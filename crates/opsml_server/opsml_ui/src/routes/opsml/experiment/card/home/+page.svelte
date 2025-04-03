@@ -18,12 +18,10 @@
 
 </script>
 
-
-<div class="mx-auto w-11/12 pb-10 flex justify-center min-h-screen">
-  <div class="grid grid-cols-1 md:grid-cols-6 gap-4 w-full pt-4">
-
+<div class="flex-1 mx-auto w-11/12 flex justify-center px-4 pb-10">
+  <div class="flex flex-wrap xl:flex-row pt-4 gap-4 w-full justify-center">
     {#if data.readme.exists}
-      <div class="col-span-1 md:col-span-4 gap-1 flex flex-col rounded-base border-black border-3 shadow bg-surface-50 w-full">
+      <div class="gap-1 flex flex-col rounded-base border-black border-3 shadow bg-surface-50 w-[1200px]">
         <CardReadMe
           name={metadata.name}
           repository={metadata.repository}
@@ -35,7 +33,7 @@
 
      
     {:else}
-      <div class="col-span-1 md:col-span-4 mx-auto gap-1 flex flex-col rounded-base border-black border-3 shadow bg-primary-100 w-1/2 h-1/4">
+      <div class="mx-auto gap-1 flex flex-col rounded-base border-black border-3 shadow bg-primary-100 w-1/3 h-1/4">
         <div class="flex flex-col items-center justify-center h-full gap-4">
           <div class="text-center text-xl font-bold text-black">No ReadMe found</div>
           <div>
@@ -52,9 +50,10 @@
 
 
     
-    <div class="col-span-1 md:col-span-2 bg-primary-200 p-4 flex flex-col rounded-base bg-surface-50 border-primary-800 border-3 shadow-primary h-[50%] min-h-fit">
+    <div class="bg-primary-200 p-4 flex flex-col rounded-base bg-surface-50 border-primary-800 border-3 shadow-primary min-w-112 max-h-[800px] overflow-y-auto self-start">
       <Metadata metadata={metadata} />
     </div>
+
   </div>
 </div>
   

@@ -395,7 +395,7 @@ impl StorageClient for GoogleStorageClient {
                         Some(last_modified) => last_modified.to_string(),
                         None => "".to_string(),
                     },
-                    suffix: name.split('.').last().unwrap_or("").to_string(),
+                    suffix: name.split('.').next_back().unwrap_or("").to_string(),
                     stripped_path,
                 }
             })

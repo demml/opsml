@@ -8,13 +8,18 @@ on:
   pull_request:
 
 env:
-  RUSTFLAGS: -C debuginfo=0 # Do not produce debug symbols to keep memory usage down
+  RUSTFLAGS: -C debuginfo=0
 
 jobs:
   format-and-lint:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
+
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: "3.x"
 
       - name: Set up Rust
         run: rustup override set stable && rustup update
@@ -33,10 +38,15 @@ jobs:
         run: make lints
 
   test-Sql-Storage-Utils:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     needs: format-and-lint
     steps:
       - uses: actions/checkout@v4
+
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: "3.x"
 
       - name: Set up Rust
         run: rustup override set stable && rustup update
@@ -56,10 +66,15 @@ jobs:
   # this will run local client and server storage tests.
   # Intergration tests will be run when prs are merged to main
   test-server:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     needs: format-and-lint
     steps:
       - uses: actions/checkout@v4
+
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: "3.x"
 
       - name: Set up Rust
         run: rustup override set stable && rustup update
@@ -101,6 +116,11 @@ jobs:
     needs: [format-and-lint]
     steps:
       - uses: actions/checkout@v4
+
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: "3.x"
 
       - name: Install libomp on macOS
         if: matrix.os == 'macos'
@@ -164,6 +184,11 @@ jobs:
     needs: [format-and-lint]
     steps:
       - uses: actions/checkout@v4
+
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: "3.x"
 
       - name: install rust stable
         uses: dtolnay/rust-toolchain@stable

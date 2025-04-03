@@ -51,7 +51,8 @@
     </button>
 
     {#if isOpen}
-      <div class="absolute top-full left-0 w-full mt-1 bg-primary-500 border-black border-2 rounded-lg overflow-hidden z-50 px-2 py-1">
+      <div class="absolute top-full left-0 w-full mt-1 bg-primary-500 border-black border-2 rounded-lg z-50">
+        <div class="max-h-72 overflow-y-auto px-2 py-1 custom-scrollbar">
         {#each values as value}
           <button
               class="w-full {py} px-4 text-left border-2 border-transparent hover:border-black rounded-lg transition-colors text-black"
@@ -60,6 +61,31 @@
               {value}
           </button>
         {/each}
+        </div>
       </div>
     {/if}
 </div>
+
+
+<style>
+  /* Webkit browsers (Chrome, Safari) */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: #e5e7eb;
+    border-radius: 2px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #ffffff;
+    border-radius: 2px;
+  }
+
+  /* Firefox */
+  .custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: #ffffff #e5e7eb;
+  }
+</style>

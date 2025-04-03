@@ -57,13 +57,6 @@
     }
   }
 
-  async function filterEntities() {
-    // filter the entities based on the search query
-    filteredEntities = availableEntities.filter((entity: string) => {
-      return entity.toLowerCase().includes(searchQuery.toLowerCase());
-    });
-  }
-
   async function plotMetrics() {
   
     // if selectedMetrics is empty, return
@@ -90,8 +83,8 @@
 
 
   </script>
-<div class="mx-auto w-11/12 pt-4 pb-10 flex justify-center">
-  <div class="grid grid-cols-1 lg:grid-cols-8 gap-4 w-full">
+<div class="flex-1 mx-auto w-10/12 pb-10 flex justify-center overflow-auto px-4">
+  <div class="grid grid-cols-1 lg:grid-cols-8 gap-4 w-full pt-4 ">
 
     <!-- Left Column-->
     <div class="col-span-1 lg:col-span-2 bg-surface-50 p-4 flex flex-col rounded-base border-black border-2 shadow h-[calc(100vh-200px)] overflow-y-auto">
@@ -130,7 +123,6 @@
             type="text"
             bind:value={searchQuery}
             placeholder="Search..."
-            oninput={filterEntities}
           />
         </div>
       </div>
@@ -160,7 +152,7 @@
             <List color="#8059b6"/>
             <header class="pl-2 text-primary-900 text-lg font-bold">Previous Versions</header>
           </div>
-          <p class="pl-2 text-base lg:text-lg text-black">Select previous version to compare metrics</p>
+          <p class="pl-2 text-black">Select previous version to compare metrics</p>
           <div class="grid grid-cols-3 gap-2 pl-2 pt-4 pb-4 overflow-auto">
             {#each recentExperiments as experiment}
               {#if selectedExperiments.includes(experiment)}

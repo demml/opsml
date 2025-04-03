@@ -8,7 +8,7 @@
  
   </script>
   
-  <div class="mx-auto w-9/12 pb-10 flex justify-center min-h-screen">
+  <div class="flex-1 mx-auto w-9/12 pb-10 flex justify-center overflow-auto px-4">
     <div class="w-full pt-4">
       <FileTree 
         files={data.fileTree.files} 

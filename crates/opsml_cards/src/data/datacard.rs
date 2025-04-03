@@ -93,6 +93,9 @@ pub struct DataCard {
 
     #[pyo3(get)]
     pub is_card: bool,
+
+    #[pyo3(get)]
+    pub opsml_version: String,
 }
 
 #[pymethods]
@@ -164,6 +167,7 @@ impl DataCard {
             app_env: std::env::var("APP_ENV").unwrap_or_else(|_| "dev".to_string()),
             created_at: get_utc_datetime(),
             is_card: true,
+            opsml_version: env!("CARGO_PKG_VERSION").to_string(),
         })
     }
 
@@ -384,6 +388,7 @@ impl Serialize for DataCard {
         state.serialize_field("created_at", &self.created_at)?;
         state.serialize_field("app_env", &self.app_env)?;
         state.serialize_field("is_card", &self.is_card)?;
+        state.serialize_field("opsml_version", &self.opsml_version)?;
         state.end()
     }
 }
@@ -407,6 +412,7 @@ impl<'de> Deserialize<'de> for DataCard {
             AppEnv,
             CreatedAt,
             IsCard,
+            OpsmlVersion,
         }
 
         struct DataCardVisitor;
@@ -433,6 +439,7 @@ impl<'de> Deserialize<'de> for DataCard {
                 let mut app_env = None;
                 let mut created_at = None;
                 let mut is_card = None;
+                let mut opsml_version = None;
 
                 while let Some(key) = map.next_key()? {
                     match key {
@@ -471,6 +478,9 @@ impl<'de> Deserialize<'de> for DataCard {
                         Field::IsCard => {
                             is_card = Some(map.next_value()?);
                         }
+                        Field::OpsmlVersion => {
+                            opsml_version = Some(map.next_value()?);
+                        }
                     }
                 }
 
@@ -487,6 +497,8 @@ impl<'de> Deserialize<'de> for DataCard {
                 let created_at =
                     created_at.ok_or_else(|| de::Error::missing_field("created_at"))?;
                 let is_card = is_card.ok_or_else(|| de::Error::missing_field("is_card"))?;
+                let opsml_version =
+                    opsml_version.ok_or_else(|| de::Error::missing_field("opsml_version"))?;
 
                 Ok(DataCard {
                     interface,
@@ -501,6 +513,7 @@ impl<'de> Deserialize<'de> for DataCard {
                     app_env,
                     created_at,
                     is_card,
+                    opsml_version,
                 })
             }
         }
@@ -517,6 +530,7 @@ impl<'de> Deserialize<'de> for DataCard {
             "app_env",
             "created_at",
             "is_card",
+            "opsml_version",
         ];
         deserializer.deserialize_struct("DataCard", FIELDS, DataCardVisitor)
     }
@@ -534,6 +548,7 @@ impl FromPyObject<'_> for DataCard {
         let registry_type = ob.getattr("registry_type")?.extract()?;
         let created_at = ob.getattr("created_at")?.extract()?;
         let app_env = ob.getattr("app_env")?.extract()?;
+        let opsml_version = ob.getattr("opsml_version")?.extract()?;
 
         Ok(DataCard {
             interface: Some(interface.unbind()),
@@ -549,6 +564,7 @@ impl FromPyObject<'_> for DataCard {
             app_env,
             created_at,
             is_card: true,
+            opsml_version,
         })
     }
 }

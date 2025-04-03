@@ -22,6 +22,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: "3.x"
+
       - name: configure aws credentials
         uses: aws-actions/configure-aws-credentials@v3
         with:
@@ -81,6 +86,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: "3.x"
+
       - name: Set up Rust
         run: rustup override set stable && rustup update
 
@@ -125,6 +135,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: "3.x"
 
       - name: "Az CLI login"
         uses: azure/login@v2
@@ -174,6 +189,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: "3.x"
 
       - name: Set up Rust
         run: rustup override set stable && rustup update

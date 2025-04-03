@@ -241,22 +241,56 @@ impl PostgresQueryHelper {
         let combined_query = format!(
             "{}{}{}{} 
             SELECT * FROM joined 
-            WHERE row_num BETWEEN $4 AND $5
+            WHERE row_num > $4 AND row_num <= $5
             ORDER BY updated_at DESC",
             versions_cte, stats_cte, filtered_versions_cte, joined_cte
         );
 
         combined_query
     }
+
+    pub fn get_version_page_query(table: &CardTable) -> String {
+        let versions_cte = format!(
+            "WITH versions AS (
+                SELECT 
+                    repository, 
+                    name, 
+                    version, 
+                    created_at,
+                    ROW_NUMBER() OVER (PARTITION BY repository, name ORDER BY created_at DESC, major DESC, minor DESC, patch DESC) AS row_num
+                FROM {}
+                WHERE repository = $1
+                AND name = $2
+            )", table
+        );
+
+        let query = format!(
+            "{}
+            SELECT
+            repository,
+            name,
+            version,
+            created_at,
+            row_num
+            FROM versions
+            WHERE row_num > $3 AND row_num <= $4
+            ORDER BY created_at DESC",
+            versions_cte
+        );
+
+        query
+    }
+
     pub fn get_query_stats_query(table: &CardTable) -> String {
         let base_query = format!(
-            "SELECT 
+            "SELECT
             COALESCE(CAST(COUNT(DISTINCT name) AS INTEGER), 0) AS nbr_names, 
             COALESCE(CAST(COUNT(major) AS INTEGER), 0) AS nbr_versions, 
             COALESCE(CAST(COUNT(DISTINCT repository) AS INTEGER), 0) AS nbr_repositories 
             FROM {}
             WHERE 1=1
-            AND ($1 IS NULL OR name LIKE $1 OR repository LIKE $1)",
+            AND ($1 IS NULL OR name LIKE $1 OR repository LIKE $1)
+            AND ($2 IS NULL OR name = $2 OR repository = $2)",
             table
         );
 

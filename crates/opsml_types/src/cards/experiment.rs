@@ -281,7 +281,7 @@ impl MemoryMetricLogger {
         let total = self.system.total_memory() as i64;
         let used = self.system.used_memory() as i64;
         let available = self.system.available_memory() as i64;
-        let used_percent_memory = used as f64 / total as f64;
+        let used_percent_memory = used as f64 / total as f64 * 100.0;
 
         MemoryMetrics {
             free_memory: free,
@@ -341,6 +341,7 @@ impl Default for NetworkRateLogger {
 
 #[derive(Debug, Serialize, Deserialize, Default, Clone)]
 pub struct HardwareMetrics {
+    pub created_at: DateTime<Utc>,
     pub cpu: CPUMetrics,
     pub memory: MemoryMetrics,
     pub network: NetworkRates,
@@ -363,6 +364,7 @@ impl HardwareMetricLogger {
 
     pub fn get_metrics(&mut self) -> HardwareMetrics {
         HardwareMetrics {
+            created_at: Utc::now(),
             cpu: self.cpu_logger.get_metrics(),
             memory: self.memory_logger.get_metrics(),
             network: self.network_logger.get_metrics(),

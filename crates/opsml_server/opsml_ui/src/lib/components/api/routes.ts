@@ -5,6 +5,7 @@ export enum RoutePaths {
   LIST_SPACES = "/opsml/api/card/repositories",
   GET_STATS = "/opsml/api/card/registry/stats",
   GET_REGISTRY_PAGE = "/opsml/api/card/registry/page",
+  GET_VERSION_PAGE = "/opsml/api/card/registry/version/page",
 
   ERROR = "/opsml/error",
   HOME = "/opsml/home",
@@ -27,6 +28,7 @@ export enum RoutePaths {
   EXPERIMENT_GROUPED_METRICS = "/opsml/api/experiment/metrics/grouped",
   EXPERIMENT_METRIC_NAMES = "/opsml/api/experiment/metrics/names",
   EXPERIMENT_PARAMETERS = "/opsml/api/experiment/parameters",
+  HARDWARE_METRICS = "/opsml/api/experiment/hardware/metrics",
 
   // everything below is old and may be removed
 

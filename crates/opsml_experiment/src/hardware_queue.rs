@@ -9,20 +9,19 @@ use tokio::time::{self, Duration};
 use tracing::Instrument;
 use tracing::{debug, error, info_span};
 
-fn insert_metrics(
+async fn insert_metrics(
     registry: Arc<OpsmlRegistry>,
     hw_logger: &mut HardwareMetricLogger,
     experiment_uid: &str,
 ) -> Result<(), ExperimentError> {
-    debug!("Locking registry for metrics");
-
     debug!("Getting metrics");
     let metrics = hw_logger.get_metrics();
+
     let request = HardwareMetricRequest {
         experiment_uid: experiment_uid.to_string(),
         metrics: metrics.clone(),
     };
-    registry.insert_hardware_metrics(request)?;
+    registry.insert_hardware_metrics(request).await?;
 
     Ok(())
 }
@@ -33,7 +32,7 @@ fn start_background_task(
     experiment_uid: String,
 ) -> Result<(), ExperimentError> {
     let registry = registry.clone();
-    let handle = app_state().runtime.clone();
+    let state = app_state();
     let mut last_inserted = Utc::now().naive_utc();
     let mut hw_logger = HardwareMetricLogger::new();
 
@@ -49,7 +48,7 @@ fn start_background_task(
                     let elapsed = now - last_inserted;
 
                     if elapsed.num_seconds() >= 30 {
-                        let inserted = insert_metrics(registry.clone(), &mut hw_logger, &experiment_uid);
+                        let inserted = insert_metrics(registry.clone(), &mut hw_logger, &experiment_uid).await;
 
                         if let Err(e) = inserted {
                             error!("Error inserting metrics: {:?}", e);
@@ -66,7 +65,9 @@ fn start_background_task(
         }
     };
 
-    handle.spawn(future.instrument(info_span!("Hardware Queue")));
+    state
+        .runtime
+        .spawn(future.instrument(info_span!("Hardware Queue")));
 
     Ok(())
 }
@@ -81,7 +82,6 @@ impl HardwareQueue {
         experiment_uid: String,
     ) -> Result<Self, ExperimentError> {
         let (stop_tx, stop_rx) = watch::channel(());
-
         start_background_task(registry, stop_rx, experiment_uid)?;
 
         Ok(Self { stop_tx })
