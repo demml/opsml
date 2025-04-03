@@ -1,4 +1,4 @@
-type BaseCard = {
+export type BaseCard = {
   uid: string;
   created_at: string;
   app_env: string;
@@ -11,7 +11,7 @@ type BaseCard = {
 
 interface DataCard extends BaseCard {
   type: "Data";
-  data: {
+  data: BaseCard & {
     data_type: string;
     interface_type: string;
     experimentcard_uid?: string;
@@ -21,7 +21,7 @@ interface DataCard extends BaseCard {
 
 interface ModelCard extends BaseCard {
   type: "Model";
-  data: {
+  data: BaseCard & {
     data_type: string;
     model_type: string;
     task_type: string;
@@ -34,7 +34,7 @@ interface ModelCard extends BaseCard {
 
 interface ExperimentCard extends BaseCard {
   type: "Experiment";
-  data: {
+  data: BaseCard & {
     datacard_uids: string[];
     modelcard_uids: string[];
     promptcard_uids: string[];
@@ -44,7 +44,7 @@ interface ExperimentCard extends BaseCard {
 
 interface AuditCard extends BaseCard {
   type: "Audit";
-  data: {
+  data: BaseCard & {
     approved: boolean;
     datacard_uids: string[];
     modelcard_uids: string[];
@@ -54,7 +54,7 @@ interface AuditCard extends BaseCard {
 
 interface PromptCard extends BaseCard {
   type: "Prompt";
-  data: {
+  data: BaseCard & {
     experimentcard_uid?: string;
     auditcard_uid?: string;
   };

@@ -86,4 +86,5 @@ export interface ExperimentCard {
   created_at: string; // ISO datetime string
   subexperiment: boolean;
   is_card: boolean;
+  opsml_version: string;
 }

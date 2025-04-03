@@ -23,6 +23,7 @@ export enum AcceptableSuffix {
   JPG = "jpg",
   PNG = "png",
   GIFF = "giff",
+  PYTHON = "py",
 }
 
 export interface RawFile {

@@ -4,8 +4,8 @@
   import { goto } from '$app/navigation';
   import type { ModelCard } from '$lib/components/card/card_interfaces/modelcard';
   import type { PageProps } from './$types';
-  import CardReadMe from '$lib/components/model/CardReadMe.svelte';
-  import Metadata from '$lib/components/model/Metadata.svelte';
+  import CardReadMe from '$lib/components/card/CardReadMe.svelte';
+  import Metadata from '$lib/components/card/model/Metadata.svelte';
 
 
   let { data }: PageProps = $props();
