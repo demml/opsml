@@ -43,11 +43,11 @@ fn start_background_task(
         loop {
             tokio::select! {
 
-                _ = time::sleep(Duration::from_secs(5)) => {
+                _ = time::sleep(Duration::from_secs(30)) => {
                     let now = Utc::now().naive_utc();
                     let elapsed = now - last_inserted;
 
-                    if elapsed.num_seconds() >= 5 {
+                    if elapsed.num_seconds() >= 30 {
                         let inserted = insert_metrics(registry.clone(), &mut hw_logger, &experiment_uid).await;
 
                         if let Err(e) = inserted {
