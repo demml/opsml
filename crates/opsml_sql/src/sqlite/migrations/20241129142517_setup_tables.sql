@@ -152,6 +152,21 @@ CREATE TABLE IF NOT EXISTS opsml_operation (
     access_location TEXT
 );
 
+CREATE TABLE IF NOT EXISTS opsml_audit_trail (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    operation_type TEXT NOT NULL,  -- CREATE, READ, UPDATE, DELETE, LOGIN, etc.
+    resource_type TEXT NOT NULL,   -- model, data, experiment, prompt, etc.
+    resource_id TEXT,              -- UUID/ID of the accessed resource
+    access_location TEXT,          -- IP address or endpoint
+    user_agent TEXT,              -- Client application/browser info
+    status TEXT NOT NULL,         -- SUCCESS, FAILURE, DENIED
+    error_message TEXT,           -- Details if operation failed
+    metadata TEXT                 -- JSON field for additional context
+);
+
+
 CREATE TABLE IF NOT EXISTS opsml_prompt_registry (
     uid TEXT PRIMARY KEY,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

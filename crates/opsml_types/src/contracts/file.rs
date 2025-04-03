@@ -189,7 +189,7 @@ impl ArtifactKey {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone)]
 pub enum Operation {
     Create,
     Read,
@@ -212,6 +212,46 @@ impl Display for Operation {
             Operation::Encrypt => write!(f, "Encrypt"),
             Operation::Decrypt => write!(f, "Decrypt"),
             Operation::Create => write!(f, "Create"),
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub enum ResourceType {
+    File,
+    Model,
+    Experiment,
+    Data,
+    Prompt,
+    Card,
+}
+
+impl Display for ResourceType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ResourceType::File => write!(f, "File"),
+            ResourceType::Model => write!(f, "Model"),
+            ResourceType::Experiment => write!(f, "Experiment"),
+            ResourceType::Data => write!(f, "Data"),
+            ResourceType::Prompt => write!(f, "Prompt"),
+            ResourceType::Card => write!(f, "Card"),
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub enum AuditStatus {
+    Success,
+    Failed,
+    Denied,
+}
+
+impl Display for AuditStatus {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            AuditStatus::Success => write!(f, "Success"),
+            AuditStatus::Failed => write!(f, "Failed"),
+            AuditStatus::Denied => write!(f, "Denied"),
         }
     }
 }

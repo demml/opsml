@@ -153,6 +153,20 @@ CREATE TABLE IF NOT EXISTS opsml_operation (
     INDEX idx_created_at (created_at)
 );
 
+CREATE TABLE IF NOT EXISTS opsml_audit_trail (
+    idx INT PRIMARY KEY AUTO_INCREMENT
+    username TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    operation_type TEXT NOT NULL,  -- CREATE, READ, UPDATE, DELETE, LOGIN, etc.
+    resource_type TEXT NOT NULL,   -- model, data, experiment, prompt, etc.
+    resource_id TEXT,              -- UUID/ID of the accessed resource
+    access_location TEXT,          -- IP address or endpoint
+    user_agent TEXT,              -- Client application/browser info
+    status TEXT NOT NULL,         -- SUCCESS, FAILURE, DENIED
+    error_message JSON,          -- Details if operation failed
+    metadata JSON                -- JSON field for additional context
+);
+
 
 -- DataSchema
 CREATE TABLE IF NOT EXISTS opsml_prompt_registry (

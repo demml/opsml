@@ -50,7 +50,7 @@ aws-types = "1.*"
 base64 = "0.22.*"
 bytes = "1.*"
 axum = { version = "0.*", features = ["multipart", "macros"] }
-axum-extra = { version =  "0.*", features = ["cookie"] }
+axum-extra = { version =  "0.*", features = ["cookie", "typed-header"] }
 clap = { version = "4.*", features = ["derive"] }
 chrono = { version = "0.*", features = ["serde"] }
 colored_json = "5.*"
@@ -59,6 +59,7 @@ futures = "0.*"
 futures-util = "0.*"
 google-cloud-storage = { version = "0.24.*", features  = ["auth"] }
 google-cloud-auth = { version = "0.17.2" }
+headers = { version = "0.*" }
 hmac = "0.*"
 hkdf = "0.*"
 jsonwebtoken = "9.*"
