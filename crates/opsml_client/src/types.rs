@@ -17,6 +17,7 @@ pub enum Routes {
     AuthRefresh,
     AuthValidate,
     AuthUiLogin,
+
     Card,
     CardReadme,
     CardCreate,
@@ -25,6 +26,13 @@ pub enum Routes {
     CardLoad,
     CardVersion,
     CardUpdate,
+
+    CardMetadata,
+    CardRepositories,
+    CardRegistryStats,
+    CardRegistryPage,
+    CardRegistryVersionPage,
+
     DeleteFiles,
     Files,
     Healthcheck,
@@ -66,6 +74,12 @@ impl Routes {
             Routes::AuthUiLogin => "auth/ui/login",
             Routes::Card => "card",
             Routes::CardReadme => "card/readme",
+            Routes::CardRepositories => "card/repositories",
+            Routes::CardMetadata => "card/metadata",
+            Routes::CardRegistryStats => "card/registry/stats",
+            Routes::CardRegistryPage => "card/registry/page",
+            Routes::CardRegistryVersionPage => "card/registry/version/page",
+
             Routes::CardCreate => "card/create",
             Routes::CardDelete => "card/delete",
             Routes::CardList => "card/list",
