@@ -1,13 +1,22 @@
 export const ssr = false;
 
 import { opsmlClient } from "$lib/components/api/client.svelte";
+import { getMaxDataPoints } from "$lib/utils";
 import type { PageLoad } from "./$types";
 import {
   getDriftProfiles,
   getProfileConfig,
   getProfileFeatures,
-} from "$lib/components/monitoring/util";
-import { DriftType } from "$lib/components/monitoring/types";
+} from "$lib/components/card/model/monitoring/util";
+import {
+  DriftType,
+  TimeInterval,
+} from "$lib/components/card/model/monitoring/types";
+import {
+  getLatestMetricsExample,
+  getCurrentMetricData,
+} from "$lib/components/card/model/monitoring/util";
+import { getDriftAlerts } from "$lib/components/card/model/monitoring/alert/utils";
 
 export const load: PageLoad = async ({ parent }) => {
   await opsmlClient.validateAuth(true);
@@ -31,6 +40,28 @@ export const load: PageLoad = async ({ parent }) => {
   );
   let currentName: string = currentNames[0];
   let currentConfig = getProfileConfig(currentDriftType, currentProfile);
+  let maxDataPoints = getMaxDataPoints();
+
+  // get latest metrics
+  let latestMetrics = await getLatestMetricsExample(
+    profiles,
+    TimeInterval.SixHours,
+    maxDataPoints
+  );
+
+  let currentMetricData = getCurrentMetricData(
+    latestMetrics,
+    currentDriftType,
+    currentName
+  );
+
+  let currentAlerts = await getDriftAlerts(
+    currentConfig.repository,
+    currentConfig.name,
+    currentConfig.version,
+    TimeInterval.SixHours,
+    true
+  );
 
   return {
     profiles,
@@ -40,5 +71,9 @@ export const load: PageLoad = async ({ parent }) => {
     currentDriftType,
     currentProfile,
     currentConfig,
+    latestMetrics,
+    currentMetricData,
+    maxDataPoints,
+    currentAlerts,
   };
 };

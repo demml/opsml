@@ -4,16 +4,21 @@ use anyhow::{Context, Result};
 use axum::{
     extract::{Query, State},
     http::StatusCode,
-    routing::{get, put},
+    routing::{get, post, put},
     Json, Router,
 };
+
+use crate::core::experiment::types::GroupedMetric;
 use opsml_sql::base::SqlClient;
 use opsml_sql::schemas::schema::{HardwareMetricsRecord, MetricRecord, ParameterRecord};
 use opsml_types::{cards::*, contracts::*};
 use opsml_utils::utils::get_utc_datetime;
 use sqlx::types::Json as SqlxJson;
-use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::sync::Arc;
+use std::{
+    collections::HashMap,
+    panic::{catch_unwind, AssertUnwindSafe},
+};
 use tracing::error;
 
 pub async fn insert_metrics(
@@ -73,6 +78,62 @@ pub async fn get_metrics(
         .collect::<Vec<_>>();
 
     Ok(Json(metrics))
+}
+
+pub async fn get_grouped_metrics(
+    State(state): State<Arc<AppState>>,
+    Json(req): Json<UiMetricRequest>,
+) -> Result<Json<HashMap<String, Vec<GroupedMetric>>>, (StatusCode, Json<serde_json::Value>)> {
+    let mut metric_data: HashMap<String, Vec<GroupedMetric>> = HashMap::new();
+
+    for experiment in req.experiments {
+        let metrics = state
+            .sql_client
+            .get_experiment_metric(&experiment.uid, &req.metric_names)
+            .await
+            .map_err(|e| {
+                error!("Failed to get metrics: {}", e);
+                internal_server_error(e, "Failed to get metrics")
+            })?;
+
+        let mut grouped_by_name: HashMap<String, Vec<MetricRecord>> = HashMap::new();
+        for metric in metrics {
+            grouped_by_name
+                .entry(metric.name.clone())
+                .or_default()
+                .push(metric);
+        }
+
+        for (metric_name, metric_records) in grouped_by_name {
+            let grouped_metric = GroupedMetric {
+                uid: experiment.uid.clone(),
+                version: experiment.version.clone(),
+                value: metric_records.iter().map(|m| m.value).collect(),
+                step: if metric_records.iter().any(|m| m.step.is_some()) {
+                    Some(
+                        metric_records
+                            .iter()
+                            .filter_map(|m| m.step.map(|s| s as i64))
+                            .collect(),
+                    )
+                } else {
+                    None
+                },
+                timestamp: if metric_records.iter().any(|m| m.timestamp.is_some()) {
+                    Some(metric_records.iter().filter_map(|m| m.timestamp).collect())
+                } else {
+                    None
+                },
+            };
+
+            // Add GroupedMetric to the final result
+            metric_data
+                .entry(metric_name)
+                .or_default()
+                .push(grouped_metric);
+        }
+    }
+    Ok(Json(metric_data))
 }
 
 pub async fn get_metric_names(
@@ -214,6 +275,10 @@ pub async fn get_experiment_router(prefix: &str) -> Result<Router<Arc<AppState>>
             .route(
                 &format!("{}/experiment/metrics", prefix),
                 put(insert_metrics).post(get_metrics),
+            )
+            .route(
+                &format!("{}/experiment/metrics/grouped", prefix),
+                post(get_grouped_metrics),
             )
             .route(
                 &format!("{}/experiment/metrics/names", prefix),
