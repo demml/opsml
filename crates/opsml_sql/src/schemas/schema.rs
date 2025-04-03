@@ -134,6 +134,15 @@ pub struct CardSummary {
     pub row_num: i64,
 }
 
+#[derive(Debug, FromRow, Serialize, Deserialize)]
+pub struct VersionSummary {
+    pub repository: String,
+    pub name: String,
+    pub version: String,
+    pub created_at: DateTime<Utc>,
+    pub row_num: i64,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct DataCardRecord {
     pub uid: String,

@@ -5,6 +5,7 @@ use crate::schemas::schema::{
     CardResults, CardSummary, HardwareMetricsRecord, MetricRecord, ParameterRecord, QueryStats,
     ServerCard, User,
 };
+use crate::schemas::VersionSummary;
 use crate::sqlite::client::SqliteClient;
 use anyhow::Context;
 use anyhow::Result as AnyhowResult;
@@ -97,11 +98,18 @@ impl SqlClient for SqlClientEnum {
         &self,
         table: &CardTable,
         search_term: Option<&str>,
+        repository: Option<&str>,
     ) -> Result<QueryStats, SqlError> {
         match self {
-            SqlClientEnum::Postgres(client) => client.query_stats(table, search_term).await,
-            SqlClientEnum::Sqlite(client) => client.query_stats(table, search_term).await,
-            SqlClientEnum::MySql(client) => client.query_stats(table, search_term).await,
+            SqlClientEnum::Postgres(client) => {
+                client.query_stats(table, search_term, repository).await
+            }
+            SqlClientEnum::Sqlite(client) => {
+                client.query_stats(table, search_term, repository).await
+            }
+            SqlClientEnum::MySql(client) => {
+                client.query_stats(table, search_term, repository).await
+            }
         }
     }
 
@@ -128,6 +136,26 @@ impl SqlClient for SqlClientEnum {
                 client
                     .query_page(sort_by, page, search_term, repository, table)
                     .await
+            }
+        }
+    }
+
+    async fn version_page(
+        &self,
+        page: i32,
+        repository: Option<&str>,
+        name: Option<&str>,
+        table: &CardTable,
+    ) -> Result<Vec<VersionSummary>, SqlError> {
+        match self {
+            SqlClientEnum::Postgres(client) => {
+                client.version_page(page, repository, name, table).await
+            }
+            SqlClientEnum::Sqlite(client) => {
+                client.version_page(page, repository, name, table).await
+            }
+            SqlClientEnum::MySql(client) => {
+                client.version_page(page, repository, name, table).await
             }
         }
     }
@@ -930,7 +958,10 @@ mod tests {
     async fn test_enum_query_stats() {
         let client = get_client().await;
         // query stats
-        let stats = client.query_stats(&CardTable::Model, None).await.unwrap();
+        let stats = client
+            .query_stats(&CardTable::Model, None, None)
+            .await
+            .unwrap();
 
         assert_eq!(stats.nbr_names, 10);
         assert_eq!(stats.nbr_versions, 10);
@@ -938,7 +969,7 @@ mod tests {
 
         // query stats with search term
         let stats = client
-            .query_stats(&CardTable::Model, Some("Model1"))
+            .query_stats(&CardTable::Model, Some("Model1"), None)
             .await
             .unwrap();
 
@@ -953,7 +984,7 @@ mod tests {
 
         // query page
         let results = client
-            .query_page("name", 0, None, None, &CardTable::Data)
+            .query_page("name", 1, None, None, &CardTable::Data)
             .await
             .unwrap();
 
@@ -961,7 +992,7 @@ mod tests {
 
         // query page
         let results = client
-            .query_page("name", 0, None, None, &CardTable::Model)
+            .query_page("name", 1, None, None, &CardTable::Model)
             .await
             .unwrap();
 
@@ -969,7 +1000,14 @@ mod tests {
 
         // query page
         let results = client
-            .query_page("name", 0, None, Some("repo3"), &CardTable::Model)
+            .query_page("name", 1, None, Some("repo3"), &CardTable::Model)
+            .await
+            .unwrap();
+
+        assert_eq!(results.len(), 1);
+
+        let results = client
+            .version_page(1, Some("repo1"), Some("Model1"), &CardTable::Model)
             .await
             .unwrap();
 

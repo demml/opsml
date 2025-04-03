@@ -3,7 +3,7 @@ use crate::base::SqlClient;
 use crate::schemas::schema::{
     AuditCardRecord, CardResults, CardSummary, DataCardRecord, ExperimentCardRecord,
     HardwareMetricsRecord, MetricRecord, ModelCardRecord, ParameterRecord, PromptCardRecord,
-    QueryStats, ServerCard, User, VersionResult,
+    QueryStats, ServerCard, User, VersionResult, VersionSummary,
 };
 use crate::sqlite::helper::SqliteQueryHelper;
 use async_trait::async_trait;
@@ -658,12 +658,14 @@ impl SqlClient for SqliteClient {
         &self,
         table: &CardTable,
         search_term: Option<&str>,
+        repository: Option<&str>,
     ) -> Result<QueryStats, SqlError> {
         let query = SqliteQueryHelper::get_query_stats_query(table);
 
         // if search_term is not None, format with %search_term%, else None
         let stats: QueryStats = sqlx::query_as(&query)
             .bind(search_term.map(|term| format!("%{}%", term)))
+            .bind(repository)
             .fetch_one(&self.pool)
             .await
             .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
@@ -694,13 +696,37 @@ impl SqlClient for SqliteClient {
     ) -> Result<Vec<CardSummary>, SqlError> {
         let query = SqliteQueryHelper::get_query_page_query(table, sort_by);
 
-        let lower_bound = page * 30;
-        let upper_bound = lower_bound + 30;
+        let lower_bound = (page * 30) - 30;
+        let upper_bound = page * 30;
 
         let records: Vec<CardSummary> = sqlx::query_as(&query)
             .bind(repository)
             .bind(search_term)
             .bind(search_term.map(|term| format!("%{}%", term)))
+            .bind(lower_bound)
+            .bind(upper_bound)
+            .fetch_all(&self.pool)
+            .await
+            .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+
+        Ok(records)
+    }
+
+    async fn version_page(
+        &self,
+        page: i32,
+        repository: Option<&str>,
+        name: Option<&str>,
+        table: &CardTable,
+    ) -> Result<Vec<VersionSummary>, SqlError> {
+        let query = SqliteQueryHelper::get_version_page_query(table);
+
+        let lower_bound = (page * 30) - 30;
+        let upper_bound = page * 30;
+
+        let records: Vec<VersionSummary> = sqlx::query_as(&query)
+            .bind(repository)
+            .bind(name)
             .bind(lower_bound)
             .bind(upper_bound)
             .fetch_all(&self.pool)
@@ -1437,7 +1463,10 @@ mod tests {
         sqlx::query(&script).execute(&client.pool).await.unwrap();
 
         // query stats
-        let stats = client.query_stats(&CardTable::Model, None).await.unwrap();
+        let stats = client
+            .query_stats(&CardTable::Model, None, None)
+            .await
+            .unwrap();
 
         assert_eq!(stats.nbr_names, 10);
         assert_eq!(stats.nbr_versions, 10);
@@ -1445,11 +1474,18 @@ mod tests {
 
         // query stats with search term
         let stats = client
-            .query_stats(&CardTable::Model, Some("Model1"))
+            .query_stats(&CardTable::Model, Some("Model1"), None)
             .await
             .unwrap();
 
         assert_eq!(stats.nbr_names, 2); // for Model1 and Model10
+
+        let stats = client
+            .query_stats(&CardTable::Model, Some("Model1"), Some("repo1"))
+            .await
+            .unwrap();
+
+        assert_eq!(stats.nbr_names, 1); // for Model1
 
         cleanup();
     }
@@ -1472,7 +1508,7 @@ mod tests {
 
         // query page
         let results = client
-            .query_page("name", 0, None, None, &CardTable::Data)
+            .query_page("name", 1, None, None, &CardTable::Data)
             .await
             .unwrap();
 
@@ -1480,7 +1516,7 @@ mod tests {
 
         // query page
         let results = client
-            .query_page("name", 0, None, None, &CardTable::Model)
+            .query_page("name", 1, None, None, &CardTable::Model)
             .await
             .unwrap();
 
@@ -1488,7 +1524,34 @@ mod tests {
 
         // query page
         let results = client
-            .query_page("name", 0, None, Some("repo3"), &CardTable::Model)
+            .query_page("name", 1, None, Some("repo3"), &CardTable::Model)
+            .await
+            .unwrap();
+
+        assert_eq!(results.len(), 1);
+
+        cleanup();
+    }
+
+    #[tokio::test]
+    async fn test_sqlite_version_page() {
+        cleanup();
+
+        let config = DatabaseSettings {
+            connection_uri: get_connection_uri(),
+            max_connections: 1,
+            sql_type: SqlType::Sqlite,
+        };
+
+        let client = SqliteClient::new(&config).await.unwrap();
+
+        // Run the SQL script to populate the database
+        let script = std::fs::read_to_string("tests/populate_sqlite_test.sql").unwrap();
+        sqlx::query(&script).execute(&client.pool).await.unwrap();
+
+        // query page
+        let results = client
+            .version_page(1, Some("repo1"), Some("Model1"), &CardTable::Model)
             .await
             .unwrap();
 

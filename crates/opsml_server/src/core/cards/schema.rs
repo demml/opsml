@@ -1,10 +1,18 @@
-use opsml_sql::schemas::schema::{CardSummary, QueryStats};
+use opsml_sql::schemas::{
+    schema::{CardSummary, QueryStats},
+    VersionSummary,
+};
 use opsml_types::RegistryType;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct QueryPageResponse {
     pub summaries: Vec<CardSummary>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct VersionPageResponse {
+    pub summaries: Vec<VersionSummary>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]

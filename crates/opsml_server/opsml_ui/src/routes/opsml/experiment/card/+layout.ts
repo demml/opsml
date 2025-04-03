@@ -24,7 +24,6 @@ export const load: LayoutServerLoad = async ({ url }) => {
     metadata.repository,
     registry
   );
-
   let registryPath = getRegistryTypeLowerCase(registry);
 
   return { metadata, registry, readme, registryPath };

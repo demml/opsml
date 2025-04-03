@@ -8,7 +8,7 @@
   import 'chartjs-adapter-date-fns';
   import { Filler } from 'chart.js';
   import { PlotType, type GroupedMetrics } from '../card/experiment/types';
-  import { createLineChart, createBarChart } from './chart';
+  import { createLineChart, createGroupedBarChart } from './chart';
 
   let { 
     groupedMetrics,
@@ -31,10 +31,9 @@
     Chart.register(Filler);
 
     function initChart() {
-      console.log('Plotting chart with type:', plotType);
       let config = plotType === PlotType.Line 
       ? createLineChart(groupedMetrics, yLabel)
-      : createBarChart(groupedMetrics, yLabel);
+      : createGroupedBarChart(groupedMetrics, yLabel);
   
       if (chart) {
         chart.destroy();

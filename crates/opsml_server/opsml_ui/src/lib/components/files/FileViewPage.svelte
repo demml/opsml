@@ -47,7 +47,7 @@
     {@html atomOneLight}
   </svelte:head>
   
-  <div class="mx-auto w-9/12 pb-10 flex justify-center min-h-screen">
+
     <div class="w-full pt-4">
       <div class="rounded-lg border-2 border-black shadow overflow-x-auto bg-primary-500 py-2 mb-2 justify-center">
         <h1 class="ml-4 flex flex-row flex-wrap items-center text-lg">
@@ -78,7 +78,7 @@
         <FileViewer {file} />
       </div>
     </div>
-  </div>
+ 
   
   <style>
   

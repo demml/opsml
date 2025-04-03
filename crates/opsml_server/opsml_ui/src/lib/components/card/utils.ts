@@ -6,6 +6,9 @@ import type {
   RepositoryResponse,
   RegistryStatsResponse,
   RegistryPageReturn,
+  RegistryStatsRequest,
+  VersionPageResponse,
+  VersionPageRequest,
 } from "$lib/components/card/types";
 import type { CardQueryArgs } from "../api/schema";
 import { type Card } from "$lib/components/home/types";
@@ -20,17 +23,16 @@ export async function getSpaces(
 
 export async function getRegistryStats(
   registry_type: RegistryType,
-  searchTerm?: string
+  searchTerm?: string,
+  repository?: string
 ): Promise<RegistryStatsResponse> {
-  let params: { registry_type: RegistryType; search_term?: string } = {
+  let request: RegistryStatsRequest = {
     registry_type: registry_type,
+    search_term: searchTerm,
+    repository: repository,
   };
 
-  if (searchTerm) {
-    params["search_term"] = searchTerm as string;
-  }
-
-  const response = await opsmlClient.get(RoutePaths.GET_STATS, params);
+  const response = await opsmlClient.get(RoutePaths.GET_STATS, request);
   return await response.json();
 }
 
@@ -72,12 +74,14 @@ export async function getRegistryPage(
 }
 
 export async function setupRegistryPage(
-  registry_type: RegistryType
+  registry_type: RegistryType,
+  space: string | undefined = undefined,
+  name: string | undefined = undefined
 ): Promise<RegistryPageReturn> {
   const [spaces, registryStats, registryPage] = await Promise.all([
     getSpaces(registry_type),
-    getRegistryStats(registry_type),
-    getRegistryPage(registry_type),
+    getRegistryStats(registry_type, name, space),
+    getRegistryPage(registry_type, undefined, space, name),
   ]);
 
   return {
@@ -152,5 +156,22 @@ export async function getCardMetadata(
   };
 
   const response = await opsmlClient.get(RoutePaths.METADATA, params);
+  return await response.json();
+}
+
+export async function getVersionPage(
+  registry_type: RegistryType,
+  repository?: string,
+  name?: string,
+  page?: number
+): Promise<VersionPageResponse> {
+  const params: VersionPageRequest = {
+    registry_type: registry_type,
+    repository: repository,
+    name: name,
+    page: page,
+  };
+
+  const response = await opsmlClient.get(RoutePaths.GET_VERSION_PAGE, params);
   return await response.json();
 }

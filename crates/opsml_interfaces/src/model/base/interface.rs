@@ -150,9 +150,6 @@ pub struct ModelInterfaceMetadata {
     pub model_specific_metadata: Value,
 
     #[pyo3(get)]
-    pub opsml_version: String,
-
-    #[pyo3(get)]
     pub drift_type: HashSet<DriftType>,
 }
 
@@ -192,7 +189,6 @@ impl ModelInterfaceMetadata {
             save_metadata,
             extra_metadata,
             model_specific_metadata: Value::Null,
-            opsml_version: env!("CARGO_PKG_VERSION").to_string(),
             drift_type,
         }
     }

@@ -23,7 +23,7 @@ use reqwest::header::HeaderMap;
 use reqwest::Response;
 
 use crate::core::scouter::types::{
-    BinnedCustomResult, BinnedPsiResult, ProfileResult, SpcDriftResult,
+    BinnedCustomResult, BinnedPsiResult, DriftProfileResult, SpcDriftResult,
 };
 use scouter_client::{
     BinnedCustomMetrics, BinnedPsiFeatureMetrics, DriftAlertRequest, DriftRequest, ProfileRequest,
@@ -364,16 +364,16 @@ pub async fn get_custom_drift(
     Ok(Json(body))
 }
 
-/// Get profiles for UI
+/// Get drift  profiles for UI
 /// UI will make a request to return all profiles for a given card
 /// The card is identified by parent drift path.
 /// All profiles will be downloaded, decrypted and returned to the UI in the DriftProfile enum
 #[instrument(skip_all)]
-pub async fn get_profiles_for_ui(
+pub async fn get_drift_profiles_for_ui(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
     Json(req): Json<RawFileRequest>,
-) -> ProfileResult {
+) -> DriftProfileResult {
     if !perms.has_read_permission() {
         error!("Permission denied");
         return Err((
@@ -481,7 +481,7 @@ pub async fn get_scouter_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
             )
             .route(
                 &format!("{}/scouter/profile/ui", prefix),
-                post(get_profiles_for_ui),
+                post(get_drift_profiles_for_ui),
             )
             .route(
                 &format!("{}/scouter/profile/status", prefix),

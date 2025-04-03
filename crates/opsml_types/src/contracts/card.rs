@@ -52,6 +52,7 @@ pub struct RepositoryResponse {
 pub struct RegistryStatsRequest {
     pub registry_type: RegistryType,
     pub search_term: Option<String>,
+    pub repository: Option<String>,
 }
 
 // RegistryStatsResponse is sourced from sql schema
@@ -62,6 +63,14 @@ pub struct QueryPageRequest {
     pub sort_by: Option<String>,
     pub repository: Option<String>,
     pub search_term: Option<String>,
+    pub page: Option<i32>,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct VersionPageRequest {
+    pub registry_type: RegistryType,
+    pub repository: Option<String>,
+    pub name: Option<String>,
     pub page: Option<i32>,
 }
 

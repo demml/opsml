@@ -2,7 +2,7 @@
   import { onMount } from 'svelte';
   import type { LayoutProps } from './$types';
   import { getRegistryTypeLowerCase } from '$lib/utils';
-  import { IdCard, FolderTree, Activity, Tag } from 'lucide-svelte';
+  import { IdCard, FolderTree, Activity, Tag, ChartColumnDecreasing } from 'lucide-svelte';
   import { goto } from '$app/navigation';
   import { page } from '$app/state';
 
@@ -36,8 +36,8 @@
 
 </script>
 
-<div class="min-h-screen flex flex-col">
-  <div class="pt-20 m500:pt-14 lg:pt-[100px] border-b bg-slate-100">
+<div class="h-screen flex flex-col">
+  <div class="flex-none pt-20 m500:pt-14 lg:pt-[85px] border-b-2 border-black bg-slate-100">
     <div class="flex flex-col mx-auto flex w-11/12 justify-start">
       <h1 class="flex flex-row flex-wrap items-center text-xl">
         <div class="group flex flex-none items-center">
@@ -60,8 +60,12 @@
           <span>Files</span>
         </button>
         <button class="flex items-center gap-x-2 border-b-3 {activeTab === 'plots' ? 'border-secondary-500' : 'border-transparent'} hover:border-secondary-500 hover:border-b-3" onclick={() => navigateTab('plots')}>
-          <Activity color="#8059b6"/>
+          <ChartColumnDecreasing color="#8059b6"/>
           <span>Plots</span>
+        </button>
+        <button class="flex items-center gap-x-2 border-b-3 {activeTab === 'hardware' ? 'border-secondary-500' : 'border-transparent'} hover:border-secondary-500 hover:border-b-3" onclick={() => navigateTab('hardware')}>
+          <Activity color="#8059b6"/>
+          <span>Hardware</span>
         </button>
         <button class="flex items-center gap-x-2 border-b-3 {activeTab === 'versions' ? 'border-secondary-500' : 'border-transparent'} hover:border-secondary-500 hover:border-b-3" onclick={() => navigateTab('versions')}>
           <Tag color="#8059b6" fill="#8059b6"/>
@@ -73,5 +77,7 @@
 
     </div>
   </div>
-  {@render children()}
+  <div class="flex-1 overflow-auto">
+      {@render children()}
+  </div>
 </div>

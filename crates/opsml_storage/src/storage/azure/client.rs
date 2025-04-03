@@ -381,7 +381,7 @@ impl StorageClient for AzureStorageClient {
                             .unwrap_or(filepath)
                             .to_string();
 
-                        let suffix = name.split('.').last().unwrap().to_string();
+                        let suffix = name.split('.').next_back().unwrap().to_string();
                         let info = FileInfo {
                             name: filepath.to_string(),
                             size: blob.properties.content_length as i64,
