@@ -1,3 +1,4 @@
+use crate::core::audit::{spawn_audit_task, AuditArgs};
 use crate::core::cards::schema::{
     CreateReadeMe, QueryPageResponse, ReadeMe, RegistryStatsResponse, VersionPageResponse,
 };
@@ -9,12 +10,14 @@ use crate::core::files::utils::{
 use crate::core::state::AppState;
 use anyhow::{Context, Result};
 use axum::{
-    extract::{Query, State},
-    http::StatusCode,
+    extract::{ConnectInfo, Query, State},
+    http::{HeaderMap, StatusCode},
     response::IntoResponse,
     routing::{delete, get, post},
     Extension, Json, Router,
 };
+use axum_extra::TypedHeader;
+use headers::UserAgent;
 use opsml_auth::permission::UserPermissions;
 use opsml_crypt::decrypt_directory;
 use opsml_sql::base::SqlClient;
@@ -24,11 +27,11 @@ use opsml_types::{SaveName, Suffix};
 use semver::Version;
 use serde_json::json;
 use sqlx::types::Json as SqlxJson;
+use std::net::SocketAddr;
 use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::sync::Arc;
 use tempfile::tempdir;
 use tracing::{debug, error, instrument};
-
 /// Route for checking if a card UID exists
 pub async fn check_card_uid(
     State(state): State<Arc<AppState>>,
@@ -189,9 +192,22 @@ pub async fn list_cards(
 #[instrument(skip_all)]
 pub async fn create_card(
     State(state): State<Arc<AppState>>,
+    ConnectInfo(addr): ConnectInfo<SocketAddr>,
+    TypedHeader(agent): TypedHeader<UserAgent>,
+    headers: HeaderMap,
     Json(card_request): Json<CreateCardRequest>,
 ) -> Result<impl IntoResponse, (StatusCode, Json<serde_json::Value>)> {
     let table = CardTable::from_registry_type(&card_request.registry_type);
+
+    let audit_args = AuditArgs::new(
+        addr,
+        agent,
+        headers,
+        Operation::Create,
+        ResourceType::Card,
+        card_request.card.uid().to_string(),
+        serde_json::to_string(&card_request).unwrap_or_default(),
+    );
 
     debug!(
         "Creating card: {}/{}/{} - registry: {:?}",
@@ -210,6 +226,8 @@ pub async fn create_card(
     .await
     .map_err(|e| {
         error!("Failed to get next version: {}", e);
+        // update audit args and log
+        spawn_audit_task(audit_args.clone().with_error(&e), state.sql_client.clone());
         internal_server_error(e, "Failed to get next version")
     })?;
     // (2) ------- Insert the card into the database
@@ -222,6 +240,7 @@ pub async fn create_card(
     .await
     .map_err(|e| {
         error!("Failed to insert card into db: {}", e);
+        spawn_audit_task(audit_args.clone().with_error(&e), state.sql_client.clone());
         internal_server_error(e, "Failed to insert card into db")
     })?;
 
@@ -236,10 +255,12 @@ pub async fn create_card(
     .await
     .map_err(|e| {
         error!("Failed to create artifact key: {}", e);
+        spawn_audit_task(audit_args.clone().with_error(&e), state.sql_client.clone());
         internal_server_error(e, "Failed to create artifact key")
     })?;
 
     debug!("Card created successfully");
+    spawn_audit_task(audit_args, state.sql_client.clone());
     Ok(Json(CreateCardResponse {
         registered: true,
         repository: card_request.card.repository().to_string(),
