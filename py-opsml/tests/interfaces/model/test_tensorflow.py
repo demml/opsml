@@ -172,7 +172,7 @@ def multi_input_dict_model():
     return model, train_data, save_kwargs
 
 
-def test_model(tf_model, onnx: bool = False, data_type: DataType = DataType.Numpy):
+def tf_test_model(tf_model, onnx: bool = False, data_type: DataType = DataType.Numpy):
     with TemporaryDirectory() as tmp_dir:
         temp_path = Path(tmp_dir)
         temp_path = temp_path / "test"
@@ -211,16 +211,16 @@ def test_model(tf_model, onnx: bool = False, data_type: DataType = DataType.Nump
 if __name__ == "__main__":
     # testing functional model
     logger.debug("Testing functional model")
-    test_model(functional_model, True)
+    tf_test_model(functional_model, True)
 
     # testing sequential model (doesn't work with onnx)
     logger.debug("Testing sequential model")
-    test_model(build_model, False)
+    tf_test_model(build_model, False)
 
     # testing multi input model
     logger.debug("Testing multi input model")
-    test_model(multi_input_model, True, DataType.List)
+    tf_test_model(multi_input_model, True, DataType.List)
 
     # testing multi input dict model
     logger.debug("Testing multi input dict model")
-    test_model(multi_input_dict_model, False, DataType.Dict)
+    tf_test_model(multi_input_dict_model, False, DataType.Dict)

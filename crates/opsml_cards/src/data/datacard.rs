@@ -388,6 +388,7 @@ impl Serialize for DataCard {
         state.serialize_field("created_at", &self.created_at)?;
         state.serialize_field("app_env", &self.app_env)?;
         state.serialize_field("is_card", &self.is_card)?;
+        state.serialize_field("opsml_version", &self.opsml_version)?;
         state.end()
     }
 }
