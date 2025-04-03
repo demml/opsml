@@ -12,10 +12,13 @@ env:
 
 jobs:
   format-and-lint:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
-
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: "3.x"
       - name: Set up Rust
         run: rustup override set stable && rustup update
 
