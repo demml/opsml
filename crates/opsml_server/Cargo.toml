@@ -11,6 +11,7 @@ anyhow = { workspace = true }
 axum = { workspace = true }
 axum-extra = { workspace = true }
 opsml-auth = { workspace = true }
+opsml-events = { workspace = true }
 opsml-client = { workspace = true }
 opsml-colors = { workspace = true }
 opsml-crypt = { workspace = true }
@@ -39,6 +40,7 @@ sqlx = { workspace = true }
 tempfile = { workspace = true }
 tokio = { workspace = true }
 tokio-util = { workspace = true }
+tokio-stream = { workspace = true }
 tower-http = { workspace = true }
 tracing = { workspace = true }
 uuid = { workspace = true }
