@@ -199,6 +199,8 @@ pub enum Operation {
     Info,
     Encrypt,
     Decrypt,
+    Load,
+    Check,
 }
 
 impl Display for Operation {
@@ -212,6 +214,7 @@ impl Display for Operation {
             Operation::Encrypt => write!(f, "Encrypt"),
             Operation::Decrypt => write!(f, "Decrypt"),
             Operation::Create => write!(f, "Create"),
+            Operation::Load => write!(f, "Load"),
         }
     }
 }
@@ -219,10 +222,7 @@ impl Display for Operation {
 #[derive(Debug, Clone)]
 pub enum ResourceType {
     File,
-    Model,
-    Experiment,
-    Data,
-    Prompt,
+    Database,
     Card,
 }
 
@@ -230,10 +230,7 @@ impl Display for ResourceType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             ResourceType::File => write!(f, "File"),
-            ResourceType::Model => write!(f, "Model"),
-            ResourceType::Experiment => write!(f, "Experiment"),
-            ResourceType::Data => write!(f, "Data"),
-            ResourceType::Prompt => write!(f, "Prompt"),
+            ResourceType::Database => write!(f, "Database"),
             ResourceType::Card => write!(f, "Card"),
         }
     }
