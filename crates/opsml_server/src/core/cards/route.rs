@@ -45,7 +45,7 @@ pub async fn check_card_uid(
         addr,
         agent,
         headers,
-        Operation::List,
+        Operation::Check,
         ResourceType::Database,
         params.uid.clone(),
         serde_json::to_string(&params).unwrap_or_default(),
