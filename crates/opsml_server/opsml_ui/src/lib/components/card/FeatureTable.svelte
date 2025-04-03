@@ -46,7 +46,7 @@
   open={openState}
   onOpenChange={(e) => (openState = e.open)}
   triggerBase="btn bg-primary-500 text-black shadow shadow-hover border-black border-2"
-  contentBase="card p-2 bg-surface-50 border-2 border-black shadow max-w-screen-xl w-[700px] h-[700px]"
+  contentBase="card p-2 bg-surface-50 border-2 border-black shadow max-w-screen-xl w-[700px] max-h-[700px]"
   backdropClasses="backdrop-blur-sm"
 >
   {#snippet trigger()}Show Features{/snippet}
