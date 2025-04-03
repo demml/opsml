@@ -1132,7 +1132,7 @@ mod tests {
             FROM opsml_artifact_key;
 
             DELETE
-            FROM opsml_operation;
+            FROM opsml_audit_event;
             "#,
         )
         .fetch_all(pool)

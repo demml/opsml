@@ -145,13 +145,6 @@ CREATE TABLE IF NOT EXISTS opsml_artifact_key (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE IF NOT EXISTS opsml_operation (
-    username VARCHAR(255) NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    access_type VARCHAR(16) NOT NULL,
-    access_location VARCHAR(255) NOT NULL,
-    INDEX idx_created_at (created_at)
-);
 
 CREATE TABLE IF NOT EXISTS opsml_audit_event (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -168,6 +161,7 @@ CREATE TABLE IF NOT EXISTS opsml_audit_event (
     metadata JSON,               
     registry_type TEXT,  
     route TEXT,
+    INDEX idx_created_at (created_at)
 );
 
 -- DataSchema

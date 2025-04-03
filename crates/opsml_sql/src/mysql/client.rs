@@ -1130,7 +1130,7 @@ impl SqlClient for MySqlClient {
 mod tests {
 
     use super::*;
-    use opsml_types::{contracts::Operation, RegistryType, SqlType};
+    use opsml_types::{RegistryType, SqlType};
     use opsml_utils::utils::get_utc_datetime;
     use std::env;
 
@@ -1168,7 +1168,7 @@ mod tests {
             FROM opsml_artifact_key;
 
             DELETE
-            FROM opsml_operation;
+            FROM opsml_audit_event;
             "#,
         )
         .fetch_all(pool)
