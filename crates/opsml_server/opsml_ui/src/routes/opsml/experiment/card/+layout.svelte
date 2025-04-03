@@ -78,6 +78,6 @@
     </div>
   </div>
   <div class="flex-1 overflow-auto">
-    {@render children()}
+      {@render children()}
   </div>
 </div>
