@@ -1,11 +1,8 @@
-use axum::extract::path;
 use axum::http::HeaderMap;
 use headers::UserAgent;
 use opsml_client::Routes;
-use opsml_sql::enums::client::SqlClientEnum;
-
-use anyhow::Result;
 use opsml_error::error::ServerError;
+use opsml_sql::enums::client::SqlClientEnum;
 use opsml_types::contracts::{AuditStatus, Operation, ResourceType};
 use opsml_types::RegistryType;
 
@@ -15,10 +12,10 @@ use tracing::error;
 use tracing::{debug, instrument};
 
 #[derive(Debug, Clone)]
-pub struct AuditArgs {
-    pub addr: SocketAddr,
-    pub agent: UserAgent,
-    pub headers: HeaderMap,
+pub struct AuditEvent {
+    pub username: String,
+    pub client_ip: String,
+    pub user_agent: String,
     pub operation_type: Operation,
     pub resource_type: ResourceType,
     pub resource_id: String,
@@ -29,7 +26,7 @@ pub struct AuditArgs {
     pub route: Routes,
 }
 
-impl AuditArgs {
+impl AuditEvent {
     pub fn new(
         addr: SocketAddr,
         agent: UserAgent,
@@ -42,9 +39,18 @@ impl AuditArgs {
         route: Routes,
     ) -> Self {
         Self {
-            addr,
-            agent,
-            headers,
+            username: headers
+                .get("username")
+                .unwrap_or(&"guest".parse().unwrap())
+                .to_str()
+                .unwrap_or("guest")
+                .to_string(),
+            client_ip: headers
+                .get("X-Forwarded-For")
+                .and_then(|hv| hv.to_str().ok())
+                .map(|ip| ip.split(',').next().unwrap_or("unknown").to_string())
+                .unwrap_or_else(|| addr.ip().to_string()),
+            user_agent: agent.to_string(),
             operation_type,
             resource_type,
             resource_id,
@@ -64,40 +70,11 @@ impl AuditArgs {
 }
 
 #[instrument(skip_all)]
-pub async fn log_to_audit(
-    args: AuditArgs,
+pub async fn _log_audit_event(
+    record: AuditRecord,
     sql_client: Arc<SqlClientEnum>,
 ) -> Result<(), ServerError> {
-    let default_user = "guest".parse().unwrap();
-    let username = args
-        .headers
-        .get("username")
-        .unwrap_or(&default_user)
-        .to_str()
-        .map_err(|e| ServerError::Error(e.to_string()))?;
-
-    // attempt to get forward first
-    let client_ip = args
-        .headers
-        .get("X-Forwarded-For")
-        .and_then(|hv| hv.to_str().ok())
-        .map(|ip| ip.split(',').next().unwrap_or("unknown").to_string());
-
-    // if not found, use the remote address
-    let client_ip = client_ip.unwrap_or_else(|| args.addr.ip().to_string());
-    let user_agent_string = args.agent.as_str();
-
-    debug!("Client IP: {}", client_ip);
-    debug!("Username: {}", username);
-    debug!("User Agent: {}", user_agent_string);
-    debug!("Operation Type: {}", args.operation_type);
-    debug!("Resource Type: {}", args.resource_type);
-    debug!("Resource ID: {}", args.resource_id);
-    debug!("Status: {:?}", args.status);
-    debug!("Error Message: {:?}", args.error_message);
-    debug!("Metadata: {}", args.metadata);
-    debug!("Registry Type: {:?}", args.registry_type);
-    // Here you would typically log the audit event to your database or logging system
+    debug!("Logging audit event: {:?}", record);
 
     //sql_client
     //.insert_operation(username, access_type, access_location)
@@ -107,9 +84,9 @@ pub async fn log_to_audit(
 }
 
 #[instrument(skip_all)]
-pub fn spawn_audit_task(args: AuditArgs, sql_client: Arc<SqlClientEnum>) {
+pub fn log_audit_event(record: AuditRecord, sql_client: Arc<SqlClientEnum>) {
     tokio::spawn(async move {
-        if let Err(e) = log_to_audit(args, sql_client).await {
+        if let Err(e) = _log_audit_event(record, sql_client).await {
             error!("Failed to log audit event: {}", e);
         }
     });

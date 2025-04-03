@@ -50,6 +50,7 @@ pub async fn check_card_uid(
         params.uid.clone(),
         serde_json::to_string(&params).unwrap_or_default(),
         params.registry_type.clone(),
+        Routes::Card,
     );
 
     let table = CardTable::from_registry_type(&params.registry_type);
@@ -89,6 +90,7 @@ pub async fn get_card_repositories(
         Routes::CardRepositories.to_string(),
         serde_json::to_string(&params).unwrap_or_default(),
         params.registry_type.clone(),
+        Routes::CardRepositories,
     );
 
     let repos = state
@@ -127,6 +129,7 @@ pub async fn get_registry_stats(
         Routes::CardRegistryStats.to_string(),
         serde_json::to_string(&params).unwrap_or_default(),
         params.registry_type.clone(),
+        Routes::CardRegistryStats,
     );
 
     let table = CardTable::from_registry_type(&params.registry_type);
@@ -169,6 +172,7 @@ pub async fn get_page(
         Routes::CardRegistryPage.to_string(),
         serde_json::to_string(&params).unwrap_or_default(),
         params.registry_type.clone(),
+        Routes::CardRegistryPage,
     );
 
     let table = CardTable::from_registry_type(&params.registry_type);
@@ -213,6 +217,7 @@ pub async fn get_version_page(
         Routes::CardRegistryVersionPage.to_string(),
         serde_json::to_string(&params).unwrap_or_default(),
         params.registry_type.clone(),
+        Routes::CardRegistryVersionPage,
     );
 
     let table = CardTable::from_registry_type(&params.registry_type);
@@ -269,6 +274,7 @@ pub async fn list_cards(
         uid,
         serde_json::to_string(&params).unwrap_or_default(),
         params.registry_type.clone(),
+        Routes::CardList,
     );
 
     let cards = state
@@ -338,6 +344,7 @@ pub async fn create_card(
         ),
         serde_json::to_string(&card_request).unwrap_or_default(),
         card_request.registry_type.clone(),
+        Routes::CardCreate,
     );
     debug!(
         "Creating card: {}/{}/{} - registry: {:?}",
@@ -443,6 +450,7 @@ pub async fn update_card(
         card_request.card.uid().to_string(),
         serde_json::to_string(&card_request).unwrap_or_default(),
         card_request.registry_type.clone(),
+        Routes::CardUpdate,
     );
 
     // Note: We can use unwrap() here because a card being updated has already been created and thus has defaults.
@@ -654,6 +662,7 @@ pub async fn delete_card(
         params.uid.clone(),
         serde_json::to_string(&params).unwrap_or_default(),
         params.registry_type.clone(),
+        Routes::CardDelete,
     );
 
     if !perms.has_delete_permission(&params.repository) {
@@ -728,6 +737,7 @@ pub async fn load_card(
         CommonKwargs::Undefined.to_string(),
         serde_json::to_string(&params).unwrap_or_default(),
         params.registry_type.clone(),
+        Routes::CardLoad,
     );
 
     let table = CardTable::from_registry_type(&params.registry_type);
@@ -769,6 +779,7 @@ pub async fn get_card(
         Routes::CardMetadata.to_string(),
         serde_json::to_string(&params).unwrap_or_default(),
         params.registry_type.clone(),
+        Routes::CardMetadata,
     );
 
     if !perms.has_read_permission() {
@@ -898,6 +909,7 @@ pub async fn get_readme(
         Routes::CardReadme.to_string(),
         serde_json::to_string(&params).unwrap_or_default(),
         params.registry_type.clone(),
+        Routes::CardReadme,
     );
 
     if !perms.has_read_permission() {
@@ -996,6 +1008,7 @@ pub async fn create_readme(
         Routes::CardReadme.to_string(),
         serde_json::to_string(&req).unwrap_or_default(),
         req.registry_type.clone(),
+        Routes::CardReadme,
     );
 
     if !perms.has_write_permission(&req.repository) {

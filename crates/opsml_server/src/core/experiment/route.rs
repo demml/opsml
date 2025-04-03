@@ -1,19 +1,26 @@
+use crate::core::audit::{spawn_audit_task, AuditArgs};
+use crate::core::experiment::types::GroupedMetric;
 /// Route for checking if a card UID exists
-use crate::core::{error::internal_server_error, state::AppState};
+use crate::core::{
+    error::{internal_server_error, internal_server_error_with_audit},
+    state::AppState,
+};
 use anyhow::{Context, Result};
 use axum::{
-    extract::{Query, State},
-    http::StatusCode,
+    extract::{ConnectInfo, Query, State},
+    http::{HeaderMap, StatusCode},
     routing::{get, post, put},
     Json, Router,
 };
-
-use crate::core::experiment::types::GroupedMetric;
+use axum_extra::TypedHeader;
+use headers::UserAgent;
+use opsml_client::Routes;
 use opsml_sql::base::SqlClient;
 use opsml_sql::schemas::schema::{HardwareMetricsRecord, MetricRecord, ParameterRecord};
-use opsml_types::{cards::*, contracts::*};
+use opsml_types::{cards::*, contracts::*, RegistryType};
 use opsml_utils::utils::get_utc_datetime;
 use sqlx::types::Json as SqlxJson;
+use std::net::SocketAddr;
 use std::sync::Arc;
 use std::{
     collections::HashMap,
@@ -23,8 +30,22 @@ use tracing::error;
 
 pub async fn insert_metrics(
     State(state): State<Arc<AppState>>,
+    ConnectInfo(addr): ConnectInfo<SocketAddr>,
+    TypedHeader(agent): TypedHeader<UserAgent>,
+    headers: HeaderMap,
     Json(req): Json<MetricRequest>,
 ) -> Result<Json<MetricResponse>, (StatusCode, Json<serde_json::Value>)> {
+    let audit_args = AuditArgs::new(
+        addr,
+        agent,
+        headers,
+        Operation::Write,
+        ResourceType::Database,
+        req.experiment_uid.clone(),
+        serde_json::to_string(&req).unwrap_or_default(),
+        RegistryType::Experiment,
+        Routes::ExperimentMetrics,
+    );
     let records = req
         .metrics
         .iter()
@@ -45,24 +66,49 @@ pub async fn insert_metrics(
         .await
         .map_err(|e| {
             error!("Failed to insert metric: {}", e);
-            internal_server_error(e, "Failed to insert metric")
+            internal_server_error_with_audit(
+                e,
+                "Failed to insert metric",
+                audit_args.clone(),
+                state.sql_client.clone(),
+            )
         })?;
 
+    // Spawn audit task
+    spawn_audit_task(audit_args, state.sql_client.clone());
     Ok(Json(MetricResponse { success: true }))
 }
 
 pub async fn get_metrics(
     State(state): State<Arc<AppState>>,
+    ConnectInfo(addr): ConnectInfo<SocketAddr>,
+    TypedHeader(agent): TypedHeader<UserAgent>,
+    headers: HeaderMap,
     Json(req): Json<GetMetricRequest>,
 ) -> Result<Json<Vec<Metric>>, (StatusCode, Json<serde_json::Value>)> {
-    // something is going on with how serde_qs is parsing the query when using names as a list
+    let audit_args = AuditArgs::new(
+        addr,
+        agent,
+        headers,
+        Operation::Read,
+        ResourceType::Database,
+        req.experiment_uid.clone(),
+        serde_json::to_string(&req).unwrap_or_default(),
+        RegistryType::Experiment,
+        Routes::ExperimentMetrics,
+    );
     let metrics = state
         .sql_client
         .get_experiment_metric(&req.experiment_uid, &req.names)
         .await
         .map_err(|e| {
             error!("Failed to get metrics: {}", e);
-            internal_server_error(e, "Failed to get metrics")
+            internal_server_error_with_audit(
+                e,
+                "Failed to get metrics",
+                audit_args.clone(),
+                state.sql_client.clone(),
+            )
         })?;
 
     // map all entries in the metrics to the Metric struct
@@ -77,14 +123,30 @@ pub async fn get_metrics(
         })
         .collect::<Vec<_>>();
 
+    spawn_audit_task(audit_args, state.sql_client.clone());
     Ok(Json(metrics))
 }
 
 pub async fn get_grouped_metrics(
     State(state): State<Arc<AppState>>,
+    ConnectInfo(addr): ConnectInfo<SocketAddr>,
+    TypedHeader(agent): TypedHeader<UserAgent>,
+    headers: HeaderMap,
     Json(req): Json<UiMetricRequest>,
 ) -> Result<Json<HashMap<String, Vec<GroupedMetric>>>, (StatusCode, Json<serde_json::Value>)> {
     let mut metric_data: HashMap<String, Vec<GroupedMetric>> = HashMap::new();
+
+    let audit_args = AuditArgs::new(
+        addr,
+        agent,
+        headers,
+        Operation::Read,
+        ResourceType::Database,
+        Routes::ExperimentGroupedMetrics.to_string(),
+        serde_json::to_string(&req).unwrap_or_default(),
+        RegistryType::Experiment,
+        Routes::ExperimentGroupedMetrics,
+    );
 
     for experiment in req.experiments {
         let metrics = state
@@ -93,7 +155,12 @@ pub async fn get_grouped_metrics(
             .await
             .map_err(|e| {
                 error!("Failed to get metrics: {}", e);
-                internal_server_error(e, "Failed to get metrics")
+                internal_server_error_with_audit(
+                    e,
+                    "Failed to get metrics",
+                    audit_args.clone(),
+                    state.sql_client.clone(),
+                )
             })?;
 
         let mut grouped_by_name: HashMap<String, Vec<MetricRecord>> = HashMap::new();
@@ -133,29 +200,65 @@ pub async fn get_grouped_metrics(
                 .push(grouped_metric);
         }
     }
+
+    spawn_audit_task(audit_args, state.sql_client.clone());
     Ok(Json(metric_data))
 }
 
 pub async fn get_metric_names(
     State(state): State<Arc<AppState>>,
+    ConnectInfo(addr): ConnectInfo<SocketAddr>,
+    TypedHeader(agent): TypedHeader<UserAgent>,
+    headers: HeaderMap,
     Query(req): Query<GetMetricNamesRequest>,
 ) -> Result<Json<Vec<String>>, (StatusCode, Json<serde_json::Value>)> {
+    let audit_args = AuditArgs::new(
+        addr,
+        agent,
+        headers,
+        Operation::Read,
+        ResourceType::Database,
+        req.experiment_uid.clone(),
+        serde_json::to_string(&req).unwrap_or_default(),
+        RegistryType::Experiment,
+        Routes::ExperimentMetricNames,
+    );
     let names = state
         .sql_client
         .get_experiment_metric_names(&req.experiment_uid)
         .await
         .map_err(|e| {
             error!("Failed to get metrics: {}", e);
-            internal_server_error(e, "Failed to get metrics")
+            internal_server_error_with_audit(
+                e,
+                "Failed to get metrics",
+                audit_args.clone(),
+                state.sql_client.clone(),
+            )
         })?;
 
+    spawn_audit_task(audit_args, state.sql_client.clone());
     Ok(Json(names))
 }
 
 pub async fn insert_parameters(
     State(state): State<Arc<AppState>>,
+    ConnectInfo(addr): ConnectInfo<SocketAddr>,
+    TypedHeader(agent): TypedHeader<UserAgent>,
+    headers: HeaderMap,
     Json(req): Json<ParameterRequest>,
 ) -> Result<Json<ParameterResponse>, (StatusCode, Json<serde_json::Value>)> {
+    let audit_args = AuditArgs::new(
+        addr,
+        agent,
+        headers,
+        Operation::Write,
+        ResourceType::Database,
+        req.experiment_uid.clone(),
+        serde_json::to_string(&req).unwrap_or_default(),
+        RegistryType::Experiment,
+        Routes::ExperimentParameters,
+    );
     let records = req
         .parameters
         .iter()
@@ -168,23 +271,49 @@ pub async fn insert_parameters(
         .await
         .map_err(|e| {
             error!("Failed to insert parameter: {}", e);
-            internal_server_error(e, "Failed to insert parameter")
+            internal_server_error_with_audit(
+                e,
+                "Failed to insert parameter",
+                audit_args.clone(),
+                state.sql_client.clone(),
+            )
         })?;
 
+    // Spawn audit task
+    spawn_audit_task(audit_args, state.sql_client.clone());
     Ok(Json(ParameterResponse { success: true }))
 }
 
 pub async fn get_parameter(
     State(state): State<Arc<AppState>>,
+    ConnectInfo(addr): ConnectInfo<SocketAddr>,
+    TypedHeader(agent): TypedHeader<UserAgent>,
+    headers: HeaderMap,
     Json(req): Json<GetParameterRequest>,
 ) -> Result<Json<Vec<Parameter>>, (StatusCode, Json<serde_json::Value>)> {
+    let audit_args = AuditArgs::new(
+        addr,
+        agent,
+        headers,
+        Operation::Read,
+        ResourceType::Database,
+        req.experiment_uid.clone(),
+        serde_json::to_string(&req).unwrap_or_default(),
+        RegistryType::Experiment,
+        Routes::ExperimentParameters,
+    );
     let params = state
         .sql_client
         .get_experiment_parameter(&req.experiment_uid, &req.names)
         .await
         .map_err(|e| {
             error!("Failed to get metrics: {}", e);
-            internal_server_error(e, "Failed to get metrics")
+            internal_server_error_with_audit(
+                e,
+                "Failed to get metrics",
+                audit_args.clone(),
+                state.sql_client.clone(),
+            )
         })?;
 
     // map all entries in the metrics to the Metric struct
@@ -196,11 +325,15 @@ pub async fn get_parameter(
         })
         .collect::<Vec<_>>();
 
+    spawn_audit_task(audit_args, state.sql_client.clone());
     Ok(Json(params))
 }
 
 pub async fn insert_hardware_metrics(
     State(state): State<Arc<AppState>>,
+    ConnectInfo(addr): ConnectInfo<SocketAddr>,
+    TypedHeader(agent): TypedHeader<UserAgent>,
+    headers: HeaderMap,
     Json(req): Json<HardwareMetricRequest>,
 ) -> Result<Json<HardwareMetricResponse>, (StatusCode, Json<serde_json::Value>)> {
     let created_at = get_utc_datetime();

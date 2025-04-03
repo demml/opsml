@@ -3862,6 +3862,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "opsml-events"
+version = "0.1.0"
+dependencies = [
+ "axum",
+ "chrono",
+ "futures",
+ "headers",
+ "opsml-client",
+ "opsml-error",
+ "opsml-sql",
+ "opsml-types",
+ "serde",
+ "tokio",
+ "tokio-stream",
+ "tracing",
+]
+
+[[package]]
 name = "opsml-experiment"
 version = "0.1.0"
 dependencies = [
@@ -6477,6 +6495,7 @@ dependencies = [
  "futures-core",
  "pin-project-lite",
  "tokio",
+ "tokio-util",
 ]
 
 [[package]]
