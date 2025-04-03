@@ -215,6 +215,7 @@ impl Display for Operation {
             Operation::Decrypt => write!(f, "Decrypt"),
             Operation::Create => write!(f, "Create"),
             Operation::Load => write!(f, "Load"),
+            Operation::Check => write!(f, "Check"),
         }
     }
 }
