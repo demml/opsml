@@ -1,9 +1,8 @@
-use crate::core::audit::{spawn_audit_task, AuditArgs};
 use crate::core::cards::schema::{
     CreateReadeMe, QueryPageResponse, ReadeMe, RegistryStatsResponse, VersionPageResponse,
 };
 use crate::core::cards::utils::{cleanup_artifacts, get_next_version, insert_card_into_db};
-use crate::core::error::internal_server_error_with_audit;
+use crate::core::error::internal_server_error;
 use crate::core::files::utils::{
     create_and_store_encrypted_file, create_artifact_key, download_artifact, get_artifact_key,
 };
@@ -21,6 +20,7 @@ use headers::UserAgent;
 use opsml_auth::permission::UserPermissions;
 use opsml_client::Routes;
 use opsml_crypt::decrypt_directory;
+use opsml_events::{AuditEvent, Event};
 use opsml_sql::base::SqlClient;
 use opsml_sql::schemas::*;
 use opsml_types::{cards::*, contracts::*};
@@ -41,7 +41,7 @@ pub async fn check_card_uid(
     headers: HeaderMap,
     Query(params): Query<UidRequest>,
 ) -> Result<Json<UidResponse>, (StatusCode, Json<serde_json::Value>)> {
-    let audit_args = AuditArgs::new(
+    let audit_args = AuditEvent::new(
         addr,
         agent,
         headers,
@@ -60,14 +60,10 @@ pub async fn check_card_uid(
         .await
         .map_err(|e| {
             error!("Failed to check if UID exists: {}", e);
-            internal_server_error_with_audit(
-                e,
-                "Failed to check if UID exists",
-                audit_args.clone(),
-                state.sql_client.clone(),
-            )
+            internal_server_error(e, "Failed to check if UID exists")
         })?;
 
+    state.event_bus.publish(Event::Audit(audit_args));
     Ok(Json(UidResponse { exists }))
 }
 
@@ -81,7 +77,7 @@ pub async fn get_card_repositories(
 ) -> Result<Json<RepositoryResponse>, (StatusCode, Json<serde_json::Value>)> {
     let table = CardTable::from_registry_type(&params.registry_type);
 
-    let audit_args = AuditArgs::new(
+    let audit_args = AuditEvent::new(
         addr,
         agent,
         headers,
@@ -99,14 +95,10 @@ pub async fn get_card_repositories(
         .await
         .map_err(|e| {
             error!("Failed to get unique repository names: {}", e);
-            internal_server_error_with_audit(
-                e,
-                "Failed to get unique repository names",
-                audit_args.clone(),
-                state.sql_client.clone(),
-            )
+            internal_server_error(e, "Failed to get unique repository names")
         })?;
 
+    state.event_bus.publish(Event::Audit(audit_args));
     Ok(Json(RepositoryResponse {
         repositories: repos,
     }))
@@ -120,7 +112,7 @@ pub async fn get_registry_stats(
     headers: HeaderMap,
     Query(params): Query<RegistryStatsRequest>,
 ) -> Result<Json<RegistryStatsResponse>, (StatusCode, Json<serde_json::Value>)> {
-    let audit_args = AuditArgs::new(
+    let audit_args = AuditEvent::new(
         addr,
         agent,
         headers,
@@ -144,14 +136,10 @@ pub async fn get_registry_stats(
         .await
         .map_err(|e| {
             error!("Failed to get unique repository names: {}", e);
-            internal_server_error_with_audit(
-                e,
-                "Failed to get unique repository names",
-                audit_args.clone(),
-                state.sql_client.clone(),
-            )
+            internal_server_error(e, "Failed to get unique repository names")
         })?;
 
+    state.event_bus.publish(Event::Audit(audit_args));
     Ok(Json(RegistryStatsResponse { stats }))
 }
 
@@ -163,7 +151,7 @@ pub async fn get_page(
     headers: HeaderMap,
     Query(params): Query<QueryPageRequest>,
 ) -> Result<Json<QueryPageResponse>, (StatusCode, Json<serde_json::Value>)> {
-    let audit_args = AuditArgs::new(
+    let audit_args = AuditEvent::new(
         addr,
         agent,
         headers,
@@ -190,14 +178,10 @@ pub async fn get_page(
         .await
         .map_err(|e| {
             error!("Failed to get unique repository names: {}", e);
-            internal_server_error_with_audit(
-                e,
-                "Failed to get unique repository names",
-                audit_args.clone(),
-                state.sql_client.clone(),
-            )
+            internal_server_error(e, "Failed to get unique repository names")
         })?;
 
+    state.event_bus.publish(Event::Audit(audit_args));
     Ok(Json(QueryPageResponse { summaries }))
 }
 
@@ -208,7 +192,7 @@ pub async fn get_version_page(
     headers: HeaderMap,
     Query(params): Query<VersionPageRequest>,
 ) -> Result<Json<VersionPageResponse>, (StatusCode, Json<serde_json::Value>)> {
-    let audit_args = AuditArgs::new(
+    let audit_args = AuditEvent::new(
         addr,
         agent,
         headers,
@@ -233,14 +217,10 @@ pub async fn get_version_page(
         .await
         .map_err(|e| {
             error!("Failed to get unique repository names: {}", e);
-            internal_server_error_with_audit(
-                e,
-                "Failed to get unique repository names",
-                audit_args.clone(),
-                state.sql_client.clone(),
-            )
+            internal_server_error(e, "Failed to get unique repository names")
         })?;
 
+    state.event_bus.publish(Event::Audit(audit_args));
     Ok(Json(VersionPageResponse { summaries }))
 }
 
@@ -265,7 +245,7 @@ pub async fn list_cards(
         .unwrap_or(&Routes::CardList.to_string())
         .to_string();
 
-    let audit_args = AuditArgs::new(
+    let audit_args = AuditEvent::new(
         addr,
         agent,
         headers,
@@ -283,15 +263,10 @@ pub async fn list_cards(
         .await
         .map_err(|e| {
             error!("Failed to get unique repository names: {}", e);
-            internal_server_error_with_audit(
-                e,
-                "Failed to get unique repository names",
-                audit_args.clone(),
-                state.sql_client.clone(),
-            )
+            internal_server_error(e, "Failed to get unique repository names")
         })?;
 
-    spawn_audit_task(audit_args, state.sql_client.clone());
+    state.event_bus.publish(Event::Audit(audit_args));
     // convert to Cards struct
     match cards {
         CardResults::Data(data) => {
@@ -330,7 +305,7 @@ pub async fn create_card(
 ) -> Result<impl IntoResponse, (StatusCode, Json<serde_json::Value>)> {
     let table = CardTable::from_registry_type(&card_request.registry_type);
 
-    let mut audit_args = AuditArgs::new(
+    let mut audit_args = AuditEvent::new(
         addr,
         agent,
         headers,
@@ -363,12 +338,7 @@ pub async fn create_card(
     .await
     .map_err(|e| {
         error!("Failed to get next version: {}", e);
-        internal_server_error_with_audit(
-            e,
-            "Failed to get next version",
-            audit_args.clone(),
-            state.sql_client.clone(),
-        )
+        internal_server_error(e, "Failed to get next version")
     })?;
     // (2) ------- Insert the card into the database
     let (uid, registry_type, card_uri, app_env, created_at) = insert_card_into_db(
@@ -380,12 +350,7 @@ pub async fn create_card(
     .await
     .map_err(|e| {
         error!("Failed to insert card into db: {}", e);
-        internal_server_error_with_audit(
-            e,
-            "Failed to insert card into db",
-            audit_args.clone(),
-            state.sql_client.clone(),
-        )
+        internal_server_error(e, "Failed to insert card into db")
     })?;
 
     // update audit args now that we have the uid
@@ -402,16 +367,11 @@ pub async fn create_card(
     .await
     .map_err(|e| {
         error!("Failed to create artifact key: {}", e);
-        internal_server_error_with_audit(
-            e,
-            "Failed to create artifact key",
-            audit_args.clone(),
-            state.sql_client.clone(),
-        )
+        internal_server_error(e, "Failed to create artifact key")
     })?;
 
     debug!("Card created successfully");
-    spawn_audit_task(audit_args, state.sql_client.clone());
+    state.event_bus.publish(Event::Audit(audit_args));
     Ok(Json(CreateCardResponse {
         registered: true,
         repository: card_request.card.repository().to_string(),
@@ -441,7 +401,7 @@ pub async fn update_card(
     );
     let table = CardTable::from_registry_type(&card_request.registry_type);
 
-    let audit_args = AuditArgs::new(
+    let audit_args = AuditEvent::new(
         addr,
         agent,
         headers,
@@ -459,12 +419,7 @@ pub async fn update_card(
         Card::Data(client_card) => {
             let version = Version::parse(&client_card.version).map_err(|e| {
                 error!("Failed to parse version: {}", e);
-                internal_server_error_with_audit(
-                    e,
-                    "Failed to parse version",
-                    audit_args.clone(),
-                    state.sql_client.clone(),
-                )
+                internal_server_error(e, "Failed to parse version")
             })?;
 
             let server_card = DataCardRecord {
@@ -492,12 +447,7 @@ pub async fn update_card(
         Card::Model(client_card) => {
             let version = Version::parse(&client_card.version).map_err(|e| {
                 error!("Failed to parse version: {}", e);
-                internal_server_error_with_audit(
-                    e,
-                    "Failed to parse version",
-                    audit_args.clone(),
-                    state.sql_client.clone(),
-                )
+                internal_server_error(e, "Failed to parse version")
             })?;
 
             let server_card = ModelCardRecord {
@@ -528,12 +478,7 @@ pub async fn update_card(
         Card::Experiment(client_card) => {
             let version = Version::parse(&client_card.version).map_err(|e| {
                 error!("Failed to parse version: {}", e);
-                internal_server_error_with_audit(
-                    e,
-                    "Failed to parse version",
-                    audit_args.clone(),
-                    state.sql_client.clone(),
-                )
+                internal_server_error(e, "Failed to parse version")
             })?;
 
             let server_card = ExperimentCardRecord {
@@ -561,12 +506,7 @@ pub async fn update_card(
         Card::Audit(client_card) => {
             let version = Version::parse(&client_card.version).map_err(|e| {
                 error!("Failed to parse version: {}", e);
-                internal_server_error_with_audit(
-                    e,
-                    "Failed to parse version",
-                    audit_args.clone(),
-                    state.sql_client.clone(),
-                )
+                internal_server_error(e, "Failed to parse version")
             })?;
 
             let server_card = AuditCardRecord {
@@ -594,12 +534,7 @@ pub async fn update_card(
         Card::Prompt(client_card) => {
             let version = Version::parse(&client_card.version).map_err(|e| {
                 error!("Failed to parse version: {}", e);
-                internal_server_error_with_audit(
-                    e,
-                    "Failed to parse version",
-                    audit_args.clone(),
-                    state.sql_client.clone(),
-                )
+                internal_server_error(e, "Failed to parse version")
             })?;
 
             let server_card = PromptCardRecord {
@@ -629,16 +564,11 @@ pub async fn update_card(
         .await
         .map_err(|e| {
             error!("Failed to update card: {}", e);
-            internal_server_error_with_audit(
-                e,
-                "Failed to update card",
-                audit_args.clone(),
-                state.sql_client.clone(),
-            )
+            internal_server_error(e, "Failed to update card")
         })?;
 
     debug!("Card updated successfully");
-    spawn_audit_task(audit_args, state.sql_client.clone());
+    state.event_bus.publish(Event::Audit(audit_args));
     Ok(Json(UpdateCardResponse { updated: true }))
 }
 
@@ -653,7 +583,7 @@ pub async fn delete_card(
 ) -> Result<Json<UidResponse>, (StatusCode, Json<serde_json::Value>)> {
     debug!("Deleting card: {}", &params.uid);
 
-    let audit_args = AuditArgs::new(
+    let audit_args = AuditEvent::new(
         addr,
         agent,
         headers,
@@ -667,10 +597,6 @@ pub async fn delete_card(
 
     if !perms.has_delete_permission(&params.repository) {
         error!("Permission denied");
-        spawn_audit_task(
-            audit_args.clone().with_error("Permission denied"),
-            state.sql_client.clone(),
-        );
         return Err((
             StatusCode::FORBIDDEN,
             Json(json!({ "error": "Permission denied" })),
@@ -690,12 +616,7 @@ pub async fn delete_card(
     .await
     .map_err(|e| {
         error!("Failed to cleanup artifacts: {}", e);
-        internal_server_error_with_audit(
-            e,
-            "Failed to cleanup artifacts",
-            audit_args.clone(),
-            state.sql_client.clone(),
-        )
+        internal_server_error(e, "Failed to cleanup artifacts")
     })?;
 
     // delete card
@@ -705,17 +626,12 @@ pub async fn delete_card(
         .await
         .map_err(|e| {
             error!("Failed to delete card: {}", e);
-            internal_server_error_with_audit(
-                e,
-                "Failed to delete card",
-                audit_args.clone(),
-                state.sql_client.clone(),
-            )
+            internal_server_error(e, "Failed to delete card")
         })?;
 
     // need to delete the artifact key and the artifact itself
 
-    spawn_audit_task(audit_args, state.sql_client.clone());
+    state.event_bus.publish(Event::Audit(audit_args));
     Ok(Json(UidResponse { exists: false }))
 }
 
@@ -728,7 +644,7 @@ pub async fn load_card(
     Query(params): Query<CardQueryArgs>,
 ) -> Result<Json<ArtifactKey>, (StatusCode, Json<serde_json::Value>)> {
     // get uid if exists
-    let mut audit_args = AuditArgs::new(
+    let mut audit_args = AuditEvent::new(
         addr,
         agent,
         headers,
@@ -747,17 +663,12 @@ pub async fn load_card(
         .await
         .map_err(|e| {
             error!("Failed to get card key for loading: {}", e);
-            internal_server_error_with_audit(
-                e,
-                "Failed to get card key for loading",
-                audit_args.clone(),
-                state.sql_client.clone(),
-            )
+            internal_server_error(e, "Failed to get card key for loading")
         })?;
 
     // update audit args now that we have the uid
     audit_args.resource_id = key.uid.clone();
-    spawn_audit_task(audit_args, state.sql_client.clone());
+    state.event_bus.publish(Event::Audit(audit_args));
     Ok(Json(key))
 }
 
@@ -770,7 +681,7 @@ pub async fn get_card(
     headers: HeaderMap,
     Query(params): Query<CardQueryArgs>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<serde_json::Value>)> {
-    let mut audit_args = AuditArgs::new(
+    let mut audit_args = AuditEvent::new(
         addr,
         agent,
         headers,
@@ -784,10 +695,6 @@ pub async fn get_card(
 
     if !perms.has_read_permission() {
         error!("Permission denied");
-        spawn_audit_task(
-            audit_args.clone().with_error("Permission denied"),
-            state.sql_client.clone(),
-        );
         return Err((
             StatusCode::FORBIDDEN,
             Json(json!({ "error": "Permission denied" })),
@@ -802,12 +709,7 @@ pub async fn get_card(
         .await
         .map_err(|e| {
             error!("Failed to get card key for loading: {}", e);
-            internal_server_error_with_audit(
-                e,
-                "Failed to get card key for loading",
-                audit_args.clone(),
-                state.sql_client.clone(),
-            )
+            internal_server_error(e, "Failed to get card key for loading")
         })?;
 
     // get uid
@@ -816,12 +718,7 @@ pub async fn get_card(
     // create temp dir
     let tmp_dir = tempdir().map_err(|e| {
         error!("Failed to create temp dir: {}", e);
-        internal_server_error_with_audit(
-            e,
-            "Failed to create temp dir",
-            audit_args.clone(),
-            state.sql_client.clone(),
-        )
+        internal_server_error(e, "Failed to create temp dir")
     })?;
 
     let tmp_path = tmp_dir.path();
@@ -840,52 +737,27 @@ pub async fn get_card(
         .await
         .map_err(|e| {
             error!("Failed to get card: {}", e);
-            internal_server_error_with_audit(
-                e,
-                "Failed to get card",
-                audit_args.clone(),
-                state.sql_client.clone(),
-            )
+            internal_server_error(e, "Failed to get card")
         })?;
 
     let decryption_key = key.get_decrypt_key().map_err(|e| {
         error!("Failed to get decryption key: {}", e);
-        internal_server_error_with_audit(
-            e,
-            "Failed to get decryption key",
-            audit_args.clone(),
-            state.sql_client.clone(),
-        )
+        internal_server_error(e, "Failed to get decryption key")
     })?;
 
     decrypt_directory(tmp_path, &decryption_key).map_err(|e| {
         error!("Failed to decrypt directory: {}", e);
-        internal_server_error_with_audit(
-            e,
-            "Failed to decrypt directory",
-            audit_args.clone(),
-            state.sql_client.clone(),
-        )
+        internal_server_error(e, "Failed to decrypt directory")
     })?;
 
     let card = std::fs::read_to_string(lpath).map_err(|e| {
         error!("Failed to read card from file: {}", e);
-        internal_server_error_with_audit(
-            e,
-            "Failed to read card from file",
-            audit_args.clone(),
-            state.sql_client.clone(),
-        )
+        internal_server_error(e, "Failed to read card from file")
     })?;
 
     let card = serde_json::from_str(&card).map_err(|e| {
         error!("Failed to parse card: {}", e);
-        internal_server_error_with_audit(
-            e,
-            "Failed to parse card",
-            audit_args.clone(),
-            state.sql_client.clone(),
-        )
+        internal_server_error(e, "Failed to parse card")
     })?;
 
     Ok(Json(card))
@@ -900,7 +772,7 @@ pub async fn get_readme(
     headers: HeaderMap,
     Query(params): Query<CardQueryArgs>,
 ) -> Result<Json<ReadeMe>, (StatusCode, Json<serde_json::Value>)> {
-    let audit_args = AuditArgs::new(
+    let audit_args = AuditEvent::new(
         addr,
         agent,
         headers,
@@ -914,10 +786,6 @@ pub async fn get_readme(
 
     if !perms.has_read_permission() {
         error!("Permission denied");
-        spawn_audit_task(
-            audit_args.clone().with_error("Permission denied"),
-            state.sql_client.clone(),
-        );
         return Err((
             StatusCode::FORBIDDEN,
             Json(json!({ "error": "Permission denied" })),
@@ -939,12 +807,7 @@ pub async fn get_readme(
 
     let tmp_dir = tempdir().map_err(|e| {
         error!("Failed to create temp dir: {}", e);
-        internal_server_error_with_audit(
-            e,
-            "Failed to create temp dir",
-            audit_args.clone(),
-            state.sql_client.clone(),
-        )
+        internal_server_error(e, "Failed to create temp dir")
     })?;
 
     let lpath = tmp_dir
@@ -973,7 +836,7 @@ pub async fn get_readme(
     {
         Ok(_) => {
             let content = std::fs::read_to_string(&lpath).unwrap_or_default();
-            spawn_audit_task(audit_args, state.sql_client.clone());
+            state.event_bus.publish(Event::Audit(audit_args));
             Ok(Json(ReadeMe {
                 readme: content,
                 exists: true,
@@ -981,7 +844,6 @@ pub async fn get_readme(
         }
         Err(e) => {
             error!("Failed to download artifact: {}", e);
-            spawn_audit_task(audit_args, state.sql_client.clone());
             Ok(Json(ReadeMe {
                 readme: "".to_string(),
                 exists: false,
@@ -999,7 +861,7 @@ pub async fn create_readme(
     headers: HeaderMap,
     Json(req): Json<CreateReadeMe>,
 ) -> Result<Json<UploadResponse>, (StatusCode, Json<serde_json::Value>)> {
-    let audit_args = AuditArgs::new(
+    let audit_args = AuditEvent::new(
         addr,
         agent,
         headers,
@@ -1012,10 +874,6 @@ pub async fn create_readme(
     );
 
     if !perms.has_write_permission(&req.repository) {
-        spawn_audit_task(
-            audit_args.clone().with_error("Permission denied"),
-            state.sql_client.clone(),
-        );
         return Err((
             StatusCode::FORBIDDEN,
             Json(json!({ "error": "Permission denied" })),
@@ -1043,12 +901,7 @@ pub async fn create_readme(
     .await
     .map_err(|e| {
         error!("Failed to get artifact key: {}", e);
-        internal_server_error_with_audit(
-            e,
-            "Failed to get artifact key",
-            audit_args.clone(),
-            state.sql_client.clone(),
-        )
+        internal_server_error(e, "Failed to get artifact key")
     })?;
 
     let lpath = format!("{}.{}", SaveName::ReadMe, Suffix::Md);
@@ -1061,7 +914,7 @@ pub async fn create_readme(
     )
     .await;
 
-    spawn_audit_task(audit_args, state.sql_client.clone());
+    state.event_bus.publish(Event::Audit(audit_args));
     match result {
         Ok(uploaded) => Ok(Json(uploaded)),
         Err(e) => Ok(Json(UploadResponse {

@@ -1,3 +1,4 @@
+use crate::core::audit::AuditEventHandler;
 use crate::core::router::create_router;
 use crate::core::setup::{initialize_default_user, setup_components};
 use crate::core::state::AppState;
@@ -5,6 +6,7 @@ use anyhow::Ok;
 use anyhow::Result;
 use axum::Router;
 use opsml_auth::auth::AuthManager;
+use opsml_events::EventBus;
 use std::sync::Arc;
 use tracing::{info, warn};
 
@@ -25,7 +27,12 @@ pub async fn create_app() -> Result<Router> {
         config: Arc::new(config),
         storage_settings: Arc::new(storage_settings),
         scouter_client: Arc::new(scouter),
+        event_bus: EventBus::new(100),
     });
+
+    // Initialize the event bus
+    let event_handler = AuditEventHandler::new(app_state.clone());
+    event_handler.start().await;
 
     // Initialize default user if none exists
     if let Err(e) = initialize_default_user(&app_state.sql_client, &app_state.scouter_client).await
