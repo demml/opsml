@@ -1,16 +1,16 @@
 use axum::http::HeaderMap;
 use headers::UserAgent;
-use opsml_sql::base::SqlClient;
 use opsml_sql::enums::client::SqlClientEnum;
 
 use anyhow::Result;
 use opsml_error::error::ServerError;
 use opsml_types::contracts::{AuditStatus, Operation, ResourceType};
+use opsml_types::RegistryType;
 
 use std::net::SocketAddr;
 use std::sync::Arc;
 use tracing::error;
-use tracing::instrument;
+use tracing::{debug, instrument};
 
 #[derive(Debug, Clone)]
 pub struct AuditArgs {
@@ -23,6 +23,7 @@ pub struct AuditArgs {
     pub status: AuditStatus,
     pub error_message: Option<String>,
     pub metadata: String,
+    pub registry_type: RegistryType,
 }
 
 impl AuditArgs {
@@ -34,6 +35,7 @@ impl AuditArgs {
         resource_type: ResourceType,
         resource_id: String,
         metadata: String,
+        registry_type: RegistryType,
     ) -> Self {
         Self {
             addr,
@@ -45,6 +47,7 @@ impl AuditArgs {
             status: AuditStatus::Success,
             error_message: None,
             metadata,
+            registry_type,
         }
     }
 
@@ -79,15 +82,16 @@ pub async fn log_to_audit(
     let client_ip = client_ip.unwrap_or_else(|| args.addr.ip().to_string());
     let user_agent_string = args.agent.as_str();
 
-    println!("Client IP: {}", client_ip);
-    println!("Username: {}", username);
-    println!("User Agent: {}", user_agent_string);
-    println!("Operation Type: {}", args.operation_type);
-    println!("Resource Type: {}", args.resource_type);
-    println!("Resource ID: {}", args.resource_id);
-    println!("Status: {:?}", args.status);
-    println!("Error Message: {:?}", args.error_message);
-    println!("Metadata: {}", args.metadata);
+    debug!("Client IP: {}", client_ip);
+    debug!("Username: {}", username);
+    debug!("User Agent: {}", user_agent_string);
+    debug!("Operation Type: {}", args.operation_type);
+    debug!("Resource Type: {}", args.resource_type);
+    debug!("Resource ID: {}", args.resource_id);
+    debug!("Status: {:?}", args.status);
+    debug!("Error Message: {:?}", args.error_message);
+    debug!("Metadata: {}", args.metadata);
+    debug!("Registry Type: {:?}", args.registry_type);
     // Here you would typically log the audit event to your database or logging system
 
     //sql_client

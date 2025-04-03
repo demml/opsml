@@ -47,6 +47,7 @@ async fn test_opsml_server_card_uid() {
     // check if a card UID exists (get request with UidRequest params)
     let request = Request::builder()
         .uri(format!("/opsml/api/card?{}", query_string))
+        .header(header::USER_AGENT, "opsml-test")
         .method("GET")
         .body(Body::empty())
         .unwrap();
@@ -101,6 +102,7 @@ async fn test_opsml_server_card_repositories() {
     // check if a card UID exists (get request with UidRequest params)
     let request = Request::builder()
         .uri(format!("/opsml/api/card/repositories?{}", query_string))
+        .header(header::USER_AGENT, "opsml-test")
         .method("GET")
         .body(Body::empty())
         .unwrap();
@@ -133,6 +135,7 @@ async fn test_opsml_server_card_stats_and_query() {
     let request = Request::builder()
         .uri(format!("/opsml/api/card/registry/stats?{}", query_string))
         .method("GET")
+        .header(header::USER_AGENT, "opsml-test")
         .body(Body::empty())
         .unwrap();
 
@@ -152,6 +155,7 @@ async fn test_opsml_server_card_stats_and_query() {
     let query_string = serde_qs::to_string(&params).unwrap();
     let request = Request::builder()
         .uri(format!("/opsml/api/card/registry/stats?{}", query_string))
+        .header(header::USER_AGENT, "opsml-test")
         .method("GET")
         .body(Body::empty())
         .unwrap();
@@ -177,6 +181,7 @@ async fn test_opsml_server_card_stats_and_query() {
 
     let request = Request::builder()
         .uri(format!("/opsml/api/card/registry/page?{}", query_string))
+        .header(header::USER_AGENT, "opsml-test")
         .method("GET")
         .body(Body::empty())
         .unwrap();
@@ -201,6 +206,7 @@ async fn test_opsml_server_card_stats_and_query() {
 
     let request = Request::builder()
         .uri(format!("/opsml/api/card/registry/page?{}", query_string))
+        .header(header::USER_AGENT, "opsml-test")
         .method("GET")
         .body(Body::empty())
         .unwrap();
@@ -227,6 +233,7 @@ async fn test_opsml_server_card_stats_and_query() {
             "/opsml/api/card/registry/version/page?{}",
             query_string
         ))
+        .header(header::USER_AGENT, "opsml-test")
         .method("GET")
         .body(Body::empty())
         .unwrap();
@@ -262,6 +269,7 @@ async fn test_opsml_server_card_list_cards() {
     let request = Request::builder()
         .uri(format!("/opsml/api/card/list?{}", query_string))
         .method("GET")
+        .header(header::USER_AGENT, "opsml-test")
         .body(Body::empty())
         .unwrap();
 
@@ -290,6 +298,7 @@ async fn test_opsml_server_card_list_cards() {
     let request = Request::builder()
         .uri(format!("/opsml/api/card/list?{}", query_string))
         .method("GET")
+        .header(header::USER_AGENT, "opsml-test")
         .body(Body::empty())
         .unwrap();
 
@@ -334,6 +343,7 @@ async fn test_opsml_server_card_datacard_crud() {
     let request = Request::builder()
         .uri("/opsml/api/card/create")
         .method("POST")
+        .header(header::USER_AGENT, "opsml-test")
         .header(header::CONTENT_TYPE, "application/json")
         .body(Body::from(body))
         .unwrap();
@@ -356,6 +366,7 @@ async fn test_opsml_server_card_datacard_crud() {
 
     let request = Request::builder()
         .uri(format!("/opsml/api/card/list?{}", query_string))
+        .header(header::USER_AGENT, "opsml-test")
         .method("GET")
         .body(Body::empty())
         .unwrap();
@@ -397,6 +408,7 @@ async fn test_opsml_server_card_datacard_crud() {
     let request = Request::builder()
         .uri("/opsml/api/card/update")
         .method("POST")
+        .header(header::USER_AGENT, "opsml-test")
         .header(header::CONTENT_TYPE, "application/json")
         .body(Body::from(body))
         .unwrap();
@@ -418,6 +430,7 @@ async fn test_opsml_server_card_datacard_crud() {
 
     let request = Request::builder()
         .uri(format!("/opsml/api/card/delete?{}", query_string))
+        .header(header::USER_AGENT, "opsml-test")
         .method("DELETE")
         .body(Body::empty())
         .unwrap();
@@ -463,6 +476,7 @@ async fn test_opsml_server_card_modelcard_crud() {
     let request = Request::builder()
         .uri("/opsml/api/card/create")
         .method("POST")
+        .header(header::USER_AGENT, "opsml-test")
         .header(header::CONTENT_TYPE, "application/json")
         .body(Body::from(body))
         .unwrap();
@@ -485,6 +499,7 @@ async fn test_opsml_server_card_modelcard_crud() {
     // get key
     let request = Request::builder()
         .uri(format!("/opsml/api/card/load?{}", query_string))
+        .header(header::USER_AGENT, "opsml-test")
         .method("GET")
         .body(Body::empty())
         .unwrap();
@@ -512,6 +527,7 @@ async fn test_opsml_server_card_modelcard_crud() {
 
     let request = Request::builder()
         .uri(format!("/opsml/api/card/list?{}", query_string))
+        .header(header::USER_AGENT, "opsml-test")
         .method("GET")
         .body(Body::empty())
         .unwrap();
@@ -556,6 +572,7 @@ async fn test_opsml_server_card_modelcard_crud() {
     let request = Request::builder()
         .uri("/opsml/api/card/update")
         .method("POST")
+        .header(header::USER_AGENT, "opsml-test")
         .header(header::CONTENT_TYPE, "application/json")
         .body(Body::from(body))
         .unwrap();
@@ -577,6 +594,7 @@ async fn test_opsml_server_card_modelcard_crud() {
 
     let request = Request::builder()
         .uri(format!("/opsml/api/card/delete?{}", query_string))
+        .header(header::USER_AGENT, "opsml-test")
         .method("DELETE")
         .body(Body::empty())
         .unwrap();
@@ -621,6 +639,7 @@ async fn test_opsml_server_card_experimentcard_crud() {
 
     let request = Request::builder()
         .uri("/opsml/api/card/create")
+        .header(header::USER_AGENT, "opsml-test")
         .method("POST")
         .header(header::CONTENT_TYPE, "application/json")
         .body(Body::from(body))
@@ -646,6 +665,7 @@ async fn test_opsml_server_card_experimentcard_crud() {
 
     let request = Request::builder()
         .uri(format!("/opsml/api/card/list?{}", query_string))
+        .header(header::USER_AGENT, "opsml-test")
         .method("GET")
         .body(Body::empty())
         .unwrap();
@@ -687,6 +707,7 @@ async fn test_opsml_server_card_experimentcard_crud() {
     let request = Request::builder()
         .uri("/opsml/api/card/update")
         .method("POST")
+        .header(header::USER_AGENT, "opsml-test")
         .header(header::CONTENT_TYPE, "application/json")
         .body(Body::from(body))
         .unwrap();
@@ -753,6 +774,7 @@ async fn test_opsml_server_card_auditcard_crud() {
     let request = Request::builder()
         .uri("/opsml/api/card/create")
         .method("POST")
+        .header(header::USER_AGENT, "opsml-test")
         .header(header::CONTENT_TYPE, "application/json")
         .body(Body::from(body))
         .unwrap();
@@ -885,6 +907,7 @@ async fn test_opsml_server_card_get_card() {
     let request = Request::builder()
         .uri("/opsml/api/card/create")
         .method("POST")
+        .header(header::USER_AGENT, "opsml-test")
         .header(header::CONTENT_TYPE, "application/json")
         .body(Body::from(body))
         .unwrap();
@@ -950,6 +973,7 @@ async fn test_opsml_server_card_get_readme() {
     let request = Request::builder()
         .uri("/opsml/api/card/readme")
         .method("POST")
+        .header(header::USER_AGENT, "opsml-test")
         .header(header::CONTENT_TYPE, "application/json")
         .body(Body::from(serde_json::to_string(&create_readme).unwrap()))
         .unwrap();
@@ -975,6 +999,7 @@ async fn test_opsml_server_card_get_readme() {
     let request = Request::builder()
         .uri(format!("/opsml/api/card/readme?{}", query_string))
         .method("GET")
+        .header(header::USER_AGENT, "opsml-test")
         .body(Body::empty())
         .unwrap();
 

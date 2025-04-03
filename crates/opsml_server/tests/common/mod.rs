@@ -17,7 +17,8 @@ use opsml_types::contracts::*;
 use opsml_types::*;
 use scouter_client::{BinnedCustomMetrics, BinnedPsiFeatureMetrics, SpcDriftFeatures};
 
-use std::{env, vec};
+use axum::extract::connect_info::MockConnectInfo;
+use std::{env, net::SocketAddr, vec};
 use tower::ServiceExt; // for `call`, `oneshot`, and `ready`
 
 fn cleanup() {
@@ -198,6 +199,8 @@ impl TestHelper {
         // create the app
         let app = create_app().await.unwrap();
 
+        let app = app.layer(MockConnectInfo(SocketAddr::from(([0, 0, 0, 0], 1337))));
+
         // populate db
         setup().await;
 
@@ -323,6 +326,7 @@ impl TestHelper {
         let request = Request::builder()
             .uri("/opsml/api/card/create")
             .method("POST")
+            .header(header::USER_AGENT, "opsml-test")
             .header(header::CONTENT_TYPE, "application/json")
             .body(Body::from(body))
             .unwrap();
