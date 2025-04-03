@@ -10,7 +10,7 @@ use async_trait::async_trait;
 use opsml_error::error::SqlError;
 use opsml_semver::VersionValidator;
 use opsml_settings::config::DatabaseSettings;
-use opsml_types::contracts::ArtifactKey;
+use opsml_types::contracts::{ArtifactKey, AuditEvent};
 use opsml_types::{cards::CardTable, contracts::CardQueryArgs, RegistryType};
 use semver::Version;
 use sqlx::{
@@ -1054,17 +1054,21 @@ impl SqlClient for SqliteClient {
         Ok(())
     }
 
-    async fn insert_operation(
-        &self,
-        username: &str,
-        access_type: &str,
-        access_location: &str,
-    ) -> Result<(), SqlError> {
-        let query = SqliteQueryHelper::get_operation_insert_query();
+    async fn insert_audit_event(&self, event: AuditEvent) -> Result<(), SqlError> {
+        let query = SqliteQueryHelper::get_audit_event_insert_query();
         sqlx::query(&query)
-            .bind(username)
-            .bind(access_type)
-            .bind(access_location)
+            .bind(event.username)
+            .bind(event.client_ip)
+            .bind(event.user_agent)
+            .bind(event.operation_type.to_string())
+            .bind(event.resource_type.to_string())
+            .bind(event.resource_id)
+            .bind(event.access_location)
+            .bind(event.status.to_string())
+            .bind(event.error_message)
+            .bind(event.metadata)
+            .bind(event.registry_type.to_string())
+            .bind(event.route)
             .execute(&self.pool)
             .await
             .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
@@ -1818,12 +1822,12 @@ mod tests {
         let client = SqliteClient::new(&config).await.unwrap();
 
         client
-            .insert_operation("guest", &Operation::Read.to_string(), "model/registry")
+            .insert_audit_event(AuditEvent::default())
             .await
             .unwrap();
 
         // check if the operation was inserted
-        let query = r#"SELECT username  FROM opsml_operation WHERE username = 'guest';"#;
+        let query = r#"SELECT username  FROM opsml_audit_event WHERE username = 'guest';"#;
         let result: String = sqlx::query_scalar(query)
             .fetch_one(&client.pool)
             .await

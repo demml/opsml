@@ -12,6 +12,7 @@ use anyhow::Result as AnyhowResult;
 use async_trait::async_trait;
 use opsml_error::error::SqlError;
 use opsml_settings::config::DatabaseSettings;
+use opsml_types::contracts::AuditEvent;
 use opsml_types::{
     SqlType,
     {
@@ -400,28 +401,11 @@ impl SqlClient for SqlClientEnum {
         }
     }
 
-    async fn insert_operation(
-        &self,
-        username: &str,
-        access_type: &str,
-        access_location: &str,
-    ) -> Result<(), SqlError> {
+    async fn insert_audit_event(&self, event: AuditEvent) -> Result<(), SqlError> {
         match self {
-            SqlClientEnum::Postgres(client) => {
-                client
-                    .insert_operation(username, access_type, access_location)
-                    .await
-            }
-            SqlClientEnum::Sqlite(client) => {
-                client
-                    .insert_operation(username, access_type, access_location)
-                    .await
-            }
-            SqlClientEnum::MySql(client) => {
-                client
-                    .insert_operation(username, access_type, access_location)
-                    .await
-            }
+            SqlClientEnum::Postgres(client) => client.insert_audit_event(event).await,
+            SqlClientEnum::Sqlite(client) => client.insert_audit_event(event).await,
+            SqlClientEnum::MySql(client) => client.insert_audit_event(event).await,
         }
     }
 

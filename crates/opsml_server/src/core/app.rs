@@ -19,14 +19,14 @@ pub async fn create_app() -> Result<Router> {
     let app_state = Arc::new(AppState {
         storage_client: Arc::new(storage_client),
         sql_client: Arc::new(sql_client),
-        auth_manager: Arc::new(AuthManager::new(
+        auth_manager: AuthManager::new(
             &config.auth_settings.jwt_secret,
             &config.auth_settings.refresh_secret,
             &config.auth_settings.scouter_secret,
-        )),
-        config: Arc::new(config),
-        storage_settings: Arc::new(storage_settings),
-        scouter_client: Arc::new(scouter),
+        ),
+        config,
+        storage_settings: storage_settings,
+        scouter_client: scouter,
         event_bus: EventBus::new(100),
     });
 

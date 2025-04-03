@@ -145,25 +145,22 @@ CREATE TABLE IF NOT EXISTS opsml_artifact_key (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE IF NOT EXISTS opsml_operation (
-    username TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    access_type TEXT,
-    access_location TEXT
-);
 
-CREATE TABLE IF NOT EXISTS opsml_audit_trail (
+CREATE TABLE IF NOT EXISTS opsml_audit_event (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    username TEXT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    operation_type TEXT NOT NULL,  -- CREATE, READ, UPDATE, DELETE, LOGIN, etc.
-    resource_type TEXT NOT NULL,   -- model, data, experiment, prompt, etc.
-    resource_id TEXT,              -- UUID/ID of the accessed resource
-    access_location TEXT,          -- IP address or endpoint
-    user_agent TEXT,              -- Client application/browser info
-    status TEXT NOT NULL,         -- SUCCESS, FAILURE, DENIED
-    error_message TEXT,           -- Details if operation failed
-    metadata TEXT                 -- JSON field for additional context
+    username TEXT NOT NULL,
+    client_ip TEXT NOT NULL,
+    user_agent TEXT, 
+    operation_type TEXT NOT NULL,  
+    resource_type TEXT NOT NULL,   
+    resource_id TEXT NOT NULL,              
+    access_location TEXT,          
+    status TEXT NOT NULL,        
+    error_message TEXT,          
+    metadata TEXT,               
+    registry_type TEXT,  
+    route TEXT,
 );
 
 

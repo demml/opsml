@@ -26,7 +26,6 @@ impl AuditEventHandler {
                             error!("Failed to log audit event: {}", e);
                         }
                     }
-                    _ => {}
                 }
             }
         });

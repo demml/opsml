@@ -3,23 +3,23 @@
 
 -- DataSchema
 CREATE TABLE IF NOT EXISTS opsml_data_registry (
-    uid VARCHAR(64) PRIMARY KEY,
+    uid TEXT PRIMARY KEY,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    app_env VARCHAR(32) DEFAULT 'development',
-    name VARCHAR(128),
-    repository VARCHAR(128),
+    app_env TEXT DEFAULT 'development',
+    name TEXT,
+    repository TEXT,
     major INT NOT NULL,
     minor INT NOT NULL,
     patch INT NOT NULL,
-    pre_tag VARCHAR(16),
-    build_tag VARCHAR(16),
-    version VARCHAR(64),
+    pre_tag TEXT,
+    build_tag TEXT,
+    version TEXT,
     tags JSON,
-    data_type VARCHAR(64),
-    experimentcard_uid VARCHAR(64),
-    auditcard_uid VARCHAR(64),
-    interface_type VARCHAR(64) NOT NULL DEFAULT 'undefined',
-    username VARCHAR(255) NOT NULL DEFAULT 'guest'
+    data_type TEXT,
+    experimentcard_uid TEXT,
+    auditcard_uid TEXT,
+    interface_type TEXT NOT NULL DEFAULT 'undefined',
+    username TEXT NOT NULL DEFAULT 'guest'
 );
 
 -- ModelSchema
@@ -153,20 +153,22 @@ CREATE TABLE IF NOT EXISTS opsml_operation (
     INDEX idx_created_at (created_at)
 );
 
-CREATE TABLE IF NOT EXISTS opsml_audit_trail (
-    idx INT PRIMARY KEY AUTO_INCREMENT
-    username TEXT NOT NULL,
+CREATE TABLE IF NOT EXISTS opsml_audit_event (
+    id INT AUTO_INCREMENT PRIMARY KEY,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    operation_type TEXT NOT NULL,  -- CREATE, READ, UPDATE, DELETE, LOGIN, etc.
-    resource_type TEXT NOT NULL,   -- model, data, experiment, prompt, etc.
-    resource_id TEXT,              -- UUID/ID of the accessed resource
-    access_location TEXT,          -- IP address or endpoint
-    user_agent TEXT,              -- Client application/browser info
-    status TEXT NOT NULL,         -- SUCCESS, FAILURE, DENIED
-    error_message JSON,          -- Details if operation failed
-    metadata JSON                -- JSON field for additional context
+    username TEXT NOT NULL,
+    client_ip TEXT NOT NULL,
+    user_agent TEXT, 
+    operation_type TEXT NOT NULL,  
+    resource_type TEXT NOT NULL,   
+    resource_id TEXT NOT NULL,              
+    access_location TEXT,          
+    status TEXT NOT NULL,        
+    error_message TEXT,          
+    metadata JSON,               
+    registry_type TEXT,  
+    route TEXT,
 );
-
 
 -- DataSchema
 CREATE TABLE IF NOT EXISTS opsml_prompt_registry (
