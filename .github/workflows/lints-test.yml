@@ -8,7 +8,7 @@ on:
   pull_request:
 
 env:
-  RUSTFLAGS: -C debuginfo=0 # Do not produce debug symbols to keep memory usage down
+  RUSTFLAGS: -C debuginfo=0
 
 jobs:
   format-and-lint:
