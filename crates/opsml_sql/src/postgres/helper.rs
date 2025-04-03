@@ -699,10 +699,23 @@ impl PostgresQueryHelper {
         )
     }
 
-    pub fn get_operation_insert_query() -> String {
+    pub fn get_audit_event_insert_query() -> String {
         format!(
-            "INSERT INTO {} (username, access_type, access_location) VALUES ($1, $2, $3)",
-            CardTable::Operations
+            "INSERT INTO {} (
+            username, 
+            client_ip, 
+            user_agent, 
+            operation_type, 
+            resource_type, 
+            resource_id,
+            access_location,
+            status,
+            error_message,
+            metadata,
+            registry_type,
+            route
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)",
+            CardTable::AuditEvent
         )
     }
 

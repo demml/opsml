@@ -671,10 +671,23 @@ impl SqliteQueryHelper {
         )
     }
 
-    pub fn get_operation_insert_query() -> String {
+    pub fn get_audit_event_insert_query() -> String {
         format!(
-            "INSERT INTO {} (username, access_type, access_location) VALUES (?, ?, ?)",
-            CardTable::Operations
+            "INSERT INTO {} (
+                username, 
+                client_ip, 
+                user_agent, 
+                operation_type, 
+                resource_type, 
+                resource_id,
+                access_location,
+                status,
+                error_message,
+                metadata,
+                registry_type,
+                route
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            CardTable::AuditEvent
         )
         .to_string()
     }
