@@ -1,6 +1,8 @@
 use chrono::{DateTime, Utc};
 use opsml_error::error::VersionError;
+use opsml_error::SqlError;
 use opsml_types::cards::{CardTable, ParameterValue};
+use opsml_types::contracts::ExperimentCardClientRecord;
 use opsml_types::{CommonKwargs, DataType, ModelType, RegistryType};
 use opsml_utils::create_uuid7;
 use opsml_utils::utils::get_utc_datetime;
@@ -436,6 +438,32 @@ impl ExperimentCardRecord {
             self.name,
             self.version
         )
+    }
+
+    pub fn from_client_card(client_card: ExperimentCardClientRecord) -> Result<Self, SqlError> {
+        let version = Version::parse(&client_card.version).map_err(|_| {
+            SqlError::GeneralError(format!("Failed to parse version: {}", client_card.version))
+        })?;
+
+        Ok(ExperimentCardRecord {
+            uid: client_card.uid,
+            created_at: client_card.created_at,
+            app_env: client_card.app_env,
+            name: client_card.name,
+            repository: client_card.repository,
+            major: version.major as i32,
+            minor: version.minor as i32,
+            patch: version.patch as i32,
+            pre_tag: Some(version.pre.to_string()),
+            build_tag: Some(version.build.to_string()),
+            version: client_card.version,
+            tags: Json(client_card.tags),
+            datacard_uids: Json(client_card.datacard_uids),
+            modelcard_uids: Json(client_card.modelcard_uids),
+            promptcard_uids: Json(client_card.promptcard_uids),
+            experimentcard_uids: Json(client_card.experimentcard_uids),
+            username: client_card.username,
+        })
     }
 }
 
