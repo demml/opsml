@@ -1,4 +1,4 @@
-pub mod audit;
+pub mod handler;
 pub mod middleware;
 pub mod schema;
-pub use audit::AuditEventHandler;
+pub use handler::AuditEventHandler;
