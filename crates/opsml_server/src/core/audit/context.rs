@@ -7,14 +7,14 @@ use opsml_types::contracts::{
 use opsml_types::RegistryType;
 use serde::Serialize;
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct AuditContext {
     pub resource_id: Option<String>,
     pub additional_metadata: Option<String>,
-    pub operation: Operation,
+    pub operation: Option<Operation>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Clone)]
 pub enum AuditableRequestType {
     Uid(UidRequest),
     Delete(DeleteCardRequest),
