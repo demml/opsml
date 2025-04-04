@@ -1,3 +1,4 @@
+use crate::core::audit::AuditContext;
 use crate::core::cards::schema::{
     CreateReadeMe, QueryPageResponse, ReadeMe, RegistryStatsResponse, VersionPageResponse,
 };
@@ -11,14 +12,13 @@ use anyhow::{Context, Result};
 use axum::{
     extract::{ConnectInfo, Query, State},
     http::{HeaderMap, StatusCode},
-    response::IntoResponse,
+    response::{IntoResponse, Response},
     routing::{delete, get, post},
     Extension, Json, Router,
 };
 use axum_extra::TypedHeader;
 use headers::UserAgent;
 use opsml_auth::permission::UserPermissions;
-use opsml_client::Routes;
 use opsml_crypt::decrypt_directory;
 use opsml_events::{create_audit_event, Event};
 use opsml_sql::base::SqlClient;
@@ -36,24 +36,8 @@ use tracing::{debug, error, instrument};
 /// Route for checking if a card UID exists
 pub async fn check_card_uid(
     State(state): State<Arc<AppState>>,
-    ConnectInfo(addr): ConnectInfo<SocketAddr>,
-    TypedHeader(agent): TypedHeader<UserAgent>,
-    headers: HeaderMap,
     Query(params): Query<UidRequest>,
-) -> Result<Json<UidResponse>, (StatusCode, Json<serde_json::Value>)> {
-    let audit_event = create_audit_event(
-        addr,
-        agent,
-        headers,
-        Operation::Check,
-        ResourceType::Database,
-        params.uid.clone(),
-        None,
-        serde_json::to_string(&params).unwrap_or_default(),
-        Some(params.registry_type.clone()),
-        Routes::Card,
-    );
-
+) -> Result<Response, (StatusCode, Json<serde_json::Value>)> {
     let table = CardTable::from_registry_type(&params.registry_type);
     let exists = state
         .sql_client
@@ -64,32 +48,28 @@ pub async fn check_card_uid(
             internal_server_error(e, "Failed to check if UID exists")
         })?;
 
-    state.event_bus.publish(Event::Audit(audit_event));
-    Ok(Json(UidResponse { exists }))
+    let response_data = UidResponse { exists };
+
+    // Convert to response and add audit context
+    let mut response = Json(response_data).into_response();
+
+    // Add audit context with relevant information
+    let audit_context = AuditContext {
+        resource_id: Some(params.uid.clone()),
+        ..AuditContext::default()
+    };
+
+    response.extensions_mut().insert(audit_context);
+
+    Ok(response)
 }
 
 /// Get card repositories
 pub async fn get_card_repositories(
     State(state): State<Arc<AppState>>,
-    ConnectInfo(addr): ConnectInfo<SocketAddr>,
-    TypedHeader(agent): TypedHeader<UserAgent>,
-    headers: HeaderMap,
     Query(params): Query<RepositoryRequest>,
 ) -> Result<Json<RepositoryResponse>, (StatusCode, Json<serde_json::Value>)> {
     let table = CardTable::from_registry_type(&params.registry_type);
-
-    let audit_args = create_audit_event(
-        addr,
-        agent,
-        headers,
-        Operation::List,
-        ResourceType::Database,
-        Routes::CardRepositories.to_string(),
-        None,
-        serde_json::to_string(&params).unwrap_or_default(),
-        Some(params.registry_type.clone()),
-        Routes::CardRepositories,
-    );
 
     let repos = state
         .sql_client
@@ -100,7 +80,6 @@ pub async fn get_card_repositories(
             internal_server_error(e, "Failed to get unique repository names")
         })?;
 
-    state.event_bus.publish(Event::Audit(audit_args));
     Ok(Json(RepositoryResponse {
         repositories: repos,
     }))
@@ -109,24 +88,8 @@ pub async fn get_card_repositories(
 /// query stats page
 pub async fn get_registry_stats(
     State(state): State<Arc<AppState>>,
-    ConnectInfo(addr): ConnectInfo<SocketAddr>,
-    TypedHeader(agent): TypedHeader<UserAgent>,
-    headers: HeaderMap,
     Query(params): Query<RegistryStatsRequest>,
 ) -> Result<Json<RegistryStatsResponse>, (StatusCode, Json<serde_json::Value>)> {
-    let audit_args = create_audit_event(
-        addr,
-        agent,
-        headers,
-        Operation::List,
-        ResourceType::Database,
-        Routes::CardRegistryStats.to_string(),
-        None,
-        serde_json::to_string(&params).unwrap_or_default(),
-        Some(params.registry_type.clone()),
-        Routes::CardRegistryStats,
-    );
-
     let table = CardTable::from_registry_type(&params.registry_type);
 
     let stats = state
@@ -142,31 +105,14 @@ pub async fn get_registry_stats(
             internal_server_error(e, "Failed to get unique repository names")
         })?;
 
-    state.event_bus.publish(Event::Audit(audit_args));
     Ok(Json(RegistryStatsResponse { stats }))
 }
 
 // query page
 pub async fn get_page(
     State(state): State<Arc<AppState>>,
-    ConnectInfo(addr): ConnectInfo<SocketAddr>,
-    TypedHeader(agent): TypedHeader<UserAgent>,
-    headers: HeaderMap,
     Query(params): Query<QueryPageRequest>,
 ) -> Result<Json<QueryPageResponse>, (StatusCode, Json<serde_json::Value>)> {
-    let audit_args = create_audit_event(
-        addr,
-        agent,
-        headers,
-        Operation::List,
-        ResourceType::Database,
-        Routes::CardRegistryPage.to_string(),
-        None,
-        serde_json::to_string(&params).unwrap_or_default(),
-        Some(params.registry_type.clone()),
-        Routes::CardRegistryPage,
-    );
-
     let table = CardTable::from_registry_type(&params.registry_type);
     let sort_by = params.sort_by.as_deref().unwrap_or("updated_at");
     let page = params.page.unwrap_or(1);
@@ -185,30 +131,13 @@ pub async fn get_page(
             internal_server_error(e, "Failed to get unique repository names")
         })?;
 
-    state.event_bus.publish(Event::Audit(audit_args));
     Ok(Json(QueryPageResponse { summaries }))
 }
 
 pub async fn get_version_page(
     State(state): State<Arc<AppState>>,
-    ConnectInfo(addr): ConnectInfo<SocketAddr>,
-    TypedHeader(agent): TypedHeader<UserAgent>,
-    headers: HeaderMap,
     Query(params): Query<VersionPageRequest>,
 ) -> Result<Json<VersionPageResponse>, (StatusCode, Json<serde_json::Value>)> {
-    let audit_args = create_audit_event(
-        addr,
-        agent,
-        headers,
-        Operation::List,
-        ResourceType::Database,
-        Routes::CardRegistryVersionPage.to_string(),
-        None,
-        serde_json::to_string(&params).unwrap_or_default(),
-        Some(params.registry_type.clone()),
-        Routes::CardRegistryVersionPage,
-    );
-
     let table = CardTable::from_registry_type(&params.registry_type);
     let page = params.page.unwrap_or(1);
     let summaries = state
@@ -225,15 +154,11 @@ pub async fn get_version_page(
             internal_server_error(e, "Failed to get unique repository names")
         })?;
 
-    state.event_bus.publish(Event::Audit(audit_args));
     Ok(Json(VersionPageResponse { summaries }))
 }
 
 pub async fn list_cards(
     State(state): State<Arc<AppState>>,
-    ConnectInfo(addr): ConnectInfo<SocketAddr>,
-    TypedHeader(agent): TypedHeader<UserAgent>,
-    headers: HeaderMap,
     Query(params): Query<CardQueryArgs>,
 ) -> Result<Json<Vec<Card>>, (StatusCode, Json<serde_json::Value>)> {
     debug!(
@@ -242,26 +167,6 @@ pub async fn list_cards(
     );
 
     let table = CardTable::from_registry_type(&params.registry_type);
-
-    // get uid if present, else use CommonKwargs::Undefined
-    let uid = params
-        .uid
-        .as_ref()
-        .unwrap_or(&Routes::CardList.to_string())
-        .to_string();
-
-    let audit_args = create_audit_event(
-        addr,
-        agent,
-        headers,
-        Operation::List,
-        ResourceType::Database,
-        uid,
-        None,
-        serde_json::to_string(&params).unwrap_or_default(),
-        Some(params.registry_type.clone()),
-        Routes::CardList,
-    );
 
     let cards = state
         .sql_client
@@ -272,7 +177,6 @@ pub async fn list_cards(
             internal_server_error(e, "Failed to get unique repository names")
         })?;
 
-    state.event_bus.publish(Event::Audit(audit_args));
     // convert to Cards struct
     match cards {
         CardResults::Data(data) => {
@@ -304,30 +208,10 @@ pub async fn list_cards(
 #[instrument(skip_all)]
 pub async fn create_card(
     State(state): State<Arc<AppState>>,
-    ConnectInfo(addr): ConnectInfo<SocketAddr>,
-    TypedHeader(agent): TypedHeader<UserAgent>,
-    headers: HeaderMap,
     Json(card_request): Json<CreateCardRequest>,
-) -> Result<impl IntoResponse, (StatusCode, Json<serde_json::Value>)> {
+) -> Result<Response, (StatusCode, Json<serde_json::Value>)> {
     let table = CardTable::from_registry_type(&card_request.registry_type);
 
-    let mut audit_args = create_audit_event(
-        addr,
-        agent,
-        headers,
-        Operation::Create,
-        ResourceType::Database,
-        format!(
-            "{}/{}/{}",
-            card_request.card.repository(),
-            card_request.card.name(),
-            card_request.card.version()
-        ),
-        None,
-        serde_json::to_string(&card_request).unwrap_or_default(),
-        Some(card_request.registry_type.clone()),
-        Routes::CardCreate,
-    );
     debug!(
         "Creating card: {}/{}/{} - registry: {:?}",
         &card_request.card.repository(),
@@ -360,9 +244,6 @@ pub async fn create_card(
         internal_server_error(e, "Failed to insert card into db")
     })?;
 
-    // update audit args now that we have the uid
-    audit_args.resource_id = uid.to_string();
-
     // (3) ------- Create the artifact key for card artifact encryption
     let key = create_artifact_key(
         &state.sql_client,
@@ -378,8 +259,8 @@ pub async fn create_card(
     })?;
 
     debug!("Card created successfully");
-    state.event_bus.publish(Event::Audit(audit_args));
-    Ok(Json(CreateCardResponse {
+
+    let mut response = Json(CreateCardResponse {
         registered: true,
         repository: card_request.card.repository().to_string(),
         name: card_request.card.name().to_string(),
@@ -387,16 +268,23 @@ pub async fn create_card(
         app_env,
         created_at,
         key,
-    }))
+    })
+    .into_response();
+
+    // Add audit context with relevant information
+    let audit_context = AuditContext {
+        resource_id: Some(uid.clone()),
+        ..AuditContext::default()
+    };
+    response.extensions_mut().insert(audit_context);
+
+    Ok(response)
 }
 
 /// update card
 #[instrument(skip_all)]
 pub async fn update_card(
     State(state): State<Arc<AppState>>,
-    ConnectInfo(addr): ConnectInfo<SocketAddr>,
-    TypedHeader(agent): TypedHeader<UserAgent>,
-    headers: HeaderMap,
     Json(card_request): Json<UpdateCardRequest>,
 ) -> Result<impl IntoResponse, (StatusCode, Json<serde_json::Value>)> {
     debug!(
@@ -407,19 +295,6 @@ pub async fn update_card(
         &card_request.registry_type
     );
     let table = CardTable::from_registry_type(&card_request.registry_type);
-
-    let audit_args = create_audit_event(
-        addr,
-        agent,
-        headers,
-        Operation::Create,
-        ResourceType::Database,
-        card_request.card.uid().to_string(),
-        None,
-        serde_json::to_string(&card_request).unwrap_or_default(),
-        Some(card_request.registry_type.clone()),
-        Routes::CardUpdate,
-    );
 
     // Note: We can use unwrap() here because a card being updated has already been created and thus has defaults.
     // match on registry type (all fields should be supplied)
@@ -484,30 +359,10 @@ pub async fn update_card(
         }
 
         Card::Experiment(client_card) => {
-            let version = Version::parse(&client_card.version).map_err(|e| {
+            let server_card = ExperimentCardRecord::from_client_card(client_card).map_err(|e| {
                 error!("Failed to parse version: {}", e);
                 internal_server_error(e, "Failed to parse version")
             })?;
-
-            let server_card = ExperimentCardRecord {
-                uid: client_card.uid,
-                created_at: client_card.created_at,
-                app_env: client_card.app_env,
-                name: client_card.name,
-                repository: client_card.repository,
-                major: version.major as i32,
-                minor: version.minor as i32,
-                patch: version.patch as i32,
-                pre_tag: Some(version.pre.to_string()),
-                build_tag: Some(version.build.to_string()),
-                version: client_card.version,
-                tags: SqlxJson(client_card.tags),
-                datacard_uids: SqlxJson(client_card.datacard_uids),
-                modelcard_uids: SqlxJson(client_card.modelcard_uids),
-                promptcard_uids: SqlxJson(client_card.promptcard_uids),
-                experimentcard_uids: SqlxJson(client_card.experimentcard_uids),
-                username: client_card.username,
-            };
             ServerCard::Experiment(server_card)
         }
 
@@ -576,7 +431,6 @@ pub async fn update_card(
         })?;
 
     debug!("Card updated successfully");
-    state.event_bus.publish(Event::Audit(audit_args));
     Ok(Json(UpdateCardResponse { updated: true }))
 }
 
@@ -584,25 +438,9 @@ pub async fn update_card(
 pub async fn delete_card(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
-    ConnectInfo(addr): ConnectInfo<SocketAddr>,
-    TypedHeader(agent): TypedHeader<UserAgent>,
-    headers: HeaderMap,
     Query(params): Query<DeleteCardRequest>,
 ) -> Result<Json<UidResponse>, (StatusCode, Json<serde_json::Value>)> {
     debug!("Deleting card: {}", &params.uid);
-
-    let audit_args = create_audit_event(
-        addr,
-        agent,
-        headers,
-        Operation::Delete,
-        ResourceType::File,
-        params.uid.clone(),
-        None,
-        serde_json::to_string(&params).unwrap_or_default(),
-        Some(params.registry_type.clone()),
-        Routes::CardDelete,
-    );
 
     if !perms.has_delete_permission(&params.repository) {
         error!("Permission denied");
@@ -639,8 +477,6 @@ pub async fn delete_card(
         })?;
 
     // need to delete the artifact key and the artifact itself
-
-    state.event_bus.publish(Event::Audit(audit_args));
     Ok(Json(UidResponse { exists: false }))
 }
 
