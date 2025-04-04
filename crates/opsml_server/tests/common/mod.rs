@@ -176,7 +176,7 @@ pub struct TestHelper {
     app: Router,
     token: JwtToken,
     pub name: String,
-    pub repository: String,
+    pub space: String,
     pub version: String,
     pub key: ArtifactKey,
     pub server: ScouterServer,
@@ -206,14 +206,14 @@ impl TestHelper {
         // retrieve the token
         let token = TestHelper::login(&app).await;
         let name = "name".to_string();
-        let repository = "space".to_string();
+        let space = "space".to_string();
         let version = "1.0.0".to_string();
 
         Self {
             app,
             token,
             name,
-            repository,
+            space,
             version,
             key: ArtifactKey {
                 uid: "550e8400-e29b-41d4-a716-446655440000".to_string(),
@@ -277,14 +277,14 @@ impl TestHelper {
 
         let base_path = format!(
             "opsml_registries/opsml_model_registry/{}/{}/v{}",
-            self.repository, self.name, self.version
+            self.space, self.name, self.version
         );
 
         let joined_path = current_dir.join(base_path.clone());
         // create the directory
         std::fs::create_dir_all(&joined_path).unwrap();
 
-        let json = r#"{"name":"name","repository":"space","version":"1.0.0","uid":"550e8400-e29b-41d4-a716-446655440000","app_env":"dev","created_at":"2021-08-01T00:00:00Z"}"#;
+        let json = r#"{"name":"name","space":"space","version":"1.0.0","uid":"550e8400-e29b-41d4-a716-446655440000","app_env":"dev","created_at":"2021-08-01T00:00:00Z"}"#;
         let path = &joined_path.join("file.json");
         std::fs::write(path, json).unwrap();
 
@@ -302,7 +302,7 @@ impl TestHelper {
         // 1. First create a card so we have something to get
         let card_version_request = CardVersionRequest {
             name: self.name.clone(),
-            repository: self.repository.clone(),
+            space: self.space.clone(),
             version: Some(self.version.clone()),
             version_type: VersionType::Minor,
             pre_tag: None,
@@ -313,7 +313,7 @@ impl TestHelper {
         let card_request = CreateCardRequest {
             card: Card::Model(ModelCardClientRecord {
                 name: self.name.clone(),
-                repository: self.repository.clone(),
+                space: self.space.clone(),
                 version: self.version.clone(),
                 tags: vec!["test".to_string()],
                 ..ModelCardClientRecord::default()

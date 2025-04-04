@@ -15,12 +15,12 @@ export type ReadMe = {
 
 export async function getCardReadMe(
   name: string,
-  repository: string,
+  space: string,
   registry_type: RegistryType
 ): Promise<ReadMe> {
   const params: CardQueryArgs = {
     name: name,
-    repository: repository,
+    space: space,
     registry_type: registry_type,
   };
 
@@ -51,12 +51,12 @@ export type UploadResponse = {
 
 export async function createReadMe(
   name: string,
-  repository: string,
+  space: string,
   registry_type: RegistryType,
   content: string
 ): Promise<UploadResponse> {
   let args: ReadMeArgs = {
-    repository: repository,
+    space: space,
     name: name,
     registry_type: registry_type,
     readme: content,

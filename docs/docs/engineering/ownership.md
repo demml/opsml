@@ -33,7 +33,7 @@ This scenario covers the typical data science workflow and tasks that include ex
 
 ### Scenario 2: Model Deployment
 
-In this scenario, a data scientist or ml engineer creates the custom api logic for their model ([FastApi](https://fastapi.tiangolo.com/) for example) and specifies resources to deploy in a custom configuration or specification file. For this example, assume the engineering repository has set up an automated process whereby changes to the configuration file and push/tags trigger a CI/CD process that builds and serves a new model api. Upon build kickoff, the model specified in the configuration file is downloaded from the `OpsML` server and packaged along with the api code into a docker container. This docker container is then deployed on K8s where the api is served and ready for requests.
+In this scenario, a data scientist or ml engineer creates the custom api logic for their model ([FastApi](https://fastapi.tiangolo.com/) for example) and specifies resources to deploy in a custom configuration or specification file. For this example, assume the engineering space has set up an automated process whereby changes to the configuration file and push/tags trigger a CI/CD process that builds and serves a new model api. Upon build kickoff, the model specified in the configuration file is downloaded from the `OpsML` server and packaged along with the api code into a docker container. This docker container is then deployed on K8s where the api is served and ready for requests.
 
 
 ## Environment

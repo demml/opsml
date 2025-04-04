@@ -91,7 +91,7 @@ pub struct ModelCard {
     pub interface: Option<PyObject>,
 
     #[pyo3(get, set)]
-    pub repository: String,
+    pub space: String,
 
     #[pyo3(get, set)]
     pub name: String,
@@ -133,11 +133,11 @@ pub struct ModelCard {
 impl ModelCard {
     #[new]
     #[allow(clippy::too_many_arguments)]
-    #[pyo3(signature = (interface, repository=None, name=None,   version=None, uid=None, tags=None,    metadata=None, to_onnx=None))]
+    #[pyo3(signature = (interface, space=None, name=None,   version=None, uid=None, tags=None,    metadata=None, to_onnx=None))]
     pub fn new(
         py: Python,
         interface: &Bound<'_, PyAny>,
-        repository: Option<&str>,
+        space: Option<&str>,
         name: Option<&str>,
         version: Option<&str>,
         uid: Option<&str>,
@@ -152,7 +152,7 @@ impl ModelCard {
                 .map_err(|e| OpsmlError::new_err(e.to_string()))?,
         };
 
-        let base_args = BaseArgs::create_args(name, repository, version, uid).map_err(|e| {
+        let base_args = BaseArgs::create_args(name, space, version, uid).map_err(|e| {
             error!("Failed to create base args: {}", e);
             OpsmlError::new_err(e.to_string())
         })?;
@@ -201,7 +201,7 @@ impl ModelCard {
                     .into_py_any(py)
                     .map_err(|e| OpsmlError::new_err(e.to_string()))?,
             ),
-            repository: base_args.0,
+            space: base_args.0,
             name: base_args.1,
             version: base_args.2,
             uid: base_args.3,
@@ -395,7 +395,7 @@ impl ModelCard {
         let record = ModelCardClientRecord {
             app_env: self.app_env.clone(),
             created_at: self.created_at,
-            repository: self.repository.clone(),
+            space: self.space.clone(),
             name: self.name.clone(),
             version: self.version.clone(),
             uid: self.uid.clone(),
@@ -435,7 +435,7 @@ impl ModelCard {
             // iterate over drift_profiles and call "update_config_args"
             let kwargs = PyDict::new(py);
             kwargs.set_item("name", self.name.clone())?;
-            kwargs.set_item("repository", self.repository.clone())?;
+            kwargs.set_item("space", self.space.clone())?;
             kwargs.set_item("version", self.version.clone())?;
 
             for profile in drift_profiles.iter() {
@@ -467,7 +467,7 @@ impl Serialize for ModelCard {
 
         // set session to none
         state.serialize_field("name", &self.name)?;
-        state.serialize_field("repository", &self.repository)?;
+        state.serialize_field("space", &self.space)?;
         state.serialize_field("version", &self.version)?;
         state.serialize_field("uid", &self.uid)?;
         state.serialize_field("tags", &self.tags)?;
@@ -486,7 +486,7 @@ impl FromPyObject<'_> for ModelCard {
     fn extract_bound(ob: &Bound<'_, PyAny>) -> PyResult<Self> {
         let interface = ob.getattr("interface")?;
         let name = ob.getattr("name")?.extract()?;
-        let repository = ob.getattr("repository")?.extract()?;
+        let space = ob.getattr("space")?.extract()?;
 
         let version = ob.getattr("version")?.extract()?;
         let uid = ob.getattr("uid")?.extract()?;
@@ -501,7 +501,7 @@ impl FromPyObject<'_> for ModelCard {
         Ok(ModelCard {
             interface: Some(interface.into()),
             name,
-            repository,
+            space,
             version,
             uid,
             tags,
@@ -527,7 +527,7 @@ impl<'de> Deserialize<'de> for ModelCard {
         enum Field {
             Interface,
             Name,
-            Repository,
+            space,
             Version,
             Uid,
             Tags,
@@ -555,7 +555,7 @@ impl<'de> Deserialize<'de> for ModelCard {
             {
                 let mut interface = None;
                 let mut name = None;
-                let mut repository = None;
+                let mut space = None;
                 let mut version = None;
                 let mut uid = None;
                 let mut tags = None;
@@ -576,8 +576,8 @@ impl<'de> Deserialize<'de> for ModelCard {
                         Field::Name => {
                             name = Some(map.next_value()?);
                         }
-                        Field::Repository => {
-                            repository = Some(map.next_value()?);
+                        Field::space => {
+                            space = Some(map.next_value()?);
                         }
 
                         Field::Version => {
@@ -614,8 +614,7 @@ impl<'de> Deserialize<'de> for ModelCard {
                 }
 
                 let name = name.ok_or_else(|| de::Error::missing_field("name"))?;
-                let repository =
-                    repository.ok_or_else(|| de::Error::missing_field("repository"))?;
+                let space = space.ok_or_else(|| de::Error::missing_field("space"))?;
                 let version = version.ok_or_else(|| de::Error::missing_field("version"))?;
                 let uid = uid.ok_or_else(|| de::Error::missing_field("uid"))?;
                 let tags = tags.ok_or_else(|| de::Error::missing_field("tags"))?;
@@ -633,7 +632,7 @@ impl<'de> Deserialize<'de> for ModelCard {
                 Ok(ModelCard {
                     interface,
                     name,
-                    repository,
+                    space,
                     version,
                     uid,
                     tags,
@@ -652,7 +651,7 @@ impl<'de> Deserialize<'de> for ModelCard {
         const FIELDS: &[&str] = &[
             "interface",
             "name",
-            "repository",
+            "space",
             "version",
             "uid",
             "tags",

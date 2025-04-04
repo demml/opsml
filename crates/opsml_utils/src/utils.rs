@@ -15,7 +15,7 @@ use tracing::error;
 use uuid::Uuid;
 
 const PUNCTUATION: &str = "!\"#$%&'()*+,./:;<=>?@[\\]^`{|}~";
-const NAME_REPOSITORY_PATTERN: &str = r"^[a-z0-9]+(?:[-a-z0-9]+)*/[-a-z0-9]+$";
+const NAME_SPACE_PATTERN: &str = r"^[a-z0-9]+(?:[-a-z0-9]+)*/[-a-z0-9]+$";
 
 /// Clean a string by removing punctuation and converting to lowercase
 ///
@@ -41,16 +41,14 @@ pub fn clean_string(input: &str) -> Result<String, UtilError> {
         .replace('_', "-"))
 }
 
-pub fn validate_name_repository_pattern(name: &str, repository: &str) -> Result<(), UtilError> {
-    let name_repo = format!("{name}/{repository}");
+pub fn validate_name_space_pattern(name: &str, space: &str) -> Result<(), UtilError> {
+    let name_repo = format!("{name}/{space}");
 
-    let re = Regex::new(NAME_REPOSITORY_PATTERN)
+    let re = Regex::new(NAME_SPACE_PATTERN)
         .map_err(|_| UtilError::Error("Failed to create regex".to_string()))?;
 
     if !re.is_match(&name_repo) {
-        return Err(UtilError::Error(
-            "Invalid name/repository pattern".to_string(),
-        ));
+        return Err(UtilError::Error("Invalid name/space pattern".to_string()));
     }
 
     if name.len() > 53 {
@@ -427,15 +425,15 @@ mod tests {
     }
 
     #[test]
-    fn test_name_repository_validation() {
+    fn test_name_space_validation() {
         let name = "hello";
-        let repository = "world";
+        let space = "world";
 
-        assert!(super::validate_name_repository_pattern(name, repository).is_ok());
+        assert!(super::validate_name_space_pattern(name, space).is_ok());
 
         let name = "llllllllllllllllloooooooooooooonnnnnnnnnnnnnnggggggggggggggg";
-        let repository = "nnnnnnnnnnnnnaaaaaaaaaaaaaaammmmmmmmmmmmmeeeeeeeeeee";
+        let space = "nnnnnnnnnnnnnaaaaaaaaaaaaaaammmmmmmmmmmmmeeeeeeeeeee";
 
-        assert!(super::validate_name_repository_pattern(name, repository).is_err());
+        assert!(super::validate_name_space_pattern(name, space).is_err());
     }
 }

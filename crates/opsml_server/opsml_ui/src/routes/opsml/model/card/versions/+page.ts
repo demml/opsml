@@ -12,14 +12,14 @@ export const load: PageLoad = async ({ parent }) => {
   // get metric names, parameters
   let versionPage = await getVersionPage(
     registry,
-    metadata.repository,
+    metadata.space,
     metadata.name
   );
 
   let versionStats = await getRegistryStats(
     registry,
     metadata.name,
-    metadata.repository
+    metadata.space
   );
 
   return { registry, versionPage, versionStats };

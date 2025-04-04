@@ -1,6 +1,6 @@
 export interface DriftAlertRequest {
   name: string;
-  repository: string;
+  space: string;
   version: string;
   limit_datetime?: string;
   active?: boolean;
@@ -10,7 +10,7 @@ export interface DriftAlertRequest {
 export interface Alert {
   created_at: string;
   name: string;
-  repository: string;
+  space: string;
   version: string;
   feature: string;
   alert: Record<string, string>;

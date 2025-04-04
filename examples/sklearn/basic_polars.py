@@ -20,7 +20,7 @@ class OpsmlWorkflow:
         Args:
             info:
                 CardInfo data structure that contains required info for cards.
-                You could also provide "name", "repository" and "email" to a card; however, this
+                You could also provide "name", "space" and "email" to a card; however, this
                 simplifies the process.
 
         """
@@ -45,8 +45,15 @@ class OpsmlWorkflow:
         data_interface = PolarsData(
             data=X,
             data_splits=[
-                DataSplit(label="train", column_name="col_1", column_value=0.5, inequality=">="),
-                DataSplit(label="test", column_name="col_1", column_value=0.5, inequality="<"),
+                DataSplit(
+                    label="train",
+                    column_name="col_1",
+                    column_value=0.5,
+                    inequality=">=",
+                ),
+                DataSplit(
+                    label="test", column_name="col_1", column_value=0.5, inequality="<"
+                ),
             ],
             dependent_vars=["target"],
         )
@@ -108,7 +115,9 @@ class OpsmlWorkflow:
         # load onnx model
         modelcard.load_onnx_model()
 
-        prediction = modelcard.onnx_model.sess.run(None, {"predict": data["test"].X.to_numpy()[:5].astype("float32")})
+        prediction = modelcard.onnx_model.sess.run(
+            None, {"predict": data["test"].X.to_numpy()[:5].astype("float32")}
+        )
         print(prediction)
 
     def run_workflow(self):
@@ -120,7 +129,7 @@ class OpsmlWorkflow:
 
 if __name__ == "__main__":
     # set info (easier than specifying in each card)
-    info = CardInfo(name="linear-regression", repository="opsml", contact="user@email.com")
+    info = CardInfo(name="linear-regression", space="opsml", contact="user@email.com")
 
     workflow = OpsmlWorkflow(info=info)
     workflow.run_workflow()

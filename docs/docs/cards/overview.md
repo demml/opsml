@@ -45,12 +45,12 @@ Each card type is associated with a specific registry (`DataCard` with data regi
 You'll notice when working with `ArtifactCards` and `CardRegistries` that there are a few common arguments that are always required. These arguments are:
 
 - **name**: Name of card
-- **repository**: Repository associated with card
+- **space**: space associated with card
 - **contact**: Contact information for card
 
 These arguments are required for card registration and can be supplied through named arguments or through a `CardInfo` dataclass.
 
-`CardInfo` is a helper class that can be used to store these arguments so you don't need to make repetitive calls. In addition, the `CardInfo` class allows you to set `runtime` environment variables through a `set_env()` method. This will allow to create cards without having to specify `name`, `repository` and/or `contact`. Examples are below.
+`CardInfo` is a helper class that can be used to store these arguments so you don't need to make repetitive calls. In addition, the `CardInfo` class allows you to set `runtime` environment variables through a `set_env()` method. This will allow to create cards without having to specify `name`, `space` and/or `contact`. Examples are below.
 
 #### Example of named arguments
 
@@ -62,7 +62,7 @@ from opsml import DataCard
 
 DataCard(
   name="linnerud", 
-  repository="opsml", 
+  space="opsml", 
   contact="mlops.com", 
   interface=data_interface
   )
@@ -73,7 +73,7 @@ DataCard(
 ```python hl_lines="1 3 8-9"
 from opsml import DataCard, CardInfo
 
-info = CardInfo(name="linnerud", repository="opsml", contact="mlops.com")
+info = CardInfo(name="linnerud", space="opsml", contact="mlops.com")
 
 # skip data interface logic
 ...
@@ -89,7 +89,7 @@ DataCard(
 ```python hl_lines="1 3 8"
 from opsml import DataCard, CardInfo
 
-info = CardInfo(name="linnerud", repository="opsml", contact="mlops.com").set_env()
+info = CardInfo(name="linnerud", space="opsml", contact="mlops.com").set_env()
 
 # skip data interface logic
 ...
@@ -99,17 +99,17 @@ DataCard(interface=data_interface)
 
 ### Name Uniqueness
 
-When registering cards, `OpsML` will check to see if a card with the same name, repository and version already exists. Therefore, name uniqueness is guaranteed at the `repository/name` level. Thus, different repositories can share cards with the same name.
+When registering cards, `OpsML` will check to see if a card with the same name, space and version already exists. Therefore, name uniqueness is guaranteed at the `space/name` level. Thus, different repositories can share cards with the same name.
 
 ### Listing Cards
 Returns a list of dictionaries. 
 : Required Args:
   
     - Name: Name of card *(Optional)*
-    - repository: repository associated with card *(Optional)*
+    - space: space associated with card *(Optional)*
     - Version: Version of Card *(Optional)*
     - uid: Uid of card *(Optional)*
-    - info: `CardInfo` dataclass that can be used in place of Name, repository, Version and Uid
+    - info: `CardInfo` dataclass that can be used in place of Name, space, Version and Uid
     - limit: Limit result
 
   Example:
@@ -130,20 +130,20 @@ Returns a list of dictionaries.
   registry.list_cards(name="linear-reg")
     # list all cards with name "linear-reg"
   
-  registry.list_cards(name="linear-reg", repository="opsml") 
-  # list all cards with name "linear-reg" with repository "opsml"
+  registry.list_cards(name="linear-reg", space="opsml") 
+  # list all cards with name "linear-reg" with space "opsml"
   
-  registry.list_cards(name="linear-reg", repository="opsml", version="1.0.0") 
-  # list card with name "linear-reg" with repository "opsml" and version 1.0.0
+  registry.list_cards(name="linear-reg", space="opsml", version="1.0.0") 
+  # list card with name "linear-reg" with space "opsml" and version 1.0.0
 
-  registry.list_cards(name="linear-reg", repository="opsml", version="1.*.*") 
-  # list cards with name "linear-reg" with repository "opsml" and major version of "1"
+  registry.list_cards(name="linear-reg", space="opsml", version="1.*.*") 
+  # list cards with name "linear-reg" with space "opsml" and major version of "1"
 
-  registry.list_cards(name="linear-reg", repository="opsml", version="^2.3.4") 
-  # list card with name "linear-reg" with repository "opsml" and latest version < 3.0.0
+  registry.list_cards(name="linear-reg", space="opsml", version="^2.3.4") 
+  # list card with name "linear-reg" with space "opsml" and latest version < 3.0.0
 
-  registry.list_cards(name="linear-reg", repository="opsml", version="~2.3.4") 
-  # list card with name "linear-reg" with repository "opsml" and latest version < 2.4.0
+  registry.list_cards(name="linear-reg", space="opsml", version="~2.3.4") 
+  # list card with name "linear-reg" with space "opsml" and latest version < 2.4.0
 
   registry.list_cards(uid=uid)
   # list card by uid
@@ -172,7 +172,7 @@ model_registry = CardRegistry(registry_name="model")
 model_card = ModelCard(
       interface=model_interface,
       name="linear-reg",
-      repository="opsml",
+      space="opsml",
       contact="mlops.com",
       datacard_uid=data_card.uid,
   )
@@ -188,10 +188,10 @@ Load an Artifact card from a registry.
 : Required Args:
   
     - Name: Name of card *(Optional)*
-    - repository: repository associated with card *(Optional)*
+    - space: space associated with card *(Optional)*
     - Version: Version of Card *(Optional)*
     - uid: Uid of card *(Optional)*
-    - info: `CardInfo` dataclass that can be used in place of Name, repository, Version and Uid
+    - info: `CardInfo` dataclass that can be used in place of Name, space, Version and Uid
 
 Example:
 

@@ -11,7 +11,7 @@ export const load: PageLoad = async ({ parent }) => {
   const { metadata, registry, registryPath } = await parent();
 
   let tableName = getRegistryTableName(registry);
-  let basePath = `${tableName}/${metadata.repository}/${metadata.name}/v${metadata.version}`;
+  let basePath = `${tableName}/${metadata.space}/${metadata.name}/v${metadata.version}`;
 
   let fileTree = await getFileTree(basePath);
 

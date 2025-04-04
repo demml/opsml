@@ -169,7 +169,7 @@ impl Experiment {
     /// # Arguments
     ///
     /// * `py` - The python interpreter
-    /// * `repository` - The repository URL
+    /// * `space` - The space URL
     /// * `name` - The name of the experiment
     /// * `code_dir` - The directory containing the code
     /// * `registries` - The registries
@@ -188,7 +188,7 @@ impl Experiment {
     #[instrument(skip_all)]
     fn create_experiment<'py>(
         py: Python<'py>,
-        repository: Option<&str>,
+        space: Option<&str>,
         name: Option<&str>,
         registries: &mut CardRegistries,
         subexperiment: bool,
@@ -199,7 +199,7 @@ impl Experiment {
         });
 
         debug!("Initializing experiment");
-        let experiment = Self::initialize_experiment(py, repository, Some(&name), subexperiment)?;
+        let experiment = Self::initialize_experiment(py, space, Some(&name), subexperiment)?;
 
         debug!("Registering experiment");
         let uid = Self::register_experiment(&experiment, registries)?;
@@ -212,7 +212,7 @@ impl Experiment {
     /// # Arguments
     ///
     /// * `py` - The python interpreter
-    /// * `repository` - The repository URL
+    /// * `space` - The space URL
     /// * `name` - The name of the experiment
     /// * `subexperiment` - Whether the experiment is a subexperiment
     ///
@@ -225,11 +225,11 @@ impl Experiment {
     /// * `ExperimentError` - Error initializing the experiment
     fn initialize_experiment<'py>(
         py: Python<'py>,
-        repository: Option<&str>,
+        space: Option<&str>,
         name: Option<&str>,
         subexperiment: bool,
     ) -> PyResult<Bound<'py, PyAny>> {
-        let mut card = ExperimentCard::new(py, repository, name, None, None, None)?;
+        let mut card = ExperimentCard::new(py, space, name, None, None, None)?;
         card.subexperiment = subexperiment;
 
         let experiment = Py::new(py, card)?.into_bound_py_any(py).map_err(|e| {
@@ -349,7 +349,7 @@ impl Experiment {
     ///
     /// # Arguments
     ///
-    /// * `repository` - The repository URL
+    /// * `space` - The space URL
     /// * `name` - The name of the experiment
     /// * `code_dir` - The directory containing the code
     /// * `log_hardware` - Whether to log hardware metrics. Will log hardware metrics every 30 seconds
@@ -362,12 +362,12 @@ impl Experiment {
     /// # Errors
     ///
     /// * `ExperimentError` - Error starting the experiment
-    #[pyo3(signature = (repository=None, name=None, code_dir=None, log_hardware=false, experiment_uid=None))]
+    #[pyo3(signature = (space=None, name=None, code_dir=None, log_hardware=false, experiment_uid=None))]
     #[instrument(skip_all)]
     pub fn start_experiment<'py>(
         mut slf: PyRefMut<'py, Self>,
         py: Python<'py>,
-        repository: Option<&str>,
+        space: Option<&str>,
         name: Option<&str>,
         code_dir: Option<PathBuf>,
         log_hardware: bool,
@@ -388,8 +388,7 @@ impl Experiment {
                 )?
             }
             None => {
-                let (card, uid) =
-                    Experiment::create_experiment(py, repository, name, registries, true)?;
+                let (card, uid) = Experiment::create_experiment(py, space, name, registries, true)?;
 
                 Experiment::new(
                     py,
@@ -671,7 +670,7 @@ impl Experiment {
 ///
 /// # Arguments
 ///
-/// * `repository` - The repository URL
+/// * `space` - The space URL
 /// * `name` - The name of the experiment
 /// * `code_dir` - The directory containing the code
 /// * `log_hardware` - Whether to log hardware metrics. Will log hardware metrics every 30 seconds
@@ -685,11 +684,11 @@ impl Experiment {
 ///
 /// * `ExperimentError` - Error starting the experiment
 #[pyfunction]
-#[pyo3(signature = (repository=None, name=None, code_dir=None, log_hardware=false, experiment_uid=None))]
+#[pyo3(signature = (space=None, name=None, code_dir=None, log_hardware=false, experiment_uid=None))]
 #[instrument(skip_all)]
 pub fn start_experiment<'py>(
     py: Python<'py>,
-    repository: Option<&str>,
+    space: Option<&str>,
     name: Option<&str>,
     code_dir: Option<PathBuf>,
     log_hardware: bool,
@@ -716,7 +715,7 @@ pub fn start_experiment<'py>(
         }
         None => {
             let (experiment, uid) =
-                Experiment::create_experiment(py, repository, name, &mut registries, false)?;
+                Experiment::create_experiment(py, space, name, &mut registries, false)?;
 
             Experiment::new(
                 py,

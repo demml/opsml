@@ -99,7 +99,7 @@ export interface BinnedCustomMetrics {
 
 export interface DriftRequest {
   name: string;
-  repository: string;
+  space: string;
   version: string;
   time_interval: TimeInterval;
   max_data_points: number;
@@ -121,7 +121,7 @@ export type MetricData =
   | null;
 
 export interface ProfileRequest {
-  repository: string;
+  space: string;
   drift_type: DriftType;
   profile: string;
 }

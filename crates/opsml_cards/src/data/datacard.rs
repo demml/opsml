@@ -63,7 +63,7 @@ pub struct DataCard {
     pub interface: Option<PyObject>,
 
     #[pyo3(get, set)]
-    pub repository: String,
+    pub space: String,
 
     #[pyo3(get, set)]
     pub name: String,
@@ -102,10 +102,10 @@ pub struct DataCard {
 impl DataCard {
     #[new]
     #[allow(clippy::too_many_arguments)]
-    #[pyo3(signature = (interface, repository=None, name=None, version=None, uid=None, tags=None, metadata=None))]
+    #[pyo3(signature = (interface, space=None, name=None, version=None, uid=None, tags=None, metadata=None))]
     pub fn new(
         interface: &Bound<'_, PyAny>,
-        repository: Option<&str>,
+        space: Option<&str>,
         name: Option<&str>,
         version: Option<&str>,
         uid: Option<&str>,
@@ -119,7 +119,7 @@ impl DataCard {
                 .map_err(|e| OpsmlError::new_err(e.to_string()))?,
         };
 
-        let base_args = BaseArgs::create_args(name, repository, version, uid).map_err(|e| {
+        let base_args = BaseArgs::create_args(name, space, version, uid).map_err(|e| {
             error!("Failed to create base args: {}", e);
             OpsmlError::new_err(e.to_string())
         })?;
@@ -156,7 +156,7 @@ impl DataCard {
                     .into_py_any(py)
                     .map_err(|e| OpsmlError::new_err(e.to_string()))?,
             ),
-            repository: base_args.0,
+            space: base_args.0,
             name: base_args.1,
             version: base_args.2,
             uid: base_args.3,
@@ -303,7 +303,7 @@ impl DataCard {
         let record = DataCardClientRecord {
             created_at: self.created_at,
             app_env: self.app_env.clone(),
-            repository: self.repository.clone(),
+            space: self.space.clone(),
             name: self.name.clone(),
             version: self.version.clone(),
             uid: self.uid.clone(),
@@ -379,7 +379,7 @@ impl Serialize for DataCard {
 
         // set session to none
         state.serialize_field("name", &self.name)?;
-        state.serialize_field("repository", &self.repository)?;
+        state.serialize_field("space", &self.space)?;
         state.serialize_field("version", &self.version)?;
         state.serialize_field("uid", &self.uid)?;
         state.serialize_field("tags", &self.tags)?;
@@ -403,7 +403,7 @@ impl<'de> Deserialize<'de> for DataCard {
         enum Field {
             Interface,
             Name,
-            Repository,
+            space,
             Version,
             Uid,
             Tags,
@@ -430,7 +430,7 @@ impl<'de> Deserialize<'de> for DataCard {
             {
                 let mut interface = None;
                 let mut name = None;
-                let mut repository = None;
+                let mut space = None;
                 let mut version = None;
                 let mut uid = None;
                 let mut tags = None;
@@ -450,8 +450,8 @@ impl<'de> Deserialize<'de> for DataCard {
                         Field::Name => {
                             name = Some(map.next_value()?);
                         }
-                        Field::Repository => {
-                            repository = Some(map.next_value()?);
+                        Field::space => {
+                            space = Some(map.next_value()?);
                         }
 
                         Field::Version => {
@@ -485,8 +485,7 @@ impl<'de> Deserialize<'de> for DataCard {
                 }
 
                 let name = name.ok_or_else(|| de::Error::missing_field("name"))?;
-                let repository =
-                    repository.ok_or_else(|| de::Error::missing_field("repository"))?;
+                let space = space.ok_or_else(|| de::Error::missing_field("space"))?;
                 let version = version.ok_or_else(|| de::Error::missing_field("version"))?;
                 let uid = uid.ok_or_else(|| de::Error::missing_field("uid"))?;
                 let tags = tags.ok_or_else(|| de::Error::missing_field("tags"))?;
@@ -503,7 +502,7 @@ impl<'de> Deserialize<'de> for DataCard {
                 Ok(DataCard {
                     interface,
                     name,
-                    repository,
+                    space,
                     version,
                     uid,
                     tags,
@@ -521,7 +520,7 @@ impl<'de> Deserialize<'de> for DataCard {
         const FIELDS: &[&str] = &[
             "interface",
             "name",
-            "repository",
+            "space",
             "version",
             "uid",
             "tags",
@@ -540,7 +539,7 @@ impl FromPyObject<'_> for DataCard {
     fn extract_bound(ob: &Bound<'_, PyAny>) -> PyResult<Self> {
         let interface = ob.getattr("interface")?;
         let name = ob.getattr("name")?.extract()?;
-        let repository = ob.getattr("repository")?.extract()?;
+        let space = ob.getattr("space")?.extract()?;
         let version = ob.getattr("version")?.extract()?;
         let uid = ob.getattr("uid")?.extract()?;
         let tags = ob.getattr("tags")?.extract()?;
@@ -553,7 +552,7 @@ impl FromPyObject<'_> for DataCard {
         Ok(DataCard {
             interface: Some(interface.unbind()),
             name,
-            repository,
+            space,
 
             version,
             uid,

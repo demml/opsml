@@ -19,7 +19,7 @@
   let registryStats = $state<RegistryStatsResponse>(data.versionStats);
 
   const changePage = async function (page: number) {
-    registryPage = await getVersionPage(data.registry, data.metadata.repository, data.metadata.name, page);
+    registryPage = await getVersionPage(data.registry, data.metadata.space, data.metadata.name, page);
 
     console.log("registryPage", JSON.stringify(registryPage, null, 2));
     currentPage = page;
@@ -57,7 +57,7 @@
         <div class="pt-4 grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-4">
           {#each registryPage.summaries as summary}
             <VersionPage
-              repository={summary.repository}
+              space={summary.space}
               name={summary.name}
               version={summary.version}
               updated_at={summary.created_at}

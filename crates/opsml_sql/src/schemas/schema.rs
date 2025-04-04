@@ -92,7 +92,7 @@ impl Default for ParameterRecord {
 pub struct VersionResult {
     pub created_at: DateTime<Utc>,
     pub name: String,
-    pub repository: String,
+    pub space: String,
     pub major: i32,
     pub minor: i32,
     pub patch: i32,
@@ -119,8 +119,8 @@ impl VersionResult {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
-pub struct Repository {
-    pub repository: String,
+pub struct Space {
+    pub space: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
@@ -132,7 +132,7 @@ pub struct QueryStats {
 
 #[derive(Debug, FromRow, Serialize, Deserialize)]
 pub struct CardSummary {
-    pub repository: String,
+    pub space: String,
     pub name: String,
     pub version: String,
     pub versions: i64,
@@ -143,7 +143,7 @@ pub struct CardSummary {
 
 #[derive(Debug, FromRow, Serialize, Deserialize)]
 pub struct VersionSummary {
-    pub repository: String,
+    pub space: String,
     pub name: String,
     pub version: String,
     pub created_at: DateTime<Utc>,
@@ -156,7 +156,7 @@ pub struct DataCardRecord {
     pub created_at: DateTime<Utc>,
     pub app_env: String,
     pub name: String,
-    pub repository: String,
+    pub space: String,
     pub major: i32,
     pub minor: i32,
     pub patch: i32,
@@ -175,7 +175,7 @@ pub struct DataCardRecord {
 impl DataCardRecord {
     pub fn new(
         name: String,
-        repository: String,
+        space: String,
         version: Version,
         tags: Vec<String>,
         data_type: String,
@@ -193,7 +193,7 @@ impl DataCardRecord {
             created_at,
             app_env,
             name,
-            repository,
+            space,
             major: version.major as i32,
             minor: version.minor as i32,
             patch: version.patch as i32,
@@ -213,7 +213,7 @@ impl DataCardRecord {
         format!(
             "{}/{}/{}/v{}",
             CardTable::Data,
-            self.repository,
+            self.space,
             self.name,
             self.version
         )
@@ -228,7 +228,7 @@ impl DataCardRecord {
             created_at: client_card.created_at,
             app_env: client_card.app_env,
             name: client_card.name,
-            repository: client_card.repository,
+            space: client_card.space,
             major: version.major as i32,
             minor: version.minor as i32,
             patch: version.patch as i32,
@@ -252,7 +252,7 @@ impl Default for DataCardRecord {
             created_at: get_utc_datetime(),
             app_env: env::var("APP_ENV").unwrap_or_else(|_| "development".to_string()),
             name: CommonKwargs::Undefined.to_string(),
-            repository: CommonKwargs::Undefined.to_string(),
+            space: CommonKwargs::Undefined.to_string(),
             major: 1,
             minor: 0,
             patch: 0,
@@ -275,7 +275,7 @@ pub struct ModelCardRecord {
     pub created_at: DateTime<Utc>,
     pub app_env: String,
     pub name: String,
-    pub repository: String,
+    pub space: String,
     pub major: i32,
     pub minor: i32,
     pub patch: i32,
@@ -297,7 +297,7 @@ pub struct ModelCardRecord {
 impl ModelCardRecord {
     pub fn new(
         name: String,
-        repository: String,
+        space: String,
         version: Version,
         tags: Vec<String>,
         datacard_uid: Option<String>,
@@ -318,7 +318,7 @@ impl ModelCardRecord {
             created_at,
             app_env,
             name,
-            repository,
+            space,
             major: version.major as i32,
             minor: version.minor as i32,
             patch: version.patch as i32,
@@ -341,7 +341,7 @@ impl ModelCardRecord {
         format!(
             "{}/{}/{}/v{}",
             CardTable::Model,
-            self.repository,
+            self.space,
             self.name,
             self.version
         )
@@ -357,7 +357,7 @@ impl ModelCardRecord {
             created_at: client_card.created_at,
             app_env: client_card.app_env,
             name: client_card.name,
-            repository: client_card.repository,
+            space: client_card.space,
             major: version.major as i32,
             minor: version.minor as i32,
             patch: version.patch as i32,
@@ -384,7 +384,7 @@ impl Default for ModelCardRecord {
             created_at: get_utc_datetime(),
             app_env: env::var("APP_ENV").unwrap_or_else(|_| "development".to_string()),
             name: CommonKwargs::Undefined.to_string(),
-            repository: CommonKwargs::Undefined.to_string(),
+            space: CommonKwargs::Undefined.to_string(),
             major: 1,
             minor: 0,
             patch: 0,
@@ -410,7 +410,7 @@ pub struct ExperimentCardRecord {
     pub created_at: DateTime<Utc>,
     pub app_env: String,
     pub name: String,
-    pub repository: String,
+    pub space: String,
     pub major: i32,
     pub minor: i32,
     pub patch: i32,
@@ -432,7 +432,7 @@ impl Default for ExperimentCardRecord {
             created_at: get_utc_datetime(),
             app_env: env::var("APP_ENV").unwrap_or_else(|_| "development".to_string()),
             name: CommonKwargs::Undefined.to_string(),
-            repository: CommonKwargs::Undefined.to_string(),
+            space: CommonKwargs::Undefined.to_string(),
             major: 1,
             minor: 0,
             patch: 0,
@@ -453,7 +453,7 @@ impl Default for ExperimentCardRecord {
 impl ExperimentCardRecord {
     pub fn new(
         name: String,
-        repository: String,
+        space: String,
         version: Version,
         tags: Vec<String>,
         datacard_uids: Vec<String>,
@@ -471,7 +471,7 @@ impl ExperimentCardRecord {
             created_at,
             app_env,
             name,
-            repository,
+            space,
             major: version.major as i32,
             minor: version.minor as i32,
             patch: version.patch as i32,
@@ -491,7 +491,7 @@ impl ExperimentCardRecord {
         format!(
             "{}/{}/{}/v{}",
             CardTable::Experiment,
-            self.repository,
+            self.space,
             self.name,
             self.version
         )
@@ -507,7 +507,7 @@ impl ExperimentCardRecord {
             created_at: client_card.created_at,
             app_env: client_card.app_env,
             name: client_card.name,
-            repository: client_card.repository,
+            space: client_card.space,
             major: version.major as i32,
             minor: version.minor as i32,
             patch: version.patch as i32,
@@ -530,7 +530,7 @@ pub struct AuditCardRecord {
     pub created_at: DateTime<Utc>,
     pub app_env: String,
     pub name: String,
-    pub repository: String,
+    pub space: String,
     pub major: i32,
     pub minor: i32,
     pub patch: i32,
@@ -549,7 +549,7 @@ pub struct AuditCardRecord {
 impl AuditCardRecord {
     pub fn new(
         name: String,
-        repository: String,
+        space: String,
         version: Version,
         tags: Vec<String>,
         approved: bool,
@@ -567,7 +567,7 @@ impl AuditCardRecord {
             created_at,
             app_env,
             name,
-            repository,
+            space,
             major: version.major as i32,
             minor: version.minor as i32,
             patch: version.patch as i32,
@@ -587,7 +587,7 @@ impl AuditCardRecord {
         format!(
             "{}/{}/{}/v{}",
             CardTable::Audit,
-            self.repository,
+            self.space,
             self.name,
             self.version
         )
@@ -602,7 +602,7 @@ impl AuditCardRecord {
             created_at: client_card.created_at,
             app_env: client_card.app_env,
             name: client_card.name,
-            repository: client_card.repository,
+            space: client_card.space,
             major: version.major as i32,
             minor: version.minor as i32,
             patch: version.patch as i32,
@@ -626,7 +626,7 @@ impl Default for AuditCardRecord {
             created_at: get_utc_datetime(),
             app_env: env::var("APP_ENV").unwrap_or_else(|_| "development".to_string()),
             name: CommonKwargs::Undefined.to_string(),
-            repository: CommonKwargs::Undefined.to_string(),
+            space: CommonKwargs::Undefined.to_string(),
             major: 1,
             minor: 0,
             patch: 0,
@@ -649,7 +649,7 @@ pub struct PromptCardRecord {
     pub created_at: DateTime<Utc>,
     pub app_env: String,
     pub name: String,
-    pub repository: String,
+    pub space: String,
     pub major: i32,
     pub minor: i32,
     pub patch: i32,
@@ -666,7 +666,7 @@ pub struct PromptCardRecord {
 impl PromptCardRecord {
     pub fn new(
         name: String,
-        repository: String,
+        space: String,
         version: Version,
         tags: Vec<String>,
         experimentcard_uid: Option<String>,
@@ -682,7 +682,7 @@ impl PromptCardRecord {
             created_at,
             app_env,
             name,
-            repository,
+            space,
             major: version.major as i32,
             minor: version.minor as i32,
             patch: version.patch as i32,
@@ -700,7 +700,7 @@ impl PromptCardRecord {
         format!(
             "{}/{}/{}/v{}",
             CardTable::Prompt,
-            self.repository,
+            self.space,
             self.name,
             self.version
         )
@@ -716,7 +716,7 @@ impl PromptCardRecord {
             created_at: client_card.created_at,
             app_env: client_card.app_env,
             name: client_card.name,
-            repository: client_card.repository,
+            space: client_card.space,
             major: version.major as i32,
             minor: version.minor as i32,
             patch: version.patch as i32,
@@ -738,7 +738,7 @@ impl Default for PromptCardRecord {
             created_at: get_utc_datetime(),
             app_env: env::var("APP_ENV").unwrap_or_else(|_| "development".to_string()),
             name: CommonKwargs::Undefined.to_string(),
-            repository: CommonKwargs::Undefined.to_string(),
+            space: CommonKwargs::Undefined.to_string(),
             major: 1,
             minor: 0,
             patch: 0,
@@ -849,13 +849,13 @@ impl ServerCard {
         }
     }
 
-    pub fn repository(&self) -> String {
+    pub fn space(&self) -> String {
         match self {
-            ServerCard::Data(card) => card.repository.clone(),
-            ServerCard::Model(card) => card.repository.clone(),
-            ServerCard::Experiment(card) => card.repository.clone(),
-            ServerCard::Audit(card) => card.repository.clone(),
-            ServerCard::Prompt(card) => card.repository.clone(),
+            ServerCard::Data(card) => card.space.clone(),
+            ServerCard::Model(card) => card.space.clone(),
+            ServerCard::Experiment(card) => card.space.clone(),
+            ServerCard::Audit(card) => card.space.clone(),
+            ServerCard::Prompt(card) => card.space.clone(),
         }
     }
 

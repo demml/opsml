@@ -4,7 +4,7 @@ import type { PageLoad } from "./$types";
 
 export const load: PageLoad = async ({ parent, url }) => {
   const name = (url as URL).searchParams.get("name") as string;
-  const repository = (url as URL).searchParams.get("repository") as string;
+  const space = (url as URL).searchParams.get("space") as string;
 
   const { metadata, registry, readme } = await parent();
 
@@ -17,7 +17,7 @@ export const load: PageLoad = async ({ parent, url }) => {
 
 <!--- Summary of experiment goes here -->
 
-Generic summary for ${repository}/${name} goes here.
+Generic summary for ${space}/${name} goes here.
 
 ## Experiment Details
 

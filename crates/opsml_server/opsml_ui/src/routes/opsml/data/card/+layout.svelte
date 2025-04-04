@@ -18,13 +18,13 @@
       return;
     }
     activeTab = tab;
-    goto(`/opsml/${registry}/card/${activeTab}?repository=${repository}&name=${name}&version=${version}`);
+    goto(`/opsml/${registry}/card/${activeTab}?space=${space}&name=${name}&version=${version}`);
   };
 
   let { data, children }: LayoutProps = $props();
 
   let activeTab = $state(getLastPartOfPath(page.url.pathname));
-  let repository = data.metadata.repository;
+  let space = data.metadata.space;
   let name = data.metadata.name;
   let version = data.metadata.version;
   let registry = $state('');
@@ -42,7 +42,7 @@
     <div class="flex flex-col mx-auto w-11/12 justify-start">
       <h1 class="flex flex-row flex-wrap items-center text-xl">
         <div class="group flex flex-none items-center">
-          <a class="font-semibold text-black hover:text-secondary-500" href="/opsml/{registry}?repository={repository}">{repository}</a>
+          <a class="font-semibold text-black hover:text-secondary-500" href="/opsml/{registry}?space={space}">{space}</a>
           <div class="mx-0.5 text-gray-800">/</div>
         </div>
         <div class="font-bold text-primary-800">{name}</div>

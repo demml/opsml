@@ -47,7 +47,7 @@ experimentcard = registry.load_card(uid="${metadata.uid}")
   <div class="flex flex-col space-y-1 text-base">
     <Pill key="Created At" value={metadata.created_at} />
     <Pill key="ID" value={metadata.uid} />
-    <Pill key="Repository" value={metadata.repository} />
+    <Pill key="space" value={metadata.space} />
     <Pill key="Name" value={metadata.name} />
     <Pill key="Version" value={metadata.version} />
     <Pill key="OpsML Version" value={metadata.opsml_version} />

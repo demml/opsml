@@ -125,7 +125,7 @@ ImageMetadata(records=records).write_to_file(Path("image_dir/metadata.jsonl"))
 ```python hl_lines="1  6"
 from opsml import ImageDataset, CardInfo, DataCard, CardRegistry
 
-info = CardInfo(name="data", repository="opsml", contact="user@email.com")
+info = CardInfo(name="data", space="opsml", contact="user@email.com")
 data_registry = CardRegistry("data")
 
 data = ImageDataset(path=Path("image_dir"))
@@ -195,7 +195,7 @@ TextMetadata(records=[record]).write_to_file(Path("text_dir/metadata.jsonl"))
 ```python hl_lines="1  6"
 from opsml import TextDataset, CardInfo, DataCard, CardRegistry
 
-info = CardInfo(name="data", repository="opsml", contact="user@email.com")
+info = CardInfo(name="data", space="opsml", contact="user@email.com")
 data_registry = CardRegistry("data")
 
 data = TextDataset(path=Path("text_dir"))

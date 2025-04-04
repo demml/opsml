@@ -28,7 +28,7 @@ class OpsmlXGBoostPipelineWorkflow:
         Args:
             info:
                 CardInfo data structure that contains required info for cards.
-                You could also provide "name", "repository" and "email" to a card; however, this
+                You could also provide "name", "space" and "email" to a card; however, this
                 simplifies the process.
 
         """
@@ -47,15 +47,24 @@ class OpsmlXGBoostPipelineWorkflow:
         """
 
         # create fake data
-        X, y = create_fake_data(n_samples=1000, n_categorical_features=2, task_type="regression")
+        X, y = create_fake_data(
+            n_samples=1000, n_categorical_features=2, task_type="regression"
+        )
         X["target"] = y
 
         # Create data interface
         data_interface = PandasData(
             data=X,
             data_splits=[
-                DataSplit(label="train", column_name="col_1", column_value=0.5, inequality=">="),
-                DataSplit(label="test", column_name="col_1", column_value=0.5, inequality="<"),
+                DataSplit(
+                    label="train",
+                    column_name="col_1",
+                    column_value=0.5,
+                    inequality=">=",
+                ),
+                DataSplit(
+                    label="test", column_name="col_1", column_value=0.5, inequality="<"
+                ),
             ],
             dependent_vars=["target"],
         )
@@ -70,14 +79,21 @@ class OpsmlXGBoostPipelineWorkflow:
         This example highlights the uses of the XGBoostModel.
         """
 
-        categorical_transformer = Pipeline([("onehot", OneHotEncoder(sparse_output=False, handle_unknown="ignore"))])
+        categorical_transformer = Pipeline(
+            [("onehot", OneHotEncoder(sparse_output=False, handle_unknown="ignore"))]
+        )
         preprocessor = ColumnTransformer(
             transformers=[("cat", categorical_transformer, self.cat_cols)],
             remainder="passthrough",
         )
 
         # setup xgb regressor
-        pipe = Pipeline([("preprocess", preprocessor), ("rf", xgb.XGBRegressor(n_estimators=3, max_depth=3))])
+        pipe = Pipeline(
+            [
+                ("preprocess", preprocessor),
+                ("rf", xgb.XGBRegressor(n_estimators=3, max_depth=3)),
+            ]
+        )
 
         # split data
         datacard: DataCard = self.registries.data.load_card(name=self.info.name)
@@ -95,7 +111,9 @@ class OpsmlXGBoostPipelineWorkflow:
 
         # create modelcard
         # Here we are registering the pipeline which contains an sklearn model
-        modelcard = ModelCard(interface=interface, info=info, datacard_uid=datacard.uid, to_onnx=True)
+        modelcard = ModelCard(
+            interface=interface, info=info, datacard_uid=datacard.uid, to_onnx=True
+        )
         self.registries.model.register_card(card=modelcard)
 
     def _create_xgboost_modelcard(self):
@@ -122,7 +140,7 @@ class OpsmlXGBoostPipelineWorkflow:
         # create modelcard
         modelcard = ModelCard(
             name="xgb-reg",
-            repository="opsml",
+            space="opsml",
             contact="user@email.com",
             interface=interface,
             datacard_uid=datacard.uid,
@@ -167,6 +185,6 @@ class OpsmlXGBoostPipelineWorkflow:
 
 if __name__ == "__main__":
     # set info (easier than specifying in each card)
-    info = CardInfo(name="xgboost", repository="opsml", contact="user@email.com")
+    info = CardInfo(name="xgboost", space="opsml", contact="user@email.com")
     workflow = OpsmlXGBoostPipelineWorkflow(info=info)
     workflow.run_workflow()

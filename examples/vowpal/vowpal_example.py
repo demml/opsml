@@ -23,7 +23,7 @@ class OpsmlWorkflow:
         Args:
             info:
                 CardInfo data structure that contains required info for cards.
-                You could also provide "name", "repository" and "email" to a card; however, this
+                You could also provide "name", "space" and "email" to a card; however, this
                 simplifies the process.
 
         """
@@ -192,7 +192,9 @@ class OpsmlWorkflow:
             feature2 = test_df.loc[j, "feature2"]
             feature3 = test_df.loc[j, "feature3"]
 
-            test_example = "| " + str(feature1) + " " + str(feature2) + " " + str(feature3)
+            test_example = (
+                "| " + str(feature1) + " " + str(feature2) + " " + str(feature3)
+            )
 
             choice = vw.predict(test_example)
             print(j, choice)
@@ -203,7 +205,9 @@ class OpsmlWorkflow:
         interface = VowpalWabbitModel(model=vw, sample_data=test_example)
 
         # create modelcard
-        modelcard = ModelCard(interface=interface, info=self.info, datacard_uid=datacard.uid)
+        modelcard = ModelCard(
+            interface=interface, info=self.info, datacard_uid=datacard.uid
+        )
         self.registries.model.register_card(card=modelcard)
 
     def _test_model(self):
@@ -273,7 +277,7 @@ class OpsmlWorkflow:
 
 if __name__ == "__main__":
     # set info (easier than specifying in each card)
-    info = CardInfo(name="vowpal-cb", repository="opsml", contact="user@email.com")
+    info = CardInfo(name="vowpal-cb", space="opsml", contact="user@email.com")
 
     workflow = OpsmlWorkflow(info=info)
     workflow.run_workflow()

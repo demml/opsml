@@ -149,7 +149,7 @@
     <div class="pt-4 grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-4">
       {#each registryPage.summaries as summary}
         <CardPage
-          repository={summary.repository}
+          space={summary.space}
           name={summary.name}
           version={summary.version}
           nbr_versions={summary.versions}

@@ -109,7 +109,7 @@
       );
 
     currentAlerts = await getDriftAlerts(
-      currentConfig.repository,
+      currentConfig.space,
       currentConfig.name,
       currentConfig.version,
       currentTimeInterval,

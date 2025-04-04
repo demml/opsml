@@ -137,37 +137,38 @@ impl MySQLQueryHelper {
         let versions_cte = format!(
             "WITH versions AS (
                 SELECT 
-                    repository, 
+                    space, 
                     name, 
                     version, 
-                    ROW_NUMBER() OVER (PARTITION BY repository, name ORDER BY created_at DESC) AS row_num
+                    ROW_NUMBER() OVER (PARTITION BY space, name ORDER BY created_at DESC) AS row_num
                 FROM {}
                 WHERE 1=1
-                AND (? IS NULL OR repository = ?)
-                AND (? IS NULL OR name LIKE ? OR repository LIKE ?)
-            )", table
+                AND (? IS NULL OR space = ?)
+                AND (? IS NULL OR name LIKE ? OR space LIKE ?)
+            )",
+            table
         );
 
         let stats_cte = format!(
             ", stats AS (
                 SELECT 
-                    repository, 
+                    space, 
                     name, 
                     COUNT(DISTINCT version) AS versions, 
                     MAX(created_at) AS updated_at, 
                     MIN(created_at) AS created_at 
                 FROM {}
                 WHERE 1=1
-                AND (? IS NULL OR repository = ?)
-                AND (? IS NULL OR name LIKE ? OR repository LIKE ?)
-                GROUP BY repository, name
+                AND (? IS NULL OR space = ?)
+                AND (? IS NULL OR name LIKE ? OR space LIKE ?)
+                GROUP BY space, name
             )",
             table
         );
 
         let filtered_versions_cte = ", filtered_versions AS (
             SELECT 
-                repository, 
+                space, 
                 name, 
                 version, 
                 row_num
@@ -178,7 +179,7 @@ impl MySQLQueryHelper {
         let joined_cte = format!(
             ", joined AS (
                 SELECT 
-                    stats.repository, 
+                    stats.space, 
                     stats.name, 
                     filtered_versions.version, 
                     stats.versions, 
@@ -187,7 +188,7 @@ impl MySQLQueryHelper {
                     ROW_NUMBER() OVER (ORDER BY stats.{}) AS row_num 
                 FROM stats 
                 JOIN filtered_versions 
-                ON stats.repository = filtered_versions.repository 
+                ON stats.space = filtered_versions.space 
                 AND stats.name = filtered_versions.name
             )",
             sort_by
@@ -196,7 +197,7 @@ impl MySQLQueryHelper {
         let combined_query = format!(
             "{}{}{}{} 
             SELECT
-            repository,
+            space,
             name,
             version,
             versions,
@@ -216,13 +217,13 @@ impl MySQLQueryHelper {
         let versions_cte = format!(
             "WITH versions AS (
                 SELECT 
-                    repository, 
+                    space, 
                     name, 
                     version, 
                     created_at,
-                    ROW_NUMBER() OVER (PARTITION BY repository, name ORDER BY created_at DESC, major DESC, minor DESC, patch DESC) AS row_num
+                    ROW_NUMBER() OVER (PARTITION BY space, name ORDER BY created_at DESC, major DESC, minor DESC, patch DESC) AS row_num
                 FROM {}
-                WHERE repository = ?
+                WHERE space = ?
                 AND name = ?
             )", table
         );
@@ -230,7 +231,7 @@ impl MySQLQueryHelper {
         let query = format!(
             "{}
             SELECT
-            repository,
+            space,
             name,
             version,
             created_at,
@@ -249,11 +250,11 @@ impl MySQLQueryHelper {
             "SELECT 
                     COALESCE(COUNT(DISTINCT name), 0) AS nbr_names, 
                     COALESCE(COUNT(major), 0) AS nbr_versions, 
-                    COALESCE(COUNT(DISTINCT repository), 0) AS nbr_repositories 
+                    COALESCE(COUNT(DISTINCT space), 0) AS nbr_repositories 
                 FROM {}
                 WHERE 1=1
-                AND (? IS NULL OR name LIKE ? OR repository LIKE ?)
-                AND (? IS NULL OR repository = ?)
+                AND (? IS NULL OR name LIKE ? OR space LIKE ?)
+                AND (? IS NULL OR space = ?)
                 ",
             table
         );
@@ -269,7 +270,7 @@ impl MySQLQueryHelper {
             SELECT
              created_at, 
              name, 
-             repository, 
+             space, 
              major, minor, 
              patch, 
              pre_tag, 
@@ -278,7 +279,7 @@ impl MySQLQueryHelper {
              FROM {}
              WHERE 1=1
                 AND name = ?
-                AND repository = ?
+                AND space = ?
             ",
             table
         );
@@ -302,7 +303,7 @@ impl MySQLQueryHelper {
         WHERE 1=1
         AND (? IS NULL OR uid = ?)
         AND (? IS NULL OR name = ?)
-        AND (? IS NULL OR repository = ?)
+        AND (? IS NULL OR space = ?)
         AND (? IS NULL OR created_at <= STR_TO_DATE(?, '%Y-%m-%d'))
         ",
             table
@@ -410,11 +411,11 @@ impl MySQLQueryHelper {
     }
 
     pub fn get_datacard_insert_query() -> String {
-        format!("INSERT INTO {} (uid, app_env, name, repository, major, minor, patch, version,  data_type, interface_type, tags, experimentcard_uid, auditcard_uid, pre_tag, build_tag, username) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", CardTable::Data)
+        format!("INSERT INTO {} (uid, app_env, name, space, major, minor, patch, version,  data_type, interface_type, tags, experimentcard_uid, auditcard_uid, pre_tag, build_tag, username) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", CardTable::Data)
     }
 
     pub fn get_promptcard_insert_query() -> String {
-        format!("INSERT INTO {} (uid, app_env, name, repository, major, minor, patch, version, tags, experimentcard_uid, auditcard_uid, pre_tag, build_tag, username) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", CardTable::Prompt)
+        format!("INSERT INTO {} (uid, app_env, name, space, major, minor, patch, version, tags, experimentcard_uid, auditcard_uid, pre_tag, build_tag, username) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", CardTable::Prompt)
     }
 
     pub fn get_modelcard_insert_query() -> String {
@@ -423,7 +424,7 @@ impl MySQLQueryHelper {
             uid, 
             app_env, 
             name, 
-            repository, 
+            space, 
             major, 
             minor, 
             patch, 
@@ -451,7 +452,7 @@ impl MySQLQueryHelper {
             uid, 
             app_env, 
             name, 
-            repository, 
+            space, 
             major, 
             minor, 
             patch, 
@@ -476,7 +477,7 @@ impl MySQLQueryHelper {
             uid, 
             app_env, 
             name, 
-            repository, 
+            space, 
             major, 
             minor, 
             patch, 
@@ -500,7 +501,7 @@ impl MySQLQueryHelper {
             "UPDATE {} SET 
             app_env = ?, 
             name = ?, 
-            repository = ?, 
+            space = ?, 
             major = ?, 
             minor = ?, 
             patch = ?, 
@@ -521,7 +522,7 @@ impl MySQLQueryHelper {
             "UPDATE {} SET  
             app_env = ?, 
             name = ?, 
-            repository = ?, 
+            space = ?, 
             major = ?, 
             minor = ?, 
             patch = ?, 
@@ -544,7 +545,7 @@ impl MySQLQueryHelper {
             "UPDATE {} SET 
             app_env = ?, 
             name = ?, 
-            repository = ?, 
+            space = ?, 
             major = ?, 
             minor = ?, 
             patch = ?, 
@@ -570,7 +571,7 @@ impl MySQLQueryHelper {
             "UPDATE {} SET 
             app_env = ?, 
             name = ?, 
-            repository = ?, 
+            space = ?, 
             major = ?, 
             minor = ?, 
             patch = ?, 
@@ -593,7 +594,7 @@ impl MySQLQueryHelper {
             "UPDATE {} SET 
             app_env = ?, 
             name = ?, 
-            repository = ?, 
+            space = ?, 
             major = ?, 
             minor = ?, 
             patch = ?, 

@@ -8,7 +8,7 @@ command: `list-cards`
 
 
 ```bash
-opsml-cli list-cards --registry "model" --name "linnerud" --repository "opsml" --limit 10
+opsml-cli list-cards --registry "model" --name "linnerud" --space "opsml" --limit 10
 ```
 
 Will list available cards in a registry
@@ -17,7 +17,7 @@ Will list available cards in a registry
 
 - **registry**: Card registry to search
 - **name**: Name of card
-- **repository**: Repository associated with card
+- **space**: space associated with card
 - **version**: Version of card
 - **uid**: Uid of card
 - **max-date**: Max date to search. Must be in `YYYY-MM-DD` format
@@ -31,7 +31,7 @@ commands: `download-model-metadata`, `download-model`
 
 ```bash
 # download model metadata
-opsml-cli download-model-metadata --name "linnerud" --repository "opsml" --version "1.0.0"
+opsml-cli download-model-metadata --name "linnerud" --space "opsml" --version "1.0.0"
 
 # download model (this will also download metadata)
 opsml-cli download-model --uid {{model_uid}}
@@ -42,7 +42,7 @@ Will download model metadata or model from a registry
 ### Args
 
 - **name**: Name of card
-- **repository**: Repository associated with card
+- **space**: space associated with card
 - **version**: Version of card
 - **uid**: Uid of card
 - **write-dir**: Directory to write to
@@ -52,13 +52,13 @@ Will download model metadata or model from a registry
 command: `get-model-metrics`
 
 ```bash
-opsml-cli get-model-metrics --name "linnerud" --repository "opsml" --version "1.0.0"
+opsml-cli get-model-metrics --name "linnerud" --space "opsml" --version "1.0.0"
 ```
 
 Prints metrics associated with a ModelCard
 
 - **name**: Name of card
-- **repository**: repository associated with card
+- **space**: space associated with card
 - **version**: Version of card
 - **uid**: uid of card
 
