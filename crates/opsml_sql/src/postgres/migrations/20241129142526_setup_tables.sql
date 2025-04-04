@@ -146,7 +146,6 @@ CREATE TABLE IF NOT EXISTS opsml_artifact_key (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-
 CREATE TABLE IF NOT EXISTS opsml_audit_event (
     id SERIAL PRIMARY KEY,
     created_at TIMESTAMPTZ DEFAULT NOW(),
@@ -159,9 +158,9 @@ CREATE TABLE IF NOT EXISTS opsml_audit_event (
     access_location TEXT,          
     status TEXT NOT NULL,        
     error_message TEXT,          
-    metadata JSONB,               
+    metadata TEXT,               
     registry_type TEXT,  
-    route TEXT,
+    route TEXT
 );
 
 CREATE INDEX idx_opsml_audit_event_created_at ON opsml_audit_event (created_at);

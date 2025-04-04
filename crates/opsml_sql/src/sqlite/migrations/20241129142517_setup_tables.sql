@@ -160,7 +160,7 @@ CREATE TABLE IF NOT EXISTS opsml_audit_event (
     error_message TEXT,          
     metadata TEXT,               
     registry_type TEXT,  
-    route TEXT,
+    route TEXT
 );
 
 

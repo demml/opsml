@@ -13,7 +13,7 @@ pub struct AuditEvent {
     pub status: AuditStatus,
     pub error_message: Option<String>,
     pub metadata: String,
-    pub registry_type: RegistryType,
+    pub registry_type: Option<RegistryType>,
     pub route: String,
 }
 
@@ -30,7 +30,7 @@ impl Default for AuditEvent {
             status: AuditStatus::Success,
             error_message: None,
             metadata: "unknown".to_string(),
-            registry_type: RegistryType::Model,
+            registry_type: Some(RegistryType::Model),
             route: "unknown".to_string(),
         }
     }

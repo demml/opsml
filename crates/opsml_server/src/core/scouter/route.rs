@@ -1,26 +1,27 @@
 use crate::core::error::internal_server_error;
-use crate::core::files::route::log_operation;
 use crate::core::files::utils::download_artifacts;
 use crate::core::scouter;
 use crate::core::scouter::utils::{find_drift_profile, save_encrypted_profile};
 use crate::core::state::AppState;
 use anyhow::{Context, Result};
 use axum::{
-    extract::{Query, State},
-    http::StatusCode,
+    extract::{ConnectInfo, Query, State},
+    http::{HeaderMap, StatusCode},
     response::IntoResponse,
     routing::{get, post, put},
     Extension, Json, Router,
 };
+use axum_extra::TypedHeader;
+use headers::UserAgent;
 use opsml_auth::permission::UserPermissions;
-use opsml_client::RequestType;
+use opsml_client::{RequestType, Routes};
+use opsml_events::{create_audit_event, Event};
 use opsml_sql::base::SqlClient;
-use opsml_types::contracts::Operation;
-use opsml_types::contracts::{RawFileRequest, UpdateProfileRequest};
+use opsml_types::contracts::{Operation, RawFileRequest, ResourceType, UpdateProfileRequest};
 use opsml_types::RegistryType;
 use opsml_types::SaveName;
-use reqwest::header::HeaderMap;
 use reqwest::Response;
+use std::net::SocketAddr;
 
 use crate::core::scouter::types::{
     BinnedCustomResult, BinnedPsiResult, DriftProfileResult, SpcDriftResult,
@@ -372,6 +373,9 @@ pub async fn get_custom_drift(
 pub async fn get_drift_profiles_for_ui(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
+    ConnectInfo(addr): ConnectInfo<SocketAddr>,
+    TypedHeader(agent): TypedHeader<UserAgent>,
+    headers: HeaderMap,
     Json(req): Json<RawFileRequest>,
 ) -> DriftProfileResult {
     if !perms.has_read_permission() {
@@ -381,24 +385,6 @@ pub async fn get_drift_profiles_for_ui(
             Json(json!({ "error": "Permission denied" })),
         ));
     }
-
-    let mut headers = HeaderMap::new();
-    headers.insert("username", perms.username.parse().unwrap());
-    let sql_client = state.sql_client.clone();
-
-    let requested_path = req.path.clone();
-    tokio::spawn(async move {
-        if let Err(e) = log_operation(
-            &headers,
-            &Operation::Read.to_string(),
-            &requested_path,
-            sql_client,
-        )
-        .await
-        {
-            error!("Failed to insert artifact key: {}", e);
-        }
-    });
 
     // create temp dir
     let tmp_dir = tempdir().map_err(|e| {
@@ -427,6 +413,20 @@ pub async fn get_drift_profiles_for_ui(
         internal_server_error(e, "Failed to load drift profile")
     })?;
 
+    let audit_event = create_audit_event(
+        addr,
+        agent,
+        headers,
+        Operation::Read,
+        ResourceType::File,
+        req.path.clone(),
+        Some(req.path.clone()),
+        serde_json::to_string(&req).unwrap_or_default(),
+        None,
+        Routes::ScouterProfileUi,
+    );
+
+    state.event_bus.publish(Event::Audit(audit_event));
     Ok(Json(profiles))
 }
 
