@@ -20,11 +20,11 @@ use headers::UserAgent;
 use opsml_auth::permission::UserPermissions;
 use opsml_client::Routes;
 use opsml_crypt::decrypt_directory;
-use opsml_events::{AuditEvent, Event};
+use opsml_events::{create_audit_event, Event};
 use opsml_sql::base::SqlClient;
 use opsml_sql::schemas::*;
 use opsml_types::{cards::*, contracts::*};
-use opsml_types::{CommonKwargs, SaveName, Suffix};
+use opsml_types::{SaveName, Suffix};
 use semver::Version;
 use serde_json::json;
 use sqlx::types::Json as SqlxJson;
@@ -41,13 +41,14 @@ pub async fn check_card_uid(
     headers: HeaderMap,
     Query(params): Query<UidRequest>,
 ) -> Result<Json<UidResponse>, (StatusCode, Json<serde_json::Value>)> {
-    let audit_args = AuditEvent::new(
+    let audit_args = create_audit_event(
         addr,
         agent,
         headers,
         Operation::Check,
         ResourceType::Database,
         params.uid.clone(),
+        None,
         serde_json::to_string(&params).unwrap_or_default(),
         params.registry_type.clone(),
         Routes::Card,
@@ -77,13 +78,14 @@ pub async fn get_card_repositories(
 ) -> Result<Json<RepositoryResponse>, (StatusCode, Json<serde_json::Value>)> {
     let table = CardTable::from_registry_type(&params.registry_type);
 
-    let audit_args = AuditEvent::new(
+    let audit_args = create_audit_event(
         addr,
         agent,
         headers,
         Operation::List,
         ResourceType::Database,
         Routes::CardRepositories.to_string(),
+        None,
         serde_json::to_string(&params).unwrap_or_default(),
         params.registry_type.clone(),
         Routes::CardRepositories,
@@ -112,13 +114,14 @@ pub async fn get_registry_stats(
     headers: HeaderMap,
     Query(params): Query<RegistryStatsRequest>,
 ) -> Result<Json<RegistryStatsResponse>, (StatusCode, Json<serde_json::Value>)> {
-    let audit_args = AuditEvent::new(
+    let audit_args = create_audit_event(
         addr,
         agent,
         headers,
         Operation::List,
         ResourceType::Database,
         Routes::CardRegistryStats.to_string(),
+        None,
         serde_json::to_string(&params).unwrap_or_default(),
         params.registry_type.clone(),
         Routes::CardRegistryStats,
@@ -151,13 +154,14 @@ pub async fn get_page(
     headers: HeaderMap,
     Query(params): Query<QueryPageRequest>,
 ) -> Result<Json<QueryPageResponse>, (StatusCode, Json<serde_json::Value>)> {
-    let audit_args = AuditEvent::new(
+    let audit_args = create_audit_event(
         addr,
         agent,
         headers,
         Operation::List,
         ResourceType::Database,
         Routes::CardRegistryPage.to_string(),
+        None,
         serde_json::to_string(&params).unwrap_or_default(),
         params.registry_type.clone(),
         Routes::CardRegistryPage,
@@ -192,13 +196,14 @@ pub async fn get_version_page(
     headers: HeaderMap,
     Query(params): Query<VersionPageRequest>,
 ) -> Result<Json<VersionPageResponse>, (StatusCode, Json<serde_json::Value>)> {
-    let audit_args = AuditEvent::new(
+    let audit_args = create_audit_event(
         addr,
         agent,
         headers,
         Operation::List,
         ResourceType::Database,
         Routes::CardRegistryVersionPage.to_string(),
+        None,
         serde_json::to_string(&params).unwrap_or_default(),
         params.registry_type.clone(),
         Routes::CardRegistryVersionPage,
@@ -245,13 +250,14 @@ pub async fn list_cards(
         .unwrap_or(&Routes::CardList.to_string())
         .to_string();
 
-    let audit_args = AuditEvent::new(
+    let audit_args = create_audit_event(
         addr,
         agent,
         headers,
         Operation::List,
         ResourceType::Database,
         uid,
+        None,
         serde_json::to_string(&params).unwrap_or_default(),
         params.registry_type.clone(),
         Routes::CardList,
@@ -305,7 +311,7 @@ pub async fn create_card(
 ) -> Result<impl IntoResponse, (StatusCode, Json<serde_json::Value>)> {
     let table = CardTable::from_registry_type(&card_request.registry_type);
 
-    let mut audit_args = AuditEvent::new(
+    let mut audit_args = create_audit_event(
         addr,
         agent,
         headers,
@@ -317,6 +323,7 @@ pub async fn create_card(
             card_request.card.name(),
             card_request.card.version()
         ),
+        None,
         serde_json::to_string(&card_request).unwrap_or_default(),
         card_request.registry_type.clone(),
         Routes::CardCreate,
@@ -401,13 +408,14 @@ pub async fn update_card(
     );
     let table = CardTable::from_registry_type(&card_request.registry_type);
 
-    let audit_args = AuditEvent::new(
+    let audit_args = create_audit_event(
         addr,
         agent,
         headers,
         Operation::Create,
         ResourceType::Database,
         card_request.card.uid().to_string(),
+        None,
         serde_json::to_string(&card_request).unwrap_or_default(),
         card_request.registry_type.clone(),
         Routes::CardUpdate,
@@ -583,13 +591,14 @@ pub async fn delete_card(
 ) -> Result<Json<UidResponse>, (StatusCode, Json<serde_json::Value>)> {
     debug!("Deleting card: {}", &params.uid);
 
-    let audit_args = AuditEvent::new(
+    let audit_args = create_audit_event(
         addr,
         agent,
         headers,
         Operation::Delete,
         ResourceType::File,
         params.uid.clone(),
+        None,
         serde_json::to_string(&params).unwrap_or_default(),
         params.registry_type.clone(),
         Routes::CardDelete,
@@ -644,17 +653,6 @@ pub async fn load_card(
     Query(params): Query<CardQueryArgs>,
 ) -> Result<Json<ArtifactKey>, (StatusCode, Json<serde_json::Value>)> {
     // get uid if exists
-    let mut audit_args = AuditEvent::new(
-        addr,
-        agent,
-        headers,
-        Operation::Load,
-        ResourceType::Database,
-        CommonKwargs::Undefined.to_string(),
-        serde_json::to_string(&params).unwrap_or_default(),
-        params.registry_type.clone(),
-        Routes::CardLoad,
-    );
 
     let table = CardTable::from_registry_type(&params.registry_type);
     let key = state
@@ -666,8 +664,18 @@ pub async fn load_card(
             internal_server_error(e, "Failed to get card key for loading")
         })?;
 
-    // update audit args now that we have the uid
-    audit_args.resource_id = key.uid.clone();
+    let audit_args = create_audit_event(
+        addr,
+        agent,
+        headers,
+        Operation::Load,
+        ResourceType::Database,
+        key.uid.clone(),
+        Some(key.storage_key.clone()),
+        serde_json::to_string(&params).unwrap_or_default(),
+        params.registry_type.clone(),
+        Routes::CardLoad,
+    );
     state.event_bus.publish(Event::Audit(audit_args));
     Ok(Json(key))
 }
@@ -681,18 +689,6 @@ pub async fn get_card(
     headers: HeaderMap,
     Query(params): Query<CardQueryArgs>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<serde_json::Value>)> {
-    let mut audit_args = AuditEvent::new(
-        addr,
-        agent,
-        headers,
-        Operation::Load,
-        ResourceType::Card,
-        Routes::CardMetadata.to_string(),
-        serde_json::to_string(&params).unwrap_or_default(),
-        params.registry_type.clone(),
-        Routes::CardMetadata,
-    );
-
     if !perms.has_read_permission() {
         error!("Permission denied");
         return Err((
@@ -711,9 +707,6 @@ pub async fn get_card(
             error!("Failed to get card key for loading: {}", e);
             internal_server_error(e, "Failed to get card key for loading")
         })?;
-
-    // get uid
-    audit_args.resource_id = key.uid.clone();
 
     // create temp dir
     let tmp_dir = tempdir().map_err(|e| {
@@ -760,6 +753,20 @@ pub async fn get_card(
         internal_server_error(e, "Failed to parse card")
     })?;
 
+    let audit_event = create_audit_event(
+        addr,
+        agent,
+        headers,
+        Operation::Load,
+        ResourceType::Card,
+        key.uid.clone(),
+        rpath.to_str().map(|s| s.to_string()),
+        serde_json::to_string(&params).unwrap_or_default(),
+        params.registry_type.clone(),
+        Routes::CardMetadata,
+    );
+
+    state.event_bus.publish(Event::Audit(audit_event));
     Ok(Json(card))
 }
 
@@ -772,18 +779,6 @@ pub async fn get_readme(
     headers: HeaderMap,
     Query(params): Query<CardQueryArgs>,
 ) -> Result<Json<ReadeMe>, (StatusCode, Json<serde_json::Value>)> {
-    let audit_args = AuditEvent::new(
-        addr,
-        agent,
-        headers,
-        Operation::Load,
-        ResourceType::File,
-        Routes::CardReadme.to_string(),
-        serde_json::to_string(&params).unwrap_or_default(),
-        params.registry_type.clone(),
-        Routes::CardReadme,
-    );
-
     if !perms.has_read_permission() {
         error!("Permission denied");
         return Err((
@@ -836,7 +831,22 @@ pub async fn get_readme(
     {
         Ok(_) => {
             let content = std::fs::read_to_string(&lpath).unwrap_or_default();
+
+            let audit_args = create_audit_event(
+                addr,
+                agent,
+                headers,
+                Operation::Load,
+                ResourceType::File,
+                rpath.clone(),
+                Some(rpath.clone()),
+                serde_json::to_string(&params).unwrap_or_default(),
+                params.registry_type.clone(),
+                Routes::CardReadme,
+            );
+
             state.event_bus.publish(Event::Audit(audit_args));
+
             Ok(Json(ReadeMe {
                 readme: content,
                 exists: true,
@@ -861,18 +871,6 @@ pub async fn create_readme(
     headers: HeaderMap,
     Json(req): Json<CreateReadeMe>,
 ) -> Result<Json<UploadResponse>, (StatusCode, Json<serde_json::Value>)> {
-    let audit_args = AuditEvent::new(
-        addr,
-        agent,
-        headers,
-        Operation::Create,
-        ResourceType::File,
-        Routes::CardReadme.to_string(),
-        serde_json::to_string(&req).unwrap_or_default(),
-        req.registry_type.clone(),
-        Routes::CardReadme,
-    );
-
     if !perms.has_write_permission(&req.repository) {
         return Err((
             StatusCode::FORBIDDEN,
@@ -910,9 +908,22 @@ pub async fn create_readme(
         &req.readme,
         &lpath,
         &readme_path,
-        key,
+        &key,
     )
     .await;
+
+    let audit_args = create_audit_event(
+        addr,
+        agent,
+        headers,
+        Operation::Create,
+        ResourceType::File,
+        key.uid.clone(),
+        Some(readme_path.clone()),
+        serde_json::to_string(&req).unwrap_or_default(),
+        req.registry_type.clone(),
+        Routes::CardReadme,
+    );
 
     state.event_bus.publish(Event::Audit(audit_args));
     match result {

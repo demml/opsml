@@ -67,7 +67,7 @@ pub async fn create_and_store_encrypted_file(
     content: &str,
     lpath: &str,
     rpath: &str,
-    key: ArtifactKey,
+    key: &ArtifactKey,
 ) -> Result<UploadResponse, ApiError> {
     let encryption_key = key.get_decrypt_key().map_err(|e| {
         error!("Failed to get decryption key: {}", e);
