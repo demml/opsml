@@ -58,6 +58,8 @@ pub enum Routes {
     ScouterProfileStatus,
     ScouterUsers,
     ScouterProfileUi,
+
+    User,
 }
 
 impl Routes {
@@ -113,7 +115,9 @@ impl Routes {
             Routes::ScouterProfileUi => "scouter/profile/ui",
 
             // Scouter User Routes
-            Routes::ScouterUsers => "scouter/users",
+            Routes::ScouterUsers => "scouter/user",
+
+            Routes::User => "user",
         }
     }
 }
