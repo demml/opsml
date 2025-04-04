@@ -56,7 +56,7 @@ async fn test_scouter_routes_insert_profile() {
     let helper = TestHelper::new().await;
 
     let request = ProfileRequest {
-        repository: helper.repository.clone(),
+        space: helper.space.clone(),
         drift_type: DriftType::Psi,
         profile: "test_profile".to_string(),
     };
@@ -91,7 +91,7 @@ async fn test_scouter_routes_update_profile() {
     let request = UpdateProfileRequest {
         uid: helper.key.uid.clone(),
         request: ProfileRequest {
-            repository: helper.repository.clone(),
+            space: helper.space.clone(),
             drift_type: DriftType::Spc,
             profile: serialized,
         },
@@ -110,7 +110,7 @@ async fn test_scouter_routes_update_profile() {
 
     // update status code
     let request = ProfileStatusRequest {
-        repository: helper.repository.clone(),
+        space: helper.space.clone(),
         name: "updated_name".to_string(),
         version: profile.config.version.clone(),
         active: true,
@@ -135,7 +135,7 @@ async fn test_scouter_routes_spc_drift_features() {
 
     let drift_request = DriftRequest {
         name: helper.name.clone(),
-        repository: helper.repository.clone(),
+        space: helper.space.clone(),
         version: helper.version.clone(),
         time_interval: TimeInterval::OneHour,
         max_data_points: 100,
@@ -159,7 +159,7 @@ async fn test_scouter_routes_psi_drift_features() {
 
     let drift_request = DriftRequest {
         name: helper.name.clone(),
-        repository: helper.repository.clone(),
+        space: helper.space.clone(),
         version: helper.version.clone(),
         time_interval: TimeInterval::OneHour,
         max_data_points: 100,
@@ -183,7 +183,7 @@ async fn test_scouter_routes_custom_drift_features() {
 
     let drift_request = DriftRequest {
         name: helper.name.clone(),
-        repository: helper.repository.clone(),
+        space: helper.space.clone(),
         version: helper.version.clone(),
         time_interval: TimeInterval::OneHour,
         max_data_points: 100,

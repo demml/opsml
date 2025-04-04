@@ -69,7 +69,7 @@ export interface PromptCardMetadata {
 
 export interface PromptCard {
   prompt: Prompt;
-  repository: string;
+  space: string;
   name: string;
   version: string;
   uid: string;

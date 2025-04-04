@@ -17,7 +17,7 @@ export const load: PageLoad = async ({ parent }) => {
   let metricNames = await getCardMetricNames(metadata.uid);
   let parameters = await getCardParameters(metadata.uid);
   let recentExperiments = await getRecentExperiments(
-    metadata.repository,
+    metadata.space,
     metadata.name,
     metadata.version
   );

@@ -25,7 +25,7 @@ class OpsmlFlow(FlowSpec):
         - Load modelcard and test onnx predictions
     """
 
-    info = CardInfo(name="metaflow_example", repository="opsml", contact="user@email.com")
+    info = CardInfo(name="metaflow_example", space="opsml", contact="user@email.com")
 
     @step
     def start(self):
@@ -40,8 +40,15 @@ class OpsmlFlow(FlowSpec):
         data_interface = PandasData(
             data=X,
             data_splits=[
-                DataSplit(label="train", column_name="col_1", column_value=0.5, inequality=">="),
-                DataSplit(label="test", column_name="col_1", column_value=0.5, inequality="<"),
+                DataSplit(
+                    label="train",
+                    column_name="col_1",
+                    column_value=0.5,
+                    inequality=">=",
+                ),
+                DataSplit(
+                    label="test", column_name="col_1", column_value=0.5, inequality="<"
+                ),
             ],
             dependent_vars=["target"],
         )
@@ -108,7 +115,9 @@ class OpsmlFlow(FlowSpec):
         # load onnx model
         modelcard.load_onnx_model()
 
-        prediction = modelcard.onnx_model.sess.run(None, {"predict": data["test"].X.to_numpy()[:5].astype("float32")})
+        prediction = modelcard.onnx_model.sess.run(
+            None, {"predict": data["test"].X.to_numpy()[:5].astype("float32")}
+        )
         print(prediction)
 
 

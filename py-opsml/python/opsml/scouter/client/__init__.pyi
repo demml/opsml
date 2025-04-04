@@ -56,7 +56,7 @@ class DriftRequest:
     def __init__(
         self,
         name: str,
-        repository: str,
+        space: str,
         version: str,
         time_interval: TimeInterval,
         max_data_points: int,
@@ -67,8 +67,8 @@ class DriftRequest:
         Args:
             name:
                 Model name
-            repository:
-                Model repository
+            space:
+                Model space
             version:
                 Model version
             time_interval:
@@ -80,14 +80,16 @@ class DriftRequest:
         """
 
 class ProfileStatusRequest:
-    def __init__(self, name: str, repository: str, version: str, drift_type: DriftType, active: bool) -> None:
+    def __init__(
+        self, name: str, space: str, version: str, drift_type: DriftType, active: bool
+    ) -> None:
         """Initialize profile status request
 
         Args:
             name:
                 Model name
-            repository:
-                Model repository
+            space:
+                Model space
             version:
                 Model version
             drift_type:
@@ -99,7 +101,7 @@ class ProfileStatusRequest:
 class Alert:
     created_at: datetime.datetime
     name: str
-    repository: str
+    space: str
     version: str
     feature: str
     alert: str
@@ -110,7 +112,7 @@ class DriftAlertRequest:
     def __init__(
         self,
         name: str,
-        repository: str,
+        space: str,
         version: str,
         active: bool = False,
         limit_datetime: Optional[datetime.datetime] = None,
@@ -121,8 +123,8 @@ class DriftAlertRequest:
         Args:
             name:
                 Name
-            repository:
-                Repository
+            space:
+                space
             version:
                 Version
             active:

@@ -15,7 +15,7 @@ export interface CustomDriftProfile {
 export interface CustomMetricDriftConfig {
   sample_size: number;
   sample: boolean;
-  repository: string;
+  space: string;
   name: string;
   version: string;
   alert_config: CustomMetricAlertConfig;

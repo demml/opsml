@@ -33,7 +33,7 @@ pub struct ReadeMe {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CreateReadeMe {
-    pub repository: String,
+    pub space: String,
     pub name: String,
     pub registry_type: RegistryType,
     pub readme: String,

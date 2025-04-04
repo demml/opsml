@@ -16,7 +16,7 @@ use std::path::PathBuf;
 
 // create json
 fn create_card_metadata(key: ArtifactKey) {
-    let json = r#"{"name":"name","repository":"space","version":"1.0.0","uid":"550e8400-e29b-41d4-a716-446655440000","app_env":"dev","created_at":"2021-08-01T00:00:00Z"}"#;
+    let json = r#"{"name":"name","space":"space","version":"1.0.0","uid":"550e8400-e29b-41d4-a716-446655440000","app_env":"dev","created_at":"2021-08-01T00:00:00Z"}"#;
     let path = format!(
         "opsml_registries/opsml_model_registry/{}/{}/v{}",
         "space", "name", "1.0.0"
@@ -92,7 +92,7 @@ async fn test_opsml_server_card_repositories() {
     let helper = TestHelper::new().await;
 
     /////////////////////// Test respositories ///////////////////////
-    let params = RepositoryRequest {
+    let params = spaceRequest {
         registry_type: RegistryType::Model,
     };
 
@@ -109,10 +109,10 @@ async fn test_opsml_server_card_repositories() {
     assert_eq!(response.status(), StatusCode::OK);
 
     let body = response.into_body().collect().await.unwrap().to_bytes();
-    let repository_response: RepositoryResponse = serde_json::from_slice(&body).unwrap();
+    let space_response: spaceResponse = serde_json::from_slice(&body).unwrap();
 
     // assert 10
-    assert_eq!(repository_response.repositories.len(), 10);
+    assert_eq!(space_response.repositories.len(), 10);
 
     helper.cleanup();
 }
@@ -126,7 +126,7 @@ async fn test_opsml_server_card_stats_and_query() {
     let params = RegistryStatsRequest {
         registry_type: RegistryType::Model,
         search_term: None,
-        repository: None,
+        space: None,
     };
 
     let query_string = serde_qs::to_string(&params).unwrap();
@@ -146,7 +146,7 @@ async fn test_opsml_server_card_stats_and_query() {
     let params = RegistryStatsRequest {
         registry_type: RegistryType::Model,
         search_term: Some("Model1".to_string()),
-        repository: None,
+        space: None,
     };
 
     let query_string = serde_qs::to_string(&params).unwrap();
@@ -168,7 +168,7 @@ async fn test_opsml_server_card_stats_and_query() {
     let args = QueryPageRequest {
         registry_type: RegistryType::Model,
         sort_by: None,
-        repository: None,
+        space: None,
         search_term: None,
         page: None,
     };
@@ -192,7 +192,7 @@ async fn test_opsml_server_card_stats_and_query() {
     let args = QueryPageRequest {
         registry_type: RegistryType::Model,
         sort_by: None,
-        repository: None,
+        space: None,
         search_term: Some("Model2".to_string()),
         page: None,
     };
@@ -216,7 +216,7 @@ async fn test_opsml_server_card_stats_and_query() {
     // test getting version page
     let args = VersionPageRequest {
         registry_type: RegistryType::Model,
-        repository: Some("repo1".to_string()),
+        space: Some("repo1".to_string()),
         name: Some("Model1".to_string()),
         page: None,
     };
@@ -248,7 +248,7 @@ async fn test_opsml_server_card_list_cards() {
     let args = CardQueryArgs {
         uid: None,
         name: None,
-        repository: None,
+        space: None,
         version: None,
         max_date: None,
         tags: None,
@@ -276,7 +276,7 @@ async fn test_opsml_server_card_list_cards() {
     let args = CardQueryArgs {
         uid: None,
         name: None,
-        repository: Some("repo1".to_string()),
+        space: Some("repo1".to_string()),
         version: None,
         max_date: None,
         tags: None,
@@ -310,7 +310,7 @@ async fn test_opsml_server_card_datacard_crud() {
 
     let card_version_request = CardVersionRequest {
         name: "DataCard".to_string(),
-        repository: "repo1".to_string(),
+        space: "repo1".to_string(),
         version: Some("1.0.0".to_string()),
         version_type: VersionType::Minor,
         pre_tag: None,
@@ -321,7 +321,7 @@ async fn test_opsml_server_card_datacard_crud() {
     let card_request = CreateCardRequest {
         card: Card::Data(DataCardClientRecord {
             name: "DataCard".to_string(),
-            repository: "repo1".to_string(),
+            space: "repo1".to_string(),
             version: "1.0.0".to_string(),
             ..DataCardClientRecord::default()
         }),
@@ -378,7 +378,7 @@ async fn test_opsml_server_card_datacard_crud() {
         registry_type: RegistryType::Data,
         card: Card::Data(DataCardClientRecord {
             name: "DataCard".to_string(),
-            repository: "repo1".to_string(),
+            space: "repo1".to_string(),
             version: "1.0.1".to_string(),
             uid: card.uid.clone(),
             app_env: card.app_env,
@@ -410,7 +410,7 @@ async fn test_opsml_server_card_datacard_crud() {
 
     let delete_args = DeleteCardRequest {
         uid: card.uid.clone(),
-        repository: card.repository.clone(),
+        space: card.space.clone(),
         registry_type: RegistryType::Data,
     };
 
@@ -439,7 +439,7 @@ async fn test_opsml_server_card_modelcard_crud() {
 
     let card_version_request = CardVersionRequest {
         name: "ModelCard".to_string(),
-        repository: "repo1".to_string(),
+        space: "repo1".to_string(),
         version: Some("1.0.0".to_string()),
         version_type: VersionType::Minor,
         pre_tag: None,
@@ -450,7 +450,7 @@ async fn test_opsml_server_card_modelcard_crud() {
     let card_request = CreateCardRequest {
         card: Card::Model(ModelCardClientRecord {
             name: "ModelCard".to_string(),
-            repository: "repo1".to_string(),
+            space: "repo1".to_string(),
             version: "1.0.0".to_string(),
             ..ModelCardClientRecord::default()
         }),
@@ -534,7 +534,7 @@ async fn test_opsml_server_card_modelcard_crud() {
         registry_type: RegistryType::Model,
         card: Card::Model(ModelCardClientRecord {
             name: "DataCard".to_string(),
-            repository: "repo1".to_string(),
+            space: "repo1".to_string(),
             version: "1.0.1".to_string(),
             uid: card.uid.clone(),
             app_env: card.app_env,
@@ -569,7 +569,7 @@ async fn test_opsml_server_card_modelcard_crud() {
 
     let delete_args = DeleteCardRequest {
         uid: card.uid.clone(),
-        repository: card.repository.clone(),
+        space: card.space.clone(),
         registry_type: RegistryType::Model,
     };
 
@@ -598,7 +598,7 @@ async fn test_opsml_server_card_experimentcard_crud() {
 
     let card_version_request = CardVersionRequest {
         name: "experimentcard".to_string(),
-        repository: "repo1".to_string(),
+        space: "repo1".to_string(),
         version: Some("1.0.0".to_string()),
         version_type: VersionType::Minor,
         pre_tag: None,
@@ -609,7 +609,7 @@ async fn test_opsml_server_card_experimentcard_crud() {
     let card_request = CreateCardRequest {
         card: Card::Experiment(ExperimentCardClientRecord {
             name: "experimentcard".to_string(),
-            repository: "repo1".to_string(),
+            space: "repo1".to_string(),
             version: "1.0.0".to_string(),
             ..ExperimentCardClientRecord::default()
         }),
@@ -636,7 +636,7 @@ async fn test_opsml_server_card_experimentcard_crud() {
     // get card by uid
     let list_cards = CardQueryArgs {
         name: Some(card_request.card.name().to_string()), // name of the card
-        repository: Some(card_request.card.repository().to_string()),
+        space: Some(card_request.card.space().to_string()),
         version: Some(card_request.card.version().to_string()),
         registry_type: RegistryType::Experiment,
         ..Default::default()
@@ -668,7 +668,7 @@ async fn test_opsml_server_card_experimentcard_crud() {
         registry_type: RegistryType::Experiment,
         card: Card::Experiment(ExperimentCardClientRecord {
             name: "DataCard".to_string(),
-            repository: "repo1".to_string(),
+            space: "repo1".to_string(),
             version: "1.0.1".to_string(),
             uid: card.uid.clone(),
             app_env: card.app_env,
@@ -700,7 +700,7 @@ async fn test_opsml_server_card_experimentcard_crud() {
 
     let delete_args = DeleteCardRequest {
         uid: card.uid.clone(),
-        repository: card.repository.clone(),
+        space: card.space.clone(),
         registry_type: RegistryType::Experiment,
     };
 
@@ -729,7 +729,7 @@ async fn test_opsml_server_card_auditcard_crud() {
 
     let card_version_request = CardVersionRequest {
         name: "AuditCard".to_string(),
-        repository: "repo1".to_string(),
+        space: "repo1".to_string(),
         version: Some("1.0.0".to_string()),
         version_type: VersionType::Minor,
         pre_tag: None,
@@ -740,7 +740,7 @@ async fn test_opsml_server_card_auditcard_crud() {
     let card_request = CreateCardRequest {
         card: Card::Audit(AuditCardClientRecord {
             name: "AuditCard".to_string(),
-            repository: "repo1".to_string(),
+            space: "repo1".to_string(),
             version: "1.0.0".to_string(),
             ..AuditCardClientRecord::default()
         }),
@@ -798,7 +798,7 @@ async fn test_opsml_server_card_auditcard_crud() {
         registry_type: RegistryType::Audit,
         card: Card::Audit(AuditCardClientRecord {
             name: "DataCard".to_string(),
-            repository: "repo1".to_string(),
+            space: "repo1".to_string(),
             version: "1.0.1".to_string(),
             uid: card.uid.clone(),
             app_env: card.app_env,
@@ -830,7 +830,7 @@ async fn test_opsml_server_card_auditcard_crud() {
 
     let delete_args = DeleteCardRequest {
         uid: card.uid.clone(),
-        repository: card.repository.clone(),
+        space: card.space.clone(),
         registry_type: RegistryType::Audit,
     };
 
@@ -860,7 +860,7 @@ async fn test_opsml_server_card_get_card() {
     // 1. First create a card so we have something to get
     let card_version_request = CardVersionRequest {
         name: "name".to_string(),
-        repository: "space".to_string(),
+        space: "space".to_string(),
         version: Some("1.0.0".to_string()),
         version_type: VersionType::Minor,
         pre_tag: None,
@@ -871,7 +871,7 @@ async fn test_opsml_server_card_get_card() {
     let card_request = CreateCardRequest {
         card: Card::Model(ModelCardClientRecord {
             name: "name".to_string(),
-            repository: "space".to_string(),
+            space: "space".to_string(),
             version: "1.0.0".to_string(),
             tags: vec!["test".to_string()],
             ..ModelCardClientRecord::default()
@@ -902,7 +902,7 @@ async fn test_opsml_server_card_get_card() {
     let params = CardQueryArgs {
         uid: None,
         name: Some("name".to_string()),
-        repository: Some("space".to_string()),
+        space: Some("space".to_string()),
         version: Some(create_response.version),
         max_date: None,
         tags: None,
@@ -927,7 +927,7 @@ async fn test_opsml_server_card_get_card() {
     //
     //// Verify the response contains the expected data
     assert_eq!(card_json["name"], "name");
-    assert_eq!(card_json["repository"], "space");
+    assert_eq!(card_json["space"], "space");
     assert_eq!(card_json["version"], "1.0.0");
     //
     helper.cleanup();
@@ -942,7 +942,7 @@ async fn test_opsml_server_card_get_readme() {
     // Create and upload the readme
     let read_me = "This is a test README";
     let create_readme = CreateReadeMe {
-        repository: "space".to_string(),
+        space: "space".to_string(),
         name: "name".to_string(),
         registry_type: RegistryType::Model,
         readme: read_me.to_string(),
@@ -962,7 +962,7 @@ async fn test_opsml_server_card_get_readme() {
     let params = CardQueryArgs {
         uid: None,
         name: Some(helper.name.clone()),
-        repository: Some(helper.repository.clone()),
+        space: Some(helper.space.clone()),
         version: Some(helper.version.clone()),
         max_date: None,
         tags: None,

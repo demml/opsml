@@ -34,7 +34,7 @@ def crud_datacard(pandas_data: PandasData):
 
     card = DataCard(
         interface=pandas_data,
-        repository="test",
+        space="test",
         name="test",
         tags=["foo:bar", "baz:qux"],
     )
@@ -51,7 +51,7 @@ def crud_datacard(pandas_data: PandasData):
     loaded_card.load()
 
     assert loaded_card.name == card.name
-    assert loaded_card.repository == card.repository
+    assert loaded_card.space == card.space
     assert loaded_card.tags == card.tags
     assert loaded_card.uid == card.uid
     assert loaded_card.version == card.version
@@ -113,7 +113,7 @@ def crud_promptcard(prompt: Prompt):
 
     card = PromptCard(
         prompt=prompt,
-        repository="test",
+        space="test",
         name="test",
     )
 
@@ -126,7 +126,7 @@ def crud_promptcard(prompt: Prompt):
     loaded_card: PromptCard = reg.load_card(uid=card.uid)
 
     assert loaded_card.name == card.name
-    assert loaded_card.repository == card.repository
+    assert loaded_card.space == card.space
     assert loaded_card.tags == card.tags
     assert loaded_card.uid == card.uid
     assert loaded_card.version == card.version
@@ -163,7 +163,7 @@ def crud_modelcard(random_forest_classifier: SklearnModel, datacard: DataCard):
 
     card = ModelCard(
         interface=interface,
-        repository="test",
+        space="test",
         name="test",
         to_onnx=True,
         tags=["foo:bar", "baz:qux"],
@@ -187,7 +187,7 @@ def crud_modelcard(random_forest_classifier: SklearnModel, datacard: DataCard):
     loaded_card.load(onnx=True)
 
     assert loaded_card.name == card.name
-    assert loaded_card.repository == card.repository
+    assert loaded_card.space == card.space
     assert loaded_card.tags == card.tags
     assert loaded_card.uid == card.uid
     assert loaded_card.version == card.version

@@ -19,9 +19,9 @@ export async function getDataProfile(card: DataCard): Promise<DataProfile> {
   let dataProfileUri = card.metadata.interface_metadata.save_metadata
     .data_profile_uri as string;
 
-  let profilePath = `${getRegistryTableName(RegistryType.Data)}/${
-    card.repository
-  }/${card.name}/v${card.version}/${dataProfileUri}`;
+  let profilePath = `${getRegistryTableName(RegistryType.Data)}/${card.space}/${
+    card.name
+  }/v${card.version}/${dataProfileUri}`;
 
   let rawFile = await getRawFile(profilePath, card.uid, RegistryType.Data);
 

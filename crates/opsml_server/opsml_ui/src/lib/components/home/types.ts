@@ -3,7 +3,7 @@ export type BaseCard = {
   created_at: string;
   app_env: string;
   name: string;
-  repository: string;
+  space: string;
   version: string;
   tags: string[];
   username: string;

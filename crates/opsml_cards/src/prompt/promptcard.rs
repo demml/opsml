@@ -27,7 +27,7 @@ pub struct PromptCard {
     pub prompt: Prompt,
 
     #[pyo3(get, set)]
-    pub repository: String,
+    pub space: String,
 
     #[pyo3(get, set)]
     pub name: String,
@@ -64,10 +64,10 @@ pub struct PromptCard {
 impl PromptCard {
     #[new]
     #[allow(clippy::too_many_arguments)]
-    #[pyo3(signature = (prompt, repository=None, name=None, version=None, uid=None, tags=None))]
+    #[pyo3(signature = (prompt, space=None, name=None, version=None, uid=None, tags=None))]
     pub fn new(
         prompt: &Bound<'_, PyAny>,
-        repository: Option<&str>,
+        space: Option<&str>,
         name: Option<&str>,
         version: Option<&str>,
         uid: Option<&str>,
@@ -80,7 +80,7 @@ impl PromptCard {
                 .map_err(|e| OpsmlError::new_err(e.to_string()))?,
         };
 
-        let base_args = BaseArgs::create_args(name, repository, version, uid).map_err(|e| {
+        let base_args = BaseArgs::create_args(name, space, version, uid).map_err(|e| {
             error!("Failed to create base args: {}", e);
             OpsmlError::new_err(e.to_string())
         })?;
@@ -92,7 +92,7 @@ impl PromptCard {
 
         Ok(Self {
             prompt,
-            repository: base_args.0,
+            space: base_args.0,
             name: base_args.1,
             version: base_args.2,
             uid: base_args.3,
@@ -161,7 +161,7 @@ impl PromptCard {
         let record = PromptCardClientRecord {
             created_at: self.created_at,
             app_env: self.app_env.clone(),
-            repository: self.repository.clone(),
+            space: self.space.clone(),
             name: self.name.clone(),
             version: self.version.clone(),
             uid: self.uid.clone(),

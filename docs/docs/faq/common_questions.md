@@ -24,9 +24,9 @@ Auto onnx conversion is turned off by default. It can be turned on by setting `t
 
 If you'd like to create your onnx model yourself and associate that with the ModelCard, you will need to provide your own implementation of the `onnx_model` arg. An example of this can be seen [here](../interfaces/model/extras.md#onnxmodel).
 
-### What's with using name, repository, and contact or `CardInfo` in the examples?
+### What's with using name, space, and contact or `CardInfo` in the examples?
 
-Every `ArtifactCard` requires a name, repository and contact. For convenience, you can instead provide a `CardInfo` instance.
+Every `ArtifactCard` requires a name, space and contact. For convenience, you can instead provide a `CardInfo` instance.
 
 ### How is `OpsML` different than other products out there?
 

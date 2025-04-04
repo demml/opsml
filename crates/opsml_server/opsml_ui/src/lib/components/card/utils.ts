@@ -3,7 +3,7 @@ import { RoutePaths } from "$lib/components/api/routes";
 import { RegistryType } from "$lib/utils";
 import type {
   QueryPageResponse,
-  RepositoryResponse,
+  spaceResponse,
   RegistryStatsResponse,
   RegistryPageReturn,
   RegistryStatsRequest,
@@ -15,7 +15,7 @@ import { type Card } from "$lib/components/home/types";
 
 export async function getSpaces(
   registry_type: RegistryType
-): Promise<RepositoryResponse> {
+): Promise<spaceResponse> {
   let params = { registry_type: registry_type };
   const response = await opsmlClient.get(RoutePaths.LIST_SPACES, params);
   return await response.json();
@@ -24,12 +24,12 @@ export async function getSpaces(
 export async function getRegistryStats(
   registry_type: RegistryType,
   searchTerm?: string,
-  repository?: string
+  space?: string
 ): Promise<RegistryStatsResponse> {
   let request: RegistryStatsRequest = {
     registry_type: registry_type,
     search_term: searchTerm,
-    repository: repository,
+    space: space,
   };
 
   const response = await opsmlClient.get(RoutePaths.GET_STATS, request);
@@ -39,14 +39,14 @@ export async function getRegistryStats(
 export async function getRegistryPage(
   registry_type: RegistryType,
   sort_by?: string,
-  repository?: string,
+  space?: string,
   searchTerm?: string,
   page?: number
 ): Promise<QueryPageResponse> {
   let params: {
     registry_type: RegistryType;
     sort_by?: string;
-    repository?: string;
+    space?: string;
     search_term?: string;
     page?: number;
   } = {
@@ -57,8 +57,8 @@ export async function getRegistryPage(
     params["sort_by"] = sort_by;
   }
 
-  if (repository) {
-    params["repository"] = repository;
+  if (space) {
+    params["space"] = space;
   }
 
   if (searchTerm) {
@@ -108,12 +108,12 @@ export function getBgColor(): string {
 export async function getCardUid(
   registry_type: RegistryType,
   name?: string,
-  repository?: string,
+  space?: string,
   version?: string
 ): Promise<string> {
   const params: CardQueryArgs = {
     name: name,
-    repository: repository,
+    space: space,
     version: version,
     registry_type: registry_type,
     limit: 1,
@@ -131,9 +131,7 @@ export async function getUID(
   registry: RegistryType
 ): Promise<string> {
   const name = (url as URL).searchParams.get("name") as string | undefined;
-  const repository = (url as URL).searchParams.get("repository") as
-    | string
-    | undefined;
+  const space = (url as URL).searchParams.get("space") as string | undefined;
   const version = (url as URL).searchParams.get("version") as
     | string
     | undefined;
@@ -144,7 +142,7 @@ export async function getUID(
     return uid;
   }
 
-  return await getCardUid(registry, name, repository, version);
+  return await getCardUid(registry, name, space, version);
 }
 export async function getCardMetadata(
   uid: string,
@@ -161,13 +159,13 @@ export async function getCardMetadata(
 
 export async function getVersionPage(
   registry_type: RegistryType,
-  repository?: string,
+  space?: string,
   name?: string,
   page?: number
 ): Promise<VersionPageResponse> {
   const params: VersionPageRequest = {
     registry_type: registry_type,
-    repository: repository,
+    space: space,
     name: name,
     page: page,
   };

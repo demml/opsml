@@ -14,7 +14,7 @@ import numpy as np
 # Opsml
 from opsml import CardInfo, DataCard, CardRegistry, DataSplit, PandasData
 
-card_info = CardInfo(name="linnerrud", repository="opsml", contact="user@email.com")
+card_info = CardInfo(name="linnerrud", space="opsml", contact="user@email.com")
 data, target = load_linnerud(return_X_y=True, as_frame=True)
 data["Pulse"] = target.Pulse
 
@@ -60,8 +60,8 @@ print(data_card.version)
 `name`: `str`
 : Name for the data (Required)
 
-`repository`: `str`
-: repository data belongs to (Required)
+`space`: `str`
+: space data belongs to (Required)
 
 `contact`: `str`
 : Email to associate with data (Required)

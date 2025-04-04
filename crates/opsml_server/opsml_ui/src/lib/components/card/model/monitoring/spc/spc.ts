@@ -39,7 +39,7 @@ export interface SpcFeatureDriftProfile {
 export interface SpcDriftConfig {
   sample_size: number;
   sample: boolean;
-  repository: string;
+  space: string;
   name: string;
   version: string;
   alert_config: SpcAlertConfig;

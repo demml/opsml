@@ -76,14 +76,14 @@ export function parseMetricsToMap(metrics: Metric[]): Map<string, Metric[]> {
 }
 
 export async function getRecentExperiments(
-  repository: string,
+  space: string,
   name: string,
   currentVersion: string
 ): Promise<Experiment[]> {
   const params: CardQueryArgs = {
     registry_type: RegistryType.Experiment,
     name,
-    repository,
+    space,
     limit: 50,
   };
 

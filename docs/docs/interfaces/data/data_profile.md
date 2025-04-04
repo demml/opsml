@@ -28,7 +28,7 @@ interface = PandasData(data=data)
 # create data profile from interface
 interface.create_data_profile(sample_perc=0.5) # you can specify a sampling percentage between 0 and 1
 
-card_info = CardInfo(name="linnerrud", repository="opsml", contact="user@email.com")
+card_info = CardInfo(name="linnerrud", space="opsml", contact="user@email.com")
 data_card = DataCard(info=card_info, data=data)
 
 # this also works
@@ -78,7 +78,7 @@ interface.create_data_profile()
 
 # Simulate creating 2nd DataCard
 data2 = data * np.random.rand(data.shape[1])
-card_info = CardInfo(name="linnerrud", repository="opsml", contact="user@email.com")
+card_info = CardInfo(name="linnerrud", space="opsml", contact="user@email.com")
 interface2 = PandasData(data=data)
 interface2.create_data_profile()
 

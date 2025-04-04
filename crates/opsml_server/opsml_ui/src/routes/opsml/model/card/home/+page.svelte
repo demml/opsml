@@ -13,7 +13,7 @@
 
   function navigateToReadMe() {
       // navigate to readme
-      goto(`/opsml/${data.registryPath}/card/readme?repository=${metadata.repository}&name=${metadata.name}&version=${metadata.version}`);
+      goto(`/opsml/${data.registryPath}/card/readme?space=${metadata.space}&name=${metadata.name}&version=${metadata.version}`);
     }
 
 </script>
@@ -26,7 +26,7 @@
       <div class="gap-1 flex flex-col rounded-base border-black border-3 shadow bg-surface-50 w-[1200px]">
         <CardReadMe
           name={metadata.name}
-          repository={metadata.repository}
+          space={metadata.space}
           registryPath={data.registryPath}
           version={metadata.version}
           readMe={data.readme}

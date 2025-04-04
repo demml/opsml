@@ -13,7 +13,7 @@ In addition to using `OpsML` as a stand-alone python package, it can also be use
 ---
 
 ## **Setup**
-You can setup the `OpsML` server based on your repository needs. As an example, you could follow a conventional setup whereby you host Docker images via K8s. For this setup, you would install `OpsML` and its dependencies into a Dockerfile and host the server on k8s.
+You can setup the `OpsML` server based on your space needs. As an example, you could follow a conventional setup whereby you host Docker images via K8s. For this setup, you would install `OpsML` and its dependencies into a Dockerfile and host the server on k8s.
 
 ### Required Env Vars
 
