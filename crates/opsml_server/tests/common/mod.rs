@@ -253,6 +253,9 @@ impl TestHelper {
             header::AUTHORIZATION,
             format!("Bearer {}", self.token.token).parse().unwrap(),
         );
+        request
+            .headers_mut()
+            .insert(header::USER_AGENT, "opsml-test".parse().unwrap());
 
         request
     }
@@ -326,7 +329,6 @@ impl TestHelper {
         let request = Request::builder()
             .uri("/opsml/api/card/create")
             .method("POST")
-            .header(header::USER_AGENT, "opsml-test")
             .header(header::CONTENT_TYPE, "application/json")
             .body(Body::from(body))
             .unwrap();

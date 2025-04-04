@@ -19,8 +19,7 @@ pub async fn log_audit_event(
     event: AuditEvent,
     sql_client: Arc<SqlClientEnum>,
 ) -> Result<(), EventError> {
-    debug!("Logging audit event: {:?}", event);
-
+    debug!("Logging audit event");
     sql_client.insert_audit_event(event).await.map_err(|e| {
         error!("Failed to log audit event: {}", e);
         EventError::Error("Failed to log audit event".to_string())
