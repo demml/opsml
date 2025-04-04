@@ -12,7 +12,7 @@ use tracing::{info, warn};
 
 pub async fn create_app() -> Result<Router> {
     // setup components (config, logging, storage client)
-    let (config, storage_client, sql_client, scouter) = setup_components().await?;
+    let (config, storage_client, sql_client, scouter_client) = setup_components().await?;
     let storage_settings = config.storage_settings()?;
 
     // Create shared state for the application (storage client, auth manager, config)
@@ -25,8 +25,8 @@ pub async fn create_app() -> Result<Router> {
             &config.auth_settings.scouter_secret,
         ),
         config,
-        storage_settings: storage_settings,
-        scouter_client: scouter,
+        storage_settings,
+        scouter_client,
         event_bus: EventBus::new(100),
     });
 
