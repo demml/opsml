@@ -1,8 +1,11 @@
 use chrono::{DateTime, Utc};
 use opsml_error::error::VersionError;
-use opsml_error::SqlError;
+use opsml_error::{ServerError, SqlError};
 use opsml_types::cards::{CardTable, ParameterValue};
-use opsml_types::contracts::ExperimentCardClientRecord;
+use opsml_types::contracts::{
+    AuditCardClientRecord, Card, DataCardClientRecord, ExperimentCardClientRecord,
+    ModelCardClientRecord, PromptCardClientRecord,
+};
 use opsml_types::{CommonKwargs, DataType, ModelType, RegistryType};
 use opsml_utils::create_uuid7;
 use opsml_utils::utils::get_utc_datetime;
@@ -215,6 +218,31 @@ impl DataCardRecord {
             self.version
         )
     }
+
+    pub fn from_client_card(client_card: DataCardClientRecord) -> Result<Self, SqlError> {
+        let version = Version::parse(&client_card.version).map_err(|_| {
+            SqlError::GeneralError(format!("Failed to parse version: {}", client_card.version))
+        })?;
+        Ok(DataCardRecord {
+            uid: client_card.uid,
+            created_at: client_card.created_at,
+            app_env: client_card.app_env,
+            name: client_card.name,
+            repository: client_card.repository,
+            major: version.major as i32,
+            minor: version.minor as i32,
+            patch: version.patch as i32,
+            pre_tag: Some(version.pre.to_string()),
+            build_tag: Some(version.build.to_string()),
+            version: client_card.version,
+            tags: Json(client_card.tags),
+            data_type: client_card.data_type,
+            experimentcard_uid: client_card.experimentcard_uid,
+            auditcard_uid: client_card.auditcard_uid,
+            interface_type: client_card.interface_type,
+            username: client_card.username,
+        })
+    }
 }
 
 impl Default for DataCardRecord {
@@ -317,6 +345,35 @@ impl ModelCardRecord {
             self.name,
             self.version
         )
+    }
+
+    pub fn from_client_card(client_card: ModelCardClientRecord) -> Result<Self, SqlError> {
+        let version = Version::parse(&client_card.version).map_err(|_| {
+            SqlError::GeneralError(format!("Failed to parse version: {}", client_card.version))
+        })?;
+
+        Ok(ModelCardRecord {
+            uid: client_card.uid,
+            created_at: client_card.created_at,
+            app_env: client_card.app_env,
+            name: client_card.name,
+            repository: client_card.repository,
+            major: version.major as i32,
+            minor: version.minor as i32,
+            patch: version.patch as i32,
+            pre_tag: Some(version.pre.to_string()),
+            build_tag: Some(version.build.to_string()),
+            version: client_card.version,
+            tags: Json(client_card.tags),
+            datacard_uid: client_card.datacard_uid,
+            data_type: client_card.data_type,
+            model_type: client_card.model_type,
+            experimentcard_uid: client_card.experimentcard_uid,
+            auditcard_uid: client_card.auditcard_uid,
+            interface_type: client_card.interface_type,
+            task_type: client_card.task_type,
+            username: client_card.username,
+        })
     }
 }
 
@@ -535,6 +592,31 @@ impl AuditCardRecord {
             self.version
         )
     }
+
+    pub fn from_client_card(client_card: AuditCardClientRecord) -> Result<Self, SqlError> {
+        let version = Version::parse(&client_card.version).map_err(|_| {
+            SqlError::GeneralError(format!("Failed to parse version: {}", client_card.version))
+        })?;
+        Ok(AuditCardRecord {
+            uid: client_card.uid,
+            created_at: client_card.created_at,
+            app_env: client_card.app_env,
+            name: client_card.name,
+            repository: client_card.repository,
+            major: version.major as i32,
+            minor: version.minor as i32,
+            patch: version.patch as i32,
+            pre_tag: Some(version.pre.to_string()),
+            build_tag: Some(version.build.to_string()),
+            version: client_card.version,
+            tags: Json(client_card.tags),
+            approved: client_card.approved,
+            datacard_uids: Json(client_card.datacard_uids),
+            modelcard_uids: Json(client_card.modelcard_uids),
+            experimentcard_uids: Json(client_card.experimentcard_uids),
+            username: client_card.username,
+        })
+    }
 }
 
 impl Default for AuditCardRecord {
@@ -622,6 +704,30 @@ impl PromptCardRecord {
             self.name,
             self.version
         )
+    }
+
+    pub fn from_client_card(client_card: PromptCardClientRecord) -> Result<Self, SqlError> {
+        let version = Version::parse(&client_card.version).map_err(|_| {
+            SqlError::GeneralError(format!("Failed to parse version: {}", client_card.version))
+        })?;
+
+        Ok(PromptCardRecord {
+            uid: client_card.uid,
+            created_at: client_card.created_at,
+            app_env: client_card.app_env,
+            name: client_card.name,
+            repository: client_card.repository,
+            major: version.major as i32,
+            minor: version.minor as i32,
+            patch: version.patch as i32,
+            pre_tag: Some(version.pre.to_string()),
+            build_tag: Some(version.build.to_string()),
+            version: client_card.version,
+            tags: Json(client_card.tags),
+            experimentcard_uid: client_card.experimentcard_uid,
+            auditcard_uid: client_card.auditcard_uid,
+            username: client_card.username,
+        })
     }
 }
 
@@ -790,6 +896,24 @@ impl ServerCard {
             ServerCard::Experiment(card) => card.created_at,
             ServerCard::Audit(card) => card.created_at,
             ServerCard::Prompt(card) => card.created_at,
+        }
+    }
+
+    /// Convert a `Card` enum to a `ServerCard` enum.
+    ///
+    /// # Arguments
+    /// * `card` - A `Card` enum variant.
+    pub fn from_card(card: Card) -> Result<Self, ServerError> {
+        match card {
+            Card::Data(card) => Ok(ServerCard::Data(DataCardRecord::from_client_card(card)?)),
+            Card::Model(card) => Ok(ServerCard::Model(ModelCardRecord::from_client_card(card)?)),
+            Card::Experiment(card) => Ok(ServerCard::Experiment(
+                ExperimentCardRecord::from_client_card(card)?,
+            )),
+            Card::Audit(card) => Ok(ServerCard::Audit(AuditCardRecord::from_client_card(card)?)),
+            Card::Prompt(card) => Ok(ServerCard::Prompt(PromptCardRecord::from_client_card(
+                card,
+            )?)),
         }
     }
 }

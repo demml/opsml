@@ -22,9 +22,7 @@ use opsml_sql::base::SqlClient;
 use opsml_sql::schemas::*;
 use opsml_types::{cards::*, contracts::*};
 use opsml_types::{SaveName, Suffix};
-use semver::Version;
 use serde_json::json;
-use sqlx::types::Json as SqlxJson;
 use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::sync::Arc;
 use tempfile::tempdir;
@@ -302,150 +300,10 @@ pub async fn update_card(
     );
     let table = CardTable::from_registry_type(&card_request.registry_type);
 
-    // Note: We can use unwrap() here because a card being updated has already been created and thus has defaults.
-    // match on registry type (all fields should be supplied)
-    let card = match card_request.card {
-        Card::Data(client_card) => {
-            let version = Version::parse(&client_card.version).map_err(|e| {
-                error!("Failed to parse version: {}", e);
-                internal_server_error(e, "Failed to parse version")
-            })?;
-
-            let server_card = DataCardRecord {
-                uid: client_card.uid,
-                created_at: client_card.created_at,
-                app_env: client_card.app_env,
-                name: client_card.name,
-                repository: client_card.repository,
-                major: version.major as i32,
-                minor: version.minor as i32,
-                patch: version.patch as i32,
-                pre_tag: Some(version.pre.to_string()),
-                build_tag: Some(version.build.to_string()),
-                version: client_card.version,
-                tags: SqlxJson(client_card.tags),
-                data_type: client_card.data_type,
-                experimentcard_uid: client_card.experimentcard_uid,
-                auditcard_uid: client_card.auditcard_uid,
-                interface_type: client_card.interface_type,
-                username: client_card.username,
-            };
-            ServerCard::Data(server_card)
-        }
-
-        Card::Model(client_card) => {
-            let version = Version::parse(&client_card.version).map_err(|e| {
-                error!("Failed to parse version: {}", e);
-                internal_server_error(e, "Failed to parse version")
-            })?;
-
-            let server_card = ModelCardRecord {
-                uid: client_card.uid,
-                created_at: client_card.created_at,
-                app_env: client_card.app_env,
-                name: client_card.name,
-                repository: client_card.repository,
-                major: version.major as i32,
-                minor: version.minor as i32,
-                patch: version.patch as i32,
-                pre_tag: Some(version.pre.to_string()),
-                build_tag: Some(version.build.to_string()),
-                version: client_card.version,
-                tags: SqlxJson(client_card.tags),
-                datacard_uid: client_card.datacard_uid,
-                data_type: client_card.data_type,
-                model_type: client_card.model_type,
-                experimentcard_uid: client_card.experimentcard_uid,
-                auditcard_uid: client_card.auditcard_uid,
-                interface_type: client_card.interface_type,
-                task_type: client_card.task_type,
-                username: client_card.username,
-            };
-            ServerCard::Model(server_card)
-        }
-
-        Card::Experiment(client_card) => {
-            let version = Version::parse(&client_card.version).map_err(|e| {
-                error!("Failed to parse version: {}", e);
-                internal_server_error(e, "Failed to parse version")
-            })?;
-
-            let server_card = ExperimentCardRecord {
-                uid: client_card.uid,
-                created_at: client_card.created_at,
-                app_env: client_card.app_env,
-                name: client_card.name,
-                repository: client_card.repository,
-                major: version.major as i32,
-                minor: version.minor as i32,
-                patch: version.patch as i32,
-                pre_tag: Some(version.pre.to_string()),
-                build_tag: Some(version.build.to_string()),
-                version: client_card.version,
-                tags: SqlxJson(client_card.tags),
-                datacard_uids: SqlxJson(client_card.datacard_uids),
-                modelcard_uids: SqlxJson(client_card.modelcard_uids),
-                promptcard_uids: SqlxJson(client_card.promptcard_uids),
-                experimentcard_uids: SqlxJson(client_card.experimentcard_uids),
-                username: client_card.username,
-            };
-            ServerCard::Experiment(server_card)
-        }
-
-        Card::Audit(client_card) => {
-            let version = Version::parse(&client_card.version).map_err(|e| {
-                error!("Failed to parse version: {}", e);
-                internal_server_error(e, "Failed to parse version")
-            })?;
-
-            let server_card = AuditCardRecord {
-                uid: client_card.uid,
-                created_at: client_card.created_at,
-                app_env: client_card.app_env,
-                name: client_card.name,
-                repository: client_card.repository,
-                major: version.major as i32,
-                minor: version.minor as i32,
-                patch: version.patch as i32,
-                pre_tag: Some(version.pre.to_string()),
-                build_tag: Some(version.build.to_string()),
-                version: client_card.version,
-                tags: SqlxJson(client_card.tags),
-                approved: client_card.approved,
-                datacard_uids: SqlxJson(client_card.datacard_uids),
-                modelcard_uids: SqlxJson(client_card.modelcard_uids),
-                experimentcard_uids: SqlxJson(client_card.experimentcard_uids),
-                username: client_card.username,
-            };
-            ServerCard::Audit(server_card)
-        }
-
-        Card::Prompt(client_card) => {
-            let version = Version::parse(&client_card.version).map_err(|e| {
-                error!("Failed to parse version: {}", e);
-                internal_server_error(e, "Failed to parse version")
-            })?;
-
-            let server_card = PromptCardRecord {
-                uid: client_card.uid,
-                created_at: client_card.created_at,
-                app_env: client_card.app_env,
-                name: client_card.name,
-                repository: client_card.repository,
-                major: version.major as i32,
-                minor: version.minor as i32,
-                patch: version.patch as i32,
-                pre_tag: Some(version.pre.to_string()),
-                build_tag: Some(version.build.to_string()),
-                version: client_card.version,
-                tags: SqlxJson(client_card.tags),
-                experimentcard_uid: client_card.experimentcard_uid,
-                auditcard_uid: client_card.auditcard_uid,
-                username: client_card.username,
-            };
-            ServerCard::Prompt(server_card)
-        }
-    };
+    let card = ServerCard::from_card(card_request.card).map_err(|e| {
+        error!("Failed to convert card: {}", e);
+        internal_server_error(e, "Failed to convert card")
+    })?;
 
     state
         .sql_client
