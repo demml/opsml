@@ -7,7 +7,7 @@ use opsml_types::RegistryType;
 
 use std::net::SocketAddr;
 
-pub fn create_audit_record(
+pub fn create_audit_event(
     addr: SocketAddr,
     agent: UserAgent,
     headers: HeaderMap,
