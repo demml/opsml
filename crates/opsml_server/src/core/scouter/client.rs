@@ -1,10 +1,8 @@
 use anyhow::Result;
-use opsml_client::RequestType;
-
 use opsml_error::{ApiError, ServerError};
 use opsml_settings::config::ScouterSettings;
-
 use opsml_sql::schemas::User;
+use opsml_types::api::RequestType;
 /// Route for debugging information
 use reqwest::Response;
 use reqwest::{header::HeaderMap, Client};

@@ -6,18 +6,22 @@ use opsml_types::RegistryType;
 
 use std::net::SocketAddr;
 
-#[allow(clippy::too_many_arguments)]
+#[derive(Clone)]
+pub struct AuditContext {
+    pub resource_id: String,
+    pub resource_type: ResourceType,
+    pub metadata: String,
+    pub operation: Operation,
+    pub registry_type: Option<RegistryType>,
+    pub access_location: Option<String>,
+}
+
 pub fn create_audit_event(
     addr: SocketAddr,
     agent: UserAgent,
     headers: HeaderMap,
-    operation_type: Operation,
-    resource_type: ResourceType,
-    resource_id: String,
-    access_location: Option<String>,
-    metadata: String,
-    registry_type: Option<RegistryType>,
     route: String,
+    context: AuditContext,
 ) -> AuditEvent {
     AuditEvent {
         username: headers
@@ -32,14 +36,14 @@ pub fn create_audit_event(
             .map(|ip| ip.split(',').next().unwrap_or("unknown").to_string())
             .unwrap_or_else(|| addr.ip().to_string()),
         user_agent: agent.to_string(),
-        operation_type,
-        resource_type,
-        resource_id,
-        access_location,
+        operation: context.operation,
+        resource_type: context.resource_type,
+        resource_id: context.resource_id,
+        access_location: context.access_location,
         status: AuditStatus::Success,
         error_message: None,
-        metadata,
-        registry_type,
+        metadata: context.metadata,
+        registry_type: context.registry_type,
         route,
     }
 }

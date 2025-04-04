@@ -7,22 +7,18 @@ use axum::extract::Multipart;
 use anyhow::{Context, Result};
 use axum::{
     body::Body,
-    extract::{ConnectInfo, Query, State},
-    http::{HeaderMap, StatusCode},
+    extract::{Query, State},
+    http::StatusCode,
     response::{IntoResponse, Response},
     routing::{delete, get, post},
     Extension, Json, Router,
 };
-use axum_extra::TypedHeader;
-use headers::UserAgent;
+use headers::HeaderMap;
 use opsml_auth::permission::UserPermissions;
-use opsml_client::Routes;
 use opsml_error::error::ServerError;
-use opsml_events::create_audit_event;
-use opsml_events::Event;
 use opsml_sql::base::SqlClient;
-use opsml_types::{api::Routes, contracts::*, StorageType, MAX_FILE_SIZE};
-use std::net::SocketAddr;
+use opsml_types::{contracts::*, StorageType, MAX_FILE_SIZE};
+
 use tokio::fs::File;
 use tokio::io::AsyncWriteExt;
 
@@ -53,8 +49,6 @@ use tracing::{error, info, instrument};
 pub async fn create_multipart_upload(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
-    ConnectInfo(addr): ConnectInfo<SocketAddr>,
-    TypedHeader(agent): TypedHeader<UserAgent>,
     headers: HeaderMap,
     Query(params): Query<MultiPartQuery>,
 ) -> Result<Json<MultiPartSession>, (StatusCode, Json<serde_json::Value>)> {
@@ -109,21 +103,6 @@ pub async fn create_multipart_upload(
         _ => None,
     };
 
-    let audit_event = create_audit_event(
-        addr,
-        agent,
-        headers,
-        Operation::Create,
-        ResourceType::File,
-        params.path.clone(),
-        Some(params.path.clone()),
-        serde_json::to_string(&params).unwrap_or_default(),
-        None,
-        Routes::Multipart,
-    );
-
-    state.event_bus.publish(Event::Audit(audit_event));
-
     Ok(Json(MultiPartSession {
         session_url,
         bucket,
@@ -143,9 +122,6 @@ pub async fn create_multipart_upload(
 pub async fn generate_presigned_url(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
-    ConnectInfo(addr): ConnectInfo<SocketAddr>,
-    TypedHeader(agent): TypedHeader<UserAgent>,
-    headers: HeaderMap,
     Query(params): Query<PresignedQuery>,
 ) -> Result<Json<PresignedUrl>, (StatusCode, Json<serde_json::Value>)> {
     // check for read access
@@ -194,21 +170,6 @@ pub async fn generate_presigned_url(
                 return Err(internal_server_error(e, "Failed to generate presigned url"));
             }
         };
-
-        let audit_event = create_audit_event(
-            addr,
-            agent,
-            headers,
-            Operation::Create,
-            ResourceType::File,
-            params.path.clone(),
-            Some(params.path.clone()),
-            serde_json::to_string(&params).unwrap_or_default(),
-            None,
-            Routes::Presigned,
-        );
-
-        state.event_bus.publish(Event::Audit(audit_event));
         return Ok(Json(PresignedUrl { url }));
     }
 
@@ -226,23 +187,6 @@ pub async fn generate_presigned_url(
         }
     };
 
-    let url_clone = url.clone();
-
-    let audit_event = create_audit_event(
-        addr,
-        agent,
-        headers,
-        Operation::Create,
-        ResourceType::File,
-        url_clone.clone(),
-        Some(url_clone),
-        serde_json::to_string(&params).unwrap_or_default(),
-        None,
-        Routes::Presigned,
-    );
-
-    state.event_bus.publish(Event::Audit(audit_event));
-
     Ok(Json(PresignedUrl { url }))
 }
 
@@ -250,9 +194,7 @@ pub async fn generate_presigned_url(
 pub async fn complete_multipart_upload(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
-    ConnectInfo(addr): ConnectInfo<SocketAddr>,
-    TypedHeader(agent): TypedHeader<UserAgent>,
-    headers: HeaderMap,
+
     Json(req): Json<CompleteMultipartUpload>,
 ) -> Result<Json<UploadResponse>, (StatusCode, Json<serde_json::Value>)> {
     // check for write access
@@ -264,19 +206,6 @@ pub async fn complete_multipart_upload(
         ));
     }
 
-    let audit_event = create_audit_event(
-        addr,
-        agent,
-        headers,
-        Operation::Create,
-        ResourceType::File,
-        req.path.clone(),
-        Some(req.path.clone()),
-        serde_json::to_string(&req).unwrap_or_default(),
-        None,
-        Routes::Presigned,
-    );
-
     state
         .storage_client
         .complete_multipart_upload(req)
@@ -287,7 +216,6 @@ pub async fn complete_multipart_upload(
             internal_server_error(e, "Failed to complete multipart upload")
         })?;
 
-    state.event_bus.publish(Event::Audit(audit_event));
     Ok(Json(UploadResponse {
         uploaded: true,
         message: "".to_string(),
@@ -330,9 +258,6 @@ pub async fn upload_multipart(
 pub async fn list_files(
     State(state): State<Arc<AppState>>,
     Query(params): Query<ListFileQuery>,
-    ConnectInfo(addr): ConnectInfo<SocketAddr>,
-    TypedHeader(agent): TypedHeader<UserAgent>,
-    headers: HeaderMap,
 ) -> Result<Json<ListFileResponse>, (StatusCode, Json<serde_json::Value>)> {
     let path = Path::new(&params.path);
     info!("Listing files for: {}", path.display());
@@ -350,20 +275,6 @@ pub async fn list_files(
             return Err(internal_server_error(e, "Failed to list files"));
         }
     };
-
-    let audit_event = create_audit_event(
-        addr,
-        agent,
-        headers,
-        Operation::Read,
-        ResourceType::File,
-        params.path.clone(),
-        Some(params.path.clone()),
-        serde_json::to_string(&params).unwrap_or_default(),
-        None,
-        Routes::List,
-    );
-    state.event_bus.publish(Event::Audit(audit_event));
 
     Ok(Json(ListFileResponse { files }))
 }
@@ -484,9 +395,7 @@ pub async fn file_tree(
 pub async fn get_file_for_ui(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
-    ConnectInfo(addr): ConnectInfo<SocketAddr>,
-    TypedHeader(agent): TypedHeader<UserAgent>,
-    headers: HeaderMap,
+
     Json(req): Json<RawFileRequest>,
 ) -> Result<Json<RawFile>, (StatusCode, Json<serde_json::Value>)> {
     if !perms.has_read_permission() {
@@ -572,19 +481,6 @@ pub async fn get_file_for_ui(
         })?
     };
 
-    let audit_event = create_audit_event(
-        addr,
-        agent,
-        headers,
-        Operation::Read,
-        ResourceType::File,
-        req.path.clone(),
-        Some(req.path.clone()),
-        serde_json::to_string(&req).unwrap_or_default(),
-        None,
-        Routes::FileContent,
-    );
-    state.event_bus.publish(Event::Audit(audit_event));
     Ok(Json(RawFile {
         content,
         suffix: file.suffix.to_string(),
@@ -595,9 +491,7 @@ pub async fn get_file_for_ui(
 pub async fn delete_file(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
-    ConnectInfo(addr): ConnectInfo<SocketAddr>,
-    TypedHeader(agent): TypedHeader<UserAgent>,
-    headers: HeaderMap,
+
     Query(params): Query<DeleteFileQuery>,
 ) -> Result<Json<DeleteFileResponse>, (StatusCode, Json<serde_json::Value>)> {
     // check for delete access
@@ -632,8 +526,6 @@ pub async fn delete_file(
         return Err(internal_server_error(e, "Failed to delete files"));
     }
 
-    let rpath = params.path.clone();
-
     // check if file exists
     let exists = state.storage_client.exists(path).await;
 
@@ -645,19 +537,6 @@ pub async fn delete_file(
                     Json(json!({ "error": "Failed to delete file" })),
                 ))
             } else {
-                let audit_event = create_audit_event(
-                    addr,
-                    agent,
-                    headers,
-                    Operation::Delete,
-                    ResourceType::File,
-                    rpath.clone(),
-                    Some(rpath),
-                    serde_json::to_string(&params).unwrap_or_default(),
-                    None,
-                    Routes::FileDelete,
-                );
-                state.event_bus.publish(Event::Audit(audit_event));
                 Ok(Json(DeleteFileResponse { deleted: true }))
             }
         }

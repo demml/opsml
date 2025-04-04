@@ -151,7 +151,7 @@ CREATE TABLE IF NOT EXISTS opsml_audit_event (
     username VARCHAR(255) NOT NULL,
     client_ip VARCHAR(255) NOT NULL,
     user_agent VARCHAR(255), 
-    operation_type VARCHAR(255) NOT NULL,  
+    operation VARCHAR(255) NOT NULL,  
     resource_type VARCHAR(255) NOT NULL,   
     resource_id VARCHAR(255) NOT NULL,              
     access_location VARCHAR(255),          
