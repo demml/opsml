@@ -8,7 +8,6 @@ use crate::{
 use chrono::{DateTime, Utc};
 use opsml_colors::Colorize;
 use opsml_error::CardError;
-use opsml_error::TypeError;
 use opsml_semver::VersionType;
 use opsml_utils::{get_utc_datetime, PyHelperFuncs};
 use pyo3::prelude::*;
@@ -35,9 +34,9 @@ impl AuditableRequest for UidRequest {
         self.uid.clone()
     }
 
-    fn get_metadata(&self) -> Result<String, TypeError> {
+    fn get_metadata(&self) -> String {
         serde_json::to_string(self)
-            .map_err(|e| TypeError::Error(format!("Failed to serialize UidRequest: {}", e)))
+            .unwrap_or_else(|e| format!("Failed to serialize UidRequest: {}", e))
     }
 
     fn get_registry_type(&self) -> Option<RegistryType> {
@@ -61,9 +60,9 @@ impl AuditableRequest for DeleteCardRequest {
         self.uid.clone()
     }
 
-    fn get_metadata(&self) -> Result<String, TypeError> {
+    fn get_metadata(&self) -> String {
         serde_json::to_string(self)
-            .map_err(|e| TypeError::Error(format!("Failed to serialize UidRequest: {}", e)))
+            .unwrap_or_else(|e| format!("Failed to serialize DeleteCardRequest: {}", e))
     }
 
     fn get_registry_type(&self) -> Option<RegistryType> {
@@ -90,9 +89,9 @@ impl AuditableRequest for RepositoryRequest {
         self.registry_type.to_string()
     }
 
-    fn get_metadata(&self) -> Result<String, TypeError> {
+    fn get_metadata(&self) -> String {
         serde_json::to_string(self)
-            .map_err(|e| TypeError::Error(format!("Failed to serialize UidRequest: {}", e)))
+            .unwrap_or_else(|e| format!("Failed to serialize RepositoryRequest: {}", e))
     }
 
     fn get_registry_type(&self) -> Option<RegistryType> {
@@ -121,9 +120,9 @@ impl AuditableRequest for RegistryStatsRequest {
         self.registry_type.to_string()
     }
 
-    fn get_metadata(&self) -> Result<String, TypeError> {
+    fn get_metadata(&self) -> String {
         serde_json::to_string(self)
-            .map_err(|e| TypeError::Error(format!("Failed to serialize UidRequest: {}", e)))
+            .unwrap_or_else(|e| format!("Failed to serialize RegistryStatsRequest: {}", e))
     }
 
     fn get_registry_type(&self) -> Option<RegistryType> {
@@ -151,9 +150,9 @@ impl AuditableRequest for QueryPageRequest {
         self.registry_type.to_string()
     }
 
-    fn get_metadata(&self) -> Result<String, TypeError> {
+    fn get_metadata(&self) -> String {
         serde_json::to_string(self)
-            .map_err(|e| TypeError::Error(format!("Failed to serialize UidRequest: {}", e)))
+            .unwrap_or_else(|e| format!("Failed to serialize QueryPageRequest: {}", e))
     }
 
     fn get_registry_type(&self) -> Option<RegistryType> {
@@ -178,9 +177,9 @@ impl AuditableRequest for VersionPageRequest {
         self.registry_type.to_string()
     }
 
-    fn get_metadata(&self) -> Result<String, TypeError> {
+    fn get_metadata(&self) -> String {
         serde_json::to_string(self)
-            .map_err(|e| TypeError::Error(format!("Failed to serialize UidRequest: {}", e)))
+            .unwrap_or_else(|e| format!("Failed to serialize VersionPageRequest: {}", e))
     }
 
     fn get_registry_type(&self) -> Option<RegistryType> {
@@ -236,9 +235,9 @@ impl AuditableRequest for CardQueryArgs {
         self.uid.clone().unwrap_or_default()
     }
 
-    fn get_metadata(&self) -> Result<String, TypeError> {
+    fn get_metadata(&self) -> String {
         serde_json::to_string(self)
-            .map_err(|e| TypeError::Error(format!("Failed to serialize CardQueryArgs: {}", e)))
+            .unwrap_or_else(|e| format!("Failed to serialize CardQueryArgs: {}", e))
     }
 
     fn get_registry_type(&self) -> Option<RegistryType> {
@@ -799,9 +798,9 @@ impl AuditableRequest for CreateCardRequest {
         self.card.uid().to_string()
     }
 
-    fn get_metadata(&self) -> Result<String, TypeError> {
+    fn get_metadata(&self) -> String {
         serde_json::to_string(self)
-            .map_err(|e| TypeError::Error(format!("Failed to serialize CreateCardRequest: {}", e)))
+            .unwrap_or_else(|e| format!("Failed to serialize CreateCardRequest: {}", e))
     }
 
     fn get_registry_type(&self) -> Option<RegistryType> {
@@ -836,9 +835,9 @@ impl AuditableRequest for UpdateCardRequest {
         self.card.uid().to_string()
     }
 
-    fn get_metadata(&self) -> Result<String, TypeError> {
+    fn get_metadata(&self) -> String {
         serde_json::to_string(self)
-            .map_err(|e| TypeError::Error(format!("Failed to serialize UpdateCardRequest: {}", e)))
+            .unwrap_or_else(|e| format!("Failed to serialize UpdateCardRequest: {}", e))
     }
 
     fn get_registry_type(&self) -> Option<RegistryType> {

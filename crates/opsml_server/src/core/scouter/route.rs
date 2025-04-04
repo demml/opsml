@@ -5,23 +5,19 @@ use crate::core::scouter::utils::{find_drift_profile, save_encrypted_profile};
 use crate::core::state::AppState;
 use anyhow::{Context, Result};
 use axum::{
-    extract::{ConnectInfo, Query, State},
-    http::{HeaderMap, StatusCode},
+    extract::{Query, State},
+    http::StatusCode,
     response::IntoResponse,
     routing::{get, post, put},
     Extension, Json, Router,
 };
-use axum_extra::TypedHeader;
-use headers::UserAgent;
 use opsml_auth::permission::UserPermissions;
-use opsml_client::{RequestType, Routes};
-use opsml_events::{create_audit_event, Event};
 use opsml_sql::base::SqlClient;
-use opsml_types::contracts::{Operation, RawFileRequest, ResourceType, UpdateProfileRequest};
+use opsml_types::api::RequestType;
+use opsml_types::contracts::{RawFileRequest, UpdateProfileRequest};
 use opsml_types::RegistryType;
 use opsml_types::SaveName;
 use reqwest::Response;
-use std::net::SocketAddr;
 
 use crate::core::scouter::types::{
     BinnedCustomResult, BinnedPsiResult, DriftProfileResult, SpcDriftResult,
@@ -373,9 +369,6 @@ pub async fn get_custom_drift(
 pub async fn get_drift_profiles_for_ui(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
-    ConnectInfo(addr): ConnectInfo<SocketAddr>,
-    TypedHeader(agent): TypedHeader<UserAgent>,
-    headers: HeaderMap,
     Json(req): Json<RawFileRequest>,
 ) -> DriftProfileResult {
     if !perms.has_read_permission() {
@@ -413,20 +406,6 @@ pub async fn get_drift_profiles_for_ui(
         internal_server_error(e, "Failed to load drift profile")
     })?;
 
-    let audit_event = create_audit_event(
-        addr,
-        agent,
-        headers,
-        Operation::Read,
-        ResourceType::File,
-        req.path.clone(),
-        Some(req.path.clone()),
-        serde_json::to_string(&req).unwrap_or_default(),
-        None,
-        Routes::ScouterProfileUi,
-    );
-
-    state.event_bus.publish(Event::Audit(audit_event));
     Ok(Json(profiles))
 }
 

@@ -2,6 +2,7 @@ pub mod core;
 
 pub use core::app::create_app;
 use opsml_colors::Colorize;
+use std::net::SocketAddr;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use tokio::task::JoinHandle;
@@ -33,7 +34,13 @@ pub async fn start_server() -> Result<(), Box<dyn std::error::Error>> {
     info!("listening on {}", listener.local_addr().unwrap());
 
     println!("🚀 Server Running 🚀");
-    axum::serve(listener, app).await.unwrap();
+
+    axum::serve(
+        listener,
+        app.into_make_service_with_connect_info::<SocketAddr>(),
+    )
+    .await
+    .unwrap();
 
     Ok(())
 }

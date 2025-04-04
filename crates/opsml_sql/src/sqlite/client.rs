@@ -1060,7 +1060,7 @@ impl SqlClient for SqliteClient {
             .bind(event.username)
             .bind(event.client_ip)
             .bind(event.user_agent)
-            .bind(event.operation_type.to_string())
+            .bind(event.operation.to_string())
             .bind(event.resource_type.to_string())
             .bind(event.resource_id)
             .bind(event.access_location)

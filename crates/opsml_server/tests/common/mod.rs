@@ -6,7 +6,6 @@ use axum::{
 };
 use http_body_util::BodyExt; // for `collect`
 use mockito;
-use opsml_client::*;
 use opsml_crypt::encrypt_file;
 use opsml_semver::VersionType;
 use opsml_server::create_app;
