@@ -201,6 +201,7 @@ pub enum Operation {
     Decrypt,
     Load,
     Check,
+    Update,
 }
 
 impl Display for Operation {
@@ -216,6 +217,7 @@ impl Display for Operation {
             Operation::Create => write!(f, "Create"),
             Operation::Load => write!(f, "Load"),
             Operation::Check => write!(f, "Check"),
+            Operation::Update => write!(f, "Update"),
         }
     }
 }

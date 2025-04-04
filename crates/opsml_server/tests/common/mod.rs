@@ -74,7 +74,7 @@ impl ScouterServer {
 
         // insert user mock
         server
-            .mock("POST", "/scouter/users")
+            .mock("POST", "/scouter/user")
             .with_status(200)
             .with_header("content-type", "application/json")
             .with_body(r#"{"status": "success", "message": "created_user"}"#)
@@ -83,7 +83,7 @@ impl ScouterServer {
 
         // update user mock
         server
-            .mock("PUT", "/scouter/users")
+            .mock("PUT", "/scouter/user")
             .with_status(200)
             .with_header("content-type", "application/json")
             .with_body(r#"{"status": "success", "message": "updated_user"}"#)
@@ -92,7 +92,7 @@ impl ScouterServer {
 
         // delete user mock
         server
-            .mock("DELETE", "/scouter/users")
+            .mock("DELETE", "/scouter/user")
             .with_status(200)
             .with_header("content-type", "application/json")
             .with_body(r#"{"status": "success", "message": "deleted_user"}"#)

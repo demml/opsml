@@ -35,7 +35,7 @@ impl Routes {
             Routes::ProfileStatus => "scouter/profile/status",
 
             // Scouter User Routes
-            Routes::Users => "scouter/users",
+            Routes::Users => "scouter/user",
 
             // Scouter Alerts Routes
             Routes::Alerts => "scouter/alerts",
