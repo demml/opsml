@@ -16,12 +16,11 @@ use axum::{
 use axum_extra::TypedHeader;
 use headers::UserAgent;
 use opsml_auth::permission::UserPermissions;
-use opsml_client::RequestType;
-use opsml_client::Routes;
 use opsml_events::{create_audit_event, Event};
 use opsml_sql::base::SqlClient;
 use opsml_sql::schemas::schema::User;
 use opsml_types::contracts::{Operation, ResourceType};
+use opsml_types::{RequestType, Routes};
 use password_auth::generate_hash;
 use std::net::SocketAddr;
 use std::panic::{catch_unwind, AssertUnwindSafe};

@@ -1,12 +1,14 @@
 use crate::contracts::ArtifactKey;
+use crate::contracts::AuditableRequest;
 use crate::{
     cards::CardTable,
     interfaces::{types::DataInterfaceType, ModelType, TaskType},
-    DataType, ModelInterfaceType, RegistryType,
+    DataType, ModelInterfaceType, RegistryType, Routes,
 };
 use chrono::{DateTime, Utc};
 use opsml_colors::Colorize;
 use opsml_error::CardError;
+use opsml_error::TypeError;
 use opsml_semver::VersionType;
 use opsml_utils::{get_utc_datetime, PyHelperFuncs};
 use pyo3::prelude::*;
@@ -20,17 +22,57 @@ use tabled::settings::{
 };
 use tabled::{Table, Tabled};
 
-#[derive(Serialize, Deserialize)]
+use crate::contracts::ResourceType;
+
+#[derive(Serialize, Deserialize, Debug)]
 pub struct UidRequest {
     pub uid: String,
     pub registry_type: RegistryType,
 }
 
-#[derive(Serialize, Deserialize)]
+impl AuditableRequest for UidRequest {
+    fn get_resource_id(&self) -> String {
+        self.uid.clone()
+    }
+
+    fn get_metadata(&self) -> Result<String, TypeError> {
+        serde_json::to_string(self)
+            .map_err(|e| TypeError::Error(format!("Failed to serialize UidRequest: {}", e)))
+    }
+
+    fn get_registry_type(&self) -> Option<RegistryType> {
+        Some(self.registry_type.clone())
+    }
+
+    fn get_resource_type(&self) -> ResourceType {
+        ResourceType::Database
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug)]
 pub struct DeleteCardRequest {
     pub uid: String,
     pub repository: String,
     pub registry_type: RegistryType,
+}
+
+impl AuditableRequest for DeleteCardRequest {
+    fn get_resource_id(&self) -> String {
+        self.uid.clone()
+    }
+
+    fn get_metadata(&self) -> Result<String, TypeError> {
+        serde_json::to_string(self)
+            .map_err(|e| TypeError::Error(format!("Failed to serialize UidRequest: {}", e)))
+    }
+
+    fn get_registry_type(&self) -> Option<RegistryType> {
+        Some(self.registry_type.clone())
+    }
+
+    fn get_resource_type(&self) -> ResourceType {
+        ResourceType::Database
+    }
 }
 
 #[derive(Serialize, Deserialize)]
@@ -38,9 +80,28 @@ pub struct UidResponse {
     pub exists: bool,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct RepositoryRequest {
     pub registry_type: RegistryType,
+}
+
+impl AuditableRequest for RepositoryRequest {
+    fn get_resource_id(&self) -> String {
+        self.registry_type.to_string()
+    }
+
+    fn get_metadata(&self) -> Result<String, TypeError> {
+        serde_json::to_string(self)
+            .map_err(|e| TypeError::Error(format!("Failed to serialize UidRequest: {}", e)))
+    }
+
+    fn get_registry_type(&self) -> Option<RegistryType> {
+        Some(self.registry_type.clone())
+    }
+
+    fn get_resource_type(&self) -> ResourceType {
+        ResourceType::Database
+    }
 }
 
 #[derive(Serialize, Deserialize)]
@@ -48,16 +109,35 @@ pub struct RepositoryResponse {
     pub repositories: Vec<String>,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct RegistryStatsRequest {
     pub registry_type: RegistryType,
     pub search_term: Option<String>,
     pub repository: Option<String>,
 }
 
+impl AuditableRequest for RegistryStatsRequest {
+    fn get_resource_id(&self) -> String {
+        self.registry_type.to_string()
+    }
+
+    fn get_metadata(&self) -> Result<String, TypeError> {
+        serde_json::to_string(self)
+            .map_err(|e| TypeError::Error(format!("Failed to serialize UidRequest: {}", e)))
+    }
+
+    fn get_registry_type(&self) -> Option<RegistryType> {
+        Some(self.registry_type.clone())
+    }
+
+    fn get_resource_type(&self) -> ResourceType {
+        ResourceType::Database
+    }
+}
+
 // RegistryStatsResponse is sourced from sql schema
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct QueryPageRequest {
     pub registry_type: RegistryType,
     pub sort_by: Option<String>,
@@ -66,12 +146,50 @@ pub struct QueryPageRequest {
     pub page: Option<i32>,
 }
 
-#[derive(Serialize, Deserialize)]
+impl AuditableRequest for QueryPageRequest {
+    fn get_resource_id(&self) -> String {
+        self.registry_type.to_string()
+    }
+
+    fn get_metadata(&self) -> Result<String, TypeError> {
+        serde_json::to_string(self)
+            .map_err(|e| TypeError::Error(format!("Failed to serialize UidRequest: {}", e)))
+    }
+
+    fn get_registry_type(&self) -> Option<RegistryType> {
+        Some(self.registry_type.clone())
+    }
+
+    fn get_resource_type(&self) -> ResourceType {
+        ResourceType::Database
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug)]
 pub struct VersionPageRequest {
     pub registry_type: RegistryType,
     pub repository: Option<String>,
     pub name: Option<String>,
     pub page: Option<i32>,
+}
+
+impl AuditableRequest for VersionPageRequest {
+    fn get_resource_id(&self) -> String {
+        self.registry_type.to_string()
+    }
+
+    fn get_metadata(&self) -> Result<String, TypeError> {
+        serde_json::to_string(self)
+            .map_err(|e| TypeError::Error(format!("Failed to serialize UidRequest: {}", e)))
+    }
+
+    fn get_registry_type(&self) -> Option<RegistryType> {
+        Some(self.registry_type.clone())
+    }
+
+    fn get_resource_type(&self) -> ResourceType {
+        ResourceType::Database
+    }
 }
 
 // QueryPageResponse is sourced from sql schema
@@ -111,6 +229,25 @@ pub struct CardQueryArgs {
     pub limit: Option<i32>,
     pub sort_by_timestamp: Option<bool>,
     pub registry_type: RegistryType,
+}
+
+impl AuditableRequest for CardQueryArgs {
+    fn get_resource_id(&self) -> String {
+        self.uid.clone().unwrap_or_default()
+    }
+
+    fn get_metadata(&self) -> Result<String, TypeError> {
+        serde_json::to_string(self)
+            .map_err(|e| TypeError::Error(format!("Failed to serialize CardQueryArgs: {}", e)))
+    }
+
+    fn get_registry_type(&self) -> Option<RegistryType> {
+        Some(self.registry_type.clone())
+    }
+
+    fn get_resource_type(&self) -> ResourceType {
+        ResourceType::Database
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -657,6 +794,25 @@ pub struct CreateCardRequest {
     pub version_request: CardVersionRequest,
 }
 
+impl AuditableRequest for CreateCardRequest {
+    fn get_resource_id(&self) -> String {
+        self.card.uid().to_string()
+    }
+
+    fn get_metadata(&self) -> Result<String, TypeError> {
+        serde_json::to_string(self)
+            .map_err(|e| TypeError::Error(format!("Failed to serialize CreateCardRequest: {}", e)))
+    }
+
+    fn get_registry_type(&self) -> Option<RegistryType> {
+        Some(self.registry_type.clone())
+    }
+
+    fn get_resource_type(&self) -> ResourceType {
+        ResourceType::Database
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CreateCardResponse {
     pub registered: bool,
@@ -669,10 +825,29 @@ pub struct CreateCardResponse {
 }
 
 /// Duplicating card request to be explicit with naming
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct UpdateCardRequest {
     pub card: Card,
     pub registry_type: RegistryType,
+}
+
+impl AuditableRequest for UpdateCardRequest {
+    fn get_resource_id(&self) -> String {
+        self.card.uid().to_string()
+    }
+
+    fn get_metadata(&self) -> Result<String, TypeError> {
+        serde_json::to_string(self)
+            .map_err(|e| TypeError::Error(format!("Failed to serialize UpdateCardRequest: {}", e)))
+    }
+
+    fn get_registry_type(&self) -> Option<RegistryType> {
+        Some(self.registry_type.clone())
+    }
+
+    fn get_resource_type(&self) -> ResourceType {
+        ResourceType::Database
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize)]

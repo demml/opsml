@@ -3869,7 +3869,6 @@ dependencies = [
  "chrono",
  "futures",
  "headers",
- "opsml-client",
  "opsml-error",
  "opsml-sql",
  "opsml-types",

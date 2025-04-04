@@ -21,7 +21,7 @@ use opsml_error::error::ServerError;
 use opsml_events::create_audit_event;
 use opsml_events::Event;
 use opsml_sql::base::SqlClient;
-use opsml_types::{contracts::*, StorageType, MAX_FILE_SIZE};
+use opsml_types::{api::Routes, contracts::*, StorageType, MAX_FILE_SIZE};
 use std::net::SocketAddr;
 use tokio::fs::File;
 use tokio::io::AsyncWriteExt;
