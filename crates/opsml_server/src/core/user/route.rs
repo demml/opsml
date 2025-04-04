@@ -8,21 +8,17 @@ use crate::core::user::utils::get_user as get_user_from_db;
 use anyhow::{Context, Result};
 use axum::extract::Path;
 use axum::{
-    extract::{ConnectInfo, State},
-    http::{HeaderMap, StatusCode},
+    extract::State,
+    http::StatusCode,
     routing::{delete, get, post, put},
     Extension, Json, Router,
 };
-use axum_extra::TypedHeader;
-use headers::UserAgent;
+
 use opsml_auth::permission::UserPermissions;
-use opsml_events::{create_audit_event, Event};
 use opsml_sql::base::SqlClient;
 use opsml_sql::schemas::schema::User;
-use opsml_types::contracts::{Operation, ResourceType};
-use opsml_types::{RequestType, Routes};
+use opsml_types::RequestType;
 use password_auth::generate_hash;
-use std::net::SocketAddr;
 use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::sync::Arc;
 use tracing::{error, info};
@@ -33,9 +29,7 @@ use tracing::{error, info};
 async fn create_user(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
-    ConnectInfo(addr): ConnectInfo<SocketAddr>,
-    TypedHeader(agent): TypedHeader<UserAgent>,
-    headers: HeaderMap,
+
     Json(create_req): Json<CreateUserRequest>,
 ) -> Result<Json<UserResponse>, (StatusCode, Json<serde_json::Value>)> {
     // Check if requester has admin permissions
@@ -103,21 +97,6 @@ async fn create_user(
             })?;
     }
 
-    let audit_event = create_audit_event(
-        addr,
-        agent,
-        headers,
-        Operation::Create,
-        ResourceType::Database,
-        user.username.clone(),
-        Some(user.username.clone()),
-        user.serialize(),
-        None,
-        Routes::User,
-    );
-
-    state.event_bus.publish(Event::Audit(audit_event));
-
     Ok(Json(UserResponse::from(user)))
 }
 
@@ -125,9 +104,7 @@ async fn create_user(
 async fn get_user(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
-    ConnectInfo(addr): ConnectInfo<SocketAddr>,
-    TypedHeader(agent): TypedHeader<UserAgent>,
-    headers: HeaderMap,
+
     Path(username): Path<String>,
 ) -> Result<Json<UserResponse>, (StatusCode, Json<serde_json::Value>)> {
     // Check permissions - user can only get their own data or admin can get any user
@@ -144,22 +121,6 @@ async fn get_user(
     // Get user from database
     let user = get_user_from_db(&state.sql_client, &username).await?;
 
-    // create audit event
-    let audit_event = create_audit_event(
-        addr,
-        agent,
-        headers,
-        Operation::Read,
-        ResourceType::Database,
-        username.clone(),
-        Some(username.clone()),
-        user.serialize(),
-        None,
-        Routes::User,
-    );
-
-    state.event_bus.publish(Event::Audit(audit_event));
-
     Ok(Json(UserResponse::from(user)))
 }
 
@@ -169,9 +130,6 @@ async fn get_user(
 async fn list_users(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
-    ConnectInfo(addr): ConnectInfo<SocketAddr>,
-    TypedHeader(agent): TypedHeader<UserAgent>,
-    headers: HeaderMap,
 ) -> Result<Json<UserListResponse>, (StatusCode, Json<serde_json::Value>)> {
     // Check if requester has admin permissions
     if !perms.group_permissions.contains(&"admin".to_string()) {
@@ -192,22 +150,6 @@ async fn list_users(
 
     let user_responses: Vec<UserResponse> = users.into_iter().map(UserResponse::from).collect();
 
-    // create audit event
-    let audit_event = create_audit_event(
-        addr,
-        agent,
-        headers,
-        Operation::Read,
-        ResourceType::Database,
-        "all_users".to_string(),
-        None,
-        "List of all users".to_string(),
-        None,
-        Routes::User,
-    );
-
-    state.event_bus.publish(Event::Audit(audit_event));
-
     Ok(Json(UserListResponse {
         users: user_responses,
     }))
@@ -218,9 +160,7 @@ async fn update_user(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
     Path(username): Path<String>,
-    ConnectInfo(addr): ConnectInfo<SocketAddr>,
-    TypedHeader(agent): TypedHeader<UserAgent>,
-    headers: HeaderMap,
+
     Json(update_req): Json<UpdateUserRequest>,
 ) -> Result<Json<UserResponse>, (StatusCode, Json<serde_json::Value>)> {
     // Check permissions - user can only update their own data or admin can update any user
@@ -289,21 +229,6 @@ async fn update_user(
         info!("User {} updated in scouter", user.username);
     }
 
-    // create audit event
-    let audit_event = create_audit_event(
-        addr,
-        agent,
-        headers,
-        Operation::Update,
-        ResourceType::Database,
-        username.clone(),
-        Some(username.clone()),
-        user.serialize(),
-        None,
-        Routes::User,
-    );
-
-    state.event_bus.publish(Event::Audit(audit_event));
     Ok(Json(UserResponse::from(user)))
 }
 
@@ -313,9 +238,7 @@ async fn update_user(
 async fn delete_user(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
-    ConnectInfo(addr): ConnectInfo<SocketAddr>,
-    TypedHeader(agent): TypedHeader<UserAgent>,
-    headers: HeaderMap,
+
     Path(username): Path<String>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<serde_json::Value>)> {
     // Check if requester has admin permissions
@@ -372,21 +295,6 @@ async fn delete_user(
     }
 
     info!("User {} deleted successfully", username);
-
-    // create audit event
-    let audit_event = create_audit_event(
-        addr,
-        agent,
-        headers,
-        Operation::Delete,
-        ResourceType::Database,
-        username.clone(),
-        Some(username.clone()),
-        "User deleted".to_string(),
-        None,
-        Routes::User,
-    );
-    state.event_bus.publish(Event::Audit(audit_event));
 
     Ok(Json(serde_json::json!({"success": true})))
 }

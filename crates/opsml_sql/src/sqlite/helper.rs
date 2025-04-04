@@ -677,7 +677,7 @@ impl SqliteQueryHelper {
                 username, 
                 client_ip, 
                 user_agent, 
-                operation_type, 
+                operation, 
                 resource_type, 
                 resource_id,
                 access_location,
