@@ -1,10 +1,9 @@
 use crate::base::*;
-use crate::types::*;
 use opsml_error::error::RegistryError;
 use opsml_semver::VersionType;
-use opsml_types::cards::HardwareMetrics;
 use opsml_types::{
-    cards::{CardTable, Metric, Parameter},
+    api::*,
+    cards::{CardTable, HardwareMetrics, Metric, Parameter},
     contracts::*,
     RegistryMode, RegistryType,
 };

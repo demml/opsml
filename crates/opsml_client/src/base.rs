@@ -1,7 +1,9 @@
-use crate::types::{JwtToken, RequestType, Routes};
 use opsml_error::error::ApiError;
 use opsml_settings::config::{ApiSettings, OpsmlStorageSettings};
-use opsml_types::contracts::{CompleteMultipartUpload, PresignedQuery, PresignedUrl};
+use opsml_types::{
+    api::{JwtToken, RequestType, Routes},
+    contracts::{CompleteMultipartUpload, PresignedQuery, PresignedUrl},
+};
 
 use reqwest::blocking::{multipart::Form, Client, Response};
 use reqwest::header::{HeaderMap, HeaderValue, AUTHORIZATION};

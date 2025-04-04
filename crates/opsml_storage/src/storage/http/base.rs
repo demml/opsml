@@ -1,8 +1,9 @@
 use crate::storage::http::multipart::MultiPartUploader;
 use anyhow::{Context, Result as AnyhowResult};
-use opsml_client::{OpsmlApiClient, RequestType, Routes};
+use opsml_client::OpsmlApiClient;
 use opsml_colors::Colorize;
 use opsml_error::error::StorageError;
+use opsml_types::api::{RequestType, Routes};
 use opsml_types::{contracts::*, StorageType, DOWNLOAD_CHUNK_SIZE};
 use std::io::{Read, Write};
 use std::path::Path;

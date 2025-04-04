@@ -1,12 +1,12 @@
 use axum::http::HeaderMap;
 use headers::UserAgent;
-use opsml_client::Routes;
 
 use opsml_types::contracts::{AuditEvent, AuditStatus, Operation, ResourceType};
 use opsml_types::RegistryType;
 
 use std::net::SocketAddr;
 
+#[allow(clippy::too_many_arguments)]
 pub fn create_audit_event(
     addr: SocketAddr,
     agent: UserAgent,
@@ -17,7 +17,7 @@ pub fn create_audit_event(
     access_location: Option<String>,
     metadata: String,
     registry_type: Option<RegistryType>,
-    route: Routes,
+    route: String,
 ) -> AuditEvent {
     AuditEvent {
         username: headers
@@ -40,7 +40,7 @@ pub fn create_audit_event(
         error_message: None,
         metadata,
         registry_type,
-        route: route.to_string(),
+        route,
     }
 }
 
