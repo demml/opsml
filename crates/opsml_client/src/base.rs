@@ -36,6 +36,10 @@ pub fn build_http_client(settings: &ApiSettings) -> Result<Client, ApiError> {
             .map_err(|e| ApiError::Error(format!("Failed to create header with error: {}", e)))?,
     );
 
+    headers.insert(
+        reqwest::header::USER_AGENT,
+        HeaderValue::from_static(concat!("opsml-client/", env!("CARGO_PKG_VERSION"))),
+    );
     let client_builder = Client::builder().timeout(std::time::Duration::from_secs(TIMEOUT_SECS));
 
     let client = client_builder
