@@ -41,7 +41,7 @@ pub async fn check_card_uid(
     headers: HeaderMap,
     Query(params): Query<UidRequest>,
 ) -> Result<Json<UidResponse>, (StatusCode, Json<serde_json::Value>)> {
-    let audit_args = create_audit_event(
+    let audit_event = create_audit_event(
         addr,
         agent,
         headers,
@@ -50,7 +50,7 @@ pub async fn check_card_uid(
         params.uid.clone(),
         None,
         serde_json::to_string(&params).unwrap_or_default(),
-        params.registry_type.clone(),
+        Some(params.registry_type.clone()),
         Routes::Card,
     );
 
@@ -64,7 +64,7 @@ pub async fn check_card_uid(
             internal_server_error(e, "Failed to check if UID exists")
         })?;
 
-    state.event_bus.publish(Event::Audit(audit_args));
+    state.event_bus.publish(Event::Audit(audit_event));
     Ok(Json(UidResponse { exists }))
 }
 
@@ -87,7 +87,7 @@ pub async fn get_card_repositories(
         Routes::CardRepositories.to_string(),
         None,
         serde_json::to_string(&params).unwrap_or_default(),
-        params.registry_type.clone(),
+        Some(params.registry_type.clone()),
         Routes::CardRepositories,
     );
 
@@ -123,7 +123,7 @@ pub async fn get_registry_stats(
         Routes::CardRegistryStats.to_string(),
         None,
         serde_json::to_string(&params).unwrap_or_default(),
-        params.registry_type.clone(),
+        Some(params.registry_type.clone()),
         Routes::CardRegistryStats,
     );
 
@@ -163,7 +163,7 @@ pub async fn get_page(
         Routes::CardRegistryPage.to_string(),
         None,
         serde_json::to_string(&params).unwrap_or_default(),
-        params.registry_type.clone(),
+        Some(params.registry_type.clone()),
         Routes::CardRegistryPage,
     );
 
@@ -205,7 +205,7 @@ pub async fn get_version_page(
         Routes::CardRegistryVersionPage.to_string(),
         None,
         serde_json::to_string(&params).unwrap_or_default(),
-        params.registry_type.clone(),
+        Some(params.registry_type.clone()),
         Routes::CardRegistryVersionPage,
     );
 
@@ -259,7 +259,7 @@ pub async fn list_cards(
         uid,
         None,
         serde_json::to_string(&params).unwrap_or_default(),
-        params.registry_type.clone(),
+        Some(params.registry_type.clone()),
         Routes::CardList,
     );
 
@@ -325,7 +325,7 @@ pub async fn create_card(
         ),
         None,
         serde_json::to_string(&card_request).unwrap_or_default(),
-        card_request.registry_type.clone(),
+        Some(card_request.registry_type.clone()),
         Routes::CardCreate,
     );
     debug!(
@@ -417,7 +417,7 @@ pub async fn update_card(
         card_request.card.uid().to_string(),
         None,
         serde_json::to_string(&card_request).unwrap_or_default(),
-        card_request.registry_type.clone(),
+        Some(card_request.registry_type.clone()),
         Routes::CardUpdate,
     );
 
@@ -600,7 +600,7 @@ pub async fn delete_card(
         params.uid.clone(),
         None,
         serde_json::to_string(&params).unwrap_or_default(),
-        params.registry_type.clone(),
+        Some(params.registry_type.clone()),
         Routes::CardDelete,
     );
 
@@ -673,7 +673,7 @@ pub async fn load_card(
         key.uid.clone(),
         Some(key.storage_key.clone()),
         serde_json::to_string(&params).unwrap_or_default(),
-        params.registry_type.clone(),
+        Some(params.registry_type.clone()),
         Routes::CardLoad,
     );
     state.event_bus.publish(Event::Audit(audit_args));
@@ -762,7 +762,7 @@ pub async fn get_card(
         key.uid.clone(),
         rpath.to_str().map(|s| s.to_string()),
         serde_json::to_string(&params).unwrap_or_default(),
-        params.registry_type.clone(),
+        Some(params.registry_type.clone()),
         Routes::CardMetadata,
     );
 
@@ -841,7 +841,7 @@ pub async fn get_readme(
                 rpath.clone(),
                 Some(rpath.clone()),
                 serde_json::to_string(&params).unwrap_or_default(),
-                params.registry_type.clone(),
+                Some(params.registry_type.clone()),
                 Routes::CardReadme,
             );
 
@@ -921,7 +921,7 @@ pub async fn create_readme(
         key.uid.clone(),
         Some(readme_path.clone()),
         serde_json::to_string(&req).unwrap_or_default(),
-        req.registry_type.clone(),
+        Some(req.registry_type.clone()),
         Routes::CardReadme,
     );
 

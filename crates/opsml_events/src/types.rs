@@ -16,7 +16,7 @@ pub fn create_audit_event(
     resource_id: String,
     access_location: Option<String>,
     metadata: String,
-    registry_type: RegistryType,
+    registry_type: Option<RegistryType>,
     route: Routes,
 ) -> AuditEvent {
     AuditEvent {

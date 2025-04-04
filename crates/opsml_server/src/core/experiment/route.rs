@@ -11,7 +11,7 @@ use axum::{
 use axum_extra::TypedHeader;
 use headers::UserAgent;
 use opsml_client::Routes;
-use opsml_events::{AuditEvent, Event};
+use opsml_events::{create_audit_event, Event};
 use opsml_sql::base::SqlClient;
 use opsml_sql::schemas::schema::{HardwareMetricsRecord, MetricRecord, ParameterRecord};
 use opsml_types::{cards::*, contracts::*, RegistryType};
@@ -32,17 +32,19 @@ pub async fn insert_metrics(
     headers: HeaderMap,
     Json(req): Json<MetricRequest>,
 ) -> Result<Json<MetricResponse>, (StatusCode, Json<serde_json::Value>)> {
-    let audit_args = AuditEvent::new(
+    let audit_event = create_audit_event(
         addr,
         agent,
         headers,
         Operation::Write,
         ResourceType::Database,
         req.experiment_uid.clone(),
+        None,
         serde_json::to_string(&req).unwrap_or_default(),
-        RegistryType::Experiment,
+        Some(RegistryType::Experiment),
         Routes::ExperimentMetrics,
     );
+
     let records = req
         .metrics
         .iter()
@@ -67,7 +69,7 @@ pub async fn insert_metrics(
         })?;
 
     // Spawn audit task
-    //spawn_audit_task(audit_args, state.sql_client.clone());
+    state.event_bus.publish(Event::Audit(audit_event));
     Ok(Json(MetricResponse { success: true }))
 }
 
@@ -78,15 +80,16 @@ pub async fn get_metrics(
     headers: HeaderMap,
     Json(req): Json<GetMetricRequest>,
 ) -> Result<Json<Vec<Metric>>, (StatusCode, Json<serde_json::Value>)> {
-    let audit_args = AuditEvent::new(
+    let audit_event = create_audit_event(
         addr,
         agent,
         headers,
         Operation::Read,
         ResourceType::Database,
         req.experiment_uid.clone(),
+        None,
         serde_json::to_string(&req).unwrap_or_default(),
-        RegistryType::Experiment,
+        Some(RegistryType::Experiment),
         Routes::ExperimentMetrics,
     );
     let metrics = state
@@ -110,7 +113,7 @@ pub async fn get_metrics(
         })
         .collect::<Vec<_>>();
 
-    // spawn_audit_task(audit_args, state.sql_client.clone());
+    state.event_bus.publish(Event::Audit(audit_event));
     Ok(Json(metrics))
 }
 
@@ -123,15 +126,16 @@ pub async fn get_grouped_metrics(
 ) -> Result<Json<HashMap<String, Vec<GroupedMetric>>>, (StatusCode, Json<serde_json::Value>)> {
     let mut metric_data: HashMap<String, Vec<GroupedMetric>> = HashMap::new();
 
-    let audit_args = AuditEvent::new(
+    let audit_event = create_audit_event(
         addr,
         agent,
         headers,
         Operation::Read,
         ResourceType::Database,
         Routes::ExperimentGroupedMetrics.to_string(),
+        None,
         serde_json::to_string(&req).unwrap_or_default(),
-        RegistryType::Experiment,
+        Some(RegistryType::Experiment),
         Routes::ExperimentGroupedMetrics,
     );
 
@@ -183,7 +187,7 @@ pub async fn get_grouped_metrics(
         }
     }
 
-    //spawn_audit_task(audit_args, state.sql_client.clone());
+    state.event_bus.publish(Event::Audit(audit_event));
     Ok(Json(metric_data))
 }
 
@@ -194,15 +198,16 @@ pub async fn get_metric_names(
     headers: HeaderMap,
     Query(req): Query<GetMetricNamesRequest>,
 ) -> Result<Json<Vec<String>>, (StatusCode, Json<serde_json::Value>)> {
-    let audit_args = AuditEvent::new(
+    let audit_event = create_audit_event(
         addr,
         agent,
         headers,
         Operation::Read,
         ResourceType::Database,
         req.experiment_uid.clone(),
+        None,
         serde_json::to_string(&req).unwrap_or_default(),
-        RegistryType::Experiment,
+        Some(RegistryType::Experiment),
         Routes::ExperimentMetricNames,
     );
     let names = state
@@ -214,7 +219,7 @@ pub async fn get_metric_names(
             internal_server_error(e, "Failed to get metrics")
         })?;
 
-    //spawn_audit_task(audit_args, state.sql_client.clone());
+    state.event_bus.publish(Event::Audit(audit_event));
     Ok(Json(names))
 }
 
@@ -225,15 +230,16 @@ pub async fn insert_parameters(
     headers: HeaderMap,
     Json(req): Json<ParameterRequest>,
 ) -> Result<Json<ParameterResponse>, (StatusCode, Json<serde_json::Value>)> {
-    let audit_args = AuditEvent::new(
+    let audit_event = create_audit_event(
         addr,
         agent,
         headers,
         Operation::Write,
         ResourceType::Database,
         req.experiment_uid.clone(),
+        None,
         serde_json::to_string(&req).unwrap_or_default(),
-        RegistryType::Experiment,
+        Some(RegistryType::Experiment),
         Routes::ExperimentParameters,
     );
     let records = req
@@ -251,8 +257,7 @@ pub async fn insert_parameters(
             internal_server_error(e, "Failed to insert parameter")
         })?;
 
-    // Spawn audit task
-    //spawn_audit_task(audit_args, state.sql_client.clone());
+    state.event_bus.publish(Event::Audit(audit_event));
     Ok(Json(ParameterResponse { success: true }))
 }
 
@@ -263,15 +268,16 @@ pub async fn get_parameter(
     headers: HeaderMap,
     Json(req): Json<GetParameterRequest>,
 ) -> Result<Json<Vec<Parameter>>, (StatusCode, Json<serde_json::Value>)> {
-    let audit_args = AuditEvent::new(
+    let audit_event = create_audit_event(
         addr,
         agent,
         headers,
         Operation::Read,
         ResourceType::Database,
         req.experiment_uid.clone(),
+        None,
         serde_json::to_string(&req).unwrap_or_default(),
-        RegistryType::Experiment,
+        Some(RegistryType::Experiment),
         Routes::ExperimentParameters,
     );
     let params = state
@@ -292,7 +298,7 @@ pub async fn get_parameter(
         })
         .collect::<Vec<_>>();
 
-    //spawn_audit_task(audit_args, state.sql_client.clone());
+    state.event_bus.publish(Event::Audit(audit_event));
     Ok(Json(params))
 }
 
@@ -303,15 +309,16 @@ pub async fn insert_hardware_metrics(
     headers: HeaderMap,
     Json(req): Json<HardwareMetricRequest>,
 ) -> Result<Json<HardwareMetricResponse>, (StatusCode, Json<serde_json::Value>)> {
-    let audit_args = AuditEvent::new(
+    let audit_event = create_audit_event(
         addr,
         agent,
         headers,
         Operation::Write,
         ResourceType::Database,
         req.experiment_uid.clone(),
+        None,
         serde_json::to_string(&req).unwrap_or_default(),
-        RegistryType::Experiment,
+        Some(RegistryType::Experiment),
         Routes::ExperimentHardwareMetrics,
     );
     let created_at = get_utc_datetime();
@@ -339,6 +346,7 @@ pub async fn insert_hardware_metrics(
             internal_server_error(e, "Failed to insert hardware metrics")
         })?;
 
+    state.event_bus.publish(Event::Audit(audit_event));
     Ok(Json(HardwareMetricResponse { success: true }))
 }
 

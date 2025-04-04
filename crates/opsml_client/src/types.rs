@@ -35,6 +35,8 @@ pub enum Routes {
 
     DeleteFiles,
     Files,
+    FileContent,
+    FileDelete,
     Healthcheck,
     List,
     ListInfo,
@@ -48,18 +50,22 @@ pub enum Routes {
     ExperimentHardwareMetrics,
     ExperimentParameters,
     ScouterAuthLogin,
+
     ScouterDriftCustom,
     ScouterDriftPsi,
     ScouterDriftSpc,
     ScouterProfile,
     ScouterProfileStatus,
     ScouterUsers,
+    ScouterProfileUi,
 }
 
 impl Routes {
     pub fn as_str(&self) -> &str {
         match self {
             Routes::Files => "files",
+            Routes::FileContent => "files/content",
+            Routes::FileDelete => "files/delete",
             Routes::Multipart => "files/multipart",
             Routes::CompleteMultipart => "files/multipart/complete",
             Routes::Presigned => "files/presigned",
@@ -104,6 +110,7 @@ impl Routes {
             // Scouter Profile Routes
             Routes::ScouterProfile => "scouter/profile",
             Routes::ScouterProfileStatus => "scouter/profile/status",
+            Routes::ScouterProfileUi => "scouter/profile/ui",
 
             // Scouter User Routes
             Routes::ScouterUsers => "scouter/users",

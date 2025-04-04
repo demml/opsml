@@ -3,23 +3,28 @@ use crate::core::files::utils::download_artifact;
 use crate::core::state::AppState;
 use axum::extract::DefaultBodyLimit;
 use axum::extract::Multipart;
+
+use anyhow::{Context, Result};
 use axum::{
     body::Body,
-    extract::{Query, State},
+    extract::{ConnectInfo, Query, State},
     http::{HeaderMap, StatusCode},
     response::{IntoResponse, Response},
     routing::{delete, get, post},
     Extension, Json, Router,
 };
+use axum_extra::TypedHeader;
+use headers::UserAgent;
 use opsml_auth::permission::UserPermissions;
+use opsml_client::Routes;
+use opsml_error::error::ServerError;
+use opsml_events::create_audit_event;
+use opsml_events::Event;
 use opsml_sql::base::SqlClient;
-use opsml_sql::enums::client::SqlClientEnum;
 use opsml_types::{contracts::*, StorageType, MAX_FILE_SIZE};
+use std::net::SocketAddr;
 use tokio::fs::File;
 use tokio::io::AsyncWriteExt;
-
-use anyhow::{Context, Result};
-use opsml_error::error::ServerError;
 
 use base64::prelude::*;
 use mime_guess::mime;
@@ -33,26 +38,6 @@ use tempfile::tempdir;
 use tokio_util::io::ReaderStream;
 use tracing::debug;
 use tracing::{error, info, instrument};
-
-pub async fn log_operation(
-    headers: &HeaderMap,
-    access_type: &str,
-    access_location: &str,
-    sql_client: Arc<SqlClientEnum>,
-) -> Result<(), ServerError> {
-    let default_user = "guest".parse().unwrap();
-    let username = headers
-        .get("username")
-        .unwrap_or(&default_user)
-        .to_str()
-        .map_err(|e| ServerError::Error(e.to_string()))?;
-
-    sql_client
-        .insert_operation(username, access_type, access_location)
-        .await?;
-
-    Ok(())
-}
 
 /// Create a multipart upload session (write)
 ///
@@ -68,8 +53,10 @@ pub async fn log_operation(
 pub async fn create_multipart_upload(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
-    Query(params): Query<MultiPartQuery>,
+    ConnectInfo(addr): ConnectInfo<SocketAddr>,
+    TypedHeader(agent): TypedHeader<UserAgent>,
     headers: HeaderMap,
+    Query(params): Query<MultiPartQuery>,
 ) -> Result<Json<MultiPartSession>, (StatusCode, Json<serde_json::Value>)> {
     // If auth is enabled, check permissions or other auth-related logic
     // get user for headers (as string)
@@ -116,25 +103,26 @@ pub async fn create_multipart_upload(
         }
     };
 
-    let sql_client = state.sql_client.clone();
-    tokio::spawn(async move {
-        if let Err(e) = log_operation(
-            &headers,
-            &Operation::Create.to_string(),
-            &params.path,
-            sql_client,
-        )
-        .await
-        {
-            error!("Failed to insert artifact key: {}", e);
-        }
-    });
-
     // if storageclient enum is aws then we need to get the bucket
     let bucket = match state.storage_client.storage_type() {
         StorageType::Aws => Some(state.storage_client.bucket().to_string()),
         _ => None,
     };
+
+    let audit_event = create_audit_event(
+        addr,
+        agent,
+        headers,
+        Operation::Create,
+        ResourceType::File,
+        params.path.clone(),
+        Some(params.path.clone()),
+        serde_json::to_string(&params).unwrap_or_default(),
+        None,
+        Routes::Multipart,
+    );
+
+    state.event_bus.publish(Event::Audit(audit_event));
 
     Ok(Json(MultiPartSession {
         session_url,
@@ -155,8 +143,10 @@ pub async fn create_multipart_upload(
 pub async fn generate_presigned_url(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
-    Query(params): Query<PresignedQuery>,
+    ConnectInfo(addr): ConnectInfo<SocketAddr>,
+    TypedHeader(agent): TypedHeader<UserAgent>,
     headers: HeaderMap,
+    Query(params): Query<PresignedQuery>,
 ) -> Result<Json<PresignedUrl>, (StatusCode, Json<serde_json::Value>)> {
     // check for read access
 
@@ -205,6 +195,20 @@ pub async fn generate_presigned_url(
             }
         };
 
+        let audit_event = create_audit_event(
+            addr,
+            agent,
+            headers,
+            Operation::Create,
+            ResourceType::File,
+            params.path.clone(),
+            Some(params.path.clone()),
+            serde_json::to_string(&params).unwrap_or_default(),
+            None,
+            Routes::Presigned,
+        );
+
+        state.event_bus.publish(Event::Audit(audit_event));
         return Ok(Json(PresignedUrl { url }));
     }
 
@@ -222,20 +226,22 @@ pub async fn generate_presigned_url(
         }
     };
 
-    let sql_client = state.sql_client.clone();
     let url_clone = url.clone();
-    tokio::spawn(async move {
-        if let Err(e) = log_operation(
-            &headers,
-            &Operation::Read.to_string(),
-            &url_clone,
-            sql_client,
-        )
-        .await
-        {
-            error!("Failed to insert artifact key: {}", e);
-        }
-    });
+
+    let audit_event = create_audit_event(
+        addr,
+        agent,
+        headers,
+        Operation::Create,
+        ResourceType::File,
+        url_clone.clone(),
+        Some(url_clone),
+        serde_json::to_string(&params).unwrap_or_default(),
+        None,
+        Routes::Presigned,
+    );
+
+    state.event_bus.publish(Event::Audit(audit_event));
 
     Ok(Json(PresignedUrl { url }))
 }
@@ -244,6 +250,9 @@ pub async fn generate_presigned_url(
 pub async fn complete_multipart_upload(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
+    ConnectInfo(addr): ConnectInfo<SocketAddr>,
+    TypedHeader(agent): TypedHeader<UserAgent>,
+    headers: HeaderMap,
     Json(req): Json<CompleteMultipartUpload>,
 ) -> Result<Json<UploadResponse>, (StatusCode, Json<serde_json::Value>)> {
     // check for write access
@@ -255,6 +264,19 @@ pub async fn complete_multipart_upload(
         ));
     }
 
+    let audit_event = create_audit_event(
+        addr,
+        agent,
+        headers,
+        Operation::Create,
+        ResourceType::File,
+        req.path.clone(),
+        Some(req.path.clone()),
+        serde_json::to_string(&req).unwrap_or_default(),
+        None,
+        Routes::Presigned,
+    );
+
     state
         .storage_client
         .complete_multipart_upload(req)
@@ -265,6 +287,7 @@ pub async fn complete_multipart_upload(
             internal_server_error(e, "Failed to complete multipart upload")
         })?;
 
+    state.event_bus.publish(Event::Audit(audit_event));
     Ok(Json(UploadResponse {
         uploaded: true,
         message: "".to_string(),
@@ -307,6 +330,9 @@ pub async fn upload_multipart(
 pub async fn list_files(
     State(state): State<Arc<AppState>>,
     Query(params): Query<ListFileQuery>,
+    ConnectInfo(addr): ConnectInfo<SocketAddr>,
+    TypedHeader(agent): TypedHeader<UserAgent>,
+    headers: HeaderMap,
 ) -> Result<Json<ListFileResponse>, (StatusCode, Json<serde_json::Value>)> {
     let path = Path::new(&params.path);
     info!("Listing files for: {}", path.display());
@@ -324,6 +350,20 @@ pub async fn list_files(
             return Err(internal_server_error(e, "Failed to list files"));
         }
     };
+
+    let audit_event = create_audit_event(
+        addr,
+        agent,
+        headers,
+        Operation::Read,
+        ResourceType::File,
+        params.path.clone(),
+        Some(params.path.clone()),
+        serde_json::to_string(&params).unwrap_or_default(),
+        None,
+        Routes::List,
+    );
+    state.event_bus.publish(Event::Audit(audit_event));
 
     Ok(Json(ListFileResponse { files }))
 }
@@ -444,6 +484,9 @@ pub async fn file_tree(
 pub async fn get_file_for_ui(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
+    ConnectInfo(addr): ConnectInfo<SocketAddr>,
+    TypedHeader(agent): TypedHeader<UserAgent>,
+    headers: HeaderMap,
     Json(req): Json<RawFileRequest>,
 ) -> Result<Json<RawFile>, (StatusCode, Json<serde_json::Value>)> {
     if !perms.has_read_permission() {
@@ -455,22 +498,6 @@ pub async fn get_file_for_ui(
     }
 
     let file_path = PathBuf::from(&req.path);
-    let sql_client = state.sql_client.clone();
-    let mut headers = HeaderMap::new();
-    headers.insert("username", perms.username.parse().unwrap());
-
-    tokio::spawn(async move {
-        if let Err(e) = log_operation(
-            &headers,
-            &Operation::Read.to_string(),
-            &req.path.clone(),
-            sql_client,
-        )
-        .await
-        {
-            error!("Failed to insert artifact key: {}", e);
-        }
-    });
 
     let files = state
         .storage_client
@@ -545,6 +572,19 @@ pub async fn get_file_for_ui(
         })?
     };
 
+    let audit_event = create_audit_event(
+        addr,
+        agent,
+        headers,
+        Operation::Read,
+        ResourceType::File,
+        req.path.clone(),
+        Some(req.path.clone()),
+        serde_json::to_string(&req).unwrap_or_default(),
+        None,
+        Routes::FileContent,
+    );
+    state.event_bus.publish(Event::Audit(audit_event));
     Ok(Json(RawFile {
         content,
         suffix: file.suffix.to_string(),
@@ -555,8 +595,10 @@ pub async fn get_file_for_ui(
 pub async fn delete_file(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
-    Query(params): Query<DeleteFileQuery>,
+    ConnectInfo(addr): ConnectInfo<SocketAddr>,
+    TypedHeader(agent): TypedHeader<UserAgent>,
     headers: HeaderMap,
+    Query(params): Query<DeleteFileQuery>,
 ) -> Result<Json<DeleteFileResponse>, (StatusCode, Json<serde_json::Value>)> {
     // check for delete access
 
@@ -590,15 +632,7 @@ pub async fn delete_file(
         return Err(internal_server_error(e, "Failed to delete files"));
     }
 
-    let sql_client = state.sql_client.clone();
     let rpath = params.path.clone();
-    tokio::spawn(async move {
-        if let Err(e) =
-            log_operation(&headers, &Operation::Delete.to_string(), &rpath, sql_client).await
-        {
-            error!("Failed to insert artifact key: {}", e);
-        }
-    });
 
     // check if file exists
     let exists = state.storage_client.exists(path).await;
@@ -611,6 +645,19 @@ pub async fn delete_file(
                     Json(json!({ "error": "Failed to delete file" })),
                 ))
             } else {
+                let audit_event = create_audit_event(
+                    addr,
+                    agent,
+                    headers,
+                    Operation::Delete,
+                    ResourceType::File,
+                    rpath.clone(),
+                    Some(rpath),
+                    serde_json::to_string(&params).unwrap_or_default(),
+                    None,
+                    Routes::FileDelete,
+                );
+                state.event_bus.publish(Event::Audit(audit_event));
                 Ok(Json(DeleteFileResponse { deleted: true }))
             }
         }

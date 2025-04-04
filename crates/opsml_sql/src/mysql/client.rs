@@ -1075,7 +1075,7 @@ impl SqlClient for MySqlClient {
             .bind(event.status.to_string())
             .bind(event.error_message)
             .bind(event.metadata)
-            .bind(event.registry_type.to_string())
+            .bind(event.registry_type.map(|r| r.to_string()))
             .bind(event.route)
             .execute(&self.pool)
             .await
