@@ -3,7 +3,7 @@ use crate::contracts::AuditableRequest;
 use crate::{
     cards::CardTable,
     interfaces::{types::DataInterfaceType, ModelType, TaskType},
-    DataType, ModelInterfaceType, RegistryType, Routes,
+    DataType, ModelInterfaceType, RegistryType,
 };
 use chrono::{DateTime, Utc};
 use opsml_colors::Colorize;
@@ -24,7 +24,7 @@ use tabled::{Table, Tabled};
 
 use crate::contracts::ResourceType;
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct UidRequest {
     pub uid: String,
     pub registry_type: RegistryType,
@@ -49,7 +49,7 @@ impl AuditableRequest for UidRequest {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct DeleteCardRequest {
     pub uid: String,
     pub repository: String,
@@ -80,7 +80,7 @@ pub struct UidResponse {
     pub exists: bool,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct RepositoryRequest {
     pub registry_type: RegistryType,
 }
@@ -109,7 +109,7 @@ pub struct RepositoryResponse {
     pub repositories: Vec<String>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct RegistryStatsRequest {
     pub registry_type: RegistryType,
     pub search_term: Option<String>,
@@ -137,7 +137,7 @@ impl AuditableRequest for RegistryStatsRequest {
 
 // RegistryStatsResponse is sourced from sql schema
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct QueryPageRequest {
     pub registry_type: RegistryType,
     pub sort_by: Option<String>,
@@ -165,7 +165,7 @@ impl AuditableRequest for QueryPageRequest {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct VersionPageRequest {
     pub registry_type: RegistryType,
     pub repository: Option<String>,
@@ -194,7 +194,7 @@ impl AuditableRequest for VersionPageRequest {
 
 // QueryPageResponse is sourced from sql schema
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct CardVersionRequest {
     pub name: String,
     pub repository: String,
@@ -218,7 +218,7 @@ pub struct CardVersionRequest {
 /// * `query_terms` - The query terms to search for
 /// * `sort_by_timestamp` - Whether to sort by timestamp
 
-#[derive(Debug, Serialize, Deserialize, Default)]
+#[derive(Debug, Serialize, Deserialize, Default, Clone)]
 pub struct CardQueryArgs {
     pub uid: Option<String>,
     pub name: Option<String>,
@@ -787,7 +787,7 @@ impl CardList {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct CreateCardRequest {
     pub registry_type: RegistryType,
     pub card: Card,
@@ -825,7 +825,7 @@ pub struct CreateCardResponse {
 }
 
 /// Duplicating card request to be explicit with naming
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct UpdateCardRequest {
     pub card: Card,
     pub registry_type: RegistryType,

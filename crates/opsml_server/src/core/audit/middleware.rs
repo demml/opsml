@@ -2,10 +2,10 @@ use crate::core::audit::context::AuditableRequestType;
 use crate::core::audit::schema::AuditError;
 use crate::core::audit::AuditContext;
 use crate::core::state::AppState;
-use axum::http::{header, StatusCode};
+use axum::http::StatusCode;
 use axum::middleware::Next;
+use axum::response::IntoResponse;
 use axum::response::Json;
-use axum::response::{IntoResponse, Response};
 use axum::{
     body::Body,
     extract::{ConnectInfo, State},
@@ -43,15 +43,18 @@ pub async fn audit_middleware(
     let path = request.uri().path().to_string();
     let operation_type = operation_from_method(method.as_str());
 
-    let auditable = match request.extensions().get::<AuditableRequestType>() {
-        Some(req) => Some(req.clone()),
-        None => None,
-    };
+    // Get auditable before processing request
+    let auditable = request.extensions().get::<AuditableRequestType>().cloned();
+
     // Process the request
     let mut response = next.run(request).await;
 
-    // Get audit context from response extensions if present
+    // Get audit context and clone it early
     let audit_context = response.extensions().get::<AuditContext>().cloned();
+
+    // remove the audit context from the response
+    // This is important to avoid sending it back to the client
+    response.extensions_mut().remove::<AuditContext>();
 
     if let Some(auditable) = auditable {
         let metadata = auditable.get_metadata().map_err(|_| {
@@ -63,16 +66,24 @@ pub async fn audit_middleware(
                 }),
             )
         })?;
+
+        let operation = audit_context
+            .as_ref()
+            .and_then(|ctx| ctx.operation.clone())
+            .unwrap_or(operation_type);
+
+        let resource_id = audit_context
+            .as_ref()
+            .and_then(|ctx| ctx.resource_id.clone())
+            .unwrap_or_else(|| auditable.get_resource_id());
+
         let audit_event = create_audit_event(
             addr,
             agent,
             headers,
-            operation_type,
+            operation,
             auditable.get_resource_type(),
-            // Only use context for dynamic IDs, otherwise use request data
-            audit_context
-                .and_then(|ctx| ctx.resource_id)
-                .unwrap_or_else(|| auditable.get_resource_id()),
+            resource_id,
             None,
             metadata,
             auditable.get_registry_type(),
