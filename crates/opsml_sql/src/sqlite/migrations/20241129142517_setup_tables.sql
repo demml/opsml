@@ -152,7 +152,7 @@ CREATE TABLE IF NOT EXISTS opsml_audit_event (
     username TEXT NOT NULL,
     client_ip TEXT NOT NULL,
     user_agent TEXT, 
-    operation_type TEXT NOT NULL,  
+    operation TEXT NOT NULL,  
     resource_type TEXT NOT NULL,   
     resource_id TEXT NOT NULL,              
     access_location TEXT,          

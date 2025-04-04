@@ -1,4 +1,3 @@
-use crate::core::audit::AuditContext;
 use crate::core::cards::schema::{
     CreateReadeMe, QueryPageResponse, ReadeMe, RegistryStatsResponse, VersionPageResponse,
 };
@@ -10,26 +9,22 @@ use crate::core::files::utils::{
 use crate::core::state::AppState;
 use anyhow::{Context, Result};
 use axum::{
-    extract::{ConnectInfo, Query, State},
-    http::{HeaderMap, StatusCode},
+    extract::{Query, State},
+    http::StatusCode,
     response::{IntoResponse, Response},
     routing::{delete, get, post},
     Extension, Json, Router,
 };
-use axum_extra::TypedHeader;
-use headers::UserAgent;
 use opsml_auth::permission::UserPermissions;
 use opsml_crypt::decrypt_directory;
-use opsml_events::{create_audit_event, Event};
+use opsml_events::AuditContext;
 use opsml_sql::base::SqlClient;
 use opsml_sql::schemas::*;
 use opsml_types::{cards::*, contracts::*};
 use opsml_types::{SaveName, Suffix};
-use reqwest::Response;
 use semver::Version;
 use serde_json::json;
 use sqlx::types::Json as SqlxJson;
-use std::net::SocketAddr;
 use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::sync::Arc;
 use tempfile::tempdir;
@@ -38,7 +33,7 @@ use tracing::{debug, error, instrument};
 pub async fn check_card_uid(
     State(state): State<Arc<AppState>>,
     Query(params): Query<UidRequest>,
-) -> Result<Json<UidResponse>, (StatusCode, Json<serde_json::Value>)> {
+) -> Result<Response, (StatusCode, Json<serde_json::Value>)> {
     let table = CardTable::from_registry_type(&params.registry_type);
     let exists = state
         .sql_client
@@ -49,7 +44,20 @@ pub async fn check_card_uid(
             internal_server_error(e, "Failed to check if UID exists")
         })?;
 
-    Ok(Json(UidResponse { exists }))
+    let mut response = Json(UidResponse { exists }).into_response();
+
+    let audit_context = AuditContext {
+        resource_id: params.uid.clone(),
+        resource_type: ResourceType::Database,
+        metadata: params.get_metadata(),
+        registry_type: Some(params.registry_type.clone()),
+        operation: Operation::Check,
+        access_location: None,
+    };
+
+    response.extensions_mut().insert(audit_context);
+
+    Ok(response)
 }
 
 /// Get card repositories
@@ -147,7 +155,7 @@ pub async fn get_version_page(
 pub async fn list_cards(
     State(state): State<Arc<AppState>>,
     Query(params): Query<CardQueryArgs>,
-) -> Result<Json<Vec<Card>>, (StatusCode, Json<serde_json::Value>)> {
+) -> Result<Response, (StatusCode, Json<serde_json::Value>)> {
     debug!(
         "Listing cards for registry: {:?} with params: {:?}",
         &params.registry_type, &params
@@ -165,31 +173,38 @@ pub async fn list_cards(
         })?;
 
     // convert to Cards struct
-    match cards {
-        CardResults::Data(data) => {
-            let cards = data.into_iter().map(convert_datacard).collect();
-            Ok(Json(cards))
-        }
+    let json_response = match cards {
+        CardResults::Data(data) => Json(data.into_iter().map(convert_datacard).collect::<Vec<_>>()),
         CardResults::Model(data) => {
-            let cards = data.into_iter().map(convert_modelcard).collect();
-            Ok(Json(cards))
+            Json(data.into_iter().map(convert_modelcard).collect::<Vec<_>>())
         }
-
-        CardResults::Experiment(data) => {
-            let cards = data.into_iter().map(convert_experimentcard).collect();
-            Ok(Json(cards))
-        }
-
+        CardResults::Experiment(data) => Json(
+            data.into_iter()
+                .map(convert_experimentcard)
+                .collect::<Vec<_>>(),
+        ),
         CardResults::Audit(data) => {
-            let cards = data.into_iter().map(convert_auditcard).collect();
-            Ok(Json(cards))
+            Json(data.into_iter().map(convert_auditcard).collect::<Vec<_>>())
         }
-
         CardResults::Prompt(data) => {
-            let cards = data.into_iter().map(convert_promptcard).collect();
-            Ok(Json(cards))
+            Json(data.into_iter().map(convert_promptcard).collect::<Vec<_>>())
         }
-    }
+    };
+
+    // Create response and add audit context
+    let mut response = json_response.into_response();
+
+    let audit_context = AuditContext {
+        resource_id: "list_cards".to_string(),
+        resource_type: ResourceType::Database,
+        metadata: params.get_metadata(),
+        registry_type: Some(params.registry_type.clone()),
+        operation: Operation::List,
+        access_location: None,
+    };
+    response.extensions_mut().insert(audit_context);
+
+    Ok(response)
 }
 
 #[instrument(skip_all)]
@@ -211,7 +226,7 @@ pub async fn create_card(
     let version = get_next_version(
         state.sql_client.clone(),
         &table,
-        card_request.version_request,
+        card_request.version_request.clone(),
     )
     .await
     .map_err(|e| {
@@ -259,8 +274,12 @@ pub async fn create_card(
     .into_response();
 
     let audit_context = AuditContext {
-        resource_id: Some(uid.clone()),
-        ..AuditContext::default()
+        resource_id: uid.clone(),
+        resource_type: ResourceType::Database,
+        metadata: card_request.get_metadata(),
+        registry_type: Some(card_request.registry_type.clone()),
+        operation: Operation::Create,
+        access_location: None,
     };
 
     response.extensions_mut().insert(audit_context);
