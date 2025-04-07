@@ -403,7 +403,7 @@ impl<'de> Deserialize<'de> for DataCard {
         enum Field {
             Interface,
             Name,
-            space,
+            Space,
             Version,
             Uid,
             Tags,
@@ -450,7 +450,7 @@ impl<'de> Deserialize<'de> for DataCard {
                         Field::Name => {
                             name = Some(map.next_value()?);
                         }
-                        Field::space => {
+                        Field::Space => {
                             space = Some(map.next_value()?);
                         }
 
