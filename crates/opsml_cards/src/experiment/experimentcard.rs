@@ -295,7 +295,7 @@ impl<'de> Deserialize<'de> for ExperimentCard {
         #[serde(field_identifier, rename_all = "snake_case")]
         enum Field {
             Name,
-            space,
+            Space,
             Version,
             Uid,
             Tags,
@@ -341,7 +341,7 @@ impl<'de> Deserialize<'de> for ExperimentCard {
                         Field::Name => {
                             name = Some(map.next_value()?);
                         }
-                        Field::space => {
+                        Field::Space => {
                             space = Some(map.next_value()?);
                         }
 
