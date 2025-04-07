@@ -1,4 +1,5 @@
 pub mod data;
+pub mod deck;
 pub mod experiment;
 pub mod model;
 pub mod prompt;
