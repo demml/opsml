@@ -930,7 +930,7 @@ mod tests {
 
         assert_eq!(stats.nbr_names, 10);
         assert_eq!(stats.nbr_versions, 10);
-        assert_eq!(stats.nbr_repositories, 10);
+        assert_eq!(stats.nbr_spaces, 10);
 
         // query stats with search term
         let stats = client

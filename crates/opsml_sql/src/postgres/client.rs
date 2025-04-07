@@ -1505,7 +1505,7 @@ mod tests {
 
         assert_eq!(stats.nbr_names, 9);
         assert_eq!(stats.nbr_versions, 9);
-        assert_eq!(stats.nbr_repositories, 9);
+        assert_eq!(stats.nbr_spaces, 9);
 
         // query stats with search term
         let stats = client

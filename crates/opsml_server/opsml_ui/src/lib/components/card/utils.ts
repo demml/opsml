@@ -85,7 +85,7 @@ export async function setupRegistryPage(
   ]);
 
   return {
-    spaces: spaces.repositories,
+    spaces: spaces.spaces,
     registry_type: registry_type,
     registryStats: registryStats,
     registryPage: registryPage,

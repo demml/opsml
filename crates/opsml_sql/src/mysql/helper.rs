@@ -250,7 +250,7 @@ impl MySQLQueryHelper {
             "SELECT 
                     COALESCE(COUNT(DISTINCT name), 0) AS nbr_names, 
                     COALESCE(COUNT(major), 0) AS nbr_versions, 
-                    COALESCE(COUNT(DISTINCT space), 0) AS nbr_repositories 
+                    COALESCE(COUNT(DISTINCT space), 0) AS nbr_spaces
                 FROM {}
                 WHERE 1=1
                 AND (? IS NULL OR name LIKE ? OR space LIKE ?)

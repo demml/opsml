@@ -126,7 +126,7 @@ pub struct Space {
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct QueryStats {
     pub nbr_names: i32,
-    pub nbr_repositories: i32,
+    pub nbr_spaces: i32,
     pub nbr_versions: i32,
 }
 

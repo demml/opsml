@@ -286,7 +286,7 @@ impl PostgresQueryHelper {
             "SELECT
             COALESCE(CAST(COUNT(DISTINCT name) AS INTEGER), 0) AS nbr_names, 
             COALESCE(CAST(COUNT(major) AS INTEGER), 0) AS nbr_versions, 
-            COALESCE(CAST(COUNT(DISTINCT space) AS INTEGER), 0) AS nbr_repositories 
+            COALESCE(CAST(COUNT(DISTINCT space) AS INTEGER), 0) AS nbr_spaces 
             FROM {}
             WHERE 1=1
             AND ($1 IS NULL OR name LIKE $1 OR space LIKE $1)
