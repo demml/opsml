@@ -92,7 +92,7 @@ async fn test_opsml_server_card_repositories() {
     let helper = TestHelper::new().await;
 
     /////////////////////// Test respositories ///////////////////////
-    let params = spaceRequest {
+    let params = SpaceRequest {
         registry_type: RegistryType::Model,
     };
 
@@ -109,7 +109,7 @@ async fn test_opsml_server_card_repositories() {
     assert_eq!(response.status(), StatusCode::OK);
 
     let body = response.into_body().collect().await.unwrap().to_bytes();
-    let space_response: spaceResponse = serde_json::from_slice(&body).unwrap();
+    let space_response: SpaceResponse = serde_json::from_slice(&body).unwrap();
 
     // assert 10
     assert_eq!(space_response.repositories.len(), 10);
