@@ -88,7 +88,7 @@ async fn test_opsml_server_card_uid() {
 }
 
 #[tokio::test]
-async fn test_opsml_server_card_repositories() {
+async fn test_opsml_server_card_spaces() {
     let helper = TestHelper::new().await;
 
     /////////////////////// Test respositories ///////////////////////
@@ -100,7 +100,7 @@ async fn test_opsml_server_card_repositories() {
 
     // check if a card UID exists (get request with UidRequest params)
     let request = Request::builder()
-        .uri(format!("/opsml/api/card/repositories?{}", query_string))
+        .uri(format!("/opsml/api/card/spaces?{}", query_string))
         .method("GET")
         .body(Body::empty())
         .unwrap();
@@ -112,7 +112,7 @@ async fn test_opsml_server_card_repositories() {
     let space_response: SpaceResponse = serde_json::from_slice(&body).unwrap();
 
     // assert 10
-    assert_eq!(space_response.repositories.len(), 10);
+    assert_eq!(space_response.spaces.len(), 10);
 
     helper.cleanup();
 }

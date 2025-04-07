@@ -105,7 +105,7 @@ impl AuditableRequest for SpaceRequest {
 
 #[derive(Serialize, Deserialize)]
 pub struct SpaceResponse {
-    pub repositories: Vec<String>,
+    pub spaces: Vec<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

@@ -28,7 +28,7 @@ pub enum Routes {
     CardUpdate,
 
     CardMetadata,
-    CardRepositories,
+    CardSpaces,
     CardRegistryStats,
     CardRegistryPage,
     CardRegistryVersionPage,
@@ -83,7 +83,7 @@ impl Routes {
             Routes::AuthUiLogin => "auth/ui/login",
             Routes::Card => "card",
             Routes::CardReadme => "card/readme",
-            Routes::CardRepositories => "card/repositories",
+            Routes::CardSpaces => "card/spaces",
             Routes::CardMetadata => "card/metadata",
             Routes::CardRegistryStats => "card/registry/stats",
             Routes::CardRegistryPage => "card/registry/page",

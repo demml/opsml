@@ -58,14 +58,14 @@ pub async fn check_card_uid(
     Ok(response)
 }
 
-/// Get card repositories
-pub async fn get_card_repositories(
+/// Get card spaces
+pub async fn get_card_spaces(
     State(state): State<Arc<AppState>>,
     Query(params): Query<SpaceRequest>,
 ) -> Result<Json<SpaceResponse>, (StatusCode, Json<serde_json::Value>)> {
     let table = CardTable::from_registry_type(&params.registry_type);
 
-    let repos = state
+    let spaces = state
         .sql_client
         .get_unique_space_names(&table)
         .await
@@ -74,9 +74,7 @@ pub async fn get_card_repositories(
             internal_server_error(e, "Failed to get unique space names")
         })?;
 
-    Ok(Json(SpaceResponse {
-        repositories: repos,
-    }))
+    Ok(Json(SpaceResponse { spaces }))
 }
 
 /// query stats page
@@ -592,10 +590,7 @@ pub async fn get_card_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
             .route(&format!("{}/card/metadata", prefix), get(get_card))
             .route(&format!("{}/card/readme", prefix), get(get_readme))
             .route(&format!("{}/card/readme", prefix), post(create_readme))
-            .route(
-                &format!("{}/card/repositories", prefix),
-                get(get_card_repositories),
-            )
+            .route(&format!("{}/card/spaces", prefix), get(get_card_spaces))
             .route(
                 &format!("{}/card/registry/stats", prefix),
                 get(get_registry_stats),

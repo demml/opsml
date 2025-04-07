@@ -6,12 +6,12 @@ export interface RegistryStatsRequest {
   space?: string;
 }
 export interface spaceResponse {
-  repositories: string[];
+  spaces: string[];
 }
 
 export interface QueryStats {
   nbr_names: number;
-  nbr_repositories: number;
+  nbr_spaces: number;
   nbr_versions: number;
 }
 
