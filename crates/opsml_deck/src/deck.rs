@@ -176,19 +176,19 @@ fn load_and_extract_card(
 #[pyclass]
 #[derive(Debug)]
 pub struct CardDeck {
-    #[pyo3(get, set)]
+    #[pyo3(get)]
     pub space: String,
 
-    #[pyo3(get, set)]
+    #[pyo3(get)]
     pub name: String,
 
-    #[pyo3(get, set)]
+    #[pyo3(get)]
     pub version: String,
 
-    #[pyo3(get, set)]
+    #[pyo3(get)]
     pub uid: String,
 
-    #[pyo3(get, set)]
+    #[pyo3(get)]
     pub created_at: DateTime<Utc>,
 
     #[pyo3(get, set)]
