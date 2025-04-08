@@ -6,8 +6,8 @@ CREATE TABLE IF NOT EXISTS opsml_data_registry (
     uid TEXT PRIMARY KEY,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     app_env TEXT DEFAULT 'development',
-    name TEXT,
     space TEXT,
+    name TEXT,
     major INT NOT NULL,
     minor INT NOT NULL,
     patch INT NOT NULL,
@@ -27,8 +27,8 @@ CREATE TABLE IF NOT EXISTS opsml_model_registry (
     uid TEXT PRIMARY KEY,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     app_env TEXT DEFAULT 'development',
-    name TEXT,
     space TEXT,
+    name TEXT,
     major INT NOT NULL,
     minor INT NOT NULL,
     patch INT NOT NULL,
@@ -51,8 +51,8 @@ CREATE TABLE IF NOT EXISTS opsml_experiment_registry (
     uid TEXT PRIMARY KEY,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     app_env TEXT DEFAULT 'development',
-    name TEXT,
     space TEXT,
+    name TEXT,
     major INT NOT NULL,
     minor INT NOT NULL,
     patch INT NOT NULL,
@@ -72,8 +72,8 @@ CREATE TABLE IF NOT EXISTS opsml_audit_registry (
     uid TEXT PRIMARY KEY,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     app_env TEXT DEFAULT 'development',
-    name TEXT,
     space TEXT,
+    name TEXT,
     major INT NOT NULL,
     minor INT NOT NULL,
     patch INT NOT NULL,
@@ -86,6 +86,20 @@ CREATE TABLE IF NOT EXISTS opsml_audit_registry (
     modelcard_uids TEXT,
     experimentcard_uids TEXT,
     username TEXT NOT NULL DEFAULT 'guest'
+);
+
+CREATE TABLE IF NOT EXISTS opsml_deck_registry (
+    uid TEXT PRIMARY KEY,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    app_env TEXT DEFAULT 'development',
+    space TEXT,
+    name TEXT,
+    major INT NOT NULL,
+    minor INT NOT NULL,
+    patch INT NOT NULL,
+    pre_tag VARCHAR(16),
+    build_tag VARCHAR(16),
+    version VARCHAR(64),
 );
 
 
