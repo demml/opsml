@@ -3,9 +3,11 @@ use crate::schemas::schema::{
 };
 
 use opsml_types::contracts::{
-    AuditCardClientRecord, CardRecord, DataCardClientRecord, ExperimentCardClientRecord,
-    ModelCardClientRecord, PromptCardClientRecord,
+    AuditCardClientRecord, CardDeckClientRecord, CardRecord, DataCardClientRecord,
+    ExperimentCardClientRecord, ModelCardClientRecord, PromptCardClientRecord,
 };
+
+use super::CardDeckRecord;
 
 pub fn convert_datacard(record: DataCardRecord) -> CardRecord {
     let card = DataCardClientRecord {
@@ -106,4 +108,19 @@ pub fn convert_promptcard(record: PromptCardRecord) -> CardRecord {
     };
 
     CardRecord::Prompt(card)
+}
+
+pub fn convert_card_deck(record: CardDeckRecord) -> CardRecord {
+    let card = CardDeckClientRecord {
+        uid: record.uid,
+        created_at: record.created_at,
+        app_env: record.app_env,
+        name: record.name,
+        space: record.space,
+        version: record.version,
+        username: record.username,
+        opsml_version: record.opsml_version,
+    };
+
+    CardRecord::Deck(card)
 }

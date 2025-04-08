@@ -154,6 +154,17 @@ pub async fn insert_card_into_db(
             );
             ServerCard::Prompt(server_card)
         }
+
+        CardRecord::Deck(client_card) => {
+            let server_card = CardDeckRecord::new(
+                client_card.name,
+                client_card.space,
+                version,
+                client_card.opsml_version,
+                client_card.username,
+            );
+            ServerCard::Deck(server_card)
+        }
     };
     sql_client.insert_card(table, &card).await.map_err(|e| {
         error!("Failed to insert card: {}", e);
