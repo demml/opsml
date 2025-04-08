@@ -2,7 +2,7 @@ use chrono::{DateTime, Utc};
 use opsml_crypt::decrypt_directory;
 use opsml_error::{CardError, OpsmlError};
 use opsml_storage::storage_client;
-use opsml_types::contracts::{Card, ExperimentCardClientRecord};
+use opsml_types::contracts::{CardRecord, ExperimentCardClientRecord};
 use opsml_types::{
     cards::{BaseArgs, ComputeEnvironment},
     contracts::ArtifactKey,
@@ -140,7 +140,7 @@ impl ExperimentCard {
         self.uids.modelcard_uids.push(uid.to_string());
     }
 
-    pub fn get_registry_card(&self) -> Result<Card, CardError> {
+    pub fn get_registry_card(&self) -> Result<CardRecord, CardError> {
         let record = ExperimentCardClientRecord {
             created_at: self.created_at,
             app_env: self.app_env.clone(),
@@ -156,7 +156,7 @@ impl ExperimentCard {
             username: std::env::var("OPSML_USERNAME").unwrap_or_else(|_| "guest".to_string()),
         };
 
-        Ok(Card::Experiment(record))
+        Ok(CardRecord::Experiment(record))
     }
 
     #[pyo3(signature = (path))]

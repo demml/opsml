@@ -435,7 +435,7 @@ impl Default for PromptCardClientRecord {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "type", content = "data")]
 #[pyclass]
-pub enum Card {
+pub enum CardRecord {
     Data(DataCardClientRecord),
     Model(ModelCardClientRecord),
     Experiment(ExperimentCardClientRecord),
@@ -444,7 +444,7 @@ pub enum Card {
 }
 
 #[pymethods]
-impl Card {
+impl CardRecord {
     pub fn __str__(&self) -> String {
         PyHelperFuncs::__str__(self)
     }
@@ -622,7 +622,7 @@ impl Card {
     }
 }
 
-impl Card {
+impl CardRecord {
     pub fn uri(&self) -> Result<PathBuf, CardError> {
         match self {
             Self::Data(card) => {
@@ -702,7 +702,7 @@ struct CardTableEntry {
 
 #[pyclass]
 struct CardListIter {
-    inner: std::vec::IntoIter<Card>,
+    inner: std::vec::IntoIter<CardRecord>,
 }
 
 #[pymethods]
@@ -711,7 +711,7 @@ impl CardListIter {
         slf
     }
 
-    fn __next__(mut slf: PyRefMut<'_, Self>) -> Option<Card> {
+    fn __next__(mut slf: PyRefMut<'_, Self>) -> Option<CardRecord> {
         slf.inner.next()
     }
 }
@@ -720,7 +720,7 @@ impl CardListIter {
 #[pyclass]
 pub struct CardList {
     #[pyo3(get)]
-    pub cards: Vec<Card>,
+    pub cards: Vec<CardRecord>,
 }
 
 #[pymethods]
@@ -729,7 +729,7 @@ impl CardList {
         PyHelperFuncs::__str__(self)
     }
 
-    pub fn __getitem__(&self, index: usize) -> Option<Card> {
+    pub fn __getitem__(&self, index: usize) -> Option<CardRecord> {
         self.cards.get(index).cloned()
     }
 
@@ -789,7 +789,7 @@ impl CardList {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct CreateCardRequest {
     pub registry_type: RegistryType,
-    pub card: Card,
+    pub card: CardRecord,
     pub version_request: CardVersionRequest,
 }
 
@@ -826,7 +826,7 @@ pub struct CreateCardResponse {
 /// Duplicating card request to be explicit with naming
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct UpdateCardRequest {
-    pub card: Card,
+    pub card: CardRecord,
     pub registry_type: RegistryType,
 }
 

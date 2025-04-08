@@ -171,7 +171,7 @@ impl CardRegistry {
     #[pyo3(signature = (uid=None, space=None, name=None, version=None, interface=None))]
     #[instrument(skip_all)]
     pub fn load_card<'py>(
-        &mut self,
+        &self,
         py: Python<'py>,
         uid: Option<String>,
         space: Option<String>,
@@ -440,7 +440,7 @@ impl CardRegistry {
                 error!("Failed to get registry card: {}", e);
                 RegistryError::Error("Failed to get registry card".to_string())
             })?
-            .extract::<Card>()
+            .extract::<CardRecord>()
             .map_err(|e| {
                 error!("Failed to extract registry card: {}", e);
                 RegistryError::Error("Failed to extract registry card".to_string())
@@ -510,7 +510,7 @@ impl CardRegistry {
                 error!("Failed to get registry card: {}", e);
                 RegistryError::Error("Failed to get registry card".to_string())
             })?
-            .extract::<Card>()
+            .extract::<CardRecord>()
             .map_err(|e| {
                 error!("Failed to extract registry card: {}", e);
                 RegistryError::Error("Failed to extract registry card".to_string())

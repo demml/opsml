@@ -3,11 +3,11 @@ use crate::schemas::schema::{
 };
 
 use opsml_types::contracts::{
-    AuditCardClientRecord, Card, DataCardClientRecord, ExperimentCardClientRecord,
+    AuditCardClientRecord, CardRecord, DataCardClientRecord, ExperimentCardClientRecord,
     ModelCardClientRecord, PromptCardClientRecord,
 };
 
-pub fn convert_datacard(record: DataCardRecord) -> Card {
+pub fn convert_datacard(record: DataCardRecord) -> CardRecord {
     let card = DataCardClientRecord {
         uid: record.uid,
         created_at: record.created_at,
@@ -23,10 +23,10 @@ pub fn convert_datacard(record: DataCardRecord) -> Card {
         username: record.username,
     };
 
-    Card::Data(card)
+    CardRecord::Data(card)
 }
 
-pub fn convert_modelcard(record: ModelCardRecord) -> Card {
+pub fn convert_modelcard(record: ModelCardRecord) -> CardRecord {
     let card = ModelCardClientRecord {
         uid: record.uid,
         created_at: record.created_at,
@@ -45,10 +45,10 @@ pub fn convert_modelcard(record: ModelCardRecord) -> Card {
         username: record.username,
     };
 
-    Card::Model(card)
+    CardRecord::Model(card)
 }
 
-pub fn convert_experimentcard(record: ExperimentCardRecord) -> Card {
+pub fn convert_experimentcard(record: ExperimentCardRecord) -> CardRecord {
     let card = ExperimentCardClientRecord {
         uid: record.uid,
         created_at: record.created_at,
@@ -64,10 +64,10 @@ pub fn convert_experimentcard(record: ExperimentCardRecord) -> Card {
         username: record.username,
     };
 
-    Card::Experiment(card)
+    CardRecord::Experiment(card)
 }
 
-pub fn convert_auditcard(record: AuditCardRecord) -> Card {
+pub fn convert_auditcard(record: AuditCardRecord) -> CardRecord {
     let card = AuditCardClientRecord {
         uid: record.uid,
         created_at: record.created_at,
@@ -83,10 +83,10 @@ pub fn convert_auditcard(record: AuditCardRecord) -> Card {
         username: record.username,
     };
 
-    Card::Audit(card)
+    CardRecord::Audit(card)
 }
 
-pub fn convert_promptcard(record: PromptCardRecord) -> Card {
+pub fn convert_promptcard(record: PromptCardRecord) -> CardRecord {
     let card = PromptCardClientRecord {
         uid: record.uid,
         created_at: record.created_at,
@@ -100,5 +100,5 @@ pub fn convert_promptcard(record: PromptCardRecord) -> Card {
         auditcard_uid: record.auditcard_uid,
     };
 
-    Card::Prompt(card)
+    CardRecord::Prompt(card)
 }

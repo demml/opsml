@@ -7,7 +7,7 @@ use opsml_interfaces::{
     XGBoostModel,
 };
 use opsml_interfaces::{ModelInterfaceMetadata, ModelLoadKwargs, ModelSaveKwargs};
-use opsml_types::contracts::{ArtifactKey, Card, ModelCardClientRecord};
+use opsml_types::contracts::{ArtifactKey, CardRecord, ModelCardClientRecord};
 use opsml_types::{
     cards::BaseArgs, DataType, ModelInterfaceType, ModelType, RegistryType, SaveName, Suffix,
     TaskType,
@@ -391,7 +391,7 @@ impl ModelCard {
         self.interface = None;
     }
 
-    pub fn get_registry_card(&self) -> Result<Card, CardError> {
+    pub fn get_registry_card(&self) -> Result<CardRecord, CardError> {
         let record = ModelCardClientRecord {
             app_env: self.app_env.clone(),
             created_at: self.created_at,
@@ -410,7 +410,7 @@ impl ModelCard {
             username: std::env::var("OPSML_USERNAME").unwrap_or_else(|_| "guest".to_string()),
         };
 
-        Ok(Card::Model(record))
+        Ok(CardRecord::Model(record))
     }
 
     pub fn save_card(&self, path: PathBuf) -> Result<(), CardError> {

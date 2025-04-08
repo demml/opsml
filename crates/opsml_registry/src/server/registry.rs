@@ -61,7 +61,10 @@ pub mod server_logic {
             self.table_name.to_string()
         }
 
-        pub async fn list_cards(&self, args: CardQueryArgs) -> Result<Vec<Card>, RegistryError> {
+        pub async fn list_cards(
+            &self,
+            args: CardQueryArgs,
+        ) -> Result<Vec<CardRecord>, RegistryError> {
             let cards = self
                 .sql_client
                 .query_cards(&self.table_name, &args)
@@ -168,7 +171,7 @@ pub mod server_logic {
 
         pub async fn create_card(
             &self,
-            card: Card,
+            card: CardRecord,
             version: Option<String>,
             version_type: VersionType,
             pre_tag: Option<String>,
@@ -186,7 +189,7 @@ pub mod server_logic {
                 .await?;
 
             let card = match card {
-                Card::Data(client_card) => {
+                CardRecord::Data(client_card) => {
                     let server_card = DataCardRecord::new(
                         client_card.name,
                         client_card.space,
@@ -200,7 +203,7 @@ pub mod server_logic {
                     );
                     ServerCard::Data(server_card)
                 }
-                Card::Model(client_card) => {
+                CardRecord::Model(client_card) => {
                     let server_card = ModelCardRecord::new(
                         client_card.name,
                         client_card.space,
@@ -218,7 +221,7 @@ pub mod server_logic {
                     ServerCard::Model(server_card)
                 }
 
-                Card::Experiment(client_card) => {
+                CardRecord::Experiment(client_card) => {
                     let server_card = ExperimentCardRecord::new(
                         client_card.name,
                         client_card.space,
@@ -233,7 +236,7 @@ pub mod server_logic {
                     ServerCard::Experiment(server_card)
                 }
 
-                Card::Audit(client_card) => {
+                CardRecord::Audit(client_card) => {
                     let server_card = AuditCardRecord::new(
                         client_card.name,
                         client_card.space,
@@ -247,7 +250,7 @@ pub mod server_logic {
                     );
                     ServerCard::Audit(server_card)
                 }
-                Card::Prompt(client_card) => {
+                CardRecord::Prompt(client_card) => {
                     let server_card = PromptCardRecord::new(
                         client_card.name,
                         client_card.space,
@@ -290,10 +293,10 @@ pub mod server_logic {
             Ok(response)
         }
 
-        pub async fn update_card(&self, card: &Card) -> Result<(), RegistryError> {
+        pub async fn update_card(&self, card: &CardRecord) -> Result<(), RegistryError> {
             let card = card.clone();
             let card = match card {
-                Card::Data(client_card) => {
+                CardRecord::Data(client_card) => {
                     let version = Version::parse(&client_card.version).map_err(|e| {
                         error!("Failed to parse version: {}", e);
                         RegistryError::Error("Failed to parse version".to_string())
@@ -321,7 +324,7 @@ pub mod server_logic {
                     ServerCard::Data(server_card)
                 }
 
-                Card::Model(client_card) => {
+                CardRecord::Model(client_card) => {
                     let version = Version::parse(&client_card.version).map_err(|e| {
                         error!("Failed to parse version: {}", e);
                         RegistryError::Error("Failed to parse version".to_string())
@@ -352,7 +355,7 @@ pub mod server_logic {
                     ServerCard::Model(server_card)
                 }
 
-                Card::Experiment(client_card) => {
+                CardRecord::Experiment(client_card) => {
                     let version = Version::parse(&client_card.version).map_err(|e| {
                         error!("Failed to parse version: {}", e);
                         RegistryError::Error("Failed to parse version".to_string())
@@ -380,7 +383,7 @@ pub mod server_logic {
                     ServerCard::Experiment(server_card)
                 }
 
-                Card::Audit(client_card) => {
+                CardRecord::Audit(client_card) => {
                     let version = Version::parse(&client_card.version).map_err(|e| {
                         error!("Failed to parse version: {}", e);
                         RegistryError::Error("Failed to parse version".to_string())
@@ -408,7 +411,7 @@ pub mod server_logic {
                     ServerCard::Audit(server_card)
                 }
 
-                Card::Prompt(client_card) => {
+                CardRecord::Prompt(client_card) => {
                     let version = Version::parse(&client_card.version).map_err(|e| {
                         error!("Failed to parse version: {}", e);
                         RegistryError::Error("Failed to parse version".to_string())

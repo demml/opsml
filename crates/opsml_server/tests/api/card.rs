@@ -269,7 +269,7 @@ async fn test_opsml_server_card_list_cards() {
     assert_eq!(response.status(), StatusCode::OK);
 
     let body = response.into_body().collect().await.unwrap().to_bytes();
-    let card_results: Vec<Card> = serde_json::from_slice(&body).unwrap();
+    let card_results: Vec<CardRecord> = serde_json::from_slice(&body).unwrap();
 
     assert_eq!(card_results.len(), 10);
 
@@ -297,7 +297,7 @@ async fn test_opsml_server_card_list_cards() {
     assert_eq!(response.status(), StatusCode::OK);
 
     let body = response.into_body().collect().await.unwrap().to_bytes();
-    let card_results: Vec<Card> = serde_json::from_slice(&body).unwrap();
+    let card_results: Vec<CardRecord> = serde_json::from_slice(&body).unwrap();
 
     assert_eq!(card_results.len(), 1);
 
@@ -319,7 +319,7 @@ async fn test_opsml_server_card_datacard_crud() {
 
     // DataCard
     let card_request = CreateCardRequest {
-        card: Card::Data(DataCardClientRecord {
+        card: CardRecord::Data(DataCardClientRecord {
             name: "DataCard".to_string(),
             space: "repo1".to_string(),
             version: "1.0.0".to_string(),
@@ -364,19 +364,19 @@ async fn test_opsml_server_card_datacard_crud() {
     assert_eq!(response.status(), StatusCode::OK);
 
     let body = response.into_body().collect().await.unwrap().to_bytes();
-    let card_results: Vec<Card> = serde_json::from_slice(&body).unwrap();
+    let card_results: Vec<CardRecord> = serde_json::from_slice(&body).unwrap();
 
     assert_eq!(card_results.len(), 1);
 
     // Update the card (get card from CardResults)
     let card = match card_results[0].clone() {
-        Card::Data(card) => card,
+        CardRecord::Data(card) => card,
         _ => panic!("Card not found"),
     };
 
     let card_request = UpdateCardRequest {
         registry_type: RegistryType::Data,
-        card: Card::Data(DataCardClientRecord {
+        card: CardRecord::Data(DataCardClientRecord {
             name: "DataCard".to_string(),
             space: "repo1".to_string(),
             version: "1.0.1".to_string(),
@@ -448,7 +448,7 @@ async fn test_opsml_server_card_modelcard_crud() {
 
     // ModelCard
     let card_request = CreateCardRequest {
-        card: Card::Model(ModelCardClientRecord {
+        card: CardRecord::Model(ModelCardClientRecord {
             name: "ModelCard".to_string(),
             space: "repo1".to_string(),
             version: "1.0.0".to_string(),
@@ -520,19 +520,19 @@ async fn test_opsml_server_card_modelcard_crud() {
     assert_eq!(response.status(), StatusCode::OK);
 
     let body = response.into_body().collect().await.unwrap().to_bytes();
-    let card_results: Vec<Card> = serde_json::from_slice(&body).unwrap();
+    let card_results: Vec<CardRecord> = serde_json::from_slice(&body).unwrap();
 
     assert_eq!(card_results.len(), 1);
 
     // Update the card (get card from CardResults)
     let card = match card_results[0].clone() {
-        Card::Model(card) => card,
+        CardRecord::Model(card) => card,
         _ => panic!("Card not found"),
     };
 
     let card_request = UpdateCardRequest {
         registry_type: RegistryType::Model,
-        card: Card::Model(ModelCardClientRecord {
+        card: CardRecord::Model(ModelCardClientRecord {
             name: "DataCard".to_string(),
             space: "repo1".to_string(),
             version: "1.0.1".to_string(),
@@ -607,7 +607,7 @@ async fn test_opsml_server_card_experimentcard_crud() {
 
     // experimentcard
     let card_request = CreateCardRequest {
-        card: Card::Experiment(ExperimentCardClientRecord {
+        card: CardRecord::Experiment(ExperimentCardClientRecord {
             name: "experimentcard".to_string(),
             space: "repo1".to_string(),
             version: "1.0.0".to_string(),
@@ -654,19 +654,19 @@ async fn test_opsml_server_card_experimentcard_crud() {
     assert_eq!(response.status(), StatusCode::OK);
 
     let body = response.into_body().collect().await.unwrap().to_bytes();
-    let card_results: Vec<Card> = serde_json::from_slice(&body).unwrap();
+    let card_results: Vec<CardRecord> = serde_json::from_slice(&body).unwrap();
 
     assert_eq!(card_results.len(), 1);
 
     // Update the card (get card from CardResults)
     let card = match card_results[0].clone() {
-        Card::Experiment(card) => card,
+        CardRecord::Experiment(card) => card,
         _ => panic!("Card not found"),
     };
 
     let card_request = UpdateCardRequest {
         registry_type: RegistryType::Experiment,
-        card: Card::Experiment(ExperimentCardClientRecord {
+        card: CardRecord::Experiment(ExperimentCardClientRecord {
             name: "DataCard".to_string(),
             space: "repo1".to_string(),
             version: "1.0.1".to_string(),
@@ -738,7 +738,7 @@ async fn test_opsml_server_card_auditcard_crud() {
 
     // AuditCard
     let card_request = CreateCardRequest {
-        card: Card::Audit(AuditCardClientRecord {
+        card: CardRecord::Audit(AuditCardClientRecord {
             name: "AuditCard".to_string(),
             space: "repo1".to_string(),
             version: "1.0.0".to_string(),
@@ -784,19 +784,19 @@ async fn test_opsml_server_card_auditcard_crud() {
     assert_eq!(response.status(), StatusCode::OK);
 
     let body = response.into_body().collect().await.unwrap().to_bytes();
-    let card_results: Vec<Card> = serde_json::from_slice(&body).unwrap();
+    let card_results: Vec<CardRecord> = serde_json::from_slice(&body).unwrap();
 
     assert_eq!(card_results.len(), 1);
 
     // Update the card (get card from CardResults)
     let card = match card_results[0].clone() {
-        Card::Audit(card) => card,
+        CardRecord::Audit(card) => card,
         _ => panic!("Card not found"),
     };
 
     let card_request = UpdateCardRequest {
         registry_type: RegistryType::Audit,
-        card: Card::Audit(AuditCardClientRecord {
+        card: CardRecord::Audit(AuditCardClientRecord {
             name: "DataCard".to_string(),
             space: "repo1".to_string(),
             version: "1.0.1".to_string(),
@@ -869,7 +869,7 @@ async fn test_opsml_server_card_get_card() {
 
     // Create a test card with some data
     let card_request = CreateCardRequest {
-        card: Card::Model(ModelCardClientRecord {
+        card: CardRecord::Model(ModelCardClientRecord {
             name: "name".to_string(),
             space: "space".to_string(),
             version: "1.0.0".to_string(),
