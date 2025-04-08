@@ -269,23 +269,27 @@ impl Clone for ModelSaveKwargs {
 #[derive(Debug, Default)]
 pub struct ModelLoadKwargs {
     #[pyo3(get, set)]
-    onnx: Option<Py<PyDict>>,
+    pub onnx: Option<Py<PyDict>>,
 
     #[pyo3(get, set)]
-    model: Option<Py<PyDict>>,
+    pub model: Option<Py<PyDict>>,
 
     #[pyo3(get, set)]
-    preprocessor: Option<Py<PyDict>>,
+    pub preprocessor: Option<Py<PyDict>>,
+
+    #[pyo3(get, set)]
+    pub load_onnx: bool,
 }
 
 #[pymethods]
 impl ModelLoadKwargs {
     #[new]
-    #[pyo3(signature = (onnx=None, model=None, preprocessor=None))]
+    #[pyo3(signature = (onnx=None, model=None, preprocessor=None, load_onnx=false))]
     pub fn new<'py>(
         onnx: Option<Bound<'py, PyAny>>,
         model: Option<Bound<'py, PyDict>>,
         preprocessor: Option<Bound<'py, PyDict>>,
+        load_onnx: Option<bool>,
     ) -> PyResult<Self> {
         // check if onnx is None, PyDict or HuggingFaceOnnxArgs
 
@@ -308,12 +312,19 @@ impl ModelLoadKwargs {
             None => None,
         };
 
+        let load_onnx = if onnx.is_some() {
+            load_onnx.unwrap_or(true)
+        } else {
+            false
+        };
+
         let model = model.map(|model| model.unbind());
         let preprocessor = preprocessor.map(|preprocessor| preprocessor.unbind());
         Ok(Self {
             onnx,
             model,
             preprocessor,
+            load_onnx,
         })
     }
 }
@@ -346,11 +357,13 @@ impl Clone for ModelLoadKwargs {
                 .preprocessor
                 .as_ref()
                 .map(|preprocessor| preprocessor.clone_ref(py));
+            let load_onnx = self.load_onnx;
 
             ModelLoadKwargs {
                 onnx,
                 model,
                 preprocessor,
+                load_onnx,
             }
         })
     }

@@ -1,3 +1,3 @@
 pub mod card_deck;
 
-pub use card_deck::{Card, CardDeck, CardKwargs};
+pub use card_deck::{Card, CardDeck};

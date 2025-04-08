@@ -42,12 +42,14 @@ class ModelLoadKwargs:
     onnx: Optional[Dict]
     model: Optional[Dict]
     preprocessor: Optional[Dict]
+    load_onnx: bool
 
     def __init__(
         self,
         onnx: Optional[Dict] = None,
         model: Optional[Dict] = None,
         preprocessor: Optional[Dict] = None,
+        load_onnx: bool = False,
     ) -> None:
         """Optional arguments to pass to load_model
 
@@ -58,6 +60,10 @@ class ModelLoadKwargs:
                 Optional model arguments to use when loading
             preprocessor (Dict):
                 Optional preprocessor arguments to use when loading
+            load_onnx (bool):
+                Whether to load the onnx model. Defaults to false unless onnx args are
+                provided. If true, the onnx model will be loaded.
+
         """
 
 class ModelType:

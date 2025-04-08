@@ -18,7 +18,6 @@ ExperimentCard = card.ExperimentCard
 ComputeEnvironment = card.ComputeEnvironment
 PromptCard = card.PromptCard
 CardDeck = card.CardDeck
-CardKwargs = card.CardKwargs
 
 
 __all__ = [
@@ -38,5 +37,4 @@ __all__ = [
     "PromptCard",
     "CardRegistries",
     "CardDeck",
-    "CardKwargs",
 ]

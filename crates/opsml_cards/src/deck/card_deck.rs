@@ -8,7 +8,6 @@ use opsml_types::{
 };
 use opsml_utils::PyHelperFuncs;
 use pyo3::prelude::*;
-use pyo3::IntoPyObjectExt;
 use pyo3::PyTraverseError;
 use pyo3::PyVisit;
 use serde::{
@@ -18,54 +17,7 @@ use serde::{
 };
 use std::collections::HashMap;
 use std::path::PathBuf;
-use tracing::{debug, error};
-
-#[pyclass]
-pub struct CardKwargs {
-    #[pyo3(get)]
-    pub interface: Option<PyObject>,
-    #[pyo3(get)]
-    pub load_kwargs: PyObject,
-}
-
-impl CardKwargs {
-    pub fn new(
-        py: Python,
-        interface: Option<PyObject>,
-        load_kwargs: Bound<'_, PyAny>,
-    ) -> PyResult<Self> {
-        // Check that load_kwargs is either ModelLoadKwargs or DataLoadKwargs
-        if !load_kwargs.is_instance_of::<ModelLoadKwargs>()
-            && !load_kwargs.is_instance_of::<DataLoadKwargs>()
-        {
-            error!("load_kwargs must be either ModelLoadKwargs or DataLoadKwargs");
-            return Err(OpsmlError::new_err(
-                "load_kwargs must be either ModelLoadKwargs or DataLoadKwargs",
-            ));
-        }
-
-        debug!("load_kwargs type: {:?}", load_kwargs.get_type());
-
-        Ok(CardKwargs {
-            interface,
-            load_kwargs: load_kwargs.into_py_any(py).map_err(|e| {
-                error!("Failed to convert load_kwargs to PyObject: {}", e);
-                OpsmlError::new_err(e.to_string())
-            })?,
-        })
-    }
-}
-
-impl FromPyObject<'_> for CardKwargs {
-    fn extract_bound(obj: &Bound<'_, PyAny>) -> PyResult<Self> {
-        let interface = obj.getattr("interface")?.extract::<Option<PyObject>>()?;
-        let load_kwargs = obj.getattr("load_kwargs")?.extract::<PyObject>()?;
-        Ok(CardKwargs {
-            interface,
-            load_kwargs,
-        })
-    }
-}
+use tracing::{debug, error, instrument};
 
 #[pyclass]
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -192,51 +144,54 @@ impl CardDeck {
     /// # Arguments
     ///
     /// * `py` - Python interpreter state
-    /// * `load_kwargs` - Optional map of alias to kwargs containing interface and load arguments
+    /// * `load_kwargs` - Optional map of alias to kwargs containing load arguments (DataLoadKwargs, ModelLoadKwargs)
     ///
-    //#[instrument(skip_all, fields(deck_name = %self.name))]
-    //pub fn load<'py>(
-    //    &mut self,
-    //    py: Python<'py>,
-    //    load_kwargs: Option<HashMap<String, CardKwargs>>,
-    //) -> PyResult<()> {
-    //    debug!("Loading CardDeck: {}", self.name);
-    //    let card_registries = CardRegistries::new()?;
+    #[instrument(skip_all)]
+    #[pyo3(signature = (load_kwargs=None))]
+    pub fn load<'py>(
+        &mut self,
+        py: Python<'py>,
+        load_kwargs: Option<HashMap<String, Bound<'_, PyAny>>>,
+    ) -> PyResult<()> {
+        debug!("Loading CardDeck: {}", self.name);
 
-    //    for card in &self.cards {
-    //        // Skip if already loaded
-    //        if self.card_objs.contains_key(&card.alias) {
-    //            debug!("Card {} already exists in card_objs", card.alias);
-    //            continue;
-    //        }
+        // iterate over card_objs and call load (only for datacard and modelcard)
+        for (alias, card_obj) in &self.card_objs {
+            let bound = card_obj.clone_ref(py).into_bound(py);
+            let registry_type = bound.getattr("registry_type")?.extract::<RegistryType>()?;
 
-    //        // Get kwargs if they exist
-    //        let (interface, load_kwargs) = load_kwargs
-    //            .as_ref()
-    //            .and_then(|kwargs| kwargs.get(&card.alias))
-    //            .map(|card_kwargs| {
-    //                let interface = card_kwargs
-    //                    .interface
-    //                    .as_ref()
-    //                    .map(|i| i.clone_ref(py).into_bound(py));
-    //                let load_kwargs = card_kwargs.load_kwargs.clone_ref(py).into_bound(py);
-    //                (interface, Some(load_kwargs))
-    //            })
-    //            .unwrap_or((None, None));
+            match registry_type {
+                RegistryType::Data => {
+                    let kwargs = load_kwargs
+                        .as_ref()
+                        .and_then(|kwargs| kwargs.get(alias))
+                        .map(|kwargs| kwargs.extract::<DataLoadKwargs>())
+                        .transpose()?;
 
-    //        // Load and store the card
-    //        let card_obj = load_and_extract_card(
-    //            py,
-    //            &card_registries,
-    //            card,
-    //            interface.as_ref(),
-    //            load_kwargs.as_ref(),
-    //        )?;
-    //        self.card_objs.insert(card.alias.clone(), card_obj);
-    //    }
+                    bound.call_method1("load", (Option::<PathBuf>::None, kwargs))?;
+                }
+                RegistryType::Model => {
+                    let (load_onnx, kwargs) = match load_kwargs
+                        .as_ref()
+                        .and_then(|kwargs| kwargs.get(alias))
+                        .map(|kwargs| kwargs.extract::<ModelLoadKwargs>())
+                        .transpose()?
+                    {
+                        Some(model_kwargs) => {
+                            let load_onnx = model_kwargs.load_onnx;
+                            let kwargs = Some(model_kwargs);
+                            (load_onnx, kwargs)
+                        }
+                        None => (false, None),
+                    };
 
-    //    Ok(())
-    //}
+                    bound.call_method1("load", (Option::<PathBuf>::None, load_onnx, kwargs))?;
+                }
+                _ => {}
+            }
+        }
+        Ok(())
+    }
 
     #[pyo3(signature = (path))]
     pub fn save(&mut self, path: PathBuf) -> Result<(), CardError> {
@@ -266,6 +221,7 @@ impl CardDeck {
         self.card_objs.clear();
     }
 
+    /// Get the registry card for the card deck
     pub fn get_registry_card(&self) -> Result<CardRecord, CardError> {
         let record = CardDeckClientRecord {
             created_at: self.created_at,
@@ -279,6 +235,17 @@ impl CardDeck {
         };
 
         Ok(CardRecord::Deck(record))
+    }
+
+    /// enable __getitem__ for CardDeck alias calls
+    pub fn __getitem__<'py>(&self, py: Python<'py>, key: &str) -> PyResult<Bound<'py, PyAny>> {
+        match self.card_objs.get(key) {
+            Some(value) => Ok(value.clone_ref(py).into_bound(py)),
+            None => Err(OpsmlError::new_err(format!(
+                "KeyError: key '{}' not found in CardDeck",
+                key
+            ))),
+        }
     }
 }
 
