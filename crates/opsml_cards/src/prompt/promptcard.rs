@@ -168,6 +168,7 @@ impl PromptCard {
             tags: self.tags.clone(),
             experimentcard_uid: self.metadata.experimentcard_uid.clone(),
             auditcard_uid: self.metadata.auditcard_uid.clone(),
+            opsml_version: self.opsml_version.clone(),
             username: std::env::var("OPSML_USERNAME").unwrap_or_else(|_| "guest".to_string()),
         };
 

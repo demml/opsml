@@ -153,6 +153,7 @@ impl ExperimentCard {
             modelcard_uids: self.uids.modelcard_uids.clone(),
             promptcard_uids: self.uids.promptcard_uids.clone(),
             experimentcard_uids: self.uids.experimentcard_uids.clone(),
+            opsml_version: self.opsml_version.clone(),
             username: std::env::var("OPSML_USERNAME").unwrap_or_else(|_| "guest".to_string()),
         };
 
