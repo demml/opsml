@@ -279,11 +279,21 @@ impl CardDeck {
         Ok(())
     }
 
-    pub fn save_card(&self, path: PathBuf) -> Result<(), CardError> {
+    #[pyo3(signature = (path))]
+    pub fn save(&mut self, path: PathBuf) -> Result<(), CardError> {
         let card_save_path = path.join(SaveName::Card).with_extension(Suffix::Json);
         PyHelperFuncs::save_to_json(self, &card_save_path)?;
 
         Ok(())
+    }
+
+    #[staticmethod]
+    #[pyo3(signature = (json_string))]
+    pub fn model_validate_json(json_string: String) -> PyResult<CardDeck> {
+        serde_json::from_str(&json_string).map_err(|e| {
+            error!("Failed to validate json: {}", e);
+            OpsmlError::new_err(e.to_string())
+        })
     }
 
     fn __traverse__(&self, visit: PyVisit) -> Result<(), PyTraverseError> {
