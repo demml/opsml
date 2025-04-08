@@ -263,6 +263,7 @@ pub struct DataCardClientRecord {
     pub experimentcard_uid: Option<String>,
     pub auditcard_uid: Option<String>,
     pub interface_type: String,
+    pub opsml_version: String,
     pub username: String,
 }
 
@@ -280,6 +281,7 @@ impl Default for DataCardClientRecord {
             experimentcard_uid: None,
             auditcard_uid: None,
             interface_type: DataInterfaceType::Base.to_string(),
+            opsml_version: env!("CARGO_PKG_VERSION").to_string(),
             username: "guest".to_string(),
         }
     }
@@ -302,6 +304,7 @@ pub struct ModelCardClientRecord {
     pub auditcard_uid: Option<String>,
     pub interface_type: String,
     pub task_type: String,
+    pub opsml_version: String,
     pub username: String,
 }
 
@@ -323,6 +326,7 @@ impl Default for ModelCardClientRecord {
             auditcard_uid: None,
             interface_type: ModelInterfaceType::Base.to_string(),
             task_type: TaskType::Other.to_string(),
+            opsml_version: env!("CARGO_PKG_VERSION").to_string(),
             username: "guest".to_string(),
         }
     }
@@ -342,6 +346,7 @@ pub struct ExperimentCardClientRecord {
     pub modelcard_uids: Vec<String>,
     pub promptcard_uids: Vec<String>,
     pub experimentcard_uids: Vec<String>,
+    pub opsml_version: String,
     pub username: String,
 }
 
@@ -359,6 +364,7 @@ impl Default for ExperimentCardClientRecord {
             modelcard_uids: Vec::new(),
             promptcard_uids: Vec::new(),
             experimentcard_uids: Vec::new(),
+            opsml_version: env!("CARGO_PKG_VERSION").to_string(),
             username: "guest".to_string(),
         }
     }
@@ -378,6 +384,7 @@ pub struct AuditCardClientRecord {
     pub datacard_uids: Vec<String>,
     pub modelcard_uids: Vec<String>,
     pub experimentcard_uids: Vec<String>,
+    pub opsml_version: String,
     pub username: String,
 }
 
@@ -395,6 +402,7 @@ impl Default for AuditCardClientRecord {
             datacard_uids: Vec::new(),
             modelcard_uids: Vec::new(),
             experimentcard_uids: Vec::new(),
+            opsml_version: env!("CARGO_PKG_VERSION").to_string(),
             username: "guest".to_string(),
         }
     }
@@ -412,6 +420,7 @@ pub struct PromptCardClientRecord {
     pub tags: Vec<String>,
     pub experimentcard_uid: Option<String>,
     pub auditcard_uid: Option<String>,
+    pub opsml_version: String,
     pub username: String,
 }
 
@@ -427,6 +436,7 @@ impl Default for PromptCardClientRecord {
             tags: Vec::new(),
             experimentcard_uid: None,
             auditcard_uid: None,
+            opsml_version: env!("CARGO_PKG_VERSION").to_string(),
             username: "guest".to_string(),
         }
     }

@@ -153,9 +153,7 @@ CREATE TABLE IF NOT EXISTS opsml_user (
     group_permissions JSONB NOT NULL,
     role TEXT DEFAULT 'user',
     refresh_token TEXT
-
 );
-
   
 CREATE TABLE IF NOT EXISTS opsml_artifact_key (
     uid TEXT PRIMARY KEY,
