@@ -1,9 +1,9 @@
 use crate::base::SqlClient;
 use crate::mysql::helper::MySQLQueryHelper;
 use crate::schemas::schema::{
-    AuditCardRecord, CardSummary, DataCardRecord, ExperimentCardRecord, HardwareMetricsRecord,
-    MetricRecord, ModelCardRecord, ParameterRecord, PromptCardRecord, QueryStats, ServerCard, User,
-    VersionSummary,
+    AuditCardRecord, CardDeckRecord, CardSummary, DataCardRecord, ExperimentCardRecord,
+    HardwareMetricsRecord, MetricRecord, ModelCardRecord, ParameterRecord, PromptCardRecord,
+    QueryStats, ServerCard, User, VersionSummary,
 };
 use crate::schemas::schema::{CardResults, VersionResult};
 use async_trait::async_trait;
@@ -252,6 +252,24 @@ impl SqlClient for MySqlClient {
                     .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
 
                 return Ok(CardResults::Prompt(card));
+            }
+
+            CardTable::Deck => {
+                let card: Vec<CardDeckRecord> = sqlx::query_as(&query)
+                    .bind(query_args.uid.as_ref())
+                    .bind(query_args.uid.as_ref())
+                    .bind(query_args.name.as_ref())
+                    .bind(query_args.name.as_ref())
+                    .bind(query_args.space.as_ref())
+                    .bind(query_args.space.as_ref())
+                    .bind(query_args.max_date.as_ref())
+                    .bind(query_args.max_date.as_ref())
+                    .bind(query_args.limit.unwrap_or(50))
+                    .fetch_all(&self.pool)
+                    .await
+                    .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+
+                return Ok(CardResults::Deck(card));
             }
 
             _ => {
@@ -1231,6 +1249,9 @@ mod tests {
 
             DELETE
             FROM opsml_audit_event;
+
+            DELETE
+            FROM opsml_deck_registry;
             "#,
         )
         .fetch_all(pool)
@@ -1317,6 +1338,15 @@ mod tests {
                     ..Default::default()
                 };
                 ServerCard::Prompt(c)
+            }
+
+            CardTable::Deck => {
+                let c = CardDeckRecord {
+                    uid: uid.clone(),
+                    name: updated_name.to_string(),
+                    ..Default::default()
+                };
+                ServerCard::Deck(c)
             }
             _ => panic!("Invalid card type"),
         };
@@ -1570,6 +1600,9 @@ mod tests {
             .await
             .unwrap();
         test_card_crud(&client, &CardTable::Prompt, "UpdatedPromptName")
+            .await
+            .unwrap();
+        test_card_crud(&client, &CardTable::Deck, "UpdatedDeckName")
             .await
             .unwrap();
     }
