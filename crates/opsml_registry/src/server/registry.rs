@@ -94,6 +94,10 @@ pub mod server_logic {
                     let cards = data.into_iter().map(convert_promptcard).collect();
                     Ok(cards)
                 }
+                CardResults::Deck(data) => {
+                    let cards = data.into_iter().map(convert_card_deck).collect();
+                    Ok(cards)
+                }
             }
         }
 
@@ -266,6 +270,17 @@ pub mod server_logic {
                         client_card.username,
                     );
                     ServerCard::Prompt(server_card)
+                }
+
+                CardRecord::Deck(client_card) => {
+                    let server_card = CardDeckRecord::new(
+                        client_card.name,
+                        client_card.space,
+                        version,
+                        client_card.opsml_version,
+                        client_card.username,
+                    );
+                    ServerCard::Deck(server_card)
                 }
             };
 
@@ -445,6 +460,30 @@ pub mod server_logic {
                         opsml_version: client_card.opsml_version,
                     };
                     ServerCard::Prompt(server_card)
+                }
+
+                CardRecord::Deck(client_card) => {
+                    let version = Version::parse(&client_card.version).map_err(|e| {
+                        error!("Failed to parse version: {}", e);
+                        RegistryError::Error("Failed to parse version".to_string())
+                    })?;
+
+                    let server_card = CardDeckRecord {
+                        uid: client_card.uid,
+                        created_at: client_card.created_at,
+                        app_env: client_card.app_env,
+                        name: client_card.name,
+                        space: client_card.space,
+                        major: version.major as i32,
+                        minor: version.minor as i32,
+                        patch: version.patch as i32,
+                        pre_tag: Some(version.pre.to_string()),
+                        build_tag: Some(version.build.to_string()),
+                        version: client_card.version,
+                        username: client_card.username,
+                        opsml_version: client_card.opsml_version,
+                    };
+                    ServerCard::Deck(server_card)
                 }
             };
 
