@@ -1302,3 +1302,23 @@ class CardDeck:
             Card:
                 The card with the given alias
         """
+
+    def download_artifacts(self, path: Optional[Path] = None) -> None:
+        """Download artifacts associated with each card in the card deck. This method
+        will always overwrite existing artifacts.
+
+        If the path is not provided, the artifacts will be saved to a directory.
+
+        ```
+        carddeck_name/
+        |-- alias1/
+        |-- alias2/
+        |-- alias3/
+        `-- ...
+        ```
+
+        Args:
+            path (Path):
+                Top-level Path to download the artifacts to. If not provided, the artifacts will be saved
+                to a directory using the CardDeck name.
+        """

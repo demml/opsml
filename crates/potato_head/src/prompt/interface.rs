@@ -105,9 +105,9 @@ impl Prompt {
 
     #[pyo3(signature = (path = None))]
     pub fn save_prompt(&self, path: Option<PathBuf>) -> PyResult<PathBuf> {
-        let path = path.unwrap_or_else(|| PathBuf::from(SaveName::Prompt));
-        PyHelperFuncs::save_to_json(self, &path)?;
-        Ok(path)
+        let save_path = path.unwrap_or_else(|| PathBuf::from(SaveName::Prompt));
+        PyHelperFuncs::save_to_json(self, &save_path)?;
+        Ok(save_path)
     }
 
     #[staticmethod]
