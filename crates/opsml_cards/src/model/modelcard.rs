@@ -423,6 +423,9 @@ impl ModelCard {
 }
 
 impl ModelCard {
+    pub fn set_artifact_key(&mut self, key: ArtifactKey) {
+        self.artifact_key = Some(key);
+    }
     fn update_drift_config_args(&self, py: Python) -> PyResult<()> {
         let interface = self.interface.as_ref().unwrap().bind(py);
         let drift_profiles = interface.getattr("drift_profile")?;

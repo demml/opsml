@@ -339,6 +339,10 @@ impl DataCard {
 }
 
 impl DataCard {
+    pub fn set_artifact_key(&mut self, key: ArtifactKey) {
+        self.artifact_key = Some(key);
+    }
+
     fn load_interface(&mut self, py: Python, interface: Option<&Bound<'_, PyAny>>) -> PyResult<()> {
         if let Some(interface) = interface {
             self.set_interface(interface)

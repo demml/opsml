@@ -70,7 +70,7 @@ pub fn card_from_string<'py>(
                     RegistryError::Error(e.to_string())
                 })?;
 
-            card.artifact_key = Some(key);
+            card.set_artifact_key(key);
             card.into_bound_py_any(py).map_err(|e| {
                 error!("Failed to convert card to bound: {}", e);
                 RegistryError::Error(e.to_string())
@@ -84,7 +84,7 @@ pub fn card_from_string<'py>(
                     RegistryError::Error(e.to_string())
                 })?;
 
-            card.artifact_key = Some(key);
+            card.set_artifact_key(key);
             card.into_bound_py_any(py).map_err(|e| {
                 error!("Failed to convert card to bound: {}", e);
                 RegistryError::Error(e.to_string())
@@ -97,7 +97,7 @@ pub fn card_from_string<'py>(
                 RegistryError::Error(e.to_string())
             })?;
 
-            card.artifact_key = Some(key);
+            card.set_artifact_key(key);
             card.into_bound_py_any(py).map_err(|e| {
                 error!("Failed to convert card to bound: {}", e);
                 RegistryError::Error(e.to_string())

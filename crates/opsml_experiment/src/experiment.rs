@@ -131,7 +131,7 @@ impl Experiment {
         // a little but of overhead here, but it's necessary
         // the card must be usable after the experiment is finished (downloading artifacts, etc.)
         let mut experiment: ExperimentCard = experiment.extract(py)?;
-        experiment.artifact_key = Some(artifact_key.clone());
+        experiment.set_artifact_key(artifact_key.clone());
 
         // extract code
         match extract_code(py, code_dir, &artifact_key) {
