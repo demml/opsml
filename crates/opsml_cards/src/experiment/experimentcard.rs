@@ -262,6 +262,12 @@ impl ExperimentCard {
     }
 }
 
+impl ExperimentCard {
+    pub fn set_artifact_key(&mut self, key: ArtifactKey) {
+        self.artifact_key = Some(key);
+    }
+}
+
 impl Serialize for ExperimentCard {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
