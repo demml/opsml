@@ -443,6 +443,34 @@ impl Default for PromptCardClientRecord {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[pyclass]
+pub struct CardDeckClientRecord {
+    pub uid: String,
+    pub created_at: DateTime<Utc>,
+    pub app_env: String,
+    pub space: String,
+    pub name: String,
+    pub version: String,
+    pub opsml_version: String,
+    pub username: String,
+}
+
+impl Default for CardDeckClientRecord {
+    fn default() -> Self {
+        Self {
+            uid: "".to_string(),
+            created_at: get_utc_datetime(),
+            app_env: "development".to_string(),
+            space: "".to_string(),
+            name: "".to_string(),
+            version: "".to_string(),
+            opsml_version: env!("CARGO_PKG_VERSION").to_string(),
+            username: "guest".to_string(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "type", content = "data")]
 #[pyclass]
 pub enum CardRecord {
@@ -451,6 +479,7 @@ pub enum CardRecord {
     Experiment(ExperimentCardClientRecord),
     Audit(AuditCardClientRecord),
     Prompt(PromptCardClientRecord),
+    Deck(CardDeckClientRecord),
 }
 
 #[pymethods]
@@ -467,6 +496,7 @@ impl CardRecord {
             Self::Experiment(card) => &card.uid,
             Self::Audit(card) => &card.uid,
             Self::Prompt(card) => &card.uid,
+            Self::Deck(card) => &card.uid,
         }
     }
 
@@ -478,6 +508,7 @@ impl CardRecord {
             Self::Experiment(card) => card.created_at,
             Self::Audit(card) => card.created_at,
             Self::Prompt(card) => card.created_at,
+            Self::Deck(card) => card.created_at,
         }
     }
 
@@ -489,6 +520,7 @@ impl CardRecord {
             Self::Experiment(card) => card.app_env.as_ref(),
             Self::Audit(card) => card.app_env.as_ref(),
             Self::Prompt(card) => card.app_env.as_ref(),
+            Self::Deck(card) => card.app_env.as_ref(),
         }
     }
 
@@ -500,6 +532,7 @@ impl CardRecord {
             Self::Experiment(card) => card.name.as_ref(),
             Self::Audit(card) => card.name.as_ref(),
             Self::Prompt(card) => card.name.as_ref(),
+            Self::Deck(card) => card.name.as_ref(),
         }
     }
 
@@ -511,6 +544,7 @@ impl CardRecord {
             Self::Experiment(card) => card.space.as_ref(),
             Self::Audit(card) => card.space.as_ref(),
             Self::Prompt(card) => card.space.as_ref(),
+            Self::Deck(card) => card.space.as_ref(),
         }
     }
 
@@ -522,17 +556,20 @@ impl CardRecord {
             Self::Experiment(card) => card.version.as_ref(),
             Self::Audit(card) => card.version.as_ref(),
             Self::Prompt(card) => card.version.as_ref(),
+            Self::Deck(card) => card.version.as_ref(),
         }
     }
 
     #[getter]
     pub fn tags(&self) -> &Vec<String> {
+        static EMPTY_TAGS: Vec<String> = Vec::new();
         match self {
             Self::Data(card) => &card.tags,
             Self::Model(card) => &card.tags,
             Self::Experiment(card) => &card.tags,
             Self::Audit(card) => &card.tags,
             Self::Prompt(card) => &card.tags,
+            Self::Deck(_card) => &EMPTY_TAGS,
         }
     }
 
@@ -544,6 +581,7 @@ impl CardRecord {
             Self::Experiment(card) => Some(card.datacard_uids.iter().map(String::as_str).collect()),
             Self::Audit(card) => Some(card.datacard_uids.iter().map(String::as_str).collect()),
             Self::Prompt(_) => None,
+            Self::Deck(_) => None,
         }
     }
 
@@ -557,6 +595,7 @@ impl CardRecord {
             }
             Self::Audit(card) => Some(card.modelcard_uids.iter().map(String::as_str).collect()),
             Self::Prompt(_) => None,
+            Self::Deck(_) => None,
         }
     }
 
@@ -573,6 +612,7 @@ impl CardRecord {
                     .collect(),
             ),
             Self::Prompt(card) => Some(vec![&card.experimentcard_uid.as_deref().unwrap()]),
+            Self::Deck(_) => None,
         }
     }
 
@@ -584,6 +624,7 @@ impl CardRecord {
             Self::Experiment(_) => None,
             Self::Audit(card) => Some(&card.uid),
             Self::Prompt(card) => card.auditcard_uid.as_deref(),
+            Self::Deck(_) => None,
         }
     }
 
@@ -595,6 +636,7 @@ impl CardRecord {
             Self::Experiment(_) => None,
             Self::Audit(_) => None,
             Self::Prompt(_) => None,
+            Self::Deck(_) => None,
         }
     }
 
@@ -606,6 +648,7 @@ impl CardRecord {
             Self::Experiment(_) => None,
             Self::Audit(_) => None,
             Self::Prompt(_) => None,
+            Self::Deck(_) => None,
         }
     }
 
@@ -617,6 +660,7 @@ impl CardRecord {
             Self::Experiment(_) => None,
             Self::Audit(_) => None,
             Self::Prompt(_) => None,
+            Self::Deck(_) => None,
         }
     }
 
@@ -628,6 +672,7 @@ impl CardRecord {
             Self::Experiment(_) => None,
             Self::Audit(_) => None,
             Self::Prompt(_) => None,
+            Self::Deck(_) => None,
         }
     }
 }
@@ -687,6 +732,16 @@ impl CardRecord {
                 );
                 Ok(Path::new(&uri).to_path_buf())
             }
+            Self::Deck(card) => {
+                let uri = format!(
+                    "{}/{}/{}/v{}",
+                    CardTable::Deck,
+                    card.space,
+                    card.name,
+                    card.version
+                );
+                Ok(Path::new(&uri).to_path_buf())
+            }
         }
     }
 
@@ -697,6 +752,7 @@ impl CardRecord {
             Self::Experiment(_) => RegistryType::Experiment,
             Self::Audit(_) => RegistryType::Audit,
             Self::Prompt(_) => RegistryType::Prompt,
+            Self::Deck(_) => RegistryType::Deck,
         }
     }
 }
