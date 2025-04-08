@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS opsml_data_registry (
     experimentcard_uid TEXT,
     auditcard_uid TEXT,
     interface_type TEXT NOT NULL DEFAULT 'undefined',
-    opsml_version TEXT,
+    opsml_version TEXT NOT NULL DEFAULT '0.0.0',
     username TEXT NOT NULL DEFAULT 'guest'
 );
 
@@ -44,7 +44,7 @@ CREATE TABLE IF NOT EXISTS opsml_model_registry (
     auditcard_uid TEXT,
     interface_type TEXT NOT NULL DEFAULT 'undefined',
     task_type TEXT NOT NULL DEFAULT 'undefined',
-    opsml_version TEXT,
+    opsml_version TEXT NOT NULL DEFAULT '0.0.0',
     username TEXT NOT NULL DEFAULT 'guest'
 );
 
@@ -66,7 +66,7 @@ CREATE TABLE IF NOT EXISTS opsml_experiment_registry (
     modelcard_uids TEXT,
     promptcard_uids TEXT,
     experimentcard_uids TEXT,
-    opsml_version TEXT,
+    opsml_version TEXT NOT NULL DEFAULT '0.0.0',
     username TEXT NOT NULL DEFAULT 'guest'
 );
 
@@ -88,7 +88,7 @@ CREATE TABLE IF NOT EXISTS opsml_audit_registry (
     datacard_uids TEXT,
     modelcard_uids TEXT,
     experimentcard_uids TEXT,
-    opsml_version TEXT,
+    opsml_version TEXT NOT NULL DEFAULT '0.0.0',
     username TEXT NOT NULL DEFAULT 'guest'
 );
 
@@ -104,7 +104,7 @@ CREATE TABLE IF NOT EXISTS opsml_deck_registry (
     pre_tag TEXT,
     build_tag TEXT,
     version TEXT,
-    opsml_version TEXT,
+    opsml_version TEXT NOT NULL DEFAULT '0.0.0',
     username TEXT NOT NULL DEFAULT 'guest'
 );
 
@@ -199,6 +199,6 @@ CREATE TABLE IF NOT EXISTS opsml_prompt_registry (
     tags TEXT,
     experimentcard_uid TEXT,
     auditcard_uid TEXT,
-    opsml_version TEXT,
+    opsml_version TEXT NOT NULL DEFAULT '0.0.0',
     username TEXT NOT NULL DEFAULT 'guest'
 );
