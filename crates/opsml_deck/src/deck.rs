@@ -402,7 +402,7 @@ impl<'de> Deserialize<'de> for CardDeck {
                 let opsml_version =
                     opsml_version.ok_or_else(|| de::Error::missing_field("opsml_version"))?;
                 let cards = cards.ok_or_else(|| de::Error::missing_field("cards"))?;
-                let card_objs = card_objs.unwrap_or_else(|| HashMap::new());
+                let card_objs = card_objs.unwrap_or_else(HashMap::new);
                 let app_env = app_env.ok_or_else(|| de::Error::missing_field("app_env"))?;
 
                 Ok(CardDeck {
