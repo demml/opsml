@@ -420,6 +420,34 @@ impl ModelCard {
 
         Ok(())
     }
+
+    /// Get the model from the interface if available.
+    /// This will result in an error if the interface is not set and
+    /// the model is not available.
+    #[getter]
+    pub fn model<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyAny>> {
+        if let Some(interface) = self.interface.as_ref() {
+            // get property "model" from interface
+            let model = interface
+                .bind(py)
+                .getattr("model")
+                .map_err(|e| OpsmlError::new_err(e.to_string()))?;
+
+            // check if model is None
+            if model.is_none() {
+                return Err(OpsmlError::new_err(
+                    "Model has not been set. Load the model and retry.",
+                ));
+            // return model
+            } else {
+                return Ok(model);
+            }
+        } else {
+            Err(OpsmlError::new_err(
+                "Model interface not found. Load the interface and retry.",
+            ))
+        }
+    }
 }
 
 impl ModelCard {

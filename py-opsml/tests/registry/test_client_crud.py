@@ -269,12 +269,21 @@ def crud_card_deck(model_uid: str, prompt_uid: str):
     assert isinstance(cards, CardList)
     assert len(cards) == 1
     loaded_card: CardDeck = reg.load_card(uid=deck.uid)
+    loaded_card.load()
 
     assert loaded_card.name == deck.name
     assert loaded_card.space == deck.space
     assert loaded_card.uid == deck.uid
     assert loaded_card.version == deck.version
     assert len(loaded_card.cards) == 2
+
+    # check aliases
+    model: ModelCard = loaded_card["model"]
+    assert model.interface.model is not None
+    model.model  # if the interface is not None, this should not raise an error
+
+    prompt: PromptCard = loaded_card["prompt"]
+    assert prompt.prompt is not None
 
     return deck, reg
 

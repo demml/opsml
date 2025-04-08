@@ -408,6 +408,13 @@ class ModelCard:
         """
 
     @property
+    def model(self) -> Any:
+        """Returns the model. This is a special property that is used to
+        access the model from the interface. It is not settable. It will also
+        raise an error if the interface is not set or if the model
+        has not been loaded.
+        """
+    @property
     def app_env(self) -> str:
         """Returns the app env"""
 
@@ -1267,4 +1274,31 @@ class CardDeck:
         Args:
             json_string (str):
                 The json string to validate
+        """
+
+    def load(
+        self,
+        load_kwargs: Optional[ModelLoadKwargs | DataLoadKwargs] = None,
+    ) -> None:
+        """Call the load method on each Card that requires additional loading.
+        This applies to ModelCards and DataCards. PromptCards and ExperimentCards
+        do not require additional loading and are loaded automatically when loading
+        the CardDeck from the registry.
+
+        Args:
+            load_kwargs (ModelLoadKwargs | DataLoadKwargs):
+                Optional load kwargs to that will be passed to the
+                data interface load method
+        """
+
+    def __getitem__(self, alias: str) -> CardType:
+        """Get a card from the card deck by alias
+
+        Args:
+            alias (str):
+                The alias of the card to get
+
+        Returns:
+            Card:
+                The card with the given alias
         """
