@@ -389,6 +389,7 @@ async fn test_opsml_server_card_datacard_crud() {
             data_type: card.data_type,
             tags: card.tags,
             username: std::env::var("OPSML_USERNAME").unwrap_or_else(|_| "guest".to_string()),
+            opsml_version: card.opsml_version,
         }),
     };
 
@@ -548,6 +549,7 @@ async fn test_opsml_server_card_modelcard_crud() {
             task_type: card.task_type,
             tags: card.tags,
             username: std::env::var("OPSML_USERNAME").unwrap_or_else(|_| "guest".to_string()),
+            opsml_version: card.opsml_version,
         }),
     };
 
@@ -679,6 +681,7 @@ async fn test_opsml_server_card_experimentcard_crud() {
             modelcard_uids: card.modelcard_uids,
             tags: card.tags,
             username: std::env::var("OPSML_USERNAME").unwrap_or_else(|_| "guest".to_string()),
+            opsml_version: card.opsml_version,
         }),
     };
 
@@ -809,6 +812,7 @@ async fn test_opsml_server_card_auditcard_crud() {
             tags: card.tags,
             approved: card.approved,
             username: std::env::var("OPSML_USERNAME").unwrap_or_else(|_| "guest".to_string()),
+            opsml_version: card.opsml_version,
         }),
     };
 
