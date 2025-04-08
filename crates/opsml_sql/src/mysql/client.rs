@@ -265,25 +265,26 @@ impl SqlClient for MySqlClient {
     async fn insert_card(&self, table: &CardTable, card: &ServerCard) -> Result<(), SqlError> {
         match table {
             CardTable::Data => match card {
-                ServerCard::Data(data) => {
+                ServerCard::Data(record) => {
                     let query = MySQLQueryHelper::get_datacard_insert_query();
                     sqlx::query(&query)
-                        .bind(&data.uid)
-                        .bind(&data.app_env)
-                        .bind(&data.name)
-                        .bind(&data.space)
-                        .bind(data.major)
-                        .bind(data.minor)
-                        .bind(data.patch)
-                        .bind(&data.version)
-                        .bind(&data.data_type)
-                        .bind(&data.interface_type)
-                        .bind(&data.tags)
-                        .bind(&data.experimentcard_uid)
-                        .bind(&data.auditcard_uid)
-                        .bind(&data.pre_tag)
-                        .bind(&data.build_tag)
-                        .bind(&data.username)
+                        .bind(&record.uid)
+                        .bind(&record.app_env)
+                        .bind(&record.name)
+                        .bind(&record.space)
+                        .bind(record.major)
+                        .bind(record.minor)
+                        .bind(record.patch)
+                        .bind(&record.version)
+                        .bind(&record.data_type)
+                        .bind(&record.interface_type)
+                        .bind(&record.tags)
+                        .bind(&record.experimentcard_uid)
+                        .bind(&record.auditcard_uid)
+                        .bind(&record.pre_tag)
+                        .bind(&record.build_tag)
+                        .bind(&record.username)
+                        .bind(&record.opsml_version)
                         .execute(&self.pool)
                         .await
                         .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
@@ -296,28 +297,29 @@ impl SqlClient for MySqlClient {
                 }
             },
             CardTable::Model => match card {
-                ServerCard::Model(model) => {
+                ServerCard::Model(record) => {
                     let query = MySQLQueryHelper::get_modelcard_insert_query();
                     sqlx::query(&query)
-                        .bind(&model.uid)
-                        .bind(&model.app_env)
-                        .bind(&model.name)
-                        .bind(&model.space)
-                        .bind(model.major)
-                        .bind(model.minor)
-                        .bind(model.patch)
-                        .bind(&model.version)
-                        .bind(&model.datacard_uid)
-                        .bind(model.data_type.to_string())
-                        .bind(model.model_type.to_string())
-                        .bind(&model.interface_type)
-                        .bind(&model.task_type)
-                        .bind(&model.tags)
-                        .bind(&model.experimentcard_uid)
-                        .bind(&model.auditcard_uid)
-                        .bind(&model.pre_tag)
-                        .bind(&model.build_tag)
-                        .bind(&model.username)
+                        .bind(&record.uid)
+                        .bind(&record.app_env)
+                        .bind(&record.name)
+                        .bind(&record.space)
+                        .bind(record.major)
+                        .bind(record.minor)
+                        .bind(record.patch)
+                        .bind(&record.version)
+                        .bind(&record.datacard_uid)
+                        .bind(&record.data_type)
+                        .bind(&record.model_type)
+                        .bind(&record.interface_type)
+                        .bind(&record.task_type)
+                        .bind(&record.tags)
+                        .bind(&record.experimentcard_uid)
+                        .bind(&record.auditcard_uid)
+                        .bind(&record.pre_tag)
+                        .bind(&record.build_tag)
+                        .bind(&record.username)
+                        .bind(&record.opsml_version)
                         .execute(&self.pool)
                         .await
                         .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
@@ -330,25 +332,26 @@ impl SqlClient for MySqlClient {
                 }
             },
             CardTable::Experiment => match card {
-                ServerCard::Experiment(run) => {
+                ServerCard::Experiment(record) => {
                     let query = MySQLQueryHelper::get_experimentcard_insert_query();
                     sqlx::query(&query)
-                        .bind(&run.uid)
-                        .bind(&run.app_env)
-                        .bind(&run.name)
-                        .bind(&run.space)
-                        .bind(run.major)
-                        .bind(run.minor)
-                        .bind(run.patch)
-                        .bind(&run.version)
-                        .bind(&run.tags)
-                        .bind(&run.datacard_uids)
-                        .bind(&run.modelcard_uids)
-                        .bind(&run.promptcard_uids)
-                        .bind(&run.experimentcard_uids)
-                        .bind(&run.pre_tag)
-                        .bind(&run.build_tag)
-                        .bind(&run.username)
+                        .bind(&record.uid)
+                        .bind(&record.app_env)
+                        .bind(&record.name)
+                        .bind(&record.space)
+                        .bind(record.major)
+                        .bind(record.minor)
+                        .bind(record.patch)
+                        .bind(&record.version)
+                        .bind(&record.tags)
+                        .bind(&record.datacard_uids)
+                        .bind(&record.modelcard_uids)
+                        .bind(&record.experimentcard_uids)
+                        .bind(&record.promptcard_uids)
+                        .bind(&record.pre_tag)
+                        .bind(&record.build_tag)
+                        .bind(&record.username)
+                        .bind(&record.opsml_version)
                         .execute(&self.pool)
                         .await
                         .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
@@ -361,25 +364,26 @@ impl SqlClient for MySqlClient {
                 }
             },
             CardTable::Audit => match card {
-                ServerCard::Audit(audit) => {
+                ServerCard::Audit(record) => {
                     let query = MySQLQueryHelper::get_auditcard_insert_query();
                     sqlx::query(&query)
-                        .bind(&audit.uid)
-                        .bind(&audit.app_env)
-                        .bind(&audit.name)
-                        .bind(&audit.space)
-                        .bind(audit.major)
-                        .bind(audit.minor)
-                        .bind(audit.patch)
-                        .bind(&audit.version)
-                        .bind(&audit.tags)
-                        .bind(audit.approved)
-                        .bind(&audit.datacard_uids)
-                        .bind(&audit.modelcard_uids)
-                        .bind(&audit.experimentcard_uids)
-                        .bind(&audit.pre_tag)
-                        .bind(&audit.build_tag)
-                        .bind(&audit.username)
+                        .bind(&record.uid)
+                        .bind(&record.app_env)
+                        .bind(&record.name)
+                        .bind(&record.space)
+                        .bind(record.major)
+                        .bind(record.minor)
+                        .bind(record.patch)
+                        .bind(&record.version)
+                        .bind(&record.tags)
+                        .bind(record.approved)
+                        .bind(&record.datacard_uids)
+                        .bind(&record.modelcard_uids)
+                        .bind(&record.experimentcard_uids)
+                        .bind(&record.pre_tag)
+                        .bind(&record.build_tag)
+                        .bind(&record.username)
+                        .bind(&record.opsml_version)
                         .execute(&self.pool)
                         .await
                         .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
@@ -393,23 +397,24 @@ impl SqlClient for MySqlClient {
             },
 
             CardTable::Prompt => match card {
-                ServerCard::Prompt(card) => {
+                ServerCard::Prompt(record) => {
                     let query = MySQLQueryHelper::get_promptcard_insert_query();
                     sqlx::query(&query)
-                        .bind(&card.uid)
-                        .bind(&card.app_env)
-                        .bind(&card.name)
-                        .bind(&card.space)
-                        .bind(card.major)
-                        .bind(card.minor)
-                        .bind(card.patch)
-                        .bind(&card.version)
-                        .bind(&card.tags)
-                        .bind(&card.experimentcard_uid)
-                        .bind(&card.auditcard_uid)
-                        .bind(&card.pre_tag)
-                        .bind(&card.build_tag)
-                        .bind(&card.username)
+                        .bind(&record.uid)
+                        .bind(&record.app_env)
+                        .bind(&record.name)
+                        .bind(&record.space)
+                        .bind(record.major)
+                        .bind(record.minor)
+                        .bind(record.patch)
+                        .bind(&record.version)
+                        .bind(&record.tags)
+                        .bind(&record.experimentcard_uid)
+                        .bind(&record.auditcard_uid)
+                        .bind(&record.pre_tag)
+                        .bind(&record.build_tag)
+                        .bind(&record.username)
+                        .bind(&record.opsml_version)
                         .execute(&self.pool)
                         .await
                         .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
@@ -434,26 +439,26 @@ impl SqlClient for MySqlClient {
     async fn update_card(&self, table: &CardTable, card: &ServerCard) -> Result<(), SqlError> {
         match table {
             CardTable::Data => match card {
-                ServerCard::Data(data) => {
+                ServerCard::Data(record) => {
                     let query = MySQLQueryHelper::get_datacard_update_query();
-
                     sqlx::query(&query)
-                        .bind(&data.app_env)
-                        .bind(&data.name)
-                        .bind(&data.space)
-                        .bind(data.major)
-                        .bind(data.minor)
-                        .bind(data.patch)
-                        .bind(&data.version)
-                        .bind(data.data_type.to_string())
-                        .bind(&data.interface_type)
-                        .bind(&data.tags)
-                        .bind(&data.experimentcard_uid)
-                        .bind(&data.auditcard_uid)
-                        .bind(&data.pre_tag)
-                        .bind(&data.build_tag)
-                        .bind(&data.username)
-                        .bind(&data.uid)
+                        .bind(&record.app_env)
+                        .bind(&record.name)
+                        .bind(&record.space)
+                        .bind(record.major)
+                        .bind(record.minor)
+                        .bind(record.patch)
+                        .bind(&record.version)
+                        .bind(&record.data_type)
+                        .bind(&record.interface_type)
+                        .bind(&record.tags)
+                        .bind(&record.experimentcard_uid)
+                        .bind(&record.auditcard_uid)
+                        .bind(&record.pre_tag)
+                        .bind(&record.build_tag)
+                        .bind(&record.username)
+                        .bind(&record.opsml_version)
+                        .bind(&record.uid)
                         .execute(&self.pool)
                         .await
                         .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
@@ -466,28 +471,29 @@ impl SqlClient for MySqlClient {
                 }
             },
             CardTable::Model => match card {
-                ServerCard::Model(model) => {
+                ServerCard::Model(record) => {
                     let query = MySQLQueryHelper::get_modelcard_update_query();
                     sqlx::query(&query)
-                        .bind(&model.app_env)
-                        .bind(&model.name)
-                        .bind(&model.space)
-                        .bind(model.major)
-                        .bind(model.minor)
-                        .bind(model.patch)
-                        .bind(&model.version)
-                        .bind(&model.datacard_uid)
-                        .bind(&model.data_type)
-                        .bind(&model.model_type)
-                        .bind(&model.interface_type)
-                        .bind(&model.task_type)
-                        .bind(&model.tags)
-                        .bind(&model.experimentcard_uid)
-                        .bind(&model.auditcard_uid)
-                        .bind(&model.pre_tag)
-                        .bind(&model.build_tag)
-                        .bind(&model.username)
-                        .bind(&model.uid)
+                        .bind(&record.app_env)
+                        .bind(&record.name)
+                        .bind(&record.space)
+                        .bind(record.major)
+                        .bind(record.minor)
+                        .bind(record.patch)
+                        .bind(&record.version)
+                        .bind(&record.datacard_uid)
+                        .bind(&record.data_type)
+                        .bind(&record.model_type)
+                        .bind(&record.interface_type)
+                        .bind(&record.task_type)
+                        .bind(&record.tags)
+                        .bind(&record.experimentcard_uid)
+                        .bind(&record.auditcard_uid)
+                        .bind(&record.pre_tag)
+                        .bind(&record.build_tag)
+                        .bind(&record.username)
+                        .bind(&record.opsml_version)
+                        .bind(&record.uid)
                         .execute(&self.pool)
                         .await
                         .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
@@ -500,25 +506,26 @@ impl SqlClient for MySqlClient {
                 }
             },
             CardTable::Experiment => match card {
-                ServerCard::Experiment(run) => {
+                ServerCard::Experiment(record) => {
                     let query = MySQLQueryHelper::get_experimentcard_update_query();
                     sqlx::query(&query)
-                        .bind(&run.app_env)
-                        .bind(&run.name)
-                        .bind(&run.space)
-                        .bind(run.major)
-                        .bind(run.minor)
-                        .bind(run.patch)
-                        .bind(&run.version)
-                        .bind(&run.tags)
-                        .bind(&run.datacard_uids)
-                        .bind(&run.modelcard_uids)
-                        .bind(&run.promptcard_uids)
-                        .bind(&run.experimentcard_uids)
-                        .bind(&run.pre_tag)
-                        .bind(&run.build_tag)
-                        .bind(&run.username)
-                        .bind(&run.uid)
+                        .bind(&record.app_env)
+                        .bind(&record.name)
+                        .bind(&record.space)
+                        .bind(record.major)
+                        .bind(record.minor)
+                        .bind(record.patch)
+                        .bind(&record.version)
+                        .bind(&record.tags)
+                        .bind(&record.datacard_uids)
+                        .bind(&record.modelcard_uids)
+                        .bind(&record.experimentcard_uids)
+                        .bind(&record.promptcard_uids)
+                        .bind(&record.pre_tag)
+                        .bind(&record.build_tag)
+                        .bind(&record.username)
+                        .bind(&record.opsml_version)
+                        .bind(&record.uid)
                         .execute(&self.pool)
                         .await
                         .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
@@ -531,25 +538,26 @@ impl SqlClient for MySqlClient {
                 }
             },
             CardTable::Audit => match card {
-                ServerCard::Audit(audit) => {
+                ServerCard::Audit(record) => {
                     let query = MySQLQueryHelper::get_auditcard_update_query();
                     sqlx::query(&query)
-                        .bind(&audit.app_env)
-                        .bind(&audit.name)
-                        .bind(&audit.space)
-                        .bind(audit.major)
-                        .bind(audit.minor)
-                        .bind(audit.patch)
-                        .bind(&audit.version)
-                        .bind(&audit.tags)
-                        .bind(audit.approved)
-                        .bind(&audit.datacard_uids)
-                        .bind(&audit.modelcard_uids)
-                        .bind(&audit.experimentcard_uids)
-                        .bind(&audit.pre_tag)
-                        .bind(&audit.build_tag)
-                        .bind(&audit.username)
-                        .bind(&audit.uid)
+                        .bind(&record.app_env)
+                        .bind(&record.name)
+                        .bind(&record.space)
+                        .bind(record.major)
+                        .bind(record.minor)
+                        .bind(record.patch)
+                        .bind(&record.version)
+                        .bind(&record.tags)
+                        .bind(record.approved)
+                        .bind(&record.datacard_uids)
+                        .bind(&record.modelcard_uids)
+                        .bind(&record.experimentcard_uids)
+                        .bind(&record.pre_tag)
+                        .bind(&record.build_tag)
+                        .bind(&record.username)
+                        .bind(&record.opsml_version)
+                        .bind(&record.uid)
                         .execute(&self.pool)
                         .await
                         .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
@@ -563,23 +571,24 @@ impl SqlClient for MySqlClient {
             },
 
             CardTable::Prompt => match card {
-                ServerCard::Prompt(card) => {
+                ServerCard::Prompt(record) => {
                     let query = MySQLQueryHelper::get_promptcard_update_query();
                     sqlx::query(&query)
-                        .bind(&card.app_env)
-                        .bind(&card.name)
-                        .bind(&card.space)
-                        .bind(card.major)
-                        .bind(card.minor)
-                        .bind(card.patch)
-                        .bind(&card.version)
-                        .bind(&card.tags)
-                        .bind(&card.experimentcard_uid)
-                        .bind(&card.auditcard_uid)
-                        .bind(&card.pre_tag)
-                        .bind(&card.build_tag)
-                        .bind(&card.username)
-                        .bind(&card.uid)
+                        .bind(&record.app_env)
+                        .bind(&record.name)
+                        .bind(&record.space)
+                        .bind(record.major)
+                        .bind(record.minor)
+                        .bind(record.patch)
+                        .bind(&record.version)
+                        .bind(&record.tags)
+                        .bind(&record.experimentcard_uid)
+                        .bind(&record.auditcard_uid)
+                        .bind(&record.pre_tag)
+                        .bind(&record.build_tag)
+                        .bind(&record.username)
+                        .bind(&record.opsml_version)
+                        .bind(&record.uid)
                         .execute(&self.pool)
                         .await
                         .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
