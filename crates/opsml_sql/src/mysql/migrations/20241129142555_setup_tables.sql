@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS opsml_data_registry (
     experimentcard_uid VARCHAR(64),
     auditcard_uid VARCHAR(64),
     interface_type VARCHAR(255) NOT NULL DEFAULT 'undefined',
-    opsml_version VARCHAR(255),
+    opsml_version VARCHAR(255) NOT NULL DEFAULT '0.0.0',
     username VARCHAR(255) NOT NULL DEFAULT 'guest'
 );
 
@@ -44,7 +44,7 @@ CREATE TABLE IF NOT EXISTS opsml_model_registry (
     auditcard_uid VARCHAR(64),
     interface_type  VARCHAR(255) NOT NULL DEFAULT 'undefined',
     task_type VARCHAR(255) NOT NULL DEFAULT 'undefined',
-    opsml_version VARCHAR(255),
+    opsml_version VARCHAR(255) NOT NULL DEFAULT '0.0.0',
     username VARCHAR(255) NOT NULL DEFAULT 'guest'
 );
 
@@ -66,7 +66,7 @@ CREATE TABLE IF NOT EXISTS opsml_experiment_registry (
     modelcard_uids JSON,
     promptcard_uids JSON,
     experimentcard_uids JSON,
-    opsml_version VARCHAR(255),
+    opsml_version VARCHAR(255) NOT NULL DEFAULT '0.0.0',
     username VARCHAR(255) NOT NULL DEFAULT 'guest'
 );
 
@@ -88,7 +88,7 @@ CREATE TABLE IF NOT EXISTS opsml_audit_registry (
     datacard_uids JSON,
     modelcard_uids JSON,
     experimentcard_uids JSON,
-    opsml_version VARCHAR(255),
+    opsml_version VARCHAR(255) NOT NULL DEFAULT '0.0.0',
     username VARCHAR(255) NOT NULL DEFAULT 'guest'
 );
 
@@ -104,7 +104,7 @@ CREATE TABLE IF NOT EXISTS opsml_deck_registry (
     pre_tag VARCHAR(255),
     build_tag VARCHAR(255),
     version VARCHAR(255),
-    opsml_version VARCHAR(255),
+    opsml_version VARCHAR(255) NOT NULL DEFAULT '0.0.0',
     username VARCHAR(255) NOT NULL DEFAULT 'guest'
 );
 
