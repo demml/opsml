@@ -1,6 +1,9 @@
 use chrono::{DateTime, Utc};
 use opsml_error::{CardError, OpsmlError};
+use opsml_interfaces::{DataLoadKwargs, ModelLoadKwargs};
+use opsml_registry::CardRegistries;
 use opsml_types::cards::BaseArgs;
+use opsml_types::RegistryType;
 use opsml_types::SaveName;
 use opsml_types::Suffix;
 use opsml_utils::PyHelperFuncs;
@@ -13,26 +16,54 @@ use serde::{
     Deserialize, Deserializer, Serialize, Serializer,
 };
 use std::collections::HashMap;
+use std::f32::consts::E;
 use std::path::PathBuf;
-use tracing::error;
+use tracing::{debug, error, instrument};
+
+#[pyclass]
+pub struct CardKwargs {
+    pub interface: Option<PyObject>,
+    pub load_kwargs: PyObject,
+}
+
+impl CardKwargs {
+    pub fn new(interface: Option<PyObject>, load_kwargs: &Bound<'_, PyAny>) -> PyResult<Self> {
+        // Check that load_kwargs is either ModelLoadKwargs or DataLoadKwargs
+        if !load_kwargs.is_instance_of::<ModelLoadKwargs>()
+            && !load_kwargs.is_instance_of::<DataLoadKwargs>()
+        {
+            error!("load_kwargs must be either ModelLoadKwargs or DataLoadKwargs");
+            return Err(OpsmlError::new_err(
+                "load_kwargs must be either ModelLoadKwargs or DataLoadKwargs",
+            ));
+        }
+
+        debug!("load_kwargs type: {:?}", load_kwargs.get_type());
+
+        Ok(CardKwargs {
+            interface,
+            load_kwargs: load_kwargs.to_object(load_kwargs.py()),
+        })
+    }
+}
 
 #[pyclass]
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Card {
     #[pyo3(get, set)]
-    pub space: String,
+    pub space: Option<String>,
 
     #[pyo3(get, set)]
-    pub name: String,
+    pub name: Option<String>,
 
     #[pyo3(get, set)]
-    pub version: String,
+    pub version: Option<String>,
 
     #[pyo3(get, set)]
-    pub uid: String,
+    pub uid: Option<String>,
 
     #[pyo3(get, set)]
-    pub registry_type: String,
+    pub registry_type: RegistryType,
 
     #[pyo3(get, set)]
     pub alias: String,
@@ -88,6 +119,90 @@ impl CardDeck {
             opsml_version: env!("CARGO_PKG_VERSION").to_string(),
             card_objs: HashMap::new(),
         })
+    }
+
+    /// Load the cards in the card deck
+    ///
+    /// # Arguments
+    ///
+    /// load_kwargs: Optional arguments to pass to the card loading function
+    /// if provided, this must be mapping of alias to kwargs. If kwargs, kwargs is a dictionary containing "interface" and "load_kwargs" keys.
+    ///
+    #[instrument(skip_all)]
+    pub fn load<'py>(
+        &mut self,
+        py: Python,
+        load_kwargs: Option<HashMap<String, CardKwargs>>,
+    ) -> PyResult<()> {
+        debug!("Loading CardDeck: {}", self.name);
+
+        let card_registries = CardRegistries::new()?;
+
+        for card in &self.cards {
+            if self.card_objs.contains_key(&card.alias) {
+                debug!("Card {} already exists in card_objs", card.alias);
+                continue;
+            }
+
+            let (interface, load_kwargs) = load_kwargs
+                .as_ref()
+                .and_then(|kwargs| kwargs.get(&card.alias))
+                .map(|card_kwargs| {
+                    (
+                        card_kwargs.interface.clone(),
+                        card_kwargs.load_kwargs.clone(),
+                    )
+                })
+                .unwrap_or_else(|| (None, PyObject::from(()).into_py(py)));
+
+            // get card_kwargs if provided
+            let card_kwargs = kwargs.get(&card.alias);
+
+            // get interface and load_kwargs from kwargs if not None
+            let (interface, load_kwargs) = if let Some(card_kwargs) = card_kwargs {
+                let interface = card_kwargs.interface.clone();
+                let load_kwargs = card_kwargs.load_kwargs.clone();
+                (interface, load_kwargs)
+            } else {
+                (None, PyObject::from(())).to_object(py)
+            };
+
+            match card.registry_type {
+                RegistryType::Model => {
+                    let model_card = card_registries.model.load_card(
+                        py,
+                        card.uid,
+                        card.space,
+                        card.name,
+                        card.version,
+                        interface,
+                    )?;
+                    self.card_objs.insert(card.alias.clone(), model_card);
+                }
+                RegistryType::Data => {
+                    let data_card = card_registries
+                        .data_registry
+                        .get_data_card(
+                            card.space.as_str(),
+                            card.name.as_str(),
+                            card.version.as_str(),
+                        )
+                        .map_err(|e| {
+                            error!("Failed to load data card: {}", e);
+                            OpsmlError::new_err(e.to_string())
+                        })?;
+                    self.card_objs.insert(card.alias.clone(), data_card);
+                }
+                _ => {
+                    return Err(OpsmlError::new_err(format!(
+                        "Card type {} not supported",
+                        card.registry_type
+                    )));
+                }
+            }
+        }
+
+        Ok(())
     }
 
     pub fn save_card(&self, path: PathBuf) -> Result<(), CardError> {

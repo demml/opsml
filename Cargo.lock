@@ -3852,6 +3852,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "opsml-deck"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "opsml-error",
+ "opsml-interfaces",
+ "opsml-registry",
+ "opsml-types",
+ "opsml-utils",
+ "pyo3",
+ "serde",
+ "serde_json",
+ "tracing",
+]
+
+[[package]]
 name = "opsml-error"
 version = "0.1.0"
 dependencies = [
