@@ -137,11 +137,7 @@ impl PromptCard {
 
     #[pyo3(signature = (path))]
     pub fn save(&mut self, path: PathBuf) -> Result<(), CardError> {
-        // save model interface
-        // if option raise error
         self.prompt.save_prompt(Some(path.clone()))?;
-
-        // save modelcard
         let card_save_path = path.join(SaveName::Card).with_extension(Suffix::Json);
         PyHelperFuncs::save_to_json(&self, &card_save_path)?;
 

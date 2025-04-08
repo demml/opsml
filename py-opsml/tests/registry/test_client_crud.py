@@ -285,6 +285,18 @@ def crud_card_deck(model_uid: str, prompt_uid: str):
     prompt: PromptCard = loaded_card["prompt"]
     assert prompt.prompt is not None
 
+    loaded_card.download_artifacts()
+
+    # check the loaded_card.name is a directory
+    created_path = Path(loaded_card.name)
+    assert created_path.exists()
+    assert created_path.is_dir()
+    assert len(list(created_path.iterdir())) == 2
+
+    # attempt to delete folder
+    shutil.rmtree(loaded_card.name)
+    assert not created_path.exists()
+
     return deck, reg
 
 

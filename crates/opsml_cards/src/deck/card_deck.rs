@@ -247,6 +247,39 @@ impl CardDeck {
             ))),
         }
     }
+
+    #[pyo3(signature = (path=None))]
+    pub fn download_artifacts(&mut self, py: Python, path: Option<PathBuf>) -> PyResult<()> {
+        let base_path = path.unwrap_or_else(|| PathBuf::from(self.name.clone()));
+
+        // delete the path if it exists
+        if base_path.exists() {
+            std::fs::remove_dir_all(&base_path).map_err(|e| {
+                error!("Failed to remove directory: {}", e);
+                OpsmlError::new_err(e.to_string())
+            })?;
+        }
+
+        for (alias, card_obj) in &self.card_objs {
+            let bound = card_obj.clone_ref(py).into_bound(py);
+            let registry_type = bound.getattr("registry_type")?.extract::<RegistryType>()?;
+            let card_path = base_path.join(alias);
+
+            match registry_type {
+                RegistryType::Data | RegistryType::Model => {
+                    bound.call_method1("download_artifacts", (Some(card_path),))?;
+                }
+                RegistryType::Experiment => {
+                    bound.call_method1("save", (card_path,))?;
+                }
+                RegistryType::Prompt => {
+                    bound.call_method1("save_card", (card_path,))?;
+                }
+                _ => continue,
+            }
+        }
+        Ok(())
+    }
 }
 
 impl Serialize for CardDeck {
