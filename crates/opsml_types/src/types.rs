@@ -24,6 +24,7 @@ pub enum RegistryType {
     Users,
     ArtifactKey,
     Prompt,
+    Deck,
 }
 
 impl Display for RegistryType {
@@ -39,6 +40,7 @@ impl Display for RegistryType {
             RegistryType::Users => write!(f, "users"),
             RegistryType::ArtifactKey => write!(f, "artifact_key"),
             RegistryType::Prompt => write!(f, "prompt"),
+            RegistryType::Deck => write!(f, "deck"),
         }
     }
 }
@@ -55,6 +57,7 @@ impl RegistryType {
             "users" => Ok(RegistryType::Users),
             "artifact_key" => Ok(RegistryType::ArtifactKey),
             "prompt" => Ok(RegistryType::Prompt),
+            "deck" => Ok(RegistryType::Deck),
 
             _ => Err(TypeError::Error("Invalid RegistryType".to_string())),
         }
@@ -72,6 +75,7 @@ impl RegistryType {
             RegistryType::Users => b"users",
             RegistryType::ArtifactKey => b"artifact_key",
             RegistryType::Prompt => b"prompt",
+            RegistryType::Deck => b"deck",
         }
     }
 }

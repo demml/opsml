@@ -19,6 +19,7 @@ pub enum CardTable {
     ArtifactKey,
     AuditEvent,
     Prompt,
+    Deck,
 }
 
 impl fmt::Display for CardTable {
@@ -35,6 +36,7 @@ impl fmt::Display for CardTable {
             CardTable::ArtifactKey => "opsml_artifact_key",
             CardTable::AuditEvent => "opsml_audit_event",
             CardTable::Prompt => "opsml_prompt_registry",
+            CardTable::Deck => "opsml_deck_registry",
         };
         write!(f, "{}", table_name)
     }
@@ -53,6 +55,7 @@ impl CardTable {
             RegistryType::Users => CardTable::Users,
             RegistryType::ArtifactKey => CardTable::ArtifactKey,
             RegistryType::Prompt => CardTable::Prompt,
+            RegistryType::Deck => CardTable::Deck,
         }
     }
 }
