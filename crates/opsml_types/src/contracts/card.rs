@@ -834,7 +834,7 @@ impl CardList {
         let mut table = Table::new(entries);
 
         table.with(Style::sharp());
-        table.modify(Columns::single(0), Width::wrap(20).keep_words(true));
+        table.modify(Columns::single(0), Width::wrap(30).keep_words(true));
         table.modify(Columns::single(1), Width::wrap(15).keep_words(true));
         table.modify(Columns::single(2), Width::wrap(15).keep_words(true));
         table.modify(Columns::single(3), Width::wrap(30).keep_words(true));
