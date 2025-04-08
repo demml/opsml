@@ -15,6 +15,7 @@ class RegistryType:
     Experiment: "RegistryType"
     Audit: "RegistryType"
     Prompt: "RegistryType"
+    Deck: "RegistryType"
 
 class RegistryMode:
     Client: "RegistryMode"
@@ -1158,12 +1159,12 @@ class Card:
 
     def __init__(
         self,
+        alias: str,
+        registry_type: RegistryType,
         space: Optional[str],
         name: Optional[str],
         version: Optional[str],
         uid: Optional[str],
-        registry_type: RegistryType,
-        alias: str,
     ) -> None:
         """Initialize the card deck. Card accepts either a combination of
         space and name (with version as optional) or a uid. If only space and name are
@@ -1185,6 +1186,10 @@ class Card:
 
 
         Args:
+            alias (str): (required)
+                The alias of the card
+            registry_type (RegistryType): (required)
+                The type of registry the card deck belongs to
             space (str):
                 The space of the card deck
             name (str):
@@ -1193,13 +1198,33 @@ class Card:
                 The version of the card deck
             uid (str):
                 The uid of the card deck
-            registry_type (RegistryType):
-                The type of registry the card deck belongs to
-            alias (str):
-                The alias of the card
+
         """
 
 class CardDeck:
+    """Creates a CardDeck to hold a collection of cards."""
+
+    def __init__(
+        self,
+        space: str,
+        name: str,
+        cards: List[Card],
+        version: Optional[str],
+    ) -> None:
+        """Initialize the card deck
+
+        Args:
+            space (str):
+                The space of the card deck
+            name (str):
+                The name of the card deck
+            cards (List[Card]):
+                The cards in the card deck
+            version (str | None):
+                The version of the card deck. If not provided, the latest version
+                for a given space and name will be used (e.g. {space}/{name}/v*).
+        """
+
     @property
     def space(self) -> str:
         """Return the space of the card deck"""
@@ -1227,3 +1252,19 @@ class CardDeck:
     @property
     def opsml_version(self) -> str:
         """Return the opsml version"""
+
+    def save(self, path: Path) -> None:
+        """Save the card deck to a directory
+
+        Args:
+            path (Path):
+                Path to save the card deck.
+        """
+
+    def model_validate_json(self, json_string: str) -> "CardDeck":
+        """Load card deck from json string
+
+        Args:
+            json_string (str):
+                The json string to validate
+        """

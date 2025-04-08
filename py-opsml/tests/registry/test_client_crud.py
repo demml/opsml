@@ -12,6 +12,7 @@ from opsml import (  # type: ignore
     PromptCard,
     Prompt,
 )
+from opsml.card import CardDeck, Card  # type: ignore
 from opsml.card import RegistryMode, CardList  # type: ignore
 from opsml.model import SklearnModel  # type: ignore
 from opsml.data import PandasData  # type: ignore
@@ -233,6 +234,51 @@ def crud_modelcard(random_forest_classifier: SklearnModel, datacard: DataCard):
     return updated_card, reg
 
 
+def crud_card_deck(model_uid: str, prompt_uid: str):
+    reg = CardRegistry(registry_type=RegistryType.Deck)
+
+    assert reg.registry_type == RegistryType.Deck
+    assert reg.mode == RegistryMode.Client
+
+    cards = reg.list_cards()
+
+    assert isinstance(cards, CardList)
+    assert len(cards) == 0
+
+    deck = CardDeck(
+        space="test",
+        name="test",
+        cards=[
+            Card(
+                uid=model_uid,
+                alias="model",
+                registry_type=RegistryType.Model,
+            ),
+            Card(
+                uid=prompt_uid,
+                alias="prompt",
+                registry_type=RegistryType.Prompt,
+            ),
+        ],
+    )
+
+    reg.register_card(deck)
+    cards = reg.list_cards()
+    cards.as_table()
+
+    assert isinstance(cards, CardList)
+    assert len(cards) == 1
+    loaded_card: CardDeck = reg.load_card(uid=deck.uid)
+
+    assert loaded_card.name == deck.name
+    assert loaded_card.space == deck.space
+    assert loaded_card.uid == deck.uid
+    assert loaded_card.version == deck.version
+    assert len(loaded_card.cards) == 2
+
+    return deck, reg
+
+
 def delete_card(card: DataCard | ModelCard, registry: CardRegistry):
     registry.delete_card(card=card)
 
@@ -254,7 +300,9 @@ def test_crud_artifactcard(
         datacard, data_registry = crud_datacard(pandas_data)
         modelcard, model_registry = crud_modelcard(random_forest_classifier, datacard)
         promptcard, prompt_registry = crud_promptcard(chat_prompt)
+        card_deck, deck_registry = crud_card_deck(modelcard.uid, promptcard.uid)
 
         delete_card(datacard, data_registry)
         delete_card(modelcard, model_registry)
         delete_card(promptcard, prompt_registry)
+        delete_card(card_deck, deck_registry)

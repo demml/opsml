@@ -18,7 +18,7 @@ use serde::{
 };
 use std::collections::HashMap;
 use std::path::PathBuf;
-use tracing::{debug, error, instrument};
+use tracing::{debug, error};
 
 #[pyclass]
 pub struct CardKwargs {
@@ -89,24 +89,58 @@ pub struct Card {
     pub alias: String,
 }
 
+#[pymethods]
+impl Card {
+    #[new]
+    #[pyo3(signature = (registry_type, alias, space=None, name=None, version=None, uid=None))]
+    pub fn new(
+        registry_type: RegistryType,
+        alias: String,
+        space: Option<&str>,
+        name: Option<&str>,
+        version: Option<&str>,
+        uid: Option<&str>,
+    ) -> PyResult<Self> {
+        // check that at least space/name  or uid is provided
+        let has_space_or_name = space.is_some() || name.is_some();
+        let has_uid = uid.is_some();
+
+        if !has_space_or_name && !has_uid {
+            error!("Either space/name or uid must be provided");
+            return Err(OpsmlError::new_err(
+                "Either space/name or uid must be provided",
+            ));
+        }
+
+        Ok(Card {
+            space: space.map(|s| s.to_string()),
+            name: name.map(|s| s.to_string()),
+            version: version.map(|s| s.to_string()),
+            uid: uid.map(|s| s.to_string()),
+            registry_type,
+            alias,
+        })
+    }
+}
+
 /// CardDeck is a collection of cards that can be used to create a card deck and load in one call
 ///
 #[pyclass]
 #[derive(Debug)]
 pub struct CardDeck {
-    #[pyo3(get)]
+    #[pyo3(get, set)]
     pub space: String,
 
-    #[pyo3(get)]
+    #[pyo3(get, set)]
     pub name: String,
 
-    #[pyo3(get)]
+    #[pyo3(get, set)]
     pub version: String,
 
-    #[pyo3(get)]
+    #[pyo3(get, set)]
     pub uid: String,
 
-    #[pyo3(get)]
+    #[pyo3(get, set)]
     pub created_at: DateTime<Utc>,
 
     #[pyo3(get, set)]
@@ -117,6 +151,12 @@ pub struct CardDeck {
 
     #[pyo3(get, set)]
     pub app_env: String,
+
+    #[pyo3(get)]
+    pub is_card: bool,
+
+    #[pyo3(get)]
+    pub registry_type: RegistryType,
 
     // this is the holder for the card objects (ModelCard, DataCard, etc.)
     pub card_objs: HashMap<String, PyObject>,
@@ -142,6 +182,8 @@ impl CardDeck {
             opsml_version: env!("CARGO_PKG_VERSION").to_string(),
             card_objs: HashMap::new(),
             app_env: std::env::var("APP_ENV").unwrap_or_else(|_| "dev".to_string()),
+            is_card: true,
+            registry_type: RegistryType::Deck,
         })
     }
 
@@ -245,7 +287,7 @@ impl Serialize for CardDeck {
     where
         S: Serializer,
     {
-        let mut state = serializer.serialize_struct("CardDeck", 8)?;
+        let mut state = serializer.serialize_struct("CardDeck", 10)?;
 
         // set session to none
         state.serialize_field("space", &self.space)?;
@@ -256,6 +298,8 @@ impl Serialize for CardDeck {
         state.serialize_field("cards", &self.cards)?;
         state.serialize_field("opsml_version", &self.opsml_version)?;
         state.serialize_field("app_env", &self.app_env)?;
+        state.serialize_field("is_card", &self.is_card)?;
+        state.serialize_field("registry_type", &self.registry_type)?;
         state.end()
     }
 }
@@ -277,6 +321,8 @@ impl<'de> Deserialize<'de> for CardDeck {
             Cards,
             CardObjs,
             AppEnv,
+            IsCard,
+            RegistryType,
         }
 
         struct CardDeckVisitor;
@@ -301,6 +347,8 @@ impl<'de> Deserialize<'de> for CardDeck {
                 let mut cards = None;
                 let mut card_objs = None;
                 let mut app_env = None;
+                let mut is_card = None;
+                let mut registry_type = None;
 
                 while let Some(key) = map.next_key()? {
                     match key {
@@ -333,6 +381,12 @@ impl<'de> Deserialize<'de> for CardDeck {
                         Field::AppEnv => {
                             app_env = Some(map.next_value()?);
                         }
+                        Field::IsCard => {
+                            is_card = Some(map.next_value()?);
+                        }
+                        Field::RegistryType => {
+                            registry_type = Some(map.next_value()?);
+                        }
                     }
                 }
 
@@ -347,6 +401,8 @@ impl<'de> Deserialize<'de> for CardDeck {
                 let cards = cards.ok_or_else(|| de::Error::missing_field("cards"))?;
                 let card_objs = card_objs.unwrap_or_else(HashMap::new);
                 let app_env = app_env.ok_or_else(|| de::Error::missing_field("app_env"))?;
+                let is_card = is_card.unwrap_or(true);
+                let registry_type = registry_type.unwrap_or(RegistryType::Deck);
 
                 Ok(CardDeck {
                     space,
@@ -357,7 +413,9 @@ impl<'de> Deserialize<'de> for CardDeck {
                     cards,
                     opsml_version,
                     card_objs,
+                    is_card,
                     app_env,
+                    registry_type,
                 })
             }
         }
@@ -372,6 +430,8 @@ impl<'de> Deserialize<'de> for CardDeck {
             "cards",
             "card_objs",
             "app_env",
+            "is_card",
+            "registry_type",
         ];
         deserializer.deserialize_struct("CardDeck", FIELDS, CardDeckVisitor)
     }
