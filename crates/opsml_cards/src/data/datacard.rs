@@ -7,7 +7,7 @@ use opsml_interfaces::data::{
 };
 use opsml_interfaces::FeatureSchema;
 use opsml_storage::storage_client;
-use opsml_types::contracts::{ArtifactKey, Card, DataCardClientRecord};
+use opsml_types::contracts::{ArtifactKey, CardRecord, DataCardClientRecord};
 use opsml_types::interfaces::types::DataInterfaceType;
 use opsml_types::{cards::BaseArgs, DataType, RegistryType, SaveName, Suffix};
 use opsml_utils::{create_tmp_path, get_utc_datetime, PyHelperFuncs};
@@ -299,7 +299,7 @@ impl DataCard {
         Ok(card)
     }
 
-    pub fn get_registry_card(&self) -> Result<Card, CardError> {
+    pub fn get_registry_card(&self) -> Result<CardRecord, CardError> {
         let record = DataCardClientRecord {
             created_at: self.created_at,
             app_env: self.app_env.clone(),
@@ -315,7 +315,7 @@ impl DataCard {
             username: std::env::var("OPSML_USERNAME").unwrap_or_else(|_| "guest".to_string()),
         };
 
-        Ok(Card::Data(record))
+        Ok(CardRecord::Data(record))
     }
 
     pub fn save_card(&self, path: PathBuf) -> Result<(), CardError> {

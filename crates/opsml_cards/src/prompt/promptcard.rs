@@ -1,6 +1,6 @@
 use chrono::{DateTime, Utc};
 use opsml_error::error::{CardError, OpsmlError};
-use opsml_types::contracts::{Card, PromptCardClientRecord};
+use opsml_types::contracts::{CardRecord, PromptCardClientRecord};
 use opsml_types::{cards::BaseArgs, RegistryType, SaveName, Suffix};
 use opsml_utils::{get_utc_datetime, PyHelperFuncs};
 use potato_head::Prompt;
@@ -157,7 +157,7 @@ impl PromptCard {
         })
     }
 
-    pub fn get_registry_card(&self) -> Result<Card, CardError> {
+    pub fn get_registry_card(&self) -> Result<CardRecord, CardError> {
         let record = PromptCardClientRecord {
             created_at: self.created_at,
             app_env: self.app_env.clone(),
@@ -171,7 +171,7 @@ impl PromptCard {
             username: std::env::var("OPSML_USERNAME").unwrap_or_else(|_| "guest".to_string()),
         };
 
-        Ok(Card::Prompt(record))
+        Ok(CardRecord::Prompt(record))
     }
 
     pub fn save_card(&self, path: PathBuf) -> Result<(), CardError> {

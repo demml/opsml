@@ -44,7 +44,7 @@ impl ClientRegistry {
         CardTable::from_registry_type(&self.registry_type).to_string()
     }
 
-    pub fn list_cards(&self, args: CardQueryArgs) -> Result<Vec<Card>, RegistryError> {
+    pub fn list_cards(&self, args: CardQueryArgs) -> Result<Vec<CardRecord>, RegistryError> {
         let query_string = serde_qs::to_string(&args)
             .map_err(|e| RegistryError::Error(format!("Failed to serialize query args {}", e)))?;
 
@@ -60,14 +60,14 @@ impl ClientRegistry {
             .map_err(|e| RegistryError::Error(format!("Failed to list cards {}", e)))?;
 
         response
-            .json::<Vec<Card>>()
+            .json::<Vec<CardRecord>>()
             .map_err(|e| RegistryError::Error(format!("Failed to parse card response {}", e)))
     }
 
     #[instrument(skip_all)]
     pub fn create_card(
         &self,
-        card: Card,
+        card: CardRecord,
         version: Option<String>,
         version_type: VersionType,
         pre_tag: Option<String>,
@@ -130,7 +130,7 @@ impl ClientRegistry {
         }
     }
 
-    pub fn update_card(&self, card: &Card) -> Result<(), RegistryError> {
+    pub fn update_card(&self, card: &CardRecord) -> Result<(), RegistryError> {
         let update_request = UpdateCardRequest {
             card: card.clone(),
             registry_type: self.registry_type.clone(),

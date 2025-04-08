@@ -3,7 +3,7 @@ use opsml_error::error::VersionError;
 use opsml_error::{ServerError, SqlError};
 use opsml_types::cards::{CardTable, ParameterValue};
 use opsml_types::contracts::{
-    AuditCardClientRecord, Card, DataCardClientRecord, ExperimentCardClientRecord,
+    AuditCardClientRecord, CardRecord, DataCardClientRecord, ExperimentCardClientRecord,
     ModelCardClientRecord, PromptCardClientRecord,
 };
 use opsml_types::{CommonKwargs, DataType, ModelType, RegistryType};
@@ -903,15 +903,19 @@ impl ServerCard {
     ///
     /// # Arguments
     /// * `card` - A `Card` enum variant.
-    pub fn from_card(card: Card) -> Result<Self, ServerError> {
+    pub fn from_card(card: CardRecord) -> Result<Self, ServerError> {
         match card {
-            Card::Data(card) => Ok(ServerCard::Data(DataCardRecord::from_client_card(card)?)),
-            Card::Model(card) => Ok(ServerCard::Model(ModelCardRecord::from_client_card(card)?)),
-            Card::Experiment(card) => Ok(ServerCard::Experiment(
+            CardRecord::Data(card) => Ok(ServerCard::Data(DataCardRecord::from_client_card(card)?)),
+            CardRecord::Model(card) => {
+                Ok(ServerCard::Model(ModelCardRecord::from_client_card(card)?))
+            }
+            CardRecord::Experiment(card) => Ok(ServerCard::Experiment(
                 ExperimentCardRecord::from_client_card(card)?,
             )),
-            Card::Audit(card) => Ok(ServerCard::Audit(AuditCardRecord::from_client_card(card)?)),
-            Card::Prompt(card) => Ok(ServerCard::Prompt(PromptCardRecord::from_client_card(
+            CardRecord::Audit(card) => {
+                Ok(ServerCard::Audit(AuditCardRecord::from_client_card(card)?))
+            }
+            CardRecord::Prompt(card) => Ok(ServerCard::Prompt(PromptCardRecord::from_client_card(
                 card,
             )?)),
         }

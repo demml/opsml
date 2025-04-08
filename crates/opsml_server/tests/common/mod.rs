@@ -311,7 +311,7 @@ impl TestHelper {
 
         // Create a test card with some data
         let card_request = CreateCardRequest {
-            card: Card::Model(ModelCardClientRecord {
+            card: CardRecord::Model(ModelCardClientRecord {
                 name: self.name.clone(),
                 space: self.space.clone(),
                 version: self.version.clone(),

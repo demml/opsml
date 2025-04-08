@@ -4,7 +4,7 @@ use opsml_semver::VersionType;
 use opsml_settings::config::OpsmlMode;
 use opsml_state::{app_state, get_api_client};
 use opsml_types::contracts::{
-    Card, CardQueryArgs, CreateCardResponse, GetMetricRequest, MetricRequest,
+    CardQueryArgs, CardRecord, CreateCardResponse, GetMetricRequest, MetricRequest,
 };
 use opsml_types::*;
 use opsml_types::{
@@ -93,7 +93,7 @@ impl OpsmlRegistry {
         }
     }
 
-    pub fn list_cards(&self, args: CardQueryArgs) -> Result<Vec<Card>, RegistryError> {
+    pub fn list_cards(&self, args: CardQueryArgs) -> Result<Vec<CardRecord>, RegistryError> {
         match self {
             Self::ClientRegistry(client_registry) => client_registry.list_cards(args),
             #[cfg(feature = "server")]
@@ -115,7 +115,7 @@ impl OpsmlRegistry {
 
     pub fn create_card(
         &self,
-        card: Card,
+        card: CardRecord,
         version: Option<String>,
         version_type: VersionType,
         pre_tag: Option<String>,
@@ -179,7 +179,7 @@ impl OpsmlRegistry {
         }
     }
 
-    pub fn update_card(&self, card: &Card) -> Result<(), RegistryError> {
+    pub fn update_card(&self, card: &CardRecord) -> Result<(), RegistryError> {
         match self {
             Self::ClientRegistry(client_registry) => client_registry.update_card(card),
             #[cfg(feature = "server")]

@@ -12,6 +12,7 @@ crate-type = ["cdylib", "rlib"]
 anyhow = { workspace = true }
 opsml-cards = { workspace = true }
 opsml-cli = { workspace = true }
+opsml-deck = { workspace = true }
 opsml-error = { workspace = true }
 opsml-interfaces = { workspace = true }
 opsml-registry = { workspace = true }

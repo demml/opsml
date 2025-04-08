@@ -70,13 +70,13 @@ pub async fn get_next_version(
 #[instrument(skip_all)]
 pub async fn insert_card_into_db(
     sql_client: Arc<SqlClientEnum>,
-    card: Card,
+    card: CardRecord,
     version: Version,
     table: &CardTable,
 ) -> Result<(String, String, String, String, DateTime<Utc>), ApiError> {
     // match on registry type
     let card = match card {
-        Card::Data(client_card) => {
+        CardRecord::Data(client_card) => {
             let server_card = DataCardRecord::new(
                 client_card.name,
                 client_card.space,
@@ -90,7 +90,7 @@ pub async fn insert_card_into_db(
             );
             ServerCard::Data(server_card)
         }
-        Card::Model(client_card) => {
+        CardRecord::Model(client_card) => {
             let server_card = ModelCardRecord::new(
                 client_card.name,
                 client_card.space,
@@ -108,7 +108,7 @@ pub async fn insert_card_into_db(
             ServerCard::Model(server_card)
         }
 
-        Card::Experiment(client_card) => {
+        CardRecord::Experiment(client_card) => {
             let server_card = ExperimentCardRecord::new(
                 client_card.name,
                 client_card.space,
@@ -123,7 +123,7 @@ pub async fn insert_card_into_db(
             ServerCard::Experiment(server_card)
         }
 
-        Card::Audit(client_card) => {
+        CardRecord::Audit(client_card) => {
             let server_card = AuditCardRecord::new(
                 client_card.name,
                 client_card.space,
@@ -137,7 +137,7 @@ pub async fn insert_card_into_db(
             );
             ServerCard::Audit(server_card)
         }
-        Card::Prompt(client_card) => {
+        CardRecord::Prompt(client_card) => {
             let server_card = PromptCardRecord::new(
                 client_card.name,
                 client_card.space,
