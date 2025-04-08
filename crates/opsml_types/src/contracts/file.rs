@@ -189,6 +189,17 @@ impl ArtifactKey {
     }
 }
 
+// implement Display for ArtifactKey and mask the encrypted_key and storage_key
+impl Display for ArtifactKey {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "ArtifactKey {{ uid: {}, registry_type: {}, encrypted_key: <masked>, storage_key: <masked> }}",
+            self.uid, self.registry_type
+        )
+    }
+}
+
 #[derive(Debug, Clone)]
 pub enum Operation {
     Create,

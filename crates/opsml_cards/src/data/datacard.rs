@@ -89,13 +89,13 @@ pub struct DataCard {
     #[pyo3(get, set)]
     pub created_at: DateTime<Utc>,
 
-    pub artifact_key: Option<ArtifactKey>,
-
     #[pyo3(get)]
     pub is_card: bool,
 
     #[pyo3(get)]
     pub opsml_version: String,
+
+    artifact_key: Option<ArtifactKey>,
 }
 
 #[pymethods]
