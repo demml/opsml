@@ -1154,6 +1154,8 @@ impl SqlClient for PostgresClient {
 
 #[cfg(test)]
 mod tests {
+    use crate::schemas::CardDeckRecord;
+
     use super::*;
     use opsml_types::{RegistryType, SqlType};
     use opsml_utils::utils::get_utc_datetime;
@@ -1212,6 +1214,7 @@ mod tests {
             CardTable::Experiment => ServerCard::Experiment(ExperimentCardRecord::default()),
             CardTable::Audit => ServerCard::Audit(AuditCardRecord::default()),
             CardTable::Prompt => ServerCard::Prompt(PromptCardRecord::default()),
+            CardTable::Deck => ServerCard::Deck(CardDeckRecord::default()),
             _ => panic!("Invalid card type"),
         };
 
@@ -1222,6 +1225,7 @@ mod tests {
             ServerCard::Experiment(c) => c.uid.clone(),
             ServerCard::Audit(c) => c.uid.clone(),
             ServerCard::Prompt(c) => c.uid.clone(),
+            ServerCard::Deck(c) => c.uid.clone(),
         };
 
         // Test Insert
@@ -1295,6 +1299,7 @@ mod tests {
             CardResults::Experiment(cards) => assert_eq!(cards[0].name, updated_name),
             CardResults::Audit(cards) => assert_eq!(cards[0].name, updated_name),
             CardResults::Prompt(cards) => assert_eq!(cards[0].name, updated_name),
+            CardResults::Deck(cards) => assert_eq!(cards[0].name, updated_name),
         }
 
         // delete card
