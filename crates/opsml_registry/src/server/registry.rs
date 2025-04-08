@@ -199,6 +199,7 @@ pub mod server_logic {
                         client_card.experimentcard_uid,
                         client_card.auditcard_uid,
                         client_card.interface_type.to_string(),
+                        client_card.opsml_version,
                         client_card.username,
                     );
                     ServerCard::Data(server_card)
@@ -216,6 +217,7 @@ pub mod server_logic {
                         client_card.auditcard_uid,
                         client_card.interface_type,
                         client_card.task_type,
+                        client_card.opsml_version,
                         client_card.username,
                     );
                     ServerCard::Model(server_card)
@@ -231,6 +233,7 @@ pub mod server_logic {
                         client_card.modelcard_uids,
                         client_card.promptcard_uids,
                         client_card.experimentcard_uids,
+                        client_card.opsml_version,
                         client_card.username,
                     );
                     ServerCard::Experiment(server_card)
@@ -246,6 +249,7 @@ pub mod server_logic {
                         client_card.datacard_uids,
                         client_card.modelcard_uids,
                         client_card.experimentcard_uids,
+                        client_card.opsml_version,
                         client_card.username,
                     );
                     ServerCard::Audit(server_card)
@@ -258,6 +262,7 @@ pub mod server_logic {
                         client_card.tags,
                         client_card.experimentcard_uid,
                         client_card.auditcard_uid,
+                        client_card.opsml_version,
                         client_card.username,
                     );
                     ServerCard::Prompt(server_card)
@@ -320,6 +325,7 @@ pub mod server_logic {
                         auditcard_uid: client_card.auditcard_uid,
                         interface_type: client_card.interface_type,
                         username: client_card.username,
+                        opsml_version: client_card.opsml_version,
                     };
                     ServerCard::Data(server_card)
                 }
@@ -351,6 +357,7 @@ pub mod server_logic {
                         interface_type: client_card.interface_type,
                         task_type: client_card.task_type,
                         username: client_card.username,
+                        opsml_version: client_card.opsml_version,
                     };
                     ServerCard::Model(server_card)
                 }
@@ -379,6 +386,7 @@ pub mod server_logic {
                         promptcard_uids: SqlxJson(client_card.promptcard_uids),
                         experimentcard_uids: SqlxJson(client_card.experimentcard_uids),
                         username: client_card.username,
+                        opsml_version: client_card.opsml_version,
                     };
                     ServerCard::Experiment(server_card)
                 }
@@ -407,6 +415,7 @@ pub mod server_logic {
                         modelcard_uids: SqlxJson(client_card.modelcard_uids),
                         experimentcard_uids: SqlxJson(client_card.experimentcard_uids),
                         username: client_card.username,
+                        opsml_version: client_card.opsml_version,
                     };
                     ServerCard::Audit(server_card)
                 }
@@ -433,6 +442,7 @@ pub mod server_logic {
                         experimentcard_uid: client_card.experimentcard_uid,
                         auditcard_uid: client_card.auditcard_uid,
                         username: client_card.username,
+                        opsml_version: client_card.opsml_version,
                     };
                     ServerCard::Prompt(server_card)
                 }
