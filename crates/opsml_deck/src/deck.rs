@@ -2,10 +2,11 @@ use chrono::{DateTime, Utc};
 use opsml_error::{CardError, OpsmlError};
 use opsml_interfaces::{DataLoadKwargs, ModelLoadKwargs};
 use opsml_registry::CardRegistries;
-use opsml_types::cards::BaseArgs;
-use opsml_types::RegistryType;
-use opsml_types::SaveName;
-use opsml_types::Suffix;
+use opsml_types::{
+    cards::BaseArgs,
+    contracts::{CardDeckClientRecord, CardRecord},
+    RegistryType, SaveName, Suffix,
+};
 use opsml_utils::PyHelperFuncs;
 use pyo3::prelude::*;
 use pyo3::IntoPyObjectExt;
@@ -294,6 +295,21 @@ impl CardDeck {
 
     fn __clear__(&mut self) {
         self.card_objs.clear();
+    }
+
+    pub fn get_registry_card(&self) -> Result<CardRecord, CardError> {
+        let record = CardDeckClientRecord {
+            created_at: self.created_at,
+            app_env: self.app_env.clone(),
+            space: self.space.clone(),
+            name: self.name.clone(),
+            version: self.version.clone(),
+            uid: self.uid.clone(),
+            opsml_version: self.opsml_version.clone(),
+            username: std::env::var("OPSML_USERNAME").unwrap_or_else(|_| "guest".to_string()),
+        };
+
+        Ok(CardRecord::Deck(record))
     }
 }
 
