@@ -197,6 +197,9 @@ pub struct CardDeck {
     #[pyo3(get)]
     pub opsml_version: String,
 
+    #[pyo3(get, set)]
+    pub app_env: String,
+
     // this is the holder for the card objects (ModelCard, DataCard, etc.)
     pub card_objs: HashMap<String, PyObject>,
 }
@@ -220,6 +223,7 @@ impl CardDeck {
             cards,
             opsml_version: env!("CARGO_PKG_VERSION").to_string(),
             card_objs: HashMap::new(),
+            app_env: std::env::var("APP_ENV").unwrap_or_else(|_| "dev".to_string()),
         })
     }
 
@@ -298,7 +302,7 @@ impl Serialize for CardDeck {
     where
         S: Serializer,
     {
-        let mut state = serializer.serialize_struct("CardDeck", 7)?;
+        let mut state = serializer.serialize_struct("CardDeck", 8)?;
 
         // set session to none
         state.serialize_field("space", &self.space)?;
@@ -308,6 +312,7 @@ impl Serialize for CardDeck {
         state.serialize_field("created_at", &self.created_at)?;
         state.serialize_field("cards", &self.cards)?;
         state.serialize_field("opsml_version", &self.opsml_version)?;
+        state.serialize_field("app_env", &self.app_env)?;
         state.end()
     }
 }
@@ -328,6 +333,7 @@ impl<'de> Deserialize<'de> for CardDeck {
             OpsmlVersion,
             Cards,
             CardObjs,
+            AppEnv,
         }
 
         struct CardDeckVisitor;
@@ -351,6 +357,7 @@ impl<'de> Deserialize<'de> for CardDeck {
                 let mut opsml_version = None;
                 let mut cards = None;
                 let mut card_objs = None;
+                let mut app_env = None;
 
                 while let Some(key) = map.next_key()? {
                     match key {
@@ -380,6 +387,9 @@ impl<'de> Deserialize<'de> for CardDeck {
                         Field::CardObjs => {
                             card_objs = None;
                         }
+                        Field::AppEnv => {
+                            app_env = Some(map.next_value()?);
+                        }
                     }
                 }
 
@@ -393,6 +403,7 @@ impl<'de> Deserialize<'de> for CardDeck {
                     opsml_version.ok_or_else(|| de::Error::missing_field("opsml_version"))?;
                 let cards = cards.ok_or_else(|| de::Error::missing_field("cards"))?;
                 let card_objs = card_objs.unwrap_or_else(|| HashMap::new());
+                let app_env = app_env.ok_or_else(|| de::Error::missing_field("app_env"))?;
 
                 Ok(CardDeck {
                     space,
@@ -403,6 +414,7 @@ impl<'de> Deserialize<'de> for CardDeck {
                     cards,
                     opsml_version,
                     card_objs,
+                    app_env,
                 })
             }
         }
@@ -416,6 +428,7 @@ impl<'de> Deserialize<'de> for CardDeck {
             "opsml_version",
             "cards",
             "card_objs",
+            "app_env",
         ];
         deserializer.deserialize_struct("CardDeck", FIELDS, CardDeckVisitor)
     }
