@@ -86,6 +86,7 @@ pub async fn insert_card_into_db(
                 client_card.experimentcard_uid,
                 client_card.auditcard_uid,
                 client_card.interface_type,
+                client_card.opsml_version,
                 client_card.username,
             );
             ServerCard::Data(server_card)
@@ -103,6 +104,7 @@ pub async fn insert_card_into_db(
                 client_card.auditcard_uid,
                 client_card.interface_type,
                 client_card.task_type,
+                client_card.opsml_version,
                 client_card.username,
             );
             ServerCard::Model(server_card)
@@ -118,6 +120,7 @@ pub async fn insert_card_into_db(
                 client_card.modelcard_uids,
                 client_card.promptcard_uids,
                 client_card.experimentcard_uids,
+                client_card.opsml_version,
                 client_card.username,
             );
             ServerCard::Experiment(server_card)
@@ -133,6 +136,7 @@ pub async fn insert_card_into_db(
                 client_card.datacard_uids,
                 client_card.modelcard_uids,
                 client_card.experimentcard_uids,
+                client_card.opsml_version,
                 client_card.username,
             );
             ServerCard::Audit(server_card)
@@ -145,6 +149,7 @@ pub async fn insert_card_into_db(
                 client_card.tags,
                 client_card.experimentcard_uid,
                 client_card.auditcard_uid,
+                client_card.opsml_version,
                 client_card.username,
             );
             ServerCard::Prompt(server_card)
