@@ -407,6 +407,7 @@ impl ModelCard {
             auditcard_uid: self.metadata.auditcard_uid.clone(),
             interface_type: self.metadata.interface_metadata.interface_type.to_string(),
             task_type: self.metadata.interface_metadata.task_type.to_string(),
+            opsml_version: self.opsml_version.clone(),
             username: std::env::var("OPSML_USERNAME").unwrap_or_else(|_| "guest".to_string()),
         };
 
