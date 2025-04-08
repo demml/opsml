@@ -199,5 +199,6 @@ CREATE TABLE IF NOT EXISTS opsml_prompt_registry (
     tags TEXT,
     experimentcard_uid TEXT,
     auditcard_uid TEXT,
+    opsml_version TEXT,
     username TEXT NOT NULL DEFAULT 'guest'
 );
