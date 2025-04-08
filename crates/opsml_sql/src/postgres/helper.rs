@@ -567,6 +567,29 @@ impl PostgresQueryHelper {
         )
     }
 
+    pub fn get_carddeck_insert_query() -> String {
+        format!("INSERT INTO {} (uid, app_env, name, space, major, minor, patch, version, pre_tag, build_tag, username, opsml_version) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)", CardTable::Deck)
+            .to_string()
+    }
+
+    pub fn get_carddeck_update_query() -> String {
+        format!(
+            "UPDATE {} SET 
+            app_env = $1, 
+            name = $2,
+            space = $3,
+            major = $4, 
+            minor = $5,
+            patch = $6, 
+            version = $7, 
+            username = $8,
+            opsml_version = $9
+            WHERE uid = $10",
+            CardTable::Deck
+        )
+        .to_string()
+    }
+
     pub fn get_datacard_update_query() -> String {
         format!(
             "UPDATE {} SET 

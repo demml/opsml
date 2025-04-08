@@ -528,6 +528,24 @@ impl SqliteQueryHelper {
             .to_string()
     }
 
+    pub fn get_carddeck_update_query() -> String {
+        format!(
+            "UPDATE {} SET 
+            app_env = ?, 
+            name = ?, 
+            space = ?, 
+            major = ?, 
+            minor = ?, 
+            patch = ?, 
+            version = ?, 
+            username = ?,
+            opsml_version = ?
+            WHERE uid = ?",
+            CardTable::Deck
+        )
+        .to_string()
+    }
+
     pub fn get_promptcard_update_query() -> String {
         format!(
             "UPDATE {} SET 
