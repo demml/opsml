@@ -21,6 +21,7 @@ pub fn convert_datacard(record: DataCardRecord) -> CardRecord {
         auditcard_uid: record.auditcard_uid,
         interface_type: record.interface_type,
         username: record.username,
+        opsml_version: record.opsml_version,
     };
 
     CardRecord::Data(card)
@@ -43,6 +44,7 @@ pub fn convert_modelcard(record: ModelCardRecord) -> CardRecord {
         interface_type: record.interface_type,
         task_type: record.task_type,
         username: record.username,
+        opsml_version: record.opsml_version,
     };
 
     CardRecord::Model(card)
@@ -62,6 +64,7 @@ pub fn convert_experimentcard(record: ExperimentCardRecord) -> CardRecord {
         promptcard_uids: record.promptcard_uids.0,
         experimentcard_uids: record.experimentcard_uids.0,
         username: record.username,
+        opsml_version: record.opsml_version,
     };
 
     CardRecord::Experiment(card)
@@ -81,6 +84,7 @@ pub fn convert_auditcard(record: AuditCardRecord) -> CardRecord {
         modelcard_uids: record.modelcard_uids.0,
         experimentcard_uids: record.experimentcard_uids.0,
         username: record.username,
+        opsml_version: record.opsml_version,
     };
 
     CardRecord::Audit(card)
@@ -98,6 +102,7 @@ pub fn convert_promptcard(record: PromptCardRecord) -> CardRecord {
         username: record.username,
         experimentcard_uid: record.experimentcard_uid,
         auditcard_uid: record.auditcard_uid,
+        opsml_version: record.opsml_version,
     };
 
     CardRecord::Prompt(card)
