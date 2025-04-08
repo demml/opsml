@@ -1,8 +1,8 @@
 use opsml_cards::{
-    DataCard, DataCardMetadata, ExperimentCard, ModelCard, ModelCardMetadata, PromptCard,
-    UidMetadata,
+    Card, CardDeck, CardKwargs, DataCard, DataCardMetadata, ExperimentCard, ModelCard,
+    ModelCardMetadata, PromptCard, UidMetadata,
 };
-use opsml_deck::{Card, CardDeck, CardKwargs};
+
 use opsml_registry::{CardRegistries, CardRegistry};
 use opsml_types::contracts::{CardList, CardRecord};
 use opsml_types::{cards::ComputeEnvironment, RegistryMode, RegistryType};
