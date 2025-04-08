@@ -168,6 +168,7 @@ pub struct DataCardRecord {
     pub experimentcard_uid: Option<String>,
     pub auditcard_uid: Option<String>,
     pub interface_type: String,
+    pub opsml_version: String,
     pub username: String,
 }
 
@@ -183,6 +184,7 @@ impl DataCardRecord {
         auditcard_uid: Option<String>,
         interface_type: String,
         username: String,
+        opsml_version: String,
     ) -> Self {
         let created_at = get_utc_datetime();
         let app_env = env::var("APP_ENV").unwrap_or_else(|_| "development".to_string());
@@ -205,6 +207,7 @@ impl DataCardRecord {
             experimentcard_uid,
             auditcard_uid,
             interface_type,
+            opsml_version,
             username,
         }
     }
@@ -240,6 +243,7 @@ impl DataCardRecord {
             experimentcard_uid: client_card.experimentcard_uid,
             auditcard_uid: client_card.auditcard_uid,
             interface_type: client_card.interface_type,
+            opsml_version: client_card.opsml_version,
             username: client_card.username,
         })
     }
