@@ -411,11 +411,11 @@ impl MySQLQueryHelper {
     }
 
     pub fn get_datacard_insert_query() -> String {
-        format!("INSERT INTO {} (uid, app_env, name, space, major, minor, patch, version,  data_type, interface_type, tags, experimentcard_uid, auditcard_uid, pre_tag, build_tag, username) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", CardTable::Data)
+        format!("INSERT INTO {} (uid, app_env, name, space, major, minor, patch, version,  data_type, interface_type, tags, experimentcard_uid, auditcard_uid, pre_tag, build_tag, username, opsml_version) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", CardTable::Data)
     }
 
     pub fn get_promptcard_insert_query() -> String {
-        format!("INSERT INTO {} (uid, app_env, name, space, major, minor, patch, version, tags, experimentcard_uid, auditcard_uid, pre_tag, build_tag, username) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", CardTable::Prompt)
+        format!("INSERT INTO {} (uid, app_env, name, space, major, minor, patch, version, tags, experimentcard_uid, auditcard_uid, pre_tag, build_tag, username, opsml_version) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", CardTable::Prompt)
     }
 
     pub fn get_modelcard_insert_query() -> String {
@@ -439,9 +439,10 @@ impl MySQLQueryHelper {
             auditcard_uid, 
             pre_tag, 
             build_tag,
-            username
+            username,
+            opsml_version
             ) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             CardTable::Model
         )
     }
@@ -464,9 +465,10 @@ impl MySQLQueryHelper {
             experimentcard_uids,
             pre_tag, 
             build_tag,
-            username
+            username,
+            opsml_version
             ) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             CardTable::Experiment
         )
     }
@@ -489,9 +491,10 @@ impl MySQLQueryHelper {
             experimentcard_uids, 
             pre_tag, 
             build_tag,
-            username
+            username,
+            opsml_version
             ) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             CardTable::Audit
         )
     }
@@ -511,7 +514,8 @@ impl MySQLQueryHelper {
             auditcard_uid = ?, 
             pre_tag = ?, 
             build_tag = ?,
-            username = ?
+            username = ?,
+            opsml_version = ?
             WHERE uid = ?",
             CardTable::Prompt
         )
@@ -534,7 +538,8 @@ impl MySQLQueryHelper {
             auditcard_uid = ?, 
             pre_tag = ?, 
             build_tag = ?,
-            username = ?
+            username = ?,
+            opsml_version = ?
             WHERE uid = ?",
             CardTable::Data
         )
@@ -560,7 +565,8 @@ impl MySQLQueryHelper {
             auditcard_uid = ?, 
             pre_tag = ?, 
             build_tag = ?,
-            username = ?
+            username = ?,
+            opsml_version = ?
             WHERE uid = ?",
             CardTable::Model
         )
@@ -583,7 +589,8 @@ impl MySQLQueryHelper {
             experimentcard_uids = ?,
             pre_tag = ?, 
             build_tag = ?,
-            username = ?
+            username = ?,
+            opsml_version = ?
             WHERE uid = ?",
             CardTable::Experiment
         )
@@ -606,7 +613,8 @@ impl MySQLQueryHelper {
             experimentcard_uids = ?, 
             pre_tag = ?, 
             build_tag = ?,
-            username = ?
+            username = ?,
+            opsml_version = ?
             WHERE uid = ?",
             CardTable::Audit
         )
