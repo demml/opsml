@@ -1174,7 +1174,15 @@ class Card:
         an error will be raised.
 
         Alias is used to identify the card in the card deck and is not necessarily the name of
-        the card. It is recommended to use a short and descriptive alias that is easy to remember
+        the card. It is recommended to use a short and descriptive alias that is easy to remember.
+
+        Example:
+
+        ```python
+        deck = CardDeck(...)
+        deck["my_alias"]
+        ```
+
 
         Args:
             space (str):
