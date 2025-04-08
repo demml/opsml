@@ -20,7 +20,7 @@ class RegistryMode:
     Client: "RegistryMode"
     Server: "RegistryMode"
 
-class Card:
+class CardRecord:
     uid: Optional[str]
     created_at: Optional[str]
     app_env: Optional[str]
@@ -45,12 +45,12 @@ class Card:
         """
 
 class CardList:
-    cards: List[Card]
+    cards: List[CardRecord]
 
-    def __getitem__(self, key: int) -> Optional[Card]:
+    def __getitem__(self, key: int) -> Optional[CardRecord]:
         """Return the card at the specified index"""
 
-    def __iter__(self) -> Card:
+    def __iter__(self) -> CardRecord:
         """Return an iterator for the card list"""
 
     def as_table(self) -> None:
@@ -257,7 +257,9 @@ class DataCard:
         """Return the model dump as a json string"""
 
     @staticmethod
-    def model_validate_json(json_string: str, interface: Optional[DataInterface] = None) -> "ModelCard":
+    def model_validate_json(
+        json_string: str, interface: Optional[DataInterface] = None
+    ) -> "ModelCard":
         """Validate the model json string
 
         Args:
@@ -539,7 +541,9 @@ class ModelCard:
         """Return the model dump as a json string"""
 
     @staticmethod
-    def model_validate_json(json_string: str, interface: Optional[ModelInterface] = None) -> "ModelCard":
+    def model_validate_json(
+        json_string: str, interface: Optional[ModelInterface] = None
+    ) -> "ModelCard":
         """Validate the model json string
 
         Args:
@@ -896,25 +900,41 @@ CardType = TypeVar("CardType", DataCard, ModelCard, PromptCard, ExperimentCard) 
 
 class CardRegistry(Generic[CardType]):
     @overload
-    def __init__(self, registry_type: Literal[RegistryType.Data]) -> "CardRegistry[DataCard]": ...
+    def __init__(
+        self, registry_type: Literal[RegistryType.Data]
+    ) -> "CardRegistry[DataCard]": ...
     @overload
-    def __init__(self, registry_type: Literal[RegistryType.Model]) -> "CardRegistry[ModelCard]": ...
+    def __init__(
+        self, registry_type: Literal[RegistryType.Model]
+    ) -> "CardRegistry[ModelCard]": ...
     @overload
-    def __init__(self, registry_type: Literal[RegistryType.Prompt]) -> "CardRegistry[PromptCard]": ...
+    def __init__(
+        self, registry_type: Literal[RegistryType.Prompt]
+    ) -> "CardRegistry[PromptCard]": ...
     @overload
-    def __init__(self, registry_type: Literal[RegistryType.Experiment]) -> "CardRegistry[ExperimentCard]": ...
+    def __init__(
+        self, registry_type: Literal[RegistryType.Experiment]
+    ) -> "CardRegistry[ExperimentCard]": ...
     @overload
-    def __init__(self, registry_type: Literal[RegistryType.Audit]) -> "CardRegistry[Any]": ...
+    def __init__(
+        self, registry_type: Literal[RegistryType.Audit]
+    ) -> "CardRegistry[Any]": ...
 
     # String literal overloads
     @overload
     def __init__(self, registry_type: Literal["data"]) -> "CardRegistry[DataCard]": ...
     @overload
-    def __init__(self, registry_type: Literal["model"]) -> "CardRegistry[ModelCard]": ...
+    def __init__(
+        self, registry_type: Literal["model"]
+    ) -> "CardRegistry[ModelCard]": ...
     @overload
-    def __init__(self, registry_type: Literal["prompt"]) -> "CardRegistry[PromptCard]": ...
+    def __init__(
+        self, registry_type: Literal["prompt"]
+    ) -> "CardRegistry[PromptCard]": ...
     @overload
-    def __init__(self, registry_type: Literal["experiment"]) -> "CardRegistry[ExperimentCard]": ...
+    def __init__(
+        self, registry_type: Literal["experiment"]
+    ) -> "CardRegistry[ExperimentCard]": ...
     @overload
     def __init__(self, registry_type: Literal["audit"]) -> "CardRegistry[Any]": ...
     def __init__(self, registry_type: Union[RegistryType, str]) -> None:
@@ -1117,3 +1137,85 @@ class CardRegistries:
     def audit(self) -> CardRegistry[Any]: ...
     @property
     def prompt(self) -> CardRegistry[PromptCard]: ...
+
+class Card:
+    """Represents a card from a given registry that can be used in a card deck
+
+    Arguments:
+        space (str):
+            The space of the card deck
+        name (str):
+            The name of the card deck
+        version (str):
+            The version of the card deck
+        uid (str):
+            The uid of the card deck
+        registry_type (RegistryType):
+            The type of registry the card deck belongs to
+        alias (str):
+            The alias of the card
+    """
+
+    def __init__(
+        self,
+        space: Optional[str],
+        name: Optional[str],
+        version: Optional[str],
+        uid: Optional[str],
+        registry_type: RegistryType,
+        alias: str,
+    ) -> None:
+        """Initialize the card deck. Card accepts either a combination of
+        space and name (with version as optional) or a uid. If only space and name are
+        provided with no version, the latest version for a given space and name will be used
+        (e.g. {space}/{name}/v*). If a version is provided, it must follow semver rules that
+        are compatible with opsml (e.g. v1.*, v1.2.3, v2.3.4-alpha, etc.). If both space/name and uid
+        are provided, the uid will take precedence. If neither space/name nor uid are provided,
+        an error will be raised.
+
+        Alias is used to identify the card in the card deck and is not necessarily the name of
+        the card. It is recommended to use a short and descriptive alias that is easy to remember
+
+        Args:
+            space (str):
+                The space of the card deck
+            name (str):
+                The name of the card deck
+            version (str):
+                The version of the card deck
+            uid (str):
+                The uid of the card deck
+            registry_type (RegistryType):
+                The type of registry the card deck belongs to
+            alias (str):
+                The alias of the card
+        """
+
+class CardDeck:
+    @property
+    def space(self) -> str:
+        """Return the space of the card deck"""
+
+    @property
+    def name(self) -> str:
+        """Return the name of the card deck"""
+
+    @property
+    def version(self) -> str:
+        """Return the version of the card deck"""
+
+    @property
+    def uid(self) -> str:
+        """Return the uid of the card deck"""
+
+    @property
+    def created_at(self) -> datetime:
+        """Return the created at timestamp"""
+
+    @property
+    def cards(self) -> List[CardType]:
+        """Return the cards in the card deck"""
+
+    @property
+    def opsml_version(self) -> str:
+        """Return the opsml version"""

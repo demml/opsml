@@ -4,7 +4,7 @@ use opsml_cards::{
 };
 use opsml_deck::{Card, CardDeck, CardKwargs};
 use opsml_registry::{CardRegistries, CardRegistry};
-use opsml_types::contracts::{Card, CardList};
+use opsml_types::contracts::{CardList, CardRecord};
 use opsml_types::{cards::ComputeEnvironment, RegistryMode, RegistryType};
 
 #[cfg(feature = "server")]
@@ -14,7 +14,7 @@ use pyo3::prelude::*;
 
 #[pymodule]
 pub fn card(m: &Bound<'_, PyModule>) -> PyResult<()> {
-    m.add_class::<Card>()?;
+    m.add_class::<CardRecord>()?;
     m.add_class::<CardList>()?;
     m.add_class::<DataCard>()?;
     m.add_class::<DataCardMetadata>()?;
