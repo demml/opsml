@@ -428,6 +428,34 @@ impl SqlClient for MySqlClient {
                 }
             },
 
+            CardTable::Deck => match card {
+                ServerCard::Deck(record) => {
+                    let query = MySQLQueryHelper::get_carddeck_insert_query();
+                    sqlx::query(&query)
+                        .bind(&record.uid)
+                        .bind(&record.app_env)
+                        .bind(&record.name)
+                        .bind(&record.space)
+                        .bind(record.major)
+                        .bind(record.minor)
+                        .bind(record.patch)
+                        .bind(&record.version)
+                        .bind(&record.pre_tag)
+                        .bind(&record.build_tag)
+                        .bind(&record.username)
+                        .bind(&record.opsml_version)
+                        .execute(&self.pool)
+                        .await
+                        .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+                    Ok(())
+                }
+                _ => {
+                    return Err(SqlError::QueryError(
+                        "Invalid card type for insert".to_string(),
+                    ));
+                }
+            },
+
             _ => {
                 return Err(SqlError::QueryError(
                     "Invalid table name for insert".to_string(),
@@ -595,6 +623,32 @@ impl SqlClient for MySqlClient {
                     Ok(())
                 }
 
+                _ => {
+                    return Err(SqlError::QueryError(
+                        "Invalid card type for insert".to_string(),
+                    ));
+                }
+            },
+
+            CardTable::Deck => match card {
+                ServerCard::Deck(record) => {
+                    let query = MySQLQueryHelper::get_carddeck_update_query();
+                    sqlx::query(&query)
+                        .bind(&record.app_env)
+                        .bind(&record.name)
+                        .bind(&record.space)
+                        .bind(record.major)
+                        .bind(record.minor)
+                        .bind(record.patch)
+                        .bind(&record.version)
+                        .bind(&record.username)
+                        .bind(&record.opsml_version)
+                        .bind(&record.uid)
+                        .execute(&self.pool)
+                        .await
+                        .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+                    Ok(())
+                }
                 _ => {
                     return Err(SqlError::QueryError(
                         "Invalid card type for insert".to_string(),
