@@ -1,16 +1,150 @@
 use crate::base::OpsmlRegistry;
-use opsml_cards::{DataCard, ExperimentCard, ModelCard, PromptCard};
+use crate::CardRegistries;
+use opsml_cards::{Card, CardDeck, DataCard, ExperimentCard, ModelCard, PromptCard};
 use opsml_crypt::{decrypt_directory, encrypt_directory};
-use opsml_error::error::RegistryError;
+use opsml_error::{error::RegistryError, OpsmlError};
 use opsml_storage::storage_client;
 use opsml_types::contracts::*;
 use opsml_types::*;
 use pyo3::prelude::*;
 use pyo3::types::PyString;
 use pyo3::IntoPyObjectExt;
+use std::collections::HashMap;
 use std::path::PathBuf;
 use tempfile::TempDir;
 use tracing::{debug, error, instrument};
+/// Helper function to load a card and convert it to PyObject
+///
+/// # Arguments
+///
+/// * `py`: Python interpreter
+/// * `card_registries`: Card registries
+/// * `card`: Card to load
+/// * `interface`: Optional interface to use
+/// * `load_kwargs`: Optional load kwargs   
+///     
+fn load_and_extract_card(
+    py: Python,
+    card_registries: &CardRegistries,
+    card: &Card,
+    interface: Option<&Bound<'_, PyAny>>,
+) -> PyResult<PyObject> {
+    let card_obj = match card.registry_type {
+        RegistryType::Model => {
+            let model_card = card_registries.model.load_card(
+                py,
+                card.uid.clone(),
+                card.space.clone(),
+                card.name.clone(),
+                card.version.clone(),
+                interface,
+            )?;
+
+            model_card
+        }
+        RegistryType::Data => {
+            let data_card = card_registries.data.load_card(
+                py,
+                card.uid.clone(),
+                card.space.clone(),
+                card.name.clone(),
+                card.version.clone(),
+                interface,
+            )?;
+
+            data_card
+        }
+        RegistryType::Experiment => card_registries.experiment.load_card(
+            py,
+            card.uid.clone(),
+            card.space.clone(),
+            card.name.clone(),
+            card.version.clone(),
+            None,
+        )?,
+        RegistryType::Prompt => card_registries.prompt.load_card(
+            py,
+            card.uid.clone(),
+            card.space.clone(),
+            card.name.clone(),
+            card.version.clone(),
+            None,
+        )?,
+        _ => {
+            return Err(OpsmlError::new_err(format!(
+                "Card type {} not supported",
+                card.registry_type
+            )))
+        }
+    };
+
+    card_obj.into_py_any(py).map_err(|e| {
+        error!("Failed to convert card to PyObject: {}", e);
+        OpsmlError::new_err(e.to_string())
+    })
+}
+
+pub enum CardEnum {
+    ModelCard(ModelCard),
+    DataCard(DataCard),
+    ExperimentCard(ExperimentCard),
+    PromptCard(PromptCard),
+    CardDeck(CardDeck),
+}
+
+impl CardEnum {
+    pub fn into_bound_py_any<'py>(
+        self,
+        py: Python<'py>,
+    ) -> Result<Bound<'py, PyAny>, RegistryError> {
+        let card = match self {
+            CardEnum::ModelCard(card) => card.into_bound_py_any(py),
+            CardEnum::DataCard(card) => card.into_bound_py_any(py),
+            CardEnum::ExperimentCard(card) => card.into_bound_py_any(py),
+            CardEnum::PromptCard(card) => card.into_bound_py_any(py),
+            CardEnum::CardDeck(card) => card.into_bound_py_any(py),
+        };
+
+        match card {
+            Ok(card) => Ok(card),
+            Err(e) => {
+                error!("Failed to convert card to bound: {}", e);
+                Err(RegistryError::Error(e.to_string()))
+            }
+        }
+    }
+}
+
+pub fn load_card_deck<'py>(
+    py: Python<'py>,
+    deck: &mut CardDeck,
+    interfaces: Option<HashMap<String, Bound<'py, PyAny>>>,
+) -> Result<(), RegistryError> {
+    let card_registries = CardRegistries::new().map_err(|e| {
+        error!("Failed to create card registries: {}", e);
+        RegistryError::Error(e.to_string())
+    })?;
+
+    for card in &deck.cards {
+        // Skip if already loaded
+        if deck.card_objs.contains_key(&card.alias) {
+            debug!("Card {} already exists in card_objs", card.alias);
+            continue;
+        }
+
+        // get interface for the card if exists
+        let interface = interfaces.as_ref().and_then(|i| i.get(&card.alias));
+
+        let card_obj =
+            load_and_extract_card(py, &card_registries, card, interface).map_err(|e| {
+                error!("Failed to load card: {}", e);
+                RegistryError::Error(e.to_string())
+            })?;
+        deck.card_objs.insert(card.alias.clone(), card_obj);
+    }
+
+    Ok(())
+}
 
 pub fn check_if_card(card: &Bound<'_, PyAny>) -> Result<(), RegistryError> {
     let is_card: bool = card
@@ -61,7 +195,7 @@ pub fn card_from_string<'py>(
     card_json: String,
     interface: Option<&Bound<'py, PyAny>>,
     key: ArtifactKey,
-) -> Result<Bound<'py, PyAny>, RegistryError> {
+) -> Result<CardEnum, RegistryError> {
     let card = match key.registry_type {
         RegistryType::Model => {
             let mut card =
@@ -71,10 +205,7 @@ pub fn card_from_string<'py>(
                 })?;
 
             card.set_artifact_key(key);
-            card.into_bound_py_any(py).map_err(|e| {
-                error!("Failed to convert card to bound: {}", e);
-                RegistryError::Error(e.to_string())
-            })?
+            CardEnum::ModelCard(card)
         }
 
         RegistryType::Data => {
@@ -85,10 +216,7 @@ pub fn card_from_string<'py>(
                 })?;
 
             card.set_artifact_key(key);
-            card.into_bound_py_any(py).map_err(|e| {
-                error!("Failed to convert card to bound: {}", e);
-                RegistryError::Error(e.to_string())
-            })?
+            CardEnum::DataCard(card)
         }
 
         RegistryType::Experiment => {
@@ -98,10 +226,7 @@ pub fn card_from_string<'py>(
             })?;
 
             card.set_artifact_key(key);
-            card.into_bound_py_any(py).map_err(|e| {
-                error!("Failed to convert card to bound: {}", e);
-                RegistryError::Error(e.to_string())
-            })?
+            CardEnum::ExperimentCard(card)
         }
 
         RegistryType::Prompt => {
@@ -110,11 +235,18 @@ pub fn card_from_string<'py>(
                 RegistryError::Error(e.to_string())
             })?;
 
-            card.into_bound_py_any(py).map_err(|e| {
-                error!("Failed to convert card to bound: {}", e);
-                RegistryError::Error(e.to_string())
-            })?
+            CardEnum::PromptCard(card)
         }
+
+        RegistryType::Deck => {
+            let card = CardDeck::model_validate_json(card_json).map_err(|e| {
+                error!("Failed to validate CardDeck: {}", e);
+                RegistryError::Error(e.to_string())
+            })?;
+
+            CardEnum::CardDeck(card)
+        }
+
         _ => {
             return Err(RegistryError::Error(
                 "Registry type not supported".to_string(),
@@ -173,9 +305,23 @@ pub fn download_card<'py>(
         RegistryError::Error("Failed to read card json".to_string())
     })?;
 
-    let card = card_from_string(py, json_string, interface, key)?;
+    let mut card = card_from_string(py, json_string, interface, key)?;
 
-    Ok(card)
+    match &mut card {
+        // load all cards in the deck
+        CardEnum::CardDeck(deck) => {
+            debug!("Loading card deck: {}", deck.name);
+            // need to check if interface is not None, if not None it needs to be
+            // HashMap<String, Bound<PyAny>>
+            let kwargs =
+                interface.and_then(|i| i.extract::<HashMap<String, Bound<'py, PyAny>>>().ok());
+
+            load_card_deck(py, deck, kwargs)?;
+        }
+        _ => debug!("Card is not a deck, skipping deck loading"),
+    }
+
+    Ok(card.into_bound_py_any(py)?)
 }
 
 /// Save card artifacts to storage

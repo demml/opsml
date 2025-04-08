@@ -11,7 +11,6 @@ doctest = false
 chrono = { workspace = true }
 opsml-error = { workspace = true }
 opsml-interfaces = { workspace = true }
-opsml-registry = { workspace = true }
 opsml-types = { workspace = true }
 opsml-utils = { workspace = true }
 pyo3 = { workspace = true }
