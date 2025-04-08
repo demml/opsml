@@ -268,6 +268,7 @@ impl Default for DataCardRecord {
             experimentcard_uid: None,
             auditcard_uid: None,
             interface_type: CommonKwargs::Undefined.to_string(),
+            opsml_version: env!("CARGO_PKG_VERSION").to_string(),
             username: CommonKwargs::Undefined.to_string(),
         }
     }
@@ -294,6 +295,7 @@ pub struct ModelCardRecord {
     pub auditcard_uid: Option<String>,
     pub interface_type: String,
     pub task_type: String,
+    pub opsml_version: String,
     pub username: String,
 }
 
@@ -311,6 +313,7 @@ impl ModelCardRecord {
         auditcard_uid: Option<String>,
         interface_type: String,
         task_type: String,
+        opsml_version: String,
         username: String,
     ) -> Self {
         let created_at = get_utc_datetime();
@@ -337,6 +340,7 @@ impl ModelCardRecord {
             auditcard_uid,
             interface_type,
             task_type,
+            opsml_version,
             username,
         }
     }
@@ -376,6 +380,7 @@ impl ModelCardRecord {
             auditcard_uid: client_card.auditcard_uid,
             interface_type: client_card.interface_type,
             task_type: client_card.task_type,
+            opsml_version: client_card.opsml_version,
             username: client_card.username,
         })
     }
@@ -403,6 +408,7 @@ impl Default for ModelCardRecord {
             auditcard_uid: None,
             interface_type: CommonKwargs::Undefined.to_string(),
             task_type: CommonKwargs::Undefined.to_string(),
+            opsml_version: env!("CARGO_PKG_VERSION").to_string(),
             username: CommonKwargs::Undefined.to_string(),
         }
     }
@@ -426,6 +432,7 @@ pub struct ExperimentCardRecord {
     pub modelcard_uids: Json<Vec<String>>,
     pub promptcard_uids: Json<Vec<String>>,
     pub experimentcard_uids: Json<Vec<String>>,
+    pub opsml_version: String,
     pub username: String,
 }
 
@@ -448,6 +455,7 @@ impl Default for ExperimentCardRecord {
             modelcard_uids: Json(Vec::new()),
             promptcard_uids: Json(Vec::new()),
             experimentcard_uids: Json(Vec::new()),
+            opsml_version: env!("CARGO_PKG_VERSION").to_string(),
             username: CommonKwargs::Undefined.to_string(),
         }
     }
@@ -464,6 +472,7 @@ impl ExperimentCardRecord {
         modelcard_uids: Vec<String>,
         promptcard_uids: Vec<String>,
         experimentcard_uids: Vec<String>,
+        opsml_version: String,
         username: String,
     ) -> Self {
         let created_at = get_utc_datetime();
@@ -487,6 +496,7 @@ impl ExperimentCardRecord {
             modelcard_uids: Json(modelcard_uids),
             promptcard_uids: Json(promptcard_uids),
             experimentcard_uids: Json(experimentcard_uids),
+            opsml_version,
             username,
         }
     }
@@ -523,6 +533,7 @@ impl ExperimentCardRecord {
             modelcard_uids: Json(client_card.modelcard_uids),
             promptcard_uids: Json(client_card.promptcard_uids),
             experimentcard_uids: Json(client_card.experimentcard_uids),
+            opsml_version: client_card.opsml_version,
             username: client_card.username,
         })
     }
@@ -546,6 +557,7 @@ pub struct AuditCardRecord {
     pub datacard_uids: Json<Vec<String>>,
     pub modelcard_uids: Json<Vec<String>>,
     pub experimentcard_uids: Json<Vec<String>>,
+    pub opsml_version: String,
     pub username: String,
 }
 
@@ -560,6 +572,7 @@ impl AuditCardRecord {
         datacard_uids: Vec<String>,
         modelcard_uids: Vec<String>,
         experimentcard_uids: Vec<String>,
+        opsml_version: String,
         username: String,
     ) -> Self {
         let created_at = get_utc_datetime();
@@ -583,6 +596,7 @@ impl AuditCardRecord {
             datacard_uids: Json(datacard_uids),
             modelcard_uids: Json(modelcard_uids),
             experimentcard_uids: Json(experimentcard_uids),
+            opsml_version,
             username,
         }
     }
@@ -618,6 +632,7 @@ impl AuditCardRecord {
             datacard_uids: Json(client_card.datacard_uids),
             modelcard_uids: Json(client_card.modelcard_uids),
             experimentcard_uids: Json(client_card.experimentcard_uids),
+            opsml_version: client_card.opsml_version,
             username: client_card.username,
         })
     }
@@ -642,6 +657,7 @@ impl Default for AuditCardRecord {
             datacard_uids: Json(Vec::new()),
             modelcard_uids: Json(Vec::new()),
             experimentcard_uids: Json(Vec::new()),
+            opsml_version: env!("CARGO_PKG_VERSION").to_string(),
             username: CommonKwargs::Undefined.to_string(),
         }
     }
@@ -663,6 +679,7 @@ pub struct PromptCardRecord {
     pub tags: Json<Vec<String>>,
     pub experimentcard_uid: Option<String>,
     pub auditcard_uid: Option<String>,
+    pub opsml_version: String,
     pub username: String,
 }
 
@@ -675,6 +692,7 @@ impl PromptCardRecord {
         tags: Vec<String>,
         experimentcard_uid: Option<String>,
         auditcard_uid: Option<String>,
+        opsml_version: String,
         username: String,
     ) -> Self {
         let created_at = get_utc_datetime();
@@ -696,6 +714,7 @@ impl PromptCardRecord {
             tags: Json(tags),
             experimentcard_uid,
             auditcard_uid,
+            opsml_version,
             username,
         }
     }
@@ -730,6 +749,7 @@ impl PromptCardRecord {
             tags: Json(client_card.tags),
             experimentcard_uid: client_card.experimentcard_uid,
             auditcard_uid: client_card.auditcard_uid,
+            opsml_version: client_card.opsml_version,
             username: client_card.username,
         })
     }
@@ -752,6 +772,7 @@ impl Default for PromptCardRecord {
             tags: Json(Vec::new()),
             experimentcard_uid: None,
             auditcard_uid: None,
+            opsml_version: env!("CARGO_PKG_VERSION").to_string(),
             username: CommonKwargs::Undefined.to_string(),
         }
     }

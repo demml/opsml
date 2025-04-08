@@ -430,12 +430,12 @@ impl SqliteQueryHelper {
     }
 
     pub fn get_promptcard_insert_query() -> String {
-        format!("INSERT INTO {} (uid, app_env, name, space, major, minor, patch, version, tags, experimentcard_uid, auditcard_uid, pre_tag, build_tag, opsml_version, username) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", CardTable::Prompt)
+        format!("INSERT INTO {} (uid, app_env, name, space, major, minor, patch, version, tags, experimentcard_uid, auditcard_uid, pre_tag, build_tag, username, opsml_version) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", CardTable::Prompt)
             .to_string()
     }
 
     pub fn get_datacard_insert_query() -> String {
-        format!("INSERT INTO {} (uid, app_env, name, space, major, minor, patch, version, data_type, interface_type, tags, experimentcard_uid, auditcard_uid, pre_tag, build_tag, opsml_version, username) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", CardTable::Data)
+        format!("INSERT INTO {} (uid, app_env, name, space, major, minor, patch, version, data_type, interface_type, tags, experimentcard_uid, auditcard_uid, pre_tag, build_tag, username, opsml_version) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", CardTable::Data)
             .to_string()
     }
 
@@ -460,8 +460,8 @@ impl SqliteQueryHelper {
         auditcard_uid, 
         pre_tag, 
         build_tag,
-        opsml_version,
-        username
+        username,
+        opsml_version
         ) 
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             CardTable::Model
@@ -487,8 +487,8 @@ impl SqliteQueryHelper {
         promptcard_uids,
         pre_tag, 
         build_tag,
-        opsml_version,
-        username
+        username,
+        opsml_version
         ) 
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             CardTable::Experiment
@@ -514,8 +514,8 @@ impl SqliteQueryHelper {
         experimentcard_uids, 
         pre_tag, 
         build_tag,
-        opsml_version,
-        username
+        username,
+        opsml_version
         ) 
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             CardTable::Audit
@@ -524,7 +524,7 @@ impl SqliteQueryHelper {
     }
 
     pub fn get_carddeck_insert_query() -> String {
-        format!("INSERT INTO {} (uid, app_env, name, space, major, minor, patch, version, pre_tag, build_tag, opsml_version, username) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", CardTable::Deck)
+        format!("INSERT INTO {} (uid, app_env, name, space, major, minor, patch, version, pre_tag, build_tag, username, opsml_version) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", CardTable::Deck)
             .to_string()
     }
 
@@ -543,8 +543,8 @@ impl SqliteQueryHelper {
         auditcard_uid = ?, 
         pre_tag = ?, 
         build_tag = ?,
-        opsml_version = ?,
-        username = ?
+        username = ?,
+        opsml_version = ?
         WHERE uid = ?",
             CardTable::Prompt
         )
@@ -568,8 +568,8 @@ impl SqliteQueryHelper {
         auditcard_uid = ?, 
         pre_tag = ?, 
         build_tag = ?,
-        opsml_version = ?,
-        username = ?
+        username = ?,
+        opsml_version = ?
         WHERE uid = ?",
             CardTable::Data
         )
@@ -596,8 +596,8 @@ impl SqliteQueryHelper {
         auditcard_uid = ?, 
         pre_tag = ?, 
         build_tag = ?,
-        opsml_version = ?,
-        username = ?
+        username = ?,
+        opsml_version = ?
         WHERE uid = ?",
             CardTable::Model
         )
@@ -621,8 +621,8 @@ impl SqliteQueryHelper {
         promptcard_uids = ?,
         pre_tag = ?, 
         build_tag = ?,
-        opsml_version = ?,
-        username = ?
+        username = ?,
+        opsml_version = ?
         WHERE uid = ?",
             CardTable::Experiment
         )
@@ -646,8 +646,8 @@ impl SqliteQueryHelper {
         experimentcard_uids = ?, 
         pre_tag = ?, 
         build_tag = ?,
-        opsml_version = ?,
-        username = ?
+        username = ?,
+        opsml_version = ?
         WHERE uid = ?",
             CardTable::Audit
         )
