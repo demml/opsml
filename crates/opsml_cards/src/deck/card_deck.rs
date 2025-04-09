@@ -50,15 +50,44 @@ pub struct Card {
 #[pymethods]
 impl Card {
     #[new]
-    #[pyo3(signature = (registry_type, alias, space=None, name=None, version=None, uid=None))]
+    #[pyo3(signature = (alias, registry_type=None, space=None, name=None, version=None, uid=None, card=None))]
     pub fn new(
-        registry_type: RegistryType,
         alias: String,
+        registry_type: Option<RegistryType>,
         space: Option<&str>,
         name: Option<&str>,
         version: Option<&str>,
         uid: Option<&str>,
+        card: Option<Bound<'_, PyAny>>,
     ) -> PyResult<Self> {
+        // if card is not None, then set the registry_type and alias
+        if let Some(card) = card {
+            let registry_type = card.getattr("registry_type")?.extract::<RegistryType>()?;
+            let uid = card
+                .getattr("uid")?
+                .extract::<Option<String>>()?
+                .ok_or_else(|| {
+                    OpsmlError::new_err("Unable to get card uid. Is this card registered?")
+                })?;
+            return Ok(Card {
+                space: None,
+                name: None,
+                version: None,
+                uid: Some(uid),
+                registry_type,
+                alias,
+            });
+        }
+
+        // if registry is none, raise error
+        let registry_type = match registry_type {
+            Some(registry_type) => registry_type,
+            None => {
+                error!("Registry type is required unless a registered card is provided");
+                return Err(OpsmlError::new_err("Registry type is required"));
+            }
+        };
+
         // check that at least space/name  or uid is provided
         let has_space_or_name = space.is_some() || name.is_some();
         let has_uid = uid.is_some();
@@ -190,12 +219,18 @@ pub struct CardDeck {
 impl CardDeck {
     #[new]
     #[pyo3(signature = (space, name,  cards, version=None))]
-    pub fn new(space: &str, name: &str, cards: Vec<Card>, version: Option<&str>) -> PyResult<Self> {
+    pub fn new(
+        space: &str,
+        name: &str,
+        cards: Vec<Card>, // can be Vec<Card> or Vec<ModelCard, DataCard, etc.>
+        version: Option<&str>,
+    ) -> PyResult<Self> {
         let base_args =
             BaseArgs::create_args(Some(name), Some(space), version, None).map_err(|e| {
                 error!("Failed to create base args: {}", e);
                 OpsmlError::new_err(e.to_string())
             })?;
+
         Ok(CardDeck {
             space: base_args.0,
             name: base_args.1,
