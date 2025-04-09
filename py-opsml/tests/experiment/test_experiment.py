@@ -199,6 +199,10 @@ def test_experimentcard_register(
                         uid=modelcard.uid,
                         registry_type=RegistryType.Model,
                     ),
+                    Card(
+                        alias="data",
+                        card=datacard,
+                    ),
                 ],
             )
             exp.register_card(deck)
