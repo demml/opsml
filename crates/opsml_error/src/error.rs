@@ -6,6 +6,25 @@ use thiserror::Error;
 use tracing::error;
 
 #[derive(Error, Debug)]
+pub enum PyProjectTomlError {
+    #[error("Failed to find absolute path")]
+    AbsolutePathError(#[source] std::io::Error),
+
+    // Borrowed from UV
+    #[error("No `pyproject.toml` found in current directory or any parent directory")]
+    MissingPyprojectToml,
+
+    #[error("Failed to read `pyproject.toml`")]
+    ReadError(#[source] std::io::Error),
+
+    #[error("Failed to parse `pyproject.toml`")]
+    ParseError(#[from] toml_edit::TomlError),
+
+    #[error("Failed to deserialize `pyproject.toml`")]
+    TomlSchema(#[from] toml::de::Error),
+}
+
+#[derive(Error, Debug)]
 pub enum EventError {
     #[error("{0}")]
     Error(String),

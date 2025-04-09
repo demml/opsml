@@ -11,7 +11,7 @@ pub const DOWNLOAD_CHUNK_SIZE: usize = 1024 * 1024 * 5;
 pub const MAX_FILE_SIZE: usize = 1024 * 1024 * 1024 * 50;
 
 #[pyclass(eq, eq_int)]
-#[derive(Debug, PartialEq, Clone, Serialize, Deserialize, Default)]
+#[derive(Debug, Eq, Hash, PartialEq, Clone, Serialize, Deserialize, Default)]
 pub enum RegistryType {
     #[default]
     Data,
