@@ -1308,6 +1308,54 @@ class CardDeck:
                 data interface load method
         """
 
+    @staticmethod
+    def load_from_path(
+        path: Path,
+        load_kwargs: Optional[Dict[str, Dict[str, Any]]] = None,
+    ) -> "CardDeck":
+        """Load a card deck from a directory
+
+        Example:
+        ```python
+        from opsml import CardDeck
+
+        # Load a card deck from a directory
+        load_kwargs = {
+            "alias1": {
+                "load_kwargs": ModelLoadKwargs(load_onnx=True),
+            },
+        }
+        deck = CardDeck.load_from_path(path=Path("path"), load_kwargs)
+        ```
+
+        Args:
+            path (Path):
+                Path to load the card deck from
+            load_kwargs (Dict[str, Dict[str, Any]]):
+                Optional load kwargs to that will be passed to the interface load method.
+
+                Load kwarg structure:
+                {
+                    "alias1": {
+                        "interface": ...,
+                        "load_kwargs": "DataLoadKwargs | ModelLoadKwargs"
+                    },
+                    "alias2": {
+                        "interface": ...,
+                        "load_kwargs": "DataLoadKwargs | ModelLoadKwargs"
+                    },
+                    ...
+                }
+
+                Where alias1, alias2, etc. are the aliases of the cards in the card deck.
+                Interface is for custom interfaces that need to be passed to the card being loaded.
+                Load kwargs are the kwargs to be passed to the interface load method.
+
+        Returns:
+            CardDeck:
+                The loaded card deck
+        """
+
     def __getitem__(self, alias: str) -> CardType:
         """Get a card from the card deck by alias
 
