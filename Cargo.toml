@@ -35,6 +35,7 @@ opsml-sql = { path = "crates/opsml_sql" }
 opsml-state = { path = "crates/opsml_state" }
 opsml-storage = { path = "crates/opsml_storage" }
 opsml-todo = { path = "crates/opsml_todo" }
+opsml-toml = { path = "crates/opsml_toml" }
 opsml-types = { path = "crates/opsml_types" }
 opsml-utils = { path = "crates/opsml_utils" }
 potato-head = { path = "crates/potato_head" }
@@ -94,6 +95,7 @@ time = "0.*"
 tokio = { version = ">1.13.0", features = ["rt", "rt-multi-thread", "macros"] }
 tokio-util = { version = "0.*",  features = ["codec", "io"]}
 tokio-stream = { version = "0.*", features = ["sync"] }
+toml_edit = { version = "0.*" }
 tower-http = { version = "0.*", features = ["cors", "fs", "trace"] }
 tracing = "0.*"
 tracing-appender = "0.*"

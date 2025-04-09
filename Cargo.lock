@@ -3859,6 +3859,7 @@ dependencies = [
  "pyo3",
  "serde",
  "thiserror 2.0.12",
+ "toml_edit",
  "tracing",
 ]
 
@@ -4101,6 +4102,17 @@ dependencies = [
  "rayon",
  "tabled",
  "walkdir",
+]
+
+[[package]]
+name = "opsml-toml"
+version = "0.1.0"
+dependencies = [
+ "opsml-cards",
+ "opsml-error",
+ "opsml-types",
+ "serde",
+ "toml_edit",
 ]
 
 [[package]]
