@@ -904,7 +904,9 @@ class PromptCard:
     def __str__(self): ...
 
 # Define a TypeVar that can only be one of our card types
-CardType = TypeVar("CardType", DataCard, ModelCard, PromptCard, ExperimentCard)  # pylint: disable=invalid-name
+CardType = TypeVar(
+    "CardType", DataCard, ModelCard, PromptCard, ExperimentCard, CardDeck
+)  # pylint: disable=invalid-name
 
 class CardRegistry(Generic[CardType]):
     @overload
@@ -925,6 +927,10 @@ class CardRegistry(Generic[CardType]):
     ) -> "CardRegistry[ExperimentCard]": ...
     @overload
     def __init__(
+        self, registry_type: Literal[RegistryType.Deck]
+    ) -> "CardRegistry[CardDeck]": ...
+    @overload
+    def __init__(
         self, registry_type: Literal[RegistryType.Audit]
     ) -> "CardRegistry[Any]": ...
 
@@ -943,6 +949,8 @@ class CardRegistry(Generic[CardType]):
     def __init__(
         self, registry_type: Literal["experiment"]
     ) -> "CardRegistry[ExperimentCard]": ...
+    @overload
+    def __init__(self, registry_type: Literal["deck"]) -> "CardRegistry[CardDeck]": ...
     @overload
     def __init__(self, registry_type: Literal["audit"]) -> "CardRegistry[Any]": ...
     def __init__(self, registry_type: Union[RegistryType, str]) -> None:
@@ -1052,6 +1060,15 @@ class CardRegistry(Generic[CardType]):
         version: Optional[str] = None,
         interface: Optional[DataInterface] = None,
     ) -> DataCard: ...
+    @overload
+    def load_card(
+        self: "CardRegistry[CardDeck]",
+        uid: Optional[str] = None,
+        space: Optional[str] = None,
+        name: Optional[str] = None,
+        version: Optional[str] = None,
+        interface=None,
+    ) -> CardDeck: ...
     @overload
     def load_card(
         self: "CardRegistry[ModelCard]",

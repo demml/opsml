@@ -327,9 +327,6 @@ impl ModelCard {
             tmp_path
         };
 
-        // download assets
-        self.download_all_artifacts(&path)?;
-
         let save_metadata = self
             .metadata
             .interface_metadata
