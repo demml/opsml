@@ -1,3 +1,4 @@
+use crate::utils::BaseArgs;
 use chrono::{DateTime, Utc};
 use opsml_crypt::decrypt_directory;
 use opsml_error::error::{CardError, OpsmlError};
@@ -9,19 +10,18 @@ use opsml_interfaces::FeatureSchema;
 use opsml_storage::storage_client;
 use opsml_types::contracts::{ArtifactKey, CardRecord, DataCardClientRecord};
 use opsml_types::interfaces::types::DataInterfaceType;
-use opsml_types::{cards::BaseArgs, DataType, RegistryType, SaveName, Suffix};
+use opsml_types::{DataType, RegistryType, SaveName, Suffix};
 use opsml_utils::{create_tmp_path, get_utc_datetime, PyHelperFuncs};
 use pyo3::types::PyList;
 use pyo3::{prelude::*, IntoPyObjectExt};
 use pyo3::{PyTraverseError, PyVisit};
-use std::path::{Path, PathBuf};
-use tracing::error;
-
 use serde::{
     de::{self, MapAccess, Visitor},
     ser::SerializeStruct,
     Deserialize, Deserializer, Serialize, Serializer,
 };
+use std::path::{Path, PathBuf};
+use tracing::error;
 
 fn interface_from_metadata<'py>(
     py: Python<'py>,
@@ -112,6 +112,7 @@ impl DataCard {
         tags: Option<&Bound<'_, PyList>>,
         metadata: Option<DataCardMetadata>,
     ) -> PyResult<Self> {
+        let registry_type = RegistryType::Data;
         let tags = match tags {
             None => Vec::new(),
             Some(t) => t
@@ -119,10 +120,11 @@ impl DataCard {
                 .map_err(|e| OpsmlError::new_err(e.to_string()))?,
         };
 
-        let base_args = BaseArgs::create_args(name, space, version, uid).map_err(|e| {
-            error!("Failed to create base args: {}", e);
-            OpsmlError::new_err(e.to_string())
-        })?;
+        let base_args =
+            BaseArgs::create_args(name, space, version, uid, &registry_type).map_err(|e| {
+                error!("Failed to create base args: {}", e);
+                OpsmlError::new_err(e.to_string())
+            })?;
 
         let py = interface.py();
 
@@ -162,7 +164,7 @@ impl DataCard {
             uid: base_args.3,
             tags,
             metadata,
-            registry_type: RegistryType::Data,
+            registry_type,
             artifact_key: None,
             app_env: std::env::var("APP_ENV").unwrap_or_else(|_| "dev".to_string()),
             created_at: get_utc_datetime(),

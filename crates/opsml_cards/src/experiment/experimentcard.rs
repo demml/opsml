@@ -1,12 +1,11 @@
+use crate::utils::BaseArgs;
 use chrono::{DateTime, Utc};
 use opsml_crypt::decrypt_directory;
 use opsml_error::{CardError, OpsmlError};
 use opsml_storage::storage_client;
 use opsml_types::contracts::{CardRecord, ExperimentCardClientRecord};
 use opsml_types::{
-    cards::{BaseArgs, ComputeEnvironment},
-    contracts::ArtifactKey,
-    RegistryType, SaveName, Suffix,
+    cards::ComputeEnvironment, contracts::ArtifactKey, RegistryType, SaveName, Suffix,
 };
 use opsml_utils::{get_utc_datetime, PyHelperFuncs};
 use pyo3::prelude::*;
@@ -97,6 +96,7 @@ impl ExperimentCard {
         uid: Option<&str>,
         tags: Option<&Bound<'_, PyList>>,
     ) -> PyResult<Self> {
+        let registry_type = RegistryType::Experiment;
         let tags = match tags {
             None => Vec::new(),
             Some(t) => t
@@ -104,10 +104,11 @@ impl ExperimentCard {
                 .map_err(|e| OpsmlError::new_err(e.to_string()))?,
         };
 
-        let base_args = BaseArgs::create_args(name, space, version, uid).map_err(|e| {
-            error!("Failed to create base args: {}", e);
-            OpsmlError::new_err(e.to_string())
-        })?;
+        let base_args =
+            BaseArgs::create_args(name, space, version, uid, &registry_type).map_err(|e| {
+                error!("Failed to create base args: {}", e);
+                OpsmlError::new_err(e.to_string())
+            })?;
 
         Ok(Self {
             space: base_args.0,
@@ -115,7 +116,7 @@ impl ExperimentCard {
             version: base_args.2,
             uid: base_args.3,
             tags,
-            registry_type: RegistryType::Experiment,
+            registry_type,
             artifact_key: None,
             app_env: std::env::var("APP_ENV").unwrap_or_else(|_| "dev".to_string()),
             created_at: get_utc_datetime(),

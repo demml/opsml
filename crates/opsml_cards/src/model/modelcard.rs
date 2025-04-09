@@ -9,10 +9,10 @@ use opsml_interfaces::{
 use opsml_interfaces::{ModelInterfaceMetadata, ModelLoadKwargs, ModelSaveKwargs};
 use opsml_types::contracts::{ArtifactKey, CardRecord, ModelCardClientRecord};
 use opsml_types::{
-    cards::BaseArgs, DataType, ModelInterfaceType, ModelType, RegistryType, SaveName, Suffix,
-    TaskType,
+    DataType, ModelInterfaceType, ModelType, RegistryType, SaveName, Suffix, TaskType,
 };
 
+use crate::utils::BaseArgs;
 use opsml_storage::storage_client;
 use opsml_utils::{create_tmp_path, get_utc_datetime, PyHelperFuncs};
 use pyo3::prelude::*;
@@ -145,6 +145,7 @@ impl ModelCard {
         metadata: Option<ModelCardMetadata>,
         to_onnx: Option<bool>,
     ) -> PyResult<Self> {
+        let registry_type = RegistryType::Model;
         let tags = match tags {
             None => Vec::new(),
             Some(t) => t
@@ -152,10 +153,11 @@ impl ModelCard {
                 .map_err(|e| OpsmlError::new_err(e.to_string()))?,
         };
 
-        let base_args = BaseArgs::create_args(name, space, version, uid).map_err(|e| {
-            error!("Failed to create base args: {}", e);
-            OpsmlError::new_err(e.to_string())
-        })?;
+        let base_args =
+            BaseArgs::create_args(name, space, version, uid, &registry_type).map_err(|e| {
+                error!("Failed to create base args: {}", e);
+                OpsmlError::new_err(e.to_string())
+            })?;
 
         if interface.is_instance_of::<ModelInterface>() {
             //
@@ -207,7 +209,7 @@ impl ModelCard {
             uid: base_args.3,
             tags,
             metadata,
-            registry_type: RegistryType::Model,
+            registry_type,
             to_onnx: to_onnx.unwrap_or(false),
             artifact_key: None,
             app_env: std::env::var("APP_ENV").unwrap_or_else(|_| "dev".to_string()),

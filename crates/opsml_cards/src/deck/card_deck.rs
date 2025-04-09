@@ -1,9 +1,9 @@
+use crate::utils::BaseArgs;
 use crate::{DataCard, ExperimentCard, ModelCard, PromptCard};
 use chrono::{DateTime, Utc};
 use opsml_error::{CardError, OpsmlError};
 use opsml_interfaces::{DataLoadKwargs, ModelLoadKwargs};
 use opsml_types::{
-    cards::BaseArgs,
     contracts::{CardDeckClientRecord, CardRecord},
     RegistryType, SaveName, Suffix,
 };
@@ -225,11 +225,14 @@ impl CardDeck {
         cards: Vec<Card>, // can be Vec<Card> or Vec<ModelCard, DataCard, etc.>
         version: Option<&str>,
     ) -> PyResult<Self> {
+        let registry_type = RegistryType::Deck;
         let base_args =
-            BaseArgs::create_args(Some(name), Some(space), version, None).map_err(|e| {
-                error!("Failed to create base args: {}", e);
-                OpsmlError::new_err(e.to_string())
-            })?;
+            BaseArgs::create_args(Some(name), Some(space), version, None, &registry_type).map_err(
+                |e| {
+                    error!("Failed to create base args: {}", e);
+                    OpsmlError::new_err(e.to_string())
+                },
+            )?;
 
         Ok(CardDeck {
             space: base_args.0,
@@ -242,7 +245,7 @@ impl CardDeck {
             card_objs: HashMap::new(),
             app_env: std::env::var("APP_ENV").unwrap_or_else(|_| "dev".to_string()),
             is_card: true,
-            registry_type: RegistryType::Deck,
+            registry_type,
         })
     }
 
