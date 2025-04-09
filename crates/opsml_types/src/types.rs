@@ -1,6 +1,6 @@
 use opsml_error::TypeError;
 use pyo3::prelude::*;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
 use std::ffi::OsStr;
 use std::fmt;
 use std::fmt::Display;
@@ -11,7 +11,7 @@ pub const DOWNLOAD_CHUNK_SIZE: usize = 1024 * 1024 * 5;
 pub const MAX_FILE_SIZE: usize = 1024 * 1024 * 1024 * 50;
 
 #[pyclass(eq, eq_int)]
-#[derive(Debug, Eq, Hash, PartialEq, Clone, Serialize, Deserialize, Default)]
+#[derive(Debug, Eq, Hash, PartialEq, Clone, Serialize, Default)]
 pub enum RegistryType {
     #[default]
     Data,
@@ -25,6 +25,32 @@ pub enum RegistryType {
     ArtifactKey,
     Prompt,
     Deck,
+}
+
+impl<'de> Deserialize<'de> for RegistryType {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        match s.to_lowercase().as_str() {
+            "data" => Ok(RegistryType::Data),
+            "model" => Ok(RegistryType::Model),
+            "experiment" => Ok(RegistryType::Experiment),
+            "audit" => Ok(RegistryType::Audit),
+            "metrics" => Ok(RegistryType::Metrics),
+            "hardware_metrics" => Ok(RegistryType::HardwareMetrics),
+            "parameters" => Ok(RegistryType::Parameters),
+            "users" => Ok(RegistryType::Users),
+            "artifact_key" => Ok(RegistryType::ArtifactKey),
+            "prompt" => Ok(RegistryType::Prompt),
+            "deck" => Ok(RegistryType::Deck),
+            _ => Err(serde::de::Error::custom(format!(
+                "Invalid registry type: {}",
+                s
+            ))),
+        }
+    }
 }
 
 impl Display for RegistryType {

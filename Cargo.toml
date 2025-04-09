@@ -95,7 +95,7 @@ time = "0.*"
 tokio = { version = ">1.13.0", features = ["rt", "rt-multi-thread", "macros"] }
 tokio-util = { version = "0.*",  features = ["codec", "io"]}
 tokio-stream = { version = "0.*", features = ["sync"] }
-toml_edit = { version = "0.*" }
+toml_edit = { version = "0.*" , features = ["serde"]}
 tower-http = { version = "0.*", features = ["cors", "fs", "trace"] }
 tracing = "0.*"
 tracing-appender = "0.*"
