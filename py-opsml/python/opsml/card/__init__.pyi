@@ -414,6 +414,7 @@ class ModelCard:
         raise an error if the interface is not set or if the model
         has not been loaded.
         """
+
     @property
     def app_env(self) -> str:
         """Returns the app env"""
@@ -904,10 +905,251 @@ class PromptCard:
 
     def __str__(self): ...
 
+class Card:
+    """Represents a card from a given registry that can be used in a card deck"""
+
+    def __init__(
+        self,
+        alias: str,
+        registry_type: Optional[RegistryType],
+        space: Optional[str],
+        name: Optional[str],
+        version: Optional[str],
+        uid: Optional[str],
+        card: Optional[CardType],
+    ) -> None:
+        """Initialize the card deck. Card accepts either a combination of
+        space and name (with version as optional) or a uid. If only space and name are
+        provided with no version, the latest version for a given space and name will be used
+        (e.g. {space}/{name}/v*). If a version is provided, it must follow semver rules that
+        are compatible with opsml (e.g. v1.*, v1.2.3, v2.3.4-alpha, etc.). If both space/name and uid
+        are provided, the uid will take precedence. If neither space/name nor uid are provided,
+        an error will be raised.
+
+        Alias is used to identify the card in the card deck and is not necessarily the name of
+        the card. It is recommended to use a short and descriptive alias that is easy to remember.
+
+        Example:
+
+        ```python
+        deck = CardDeck(...)
+        deck["my_alias"]
+        ```
+
+
+        Args:
+            alias (str):
+                The alias of the card
+            registry_type (RegistryType):
+                The type of registry the card deck belongs to. This is
+                required if no card is provided.
+            space (str):
+                The space of the card deck
+            name (str):
+                The name of the card deck
+            version (str):
+                The version of the card deck
+            uid (str):
+                The uid of the card deck
+            card (Union[DataCard, ModelCard, PromptCard, ExperimentCard]):
+                Optional card to add to the deck. If provided, arguments will
+                be extracted from the card. This card must be registered in a registry.
+
+
+        Example:
+
+        ```python
+        from opsml import Card, CardDeck, RegistryType
+
+        # With arguments
+        card = Card(
+            alias="my_alias",
+            registry_type=RegistryType.Model,
+            space="my_space",
+            name="my_name",
+            version="1.0.0",
+        )
+
+        # With card uid
+        card = Card(
+            alias="my_alias",
+            registry_type=RegistryType.Model,
+            uid="my_uid",
+        )
+
+        # With registered card
+        card = Card(
+            alias="my_alias",
+            card=model_card,  # ModelCard object
+        )
+        ```
+
+        """
+
+class CardDeck:
+    """Creates a CardDeck to hold a collection of cards."""
+
+    def __init__(
+        self,
+        space: str,
+        name: str,
+        cards: List[Card],
+        version: Optional[str],
+    ) -> None:
+        """Initialize the card deck
+
+        Args:
+            space (str):
+                The space of the card deck
+            name (str):
+                The name of the card deck
+            cards (List[Card]):
+                The cards in the card deck
+            version (str | None):
+                The version of the card deck. If not provided, the latest version
+                for a given space and name will be used (e.g. {space}/{name}/v*).
+        """
+
+    @property
+    def space(self) -> str:
+        """Return the space of the card deck"""
+
+    @property
+    def name(self) -> str:
+        """Return the name of the card deck"""
+
+    @property
+    def version(self) -> str:
+        """Return the version of the card deck"""
+
+    @property
+    def uid(self) -> str:
+        """Return the uid of the card deck"""
+
+    @property
+    def created_at(self) -> datetime:
+        """Return the created at timestamp"""
+
+    @property
+    def cards(self) -> List[CardType]:
+        """Return the cards in the card deck"""
+
+    @property
+    def opsml_version(self) -> str:
+        """Return the opsml version"""
+
+    def save(self, path: Path) -> None:
+        """Save the card deck to a directory
+
+        Args:
+            path (Path):
+                Path to save the card deck.
+        """
+
+    def model_validate_json(self, json_string: str) -> "CardDeck":
+        """Load card deck from json string
+
+        Args:
+            json_string (str):
+                The json string to validate
+        """
+
+    def load(
+        self,
+        load_kwargs: Optional[ModelLoadKwargs | DataLoadKwargs] = None,
+    ) -> None:
+        """Call the load method on each Card that requires additional loading.
+        This applies to ModelCards and DataCards. PromptCards and ExperimentCards
+        do not require additional loading and are loaded automatically when loading
+        the CardDeck from the registry.
+
+        Args:
+            load_kwargs (ModelLoadKwargs | DataLoadKwargs):
+                Optional load kwargs to that will be passed to the
+                data interface load method
+        """
+
+    @staticmethod
+    def load_from_path(
+        path: Optional[Path] = None,
+        load_kwargs: Optional[Dict[str, Dict[str, Any]]] = None,
+    ) -> "CardDeck":
+        """Loads a card deck and its associated cards from a filesystem path.
+
+        Args:
+            path (Path):
+                Path to load the card deck from. Defaults to "card_deck".
+            load_kwargs (Dict[str, Dict[str, Any]]):
+                Optional kwargs for loading cards. Expected format:
+                {
+                    "card_alias": {
+                        "interface": interface_object,
+                        "load_kwargs": DataLoadKwargs | ModelLoadKwargs
+                    }
+                }
+
+        Returns:
+            CardDeck: The loaded card deck with all cards instantiated.
+
+        Raises:
+            PyError: If card deck JSON cannot be read
+            PyError: If cards cannot be loaded
+            PyError: If invalid kwargs are provided
+
+        Example:
+            ```python
+            # Load with custom kwargs for model loading
+            load_kwargs = {
+                "model_card": {
+                    "load_kwargs": ModelLoadKwargs(load_onnx=True)
+                }
+            }
+            deck = CardDeck.load_from_path(load_kwargs=load_kwargs)
+            ```
+        """
+
+    def __getitem__(self, alias: str) -> CardType:
+        """Get a card from the card deck by alias
+
+        Args:
+            alias (str):
+                The alias of the card to get
+
+        Returns:
+            Card:
+                The card with the given alias
+        """
+
+    def download_artifacts(self, path: Optional[Path] = None) -> None:
+        """Download artifacts associated with each card in the card deck. This method
+        will always overwrite existing artifacts.
+
+        If the path is not provided, the artifacts will be saved to a directory.
+
+        ```
+        card_deck/
+        |-- {name}-{version}/
+            |-- alias1/
+            |-- alias2/
+            |-- alias3/
+        `-- ...
+        ```
+
+        Args:
+            path (Path):
+                Top-level Path to download the artifacts to. If not provided, the artifacts will be saved
+                to a directory using the CardDeck name.
+        """
+
 # Define a TypeVar that can only be one of our card types
-CardType = TypeVar(
-    "CardType", DataCard, ModelCard, PromptCard, ExperimentCard, CardDeck
-)  # pylint: disable=invalid-name
+CardType = TypeVar(  # pylint: disable=invalid-name
+    "CardType",
+    DataCard,
+    ModelCard,
+    PromptCard,
+    ExperimentCard,
+    CardDeck,
+)
 
 class CardRegistry(Generic[CardType]):
     @overload
@@ -1163,238 +1405,5 @@ class CardRegistries:
     def audit(self) -> CardRegistry[Any]: ...
     @property
     def prompt(self) -> CardRegistry[PromptCard]: ...
-
-class Card:
-    """Represents a card from a given registry that can be used in a card deck"""
-
-    def __init__(
-        self,
-        alias: str,
-        registry_type: Optional[RegistryType],
-        space: Optional[str],
-        name: Optional[str],
-        version: Optional[str],
-        uid: Optional[str],
-    ) -> None:
-        """Initialize the card deck. Card accepts either a combination of
-        space and name (with version as optional) or a uid. If only space and name are
-        provided with no version, the latest version for a given space and name will be used
-        (e.g. {space}/{name}/v*). If a version is provided, it must follow semver rules that
-        are compatible with opsml (e.g. v1.*, v1.2.3, v2.3.4-alpha, etc.). If both space/name and uid
-        are provided, the uid will take precedence. If neither space/name nor uid are provided,
-        an error will be raised.
-
-        Alias is used to identify the card in the card deck and is not necessarily the name of
-        the card. It is recommended to use a short and descriptive alias that is easy to remember.
-
-        Example:
-
-        ```python
-        deck = CardDeck(...)
-        deck["my_alias"]
-        ```
-
-
-        Args:
-            alias (str):
-                The alias of the card
-            registry_type (RegistryType):
-                The type of registry the card deck belongs to. This is
-                required if no card is provided.
-            space (str):
-                The space of the card deck
-            name (str):
-                The name of the card deck
-            version (str):
-                The version of the card deck
-            uid (str):
-                The uid of the card deck
-            card (Union[DataCard, ModelCard, PromptCard, ExperimentCard]):
-                Optional card to add to the deck. If provided, arguments will
-                be extracted from the card. This card must be registered in a registry.
-
-
-        Example:
-
-        ```python
-        from opsml import Card, CardDeck, RegistryType
-
-        # With arguments
-        card = Card(
-            alias="my_alias",
-            registry_type=RegistryType.Model,
-            space="my_space",
-            name="my_name",
-            version="1.0.0",
-        )
-
-        # With card uid
-        card = Card(
-            alias="my_alias",
-            registry_type=RegistryType.Model,
-            uid="my_uid",
-        )
-
-        # With registered card
-        card = Card(
-            alias="my_alias",
-            card=model_card,  # ModelCard object
-        )
-        ```
-
-        """
-
-class CardDeck:
-    """Creates a CardDeck to hold a collection of cards."""
-
-    def __init__(
-        self,
-        space: str,
-        name: str,
-        cards: List[Card],
-        version: Optional[str],
-    ) -> None:
-        """Initialize the card deck
-
-        Args:
-            space (str):
-                The space of the card deck
-            name (str):
-                The name of the card deck
-            cards (List[Card]):
-                The cards in the card deck
-            version (str | None):
-                The version of the card deck. If not provided, the latest version
-                for a given space and name will be used (e.g. {space}/{name}/v*).
-        """
-
     @property
-    def space(self) -> str:
-        """Return the space of the card deck"""
-
-    @property
-    def name(self) -> str:
-        """Return the name of the card deck"""
-
-    @property
-    def version(self) -> str:
-        """Return the version of the card deck"""
-
-    @property
-    def uid(self) -> str:
-        """Return the uid of the card deck"""
-
-    @property
-    def created_at(self) -> datetime:
-        """Return the created at timestamp"""
-
-    @property
-    def cards(self) -> List[CardType]:
-        """Return the cards in the card deck"""
-
-    @property
-    def opsml_version(self) -> str:
-        """Return the opsml version"""
-
-    def save(self, path: Path) -> None:
-        """Save the card deck to a directory
-
-        Args:
-            path (Path):
-                Path to save the card deck.
-        """
-
-    def model_validate_json(self, json_string: str) -> "CardDeck":
-        """Load card deck from json string
-
-        Args:
-            json_string (str):
-                The json string to validate
-        """
-
-    def load(
-        self,
-        load_kwargs: Optional[ModelLoadKwargs | DataLoadKwargs] = None,
-    ) -> None:
-        """Call the load method on each Card that requires additional loading.
-        This applies to ModelCards and DataCards. PromptCards and ExperimentCards
-        do not require additional loading and are loaded automatically when loading
-        the CardDeck from the registry.
-
-        Args:
-            load_kwargs (ModelLoadKwargs | DataLoadKwargs):
-                Optional load kwargs to that will be passed to the
-                data interface load method
-        """
-
-    @staticmethod
-    def load_from_path(
-        path: Optional[Path] = None,
-        load_kwargs: Optional[Dict[str, Dict[str, Any]]] = None,
-    ) -> "CardDeck":
-        """Loads a card deck and its associated cards from a filesystem path.
-
-        Args:
-            path (Path):
-                Path to load the card deck from. Defaults to "card_deck".
-            load_kwargs (Dict[str, Dict[str, Any]]):
-                Optional kwargs for loading cards. Expected format:
-                {
-                    "card_alias": {
-                        "interface": interface_object,
-                        "load_kwargs": DataLoadKwargs | ModelLoadKwargs
-                    }
-                }
-
-        Returns:
-            CardDeck: The loaded card deck with all cards instantiated.
-
-        Raises:
-            PyError: If card deck JSON cannot be read
-            PyError: If cards cannot be loaded
-            PyError: If invalid kwargs are provided
-
-        Example:
-            ```python
-            # Load with custom kwargs for model loading
-            load_kwargs = {
-                "model_card": {
-                    "load_kwargs": ModelLoadKwargs(load_onnx=True)
-                }
-            }
-            deck = CardDeck.load_from_path(load_kwargs=load_kwargs)
-            ```
-        """
-
-    def __getitem__(self, alias: str) -> CardType:
-        """Get a card from the card deck by alias
-
-        Args:
-            alias (str):
-                The alias of the card to get
-
-        Returns:
-            Card:
-                The card with the given alias
-        """
-
-    def download_artifacts(self, path: Optional[Path] = None) -> None:
-        """Download artifacts associated with each card in the card deck. This method
-        will always overwrite existing artifacts.
-
-        If the path is not provided, the artifacts will be saved to a directory.
-
-        ```
-        card_deck/
-        |-- {name}-{version}/
-            |-- alias1/
-            |-- alias2/
-            |-- alias3/
-        `-- ...
-        ```
-
-        Args:
-            path (Path):
-                Top-level Path to download the artifacts to. If not provided, the artifacts will be saved
-                to a directory using the CardDeck name.
-        """
+    def deck(self) -> CardRegistry[CardDeck]: ...
