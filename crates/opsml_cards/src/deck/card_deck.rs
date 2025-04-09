@@ -21,8 +21,8 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 use tracing::{debug, error, instrument};
 
-#[pyclass]
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[pyclass(eq)]
+#[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
 pub struct Card {
     #[pyo3(get, set)]
     pub space: Option<String>,
@@ -77,8 +77,74 @@ impl Card {
     }
 }
 
-/// CardDeck is a collection of cards that can be used to create a card deck and load in one call
+#[pyclass]
+struct CardListIter {
+    inner: std::vec::IntoIter<Card>,
+}
+
+#[pymethods]
+impl CardListIter {
+    fn __iter__(slf: PyRef<'_, Self>) -> PyRef<'_, Self> {
+        slf
+    }
+
+    fn __next__(mut slf: PyRefMut<'_, Self>) -> Option<Card> {
+        slf.inner.next()
+    }
+}
+/// CardList holds a list of cards for the CardDeck
 ///
+/// # Implementation
+/// * Implements `__iter__`, `__len__`, and `__getitem__` for Python list compatibility
+/// * Implements `IntoIterator` for Rust iterator compatibility
+///
+/// # Attributes
+/// * `cards`: A vector of `Card` objects
+#[pyclass(eq)]
+#[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
+pub struct CardList {
+    #[pyo3(get)]
+    pub cards: Vec<Card>,
+}
+
+#[pymethods]
+impl CardList {
+    fn __iter__(slf: PyRef<'_, Self>) -> PyResult<Py<CardListIter>> {
+        let iter = CardListIter {
+            inner: slf.cards.clone().into_iter(),
+        };
+        Py::new(slf.py(), iter)
+    }
+
+    pub fn __len__(&self) -> usize {
+        self.cards.len()
+    }
+
+    pub fn __getitem__(&self, index: usize) -> PyResult<Card> {
+        if index >= self.cards.len() {
+            return Err(OpsmlError::new_err(format!(
+                "Index out of bounds: {}",
+                index
+            )));
+        }
+        Ok(self.cards[index].clone())
+    }
+
+    pub fn __str__(&self) -> String {
+        PyHelperFuncs::__str__(self)
+    }
+}
+
+impl<'a> IntoIterator for &'a CardList {
+    type Item = &'a Card;
+    type IntoIter = std::slice::Iter<'a, Card>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.cards.iter()
+    }
+}
+
+/// CardDeck is a collection of cards that can be used to create a card deck and load in one call
 #[pyclass]
 #[derive(Debug)]
 pub struct CardDeck {
@@ -97,8 +163,8 @@ pub struct CardDeck {
     #[pyo3(get, set)]
     pub created_at: DateTime<Utc>,
 
-    #[pyo3(get, set)]
-    pub cards: Vec<Card>,
+    #[pyo3(get)]
+    pub cards: CardList,
 
     #[pyo3(get)]
     pub opsml_version: String,
@@ -132,13 +198,18 @@ impl CardDeck {
             version: base_args.2,
             uid: base_args.3,
             created_at: Utc::now(),
-            cards,
+            cards: CardList { cards },
             opsml_version: env!("CARGO_PKG_VERSION").to_string(),
             card_objs: HashMap::new(),
             app_env: std::env::var("APP_ENV").unwrap_or_else(|_| "dev".to_string()),
             is_card: true,
             registry_type: RegistryType::Deck,
         })
+    }
+
+    #[setter]
+    pub fn set_cards(&mut self, cards: Vec<Card>) {
+        self.cards = CardList { cards };
     }
 
     /// Load the cards in the card deck

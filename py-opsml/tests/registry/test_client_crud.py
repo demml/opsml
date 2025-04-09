@@ -11,6 +11,7 @@ from opsml import (  # type: ignore
     DataCard,
     PromptCard,
     Prompt,
+    ModelLoadKwargs,
 )
 from opsml.card import CardDeck, Card  # type: ignore
 from opsml.card import RegistryMode, CardList  # type: ignore
@@ -277,6 +278,14 @@ def crud_card_deck(model_uid: str, prompt_uid: str):
     assert loaded_card.version == deck.version
     assert len(loaded_card.cards) == 2
 
+    # check iteration works
+    for card in loaded_card.cards:
+        assert isinstance(card, Card)
+
+    # check indexing works
+    assert isinstance(loaded_card.cards[0], Card)
+    assert isinstance(loaded_card.cards[1], Card)
+
     # check aliases
     model: ModelCard = loaded_card["model"]
     assert model.interface.model is not None
@@ -293,14 +302,34 @@ def crud_card_deck(model_uid: str, prompt_uid: str):
     assert created_path.is_dir()
     assert len(list(created_path.iterdir())) == 3
 
-    loaded_card2 = CardDeck.load_from_path()
-    print(loaded_card2)
+    # test loading from path with onnx
+    load_kwargs = {
+        "model": {"load_kwargs": ModelLoadKwargs(load_onnx=True)},
+    }
+    CardDeck.load_from_path(load_kwargs=load_kwargs)
 
     # attempt to delete folder
     shutil.rmtree(created_path.as_posix())
     assert not created_path.exists()
 
-    return deck, reg
+    # attempt to update the card
+    loaded_card.name = "new_deck_name"
+
+    # update the card
+    reg.update_card(loaded_card)
+
+    # load the updated card
+    updated_card: CardDeck = reg.load_card(uid=loaded_card.uid)
+    updated_card.load()
+
+    # make sure datacard_uid is set
+
+    assert updated_card.cards == loaded_card.cards
+
+    # assert that the card was updated
+    assert updated_card.name == "new_deck_name"
+
+    return updated_card, reg
 
 
 def delete_card(card: DataCard | ModelCard, registry: CardRegistry):
