@@ -288,16 +288,16 @@ def crud_card_deck(model_uid: str, prompt_uid: str):
     loaded_card.download_artifacts()
 
     # check the loaded_card.name is a directory
-    created_path = Path(loaded_card.name)
+    created_path = Path("card_deck")
     assert created_path.exists()
     assert created_path.is_dir()
     assert len(list(created_path.iterdir())) == 3
 
-    loaded_card2 = CardDeck.load_from_path(created_path)
+    loaded_card2 = CardDeck.load_from_path()
     print(loaded_card2)
 
     # attempt to delete folder
-    shutil.rmtree(loaded_card.name)
+    shutil.rmtree(created_path.as_posix())
     assert not created_path.exists()
 
     return deck, reg

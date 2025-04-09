@@ -317,6 +317,7 @@ pub enum SaveName {
     Code,
     Prompt,
     ReadMe,
+    CardDeck,
 }
 
 #[pymethods]
@@ -349,6 +350,7 @@ impl SaveName {
             "code" => Some(SaveName::Code),
             "prompt" => Some(SaveName::Prompt),
             "README" => Some(SaveName::ReadMe),
+            "card_deck" => Some(SaveName::CardDeck),
             _ => None,
         }
     }
@@ -380,6 +382,7 @@ impl SaveName {
             SaveName::Code => "code",
             SaveName::Prompt => "prompt",
             SaveName::ReadMe => "README",
+            SaveName::CardDeck => "card_deck",
         }
     }
 
@@ -422,6 +425,7 @@ impl AsRef<Path> for SaveName {
             SaveName::Code => Path::new("code"),
             SaveName::Prompt => Path::new("prompt"),
             SaveName::ReadMe => Path::new("README"),
+            SaveName::CardDeck => Path::new("card_deck"),
         }
     }
 }

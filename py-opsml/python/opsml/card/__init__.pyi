@@ -1310,50 +1310,41 @@ class CardDeck:
 
     @staticmethod
     def load_from_path(
-        path: Path,
+        path: Optional[Path] = None,
         load_kwargs: Optional[Dict[str, Dict[str, Any]]] = None,
     ) -> "CardDeck":
-        """Load a card deck from a directory
-
-        Example:
-        ```python
-        from opsml import CardDeck
-
-        # Load a card deck from a directory
-        load_kwargs = {
-            "alias1": {
-                "load_kwargs": ModelLoadKwargs(load_onnx=True),
-            },
-        }
-        deck = CardDeck.load_from_path(path=Path("path"), load_kwargs)
-        ```
+        """Loads a card deck and its associated cards from a filesystem path.
 
         Args:
             path (Path):
-                Path to load the card deck from
+                Path to load the card deck from. Defaults to "card_deck".
             load_kwargs (Dict[str, Dict[str, Any]]):
-                Optional load kwargs to that will be passed to the interface load method.
-
-                Load kwarg structure:
+                Optional kwargs for loading cards. Expected format:
                 {
-                    "alias1": {
-                        "interface": ...,
-                        "load_kwargs": "DataLoadKwargs | ModelLoadKwargs"
-                    },
-                    "alias2": {
-                        "interface": ...,
-                        "load_kwargs": "DataLoadKwargs | ModelLoadKwargs"
-                    },
-                    ...
+                    "card_alias": {
+                        "interface": interface_object,
+                        "load_kwargs": DataLoadKwargs | ModelLoadKwargs
+                    }
                 }
 
-                Where alias1, alias2, etc. are the aliases of the cards in the card deck.
-                Interface is for custom interfaces that need to be passed to the card being loaded.
-                Load kwargs are the kwargs to be passed to the interface load method.
-
         Returns:
-            CardDeck:
-                The loaded card deck
+            CardDeck: The loaded card deck with all cards instantiated.
+
+        Raises:
+            PyError: If card deck JSON cannot be read
+            PyError: If cards cannot be loaded
+            PyError: If invalid kwargs are provided
+
+        Example:
+            ```python
+            # Load with custom kwargs for model loading
+            load_kwargs = {
+                "model_card": {
+                    "load_kwargs": ModelLoadKwargs(load_onnx=True)
+                }
+            }
+            deck = CardDeck.load_from_path(load_kwargs=load_kwargs)
+            ```
         """
 
     def __getitem__(self, alias: str) -> CardType:
@@ -1375,10 +1366,11 @@ class CardDeck:
         If the path is not provided, the artifacts will be saved to a directory.
 
         ```
-        carddeck_name/
-        |-- alias1/
-        |-- alias2/
-        |-- alias3/
+        card_deck/
+        |-- {name}-{version}/
+            |-- alias1/
+            |-- alias2/
+            |-- alias3/
         `-- ...
         ```
 
