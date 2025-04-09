@@ -12,6 +12,7 @@ opsml-client = { workspace = true }
 opsml-error = { workspace = true }
 opsml-types = { workspace = true }
 opsml-settings = { workspace = true }
+opsml-toml = { workspace = true }
 opsml-utils = { workspace = true }
 
 futures = { workspace = true }

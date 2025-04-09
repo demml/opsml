@@ -173,12 +173,12 @@ impl FileSystemStorage {
     pub async fn generate_presigned_url(
         &self,
         path: &Path,
-        expiration: u64,
+        _expiration: u64,
     ) -> Result<String, StorageError> {
         match self {
             #[cfg(feature = "server")]
             FileSystemStorage::Server(client) => app_state()
-                .block_on(async { client.generate_presigned_url(path, expiration).await }),
+                .block_on(async { client.generate_presigned_url(path, _expiration).await }),
             FileSystemStorage::Client(client) => client.generate_presigned_url(path),
         }
     }

@@ -3779,6 +3779,7 @@ dependencies = [
  "opsml-interfaces",
  "opsml-state",
  "opsml-storage",
+ "opsml-toml",
  "opsml-types",
  "opsml-utils",
  "potato-head",
@@ -4046,6 +4047,7 @@ dependencies = [
  "opsml-client",
  "opsml-error",
  "opsml-settings",
+ "opsml-toml",
  "opsml-types",
  "opsml-utils",
  "tokio",
@@ -4108,7 +4110,6 @@ dependencies = [
 name = "opsml-toml"
 version = "0.1.0"
 dependencies = [
- "opsml-cards",
  "opsml-error",
  "opsml-types",
  "serde",

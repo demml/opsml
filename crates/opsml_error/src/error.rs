@@ -509,10 +509,13 @@ impl From<PyErr> for CryptError {
     }
 }
 
-#[derive(Error, Debug, Deserialize, Serialize)]
+#[derive(Error, Debug)]
 pub enum StateError {
     #[error("{0}")]
     Error(String),
+
+    #[error("Failed to read config")]
+    ReadConfigError(#[source] std::io::Error),
 }
 
 impl From<StateError> for PyErr {

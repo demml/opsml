@@ -8,7 +8,6 @@ repository = { workspace = true }
 doctest = false
 
 [dependencies]
-opsml-cards = { workspace = true }
 opsml-error = { workspace = true }
 opsml-types = { workspace = true }
 serde = { workspace = true }
