@@ -1,7 +1,8 @@
+use crate::utils::BaseArgs;
 use chrono::{DateTime, Utc};
 use opsml_error::error::{CardError, OpsmlError};
 use opsml_types::contracts::{CardRecord, PromptCardClientRecord};
-use opsml_types::{cards::BaseArgs, RegistryType, SaveName, Suffix};
+use opsml_types::{RegistryType, SaveName, Suffix};
 use opsml_utils::{get_utc_datetime, PyHelperFuncs};
 use potato_head::Prompt;
 use pyo3::prelude::*;
@@ -73,6 +74,7 @@ impl PromptCard {
         uid: Option<&str>,
         tags: Option<&Bound<'_, PyList>>,
     ) -> PyResult<Self> {
+        let registry_type = RegistryType::Prompt;
         let tags = match tags {
             None => Vec::new(),
             Some(t) => t
@@ -80,10 +82,11 @@ impl PromptCard {
                 .map_err(|e| OpsmlError::new_err(e.to_string()))?,
         };
 
-        let base_args = BaseArgs::create_args(name, space, version, uid).map_err(|e| {
-            error!("Failed to create base args: {}", e);
-            OpsmlError::new_err(e.to_string())
-        })?;
+        let base_args =
+            BaseArgs::create_args(name, space, version, uid, &registry_type).map_err(|e| {
+                error!("Failed to create base args: {}", e);
+                OpsmlError::new_err(e.to_string())
+            })?;
 
         let prompt = prompt.extract::<Prompt>().map_err(|e| {
             error!("Failed to extract prompt: {}", e);
@@ -98,7 +101,7 @@ impl PromptCard {
             uid: base_args.3,
             tags,
             metadata: PromptCardMetadata::default(),
-            registry_type: RegistryType::Prompt,
+            registry_type,
             app_env: std::env::var("APP_ENV").unwrap_or_else(|_| "dev".to_string()),
             created_at: get_utc_datetime(),
             is_card: true,

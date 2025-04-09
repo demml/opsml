@@ -104,6 +104,58 @@ pub struct OpsmlTools {
     deck: Option<DeckConfig>,
 }
 
+impl OpsmlTools {
+    /// Gets a value for a given
+    /// This method will return the value for the key if it exists in either
+    /// the default or registry specific arguments. Default arguments will
+    /// override registry specific arguments.
+    ///
+    /// # Arguments
+    /// * `key` - The key to get the value for
+    pub fn get_attribute_key_value(
+        &self,
+        key: &str,
+        registry_type: &RegistryType,
+    ) -> Option<String> {
+        // get the default value
+        let default_value = self.default.as_ref().and_then(|d| match key {
+            "space" => d.space.clone(),
+            "name" => d.name.clone(),
+            "version" => d.version.clone(),
+            _ => None,
+        });
+
+        // if default value is Some, return it
+        if default_value.is_some() {
+            return default_value;
+        }
+
+        // check the registry specific arguments for the given registry type and key
+        let registry_value = self
+            .registry
+            .as_ref()
+            .and_then(|r| r.get(registry_type))
+            .and_then(|r| match key {
+                "space" => r.space.clone(),
+                "name" => r.name.clone(),
+                "version" => r.version.clone(),
+                _ => None,
+            });
+
+        return registry_value;
+    }
+
+    /// Get the registry specific arguments
+    pub fn get_registry(&self) -> Option<HashMap<RegistryType, CardAttr>> {
+        self.registry.clone()
+    }
+
+    /// Get the deck configuration
+    pub fn get_deck(&self) -> Option<DeckConfig> {
+        self.deck.clone()
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct OpsmlTool {
     #[serde(rename = "opsml")]
