@@ -287,136 +287,213 @@ impl CardDeck {
         Ok(())
     }
 
+    /// Loads a card deck and its associated cards from a filesystem path.
+    ///
+    /// # Process
+    /// 1. Loads the card deck JSON file
+    /// 2. For each card in the deck:
+    ///    - Loads the card's JSON file
+    ///    - Extracts any provided load kwargs
+    ///    - Loads the card object with kwargs if provided
+    ///    - Loads artifacts for data/model cards
+    ///    - Returns the loaded card object
+    /// 3. Loads all card objects into the deck
+    /// 4. Returns the complete card deck
+    ///
+    /// # Arguments
+    /// * `py` - Python interpreter state
+    /// * `path` - Path to the card deck JSON file
+    /// * `load_kwargs` - Optional loading arguments for cards
+    ///
+    /// # Load Kwargs Format
+    /// The `load_kwargs` argument should be a nested dictionary with structure:
+    /// ```python
+    /// {
+    ///     "card_alias": {
+    ///         "interface": interface_object,
+    ///         "load_kwargs": DataLoadKwargs | ModelLoadKwargs
+    ///     }
+    /// }
+    /// ```
+    ///
+    /// # Returns
+    /// Returns `PyResult<CardDeck>` containing the loaded card deck or an error
+    ///
+    /// # Errors
+    /// Will return `PyResult::Err` if:
+    /// - Card deck JSON file cannot be read
+    /// - Individual card files cannot be loaded
+    /// - Invalid kwargs are provided
     #[staticmethod]
     pub fn load_from_path(
         py: Python,
         path: PathBuf,
         load_kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<CardDeck> {
+        let mut card_deck = Self::load_card_deck_json(&path)?;
+
+        for card in &card_deck.cards {
+            let card_obj = Self::load_card(py, &path, card, load_kwargs)?;
+            card_deck.card_objs.insert(card.alias.clone(), card_obj);
+        }
+
+        Ok(card_deck)
+    }
+}
+
+impl CardDeck {
+    fn load_card(
+        py: Python,
+        base_path: &PathBuf,
+        card: &Card,
+        load_kwargs: Option<&Bound<'_, PyDict>>,
+    ) -> PyResult<PyObject> {
+        let card_path = base_path.join(&card.alias);
+
+        let (interface, load_kwargs) =
+            Self::extract_kwargs(py, load_kwargs, &card.alias).map_err(|e| {
+                error!("Failed to extract kwargs: {}", e);
+                OpsmlError::new_err(e.to_string())
+            })?;
+
+        let card_json = Self::read_card_json(&card_path)?;
+        let json_path = card_path.join(SaveName::Card).with_extension(Suffix::Json);
+
+        let card_obj = match card.registry_type {
+            RegistryType::Data => {
+                Self::load_data_card(py, &card_json, &json_path, interface, load_kwargs)?
+            }
+            RegistryType::Model => {
+                Self::load_model_card(py, &card_json, &json_path, interface, load_kwargs)?
+            }
+            RegistryType::Experiment => Self::load_experiment_card(&card_json)?,
+            RegistryType::Prompt => Self::load_prompt_card(&card_json)?,
+            _ => {
+                error!("Unsupported registry type: {:?}", card.registry_type);
+                return Err(OpsmlError::new_err(format!(
+                    "Unsupported registry type: {:?}",
+                    card.registry_type
+                )));
+            }
+        };
+
+        Ok(card_obj)
+    }
+    fn load_card_deck_json(path: &PathBuf) -> PyResult<CardDeck> {
         let card_deck_path = path.join(SaveName::Card).with_extension(Suffix::Json);
-        // read the json file
         let json_string = std::fs::read_to_string(card_deck_path).map_err(|e| {
             error!("Failed to read file: {}", e);
             OpsmlError::new_err(e.to_string())
         })?;
-        let mut card_deck = Self::model_validate_json(json_string)?;
+        Self::model_validate_json(json_string)
+    }
 
-        // iterare over the cards and load them
-        for card in &card_deck.cards {
-            let card_path = path.join(&card.alias);
+    fn extract_kwargs<'py>(
+        py: Python<'py>,
+        kwargs: Option<&Bound<'py, PyDict>>,
+        alias: &str,
+    ) -> PyResult<(Option<Bound<'py, PyAny>>, Option<Bound<'py, PyAny>>)> {
+        let card_kwargs = kwargs
+            .and_then(|kwargs| kwargs.get_item(alias).ok())
+            .and_then(|bound| match bound {
+                Some(b) => b.downcast::<PyDict>().ok().map(|dict| dict.clone()),
+                None => None,
+            });
 
-            // load kwargs should be a dict of alias matched to dict of kwargs
-            let card_kwargs = load_kwargs
-                .and_then(|kwargs| kwargs.get_item(&card.alias).ok())
-                .and_then(|bound| match bound {
-                    Some(b) => b.downcast::<PyDict>().ok().map(|dict| dict.clone()),
-                    None => None,
-                });
+        match card_kwargs {
+            Some(kwargs) => {
+                let interface = kwargs
+                    .get_item("interface")
+                    .ok()
+                    .flatten()
+                    .map(|bound| bound.into_bound_py_any(py))
+                    .transpose()?;
 
-            // Extract interface and load kwargs if provided
-            let (interface, load_kwargs) = if let Some(kwargs) = card_kwargs {
-                (
-                    match kwargs.get_item("interface").ok() {
-                        Some(value) => value,
-                        None => None,
-                    },
-                    match kwargs.get_item("load_kwargs").ok() {
-                        Some(value) => value,
-                        None => None,
-                    },
-                )
-            } else {
-                (None, None)
-            };
+                let load_kwargs = kwargs
+                    .get_item("load_kwargs")
+                    .ok()
+                    .flatten()
+                    .map(|bound| bound.into_bound_py_any(py))
+                    .transpose()?;
 
-            let card_json = std::fs::read_to_string(
-                card_path.join(SaveName::Card).with_extension(Suffix::Json),
-            )?;
-
-            match card.registry_type {
-                RegistryType::Data => {
-                    let mut card_obj =
-                        DataCard::model_validate_json(py, card_json, interface.as_ref())?;
-
-                    let kwargs: Option<DataLoadKwargs> =
-                        load_kwargs.and_then(|kwargs| kwargs.extract::<DataLoadKwargs>().ok());
-
-                    let card_path = card_path.join(SaveName::Card).with_extension(Suffix::Json);
-                    card_obj.load(py, Some(card_path), kwargs).map_err(|e| {
-                        error!("Failed to load card: {}", e);
-                        OpsmlError::new_err(e.to_string())
-                    })?;
-
-                    card_deck.card_objs.insert(
-                        card.alias.clone(),
-                        card_obj.into_py_any(py).map_err(|e| {
-                            error!("Failed to convert card to PyAny: {}", e);
-                            OpsmlError::new_err(e.to_string())
-                        })?,
-                    );
-                }
-                RegistryType::Model => {
-                    let mut card_obj =
-                        ModelCard::model_validate_json(py, card_json, interface.as_ref())?;
-
-                    let kwargs: Option<ModelLoadKwargs> =
-                        load_kwargs.and_then(|kwargs| kwargs.extract::<ModelLoadKwargs>().ok());
-
-                    let card_path = card_path.join(SaveName::Card).with_extension(Suffix::Json);
-
-                    let onnx = kwargs
-                        .as_ref()
-                        .and_then(|kwargs| Some(kwargs.load_onnx))
-                        .unwrap_or(false);
-
-                    card_obj
-                        .load(py, Some(card_path), onnx, kwargs)
-                        .map_err(|e| {
-                            error!("Failed to load card: {}", e);
-                            OpsmlError::new_err(e.to_string())
-                        })?;
-
-                    card_deck.card_objs.insert(
-                        card.alias.clone(),
-                        card_obj.into_py_any(py).map_err(|e| {
-                            error!("Failed to convert card to PyAny: {}", e);
-                            OpsmlError::new_err(e.to_string())
-                        })?,
-                    );
-                }
-                RegistryType::Experiment => {
-                    let card_obj = ExperimentCard::model_validate_json(card_json)?;
-
-                    card_deck.card_objs.insert(
-                        card.alias.clone(),
-                        card_obj.into_py_any(py).map_err(|e| {
-                            error!("Failed to convert card to PyAny: {}", e);
-                            OpsmlError::new_err(e.to_string())
-                        })?,
-                    );
-                }
-                RegistryType::Prompt => {
-                    let card_obj = PromptCard::model_validate_json(card_json)?;
-
-                    card_deck.card_objs.insert(
-                        card.alias.clone(),
-                        card_obj.into_py_any(py).map_err(|e| {
-                            error!("Failed to convert card to PyAny: {}", e);
-                            OpsmlError::new_err(e.to_string())
-                        })?,
-                    );
-                }
-                _ => {
-                    error!("Unsupported registry type: {:?}", card.registry_type);
-                    return Err(OpsmlError::new_err(format!(
-                        "Unsupported registry type: {:?}",
-                        card.registry_type
-                    )));
-                }
-            };
+                Ok((interface, load_kwargs))
+            }
+            None => Ok((None, None)),
         }
+    }
 
-        Ok(card_deck)
+    fn read_card_json(card_path: &PathBuf) -> PyResult<String> {
+        std::fs::read_to_string(card_path.join(SaveName::Card).with_extension(Suffix::Json))
+            .map_err(|e| OpsmlError::new_err(e.to_string()))
+    }
+
+    fn load_data_card(
+        py: Python,
+        card_json: &str,
+        card_path: &PathBuf,
+        interface: Option<Bound<'_, PyAny>>,
+        load_kwargs: Option<Bound<'_, PyAny>>,
+    ) -> PyResult<PyObject> {
+        let mut card_obj =
+            DataCard::model_validate_json(py, card_json.to_string(), interface.as_ref())?;
+        let kwargs = load_kwargs.and_then(|kwargs| kwargs.extract::<DataLoadKwargs>().ok());
+
+        card_obj
+            .load(py, Some(card_path.clone()), kwargs)
+            .map_err(|e| {
+                error!("Failed to load card: {}", e);
+                OpsmlError::new_err(e.to_string())
+            })?;
+
+        card_obj.into_py_any(py).map_err(|e| {
+            error!("Failed to convert card to PyAny: {}", e);
+            OpsmlError::new_err(e.to_string())
+        })
+    }
+
+    fn load_model_card(
+        py: Python,
+        card_json: &str,
+        card_path: &PathBuf,
+        interface: Option<Bound<'_, PyAny>>,
+        load_kwargs: Option<Bound<'_, PyAny>>,
+    ) -> PyResult<PyObject> {
+        let mut card_obj =
+            ModelCard::model_validate_json(py, card_json.to_string(), interface.as_ref())?;
+        let kwargs = load_kwargs.and_then(|kwargs| kwargs.extract::<ModelLoadKwargs>().ok());
+        let onnx = kwargs.as_ref().map(|k| k.load_onnx).unwrap_or(false);
+
+        card_obj
+            .load(py, Some(card_path.clone()), onnx, kwargs)
+            .map_err(|e| {
+                error!("Failed to load card: {}", e);
+                OpsmlError::new_err(e.to_string())
+            })?;
+
+        card_obj.into_py_any(py).map_err(|e| {
+            error!("Failed to convert card to PyAny: {}", e);
+            OpsmlError::new_err(e.to_string())
+        })
+    }
+
+    fn load_experiment_card(card_json: &str) -> PyResult<PyObject> {
+        let card_obj = ExperimentCard::model_validate_json(card_json.to_string())?;
+        Python::with_gil(|py| {
+            card_obj.into_py_any(py).map_err(|e| {
+                error!("Failed to convert card to PyAny: {}", e);
+                OpsmlError::new_err(e.to_string())
+            })
+        })
+    }
+
+    fn load_prompt_card(card_json: &str) -> PyResult<PyObject> {
+        let card_obj = PromptCard::model_validate_json(card_json.to_string())?;
+        Python::with_gil(|py| {
+            card_obj.into_py_any(py).map_err(|e| {
+                error!("Failed to convert card to PyAny: {}", e);
+                OpsmlError::new_err(e.to_string())
+            })
+        })
     }
 }
 
