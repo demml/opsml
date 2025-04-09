@@ -142,7 +142,7 @@ impl OpsmlTools {
                 _ => None,
             });
 
-        return registry_value;
+        registry_value
     }
 
     /// Get the registry specific arguments

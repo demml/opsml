@@ -1,9 +1,7 @@
-use crate::types::{CommonKwargs, RegistryType};
-use opsml_error::TypeError;
-use opsml_utils::{clean_string, validate_name_space_pattern};
+use crate::types::RegistryType;
 use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
-use std::{env, fmt};
+use std::fmt;
 
 #[pyclass(eq, eq_int)]
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
