@@ -645,6 +645,22 @@ impl Experiment {
                     .call_method1("add_promptcard_uid", (promptcard_uid,))?;
             }
 
+            RegistryType::Deck => {
+                self.registries.deck.register_card(
+                    card,
+                    version_type,
+                    pre_tag,
+                    build_tag,
+                    save_kwargs,
+                )?;
+
+                // update experimentcard_uids on experiment card
+                let deckcard_uid = &card.getattr("uid")?.extract::<String>()?;
+                self.experiment
+                    .bind(py)
+                    .call_method1("add_card_deck_uid", (deckcard_uid,))?;
+            }
+
             _ => {
                 warn!("Registry type not supported for {} when registering card from inside an experiment", registry_type);
             }

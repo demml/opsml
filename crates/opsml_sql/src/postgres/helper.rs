@@ -530,13 +530,14 @@ impl PostgresQueryHelper {
         datacard_uids, 
         modelcard_uids, 
         promptcard_uids,
+        card_deck_uids,
         experimentcard_uids,
         pre_tag, 
         build_tag,
         username,
         opsml_version
         ) 
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)",
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)",
             CardTable::Experiment
         )
     }
@@ -677,12 +678,13 @@ impl PostgresQueryHelper {
             datacard_uids = $9, 
             modelcard_uids = $10, 
             promptcard_uids = $11,
-            experimentcard_uids = $12, 
-            pre_tag = $13, 
-            build_tag = $14,
-            username = $15,
-            opsml_version = $16
-            WHERE uid = $17",
+            card_deck_uids = $12,
+            experimentcard_uids = $13, 
+            pre_tag = $14, 
+            build_tag = $15,
+            username = $16,
+            opsml_version = $17
+            WHERE uid = $18",
             CardTable::Experiment
         )
     }

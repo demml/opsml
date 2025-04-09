@@ -63,6 +63,7 @@ CREATE TABLE IF NOT EXISTS opsml_experiment_registry (
     modelcard_uids JSONB,
     promptcard_uids JSONB,
     experimentcard_uids JSONB,
+    card_deck_uids JSONB,
     compute_environment JSONB,
     opsml_version TEXT NOT NULL DEFAULT '0.0.0',
     username TEXT NOT NULL DEFAULT 'guest'
