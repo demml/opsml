@@ -26,15 +26,15 @@ fn download_card_artifacts(key: &ArtifactKey, lpath: &Path) -> Result<(), CliErr
     let rpath = key.storage_path();
 
     if !lpath.exists() {
-        std::fs::create_dir_all(&lpath).map_err(|e| CliError::Error(format!("{}", e)))?;
+        std::fs::create_dir_all(lpath).map_err(|e| CliError::Error(format!("{}", e)))?;
     }
     // download card artifacts
     storage_client()
         .map_err(|e| CliError::Error(format!("{}", e)))?
-        .get(&lpath, &rpath, true)
+        .get(lpath, &rpath, true)
         .map_err(|e| CliError::Error(format!("{}", e)))?;
 
-    decrypt_directory(&lpath, &decryption_key)?;
+    decrypt_directory(lpath, &decryption_key)?;
 
     Ok(())
 }
