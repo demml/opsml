@@ -250,9 +250,23 @@ impl CardDeck {
         }
     }
 
+    /// Downloads artifacts for all cards in the card deck.
+    ///
+    /// # Arguments
+    /// * `py` - Python interpreter state
+    /// * `path` - Optional path to save the artifacts. If not provided, defaults to "card_deck".
+    /// Path follows the format: `card_deck/{name}-{version}/{alias}`.
+    ///
+    /// # Returns
+    /// Returns `PyResult<()>` indicating success or failure.
+    ///
+    /// # Errors
+    /// Will return `PyResult::Err` if:
+    /// - The path cannot be created or written to.
+    /// - The artifacts cannot be downloaded.
     #[pyo3(signature = (path=None))]
     pub fn download_artifacts(&mut self, py: Python, path: Option<PathBuf>) -> PyResult<()> {
-        let base_path = path.unwrap_or_else(|| PathBuf::from(self.name.clone()));
+        let base_path = path.unwrap_or_else(|| PathBuf::from("card_deck"));
 
         // delete the path if it exists
         if base_path.exists() {
@@ -302,7 +316,8 @@ impl CardDeck {
     ///
     /// # Arguments
     /// * `py` - Python interpreter state
-    /// * `path` - Path to the card deck JSON file
+    /// * `path` - Path to the card deck files. This should be the top-level directory and will be
+    /// appended with the "{name}-{version} directory containing the card deck files". Defaults to "card_deck".
     /// * `load_kwargs` - Optional loading arguments for cards
     ///
     /// # Load Kwargs Format
@@ -325,12 +340,14 @@ impl CardDeck {
     /// - Individual card files cannot be loaded
     /// - Invalid kwargs are provided
     #[staticmethod]
-    #[pyo3(signature = (path, load_kwargs=None))]
+    #[pyo3(signature = (path=None, load_kwargs=None))]
     pub fn load_from_path(
         py: Python,
-        path: PathBuf,
+        path: Option<PathBuf>,
         load_kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<CardDeck> {
+        let path = path.unwrap_or_else(|| PathBuf::from(SaveName::CardDeck));
+
         let mut card_deck = Self::load_card_deck_json(&path)?;
 
         for card in &card_deck.cards {
@@ -339,6 +356,10 @@ impl CardDeck {
         }
 
         Ok(card_deck)
+    }
+
+    pub fn __str__(&self) -> String {
+        PyHelperFuncs::__str__(self)
     }
 }
 
@@ -358,14 +379,13 @@ impl CardDeck {
             })?;
 
         let card_json = Self::read_card_json(&card_path)?;
-        let json_path = card_path.join(SaveName::Card).with_extension(Suffix::Json);
 
         let card_obj = match card.registry_type {
             RegistryType::Data => {
-                Self::load_data_card(py, &card_json, &json_path, interface, load_kwargs)?
+                Self::load_data_card(py, &card_json, card_path, interface, load_kwargs)?
             }
             RegistryType::Model => {
-                Self::load_model_card(py, &card_json, &json_path, interface, load_kwargs)?
+                Self::load_model_card(py, &card_json, card_path, interface, load_kwargs)?
             }
             RegistryType::Experiment => Self::load_experiment_card(&card_json)?,
             RegistryType::Prompt => Self::load_prompt_card(&card_json)?,
@@ -431,7 +451,7 @@ impl CardDeck {
     fn load_data_card(
         py: Python,
         card_json: &str,
-        card_path: &PathBuf,
+        card_path: PathBuf,
         interface: Option<Bound<'_, PyAny>>,
         load_kwargs: Option<Bound<'_, PyAny>>,
     ) -> PyResult<PyObject> {
@@ -439,12 +459,10 @@ impl CardDeck {
             DataCard::model_validate_json(py, card_json.to_string(), interface.as_ref())?;
         let kwargs = load_kwargs.and_then(|kwargs| kwargs.extract::<DataLoadKwargs>().ok());
 
-        card_obj
-            .load(py, Some(card_path.clone()), kwargs)
-            .map_err(|e| {
-                error!("Failed to load card: {}", e);
-                OpsmlError::new_err(e.to_string())
-            })?;
+        card_obj.load(py, Some(card_path), kwargs).map_err(|e| {
+            error!("Failed to load card: {}", e);
+            OpsmlError::new_err(e.to_string())
+        })?;
 
         card_obj.into_py_any(py).map_err(|e| {
             error!("Failed to convert card to PyAny: {}", e);
@@ -455,7 +473,7 @@ impl CardDeck {
     fn load_model_card(
         py: Python,
         card_json: &str,
-        card_path: &PathBuf,
+        card_path: PathBuf,
         interface: Option<Bound<'_, PyAny>>,
         load_kwargs: Option<Bound<'_, PyAny>>,
     ) -> PyResult<PyObject> {
@@ -465,7 +483,7 @@ impl CardDeck {
         let onnx = kwargs.as_ref().map(|k| k.load_onnx).unwrap_or(false);
 
         card_obj
-            .load(py, Some(card_path.clone()), onnx, kwargs)
+            .load(py, Some(card_path), onnx, kwargs)
             .map_err(|e| {
                 error!("Failed to load card: {}", e);
                 OpsmlError::new_err(e.to_string())

@@ -13,6 +13,7 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 use tempfile::TempDir;
 use tracing::{debug, error, instrument};
+
 /// Helper function to load a card and convert it to PyObject
 ///
 /// # Arguments
@@ -354,19 +355,98 @@ pub fn upload_card_artifacts(path: PathBuf, key: &ArtifactKey) -> Result<(), Reg
     Ok(())
 }
 
-/// Verify that the card is valid
+fn validate_card_by_metadata(reg: &OpsmlRegistry, card: &Card) -> Result<(), RegistryError> {
+    let args = CardQueryArgs {
+        name: card.name.clone(),
+        space: card.space.clone(),
+        version: card.version.clone(),
+        ..Default::default()
+    };
+
+    let cards = reg.list_cards(args).map_err(|e| {
+        error!("Failed to list cards: {}", e);
+        RegistryError::Error("Failed to list cards".to_string())
+    })?;
+
+    if cards.is_empty() {
+        return Err(RegistryError::Error(format!(
+            "Card {:?} does not exist in the registry",
+            card.name
+        )));
+    }
+    Ok(())
+}
+
+/// Validates a card deck card by checking if it exists in the registry
+///
+/// # Process
+/// 1. If the card has a UID, check if it exists in the registry
+/// 2. If the card does not have a UID, check if it exists in the registry by name, space, and version
+/// 3. If the card exists and a UID was provided, update the metadata (name, space, version)
+/// 4. If the card does not exist, return an error
 ///
 /// # Arguments
+/// * `card` - Card to validate
 ///
+/// # Returns
+/// * `Result<(), RegistryError>` - Result
+///
+/// # Errors
+/// * `RegistryError` - Error validating card
+/// Will return an error if the card does not exist in the registry
+fn validate_and_update_card(card: &mut Card) -> Result<(), RegistryError> {
+    let reg = OpsmlRegistry::new(card.registry_type.clone())?;
+
+    match &card.uid {
+        Some(uid) => {
+            let args = CardQueryArgs {
+                uid: Some(uid.clone()),
+                registry_type: card.registry_type.clone(),
+                ..Default::default()
+            };
+
+            let cards = reg.list_cards(args).map_err(|e| {
+                error!("Failed to list cards: {}", e);
+                RegistryError::Error("Failed to list cards".to_string())
+            })?;
+
+            if let Some(found_card) = cards.first() {
+                // Update card metadata
+                card.name = Some(found_card.name().to_string());
+                card.space = Some(found_card.space().to_string());
+                card.version = Some(found_card.version().to_string());
+                debug!("Updated card metadata for uid: {}", uid);
+                Ok(())
+            } else {
+                Err(RegistryError::Error(format!(
+                    "Card {} does not exist in registry {}",
+                    uid, card.registry_type
+                )))
+            }
+        }
+        None => validate_card_by_metadata(&reg, card),
+    }
+}
+
+#[instrument(skip_all)]
+fn validate_card_deck(deck: &mut Vec<Card>) -> Result<(), RegistryError> {
+    for card in deck.iter_mut() {
+        validate_and_update_card(card)?;
+    }
+    Ok(())
+}
+
+/// Verify that the card is valid
+/// If a card deck is passed, verify that all cards in the deck are valid
+///
+/// # Arguments
 /// * `card` - Card to verify
 /// * `registry_type` - Registry type
 ///
 /// # Returns
-///
 /// * `Result<(), RegistryError>` - Result
 ///
 /// # Errors
-///
 /// * `RegistryError` - Error verifying card
 #[instrument(skip_all)]
 pub fn verify_card(
@@ -395,6 +475,29 @@ pub fn verify_card(
                 ));
             }
         }
+    }
+
+    if card.is_instance_of::<CardDeck>() {
+        let mut deck = card
+            .getattr("cards")
+            .map_err(|e| {
+                error!("Failed to get cards from deck: {}", e);
+                RegistryError::Error("Failed to get cards from deck".to_string())
+            })?
+            .extract::<Vec<Card>>()
+            .map_err(|e| {
+                error!("Failed to extract cards from deck: {}", e);
+                RegistryError::Error("Failed to extract cards from deck".to_string())
+            })?;
+
+        validate_card_deck(&mut deck)?;
+
+        // Update the Python card deck with the updated cards
+        card.setattr("cards", deck.into_py_any(card.py()).unwrap())
+            .map_err(|e| {
+                error!("Failed to update card deck: {}", e);
+                RegistryError::Error("Failed to update card deck".to_string())
+            })?;
     }
 
     let card_registry_type = card
