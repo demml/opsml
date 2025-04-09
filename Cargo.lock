@@ -3796,6 +3796,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "clap 4.5.35",
+ "opsml-cards",
  "opsml-colors",
  "opsml-crypt",
  "opsml-error",

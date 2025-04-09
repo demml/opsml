@@ -209,7 +209,7 @@ impl ClientRegistry {
     }
 
     #[instrument(skip_all)]
-    pub fn load_card(&self, args: CardQueryArgs) -> Result<ArtifactKey, RegistryError> {
+    pub fn get_key(&self, args: CardQueryArgs) -> Result<ArtifactKey, RegistryError> {
         let query_string = serde_qs::to_string(&args)
             .map_err(|e| RegistryError::Error(format!("Failed to serialize query args {}", e)))?;
 

@@ -501,7 +501,7 @@ pub mod server_logic {
         ) -> Result<(), RegistryError> {
             // get key
             let key = self
-                .load_card(CardQueryArgs {
+                .get_key(CardQueryArgs {
                     uid: Some(delete_request.uid.to_string()),
                     ..Default::default()
                 })
@@ -534,7 +534,7 @@ pub mod server_logic {
             Ok(())
         }
 
-        pub async fn load_card(&self, args: CardQueryArgs) -> Result<ArtifactKey, RegistryError> {
+        pub async fn get_key(&self, args: CardQueryArgs) -> Result<ArtifactKey, RegistryError> {
             self.sql_client
                 .get_card_key_for_loading(&self.table_name, &args)
                 .await
