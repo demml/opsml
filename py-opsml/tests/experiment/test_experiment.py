@@ -16,6 +16,7 @@ from opsml import (  # type: ignore
     PromptCard,
     CardDeck,
     Card,
+    RegistryType,
 )
 from opsml.card import CardRegistries
 import joblib  # type: ignore
@@ -193,7 +194,11 @@ def test_experimentcard_register(
                 space="test",
                 name="test",
                 cards=[
-                    Card(alias="model", uid=modelcard.uid),
+                    Card(
+                        alias="model",
+                        uid=modelcard.uid,
+                        registry_type=RegistryType.Model,
+                    ),
                 ],
             )
             exp.register_card(deck)
