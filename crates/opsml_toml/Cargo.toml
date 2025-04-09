@@ -13,3 +13,6 @@ opsml-error = { workspace = true }
 opsml-types = { workspace = true }
 serde = { workspace = true }
 toml_edit = { workspace = true }
+
+[dev-dependencies]
+tempfile = { workspace = true }

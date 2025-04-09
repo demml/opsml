@@ -20,8 +20,11 @@ pub enum PyProjectTomlError {
     #[error("Failed to parse `pyproject.toml`")]
     ParseError(#[from] toml_edit::TomlError),
 
+    #[error("Failed to get current directory")]
+    CurrentDirError(#[source] std::io::Error),
+
     #[error("Failed to deserialize `pyproject.toml`")]
-    TomlSchema(#[from] toml::de::Error),
+    TomlSchema(#[source] toml_edit::de::Error),
 }
 
 #[derive(Error, Debug)]
