@@ -45,7 +45,7 @@ pub fn run_cli(args: Vec<String>) -> anyhow::Result<()> {
         },
         Some(Commands::Get { command }) => match command {
             GetCommands::Model(args) => {
-                download_card(&args, RegistryType::Model).context("Failed to download ModelCard")
+                download_card(args, RegistryType::Model).context("Failed to download ModelCard")
             }
             GetCommands::Deck(args) => download_deck(args).context("Failed to download CardDeck"),
         },
