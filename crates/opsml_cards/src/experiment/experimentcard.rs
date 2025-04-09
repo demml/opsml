@@ -34,10 +34,10 @@ pub struct UidMetadata {
     pub promptcard_uids: Vec<String>,
 
     #[pyo3(get, set)]
-    pub experimentcard_uids: Vec<String>,
+    pub card_deck_uids: Vec<String>,
 
     #[pyo3(get, set)]
-    pub card_deck_uids: Vec<String>,
+    pub experimentcard_uids: Vec<String>,
 }
 
 #[pyclass]

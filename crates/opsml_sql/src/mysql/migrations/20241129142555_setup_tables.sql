@@ -62,11 +62,11 @@ CREATE TABLE IF NOT EXISTS opsml_experiment_registry (
     build_tag VARCHAR(255),
     version VARCHAR(255),
     tags JSON,
-    datacard_uids JSON,
-    modelcard_uids JSON,
-    promptcard_uids JSON,
-    card_deck_uids JSON,
-    experimentcard_uids JSON,
+    datacard_uids JSON NOT NULL DEFAULT ('[]'),
+    modelcard_uids JSON NOT NULL DEFAULT ('[]'),
+    promptcard_uids JSON NOT NULL DEFAULT ('[]'),
+    card_deck_uids JSON NOT NULL DEFAULT ('[]'),
+    experimentcard_uids JSON NOT NULL DEFAULT ('[]'),
     opsml_version VARCHAR(255) NOT NULL DEFAULT '0.0.0',
     username VARCHAR(255) NOT NULL DEFAULT 'guest'
 );

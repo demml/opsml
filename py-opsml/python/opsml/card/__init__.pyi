@@ -585,6 +585,7 @@ class UidMetadata:
     datacard_uids: List[str]
     modelcard_uids: List[str]
     promptcard_uids: List[str]
+    card_deck_uids: List[str]
     experimentcard_uids: List[str]
 
 class ExperimentCard:
