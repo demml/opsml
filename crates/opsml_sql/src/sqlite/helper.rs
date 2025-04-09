@@ -483,14 +483,15 @@ impl SqliteQueryHelper {
         tags, 
         datacard_uids,
         modelcard_uids, 
-        experimentcard_uids,
         promptcard_uids,
+        card_deck_uids,
+        experimentcard_uids,
         pre_tag, 
         build_tag,
         username,
         opsml_version
         ) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             CardTable::Experiment
         )
         .to_string()
@@ -635,8 +636,9 @@ impl SqliteQueryHelper {
         tags = ?, 
         datacard_uids = ?, 
         modelcard_uids = ?, 
-        experimentcard_uids = ?,  
         promptcard_uids = ?,
+        card_deck_uids = ?,
+        experimentcard_uids = ?,  
         pre_tag = ?, 
         build_tag = ?,
         username = ?,

@@ -118,6 +118,7 @@ pub async fn insert_card_into_db(
                 client_card.datacard_uids,
                 client_card.modelcard_uids,
                 client_card.promptcard_uids,
+                client_card.card_deck_uids,
                 client_card.experimentcard_uids,
                 client_card.opsml_version,
                 client_card.username,

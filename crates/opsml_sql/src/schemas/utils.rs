@@ -64,6 +64,7 @@ pub fn convert_experimentcard(record: ExperimentCardRecord) -> CardRecord {
         datacard_uids: record.datacard_uids.0,
         modelcard_uids: record.modelcard_uids.0,
         promptcard_uids: record.promptcard_uids.0,
+        card_deck_uids: record.card_deck_uids.0,
         experimentcard_uids: record.experimentcard_uids.0,
         username: record.username,
         opsml_version: record.opsml_version,

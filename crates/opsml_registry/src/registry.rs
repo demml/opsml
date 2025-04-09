@@ -573,6 +573,9 @@ pub struct CardRegistries {
 
     #[pyo3(get)]
     pub prompt: CardRegistry,
+
+    #[pyo3(get)]
+    pub deck: CardRegistry,
 }
 
 #[pymethods]
@@ -590,12 +593,14 @@ impl CardRegistries {
         let model = CardRegistry::rust_new(&RegistryType::Model)?;
         let data = CardRegistry::rust_new(&RegistryType::Data)?;
         let prompt = CardRegistry::rust_new(&RegistryType::Prompt)?;
+        let deck = CardRegistry::rust_new(&RegistryType::Deck)?;
 
         Ok(Self {
             experiment,
             model,
             data,
             prompt,
+            deck,
         })
     }
 }

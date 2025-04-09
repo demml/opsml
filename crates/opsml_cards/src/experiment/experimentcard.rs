@@ -35,6 +35,9 @@ pub struct UidMetadata {
 
     #[pyo3(get, set)]
     pub experimentcard_uids: Vec<String>,
+
+    #[pyo3(get, set)]
+    pub card_deck_uids: Vec<String>,
 }
 
 #[pyclass]
@@ -140,6 +143,10 @@ impl ExperimentCard {
         self.uids.modelcard_uids.push(uid.to_string());
     }
 
+    pub fn add_card_deck_uid(&mut self, uid: &str) {
+        self.uids.card_deck_uids.push(uid.to_string());
+    }
+
     pub fn get_registry_card(&self) -> Result<CardRecord, CardError> {
         let record = ExperimentCardClientRecord {
             created_at: self.created_at,
@@ -152,6 +159,7 @@ impl ExperimentCard {
             datacard_uids: self.uids.datacard_uids.clone(),
             modelcard_uids: self.uids.modelcard_uids.clone(),
             promptcard_uids: self.uids.promptcard_uids.clone(),
+            card_deck_uids: self.uids.card_deck_uids.clone(),
             experimentcard_uids: self.uids.experimentcard_uids.clone(),
             opsml_version: self.opsml_version.clone(),
             username: std::env::var("OPSML_USERNAME").unwrap_or_else(|_| "guest".to_string()),
