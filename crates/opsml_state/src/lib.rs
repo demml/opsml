@@ -2,17 +2,19 @@ use opsml_client::base::{build_api_client, OpsmlApiClient};
 use opsml_error::error::StateError;
 use opsml_settings::OpsmlConfig;
 use opsml_settings::OpsmlMode;
+use opsml_toml::{OpsmlTools, PyProjectToml};
 use std::sync::Arc;
 use std::sync::OnceLock;
 use std::sync::RwLock;
 use tokio::runtime::Runtime;
-use tracing::error;
+use tracing::{debug, error};
 
 //    pub api_client: Arc<OpsmlApiClient>,
 
 pub struct OpsmlState {
     pub config: RwLock<OpsmlConfig>,
     pub runtime: Arc<Runtime>,
+    pub tools: Arc<Option<OpsmlTools>>,
 }
 
 impl OpsmlState {
@@ -24,7 +26,20 @@ impl OpsmlState {
             StateError::Error(format!("Failed to create runtime with error: {}", e))
         })?);
 
-        Ok(Self { config, runtime })
+        // Initialize tools from pyproject.toml
+        let tools = match PyProjectToml::load(None) {
+            Ok(toml) => Arc::new(toml.get_tools()),
+            Err(e) => {
+                debug!("Failed to load pyproject.toml, defaulting to None: {}", e);
+                Arc::new(None)
+            }
+        };
+
+        Ok(Self {
+            config,
+            runtime,
+            tools,
+        })
     }
 
     pub fn config(&self) -> Result<OpsmlConfig, StateError> {

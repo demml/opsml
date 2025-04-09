@@ -5,14 +5,14 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 use std::str::FromStr;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct CardAttr {
     pub space: Option<String>,
     pub name: Option<String>,
     pub version: Option<String>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct DeckCard {
     pub alias: String,
     pub space: Option<String>,
@@ -23,7 +23,7 @@ pub struct DeckCard {
     pub card_type: Option<RegistryType>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct DeckConfig {
     pub create: bool,
     pub name: String,
@@ -70,7 +70,7 @@ pub struct DeckConfig {
 //    }
 //}
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct OpsmlTools {
     /// Default argument that will apply to all cards
     ///
@@ -118,8 +118,8 @@ pub struct PyProjectToml {
 
 impl PyProjectToml {
     /// Quick access to the OpsmlTools
-    pub fn get_tools(&self) -> Option<&OpsmlTools> {
-        self.tool.as_ref().and_then(|t| t.opsml.as_ref())
+    pub fn get_tools(&self) -> Option<OpsmlTools> {
+        self.tool.as_ref().and_then(|t| t.opsml.clone())
     }
 
     /// Load the pyproject.toml file from a string
