@@ -63,7 +63,6 @@ pub fn validate_name_space_pattern(name: &str, space: &str) -> Result<(), UtilEr
 /// * `uid` - A string slice that holds the UUID
 ///
 /// # Returns
-///
 /// * `bool` - A boolean indicating if the UUID is valid
 ///
 /// # Errors

@@ -176,11 +176,9 @@ pub fn check_if_card(card: &Bound<'_, PyAny>) -> Result<(), RegistryError> {
 /// * `rt` - Tokio runtime
 ///
 /// # Returns
-///
 /// * `Bound<PyAny>` - Bound card
 ///
 /// # Errors
-///
 /// * `RegistryError` - Error creating card
 pub fn card_from_string<'py>(
     py: Python<'py>,
@@ -325,7 +323,6 @@ pub fn download_card<'py>(
 /// * `save_kwargs` - Optional save kwargs
 ///
 /// # Returns
-///
 /// * `Result<(), RegistryError>` - Result
 #[instrument(skip_all)]
 pub fn upload_card_artifacts(path: PathBuf, key: &ArtifactKey) -> Result<(), RegistryError> {

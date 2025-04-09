@@ -18,11 +18,9 @@ use tracing::{debug, error, instrument};
 /// * `registry_type` - PyAny object
 ///
 /// # Returns
-///
 /// * `Result<RegistryType, OpsmlError>` - Result
 ///
 /// # Errors
-///
 /// * `OpsmlError` - Error
 fn extract_registry_type(registry_type: &Bound<'_, PyAny>) -> PyResult<RegistryType> {
     match registry_type.is_instance_of::<RegistryType>() {
