@@ -1165,27 +1165,12 @@ class CardRegistries:
     def prompt(self) -> CardRegistry[PromptCard]: ...
 
 class Card:
-    """Represents a card from a given registry that can be used in a card deck
-
-    Arguments:
-        space (str):
-            The space of the card deck
-        name (str):
-            The name of the card deck
-        version (str):
-            The version of the card deck
-        uid (str):
-            The uid of the card deck
-        registry_type (RegistryType):
-            The type of registry the card deck belongs to
-        alias (str):
-            The alias of the card
-    """
+    """Represents a card from a given registry that can be used in a card deck"""
 
     def __init__(
         self,
         alias: str,
-        registry_type: RegistryType,
+        registry_type: Optional[RegistryType],
         space: Optional[str],
         name: Optional[str],
         version: Optional[str],
@@ -1211,10 +1196,11 @@ class Card:
 
 
         Args:
-            alias (str): (required)
+            alias (str):
                 The alias of the card
-            registry_type (RegistryType): (required)
-                The type of registry the card deck belongs to
+            registry_type (RegistryType):
+                The type of registry the card deck belongs to. This is
+                required if no card is provided.
             space (str):
                 The space of the card deck
             name (str):
@@ -1223,6 +1209,38 @@ class Card:
                 The version of the card deck
             uid (str):
                 The uid of the card deck
+            card (Union[DataCard, ModelCard, PromptCard, ExperimentCard]):
+                Optional card to add to the deck. If provided, arguments will
+                be extracted from the card. This card must be registered in a registry.
+
+
+        Example:
+
+        ```python
+        from opsml import Card, CardDeck, RegistryType
+
+        # With arguments
+        card = Card(
+            alias="my_alias",
+            registry_type=RegistryType.Model,
+            space="my_space",
+            name="my_name",
+            version="1.0.0",
+        )
+
+        # With card uid
+        card = Card(
+            alias="my_alias",
+            registry_type=RegistryType.Model,
+            uid="my_uid",
+        )
+
+        # With registered card
+        card = Card(
+            alias="my_alias",
+            card=model_card,  # ModelCard object
+        )
+        ```
 
         """
 
