@@ -59,7 +59,6 @@ pub async fn get_next_version(
 /// Insert a card into the database
 ///
 /// # Arguments
-///
 /// * `sql_client` - The sql client
 /// * `card` - The card to insert
 /// * `version` - The version of the card

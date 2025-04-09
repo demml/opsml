@@ -20,7 +20,6 @@ const NAME_SPACE_PATTERN: &str = r"^[a-z0-9]+(?:[-a-z0-9]+)*/[-a-z0-9]+$";
 /// Clean a string by removing punctuation and converting to lowercase
 ///
 /// # Arguments
-///
 /// * `input` - A string slice that holds the input string
 ///
 /// # Returns
@@ -61,7 +60,6 @@ pub fn validate_name_space_pattern(name: &str, space: &str) -> Result<(), UtilEr
 /// Check if a string is a valid `UUIDv7`
 ///
 /// # Arguments
-///
 /// * `uid` - A string slice that holds the UUID
 ///
 /// # Returns
@@ -379,7 +377,6 @@ pub fn create_tmp_path() -> Result<PathBuf, UtilError> {
 /// Unwraps a Python string attribute from a `PyAny` object.
 ///
 /// # Arguments
-///
 /// * `obj` - A reference to a `PyAny` object.
 /// * `field` - The name of the attribute to unwrap.
 ///
