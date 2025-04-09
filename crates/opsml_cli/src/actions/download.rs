@@ -10,7 +10,6 @@ use std::path::PathBuf;
 /// Download all artifacts of a card
 ///
 /// # Arguments
-///
 /// * `key` - ArtifactKey
 /// * `write_dir` - str
 ///

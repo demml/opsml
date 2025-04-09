@@ -17,7 +17,6 @@ use tracing::{debug, error, instrument};
 /// Helper function to load a card and convert it to PyObject
 ///
 /// # Arguments
-///
 /// * `py`: Python interpreter
 /// * `card_registries`: Card registries
 /// * `card`: Card to load
@@ -31,30 +30,22 @@ fn load_and_extract_card(
     interface: Option<&Bound<'_, PyAny>>,
 ) -> PyResult<PyObject> {
     let card_obj = match card.registry_type {
-        RegistryType::Model => {
-            let model_card = card_registries.model.load_card(
-                py,
-                card.uid.clone(),
-                card.space.clone(),
-                card.name.clone(),
-                card.version.clone(),
-                interface,
-            )?;
-
-            model_card
-        }
-        RegistryType::Data => {
-            let data_card = card_registries.data.load_card(
-                py,
-                card.uid.clone(),
-                card.space.clone(),
-                card.name.clone(),
-                card.version.clone(),
-                interface,
-            )?;
-
-            data_card
-        }
+        RegistryType::Model => card_registries.model.load_card(
+            py,
+            card.uid.clone(),
+            card.space.clone(),
+            card.name.clone(),
+            card.version.clone(),
+            interface,
+        )?,
+        RegistryType::Data => card_registries.data.load_card(
+            py,
+            card.uid.clone(),
+            card.space.clone(),
+            card.name.clone(),
+            card.version.clone(),
+            interface,
+        )?,
         RegistryType::Experiment => card_registries.experiment.load_card(
             py,
             card.uid.clone(),
@@ -94,6 +85,7 @@ pub enum CardEnum {
 }
 
 impl CardEnum {
+    #[allow(clippy::needless_lifetimes)]
     pub fn into_bound_py_any<'py>(
         self,
         py: Python<'py>,
@@ -176,7 +168,6 @@ pub fn check_if_card(card: &Bound<'_, PyAny>) -> Result<(), RegistryError> {
 /// Create a card from a json string
 ///
 /// # Arguments
-///
 /// * `py` - Python interpreter
 /// * `card_json` - JSON string of the card
 /// * `interface` - Optional interface for the card
@@ -261,7 +252,6 @@ pub fn card_from_string<'py>(
 /// Download a card
 ///
 /// # Arguments
-///
 /// * `py` - Python interpreter
 /// * `key` - Artifact key
 /// * `fs` - File system storage
@@ -269,11 +259,9 @@ pub fn card_from_string<'py>(
 /// * `interface` - Optional interface for the card
 ///
 /// # Returns
-///
 /// * `Bound<PyAny>` - Bound card
 ///
 /// # Errors
-///
 /// * `RegistryError` - Error downloading card
 pub fn download_card<'py>(
     py: Python<'py>,
@@ -322,7 +310,7 @@ pub fn download_card<'py>(
         _ => debug!("Card is not a deck, skipping deck loading"),
     }
 
-    Ok(card.into_bound_py_any(py)?)
+    card.into_bound_py_any(py)
 }
 
 /// Save card artifacts to storage
@@ -332,7 +320,6 @@ pub fn download_card<'py>(
 /// (3) Transfer all files in the temporary directory to the storage system
 ///
 /// # Arguments
-///
 /// * `py` - Python interpreter
 /// * `card` - Card to save
 /// * `save_kwargs` - Optional save kwargs
@@ -393,7 +380,7 @@ fn validate_card_by_metadata(reg: &OpsmlRegistry, card: &Card) -> Result<(), Reg
 ///
 /// # Errors
 /// * `RegistryError` - Error validating card
-/// Will return an error if the card does not exist in the registry
+///   Will return an error if the card does not exist in the registry
 fn validate_and_update_card(card: &mut Card) -> Result<(), RegistryError> {
     let reg = OpsmlRegistry::new(card.registry_type.clone())?;
 
@@ -429,7 +416,7 @@ fn validate_and_update_card(card: &mut Card) -> Result<(), RegistryError> {
 }
 
 #[instrument(skip_all)]
-fn validate_card_deck(deck: &mut Vec<Card>) -> Result<(), RegistryError> {
+fn validate_card_deck(deck: &mut [Card]) -> Result<(), RegistryError> {
     for card in deck.iter_mut() {
         validate_and_update_card(card)?;
     }

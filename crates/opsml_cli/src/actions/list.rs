@@ -8,16 +8,13 @@ use opsml_types::contracts::CardList;
 /// List cards from a registry and print them as a table
 ///
 /// # Example
-///
 /// opsml-cli list-cards --registry data
 ///
 /// # Arguments
-///
 /// * `args` - ListCards
 ///
 /// # Returns
-///
-/// Result<(), CliError>å
+/// Result<(), CliError>
 pub fn list_cards(args: &ListCards) -> Result<(), CliError> {
     println!(
         "\nListing cards from {} registry",

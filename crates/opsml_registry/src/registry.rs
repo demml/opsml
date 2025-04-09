@@ -15,7 +15,6 @@ use tracing::{debug, error, instrument};
 /// Extract registry type from a PyAny object
 ///
 /// # Arguments
-///
 /// * `registry_type` - PyAny object
 ///
 /// # Returns

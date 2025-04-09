@@ -180,7 +180,6 @@ pub async fn update_drift_profile(
 /// Update drift profile status
 ///
 /// # Arguments
-///
 /// * `data` - Arc<AppState> - Application state
 /// * `body` - Json<ProfileStatusRequest> - Profile status request
 ///

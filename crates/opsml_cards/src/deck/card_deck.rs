@@ -18,8 +18,12 @@ use serde::{
     Deserialize, Deserializer, Serialize, Serializer,
 };
 use std::collections::HashMap;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use tracing::{debug, error, instrument};
+
+type PyBoundAny<'py> = Bound<'py, PyAny>;
+type OptionalPyBound<'py> = Option<PyBoundAny<'py>>;
+type ExtractedKwargs<'py> = (OptionalPyBound<'py>, OptionalPyBound<'py>);
 
 #[pyclass(eq)]
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
@@ -215,7 +219,6 @@ impl CardDeck {
     /// Load the cards in the card deck
     ///
     /// # Arguments
-    ///
     /// * `py` - Python interpreter state
     /// * `load_kwargs` - Optional map of alias to kwargs containing load arguments (DataLoadKwargs, ModelLoadKwargs)
     ///
@@ -437,7 +440,7 @@ impl CardDeck {
 impl CardDeck {
     fn load_card(
         py: Python,
-        base_path: &PathBuf,
+        base_path: &Path,
         card: &Card,
         load_kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<PyObject> {
@@ -471,7 +474,7 @@ impl CardDeck {
 
         Ok(card_obj)
     }
-    fn load_card_deck_json(path: &PathBuf) -> PyResult<CardDeck> {
+    fn load_card_deck_json(path: &Path) -> PyResult<CardDeck> {
         let card_deck_path = path.join(SaveName::Card).with_extension(Suffix::Json);
         let json_string = std::fs::read_to_string(card_deck_path).map_err(|e| {
             error!("Failed to read file: {}", e);
@@ -484,11 +487,11 @@ impl CardDeck {
         py: Python<'py>,
         kwargs: Option<&Bound<'py, PyDict>>,
         alias: &str,
-    ) -> PyResult<(Option<Bound<'py, PyAny>>, Option<Bound<'py, PyAny>>)> {
+    ) -> PyResult<ExtractedKwargs<'py>> {
         let card_kwargs = kwargs
             .and_then(|kwargs| kwargs.get_item(alias).ok())
             .and_then(|bound| match bound {
-                Some(b) => b.downcast::<PyDict>().ok().map(|dict| dict.clone()),
+                Some(b) => b.downcast::<PyDict>().ok().cloned(),
                 None => None,
             });
 
@@ -514,7 +517,7 @@ impl CardDeck {
         }
     }
 
-    fn read_card_json(card_path: &PathBuf) -> PyResult<String> {
+    fn read_card_json(card_path: &Path) -> PyResult<String> {
         std::fs::read_to_string(card_path.join(SaveName::Card).with_extension(Suffix::Json))
             .map_err(|e| OpsmlError::new_err(e.to_string()))
     }

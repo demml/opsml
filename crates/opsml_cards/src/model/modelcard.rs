@@ -432,12 +432,12 @@ impl ModelCard {
 
             // check if model is None
             if model.is_none() {
-                return Err(OpsmlError::new_err(
+                Err(OpsmlError::new_err(
                     "Model has not been set. Load the model and retry.",
-                ));
+                ))
             // return model
             } else {
-                return Ok(model);
+                Ok(model)
             }
         } else {
             Err(OpsmlError::new_err(

@@ -272,7 +272,6 @@ impl Display for AuditStatus {
 /// Request to get a file from the registry
 ///
 /// # Arguments
-///
 /// * `uid` - The unique identifier of card that is requesting the file
 /// * `file` - The file tree node
 /// * `registry_type` - The type of registry
@@ -286,7 +285,6 @@ pub struct RawFileRequest {
 /// Response to get a file from the registry
 ///
 /// # Arguments
-///
 /// * `content` - The content of the file
 /// * `suffix` - The suffix of the file
 /// * `mime_type` - The mime type of the file

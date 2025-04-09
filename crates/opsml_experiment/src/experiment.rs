@@ -25,15 +25,12 @@ use tracing::{debug, error, instrument, warn};
 /// Get the filename of the python file
 ///
 /// # Arguments
-///
 /// * `py` - The python interpreter
 ///
 /// # Returns
-///
 /// * `PathBuf` - The path to the python file
 ///
 /// # Errors
-///
 /// * `ExperimentError` - Error getting the python filename
 fn get_py_filename(py: Python) -> Result<PathBuf, ExperimentError> {
     let inspect = py.import("inspect")?;
@@ -47,7 +44,6 @@ fn get_py_filename(py: Python) -> Result<PathBuf, ExperimentError> {
 /// Extract the code related to the experiment
 ///
 /// # Arguments
-///
 /// * `py` - The python interpreter
 /// * `code_dir` - The directory containing the code
 /// * `uid` - The experiment UID
@@ -56,11 +52,9 @@ fn get_py_filename(py: Python) -> Result<PathBuf, ExperimentError> {
 /// * `rt` - The tokio runtime
 ///
 /// # Returns
-///
 /// * `None`
 ///
 /// # Errors
-///
 /// * `ExperimentError` - Error extracting the code
 fn extract_code(
     py: Python<'_>,
@@ -167,7 +161,6 @@ impl Experiment {
     /// Create an experiment
     ///
     /// # Arguments
-    ///
     /// * `py` - The python interpreter
     /// * `space` - The space URL
     /// * `name` - The name of the experiment
@@ -178,12 +171,10 @@ impl Experiment {
     /// * `rt` - The tokio runtime
     ///
     /// # Returns
-    ///
     /// * `Bound<PyAny>` - The experiment card
     /// * `String` - The experiment UID
     ///
     /// # Errors
-    ///
     /// * `ExperimentError` - Error creating the experiment
     #[instrument(skip_all)]
     fn create_experiment<'py>(
@@ -669,7 +660,6 @@ impl Experiment {
 /// Start an experiment
 ///
 /// # Arguments
-///
 /// * `space` - The space URL
 /// * `name` - The name of the experiment
 /// * `code_dir` - The directory containing the code

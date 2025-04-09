@@ -19,7 +19,6 @@ use tracing::error;
 /// Returns a `Result` containing either the user or an error
 ///
 /// # Errors
-///
 /// Returns an error if the user is not found in the database
 ///
 /// # Panics
