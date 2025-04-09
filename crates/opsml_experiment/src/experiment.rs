@@ -667,11 +667,9 @@ impl Experiment {
 /// * `experiment_uid` - The experiment UID
 ///
 /// # Returns
-///
 /// * `Bound<Experiment>` - The experiment
 ///
 /// # Errors
-///
 /// * `ExperimentError` - Error starting the experiment
 #[pyfunction]
 #[pyo3(signature = (space=None, name=None, code_dir=None, log_hardware=false, experiment_uid=None))]

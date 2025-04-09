@@ -184,7 +184,6 @@ pub async fn update_drift_profile(
 /// * `body` - Json<ProfileStatusRequest> - Profile status request
 ///
 /// # Returns
-///
 /// * `Result<impl IntoResponse, (StatusCode, Json<serde_json::Value>)>` - Result of the request
 #[instrument(skip(data, body))]
 pub async fn update_drift_profile_status(
