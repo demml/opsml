@@ -5,6 +5,7 @@ edition = { workspace = true }
 repository = { workspace = true }
 
 [dependencies]
+opsml-cards = { workspace = true }
 opsml-colors = { workspace = true }
 opsml-crypt = { workspace = true }
 opsml-error = { workspace = true }

@@ -4,6 +4,7 @@ use opsml_colors::Colorize;
 use opsml_error::CliError;
 use opsml_registry::base::OpsmlRegistry;
 use opsml_types::contracts::CardList;
+use opsml_types::RegistryType;
 
 /// List cards from a registry and print them as a table
 ///
@@ -15,14 +16,14 @@ use opsml_types::contracts::CardList;
 ///
 /// # Returns
 /// Result<(), CliError>
-pub fn list_cards(args: &ListCards) -> Result<(), CliError> {
+pub fn list_cards(args: &ListCards, registry_type: RegistryType) -> Result<(), CliError> {
     println!(
         "\nListing cards from {} registry",
-        Colorize::green(&args.registry)
+        Colorize::green(&registry_type.to_string())
     );
 
     // convert to query args
-    let query_args = args.into_query_args()?;
+    let query_args = args.into_query_args(registry_type)?;
 
     // get registry
     let registry = OpsmlRegistry::new(query_args.registry_type.clone())?;

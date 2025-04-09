@@ -17,20 +17,26 @@ pub enum Commands {
     ///
     /// # Example
     ///
-    /// opsml-cli list-cards --registry data
-    ListCards(ListCards),
+    /// opsml list --registry data
+    List {
+        #[command(subcommand)]
+        command: ListCommands,
+    },
+
     /// Download card artifacts from a registry
     ///
     /// # Example
-    ///
-    /// opsml-cli download-card --registry model --name model_name --version 1.0.0
-    DownloadCard(DownloadCard),
+    /// opsml get model --name model_name --version 1.0.0
+    Get {
+        #[command(subcommand)]
+        command: GetCommands,
+    },
 
-    ///  Show opsml-cli version
+    ///  Show opsml version
     ///
     /// # Example
     ///
-    /// opsml-cli version
+    /// opsml version
     Version,
 
     ///  Show opsml-cli info
@@ -39,6 +45,30 @@ pub enum Commands {
     ///
     /// opsml-cli info
     Info,
+}
+
+#[derive(Subcommand)]
+pub enum GetCommands {
+    /// Download card model artifacts
+    ///
+    /// # Example
+    ///
+    /// opsml get model --name model_name --version 1.0.0
+    Model(DownloadCard),
+
+    /// Download card deck artifacts
+    ///
+    Deck(DownloadCard),
+}
+
+#[derive(Subcommand)]
+pub enum ListCommands {
+    Model(ListCards),
+    Deck(ListCards),
+    Data(ListCards),
+    Experiment(ListCards),
+    Audit(ListCards),
+    Prompt(ListCards),
 }
 
 pub const LOGO_TEXT: &str = "

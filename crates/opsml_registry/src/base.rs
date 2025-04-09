@@ -149,13 +149,13 @@ impl OpsmlRegistry {
         }
     }
 
-    pub fn load_card(&self, args: CardQueryArgs) -> Result<ArtifactKey, RegistryError> {
+    pub fn get_key(&self, args: CardQueryArgs) -> Result<ArtifactKey, RegistryError> {
         match self {
-            Self::ClientRegistry(client_registry) => client_registry.load_card(args),
+            Self::ClientRegistry(client_registry) => client_registry.get_key(args),
             #[cfg(feature = "server")]
             Self::ServerRegistry(server_registry) => {
                 app_state().block_on(async {
-                    let key = server_registry.load_card(args).await?;
+                    let key = server_registry.get_key(args).await?;
 
                     // convert to client ArtifactKey
                     Ok(ArtifactKey {

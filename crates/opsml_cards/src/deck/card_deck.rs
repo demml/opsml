@@ -474,7 +474,7 @@ impl CardDeck {
 
         Ok(card_obj)
     }
-    fn load_card_deck_json(path: &Path) -> PyResult<CardDeck> {
+    pub fn load_card_deck_json(path: &Path) -> PyResult<CardDeck> {
         let card_deck_path = path.join(SaveName::Card).with_extension(Suffix::Json);
         let json_string = std::fs::read_to_string(card_deck_path).map_err(|e| {
             error!("Failed to read file: {}", e);
