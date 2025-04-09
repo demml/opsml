@@ -291,7 +291,10 @@ def crud_card_deck(model_uid: str, prompt_uid: str):
     created_path = Path(loaded_card.name)
     assert created_path.exists()
     assert created_path.is_dir()
-    assert len(list(created_path.iterdir())) == 2
+    assert len(list(created_path.iterdir())) == 3
+
+    loaded_card2 = CardDeck.load_from_path(created_path)
+    print(loaded_card2)
 
     # attempt to delete folder
     shutil.rmtree(loaded_card.name)

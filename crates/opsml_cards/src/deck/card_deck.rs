@@ -325,6 +325,7 @@ impl CardDeck {
     /// - Individual card files cannot be loaded
     /// - Invalid kwargs are provided
     #[staticmethod]
+    #[pyo3(signature = (path, load_kwargs=None))]
     pub fn load_from_path(
         py: Python,
         path: PathBuf,
