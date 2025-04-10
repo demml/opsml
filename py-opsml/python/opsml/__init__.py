@@ -8,7 +8,7 @@ from .opsml import (  # noqa: F401
     experiment,
     model,
     potato_head,
-    run_opsml_cli,
+    cli,
     scouter,
     test,
 )
@@ -72,3 +72,6 @@ Message = potato_head.Message
 # Deck
 CardDeck = card.CardDeck
 Card = card.Card
+
+# CLI
+run_opsml_cli = cli.run_opsml_cli

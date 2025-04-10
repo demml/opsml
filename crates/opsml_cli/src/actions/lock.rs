@@ -1,38 +1,17 @@
+use super::utils::register_card_deck;
 use opsml_error::CliError;
 use opsml_registry::{CardRegistries, CardRegistry};
-use opsml_toml::tools::DeckCard;
-use opsml_toml::{tools::AppConfig, PyProjectToml};
+use opsml_toml::{
+    toml::{AppConfig, Card},
+    LockArtifact, LockFile, PyProjectToml,
+};
 use opsml_types::{
     contracts::{CardEntry, CardRecord},
     RegistryType,
 };
-use serde::{Deserialize, Serialize};
-
-use super::utils::register_card_deck;
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct LockEntry {
-    pub space: String,
-    pub name: String,
-    pub version: String,
-    pub uid: String,
-    pub registry_type: RegistryType,
-}
-
-/// LockFile struct to hold the lock entries
-pub struct LockFile {
-    // Each entry is considered a service
-    pub service: Vec<LockEntry>,
-}
-
-/// create lock entry for a card
-/// # Arguments
-/// * `card` - AppConfig
-async fn lock_card(config: AppConfig) -> Result<(), CliError> {
-    // Create a lock file for the card
-    //let registry_type = card.registry_type;
-    Ok(())
-}
+use pyo3::prelude::*;
+use std::path::PathBuf;
+use tracing::debug;
 
 /// Helper function to get cards from registry
 fn get_deck_from_registry(
@@ -53,7 +32,7 @@ fn get_deck_from_registry(
 }
 
 /// Helper function to validate app configuration
-fn validate_app_cards(config: &AppConfig) -> Result<&Vec<DeckCard>, CliError> {
+fn validate_app_cards(config: &AppConfig) -> Result<&Vec<Card>, CliError> {
     config.cards.as_ref().ok_or(CliError::MissingDeckCards)
 }
 
@@ -68,7 +47,7 @@ fn validate_app_cards(config: &AppConfig) -> Result<&Vec<DeckCard>, CliError> {
 ///
 /// # Errors
 /// * `CliError::MissingRegistryType` - If the registry type is missing
-fn get_latest_card(registries: &CardRegistries, card: &DeckCard) -> Result<CardRecord, CliError> {
+fn get_latest_card(registries: &CardRegistries, card: &Card) -> Result<CardRecord, CliError> {
     // extract registry type from entry
     let registry_type = card.registry_type.clone();
 
@@ -115,7 +94,7 @@ fn get_latest_card(registries: &CardRegistries, card: &DeckCard) -> Result<CardR
 /// * `Result<bool, CliError>` - True if a version refresh is needed, false otherwise
 fn process_deck_cards(
     card_entries: Vec<CardEntry>,
-    app_cards: &[DeckCard],
+    app_cards: &[Card],
     registries: &CardRegistries,
 ) -> Result<bool, CliError> {
     for app_card in app_cards {
@@ -149,7 +128,7 @@ fn process_deck_cards(
 /// create lock entry for a deck
 /// # Arguments
 /// * `config` - AppConfig
-async fn lock_deck(config: AppConfig) -> Result<Option<LockEntry>, CliError> {
+fn lock_deck(config: AppConfig) -> Result<LockArtifact, CliError> {
     // Validate app configuration
     let app_cards = validate_app_cards(&config)?;
     let registries = CardRegistries::new()?;
@@ -159,41 +138,44 @@ async fn lock_deck(config: AppConfig) -> Result<Option<LockEntry>, CliError> {
 
     // Handle deck creation if it doesn't exist
     if deck.is_none() {
-        if config.create {
-            let card = register_card_deck(config, &registries.deck)?;
-            return Ok(Some(LockEntry {
-                space: card.space.clone(),
-                name: card.name.clone(),
-                version: card.version.clone(),
-                uid: card.uid.clone(),
-                registry_type: RegistryType::Deck,
-            }));
-        }
-        return Ok(None);
+        let card = register_card_deck(&config, &registries.deck)?;
+        return Ok(LockArtifact {
+            space: card.space.clone(),
+            name: card.name.clone(),
+            version: card.version.clone(),
+            uid: card.uid.clone(),
+            registry_type: RegistryType::Deck,
+        });
     }
-
-    // Process existing deck
+    //
+    //// Process existing deck
     let deck = deck.unwrap();
-
-    // Get card UIDs from deck
+    //
+    //// Get card UIDs from deck
     let card_entries = deck.card_uids().ok_or(CliError::MissingCardDeckUids)?;
     let needs_refresh = process_deck_cards(card_entries, app_cards, &registries)?;
-
+    //
     let lock_entry = match needs_refresh {
         true => {
             // If refresh is needed, register the deck again
-            let card = register_card_deck(config, &registries.deck)?;
-            Some(LockEntry {
+            let card = register_card_deck(&config, &registries.deck)?;
+            LockArtifact {
                 space: card.space.clone(),
                 name: card.name.clone(),
                 version: card.version.clone(),
                 uid: card.uid.clone(),
                 registry_type: RegistryType::Deck,
-            })
+            }
         }
         false => {
             // No refresh needed, return existing entry
-            None
+            LockArtifact {
+                space: deck.space().to_string(),
+                name: deck.name().to_string(),
+                version: deck.version().to_string(),
+                uid: deck.uid().to_string(),
+                registry_type: RegistryType::Deck,
+            }
         }
     };
 
@@ -201,11 +183,11 @@ async fn lock_deck(config: AppConfig) -> Result<Option<LockEntry>, CliError> {
 }
 
 /// Create the the lock file for the app
-async fn lock_app(app: AppConfig) -> Result<Option<LockEntry>, CliError> {
+fn lock_app(app: AppConfig) -> Result<LockArtifact, CliError> {
     // Create a lock file for the app
     // current only support deck
     match app.registry_type {
-        RegistryType::Deck => lock_deck(app).await,
+        RegistryType::Deck => lock_deck(app),
         _ => {
             return Err(CliError::Error(
                 "Unsupported registry type for lock file".to_string(),
@@ -214,9 +196,12 @@ async fn lock_app(app: AppConfig) -> Result<Option<LockEntry>, CliError> {
     }
 }
 
-pub async fn lock() -> Result<(), CliError> {
+#[pyfunction]
+#[pyo3(signature = (path=None, toml_name=None))]
+pub fn lock_project(path: Option<PathBuf>, toml_name: Option<&str>) -> Result<(), CliError> {
+    debug!("Locking project with path: {:?}", path);
     // Load the pyproject.toml file
-    let pyproject = PyProjectToml::load(None)?;
+    let pyproject = PyProjectToml::load(path.as_deref(), toml_name)?;
 
     let tools = pyproject.get_tools().ok_or_else(|| {
         CliError::Error(
@@ -233,14 +218,14 @@ pub async fn lock() -> Result<(), CliError> {
     // Create a lock file
     let mut lock_entries = Vec::new();
     for app in apps {
-        if let Some(entry) = lock_app(app.clone()).await? {
-            lock_entries.push(entry);
-        }
+        lock_entries.push(lock_app(app.clone())?);
     }
-
+    //
     let lock_file = LockFile {
-        service: lock_entries,
+        artifact: lock_entries,
     };
+
+    lock_file.write(&pyproject.root_path.join("opsml.lock"))?;
 
     Ok(())
 }

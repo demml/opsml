@@ -27,7 +27,7 @@ impl OpsmlState {
         })?);
 
         // Initialize tools from pyproject.toml
-        let tools = match PyProjectToml::load(None) {
+        let tools = match PyProjectToml::load(None, None) {
             Ok(toml) => Arc::new(toml.get_tools()),
             Err(e) => {
                 debug!("Failed to load pyproject.toml, defaulting to None: {}", e);

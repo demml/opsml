@@ -5,6 +5,7 @@ use chrono::{DateTime, Utc};
 use opsml_error::{CardError, OpsmlError};
 use opsml_interfaces::{DataLoadKwargs, ModelLoadKwargs};
 use opsml_types::contracts::CardEntry;
+use opsml_types::CommonKwargs;
 use opsml_types::{
     contracts::{CardDeckClientRecord, CardRecord},
     RegistryType, SaveName, Suffix,
@@ -31,16 +32,16 @@ type ExtractedKwargs<'py> = (OptionalPyBound<'py>, OptionalPyBound<'py>);
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
 pub struct Card {
     #[pyo3(get, set)]
-    pub space: Option<String>,
+    pub space: String,
 
     #[pyo3(get, set)]
-    pub name: Option<String>,
+    pub name: String,
 
     #[pyo3(get, set)]
-    pub version: Option<String>,
+    pub version: String,
 
     #[pyo3(get, set)]
-    pub uid: Option<String>,
+    pub uid: String,
 
     #[pyo3(get, set)]
     pub registry_type: RegistryType,
@@ -71,11 +72,30 @@ impl Card {
                 .ok_or_else(|| {
                     OpsmlError::new_err("Unable to get card uid. Is this card registered?")
                 })?;
+            let name = card
+                .getattr("name")?
+                .extract::<Option<String>>()?
+                .ok_or_else(|| {
+                    OpsmlError::new_err("Unable to get card name. Is this card registered?")
+                })?;
+            let space = card
+                .getattr("space")?
+                .extract::<Option<String>>()?
+                .ok_or_else(|| {
+                    OpsmlError::new_err("Unable to get card space. Is this card registered?")
+                })?;
+
+            let version = card
+                .getattr("version")?
+                .extract::<Option<String>>()?
+                .ok_or_else(|| {
+                    OpsmlError::new_err("Unable to get card version. Is this card registered?")
+                })?;
             return Ok(Card {
-                space: None,
-                name: None,
-                version: None,
-                uid: Some(uid),
+                space,
+                name,
+                version,
+                uid,
                 registry_type,
                 alias,
             });
@@ -102,10 +122,18 @@ impl Card {
         }
 
         Ok(Card {
-            space: space.map(|s| s.to_string()),
-            name: name.map(|s| s.to_string()),
-            version: version.map(|s| s.to_string()),
-            uid: uid.map(|s| s.to_string()),
+            space: space
+                .map(String::from)
+                .unwrap_or_else(|| CommonKwargs::Undefined.to_string()),
+            name: name
+                .map(String::from)
+                .unwrap_or_else(|| CommonKwargs::Undefined.to_string()),
+            version: version
+                .map(String::from)
+                .unwrap_or_else(|| CommonKwargs::Undefined.to_string()),
+            uid: uid
+                .map(String::from)
+                .unwrap_or_else(|| CommonKwargs::Undefined.to_string()),
             registry_type,
             alias,
         })
@@ -121,10 +149,10 @@ impl Card {
         version: Option<String>,
     ) -> Card {
         Card {
-            space: Some(space),
-            name: Some(name),
-            version,
-            uid: None,
+            space,
+            name,
+            version: version.unwrap_or_else(|| CommonKwargs::Undefined.to_string()),
+            uid: CommonKwargs::Undefined.to_string(),
             registry_type,
             alias,
         }
@@ -190,13 +218,16 @@ impl CardList {
 }
 
 impl CardList {
+    pub fn new_rs(cards: Vec<Card>) -> CardList {
+        CardList { cards }
+    }
     pub fn to_card_entries(&self) -> Vec<CardEntry> {
         self.cards
             .iter()
             .map(|card| CardEntry {
                 alias: card.alias.clone(),
-                version: card.version.as_ref().unwrap().clone(),
-                uid: card.uid.as_ref().unwrap().clone(),
+                version: card.version.clone(),
+                uid: card.uid.clone(),
                 registry_type: card.registry_type.clone(),
             })
             .collect()
@@ -686,7 +717,7 @@ impl CardDeck {
             version: base_args.2,
             uid: base_args.3,
             created_at: Utc::now(),
-            cards: CardList { cards },
+            cards: CardList::new_rs(cards),
             opsml_version: env!("CARGO_PKG_VERSION").to_string(),
             card_objs: HashMap::new(),
             app_env: std::env::var("APP_ENV").unwrap_or_else(|_| "dev".to_string()),
