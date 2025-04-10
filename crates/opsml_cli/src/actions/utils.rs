@@ -4,6 +4,7 @@ use opsml_colors::Colorize;
 use opsml_error::CliError;
 use opsml_registry::base::OpsmlRegistry;
 pub use opsml_registry::utils::validate_card_deck_cards;
+use opsml_registry::CardRegistry;
 use opsml_semver::VersionType;
 use opsml_toml::tools::AppConfig;
 use opsml_types::contracts::card;
@@ -50,29 +51,10 @@ pub fn create_card_deck(app: AppConfig) -> Result<CardDeck, CliError> {
         .map_err(|e| CliError::CreateDeckError(e))
 }
 
-pub fn register_card_deck(app: AppConfig, registry: &OpsmlRegistry) -> Result<(), CliError> {
+pub fn register_card_deck(app: AppConfig, registry: &CardRegistry) -> Result<CardDeck, CliError> {
     // Validate the app configuration
-    let card_deck = create_card_deck(app.clone())?;
-    let registry_card = card_deck.get_registry_card()?;
+    let mut card_deck = create_card_deck(app.clone())?;
+    registry.register_card_rs(&mut card_deck, VersionType::Minor)?;
 
-    let version: Option<String> = if card_deck.version == CommonKwargs::BaseVersion.to_string() {
-        None
-    } else {
-        Some(card_deck.version.clone())
-    };
-
-    let response = registry.create_card(registry_card, version, VersionType::Minor, None, None)?;
-
-    println!(
-        "{} - {} - {}/{} - v{}",
-        Colorize::green("Registered card"),
-        Colorize::purple(&app.registry_type.to_string()),
-        response.space,
-        response.name,
-        response.version
-    );
-
-    // Register the card deck
-
-    Ok(())
+    Ok(card_deck)
 }

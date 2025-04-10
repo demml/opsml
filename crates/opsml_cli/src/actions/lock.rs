@@ -1,16 +1,14 @@
-use opsml_cards::Card;
 use opsml_error::CliError;
-use opsml_registry::base::OpsmlRegistry;
-use opsml_registry::RustRegistries;
+use opsml_registry::{CardRegistries, CardRegistry};
 use opsml_toml::tools::DeckCard;
-use opsml_toml::{tools::AppConfig, OpsmlTool, OpsmlTools, PyProjectToml};
+use opsml_toml::{tools::AppConfig, PyProjectToml};
 use opsml_types::{
-    contracts::{CardEntry, CardQueryArgs, CardRecord},
+    contracts::{CardEntry, CardRecord},
     RegistryType,
 };
 use serde::{Deserialize, Serialize};
 
-use crate::cli::Cli;
+use super::utils::register_card_deck;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct LockEntry {
@@ -38,21 +36,20 @@ async fn lock_card(config: AppConfig) -> Result<(), CliError> {
 
 /// Helper function to get cards from registry
 fn get_deck_from_registry(
-    registry: &OpsmlRegistry,
+    registry: &CardRegistry,
     config: &AppConfig,
 ) -> Result<Option<CardRecord>, CliError> {
-    let query_args = CardQueryArgs {
-        space: config.space.clone(),
-        name: config.name.clone(),
-        version: config.version.clone(),
-        uid: config.uid.clone(),
-        registry_type: config.registry_type.clone(),
-        limit: Some(1),
-        ..Default::default()
-    };
-
-    let cards = registry.list_cards(query_args)?;
-    Ok(cards.first().cloned())
+    let cards = registry.list_cards(
+        None,
+        Some(config.space.clone()),
+        Some(config.name.clone()),
+        config.version.clone(),
+        None,
+        None,
+        Some(true),
+        1,
+    )?;
+    Ok(cards.cards.first().cloned())
 }
 
 /// Helper function to validate app configuration
@@ -71,32 +68,16 @@ fn validate_app_cards(config: &AppConfig) -> Result<&Vec<DeckCard>, CliError> {
 ///
 /// # Errors
 /// * `CliError::MissingRegistryType` - If the registry type is missing
-fn get_latest_card(registries: &RustRegistries, card: &DeckCard) -> Result<CardRecord, CliError> {
+fn get_latest_card(registries: &CardRegistries, card: &DeckCard) -> Result<CardRecord, CliError> {
     // extract registry type from entry
-    let registry_type = card
-        .registry_type
-        .as_ref()
-        .ok_or(CliError::MissingRegistryType)?;
+    let registry_type = card.registry_type.clone();
 
-    // set args for querying registry
-    let query_args = CardQueryArgs {
-        space: card.space.clone(),
-        name: card.name.clone(),
-        version: card.version.clone(),
-        uid: card.uid.clone(),
-        registry_type: registry_type.clone(),
-        sort_by_timestamp: Some(true),
-        limit: Some(1),
-        ..Default::default()
-    };
-
-    // get the latest card from the appropriate registry
-    let latest_cards = match registry_type {
-        RegistryType::Model => registries.model.list_cards(query_args)?,
-        RegistryType::Experiment => registries.experiment.list_cards(query_args)?,
-        RegistryType::Data => registries.data.list_cards(query_args)?,
-        RegistryType::Audit => registries.audit.list_cards(query_args)?,
-        RegistryType::Prompt => registries.prompt.list_cards(query_args)?,
+    let registry = match registry_type {
+        RegistryType::Model => &registries.model,
+        RegistryType::Experiment => &registries.experiment,
+        RegistryType::Data => &registries.data,
+        RegistryType::Prompt => &registries.prompt,
+        RegistryType::Deck => &registries.deck,
         _ => {
             return Err(CliError::RegistryTypeNotSupported(
                 registry_type.to_string(),
@@ -104,8 +85,20 @@ fn get_latest_card(registries: &RustRegistries, card: &DeckCard) -> Result<CardR
         }
     };
 
+    let latest_cards = registry.list_cards(
+        None,
+        Some(card.space.clone()),
+        Some(card.name.clone()),
+        card.version.clone(),
+        None,
+        None,
+        Some(true),
+        1,
+    )?;
+
     // return the first card in the list
     latest_cards
+        .cards
         .first()
         .cloned()
         .ok_or(CliError::MissingCardRecord)
@@ -123,7 +116,7 @@ fn get_latest_card(registries: &RustRegistries, card: &DeckCard) -> Result<CardR
 fn process_deck_cards(
     card_entries: Vec<CardEntry>,
     app_cards: &[DeckCard],
-    registries: &RustRegistries,
+    registries: &CardRegistries,
 ) -> Result<bool, CliError> {
     for app_card in app_cards {
         // Find the latest card given the constraints provided in toml file
@@ -155,12 +148,11 @@ fn process_deck_cards(
 
 /// create lock entry for a deck
 /// # Arguments
-/// * `deck` - AppConfig
-/// create lock entry for a deck
-async fn lock_deck(config: AppConfig) -> Result<(), CliError> {
+/// * `config` - AppConfig
+async fn lock_deck(config: AppConfig) -> Result<Option<LockEntry>, CliError> {
     // Validate app configuration
     let app_cards = validate_app_cards(&config)?;
-    let registries = RustRegistries::new()?;
+    let registries = CardRegistries::new()?;
 
     // Initialize registry and get deck
     let deck = get_deck_from_registry(&registries.deck, &config)?;
@@ -168,9 +160,16 @@ async fn lock_deck(config: AppConfig) -> Result<(), CliError> {
     // Handle deck creation if it doesn't exist
     if deck.is_none() {
         if config.create {
-            unimplemented!("Create a new deck");
+            let card = register_card_deck(config, &registries.deck)?;
+            return Ok(Some(LockEntry {
+                space: card.space.clone(),
+                name: card.name.clone(),
+                version: card.version.clone(),
+                uid: card.uid.clone(),
+                registry_type: RegistryType::Deck,
+            }));
         }
-        return Ok(());
+        return Ok(None);
     }
 
     // Process existing deck
@@ -180,49 +179,67 @@ async fn lock_deck(config: AppConfig) -> Result<(), CliError> {
     let card_entries = deck.card_uids().ok_or(CliError::MissingCardDeckUids)?;
     let needs_refresh = process_deck_cards(card_entries, app_cards, &registries)?;
 
-    Ok(())
+    let lock_entry = match needs_refresh {
+        true => {
+            // If refresh is needed, register the deck again
+            let card = register_card_deck(config, &registries.deck)?;
+            Some(LockEntry {
+                space: card.space.clone(),
+                name: card.name.clone(),
+                version: card.version.clone(),
+                uid: card.uid.clone(),
+                registry_type: RegistryType::Deck,
+            })
+        }
+        false => {
+            // No refresh needed, return existing entry
+            None
+        }
+    };
+
+    Ok(lock_entry)
 }
 
 /// Create the the lock file for the app
-async fn lock_app(app: AppConfig) -> Result<(), CliError> {
+async fn lock_app(app: AppConfig) -> Result<Option<LockEntry>, CliError> {
     // Create a lock file for the app
+    // current only support deck
     match app.registry_type {
-        RegistryType::Model => lock_card(app).await?,
-        RegistryType::Experiment => lock_card(app).await?,
-        RegistryType::Data => lock_card(app).await?,
-        RegistryType::Audit => lock_card(app).await?,
-        RegistryType::Prompt => lock_card(app).await?,
-        RegistryType::Deck => lock_deck(app).await?,
+        RegistryType::Deck => lock_deck(app).await,
         _ => {
             return Err(CliError::Error(
                 "Unsupported registry type for lock file".to_string(),
             ))
         }
     }
-
-    Ok(())
 }
 
 pub async fn lock() -> Result<(), CliError> {
     // Load the pyproject.toml file
     let pyproject = PyProjectToml::load(None)?;
 
-    let tools = match pyproject.get_tools() {
-        Some(config) => config,
-        None => {
-            return Err(CliError::Error(
-                "No tools found in pyproject.toml. An tool config must be present".to_string(),
-            ));
-        }
-    };
+    let tools = pyproject.get_tools().ok_or_else(|| {
+        CliError::Error(
+            "No tools found in pyproject.toml. An tool config must be present".to_string(),
+        )
+    })?;
 
-    let apps = match tools.get_apps() {
-        Some(apps) => apps.clone(),
-        None => {
-            return Err(CliError::Error(
-                "No apps found in pyproject.toml. An app config must be present".to_string(),
-            ));
+    let apps = tools.get_apps().ok_or_else(|| {
+        CliError::Error(
+            "No apps found in pyproject.toml. An app config must be present".to_string(),
+        )
+    })?;
+
+    // Create a lock file
+    let mut lock_entries = Vec::new();
+    for app in apps {
+        if let Some(entry) = lock_app(app.clone()).await? {
+            lock_entries.push(entry);
         }
+    }
+
+    let lock_file = LockFile {
+        service: lock_entries,
     };
 
     Ok(())
