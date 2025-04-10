@@ -3,7 +3,7 @@ pub mod registry;
 pub mod server;
 pub mod utils;
 
-pub use registry::{CardRegistries, CardRegistry};
+pub use registry::{CardRegistries, CardRegistry, RustRegistries};
 
 #[cfg(feature = "server")]
 pub use server::registry::server_logic::RegistryTestHelper;

@@ -682,6 +682,17 @@ impl CardRecord {
 }
 
 impl CardRecord {
+    pub fn card_uids(&self) -> Option<Vec<CardEntry>> {
+        match self {
+            Self::Data(_) => None,
+            Self::Model(_) => None,
+            Self::Experiment(_) => None,
+            Self::Audit(_) => None,
+            Self::Prompt(_) => None,
+            Self::Deck(card) => Some(card.card_uids.clone()),
+        }
+    }
+
     pub fn uri(&self) -> Result<PathBuf, CardError> {
         match self {
             Self::Data(card) => {
@@ -928,4 +939,6 @@ pub struct UpdateCardResponse {
 pub struct CardEntry {
     pub registry_type: RegistryType,
     pub uid: String,
+    pub version: String,
+    pub alias: String,
 }
