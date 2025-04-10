@@ -24,12 +24,15 @@ pub struct DeckCard {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct DeckConfig {
+pub struct AppConfig {
     pub create: bool,
+    #[serde(rename = "type")]
+    pub registry_type: RegistryType,
     pub name: String,
     pub space: String,
     pub version: Option<String>,
-    pub cards: Vec<DeckCard>,
+    pub uid: Option<String>,
+    pub cards: Option<Vec<DeckCard>>,
 }
 
 //impl DeckConfig {
@@ -92,7 +95,7 @@ pub struct OpsmlTools {
     /// CardDeck configuration
     ///
     /// # Example
-    /// [tool.opsml.deck]
+    /// [tool.opsml.app]
     /// create = true
     /// name = "opsml"
     /// space = "opsml"
@@ -101,7 +104,7 @@ pub struct OpsmlTools {
     ///    {alias="data", space = "opsml", name = "opsml", version="1", type="data"},
     ///    {alias="model", space = "opsml", name = "opsml", version="1", type="model"},
     /// ]
-    deck: Option<DeckConfig>,
+    app: Option<Vec<AppConfig>>,
 }
 
 impl OpsmlTools {
@@ -151,8 +154,15 @@ impl OpsmlTools {
     }
 
     /// Get the deck configuration
-    pub fn get_deck(&self) -> Option<DeckConfig> {
-        self.deck.clone()
+    pub fn get_apps(&self) -> Option<&Vec<AppConfig>> {
+        self.app.as_ref()
+    }
+
+    /// Get a specific app configuration by name
+    pub fn get_app(&self, name: &str) -> Option<&AppConfig> {
+        self.app
+            .as_ref()
+            .and_then(|apps| apps.iter().find(|app| app.name == name))
     }
 }
 
@@ -256,8 +266,9 @@ mod tests {
     #[test]
     fn test_deck_configuration_load() {
         let content = r#"
-            [tool.opsml.deck]
+            [[tool.opsml.app]]
             create = true
+            type = "deck"
             name = "opsml"
             space = "opsml"
             version = "1"
@@ -281,25 +292,26 @@ mod tests {
             .opsml
             .as_ref()
             .unwrap()
-            .deck
+            .app
             .is_some());
 
         let tools = pyproject.get_tools().unwrap();
-        let deck = tools.deck.as_ref().unwrap();
-        assert!(deck.create);
-        assert_eq!(deck.name, "opsml");
-        assert_eq!(deck.space, "opsml");
-        assert_eq!(deck.version, Some("1".to_string()));
-        assert_eq!(deck.cards.len(), 2);
-        assert_eq!(deck.cards[0].alias, "data");
-        assert_eq!(deck.cards[0].space, Some("opsml".to_string()));
-        assert_eq!(deck.cards[0].name, Some("opsml".to_string()));
-        assert_eq!(deck.cards[0].version, Some("1".to_string()));
-        assert_eq!(deck.cards[0].card_type, Some(RegistryType::Data));
-        assert_eq!(deck.cards[1].alias, "model");
-        assert_eq!(deck.cards[1].space, Some("opsml".to_string()));
-        assert_eq!(deck.cards[1].name, Some("opsml".to_string()));
-        assert_eq!(deck.cards[1].version, Some("1".to_string()));
+        let app = tools.app.as_ref().unwrap()[0].clone();
+        let cards = app.cards.clone().unwrap();
+        assert!(app.create);
+        assert_eq!(app.name, "opsml");
+        assert_eq!(app.space, "opsml");
+        assert_eq!(app.version, Some("1".to_string()));
+        assert_eq!(cards.len(), 2);
+        assert_eq!(cards[0].alias, "data");
+        assert_eq!(cards[0].space, Some("opsml".to_string()));
+        assert_eq!(cards[0].name, Some("opsml".to_string()));
+        assert_eq!(cards[0].version, Some("1".to_string()));
+        assert_eq!(cards[0].card_type, Some(RegistryType::Data));
+        assert_eq!(cards[1].alias, "model");
+        assert_eq!(cards[1].space, Some("opsml".to_string()));
+        assert_eq!(cards[1].name, Some("opsml".to_string()));
+        assert_eq!(cards[1].version, Some("1".to_string()));
     }
 
     #[test]
