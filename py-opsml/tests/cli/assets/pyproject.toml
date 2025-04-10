@@ -10,7 +10,27 @@ classifiers = [
 [[tool.opsml.app]]
 type = "deck"
 space = "space"
-name = "name"
+name = "name1"
+version = "1"
+cards = [
+    {alias = "my_prompt", space="space", name="prompt", version = "1.*", type = "prompt"},
+    {alias = "my_model", space="space", name="model", version = "1.*", type = "model"}
+]
+
+[[tool.opsml.app]]
+type = "deck"
+space = "space"
+name = "name2"
+version = "1"
+cards = [
+    {alias = "my_prompt", space="space", name="prompt", version = "1.*", type = "prompt"},
+    {alias = "my_model", space="space", name="model", version = "1.*", type = "model"}
+]
+
+[[tool.opsml.app]]
+type = "deck"
+space = "space"
+name = "name3"
 version = "1"
 cards = [
     {alias = "my_prompt", space="space", name="prompt", version = "1.*", type = "prompt"},

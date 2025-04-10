@@ -386,8 +386,8 @@ fn validate_and_update_card(card: &mut Card) -> Result<(), RegistryError> {
 
     if cards.is_empty() {
         return Err(RegistryError::Error(format!(
-            "Card {:?} does not exist in the registry",
-            card.name
+            "Card {:?}/{:?} does not exist in the {:?} registry",
+            card.space, card.name, card.registry_type
         )));
     }
 
@@ -400,8 +400,8 @@ fn validate_and_update_card(card: &mut Card) -> Result<(), RegistryError> {
         debug!("Updated card metadata for name: {:?}", card.name);
     } else {
         return Err(RegistryError::Error(format!(
-            "Card {:?} does not exist in the registry",
-            card.name
+            "Card {:?}/{:?} does not exist in the {:?} registry",
+            card.space, card.name, card.registry_type
         )));
     }
     Ok(())

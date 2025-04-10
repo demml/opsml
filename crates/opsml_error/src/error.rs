@@ -85,6 +85,15 @@ pub enum CliError {
 
     #[error("Failed to get current directory")]
     CurrentDirectoryError(#[source] std::io::Error),
+
+    #[error("No tools found in pyproject.toml. An tool config must be present")]
+    MissingTools,
+
+    #[error("No apps found in pyproject.toml. An app config must be present")]
+    MissingApp,
+
+    #[error("Registry type {0} is not supported for apps")]
+    UnsupportedRegistryType(String),
 }
 
 impl From<CliError> for PyErr {

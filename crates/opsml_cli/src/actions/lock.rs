@@ -185,12 +185,12 @@ fn lock_deck(config: AppConfig) -> Result<LockArtifact, CliError> {
 /// Create the the lock file for the app
 fn lock_app(app: AppConfig) -> Result<LockArtifact, CliError> {
     // Create a lock file for the app
-    // current only support deck
+    // Only support's  deck currently
     match app.registry_type {
         RegistryType::Deck => lock_deck(app),
         _ => {
-            return Err(CliError::Error(
-                "Unsupported registry type for lock file".to_string(),
+            return Err(CliError::UnsupportedRegistryType(
+                app.registry_type.to_string(),
             ))
         }
     }
@@ -200,32 +200,24 @@ fn lock_app(app: AppConfig) -> Result<LockArtifact, CliError> {
 #[pyo3(signature = (path=None, toml_name=None))]
 pub fn lock_project(path: Option<PathBuf>, toml_name: Option<&str>) -> Result<(), CliError> {
     debug!("Locking project with path: {:?}", path);
-    // Load the pyproject.toml file
+
     let pyproject = PyProjectToml::load(path.as_deref(), toml_name)?;
 
-    let tools = pyproject.get_tools().ok_or_else(|| {
-        CliError::Error(
-            "No tools found in pyproject.toml. An tool config must be present".to_string(),
-        )
-    })?;
+    let tools = pyproject
+        .get_tools()
+        .ok_or_else(|| CliError::MissingTools)?;
 
-    let apps = tools.get_apps().ok_or_else(|| {
-        CliError::Error(
-            "No apps found in pyproject.toml. An app config must be present".to_string(),
-        )
-    })?;
+    let apps = tools.get_apps().ok_or_else(|| CliError::MissingApp)?;
 
     // Create a lock file
-    let mut lock_entries = Vec::new();
-    for app in apps {
-        lock_entries.push(lock_app(app.clone())?);
-    }
-    //
     let lock_file = LockFile {
-        artifact: lock_entries,
+        artifact: apps
+            .into_iter()
+            .map(|app| lock_app(app.clone()))
+            .collect::<Result<Vec<_>, _>>()?,
     };
 
-    lock_file.write(&pyproject.root_path.join("opsml.lock"))?;
+    lock_file.write(&pyproject.root_path)?;
 
     Ok(())
 }

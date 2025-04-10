@@ -26,9 +26,9 @@ impl LockFile {
     /// Iterate over entries and create a lock file
     ///
     /// # Arguments
-    /// * `path` - Optional path to the lock file
+    /// * `root_path` - Optional path to write the lockfile
     ///
-    pub fn write(&self, path: &Path) -> Result<(), PyProjectTomlError> {
+    pub fn write(&self, root_path: &Path) -> Result<(), PyProjectTomlError> {
         let mut doc = DocumentMut::new();
         doc.insert("version", value(env!("CARGO_PKG_VERSION").to_string()));
         let mut artifacts = ArrayOfTables::new();
@@ -46,9 +46,10 @@ impl LockFile {
 
         doc.insert("artifact", Item::ArrayOfTables(artifacts));
 
-        // Write to file
-        let lock_path = path.join("opsml.lock");
-        fs::write(lock_path, doc.to_string()).map_err(PyProjectTomlError::FailedToLockFile)?;
+        let lock_path = root_path.join("opsml.lock");
+
+        fs::write(lock_path, doc.to_string())
+            .map_err(|e| PyProjectTomlError::FailedToLockFile(e))?;
 
         Ok(())
     }

@@ -1,4 +1,5 @@
 use pyo3::prelude::*;
+use std::io::Write;
 
 #[cfg(feature = "server")]
 use opsml_server::{start_server_in_background, stop_server};
@@ -162,6 +163,26 @@ impl OpsmlTestServer {
 
         if storage_dir.exists() {
             std::fs::remove_dir_all(storage_dir).unwrap();
+        }
+
+        // shutdown any running server running on port 3000
+        if let Ok(output) = std::process::Command::new("lsof")
+            .args(["-ti", ":3000"])
+            .output()
+        {
+            if !output.stdout.is_empty() {
+                let _ = std::process::Command::new("xargs")
+                    .arg("kill")
+                    .arg("-9")
+                    .stdin(std::process::Stdio::piped())
+                    .spawn()
+                    .and_then(|mut child| {
+                        if let Some(stdin) = child.stdin.as_mut() {
+                            let _ = stdin.write_all(&output.stdout);
+                        }
+                        child.wait()
+                    });
+            }
         }
 
         Ok(())
