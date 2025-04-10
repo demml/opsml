@@ -1,3 +1,5 @@
+use core::error;
+
 use pyo3::create_exception;
 use pyo3::exceptions::PyException;
 use pyo3::PyErr;
@@ -67,6 +69,9 @@ pub enum CliError {
 
     #[error("CardDeck missing card UIDs")]
     MissingCardDeckUids,
+
+    #[error("Failed to create card deck")]
+    CreateDeckError(#[from] CardError),
 }
 
 #[derive(Error, Debug)]
@@ -343,6 +348,9 @@ pub enum RegistryError {
 
     #[error(transparent)]
     StateError(#[from] StateError),
+
+    #[error("Failed to get registry record")]
+    FailedToGetRegistryRecordError,
 }
 
 impl From<RegistryError> for PyErr {
