@@ -52,6 +52,21 @@ pub enum CliError {
 
     #[error(transparent)]
     PyProjectTomlError(#[from] PyProjectTomlError),
+
+    #[error("Registry type not found")]
+    MissingRegistryType,
+
+    #[error("CardRecord not found in response")]
+    MissingCardRecord,
+
+    #[error("Registry type {0} not supported")]
+    RegistryTypeNotSupported(String),
+
+    #[error("Cards were not provided as part of the toml app config")]
+    MissingDeckCards,
+
+    #[error("CardDeck missing card UIDs")]
+    MissingCardDeckUids,
 }
 
 #[derive(Error, Debug)]
