@@ -1,5 +1,3 @@
-use core::error;
-
 use pyo3::create_exception;
 use pyo3::exceptions::PyException;
 use pyo3::PyErr;
@@ -27,6 +25,18 @@ pub enum PyProjectTomlError {
 
     #[error("Failed to deserialize `pyproject.toml`")]
     TomlSchema(#[source] toml_edit::de::Error),
+
+    #[error("Failed to deserialize `opsml.lock`")]
+    LockFileSchema(#[source] toml_edit::de::Error),
+
+    #[error("Failed to write opsml.lock file")]
+    FailedToLockFile(#[source] std::io::Error),
+
+    #[error("Failed to read opsml.lock file")]
+    FailedToReadLockFile(#[source] std::io::Error),
+
+    #[error("Failed to parse opsml.lock file")]
+    FailedToParseLockFile(#[source] toml_edit::TomlError),
 }
 
 #[derive(Error, Debug)]
