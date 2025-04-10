@@ -116,14 +116,17 @@ pub mod server_logic {
                 .await
                 .map_err(|e| RegistryError::Error(format!("Failed to get versions {}", e)))?;
 
+            // if no versions exist, return the default version
             if versions.is_empty() {
                 return match &version {
-                    Some(version_str) => Version::parse(version_str).map_err(|e| {
-                        error!("Invalid version format: {}", e);
-                        RegistryError::Error(
-                            "Invalid version format. Version must be a full semver".to_string(),
-                        )
-                    }),
+                    Some(version_str) => {
+                        VersionValidator::clean_version(version_str).map_err(|e| {
+                            error!("Invalid version format: {}", e);
+                            RegistryError::Error(
+                                "Invalid version format. Version must be a full semver".to_string(),
+                            )
+                        })
+                    }
                     None => Ok(Version::new(0, 1, 0)),
                 };
             }

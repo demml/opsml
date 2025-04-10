@@ -32,7 +32,7 @@ pub async fn get_next_version(
 
     if versions.is_empty() {
         return match &request.version {
-            Some(version_str) => Version::parse(version_str).map_err(|e| {
+            Some(version_str) => VersionValidator::clean_version(version_str).map_err(|e| {
                 error!("Invalid version format: {}", e);
                 ApiError::Error("Invalid version format. Version must be a full semver".to_string())
             }),
