@@ -278,6 +278,7 @@ pub mod server_logic {
                         client_card.name,
                         client_card.space,
                         version,
+                        client_card.card_uids,
                         client_card.opsml_version,
                         client_card.username,
                     );
@@ -482,6 +483,7 @@ pub mod server_logic {
                         pre_tag: Some(version.pre.to_string()),
                         build_tag: Some(version.build.to_string()),
                         version: client_card.version,
+                        card_uids: SqlxJson(client_card.card_uids),
                         username: client_card.username,
                         opsml_version: client_card.opsml_version,
                     };
