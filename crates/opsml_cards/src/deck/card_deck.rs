@@ -174,6 +174,8 @@ impl CardList {
         self.cards
             .iter()
             .map(|card| CardEntry {
+                alias: card.alias.clone(),
+                version: card.version.as_ref().unwrap().clone(),
                 uid: card.uid.as_ref().unwrap().clone(),
                 registry_type: card.registry_type.clone(),
             })

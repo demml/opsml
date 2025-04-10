@@ -604,3 +604,32 @@ impl CardRegistries {
         })
     }
 }
+
+pub struct RustRegistries {
+    pub experiment: OpsmlRegistry,
+    pub model: OpsmlRegistry,
+    pub data: OpsmlRegistry,
+    pub prompt: OpsmlRegistry,
+    pub deck: OpsmlRegistry,
+    pub audit: OpsmlRegistry,
+}
+
+impl RustRegistries {
+    pub fn new() -> Result<Self, RegistryError> {
+        let experiment = OpsmlRegistry::new(RegistryType::Experiment)?;
+        let model = OpsmlRegistry::new(RegistryType::Model)?;
+        let data = OpsmlRegistry::new(RegistryType::Data)?;
+        let prompt = OpsmlRegistry::new(RegistryType::Prompt)?;
+        let deck = OpsmlRegistry::new(RegistryType::Deck)?;
+        let audit = OpsmlRegistry::new(RegistryType::Audit)?;
+
+        Ok(Self {
+            experiment,
+            model,
+            data,
+            prompt,
+            deck,
+            audit,
+        })
+    }
+}
