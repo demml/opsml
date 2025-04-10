@@ -1,3 +1,4 @@
+use crate::traits::OpsmlCard;
 use crate::utils::BaseArgs;
 use crate::{DataCard, ExperimentCard, ModelCard, PromptCard};
 use chrono::{DateTime, Utc};
@@ -115,16 +116,16 @@ impl Card {
     pub fn rust_new(
         alias: String,
         registry_type: RegistryType,
-        space: Option<&str>,
-        name: Option<&str>,
-        version: Option<&str>,
+        space: String,
+        name: String,
+        version: Option<String>,
     ) -> Card {
         Card {
-            space: space.map(|s| s.to_string()),
-            name: name.map(|s| s.to_string()),
-            version: version.map(|s| s.to_string()),
-            registry_type,
+            space: Some(space),
+            name: Some(name),
+            version,
             uid: None,
+            registry_type,
             alias,
         }
     }
@@ -342,7 +343,7 @@ impl CardDeck {
     }
 
     #[pyo3(signature = (path))]
-    pub fn save(&mut self, path: PathBuf) -> Result<(), CardError> {
+    pub fn save(&self, path: PathBuf) -> Result<(), CardError> {
         let card_save_path = path.join(SaveName::Card).with_extension(Suffix::Json);
         PyHelperFuncs::save_to_json(self, &card_save_path)?;
 
@@ -660,6 +661,82 @@ impl CardDeck {
                 OpsmlError::new_err(e.to_string())
             })
         })
+    }
+}
+
+impl CardDeck {
+    /// Helper function for creating CardDeck from within Rust. Used in the CLI lock command.
+    pub fn rust_new(
+        space: String,
+        name: String,
+        cards: Vec<Card>, // can be Vec<Card> or Vec<ModelCard, DataCard, etc.>
+        version: Option<&str>,
+    ) -> Result<CardDeck, CardError> {
+        let registry_type = RegistryType::Deck;
+        let base_args =
+            BaseArgs::create_args(Some(&name), Some(&space), version, None, &registry_type)
+                .map_err(|e| {
+                    error!("Failed to create base args: {}", e);
+                    CardError::TypeError(e)
+                })?;
+
+        Ok(CardDeck {
+            space: base_args.0,
+            name: base_args.1,
+            version: base_args.2,
+            uid: base_args.3,
+            created_at: Utc::now(),
+            cards: CardList { cards },
+            opsml_version: env!("CARGO_PKG_VERSION").to_string(),
+            card_objs: HashMap::new(),
+            app_env: std::env::var("APP_ENV").unwrap_or_else(|_| "dev".to_string()),
+            is_card: true,
+            registry_type,
+        })
+    }
+}
+
+// generic trait for compatibility and use in rust-based card functions
+impl OpsmlCard for CardDeck {
+    fn get_registry_card(&self) -> Result<CardRecord, CardError> {
+        self.get_registry_card()
+    }
+
+    fn get_version(&self) -> String {
+        self.version.clone()
+    }
+
+    fn registry_type(&self) -> &RegistryType {
+        &self.registry_type
+    }
+
+    fn set_space(&mut self, space: String) {
+        self.space = space;
+    }
+
+    fn is_card(&self) -> bool {
+        self.is_card
+    }
+
+    fn set_name(&mut self, name: String) {
+        self.name = name;
+    }
+    fn set_version(&mut self, version: String) {
+        self.version = version;
+    }
+    fn set_uid(&mut self, uid: String) {
+        self.uid = uid;
+    }
+    fn set_created_at(&mut self, created_at: DateTime<Utc>) {
+        self.created_at = created_at;
+    }
+
+    fn set_app_env(&mut self, app_env: String) {
+        self.app_env = app_env;
+    }
+
+    fn save(&self, path: PathBuf) -> Result<(), CardError> {
+        self.save(path)
     }
 }
 

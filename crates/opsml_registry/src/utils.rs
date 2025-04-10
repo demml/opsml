@@ -1,6 +1,9 @@
 use crate::base::OpsmlRegistry;
 use crate::CardRegistries;
-use opsml_cards::{Card, CardDeck, DataCard, ExperimentCard, ModelCard, PromptCard};
+use opsml_cards::{
+    traits::OpsmlCard, Card, CardDeck, DataCard, ExperimentCard, ModelCard, PromptCard,
+};
+use opsml_client::registry;
 use opsml_crypt::{decrypt_directory, encrypt_directory};
 use opsml_error::{error::RegistryError, OpsmlError};
 use opsml_storage::storage_client;
@@ -442,7 +445,7 @@ fn validate_and_update_card(card: &mut Card) -> Result<(), RegistryError> {
 /// # Errors
 /// * `RegistryError` - Error validating card
 #[instrument(skip_all)]
-pub fn validate_card_deck(deck: &mut [Card]) -> Result<(), RegistryError> {
+pub fn validate_card_deck_cards(deck: &mut [Card]) -> Result<(), RegistryError> {
     // iterate over each card in the deck
     for card in deck.iter_mut() {
         validate_and_update_card(card)?;
@@ -504,7 +507,7 @@ pub fn verify_card(
                 RegistryError::Error("Failed to extract cards from deck".to_string())
             })?;
 
-        validate_card_deck(&mut deck)?;
+        validate_card_deck_cards(&mut deck)?;
 
         // Update the Python card deck with the updated cards
         card.setattr("cards", deck.into_py_any(card.py()).unwrap())
@@ -531,6 +534,22 @@ pub fn verify_card(
         return Err(RegistryError::Error(
             "Card registry type does not match registry type".to_string(),
         ));
+    }
+
+    debug!("Verified card");
+
+    Ok(())
+}
+
+/// Verify that the card is valid
+/// This will be expanded in the future
+#[instrument(skip_all)]
+pub fn verify_card_rs<T>(card: &T) -> Result<(), RegistryError>
+where
+    T: OpsmlCard,
+{
+    if !card.is_card() {
+        return Err(RegistryError::Error("Card is not a valid card".to_string()));
     }
 
     debug!("Verified card");

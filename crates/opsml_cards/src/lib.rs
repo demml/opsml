@@ -3,6 +3,7 @@ pub mod deck;
 pub mod experiment;
 pub mod model;
 pub mod prompt;
+pub mod traits;
 pub mod utils;
 
 pub use data::*;

@@ -12,7 +12,7 @@ pub struct CardAttr {
     pub version: Option<String>,
 }
 
-#[derive(Debug, Serialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct DeckCard {
     pub alias: String,
     pub space: String,
@@ -22,51 +22,14 @@ pub struct DeckCard {
     pub registry_type: RegistryType,
 }
 
-// Custom deserializer for DeckCard
-#[derive(Deserialize)]
-struct DeckCardDef {
-    pub alias: String,
-    pub name: String, // This will contain "space/name"
-    pub version: Option<String>,
-    #[serde(rename = "type")]
-    pub registry_type: RegistryType,
-}
-
-// Implementation for custom deserialization
-impl<'de> Deserialize<'de> for DeckCard {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        let helper = DeckCardDef::deserialize(deserializer)?;
-
-        // Split the name into space and name parts
-        let parts: Vec<&str> = helper.name.split('/').collect();
-        if parts.len() != 2 {
-            return Err(serde::de::Error::custom(
-                "name must be in format 'space/name'",
-            ));
-        }
-
-        Ok(DeckCard {
-            alias: helper.alias,
-            space: parts[0].to_string(),
-            name: parts[1].to_string(),
-            version: helper.version,
-            registry_type: helper.registry_type,
-        })
-    }
-}
-
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct AppConfig {
     pub create: bool,
     #[serde(rename = "type")]
     pub registry_type: RegistryType,
-    pub name: Option<String>,
-    pub space: Option<String>,
+    pub name: String,
+    pub space: String,
     pub version: Option<String>,
-    pub uid: Option<String>,
     pub cards: Option<Vec<DeckCard>>,
 }
 
@@ -297,12 +260,12 @@ mod tests {
             [[tool.opsml.app]]
             create = true
             type = "deck"
-            name = "opsml"
             space = "opsml"
+            name = "opsml"
             version = "1"
             cards = [
-                {alias = "data", name="space/name", version = "1", type = "data"},
-                {alias = "model", name="space/name", version = "1", type = "model"}
+                {alias = "data", space="space", name="name, version = "1", type = "data"},
+                {alias = "model", space="space", name="name, version = "1", type = "model"}
             ]
         "#;
 
@@ -327,8 +290,8 @@ mod tests {
         let app = tools.app.as_ref().unwrap()[0].clone();
         let cards = app.cards.clone().unwrap();
         assert!(app.create);
-        assert_eq!(app.name.unwrap(), "opsml");
-        assert_eq!(app.space.unwrap(), "opsml");
+        assert_eq!(app.name, "opsml");
+        assert_eq!(app.space, "opsml");
         assert_eq!(app.version, Some("1".to_string()));
         assert_eq!(cards.len(), 2);
         assert_eq!(cards[0].alias, "data");

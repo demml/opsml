@@ -1,5 +1,6 @@
 use crate::base::OpsmlRegistry;
 use crate::utils::{check_if_card, download_card, upload_card_artifacts, verify_card};
+use opsml_cards::traits::OpsmlCard;
 use opsml_colors::Colorize;
 use opsml_error::error::OpsmlError;
 use opsml_error::error::RegistryError;
@@ -321,6 +322,21 @@ impl CardRegistry {
         Ok(())
     }
 
+    #[instrument(skip_all)]
+    fn update_card_with_server_response_rs<T>(
+        response: &CreateCardResponse,
+        card: &mut T,
+    ) -> Result<(), RegistryError>
+    where
+        T: OpsmlCard,
+    {
+        card.set_uid(response.key.uid.clone());
+        card.set_version(response.version.clone());
+        card.set_created_at(response.created_at);
+        card.set_app_env(response.app_env.clone());
+        Ok(())
+    }
+
     /// Save card artifacts to storage
     /// Using a runtime, this method will:
     /// (1) create an artifact key to be used to encrypt data
@@ -548,6 +564,9 @@ impl CardRegistry {
     }
 }
 
+/// implementation for rust-based functionality
+/// This is done because CardRegistry is intertwined with python meaning a python runtime is needed
+/// There are some areas where we can register cards via rust (CLI) and so we do not need to interact with python
 impl CardRegistry {
     pub fn rust_new(registry_type: &RegistryType) -> Result<Self, RegistryError> {
         let registry = OpsmlRegistry::new(registry_type.clone())?;
@@ -556,6 +575,47 @@ impl CardRegistry {
             table_name: CardTable::from_registry_type(registry_type).to_string(),
             registry,
         })
+    }
+
+    /// Rust version of register card
+    fn _register_card_rs<T>(
+        registry: &OpsmlRegistry,
+        card: T,
+        registry_type: &RegistryType,
+        version_type: VersionType,
+    ) -> Result<CreateCardResponse, RegistryError>
+    where
+        T: OpsmlCard,
+    {
+        let registry_card = card
+            .get_registry_card()
+            .map_err(|_| RegistryError::FailedToGetRegistryRecordError)?;
+        let version = card.get_version();
+
+        // get version
+        let version: Option<String> = if version == CommonKwargs::BaseVersion.to_string() {
+            None
+        } else {
+            Some(version.clone())
+        };
+
+        let response = registry.create_card(registry_card, version, version_type, None, None)?;
+
+        println!(
+            "{} - {} - {}/{} - v{}",
+            Colorize::green("Registered card"),
+            Colorize::purple(&registry_type.to_string()),
+            response.space,
+            response.name,
+            response.version
+        );
+
+        debug!(
+            "Successfully registered card - {} - {}/{} - v{}",
+            registry_type, response.space, response.name, response.version
+        );
+
+        Ok(response)
     }
 }
 
