@@ -154,3 +154,14 @@ opsml = "opsml:run_opsml_cli"
 
 [tool.uv]
 package = false
+
+[tool.opsml.app]
+create = true
+type = "deck"
+space = "space"
+name = "name"
+version = "1"
+cards = [
+    {alias = "data", space = "opsml", name = "opsml", version = "1", type = "data"},
+    {alias = "model", space = "opsml", name = "opsml", version = "1", type = "model"}
+]

@@ -339,7 +339,7 @@ pub fn upload_card_artifacts(path: PathBuf, key: &ArtifactKey) -> Result<(), Reg
     Ok(())
 }
 
-fn validate_card_by_metadata(reg: &OpsmlRegistry, card: &Card) -> Result<(), RegistryError> {
+fn validate_card_by_metadata(reg: &OpsmlRegistry, card: &mut Card) -> Result<(), RegistryError> {
     let args = CardQueryArgs {
         name: card.name.clone(),
         space: card.space.clone(),
@@ -353,6 +353,20 @@ fn validate_card_by_metadata(reg: &OpsmlRegistry, card: &Card) -> Result<(), Reg
     })?;
 
     if cards.is_empty() {
+        return Err(RegistryError::Error(format!(
+            "Card {:?} does not exist in the registry",
+            card.name
+        )));
+    }
+
+    // Update card metadata
+    if let Some(found_card) = cards.first() {
+        card.name = Some(found_card.name().to_string());
+        card.space = Some(found_card.space().to_string());
+        card.version = Some(found_card.version().to_string());
+        card.uid = Some(found_card.uid().to_string());
+        debug!("Updated card metadata for name: {:?}", card.name);
+    } else {
         return Err(RegistryError::Error(format!(
             "Card {:?} does not exist in the registry",
             card.name

@@ -105,6 +105,7 @@ CREATE TABLE IF NOT EXISTS opsml_deck_registry (
     pre_tag VARCHAR(255),
     build_tag VARCHAR(255),
     version VARCHAR(255),
+    card_uids JSON NOT NULL DEFAULT ('[]'),
     opsml_version VARCHAR(255) NOT NULL DEFAULT '0.0.0',
     username VARCHAR(255) NOT NULL DEFAULT 'guest'
 );

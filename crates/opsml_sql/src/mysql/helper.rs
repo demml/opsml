@@ -501,7 +501,7 @@ impl MySQLQueryHelper {
     }
 
     pub fn get_carddeck_insert_query() -> String {
-        format!("INSERT INTO {} (uid, app_env, name, space, major, minor, patch, version, pre_tag, build_tag, username, opsml_version) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", CardTable::Deck)
+        format!("INSERT INTO {} (uid, app_env, name, space, major, minor, patch, version, pre_tag, build_tag, card_uids, username, opsml_version) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", CardTable::Deck)
             .to_string()
     }
 
@@ -515,6 +515,7 @@ impl MySQLQueryHelper {
             minor = ?, 
             patch = ?, 
             version = ?, 
+            card_uids = ?,
             username = ?,
             opsml_version = ?
             WHERE uid = ?",

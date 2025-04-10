@@ -936,6 +936,7 @@ async fn test_opsml_server_card_card_deck_crud() {
             uid: card.uid.clone(),
             app_env: card.app_env,
             created_at: card.created_at,
+            card_uids: card.card_uids,
             username: std::env::var("OPSML_USERNAME").unwrap_or_else(|_| "guest".to_string()),
             opsml_version: card.opsml_version,
         }),

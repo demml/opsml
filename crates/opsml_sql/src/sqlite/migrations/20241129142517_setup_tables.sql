@@ -105,6 +105,7 @@ CREATE TABLE IF NOT EXISTS opsml_deck_registry (
     pre_tag TEXT,
     build_tag TEXT,
     version TEXT,
+    card_uids TEXT DEFAULT '[]',
     opsml_version TEXT NOT NULL DEFAULT '0.0.0',
     username TEXT NOT NULL DEFAULT 'guest'
 );
