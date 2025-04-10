@@ -453,6 +453,7 @@ pub struct CardDeckClientRecord {
     pub space: String,
     pub name: String,
     pub version: String,
+    pub card_uids: Vec<CardEntry>,
     pub opsml_version: String,
     pub username: String,
 }
@@ -468,6 +469,7 @@ impl Default for CardDeckClientRecord {
             version: "".to_string(),
             opsml_version: env!("CARGO_PKG_VERSION").to_string(),
             username: "guest".to_string(),
+            card_uids: Vec::new(),
         }
     }
 }
@@ -920,4 +922,10 @@ impl AuditableRequest for UpdateCardRequest {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct UpdateCardResponse {
     pub updated: bool,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct CardEntry {
+    pub registry_type: RegistryType,
+    pub uid: String,
 }

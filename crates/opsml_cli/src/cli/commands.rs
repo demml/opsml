@@ -16,7 +16,6 @@ pub enum Commands {
     /// Lists cards from a registry
     ///
     /// # Example
-    ///
     /// opsml list --registry data
     List {
         #[command(subcommand)]
@@ -32,17 +31,21 @@ pub enum Commands {
         command: GetCommands,
     },
 
+    /// Loads a pyproject.toml file and creates a lock file for an app
+    ///
+    /// # Example
+    /// opsml lock
+    Lock,
+
     ///  Show opsml version
     ///
     /// # Example
-    ///
     /// opsml version
     Version,
 
     ///  Show opsml-cli info
     ///
     /// # Example
-    ///
     /// opsml-cli info
     Info,
 }

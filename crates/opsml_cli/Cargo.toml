@@ -12,9 +12,11 @@ opsml-error = { workspace = true }
 opsml-registry = { workspace = true }
 opsml-state = { workspace = true }
 opsml-storage = { workspace = true }
+opsml-toml = { workspace = true }
 opsml-types = { workspace = true }
 opsml-utils = { workspace = true }
 
 anyhow = { workspace = true }
 clap = { workspace = true }
+serde = { workspace = true }
 tabled = { workspace = true }

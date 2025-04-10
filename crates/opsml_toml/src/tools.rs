@@ -28,8 +28,8 @@ pub struct AppConfig {
     pub create: bool,
     #[serde(rename = "type")]
     pub registry_type: RegistryType,
-    pub name: String,
-    pub space: String,
+    pub name: Option<String>,
+    pub space: Option<String>,
     pub version: Option<String>,
     pub uid: Option<String>,
     pub cards: Option<Vec<DeckCard>>,
@@ -156,13 +156,6 @@ impl OpsmlTools {
     /// Get the deck configuration
     pub fn get_apps(&self) -> Option<&Vec<AppConfig>> {
         self.app.as_ref()
-    }
-
-    /// Get a specific app configuration by name
-    pub fn get_app(&self, name: &str) -> Option<&AppConfig> {
-        self.app
-            .as_ref()
-            .and_then(|apps| apps.iter().find(|app| app.name == name))
     }
 }
 
@@ -299,8 +292,8 @@ mod tests {
         let app = tools.app.as_ref().unwrap()[0].clone();
         let cards = app.cards.clone().unwrap();
         assert!(app.create);
-        assert_eq!(app.name, "opsml");
-        assert_eq!(app.space, "opsml");
+        assert_eq!(app.name.unwrap(), "opsml");
+        assert_eq!(app.space.unwrap(), "opsml");
         assert_eq!(app.version, Some("1".to_string()));
         assert_eq!(cards.len(), 2);
         assert_eq!(cards[0].alias, "data");

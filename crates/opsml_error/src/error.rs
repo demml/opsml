@@ -49,6 +49,9 @@ pub enum CliError {
 
     #[error(transparent)]
     CryptError(#[from] CryptError),
+
+    #[error(transparent)]
+    PyProjectTomlError(#[from] PyProjectTomlError),
 }
 
 #[derive(Error, Debug)]

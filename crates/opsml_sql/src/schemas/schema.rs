@@ -3,7 +3,7 @@ use opsml_error::error::VersionError;
 use opsml_error::{ServerError, SqlError};
 use opsml_types::cards::{CardTable, ParameterValue};
 use opsml_types::contracts::{
-    AuditCardClientRecord, CardDeckClientRecord, CardRecord, DataCardClientRecord,
+    AuditCardClientRecord, CardDeckClientRecord, CardEntry, CardRecord, DataCardClientRecord,
     ExperimentCardClientRecord, ModelCardClientRecord, PromptCardClientRecord,
 };
 use opsml_types::{CommonKwargs, DataType, ModelType, RegistryType};
@@ -796,6 +796,7 @@ pub struct CardDeckRecord {
     pub version: String,
     pub pre_tag: Option<String>,
     pub build_tag: Option<String>,
+    pub card_uids: Json<Vec<CardEntry>>,
     pub opsml_version: String,
     pub username: String,
 }
@@ -805,6 +806,7 @@ impl CardDeckRecord {
         name: String,
         space: String,
         version: Version,
+        card_uids: Vec<CardEntry>,
         opsml_version: String,
         username: String,
     ) -> Self {
@@ -824,6 +826,7 @@ impl CardDeckRecord {
             pre_tag: version.pre.to_string().parse().ok(),
             build_tag: version.build.to_string().parse().ok(),
             version: version.to_string(),
+            card_uids: Json(card_uids),
             opsml_version,
             username,
         }
@@ -856,6 +859,7 @@ impl CardDeckRecord {
             pre_tag: Some(version.pre.to_string()),
             build_tag: Some(version.build.to_string()),
             version: client_card.version,
+            card_uids: Json(client_card.card_uids),
             opsml_version: client_card.opsml_version,
             username: client_card.username,
         })
@@ -876,6 +880,7 @@ impl Default for CardDeckRecord {
             pre_tag: None,
             build_tag: None,
             version: Version::new(1, 0, 0).to_string(),
+            card_uids: Json(Vec::new()),
             opsml_version: env!("CARGO_PKG_VERSION").to_string(),
             username: CommonKwargs::Undefined.to_string(),
         }

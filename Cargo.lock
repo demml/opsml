@@ -3804,8 +3804,10 @@ dependencies = [
  "opsml-registry",
  "opsml-state",
  "opsml-storage",
+ "opsml-toml",
  "opsml-types",
  "opsml-utils",
+ "serde",
  "tabled",
 ]
 

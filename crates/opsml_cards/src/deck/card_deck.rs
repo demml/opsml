@@ -3,6 +3,7 @@ use crate::{DataCard, ExperimentCard, ModelCard, PromptCard};
 use chrono::{DateTime, Utc};
 use opsml_error::{CardError, OpsmlError};
 use opsml_interfaces::{DataLoadKwargs, ModelLoadKwargs};
+use opsml_types::contracts::CardEntry;
 use opsml_types::{
     contracts::{CardDeckClientRecord, CardRecord},
     RegistryType, SaveName, Suffix,
@@ -165,6 +166,18 @@ impl CardList {
 
     pub fn __str__(&self) -> String {
         PyHelperFuncs::__str__(self)
+    }
+}
+
+impl CardList {
+    pub fn to_card_entries(&self) -> Vec<CardEntry> {
+        self.cards
+            .iter()
+            .map(|card| CardEntry {
+                uid: card.uid.as_ref().unwrap().clone(),
+                registry_type: card.registry_type.clone(),
+            })
+            .collect()
     }
 }
 
@@ -344,6 +357,7 @@ impl CardDeck {
             name: self.name.clone(),
             version: self.version.clone(),
             uid: self.uid.clone(),
+            card_uids: self.cards.to_card_entries(),
             opsml_version: self.opsml_version.clone(),
             username: std::env::var("OPSML_USERNAME").unwrap_or_else(|_| "guest".to_string()),
         };

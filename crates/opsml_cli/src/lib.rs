@@ -63,6 +63,10 @@ pub fn run_cli(args: Vec<String>) -> anyhow::Result<()> {
 
             Ok(())
         }
+        Some(Commands::Lock) => {
+            println!("opsml-cli lock");
+            Ok(())
+        }
         None => {
             println!("No command provided");
             Ok(())
