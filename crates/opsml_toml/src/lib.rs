@@ -1,3 +1,4 @@
 pub mod lock;
-pub mod tools;
-pub use tools::{OpsmlTool, OpsmlTools, PyProjectToml};
+pub mod toml;
+pub use lock::{LockArtifact, LockFile};
+pub use toml::{OpsmlTool, OpsmlTools, PyProjectToml};

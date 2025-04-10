@@ -11,8 +11,8 @@ pub enum PyProjectTomlError {
     AbsolutePathError(#[source] std::io::Error),
 
     // Borrowed from UV
-    #[error("No `pyproject.toml` found in current directory or any parent directory")]
-    MissingPyprojectToml,
+    #[error("No file name {0} in current directory or any parent directory")]
+    MissingPyprojectToml(String),
 
     #[error("Failed to read `pyproject.toml`")]
     ReadError(#[source] std::io::Error),
@@ -82,6 +82,17 @@ pub enum CliError {
 
     #[error("Failed to create card deck")]
     CreateDeckError(#[from] CardError),
+
+    #[error("Failed to get current directory")]
+    CurrentDirectoryError(#[source] std::io::Error),
+}
+
+impl From<CliError> for PyErr {
+    fn from(err: CliError) -> PyErr {
+        let msg = err.to_string();
+        error!("{}", msg);
+        OpsmlError::new_err(err.to_string())
+    }
 }
 
 #[derive(Error, Debug)]

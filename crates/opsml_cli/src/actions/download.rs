@@ -115,10 +115,10 @@ pub fn download_deck(args: &DownloadCard) -> Result<(), CliError> {
     // Use try_for_each instead of for_each to handle Results
     card_deck.cards.into_iter().try_for_each(|card| {
         let query_args = CardQueryArgs {
-            uid: card.uid.clone(),
-            name: card.name.clone(),
-            space: card.space.clone(),
-            version: card.version.clone(),
+            uid: Some(card.uid.clone()),
+            name: Some(card.name.clone()),
+            space: Some(card.space.clone()),
+            version: Some(card.version.clone()),
             registry_type: card.registry_type.clone(),
             ..Default::default()
         };

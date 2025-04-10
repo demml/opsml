@@ -9,6 +9,8 @@ use clap::Parser;
 use opsml_colors::Colorize;
 use opsml_types::RegistryType;
 
+pub use actions::lock::lock_project;
+
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 pub const LOGO_TEXT: &str = "

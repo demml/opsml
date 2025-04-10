@@ -14,6 +14,11 @@ lints.pedantic:
 test.toml:
 	cargo test -p opsml-toml -- --nocapture --test-threads=1
 
+####### CLI tests
+.PHONY: test.cli
+test.cli:
+	cargo test -p opsml-cli -- --nocapture --test-threads=1
+
 ####### SQL tests
 .PHONY: test.sql.sqlite
 test.sql.sqlite:

@@ -3,7 +3,7 @@ use crate::CardRegistries;
 use opsml_cards::{
     traits::OpsmlCard, Card, CardDeck, DataCard, ExperimentCard, ModelCard, PromptCard,
 };
-use opsml_client::registry;
+
 use opsml_crypt::{decrypt_directory, encrypt_directory};
 use opsml_error::{error::RegistryError, OpsmlError};
 use opsml_storage::storage_client;
@@ -35,34 +35,34 @@ fn load_and_extract_card(
     let card_obj = match card.registry_type {
         RegistryType::Model => card_registries.model.load_card(
             py,
-            card.uid.clone(),
-            card.space.clone(),
-            card.name.clone(),
-            card.version.clone(),
+            Some(card.uid.clone()),
+            Some(card.space.clone()),
+            Some(card.name.clone()),
+            Some(card.version.clone()),
             interface,
         )?,
         RegistryType::Data => card_registries.data.load_card(
             py,
-            card.uid.clone(),
-            card.space.clone(),
-            card.name.clone(),
-            card.version.clone(),
+            Some(card.uid.clone()),
+            Some(card.space.clone()),
+            Some(card.name.clone()),
+            Some(card.version.clone()),
             interface,
         )?,
         RegistryType::Experiment => card_registries.experiment.load_card(
             py,
-            card.uid.clone(),
-            card.space.clone(),
-            card.name.clone(),
-            card.version.clone(),
+            Some(card.uid.clone()),
+            Some(card.space.clone()),
+            Some(card.name.clone()),
+            Some(card.version.clone()),
             None,
         )?,
         RegistryType::Prompt => card_registries.prompt.load_card(
             py,
-            card.uid.clone(),
-            card.space.clone(),
-            card.name.clone(),
-            card.version.clone(),
+            Some(card.uid.clone()),
+            Some(card.space.clone()),
+            Some(card.name.clone()),
+            Some(card.version.clone()),
             None,
         )?,
         _ => {
@@ -342,11 +342,40 @@ pub fn upload_card_artifacts(path: PathBuf, key: &ArtifactKey) -> Result<(), Reg
     Ok(())
 }
 
-fn validate_card_by_metadata(reg: &OpsmlRegistry, card: &mut Card) -> Result<(), RegistryError> {
+/// Helper for converting card deck attributes to options
+fn to_option(value: &str) -> Option<String> {
+    match value == CommonKwargs::Undefined.to_string() {
+        true => None,
+        false => Some(value.to_string()),
+    }
+}
+
+/// Validates a card deck card by checking if it exists in the registry
+///
+/// # Process
+/// 1. Check if Card exists in the registry
+/// 2. If it exists, update the card metadata
+/// 3. If it does not exist, return an error
+///
+/// # Arguments
+/// * `card` - Card to validate
+///
+/// # Returns
+/// * `Result<(), RegistryError>` - Result
+///
+/// # Errors
+/// * `RegistryError` - Error validating card
+///   Will return an error if the card does not exist in the registry
+fn validate_and_update_card(card: &mut Card) -> Result<(), RegistryError> {
+    let reg = OpsmlRegistry::new(card.registry_type.clone())?;
+
     let args = CardQueryArgs {
-        name: card.name.clone(),
-        space: card.space.clone(),
-        version: card.version.clone(),
+        uid: to_option(&card.uid),
+        space: to_option(&card.space),
+        name: to_option(&card.name),
+        version: to_option(&card.version),
+        registry_type: card.registry_type.clone(),
+        sort_by_timestamp: Some(false),
         ..Default::default()
     };
 
@@ -364,10 +393,10 @@ fn validate_card_by_metadata(reg: &OpsmlRegistry, card: &mut Card) -> Result<(),
 
     // Update card metadata
     if let Some(found_card) = cards.first() {
-        card.name = Some(found_card.name().to_string());
-        card.space = Some(found_card.space().to_string());
-        card.version = Some(found_card.version().to_string());
-        card.uid = Some(found_card.uid().to_string());
+        card.name = found_card.name().to_string();
+        card.space = found_card.space().to_string();
+        card.version = found_card.version().to_string();
+        card.uid = found_card.uid().to_string();
         debug!("Updated card metadata for name: {:?}", card.name);
     } else {
         return Err(RegistryError::Error(format!(
@@ -378,62 +407,10 @@ fn validate_card_by_metadata(reg: &OpsmlRegistry, card: &mut Card) -> Result<(),
     Ok(())
 }
 
-/// Validates a card deck card by checking if it exists in the registry
-///
-/// # Process
-/// 1. If the card has a UID, check if it exists in the registry
-/// 2. If the card does not have a UID, check if it exists in the registry by name, space, and version
-/// 3. If the card exists and a UID was provided, update the metadata (name, space, version)
-/// 4. If the card does not exist, return an error
-///
-/// # Arguments
-/// * `card` - Card to validate
-///
-/// # Returns
-/// * `Result<(), RegistryError>` - Result
-///
-/// # Errors
-/// * `RegistryError` - Error validating card
-///   Will return an error if the card does not exist in the registry
-fn validate_and_update_card(card: &mut Card) -> Result<(), RegistryError> {
-    let reg = OpsmlRegistry::new(card.registry_type.clone())?;
-
-    match &card.uid {
-        Some(uid) => {
-            let args = CardQueryArgs {
-                uid: Some(uid.clone()),
-                registry_type: card.registry_type.clone(),
-                ..Default::default()
-            };
-
-            let cards = reg.list_cards(args).map_err(|e| {
-                error!("Failed to list cards: {}", e);
-                RegistryError::Error("Failed to list cards".to_string())
-            })?;
-
-            if let Some(found_card) = cards.first() {
-                // Update card metadata
-                card.name = Some(found_card.name().to_string());
-                card.space = Some(found_card.space().to_string());
-                card.version = Some(found_card.version().to_string());
-                debug!("Updated card metadata for uid: {}", uid);
-                Ok(())
-            } else {
-                Err(RegistryError::Error(format!(
-                    "Card {} does not exist in registry {}",
-                    uid, card.registry_type
-                )))
-            }
-        }
-        None => validate_card_by_metadata(&reg, card),
-    }
-}
-
 /// Validate a card deck
 /// This function will validate each card in the deck
-/// If a card has a UID, it will check if it exists in the registry
-/// If a card does not have a UID, it will check if it exists in the registry by name, space, and version
-/// Provided card will be updated with metadata (name, space, version)
+/// The registry will be queried based on the card args.
+/// Returned record will be used to update card attributes as part of CardDeck
 /// If a card does not exist, it will return an error
 ///
 /// # Arguments

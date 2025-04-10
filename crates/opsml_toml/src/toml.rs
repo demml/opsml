@@ -2,7 +2,7 @@ use opsml_error::PyProjectTomlError;
 use opsml_types::RegistryType;
 use serde::{de::IntoDeserializer, Deserialize, Serialize};
 use std::collections::HashMap;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::str::FromStr;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -12,8 +12,9 @@ pub struct CardAttr {
     pub version: Option<String>,
 }
 
+/// toml equivalent of opsml_cards::CardDeck Card
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct DeckCard {
+pub struct Card {
     pub alias: String,
     pub space: String,
     pub name: String,
@@ -24,13 +25,12 @@ pub struct DeckCard {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct AppConfig {
-    pub create: bool,
     #[serde(rename = "type")]
     pub registry_type: RegistryType,
     pub name: String,
     pub space: String,
     pub version: Option<String>,
-    pub cards: Option<Vec<DeckCard>>,
+    pub cards: Option<Vec<Card>>,
 }
 
 //impl DeckConfig {
@@ -94,7 +94,6 @@ pub struct OpsmlTools {
     ///
     /// # Example
     /// [tool.opsml.app]
-    /// create = true
     /// name = "opsml"
     /// space = "opsml"
     /// version = "1"
@@ -167,6 +166,18 @@ pub struct OpsmlTool {
 #[serde(rename_all = "kebab-case")]
 pub struct PyProjectToml {
     pub tool: Option<OpsmlTool>,
+
+    // skip when deserializing
+    #[serde(skip)]
+    pub root_path: PathBuf,
+}
+
+impl PyProjectToml {
+    /// Get the root path of the pyproject.toml file
+    /// This is used to ensure lockfiles are created in the same directory as the pyproject.toml file
+    pub fn get_root_path(&self) -> PathBuf {
+        self.root_path.clone()
+    }
 }
 
 impl PyProjectToml {
@@ -199,11 +210,15 @@ impl PyProjectToml {
     /// * The path is not a file
     /// * The path is not a directory
     /// * The path is not a valid toml file
-    pub fn load(path: Option<PathBuf>) -> Result<Self, PyProjectTomlError> {
+    pub fn load(path: Option<&Path>, toml_name: Option<&str>) -> Result<Self, PyProjectTomlError> {
+        let toml_name = match toml_name {
+            Some(name) => name,
+            None => "pyproject.toml",
+        };
         // get the current directory
         let path = match path {
             Some(p) => p,
-            None => std::env::current_dir().map_err(PyProjectTomlError::CurrentDirError)?,
+            None => &std::env::current_dir().map_err(PyProjectTomlError::CurrentDirError)?,
         };
 
         let path = path
@@ -211,17 +226,25 @@ impl PyProjectToml {
             .map_err(PyProjectTomlError::AbsolutePathError)?;
 
         // Search parent directories
-        let project_path = path
+        let root_path = path
             .ancestors()
-            .find(|p| p.join("pyproject.toml").is_file())
-            .ok_or(PyProjectTomlError::MissingPyprojectToml)?
-            .to_path_buf()
-            .join("pyproject.toml");
+            .find(|p| p.join(toml_name).is_file())
+            .ok_or(PyProjectTomlError::MissingPyprojectToml(
+                toml_name.to_string(),
+            ))?
+            .to_path_buf();
+
+        let project_path = root_path.join(toml_name);
 
         let content =
             std::fs::read_to_string(&project_path).map_err(PyProjectTomlError::ReadError)?;
 
-        Self::from_string(&content)
+        let mut toml = Self::from_string(&content)?;
+
+        // set the root path
+        toml.root_path = root_path.clone();
+
+        Ok(toml)
     }
 }
 
@@ -258,20 +281,22 @@ mod tests {
     fn test_deck_configuration_load() {
         let content = r#"
             [[tool.opsml.app]]
-            create = true
             type = "deck"
             space = "opsml"
             name = "opsml"
             version = "1"
             cards = [
-                {alias = "data", space="space", name="name, version = "1", type = "data"},
-                {alias = "model", space="space", name="name, version = "1", type = "model"}
+                {alias = "data", space="space", name="name", version = "1", type = "data"},
+                {alias = "model", space="space", name="name", version = "1", type = "model"}
             ]
+
         "#;
 
         let (_temp_dir, root_dir) = write_toml_to_temp(content).unwrap();
 
-        let pyproject = PyProjectToml::load(Some(root_dir)).unwrap();
+        let pyproject = PyProjectToml::load(Some(&root_dir), None).unwrap();
+
+        println!("{:?}", pyproject);
 
         // assert tool.opsml is not None
         assert!(pyproject.tool.is_some());
@@ -289,19 +314,18 @@ mod tests {
         let tools = pyproject.get_tools().unwrap();
         let app = tools.app.as_ref().unwrap()[0].clone();
         let cards = app.cards.clone().unwrap();
-        assert!(app.create);
         assert_eq!(app.name, "opsml");
         assert_eq!(app.space, "opsml");
         assert_eq!(app.version, Some("1".to_string()));
         assert_eq!(cards.len(), 2);
         assert_eq!(cards[0].alias, "data");
-        assert_eq!(cards[0].space, "opsml".to_string());
-        assert_eq!(cards[0].name, "opsml".to_string());
+        assert_eq!(cards[0].space, "space".to_string());
+        assert_eq!(cards[0].name, "name".to_string());
         assert_eq!(cards[0].version, Some("1".to_string()));
         assert_eq!(cards[0].registry_type, RegistryType::Data);
         assert_eq!(cards[1].alias, "model");
-        assert_eq!(cards[1].space, "opsml".to_string());
-        assert_eq!(cards[1].name, "opsml".to_string());
+        assert_eq!(cards[1].space, "space".to_string());
+        assert_eq!(cards[1].name, "name".to_string());
         assert_eq!(cards[1].version, Some("1".to_string()));
     }
 
@@ -315,7 +339,7 @@ mod tests {
 
         let (_temp_dir, root_dir) = write_toml_to_temp(content).unwrap();
 
-        let pyproject = PyProjectToml::load(Some(root_dir)).unwrap();
+        let pyproject = PyProjectToml::load(Some(&root_dir), None).unwrap();
 
         // assert tool.opsml is not None
         assert!(pyproject.tool.is_some());
@@ -347,7 +371,7 @@ mod tests {
 
         let (_temp_dir, root_dir) = write_toml_to_temp(content).unwrap();
 
-        let pyproject = PyProjectToml::load(Some(root_dir)).unwrap();
+        let pyproject = PyProjectToml::load(Some(&root_dir), None).unwrap();
 
         // assert tool.opsml is not None
         let tools = pyproject.get_tools().unwrap();

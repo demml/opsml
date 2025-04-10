@@ -3808,8 +3808,10 @@ dependencies = [
  "opsml-toml",
  "opsml-types",
  "opsml-utils",
+ "pyo3",
  "serde",
  "tabled",
+ "tracing",
 ]
 
 [[package]]
