@@ -12,15 +12,50 @@ pub struct CardAttr {
     pub version: Option<String>,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Clone)]
 pub struct DeckCard {
     pub alias: String,
-    pub space: Option<String>,
-    pub name: Option<String>,
+    pub space: String,
+    pub name: String,
     pub version: Option<String>,
-    pub uid: Option<String>,
     #[serde(rename = "type")]
-    pub card_type: Option<RegistryType>,
+    pub registry_type: RegistryType,
+}
+
+// Custom deserializer for DeckCard
+#[derive(Deserialize)]
+struct DeckCardDef {
+    pub alias: String,
+    pub name: String, // This will contain "space/name"
+    pub version: Option<String>,
+    #[serde(rename = "type")]
+    pub registry_type: RegistryType,
+}
+
+// Implementation for custom deserialization
+impl<'de> Deserialize<'de> for DeckCard {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let helper = DeckCardDef::deserialize(deserializer)?;
+
+        // Split the name into space and name parts
+        let parts: Vec<&str> = helper.name.split('/').collect();
+        if parts.len() != 2 {
+            return Err(serde::de::Error::custom(
+                "name must be in format 'space/name'",
+            ));
+        }
+
+        Ok(DeckCard {
+            alias: helper.alias,
+            space: parts[0].to_string(),
+            name: parts[1].to_string(),
+            version: helper.version,
+            registry_type: helper.registry_type,
+        })
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -266,8 +301,8 @@ mod tests {
             space = "opsml"
             version = "1"
             cards = [
-                {alias = "data", space = "opsml", name = "opsml", version = "1", type = "data"},
-                {alias = "model", space = "opsml", name = "opsml", version = "1", type = "model"}
+                {alias = "data", name="space/name", version = "1", type = "data"},
+                {alias = "model", name="space/name", version = "1", type = "model"}
             ]
         "#;
 
@@ -297,13 +332,13 @@ mod tests {
         assert_eq!(app.version, Some("1".to_string()));
         assert_eq!(cards.len(), 2);
         assert_eq!(cards[0].alias, "data");
-        assert_eq!(cards[0].space, Some("opsml".to_string()));
-        assert_eq!(cards[0].name, Some("opsml".to_string()));
+        assert_eq!(cards[0].space, "opsml".to_string());
+        assert_eq!(cards[0].name, "opsml".to_string());
         assert_eq!(cards[0].version, Some("1".to_string()));
-        assert_eq!(cards[0].card_type, Some(RegistryType::Data));
+        assert_eq!(cards[0].registry_type, RegistryType::Data);
         assert_eq!(cards[1].alias, "model");
-        assert_eq!(cards[1].space, Some("opsml".to_string()));
-        assert_eq!(cards[1].name, Some("opsml".to_string()));
+        assert_eq!(cards[1].space, "opsml".to_string());
+        assert_eq!(cards[1].name, "opsml".to_string());
         assert_eq!(cards[1].version, Some("1".to_string()));
     }
 

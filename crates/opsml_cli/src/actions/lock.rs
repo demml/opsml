@@ -57,62 +57,96 @@ fn get_deck_from_registry(
 
 /// Helper function to validate app configuration
 fn validate_app_cards(config: &AppConfig) -> Result<&Vec<DeckCard>, CliError> {
-    config.cards.as_ref().ok_or(CliError::Error(
-        "No cards found in the app config. An app config must be present".to_string(),
-    ))
+    config.cards.as_ref().ok_or(CliError::MissingDeckCards)
 }
 
 /// Helper function to get latest card from appropriate registry
-fn get_latest_card(registries: &RustRegistries, entry: &CardEntry) -> Result<CardRecord, CliError> {
+///
+/// # Arguments
+/// * `registries` - RustRegistries
+/// * `entry` - DeckCard
+///
+/// # Returns
+/// * `Result<CardRecord, CliError>` - The latest card record
+///
+/// # Errors
+/// * `CliError::MissingRegistryType` - If the registry type is missing
+fn get_latest_card(registries: &RustRegistries, card: &DeckCard) -> Result<CardRecord, CliError> {
+    // extract registry type from entry
+    let registry_type = card
+        .registry_type
+        .as_ref()
+        .ok_or(CliError::MissingRegistryType)?;
+
+    // set args for querying registry
     let query_args = CardQueryArgs {
-        uid: Some(entry.uid.clone()),
-        registry_type: entry.registry_type.clone(),
+        space: card.space.clone(),
+        name: card.name.clone(),
+        version: card.version.clone(),
+        uid: card.uid.clone(),
+        registry_type: registry_type.clone(),
         sort_by_timestamp: Some(true),
         limit: Some(1),
         ..Default::default()
     };
 
-    let latest_cards = match entry.registry_type {
+    // get the latest card from the appropriate registry
+    let latest_cards = match registry_type {
         RegistryType::Model => registries.model.list_cards(query_args)?,
         RegistryType::Experiment => registries.experiment.list_cards(query_args)?,
         RegistryType::Data => registries.data.list_cards(query_args)?,
         RegistryType::Audit => registries.audit.list_cards(query_args)?,
         RegistryType::Prompt => registries.prompt.list_cards(query_args)?,
         _ => {
-            return Err(CliError::Error(format!(
-                "Unsupported registry type: {}",
-                entry.registry_type
-            )))
+            return Err(CliError::RegistryTypeNotSupported(
+                registry_type.to_string(),
+            ))
         }
     };
 
+    // return the first card in the list
     latest_cards
         .first()
         .cloned()
-        .ok_or_else(|| CliError::Error(format!("No card found for uid: {}", entry.uid)))
-}
-
-fn needs_version_refresh(version: &str) -> bool {
-    version.contains('*') || version.contains('^') || version.contains('~')
+        .ok_or(CliError::MissingCardRecord)
 }
 
 /// Process deck cards and check for version updates
+///
+/// # Arguments
+/// * `card_entries` - Vec<CardEntry> - List of cards associated with the most recent registered deck
+/// * `app_cards` - &[DeckCard] - List of cards found in toml
+/// * `registries` - &RustRegistries - Rust variant of Opsml registries
+///
+/// # Returns
+/// * `Result<bool, CliError>` - True if a version refresh is needed, false otherwise
 fn process_deck_cards(
     card_entries: Vec<CardEntry>,
     app_cards: &[DeckCard],
     registries: &RustRegistries,
 ) -> Result<bool, CliError> {
-    for entry in card_entries {
-        let latest_card = get_latest_card(registries, &entry)?;
+    for app_card in app_cards {
+        // Find the latest card given the constraints provided in toml file
+        let latest_card = get_latest_card(registries, &app_card)?;
 
-        if latest_card.version() != entry.version {
-            if let Some(app_card) = app_cards.iter().find(|c| c.alias == entry.alias) {
-                if let Some(version) = &app_card.version {
-                    if needs_version_refresh(version) {
-                        return Ok(true);
-                    }
+        // Find the entry in the card entries
+        // If the entry is not found - return true (need to increment version)
+        // If the entry is found - check if the uid is different from latest card - if different - return true
+        // Otherwise - return false
+        // Find matching entry in existing deck
+        let existing_entry = card_entries
+            .iter()
+            .find(|entry| entry.alias == app_card.alias);
+
+        match existing_entry {
+            Some(entry) => {
+                // Check if existing entry UID matches latest card UID
+                if entry.uid != latest_card.uid() {
+                    return Ok(true);
                 }
             }
+            // No existing entry found - needs refresh
+            None => return Ok(true),
         }
     }
 
@@ -143,10 +177,7 @@ async fn lock_deck(config: AppConfig) -> Result<(), CliError> {
     let deck = deck.unwrap();
 
     // Get card UIDs from deck
-    let card_entries = deck
-        .card_uids()
-        .ok_or(CliError::Error("No card UIDs found in deck".to_string()))?;
-
+    let card_entries = deck.card_uids().ok_or(CliError::MissingCardDeckUids)?;
     let needs_refresh = process_deck_cards(card_entries, app_cards, &registries)?;
 
     Ok(())

@@ -426,8 +426,24 @@ fn validate_and_update_card(card: &mut Card) -> Result<(), RegistryError> {
     }
 }
 
+/// Validate a card deck
+/// This function will validate each card in the deck
+/// If a card has a UID, it will check if it exists in the registry
+/// If a card does not have a UID, it will check if it exists in the registry by name, space, and version
+/// Provided card will be updated with metadata (name, space, version)
+/// If a card does not exist, it will return an error
+///
+/// # Arguments
+/// * `deck` - Card deck to validate
+///
+/// # Returns
+/// * `Result<(), RegistryError>` - Result
+///
+/// # Errors
+/// * `RegistryError` - Error validating card
 #[instrument(skip_all)]
-fn validate_card_deck(deck: &mut [Card]) -> Result<(), RegistryError> {
+pub fn validate_card_deck(deck: &mut [Card]) -> Result<(), RegistryError> {
+    // iterate over each card in the deck
     for card in deck.iter_mut() {
         validate_and_update_card(card)?;
     }

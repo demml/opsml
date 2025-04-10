@@ -111,6 +111,25 @@ impl Card {
     }
 }
 
+impl Card {
+    pub fn rust_new(
+        alias: String,
+        registry_type: RegistryType,
+        space: Option<&str>,
+        name: Option<&str>,
+        version: Option<&str>,
+    ) -> Card {
+        Card {
+            space: space.map(|s| s.to_string()),
+            name: name.map(|s| s.to_string()),
+            version: version.map(|s| s.to_string()),
+            registry_type,
+            uid: None,
+            alias,
+        }
+    }
+}
+
 #[pyclass]
 struct CardListIter {
     inner: std::vec::IntoIter<Card>,
