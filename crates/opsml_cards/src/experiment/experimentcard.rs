@@ -1,11 +1,11 @@
 use crate::utils::BaseArgs;
 use chrono::{DateTime, Utc};
 use opsml_crypt::decrypt_directory;
-use opsml_error::{CardError, OpsmlError};
+use opsml_error::{map_err_with_logging, CardError, OpsmlError};
 use opsml_storage::storage_client;
 use opsml_types::contracts::{CardRecord, ExperimentCardClientRecord};
 use opsml_types::{
-    cards::ComputeEnvironment, contracts::ArtifactKey, RegistryType, SaveName, Suffix,
+    cards::ComputeEnvironment, contracts::ArtifactKey, BaseArgsType, RegistryType, SaveName, Suffix,
 };
 use opsml_utils::{get_utc_datetime, PyHelperFuncs};
 use pyo3::prelude::*;
@@ -104,11 +104,10 @@ impl ExperimentCard {
                 .map_err(|e| OpsmlError::new_err(e.to_string()))?,
         };
 
-        let base_args =
-            BaseArgs::create_args(name, space, version, uid, &registry_type).map_err(|e| {
-                error!("Failed to create base args: {}", e);
-                OpsmlError::new_err(e.to_string())
-            })?;
+        let base_args = map_err_with_logging::<BaseArgsType, _>(
+            BaseArgs::create_args(name, space, version, uid, &registry_type),
+            "Failed to create base args for ExperimentCard",
+        )?;
 
         Ok(Self {
             space: base_args.0,

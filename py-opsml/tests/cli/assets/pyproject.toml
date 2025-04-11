@@ -7,6 +7,13 @@ classifiers = [
     "Programming Language :: Python :: Implementation :: PyPy",
 ]
 
+[tool.opsml.default]
+space = "space"
+
+[tool.opsml.registry]
+model = { name = "model" }
+prompt = { name = "prompt" }
+
 [[tool.opsml.app]]
 type = "deck"
 space = "space"

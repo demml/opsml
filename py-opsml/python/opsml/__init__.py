@@ -3,12 +3,12 @@
 
 from .opsml import (  # noqa: F401
     card,
+    cli,
     core,
     data,
     experiment,
     model,
     potato_head,
-    cli,
     scouter,
     test,
 )

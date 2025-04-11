@@ -704,6 +704,8 @@ impl Display for DataType {
     }
 }
 
+pub type BaseArgsType = (String, String, String, String);
+
 #[pyclass(eq)]
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub enum InterfaceType {

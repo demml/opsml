@@ -10,7 +10,7 @@ use opsml_types::{
     contracts::{CardDeckClientRecord, CardRecord},
     RegistryType, SaveName, Suffix,
 };
-use opsml_utils::PyHelperFuncs;
+use opsml_utils::{extract_py_attr, PyHelperFuncs};
 use pyo3::IntoPyObjectExt;
 use pyo3::PyTraverseError;
 use pyo3::PyVisit;
@@ -65,32 +65,20 @@ impl Card {
     ) -> PyResult<Self> {
         // if card is not None, then set the registry_type and alias
         if let Some(card) = card {
-            let registry_type = card.getattr("registry_type")?.extract::<RegistryType>()?;
-            let uid = card
-                .getattr("uid")?
-                .extract::<Option<String>>()?
-                .ok_or_else(|| {
-                    OpsmlError::new_err("Unable to get card uid. Is this card registered?")
-                })?;
-            let name = card
-                .getattr("name")?
-                .extract::<Option<String>>()?
-                .ok_or_else(|| {
-                    OpsmlError::new_err("Unable to get card name. Is this card registered?")
-                })?;
-            let space = card
-                .getattr("space")?
-                .extract::<Option<String>>()?
-                .ok_or_else(|| {
-                    OpsmlError::new_err("Unable to get card space. Is this card registered?")
-                })?;
+            let registry_type = extract_py_attr::<RegistryType>(&card, "registry_type")?;
 
-            let version = card
-                .getattr("version")?
-                .extract::<Option<String>>()?
-                .ok_or_else(|| {
-                    OpsmlError::new_err("Unable to get card version. Is this card registered?")
-                })?;
+            let uid = extract_py_attr::<Option<String>>(&card, "uid")?
+                .ok_or_else(|| CardError::MissingAttribute("uid".to_string()))?;
+
+            let name = extract_py_attr::<Option<String>>(&card, "name")?
+                .ok_or_else(|| CardError::MissingAttribute("name".to_string()))?;
+
+            let space = extract_py_attr::<Option<String>>(&card, "space")?
+                .ok_or_else(|| CardError::MissingAttribute("space".to_string()))?;
+
+            let version = extract_py_attr::<Option<String>>(&card, "version")?
+                .ok_or_else(|| CardError::MissingAttribute("version".to_string()))?;
+
             return Ok(Card {
                 space,
                 name,
@@ -295,8 +283,9 @@ impl CardDeck {
         let base_args =
             BaseArgs::create_args(Some(name), Some(space), version, None, &registry_type).map_err(
                 |e| {
-                    error!("Failed to create base args: {}", e);
-                    OpsmlError::new_err(e.to_string())
+                    let msg = format!("Failed to create base args for CardDeck: {}", e.to_string());
+                    error!(msg);
+                    OpsmlError::new_err(msg)
                 },
             )?;
 
@@ -707,7 +696,8 @@ impl CardDeck {
         let base_args =
             BaseArgs::create_args(Some(&name), Some(&space), version, None, &registry_type)
                 .map_err(|e| {
-                    error!("Failed to create base args: {}", e);
+                    let msg = format!("Failed to create base args for CardDeck: {}", e.to_string());
+                    error!(msg);
                     CardError::TypeError(e)
                 })?;
 

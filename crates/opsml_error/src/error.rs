@@ -97,6 +97,9 @@ pub enum CliError {
 
     #[error("Failed to get write path")]
     WritePathError,
+
+    #[error("Failed to delete base path when downloading CardDeck artifacts {0}")]
+    DeleteBasePathError(#[source] std::io::Error),
 }
 
 impl From<CliError> for PyErr {
@@ -413,6 +416,9 @@ pub enum CardError {
 
     #[error(transparent)]
     CryptError(#[from] CryptError),
+
+    #[error("Failed to get attribute {0}. Has this card been registered?")]
+    MissingAttribute(String),
 }
 
 impl From<CardError> for PyErr {
