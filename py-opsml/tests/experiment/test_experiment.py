@@ -25,7 +25,6 @@ import uuid
 import shutil
 from tests.conftest import WINDOWS_EXCLUDE
 import pytest
-# Sets up logging for tests
 
 
 def cleanup_manually_created_directories():

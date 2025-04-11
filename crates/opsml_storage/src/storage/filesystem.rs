@@ -80,7 +80,7 @@ impl FileSystemStorage {
     pub fn new() -> Result<Self, StorageError> {
         let state = app_state();
         let settings = state.config()?.storage_settings()?;
-        let mode = state.mode()?;
+        let mode = &*state.mode()?;
 
         match mode {
             OpsmlMode::Server => Self::create_server_storage(&settings),
