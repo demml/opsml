@@ -74,14 +74,3 @@ print(data_card.version)
 
 ---
 ## Docs
-
-::: opsml.DataCard
-    options:
-        members:
-            - create_data_profile
-            - split_data
-            - load_data
-            - registry_type
-        show_root_heading: true
-        show_source: true
-        heading_level: 3
