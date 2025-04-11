@@ -26,7 +26,7 @@ pub fn create_card_deck(app: &AppConfig) -> Result<CardDeck, CliError> {
         .cards
         .as_ref()
         .ok_or(CliError::MissingDeckCards)?
-        .into_iter()
+        .iter()
         .map(|card| {
             let card = Card::rust_new(
                 card.alias.clone(),
@@ -49,7 +49,7 @@ pub fn create_card_deck(app: &AppConfig) -> Result<CardDeck, CliError> {
         cards,
         app.version.as_deref(),
     )
-    .map_err(|e| CliError::CreateDeckError(e))
+    .map_err(CliError::CreateDeckError)
 }
 
 pub fn register_card_deck(app: &AppConfig, registry: &CardRegistry) -> Result<CardDeck, CliError> {

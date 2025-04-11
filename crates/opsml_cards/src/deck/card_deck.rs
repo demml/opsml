@@ -283,7 +283,7 @@ impl CardDeck {
         let base_args =
             BaseArgs::create_args(Some(name), Some(space), version, None, &registry_type).map_err(
                 |e| {
-                    let msg = format!("Failed to create base args for CardDeck: {}", e.to_string());
+                    let msg = format!("Failed to create base args for CardDeck: {}", e);
                     error!(msg);
                     OpsmlError::new_err(msg)
                 },
@@ -705,7 +705,7 @@ impl CardDeck {
         let base_args =
             BaseArgs::create_args(Some(&name), Some(&space), version, None, &registry_type)
                 .map_err(|e| {
-                    let msg = format!("Failed to create base args for CardDeck: {}", e.to_string());
+                    let msg = format!("Failed to create base args for CardDeck: {}", e);
                     error!(msg);
                     CardError::TypeError(e)
                 })?;

@@ -103,7 +103,7 @@ fn process_deck_cards(
     debug!("Processing deck cards");
     for app_card in app_cards {
         // Find the latest card given the constraints provided in toml file
-        let latest_card = get_latest_card(registries, &app_card)?;
+        let latest_card = get_latest_card(registries, app_card)?;
 
         // Find the entry in the card entries
         // If the entry is not found - return true (need to increment version)
@@ -197,11 +197,9 @@ fn lock_app(app: AppConfig) -> Result<LockArtifact, CliError> {
     // Only support's  deck currently
     match app.registry_type {
         RegistryType::Deck => lock_deck(app),
-        _ => {
-            return Err(CliError::UnsupportedRegistryType(
-                app.registry_type.to_string(),
-            ))
-        }
+        _ => Err(CliError::UnsupportedRegistryType(
+            app.registry_type.to_string(),
+        )),
     }
 }
 
@@ -267,16 +265,14 @@ pub fn lock_project(path: Option<PathBuf>, toml_name: Option<&str>) -> Result<()
 
     let pyproject = PyProjectToml::load(path.as_deref(), toml_name)?;
 
-    let tools = pyproject
-        .get_tools()
-        .ok_or_else(|| CliError::MissingTools)?;
+    let tools = pyproject.get_tools().ok_or(CliError::MissingTools)?;
 
-    let apps = tools.get_apps().ok_or_else(|| CliError::MissingApp)?;
+    let apps = tools.get_apps().ok_or(CliError::MissingApp)?;
 
     // Create a lock file
     let lock_file = LockFile {
         artifact: apps
-            .into_iter()
+            .iter()
             .map(|app| lock_app(app.clone()))
             .collect::<Result<Vec<_>, _>>()?,
     };

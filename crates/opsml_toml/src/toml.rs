@@ -174,10 +174,7 @@ impl PyProjectToml {
     /// * The path is not a directory
     /// * The path is not a valid toml file
     pub fn load(path: Option<&Path>, toml_name: Option<&str>) -> Result<Self, PyProjectTomlError> {
-        let toml_name = match toml_name {
-            Some(name) => name,
-            None => "pyproject.toml",
-        };
+        let toml_name = toml_name.unwrap_or("pyproject.toml");
         // get the current directory
         let path = match path {
             Some(p) => p,
