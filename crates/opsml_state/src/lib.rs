@@ -19,7 +19,7 @@ pub struct OpsmlState {
 
 impl OpsmlState {
     fn new() -> Result<Self, StateError> {
-        let config = RwLock::new(OpsmlConfig::new());
+        let config = OpsmlConfig::new();
 
         let runtime = Arc::new(Runtime::new().map_err(|e| {
             error!("Failed to create runtime: {}", e);
@@ -27,7 +27,8 @@ impl OpsmlState {
         })?);
 
         // Initialize tools from pyproject.toml
-        let tools = match PyProjectToml::load(None, None) {
+
+        let tools = match PyProjectToml::load(Some(&config.base_path), None) {
             Ok(toml) => Arc::new(toml.get_tools()),
             Err(e) => {
                 debug!("Failed to load pyproject.toml, defaulting to None: {}", e);
@@ -36,7 +37,7 @@ impl OpsmlState {
         };
 
         Ok(Self {
-            config,
+            config: RwLock::new(config),
             runtime,
             tools,
         })

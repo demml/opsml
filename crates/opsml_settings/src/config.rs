@@ -104,6 +104,7 @@ pub struct OpsmlConfig {
     pub database_settings: DatabaseSettings,
     pub logging_config: LoggingConfig,
     pub mode: OpsmlMode,
+    pub base_path: PathBuf,
 }
 
 impl Default for OpsmlConfig {
@@ -191,6 +192,20 @@ impl Default for OpsmlConfig {
         let logging_config =
             LoggingConfig::rust_new(false, log_level, WriteLevel::Stdout, log_json);
 
+        // check OPSML_BASE_PATH or use current directory
+        let base_path = match env::var("OPSML_BASE_PATH") {
+            Ok(path) => {
+                let path = PathBuf::from(path);
+                if path.exists() {
+                    path
+                } else {
+                    warn!("OPSML_BASE_PATH does not exist, using current directory");
+                    std::env::current_dir().expect("Failed to get current directory")
+                }
+            }
+            Err(_) => std::env::current_dir().expect("Failed to get current directory"),
+        };
+
         OpsmlConfig {
             app_name: "opsml".to_string(),
             app_env: env::var("APP_ENV").unwrap_or_else(|_| "development".to_string()),
@@ -207,6 +222,7 @@ impl Default for OpsmlConfig {
             auth_settings,
             mode,
             logging_config,
+            base_path,
         }
     }
 }
