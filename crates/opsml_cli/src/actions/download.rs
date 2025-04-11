@@ -94,6 +94,11 @@ pub fn download_deck(args: &DownloadCard) -> Result<(), CliError> {
     let key = registry.get_key(query_args)?;
     let base_path = args.deck_path();
 
+    // delete directory if it exists
+    if base_path.exists() {
+        std::fs::remove_dir_all(&base_path).map_err(|e| CliError::DeleteBasePathError(e))?;
+    }
+
     // download card deck card
     download_card_artifacts(&key, &base_path)?;
 

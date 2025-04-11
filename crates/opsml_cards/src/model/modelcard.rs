@@ -1,6 +1,9 @@
 use chrono::{DateTime, Utc};
 use opsml_crypt::decrypt_directory;
-use opsml_error::error::{CardError, OpsmlError};
+use opsml_error::{
+    error::{CardError, OpsmlError},
+    map_err_with_logging,
+};
 use opsml_interfaces::ModelInterface;
 use opsml_interfaces::{
     CatBoostModel, HuggingFaceModel, LightGBMModel, LightningModel, SklearnModel, TorchModel,
@@ -9,12 +12,12 @@ use opsml_interfaces::{
 use opsml_interfaces::{ModelInterfaceMetadata, ModelLoadKwargs, ModelSaveKwargs};
 use opsml_types::contracts::{ArtifactKey, CardRecord, ModelCardClientRecord};
 use opsml_types::{
-    DataType, ModelInterfaceType, ModelType, RegistryType, SaveName, Suffix, TaskType,
+    BaseArgsType, DataType, ModelInterfaceType, ModelType, RegistryType, SaveName, Suffix, TaskType,
 };
 
 use crate::utils::BaseArgs;
 use opsml_storage::storage_client;
-use opsml_utils::{create_tmp_path, get_utc_datetime, PyHelperFuncs};
+use opsml_utils::{create_tmp_path, extract_py_attr, get_utc_datetime, PyHelperFuncs};
 use pyo3::prelude::*;
 use pyo3::types::{PyDict, PyList};
 use pyo3::{IntoPyObjectExt, PyObject};
@@ -153,11 +156,10 @@ impl ModelCard {
                 .map_err(|e| OpsmlError::new_err(e.to_string()))?,
         };
 
-        let base_args =
-            BaseArgs::create_args(name, space, version, uid, &registry_type).map_err(|e| {
-                error!("Failed to create base args: {}", e);
-                OpsmlError::new_err(e.to_string())
-            })?;
+        let base_args = map_err_with_logging::<BaseArgsType, _>(
+            BaseArgs::create_args(name, space, version, uid, &registry_type),
+            "Failed to create base args for ModelCard",
+        )?;
 
         if interface.is_instance_of::<ModelInterface>() {
             //
@@ -167,29 +169,10 @@ impl ModelCard {
             ));
         }
 
-        let interface_type = interface
-            .getattr("interface_type")
-            .map_err(|e| OpsmlError::new_err(e.to_string()))?
-            .extract::<ModelInterfaceType>()
-            .map_err(|e| OpsmlError::new_err(e.to_string()))?;
-
-        let data_type = interface
-            .getattr("data_type")
-            .map_err(|e| OpsmlError::new_err(e.to_string()))?
-            .extract::<DataType>()
-            .map_err(|e| OpsmlError::new_err(e.to_string()))?;
-
-        let model_type = interface
-            .getattr("model_type")
-            .map_err(|e| OpsmlError::new_err(e.to_string()))?
-            .extract::<ModelType>()
-            .map_err(|e| OpsmlError::new_err(e.to_string()))?;
-
-        let task_type = interface
-            .getattr("task_type")
-            .map_err(|e| OpsmlError::new_err(e.to_string()))?
-            .extract::<TaskType>()
-            .map_err(|e| OpsmlError::new_err(e.to_string()))?;
+        let interface_type = extract_py_attr::<ModelInterfaceType>(interface, "interface_type")?;
+        let data_type = extract_py_attr::<DataType>(interface, "data_type")?;
+        let model_type = extract_py_attr::<ModelType>(interface, "model_type")?;
+        let task_type = extract_py_attr::<TaskType>(interface, "task_type")?;
 
         let mut metadata = metadata.unwrap_or_default();
         metadata.interface_metadata.interface_type = interface_type;
