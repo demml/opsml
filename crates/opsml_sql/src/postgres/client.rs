@@ -13,7 +13,7 @@ use opsml_semver::VersionValidator;
 use opsml_settings::config::DatabaseSettings;
 use opsml_types::{
     cards::CardTable,
-    contracts::{ArtifactKey, CardQueryArgs},
+    contracts::{ArtifactKey, AuditEvent, CardQueryArgs},
     RegistryType,
 };
 use semver::Version;
@@ -1032,17 +1032,21 @@ impl SqlClient for PostgresClient {
         Ok(())
     }
 
-    async fn insert_operation(
-        &self,
-        username: &str,
-        access_type: &str,
-        access_location: &str,
-    ) -> Result<(), SqlError> {
-        let query = PostgresQueryHelper::get_operation_insert_query();
+    async fn insert_audit_event(&self, event: AuditEvent) -> Result<(), SqlError> {
+        let query = PostgresQueryHelper::get_audit_event_insert_query();
         sqlx::query(&query)
-            .bind(username)
-            .bind(access_type)
-            .bind(access_location)
+            .bind(event.username)
+            .bind(event.client_ip)
+            .bind(event.user_agent)
+            .bind(event.operation.to_string())
+            .bind(event.resource_type.to_string())
+            .bind(event.resource_id)
+            .bind(event.access_location)
+            .bind(event.status.to_string())
+            .bind(event.error_message)
+            .bind(event.metadata)
+            .bind(event.registry_type.map(|r| r.to_string()))
+            .bind(event.route)
             .execute(&self.pool)
             .await
             .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
@@ -1091,7 +1095,7 @@ impl SqlClient for PostgresClient {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use opsml_types::{contracts::Operation, RegistryType, SqlType};
+    use opsml_types::{RegistryType, SqlType};
     use opsml_utils::utils::get_utc_datetime;
     use std::{env, vec};
     pub async fn cleanup(pool: &Pool<Postgres>) {
@@ -1128,7 +1132,7 @@ mod tests {
             FROM opsml_artifact_key;
 
             DELETE
-            FROM opsml_operation;
+            FROM opsml_audit_event;
             "#,
         )
         .fetch_all(pool)
@@ -1763,12 +1767,12 @@ mod tests {
         let client = db_client().await;
 
         client
-            .insert_operation("guest", &Operation::Read.to_string(), "model/registry")
+            .insert_audit_event(AuditEvent::default())
             .await
             .unwrap();
 
         // check if the operation was inserted
-        let query = r#"SELECT username  FROM opsml_operation WHERE username = 'guest';"#;
+        let query = r#"SELECT username  FROM opsml_audit_event WHERE username = 'guest';"#;
         let result: String = sqlx::query_scalar(query)
             .fetch_one(&client.pool)
             .await

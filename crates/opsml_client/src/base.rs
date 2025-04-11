@@ -1,7 +1,9 @@
-use crate::types::{JwtToken, RequestType, Routes};
 use opsml_error::error::ApiError;
 use opsml_settings::config::{ApiSettings, OpsmlStorageSettings};
-use opsml_types::contracts::{CompleteMultipartUpload, PresignedQuery, PresignedUrl};
+use opsml_types::{
+    api::{JwtToken, RequestType, Routes},
+    contracts::{CompleteMultipartUpload, PresignedQuery, PresignedUrl},
+};
 
 use reqwest::blocking::{multipart::Form, Client, Response};
 use reqwest::header::{HeaderMap, HeaderValue, AUTHORIZATION};
@@ -34,6 +36,10 @@ pub fn build_http_client(settings: &ApiSettings) -> Result<Client, ApiError> {
             .map_err(|e| ApiError::Error(format!("Failed to create header with error: {}", e)))?,
     );
 
+    headers.insert(
+        reqwest::header::USER_AGENT,
+        HeaderValue::from_static(concat!("opsml-client/", env!("CARGO_PKG_VERSION"))),
+    );
     let client_builder = Client::builder().timeout(std::time::Duration::from_secs(TIMEOUT_SECS));
 
     let client = client_builder

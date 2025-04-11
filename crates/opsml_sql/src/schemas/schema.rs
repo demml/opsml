@@ -6,7 +6,9 @@ use opsml_utils::create_uuid7;
 use opsml_utils::utils::get_utc_datetime;
 use semver::{BuildMetadata, Prerelease, Version};
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 use sqlx::{prelude::FromRow, types::Json};
+use std::collections::HashMap;
 use std::env;
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
@@ -831,6 +833,22 @@ impl User {
             role: role.unwrap_or("user".to_string()),
             refresh_token: None,
         }
+    }
+
+    pub fn serialize(&self) -> String {
+        // convert to HashMap<String, Value>
+        // redact password_hash and permissions
+        let mut map: HashMap<String, Value> = HashMap::new();
+        map.insert("id".to_string(), self.id.into());
+        map.insert("created_at".to_string(), self.created_at.to_string().into());
+        map.insert("active".to_string(), self.active.into());
+        map.insert("username".to_string(), self.username.clone().into());
+        map.insert("password_hash".to_string(), "[redacted]".into());
+        map.insert("permissions".to_string(), "[redacted]".into());
+        map.insert("group_permissions".to_string(), "[redacted]".into());
+
+        // convert to JSON
+        serde_json::to_string(&map).unwrap_or_else(|_| "{}".to_string())
     }
 }
 

@@ -3,6 +3,7 @@ use tracing::info;
 mod core;
 
 use crate::core::app::create_app;
+use std::net::SocketAddr;
 
 #[tokio::main]
 async fn main() {
@@ -31,5 +32,12 @@ async fn main() {
     info!("listening on {}", listener.local_addr().unwrap());
 
     println!("🚀 Server Running 🚀");
-    axum::serve(listener, app).await.unwrap();
+    //axum::serve(listener, app).await.unwrap();
+
+    axum::serve(
+        listener,
+        app.into_make_service_with_connect_info::<SocketAddr>(),
+    )
+    .await
+    .unwrap();
 }

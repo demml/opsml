@@ -1,5 +1,4 @@
 use crate::core::error::internal_server_error;
-use crate::core::files::route::log_operation;
 use crate::core::files::utils::download_artifacts;
 use crate::core::scouter;
 use crate::core::scouter::utils::{find_drift_profile, save_encrypted_profile};
@@ -13,13 +12,11 @@ use axum::{
     Extension, Json, Router,
 };
 use opsml_auth::permission::UserPermissions;
-use opsml_client::RequestType;
 use opsml_sql::base::SqlClient;
-use opsml_types::contracts::Operation;
+use opsml_types::api::RequestType;
 use opsml_types::contracts::{RawFileRequest, UpdateProfileRequest};
 use opsml_types::RegistryType;
 use opsml_types::SaveName;
-use reqwest::header::HeaderMap;
 use reqwest::Response;
 
 use crate::core::scouter::types::{
@@ -381,24 +378,6 @@ pub async fn get_drift_profiles_for_ui(
             Json(json!({ "error": "Permission denied" })),
         ));
     }
-
-    let mut headers = HeaderMap::new();
-    headers.insert("username", perms.username.parse().unwrap());
-    let sql_client = state.sql_client.clone();
-
-    let requested_path = req.path.clone();
-    tokio::spawn(async move {
-        if let Err(e) = log_operation(
-            &headers,
-            &Operation::Read.to_string(),
-            &requested_path,
-            sql_client,
-        )
-        .await
-        {
-            error!("Failed to insert artifact key: {}", e);
-        }
-    });
 
     // create temp dir
     let tmp_dir = tempdir().map_err(|e| {

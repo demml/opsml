@@ -145,12 +145,24 @@ CREATE TABLE IF NOT EXISTS opsml_artifact_key (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE IF NOT EXISTS opsml_operation (
-    username TEXT,
+
+CREATE TABLE IF NOT EXISTS opsml_audit_event (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    access_type TEXT,
-    access_location TEXT
+    username TEXT NOT NULL,
+    client_ip TEXT NOT NULL,
+    user_agent TEXT, 
+    operation TEXT NOT NULL,  
+    resource_type TEXT NOT NULL,   
+    resource_id TEXT NOT NULL,              
+    access_location TEXT,          
+    status TEXT NOT NULL,        
+    error_message TEXT,          
+    metadata TEXT,               
+    registry_type TEXT,  
+    route TEXT
 );
+
 
 CREATE TABLE IF NOT EXISTS opsml_prompt_registry (
     uid TEXT PRIMARY KEY,

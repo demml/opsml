@@ -6,7 +6,6 @@ use axum::{
 };
 use http_body_util::BodyExt; // for `collect`
 use mockito;
-use opsml_client::*;
 use opsml_crypt::encrypt_file;
 use opsml_semver::VersionType;
 use opsml_server::create_app;
@@ -17,7 +16,8 @@ use opsml_types::contracts::*;
 use opsml_types::*;
 use scouter_client::{BinnedCustomMetrics, BinnedPsiFeatureMetrics, SpcDriftFeatures};
 
-use std::{env, vec};
+use axum::extract::connect_info::MockConnectInfo;
+use std::{env, net::SocketAddr, vec};
 use tower::ServiceExt; // for `call`, `oneshot`, and `ready`
 
 fn cleanup() {
@@ -73,7 +73,7 @@ impl ScouterServer {
 
         // insert user mock
         server
-            .mock("POST", "/scouter/users")
+            .mock("POST", "/scouter/user")
             .with_status(200)
             .with_header("content-type", "application/json")
             .with_body(r#"{"status": "success", "message": "created_user"}"#)
@@ -82,7 +82,7 @@ impl ScouterServer {
 
         // update user mock
         server
-            .mock("PUT", "/scouter/users")
+            .mock("PUT", "/scouter/user")
             .with_status(200)
             .with_header("content-type", "application/json")
             .with_body(r#"{"status": "success", "message": "updated_user"}"#)
@@ -91,7 +91,7 @@ impl ScouterServer {
 
         // delete user mock
         server
-            .mock("DELETE", "/scouter/users")
+            .mock("DELETE", "/scouter/user")
             .with_status(200)
             .with_header("content-type", "application/json")
             .with_body(r#"{"status": "success", "message": "deleted_user"}"#)
@@ -198,6 +198,8 @@ impl TestHelper {
         // create the app
         let app = create_app().await.unwrap();
 
+        let app = app.layer(MockConnectInfo(SocketAddr::from(([0, 0, 0, 0], 1337))));
+
         // populate db
         setup().await;
 
@@ -250,6 +252,9 @@ impl TestHelper {
             header::AUTHORIZATION,
             format!("Bearer {}", self.token.token).parse().unwrap(),
         );
+        request
+            .headers_mut()
+            .insert(header::USER_AGENT, "opsml-test".parse().unwrap());
 
         request
     }
