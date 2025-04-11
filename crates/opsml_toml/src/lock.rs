@@ -41,6 +41,7 @@ impl LockFile {
             table["name"] = Item::Value(artifact.name.clone().into());
             table["version"] = Item::Value(artifact.version.clone().into());
             table["uid"] = Item::Value(artifact.uid.clone().into());
+            table["write_dir"] = Item::Value(artifact.write_dir.clone().into());
             table["registry_type"] = Item::Value(artifact.registry_type.to_string().into());
             artifacts.push(table);
         }

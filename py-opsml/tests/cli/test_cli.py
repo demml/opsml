@@ -1,26 +1,23 @@
-from opsml.cli import lock_project  # type: ignore
+###################################################################################################
+# This file contains tes cases for the OpsML CLI.
+# In order to test the CLI, we expose some of the top-level functions in the opsml.cli module.
+###################################################################################################
+
+from opsml.cli import lock_project, install_app  # type: ignore
 import os
 from pathlib import Path
-
+import shutil
 from opsml.test import OpsmlTestServer
 
 from opsml import (  # type: ignore
     start_experiment,
-    DataCard,
     ModelCard,
-    ModelCardMetadata,
-    PandasData,
     SklearnModel,
     Prompt,
     PromptCard,
-    CardDeck,
-    Card,
-    RegistryType,
 )
-from opsml.card import CardRegistries
 from tests.conftest import WINDOWS_EXCLUDE
 import pytest
-import time
 # Sets up logging for tests
 
 
@@ -53,5 +50,21 @@ def test_pyproject_app_lock_project(
         current_directory = Path(os.getcwd()) / "tests" / "cli" / "assets"
         lock_project(current_directory)
 
-        # add test to download assets from lock file
-        # get_app_artifacts
+        # Check if the lock file was created
+        lock_file = current_directory / "opsml.lock"
+        assert lock_file.exists()
+
+        # download the assets
+        install_app(current_directory, current_directory)
+
+        # check if opsml_app was created
+        opsml_app = current_directory / "opsml_app"
+        assert opsml_app.exists()
+        # check if the opsml_app contains the assets
+        assert (opsml_app / "app1").exists()
+        assert (opsml_app / "app2").exists()
+        assert (opsml_app / "app3").exists()
+
+        # delete the opsml_app
+        shutil.rmtree(opsml_app)
+        os.remove(lock_file)

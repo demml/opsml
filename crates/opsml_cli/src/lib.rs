@@ -4,7 +4,7 @@ pub mod cli;
 use crate::actions::{download_card, list_cards};
 use crate::cli::{Cli, Commands, GetCommands, InstallCommands, ListCommands};
 use actions::download::download_deck;
-use actions::lock::install_app;
+pub use actions::lock::install_app;
 use anyhow::Context;
 use clap::Parser;
 use opsml_colors::Colorize;
@@ -57,7 +57,7 @@ pub fn run_cli(args: Vec<String>) -> anyhow::Result<()> {
             InstallCommands::App => {
                 let current_dir =
                     std::env::current_dir().context("Failed to get current directory")?;
-                install_app(current_dir).context("Failed to install app")?;
+                install_app(current_dir, None).context("Failed to install app")?;
                 Ok(())
             }
         },

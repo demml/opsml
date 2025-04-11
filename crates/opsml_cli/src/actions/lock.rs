@@ -203,13 +203,11 @@ fn lock_app(app: AppConfig) -> Result<LockArtifact, CliError> {
 }
 
 #[pyfunction]
-pub fn install_app(path: PathBuf) -> Result<(), CliError> {
+#[pyo3(signature = (path, write_path=None))]
+pub fn install_app(path: PathBuf, write_path: Option<PathBuf>) -> Result<(), CliError> {
     debug!("Installing app from lock file");
 
-    println!(
-        "{:?}",
-        Colorize::green("Downloading app for opsml.lock file")
-    );
+    println!("{}", Colorize::green("Downloading app for opsml.lock file"));
 
     let lockfile = LockFile::read(&path)?;
 
@@ -225,12 +223,25 @@ pub fn install_app(path: PathBuf) -> Result<(), CliError> {
                     Colorize::purple(&artifact.write_dir),
                 );
 
+                let write_path = if let Some(path) = write_path.as_ref() {
+                    path.to_path_buf()
+                } else {
+                    let current_dir =
+                        std::env::current_dir().map_err(|_| CliError::WritePathError)?;
+                    // Store the `PathBuf` in a variable and return a reference to it
+                    current_dir.as_path().to_path_buf()
+                };
+
                 let args = DownloadCard {
                     space: Some(artifact.space.clone()),
                     name: Some(artifact.name.clone()),
                     version: Some(artifact.version.clone()),
                     uid: Some(artifact.uid.clone()),
-                    write_dir: artifact.write_dir.clone(),
+                    write_dir: write_path
+                        .join(artifact.write_dir)
+                        .into_os_string()
+                        .into_string()
+                        .map_err(|_| CliError::WritePathError)?,
                 };
 
                 download_deck(&args)?;
