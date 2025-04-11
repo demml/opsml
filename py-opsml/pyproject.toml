@@ -71,10 +71,15 @@ dev = [
     "tf-keras>=2.16.0; platform_system=='Linux' and python_version <= '3.11'",
     "tf-keras>=2.16.0; platform_system=='Darwin' and python_version <= '3.11'",
     "pydantic-ai>=0.0.41",
+    "mkdocstrings[python]>=0.29.1",
 ]
 
 numpy1 = [
     "numpy>=1.26.4, <2.0.0",
+]
+docs = [
+    "mkdocs-material>=9.6.11",
+    "mkdocstrings[python]>=0.29.1",
 ]
 
 

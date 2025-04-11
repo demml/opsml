@@ -53,7 +53,7 @@ impl SklearnModel {
                 //
             } else {
                 return Err(OpsmlError::new_err(
-                    "Sample data must be an sklearn model and inherit from BaseEstimator",
+                    "Model must be an sklearn model and inherit from BaseEstimator",
                 ));
             }
         }
