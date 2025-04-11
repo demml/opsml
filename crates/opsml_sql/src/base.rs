@@ -8,7 +8,7 @@ use opsml_semver::VersionParser;
 use opsml_settings::config::DatabaseSettings;
 use opsml_types::{
     cards::CardTable,
-    contracts::{ArtifactKey, CardQueryArgs},
+    contracts::{ArtifactKey, AuditEvent, CardQueryArgs},
 };
 
 pub fn add_version_bounds(builder: &mut String, version: &str) -> Result<(), SqlError> {
@@ -271,24 +271,14 @@ pub trait SqlClient: Sized {
     /// * `Result<(), SqlError>` - The result of the operation
     async fn update_artifact_key(&self, key: &ArtifactKey) -> Result<(), SqlError>;
 
-    /// Insert operation
-    ///  Records a given file operation
+    /// Insert audit event
     ///
     /// # Arguments
-    ///
-    /// * `username` - The username
-    /// * `access_type` - The type of access
-    /// * `access_location` - The location of the access
+    /// * `event` - The audit event
     ///
     /// # Returns
-    ///
     /// * `Result<(), SqlError>` - The result of the operation
-    async fn insert_operation(
-        &self,
-        username: &str,
-        access_type: &str,
-        access_location: &str,
-    ) -> Result<(), SqlError>;
+    async fn insert_audit_event(&self, event: AuditEvent) -> Result<(), SqlError>;
 
     /// Queries the a card registry for a card version and returns
     /// the artifact keys for loading the card on the client side

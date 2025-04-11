@@ -17,15 +17,26 @@ pub enum Routes {
     AuthRefresh,
     AuthValidate,
     AuthUiLogin,
+
     Card,
+    CardReadme,
     CardCreate,
     CardDelete,
     CardList,
     CardLoad,
     CardVersion,
     CardUpdate,
+
+    CardMetadata,
+    CardRepositories,
+    CardRegistryStats,
+    CardRegistryPage,
+    CardRegistryVersionPage,
+
     DeleteFiles,
     Files,
+    FileContent,
+    FileDelete,
     Healthcheck,
     List,
     ListInfo,
@@ -34,22 +45,29 @@ pub enum Routes {
     Presigned,
     StorageSettings,
     ExperimentMetrics,
+    ExperimentGroupedMetrics,
     ExperimentMetricNames,
     ExperimentHardwareMetrics,
     ExperimentParameters,
     ScouterAuthLogin,
+
     ScouterDriftCustom,
     ScouterDriftPsi,
     ScouterDriftSpc,
     ScouterProfile,
     ScouterProfileStatus,
     ScouterUsers,
+    ScouterProfileUi,
+
+    User,
 }
 
 impl Routes {
     pub fn as_str(&self) -> &str {
         match self {
             Routes::Files => "files",
+            Routes::FileContent => "files/content",
+            Routes::FileDelete => "files/delete",
             Routes::Multipart => "files/multipart",
             Routes::CompleteMultipart => "files/multipart/complete",
             Routes::Presigned => "files/presigned",
@@ -64,6 +82,13 @@ impl Routes {
             Routes::AuthValidate => "auth/validate",
             Routes::AuthUiLogin => "auth/ui/login",
             Routes::Card => "card",
+            Routes::CardReadme => "card/readme",
+            Routes::CardRepositories => "card/repositories",
+            Routes::CardMetadata => "card/metadata",
+            Routes::CardRegistryStats => "card/registry/stats",
+            Routes::CardRegistryPage => "card/registry/page",
+            Routes::CardRegistryVersionPage => "card/registry/version/page",
+
             Routes::CardCreate => "card/create",
             Routes::CardDelete => "card/delete",
             Routes::CardList => "card/list",
@@ -71,6 +96,7 @@ impl Routes {
             Routes::CardVersion => "card/version",
             Routes::CardUpdate => "card/update",
             Routes::ExperimentMetrics => "experiment/metrics",
+            Routes::ExperimentGroupedMetrics => "experiment/metrics/grouped",
             Routes::ExperimentMetricNames => "experiment/metrics/names",
             Routes::ExperimentHardwareMetrics => "experiment/hardware/metrics",
             Routes::ExperimentParameters => "experiment/parameters",
@@ -86,9 +112,12 @@ impl Routes {
             // Scouter Profile Routes
             Routes::ScouterProfile => "scouter/profile",
             Routes::ScouterProfileStatus => "scouter/profile/status",
+            Routes::ScouterProfileUi => "scouter/profile/ui",
 
             // Scouter User Routes
-            Routes::ScouterUsers => "scouter/users",
+            Routes::ScouterUsers => "scouter/user",
+
+            Routes::User => "user",
         }
     }
 }

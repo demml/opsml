@@ -146,13 +146,24 @@ CREATE TABLE IF NOT EXISTS opsml_artifact_key (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE TABLE IF NOT EXISTS opsml_operation (
-    username TEXT NOT NULL,
+CREATE TABLE IF NOT EXISTS opsml_audit_event (
+    id SERIAL PRIMARY KEY,
     created_at TIMESTAMPTZ DEFAULT NOW(),
-    access_type TEXT NOT NULL,
-    access_location TEXT NOT NULL
+    username TEXT NOT NULL,
+    client_ip TEXT NOT NULL,
+    user_agent TEXT, 
+    operation TEXT NOT NULL,  
+    resource_type TEXT NOT NULL,   
+    resource_id TEXT NOT NULL,              
+    access_location TEXT,          
+    status TEXT NOT NULL,        
+    error_message TEXT,          
+    metadata TEXT,               
+    registry_type TEXT,  
+    route TEXT
 );
-CREATE INDEX idx_opsml_operation_created_at ON opsml_operation (created_at);
+
+CREATE INDEX idx_opsml_audit_event_created_at ON opsml_audit_event (created_at);
 
 -- DataSchema
 CREATE TABLE IF NOT EXISTS opsml_prompt_registry (

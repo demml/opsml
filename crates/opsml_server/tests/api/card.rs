@@ -780,6 +780,7 @@ async fn test_opsml_server_card_auditcard_crud() {
         .unwrap();
 
     let response = helper.send_oneshot(request).await;
+
     assert_eq!(response.status(), StatusCode::OK);
 
     let body = response.into_body().collect().await.unwrap().to_bytes();

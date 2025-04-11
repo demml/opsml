@@ -13,10 +13,11 @@ use axum::{
     routing::{delete, get, post, put},
     Extension, Json, Router,
 };
+
 use opsml_auth::permission::UserPermissions;
-use opsml_client::RequestType;
 use opsml_sql::base::SqlClient;
 use opsml_sql::schemas::schema::User;
+use opsml_types::RequestType;
 use password_auth::generate_hash;
 use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::sync::Arc;
@@ -28,6 +29,7 @@ use tracing::{error, info};
 async fn create_user(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
+
     Json(create_req): Json<CreateUserRequest>,
 ) -> Result<Json<UserResponse>, (StatusCode, Json<serde_json::Value>)> {
     // Check if requester has admin permissions
@@ -94,6 +96,7 @@ async fn create_user(
                 internal_server_error(e, "Failed to create user in scouter")
             })?;
     }
+
     Ok(Json(UserResponse::from(user)))
 }
 
@@ -101,6 +104,7 @@ async fn create_user(
 async fn get_user(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
+
     Path(username): Path<String>,
 ) -> Result<Json<UserResponse>, (StatusCode, Json<serde_json::Value>)> {
     // Check permissions - user can only get their own data or admin can get any user
@@ -156,6 +160,7 @@ async fn update_user(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
     Path(username): Path<String>,
+
     Json(update_req): Json<UpdateUserRequest>,
 ) -> Result<Json<UserResponse>, (StatusCode, Json<serde_json::Value>)> {
     // Check permissions - user can only update their own data or admin can update any user
@@ -233,6 +238,7 @@ async fn update_user(
 async fn delete_user(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
+
     Path(username): Path<String>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<serde_json::Value>)> {
     // Check if requester has admin permissions
@@ -296,12 +302,12 @@ async fn delete_user(
 pub async fn get_user_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
     let result = catch_unwind(AssertUnwindSafe(|| {
         Router::new()
-            .route(&format!("{}/users", prefix), post(create_user))
-            .route(&format!("{}/users", prefix), get(list_users))
-            .route(&format!("{}/users/{{username}}", prefix), get(get_user))
-            .route(&format!("{}/users/{{username}}", prefix), put(update_user))
+            .route(&format!("{}/user", prefix), post(create_user))
+            .route(&format!("{}/user", prefix), get(list_users))
+            .route(&format!("{}/user/{{username}}", prefix), get(get_user))
+            .route(&format!("{}/user/{{username}}", prefix), put(update_user))
             .route(
-                &format!("{}/users/{{username}}", prefix),
+                &format!("{}/user/{{username}}", prefix),
                 delete(delete_user),
             )
     }));

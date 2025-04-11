@@ -3,23 +3,24 @@ use crate::core::files::utils::download_artifact;
 use crate::core::state::AppState;
 use axum::extract::DefaultBodyLimit;
 use axum::extract::Multipart;
+
+use anyhow::{Context, Result};
 use axum::{
     body::Body,
     extract::{Query, State},
-    http::{HeaderMap, StatusCode},
+    http::StatusCode,
     response::{IntoResponse, Response},
     routing::{delete, get, post},
     Extension, Json, Router,
 };
+use headers::HeaderMap;
 use opsml_auth::permission::UserPermissions;
+use opsml_error::error::ServerError;
 use opsml_sql::base::SqlClient;
-use opsml_sql::enums::client::SqlClientEnum;
 use opsml_types::{contracts::*, StorageType, MAX_FILE_SIZE};
+
 use tokio::fs::File;
 use tokio::io::AsyncWriteExt;
-
-use anyhow::{Context, Result};
-use opsml_error::error::ServerError;
 
 use base64::prelude::*;
 use mime_guess::mime;
@@ -33,26 +34,6 @@ use tempfile::tempdir;
 use tokio_util::io::ReaderStream;
 use tracing::debug;
 use tracing::{error, info, instrument};
-
-pub async fn log_operation(
-    headers: &HeaderMap,
-    access_type: &str,
-    access_location: &str,
-    sql_client: Arc<SqlClientEnum>,
-) -> Result<(), ServerError> {
-    let default_user = "guest".parse().unwrap();
-    let username = headers
-        .get("username")
-        .unwrap_or(&default_user)
-        .to_str()
-        .map_err(|e| ServerError::Error(e.to_string()))?;
-
-    sql_client
-        .insert_operation(username, access_type, access_location)
-        .await?;
-
-    Ok(())
-}
 
 /// Create a multipart upload session (write)
 ///
@@ -68,8 +49,8 @@ pub async fn log_operation(
 pub async fn create_multipart_upload(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
-    Query(params): Query<MultiPartQuery>,
     headers: HeaderMap,
+    Query(params): Query<MultiPartQuery>,
 ) -> Result<Json<MultiPartSession>, (StatusCode, Json<serde_json::Value>)> {
     // If auth is enabled, check permissions or other auth-related logic
     // get user for headers (as string)
@@ -116,20 +97,6 @@ pub async fn create_multipart_upload(
         }
     };
 
-    let sql_client = state.sql_client.clone();
-    tokio::spawn(async move {
-        if let Err(e) = log_operation(
-            &headers,
-            &Operation::Create.to_string(),
-            &params.path,
-            sql_client,
-        )
-        .await
-        {
-            error!("Failed to insert artifact key: {}", e);
-        }
-    });
-
     // if storageclient enum is aws then we need to get the bucket
     let bucket = match state.storage_client.storage_type() {
         StorageType::Aws => Some(state.storage_client.bucket().to_string()),
@@ -156,7 +123,6 @@ pub async fn generate_presigned_url(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
     Query(params): Query<PresignedQuery>,
-    headers: HeaderMap,
 ) -> Result<Json<PresignedUrl>, (StatusCode, Json<serde_json::Value>)> {
     // check for read access
 
@@ -204,7 +170,6 @@ pub async fn generate_presigned_url(
                 return Err(internal_server_error(e, "Failed to generate presigned url"));
             }
         };
-
         return Ok(Json(PresignedUrl { url }));
     }
 
@@ -222,21 +187,6 @@ pub async fn generate_presigned_url(
         }
     };
 
-    let sql_client = state.sql_client.clone();
-    let url_clone = url.clone();
-    tokio::spawn(async move {
-        if let Err(e) = log_operation(
-            &headers,
-            &Operation::Read.to_string(),
-            &url_clone,
-            sql_client,
-        )
-        .await
-        {
-            error!("Failed to insert artifact key: {}", e);
-        }
-    });
-
     Ok(Json(PresignedUrl { url }))
 }
 
@@ -244,6 +194,7 @@ pub async fn generate_presigned_url(
 pub async fn complete_multipart_upload(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
+
     Json(req): Json<CompleteMultipartUpload>,
 ) -> Result<Json<UploadResponse>, (StatusCode, Json<serde_json::Value>)> {
     // check for write access
@@ -444,6 +395,7 @@ pub async fn file_tree(
 pub async fn get_file_for_ui(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
+
     Json(req): Json<RawFileRequest>,
 ) -> Result<Json<RawFile>, (StatusCode, Json<serde_json::Value>)> {
     if !perms.has_read_permission() {
@@ -455,22 +407,6 @@ pub async fn get_file_for_ui(
     }
 
     let file_path = PathBuf::from(&req.path);
-    let sql_client = state.sql_client.clone();
-    let mut headers = HeaderMap::new();
-    headers.insert("username", perms.username.parse().unwrap());
-
-    tokio::spawn(async move {
-        if let Err(e) = log_operation(
-            &headers,
-            &Operation::Read.to_string(),
-            &req.path.clone(),
-            sql_client,
-        )
-        .await
-        {
-            error!("Failed to insert artifact key: {}", e);
-        }
-    });
 
     let files = state
         .storage_client
@@ -555,8 +491,8 @@ pub async fn get_file_for_ui(
 pub async fn delete_file(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
+
     Query(params): Query<DeleteFileQuery>,
-    headers: HeaderMap,
 ) -> Result<Json<DeleteFileResponse>, (StatusCode, Json<serde_json::Value>)> {
     // check for delete access
 
@@ -589,16 +525,6 @@ pub async fn delete_file(
     if let Err(e) = files {
         return Err(internal_server_error(e, "Failed to delete files"));
     }
-
-    let sql_client = state.sql_client.clone();
-    let rpath = params.path.clone();
-    tokio::spawn(async move {
-        if let Err(e) =
-            log_operation(&headers, &Operation::Delete.to_string(), &rpath, sql_client).await
-        {
-            error!("Failed to insert artifact key: {}", e);
-        }
-    });
 
     // check if file exists
     let exists = state.storage_client.exists(path).await;

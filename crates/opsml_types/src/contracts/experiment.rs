@@ -1,4 +1,6 @@
 use crate::cards::{HardwareMetrics, Metric, Parameter};
+use crate::contracts::{traits::AuditableRequest, ResourceType};
+use crate::RegistryType;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -19,6 +21,25 @@ impl GetMetricRequest {
             experiment_uid,
             names: names.unwrap_or_default(),
         }
+    }
+}
+
+impl AuditableRequest for GetMetricRequest {
+    fn get_resource_id(&self) -> String {
+        self.experiment_uid.clone()
+    }
+
+    fn get_metadata(&self) -> String {
+        serde_json::to_string(self)
+            .unwrap_or_else(|e| format!("Failed to serialize GetMetricRequest: {}", e))
+    }
+
+    fn get_registry_type(&self) -> Option<RegistryType> {
+        Some(RegistryType::Experiment)
+    }
+
+    fn get_resource_type(&self) -> ResourceType {
+        ResourceType::Database
     }
 }
 

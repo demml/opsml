@@ -1,3 +1,4 @@
+use crate::core::experiment::types::GroupedMetric;
 /// Route for checking if a card UID exists
 use crate::core::{error::internal_server_error, state::AppState};
 use anyhow::{Context, Result};
@@ -8,7 +9,6 @@ use axum::{
     Json, Router,
 };
 
-use crate::core::experiment::types::GroupedMetric;
 use opsml_sql::base::SqlClient;
 use opsml_sql::schemas::schema::{HardwareMetricsRecord, MetricRecord, ParameterRecord};
 use opsml_types::{cards::*, contracts::*};
@@ -53,9 +53,9 @@ pub async fn insert_metrics(
 
 pub async fn get_metrics(
     State(state): State<Arc<AppState>>,
+
     Json(req): Json<GetMetricRequest>,
 ) -> Result<Json<Vec<Metric>>, (StatusCode, Json<serde_json::Value>)> {
-    // something is going on with how serde_qs is parsing the query when using names as a list
     let metrics = state
         .sql_client
         .get_experiment_metric(&req.experiment_uid, &req.names)
@@ -82,6 +82,7 @@ pub async fn get_metrics(
 
 pub async fn get_grouped_metrics(
     State(state): State<Arc<AppState>>,
+
     Json(req): Json<UiMetricRequest>,
 ) -> Result<Json<HashMap<String, Vec<GroupedMetric>>>, (StatusCode, Json<serde_json::Value>)> {
     let mut metric_data: HashMap<String, Vec<GroupedMetric>> = HashMap::new();
@@ -133,11 +134,13 @@ pub async fn get_grouped_metrics(
                 .push(grouped_metric);
         }
     }
+
     Ok(Json(metric_data))
 }
 
 pub async fn get_metric_names(
     State(state): State<Arc<AppState>>,
+
     Query(req): Query<GetMetricNamesRequest>,
 ) -> Result<Json<Vec<String>>, (StatusCode, Json<serde_json::Value>)> {
     let names = state
@@ -154,6 +157,7 @@ pub async fn get_metric_names(
 
 pub async fn insert_parameters(
     State(state): State<Arc<AppState>>,
+
     Json(req): Json<ParameterRequest>,
 ) -> Result<Json<ParameterResponse>, (StatusCode, Json<serde_json::Value>)> {
     let records = req

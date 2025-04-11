@@ -24,6 +24,7 @@ opsml-crypt = { path = "crates/opsml_crypt" }
 opsml-client = { path = "crates/opsml_client" }
 opsml-colors = { path = "crates/opsml_colors" }
 opsml-error = { path = "crates/opsml_error" }
+opsml-events = { path = "crates/opsml_events" }
 opsml-interfaces = { path = "crates/opsml_interfaces" }
 opsml-registry = { path = "crates/opsml_registry" }
 opsml-experiment = { path = "crates/opsml_experiment" }
@@ -50,7 +51,7 @@ aws-types = "1.*"
 base64 = "0.22.*"
 bytes = "1.*"
 axum = { version = "0.*", features = ["multipart", "macros"] }
-axum-extra = { version =  "0.*", features = ["cookie"] }
+axum-extra = { version =  "0.*", features = ["cookie", "typed-header"] }
 clap = { version = "4.*", features = ["derive"] }
 chrono = { version = "0.*", features = ["serde"] }
 colored_json = "5.*"
@@ -59,6 +60,7 @@ futures = "0.*"
 futures-util = "0.*"
 google-cloud-storage = { version = "0.24.*", features  = ["auth"] }
 google-cloud-auth = { version = "0.17.2" }
+headers = { version = "0.*" }
 hmac = "0.*"
 hkdf = "0.*"
 jsonwebtoken = "9.*"
@@ -91,6 +93,7 @@ time = "0.*"
 
 tokio = { version = ">1.13.0", features = ["rt", "rt-multi-thread", "macros"] }
 tokio-util = { version = "0.*",  features = ["codec", "io"]}
+tokio-stream = { version = "0.*", features = ["sync"] }
 tower-http = { version = "0.*", features = ["cors", "fs", "trace"] }
 tracing = "0.*"
 tracing-appender = "0.*"
