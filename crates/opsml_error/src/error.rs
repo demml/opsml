@@ -94,6 +94,9 @@ pub enum CliError {
 
     #[error("Registry type {0} is not supported for apps")]
     UnsupportedRegistryType(String),
+
+    #[error("Failed to get write path")]
+    WritePathError,
 }
 
 impl From<CliError> for PyErr {
