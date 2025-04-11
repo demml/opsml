@@ -24,7 +24,9 @@ logger = ArtifactLogger.get_logger()
 def populate_registry():
     """This function is used to populate the data and model registry in order to test the ModelChallenger class"""
     """-------------------------------------DataCard-------------------------------------"""
-    info = CardInfo(name="challenger_example", repository="opsml", contact="user@example").set_env()
+    info = CardInfo(
+        name="challenger_example", space="opsml", contact="user@example"
+    ).set_env()
     data_reg = CardRegistry(RegistryType.DATA)
 
     # create fake data
@@ -35,8 +37,12 @@ def populate_registry():
     data_interface = PandasData(
         data=X,
         data_splits=[
-            DataSplit(label="train", column_name="col_1", column_value=0.5, inequality=">="),
-            DataSplit(label="test", column_name="col_1", column_value=0.5, inequality="<"),
+            DataSplit(
+                label="train", column_name="col_1", column_value=0.5, inequality=">="
+            ),
+            DataSplit(
+                label="test", column_name="col_1", column_value=0.5, inequality="<"
+            ),
         ],
         dependent_vars=["target"],
     )
@@ -47,7 +53,7 @@ def populate_registry():
 
     """-------------------------------------Create First Model-------------------------------------"""
     logger.info("starting linear regression model")
-    info = ProjectInfo(name="opsml", repository="devops", contact="test_email")
+    info = ProjectInfo(name="opsml", space="devops", contact="test_email")
     project = OpsmlProject(info=info)
     datacard = data_reg.load_card(RegistryType.DATA, info=CardInfo(uid=datacard.uid))
     splits = datacard.split_data()
@@ -104,13 +110,13 @@ def populate_registry():
 
 
 def compare_models():
-    info = CardInfo(repository="opsml", contact="user@example").set_env()
+    info = CardInfo(space="opsml", contact="user@example").set_env()
     # lets first load the linear_reg model
 
     model_registry = CardRegistry("model")
     linreg_card = model_registry.load_card(
         name="linear_reg",
-        repository=info.repository,
+        space=info.space,
         tags={"example": "challenger"},
     )
 
@@ -122,8 +128,8 @@ def compare_models():
         metric_name="mae",
         lower_is_better=True,
         champions=[
-            CardInfo(name="lasso_reg", repository="opsml", version="1.0.0"),
-            CardInfo(name="quantile_reg", repository="opsml", version="1.0.0"),
+            CardInfo(name="lasso_reg", space="opsml", version="1.0.0"),
+            CardInfo(name="quantile_reg", space="opsml", version="1.0.0"),
         ],
     )
 

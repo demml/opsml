@@ -56,7 +56,7 @@ export const load: PageLoad = async ({ parent }) => {
   );
 
   let currentAlerts = await getDriftAlerts(
-    currentConfig.repository,
+    currentConfig.space,
     currentConfig.name,
     currentConfig.version,
     TimeInterval.SixHours,

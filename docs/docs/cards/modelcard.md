@@ -21,7 +21,7 @@ from opsml import CardRegistry, ModelCard, CardInfo
 data_registry = CardRegistry(registry_name="data")
 model_registry = CardRegistry(registry_name="model")
 
-card_info = CardInfo(name="linnerrud", repository="opsml", contact="user@email.com")
+card_info = CardInfo(name="linnerrud", space="opsml", contact="user@email.com")
 
 
 # load datacard
@@ -63,8 +63,8 @@ model_registry.register_card(modelcard)
 `name`: `str`
 : Name for the data (Required)
 
-`repository`: `str`
-: repository data belongs to (Required)
+`space`: `str`
+: space data belongs to (Required)
 
 `contact`: `str`
 : Email to associate with data (Required)

@@ -60,7 +60,7 @@ pub async fn create_multipart_upload(
         headers.get("username")
     );
 
-    let repository_id = Path::new(&params.path).iter().next().ok_or_else(|| {
+    let space_id = Path::new(&params.path).iter().next().ok_or_else(|| {
         (
             StatusCode::BAD_REQUEST,
             Json(json!({ "error": "Invalid path" })),
@@ -68,7 +68,7 @@ pub async fn create_multipart_upload(
     })?;
 
     // check if user has permission to write to the repo
-    if !perms.has_write_permission(repository_id.to_str().unwrap()) {
+    if !perms.has_write_permission(space_id.to_str().unwrap()) {
         return Err((
             StatusCode::FORBIDDEN,
             Json(json!({ "error": "Permission denied" })),
@@ -497,14 +497,14 @@ pub async fn delete_file(
     // check for delete access
 
     // check if user has permission to write to the repo
-    let repository_id = Path::new(&params.path).iter().next().ok_or_else(|| {
+    let space_id = Path::new(&params.path).iter().next().ok_or_else(|| {
         (
             StatusCode::BAD_REQUEST,
             Json(json!({ "error": "Invalid path" })),
         )
     })?;
 
-    if !perms.has_delete_permission(repository_id.to_str().unwrap()) {
+    if !perms.has_delete_permission(space_id.to_str().unwrap()) {
         return Err((
             StatusCode::FORBIDDEN,
             Json(json!({ "error": "Permission denied" })),

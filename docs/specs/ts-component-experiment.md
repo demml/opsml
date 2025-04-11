@@ -59,7 +59,7 @@ pub fn new(
 ```rust
 fn create_experiment<'py>(
     py: Python<'py>,
-    repository: Option<&str>,
+    space: Option<&str>,
     name: Option<&str>,
     registries: &mut CardRegistries,
     subexperiment: bool,
@@ -119,7 +119,7 @@ pub fn log_artifact(&self, path: PathBuf) -> PyResult<()>
 ### Exposed Methods
 ```python
 # Creation
-start_experiment(repository=None, name=None, code_dir=None, log_hardware=False, experiment_uid=None)
+start_experiment(space=None, name=None, code_dir=None, log_hardware=False, experiment_uid=None)
 
 # Logging
 log_metric(name, value, step=None, timestamp=None, created_at=None)

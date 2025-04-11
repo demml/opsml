@@ -1,6 +1,6 @@
 use crate::types::{CommonKwargs, RegistryType};
 use opsml_error::TypeError;
-use opsml_utils::{clean_string, validate_name_repository_pattern};
+use opsml_utils::{clean_string, validate_name_space_pattern};
 use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::{env, fmt};
@@ -64,19 +64,19 @@ pub struct BaseArgs {}
 impl BaseArgs {
     pub fn create_args(
         name: Option<&str>,
-        repository: Option<&str>,
+        space: Option<&str>,
         version: Option<&str>,
         uid: Option<&str>,
     ) -> Result<BaseArgsResult, TypeError> {
         let name = clean_string(&Self::get_value("NAME", name)?)?;
-        let repository = clean_string(&Self::get_value("REPOSITORY", repository)?)?;
+        let space = clean_string(&Self::get_value("space", space)?)?;
 
         let version = version.map_or(CommonKwargs::BaseVersion.to_string(), |v| v.to_string());
         let uid = uid.map_or(CommonKwargs::Undefined.to_string(), |v| v.to_string());
 
-        validate_name_repository_pattern(&name, &repository)?;
+        validate_name_space_pattern(&name, &space)?;
 
-        Ok((repository, name, version, uid))
+        Ok((space, name, version, uid))
     }
 
     fn get_value(key: &str, value: Option<&str>) -> Result<String, TypeError> {

@@ -58,25 +58,23 @@ pub async fn check_card_uid(
     Ok(response)
 }
 
-/// Get card repositories
-pub async fn get_card_repositories(
+/// Get card spaces
+pub async fn get_card_spaces(
     State(state): State<Arc<AppState>>,
-    Query(params): Query<RepositoryRequest>,
-) -> Result<Json<RepositoryResponse>, (StatusCode, Json<serde_json::Value>)> {
+    Query(params): Query<SpaceRequest>,
+) -> Result<Json<SpaceResponse>, (StatusCode, Json<serde_json::Value>)> {
     let table = CardTable::from_registry_type(&params.registry_type);
 
-    let repos = state
+    let spaces = state
         .sql_client
-        .get_unique_repository_names(&table)
+        .get_unique_space_names(&table)
         .await
         .map_err(|e| {
-            error!("Failed to get unique repository names: {}", e);
-            internal_server_error(e, "Failed to get unique repository names")
+            error!("Failed to get unique space names: {}", e);
+            internal_server_error(e, "Failed to get unique space names")
         })?;
 
-    Ok(Json(RepositoryResponse {
-        repositories: repos,
-    }))
+    Ok(Json(SpaceResponse { spaces }))
 }
 
 /// query stats page
@@ -91,12 +89,12 @@ pub async fn get_registry_stats(
         .query_stats(
             &table,
             params.search_term.as_deref(),
-            params.repository.as_deref(),
+            params.space.as_deref(),
         )
         .await
         .map_err(|e| {
-            error!("Failed to get unique repository names: {}", e);
-            internal_server_error(e, "Failed to get unique repository names")
+            error!("Failed to get unique space names: {}", e);
+            internal_server_error(e, "Failed to get unique space names")
         })?;
 
     Ok(Json(RegistryStatsResponse { stats }))
@@ -116,13 +114,13 @@ pub async fn get_page(
             sort_by,
             page,
             params.search_term.as_deref(),
-            params.repository.as_deref(),
+            params.space.as_deref(),
             &table,
         )
         .await
         .map_err(|e| {
-            error!("Failed to get unique repository names: {}", e);
-            internal_server_error(e, "Failed to get unique repository names")
+            error!("Failed to get unique space names: {}", e);
+            internal_server_error(e, "Failed to get unique space names")
         })?;
     Ok(Json(QueryPageResponse { summaries }))
 }
@@ -137,14 +135,14 @@ pub async fn get_version_page(
         .sql_client
         .version_page(
             page,
-            params.repository.as_deref(),
+            params.space.as_deref(),
             params.name.as_deref(),
             &table,
         )
         .await
         .map_err(|e| {
-            error!("Failed to get unique repository names: {}", e);
-            internal_server_error(e, "Failed to get unique repository names")
+            error!("Failed to get unique space names: {}", e);
+            internal_server_error(e, "Failed to get unique space names")
         })?;
 
     Ok(Json(VersionPageResponse { summaries }))
@@ -166,8 +164,8 @@ pub async fn list_cards(
         .query_cards(&table, &params)
         .await
         .map_err(|e| {
-            error!("Failed to get unique repository names: {}", e);
-            internal_server_error(e, "Failed to get unique repository names")
+            error!("Failed to get unique space names: {}", e);
+            internal_server_error(e, "Failed to get unique space names")
         })?;
 
     // convert to Cards struct
@@ -214,7 +212,7 @@ pub async fn create_card(
 
     debug!(
         "Creating card: {}/{}/{} - registry: {:?}",
-        &card_request.card.repository(),
+        &card_request.card.space(),
         &card_request.card.name(),
         &card_request.card.version(),
         &card_request.registry_type
@@ -262,7 +260,7 @@ pub async fn create_card(
 
     let mut response = Json(CreateCardResponse {
         registered: true,
-        repository: card_request.card.repository().to_string(),
+        space: card_request.card.space().to_string(),
         name: card_request.card.name().to_string(),
         version: version.to_string(),
         app_env,
@@ -293,7 +291,7 @@ pub async fn update_card(
 ) -> Result<impl IntoResponse, (StatusCode, Json<serde_json::Value>)> {
     debug!(
         "Updating card: {}/{}/{} - registry: {:?}",
-        &card_request.card.repository(),
+        &card_request.card.space(),
         &card_request.card.name(),
         &card_request.card.version(),
         &card_request.registry_type
@@ -326,7 +324,7 @@ pub async fn delete_card(
 ) -> Result<Json<UidResponse>, (StatusCode, Json<serde_json::Value>)> {
     debug!("Deleting card: {}", &params.uid);
 
-    if !perms.has_delete_permission(&params.repository) {
+    if !perms.has_delete_permission(&params.space) {
         error!("Permission denied");
         return Err((
             StatusCode::FORBIDDEN,
@@ -472,16 +470,16 @@ pub async fn get_readme(
 
     let table = CardTable::from_registry_type(&params.registry_type);
 
-    // name and repository are required
-    if params.name.is_none() || params.repository.is_none() {
+    // name and space are required
+    if params.name.is_none() || params.space.is_none() {
         return Err((
             StatusCode::BAD_REQUEST,
-            Json(serde_json::json!({ "error": "Name and repository are required" })),
+            Json(serde_json::json!({ "error": "Name and space are required" })),
         ));
     }
 
     let name = params.name.as_ref().unwrap();
-    let repository = params.repository.as_ref().unwrap();
+    let space = params.space.as_ref().unwrap();
 
     let tmp_dir = tempdir().map_err(|e| {
         error!("Failed to create temp dir: {}", e);
@@ -496,7 +494,7 @@ pub async fn get_readme(
     let rpath = format!(
         "{}/{}/{}/{}.{}",
         table,
-        repository,
+        space,
         name,
         SaveName::ReadMe,
         Suffix::Md
@@ -535,7 +533,7 @@ pub async fn create_readme(
     Extension(perms): Extension<UserPermissions>,
     Json(req): Json<CreateReadeMe>,
 ) -> Result<Json<UploadResponse>, (StatusCode, Json<serde_json::Value>)> {
-    if !perms.has_write_permission(&req.repository) {
+    if !perms.has_write_permission(&req.space) {
         return Err((
             StatusCode::FORBIDDEN,
             Json(json!({ "error": "Permission denied" })),
@@ -547,7 +545,7 @@ pub async fn create_readme(
     let readme_path = format!(
         "{}/{}/{}/{}.{}",
         table,
-        &req.repository,
+        &req.space,
         &req.name,
         SaveName::ReadMe,
         Suffix::Md
@@ -592,10 +590,7 @@ pub async fn get_card_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
             .route(&format!("{}/card/metadata", prefix), get(get_card))
             .route(&format!("{}/card/readme", prefix), get(get_readme))
             .route(&format!("{}/card/readme", prefix), post(create_readme))
-            .route(
-                &format!("{}/card/repositories", prefix),
-                get(get_card_repositories),
-            )
+            .route(&format!("{}/card/spaces", prefix), get(get_card_spaces))
             .route(
                 &format!("{}/card/registry/stats", prefix),
                 get(get_registry_stats),

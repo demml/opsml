@@ -74,7 +74,7 @@ export interface UidMetadata {
 
 // Main ExperimentCard interface
 export interface ExperimentCard {
-  repository: string;
+  space: string;
   name: string;
   version: string;
   uid: string;

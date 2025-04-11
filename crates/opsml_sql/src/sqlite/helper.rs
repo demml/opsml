@@ -152,35 +152,36 @@ impl SqliteQueryHelper {
         let versions_cte = format!(
             "WITH versions AS (
                 SELECT 
-                    repository, 
+                    space, 
                     name, 
                     version, 
-                    ROW_NUMBER() OVER (PARTITION BY repository, name ORDER BY created_at DESC) AS row_num
+                    ROW_NUMBER() OVER (PARTITION BY space, name ORDER BY created_at DESC) AS row_num
                 FROM {}
-                WHERE (?1 IS NULL OR repository = ?1)
-                AND (?2 IS NULL OR name LIKE ?3 OR repository LIKE ?3)
-            )", table
+                WHERE (?1 IS NULL OR space = ?1)
+                AND (?2 IS NULL OR name LIKE ?3 OR space LIKE ?3)
+            )",
+            table
         );
 
         let stats_cte = format!(
             ", stats AS (
                 SELECT 
-                    repository, 
+                    space, 
                     name, 
                     COUNT(DISTINCT version) AS versions, 
                     MAX(created_at) AS updated_at, 
                     MIN(created_at) AS created_at 
                 FROM {}
-                WHERE (?1 IS NULL OR repository = ?1)
-                AND (?2 IS NULL OR name LIKE ?3 OR repository LIKE ?3)
-                GROUP BY repository, name
+                WHERE (?1 IS NULL OR space = ?1)
+                AND (?2 IS NULL OR name LIKE ?3 OR space LIKE ?3)
+                GROUP BY space, name
             )",
             table
         );
 
         let filtered_versions_cte = ", filtered_versions AS (
             SELECT 
-                repository, 
+                space, 
                 name, 
                 version, 
                 row_num
@@ -191,7 +192,7 @@ impl SqliteQueryHelper {
         let joined_cte = format!(
             ", joined AS (
                 SELECT 
-                    stats.repository, 
+                    stats.space, 
                     stats.name, 
                     filtered_versions.version, 
                     stats.versions, 
@@ -200,7 +201,7 @@ impl SqliteQueryHelper {
                     ROW_NUMBER() OVER (ORDER BY stats.{}) AS row_num 
                 FROM stats 
                 JOIN filtered_versions 
-                ON stats.repository = filtered_versions.repository 
+                ON stats.space = filtered_versions.space 
                 AND stats.name = filtered_versions.name
             )",
             sort_by
@@ -209,7 +210,7 @@ impl SqliteQueryHelper {
         let combined_query = format!(
             "{}{}{}{} 
             SELECT
-            repository,
+            space,
             name,
             version,
             versions,
@@ -229,13 +230,13 @@ impl SqliteQueryHelper {
         let versions_cte = format!(
             "WITH versions AS (
                 SELECT 
-                    repository, 
+                    space, 
                     name, 
                     version, 
                     created_at,
-                    ROW_NUMBER() OVER (PARTITION BY repository, name ORDER BY created_at DESC, major DESC, minor DESC, patch DESC) AS row_num
+                    ROW_NUMBER() OVER (PARTITION BY space, name ORDER BY created_at DESC, major DESC, minor DESC, patch DESC) AS row_num
                 FROM {}
-                WHERE repository = ?1
+                WHERE space = ?1
                 AND name = ?2
             )", table
         );
@@ -243,7 +244,7 @@ impl SqliteQueryHelper {
         let query = format!(
             "{}
             SELECT
-            repository,
+            space,
             name,
             version,
             created_at,
@@ -262,11 +263,11 @@ impl SqliteQueryHelper {
             "SELECT 
                     COALESCE(COUNT(DISTINCT name), 0) AS nbr_names, 
                     COALESCE(COUNT(major), 0) AS nbr_versions, 
-                    COALESCE(COUNT(DISTINCT repository), 0) AS nbr_repositories 
+                    COALESCE(COUNT(DISTINCT space), 0) AS nbr_spaces
                 FROM {}
                 WHERE 1=1
-                AND (?1 IS NULL OR name LIKE ?1 OR repository LIKE ?1)
-                AND (?2 IS NULL OR repository = ?2) 
+                AND (?1 IS NULL OR name LIKE ?1 OR space LIKE ?1)
+                AND (?2 IS NULL OR space = ?2) 
                 ",
             table
         );
@@ -282,7 +283,7 @@ impl SqliteQueryHelper {
             SELECT
              created_at,
              name, 
-             repository, 
+             space, 
              major, minor, 
              patch, 
              pre_tag, 
@@ -291,7 +292,7 @@ impl SqliteQueryHelper {
              FROM {}
              WHERE 1=1
                 AND name = ?
-                AND repository = ?
+                AND space = ?
             ",
             table
         );
@@ -315,7 +316,7 @@ impl SqliteQueryHelper {
         WHERE 1==1
         AND (?1 IS NULL OR uid = ?1)
         AND (?2 IS NULL OR name = ?2)
-        AND (?3 IS NULL OR repository = ?3)
+        AND (?3 IS NULL OR space = ?3)
         AND (?4 IS NULL OR created_at <= DATETIME(?4))
         ",
             table
@@ -429,12 +430,12 @@ impl SqliteQueryHelper {
     }
 
     pub fn get_promptcard_insert_query() -> String {
-        format!("INSERT INTO {} (uid, app_env, name, repository, major, minor, patch, version, tags, experimentcard_uid, auditcard_uid, pre_tag, build_tag, username) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", CardTable::Prompt)
+        format!("INSERT INTO {} (uid, app_env, name, space, major, minor, patch, version, tags, experimentcard_uid, auditcard_uid, pre_tag, build_tag, username) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", CardTable::Prompt)
             .to_string()
     }
 
     pub fn get_datacard_insert_query() -> String {
-        format!("INSERT INTO {} (uid, app_env, name, repository, major, minor, patch, version, data_type, interface_type, tags, experimentcard_uid, auditcard_uid, pre_tag, build_tag, username) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", CardTable::Data)
+        format!("INSERT INTO {} (uid, app_env, name, space, major, minor, patch, version, data_type, interface_type, tags, experimentcard_uid, auditcard_uid, pre_tag, build_tag, username) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", CardTable::Data)
             .to_string()
     }
 
@@ -444,7 +445,7 @@ impl SqliteQueryHelper {
         uid, 
         app_env, 
         name, 
-        repository, 
+        space, 
         major, 
         minor, 
         patch, 
@@ -473,7 +474,7 @@ impl SqliteQueryHelper {
         uid, 
         app_env, 
         name, 
-        repository, 
+        space, 
         major, 
         minor, 
         patch, 
@@ -499,7 +500,7 @@ impl SqliteQueryHelper {
         uid, 
         app_env, 
         name, 
-        repository, 
+        space, 
         major, 
         minor, 
         patch, 
@@ -524,7 +525,7 @@ impl SqliteQueryHelper {
             "UPDATE {} SET 
         app_env = ?, 
         name = ?, 
-        repository = ?, 
+        space = ?, 
         major = ?, 
         minor = ?, 
         patch = ?, 
@@ -546,7 +547,7 @@ impl SqliteQueryHelper {
             "UPDATE {} SET 
         app_env = ?, 
         name = ?, 
-        repository = ?, 
+        space = ?, 
         major = ?, 
         minor = ?, 
         patch = ?, 
@@ -570,7 +571,7 @@ impl SqliteQueryHelper {
             "UPDATE {} SET 
         app_env = ?, 
         name = ?, 
-        repository = ?, 
+        space = ?, 
         major = ?, 
         minor = ?, 
         patch = ?, 
@@ -597,7 +598,7 @@ impl SqliteQueryHelper {
             "UPDATE {} SET 
         app_env = ?, 
         name = ?, 
-        repository = ?, 
+        space = ?, 
         major = ?, 
         minor = ?, 
         patch = ?, 
@@ -621,7 +622,7 @@ impl SqliteQueryHelper {
             "UPDATE {} SET 
         app_env = ?, 
         name = ?, 
-        repository = ?, 
+        space = ?, 
         major = ?, 
         minor = ?, 
         patch = ?, 

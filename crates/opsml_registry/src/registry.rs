@@ -44,7 +44,7 @@ fn extract_registry_type(registry_type: &Bound<'_, PyAny>) -> PyResult<RegistryT
 pub struct CardArgs {
     pub uid: String,
     pub name: String,
-    pub repository: String,
+    pub space: String,
     pub version: String,
     pub registry_type: RegistryType,
 }
@@ -101,12 +101,12 @@ impl CardRegistry {
     }
 
     #[allow(clippy::too_many_arguments)]
-    #[pyo3(signature = (uid=None, repository=None, name=None,  version=None, max_date=None, tags=None,  sort_by_timestamp=None, limit=25))]
+    #[pyo3(signature = (uid=None, space=None, name=None,  version=None, max_date=None, tags=None,  sort_by_timestamp=None, limit=25))]
     #[instrument(skip_all)]
     pub fn list_cards(
         &self,
         uid: Option<String>,
-        repository: Option<String>,
+        space: Option<String>,
         name: Option<String>,
         version: Option<String>,
         max_date: Option<String>,
@@ -116,19 +116,17 @@ impl CardRegistry {
     ) -> PyResult<CardList> {
         debug!(
             "Listing cards - {:?} - {:?} - {:?} - {:?} - {:?} - {:?} - {:?} - {:?}",
-            uid, name, repository, version, max_date, tags, limit, sort_by_timestamp
+            uid, name, space, version, max_date, tags, limit, sort_by_timestamp
         );
 
         let name = name.map(|name| clean_string(&name)).transpose()?;
 
-        let repository = repository
-            .map(|repository| clean_string(&repository))
-            .transpose()?;
+        let space = space.map(|space| clean_string(&space)).transpose()?;
 
         let query_args = CardQueryArgs {
             uid,
             name,
-            repository,
+            space,
             version,
             max_date,
             tags,
@@ -170,26 +168,26 @@ impl CardRegistry {
         .map_err(|e: RegistryError| OpsmlError::new_err(e.to_string()))
     }
 
-    #[pyo3(signature = (uid=None, repository=None, name=None, version=None, interface=None))]
+    #[pyo3(signature = (uid=None, space=None, name=None, version=None, interface=None))]
     #[instrument(skip_all)]
     pub fn load_card<'py>(
         &mut self,
         py: Python<'py>,
         uid: Option<String>,
-        repository: Option<String>,
+        space: Option<String>,
         name: Option<String>,
         version: Option<String>,
         interface: Option<&Bound<'py, PyAny>>,
     ) -> PyResult<Bound<'py, PyAny>> {
         debug!(
             "Loading card - {:?} - {:?} - {:?} - {:?} - {:?}",
-            uid, name, repository, version, interface
+            uid, name, space, version, interface
         );
 
-        // if uid, name, repository, version is None, return error
-        if uid.is_none() && name.is_none() && repository.is_none() && version.is_none() {
+        // if uid, name, space, version is None, return error
+        if uid.is_none() && name.is_none() && space.is_none() && version.is_none() {
             return Err(OpsmlError::new_err(
-                "At least one of uid, name, repository, version must be provided".to_string(),
+                "At least one of uid, name, space, version must be provided".to_string(),
             ));
         }
 
@@ -197,7 +195,7 @@ impl CardRegistry {
         let key = self.registry.load_card(CardQueryArgs {
             uid,
             name,
-            repository,
+            space,
             version,
             registry_type: self.registry_type.clone(),
             ..Default::default()
@@ -464,14 +462,14 @@ impl CardRegistry {
             "{} - {} - {}/{} - v{}",
             Colorize::green("Registered card"),
             Colorize::purple(&registry_type.to_string()),
-            response.repository,
+            response.space,
             response.name,
             response.version
         );
 
         debug!(
             "Successfully registered card - {} - {}/{} - v{}",
-            registry_type, response.repository, response.name, response.version
+            registry_type, response.space, response.name, response.version
         );
 
         Ok(response)
@@ -484,11 +482,11 @@ impl CardRegistry {
         registry_type: &RegistryType,
     ) -> Result<(), RegistryError> {
         let uid = unwrap_pystring(card, "uid")?;
-        let repository = unwrap_pystring(card, "repository")?;
+        let space = unwrap_pystring(card, "space")?;
 
         let delete_request = DeleteCardRequest {
             uid,
-            repository,
+            space,
             registry_type: registry_type.clone(),
         };
 
@@ -541,7 +539,7 @@ impl CardRegistry {
             "{} - {} - {}/{} - v{}",
             Colorize::green("Updated card"),
             Colorize::purple(&registry_type.to_string()),
-            registry_card.repository(),
+            registry_card.space(),
             registry_card.name(),
             registry_card.version()
         );

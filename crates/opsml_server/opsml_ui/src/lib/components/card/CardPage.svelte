@@ -6,7 +6,7 @@
   
     let {
       name,
-      repository,
+      space,
       version,
       registry,
       updated_at,
@@ -14,7 +14,7 @@
       bgColor
     } = $props<{
       name: string;
-      repository: string;
+      space: string;
       version: string;
       registry: RegistryType;
       updated_at: string;
@@ -26,7 +26,7 @@
     function navigateToCardPage() {
       // navigate to the card page
       let registry_name = getRegistryTypeLowerCase(registry);
-      goto(`/opsml/${registry_name}/card/home?repository=${repository}&name=${name}&version=${version}`);
+      goto(`/opsml/${registry_name}/card/home?space=${space}&name=${name}&version=${version}`);
     }
   
   
@@ -37,7 +37,7 @@
       <div class="ml-2">
         <CircuitBoard color="#5948a3" />
       </div>
-      <div><h4 class="truncate font-bold">{repository}/{name}</h4></div>
+      <div><h4 class="truncate font-bold">{space}/{name}</h4></div>
     </div>
  
     <div class="flex items-center justify-start gap-2 overflow-hidden whitespace-nowrap text-xs lg:text-sm mb-1">

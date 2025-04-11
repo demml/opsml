@@ -135,7 +135,7 @@ export interface DataCardMetadata {
 
 export interface DataCard {
   name: string;
-  repository: string;
+  space: string;
   version: string;
   uid: string;
   tags: string[];

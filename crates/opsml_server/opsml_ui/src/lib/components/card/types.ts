@@ -3,15 +3,15 @@ import type { RegistryType } from "$lib/utils";
 export interface RegistryStatsRequest {
   registry_type: RegistryType;
   search_term?: string;
-  repository?: string;
+  space?: string;
 }
-export interface RepositoryResponse {
-  repositories: string[];
+export interface spaceResponse {
+  spaces: string[];
 }
 
 export interface QueryStats {
   nbr_names: number;
-  nbr_repositories: number;
+  nbr_spaces: number;
   nbr_versions: number;
 }
 
@@ -20,7 +20,7 @@ export interface RegistryStatsResponse {
 }
 
 export interface CardSummary {
-  repository: string;
+  space: string;
   name: string;
   version: string;
   versions: number;
@@ -30,7 +30,7 @@ export interface CardSummary {
 }
 
 export interface VersionSummary {
-  repository: string;
+  space: string;
   name: string;
   version: string;
   created_at: string;
@@ -54,7 +54,7 @@ export interface RegistryPageReturn {
 
 export interface VersionPageRequest {
   registry_type: RegistryType;
-  repository?: string;
+  space?: string;
   name?: string;
   page?: number;
 }

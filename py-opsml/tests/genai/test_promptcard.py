@@ -20,7 +20,7 @@ def test_promptcard_crud() -> None:
             system_prompt="You are a helpful assistant.",
         )
 
-        card = PromptCard(prompt=prompt, repository="test", name="test")
+        card = PromptCard(prompt=prompt, space="test", name="test")
         reg.register_card(card)
 
         assert card.uid is not None

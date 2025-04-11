@@ -65,7 +65,7 @@ pub trait SqlClient: Sized {
         &self,
         table: &CardTable,
         name: &str,
-        repository: &str,
+        space: &str,
         version: Option<String>,
     ) -> Result<Vec<String>, SqlError>;
 
@@ -77,13 +77,12 @@ pub trait SqlClient: Sized {
 
     async fn insert_card(&self, table: &CardTable, card: &ServerCard) -> Result<(), SqlError>;
     async fn update_card(&self, table: &CardTable, card: &ServerCard) -> Result<(), SqlError>;
-    async fn get_unique_repository_names(&self, table: &CardTable)
-        -> Result<Vec<String>, SqlError>;
+    async fn get_unique_space_names(&self, table: &CardTable) -> Result<Vec<String>, SqlError>;
     async fn query_stats(
         &self,
         table: &CardTable,
         search_term: Option<&str>,
-        repository: Option<&str>,
+        space: Option<&str>,
     ) -> Result<QueryStats, SqlError>;
 
     async fn query_page(
@@ -91,7 +90,7 @@ pub trait SqlClient: Sized {
         sort_by: &str,
         page: i32,
         search_term: Option<&str>,
-        repository: Option<&str>,
+        space: Option<&str>,
         table: &CardTable,
     ) -> Result<Vec<CardSummary>, SqlError>;
 
@@ -350,7 +349,7 @@ pub trait SqlClient: Sized {
     async fn version_page(
         &self,
         page: i32,
-        repository: Option<&str>,
+        space: Option<&str>,
         name: Option<&str>,
         table: &CardTable,
     ) -> Result<Vec<VersionSummary>, SqlError>;

@@ -51,7 +51,7 @@ impl AuditableRequest for UidRequest {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct DeleteCardRequest {
     pub uid: String,
-    pub repository: String,
+    pub space: String,
     pub registry_type: RegistryType,
 }
 
@@ -80,18 +80,18 @@ pub struct UidResponse {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct RepositoryRequest {
+pub struct SpaceRequest {
     pub registry_type: RegistryType,
 }
 
-impl AuditableRequest for RepositoryRequest {
+impl AuditableRequest for SpaceRequest {
     fn get_resource_id(&self) -> String {
         self.registry_type.to_string()
     }
 
     fn get_metadata(&self) -> String {
         serde_json::to_string(self)
-            .unwrap_or_else(|e| format!("Failed to serialize RepositoryRequest: {}", e))
+            .unwrap_or_else(|e| format!("Failed to serialize spaceRequest: {}", e))
     }
 
     fn get_registry_type(&self) -> Option<RegistryType> {
@@ -104,15 +104,15 @@ impl AuditableRequest for RepositoryRequest {
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct RepositoryResponse {
-    pub repositories: Vec<String>,
+pub struct SpaceResponse {
+    pub spaces: Vec<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct RegistryStatsRequest {
     pub registry_type: RegistryType,
     pub search_term: Option<String>,
-    pub repository: Option<String>,
+    pub space: Option<String>,
 }
 
 impl AuditableRequest for RegistryStatsRequest {
@@ -140,7 +140,7 @@ impl AuditableRequest for RegistryStatsRequest {
 pub struct QueryPageRequest {
     pub registry_type: RegistryType,
     pub sort_by: Option<String>,
-    pub repository: Option<String>,
+    pub space: Option<String>,
     pub search_term: Option<String>,
     pub page: Option<i32>,
 }
@@ -167,7 +167,7 @@ impl AuditableRequest for QueryPageRequest {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct VersionPageRequest {
     pub registry_type: RegistryType,
-    pub repository: Option<String>,
+    pub space: Option<String>,
     pub name: Option<String>,
     pub page: Option<i32>,
 }
@@ -196,7 +196,7 @@ impl AuditableRequest for VersionPageRequest {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct CardVersionRequest {
     pub name: String,
-    pub repository: String,
+    pub space: String,
     pub version: Option<String>,
     pub version_type: VersionType,
     pub pre_tag: Option<String>,
@@ -209,7 +209,7 @@ pub struct CardVersionRequest {
 ///
 /// * `uid` - The unique identifier of the card
 /// * `name` - The name of the card
-/// * `repository` - The repository of the card
+/// * `space` - The space of the card
 /// * `version` - The version of the card
 /// * `max_date` - The maximum date of the card
 /// * `tags` - The tags of the card
@@ -221,7 +221,7 @@ pub struct CardVersionRequest {
 pub struct CardQueryArgs {
     pub uid: Option<String>,
     pub name: Option<String>,
-    pub repository: Option<String>,
+    pub space: Option<String>,
     pub version: Option<String>,
     pub max_date: Option<String>,
     pub tags: Option<Vec<String>>,
@@ -256,7 +256,7 @@ pub struct DataCardClientRecord {
     pub created_at: DateTime<Utc>,
     pub app_env: String,
     pub name: String,
-    pub repository: String,
+    pub space: String,
     pub version: String,
     pub tags: Vec<String>,
     pub data_type: String,
@@ -273,7 +273,7 @@ impl Default for DataCardClientRecord {
             created_at: get_utc_datetime(),
             app_env: "development".to_string(),
             name: "".to_string(),
-            repository: "".to_string(),
+            space: "".to_string(),
             version: "".to_string(),
             tags: Vec::new(),
             data_type: DataType::NotProvided.to_string(),
@@ -292,7 +292,7 @@ pub struct ModelCardClientRecord {
     pub created_at: DateTime<Utc>,
     pub app_env: String,
     pub name: String,
-    pub repository: String,
+    pub space: String,
     pub version: String,
     pub tags: Vec<String>,
     pub datacard_uid: Option<String>,
@@ -312,7 +312,7 @@ impl Default for ModelCardClientRecord {
             created_at: get_utc_datetime(),
             app_env: "development".to_string(),
             name: "".to_string(),
-            repository: "".to_string(),
+            space: "".to_string(),
             version: "".to_string(),
 
             tags: Vec::new(),
@@ -335,7 +335,7 @@ pub struct ExperimentCardClientRecord {
     pub created_at: DateTime<Utc>,
     pub app_env: String,
     pub name: String,
-    pub repository: String,
+    pub space: String,
     pub version: String,
     pub tags: Vec<String>,
     pub datacard_uids: Vec<String>,
@@ -352,7 +352,7 @@ impl Default for ExperimentCardClientRecord {
             created_at: get_utc_datetime(),
             app_env: "development".to_string(),
             name: "".to_string(),
-            repository: "".to_string(),
+            space: "".to_string(),
             version: "".to_string(),
             tags: Vec::new(),
             datacard_uids: Vec::new(),
@@ -371,7 +371,7 @@ pub struct AuditCardClientRecord {
     pub created_at: DateTime<Utc>,
     pub app_env: String,
     pub name: String,
-    pub repository: String,
+    pub space: String,
     pub version: String,
     pub tags: Vec<String>,
     pub approved: bool,
@@ -388,7 +388,7 @@ impl Default for AuditCardClientRecord {
             created_at: get_utc_datetime(),
             app_env: "development".to_string(),
             name: "".to_string(),
-            repository: "".to_string(),
+            space: "".to_string(),
             version: "".to_string(),
             tags: Vec::new(),
             approved: false,
@@ -407,7 +407,7 @@ pub struct PromptCardClientRecord {
     pub created_at: DateTime<Utc>,
     pub app_env: String,
     pub name: String,
-    pub repository: String,
+    pub space: String,
     pub version: String,
     pub tags: Vec<String>,
     pub experimentcard_uid: Option<String>,
@@ -422,7 +422,7 @@ impl Default for PromptCardClientRecord {
             created_at: get_utc_datetime(),
             app_env: "development".to_string(),
             name: "".to_string(),
-            repository: "".to_string(),
+            space: "".to_string(),
             version: "".to_string(),
             tags: Vec::new(),
             experimentcard_uid: None,
@@ -494,13 +494,13 @@ impl Card {
     }
 
     #[getter]
-    pub fn repository(&self) -> &str {
+    pub fn space(&self) -> &str {
         match self {
-            Self::Data(card) => card.repository.as_ref(),
-            Self::Model(card) => card.repository.as_ref(),
-            Self::Experiment(card) => card.repository.as_ref(),
-            Self::Audit(card) => card.repository.as_ref(),
-            Self::Prompt(card) => card.repository.as_ref(),
+            Self::Data(card) => card.space.as_ref(),
+            Self::Model(card) => card.space.as_ref(),
+            Self::Experiment(card) => card.space.as_ref(),
+            Self::Audit(card) => card.space.as_ref(),
+            Self::Prompt(card) => card.space.as_ref(),
         }
     }
 
@@ -629,7 +629,7 @@ impl Card {
                 let uri = format!(
                     "{}/{}/{}/v{}",
                     CardTable::Data,
-                    card.repository,
+                    card.space,
                     card.name,
                     card.version
                 );
@@ -639,7 +639,7 @@ impl Card {
                 let uri = format!(
                     "{}/{}/{}/v{}",
                     CardTable::Model,
-                    card.repository,
+                    card.space,
                     card.name,
                     card.version
                 );
@@ -649,7 +649,7 @@ impl Card {
                 let uri = format!(
                     "{}/{}/{}/v{}",
                     CardTable::Experiment,
-                    card.repository,
+                    card.space,
                     card.name,
                     card.version
                 );
@@ -660,7 +660,7 @@ impl Card {
                 let uri = format!(
                     "{}/{}/{}/v{}",
                     CardTable::Audit,
-                    card.repository,
+                    card.space,
                     card.name,
                     card.version
                 );
@@ -671,7 +671,7 @@ impl Card {
                 let uri = format!(
                     "{}/{}/{}/v{}",
                     CardTable::Prompt,
-                    card.repository,
+                    card.space,
                     card.name,
                     card.version
                 );
@@ -695,7 +695,7 @@ impl Card {
 struct CardTableEntry {
     created_at: String,
     name: String,
-    repository: String,
+    space: String,
     version: String,
     uid: String,
 }
@@ -751,14 +751,14 @@ impl CardList {
             .map(|card| {
                 let created_at = card.created_at().to_string();
                 let name = card.name();
-                let repository = card.repository();
+                let space = card.space();
                 let version = card.version();
                 let uid = card.uid();
 
                 CardTableEntry {
                     created_at,
                     name: name.to_string(),
-                    repository: repository.to_string(),
+                    space: space.to_string(),
                     version: version.to_string(),
                     uid: Colorize::purple(uid),
                 }
@@ -816,7 +816,7 @@ impl AuditableRequest for CreateCardRequest {
 pub struct CreateCardResponse {
     pub registered: bool,
     pub version: String,
-    pub repository: String,
+    pub space: String,
     pub name: String,
     pub app_env: String,
     pub created_at: DateTime<Utc>,

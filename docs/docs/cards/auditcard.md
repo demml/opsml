@@ -50,7 +50,7 @@ These questions help stakeholders gain a clear understanding of the business con
 
 6. **Data Quality Thresholds**: This question focuses on whether threshold values have been set for data quality and the reasons for choosing them, along with what actions are taken when data quality falls below or exceeds these thresholds.
 
-7. **Documentation of Data Model Semantic**: This question focuses on whether the meaning and structure of data have been clearly defined in the data model. This includes checking if the repository has established the interpretation of data, including any abbreviations or codes used, ensuring consistency and understanding in data usage.
+7. **Documentation of Data Model Semantic**: This question focuses on whether the meaning and structure of data have been clearly defined in the data model. This includes checking if the space has established the interpretation of data, including any abbreviations or codes used, ensuring consistency and understanding in data usage.
 
 8. **Data Subject to Security Requirements**: This helps identify whether the application handles data subject to security regulations like FTC and the rationale behind using such data.
 
@@ -240,7 +240,7 @@ from opsml import AuditCard, CardRegistry
 
 auditcard = AuditCard(
     name="linear-regressor-audit",
-    repository="my_repository", 
+    space="my_space", 
     contact="contact"
 )
 

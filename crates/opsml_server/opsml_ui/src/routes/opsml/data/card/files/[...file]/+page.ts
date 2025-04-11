@@ -17,7 +17,7 @@ export const load: PageLoad = async ({ parent, params }) => {
   const { metadata, registry, registryPath } = await parent();
 
   let tableName = getRegistryTableName(registry);
-  let basePath = `${tableName}/${metadata.repository}/${metadata.name}/v${metadata.version}`;
+  let basePath = `${tableName}/${metadata.space}/${metadata.name}/v${metadata.version}`;
 
   // join all but the last element of the slugs to get the previous path without final "/"
   let previousPath = `/opsml/${registryPath}/card/files/${slugs
@@ -25,7 +25,7 @@ export const load: PageLoad = async ({ parent, params }) => {
     .join("/")}`.replace(/\/$/, "");
 
   // add params to previousPath
-  previousPath = `${previousPath}?repository=${metadata.repository}&name=${metadata.name}&version=${metadata.version}`;
+  previousPath = `${previousPath}?space=${metadata.space}&name=${metadata.name}&version=${metadata.version}`;
 
   // add the rest of the slugs to the basePath
   basePath = `${basePath}/${slugs.join("/")}`;
