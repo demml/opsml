@@ -103,8 +103,8 @@ pub mod server_logic {
 
         async fn get_next_version(
             &self,
-            name: &str,
             space: &str,
+            name: &str,
             version: Option<String>,
             version_type: VersionType,
             pre_tag: Option<String>,
@@ -112,7 +112,7 @@ pub mod server_logic {
         ) -> Result<Version, RegistryError> {
             let versions = self
                 .sql_client
-                .get_versions(&self.table_name, name, space, version.clone())
+                .get_versions(&self.table_name, space, name, version.clone())
                 .await
                 .map_err(|e| RegistryError::Error(format!("Failed to get versions {}", e)))?;
 
@@ -186,8 +186,8 @@ pub mod server_logic {
         ) -> Result<CreateCardResponse, RegistryError> {
             let version = self
                 .get_next_version(
-                    card.name(),
                     card.space(),
+                    card.name(),
                     version,
                     version_type,
                     pre_tag,

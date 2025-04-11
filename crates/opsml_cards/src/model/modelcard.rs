@@ -1,4 +1,7 @@
+use crate::model::error::interface_error;
+use crate::utils::BaseArgs;
 use chrono::{DateTime, Utc};
+use opsml_colors::Colorize;
 use opsml_crypt::decrypt_directory;
 use opsml_error::{
     error::{CardError, OpsmlError},
@@ -10,13 +13,11 @@ use opsml_interfaces::{
     XGBoostModel,
 };
 use opsml_interfaces::{ModelInterfaceMetadata, ModelLoadKwargs, ModelSaveKwargs};
+use opsml_storage::storage_client;
 use opsml_types::contracts::{ArtifactKey, CardRecord, ModelCardClientRecord};
 use opsml_types::{
     BaseArgsType, DataType, ModelInterfaceType, ModelType, RegistryType, SaveName, Suffix, TaskType,
 };
-
-use crate::utils::BaseArgs;
-use opsml_storage::storage_client;
 use opsml_utils::{create_tmp_path, extract_py_attr, get_utc_datetime, PyHelperFuncs};
 use pyo3::prelude::*;
 use pyo3::types::{PyDict, PyList};
@@ -164,9 +165,7 @@ impl ModelCard {
         if interface.is_instance_of::<ModelInterface>() {
             //
         } else {
-            return Err(OpsmlError::new_err(
-                "interface must be an instance of ModelInterface",
-            ));
+            return Err(OpsmlError::new_err(interface_error()));
         }
 
         let interface_type = extract_py_attr::<ModelInterfaceType>(interface, "interface_type")?;
