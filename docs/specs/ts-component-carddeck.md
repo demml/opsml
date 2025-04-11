@@ -186,7 +186,7 @@ deck = CardDeck(
     ],
 )
 
-# Registration through experiment
+# Registration
 registry.register_card(deck)
 
 # Accessing cards by alias
