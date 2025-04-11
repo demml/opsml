@@ -13,6 +13,7 @@ pub struct LockArtifact {
     pub version: String,
     pub uid: String,
     pub registry_type: RegistryType,
+    pub write_dir: String,
 }
 
 /// LockFile struct to hold the lock entries
@@ -97,6 +98,7 @@ mod tests {
                     version: "1.0.0".to_string(),
                     uid: "abc123".to_string(),
                     registry_type: RegistryType::Model,
+                    write_dir: "artifacts".to_string(),
                 },
                 LockArtifact {
                     space: "test-space-2".to_string(),
@@ -104,6 +106,7 @@ mod tests {
                     version: "2.0.0".to_string(),
                     uid: "def456".to_string(),
                     registry_type: RegistryType::Data,
+                    write_dir: "artifacts".to_string(),
                 },
             ],
         }

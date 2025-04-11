@@ -31,45 +31,8 @@ pub struct AppConfig {
     pub space: String,
     pub version: Option<String>,
     pub cards: Option<Vec<Card>>,
+    pub write_dir: Option<String>,
 }
-
-//impl DeckConfig {
-//    /// Convert the DeckConfig to a CardDeck
-//    ///
-//    /// # Arguments
-//    /// * `self` - The DeckConfig to convert
-//    ///
-//    /// # Returns
-//    /// * `Result<CardDeck, PyProjectTomlError>` - The CardDeck
-//    ///
-//    /// # Errors
-//    /// Will return an error if:
-//    /// - Card iteration and conversion fails
-//    /// - CardDeck construction fails
-//    pub fn to_card_deck(&self) -> Result<CardDeck, PyProjectTomlError> {
-//        let cards = self
-//            .cards
-//            .iter()
-//            .map(|card| {
-//                opsml_cards::Card::new(
-//                    card.alias.clone(),
-//                    card.card_type.clone(),
-//                    card.space.as_deref(),
-//                    card.name.as_deref(),
-//                    card.version.as_deref(),
-//                    card.uid.as_deref(),
-//                    None,
-//                )
-//            })
-//            .collect::<Result<Vec<_>, _>>()
-//            .map_err(PyProjectTomlError::MapToCardError)?;
-//
-//        let deck = CardDeck::new(&self.name, &self.space, cards, self.version.as_deref())
-//            .map_err(|e| PyProjectTomlError::ConstructCardDeckError(e))?;
-//
-//        Ok(deck)
-//    }
-//}
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct OpsmlTools {
