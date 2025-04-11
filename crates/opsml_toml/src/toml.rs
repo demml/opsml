@@ -259,8 +259,6 @@ mod tests {
 
         let pyproject = PyProjectToml::load(Some(&root_dir), None).unwrap();
 
-        println!("{:?}", pyproject);
-
         // assert tool.opsml is not None
         assert!(pyproject.tool.is_some());
         assert!(pyproject.tool.as_ref().unwrap().opsml.is_some());

@@ -16,10 +16,13 @@ from opsml import (  # type: ignore
     Prompt,
     PromptCard,
     CardDeck,
+    CardRegistry,
 )
 from tests.conftest import WINDOWS_EXCLUDE
 import pytest
-# Sets up logging for tests
+
+# Set current directory
+CURRENT_DIRECTORY = Path(os.getcwd()) / "tests" / "cli" / "assets"
 
 
 def run_experiment(
@@ -29,7 +32,6 @@ def run_experiment(
     with start_experiment(space="test", log_hardware=True) as exp:
         modelcard = ModelCard(
             interface=random_forest_classifier,
-            name="model",
             tags=["foo:bar", "baz:qux"],
             version="1.0.0",
         )
@@ -37,7 +39,6 @@ def run_experiment(
 
         prompt_card = PromptCard(
             prompt=chat_prompt,
-            name="prompt",
             version="1.0.0",
         )
         exp.register_card(prompt_card)
@@ -66,22 +67,21 @@ def test_pyproject_app_lock_project(
 
 
     """
-    with OpsmlTestServer(False):
+    with OpsmlTestServer(False, CURRENT_DIRECTORY):
         # run experiment to populate registry
         run_experiment(random_forest_classifier, chat_prompt)
 
-        current_directory = Path(os.getcwd()) / "tests" / "cli" / "assets"
-        lock_project(current_directory)
+        lock_project(CURRENT_DIRECTORY)
 
         # Check if the lock file was created
-        lock_file = current_directory / "opsml.lock"
+        lock_file = CURRENT_DIRECTORY / "opsml.lock"
         assert lock_file.exists()
 
         # download the assets
-        install_app(current_directory, current_directory)
+        install_app(CURRENT_DIRECTORY, CURRENT_DIRECTORY)
 
         # check if opsml_app was created
-        opsml_app = current_directory / "opsml_app"
+        opsml_app = CURRENT_DIRECTORY / "opsml_app"
         assert opsml_app.exists()
 
         # check if the opsml_app contains the assets
@@ -98,23 +98,32 @@ def test_pyproject_app_lock_project(
             assert deck["my_prompt"].prompt is not None
             assert deck["my_prompt"].version == "1.0.0"
 
+        ## delete the opsml_app and lock file
+        shutil.rmtree(opsml_app)
+        os.remove(lock_file)
+
         # write new experiment to the registry
         run_experiment(random_forest_classifier, chat_prompt)
 
+        # check multiple files exist
+        reg = CardRegistry("model")
+        cards = reg.list_cards(space="space", name="model")
+
+        assert len(cards) == 2
+
         # lock the project again
-        lock_project(current_directory)
+        lock_project(CURRENT_DIRECTORY)
 
         # Check if the lock file was created
-        lock_file = current_directory / "opsml.lock"
+        lock_file = CURRENT_DIRECTORY / "opsml.lock"
 
         assert lock_file.exists()
 
         # re-install the app
-        install_app(current_directory, current_directory)
+        install_app(CURRENT_DIRECTORY, CURRENT_DIRECTORY)
 
-        #
         ## check if opsml_app was created
-        opsml_app = current_directory / "opsml_app"
+        opsml_app = CURRENT_DIRECTORY / "opsml_app"
         assert opsml_app.exists()
 
         for app in ["app1", "app2", "app3"]:
@@ -125,6 +134,6 @@ def test_pyproject_app_lock_project(
             assert deck["my_prompt"].prompt is not None
             assert deck["my_prompt"].version == "1.1.0"
 
-        ## delete the opsml_app
+        ## delete the opsml_app and lock file
         shutil.rmtree(opsml_app)
         os.remove(lock_file)

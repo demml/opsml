@@ -14,7 +14,7 @@ use opsml_types::{
 };
 use pyo3::prelude::*;
 use std::path::PathBuf;
-use tracing::debug;
+use tracing::{debug, error, instrument};
 
 /// Helper function to get cards from registry
 fn get_deck_from_registry(
@@ -74,16 +74,15 @@ fn get_latest_card(registries: &CardRegistries, card: &Card) -> Result<CardRecor
         card.version.clone(),
         None,
         None,
-        Some(true),
+        Some(false),
         1,
     )?;
 
     // return the first card in the list
-    latest_cards
-        .cards
-        .first()
-        .cloned()
-        .ok_or(CliError::MissingCardRecord)
+    latest_cards.cards.first().cloned().ok_or({
+        error!("Failed to get latest card");
+        CliError::MissingCardRecord
+    })
 }
 
 /// Process deck cards and check for version updates
@@ -95,11 +94,13 @@ fn get_latest_card(registries: &CardRegistries, card: &Card) -> Result<CardRecor
 ///
 /// # Returns
 /// * `Result<bool, CliError>` - True if a version refresh is needed, false otherwise
+#[instrument(skip_all)]
 fn process_deck_cards(
     card_entries: Vec<CardEntry>,
     app_cards: &[Card],
     registries: &CardRegistries,
 ) -> Result<bool, CliError> {
+    debug!("Processing deck cards");
     for app_card in app_cards {
         // Find the latest card given the constraints provided in toml file
         let latest_card = get_latest_card(registries, &app_card)?;
@@ -132,6 +133,8 @@ fn process_deck_cards(
 /// # Arguments
 /// * `config` - AppConfig
 fn lock_deck(config: AppConfig) -> Result<LockArtifact, CliError> {
+    debug!("Locking deck with config: {:?}", config);
+
     // Validate app configuration
     let app_cards = validate_app_cards(&config)?;
     let registries = CardRegistries::new()?;

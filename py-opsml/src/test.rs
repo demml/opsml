@@ -1,5 +1,6 @@
 use pyo3::prelude::*;
 use std::io::Write;
+use std::path::PathBuf;
 
 #[cfg(feature = "server")]
 use opsml_server::{start_server_in_background, stop_server};
@@ -26,19 +27,21 @@ pub struct OpsmlTestServer {
     #[cfg(feature = "server")]
     runtime: Arc<Runtime>,
     cleanup: bool,
+    base_path: Option<PathBuf>,
 }
 
 #[pymethods]
 impl OpsmlTestServer {
     #[new]
-    #[pyo3(signature = (cleanup = true))]
-    fn new(cleanup: bool) -> Self {
+    #[pyo3(signature = (cleanup = true, base_path = None))]
+    fn new(cleanup: bool, base_path: Option<PathBuf>) -> Self {
         OpsmlTestServer {
             #[cfg(feature = "server")]
             handle: Arc::new(Mutex::new(None)),
             #[cfg(feature = "server")]
             runtime: Arc::new(Runtime::new().unwrap()),
             cleanup,
+            base_path,
         }
     }
 
@@ -64,6 +67,10 @@ impl OpsmlTestServer {
 
             // set server env vars
             std::env::set_var("APP_ENV", "dev_server");
+
+            if self.base_path.is_some() {
+                std::env::set_var("OPSML_BASE_PATH", self.base_path.as_ref().unwrap());
+            }
 
             let handle = self.handle.clone();
             let runtime = self.runtime.clone();

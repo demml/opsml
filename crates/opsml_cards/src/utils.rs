@@ -50,6 +50,7 @@ impl BaseArgs {
         registry_type: &RegistryType,
     ) -> Result<Option<String>, TypeError> {
         // Get reference to Arc<Option<OpsmlTools>> once
+
         match &*app_state().tools {
             Some(tools) => Ok(tools.get_attribute_key_value(key, registry_type)),
             None => Ok(None),
