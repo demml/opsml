@@ -48,6 +48,15 @@ pub enum Commands {
     /// # Example
     /// opsml-cli info
     Info,
+
+    /// Install/download an opsml app
+    ///
+    /// # Example
+    /// opsml install app
+    Install {
+        #[command(subcommand)]
+        command: InstallCommands,
+    },
 }
 
 #[derive(Subcommand)]
@@ -72,6 +81,11 @@ pub enum ListCommands {
     Experiment(ListCards),
     Audit(ListCards),
     Prompt(ListCards),
+}
+
+#[derive(Subcommand)]
+pub enum InstallCommands {
+    App,
 }
 
 pub const LOGO_TEXT: &str = "

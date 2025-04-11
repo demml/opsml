@@ -1,4 +1,7 @@
 use super::utils::register_card_deck;
+use crate::cli::arg::DownloadCard;
+use crate::download_deck;
+use opsml_colors::Colorize;
 use opsml_error::CliError;
 use opsml_registry::{CardRegistries, CardRegistry};
 use opsml_toml::{
@@ -145,6 +148,7 @@ fn lock_deck(config: AppConfig) -> Result<LockArtifact, CliError> {
             version: card.version.clone(),
             uid: card.uid.clone(),
             registry_type: RegistryType::Deck,
+            write_dir: config.write_dir.unwrap_or("opsml_app".to_string()),
         });
     }
     //
@@ -165,6 +169,7 @@ fn lock_deck(config: AppConfig) -> Result<LockArtifact, CliError> {
                 version: card.version.clone(),
                 uid: card.uid.clone(),
                 registry_type: RegistryType::Deck,
+                write_dir: config.write_dir.unwrap_or("opsml_app".to_string()),
             }
         }
         false => {
@@ -175,6 +180,7 @@ fn lock_deck(config: AppConfig) -> Result<LockArtifact, CliError> {
                 version: deck.version().to_string(),
                 uid: deck.uid().to_string(),
                 registry_type: RegistryType::Deck,
+                write_dir: config.write_dir.unwrap_or("opsml_app".to_string()),
             }
         }
     };
@@ -194,6 +200,50 @@ fn lock_app(app: AppConfig) -> Result<LockArtifact, CliError> {
             ))
         }
     }
+}
+
+#[pyfunction]
+pub fn install_app(path: PathBuf) -> Result<(), CliError> {
+    debug!("Installing app from lock file");
+
+    println!(
+        "{:?}",
+        Colorize::green("Downloading app for opsml.lock file")
+    );
+
+    let lockfile = LockFile::read(&path)?;
+
+    for artifact in lockfile.artifact {
+        match artifact.registry_type {
+            RegistryType::Deck => {
+                println!(
+                    "Downloading CardDeck {} to path {}",
+                    Colorize::green(&format!(
+                        "{}/{}/v{}",
+                        &artifact.name, &artifact.space, &artifact.version
+                    )),
+                    Colorize::purple(&artifact.write_dir),
+                );
+
+                let args = DownloadCard {
+                    space: Some(artifact.space.clone()),
+                    name: Some(artifact.name.clone()),
+                    version: Some(artifact.version.clone()),
+                    uid: Some(artifact.uid.clone()),
+                    write_dir: artifact.write_dir.clone(),
+                };
+
+                download_deck(&args)?;
+            }
+            _ => {
+                return Err(CliError::UnsupportedRegistryType(
+                    artifact.registry_type.to_string(),
+                ))
+            }
+        }
+    }
+
+    Ok(())
 }
 
 #[pyfunction]
