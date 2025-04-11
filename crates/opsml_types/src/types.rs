@@ -1,6 +1,6 @@
 use opsml_error::TypeError;
 use pyo3::prelude::*;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
 use std::ffi::OsStr;
 use std::fmt;
 use std::fmt::Display;
@@ -11,7 +11,7 @@ pub const DOWNLOAD_CHUNK_SIZE: usize = 1024 * 1024 * 5;
 pub const MAX_FILE_SIZE: usize = 1024 * 1024 * 1024 * 50;
 
 #[pyclass(eq, eq_int)]
-#[derive(Debug, PartialEq, Clone, Serialize, Deserialize, Default)]
+#[derive(Debug, Eq, Hash, PartialEq, Clone, Serialize, Default)]
 pub enum RegistryType {
     #[default]
     Data,
@@ -24,6 +24,33 @@ pub enum RegistryType {
     Users,
     ArtifactKey,
     Prompt,
+    Deck,
+}
+
+impl<'de> Deserialize<'de> for RegistryType {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        match s.to_lowercase().as_str() {
+            "data" => Ok(RegistryType::Data),
+            "model" => Ok(RegistryType::Model),
+            "experiment" => Ok(RegistryType::Experiment),
+            "audit" => Ok(RegistryType::Audit),
+            "metrics" => Ok(RegistryType::Metrics),
+            "hardware_metrics" => Ok(RegistryType::HardwareMetrics),
+            "parameters" => Ok(RegistryType::Parameters),
+            "users" => Ok(RegistryType::Users),
+            "artifact_key" => Ok(RegistryType::ArtifactKey),
+            "prompt" => Ok(RegistryType::Prompt),
+            "deck" => Ok(RegistryType::Deck),
+            _ => Err(serde::de::Error::custom(format!(
+                "Invalid registry type: {}",
+                s
+            ))),
+        }
+    }
 }
 
 impl Display for RegistryType {
@@ -39,6 +66,7 @@ impl Display for RegistryType {
             RegistryType::Users => write!(f, "users"),
             RegistryType::ArtifactKey => write!(f, "artifact_key"),
             RegistryType::Prompt => write!(f, "prompt"),
+            RegistryType::Deck => write!(f, "deck"),
         }
     }
 }
@@ -55,6 +83,7 @@ impl RegistryType {
             "users" => Ok(RegistryType::Users),
             "artifact_key" => Ok(RegistryType::ArtifactKey),
             "prompt" => Ok(RegistryType::Prompt),
+            "deck" => Ok(RegistryType::Deck),
 
             _ => Err(TypeError::Error("Invalid RegistryType".to_string())),
         }
@@ -72,6 +101,7 @@ impl RegistryType {
             RegistryType::Users => b"users",
             RegistryType::ArtifactKey => b"artifact_key",
             RegistryType::Prompt => b"prompt",
+            RegistryType::Deck => b"deck",
         }
     }
 }
@@ -313,6 +343,7 @@ pub enum SaveName {
     Code,
     Prompt,
     ReadMe,
+    CardDeck,
 }
 
 #[pymethods]
@@ -345,6 +376,7 @@ impl SaveName {
             "code" => Some(SaveName::Code),
             "prompt" => Some(SaveName::Prompt),
             "README" => Some(SaveName::ReadMe),
+            "card_deck" => Some(SaveName::CardDeck),
             _ => None,
         }
     }
@@ -376,6 +408,7 @@ impl SaveName {
             SaveName::Code => "code",
             SaveName::Prompt => "prompt",
             SaveName::ReadMe => "README",
+            SaveName::CardDeck => "card_deck",
         }
     }
 
@@ -418,6 +451,7 @@ impl AsRef<Path> for SaveName {
             SaveName::Code => Path::new("code"),
             SaveName::Prompt => Path::new("prompt"),
             SaveName::ReadMe => Path::new("README"),
+            SaveName::CardDeck => Path::new("card_deck"),
         }
     }
 }
@@ -669,6 +703,8 @@ impl Display for DataType {
         }
     }
 }
+
+pub type BaseArgsType = (String, String, String, String);
 
 #[pyclass(eq)]
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]

@@ -4,7 +4,7 @@ use opsml_semver::VersionType;
 use opsml_settings::config::OpsmlMode;
 use opsml_state::{app_state, get_api_client};
 use opsml_types::contracts::{
-    Card, CardQueryArgs, CreateCardResponse, GetMetricRequest, MetricRequest,
+    CardQueryArgs, CardRecord, CreateCardResponse, GetMetricRequest, MetricRequest,
 };
 use opsml_types::*;
 use opsml_types::{
@@ -35,8 +35,8 @@ pub enum OpsmlRegistry {
 impl OpsmlRegistry {
     #[instrument(skip_all)]
     pub fn new(registry_type: RegistryType) -> Result<Self, RegistryError> {
-        let state = app_state();
-        let mode = state.mode()?;
+        let state = &app_state();
+        let mode = &*state.mode()?;
 
         match mode {
             OpsmlMode::Client => {
@@ -93,7 +93,7 @@ impl OpsmlRegistry {
         }
     }
 
-    pub fn list_cards(&self, args: CardQueryArgs) -> Result<Vec<Card>, RegistryError> {
+    pub fn list_cards(&self, args: CardQueryArgs) -> Result<Vec<CardRecord>, RegistryError> {
         match self {
             Self::ClientRegistry(client_registry) => client_registry.list_cards(args),
             #[cfg(feature = "server")]
@@ -115,7 +115,7 @@ impl OpsmlRegistry {
 
     pub fn create_card(
         &self,
-        card: Card,
+        card: CardRecord,
         version: Option<String>,
         version_type: VersionType,
         pre_tag: Option<String>,
@@ -149,13 +149,13 @@ impl OpsmlRegistry {
         }
     }
 
-    pub fn load_card(&self, args: CardQueryArgs) -> Result<ArtifactKey, RegistryError> {
+    pub fn get_key(&self, args: CardQueryArgs) -> Result<ArtifactKey, RegistryError> {
         match self {
-            Self::ClientRegistry(client_registry) => client_registry.load_card(args),
+            Self::ClientRegistry(client_registry) => client_registry.get_key(args),
             #[cfg(feature = "server")]
             Self::ServerRegistry(server_registry) => {
                 app_state().block_on(async {
-                    let key = server_registry.load_card(args).await?;
+                    let key = server_registry.get_key(args).await?;
 
                     // convert to client ArtifactKey
                     Ok(ArtifactKey {
@@ -179,7 +179,7 @@ impl OpsmlRegistry {
         }
     }
 
-    pub fn update_card(&self, card: &Card) -> Result<(), RegistryError> {
+    pub fn update_card(&self, card: &CardRecord) -> Result<(), RegistryError> {
         match self {
             Self::ClientRegistry(client_registry) => client_registry.update_card(card),
             #[cfg(feature = "server")]

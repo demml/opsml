@@ -16,29 +16,76 @@ pub enum Commands {
     /// Lists cards from a registry
     ///
     /// # Example
-    ///
-    /// opsml-cli list-cards --registry data
-    ListCards(ListCards),
+    /// opsml list --registry data
+    List {
+        #[command(subcommand)]
+        command: ListCommands,
+    },
+
     /// Download card artifacts from a registry
     ///
     /// # Example
-    ///
-    /// opsml-cli download-card --registry model --name model_name --version 1.0.0
-    DownloadCard(DownloadCard),
+    /// opsml get model --name model_name --version 1.0.0
+    Get {
+        #[command(subcommand)]
+        command: GetCommands,
+    },
 
-    ///  Show opsml-cli version
+    /// Loads a pyproject.toml file and creates a lock file for an app
     ///
     /// # Example
+    /// opsml lock
+    Lock,
+
+    ///  Show opsml version
     ///
-    /// opsml-cli version
+    /// # Example
+    /// opsml version
     Version,
 
     ///  Show opsml-cli info
     ///
     /// # Example
-    ///
     /// opsml-cli info
     Info,
+
+    /// Install/download an opsml app
+    ///
+    /// # Example
+    /// opsml install app
+    Install {
+        #[command(subcommand)]
+        command: InstallCommands,
+    },
+}
+
+#[derive(Subcommand)]
+pub enum GetCommands {
+    /// Download card model artifacts
+    ///
+    /// # Example
+    ///
+    /// opsml get model --name model_name --version 1.0.0
+    Model(DownloadCard),
+
+    /// Download card deck artifacts
+    ///
+    Deck(DownloadCard),
+}
+
+#[derive(Subcommand)]
+pub enum ListCommands {
+    Model(ListCards),
+    Deck(ListCards),
+    Data(ListCards),
+    Experiment(ListCards),
+    Audit(ListCards),
+    Prompt(ListCards),
+}
+
+#[derive(Subcommand)]
+pub enum InstallCommands {
+    App,
 }
 
 pub const LOGO_TEXT: &str = "

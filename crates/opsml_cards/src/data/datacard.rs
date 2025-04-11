@@ -1,27 +1,30 @@
+use crate::utils::BaseArgs;
 use chrono::{DateTime, Utc};
 use opsml_crypt::decrypt_directory;
-use opsml_error::error::{CardError, OpsmlError};
+use opsml_error::{
+    error::{CardError, OpsmlError},
+    map_err_with_logging,
+};
 use opsml_interfaces::data::{
     ArrowData, DataInterface, DataInterfaceMetadata, DataLoadKwargs, DataSaveKwargs, NumpyData,
     PandasData, PolarsData, SqlData, TorchData,
 };
 use opsml_interfaces::FeatureSchema;
 use opsml_storage::storage_client;
-use opsml_types::contracts::{ArtifactKey, Card, DataCardClientRecord};
+use opsml_types::contracts::{ArtifactKey, CardRecord, DataCardClientRecord};
 use opsml_types::interfaces::types::DataInterfaceType;
-use opsml_types::{cards::BaseArgs, DataType, RegistryType, SaveName, Suffix};
-use opsml_utils::{create_tmp_path, get_utc_datetime, PyHelperFuncs};
+use opsml_types::{BaseArgsType, DataType, RegistryType, SaveName, Suffix};
+use opsml_utils::{create_tmp_path, extract_py_attr, get_utc_datetime, PyHelperFuncs};
 use pyo3::types::PyList;
 use pyo3::{prelude::*, IntoPyObjectExt};
 use pyo3::{PyTraverseError, PyVisit};
-use std::path::{Path, PathBuf};
-use tracing::error;
-
 use serde::{
     de::{self, MapAccess, Visitor},
     ser::SerializeStruct,
     Deserialize, Deserializer, Serialize, Serializer,
 };
+use std::path::{Path, PathBuf};
+use tracing::error;
 
 fn interface_from_metadata<'py>(
     py: Python<'py>,
@@ -89,13 +92,13 @@ pub struct DataCard {
     #[pyo3(get, set)]
     pub created_at: DateTime<Utc>,
 
-    pub artifact_key: Option<ArtifactKey>,
-
     #[pyo3(get)]
     pub is_card: bool,
 
     #[pyo3(get)]
     pub opsml_version: String,
+
+    artifact_key: Option<ArtifactKey>,
 }
 
 #[pymethods]
@@ -112,6 +115,7 @@ impl DataCard {
         tags: Option<&Bound<'_, PyList>>,
         metadata: Option<DataCardMetadata>,
     ) -> PyResult<Self> {
+        let registry_type = RegistryType::Data;
         let tags = match tags {
             None => Vec::new(),
             Some(t) => t
@@ -119,10 +123,10 @@ impl DataCard {
                 .map_err(|e| OpsmlError::new_err(e.to_string()))?,
         };
 
-        let base_args = BaseArgs::create_args(name, space, version, uid).map_err(|e| {
-            error!("Failed to create base args: {}", e);
-            OpsmlError::new_err(e.to_string())
-        })?;
+        let base_args = map_err_with_logging::<BaseArgsType, _>(
+            BaseArgs::create_args(name, space, version, uid, &registry_type),
+            "Failed to create base args for DataCard",
+        )?;
 
         let py = interface.py();
 
@@ -134,17 +138,8 @@ impl DataCard {
             ));
         }
 
-        let interface_type = interface
-            .getattr("interface_type")
-            .map_err(|e| OpsmlError::new_err(e.to_string()))?
-            .extract::<DataInterfaceType>()
-            .map_err(|e| OpsmlError::new_err(e.to_string()))?;
-
-        let data_type = interface
-            .getattr("data_type")
-            .map_err(|e| OpsmlError::new_err(e.to_string()))?
-            .extract::<DataType>()
-            .map_err(|e| OpsmlError::new_err(e.to_string()))?;
+        let interface_type = extract_py_attr::<DataInterfaceType>(interface, "interface_type")?;
+        let data_type = extract_py_attr::<DataType>(interface, "data_type")?;
 
         let mut metadata = metadata.unwrap_or_default();
         metadata.interface_metadata.interface_type = interface_type;
@@ -162,7 +157,7 @@ impl DataCard {
             uid: base_args.3,
             tags,
             metadata,
-            registry_type: RegistryType::Data,
+            registry_type,
             artifact_key: None,
             app_env: std::env::var("APP_ENV").unwrap_or_else(|_| "dev".to_string()),
             created_at: get_utc_datetime(),
@@ -299,7 +294,7 @@ impl DataCard {
         Ok(card)
     }
 
-    pub fn get_registry_card(&self) -> Result<Card, CardError> {
+    pub fn get_registry_card(&self) -> Result<CardRecord, CardError> {
         let record = DataCardClientRecord {
             created_at: self.created_at,
             app_env: self.app_env.clone(),
@@ -312,10 +307,11 @@ impl DataCard {
             experimentcard_uid: self.metadata.experimentcard_uid.clone(),
             auditcard_uid: self.metadata.auditcard_uid.clone(),
             interface_type: self.metadata.interface_metadata.interface_type.to_string(),
+            opsml_version: self.opsml_version.clone(),
             username: std::env::var("OPSML_USERNAME").unwrap_or_else(|_| "guest".to_string()),
         };
 
-        Ok(Card::Data(record))
+        Ok(CardRecord::Data(record))
     }
 
     pub fn save_card(&self, path: PathBuf) -> Result<(), CardError> {
@@ -338,6 +334,10 @@ impl DataCard {
 }
 
 impl DataCard {
+    pub fn set_artifact_key(&mut self, key: ArtifactKey) {
+        self.artifact_key = Some(key);
+    }
+
     fn load_interface(&mut self, py: Python, interface: Option<&Bound<'_, PyAny>>) -> PyResult<()> {
         if let Some(interface) = interface {
             self.set_interface(interface)

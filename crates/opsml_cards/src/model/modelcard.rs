@@ -1,20 +1,23 @@
 use chrono::{DateTime, Utc};
 use opsml_crypt::decrypt_directory;
-use opsml_error::error::{CardError, OpsmlError};
+use opsml_error::{
+    error::{CardError, OpsmlError},
+    map_err_with_logging,
+};
 use opsml_interfaces::ModelInterface;
 use opsml_interfaces::{
     CatBoostModel, HuggingFaceModel, LightGBMModel, LightningModel, SklearnModel, TorchModel,
     XGBoostModel,
 };
 use opsml_interfaces::{ModelInterfaceMetadata, ModelLoadKwargs, ModelSaveKwargs};
-use opsml_types::contracts::{ArtifactKey, Card, ModelCardClientRecord};
+use opsml_types::contracts::{ArtifactKey, CardRecord, ModelCardClientRecord};
 use opsml_types::{
-    cards::BaseArgs, DataType, ModelInterfaceType, ModelType, RegistryType, SaveName, Suffix,
-    TaskType,
+    BaseArgsType, DataType, ModelInterfaceType, ModelType, RegistryType, SaveName, Suffix, TaskType,
 };
 
+use crate::utils::BaseArgs;
 use opsml_storage::storage_client;
-use opsml_utils::{create_tmp_path, get_utc_datetime, PyHelperFuncs};
+use opsml_utils::{create_tmp_path, extract_py_attr, get_utc_datetime, PyHelperFuncs};
 use pyo3::prelude::*;
 use pyo3::types::{PyDict, PyList};
 use pyo3::{IntoPyObjectExt, PyObject};
@@ -120,13 +123,13 @@ pub struct ModelCard {
     #[pyo3(get, set)]
     pub created_at: DateTime<Utc>,
 
-    pub artifact_key: Option<ArtifactKey>,
-
     #[pyo3(get)]
     pub is_card: bool,
 
     #[pyo3(get)]
     pub opsml_version: String,
+
+    artifact_key: Option<ArtifactKey>,
 }
 
 #[pymethods]
@@ -145,6 +148,7 @@ impl ModelCard {
         metadata: Option<ModelCardMetadata>,
         to_onnx: Option<bool>,
     ) -> PyResult<Self> {
+        let registry_type = RegistryType::Model;
         let tags = match tags {
             None => Vec::new(),
             Some(t) => t
@@ -152,10 +156,10 @@ impl ModelCard {
                 .map_err(|e| OpsmlError::new_err(e.to_string()))?,
         };
 
-        let base_args = BaseArgs::create_args(name, space, version, uid).map_err(|e| {
-            error!("Failed to create base args: {}", e);
-            OpsmlError::new_err(e.to_string())
-        })?;
+        let base_args = map_err_with_logging::<BaseArgsType, _>(
+            BaseArgs::create_args(name, space, version, uid, &registry_type),
+            "Failed to create base args for ModelCard",
+        )?;
 
         if interface.is_instance_of::<ModelInterface>() {
             //
@@ -165,29 +169,10 @@ impl ModelCard {
             ));
         }
 
-        let interface_type = interface
-            .getattr("interface_type")
-            .map_err(|e| OpsmlError::new_err(e.to_string()))?
-            .extract::<ModelInterfaceType>()
-            .map_err(|e| OpsmlError::new_err(e.to_string()))?;
-
-        let data_type = interface
-            .getattr("data_type")
-            .map_err(|e| OpsmlError::new_err(e.to_string()))?
-            .extract::<DataType>()
-            .map_err(|e| OpsmlError::new_err(e.to_string()))?;
-
-        let model_type = interface
-            .getattr("model_type")
-            .map_err(|e| OpsmlError::new_err(e.to_string()))?
-            .extract::<ModelType>()
-            .map_err(|e| OpsmlError::new_err(e.to_string()))?;
-
-        let task_type = interface
-            .getattr("task_type")
-            .map_err(|e| OpsmlError::new_err(e.to_string()))?
-            .extract::<TaskType>()
-            .map_err(|e| OpsmlError::new_err(e.to_string()))?;
+        let interface_type = extract_py_attr::<ModelInterfaceType>(interface, "interface_type")?;
+        let data_type = extract_py_attr::<DataType>(interface, "data_type")?;
+        let model_type = extract_py_attr::<ModelType>(interface, "model_type")?;
+        let task_type = extract_py_attr::<TaskType>(interface, "task_type")?;
 
         let mut metadata = metadata.unwrap_or_default();
         metadata.interface_metadata.interface_type = interface_type;
@@ -207,7 +192,7 @@ impl ModelCard {
             uid: base_args.3,
             tags,
             metadata,
-            registry_type: RegistryType::Model,
+            registry_type,
             to_onnx: to_onnx.unwrap_or(false),
             artifact_key: None,
             app_env: std::env::var("APP_ENV").unwrap_or_else(|_| "dev".to_string()),
@@ -327,9 +312,6 @@ impl ModelCard {
             tmp_path
         };
 
-        // download assets
-        self.download_all_artifacts(&path)?;
-
         let save_metadata = self
             .metadata
             .interface_metadata
@@ -391,7 +373,7 @@ impl ModelCard {
         self.interface = None;
     }
 
-    pub fn get_registry_card(&self) -> Result<Card, CardError> {
+    pub fn get_registry_card(&self) -> Result<CardRecord, CardError> {
         let record = ModelCardClientRecord {
             app_env: self.app_env.clone(),
             created_at: self.created_at,
@@ -407,10 +389,11 @@ impl ModelCard {
             auditcard_uid: self.metadata.auditcard_uid.clone(),
             interface_type: self.metadata.interface_metadata.interface_type.to_string(),
             task_type: self.metadata.interface_metadata.task_type.to_string(),
+            opsml_version: self.opsml_version.clone(),
             username: std::env::var("OPSML_USERNAME").unwrap_or_else(|_| "guest".to_string()),
         };
 
-        Ok(Card::Model(record))
+        Ok(CardRecord::Model(record))
     }
 
     pub fn save_card(&self, path: PathBuf) -> Result<(), CardError> {
@@ -419,9 +402,40 @@ impl ModelCard {
 
         Ok(())
     }
+
+    /// Get the model from the interface if available.
+    /// This will result in an error if the interface is not set and
+    /// the model is not available.
+    #[getter]
+    pub fn model<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyAny>> {
+        if let Some(interface) = self.interface.as_ref() {
+            // get property "model" from interface
+            let model = interface
+                .bind(py)
+                .getattr("model")
+                .map_err(|e| OpsmlError::new_err(e.to_string()))?;
+
+            // check if model is None
+            if model.is_none() {
+                Err(OpsmlError::new_err(
+                    "Model has not been set. Load the model and retry.",
+                ))
+            // return model
+            } else {
+                Ok(model)
+            }
+        } else {
+            Err(OpsmlError::new_err(
+                "Model interface not found. Load the interface and retry.",
+            ))
+        }
+    }
 }
 
 impl ModelCard {
+    pub fn set_artifact_key(&mut self, key: ArtifactKey) {
+        self.artifact_key = Some(key);
+    }
     fn update_drift_config_args(&self, py: Python) -> PyResult<()> {
         let interface = self.interface.as_ref().unwrap().bind(py);
         let drift_profiles = interface.getattr("drift_profile")?;

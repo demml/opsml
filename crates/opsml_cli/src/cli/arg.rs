@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use clap::Args;
 use opsml_error::CliError;
 use opsml_types::{contracts::CardQueryArgs, RegistryType};
@@ -5,15 +7,11 @@ use opsml_utils::clean_string;
 
 #[allow(clippy::wrong_self_convention)]
 pub trait IntoQueryArgs {
-    fn into_query_args(&self) -> Result<CardQueryArgs, CliError>;
+    fn into_query_args(&self, registry_type: RegistryType) -> Result<CardQueryArgs, CliError>;
 }
 
 #[derive(Args)]
 pub struct ListCards {
-    /// Name of the registry (data, model, experiment, prompt etc)
-    #[arg(long = "registry")]
-    pub registry: String,
-
     /// space name
     #[arg(long = "space")]
     pub space: Option<String>,
@@ -48,7 +46,7 @@ pub struct ListCards {
 }
 
 impl IntoQueryArgs for ListCards {
-    fn into_query_args(&self) -> Result<CardQueryArgs, CliError> {
+    fn into_query_args(&self, registry_type: RegistryType) -> Result<CardQueryArgs, CliError> {
         let name = self
             .name
             .clone()
@@ -60,13 +58,6 @@ impl IntoQueryArgs for ListCards {
             .clone()
             .map(|space| clean_string(&space))
             .transpose()?;
-
-        let registry_type = RegistryType::from_string(&self.registry).map_err(|e| {
-            CliError::Error(format!(
-                "Invalid registry type: {}. Error: {}",
-                self.registry, e
-            ))
-        })?;
 
         Ok(CardQueryArgs {
             registry_type,
@@ -82,12 +73,8 @@ impl IntoQueryArgs for ListCards {
     }
 }
 
-#[derive(Args)]
+#[derive(Args, Clone)]
 pub struct DownloadCard {
-    /// Name of the registry (data, model, experiment, prompt etc)
-    #[arg(long = "registry")]
-    pub registry: String,
-
     /// Card space
     #[arg(long = "space")]
     pub space: Option<String>,
@@ -109,8 +96,22 @@ pub struct DownloadCard {
     pub write_dir: String,
 }
 
+impl DownloadCard {
+    pub fn write_path(&self) -> PathBuf {
+        PathBuf::from(&self.write_dir)
+    }
+
+    pub fn deck_path(&self) -> PathBuf {
+        if self.write_dir == *"artifacts" {
+            PathBuf::from("card_deck")
+        } else {
+            PathBuf::from(&self.write_dir)
+        }
+    }
+}
+
 impl IntoQueryArgs for DownloadCard {
-    fn into_query_args(&self) -> Result<CardQueryArgs, CliError> {
+    fn into_query_args(&self, registry_type: RegistryType) -> Result<CardQueryArgs, CliError> {
         let name = self
             .name
             .clone()
@@ -122,13 +123,6 @@ impl IntoQueryArgs for DownloadCard {
             .clone()
             .map(|space| clean_string(&space))
             .transpose()?;
-
-        let registry_type = RegistryType::from_string(&self.registry).map_err(|e| {
-            CliError::Error(format!(
-                "Invalid registry type: {}. Error: {}",
-                self.registry, e
-            ))
-        })?;
 
         Ok(CardQueryArgs {
             uid: self.uid.clone(),

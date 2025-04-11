@@ -430,12 +430,12 @@ impl SqliteQueryHelper {
     }
 
     pub fn get_promptcard_insert_query() -> String {
-        format!("INSERT INTO {} (uid, app_env, name, space, major, minor, patch, version, tags, experimentcard_uid, auditcard_uid, pre_tag, build_tag, username) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", CardTable::Prompt)
+        format!("INSERT INTO {} (uid, app_env, name, space, major, minor, patch, version, tags, experimentcard_uid, auditcard_uid, pre_tag, build_tag, username, opsml_version) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", CardTable::Prompt)
             .to_string()
     }
 
     pub fn get_datacard_insert_query() -> String {
-        format!("INSERT INTO {} (uid, app_env, name, space, major, minor, patch, version, data_type, interface_type, tags, experimentcard_uid, auditcard_uid, pre_tag, build_tag, username) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", CardTable::Data)
+        format!("INSERT INTO {} (uid, app_env, name, space, major, minor, patch, version, data_type, interface_type, tags, experimentcard_uid, auditcard_uid, pre_tag, build_tag, username, opsml_version) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", CardTable::Data)
             .to_string()
     }
 
@@ -460,9 +460,10 @@ impl SqliteQueryHelper {
         auditcard_uid, 
         pre_tag, 
         build_tag,
-        username
+        username,
+        opsml_version
         ) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             CardTable::Model
         )
         .to_string()
@@ -482,13 +483,15 @@ impl SqliteQueryHelper {
         tags, 
         datacard_uids,
         modelcard_uids, 
-        experimentcard_uids,
         promptcard_uids,
+        card_deck_uids,
+        experimentcard_uids,
         pre_tag, 
         build_tag,
-        username
+        username,
+        opsml_version
         ) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             CardTable::Experiment
         )
         .to_string()
@@ -512,10 +515,35 @@ impl SqliteQueryHelper {
         experimentcard_uids, 
         pre_tag, 
         build_tag,
-        username
+        username,
+        opsml_version
         ) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             CardTable::Audit
+        )
+        .to_string()
+    }
+
+    pub fn get_carddeck_insert_query() -> String {
+        format!("INSERT INTO {} (uid, app_env, name, space, major, minor, patch, version, pre_tag, build_tag, cards, username, opsml_version) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", CardTable::Deck)
+            .to_string()
+    }
+
+    pub fn get_carddeck_update_query() -> String {
+        format!(
+            "UPDATE {} SET 
+            app_env = ?, 
+            name = ?, 
+            space = ?, 
+            major = ?, 
+            minor = ?, 
+            patch = ?, 
+            version = ?, 
+            cards = ?,
+            username = ?,
+            opsml_version = ?
+            WHERE uid = ?",
+            CardTable::Deck
         )
         .to_string()
     }
@@ -535,7 +563,8 @@ impl SqliteQueryHelper {
         auditcard_uid = ?, 
         pre_tag = ?, 
         build_tag = ?,
-        username = ?
+        username = ?,
+        opsml_version = ?
         WHERE uid = ?",
             CardTable::Prompt
         )
@@ -559,7 +588,8 @@ impl SqliteQueryHelper {
         auditcard_uid = ?, 
         pre_tag = ?, 
         build_tag = ?,
-        username = ?
+        username = ?,
+        opsml_version = ?
         WHERE uid = ?",
             CardTable::Data
         )
@@ -586,7 +616,8 @@ impl SqliteQueryHelper {
         auditcard_uid = ?, 
         pre_tag = ?, 
         build_tag = ?,
-        username = ?
+        username = ?,
+        opsml_version = ?
         WHERE uid = ?",
             CardTable::Model
         )
@@ -606,11 +637,13 @@ impl SqliteQueryHelper {
         tags = ?, 
         datacard_uids = ?, 
         modelcard_uids = ?, 
-        experimentcard_uids = ?,  
         promptcard_uids = ?,
+        card_deck_uids = ?,
+        experimentcard_uids = ?,  
         pre_tag = ?, 
         build_tag = ?,
-        username = ?
+        username = ?,
+        opsml_version = ?
         WHERE uid = ?",
             CardTable::Experiment
         )
@@ -634,7 +667,8 @@ impl SqliteQueryHelper {
         experimentcard_uids = ?, 
         pre_tag = ?, 
         build_tag = ?,
-        username = ?
+        username = ?,
+        opsml_version = ?
         WHERE uid = ?",
             CardTable::Audit
         )

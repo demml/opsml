@@ -3,8 +3,8 @@ use opsml_error::error::VersionError;
 use opsml_error::{ServerError, SqlError};
 use opsml_types::cards::{CardTable, ParameterValue};
 use opsml_types::contracts::{
-    AuditCardClientRecord, Card, DataCardClientRecord, ExperimentCardClientRecord,
-    ModelCardClientRecord, PromptCardClientRecord,
+    AuditCardClientRecord, CardDeckClientRecord, CardEntry, CardRecord, DataCardClientRecord,
+    ExperimentCardClientRecord, ModelCardClientRecord, PromptCardClientRecord,
 };
 use opsml_types::{CommonKwargs, DataType, ModelType, RegistryType};
 use opsml_utils::create_uuid7;
@@ -168,6 +168,7 @@ pub struct DataCardRecord {
     pub experimentcard_uid: Option<String>,
     pub auditcard_uid: Option<String>,
     pub interface_type: String,
+    pub opsml_version: String,
     pub username: String,
 }
 
@@ -183,6 +184,7 @@ impl DataCardRecord {
         auditcard_uid: Option<String>,
         interface_type: String,
         username: String,
+        opsml_version: String,
     ) -> Self {
         let created_at = get_utc_datetime();
         let app_env = env::var("APP_ENV").unwrap_or_else(|_| "development".to_string());
@@ -205,6 +207,7 @@ impl DataCardRecord {
             experimentcard_uid,
             auditcard_uid,
             interface_type,
+            opsml_version,
             username,
         }
     }
@@ -240,6 +243,7 @@ impl DataCardRecord {
             experimentcard_uid: client_card.experimentcard_uid,
             auditcard_uid: client_card.auditcard_uid,
             interface_type: client_card.interface_type,
+            opsml_version: client_card.opsml_version,
             username: client_card.username,
         })
     }
@@ -264,6 +268,7 @@ impl Default for DataCardRecord {
             experimentcard_uid: None,
             auditcard_uid: None,
             interface_type: CommonKwargs::Undefined.to_string(),
+            opsml_version: env!("CARGO_PKG_VERSION").to_string(),
             username: CommonKwargs::Undefined.to_string(),
         }
     }
@@ -290,6 +295,7 @@ pub struct ModelCardRecord {
     pub auditcard_uid: Option<String>,
     pub interface_type: String,
     pub task_type: String,
+    pub opsml_version: String,
     pub username: String,
 }
 
@@ -307,6 +313,7 @@ impl ModelCardRecord {
         auditcard_uid: Option<String>,
         interface_type: String,
         task_type: String,
+        opsml_version: String,
         username: String,
     ) -> Self {
         let created_at = get_utc_datetime();
@@ -333,6 +340,7 @@ impl ModelCardRecord {
             auditcard_uid,
             interface_type,
             task_type,
+            opsml_version,
             username,
         }
     }
@@ -372,6 +380,7 @@ impl ModelCardRecord {
             auditcard_uid: client_card.auditcard_uid,
             interface_type: client_card.interface_type,
             task_type: client_card.task_type,
+            opsml_version: client_card.opsml_version,
             username: client_card.username,
         })
     }
@@ -399,6 +408,7 @@ impl Default for ModelCardRecord {
             auditcard_uid: None,
             interface_type: CommonKwargs::Undefined.to_string(),
             task_type: CommonKwargs::Undefined.to_string(),
+            opsml_version: env!("CARGO_PKG_VERSION").to_string(),
             username: CommonKwargs::Undefined.to_string(),
         }
     }
@@ -421,7 +431,9 @@ pub struct ExperimentCardRecord {
     pub datacard_uids: Json<Vec<String>>,
     pub modelcard_uids: Json<Vec<String>>,
     pub promptcard_uids: Json<Vec<String>>,
+    pub card_deck_uids: Json<Vec<String>>,
     pub experimentcard_uids: Json<Vec<String>>,
+    pub opsml_version: String,
     pub username: String,
 }
 
@@ -443,7 +455,9 @@ impl Default for ExperimentCardRecord {
             datacard_uids: Json(Vec::new()),
             modelcard_uids: Json(Vec::new()),
             promptcard_uids: Json(Vec::new()),
+            card_deck_uids: Json(Vec::new()),
             experimentcard_uids: Json(Vec::new()),
+            opsml_version: env!("CARGO_PKG_VERSION").to_string(),
             username: CommonKwargs::Undefined.to_string(),
         }
     }
@@ -459,7 +473,9 @@ impl ExperimentCardRecord {
         datacard_uids: Vec<String>,
         modelcard_uids: Vec<String>,
         promptcard_uids: Vec<String>,
+        card_deck_uids: Vec<String>,
         experimentcard_uids: Vec<String>,
+        opsml_version: String,
         username: String,
     ) -> Self {
         let created_at = get_utc_datetime();
@@ -482,7 +498,9 @@ impl ExperimentCardRecord {
             datacard_uids: Json(datacard_uids),
             modelcard_uids: Json(modelcard_uids),
             promptcard_uids: Json(promptcard_uids),
+            card_deck_uids: Json(card_deck_uids),
             experimentcard_uids: Json(experimentcard_uids),
+            opsml_version,
             username,
         }
     }
@@ -518,7 +536,9 @@ impl ExperimentCardRecord {
             datacard_uids: Json(client_card.datacard_uids),
             modelcard_uids: Json(client_card.modelcard_uids),
             promptcard_uids: Json(client_card.promptcard_uids),
+            card_deck_uids: Json(client_card.card_deck_uids),
             experimentcard_uids: Json(client_card.experimentcard_uids),
+            opsml_version: client_card.opsml_version,
             username: client_card.username,
         })
     }
@@ -542,6 +562,7 @@ pub struct AuditCardRecord {
     pub datacard_uids: Json<Vec<String>>,
     pub modelcard_uids: Json<Vec<String>>,
     pub experimentcard_uids: Json<Vec<String>>,
+    pub opsml_version: String,
     pub username: String,
 }
 
@@ -556,6 +577,7 @@ impl AuditCardRecord {
         datacard_uids: Vec<String>,
         modelcard_uids: Vec<String>,
         experimentcard_uids: Vec<String>,
+        opsml_version: String,
         username: String,
     ) -> Self {
         let created_at = get_utc_datetime();
@@ -579,6 +601,7 @@ impl AuditCardRecord {
             datacard_uids: Json(datacard_uids),
             modelcard_uids: Json(modelcard_uids),
             experimentcard_uids: Json(experimentcard_uids),
+            opsml_version,
             username,
         }
     }
@@ -614,6 +637,7 @@ impl AuditCardRecord {
             datacard_uids: Json(client_card.datacard_uids),
             modelcard_uids: Json(client_card.modelcard_uids),
             experimentcard_uids: Json(client_card.experimentcard_uids),
+            opsml_version: client_card.opsml_version,
             username: client_card.username,
         })
     }
@@ -638,6 +662,7 @@ impl Default for AuditCardRecord {
             datacard_uids: Json(Vec::new()),
             modelcard_uids: Json(Vec::new()),
             experimentcard_uids: Json(Vec::new()),
+            opsml_version: env!("CARGO_PKG_VERSION").to_string(),
             username: CommonKwargs::Undefined.to_string(),
         }
     }
@@ -659,6 +684,7 @@ pub struct PromptCardRecord {
     pub tags: Json<Vec<String>>,
     pub experimentcard_uid: Option<String>,
     pub auditcard_uid: Option<String>,
+    pub opsml_version: String,
     pub username: String,
 }
 
@@ -671,6 +697,7 @@ impl PromptCardRecord {
         tags: Vec<String>,
         experimentcard_uid: Option<String>,
         auditcard_uid: Option<String>,
+        opsml_version: String,
         username: String,
     ) -> Self {
         let created_at = get_utc_datetime();
@@ -692,6 +719,7 @@ impl PromptCardRecord {
             tags: Json(tags),
             experimentcard_uid,
             auditcard_uid,
+            opsml_version,
             username,
         }
     }
@@ -726,6 +754,7 @@ impl PromptCardRecord {
             tags: Json(client_card.tags),
             experimentcard_uid: client_card.experimentcard_uid,
             auditcard_uid: client_card.auditcard_uid,
+            opsml_version: client_card.opsml_version,
             username: client_card.username,
         })
     }
@@ -748,6 +777,111 @@ impl Default for PromptCardRecord {
             tags: Json(Vec::new()),
             experimentcard_uid: None,
             auditcard_uid: None,
+            opsml_version: env!("CARGO_PKG_VERSION").to_string(),
+            username: CommonKwargs::Undefined.to_string(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+pub struct CardDeckRecord {
+    pub uid: String,
+    pub created_at: DateTime<Utc>,
+    pub app_env: String,
+    pub space: String,
+    pub name: String,
+    pub major: i32,
+    pub minor: i32,
+    pub patch: i32,
+    pub version: String,
+    pub pre_tag: Option<String>,
+    pub build_tag: Option<String>,
+    pub cards: Json<Vec<CardEntry>>,
+    pub opsml_version: String,
+    pub username: String,
+}
+
+impl CardDeckRecord {
+    pub fn new(
+        name: String,
+        space: String,
+        version: Version,
+        cards: Vec<CardEntry>,
+        opsml_version: String,
+        username: String,
+    ) -> Self {
+        let created_at = get_utc_datetime();
+        let app_env = env::var("APP_ENV").unwrap_or_else(|_| "development".to_string());
+        let uid = create_uuid7();
+
+        CardDeckRecord {
+            uid,
+            created_at,
+            app_env,
+            name,
+            space,
+            major: version.major as i32,
+            minor: version.minor as i32,
+            patch: version.patch as i32,
+            pre_tag: version.pre.to_string().parse().ok(),
+            build_tag: version.build.to_string().parse().ok(),
+            version: version.to_string(),
+            cards: Json(cards),
+            opsml_version,
+            username,
+        }
+    }
+
+    pub fn uri(&self) -> String {
+        format!(
+            "{}/{}/{}/v{}",
+            CardTable::Deck,
+            self.space,
+            self.name,
+            self.version
+        )
+    }
+
+    pub fn from_client_card(client_card: CardDeckClientRecord) -> Result<Self, SqlError> {
+        let version = Version::parse(&client_card.version).map_err(|_| {
+            SqlError::GeneralError(format!("Failed to parse version: {}", client_card.version))
+        })?;
+
+        Ok(CardDeckRecord {
+            uid: client_card.uid,
+            created_at: client_card.created_at,
+            app_env: client_card.app_env,
+            name: client_card.name,
+            space: client_card.space,
+            major: version.major as i32,
+            minor: version.minor as i32,
+            patch: version.patch as i32,
+            pre_tag: Some(version.pre.to_string()),
+            build_tag: Some(version.build.to_string()),
+            version: client_card.version,
+            cards: Json(client_card.cards),
+            opsml_version: client_card.opsml_version,
+            username: client_card.username,
+        })
+    }
+}
+
+impl Default for CardDeckRecord {
+    fn default() -> Self {
+        CardDeckRecord {
+            uid: create_uuid7(),
+            created_at: get_utc_datetime(),
+            app_env: env::var("APP_ENV").unwrap_or_else(|_| "development".to_string()),
+            name: CommonKwargs::Undefined.to_string(),
+            space: CommonKwargs::Undefined.to_string(),
+            major: 1,
+            minor: 0,
+            patch: 0,
+            pre_tag: None,
+            build_tag: None,
+            version: Version::new(1, 0, 0).to_string(),
+            cards: Json(Vec::new()),
+            opsml_version: env!("CARGO_PKG_VERSION").to_string(),
             username: CommonKwargs::Undefined.to_string(),
         }
     }
@@ -762,6 +896,7 @@ pub enum CardResults {
     Experiment(Vec<ExperimentCardRecord>),
     Audit(Vec<AuditCardRecord>),
     Prompt(Vec<PromptCardRecord>),
+    Deck(Vec<CardDeckRecord>),
 }
 
 impl CardResults {
@@ -772,6 +907,7 @@ impl CardResults {
             CardResults::Experiment(cards) => cards.len(),
             CardResults::Audit(cards) => cards.len(),
             CardResults::Prompt(cards) => cards.len(),
+            CardResults::Deck(cards) => cards.len(),
         }
     }
     pub fn is_empty(&self) -> bool {
@@ -781,6 +917,7 @@ impl CardResults {
             CardResults::Experiment(cards) => cards.is_empty(),
             CardResults::Audit(cards) => cards.is_empty(),
             CardResults::Prompt(cards) => cards.is_empty(),
+            CardResults::Deck(cards) => cards.is_empty(),
         }
     }
     pub fn to_json(&self) -> Vec<String> {
@@ -805,6 +942,10 @@ impl CardResults {
                 .iter()
                 .map(|card| serde_json::to_string_pretty(card).unwrap())
                 .collect(),
+            CardResults::Deck(cards) => cards
+                .iter()
+                .map(|card| serde_json::to_string_pretty(card).unwrap())
+                .collect(),
         }
     }
 }
@@ -816,6 +957,7 @@ pub enum ServerCard {
     Experiment(ExperimentCardRecord),
     Audit(AuditCardRecord),
     Prompt(PromptCardRecord),
+    Deck(CardDeckRecord),
 }
 
 impl ServerCard {
@@ -826,6 +968,7 @@ impl ServerCard {
             ServerCard::Experiment(card) => card.uid.as_str(),
             ServerCard::Audit(card) => card.uid.as_str(),
             ServerCard::Prompt(card) => card.uid.as_str(),
+            ServerCard::Deck(card) => card.uid.as_str(),
         }
     }
 
@@ -836,6 +979,7 @@ impl ServerCard {
             ServerCard::Experiment(_) => RegistryType::Experiment.to_string(),
             ServerCard::Audit(_) => RegistryType::Audit.to_string(),
             ServerCard::Prompt(_) => RegistryType::Prompt.to_string(),
+            ServerCard::Deck(_) => RegistryType::Deck.to_string(),
         }
     }
 
@@ -846,6 +990,7 @@ impl ServerCard {
             ServerCard::Experiment(card) => card.version.clone(),
             ServerCard::Audit(card) => card.version.clone(),
             ServerCard::Prompt(card) => card.version.clone(),
+            ServerCard::Deck(card) => card.version.clone(),
         }
     }
 
@@ -856,6 +1001,7 @@ impl ServerCard {
             ServerCard::Experiment(card) => card.space.clone(),
             ServerCard::Audit(card) => card.space.clone(),
             ServerCard::Prompt(card) => card.space.clone(),
+            ServerCard::Deck(card) => card.space.clone(),
         }
     }
 
@@ -866,6 +1012,7 @@ impl ServerCard {
             ServerCard::Experiment(card) => card.name.clone(),
             ServerCard::Audit(card) => card.name.clone(),
             ServerCard::Prompt(card) => card.name.clone(),
+            ServerCard::Deck(card) => card.name.clone(),
         }
     }
 
@@ -876,6 +1023,7 @@ impl ServerCard {
             ServerCard::Experiment(card) => card.uri(),
             ServerCard::Audit(card) => card.uri(),
             ServerCard::Prompt(card) => card.uri(),
+            ServerCard::Deck(card) => card.uri(),
         }
     }
 
@@ -886,6 +1034,7 @@ impl ServerCard {
             ServerCard::Experiment(card) => card.app_env.clone(),
             ServerCard::Audit(card) => card.app_env.clone(),
             ServerCard::Prompt(card) => card.app_env.clone(),
+            ServerCard::Deck(card) => card.app_env.clone(),
         }
     }
 
@@ -896,6 +1045,7 @@ impl ServerCard {
             ServerCard::Experiment(card) => card.created_at,
             ServerCard::Audit(card) => card.created_at,
             ServerCard::Prompt(card) => card.created_at,
+            ServerCard::Deck(card) => card.created_at,
         }
     }
 
@@ -903,17 +1053,22 @@ impl ServerCard {
     ///
     /// # Arguments
     /// * `card` - A `Card` enum variant.
-    pub fn from_card(card: Card) -> Result<Self, ServerError> {
+    pub fn from_card(card: CardRecord) -> Result<Self, ServerError> {
         match card {
-            Card::Data(card) => Ok(ServerCard::Data(DataCardRecord::from_client_card(card)?)),
-            Card::Model(card) => Ok(ServerCard::Model(ModelCardRecord::from_client_card(card)?)),
-            Card::Experiment(card) => Ok(ServerCard::Experiment(
+            CardRecord::Data(card) => Ok(ServerCard::Data(DataCardRecord::from_client_card(card)?)),
+            CardRecord::Model(card) => {
+                Ok(ServerCard::Model(ModelCardRecord::from_client_card(card)?))
+            }
+            CardRecord::Experiment(card) => Ok(ServerCard::Experiment(
                 ExperimentCardRecord::from_client_card(card)?,
             )),
-            Card::Audit(card) => Ok(ServerCard::Audit(AuditCardRecord::from_client_card(card)?)),
-            Card::Prompt(card) => Ok(ServerCard::Prompt(PromptCardRecord::from_client_card(
+            CardRecord::Audit(card) => {
+                Ok(ServerCard::Audit(AuditCardRecord::from_client_card(card)?))
+            }
+            CardRecord::Prompt(card) => Ok(ServerCard::Prompt(PromptCardRecord::from_client_card(
                 card,
             )?)),
+            CardRecord::Deck(card) => Ok(ServerCard::Deck(CardDeckRecord::from_client_card(card)?)),
         }
     }
 }

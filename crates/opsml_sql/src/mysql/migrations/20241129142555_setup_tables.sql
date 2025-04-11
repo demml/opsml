@@ -6,8 +6,8 @@ CREATE TABLE IF NOT EXISTS opsml_data_registry (
     uid VARCHAR(64) PRIMARY KEY,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     app_env VARCHAR(32) DEFAULT 'development',
-    name VARCHAR(255),
     space VARCHAR(255),
+    name VARCHAR(255),
     major INT NOT NULL,
     minor INT NOT NULL,
     patch INT NOT NULL,
@@ -19,6 +19,7 @@ CREATE TABLE IF NOT EXISTS opsml_data_registry (
     experimentcard_uid VARCHAR(64),
     auditcard_uid VARCHAR(64),
     interface_type VARCHAR(255) NOT NULL DEFAULT 'undefined',
+    opsml_version VARCHAR(255) NOT NULL DEFAULT '0.0.0',
     username VARCHAR(255) NOT NULL DEFAULT 'guest'
 );
 
@@ -27,8 +28,8 @@ CREATE TABLE IF NOT EXISTS opsml_model_registry (
     uid VARCHAR(64) PRIMARY KEY,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     app_env VARCHAR(32) DEFAULT 'development',
-    name VARCHAR(128),
     space VARCHAR(255),
+    name VARCHAR(128),
     major INT NOT NULL,
     minor INT NOT NULL,
     patch INT NOT NULL,
@@ -43,6 +44,7 @@ CREATE TABLE IF NOT EXISTS opsml_model_registry (
     auditcard_uid VARCHAR(64),
     interface_type  VARCHAR(255) NOT NULL DEFAULT 'undefined',
     task_type VARCHAR(255) NOT NULL DEFAULT 'undefined',
+    opsml_version VARCHAR(255) NOT NULL DEFAULT '0.0.0',
     username VARCHAR(255) NOT NULL DEFAULT 'guest'
 );
 
@@ -51,8 +53,8 @@ CREATE TABLE IF NOT EXISTS opsml_experiment_registry (
     uid VARCHAR(64) PRIMARY KEY,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     app_env VARCHAR(32) DEFAULT 'development',
-    name VARCHAR(255),
     space VARCHAR(255),
+    name VARCHAR(255),
     major INT NOT NULL,
     minor INT NOT NULL,
     patch INT NOT NULL,
@@ -60,10 +62,12 @@ CREATE TABLE IF NOT EXISTS opsml_experiment_registry (
     build_tag VARCHAR(255),
     version VARCHAR(255),
     tags JSON,
-    datacard_uids JSON,
-    modelcard_uids JSON,
-    promptcard_uids JSON,
-    experimentcard_uids JSON,
+    datacard_uids JSON NOT NULL DEFAULT ('[]'),
+    modelcard_uids JSON NOT NULL DEFAULT ('[]'),
+    promptcard_uids JSON NOT NULL DEFAULT ('[]'),
+    card_deck_uids JSON NOT NULL DEFAULT ('[]'),
+    experimentcard_uids JSON NOT NULL DEFAULT ('[]'),
+    opsml_version VARCHAR(255) NOT NULL DEFAULT '0.0.0',
     username VARCHAR(255) NOT NULL DEFAULT 'guest'
 );
 
@@ -72,8 +76,8 @@ CREATE TABLE IF NOT EXISTS opsml_audit_registry (
     uid VARCHAR(64) PRIMARY KEY,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     app_env VARCHAR(32) DEFAULT 'development',
-    name VARCHAR(255),
     space VARCHAR(255),
+    name VARCHAR(255),
     major INT NOT NULL,
     minor INT NOT NULL,
     patch INT NOT NULL,
@@ -85,6 +89,24 @@ CREATE TABLE IF NOT EXISTS opsml_audit_registry (
     datacard_uids JSON,
     modelcard_uids JSON,
     experimentcard_uids JSON,
+    opsml_version VARCHAR(255) NOT NULL DEFAULT '0.0.0',
+    username VARCHAR(255) NOT NULL DEFAULT 'guest'
+);
+
+CREATE TABLE IF NOT EXISTS opsml_deck_registry (
+    uid VARCHAR(64) PRIMARY KEY,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    app_env VARCHAR(32) DEFAULT 'development',
+    space VARCHAR(255),
+    name VARCHAR(255),
+    major INT NOT NULL,
+    minor INT NOT NULL,
+    patch INT NOT NULL,
+    pre_tag VARCHAR(255),
+    build_tag VARCHAR(255),
+    version VARCHAR(255),
+    cards JSON NOT NULL DEFAULT ('[]'),
+    opsml_version VARCHAR(255) NOT NULL DEFAULT '0.0.0',
     username VARCHAR(255) NOT NULL DEFAULT 'guest'
 );
 
@@ -179,5 +201,6 @@ CREATE TABLE IF NOT EXISTS opsml_prompt_registry (
     tags JSON,
     experimentcard_uid VARCHAR(64),
     auditcard_uid VARCHAR(64),
+    opsml_version VARCHAR(64),
     username VARCHAR(255) NOT NULL DEFAULT 'guest'
 );

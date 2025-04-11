@@ -185,6 +185,9 @@ pub async fn list_cards(
         CardResults::Prompt(data) => {
             Json(data.into_iter().map(convert_promptcard).collect::<Vec<_>>())
         }
+        CardResults::Deck(data) => {
+            Json(data.into_iter().map(convert_card_deck).collect::<Vec<_>>())
+        }
     };
 
     // Create response and add audit context

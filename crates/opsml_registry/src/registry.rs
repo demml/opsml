@@ -1,5 +1,7 @@
 use crate::base::OpsmlRegistry;
+use crate::utils::verify_card_rs;
 use crate::utils::{check_if_card, download_card, upload_card_artifacts, verify_card};
+use opsml_cards::traits::OpsmlCard;
 use opsml_colors::Colorize;
 use opsml_error::error::OpsmlError;
 use opsml_error::error::RegistryError;
@@ -15,15 +17,12 @@ use tracing::{debug, error, instrument};
 /// Extract registry type from a PyAny object
 ///
 /// # Arguments
-///
 /// * `registry_type` - PyAny object
 ///
 /// # Returns
-///
 /// * `Result<RegistryType, OpsmlError>` - Result
 ///
 /// # Errors
-///
 /// * `OpsmlError` - Error
 fn extract_registry_type(registry_type: &Bound<'_, PyAny>) -> PyResult<RegistryType> {
     match registry_type.is_instance_of::<RegistryType>() {
@@ -113,7 +112,7 @@ impl CardRegistry {
         tags: Option<Vec<String>>,
         sort_by_timestamp: Option<bool>,
         limit: i32,
-    ) -> PyResult<CardList> {
+    ) -> Result<CardList, RegistryError> {
         debug!(
             "Listing cards - {:?} - {:?} - {:?} - {:?} - {:?} - {:?} - {:?} - {:?}",
             uid, name, space, version, max_date, tags, limit, sort_by_timestamp
@@ -135,10 +134,7 @@ impl CardRegistry {
             registry_type: self.registry_type.clone(),
         };
 
-        let cards = self.registry.list_cards(query_args).map_err(|e| {
-            error!("Failed to list cards: {}", e);
-            OpsmlError::new_err(e.to_string())
-        })?;
+        let cards = self.registry.list_cards(query_args)?;
 
         Ok(CardList { cards })
     }
@@ -171,7 +167,7 @@ impl CardRegistry {
     #[pyo3(signature = (uid=None, space=None, name=None, version=None, interface=None))]
     #[instrument(skip_all)]
     pub fn load_card<'py>(
-        &mut self,
+        &self,
         py: Python<'py>,
         uid: Option<String>,
         space: Option<String>,
@@ -192,7 +188,7 @@ impl CardRegistry {
         }
 
         // Wrap all operations in a single block_on to handle async operations
-        let key = self.registry.load_card(CardQueryArgs {
+        let key = self.registry.get_key(CardQueryArgs {
             uid,
             name,
             space,
@@ -203,6 +199,8 @@ impl CardRegistry {
 
         let card =
             download_card(py, key, interface).map_err(|e| OpsmlError::new_err(e.to_string()))?;
+
+        //
 
         Ok(card)
     }
@@ -351,7 +349,7 @@ impl CardRegistry {
         let tmp_path = tmp_dir.into_path();
 
         match registry_type {
-            RegistryType::Experiment | RegistryType::Prompt => {
+            RegistryType::Experiment | RegistryType::Prompt | RegistryType::Deck => {
                 card.call_method1("save", (tmp_path.to_path_buf(),))
                     .map_err(|e| {
                         error!("Failed to save card: {}", e);
@@ -396,7 +394,7 @@ impl CardRegistry {
         let tmp_path = tmp_dir.into_path();
 
         match registry_type {
-            RegistryType::Experiment => {
+            RegistryType::Experiment | RegistryType::Deck => {
                 card.call_method1("save", (tmp_path.to_path_buf(),))
                     .map_err(|e| {
                         error!("Failed to save card: {}", e);
@@ -440,7 +438,7 @@ impl CardRegistry {
                 error!("Failed to get registry card: {}", e);
                 RegistryError::Error("Failed to get registry card".to_string())
             })?
-            .extract::<Card>()
+            .extract::<CardRecord>()
             .map_err(|e| {
                 error!("Failed to extract registry card: {}", e);
                 RegistryError::Error("Failed to extract registry card".to_string())
@@ -510,7 +508,7 @@ impl CardRegistry {
                 error!("Failed to get registry card: {}", e);
                 RegistryError::Error("Failed to get registry card".to_string())
             })?
-            .extract::<Card>()
+            .extract::<CardRecord>()
             .map_err(|e| {
                 error!("Failed to extract registry card: {}", e);
                 RegistryError::Error("Failed to extract registry card".to_string())
@@ -525,7 +523,7 @@ impl CardRegistry {
         // get key to re-save Card.json
         let uid = registry_card.uid().to_string();
         let key = registry
-            .load_card(CardQueryArgs {
+            .get_key(CardQueryArgs {
                 uid: Some(uid),
                 registry_type: registry_type.clone(),
                 ..Default::default()
@@ -549,6 +547,9 @@ impl CardRegistry {
     }
 }
 
+/// implementation for rust-based functionality
+/// This is done because CardRegistry is intertwined with python meaning a python runtime is needed
+/// There are some areas where we can register cards via rust (CLI) and so we do not need to interact with python, nor return python errors
 impl CardRegistry {
     pub fn rust_new(registry_type: &RegistryType) -> Result<Self, RegistryError> {
         let registry = OpsmlRegistry::new(registry_type.clone())?;
@@ -557,6 +558,119 @@ impl CardRegistry {
             table_name: CardTable::from_registry_type(registry_type).to_string(),
             registry,
         })
+    }
+
+    #[instrument(skip_all)]
+    pub fn register_card_rs<T>(
+        &self,
+        card: &mut T,
+        version_type: VersionType,
+    ) -> Result<(), RegistryError>
+    where
+        T: OpsmlCard,
+    {
+        // Verify card for registration
+        debug!("Verifying card");
+        verify_card_rs(card)?;
+
+        // Register card
+        debug!("Registering card");
+        let create_response = self._register_card_rs(card, version_type)?;
+
+        // Update card attributes
+        debug!("Updating card with server response");
+        Self::update_card_with_server_response_rs(&create_response, card)?;
+
+        // Save card artifacts to temp path
+        debug!("Saving card artifacts");
+        let tmp_path = Self::save_card_artifacts_rs(card)?;
+
+        // Save artifacts
+        debug!("Uploading card artifacts");
+        upload_card_artifacts(tmp_path, &create_response.key)?;
+
+        debug!("Successfully registered card");
+        Ok(())
+    }
+
+    #[instrument(skip_all)]
+    fn save_card_artifacts_rs<T>(card: &T) -> Result<PathBuf, RegistryError>
+    where
+        T: OpsmlCard,
+    {
+        let tmp_dir = TempDir::new().map_err(|e| {
+            error!("Failed to create temporary directory: {}", e);
+            RegistryError::Error("Failed to create temporary directory".to_string())
+        })?;
+
+        let tmp_path = tmp_dir.into_path();
+
+        card.save(tmp_path.clone()).map_err(|e| {
+            error!("Failed to save card: {}", e);
+            RegistryError::Error("Failed to save card".to_string())
+        })?;
+
+        Ok(tmp_path)
+    }
+
+    #[instrument(skip_all)]
+    fn update_card_with_server_response_rs<T>(
+        response: &CreateCardResponse,
+        card: &mut T,
+    ) -> Result<(), RegistryError>
+    where
+        T: OpsmlCard,
+    {
+        card.set_uid(response.key.uid.clone());
+        card.set_version(response.version.clone());
+        card.set_created_at(response.created_at);
+        card.set_app_env(response.app_env.clone());
+        Ok(())
+    }
+
+    /// Rust version of _register card
+    fn _register_card_rs<T>(
+        &self,
+        card: &T,
+        version_type: VersionType,
+    ) -> Result<CreateCardResponse, RegistryError>
+    where
+        T: OpsmlCard,
+    {
+        let registry_card = card
+            .get_registry_card()
+            .map_err(|_| RegistryError::FailedToGetRegistryRecordError)?;
+        let version = card.get_version();
+
+        // get version
+        let version: Option<String> = if version == CommonKwargs::BaseVersion.to_string() {
+            None
+        } else {
+            Some(version.clone())
+        };
+
+        let response =
+            self.registry
+                .create_card(registry_card, version, version_type, None, None)?;
+
+        println!(
+            "{} - {} - {}/{} - v{}",
+            Colorize::green("Registered card"),
+            Colorize::purple(&self.registry_type().to_string()),
+            response.space,
+            response.name,
+            response.version
+        );
+
+        debug!(
+            "Successfully registered card - {} - {}/{} - v{}",
+            self.registry_type(),
+            response.space,
+            response.name,
+            response.version
+        );
+
+        Ok(response)
     }
 }
 
@@ -574,6 +688,9 @@ pub struct CardRegistries {
 
     #[pyo3(get)]
     pub prompt: CardRegistry,
+
+    #[pyo3(get)]
+    pub deck: CardRegistry,
 }
 
 #[pymethods]
@@ -586,17 +703,19 @@ impl CardRegistries {
     /// it can be shared, cloned and used across the different registries in order to prevent deadlocks.
     #[new]
     #[instrument(skip_all)]
-    pub fn new() -> PyResult<Self> {
+    pub fn new() -> Result<Self, RegistryError> {
         let experiment = CardRegistry::rust_new(&RegistryType::Experiment)?;
         let model = CardRegistry::rust_new(&RegistryType::Model)?;
         let data = CardRegistry::rust_new(&RegistryType::Data)?;
         let prompt = CardRegistry::rust_new(&RegistryType::Prompt)?;
+        let deck = CardRegistry::rust_new(&RegistryType::Deck)?;
 
         Ok(Self {
             experiment,
             model,
             data,
             prompt,
+            deck,
         })
     }
 }

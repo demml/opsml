@@ -3,6 +3,7 @@
 from .. import card
 
 Card = card.Card
+CardRecord = card.CardRecord
 CardList = card.CardList
 CardRegistry = card.CardRegistry
 CardRegistries = card.CardRegistries
@@ -16,10 +17,12 @@ ModelCardMetadata = card.ModelCardMetadata
 ExperimentCard = card.ExperimentCard
 ComputeEnvironment = card.ComputeEnvironment
 PromptCard = card.PromptCard
+CardDeck = card.CardDeck
 
 
 __all__ = [
     "Card",
+    "CardRecord",
     "CardList",
     "CardRegistry",
     "DataCard",
@@ -33,4 +36,5 @@ __all__ = [
     "ComputeEnvironment",
     "PromptCard",
     "CardRegistries",
+    "CardDeck",
 ]

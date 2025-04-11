@@ -80,7 +80,7 @@ impl FileSystemStorage {
     pub fn new() -> Result<Self, StorageError> {
         let state = app_state();
         let settings = state.config()?.storage_settings()?;
-        let mode = state.mode()?;
+        let mode = &*state.mode()?;
 
         match mode {
             OpsmlMode::Server => Self::create_server_storage(&settings),
@@ -173,12 +173,12 @@ impl FileSystemStorage {
     pub async fn generate_presigned_url(
         &self,
         path: &Path,
-        expiration: u64,
+        _expiration: u64,
     ) -> Result<String, StorageError> {
         match self {
             #[cfg(feature = "server")]
             FileSystemStorage::Server(client) => app_state()
-                .block_on(async { client.generate_presigned_url(path, expiration).await }),
+                .block_on(async { client.generate_presigned_url(path, _expiration).await }),
             FileSystemStorage::Client(client) => client.generate_presigned_url(path),
         }
     }

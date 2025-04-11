@@ -1,12 +1,11 @@
+use crate::utils::BaseArgs;
 use chrono::{DateTime, Utc};
 use opsml_crypt::decrypt_directory;
-use opsml_error::{CardError, OpsmlError};
+use opsml_error::{map_err_with_logging, CardError, OpsmlError};
 use opsml_storage::storage_client;
-use opsml_types::contracts::{Card, ExperimentCardClientRecord};
+use opsml_types::contracts::{CardRecord, ExperimentCardClientRecord};
 use opsml_types::{
-    cards::{BaseArgs, ComputeEnvironment},
-    contracts::ArtifactKey,
-    RegistryType, SaveName, Suffix,
+    cards::ComputeEnvironment, contracts::ArtifactKey, BaseArgsType, RegistryType, SaveName, Suffix,
 };
 use opsml_utils::{get_utc_datetime, PyHelperFuncs};
 use pyo3::prelude::*;
@@ -32,6 +31,9 @@ pub struct UidMetadata {
 
     #[pyo3(get, set)]
     pub promptcard_uids: Vec<String>,
+
+    #[pyo3(get, set)]
+    pub card_deck_uids: Vec<String>,
 
     #[pyo3(get, set)]
     pub experimentcard_uids: Vec<String>,
@@ -75,10 +77,10 @@ pub struct ExperimentCard {
     #[pyo3(get)]
     pub opsml_version: String,
 
-    pub artifact_key: Option<ArtifactKey>,
-
     #[pyo3(get)]
     pub is_card: bool,
+
+    artifact_key: Option<ArtifactKey>,
 }
 
 #[pymethods]
@@ -94,6 +96,7 @@ impl ExperimentCard {
         uid: Option<&str>,
         tags: Option<&Bound<'_, PyList>>,
     ) -> PyResult<Self> {
+        let registry_type = RegistryType::Experiment;
         let tags = match tags {
             None => Vec::new(),
             Some(t) => t
@@ -101,10 +104,10 @@ impl ExperimentCard {
                 .map_err(|e| OpsmlError::new_err(e.to_string()))?,
         };
 
-        let base_args = BaseArgs::create_args(name, space, version, uid).map_err(|e| {
-            error!("Failed to create base args: {}", e);
-            OpsmlError::new_err(e.to_string())
-        })?;
+        let base_args = map_err_with_logging::<BaseArgsType, _>(
+            BaseArgs::create_args(name, space, version, uid, &registry_type),
+            "Failed to create base args for ExperimentCard",
+        )?;
 
         Ok(Self {
             space: base_args.0,
@@ -112,7 +115,7 @@ impl ExperimentCard {
             version: base_args.2,
             uid: base_args.3,
             tags,
-            registry_type: RegistryType::Experiment,
+            registry_type,
             artifact_key: None,
             app_env: std::env::var("APP_ENV").unwrap_or_else(|_| "dev".to_string()),
             created_at: get_utc_datetime(),
@@ -140,7 +143,11 @@ impl ExperimentCard {
         self.uids.modelcard_uids.push(uid.to_string());
     }
 
-    pub fn get_registry_card(&self) -> Result<Card, CardError> {
+    pub fn add_card_deck_uid(&mut self, uid: &str) {
+        self.uids.card_deck_uids.push(uid.to_string());
+    }
+
+    pub fn get_registry_card(&self) -> Result<CardRecord, CardError> {
         let record = ExperimentCardClientRecord {
             created_at: self.created_at,
             app_env: self.app_env.clone(),
@@ -152,11 +159,13 @@ impl ExperimentCard {
             datacard_uids: self.uids.datacard_uids.clone(),
             modelcard_uids: self.uids.modelcard_uids.clone(),
             promptcard_uids: self.uids.promptcard_uids.clone(),
+            card_deck_uids: self.uids.card_deck_uids.clone(),
             experimentcard_uids: self.uids.experimentcard_uids.clone(),
+            opsml_version: self.opsml_version.clone(),
             username: std::env::var("OPSML_USERNAME").unwrap_or_else(|_| "guest".to_string()),
         };
 
-        Ok(Card::Experiment(record))
+        Ok(CardRecord::Experiment(record))
     }
 
     #[pyo3(signature = (path))]
@@ -258,6 +267,12 @@ impl ExperimentCard {
         decrypt_directory(&lpath, &decrypt_key)?;
 
         Ok(())
+    }
+}
+
+impl ExperimentCard {
+    pub fn set_artifact_key(&mut self, key: ArtifactKey) {
+        self.artifact_key = Some(key);
     }
 }
 
