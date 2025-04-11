@@ -6,57 +6,8 @@
   --md-typeset-a-color: #02af84;
 }
 
-.md-typeset {
-  font-size: 17px;
 
-}
-
-
-
-.termynal-comment {
-  color: #4a968f;
-  font-style: italic;
-  display: block;
-}
-
-.termy {
-  /* For right to left languages */
-  direction: ltr;
-}
-
-.termy [data-termynal] {
-  white-space: pre-wrap;
-}
-
-
-.md-grid {
-  max-width: 90%;
-}
-@media (min-width: 1220px) {
-  .md-main__inner {
-    margin-top: 0;
-  }
-  .md-sidebar {
-    height: auto;
-  }
-  .md-sidebar--primary {
-    border-right: 1px solid var(--md-default-fg-color--lightest);
-    width: 9rem;
-    font-size: 8px;
-  }
-  .md-sidebar--secondary {
-    width: 10rem;
-    font-size: 8px;
-  }
-  .md-nav {
-    font-size: 16px;
-  }
-  .md-nav .md-nav__title {
-    display: none;
-  }
-  .md-nav__icon {
-    width: 1.2rem;
-    height: 1.2rem;
-    margin-top: -.1rem;
-  }
+[data-md-color-scheme="slate"] {
+  --md-hue: 230;
+  --md-default-bg-color: hsla(230, 15%, 21%, 1);
 }

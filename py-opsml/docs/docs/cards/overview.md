@@ -236,8 +236,3 @@ model_registry = CardRegistry(registry_name="model")
 model_registry.delete_card(card)
 ```
 
-::: opsml.CardRegistry
-    options:
-        show_root_heading: true
-        show_source: true
-        heading_level: 3
