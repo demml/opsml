@@ -14,6 +14,9 @@ from opsml import (  # type: ignore
     SklearnModel,
     Prompt,
     PromptCard,
+    CardDeck,
+    Card,
+    RegistryType,
 )
 from opsml.card import CardRegistries
 import joblib  # type: ignore
@@ -22,7 +25,6 @@ import uuid
 import shutil
 from tests.conftest import WINDOWS_EXCLUDE
 import pytest
-# Sets up logging for tests
 
 
 def cleanup_manually_created_directories():
@@ -187,6 +189,23 @@ def test_experimentcard_register(
             # (this is not recommended, but need to test if it causes a tokio::runtime deadlock)
             reg = CardRegistries()
 
+            deck = CardDeck(
+                space="test",
+                name="test",
+                cards=[
+                    Card(
+                        alias="model",
+                        uid=modelcard.uid,
+                        registry_type=RegistryType.Model,
+                    ),
+                    Card(
+                        alias="data",
+                        card=datacard,
+                    ),
+                ],
+            )
+            exp.register_card(deck)
+
         loaded_card = reg.experiment.load_card(uid=exp.card.uid)
 
         assert loaded_card.name == exp.card.name
@@ -198,3 +217,4 @@ def test_experimentcard_register(
         loaded_card.uids.datacard_uids = [datacard.uid]
         loaded_card.uids.modelcard_uids = [modelcard.uid]
         loaded_card.uids.promptcard_uids = [prompt_card.uid]
+        loaded_card.uids.card_deck_uids = [deck.uid]

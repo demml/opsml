@@ -91,13 +91,10 @@ pub fn decrypt_file(input_path: &Path, key_bytes: &[u8]) -> Result<(), CryptErro
 /// This function will encrypt all files in a directory and its subdirectories
 ///
 /// # Arguments
-///
 /// * `input_path` - A path to the directory to encrypt
-///
 /// * `key_bytes` - A byte slice containing the key to encrypt the files with
 ///
 /// # Returns
-///
 /// A Result containing either an empty tuple or a CryptError
 #[instrument(skip_all)]
 pub fn encrypt_directory(input_path: &Path, key_bytes: &[u8]) -> Result<(), CryptError> {
@@ -121,16 +118,13 @@ pub fn encrypt_directory(input_path: &Path, key_bytes: &[u8]) -> Result<(), Cryp
 }
 
 /// Decrypt all files in a directory
-///
 /// This function will decrypt all files in a directory and its subdirectories
 ///
 /// # Arguments
-///
 /// * `input_path` - A path to the directory to decrypt
 /// * `key_bytes` - A byte slice containing the key to decrypt the files with
 ///
 /// # Returns
-///
 /// A Result containing either an empty tuple or a CryptError
 pub fn decrypt_directory(input_path: &Path, key_bytes: &[u8]) -> Result<(), CryptError> {
     // get all files (including subdirectories)

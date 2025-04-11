@@ -1,16 +1,146 @@
 use crate::base::OpsmlRegistry;
-use opsml_cards::{DataCard, ExperimentCard, ModelCard, PromptCard};
+use crate::CardRegistries;
+use opsml_cards::{
+    traits::OpsmlCard, Card, CardDeck, DataCard, ExperimentCard, ModelCard, PromptCard,
+};
+
 use opsml_crypt::{decrypt_directory, encrypt_directory};
-use opsml_error::error::RegistryError;
+use opsml_error::{error::RegistryError, OpsmlError};
 use opsml_storage::storage_client;
 use opsml_types::contracts::*;
 use opsml_types::*;
 use pyo3::prelude::*;
 use pyo3::types::PyString;
 use pyo3::IntoPyObjectExt;
+use std::collections::HashMap;
 use std::path::PathBuf;
 use tempfile::TempDir;
 use tracing::{debug, error, instrument};
+
+/// Helper function to load a card and convert it to PyObject
+///
+/// # Arguments
+/// * `py`: Python interpreter
+/// * `card_registries`: Card registries
+/// * `card`: Card to load
+/// * `interface`: Optional interface to use
+/// * `load_kwargs`: Optional load kwargs   
+///     
+fn load_and_extract_card(
+    py: Python,
+    card_registries: &CardRegistries,
+    card: &Card,
+    interface: Option<&Bound<'_, PyAny>>,
+) -> PyResult<PyObject> {
+    let card_obj = match card.registry_type {
+        RegistryType::Model => card_registries.model.load_card(
+            py,
+            Some(card.uid.clone()),
+            Some(card.space.clone()),
+            Some(card.name.clone()),
+            Some(card.version.clone()),
+            interface,
+        )?,
+        RegistryType::Data => card_registries.data.load_card(
+            py,
+            Some(card.uid.clone()),
+            Some(card.space.clone()),
+            Some(card.name.clone()),
+            Some(card.version.clone()),
+            interface,
+        )?,
+        RegistryType::Experiment => card_registries.experiment.load_card(
+            py,
+            Some(card.uid.clone()),
+            Some(card.space.clone()),
+            Some(card.name.clone()),
+            Some(card.version.clone()),
+            None,
+        )?,
+        RegistryType::Prompt => card_registries.prompt.load_card(
+            py,
+            Some(card.uid.clone()),
+            Some(card.space.clone()),
+            Some(card.name.clone()),
+            Some(card.version.clone()),
+            None,
+        )?,
+        _ => {
+            return Err(OpsmlError::new_err(format!(
+                "Card type {} not supported",
+                card.registry_type
+            )))
+        }
+    };
+
+    card_obj.into_py_any(py).map_err(|e| {
+        error!("Failed to convert card to PyObject: {}", e);
+        OpsmlError::new_err(e.to_string())
+    })
+}
+
+pub enum CardEnum {
+    ModelCard(ModelCard),
+    DataCard(DataCard),
+    ExperimentCard(ExperimentCard),
+    PromptCard(PromptCard),
+    CardDeck(CardDeck),
+}
+
+impl CardEnum {
+    #[allow(clippy::needless_lifetimes)]
+    pub fn into_bound_py_any<'py>(
+        self,
+        py: Python<'py>,
+    ) -> Result<Bound<'py, PyAny>, RegistryError> {
+        let card = match self {
+            CardEnum::ModelCard(card) => card.into_bound_py_any(py),
+            CardEnum::DataCard(card) => card.into_bound_py_any(py),
+            CardEnum::ExperimentCard(card) => card.into_bound_py_any(py),
+            CardEnum::PromptCard(card) => card.into_bound_py_any(py),
+            CardEnum::CardDeck(card) => card.into_bound_py_any(py),
+        };
+
+        match card {
+            Ok(card) => Ok(card),
+            Err(e) => {
+                error!("Failed to convert card to bound: {}", e);
+                Err(RegistryError::Error(e.to_string()))
+            }
+        }
+    }
+}
+
+pub fn load_card_deck<'py>(
+    py: Python<'py>,
+    deck: &mut CardDeck,
+    interfaces: Option<HashMap<String, Bound<'py, PyAny>>>,
+) -> Result<(), RegistryError> {
+    let card_registries = CardRegistries::new().map_err(|e| {
+        error!("Failed to create card registries: {}", e);
+        RegistryError::Error(e.to_string())
+    })?;
+
+    for card in &deck.cards {
+        // Skip if already loaded
+        if deck.card_objs.contains_key(&card.alias) {
+            debug!("Card {} already exists in card_objs", card.alias);
+            continue;
+        }
+
+        // get interface for the card if exists
+        let interface = interfaces.as_ref().and_then(|i| i.get(&card.alias));
+
+        let card_obj =
+            load_and_extract_card(py, &card_registries, card, interface).map_err(|e| {
+                error!("Failed to load card: {}", e);
+                RegistryError::Error(e.to_string())
+            })?;
+        deck.card_objs.insert(card.alias.clone(), card_obj);
+    }
+
+    Ok(())
+}
 
 pub fn check_if_card(card: &Bound<'_, PyAny>) -> Result<(), RegistryError> {
     let is_card: bool = card
@@ -41,7 +171,6 @@ pub fn check_if_card(card: &Bound<'_, PyAny>) -> Result<(), RegistryError> {
 /// Create a card from a json string
 ///
 /// # Arguments
-///
 /// * `py` - Python interpreter
 /// * `card_json` - JSON string of the card
 /// * `interface` - Optional interface for the card
@@ -50,18 +179,16 @@ pub fn check_if_card(card: &Bound<'_, PyAny>) -> Result<(), RegistryError> {
 /// * `rt` - Tokio runtime
 ///
 /// # Returns
-///
 /// * `Bound<PyAny>` - Bound card
 ///
 /// # Errors
-///
 /// * `RegistryError` - Error creating card
 pub fn card_from_string<'py>(
     py: Python<'py>,
     card_json: String,
     interface: Option<&Bound<'py, PyAny>>,
     key: ArtifactKey,
-) -> Result<Bound<'py, PyAny>, RegistryError> {
+) -> Result<CardEnum, RegistryError> {
     let card = match key.registry_type {
         RegistryType::Model => {
             let mut card =
@@ -70,11 +197,8 @@ pub fn card_from_string<'py>(
                     RegistryError::Error(e.to_string())
                 })?;
 
-            card.artifact_key = Some(key);
-            card.into_bound_py_any(py).map_err(|e| {
-                error!("Failed to convert card to bound: {}", e);
-                RegistryError::Error(e.to_string())
-            })?
+            card.set_artifact_key(key);
+            CardEnum::ModelCard(card)
         }
 
         RegistryType::Data => {
@@ -84,11 +208,8 @@ pub fn card_from_string<'py>(
                     RegistryError::Error(e.to_string())
                 })?;
 
-            card.artifact_key = Some(key);
-            card.into_bound_py_any(py).map_err(|e| {
-                error!("Failed to convert card to bound: {}", e);
-                RegistryError::Error(e.to_string())
-            })?
+            card.set_artifact_key(key);
+            CardEnum::DataCard(card)
         }
 
         RegistryType::Experiment => {
@@ -97,11 +218,8 @@ pub fn card_from_string<'py>(
                 RegistryError::Error(e.to_string())
             })?;
 
-            card.artifact_key = Some(key);
-            card.into_bound_py_any(py).map_err(|e| {
-                error!("Failed to convert card to bound: {}", e);
-                RegistryError::Error(e.to_string())
-            })?
+            card.set_artifact_key(key);
+            CardEnum::ExperimentCard(card)
         }
 
         RegistryType::Prompt => {
@@ -110,11 +228,18 @@ pub fn card_from_string<'py>(
                 RegistryError::Error(e.to_string())
             })?;
 
-            card.into_bound_py_any(py).map_err(|e| {
-                error!("Failed to convert card to bound: {}", e);
-                RegistryError::Error(e.to_string())
-            })?
+            CardEnum::PromptCard(card)
         }
+
+        RegistryType::Deck => {
+            let card = CardDeck::model_validate_json(card_json).map_err(|e| {
+                error!("Failed to validate CardDeck: {}", e);
+                RegistryError::Error(e.to_string())
+            })?;
+
+            CardEnum::CardDeck(card)
+        }
+
         _ => {
             return Err(RegistryError::Error(
                 "Registry type not supported".to_string(),
@@ -128,7 +253,6 @@ pub fn card_from_string<'py>(
 /// Download a card
 ///
 /// # Arguments
-///
 /// * `py` - Python interpreter
 /// * `key` - Artifact key
 /// * `fs` - File system storage
@@ -136,11 +260,9 @@ pub fn card_from_string<'py>(
 /// * `interface` - Optional interface for the card
 ///
 /// # Returns
-///
 /// * `Bound<PyAny>` - Bound card
 ///
 /// # Errors
-///
 /// * `RegistryError` - Error downloading card
 pub fn download_card<'py>(
     py: Python<'py>,
@@ -173,9 +295,23 @@ pub fn download_card<'py>(
         RegistryError::Error("Failed to read card json".to_string())
     })?;
 
-    let card = card_from_string(py, json_string, interface, key)?;
+    let mut card = card_from_string(py, json_string, interface, key)?;
 
-    Ok(card)
+    match &mut card {
+        // load all cards in the deck
+        CardEnum::CardDeck(deck) => {
+            debug!("Loading card deck: {}", deck.name);
+            // need to check if interface is not None, if not None it needs to be
+            // HashMap<String, Bound<PyAny>>
+            let kwargs =
+                interface.and_then(|i| i.extract::<HashMap<String, Bound<'py, PyAny>>>().ok());
+
+            load_card_deck(py, deck, kwargs)?;
+        }
+        _ => debug!("Card is not a deck, skipping deck loading"),
+    }
+
+    card.into_bound_py_any(py)
 }
 
 /// Save card artifacts to storage
@@ -185,13 +321,11 @@ pub fn download_card<'py>(
 /// (3) Transfer all files in the temporary directory to the storage system
 ///
 /// # Arguments
-///
 /// * `py` - Python interpreter
 /// * `card` - Card to save
 /// * `save_kwargs` - Optional save kwargs
 ///
 /// # Returns
-///
 /// * `Result<(), RegistryError>` - Result
 #[instrument(skip_all)]
 pub fn upload_card_artifacts(path: PathBuf, key: &ArtifactKey) -> Result<(), RegistryError> {
@@ -208,19 +342,105 @@ pub fn upload_card_artifacts(path: PathBuf, key: &ArtifactKey) -> Result<(), Reg
     Ok(())
 }
 
-/// Verify that the card is valid
+/// Helper for converting card deck attributes to options
+fn to_option(value: &str) -> Option<String> {
+    match value == CommonKwargs::Undefined.to_string() {
+        true => None,
+        false => Some(value.to_string()),
+    }
+}
+
+/// Validates a card deck card by checking if it exists in the registry
+///
+/// # Process
+/// 1. Check if Card exists in the registry
+/// 2. If it exists, update the card metadata
+/// 3. If it does not exist, return an error
 ///
 /// # Arguments
+/// * `card` - Card to validate
 ///
+/// # Returns
+/// * `Result<(), RegistryError>` - Result
+///
+/// # Errors
+/// * `RegistryError` - Error validating card
+///   Will return an error if the card does not exist in the registry
+fn validate_and_update_card(card: &mut Card) -> Result<(), RegistryError> {
+    let reg = OpsmlRegistry::new(card.registry_type.clone())?;
+
+    let args = CardQueryArgs {
+        uid: to_option(&card.uid),
+        space: to_option(&card.space),
+        name: to_option(&card.name),
+        version: to_option(&card.version),
+        registry_type: card.registry_type.clone(),
+        sort_by_timestamp: Some(false),
+        ..Default::default()
+    };
+
+    let cards = reg.list_cards(args).map_err(|e| {
+        error!("Failed to list cards: {}", e);
+        RegistryError::Error("Failed to list cards".to_string())
+    })?;
+
+    if cards.is_empty() {
+        return Err(RegistryError::Error(format!(
+            "Card {:?}/{:?} does not exist in the {:?} registry",
+            card.space, card.name, card.registry_type
+        )));
+    }
+
+    // Update card metadata
+    if let Some(found_card) = cards.first() {
+        card.name = found_card.name().to_string();
+        card.space = found_card.space().to_string();
+        card.version = found_card.version().to_string();
+        card.uid = found_card.uid().to_string();
+        debug!("Updated card metadata for name: {:?}", card.name);
+    } else {
+        return Err(RegistryError::Error(format!(
+            "Card {:?}/{:?} does not exist in the {:?} registry",
+            card.space, card.name, card.registry_type
+        )));
+    }
+    Ok(())
+}
+
+/// Validate a card deck
+/// This function will validate each card in the deck
+/// The registry will be queried based on the card args.
+/// Returned record will be used to update card attributes as part of CardDeck
+/// If a card does not exist, it will return an error
+///
+/// # Arguments
+/// * `deck` - Card deck to validate
+///
+/// # Returns
+/// * `Result<(), RegistryError>` - Result
+///
+/// # Errors
+/// * `RegistryError` - Error validating card
+#[instrument(skip_all)]
+pub fn validate_card_deck_cards(deck: &mut [Card]) -> Result<(), RegistryError> {
+    // iterate over each card in the deck
+    for card in deck.iter_mut() {
+        validate_and_update_card(card)?;
+    }
+    Ok(())
+}
+
+/// Verify that the card is valid
+/// If a card deck is passed, verify that all cards in the deck are valid
+///
+/// # Arguments
 /// * `card` - Card to verify
 /// * `registry_type` - Registry type
 ///
 /// # Returns
-///
 /// * `Result<(), RegistryError>` - Result
 ///
 /// # Errors
-///
 /// * `RegistryError` - Error verifying card
 #[instrument(skip_all)]
 pub fn verify_card(
@@ -251,6 +471,29 @@ pub fn verify_card(
         }
     }
 
+    if card.is_instance_of::<CardDeck>() {
+        let mut deck = card
+            .getattr("cards")
+            .map_err(|e| {
+                error!("Failed to get cards from deck: {}", e);
+                RegistryError::Error("Failed to get cards from deck".to_string())
+            })?
+            .extract::<Vec<Card>>()
+            .map_err(|e| {
+                error!("Failed to extract cards from deck: {}", e);
+                RegistryError::Error("Failed to extract cards from deck".to_string())
+            })?;
+
+        validate_card_deck_cards(&mut deck)?;
+
+        // Update the Python card deck with the updated cards
+        card.setattr("cards", deck.into_py_any(card.py()).unwrap())
+            .map_err(|e| {
+                error!("Failed to update card deck: {}", e);
+                RegistryError::Error("Failed to update card deck".to_string())
+            })?;
+    }
+
     let card_registry_type = card
         .getattr("registry_type")
         .map_err(|e| {
@@ -268,6 +511,22 @@ pub fn verify_card(
         return Err(RegistryError::Error(
             "Card registry type does not match registry type".to_string(),
         ));
+    }
+
+    debug!("Verified card");
+
+    Ok(())
+}
+
+/// Verify that the card is valid
+/// This will be expanded in the future
+#[instrument(skip_all)]
+pub fn verify_card_rs<T>(card: &T) -> Result<(), RegistryError>
+where
+    T: OpsmlCard,
+{
+    if !card.is_card() {
+        return Err(RegistryError::Error("Card is not a valid card".to_string()));
     }
 
     debug!("Verified card");

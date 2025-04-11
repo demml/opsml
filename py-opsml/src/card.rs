@@ -1,9 +1,10 @@
 use opsml_cards::{
-    DataCard, DataCardMetadata, ExperimentCard, ModelCard, ModelCardMetadata, PromptCard,
-    UidMetadata,
+    Card, CardDeck, DataCard, DataCardMetadata, ExperimentCard, ModelCard, ModelCardMetadata,
+    PromptCard, UidMetadata,
 };
+
 use opsml_registry::{CardRegistries, CardRegistry};
-use opsml_types::contracts::{Card, CardList};
+use opsml_types::contracts::{CardList, CardRecord};
 use opsml_types::{cards::ComputeEnvironment, RegistryMode, RegistryType};
 
 #[cfg(feature = "server")]
@@ -13,7 +14,7 @@ use pyo3::prelude::*;
 
 #[pymodule]
 pub fn card(m: &Bound<'_, PyModule>) -> PyResult<()> {
-    m.add_class::<Card>()?;
+    m.add_class::<CardRecord>()?;
     m.add_class::<CardList>()?;
     m.add_class::<DataCard>()?;
     m.add_class::<DataCardMetadata>()?;
@@ -38,6 +39,10 @@ pub fn card(m: &Bound<'_, PyModule>) -> PyResult<()> {
 
     // promptcard
     m.add_class::<PromptCard>()?;
+
+    // CardDeck
+    m.add_class::<CardDeck>()?;
+    m.add_class::<Card>()?;
 
     Ok(())
 }

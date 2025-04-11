@@ -457,10 +457,11 @@ impl PostgresQueryHelper {
         auditcard_uid, 
         pre_tag, 
         build_tag,
-        username
+        username,
+        opsml_version
         ) 
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)",
-            CardTable::Data
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)",
+            CardTable::Data,
         )
     }
 
@@ -480,9 +481,10 @@ impl PostgresQueryHelper {
             auditcard_uid, 
             pre_tag, 
             build_tag,
-            username
+            username,
+            opsml_version
             ) 
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)",
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)",
             CardTable::Prompt
         )
     }
@@ -507,9 +509,10 @@ impl PostgresQueryHelper {
         auditcard_uid, 
         pre_tag, 
         build_tag,
-        username
+        username,
+        opsml_version
         ) 
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)", CardTable::Model)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)", CardTable::Model)
     }
 
     pub fn get_experimentcard_insert_query() -> String {
@@ -527,12 +530,14 @@ impl PostgresQueryHelper {
         datacard_uids, 
         modelcard_uids, 
         promptcard_uids,
+        card_deck_uids,
         experimentcard_uids,
         pre_tag, 
         build_tag,
-        username
+        username,
+        opsml_version
         ) 
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)",
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)",
             CardTable::Experiment
         )
     }
@@ -555,11 +560,36 @@ impl PostgresQueryHelper {
         experimentcard_uids, 
         pre_tag, 
         build_tag,
-        username
+        username,
+        opsml_version
         ) 
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)",
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)",
             CardTable::Audit
         )
+    }
+
+    pub fn get_carddeck_insert_query() -> String {
+        format!("INSERT INTO {} (uid, app_env, name, space, major, minor, patch, version, pre_tag, build_tag, cards, username, opsml_version) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)", CardTable::Deck)
+            .to_string()
+    }
+
+    pub fn get_carddeck_update_query() -> String {
+        format!(
+            "UPDATE {} SET 
+            app_env = $1, 
+            name = $2,
+            space = $3,
+            major = $4, 
+            minor = $5,
+            patch = $6, 
+            version = $7, 
+            cards = $8,
+            username = $9,
+            opsml_version = $10
+            WHERE uid = $11",
+            CardTable::Deck
+        )
+        .to_string()
     }
 
     pub fn get_datacard_update_query() -> String {
@@ -579,8 +609,9 @@ impl PostgresQueryHelper {
             auditcard_uid = $12, 
             pre_tag = $13, 
             build_tag = $14,
-            username = $15
-            WHERE uid = $16",
+            username = $15,
+            opsml_version = $16
+            WHERE uid = $17",
             CardTable::Data
         )
     }
@@ -600,8 +631,9 @@ impl PostgresQueryHelper {
         auditcard_uid = $10, 
         pre_tag = $11, 
         build_tag = $12,
-        username = $13
-        WHERE uid = $14",
+        username = $13,
+        opsml_version = $14
+        WHERE uid = $15",
             CardTable::Prompt
         )
     }
@@ -626,8 +658,9 @@ impl PostgresQueryHelper {
         auditcard_uid = $15, 
         pre_tag = $16, 
         build_tag = $17,
-        username = $18
-        WHERE uid = $19",
+        username = $18,
+        opsml_version = $19
+        WHERE uid = $20",
             CardTable::Model
         )
     }
@@ -646,11 +679,13 @@ impl PostgresQueryHelper {
             datacard_uids = $9, 
             modelcard_uids = $10, 
             promptcard_uids = $11,
-            experimentcard_uids = $12, 
-            pre_tag = $13, 
-            build_tag = $14,
-            username = $15
-            WHERE uid = $16",
+            card_deck_uids = $12,
+            experimentcard_uids = $13, 
+            pre_tag = $14, 
+            build_tag = $15,
+            username = $16,
+            opsml_version = $17
+            WHERE uid = $18",
             CardTable::Experiment
         )
     }
@@ -672,8 +707,9 @@ impl PostgresQueryHelper {
         experimentcard_uids = $12, 
         pre_tag = $13, 
         build_tag = $14,
-        username = $15
-        WHERE uid = $16",
+        username = $15,
+        opsml_version = $16
+        WHERE uid = $17",
             CardTable::Audit
         )
     }

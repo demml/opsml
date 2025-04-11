@@ -9,6 +9,16 @@ lints:
 lints.pedantic:
 	cargo clippy --workspace --all-targets  -- -D warnings -W clippy::pedantic -A clippy::must_use_candidate -A clippy::missing_errors_doc
 
+####### TOML tests
+.PHONY: test.toml
+test.toml:
+	cargo test -p opsml-toml -- --nocapture --test-threads=1
+
+####### CLI tests
+.PHONY: test.cli
+test.cli:
+	cargo test -p opsml-cli -- --nocapture --test-threads=1
+
 ####### SQL tests
 .PHONY: test.sql.sqlite
 test.sql.sqlite:

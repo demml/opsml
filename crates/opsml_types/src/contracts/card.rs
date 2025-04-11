@@ -263,6 +263,7 @@ pub struct DataCardClientRecord {
     pub experimentcard_uid: Option<String>,
     pub auditcard_uid: Option<String>,
     pub interface_type: String,
+    pub opsml_version: String,
     pub username: String,
 }
 
@@ -280,6 +281,7 @@ impl Default for DataCardClientRecord {
             experimentcard_uid: None,
             auditcard_uid: None,
             interface_type: DataInterfaceType::Base.to_string(),
+            opsml_version: env!("CARGO_PKG_VERSION").to_string(),
             username: "guest".to_string(),
         }
     }
@@ -302,6 +304,7 @@ pub struct ModelCardClientRecord {
     pub auditcard_uid: Option<String>,
     pub interface_type: String,
     pub task_type: String,
+    pub opsml_version: String,
     pub username: String,
 }
 
@@ -323,6 +326,7 @@ impl Default for ModelCardClientRecord {
             auditcard_uid: None,
             interface_type: ModelInterfaceType::Base.to_string(),
             task_type: TaskType::Other.to_string(),
+            opsml_version: env!("CARGO_PKG_VERSION").to_string(),
             username: "guest".to_string(),
         }
     }
@@ -341,7 +345,9 @@ pub struct ExperimentCardClientRecord {
     pub datacard_uids: Vec<String>,
     pub modelcard_uids: Vec<String>,
     pub promptcard_uids: Vec<String>,
+    pub card_deck_uids: Vec<String>,
     pub experimentcard_uids: Vec<String>,
+    pub opsml_version: String,
     pub username: String,
 }
 
@@ -358,7 +364,9 @@ impl Default for ExperimentCardClientRecord {
             datacard_uids: Vec::new(),
             modelcard_uids: Vec::new(),
             promptcard_uids: Vec::new(),
+            card_deck_uids: Vec::new(),
             experimentcard_uids: Vec::new(),
+            opsml_version: env!("CARGO_PKG_VERSION").to_string(),
             username: "guest".to_string(),
         }
     }
@@ -378,6 +386,7 @@ pub struct AuditCardClientRecord {
     pub datacard_uids: Vec<String>,
     pub modelcard_uids: Vec<String>,
     pub experimentcard_uids: Vec<String>,
+    pub opsml_version: String,
     pub username: String,
 }
 
@@ -395,6 +404,7 @@ impl Default for AuditCardClientRecord {
             datacard_uids: Vec::new(),
             modelcard_uids: Vec::new(),
             experimentcard_uids: Vec::new(),
+            opsml_version: env!("CARGO_PKG_VERSION").to_string(),
             username: "guest".to_string(),
         }
     }
@@ -412,6 +422,7 @@ pub struct PromptCardClientRecord {
     pub tags: Vec<String>,
     pub experimentcard_uid: Option<String>,
     pub auditcard_uid: Option<String>,
+    pub opsml_version: String,
     pub username: String,
 }
 
@@ -427,7 +438,38 @@ impl Default for PromptCardClientRecord {
             tags: Vec::new(),
             experimentcard_uid: None,
             auditcard_uid: None,
+            opsml_version: env!("CARGO_PKG_VERSION").to_string(),
             username: "guest".to_string(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[pyclass]
+pub struct CardDeckClientRecord {
+    pub uid: String,
+    pub created_at: DateTime<Utc>,
+    pub app_env: String,
+    pub space: String,
+    pub name: String,
+    pub version: String,
+    pub cards: Vec<CardEntry>,
+    pub opsml_version: String,
+    pub username: String,
+}
+
+impl Default for CardDeckClientRecord {
+    fn default() -> Self {
+        Self {
+            uid: "".to_string(),
+            created_at: get_utc_datetime(),
+            app_env: "development".to_string(),
+            space: "".to_string(),
+            name: "".to_string(),
+            version: "".to_string(),
+            opsml_version: env!("CARGO_PKG_VERSION").to_string(),
+            username: "guest".to_string(),
+            cards: Vec::new(),
         }
     }
 }
@@ -435,16 +477,17 @@ impl Default for PromptCardClientRecord {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "type", content = "data")]
 #[pyclass]
-pub enum Card {
+pub enum CardRecord {
     Data(DataCardClientRecord),
     Model(ModelCardClientRecord),
     Experiment(ExperimentCardClientRecord),
     Audit(AuditCardClientRecord),
     Prompt(PromptCardClientRecord),
+    Deck(CardDeckClientRecord),
 }
 
 #[pymethods]
-impl Card {
+impl CardRecord {
     pub fn __str__(&self) -> String {
         PyHelperFuncs::__str__(self)
     }
@@ -457,6 +500,7 @@ impl Card {
             Self::Experiment(card) => &card.uid,
             Self::Audit(card) => &card.uid,
             Self::Prompt(card) => &card.uid,
+            Self::Deck(card) => &card.uid,
         }
     }
 
@@ -468,6 +512,7 @@ impl Card {
             Self::Experiment(card) => card.created_at,
             Self::Audit(card) => card.created_at,
             Self::Prompt(card) => card.created_at,
+            Self::Deck(card) => card.created_at,
         }
     }
 
@@ -479,6 +524,7 @@ impl Card {
             Self::Experiment(card) => card.app_env.as_ref(),
             Self::Audit(card) => card.app_env.as_ref(),
             Self::Prompt(card) => card.app_env.as_ref(),
+            Self::Deck(card) => card.app_env.as_ref(),
         }
     }
 
@@ -490,6 +536,7 @@ impl Card {
             Self::Experiment(card) => card.name.as_ref(),
             Self::Audit(card) => card.name.as_ref(),
             Self::Prompt(card) => card.name.as_ref(),
+            Self::Deck(card) => card.name.as_ref(),
         }
     }
 
@@ -501,6 +548,7 @@ impl Card {
             Self::Experiment(card) => card.space.as_ref(),
             Self::Audit(card) => card.space.as_ref(),
             Self::Prompt(card) => card.space.as_ref(),
+            Self::Deck(card) => card.space.as_ref(),
         }
     }
 
@@ -512,17 +560,20 @@ impl Card {
             Self::Experiment(card) => card.version.as_ref(),
             Self::Audit(card) => card.version.as_ref(),
             Self::Prompt(card) => card.version.as_ref(),
+            Self::Deck(card) => card.version.as_ref(),
         }
     }
 
     #[getter]
     pub fn tags(&self) -> &Vec<String> {
+        static EMPTY_TAGS: Vec<String> = Vec::new();
         match self {
             Self::Data(card) => &card.tags,
             Self::Model(card) => &card.tags,
             Self::Experiment(card) => &card.tags,
             Self::Audit(card) => &card.tags,
             Self::Prompt(card) => &card.tags,
+            Self::Deck(_card) => &EMPTY_TAGS,
         }
     }
 
@@ -534,6 +585,7 @@ impl Card {
             Self::Experiment(card) => Some(card.datacard_uids.iter().map(String::as_str).collect()),
             Self::Audit(card) => Some(card.datacard_uids.iter().map(String::as_str).collect()),
             Self::Prompt(_) => None,
+            Self::Deck(_) => None,
         }
     }
 
@@ -547,6 +599,7 @@ impl Card {
             }
             Self::Audit(card) => Some(card.modelcard_uids.iter().map(String::as_str).collect()),
             Self::Prompt(_) => None,
+            Self::Deck(_) => None,
         }
     }
 
@@ -563,6 +616,7 @@ impl Card {
                     .collect(),
             ),
             Self::Prompt(card) => Some(vec![&card.experimentcard_uid.as_deref().unwrap()]),
+            Self::Deck(_) => None,
         }
     }
 
@@ -574,6 +628,7 @@ impl Card {
             Self::Experiment(_) => None,
             Self::Audit(card) => Some(&card.uid),
             Self::Prompt(card) => card.auditcard_uid.as_deref(),
+            Self::Deck(_) => None,
         }
     }
 
@@ -585,6 +640,7 @@ impl Card {
             Self::Experiment(_) => None,
             Self::Audit(_) => None,
             Self::Prompt(_) => None,
+            Self::Deck(_) => None,
         }
     }
 
@@ -596,6 +652,7 @@ impl Card {
             Self::Experiment(_) => None,
             Self::Audit(_) => None,
             Self::Prompt(_) => None,
+            Self::Deck(_) => None,
         }
     }
 
@@ -607,6 +664,7 @@ impl Card {
             Self::Experiment(_) => None,
             Self::Audit(_) => None,
             Self::Prompt(_) => None,
+            Self::Deck(_) => None,
         }
     }
 
@@ -618,11 +676,23 @@ impl Card {
             Self::Experiment(_) => None,
             Self::Audit(_) => None,
             Self::Prompt(_) => None,
+            Self::Deck(_) => None,
         }
     }
 }
 
-impl Card {
+impl CardRecord {
+    pub fn cards(&self) -> Option<Vec<CardEntry>> {
+        match self {
+            Self::Data(_) => None,
+            Self::Model(_) => None,
+            Self::Experiment(_) => None,
+            Self::Audit(_) => None,
+            Self::Prompt(_) => None,
+            Self::Deck(card) => Some(card.cards.clone()),
+        }
+    }
+
     pub fn uri(&self) -> Result<PathBuf, CardError> {
         match self {
             Self::Data(card) => {
@@ -677,6 +747,16 @@ impl Card {
                 );
                 Ok(Path::new(&uri).to_path_buf())
             }
+            Self::Deck(card) => {
+                let uri = format!(
+                    "{}/{}/{}/v{}",
+                    CardTable::Deck,
+                    card.space,
+                    card.name,
+                    card.version
+                );
+                Ok(Path::new(&uri).to_path_buf())
+            }
         }
     }
 
@@ -687,6 +767,7 @@ impl Card {
             Self::Experiment(_) => RegistryType::Experiment,
             Self::Audit(_) => RegistryType::Audit,
             Self::Prompt(_) => RegistryType::Prompt,
+            Self::Deck(_) => RegistryType::Deck,
         }
     }
 }
@@ -702,7 +783,7 @@ struct CardTableEntry {
 
 #[pyclass]
 struct CardListIter {
-    inner: std::vec::IntoIter<Card>,
+    inner: std::vec::IntoIter<CardRecord>,
 }
 
 #[pymethods]
@@ -711,7 +792,7 @@ impl CardListIter {
         slf
     }
 
-    fn __next__(mut slf: PyRefMut<'_, Self>) -> Option<Card> {
+    fn __next__(mut slf: PyRefMut<'_, Self>) -> Option<CardRecord> {
         slf.inner.next()
     }
 }
@@ -720,7 +801,7 @@ impl CardListIter {
 #[pyclass]
 pub struct CardList {
     #[pyo3(get)]
-    pub cards: Vec<Card>,
+    pub cards: Vec<CardRecord>,
 }
 
 #[pymethods]
@@ -729,7 +810,7 @@ impl CardList {
         PyHelperFuncs::__str__(self)
     }
 
-    pub fn __getitem__(&self, index: usize) -> Option<Card> {
+    pub fn __getitem__(&self, index: usize) -> Option<CardRecord> {
         self.cards.get(index).cloned()
     }
 
@@ -768,7 +849,7 @@ impl CardList {
         let mut table = Table::new(entries);
 
         table.with(Style::sharp());
-        table.modify(Columns::single(0), Width::wrap(20).keep_words(true));
+        table.modify(Columns::single(0), Width::wrap(30).keep_words(true));
         table.modify(Columns::single(1), Width::wrap(15).keep_words(true));
         table.modify(Columns::single(2), Width::wrap(15).keep_words(true));
         table.modify(Columns::single(3), Width::wrap(30).keep_words(true));
@@ -789,7 +870,7 @@ impl CardList {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct CreateCardRequest {
     pub registry_type: RegistryType,
-    pub card: Card,
+    pub card: CardRecord,
     pub version_request: CardVersionRequest,
 }
 
@@ -826,7 +907,7 @@ pub struct CreateCardResponse {
 /// Duplicating card request to be explicit with naming
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct UpdateCardRequest {
-    pub card: Card,
+    pub card: CardRecord,
     pub registry_type: RegistryType,
 }
 
@@ -852,4 +933,12 @@ impl AuditableRequest for UpdateCardRequest {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct UpdateCardResponse {
     pub updated: bool,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct CardEntry {
+    pub registry_type: RegistryType,
+    pub uid: String,
+    pub version: String,
+    pub alias: String,
 }

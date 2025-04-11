@@ -3779,6 +3779,7 @@ dependencies = [
  "opsml-interfaces",
  "opsml-state",
  "opsml-storage",
+ "opsml-toml",
  "opsml-types",
  "opsml-utils",
  "potato-head",
@@ -3796,15 +3797,21 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "clap 4.5.35",
+ "opsml-cards",
  "opsml-colors",
  "opsml-crypt",
  "opsml-error",
  "opsml-registry",
+ "opsml-semver",
  "opsml-state",
  "opsml-storage",
+ "opsml-toml",
  "opsml-types",
  "opsml-utils",
+ "pyo3",
+ "serde",
  "tabled",
+ "tracing",
 ]
 
 [[package]]
@@ -3858,6 +3865,7 @@ dependencies = [
  "pyo3",
  "serde",
  "thiserror 2.0.12",
+ "toml_edit",
  "tracing",
 ]
 
@@ -3928,6 +3936,7 @@ dependencies = [
  "opsml-colors",
  "opsml-crypt",
  "opsml-error",
+ "opsml-interfaces",
  "opsml-semver",
  "opsml-settings",
  "opsml-sql",
@@ -4043,6 +4052,7 @@ dependencies = [
  "opsml-client",
  "opsml-error",
  "opsml-settings",
+ "opsml-toml",
  "opsml-types",
  "opsml-utils",
  "tokio",
@@ -4099,6 +4109,17 @@ dependencies = [
  "rayon",
  "tabled",
  "walkdir",
+]
+
+[[package]]
+name = "opsml-toml"
+version = "0.1.0"
+dependencies = [
+ "opsml-error",
+ "opsml-types",
+ "serde",
+ "tempfile",
+ "toml_edit",
 ]
 
 [[package]]
@@ -5765,6 +5786,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "serde_spanned"
+version = "0.6.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "87607cb1398ed59d48732e575a4c28a7a8ebf2454b964fe3f224f2afc07909e1"
+dependencies = [
+ "serde",
+]
+
+[[package]]
 name = "serde_urlencoded"
 version = "0.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6506,6 +6536,9 @@ name = "toml_datetime"
 version = "0.6.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0dd7358ecb8fc2f8d014bf86f6f638ce72ba252a2c3a2572f2a795f1d23efb41"
+dependencies = [
+ "serde",
+]
 
 [[package]]
 name = "toml_edit"
@@ -6514,6 +6547,8 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "17b4795ff5edd201c7cd6dca065ae59972ce77d1b80fa0a84d94950ece7d1474"
 dependencies = [
  "indexmap 2.9.0",
+ "serde",
+ "serde_spanned",
  "toml_datetime",
  "winnow 0.7.4",
 ]

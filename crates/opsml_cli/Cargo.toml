@@ -5,15 +5,22 @@ edition = { workspace = true }
 repository = { workspace = true }
 
 [dependencies]
+opsml-cards = { workspace = true }
 opsml-colors = { workspace = true }
 opsml-crypt = { workspace = true }
 opsml-error = { workspace = true }
 opsml-registry = { workspace = true }
+opsml-semver = { workspace = true }
 opsml-state = { workspace = true }
 opsml-storage = { workspace = true }
+opsml-toml = { workspace = true }
 opsml-types = { workspace = true }
 opsml-utils = { workspace = true }
 
 anyhow = { workspace = true }
 clap = { workspace = true }
+pyo3 = { workspace = true }
+serde = { workspace = true }
 tabled = { workspace = true }
+tracing = { workspace = true }
+

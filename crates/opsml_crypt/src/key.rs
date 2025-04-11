@@ -20,7 +20,6 @@ const PBKDF2_ITERATIONS: u32 = 100_000;
 /// A master key should always be stored in a secret manager
 ///
 /// # Arguments
-///
 /// * `password` - A byte slice containing the password
 /// * `salt` - A byte slice containing the salt
 ///
@@ -47,13 +46,11 @@ pub fn derive_master_key(
 /// Derive an encryption key from a master key
 ///
 /// # Arguments
-///
 /// * `master_key` - A byte slice containing the master key
 /// * `salt` - A byte slice containing the salt
 /// * `info` - A byte slice containing the info
 ///
 /// # Returns
-///
 /// A 32-byte array containing the derived encryption key
 pub fn derive_encryption_key(
     master_key: &[u8],
@@ -80,12 +77,10 @@ pub fn generate_salt() -> Result<[u8; 16], CryptError> {
 /// This us used to encrypt the encryption key for storing in databases. This is typically run on the server-side.
 ///
 /// # Arguments
-///
 /// * `master_key` - A byte slice containing the master key
 /// * `key` - A byte slice containing the key to encrypt
 ///
 /// # Returns
-///
 /// A vector containing the nonce and the encrypted key
 pub fn encrypted_key(master_key: &[u8], key: &[u8]) -> Result<Vec<u8>, CryptError> {
     let aes_key = std::panic::catch_unwind(|| Key::<Aes256Gcm>::from_slice(master_key));
@@ -117,7 +112,6 @@ pub fn encrypted_key(master_key: &[u8], key: &[u8]) -> Result<Vec<u8>, CryptErro
 /// This is used to decrypt the encryption key for use in the client. This is done on the server-side.
 ///
 /// # Arguments
-///
 /// * `master_key` - A byte slice containing the master key
 /// * `encrypted_key` - A byte slice containing the encrypted key
 ///

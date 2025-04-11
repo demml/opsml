@@ -189,6 +189,17 @@ impl ArtifactKey {
     }
 }
 
+// implement Display for ArtifactKey and mask the encrypted_key and storage_key
+impl Display for ArtifactKey {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "ArtifactKey {{ uid: {}, registry_type: {}, encrypted_key: <masked>, storage_key: <masked> }}",
+            self.uid, self.registry_type
+        )
+    }
+}
+
 #[derive(Debug, Clone)]
 pub enum Operation {
     Create,
@@ -261,7 +272,6 @@ impl Display for AuditStatus {
 /// Request to get a file from the registry
 ///
 /// # Arguments
-///
 /// * `uid` - The unique identifier of card that is requesting the file
 /// * `file` - The file tree node
 /// * `registry_type` - The type of registry
@@ -275,7 +285,6 @@ pub struct RawFileRequest {
 /// Response to get a file from the registry
 ///
 /// # Arguments
-///
 /// * `content` - The content of the file
 /// * `suffix` - The suffix of the file
 /// * `mime_type` - The mime type of the file

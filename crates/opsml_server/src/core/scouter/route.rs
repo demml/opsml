@@ -180,12 +180,10 @@ pub async fn update_drift_profile(
 /// Update drift profile status
 ///
 /// # Arguments
-///
 /// * `data` - Arc<AppState> - Application state
 /// * `body` - Json<ProfileStatusRequest> - Profile status request
 ///
 /// # Returns
-///
 /// * `Result<impl IntoResponse, (StatusCode, Json<serde_json::Value>)>` - Result of the request
 #[instrument(skip(data, body))]
 pub async fn update_drift_profile_status(
