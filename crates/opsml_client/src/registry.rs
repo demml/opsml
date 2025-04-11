@@ -76,7 +76,7 @@ impl ClientRegistry {
         // create version request
         let version_request = CardVersionRequest {
             name: card.name().to_string(),
-            repository: card.repository().to_string(),
+            space: card.space().to_string(),
             version,
             version_type,
             pre_tag,

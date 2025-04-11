@@ -28,7 +28,7 @@ class OpsmlLightGBMSklearnWorkflow:
         Args:
             info:
                 CardInfo data structure that contains required info for cards.
-                You could also provide "name", "repository" and "email" to a card; however, this
+                You could also provide "name", "space" and "email" to a card; however, this
                 simplifies the process.
 
         """
@@ -47,15 +47,24 @@ class OpsmlLightGBMSklearnWorkflow:
         """
 
         # create fake data
-        X, y = create_fake_data(n_samples=1000, n_categorical_features=2, task_type="regression")
+        X, y = create_fake_data(
+            n_samples=1000, n_categorical_features=2, task_type="regression"
+        )
         X["target"] = y
 
         # Create data interface
         data_interface = PandasData(
             data=X,
             data_splits=[
-                DataSplit(label="train", column_name="col_1", column_value=0.5, inequality=">="),
-                DataSplit(label="test", column_name="col_1", column_value=0.5, inequality="<"),
+                DataSplit(
+                    label="train",
+                    column_name="col_1",
+                    column_value=0.5,
+                    inequality=">=",
+                ),
+                DataSplit(
+                    label="test", column_name="col_1", column_value=0.5, inequality="<"
+                ),
             ],
             dependent_vars=["target"],
         )
@@ -70,7 +79,9 @@ class OpsmlLightGBMSklearnWorkflow:
         This example highlights the uses of the LightGBMModel.
         """
 
-        categorical_transformer = Pipeline([("onehot", OneHotEncoder(sparse_output=False, handle_unknown="ignore"))])
+        categorical_transformer = Pipeline(
+            [("onehot", OneHotEncoder(sparse_output=False, handle_unknown="ignore"))]
+        )
         preprocessor = ColumnTransformer(
             transformers=[("cat", categorical_transformer, self.cat_cols)],
             remainder="passthrough",
@@ -78,7 +89,10 @@ class OpsmlLightGBMSklearnWorkflow:
 
         # setup lgb regressor
         pipe = Pipeline(
-            [("preprocess", preprocessor), ("rf", lgb.LGBMRegressor(n_estimators=3, max_depth=3, num_leaves=5))]
+            [
+                ("preprocess", preprocessor),
+                ("rf", lgb.LGBMRegressor(n_estimators=3, max_depth=3, num_leaves=5)),
+            ]
         )
 
         # split data
@@ -96,7 +110,9 @@ class OpsmlLightGBMSklearnWorkflow:
         )
 
         # create modelcard
-        modelcard = ModelCard(interface=interface, info=info, datacard_uid=datacard.uid, to_onnx=True)
+        modelcard = ModelCard(
+            interface=interface, info=info, datacard_uid=datacard.uid, to_onnx=True
+        )
         self.registries.model.register_card(card=modelcard)
 
     def _create_lightgbm_modelcard(self):
@@ -124,7 +140,7 @@ class OpsmlLightGBMSklearnWorkflow:
         # Here we are registering the pipeline which contains an sklearn model
         modelcard = ModelCard(
             name="lgb-reg",
-            repository="opsml",
+            space="opsml",
             contact="user@email.com",
             interface=interface,
             datacard_uid=datacard.uid,
@@ -169,6 +185,6 @@ class OpsmlLightGBMSklearnWorkflow:
 
 if __name__ == "__main__":
     # set info (easier than specifying in each card)
-    info = CardInfo(name="lightgbm", repository="opsml", contact="user@email.com")
+    info = CardInfo(name="lightgbm", space="opsml", contact="user@email.com")
     workflow = OpsmlLightGBMSklearnWorkflow(info=info)
     workflow.run_workflow()

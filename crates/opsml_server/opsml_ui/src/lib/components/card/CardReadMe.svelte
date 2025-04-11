@@ -14,13 +14,13 @@
   
     let {
         name,
-        repository,
+        space,
         registryPath,
         version,
         readMe,
       } = $props<{
         name: string;
-        repository: string;
+        space: string;
         registryPath: string;
         version: string;
         readMe: ReadMe;
@@ -29,7 +29,7 @@
   
     
     function navigateToReadMe() {
-        goto(`/opsml/${registryPath}/card/readme?repository=${repository}&name=${name}&version=${version}`);
+        goto(`/opsml/${registryPath}/card/readme?space=${space}&name=${name}&version=${version}`);
       }
   
   

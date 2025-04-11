@@ -184,35 +184,35 @@ impl PostgresQueryHelper {
         let versions_cte = format!(
             "WITH versions AS (
                 SELECT 
-                    repository, 
+                    space, 
                     name, 
                     version, 
-                    ROW_NUMBER() OVER (PARTITION BY repository, name ORDER BY created_at DESC) AS row_num 
+                    ROW_NUMBER() OVER (PARTITION BY space, name ORDER BY created_at DESC) AS row_num 
                 FROM {}
-                WHERE ($1 IS NULL OR repository = $1)
-                AND ($2 IS NULL OR name LIKE $3 OR repository LIKE $3)
+                WHERE ($1 IS NULL OR space = $1)
+                AND ($2 IS NULL OR name LIKE $3 OR space LIKE $3)
             )", table
         );
 
         let stats_cte = format!(
             ", stats AS (
                 SELECT 
-                    repository, 
+                    space, 
                     name, 
                     COUNT(DISTINCT version) AS versions, 
                     MAX(created_at) AS updated_at, 
                     MIN(created_at) AS created_at 
                 FROM {}
-                WHERE ($1 IS NULL OR repository = $1)
-                AND ($2 IS NULL OR name LIKE $3 OR repository LIKE $3)
-                GROUP BY repository, name
+                WHERE ($1 IS NULL OR space = $1)
+                AND ($2 IS NULL OR name LIKE $3 OR space LIKE $3)
+                GROUP BY space, name
             )",
             table
         );
 
         let filtered_versions_cte = ", filtered_versions AS (
              SELECT 
-                    repository, 
+                    space, 
                     name, 
                     version, 
                     row_num
@@ -223,7 +223,7 @@ impl PostgresQueryHelper {
         let joined_cte = format!(
             ", joined AS (
                  SELECT 
-                    stats.repository, 
+                    stats.space, 
                     stats.name, 
                     filtered_versions.version, 
                     stats.versions, 
@@ -232,7 +232,7 @@ impl PostgresQueryHelper {
                     ROW_NUMBER() OVER (ORDER BY stats.{}) AS row_num 
                 FROM stats 
                 JOIN filtered_versions 
-                ON stats.repository = filtered_versions.repository 
+                ON stats.space = filtered_versions.space 
                 AND stats.name = filtered_versions.name
             )",
             sort_by
@@ -253,13 +253,13 @@ impl PostgresQueryHelper {
         let versions_cte = format!(
             "WITH versions AS (
                 SELECT 
-                    repository, 
+                    space, 
                     name, 
                     version, 
                     created_at,
-                    ROW_NUMBER() OVER (PARTITION BY repository, name ORDER BY created_at DESC, major DESC, minor DESC, patch DESC) AS row_num
+                    ROW_NUMBER() OVER (PARTITION BY space, name ORDER BY created_at DESC, major DESC, minor DESC, patch DESC) AS row_num
                 FROM {}
-                WHERE repository = $1
+                WHERE space = $1
                 AND name = $2
             )", table
         );
@@ -267,7 +267,7 @@ impl PostgresQueryHelper {
         let query = format!(
             "{}
             SELECT
-            repository,
+            space,
             name,
             version,
             created_at,
@@ -286,11 +286,11 @@ impl PostgresQueryHelper {
             "SELECT
             COALESCE(CAST(COUNT(DISTINCT name) AS INTEGER), 0) AS nbr_names, 
             COALESCE(CAST(COUNT(major) AS INTEGER), 0) AS nbr_versions, 
-            COALESCE(CAST(COUNT(DISTINCT repository) AS INTEGER), 0) AS nbr_repositories 
+            COALESCE(CAST(COUNT(DISTINCT space) AS INTEGER), 0) AS nbr_spaces 
             FROM {}
             WHERE 1=1
-            AND ($1 IS NULL OR name LIKE $1 OR repository LIKE $1)
-            AND ($2 IS NULL OR name = $2 OR repository = $2)",
+            AND ($1 IS NULL OR name LIKE $1 OR space LIKE $1)
+            AND ($2 IS NULL OR name = $2 OR space = $2)",
             table
         );
 
@@ -305,7 +305,7 @@ impl PostgresQueryHelper {
             SELECT
              created_at,
              name, 
-             repository, 
+             space, 
              major, minor, 
              patch, 
              pre_tag, 
@@ -314,7 +314,7 @@ impl PostgresQueryHelper {
              FROM {}
              WHERE 1=1
                 AND name = $1
-                AND repository = $2
+                AND space = $2
             ",
             table
         );
@@ -338,7 +338,7 @@ impl PostgresQueryHelper {
         WHERE 1=1
         AND ($1 IS NULL OR uid = $1)
         AND ($2 IS NULL OR name = $2)
-        AND ($3 IS NULL OR repository = $3)
+        AND ($3 IS NULL OR space = $3)
         AND ($4 IS NULL OR created_at <= TO_DATE($4, 'YYYY-MM-DD'))
         ",
             table
@@ -445,7 +445,7 @@ impl PostgresQueryHelper {
         uid, 
         app_env, 
         name, 
-        repository, 
+        space, 
         major, 
         minor, 
         patch, 
@@ -470,7 +470,7 @@ impl PostgresQueryHelper {
             uid, 
             app_env, 
             name, 
-            repository, 
+            space, 
             major, 
             minor, 
             patch, 
@@ -492,7 +492,7 @@ impl PostgresQueryHelper {
         uid, 
         app_env, 
         name, 
-        repository, 
+        space, 
         major, 
         minor, 
         patch, 
@@ -518,7 +518,7 @@ impl PostgresQueryHelper {
         uid,
         app_env, 
         name, 
-        repository, 
+        space, 
         major, 
         minor, 
         patch, 
@@ -543,7 +543,7 @@ impl PostgresQueryHelper {
         uid, 
         app_env, 
         name, 
-        repository, 
+        space, 
         major, 
         minor, 
         patch, 
@@ -567,7 +567,7 @@ impl PostgresQueryHelper {
             "UPDATE {} SET 
             app_env = $1, 
             name = $2, 
-            repository = $3, 
+            space = $3, 
             major = $4, 
             minor = $5, 
             patch = $6, 
@@ -590,7 +590,7 @@ impl PostgresQueryHelper {
             "UPDATE {} SET 
         app_env = $1, 
         name = $2, 
-        repository = $3, 
+        space = $3, 
         major = $4, 
         minor = $5, 
         patch = $6, 
@@ -611,7 +611,7 @@ impl PostgresQueryHelper {
             "UPDATE {} SET 
         app_env = $1, 
         name = $2, 
-        repository = $3, 
+        space = $3, 
         major = $4, 
         minor = $5, 
         patch = $6, 
@@ -637,7 +637,7 @@ impl PostgresQueryHelper {
             "UPDATE {} SET 
             app_env = $1, 
             name = $2, 
-            repository = $3, 
+            space = $3, 
             major = $4, 
             minor = $5, 
             patch = $6, 
@@ -660,7 +660,7 @@ impl PostgresQueryHelper {
             "UPDATE {} SET 
         app_env = $1, 
         name = $2, 
-        repository = $3, 
+        space = $3, 
         major = $4, 
         minor = $5, 
         patch = $6, 

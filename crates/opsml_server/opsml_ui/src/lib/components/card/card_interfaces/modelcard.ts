@@ -163,7 +163,7 @@ export interface ModelCardMetadata {
 
 export interface ModelCard {
   name: string;
-  repository: string;
+  space: string;
   version: string;
   uid: string;
   tags: string[];

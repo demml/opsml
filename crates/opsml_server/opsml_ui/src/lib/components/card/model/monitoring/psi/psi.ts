@@ -32,7 +32,7 @@ export enum BinType {
 }
 
 export interface PsiDriftConfig {
-  repository: string;
+  space: string;
   name: string;
   version: string;
   feature_map: FeatureMap; // You'll need to define FeatureMap type

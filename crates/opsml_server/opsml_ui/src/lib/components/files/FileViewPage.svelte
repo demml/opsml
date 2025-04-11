@@ -10,14 +10,14 @@
       file,
       splitPath,
       registry,
-      repository,
+      space,
       name,
       version,
     } = $props<{
       file: RawFile;
       splitPath: string[];
       registry: string;
-      repository: string;
+      space: string;
       name: string;
       version: string;
     }>();
@@ -31,7 +31,7 @@
     function constructPath(index: number): string {
       const basePath = `/opsml/${registry}/card/files`;
       const dynamicPath = splitPath.slice(4, index + 1).join('/');
-      const queryParams = `?repository=${repository}&name=${name}&version=${version}`;
+      const queryParams = `?space=${space}&name=${name}&version=${version}`;
       return dynamicPath ? `${basePath}/${dynamicPath}${queryParams}` : `${basePath}${queryParams}`;
     }
   

@@ -4,7 +4,7 @@ version = { workspace = true }
 edition = { workspace = true }
 repository = { workspace = true }
 license = "MIT"
-description = "Core rust library for the opsml project"
+description = "Core rust library for the OpsML"
 
 [dependencies]
 anyhow = { workspace = true }

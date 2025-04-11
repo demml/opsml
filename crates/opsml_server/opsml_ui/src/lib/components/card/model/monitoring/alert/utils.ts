@@ -6,14 +6,14 @@ import { timeIntervalToDateTime } from "../util";
 import { sampleAlerts } from "../example";
 
 export async function getDriftAlerts(
-  repository: string,
+  space: string,
   name: string,
   version: string,
   timeInterval: TimeInterval,
   active: boolean
 ): Promise<Alert[]> {
   let alertRequest: DriftAlertRequest = {
-    repository: repository,
+    space: space,
     name: name,
     version: version,
     limit_datetime: timeIntervalToDateTime(timeInterval),

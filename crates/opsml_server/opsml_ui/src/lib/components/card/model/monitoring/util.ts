@@ -107,7 +107,7 @@ export async function getLatestMetrics(
 
       const request: DriftRequest = {
         name: config.name,
-        repository: config.repository,
+        space: config.space,
         version: config.version,
         time_interval: time_interval,
         max_data_points: max_data_points,

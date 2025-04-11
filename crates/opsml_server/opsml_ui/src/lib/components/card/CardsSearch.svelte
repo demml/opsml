@@ -101,7 +101,7 @@
       <div class="space-y-2 flex flex-wrap pl-2 pt-4 pb-4 gap-1 overflow-y-scroll">
         <!-- Add your tags or other content here -->
         {#if searchQuery && filteredSpaces.length == 0}
-          <p class="text-black">No repositories found</p>
+          <p class="text-black">No spaces found</p>
         {:else if filteredSpaces.length > 0}
           {#each filteredSpaces as space}
 
@@ -134,7 +134,7 @@
         <span class="badge text-base text-primary-800 border-black border-1 shadow-small bg-surface-50">{registryStats.stats.nbr_versions} versions</span>
       </div>
       <div>
-        <span class="badge text-base text-primary-800 border-black border-1 shadow-small bg-surface-50">{registryStats.stats.nbr_repositories} spaces</span>
+        <span class="badge text-base text-primary-800 border-black border-1 shadow-small bg-surface-50">{registryStats.stats.nbr_spaces} spaces</span>
       </div>
       <div class="ml-1 w-full md:w-auto lg:flex-1">
         <input
@@ -149,7 +149,7 @@
     <div class="pt-4 grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-4">
       {#each registryPage.summaries as summary}
         <CardPage
-          repository={summary.repository}
+          space={summary.space}
           name={summary.name}
           version={summary.version}
           nbr_versions={summary.versions}

@@ -2,7 +2,7 @@ export enum RoutePaths {
   VALIDATE_AUTH = "/opsml/api/auth/validate",
   LOGIN = "/opsml/api/auth/ui/login",
   LIST_CARDS = "/opsml/api/card/list",
-  LIST_SPACES = "/opsml/api/card/repositories",
+  LIST_SPACES = "/opsml/api/card/spaces",
   GET_STATS = "/opsml/api/card/registry/stats",
   GET_REGISTRY_PAGE = "/opsml/api/card/registry/page",
   GET_VERSION_PAGE = "/opsml/api/card/registry/version/page",
@@ -45,7 +45,6 @@ export enum RoutePaths {
   METRICS = "/opsml/metrics",
 
   GRAPHS = "/opsml/runs/graphs",
-  REPOSITORIES = "/opsml/cards/repositories",
   FILE_EXISTS = "/opsml/files/exists",
   FILES_VIEW = "/opsml/files/view",
   MODEL_METADATA = "/opsml/models/metadata",

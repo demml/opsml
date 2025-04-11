@@ -116,7 +116,7 @@ impl SqlClient for PostgresClient {
     ///
     /// * `table` - The table to query
     /// * `name` - The name of the card
-    /// * `repository` - The repository of the card
+    /// * `space` - The space of the card
     /// * `version` - The version of the card
     ///
     /// # Returns
@@ -125,7 +125,7 @@ impl SqlClient for PostgresClient {
     async fn get_versions(
         &self,
         table: &CardTable,
-        repository: &str,
+        space: &str,
         name: &str,
         version: Option<String>,
     ) -> Result<Vec<String>, SqlError> {
@@ -134,7 +134,7 @@ impl SqlClient for PostgresClient {
 
         let cards: Vec<VersionResult> = sqlx::query_as(&query)
             .bind(name)
-            .bind(repository)
+            .bind(space)
             .fetch_all(&self.pool)
             .await
             .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
@@ -174,7 +174,7 @@ impl SqlClient for PostgresClient {
                 let card: Vec<DataCardRecord> = sqlx::query_as(&query)
                     .bind(query_args.uid.as_ref())
                     .bind(query_args.name.as_ref())
-                    .bind(query_args.repository.as_ref())
+                    .bind(query_args.space.as_ref())
                     .bind(query_args.max_date.as_ref())
                     .bind(query_args.limit.unwrap_or(50))
                     .fetch_all(&self.pool)
@@ -187,7 +187,7 @@ impl SqlClient for PostgresClient {
                 let card: Vec<ModelCardRecord> = sqlx::query_as(&query)
                     .bind(query_args.uid.as_ref())
                     .bind(query_args.name.as_ref())
-                    .bind(query_args.repository.as_ref())
+                    .bind(query_args.space.as_ref())
                     .bind(query_args.max_date.as_ref())
                     .bind(query_args.limit.unwrap_or(50))
                     .fetch_all(&self.pool)
@@ -200,7 +200,7 @@ impl SqlClient for PostgresClient {
                 let card: Vec<ExperimentCardRecord> = sqlx::query_as(&query)
                     .bind(query_args.uid.as_ref())
                     .bind(query_args.name.as_ref())
-                    .bind(query_args.repository.as_ref())
+                    .bind(query_args.space.as_ref())
                     .bind(query_args.max_date.as_ref())
                     .bind(query_args.limit.unwrap_or(50))
                     .fetch_all(&self.pool)
@@ -214,7 +214,7 @@ impl SqlClient for PostgresClient {
                 let card: Vec<AuditCardRecord> = sqlx::query_as(&query)
                     .bind(query_args.uid.as_ref())
                     .bind(query_args.name.as_ref())
-                    .bind(query_args.repository.as_ref())
+                    .bind(query_args.space.as_ref())
                     .bind(query_args.max_date.as_ref())
                     .bind(query_args.limit.unwrap_or(50))
                     .fetch_all(&self.pool)
@@ -228,7 +228,7 @@ impl SqlClient for PostgresClient {
                 let card: Vec<PromptCardRecord> = sqlx::query_as(&query)
                     .bind(query_args.uid.as_ref())
                     .bind(query_args.name.as_ref())
-                    .bind(query_args.repository.as_ref())
+                    .bind(query_args.space.as_ref())
                     .bind(query_args.max_date.as_ref())
                     .bind(query_args.limit.unwrap_or(50))
                     .fetch_all(&self.pool)
@@ -254,7 +254,7 @@ impl SqlClient for PostgresClient {
                         .bind(&data.uid)
                         .bind(&data.app_env)
                         .bind(&data.name)
-                        .bind(&data.repository)
+                        .bind(&data.space)
                         .bind(data.major)
                         .bind(data.minor)
                         .bind(data.patch)
@@ -285,7 +285,7 @@ impl SqlClient for PostgresClient {
                         .bind(&model.uid)
                         .bind(&model.app_env)
                         .bind(&model.name)
-                        .bind(&model.repository)
+                        .bind(&model.space)
                         .bind(model.major)
                         .bind(model.minor)
                         .bind(model.patch)
@@ -319,7 +319,7 @@ impl SqlClient for PostgresClient {
                         .bind(&run.uid)
                         .bind(&run.app_env)
                         .bind(&run.name)
-                        .bind(&run.repository)
+                        .bind(&run.space)
                         .bind(run.major)
                         .bind(run.minor)
                         .bind(run.patch)
@@ -350,7 +350,7 @@ impl SqlClient for PostgresClient {
                         .bind(&audit.uid)
                         .bind(&audit.app_env)
                         .bind(&audit.name)
-                        .bind(&audit.repository)
+                        .bind(&audit.space)
                         .bind(audit.major)
                         .bind(audit.minor)
                         .bind(audit.patch)
@@ -382,7 +382,7 @@ impl SqlClient for PostgresClient {
                         .bind(&card.uid)
                         .bind(&card.app_env)
                         .bind(&card.name)
-                        .bind(&card.repository)
+                        .bind(&card.space)
                         .bind(card.major)
                         .bind(card.minor)
                         .bind(card.patch)
@@ -422,7 +422,7 @@ impl SqlClient for PostgresClient {
                     sqlx::query(&query)
                         .bind(&data.app_env)
                         .bind(&data.name)
-                        .bind(&data.repository)
+                        .bind(&data.space)
                         .bind(data.major)
                         .bind(data.minor)
                         .bind(data.patch)
@@ -453,7 +453,7 @@ impl SqlClient for PostgresClient {
                     sqlx::query(&query)
                         .bind(&model.app_env)
                         .bind(&model.name)
-                        .bind(&model.repository)
+                        .bind(&model.space)
                         .bind(model.major)
                         .bind(model.minor)
                         .bind(model.patch)
@@ -487,7 +487,7 @@ impl SqlClient for PostgresClient {
                     sqlx::query(&query)
                         .bind(&run.app_env)
                         .bind(&run.name)
-                        .bind(&run.repository)
+                        .bind(&run.space)
                         .bind(run.major)
                         .bind(run.minor)
                         .bind(run.patch)
@@ -518,7 +518,7 @@ impl SqlClient for PostgresClient {
                     sqlx::query(&query)
                         .bind(&audit.app_env)
                         .bind(&audit.name)
-                        .bind(&audit.repository)
+                        .bind(&audit.space)
                         .bind(audit.major)
                         .bind(audit.minor)
                         .bind(audit.patch)
@@ -550,7 +550,7 @@ impl SqlClient for PostgresClient {
                     sqlx::query(&query)
                         .bind(&card.app_env)
                         .bind(&card.name)
-                        .bind(&card.repository)
+                        .bind(&card.space)
                         .bind(card.major)
                         .bind(card.minor)
                         .bind(card.patch)
@@ -583,7 +583,7 @@ impl SqlClient for PostgresClient {
         }
     }
 
-    /// Get unique repository names
+    /// Get unique space names
     ///
     /// # Arguments
     ///
@@ -591,12 +591,9 @@ impl SqlClient for PostgresClient {
     ///
     /// # Returns
     ///
-    /// * `Vec<String>` - A vector of unique repository names
-    async fn get_unique_repository_names(
-        &self,
-        table: &CardTable,
-    ) -> Result<Vec<String>, SqlError> {
-        let query = format!("SELECT DISTINCT repository FROM {}", table);
+    /// * `Vec<String>` - A vector of unique space names
+    async fn get_unique_space_names(&self, table: &CardTable) -> Result<Vec<String>, SqlError> {
+        let query = format!("SELECT DISTINCT space FROM {}", table);
         let repos: Vec<String> = sqlx::query_scalar(&query)
             .fetch_all(&self.pool)
             .await
@@ -609,14 +606,14 @@ impl SqlClient for PostgresClient {
         &self,
         table: &CardTable,
         search_term: Option<&str>,
-        repository: Option<&str>,
+        space: Option<&str>,
     ) -> Result<QueryStats, SqlError> {
         let query = PostgresQueryHelper::get_query_stats_query(table);
 
         // if search_term is not None, format with %search_term%, else None
         let stats: QueryStats = sqlx::query_as(&query)
             .bind(search_term.map(|term| format!("%{}%", term)))
-            .bind(repository)
+            .bind(space)
             .fetch_one(&self.pool)
             .await
             .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
@@ -631,7 +628,7 @@ impl SqlClient for PostgresClient {
     /// * `sort_by` - The field to sort by
     /// * `page` - The page number
     /// * `search_term` - The search term to query
-    /// * `repository` - The repository to query
+    /// * `space` - The space to query
     /// * `table` - The table to query
     ///
     /// # Returns
@@ -642,7 +639,7 @@ impl SqlClient for PostgresClient {
         sort_by: &str,
         page: i32,
         search_term: Option<&str>,
-        repository: Option<&str>,
+        space: Option<&str>,
         table: &CardTable,
     ) -> Result<Vec<CardSummary>, SqlError> {
         let query = PostgresQueryHelper::get_query_page_query(table, sort_by);
@@ -651,7 +648,7 @@ impl SqlClient for PostgresClient {
         let upper_bound = page * 30;
 
         let records: Vec<CardSummary> = sqlx::query_as(&query)
-            .bind(repository)
+            .bind(space)
             .bind(search_term)
             .bind(search_term.map(|term| format!("%{}%", term)))
             .bind(lower_bound)
@@ -666,7 +663,7 @@ impl SqlClient for PostgresClient {
     async fn version_page(
         &self,
         page: i32,
-        repository: Option<&str>,
+        space: Option<&str>,
         name: Option<&str>,
         table: &CardTable,
     ) -> Result<Vec<VersionSummary>, SqlError> {
@@ -676,7 +673,7 @@ impl SqlClient for PostgresClient {
         let upper_bound = page * 30;
 
         let records: Vec<VersionSummary> = sqlx::query_as(&query)
-            .bind(repository)
+            .bind(space)
             .bind(name)
             .bind(lower_bound)
             .bind(upper_bound)
@@ -1064,7 +1061,7 @@ impl SqlClient for PostgresClient {
         let key: (String, String, Vec<u8>, String) = sqlx::query_as(&query)
             .bind(query_args.uid.as_ref())
             .bind(query_args.name.as_ref())
-            .bind(query_args.repository.as_ref())
+            .bind(query_args.space.as_ref())
             .bind(query_args.max_date.as_ref())
             .bind(query_args.limit.unwrap_or(1))
             .fetch_one(&self.pool)
@@ -1366,10 +1363,10 @@ mod tests {
 
         assert!(!exists);
 
-        // try name and repository
+        // try name and space
         let card_args = CardQueryArgs {
             name: Some("Data1".to_string()),
-            repository: Some("repo1".to_string()),
+            space: Some("repo1".to_string()),
             ..Default::default()
         };
 
@@ -1382,10 +1379,10 @@ mod tests {
 
         assert_eq!(results.len(), 10);
 
-        // try name and repository
+        // try name and space
         let card_args = CardQueryArgs {
             name: Some("Model1".to_string()),
-            repository: Some("repo1".to_string()),
+            space: Some("repo1".to_string()),
             version: Some("~1.0.0".to_string()),
             ..Default::default()
         };
@@ -1483,9 +1480,9 @@ mod tests {
         let script = std::fs::read_to_string("tests/populate_postgres_test.sql").unwrap();
         sqlx::raw_sql(&script).execute(&client.pool).await.unwrap();
 
-        // get unique repository names
+        // get unique space names
         let repos = client
-            .get_unique_repository_names(&CardTable::Model)
+            .get_unique_space_names(&CardTable::Model)
             .await
             .unwrap();
 
@@ -1508,7 +1505,7 @@ mod tests {
 
         assert_eq!(stats.nbr_names, 9);
         assert_eq!(stats.nbr_versions, 9);
-        assert_eq!(stats.nbr_repositories, 9);
+        assert_eq!(stats.nbr_spaces, 9);
 
         // query stats with search term
         let stats = client

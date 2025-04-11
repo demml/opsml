@@ -20,7 +20,7 @@ pub async fn get_next_version(
     let versions = sql_client
         .get_versions(
             table,
-            &request.repository,
+            &request.space,
             &request.name,
             request.version.clone(),
         )
@@ -79,7 +79,7 @@ pub async fn insert_card_into_db(
         Card::Data(client_card) => {
             let server_card = DataCardRecord::new(
                 client_card.name,
-                client_card.repository,
+                client_card.space,
                 version,
                 client_card.tags,
                 client_card.data_type,
@@ -93,7 +93,7 @@ pub async fn insert_card_into_db(
         Card::Model(client_card) => {
             let server_card = ModelCardRecord::new(
                 client_card.name,
-                client_card.repository,
+                client_card.space,
                 version,
                 client_card.tags,
                 client_card.datacard_uid,
@@ -111,7 +111,7 @@ pub async fn insert_card_into_db(
         Card::Experiment(client_card) => {
             let server_card = ExperimentCardRecord::new(
                 client_card.name,
-                client_card.repository,
+                client_card.space,
                 version,
                 client_card.tags,
                 client_card.datacard_uids,
@@ -126,7 +126,7 @@ pub async fn insert_card_into_db(
         Card::Audit(client_card) => {
             let server_card = AuditCardRecord::new(
                 client_card.name,
-                client_card.repository,
+                client_card.space,
                 version,
                 client_card.tags,
                 client_card.approved,
@@ -140,7 +140,7 @@ pub async fn insert_card_into_db(
         Card::Prompt(client_card) => {
             let server_card = PromptCardRecord::new(
                 client_card.name,
-                client_card.repository,
+                client_card.space,
                 version,
                 client_card.tags,
                 client_card.experimentcard_uid,

@@ -14,9 +14,9 @@ pub struct ListCards {
     #[arg(long = "registry")]
     pub registry: String,
 
-    /// repository name
-    #[arg(long = "repository")]
-    pub repository: Option<String>,
+    /// space name
+    #[arg(long = "space")]
+    pub space: Option<String>,
 
     /// Name given to a card
     #[arg(long = "name")]
@@ -55,10 +55,10 @@ impl IntoQueryArgs for ListCards {
             .map(|name| clean_string(&name))
             .transpose()?;
 
-        let repository = self
-            .repository
+        let space = self
+            .space
             .clone()
-            .map(|repository| clean_string(&repository))
+            .map(|space| clean_string(&space))
             .transpose()?;
 
         let registry_type = RegistryType::from_string(&self.registry).map_err(|e| {
@@ -70,7 +70,7 @@ impl IntoQueryArgs for ListCards {
 
         Ok(CardQueryArgs {
             registry_type,
-            repository,
+            space,
             name,
             version: self.version.clone(),
             uid: self.uid.clone(),
@@ -88,9 +88,9 @@ pub struct DownloadCard {
     #[arg(long = "registry")]
     pub registry: String,
 
-    /// Card repository
-    #[arg(long = "repository")]
-    pub repository: Option<String>,
+    /// Card space
+    #[arg(long = "space")]
+    pub space: Option<String>,
 
     /// Name given to card
     #[arg(long = "name")]
@@ -117,10 +117,10 @@ impl IntoQueryArgs for DownloadCard {
             .map(|name| clean_string(&name))
             .transpose()?;
 
-        let repository = self
-            .repository
+        let space = self
+            .space
             .clone()
-            .map(|repository| clean_string(&repository))
+            .map(|space| clean_string(&space))
             .transpose()?;
 
         let registry_type = RegistryType::from_string(&self.registry).map_err(|e| {
@@ -133,7 +133,7 @@ impl IntoQueryArgs for DownloadCard {
         Ok(CardQueryArgs {
             uid: self.uid.clone(),
             name,
-            repository,
+            space,
             version: self.version.clone(),
             registry_type,
             ..Default::default()

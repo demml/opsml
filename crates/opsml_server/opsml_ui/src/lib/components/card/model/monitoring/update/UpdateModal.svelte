@@ -202,7 +202,7 @@ function validateDispatchForm(): boolean {
     let request: UpdateProfileRequest = {
       uid: profile.config.uid,
       request: {
-        repository: matchedProfile.config.repository,
+        space: matchedProfile.config.space,
         profile: JSON.stringify(matchedProfile),
         drift_type: driftType,
       }

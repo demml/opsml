@@ -26,17 +26,21 @@ Steps:
 """
 
 """-------------------------------------DataCard-------------------------------------"""
-info = CardInfo(name="sklearn_pipeline", repository="opsml", contact="user@email.com")
+info = CardInfo(name="sklearn_pipeline", space="opsml", contact="user@email.com")
 registries = CardRegistries()
 
-X, y = create_fake_data(n_samples=1000, n_categorical_features=2, task_type="regression")
+X, y = create_fake_data(
+    n_samples=1000, n_categorical_features=2, task_type="regression"
+)
 X["target"] = y
 
 # Create data interface
 data_interface = PandasData(
     data=X,
     data_splits=[
-        DataSplit(label="train", column_name="col_1", column_value=0.5, inequality=">="),
+        DataSplit(
+            label="train", column_name="col_1", column_value=0.5, inequality=">="
+        ),
         DataSplit(label="test", column_name="col_1", column_value=0.5, inequality="<"),
     ],
     dependent_vars=["target"],
@@ -50,7 +54,9 @@ registries.data.register_card(card=datacard)
 
 # setup columntransformer
 cat_cols = ["cat_col_0", "cat_col_1"]
-categorical_transformer = Pipeline([("onehot", OneHotEncoder(sparse_output=False, handle_unknown="ignore"))])
+categorical_transformer = Pipeline(
+    [("onehot", OneHotEncoder(sparse_output=False, handle_unknown="ignore"))]
+)
 preprocessor = ColumnTransformer(
     transformers=[("cat", categorical_transformer, cat_cols)],
     remainder="passthrough",
@@ -84,7 +90,9 @@ interface = SklearnModel(
 )
 
 # create modelcard
-modelcard = ModelCard(interface=interface, info=info, datacard_uid=datacard.uid, to_onnx=True)
+modelcard = ModelCard(
+    interface=interface, info=info, datacard_uid=datacard.uid, to_onnx=True
+)
 registries.model.register_card(card=modelcard)
 
 """-------------------------------------Onnx-------------------------------------"""

@@ -19,11 +19,7 @@ export const load: LayoutServerLoad = async ({ url }) => {
 
   let metadata = (await getCardMetadata(uid, registry)) as DataCard;
 
-  let readme = await getCardReadMe(
-    metadata.name,
-    metadata.repository,
-    registry
-  );
+  let readme = await getCardReadMe(metadata.name, metadata.space, registry);
 
   let registryPath = getRegistryTypeLowerCase(registry);
 

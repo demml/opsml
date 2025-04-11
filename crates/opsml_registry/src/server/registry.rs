@@ -97,7 +97,7 @@ pub mod server_logic {
         async fn get_next_version(
             &self,
             name: &str,
-            repository: &str,
+            space: &str,
             version: Option<String>,
             version_type: VersionType,
             pre_tag: Option<String>,
@@ -105,7 +105,7 @@ pub mod server_logic {
         ) -> Result<Version, RegistryError> {
             let versions = self
                 .sql_client
-                .get_versions(&self.table_name, name, repository, version.clone())
+                .get_versions(&self.table_name, name, space, version.clone())
                 .await
                 .map_err(|e| RegistryError::Error(format!("Failed to get versions {}", e)))?;
 
@@ -177,7 +177,7 @@ pub mod server_logic {
             let version = self
                 .get_next_version(
                     card.name(),
-                    card.repository(),
+                    card.space(),
                     version,
                     version_type,
                     pre_tag,
@@ -189,7 +189,7 @@ pub mod server_logic {
                 Card::Data(client_card) => {
                     let server_card = DataCardRecord::new(
                         client_card.name,
-                        client_card.repository,
+                        client_card.space,
                         version,
                         client_card.tags,
                         client_card.data_type,
@@ -203,7 +203,7 @@ pub mod server_logic {
                 Card::Model(client_card) => {
                     let server_card = ModelCardRecord::new(
                         client_card.name,
-                        client_card.repository,
+                        client_card.space,
                         version,
                         client_card.tags,
                         client_card.datacard_uid,
@@ -221,7 +221,7 @@ pub mod server_logic {
                 Card::Experiment(client_card) => {
                     let server_card = ExperimentCardRecord::new(
                         client_card.name,
-                        client_card.repository,
+                        client_card.space,
                         version,
                         client_card.tags,
                         client_card.datacard_uids,
@@ -236,7 +236,7 @@ pub mod server_logic {
                 Card::Audit(client_card) => {
                     let server_card = AuditCardRecord::new(
                         client_card.name,
-                        client_card.repository,
+                        client_card.space,
                         version,
                         client_card.tags,
                         client_card.approved,
@@ -250,7 +250,7 @@ pub mod server_logic {
                 Card::Prompt(client_card) => {
                     let server_card = PromptCardRecord::new(
                         client_card.name,
-                        client_card.repository,
+                        client_card.space,
                         version,
                         client_card.tags,
                         client_card.experimentcard_uid,
@@ -276,7 +276,7 @@ pub mod server_logic {
             let response = CreateCardResponse {
                 registered: true,
                 version: card.version(),
-                repository: card.registry_type(),
+                space: card.registry_type(),
                 name: card.name(),
                 app_env: card.app_env(),
                 created_at: card.created_at(),
@@ -304,7 +304,7 @@ pub mod server_logic {
                         created_at: client_card.created_at,
                         app_env: client_card.app_env,
                         name: client_card.name,
-                        repository: client_card.repository,
+                        space: client_card.space,
                         major: version.major as i32,
                         minor: version.minor as i32,
                         patch: version.patch as i32,
@@ -332,7 +332,7 @@ pub mod server_logic {
                         created_at: client_card.created_at,
                         app_env: client_card.app_env,
                         name: client_card.name,
-                        repository: client_card.repository,
+                        space: client_card.space,
                         major: version.major as i32,
                         minor: version.minor as i32,
                         patch: version.patch as i32,
@@ -363,7 +363,7 @@ pub mod server_logic {
                         created_at: client_card.created_at,
                         app_env: client_card.app_env,
                         name: client_card.name,
-                        repository: client_card.repository,
+                        space: client_card.space,
                         major: version.major as i32,
                         minor: version.minor as i32,
                         patch: version.patch as i32,
@@ -391,7 +391,7 @@ pub mod server_logic {
                         created_at: client_card.created_at,
                         app_env: client_card.app_env,
                         name: client_card.name,
-                        repository: client_card.repository,
+                        space: client_card.space,
                         major: version.major as i32,
                         minor: version.minor as i32,
                         patch: version.patch as i32,
@@ -419,7 +419,7 @@ pub mod server_logic {
                         created_at: client_card.created_at,
                         app_env: client_card.app_env,
                         name: client_card.name,
-                        repository: client_card.repository,
+                        space: client_card.space,
                         major: version.major as i32,
                         minor: version.minor as i32,
                         patch: version.patch as i32,
@@ -731,7 +731,7 @@ pub mod server_logic {
                 let query_args = CardQueryArgs {
                     uid: None,
                     name: None,
-                    repository: None,
+                    space: None,
                     version: None,
                     max_date: None,
                     tags: None,

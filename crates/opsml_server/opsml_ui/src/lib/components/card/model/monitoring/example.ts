@@ -174,7 +174,7 @@ export const sampleAlerts: Alert[] = [
   {
     created_at: "2024-03-28 10:30:00",
     name: "credit_model",
-    repository: "models",
+    space: "models",
     version: "1.0.0",
     feature: "income",
     alert: { type: "drift_detected", message: "PSI value exceeded threshold" },
@@ -184,7 +184,7 @@ export const sampleAlerts: Alert[] = [
   {
     created_at: "2024-03-28 09:45:00",
     name: "fraud_detection",
-    repository: "models",
+    space: "models",
     version: "2.1.0",
     feature: "transaction_amount",
     alert: { type: "spc_violation", message: "Value outside control limits" },
@@ -194,7 +194,7 @@ export const sampleAlerts: Alert[] = [
   {
     created_at: "2024-03-28 09:00:00",
     name: "customer_churn",
-    repository: "ml_models",
+    space: "ml_models",
     version: "1.2.3",
     feature: "usage_frequency",
     alert: { type: "custom_metric", message: "Metric below threshold" },
@@ -204,7 +204,7 @@ export const sampleAlerts: Alert[] = [
   {
     created_at: "2024-03-27 23:15:00",
     name: "recommendation_engine",
-    repository: "recsys",
+    space: "recsys",
     version: "3.0.1",
     feature: "user_engagement",
     alert: { type: "drift_detected", message: "Distribution shift detected" },
@@ -214,7 +214,7 @@ export const sampleAlerts: Alert[] = [
   {
     created_at: "2024-03-27 22:30:00",
     name: "credit_model",
-    repository: "models",
+    space: "models",
     version: "1.0.0",
     feature: "debt_ratio",
     alert: { type: "spc_violation", message: "Consecutive points above mean" },
@@ -224,7 +224,7 @@ export const sampleAlerts: Alert[] = [
   {
     created_at: "2024-03-27 21:45:00",
     name: "fraud_detection",
-    repository: "models",
+    space: "models",
     version: "2.1.0",
     feature: "ip_velocity",
     alert: { type: "psi_threshold", message: "PSI above 0.2" },
@@ -234,7 +234,7 @@ export const sampleAlerts: Alert[] = [
   {
     created_at: "2024-03-27 20:00:00",
     name: "price_optimization",
-    repository: "pricing",
+    space: "pricing",
     version: "1.1.0",
     feature: "demand_forecast",
     alert: { type: "custom_metric", message: "Accuracy below target" },
@@ -244,7 +244,7 @@ export const sampleAlerts: Alert[] = [
   {
     created_at: "2024-03-27 19:15:00",
     name: "customer_churn",
-    repository: "ml_models",
+    space: "ml_models",
     version: "1.2.3",
     feature: "support_tickets",
     alert: { type: "drift_detected", message: "Significant feature drift" },
@@ -254,7 +254,7 @@ export const sampleAlerts: Alert[] = [
   {
     created_at: "2024-03-27 18:30:00",
     name: "recommendation_engine",
-    repository: "recsys",
+    space: "recsys",
     version: "3.0.1",
     feature: "click_through_rate",
     alert: { type: "spc_violation", message: "Point beyond 3 sigma" },
@@ -264,7 +264,7 @@ export const sampleAlerts: Alert[] = [
   {
     created_at: "2024-03-27 17:45:00",
     name: "price_optimization",
-    repository: "pricing",
+    space: "pricing",
     version: "1.1.0",
     feature: "competitor_prices",
     alert: { type: "custom_metric", message: "Data freshness warning" },

@@ -62,7 +62,7 @@ This should match exactly what the model expects as input.
 from opsml import SklearnModel, CardInfo, ModelCard, CardRegistry
 from sklearn.linear_model import LinearRegression
 
-info = CardInfo(name="model", repository="opsml", contact="user@email.com")
+info = CardInfo(name="model", space="opsml", contact="user@email.com")
 model_registry = CardRegistry("model")
 
 # Skipping data step
@@ -117,7 +117,7 @@ from opsml import LightGBMModel, CardInfo, ModelCard, CardRegistry
 from sklearn.preprocessing import StandardScaler
 import lightgbm as lgb
 
-info = CardInfo(name="model", repository="opsml", contact="user@email.com")
+info = CardInfo(name="model", space="opsml", contact="user@email.com")
 model_registry = CardRegistry("model")
 
 # Skipping data step
@@ -178,7 +178,7 @@ This should match exactly what the model expects as input. See example below.
 from opsml import XGBoostModel, CardInfo, ModelCard, CardRegistry
 import xgboost as xgb
 
-info = CardInfo(name="model", repository="opsml", contact="user@email.com")
+info = CardInfo(name="model", space="opsml", contact="user@email.com")
 model_registry = CardRegistry("model")
 
 # Skipping data step
@@ -229,7 +229,7 @@ For catboost models this is either a list or numpy array.
 from opsml import CatBoostModel, CardInfo, ModelCard, CardRegistry
 import catboost
 
-info = CardInfo(name="model", repository="opsml", contact="user@email.com")
+info = CardInfo(name="model", space="opsml", contact="user@email.com")
 model_registry = CardRegistry("model")
 
 # Skipping data step
@@ -290,7 +290,7 @@ If you wish to save the model's state dict, as is recommended by pytorch, you wi
 from opsml import TorchModel, CardInfo, ModelCard, CardRegistry
 from examples.torch.polynomial_nn import Polynomial3 # see examples/torch/polynomial_nn.py
 
-info = CardInfo(name="model", repository="opsml", contact="user@email.com")
+info = CardInfo(name="model", space="opsml", contact="user@email.com")
 model_registry = CardRegistry("model")
 
 # Skipping data step
@@ -361,7 +361,7 @@ from opsml import LightningModel, TorchOnnxArgs, CardInfo, ModelCard, CardRegist
 from examples.torch.lightning_module import RegressionModel # see examples/torch/
 import lightning as L
 
-info = CardInfo(name="model", repository="opsml", contact="user@email.com")
+info = CardInfo(name="model", space="opsml", contact="user@email.com")
 model_registry = CardRegistry("model")
 
 # Skipping data step
@@ -430,7 +430,7 @@ Interface for saving a tensorflow model.
 from opsml import TensorFlowModel, CardInfo, ModelCard, CardRegistry
 import tensorflow as tf 
 
-info = CardInfo(name="model", repository="opsml", contact="user@email.com")
+info = CardInfo(name="model", space="opsml", contact="user@email.com")
 model_registry = CardRegistry("model")
 
 # Skipping data step
@@ -501,7 +501,7 @@ Interface for saving a huggingface model.
 from opsml import HuggingFaceModel, HuggingFaceOnnxArgs, HuggingFaceORTModel, HuggingFaceTask, CardInfo, ModelCard, CardRegistry
 from transformers import BartModel, BartTokenizer
 
-info = CardInfo(name="model", repository="opsml", contact="user@email.com")
+info = CardInfo(name="model", space="opsml", contact="user@email.com")
 model_registry = CardRegistry("model")
 
 # Skipping data step
@@ -566,7 +566,7 @@ Interface for saving a Vowpal Wabbit model.
 from opsml import VowpalWabbitModel, CardInfo, ModelCard, CardRegistry
 import vowpalwabbit
 
-info = CardInfo(name="model", repository="opsml", contact="user@email.com")
+info = CardInfo(name="model", space="opsml", contact="user@email.com")
 model_registry = CardRegistry("model")
 
 # Skipping data step
@@ -609,7 +609,7 @@ These requirements are necessary for `OpsML` to properly save and load your mode
 ```python
 from opsml import ModelInterface, CardInfo, DataCard, CardRegistry
 
-info = CardInfo(name="model", repository="opsml", contact="opsml_user")
+info = CardInfo(name="model", space="opsml", contact="opsml_user")
 registry = CardRegistry("model")
 
 # ModelInterface is a pydantic BaseModel

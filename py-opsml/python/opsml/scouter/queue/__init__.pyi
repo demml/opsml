@@ -140,7 +140,9 @@ class ServerRecord:
         """
 
     @property
-    def record(self) -> Union[SpcServerRecord, PsiServerRecord, CustomMetricServerRecord, ObservabilityMetrics]:
+    def record(
+        self,
+    ) -> Union[SpcServerRecord, PsiServerRecord, CustomMetricServerRecord, ObservabilityMetrics]:
         """Return the drift server record."""
 
 class ServerRecords:
@@ -229,7 +231,7 @@ class ScouterQueue:
 class SpcServerRecord:
     def __init__(
         self,
-        repository: str,
+        space: str,
         name: str,
         version: str,
         feature: str,
@@ -238,8 +240,8 @@ class SpcServerRecord:
         """Initialize spc drift server record
 
         Args:
-            repository:
-                Model repository
+            space:
+                Model space
             name:
                 Model name
             version:
@@ -255,8 +257,8 @@ class SpcServerRecord:
         """Return the created at timestamp."""
 
     @property
-    def repository(self) -> str:
-        """Return the repository."""
+    def space(self) -> str:
+        """Return the space."""
 
     @property
     def name(self) -> str:
@@ -286,7 +288,7 @@ class SpcServerRecord:
 class PsiServerRecord:
     def __init__(
         self,
-        repository: str,
+        space: str,
         name: str,
         version: str,
         feature: str,
@@ -296,8 +298,8 @@ class PsiServerRecord:
         """Initialize spc drift server record
 
         Args:
-            repository:
-                Model repository
+            space:
+                Model space
             name:
                 Model name
             version:
@@ -315,8 +317,8 @@ class PsiServerRecord:
         """Return the created at timestamp."""
 
     @property
-    def repository(self) -> str:
-        """Return the repository."""
+    def space(self) -> str:
+        """Return the space."""
 
     @property
     def name(self) -> str:
@@ -350,7 +352,7 @@ class PsiServerRecord:
 class CustomMetricServerRecord:
     def __init__(
         self,
-        repository: str,
+        space: str,
         name: str,
         version: str,
         metric: str,
@@ -359,8 +361,8 @@ class CustomMetricServerRecord:
         """Initialize spc drift server record
 
         Args:
-            repository:
-                Model repository
+            space:
+                Model space
             name:
                 Model name
             version:
@@ -376,8 +378,8 @@ class CustomMetricServerRecord:
         """Return the created at timestamp."""
 
     @property
-    def repository(self) -> str:
-        """Return the repository."""
+    def space(self) -> str:
+        """Return the space."""
 
     @property
     def name(self) -> str:
