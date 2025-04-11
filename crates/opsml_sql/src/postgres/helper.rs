@@ -569,7 +569,7 @@ impl PostgresQueryHelper {
     }
 
     pub fn get_carddeck_insert_query() -> String {
-        format!("INSERT INTO {} (uid, app_env, name, space, major, minor, patch, version, pre_tag, build_tag, card_uids, username, opsml_version) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)", CardTable::Deck)
+        format!("INSERT INTO {} (uid, app_env, name, space, major, minor, patch, version, pre_tag, build_tag, cards, username, opsml_version) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)", CardTable::Deck)
             .to_string()
     }
 
@@ -583,7 +583,7 @@ impl PostgresQueryHelper {
             minor = $5,
             patch = $6, 
             version = $7, 
-            card_uids = $8,
+            cards = $8,
             username = $9,
             opsml_version = $10
             WHERE uid = $11",

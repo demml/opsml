@@ -160,7 +160,7 @@ pub async fn insert_card_into_db(
                 client_card.name,
                 client_card.space,
                 version,
-                client_card.card_uids,
+                client_card.cards,
                 client_card.opsml_version,
                 client_card.username,
             );

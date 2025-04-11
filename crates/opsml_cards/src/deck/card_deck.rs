@@ -399,7 +399,7 @@ impl CardDeck {
             name: self.name.clone(),
             version: self.version.clone(),
             uid: self.uid.clone(),
-            card_uids: self.cards.to_card_entries(),
+            cards: self.cards.to_card_entries(),
             opsml_version: self.opsml_version.clone(),
             username: std::env::var("OPSML_USERNAME").unwrap_or_else(|_| "guest".to_string()),
         };
