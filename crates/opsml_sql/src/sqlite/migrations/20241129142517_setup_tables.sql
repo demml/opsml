@@ -65,7 +65,7 @@ CREATE TABLE IF NOT EXISTS opsml_experiment_registry (
     datacard_uids TEXT,
     modelcard_uids TEXT,
     promptcard_uids TEXT,
-    card_deck_uids TEXT,
+    card_deck_uids TEXT DEFAULT '[]',
     experimentcard_uids TEXT,
     opsml_version TEXT NOT NULL DEFAULT '0.0.0',
     username TEXT NOT NULL DEFAULT 'guest'
