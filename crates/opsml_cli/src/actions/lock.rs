@@ -159,7 +159,7 @@ fn lock_deck(config: AppConfig) -> Result<LockArtifact, CliError> {
     let deck = deck.unwrap();
     //
     //// Get card UIDs from deck
-    let card_entries = deck.card_uids().ok_or(CliError::MissingCardDeckUids)?;
+    let card_entries = deck.cards().ok_or(CliError::MissingCardDeckUids)?;
     let needs_refresh = process_deck_cards(card_entries, app_cards, &registries)?;
     //
     let lock_entry = match needs_refresh {

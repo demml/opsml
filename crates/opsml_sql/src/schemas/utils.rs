@@ -120,7 +120,7 @@ pub fn convert_card_deck(record: CardDeckRecord) -> CardRecord {
         space: record.space,
         version: record.version,
         username: record.username,
-        card_uids: record.card_uids.0,
+        cards: record.cards.0,
         opsml_version: record.opsml_version,
     };
 

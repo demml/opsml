@@ -453,7 +453,7 @@ pub struct CardDeckClientRecord {
     pub space: String,
     pub name: String,
     pub version: String,
-    pub card_uids: Vec<CardEntry>,
+    pub cards: Vec<CardEntry>,
     pub opsml_version: String,
     pub username: String,
 }
@@ -469,7 +469,7 @@ impl Default for CardDeckClientRecord {
             version: "".to_string(),
             opsml_version: env!("CARGO_PKG_VERSION").to_string(),
             username: "guest".to_string(),
-            card_uids: Vec::new(),
+            cards: Vec::new(),
         }
     }
 }
@@ -682,14 +682,14 @@ impl CardRecord {
 }
 
 impl CardRecord {
-    pub fn card_uids(&self) -> Option<Vec<CardEntry>> {
+    pub fn cards(&self) -> Option<Vec<CardEntry>> {
         match self {
             Self::Data(_) => None,
             Self::Model(_) => None,
             Self::Experiment(_) => None,
             Self::Audit(_) => None,
             Self::Prompt(_) => None,
-            Self::Deck(card) => Some(card.card_uids.clone()),
+            Self::Deck(card) => Some(card.cards.clone()),
         }
     }
 
