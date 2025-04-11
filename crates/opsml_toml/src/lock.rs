@@ -50,8 +50,7 @@ impl LockFile {
 
         let lock_path = root_path.join("opsml.lock");
 
-        fs::write(lock_path, doc.to_string())
-            .map_err(|e| PyProjectTomlError::FailedToLockFile(e))?;
+        fs::write(lock_path, doc.to_string()).map_err(PyProjectTomlError::FailedToLockFile)?;
 
         Ok(())
     }

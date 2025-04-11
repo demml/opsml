@@ -96,7 +96,7 @@ pub fn download_deck(args: &DownloadCard) -> Result<(), CliError> {
 
     // delete directory if it exists
     if base_path.exists() {
-        std::fs::remove_dir_all(&base_path).map_err(|e| CliError::DeleteBasePathError(e))?;
+        std::fs::remove_dir_all(&base_path).map_err(CliError::DeleteBasePathError)?;
     }
 
     // download card deck card
