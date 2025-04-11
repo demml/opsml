@@ -35,8 +35,8 @@ pub enum OpsmlRegistry {
 impl OpsmlRegistry {
     #[instrument(skip_all)]
     pub fn new(registry_type: RegistryType) -> Result<Self, RegistryError> {
-        let state = app_state();
-        let mode = state.mode()?;
+        let state = &app_state();
+        let mode = &*state.mode()?;
 
         match mode {
             OpsmlMode::Client => {

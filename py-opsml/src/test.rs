@@ -1,5 +1,4 @@
 use pyo3::prelude::*;
-use std::io::Write;
 use std::path::PathBuf;
 
 #[cfg(feature = "server")]
@@ -63,6 +62,7 @@ impl OpsmlTestServer {
     fn start_server(&mut self) -> PyResult<()> {
         #[cfg(feature = "server")]
         {
+            println!("Starting Opsml Server...");
             self.cleanup()?;
 
             // set server env vars
@@ -105,7 +105,7 @@ impl OpsmlTestServer {
                     if response.status() == 200 {
                         self.set_env_vars_for_client()?;
                         println!("Opsml Server started successfully");
-                        app_state().reset_config()?;
+                        app_state().reset_app_state()?;
                         return Ok(());
                     }
                 }
@@ -153,6 +153,8 @@ impl OpsmlTestServer {
     pub fn remove_env_vars_for_client(&self) -> PyResult<()> {
         std::env::remove_var("APP_ENV");
         std::env::remove_var("OPSML_TRACKING_URI");
+        std::env::remove_var("OPSML_SERVER_PORT");
+        std::env::remove_var("OPSML_BASE_PATH");
         Ok(())
     }
 
@@ -173,24 +175,24 @@ impl OpsmlTestServer {
         }
 
         // shutdown any running server running on port 3000
-        if let Ok(output) = std::process::Command::new("lsof")
-            .args(["-ti", ":3000"])
-            .output()
-        {
-            if !output.stdout.is_empty() {
-                let _ = std::process::Command::new("xargs")
-                    .arg("kill")
-                    .arg("-9")
-                    .stdin(std::process::Stdio::piped())
-                    .spawn()
-                    .and_then(|mut child| {
-                        if let Some(stdin) = child.stdin.as_mut() {
-                            let _ = stdin.write_all(&output.stdout);
-                        }
-                        child.wait()
-                    });
-            }
-        }
+        //if let Ok(output) = std::process::Command::new("lsof")
+        //    .args(["-ti", ":3000"])
+        //    .output()
+        //{
+        //    if !output.stdout.is_empty() {
+        //        let _ = std::process::Command::new("xargs")
+        //            .arg("kill")
+        //            .arg("-9")
+        //            .stdin(std::process::Stdio::piped())
+        //            .spawn()
+        //            .and_then(|mut child| {
+        //                if let Some(stdin) = child.stdin.as_mut() {
+        //                    let _ = stdin.write_all(&output.stdout);
+        //                }
+        //                child.wait()
+        //            });
+        //    }
+        //}
 
         Ok(())
     }
@@ -225,7 +227,7 @@ impl OpsmlServerContext {
     fn __enter__(&self) -> PyResult<()> {
         #[cfg(feature = "server")]
         {
-            app_state().reset_config()?;
+            app_state().reset_app_state()?;
             reset_storage_client()?;
         }
 

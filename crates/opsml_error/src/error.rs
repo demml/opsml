@@ -214,7 +214,7 @@ impl From<UtilError> for PyErr {
     }
 }
 
-#[derive(Error, Debug, Deserialize, Serialize)]
+#[derive(Error, Debug)]
 pub enum TypeError {
     #[error("{0}")]
     Error(String),
@@ -245,6 +245,9 @@ pub enum TypeError {
 
     #[error(transparent)]
     UtilError(#[from] UtilError),
+
+    #[error(transparent)]
+    StateError(#[from] StateError),
 }
 
 impl From<TypeError> for PyErr {
@@ -269,7 +272,7 @@ impl From<LoggingError> for PyErr {
     }
 }
 
-#[derive(Error, Debug, Serialize, Deserialize)]
+#[derive(Error, Debug)]
 pub enum ServerError {
     #[error("Failed to delete file: {0}")]
     DeleteError(String),
@@ -290,7 +293,7 @@ pub enum ServerError {
     Error(String),
 }
 
-#[derive(Error, Debug, Serialize, Deserialize)]
+#[derive(Error, Debug)]
 pub enum SqlError {
     #[error("Failed to run sql migrations: {0}")]
     MigrationError(String),
