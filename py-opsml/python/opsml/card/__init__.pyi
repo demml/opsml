@@ -2,12 +2,27 @@
 # type: ignore
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, Generic, List, Literal, Optional, TypeVar, Union, overload
+from typing import (
+    Any,
+    Dict,
+    Generic,
+    List,
+    Literal,
+    Optional,
+    TypeAlias,
+    TypeVar,
+    Union,
+    overload,
+)
 
 from ..core import FeatureSchema, VersionType
 from ..data import DataInterface, DataLoadKwargs, DataSaveKwargs, DataType
 from ..model import ModelInterface, ModelLoadKwargs, ModelSaveKwargs
 from ..potato_head import Prompt
+
+CardInterfaceType: TypeAlias = Union[DataInterface, ModelInterface]
+CardDeckInterfaceType: TypeAlias = Dict[str, Union[DataInterface, ModelInterface]]
+LoadInterfaceType: TypeAlias = Union[CardDeckInterfaceType, CardDeckInterfaceType]
 
 class RegistryType:
     Data: "RegistryType"
@@ -1052,7 +1067,7 @@ class CardDeck:
 
     def load(
         self,
-        load_kwargs: Optional[ModelLoadKwargs | DataLoadKwargs] = None,
+        load_kwargs: Optional[Dict[str, ModelLoadKwargs | DataLoadKwargs]] = None,
     ) -> None:
         """Call the load method on each Card that requires additional loading.
         This applies to ModelCards and DataCards. PromptCards and ExperimentCards
@@ -1060,9 +1075,11 @@ class CardDeck:
         the CardDeck from the registry.
 
         Args:
-            load_kwargs (ModelLoadKwargs | DataLoadKwargs):
-                Optional load kwargs to that will be passed to the
-                data interface load method
+            load_kwargs (Dict[str, ModelLoadKwargs | DataLoadKwargs]):
+                Optional kwargs for loading cards. Expected format:
+                {
+                    "card_alias":  DataLoadKwargs | ModelLoadKwargs
+                }
         """
 
     @staticmethod
@@ -1288,7 +1305,7 @@ class CardRegistry(Generic[CardType]):
         space: Optional[str] = None,
         name: Optional[str] = None,
         version: Optional[str] = None,
-        interface=None,
+        interface=Optional[CardDeckInterfaceType],
     ) -> CardDeck: ...
     @overload
     def load_card(
@@ -1323,25 +1340,33 @@ class CardRegistry(Generic[CardType]):
         space: Optional[str] = None,
         name: Optional[str] = None,
         version: Optional[str] = None,
-        interface: Optional[Union[DataInterface, ModelInterface]] = None,
-    ) -> Union[DataCard, ModelCard, PromptCard, ExperimentCard]:
+        interface: Optional[LoadInterfaceType] = None,
+    ) -> Union[DataCard, ModelCard, PromptCard, ExperimentCard, CardDeck]:
         """Load a Card from the registry
 
         Args:
-            uid (str):
-                Unique identifier for Card. If present, the uid takes precedence
-            space (str):
-                Optional space associated with card
-            name (str):
-                Optional name of card
-            version (str):
-                Optional version number of existing data. If not specified, the
-                most recent version will be used
-            interface (Union[DataInterface, ModelInterface]):
-                Optional interface to load the card into
+            uid (str, optional):
+                Unique identifier for Card. If present, the uid takes precedence over space/name/version.
+            space (str, optional):
+                Space associated with the card.
+            name (str, optional):
+                Name of the card.
+            version (str, optional):
+                Version number of existing card. If not specified, the most recent version will be used.
+            interface (LoadInterfaceType, optional):
+                Interface to load the card with. Required for cards registered with custom interfaces.
+                The expected interface type depends on the registry:
+
+                - DataCard registry: DataInterface
+                - ModelCard registry: ModelInterface
+                - ExperimentCard registry: Not used
+                - PromptCard registry: Not used
+                - CardDeck registry: Dict[str, Union[DataInterface, ModelInterface]]
+                  Keys should be card aliases within the deck.
 
         Returns:
-            Card
+            Union[DataCard, ModelCard, PromptCard, ExperimentCard, CardDeck]:
+                The loaded card instance from the registry.
         """
 
     def update_card(

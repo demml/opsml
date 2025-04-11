@@ -516,6 +516,15 @@ impl CardDeck {
     ) -> PyResult<CardDeck> {
         let path = path.unwrap_or_else(|| PathBuf::from(SaveName::CardDeck));
 
+        // check path exists
+        if !path.exists() {
+            error!("Path does not exist: {:?}", path);
+            return Err(OpsmlError::new_err(format!(
+                "Path does not exist: {:?}",
+                path
+            )));
+        }
+
         let mut card_deck = Self::load_card_deck_json(&path)?;
 
         for card in &card_deck.cards {
