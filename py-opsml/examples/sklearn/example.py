@@ -36,9 +36,11 @@ classifier.fit(X.to_numpy(), y.to_numpy().ravel())
 
 model_interface = SklearnModel(
     model=classifier,
-    sample_data=X,
+    sample_data=X[0:10],
     task_type=TaskType.Classification,
 )
+
+model_interface.create_drift_profile(X)
 
 modelcard = ModelCard(
     interface=model_interface,
@@ -53,3 +55,5 @@ modelcard = ModelCard(
 
 # register model
 reg.model.register_card(modelcard)
+
+print(modelcard)

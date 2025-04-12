@@ -22,7 +22,7 @@ lints: lints.ruff lints.pylint lints.mypy
 lints.ci: lints.format_check lints.ruff lints.pylint lints.mypy
 
 setup.project:
-	uv sync --all-extras --group dev
+	uv sync --all-extras --group dev --group docs
 	uv run maturin develop --features server
 
 setup.project.numpy1:
@@ -55,7 +55,7 @@ test.unit:
 		--cov-report term 
 
 setup.integration:
-	uv sync --all-extras --group dev
+	uv sync --all-extras --group dev,docs
 	uv run maturin develop --release 
 
 test.integration:
