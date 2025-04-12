@@ -1,6 +1,6 @@
 <h1 align="center">
   <br>
-  <img src="https://github.com/demml/opsml/blob/main/images/opsml-logo.png?raw=true"  width="400" height="400" alt="opsml logo"/>
+  <img src="https://github.com/demml/opsml/blob/main/images/opsml-logo.png?raw=true"  width="300" height="400" alt="opsml logo"/>
   <br>
 </h1>
 
@@ -15,8 +15,8 @@
 
 `OpsML` is a developer-first ML operations platform focused on injecting quality control into machine learning artifact management. `OpsML` provides a unified and ergonomic interface and experience for managing ML artifacts, enabling teams to collaborate more effectively and deploy with confidence, all while reducing engineering overhead and providing piece of mind.
 
-## See it in action
-```python {upgrade="skip" title="Quickstart" requires=">=3.10"}
+## See it in action (Traditional ML Workflow)
+``` py { title="Quickstart" hl_lines="17-21 23-28"}
 from opsml.helpers.data import create_fake_data
 from typing import Tuple, cast
 import pandas as pd
@@ -24,7 +24,7 @@ from opsml import SklearnModel, CardRegistry, TaskType,  ModelCard
 from sklearn import ensemble  # type: ignore
 
 # start registries
-reg = CardRegistry(RegistryType.Model)
+reg = CardRegistry(RegistryType.Model) # (1)
 
 # create data
 X, y = cast(Tuple[pd.DataFrame, pd.DataFrame], create_fake_data(n_samples=1200))
@@ -33,13 +33,13 @@ X, y = cast(Tuple[pd.DataFrame, pd.DataFrame], create_fake_data(n_samples=1200))
 classifier = ensemble.RandomForestClassifier(n_estimators=5)
 classifier.fit(X.to_numpy(), y.to_numpy().ravel())
 
-model_interface = SklearnModel(
+model_interface = SklearnModel(  # (2)
     model=classifier,
     sample_data=X,
     task_type=TaskType.Classification,
 )
 
-modelcard = ModelCard(
+modelcard = ModelCard( # (3)
     interface=model_interface,
     space="opsml",
     name="my_model",
@@ -51,6 +51,12 @@ reg.model.register_card(modelcard)
 
 # This code will run as is
 ```
+
+1.  Create, read, update, and delete Cards via CardRegistries.
+2.  The SklearnModel is one of several interfaces storing models in OpsML.
+3.  The ModelCard is the primary interface for storing models in OpsML. It is a wrapper around the model interface and provides additional functionality such as versioning, metadata, and artifact management.
+
+## See it in action (Agentic Workflow via PydanticAI)
 
 ## **What is Quality Control?**
 

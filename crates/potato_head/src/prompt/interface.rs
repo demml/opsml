@@ -68,10 +68,10 @@ fn parse_prompt(prompt: &Bound<'_, PyAny>) -> PyResult<Vec<Message>> {
 #[pymethods]
 impl Prompt {
     #[new]
-    #[pyo3(signature = (model, prompt, system_prompt=None, sanitization_config=None))]
+    #[pyo3(signature = (model, prompt=None, system_prompt=None, sanitization_config=None))]
     pub fn new(
         model: &str,
-        prompt: &Bound<'_, PyAny>,
+        prompt: Option<&Bound<'_, PyAny>>,
         system_prompt: Option<&Bound<'_, PyAny>>,
         sanitization_config: Option<SanitizationConfig>,
     ) -> PyResult<Self> {
@@ -83,7 +83,20 @@ impl Prompt {
             vec![]
         };
 
-        let prompt = parse_prompt(prompt)?;
+        let prompt = if let Some(prompt) = prompt {
+            parse_prompt(prompt)?
+        } else {
+            vec![]
+        };
+
+        // if system_prompt and prompt are empty, return error
+        if prompt.is_empty() && system_prompt.is_empty() {
+            return Err(PotatoHeadError::new_err(
+                "Prompt and system prompt cannot be empty. At least one must be
+                supplied"
+                    .to_string(),
+            ));
+        }
 
         // get version from crate
         let version = env!("CARGO_PKG_VERSION").to_string();

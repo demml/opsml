@@ -1,7 +1,6 @@
 use crate::model::error::interface_error;
 use crate::utils::BaseArgs;
 use chrono::{DateTime, Utc};
-use opsml_colors::Colorize;
 use opsml_crypt::decrypt_directory;
 use opsml_error::{
     error::{CardError, OpsmlError},
