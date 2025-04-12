@@ -15,7 +15,7 @@
 
 `OpsML` is a developer-first ML operations platform focused on injecting quality control into machine learning artifact management. `OpsML` provides a unified and ergonomic interface and experience for managing ML artifacts, enabling teams to collaborate more effectively and deploy with confidence, all while reducing engineering overhead and providing piece of mind.
 
-## See it in action (Traditional ML Workflow)
+## Use case - Traditional ML Workflow
 ``` py { title="Quickstart" hl_lines="17-21 23-28"}
 from opsml.helpers.data import create_fake_data
 from typing import Tuple, cast
@@ -56,9 +56,50 @@ reg.model.register_card(modelcard)
 2.  The SklearnModel is one of several interfaces storing models in OpsML.
 3.  The ModelCard is the primary interface for storing models in OpsML. It is a wrapper around the model interface and provides additional functionality such as versioning, metadata, and artifact management.
 
-## See it in action (Agentic Workflow via PydanticAI)
+### Use Case - GenAI
+``` py { title="GenAI" hl_lines="17-21 23-28"}
+from openai import OpenAI
+from opsml import PromptCard, Prompt, CardRegistry
 
-``` py { title="Quickstart" }
+client = OpenAI()
+
+card = PromptCard(
+    space="opsml",
+    name="my_prompt",
+    prompt=Prompt(
+        model="gpt-4o",
+        prompt="Provide a brief summary of the programming language $1.", # (1)
+        system_prompt="Be concise, reply with one sentence.",
+    ),
+)
+
+def chat_app(language: str):
+    user_prompt = card.prompt.prompt[0].bind(language).unwrap()
+
+    response = client.chat.completions.create(
+        model=card.prompt.model,
+        messages=[
+            {"role": "system", "content": user_prompt},
+            {"role": "user", "content": card.prompt.prompt[0].unwrap()},
+        ],
+    )
+
+    return response.choices[0].message.content
+
+if __name__ == "__main__":
+    result = chat_app("Python")
+    print(result)
+
+    # Register the card in the registry
+    registry = CardRegistry("prompt")
+    registry.register_card(card)
+
+# This code will run as is
+```
+1.  OpsML prompts allow you to bind context and santize prompt messages.
+
+## Use Case - Agentic Workflow via PydanticAI
+``` py { title="{Pydantic Agent}" }
 from pydantic_ai import Agent
 from opsml import PromptCard, Prompt, CardRegistry, RegistryType
 

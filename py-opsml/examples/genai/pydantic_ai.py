@@ -21,6 +21,5 @@ agent = Agent(
 result = agent.run_sync('Where does "hello world" come from?')
 print(result.data)
 
-
 registry = CardRegistry(RegistryType.Prompt)
 registry.register_card(card)
