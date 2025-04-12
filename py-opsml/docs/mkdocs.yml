@@ -56,6 +56,7 @@ edit_uri: edit/main/docs/
 
 nav:
   - Overview: "index.md"
+  - Quality Control: "quality_control.md"
   #- Installation: "installation.md"
   #- Quickstart: "quickstart.md"
   #- Reference: "reference.md"
@@ -104,24 +105,22 @@ markdown_extensions:
       title: Page contents
   - pymdownx.highlight:
       use_pygments: true
-      anchor_linenums: true
-      line_spans: __span
-      pygments_lang_class: true
   - pymdownx.inlinehilite
   - pymdownx.snippets
   - pymdownx.superfences
+  - pymdownx.details
   - admonition
   - def_list
   - pymdownx.tasklist:
       custom_checkbox: true
-  - pymdownx.superfences:
-      custom_fences:
-        - name: python
-          class: python
-          format: !!python/name:pymdownx.superfences.fence_code_format
-  - pymdownx.emoji:
-      emoji_index: !!python/name:material.extensions.emoji.twemoji
-      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  #- pymdownx.superfences:
+  #    custom_fences:
+  #      - name: python
+  #        class: python
+  #        format: !!python/name:pymdownx.superfences.fence_code_format
+  #- pymdownx.emoji:
+  #    emoji_index: !!python/name:material.extensions.emoji.twemoji
+  #    emoji_generator: !!python/name:material.extensions.emoji.to_svg
 
 plugins:
   - search
