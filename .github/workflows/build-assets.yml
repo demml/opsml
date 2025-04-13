@@ -104,70 +104,103 @@ jobs:
           cd release-bin
           tar -czf ../${{ matrix.archive_name }}.tar.gz ./*
 
-      #- name: Upload artifact
-      #  uses: actions/upload-artifact@v4
-      #  with:
-      #    name: ${{ matrix.archive_name }}
-      #    path: ${{ matrix.archive_name }}.${{ matrix.archive }}
-      #    retention-days: 1
-  #
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.archive_name }}
+          path: ${{ matrix.archive_name }}.${{ matrix.archive }}
+          retention-days: 1
 
   publish-docker-images:
-    if: github.event_name == 'release'
+    #if: github.event_name == 'release'
     needs: build
-    name: Publish scouter base images to Dockerhub
+    name: Publish Docker images to Dockerhub
     runs-on: ubuntu-22.04
     strategy:
+      fail-fast: false
       matrix:
         include:
           - image: "ubuntu"
+            tag_suffix: "ubuntu"
+          - image: "alpine"
+            tag_suffix: "alpine"
+          - image: "scratch"
+            tag_suffix: "scratch"
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
-      - name: Download binary
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Download Linux binary artifact
         uses: actions/download-artifact@v4
         with:
-          name: opsml_server_x86_64-unknown-linux-gnu_tar.gz
-          path: .
+          name: opsml-server-x86_64-linux-gnu
+          path: ./artifacts
+
       - name: Extract binary
-        run: tar -xzf opsml-server-x86_64-unknown-linux-gnu.tar.gz -C .
-      - name: Move binary to root folder
-        run: mv target/x86_64-unknown-linux-gnu/release/opsml-server .
-      - name: build image
         run: |
-          docker build \
-          --build-arg OPSML_SERVER_BINARY=./opsml-server \
-          -f docker/official-base-image/${{ matrix.image }}/Dockerfile \
-          -t demml/opsml:${{ matrix.image }}-${{ github.event.release.tag_name }} .
-      - name: push image to docker hub
+          mkdir -p binary
+          tar -xzf ./artifacts/opsml-server-x86_64-linux-gnu.tar.gz -C ./binary
+
+      - name: Set up binary permissions
         run: |
-          docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
-          docker push demml/opsml:${{ matrix.image }}-${{ github.event.release.tag_name }}
+          chmod +x ./binary/opsml-server
+
+      - name: Set version tag
+        id: set-version
+        run: |
+          if [[ "${{ github.event_name }}" == "release" ]]; then
+            echo "VERSION=${{ github.event.release.tag_name }}" >> $GITHUB_OUTPUT
+          else
+            echo "VERSION=latest" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and push image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: docker/official/${{ matrix.image }}/Dockerfile
+          push: true
+          build-args: |
+            OPSML_SERVER_BINARY=./binary/opsml-server
+          tags: |
+            demml/opsml:${{ matrix.tag_suffix }}-${{ steps.set-version.outputs.VERSION }}
+            ${{ github.event_name == 'release' && format('demml/opsml:{0}-latest', matrix.tag_suffix) || '' }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
   release-binary-assets:
     if: github.event_name == 'release'
-    needs: [build]
+    needs: build
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: get dist artifacts
+      - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
-          pattern: scouter_server_*
           path: dist
 
-      - name: list dist files
+      - name: List artifacts
         run: |
           ls -lhR dist
-          echo "`ls dist | wc -l` files"
+          echo "`find dist -type f | wc -l` files"
 
-      - name: Upload files to release tag
+      - name: Upload files to GitHub release
         env:
-          GH_TOKEN: ${{ secrets.RELEASE_PLZ_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          for i in $(find dist -type f -print)
-          do
-            gh release upload ${{ github.event.release.name }} $i
+          for file in $(find dist -type f -not -path "*/\.*"); do
+            echo "Uploading $file to release"
+            gh release upload ${{ github.event.release.tag_name }} "$file" --clobber
           done
