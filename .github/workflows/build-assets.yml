@@ -1,0 +1,173 @@
+name: Build Assets
+
+permissions:
+  pull-requests: write
+  contents: write
+
+#on:
+#  push:
+#    branches:
+#      - main
+#  release:
+#    types: [published]
+# testing
+on:
+  push:
+    branches:
+      - actions/get-ready-for-release
+
+env:
+  INTERPRETER: "3.12"
+  RUSTFLAGS: "-C debuginfo=0"
+
+jobs:
+  build:
+    name: build - ${{ matrix.target }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-22.04
+            target: x86_64-unknown-linux-gnu
+            archive: tar.gz
+            binary_name: opsml-server
+            archive_name: opsml-server-x86_64-linux-gnu
+
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            archive: zip
+            binary_name: opsml-server
+            archive_name: opsml-server-aarch64-darwin
+
+          - os: macos-13
+            target: x86_64-apple-darwin
+            archive: zip
+            binary_name: opsml-server
+            archive_name: opsml-server-x86_64-darwin
+
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            archive: zip
+            binary_name: opsml-server.exe
+            archive_name: opsml-server-x86_64-windows
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Rust
+        run: |
+          rustup override set stable
+          rustup update
+          rustup target add ${{ matrix.target }}
+          rustup component add rust-src
+
+      - name: Update apt repositories (Linux)
+        if: contains(matrix.os, 'ubuntu')
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y build-essential
+
+      - name: Build Binaries
+        run: cargo build -p opsml-server --release --target ${{ matrix.target }}
+
+      - name: Prepare binary directory
+        shell: bash
+        run: |
+          mkdir -p release-bin
+          if [ "${{ contains(matrix.os, 'windows') }}" == "true" ]; then
+            cp target/${{ matrix.target }}/release/${{ matrix.binary_name }} release-bin/
+          else
+            cp target/${{ matrix.target }}/release/${{ matrix.binary_name }} release-bin/
+            chmod +x release-bin/${{ matrix.binary_name }}
+          fi
+
+      - name: Create zip archive (Windows/macOS)
+        if: contains(matrix.archive, 'zip')
+        shell: bash
+        run: |
+          cd release-bin
+          if [ "${{ contains(matrix.os, 'windows') }}" == "true" ]; then
+            7z a -tzip ../${{ matrix.archive_name }}.zip ./*
+          else
+            zip -r ../${{ matrix.archive_name }}.zip ./*
+          fi
+
+      - name: Create tar.gz archive (Linux)
+        if: contains(matrix.archive, 'tar.gz')
+        shell: bash
+        run: |
+          cd release-bin
+          tar -czf ../${{ matrix.archive_name }}.tar.gz ./*
+
+      #- name: Upload artifact
+      #  uses: actions/upload-artifact@v4
+      #  with:
+      #    name: ${{ matrix.archive_name }}
+      #    path: ${{ matrix.archive_name }}.${{ matrix.archive }}
+      #    retention-days: 1
+  #
+
+  publish-docker-images:
+    if: github.event_name == 'release'
+    needs: build
+    name: Publish scouter base images to Dockerhub
+    runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        include:
+          - image: "ubuntu"
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      - name: Download binary
+        uses: actions/download-artifact@v4
+        with:
+          name: opsml_server_x86_64-unknown-linux-gnu_tar.gz
+          path: .
+      - name: Extract binary
+        run: tar -xzf opsml-server-x86_64-unknown-linux-gnu.tar.gz -C .
+      - name: Move binary to root folder
+        run: mv target/x86_64-unknown-linux-gnu/release/opsml-server .
+      - name: build image
+        run: |
+          docker build \
+          --build-arg OPSML_SERVER_BINARY=./opsml-server \
+          -f docker/official-base-image/${{ matrix.image }}/Dockerfile \
+          -t demml/opsml:${{ matrix.image }}-${{ github.event.release.tag_name }} .
+      - name: push image to docker hub
+        run: |
+          docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
+          docker push demml/opsml:${{ matrix.image }}-${{ github.event.release.tag_name }}
+
+  release-binary-assets:
+    if: github.event_name == 'release'
+    needs: [build]
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: get dist artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: scouter_server_*
+          path: dist
+
+      - name: list dist files
+        run: |
+          ls -lhR dist
+          echo "`ls dist | wc -l` files"
+
+      - name: Upload files to release tag
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_PLZ_TOKEN }}
+        run: |
+          for i in $(find dist -type f -print)
+          do
+            gh release upload ${{ github.event.release.name }} $i
+          done
