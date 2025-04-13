@@ -1,6 +1,4 @@
 
-## **What is Quality Control?**
-
 Quality control in the context of `OpsML` refers to:
 
 ### Developer-First Experience
