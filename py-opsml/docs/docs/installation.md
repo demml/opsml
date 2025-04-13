@@ -1,121 +1,57 @@
 # Installation
 
-### Poetry
+Install OpsML with your preferred package manager. OpsML is built and distributed through PyPi.
+
+
+=== "uv"
+
+    ```console
+    $ uv add opsml
+    ```
+
+=== "pip"
+
+    ```console
+    $ pip install opsml
+    ```
+
+## Basic Usage
+
+OpsML is designed for both development and production use cases, meaning you can run it in either server mode or client mode. 
+
+- **Server mode**: You are directly connecting to both the database and storage backends. 
+- **Client mode**: You are connecting to an OpsML server that is already running and managing the database and storage backends for you. 
+
+While it's recommended to setup the server separately for production and enterprise use cases, we understand sometimes you just want to get up and running quickly to test things out or work locally.
+
+???tip "Server Mode"
+    The OpsML server is written in 100% Rust using the [Axum](https://github.com/tokio-rs/axum/) framework. On every release of OpsML, we build, tag and publish new docker images that you can use to run the server. You can also build the server from source or download the pre-built binary from our release artifacts.
+   
+
+## Run Before Walking
+
+Let's make sure everything is setup correctly before moving on to other sections. The following demo will populate a few Cards into a database that you can then visualize in the UI. You will also need to make sure you install sklearn and pandas if you haven't already. You can do this with the following command:
 
 ```bash
-poetry add opsml
+pip install pandas scikit-learn
 ```
 
-### Pip
+???note Note
+    This is intended for demo purposes only. When you you are ready to use OpsML in a production environment, take a look at the [Server Setup](./server_setup.md) section to learn how to setup the server and connect to it from your client.
+   
+
+Run the following CLI commands from within your python environment to make sure everything is working as expected.
+
+**Note**: This will create a new SQLite database in the current directory.
 
 ```bash
-pip install opsml
+opsml run demo
 ```
 
-## Optional Dependencies
-`OpsML` is designed to work with a variety of 3rd-party integrations depending on your use-case.
-
-Types of extras that can be installed:
-
-- **Postgres**: Installs postgres pyscopg2 dependency to be used with `OpsML`
-  ```bash
-  poetry add "opsml[postgres]"
-  ```
-
-- **Server**: Installs necessary packages for setting up a `Fastapi` based `OpsML` server
-  ```bash
-  poetry add "opsml[server]"
-  ```
-
-- **GCP with mysql**: Installs mysql and gcsfs to be used with `OpsML`
-  ```bash
-  poetry add "opsml[gcp_mysql]" or "opsml[gcs,mysql]"
-  ```
-
-- **GCP with postgres**: Installs postgres and gcsgs to be used with `OpsML`
-  ```bash
-  poetry add "opsml[gcp_postgres]" or "opsml[gcs,postgres]"
-  ```
-
-- **AWS with mysql**: Installs postgres and s3fs dependencies to be used with `OpsML`
-  ```bash
-  poetry add "opsml[aws_mysql]" or "opsml[s3,mysql]"
-  ```
-
-- **AWS with postgres**: Installs postgres and s3fs dependencies to be used with `OpsML`
-  ```bash
-  poetry add "opsml[aws_postgres]" or "opsml[s3,postgres]"
-  ``` 
-
-- **Azure with mysql**: Installs postgres and s3fs dependencies to be used with `OpsML`
-  ```bash
-  poetry add "opsml[azure_mysql]" or "opsml[azure,mysql]"
-  ``` 
-
-- **Azure with postgres**: Installs postgres and s3fs dependencies to be used with `OpsML`
-  ```bash
-  poetry add "opsml[azure_postgres]" or "opsml[azure,postgres]"
-  ```
-
-### Example setup for gcs storage and postgres with opsml server
+This will create a new SQLite database in the current directory and populate it with a few Cards. You can then visualize the Cards in the UI by running the following command:
 
 ```bash
-  poetry add "opsml[gcp_postgres, server]"
+opsml start ui
 ```
 
-## Environment Variables
-`OpsML` requires 1 or 2 environment variables depending on if you are using it as an all-in-one interface (no proxy) or you are using it as an interface to interact with an `OpsML` [server](./engineering/server.md).
-
-**OPSML_TRACKING_URI**
-:   This is the sql tracking uri to your card registry database. If interacting with an `OpsML` server, this will be the http address of the server. If this variable is not set, it will default to a local `SQLite` connection.
-
-**OPSML_STORAGE_URI**
-:   This is the storage uri to use for storing ml artifacts (models, data, figures, etc.). `OpsML` currently supports local file system, Google Cloud Storage, AWS S3 and Azure.
-If running `OpsML` as an all-in-one interface, this variable is required and will default to a local folder if not specified. If interacting with an `OpsML` server, this variable does not need to be set.
-
-| Storage Type | URI Format |
-|--------------|------------|
-| Local        | `./path/to/folder` |
-| Google Cloud | `gs://bucket_name` |
-| AWS S3       | `s3://bucket_name` |
-| Azure        | `az://container_name` |
-
-
-### Example setups
-
-  - **Server setup with local storage and sqlite**:
-    ```bash
-    export OPSML_TRACKING_URI="sqlite:///opsml.db"
-    export OPSML_STORAGE_URI="./opsml_registries"
-    ```
-
-  - **Server setup with gcs storage and postgres (with ssl)**:
-    ```bash
-    export OPSML_TRACKING_URI="postgresql+psycopg2://username:password@opsml-host:5432/db_name?connect_timeout=5&sslmode=require"
-    export OPSML_STORAGE_URI="gs://opsml_bucket"
-    ```
-
-  - **Server setup with s3 storage and mysql**:
-    ```bash
-    export OPSML_TRACKING_URI="mysql+pymysql://username:password@opsml-host:3306/db_name"
-    export OPSML_STORAGE_URI="s3://opsml_bucket"
-    ```
-
-  - **Server setup with azure storage and mysql**:
-    ```bash
-    export OPSML_TRACKING_URI="mysql+pymysql://username:password@opsml-host:3306/db_name"
-    export OPSML_STORAGE_URI="az://opsml_container"
-    ```
-
-
-## TLDR Scenarios
-
-**Server is already setup and I need to interact with it from the client side (notebook, python script, cli, etc.)**:
-
-  - Set `OPSML_TRACKING_URI` to the http address of the server
-
-**I need to setup the Server**:
-
-  - Set `OPSML_TRACKING_URI` to the sql tracking uri of your card registry database
-  - Set `OPSML_STORAGE_URI` to the storage uri of your choice
-  - Follow additional instructions in [server](./engineering/server.md) docs
+This command will create a local cache, pull the latest version of the UI from the OpsML repository and run the server. The server is written entirely in Rust and is exposed as a SvelteKit SPA and does not come prepacked with OpsML.

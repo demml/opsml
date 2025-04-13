@@ -34,7 +34,6 @@ theme:
     - content.code.annotate
     - content.code.copy
     - announce.dismiss
-    #
     - navigation.instant
     - navigation.instant.prefetch
     - navigation.instant.preview
@@ -57,7 +56,8 @@ edit_uri: edit/main/docs/
 nav:
   - Overview: "index.md"
   - Quality Control: "quality_control.md"
-  #- Installation: "installation.md"
+  - Installation: "installation.md"
+  - Setup: "setup.md"
   #- Quickstart: "quickstart.md"
   #- Reference: "reference.md"
   #- Interfaces:
@@ -105,22 +105,35 @@ markdown_extensions:
       title: Page contents
   - pymdownx.highlight:
       use_pygments: true
+  - pymdownx.tabbed:
+      alternate_style: true
   - pymdownx.inlinehilite
   - pymdownx.snippets
   - pymdownx.superfences
   - pymdownx.details
   - admonition
   - def_list
+  - attr_list
+  - md_in_html:
+  - pymdownx.keys:
   - pymdownx.tasklist:
       custom_checkbox: true
-  #- pymdownx.superfences:
-  #    custom_fences:
-  #      - name: python
-  #        class: python
-  #        format: !!python/name:pymdownx.superfences.fence_code_format
-  #- pymdownx.emoji:
-  #    emoji_index: !!python/name:material.extensions.emoji.twemoji
-  #    emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+        #- pymdownx.superfences:
+        #    custom_fences:
+        #      - name: python
+        #        class: python
+        #        format: !!python/name:pymdownx.superfences.fence_code_format
+        #- pymdownx.emoji:
+        #    emoji_index: !!python/name:material.extensions.emoji.twemoji
+        #    emoji_generator: !!python/name:material.extensions.emoji.to_svg
+
 
 plugins:
   - search
@@ -133,3 +146,7 @@ extra_css:
 extra_javascript:
   - js/termynal.js
   - js/custom.js
+
+extra:
+  version:
+    provider: mike
