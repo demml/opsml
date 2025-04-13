@@ -88,7 +88,7 @@ Apart from the `OPSML_TRACKING_URI` and `OPSML_STORAGE_URI` environment variable
 $ opsml generate key --password {your_password}
 ```
 
-The encryption key (aka jwt_key) is one of the most important pieces to OpsML's security system. It is used to derive new keys for each artifact, which in-turn are used to encrypt data, and is used generate short-lived JWT tokens for authentication.
+    The encryption key (aka jwt_key) is one of the most important pieces to OpsML's security system. It is used to derive new keys for each artifact, which in-turn are used to encrypt data, and is used generate short-lived JWT tokens for authentication.
 
 - `OPSML_REFRESH_SECRET`: The secret used to sign the refresh tokens. This is used to verify the integrity of the refresh tokens. If not set, OpsML will use a default **deterministic** key. This is not recommended for production use cases. OpsML requires a pbdkdf2::HmacSha256 key with a length of 32 bytes. You can generate a key similar to the `OPSML_ENCRYPT_KEY` key.
   
