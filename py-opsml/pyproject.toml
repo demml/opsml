@@ -71,6 +71,8 @@ dev = [
     "tf-keras>=2.16.0; platform_system=='Linux' and python_version <= '3.11'",
     "tf-keras>=2.16.0; platform_system=='Darwin' and python_version <= '3.11'",
     "pydantic-ai>=0.0.41",
+    "tomli>=2.2.1",
+    "tomli-w>=1.2.0",
 ]
 
 numpy1 = [
