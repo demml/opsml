@@ -44,7 +44,7 @@ jobs:
         uses: PyO3/maturin-action@v1
         with:
           command: sdist
-          args: --release --out dist
+          args: --out dist
           rust-toolchain: stable
           working-directory: ./py-opsml
 
@@ -75,6 +75,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: "3.x"
 
       - name: set up python
         uses: actions/setup-python@v5
@@ -146,6 +151,11 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: "3.x"
+
       - name: Update package name to opsml-client
         run: |
           pip install -U twine tomli tomli-w
@@ -185,6 +195,11 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: "3.x"
 
       - name: set up python
         uses: actions/setup-python@v5
@@ -242,6 +257,11 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: "3.x"
 
       - name: set up python
         uses: actions/setup-python@v5
