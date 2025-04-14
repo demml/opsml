@@ -38,7 +38,7 @@ jobs:
         uses: PyO3/maturin-action@v1
         with:
           command: sdist
-          args: --out dist --features server
+          args: --out dist
           rust-toolchain: stable
           working-directory: ./py-opsml
 
@@ -105,6 +105,9 @@ jobs:
                 # If we're running on debian-based system.
                 apt update -y && apt-get install -y libssl-dev openssl pkg-config
             fi
+
+            # Install bindgen CLI
+            cargo install --force --locked bindgen-cli
 
             # Determine architecture (x86_64 or x86)
             ARCH=$(uname -m)
