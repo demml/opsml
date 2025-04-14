@@ -1,7 +1,7 @@
 # Technical Component Specification: Builds
 
 ## Overview
-As part of [pr](#), we are introducing github action workflows to build and publish OpsML artifacts. This includes the following:
+As part of [pr](https://github.com/demml/opsml/pull/92), we are introducing github action workflows to build and publish OpsML artifacts. This includes the following:
 - **Docker Images**: Base Docker images for the OpsML server
 - **Python Wheels**: Python wheels for OpsML (with server) and OpsML client (without server)
 - **Compressed Artifacts**: Compressed artifacts for OpsML (with server)
@@ -55,6 +55,17 @@ On every new release of OpsML, we will publish two pypi libraries. `opsml` and `
 The opsml version of the library comes compiled with the server features, meaning it comes with sql and server (axum) logic. While this doesn't change how a developer will use opsml, it does result in a larger python wheel. The opsml version of the library allows for developers to run opsml in both server and client mode from python. While this is not the recommended approach for all scenarios, it does make development easier in that it doesn't require a developer to spin up a server in order to save and register artifacts. 
 
 The opsml-client version of the library is compiled without the server feature. This is the recommended library in production settings where an engineering team has already setup a server for developers to use.
+
+
+#### Platform Support
+
+Python support is provided for the following platforms:
+
+- `linux-x86_64`
+- `linux-aarch64`
+- `macos-x86_64`
+- `macos-aarch64`
+- `windows-x64`
 
 ### Relevant GitHub Actions
 
