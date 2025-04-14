@@ -120,6 +120,9 @@ jobs:
                 apt update -y && apt-get install -y libssl-dev openssl pkg-config
             fi
 
+            # Install bindgen CLI
+            cargo install --force --locked bindgen-cli
+
             # Determine architecture (x86_64 or x86)
             ARCH=$(uname -m)
 
