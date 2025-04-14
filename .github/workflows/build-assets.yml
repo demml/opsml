@@ -102,11 +102,8 @@ jobs:
 
       - name: Build Binaries
         env:
-          # Only set for aarch64-unknown-linux-gnu target
           PYO3_CROSS_PYTHON_VERSION: ${{ matrix.target == 'aarch64-unknown-linux-gnu' && '3.12' || '' }}
-          # Use abi3 for better compatibility
           RUSTFLAGS: ${{ matrix.target == 'aarch64-unknown-linux-gnu' && '-C debuginfo=0 --cfg=Py_LIMITED_API' || '-C debuginfo=0' }}
-          # Force PyO3 to configure as cross-compilation
           PYO3_CROSS: ${{ matrix.target == 'aarch64-unknown-linux-gnu' && '1' || '' }}
         run: |
           # For ARM64 Linux builds, use the abi3 feature
