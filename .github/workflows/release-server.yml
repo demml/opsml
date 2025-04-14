@@ -64,6 +64,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: "3.x"
+
       - name: set up python
         uses: actions/setup-python@v5
         with:
@@ -126,6 +131,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: "3.x"
+
       - name: set up python
         uses: actions/setup-python@v5
         with:
@@ -167,6 +177,11 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: "3.x"
 
       - name: set up python
         uses: actions/setup-python@v5
@@ -221,6 +236,11 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: "3.x"
 
       - name: set up python
         uses: actions/setup-python@v5
