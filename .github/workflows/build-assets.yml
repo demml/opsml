@@ -33,7 +33,7 @@ jobs:
             binary_name: opsml-server
             archive_name: opsml-server-x86_64-linux-gnu
 
-          - os: ubuntu-22.04
+          - os: ubuntu-22.04-arm
             target: aarch64-unknown-linux-gnu
             archive: tar.gz
             binary_name: opsml-server
@@ -72,19 +72,6 @@ jobs:
           rustup target add ${{ matrix.target }}
           rustup component add rust-src
 
-      - name: Install ARM64 cross-compilation tools
-        if: matrix.target == 'aarch64-unknown-linux-gnu'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
-
-      - name: Configure Cargo for ARM64 cross-compilation
-        if: matrix.target == 'aarch64-unknown-linux-gnu'
-        run: |
-          mkdir -p ~/.cargo
-          echo '[target.aarch64-unknown-linux-gnu]' >> ~/.cargo/config
-          echo 'linker = "aarch64-linux-gnu-gcc"' >> ~/.cargo/config
-
       - uses: pnpm/action-setup@v4
         name: Install pnpm
         with:
@@ -101,17 +88,7 @@ jobs:
           sudo apt-get install -y build-essential
 
       - name: Build Binaries
-        env:
-          PYO3_CROSS_PYTHON_VERSION: ${{ matrix.target == 'aarch64-unknown-linux-gnu' && '3.12' || '' }}
-          RUSTFLAGS: ${{ matrix.target == 'aarch64-unknown-linux-gnu' && '-C debuginfo=0 --cfg=Py_LIMITED_API' || '-C debuginfo=0' }}
-          PYO3_CROSS: ${{ matrix.target == 'aarch64-unknown-linux-gnu' && '1' || '' }}
-        run: |
-          # For ARM64 Linux builds, use the abi3 feature
-          if [ "${{ matrix.target }}" == "aarch64-unknown-linux-gnu" ]; then
-            cargo build -p opsml-server --release --target ${{ matrix.target }} --features="pyo3/abi3-py312"
-          else
-            cargo build -p opsml-server --release --target ${{ matrix.target }}
-          fi
+        run: cargo build -p opsml-server --release --target ${{ matrix.target }}
 
       - name: Prepare binary directory
         shell: bash
