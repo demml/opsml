@@ -68,13 +68,15 @@ jobs:
           rustup component add rust-src
 
       - uses: pnpm/action-setup@v4
-        name: Install pnpm
+        name: Build UI
         with:
           version: 10
           run_install: false
 
       - name: Install UI dependencies
-        run: make install.ui.deps
+        run: |
+          make install.ui.deps
+          make build.ui
 
       - name: Update apt repositories (Linux)
         if: contains(matrix.os, 'ubuntu')
