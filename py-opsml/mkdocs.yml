@@ -30,7 +30,6 @@ theme:
         name: "Switch to system preference"
 
   features:
-    #- content.tabs.link
     - content.code.annotate
     - content.code.copy
     - announce.dismiss
@@ -47,17 +46,16 @@ theme:
   font:
     text: Roboto
     code: Roboto Mono
-  logo: "images/gear.png"
+  logo: "docs/images/gear.png"
 
 repo_name: opsml
 repo_url: https://github.com/demml/opsml
-edit_uri: edit/main/docs/
-
 nav:
-  - Overview: "index.md"
-  - Quality Control: "quality_control.md"
-  - Installation: "installation.md"
-  - Setup: "setup.md"
+  - Overview: "docs/index.md"
+  - Quality Control: "docs/quality_control.md"
+  - Installation: "docs/installation.md"
+  - Setup: "docs/setup.md"
+  - Contributing: "docs/contributing.md"
   #- Quickstart: "quickstart.md"
   #- Reference: "reference.md"
   #- Interfaces:
@@ -68,14 +66,14 @@ nav:
   #        - "interfaces/data/datasets.md"
   #        - "interfaces/data/data_profile.md"
   #        - "interfaces/data/feature.md"
-#
-#    - Model Interface:
-#        - "interfaces/model/interfaces.md"
-#        - "interfaces/model/onnx.md"
-#        - "interfaces/model/extras.md"
-#        - "interfaces/model/deployment.md"
-#- Cards:
-#    - "cards/overview.md"
+  #
+  #    - Model Interface:
+  #        - "interfaces/model/interfaces.md"
+  #        - "interfaces/model/onnx.md"
+  #        - "interfaces/model/extras.md"
+  #        - "interfaces/model/deployment.md"
+  - Cards:
+      - "docs/cards/overview.md"
 #    - "cards/versioning.md"
 #    - "cards/metadata.md"
 #    - DataCard:
@@ -109,7 +107,11 @@ markdown_extensions:
       alternate_style: true
   - pymdownx.inlinehilite
   - pymdownx.snippets
-  - pymdownx.superfences
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
   - pymdownx.details
   - admonition
   - def_list
@@ -140,12 +142,12 @@ plugins:
   - mkdocstrings
 
 extra_css:
-  - css/custom.css
-  - stylesheets/extra.css
-  - css/termynal.css
+  - docs/css/custom.css
+  - docs/stylesheets/extra.css
+  - docs/css/termynal.css
 extra_javascript:
-  - js/termynal.js
-  - js/custom.js
+  - docs/js/termynal.js
+  - docs/js/custom.js
 
 extra:
   version:
