@@ -57,14 +57,8 @@ jobs:
         platform:
           - target: x86_64
             manylinux: auto
-          - target: x86
-            manylinux: auto
           - target: aarch64
-            manylinux: "2_28" # ring will not compile here
-          - target: armv7
-            manylinux: auto
-          - target: ppc64le
-            manylinux: auto
+            manylinux: "2_28"
 
     runs-on: ubuntu-latest
     steps:
@@ -155,7 +149,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        target: [x86_64, aarch64]
+        target: [x86_64]
         manylinux: ["musllinux_1_1"]
 
     runs-on: ubuntu-latest
@@ -245,24 +239,15 @@ jobs:
           retention-days: 1
 
   build-windows:
-    name: build - windows - (${{ matrix.target }} - auto
+    name: build - windows - ${{ matrix.target }}
     strategy:
       fail-fast: false
       matrix:
-        target: [x64, x86]
+        target: [x64]
         include:
-          - target: i686
-            python-architecture: x86
-            interpreter: 3.9 3.10 3.11 3.12
           - target: x64
             python-architecture: x64
             interpreter: 3.9 3.10 3.11 3.12
-          - target: x86
-            python-architecture: x86
-            interpreter: 3.9 3.10 3.11 3.12
-        exclude:
-          - target: x86
-          - target: x64
 
     runs-on: windows-latest
     steps:
