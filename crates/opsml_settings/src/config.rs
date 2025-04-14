@@ -215,7 +215,7 @@ impl Default for OpsmlConfig {
 
             opsml_proxy_root: "opsml-root:/".to_string(),
             opsml_registry_path: env::var("OPSML_REGISTRY_PATH")
-                .unwrap_or_else(|_| "model_registry".to_string()),
+                .unwrap_or_else(|_| "opsml_registry".to_string()),
 
             database_settings,
             scouter_settings,
@@ -475,7 +475,7 @@ mod tests {
             Some("staging".to_string())
         );
         assert_eq!(opsml_config.opsml_proxy_root, "opsml-root:/");
-        assert_eq!(opsml_config.opsml_registry_path, "model_registry");
+        assert_eq!(opsml_config.opsml_registry_path, "opsml_registry");
 
         assert_eq!(opsml_config.auth_settings.jwt_secret.len(), 32);
         assert_eq!(opsml_config.auth_settings.username, "guest");

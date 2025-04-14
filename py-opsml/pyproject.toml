@@ -159,4 +159,4 @@ features = ["pyo3/extension-module"]
 opsml = "opsml.cli:run_opsml_cli"
 
 [tool.uv]
-package = false
+package = true
