@@ -4,17 +4,12 @@ permissions:
   pull-requests: write
   contents: write
 
-#on:
-#  push:
-#    branches:
-#      - main
-#  release:
-#    types: [published]
-# testing
 on:
   push:
     branches:
-      - actions/get-ready-for-release
+      - main
+  release:
+    types: [published]
 
 env:
   INTERPRETER: "3.12"
@@ -127,7 +122,7 @@ jobs:
           retention-days: 1
 
   publish-docker-images:
-    #if: github.event_name == 'release'
+    if: github.event_name == 'release'
     needs: build
     name: Publish Docker images to Dockerhub
     runs-on: ubuntu-22.04
@@ -197,13 +192,11 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-  # ARM64 Docker image builds (Add as a separate job)
   publish-docker-images-arm64:
-    #if: github.event_name == 'release'
+    if: github.event_name == 'release'
     needs: build
     name: Publish ARM64 Docker images
     runs-on: ubuntu-22.04
-    # This job can run in parallel with the AMD64 images job
     strategy:
       fail-fast: false
       matrix:
@@ -229,13 +222,11 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      # Download the ARM64 binary if you have it
       - name: Download ARM64 Linux binary artifact
         uses: actions/download-artifact@v4
         with:
           name: opsml-server-aarch64-linux-gnu
           path: ./artifacts
-        continue-on-error: true # Skip if not available
 
       - name: Extract binary
         run: |

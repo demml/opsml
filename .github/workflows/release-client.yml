@@ -1,0 +1,381 @@
+name: Publish Opsml Client
+
+#on:
+#  push:
+#    branches:
+#      - main
+#  release:
+#    types: [published]
+
+on:
+  push:
+    branches:
+      - actions/get-ready-for-release
+
+permissions:
+  contents: read
+
+env:
+  INTERPRETER: "3.10 3.11 3.12 3.13 pypy3.9 pypy3.10"
+  RUSTFLAGS: -C debuginfo=0
+  PYTHON_VERSION: "3.12"
+  CARGO_INCREMENTAL: 0
+  CARGO_NET_RETRY: 10
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build-sdist:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: pip install -U twine tomli tomli-w
+
+      - name: Update package name to opsml-client
+        run: python ./py-opsml/scripts/update_package_name.py ./py-opsml/pyproject.toml "opsml-client"
+
+      - name: Build sdist
+        uses: PyO3/maturin-action@v1
+        with:
+          command: sdist
+          args: --release --out dist
+          rust-toolchain: stable
+          working-directory: ./py-opsml
+
+      - name: Upload sdist
+        uses: actions/upload-artifact@v4
+        with:
+          name: pypi_sdist
+          path: ./py-opsml/dist
+          retention-days: 1
+
+  build-ubuntu:
+    name: build - ubuntu - ${{ matrix.platform.manylinux }} - ${{ matrix.platform.target }}
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - target: x86_64
+            manylinux: auto
+          - target: x86
+            manylinux: auto
+          - target: aarch64
+            manylinux: "2_28" # ring will not compile here
+          - target: armv7
+            manylinux: auto
+          - target: ppc64le
+            manylinux: auto
+
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: set up python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Update package name to opsml-client
+        run: |
+          pip install -U twine tomli tomli-w
+          python ./py-opsml/scripts/update_package_name.py ./py-opsml/pyproject.toml "opsml-client"
+
+      - name: Set OPENSSL_DIR environment variable
+        run: echo "OPENSSL_DIR=/usr" >> $GITHUB_ENV
+
+      - name: build wheels
+        uses: PyO3/maturin-action@v1
+        with:
+          target: ${{ matrix.platform.target }}
+          manylinux: ${{ matrix.platform.manylinux }}
+          args: --release --out dist --interpreter ${{ env.INTERPRETER }}
+          rust-toolchain: stable
+          docker-options: -e CI
+          working-directory: ./py-opsml
+
+          # See: https://github.com/sfackler/rust-openssl/issues/2036#issuecomment-1724324145
+          before-script-linux: |
+            # If we're running on rhel centos, install needed packages.
+            if command -v yum &> /dev/null; then
+                yum update -y && yum install -y perl-core openssl openssl-devel pkgconfig libatomic
+
+                # If we're running on i686 we need to symlink libatomic
+                # in order to build openssl with -latomic flag.
+                if [[ ! -d "/usr/lib64" ]]; then
+                    ln -s /usr/lib/libatomic.so.1 /usr/lib/libatomic.so
+                fi
+            else
+                # If we're running on debian-based system.
+                apt update -y && apt-get install -y libssl-dev openssl pkg-config
+            fi
+
+      - name: Check dist
+        working-directory: ./py-opsml
+        run: ls -lh dist/
+
+      - name: Check wheel
+        working-directory: ./py-opsml
+        run: twine check --strict dist/*
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pypi_files_ubuntu_${{ matrix.platform.target }}_all_${{ matrix.platform.manylinux }}
+          path: ./py-opsml/dist
+          retention-days: 1
+
+  build-ubuntu-musllinux:
+    name: build - ubuntu - ${{ matrix.manylinux }} - ${{ matrix.target }}
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [x86_64, aarch64]
+        manylinux: ["musllinux_1_1"]
+
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: set up python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Update package name to opsml-client
+        run: |
+          pip install -U twine tomli tomli-w
+          python ./py-opsml/scripts/update_package_name.py ./py-opsml/pyproject.toml "opsml-client"
+
+      - name: build wheels
+        uses: PyO3/maturin-action@v1
+        with:
+          target: ${{ matrix.target }}
+          manylinux: ${{ matrix.manylinux }}
+          args: --release --out dist --interpreter ${{ env.INTERPRETER }}
+          rust-toolchain: stable
+          docker-options: -e CI
+          working-directory: ./py-opsml
+
+      - name: Check dist
+        working-directory: ./py-opsml
+        run: ls -lh dist/
+
+      - name: Check wheel
+        working-directory: ./py-opsml
+        run: twine check --strict dist/*
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pypi_files_ubuntu_${{ matrix.target }}_all_${{ matrix.manylinux }}
+          path: ./py-opsml/dist
+          retention-days: 1
+
+  build-macos:
+    name: build - macos - (${{ matrix.target }} - auto
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [x86_64, aarch64]
+
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: set up python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Update package name to opsml-client
+        run: |
+          pip install -U twine tomli tomli-w
+          python ./py-opsml/scripts/update_package_name.py ./py-opsml/pyproject.toml "opsml-client"
+
+      - name: build wheels
+        uses: PyO3/maturin-action@v1
+        with:
+          target: ${{ matrix.target }}
+          args: --release --out dist --interpreter ${{ env.INTERPRETER }}
+          rust-toolchain: stable
+          docker-options: -e CI
+          working-directory: ./py-opsml
+
+      - name: Check dist
+        working-directory: ./py-opsml
+        run: ls -lh dist/
+
+      - name: Check wheel
+        working-directory: ./py-opsml
+        run: twine check --strict dist/*
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pypi_files_macos_${{ matrix.target }}_all
+          path: ./py-opsml/dist
+          retention-days: 1
+
+  build-windows:
+    name: build - windows - (${{ matrix.target }} - auto
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [x64, x86]
+        include:
+          - target: i686
+            python-architecture: x86
+            interpreter: 3.9 3.10 3.11 3.12
+          - target: x64
+            python-architecture: x64
+            interpreter: 3.9 3.10 3.11 3.12
+          - target: x86
+            python-architecture: x86
+            interpreter: 3.9 3.10 3.11 3.12
+        exclude:
+          - target: x86
+          - target: x64
+
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: set up python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          architecture: ${{ matrix.python-architecture }}
+
+      - name: Update package name to opsml-client
+        run: |
+          pip install -U twine tomli tomli-w
+          python ./py-opsml/scripts/update_package_name.py ./py-opsml/pyproject.toml "opsml-client"
+
+      - name: build wheels
+        uses: PyO3/maturin-action@v1
+        with:
+          target: ${{ matrix.target }}
+          args: --release --out dist --interpreter ${{ matrix.interpreter || env.INTERPRETER }}
+          rust-toolchain: stable
+          working-directory: ./py-opsml
+
+      - name: Check dist
+        working-directory: ./py-opsml
+        run: dir dist/
+
+      - name: Check wheel
+        working-directory: ./py-opsml
+        run: twine check --strict dist/*
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pypi_files_windows_${{ matrix.target }}_all
+          path: ./py-opsml/dist
+          retention-days: 1
+
+  inspect-pypi-assets:
+    needs:
+      [
+        build-ubuntu,
+        build-ubuntu-musllinux,
+        build-macos,
+        build-windows,
+        build-sdist,
+      ]
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: get dist artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: pypi_files_*
+          merge-multiple: true
+          path: dist
+
+      - name: list dist files
+        run: |
+          ls -lh dist/
+          ls -l dist/
+          echo "`ls dist | wc -l` files"
+
+  test-builds-os:
+    name: test build on ${{ matrix.os }}
+    needs:
+      [
+        build-ubuntu,
+        build-ubuntu-musllinux,
+        build-macos,
+        build-windows,
+        build-sdist,
+      ]
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu, macos, windows]
+
+    runs-on: ${{ matrix.os }}-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: set up python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Create virtual environment
+        working-directory: ./py-opsml
+        run: |
+          python -m venv .venv
+          echo "$GITHUB_WORKSPACE/opsml/.venv/bin" >> $GITHUB_PATH
+
+      - name: get dist artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: pypi_files_${{ matrix.os }}_*
+          merge-multiple: true
+          path: py-opsml/dist
+
+      - name: install opsml-client
+        working-directory: ./py-opsml
+        run: |
+          python3 -m pip install opsml-client --no-deps --no-index --force-reinstall --find-links dist
+
+  python-release:
+    if: github.event_name == 'release'
+    name: Release-Python
+    runs-on: ubuntu-latest
+    needs: [test-builds-os]
+    steps:
+      - uses: actions/checkout@v4
+      - name: install rust stable
+        uses: dtolnay/rust-toolchain@stable
+      - name: Check version
+        working-directory: ./py-opsml
+        run: |
+          export VERSION=$(cargo pkgid | cut -d "#" -f2)
+          echo "version: $VERSION"
+          echo "tag: $GITHUB_REF_NAME"
+          test "v$VERSION" "=" "$GITHUB_REF_NAME"
+      - name: set up python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -U twine
+      - name: get dist artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: pypi_files_*
+          merge-multiple: true
+          path: dist
+      - run: twine check --strict dist/*
+      - name: upload to pypi
+        run: twine upload dist/*
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
