@@ -167,6 +167,6 @@ with start_experiment(...) as exp:
 
 ---
 
-*Version: 3.0*  
+*Version: 1.0*  
 *Last Updated: 2025-04-02*  
 *Component Owner: Steven Forrester*
