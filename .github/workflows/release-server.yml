@@ -29,11 +29,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup cmake
-        uses: jwlawson/actions-setup-cmake@v2
-        with:
-          cmake-version: "3.x"
-
       - name: Build sdist
         uses: PyO3/maturin-action@v1
         with:
@@ -144,94 +139,6 @@ jobs:
           path: ./py-opsml/dist
           retention-days: 1
 
-  build-ubuntu-musllinux:
-    name: build - ubuntu - ${{ matrix.manylinux }} - ${{ matrix.target }}
-    strategy:
-      fail-fast: false
-      matrix:
-        target: [x86_64]
-        manylinux: ["musllinux_1_1"]
-
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: set up python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-
-      - run: pip install -U twine
-
-      - name: Set OPENSSL_DIR environment variable
-        run: echo "OPENSSL_DIR=/usr" >> $GITHUB_ENV
-
-      - name: build wheels
-        uses: PyO3/maturin-action@v1
-        with:
-          target: ${{ matrix.target }}
-          manylinux: ${{ matrix.manylinux }}
-          args: --release --out dist --interpreter ${{ env.INTERPRETER }} --features server
-          rust-toolchain: stable
-          docker-options: -e CI
-          working-directory: ./py-opsml
-          before-script-linux: |
-            # If we're running on rhel centos, install needed packages.
-            if command -v yum &> /dev/null; then
-                yum update -y && yum install -y perl-core openssl openssl-devel pkgconfig libatomic
-
-                # If we're running on i686 we need to symlink libatomic
-                # in order to build openssl with -latomic flag.
-                if [[ ! -d "/usr/lib64" ]]; then
-                    ln -s /usr/lib/libatomic.so.1 /usr/lib/libatomic.so
-                fi
-            else
-                # If we're running on debian-based system.
-                apt update -y && apt-get install -y libssl-dev openssl pkg-config
-            fi
-
-
-            # Determine architecture (x86_64 or x86)
-            ARCH=$(uname -m)
-
-            echo "Detected architecture: $ARCH"
-
-            # Download the correct CMake version based on the architecture
-            if [[ "$ARCH" == "x86_64" ]]; then
-                echo "Downloading CMake for x86_64 architecture"
-                curl -L https://github.com/Kitware/CMake/releases/download/v3.26.4/cmake-3.26.4-linux-x86_64.sh -o cmake.sh
-                chmod +x cmake.sh
-                ./cmake.sh --skip-license --prefix=/usr/local
-            elif [[ "$ARCH" == "i686" ]]; then
-                echo "Downloading CMake for x86 architecture"
-                curl -L https://github.com/Kitware/CMake/releases/download/v3.26.4/cmake-3.26.4.tar.gz -o cmake.tar.gz
-                tar -xzf cmake.tar.gz
-                cd cmake-3.26.4
-                ./bootstrap --prefix=/usr/local
-                make -j$(nproc)
-                make install
-                cd ..
-            else
-                echo "Unsupported architecture: $ARCH"
-                exit 1
-            fi
-
-            cmake --version
-
-      - name: Check dist
-        working-directory: ./py-opsml
-        run: ls -lh dist/
-
-      - name: Check wheel
-        working-directory: ./py-opsml
-        run: twine check --strict dist/*
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: pypi_files_ubuntu_${{ matrix.target }}_all_${{ matrix.manylinux }}
-          path: ./py-opsml/dist
-          retention-days: 1
-
   build-macos:
     name: build - macos - (${{ matrix.target }} - auto
     strategy:
@@ -242,11 +149,6 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
-
-      - name: Setup cmake
-        uses: jwlawson/actions-setup-cmake@v2
-        with:
-          cmake-version: "3.x"
 
       - name: set up python
         uses: actions/setup-python@v5
@@ -293,11 +195,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup cmake
-        uses: jwlawson/actions-setup-cmake@v2
-        with:
-          cmake-version: "3.x"
-
       - name: set up python
         uses: actions/setup-python@v5
         with:
@@ -329,14 +226,7 @@ jobs:
           retention-days: 1
 
   inspect-pypi-assets:
-    needs:
-      [
-        build-ubuntu,
-        build-ubuntu-musllinux,
-        build-macos,
-        build-windows,
-        build-sdist,
-      ]
+    needs: [build-ubuntu, build-macos, build-windows, build-sdist]
     runs-on: ubuntu-latest
 
     steps:
@@ -357,14 +247,7 @@ jobs:
 
   test-builds-os:
     name: test build on ${{ matrix.os }}
-    needs:
-      [
-        build-ubuntu,
-        build-ubuntu-musllinux,
-        build-macos,
-        build-windows,
-        build-sdist,
-      ]
+    needs: [build-ubuntu, build-macos, build-windows, build-sdist]
 
     strategy:
       fail-fast: false
