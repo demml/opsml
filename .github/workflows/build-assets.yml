@@ -187,8 +187,8 @@ jobs:
           build-args: |
             OPSML_SERVER_BINARY=./binary/opsml-server
           tags: |
-            demml/opsml:${{ matrix.tag_suffix }}-${{ steps.set-version.outputs.VERSION }}
-            ${{ github.event_name == 'release' && format('demml/opsml:{0}-latest', matrix.tag_suffix) || '' }}
+            demml/opsml:${{ matrix.tag_suffix }}-amd64-${{ steps.set-version.outputs.VERSION }}
+            ${{ github.event_name == 'release' && format('demml/opsml:{0}-amd64-latest', matrix.tag_suffix) || '' }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
