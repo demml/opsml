@@ -286,6 +286,7 @@ mod tests {
                 .create()
         }
 
+        #[cfg(target_os = "macos")]
         fn mock_macos_binary(&mut self, version: &str, arch: &str) -> mockito::Mock {
             // Create a proper zip archive in memory
             let mut buffer = Vec::new();
