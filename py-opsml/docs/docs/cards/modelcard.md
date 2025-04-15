@@ -1,6 +1,5 @@
-# Overview
 
-ModelCards are cards for storing, versioning, and tracking model objects.
+ModelCards help you store, version, and track model objects.
 
 ## Features
 - **shareable**: All cards including ModelCards are shareable and searchable.
@@ -11,76 +10,95 @@ ModelCards are cards for storing, versioning, and tracking model objects.
 
 ## Create a Card
 
-```python hl_lines="5 28 31-36"
-# load data card from earlier
-from sklearn.linear_model import LinearRegression
-
-# Opsml
-from opsml import CardRegistry, ModelCard
-
-# set up registries
-data_registry = CardRegistry(registry_name="data")
-model_registry = CardRegistry(registry_name="model")
-
-# load datacard
-datacard = data_registry.load_card(name=card_info.name, version="1.0.0")
-
-# data is not loaded by default (helps when sharing cards with large data)
-datacard.load_data()
-data_splits = datacard.split_data()
+```python
+from opsml.helpers.data import create_fake_data
+from typing import Tuple, cast
+import pandas as pd
+from opsml import (  # type: ignore
+    SklearnModel,
+    PandasData,
+    CardRegistries,
+    TaskType,
+    DataCard,
+    ModelCard,
+)
+from opsml.data import DataSplit, StartStopSplit
+from sklearn import ensemble  # type: ignore
 
 
-X_train = data_splits["train"].X
-y_train = data_splits["train"].y
+# start registries
+reg = CardRegistries()
 
-# fit model
-linreg = LinearRegression()
-linreg = linreg.fit(X=X_train, y=y_train)
-model_interface = SklearnModel(model=linreg, sample_data=X_train)
+# create data
+X, y = cast(Tuple[pd.DataFrame, pd.DataFrame], create_fake_data(n_samples=1200))
+X["target"] = y
 
-# lets test the onnx model before registering
-modelcard = ModelCard(
-    info=card_info,
-    interface = model_interface,
-    datacard_uid=datacard.uid,
-    to_onnx=True,
+# create data splits to store with the model (optional)
+data_splits = [
+    DataSplit(  # (1)
+        label="train",
+        start_stop_split=StartStopSplit(
+            start=0,
+            stop=1000,
+        ),
+    ),
+    DataSplit(
+        label="test",
+        start_stop_split=StartStopSplit(
+            start=1000,
+            stop=1200,
+        ),
+    ),
+]
+
+# create DataCard
+datacard = DataCard(
+    interface=PandasData(
+        data=X,
+        data_splits=data_splits,
+        dependent_vars=["target"],
+    ),
+    space="opsml",
+    name="my_data",
+    tags=["foo:bar", "baz:qux"],
 )
 
-# if you'd like to convert to onnx before registering, you can do that as well
-modelcard.convert_to_onnx()
+# register DataCard
+reg.data.register_card(datacard)
 
-# custom onnx testing logic
-...
+splits = datacard.interface.split_data()
 
-# everything looks good
-model_registry.register_card(modelcard)
+# Create and train model
+classifier = ensemble.RandomForestClassifier(n_estimators=5)
+classifier.fit(
+    splits["train"].x.to_numpy(),
+    splits["train"].y.to_numpy().ravel(),
+)
+
+model_interface = SklearnModel( # (2)
+    model=classifier,
+    sample_data=X[0:10],
+    task_type=TaskType.Classification,
+)
+
+model_interface.create_drift_profile(X)
+
+modelcard = ModelCard( # (3)
+    interface=model_interface,
+    space="opsml",
+    name="my_model",
+    tags=["foo:bar", "baz:qux"],
+    datacard_uid=datacard.uid,
+)
+
+# register model
+reg.model.register_card(modelcard)
 ```
 
-## ModelCard Args
+1. DataSplits allow you to create and store split logic with your DataInterface ensuring reproducibility
+2. Here we are using the SklearnModel interface and passing in the trained model, sample data, and the task type
+3. Here we are creating a ModelCard and passing in the model interface, space, name, tags, and the datacard_uid. The datacard_uid is used to link the model to the data it was trained on
 
-`name`: `str`
-: Name for the data (Required)
-
-`space`: `str`
-: space data belongs to (Required)
-
-`contact`: `str`
-: Email to associate with data (Required)
-
-`interface`: `ModelInterface`
-: ModelInterface used to interact with model. See [ModelInterface](../interfaces/model/interfaces.md) for more information
-
-`datacard_uid`
-: uid of DataCard that contains training data. This is not required to instantiate a ModelCard, but it is required to register a ModelCard
-
-`to_onnx`
-: Whether to convert model to onnx or not. Default is False
-
-`metadata`: `ModelCardMetadata`
-: Optional ModelCardMetadata used to store metadata about the model. See [ModelCardMetadata](./metadata.md) for more information. If not provided, a default object is created. When registering a card, the metadata is updated with the latest information. 
-
-
----
 ## Docs
 
-make font color white
+::: opsml.card.ModelCard
