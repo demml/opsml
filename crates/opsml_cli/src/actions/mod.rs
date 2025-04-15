@@ -1,5 +1,6 @@
 pub mod download;
 pub mod generate;
+pub mod ui;
 
 pub mod list;
 pub mod lock;
