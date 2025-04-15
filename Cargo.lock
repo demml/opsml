@@ -3899,6 +3899,8 @@ dependencies = [
  "clap 4.5.35",
  "dirs",
  "flate2",
+ "mockall",
+ "mockito",
  "opsml-cards",
  "opsml-colors",
  "opsml-crypt",
@@ -3915,6 +3917,7 @@ dependencies = [
  "serde",
  "tabled",
  "tar",
+ "tempfile",
  "tracing",
  "zip",
 ]

@@ -37,6 +37,52 @@ jobs:
       - name: Run lints
         run: make lints
 
+  test-cli-windows:
+    runs-on: windows-latest
+    needs: format-and-lint
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: "3.x"
+
+      - name: Set up Rust
+        run: rustup override set stable && rustup update
+
+      - name: Cache Rust
+        uses: Swatinem/rust-cache@v2
+
+      - name: Run CLI tests
+        run: make test.cli
+        env:
+          RUST_BACKTRACE: 1
+          RUST_LOG: debug
+
+  test-cli-macos:
+    runs-on: macos-latest
+    needs: format-and-lint
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: "3.x"
+
+      - name: Set up Rust
+        run: rustup override set stable && rustup update
+
+      - name: Cache Rust
+        uses: Swatinem/rust-cache@v2
+
+      - name: Run CLI tests
+        run: make test.cli
+        env:
+          RUST_BACKTRACE: 1
+          RUST_LOG: debug
+
   test-unit:
     runs-on: ubuntu-22.04
     needs: format-and-lint
@@ -59,7 +105,7 @@ jobs:
 
   test-storage-client:
     runs-on: ubuntu-22.04
-    needs: format-and-lint
+    needs: [format-and-lint, test-unit]
     steps:
       - uses: actions/checkout@v4
 
@@ -102,7 +148,7 @@ jobs:
         python-version: ["3.10", "3.11", "3.12"]
 
     runs-on: ${{ matrix.os }}-latest
-    needs: [format-and-lint]
+    needs: [test-storage-client, test-cli-windows, test-cli-macos]
     steps:
       - uses: actions/checkout@v4
 
