@@ -4,15 +4,26 @@ pub use opsml_crypt::{derive_master_key, generate_salt};
 use opsml_error::CliError;
 use pyo3::prelude::*;
 
+/// Create a structured response for the generated key
+///
+/// # Arguments
+/// * `key` - A string slice containing the generated key
+///
+/// # Returns
+/// A formatted string containing the structured response
 pub fn create_response(key: &str) -> String {
-    let header = Colorize::green("################## Generated Key ##################");
+    let header = Colorize::green(
+        "############################### Generated Key ###############################",
+    );
     let key_response = Colorize::purple(&format!("Key: {}", key));
-    let footer = Colorize::green("###################################################");
+    let footer = Colorize::green(
+        "#############################################################################",
+    );
     let structured_response = format!(
         r#"
 {}
-This key will not be saved. Make sure to save it in a secure location
-{}
+    This key will not be saved. Make sure to save it in a secure location
+    {}
 {}
 "#,
         header, key_response, footer
