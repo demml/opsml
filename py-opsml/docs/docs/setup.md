@@ -66,7 +66,6 @@ Supported Database backends:
 - Postgres
 - MySQL
 
-
 To run the server with a different storage backend, you can set the `OPSML_STORAGE_URI` environment variable to the desired backend. For example, to use S3, you can set the following environment variable:
 
 ```console
@@ -79,6 +78,28 @@ Supported Storage backends:
 - S3
 - GCS
 - Azure Blob Storage
+
+!!!info
+    Ensure the required storage credentials are set appropriately in your environment
+
+#### Storage Credentials
+
+##### Google Cloud Storage
+
+- `GOOGLE_ACCOUNT_JSON_BASE64`: Environment variables that contains the base64 encoded JSON key for the service account.
+- `GOOGLE_APPLICATION_CREDENTIALS_JSON`: Environment variable that contains the JSON key for the service account.
+- `GOOGLE_APPLICATION_CREDENTIALS`: Environment variable that contains the path to the credential file.
+
+##### Amazon S3
+
+- Opsml uses the [aws_sdk_s3](https://docs.rs/aws-sdk-s3/1.82.0/aws_sdk_s3/) and [aws_config](https://docs.rs/aws-config/1.6.1/aws_config/#examples) crates to handle S3 storage. Thus, all credential configurations supported by the rust crate are supported by opsml.
+
+##### Azure Blob Storage
+
+- Opsml uses the [azure-identity](https://docs.rs/azure_identity/latest/azure_identity/) crate to handle authentication.
+
+- In addition to credentials, to use Azure Blob Storage, you will need to set the following environment variable:
+    - `AZURE_STORAGE_ACCOUNT`: The name of the storage account.
 
 
 ### Environment Variables
@@ -95,7 +116,7 @@ Apart from the `OPSML_TRACKING_URI` and `OPSML_STORAGE_URI` environment variable
 $ opsml generate key --password {your_password}
 ```
 
-    The encryption key (aka jwt_key) is one of the most important pieces to opsml's security system. It is used to derive new keys for each artifact, which in-turn are used to encrypt data, and is used generate short-lived JWT tokens for authentication.
+The encryption key (aka jwt_key) is one of the most important pieces to opsml's security system. It is used to derive new keys for each artifact, which in-turn are used to encrypt data, and is used generate short-lived JWT tokens for authentication.
 
 - `OPSML_REFRESH_SECRET`: The secret used to sign the refresh tokens. This is used to verify the integrity of the refresh tokens. If not set, opsml will use a default **deterministic** key. This is not recommended for production use cases. opsml requires a pbdkdf2::HmacSha256 key with a length of 32 bytes. You can generate a key similar to the `OPSML_ENCRYPT_KEY` key.
 - `OPSML_MAX_POOL_CONNECTIONS`: The maximum number of connections to the database. The default is `10`.

@@ -5,8 +5,9 @@ ModelCards are cards for storing, versioning, and tracking model objects.
 ## Features
 - **shareable**: All cards including ModelCards are shareable and searchable.
 - **auto-onnx**: Automatic conversion of trained model into onnx model format.
-- **auto-schema**: Auto-infer data schema and input and output signature.
-- **versioning**: SemVer for your model.
+- **auto-schema**: Auto-infer data schema.
+- **auto-metadata**: Extract model-specific metadata to associate with the card.
+- **versioning**: SemVer for your model. 
 
 ## Create a Card
 
@@ -15,14 +16,11 @@ ModelCards are cards for storing, versioning, and tracking model objects.
 from sklearn.linear_model import LinearRegression
 
 # Opsml
-from opsml import CardRegistry, ModelCard, CardInfo
+from opsml import CardRegistry, ModelCard
 
 # set up registries
 data_registry = CardRegistry(registry_name="data")
 model_registry = CardRegistry(registry_name="model")
-
-card_info = CardInfo(name="linnerrud", space="opsml", contact="user@email.com")
-
 
 # load datacard
 datacard = data_registry.load_card(name=card_info.name, version="1.0.0")
@@ -85,3 +83,4 @@ model_registry.register_card(modelcard)
 ---
 ## Docs
 
+make font color white
