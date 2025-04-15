@@ -94,6 +94,9 @@ test.opsml.registry.client:
 	cargo test --features server -p opsml-registry test_registry_client -- --nocapture --test-threads=1
 
 
+.PHONY: test.unit
+test.unit: test.sql test.storage.server test.server test.utils
+
 ###### UI ######
 UI_DIR = crates/opsml_server/opsml_ui
 PY_DIR = py-opsml

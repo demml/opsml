@@ -37,7 +37,7 @@ jobs:
       - name: Run lints
         run: make lints
 
-  test-Sql-Storage-Utils:
+  test-unit:
     runs-on: ubuntu-22.04
     needs: format-and-lint
     steps:
@@ -54,18 +54,10 @@ jobs:
       - name: Cache Rust
         uses: Swatinem/rust-cache@v2
 
-      - name: Run sql tests
-        run: make test.sql
+      - name: Run Unit Tests
+        run: make test.unit
 
-      - name: Run storage tests
-        run: make test.storage.server
-
-      - name: Run util tests
-        run: make test.utils
-
-  # this will run local client and server storage tests.
-  # Intergration tests will be run when prs are merged to main
-  test-server:
+  test-storage-client:
     runs-on: ubuntu-22.04
     needs: format-and-lint
     steps:
@@ -96,9 +88,6 @@ jobs:
 
       - name: Run storage client tests
         run: make test.storage.client
-
-      - name: Run server tests
-        run: make test.server
 
       - name: Shutdown Server
         run: make stop.server
