@@ -209,7 +209,7 @@ impl Default for OpsmlConfig {
         OpsmlConfig {
             app_name: "opsml".to_string(),
             app_env: env::var("APP_ENV").unwrap_or_else(|_| "development".to_string()),
-            app_version: env!("CARGO_PKG_VERSION").to_string(),
+            app_version: opsml_version::version(),
             opsml_storage_uri: OpsmlConfig::set_opsml_storage_uri(opsml_storage_uri, &mode),
             opsml_tracking_uri,
 
@@ -460,7 +460,7 @@ mod tests {
         let opsml_config = OpsmlConfig::default();
         assert_eq!(opsml_config.app_name, "opsml");
         assert_eq!(opsml_config.app_env, "development");
-        assert_eq!(opsml_config.app_version, env!("CARGO_PKG_VERSION"));
+        assert_eq!(opsml_config.app_version, opsml_version::version());
         assert_eq!(
             opsml_config.opsml_storage_uri,
             Path::new("./opsml_registries")

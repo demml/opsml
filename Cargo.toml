@@ -38,6 +38,7 @@ opsml-todo = { path = "crates/opsml_todo" }
 opsml-toml = { path = "crates/opsml_toml" }
 opsml-types = { path = "crates/opsml_types" }
 opsml-utils = { path = "crates/opsml_utils" }
+opsml-version = { path = "crates/opsml_version" }
 potato-head = { path = "crates/potato_head" }
 
 aes-gcm = "0.*"
@@ -53,7 +54,7 @@ aws-config = {version = "1.*", features = ["sso"]}
 aws-types = "1.*"
 base64 = "0.22.*"
 bytes = "1.*"
-clap = { version = "4.*", features = ["derive"] }
+clap = { version = "4.*", features = ["derive", "string", "wrap_help"] }
 chrono = { version = "0.*", features = ["serde"] }
 colored_json = "5.*"
 dirs = "6.*"

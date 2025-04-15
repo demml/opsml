@@ -8,7 +8,7 @@ use std::{
 };
 
 const GITHUB_REPO: &str = "demml/opsml";
-const CACHE_DIR: &str = "opsml-cache";
+const CACHE_DIR: &str = ".opsml-cache";
 
 #[derive(Debug)]
 pub enum Platform {
