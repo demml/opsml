@@ -2,6 +2,8 @@ use base64::prelude::*;
 use opsml_colors::Colorize;
 pub use opsml_crypt::{derive_master_key, generate_salt};
 use opsml_error::CliError;
+use pyo3::prelude::*;
+
 /// Generate a pbkdf2 key for the given password
 ///
 /// # Arguments
@@ -13,6 +15,9 @@ use opsml_error::CliError;
 ///
 /// # Errors
 /// * `CliError::GenerateKeyError` - If the key generation fails
+
+#[pyfunction]
+#[pyo3(signature = (password, rounds=100_000))]
 pub fn generate_pbkdf2_key(password: &str, rounds: u32) -> Result<(), CliError> {
     let salt = generate_salt()?;
 
