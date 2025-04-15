@@ -238,8 +238,12 @@ fn cleanup_old_binaries(
 mod tests {
     use super::*;
     use mockito::{Server, ServerGuard};
-    use std::io::Write;
     use tempfile::TempDir;
+
+    #[cfg(any(target_os = "macos", target_os = "windows"))]
+    use std::io::Write;
+
+    #[cfg(any(target_os = "macos", target_os = "windows"))]
     use zip::write::FileOptions;
 
     #[cfg(target_os = "linux")]
