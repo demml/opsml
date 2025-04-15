@@ -121,7 +121,8 @@ fn download_binary(
         Platform::Linux(_) => {
             #[cfg(target_os = "linux")]
             {
-                let tar_gz = fs::File::open(&archive_path)?;
+                let tar_gz = fs::File::open(&archive_path)
+                    .map_err(|e| CliError::ArchiveOpenError(e.to_string()))?;
                 let tar = flate2::read::GzDecoder::new(tar_gz);
                 let mut archive = tar::Archive::new(tar);
                 archive
