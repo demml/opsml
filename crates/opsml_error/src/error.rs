@@ -130,6 +130,18 @@ pub enum CliError {
 
     #[error("Failed to remove archive - {0}")]
     RemoveArchiveError(String),
+
+    #[error("{0}")]
+    BinaryExecutionError(String),
+
+    #[error("Failed to rename binary")]
+    RenameBinaryError(#[source] std::io::Error),
+
+    #[error("Failed to read file")]
+    ReadError(#[source] std::io::Error),
+
+    #[error("Failed to remove file")]
+    RemoveFileError(#[source] std::io::Error),
 }
 
 impl From<CliError> for PyErr {
