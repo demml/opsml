@@ -4,8 +4,7 @@ pub mod cli;
 use crate::actions::{download_card, list_cards};
 use crate::cli::{Cli, Commands, GenerateCommands, GetCommands, InstallCommands, ListCommands};
 use actions::download::download_deck;
-use actions::generate::generate_pbkdf2_key;
-pub use actions::lock::install_app;
+pub use actions::{generate_key, lock::install_app};
 use anyhow::Context;
 use clap::Parser;
 use opsml_colors::Colorize;
@@ -83,8 +82,7 @@ pub fn run_cli(args: Vec<String>) -> anyhow::Result<()> {
 
         Some(Commands::GenerateKey { command }) => match command {
             GenerateCommands::Key(args) => {
-                generate_pbkdf2_key(&args.password, args.rounds)
-                    .context("Failed to generate key")?;
+                generate_key(&args.password, args.rounds).context("Failed to generate key")?;
                 Ok(())
             }
         },

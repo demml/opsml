@@ -3,7 +3,7 @@
 # In order to test the CLI, we expose some of the top-level functions in the opsml.cli module.
 ###################################################################################################
 
-from opsml.cli import lock_project, install_app  # type: ignore
+from opsml.cli import lock_project, install_app, generate_key  # type: ignore
 import os
 from pathlib import Path
 import shutil
@@ -137,3 +137,14 @@ def test_pyproject_app_lock_project(
         ## delete the opsml_app and lock file
         shutil.rmtree(opsml_app)
         os.remove(lock_file)
+
+
+def test_generate_key():
+    """
+    This test is meant to test generating a master key via the CLI.
+    """
+
+    password = "test_password"
+    rounds = 10
+
+    generate_key(password=password, rounds=rounds)
