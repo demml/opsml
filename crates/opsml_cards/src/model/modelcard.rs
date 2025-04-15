@@ -136,7 +136,7 @@ pub struct ModelCard {
 impl ModelCard {
     #[new]
     #[allow(clippy::too_many_arguments)]
-    #[pyo3(signature = (interface, space=None, name=None,   version=None, uid=None, tags=None,    metadata=None, to_onnx=None))]
+    #[pyo3(signature = (interface, space=None, name=None, version=None, uid=None, tags=None, datacard_uid=None, metadata=None, to_onnx=None))]
     pub fn new(
         py: Python,
         interface: &Bound<'_, PyAny>,
@@ -145,6 +145,7 @@ impl ModelCard {
         version: Option<&str>,
         uid: Option<&str>,
         tags: Option<&Bound<'_, PyList>>,
+        datacard_uid: Option<&str>,
         metadata: Option<ModelCardMetadata>,
         to_onnx: Option<bool>,
     ) -> PyResult<Self> {
@@ -173,6 +174,12 @@ impl ModelCard {
         let task_type = extract_py_attr::<TaskType>(interface, "task_type")?;
 
         let mut metadata = metadata.unwrap_or_default();
+
+        // if metadata.datacard_uid is None, set it to datacard_uid
+        if metadata.datacard_uid.is_none() {
+            metadata.datacard_uid = datacard_uid.map(|s| s.to_string());
+        }
+
         metadata.interface_metadata.interface_type = interface_type;
         metadata.interface_metadata.data_type = data_type;
         metadata.interface_metadata.model_type = model_type;

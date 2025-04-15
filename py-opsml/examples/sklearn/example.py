@@ -8,8 +8,8 @@ from opsml import (  # type: ignore
     TaskType,
     DataCard,
     ModelCard,
-    ModelCardMetadata,
 )
+from opsml.data import DataSplit, StartStopSplit
 from sklearn import ensemble  # type: ignore
 
 
@@ -18,10 +18,33 @@ reg = CardRegistries()
 
 # create data
 X, y = cast(Tuple[pd.DataFrame, pd.DataFrame], create_fake_data(n_samples=1200))
+X["target"] = y
+
+# create data splits to store with the model
+data_splits = [
+    DataSplit(
+        label="train",
+        start_stop_split=StartStopSplit(
+            start=0,
+            stop=1000,
+        ),
+    ),
+    DataSplit(
+        label="test",
+        start_stop_split=StartStopSplit(
+            start=1000,
+            stop=1200,
+        ),
+    ),
+]
 
 # create DataCard
 datacard = DataCard(
-    interface=PandasData(data=X),
+    interface=PandasData(
+        data=X,
+        data_splits=data_splits,
+        dependent_vars=["target"],
+    ),
     space="opsml",
     name="my_data",
     tags=["foo:bar", "baz:qux"],
@@ -30,9 +53,14 @@ datacard = DataCard(
 # register DataCard
 reg.data.register_card(datacard)
 
+splits = datacard.interface.split_data()
+
 # Create and train model
 classifier = ensemble.RandomForestClassifier(n_estimators=5)
-classifier.fit(X.to_numpy(), y.to_numpy().ravel())
+classifier.fit(
+    splits["train"].x.to_numpy(),
+    splits["train"].y.to_numpy().ravel(),
+)
 
 model_interface = SklearnModel(
     model=classifier,
@@ -46,14 +74,9 @@ modelcard = ModelCard(
     interface=model_interface,
     space="opsml",
     name="my_model",
-    to_onnx=True,  # aut-convert to onnx (optional)
     tags=["foo:bar", "baz:qux"],
-    metadata=ModelCardMetadata(
-        datacard_uid=datacard.uid,  # link to datacard (optional)
-    ),
+    datacard_uid=datacard.uid,
 )
 
 # register model
 reg.model.register_card(modelcard)
-
-print(modelcard)
