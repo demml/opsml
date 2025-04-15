@@ -101,4 +101,8 @@ reg.model.register_card(modelcard)
 
 ## Docs
 
-::: opsml.card.ModelCard
+::: opsml.card.stubs.ModelCard
+    options:
+        show_root_heading: true
+        show_source: true
+        heading_level: 3

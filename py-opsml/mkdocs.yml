@@ -141,7 +141,12 @@ markdown_extensions:
 
 plugins:
   - search
-  - mkdocstrings
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            search_in_source_dirs: true
+            source_suffix: ".pyi"
 
 extra_css:
   - docs/css/custom.css
