@@ -33,7 +33,8 @@ pub fn start_ui(version: &str) -> Result<(), CliError> {
     let binary_path = cache_dir.join(format!("opsml-server-v{}", version));
 
     if !binary_path.exists() {
-        download_binary(&platform, version, &cache_dir).await?;
+        download_binary(&platform, version, &cache_dir)?;
+        cleanup_old_binaries(&cache_dir, version, &platform)?;
     }
 
     execute_binary(&binary_path)?;
@@ -80,6 +81,7 @@ fn get_cache_dir() -> Result<PathBuf, CliError> {
 /// # Returns
 /// A Result indicating success or failure
 fn download_binary(platform: &Platform, version: &str, cache_dir: &Path) -> Result<(), CliError> {
+    // standardize naming
     let archive_name = match platform {
         Platform::Windows => "opsml-server-x86_64-windows.zip".to_string(),
         Platform::MacOS(arch) => format!("opsml-server-{}-darwin.zip", arch),
@@ -130,6 +132,15 @@ fn download_binary(platform: &Platform, version: &str, cache_dir: &Path) -> Resu
         }
     }
 
+    let expected_binary_path = cache_dir.join(format!(
+        "opsml-server-v{}{}",
+        version,
+        match platform {
+            Platform::Windows => ".exe",
+            _ => "",
+        }
+    ));
+
     let extracted_binary_name = match platform {
         Platform::Windows => "opsml-server.exe",
         Platform::MacOS(_) | Platform::Linux(_) => "opsml-server",
@@ -138,12 +149,83 @@ fn download_binary(platform: &Platform, version: &str, cache_dir: &Path) -> Resu
     let extracted_path = cache_dir.join(extracted_binary_name);
     if !extracted_path.exists() {
         return Err(CliError::BinaryNotFound);
+    } else {
+        // rename the extracted binary to the versioned name while preserving the .exe extension for Windows
+        fs::rename(&extracted_path, &expected_binary_path)
+            .map_err(|e| CliError::RenameBinaryError(e))?;
     }
 
     // Clean up archive
     fs::remove_file(archive_path).map_err(|e| {
         CliError::RemoveArchiveError(format!("Failed to remove archive: {}", e.to_string()))
     })?;
+
+    Ok(())
+}
+
+///// Execute the OpsML UI binary
+///
+/// # Arguments
+/// * `binary_path` - The path to the OpsML UI binary
+///
+/// # Returns
+/// A Result indicating success or failure
+///
+/// # Errors
+/// * `CliError::BinaryExecutionError` - If the binary execution fails
+fn execute_binary(binary_path: &Path) -> Result<(), CliError> {
+    let mut child_process = Command::new(binary_path).spawn().map_err(|e| {
+        CliError::BinaryExecutionError(format!("Failed to spawn child process: {}", e.to_string()))
+    })?;
+
+    // Wait for the process to finish
+    let status = child_process.wait().map_err(|e| {
+        CliError::BinaryExecutionError(format!(
+            "Failed to wait for child process: {}",
+            e.to_string()
+        ))
+    })?;
+
+    if !status.success() {
+        return Err(CliError::BinaryExecutionError(
+            "Failed to start the UI".to_string(),
+        ));
+    }
+
+    Ok(())
+}
+
+/// Cleans up old binary versions from the cache directory
+/// Keeps only the current version
+///
+/// # Arguments
+/// * `cache_dir` - The cache directory containing the binaries
+/// * `current_version` - The version to keep
+/// * `platform` - The current platform to determine file extension
+fn cleanup_old_binaries(
+    cache_dir: &Path,
+    current_version: &str,
+    platform: &Platform,
+) -> Result<(), CliError> {
+    let extension = match platform {
+        Platform::Windows => ".exe",
+        _ => "",
+    };
+
+    let prefix = "opsml-server-v";
+    let current_binary = format!("{}{}{}", prefix, current_version, extension);
+
+    for entry in fs::read_dir(cache_dir).map_err(|e| CliError::ReadError(e))? {
+        let entry = entry.map_err(|e| CliError::ReadError(e))?;
+        let path = entry.path();
+
+        if let Some(file_name) = path.file_name().and_then(|f| f.to_str()) {
+            // Check if it's a server binary and not the current version
+            if file_name.starts_with(prefix) && file_name != current_binary {
+                fs::remove_file(&path).map_err(|e| CliError::RemoveFileError(e))?;
+            }
+        }
+    }
 
     Ok(())
 }
