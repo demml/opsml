@@ -59,6 +59,12 @@
 
 }
 
+[data-md-color-scheme="opsml-dark"] .quote,
+[data-md-color-scheme="opsml-dark"] details.quote {
+  background-color: var(--primary-700) !important;
+  color: var(--white) !important;
+}
+
 [data-md-color-scheme="opsml-dark"] .admonition.info,
 [data-md-color-scheme="opsml-dark"] div.admonition.info {
   background-color: var(--primary-700) !important;
