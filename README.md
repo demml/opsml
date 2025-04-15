@@ -51,24 +51,23 @@ Quality control in the context of `OpsML` refers to:
 OpsML is written in Rust and is exposed via a Python API built with PyO3.
 </sup>
 
-## v3.0.0 Status
+### Us vs Others
 
-| Task | Status | Description |
-|---------|--------|-------------|
-| Client/Server Rust Implementation | ✅ Complete  | Re-write core logic in rust |
-| Rust Storage Clients  | ✅ Complete | Native support for AWS, GCP, Azure |
-| Rust SQL Clients  | ✅ Complete | Native support for Sqlite, MySQL, Postgres |
-| Encryption System | ✅ Complete | Encrypt/decrypt artifacts via pbkdf2-derived Aes256-Gcm key |
-| Authentication System | ✅ Complete | Token-based auth with role management |
-| Monitoring Integration | 🚧 In Progress | Scouter integration for real-time model monitoring |
-| Documentation Update | 🔜 Planned | Complete documentation overhaul |
-| Rebuilt UI | 🚧 In Progress | New UI written in svelte |
-
-Legend:
-- ✅ Complete
-- 🚧 In Progress
-- 🔜 Planned
-  
+| Feature | OpsML | Others |
+|---------|:-------:|:--------:|
+| **Artifact-First Approach** | ✅ | ❌ |
+| **SemVer for All Artifacts** | ✅ | ❌ (rare) |
+| **Multi-Cloud Compatibility** | ✅ | ✅ |
+| **Multi-Database Support** | ✅ | ✅ |
+| **Authentication** | ✅ | ✅ |
+| **Encryption** | ✅ | ❌ (rare) |
+| **Artifact Lineage** | ✅ | ❌ (uncommon) |
+| **Out-of-the-Box Model Monitoring & Data Profiling** | ✅ | ❌ |
+| **Isolated Environments (No Staging/Prod Conflicts)** | ✅ | ❌ |
+| **Single Dependency** | ✅ | ❌ |
+| **Low-friction Integration Into Your Current Tech Stack** | ✅ | ❌ |
+| **Standardized Patterns and Workflows** | ✅ | ❌ |
+| **Open Source** | ✅ | ❌ (some) |
 
 ## Contributing
 If you'd like to contribute, be sure to check out our [contributing guide](./CONTRIBUTING.md)! If you'd like to work on any outstanding items, check out the `roadmap` section in the docs and get started :smiley:
