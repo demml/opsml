@@ -93,6 +93,12 @@ test.server:
 test.opsml.registry.client:
 	cargo test --features server -p opsml-registry test_registry_client -- --nocapture --test-threads=1
 
+.PHONY: test.version 
+test.version:
+	cargo test -p opsml-version -- --nocapture --test-threads=1
+
+.PHONY: test.unit
+test.unit: test.sql test.storage.server test.server test.utils test.version test.cli
 
 ###### UI ######
 UI_DIR = crates/opsml_server/opsml_ui

@@ -198,7 +198,7 @@ impl ModelCard {
             app_env: std::env::var("APP_ENV").unwrap_or_else(|_| "dev".to_string()),
             created_at: get_utc_datetime(),
             is_card: true,
-            opsml_version: env!("CARGO_PKG_VERSION").to_string(),
+            opsml_version: opsml_version::version(),
         })
     }
 

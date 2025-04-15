@@ -281,7 +281,7 @@ impl Default for DataCardClientRecord {
             experimentcard_uid: None,
             auditcard_uid: None,
             interface_type: DataInterfaceType::Base.to_string(),
-            opsml_version: env!("CARGO_PKG_VERSION").to_string(),
+            opsml_version: opsml_version::version(),
             username: "guest".to_string(),
         }
     }
@@ -326,7 +326,7 @@ impl Default for ModelCardClientRecord {
             auditcard_uid: None,
             interface_type: ModelInterfaceType::Base.to_string(),
             task_type: TaskType::Other.to_string(),
-            opsml_version: env!("CARGO_PKG_VERSION").to_string(),
+            opsml_version: opsml_version::version(),
             username: "guest".to_string(),
         }
     }
@@ -366,7 +366,7 @@ impl Default for ExperimentCardClientRecord {
             promptcard_uids: Vec::new(),
             card_deck_uids: Vec::new(),
             experimentcard_uids: Vec::new(),
-            opsml_version: env!("CARGO_PKG_VERSION").to_string(),
+            opsml_version: opsml_version::version(),
             username: "guest".to_string(),
         }
     }
@@ -404,7 +404,7 @@ impl Default for AuditCardClientRecord {
             datacard_uids: Vec::new(),
             modelcard_uids: Vec::new(),
             experimentcard_uids: Vec::new(),
-            opsml_version: env!("CARGO_PKG_VERSION").to_string(),
+            opsml_version: opsml_version::version(),
             username: "guest".to_string(),
         }
     }
@@ -438,7 +438,7 @@ impl Default for PromptCardClientRecord {
             tags: Vec::new(),
             experimentcard_uid: None,
             auditcard_uid: None,
-            opsml_version: env!("CARGO_PKG_VERSION").to_string(),
+            opsml_version: opsml_version::version(),
             username: "guest".to_string(),
         }
     }
@@ -467,7 +467,7 @@ impl Default for CardDeckClientRecord {
             space: "".to_string(),
             name: "".to_string(),
             version: "".to_string(),
-            opsml_version: env!("CARGO_PKG_VERSION").to_string(),
+            opsml_version: opsml_version::version(),
             username: "guest".to_string(),
             cards: Vec::new(),
         }

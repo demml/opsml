@@ -1,0 +1,7 @@
+[package]
+name = "opsml-version"
+version = { workspace = true }
+edition = { workspace = true }
+repository = { workspace = true }
+license = "MIT"
+description = "Current version of OpsML"
