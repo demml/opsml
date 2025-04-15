@@ -14,7 +14,7 @@ theme:
         name: "Switch to light mode"
 
     - media: "(prefers-color-scheme: light)"
-      scheme: default
+      scheme: opsml-light
       primary: stylesheets/extra.css
       accent: stylesheets/extra.css
       toggle:
@@ -22,7 +22,7 @@ theme:
         name: "Switch to dark mode"
 
     - media: "(prefers-color-scheme: dark)"
-      scheme: slate
+      scheme: opsml-dark
       primary: stylesheets/extra.css
       accent: stylesheets/extra.css
       toggle:
@@ -74,7 +74,7 @@ nav:
   #        - "interfaces/model/deployment.md"
   - Cards:
       - "docs/cards/overview.md"
-#    - "cards/versioning.md"
+      - "docs/cards/versioning.md"
 #    - "cards/metadata.md"
 #    - DataCard:
 #        - "cards/datacard.md"
