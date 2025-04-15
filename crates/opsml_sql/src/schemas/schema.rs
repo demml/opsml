@@ -268,7 +268,7 @@ impl Default for DataCardRecord {
             experimentcard_uid: None,
             auditcard_uid: None,
             interface_type: CommonKwargs::Undefined.to_string(),
-            opsml_version: env!("CARGO_PKG_VERSION").to_string(),
+            opsml_version: opsml_version::version(),
             username: CommonKwargs::Undefined.to_string(),
         }
     }
@@ -408,7 +408,7 @@ impl Default for ModelCardRecord {
             auditcard_uid: None,
             interface_type: CommonKwargs::Undefined.to_string(),
             task_type: CommonKwargs::Undefined.to_string(),
-            opsml_version: env!("CARGO_PKG_VERSION").to_string(),
+            opsml_version: opsml_version::version(),
             username: CommonKwargs::Undefined.to_string(),
         }
     }
@@ -457,7 +457,7 @@ impl Default for ExperimentCardRecord {
             promptcard_uids: Json(Vec::new()),
             card_deck_uids: Json(Vec::new()),
             experimentcard_uids: Json(Vec::new()),
-            opsml_version: env!("CARGO_PKG_VERSION").to_string(),
+            opsml_version: opsml_version::version(),
             username: CommonKwargs::Undefined.to_string(),
         }
     }
@@ -662,7 +662,7 @@ impl Default for AuditCardRecord {
             datacard_uids: Json(Vec::new()),
             modelcard_uids: Json(Vec::new()),
             experimentcard_uids: Json(Vec::new()),
-            opsml_version: env!("CARGO_PKG_VERSION").to_string(),
+            opsml_version: opsml_version::version(),
             username: CommonKwargs::Undefined.to_string(),
         }
     }
@@ -777,7 +777,7 @@ impl Default for PromptCardRecord {
             tags: Json(Vec::new()),
             experimentcard_uid: None,
             auditcard_uid: None,
-            opsml_version: env!("CARGO_PKG_VERSION").to_string(),
+            opsml_version: opsml_version::version(),
             username: CommonKwargs::Undefined.to_string(),
         }
     }
@@ -881,7 +881,7 @@ impl Default for CardDeckRecord {
             build_tag: None,
             version: Version::new(1, 0, 0).to_string(),
             cards: Json(Vec::new()),
-            opsml_version: env!("CARGO_PKG_VERSION").to_string(),
+            opsml_version: opsml_version::version(),
             username: CommonKwargs::Undefined.to_string(),
         }
     }

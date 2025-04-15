@@ -1,10 +1,54 @@
 use crate::cli::arg::{DownloadCard, KeyArgs, ListCards};
+use clap::builder::styling::{AnsiColor, Effects};
+use clap::builder::Styles;
 use clap::command;
 use clap::Parser;
 use clap::Subcommand;
+use serde::Serialize;
+use std::fmt;
+
+#[derive(Serialize)]
+pub struct VersionInfo {
+    version: String,
+}
+
+impl VersionInfo {
+    pub fn new() -> Self {
+        VersionInfo {
+            version: opsml_version::version(),
+        }
+    }
+}
+
+impl Default for VersionInfo {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl fmt::Display for VersionInfo {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "opsml-cli version {}", self.version)
+    }
+}
+
+impl From<VersionInfo> for clap::builder::Str {
+    fn from(val: VersionInfo) -> Self {
+        val.to_string().into()
+    }
+}
+
+const STYLES: Styles = Styles::styled()
+    .header(AnsiColor::Green.on_default().effects(Effects::BOLD))
+    .usage(AnsiColor::Green.on_default().effects(Effects::BOLD))
+    .literal(AnsiColor::Magenta.on_default().effects(Effects::BOLD))
+    .placeholder(AnsiColor::Magenta.on_default());
 
 #[derive(Parser)]
-#[command(about = "CLI tool for Interacting with an Opsml server")]
+#[command(styles=STYLES)]
+#[command(name = "OpsML", author, long_version = VersionInfo::new())]
+#[command(about = "CLI tool for Interacting with OpsML")]
+#[command(propagate_version = true)]
 pub struct Cli {
     #[command(subcommand)]
     pub command: Option<Commands>,
@@ -57,11 +101,11 @@ pub enum Commands {
         command: InstallCommands,
     },
 
-    /// Generate key
+    /// Generate an encryption key from a password
     ///
     /// # Example
     /// opsml generate key
-    GenerateKey {
+    Generate {
         #[command(subcommand)]
         command: GenerateCommands,
     },
@@ -82,6 +126,7 @@ pub enum GetCommands {
 }
 
 #[derive(Subcommand)]
+
 pub enum ListCommands {
     Model(ListCards),
     Deck(ListCards),

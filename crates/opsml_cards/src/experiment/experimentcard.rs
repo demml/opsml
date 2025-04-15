@@ -123,7 +123,7 @@ impl ExperimentCard {
             uids: UidMetadata::default(),
             subexperiment: false,
             is_card: true,
-            opsml_version: env!("CARGO_PKG_VERSION").to_string(),
+            opsml_version: opsml_version::version(),
         })
     }
 

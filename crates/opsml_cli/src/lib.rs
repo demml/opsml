@@ -12,8 +12,6 @@ use opsml_types::RegistryType;
 
 pub use actions::lock::lock_project;
 
-pub const VERSION: &str = env!("CARGO_PKG_VERSION");
-
 pub const LOGO_TEXT: &str = "
  ██████  ██████  ███████ ███    ███ ██             ██████ ██      ██ 
 ██    ██ ██   ██ ██      ████  ████ ██            ██      ██      ██ 
@@ -63,14 +61,17 @@ pub fn run_cli(args: Vec<String>) -> anyhow::Result<()> {
         },
 
         Some(Commands::Version) => {
-            println!("opsml-cli version {}", Colorize::purple(VERSION));
+            println!(
+                "opsml-cli version {}",
+                Colorize::purple(&opsml_version::version())
+            );
             Ok(())
         }
         Some(Commands::Info) => {
             println!(
                 "\n{}\nopsml-cli version {}\n2025 Demml\n",
                 Colorize::green(LOGO_TEXT),
-                Colorize::purple(VERSION)
+                Colorize::purple(&opsml_version::version())
             );
 
             Ok(())
@@ -80,7 +81,7 @@ pub fn run_cli(args: Vec<String>) -> anyhow::Result<()> {
             Ok(())
         }
 
-        Some(Commands::GenerateKey { command }) => match command {
+        Some(Commands::Generate { command }) => match command {
             GenerateCommands::Key(args) => {
                 generate_key(&args.password, args.rounds).context("Failed to generate key")?;
                 Ok(())
