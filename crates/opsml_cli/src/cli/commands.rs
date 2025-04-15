@@ -7,6 +7,8 @@ use clap::Subcommand;
 use serde::Serialize;
 use std::fmt;
 
+// Borrowed from uv - really like their style
+
 #[derive(Serialize)]
 pub struct VersionInfo {
     version: String,
