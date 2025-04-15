@@ -65,7 +65,7 @@ fn get_cache_dir() -> Result<PathBuf, CliError> {
     let cache_dir = home.join(CACHE_DIR);
 
     if !cache_dir.exists() {
-        fs::create_dir_all(&cache_dir).map_err(|e| CliError::CreateCacheDirError(e))?;
+        fs::create_dir_all(&cache_dir).map_err(CliError::CreateCacheDirError)?;
     }
 
     Ok(cache_dir)
@@ -156,14 +156,12 @@ fn download_binary(
         return Err(CliError::BinaryNotFound);
     } else {
         // rename the extracted binary to the versioned name while preserving the .exe extension for Windows
-        fs::rename(&extracted_path, &expected_binary_path)
-            .map_err(|e| CliError::RenameBinaryError(e))?;
+        fs::rename(&extracted_path, &expected_binary_path).map_err(CliError::RenameBinaryError)?;
     }
 
     // Clean up archive
-    fs::remove_file(archive_path).map_err(|e| {
-        CliError::RemoveArchiveError(format!("Failed to remove archive: {}", e.to_string()))
-    })?;
+    fs::remove_file(archive_path)
+        .map_err(|e| CliError::RemoveArchiveError(format!("Failed to remove archive: {}", e)))?;
 
     Ok(())
 }
@@ -180,15 +178,12 @@ fn download_binary(
 /// * `CliError::BinaryExecutionError` - If the binary execution fails
 fn execute_binary(binary_path: &Path) -> Result<(), CliError> {
     let mut child_process = Command::new(binary_path).spawn().map_err(|e| {
-        CliError::BinaryExecutionError(format!("Failed to spawn child process: {}", e.to_string()))
+        CliError::BinaryExecutionError(format!("Failed to spawn child process: {}", e))
     })?;
 
     // Wait for the process to finish
     let status = child_process.wait().map_err(|e| {
-        CliError::BinaryExecutionError(format!(
-            "Failed to wait for child process: {}",
-            e.to_string()
-        ))
+        CliError::BinaryExecutionError(format!("Failed to wait for child process: {}", e))
     })?;
 
     if !status.success() {
@@ -220,8 +215,8 @@ fn cleanup_old_binaries(
     let prefix = "opsml-server-v";
     let current_binary = format!("{}{}{}", prefix, current_version, extension);
 
-    for entry in fs::read_dir(cache_dir).map_err(|e| CliError::ReadError(e))? {
-        let entry = entry.map_err(|e| CliError::ReadError(e))?;
+    for entry in fs::read_dir(cache_dir).map_err(CliError::ReadError)? {
+        let entry = entry.map_err(CliError::ReadError)?;
         let path = entry.path();
 
         if let Some(file_name) = path.file_name().and_then(|f| f.to_str()) {
@@ -230,7 +225,7 @@ fn cleanup_old_binaries(
                 && file_name.ends_with(extension)
                 && file_name != current_binary
             {
-                fs::remove_file(&path).map_err(|e| CliError::RemoveFileError(e))?;
+                fs::remove_file(&path).map_err(CliError::RemoveFileError)?;
             }
         }
     }
