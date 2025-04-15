@@ -41,13 +41,12 @@ pub fn clean_string(input: &str) -> Result<String, UtilError> {
 }
 
 pub fn validate_name_space_pattern(name: &str, space: &str) -> Result<(), UtilError> {
-    let name_repo = format!("{name}/{space}");
+    let space_name = format!("{space}/{name}");
 
-    let re = Regex::new(NAME_SPACE_PATTERN)
-        .map_err(|_| UtilError::Error("Failed to create regex".to_string()))?;
+    let re = Regex::new(NAME_SPACE_PATTERN).map_err(|_| UtilError::RegexError)?;
 
-    if !re.is_match(&name_repo) {
-        return Err(UtilError::Error("Invalid name/space pattern".to_string()));
+    if !re.is_match(&space_name) {
+        return Err(UtilError::InvalidSpaceNamePattern);
     }
 
     if name.len() > 53 {

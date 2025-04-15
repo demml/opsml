@@ -1,4 +1,4 @@
-use opsml_cli::{install_app, lock_project, run_cli};
+use opsml_cli::{generate_key, install_app, lock_project, run_cli};
 use pyo3::prelude::*;
 use std::env;
 
@@ -13,5 +13,6 @@ pub fn cli(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(run_opsml_cli, m)?)?;
     m.add_function(wrap_pyfunction!(lock_project, m)?)?;
     m.add_function(wrap_pyfunction!(install_app, m)?)?;
+    m.add_function(wrap_pyfunction!(generate_key, m)?)?;
     Ok(())
 }

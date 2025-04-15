@@ -99,7 +99,7 @@ impl Prompt {
         }
 
         // get version from crate
-        let version = env!("CARGO_PKG_VERSION").to_string();
+        let version = opsml_version::version();
 
         // Create a sanitizer if sanitization_config is provided, else create default sanitizer (will be skipped)
         let sanitizer = sanitization_config

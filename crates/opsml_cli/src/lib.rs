@@ -2,17 +2,15 @@ pub mod actions;
 pub mod cli;
 
 use crate::actions::{download_card, list_cards};
-use crate::cli::{Cli, Commands, GetCommands, InstallCommands, ListCommands};
+use crate::cli::{Cli, Commands, GenerateCommands, GetCommands, InstallCommands, ListCommands};
 use actions::download::download_deck;
-pub use actions::lock::install_app;
+pub use actions::{generate_key, lock::install_app};
 use anyhow::Context;
 use clap::Parser;
 use opsml_colors::Colorize;
 use opsml_types::RegistryType;
 
 pub use actions::lock::lock_project;
-
-pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 pub const LOGO_TEXT: &str = "
  ██████  ██████  ███████ ███    ███ ██             ██████ ██      ██ 
@@ -63,14 +61,17 @@ pub fn run_cli(args: Vec<String>) -> anyhow::Result<()> {
         },
 
         Some(Commands::Version) => {
-            println!("opsml-cli version {}", Colorize::purple(VERSION));
+            println!(
+                "opsml-cli version {}",
+                Colorize::purple(&opsml_version::version())
+            );
             Ok(())
         }
         Some(Commands::Info) => {
             println!(
                 "\n{}\nopsml-cli version {}\n2025 Demml\n",
                 Colorize::green(LOGO_TEXT),
-                Colorize::purple(VERSION)
+                Colorize::purple(&opsml_version::version())
             );
 
             Ok(())
@@ -79,6 +80,13 @@ pub fn run_cli(args: Vec<String>) -> anyhow::Result<()> {
             println!("opsml-cli lock");
             Ok(())
         }
+
+        Some(Commands::Generate { command }) => match command {
+            GenerateCommands::Key(args) => {
+                generate_key(&args.password, args.rounds).context("Failed to generate key")?;
+                Ok(())
+            }
+        },
         None => {
             println!("No command provided");
             Ok(())

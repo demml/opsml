@@ -31,7 +31,7 @@ impl LockFile {
     ///
     pub fn write(&self, root_path: &Path) -> Result<(), PyProjectTomlError> {
         let mut doc = DocumentMut::new();
-        doc.insert("version", value(env!("CARGO_PKG_VERSION").to_string()));
+        doc.insert("version", value(opsml_version::version()));
         let mut artifacts = ArrayOfTables::new();
 
         // Create entries for each service
