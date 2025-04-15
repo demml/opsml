@@ -71,7 +71,6 @@ registry.register_card(card=card)
 
 ## Terminology:
 
----
 ### `Major`
 Indicates a breaking change
 
@@ -80,7 +79,6 @@ Indicates a breaking change
     * New model architecture
     * Training same model architecture but with additional features (major change for both data and model)
 
----
 ### `Minor`
 Non-breaking changes that typically add functionality
 
@@ -89,7 +87,6 @@ Non-breaking changes that typically add functionality
     * Updating model parameters
     * Features and output remain the same
 
----
 ### `Patch`
 Indicates a non-breaking change
 
@@ -97,19 +94,17 @@ Indicates a non-breaking change
     * model re-training
     * data re-freshes
 
----
 ### `Pre`
 Indicates a release candidate
 
 - **Examples**:
     * Saved model that is not ready for an official release
     * Candidate data that needs to be further validated
----
+
 ### `Build`
 Indicates a build tag
 
 - **Examples**:
     * Appending git commit hash to a version
----
 
 These are all general guidelines and we recommend to use what works best for your team. For example, if you team prefers not to mess around with versioning, you may wish to default every model re-training to a `minor` version. 
