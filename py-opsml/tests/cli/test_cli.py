@@ -148,3 +148,4 @@ def test_generate_key():
     rounds = 10
 
     generate_key(password=password, rounds=rounds)
+    a
