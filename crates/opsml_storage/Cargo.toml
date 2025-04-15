@@ -48,7 +48,7 @@ default = []
 server = ["aws-config", "aws-sdk-s3", "azure_identity", "azure_storage", "azure_storage_blobs", "google-cloud-auth", "google-cloud-storage"]
 
 [dev-dependencies]
-mockall = "0.*"
-mockito = "1.*"
+mockall = { workspace = true }
+mockito = { workspace = true }
 rand = "0.*"
-tempfile = "3.*"
+tempfile = {workspace = true}

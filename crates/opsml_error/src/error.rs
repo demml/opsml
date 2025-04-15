@@ -100,6 +100,48 @@ pub enum CliError {
 
     #[error("Failed to delete base path when downloading CardDeck artifacts {0}")]
     DeleteBasePathError(#[source] std::io::Error),
+
+    #[error("Failed to generate key")]
+    GenerateKeyError,
+
+    #[error("Unsupported platform - os: {0}, arch: {1}")]
+    UnsupportedPlatform(String, String),
+
+    #[error("Failed to get home directory")]
+    HomeDirError,
+
+    #[error("Failed to get create cache directory")]
+    CreateCacheDirError(#[source] std::io::Error),
+
+    #[error("Failed to extract archive - {0}")]
+    ArchiveExtractionError(String),
+
+    #[error("Failed to download binary - {0}")]
+    DownloadBinaryError(String),
+
+    #[error("Failed to write binary - {0}")]
+    WriteBinaryError(String),
+
+    #[error("Failed to open archive - {0}")]
+    ArchiveOpenError(String),
+
+    #[error("Binary not found")]
+    BinaryNotFound,
+
+    #[error("Failed to remove archive - {0}")]
+    RemoveArchiveError(String),
+
+    #[error("{0}")]
+    BinaryExecutionError(String),
+
+    #[error("Failed to rename binary")]
+    RenameBinaryError(#[source] std::io::Error),
+
+    #[error("Failed to read file")]
+    ReadError(#[source] std::io::Error),
+
+    #[error("Failed to remove file")]
+    RemoveFileError(#[source] std::io::Error),
 }
 
 impl From<CliError> for PyErr {
@@ -204,6 +246,12 @@ pub enum UtilError {
 
     #[error("Failed to read to file")]
     ReadError,
+
+    #[error("Failed to create regex")]
+    RegexError,
+
+    #[error("Invalid space/name pattern")]
+    InvalidSpaceNamePattern,
 }
 
 impl From<UtilError> for PyErr {

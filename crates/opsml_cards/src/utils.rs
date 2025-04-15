@@ -8,6 +8,17 @@ pub type BaseArgsResult = (String, String, String, String);
 pub struct BaseArgs {}
 
 impl BaseArgs {
+    /// Create base arguments for a card. Attempt to pull from config if not provided.
+    ///
+    /// # Arguments
+    /// * `name` - Optional name of the card
+    /// * `space` - Optional space of the card
+    /// * `version` - Optional version of the card
+    /// * `uid` - Optional uid of the card
+    /// * `registry_type` - Type of the registry
+    ///
+    /// # Returns
+    /// * `Result<BaseArgsResult, TypeError>` - A tuple containing the space, name, version, and uid of the card
     pub fn create_args(
         name: Option<&str>,
         space: Option<&str>,
@@ -26,6 +37,7 @@ impl BaseArgs {
 
         let uid = uid.map_or(CommonKwargs::Undefined.to_string(), |v| v.to_string());
 
+        // we want to ensure some kind of pattern for the space and name validation
         validate_name_space_pattern(&name, &space)?;
 
         Ok((space, name, version, uid))

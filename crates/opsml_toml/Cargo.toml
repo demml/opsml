@@ -10,6 +10,7 @@ doctest = false
 [dependencies]
 opsml-error = { workspace = true }
 opsml-types = { workspace = true }
+opsml-version = { workspace = true }
 serde = { workspace = true }
 toml_edit = { workspace = true }
 
