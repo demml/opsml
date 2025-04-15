@@ -1,4 +1,4 @@
-use super::utils::register_card_deck;
+use crate::actions::utils::register_card_deck;
 use crate::cli::arg::DownloadCard;
 use crate::download_deck;
 use opsml_colors::Colorize;

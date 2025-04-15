@@ -141,3 +141,14 @@ pub struct LaunchServer {
     #[arg(long = "port", default_value = "8888")]
     pub port: i32,
 }
+
+#[derive(Args)]
+pub struct KeyArgs {
+    /// Password to use for the key
+    #[arg(long = "key")]
+    pub password: String,
+
+    /// Number of rounds to use for the key
+    #[arg(long = "rounds", default_value = "100000")]
+    pub rounds: u32,
+}
