@@ -3,6 +3,8 @@ site_url: https://demml.github.io/opsml/
 
 theme:
   name: material
+  logo: docs/images/favicon.ico
+  favicon: docs/images/favicon.ico
   icon:
     repo: fontawesome/brands/github
   palette:
@@ -46,7 +48,6 @@ theme:
   font:
     text: Roboto
     code: Roboto Mono
-  logo: "docs/images/gear.png"
 
 repo_name: opsml
 repo_url: https://github.com/demml/opsml
