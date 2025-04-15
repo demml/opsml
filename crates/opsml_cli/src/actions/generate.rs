@@ -18,7 +18,7 @@ use pyo3::prelude::*;
 
 #[pyfunction]
 #[pyo3(signature = (password, rounds=100_000))]
-pub fn generate_pbkdf2_key(password: &str, rounds: u32) -> Result<(), CliError> {
+pub fn generate_key(password: &str, rounds: u32) -> Result<(), CliError> {
     let salt = generate_salt()?;
 
     // convert password to bytes
