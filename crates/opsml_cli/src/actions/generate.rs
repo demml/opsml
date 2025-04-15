@@ -56,7 +56,7 @@ pub fn generate_key(password: &str, rounds: u32) -> Result<(), CliError> {
         derive_master_key(password, &salt, Some(rounds)).map_err(|_| CliError::GenerateKeyError)?;
 
     // base64 encode the key
-    let encoded_key = BASE64_STANDARD.encode(&key);
+    let encoded_key = BASE64_STANDARD.encode(key);
     let structured_response = create_response(&encoded_key);
     println!("{}", structured_response);
 
