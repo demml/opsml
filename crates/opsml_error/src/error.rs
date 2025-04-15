@@ -103,6 +103,33 @@ pub enum CliError {
 
     #[error("Failed to generate key")]
     GenerateKeyError,
+
+    #[error("Unsupported platform - os: {0}, arch: {1}")]
+    UnsupportedPlatform(String, String),
+
+    #[error("Failed to get home directory")]
+    HomeDirError,
+
+    #[error("Failed to get create cache directory")]
+    CreateCacheDirError(#[source] std::io::Error),
+
+    #[error("Failed to extract archive - {0}")]
+    ArchiveExtractionError(String),
+
+    #[error("Failed to download binary - {0}")]
+    DownloadBinaryError(String),
+
+    #[error("Failed to write binary - {0}")]
+    WriteBinaryError(String),
+
+    #[error("Failed to open archive - {0}")]
+    ArchiveOpenError(String),
+
+    #[error("Binary not found")]
+    BinaryNotFound,
+
+    #[error("Failed to remove archive - {0}")]
+    RemoveArchiveError(String),
 }
 
 impl From<CliError> for PyErr {

@@ -43,6 +43,8 @@ potato-head = { path = "crates/potato_head" }
 aes-gcm = "0.*"
 anyhow = "1.0.93"
 async-trait = "0.*"
+axum = { version = "0.*", features = ["multipart", "macros"] }
+axum-extra = { version =  "0.*", features = ["cookie", "typed-header"] }
 aws-sdk-s3 = "1.75.0"
 azure_identity = "0.21.0" 
 azure_storage = "0.21.0"
@@ -51,11 +53,10 @@ aws-config = {version = "1.*", features = ["sso"]}
 aws-types = "1.*"
 base64 = "0.22.*"
 bytes = "1.*"
-axum = { version = "0.*", features = ["multipart", "macros"] }
-axum-extra = { version =  "0.*", features = ["cookie", "typed-header"] }
 clap = { version = "4.*", features = ["derive"] }
 chrono = { version = "0.*", features = ["serde"] }
 colored_json = "5.*"
+dirs = "6.*"
 dynfmt = { version = "0.*", features = ["curly"] }
 futures = "0.*"
 futures-util = "0.*"
@@ -103,6 +104,8 @@ tracing-core = "0.*"
 tracing-subscriber = {version = "0.*", features = ["json", "time"]}
 uuid = { version = "1.*", features = ["v7"] }
 walkdir = "2.*"
+zip = "2.*"
+
 
 
 [profile.release]

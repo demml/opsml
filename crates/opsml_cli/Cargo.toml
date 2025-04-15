@@ -20,8 +20,16 @@ opsml-utils = { workspace = true }
 anyhow = { workspace = true }
 base64 = { workspace = true }
 clap = { workspace = true }
+dirs = { workspace = true }
 pyo3 = { workspace = true }
+reqwest = { workspace = true }
 serde = { workspace = true }
 tabled = { workspace = true }
 tracing = { workspace = true }
+zip = { workspace = true }
 
+
+
+[target.'cfg(target_os = "linux")'.dependencies]
+flate2 = "1.*"
+tar = "*"
