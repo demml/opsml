@@ -349,3 +349,21 @@ registry.register_card(card)
 
 # This code will run as is
 ```
+
+### Us vs Others
+
+| Feature | OpsML | Others |
+|---------|:-------:|:--------:|
+| **Artifact-First Approach** | ✅ | ❌ |
+| **SemVer for All Artifacts** | ✅ | ❌ (rare) |
+| **Multi-Cloud Compatibility** | ✅ | ✅ |
+| **Multi-Database Support** | ✅ | ✅ |
+| **Authentication** | ✅ | ✅ |
+| **Encryption** | ✅ | ❌ (rare) |
+| **Artifact Lineage** | ✅ | ❌ (uncommon) |
+| **Out-of-the-Box Model Monitoring & Data Profiling** | ✅ | ❌ |
+| **Isolated Environments (No Staging/Prod Conflicts)** | ✅ | ❌ |
+| **Single Dependency** | ✅ | ❌ |
+| **Low-friction Integration Into Your Current Tech Stack** | ✅ | ❌ |
+| **Standardized Patterns and Workflows** | ✅ | ❌ |
+| **Open Source** | ✅ | ❌ (some) |
