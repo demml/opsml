@@ -1,5 +1,4 @@
-use crate::cli::arg::{DownloadCard, ListCards};
-
+use crate::cli::arg::{DownloadCard, KeyArgs, ListCards};
 use clap::command;
 use clap::Parser;
 use clap::Subcommand;
@@ -57,6 +56,15 @@ pub enum Commands {
         #[command(subcommand)]
         command: InstallCommands,
     },
+
+    /// Generate key
+    ///
+    /// # Example
+    /// opsml generate key
+    GenerateKey {
+        #[command(subcommand)]
+        command: GenerateCommands,
+    },
 }
 
 #[derive(Subcommand)]
@@ -86,6 +94,11 @@ pub enum ListCommands {
 #[derive(Subcommand)]
 pub enum InstallCommands {
     App,
+}
+
+#[derive(Subcommand)]
+pub enum GenerateCommands {
+    Key(KeyArgs),
 }
 
 pub const LOGO_TEXT: &str = "

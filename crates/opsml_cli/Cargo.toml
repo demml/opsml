@@ -18,6 +18,7 @@ opsml-types = { workspace = true }
 opsml-utils = { workspace = true }
 
 anyhow = { workspace = true }
+base64 = { workspace = true }
 clap = { workspace = true }
 pyo3 = { workspace = true }
 serde = { workspace = true }

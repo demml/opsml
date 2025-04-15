@@ -100,6 +100,9 @@ pub enum CliError {
 
     #[error("Failed to delete base path when downloading CardDeck artifacts {0}")]
     DeleteBasePathError(#[source] std::io::Error),
+
+    #[error("Failed to generate key")]
+    GenerateKeyError,
 }
 
 impl From<CliError> for PyErr {
