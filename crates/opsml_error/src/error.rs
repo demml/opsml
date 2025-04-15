@@ -246,6 +246,12 @@ pub enum UtilError {
 
     #[error("Failed to read to file")]
     ReadError,
+
+    #[error("Failed to create regex")]
+    RegexError,
+
+    #[error("Invalid space/name pattern")]
+    InvalidSpaceNamePattern,
 }
 
 impl From<UtilError> for PyErr {
