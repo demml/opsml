@@ -1,3 +1,4 @@
+use crate::core::error::OpsmlServerError;
 use crate::core::experiment::types::GroupedMetric;
 /// Route for checking if a card UID exists
 use crate::core::{error::internal_server_error, state::AppState};
@@ -24,7 +25,7 @@ use tracing::error;
 pub async fn insert_metrics(
     State(state): State<Arc<AppState>>,
     Json(req): Json<MetricRequest>,
-) -> Result<Json<MetricResponse>, (StatusCode, Json<serde_json::Value>)> {
+) -> Result<Json<MetricResponse>, (StatusCode, Json<OpsmlServerError>)> {
     let records = req
         .metrics
         .iter()
@@ -55,7 +56,7 @@ pub async fn get_metrics(
     State(state): State<Arc<AppState>>,
 
     Json(req): Json<GetMetricRequest>,
-) -> Result<Json<Vec<Metric>>, (StatusCode, Json<serde_json::Value>)> {
+) -> Result<Json<Vec<Metric>>, (StatusCode, Json<OpsmlServerError>)> {
     let metrics = state
         .sql_client
         .get_experiment_metric(&req.experiment_uid, &req.names)
@@ -84,7 +85,7 @@ pub async fn get_grouped_metrics(
     State(state): State<Arc<AppState>>,
 
     Json(req): Json<UiMetricRequest>,
-) -> Result<Json<HashMap<String, Vec<GroupedMetric>>>, (StatusCode, Json<serde_json::Value>)> {
+) -> Result<Json<HashMap<String, Vec<GroupedMetric>>>, (StatusCode, Json<OpsmlServerError>)> {
     let mut metric_data: HashMap<String, Vec<GroupedMetric>> = HashMap::new();
 
     for experiment in req.experiments {
@@ -142,7 +143,7 @@ pub async fn get_metric_names(
     State(state): State<Arc<AppState>>,
 
     Query(req): Query<GetMetricNamesRequest>,
-) -> Result<Json<Vec<String>>, (StatusCode, Json<serde_json::Value>)> {
+) -> Result<Json<Vec<String>>, (StatusCode, Json<OpsmlServerError>)> {
     let names = state
         .sql_client
         .get_experiment_metric_names(&req.experiment_uid)
@@ -159,7 +160,7 @@ pub async fn insert_parameters(
     State(state): State<Arc<AppState>>,
 
     Json(req): Json<ParameterRequest>,
-) -> Result<Json<ParameterResponse>, (StatusCode, Json<serde_json::Value>)> {
+) -> Result<Json<ParameterResponse>, (StatusCode, Json<OpsmlServerError>)> {
     let records = req
         .parameters
         .iter()
@@ -181,7 +182,7 @@ pub async fn insert_parameters(
 pub async fn get_parameter(
     State(state): State<Arc<AppState>>,
     Json(req): Json<GetParameterRequest>,
-) -> Result<Json<Vec<Parameter>>, (StatusCode, Json<serde_json::Value>)> {
+) -> Result<Json<Vec<Parameter>>, (StatusCode, Json<OpsmlServerError>)> {
     let params = state
         .sql_client
         .get_experiment_parameter(&req.experiment_uid, &req.names)
@@ -206,7 +207,7 @@ pub async fn get_parameter(
 pub async fn insert_hardware_metrics(
     State(state): State<Arc<AppState>>,
     Json(req): Json<HardwareMetricRequest>,
-) -> Result<Json<HardwareMetricResponse>, (StatusCode, Json<serde_json::Value>)> {
+) -> Result<Json<HardwareMetricResponse>, (StatusCode, Json<OpsmlServerError>)> {
     let created_at = get_utc_datetime();
 
     let record = HardwareMetricsRecord {
@@ -238,7 +239,7 @@ pub async fn insert_hardware_metrics(
 pub async fn get_hardware_metrics(
     State(state): State<Arc<AppState>>,
     Query(req): Query<GetHardwareMetricRequest>,
-) -> Result<Json<Vec<HardwareMetrics>>, (StatusCode, Json<serde_json::Value>)> {
+) -> Result<Json<Vec<HardwareMetrics>>, (StatusCode, Json<OpsmlServerError>)> {
     let metrics = state
         .sql_client
         .get_hardware_metric(&req.experiment_uid)
