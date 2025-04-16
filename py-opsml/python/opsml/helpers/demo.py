@@ -1,31 +1,25 @@
+import numpy as np
 from opsml import (
-    start_experiment,
-    PandasData,
-    SklearnModel,
-    Prompt,
+    Card,
+    CardDeck,
     DataCard,
     ModelCard,
     ModelCardMetadata,
+    PandasData,
+    Prompt,
     PromptCard,
-    CardDeck,
-    Card,
     RegistryType,
+    SklearnModel,
+    start_experiment,
 )
-from opsml.core import RustyLogger, LoggingConfig, LogLevel
-from opsml.scouter.drift import (
-    PsiDriftConfig,
-    CustomMetric,
-    CustomMetricDriftConfig,
-)
-import numpy as np
-from opsml.scouter.alert import AlertThreshold
-from opsml.data import DataType
+from opsml.core import LoggingConfig, LogLevel, RustyLogger
+from opsml.data import ColType, ColumnSplit, DataSplit, DataType
 from opsml.helpers.data import create_fake_data
 from opsml.model import TaskType
-from sklearn.preprocessing import StandardScaler  # type: ignore
+from opsml.scouter.alert import AlertThreshold
+from opsml.scouter.drift import CustomMetric, CustomMetricDriftConfig, PsiDriftConfig
 from sklearn import ensemble  # type: ignore
-from opsml.data import ColType, ColumnSplit, DataSplit
-
+from sklearn.preprocessing import StandardScaler  # type: ignore
 
 RustyLogger.setup_logging(LoggingConfig(log_level=LogLevel.Debug))
 X, y = create_fake_data(n_samples=1200)
@@ -49,9 +43,7 @@ def random_forest_classifier():
     model.create_drift_profile(X, PsiDriftConfig(), DataType.Pandas)
 
     # custom
-    metric = CustomMetric(
-        name="custom", value=0.5, alert_threshold=AlertThreshold.Above
-    )
+    metric = CustomMetric(name="custom", value=0.5, alert_threshold=AlertThreshold.Above)
     model.create_drift_profile([metric], CustomMetricDriftConfig())
 
     return model
@@ -102,7 +94,7 @@ def demo():
     SPACE = "space2"
     NAME = "name"
 
-    for i in range(0, 1):
+    for i in range(0, 5):
         with start_experiment(space=SPACE, name=NAME, log_hardware=True) as exp:
             datacard = DataCard(
                 interface=pandas_data(),

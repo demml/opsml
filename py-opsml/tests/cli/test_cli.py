@@ -3,11 +3,12 @@
 # In order to test the CLI, we expose some of the top-level functions in the opsml.cli module.
 ###################################################################################################
 
-from opsml.cli import lock_project, install_app, generate_key  # type: ignore
+from opsml.cli import lock_project, install_app, generate_key, run_demo  # type: ignore
 import os
 from pathlib import Path
 import shutil
 from opsml.test import OpsmlTestServer
+from opsml.test import OpsmlServerContext
 
 from opsml import (  # type: ignore
     start_experiment,
@@ -67,7 +68,7 @@ def test_pyproject_app_lock_project(
 
 
     """
-    with OpsmlTestServer(False, CURRENT_DIRECTORY):
+    with OpsmlTestServer(True, CURRENT_DIRECTORY):
         # run experiment to populate registry
         run_experiment(random_forest_classifier, chat_prompt)
 
@@ -148,3 +149,13 @@ def test_generate_key():
     rounds = 10
 
     generate_key(password=password, rounds=rounds)
+
+
+def test_run_demo():
+    """
+    This test is meant to test running the opsml cli demo script.
+    `opsml run demo`
+    """
+
+    with OpsmlServerContext():
+        run_demo()

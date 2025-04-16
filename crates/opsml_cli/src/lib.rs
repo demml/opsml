@@ -1,12 +1,12 @@
 pub mod actions;
 pub mod cli;
 
-use crate::actions::{download_card, list_cards, run_demo};
+use crate::actions::{download_card, list_cards};
 use crate::cli::{
     Cli, Commands, GenerateCommands, GetCommands, InstallCommands, ListCommands, RunCommands,
 };
 use actions::download::download_deck;
-pub use actions::{generate_key, lock::install_app};
+pub use actions::{generate_key, lock::install_app, run_demo};
 use anyhow::Context;
 use clap::Parser;
 use opsml_colors::Colorize;
