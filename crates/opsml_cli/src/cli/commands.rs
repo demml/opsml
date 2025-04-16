@@ -111,6 +111,12 @@ pub enum Commands {
         #[command(subcommand)]
         command: GenerateCommands,
     },
+
+    /// Run OpsML demo
+    Run {
+        #[command(subcommand)]
+        command: RunCommands,
+    },
 }
 
 #[derive(Subcommand)]
@@ -146,6 +152,12 @@ pub enum InstallCommands {
 #[derive(Subcommand)]
 pub enum GenerateCommands {
     Key(KeyArgs),
+}
+
+#[derive(Subcommand)]
+pub enum RunCommands {
+    /// Run OpsML demo
+    Demo,
 }
 
 pub const LOGO_TEXT: &str = "

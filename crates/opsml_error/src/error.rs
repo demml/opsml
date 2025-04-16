@@ -142,6 +142,9 @@ pub enum CliError {
 
     #[error("Failed to remove file")]
     RemoveFileError(#[source] std::io::Error),
+
+    #[error("Failed to run python script")]
+    PythonError,
 }
 
 impl From<CliError> for PyErr {

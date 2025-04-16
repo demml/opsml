@@ -1,8 +1,10 @@
 pub mod actions;
 pub mod cli;
 
-use crate::actions::{download_card, list_cards};
-use crate::cli::{Cli, Commands, GenerateCommands, GetCommands, InstallCommands, ListCommands};
+use crate::actions::{download_card, list_cards, run_demo};
+use crate::cli::{
+    Cli, Commands, GenerateCommands, GetCommands, InstallCommands, ListCommands, RunCommands,
+};
 use actions::download::download_deck;
 pub use actions::{generate_key, lock::install_app};
 use anyhow::Context;
@@ -84,6 +86,13 @@ pub fn run_cli(args: Vec<String>) -> anyhow::Result<()> {
         Some(Commands::Generate { command }) => match command {
             GenerateCommands::Key(args) => {
                 generate_key(&args.password, args.rounds).context("Failed to generate key")?;
+                Ok(())
+            }
+        },
+
+        Some(Commands::Run { command }) => match command {
+            RunCommands::Demo => {
+                run_demo().with_context(|| "Failed to run demo")?;
                 Ok(())
             }
         },
