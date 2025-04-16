@@ -1,4 +1,5 @@
 use crate::core::error::internal_server_error;
+use crate::core::error::OpsmlServerError;
 use anyhow::Result;
 use axum::{http::StatusCode, Json};
 use opsml_crypt::encrypt_file;
@@ -14,7 +15,7 @@ use tracing::error;
 pub fn find_drift_profile(
     files: &[String],
     drift_type: &str,
-) -> Result<String, (StatusCode, Json<serde_json::Value>)> {
+) -> Result<String, (StatusCode, Json<OpsmlServerError>)> {
     files
         .iter()
         .find(|f| f.as_str().contains(drift_type))
@@ -22,12 +23,9 @@ pub fn find_drift_profile(
         .and_then(|f| f.to_str())
         .map(String::from)
         .ok_or_else(|| {
-            error!("No matching drift profile found for type: {}", drift_type);
             (
                 StatusCode::NOT_FOUND,
-                Json(serde_json::json!({
-                    "error": format!("No drift profile found for type: {}", drift_type)
-                })),
+                Json(OpsmlServerError::no_drift_profile_found()),
             )
         })
 }
@@ -38,7 +36,7 @@ pub async fn save_encrypted_profile(
     encryption_key: &[u8],
     storage_client: &StorageClientEnum,
     storage_path: &Path,
-) -> Result<(), (StatusCode, Json<serde_json::Value>)> {
+) -> Result<(), (StatusCode, Json<OpsmlServerError>)> {
     let tempdir = tempfile::tempdir().map_err(|e| {
         error!("Failed to create tempdir: {}", e);
         internal_server_error(e, "Failed to create tempdir")
@@ -63,10 +61,9 @@ pub async fn save_encrypted_profile(
         .put(&temp_path, &new_storage_path, false)
         .await
         .map_err(|e| {
-            error!("Failed to save to storage: {}", e);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(serde_json::json!({"error": "Failed to save to storage"})),
+                Json(OpsmlServerError::failed_to_save_to_storage(e)),
             )
         })?;
 

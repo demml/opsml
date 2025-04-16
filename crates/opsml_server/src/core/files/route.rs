@@ -1,4 +1,5 @@
 use crate::core::error::internal_server_error;
+use crate::core::error::OpsmlServerError;
 use crate::core::files::utils::download_artifact;
 use crate::core::state::AppState;
 use axum::extract::DefaultBodyLimit;
@@ -51,7 +52,7 @@ pub async fn create_multipart_upload(
     Extension(perms): Extension<UserPermissions>,
     headers: HeaderMap,
     Query(params): Query<MultiPartQuery>,
-) -> Result<Json<MultiPartSession>, (StatusCode, Json<serde_json::Value>)> {
+) -> Result<Json<MultiPartSession>, (StatusCode, Json<OpsmlServerError>)> {
     // If auth is enabled, check permissions or other auth-related logic
     // get user for headers (as string)
 
@@ -63,7 +64,7 @@ pub async fn create_multipart_upload(
     let space_id = Path::new(&params.path).iter().next().ok_or_else(|| {
         (
             StatusCode::BAD_REQUEST,
-            Json(json!({ "error": "Invalid path" })),
+            Json(OpsmlServerError::invalid_path()),
         )
     })?;
 
@@ -71,7 +72,7 @@ pub async fn create_multipart_upload(
     if !perms.has_write_permission(space_id.to_str().unwrap()) {
         return Err((
             StatusCode::FORBIDDEN,
-            Json(json!({ "error": "Permission denied" })),
+            Json(OpsmlServerError::permission_denied()),
         ));
     }
 
@@ -123,13 +124,13 @@ pub async fn generate_presigned_url(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
     Query(params): Query<PresignedQuery>,
-) -> Result<Json<PresignedUrl>, (StatusCode, Json<serde_json::Value>)> {
+) -> Result<Json<PresignedUrl>, (StatusCode, Json<OpsmlServerError>)> {
     // check for read access
 
     if !perms.has_read_permission() {
         return Err((
             StatusCode::FORBIDDEN,
-            Json(json!({ "error": "Permission denied" })),
+            Json(OpsmlServerError::permission_denied()),
         ));
     }
 
@@ -144,7 +145,7 @@ pub async fn generate_presigned_url(
             .ok_or_else(|| {
                 (
                     StatusCode::BAD_REQUEST,
-                    Json(json!({ "error": "Missing session_uri" })),
+                    Json(OpsmlServerError::missing_session_uri()),
                 )
             })?
             .to_string();
@@ -152,7 +153,7 @@ pub async fn generate_presigned_url(
         let part_number = params.part_number.ok_or_else(|| {
             (
                 StatusCode::BAD_REQUEST,
-                Json(json!({ "error": "Missing part_number" })),
+                Json(OpsmlServerError::missing_part_number()),
             )
         })?;
 
@@ -196,13 +197,13 @@ pub async fn complete_multipart_upload(
     Extension(perms): Extension<UserPermissions>,
 
     Json(req): Json<CompleteMultipartUpload>,
-) -> Result<Json<UploadResponse>, (StatusCode, Json<serde_json::Value>)> {
+) -> Result<Json<UploadResponse>, (StatusCode, Json<OpsmlServerError>)> {
     // check for write access
 
     if !perms.has_write_permission("") {
         return Err((
             StatusCode::FORBIDDEN,
-            Json(json!({ "error": "Permission denied" })),
+            Json(OpsmlServerError::permission_denied()),
         ));
     }
 
@@ -227,26 +228,35 @@ pub async fn complete_multipart_upload(
 pub async fn upload_multipart(
     State(state): State<Arc<AppState>>,
     mut multipart: Multipart,
-) -> Result<Json<UploadResponse>, (StatusCode, Json<serde_json::Value>)> {
+) -> Result<Json<UploadResponse>, (StatusCode, Json<OpsmlServerError>)> {
     while let Some(field) = multipart.next_field().await.unwrap() {
         let file_name = field.file_name().unwrap().to_string();
-        let data = field.bytes().await.unwrap();
+        let data = field.bytes().await.map_err(|e| {
+            error!("Failed to read file: {}", e);
+            internal_server_error(e, "Failed to read file")
+        })?;
         let bucket = state.config.opsml_storage_uri.to_owned();
-
-        debug!("Filename: {}", file_name);
 
         // join the bucket and the file name
         let rpath = Path::new(&bucket).join(&file_name);
 
-        debug!("Rpath: {}", rpath.display());
-
         // create the directory if it doesn't exist
         if let Some(parent) = rpath.parent() {
-            tokio::fs::create_dir_all(parent).await.unwrap();
+            tokio::fs::create_dir_all(parent).await.map_err(|e| {
+                error!("Failed to create directory: {}", e);
+                internal_server_error(e, "Failed to create directory")
+            })?;
         }
 
-        let mut file = File::create(&rpath).await.unwrap();
-        file.write_all(&data).await.unwrap();
+        let mut file = File::create(&rpath).await.map_err(|e| {
+            error!("Failed to create file: {}", e);
+            internal_server_error(e, "Failed to create file")
+        })?;
+
+        file.write_all(&data).await.map_err(|e| {
+            error!("Failed to write file: {}", e);
+            internal_server_error(e, "Failed to write file")
+        })?;
     }
 
     Ok(Json(UploadResponse {
