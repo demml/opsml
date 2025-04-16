@@ -128,10 +128,7 @@ pub async fn generate_presigned_url(
     // check for read access
 
     if !perms.has_read_permission() {
-        return Err((
-            StatusCode::FORBIDDEN,
-            Json(OpsmlServerError::permission_denied()),
-        ));
+        return OpsmlServerError::permission_denied().to_error(StatusCode::FORBIDDEN);
     }
 
     let path = Path::new(&params.path);
@@ -201,10 +198,7 @@ pub async fn complete_multipart_upload(
     // check for write access
 
     if !perms.has_write_permission("") {
-        return Err((
-            StatusCode::FORBIDDEN,
-            Json(OpsmlServerError::permission_denied()),
-        ));
+        return OpsmlServerError::permission_denied().to_error(StatusCode::FORBIDDEN);
     }
 
     state
@@ -252,7 +246,6 @@ pub async fn upload_multipart(
             error!("Failed to create file: {}", e);
             internal_server_error(e, "Failed to create file")
         })?;
-
         file.write_all(&data).await.map_err(|e| {
             error!("Failed to write file: {}", e);
             internal_server_error(e, "Failed to write file")
@@ -268,7 +261,7 @@ pub async fn upload_multipart(
 pub async fn list_files(
     State(state): State<Arc<AppState>>,
     Query(params): Query<ListFileQuery>,
-) -> Result<Json<ListFileResponse>, (StatusCode, Json<serde_json::Value>)> {
+) -> Result<Json<ListFileResponse>, (StatusCode, Json<OpsmlServerError>)> {
     let path = Path::new(&params.path);
     info!("Listing files for: {}", path.display());
 
@@ -293,12 +286,9 @@ pub async fn list_file_info(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
     Query(params): Query<ListFileQuery>,
-) -> Result<Json<ListFileInfoResponse>, (StatusCode, Json<serde_json::Value>)> {
+) -> Result<Json<ListFileInfoResponse>, (StatusCode, Json<OpsmlServerError>)> {
     if !perms.has_read_permission() {
-        return Err((
-            StatusCode::FORBIDDEN,
-            Json(json!({ "error": "Permission denied" })),
-        ));
+        return OpsmlServerError::permission_denied().to_error(StatusCode::FORBIDDEN);
     }
 
     let path = Path::new(&params.path);
@@ -326,12 +316,9 @@ pub async fn file_tree(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
     Query(params): Query<ListFileQuery>,
-) -> Result<Json<FileTreeResponse>, (StatusCode, Json<serde_json::Value>)> {
+) -> Result<Json<FileTreeResponse>, (StatusCode, Json<OpsmlServerError>)> {
     if !perms.has_read_permission() {
-        return Err((
-            StatusCode::FORBIDDEN,
-            Json(json!({ "error": "Permission denied" })),
-        ));
+        return OpsmlServerError::permission_denied().to_error(StatusCode::FORBIDDEN);
     }
 
     let path = Path::new(&params.path);
@@ -407,13 +394,10 @@ pub async fn get_file_for_ui(
     Extension(perms): Extension<UserPermissions>,
 
     Json(req): Json<RawFileRequest>,
-) -> Result<Json<RawFile>, (StatusCode, Json<serde_json::Value>)> {
+) -> Result<Json<RawFile>, (StatusCode, Json<OpsmlServerError>)> {
     if !perms.has_read_permission() {
         error!("Permission denied");
-        return Err((
-            StatusCode::FORBIDDEN,
-            Json(json!({ "error": "Permission denied" })),
-        ));
+        return OpsmlServerError::permission_denied().to_error(StatusCode::FORBIDDEN);
     }
 
     let file_path = PathBuf::from(&req.path);
@@ -437,20 +421,14 @@ pub async fn get_file_for_ui(
         Some(file) => file,
         None => {
             error!("File not found");
-            return Err((
-                StatusCode::NOT_FOUND,
-                Json(json!({ "error": "File not found" })),
-            ));
+            return OpsmlServerError::no_files_found().to_error(StatusCode::NOT_FOUND);
         }
     };
 
     // check if size is less than 50 mb
     if file.size > 50_000_000 {
         error!("File size too large");
-        return Err((
-            StatusCode::BAD_REQUEST,
-            Json(json!({ "error": "File size too large" })),
-        ));
+        return OpsmlServerError::file_too_large().to_error(StatusCode::BAD_REQUEST);
     }
 
     let tmp_dir = tempdir().map_err(|e| {
@@ -503,22 +481,19 @@ pub async fn delete_file(
     Extension(perms): Extension<UserPermissions>,
 
     Query(params): Query<DeleteFileQuery>,
-) -> Result<Json<DeleteFileResponse>, (StatusCode, Json<serde_json::Value>)> {
+) -> Result<Json<DeleteFileResponse>, (StatusCode, Json<OpsmlServerError>)> {
     // check for delete access
 
     // check if user has permission to write to the repo
     let space_id = Path::new(&params.path).iter().next().ok_or_else(|| {
         (
             StatusCode::BAD_REQUEST,
-            Json(json!({ "error": "Invalid path" })),
+            Json(OpsmlServerError::invalid_path()),
         )
     })?;
 
     if !perms.has_delete_permission(space_id.to_str().unwrap()) {
-        return Err((
-            StatusCode::FORBIDDEN,
-            Json(json!({ "error": "Permission denied" })),
-        ));
+        return OpsmlServerError::permission_denied().to_error(StatusCode::FORBIDDEN);
     }
 
     let path = Path::new(&params.path);
@@ -542,10 +517,8 @@ pub async fn delete_file(
     match exists {
         Ok(exists) => {
             if exists {
-                Err((
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(json!({ "error": "Failed to delete file" })),
-                ))
+                OpsmlServerError::failed_to_delete_file()
+                    .to_error(StatusCode::INTERNAL_SERVER_ERROR)
             } else {
                 Ok(Json(DeleteFileResponse { deleted: true }))
             }
@@ -595,7 +568,7 @@ pub async fn download_file(
 pub async fn get_artifact_key(
     State(state): State<Arc<AppState>>,
     Query(req): Query<ArtifactKeyRequest>,
-) -> Result<Json<ArtifactKey>, (StatusCode, Json<serde_json::Value>)> {
+) -> Result<Json<ArtifactKey>, (StatusCode, Json<OpsmlServerError>)> {
     debug!("Getting artifact key for: {:?}", req);
     let key = state
         .sql_client

@@ -172,6 +172,13 @@ impl OpsmlServerError {
         }
     }
 
+    pub fn file_too_large() -> Self {
+        error!("File too large");
+        OpsmlServerError {
+            error: "File too large".to_string(),
+        }
+    }
+
     pub fn no_drift_profile_found() -> Self {
         error!("No drift profile found");
         OpsmlServerError {
@@ -205,6 +212,17 @@ impl OpsmlServerError {
         OpsmlServerError {
             error: "Missing part number".to_string(),
         }
+    }
+
+    pub fn failed_to_delete_file() -> Self {
+        error!("Failed to delete file");
+        OpsmlServerError {
+            error: "Failed to delete file".to_string(),
+        }
+    }
+
+    pub fn to_error<T>(self, code: StatusCode) -> Result<T, (StatusCode, Json<OpsmlServerError>)> {
+        Err((code, Json(self)))
     }
 }
 
