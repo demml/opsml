@@ -392,7 +392,6 @@ pub async fn file_tree(
 pub async fn get_file_for_ui(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
-
     Json(req): Json<RawFileRequest>,
 ) -> Result<Json<RawFile>, (StatusCode, Json<OpsmlServerError>)> {
     if !perms.has_read_permission() {
