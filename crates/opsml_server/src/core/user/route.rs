@@ -1,4 +1,4 @@
-use crate::core::error::internal_server_error;
+use crate::core::error::{internal_server_error, OpsmlServerError};
 use crate::core::scouter;
 use crate::core::state::AppState;
 use crate::core::user::schema::{
@@ -31,21 +31,15 @@ async fn create_user(
     Extension(perms): Extension<UserPermissions>,
 
     Json(create_req): Json<CreateUserRequest>,
-) -> Result<Json<UserResponse>, (StatusCode, Json<serde_json::Value>)> {
+) -> Result<Json<UserResponse>, (StatusCode, Json<OpsmlServerError>)> {
     // Check if requester has admin permissions
     if !perms.group_permissions.contains(&"admin".to_string()) {
-        return Err((
-            StatusCode::FORBIDDEN,
-            Json(serde_json::json!({"error": "Admin permissions required"})),
-        ));
+        return OpsmlServerError::need_admin_permission().to_error(StatusCode::FORBIDDEN);
     }
 
     // Check if user already exists
     if let Ok(Some(_)) = state.sql_client.get_user(&create_req.username).await {
-        return Err((
-            StatusCode::CONFLICT,
-            Json(serde_json::json!({"error": "User already exists"})),
-        ));
+        return OpsmlServerError::user_already_exists().to_error(StatusCode::CONFLICT);
     }
 
     // Hash the password
@@ -106,20 +100,20 @@ async fn get_user(
     Extension(perms): Extension<UserPermissions>,
 
     Path(username): Path<String>,
-) -> Result<Json<UserResponse>, (StatusCode, Json<serde_json::Value>)> {
+) -> Result<Json<UserResponse>, (StatusCode, Json<OpsmlServerError>)> {
     // Check permissions - user can only get their own data or admin can get any user
     let is_admin = perms.group_permissions.contains(&"admin".to_string());
     let is_self = perms.username == username;
 
     if !is_admin && !is_self {
-        return Err((
-            StatusCode::FORBIDDEN,
-            Json(serde_json::json!({"error": "Permission denied"})),
-        ));
+        return OpsmlServerError::permission_denied().to_error(StatusCode::FORBIDDEN);
     }
 
     // Get user from database
-    let user = get_user_from_db(&state.sql_client, &username).await?;
+    let user = match get_user_from_db(&state.sql_client, &username).await {
+        Ok(user) => user,
+        Err(e) => return Err(e),
+    };
 
     Ok(Json(UserResponse::from(user)))
 }
@@ -130,13 +124,10 @@ async fn get_user(
 async fn list_users(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
-) -> Result<Json<UserListResponse>, (StatusCode, Json<serde_json::Value>)> {
+) -> Result<Json<UserListResponse>, (StatusCode, Json<OpsmlServerError>)> {
     // Check if requester has admin permissions
     if !perms.group_permissions.contains(&"admin".to_string()) {
-        return Err((
-            StatusCode::FORBIDDEN,
-            Json(serde_json::json!({"error": "Admin permissions required"})),
-        ));
+        return OpsmlServerError::need_admin_permission().to_error(StatusCode::FORBIDDEN);
     }
 
     // Get users from database
@@ -162,16 +153,13 @@ async fn update_user(
     Path(username): Path<String>,
 
     Json(update_req): Json<UpdateUserRequest>,
-) -> Result<Json<UserResponse>, (StatusCode, Json<serde_json::Value>)> {
+) -> Result<Json<UserResponse>, (StatusCode, Json<OpsmlServerError>)> {
     // Check permissions - user can only update their own data or admin can update any user
     let is_admin = perms.group_permissions.contains(&"admin".to_string());
     let is_self = perms.username == username;
 
     if !is_admin && !is_self {
-        return Err((
-            StatusCode::FORBIDDEN,
-            Json(serde_json::json!({"error": "Permission denied"})),
-        ));
+        return OpsmlServerError::permission_denied().to_error(StatusCode::FORBIDDEN);
     }
 
     // Get the current user state
@@ -240,13 +228,10 @@ async fn delete_user(
     Extension(perms): Extension<UserPermissions>,
 
     Path(username): Path<String>,
-) -> Result<Json<serde_json::Value>, (StatusCode, Json<serde_json::Value>)> {
+) -> Result<Json<serde_json::Value>, (StatusCode, Json<OpsmlServerError>)> {
     // Check if requester has admin permissions
     if !perms.group_permissions.contains(&"admin".to_string()) {
-        return Err((
-            StatusCode::FORBIDDEN,
-            Json(serde_json::json!({"error": "Admin permissions required"})),
-        ));
+        return OpsmlServerError::need_admin_permission().to_error(StatusCode::FORBIDDEN);
     }
 
     // Prevent deleting the last admin user
@@ -262,10 +247,7 @@ async fn delete_user(
     };
 
     if is_last_admin {
-        return Err((
-            StatusCode::FORBIDDEN,
-            Json(serde_json::json!({"error": "Cannot delete the last admin user"})),
-        ));
+        return OpsmlServerError::cannot_delete_last_admin().to_error(StatusCode::FORBIDDEN);
     }
 
     // Delete in scouter first
