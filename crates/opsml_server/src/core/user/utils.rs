@@ -1,4 +1,4 @@
-use crate::core::error::internal_server_error;
+use crate::core::error::{internal_server_error, OpsmlServerError};
 use anyhow::Result;
 /// Route for debugging information
 use axum::{http::StatusCode, Json};
@@ -27,7 +27,7 @@ use tracing::error;
 pub async fn get_user(
     sql_client: &SqlClientEnum,
     username: &str,
-) -> Result<User, (StatusCode, Json<serde_json::Value>)> {
+) -> Result<User, (StatusCode, Json<OpsmlServerError>)> {
     sql_client
         .get_user(username)
         .await
@@ -39,7 +39,7 @@ pub async fn get_user(
             error!("User not found in database");
             (
                 StatusCode::NOT_FOUND,
-                Json(serde_json::json!({ "error": "User not found" })),
+                Json(OpsmlServerError::user_not_found()),
             )
         })
 }

@@ -32,50 +32,9 @@ impl OpsmlServerError {
         }
     }
 
-    pub fn create_user_error(e: String) -> Self {
-        error!("Failed to create user: {}", e);
-        OpsmlServerError {
-            error: "Failed to create user".to_string(),
-        }
-    }
-
     pub fn user_not_found() -> Self {
         OpsmlServerError {
             error: "User not found".to_string(),
-        }
-    }
-
-    pub fn get_user_error<T: Display>(e: T) -> Self {
-        error!("Failed to get user: {}", e);
-        OpsmlServerError {
-            error: "Failed to get user".to_string(),
-        }
-    }
-
-    pub fn list_users_error<T: Display>(e: T) -> Self {
-        error!("Failed to list users: {}", e);
-        OpsmlServerError {
-            error: "Failed to list users".to_string(),
-        }
-    }
-
-    pub fn update_user_error<T: Display>(e: T) -> Self {
-        error!("Failed to update user: {}", e);
-        OpsmlServerError {
-            error: "Failed to update user".to_string(),
-        }
-    }
-    pub fn delete_user_error<T: Display>(e: T) -> Self {
-        error!("Failed to delete user: {}", e);
-        OpsmlServerError {
-            error: "Failed to delete user".to_string(),
-        }
-    }
-
-    pub fn check_last_admin_error<T: Display>(e: T) -> Self {
-        error!("Failed to check admin status: {}", e);
-        OpsmlServerError {
-            error: "Failed to check admin status".to_string(),
         }
     }
 
@@ -119,13 +78,6 @@ impl OpsmlServerError {
         }
     }
 
-    pub fn failed_token_validation() -> Self {
-        error!("Failed to validate token");
-        OpsmlServerError {
-            error: "Failed to validate token".to_string(),
-        }
-    }
-
     pub fn failed_token_generation() -> Self {
         error!("Failed to generate token");
         OpsmlServerError {
@@ -154,24 +106,10 @@ impl OpsmlServerError {
         }
     }
 
-    pub fn unauthorized<T: Display>(e: T) -> Self {
-        error!("Unauthorized: {}", e);
-        OpsmlServerError {
-            error: "Unauthorized".to_string(),
-        }
-    }
-
     pub fn jwt_decode_error<T: Display>(e: T) -> Self {
         error!("Failed to decode JWT token: {}", e);
         OpsmlServerError {
             error: "Failed to decode JWT token".to_string(),
-        }
-    }
-
-    pub fn no_refresh_token() -> Self {
-        error!("No refresh token provided");
-        OpsmlServerError {
-            error: "No refresh token provided".to_string(),
         }
     }
 
