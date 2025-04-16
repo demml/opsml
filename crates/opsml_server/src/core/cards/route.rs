@@ -8,11 +8,10 @@ use crate::core::files::utils::{
 };
 use crate::core::state::AppState;
 use anyhow::{Context, Result};
-use axum::http::Response;
 use axum::{
     extract::{Query, State},
     http::StatusCode,
-    response::IntoResponse,
+    response::{IntoResponse, Response},
     routing::{delete, get, post},
     Extension, Json, Router,
 };
@@ -23,16 +22,16 @@ use opsml_sql::base::SqlClient;
 use opsml_sql::schemas::*;
 use opsml_types::{cards::*, contracts::*};
 use opsml_types::{SaveName, Suffix};
-use serde_json::json;
 use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::sync::Arc;
 use tempfile::tempdir;
 use tracing::{debug, error, instrument};
 /// Route for checking if a card UID exists
+#[axum::debug_handler]
 pub async fn check_card_uid(
     State(state): State<Arc<AppState>>,
     Query(params): Query<UidRequest>,
-) -> Result<Response, (StatusCode, Json<OpsmlServerError>)> {
+) -> Result<Json<UidResponse>, (StatusCode, Json<OpsmlServerError>)> {
     let table = CardTable::from_registry_type(&params.registry_type);
     let exists = state
         .sql_client
@@ -43,20 +42,7 @@ pub async fn check_card_uid(
             internal_server_error(e, "Failed to check if UID exists")
         })?;
 
-    let mut response = Json(UidResponse { exists }).into_response();
-
-    let audit_context = AuditContext {
-        resource_id: params.uid.clone(),
-        resource_type: ResourceType::Database,
-        metadata: params.get_metadata(),
-        registry_type: Some(params.registry_type.clone()),
-        operation: Operation::Check,
-        access_location: None,
-    };
-
-    response.extensions_mut().insert(audit_context);
-
-    Ok(response)
+    Ok(Json(UidResponse { exists }))
 }
 
 /// Get card spaces
@@ -149,10 +135,11 @@ pub async fn get_version_page(
     Ok(Json(VersionPageResponse { summaries }))
 }
 
+#[axum::debug_handler]
 pub async fn list_cards(
     State(state): State<Arc<AppState>>,
     Query(params): Query<CardQueryArgs>,
-) -> Result<Response<Json<Vec<CardRecord>>>, (StatusCode, Json<OpsmlServerError>)> {
+) -> Result<Response, (StatusCode, Json<OpsmlServerError>)> {
     debug!(
         "Listing cards for registry: {:?} with params: {:?}",
         &params.registry_type, &params
@@ -192,7 +179,7 @@ pub async fn list_cards(
     };
 
     // Create response and add audit context
-    let mut response = Response::new(json_response);
+    let mut response = json_response.into_response();
 
     let audit_context = AuditContext {
         resource_id: "list_cards".to_string(),
@@ -202,6 +189,7 @@ pub async fn list_cards(
         operation: Operation::List,
         access_location: None,
     };
+
     response.extensions_mut().insert(audit_context);
 
     Ok(response)
@@ -212,7 +200,7 @@ pub async fn create_card(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
     Json(card_request): Json<CreateCardRequest>,
-) -> Result<Response<Json<CreateCardResponse>>, (StatusCode, Json<OpsmlServerError>)> {
+) -> Result<Response, (StatusCode, Json<OpsmlServerError>)> {
     let table = CardTable::from_registry_type(&card_request.registry_type);
 
     if !perms.has_write_permission(&card_request.card.space()) {
@@ -267,7 +255,7 @@ pub async fn create_card(
 
     debug!("Card created successfully");
 
-    let repsonse = Json(CreateCardResponse {
+    let mut response = Json(CreateCardResponse {
         registered: true,
         space: card_request.card.space().to_string(),
         name: card_request.card.name().to_string(),
@@ -275,9 +263,8 @@ pub async fn create_card(
         app_env,
         created_at,
         key,
-    });
-
-    let mut response = Response::new(repsonse);
+    })
+    .into_response();
 
     let audit_context = AuditContext {
         resource_id: uid.clone(),
@@ -298,7 +285,7 @@ pub async fn create_card(
 pub async fn update_card(
     State(state): State<Arc<AppState>>,
     Json(card_request): Json<UpdateCardRequest>,
-) -> Result<Response<Json<UpdateCardResponse>>, (StatusCode, Json<OpsmlServerError>)> {
+) -> Result<Response, (StatusCode, Json<OpsmlServerError>)> {
     debug!(
         "Updating card: {}/{}/{} - registry: {:?}",
         &card_request.card.space(),
@@ -323,8 +310,7 @@ pub async fn update_card(
         })?;
 
     debug!("Card updated successfully");
-    let updated = Json(UpdateCardResponse { updated: true });
-    let mut response = Response::new(updated);
+    let mut response = Json(UpdateCardResponse { updated: true }).into_response();
 
     let audit_context = AuditContext {
         resource_id: card.uid().to_string(),
@@ -345,7 +331,7 @@ pub async fn delete_card(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
     Query(params): Query<DeleteCardRequest>,
-) -> Result<Response<Json<UidResponse>>, (StatusCode, Json<OpsmlServerError>)> {
+) -> Result<Response, (StatusCode, Json<OpsmlServerError>)> {
     debug!("Deleting card: {}", &params.uid);
 
     if !perms.has_delete_permission(&params.space) {
@@ -378,8 +364,7 @@ pub async fn delete_card(
             internal_server_error(e, "Failed to delete card")
         })?;
 
-    let response_body = Json(UidResponse { exists: false });
-    let mut response = Response::new(response_body);
+    let mut response = Json(UidResponse { exists: false }).into_response();
 
     let audit_context = AuditContext {
         resource_id: params.uid.clone(),
@@ -422,11 +407,7 @@ pub async fn get_card(
     Query(params): Query<CardQueryArgs>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<OpsmlServerError>)> {
     if !perms.has_read_permission() {
-        error!("Permission denied");
-        return Err((
-            StatusCode::FORBIDDEN,
-            Json(json!({ "error": "Permission denied" })),
-        ));
+        return OpsmlServerError::permission_denied().to_error(StatusCode::FORBIDDEN);
     }
 
     let table = CardTable::from_registry_type(&params.registry_type);
@@ -495,21 +476,14 @@ pub async fn get_readme(
     Query(params): Query<CardQueryArgs>,
 ) -> Result<Json<ReadeMe>, (StatusCode, Json<OpsmlServerError>)> {
     if !perms.has_read_permission() {
-        error!("Permission denied");
-        return Err((
-            StatusCode::FORBIDDEN,
-            Json(json!({ "error": "Permission denied" })),
-        ));
+        return OpsmlServerError::permission_denied().to_error(StatusCode::FORBIDDEN);
     }
 
     let table = CardTable::from_registry_type(&params.registry_type);
 
     // name and space are required
     if params.name.is_none() || params.space.is_none() {
-        return Err((
-            StatusCode::BAD_REQUEST,
-            Json(serde_json::json!({ "error": "Name and space are required" })),
-        ));
+        return OpsmlServerError::missing_space_and_name().to_error(StatusCode::BAD_REQUEST);
     }
 
     let name = params.name.as_ref().unwrap();
@@ -568,10 +542,7 @@ pub async fn create_readme(
     Json(req): Json<CreateReadeMe>,
 ) -> Result<Json<UploadResponse>, (StatusCode, Json<OpsmlServerError>)> {
     if !perms.has_write_permission(&req.space) {
-        return Err((
-            StatusCode::FORBIDDEN,
-            Json(json!({ "error": "Permission denied" })),
-        ));
+        return OpsmlServerError::permission_denied().to_error(StatusCode::FORBIDDEN);
     }
 
     let table = CardTable::from_registry_type(&req.registry_type);

@@ -221,6 +221,13 @@ impl OpsmlServerError {
         }
     }
 
+    pub fn missing_space_and_name() -> Self {
+        error!("Missing space and name");
+        OpsmlServerError {
+            error: "Missing space and name".to_string(),
+        }
+    }
+
     pub fn to_error<T>(self, code: StatusCode) -> Result<T, (StatusCode, Json<OpsmlServerError>)> {
         Err((code, Json(self)))
     }
