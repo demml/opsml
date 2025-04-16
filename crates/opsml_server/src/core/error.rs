@@ -126,6 +126,13 @@ impl OpsmlServerError {
         }
     }
 
+    pub fn failed_token_generation() -> Self {
+        error!("Failed to generate token");
+        OpsmlServerError {
+            error: "Failed to generate token".to_string(),
+        }
+    }
+
     pub fn bearer_token_not_found() -> Self {
         error!("Bearer token not found");
         OpsmlServerError {
@@ -140,6 +147,13 @@ impl OpsmlServerError {
         }
     }
 
+    pub fn refresh_token_not_found() -> Self {
+        error!("Refresh token not found");
+        OpsmlServerError {
+            error: "Refresh token not found".to_string(),
+        }
+    }
+
     pub fn unauthorized<T: Display>(e: T) -> Self {
         error!("Unauthorized: {}", e);
         OpsmlServerError {
@@ -147,7 +161,7 @@ impl OpsmlServerError {
         }
     }
 
-    pub fn jwt_decode_error(e: String) -> Self {
+    pub fn jwt_decode_error<T: Display>(e: T) -> Self {
         error!("Failed to decode JWT token: {}", e);
         OpsmlServerError {
             error: "Failed to decode JWT token".to_string(),
@@ -225,6 +239,13 @@ impl OpsmlServerError {
         error!("Missing space and name");
         OpsmlServerError {
             error: "Missing space and name".to_string(),
+        }
+    }
+
+    pub fn invalid_token() -> Self {
+        error!("Invalid token");
+        OpsmlServerError {
+            error: "Invalid token".to_string(),
         }
     }
 
