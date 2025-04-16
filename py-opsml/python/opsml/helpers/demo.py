@@ -1,3 +1,4 @@
+# type: ignore
 import numpy as np
 from opsml import (
     Card,
@@ -91,15 +92,15 @@ def demo():
     """
     This is a demo function that runs an experiment and registers a model, prompt, and data card.
     """
-    SPACE = "space2"
-    NAME = "name"
+    space = "space2"
+    name = "name"
 
     for i in range(0, 5):
-        with start_experiment(space=SPACE, name=NAME, log_hardware=True) as exp:
+        with start_experiment(space=space, name=name, log_hardware=True) as exp:
             datacard = DataCard(
                 interface=pandas_data(),
-                space=f"{SPACE}_{i}",
-                name=f"{NAME}_{i}",
+                space=f"{space}_{i}",
+                name=f"{name}_{i}",
                 tags=["foo:bar", "baz:qux"],
             )
             exp.register_card(datacard)
@@ -108,8 +109,8 @@ def demo():
 
             modelcard = ModelCard(
                 interface=random_forest_classifier(),
-                space=f"{SPACE}_{i}",
-                name=f"{NAME}_{i}",
+                space=f"{space}_{i}",
+                name=f"{name}_{i}",
                 to_onnx=True,
                 tags=["foo:bar", "baz:qux"],
                 metadata=ModelCardMetadata(
@@ -122,8 +123,8 @@ def demo():
 
             prompt_card = PromptCard(
                 prompt=chat_prompt(),
-                space=f"{SPACE}_{i}",
-                name=f"{NAME}_{i}",
+                space=f"{space}_{i}",
+                name=f"{name}_{i}",
             )
             exp.register_card(prompt_card)
 
