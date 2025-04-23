@@ -30,6 +30,9 @@ export enum RoutePaths {
   EXPERIMENT_PARAMETERS = "/opsml/api/experiment/parameters",
   HARDWARE_METRICS = "/opsml/api/experiment/hardware/metrics",
 
+  // Genai
+  PROVIDER_KEY = "/opsml/api/genai/provider/key",
+
   // everything below is old and may be removed
 
   REGISTER = "/opsml/auth/register",
