@@ -28,19 +28,19 @@ Version 3.0.0 is under active development and will be released soon. In the mean
 
 Quality control in the context of `OpsML` refers to:
 
-### 🎯 Developer-First Experience
+### Developer-First Experience
 - **Zero-friction Integration** - Drop into existing ML workflows in minutes
 - **Type-safe by Design** - Rust in the back, python in the front<sup>*</sup>. Catch errors before they hit production
 - **Unified API** - One consistent interface for all ML frameworks
 - **Environment Parity** - Same experience from laptop to production
 - **Dependency Overhead** - One dependency for all ML artifact management
 
-### 🏗️ Built to Scale
+### Built to Scale
 - **Trading Cards for ML** - Manage ML artifacts like trading cards - collect, organize, share
 - **Cloud-Ready** - Native support for AWS, GCP, Azure
 - **Modular Design** - Use what you need, leave what you don't
 
-### 💪 Production Ready
+### Production Ready
 - **High-Performance Server** - Built in Rust for speed, reliability and concurrency
 - **Built-in Security** - Authentication and encryption out of the box
 - **Audit-Ready** - Complete artifact lineage and versioning
