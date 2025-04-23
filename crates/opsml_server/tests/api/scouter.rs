@@ -140,6 +140,7 @@ async fn test_scouter_routes_spc_drift_features() {
         time_interval: TimeInterval::OneHour,
         max_data_points: 100,
         drift_type: DriftType::Spc,
+        ..Default::default()
     };
 
     let query_string = serde_qs::to_string(&drift_request).unwrap();
@@ -164,6 +165,7 @@ async fn test_scouter_routes_psi_drift_features() {
         time_interval: TimeInterval::OneHour,
         max_data_points: 100,
         drift_type: DriftType::Psi,
+        ..Default::default()
     };
 
     let query_string = serde_qs::to_string(&drift_request).unwrap();
@@ -188,6 +190,7 @@ async fn test_scouter_routes_custom_drift_features() {
         time_interval: TimeInterval::OneHour,
         max_data_points: 100,
         drift_type: DriftType::Psi,
+        ..Default::default()
     };
 
     let query_string = serde_qs::to_string(&drift_request).unwrap();
