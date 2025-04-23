@@ -2,19 +2,9 @@
   import { onMount } from "svelte";
   import logo from "$lib/images/opsml_word.webp";
   import { page } from "$app/state";
-  import LogoutModal from "$lib/components/auth/LogoutModal.svelte";
   import { goto } from "$app/navigation";
-  import { browser } from '$app/environment';
-  import { Popover } from '@skeletonlabs/skeleton-svelte';
   import IconX from 'lucide-svelte/icons/x';
   import { KeySquare, Github } from 'lucide-svelte';
-  import { RoutePaths } from "../api/routes";
-
-
-
-  let popupState = $state(false);
-  let popupMessage = $state('');
-  let loaded = $state(false);
 
 
   let isSidebarOpen = $state(false);
@@ -28,26 +18,15 @@
     goto(path);
   }
 
-
-  function popoverClose() {
-    popupState = false;
-  }
-
   
   function logInHandle() {
     const currentPage = page.url.pathname;
     goto('/opsml/auth/login?url=' + currentPage);
   }
 
-  
-  function navigateToPath(name: string) {
-    let path = `/opsml/${name}`;
-    goto(path);
-  }
-
   let imageLoaded = $state(false);
 
-  const names = ["Models", "Data", "Prompts", "Experiments"];
+  const names = ["Models", "Data", "Prompt", "Experiments"];
 
 
   onMount(() => {
