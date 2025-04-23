@@ -2,12 +2,116 @@ use crate::error::PotatoHeadError;
 use crate::prompt::sanitize::{PromptSanitizer, SanitizationConfig};
 use crate::prompt::types::Message;
 use opsml_types::SaveName;
-use opsml_utils::PyHelperFuncs;
+use opsml_utils::{json_to_pyobject, pyobject_to_json, PyHelperFuncs};
 use pyo3::prelude::*;
-use pyo3::types::{PyList, PyString, PyTuple};
+use pyo3::types::{PyDict, PyList, PyString, PyTuple};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use std::collections::HashMap;
+use std::hash::Hash;
 use std::path::PathBuf;
+
+#[pyclass]
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct ModelSettings {
+    #[pyo3(get, set)]
+    pub model: String,
+
+    #[pyo3(get, set)]
+    pub provider: String,
+
+    #[pyo3(get, set)]
+    pub max_tokens: Option<usize>,
+
+    #[pyo3(get, set)]
+    pub temperature: Option<f32>,
+
+    #[pyo3(get, set)]
+    pub top_p: Option<f32>,
+
+    #[pyo3(get, set)]
+    pub frequency_penalty: Option<f32>,
+
+    #[pyo3(get, set)]
+    pub presence_penalty: Option<f32>,
+
+    #[pyo3(get, set)]
+    pub timeout: f32,
+
+    #[pyo3(get, set)]
+    pub parallel_tool_calls: Option<bool>,
+
+    #[pyo3(get, set)]
+    pub seed: Option<u64>,
+
+    #[pyo3(get, set)]
+    pub logit_bias: Option<HashMap<String, i32>>,
+
+    #[pyo3(get, set)]
+    pub stop_sequences: Option<Vec<String>>,
+
+    pub extra_body: Option<Value>,
+}
+
+#[pymethods]
+impl ModelSettings {
+    #[new]
+    #[pyo3(signature = (model, provider, max_tokens=None, temperature=None, top_p=None, frequency_penalty=None, presence_penalty=None, timeout=0.0, parallel_tool_calls=None, seed=None, logit_bias=None, stop_sequences=None, extra_body=None))]
+    pub fn new(
+        model: &str,
+        provider: &str,
+        max_tokens: Option<usize>,
+        temperature: Option<f32>,
+        top_p: Option<f32>,
+        frequency_penalty: Option<f32>,
+        presence_penalty: Option<f32>,
+        timeout: f32,
+        parallel_tool_calls: Option<bool>,
+        seed: Option<u64>,
+        logit_bias: Option<HashMap<String, i32>>,
+        stop_sequences: Option<Vec<String>>,
+        extra_body: Option<&Bound<'_, PyAny>>,
+    ) -> PyResult<Self> {
+        // check if extra body is not none.
+        // if not none, conver to py any and attempt pyobject_to_json
+        let extra_body = if let Some(extra_body) = extra_body {
+            Some(pyobject_to_json(extra_body).map_err(|e| {
+                PotatoHeadError::new_err(format!("Failed to convert extra body: {}", e))
+            })?)
+        } else {
+            None
+        };
+
+        Ok(Self {
+            model: model.to_string(),
+            provider: provider.to_string(),
+            max_tokens,
+            temperature,
+            top_p,
+            frequency_penalty,
+            presence_penalty,
+            timeout,
+            parallel_tool_calls,
+            seed,
+            logit_bias,
+            stop_sequences,
+            extra_body,
+        })
+    }
+
+    #[getter]
+    pub fn extra_body<'py>(&self, py: Python<'py>) -> PyResult<Option<Bound<'py, PyDict>>> {
+        // error if extra body is None
+        self.extra_body
+            .as_ref()
+            .map(|v| {
+                let pydict = PyDict::new(py);
+                json_to_pyobject(py, v, &pydict)
+            })
+            .transpose()
+            .map_err(|e| PotatoHeadError::new_err(format!("Failed to get extra body: {}", e)))
+    }
+}
 
 #[pyclass]
 #[derive(Debug, Serialize, Deserialize, Clone)]
