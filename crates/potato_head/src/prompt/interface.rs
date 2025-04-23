@@ -116,9 +116,6 @@ impl ModelSettings {
 #[pyclass]
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Prompt {
-    #[pyo3(get, set)]
-    pub model: String,
-
     #[pyo3(get)]
     pub prompt: Vec<Message>,
 
@@ -132,6 +129,8 @@ pub struct Prompt {
     pub sanitizer: Option<PromptSanitizer>,
 
     pub version: String,
+
+    pub model_settings: ModelSettings,
 }
 
 fn parse_prompt(prompt: &Bound<'_, PyAny>) -> PyResult<Vec<Message>> {
@@ -172,12 +171,14 @@ fn parse_prompt(prompt: &Bound<'_, PyAny>) -> PyResult<Vec<Message>> {
 #[pymethods]
 impl Prompt {
     #[new]
-    #[pyo3(signature = (model, prompt, system_prompt=None, sanitization_config=None))]
+    #[pyo3(signature = (model, provider, prompt, system_prompt=None, sanitization_config=None, model_settings=None))]
     pub fn new(
         model: &str,
+        provider: &str,
         prompt: &Bound<'_, PyAny>,
         system_prompt: Option<&Bound<'_, PyAny>>,
         sanitization_config: Option<SanitizationConfig>,
+        model_settings: Option<ModelSettings>,
     ) -> PyResult<Self> {
         // extract messages
 
@@ -197,14 +198,65 @@ impl Prompt {
             .as_ref()
             .map(|config| PromptSanitizer::new(config.clone()));
 
+        let model_settings = match model_settings {
+            Some(settings) => settings,
+            None => ModelSettings::new(
+                model, provider, None, None, None, None, None, 0.0, None, None, None, None, None,
+            )?,
+        };
+
         Ok(Self {
-            model: model.to_string(),
             prompt: prompt.clone(),
             sanitization_config,
             sanitizer,
             version,
             system_prompt,
+            model_settings,
         })
+    }
+
+    #[getter]
+    pub fn model_settings<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyDict>> {
+        // iterate over each field in model_settings and add to the dict if it is not None
+        let pydict = PyDict::new(py);
+
+        pydict.set_item("model", &self.model_settings.model)?;
+        pydict.set_item("provider", &self.model_settings.provider)?;
+
+        if let Some(max_tokens) = self.model_settings.max_tokens {
+            pydict.set_item("max_tokens", max_tokens)?;
+        }
+        if let Some(temperature) = self.model_settings.temperature {
+            pydict.set_item("temperature", temperature)?;
+        }
+        if let Some(top_p) = self.model_settings.top_p {
+            pydict.set_item("top_p", top_p)?;
+        }
+        if let Some(frequency_penalty) = self.model_settings.frequency_penalty {
+            pydict.set_item("frequency_penalty", frequency_penalty)?;
+        }
+        if let Some(presence_penalty) = self.model_settings.presence_penalty {
+            pydict.set_item("presence_penalty", presence_penalty)?;
+        }
+        if let Some(parallel_tool_calls) = self.model_settings.parallel_tool_calls {
+            pydict.set_item("parallel_tool_calls", parallel_tool_calls)?;
+        }
+        if let Some(seed) = self.model_settings.seed {
+            pydict.set_item("seed", seed)?;
+        }
+        if let Some(logit_bias) = &self.model_settings.logit_bias {
+            pydict.set_item("logit_bias", logit_bias)?;
+        }
+        if let Some(stop_sequences) = &self.model_settings.stop_sequences {
+            pydict.set_item("stop_sequences", stop_sequences)?;
+        }
+        let extra = self.model_settings.extra_body(py)?;
+
+        if let Some(extra) = extra {
+            pydict.set_item("extra_body", extra)?;
+        }
+
+        Ok(pydict)
     }
 
     #[pyo3(signature = (path = None))]
