@@ -170,11 +170,11 @@ fn parse_prompt(prompt: &Bound<'_, PyAny>) -> PyResult<Vec<Message>> {
 #[pymethods]
 impl Prompt {
     #[new]
-    #[pyo3(signature = (model, provider, prompt, system_prompt=None, sanitization_config=None, model_settings=None))]
+    #[pyo3(signature = (prompt, model=None, provider=None, system_prompt=None, sanitization_config=None, model_settings=None))]
     pub fn new(
+        prompt: &Bound<'_, PyAny>,
         model: Option<&str>,
         provider: Option<&str>,
-        prompt: &Bound<'_, PyAny>,
         system_prompt: Option<&Bound<'_, PyAny>>,
         sanitization_config: Option<SanitizationConfig>,
         model_settings: Option<ModelSettings>,
