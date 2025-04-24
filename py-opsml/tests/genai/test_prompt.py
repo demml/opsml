@@ -3,6 +3,7 @@ from pydantic_ai import (
     BinaryContent as PydanticBinaryContent,
     DocumentUrl as PydanticDocumentUrl,
 )
+from pydantic_ai.settings import ModelSettings as PydanticModelSettings
 from opsml.potato_head import (
     Prompt,
     ImageUrl,
@@ -124,6 +125,15 @@ def test_model_settings_prompt():
         top_p=0.9,
         frequency_penalty=0.0,
         presence_penalty=0.0,
+        extra_body={"key": "value"},
     )
 
-    Prompt(model_settings=settings)
+    prompt = Prompt(
+        prompt=[
+            "My prompt $1 is $2",
+            "My prompt $3 is $4",
+        ],
+        model_settings=settings,
+    )
+
+    settings = PydanticModelSettings(**prompt.model_settings)
