@@ -11,7 +11,7 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 
 #[pyclass]
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct ModelSettings {
     #[pyo3(get, set)]
     pub model: String,
@@ -172,8 +172,8 @@ impl Prompt {
     #[new]
     #[pyo3(signature = (model, provider, prompt, system_prompt=None, sanitization_config=None, model_settings=None))]
     pub fn new(
-        model: &str,
-        provider: &str,
+        model: Option<&str>,
+        provider: Option<&str>,
         prompt: &Bound<'_, PyAny>,
         system_prompt: Option<&Bound<'_, PyAny>>,
         sanitization_config: Option<SanitizationConfig>,
@@ -197,11 +197,20 @@ impl Prompt {
             .as_ref()
             .map(|config| PromptSanitizer::new(config.clone()));
 
+        // either model and provider or model_settings must be provided
+        if (model.is_none() || provider.is_none()) && model_settings.is_none() {
+            return Err(PotatoHeadError::new_err(
+                "Either model and provider or model_settings must be provided".to_string(),
+            ));
+        }
+
         let model_settings = match model_settings {
             Some(settings) => settings,
-            None => ModelSettings::new(
-                model, provider, None, None, None, None, None, None, None, None, None, None, None,
-            )?,
+            None => ModelSettings {
+                model: model.unwrap().to_string(),
+                provider: provider.unwrap().to_string(),
+                ..Default::default()
+            },
         };
 
         Ok(Self {

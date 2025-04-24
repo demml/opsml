@@ -3,14 +3,22 @@ from pydantic_ai import (
     BinaryContent as PydanticBinaryContent,
     DocumentUrl as PydanticDocumentUrl,
 )
-from opsml.potato_head import Prompt, ImageUrl, BinaryContent, Message, DocumentUrl
+from opsml.potato_head import (
+    Prompt,
+    ImageUrl,
+    BinaryContent,
+    Message,
+    DocumentUrl,
+    ModelSettings,
+)
 import httpx
 
 
 def test_string_prompt():
     # test string prompt
     prompt = Prompt(
-        model="openai:gpt-4o",
+        model="gpt-4o",
+        provider="openai",
         prompt="My prompt $1 is $2",
         system_prompt="system_prompt",
     )
@@ -19,7 +27,8 @@ def test_string_prompt():
 
     # test string message
     prompt = Prompt(
-        model="openai:gpt-4o",
+        model="gpt-4o",
+        provider="openai",
         prompt=Message(content="My prompt $1 is $2"),
         system_prompt="system_prompt",
     )
@@ -28,7 +37,8 @@ def test_string_prompt():
 
     # test list of string messages
     prompt = Prompt(
-        model="openai:gpt-4o",
+        model="gpt-4o",
+        provider="openai",
         prompt=[
             Message(content="My prompt $1 is $2"),
             Message(content="My prompt $3 is $4"),
@@ -41,7 +51,8 @@ def test_string_prompt():
 
     # test list of strings
     prompt = Prompt(
-        model="openai:gpt-4o",
+        model="gpt-4o",
+        provider="openai",
         prompt=[
             "My prompt $1 is $2",
             "My prompt $3 is $4",
@@ -55,7 +66,8 @@ def test_string_prompt():
 
 def test_image_prompt():
     prompt = Prompt(
-        model="openai:gpt-4o",
+        model="gpt-4o",
+        provider="openai",
         prompt=[
             "What company is this logo from?",
             ImageUrl(url="https://iili.io/3Hs4FMg.png"),
@@ -73,7 +85,8 @@ def test_binary_prompt():
     image_response = httpx.get("https://iili.io/3Hs4FMg.png")
 
     prompt = Prompt(
-        model="openai:gpt-4o",
+        model="gpt-4o",
+        provider="openai",
         prompt=[
             "What company is this logo from?",
             BinaryContent(data=image_response.content, media_type="image/png"),
@@ -87,7 +100,8 @@ def test_binary_prompt():
 
 def test_document_prompt():
     prompt = Prompt(
-        model="openai:gpt-4o",
+        model="gpt-4o",
+        provider="openai",
         prompt=[
             "What is the main content of this document?",
             DocumentUrl(
@@ -99,3 +113,17 @@ def test_document_prompt():
 
     assert prompt.prompt[0].unwrap() == "What is the main content of this document?"
     assert isinstance(prompt.prompt[1].unwrap(), PydanticDocumentUrl)
+
+
+def test_model_settings_prompt():
+    settings = ModelSettings(
+        model="gpt-4o",
+        provider="openai",
+        temperature=0.5,
+        max_tokens=100,
+        top_p=0.9,
+        frequency_penalty=0.0,
+        presence_penalty=0.0,
+    )
+
+    Prompt(model_settings=settings)
