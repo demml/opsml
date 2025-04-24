@@ -8,7 +8,6 @@ use pyo3::types::{PyDict, PyList, PyString, PyTuple};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
-use std::hash::Hash;
 use std::path::PathBuf;
 
 #[pyclass]
@@ -36,7 +35,7 @@ pub struct ModelSettings {
     pub presence_penalty: Option<f32>,
 
     #[pyo3(get, set)]
-    pub timeout: f32,
+    pub timeout: Option<f32>,
 
     #[pyo3(get, set)]
     pub parallel_tool_calls: Option<bool>,
@@ -65,7 +64,7 @@ impl ModelSettings {
         top_p: Option<f32>,
         frequency_penalty: Option<f32>,
         presence_penalty: Option<f32>,
-        timeout: f32,
+        timeout: Option<f32>,
         parallel_tool_calls: Option<bool>,
         seed: Option<u64>,
         logit_bias: Option<HashMap<String, i32>>,
@@ -201,7 +200,7 @@ impl Prompt {
         let model_settings = match model_settings {
             Some(settings) => settings,
             None => ModelSettings::new(
-                model, provider, None, None, None, None, None, 0.0, None, None, None, None, None,
+                model, provider, None, None, None, None, None, None, None, None, None, None, None,
             )?,
         };
 
