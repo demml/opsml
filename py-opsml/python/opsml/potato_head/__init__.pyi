@@ -435,12 +435,12 @@ class ModelSettings:
 class Prompt:
     def __init__(
         self,
-        model: str,
-        provider: str,
         prompt: str
         | Sequence[str | ImageUrl | AudioUrl | BinaryContent | DocumentUrl]
         | Message
         | List[Message],
+        model: Optional[str] = None,
+        provider: Optional[str] = None,
         system_prompt: Optional[str | List[str]] = None,
         sanitization_config: Optional[SanitizationConfig] = None,
         model_settings: Optional[ModelSettings] = None,
@@ -448,12 +448,12 @@ class Prompt:
         """Prompt for interacting with an LLM API.
 
         Args:
-            model (str):
-                The model to use for the prompt.
-            provider (str):
-                The provider to use for the prompt.
             prompt (str | Sequence[str | ImageUrl | AudioUrl | BinaryContent | DocumentUrl] | Message | List[Message]):
-                The prompt to use in the prompt.
+                The prompt to use.
+            model (str | None):
+                The model to use for the prompt. Required if model_settings is not provided.
+            provider (str | None):
+                The provider to use for the prompt. Required if model_settings is not provided.
             system_prompt (Optional[str, Sequence[str]]):
                 The system prompt to use in the prompt.
             sanitization_config (None):
