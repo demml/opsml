@@ -1,6 +1,6 @@
 use ::potato_head::{
-    AudioUrl, BinaryContent, DocumentUrl, ImageUrl, Message, PIIConfig, Prompt, PromptSanitizer,
-    RiskLevel, SanitizationConfig, SanitizedResult,
+    AudioUrl, BinaryContent, DocumentUrl, ImageUrl, Message, ModelSettings, PIIConfig, Prompt,
+    PromptSanitizer, RiskLevel, SanitizationConfig, SanitizedResult,
 };
 
 use pyo3::prelude::*;
@@ -18,5 +18,6 @@ pub fn potato_head(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<SanitizationConfig>()?;
     m.add_class::<PromptSanitizer>()?;
     m.add_class::<SanitizedResult>()?;
+    m.add_class::<ModelSettings>()?;
     Ok(())
 }
