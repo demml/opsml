@@ -224,6 +224,18 @@ impl Prompt {
     }
 
     #[getter]
+    pub fn model(&self) -> &str {
+        // error if model is None
+        &self.model_settings.model
+    }
+
+    #[getter]
+    pub fn provider(&self) -> &str {
+        // error if model is None
+        &self.model_settings.provider
+    }
+
+    #[getter]
     pub fn model_settings<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyDict>> {
         // iterate over each field in model_settings and add to the dict if it is not None
         let pydict = PyDict::new(py);
