@@ -3874,6 +3874,7 @@ name = "opsml-cards"
 version = "0.1.0"
 dependencies = [
  "chrono",
+ "opsml-colors",
  "opsml-crypt",
  "opsml-error",
  "opsml-interfaces",
