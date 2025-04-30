@@ -3,16 +3,16 @@ name: Publish-Github-Pages
 on:
   push:
     branches:
-      - later
+      - main
+      - docs
+  release:
+    types: [published]
 
 permissions:
   contents: write
 jobs:
   PublishDocs:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        poetry-version: ["1.7.1"]
 
     steps:
       - uses: actions/checkout@v4
@@ -20,11 +20,17 @@ jobs:
       - name: Set up uv
         run: curl -LsSf https://astral.sh/uv/install.sh | sh
 
-      - name: Set up Python
-        run: uv python install 3.11
+      - name: set up python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
 
-      - name: Install dependencies
-        run: make setup.install
+      - name: Create CNAME record
+        working-directory: ./py-opsml
+        run: echo ${{ secrets.DEMML_DOCS_DOMAIN }} > docs/CNAME
 
       - name: Publish Docs
-        run: make publish.docs
+        working-directory: ./py-opsml
+        run: |
+          make setup.project
+          make publish.docs
