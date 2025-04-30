@@ -1,6 +1,6 @@
 site_name: OpsML
-site_url: https://demml.github.io/opsml/
-
+site_dir: site/opsml
+site_url: https://docs.demml.io/opsml/
 theme:
   name: material
   logo: docs/images/favicon.ico
