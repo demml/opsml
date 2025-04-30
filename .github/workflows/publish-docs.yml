@@ -10,8 +10,11 @@ on:
 
 permissions:
   contents: write
+  pages: write
+  id-token: write
+
 jobs:
-  PublishDocs:
+  BuildDocs:
     runs-on: ubuntu-latest
 
     steps:
@@ -25,88 +28,29 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: "Set docs version"
-        run: |
-
-          # Use version as display name for now
-          version="latest"
-          display_name="$version"
-
-          echo "version=$version" >> $GITHUB_ENV
-          echo "display_name=$display_name" >> $GITHUB_ENV
-
-      - name: "Set branch name"
-        run: |
-          version="${{ env.version }}"
-          display_name="${{ env.display_name }}"
-          timestamp="$(date +%s)"
-
-          # create branch_display_name from display_name by replacing all
-          # characters disallowed in git branch names with hyphens
-          branch_display_name="$(echo "$display_name" | tr -c '[:alnum:]._' '-' | tr -s '-')"
-
-          echo "branch_name=update-docs-$branch_display_name-$timestamp" >> $GITHUB_ENV
-          echo "timestamp=$timestamp" >> $GITHUB_ENV
-
-      - name: Build DOcs
+      - name: Build Docs
         working-directory: ./py-opsml
         run: |
           make setup.docs
-          make build.docs
+          make publish.docs
 
-      - name: "Clone docs repo"
-        run: |
-          version="${{ env.version }}"
-          git clone https://${{ secrets.DEMML_DOCS_PAT }}@github.com/demml/docs.git demml-docs
-
-      - name: "Copy docs"
-        run: rm -rf demml-docs/site/opsml && mkdir -p demml-docs/site && cp -r site/opsml demml-docs/site/
-
-      - name: "Commit docs"
-        working-directory: demml-docs
-        run: |
-          branch_name="${{ env.branch_name }}"
-
-          git config --global user.name "${{ github.actor }}"
-          git config --global user.email "${{ github.actor }}@users.noreply.github.com"
-
-          git checkout -b $branch_name
-          git add site/uv
-          git commit -m "Update uv documentation for $version"
-
-      - name: "Create Pull Request"
-        working-directory: demml-docs
-        env:
-          GITHUB_TOKEN: ${{ secrets.DEMML_DOCS_PAT }}
-        run: |
-          version="${{ env.version }}"
-          display_name="${{ env.display_name }}"
-          branch_name="${{ env.branch_name }}"
-
-          # set the PR title
-          pull_request_title="Update opsml documentation for $display_name"
-
-          # Delete any existing pull requests that are open for this version
-          gh pr list --state open --json title --jq '.[] | select(.title == "$pull_request_title") | .number' | \
-            xargs -I {} gh pr close {}
-
-          # push the branch to GitHub
-          git push origin $branch_name
-
-          # create the PR
-          gh pr create --base main --head $branch_name \
-            --title "$pull_request_title" \
-            --body "Automated documentation update for $display_name" \
-            --label "documentation"
-
-      - name: "Merge Pull Request"
-        working-directory: demml-docs
-        env:
-          GITHUB_TOKEN: ${{ secrets.DEMML_DOCS_PAT }}
-        run: |
-          branch_name="${{ env.branch_name }}"
-
-          # auto-merge the PR if the build was triggered by a release. Manual builds should be reviewed by a human.
-          # give the PR a few seconds to be created before trying to auto-merge it
-          sleep 10
-          gh pr merge --squash $branch_name
+  DeployDocs:
+    needs: BuildDocs
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: "."
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
