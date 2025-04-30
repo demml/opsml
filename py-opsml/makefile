@@ -72,3 +72,6 @@ uv.sub.pre.tag:
 	@sed -i "s/$(VER)/$(REL_CANDIDATE)/" pyproject.toml
 
 prep.pre.patch: uv.pre.patch uv.sub.pre.tag
+
+publish.docs:
+	uv run mkdocs gh-deploy --force
