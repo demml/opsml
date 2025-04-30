@@ -73,5 +73,13 @@ uv.sub.pre.tag:
 
 prep.pre.patch: uv.pre.patch uv.sub.pre.tag
 
+
+setup.docs:
+	uv sync --all-extras --group docs
+	uv run maturin develop --features server
+
+build.docs:
+	uv run mkdocs build
+
 publish.docs:
 	uv run mkdocs gh-deploy --force
