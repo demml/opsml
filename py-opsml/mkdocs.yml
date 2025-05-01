@@ -129,31 +129,14 @@ markdown_extensions:
   - pymdownx.emoji:
       emoji_index: !!python/name:material.extensions.emoji.twemoji
       emoji_generator: !!python/name:material.extensions.emoji.to_svg
-        #- pymdownx.superfences:
-        #    custom_fences:
-        #      - name: python
-        #        class: python
-        #        format: !!python/name:pymdownx.superfences.fence_code_format
-        #- pymdownx.emoji:
-        #    emoji_index: !!python/name:material.extensions.emoji.twemoji
-        #    emoji_generator: !!python/name:material.extensions.emoji.to_svg
-
 
 plugins:
   - search
-  - mkdocstrings:
-      handlers:
-        python:
-          options:
-            search_in_source_dirs: true
 
 extra_css:
   - docs/css/custom.css
   - docs/stylesheets/extra.css
   - docs/css/termynal.css
-extra_javascript:
-  - docs/js/termynal.js
-  - docs/js/custom.js
 
 extra:
   version:
