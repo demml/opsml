@@ -158,7 +158,7 @@ impl ModelInterfaceMetadata {
     #[new]
     #[pyo3(signature = (
         save_metadata,
-        task_type=TaskType::Other,
+        task_type=TaskType::Undefined,
         model_type=ModelType::Unknown,
         data_type=DataType::NotProvided,
         schema=FeatureSchema::default(),
@@ -242,15 +242,13 @@ pub struct ModelInterface {
 impl ModelInterface {
     #[new]
     #[allow(clippy::too_many_arguments)]
-    #[pyo3(signature = (model=None, sample_data=None, task_type=None, schema=None,drift_profile=None, **_kwargs))]
+    #[pyo3(signature = (model=None, sample_data=None, task_type=None, drift_profile=None))]
     pub fn new<'py>(
         py: Python,
         model: Option<&Bound<'py, PyAny>>,
         sample_data: Option<&Bound<'py, PyAny>>,
         task_type: Option<TaskType>,
-        schema: Option<FeatureSchema>,
         drift_profile: Option<&Bound<'py, PyAny>>,
-        _kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Self> {
         // Extract the sample data
         let sample_data = match sample_data {
@@ -261,9 +259,6 @@ impl ModelInterface {
             }),
             None => SampleData::default(),
         };
-
-        // Extract the schema if it exists
-        let schema = schema.unwrap_or_default();
 
         // Determing model_type
         let model_type = if let Some(model) = model {
@@ -305,8 +300,8 @@ impl ModelInterface {
         Ok(ModelInterface {
             model,
             data_type: sample_data.get_data_type(),
-            task_type: task_type.unwrap_or(TaskType::Other),
-            schema,
+            task_type: task_type.unwrap_or(TaskType::Undefined),
+            schema: FeatureSchema::default(),
             sample_data,
             model_type,
             interface_type: ModelInterfaceType::Base,

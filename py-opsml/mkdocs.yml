@@ -45,6 +45,7 @@ theme:
     - navigation.tracking
     - search.suggest
     - toc.follow
+
   font:
     text: Roboto
     code: Roboto Mono
@@ -52,11 +53,21 @@ theme:
 repo_name: opsml
 repo_url: https://github.com/demml/opsml
 nav:
-  - Overview: "docs/index.md"
-  - Quality Control: "docs/quality_control.md"
-  - Installation: "docs/installation.md"
-  - Setup: "docs/setup.md"
-  - Contributing: "docs/contributing.md"
+  - Overview: "index.md"
+  - Quality Control: "quality_control.md"
+  - Installation: "installation.md"
+  - Setup: "setup.md"
+  - Contributing: "contributing.md"
+  - Tech Specs:
+      - Overview: "docs/specs/Readme.md"
+      - Components:
+          - Auditing: "docs/specs/ts-component-auditing.md"
+          - Card Deck: "docs/specs/ts-component-carddeck.md"
+          - EventBus: "docs/specs/ts-component-eventbus.md"
+          - Experiment: "docs/specs/ts-component-experiment.md"
+      - Features:
+          - Builds: "docs/specs/ts-feature-builds.md"
+          - Async Registry: "docs/specs/ts-feature-opsml-registry-hardware-async.md"
   #- Quickstart: "quickstart.md"
   #- Reference: "reference.md"
   #- Interfaces:

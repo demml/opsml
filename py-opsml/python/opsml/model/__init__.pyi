@@ -373,7 +373,6 @@ class ModelInterface:
         model: None | Any = None,
         sample_data: None | Any = None,
         task_type: None | TaskType = None,
-        schema: None | FeatureSchema = None,
         drift_profile: (
             None
             | List[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile]
@@ -383,15 +382,12 @@ class ModelInterface:
         """Base class for ModelInterface
 
         Args:
-            data:
-                Data. Can be a pyarrow table, pandas dataframe, polars dataframe
-                or numpy array
+            model:
+                Model to associate with interface.
             sample_data:
                 Sample data to use to make predictions
             task_type:
                 The type of task the model performs
-            schema:
-                Feature schema for model features
             drift_profile:
                 Drift profile to use. Can be a list of SpcDriftProfile, PsiDriftProfile or CustomDriftProfile
         """

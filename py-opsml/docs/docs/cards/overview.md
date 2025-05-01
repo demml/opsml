@@ -1,44 +1,42 @@
 Cards are one of the primary data structures of opsml. All cards store specific information depending on their type and are serialized and stored in a registry and backend storage system
 
-```mermaid
-flowchart TD
-    DS(["fa:fa-user-group" DS])
-    DS --> ModelInterface(["ModelInterface"])
-    DS --> DataInterface(["DataInterface"])
-    DS --> ExperimentCard(["ExperimentCard"])
-    DS --> PromptCard(["PromptCard"])
-    DataInterface(["DataInterface"]) --> DataCard(["DataCard"])
-    ModelInterface(["ModelInterface"]) --> ModelCard(["ModelCard"])
-    ModelCard(["ModelCard"]) --> ModelRegistry(["ModelRegistry"])
-    DataCard(["DataCard"]) --> DataRegistry(["DataRegistry"])
-    ExperimentCard(["ExperimentCard"]) --> ExperimentRegistry(["ExperimentRegistry"])
-    PromptCard(["PromptCard"]) --> PromptRegistry(["PromptRegistry"])
-
-
-
-    %% Apply consistent styling to all nodes
-    classDef default fill:#5e0fb7,stroke:black,stroke-width:2px,color:white,font-weight:bolder,border-radius:10px
-    class DS,ModelInterface,DataInterface,ExperimentCard,PromptCard,DataCard,ModelCard,ModelRegistry,DataRegistry,ExperimentRegistry,PromptRegistry default
-```
-
-
 ## Card Types
 
-- **DataCard**: Card used to store data-related information. DataCards require an interface and currently support (pandas)[], (numpy)[], (arrow)[], (polars)[], (numpy)[], (torch)[], (sql)[] and (custom)[] interfaces.
-- **ModelCard**: Card used to store model-related information. ModelCards require an interface and currently support (huggingface)[], (lightgbm)[], (lightning)[], (sklearn)[], (tensorflow)[], (torch)[], (xgboost)[], (catboost)[] and (custom)[] interfaces.
-- **ExperimentCard**: Card used to store experiment-related information (metrics, parameters, cards, hardware metrics). ExperimentCards are typically used in as a context manager via `with start_experiment()`.
-- **PromptCard**: Card used to store prompt-related information for GenAI workflows.
+<span class="text-secondary">**DataCard**</span>: 
+
+  - Stores data-related information
+  - Requires a `DataInterface` 
+  - Registered in the `DataRegistry`
+  
+<span class="text-secondary">**ModelCard**</span>:  
+
+  - Stores model-related information
+  - Requires a `ModelInterface` 
+  - Registered in the `ModelRegistry`
+
+
+<span class="text-secondary">**ExperimentCard**</span>: 
+
+  - Stores experiment-related information (metrics, parameters, cards, hardware metrics)
+  - Typically accessed through a context manager `with start_experiment()`
+  - Registered in the `ExperimentRegistry`
+  
+<span class="text-secondary">**PromptCard**</span>: 
+
+  - Stores prompt/genai-related information
+  - Requires a `Prompt` 
+  - Registered in the `PromptRegistry`
 
 ### Card Arguments
 
-All cards require set of arguments in order to be registered. This is to ensure the card is properly assigned ownership and can be tracked. The arguments are:
+All cards require a set of arguments in order to be registered. This is to ensure the card is properly assigned ownership and can be tracked. The arguments are:
 
 - **space**: The space associated with the card. This is typically the name of the organization or team that owns the card.
 - **name**: The name of the card. This is typically a short, descriptive name that identifies the card.
   
 ### Naming
 
-All cards follow a standardized naming conventions of `{space}/{name}/v{version"}`. This is to ensure that cards are easily 
+All cards follow a standardized naming conventions of `{space}/{name}/v{version"}`. This is to ensure that cards are easily tracked and managed.
 
 !!!note
     These arguments can also be be supplied through a pyproject.toml tool configuration. See the [tools](../tools.md) section for more information.
@@ -95,7 +93,7 @@ You can list cards in a registry using the `list_cards` method. This will return
 
 
 Returns a list of cards. 
-: Required Args:
+: Arguments:
   
     - space: space associated with card *(Optional)*
     - name: Name of card *(Optional)*
@@ -147,10 +145,9 @@ Returns a list of cards.
 Register a card to a registry 
 : Required Args:
   
-    - card: Card to register
-    - version_type: Type of version increment. Must be of type `VersionType` (VersionType.Major, VersionType.Minor, VersionType.Patch, VersionType.PreRelease, VersionType.Build)
-    - registry_name: Name of registry to register to *(Optional)*
-    - save_path: Specific path to save to in root opsml folder if default are not preferred *(Optional)*
+    - **card**: Card to register
+    - **version_type**: Type of version increment (Optional). Must be of type `VersionType` (VersionType.Major, VersionType.Minor, VersionType.Patch, VersionType.PreRelease, VersionType.Build). Defaults to `VersionType.Minor`
+
 
 
 Example:
@@ -178,7 +175,7 @@ print(model_card.version)
 
 ### Loading Cards
 Load an Artifact card from a registry. 
-: Required Args:
+: Arguments:
 
     - space: space associated with card *(Optional)*
     - name: Name of card *(Optional)*
@@ -241,4 +238,10 @@ model_registry = CardRegistry("model")
 
 model_registry.delete_card(card)
 ```
+
+#### For detailed information on each card type, see the following sections:
+- [DataCard](./datacard.md)
+- [ModelCard](./modelcard.md)
+- [ExperimentCard](./experimentcard.md)
+- [PromptCard](./promptcard.md)
 
