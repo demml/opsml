@@ -6,6 +6,153 @@ use thiserror::Error;
 use tracing::error;
 
 #[derive(Error, Debug)]
+pub enum PyProjectTomlError {
+    #[error("Failed to find absolute path")]
+    AbsolutePathError(#[source] std::io::Error),
+
+    // Borrowed from UV
+    #[error("No file name {0} in current directory or any parent directory")]
+    MissingPyprojectToml(String),
+
+    #[error("Failed to read `pyproject.toml`")]
+    ReadError(#[source] std::io::Error),
+
+    #[error("Failed to parse `pyproject.toml`")]
+    ParseError(#[from] toml_edit::TomlError),
+
+    #[error("Failed to get current directory")]
+    CurrentDirError(#[source] std::io::Error),
+
+    #[error("Failed to deserialize `pyproject.toml`")]
+    TomlSchema(#[source] toml_edit::de::Error),
+
+    #[error("Failed to deserialize `opsml.lock`")]
+    LockFileSchema(#[source] toml_edit::de::Error),
+
+    #[error("Failed to write opsml.lock file")]
+    FailedToLockFile(#[source] std::io::Error),
+
+    #[error("Failed to read opsml.lock file")]
+    FailedToReadLockFile(#[source] std::io::Error),
+
+    #[error("Failed to parse opsml.lock file")]
+    FailedToParseLockFile(#[source] toml_edit::TomlError),
+}
+
+#[derive(Error, Debug)]
+pub enum EventError {
+    #[error("{0}")]
+    Error(String),
+}
+
+#[derive(Error, Debug)]
+pub enum CliError {
+    #[error("{0}")]
+    Error(String),
+
+    #[error(transparent)]
+    UtilError(#[from] UtilError),
+
+    #[error(transparent)]
+    RegistryError(#[from] RegistryError),
+
+    #[error(transparent)]
+    TypeError(#[from] TypeError),
+
+    #[error(transparent)]
+    CryptError(#[from] CryptError),
+
+    #[error(transparent)]
+    PyProjectTomlError(#[from] PyProjectTomlError),
+
+    #[error("Registry type not found")]
+    MissingRegistryType,
+
+    #[error("CardRecord not found in response")]
+    MissingCardRecord,
+
+    #[error("Registry type {0} not supported")]
+    RegistryTypeNotSupported(String),
+
+    #[error("Cards were not provided as part of the toml app config")]
+    MissingDeckCards,
+
+    #[error("CardDeck missing card UIDs")]
+    MissingCardDeckUids,
+
+    #[error("Failed to create card deck")]
+    CreateDeckError(#[from] CardError),
+
+    #[error("Failed to get current directory")]
+    CurrentDirectoryError(#[source] std::io::Error),
+
+    #[error("No tools found in pyproject.toml. An tool config must be present")]
+    MissingTools,
+
+    #[error("No apps found in pyproject.toml. An app config must be present")]
+    MissingApp,
+
+    #[error("Registry type {0} is not supported for apps")]
+    UnsupportedRegistryType(String),
+
+    #[error("Failed to get write path")]
+    WritePathError,
+
+    #[error("Failed to delete base path when downloading CardDeck artifacts {0}")]
+    DeleteBasePathError(#[source] std::io::Error),
+
+    #[error("Failed to generate key")]
+    GenerateKeyError,
+
+    #[error("Unsupported platform - os: {0}, arch: {1}")]
+    UnsupportedPlatform(String, String),
+
+    #[error("Failed to get home directory")]
+    HomeDirError,
+
+    #[error("Failed to get create cache directory")]
+    CreateCacheDirError(#[source] std::io::Error),
+
+    #[error("Failed to extract archive - {0}")]
+    ArchiveExtractionError(String),
+
+    #[error("Failed to download binary - {0}")]
+    DownloadBinaryError(String),
+
+    #[error("Failed to write binary - {0}")]
+    WriteBinaryError(String),
+
+    #[error("Failed to open archive - {0}")]
+    ArchiveOpenError(String),
+
+    #[error("Binary not found")]
+    BinaryNotFound,
+
+    #[error("Failed to remove archive - {0}")]
+    RemoveArchiveError(String),
+
+    #[error("{0}")]
+    BinaryExecutionError(String),
+
+    #[error("Failed to rename binary")]
+    RenameBinaryError(#[source] std::io::Error),
+
+    #[error("Failed to read file")]
+    ReadError(#[source] std::io::Error),
+
+    #[error("Failed to remove file")]
+    RemoveFileError(#[source] std::io::Error),
+}
+
+impl From<CliError> for PyErr {
+    fn from(err: CliError) -> PyErr {
+        let msg = err.to_string();
+        error!("{}", msg);
+        OpsmlError::new_err(err.to_string())
+    }
+}
+
+#[derive(Error, Debug)]
 pub enum SettingsError {
     #[error("Settings Error: {0}")]
     Error(String),
@@ -32,6 +179,9 @@ pub enum StorageError {
 
     #[error("Unauthorized: {0}")]
     PermissionDenied(String),
+
+    #[error(transparent)]
+    StateError(#[from] StateError),
 }
 
 impl From<StorageError> for PyErr {
@@ -96,6 +246,12 @@ pub enum UtilError {
 
     #[error("Failed to read to file")]
     ReadError,
+
+    #[error("Failed to create regex")]
+    RegexError,
+
+    #[error("Invalid space/name pattern")]
+    InvalidSpaceNamePattern,
 }
 
 impl From<UtilError> for PyErr {
@@ -106,7 +262,7 @@ impl From<UtilError> for PyErr {
     }
 }
 
-#[derive(Error, Debug, Deserialize, Serialize)]
+#[derive(Error, Debug)]
 pub enum TypeError {
     #[error("{0}")]
     Error(String),
@@ -137,6 +293,9 @@ pub enum TypeError {
 
     #[error(transparent)]
     UtilError(#[from] UtilError),
+
+    #[error(transparent)]
+    StateError(#[from] StateError),
 }
 
 impl From<TypeError> for PyErr {
@@ -161,7 +320,7 @@ impl From<LoggingError> for PyErr {
     }
 }
 
-#[derive(Error, Debug, Serialize, Deserialize)]
+#[derive(Error, Debug)]
 pub enum ServerError {
     #[error("Failed to delete file: {0}")]
     DeleteError(String),
@@ -182,7 +341,7 @@ pub enum ServerError {
     Error(String),
 }
 
-#[derive(Error, Debug, Serialize, Deserialize)]
+#[derive(Error, Debug)]
 pub enum SqlError {
     #[error("Failed to run sql migrations: {0}")]
     MigrationError(String),
@@ -273,6 +432,12 @@ pub enum RegistryError {
 
     #[error(transparent)]
     TypeError(#[from] TypeError),
+
+    #[error(transparent)]
+    StateError(#[from] StateError),
+
+    #[error("Failed to get registry record")]
+    FailedToGetRegistryRecordError,
 }
 
 impl From<RegistryError> for PyErr {
@@ -302,6 +467,9 @@ pub enum CardError {
 
     #[error(transparent)]
     CryptError(#[from] CryptError),
+
+    #[error("Failed to get attribute {0}. Has this card been registered?")]
+    MissingAttribute(String),
 }
 
 impl From<CardError> for PyErr {
@@ -454,6 +622,29 @@ impl From<std::io::Error> for CryptError {
 impl From<PyErr> for CryptError {
     fn from(err: PyErr) -> Self {
         CryptError::Error(err.to_string())
+    }
+}
+
+#[derive(Error, Debug)]
+pub enum StateError {
+    #[error("{0}")]
+    Error(String),
+
+    #[error("Failed to read config")]
+    ReadConfigError(#[source] std::io::Error),
+}
+
+impl From<StateError> for PyErr {
+    fn from(err: StateError) -> PyErr {
+        let msg = err.to_string();
+        error!("{}", msg);
+        OpsmlError::new_err(err.to_string())
+    }
+}
+
+impl From<PyErr> for StateError {
+    fn from(err: PyErr) -> Self {
+        StateError::Error(err.to_string())
     }
 }
 

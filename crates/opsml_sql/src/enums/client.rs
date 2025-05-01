@@ -5,12 +5,14 @@ use crate::schemas::schema::{
     CardResults, CardSummary, HardwareMetricsRecord, MetricRecord, ParameterRecord, QueryStats,
     ServerCard, User,
 };
+use crate::schemas::VersionSummary;
 use crate::sqlite::client::SqliteClient;
 use anyhow::Context;
 use anyhow::Result as AnyhowResult;
 use async_trait::async_trait;
 use opsml_error::error::SqlError;
 use opsml_settings::config::DatabaseSettings;
+use opsml_types::contracts::AuditEvent;
 use opsml_types::{
     SqlType,
     {
@@ -97,11 +99,12 @@ impl SqlClient for SqlClientEnum {
         &self,
         table: &CardTable,
         search_term: Option<&str>,
+        space: Option<&str>,
     ) -> Result<QueryStats, SqlError> {
         match self {
-            SqlClientEnum::Postgres(client) => client.query_stats(table, search_term).await,
-            SqlClientEnum::Sqlite(client) => client.query_stats(table, search_term).await,
-            SqlClientEnum::MySql(client) => client.query_stats(table, search_term).await,
+            SqlClientEnum::Postgres(client) => client.query_stats(table, search_term, space).await,
+            SqlClientEnum::Sqlite(client) => client.query_stats(table, search_term, space).await,
+            SqlClientEnum::MySql(client) => client.query_stats(table, search_term, space).await,
         }
     }
 
@@ -110,25 +113,39 @@ impl SqlClient for SqlClientEnum {
         sort_by: &str,
         page: i32,
         search_term: Option<&str>,
-        repository: Option<&str>,
+        space: Option<&str>,
         table: &CardTable,
     ) -> Result<Vec<CardSummary>, SqlError> {
         match self {
             SqlClientEnum::Postgres(client) => {
                 client
-                    .query_page(sort_by, page, search_term, repository, table)
+                    .query_page(sort_by, page, search_term, space, table)
                     .await
             }
             SqlClientEnum::Sqlite(client) => {
                 client
-                    .query_page(sort_by, page, search_term, repository, table)
+                    .query_page(sort_by, page, search_term, space, table)
                     .await
             }
             SqlClientEnum::MySql(client) => {
                 client
-                    .query_page(sort_by, page, search_term, repository, table)
+                    .query_page(sort_by, page, search_term, space, table)
                     .await
             }
+        }
+    }
+
+    async fn version_page(
+        &self,
+        page: i32,
+        space: Option<&str>,
+        name: Option<&str>,
+        table: &CardTable,
+    ) -> Result<Vec<VersionSummary>, SqlError> {
+        match self {
+            SqlClientEnum::Postgres(client) => client.version_page(page, space, name, table).await,
+            SqlClientEnum::Sqlite(client) => client.version_page(page, space, name, table).await,
+            SqlClientEnum::MySql(client) => client.version_page(page, space, name, table).await,
         }
     }
 
@@ -159,34 +176,27 @@ impl SqlClient for SqlClientEnum {
         }
     }
 
-    async fn get_unique_repository_names(
-        &self,
-        table: &CardTable,
-    ) -> Result<Vec<String>, SqlError> {
+    async fn get_unique_space_names(&self, table: &CardTable) -> Result<Vec<String>, SqlError> {
         match self {
-            SqlClientEnum::Postgres(client) => client.get_unique_repository_names(table).await,
-            SqlClientEnum::Sqlite(client) => client.get_unique_repository_names(table).await,
-            SqlClientEnum::MySql(client) => client.get_unique_repository_names(table).await,
+            SqlClientEnum::Postgres(client) => client.get_unique_space_names(table).await,
+            SqlClientEnum::Sqlite(client) => client.get_unique_space_names(table).await,
+            SqlClientEnum::MySql(client) => client.get_unique_space_names(table).await,
         }
     }
 
     async fn get_versions(
         &self,
         table: &CardTable,
-        repository: &str,
+        space: &str,
         name: &str,
         version: Option<String>,
     ) -> Result<Vec<String>, SqlError> {
         match self {
             SqlClientEnum::Postgres(client) => {
-                client.get_versions(table, repository, name, version).await
+                client.get_versions(table, space, name, version).await
             }
-            SqlClientEnum::Sqlite(client) => {
-                client.get_versions(table, repository, name, version).await
-            }
-            SqlClientEnum::MySql(client) => {
-                client.get_versions(table, repository, name, version).await
-            }
+            SqlClientEnum::Sqlite(client) => client.get_versions(table, space, name, version).await,
+            SqlClientEnum::MySql(client) => client.get_versions(table, space, name, version).await,
         }
     }
 
@@ -372,28 +382,11 @@ impl SqlClient for SqlClientEnum {
         }
     }
 
-    async fn insert_operation(
-        &self,
-        username: &str,
-        access_type: &str,
-        access_location: &str,
-    ) -> Result<(), SqlError> {
+    async fn insert_audit_event(&self, event: AuditEvent) -> Result<(), SqlError> {
         match self {
-            SqlClientEnum::Postgres(client) => {
-                client
-                    .insert_operation(username, access_type, access_location)
-                    .await
-            }
-            SqlClientEnum::Sqlite(client) => {
-                client
-                    .insert_operation(username, access_type, access_location)
-                    .await
-            }
-            SqlClientEnum::MySql(client) => {
-                client
-                    .insert_operation(username, access_type, access_location)
-                    .await
-            }
+            SqlClientEnum::Postgres(client) => client.insert_audit_event(event).await,
+            SqlClientEnum::Sqlite(client) => client.insert_audit_event(event).await,
+            SqlClientEnum::MySql(client) => client.insert_audit_event(event).await,
         }
     }
 
@@ -572,10 +565,10 @@ mod tests {
 
         assert!(!exists);
 
-        // try name and repository
+        // try name and space
         let card_args = CardQueryArgs {
             name: Some("Data1".to_string()),
-            repository: Some("repo1".to_string()),
+            space: Some("repo1".to_string()),
             ..Default::default()
         };
 
@@ -588,10 +581,10 @@ mod tests {
 
         assert_eq!(results.len(), 10);
 
-        // try name and repository
+        // try name and space
         let card_args = CardQueryArgs {
             name: Some("Model1".to_string()),
-            repository: Some("repo1".to_string()),
+            space: Some("repo1".to_string()),
             version: Some("~1.0.0".to_string()),
             ..Default::default()
         };
@@ -915,9 +908,9 @@ mod tests {
     async fn test_enum_unique_repos() {
         let client = get_client().await;
 
-        // get unique repository names
+        // get unique space names
         let repos = client
-            .get_unique_repository_names(&CardTable::Model)
+            .get_unique_space_names(&CardTable::Model)
             .await
             .unwrap();
 
@@ -930,15 +923,18 @@ mod tests {
     async fn test_enum_query_stats() {
         let client = get_client().await;
         // query stats
-        let stats = client.query_stats(&CardTable::Model, None).await.unwrap();
+        let stats = client
+            .query_stats(&CardTable::Model, None, None)
+            .await
+            .unwrap();
 
         assert_eq!(stats.nbr_names, 10);
         assert_eq!(stats.nbr_versions, 10);
-        assert_eq!(stats.nbr_repositories, 10);
+        assert_eq!(stats.nbr_spaces, 10);
 
         // query stats with search term
         let stats = client
-            .query_stats(&CardTable::Model, Some("Model1"))
+            .query_stats(&CardTable::Model, Some("Model1"), None)
             .await
             .unwrap();
 
@@ -953,7 +949,7 @@ mod tests {
 
         // query page
         let results = client
-            .query_page("name", 0, None, None, &CardTable::Data)
+            .query_page("name", 1, None, None, &CardTable::Data)
             .await
             .unwrap();
 
@@ -961,7 +957,7 @@ mod tests {
 
         // query page
         let results = client
-            .query_page("name", 0, None, None, &CardTable::Model)
+            .query_page("name", 1, None, None, &CardTable::Model)
             .await
             .unwrap();
 
@@ -969,7 +965,14 @@ mod tests {
 
         // query page
         let results = client
-            .query_page("name", 0, None, Some("repo3"), &CardTable::Model)
+            .query_page("name", 1, None, Some("repo3"), &CardTable::Model)
+            .await
+            .unwrap();
+
+        assert_eq!(results.len(), 1);
+
+        let results = client
+            .version_page(1, Some("repo1"), Some("Model1"), &CardTable::Model)
             .await
             .unwrap();
 
@@ -987,7 +990,7 @@ mod tests {
         let args = CardQueryArgs {
             uid: None,
             name: Some("Data1".to_string()),
-            repository: Some("repo1".to_string()),
+            space: Some("repo1".to_string()),
             ..Default::default()
         };
 

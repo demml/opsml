@@ -1,0 +1,18 @@
+[package]
+name = "opsml-toml"
+version = { workspace = true }
+edition = { workspace = true }
+repository = { workspace = true }
+
+[lib]
+doctest = false
+
+[dependencies]
+opsml-error = { workspace = true }
+opsml-types = { workspace = true }
+opsml-version = { workspace = true }
+serde = { workspace = true }
+toml_edit = { workspace = true }
+
+[dev-dependencies]
+tempfile = { workspace = true }

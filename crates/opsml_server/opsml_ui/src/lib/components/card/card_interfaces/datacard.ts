@@ -135,7 +135,7 @@ export interface DataCardMetadata {
 
 export interface DataCard {
   name: string;
-  repository: string;
+  space: string;
   version: string;
   uid: string;
   tags: string[];
@@ -144,4 +144,5 @@ export interface DataCard {
   app_env: string;
   created_at: string; // ISO datetime string
   is_card: boolean;
+  opsml_version: string;
 }

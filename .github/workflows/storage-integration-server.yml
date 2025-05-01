@@ -21,6 +21,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: "3.x"
+
       - name: configure aws credentials
         uses: aws-actions/configure-aws-credentials@v3
         with:
@@ -58,6 +63,11 @@ jobs:
     needs: aws-lints-client-test
     steps:
       - uses: actions/checkout@v4
+
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: "3.x"
 
       - name: Cache Rust
         uses: Swatinem/rust-cache@v2

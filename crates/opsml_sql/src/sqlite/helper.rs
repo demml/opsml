@@ -3,7 +3,7 @@ use opsml_error::error::SqlError;
 /// this file contains helper logic for generating sql queries across different databases
 use crate::base::add_version_bounds;
 use opsml_types::{cards::CardTable, contracts::CardQueryArgs};
-use opsml_utils::utils::is_valid_uuid4;
+use opsml_utils::utils::is_valid_uuidv7;
 pub struct SqliteQueryHelper;
 
 impl SqliteQueryHelper {
@@ -152,35 +152,36 @@ impl SqliteQueryHelper {
         let versions_cte = format!(
             "WITH versions AS (
                 SELECT 
-                    repository, 
+                    space, 
                     name, 
                     version, 
-                    ROW_NUMBER() OVER (PARTITION BY repository, name ORDER BY created_at DESC) AS row_num
+                    ROW_NUMBER() OVER (PARTITION BY space, name ORDER BY created_at DESC) AS row_num
                 FROM {}
-                WHERE (?1 IS NULL OR repository = ?1)
-                AND (?2 IS NULL OR name LIKE ?3 OR repository LIKE ?3)
-            )", table
+                WHERE (?1 IS NULL OR space = ?1)
+                AND (?2 IS NULL OR name LIKE ?3 OR space LIKE ?3)
+            )",
+            table
         );
 
         let stats_cte = format!(
             ", stats AS (
                 SELECT 
-                    repository, 
+                    space, 
                     name, 
                     COUNT(DISTINCT version) AS versions, 
                     MAX(created_at) AS updated_at, 
                     MIN(created_at) AS created_at 
                 FROM {}
-                WHERE (?1 IS NULL OR repository = ?1)
-                AND (?2 IS NULL OR name LIKE ?3 OR repository LIKE ?3)
-                GROUP BY repository, name
+                WHERE (?1 IS NULL OR space = ?1)
+                AND (?2 IS NULL OR name LIKE ?3 OR space LIKE ?3)
+                GROUP BY space, name
             )",
             table
         );
 
         let filtered_versions_cte = ", filtered_versions AS (
             SELECT 
-                repository, 
+                space, 
                 name, 
                 version, 
                 row_num
@@ -191,7 +192,7 @@ impl SqliteQueryHelper {
         let joined_cte = format!(
             ", joined AS (
                 SELECT 
-                    stats.repository, 
+                    stats.space, 
                     stats.name, 
                     filtered_versions.version, 
                     stats.versions, 
@@ -200,7 +201,7 @@ impl SqliteQueryHelper {
                     ROW_NUMBER() OVER (ORDER BY stats.{}) AS row_num 
                 FROM stats 
                 JOIN filtered_versions 
-                ON stats.repository = filtered_versions.repository 
+                ON stats.space = filtered_versions.space 
                 AND stats.name = filtered_versions.name
             )",
             sort_by
@@ -209,7 +210,7 @@ impl SqliteQueryHelper {
         let combined_query = format!(
             "{}{}{}{} 
             SELECT
-            repository,
+            space,
             name,
             version,
             versions,
@@ -217,22 +218,56 @@ impl SqliteQueryHelper {
             created_at,
             row_num
             FROM joined 
-            WHERE row_num BETWEEN ?4 AND ?5
+            WHERE row_num > ?4 AND row_num <= ?5
             ORDER BY updated_at DESC",
             versions_cte, stats_cte, filtered_versions_cte, joined_cte
         );
 
         combined_query
     }
+
+    pub fn get_version_page_query(table: &CardTable) -> String {
+        let versions_cte = format!(
+            "WITH versions AS (
+                SELECT 
+                    space, 
+                    name, 
+                    version, 
+                    created_at,
+                    ROW_NUMBER() OVER (PARTITION BY space, name ORDER BY created_at DESC, major DESC, minor DESC, patch DESC) AS row_num
+                FROM {}
+                WHERE space = ?1
+                AND name = ?2
+            )", table
+        );
+
+        let query = format!(
+            "{}
+            SELECT
+            space,
+            name,
+            version,
+            created_at,
+            row_num
+            FROM versions
+            WHERE row_num > ?3 AND row_num <= ?4
+            ORDER BY created_at DESC",
+            versions_cte
+        );
+
+        query
+    }
+
     pub fn get_query_stats_query(table: &CardTable) -> String {
         let base_query = format!(
             "SELECT 
                     COALESCE(COUNT(DISTINCT name), 0) AS nbr_names, 
                     COALESCE(COUNT(major), 0) AS nbr_versions, 
-                    COALESCE(COUNT(DISTINCT repository), 0) AS nbr_repositories 
+                    COALESCE(COUNT(DISTINCT space), 0) AS nbr_spaces
                 FROM {}
                 WHERE 1=1
-                AND (?1 IS NULL OR name LIKE ?1 OR repository LIKE ?1)
+                AND (?1 IS NULL OR name LIKE ?1 OR space LIKE ?1)
+                AND (?2 IS NULL OR space = ?2) 
                 ",
             table
         );
@@ -248,7 +283,7 @@ impl SqliteQueryHelper {
             SELECT
              created_at,
              name, 
-             repository, 
+             space, 
              major, minor, 
              patch, 
              pre_tag, 
@@ -257,7 +292,7 @@ impl SqliteQueryHelper {
              FROM {}
              WHERE 1=1
                 AND name = ?
-                AND repository = ?
+                AND space = ?
             ",
             table
         );
@@ -281,7 +316,7 @@ impl SqliteQueryHelper {
         WHERE 1==1
         AND (?1 IS NULL OR uid = ?1)
         AND (?2 IS NULL OR name = ?2)
-        AND (?3 IS NULL OR repository = ?3)
+        AND (?3 IS NULL OR space = ?3)
         AND (?4 IS NULL OR created_at <= DATETIME(?4))
         ",
             table
@@ -290,7 +325,7 @@ impl SqliteQueryHelper {
         // check for uid. If uid is present, we only return that card
         if query_args.uid.is_some() {
             // validate uid
-            is_valid_uuid4(query_args.uid.as_ref().unwrap())
+            is_valid_uuidv7(query_args.uid.as_ref().unwrap())
                 .map_err(|e| SqlError::GeneralError(e.to_string()))?;
         } else {
             // add where clause due to multiple combinations
@@ -395,12 +430,12 @@ impl SqliteQueryHelper {
     }
 
     pub fn get_promptcard_insert_query() -> String {
-        format!("INSERT INTO {} (uid, app_env, name, repository, major, minor, patch, version, tags, experimentcard_uid, auditcard_uid, pre_tag, build_tag, username) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", CardTable::Prompt)
+        format!("INSERT INTO {} (uid, app_env, name, space, major, minor, patch, version, tags, experimentcard_uid, auditcard_uid, pre_tag, build_tag, username, opsml_version) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", CardTable::Prompt)
             .to_string()
     }
 
     pub fn get_datacard_insert_query() -> String {
-        format!("INSERT INTO {} (uid, app_env, name, repository, major, minor, patch, version, data_type, interface_type, tags, experimentcard_uid, auditcard_uid, pre_tag, build_tag, username) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", CardTable::Data)
+        format!("INSERT INTO {} (uid, app_env, name, space, major, minor, patch, version, data_type, interface_type, tags, experimentcard_uid, auditcard_uid, pre_tag, build_tag, username, opsml_version) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", CardTable::Data)
             .to_string()
     }
 
@@ -410,7 +445,7 @@ impl SqliteQueryHelper {
         uid, 
         app_env, 
         name, 
-        repository, 
+        space, 
         major, 
         minor, 
         patch, 
@@ -425,9 +460,10 @@ impl SqliteQueryHelper {
         auditcard_uid, 
         pre_tag, 
         build_tag,
-        username
+        username,
+        opsml_version
         ) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             CardTable::Model
         )
         .to_string()
@@ -439,7 +475,7 @@ impl SqliteQueryHelper {
         uid, 
         app_env, 
         name, 
-        repository, 
+        space, 
         major, 
         minor, 
         patch, 
@@ -447,13 +483,15 @@ impl SqliteQueryHelper {
         tags, 
         datacard_uids,
         modelcard_uids, 
-        experimentcard_uids,
         promptcard_uids,
+        card_deck_uids,
+        experimentcard_uids,
         pre_tag, 
         build_tag,
-        username
+        username,
+        opsml_version
         ) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             CardTable::Experiment
         )
         .to_string()
@@ -465,7 +503,7 @@ impl SqliteQueryHelper {
         uid, 
         app_env, 
         name, 
-        repository, 
+        space, 
         major, 
         minor, 
         patch, 
@@ -477,10 +515,35 @@ impl SqliteQueryHelper {
         experimentcard_uids, 
         pre_tag, 
         build_tag,
-        username
+        username,
+        opsml_version
         ) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             CardTable::Audit
+        )
+        .to_string()
+    }
+
+    pub fn get_carddeck_insert_query() -> String {
+        format!("INSERT INTO {} (uid, app_env, name, space, major, minor, patch, version, pre_tag, build_tag, cards, username, opsml_version) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", CardTable::Deck)
+            .to_string()
+    }
+
+    pub fn get_carddeck_update_query() -> String {
+        format!(
+            "UPDATE {} SET 
+            app_env = ?, 
+            name = ?, 
+            space = ?, 
+            major = ?, 
+            minor = ?, 
+            patch = ?, 
+            version = ?, 
+            cards = ?,
+            username = ?,
+            opsml_version = ?
+            WHERE uid = ?",
+            CardTable::Deck
         )
         .to_string()
     }
@@ -490,7 +553,7 @@ impl SqliteQueryHelper {
             "UPDATE {} SET 
         app_env = ?, 
         name = ?, 
-        repository = ?, 
+        space = ?, 
         major = ?, 
         minor = ?, 
         patch = ?, 
@@ -500,7 +563,8 @@ impl SqliteQueryHelper {
         auditcard_uid = ?, 
         pre_tag = ?, 
         build_tag = ?,
-        username = ?
+        username = ?,
+        opsml_version = ?
         WHERE uid = ?",
             CardTable::Prompt
         )
@@ -512,7 +576,7 @@ impl SqliteQueryHelper {
             "UPDATE {} SET 
         app_env = ?, 
         name = ?, 
-        repository = ?, 
+        space = ?, 
         major = ?, 
         minor = ?, 
         patch = ?, 
@@ -524,7 +588,8 @@ impl SqliteQueryHelper {
         auditcard_uid = ?, 
         pre_tag = ?, 
         build_tag = ?,
-        username = ?
+        username = ?,
+        opsml_version = ?
         WHERE uid = ?",
             CardTable::Data
         )
@@ -536,7 +601,7 @@ impl SqliteQueryHelper {
             "UPDATE {} SET 
         app_env = ?, 
         name = ?, 
-        repository = ?, 
+        space = ?, 
         major = ?, 
         minor = ?, 
         patch = ?, 
@@ -551,7 +616,8 @@ impl SqliteQueryHelper {
         auditcard_uid = ?, 
         pre_tag = ?, 
         build_tag = ?,
-        username = ?
+        username = ?,
+        opsml_version = ?
         WHERE uid = ?",
             CardTable::Model
         )
@@ -563,7 +629,7 @@ impl SqliteQueryHelper {
             "UPDATE {} SET 
         app_env = ?, 
         name = ?, 
-        repository = ?, 
+        space = ?, 
         major = ?, 
         minor = ?, 
         patch = ?, 
@@ -571,11 +637,13 @@ impl SqliteQueryHelper {
         tags = ?, 
         datacard_uids = ?, 
         modelcard_uids = ?, 
-        experimentcard_uids = ?,  
         promptcard_uids = ?,
+        card_deck_uids = ?,
+        experimentcard_uids = ?,  
         pre_tag = ?, 
         build_tag = ?,
-        username = ?
+        username = ?,
+        opsml_version = ?
         WHERE uid = ?",
             CardTable::Experiment
         )
@@ -587,7 +655,7 @@ impl SqliteQueryHelper {
             "UPDATE {} SET 
         app_env = ?, 
         name = ?, 
-        repository = ?, 
+        space = ?, 
         major = ?, 
         minor = ?, 
         patch = ?, 
@@ -599,7 +667,8 @@ impl SqliteQueryHelper {
         experimentcard_uids = ?, 
         pre_tag = ?, 
         build_tag = ?,
-        username = ?
+        username = ?,
+        opsml_version = ?
         WHERE uid = ?",
             CardTable::Audit
         )
@@ -637,10 +706,23 @@ impl SqliteQueryHelper {
         )
     }
 
-    pub fn get_operation_insert_query() -> String {
+    pub fn get_audit_event_insert_query() -> String {
         format!(
-            "INSERT INTO {} (username, access_type, access_location) VALUES (?, ?, ?)",
-            CardTable::Operations
+            "INSERT INTO {} (
+                username, 
+                client_ip, 
+                user_agent, 
+                operation, 
+                resource_type, 
+                resource_id,
+                access_location,
+                status,
+                error_message,
+                metadata,
+                registry_type,
+                route
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            CardTable::AuditEvent
         )
         .to_string()
     }

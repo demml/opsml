@@ -2,18 +2,18 @@ use crate::base::SqlClient;
 
 use crate::postgres::helper::PostgresQueryHelper;
 use crate::schemas::schema::{
-    AuditCardRecord, CardResults, CardSummary, DataCardRecord, ExperimentCardRecord,
-    HardwareMetricsRecord, MetricRecord, ModelCardRecord, ParameterRecord, PromptCardRecord,
-    QueryStats, ServerCard, User, VersionResult,
+    AuditCardRecord, CardDeckRecord, CardResults, CardSummary, DataCardRecord,
+    ExperimentCardRecord, HardwareMetricsRecord, MetricRecord, ModelCardRecord, ParameterRecord,
+    PromptCardRecord, QueryStats, ServerCard, User, VersionResult, VersionSummary,
 };
 use async_trait::async_trait;
-use chrono::NaiveDateTime;
+use chrono::{DateTime, Utc};
 use opsml_error::error::SqlError;
 use opsml_semver::VersionValidator;
 use opsml_settings::config::DatabaseSettings;
 use opsml_types::{
     cards::CardTable,
-    contracts::{ArtifactKey, CardQueryArgs},
+    contracts::{ArtifactKey, AuditEvent, CardQueryArgs},
     RegistryType,
 };
 use semver::Version;
@@ -26,7 +26,7 @@ use tracing::info;
 impl FromRow<'_, PgRow> for User {
     fn from_row(row: &PgRow) -> Result<Self, sqlx::Error> {
         let id: Option<i32> = row.try_get("id")?;
-        let created_at: NaiveDateTime = row.try_get("created_at")?;
+        let created_at: DateTime<Utc> = row.try_get("created_at")?;
         let active: bool = row.try_get("active")?;
         let username: String = row.try_get("username")?;
         let password_hash: String = row.try_get("password_hash")?;
@@ -116,7 +116,7 @@ impl SqlClient for PostgresClient {
     ///
     /// * `table` - The table to query
     /// * `name` - The name of the card
-    /// * `repository` - The repository of the card
+    /// * `space` - The space of the card
     /// * `version` - The version of the card
     ///
     /// # Returns
@@ -125,7 +125,7 @@ impl SqlClient for PostgresClient {
     async fn get_versions(
         &self,
         table: &CardTable,
-        repository: &str,
+        space: &str,
         name: &str,
         version: Option<String>,
     ) -> Result<Vec<String>, SqlError> {
@@ -134,7 +134,7 @@ impl SqlClient for PostgresClient {
 
         let cards: Vec<VersionResult> = sqlx::query_as(&query)
             .bind(name)
-            .bind(repository)
+            .bind(space)
             .fetch_all(&self.pool)
             .await
             .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
@@ -174,7 +174,7 @@ impl SqlClient for PostgresClient {
                 let card: Vec<DataCardRecord> = sqlx::query_as(&query)
                     .bind(query_args.uid.as_ref())
                     .bind(query_args.name.as_ref())
-                    .bind(query_args.repository.as_ref())
+                    .bind(query_args.space.as_ref())
                     .bind(query_args.max_date.as_ref())
                     .bind(query_args.limit.unwrap_or(50))
                     .fetch_all(&self.pool)
@@ -187,7 +187,7 @@ impl SqlClient for PostgresClient {
                 let card: Vec<ModelCardRecord> = sqlx::query_as(&query)
                     .bind(query_args.uid.as_ref())
                     .bind(query_args.name.as_ref())
-                    .bind(query_args.repository.as_ref())
+                    .bind(query_args.space.as_ref())
                     .bind(query_args.max_date.as_ref())
                     .bind(query_args.limit.unwrap_or(50))
                     .fetch_all(&self.pool)
@@ -200,7 +200,7 @@ impl SqlClient for PostgresClient {
                 let card: Vec<ExperimentCardRecord> = sqlx::query_as(&query)
                     .bind(query_args.uid.as_ref())
                     .bind(query_args.name.as_ref())
-                    .bind(query_args.repository.as_ref())
+                    .bind(query_args.space.as_ref())
                     .bind(query_args.max_date.as_ref())
                     .bind(query_args.limit.unwrap_or(50))
                     .fetch_all(&self.pool)
@@ -214,7 +214,7 @@ impl SqlClient for PostgresClient {
                 let card: Vec<AuditCardRecord> = sqlx::query_as(&query)
                     .bind(query_args.uid.as_ref())
                     .bind(query_args.name.as_ref())
-                    .bind(query_args.repository.as_ref())
+                    .bind(query_args.space.as_ref())
                     .bind(query_args.max_date.as_ref())
                     .bind(query_args.limit.unwrap_or(50))
                     .fetch_all(&self.pool)
@@ -228,7 +228,7 @@ impl SqlClient for PostgresClient {
                 let card: Vec<PromptCardRecord> = sqlx::query_as(&query)
                     .bind(query_args.uid.as_ref())
                     .bind(query_args.name.as_ref())
-                    .bind(query_args.repository.as_ref())
+                    .bind(query_args.space.as_ref())
                     .bind(query_args.max_date.as_ref())
                     .bind(query_args.limit.unwrap_or(50))
                     .fetch_all(&self.pool)
@@ -236,6 +236,20 @@ impl SqlClient for PostgresClient {
                     .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
 
                 return Ok(CardResults::Prompt(card));
+            }
+
+            CardTable::Deck => {
+                let card: Vec<CardDeckRecord> = sqlx::query_as(&query)
+                    .bind(query_args.uid.as_ref())
+                    .bind(query_args.name.as_ref())
+                    .bind(query_args.space.as_ref())
+                    .bind(query_args.max_date.as_ref())
+                    .bind(query_args.limit.unwrap_or(50))
+                    .fetch_all(&self.pool)
+                    .await
+                    .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+
+                return Ok(CardResults::Deck(card));
             }
             _ => {
                 return Err(SqlError::QueryError(
@@ -247,26 +261,26 @@ impl SqlClient for PostgresClient {
     async fn insert_card(&self, table: &CardTable, card: &ServerCard) -> Result<(), SqlError> {
         match table {
             CardTable::Data => match card {
-                ServerCard::Data(data) => {
+                ServerCard::Data(record) => {
                     let query = PostgresQueryHelper::get_datacard_insert_query();
-
                     sqlx::query(&query)
-                        .bind(&data.uid)
-                        .bind(&data.app_env)
-                        .bind(&data.name)
-                        .bind(&data.repository)
-                        .bind(data.major)
-                        .bind(data.minor)
-                        .bind(data.patch)
-                        .bind(&data.version)
-                        .bind(&data.data_type)
-                        .bind(&data.interface_type)
-                        .bind(&data.tags)
-                        .bind(&data.experimentcard_uid)
-                        .bind(&data.auditcard_uid)
-                        .bind(&data.pre_tag)
-                        .bind(&data.build_tag)
-                        .bind(&data.username)
+                        .bind(&record.uid)
+                        .bind(&record.app_env)
+                        .bind(&record.name)
+                        .bind(&record.space)
+                        .bind(record.major)
+                        .bind(record.minor)
+                        .bind(record.patch)
+                        .bind(&record.version)
+                        .bind(&record.data_type)
+                        .bind(&record.interface_type)
+                        .bind(&record.tags)
+                        .bind(&record.experimentcard_uid)
+                        .bind(&record.auditcard_uid)
+                        .bind(&record.pre_tag)
+                        .bind(&record.build_tag)
+                        .bind(&record.username)
+                        .bind(&record.opsml_version)
                         .execute(&self.pool)
                         .await
                         .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
@@ -279,28 +293,29 @@ impl SqlClient for PostgresClient {
                 }
             },
             CardTable::Model => match card {
-                ServerCard::Model(model) => {
+                ServerCard::Model(record) => {
                     let query = PostgresQueryHelper::get_modelcard_insert_query();
                     sqlx::query(&query)
-                        .bind(&model.uid)
-                        .bind(&model.app_env)
-                        .bind(&model.name)
-                        .bind(&model.repository)
-                        .bind(model.major)
-                        .bind(model.minor)
-                        .bind(model.patch)
-                        .bind(&model.version)
-                        .bind(&model.datacard_uid)
-                        .bind(&model.data_type)
-                        .bind(&model.model_type)
-                        .bind(&model.interface_type)
-                        .bind(&model.task_type)
-                        .bind(&model.tags)
-                        .bind(&model.experimentcard_uid)
-                        .bind(&model.auditcard_uid)
-                        .bind(&model.pre_tag)
-                        .bind(&model.build_tag)
-                        .bind(&model.username)
+                        .bind(&record.uid)
+                        .bind(&record.app_env)
+                        .bind(&record.name)
+                        .bind(&record.space)
+                        .bind(record.major)
+                        .bind(record.minor)
+                        .bind(record.patch)
+                        .bind(&record.version)
+                        .bind(&record.datacard_uid)
+                        .bind(&record.data_type)
+                        .bind(&record.model_type)
+                        .bind(&record.interface_type)
+                        .bind(&record.task_type)
+                        .bind(&record.tags)
+                        .bind(&record.experimentcard_uid)
+                        .bind(&record.auditcard_uid)
+                        .bind(&record.pre_tag)
+                        .bind(&record.build_tag)
+                        .bind(&record.username)
+                        .bind(&record.opsml_version)
                         .execute(&self.pool)
                         .await
                         .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
@@ -313,25 +328,27 @@ impl SqlClient for PostgresClient {
                 }
             },
             CardTable::Experiment => match card {
-                ServerCard::Experiment(run) => {
+                ServerCard::Experiment(record) => {
                     let query = PostgresQueryHelper::get_experimentcard_insert_query();
                     sqlx::query(&query)
-                        .bind(&run.uid)
-                        .bind(&run.app_env)
-                        .bind(&run.name)
-                        .bind(&run.repository)
-                        .bind(run.major)
-                        .bind(run.minor)
-                        .bind(run.patch)
-                        .bind(&run.version)
-                        .bind(&run.tags)
-                        .bind(&run.datacard_uids)
-                        .bind(&run.modelcard_uids)
-                        .bind(&run.promptcard_uids)
-                        .bind(&run.experimentcard_uids)
-                        .bind(&run.pre_tag)
-                        .bind(&run.build_tag)
-                        .bind(&run.username)
+                        .bind(&record.uid)
+                        .bind(&record.app_env)
+                        .bind(&record.name)
+                        .bind(&record.space)
+                        .bind(record.major)
+                        .bind(record.minor)
+                        .bind(record.patch)
+                        .bind(&record.version)
+                        .bind(&record.tags)
+                        .bind(&record.datacard_uids)
+                        .bind(&record.modelcard_uids)
+                        .bind(&record.promptcard_uids)
+                        .bind(&record.card_deck_uids)
+                        .bind(&record.experimentcard_uids)
+                        .bind(&record.pre_tag)
+                        .bind(&record.build_tag)
+                        .bind(&record.username)
+                        .bind(&record.opsml_version)
                         .execute(&self.pool)
                         .await
                         .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
@@ -344,30 +361,32 @@ impl SqlClient for PostgresClient {
                 }
             },
             CardTable::Audit => match card {
-                ServerCard::Audit(audit) => {
+                ServerCard::Audit(record) => {
                     let query = PostgresQueryHelper::get_auditcard_insert_query();
                     sqlx::query(&query)
-                        .bind(&audit.uid)
-                        .bind(&audit.app_env)
-                        .bind(&audit.name)
-                        .bind(&audit.repository)
-                        .bind(audit.major)
-                        .bind(audit.minor)
-                        .bind(audit.patch)
-                        .bind(&audit.version)
-                        .bind(&audit.tags)
-                        .bind(audit.approved)
-                        .bind(&audit.datacard_uids)
-                        .bind(&audit.modelcard_uids)
-                        .bind(&audit.experimentcard_uids)
-                        .bind(&audit.pre_tag)
-                        .bind(&audit.build_tag)
-                        .bind(&audit.username)
+                        .bind(&record.uid)
+                        .bind(&record.app_env)
+                        .bind(&record.name)
+                        .bind(&record.space)
+                        .bind(record.major)
+                        .bind(record.minor)
+                        .bind(record.patch)
+                        .bind(&record.version)
+                        .bind(&record.tags)
+                        .bind(record.approved)
+                        .bind(&record.datacard_uids)
+                        .bind(&record.modelcard_uids)
+                        .bind(&record.experimentcard_uids)
+                        .bind(&record.pre_tag)
+                        .bind(&record.build_tag)
+                        .bind(&record.username)
+                        .bind(&record.opsml_version)
                         .execute(&self.pool)
                         .await
                         .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
                     Ok(())
                 }
+
                 _ => {
                     return Err(SqlError::QueryError(
                         "Invalid card type for insert".to_string(),
@@ -376,29 +395,58 @@ impl SqlClient for PostgresClient {
             },
 
             CardTable::Prompt => match card {
-                ServerCard::Prompt(card) => {
+                ServerCard::Prompt(record) => {
                     let query = PostgresQueryHelper::get_promptcard_insert_query();
                     sqlx::query(&query)
-                        .bind(&card.uid)
-                        .bind(&card.app_env)
-                        .bind(&card.name)
-                        .bind(&card.repository)
-                        .bind(card.major)
-                        .bind(card.minor)
-                        .bind(card.patch)
-                        .bind(&card.version)
-                        .bind(&card.tags)
-                        .bind(&card.experimentcard_uid)
-                        .bind(&card.auditcard_uid)
-                        .bind(&card.pre_tag)
-                        .bind(&card.build_tag)
-                        .bind(&card.username)
+                        .bind(&record.uid)
+                        .bind(&record.app_env)
+                        .bind(&record.name)
+                        .bind(&record.space)
+                        .bind(record.major)
+                        .bind(record.minor)
+                        .bind(record.patch)
+                        .bind(&record.version)
+                        .bind(&record.tags)
+                        .bind(&record.experimentcard_uid)
+                        .bind(&record.auditcard_uid)
+                        .bind(&record.pre_tag)
+                        .bind(&record.build_tag)
+                        .bind(&record.username)
+                        .bind(&record.opsml_version)
                         .execute(&self.pool)
                         .await
                         .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
                     Ok(())
                 }
 
+                _ => {
+                    return Err(SqlError::QueryError(
+                        "Invalid card type for insert".to_string(),
+                    ));
+                }
+            },
+            CardTable::Deck => match card {
+                ServerCard::Deck(record) => {
+                    let query = PostgresQueryHelper::get_carddeck_insert_query();
+                    sqlx::query(&query)
+                        .bind(&record.uid)
+                        .bind(&record.app_env)
+                        .bind(&record.name)
+                        .bind(&record.space)
+                        .bind(record.major)
+                        .bind(record.minor)
+                        .bind(record.patch)
+                        .bind(&record.version)
+                        .bind(&record.pre_tag)
+                        .bind(&record.build_tag)
+                        .bind(&record.cards)
+                        .bind(&record.username)
+                        .bind(&record.opsml_version)
+                        .execute(&self.pool)
+                        .await
+                        .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+                    Ok(())
+                }
                 _ => {
                     return Err(SqlError::QueryError(
                         "Invalid card type for insert".to_string(),
@@ -417,25 +465,26 @@ impl SqlClient for PostgresClient {
     async fn update_card(&self, table: &CardTable, card: &ServerCard) -> Result<(), SqlError> {
         match table {
             CardTable::Data => match card {
-                ServerCard::Data(data) => {
+                ServerCard::Data(record) => {
                     let query = PostgresQueryHelper::get_datacard_update_query();
                     sqlx::query(&query)
-                        .bind(&data.app_env)
-                        .bind(&data.name)
-                        .bind(&data.repository)
-                        .bind(data.major)
-                        .bind(data.minor)
-                        .bind(data.patch)
-                        .bind(&data.version)
-                        .bind(&data.data_type)
-                        .bind(&data.interface_type)
-                        .bind(&data.tags)
-                        .bind(&data.experimentcard_uid)
-                        .bind(&data.auditcard_uid)
-                        .bind(&data.pre_tag)
-                        .bind(&data.build_tag)
-                        .bind(&data.username)
-                        .bind(&data.uid)
+                        .bind(&record.app_env)
+                        .bind(&record.name)
+                        .bind(&record.space)
+                        .bind(record.major)
+                        .bind(record.minor)
+                        .bind(record.patch)
+                        .bind(&record.version)
+                        .bind(&record.data_type)
+                        .bind(&record.interface_type)
+                        .bind(&record.tags)
+                        .bind(&record.experimentcard_uid)
+                        .bind(&record.auditcard_uid)
+                        .bind(&record.pre_tag)
+                        .bind(&record.build_tag)
+                        .bind(&record.username)
+                        .bind(&record.opsml_version)
+                        .bind(&record.uid)
                         .execute(&self.pool)
                         .await
                         .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
@@ -448,28 +497,29 @@ impl SqlClient for PostgresClient {
                 }
             },
             CardTable::Model => match card {
-                ServerCard::Model(model) => {
+                ServerCard::Model(record) => {
                     let query = PostgresQueryHelper::get_modelcard_update_query();
                     sqlx::query(&query)
-                        .bind(&model.app_env)
-                        .bind(&model.name)
-                        .bind(&model.repository)
-                        .bind(model.major)
-                        .bind(model.minor)
-                        .bind(model.patch)
-                        .bind(&model.version)
-                        .bind(&model.datacard_uid)
-                        .bind(&model.data_type)
-                        .bind(&model.model_type)
-                        .bind(&model.interface_type)
-                        .bind(&model.task_type)
-                        .bind(&model.tags)
-                        .bind(&model.experimentcard_uid)
-                        .bind(&model.auditcard_uid)
-                        .bind(&model.pre_tag)
-                        .bind(&model.build_tag)
-                        .bind(&model.username)
-                        .bind(&model.uid)
+                        .bind(&record.app_env)
+                        .bind(&record.name)
+                        .bind(&record.space)
+                        .bind(record.major)
+                        .bind(record.minor)
+                        .bind(record.patch)
+                        .bind(&record.version)
+                        .bind(&record.datacard_uid)
+                        .bind(&record.data_type)
+                        .bind(&record.model_type)
+                        .bind(&record.interface_type)
+                        .bind(&record.task_type)
+                        .bind(&record.tags)
+                        .bind(&record.experimentcard_uid)
+                        .bind(&record.auditcard_uid)
+                        .bind(&record.pre_tag)
+                        .bind(&record.build_tag)
+                        .bind(&record.username)
+                        .bind(&record.opsml_version)
+                        .bind(&record.uid)
                         .execute(&self.pool)
                         .await
                         .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
@@ -482,25 +532,27 @@ impl SqlClient for PostgresClient {
                 }
             },
             CardTable::Experiment => match card {
-                ServerCard::Experiment(run) => {
+                ServerCard::Experiment(record) => {
                     let query = PostgresQueryHelper::get_experimentcard_update_query();
                     sqlx::query(&query)
-                        .bind(&run.app_env)
-                        .bind(&run.name)
-                        .bind(&run.repository)
-                        .bind(run.major)
-                        .bind(run.minor)
-                        .bind(run.patch)
-                        .bind(&run.version)
-                        .bind(&run.tags)
-                        .bind(&run.datacard_uids)
-                        .bind(&run.modelcard_uids)
-                        .bind(&run.promptcard_uids)
-                        .bind(&run.experimentcard_uids)
-                        .bind(&run.pre_tag)
-                        .bind(&run.build_tag)
-                        .bind(&run.username)
-                        .bind(&run.uid)
+                        .bind(&record.app_env)
+                        .bind(&record.name)
+                        .bind(&record.space)
+                        .bind(record.major)
+                        .bind(record.minor)
+                        .bind(record.patch)
+                        .bind(&record.version)
+                        .bind(&record.tags)
+                        .bind(&record.datacard_uids)
+                        .bind(&record.modelcard_uids)
+                        .bind(&record.promptcard_uids)
+                        .bind(&record.card_deck_uids)
+                        .bind(&record.experimentcard_uids)
+                        .bind(&record.pre_tag)
+                        .bind(&record.build_tag)
+                        .bind(&record.username)
+                        .bind(&record.opsml_version)
+                        .bind(&record.uid)
                         .execute(&self.pool)
                         .await
                         .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
@@ -513,25 +565,26 @@ impl SqlClient for PostgresClient {
                 }
             },
             CardTable::Audit => match card {
-                ServerCard::Audit(audit) => {
+                ServerCard::Audit(record) => {
                     let query = PostgresQueryHelper::get_auditcard_update_query();
                     sqlx::query(&query)
-                        .bind(&audit.app_env)
-                        .bind(&audit.name)
-                        .bind(&audit.repository)
-                        .bind(audit.major)
-                        .bind(audit.minor)
-                        .bind(audit.patch)
-                        .bind(&audit.version)
-                        .bind(&audit.tags)
-                        .bind(audit.approved)
-                        .bind(&audit.datacard_uids)
-                        .bind(&audit.modelcard_uids)
-                        .bind(&audit.experimentcard_uids)
-                        .bind(&audit.pre_tag)
-                        .bind(&audit.build_tag)
-                        .bind(&audit.username)
-                        .bind(&audit.uid)
+                        .bind(&record.app_env)
+                        .bind(&record.name)
+                        .bind(&record.space)
+                        .bind(record.major)
+                        .bind(record.minor)
+                        .bind(record.patch)
+                        .bind(&record.version)
+                        .bind(&record.tags)
+                        .bind(record.approved)
+                        .bind(&record.datacard_uids)
+                        .bind(&record.modelcard_uids)
+                        .bind(&record.experimentcard_uids)
+                        .bind(&record.pre_tag)
+                        .bind(&record.build_tag)
+                        .bind(&record.username)
+                        .bind(&record.opsml_version)
+                        .bind(&record.uid)
                         .execute(&self.pool)
                         .await
                         .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
@@ -545,29 +598,57 @@ impl SqlClient for PostgresClient {
             },
 
             CardTable::Prompt => match card {
-                ServerCard::Prompt(card) => {
+                ServerCard::Prompt(record) => {
                     let query = PostgresQueryHelper::get_promptcard_update_query();
                     sqlx::query(&query)
-                        .bind(&card.app_env)
-                        .bind(&card.name)
-                        .bind(&card.repository)
-                        .bind(card.major)
-                        .bind(card.minor)
-                        .bind(card.patch)
-                        .bind(&card.version)
-                        .bind(&card.tags)
-                        .bind(&card.experimentcard_uid)
-                        .bind(&card.auditcard_uid)
-                        .bind(&card.pre_tag)
-                        .bind(&card.build_tag)
-                        .bind(&card.username)
-                        .bind(&card.uid)
+                        .bind(&record.app_env)
+                        .bind(&record.name)
+                        .bind(&record.space)
+                        .bind(record.major)
+                        .bind(record.minor)
+                        .bind(record.patch)
+                        .bind(&record.version)
+                        .bind(&record.tags)
+                        .bind(&record.experimentcard_uid)
+                        .bind(&record.auditcard_uid)
+                        .bind(&record.pre_tag)
+                        .bind(&record.build_tag)
+                        .bind(&record.username)
+                        .bind(&record.opsml_version)
+                        .bind(&record.uid)
                         .execute(&self.pool)
                         .await
                         .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
                     Ok(())
                 }
 
+                _ => {
+                    return Err(SqlError::QueryError(
+                        "Invalid card type for insert".to_string(),
+                    ));
+                }
+            },
+
+            CardTable::Deck => match card {
+                ServerCard::Deck(record) => {
+                    let query = PostgresQueryHelper::get_carddeck_update_query();
+                    sqlx::query(&query)
+                        .bind(&record.app_env)
+                        .bind(&record.name)
+                        .bind(&record.space)
+                        .bind(record.major)
+                        .bind(record.minor)
+                        .bind(record.patch)
+                        .bind(&record.version)
+                        .bind(&record.cards)
+                        .bind(&record.username)
+                        .bind(&record.opsml_version)
+                        .bind(&record.uid)
+                        .execute(&self.pool)
+                        .await
+                        .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+                    Ok(())
+                }
                 _ => {
                     return Err(SqlError::QueryError(
                         "Invalid card type for insert".to_string(),
@@ -583,7 +664,7 @@ impl SqlClient for PostgresClient {
         }
     }
 
-    /// Get unique repository names
+    /// Get unique space names
     ///
     /// # Arguments
     ///
@@ -591,12 +672,9 @@ impl SqlClient for PostgresClient {
     ///
     /// # Returns
     ///
-    /// * `Vec<String>` - A vector of unique repository names
-    async fn get_unique_repository_names(
-        &self,
-        table: &CardTable,
-    ) -> Result<Vec<String>, SqlError> {
-        let query = format!("SELECT DISTINCT repository FROM {}", table);
+    /// * `Vec<String>` - A vector of unique space names
+    async fn get_unique_space_names(&self, table: &CardTable) -> Result<Vec<String>, SqlError> {
+        let query = format!("SELECT DISTINCT space FROM {}", table);
         let repos: Vec<String> = sqlx::query_scalar(&query)
             .fetch_all(&self.pool)
             .await
@@ -609,12 +687,14 @@ impl SqlClient for PostgresClient {
         &self,
         table: &CardTable,
         search_term: Option<&str>,
+        space: Option<&str>,
     ) -> Result<QueryStats, SqlError> {
         let query = PostgresQueryHelper::get_query_stats_query(table);
 
         // if search_term is not None, format with %search_term%, else None
         let stats: QueryStats = sqlx::query_as(&query)
             .bind(search_term.map(|term| format!("%{}%", term)))
+            .bind(space)
             .fetch_one(&self.pool)
             .await
             .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
@@ -629,7 +709,7 @@ impl SqlClient for PostgresClient {
     /// * `sort_by` - The field to sort by
     /// * `page` - The page number
     /// * `search_term` - The search term to query
-    /// * `repository` - The repository to query
+    /// * `space` - The space to query
     /// * `table` - The table to query
     ///
     /// # Returns
@@ -640,18 +720,42 @@ impl SqlClient for PostgresClient {
         sort_by: &str,
         page: i32,
         search_term: Option<&str>,
-        repository: Option<&str>,
+        space: Option<&str>,
         table: &CardTable,
     ) -> Result<Vec<CardSummary>, SqlError> {
         let query = PostgresQueryHelper::get_query_page_query(table, sort_by);
 
-        let lower_bound = page * 30;
-        let upper_bound = lower_bound + 30;
+        let lower_bound = (page * 30) - 30;
+        let upper_bound = page * 30;
 
         let records: Vec<CardSummary> = sqlx::query_as(&query)
-            .bind(repository)
+            .bind(space)
             .bind(search_term)
             .bind(search_term.map(|term| format!("%{}%", term)))
+            .bind(lower_bound)
+            .bind(upper_bound)
+            .fetch_all(&self.pool)
+            .await
+            .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+
+        Ok(records)
+    }
+
+    async fn version_page(
+        &self,
+        page: i32,
+        space: Option<&str>,
+        name: Option<&str>,
+        table: &CardTable,
+    ) -> Result<Vec<VersionSummary>, SqlError> {
+        let query = PostgresQueryHelper::get_version_page_query(table);
+
+        let lower_bound = (page * 30) - 30;
+        let upper_bound = page * 30;
+
+        let records: Vec<VersionSummary> = sqlx::query_as(&query)
+            .bind(space)
+            .bind(name)
             .bind(lower_bound)
             .bind(upper_bound)
             .fetch_all(&self.pool)
@@ -1006,17 +1110,21 @@ impl SqlClient for PostgresClient {
         Ok(())
     }
 
-    async fn insert_operation(
-        &self,
-        username: &str,
-        access_type: &str,
-        access_location: &str,
-    ) -> Result<(), SqlError> {
-        let query = PostgresQueryHelper::get_operation_insert_query();
+    async fn insert_audit_event(&self, event: AuditEvent) -> Result<(), SqlError> {
+        let query = PostgresQueryHelper::get_audit_event_insert_query();
         sqlx::query(&query)
-            .bind(username)
-            .bind(access_type)
-            .bind(access_location)
+            .bind(event.username)
+            .bind(event.client_ip)
+            .bind(event.user_agent)
+            .bind(event.operation.to_string())
+            .bind(event.resource_type.to_string())
+            .bind(event.resource_id)
+            .bind(event.access_location)
+            .bind(event.status.to_string())
+            .bind(event.error_message)
+            .bind(event.metadata)
+            .bind(event.registry_type.map(|r| r.to_string()))
+            .bind(event.route)
             .execute(&self.pool)
             .await
             .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
@@ -1034,7 +1142,7 @@ impl SqlClient for PostgresClient {
         let key: (String, String, Vec<u8>, String) = sqlx::query_as(&query)
             .bind(query_args.uid.as_ref())
             .bind(query_args.name.as_ref())
-            .bind(query_args.repository.as_ref())
+            .bind(query_args.space.as_ref())
             .bind(query_args.max_date.as_ref())
             .bind(query_args.limit.unwrap_or(1))
             .fetch_one(&self.pool)
@@ -1064,8 +1172,10 @@ impl SqlClient for PostgresClient {
 
 #[cfg(test)]
 mod tests {
+    use crate::schemas::CardDeckRecord;
+
     use super::*;
-    use opsml_types::{contracts::Operation, RegistryType, SqlType};
+    use opsml_types::{RegistryType, SqlType};
     use opsml_utils::utils::get_utc_datetime;
     use std::{env, vec};
     pub async fn cleanup(pool: &Pool<Postgres>) {
@@ -1084,25 +1194,28 @@ mod tests {
             FROM opsml_audit_registry;
 
             DELETE
-            FROM opsml_experiment_metrics;
+            FROM opsml_experiment_metric;
 
             DELETE
-            FROM opsml_experiment_hardware_metrics;
+            FROM opsml_experiment_hardware_metric;
 
             DELETE
-            FROM opsml_experiment_parameters;
+            FROM opsml_experiment_parameter;
 
             DELETE
             FROM opsml_prompt_registry;
 
             DELETE
-            FROM opsml_users;
+            FROM opsml_user;
 
             DELETE
             FROM opsml_artifact_key;
 
             DELETE
-            FROM opsml_operations;
+            FROM opsml_audit_event;
+
+            DELETE
+            FROM opsml_deck_registry;
             "#,
         )
         .fetch_all(pool)
@@ -1122,6 +1235,7 @@ mod tests {
             CardTable::Experiment => ServerCard::Experiment(ExperimentCardRecord::default()),
             CardTable::Audit => ServerCard::Audit(AuditCardRecord::default()),
             CardTable::Prompt => ServerCard::Prompt(PromptCardRecord::default()),
+            CardTable::Deck => ServerCard::Deck(CardDeckRecord::default()),
             _ => panic!("Invalid card type"),
         };
 
@@ -1132,6 +1246,7 @@ mod tests {
             ServerCard::Experiment(c) => c.uid.clone(),
             ServerCard::Audit(c) => c.uid.clone(),
             ServerCard::Prompt(c) => c.uid.clone(),
+            ServerCard::Deck(c) => c.uid.clone(),
         };
 
         // Test Insert
@@ -1188,6 +1303,14 @@ mod tests {
                 };
                 ServerCard::Prompt(c)
             }
+            CardTable::Deck => {
+                let c = CardDeckRecord {
+                    uid: uid.clone(),
+                    name: updated_name.to_string(),
+                    ..Default::default()
+                };
+                ServerCard::Deck(c)
+            }
             _ => panic!("Invalid card type"),
         };
 
@@ -1205,6 +1328,7 @@ mod tests {
             CardResults::Experiment(cards) => assert_eq!(cards[0].name, updated_name),
             CardResults::Audit(cards) => assert_eq!(cards[0].name, updated_name),
             CardResults::Prompt(cards) => assert_eq!(cards[0].name, updated_name),
+            CardResults::Deck(cards) => assert_eq!(cards[0].name, updated_name),
         }
 
         // delete card
@@ -1336,10 +1460,10 @@ mod tests {
 
         assert!(!exists);
 
-        // try name and repository
+        // try name and space
         let card_args = CardQueryArgs {
             name: Some("Data1".to_string()),
-            repository: Some("repo1".to_string()),
+            space: Some("repo1".to_string()),
             ..Default::default()
         };
 
@@ -1352,10 +1476,10 @@ mod tests {
 
         assert_eq!(results.len(), 10);
 
-        // try name and repository
+        // try name and space
         let card_args = CardQueryArgs {
             name: Some("Model1".to_string()),
-            repository: Some("repo1".to_string()),
+            space: Some("repo1".to_string()),
             version: Some("~1.0.0".to_string()),
             ..Default::default()
         };
@@ -1443,6 +1567,9 @@ mod tests {
         test_card_crud(&client, &CardTable::Prompt, "UpdatedPromptName")
             .await
             .unwrap();
+        test_card_crud(&client, &CardTable::Deck, "UpdatedDeckName")
+            .await
+            .unwrap();
     }
 
     #[tokio::test]
@@ -1453,9 +1580,9 @@ mod tests {
         let script = std::fs::read_to_string("tests/populate_postgres_test.sql").unwrap();
         sqlx::raw_sql(&script).execute(&client.pool).await.unwrap();
 
-        // get unique repository names
+        // get unique space names
         let repos = client
-            .get_unique_repository_names(&CardTable::Model)
+            .get_unique_space_names(&CardTable::Model)
             .await
             .unwrap();
 
@@ -1471,23 +1598,33 @@ mod tests {
         sqlx::raw_sql(&script).execute(&client.pool).await.unwrap();
 
         // query stats
-        let stats = client.query_stats(&CardTable::Model, None).await.unwrap();
+        let stats = client
+            .query_stats(&CardTable::Model, None, None)
+            .await
+            .unwrap();
 
         assert_eq!(stats.nbr_names, 9);
         assert_eq!(stats.nbr_versions, 9);
-        assert_eq!(stats.nbr_repositories, 9);
+        assert_eq!(stats.nbr_spaces, 9);
 
         // query stats with search term
         let stats = client
-            .query_stats(&CardTable::Model, Some("Model1"))
+            .query_stats(&CardTable::Model, Some("Model1"), None)
             .await
             .unwrap();
 
         assert_eq!(stats.nbr_names, 2); // for Model1 and Model10
 
+        let stats = client
+            .query_stats(&CardTable::Model, Some("Model1"), Some("repo1"))
+            .await
+            .unwrap();
+
+        assert_eq!(stats.nbr_names, 1); // for Model1
+
         // query page
         let results = client
-            .query_page("name", 0, None, None, &CardTable::Data)
+            .query_page("name", 1, None, None, &CardTable::Data)
             .await
             .unwrap();
 
@@ -1495,7 +1632,7 @@ mod tests {
 
         // query page
         let results = client
-            .query_page("name", 0, None, None, &CardTable::Model)
+            .query_page("name", 1, None, None, &CardTable::Model)
             .await
             .unwrap();
 
@@ -1503,7 +1640,24 @@ mod tests {
 
         // query page
         let results = client
-            .query_page("name", 0, None, Some("repo4"), &CardTable::Model)
+            .query_page("name", 1, None, Some("repo4"), &CardTable::Model)
+            .await
+            .unwrap();
+
+        assert_eq!(results.len(), 1);
+    }
+
+    #[tokio::test]
+    async fn test_postgres_version_page() {
+        let client = db_client().await;
+
+        // Run the SQL script to populate the database
+        let script = std::fs::read_to_string("tests/populate_postgres_test.sql").unwrap();
+        sqlx::raw_sql(&script).execute(&client.pool).await.unwrap();
+
+        // query page
+        let results = client
+            .version_page(1, Some("repo1"), Some("Model1"), &CardTable::Model)
             .await
             .unwrap();
 
@@ -1710,12 +1864,12 @@ mod tests {
         let client = db_client().await;
 
         client
-            .insert_operation("guest", &Operation::Read.to_string(), "model/registry")
+            .insert_audit_event(AuditEvent::default())
             .await
             .unwrap();
 
         // check if the operation was inserted
-        let query = r#"SELECT username  FROM opsml_operations WHERE username = 'guest';"#;
+        let query = r#"SELECT username  FROM opsml_audit_event WHERE username = 'guest';"#;
         let result: String = sqlx::query_scalar(query)
             .fetch_one(&client.pool)
             .await

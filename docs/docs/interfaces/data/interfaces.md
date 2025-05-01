@@ -19,8 +19,8 @@ The `DataInterface` is the primary interface for working with data in `OpsML`. I
 `name`: `str`
 : Name for the data
 
-`repository`: `str`
-: Repository data belongs to
+`space`: `str`
+: space data belongs to
 
 `contact`: `str`
 : Contact information (can be anything you define such as an email or slack channel) (Required)
@@ -61,7 +61,7 @@ Information about the `PandasData` interface.
 from opsml import PandasData, CardInfo, DataCard, CardRegistry
 from opsml.helpers.data import create_fake_data
 
-info = CardInfo(name="data", repository="opsml", contact="user@email.com")
+info = CardInfo(name="data", space="opsml", contact="user@email.com")
 data_registry = CardRegistry("data")
 
 # create fake data
@@ -94,7 +94,7 @@ Information about the `PandasData` interface.
 from opsml import PolarsData, CardInfo, DataCard, CardRegistry
 from opsml.helpers.data import create_fake_data
 
-info = CardInfo(name="data", repository="opsml", contact="user@email.com")
+info = CardInfo(name="data", space="opsml", contact="user@email.com")
 data_registry = CardRegistry("data")
 
 # create fake data
@@ -126,7 +126,7 @@ Information about the `NumpyData` interface.
 from opsml import NumpyData, CardInfo, DataCard, CardRegistry
 import numpy as np
 
-info = CardInfo(name="data", repository="opsml", contact="user@email.com")
+info = CardInfo(name="data", space="opsml", contact="user@email.com")
 data_registry = CardRegistry("data")
 
 data = np.random.rand(10, 100)
@@ -154,7 +154,7 @@ Information about the `ArrowData` interface.
 from opsml import ArrowData, CardInfo, DataCard, CardRegistry
 import pyarrow as pa
 
-info = CardInfo(name="data", repository="opsml", contact="user@email.com")
+info = CardInfo(name="data", space="opsml", contact="user@email.com")
 data_registry = CardRegistry("data")
 
 n_legs = pa.array([2, 4, 5, 100])
@@ -186,7 +186,7 @@ Information about the `TorchData` interface.
 from opsml import TorchData, CardInfo, DataCard, CardRegistry
 import torch
 
-info = CardInfo(name="data", repository="opsml", contact="user@email.com")
+info = CardInfo(name="data", space="opsml", contact="user@email.com")
 data_registry = CardRegistry("data")
 
 X = torch.Tensor([[1.0], [51.0], [89.0]])
@@ -214,7 +214,7 @@ SqlData is an interface for storing sql logic in the event that you prefer to no
 ```python hl_lines="1  6 10"
 from opsml import SqlData, CardInfo, DataCard, CardRegistry
 
-info = CardInfo(name="data", repository="opsml", contact="user@email.com")
+info = CardInfo(name="data", space="opsml", contact="user@email.com")
 data_registry = CardRegistry("data")
 
 data = SqlData(sql_logic={"my_logic": "select * from test_table"})
@@ -245,7 +245,7 @@ These requirements are necessary for `OpsML` to properly save and load your data
 ```python
 from opsml import DataInterface, CardInfo, DataCard, CardRegistry
 
-info = CardInfo(name="data", repository="opsml", contact="opsml_user")
+info = CardInfo(name="data", space="opsml", contact="opsml_user")
 registry = CardRegistry("data")
 
 # DataInterface is a pydantic BaseModel

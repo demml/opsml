@@ -12,7 +12,7 @@ from ..model import ModelSaveKwargs
 class Experiment:
     def start_experiment(
         self,
-        repository: Optional[str] = None,
+        space: Optional[str] = None,
         name: Optional[str] = None,
         code_dir: Optional[Path] = None,
         log_hardware: bool = False,
@@ -22,8 +22,8 @@ class Experiment:
         Start an Experiment
 
         Args:
-            repository (str | None):
-                Repository to associate with `ExperimentCard`
+            space (str | None):
+                space to associate with `ExperimentCard`
             name (str | None):
                 Name to associate with `ExperimentCard`
             code_dir (Path | None):
@@ -158,7 +158,7 @@ class Experiment:
         """
 
 def start_experiment(
-    repository: Optional[str] = None,
+    space: Optional[str] = None,
     name: Optional[str] = None,
     code_dir: Optional[Path] = None,
     log_hardware: bool = False,
@@ -168,8 +168,8 @@ def start_experiment(
     Start an Experiment
 
     Args:
-        repository (str | None):
-            Repository to associate with `ExperimentCard`
+        space (str | None):
+            space to associate with `ExperimentCard`
         name (str | None):
             Name to associate with `ExperimentCard`
         code_dir (Path | None):

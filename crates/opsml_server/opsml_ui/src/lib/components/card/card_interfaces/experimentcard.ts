@@ -74,7 +74,7 @@ export interface UidMetadata {
 
 // Main ExperimentCard interface
 export interface ExperimentCard {
-  repository: string;
+  space: string;
   name: string;
   version: string;
   uid: string;
@@ -86,4 +86,5 @@ export interface ExperimentCard {
   created_at: string; // ISO datetime string
   subexperiment: boolean;
   is_card: boolean;
+  opsml_version: string;
 }

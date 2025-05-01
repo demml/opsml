@@ -11,7 +11,7 @@ from opsml import CardRegistries, ModelCard
 
 registries = CardRegistries()
 
-card = ModelCard(name={name}, repository={repository}, version={version})
+card = ModelCard(name={name}, space={space}, version={version})
 registries.model.register_card(card)
 
 # This also works
@@ -26,7 +26,7 @@ registry.register_card(card)
 
 ```python
 
-registry.load_card(name={name}, repository={repository}, version={version})
+registry.load_card(name={name}, space={space}, version={version})
 
 # or 
 
@@ -35,7 +35,7 @@ registry.load_card(uid={uid})
 # or
 
 from opsml import CardInfo
-info = CardInfo(name={name}, repository={repository}, version={version})
+info = CardInfo(name={name}, space={space}, version={version})
 registry.load_card(info=info)
 ```
 
@@ -45,7 +45,7 @@ registry.load_card(info=info)
 
 ```python
 
-modelcard = registry.load_card(name={name}, repository={repository}, version={version})
+modelcard = registry.load_card(name={name}, space={space}, version={version})
 modelcard.load_model()
 
 # with preprocessor
@@ -59,7 +59,7 @@ modelcard.model
 
 ```python
 
-modelcard = registry.load_card(name={name}, repository={repository}, version={version})
+modelcard = registry.load_card(name={name}, space={space}, version={version})
 modelcard.load_onnx_model()
 
 # with preprocessor

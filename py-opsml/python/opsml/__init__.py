@@ -3,6 +3,7 @@
 
 from .opsml import (  # noqa: F401
     card,
+    cli,
     core,
     data,
     experiment,
@@ -67,3 +68,10 @@ VersionType = core.VersionType
 PromptCard = card.PromptCard
 Prompt = potato_head.Prompt
 Message = potato_head.Message
+
+# Deck
+CardDeck = card.CardDeck
+Card = card.Card
+
+# CLI
+run_opsml_cli = cli.run_opsml_cli

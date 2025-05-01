@@ -8,13 +8,18 @@ on:
   pull_request:
 
 env:
-  RUSTFLAGS: -C debuginfo=0 # Do not produce debug symbols to keep memory usage down
+  RUSTFLAGS: -C debuginfo=0
 
 jobs:
   format-and-lint:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
+
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: "3.x"
 
       - name: Set up Rust
         run: rustup override set stable && rustup update
@@ -32,11 +37,16 @@ jobs:
       - name: Run lints
         run: make lints
 
-  test-Sql-Storage-Utils:
-    runs-on: ubuntu-latest
+  test-cli-windows:
+    runs-on: windows-latest
     needs: format-and-lint
     steps:
       - uses: actions/checkout@v4
+
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: "3.x"
 
       - name: Set up Rust
         run: rustup override set stable && rustup update
@@ -44,22 +54,65 @@ jobs:
       - name: Cache Rust
         uses: Swatinem/rust-cache@v2
 
-      - name: Run sql tests
-        run: make test.sql
+      - name: Run CLI tests
+        run: make test.cli
+        env:
+          RUST_BACKTRACE: 1
+          RUST_LOG: debug
 
-      - name: Run storage tests
-        run: make test.storage.server
-
-      - name: Run util tests
-        run: make test.utils
-
-  # this will run local client and server storage tests.
-  # Intergration tests will be run when prs are merged to main
-  test-server:
-    runs-on: ubuntu-latest
+  test-cli-macos:
+    runs-on: macos-latest
     needs: format-and-lint
     steps:
       - uses: actions/checkout@v4
+
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: "3.x"
+
+      - name: Set up Rust
+        run: rustup override set stable && rustup update
+
+      - name: Cache Rust
+        uses: Swatinem/rust-cache@v2
+
+      - name: Run CLI tests
+        run: make test.cli
+        env:
+          RUST_BACKTRACE: 1
+          RUST_LOG: debug
+
+  test-unit:
+    runs-on: ubuntu-22.04
+    needs: format-and-lint
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: "3.x"
+
+      - name: Set up Rust
+        run: rustup override set stable && rustup update
+
+      - name: Cache Rust
+        uses: Swatinem/rust-cache@v2
+
+      - name: Run Unit Tests
+        run: make test.unit
+
+  test-storage-client:
+    runs-on: ubuntu-22.04
+    needs: [format-and-lint, test-unit]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: "3.x"
 
       - name: Set up Rust
         run: rustup override set stable && rustup update
@@ -82,9 +135,6 @@ jobs:
       - name: Run storage client tests
         run: make test.storage.client
 
-      - name: Run server tests
-        run: make test.server
-
       - name: Shutdown Server
         run: make stop.server
 
@@ -98,9 +148,14 @@ jobs:
         python-version: ["3.10", "3.11", "3.12"]
 
     runs-on: ${{ matrix.os }}-latest
-    needs: [format-and-lint]
+    needs: [test-storage-client, test-cli-windows, test-cli-macos]
     steps:
       - uses: actions/checkout@v4
+
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: "3.x"
 
       - name: Install libomp on macOS
         if: matrix.os == 'macos'
@@ -164,6 +219,11 @@ jobs:
     needs: [format-and-lint]
     steps:
       - uses: actions/checkout@v4
+
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: "3.x"
 
       - name: install rust stable
         uses: dtolnay/rust-toolchain@stable

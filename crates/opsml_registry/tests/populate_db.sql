@@ -1,5 +1,5 @@
 -- Populate opsml_data_registry
-INSERT INTO opsml_data_registry (uid, app_env, name, repository, major, minor, patch, pre_tag, build_tag, version, tags, data_type, experimentcard_uid,  auditcard_uid, interface_type) VALUES 
+INSERT INTO opsml_data_registry (uid, app_env, name, space, major, minor, patch, pre_tag, build_tag, version, tags, data_type, experimentcard_uid,  auditcard_uid, interface_type) VALUES 
 ('550e8400-e29b-41d4-a716-446655440000', 'development', 'Data1', 'repo1', 1, 0, 0, 'alpha', 'build1', '1.0.0-alpha+build1',  '["key1", "key2"]', 'type1', 'experimentcard1',  'auditcard1', 'typeA'),
 ('550e8400-e29b-41d4-a716-446655440001', 'development', 'Data1', 'repo1', 1, 0, 1, 'beta', 'build2', '1.0.1-beta+build2',  '[]', 'type2', 'experimentcard2',  'auditcard2', 'typeB'),
 ('550e8400-e29b-41d4-a716-446655440002', 'development', 'Data1', 'repo1', 1, 1, 0, 'gamma', 'build3', '1.1.0-gamma+build3', '[]', 'type3', 'experimentcard3',  'auditcard3', 'typeC'),
@@ -12,7 +12,7 @@ INSERT INTO opsml_data_registry (uid, app_env, name, repository, major, minor, p
 ('550e8400-e29b-41d4-a716-446655440009', 'development', 'Data1', 'repo1', 3, 0, 1, 'kappa', 'build10', '3.0.1', '[]', 'type10', 'experimentcard10',  'auditcard10', 'typeJ');
 
 -- Populate opsml_model_registry
-INSERT INTO opsml_model_registry (uid, app_env, name, repository, major, minor, patch, pre_tag, build_tag, version,  tags, datacard_uid, data_type, model_type, experimentcard_uid,  auditcard_uid, interface_type, task_type) VALUES 
+INSERT INTO opsml_model_registry (uid, app_env, name, space, major, minor, patch, pre_tag, build_tag, version,  tags, datacard_uid, data_type, model_type, experimentcard_uid,  auditcard_uid, interface_type, task_type) VALUES 
 ('550e8400-e29b-41d4-a716-446655440000', 'development', 'Model1', 'repo1', 1, 0, 0, 'alpha', 'build1', '1.0.0', '[]', 'datacard1', 'sample1', 'type1', 'experimentcard1',  'auditcard1', 'typeA', 'task1'),
 ('550e8400-e29b-41d4-a716-446655440001', 'development', 'Model2', 'repo2', 1, 0, 1, 'beta', 'build2', '1.0.0', '[]', 'datacard2', 'sample2', 'type2', 'experimentcard2',  'auditcard2', 'typeB', 'task2'),
 ('550e8400-e29b-41d4-a716-446655440002', 'development', 'Model3', 'repo3', 1, 1, 0, 'gamma', 'build3', '1.0.0', '[]', 'datacard3', 'sample3', 'type3', 'experimentcard3',  'auditcard3', 'typeC', 'task3'),
@@ -25,7 +25,7 @@ INSERT INTO opsml_model_registry (uid, app_env, name, repository, major, minor, 
 ('550e8400-e29b-41d4-a716-446655440009', 'development', 'Model10', 'repo10', 3, 0, 1, 'kappa', 'build10', '1.0.0', '[]', 'datacard10', 'sample10', 'type10', 'experimentcard10',  'auditcard10', 'typeJ', 'task10');
 
 -- Populate opsml_experiment_registry
-INSERT INTO opsml_experiment_registry (uid, created_at, app_env, name, repository, major, minor, patch, pre_tag, build_tag, version,  tags, datacard_uids, modelcard_uids,  promptcard_uids) VALUES 
+INSERT INTO opsml_experiment_registry (uid, created_at, app_env, name, space, major, minor, patch, pre_tag, build_tag, version,  tags, datacard_uids, modelcard_uids,  promptcard_uids) VALUES 
 ('550e8400-e29b-41d4-a716-446655440000', '2023-11-28 00:00:00', 'development', 'Run1', 'repo1', 1, 0, 0, 'alpha', 'build1', '0.0.0',  '[]', '["datacard1"]', '["modelcard1"]', '["modelcard1"]'),
 ('550e8400-e29b-41d4-a716-446655440001', '2023-11-28 00:00:00', 'development', 'Run2', 'repo2', 1, 0, 1, 'beta', 'build2',  '0.0.1', '[]', '["datacard1"]', '["modelcard1"]', '["modelcard1"]'),
 ('550e8400-e29b-41d4-a716-446655440002', '2023-11-29 00:00:00', 'development', 'Run3', 'repo3', 1, 1, 0, 'gamma', 'build3', '0.0.2', '[]', '["datacard1"]', '["modelcard1"]', '["modelcard1"]'),
@@ -38,7 +38,7 @@ INSERT INTO opsml_experiment_registry (uid, created_at, app_env, name, repositor
 ('550e8400-e29b-41d4-a716-446655440009', '2023-11-29 00:00:00', 'development', 'Run10', 'repo10', 3, 0, 1, 'kappa', 'build10', '0.0.9', '[]', '["datacard1"]', '["modelcard1"]',  '["modelcard1"]');
 
 -- Populate opsml_audit_registry
-INSERT INTO opsml_audit_registry (uid, app_env, name, repository, major, minor, patch, pre_tag, build_tag, version,  tags, approved, datacard_uids, modelcard_uids, experimentcard_uids) VALUES 
+INSERT INTO opsml_audit_registry (uid, app_env, name, space, major, minor, patch, pre_tag, build_tag, version,  tags, approved, datacard_uids, modelcard_uids, experimentcard_uids) VALUES 
 ('550e8400-e29b-41d4-a716-446655440000', 'development', 'Audit1', 'repo1', 1, 0, 0, 'alpha', 'build1', '0.0.0', '[]', 1, '[]', '[]', '[]'), 
 ('550e8400-e29b-41d4-a716-446655440001', 'development', 'Audit2', 'repo2', 1, 0, 1, 'beta', 'build2', '0.0.0', '[]', 0, '[]', '[]', '[]'),
 ('550e8400-e29b-41d4-a716-446655440002', 'development', 'Audit3', 'repo3', 1, 1, 0, 'gamma', 'build3', '0.0.0', '[]', 1, '[]', '[]', '[]'),
@@ -52,5 +52,5 @@ INSERT INTO opsml_audit_registry (uid, app_env, name, repository, major, minor, 
 
 
 
-INSERT INTO opsml_users (username, password_hash, permissions, group_permissions, refresh_token) VALUES
+INSERT INTO opsml_user (username, password_hash, permissions, group_permissions, refresh_token) VALUES
 ('admin', '$argon2id$v=19$m=19456,t=2,p=1$+OB+o3Q2x9jwj0Tz1Y8vcA$TXAyajadxyCdaYwjU3zvEylBt9KMosfwfx7xC6PERgI', '["read", "write"]', '["admin"]', NULL)

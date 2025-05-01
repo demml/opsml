@@ -1,5 +1,8 @@
+from pathlib import Path
+from typing import Optional
+
 class OpsmlTestServer:
-    def __init__(self, cleanup: bool = True) -> None:
+    def __init__(self, cleanup: bool = True, base_path: Optional[Path] = None) -> None:
         """Instantiates the test server.
 
         When the test server is used as a context manager, it will start the server
@@ -8,8 +11,11 @@ class OpsmlTestServer:
         exits and the env vars will be reset.
 
         Args:
-            cleanup (bool, optional): Whether to cleanup the server after the test.
-            Defaults to True.
+            cleanup (bool, optional):
+                Whether to cleanup the server after the test. Defaults to True.
+            base_path (Optional[Path], optional):
+                The base path for the server. Defaults to None. This is primarily
+                used for testing loading attributes from a pyproject.toml file.
         """
 
     def start_server(self) -> None:

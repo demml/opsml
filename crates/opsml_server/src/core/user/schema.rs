@@ -1,7 +1,7 @@
 use opsml_sql::schemas::schema::User;
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct CreateUserRequest {
     pub username: String,
     pub password: String,

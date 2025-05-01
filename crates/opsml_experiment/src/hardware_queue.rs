@@ -1,23 +1,22 @@
 use chrono::Utc;
 use opsml_error::ExperimentError;
-use opsml_registry::enums::OpsmlRegistry;
+use opsml_registry::base::OpsmlRegistry;
+use opsml_state::app_state;
 use opsml_types::{cards::HardwareMetricLogger, contracts::HardwareMetricRequest};
 use std::sync::Arc;
-use tokio::sync::{watch, Mutex};
+use tokio::sync::watch;
 use tokio::time::{self, Duration};
 use tracing::Instrument;
 use tracing::{debug, error, info_span};
 
 async fn insert_metrics(
-    registry: Arc<Mutex<OpsmlRegistry>>,
+    registry: Arc<OpsmlRegistry>,
     hw_logger: &mut HardwareMetricLogger,
     experiment_uid: &str,
 ) -> Result<(), ExperimentError> {
-    debug!("Locking registry for metrics");
-    let mut registry = registry.lock().await;
-
     debug!("Getting metrics");
     let metrics = hw_logger.get_metrics();
+
     let request = HardwareMetricRequest {
         experiment_uid: experiment_uid.to_string(),
         metrics: metrics.clone(),
@@ -28,13 +27,12 @@ async fn insert_metrics(
 }
 
 fn start_background_task(
-    rt: Arc<tokio::runtime::Runtime>,
-    registry: Arc<Mutex<OpsmlRegistry>>,
+    registry: Arc<OpsmlRegistry>,
     mut stop_rx: watch::Receiver<()>,
     experiment_uid: String,
 ) -> Result<(), ExperimentError> {
     let registry = registry.clone();
-    let handle = rt.clone();
+    let state = app_state();
     let mut last_inserted = Utc::now().naive_utc();
     let mut hw_logger = HardwareMetricLogger::new();
 
@@ -67,7 +65,9 @@ fn start_background_task(
         }
     };
 
-    handle.spawn(future.instrument(info_span!("Hardware Queue")));
+    state
+        .runtime
+        .spawn(future.instrument(info_span!("Hardware Queue")));
 
     Ok(())
 }
@@ -78,13 +78,11 @@ pub struct HardwareQueue {
 
 impl HardwareQueue {
     pub fn start(
-        rt: Arc<tokio::runtime::Runtime>,
-        registry: Arc<Mutex<OpsmlRegistry>>,
+        registry: Arc<OpsmlRegistry>,
         experiment_uid: String,
     ) -> Result<Self, ExperimentError> {
         let (stop_tx, stop_rx) = watch::channel(());
-
-        start_background_task(rt, registry, stop_rx, experiment_uid)?;
+        start_background_task(registry, stop_rx, experiment_uid)?;
 
         Ok(Self { stop_tx })
     }

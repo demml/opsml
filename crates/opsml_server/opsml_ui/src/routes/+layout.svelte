@@ -26,10 +26,16 @@
   </svelte:head>
 
 {#if show}
-  <div class="layout overflow-auto font-sans" id="page">
+  <div class="layout h-screen font-sans overflow-hidden" id="page">
     <Navbar/>
-      <ToastProvider messageBase="text-base" placement="top-end" stateError="bg-error-500 justify-center text-black border-2 border-black" stateSuccess="bg-secondary-500 text-black border-2 border-black">
-        {@render children()}
+      <ToastProvider 
+        messageBase="text-base" 
+        placement="top-end" 
+        stateError="bg-error-500 justify-center text-black border-2 border-black" 
+        stateSuccess="bg-secondary-500 text-black border-2 border-black">
+        <div class="flex-1 overflow-auto">
+          {@render children()}
+        </div>
       </ToastProvider>
   </div>
 {:else}

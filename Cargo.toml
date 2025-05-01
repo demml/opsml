@@ -19,10 +19,12 @@ repository = "https://github.com/demml/opsml"
 [workspace.dependencies]
 opsml-auth = { path = "crates/opsml_auth" }
 opsml-cards = { path = "crates/opsml_cards" }
+opsml-cli = { path = "crates/opsml_cli" }
 opsml-crypt = { path = "crates/opsml_crypt" }
 opsml-client = { path = "crates/opsml_client" }
 opsml-colors = { path = "crates/opsml_colors" }
 opsml-error = { path = "crates/opsml_error" }
+opsml-events = { path = "crates/opsml_events" }
 opsml-interfaces = { path = "crates/opsml_interfaces" }
 opsml-registry = { path = "crates/opsml_registry" }
 opsml-experiment = { path = "crates/opsml_experiment" }
@@ -30,15 +32,20 @@ opsml-server = { path = "crates/opsml_server" }
 opsml-semver = { path = "crates/opsml_semver" }
 opsml-settings = { path = "crates/opsml_settings" }
 opsml-sql = { path = "crates/opsml_sql" }
+opsml-state = { path = "crates/opsml_state" }
 opsml-storage = { path = "crates/opsml_storage" }
 opsml-todo = { path = "crates/opsml_todo" }
+opsml-toml = { path = "crates/opsml_toml" }
 opsml-types = { path = "crates/opsml_types" }
 opsml-utils = { path = "crates/opsml_utils" }
+opsml-version = { path = "crates/opsml_version" }
 potato-head = { path = "crates/potato_head" }
 
 aes-gcm = "0.*"
 anyhow = "1.0.93"
 async-trait = "0.*"
+axum = { version = "0.*", features = ["multipart", "macros"] }
+axum-extra = { version =  "0.*", features = ["cookie", "typed-header"] }
 aws-sdk-s3 = "1.75.0"
 azure_identity = "0.21.0" 
 azure_storage = "0.21.0"
@@ -47,33 +54,35 @@ aws-config = {version = "1.*", features = ["sso"]}
 aws-types = "1.*"
 base64 = "0.22.*"
 bytes = "1.*"
-axum = { version = "0.*", features = ["multipart", "macros"] }
-axum-extra = { version =  "0.*", features = ["cookie"] }
-clap = { version = "4.*", features = ["derive"] }
+clap = { version = "4.*", features = ["derive", "string", "wrap_help"] }
 chrono = { version = "0.*", features = ["serde"] }
 colored_json = "5.*"
+dirs = "6.*"
 dynfmt = { version = "0.*", features = ["curly"] }
 futures = "0.*"
 futures-util = "0.*"
 google-cloud-storage = { version = "0.24.*", features  = ["auth"] }
 google-cloud-auth = { version = "0.17.2" }
+headers = { version = "0.*" }
 hmac = "0.*"
 hkdf = "0.*"
 jsonwebtoken = "9.*"
 mime_guess = "2.*"
+mockall = "0.*"
+mockito = "1.*"
 names = "0.*"
 ort = { version = "2.0.0-rc.9" }
 owo-colors = "4.*"
 password-auth = "1.*"
 pbkdf2 = "0.*"
-pyo3 = { version = "0.23", features = ["extension-module", "anyhow", "serde", "chrono"] }
+pyo3 = { version = "0.*", features = ["extension-module", "anyhow", "serde", "chrono"] }
 rand = { version = "0.*"}
 rayon = "1.*"
 regex = "1.*"
 reqwest = { version = "0.12.*", features = ["json", "stream", "multipart", "rustls-tls", "rustls-tls-native-roots", "blocking" ], default-features = false }
 rust-embed = "8.*"
 reqwest-middleware = "0.*"
-rusty-logging = { git = "https://github.com/demml/rusty-logger.git", version = "0.4.0", branch = "add-serialization" }
+rusty-logging = "0.*"
 scouter-client = { git = "https://github.com/demml/scouter.git", branch = "opsmlUi" }
 sha2 = "0.*"
 semver = "1.*"
@@ -89,13 +98,17 @@ time = "0.*"
 
 tokio = { version = ">1.13.0", features = ["rt", "rt-multi-thread", "macros"] }
 tokio-util = { version = "0.*",  features = ["codec", "io"]}
+tokio-stream = { version = "0.*", features = ["sync"] }
+toml_edit = { version = "0.*" , features = ["serde"]}
 tower-http = { version = "0.*", features = ["cors", "fs", "trace"] }
 tracing = "0.*"
 tracing-appender = "0.*"
 tracing-core = "0.*"
 tracing-subscriber = {version = "0.*", features = ["json", "time"]}
-uuid = { version = "1.*", features = ["v4"] }
+uuid = { version = "1.*", features = ["v7"] }
 walkdir = "2.*"
+zip = "2.*"
+
 
 
 [profile.release]

@@ -1,4 +1,5 @@
-use chrono::{NaiveDateTime, Timelike};
+use chrono::Timelike;
+use chrono::{DateTime, NaiveDateTime, Utc};
 use colored_json::{Color, ColorMode, ColoredFormatter, PrettyFormatter, Styler};
 use opsml_error::error::UtilError;
 use pyo3::exceptions::PyValueError;
@@ -14,12 +15,11 @@ use tracing::error;
 use uuid::Uuid;
 
 const PUNCTUATION: &str = "!\"#$%&'()*+,./:;<=>?@[\\]^`{|}~";
-const NAME_REPOSITORY_PATTERN: &str = r"^[a-z0-9]+(?:[-a-z0-9]+)*/[-a-z0-9]+$";
+const NAME_SPACE_PATTERN: &str = r"^[a-z0-9]+(?:[-a-z0-9]+)*/[-a-z0-9]+$";
 
 /// Clean a string by removing punctuation and converting to lowercase
 ///
 /// # Arguments
-///
 /// * `input` - A string slice that holds the input string
 ///
 /// # Returns
@@ -40,16 +40,13 @@ pub fn clean_string(input: &str) -> Result<String, UtilError> {
         .replace('_', "-"))
 }
 
-pub fn validate_name_repository_pattern(name: &str, repository: &str) -> Result<(), UtilError> {
-    let name_repo = format!("{name}/{repository}");
+pub fn validate_name_space_pattern(name: &str, space: &str) -> Result<(), UtilError> {
+    let space_name = format!("{space}/{name}");
 
-    let re = Regex::new(NAME_REPOSITORY_PATTERN)
-        .map_err(|_| UtilError::Error("Failed to create regex".to_string()))?;
+    let re = Regex::new(NAME_SPACE_PATTERN).map_err(|_| UtilError::RegexError)?;
 
-    if !re.is_match(&name_repo) {
-        return Err(UtilError::Error(
-            "Invalid name/repository pattern".to_string(),
-        ));
+    if !re.is_match(&space_name) {
+        return Err(UtilError::InvalidSpaceNamePattern);
     }
 
     if name.len() > 53 {
@@ -59,23 +56,21 @@ pub fn validate_name_repository_pattern(name: &str, repository: &str) -> Result<
     Ok(())
 }
 
-/// Check if a string is a valid `UUIDv4`
+/// Check if a string is a valid `UUIDv7`
 ///
 /// # Arguments
-///
 /// * `uid` - A string slice that holds the UUID
 ///
 /// # Returns
-///
 /// * `bool` - A boolean indicating if the UUID is valid
 ///
 /// # Errors
 ///
 /// This function will return an error if:
 /// - The UUID string cannot be parsed.
-pub fn is_valid_uuid4(uid: &str) -> Result<bool, UtilError> {
+pub fn is_valid_uuidv7(uid: &str) -> Result<bool, UtilError> {
     match Uuid::parse_str(uid) {
-        Ok(uuid) => Ok(uuid.get_version_num() == 4),
+        Ok(uuid) => Ok(uuid.get_version_num() == 7),
         Err(_) => Err(UtilError::UuidError),
     }
 }
@@ -93,7 +88,7 @@ pub fn is_valid_uuid4(uid: &str) -> Result<bool, UtilError> {
 pub fn get_epoch_time_to_search(max_date: &str) -> Result<i64, UtilError> {
     const YEAR_MONTH_DATE: &str = "%Y-%m-%d";
 
-    // Parse the date string into a NaiveDateTime
+    // Parse the date string into a  DateTime<Utc>
     let converted_date = NaiveDateTime::parse_from_str(max_date, YEAR_MONTH_DATE)
         .map_err(|_| UtilError::DateError)?;
 
@@ -106,7 +101,7 @@ pub fn get_epoch_time_to_search(max_date: &str) -> Result<i64, UtilError> {
         .with_second(59)
         .ok_or(UtilError::DateError)?;
 
-    // Convert NaiveDateTime to timestamp in microseconds
+    // Convert  DateTime<Utc> to timestamp in microseconds
     let timestamp = max_date.and_utc().timestamp() * 1_000_000;
 
     Ok(timestamp)
@@ -120,8 +115,12 @@ pub fn get_utc_timestamp() -> i64 {
     chrono::Utc::now().timestamp()
 }
 
-pub fn get_utc_datetime() -> NaiveDateTime {
-    chrono::Utc::now().naive_utc()
+pub fn get_utc_datetime() -> DateTime<Utc> {
+    Utc::now() // Returns DateTime<Utc> directly
+}
+
+pub fn create_uuid7() -> String {
+    Uuid::now_v7().to_string()
 }
 
 pub struct PyHelperFuncs {}
@@ -376,7 +375,6 @@ pub fn create_tmp_path() -> Result<PathBuf, UtilError> {
 /// Unwraps a Python string attribute from a `PyAny` object.
 ///
 /// # Arguments
-///
 /// * `obj` - A reference to a `PyAny` object.
 /// * `field` - The name of the attribute to unwrap.
 ///
@@ -422,15 +420,15 @@ mod tests {
     }
 
     #[test]
-    fn test_name_repository_validation() {
+    fn test_name_space_validation() {
         let name = "hello";
-        let repository = "world";
+        let space = "world";
 
-        assert!(super::validate_name_repository_pattern(name, repository).is_ok());
+        assert!(super::validate_name_space_pattern(name, space).is_ok());
 
         let name = "llllllllllllllllloooooooooooooonnnnnnnnnnnnnnggggggggggggggg";
-        let repository = "nnnnnnnnnnnnnaaaaaaaaaaaaaaammmmmmmmmmmmmeeeeeeeeeee";
+        let space = "nnnnnnnnnnnnnaaaaaaaaaaaaaaammmmmmmmmmmmmeeeeeeeeeee";
 
-        assert!(super::validate_name_repository_pattern(name, repository).is_err());
+        assert!(super::validate_name_space_pattern(name, space).is_err());
     }
 }

@@ -1,36 +1,60 @@
 import type { RegistryType } from "$lib/utils";
 
-export type RepositoryResponse = {
-  repositories: string[];
-};
+export interface RegistryStatsRequest {
+  registry_type: RegistryType;
+  search_term?: string;
+  space?: string;
+}
+export interface spaceResponse {
+  spaces: string[];
+}
 
-export type QueryStats = {
+export interface QueryStats {
   nbr_names: number;
-  nbr_repositories: number;
+  nbr_spaces: number;
   nbr_versions: number;
-};
+}
 
-export type RegistryStatsResponse = {
+export interface RegistryStatsResponse {
   stats: QueryStats;
-};
+}
 
-export type CardSummary = {
-  repository: string;
+export interface CardSummary {
+  space: string;
   name: string;
   version: string;
   versions: number;
-  updated_at: string; // Assuming NaiveDateTime is serialized as a string
-  created_at: string; // Assuming NaiveDateTime is serialized as a string
+  updated_at: string;
+  created_at: string;
   row_num: number;
-};
+}
 
-export type QueryPageResponse = {
+export interface VersionSummary {
+  space: string;
+  name: string;
+  version: string;
+  created_at: string;
+  row_num: number;
+}
+
+export interface VersionPageResponse {
+  summaries: VersionSummary[];
+}
+
+export interface QueryPageResponse {
   summaries: CardSummary[];
-};
+}
 
 export interface RegistryPageReturn {
   spaces: string[];
   registry_type: RegistryType;
   registryStats: RegistryStatsResponse;
   registryPage: QueryPageResponse;
+}
+
+export interface VersionPageRequest {
+  registry_type: RegistryType;
+  space?: string;
+  name?: string;
+  page?: number;
 }

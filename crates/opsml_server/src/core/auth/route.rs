@@ -1,4 +1,5 @@
 use crate::core::auth::schema::{Authenticated, LoginRequest, LoginResponse};
+use crate::core::error::{internal_server_error, OpsmlServerError};
 use crate::core::state::AppState;
 use crate::core::user::utils::get_user;
 use anyhow::{Context, Result};
@@ -11,8 +12,8 @@ use axum::{
     routing::{get, post},
     Json, Router,
 };
-use opsml_client::JwtToken;
 use opsml_sql::base::SqlClient;
+use opsml_types::JwtToken;
 use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::sync::Arc;
 use tracing::{debug, error, instrument};
@@ -31,7 +32,7 @@ use tracing::{debug, error, instrument};
 pub async fn api_login_handler(
     State(state): State<Arc<AppState>>,
     headers: HeaderMap,
-) -> Result<Json<JwtToken>, (StatusCode, Json<serde_json::Value>)> {
+) -> Result<Json<JwtToken>, (StatusCode, Json<OpsmlServerError>)> {
     // get Username and Password from headers
     let username = headers
         .get("Username")
@@ -39,7 +40,7 @@ pub async fn api_login_handler(
             error!("Username not found in headers");
             (
                 StatusCode::BAD_REQUEST,
-                Json(serde_json::json!({ "error": "Username not found in headers" })),
+                Json(OpsmlServerError::username_header_not_found()),
             )
         })?
         .to_str()
@@ -47,7 +48,7 @@ pub async fn api_login_handler(
             error!("Invalid UTF-8 in Username header");
             (
                 StatusCode::BAD_REQUEST,
-                Json(serde_json::json!({ "error": "Invalid username format" })),
+                Json(OpsmlServerError::invalid_username_format()),
             )
         })?
         .to_string();
@@ -58,7 +59,7 @@ pub async fn api_login_handler(
             error!("Password not found in headers");
             (
                 StatusCode::BAD_REQUEST,
-                Json(serde_json::json!({ "error": "Password not found in headers" })),
+                Json(OpsmlServerError::password_header_not_found()),
             )
         })?
         .to_str()
@@ -66,20 +67,29 @@ pub async fn api_login_handler(
             error!("Invalid UTF-8 in Password header");
             (
                 StatusCode::BAD_REQUEST,
-                Json(serde_json::json!({ "error": "Invalid password format" })),
+                Json(OpsmlServerError::invalid_password_format()),
             )
         })?
         .to_string();
 
     // get user from database
-    let mut user = get_user(&state.sql_client, &username).await?;
+    let mut user = match get_user(&state.sql_client, &username).await {
+        Ok(user) => user,
+        Err(_) => {
+            return OpsmlServerError::user_validation_error()
+                .into_response(StatusCode::BAD_REQUEST);
+        }
+    };
+
     // check if password is correct
     state
         .auth_manager
         .validate_user(&user, &password)
-        .map_err(|e| {
-            error!("Failed to validate user: {}", e);
-            (StatusCode::UNAUTHORIZED, Json(serde_json::json!({})))
+        .map_err(|_| {
+            (
+                StatusCode::UNAUTHORIZED,
+                Json(OpsmlServerError::user_validation_error()),
+            )
         })?;
 
     // we may get multiple requests for the same user (setting up storage and registries), so we
@@ -88,10 +98,7 @@ pub async fn api_login_handler(
     // generate JWT token
     let jwt_token = state.auth_manager.generate_jwt(&user).map_err(|e| {
         error!("Failed to generate JWT token: {}", e);
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(serde_json::json!({})),
-        )
+        internal_server_error(e, "Failed to generate JWT token")
     })?;
 
     // check if refresh token is already set.
@@ -112,10 +119,7 @@ pub async fn api_login_handler(
         .generate_refresh_token(&user)
         .map_err(|e| {
             error!("Failed to generate refresh token: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(serde_json::json!({})),
-            )
+            internal_server_error(e, "Failed to generate refresh token")
         })?;
 
     user.refresh_token = Some(refresh_token);
@@ -123,10 +127,7 @@ pub async fn api_login_handler(
     // set refresh token in db
     state.sql_client.update_user(&user).await.map_err(|e| {
         error!("Failed to set refresh token in database: {}", e);
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(serde_json::json!({})),
-        )
+        internal_server_error(e, "Failed to set refresh token in database")
     })?;
 
     // update scouter with new refresh token
@@ -147,37 +148,41 @@ pub async fn api_login_handler(
 async fn ui_login_handler(
     State(state): State<Arc<AppState>>,
     Json(req): Json<LoginRequest>,
-) -> Result<Json<LoginResponse>, (StatusCode, Json<serde_json::Value>)> {
+) -> Result<Json<LoginResponse>, (StatusCode, Json<OpsmlServerError>)> {
     // get Username and Password from headers
 
     // get user from database
-    let mut user = get_user(&state.sql_client, &req.username).await?;
+    let mut user = match get_user(&state.sql_client, &req.username).await {
+        Ok(user) => user,
+        Err(_) => {
+            return OpsmlServerError::user_validation_error()
+                .into_response(StatusCode::BAD_REQUEST);
+        }
+    };
 
     // check if password is correct
     state
         .auth_manager
         .validate_user(&user, &req.password)
-        .map_err(|e| {
-            error!("Failed to validate user: {}", e);
-            (StatusCode::UNAUTHORIZED, Json(serde_json::json!({})))
+        .map_err(|_| {
+            (
+                StatusCode::UNAUTHORIZED,
+                Json(OpsmlServerError::user_validation_error()),
+            )
         })?;
 
     // generate JWT token
     let jwt_token = state.auth_manager.generate_jwt(&user).map_err(|e| {
         error!("Failed to generate JWT token: {}", e);
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(serde_json::json!({})),
-        )
+        internal_server_error(e, "Failed to generate JWT token")
     })?;
     let refresh_token = state
         .auth_manager
         .generate_refresh_token(&user)
         .map_err(|e| {
-            error!("Failed to generate refresh token: {}", e);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(serde_json::json!({})),
+                Json(OpsmlServerError::refresh_token_error(e)),
             )
         })?;
 
@@ -185,10 +190,9 @@ async fn ui_login_handler(
 
     // set refresh token in db
     state.sql_client.update_user(&user).await.map_err(|e| {
-        error!("Failed to set refresh token in database: {}", e);
         (
             StatusCode::INTERNAL_SERVER_ERROR,
-            Json(serde_json::json!({})),
+            Json(OpsmlServerError::refresh_token_error(e)),
         )
     })?;
 
@@ -211,7 +215,7 @@ async fn ui_login_handler(
 pub async fn api_refresh_token_handler(
     State(state): State<Arc<AppState>>,
     headers: HeaderMap,
-) -> Result<Json<JwtToken>, (StatusCode, Json<serde_json::Value>)> {
+) -> Result<Json<JwtToken>, (StatusCode, Json<OpsmlServerError>)> {
     let bearer_token = headers
         .get(header::AUTHORIZATION)
         .and_then(|auth_header| auth_header.to_str().ok())
@@ -227,19 +231,26 @@ pub async fn api_refresh_token_handler(
             .auth_manager
             .decode_jwt_without_validation(&bearer_token)
             .map_err(|e| {
-                error!("Failed to decode JWT token: {}", e);
-                (StatusCode::UNAUTHORIZED, Json(serde_json::json!({})))
+                (
+                    StatusCode::UNAUTHORIZED,
+                    Json(OpsmlServerError::jwt_decode_error(e)),
+                )
             })?;
 
         // get user from database
-        let mut user = get_user(&state.sql_client, &claims.sub).await?;
+        let mut user = match get_user(&state.sql_client, &claims.sub).await {
+            Ok(user) => user,
+            Err(_) => {
+                return OpsmlServerError::user_validation_error()
+                    .into_response(StatusCode::BAD_REQUEST);
+            }
+        };
 
         // generate JWT token
-        let jwt_token = state.auth_manager.generate_jwt(&user).map_err(|e| {
-            error!("Failed to generate JWT token: {}", e);
+        let jwt_token = state.auth_manager.generate_jwt(&user).map_err(|_| {
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(serde_json::json!({})),
+                Json(OpsmlServerError::failed_token_generation()),
             )
         })?;
 
@@ -248,10 +259,9 @@ pub async fn api_refresh_token_handler(
             .auth_manager
             .generate_refresh_token(&user)
             .map_err(|e| {
-                error!("Failed to generate refresh token: {}", e);
                 (
                     StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(serde_json::json!({})),
+                    Json(OpsmlServerError::refresh_token_error(e)),
                 )
             })?;
 
@@ -260,25 +270,19 @@ pub async fn api_refresh_token_handler(
         // set refresh token in db
         state.sql_client.update_user(&user).await.map_err(|e| {
             error!("Failed to set refresh token in database: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(serde_json::json!({})),
-            )
+            internal_server_error(e, "Failed to set refresh token in database")
         })?;
 
         Ok(Json(JwtToken { token: jwt_token }))
     } else {
-        Err((
-            StatusCode::UNAUTHORIZED,
-            Json(serde_json::json!({ "error": "No refresh token found" })),
-        ))
+        OpsmlServerError::refresh_token_not_found().into_response(StatusCode::BAD_REQUEST)
     }
 }
 
 async fn validate_jwt_token(
     State(state): State<Arc<AppState>>,
     headers: HeaderMap,
-) -> Result<Json<Authenticated>, (StatusCode, Json<serde_json::Value>)> {
+) -> Result<Json<Authenticated>, (StatusCode, Json<OpsmlServerError>)> {
     let bearer_token = headers
         .get(header::AUTHORIZATION)
         .and_then(|auth_header| auth_header.to_str().ok())
@@ -294,20 +298,11 @@ async fn validate_jwt_token(
             Ok(_) => Ok(Json(Authenticated {
                 is_authenticated: true,
             })),
-            Err(e) => {
-                error!("Failed to validate JWT token: {}", e);
-                Err((
-                    StatusCode::UNAUTHORIZED,
-                    Json(serde_json::json!({ "error": "Invalid token" })),
-                ))
-            }
+            Err(_) => OpsmlServerError::invalid_token().into_response(StatusCode::UNAUTHORIZED),
         }
     } else {
         debug!("No bearer token found");
-        Err((
-            StatusCode::UNAUTHORIZED,
-            Json(serde_json::json!({ "error": "No bearer token found" })),
-        ))
+        OpsmlServerError::bearer_token_not_found().into_response(StatusCode::BAD_REQUEST)
     }
 }
 

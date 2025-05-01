@@ -2,7 +2,6 @@ from opsml.core import (
     CommonKwargs,
     SaveName,
     Suffix,
-    OpsmlConfig,
     VersionType,
 )
 from opsml.card import RegistryType
@@ -92,11 +91,6 @@ def test_save_name_as_string(variant, expected_string):
 )
 def test_suffix_as_string(variant, expected_string):
     assert variant.as_string() == expected_string
-
-
-def test_opsml_config():
-    config = OpsmlConfig()
-    assert config is not None
 
 
 def test_version_type_enum():

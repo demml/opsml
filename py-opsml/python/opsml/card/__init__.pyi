@@ -2,12 +2,27 @@
 # type: ignore
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, Generic, List, Literal, Optional, TypeVar, Union, overload
+from typing import (
+    Any,
+    Dict,
+    Generic,
+    List,
+    Literal,
+    Optional,
+    TypeAlias,
+    TypeVar,
+    Union,
+    overload,
+)
 
 from ..core import FeatureSchema, VersionType
 from ..data import DataInterface, DataLoadKwargs, DataSaveKwargs, DataType
 from ..model import ModelInterface, ModelLoadKwargs, ModelSaveKwargs
 from ..potato_head import Prompt
+
+CardInterfaceType: TypeAlias = Union[DataInterface, ModelInterface]
+CardDeckInterfaceType: TypeAlias = Dict[str, Union[DataInterface, ModelInterface]]
+LoadInterfaceType: TypeAlias = Union[CardDeckInterfaceType, CardDeckInterfaceType]
 
 class RegistryType:
     Data: "RegistryType"
@@ -15,17 +30,18 @@ class RegistryType:
     Experiment: "RegistryType"
     Audit: "RegistryType"
     Prompt: "RegistryType"
+    Deck: "RegistryType"
 
 class RegistryMode:
     Client: "RegistryMode"
     Server: "RegistryMode"
 
-class Card:
+class CardRecord:
     uid: Optional[str]
     created_at: Optional[str]
     app_env: Optional[str]
     name: str
-    repository: str
+    space: str
     version: str
     tags: Dict[str, str]
     datacard_uids: Optional[List[str]]
@@ -45,12 +61,12 @@ class Card:
         """
 
 class CardList:
-    cards: List[Card]
+    cards: List[CardRecord]
 
-    def __getitem__(self, key: int) -> Optional[Card]:
+    def __getitem__(self, key: int) -> Optional[CardRecord]:
         """Return the card at the specified index"""
 
-    def __iter__(self) -> Card:
+    def __iter__(self) -> CardRecord:
         """Return an iterator for the card list"""
 
     def as_table(self) -> None:
@@ -65,7 +81,7 @@ class DataCard:
     def __init__(  # pylint: disable=dangerous-default-value
         self,
         interface: Optional[DataInterface] = None,
-        repository: Optional[str] = None,
+        space: Optional[str] = None,
         name: Optional[str] = None,
         version: Optional[str] = None,
         uid: Optional[str] = None,
@@ -76,8 +92,8 @@ class DataCard:
         Args:
             interface (DataInterface | None):
                 The data interface
-            repository (str | None):
-                The repository of the card
+            space (str | None):
+                The space of the card
             name (str | None):
                 The name of the card
             version (str | None):
@@ -100,7 +116,7 @@ class DataCard:
         interface = PandasData(data=X)
         datacard = DataCard(
             interface=interface,
-            repository="my-repo",
+            space="my-repo",
             name="my-name",
             tags=["foo:bar", "baz:qux"],
         )
@@ -154,16 +170,16 @@ class DataCard:
         """
 
     @property
-    def repository(self) -> str:
-        """Return the repository of the data card"""
+    def space(self) -> str:
+        """Return the space of the data card"""
 
-    @repository.setter
-    def repository(self, repository: str) -> None:
-        """Set the repository of the data card
+    @space.setter
+    def space(self, space: str) -> None:
+        """Set the space of the data card
 
         Args:
-            repository (str):
-                The repository of the data card
+            space (str):
+                The space of the data card
         """
 
     @property
@@ -335,7 +351,7 @@ class ModelCard:
     def __init__(
         self,
         interface: Optional[ModelInterface] = None,
-        repository: Optional[str] = None,
+        space: Optional[str] = None,
         name: Optional[str] = None,
         version: Optional[str] = None,
         uid: Optional[str] = None,
@@ -346,13 +362,13 @@ class ModelCard:
         """Create a ModelCard from a machine learning model.
 
         Cards are stored in the ModelCardRegistry and follow the naming convention of:
-        {registry}/{repository}/{name}/v{version}
+        {registry}/{space}/{name}/v{version}
 
         Args:
             interface (ModelInterface | None):
                 `ModelInterface` class containing trained model
-            repository (str | None):
-                Repository to associate with `ModelCard`
+            space (str | None):
+                space to associate with `ModelCard`
             name (str | None):
                 Name to associate with `ModelCard`
             version (str | None):
@@ -392,7 +408,7 @@ class ModelCard:
 
         modelcard = ModelCard(
             interface=random_forest_classifier,
-            repository="my-repo",
+            space="my-repo",
             name="my-model",
             to_onnx=True, # auto-convert to onnx
             tags=["foo:bar", "baz:qux"],
@@ -402,6 +418,14 @@ class ModelCard:
         registry = CardRegistry(RegistryType.Model)
         registry.register_card(modelcard)
         ```
+        """
+
+    @property
+    def model(self) -> Any:
+        """Returns the model. This is a special property that is used to
+        access the model from the interface. It is not settable. It will also
+        raise an error if the interface is not set or if the model
+        has not been loaded.
         """
 
     @property
@@ -431,7 +455,7 @@ class ModelCard:
     @property
     def uri(self) -> Path:
         """Returns the uri of the `ModelCard` in the
-        format of {registry}/{repository}/{name}/v{version}
+        format of {registry}/{space}/{name}/v{version}
         """
 
     @property
@@ -456,16 +480,16 @@ class ModelCard:
         """
 
     @property
-    def repository(self) -> str:
-        """Returns the repository of the `ModelCard`"""
+    def space(self) -> str:
+        """Returns the space of the `ModelCard`"""
 
-    @repository.setter
-    def repository(self, repository: str) -> None:
-        """Set the repository of the `ModelCard`
+    @space.setter
+    def space(self, space: str) -> None:
+        """Set the space of the `ModelCard`
 
         Args:
-            repository (str):
-                The repository of the `ModelCard`
+            space (str):
+                The space of the `ModelCard`
         """
 
     @property
@@ -573,12 +597,13 @@ class UidMetadata:
     datacard_uids: List[str]
     modelcard_uids: List[str]
     promptcard_uids: List[str]
+    card_deck_uids: List[str]
     experimentcard_uids: List[str]
 
 class ExperimentCard:
     def __init__(
         self,
-        repository: Optional[str] = None,
+        space: Optional[str] = None,
         name: Optional[str] = None,
         version: Optional[str] = None,
         uid: Optional[str] = None,
@@ -587,11 +612,11 @@ class ExperimentCard:
         """Creates a ExperimentCard.
 
         Cards are stored in the ExperimentCard Registry and follow the naming convention of:
-        {registry}/{repository}/{name}/v{version}
+        {registry}/{space}/{name}/v{version}
 
         Args:
-            repository (str | None):
-                Repository to associate with `ExperimentCard`
+            space (str | None):
+                space to associate with `ExperimentCard`
             name (str | None):
                 Name to associate with `ExperimentCard`
             version (str | None):
@@ -608,7 +633,7 @@ class ExperimentCard:
         from opsml import start_experiment
 
         # start an experiment
-        with start_experiment(repository="test", log_hardware=True) as exp:
+        with start_experiment(space="test", log_hardware=True) as exp:
             exp.log_metric("accuracy", 0.95)
             exp.log_parameter("epochs", 10)
         ```
@@ -628,16 +653,16 @@ class ExperimentCard:
         """
 
     @property
-    def repository(self) -> str:
-        """Returns the repository of the `experimentcard`"""
+    def space(self) -> str:
+        """Returns the space of the `experimentcard`"""
 
-    @repository.setter
-    def repository(self, repository: str) -> None:
-        """Set the repository of the `experimentcard`
+    @space.setter
+    def space(self, space: str) -> None:
+        """Set the space of the `experimentcard`
 
         Args:
-            repository (str):
-                The repository of the `experimentcard`
+            space (str):
+                The space of the `experimentcard`
         """
 
     @property
@@ -747,7 +772,7 @@ class PromptCard:
     def __init__(
         self,
         prompt: Prompt,
-        repository: Optional[str] = None,
+        space: Optional[str] = None,
         name: Optional[str] = None,
         version: Optional[str] = None,
         uid: Optional[str] = None,
@@ -756,14 +781,14 @@ class PromptCard:
         """Creates a `PromptCard`.
 
         Cards are stored in the PromptCard Registry and follow the naming convention of:
-        {registry}/{repository}/{name}/v{version}
+        {registry}/{space}/{name}/v{version}
 
 
         Args:
             prompt (Prompt):
                 Prompt to associate with `PromptCard`
-            repository (str | None):
-                Repository to associate with `PromptCard`
+            space (str | None):
+                space to associate with `PromptCard`
             name (str | None):
                 Name to associate with `PromptCard`
             version (str | None):
@@ -792,7 +817,7 @@ class PromptCard:
         # create card
         card = PromptCard(
             prompt=prompt,
-            repository="my-repo",
+            space="my-repo",
             name="my-prompt",
             version="0.0.1",
             tags=["gpt-4o", "prompt"],
@@ -839,16 +864,16 @@ class PromptCard:
         """
 
     @property
-    def repository(self) -> str:
-        """Returns the repository of the `ModelCard`"""
+    def space(self) -> str:
+        """Returns the space of the `ModelCard`"""
 
-    @repository.setter
-    def repository(self, repository: str) -> None:
-        """Set the repository of the `ModelCard`
+    @space.setter
+    def space(self, space: str) -> None:
+        """Set the space of the `ModelCard`
 
         Args:
-            repository (str):
-                The repository of the `ModelCard`
+            space (str):
+                The space of the `ModelCard`
         """
 
     @property
@@ -891,8 +916,253 @@ class PromptCard:
 
     def __str__(self): ...
 
+class Card:
+    """Represents a card from a given registry that can be used in a card deck"""
+
+    def __init__(
+        self,
+        alias: str,
+        registry_type: Optional[RegistryType],
+        space: Optional[str],
+        name: Optional[str],
+        version: Optional[str],
+        uid: Optional[str],
+        card: Optional[CardType],
+    ) -> None:
+        """Initialize the card deck. Card accepts either a combination of
+        space and name (with version as optional) or a uid. If only space and name are
+        provided with no version, the latest version for a given space and name will be used
+        (e.g. {space}/{name}/v*). If a version is provided, it must follow semver rules that
+        are compatible with opsml (e.g. v1.*, v1.2.3, v2.3.4-alpha, etc.). If both space/name and uid
+        are provided, the uid will take precedence. If neither space/name nor uid are provided,
+        an error will be raised.
+
+        Alias is used to identify the card in the card deck and is not necessarily the name of
+        the card. It is recommended to use a short and descriptive alias that is easy to remember.
+
+        Example:
+
+        ```python
+        deck = CardDeck(...)
+        deck["my_alias"]
+        ```
+
+
+        Args:
+            alias (str):
+                The alias of the card
+            registry_type (RegistryType):
+                The type of registry the card deck belongs to. This is
+                required if no card is provided.
+            space (str):
+                The space of the card deck
+            name (str):
+                The name of the card deck
+            version (str):
+                The version of the card deck
+            uid (str):
+                The uid of the card deck
+            card (Union[DataCard, ModelCard, PromptCard, ExperimentCard]):
+                Optional card to add to the deck. If provided, arguments will
+                be extracted from the card. This card must be registered in a registry.
+
+
+        Example:
+
+        ```python
+        from opsml import Card, CardDeck, RegistryType
+
+        # With arguments
+        card = Card(
+            alias="my_alias",
+            registry_type=RegistryType.Model,
+            space="my_space",
+            name="my_name",
+            version="1.0.0",
+        )
+
+        # With card uid
+        card = Card(
+            alias="my_alias",
+            registry_type=RegistryType.Model,
+            uid="my_uid",
+        )
+
+        # With registered card
+        card = Card(
+            alias="my_alias",
+            card=model_card,  # ModelCard object
+        )
+        ```
+
+        """
+
+class CardDeck:
+    """Creates a CardDeck to hold a collection of cards."""
+
+    def __init__(
+        self,
+        space: str,
+        name: str,
+        cards: List[Card],
+        version: Optional[str],
+    ) -> None:
+        """Initialize the card deck
+
+        Args:
+            space (str):
+                The space of the card deck
+            name (str):
+                The name of the card deck
+            cards (List[Card]):
+                The cards in the card deck
+            version (str | None):
+                The version of the card deck. If not provided, the latest version
+                for a given space and name will be used (e.g. {space}/{name}/v*).
+        """
+
+    @property
+    def space(self) -> str:
+        """Return the space of the card deck"""
+
+    @property
+    def name(self) -> str:
+        """Return the name of the card deck"""
+
+    @property
+    def version(self) -> str:
+        """Return the version of the card deck"""
+
+    @property
+    def uid(self) -> str:
+        """Return the uid of the card deck"""
+
+    @property
+    def created_at(self) -> datetime:
+        """Return the created at timestamp"""
+
+    @property
+    def cards(self) -> List[CardType]:
+        """Return the cards in the card deck"""
+
+    @property
+    def opsml_version(self) -> str:
+        """Return the opsml version"""
+
+    def save(self, path: Path) -> None:
+        """Save the card deck to a directory
+
+        Args:
+            path (Path):
+                Path to save the card deck.
+        """
+
+    def model_validate_json(self, json_string: str) -> "CardDeck":
+        """Load card deck from json string
+
+        Args:
+            json_string (str):
+                The json string to validate
+        """
+
+    def load(
+        self,
+        load_kwargs: Optional[Dict[str, ModelLoadKwargs | DataLoadKwargs]] = None,
+    ) -> None:
+        """Call the load method on each Card that requires additional loading.
+        This applies to ModelCards and DataCards. PromptCards and ExperimentCards
+        do not require additional loading and are loaded automatically when loading
+        the CardDeck from the registry.
+
+        Args:
+            load_kwargs (Dict[str, ModelLoadKwargs | DataLoadKwargs]):
+                Optional kwargs for loading cards. Expected format:
+                {
+                    "card_alias":  DataLoadKwargs | ModelLoadKwargs
+                }
+        """
+
+    @staticmethod
+    def load_from_path(
+        path: Optional[Path] = None,
+        load_kwargs: Optional[Dict[str, Dict[str, Any]]] = None,
+    ) -> "CardDeck":
+        """Loads a card deck and its associated cards from a filesystem path.
+
+        Args:
+            path (Path):
+                Path to load the card deck from. Defaults to "card_deck".
+            load_kwargs (Dict[str, Dict[str, Any]]):
+                Optional kwargs for loading cards. Expected format:
+                {
+                    "card_alias": {
+                        "interface": interface_object,
+                        "load_kwargs": DataLoadKwargs | ModelLoadKwargs
+                    }
+                }
+
+        Returns:
+            CardDeck: The loaded card deck with all cards instantiated.
+
+        Raises:
+            PyError: If card deck JSON cannot be read
+            PyError: If cards cannot be loaded
+            PyError: If invalid kwargs are provided
+
+        Example:
+            ```python
+            # Load with custom kwargs for model loading
+            load_kwargs = {
+                "model_card": {
+                    "load_kwargs": ModelLoadKwargs(load_onnx=True)
+                }
+            }
+            deck = CardDeck.load_from_path(load_kwargs=load_kwargs)
+            ```
+        """
+
+    def __getitem__(self, alias: str) -> CardType:
+        """Get a card from the card deck by alias
+
+        Args:
+            alias (str):
+                The alias of the card to get
+
+        Returns:
+            Card:
+                The card with the given alias
+        """
+
+    def download_artifacts(self, path: Optional[Path] = None) -> None:
+        """Download artifacts associated with each card in the card deck. This method
+        will always overwrite existing artifacts.
+
+        If the path is not provided, the artifacts will be saved to a directory.
+
+        ```
+        card_deck/
+        |-- {name}-{version}/
+            |-- alias1/
+            |-- alias2/
+            |-- alias3/
+        `-- ...
+        ```
+
+        Args:
+            path (Path):
+                Top-level Path to download the artifacts to. If not provided, the artifacts will be saved
+                to a directory using the CardDeck name.
+        """
+
 # Define a TypeVar that can only be one of our card types
-CardType = TypeVar("CardType", DataCard, ModelCard, PromptCard, ExperimentCard)  # pylint: disable=invalid-name
+CardType = TypeVar(  # pylint: disable=invalid-name
+    "CardType",
+    DataCard,
+    ModelCard,
+    PromptCard,
+    ExperimentCard,
+    CardDeck,
+)
 
 class CardRegistry(Generic[CardType]):
     @overload
@@ -903,6 +1173,8 @@ class CardRegistry(Generic[CardType]):
     def __init__(self, registry_type: Literal[RegistryType.Prompt]) -> "CardRegistry[PromptCard]": ...
     @overload
     def __init__(self, registry_type: Literal[RegistryType.Experiment]) -> "CardRegistry[ExperimentCard]": ...
+    @overload
+    def __init__(self, registry_type: Literal[RegistryType.Deck]) -> "CardRegistry[CardDeck]": ...
     @overload
     def __init__(self, registry_type: Literal[RegistryType.Audit]) -> "CardRegistry[Any]": ...
 
@@ -915,6 +1187,8 @@ class CardRegistry(Generic[CardType]):
     def __init__(self, registry_type: Literal["prompt"]) -> "CardRegistry[PromptCard]": ...
     @overload
     def __init__(self, registry_type: Literal["experiment"]) -> "CardRegistry[ExperimentCard]": ...
+    @overload
+    def __init__(self, registry_type: Literal["deck"]) -> "CardRegistry[CardDeck]": ...
     @overload
     def __init__(self, registry_type: Literal["audit"]) -> "CardRegistry[Any]": ...
     def __init__(self, registry_type: Union[RegistryType, str]) -> None:
@@ -954,7 +1228,7 @@ class CardRegistry(Generic[CardType]):
     def list_cards(
         self,
         uid: Optional[str] = None,
-        repository: Optional[str] = None,
+        space: Optional[str] = None,
         name: Optional[str] = None,
         version: Optional[str] = None,
         max_date: Optional[str] = None,
@@ -967,8 +1241,8 @@ class CardRegistry(Generic[CardType]):
         Args:
             uid (str):
                 Unique identifier for Card. If present, the uid takes precedence
-            repository (str):
-                Optional repository associated with card
+            space (str):
+                Optional space associated with card
             name (str):
                 Optional name of card
             version (str):
@@ -1019,16 +1293,25 @@ class CardRegistry(Generic[CardType]):
     def load_card(
         self: "CardRegistry[DataCard]",
         uid: Optional[str] = None,
-        repository: Optional[str] = None,
+        space: Optional[str] = None,
         name: Optional[str] = None,
         version: Optional[str] = None,
         interface: Optional[DataInterface] = None,
     ) -> DataCard: ...
     @overload
     def load_card(
+        self: "CardRegistry[CardDeck]",
+        uid: Optional[str] = None,
+        space: Optional[str] = None,
+        name: Optional[str] = None,
+        version: Optional[str] = None,
+        interface=Optional[CardDeckInterfaceType],
+    ) -> CardDeck: ...
+    @overload
+    def load_card(
         self: "CardRegistry[ModelCard]",
         uid: Optional[str] = None,
-        repository: Optional[str] = None,
+        space: Optional[str] = None,
         name: Optional[str] = None,
         version: Optional[str] = None,
         interface: Optional[ModelInterface] = None,
@@ -1037,7 +1320,7 @@ class CardRegistry(Generic[CardType]):
     def load_card(
         self: "CardRegistry[PromptCard]",
         uid: Optional[str] = None,
-        repository: Optional[str] = None,
+        space: Optional[str] = None,
         name: Optional[str] = None,
         version: Optional[str] = None,
         interface: None = None,
@@ -1046,7 +1329,7 @@ class CardRegistry(Generic[CardType]):
     def load_card(
         self: "CardRegistry[ExperimentCard]",
         uid: Optional[str] = None,
-        repository: Optional[str] = None,
+        space: Optional[str] = None,
         name: Optional[str] = None,
         version: Optional[str] = None,
         interface: None = None,
@@ -1054,28 +1337,36 @@ class CardRegistry(Generic[CardType]):
     def load_card(
         self,
         uid: Optional[str] = None,
-        repository: Optional[str] = None,
+        space: Optional[str] = None,
         name: Optional[str] = None,
         version: Optional[str] = None,
-        interface: Optional[Union[DataInterface, ModelInterface]] = None,
-    ) -> Union[DataCard, ModelCard, PromptCard, ExperimentCard]:
+        interface: Optional[LoadInterfaceType] = None,
+    ) -> Union[DataCard, ModelCard, PromptCard, ExperimentCard, CardDeck]:
         """Load a Card from the registry
 
         Args:
-            uid (str):
-                Unique identifier for Card. If present, the uid takes precedence
-            repository (str):
-                Optional repository associated with card
-            name (str):
-                Optional name of card
-            version (str):
-                Optional version number of existing data. If not specified, the
-                most recent version will be used
-            interface (Union[DataInterface, ModelInterface]):
-                Optional interface to load the card into
+            uid (str, optional):
+                Unique identifier for Card. If present, the uid takes precedence over space/name/version.
+            space (str, optional):
+                Space associated with the card.
+            name (str, optional):
+                Name of the card.
+            version (str, optional):
+                Version number of existing card. If not specified, the most recent version will be used.
+            interface (LoadInterfaceType, optional):
+                Interface to load the card with. Required for cards registered with custom interfaces.
+                The expected interface type depends on the registry:
+
+                - DataCard registry: DataInterface
+                - ModelCard registry: ModelInterface
+                - ExperimentCard registry: Not used
+                - PromptCard registry: Not used
+                - CardDeck registry: Dict[str, Union[DataInterface, ModelInterface]]
+                  Keys should be card aliases within the deck.
 
         Returns:
-            Card
+            Union[DataCard, ModelCard, PromptCard, ExperimentCard, CardDeck]:
+                The loaded card instance from the registry.
         """
 
     def update_card(
@@ -1117,3 +1408,5 @@ class CardRegistries:
     def audit(self) -> CardRegistry[Any]: ...
     @property
     def prompt(self) -> CardRegistry[PromptCard]: ...
+    @property
+    def deck(self) -> CardRegistry[CardDeck]: ...

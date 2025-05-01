@@ -1,7 +1,8 @@
 use crate::core::cards::schema::{
-    CreateReadeMe, QueryPageResponse, ReadeMe, RegistryStatsResponse,
+    CreateReadeMe, QueryPageResponse, ReadeMe, RegistryStatsResponse, VersionPageResponse,
 };
 use crate::core::cards::utils::{cleanup_artifacts, get_next_version, insert_card_into_db};
+use crate::core::error::{internal_server_error, OpsmlServerError};
 use crate::core::files::utils::{
     create_and_store_encrypted_file, create_artifact_key, download_artifact, get_artifact_key,
 };
@@ -10,29 +11,27 @@ use anyhow::{Context, Result};
 use axum::{
     extract::{Query, State},
     http::StatusCode,
-    response::IntoResponse,
+    response::{IntoResponse, Response},
     routing::{delete, get, post},
     Extension, Json, Router,
 };
 use opsml_auth::permission::UserPermissions;
 use opsml_crypt::decrypt_directory;
+use opsml_events::AuditContext;
 use opsml_sql::base::SqlClient;
 use opsml_sql::schemas::*;
 use opsml_types::{cards::*, contracts::*};
 use opsml_types::{SaveName, Suffix};
-use semver::Version;
-use serde_json::json;
-use sqlx::types::Json as SqlxJson;
 use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::sync::Arc;
 use tempfile::tempdir;
 use tracing::{debug, error, instrument};
-
 /// Route for checking if a card UID exists
+#[axum::debug_handler]
 pub async fn check_card_uid(
     State(state): State<Arc<AppState>>,
     Query(params): Query<UidRequest>,
-) -> Result<Json<UidResponse>, (StatusCode, Json<serde_json::Value>)> {
+) -> Result<Json<UidResponse>, (StatusCode, Json<OpsmlServerError>)> {
     let table = CardTable::from_registry_type(&params.registry_type);
     let exists = state
         .sql_client
@@ -40,54 +39,49 @@ pub async fn check_card_uid(
         .await
         .map_err(|e| {
             error!("Failed to check if UID exists: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(serde_json::json!({})),
-            )
+            internal_server_error(e, "Failed to check if UID exists")
         })?;
 
     Ok(Json(UidResponse { exists }))
 }
 
-/// Get card repositories
-pub async fn get_card_repositories(
+/// Get card spaces
+pub async fn get_card_spaces(
     State(state): State<Arc<AppState>>,
-    params: Query<RepositoryRequest>,
-) -> Result<Json<RepositoryResponse>, (StatusCode, Json<serde_json::Value>)> {
+    Query(params): Query<SpaceRequest>,
+) -> Result<Json<SpaceResponse>, (StatusCode, Json<OpsmlServerError>)> {
     let table = CardTable::from_registry_type(&params.registry_type);
-    let repos = state
+
+    let spaces = state
         .sql_client
-        .get_unique_repository_names(&table)
+        .get_unique_space_names(&table)
         .await
         .map_err(|e| {
-            error!("Failed to get unique repository names: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(serde_json::json!({})),
-            )
+            error!("Failed to get unique space names: {}", e);
+            internal_server_error(e, "Failed to get unique space names")
         })?;
 
-    Ok(Json(RepositoryResponse {
-        repositories: repos,
-    }))
+    Ok(Json(SpaceResponse { spaces }))
 }
 
 /// query stats page
 pub async fn get_registry_stats(
     State(state): State<Arc<AppState>>,
     Query(params): Query<RegistryStatsRequest>,
-) -> Result<Json<RegistryStatsResponse>, (StatusCode, Json<serde_json::Value>)> {
+) -> Result<Json<RegistryStatsResponse>, (StatusCode, Json<OpsmlServerError>)> {
     let table = CardTable::from_registry_type(&params.registry_type);
+
     let stats = state
         .sql_client
-        .query_stats(&table, params.search_term.as_deref())
+        .query_stats(
+            &table,
+            params.search_term.as_deref(),
+            params.space.as_deref(),
+        )
         .await
         .map_err(|e| {
-            error!("Failed to get unique repository names: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(serde_json::json!({})),
-            )
+            error!("Failed to get unique space names: {}", e);
+            internal_server_error(e, "Failed to get unique space names")
         })?;
 
     Ok(Json(RegistryStatsResponse { stats }))
@@ -97,35 +91,55 @@ pub async fn get_registry_stats(
 pub async fn get_page(
     State(state): State<Arc<AppState>>,
     Query(params): Query<QueryPageRequest>,
-) -> Result<Json<QueryPageResponse>, (StatusCode, Json<serde_json::Value>)> {
+) -> Result<Json<QueryPageResponse>, (StatusCode, Json<OpsmlServerError>)> {
     let table = CardTable::from_registry_type(&params.registry_type);
     let sort_by = params.sort_by.as_deref().unwrap_or("updated_at");
-    let page = params.page.unwrap_or(0);
+    let page = params.page.unwrap_or(1);
     let summaries = state
         .sql_client
         .query_page(
             sort_by,
             page,
             params.search_term.as_deref(),
-            params.repository.as_deref(),
+            params.space.as_deref(),
             &table,
         )
         .await
         .map_err(|e| {
-            error!("Failed to get unique repository names: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(serde_json::json!({})),
-            )
+            error!("Failed to get unique space names: {}", e);
+            internal_server_error(e, "Failed to get unique space names")
         })?;
-
     Ok(Json(QueryPageResponse { summaries }))
 }
 
+pub async fn get_version_page(
+    State(state): State<Arc<AppState>>,
+    Query(params): Query<VersionPageRequest>,
+) -> Result<Json<VersionPageResponse>, (StatusCode, Json<OpsmlServerError>)> {
+    let table = CardTable::from_registry_type(&params.registry_type);
+    let page = params.page.unwrap_or(1);
+    let summaries = state
+        .sql_client
+        .version_page(
+            page,
+            params.space.as_deref(),
+            params.name.as_deref(),
+            &table,
+        )
+        .await
+        .map_err(|e| {
+            error!("Failed to get unique space names: {}", e);
+            internal_server_error(e, "Failed to get unique space names")
+        })?;
+
+    Ok(Json(VersionPageResponse { summaries }))
+}
+
+#[axum::debug_handler]
 pub async fn list_cards(
     State(state): State<Arc<AppState>>,
     Query(params): Query<CardQueryArgs>,
-) -> Result<Json<Vec<Card>>, (StatusCode, Json<serde_json::Value>)> {
+) -> Result<Response, (StatusCode, Json<OpsmlServerError>)> {
     debug!(
         "Listing cards for registry: {:?} with params: {:?}",
         &params.registry_type, &params
@@ -138,51 +152,64 @@ pub async fn list_cards(
         .query_cards(&table, &params)
         .await
         .map_err(|e| {
-            error!("Failed to get unique repository names: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(serde_json::json!({})),
-            )
+            error!("Failed to get unique space names: {}", e);
+            internal_server_error(e, "Failed to get unique space names")
         })?;
 
     // convert to Cards struct
-    match cards {
-        CardResults::Data(data) => {
-            let cards = data.into_iter().map(convert_datacard).collect();
-            Ok(Json(cards))
-        }
+    let json_response = match cards {
+        CardResults::Data(data) => Json(data.into_iter().map(convert_datacard).collect::<Vec<_>>()),
         CardResults::Model(data) => {
-            let cards = data.into_iter().map(convert_modelcard).collect();
-            Ok(Json(cards))
+            Json(data.into_iter().map(convert_modelcard).collect::<Vec<_>>())
         }
-
-        CardResults::Experiment(data) => {
-            let cards = data.into_iter().map(convert_experimentcard).collect();
-            Ok(Json(cards))
-        }
-
+        CardResults::Experiment(data) => Json(
+            data.into_iter()
+                .map(convert_experimentcard)
+                .collect::<Vec<_>>(),
+        ),
         CardResults::Audit(data) => {
-            let cards = data.into_iter().map(convert_auditcard).collect();
-            Ok(Json(cards))
+            Json(data.into_iter().map(convert_auditcard).collect::<Vec<_>>())
         }
-
         CardResults::Prompt(data) => {
-            let cards = data.into_iter().map(convert_promptcard).collect();
-            Ok(Json(cards))
+            Json(data.into_iter().map(convert_promptcard).collect::<Vec<_>>())
         }
-    }
+        CardResults::Deck(data) => {
+            Json(data.into_iter().map(convert_card_deck).collect::<Vec<_>>())
+        }
+    };
+
+    // Create response and add audit context
+    let mut response = json_response.into_response();
+
+    let audit_context = AuditContext {
+        resource_id: "list_cards".to_string(),
+        resource_type: ResourceType::Database,
+        metadata: params.get_metadata(),
+        registry_type: Some(params.registry_type.clone()),
+        operation: Operation::List,
+        access_location: None,
+    };
+
+    response.extensions_mut().insert(audit_context);
+
+    Ok(response)
 }
 
 #[instrument(skip_all)]
 pub async fn create_card(
     State(state): State<Arc<AppState>>,
+    Extension(perms): Extension<UserPermissions>,
     Json(card_request): Json<CreateCardRequest>,
-) -> Result<impl IntoResponse, (StatusCode, Json<serde_json::Value>)> {
+) -> Result<Response, (StatusCode, Json<OpsmlServerError>)> {
     let table = CardTable::from_registry_type(&card_request.registry_type);
+
+    if !perms.has_write_permission(card_request.card.space()) {
+        return OpsmlServerError::permission_denied().into_response(StatusCode::FORBIDDEN);
+    }
 
     debug!(
         "Creating card: {}/{}/{} - registry: {:?}",
-        &card_request.card.repository(),
+        &card_request.card.space(),
         &card_request.card.name(),
         &card_request.card.version(),
         &card_request.registry_type
@@ -192,15 +219,12 @@ pub async fn create_card(
     let version = get_next_version(
         state.sql_client.clone(),
         &table,
-        card_request.version_request,
+        card_request.version_request.clone(),
     )
     .await
     .map_err(|e| {
         error!("Failed to get next version: {}", e);
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(serde_json::json!({})),
-        )
+        internal_server_error(e, "Failed to get next version")
     })?;
     // (2) ------- Insert the card into the database
     let (uid, registry_type, card_uri, app_env, created_at) = insert_card_into_db(
@@ -212,10 +236,7 @@ pub async fn create_card(
     .await
     .map_err(|e| {
         error!("Failed to insert card into db: {}", e);
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(serde_json::json!({})),
-        )
+        internal_server_error(e, "Failed to insert card into db")
     })?;
 
     // (3) ------- Create the artifact key for card artifact encryption
@@ -229,22 +250,34 @@ pub async fn create_card(
     .await
     .map_err(|e| {
         error!("Failed to create artifact key: {}", e);
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(serde_json::json!({})),
-        )
+        internal_server_error(e, "Failed to create artifact key")
     })?;
 
     debug!("Card created successfully");
-    Ok(Json(CreateCardResponse {
+
+    let mut response = Json(CreateCardResponse {
         registered: true,
-        repository: card_request.card.repository().to_string(),
+        space: card_request.card.space().to_string(),
         name: card_request.card.name().to_string(),
         version: version.to_string(),
         app_env,
         created_at,
         key,
-    }))
+    })
+    .into_response();
+
+    let audit_context = AuditContext {
+        resource_id: uid.clone(),
+        resource_type: ResourceType::Database,
+        metadata: card_request.get_metadata(),
+        registry_type: Some(card_request.registry_type.clone()),
+        operation: Operation::Create,
+        access_location: None,
+    };
+
+    response.extensions_mut().insert(audit_context);
+
+    Ok(response)
 }
 
 /// update card
@@ -252,175 +285,20 @@ pub async fn create_card(
 pub async fn update_card(
     State(state): State<Arc<AppState>>,
     Json(card_request): Json<UpdateCardRequest>,
-) -> Result<impl IntoResponse, (StatusCode, Json<serde_json::Value>)> {
+) -> Result<Response, (StatusCode, Json<OpsmlServerError>)> {
     debug!(
         "Updating card: {}/{}/{} - registry: {:?}",
-        &card_request.card.repository(),
+        &card_request.card.space(),
         &card_request.card.name(),
         &card_request.card.version(),
         &card_request.registry_type
     );
     let table = CardTable::from_registry_type(&card_request.registry_type);
 
-    // Note: We can use unwrap() here because a card being updated has already been created and thus has defaults.
-    // match on registry type (all fields should be supplied)
-    let card = match card_request.card {
-        Card::Data(client_card) => {
-            let version = Version::parse(&client_card.version).map_err(|e| {
-                error!("Failed to parse version: {}", e);
-                (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(serde_json::json!({})),
-                )
-            })?;
-
-            let server_card = DataCardRecord {
-                uid: client_card.uid,
-                created_at: client_card.created_at,
-                app_env: client_card.app_env,
-                name: client_card.name,
-                repository: client_card.repository,
-                major: version.major as i32,
-                minor: version.minor as i32,
-                patch: version.patch as i32,
-                pre_tag: Some(version.pre.to_string()),
-                build_tag: Some(version.build.to_string()),
-                version: client_card.version,
-                tags: SqlxJson(client_card.tags),
-                data_type: client_card.data_type,
-                experimentcard_uid: client_card.experimentcard_uid,
-                auditcard_uid: client_card.auditcard_uid,
-                interface_type: client_card.interface_type,
-                username: client_card.username,
-            };
-            ServerCard::Data(server_card)
-        }
-
-        Card::Model(client_card) => {
-            let version = Version::parse(&client_card.version).map_err(|e| {
-                error!("Failed to parse version: {}", e);
-                (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(serde_json::json!({})),
-                )
-            })?;
-
-            let server_card = ModelCardRecord {
-                uid: client_card.uid,
-                created_at: client_card.created_at,
-                app_env: client_card.app_env,
-                name: client_card.name,
-                repository: client_card.repository,
-                major: version.major as i32,
-                minor: version.minor as i32,
-                patch: version.patch as i32,
-                pre_tag: Some(version.pre.to_string()),
-                build_tag: Some(version.build.to_string()),
-                version: client_card.version,
-                tags: SqlxJson(client_card.tags),
-                datacard_uid: client_card.datacard_uid,
-                data_type: client_card.data_type,
-                model_type: client_card.model_type,
-                experimentcard_uid: client_card.experimentcard_uid,
-                auditcard_uid: client_card.auditcard_uid,
-                interface_type: client_card.interface_type,
-                task_type: client_card.task_type,
-                username: client_card.username,
-            };
-            ServerCard::Model(server_card)
-        }
-
-        Card::Experiment(client_card) => {
-            let version = Version::parse(&client_card.version).map_err(|e| {
-                error!("Failed to parse version: {}", e);
-                (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(serde_json::json!({})),
-                )
-            })?;
-
-            let server_card = ExperimentCardRecord {
-                uid: client_card.uid,
-                created_at: client_card.created_at,
-                app_env: client_card.app_env,
-                name: client_card.name,
-                repository: client_card.repository,
-                major: version.major as i32,
-                minor: version.minor as i32,
-                patch: version.patch as i32,
-                pre_tag: Some(version.pre.to_string()),
-                build_tag: Some(version.build.to_string()),
-                version: client_card.version,
-                tags: SqlxJson(client_card.tags),
-                datacard_uids: SqlxJson(client_card.datacard_uids),
-                modelcard_uids: SqlxJson(client_card.modelcard_uids),
-                promptcard_uids: SqlxJson(client_card.promptcard_uids),
-                experimentcard_uids: SqlxJson(client_card.experimentcard_uids),
-                username: client_card.username,
-            };
-            ServerCard::Experiment(server_card)
-        }
-
-        Card::Audit(client_card) => {
-            let version = Version::parse(&client_card.version).map_err(|e| {
-                error!("Failed to parse version: {}", e);
-                (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(serde_json::json!({})),
-                )
-            })?;
-
-            let server_card = AuditCardRecord {
-                uid: client_card.uid,
-                created_at: client_card.created_at,
-                app_env: client_card.app_env,
-                name: client_card.name,
-                repository: client_card.repository,
-                major: version.major as i32,
-                minor: version.minor as i32,
-                patch: version.patch as i32,
-                pre_tag: Some(version.pre.to_string()),
-                build_tag: Some(version.build.to_string()),
-                version: client_card.version,
-                tags: SqlxJson(client_card.tags),
-                approved: client_card.approved,
-                datacard_uids: SqlxJson(client_card.datacard_uids),
-                modelcard_uids: SqlxJson(client_card.modelcard_uids),
-                experimentcard_uids: SqlxJson(client_card.experimentcard_uids),
-                username: client_card.username,
-            };
-            ServerCard::Audit(server_card)
-        }
-
-        Card::Prompt(client_card) => {
-            let version = Version::parse(&client_card.version).map_err(|e| {
-                error!("Failed to parse version: {}", e);
-                (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(serde_json::json!({})),
-                )
-            })?;
-
-            let server_card = PromptCardRecord {
-                uid: client_card.uid,
-                created_at: client_card.created_at,
-                app_env: client_card.app_env,
-                name: client_card.name,
-                repository: client_card.repository,
-                major: version.major as i32,
-                minor: version.minor as i32,
-                patch: version.patch as i32,
-                pre_tag: Some(version.pre.to_string()),
-                build_tag: Some(version.build.to_string()),
-                version: client_card.version,
-                tags: SqlxJson(client_card.tags),
-                experimentcard_uid: client_card.experimentcard_uid,
-                auditcard_uid: client_card.auditcard_uid,
-                username: client_card.username,
-            };
-            ServerCard::Prompt(server_card)
-        }
-    };
+    let card = ServerCard::from_card(card_request.clone().card).map_err(|e| {
+        error!("Failed to convert card: {}", e);
+        internal_server_error(e, "Failed to convert card")
+    })?;
 
     state
         .sql_client
@@ -428,14 +306,24 @@ pub async fn update_card(
         .await
         .map_err(|e| {
             error!("Failed to update card: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(serde_json::json!({})),
-            )
+            internal_server_error(e, "Failed to update card")
         })?;
 
     debug!("Card updated successfully");
-    Ok(Json(UpdateCardResponse { updated: true }))
+    let mut response = Json(UpdateCardResponse { updated: true }).into_response();
+
+    let audit_context = AuditContext {
+        resource_id: card.uid().to_string(),
+        resource_type: ResourceType::Database,
+        metadata: card_request.get_metadata(),
+        registry_type: Some(card_request.registry_type.clone()),
+        operation: Operation::Update,
+        access_location: None,
+    };
+
+    response.extensions_mut().insert(audit_context);
+
+    Ok(response)
 }
 
 #[instrument(skip_all)]
@@ -443,15 +331,11 @@ pub async fn delete_card(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
     Query(params): Query<DeleteCardRequest>,
-) -> Result<Json<UidResponse>, (StatusCode, Json<serde_json::Value>)> {
+) -> Result<Response, (StatusCode, Json<OpsmlServerError>)> {
     debug!("Deleting card: {}", &params.uid);
 
-    if !perms.has_delete_permission(&params.repository) {
-        error!("Permission denied");
-        return Err((
-            StatusCode::FORBIDDEN,
-            Json(json!({ "error": "Permission denied" })),
-        ));
+    if !perms.has_delete_permission(&params.space) {
+        return OpsmlServerError::permission_denied().into_response(StatusCode::FORBIDDEN);
     }
 
     let table = CardTable::from_registry_type(&params.registry_type);
@@ -467,10 +351,7 @@ pub async fn delete_card(
     .await
     .map_err(|e| {
         error!("Failed to cleanup artifacts: {}", e);
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(serde_json::json!({})),
-        )
+        internal_server_error(e, "Failed to cleanup artifacts")
     })?;
 
     // delete card
@@ -480,22 +361,32 @@ pub async fn delete_card(
         .await
         .map_err(|e| {
             error!("Failed to delete card: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(serde_json::json!({})),
-            )
+            internal_server_error(e, "Failed to delete card")
         })?;
 
-    // need to delete the artifact key and the artifact itself
+    let mut response = Json(UidResponse { exists: false }).into_response();
 
-    Ok(Json(UidResponse { exists: false }))
+    let audit_context = AuditContext {
+        resource_id: params.uid.clone(),
+        resource_type: ResourceType::Database,
+        metadata: params.get_metadata(),
+        registry_type: Some(params.registry_type.clone()),
+        operation: Operation::Delete,
+        access_location: None,
+    };
+
+    response.extensions_mut().insert(audit_context);
+
+    Ok(response)
 }
 
 #[instrument(skip_all)]
 pub async fn load_card(
     State(state): State<Arc<AppState>>,
     Query(params): Query<CardQueryArgs>,
-) -> Result<Json<ArtifactKey>, (StatusCode, Json<serde_json::Value>)> {
+) -> Result<Json<ArtifactKey>, (StatusCode, Json<OpsmlServerError>)> {
+    // get uid if exists
+
     let table = CardTable::from_registry_type(&params.registry_type);
     let key = state
         .sql_client
@@ -503,10 +394,7 @@ pub async fn load_card(
         .await
         .map_err(|e| {
             error!("Failed to get card key for loading: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(serde_json::json!({})),
-            )
+            internal_server_error(e, "Failed to get card key for loading")
         })?;
 
     Ok(Json(key))
@@ -517,12 +405,9 @@ pub async fn get_card(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
     Query(params): Query<CardQueryArgs>,
-) -> Result<Json<serde_json::Value>, (StatusCode, Json<serde_json::Value>)> {
+) -> Result<Json<serde_json::Value>, (StatusCode, Json<OpsmlServerError>)> {
     if !perms.has_read_permission() {
-        return Err((
-            StatusCode::FORBIDDEN,
-            Json(json!({ "error": "Permission denied" })),
-        ));
+        return OpsmlServerError::permission_denied().into_response(StatusCode::FORBIDDEN);
     }
 
     let table = CardTable::from_registry_type(&params.registry_type);
@@ -533,21 +418,13 @@ pub async fn get_card(
         .await
         .map_err(|e| {
             error!("Failed to get card key for loading: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(serde_json::json!({})),
-            )
+            internal_server_error(e, "Failed to get card key for loading")
         })?;
-
-    // get uid
 
     // create temp dir
     let tmp_dir = tempdir().map_err(|e| {
         error!("Failed to create temp dir: {}", e);
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(serde_json::json!({})),
-        )
+        internal_server_error(e, "Failed to create temp dir")
     })?;
 
     let tmp_path = tmp_dir.path();
@@ -566,42 +443,27 @@ pub async fn get_card(
         .await
         .map_err(|e| {
             error!("Failed to get card: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(serde_json::json!({})),
-            )
+            internal_server_error(e, "Failed to get card")
         })?;
 
     let decryption_key = key.get_decrypt_key().map_err(|e| {
         error!("Failed to get decryption key: {}", e);
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(serde_json::json!({})),
-        )
+        internal_server_error(e, "Failed to get decryption key")
     })?;
 
     decrypt_directory(tmp_path, &decryption_key).map_err(|e| {
         error!("Failed to decrypt directory: {}", e);
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(serde_json::json!({})),
-        )
+        internal_server_error(e, "Failed to decrypt directory")
     })?;
 
     let card = std::fs::read_to_string(lpath).map_err(|e| {
         error!("Failed to read card from file: {}", e);
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(serde_json::json!({})),
-        )
+        internal_server_error(e, "Failed to read card from file")
     })?;
 
     let card = serde_json::from_str(&card).map_err(|e| {
         error!("Failed to parse card: {}", e);
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(serde_json::json!({})),
-        )
+        internal_server_error(e, "Failed to parse card")
     })?;
 
     Ok(Json(card))
@@ -612,33 +474,24 @@ pub async fn get_readme(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
     Query(params): Query<CardQueryArgs>,
-) -> Result<Json<ReadeMe>, (StatusCode, Json<serde_json::Value>)> {
+) -> Result<Json<ReadeMe>, (StatusCode, Json<OpsmlServerError>)> {
     if !perms.has_read_permission() {
-        return Err((
-            StatusCode::FORBIDDEN,
-            Json(json!({ "error": "Permission denied" })),
-        ));
+        return OpsmlServerError::permission_denied().into_response(StatusCode::FORBIDDEN);
     }
 
     let table = CardTable::from_registry_type(&params.registry_type);
 
-    // name and repository are required
-    if params.name.is_none() || params.repository.is_none() {
-        return Err((
-            StatusCode::BAD_REQUEST,
-            Json(serde_json::json!({ "error": "Name and repository are required" })),
-        ));
+    // name and space are required
+    if params.name.is_none() || params.space.is_none() {
+        return OpsmlServerError::missing_space_and_name().into_response(StatusCode::BAD_REQUEST);
     }
 
     let name = params.name.as_ref().unwrap();
-    let repository = params.repository.as_ref().unwrap();
+    let space = params.space.as_ref().unwrap();
 
     let tmp_dir = tempdir().map_err(|e| {
         error!("Failed to create temp dir: {}", e);
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(serde_json::json!({})),
-        )
+        internal_server_error(e, "Failed to create temp dir")
     })?;
 
     let lpath = tmp_dir
@@ -649,7 +502,7 @@ pub async fn get_readme(
     let rpath = format!(
         "{}/{}/{}/{}.{}",
         table,
-        repository,
+        space,
         name,
         SaveName::ReadMe,
         Suffix::Md
@@ -674,10 +527,10 @@ pub async fn get_readme(
         }
         Err(e) => {
             error!("Failed to download artifact: {}", e);
-            Err((
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(json!({ "error": format!("Failed to download artifact: {}", e) })),
-            ))
+            Ok(Json(ReadeMe {
+                readme: "".to_string(),
+                exists: false,
+            }))
         }
     }
 }
@@ -687,12 +540,9 @@ pub async fn create_readme(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
     Json(req): Json<CreateReadeMe>,
-) -> Result<Json<UploadResponse>, (StatusCode, Json<serde_json::Value>)> {
-    if !perms.has_write_permission(&req.repository) {
-        return Err((
-            StatusCode::FORBIDDEN,
-            Json(json!({ "error": "Permission denied" })),
-        ));
+) -> Result<Json<UploadResponse>, (StatusCode, Json<OpsmlServerError>)> {
+    if !perms.has_write_permission(&req.space) {
+        return OpsmlServerError::permission_denied().into_response(StatusCode::FORBIDDEN);
     }
 
     let table = CardTable::from_registry_type(&req.registry_type);
@@ -700,7 +550,7 @@ pub async fn create_readme(
     let readme_path = format!(
         "{}/{}/{}/{}.{}",
         table,
-        &req.repository,
+        &req.space,
         &req.name,
         SaveName::ReadMe,
         Suffix::Md
@@ -716,10 +566,7 @@ pub async fn create_readme(
     .await
     .map_err(|e| {
         error!("Failed to get artifact key: {}", e);
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(serde_json::json!({})),
-        )
+        internal_server_error(e, "Failed to get artifact key")
     })?;
 
     let lpath = format!("{}.{}", SaveName::ReadMe, Suffix::Md);
@@ -728,7 +575,7 @@ pub async fn create_readme(
         &req.readme,
         &lpath,
         &readme_path,
-        key,
+        &key,
     )
     .await;
 
@@ -748,15 +595,16 @@ pub async fn get_card_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
             .route(&format!("{}/card/metadata", prefix), get(get_card))
             .route(&format!("{}/card/readme", prefix), get(get_readme))
             .route(&format!("{}/card/readme", prefix), post(create_readme))
-            .route(
-                &format!("{}/card/repositories", prefix),
-                get(get_card_repositories),
-            )
+            .route(&format!("{}/card/spaces", prefix), get(get_card_spaces))
             .route(
                 &format!("{}/card/registry/stats", prefix),
                 get(get_registry_stats),
             )
             .route(&format!("{}/card/registry/page", prefix), get(get_page))
+            .route(
+                &format!("{}/card/registry/version/page", prefix),
+                get(get_version_page),
+            )
             .route(&format!("{}/card/list", prefix), get(list_cards))
             .route(&format!("{}/card/create", prefix), post(create_card))
             .route(&format!("{}/card/load", prefix), get(load_card))

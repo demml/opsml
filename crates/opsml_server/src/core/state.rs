@@ -2,6 +2,7 @@ use crate::core::scouter::client::ScouterApiClient;
 use opsml_auth::auth::AuthManager;
 use opsml_auth::permission::UserPermissions;
 use opsml_error::ApiError;
+use opsml_events::EventBus;
 use opsml_settings::config::{OpsmlConfig, OpsmlStorageSettings};
 use opsml_sql::base::SqlClient;
 use opsml_sql::enums::client::SqlClientEnum;
@@ -12,10 +13,11 @@ use tracing::error;
 pub struct AppState {
     pub storage_client: Arc<StorageClientEnum>,
     pub sql_client: Arc<SqlClientEnum>,
-    pub auth_manager: Arc<AuthManager>,
-    pub config: Arc<OpsmlConfig>,
-    pub storage_settings: Arc<OpsmlStorageSettings>,
-    pub scouter_client: Arc<ScouterApiClient>,
+    pub auth_manager: AuthManager,
+    pub config: OpsmlConfig,
+    pub storage_settings: OpsmlStorageSettings,
+    pub scouter_client: ScouterApiClient,
+    pub event_bus: EventBus,
 }
 
 impl AppState {

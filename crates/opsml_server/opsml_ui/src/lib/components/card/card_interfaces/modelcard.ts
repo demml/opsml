@@ -163,7 +163,7 @@ export interface ModelCardMetadata {
 
 export interface ModelCard {
   name: string;
-  repository: string;
+  space: string;
   version: string;
   uid: string;
   tags: string[];
@@ -173,4 +173,5 @@ export interface ModelCard {
   app_env: string;
   created_at: string; // ISO datetime string
   is_card: boolean;
+  opsml_version: string;
 }

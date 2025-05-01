@@ -2,7 +2,7 @@ use crate::base::add_version_bounds;
 
 use opsml_error::error::SqlError;
 use opsml_types::{cards::CardTable, contracts::CardQueryArgs};
-use opsml_utils::utils::is_valid_uuid4;
+use opsml_utils::utils::is_valid_uuidv7;
 pub struct MySQLQueryHelper;
 
 impl MySQLQueryHelper {
@@ -137,37 +137,38 @@ impl MySQLQueryHelper {
         let versions_cte = format!(
             "WITH versions AS (
                 SELECT 
-                    repository, 
+                    space, 
                     name, 
                     version, 
-                    ROW_NUMBER() OVER (PARTITION BY repository, name ORDER BY created_at DESC) AS row_num
+                    ROW_NUMBER() OVER (PARTITION BY space, name ORDER BY created_at DESC) AS row_num
                 FROM {}
                 WHERE 1=1
-                AND (? IS NULL OR repository = ?)
-                AND (? IS NULL OR name LIKE ? OR repository LIKE ?)
-            )", table
+                AND (? IS NULL OR space = ?)
+                AND (? IS NULL OR name LIKE ? OR space LIKE ?)
+            )",
+            table
         );
 
         let stats_cte = format!(
             ", stats AS (
                 SELECT 
-                    repository, 
+                    space, 
                     name, 
                     COUNT(DISTINCT version) AS versions, 
                     MAX(created_at) AS updated_at, 
                     MIN(created_at) AS created_at 
                 FROM {}
                 WHERE 1=1
-                AND (? IS NULL OR repository = ?)
-                AND (? IS NULL OR name LIKE ? OR repository LIKE ?)
-                GROUP BY repository, name
+                AND (? IS NULL OR space = ?)
+                AND (? IS NULL OR name LIKE ? OR space LIKE ?)
+                GROUP BY space, name
             )",
             table
         );
 
         let filtered_versions_cte = ", filtered_versions AS (
             SELECT 
-                repository, 
+                space, 
                 name, 
                 version, 
                 row_num
@@ -178,7 +179,7 @@ impl MySQLQueryHelper {
         let joined_cte = format!(
             ", joined AS (
                 SELECT 
-                    stats.repository, 
+                    stats.space, 
                     stats.name, 
                     filtered_versions.version, 
                     stats.versions, 
@@ -187,7 +188,7 @@ impl MySQLQueryHelper {
                     ROW_NUMBER() OVER (ORDER BY stats.{}) AS row_num 
                 FROM stats 
                 JOIN filtered_versions 
-                ON stats.repository = filtered_versions.repository 
+                ON stats.space = filtered_versions.space 
                 AND stats.name = filtered_versions.name
             )",
             sort_by
@@ -196,7 +197,7 @@ impl MySQLQueryHelper {
         let combined_query = format!(
             "{}{}{}{} 
             SELECT
-            repository,
+            space,
             name,
             version,
             versions,
@@ -204,22 +205,56 @@ impl MySQLQueryHelper {
             created_at,
             CAST(row_num AS SIGNED) AS row_num
             FROM joined 
-            WHERE row_num BETWEEN ? AND ?
+            WHERE row_num > ? AND row_num <= ?
             ORDER BY updated_at DESC;",
             versions_cte, stats_cte, filtered_versions_cte, joined_cte
         );
 
         combined_query
     }
+
+    pub fn get_version_page_query(table: &CardTable) -> String {
+        let versions_cte = format!(
+            "WITH versions AS (
+                SELECT 
+                    space, 
+                    name, 
+                    version, 
+                    created_at,
+                    ROW_NUMBER() OVER (PARTITION BY space, name ORDER BY created_at DESC, major DESC, minor DESC, patch DESC) AS row_num
+                FROM {}
+                WHERE space = ?
+                AND name = ?
+            )", table
+        );
+
+        let query = format!(
+            "{}
+            SELECT
+            space,
+            name,
+            version,
+            created_at,
+            CAST(row_num AS SIGNED) AS row_num
+            FROM versions
+            WHERE row_num > ? AND row_num <= ?
+            ORDER BY created_at DESC",
+            versions_cte
+        );
+
+        query
+    }
+
     pub fn get_query_stats_query(table: &CardTable) -> String {
         let base_query = format!(
             "SELECT 
                     COALESCE(COUNT(DISTINCT name), 0) AS nbr_names, 
                     COALESCE(COUNT(major), 0) AS nbr_versions, 
-                    COALESCE(COUNT(DISTINCT repository), 0) AS nbr_repositories 
+                    COALESCE(COUNT(DISTINCT space), 0) AS nbr_spaces
                 FROM {}
                 WHERE 1=1
-                AND (? IS NULL OR name LIKE ? OR repository LIKE ?)
+                AND (? IS NULL OR name LIKE ? OR space LIKE ?)
+                AND (? IS NULL OR space = ?)
                 ",
             table
         );
@@ -235,7 +270,7 @@ impl MySQLQueryHelper {
             SELECT
              created_at, 
              name, 
-             repository, 
+             space, 
              major, minor, 
              patch, 
              pre_tag, 
@@ -244,7 +279,7 @@ impl MySQLQueryHelper {
              FROM {}
              WHERE 1=1
                 AND name = ?
-                AND repository = ?
+                AND space = ?
             ",
             table
         );
@@ -268,7 +303,7 @@ impl MySQLQueryHelper {
         WHERE 1=1
         AND (? IS NULL OR uid = ?)
         AND (? IS NULL OR name = ?)
-        AND (? IS NULL OR repository = ?)
+        AND (? IS NULL OR space = ?)
         AND (? IS NULL OR created_at <= STR_TO_DATE(?, '%Y-%m-%d'))
         ",
             table
@@ -277,7 +312,7 @@ impl MySQLQueryHelper {
         // check for uid. If uid is present, we only return that card
         if query_args.uid.is_some() {
             // validate uid
-            is_valid_uuid4(query_args.uid.as_ref().unwrap())
+            is_valid_uuidv7(query_args.uid.as_ref().unwrap())
                 .map_err(|e| SqlError::GeneralError(e.to_string()))?;
         } else {
             // add where clause due to multiple combinations
@@ -376,11 +411,11 @@ impl MySQLQueryHelper {
     }
 
     pub fn get_datacard_insert_query() -> String {
-        format!("INSERT INTO {} (uid, app_env, name, repository, major, minor, patch, version,  data_type, interface_type, tags, experimentcard_uid, auditcard_uid, pre_tag, build_tag, username) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", CardTable::Data)
+        format!("INSERT INTO {} (uid, app_env, name, space, major, minor, patch, version,  data_type, interface_type, tags, experimentcard_uid, auditcard_uid, pre_tag, build_tag, username, opsml_version) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", CardTable::Data)
     }
 
     pub fn get_promptcard_insert_query() -> String {
-        format!("INSERT INTO {} (uid, app_env, name, repository, major, minor, patch, version, tags, experimentcard_uid, auditcard_uid, pre_tag, build_tag, username) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", CardTable::Prompt)
+        format!("INSERT INTO {} (uid, app_env, name, space, major, minor, patch, version, tags, experimentcard_uid, auditcard_uid, pre_tag, build_tag, username, opsml_version) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", CardTable::Prompt)
     }
 
     pub fn get_modelcard_insert_query() -> String {
@@ -389,7 +424,7 @@ impl MySQLQueryHelper {
             uid, 
             app_env, 
             name, 
-            repository, 
+            space, 
             major, 
             minor, 
             patch, 
@@ -404,9 +439,10 @@ impl MySQLQueryHelper {
             auditcard_uid, 
             pre_tag, 
             build_tag,
-            username
+            username,
+            opsml_version
             ) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             CardTable::Model
         )
     }
@@ -417,7 +453,7 @@ impl MySQLQueryHelper {
             uid, 
             app_env, 
             name, 
-            repository, 
+            space, 
             major, 
             minor, 
             patch, 
@@ -426,12 +462,14 @@ impl MySQLQueryHelper {
             datacard_uids,
             modelcard_uids, 
             promptcard_uids,
+            card_deck_uids,
             experimentcard_uids,
             pre_tag, 
             build_tag,
-            username
+            username,
+            opsml_version
             ) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             CardTable::Experiment
         )
     }
@@ -442,7 +480,7 @@ impl MySQLQueryHelper {
             uid, 
             app_env, 
             name, 
-            repository, 
+            space, 
             major, 
             minor, 
             patch, 
@@ -454,11 +492,36 @@ impl MySQLQueryHelper {
             experimentcard_uids, 
             pre_tag, 
             build_tag,
-            username
+            username,
+            opsml_version
             ) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             CardTable::Audit
         )
+    }
+
+    pub fn get_carddeck_insert_query() -> String {
+        format!("INSERT INTO {} (uid, app_env, name, space, major, minor, patch, version, pre_tag, build_tag, cards, username, opsml_version) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", CardTable::Deck)
+            .to_string()
+    }
+
+    pub fn get_carddeck_update_query() -> String {
+        format!(
+            "UPDATE {} SET 
+            app_env = ?, 
+            name = ?, 
+            space = ?, 
+            major = ?, 
+            minor = ?, 
+            patch = ?, 
+            version = ?, 
+            cards = ?,
+            username = ?,
+            opsml_version = ?
+            WHERE uid = ?",
+            CardTable::Deck
+        )
+        .to_string()
     }
 
     pub fn get_promptcard_update_query() -> String {
@@ -466,7 +529,7 @@ impl MySQLQueryHelper {
             "UPDATE {} SET 
             app_env = ?, 
             name = ?, 
-            repository = ?, 
+            space = ?, 
             major = ?, 
             minor = ?, 
             patch = ?, 
@@ -476,7 +539,8 @@ impl MySQLQueryHelper {
             auditcard_uid = ?, 
             pre_tag = ?, 
             build_tag = ?,
-            username = ?
+            username = ?,
+            opsml_version = ?
             WHERE uid = ?",
             CardTable::Prompt
         )
@@ -487,7 +551,7 @@ impl MySQLQueryHelper {
             "UPDATE {} SET  
             app_env = ?, 
             name = ?, 
-            repository = ?, 
+            space = ?, 
             major = ?, 
             minor = ?, 
             patch = ?, 
@@ -499,7 +563,8 @@ impl MySQLQueryHelper {
             auditcard_uid = ?, 
             pre_tag = ?, 
             build_tag = ?,
-            username = ?
+            username = ?,
+            opsml_version = ?
             WHERE uid = ?",
             CardTable::Data
         )
@@ -510,7 +575,7 @@ impl MySQLQueryHelper {
             "UPDATE {} SET 
             app_env = ?, 
             name = ?, 
-            repository = ?, 
+            space = ?, 
             major = ?, 
             minor = ?, 
             patch = ?, 
@@ -525,7 +590,8 @@ impl MySQLQueryHelper {
             auditcard_uid = ?, 
             pre_tag = ?, 
             build_tag = ?,
-            username = ?
+            username = ?,
+            opsml_version = ?
             WHERE uid = ?",
             CardTable::Model
         )
@@ -536,7 +602,7 @@ impl MySQLQueryHelper {
             "UPDATE {} SET 
             app_env = ?, 
             name = ?, 
-            repository = ?, 
+            space = ?, 
             major = ?, 
             minor = ?, 
             patch = ?, 
@@ -545,10 +611,12 @@ impl MySQLQueryHelper {
             datacard_uids = ?, 
             modelcard_uids = ?, 
             promptcard_uids = ?,
+            card_deck_uids = ?,
             experimentcard_uids = ?,
             pre_tag = ?, 
             build_tag = ?,
-            username = ?
+            username = ?,
+            opsml_version = ?
             WHERE uid = ?",
             CardTable::Experiment
         )
@@ -559,7 +627,7 @@ impl MySQLQueryHelper {
             "UPDATE {} SET 
             app_env = ?, 
             name = ?, 
-            repository = ?, 
+            space = ?, 
             major = ?, 
             minor = ?, 
             patch = ?, 
@@ -571,7 +639,8 @@ impl MySQLQueryHelper {
             experimentcard_uids = ?, 
             pre_tag = ?, 
             build_tag = ?,
-            username = ?
+            username = ?,
+            opsml_version = ?
             WHERE uid = ?",
             CardTable::Audit
         )
@@ -605,10 +674,23 @@ impl MySQLQueryHelper {
         )
     }
 
-    pub fn get_operation_insert_query() -> String {
+    pub fn get_audit_event_insert_query() -> String {
         format!(
-            "INSERT INTO {} (username, access_type, access_location) VALUES (?, ?, ?)",
-            CardTable::Operations
+            "INSERT INTO {} (
+            username, 
+            client_ip, 
+            user_agent, 
+            operation, 
+            resource_type, 
+            resource_id,
+            access_location,
+            status,
+            error_message,
+            metadata,
+            registry_type,
+            route
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            CardTable::AuditEvent
         )
     }
 

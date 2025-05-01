@@ -6,7 +6,6 @@ LogLevel = core.LogLevel
 RustyLogger = core.RustyLogger
 LoggingConfig = core.LoggingConfig
 OpsmlError = core.OpsmlError
-OpsmlConfig = core.OpsmlConfig
 CommonKwargs = core.CommonKwargs
 SaveName = core.SaveName
 SaverPath = core.SaverPath
@@ -15,8 +14,6 @@ VersionType = core.VersionType
 Feature = core.Feature
 FeatureSchema = core.FeatureSchema
 OnnxSchema = core.OnnxSchema
-ApiSettings = core.ApiSettings
-OpsmlStorageSettings = core.OpsmlStorageSettings
 ExtraMetadata = core.ExtraMetadata
 
 
@@ -25,7 +22,6 @@ __all__ = [
     "RustyLogger",
     "LoggingConfig",
     "OpsmlError",
-    "OpsmlConfig",
     "CommonKwargs",
     "SaveName",
     "Suffix",
@@ -33,7 +29,5 @@ __all__ = [
     "Feature",
     "FeatureSchema",
     "OnnxSchema",
-    "ApiSettings",
-    "OpsmlStorageSettings",
     "ExtraMetadata",
 ]

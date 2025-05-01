@@ -22,7 +22,7 @@ use pyo3::IntoPyObjectExt;
 use rand::Rng;
 use scouter_client::{drifter::PyDrifter, DataType as DriftDataType};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -150,13 +150,23 @@ pub struct ModelInterfaceMetadata {
     pub model_specific_metadata: Value,
 
     #[pyo3(get)]
-    pub opsml_version: String,
+    pub drift_type: HashSet<DriftType>,
 }
 
 #[pymethods]
 impl ModelInterfaceMetadata {
     #[new]
-    #[pyo3(signature = (save_metadata, task_type=TaskType::Other, model_type=ModelType::Unknown, data_type=DataType::NotProvided, schema=FeatureSchema::default(),interface_type=ModelInterfaceType::Base, onnx_session=None, extra_metadata=HashMap::new()))]
+    #[pyo3(signature = (
+        save_metadata,
+        task_type=TaskType::Other,
+        model_type=ModelType::Unknown,
+        data_type=DataType::NotProvided,
+        schema=FeatureSchema::default(),
+        interface_type=ModelInterfaceType::Base,
+        onnx_session=None,
+        extra_metadata=HashMap::new(),
+        drift_type=HashSet::new())
+    )]
     #[allow(clippy::too_many_arguments)]
     pub fn new(
         save_metadata: ModelInterfaceSaveMetadata,
@@ -167,6 +177,7 @@ impl ModelInterfaceMetadata {
         interface_type: ModelInterfaceType,
         onnx_session: Option<OnnxSession>,
         extra_metadata: HashMap<String, String>,
+        drift_type: HashSet<DriftType>,
     ) -> Self {
         ModelInterfaceMetadata {
             task_type,
@@ -178,7 +189,7 @@ impl ModelInterfaceMetadata {
             save_metadata,
             extra_metadata,
             model_specific_metadata: Value::Null,
-            opsml_version: env!("CARGO_PKG_VERSION").to_string(),
+            drift_type,
         }
     }
     pub fn __str__(&self) -> String {
@@ -223,6 +234,8 @@ pub struct ModelInterface {
     pub drift_profile: Vec<PyObject>,
 
     pub sample_data: SampleData,
+
+    pub drift_type: HashSet<DriftType>,
 }
 
 #[pymethods]
@@ -270,6 +283,25 @@ impl ModelInterface {
             None => vec![],
         };
 
+        // if profile is not empty, iterate through and get the drift type else default create empty vec
+        let drift_type = if !profiles.is_empty() {
+            profiles
+                .iter()
+                .map(|profile| {
+                    profile
+                        .bind(py)
+                        .getattr("config")
+                        .unwrap()
+                        .getattr("drift_type")
+                        .unwrap()
+                        .extract::<DriftType>()
+                        .unwrap()
+                })
+                .collect::<HashSet<DriftType>>()
+        } else {
+            HashSet::new()
+        };
+
         Ok(ModelInterface {
             model,
             data_type: sample_data.get_data_type(),
@@ -280,6 +312,7 @@ impl ModelInterface {
             interface_type: ModelInterfaceType::Base,
             onnx_session: None,
             drift_profile: profiles,
+            drift_type,
         })
     }
 
@@ -442,6 +475,7 @@ impl ModelInterface {
             self.interface_type.clone(),
             onnx_session,
             HashMap::new(),
+            self.drift_type.clone(),
         );
 
         Ok(metadata)
@@ -476,6 +510,15 @@ impl ModelInterface {
 
         let profile = drifter.create_drift_profile(py, data, config, data_type)?;
         self.drift_profile.push(profile.clone().into_py_any(py)?);
+
+        // get drift_type from config and push to drift_type
+
+        let drift_type = profile
+            .getattr("config")?
+            .getattr("drift_type")?
+            .extract::<DriftType>()?;
+
+        self.drift_type.insert(drift_type);
 
         Ok(profile)
     }
@@ -555,6 +598,7 @@ impl ModelInterface {
                 .map(|session| Py::new(py, session.clone()).unwrap()),
             drift_profile: vec![],
             sample_data: SampleData::default(),
+            drift_type: metadata.drift_type.clone(),
         };
 
         Ok(interface)
@@ -665,8 +709,6 @@ impl ModelInterface {
         for filepath in files {
             // get file name
             let filename = filepath.file_name().unwrap().to_str().unwrap();
-
-            println!("Loading drift profile: {:?}", &filepath);
 
             let drift_type_str = filename.split('-').next().unwrap().to_lowercase();
             let drift_type = DriftType::from_value(&drift_type_str);

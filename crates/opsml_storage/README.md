@@ -1,5 +1,5 @@
 # Opsml Storage
-This repository container the storage layer for the Opsml project. It consists of both rust and python interfaces for interacting with various storage backends.
+This repository contains the storage layer for the Opsml project. It consists of both rust and python interfaces for interacting with various storage backends.
 
 
 ## FileSystem Top-level interface

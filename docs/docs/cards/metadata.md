@@ -37,7 +37,7 @@ from opsml.types import Description, ModelCardMetadata
 
 modelcard = ModelCard(
   name="my_model",
-  repository="my_repo",
+  space="my_repo",
   contact="user",
   interface=interface,
   datacard_uid=datacard.uid,
@@ -85,7 +85,7 @@ One of the benefits to the model registration process (especially when auto-conv
     "onnx_version": "1.14.1",
     "model_uri": "opsml-root:/OPSML_MODEL_REGISTRY/opsml/regression/v1.4.0/trained-model.joblib",
     "model_version": "1.4.0",
-    "model_repository": "opsml",
+    "model_space": "opsml",
     "sample_data_uri": "opsml-root:/OPSML_MODEL_REGISTRY/opsml/regression/v1.4.0/sample-model-data.joblib",
     "opsml_version": "2.0.0",
     "data_schema": {
