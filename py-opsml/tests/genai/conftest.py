@@ -5,7 +5,8 @@ import pytest
 @pytest.fixture(scope="module")
 def prompt_step1():
     return Prompt(
-        model="openai:gpt-4o",
+        model="gpt-4o",
+        provider="openai",
         prompt="Prompt for task 1. Context: $1",
         system_prompt="You are a helpful assistant.",
     )
@@ -14,6 +15,7 @@ def prompt_step1():
 @pytest.fixture(scope="module")
 def prompt_step2():
     return Prompt(
-        model="openai:gpt-4o",
+        model="gpt-4o",
+        provider="openai",
         prompt="Prompt for task 2. Context: $1",
     )

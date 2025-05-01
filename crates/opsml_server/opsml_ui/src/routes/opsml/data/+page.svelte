@@ -16,5 +16,6 @@
     selectedSpace={selectedSpace}
     selectedName={selectedName}
     page={page}
+    title={page.registry_type}
   />
 </div>

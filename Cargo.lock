@@ -3147,15 +3147,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "itertools"
-version = "0.14.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2b192c782037fadd9cfa75548310488aabdbf3d2da73885b31bd0abd03351285"
-dependencies = [
- "either",
-]
-
-[[package]]
 name = "itoa"
 version = "1.0.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5605,7 +5596,7 @@ checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
 [[package]]
 name = "scouter-client"
 version = "0.4.5"
-source = "git+https://github.com/demml/scouter.git?branch=opsmlUi#e17abc5efd2da6bf7d93777398c6fbaba13dff94"
+source = "git+https://github.com/demml/scouter.git?branch=main#99fae69d16bce5b627a1c4d24cbbd4e11fe0dd8c"
 dependencies = [
  "chrono",
  "ndarray",
@@ -5613,6 +5604,7 @@ dependencies = [
  "num-traits",
  "numpy",
  "pyo3",
+ "reqwest",
  "scouter-contracts",
  "scouter-dispatch",
  "scouter-drift",
@@ -5620,10 +5612,11 @@ dependencies = [
  "scouter-events",
  "scouter-observability",
  "scouter-profile",
+ "scouter-settings",
  "scouter-types",
  "serde",
  "serde_json",
- "serde_qs 0.14.0",
+ "serde_qs 0.8.5",
  "tokio",
  "tracing",
 ]
@@ -5631,7 +5624,7 @@ dependencies = [
 [[package]]
 name = "scouter-contracts"
 version = "0.4.5"
-source = "git+https://github.com/demml/scouter.git?branch=opsmlUi#e17abc5efd2da6bf7d93777398c6fbaba13dff94"
+source = "git+https://github.com/demml/scouter.git?branch=main#99fae69d16bce5b627a1c4d24cbbd4e11fe0dd8c"
 dependencies = [
  "chrono",
  "pyo3",
@@ -5645,7 +5638,7 @@ dependencies = [
 [[package]]
 name = "scouter-dispatch"
 version = "0.4.5"
-source = "git+https://github.com/demml/scouter.git?branch=opsmlUi#e17abc5efd2da6bf7d93777398c6fbaba13dff94"
+source = "git+https://github.com/demml/scouter.git?branch=main#99fae69d16bce5b627a1c4d24cbbd4e11fe0dd8c"
 dependencies = [
  "futures",
  "pyo3",
@@ -5660,12 +5653,12 @@ dependencies = [
 [[package]]
 name = "scouter-drift"
 version = "0.4.5"
-source = "git+https://github.com/demml/scouter.git?branch=opsmlUi#e17abc5efd2da6bf7d93777398c6fbaba13dff94"
+source = "git+https://github.com/demml/scouter.git?branch=main#99fae69d16bce5b627a1c4d24cbbd4e11fe0dd8c"
 dependencies = [
  "chrono",
  "cron",
  "indicatif",
- "itertools 0.14.0",
+ "itertools 0.12.1",
  "ndarray",
  "ndarray-stats",
  "noisy_float",
@@ -5676,6 +5669,7 @@ dependencies = [
  "scouter-contracts",
  "scouter-dispatch",
  "scouter-error",
+ "scouter-settings",
  "scouter-types",
  "serde",
  "serde_json",
@@ -5686,17 +5680,18 @@ dependencies = [
 [[package]]
 name = "scouter-error"
 version = "0.4.5"
-source = "git+https://github.com/demml/scouter.git?branch=opsmlUi#e17abc5efd2da6bf7d93777398c6fbaba13dff94"
+source = "git+https://github.com/demml/scouter.git?branch=main#99fae69d16bce5b627a1c4d24cbbd4e11fe0dd8c"
 dependencies = [
  "pyo3",
  "serde",
  "thiserror 2.0.12",
+ "tracing",
 ]
 
 [[package]]
 name = "scouter-events"
 version = "0.4.5"
-source = "git+https://github.com/demml/scouter.git?branch=opsmlUi#e17abc5efd2da6bf7d93777398c6fbaba13dff94"
+source = "git+https://github.com/demml/scouter.git?branch=main#99fae69d16bce5b627a1c4d24cbbd4e11fe0dd8c"
 dependencies = [
  "chrono",
  "futures",
@@ -5721,9 +5716,9 @@ dependencies = [
 [[package]]
 name = "scouter-observability"
 version = "0.4.5"
-source = "git+https://github.com/demml/scouter.git?branch=opsmlUi#e17abc5efd2da6bf7d93777398c6fbaba13dff94"
+source = "git+https://github.com/demml/scouter.git?branch=main#99fae69d16bce5b627a1c4d24cbbd4e11fe0dd8c"
 dependencies = [
- "itertools 0.14.0",
+ "itertools 0.12.1",
  "ndarray",
  "ndarray-stats",
  "noisy_float",
@@ -5738,11 +5733,11 @@ dependencies = [
 [[package]]
 name = "scouter-profile"
 version = "0.4.5"
-source = "git+https://github.com/demml/scouter.git?branch=opsmlUi#e17abc5efd2da6bf7d93777398c6fbaba13dff94"
+source = "git+https://github.com/demml/scouter.git?branch=main#99fae69d16bce5b627a1c4d24cbbd4e11fe0dd8c"
 dependencies = [
  "chrono",
  "indicatif",
- "itertools 0.14.0",
+ "itertools 0.12.1",
  "ndarray",
  "ndarray-stats",
  "noisy_float",
@@ -5760,10 +5755,12 @@ dependencies = [
 [[package]]
 name = "scouter-settings"
 version = "0.4.5"
-source = "git+https://github.com/demml/scouter.git?branch=opsmlUi#e17abc5efd2da6bf7d93777398c6fbaba13dff94"
+source = "git+https://github.com/demml/scouter.git?branch=main#99fae69d16bce5b627a1c4d24cbbd4e11fe0dd8c"
 dependencies = [
  "base64 0.22.1",
+ "pyo3",
  "scouter-error",
+ "scouter-types",
  "serde",
  "tracing",
 ]
@@ -5771,7 +5768,7 @@ dependencies = [
 [[package]]
 name = "scouter-types"
 version = "0.4.5"
-source = "git+https://github.com/demml/scouter.git?branch=opsmlUi#e17abc5efd2da6bf7d93777398c6fbaba13dff94"
+source = "git+https://github.com/demml/scouter.git?branch=main#99fae69d16bce5b627a1c4d24cbbd4e11fe0dd8c"
 dependencies = [
  "chrono",
  "colored_json",
@@ -5781,6 +5778,8 @@ dependencies = [
  "scouter-error",
  "serde",
  "serde_json",
+ "strum",
+ "strum_macros",
  "tracing",
 ]
 
@@ -6336,6 +6335,25 @@ name = "strsim"
 version = "0.11.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7da8b5736845d9f2fcb837ea5d9e2628564b3b043a70948a3f0b778838c5fb4f"
+
+[[package]]
+name = "strum"
+version = "0.27.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f64def088c51c9510a8579e3c5d67c65349dcf755e5479ad3d010aa6454e2c32"
+
+[[package]]
+name = "strum_macros"
+version = "0.27.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c77a8c5abcaf0f9ce05d62342b7d298c346515365c36b673df4ebe3ced01fde8"
+dependencies = [
+ "heck 0.5.0",
+ "proc-macro2",
+ "quote",
+ "rustversion",
+ "syn 2.0.100",
+]
 
 [[package]]
 name = "subtle"
