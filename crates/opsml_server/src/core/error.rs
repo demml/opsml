@@ -187,7 +187,10 @@ impl OpsmlServerError {
         }
     }
 
-    pub fn to_error<T>(self, code: StatusCode) -> Result<T, (StatusCode, Json<OpsmlServerError>)> {
+    pub fn into_response<T>(
+        self,
+        code: StatusCode,
+    ) -> Result<T, (StatusCode, Json<OpsmlServerError>)> {
         Err((code, Json(self)))
     }
 }
