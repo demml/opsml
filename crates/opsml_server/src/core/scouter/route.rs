@@ -1,4 +1,4 @@
-use crate::core::error::internal_server_error;
+use crate::core::error::{internal_server_error, OpsmlServerError};
 use crate::core::files::utils::download_artifacts;
 use crate::core::scouter;
 use crate::core::scouter::utils::{find_drift_profile, save_encrypted_profile};
@@ -7,7 +7,6 @@ use anyhow::{Context, Result};
 use axum::{
     extract::{Query, State},
     http::StatusCode,
-    response::IntoResponse,
     routing::{get, post, put},
     Extension, Json, Router,
 };
@@ -19,14 +18,11 @@ use opsml_types::RegistryType;
 use opsml_types::SaveName;
 use reqwest::Response;
 
-use crate::core::scouter::types::{
-    BinnedCustomResult, BinnedPsiResult, DriftProfileResult, SpcDriftResult,
-};
+use crate::core::scouter::types::DriftProfileResult;
 use scouter_client::{
-    BinnedCustomMetrics, BinnedPsiFeatureMetrics, DriftAlertRequest, DriftRequest, ProfileRequest,
-    ProfileStatusRequest, SpcDriftFeatures,
+    Alerts, BinnedCustomMetrics, BinnedPsiFeatureMetrics, DriftAlertRequest, DriftRequest,
+    ProfileRequest, ProfileStatusRequest, ScouterResponse, ScouterServerError, SpcDriftFeatures,
 };
-use serde_json::json;
 use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -35,23 +31,26 @@ use tracing::{debug, error, instrument};
 
 use crate::core::scouter::utils::load_drift_profiles;
 
-async fn return_response(
+async fn parse_scouter_response(
     response: Response,
-) -> Result<impl IntoResponse, (StatusCode, Json<serde_json::Value>)> {
-    // Get status code from Scouter response
-    let status = response.status();
+) -> Result<Json<ScouterResponse>, (StatusCode, Json<OpsmlServerError>)> {
+    let status_code = response.status();
 
-    // Get JSON body from Scouter response
-    let body = response.json::<serde_json::Value>().await.map_err(|e| {
-        error!("Failed to parse scouter response: {}", e);
-        internal_server_error(e, "Failed to parse scouter response")
-    })?;
-
-    // Pass through the status code and body from Scouter
-    if status.is_success() {
-        Ok((status, Json(body)))
-    } else {
-        Err((status, Json(body)))
+    match status_code.is_success() {
+        true => {
+            let body = response.json::<ScouterResponse>().await.map_err(|e| {
+                error!("Failed to parse scouter response: {}", e);
+                internal_server_error(e, "Failed to parse scouter response")
+            })?;
+            Ok(Json(body))
+        }
+        false => {
+            let body = response.json::<ScouterServerError>().await.map_err(|e| {
+                error!("Failed to parse scouter error response: {}", e);
+                internal_server_error(e, "Failed to parse scouter error response")
+            })?;
+            Err((status_code, Json(OpsmlServerError::new(body.error))))
+        }
     }
 }
 
@@ -59,7 +58,7 @@ pub async fn insert_drift_profile(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
     Json(body): Json<ProfileRequest>,
-) -> Result<impl IntoResponse, (StatusCode, Json<serde_json::Value>)> {
+) -> Result<Json<ScouterResponse>, (StatusCode, Json<OpsmlServerError>)> {
     let exchange_token = state.exchange_token_from_perms(&perms).await.map_err(|e| {
         error!("Failed to exchange token for scouter: {}", e);
         internal_server_error(e, "Failed to exchange token for scouter")
@@ -86,8 +85,7 @@ pub async fn insert_drift_profile(
             internal_server_error(e, "Failed to insert drift profile")
         })?;
 
-    // Get status code from Scouter response
-    return_response(response).await
+    parse_scouter_response(response).await
 }
 
 /// Update a drift profile. Two tasks are performed:
@@ -98,12 +96,9 @@ pub async fn update_drift_profile(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
     Json(req): Json<UpdateProfileRequest>,
-) -> Result<impl IntoResponse, (StatusCode, Json<serde_json::Value>)> {
+) -> Result<Json<ScouterResponse>, (StatusCode, Json<OpsmlServerError>)> {
     if !perms.has_write_permission(&req.request.space) {
-        return Err((
-            StatusCode::FORBIDDEN,
-            Json(serde_json::json!({"error": "User does not have write permission"})),
-        ));
+        return OpsmlServerError::permission_denied().into_response(StatusCode::FORBIDDEN);
     }
 
     // 1. Opsml task
@@ -128,10 +123,7 @@ pub async fn update_drift_profile(
     // assert files is not empty
     if files.is_empty() {
         error!("No files found in directory");
-        return Err((
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(serde_json::json!({"error": "No files found in directory"})),
-        ));
+        return OpsmlServerError::no_files_found().into_response(StatusCode::NOT_FOUND);
     }
 
     let filename = find_drift_profile(&files, drift_type)?;
@@ -174,7 +166,7 @@ pub async fn update_drift_profile(
             internal_server_error(e, "Failed to update drift profile")
         })?;
 
-    return_response(response).await
+    parse_scouter_response(response).await
 }
 
 /// Update drift profile status
@@ -190,12 +182,9 @@ pub async fn update_drift_profile_status(
     State(data): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
     Json(body): Json<ProfileStatusRequest>,
-) -> Result<impl IntoResponse, (StatusCode, Json<serde_json::Value>)> {
+) -> Result<Json<ScouterResponse>, (StatusCode, Json<OpsmlServerError>)> {
     if !perms.has_write_permission(&body.space) {
-        return Err((
-            StatusCode::FORBIDDEN,
-            Json(serde_json::json!({ "error": "Permission denied" })),
-        ));
+        return OpsmlServerError::permission_denied().into_response(StatusCode::FORBIDDEN);
     }
     debug!("Updating drift profile status: {:?}", &body);
 
@@ -223,7 +212,7 @@ pub async fn update_drift_profile_status(
             internal_server_error(e, "Failed to update drift profile status")
         })?;
 
-    return_response(response).await
+    parse_scouter_response(response).await
 }
 
 #[instrument(skip(data, params))]
@@ -231,7 +220,7 @@ pub async fn get_spc_drift(
     State(data): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
     Query(params): Query<DriftRequest>,
-) -> SpcDriftResult {
+) -> Result<Json<SpcDriftFeatures>, (StatusCode, Json<OpsmlServerError>)> {
     // validate time window
 
     let exchange_token = data.exchange_token_from_perms(&perms).await.map_err(|e| {
@@ -273,7 +262,7 @@ pub async fn get_psi_drift(
     State(data): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
     Query(params): Query<DriftRequest>,
-) -> BinnedPsiResult {
+) -> Result<Json<BinnedPsiFeatureMetrics>, (StatusCode, Json<OpsmlServerError>)> {
     // validate time window
 
     let exchange_token = data.exchange_token_from_perms(&perms).await.map_err(|e| {
@@ -320,7 +309,7 @@ pub async fn get_custom_drift(
     State(data): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
     Query(params): Query<DriftRequest>,
-) -> BinnedCustomResult {
+) -> Result<Json<BinnedCustomMetrics>, (StatusCode, Json<OpsmlServerError>)> {
     // validate time window
 
     let exchange_token = data.exchange_token_from_perms(&perms).await.map_err(|e| {
@@ -370,11 +359,7 @@ pub async fn get_drift_profiles_for_ui(
     Json(req): Json<RawFileRequest>,
 ) -> DriftProfileResult {
     if !perms.has_read_permission() {
-        error!("Permission denied");
-        return Err((
-            StatusCode::FORBIDDEN,
-            Json(json!({ "error": "Permission denied" })),
-        ));
+        return OpsmlServerError::permission_denied().into_response(StatusCode::FORBIDDEN);
     }
 
     // create temp dir
@@ -412,12 +397,9 @@ pub async fn get_drift_alerts(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
     Query(params): Query<DriftAlertRequest>,
-) -> Result<impl IntoResponse, (StatusCode, Json<serde_json::Value>)> {
+) -> Result<Json<Alerts>, (StatusCode, Json<OpsmlServerError>)> {
     if !perms.has_read_permission() {
-        return Err((
-            StatusCode::FORBIDDEN,
-            Json(json!({ "error": "Permission denied" })),
-        ));
+        return OpsmlServerError::permission_denied().into_response(StatusCode::FORBIDDEN);
     }
 
     let exchange_token = state.exchange_token_from_perms(&perms).await.map_err(|e| {
@@ -446,7 +428,24 @@ pub async fn get_drift_alerts(
             internal_server_error(e, "Failed to get drift alerts")
         })?;
 
-    return_response(response).await
+    let status_code = response.status();
+
+    match status_code.is_success() {
+        true => {
+            let body = response.json::<Alerts>().await.map_err(|e| {
+                error!("Failed to parse scouter response: {}", e);
+                internal_server_error(e, "Failed to parse scouter response")
+            })?;
+            Ok(Json(body))
+        }
+        false => {
+            let body = response.json::<ScouterServerError>().await.map_err(|e| {
+                error!("Failed to parse scouter error response: {}", e);
+                internal_server_error(e, "Failed to parse scouter error response")
+            })?;
+            Err((status_code, Json(OpsmlServerError::new(body.error))))
+        }
+    }
 }
 
 pub async fn get_scouter_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
@@ -477,7 +476,6 @@ pub async fn get_scouter_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
         Ok(router) => Ok(router),
         Err(_) => {
             error!("Failed to create scouter router");
-            // panic
             Err(anyhow::anyhow!("Failed to create scouter router"))
                 .context("Panic occurred while creating the router")
         }
