@@ -49,14 +49,14 @@ pub struct TensorFlowModel {
 impl TensorFlowModel {
     #[new]
     #[allow(clippy::too_many_arguments)]
-    #[pyo3(signature = (model=None, preprocessor=None, sample_data=None, task_type=None, schema=None, drift_profile=None))]
+    #[pyo3(signature = (model=None, preprocessor=None, sample_data=None, task_type=None,  drift_profile=None))]
     pub fn new<'py>(
         py: Python,
         model: Option<&Bound<'py, PyAny>>,
         preprocessor: Option<&Bound<'py, PyAny>>,
         sample_data: Option<&Bound<'py, PyAny>>,
         task_type: Option<TaskType>,
-        schema: Option<FeatureSchema>,
+
         drift_profile: Option<&Bound<'py, PyAny>>,
     ) -> PyResult<(Self, ModelInterface)> {
         // check if model is base estimator for sklearn validation
@@ -76,8 +76,7 @@ impl TensorFlowModel {
             None
         };
 
-        let mut model_interface =
-            ModelInterface::new(py, None, None, task_type, schema, drift_profile, None)?;
+        let mut model_interface = ModelInterface::new(py, None, None, task_type, drift_profile)?;
 
         // override ModelInterface SampleData with TensorFlowSampleData
         let sample_data = match sample_data {
@@ -421,16 +420,10 @@ impl TensorFlowModel {
             sample_data: TensorFlowSampleData::default(),
         };
 
-        let mut interface = ModelInterface::new(
-            py,
-            None,
-            None,
-            Some(metadata.task_type.clone()),
-            Some(metadata.schema.clone()),
-            None,
-            None,
-        )?;
+        let mut interface =
+            ModelInterface::new(py, None, None, Some(metadata.task_type.clone()), None)?;
 
+        interface.schema = metadata.schema.clone();
         interface.data_type = metadata.data_type.clone();
 
         Py::new(py, (model_interface, interface))?.into_bound_py_any(py)
