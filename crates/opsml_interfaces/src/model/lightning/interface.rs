@@ -295,6 +295,7 @@ impl LightningModel {
             self_.interface_type.clone(),
             onnx_session,
             HashMap::new(),
+            self_.as_super().drift_type.clone(),
         );
 
         Ok(metadata)

@@ -17,13 +17,14 @@
       return;
     }
     activeTab = tab;
-    goto(`/opsml/${registry}/card/${activeTab}?repository=${repository}&name=${name}&version=${version}`);
+    goto(`/opsml/${registry}/card/${activeTab}?space=${space}&name=${name}&version=${version}`);
   };
+
 
   let { data, children }: LayoutProps = $props();
 
   let activeTab = $state(getLastPartOfPath(page.url.pathname));
-  let repository = data.metadata.repository;
+  let space = data.metadata.space;
   let name = data.metadata.name;
   let version = data.metadata.version;
   let registry = $state('');
@@ -36,12 +37,13 @@
 
 </script>
 
-<div>
-  <div class="pt-20 m500:pt-14 lg:pt-[100px] border-b bg-slate-100">
+
+<div class="h-screen flex flex-col">
+  <div class="flex-none pt-20 m500:pt-14 lg:pt-[85px] border-b-2 border-black bg-slate-100">
     <div class="flex flex-col mx-auto flex w-11/12 justify-start">
       <h1 class="flex flex-row flex-wrap items-center text-xl">
         <div class="group flex flex-none items-center">
-          <a class="font-semibold text-black hover:text-secondary-500" href="/opsml/{registry}?repository={repository}">{repository}</a>
+          <a class="font-semibold text-black hover:text-secondary-500" href="/opsml/{registry}?space={space}">{space}</a>
           <div class="mx-0.5 text-gray-800">/</div>
         </div>
         <div class="font-bold text-primary-800">{name}</div>
@@ -59,11 +61,11 @@
           <FolderTree color="#8059b6"/>
           <span>Files</span>
         </button>
-        <button class="flex items-center gap-x-2 border-b-3 {activeTab === 'monitoring' ? 'border-secondary-500' : 'border-transparent'} hover:border-secondary-500 hover:border-b-3" onclick={() => activeTab = 'monitoring'}>
+        <button class="flex items-center gap-x-2 border-b-3 {activeTab === 'monitoring' ? 'border-secondary-500' : 'border-transparent'} hover:border-secondary-500 hover:border-b-3" onclick={() => navigateTab('monitoring')}>
           <Activity color="#8059b6"/>
           <span>Monitoring</span>
         </button>
-        <button class="flex items-center gap-x-2 border-b-3 {activeTab === 'versions' ? 'border-secondary-500' : 'border-transparent'} hover:border-secondary-500 hover:border-b-3" onclick={() => activeTab = 'versions'}>
+        <button class="flex items-center gap-x-2 border-b-3 {activeTab === 'versions' ? 'border-secondary-500' : 'border-transparent'} hover:border-secondary-500 hover:border-b-3" onclick={() => navigateTab('versions')}>
           <Tag color="#8059b6" fill="#8059b6"/>
           <span>Versions</span>
         </button>
@@ -73,5 +75,7 @@
 
     </div>
   </div>
-  {@render children()}
+  <div class="flex-1 overflow-auto">
+    {@render children()}
+  </div>
 </div>

@@ -10,7 +10,7 @@
   let { files, 
         currentPath, 
         previousPath, 
-        repository, 
+        space, 
         name, 
         version, 
         isRoot ,
@@ -19,7 +19,7 @@
         files: FileTreeNode[], 
         currentPath:string, 
         previousPath: string, 
-        repository:string, 
+        space:string, 
         name:string, 
         version: string, 
         isRoot: boolean ,
@@ -31,13 +31,13 @@
   function navigateToPath(slug_name: string) {
     let newPath = currentPath + '/' + slug_name;
     // add params to path
-    newPath = newPath + `?repository=${repository}&name=${name}&version=${version}`;
+    newPath = newPath + `?space=${space}&name=${name}&version=${version}`;
     goto(newPath);
   }
 
   function navigateToView(path: string) {
     // add params to path
-    let viewPath = `/opsml/${registryPath}/card/files/view?repository=${repository}&name=${name}&version=${version}&path=${path}`;
+    let viewPath = `/opsml/${registryPath}/card/files/view?space=${space}&name=${name}&version=${version}&path=${path}`;
     goto(viewPath);
   }
    

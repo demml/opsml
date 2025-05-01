@@ -10,15 +10,15 @@ use opsml_types::*;
 
 use opsml_crypt::encrypt_file;
 use opsml_server::core::cards::schema::{
-    CreateReadeMe, QueryPageResponse, ReadeMe, RegistryStatsResponse,
+    CreateReadeMe, QueryPageResponse, ReadeMe, RegistryStatsResponse, VersionPageResponse,
 };
 use std::path::PathBuf;
 
 // create json
 fn create_card_metadata(key: ArtifactKey) {
-    let json = r#"{"name":"name","repository":"space","version":"1.0.0","uid":"550e8400-e29b-41d4-a716-446655440000","app_env":"dev","created_at":"2021-08-01T00:00:00Z"}"#;
+    let json = r#"{"name":"name","space":"space","version":"1.0.0","uid":"550e8400-e29b-41d4-a716-446655440000","app_env":"dev","created_at":"2021-08-01T00:00:00Z"}"#;
     let path = format!(
-        "opsml_registries/opsml_data_registry/{}/{}/v{}",
+        "opsml_registries/opsml_model_registry/{}/{}/v{}",
         "space", "name", "1.0.0"
     );
     std::fs::create_dir_all(path.clone()).unwrap();
@@ -88,11 +88,11 @@ async fn test_opsml_server_card_uid() {
 }
 
 #[tokio::test]
-async fn test_opsml_server_card_repositories() {
+async fn test_opsml_server_card_spaces() {
     let helper = TestHelper::new().await;
 
     /////////////////////// Test respositories ///////////////////////
-    let params = RepositoryRequest {
+    let params = SpaceRequest {
         registry_type: RegistryType::Model,
     };
 
@@ -100,7 +100,7 @@ async fn test_opsml_server_card_repositories() {
 
     // check if a card UID exists (get request with UidRequest params)
     let request = Request::builder()
-        .uri(format!("/opsml/api/card/repositories?{}", query_string))
+        .uri(format!("/opsml/api/card/spaces?{}", query_string))
         .method("GET")
         .body(Body::empty())
         .unwrap();
@@ -109,10 +109,10 @@ async fn test_opsml_server_card_repositories() {
     assert_eq!(response.status(), StatusCode::OK);
 
     let body = response.into_body().collect().await.unwrap().to_bytes();
-    let repository_response: RepositoryResponse = serde_json::from_slice(&body).unwrap();
+    let space_response: SpaceResponse = serde_json::from_slice(&body).unwrap();
 
     // assert 10
-    assert_eq!(repository_response.repositories.len(), 10);
+    assert_eq!(space_response.spaces.len(), 10);
 
     helper.cleanup();
 }
@@ -126,6 +126,7 @@ async fn test_opsml_server_card_stats_and_query() {
     let params = RegistryStatsRequest {
         registry_type: RegistryType::Model,
         search_term: None,
+        space: None,
     };
 
     let query_string = serde_qs::to_string(&params).unwrap();
@@ -145,6 +146,7 @@ async fn test_opsml_server_card_stats_and_query() {
     let params = RegistryStatsRequest {
         registry_type: RegistryType::Model,
         search_term: Some("Model1".to_string()),
+        space: None,
     };
 
     let query_string = serde_qs::to_string(&params).unwrap();
@@ -166,7 +168,7 @@ async fn test_opsml_server_card_stats_and_query() {
     let args = QueryPageRequest {
         registry_type: RegistryType::Model,
         sort_by: None,
-        repository: None,
+        space: None,
         search_term: None,
         page: None,
     };
@@ -190,7 +192,7 @@ async fn test_opsml_server_card_stats_and_query() {
     let args = QueryPageRequest {
         registry_type: RegistryType::Model,
         sort_by: None,
-        repository: None,
+        space: None,
         search_term: Some("Model2".to_string()),
         page: None,
     };
@@ -211,6 +213,31 @@ async fn test_opsml_server_card_stats_and_query() {
 
     assert_eq!(page_response.summaries.len(), 1);
 
+    // test getting version page
+    let args = VersionPageRequest {
+        registry_type: RegistryType::Model,
+        space: Some("repo1".to_string()),
+        name: Some("Model1".to_string()),
+        page: None,
+    };
+    let query_string = serde_qs::to_string(&args).unwrap();
+
+    let request = Request::builder()
+        .uri(format!(
+            "/opsml/api/card/registry/version/page?{}",
+            query_string
+        ))
+        .method("GET")
+        .body(Body::empty())
+        .unwrap();
+
+    let response = helper.send_oneshot(request).await;
+    assert_eq!(response.status(), StatusCode::OK);
+    let body = response.into_body().collect().await.unwrap().to_bytes();
+    let version_page_response: VersionPageResponse = serde_json::from_slice(&body).unwrap();
+
+    assert_eq!(version_page_response.summaries.len(), 1);
+
     helper.cleanup();
 }
 
@@ -221,7 +248,7 @@ async fn test_opsml_server_card_list_cards() {
     let args = CardQueryArgs {
         uid: None,
         name: None,
-        repository: None,
+        space: None,
         version: None,
         max_date: None,
         tags: None,
@@ -242,14 +269,14 @@ async fn test_opsml_server_card_list_cards() {
     assert_eq!(response.status(), StatusCode::OK);
 
     let body = response.into_body().collect().await.unwrap().to_bytes();
-    let card_results: Vec<Card> = serde_json::from_slice(&body).unwrap();
+    let card_results: Vec<CardRecord> = serde_json::from_slice(&body).unwrap();
 
     assert_eq!(card_results.len(), 10);
 
     let args = CardQueryArgs {
         uid: None,
         name: None,
-        repository: Some("repo1".to_string()),
+        space: Some("repo1".to_string()),
         version: None,
         max_date: None,
         tags: None,
@@ -270,7 +297,7 @@ async fn test_opsml_server_card_list_cards() {
     assert_eq!(response.status(), StatusCode::OK);
 
     let body = response.into_body().collect().await.unwrap().to_bytes();
-    let card_results: Vec<Card> = serde_json::from_slice(&body).unwrap();
+    let card_results: Vec<CardRecord> = serde_json::from_slice(&body).unwrap();
 
     assert_eq!(card_results.len(), 1);
 
@@ -283,7 +310,7 @@ async fn test_opsml_server_card_datacard_crud() {
 
     let card_version_request = CardVersionRequest {
         name: "DataCard".to_string(),
-        repository: "repo1".to_string(),
+        space: "repo1".to_string(),
         version: Some("1.0.0".to_string()),
         version_type: VersionType::Minor,
         pre_tag: None,
@@ -292,9 +319,9 @@ async fn test_opsml_server_card_datacard_crud() {
 
     // DataCard
     let card_request = CreateCardRequest {
-        card: Card::Data(DataCardClientRecord {
+        card: CardRecord::Data(DataCardClientRecord {
             name: "DataCard".to_string(),
-            repository: "repo1".to_string(),
+            space: "repo1".to_string(),
             version: "1.0.0".to_string(),
             ..DataCardClientRecord::default()
         }),
@@ -337,21 +364,21 @@ async fn test_opsml_server_card_datacard_crud() {
     assert_eq!(response.status(), StatusCode::OK);
 
     let body = response.into_body().collect().await.unwrap().to_bytes();
-    let card_results: Vec<Card> = serde_json::from_slice(&body).unwrap();
+    let card_results: Vec<CardRecord> = serde_json::from_slice(&body).unwrap();
 
     assert_eq!(card_results.len(), 1);
 
     // Update the card (get card from CardResults)
     let card = match card_results[0].clone() {
-        Card::Data(card) => card,
+        CardRecord::Data(card) => card,
         _ => panic!("Card not found"),
     };
 
     let card_request = UpdateCardRequest {
         registry_type: RegistryType::Data,
-        card: Card::Data(DataCardClientRecord {
+        card: CardRecord::Data(DataCardClientRecord {
             name: "DataCard".to_string(),
-            repository: "repo1".to_string(),
+            space: "repo1".to_string(),
             version: "1.0.1".to_string(),
             uid: card.uid.clone(),
             app_env: card.app_env,
@@ -362,6 +389,7 @@ async fn test_opsml_server_card_datacard_crud() {
             data_type: card.data_type,
             tags: card.tags,
             username: std::env::var("OPSML_USERNAME").unwrap_or_else(|_| "guest".to_string()),
+            opsml_version: card.opsml_version,
         }),
     };
 
@@ -383,7 +411,7 @@ async fn test_opsml_server_card_datacard_crud() {
 
     let delete_args = DeleteCardRequest {
         uid: card.uid.clone(),
-        repository: card.repository.clone(),
+        space: card.space.clone(),
         registry_type: RegistryType::Data,
     };
 
@@ -412,7 +440,7 @@ async fn test_opsml_server_card_modelcard_crud() {
 
     let card_version_request = CardVersionRequest {
         name: "ModelCard".to_string(),
-        repository: "repo1".to_string(),
+        space: "repo1".to_string(),
         version: Some("1.0.0".to_string()),
         version_type: VersionType::Minor,
         pre_tag: None,
@@ -421,9 +449,9 @@ async fn test_opsml_server_card_modelcard_crud() {
 
     // ModelCard
     let card_request = CreateCardRequest {
-        card: Card::Model(ModelCardClientRecord {
+        card: CardRecord::Model(ModelCardClientRecord {
             name: "ModelCard".to_string(),
-            repository: "repo1".to_string(),
+            space: "repo1".to_string(),
             version: "1.0.0".to_string(),
             ..ModelCardClientRecord::default()
         }),
@@ -493,21 +521,21 @@ async fn test_opsml_server_card_modelcard_crud() {
     assert_eq!(response.status(), StatusCode::OK);
 
     let body = response.into_body().collect().await.unwrap().to_bytes();
-    let card_results: Vec<Card> = serde_json::from_slice(&body).unwrap();
+    let card_results: Vec<CardRecord> = serde_json::from_slice(&body).unwrap();
 
     assert_eq!(card_results.len(), 1);
 
     // Update the card (get card from CardResults)
     let card = match card_results[0].clone() {
-        Card::Model(card) => card,
+        CardRecord::Model(card) => card,
         _ => panic!("Card not found"),
     };
 
     let card_request = UpdateCardRequest {
         registry_type: RegistryType::Model,
-        card: Card::Model(ModelCardClientRecord {
+        card: CardRecord::Model(ModelCardClientRecord {
             name: "DataCard".to_string(),
-            repository: "repo1".to_string(),
+            space: "repo1".to_string(),
             version: "1.0.1".to_string(),
             uid: card.uid.clone(),
             app_env: card.app_env,
@@ -521,6 +549,7 @@ async fn test_opsml_server_card_modelcard_crud() {
             task_type: card.task_type,
             tags: card.tags,
             username: std::env::var("OPSML_USERNAME").unwrap_or_else(|_| "guest".to_string()),
+            opsml_version: card.opsml_version,
         }),
     };
 
@@ -542,7 +571,7 @@ async fn test_opsml_server_card_modelcard_crud() {
 
     let delete_args = DeleteCardRequest {
         uid: card.uid.clone(),
-        repository: card.repository.clone(),
+        space: card.space.clone(),
         registry_type: RegistryType::Model,
     };
 
@@ -571,7 +600,7 @@ async fn test_opsml_server_card_experimentcard_crud() {
 
     let card_version_request = CardVersionRequest {
         name: "experimentcard".to_string(),
-        repository: "repo1".to_string(),
+        space: "repo1".to_string(),
         version: Some("1.0.0".to_string()),
         version_type: VersionType::Minor,
         pre_tag: None,
@@ -580,9 +609,9 @@ async fn test_opsml_server_card_experimentcard_crud() {
 
     // experimentcard
     let card_request = CreateCardRequest {
-        card: Card::Experiment(ExperimentCardClientRecord {
+        card: CardRecord::Experiment(ExperimentCardClientRecord {
             name: "experimentcard".to_string(),
-            repository: "repo1".to_string(),
+            space: "repo1".to_string(),
             version: "1.0.0".to_string(),
             ..ExperimentCardClientRecord::default()
         }),
@@ -609,7 +638,7 @@ async fn test_opsml_server_card_experimentcard_crud() {
     // get card by uid
     let list_cards = CardQueryArgs {
         name: Some(card_request.card.name().to_string()), // name of the card
-        repository: Some(card_request.card.repository().to_string()),
+        space: Some(card_request.card.space().to_string()),
         version: Some(card_request.card.version().to_string()),
         registry_type: RegistryType::Experiment,
         ..Default::default()
@@ -627,31 +656,33 @@ async fn test_opsml_server_card_experimentcard_crud() {
     assert_eq!(response.status(), StatusCode::OK);
 
     let body = response.into_body().collect().await.unwrap().to_bytes();
-    let card_results: Vec<Card> = serde_json::from_slice(&body).unwrap();
+    let card_results: Vec<CardRecord> = serde_json::from_slice(&body).unwrap();
 
     assert_eq!(card_results.len(), 1);
 
     // Update the card (get card from CardResults)
     let card = match card_results[0].clone() {
-        Card::Experiment(card) => card,
+        CardRecord::Experiment(card) => card,
         _ => panic!("Card not found"),
     };
 
     let card_request = UpdateCardRequest {
         registry_type: RegistryType::Experiment,
-        card: Card::Experiment(ExperimentCardClientRecord {
+        card: CardRecord::Experiment(ExperimentCardClientRecord {
             name: "DataCard".to_string(),
-            repository: "repo1".to_string(),
+            space: "repo1".to_string(),
             version: "1.0.1".to_string(),
             uid: card.uid.clone(),
             app_env: card.app_env,
             created_at: card.created_at,
             datacard_uids: card.datacard_uids,
-            promptcard_uids: card.promptcard_uids,
-            experimentcard_uids: card.experimentcard_uids,
             modelcard_uids: card.modelcard_uids,
+            promptcard_uids: card.promptcard_uids,
+            card_deck_uids: card.card_deck_uids,
+            experimentcard_uids: card.experimentcard_uids,
             tags: card.tags,
             username: std::env::var("OPSML_USERNAME").unwrap_or_else(|_| "guest".to_string()),
+            opsml_version: card.opsml_version,
         }),
     };
 
@@ -673,7 +704,7 @@ async fn test_opsml_server_card_experimentcard_crud() {
 
     let delete_args = DeleteCardRequest {
         uid: card.uid.clone(),
-        repository: card.repository.clone(),
+        space: card.space.clone(),
         registry_type: RegistryType::Experiment,
     };
 
@@ -702,7 +733,7 @@ async fn test_opsml_server_card_auditcard_crud() {
 
     let card_version_request = CardVersionRequest {
         name: "AuditCard".to_string(),
-        repository: "repo1".to_string(),
+        space: "repo1".to_string(),
         version: Some("1.0.0".to_string()),
         version_type: VersionType::Minor,
         pre_tag: None,
@@ -711,9 +742,9 @@ async fn test_opsml_server_card_auditcard_crud() {
 
     // AuditCard
     let card_request = CreateCardRequest {
-        card: Card::Audit(AuditCardClientRecord {
+        card: CardRecord::Audit(AuditCardClientRecord {
             name: "AuditCard".to_string(),
-            repository: "repo1".to_string(),
+            space: "repo1".to_string(),
             version: "1.0.0".to_string(),
             ..AuditCardClientRecord::default()
         }),
@@ -753,24 +784,25 @@ async fn test_opsml_server_card_auditcard_crud() {
         .unwrap();
 
     let response = helper.send_oneshot(request).await;
+
     assert_eq!(response.status(), StatusCode::OK);
 
     let body = response.into_body().collect().await.unwrap().to_bytes();
-    let card_results: Vec<Card> = serde_json::from_slice(&body).unwrap();
+    let card_results: Vec<CardRecord> = serde_json::from_slice(&body).unwrap();
 
     assert_eq!(card_results.len(), 1);
 
     // Update the card (get card from CardResults)
     let card = match card_results[0].clone() {
-        Card::Audit(card) => card,
+        CardRecord::Audit(card) => card,
         _ => panic!("Card not found"),
     };
 
     let card_request = UpdateCardRequest {
         registry_type: RegistryType::Audit,
-        card: Card::Audit(AuditCardClientRecord {
+        card: CardRecord::Audit(AuditCardClientRecord {
             name: "DataCard".to_string(),
-            repository: "repo1".to_string(),
+            space: "repo1".to_string(),
             version: "1.0.1".to_string(),
             uid: card.uid.clone(),
             app_env: card.app_env,
@@ -781,6 +813,7 @@ async fn test_opsml_server_card_auditcard_crud() {
             tags: card.tags,
             approved: card.approved,
             username: std::env::var("OPSML_USERNAME").unwrap_or_else(|_| "guest".to_string()),
+            opsml_version: card.opsml_version,
         }),
     };
 
@@ -802,8 +835,260 @@ async fn test_opsml_server_card_auditcard_crud() {
 
     let delete_args = DeleteCardRequest {
         uid: card.uid.clone(),
-        repository: card.repository.clone(),
+        space: card.space.clone(),
         registry_type: RegistryType::Audit,
+    };
+
+    let query_string = serde_qs::to_string(&delete_args).unwrap();
+
+    let request = Request::builder()
+        .uri(format!("/opsml/api/card/delete?{}", query_string))
+        .method("DELETE")
+        .body(Body::empty())
+        .unwrap();
+
+    let response = helper.send_oneshot(request).await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let body = response.into_body().collect().await.unwrap().to_bytes();
+    let delete_response: UidResponse = serde_json::from_slice(&body).unwrap();
+
+    assert!(!delete_response.exists);
+
+    helper.cleanup();
+}
+
+#[tokio::test]
+async fn test_opsml_server_card_card_deck_crud() {
+    let helper = TestHelper::new().await;
+
+    let card_version_request = CardVersionRequest {
+        name: "deck".to_string(),
+        space: "repo1".to_string(),
+        version: Some("1.0.0".to_string()),
+        version_type: VersionType::Minor,
+        pre_tag: None,
+        build_tag: None,
+    };
+
+    // CardDeck
+    let card_request = CreateCardRequest {
+        card: CardRecord::Deck(CardDeckClientRecord {
+            name: "deck".to_string(),
+            space: "repo1".to_string(),
+            version: "1.0.0".to_string(),
+            ..CardDeckClientRecord::default()
+        }),
+        registry_type: RegistryType::Deck,
+        version_request: card_version_request,
+    };
+
+    let body = serde_json::to_string(&card_request).unwrap();
+
+    let request = Request::builder()
+        .uri("/opsml/api/card/create")
+        .method("POST")
+        .header(header::CONTENT_TYPE, "application/json")
+        .body(Body::from(body))
+        .unwrap();
+
+    let response = helper.send_oneshot(request).await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let body = response.into_body().collect().await.unwrap().to_bytes();
+    let create_response: CreateCardResponse = serde_json::from_slice(&body).unwrap();
+    assert!(create_response.registered);
+
+    // get card by uid
+    let list_cards = CardQueryArgs {
+        uid: Some(create_response.key.uid),
+        registry_type: RegistryType::Deck,
+        ..Default::default()
+    };
+
+    let query_string = serde_qs::to_string(&list_cards).unwrap();
+
+    let request = Request::builder()
+        .uri(format!("/opsml/api/card/list?{}", query_string))
+        .method("GET")
+        .body(Body::empty())
+        .unwrap();
+
+    let response = helper.send_oneshot(request).await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let body = response.into_body().collect().await.unwrap().to_bytes();
+    let card_results: Vec<CardRecord> = serde_json::from_slice(&body).unwrap();
+
+    assert_eq!(card_results.len(), 1);
+
+    let card = match card_results[0].clone() {
+        CardRecord::Deck(card) => card,
+        _ => panic!("Card not found"),
+    };
+
+    let card_request = UpdateCardRequest {
+        registry_type: RegistryType::Deck,
+        card: CardRecord::Deck(CardDeckClientRecord {
+            name: "deck".to_string(),
+            space: "repo1".to_string(),
+            version: "1.0.1".to_string(),
+            uid: card.uid.clone(),
+            app_env: card.app_env,
+            created_at: card.created_at,
+            cards: card.cards,
+            username: std::env::var("OPSML_USERNAME").unwrap_or_else(|_| "guest".to_string()),
+            opsml_version: card.opsml_version,
+        }),
+    };
+
+    let body = serde_json::to_string(&card_request).unwrap();
+
+    let request = Request::builder()
+        .uri("/opsml/api/card/update")
+        .method("POST")
+        .header(header::CONTENT_TYPE, "application/json")
+        .body(Body::from(body))
+        .unwrap();
+
+    let response = helper.send_oneshot(request).await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let body = response.into_body().collect().await.unwrap().to_bytes();
+    let update_response: UpdateCardResponse = serde_json::from_slice(&body).unwrap();
+    assert!(update_response.updated);
+
+    let delete_args = DeleteCardRequest {
+        uid: card.uid.clone(),
+        space: card.space.clone(),
+        registry_type: RegistryType::Deck,
+    };
+
+    let query_string = serde_qs::to_string(&delete_args).unwrap();
+
+    let request = Request::builder()
+        .uri(format!("/opsml/api/card/delete?{}", query_string))
+        .method("DELETE")
+        .body(Body::empty())
+        .unwrap();
+
+    let response = helper.send_oneshot(request).await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let body = response.into_body().collect().await.unwrap().to_bytes();
+    let delete_response: UidResponse = serde_json::from_slice(&body).unwrap();
+
+    assert!(!delete_response.exists);
+
+    helper.cleanup();
+}
+
+#[tokio::test]
+async fn test_opsml_server_card_promptcard_crud() {
+    let helper = TestHelper::new().await;
+
+    let card_version_request = CardVersionRequest {
+        name: "prompt".to_string(),
+        space: "repo1".to_string(),
+        version: Some("1.0.0".to_string()),
+        version_type: VersionType::Minor,
+        pre_tag: None,
+        build_tag: None,
+    };
+
+    // CardDeck
+    let card_request = CreateCardRequest {
+        card: CardRecord::Prompt(PromptCardClientRecord {
+            name: "prompt".to_string(),
+            space: "repo1".to_string(),
+            version: "1.0.0".to_string(),
+            ..PromptCardClientRecord::default()
+        }),
+        registry_type: RegistryType::Prompt,
+        version_request: card_version_request,
+    };
+
+    let body = serde_json::to_string(&card_request).unwrap();
+
+    let request = Request::builder()
+        .uri("/opsml/api/card/create")
+        .method("POST")
+        .header(header::CONTENT_TYPE, "application/json")
+        .body(Body::from(body))
+        .unwrap();
+
+    let response = helper.send_oneshot(request).await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let body = response.into_body().collect().await.unwrap().to_bytes();
+    let create_response: CreateCardResponse = serde_json::from_slice(&body).unwrap();
+    assert!(create_response.registered);
+
+    // get card by uid
+    let list_cards = CardQueryArgs {
+        uid: Some(create_response.key.uid),
+        registry_type: RegistryType::Prompt,
+        ..Default::default()
+    };
+
+    let query_string = serde_qs::to_string(&list_cards).unwrap();
+
+    let request = Request::builder()
+        .uri(format!("/opsml/api/card/list?{}", query_string))
+        .method("GET")
+        .body(Body::empty())
+        .unwrap();
+
+    let response = helper.send_oneshot(request).await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let body = response.into_body().collect().await.unwrap().to_bytes();
+    let card_results: Vec<CardRecord> = serde_json::from_slice(&body).unwrap();
+
+    assert_eq!(card_results.len(), 1);
+
+    let card = match card_results[0].clone() {
+        CardRecord::Prompt(card) => card,
+        _ => panic!("Card not found"),
+    };
+
+    let card_request = UpdateCardRequest {
+        registry_type: RegistryType::Prompt,
+        card: CardRecord::Prompt(PromptCardClientRecord {
+            name: "prompt".to_string(),
+            space: "repo1".to_string(),
+            version: "1.0.1".to_string(),
+            uid: card.uid.clone(),
+            app_env: card.app_env,
+            tags: card.tags,
+            experimentcard_uid: card.experimentcard_uid,
+            auditcard_uid: card.auditcard_uid,
+            created_at: card.created_at,
+            username: std::env::var("OPSML_USERNAME").unwrap_or_else(|_| "guest".to_string()),
+            opsml_version: card.opsml_version,
+        }),
+    };
+
+    let body = serde_json::to_string(&card_request).unwrap();
+
+    let request = Request::builder()
+        .uri("/opsml/api/card/update")
+        .method("POST")
+        .header(header::CONTENT_TYPE, "application/json")
+        .body(Body::from(body))
+        .unwrap();
+
+    let response = helper.send_oneshot(request).await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let body = response.into_body().collect().await.unwrap().to_bytes();
+    let update_response: UpdateCardResponse = serde_json::from_slice(&body).unwrap();
+    assert!(update_response.updated);
+
+    let delete_args = DeleteCardRequest {
+        uid: card.uid.clone(),
+        space: card.space.clone(),
+        registry_type: RegistryType::Prompt,
     };
 
     let query_string = serde_qs::to_string(&delete_args).unwrap();
@@ -832,7 +1117,7 @@ async fn test_opsml_server_card_get_card() {
     // 1. First create a card so we have something to get
     let card_version_request = CardVersionRequest {
         name: "name".to_string(),
-        repository: "space".to_string(),
+        space: "space".to_string(),
         version: Some("1.0.0".to_string()),
         version_type: VersionType::Minor,
         pre_tag: None,
@@ -841,14 +1126,14 @@ async fn test_opsml_server_card_get_card() {
 
     // Create a test card with some data
     let card_request = CreateCardRequest {
-        card: Card::Data(DataCardClientRecord {
+        card: CardRecord::Model(ModelCardClientRecord {
             name: "name".to_string(),
-            repository: "space".to_string(),
+            space: "space".to_string(),
             version: "1.0.0".to_string(),
             tags: vec!["test".to_string()],
-            ..DataCardClientRecord::default()
+            ..ModelCardClientRecord::default()
         }),
-        registry_type: RegistryType::Data,
+        registry_type: RegistryType::Model,
         version_request: card_version_request,
     };
 
@@ -874,13 +1159,13 @@ async fn test_opsml_server_card_get_card() {
     let params = CardQueryArgs {
         uid: None,
         name: Some("name".to_string()),
-        repository: Some("space".to_string()),
+        space: Some("space".to_string()),
         version: Some(create_response.version),
         max_date: None,
         tags: None,
         limit: None,
         sort_by_timestamp: None,
-        registry_type: RegistryType::Data,
+        registry_type: RegistryType::Model,
     };
     //
     let query_string = serde_qs::to_string(&params).unwrap();
@@ -899,7 +1184,7 @@ async fn test_opsml_server_card_get_card() {
     //
     //// Verify the response contains the expected data
     assert_eq!(card_json["name"], "name");
-    assert_eq!(card_json["repository"], "space");
+    assert_eq!(card_json["space"], "space");
     assert_eq!(card_json["version"], "1.0.0");
     //
     helper.cleanup();
@@ -909,14 +1194,14 @@ async fn test_opsml_server_card_get_card() {
 async fn test_opsml_server_card_get_readme() {
     let mut helper = TestHelper::new().await;
 
-    helper.create_card().await;
+    helper.create_modelcard().await;
 
     // Create and upload the readme
     let read_me = "This is a test README";
     let create_readme = CreateReadeMe {
-        repository: "space".to_string(),
+        space: "space".to_string(),
         name: "name".to_string(),
-        registry_type: RegistryType::Data,
+        registry_type: RegistryType::Model,
         readme: read_me.to_string(),
     };
 
@@ -934,13 +1219,13 @@ async fn test_opsml_server_card_get_readme() {
     let params = CardQueryArgs {
         uid: None,
         name: Some(helper.name.clone()),
-        repository: Some(helper.repository.clone()),
+        space: Some(helper.space.clone()),
         version: Some(helper.version.clone()),
         max_date: None,
         tags: None,
         limit: None,
         sort_by_timestamp: None,
-        registry_type: RegistryType::Data,
+        registry_type: RegistryType::Model,
     };
     //
     let query_string = serde_qs::to_string(&params).unwrap();

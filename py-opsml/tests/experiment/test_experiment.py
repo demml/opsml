@@ -14,6 +14,9 @@ from opsml import (  # type: ignore
     SklearnModel,
     Prompt,
     PromptCard,
+    CardDeck,
+    Card,
+    RegistryType,
 )
 from opsml.card import CardRegistries
 import joblib  # type: ignore
@@ -22,7 +25,6 @@ import uuid
 import shutil
 from tests.conftest import WINDOWS_EXCLUDE
 import pytest
-# Sets up logging for tests
 
 
 def cleanup_manually_created_directories():
@@ -68,7 +70,7 @@ def cleanup_fake_directory(save_path: Path):
 def test_experimentcard():
     with OpsmlTestServer():
         cleanup_manually_created_directories()
-        with start_experiment(repository="test", log_hardware=True) as exp:
+        with start_experiment(space="test", log_hardware=True) as exp:
             metric1 = Metric(name="test", value=1.0)
             metric2 = Metric(name="test", value=2.0)
 
@@ -149,10 +151,10 @@ def test_experimentcard_register(
     chat_prompt: Prompt,
 ):
     with OpsmlTestServer(True):
-        with start_experiment(repository="test", log_hardware=True) as exp:
+        with start_experiment(space="test", log_hardware=True) as exp:
             datacard = DataCard(
                 interface=pandas_data,
-                repository="test",
+                space="test",
                 name="test",
                 tags=["foo:bar", "baz:qux"],
             )
@@ -162,7 +164,7 @@ def test_experimentcard_register(
 
             modelcard = ModelCard(
                 interface=random_forest_classifier,
-                repository="test",
+                space="test",
                 name="test",
                 to_onnx=True,
                 tags=["foo:bar", "baz:qux"],
@@ -176,7 +178,7 @@ def test_experimentcard_register(
 
             prompt_card = PromptCard(
                 prompt=chat_prompt,
-                repository="test",
+                space="test",
                 name="test",
             )
             exp.register_card(prompt_card)
@@ -187,10 +189,27 @@ def test_experimentcard_register(
             # (this is not recommended, but need to test if it causes a tokio::runtime deadlock)
             reg = CardRegistries()
 
+            deck = CardDeck(
+                space="test",
+                name="test",
+                cards=[
+                    Card(
+                        alias="model",
+                        uid=modelcard.uid,
+                        registry_type=RegistryType.Model,
+                    ),
+                    Card(
+                        alias="data",
+                        card=datacard,
+                    ),
+                ],
+            )
+            exp.register_card(deck)
+
         loaded_card = reg.experiment.load_card(uid=exp.card.uid)
 
         assert loaded_card.name == exp.card.name
-        assert loaded_card.repository == exp.card.repository
+        assert loaded_card.space == exp.card.space
         assert loaded_card.tags == exp.card.tags
         assert loaded_card.uid == exp.card.uid
         assert loaded_card.version == exp.card.version
@@ -198,3 +217,4 @@ def test_experimentcard_register(
         loaded_card.uids.datacard_uids = [datacard.uid]
         loaded_card.uids.modelcard_uids = [modelcard.uid]
         loaded_card.uids.promptcard_uids = [prompt_card.uid]
+        loaded_card.uids.card_deck_uids = [deck.uid]

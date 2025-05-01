@@ -3,7 +3,7 @@ use opsml_error::error::SqlError;
 use opsml_semver::VersionParser;
 /// this file contains helper logic for generating sql queries across different databases
 use opsml_types::{cards::CardTable, contracts::CardQueryArgs};
-use opsml_utils::utils::is_valid_uuid4;
+use opsml_utils::utils::is_valid_uuidv7;
 
 pub fn add_version_bounds(builder: &mut String, version: &str) -> Result<(), SqlError> {
     let version_bounds = VersionParser::get_version_to_search(version)
@@ -184,35 +184,35 @@ impl PostgresQueryHelper {
         let versions_cte = format!(
             "WITH versions AS (
                 SELECT 
-                    repository, 
+                    space, 
                     name, 
                     version, 
-                    ROW_NUMBER() OVER (PARTITION BY repository, name ORDER BY created_at DESC) AS row_num 
+                    ROW_NUMBER() OVER (PARTITION BY space, name ORDER BY created_at DESC) AS row_num 
                 FROM {}
-                WHERE ($1 IS NULL OR repository = $1)
-                AND ($2 IS NULL OR name LIKE $3 OR repository LIKE $3)
+                WHERE ($1 IS NULL OR space = $1)
+                AND ($2 IS NULL OR name LIKE $3 OR space LIKE $3)
             )", table
         );
 
         let stats_cte = format!(
             ", stats AS (
                 SELECT 
-                    repository, 
+                    space, 
                     name, 
                     COUNT(DISTINCT version) AS versions, 
                     MAX(created_at) AS updated_at, 
                     MIN(created_at) AS created_at 
                 FROM {}
-                WHERE ($1 IS NULL OR repository = $1)
-                AND ($2 IS NULL OR name LIKE $3 OR repository LIKE $3)
-                GROUP BY repository, name
+                WHERE ($1 IS NULL OR space = $1)
+                AND ($2 IS NULL OR name LIKE $3 OR space LIKE $3)
+                GROUP BY space, name
             )",
             table
         );
 
         let filtered_versions_cte = ", filtered_versions AS (
              SELECT 
-                    repository, 
+                    space, 
                     name, 
                     version, 
                     row_num
@@ -223,7 +223,7 @@ impl PostgresQueryHelper {
         let joined_cte = format!(
             ", joined AS (
                  SELECT 
-                    stats.repository, 
+                    stats.space, 
                     stats.name, 
                     filtered_versions.version, 
                     stats.versions, 
@@ -232,7 +232,7 @@ impl PostgresQueryHelper {
                     ROW_NUMBER() OVER (ORDER BY stats.{}) AS row_num 
                 FROM stats 
                 JOIN filtered_versions 
-                ON stats.repository = filtered_versions.repository 
+                ON stats.space = filtered_versions.space 
                 AND stats.name = filtered_versions.name
             )",
             sort_by
@@ -241,22 +241,56 @@ impl PostgresQueryHelper {
         let combined_query = format!(
             "{}{}{}{} 
             SELECT * FROM joined 
-            WHERE row_num BETWEEN $4 AND $5
+            WHERE row_num > $4 AND row_num <= $5
             ORDER BY updated_at DESC",
             versions_cte, stats_cte, filtered_versions_cte, joined_cte
         );
 
         combined_query
     }
+
+    pub fn get_version_page_query(table: &CardTable) -> String {
+        let versions_cte = format!(
+            "WITH versions AS (
+                SELECT 
+                    space, 
+                    name, 
+                    version, 
+                    created_at,
+                    ROW_NUMBER() OVER (PARTITION BY space, name ORDER BY created_at DESC, major DESC, minor DESC, patch DESC) AS row_num
+                FROM {}
+                WHERE space = $1
+                AND name = $2
+            )", table
+        );
+
+        let query = format!(
+            "{}
+            SELECT
+            space,
+            name,
+            version,
+            created_at,
+            row_num
+            FROM versions
+            WHERE row_num > $3 AND row_num <= $4
+            ORDER BY created_at DESC",
+            versions_cte
+        );
+
+        query
+    }
+
     pub fn get_query_stats_query(table: &CardTable) -> String {
         let base_query = format!(
-            "SELECT 
+            "SELECT
             COALESCE(CAST(COUNT(DISTINCT name) AS INTEGER), 0) AS nbr_names, 
             COALESCE(CAST(COUNT(major) AS INTEGER), 0) AS nbr_versions, 
-            COALESCE(CAST(COUNT(DISTINCT repository) AS INTEGER), 0) AS nbr_repositories 
+            COALESCE(CAST(COUNT(DISTINCT space) AS INTEGER), 0) AS nbr_spaces 
             FROM {}
             WHERE 1=1
-            AND ($1 IS NULL OR name LIKE $1 OR repository LIKE $1)",
+            AND ($1 IS NULL OR name LIKE $1 OR space LIKE $1)
+            AND ($2 IS NULL OR name = $2 OR space = $2)",
             table
         );
 
@@ -271,7 +305,7 @@ impl PostgresQueryHelper {
             SELECT
              created_at,
              name, 
-             repository, 
+             space, 
              major, minor, 
              patch, 
              pre_tag, 
@@ -280,7 +314,7 @@ impl PostgresQueryHelper {
              FROM {}
              WHERE 1=1
                 AND name = $1
-                AND repository = $2
+                AND space = $2
             ",
             table
         );
@@ -304,7 +338,7 @@ impl PostgresQueryHelper {
         WHERE 1=1
         AND ($1 IS NULL OR uid = $1)
         AND ($2 IS NULL OR name = $2)
-        AND ($3 IS NULL OR repository = $3)
+        AND ($3 IS NULL OR space = $3)
         AND ($4 IS NULL OR created_at <= TO_DATE($4, 'YYYY-MM-DD'))
         ",
             table
@@ -313,7 +347,7 @@ impl PostgresQueryHelper {
         // check for uid. If uid is present, we only return that card
         if query_args.uid.is_some() {
             // validate uid
-            is_valid_uuid4(query_args.uid.as_ref().unwrap())
+            is_valid_uuidv7(query_args.uid.as_ref().unwrap())
                 .map_err(|e| SqlError::GeneralError(e.to_string()))?;
         } else {
             // add where clause due to multiple combinations
@@ -411,7 +445,7 @@ impl PostgresQueryHelper {
         uid, 
         app_env, 
         name, 
-        repository, 
+        space, 
         major, 
         minor, 
         patch, 
@@ -423,10 +457,11 @@ impl PostgresQueryHelper {
         auditcard_uid, 
         pre_tag, 
         build_tag,
-        username
+        username,
+        opsml_version
         ) 
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)",
-            CardTable::Data
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)",
+            CardTable::Data,
         )
     }
 
@@ -436,7 +471,7 @@ impl PostgresQueryHelper {
             uid, 
             app_env, 
             name, 
-            repository, 
+            space, 
             major, 
             minor, 
             patch, 
@@ -446,9 +481,10 @@ impl PostgresQueryHelper {
             auditcard_uid, 
             pre_tag, 
             build_tag,
-            username
+            username,
+            opsml_version
             ) 
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)",
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)",
             CardTable::Prompt
         )
     }
@@ -458,7 +494,7 @@ impl PostgresQueryHelper {
         uid, 
         app_env, 
         name, 
-        repository, 
+        space, 
         major, 
         minor, 
         patch, 
@@ -473,9 +509,10 @@ impl PostgresQueryHelper {
         auditcard_uid, 
         pre_tag, 
         build_tag,
-        username
+        username,
+        opsml_version
         ) 
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)", CardTable::Model)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)", CardTable::Model)
     }
 
     pub fn get_experimentcard_insert_query() -> String {
@@ -484,7 +521,7 @@ impl PostgresQueryHelper {
         uid,
         app_env, 
         name, 
-        repository, 
+        space, 
         major, 
         minor, 
         patch, 
@@ -493,12 +530,14 @@ impl PostgresQueryHelper {
         datacard_uids, 
         modelcard_uids, 
         promptcard_uids,
+        card_deck_uids,
         experimentcard_uids,
         pre_tag, 
         build_tag,
-        username
+        username,
+        opsml_version
         ) 
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)",
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)",
             CardTable::Experiment
         )
     }
@@ -509,7 +548,7 @@ impl PostgresQueryHelper {
         uid, 
         app_env, 
         name, 
-        repository, 
+        space, 
         major, 
         minor, 
         patch, 
@@ -521,11 +560,36 @@ impl PostgresQueryHelper {
         experimentcard_uids, 
         pre_tag, 
         build_tag,
-        username
+        username,
+        opsml_version
         ) 
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)",
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)",
             CardTable::Audit
         )
+    }
+
+    pub fn get_carddeck_insert_query() -> String {
+        format!("INSERT INTO {} (uid, app_env, name, space, major, minor, patch, version, pre_tag, build_tag, cards, username, opsml_version) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)", CardTable::Deck)
+            .to_string()
+    }
+
+    pub fn get_carddeck_update_query() -> String {
+        format!(
+            "UPDATE {} SET 
+            app_env = $1, 
+            name = $2,
+            space = $3,
+            major = $4, 
+            minor = $5,
+            patch = $6, 
+            version = $7, 
+            cards = $8,
+            username = $9,
+            opsml_version = $10
+            WHERE uid = $11",
+            CardTable::Deck
+        )
+        .to_string()
     }
 
     pub fn get_datacard_update_query() -> String {
@@ -533,7 +597,7 @@ impl PostgresQueryHelper {
             "UPDATE {} SET 
             app_env = $1, 
             name = $2, 
-            repository = $3, 
+            space = $3, 
             major = $4, 
             minor = $5, 
             patch = $6, 
@@ -545,8 +609,9 @@ impl PostgresQueryHelper {
             auditcard_uid = $12, 
             pre_tag = $13, 
             build_tag = $14,
-            username = $15
-            WHERE uid = $16",
+            username = $15,
+            opsml_version = $16
+            WHERE uid = $17",
             CardTable::Data
         )
     }
@@ -556,7 +621,7 @@ impl PostgresQueryHelper {
             "UPDATE {} SET 
         app_env = $1, 
         name = $2, 
-        repository = $3, 
+        space = $3, 
         major = $4, 
         minor = $5, 
         patch = $6, 
@@ -566,8 +631,9 @@ impl PostgresQueryHelper {
         auditcard_uid = $10, 
         pre_tag = $11, 
         build_tag = $12,
-        username = $13
-        WHERE uid = $14",
+        username = $13,
+        opsml_version = $14
+        WHERE uid = $15",
             CardTable::Prompt
         )
     }
@@ -577,7 +643,7 @@ impl PostgresQueryHelper {
             "UPDATE {} SET 
         app_env = $1, 
         name = $2, 
-        repository = $3, 
+        space = $3, 
         major = $4, 
         minor = $5, 
         patch = $6, 
@@ -592,8 +658,9 @@ impl PostgresQueryHelper {
         auditcard_uid = $15, 
         pre_tag = $16, 
         build_tag = $17,
-        username = $18
-        WHERE uid = $19",
+        username = $18,
+        opsml_version = $19
+        WHERE uid = $20",
             CardTable::Model
         )
     }
@@ -603,7 +670,7 @@ impl PostgresQueryHelper {
             "UPDATE {} SET 
             app_env = $1, 
             name = $2, 
-            repository = $3, 
+            space = $3, 
             major = $4, 
             minor = $5, 
             patch = $6, 
@@ -612,11 +679,13 @@ impl PostgresQueryHelper {
             datacard_uids = $9, 
             modelcard_uids = $10, 
             promptcard_uids = $11,
-            experimentcard_uids = $12, 
-            pre_tag = $13, 
-            build_tag = $14,
-            username = $15
-            WHERE uid = $16",
+            card_deck_uids = $12,
+            experimentcard_uids = $13, 
+            pre_tag = $14, 
+            build_tag = $15,
+            username = $16,
+            opsml_version = $17
+            WHERE uid = $18",
             CardTable::Experiment
         )
     }
@@ -626,7 +695,7 @@ impl PostgresQueryHelper {
             "UPDATE {} SET 
         app_env = $1, 
         name = $2, 
-        repository = $3, 
+        space = $3, 
         major = $4, 
         minor = $5, 
         patch = $6, 
@@ -638,8 +707,9 @@ impl PostgresQueryHelper {
         experimentcard_uids = $12, 
         pre_tag = $13, 
         build_tag = $14,
-        username = $15
-        WHERE uid = $16",
+        username = $15,
+        opsml_version = $16
+        WHERE uid = $17",
             CardTable::Audit
         )
     }
@@ -665,10 +735,23 @@ impl PostgresQueryHelper {
         )
     }
 
-    pub fn get_operation_insert_query() -> String {
+    pub fn get_audit_event_insert_query() -> String {
         format!(
-            "INSERT INTO {} (username, access_type, access_location) VALUES ($1, $2, $3)",
-            CardTable::Operations
+            "INSERT INTO {} (
+            username, 
+            client_ip, 
+            user_agent, 
+            operation, 
+            resource_type, 
+            resource_id,
+            access_location,
+            status,
+            error_message,
+            metadata,
+            registry_type,
+            route
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)",
+            CardTable::AuditEvent
         )
     }
 

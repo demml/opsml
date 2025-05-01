@@ -133,8 +133,11 @@ export class OpsmlClient {
     contentType: string = "application/json",
     additionalHeaders: Record<string, string> = {}
   ): Promise<Response> {
+    const userAgent = browser ? navigator.userAgent : "opsml-ui";
+
     const headers = {
       "Content-Type": contentType,
+      "User-Agent": userAgent,
       Authorization: `Bearer ${this.jwt_token}`,
       ...additionalHeaders,
     };

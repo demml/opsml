@@ -9,6 +9,16 @@ lints:
 lints.pedantic:
 	cargo clippy --workspace --all-targets  -- -D warnings -W clippy::pedantic -A clippy::must_use_candidate -A clippy::missing_errors_doc
 
+####### TOML tests
+.PHONY: test.toml
+test.toml:
+	cargo test -p opsml-toml -- --nocapture --test-threads=1
+
+####### CLI tests
+.PHONY: test.cli
+test.cli:
+	cargo test -p opsml-cli -- --nocapture --test-threads=1
+
 ####### SQL tests
 .PHONY: test.sql.sqlite
 test.sql.sqlite:
@@ -58,7 +68,6 @@ start.server: stop.server build.ui
 .PHONY: stop.server
 stop.server:
 	-lsof -ti:3000 | xargs kill -9 2>/dev/null || true
-# lsof -ti:3000 | xargs kill -9
 #	rm -f opsml.db || true
 #	rm -rf opsml_registries || true
 
@@ -84,6 +93,12 @@ test.server:
 test.opsml.registry.client:
 	cargo test --features server -p opsml-registry test_registry_client -- --nocapture --test-threads=1
 
+.PHONY: test.version 
+test.version:
+	cargo test -p opsml-version -- --nocapture --test-threads=1
+
+.PHONY: test.unit
+test.unit: test.sql test.storage.server test.server test.utils test.version test.cli
 
 ###### UI ######
 UI_DIR = crates/opsml_server/opsml_ui
@@ -92,7 +107,7 @@ PY_DIR = py-opsml
 ui.update.deps:
 	cd $(UI_DIR) && pnpm update
 
-.PHONY: ui.install
+.PHONY: ui.install.deps
 install.ui.deps:
 	cd $(UI_DIR) && pnpm install
 
@@ -104,5 +119,5 @@ build.ui:
 ui.dev:
 	cd $(UI_DIR) && pnpm run dev
 
-populate.db:
-	cd $(PY_DIR) && uv run python dev/populate_db.py
+populate.cards:
+	cd $(PY_DIR) && uv run python -m dev.populate_cards

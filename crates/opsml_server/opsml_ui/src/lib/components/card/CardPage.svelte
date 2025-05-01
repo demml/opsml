@@ -6,7 +6,7 @@
   
     let {
       name,
-      repository,
+      space,
       version,
       registry,
       updated_at,
@@ -14,7 +14,7 @@
       bgColor
     } = $props<{
       name: string;
-      repository: string;
+      space: string;
       version: string;
       registry: RegistryType;
       updated_at: string;
@@ -26,18 +26,18 @@
     function navigateToCardPage() {
       // navigate to the card page
       let registry_name = getRegistryTypeLowerCase(registry);
-      goto(`/opsml/${registry_name}/card/home?repository=${repository}&name=${name}&version=${version}`);
+      goto(`/opsml/${registry_name}/card/home?space=${space}&name=${name}&version=${version}`);
     }
   
   
   </script>
   
-  <button class="text-black rounded-lg shadow border-2 border-black {bgColor} max-w-96 h-[84px] lg:h-[90px] overflow-hidden whitespace-nowrap hover:translate-x-[4px] hover:translate-y-[4px] hover:shadow-none" onclick={navigateToCardPage}>
-    <div class="flex items-center justify-start gap-2 lg:text-lg">
+  <button class="text-black rounded-lg shadow border-2 border-black {bgColor} max-w-96 h-[84px] lg:h-[90px] overflow-auto whitespace-nowrap hover:translate-x-[4px] hover:translate-y-[4px] hover:shadow-none" onclick={navigateToCardPage}>
+    <div class="flex items-center justify-start gap-2">
       <div class="ml-2">
         <CircuitBoard color="#5948a3" />
       </div>
-      <div><h4 class="truncate font-bold">{repository}/{name}</h4></div>
+      <div><h4 class="truncate font-bold">{space}/{name}</h4></div>
     </div>
  
     <div class="flex items-center justify-start gap-2 overflow-hidden whitespace-nowrap text-xs lg:text-sm mb-1">

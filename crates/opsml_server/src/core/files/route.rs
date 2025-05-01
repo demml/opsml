@@ -1,25 +1,27 @@
 use crate::core::error::internal_server_error;
+use crate::core::error::OpsmlServerError;
 use crate::core::files::utils::download_artifact;
 use crate::core::state::AppState;
 use axum::extract::DefaultBodyLimit;
 use axum::extract::Multipart;
+
+use anyhow::{Context, Result};
 use axum::{
     body::Body,
     extract::{Query, State},
-    http::{HeaderMap, StatusCode},
+    http::StatusCode,
     response::{IntoResponse, Response},
     routing::{delete, get, post},
     Extension, Json, Router,
 };
+use headers::HeaderMap;
 use opsml_auth::permission::UserPermissions;
+use opsml_error::error::ServerError;
 use opsml_sql::base::SqlClient;
-use opsml_sql::enums::client::SqlClientEnum;
 use opsml_types::{contracts::*, StorageType, MAX_FILE_SIZE};
+
 use tokio::fs::File;
 use tokio::io::AsyncWriteExt;
-
-use anyhow::{Context, Result};
-use opsml_error::error::ServerError;
 
 use base64::prelude::*;
 use mime_guess::mime;
@@ -33,26 +35,6 @@ use tempfile::tempdir;
 use tokio_util::io::ReaderStream;
 use tracing::debug;
 use tracing::{error, info, instrument};
-
-async fn log_operation(
-    headers: &HeaderMap,
-    access_type: &str,
-    access_location: &str,
-    sql_client: Arc<SqlClientEnum>,
-) -> Result<(), ServerError> {
-    let default_user = "guest".parse().unwrap();
-    let username = headers
-        .get("username")
-        .unwrap_or(&default_user)
-        .to_str()
-        .map_err(|e| ServerError::Error(e.to_string()))?;
-
-    sql_client
-        .insert_operation(username, access_type, access_location)
-        .await?;
-
-    Ok(())
-}
 
 /// Create a multipart upload session (write)
 ///
@@ -68,9 +50,9 @@ async fn log_operation(
 pub async fn create_multipart_upload(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
-    Query(params): Query<MultiPartQuery>,
     headers: HeaderMap,
-) -> Result<Json<MultiPartSession>, (StatusCode, Json<serde_json::Value>)> {
+    Query(params): Query<MultiPartQuery>,
+) -> Result<Json<MultiPartSession>, (StatusCode, Json<OpsmlServerError>)> {
     // If auth is enabled, check permissions or other auth-related logic
     // get user for headers (as string)
 
@@ -79,18 +61,18 @@ pub async fn create_multipart_upload(
         headers.get("username")
     );
 
-    let repository_id = Path::new(&params.path).iter().next().ok_or_else(|| {
+    let space_id = Path::new(&params.path).iter().next().ok_or_else(|| {
         (
             StatusCode::BAD_REQUEST,
-            Json(json!({ "error": "Invalid path" })),
+            Json(OpsmlServerError::invalid_path()),
         )
     })?;
 
     // check if user has permission to write to the repo
-    if !perms.has_write_permission(repository_id.to_str().unwrap()) {
+    if !perms.has_write_permission(space_id.to_str().unwrap()) {
         return Err((
             StatusCode::FORBIDDEN,
-            Json(json!({ "error": "Permission denied" })),
+            Json(OpsmlServerError::permission_denied()),
         ));
     }
 
@@ -109,23 +91,12 @@ pub async fn create_multipart_upload(
         Ok(session_url) => session_url,
         Err(e) => {
             error!("Failed to create multipart upload: {}", e);
-            return Err(internal_server_error(e));
+            return Err(internal_server_error(
+                e,
+                "Failed to create multipart upload",
+            ));
         }
     };
-
-    let sql_client = state.sql_client.clone();
-    tokio::spawn(async move {
-        if let Err(e) = log_operation(
-            &headers,
-            &Operation::Create.to_string(),
-            &params.path,
-            sql_client,
-        )
-        .await
-        {
-            error!("Failed to insert artifact key: {}", e);
-        }
-    });
 
     // if storageclient enum is aws then we need to get the bucket
     let bucket = match state.storage_client.storage_type() {
@@ -153,15 +124,11 @@ pub async fn generate_presigned_url(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
     Query(params): Query<PresignedQuery>,
-    headers: HeaderMap,
-) -> Result<Json<PresignedUrl>, (StatusCode, Json<serde_json::Value>)> {
+) -> Result<Json<PresignedUrl>, (StatusCode, Json<OpsmlServerError>)> {
     // check for read access
 
     if !perms.has_read_permission() {
-        return Err((
-            StatusCode::FORBIDDEN,
-            Json(json!({ "error": "Permission denied" })),
-        ));
+        return OpsmlServerError::permission_denied().into_response(StatusCode::FORBIDDEN);
     }
 
     let path = Path::new(&params.path);
@@ -175,7 +142,7 @@ pub async fn generate_presigned_url(
             .ok_or_else(|| {
                 (
                     StatusCode::BAD_REQUEST,
-                    Json(json!({ "error": "Missing session_uri" })),
+                    Json(OpsmlServerError::missing_session_uri()),
                 )
             })?
             .to_string();
@@ -183,7 +150,7 @@ pub async fn generate_presigned_url(
         let part_number = params.part_number.ok_or_else(|| {
             (
                 StatusCode::BAD_REQUEST,
-                Json(json!({ "error": "Missing part_number" })),
+                Json(OpsmlServerError::missing_part_number()),
             )
         })?;
 
@@ -198,10 +165,9 @@ pub async fn generate_presigned_url(
             Ok(url) => url,
             Err(e) => {
                 error!("Failed to generate presigned url: {}", e);
-                return Err(internal_server_error(e));
+                return Err(internal_server_error(e, "Failed to generate presigned url"));
             }
         };
-
         return Ok(Json(PresignedUrl { url }));
     }
 
@@ -215,26 +181,40 @@ pub async fn generate_presigned_url(
         Ok(url) => url,
         Err(e) => {
             error!("Failed to generate presigned url: {}", e);
-            return Err(internal_server_error(e));
+            return Err(internal_server_error(e, "Failed to generate presigned url"));
         }
     };
 
-    let sql_client = state.sql_client.clone();
-    let url_clone = url.clone();
-    tokio::spawn(async move {
-        if let Err(e) = log_operation(
-            &headers,
-            &Operation::Read.to_string(),
-            &url_clone,
-            sql_client,
-        )
-        .await
-        {
-            error!("Failed to insert artifact key: {}", e);
-        }
-    });
-
     Ok(Json(PresignedUrl { url }))
+}
+
+#[instrument(skip_all)]
+pub async fn complete_multipart_upload(
+    State(state): State<Arc<AppState>>,
+    Extension(perms): Extension<UserPermissions>,
+
+    Json(req): Json<CompleteMultipartUpload>,
+) -> Result<Json<UploadResponse>, (StatusCode, Json<OpsmlServerError>)> {
+    // check for write access
+
+    if !perms.has_write_permission("") {
+        return OpsmlServerError::permission_denied().into_response(StatusCode::FORBIDDEN);
+    }
+
+    state
+        .storage_client
+        .complete_multipart_upload(req)
+        .await
+        .map_err(|e| ServerError::MultipartError(e.to_string()))
+        .map_err(|e| {
+            error!("Failed to complete multipart upload: {}", e);
+            internal_server_error(e, "Failed to complete multipart upload")
+        })?;
+
+    Ok(Json(UploadResponse {
+        uploaded: true,
+        message: "".to_string(),
+    }))
 }
 
 // this is for local storage only
@@ -242,26 +222,34 @@ pub async fn generate_presigned_url(
 pub async fn upload_multipart(
     State(state): State<Arc<AppState>>,
     mut multipart: Multipart,
-) -> Result<Json<UploadResponse>, (StatusCode, Json<serde_json::Value>)> {
+) -> Result<Json<UploadResponse>, (StatusCode, Json<OpsmlServerError>)> {
     while let Some(field) = multipart.next_field().await.unwrap() {
         let file_name = field.file_name().unwrap().to_string();
-        let data = field.bytes().await.unwrap();
+        let data = field.bytes().await.map_err(|e| {
+            error!("Failed to read file: {}", e);
+            internal_server_error(e, "Failed to read file")
+        })?;
         let bucket = state.config.opsml_storage_uri.to_owned();
-
-        debug!("Filename: {}", file_name);
 
         // join the bucket and the file name
         let rpath = Path::new(&bucket).join(&file_name);
 
-        debug!("Rpath: {}", rpath.display());
-
         // create the directory if it doesn't exist
         if let Some(parent) = rpath.parent() {
-            tokio::fs::create_dir_all(parent).await.unwrap();
+            tokio::fs::create_dir_all(parent).await.map_err(|e| {
+                error!("Failed to create directory: {}", e);
+                internal_server_error(e, "Failed to create directory")
+            })?;
         }
 
-        let mut file = File::create(&rpath).await.unwrap();
-        file.write_all(&data).await.unwrap();
+        let mut file = File::create(&rpath).await.map_err(|e| {
+            error!("Failed to create file: {}", e);
+            internal_server_error(e, "Failed to create file")
+        })?;
+        file.write_all(&data).await.map_err(|e| {
+            error!("Failed to write file: {}", e);
+            internal_server_error(e, "Failed to write file")
+        })?;
     }
 
     Ok(Json(UploadResponse {
@@ -273,7 +261,7 @@ pub async fn upload_multipart(
 pub async fn list_files(
     State(state): State<Arc<AppState>>,
     Query(params): Query<ListFileQuery>,
-) -> Result<Json<ListFileResponse>, (StatusCode, Json<serde_json::Value>)> {
+) -> Result<Json<ListFileResponse>, (StatusCode, Json<OpsmlServerError>)> {
     let path = Path::new(&params.path);
     info!("Listing files for: {}", path.display());
 
@@ -287,7 +275,7 @@ pub async fn list_files(
         Ok(files) => files,
         Err(e) => {
             error!("Failed to list files: {}", e);
-            return Err(internal_server_error(e));
+            return Err(internal_server_error(e, "Failed to list files"));
         }
     };
 
@@ -298,12 +286,9 @@ pub async fn list_file_info(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
     Query(params): Query<ListFileQuery>,
-) -> Result<Json<ListFileInfoResponse>, (StatusCode, Json<serde_json::Value>)> {
+) -> Result<Json<ListFileInfoResponse>, (StatusCode, Json<OpsmlServerError>)> {
     if !perms.has_read_permission() {
-        return Err((
-            StatusCode::FORBIDDEN,
-            Json(json!({ "error": "Permission denied" })),
-        ));
+        return OpsmlServerError::permission_denied().into_response(StatusCode::FORBIDDEN);
     }
 
     let path = Path::new(&params.path);
@@ -320,7 +305,7 @@ pub async fn list_file_info(
         Ok(files) => files,
         Err(e) => {
             error!("Failed to list files: {}", e);
-            return Err(internal_server_error(e));
+            return Err(internal_server_error(e, "Failed to list files"));
         }
     };
 
@@ -331,12 +316,9 @@ pub async fn file_tree(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
     Query(params): Query<ListFileQuery>,
-) -> Result<Json<FileTreeResponse>, (StatusCode, Json<serde_json::Value>)> {
+) -> Result<Json<FileTreeResponse>, (StatusCode, Json<OpsmlServerError>)> {
     if !perms.has_read_permission() {
-        return Err((
-            StatusCode::FORBIDDEN,
-            Json(json!({ "error": "Permission denied" })),
-        ));
+        return OpsmlServerError::permission_denied().into_response(StatusCode::FORBIDDEN);
     }
 
     let path = Path::new(&params.path);
@@ -351,7 +333,7 @@ pub async fn file_tree(
         Ok(files) => files,
         Err(e) => {
             error!("Failed to list files: {}", e);
-            return Err(internal_server_error(e));
+            return Err(internal_server_error(e, "Failed to list files"));
         }
     };
 
@@ -411,32 +393,13 @@ pub async fn get_file_for_ui(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
     Json(req): Json<RawFileRequest>,
-) -> Result<Json<RawFile>, (StatusCode, Json<serde_json::Value>)> {
+) -> Result<Json<RawFile>, (StatusCode, Json<OpsmlServerError>)> {
     if !perms.has_read_permission() {
         error!("Permission denied");
-        return Err((
-            StatusCode::FORBIDDEN,
-            Json(json!({ "error": "Permission denied" })),
-        ));
+        return OpsmlServerError::permission_denied().into_response(StatusCode::FORBIDDEN);
     }
 
     let file_path = PathBuf::from(&req.path);
-    let sql_client = state.sql_client.clone();
-    let mut headers = HeaderMap::new();
-    headers.insert("username", perms.username.parse().unwrap());
-
-    tokio::spawn(async move {
-        if let Err(e) = log_operation(
-            &headers,
-            &Operation::Read.to_string(),
-            &req.path.clone(),
-            sql_client,
-        )
-        .await
-        {
-            error!("Failed to insert artifact key: {}", e);
-        }
-    });
 
     let files = state
         .storage_client
@@ -448,7 +411,7 @@ pub async fn get_file_for_ui(
         Ok(files) => files,
         Err(e) => {
             error!("Failed to list files: {}", e);
-            return Err(internal_server_error(e));
+            return Err(internal_server_error(e, "Failed to list files"));
         }
     };
 
@@ -457,28 +420,19 @@ pub async fn get_file_for_ui(
         Some(file) => file,
         None => {
             error!("File not found");
-            return Err((
-                StatusCode::NOT_FOUND,
-                Json(json!({ "error": "File not found" })),
-            ));
+            return OpsmlServerError::no_files_found().into_response(StatusCode::NOT_FOUND);
         }
     };
 
     // check if size is less than 50 mb
     if file.size > 50_000_000 {
         error!("File size too large");
-        return Err((
-            StatusCode::BAD_REQUEST,
-            Json(json!({ "error": "File size too large" })),
-        ));
+        return OpsmlServerError::file_too_large().into_response(StatusCode::BAD_REQUEST);
     }
 
     let tmp_dir = tempdir().map_err(|e| {
         error!("Failed to create temp dir: {}", e);
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(serde_json::json!({})),
-        )
+        internal_server_error(e, "Failed to create temp dir")
     })?;
 
     let lpath = tmp_dir.path().join(file_path.file_name().unwrap());
@@ -494,22 +448,24 @@ pub async fn get_file_for_ui(
     .await
     .map_err(|e| {
         error!("Failed to download artifact: {}", e);
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(serde_json::json!({})),
-        )
+        internal_server_error(e, "Failed to download artifact")
     })?;
 
     debug!("Downloaded file to: {}", lpath.display());
 
-    let content = std::fs::read_to_string(&lpath).unwrap_or_default();
     let mime_type = mime_guess::from_path(&lpath).first_or_octet_stream();
 
-    // if mime image the base64 encode the content
     let content = if mime_type.type_() == mime::IMAGE {
-        BASE64_STANDARD.encode(&content)
+        let bytes = std::fs::read(&lpath).map_err(|e| {
+            error!("Failed to read file: {}", e);
+            internal_server_error(e, "Failed to read file")
+        })?;
+        BASE64_STANDARD.encode(&bytes)
     } else {
-        content
+        std::fs::read_to_string(&lpath).map_err(|e| {
+            error!("Failed to read file: {}", e);
+            internal_server_error(e, "Failed to read file")
+        })?
     };
 
     Ok(Json(RawFile {
@@ -522,24 +478,21 @@ pub async fn get_file_for_ui(
 pub async fn delete_file(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
+
     Query(params): Query<DeleteFileQuery>,
-    headers: HeaderMap,
-) -> Result<Json<DeleteFileResponse>, (StatusCode, Json<serde_json::Value>)> {
+) -> Result<Json<DeleteFileResponse>, (StatusCode, Json<OpsmlServerError>)> {
     // check for delete access
 
     // check if user has permission to write to the repo
-    let repository_id = Path::new(&params.path).iter().next().ok_or_else(|| {
+    let space_id = Path::new(&params.path).iter().next().ok_or_else(|| {
         (
             StatusCode::BAD_REQUEST,
-            Json(json!({ "error": "Invalid path" })),
+            Json(OpsmlServerError::invalid_path()),
         )
     })?;
 
-    if !perms.has_delete_permission(repository_id.to_str().unwrap()) {
-        return Err((
-            StatusCode::FORBIDDEN,
-            Json(json!({ "error": "Permission denied" })),
-        ));
+    if !perms.has_delete_permission(space_id.to_str().unwrap()) {
+        return OpsmlServerError::permission_denied().into_response(StatusCode::FORBIDDEN);
     }
 
     let path = Path::new(&params.path);
@@ -554,18 +507,8 @@ pub async fn delete_file(
 
     //
     if let Err(e) = files {
-        return Err(internal_server_error(e));
+        return Err(internal_server_error(e, "Failed to delete files"));
     }
-
-    let sql_client = state.sql_client.clone();
-    let rpath = params.path.clone();
-    tokio::spawn(async move {
-        if let Err(e) =
-            log_operation(&headers, &Operation::Delete.to_string(), &rpath, sql_client).await
-        {
-            error!("Failed to insert artifact key: {}", e);
-        }
-    });
 
     // check if file exists
     let exists = state.storage_client.exists(path).await;
@@ -573,14 +516,15 @@ pub async fn delete_file(
     match exists {
         Ok(exists) => {
             if exists {
-                Err(internal_server_error("Failed to delete file"))
+                OpsmlServerError::failed_to_delete_file()
+                    .into_response(StatusCode::INTERNAL_SERVER_ERROR)
             } else {
                 Ok(Json(DeleteFileResponse { deleted: true }))
             }
         }
         Err(e) => {
             error!("Failed to check if file exists: {}", e);
-            Err(internal_server_error(e))
+            Err(internal_server_error(e, "Failed to check if file exists"))
         }
     }
 }
@@ -609,11 +553,7 @@ pub async fn download_file(
         Ok(file) => file,
         Err(e) => {
             error!("Failed to open file: {}", e);
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(json!({ "failed": "Failed to open file" })),
-            )
-                .into_response();
+            return internal_server_error(e, "Failed to open file").into_response();
         }
     };
 
@@ -627,7 +567,7 @@ pub async fn download_file(
 pub async fn get_artifact_key(
     State(state): State<Arc<AppState>>,
     Query(req): Query<ArtifactKeyRequest>,
-) -> Result<Json<ArtifactKey>, (StatusCode, Json<serde_json::Value>)> {
+) -> Result<Json<ArtifactKey>, (StatusCode, Json<OpsmlServerError>)> {
     debug!("Getting artifact key for: {:?}", req);
     let key = state
         .sql_client
@@ -635,7 +575,7 @@ pub async fn get_artifact_key(
         .await
         .map_err(|e| {
             error!("Failed to get artifact key: {}", e);
-            (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({})))
+            internal_server_error(e, "Failed to get artifact key")
         })?;
 
     Ok(Json(key))
@@ -651,6 +591,10 @@ pub async fn get_file_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
             .route(
                 &format!("{}/files/multipart", prefix),
                 post(upload_multipart).layer(DefaultBodyLimit::max(MAX_FILE_SIZE)),
+            )
+            .route(
+                &format!("{}/files/multipart/complete", prefix),
+                post(complete_multipart_upload),
             )
             .route(&format!("{}/files", prefix), get(download_file))
             .route(

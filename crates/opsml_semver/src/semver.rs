@@ -138,6 +138,42 @@ impl VersionValidator {
 
         Ok(versions.iter().map(ToString::to_string).collect())
     }
+
+    /// Take a semver that may be incomplete and expand it to a full semver
+    ///
+    fn expand_version(version: &str) -> String {
+        let version_parts: Vec<&str> = version.split('.').collect();
+
+        // Return early if we already have all parts
+        if version_parts.len() >= 3 {
+            return version.to_string();
+        }
+
+        // Create a new vector with the existing parts
+        let mut expanded_version = version_parts.to_vec();
+
+        // Fill in missing parts with "0"
+        while expanded_version.len() < 3 {
+            expanded_version.push("0");
+        }
+
+        // Join parts with dots and return owned String
+        expanded_version.join(".")
+    }
+
+    pub fn clean_version(version: &str) -> Result<Version, VersionError> {
+        // Check if the version is empty
+        if version.is_empty() {
+            return Err(VersionError::InvalidVersion(
+                "Version string is empty".to_string(),
+            ));
+        }
+
+        match Version::parse(&Self::expand_version(version)) {
+            Ok(version) => Ok(version),
+            Err(e) => Err(VersionError::InvalidVersion(e.to_string())),
+        }
+    }
 }
 
 #[derive(Debug, PartialEq)]
@@ -356,6 +392,35 @@ mod tests {
     fn test_version_validator_validate_version() {
         assert!(VersionValidator::validate_version("1.2.3").is_ok());
         assert!(VersionValidator::validate_version("invalid.version").is_err());
+
+        // validate default
+        assert_eq!(
+            VersionValidator::clean_version("1.2.3-alpha").unwrap(),
+            Version::parse("1.2.3-alpha").unwrap()
+        );
+
+        // validate with build
+        assert_eq!(
+            VersionValidator::clean_version("1.2.3+001").unwrap(),
+            Version::parse("1.2.3+001").unwrap()
+        );
+
+        // validate with pre and build
+        assert_eq!(
+            VersionValidator::clean_version("1.2.3-alpha+001").unwrap(),
+            Version::parse("1.2.3-alpha+001").unwrap()
+        );
+
+        // validate missing parts
+        assert_eq!(
+            VersionValidator::clean_version("1.2").unwrap(),
+            Version::parse("1.2.0").unwrap()
+        );
+
+        assert_eq!(
+            VersionValidator::clean_version("1").unwrap(),
+            Version::parse("1.0.0").unwrap()
+        );
     }
 
     #[test]

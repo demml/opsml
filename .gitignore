@@ -67,8 +67,6 @@ results.xml
 profile_default/
 ipython_config.py
 
-# pyenv
-.python-version
 
 # Translations
 *.mo
@@ -106,7 +104,6 @@ dmypy.json
 
 #IDE
 .idea/
-scratch/
 qr_cache/
 test_project/
 tests/_test_scratch.py
@@ -137,3 +134,5 @@ local_test_db.db
 
 crates/opsml_server/opsml_ui/site/*
 !crates/opsml_server/opsml_ui/site/.gitkeep
+package.json
+pnpm-lock.yaml

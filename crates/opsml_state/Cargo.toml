@@ -1,0 +1,21 @@
+[package]
+name = "opsml-state"
+version = { workspace = true }
+edition = { workspace = true }
+repository = { workspace = true }
+
+[lib]
+doctest = false
+
+[dependencies]
+opsml-client = { workspace = true }
+opsml-error = { workspace = true }
+opsml-types = { workspace = true }
+opsml-settings = { workspace = true }
+opsml-toml = { workspace = true }
+opsml-utils = { workspace = true }
+
+futures = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }
+

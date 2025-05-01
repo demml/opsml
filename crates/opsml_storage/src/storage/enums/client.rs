@@ -3,18 +3,17 @@
 use crate::storage::filesystem::FileSystem;
 use crate::storage::local::client::{LocalFSStorageClient, LocalMultiPartUpload};
 
-use anyhow::{Context, Result as AnyhowResult};
-use opsml_client::OpsmlApiClient;
-use opsml_error::error::StorageError;
-use opsml_settings::config::{OpsmlConfig, OpsmlStorageSettings};
-use opsml_types::contracts::{FileInfo, MultiPartSession};
-use opsml_types::StorageType;
-use std::path::Path;
-use tracing::debug;
-
 use crate::storage::aws::client::{AWSMulitPartUpload, S3FStorageClient};
 use crate::storage::azure::client::{AzureFSStorageClient, AzureMultipartUpload};
 use crate::storage::gcs::client::{GCSFSStorageClient, GoogleMultipartUpload};
+use anyhow::{Context, Result as AnyhowResult};
+use opsml_error::error::StorageError;
+use opsml_settings::config::{OpsmlConfig, OpsmlStorageSettings};
+use opsml_types::contracts::CompleteMultipartUpload;
+use opsml_types::contracts::FileInfo;
+use opsml_types::StorageType;
+use std::path::Path;
+use tracing::debug;
 
 pub enum MultiPartUploader {
     Google(GoogleMultipartUpload),
@@ -262,143 +261,42 @@ impl StorageClientEnum {
         &self,
         lpath: &Path,
         rpath: &Path,
-        multipart_session: MultiPartSession,
-        api_client: Option<OpsmlApiClient>,
     ) -> Result<MultiPartUploader, StorageError> {
         match self {
             StorageClientEnum::Google(client) => {
-                let uploader = client
-                    .create_multipart_uploader(lpath, rpath, Some(multipart_session.session_url))
-                    .await?;
+                let uploader = client.create_multipart_uploader(lpath, rpath).await?;
                 Ok(MultiPartUploader::Google(uploader))
             }
 
             StorageClientEnum::AWS(client) => {
-                let uploader = client
-                    .create_multipart_uploader(
-                        rpath,
-                        lpath,
-                        Some(multipart_session.session_url),
-                        multipart_session.bucket,
-                        api_client,
-                    )
-                    .await?;
+                let uploader = client.create_multipart_uploader(rpath, lpath).await?;
                 Ok(MultiPartUploader::AWS(uploader))
             }
             StorageClientEnum::Local(client) => {
-                let uploader = client
-                    .create_multipart_uploader(lpath, rpath, api_client)
-                    .await?;
+                let uploader = client.create_multipart_uploader(lpath, rpath).await?;
 
                 Ok(MultiPartUploader::Local(uploader))
             }
             StorageClientEnum::Azure(client) => {
-                let api_client = if let Some(api_client) = api_client {
-                    Some(api_client.client)
-                } else {
-                    None
-                };
-
-                let uploader = client
-                    .create_multipart_uploader(
-                        lpath,
-                        rpath,
-                        Some(multipart_session.session_url),
-                        api_client,
-                    )
-                    .await?;
+                let uploader = client.create_multipart_uploader(lpath, rpath).await?;
                 Ok(MultiPartUploader::Azure(uploader))
             }
         }
     }
+
+    pub async fn complete_multipart_upload(
+        &self,
+        request: CompleteMultipartUpload,
+    ) -> Result<(), StorageError> {
+        match self {
+            StorageClientEnum::Google(client) => client.complete_multipart_upload(request).await,
+            StorageClientEnum::AWS(client) => client.complete_multipart_upload(request).await,
+            StorageClientEnum::Local(client) => client.complete_multipart_upload(request).await,
+            StorageClientEnum::Azure(client) => client.complete_multipart_upload(request).await,
+        }
+    }
 }
 
-//#[pyclass]
-//pub struct PyStorageClient {
-//    inner: StorageClientEnum,
-//    runtime: tokio::runtime::Runtime,
-//}
-//
-//#[pymethods]
-//impl PyStorageClient {
-//    #[new]
-//    pub fn new(settings: &OpsmlStorageSettings) -> Result<Self, StorageError> {
-//        let rt = tokio::runtime::Runtime::new().unwrap();
-//        let client = rt
-//            .block_on(StorageClientEnum::new(settings))
-//            .map_err(|e| StorageError::Error(format!("{:?}", e)))?;
-//
-//        Ok(PyStorageClient {
-//            inner: client,
-//            runtime: rt,
-//        })
-//    }
-//
-//    #[pyo3(signature = (path=PathBuf::new()))]
-//    fn find(&self, path: PathBuf) -> PyResult<Vec<String>> {
-//        let result = self
-//            .runtime
-//            .block_on(self.inner.find(&path))
-//            .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(format!("{:?}", e)))?;
-//        Ok(result)
-//    }
-//
-//    fn find_info(&self, path: PathBuf) -> PyResult<Vec<FileInfo>> {
-//        let result = self
-//            .runtime
-//            .block_on(self.inner.find_info(&path))
-//            .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(format!("{:?}", e)))?;
-//        Ok(result)
-//    }
-//
-//    #[pyo3(signature = (lpath, rpath, recursive = false))]
-//    pub fn get(&self, lpath: PathBuf, rpath: PathBuf, recursive: bool) -> PyResult<()> {
-//        self.runtime
-//            .block_on(self.inner.get(&lpath, &rpath, recursive))
-//            .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(format!("{:?}", e)))?;
-//        Ok(())
-//    }
-//
-//    #[pyo3(signature = (lpath, rpath, recursive = false))]
-//    pub fn put(&self, lpath: PathBuf, rpath: PathBuf, recursive: bool) -> PyResult<()> {
-//        self.runtime
-//            .block_on(self.inner.put(&lpath, &rpath, recursive))
-//            .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(format!("{:?}", e)))?;
-//        Ok(())
-//    }
-//
-//    pub fn copy(&self, src: PathBuf, dest: PathBuf, recursive: bool) -> PyResult<()> {
-//        self.runtime
-//            .block_on(self.inner.copy(&src, &dest, recursive))
-//            .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(format!("{:?}", e)))?;
-//        Ok(())
-//    }
-//
-//    pub fn rm(&self, path: PathBuf, recursive: bool) -> PyResult<()> {
-//        self.runtime
-//            .block_on(self.inner.rm(&path, recursive))
-//            .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(format!("{:?}", e)))?;
-//
-//        Ok(())
-//    }
-//
-//    pub fn exists(&self, path: PathBuf) -> PyResult<bool> {
-//        let result = self
-//            .runtime
-//            .block_on(self.inner.exists(&path))
-//            .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(format!("{:?}", e)))?;
-//        Ok(result)
-//    }
-//
-//    pub fn generate_presigned_url(&self, path: PathBuf, expiration: u64) -> PyResult<String> {
-//        let result = self
-//            .runtime
-//            .block_on(self.inner.generate_presigned_url(&path, expiration))
-//            .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(format!("{:?}", e)))?;
-//        Ok(result)
-//    }
-//}
-//
 pub async fn get_storage_system(config: &OpsmlConfig) -> AnyhowResult<StorageClientEnum> {
     // check storage_uri for prefix
     let storage_settings = config.storage_settings().with_context(|| {

@@ -90,6 +90,22 @@ pub struct ListFileResponse {
     pub files: Vec<String>,
 }
 
+#[derive(Debug, Serialize, Deserialize, Default)]
+pub enum MultipartCompleteParts {
+    Aws(CompletedUploadParts),
+    Azure(Vec<String>),
+    #[default]
+    None,
+}
+
+#[derive(Debug, Serialize, Deserialize, Default)]
+pub struct CompleteMultipartUpload {
+    pub path: String,
+    pub session_url: String,
+    pub parts: MultipartCompleteParts,
+    pub cancel: bool,
+}
+
 #[derive(Serialize, Deserialize)]
 pub struct ListFileInfoResponse {
     pub files: Vec<FileInfo>,
@@ -119,6 +135,17 @@ pub struct UploadResponse {
     pub message: String,
 }
 
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct CompletedUploadPart {
+    pub part_number: i32,
+    pub e_tag: String,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct CompletedUploadParts {
+    pub parts: Vec<CompletedUploadPart>,
+}
+
 #[derive(Serialize, Deserialize)]
 pub struct DownloadResponse {
     pub exists: bool,
@@ -130,7 +157,6 @@ pub struct PermissionDenied {
 }
 
 pub struct UploadPartArgs {
-    pub presigned_url: Option<String>,
     pub chunk_size: u64,
     pub chunk_index: u64,
     pub this_chunk_size: u64,
@@ -163,7 +189,18 @@ impl ArtifactKey {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+// implement Display for ArtifactKey and mask the encrypted_key and storage_key
+impl Display for ArtifactKey {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "ArtifactKey {{ uid: {}, registry_type: {}, encrypted_key: <masked>, storage_key: <masked> }}",
+            self.uid, self.registry_type
+        )
+    }
+}
+
+#[derive(Debug, Clone)]
 pub enum Operation {
     Create,
     Read,
@@ -173,6 +210,10 @@ pub enum Operation {
     Info,
     Encrypt,
     Decrypt,
+    Load,
+    Check,
+    Update,
+    Unknown,
 }
 
 impl Display for Operation {
@@ -186,6 +227,44 @@ impl Display for Operation {
             Operation::Encrypt => write!(f, "Encrypt"),
             Operation::Decrypt => write!(f, "Decrypt"),
             Operation::Create => write!(f, "Create"),
+            Operation::Load => write!(f, "Load"),
+            Operation::Check => write!(f, "Check"),
+            Operation::Update => write!(f, "Update"),
+            Operation::Unknown => write!(f, "Unknown"),
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub enum ResourceType {
+    File,
+    Database,
+    Card,
+}
+
+impl Display for ResourceType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ResourceType::File => write!(f, "File"),
+            ResourceType::Database => write!(f, "Database"),
+            ResourceType::Card => write!(f, "Card"),
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub enum AuditStatus {
+    Success,
+    Failed,
+    Denied,
+}
+
+impl Display for AuditStatus {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            AuditStatus::Success => write!(f, "Success"),
+            AuditStatus::Failed => write!(f, "Failed"),
+            AuditStatus::Denied => write!(f, "Denied"),
         }
     }
 }
@@ -193,7 +272,6 @@ impl Display for Operation {
 /// Request to get a file from the registry
 ///
 /// # Arguments
-///
 /// * `uid` - The unique identifier of card that is requesting the file
 /// * `file` - The file tree node
 /// * `registry_type` - The type of registry
@@ -207,7 +285,6 @@ pub struct RawFileRequest {
 /// Response to get a file from the registry
 ///
 /// # Arguments
-///
 /// * `content` - The content of the file
 /// * `suffix` - The suffix of the file
 /// * `mime_type` - The mime type of the file

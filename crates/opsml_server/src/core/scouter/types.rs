@@ -1,9 +1,10 @@
-use scouter_client::ProfileRequest;
-use serde::Deserialize;
+use anyhow::Result;
+use axum::{http::StatusCode, Json};
+use scouter_client::{DriftProfile, DriftType};
 
-#[derive(Deserialize, Debug, Clone)]
-pub struct UpdateProfileRequest {
-    pub uid: String,
-    pub repository: String,
-    pub request: ProfileRequest,
-}
+use std::collections::HashMap;
+
+use crate::core::error::OpsmlServerError;
+
+pub type ReturnError = (StatusCode, Json<OpsmlServerError>);
+pub type DriftProfileResult = Result<Json<HashMap<DriftType, DriftProfile>>, ReturnError>;

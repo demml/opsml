@@ -11,7 +11,9 @@ from opsml import (  # type: ignore
     DataCard,
     PromptCard,
     Prompt,
+    ModelLoadKwargs,
 )
+from opsml.card import CardDeck, Card  # type: ignore
 from opsml.card import RegistryMode, CardList  # type: ignore
 from opsml.model import SklearnModel  # type: ignore
 from opsml.data import PandasData  # type: ignore
@@ -34,7 +36,7 @@ def crud_datacard(pandas_data: PandasData):
 
     card = DataCard(
         interface=pandas_data,
-        repository="test",
+        space="test",
         name="test",
         tags=["foo:bar", "baz:qux"],
     )
@@ -51,7 +53,7 @@ def crud_datacard(pandas_data: PandasData):
     loaded_card.load()
 
     assert loaded_card.name == card.name
-    assert loaded_card.repository == card.repository
+    assert loaded_card.space == card.space
     assert loaded_card.tags == card.tags
     assert loaded_card.uid == card.uid
     assert loaded_card.version == card.version
@@ -113,7 +115,7 @@ def crud_promptcard(prompt: Prompt):
 
     card = PromptCard(
         prompt=prompt,
-        repository="test",
+        space="test",
         name="test",
     )
 
@@ -126,7 +128,7 @@ def crud_promptcard(prompt: Prompt):
     loaded_card: PromptCard = reg.load_card(uid=card.uid)
 
     assert loaded_card.name == card.name
-    assert loaded_card.repository == card.repository
+    assert loaded_card.space == card.space
     assert loaded_card.tags == card.tags
     assert loaded_card.uid == card.uid
     assert loaded_card.version == card.version
@@ -163,7 +165,7 @@ def crud_modelcard(random_forest_classifier: SklearnModel, datacard: DataCard):
 
     card = ModelCard(
         interface=interface,
-        repository="test",
+        space="test",
         name="test",
         to_onnx=True,
         tags=["foo:bar", "baz:qux"],
@@ -187,7 +189,7 @@ def crud_modelcard(random_forest_classifier: SklearnModel, datacard: DataCard):
     loaded_card.load(onnx=True)
 
     assert loaded_card.name == card.name
-    assert loaded_card.repository == card.repository
+    assert loaded_card.space == card.space
     assert loaded_card.tags == card.tags
     assert loaded_card.uid == card.uid
     assert loaded_card.version == card.version
@@ -233,6 +235,103 @@ def crud_modelcard(random_forest_classifier: SklearnModel, datacard: DataCard):
     return updated_card, reg
 
 
+def crud_card_deck(model_uid: str, prompt_uid: str):
+    reg = CardRegistry(registry_type=RegistryType.Deck)
+
+    assert reg.registry_type == RegistryType.Deck
+    assert reg.mode == RegistryMode.Client
+
+    cards = reg.list_cards()
+
+    assert isinstance(cards, CardList)
+    assert len(cards) == 0
+
+    deck = CardDeck(
+        space="test",
+        name="test",
+        cards=[
+            Card(
+                uid=model_uid,
+                alias="model",
+                registry_type=RegistryType.Model,
+            ),
+            Card(
+                uid=prompt_uid,
+                alias="prompt",
+                registry_type=RegistryType.Prompt,
+            ),
+        ],
+    )
+
+    reg.register_card(deck)
+    cards = reg.list_cards()
+    cards.as_table()
+
+    assert isinstance(cards, CardList)
+    assert len(cards) == 1
+    loaded_card: CardDeck = reg.load_card(uid=deck.uid)
+    loaded_card.load()
+
+    assert loaded_card.name == deck.name
+    assert loaded_card.space == deck.space
+    assert loaded_card.uid == deck.uid
+    assert loaded_card.version == deck.version
+    assert len(loaded_card.cards) == 2
+
+    # check iteration works
+    for card in loaded_card.cards:
+        assert isinstance(card, Card)
+
+    # check indexing works
+    assert isinstance(loaded_card.cards[0], Card)
+    assert isinstance(loaded_card.cards[1], Card)
+
+    # check aliases
+    model: ModelCard = loaded_card["model"]
+    assert model.interface.model is not None
+    model.model  # if the interface is not None, this should not raise an error
+
+    prompt: PromptCard = loaded_card["prompt"]
+    assert prompt.prompt is not None
+
+    loaded_card.download_artifacts()
+
+    # check the loaded_card.name is a directory
+    created_path = Path("card_deck")
+    assert created_path.exists()
+    assert created_path.is_dir()
+    assert len(list(created_path.iterdir())) == 3
+
+    # test loading from path with onnx
+    load_kwargs = {
+        "model": {"load_kwargs": ModelLoadKwargs(load_onnx=True)},
+    }
+    CardDeck.load_from_path(load_kwargs=load_kwargs)
+
+    # attempt to delete folder
+    shutil.rmtree(created_path.as_posix())
+    assert not created_path.exists()
+
+    # attempt to update the card
+    loaded_card.name = "new_deck_name"
+
+    # update the card
+    reg.update_card(loaded_card)
+
+    # load the updated card
+    updated_card: CardDeck = reg.load_card(uid=loaded_card.uid)
+    updated_card.load()
+
+    # make sure datacard_uid is set
+
+    assert updated_card.cards == loaded_card.cards
+
+    # assert that the card was updated
+    assert updated_card.name == "new_deck_name"
+
+    return updated_card, reg
+
+
 def delete_card(card: DataCard | ModelCard, registry: CardRegistry):
     registry.delete_card(card=card)
 
@@ -254,7 +353,9 @@ def test_crud_artifactcard(
         datacard, data_registry = crud_datacard(pandas_data)
         modelcard, model_registry = crud_modelcard(random_forest_classifier, datacard)
         promptcard, prompt_registry = crud_promptcard(chat_prompt)
+        card_deck, deck_registry = crud_card_deck(modelcard.uid, promptcard.uid)
 
         delete_card(datacard, data_registry)
         delete_card(modelcard, model_registry)
         delete_card(promptcard, prompt_registry)
+        delete_card(card_deck, deck_registry)

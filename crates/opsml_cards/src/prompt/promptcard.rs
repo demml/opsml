@@ -1,7 +1,11 @@
-use chrono::NaiveDateTime;
-use opsml_error::error::{CardError, OpsmlError};
-use opsml_types::contracts::{Card, PromptCardClientRecord};
-use opsml_types::{cards::BaseArgs, RegistryType, SaveName, Suffix};
+use crate::utils::BaseArgs;
+use chrono::{DateTime, Utc};
+use opsml_error::{
+    error::{CardError, OpsmlError},
+    map_err_with_logging,
+};
+use opsml_types::contracts::{CardRecord, PromptCardClientRecord};
+use opsml_types::{BaseArgsType, RegistryType, SaveName, Suffix};
 use opsml_utils::{get_utc_datetime, PyHelperFuncs};
 use potato_head::Prompt;
 use pyo3::prelude::*;
@@ -27,7 +31,7 @@ pub struct PromptCard {
     pub prompt: Prompt,
 
     #[pyo3(get, set)]
-    pub repository: String,
+    pub space: String,
 
     #[pyo3(get, set)]
     pub name: String,
@@ -51,7 +55,7 @@ pub struct PromptCard {
     pub app_env: String,
 
     #[pyo3(get, set)]
-    pub created_at: NaiveDateTime,
+    pub created_at: DateTime<Utc>,
 
     #[pyo3(get)]
     pub is_card: bool,
@@ -64,15 +68,16 @@ pub struct PromptCard {
 impl PromptCard {
     #[new]
     #[allow(clippy::too_many_arguments)]
-    #[pyo3(signature = (prompt, repository=None, name=None, version=None, uid=None, tags=None))]
+    #[pyo3(signature = (prompt, space=None, name=None, version=None, uid=None, tags=None))]
     pub fn new(
         prompt: &Bound<'_, PyAny>,
-        repository: Option<&str>,
+        space: Option<&str>,
         name: Option<&str>,
         version: Option<&str>,
         uid: Option<&str>,
         tags: Option<&Bound<'_, PyList>>,
     ) -> PyResult<Self> {
+        let registry_type = RegistryType::Prompt;
         let tags = match tags {
             None => Vec::new(),
             Some(t) => t
@@ -80,10 +85,10 @@ impl PromptCard {
                 .map_err(|e| OpsmlError::new_err(e.to_string()))?,
         };
 
-        let base_args = BaseArgs::create_args(name, repository, version, uid).map_err(|e| {
-            error!("Failed to create base args: {}", e);
-            OpsmlError::new_err(e.to_string())
-        })?;
+        let base_args = map_err_with_logging::<BaseArgsType, _>(
+            BaseArgs::create_args(name, space, version, uid, &registry_type),
+            "Failed to create base args for PromptCard",
+        )?;
 
         let prompt = prompt.extract::<Prompt>().map_err(|e| {
             error!("Failed to extract prompt: {}", e);
@@ -92,17 +97,17 @@ impl PromptCard {
 
         Ok(Self {
             prompt,
-            repository: base_args.0,
+            space: base_args.0,
             name: base_args.1,
             version: base_args.2,
             uid: base_args.3,
             tags,
             metadata: PromptCardMetadata::default(),
-            registry_type: RegistryType::Prompt,
+            registry_type,
             app_env: std::env::var("APP_ENV").unwrap_or_else(|_| "dev".to_string()),
             created_at: get_utc_datetime(),
             is_card: true,
-            opsml_version: env!("CARGO_PKG_VERSION").to_string(),
+            opsml_version: opsml_version::version(),
         })
     }
 
@@ -127,7 +132,7 @@ impl PromptCard {
     }
 
     #[setter]
-    pub fn set_experimentcard_uid(&mut self, experimentcard_uid: Option<&str>) {
+    pub fn set_experimentcard_uid(&mut self, experimentcard_uid: Option<String>) {
         self.metadata.experimentcard_uid = experimentcard_uid.map(|s| s.to_string());
     }
 
@@ -137,11 +142,7 @@ impl PromptCard {
 
     #[pyo3(signature = (path))]
     pub fn save(&mut self, path: PathBuf) -> Result<(), CardError> {
-        // save model interface
-        // if option raise error
         self.prompt.save_prompt(Some(path.clone()))?;
-
-        // save modelcard
         let card_save_path = path.join(SaveName::Card).with_extension(Suffix::Json);
         PyHelperFuncs::save_to_json(&self, &card_save_path)?;
 
@@ -157,21 +158,22 @@ impl PromptCard {
         })
     }
 
-    pub fn get_registry_card(&self) -> Result<Card, CardError> {
+    pub fn get_registry_card(&self) -> Result<CardRecord, CardError> {
         let record = PromptCardClientRecord {
             created_at: self.created_at,
             app_env: self.app_env.clone(),
-            repository: self.repository.clone(),
+            space: self.space.clone(),
             name: self.name.clone(),
             version: self.version.clone(),
             uid: self.uid.clone(),
             tags: self.tags.clone(),
             experimentcard_uid: self.metadata.experimentcard_uid.clone(),
             auditcard_uid: self.metadata.auditcard_uid.clone(),
+            opsml_version: self.opsml_version.clone(),
             username: std::env::var("OPSML_USERNAME").unwrap_or_else(|_| "guest".to_string()),
         };
 
-        Ok(Card::Prompt(record))
+        Ok(CardRecord::Prompt(record))
     }
 
     pub fn save_card(&self, path: PathBuf) -> Result<(), CardError> {

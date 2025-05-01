@@ -1,10 +1,8 @@
 use anyhow::Result;
-use opsml_client::RequestType;
-
 use opsml_error::{ApiError, ServerError};
 use opsml_settings::config::ScouterSettings;
-
 use opsml_sql::schemas::User;
+use opsml_types::api::RequestType;
 /// Route for debugging information
 use reqwest::Response;
 use reqwest::{header::HeaderMap, Client};
@@ -19,6 +17,7 @@ pub enum Routes {
     Profile,
     ProfileStatus,
     Users,
+    Alerts,
 }
 
 impl Routes {
@@ -34,7 +33,10 @@ impl Routes {
             Routes::ProfileStatus => "scouter/profile/status",
 
             // Scouter User Routes
-            Routes::Users => "scouter/users",
+            Routes::Users => "scouter/user",
+
+            // Scouter Alerts Routes
+            Routes::Alerts => "scouter/alerts",
         }
     }
 }

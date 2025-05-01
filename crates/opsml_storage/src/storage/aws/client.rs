@@ -3,18 +3,15 @@ use crate::storage::filesystem::FileSystem;
 use async_trait::async_trait;
 use aws_config::BehaviorVersion;
 use aws_config::SdkConfig;
-use aws_sdk_s3::config::Builder;
-use aws_sdk_s3::config::Credentials;
 use aws_sdk_s3::operation::get_object::GetObjectOutput;
 use aws_sdk_s3::presigning::PresigningConfig;
 use aws_sdk_s3::primitives::ByteStream;
 use aws_sdk_s3::primitives::Length;
 use aws_sdk_s3::types::{CompletedMultipartUpload, CompletedPart};
 use aws_sdk_s3::Client;
-use opsml_client::OpsmlApiClient;
 use opsml_error::error::StorageError;
 use opsml_settings::config::OpsmlStorageSettings;
-use opsml_types::contracts::{FileInfo, UploadPartArgs};
+use opsml_types::contracts::{CompleteMultipartUpload, FileInfo, MultipartCompleteParts};
 use opsml_types::{StorageType, UPLOAD_CHUNK_SIZE};
 use opsml_utils::FileUtils;
 use reqwest::Client as HttpClient;
@@ -22,8 +19,8 @@ use std::fs::File;
 use std::io::Write;
 use std::path::Path;
 use std::path::PathBuf;
-use std::str;
 use std::time::Duration;
+use tracing::{error, instrument};
 
 // Notes:
 // For general compatibility with the Pyo3, Rust and generics, we need to define structs with sync in mind.
@@ -69,16 +66,19 @@ pub async fn generate_presigned_url_for_part(
 }
 
 pub struct AWSMulitPartUpload {
-    pub bucket: String,
-    pub client: Client,
-    pub rpath: String,
-    pub lpath: String,
+    bucket: String,
+    client: Client,
+    rpath: String,
+    lpath: String,
     pub upload_id: String,
-    pub api_client: Option<OpsmlApiClient>,
-    upload_parts: Vec<CompletedPart>,
-    pub file_size: u64,
-    pub filename: String,
-    pub http_client: HttpClient,
+    file_size: u64,
+    http_client: HttpClient,
+}
+
+#[derive(Clone)]
+pub struct UploadPart {
+    e_tag: String,
+    part_number: i32,
 }
 
 impl AWSMulitPartUpload {
@@ -87,28 +87,10 @@ impl AWSMulitPartUpload {
         lpath: &str,
         rpath: &str,
         upload_id: &str,
-        api_client: Option<OpsmlApiClient>,
-        http_client: HttpClient,
     ) -> Result<Self, StorageError> {
-        // create a resuable runtime for the multipart upload
-
         let creds = AWSCreds::new().await?;
         let client = Client::new(&creds.config);
-
-        let file = File::open(lpath)
-            .map_err(|e| StorageError::Error(format!("Failed to open file: {}", e)))?;
-
-        let metadata = file
-            .metadata()
-            .map_err(|e| StorageError::Error(format!("Failed to get file metadata: {}", e)))?;
-
-        let file_size = metadata.len();
-
-        let filename = Path::new(lpath)
-            .file_name()
-            .unwrap()
-            .to_string_lossy()
-            .to_string();
+        let file_size = Self::get_file_size(lpath)?;
 
         Ok(Self {
             client,
@@ -116,29 +98,31 @@ impl AWSMulitPartUpload {
             rpath: rpath.to_string(),
             lpath: lpath.to_string(),
             upload_id: upload_id.to_string(),
-            upload_parts: Vec::new(),
-            api_client,
             file_size,
-            filename,
-            http_client,
+
+            http_client: HttpClient::new(),
         })
+    }
+
+    fn get_file_size(path: &str) -> Result<u64, StorageError> {
+        let metadata = std::fs::metadata(path)
+            .map_err(|e| StorageError::Error(format!("Failed to get file metadata: {}", e)))?;
+        Ok(metadata.len())
     }
 
     /// Generate a presigned url for a part in the multipart upload
     /// This needs to be a non-self method because it is called from both client or server
-    pub async fn upload_part_with_presigned_url(
-        &mut self,
-        part_number: &i32,
+    pub async fn upload_part(
+        &self,
+        part_number: i32,
         body: ByteStream,
         presigned_url: &str,
-    ) -> Result<bool, StorageError> {
-        // collect the ByteStream
+    ) -> Result<UploadPart, StorageError> {
         let body = body
             .collect()
             .await
             .map_err(|e| StorageError::Error(format!("Failed to collect ByteStream: {}", e)))?;
 
-        // convert to bytes::Bytes
         let response = self
             .http_client
             .put(presigned_url)
@@ -148,21 +132,15 @@ impl AWSMulitPartUpload {
             .map_err(|e| StorageError::Error(format!("Failed to upload part: {}", e)))?;
 
         if response.status().is_success() {
-            self.upload_parts.push(
-                CompletedPart::builder()
-                    .e_tag(
-                        response
-                            .headers()
-                            .get("ETag")
-                            .unwrap()
-                            .to_str()
-                            .unwrap()
-                            .to_string(),
-                    )
-                    .part_number(*part_number)
-                    .build(),
-            );
-            Ok(true)
+            let e_tag = response
+                .headers()
+                .get("ETag")
+                .ok_or_else(|| StorageError::Error("Missing ETag header".to_string()))?
+                .to_str()
+                .map_err(|e| StorageError::Error(format!("Invalid ETag header: {}", e)))?
+                .to_string();
+
+            Ok(UploadPart { e_tag, part_number })
         } else {
             Err(StorageError::Error(format!(
                 "Failed to upload part: {}",
@@ -171,14 +149,22 @@ impl AWSMulitPartUpload {
         }
     }
 
-    pub async fn complete_upload(&self) -> Result<(), StorageError> {
-        let completed_multipart_upload: CompletedMultipartUpload =
-            CompletedMultipartUpload::builder()
-                .set_parts(Some(self.upload_parts.clone()))
-                .build();
+    pub async fn complete_upload(&self, parts: Vec<UploadPart>) -> Result<(), StorageError> {
+        let completed_parts: Vec<CompletedPart> = parts
+            .into_iter()
+            .map(|part| {
+                CompletedPart::builder()
+                    .e_tag(part.e_tag)
+                    .part_number(part.part_number)
+                    .build()
+            })
+            .collect();
 
-        let _complete_multipart_upload_res = self
-            .client
+        let completed_multipart_upload = CompletedMultipartUpload::builder()
+            .set_parts(Some(completed_parts))
+            .build();
+
+        self.client
             .complete_multipart_upload()
             .bucket(&self.bucket)
             .key(&self.rpath)
@@ -187,6 +173,20 @@ impl AWSMulitPartUpload {
             .send()
             .await
             .map_err(|e| StorageError::Error(format!("Failed to complete upload: {}", e)))?;
+
+        Ok(())
+    }
+
+    pub async fn abort_multipart_upload(&self) -> Result<(), StorageError> {
+        let _abort_multipart_upload_res = self
+            .client
+            .abort_multipart_upload()
+            .bucket(&self.bucket)
+            .key(&self.rpath)
+            .upload_id(&self.upload_id)
+            .send()
+            .await
+            .map_err(|e| StorageError::Error(format!("Failed to abort upload: {}", e)))?;
 
         Ok(())
     }
@@ -209,35 +209,13 @@ impl AWSMulitPartUpload {
         Ok(stream)
     }
 
-    pub async fn upload_next_chunk(
-        &mut self,
-        upload_args: &UploadPartArgs,
-    ) -> Result<bool, StorageError> {
-        let path = Path::new(&self.lpath);
-        let part_number = (upload_args.chunk_index + 1) as i32;
-
-        let body = self
-            .get_next_chunk(
-                path,
-                upload_args.chunk_size,
-                upload_args.chunk_index,
-                upload_args.this_chunk_size,
-            )
-            .await?;
-
-        let presigned_url = upload_args.presigned_url.as_ref().unwrap();
-        self.upload_part_with_presigned_url(&part_number, body, presigned_url)
-            .await?;
-
-        Ok(true)
-    }
-
     pub async fn upload_file_in_chunks(
-        &mut self,
+        &self,
         chunk_count: u64,
         size_of_last_chunk: u64,
     ) -> Result<(), StorageError> {
         let chunk_size = std::cmp::min(self.file_size, UPLOAD_CHUNK_SIZE as u64);
+        let mut upload_parts = Vec::new();
 
         for chunk_index in 0..chunk_count {
             let this_chunk = if chunk_count - 1 == chunk_index {
@@ -246,45 +224,38 @@ impl AWSMulitPartUpload {
                 chunk_size
             };
 
-            let part_number = (chunk_index + 1) as i32;
+            let presigned_url = generate_presigned_url_for_part(
+                &self.bucket,
+                (chunk_index + 1) as i32,
+                &self.rpath,
+                &self.upload_id,
+                &self.client,
+            )
+            .await?;
 
-            // get presigned url for the part
-            // if client mode is enabled, use the api client to generate the presigned url
-            // else use the storage client to generate the presigned url
-            let presigned_url = if self.api_client.is_some() {
-                let mut client = self.api_client.as_ref().unwrap().clone();
-                client
-                    .generate_presigned_url_for_part(&self.rpath, &self.upload_id, part_number)
-                    .await
-                    .map_err(|e| {
-                        StorageError::Error(format!("Failed to generate presigned url: {}", e))
-                    })?
-            } else {
-                generate_presigned_url_for_part(
-                    &self.bucket,
-                    (chunk_index + 1) as i32,
-                    &self.rpath,
-                    &self.upload_id,
-                    &self.client,
-                )
-                .await?
-            };
+            let path = Path::new(&self.lpath);
+            let body = ByteStream::read_from()
+                .path(path)
+                .offset(chunk_index * chunk_size)
+                .length(Length::Exact(this_chunk))
+                .build()
+                .await
+                .map_err(|e| StorageError::Error(format!("Failed to get next chunk: {}", e)))?;
 
-            let upload_args = UploadPartArgs {
-                presigned_url: Some(presigned_url),
-                chunk_size,
-                chunk_index,
-                this_chunk_size: this_chunk,
-            };
+            let part = self
+                .upload_part((chunk_index + 1) as i32, body, &presigned_url)
+                .await?;
+            upload_parts.push(part);
+        }
 
-            self.upload_next_chunk(&upload_args).await?;
-        } // extract the range from the result and update the first_byte and last_byte
-
-        self.complete_upload().await?;
-
-        Ok(())
-
-        // check if enum is Ok
+        match self.complete_upload(upload_parts).await {
+            Ok(_) => Ok(()),
+            Err(e) => {
+                error!("Failed to complete upload: {}. Aborting", e);
+                self.abort_multipart_upload().await?;
+                Err(e)
+            }
+        }
     }
 }
 
@@ -303,21 +274,9 @@ impl StorageClient for AWSStorageClient {
         &self.bucket
     }
     async fn new(settings: &OpsmlStorageSettings) -> Result<Self, StorageError> {
-        // create a resuable runtime for client
-        let client = if !settings.client_mode {
-            let creds = AWSCreds::new().await?;
-            Client::new(&creds.config)
-        } else {
-            // set anonymous credentials if client mode is enabled
-            // this is because we want to force the client to use the api client to generate presigned urls
-            let creds = Credentials::new("", "", None, None, "anonymous");
-            let config = Builder::new()
-                .credentials_provider(creds)
-                .behavior_version(BehaviorVersion::latest())
-                .build();
-
-            Client::from_conf(config)
-        };
+        // read creds from env
+        let creds = AWSCreds::new().await?;
+        let client = Client::new(&creds.config);
 
         let bucket = settings
             .storage_uri
@@ -631,9 +590,7 @@ impl AWSStorageClient {
             .key(path)
             .send()
             .await
-            .map_err(|e| {
-                StorageError::Error(format!("Failed to create multipart upload: {}", e))
-            })?;
+            .unwrap();
 
         Ok(response.upload_id.unwrap())
     }
@@ -642,23 +599,9 @@ impl AWSStorageClient {
         &self,
         lpath: &str,
         rpath: &str,
-        session_url: Option<String>,
-        api_client: Option<OpsmlApiClient>,
-        http_client: HttpClient,
     ) -> Result<AWSMulitPartUpload, StorageError> {
-        let upload_id = match session_url {
-            Some(session_url) => session_url,
-            None => self.create_multipart_upload(rpath).await?,
-        };
-        AWSMulitPartUpload::new(
-            &self.bucket,
-            lpath,
-            rpath,
-            &upload_id,
-            api_client,
-            http_client,
-        )
-        .await
+        let upload_id = self.create_multipart_upload(rpath).await?;
+        AWSMulitPartUpload::new(&self.bucket, lpath, rpath, &upload_id).await
     }
 
     /// Generate a presigned url for a part in the multipart upload
@@ -685,6 +628,62 @@ impl AWSStorageClient {
             .map_err(|e| StorageError::Error(format!("Failed to generate presigned url: {}", e)))?;
 
         Ok(presigned_request.uri().to_string())
+    }
+
+    /// Helper function to complete an upload from parts
+    /// This is use by the server to complete a client multipart upload
+    ///
+    /// # Arguments
+    ///
+    /// * `upload_id` - The upload id of the multipart upload
+    /// * `parts` - The completed parts of the upload
+    /// * `path` - The path to the object in the bucket
+    ///
+    #[instrument(skip_all)]
+    pub async fn complete_upload_from_parts(
+        &self,
+        upload_id: &str,
+        parts: MultipartCompleteParts,
+        path: &str,
+    ) -> Result<(), StorageError> {
+        // convert the parts to CompletedPart
+        let parts = match parts {
+            MultipartCompleteParts::Aws(parts) => parts,
+            _ => {
+                return Err(StorageError::Error(
+                    "Invalid parts type for AWS storage".to_string(),
+                ))
+            }
+        };
+
+        let upload_parts = parts
+            .parts
+            .iter()
+            .map(|part| {
+                CompletedPart::builder()
+                    .e_tag(part.e_tag.clone())
+                    .part_number(part.part_number)
+                    .build()
+            })
+            .collect();
+
+        let completed_multipart_upload: CompletedMultipartUpload =
+            CompletedMultipartUpload::builder()
+                .set_parts(Some(upload_parts))
+                .build();
+
+        let _upload_response = self
+            .client
+            .complete_multipart_upload()
+            .bucket(&self.bucket)
+            .key(path)
+            .multipart_upload(completed_multipart_upload)
+            .upload_id(upload_id)
+            .send()
+            .await
+            .map_err(|e| StorageError::Error(format!("Failed to complete upload: {}", e)))?;
+
+        Ok(())
     }
 }
 
@@ -835,14 +834,11 @@ impl FileSystem for S3FStorageClient {
                 let relative_path = file.relative_path(&stripped_lpath)?;
                 let remote_path = stripped_rpath.join(relative_path);
 
-                let mut uploader = self
+                let uploader = self
                     .client
                     .create_multipart_uploader(
                         stripped_file_path.to_str().unwrap(),
                         remote_path.to_str().unwrap(),
-                        None,
-                        None,
-                        HttpClient::new(),
                     )
                     .await?;
 
@@ -854,14 +850,11 @@ impl FileSystem for S3FStorageClient {
             let (chunk_count, size_of_last_chunk, _) =
                 FileUtils::get_chunk_count(&stripped_lpath, UPLOAD_CHUNK_SIZE as u64).unwrap();
 
-            let mut uploader = self
+            let uploader = self
                 .client
                 .create_multipart_uploader(
                     stripped_lpath.to_str().unwrap(),
                     stripped_rpath.to_str().unwrap(),
-                    None,
-                    None,
-                    HttpClient::new(),
                 )
                 .await?;
 
@@ -871,6 +864,16 @@ impl FileSystem for S3FStorageClient {
         };
 
         Ok(())
+    }
+
+    async fn complete_multipart_upload(
+        &self,
+        request: CompleteMultipartUpload,
+    ) -> Result<(), StorageError> {
+        let parts = request.parts;
+        self.client
+            .complete_upload_from_parts(&request.session_url, parts, &request.path)
+            .await
     }
 }
 
@@ -885,37 +888,19 @@ impl S3FStorageClient {
         &self,
         rpath: &Path,
         lpath: &Path,
-        session_url: Option<String>,
-        bucket: Option<String>,
-        api_client: Option<OpsmlApiClient>,
     ) -> Result<AWSMulitPartUpload, StorageError> {
-        let upload_id = match session_url {
-            Some(session_url) => session_url,
-            None => {
-                self.client
-                    .create_multipart_upload(rpath.to_str().unwrap())
-                    .await?
-            }
-        };
+        let upload_id = self
+            .client
+            .create_multipart_upload(rpath.to_str().unwrap())
+            .await?;
 
-        let http_client = if let Some(client) = &api_client {
-            client.client.clone()
-        } else {
-            HttpClient::new()
-        };
-
-        let bucket = match bucket {
-            Some(bucket) => bucket,
-            None => self.client.bucket().await.to_string(),
-        };
+        let bucket = self.client.bucket().await.to_string();
 
         AWSMulitPartUpload::new(
             &bucket,
             lpath.to_str().unwrap(),
             rpath.to_str().unwrap(),
             &upload_id,
-            api_client,
-            http_client,
         )
         .await
     }
@@ -937,6 +922,7 @@ mod tests {
     use super::*;
     use opsml_error::error::StorageError;
     use opsml_settings::config::OpsmlConfig;
+    use opsml_utils::create_uuid7;
     use rand::distr::Alphanumeric;
     use rand::rng;
     use rand::Rng;
@@ -962,7 +948,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_aws_storage_server() -> Result<(), StorageError> {
-        let rand_name = uuid::Uuid::new_v4().to_string();
+        let rand_name = create_uuid7();
         let filename = format!("file-{}.txt", rand_name);
 
         let tmp_dir = TempDir::new().unwrap();
@@ -1035,7 +1021,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_aws_storage_server_trees() -> Result<(), StorageError> {
-        let rand_name = uuid::Uuid::new_v4().to_string();
+        let rand_name = create_uuid7();
 
         let tmp_dir = TempDir::new().unwrap();
         let tmp_path = tmp_dir.path();
@@ -1051,7 +1037,7 @@ mod tests {
             std::fs::write(&txt_path, "hello, world").unwrap();
         }
 
-        let new_rand_name = uuid::Uuid::new_v4().to_string();
+        let new_rand_name = create_uuid7();
         let rpath_root = Path::new(&new_rand_name);
 
         if storage_client.exists(rpath_root).await? {

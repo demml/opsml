@@ -2,9 +2,10 @@ export enum RoutePaths {
   VALIDATE_AUTH = "/opsml/api/auth/validate",
   LOGIN = "/opsml/api/auth/ui/login",
   LIST_CARDS = "/opsml/api/card/list",
-  LIST_SPACES = "/opsml/api/card/repositories",
+  LIST_SPACES = "/opsml/api/card/spaces",
   GET_STATS = "/opsml/api/card/registry/stats",
   GET_REGISTRY_PAGE = "/opsml/api/card/registry/page",
+  GET_VERSION_PAGE = "/opsml/api/card/registry/version/page",
 
   ERROR = "/opsml/error",
   HOME = "/opsml/home",
@@ -14,7 +15,22 @@ export enum RoutePaths {
   FILE_TREE = "/opsml/api/files/tree",
   FILE_CONTENT = "/opsml/api/files/content",
 
-  // everything below is old
+  // scouter
+  DRIFT_PROFILE_UI = "/opsml/api/scouter/profile/ui",
+  SPC_DRIFT = "/opsml/api/scouter/drift/spc",
+  PSI_DRIFT = "/opsml/api/scouter/drift/psi",
+  CUSTOM_DRIFT = "/opsml/api/scouter/drift/custom",
+  DRIFT_PROFILE = "/opsml/api/scouter/profile",
+  DRIFT_ALERT = "/opsml/api/scouter/alerts",
+
+  // Experiment
+  EXPERIMENT_METRICS = "/opsml/api/experiment/metrics",
+  EXPERIMENT_GROUPED_METRICS = "/opsml/api/experiment/metrics/grouped",
+  EXPERIMENT_METRIC_NAMES = "/opsml/api/experiment/metrics/names",
+  EXPERIMENT_PARAMETERS = "/opsml/api/experiment/parameters",
+  HARDWARE_METRICS = "/opsml/api/experiment/hardware/metrics",
+
+  // everything below is old and may be removed
 
   REGISTER = "/opsml/auth/register",
   UPDATE = "/opsml/auth/update",
@@ -27,9 +43,8 @@ export enum RoutePaths {
   DATACARD = "/opsml/data/card",
   RUNCARD = "/opsml/run/card",
   METRICS = "/opsml/metrics",
-  PARAMETERS = "/opsml/parameters",
+
   GRAPHS = "/opsml/runs/graphs",
-  REPOSITORIES = "/opsml/cards/repositories",
   FILE_EXISTS = "/opsml/files/exists",
   FILES_VIEW = "/opsml/files/view",
   MODEL_METADATA = "/opsml/models/metadata",
@@ -41,7 +56,6 @@ export enum RoutePaths {
   REFRESH_TOKEN = "/opsml/auth/token/refresh",
 
   HARDWARE = "/opsml/metrics/hardware",
-  DRIFT_PROFILE = "/opsml/scouter/drift/profile",
   DRIFT_VALUES = "/opsml/scouter/drift/values",
   FEATURE_DISTRIBUTION = "/opsml/scouter/feature/distribution",
   MONITOR_ALERTS = "/opsml/scouter/alerts",

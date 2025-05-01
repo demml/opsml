@@ -51,7 +51,7 @@ class OpsmlHuggingFaceWorkflow:
         Args:
             info:
                 CardInfo data structure that contains required info for cards.
-                You could also provide "name", "repository" and "email" to a card; however, this
+                You could also provide "name", "space" and "email" to a card; however, this
                 simplifies the process.
 
         """
@@ -99,7 +99,9 @@ class OpsmlHuggingFaceWorkflow:
 
         # process data
         text, labels = self._get_data(Path("examples/huggingface/data"))
-        train_texts, val_texts, train_labels, val_labels = train_test_split(text, labels, test_size=0.2)
+        train_texts, val_texts, train_labels, val_labels = train_test_split(
+            text, labels, test_size=0.2
+        )
 
         # get tokenizer
         tokenizer = DistilBertTokenizerFast.from_pretrained("distilbert-base-uncased")
@@ -121,7 +123,9 @@ class OpsmlHuggingFaceWorkflow:
             logging_steps=10,
         )
 
-        model = DistilBertForSequenceClassification.from_pretrained("distilbert-base-uncased")
+        model = DistilBertForSequenceClassification.from_pretrained(
+            "distilbert-base-uncased"
+        )
 
         trainer = Trainer(
             model=model,
@@ -132,7 +136,9 @@ class OpsmlHuggingFaceWorkflow:
 
         trainer.train()
 
-        inputs = tokenizer(train_texts[0], return_tensors="pt", padding="max_length", truncation=True)
+        inputs = tokenizer(
+            train_texts[0], return_tensors="pt", padding="max_length", truncation=True
+        )
 
         interface = HuggingFaceModel(
             model=trainer.model,
@@ -142,7 +148,9 @@ class OpsmlHuggingFaceWorkflow:
             onnx_args=HuggingFaceOnnxArgs(
                 ort_type=HuggingFaceORTModel.ORT_SEQUENCE_CLASSIFICATION.value,
                 quantize=True,
-                config=AutoQuantizationConfig.avx512_vnni(is_static=False, per_channel=False),
+                config=AutoQuantizationConfig.avx512_vnni(
+                    is_static=False, per_channel=False
+                ),
             ),
         )
 
@@ -163,7 +171,12 @@ class OpsmlHuggingFaceWorkflow:
         # load onnx model
         modelcard.load_onnx_model(load_preprocessor=True)
         inputs = dict(
-            modelcard.preprocessor("This is a test", return_tensors="np", padding="max_length", truncation=True)
+            modelcard.preprocessor(
+                "This is a test",
+                return_tensors="np",
+                padding="max_length",
+                truncation=True,
+            )
         )
         assert modelcard.onnx_model is not None, "Onnx model is not loaded"
 
@@ -184,7 +197,7 @@ if __name__ == "__main__":
     workflow = OpsmlHuggingFaceWorkflow(
         info=CardInfo(
             name="huggingface",
-            repository="opsml",
+            space="opsml",
             contact="user@email.com",
         )
     )

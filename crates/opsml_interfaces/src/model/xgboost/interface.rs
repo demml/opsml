@@ -272,6 +272,7 @@ impl XGBoostModel {
             self_.as_super().interface_type.clone(),
             onnx_session,
             HashMap::new(),
+            self_.as_super().drift_type.clone(),
         );
 
         let model_uri = XGBoostModel::save_model(self_, py, &path)?;

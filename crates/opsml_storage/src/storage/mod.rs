@@ -1,9 +1,14 @@
+#[cfg(feature = "server")]
 pub mod aws;
+#[cfg(feature = "server")]
 pub mod azure;
-pub mod base;
+#[cfg(feature = "server")]
 pub mod enums;
-pub mod filesystem;
+#[cfg(feature = "server")]
 pub mod gcs;
+
+pub mod base;
+pub mod filesystem;
 pub mod http;
 pub mod local;
 pub mod utils;

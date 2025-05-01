@@ -22,7 +22,7 @@ class OpsmlCatBoostWorkflow:
         Args:
             info:
                 CardInfo data structure that contains required info for cards.
-                You could also provide "name", "repository" and "email" to a card; however, this
+                You could also provide "name", "space" and "email" to a card; however, this
                 simplifies the process.
 
         """
@@ -40,15 +40,24 @@ class OpsmlCatBoostWorkflow:
         """
 
         # create fake data
-        X, y = create_fake_data(n_samples=1000, task_type="classification", to_polars=True)
+        X, y = create_fake_data(
+            n_samples=1000, task_type="classification", to_polars=True
+        )
         X = X.with_columns((y).to_series().alias("target"))
 
         # Create data interface
         data_interface = PolarsData(
             data=X,
             data_splits=[
-                DataSplit(label="train", column_name="col_1", column_value=0.5, inequality=">="),
-                DataSplit(label="test", column_name="col_1", column_value=0.5, inequality="<"),
+                DataSplit(
+                    label="train",
+                    column_name="col_1",
+                    column_value=0.5,
+                    inequality=">=",
+                ),
+                DataSplit(
+                    label="test", column_name="col_1", column_value=0.5, inequality="<"
+                ),
             ],
             dependent_vars=["target"],
         )
@@ -115,6 +124,6 @@ class OpsmlCatBoostWorkflow:
 
 if __name__ == "__main__":
     # set info (easier than specifying in each card)
-    info = CardInfo(name="catboost", repository="opsml", contact="user@email.com")
+    info = CardInfo(name="catboost", space="opsml", contact="user@email.com")
     workflow = OpsmlCatBoostWorkflow(info=info)
     workflow.run_workflow()

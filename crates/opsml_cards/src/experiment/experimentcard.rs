@@ -1,20 +1,17 @@
-use chrono::NaiveDateTime;
+use crate::utils::BaseArgs;
+use chrono::{DateTime, Utc};
 use opsml_crypt::decrypt_directory;
-use opsml_error::{CardError, OpsmlError};
-use opsml_storage::FileSystemStorage;
-use opsml_types::contracts::{Card, ExperimentCardClientRecord};
+use opsml_error::{map_err_with_logging, CardError, OpsmlError};
+use opsml_storage::storage_client;
+use opsml_types::contracts::{CardRecord, ExperimentCardClientRecord};
 use opsml_types::{
-    cards::{BaseArgs, ComputeEnvironment},
-    contracts::ArtifactKey,
-    RegistryType, SaveName, Suffix,
+    cards::ComputeEnvironment, contracts::ArtifactKey, BaseArgsType, RegistryType, SaveName, Suffix,
 };
 use opsml_utils::{get_utc_datetime, PyHelperFuncs};
 use pyo3::prelude::*;
 use pyo3::types::PyList;
 use serde_json;
 use std::path::PathBuf;
-use std::sync::Arc;
-use tokio::sync::Mutex;
 use tracing::error;
 
 use serde::{
@@ -36,13 +33,16 @@ pub struct UidMetadata {
     pub promptcard_uids: Vec<String>,
 
     #[pyo3(get, set)]
+    pub card_deck_uids: Vec<String>,
+
+    #[pyo3(get, set)]
     pub experimentcard_uids: Vec<String>,
 }
 
 #[pyclass]
 pub struct ExperimentCard {
     #[pyo3(get, set)]
-    pub repository: String,
+    pub space: String,
 
     #[pyo3(get, set)]
     pub name: String,
@@ -69,7 +69,7 @@ pub struct ExperimentCard {
     pub app_env: String,
 
     #[pyo3(get, set)]
-    pub created_at: NaiveDateTime,
+    pub created_at: DateTime<Utc>,
 
     #[pyo3(get)]
     pub subexperiment: bool,
@@ -77,29 +77,26 @@ pub struct ExperimentCard {
     #[pyo3(get)]
     pub opsml_version: String,
 
-    pub rt: Option<Arc<tokio::runtime::Runtime>>,
-
-    pub fs: Option<Arc<Mutex<FileSystemStorage>>>,
-
-    pub artifact_key: Option<ArtifactKey>,
-
     #[pyo3(get)]
     pub is_card: bool,
+
+    artifact_key: Option<ArtifactKey>,
 }
 
 #[pymethods]
 impl ExperimentCard {
     #[new]
     #[allow(clippy::too_many_arguments)]
-    #[pyo3(signature = (repository=None, name=None, version=None, uid=None, tags=None))]
+    #[pyo3(signature = (space=None, name=None, version=None, uid=None, tags=None))]
     pub fn new(
         py: Python,
-        repository: Option<&str>,
+        space: Option<&str>,
         name: Option<&str>,
         version: Option<&str>,
         uid: Option<&str>,
         tags: Option<&Bound<'_, PyList>>,
     ) -> PyResult<Self> {
+        let registry_type = RegistryType::Experiment;
         let tags = match tags {
             None => Vec::new(),
             Some(t) => t
@@ -107,20 +104,18 @@ impl ExperimentCard {
                 .map_err(|e| OpsmlError::new_err(e.to_string()))?,
         };
 
-        let base_args = BaseArgs::create_args(name, repository, version, uid).map_err(|e| {
-            error!("Failed to create base args: {}", e);
-            OpsmlError::new_err(e.to_string())
-        })?;
+        let base_args = map_err_with_logging::<BaseArgsType, _>(
+            BaseArgs::create_args(name, space, version, uid, &registry_type),
+            "Failed to create base args for ExperimentCard",
+        )?;
 
         Ok(Self {
-            repository: base_args.0,
+            space: base_args.0,
             name: base_args.1,
             version: base_args.2,
             uid: base_args.3,
             tags,
-            registry_type: RegistryType::Experiment,
-            rt: None,
-            fs: None,
+            registry_type,
             artifact_key: None,
             app_env: std::env::var("APP_ENV").unwrap_or_else(|_| "dev".to_string()),
             created_at: get_utc_datetime(),
@@ -128,7 +123,7 @@ impl ExperimentCard {
             uids: UidMetadata::default(),
             subexperiment: false,
             is_card: true,
-            opsml_version: env!("CARGO_PKG_VERSION").to_string(),
+            opsml_version: opsml_version::version(),
         })
     }
 
@@ -148,11 +143,15 @@ impl ExperimentCard {
         self.uids.modelcard_uids.push(uid.to_string());
     }
 
-    pub fn get_registry_card(&self) -> Result<Card, CardError> {
+    pub fn add_card_deck_uid(&mut self, uid: &str) {
+        self.uids.card_deck_uids.push(uid.to_string());
+    }
+
+    pub fn get_registry_card(&self) -> Result<CardRecord, CardError> {
         let record = ExperimentCardClientRecord {
             created_at: self.created_at,
             app_env: self.app_env.clone(),
-            repository: self.repository.clone(),
+            space: self.space.clone(),
             name: self.name.clone(),
             version: self.version.clone(),
             uid: self.uid.clone(),
@@ -160,11 +159,13 @@ impl ExperimentCard {
             datacard_uids: self.uids.datacard_uids.clone(),
             modelcard_uids: self.uids.modelcard_uids.clone(),
             promptcard_uids: self.uids.promptcard_uids.clone(),
+            card_deck_uids: self.uids.card_deck_uids.clone(),
             experimentcard_uids: self.uids.experimentcard_uids.clone(),
+            opsml_version: self.opsml_version.clone(),
             username: std::env::var("OPSML_USERNAME").unwrap_or_else(|_| "guest".to_string()),
         };
 
-        Ok(Card::Experiment(record))
+        Ok(CardRecord::Experiment(record))
     }
 
     #[pyo3(signature = (path))]
@@ -186,8 +187,6 @@ impl ExperimentCard {
 
     #[pyo3(signature = (path=None))]
     pub fn list_artifacts(&self, path: Option<PathBuf>) -> PyResult<Vec<String>> {
-        let rt = self.rt.as_ref().unwrap();
-        let fs = self.fs.as_ref().unwrap();
         let storage_path = self.artifact_key.as_ref().unwrap().storage_path();
 
         let rpath = match path {
@@ -195,15 +194,10 @@ impl ExperimentCard {
             Some(p) => storage_path.join(SaveName::Artifacts).join(p),
         };
 
-        let files = rt
-            .block_on(async {
-                let mut storage = fs.lock().await;
-                storage.find(&rpath).await
-            })
-            .map_err(|e| {
-                error!("Failed to list artifacts: {}", e);
-                OpsmlError::new_err(e.to_string())
-            })?;
+        let files = storage_client()?.find(&rpath).map_err(|e| {
+            error!("Failed to list artifacts: {}", e);
+            OpsmlError::new_err(e.to_string())
+        })?;
 
         // iterate through and remove storage_path if it exists
         let storage_path_str = storage_path
@@ -228,8 +222,6 @@ impl ExperimentCard {
         path: Option<PathBuf>,
         lpath: Option<PathBuf>,
     ) -> PyResult<()> {
-        let rt = self.rt.as_ref().unwrap();
-        let fs = self.fs.as_ref().unwrap();
         let storage_path = self.artifact_key.as_ref().unwrap().storage_path();
 
         // if lpath is None, download to "artifacts" directory
@@ -256,14 +248,12 @@ impl ExperimentCard {
         // if rpath has an extension, set recursive to false
         let recursive = rpath.extension().is_none();
 
-        rt.block_on(async {
-            let mut storage = fs.lock().await;
-            storage.get(&lpath, &rpath, recursive).await
-        })
-        .map_err(|e| {
-            error!("Failed to download artifacts: {}", e);
-            OpsmlError::new_err(e.to_string())
-        })?;
+        storage_client()?
+            .get(&lpath, &rpath, recursive)
+            .map_err(|e| {
+                error!("Failed to download artifacts: {}", e);
+                OpsmlError::new_err(e.to_string())
+            })?;
 
         let decrypt_key = self
             .artifact_key
@@ -280,6 +270,12 @@ impl ExperimentCard {
     }
 }
 
+impl ExperimentCard {
+    pub fn set_artifact_key(&mut self, key: ArtifactKey) {
+        self.artifact_key = Some(key);
+    }
+}
+
 impl Serialize for ExperimentCard {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -289,7 +285,7 @@ impl Serialize for ExperimentCard {
 
         // set session to none
         state.serialize_field("name", &self.name)?;
-        state.serialize_field("repository", &self.repository)?;
+        state.serialize_field("space", &self.space)?;
         state.serialize_field("version", &self.version)?;
         state.serialize_field("uid", &self.uid)?;
         state.serialize_field("tags", &self.tags)?;
@@ -314,7 +310,7 @@ impl<'de> Deserialize<'de> for ExperimentCard {
         #[serde(field_identifier, rename_all = "snake_case")]
         enum Field {
             Name,
-            Repository,
+            Space,
             Version,
             Uid,
             Tags,
@@ -342,7 +338,7 @@ impl<'de> Deserialize<'de> for ExperimentCard {
                 V: MapAccess<'de>,
             {
                 let mut name = None;
-                let mut repository = None;
+                let mut space = None;
                 let mut version = None;
                 let mut uid = None;
                 let mut tags = None;
@@ -360,8 +356,8 @@ impl<'de> Deserialize<'de> for ExperimentCard {
                         Field::Name => {
                             name = Some(map.next_value()?);
                         }
-                        Field::Repository => {
-                            repository = Some(map.next_value()?);
+                        Field::Space => {
+                            space = Some(map.next_value()?);
                         }
 
                         Field::Version => {
@@ -403,8 +399,7 @@ impl<'de> Deserialize<'de> for ExperimentCard {
                 }
 
                 let name = name.ok_or_else(|| de::Error::missing_field("name"))?;
-                let repository =
-                    repository.ok_or_else(|| de::Error::missing_field("repository"))?;
+                let space = space.ok_or_else(|| de::Error::missing_field("space"))?;
                 let version = version.ok_or_else(|| de::Error::missing_field("version"))?;
                 let uid = uid.ok_or_else(|| de::Error::missing_field("uid"))?;
                 let tags = tags.ok_or_else(|| de::Error::missing_field("tags"))?;
@@ -425,13 +420,11 @@ impl<'de> Deserialize<'de> for ExperimentCard {
 
                 Ok(ExperimentCard {
                     name,
-                    repository,
+                    space,
                     version,
                     uid,
                     tags,
                     registry_type,
-                    rt: None,
-                    fs: None,
                     artifact_key: None,
                     app_env,
                     created_at,
@@ -446,7 +439,7 @@ impl<'de> Deserialize<'de> for ExperimentCard {
 
         const FIELDS: &[&str] = &[
             "name",
-            "repository",
+            "space",
             "version",
             "uid",
             "tags",
@@ -466,7 +459,7 @@ impl<'de> Deserialize<'de> for ExperimentCard {
 
 impl FromPyObject<'_> for ExperimentCard {
     fn extract_bound(ob: &Bound<'_, PyAny>) -> PyResult<Self> {
-        let repository = ob.getattr("repository")?.extract()?;
+        let space = ob.getattr("space")?.extract()?;
         let name = ob.getattr("name")?.extract()?;
         let version = ob.getattr("version")?.extract()?;
         let uid = ob.getattr("uid")?.extract()?;
@@ -477,13 +470,11 @@ impl FromPyObject<'_> for ExperimentCard {
         let app_env = ob.getattr("app_env")?.extract()?;
         let created_at = ob.getattr("created_at")?.extract()?;
         let subexperiment = ob.getattr("subexperiment")?.extract()?;
-        let rt = None;
-        let fs = None;
         let artifact_key = None;
         let opsml_version = ob.getattr("opsml_version")?.extract()?;
 
         Ok(ExperimentCard {
-            repository,
+            space,
             name,
             version,
             uid,
@@ -494,8 +485,6 @@ impl FromPyObject<'_> for ExperimentCard {
             app_env,
             created_at,
             subexperiment,
-            rt,
-            fs,
             artifact_key,
             is_card: true,
             opsml_version,

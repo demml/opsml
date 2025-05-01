@@ -15,8 +15,10 @@ logger = ArtifactLogger.get_logger()
 def create_champion():
     """This function is used to populate the data and model registry in order to test the ModelChallenger class"""
     """-------------------------------------DataCard-------------------------------------"""
-    CardInfo(name="regression", repository="opsml", contact="user@example").set_env()
-    project = OpsmlProject(info=ProjectInfo(name="opsml", repository="devops", contact="test_email"))
+    CardInfo(name="regression", space="opsml", contact="user@example").set_env()
+    project = OpsmlProject(
+        info=ProjectInfo(name="opsml", space="devops", contact="test_email")
+    )
 
     with project.run() as run:
         # create fake data
@@ -27,8 +29,15 @@ def create_champion():
         data_interface = PandasData(
             data=X,
             data_splits=[
-                DataSplit(label="train", column_name="col_1", column_value=0.5, inequality=">="),
-                DataSplit(label="test", column_name="col_1", column_value=0.5, inequality="<"),
+                DataSplit(
+                    label="train",
+                    column_name="col_1",
+                    column_value=0.5,
+                    inequality=">=",
+                ),
+                DataSplit(
+                    label="test", column_name="col_1", column_value=0.5, inequality="<"
+                ),
             ],
             dependent_vars=["target"],
         )
@@ -57,8 +66,10 @@ def create_champion():
 def create_challenger():
     """This function is used to populate the data and model registry in order to test the ModelChallenger class"""
     """-------------------------------------DataCard-------------------------------------"""
-    CardInfo(name="regression", repository="opsml", contact="user@example").set_env()
-    project = OpsmlProject(info=ProjectInfo(name="opsml", repository="devops", contact="test_email"))
+    CardInfo(name="regression", space="opsml", contact="user@example").set_env()
+    project = OpsmlProject(
+        info=ProjectInfo(name="opsml", space="devops", contact="test_email")
+    )
 
     with project.run() as run:
         # create fake data
@@ -69,8 +80,15 @@ def create_challenger():
         data_interface = PandasData(
             data=X,
             data_splits=[
-                DataSplit(label="train", column_name="col_1", column_value=0.5, inequality=">="),
-                DataSplit(label="test", column_name="col_1", column_value=0.5, inequality="<"),
+                DataSplit(
+                    label="train",
+                    column_name="col_1",
+                    column_value=0.5,
+                    inequality=">=",
+                ),
+                DataSplit(
+                    label="test", column_name="col_1", column_value=0.5, inequality="<"
+                ),
             ],
             dependent_vars=["target"],
         )

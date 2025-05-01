@@ -1,4 +1,4 @@
-use crate::core::error::internal_server_error;
+use crate::core::error::{internal_server_error, OpsmlServerError};
 use crate::core::scouter;
 use crate::core::state::AppState;
 use crate::core::user::schema::{
@@ -13,10 +13,11 @@ use axum::{
     routing::{delete, get, post, put},
     Extension, Json, Router,
 };
+
 use opsml_auth::permission::UserPermissions;
-use opsml_client::RequestType;
 use opsml_sql::base::SqlClient;
 use opsml_sql::schemas::schema::User;
+use opsml_types::RequestType;
 use password_auth::generate_hash;
 use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::sync::Arc;
@@ -28,22 +29,17 @@ use tracing::{error, info};
 async fn create_user(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
+
     Json(create_req): Json<CreateUserRequest>,
-) -> Result<Json<UserResponse>, (StatusCode, Json<serde_json::Value>)> {
+) -> Result<Json<UserResponse>, (StatusCode, Json<OpsmlServerError>)> {
     // Check if requester has admin permissions
     if !perms.group_permissions.contains(&"admin".to_string()) {
-        return Err((
-            StatusCode::FORBIDDEN,
-            Json(serde_json::json!({"error": "Admin permissions required"})),
-        ));
+        return OpsmlServerError::need_admin_permission().into_response(StatusCode::FORBIDDEN);
     }
 
     // Check if user already exists
     if let Ok(Some(_)) = state.sql_client.get_user(&create_req.username).await {
-        return Err((
-            StatusCode::CONFLICT,
-            Json(serde_json::json!({"error": "User already exists"})),
-        ));
+        return OpsmlServerError::user_already_exists().into_response(StatusCode::CONFLICT);
     }
 
     // Hash the password
@@ -66,10 +62,7 @@ async fn create_user(
     // Save to database
     if let Err(e) = state.sql_client.insert_user(&user).await {
         error!("Failed to create user: {}", e);
-        return Err((
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(serde_json::json!({"error": "Failed to create user"})),
-        ));
+        return Err(internal_server_error(e, "Failed to create user"));
     }
 
     info!("User {} created successfully", user.username);
@@ -78,10 +71,7 @@ async fn create_user(
     if state.scouter_client.enabled {
         let exchange_token = state.exchange_token_from_perms(&perms).await.map_err(|e| {
             error!("Failed to exchange token for scouter: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(serde_json::json!({"error": "Failed to exchange token for scouter"})),
-            )
+            internal_server_error(e, "Failed to exchange token for scouter")
         })?;
 
         state
@@ -97,12 +87,10 @@ async fn create_user(
             .await
             .map_err(|e| {
                 error!("Failed to create user in scouter: {}", e);
-                (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(serde_json::json!({"error": "Failed to create user in scouter"})),
-                )
+                internal_server_error(e, "Failed to create user in scouter")
             })?;
     }
+
     Ok(Json(UserResponse::from(user)))
 }
 
@@ -110,21 +98,22 @@ async fn create_user(
 async fn get_user(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
+
     Path(username): Path<String>,
-) -> Result<Json<UserResponse>, (StatusCode, Json<serde_json::Value>)> {
+) -> Result<Json<UserResponse>, (StatusCode, Json<OpsmlServerError>)> {
     // Check permissions - user can only get their own data or admin can get any user
     let is_admin = perms.group_permissions.contains(&"admin".to_string());
     let is_self = perms.username == username;
 
     if !is_admin && !is_self {
-        return Err((
-            StatusCode::FORBIDDEN,
-            Json(serde_json::json!({"error": "Permission denied"})),
-        ));
+        return OpsmlServerError::permission_denied().into_response(StatusCode::FORBIDDEN);
     }
 
     // Get user from database
-    let user = get_user_from_db(&state.sql_client, &username).await?;
+    let user = match get_user_from_db(&state.sql_client, &username).await {
+        Ok(user) => user,
+        Err(e) => return Err(e),
+    };
 
     Ok(Json(UserResponse::from(user)))
 }
@@ -135,13 +124,10 @@ async fn get_user(
 async fn list_users(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
-) -> Result<Json<UserListResponse>, (StatusCode, Json<serde_json::Value>)> {
+) -> Result<Json<UserListResponse>, (StatusCode, Json<OpsmlServerError>)> {
     // Check if requester has admin permissions
     if !perms.group_permissions.contains(&"admin".to_string()) {
-        return Err((
-            StatusCode::FORBIDDEN,
-            Json(serde_json::json!({"error": "Admin permissions required"})),
-        ));
+        return OpsmlServerError::need_admin_permission().into_response(StatusCode::FORBIDDEN);
     }
 
     // Get users from database
@@ -149,10 +135,7 @@ async fn list_users(
         Ok(users) => users,
         Err(e) => {
             error!("Failed to list users: {}", e);
-            return Err((
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(serde_json::json!({"error": "Failed to list users"})),
-            ));
+            return Err(internal_server_error(e, "Failed to list users"));
         }
     };
 
@@ -168,17 +151,15 @@ async fn update_user(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
     Path(username): Path<String>,
+
     Json(update_req): Json<UpdateUserRequest>,
-) -> Result<Json<UserResponse>, (StatusCode, Json<serde_json::Value>)> {
+) -> Result<Json<UserResponse>, (StatusCode, Json<OpsmlServerError>)> {
     // Check permissions - user can only update their own data or admin can update any user
     let is_admin = perms.group_permissions.contains(&"admin".to_string());
     let is_self = perms.username == username;
 
     if !is_admin && !is_self {
-        return Err((
-            StatusCode::FORBIDDEN,
-            Json(serde_json::json!({"error": "Permission denied"})),
-        ));
+        return OpsmlServerError::permission_denied().into_response(StatusCode::FORBIDDEN);
     }
 
     // Get the current user state
@@ -207,10 +188,7 @@ async fn update_user(
     // Save updated user to database
     if let Err(e) = state.sql_client.update_user(&user).await {
         error!("Failed to update user: {}", e);
-        return Err((
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(serde_json::json!({"error": "Failed to update user"})),
-        ));
+        return Err(internal_server_error(e, "Failed to update user"));
     }
 
     info!("User {} updated successfully", user.username);
@@ -219,7 +197,7 @@ async fn update_user(
     if state.scouter_client.enabled {
         let exchange_token = state.exchange_token_from_perms(&perms).await.map_err(|e| {
             error!("Failed to exchange token for scouter: {}", e);
-            internal_server_error("Failed to exchange token for scouter")
+            internal_server_error(e, "Failed to exchange token for scouter")
         })?;
         state
             .scouter_client
@@ -234,7 +212,7 @@ async fn update_user(
             .await
             .map_err(|e| {
                 error!("Failed to create user in scouter: {}", e);
-                internal_server_error("Failed to create user in scouter")
+                internal_server_error(e, "Failed to create user in scouter")
             })?;
         info!("User {} updated in scouter", user.username);
     }
@@ -248,14 +226,12 @@ async fn update_user(
 async fn delete_user(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
+
     Path(username): Path<String>,
-) -> Result<Json<serde_json::Value>, (StatusCode, Json<serde_json::Value>)> {
+) -> Result<Json<serde_json::Value>, (StatusCode, Json<OpsmlServerError>)> {
     // Check if requester has admin permissions
     if !perms.group_permissions.contains(&"admin".to_string()) {
-        return Err((
-            StatusCode::FORBIDDEN,
-            Json(serde_json::json!({"error": "Admin permissions required"})),
-        ));
+        return OpsmlServerError::need_admin_permission().into_response(StatusCode::FORBIDDEN);
     }
 
     // Prevent deleting the last admin user
@@ -263,18 +239,15 @@ async fn delete_user(
         Ok(is_last) => is_last,
         Err(e) => {
             error!("Failed to check if user is last admin: {}", e);
-            return Err((
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(serde_json::json!({"error": "Failed to check admin status"})),
+            return Err(internal_server_error(
+                e,
+                "Failed to check if user is last admin",
             ));
         }
     };
 
     if is_last_admin {
-        return Err((
-            StatusCode::FORBIDDEN,
-            Json(serde_json::json!({"error": "Cannot delete the last admin user"})),
-        ));
+        return OpsmlServerError::cannot_delete_last_admin().into_response(StatusCode::FORBIDDEN);
     }
 
     // Delete in scouter first
@@ -282,7 +255,7 @@ async fn delete_user(
     if state.scouter_client.enabled {
         let exchange_token = state.exchange_token_from_perms(&perms).await.map_err(|e| {
             error!("Failed to exchange token for scouter: {}", e);
-            internal_server_error("Failed to exchange token for scouter")
+            internal_server_error(e, "Failed to exchange token for scouter")
         })?;
 
         state
@@ -291,7 +264,7 @@ async fn delete_user(
             .await
             .map_err(|e| {
                 error!("Failed to delete user in scouter: {}", e);
-                internal_server_error("Failed to delete user in scouter")
+                internal_server_error(e, "Failed to delete user in scouter")
             })?;
 
         info!("User {} deleted in scouter", username);
@@ -300,10 +273,7 @@ async fn delete_user(
     // Delete the user
     if let Err(e) = state.sql_client.delete_user(&username).await {
         error!("Failed to delete user: {}", e);
-        return Err((
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(serde_json::json!({"error": "Failed to delete user"})),
-        ));
+        return Err(internal_server_error(e, "Failed to delete user"));
     }
 
     info!("User {} deleted successfully", username);
@@ -314,12 +284,12 @@ async fn delete_user(
 pub async fn get_user_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
     let result = catch_unwind(AssertUnwindSafe(|| {
         Router::new()
-            .route(&format!("{}/users", prefix), post(create_user))
-            .route(&format!("{}/users", prefix), get(list_users))
-            .route(&format!("{}/users/{{username}}", prefix), get(get_user))
-            .route(&format!("{}/users/{{username}}", prefix), put(update_user))
+            .route(&format!("{}/user", prefix), post(create_user))
+            .route(&format!("{}/user", prefix), get(list_users))
+            .route(&format!("{}/user/{{username}}", prefix), get(get_user))
+            .route(&format!("{}/user/{{username}}", prefix), put(update_user))
             .route(
-                &format!("{}/users/{{username}}", prefix),
+                &format!("{}/user/{{username}}", prefix),
                 delete(delete_user),
             )
     }));

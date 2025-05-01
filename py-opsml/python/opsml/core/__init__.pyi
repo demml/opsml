@@ -198,51 +198,6 @@ class OpsmlError(Exception):
     def __init__(self, message: str) -> None: ...
     def __str__(self) -> str: ...
 
-# Config
-class OpsmlConfig:
-    def __init__(self, client_mode: Optional[bool] = None) -> None:
-        """Initialize the OpsmlConfig.
-
-        Args:
-            client_mode:
-                Whether to use the client. By default, OpsML will determine whether
-                to run in client mode based on the provided OPSML_TRACKING_URI. This attribute
-                will override that behavior. Default is None.
-        """
-
-    def __str__(self):
-        """Return a string representation of the OpsmlConfig.
-
-        Returns:
-            String representation of the OpsmlConfig.
-        """
-
-class ApiSettings:
-    base_url: str
-    use_auth: bool
-    opsml_dir: str
-    username: str
-    password: str
-    auth_token: str
-    prod_token: Optional[str]
-
-class OpsmlStorageSettings:
-    storage_uri: str
-    client_mode: bool
-    storage_type: StorageType
-    api_settings: ApiSettings
-
-    def __init__(self, storage_uri="./opsml_registries", client_mode=False) -> None:
-        """Initialize the OpsmlStorageSettings.
-
-        Args:
-            storage_uri:
-                The URI for the storage. Default is "./opsml_registries".
-
-            client_mode:
-                Whether to use the client. Default is False.
-        """
-
 # shared
 class CommonKwargs:
     IsPipeline: "CommonKwargs"
@@ -416,31 +371,6 @@ class VersionType:
 
     def __init__(self, version_type: str) -> None: ...
     def __eq__(self, other: object) -> bool: ...
-
-class FileUtils:
-    @staticmethod
-    def open_file(filepath: str) -> str:
-        """Open a file and return the contents as a string
-
-        Args:
-            filepath:
-                The name of the file
-
-        Returns:
-            The file path
-        """
-
-    @staticmethod
-    def find_path_to_file(filepath: str) -> str:
-        """Find the path to a file
-
-        Args:
-            filepath:
-                The name of the file
-
-        Returns:
-            The file path
-        """
 
 class Feature:
     feature_type: str

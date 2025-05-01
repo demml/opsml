@@ -35,11 +35,6 @@ pub mod server_logic {
     }
 
     impl ServerRegistry {
-        pub fn update_registry_type(&mut self, registry_type: RegistryType) {
-            self.registry_type = registry_type.clone();
-            self.table_name = CardTable::from_registry_type(&registry_type);
-        }
-
         pub async fn new(
             registry_type: RegistryType,
             storage_settings: OpsmlStorageSettings,
@@ -67,9 +62,9 @@ pub mod server_logic {
         }
 
         pub async fn list_cards(
-            &mut self,
+            &self,
             args: CardQueryArgs,
-        ) -> Result<Vec<Card>, RegistryError> {
+        ) -> Result<Vec<CardRecord>, RegistryError> {
             let cards = self
                 .sql_client
                 .query_cards(&self.table_name, &args)
@@ -99,13 +94,17 @@ pub mod server_logic {
                     let cards = data.into_iter().map(convert_promptcard).collect();
                     Ok(cards)
                 }
+                CardResults::Deck(data) => {
+                    let cards = data.into_iter().map(convert_card_deck).collect();
+                    Ok(cards)
+                }
             }
         }
 
         async fn get_next_version(
-            &mut self,
+            &self,
             name: &str,
-            repository: &str,
+            space: &str,
             version: Option<String>,
             version_type: VersionType,
             pre_tag: Option<String>,
@@ -113,18 +112,21 @@ pub mod server_logic {
         ) -> Result<Version, RegistryError> {
             let versions = self
                 .sql_client
-                .get_versions(&self.table_name, name, repository, version.clone())
+                .get_versions(&self.table_name, name, space, version.clone())
                 .await
                 .map_err(|e| RegistryError::Error(format!("Failed to get versions {}", e)))?;
 
+            // if no versions exist, return the default version
             if versions.is_empty() {
                 return match &version {
-                    Some(version_str) => Version::parse(version_str).map_err(|e| {
-                        error!("Invalid version format: {}", e);
-                        RegistryError::Error(
-                            "Invalid version format. Version must be a full semver".to_string(),
-                        )
-                    }),
+                    Some(version_str) => {
+                        VersionValidator::clean_version(version_str).map_err(|e| {
+                            error!("Invalid version format: {}", e);
+                            RegistryError::Error(
+                                "Invalid version format. Version must be a full semver".to_string(),
+                            )
+                        })
+                    }
                     None => Ok(Version::new(0, 1, 0)),
                 };
             }
@@ -145,7 +147,7 @@ pub mod server_logic {
         }
 
         async fn create_artifact_key(
-            &mut self,
+            &self,
             uid: &str,
             registry_type: &str,
             storage_key: &str,
@@ -175,8 +177,8 @@ pub mod server_logic {
         }
 
         pub async fn create_card(
-            &mut self,
-            card: Card,
+            &self,
+            card: CardRecord,
             version: Option<String>,
             version_type: VersionType,
             pre_tag: Option<String>,
@@ -185,7 +187,7 @@ pub mod server_logic {
             let version = self
                 .get_next_version(
                     card.name(),
-                    card.repository(),
+                    card.space(),
                     version,
                     version_type,
                     pre_tag,
@@ -194,24 +196,25 @@ pub mod server_logic {
                 .await?;
 
             let card = match card {
-                Card::Data(client_card) => {
+                CardRecord::Data(client_card) => {
                     let server_card = DataCardRecord::new(
                         client_card.name,
-                        client_card.repository,
+                        client_card.space,
                         version,
                         client_card.tags,
                         client_card.data_type,
                         client_card.experimentcard_uid,
                         client_card.auditcard_uid,
                         client_card.interface_type.to_string(),
+                        client_card.opsml_version,
                         client_card.username,
                     );
                     ServerCard::Data(server_card)
                 }
-                Card::Model(client_card) => {
+                CardRecord::Model(client_card) => {
                     let server_card = ModelCardRecord::new(
                         client_card.name,
-                        client_card.repository,
+                        client_card.space,
                         version,
                         client_card.tags,
                         client_card.datacard_uid,
@@ -221,51 +224,68 @@ pub mod server_logic {
                         client_card.auditcard_uid,
                         client_card.interface_type,
                         client_card.task_type,
+                        client_card.opsml_version,
                         client_card.username,
                     );
                     ServerCard::Model(server_card)
                 }
 
-                Card::Experiment(client_card) => {
+                CardRecord::Experiment(client_card) => {
                     let server_card = ExperimentCardRecord::new(
                         client_card.name,
-                        client_card.repository,
+                        client_card.space,
                         version,
                         client_card.tags,
                         client_card.datacard_uids,
                         client_card.modelcard_uids,
                         client_card.promptcard_uids,
+                        client_card.card_deck_uids,
                         client_card.experimentcard_uids,
+                        client_card.opsml_version,
                         client_card.username,
                     );
                     ServerCard::Experiment(server_card)
                 }
 
-                Card::Audit(client_card) => {
+                CardRecord::Audit(client_card) => {
                     let server_card = AuditCardRecord::new(
                         client_card.name,
-                        client_card.repository,
+                        client_card.space,
                         version,
                         client_card.tags,
                         client_card.approved,
                         client_card.datacard_uids,
                         client_card.modelcard_uids,
                         client_card.experimentcard_uids,
+                        client_card.opsml_version,
                         client_card.username,
                     );
                     ServerCard::Audit(server_card)
                 }
-                Card::Prompt(client_card) => {
+                CardRecord::Prompt(client_card) => {
                     let server_card = PromptCardRecord::new(
                         client_card.name,
-                        client_card.repository,
+                        client_card.space,
                         version,
                         client_card.tags,
                         client_card.experimentcard_uid,
                         client_card.auditcard_uid,
+                        client_card.opsml_version,
                         client_card.username,
                     );
                     ServerCard::Prompt(server_card)
+                }
+
+                CardRecord::Deck(client_card) => {
+                    let server_card = CardDeckRecord::new(
+                        client_card.name,
+                        client_card.space,
+                        version,
+                        client_card.cards,
+                        client_card.opsml_version,
+                        client_card.username,
+                    );
+                    ServerCard::Deck(server_card)
                 }
             };
 
@@ -284,7 +304,7 @@ pub mod server_logic {
             let response = CreateCardResponse {
                 registered: true,
                 version: card.version(),
-                repository: card.registry_type(),
+                space: card.registry_type(),
                 name: card.name(),
                 app_env: card.app_env(),
                 created_at: card.created_at(),
@@ -298,10 +318,10 @@ pub mod server_logic {
             Ok(response)
         }
 
-        pub async fn update_card(&self, card: &Card) -> Result<(), RegistryError> {
+        pub async fn update_card(&self, card: &CardRecord) -> Result<(), RegistryError> {
             let card = card.clone();
             let card = match card {
-                Card::Data(client_card) => {
+                CardRecord::Data(client_card) => {
                     let version = Version::parse(&client_card.version).map_err(|e| {
                         error!("Failed to parse version: {}", e);
                         RegistryError::Error("Failed to parse version".to_string())
@@ -312,7 +332,7 @@ pub mod server_logic {
                         created_at: client_card.created_at,
                         app_env: client_card.app_env,
                         name: client_card.name,
-                        repository: client_card.repository,
+                        space: client_card.space,
                         major: version.major as i32,
                         minor: version.minor as i32,
                         patch: version.patch as i32,
@@ -325,11 +345,12 @@ pub mod server_logic {
                         auditcard_uid: client_card.auditcard_uid,
                         interface_type: client_card.interface_type,
                         username: client_card.username,
+                        opsml_version: client_card.opsml_version,
                     };
                     ServerCard::Data(server_card)
                 }
 
-                Card::Model(client_card) => {
+                CardRecord::Model(client_card) => {
                     let version = Version::parse(&client_card.version).map_err(|e| {
                         error!("Failed to parse version: {}", e);
                         RegistryError::Error("Failed to parse version".to_string())
@@ -340,7 +361,7 @@ pub mod server_logic {
                         created_at: client_card.created_at,
                         app_env: client_card.app_env,
                         name: client_card.name,
-                        repository: client_card.repository,
+                        space: client_card.space,
                         major: version.major as i32,
                         minor: version.minor as i32,
                         patch: version.patch as i32,
@@ -356,11 +377,12 @@ pub mod server_logic {
                         interface_type: client_card.interface_type,
                         task_type: client_card.task_type,
                         username: client_card.username,
+                        opsml_version: client_card.opsml_version,
                     };
                     ServerCard::Model(server_card)
                 }
 
-                Card::Experiment(client_card) => {
+                CardRecord::Experiment(client_card) => {
                     let version = Version::parse(&client_card.version).map_err(|e| {
                         error!("Failed to parse version: {}", e);
                         RegistryError::Error("Failed to parse version".to_string())
@@ -371,7 +393,7 @@ pub mod server_logic {
                         created_at: client_card.created_at,
                         app_env: client_card.app_env,
                         name: client_card.name,
-                        repository: client_card.repository,
+                        space: client_card.space,
                         major: version.major as i32,
                         minor: version.minor as i32,
                         patch: version.patch as i32,
@@ -382,13 +404,15 @@ pub mod server_logic {
                         datacard_uids: SqlxJson(client_card.datacard_uids),
                         modelcard_uids: SqlxJson(client_card.modelcard_uids),
                         promptcard_uids: SqlxJson(client_card.promptcard_uids),
+                        card_deck_uids: SqlxJson(client_card.card_deck_uids),
                         experimentcard_uids: SqlxJson(client_card.experimentcard_uids),
                         username: client_card.username,
+                        opsml_version: client_card.opsml_version,
                     };
                     ServerCard::Experiment(server_card)
                 }
 
-                Card::Audit(client_card) => {
+                CardRecord::Audit(client_card) => {
                     let version = Version::parse(&client_card.version).map_err(|e| {
                         error!("Failed to parse version: {}", e);
                         RegistryError::Error("Failed to parse version".to_string())
@@ -399,7 +423,7 @@ pub mod server_logic {
                         created_at: client_card.created_at,
                         app_env: client_card.app_env,
                         name: client_card.name,
-                        repository: client_card.repository,
+                        space: client_card.space,
                         major: version.major as i32,
                         minor: version.minor as i32,
                         patch: version.patch as i32,
@@ -412,11 +436,12 @@ pub mod server_logic {
                         modelcard_uids: SqlxJson(client_card.modelcard_uids),
                         experimentcard_uids: SqlxJson(client_card.experimentcard_uids),
                         username: client_card.username,
+                        opsml_version: client_card.opsml_version,
                     };
                     ServerCard::Audit(server_card)
                 }
 
-                Card::Prompt(client_card) => {
+                CardRecord::Prompt(client_card) => {
                     let version = Version::parse(&client_card.version).map_err(|e| {
                         error!("Failed to parse version: {}", e);
                         RegistryError::Error("Failed to parse version".to_string())
@@ -427,7 +452,7 @@ pub mod server_logic {
                         created_at: client_card.created_at,
                         app_env: client_card.app_env,
                         name: client_card.name,
-                        repository: client_card.repository,
+                        space: client_card.space,
                         major: version.major as i32,
                         minor: version.minor as i32,
                         patch: version.patch as i32,
@@ -438,8 +463,34 @@ pub mod server_logic {
                         experimentcard_uid: client_card.experimentcard_uid,
                         auditcard_uid: client_card.auditcard_uid,
                         username: client_card.username,
+                        opsml_version: client_card.opsml_version,
                     };
                     ServerCard::Prompt(server_card)
+                }
+
+                CardRecord::Deck(client_card) => {
+                    let version = Version::parse(&client_card.version).map_err(|e| {
+                        error!("Failed to parse version: {}", e);
+                        RegistryError::Error("Failed to parse version".to_string())
+                    })?;
+
+                    let server_card = CardDeckRecord {
+                        uid: client_card.uid,
+                        created_at: client_card.created_at,
+                        app_env: client_card.app_env,
+                        name: client_card.name,
+                        space: client_card.space,
+                        major: version.major as i32,
+                        minor: version.minor as i32,
+                        patch: version.patch as i32,
+                        pre_tag: Some(version.pre.to_string()),
+                        build_tag: Some(version.build.to_string()),
+                        version: client_card.version,
+                        cards: SqlxJson(client_card.cards),
+                        username: client_card.username,
+                        opsml_version: client_card.opsml_version,
+                    };
+                    ServerCard::Deck(server_card)
                 }
             };
 
@@ -452,12 +503,12 @@ pub mod server_logic {
         }
 
         pub async fn delete_card(
-            &mut self,
+            &self,
             delete_request: DeleteCardRequest,
         ) -> Result<(), RegistryError> {
             // get key
             let key = self
-                .load_card(CardQueryArgs {
+                .get_key(CardQueryArgs {
                     uid: Some(delete_request.uid.to_string()),
                     ..Default::default()
                 })
@@ -490,17 +541,14 @@ pub mod server_logic {
             Ok(())
         }
 
-        pub async fn load_card(
-            &mut self,
-            args: CardQueryArgs,
-        ) -> Result<ArtifactKey, RegistryError> {
+        pub async fn get_key(&self, args: CardQueryArgs) -> Result<ArtifactKey, RegistryError> {
             self.sql_client
                 .get_card_key_for_loading(&self.table_name, &args)
                 .await
                 .map_err(|e| RegistryError::Error(format!("Failed to list cards {}", e)))
         }
 
-        pub async fn check_uid_exists(&mut self, uid: &str) -> Result<bool, RegistryError> {
+        pub async fn check_uid_exists(&self, uid: &str) -> Result<bool, RegistryError> {
             self.sql_client
                 .check_uid_exists(uid, &self.table_name)
                 .await
@@ -508,7 +556,7 @@ pub mod server_logic {
         }
 
         pub async fn get_artifact_key(
-            &mut self,
+            &self,
             uid: &str,
             registry_type: &RegistryType,
         ) -> Result<ArtifactKey, RegistryError> {
@@ -522,7 +570,7 @@ pub mod server_logic {
         }
 
         pub async fn insert_hardware_metrics(
-            &mut self,
+            &self,
             metrics: &HardwareMetricRequest,
         ) -> Result<(), RegistryError> {
             let created_at = get_utc_datetime();
@@ -549,7 +597,7 @@ pub mod server_logic {
         }
 
         pub async fn get_hardware_metrics(
-            &mut self,
+            &self,
             request: &GetHardwareMetricRequest,
         ) -> Result<Vec<HardwareMetrics>, RegistryError> {
             let records = self
@@ -561,6 +609,7 @@ pub mod server_logic {
             let metrics = records
                 .into_iter()
                 .map(|m| HardwareMetrics {
+                    created_at: m.created_at,
                     cpu: CPUMetrics {
                         cpu_percent_utilization: m.cpu_percent_utilization,
                         cpu_percent_per_core: m.cpu_percent_per_core.to_vec(),
@@ -582,10 +631,7 @@ pub mod server_logic {
             Ok(metrics)
         }
 
-        pub async fn insert_metrics(
-            &mut self,
-            metrics: &MetricRequest,
-        ) -> Result<(), RegistryError> {
+        pub async fn insert_metrics(&self, metrics: &MetricRequest) -> Result<(), RegistryError> {
             let records = metrics
                 .metrics
                 .iter()
@@ -609,7 +655,7 @@ pub mod server_logic {
         }
 
         pub async fn get_metrics(
-            &mut self,
+            &self,
             metrics: &GetMetricRequest,
         ) -> Result<Vec<Metric>, RegistryError> {
             let records = self
@@ -633,7 +679,7 @@ pub mod server_logic {
         }
 
         pub async fn insert_parameters(
-            &mut self,
+            &self,
             parameters: &ParameterRequest,
         ) -> Result<(), RegistryError> {
             let records = parameters
@@ -657,7 +703,7 @@ pub mod server_logic {
         }
 
         pub async fn get_parameters(
-            &mut self,
+            &self,
             parameters: &GetParameterRequest,
         ) -> Result<Vec<Parameter>, RegistryError> {
             let records = self
@@ -744,7 +790,7 @@ pub mod server_logic {
                 let query_args = CardQueryArgs {
                     uid: None,
                     name: None,
-                    repository: None,
+                    space: None,
                     version: None,
                     max_date: None,
                     tags: None,

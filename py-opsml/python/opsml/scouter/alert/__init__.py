@@ -12,8 +12,6 @@ SpcAlert = scouter.alert.SpcAlert
 SpcAlertConfig = scouter.alert.SpcAlertConfig
 SpcAlertRule = scouter.alert.SpcAlertRule
 SpcAlertType = scouter.alert.SpcAlertType
-SpcFeatureAlert = scouter.alert.SpcFeatureAlert
-SpcFeatureAlerts = scouter.alert.SpcFeatureAlerts
 
 
 __all__ = [
@@ -24,8 +22,6 @@ __all__ = [
     "PsiAlertConfig",
     "SpcAlertConfig",
     "SpcAlert",
-    "SpcFeatureAlert",
-    "SpcFeatureAlerts",
     "AlertThreshold",
     "CustomMetricAlertCondition",
     "CustomMetricAlertConfig",

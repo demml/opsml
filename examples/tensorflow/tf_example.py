@@ -19,7 +19,7 @@ class OpsmlTensorFlowWorkflow:
         Args:
             info:
                 CardInfo data structure that contains required info for cards.
-                You could also provide "name", "repository" and "email" to a card; however, this
+                You could also provide "name", "space" and "email" to a card; however, this
                 simplifies the process.
 
         """
@@ -50,7 +50,14 @@ class OpsmlTensorFlowWorkflow:
             "Origin",
         ]
 
-        dataset = pd.read_csv(url, names=column_names, na_values="?", comment="\t", sep=" ", skipinitialspace=True)
+        dataset = pd.read_csv(
+            url,
+            names=column_names,
+            na_values="?",
+            comment="\t",
+            sep=" ",
+            skipinitialspace=True,
+        )
         dataset = dataset.dropna()
         dataset["Origin"] = dataset["Origin"].map({1: "USA", 2: "Europe", 3: "Japan"})
         dataset = pd.get_dummies(dataset, columns=["Origin"], prefix="", prefix_sep="")
@@ -80,7 +87,9 @@ class OpsmlTensorFlowWorkflow:
             ]
         )
 
-        model.compile(loss="mean_absolute_error", optimizer=tf.keras.optimizers.Adam(0.001))
+        model.compile(
+            loss="mean_absolute_error", optimizer=tf.keras.optimizers.Adam(0.001)
+        )
         return model
 
     def create_modelcard(self):
@@ -147,7 +156,7 @@ if __name__ == "__main__":
     workflow = OpsmlTensorFlowWorkflow(
         info=CardInfo(
             name="tensorflow",
-            repository="opsml",
+            space="opsml",
             contact="user@email.com",
         )
     )

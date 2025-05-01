@@ -34,14 +34,14 @@
 
   let {
       name,
-      repository,
+      space,
       version,
       registry,
       registryPath,
       readme_content,
     } = $props<{
       name: string;
-      repository: string;
+      space: string;
       version: string;
       registry: RegistryType;
       registryPath: string;
@@ -61,7 +61,7 @@
 
   async function saveReadme() {
     content = editor.state.doc.toString();
-    let response = await createReadMe(name, repository, registry, content);
+    let response = await createReadMe(name, space, registry, content);
 
     if (!response.uploaded) {
       error = response.message;
@@ -70,7 +70,7 @@
       triggerSuccess();
     }
 
-    goto(`/opsml/${registryPath}/card/home?repository=${repository}&name=${name}&version=${version}`);
+    goto(`/opsml/${registryPath}/card/home?space=${space}&name=${name}&version=${version}`);
   }
 
 async function toggle(toggle: string) {

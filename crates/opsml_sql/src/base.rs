@@ -1,6 +1,6 @@
 use crate::schemas::schema::{
     CardResults, CardSummary, HardwareMetricsRecord, MetricRecord, ParameterRecord, QueryStats,
-    ServerCard, User,
+    ServerCard, User, VersionSummary,
 };
 use async_trait::async_trait;
 use opsml_error::error::SqlError;
@@ -8,7 +8,7 @@ use opsml_semver::VersionParser;
 use opsml_settings::config::DatabaseSettings;
 use opsml_types::{
     cards::CardTable,
-    contracts::{ArtifactKey, CardQueryArgs},
+    contracts::{ArtifactKey, AuditEvent, CardQueryArgs},
 };
 
 pub fn add_version_bounds(builder: &mut String, version: &str) -> Result<(), SqlError> {
@@ -65,7 +65,7 @@ pub trait SqlClient: Sized {
         &self,
         table: &CardTable,
         name: &str,
-        repository: &str,
+        space: &str,
         version: Option<String>,
     ) -> Result<Vec<String>, SqlError>;
 
@@ -77,12 +77,12 @@ pub trait SqlClient: Sized {
 
     async fn insert_card(&self, table: &CardTable, card: &ServerCard) -> Result<(), SqlError>;
     async fn update_card(&self, table: &CardTable, card: &ServerCard) -> Result<(), SqlError>;
-    async fn get_unique_repository_names(&self, table: &CardTable)
-        -> Result<Vec<String>, SqlError>;
+    async fn get_unique_space_names(&self, table: &CardTable) -> Result<Vec<String>, SqlError>;
     async fn query_stats(
         &self,
         table: &CardTable,
         search_term: Option<&str>,
+        space: Option<&str>,
     ) -> Result<QueryStats, SqlError>;
 
     async fn query_page(
@@ -90,7 +90,7 @@ pub trait SqlClient: Sized {
         sort_by: &str,
         page: i32,
         search_term: Option<&str>,
-        repository: Option<&str>,
+        space: Option<&str>,
         table: &CardTable,
     ) -> Result<Vec<CardSummary>, SqlError>;
 
@@ -270,24 +270,14 @@ pub trait SqlClient: Sized {
     /// * `Result<(), SqlError>` - The result of the operation
     async fn update_artifact_key(&self, key: &ArtifactKey) -> Result<(), SqlError>;
 
-    /// Insert operation
-    ///  Records a given file operation
+    /// Insert audit event
     ///
     /// # Arguments
-    ///
-    /// * `username` - The username
-    /// * `access_type` - The type of access
-    /// * `access_location` - The location of the access
+    /// * `event` - The audit event
     ///
     /// # Returns
-    ///
     /// * `Result<(), SqlError>` - The result of the operation
-    async fn insert_operation(
-        &self,
-        username: &str,
-        access_type: &str,
-        access_location: &str,
-    ) -> Result<(), SqlError>;
+    async fn insert_audit_event(&self, event: AuditEvent) -> Result<(), SqlError>;
 
     /// Queries the a card registry for a card version and returns
     /// the artifact keys for loading the card on the client side
@@ -354,4 +344,13 @@ pub trait SqlClient: Sized {
         storage_path: &str,
         registry_type: &str,
     ) -> Result<Option<ArtifactKey>, SqlError>;
+
+    /// Get all versions of a card
+    async fn version_page(
+        &self,
+        page: i32,
+        space: Option<&str>,
+        name: Option<&str>,
+        table: &CardTable,
+    ) -> Result<Vec<VersionSummary>, SqlError>;
 }
