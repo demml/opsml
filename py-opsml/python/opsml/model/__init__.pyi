@@ -15,6 +15,11 @@ from ..scouter.drift import (
     SpcDriftProfile,
 )
 
+DriftProfileType = Union[
+    List[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile],
+    SpcDriftProfile | PsiDriftProfile | CustomDriftProfile,
+]
+
 class ModelSaveKwargs:
     def __init__(
         self,
@@ -565,11 +570,7 @@ class SklearnModel(ModelInterface):
         preprocessor: Optional[Any] = None,
         sample_data: Optional[Any] = None,
         task_type: Optional[TaskType] = None,
-        drift_profile: (
-            None
-            | List[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile]
-            | Union[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile]
-        ) = None,
+        drift_profile: Optional[DriftProfileType] = None,
     ) -> None:
         """Instantiate an SklearnModel interface
 
@@ -613,12 +614,7 @@ class LightGBMModel(ModelInterface):
         preprocessor: Optional[Any] = None,
         sample_data: Optional[Any] = None,
         task_type: Optional[TaskType] = None,
-        schema: Optional[FeatureSchema] = None,
-        drift_profile: (
-            None
-            | List[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile]
-            | Union[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile]
-        ) = None,
+        drift_profile: Optional[DriftProfileType] = None,
     ) -> None:
         """Instantiate a LightGBMModel interface
 
@@ -631,8 +627,6 @@ class LightGBMModel(ModelInterface):
                 Sample data to use to make predictions
             task_type:
                 The type of task the model performs
-            schema:
-                Feature schema for model features
             drift_profile:
                 Drift profile to use. Can be a list of SpcDriftProfile, PsiDriftProfile or CustomDriftProfile
         """
@@ -662,12 +656,7 @@ class XGBoostModel(ModelInterface):
         preprocessor: Optional[Any] = None,
         sample_data: Optional[Any] = None,
         task_type: Optional[TaskType] = None,
-        schema: Optional[FeatureSchema] = None,
-        drift_profile: (
-            None
-            | List[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile]
-            | Union[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile]
-        ) = None,
+        drift_profile: Optional[DriftProfileType] = None,
     ) -> None:
         """Interface for saving XGBoost Booster models
 
@@ -680,8 +669,6 @@ class XGBoostModel(ModelInterface):
                 Sample data to use to make predictions.
             task_type:
                 The type of task the model performs
-            schema:
-                Feature schema for model features
             drift_profile:
                 Drift profile to use. Can be a list of SpcDriftProfile, PsiDriftProfile or CustomDriftProfile
         """
@@ -711,12 +698,7 @@ class TorchModel(ModelInterface):
         preprocessor: Optional[Any] = None,
         sample_data: Optional[Any] = None,
         task_type: Optional[TaskType] = None,
-        schema: Optional[FeatureSchema] = None,
-        drift_profile: (
-            None
-            | List[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile]
-            | Union[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile]
-        ) = None,
+        drift_profile: Optional[DriftProfileType] = None,
     ) -> None:
         """Interface for saving PyTorch models
 
@@ -731,8 +713,6 @@ class TorchModel(ModelInterface):
                 List[torch.Tensor], Tuple[torch.Tensor].
             task_type:
                 The intended task type of the model.
-            schema:
-                Feature schema for model features. Will be inferred from the sample data if not provided.
             drift_profile:
                 Drift profile to use. Can be a list of SpcDriftProfile, PsiDriftProfile or CustomDriftProfile
         """
@@ -786,12 +766,7 @@ class LightningModel(ModelInterface):
         preprocessor: Optional[Any] = None,
         sample_data: Optional[Any] = None,
         task_type: Optional[TaskType] = None,
-        schema: Optional[FeatureSchema] = None,
-        drift_profile: (
-            None
-            | List[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile]
-            | Union[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile]
-        ) = None,
+        drift_profile: Optional[DriftProfileType] = None,
     ) -> None:
         """Interface for saving PyTorch Lightning models
 
@@ -806,8 +781,6 @@ class LightningModel(ModelInterface):
                 List[torch.Tensor], Tuple[torch.Tensor].
             task_type:
                 The intended task type of the model.
-            schema:
-                Feature schema for model features. Will be inferred from the sample data if not provided.
             drift_profile:
                 Drift profile to use. Can be a list of SpcDriftProfile, PsiDriftProfile or CustomDriftProfile
         """
@@ -871,12 +844,7 @@ class HuggingFaceModel(ModelInterface):
         sample_data: Optional[Any] = None,
         hf_task: Optional[HuggingFaceTask] = None,
         task_type: Optional[TaskType] = None,
-        schema: Optional[FeatureSchema] = None,
-        drift_profile: (
-            None
-            | List[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile]
-            | Union[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile]
-        ) = None,
+        drift_profile: Optional[DriftProfileType] = None,
     ) -> None:
         """Interface for saving HuggingFace models and pipelines
 
@@ -934,8 +902,6 @@ class HuggingFaceModel(ModelInterface):
                     - `"zero-shot-object-detection"`: will return a [`ZeroShotObjectDetectionPipeline`].
             task_type:
                 The intended task type for the model. Note: This is the OpsML task type, not the HuggingFace task type.
-            schema:
-                Feature schema for model features. Will be inferred from the sample data if not provided.
             drift_profile:
                 Drift profile to use. Can be a list of SpcDriftProfile, PsiDriftProfile or CustomDriftProfile
         """
@@ -1037,12 +1003,7 @@ class CatBoostModel(ModelInterface):
         preprocessor: Optional[Any] = None,
         sample_data: Optional[Any] = None,
         task_type: Optional[TaskType] = None,
-        schema: Optional[FeatureSchema] = None,
-        drift_profile: (
-            None
-            | List[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile]
-            | Union[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile]
-        ) = None,
+        drift_profile: Optional[DriftProfileType] = None,
     ) -> None:
         """Interface for saving CatBoost models
 
@@ -1055,8 +1016,6 @@ class CatBoostModel(ModelInterface):
                 Sample data to use to make predictions.
             task_type:
                 The type of task the model performs
-            schema:
-                Feature schema for model features
             drift_profile:
                 Drift profile to use. Can be a list of SpcDriftProfile, PsiDriftProfile or CustomDriftProfile
         """
@@ -1087,11 +1046,7 @@ class TensorFlowModel(ModelInterface):
         sample_data: Optional[Any] = None,
         task_type: Optional[TaskType] = None,
         schema: Optional[FeatureSchema] = None,
-        drift_profile: (
-            None
-            | List[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile]
-            | Union[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile]
-        ) = None,
+        drift_profile: Optional[DriftProfileType] = None,
     ) -> None:
         """Interface for saving PyTorch models
 
@@ -1106,8 +1061,6 @@ class TensorFlowModel(ModelInterface):
                 List[tf.Tensor], Tuple[tf.Tensor].
             task_type:
                 The intended task type of the model.
-            schema:
-                Feature schema for model features. Will be inferred from the sample data if not provided.
             drift_profile:
                 Drift profile to use. Can be a list of SpcDriftProfile, PsiDriftProfile or CustomDriftProfile
         """
