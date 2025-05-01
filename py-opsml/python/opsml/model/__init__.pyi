@@ -565,7 +565,6 @@ class SklearnModel(ModelInterface):
         preprocessor: Optional[Any] = None,
         sample_data: Optional[Any] = None,
         task_type: Optional[TaskType] = None,
-        schema: Optional[FeatureSchema] = None,
         drift_profile: (
             None
             | List[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile]
@@ -585,8 +584,6 @@ class SklearnModel(ModelInterface):
                 Sample data to use to make predictions
             task_type:
                 The type of task the model performs
-            schema:
-                Feature schema for model features
             drift_profile:
                 Drift profile to use. Can be a list of SpcDriftProfile, PsiDriftProfile or CustomDriftProfile
         """
