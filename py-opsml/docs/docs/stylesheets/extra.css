@@ -16,6 +16,7 @@
 
 .text-primary { color: var(--primary-500); }
 .text-secondary { color: var(--secondary); }
+.text-alert { color: var(--alert); }
 
 [data-md-color-scheme="opsml-light"] {
   --md-default-bg-color--dark: var(--black);
