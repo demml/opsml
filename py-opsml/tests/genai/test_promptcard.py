@@ -16,6 +16,7 @@ def test_promptcard_crud() -> None:
 
         prompt = Prompt(
             model="gpt-4o",
+            provider="openai",
             prompt="Hello!",
             system_prompt="You are a helpful assistant.",
         )

@@ -1,4 +1,5 @@
 from pydantic_ai import Agent, RunContext
+
 from pydantic_ai.models.test import TestModel
 from opsml.potato_head import Prompt, SanitizationConfig, PromptSanitizer
 from dataclasses import dataclass
@@ -11,7 +12,10 @@ class Prompts:
 
 
 def test_simple_workflow(prompt_step1: Prompt):
-    agent = Agent("openai:gpt-4o", system_prompt=prompt_step1.system_prompt[0].unwrap())
+    agent = Agent(
+        prompt_step1.model_identifier,
+        system_prompt=prompt_step1.system_prompt[0].unwrap(),
+    )
 
     with agent.override(model=TestModel()):
         agent.run_sync(prompt_step1.prompt[0].unwrap())
@@ -19,7 +23,7 @@ def test_simple_workflow(prompt_step1: Prompt):
 
 def test_simple_dep_workflow(prompt_step1: Prompt, prompt_step2: Prompt):
     agent = Agent(
-        "openai:gpt-4o",
+        prompt_step1.model_identifier,
         system_prompt=prompt_step1.system_prompt[0].unwrap(),
         deps_type=Prompts,
     )
@@ -69,7 +73,10 @@ def test_sanitization_workflow(prompt_step1: Prompt):
 
     sanitizer = PromptSanitizer(santization_config)
 
-    agent = Agent("openai:gpt-4o", system_prompt=prompt_step1.system_prompt[0].unwrap())
+    agent = Agent(
+        prompt_step1.model_identifier,
+        system_prompt=prompt_step1.system_prompt[0].unwrap(),
+    )
 
     with agent.override(model=TestModel()):
         # make sure the prompt was sanitized

@@ -5,6 +5,7 @@ from .. import potato_head  # noqa: F401
 
 Prompt = potato_head.Prompt
 Message = potato_head.Message
+ModelSettings = potato_head.ModelSettings
 ImageUrl = potato_head.ImageUrl
 AudioUrl = potato_head.AudioUrl
 BinaryContent = potato_head.BinaryContent
@@ -26,4 +27,5 @@ __all__ = [
     "RiskLevel",
     "PIIConfig",
     "PromptSanitizer",
+    "ModelSettings",
 ]
