@@ -29,8 +29,6 @@ setup.project.numpy1:
 	uv sync --all-extras --group dev --group numpy1
 	uv run maturin develop --features server
 
-setup.docs:
-	uv sync --all-extras --group dev --group docs
 
 test.unit.numpy1: setup.project.numpy1
 	uv run pytest \
@@ -72,7 +70,6 @@ uv.sub.pre.tag:
 	@sed -i "s/$(VER)/$(REL_CANDIDATE)/" pyproject.toml
 
 prep.pre.patch: uv.pre.patch uv.sub.pre.tag
-
 
 setup.docs:
 	uv sync --all-extras --group docs

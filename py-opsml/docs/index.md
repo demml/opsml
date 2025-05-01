@@ -22,14 +22,14 @@
 - 🔌 **Integrations**: OpsML is designed to be easy to integrate into your existing workflows and tech stack. In addition, we're continually adding intergrations to third-party libraries, providing developers with a hollistic and singlular experience.
 - 🪄 **No Magic**: OpsML is designed to be easy to use and understand, with no hidden magic or black boxes. Sure, we abstract things to make the experience consistent, but these abstractions are thin and transparent with accompanying documentation and code, so you know what's going on under the hood. 
 
-### Do any of the following apply to you?
+### <span class="text-secondary">**Do any of the following apply to you?**</span>
 
 - You don't currently have a consistent way to manage ML artifacts.
 - You're using a variety of tools to manage ML artifacts across the entire lifecycle (why use many tool when few do trick?).
 - You're tired of spending time on boilerplate code and want to focus on building models and applications.
 - You want something that is easy to use and integrate into your existing workflows/tech stack.
 - You are a developer, team, small company, large enterprise?
-- You want to a tool that has consistent support and maintenance and a team that is obsessed with quality control.
+- You want a tool that has consistent support and maintenance and a team that is obsessed with quality control.
 - You don't want to spend the brain power on figuring out how to manage all of your ML artifacts (you've got better things to do).
 
 If you answered yes to any of the above, then `OpsML` is for you.
@@ -352,7 +352,7 @@ registry.register_card(card)
 # This code will run as is
 ```
 
-### Us vs Others
+### <span class="text-secondary">**Us vs Others**</span>
 
 | Feature | OpsML | Others |
 |---------|:-------:|:--------:|

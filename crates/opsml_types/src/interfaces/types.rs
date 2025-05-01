@@ -37,7 +37,7 @@ pub enum TaskType {
     TimeSeriesTabular,
     Optimization,
     #[default]
-    Other,
+    Undefined,
 }
 
 impl Display for TaskType {
@@ -72,7 +72,7 @@ impl Display for TaskType {
             TaskType::TimeSeriesGraph => "TimeSeriesGraph",
             TaskType::TimeSeriesTabular => "TimeSeriesTabular",
             TaskType::Optimization => "Optimization",
-            TaskType::Other => "Other",
+            TaskType::Undefined => "Undefined",
         };
 
         write!(f, "{}", task_type)

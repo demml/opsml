@@ -51,7 +51,7 @@ pub struct LightningModel {
 impl LightningModel {
     #[new]
     #[allow(clippy::too_many_arguments)]
-    #[pyo3(signature = (trainer=None, preprocessor=None, sample_data=None, task_type=TaskType::Other, schema=None, drift_profile=None))]
+    #[pyo3(signature = (trainer=None, preprocessor=None, sample_data=None, task_type=TaskType::Undefined, schema=None, drift_profile=None))]
     pub fn new<'py>(
         py: Python,
         trainer: Option<&Bound<'py, PyAny>>,

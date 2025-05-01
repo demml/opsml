@@ -99,10 +99,29 @@ reg.model.register_card(modelcard)
 2. Here we are using the SklearnModel interface and passing in the trained model, sample data, and the task type
 3. Here we are creating a ModelCard and passing in the model interface, space, name, tags, and the datacard_uid. The datacard_uid is used to link the model to the data it was trained on
 
-## Docs
+## How it all works
 
-::: opsml.card.ModelCard
-    options:
-        show_root_heading: true
-        show_source: true
-        heading_level: 3
+As you can tell in the example above, `ModelCards` are created by passing in a `ModelInterface`, some required args and some optional args. The `ModelInterface` is the interface is a library-specific interface for saving and extracting metadata from the model. It also allows us to standardize how models are saved (by following the library's guidelines) and ensures reproducibility.
+
+## Model Interface
+
+The `ModelInterface` is the primary interface for working with models in `Opsml`. It is designed to be subclassed and can be used to store models in a variety of formats depending on the library. Out of the box the following subclasses are available:
+
+- `SklearnModel`: Stores data from a sklearn model
+- `TorchModel`: Stores data from a pytorch model
+- `LightningModel`: Stores data from a pytorch lightning model
+- `HuggingFaceModel`: Stores data from a huggingface model
+- `TensorFlowModel`: Stores data from a tensorflow model
+- `XGBoostModel`: Stores data from a xgboost model
+- `LightGBMModel`: Stores data from a lightgbm model
+- `CatBoostModel`: Stores data from a catboost model
+
+### Shared Arguments for all ModelInterfaces
+
+- `model`: Model to save. See subclasses for supported model types
+- `sample_data`: Sample of data that is fed to the model at inference time. As an example, if you are using a `SklearnModel` you would provide a numpy array at prediction time, so `sample_data` should be a numpy array for X features.
+- `task_type`: Optional task type of the model. Defaults to `TaskType.Undefined`
+- `drift_profile`: Optional `Scouter` drift profile to associated with model. This is a convenience argument if you already created a drift profile. You can also use interface.create_drift_profile(..) to create a drift profile from the model interface.
+
+
+

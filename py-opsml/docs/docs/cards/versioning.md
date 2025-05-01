@@ -2,7 +2,7 @@
 
 All cards follow a semver version format (`major.minor.patch`). By default, a `minor` increment is used whenever a card is registered. If a version is provided, it overrides the default version type.
 
-For more information on the versioning scheme, please refer to the [Semver](https://semver.org/) documentation. In addition, opsml leverage the [semver](https://docs.rs/semver/1.0.26/semver/) crate to ensure semver compliance.
+For more information on the versioning scheme, please refer to the [Semver](https://semver.org/) documentation. In addition, opsml leverages the [semver](https://docs.rs/semver/1.0.26/semver/) crate to ensure semver compliance.
 
 Card versions can also be assigned pre and build tags.
 
@@ -68,43 +68,3 @@ registry.register_card(card=card)
 registry.register_card(card=card)
 # 1.2.0
 ```
-
-## Terminology:
-
-### `Major`
-Indicates a breaking change
-
-- **Examples**:
-    * Adding new features to a dataset
-    * New model architecture
-    * Training same model architecture but with additional features (major change for both data and model)
-
-### `Minor`
-Non-breaking changes that typically add functionality
-
-- **Examples**:
-    * Updating data/sql logic
-    * Updating model parameters
-    * Features and output remain the same
-
-### `Patch`
-Indicates a non-breaking change
-
-- **Examples**:
-    * model re-training
-    * data re-freshes
-
-### `Pre`
-Indicates a release candidate
-
-- **Examples**:
-    * Saved model that is not ready for an official release
-    * Candidate data that needs to be further validated
-
-### `Build`
-Indicates a build tag
-
-- **Examples**:
-    * Appending git commit hash to a version
-
-These are all general guidelines and we recommend to use what works best for your team. For example, if you team prefers not to mess around with versioning, you may wish to default every model re-training to a `minor` version. 
