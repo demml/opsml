@@ -76,7 +76,8 @@ pub async fn api_login_handler(
     let mut user = match get_user(&state.sql_client, &username).await {
         Ok(user) => user,
         Err(_) => {
-            return OpsmlServerError::user_validation_error().to_error(StatusCode::BAD_REQUEST);
+            return OpsmlServerError::user_validation_error()
+                .into_response(StatusCode::BAD_REQUEST);
         }
     };
 
@@ -154,7 +155,8 @@ async fn ui_login_handler(
     let mut user = match get_user(&state.sql_client, &req.username).await {
         Ok(user) => user,
         Err(_) => {
-            return OpsmlServerError::user_validation_error().to_error(StatusCode::BAD_REQUEST);
+            return OpsmlServerError::user_validation_error()
+                .into_response(StatusCode::BAD_REQUEST);
         }
     };
 
@@ -239,7 +241,8 @@ pub async fn api_refresh_token_handler(
         let mut user = match get_user(&state.sql_client, &claims.sub).await {
             Ok(user) => user,
             Err(_) => {
-                return OpsmlServerError::user_validation_error().to_error(StatusCode::BAD_REQUEST);
+                return OpsmlServerError::user_validation_error()
+                    .into_response(StatusCode::BAD_REQUEST);
             }
         };
 
@@ -272,7 +275,7 @@ pub async fn api_refresh_token_handler(
 
         Ok(Json(JwtToken { token: jwt_token }))
     } else {
-        OpsmlServerError::refresh_token_not_found().to_error(StatusCode::BAD_REQUEST)
+        OpsmlServerError::refresh_token_not_found().into_response(StatusCode::BAD_REQUEST)
     }
 }
 
@@ -295,11 +298,11 @@ async fn validate_jwt_token(
             Ok(_) => Ok(Json(Authenticated {
                 is_authenticated: true,
             })),
-            Err(_) => OpsmlServerError::invalid_token().to_error(StatusCode::UNAUTHORIZED),
+            Err(_) => OpsmlServerError::invalid_token().into_response(StatusCode::UNAUTHORIZED),
         }
     } else {
         debug!("No bearer token found");
-        OpsmlServerError::bearer_token_not_found().to_error(StatusCode::BAD_REQUEST)
+        OpsmlServerError::bearer_token_not_found().into_response(StatusCode::BAD_REQUEST)
     }
 }
 

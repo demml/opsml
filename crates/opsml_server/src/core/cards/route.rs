@@ -203,8 +203,8 @@ pub async fn create_card(
 ) -> Result<Response, (StatusCode, Json<OpsmlServerError>)> {
     let table = CardTable::from_registry_type(&card_request.registry_type);
 
-    if !perms.has_write_permission(&card_request.card.space()) {
-        return OpsmlServerError::permission_denied().to_error(StatusCode::FORBIDDEN);
+    if !perms.has_write_permission(card_request.card.space()) {
+        return OpsmlServerError::permission_denied().into_response(StatusCode::FORBIDDEN);
     }
 
     debug!(
@@ -335,7 +335,7 @@ pub async fn delete_card(
     debug!("Deleting card: {}", &params.uid);
 
     if !perms.has_delete_permission(&params.space) {
-        return OpsmlServerError::permission_denied().to_error(StatusCode::FORBIDDEN);
+        return OpsmlServerError::permission_denied().into_response(StatusCode::FORBIDDEN);
     }
 
     let table = CardTable::from_registry_type(&params.registry_type);
@@ -407,7 +407,7 @@ pub async fn get_card(
     Query(params): Query<CardQueryArgs>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<OpsmlServerError>)> {
     if !perms.has_read_permission() {
-        return OpsmlServerError::permission_denied().to_error(StatusCode::FORBIDDEN);
+        return OpsmlServerError::permission_denied().into_response(StatusCode::FORBIDDEN);
     }
 
     let table = CardTable::from_registry_type(&params.registry_type);
@@ -476,14 +476,14 @@ pub async fn get_readme(
     Query(params): Query<CardQueryArgs>,
 ) -> Result<Json<ReadeMe>, (StatusCode, Json<OpsmlServerError>)> {
     if !perms.has_read_permission() {
-        return OpsmlServerError::permission_denied().to_error(StatusCode::FORBIDDEN);
+        return OpsmlServerError::permission_denied().into_response(StatusCode::FORBIDDEN);
     }
 
     let table = CardTable::from_registry_type(&params.registry_type);
 
     // name and space are required
     if params.name.is_none() || params.space.is_none() {
-        return OpsmlServerError::missing_space_and_name().to_error(StatusCode::BAD_REQUEST);
+        return OpsmlServerError::missing_space_and_name().into_response(StatusCode::BAD_REQUEST);
     }
 
     let name = params.name.as_ref().unwrap();
@@ -542,7 +542,7 @@ pub async fn create_readme(
     Json(req): Json<CreateReadeMe>,
 ) -> Result<Json<UploadResponse>, (StatusCode, Json<OpsmlServerError>)> {
     if !perms.has_write_permission(&req.space) {
-        return OpsmlServerError::permission_denied().to_error(StatusCode::FORBIDDEN);
+        return OpsmlServerError::permission_denied().into_response(StatusCode::FORBIDDEN);
     }
 
     let table = CardTable::from_registry_type(&req.registry_type);
