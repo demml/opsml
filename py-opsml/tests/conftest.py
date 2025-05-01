@@ -106,6 +106,7 @@ def chat_prompt() -> Prompt:
     prompt = Prompt(
         model="gpt-4o",
         prompt="what is 2 + 2?",
+        provider="openai",
         system_prompt="You are a helpful assistant.",
     )
     return prompt

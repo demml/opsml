@@ -10,10 +10,11 @@
   import { ArrowLeft, ArrowRight } from 'lucide-svelte';
 
   
-  let { selectedSpace, page, selectedName } = $props<{
+  let { selectedSpace, page, selectedName, title } = $props<{
     selectedSpace: string | undefined;
     selectedName: string | undefined;
     page: RegistryPageReturn;
+    title: RegistryType;
   }>();
  
   let currentPage = $state(1);
@@ -124,7 +125,7 @@
       <div class="rounded-full bg-surface-200 border-black border-2 p-1 shadow-small">
         <Settings color="#40328b" />
       </div>
-      <h2 class="font-bold text-primary-800 text-xl">Artifacts</h2>
+      <h2 class="font-bold text-primary-800 text-xl">{title} Artifacts</h2>
     </div>
     <div class="flex flex-row flex-wrap gap-1 items-center">
       <div>

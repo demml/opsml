@@ -68,6 +68,7 @@ VersionType = core.VersionType
 PromptCard = card.PromptCard
 Prompt = potato_head.Prompt
 Message = potato_head.Message
+ModelSettings = potato_head.ModelSettings
 
 # Deck
 CardDeck = card.CardDeck
