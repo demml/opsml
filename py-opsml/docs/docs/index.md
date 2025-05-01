@@ -285,6 +285,7 @@ card = PromptCard(
     name="my_prompt",
     prompt=Prompt(
         model="gpt-4o",
+        provider="openai",
         prompt="Provide a brief summary of the programming language $1.", # (1)
         system_prompt="Be concise, reply with one sentence.",
     ),
@@ -296,7 +297,7 @@ def chat_app(language: str):
     user_prompt = card.prompt.prompt[0].bind(language).unwrap()
 
     response = client.chat.completions.create(
-        model=card.prompt.model,
+        model=card.prompt.model_identifier,
         messages=[
             {"role": "system", "content": user_prompt},
             {"role": "user", "content": card.prompt.prompt[0].unwrap()},
@@ -331,13 +332,14 @@ card = PromptCard(
     space="opsml",
     name="my_prompt",
     prompt=Prompt(
-        model="openai:gpt-4o",
+        model="gpt-4o",
+        provider="openai",
         system_prompt="Be concise, reply with one sentence.",
     ),
 )
 
 agent = Agent(
-    card.prompt.model,
+    card.prompt.model_identifier,
     system_prompt=card.prompt.system_prompt[0].unwrap(),
 )
 
