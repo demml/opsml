@@ -2,7 +2,7 @@
 
 from enum import IntEnum
 from pathlib import Path
-from typing import Any, List, Literal, Optional, Sequence, Dict
+from typing import Any, Dict, List, Literal, Optional, Sequence
 
 class RiskLevel(IntEnum):
     """Risk level of a potential prompt injection attempt"""
@@ -257,9 +257,7 @@ class DocumentUrl:
         """The format of the document URL."""
 
 class Message:
-    def __init__(
-        self, content: str | ImageUrl | AudioUrl | BinaryContent | DocumentUrl
-    ) -> None:
+    def __init__(self, content: str | ImageUrl | AudioUrl | BinaryContent | DocumentUrl) -> None:
         """Create a Message object.
 
         Args:
@@ -392,42 +390,55 @@ class ModelSettings:
                 The extra body to use. Must be a dictionary
 
         """
+
     @property
     def model(self) -> str:
         """The model to use."""
+
     @property
     def provider(self) -> str:
         """The provider to use."""
+
     @property
     def max_tokens(self) -> Optional[int]:
         """The maximum number of tokens to generate."""
+
     @property
     def temperature(self) -> Optional[float]:
         """The amount of randomness to use."""
+
     @property
     def top_p(self) -> Optional[float]:
         """The top p to use."""
+
     @property
     def frequency_penalty(self) -> Optional[float]:
         """The frequency penalty to use."""
+
     @property
     def presence_penalty(self) -> Optional[float]:
         """The presence penalty to use."""
+
     @property
     def timeout(self) -> Optional[float]:
         """The timeout to use."""
+
     @property
     def parallel_tool_calls(self) -> Optional[bool]:
         """Whether to allow parallel tool calls."""
+
     @property
     def seed(self) -> Optional[int]:
         """The seed to use for the model allowing for reproducible results."""
+
     @property
     def logit_bias(self) -> Optional[dict[str, int]]:
         """The logit bias to use."""
+
     @property
     def stop_sequences(self) -> Optional[List[str]]:
         """The stop sequences to use."""
+
     @property
     def extra_body(self) -> Optional[dict[str, Any]]:
         """The extra body to use."""
@@ -435,10 +446,7 @@ class ModelSettings:
 class Prompt:
     def __init__(
         self,
-        prompt: str
-        | Sequence[str | ImageUrl | AudioUrl | BinaryContent | DocumentUrl]
-        | Message
-        | List[Message],
+        prompt: str | Sequence[str | ImageUrl | AudioUrl | BinaryContent | DocumentUrl] | Message | List[Message],
         model: Optional[str] = None,
         provider: Optional[str] = None,
         system_prompt: Optional[str | List[str]] = None,
