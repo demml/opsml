@@ -56,6 +56,7 @@ pub struct ModelSettings {
 impl ModelSettings {
     #[new]
     #[pyo3(signature = (model, provider, max_tokens=None, temperature=None, top_p=None, frequency_penalty=None, presence_penalty=None, timeout=0.0, parallel_tool_calls=None, seed=None, logit_bias=None, stop_sequences=None, extra_body=None))]
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         model: &str,
         provider: &str,
