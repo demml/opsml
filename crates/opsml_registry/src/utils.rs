@@ -82,9 +82,9 @@ fn load_and_extract_card(
 pub enum CardEnum {
     ModelCard(ModelCard),
     DataCard(DataCard),
-    ExperimentCard(ExperimentCard),
+    ExperimentCard(Box<ExperimentCard>),
     PromptCard(PromptCard),
-    CardDeck(CardDeck),
+    CardDeck(Box<CardDeck>),
 }
 
 impl CardEnum {
@@ -219,7 +219,7 @@ pub fn card_from_string<'py>(
             })?;
 
             card.set_artifact_key(key);
-            CardEnum::ExperimentCard(card)
+            CardEnum::ExperimentCard(Box::new(card))
         }
 
         RegistryType::Prompt => {
@@ -237,7 +237,7 @@ pub fn card_from_string<'py>(
                 RegistryError::Error(e.to_string())
             })?;
 
-            CardEnum::CardDeck(card)
+            CardEnum::CardDeck(Box::new(card))
         }
 
         _ => {
