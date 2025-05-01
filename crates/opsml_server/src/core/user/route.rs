@@ -34,12 +34,12 @@ async fn create_user(
 ) -> Result<Json<UserResponse>, (StatusCode, Json<OpsmlServerError>)> {
     // Check if requester has admin permissions
     if !perms.group_permissions.contains(&"admin".to_string()) {
-        return OpsmlServerError::need_admin_permission().to_error(StatusCode::FORBIDDEN);
+        return OpsmlServerError::need_admin_permission().into_response(StatusCode::FORBIDDEN);
     }
 
     // Check if user already exists
     if let Ok(Some(_)) = state.sql_client.get_user(&create_req.username).await {
-        return OpsmlServerError::user_already_exists().to_error(StatusCode::CONFLICT);
+        return OpsmlServerError::user_already_exists().into_response(StatusCode::CONFLICT);
     }
 
     // Hash the password
@@ -106,7 +106,7 @@ async fn get_user(
     let is_self = perms.username == username;
 
     if !is_admin && !is_self {
-        return OpsmlServerError::permission_denied().to_error(StatusCode::FORBIDDEN);
+        return OpsmlServerError::permission_denied().into_response(StatusCode::FORBIDDEN);
     }
 
     // Get user from database
@@ -127,7 +127,7 @@ async fn list_users(
 ) -> Result<Json<UserListResponse>, (StatusCode, Json<OpsmlServerError>)> {
     // Check if requester has admin permissions
     if !perms.group_permissions.contains(&"admin".to_string()) {
-        return OpsmlServerError::need_admin_permission().to_error(StatusCode::FORBIDDEN);
+        return OpsmlServerError::need_admin_permission().into_response(StatusCode::FORBIDDEN);
     }
 
     // Get users from database
@@ -159,7 +159,7 @@ async fn update_user(
     let is_self = perms.username == username;
 
     if !is_admin && !is_self {
-        return OpsmlServerError::permission_denied().to_error(StatusCode::FORBIDDEN);
+        return OpsmlServerError::permission_denied().into_response(StatusCode::FORBIDDEN);
     }
 
     // Get the current user state
@@ -231,7 +231,7 @@ async fn delete_user(
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<OpsmlServerError>)> {
     // Check if requester has admin permissions
     if !perms.group_permissions.contains(&"admin".to_string()) {
-        return OpsmlServerError::need_admin_permission().to_error(StatusCode::FORBIDDEN);
+        return OpsmlServerError::need_admin_permission().into_response(StatusCode::FORBIDDEN);
     }
 
     // Prevent deleting the last admin user
@@ -247,7 +247,7 @@ async fn delete_user(
     };
 
     if is_last_admin {
-        return OpsmlServerError::cannot_delete_last_admin().to_error(StatusCode::FORBIDDEN);
+        return OpsmlServerError::cannot_delete_last_admin().into_response(StatusCode::FORBIDDEN);
     }
 
     // Delete in scouter first

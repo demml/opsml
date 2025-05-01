@@ -98,7 +98,7 @@ pub async fn update_drift_profile(
     Json(req): Json<UpdateProfileRequest>,
 ) -> Result<Json<ScouterResponse>, (StatusCode, Json<OpsmlServerError>)> {
     if !perms.has_write_permission(&req.request.space) {
-        return OpsmlServerError::permission_denied().to_error(StatusCode::FORBIDDEN);
+        return OpsmlServerError::permission_denied().into_response(StatusCode::FORBIDDEN);
     }
 
     // 1. Opsml task
@@ -123,7 +123,7 @@ pub async fn update_drift_profile(
     // assert files is not empty
     if files.is_empty() {
         error!("No files found in directory");
-        return OpsmlServerError::no_files_found().to_error(StatusCode::NOT_FOUND);
+        return OpsmlServerError::no_files_found().into_response(StatusCode::NOT_FOUND);
     }
 
     let filename = find_drift_profile(&files, drift_type)?;
@@ -184,7 +184,7 @@ pub async fn update_drift_profile_status(
     Json(body): Json<ProfileStatusRequest>,
 ) -> Result<Json<ScouterResponse>, (StatusCode, Json<OpsmlServerError>)> {
     if !perms.has_write_permission(&body.space) {
-        return OpsmlServerError::permission_denied().to_error(StatusCode::FORBIDDEN);
+        return OpsmlServerError::permission_denied().into_response(StatusCode::FORBIDDEN);
     }
     debug!("Updating drift profile status: {:?}", &body);
 
@@ -359,7 +359,7 @@ pub async fn get_drift_profiles_for_ui(
     Json(req): Json<RawFileRequest>,
 ) -> DriftProfileResult {
     if !perms.has_read_permission() {
-        return OpsmlServerError::permission_denied().to_error(StatusCode::FORBIDDEN);
+        return OpsmlServerError::permission_denied().into_response(StatusCode::FORBIDDEN);
     }
 
     // create temp dir
@@ -399,7 +399,7 @@ pub async fn get_drift_alerts(
     Query(params): Query<DriftAlertRequest>,
 ) -> Result<Json<Alerts>, (StatusCode, Json<OpsmlServerError>)> {
     if !perms.has_read_permission() {
-        return OpsmlServerError::permission_denied().to_error(StatusCode::FORBIDDEN);
+        return OpsmlServerError::permission_denied().into_response(StatusCode::FORBIDDEN);
     }
 
     let exchange_token = state.exchange_token_from_perms(&perms).await.map_err(|e| {
