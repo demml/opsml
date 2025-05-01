@@ -481,6 +481,26 @@ class Prompt:
         """The provider to use for the prompt."""
 
     @property
+    def model_identifier(self) -> Any:
+        """Concatenation of provider and model, used for identifying the model in the prompt. This
+        is commonly used with pydantic_ai to identify the model to use for the agent.
+
+        Example:
+            ```python
+                prompt = Prompt(
+                    model="gpt-4o",
+                    prompt="My prompt $1 is $2",
+                    system_prompt="system_prompt",
+                    provider="openai",
+                )
+                agent = Agent(
+                    prompt.model_identifier, # "openai:gpt-4o"
+                    system_prompt=prompt.system_prompt[0].unwrap(),
+                )
+            ```
+        """
+
+    @property
     def model_settings(self) -> Dict[str, Any]:
         """The model settings to use for the prompt."""
 
