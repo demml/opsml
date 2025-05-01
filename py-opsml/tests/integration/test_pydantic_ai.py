@@ -12,13 +12,14 @@ class TodaysDate(BaseModel):
 def test_string_openai_prompt():
     # test string prompt
     prompt = Prompt(
-        model="openai:gpt-4o-mini",
+        model="gpt-4o-mini",
         prompt="What is today's date?",
+        provider="openai",
         system_prompt="You are a helpful assistant.",
     )
 
     agent = Agent(
-        prompt.model,
+        prompt.model_identifier,
         system_prompt=prompt.system_prompt[0].unwrap(),
         result_type=TodaysDate,
     )

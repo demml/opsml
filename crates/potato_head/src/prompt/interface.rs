@@ -237,6 +237,14 @@ impl Prompt {
     }
 
     #[getter]
+    pub fn model_identifier(&self) -> String {
+        format!(
+            "{}:{}",
+            self.model_settings.provider, self.model_settings.model
+        )
+    }
+
+    #[getter]
     pub fn model_settings<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyDict>> {
         // iterate over each field in model_settings and add to the dict if it is not None
         let pydict = PyDict::new(py);
