@@ -229,7 +229,7 @@ pub struct HuggingFaceModel {
 impl HuggingFaceModel {
     #[new]
     #[allow(clippy::too_many_arguments)]
-    #[pyo3(signature = (model=None, tokenizer=None, feature_extractor=None, image_processor=None, sample_data=None, hf_task=None, task_type=None, schema=None, drift_profile=None))]
+    #[pyo3(signature = (model=None, tokenizer=None, feature_extractor=None, image_processor=None, sample_data=None, hf_task=None, task_type=None, drift_profile=None))]
     pub fn new<'py>(
         py: Python,
         model: Option<&Bound<'py, PyAny>>,
@@ -239,7 +239,6 @@ impl HuggingFaceModel {
         sample_data: Option<&Bound<'py, PyAny>>,
         hf_task: Option<HuggingFaceTask>,
         task_type: Option<TaskType>,
-        schema: Option<FeatureSchema>,
         drift_profile: Option<&Bound<'py, PyAny>>,
     ) -> PyResult<(Self, ModelInterface)> {
         // check if model is a Transformers Pipeline, PreTrainedModel, or TFPPreTrainedModel
@@ -311,8 +310,7 @@ impl HuggingFaceModel {
 
         // process preprocessor
 
-        let mut model_interface =
-            ModelInterface::new(py, None, None, task_type, schema, drift_profile, None)?;
+        let mut model_interface = ModelInterface::new(py, None, None, task_type, drift_profile)?;
 
         // override ModelInterface SampleData with TorchSampleData
         let sample_data = match sample_data {
@@ -679,16 +677,10 @@ impl HuggingFaceModel {
             base_args,
         };
 
-        let mut interface = ModelInterface::new(
-            py,
-            None,
-            None,
-            Some(metadata.task_type.clone()),
-            Some(metadata.schema.clone()),
-            None,
-            None,
-        )?;
+        let mut interface =
+            ModelInterface::new(py, None, None, Some(metadata.task_type.clone()), None)?;
 
+        interface.schema = metadata.schema.clone();
         interface.data_type = metadata.data_type.clone();
         interface.model_type = metadata.model_type.clone();
         interface.interface_type = metadata.interface_type.clone();
