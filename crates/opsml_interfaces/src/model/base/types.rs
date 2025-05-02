@@ -315,7 +315,7 @@ impl ModelLoadKwargs {
         let load_onnx = if onnx.is_some() {
             load_onnx.unwrap_or(true)
         } else {
-            false
+            load_onnx.unwrap_or(false)
         };
 
         let model = model.map(|model| model.unbind());

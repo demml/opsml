@@ -35,7 +35,6 @@ pub struct LightningModel {
     #[pyo3(get, set)]
     preprocessor_name: String,
 
-    #[pyo3(get, set)]
     pub onnx_session: Option<Py<OnnxSession>>,
 
     #[pyo3(get)]
@@ -141,9 +140,21 @@ impl LightningModel {
         Ok(())
     }
 
+    #[getter]
+    pub fn get_onnx_session<'py>(
+        &self,
+        py: Python<'py>,
+    ) -> PyResult<Option<&Bound<'py, OnnxSession>>> {
+        // return mutable reference to onnx session
+        Ok(self.onnx_session.as_ref().map(|sess| sess.bind(py)))
+    }
+
     #[setter]
-    pub fn set_onnx_session(&mut self, onnx_session: Option<Py<OnnxSession>>) {
-        self.onnx_session = onnx_session;
+    pub fn set_onnx_session<'py>(&mut self, onnx_session: Option<Bound<'py, OnnxSession>>) {
+        self.onnx_session = onnx_session.map(|sess| sess.unbind()).or_else(|| {
+            warn!("Failed to set onnx session. Defaulting to None");
+            None
+        });
     }
 
     #[setter]
@@ -268,7 +279,7 @@ impl LightningModel {
             .unwrap_or_default();
 
         let onnx_session = {
-            self_.as_super().onnx_session.as_ref().map(|sess| {
+            self_.onnx_session.as_ref().map(|sess| {
                 let sess = sess.bind(py);
                 // extract OnnxSession from py object
                 sess.extract::<OnnxSession>().unwrap()

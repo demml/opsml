@@ -47,11 +47,12 @@ loaded_modelcard: ModelCard = registry.load_card(modelcard.uid)
 
 # Load the model card artifacts
 loaded_modelcard.load(
+    None,
     load_kwargs=ModelLoadKwargs(
         model={"model": model},
         load_onnx=True,
-    )
+    ),
 )
 
 assert loaded_modelcard.model is not None
-assert loaded_modelcard.interface.onnx_session is not None
+assert loaded_modelcard.onnx_session is not None
