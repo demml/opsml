@@ -401,13 +401,127 @@ Interface for saving a LightGBM Booster model. **Note** - If using a LGBMRegress
 
 | Argument     | Description                          |
 | ----------- | ------------------------------------ |
-| <span class="text-alert">**model**</span>       | Model to associate with interface. This model must be a lightgbm booster  |
+| <span class="text-alert">**model**</span>       | Model to associate with interface. This model must be an lightgbm booster  |
 | <span class="text-alert">**preprocessor**</span>       | Optional preprocessor to associate with the model. Preprocessor to associate with the model  |
 | <span class="text-alert">**sample_data**</span>      | Optional ample of data that is fed to the model at inference time |
 | <span class="text-alert">**task_type**</span>    | Optional task type of the model. Defaults to `TaskType.Undefined` |
 | <span class="text-alert">**drift_profile**</span> | Optional `Scouter` drift profile to associated with model. This is a convenience argument if you already created a drift profile. You can also use interface.create_drift_profile(..) to create a drift profile from the model interface. |
 
 
+???success "Py Doc"
+    ```python
+    class LightGBMModel(ModelInterface):
+    def __init__(
+        self,
+        model: Optional[Any] = None,
+        preprocessor: Optional[Any] = None,
+        sample_data: Optional[Any] = None,
+        task_type: Optional[TaskType] = None,
+        drift_profile: Optional[DriftProfileType] = None,
+    ) -> None:
+        """Instantiate a LightGBMModel interface
+
+        Args:
+            model:
+                Model to associate with interface. This model must be a lightgbm booster.
+            preprocessor:
+                Preprocessor to associate with the model.
+            sample_data:
+                Sample data to use to make predictions
+            task_type:
+                The type of task the model performs
+            drift_profile:
+                Drift profile to use. Can be a list of SpcDriftProfile, PsiDriftProfile or CustomDriftProfile
+        """
+
+    @property
+    def preprocessor(self) -> Optional[Any]:
+        """Returns the preprocessor"""
+
+    @preprocessor.setter
+    def preprocessor(self, preprocessor: Any) -> None:
+        """Sets the preprocessor
+
+        Args:
+            preprocessor:
+                Preprocessor to associate with the model. This preprocessor must be from the
+                scikit-learn ecosystem
+        """
+
+    @property
+    def preprocessor_name(self) -> Optional[str]:
+        """Returns the preprocessor name"""
+    ```
+
+
 ### Nuts and Bolts
 
 Booster models are saved via `save_model` which exports a `.txt` file. Preprocessors are saved via `joblib`.
+
+
+## XGBoostModel
+
+Interface for saving a XGBoostBooster model. **Note** - If using a XGBRegressor or XGBClassifier, you should use the SklearnModelInterface instead.
+
+
+**Example**: [`Link`](https://github.com/opsml/py-opsml/examples/model/xgb_booster.py)
+
+
+| Argument     | Description                          |
+| ----------- | ------------------------------------ |
+| <span class="text-alert">**model**</span>       | Model to associate with interface. This model must be an xgboost booster  |
+| <span class="text-alert">**preprocessor**</span>       | Optional preprocessor to associate with the model. Preprocessor to associate with the model  |
+| <span class="text-alert">**sample_data**</span>      | Optional ample of data that is fed to the model at inference time |
+| <span class="text-alert">**task_type**</span>    | Optional task type of the model. Defaults to `TaskType.Undefined` |
+| <span class="text-alert">**drift_profile**</span> | Optional `Scouter` drift profile to associated with model. This is a convenience argument if you already created a drift profile. You can also use interface.create_drift_profile(..) to create a drift profile from the model interface. |
+
+???success "Py Doc"
+    ```python
+    class XGBoostModel(ModelInterface):
+    def __init__(
+        self,
+        model: Optional[Any] = None,
+        preprocessor: Optional[Any] = None,
+        sample_data: Optional[Any] = None,
+        task_type: Optional[TaskType] = None,
+        drift_profile: Optional[DriftProfileType] = None,
+    ) -> None:
+        """Interface for saving XGBoost Booster models
+
+        Args:
+            model:
+                Model to associate with interface. This model must be an xgboost booster.
+            preprocessor:
+                Preprocessor to associate with the model.
+            sample_data:
+                Sample data to use to make predictions.
+            task_type:
+                The type of task the model performs
+            drift_profile:
+                Drift profile to use. Can be a list of SpcDriftProfile, PsiDriftProfile or CustomDriftProfile
+        """
+
+    @property
+    def preprocessor(self) -> Optional[Any]:
+        """Returns the preprocessor"""
+
+    @preprocessor.setter
+    def preprocessor(self, preprocessor: Any) -> None:
+        """Sets the preprocessor
+
+        Args:
+            preprocessor:
+                Preprocessor to associate with the model. This preprocessor must be from the
+                scikit-learn ecosystem
+        """
+
+    @property
+    def preprocessor_name(self) -> Optional[str]:
+        """Returns the preprocessor name"""
+    ```
+
+### Nuts and Bolts
+
+Booster models are saved via `save_model` which exports a `.json` file. Preprocessors are saved via `joblib`.
+
+## HuggingFaceModel
