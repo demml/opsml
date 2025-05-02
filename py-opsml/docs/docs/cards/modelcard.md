@@ -840,3 +840,69 @@ There are times where you may want to convert your HuggingFace model to onnx for
 
             """
     ```
+
+## CatBoostModel
+
+Interface for saving a CatBoost model
+
+**Example**: [`Link`](https://github.com/opsml/py-opsml/examples/model/catboost_model.py)
+
+
+| Argument     | Description                          |
+| ----------- | ------------------------------------ |
+| <span class="text-alert">**model**</span>       | Model to associate with interface. This model must be an `CatBoost` model  |
+| <span class="text-alert">**preprocessor**</span>       | Optional preprocessor to associate with the model. Preprocessor to associate with the model  |
+| <span class="text-alert">**sample_data**</span>      | Optional ample of data that is fed to the model at inference time |
+| <span class="text-alert">**task_type**</span>    | Optional task type of the model. Defaults to `TaskType.Undefined` |
+| <span class="text-alert">**drift_profile**</span> | Optional `Scouter` drift profile to associated with model. This is a convenience argument if you already created a drift profile. You can also use interface.create_drift_profile(..) to create a drift profile from the model interface. |
+
+???success "CatBoostModel"
+    ```python
+    class CatBoostModel(ModelInterface):
+        def __init__(
+            self,
+            model: Optional[Any] = None,
+            preprocessor: Optional[Any] = None,
+            sample_data: Optional[Any] = None,
+            task_type: Optional[TaskType] = None,
+            drift_profile: Optional[DriftProfileType] = None,
+        ) -> None:
+            """Interface for saving CatBoost models
+
+            Args:
+                model:
+                    Model to associate with the interface. This model must be a CatBoost model.
+                preprocessor:
+                    Preprocessor to associate with the model.
+                sample_data:
+                    Sample data to use to make predictions.
+                task_type:
+                    The type of task the model performs
+                drift_profile:
+                    Drift profile to use. Can be a list of SpcDriftProfile, PsiDriftProfile or CustomDriftProfile
+            """
+
+        @property
+        def preprocessor(self) -> Optional[Any]:
+            """Returns the preprocessor"""
+
+        @preprocessor.setter
+        def preprocessor(self, preprocessor: Any) -> None:
+            """Sets the preprocessor
+
+            Args:
+                preprocessor:
+                    Preprocessor to associate with the model. This preprocessor must be from the
+                    scikit-learn ecosystem
+            """
+
+        @property
+        def preprocessor_name(self) -> Optional[str]:
+            """Returns the preprocessor name"""
+
+    ```
+
+
+### Nuts and Bolts
+
+CatBoost models are saved via `save_model` which exports a `.cbm` file. Preprocessors are saved via `joblib`.
