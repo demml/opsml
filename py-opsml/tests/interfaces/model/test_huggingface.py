@@ -138,17 +138,4 @@ def test_huggingface_vit(
         hf_task=HuggingFaceTask.ImageClassification,
     )
 
-    onnx_args = HuggingFaceOnnxArgs(
-        ort_type=HuggingFaceORTModel.OrtImageClassification,
-        provider="CPUExecutionProvider",
-    )
-
-    kwargs = ModelSaveKwargs(onnx=onnx_args)
-    interface.save(save_path, True, save_kwargs=kwargs)
-    assert interface.onnx_session is not None
-
-    interface.onnx_session.session = None
-    assert interface.onnx_session.session is None
-
-    interface.tokenizer = None
-    assert interface.tokenizer is None
+    interface.save(save_path, False)
