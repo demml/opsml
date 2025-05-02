@@ -3,7 +3,6 @@
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union, overload
 
-from ..core import ExtraMetadata, FeatureSchema, OnnxSchema
 from ..data import DataType
 from ..scouter.drift import (
     CustomDriftProfile,
@@ -19,6 +18,100 @@ DriftProfileType = Union[
     List[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile],
     SpcDriftProfile | PsiDriftProfile | CustomDriftProfile,
 ]
+
+class ExtraMetadata:
+    metadata: Dict[str, Any]
+
+class Feature:
+    feature_type: str
+    shape: List[int]
+    extra_args: Dict[str, str]
+
+    def __init__(
+        self,
+        feature_type: str,
+        shape: List[int],
+        extra_args: Optional[Dict[str, str]] = None,
+    ) -> None:
+        """Define a feature
+
+        Args:
+            feature_type:
+                The type of the feature
+            shape:
+                The shape of the feature
+            extra_args:
+                Extra arguments to pass to the feature
+        """
+
+    def __str__(self) -> str:
+        """Return a string representation of the Feature.
+
+        Returns:
+            String representation of the Feature.
+        """
+
+class FeatureSchema:
+    def __init__(self, items: Optional[dict[str, Feature]] = None) -> None:
+        """Define a feature map
+
+        Args:
+            features:
+                The features to use in the feature map
+        """
+
+    def __str__(self) -> str:
+        """Return a string representation of the FeatureSchema."""
+
+    def __getitem__(self, key: str) -> Feature:
+        """Returns the feature at the given key."""
+
+# Utils
+
+class OnnxSchema:
+    def __init__(
+        self,
+        input_features: FeatureSchema,
+        output_features: FeatureSchema,
+        onnx_version: str,
+        feature_names: Optional[List[str]] = None,
+    ) -> None:
+        """Define an onnx schema
+
+        Args:
+            input_features (FeatureSchema):
+                The input features of the onnx schema
+            output_features (FeatureSchema):
+                The output features of the onnx schema
+            onnx_version (str):
+                The onnx version of the schema
+            feature_names (List[str] | None):
+                The feature names and order for onnx.
+
+        """
+
+    def __str__(self) -> str:
+        """Return a string representation of the OnnxSchema.
+
+        Returns:
+            String representation of the OnnxSchema.
+        """
+
+    @property
+    def input_features(self) -> FeatureSchema:
+        """Return the input features of the OnnxSchema."""
+
+    @property
+    def output_features(self) -> FeatureSchema:
+        """Return the output features of the OnnxSchema."""
+
+    @property
+    def onnx_version(self) -> str:
+        """Return the onnx version of the OnnxSchema."""
+
+    @property
+    def feature_names(self) -> List[str]:
+        """Return the feature names and order for onnx."""
 
 class ModelSaveKwargs:
     def __init__(

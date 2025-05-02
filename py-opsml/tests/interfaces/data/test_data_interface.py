@@ -16,7 +16,7 @@ from opsml.data import (
     ColType,
     Inequality,
 )
-from opsml.core import OpsmlError
+from opsml.error import OpsmlError
 import numpy as np
 import polars as pl
 import pyarrow as pa  # type: ignore
