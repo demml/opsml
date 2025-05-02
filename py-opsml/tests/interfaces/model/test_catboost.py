@@ -3,10 +3,8 @@ from catboost import CatBoostRegressor, CatBoostClassifier, CatBoostRanker  # ty
 import pandas as pd
 from opsml.model import CatBoostModel, ModelType
 from pathlib import Path
-import pytest
 
 
-@pytest.mark.numpy
 def test_catboost_regressor(
     tmp_path: Path,
     catboost_regressor: Tuple[CatBoostRegressor, pd.DataFrame],
@@ -35,7 +33,6 @@ def test_catboost_regressor(
     assert interface.onnx_session.session is not None
 
 
-@pytest.mark.numpy
 def test_catboost_classifier(
     tmp_path: Path,
     catboost_classifier: Tuple[CatBoostClassifier, pd.DataFrame],
@@ -64,7 +61,6 @@ def test_catboost_classifier(
     assert interface.onnx_session.session is not None
 
 
-@pytest.mark.numpy
 def test_catboost_ranker(
     tmp_path: Path,
     catboost_ranker: Tuple[CatBoostRanker, pd.DataFrame],

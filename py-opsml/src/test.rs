@@ -137,6 +137,7 @@ impl OpsmlTestServer {
             });
 
             if self.cleanup {
+                println!("Cleaning up Opsml Server...");
                 self.cleanup()?;
             }
 
