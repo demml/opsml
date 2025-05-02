@@ -1,5 +1,7 @@
 # type: ignore
-# pylint: disable=no-name-in-module
+# pylint: disable=no-name-in-module,protected-access
+
+
 from .. import scouter
 
 CommonCrons = scouter._types.CommonCrons

@@ -5,6 +5,7 @@ from opsml.model import (
     OnnxSchema,
     FeatureSchema,
 )
+
 from opsml.error import OpsmlError
 
 from optimum.onnxruntime.configuration import AutoQuantizationConfig  # type: ignore

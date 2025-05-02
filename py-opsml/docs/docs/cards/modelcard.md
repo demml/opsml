@@ -99,9 +99,313 @@ reg.model.register_card(modelcard)
 2. Here we are using the SklearnModel interface and passing in the trained model, sample data, and the task type
 3. Here we are creating a ModelCard and passing in the model interface, space, name, tags, and the datacard_uid. The datacard_uid is used to link the model to the data it was trained on
 
-## How it all works
+### How it all works
 
 As you can tell in the example above, `ModelCards` are created by passing in a `ModelInterface`, some required args and some optional args. The `ModelInterface` is the interface is a library-specific interface for saving and extracting metadata from the model. It also allows us to standardize how models are saved (by following the library's guidelines) and ensures reproducibility.
+
+## Load a Card's Components
+
+By default, `OpsML` **does not** load any of the model components (model, preprocessor, etc.) when loading a card. This is to ensure that the card is loaded as quickly as possible. If you wish to load the model components, you can do so by calling the `load` method on the `ModelCard`
+
+```python
+from opsml import CardRegistry, RegistryType
+
+# start registries
+reg = CardRegistry(RegistryType.Model)
+
+# load model card
+modelcard = reg.load_card(uid="{{model uid}}")
+
+# load the model
+modelcard.load() #(1)
+
+# load with the onnx model as well
+modelcard.load(load_kwargs=ModelLoadKwargs(load_onnx=True)) #(1)
+```
+
+1. For the majority of use cases, load() is enough. However, there are optional arguments you can pass for things like loading an onnx model.
+
+???success "ModelCard"
+    ```python
+    class ModelCard:
+        def __init__(
+            self,
+            interface: Optional[ModelInterface] = None,
+            space: Optional[str] = None,
+            name: Optional[str] = None,
+            version: Optional[str] = None,
+            uid: Optional[str] = None,
+            tags: List[str] = [],
+            datacard_uid: Optional[str] = None,
+            metadata: ModelCardMetadata = ModelCardMetadata(),
+            to_onnx: bool = False,
+        ) -> None:
+            """Create a ModelCard from a machine learning model.
+
+            Cards are stored in the ModelCardRegistry and follow the naming convention of:
+            {registry}/{space}/{name}/v{version}
+
+            Args:
+                interface (ModelInterface | None):
+                    `ModelInterface` class containing trained model
+                space (str | None):
+                    space to associate with `ModelCard`
+                name (str | None):
+                    Name to associate with `ModelCard`
+                version (str | None):
+                    Current version (assigned if card has been registered). Follows
+                    semantic versioning.
+                uid (str | None):
+                    Unique id (assigned if card has been registered)
+                tags (List[str]):
+                    Tags to associate with `ModelCard`. Can be a dictionary of strings or
+                    a `Tags` object.
+                datacard_uid (str | None):
+                    The datacard uid to associate with the model card. This is used to link the
+                    model card to the data card. Datacard uid can also be set in card metadata.
+                metadata (ModelCardMetadata):
+                    Metadata to associate with the `ModelCard. Defaults to an empty `ModelCardMetadata` object.
+                to_onnx:
+                    Whether to convert the model to onnx or not during registration
+
+            Example:
+            ```python
+            from opsml import ModelCard, CardRegistry, RegistryType, SklearnModel, TaskType
+            from sklearn import ensemble
+
+            # for testing purposes
+            from opsml.helpers.data import create_fake_data
+
+            # pandas data
+            X, y = create_fake_data(n_samples=1200)
+
+            # train model
+            reg = ensemble.RandomForestClassifier(n_estimators=5)
+            reg.fit(X_train.to_numpy(), y_train)
+
+            # create interface and card
+            interface = SklearnModel(
+                model=reg,
+                sample_data=X_train,
+                task_type=TaskType.Classification,
+            )
+
+            modelcard = ModelCard(
+                interface=random_forest_classifier,
+                space="my-repo",
+                name="my-model",
+                to_onnx=True, # auto-convert to onnx
+                tags=["foo:bar", "baz:qux"],
+            )
+
+            # register card
+            registry = CardRegistry(RegistryType.Model)
+            registry.register_card(modelcard)
+            ```
+            """
+
+        @property
+        def model(self) -> Any:
+            """Returns the model. This is a special property that is used to
+            access the model from the interface. It is not settable. It will also
+            raise an error if the interface is not set or if the model
+            has not been loaded.
+            """
+
+        @property
+        def app_env(self) -> str:
+            """Returns the app env"""
+
+        @property
+        def created_at(self) -> datetime:
+            """Returns the created at timestamp"""
+
+        @property
+        def datacard_uid(self) -> str:
+            """Returns the datacard uid"""
+
+        @datacard_uid.setter
+        def datacard_uid(self, datacard_uid: str) -> None:
+            """Set the datacard uid"""
+
+        @property
+        def experimentcard_uid(self) -> str:
+            """Returns the experimentcard uid"""
+
+        @experimentcard_uid.setter
+        def experimentcard_uid(self, experimentcard_uid: str) -> None:
+            """Set the experimentcard uid"""
+
+        @property
+        def uri(self) -> Path:
+            """Returns the uri of the `ModelCard` in the
+            format of {registry}/{space}/{name}/v{version}
+            """
+
+        @property
+        def interface(self) -> Optional[ModelInterface]:
+            """Returns the `ModelInterface` associated with the `ModelCard`"""
+
+        @interface.setter
+        def interface(self, interface: Any) -> None:
+            """Set the `ModelInterface` associated with the `ModelCard`"""
+
+        @property
+        def name(self) -> str:
+            """Returns the name of the `ModelCard`"""
+
+        @name.setter
+        def name(self, name: str) -> None:
+            """Set the name of the `ModelCard`
+
+            Args:
+                name (str):
+                    The name of the `ModelCard`
+            """
+
+        @property
+        def space(self) -> str:
+            """Returns the space of the `ModelCard`"""
+
+        @space.setter
+        def space(self, space: str) -> None:
+            """Set the space of the `ModelCard`
+
+            Args:
+                space (str):
+                    The space of the `ModelCard`
+            """
+
+        @property
+        def version(self) -> str:
+            """Returns the version of the `ModelCard`"""
+
+        @version.setter
+        def version(self, version: str) -> None:
+            """Set the version of the `ModelCard`
+
+            Args:
+                version (str):
+                    The version of the `ModelCard`
+            """
+
+        @property
+        def uid(self) -> str:
+            """Returns the uid of the `ModelCard`"""
+
+        @property
+        def tags(self) -> List[str]:
+            """Returns the tags of the `ModelCard`"""
+
+        @property
+        def metadata(self) -> ModelCardMetadata:
+            """Returns the metadata of the `ModelCard`"""
+
+        @property
+        def registry_type(self) -> RegistryType:
+            """Returns the card type of the `ModelCard`"""
+
+        def save(self, path: Path, save_kwargs: Optional[ModelSaveKwargs] = None) -> None:
+            """Save the model card to a directory
+
+            Args:
+                path (Path):
+                    Path to save the model card.
+                save_kwargs (SaveKwargs):
+                    Optional kwargs to pass to `ModelInterface` save method.
+            """
+
+        def load(
+            self,
+            path: Optional[Path] = None,
+            onnx: bool = False,
+            load_kwargs: None | ModelLoadKwargs = None,
+        ) -> None:
+            """Load ModelCard interface components
+
+            Args:
+                path (Path | None):
+                    The path to load the data card from. If no path is provided,
+                    the model interface will be loaded from the server.
+                onnx (bool):
+                    Whether to load the model as onnx or not.
+                    Only available for models that have been converted to onnx.
+                load_kwargs (ModelLoadKwargs):
+                    Optional kwargs to pass to `ModelInterface` load method.
+            """
+
+        def download_artifacts(self, path: Optional[Path] = None) -> None:
+            """Download artifacts associated with the ModelCard
+
+            Args:
+                path (Path):
+                    Path to save the artifacts. If not provided, the artifacts will be saved
+                    to a directory called "card_artifacts"
+            """
+
+        def model_dump_json(self) -> str:
+            """Return the model dump as a json string"""
+
+        @staticmethod
+        def model_validate_json(json_string: str, interface: Optional[ModelInterface] = None) -> "ModelCard":
+            """Validate the model json string
+
+            Args:
+                json_string (str):
+                    The json string to validate
+                interface (ModelInterface):
+                    By default, the interface will be inferred and instantiated
+                    from the interface metadata. If an interface is provided
+                    (as in the case of custom interfaces), it will be used.
+            """
+
+        def __str__(self) -> str:
+            """Return a string representation of the ModelCard.
+
+            Returns:
+                String representation of the ModelCard.
+            """
+    ```
+
+### Load arguments
+
+| Argument     | Description                          |
+| ----------- | ------------------------------------ |
+| <span class="text-alert">**onnx**</span>       | Optional onnx arguments to use when loading  |
+| <span class="text-alert">**model**</span>  | Optional model arguments to use when loading time |
+| <span class="text-alert">**preprocessor**</span>    | Optional preprocessor arguments to use when loading |
+| <span class="text-alert">**load_onnx**</span> |  Whether to load the onnx model. Defaults to false unless onnx args are provided. If true, the onnx model will be loaded.. |
+
+???success "ModelLoadKwargs"
+    ```python
+    class ModelLoadKwargs:
+        onnx: Optional[Dict]
+        model: Optional[Dict]
+        preprocessor: Optional[Dict]
+        load_onnx: bool
+
+        def __init__(
+            self,
+            onnx: Optional[Dict] = None,
+            model: Optional[Dict] = None,
+            preprocessor: Optional[Dict] = None,
+            load_onnx: bool = False,
+        ) -> None:
+            """Optional arguments to pass to load_model
+
+            Args:
+                onnx (Dict):
+                    Optional onnx arguments to use when loading
+                model (Dict):
+                    Optional model arguments to use when loading
+                preprocessor (Dict):
+                    Optional preprocessor arguments to use when loading
+                load_onnx (bool):
+                    Whether to load the onnx model. Defaults to false unless onnx args are
+                    provided. If true, the onnx model will be loaded.
+
+            """
+    ```
 
 ## Model Interface
 
@@ -125,198 +429,198 @@ The `ModelInterface` is the primary interface for working with models in `Opsml`
 | <span class="text-alert">**task_type**</span>    | Optional task type of the model. Defaults to `TaskType.Undefined` |
 | <span class="text-alert">**drift_profile**</span> | Optional `Scouter` drift profile to associated with model. This is a convenience argument if you already created a drift profile. You can also use interface.create_drift_profile(..) to create a drift profile from the model interface. |
 
-???success "Py Doc"
+???success "ModelInterfacec"
     ```python
     class ModelInterface:
-    def __init__(
-        self,
-        model: None | Any = None,
-        sample_data: None | Any = None,
-        task_type: None | TaskType = None,
-        drift_profile: (
-            None
-            | List[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile]
-            | Union[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile]
-        ) = None,
-    ) -> None:
-        """Base class for ModelInterface
+        def __init__(
+            self,
+            model: None | Any = None,
+            sample_data: None | Any = None,
+            task_type: None | TaskType = None,
+            drift_profile: (
+                None
+                | List[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile]
+                | Union[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile]
+            ) = None,
+        ) -> None:
+            """Base class for ModelInterface
 
-        Args:
-            model:
-                Model to associate with interface.
-            sample_data:
-                Sample data to use to make predictions
-            task_type:
-                The type of task the model performs
-            drift_profile:
-                Drift profile to use. Can be a list of SpcDriftProfile, PsiDriftProfile or CustomDriftProfile
-        """
+            Args:
+                model:
+                    Model to associate with interface.
+                sample_data:
+                    Sample data to use to make predictions
+                task_type:
+                    The type of task the model performs
+                drift_profile:
+                    Drift profile to use. Can be a list of SpcDriftProfile, PsiDriftProfile or CustomDriftProfile
+            """
 
-    @property
-    def model(self) -> None | Any:
-        """Returns the model"""
+        @property
+        def model(self) -> None | Any:
+            """Returns the model"""
 
-    @model.setter
-    def model(self, model: Any) -> None:
-        """Sets the model"""
+        @model.setter
+        def model(self, model: Any) -> None:
+            """Sets the model"""
 
-    @property
-    def sample_data(self) -> None | Any:
-        """Returns the sample data"""
+        @property
+        def sample_data(self) -> None | Any:
+            """Returns the sample data"""
 
-    @sample_data.setter
-    def sample_data(self, sample_data: Any) -> None:
-        """Sets the sample data"""
+        @sample_data.setter
+        def sample_data(self, sample_data: Any) -> None:
+            """Sets the sample data"""
 
-    @property
-    def data_type(self) -> DataType:
-        """Returns the task type"""
+        @property
+        def data_type(self) -> DataType:
+            """Returns the task type"""
 
-    @property
-    def task_type(self) -> TaskType:
-        """Returns the task type"""
+        @property
+        def task_type(self) -> TaskType:
+            """Returns the task type"""
 
-    @property
-    def schema(self) -> FeatureSchema:
-        """Returns the feature schema"""
+        @property
+        def schema(self) -> FeatureSchema:
+            """Returns the feature schema"""
 
-    @property
-    def model_type(self) -> ModelType:
-        """Returns the model type"""
+        @property
+        def model_type(self) -> ModelType:
+            """Returns the model type"""
 
-    @property
-    def interface_type(self) -> ModelInterfaceType:
-        """Returns the model type"""
+        @property
+        def interface_type(self) -> ModelInterfaceType:
+            """Returns the model type"""
 
-    @property
-    def drift_profile(
-        self,
-    ) -> List[Any]:
-        """Returns the drift profile"""
+        @property
+        def drift_profile(
+            self,
+        ) -> List[Any]:
+            """Returns the drift profile"""
 
-    @drift_profile.setter
-    def drift_profile(
-        self,
-        profile: List[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile],
-    ) -> None:
-        """Sets the drift profile"""
+        @drift_profile.setter
+        def drift_profile(
+            self,
+            profile: List[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile],
+        ) -> None:
+            """Sets the drift profile"""
 
-    @property
-    def onnx_session(self) -> None | OnnxSession:
-        """Returns the onnx session if it exists"""
+        @property
+        def onnx_session(self) -> None | OnnxSession:
+            """Returns the onnx session if it exists"""
 
-    @onnx_session.setter
-    def onnx_session(self, session: None | OnnxSession) -> None:
-        """Sets the onnx session
+        @onnx_session.setter
+        def onnx_session(self, session: None | OnnxSession) -> None:
+            """Sets the onnx session
 
 
-        Args:
-            session:
-                Onnx session
-        """
+            Args:
+                session:
+                    Onnx session
+            """
 
-    @overload
-    def create_drift_profile(
-        self,
-        data: CustomMetric | List[CustomMetric],
-        config: CustomMetricDriftConfig,
-        data_type: Optional[DataType] = None,
-    ) -> CustomDriftProfile: ...
-    @overload
-    def create_drift_profile(
-        self,
-        data: Any,
-        config: SpcDriftConfig,
-        data_type: Optional[DataType] = None,
-    ) -> SpcDriftProfile: ...
-    @overload
-    def create_drift_profile(
-        self,
-        data: Any,
-        config: PsiDriftConfig,
-        data_type: Optional[DataType] = None,
-    ) -> PsiDriftProfile: ...
-    @overload
-    def create_drift_profile(
-        self,
-        data: Any,
-        data_type: Optional[DataType] = None,
-    ) -> SpcDriftProfile: ...
-    def create_drift_profile(  # type: ignore
-        self,
-        data: Any,
-        config: None | SpcDriftConfig | PsiDriftConfig | CustomMetricDriftConfig = None,
-        data_type: None | DataType = None,
-    ) -> Any:
-        """Create a drift profile and append it to the drift profile list
+        @overload
+        def create_drift_profile(
+            self,
+            data: CustomMetric | List[CustomMetric],
+            config: CustomMetricDriftConfig,
+            data_type: Optional[DataType] = None,
+        ) -> CustomDriftProfile: ...
+        @overload
+        def create_drift_profile(
+            self,
+            data: Any,
+            config: SpcDriftConfig,
+            data_type: Optional[DataType] = None,
+        ) -> SpcDriftProfile: ...
+        @overload
+        def create_drift_profile(
+            self,
+            data: Any,
+            config: PsiDriftConfig,
+            data_type: Optional[DataType] = None,
+        ) -> PsiDriftProfile: ...
+        @overload
+        def create_drift_profile(
+            self,
+            data: Any,
+            data_type: Optional[DataType] = None,
+        ) -> SpcDriftProfile: ...
+        def create_drift_profile(  # type: ignore
+            self,
+            data: Any,
+            config: None | SpcDriftConfig | PsiDriftConfig | CustomMetricDriftConfig = None,
+            data_type: None | DataType = None,
+        ) -> Any:
+            """Create a drift profile and append it to the drift profile list
 
-        Args:
-            data:
-                Data to use to create the drift profile. Can be a pandas dataframe,
-                polars dataframe, pyarrow table or numpy array.
-            config:
-                Drift config to use. If None, defaults to SpcDriftConfig.
-            data_type:
-                Data type to use. If None, data_type will be inferred from the data.
+            Args:
+                data:
+                    Data to use to create the drift profile. Can be a pandas dataframe,
+                    polars dataframe, pyarrow table or numpy array.
+                config:
+                    Drift config to use. If None, defaults to SpcDriftConfig.
+                data_type:
+                    Data type to use. If None, data_type will be inferred from the data.
 
-        Returns:
-            Drift profile SPcDriftProfile, PsiDriftProfile or CustomDriftProfile
-        """
+            Returns:
+                Drift profile SPcDriftProfile, PsiDriftProfile or CustomDriftProfile
+            """
 
-    def save(
-        self,
-        path: Path,
-        to_onnx: bool = False,
-        save_kwargs: None | ModelSaveKwargs = None,
-    ) -> ModelInterfaceMetadata:
-        """Save the model interface
+        def save(
+            self,
+            path: Path,
+            to_onnx: bool = False,
+            save_kwargs: None | ModelSaveKwargs = None,
+        ) -> ModelInterfaceMetadata:
+            """Save the model interface
 
-        Args:
-            path (Path):
-                Path to save the model
-            to_onnx (bool):
-                Whether to save the model to onnx
-            save_kwargs (ModelSaveKwargs):
-                Optional kwargs to pass to the various underlying methods. This is a passthrough object meaning
-                that the kwargs will be passed to the underlying methods as is and are expected to be supported by
-                the underlying library.
+            Args:
+                path (Path):
+                    Path to save the model
+                to_onnx (bool):
+                    Whether to save the model to onnx
+                save_kwargs (ModelSaveKwargs):
+                    Optional kwargs to pass to the various underlying methods. This is a passthrough object meaning
+                    that the kwargs will be passed to the underlying methods as is and are expected to be supported by
+                    the underlying library.
 
-                - model: Kwargs that will be passed to save_model. See save_model for more details.
-                - preprocessor: Kwargs that will be passed to save_preprocessor
-                - onnx: Kwargs that will be passed to save_onnx_model. See convert_onnx_model for more details
-        """
+                    - model: Kwargs that will be passed to save_model. See save_model for more details.
+                    - preprocessor: Kwargs that will be passed to save_preprocessor
+                    - onnx: Kwargs that will be passed to save_onnx_model. See convert_onnx_model for more details
+            """
 
-    def load(
-        self,
-        path: Path,
-        metadata: ModelInterfaceSaveMetadata,
-        onnx: bool = False,
-        load_kwargs: None | ModelLoadKwargs = None,
-    ) -> None:
-        """Load ModelInterface components
+        def load(
+            self,
+            path: Path,
+            metadata: ModelInterfaceSaveMetadata,
+            onnx: bool = False,
+            load_kwargs: None | ModelLoadKwargs = None,
+        ) -> None:
+            """Load ModelInterface components
 
-        Args:
-            path (Path):
-                Path to load the model
-            metadata (ModelInterfaceSaveMetadata):
-                Metadata to use to load the model
-            onnx (bool):
-                Whether to load the onnx model
-            load_kwargs (ModelLoadKwargs):
-                Optional load kwargs to pass to the different load methods
-        """
+            Args:
+                path (Path):
+                    Path to load the model
+                metadata (ModelInterfaceSaveMetadata):
+                    Metadata to use to load the model
+                onnx (bool):
+                    Whether to load the onnx model
+                load_kwargs (ModelLoadKwargs):
+                    Optional load kwargs to pass to the different load methods
+            """
 
-    @staticmethod
-    def from_metadata(metadata: ModelInterfaceMetadata) -> "ModelInterface":
-        """Create a ModelInterface from metadata
+        @staticmethod
+        def from_metadata(metadata: ModelInterfaceMetadata) -> "ModelInterface":
+            """Create a ModelInterface from metadata
 
-        Args:
-            metadata:
-                Model interface metadata
+            Args:
+                metadata:
+                    Model interface metadata
 
-        Returns:
-            Model interface
-        """
+            Returns:
+                Model interface
+            """
     ```
 
 ### Default Save Method
@@ -450,7 +754,7 @@ Interface for saving a LightGBM Booster model. **Note** - If using a LGBMRegress
 | Argument     | Description                          |
 | ----------- | ------------------------------------ |
 | <span class="text-alert">**model**</span>       | Model to associate with interface. This model must be an lightgbm booster  |
-| <span class="text-alert">**preprocessor**</span>       | Optional preprocessor to associate with the model. Preprocessor to associate with the model  |
+| <span class="text-alert">**preprocessor**</span>       | Optional preprocessor to associate with the model  |
 | <span class="text-alert">**sample_data**</span>      | Optional ample of data that is fed to the model at inference time |
 | <span class="text-alert">**task_type**</span>    | Optional task type of the model. Defaults to `TaskType.Undefined` |
 | <span class="text-alert">**drift_profile**</span> | Optional `Scouter` drift profile to associated with model. This is a convenience argument if you already created a drift profile. You can also use interface.create_drift_profile(..) to create a drift profile from the model interface. |
@@ -518,7 +822,7 @@ Interface for saving a XGBoostBooster model. **Note** - If using a XGBRegressor 
 | Argument     | Description                          |
 | ----------- | ------------------------------------ |
 | <span class="text-alert">**model**</span>       | Model to associate with interface. This model must be an xgboost booster  |
-| <span class="text-alert">**preprocessor**</span>       | Optional preprocessor to associate with the model. Preprocessor to associate with the model  |
+| <span class="text-alert">**preprocessor**</span>       | Optional preprocessor to associate with the model |
 | <span class="text-alert">**sample_data**</span>      | Optional ample of data that is fed to the model at inference time |
 | <span class="text-alert">**task_type**</span>    | Optional task type of the model. Defaults to `TaskType.Undefined` |
 | <span class="text-alert">**drift_profile**</span> | Optional `Scouter` drift profile to associated with model. This is a convenience argument if you already created a drift profile. You can also use interface.create_drift_profile(..) to create a drift profile from the model interface. |
@@ -847,11 +1151,10 @@ Interface for saving a CatBoost model
 
 **Example**: [`Link`](https://github.com/opsml/py-opsml/examples/model/catboost_model.py)
 
-
 | Argument     | Description                          |
 | ----------- | ------------------------------------ |
 | <span class="text-alert">**model**</span>       | Model to associate with interface. This model must be an `CatBoost` model  |
-| <span class="text-alert">**preprocessor**</span>       | Optional preprocessor to associate with the model. Preprocessor to associate with the model  |
+| <span class="text-alert">**preprocessor**</span>       | Optional preprocessor to associate with the model |
 | <span class="text-alert">**sample_data**</span>      | Optional ample of data that is fed to the model at inference time |
 | <span class="text-alert">**task_type**</span>    | Optional task type of the model. Defaults to `TaskType.Undefined` |
 | <span class="text-alert">**drift_profile**</span> | Optional `Scouter` drift profile to associated with model. This is a convenience argument if you already created a drift profile. You can also use interface.create_drift_profile(..) to create a drift profile from the model interface. |
@@ -906,3 +1209,132 @@ Interface for saving a CatBoost model
 ### Nuts and Bolts
 
 CatBoost models are saved via `save_model` which exports a `.cbm` file. Preprocessors are saved via `joblib`.
+
+## TorchModel
+
+Interface for saving a CatBoost model
+
+**Example**: [`Link`](https://github.com/opsml/py-opsml/examples/model/torch_model.py)
+
+
+| Argument     | Description                          |
+| ----------- | ------------------------------------ |
+| <span class="text-alert">**model**</span>       | Model to associate with interface. This model must be of type `torch.nn.Module`  |
+| <span class="text-alert">**preprocessor**</span>       | Optional preprocessor to associate with the model |
+| <span class="text-alert">**sample_data**</span>      | Optional ample of data that is fed to the model at inference time |
+| <span class="text-alert">**task_type**</span>    | Optional task type of the model. Defaults to `TaskType.Undefined` |
+| <span class="text-alert">**drift_profile**</span> | Optional `Scouter` drift profile to associated with model. This is a convenience argument if you already created a drift profile. You can also use interface.create_drift_profile(..) to create a drift profile from the model interface. |
+
+
+???success "TorchModel"
+    ```python
+    class TorchModel(ModelInterface):
+        def __init__(
+            self,
+            model: Optional[Any] = None,
+            preprocessor: Optional[Any] = None,
+            sample_data: Optional[Any] = None,
+            task_type: Optional[TaskType] = None,
+            drift_profile: Optional[DriftProfileType] = None,
+        ) -> None:
+            """Interface for saving PyTorch models
+
+            Args:
+                model:
+                    Model to associate with interface. This model must inherit from torch.nn.Module.
+                preprocessor:
+                    Preprocessor to associate with model.
+                sample_data:
+                    Sample data to use to convert to ONNX and make sample predictions. This data must be a
+                    pytorch-supported type. TorchData interface, torch tensor, torch dataset, Dict[str, torch.Tensor],
+                    List[torch.Tensor], Tuple[torch.Tensor].
+                task_type:
+                    The intended task type of the model.
+                drift_profile:
+                    Drift profile to use. Can be a list of SpcDriftProfile, PsiDriftProfile or CustomDriftProfile
+            """
+
+        @property
+        def preprocessor(self) -> Optional[Any]:
+            """Returns the preprocessor"""
+
+        @preprocessor.setter
+        def preprocessor(self, preprocessor: Any) -> None:
+            """Sets the preprocessor
+
+            Args:
+                preprocessor:
+                    Preprocessor to associate with the model. This preprocessor must be from the
+                    scikit-learn ecosystem
+            """
+
+        @property
+        def preprocessor_name(self) -> Optional[str]:
+            """Returns the preprocessor name"""
+
+        def save(
+            self,
+            path: Path,
+            to_onnx: bool = False,
+            save_kwargs: None | ModelSaveKwargs = None,
+        ) -> ModelInterfaceMetadata:
+            """Save the TorchModel interface. Torch models are saved
+            as state_dicts as is the standard for PyTorch.
+
+            Args:
+                path (Path):
+                    Base path to save artifacts
+                to_onnx (bool):
+                    Whether to save the model to onnx
+                save_kwargs (ModelSaveKwargs):
+                    Optional kwargs to pass to the various underlying methods. This is a passthrough object meaning
+                    that the kwargs will be passed to the underlying methods as is and are expected to be supported by
+                    the underlying library.
+            """
+    ```
+
+### Nuts and Bolts
+
+The following steps are executed when saving a TorchModel:
+
+### Saving a Model
+
+- The state dict of the model is extracted from `state_dict()` 
+- The sate dict is saved to a `.pt` file using `torch.save`
+- If any user-defined save kwargs are passed using `ModelSaveKwargs`, they are passed to the `torch.save` method as a dictionary.
+
+### Loading a Model
+
+- As a result of the model being saved as a state dict, a user will need to supply the model call as a load kwarg when loading the model.
+- The state dict is loaded from path and then loaded into the model using `load_state_dict()`
+- If any user-defined load kwargs are passed using `ModelLoadKwargs`, they are passed to the `torch.load` method as a dictionary.
+
+```python
+
+class Polynomial3(torch.nn.Module):
+    def __init__(self):
+        """
+        In the constructor we instantiate four parameters and assign them as
+        member parameters.
+        """
+        super().__init__()
+        self.x1 = torch.nn.Parameter(torch.randn(()))
+        self.x2 = torch.nn.Parameter(torch.randn(()))
+
+    def forward(self, x1: torch.Tensor, x2: torch.Tensor):
+        """
+        In the forward function we accept a Tensor of input data and we must return
+        a Tensor of output data. We can use Modules defined in the constructor as
+        well as arbitrary operators on Tensors.
+        """
+        return self.x1 + self.x2 * x1 * x2
+
+model = Polynomial3()
+
+# ... logic to load from registry
+
+# load the model
+modelcard.load(load_kwargs = ModelLoadKwargs(model={"model": model})) #(1)
+```
+
+1. The model object is passed as a load kwarg when loading a `ModelCard's` components

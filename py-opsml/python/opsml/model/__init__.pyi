@@ -846,10 +846,6 @@ class TorchModel(ModelInterface):
                 Optional kwargs to pass to the various underlying methods. This is a passthrough object meaning
                 that the kwargs will be passed to the underlying methods as is and are expected to be supported by
                 the underlying library.
-
-                - model: Kwargs that will be passed to save_model. See save_model for more details.
-                - preprocessor: Kwargs that will be passed to save_preprocessor
-                - onnx: Kwargs that will be passed to save_onnx_model. See convert_onnx_model for more details.
         """
 
 class LightningModel(ModelInterface):

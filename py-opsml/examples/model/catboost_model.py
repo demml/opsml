@@ -11,18 +11,18 @@ from catboost import CatBoostRegressor  # type: ignore
 
 
 # start registries
-reg = CardRegistries()
+registry = CardRegistries()
 
 # create data
 X_train, y_train = cast(
     Tuple[pd.DataFrame, pd.DataFrame], create_fake_data(n_samples=1200)
 )
 
-reg = CatBoostRegressor(n_estimators=5, max_depth=3)
-reg.fit(X_train.to_numpy(), y_train)
+model = CatBoostRegressor(n_estimators=5, max_depth=3)
+model.fit(X_train.to_numpy(), y_train)
 
 model_interface = CatBoostModel(
-    model=reg,
+    model=model,
     sample_data=X_train[0:10],
     task_type=TaskType.Regression,
 )
@@ -31,11 +31,11 @@ model_interface.create_drift_profile(X_train)
 modelcard = ModelCard(interface=model_interface, space="opsml", name="my_model")
 
 # register model
-reg.model.register_card(modelcard)
+registry.model.register_card(modelcard)
 
 
 # load model
-loaded_modelcard: ModelCard = reg.model.load_card(uid=modelcard.uid)
+loaded_modelcard: ModelCard = registry.model.load_card(uid=modelcard.uid)
 loaded_modelcard.load()
 
 assert loaded_modelcard.model is not None
