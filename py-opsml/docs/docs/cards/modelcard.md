@@ -324,7 +324,7 @@ The `ModelInterface` is the primary interface for working with models in `Opsml`
 
 Interface for saving an Sklearn model
 
-**Example**: [`Link`](https://github.com/shipt/opsml/blob/main/examples/sklearn/basic.py)
+**Example**: [`Link`](https://github.com/opsml/py-opsml/examples/model/sklean.py)
 
 
 | Argument     | Description                          |
@@ -389,3 +389,25 @@ Interface for saving an Sklearn model
 ### Nuts and Bolts
 
 The `SklearnModel` and it's associated model and preprocessor are saved using joblib. In addition, depending upon the model type, `OpsML` will extract model-specific metadata from the provided model at the time of registration, which can be viewed in the UI and is associated with the card metadata.
+
+
+## LightGBMModel
+
+Interface for saving a LightGBM Booster model. **Note** - If using a LGBMRegressor or LGBMClassifier, you should use the SklearnModelInterface instead.
+
+
+**Example**: [`Link`](https://github.com/opsml/py-opsml/examples/model/lightgbm_booster.py)
+
+
+| Argument     | Description                          |
+| ----------- | ------------------------------------ |
+| <span class="text-alert">**model**</span>       | Model to associate with interface. This model must be a lightgbm booster  |
+| <span class="text-alert">**preprocessor**</span>       | Optional preprocessor to associate with the model. Preprocessor to associate with the model  |
+| <span class="text-alert">**sample_data**</span>      | Optional ample of data that is fed to the model at inference time |
+| <span class="text-alert">**task_type**</span>    | Optional task type of the model. Defaults to `TaskType.Undefined` |
+| <span class="text-alert">**drift_profile**</span> | Optional `Scouter` drift profile to associated with model. This is a convenience argument if you already created a drift profile. You can also use interface.create_drift_profile(..) to create a drift profile from the model interface. |
+
+
+### Nuts and Bolts
+
+Booster models are saved via `save_model` which exports a `.txt` file. Preprocessors are saved via `joblib`.
