@@ -1,8 +1,12 @@
-from pydantic_ai import Agent, RunContext
+from pydantic_ai import Agent, RunContext, models
 
 from pydantic_ai.models.test import TestModel
 from opsml.potato_head import Prompt, SanitizationConfig, PromptSanitizer
 from dataclasses import dataclass
+import os
+
+models.ALLOW_MODEL_REQUESTS = False
+os.environ["OPENAI_API_KEY"] = "mock_api_key"
 
 
 @dataclass

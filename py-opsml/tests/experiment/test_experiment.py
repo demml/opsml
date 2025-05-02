@@ -68,7 +68,7 @@ def cleanup_fake_directory(save_path: Path):
 
 @pytest.mark.skipif(WINDOWS_EXCLUDE, reason="skipping")
 def test_experimentcard():
-    with OpsmlTestServer():
+    with OpsmlTestServer(cleanup=False):
         cleanup_manually_created_directories()
         with start_experiment(space="test", log_hardware=True) as exp:
             metric1 = Metric(name="test", value=1.0)
