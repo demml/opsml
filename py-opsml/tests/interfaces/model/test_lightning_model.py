@@ -45,8 +45,10 @@ def test_lightning_regression(
     interface.load(
         save_path,
         metadata.save_metadata,
-        onnx=True,
-        load_kwargs=ModelLoadKwargs(model={"model": model}),
+        load_kwargs=ModelLoadKwargs(
+            model={"model": model},
+            load_onnx=True,
+        ),
     )
 
 
@@ -70,6 +72,8 @@ def test_lightning_classification(
     interface.load(
         save_path,
         metadata.save_metadata,
-        onnx=True,
-        load_kwargs=ModelLoadKwargs(model={"model": model}),
+        load_kwargs=ModelLoadKwargs(
+            model={"model": model},
+            load_onnx=True,
+        ),
     )

@@ -30,8 +30,10 @@ def test_pytorch_simple(tmp_path: Path, pytorch_simple: Tuple[torch.nn.Module, d
     interface.load(
         save_path,
         metadata.save_metadata,
-        onnx=True,
-        load_kwargs=ModelLoadKwargs(model={"model": model}),
+        load_kwargs=ModelLoadKwargs(
+            model={"model": model},
+            load_onnx=True,
+        ),
     )
 
     assert interface.onnx_session.session is not None
@@ -60,8 +62,10 @@ def test_pytorch_simple_tuple(
     interface.load(
         save_path,
         metadata.save_metadata,
-        onnx=True,
-        load_kwargs=ModelLoadKwargs(model={"model": model}),
+        load_kwargs=ModelLoadKwargs(
+            model={"model": model},
+            load_onnx=True,
+        ),
     )
 
     assert interface.onnx_session.session is not None

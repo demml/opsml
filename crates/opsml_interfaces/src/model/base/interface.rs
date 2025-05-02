@@ -7,6 +7,7 @@ use crate::types::{FeatureSchema, ProcessorType};
 use crate::OnnxSession;
 use opsml_utils::FileUtils;
 use opsml_utils::PyHelperFuncs;
+use ort::session;
 use scouter_client::{CustomDriftProfile, DriftType, PsiDriftProfile, SpcDriftProfile};
 
 use crate::model::base::utils;
@@ -312,14 +313,20 @@ impl ModelInterface {
     }
 
     #[getter]
-    pub fn get_onnx_session(&self, py: Python) -> PyResult<Option<Py<OnnxSession>>> {
+    pub fn get_onnx_session<'py>(
+        &self,
+        py: Python<'py>,
+    ) -> PyResult<Option<&Bound<'py, OnnxSession>>> {
         // return mutable reference to onnx session
-        Ok(self.onnx_session.as_ref().map(|sess| sess.clone_ref(py)))
+        Ok(self.onnx_session.as_ref().map(|sess| sess.bind(py)))
     }
 
     #[setter]
-    pub fn set_onnx_session(&mut self, onnx_session: Option<Py<OnnxSession>>) {
-        self.onnx_session = onnx_session;
+    pub fn set_onnx_session<'py>(&mut self, onnx_session: Option<Bound<'py, OnnxSession>>) {
+        self.onnx_session = onnx_session.map(|sess| sess.unbind()).or_else(|| {
+            warn!("Failed to set onnx session. Defaulting to None");
+            None
+        });
     }
 
     #[setter]
@@ -530,14 +537,13 @@ impl ModelInterface {
     /// # Returns
     ///
     /// * `PyResult<DataInterfaceMetadata>` - DataInterfaceMetadata
-    #[pyo3(signature = (path, metadata, onnx=false, load_kwargs=None, ))]
+    #[pyo3(signature = (path, metadata, load_kwargs=None, ))]
     #[allow(clippy::too_many_arguments)]
     pub fn load(
         &mut self,
         py: Python,
         path: PathBuf,
         metadata: ModelInterfaceSaveMetadata,
-        onnx: bool,
         load_kwargs: Option<ModelLoadKwargs>,
     ) -> PyResult<()> {
         // if kwargs is not None, unwrap, else default to None
@@ -563,7 +569,7 @@ impl ModelInterface {
             self.load_data(py, &sample_data_path, None)?;
         }
 
-        if onnx {
+        if load_kwargs.load_onnx {
             let onnx_path = path.join(
                 &metadata
                     .onnx_model_uri

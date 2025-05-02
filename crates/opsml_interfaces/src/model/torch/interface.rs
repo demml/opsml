@@ -309,7 +309,7 @@ impl TorchModel {
     /// # Returns
     ///
     /// * `PyResult<DataInterfaceMetadata>` - DataInterfaceMetadata
-    #[pyo3(signature = (path, metadata, onnx=false, load_kwargs=None))]
+    #[pyo3(signature = (path, metadata, load_kwargs=None))]
     #[allow(clippy::too_many_arguments)]
     #[instrument(skip_all)]
     pub fn load(
@@ -317,7 +317,6 @@ impl TorchModel {
         py: Python,
         path: PathBuf,
         metadata: ModelInterfaceSaveMetadata,
-        onnx: bool,
         load_kwargs: Option<ModelLoadKwargs>,
     ) -> PyResult<()> {
         // if kwargs is not None, unwrap, else default to None
@@ -327,7 +326,7 @@ impl TorchModel {
         let model_path = path.join(&metadata.model_uri);
         self_.load_model(py, &model_path, load_kwargs.model_kwargs(py))?;
 
-        if onnx {
+        if load_kwargs.load_onnx {
             debug!("Loading ONNX model");
             let onnx_path = path.join(
                 &metadata

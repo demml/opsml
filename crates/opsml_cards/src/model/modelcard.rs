@@ -7,6 +7,7 @@ use opsml_error::{
     map_err_with_logging,
 };
 use opsml_interfaces::ModelInterface;
+use opsml_interfaces::OnnxSession;
 use opsml_interfaces::{
     CatBoostModel, HuggingFaceModel, LightGBMModel, LightningModel, SklearnModel, TorchModel,
     XGBoostModel,
@@ -205,6 +206,30 @@ impl ModelCard {
             is_card: true,
             opsml_version: opsml_version::version(),
         })
+    }
+
+    #[getter]
+    pub fn get_onnx_session<'py>(
+        &self,
+        py: Python<'py>,
+    ) -> PyResult<Option<Bound<'py, OnnxSession>>> {
+        if let Some(interface) = self.interface.as_ref() {
+            let session = interface
+                .bind(py)
+                .getattr("onnx_session")
+                .map_err(|e| OpsmlError::new_err(e.to_string()))?;
+
+            if session.is_none() {
+                Ok(None)
+            } else {
+                let session = session
+                    .downcast::<OnnxSession>()
+                    .map_err(|e| OpsmlError::new_err(e.to_string()))?;
+                Ok(Some(session.clone()))
+            }
+        } else {
+            Ok(None)
+        }
     }
 
     #[getter]
