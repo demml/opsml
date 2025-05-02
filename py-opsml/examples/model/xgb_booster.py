@@ -43,3 +43,12 @@ model_registry.register_card(modelcard)
 
 # list card
 model_registry.list_cards(uid=modelcard.uid).as_table()
+
+
+# load card
+loaded_modelcard: ModelCard = model_registry.load_card(uid=modelcard.uid)
+
+# load card artifacts
+loaded_modelcard.load()
+
+assert loaded_modelcard.model is not None

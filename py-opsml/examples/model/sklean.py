@@ -81,3 +81,10 @@ modelcard = ModelCard(
 
 # register model
 reg.model.register_card(modelcard)
+
+
+# load model
+loaded_modelcard = reg.model.load_card(uid=modelcard.uid)
+loaded_modelcard.load()
+
+assert loaded_modelcard.model is not None
