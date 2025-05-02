@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Optional, Union
 
 from ..card import DataCard, ExperimentCard, ModelCard, PromptCard
-from ..core import VersionType
+from ..types import VersionType
 from ..data import DataSaveKwargs
 from ..model import ModelSaveKwargs
 

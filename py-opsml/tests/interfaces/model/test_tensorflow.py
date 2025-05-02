@@ -8,7 +8,7 @@ from tempfile import TemporaryDirectory
 from pathlib import Path
 from tensorflow.keras import Input, Model
 from tensorflow.keras.layers import Dense, Concatenate
-from opsml.core import RustyLogger, LoggingConfig, LogLevel
+from opsml.logging import RustyLogger, LoggingConfig, LogLevel
 
 
 # Sets up logging for tests

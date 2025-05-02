@@ -24,6 +24,12 @@ TensorFlowModel = model.TensorFlowModel
 ModelLoadKwargs = model.ModelLoadKwargs
 ModelSaveKwargs = model.ModelSaveKwargs
 
+Feature = model.Feature
+FeatureSchema = model.FeatureSchema
+OnnxSchema = model.OnnxSchema
+ExtraMetadata = model.ExtraMetadata
+
+
 __all__ = [
     "HuggingFaceORTModel",
     "HuggingFaceOnnxArgs",
@@ -46,4 +52,8 @@ __all__ = [
     "TensorFlowModel",
     "ModelLoadKwargs",
     "ModelSaveKwargs",
+    "Feature",
+    "FeatureSchema",
+    "OnnxSchema",
+    "ExtraMetadata",
 ]
