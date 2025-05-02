@@ -3,7 +3,14 @@ import pandas as pd
 from opsml import CardRegistry, RegistryType, LightGBMModel, TaskType, ModelCard
 from opsml.helpers.data import create_fake_data
 from typing import Tuple, cast
+from opsml.logging import RustyLogger, LoggingConfig, LogLevel
 
+
+logger = RustyLogger.get_logger(
+    config=LoggingConfig(log_level=LogLevel.Info),
+)
+
+logger.info("Starting the model card example...")
 model_registry = CardRegistry(registry_type=RegistryType.Model)
 
 
@@ -53,9 +60,17 @@ modelcard = ModelCard(
     name="my_model",
 )
 
-# register ModelCard
+logger.info("Registering the model card...")
 model_registry.register_card(modelcard)
 
 
-# list card
+logger.info("Listing the model card...")
 model_registry.list_cards(uid=modelcard.uid).as_table()
+
+logger.info("Loading the model card...")
+loaded_modelcard: ModelCard = model_registry.load_card(uid=modelcard.uid)
+
+# load card artifacts
+loaded_modelcard.load()
+
+assert loaded_modelcard.model is not None

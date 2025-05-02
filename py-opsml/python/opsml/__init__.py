@@ -4,14 +4,14 @@
 from .opsml import (  # noqa: F401
     card,
     cli,
-    types,
     data,
     experiment,
+    logging,
     model,
     potato_head,
-    logging,
     scouter,
     test,
+    types,
 )
 
 CardRegistry = card.CardRegistry

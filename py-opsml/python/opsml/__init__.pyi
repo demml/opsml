@@ -12,11 +12,6 @@ from .card import ModelCard as ModelCard
 from .card import ModelCardMetadata as ModelCardMetadata
 from .card import PromptCard as PromptCard
 from .card import RegistryType as RegistryType
-from .logging import LoggingConfig as LoggingConfig
-from .logging import RustyLogger as RustyLogger
-from .logging import LogLevel as LogLevel
-from .logging import WriteLevel as WriteLevel
-from .types import VersionType as VersionType
 from .data import ArrowData as ArrowData
 from .data import DataInterface as DataInterface
 from .data import DataLoadKwargs as DataLoadKwargs
@@ -29,6 +24,10 @@ from .data import TorchData as TorchData
 from .experiment import get_experiment_metrics as get_experiment_metrics
 from .experiment import get_experiment_parameters as get_experiment_parameters
 from .experiment import start_experiment as start_experiment
+from .logging import LoggingConfig as LoggingConfig
+from .logging import LogLevel as LogLevel
+from .logging import RustyLogger as RustyLogger
+from .logging import WriteLevel as WriteLevel
 from .model import CatBoostModel as CatBoostModel
 from .model import HuggingFaceModel as HuggingFaceModel
 from .model import HuggingFaceOnnxArgs as HuggingFaceOnnxArgs
@@ -50,3 +49,4 @@ from .model import XGBoostModel as XGBoostModel
 from .potato_head import Message as Message
 from .potato_head import ModelSettings as ModelSettings
 from .potato_head import Prompt as Prompt
+from .types import VersionType as VersionType
