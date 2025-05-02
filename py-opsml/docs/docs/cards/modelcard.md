@@ -342,7 +342,7 @@ model_registry.register_card(
 )
 ```
 
-???success "Py Doc"
+???success "ModelSaveKwargs"
     ```python
     class ModelSaveKwargs:
         def __init__(
@@ -368,10 +368,6 @@ model_registry.register_card(
         def model_validate_json(json_string: str) -> "ModelSaveKwargs": ...
     ```
 
-
-
-
-
 ## SklearnModel
 
 Interface for saving an Sklearn model
@@ -387,7 +383,7 @@ Interface for saving an Sklearn model
 | <span class="text-alert">**task_type**</span>    | Optional task type of the model. Defaults to `TaskType.Undefined` |
 | <span class="text-alert">**drift_profile**</span> | Optional `Scouter` drift profile to associated with model. This is a convenience argument if you already created a drift profile. You can also use interface.create_drift_profile(..) to create a drift profile from the model interface. |
 
-???success "Py Doc"
+???success "SklearnModel"
     ```python
     class SklearnModel(ModelInterface):
     def __init__(
@@ -460,7 +456,7 @@ Interface for saving a LightGBM Booster model. **Note** - If using a LGBMRegress
 | <span class="text-alert">**drift_profile**</span> | Optional `Scouter` drift profile to associated with model. This is a convenience argument if you already created a drift profile. You can also use interface.create_drift_profile(..) to create a drift profile from the model interface. |
 
 
-???success "Py Doc"
+???success "LightGBMModel"
     ```python
     class LightGBMModel(ModelInterface):
     def __init__(
@@ -527,7 +523,7 @@ Interface for saving a XGBoostBooster model. **Note** - If using a XGBRegressor 
 | <span class="text-alert">**task_type**</span>    | Optional task type of the model. Defaults to `TaskType.Undefined` |
 | <span class="text-alert">**drift_profile**</span> | Optional `Scouter` drift profile to associated with model. This is a convenience argument if you already created a drift profile. You can also use interface.create_drift_profile(..) to create a drift profile from the model interface. |
 
-???success "Py Doc"
+???success "XGBoostModel"
     ```python
     class XGBoostModel(ModelInterface):
     def __init__(
@@ -593,7 +589,7 @@ Booster models are saved via `save_model` which exports a `.json` file. Preproce
 | <span class="text-alert">**drift_profile**</span> | Optional `Scouter` drift profile to associated with model. This is a convenience argument if you already created a drift profile. You can also use interface.create_drift_profile(..) to create a drift profile from the model interface. |
 
 
-???success "Py Doc"
+???success "HuggingFaceMode"
     ```python
     class HuggingFaceModel(ModelInterface):
         def __init__(
