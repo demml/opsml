@@ -144,7 +144,7 @@ impl TorchModel {
     }
 
     #[setter]
-    pub fn set_onnx_session<'py>(&mut self, onnx_session: Option<Bound<'py, OnnxSession>>) {
+    pub fn set_onnx_session(&mut self, onnx_session: Option<Bound<'_, OnnxSession>>) {
         self.onnx_session = onnx_session.map(|sess| sess.unbind()).or_else(|| {
             warn!("Failed to set onnx session. Defaulting to None");
             None
