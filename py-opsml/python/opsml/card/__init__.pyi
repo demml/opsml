@@ -16,7 +16,13 @@ from typing import (
 )
 
 from ..data import DataInterface, DataLoadKwargs, DataSaveKwargs, DataType
-from ..model import FeatureSchema, ModelInterface, ModelLoadKwargs, ModelSaveKwargs
+from ..model import (
+    FeatureSchema,
+    ModelInterface,
+    ModelLoadKwargs,
+    ModelSaveKwargs,
+    OnnxSession,
+)
 from ..potato_head import Prompt
 from ..types import VersionType
 
@@ -428,6 +434,14 @@ class ModelCard:
     def model(self) -> Any:
         """Returns the model. This is a special property that is used to
         access the model from the interface. It is not settable. It will also
+        raise an error if the interface is not set or if the model
+        has not been loaded.
+        """
+
+    @property
+    def onnx_session(self) -> Optional[OnnxSession]:
+        """Returns the onnx session. This is a special property that is used to
+        access the onnx session from the interface. It is not settable. It will also
         raise an error if the interface is not set or if the model
         has not been loaded.
         """
