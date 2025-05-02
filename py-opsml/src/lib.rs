@@ -3,6 +3,7 @@ pub mod cli;
 pub mod core;
 pub mod data;
 pub mod experiment;
+pub mod logging;
 pub mod model;
 pub mod potato_head;
 pub mod scouter;
@@ -27,6 +28,9 @@ fn opsml(m: &Bound<'_, PyModule>) -> PyResult<()> {
 
     // types
     m.add_wrapped(wrap_pymodule!(types::types))?;
+
+    // logging
+    m.add_wrapped(wrap_pymodule!(logging::logging))?;
 
     // test
     m.add_wrapped(wrap_pymodule!(test::test))?;

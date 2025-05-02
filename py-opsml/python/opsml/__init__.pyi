@@ -12,8 +12,10 @@ from .card import ModelCard as ModelCard
 from .card import ModelCardMetadata as ModelCardMetadata
 from .card import PromptCard as PromptCard
 from .card import RegistryType as RegistryType
-from .core import LoggingConfig as LoggingConfig
-from .core import RustyLogger as RustyLogger
+from .logging import LoggingConfig as LoggingConfig
+from .logging import RustyLogger as RustyLogger
+from .logging import LogLevel as LogLevel
+from .logging import WriteLevel as WriteLevel
 from .types import VersionType as VersionType
 from .data import ArrowData as ArrowData
 from .data import DataInterface as DataInterface
