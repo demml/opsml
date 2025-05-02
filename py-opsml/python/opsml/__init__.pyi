@@ -14,7 +14,7 @@ from .card import PromptCard as PromptCard
 from .card import RegistryType as RegistryType
 from .core import LoggingConfig as LoggingConfig
 from .core import RustyLogger as RustyLogger
-from .core import VersionType as VersionType
+from .types import VersionType as VersionType
 from .data import ArrowData as ArrowData
 from .data import DataInterface as DataInterface
 from .data import DataLoadKwargs as DataLoadKwargs

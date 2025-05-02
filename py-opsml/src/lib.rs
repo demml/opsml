@@ -7,6 +7,7 @@ pub mod model;
 pub mod potato_head;
 pub mod scouter;
 pub mod test;
+pub mod types;
 
 use pyo3::prelude::*;
 use pyo3::wrap_pymodule;
@@ -23,6 +24,9 @@ fn opsml(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_wrapped(wrap_pymodule!(model::model))?;
     m.add_wrapped(wrap_pymodule!(card::card))?;
     m.add_wrapped(wrap_pymodule!(experiment::experiment))?;
+
+    // types
+    m.add_wrapped(wrap_pymodule!(types::types))?;
 
     // test
     m.add_wrapped(wrap_pymodule!(test::test))?;
