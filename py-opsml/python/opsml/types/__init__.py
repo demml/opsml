@@ -1,12 +1,12 @@
 # type: ignore
 
-from .. import core
+from .. import types
 
-CommonKwargs = core.CommonKwargs
-SaveName = core.SaveName
-SaverPath = core.SaverPath
-Suffix = core.Suffix
-VersionType = core.VersionType
+CommonKwargs = types.CommonKwargs
+SaveName = types.SaveName
+SaverPath = types.SaverPath
+Suffix = types.Suffix
+VersionType = types.VersionType
 
 
 __all__ = [
