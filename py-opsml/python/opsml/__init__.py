@@ -4,7 +4,7 @@
 from .opsml import (  # noqa: F401
     card,
     cli,
-    core,
+    types,
     data,
     experiment,
     model,
@@ -62,7 +62,7 @@ get_experiment_parameters = experiment.get_experiment_parameters
 # core
 RustyLogger = core.RustyLogger
 LoggingConfig = core.LoggingConfig
-VersionType = core.VersionType
+VersionType = types.VersionType
 
 # Potato Head
 PromptCard = card.PromptCard
