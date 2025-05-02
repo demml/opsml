@@ -8,6 +8,7 @@ from opsml import (  # type: ignore
     TaskType,
     DataCard,
     ModelCard,
+    ModelLoadKwargs,
 )
 
 from opsml.data import DataSplit, StartStopSplit
@@ -77,6 +78,7 @@ modelcard = ModelCard(
     name="my_model",
     tags=["foo:bar", "baz:qux"],
     datacard_uid=datacard.uid,
+    to_onnx=True,
 )
 
 # register model
@@ -85,6 +87,7 @@ reg.model.register_card(modelcard)
 
 # load model
 loaded_modelcard = reg.model.load_card(uid=modelcard.uid)
-loaded_modelcard.load()
+loaded_modelcard.load(load_kwargs=ModelLoadKwargs(load_onnx=True))
 
 assert loaded_modelcard.model is not None
+assert loaded_modelcard.onnx_session is not None

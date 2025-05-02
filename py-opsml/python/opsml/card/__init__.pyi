@@ -552,7 +552,6 @@ class ModelCard:
     def load(
         self,
         path: Optional[Path] = None,
-        onnx: bool = False,
         load_kwargs: None | ModelLoadKwargs = None,
     ) -> None:
         """Load ModelCard interface components
@@ -561,9 +560,6 @@ class ModelCard:
             path (Path | None):
                 The path to load the data card from. If no path is provided,
                 the model interface will be loaded from the server.
-            onnx (bool):
-                Whether to load the model as onnx or not.
-                Only available for models that have been converted to onnx.
             load_kwargs (ModelLoadKwargs):
                 Optional kwargs to pass to `ModelInterface` load method.
         """

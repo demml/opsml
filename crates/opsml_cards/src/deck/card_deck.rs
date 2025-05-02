@@ -657,14 +657,11 @@ impl CardDeck {
         let mut card_obj =
             ModelCard::model_validate_json(py, card_json.to_string(), interface.as_ref())?;
         let kwargs = load_kwargs.and_then(|kwargs| kwargs.extract::<ModelLoadKwargs>().ok());
-        let onnx = kwargs.as_ref().map(|k| k.load_onnx).unwrap_or(false);
 
-        card_obj
-            .load(py, Some(card_path), onnx, kwargs)
-            .map_err(|e| {
-                error!("Failed to load card: {}", e);
-                OpsmlError::new_err(e.to_string())
-            })?;
+        card_obj.load(py, Some(card_path), kwargs).map_err(|e| {
+            error!("Failed to load card: {}", e);
+            OpsmlError::new_err(e.to_string())
+        })?;
 
         card_obj.into_py_any(py).map_err(|e| {
             error!("Failed to convert card to PyAny: {}", e);

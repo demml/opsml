@@ -436,9 +436,12 @@ impl HuggingFaceModel {
     }
 
     #[getter]
-    pub fn get_onnx_session(&self, py: Python) -> PyResult<Option<Py<OnnxSession>>> {
+    pub fn get_onnx_session<'py>(
+        &self,
+        py: Python<'py>,
+    ) -> PyResult<Option<&Bound<'py, OnnxSession>>> {
         // return mutable reference to onnx session
-        Ok(self.onnx_session.as_ref().map(|sess| sess.clone_ref(py)))
+        Ok(self.onnx_session.as_ref().map(|sess| sess.bind(py)))
     }
 
     #[getter]
@@ -520,7 +523,7 @@ impl HuggingFaceModel {
         };
 
         let onnx_session = {
-            self_.as_super().onnx_session.as_ref().map(|sess| {
+            self_.onnx_session.as_ref().map(|sess| {
                 let sess = sess.bind(py);
                 // extract OnnxSession from py object
                 sess.extract::<OnnxSession>().unwrap()

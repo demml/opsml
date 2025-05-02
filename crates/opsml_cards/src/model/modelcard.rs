@@ -324,13 +324,12 @@ impl ModelCard {
         Ok(())
     }
 
-    #[pyo3(signature = (path=None, onnx=false, load_kwargs=None))]
+    #[pyo3(signature = (path=None, load_kwargs=None))]
     #[allow(clippy::too_many_arguments)]
     pub fn load(
         &mut self,
         py: Python,
         path: Option<PathBuf>,
-        onnx: bool,
         load_kwargs: Option<ModelLoadKwargs>,
     ) -> PyResult<()> {
         let path = if let Some(p) = path {
@@ -352,7 +351,7 @@ impl ModelCard {
         // load model interface
         self.interface.as_ref().unwrap().bind(py).call_method(
             "load",
-            (path, save_metadata, onnx, load_kwargs),
+            (path, save_metadata, load_kwargs),
             None,
         )?;
 
