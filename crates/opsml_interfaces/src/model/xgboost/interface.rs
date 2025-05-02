@@ -286,14 +286,13 @@ impl XGBoostModel {
     /// # Returns
     ///
     /// * `PyResult<DataInterfaceMetadata>` - DataInterfaceMetadata
-    #[pyo3(signature = (path, metadata, onnx=false, load_kwargs=None))]
+    #[pyo3(signature = (path, metadata, load_kwargs=None))]
     #[allow(clippy::too_many_arguments)]
     pub fn load(
         mut self_: PyRefMut<'_, Self>,
         py: Python,
         path: PathBuf,
         metadata: ModelInterfaceSaveMetadata,
-        onnx: bool,
         load_kwargs: Option<ModelLoadKwargs>,
     ) -> PyResult<()> {
         // if kwargs is not None, unwrap, else default to None
@@ -320,7 +319,7 @@ impl XGBoostModel {
         {
             let parent = self_.as_super();
 
-            if onnx {
+            if load_kwargs.load_onnx {
                 let onnx_path =
                     path.join(&metadata.onnx_model_uri.ok_or_else(|| {
                         OpsmlError::new_err("ONNX model URI not found in metadata")
