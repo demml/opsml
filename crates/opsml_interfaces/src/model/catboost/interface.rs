@@ -37,7 +37,6 @@ impl CatBoostModel {
         preprocessor: Option<&Bound<'py, PyAny>>,
         sample_data: Option<&Bound<'py, PyAny>>,
         task_type: Option<TaskType>,
-
         drift_profile: Option<&Bound<'py, PyAny>>,
     ) -> PyResult<(Self, ModelInterface)> {
         let mut model_name = CommonKwargs::Undefined.to_string();
