@@ -368,7 +368,7 @@ class TaskType:
     TimeSeriesVideo: "TaskType"
     TimeSeriesGraph: "TaskType"
     TimeSeriesTabular: "TaskType"
-    Other: "TaskType"
+    Undefined: "TaskType"
 
 class OnnxSession:
     @property
@@ -427,7 +427,7 @@ class ModelInterfaceMetadata:
     def __init__(
         self,
         save_metadata: ModelInterfaceSaveMetadata,
-        task_type: TaskType = TaskType.Other,
+        task_type: TaskType = TaskType.Undefined,
         model_type: ModelType = ModelType.Unknown,
         data_type: DataType = DataType.NotProvided,
         schema: FeatureSchema = FeatureSchema(),
@@ -628,7 +628,6 @@ class ModelInterface:
         self,
         path: Path,
         metadata: ModelInterfaceSaveMetadata,
-        onnx: bool = False,
         load_kwargs: None | ModelLoadKwargs = None,
     ) -> None:
         """Load ModelInterface components
@@ -638,8 +637,6 @@ class ModelInterface:
                 Path to load the model
             metadata (ModelInterfaceSaveMetadata):
                 Metadata to use to load the model
-            onnx (bool):
-                Whether to load the onnx model
             load_kwargs (ModelLoadKwargs):
                 Optional load kwargs to pass to the different load methods
         """

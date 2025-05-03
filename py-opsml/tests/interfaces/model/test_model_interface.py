@@ -40,7 +40,7 @@ def test_model_interface_sample_data_numpy(numpy_array: NDArray[np.float64]):
     assert model_interface.sample_data.data.shape == (1, 100)
     assert id(model_interface.sample_data) == id(data_interface)
 
-    assert model_interface.task_type == TaskType.Other
+    assert model_interface.task_type == TaskType.Undefined
     assert model_interface.data_type == DataType.Numpy
 
 
@@ -75,7 +75,7 @@ def test_model_interface_sample_data_pandas(pandas_dataframe_num: pd.DataFrame):
     assert model_interface.sample_data.data.shape == (1, 100)
     assert id(model_interface.sample_data) == id(data_interface)
 
-    assert model_interface.task_type == TaskType.Other
+    assert model_interface.task_type == TaskType.Undefined
     assert model_interface.data_type == DataType.Pandas
 
 
@@ -110,7 +110,7 @@ def test_model_interface_sample_data_polars(polars_dataframe_num: pl.DataFrame):
     assert model_interface.sample_data.data.shape == (1, 100)
     assert id(model_interface.sample_data) == id(data_interface)
 
-    assert model_interface.task_type == TaskType.Other
+    assert model_interface.task_type == TaskType.Undefined
     assert model_interface.data_type == DataType.Polars
 
 
@@ -145,7 +145,7 @@ def test_model_interface_sample_data_arrow(arrow_num: pa.Table):
     assert model_interface.sample_data.data.shape == (1, 100)
     assert id(model_interface.sample_data) == id(data_interface)
 
-    assert model_interface.task_type == TaskType.Other
+    assert model_interface.task_type == TaskType.Undefined
     assert model_interface.data_type == DataType.Arrow
 
 
@@ -180,7 +180,7 @@ def test_model_interface_sample_data_torch(torch_tensor: torch.Tensor):
     assert model_interface.sample_data.data.shape == (1, 3)
     assert id(model_interface.sample_data) == id(data_interface)
 
-    assert model_interface.task_type == TaskType.Other
+    assert model_interface.task_type == TaskType.Undefined
     assert model_interface.data_type == DataType.TorchTensor
 
 
@@ -205,7 +205,7 @@ def test_model_interface_sample_data_list(numpy_list: List[NDArray[np.float64]])
     for data in model_interface.sample_data:
         assert data.shape == (1, 3)
 
-    assert model_interface.task_type == TaskType.Other
+    assert model_interface.task_type == TaskType.Undefined
     assert model_interface.data_type == DataType.List
 
 
@@ -230,7 +230,7 @@ def test_model_interface_sample_data_tuple(numpy_tuple: tuple[NDArray[np.float64
     for data in model_interface.sample_data:
         assert data.shape == (1, 3)
 
-    assert model_interface.task_type == TaskType.Other
+    assert model_interface.task_type == TaskType.Undefined
     assert model_interface.data_type == DataType.Tuple
 
 
@@ -255,5 +255,5 @@ def test_model_interface_sample_data_dict(numpy_dict: Dict[str, NDArray[np.float
     for _, data in model_interface.sample_data.items():
         assert data.shape == (1, 3)
 
-    assert model_interface.task_type == TaskType.Other
+    assert model_interface.task_type == TaskType.Undefined
     assert model_interface.data_type == DataType.Dict

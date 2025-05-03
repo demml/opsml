@@ -5,6 +5,7 @@ from .opsml import (  # noqa: F401
     card,
     cli,
     data,
+    error,
     experiment,
     logging,
     model,
@@ -12,7 +13,6 @@ from .opsml import (  # noqa: F401
     scouter,
     test,
     types,
-    error,
 )
 
 CardRegistry = card.CardRegistry
