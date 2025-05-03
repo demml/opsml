@@ -493,7 +493,13 @@ impl ModelCard {
 
     fn load_interface(&mut self, py: Python, interface: Option<&Bound<'_, PyAny>>) -> PyResult<()> {
         if let Some(interface) = interface {
-            self.set_interface(interface)
+            // this for custom interfaces (uninstantiated)
+
+            let interface = interface
+                .call_method1("from_metadata", (self.metadata.interface_metadata.clone(),))
+                .map_err(|e| OpsmlError::new_err(e.to_string()))?;
+
+            self.set_interface(&interface)
         } else {
             // match interface type
             let interface = interface_from_metadata(py, &self.metadata.interface_metadata)?;
