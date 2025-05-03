@@ -1508,3 +1508,189 @@ Interface for saving a TensorFlow model
 ### Nuts and Bolts
 
 The model is saved using the preferred **keras** format via `model.save`. Loading is done through `tensorflow.keras.models` `load_model` method. If a user provides a custom load kwarg, it is passed to the `load_model` method as a dictionary
+
+
+## CustomModel
+
+While the above interfaces cover the most common use cases, there are times where you may want to create your own custom model interface. By design, the `ModelInterface` can be subclassed in cases where a more flexible implementation is needed. However to make sure all other components work nicely together, you will need to implement the following:
+
+
+### Custom Save 
+
+- **save**: This method is called when saving the model. It should save the model and any other artifacts to the specified path. The method should return a `ModelInterfaceMetadata` object.
+
+| Argument     | Description                          |
+| ----------- | ------------------------------------ |
+| <span class="text-alert">**path**</span>       | The base path to save artifacts to. **note** - this is typically injected at the time of saving. See the below example for how it should be used |
+| <span class="text-alert">**save_kwargs**</span>       | Optional ModelSaveKwargs to use when saving the model |
+
+
+```python
+class CustomInterface(ModelInterface): #(1)
+    def save( #(2)
+        self,
+        path: Path, 
+        save_kwargs: ModelSaveKwargs | None = None,
+    ) -> ModelInterfaceMetadata:
+
+        model_save_path = Path("model").with_suffix(".joblib") #(3)
+
+        joblib.dump(self.model, path / model_save_path) #(4)
+
+        save_metadata = ModelInterfaceSaveMetadata(model_uri=model_save_path)  #(5)
+
+
+        return ModelInterfaceMetadata( #(5)
+            task_type=self.task_type,
+            model_type=self.model_type,
+            data_type=self.data_type,
+            save_metadata=save_metadata,
+            extra_metadata={"foo": "bar"},
+        )
+```
+
+1. The class must inherit from `ModelInterface`. This is the base class for all model interfaces.
+2. The `save` method arguments cannot be changed. These are standardized across all interfaces and are used internally within the Rust runtime.
+3. The `model_save_path` is the path to save the model to relative to the base path. This will be joined with the base path when saving and loading the model.
+4. The model is saved using `joblib.dump` to the specified path. This is where you would save your model and any other artifacts.
+5. `ModelInterfaceSaveMetadata` is a core component for storing artifact uris and extra metadata. It is **required** as it is used internally to load artifacts.
+6. The `ModelInterfaceMetadata` is returned from the save method. This is **required**.
+
+???success "DataProcessor"
+    ```python
+    class DataProcessor:
+        """Generic class that holds uri information for data preprocessors and postprocessors"""
+
+        name: str
+        uri: Path
+
+        def __str__(self): ...
+    ```
+
+???success "ModelInterfaceSaveMetadata"
+    ```python
+    class ModelInterfaceSaveMetadata:
+        model_uri: Path
+        data_processor_map: Dict[str, DataProcessor]
+        sample_data_uri: Path
+        onnx_model_uri: Optional[Path]
+        drift_profile_uri: Optional[Path]
+        extra: Optional[ExtraMetadata]
+        save_kwargs: Optional[ModelSaveKwargs]
+
+        def __init__(
+            self,
+            model_uri: Path,
+            data_processor_map: Optional[Dict[str, DataProcessor]] = {},  # type: ignore
+            sample_data_uri: Optional[Path] = None,
+            onnx_model_uri: Optional[Path] = None,
+            drift_profile_uri: Optional[Path] = None,
+            extra: Optional[ExtraMetadata] = None,
+            save_kwargs: Optional[ModelSaveKwargs] = None,
+        ) -> None:
+            """Define model interface save arguments
+
+            Args:
+                model_uri:
+                    Path to the model
+                data_processor_map:
+                    Dictionary of data processors
+                sample_data_uri:
+                    Path to the sample data
+                onnx_model_uri:
+                    Path to the onnx model
+                drift_profile_uri:
+                    Path to the drift profile
+                extra_metadata:
+                    Extra metadata
+                save_kwargs:
+                    Optional save args
+            """
+
+        def __str__(self): ...
+        def model_dump_json(self) -> str: ...
+    ```
+
+???success "ModelInterfaceMetadata"
+    ```python
+    class ModelInterfaceMetadata:
+        task_type: TaskType
+        model_type: ModelType
+        data_type: DataType
+        onnx_session: Optional[OnnxSession]
+        schema: FeatureSchema
+        save_metadata: ModelInterfaceSaveMetadata
+        extra_metadata: dict[str, str]
+
+        def __init__(
+            self,
+            save_metadata: ModelInterfaceSaveMetadata,
+            task_type: TaskType = TaskType.Undefined,
+            model_type: ModelType = ModelType.Unknown,
+            data_type: DataType = DataType.NotProvided,
+            schema: FeatureSchema = FeatureSchema(),
+            onnx_session: Optional[OnnxSession] = None,
+            extra_metadata: dict[str, str] = {},
+        ) -> None:
+            """Define a model interface
+
+            Args:
+                task_type:
+                    Task type
+                model_type:
+                    Model type
+                data_type:
+                    Data type
+                onnx_session:
+                    Onnx session
+                schema:
+                    Feature schema
+                data_type:
+                    Sample data type
+                save_metadata:
+                    Save metadata
+                extra_metadata:
+                    Extra metadata. Must be a dictionary of strings
+            """
+
+        def __str__(self) -> str:
+            """Return the string representation of the model interface metadata"""
+
+        def model_dump_json(self) -> str:
+            """Dump the model interface metadata to json"""
+
+        @staticmethod
+        def model_validate_json(json_string: str) -> "ModelInterfaceMetadata":
+            """Validate the model interface metadata json"""
+    ```
+
+### Custom Load
+
+To load a custom model, you will need to implement the `load` method. This method is called when loading the model. It should load the model and any other artifacts from the specified path. The method.
+
+- **load**: This method is called when loading the model
+
+| Argument     | Description                          |
+| ----------- | ------------------------------------ |
+| <span class="text-alert">**path**</span>       | The base path to load artifacts from. **note** - this is typically injected at the time of loading. See the below example for how it should be used |
+| <span class="text-alert">**metadata**</span>       | `ModelInterfaceSaveMetadata`. This will be injected by Opsml when the card is loaded from a registry  |
+| <span class="text-alert">**load_kwargs**</span>       | Optional `ModelLoadKwargs`. Additional load kwargs used to load a model and it's artifacts |
+
+```python
+class CustomInterface(ModelInterface):
+    def load(
+        self,
+        path: Path,
+        metadata: ModelInterfaceSaveMetadata,
+        load_kwargs: ModelLoadKwargs | None = None,
+    ) -> None:
+        model_path = path / metadata.model_uri #(1)
+        self.model = joblib.load(model_path) #(2)
+```
+
+1. We use the `metadata` object to get the model path or any other path to an artifact. It is then joined with the base path to load the model.
+2. The model is loaded using `joblib.load` and assigned to the model property of the interface. This is where you would load your model and any other artifacts.
+
+### Loading from a Registry
+
+To load a custom interface from the registry, you will need to supply the python definition of the interface class to the `load_card` method. This is important to keep in mind for reproducibility and sharing. Another user will not be able to use your interface unless they have the same class definition.

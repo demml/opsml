@@ -29,6 +29,8 @@ FeatureSchema = model.FeatureSchema
 OnnxSchema = model.OnnxSchema
 ExtraMetadata = model.ExtraMetadata
 
+ProcessorType = model.ProcessorType
+
 
 __all__ = [
     "HuggingFaceORTModel",
@@ -56,4 +58,5 @@ __all__ = [
     "FeatureSchema",
     "OnnxSchema",
     "ExtraMetadata",
+    "ProcessorType",
 ]

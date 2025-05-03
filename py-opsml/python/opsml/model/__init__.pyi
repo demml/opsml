@@ -19,6 +19,12 @@ DriftProfileType = Union[
     SpcDriftProfile | PsiDriftProfile | CustomDriftProfile,
 ]
 
+class ProcessorType:
+    Preprocessor: "ProcessorType"
+    Tokenizer: "ProcessorType"
+    FeatureExtractor: "ProcessorType"
+    ImageProcessor: "ProcessorType"
+
 class ExtraMetadata:
     metadata: Dict[str, Any]
 
@@ -281,8 +287,21 @@ class HuggingFaceOnnxArgs:
         """
 
 class DataProcessor:
+    """Generic class that holds uri information for data preprocessors and postprocessors"""
+
     name: str
     uri: Path
+    type: ProcessorType
+
+    def __init__(self, name: str, uri: Path) -> None:
+        """Define a data processor
+
+        Args:
+            name:
+                Name of the data processor
+            uri:
+                Path to the data processor
+        """
 
     def __str__(self): ...
 
