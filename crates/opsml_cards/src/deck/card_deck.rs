@@ -340,21 +340,13 @@ impl CardDeck {
                     bound.call_method1("load", (Option::<PathBuf>::None, kwargs))?;
                 }
                 RegistryType::Model => {
-                    let (load_onnx, kwargs) = match load_kwargs
+                    let kwargs = load_kwargs
                         .as_ref()
                         .and_then(|kwargs| kwargs.get(alias))
                         .map(|kwargs| kwargs.extract::<ModelLoadKwargs>())
-                        .transpose()?
-                    {
-                        Some(model_kwargs) => {
-                            let load_onnx = model_kwargs.load_onnx;
-                            let kwargs = Some(model_kwargs);
-                            (load_onnx, kwargs)
-                        }
-                        None => (false, None),
-                    };
+                        .transpose()?;
 
-                    bound.call_method1("load", (Option::<PathBuf>::None, load_onnx, kwargs))?;
+                    bound.call_method1("load", (Option::<PathBuf>::None, kwargs))?;
                 }
                 _ => {}
             }

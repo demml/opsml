@@ -5,6 +5,7 @@ from opsml import (  # type: ignore
     DataCard,
     PromptCard,
     Prompt,
+    ModelLoadKwargs,
 )
 from opsml.test import OpsmlServerContext
 from opsml.card import RegistryMode, CardList  # type: ignore
@@ -179,7 +180,9 @@ def crud_modelcard(random_forest_classifier: SklearnModel, datacard: DataCard):
     loaded_card: ModelCard = reg.load_card(uid=card.uid)
 
     # load all artifacts
-    loaded_card.load(onnx=True)
+    loaded_card.load(
+        load_kwargs=ModelLoadKwargs(load_onnx=True),
+    )
 
     assert loaded_card.name == card.name
     assert loaded_card.space == card.space
