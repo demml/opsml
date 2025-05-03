@@ -590,7 +590,6 @@ The `ModelInterface` is the primary interface for working with models in `Opsml`
             self,
             path: Path,
             metadata: ModelInterfaceSaveMetadata,
-            onnx: bool = False,
             load_kwargs: None | ModelLoadKwargs = None,
         ) -> None:
             """Load ModelInterface components
@@ -600,8 +599,6 @@ The `ModelInterface` is the primary interface for working with models in `Opsml`
                     Path to load the model
                 metadata (ModelInterfaceSaveMetadata):
                     Metadata to use to load the model
-                onnx (bool):
-                    Whether to load the onnx model
                 load_kwargs (ModelLoadKwargs):
                     Optional load kwargs to pass to the different load methods
             """
@@ -1198,9 +1195,7 @@ Interface for saving a CatBoost model
         @property
         def preprocessor_name(self) -> Optional[str]:
             """Returns the preprocessor name"""
-
     ```
-
 
 ### Nuts and Bolts
 
@@ -1302,7 +1297,7 @@ The following steps are executed when saving a TorchModel:
 ### Loading a Model
 
 - As a result of the model being saved as a state dict, a user will need to supply the model call as a load kwarg when loading the model.
-- The state dict is loaded from path and then loaded into the model using `load_state_dict()`
+- The state dict is loaded from path and then loaded into the model using Torch's `load_state_dict()` method.
 - If any user-defined load kwargs are passed using `ModelLoadKwargs`, they are passed to the `torch.load` method as a dictionary.
 
 ```python
@@ -1334,3 +1329,113 @@ modelcard.load(load_kwargs = ModelLoadKwargs(model={"model": model})) #(1)
 ```
 
 1. The model object is passed as a load kwarg when loading a `ModelCard's` components
+
+
+## LightningModel
+
+Interface for saving a Lightning model
+
+**Example**: [`Link`](https://github.com/opsml/py-opsml/examples/model/lightning_model.py)
+
+
+| Argument     | Description                          |
+| ----------- | ------------------------------------ |
+| <span class="text-alert">**trainer**</span>       | A model trainer to associate with interface. This model must be of type `lightning.Trainer`  |
+| <span class="text-alert">**preprocessor**</span>       | Optional preprocessor to associate with the model |
+| <span class="text-alert">**sample_data**</span>      | Optional ample of data that is fed to the model at inference time |
+| <span class="text-alert">**task_type**</span>    | Optional task type of the model. Defaults to `TaskType.Undefined` |
+| <span class="text-alert">**drift_profile**</span> | Optional `Scouter` drift profile to associated with model. This is a convenience argument if you already created a drift profile. You can also use interface.create_drift_profile(..) to create a drift profile from the model interface. |
+
+
+???success "LightningModel"
+    ```python
+    class LightningModel(ModelInterface):
+        def __init__(
+            self,
+            trainer: Optional[Any] = None,
+            preprocessor: Optional[Any] = None,
+            sample_data: Optional[Any] = None,
+            task_type: Optional[TaskType] = None,
+            drift_profile: Optional[DriftProfileType] = None,
+        ) -> None:
+            """Interface for saving PyTorch Lightning models
+
+            Args:
+                trainer:
+                    Pytorch lightning trainer to associate with interface.
+                preprocessor:
+                    Preprocessor to associate with model.
+                sample_data:
+                    Sample data to use to convert to ONNX and make sample predictions. This data must be a
+                    pytorch-supported type. TorchData interface, torch tensor, torch dataset, Dict[str, torch.Tensor],
+                    List[torch.Tensor], Tuple[torch.Tensor].
+                task_type:
+                    The intended task type of the model.
+                drift_profile:
+                    Drift profile to use. Can be a list of SpcDriftProfile, PsiDriftProfile or CustomDriftProfile
+            """
+
+        @property
+        def trainer(self) -> None:
+            """Returns the trainer"""
+
+        @trainer.setter
+        def trainer(self, trainer: Any) -> None:
+            """Sets the trainer"""
+
+        @property
+        def preprocessor(self) -> Optional[Any]:
+            """Returns the preprocessor"""
+
+        @preprocessor.setter
+        def preprocessor(self, preprocessor: Any) -> None:
+            """Sets the preprocessor
+
+            Args:
+                preprocessor:
+                    Preprocessor to associate with the model. This preprocessor must be from the
+                    scikit-learn ecosystem
+            """
+
+        @property
+        def preprocessor_name(self) -> Optional[str]:
+            """Returns the preprocessor name"""
+
+        def save(
+            self,
+            path: Path,
+            to_onnx: bool = False,
+            save_kwargs: None | ModelSaveKwargs = None,
+        ) -> ModelInterfaceMetadata:
+            """Save the LightningModel interface. Lightning models are saved via checkpoints.
+
+            Args:
+                path (Path):
+                    Base path to save artifacts
+                to_onnx (bool):
+                    Whether to save the model to onnx
+                save_kwargs (ModelSaveKwargs):
+                    Optional kwargs to pass to the various underlying methods. This is a passthrough object meaning
+                    that the kwargs will be passed to the underlying methods as is and are expected to be supported by
+                    the underlying library.
+
+                    - model: Kwargs that will be passed to save_model. See save_model for more details.
+                    - preprocessor: Kwargs that will be passed to save_preprocessor
+                    - onnx: Kwargs that will be passed to save_onnx_model. See convert_onnx_model for more details.
+            """
+    ```
+
+### Nuts and Bolts
+
+The following steps are executed when saving a LightningModel:
+
+### Saving a Model
+
+- Lightning models are saved via checkpoints and the `save_checkpoint` method, which exports a `.ckpt` file. Thus, make sure the trainer is stopped at the appropriate checkpoint, or reverted to your preferred checkpoint prior to saving.
+
+### Loading a Model
+
+- When loading a LightningModel, the model is loaded from the saved `Trainer` checkpoint.
+- Similar to `TorchModel`, an instantiated model object is required to be passed as a load kwarg
+- The saved checkpoint is then loaded into the model using the `load_from_checkpoint` method including any additional kwargs that are passed via `ModelLoadKwargs`.
+- The model can then be accessed via the `model` property of `LightningModel`.
