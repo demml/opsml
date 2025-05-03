@@ -12,6 +12,7 @@ from .opsml import (  # noqa: F401
     scouter,
     test,
     types,
+    error,
 )
 
 CardRegistry = card.CardRegistry

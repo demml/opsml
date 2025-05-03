@@ -1,4 +1,4 @@
-from opsml.model import SklearnModel, ModelSaveKwargs
+from opsml.model import SklearnModel, ModelSaveKwargs, ModelLoadKwargs
 from pathlib import Path
 
 
@@ -18,7 +18,11 @@ def test_save_model_interface(tmp_path: Path, random_forest_classifier: SklearnM
     interface.preprocessor = None
     assert interface.preprocessor is None
 
-    interface.load(save_path, metadata.save_metadata, onnx=True)
+    interface.load(
+        save_path,
+        metadata.save_metadata,
+        load_kwargs=ModelLoadKwargs(load_onnx=True),
+    )
 
     assert interface.model is not None
     assert interface.preprocessor is not None
@@ -41,7 +45,11 @@ def test_save_model_interface_with_args(
     assert interface.model is None
 
     # load model
-    interface.load(save_path, metadata.save_metadata, onnx=True)
+    interface.load(
+        save_path,
+        metadata.save_metadata,
+        load_kwargs=ModelLoadKwargs(load_onnx=True),
+    )
 
     assert interface.model is not None
 
