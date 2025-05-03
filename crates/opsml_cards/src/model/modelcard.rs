@@ -6,12 +6,12 @@ use opsml_error::{
     error::{CardError, OpsmlError},
     map_err_with_logging,
 };
-use opsml_interfaces::ModelInterface;
 use opsml_interfaces::OnnxSession;
 use opsml_interfaces::{
     CatBoostModel, HuggingFaceModel, LightGBMModel, LightningModel, SklearnModel, TorchModel,
     XGBoostModel,
 };
+use opsml_interfaces::{ModelInterface, TensorFlowModel};
 use opsml_interfaces::{ModelInterfaceMetadata, ModelLoadKwargs, ModelSaveKwargs};
 use opsml_storage::storage_client;
 use opsml_types::contracts::{ArtifactKey, CardRecord, ModelCardClientRecord};
@@ -44,6 +44,7 @@ fn interface_from_metadata<'py>(
         ModelInterfaceType::Torch => TorchModel::from_metadata(py, metadata),
         ModelInterfaceType::Lightning => LightningModel::from_metadata(py, metadata),
         ModelInterfaceType::HuggingFace => HuggingFaceModel::from_metadata(py, metadata),
+        ModelInterfaceType::TensorFlow => TensorFlowModel::from_metadata(py, metadata),
 
         _ => {
             error!("Interface type not found");

@@ -1439,3 +1439,72 @@ The following steps are executed when saving a LightningModel:
 - Similar to `TorchModel`, an instantiated model object is required to be passed as a load kwarg
 - The saved checkpoint is then loaded into the model using the `load_from_checkpoint` method including any additional kwargs that are passed via `ModelLoadKwargs`.
 - The model can then be accessed via the `model` property of `LightningModel`.
+
+
+## TensorFlowModel
+
+Interface for saving a TensorFlow model
+
+
+**Example**: [`Link`](https://github.com/opsml/py-opsml/examples/model/tensorflow_model.py)
+
+
+| Argument     | Description                          |
+| ----------- | ------------------------------------ |
+| <span class="text-alert">**model**</span>       | Model to associate with interface. This model must be of type `tensorflow.keras.Model`  |
+| <span class="text-alert">**preprocessor**</span>       | Optional preprocessor to associate with the model |
+| <span class="text-alert">**sample_data**</span>      | Optional ample of data that is fed to the model at inference time |
+| <span class="text-alert">**task_type**</span>    | Optional task type of the model. Defaults to `TaskType.Undefined` |
+| <span class="text-alert">**drift_profile**</span> | Optional `Scouter` drift profile to associated with model. This is a convenience argument if you already created a drift profile. You can also use interface.create_drift_profile(..) to create a drift profile from the model interface. |
+
+
+???success "TensorFlowModel"
+    ```python
+    class TensorFlowModel(ModelInterface):
+        def __init__(
+            self,
+            model: Optional[Any] = None,
+            preprocessor: Optional[Any] = None,
+            sample_data: Optional[Any] = None,
+            task_type: Optional[TaskType] = None,
+            schema: Optional[FeatureSchema] = None,
+            drift_profile: Optional[DriftProfileType] = None,
+        ) -> None:
+            """Interface for saving PyTorch models
+
+            Args:
+                model:
+                    Model to associate with interface. This model must inherit from tensorflow.keras.Model
+                preprocessor:
+                    Preprocessor to associate with model.
+                sample_data:
+                    Sample data to use to convert to ONNX and make sample predictions. This data must be a
+                    tensorflow-supported type. numpy array, tf.Tensor, torch dataset, Dict[str, tf.Tensor],
+                    List[tf.Tensor], Tuple[tf.Tensor].
+                task_type:
+                    The intended task type of the model.
+                drift_profile:
+                    Drift profile to use. Can be a list of SpcDriftProfile, PsiDriftProfile or CustomDriftProfile
+            """
+
+        @property
+        def preprocessor(self) -> Optional[Any]:
+            """Returns the preprocessor"""
+
+        @preprocessor.setter
+        def preprocessor(self, preprocessor: Any) -> None:
+            """Sets the preprocessor
+
+            Args:
+                preprocessor:
+                    Preprocessor to associate with the model
+            """
+
+        @property
+        def preprocessor_name(self) -> Optional[str]:
+            """Returns the preprocessor name"""
+    ```
+
+### Nuts and Bolts
+
+The model is saved using the preferred **keras** format via `model.save`. Loading is done through `tensorflow.keras.models` `load_model` method. If a user provides a custom load kwarg, it is passed to the `load_model` method as a dictionary

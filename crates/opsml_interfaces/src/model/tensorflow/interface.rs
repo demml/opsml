@@ -55,7 +55,6 @@ impl TensorFlowModel {
         preprocessor: Option<&Bound<'py, PyAny>>,
         sample_data: Option<&Bound<'py, PyAny>>,
         task_type: Option<TaskType>,
-
         drift_profile: Option<&Bound<'py, PyAny>>,
     ) -> PyResult<(Self, ModelInterface)> {
         // check if model is base estimator for sklearn validation
