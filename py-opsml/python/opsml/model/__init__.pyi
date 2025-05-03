@@ -1161,8 +1161,7 @@ class TensorFlowModel(ModelInterface):
 
         Args:
             preprocessor:
-                Preprocessor to associate with the model. This preprocessor must be from the
-                scikit-learn ecosystem
+                Preprocessor to associate with the model
         """
 
     @property
