@@ -83,8 +83,14 @@ pub struct AuthSettings {
 pub struct ScouterSettings {
     pub server_uri: String,
 
-    // token used to send initialization requests to the scouter server
+    // Token used to sync users across Opsml and Scouter
     pub bootstrap_token: String,
+}
+
+impl ScouterSettings {
+    pub fn enabled(&self) -> bool {
+        !self.server_uri.is_empty()
+    }
 }
 
 /// OpsmlConfig for use with both server and client implementations
@@ -155,7 +161,7 @@ impl Default for OpsmlConfig {
                 }
                 generate_default_secret()
             }),
-            scouter_secret: env::var("OPSML_SCOUTER_SECRET").unwrap_or_else(|_| {
+            scouter_secret: env::var("SCOUTER_AUTH_SECRET").unwrap_or_else(|_| {
                 if mode == OpsmlMode::Server {
                     warn!(
                         "Using default secret for scouter. 
