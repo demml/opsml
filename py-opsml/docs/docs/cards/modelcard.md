@@ -117,7 +117,7 @@ reg = CardRegistry(RegistryType.Model)
 modelcard = reg.load_card(uid="{{model uid}}")
 
 # load the model
-modelcard.load() #(1)
+modelcard.load()
 
 # load with the onnx model as well
 modelcard.load(load_kwargs=ModelLoadKwargs(load_onnx=True)) #(1)
@@ -407,14 +407,15 @@ modelcard.load(load_kwargs=ModelLoadKwargs(load_onnx=True)) #(1)
 
 The `ModelInterface` is the primary interface for working with models in `Opsml`. It is designed to be subclassed and can be used to store models in a variety of formats depending on the library. Out of the box the following subclasses are available:
 
-- `SklearnModel`: Stores data from a sklearn model
-- `TorchModel`: Stores data from a pytorch model
-- `LightningModel`: Stores data from a pytorch lightning model
-- `HuggingFaceModel`: Stores data from a huggingface model
-- `TensorFlowModel`: Stores data from a tensorflow model
-- `XGBoostModel`: Stores data from a xgboost model
-- `LightGBMModel`: Stores data from a lightgbm model
-- `CatBoostModel`: Stores data from a catboost model
+- `SklearnModel`: Stores data from a sklearn model - [link](#sklearnmodel)
+- `TorchModel`: Stores data from a pytorch model - [link](#torchmodel)
+- `LightningModel`: Stores data from a pytorch lightning model - [link](#lightningmodel)
+- `HuggingFaceModel`: Stores data from a huggingface model - [link](#huggingfacemodel)
+- `TensorFlowModel`: Stores data from a tensorflow model - [link](#tensorflowmodel)
+- `XGBoostModel`: Stores data from a xgboost model - [link](#xgboostmodel)
+- `LightGBMModel`: Stores data from a lightgbm model - [link](#lightgbmmodel)
+- `CatBoostModel`: Stores data from a catboost model - [link](#catboostmodel)
+- `Custom`: Create your own model interface - [link](#custommodel)
 
 ### Shared Arguments for all ModelInterfaces
 
@@ -1670,7 +1671,7 @@ class CustomInterface(ModelInterface): #(1)
 
 ### Custom Load
 
-To load a custom model, you will need to implement the `load` method. This method is called when loading the model. It should load the model and any other artifacts from the specified path. The method.
+To load a custom model, you will need to implement the `load` method. This method is called when loading the model. It should load the model and any other artifacts from the specified path.
 
 - **load**: This method is called when loading the model
 
