@@ -336,7 +336,7 @@ impl CardRegistry {
     ) -> Result<(), RegistryError> {
         // Update card attributes
         debug!("Updating card with server response");
-        Self::update_card_with_server_response(&response, card)?;
+        Self::update_card_with_server_response(response, card)?;
 
         // Save card artifacts to temp path
         debug!("Saving card artifacts");
