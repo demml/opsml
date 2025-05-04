@@ -6,6 +6,7 @@ use opsml_sql::base::SqlClient;
 use opsml_sql::enums::client::{get_sql_client, SqlClientEnum};
 use opsml_sql::schemas::User;
 use opsml_storage::storage::enums::client::{get_storage_system, StorageClientEnum};
+use reqwest::StatusCode;
 use rusty_logging::setup_logging;
 use tracing::{debug, info};
 
@@ -69,20 +70,52 @@ pub async fn initialize_default_user(
 
     if scouter_client.enabled {
         // send admin user to scouter
-        scouter_client
-            .create_initial_user(&admin_user)
-            .await
-            .context(Colorize::purple(
-                "❌ Failed to create default admin in scouter",
-            ))?;
+        match scouter_client.create_initial_user(&admin_user).await {
+            Ok(response) => {
+                if response.status() == StatusCode::CONFLICT {
+                    info!("ℹ️ Admin user already exists in Scouter");
+                } else if response.status().is_success() {
+                    info!("✅ Created default admin user in Scouter");
+                } else {
+                    return Err(anyhow::anyhow!(
+                        "Failed to create admin user with status: {}",
+                        response.status()
+                    ))
+                    .context(Colorize::purple(
+                        "❌ Failed to create default admin in scouter",
+                    ));
+                }
+            }
+            Err(e) => {
+                return Err(anyhow::anyhow!(e)).context(Colorize::purple(
+                    "❌ Failed to create default admin in scouter",
+                ));
+            }
+        }
 
         // send guest user to scouter
-        scouter_client
-            .create_initial_user(&guest_user)
-            .await
-            .context(Colorize::purple(
-                "❌ Failed to create default guest in scouter",
-            ))?;
+        match scouter_client.create_initial_user(&guest_user).await {
+            Ok(response) => {
+                if response.status() == StatusCode::CONFLICT {
+                    info!("ℹ️ Guest user already exists in Scouter");
+                } else if response.status().is_success() {
+                    info!("✅ Created default guest user in Scouter");
+                } else {
+                    return Err(anyhow::anyhow!(
+                        "Failed to create guest user with status: {}",
+                        response.status()
+                    ))
+                    .context(Colorize::purple(
+                        "❌ Failed to create default guest in scouter",
+                    ));
+                }
+            }
+            Err(e) => {
+                return Err(anyhow::anyhow!(e)).context(Colorize::purple(
+                    "❌ Failed to create default guest in scouter",
+                ));
+            }
+        }
 
         info!(
             "✅ Created default admin and guest user in Scouter (change password on first login)",
