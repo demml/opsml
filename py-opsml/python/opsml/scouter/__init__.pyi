@@ -16,6 +16,8 @@ from .drift import SpcDriftConfig as SpcDriftConfig
 from .drift import SpcDriftProfile as SpcDriftProfile
 from .profile import DataProfile as DataProfile
 from .profile import DataProfiler as DataProfiler
+
+# from .queue import RedisConfig as RedisConfig
 from .queue import Feature as Feature
 from .queue import Features as Features
 from .queue import KafkaConfig as KafkaConfig
@@ -23,7 +25,5 @@ from .queue import Metric as Metric
 from .queue import Metrics as Metrics
 from .queue import Queue as Queue
 from .queue import RabbitMQConfig as RabbitMQConfig
-
-# from .queue import RedisConfig as RedisConfig
 from .queue import ScouterQueue as ScouterQueue
 from .types import CommonCrons as CommonCrons
