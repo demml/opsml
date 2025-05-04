@@ -3,18 +3,9 @@ from opsml import (  # type: ignore
     CardRegistry,
     RegistryType,
     ModelCard,
-    DataCard,
-    PromptCard,
-    Prompt,
-    ModelLoadKwargs,
     ModelInterface,
+    TaskType,
 )
-from opsml.card import CardDeck, Card  # type: ignore
-from opsml.card import RegistryMode, CardList  # type: ignore
-from opsml.model import SklearnModel  # type: ignore
-from opsml.data import PandasData  # type: ignore
-from pathlib import Path
-import shutil
 import pytest
 from tests.conftest import CustomModel
 from tests.conftest import WINDOWS_EXCLUDE
@@ -45,3 +36,4 @@ def test_crud_artifactcard(
 
         assert loaded_card.interface.model is not None
         assert loaded_card.interface.preprocessor is not None
+        assert loaded_card.interface.task_type == TaskType.AnomalyDetection
