@@ -24,7 +24,7 @@ pub mod server_logic {
     use pyo3::prelude::*;
     use semver::Version;
     use sqlx::types::Json as SqlxJson;
-    use tracing::error;
+    use tracing::{error, info};
 
     #[derive(Debug, Clone)]
     pub struct ServerRegistry {
@@ -522,8 +522,14 @@ pub mod server_logic {
                     RegistryError::Error(format!("Failed to create storage client {}", e))
                 })?;
 
-            storage_client.rm(&key.storage_path(), true).await?;
+            // Delete saved artifacts if they exist
+            if storage_client.find(&key.storage_path()).await?.is_empty() {
+                info!("No files found at storage path. Skipping artifact deletion");
+            } else {
+                storage_client.rm(&key.storage_path(), true).await?;
+            }
 
+            // Delete the artifact key
             self.sql_client
                 .delete_artifact_key(&delete_request.uid, &key.registry_type.to_string())
                 .await
@@ -531,12 +537,11 @@ pub mod server_logic {
                     RegistryError::Error(format!("Failed to delete artifact key {}", e))
                 })?;
 
+            // Delete the card from registry
             self.sql_client
                 .delete_card(&self.table_name, &delete_request.uid)
                 .await
                 .map_err(|e| RegistryError::Error(format!("Failed to delete card {}", e)))?;
-
-            // delete key
 
             Ok(())
         }
