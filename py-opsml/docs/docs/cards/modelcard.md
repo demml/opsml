@@ -1512,7 +1512,10 @@ The model is saved using the preferred **keras** format via `model.save`. Loadin
 
 ## CustomModel
 
-While the above interfaces cover the most common use cases, there are times where you may want to create your own custom model interface. By design, the `ModelInterface` can be subclassed in cases where a more flexible implementation is needed. However to make sure all other components work nicely together, you will need to implement the following:
+While the above interfaces cover the most common use cases, there may be times where you want to create your own custom model interface. By design, the `ModelInterface` can be subclassed in cases where a more flexible implementation is needed. However to make sure all other components work nicely together, you will need to implement the following.
+
+
+**Example**: [`Link`](https://github.com/opsml/py-opsml/examples/model/custom_model.py)
 
 
 ### Custom Save 
@@ -1563,6 +1566,7 @@ class CustomInterface(ModelInterface): #(1)
 
         name: str
         uri: Path
+        type: ProcessorType
 
         def __str__(self): ...
     ```
@@ -1691,6 +1695,79 @@ class CustomInterface(ModelInterface):
 1. We use the `metadata` object to get the model path or any other path to an artifact. It is then joined with the base path to load the model.
 2. The model is loaded using `joblib.load` and assigned to the model property of the interface. This is where you would load your model and any other artifacts.
 
+### Changing Init Arguments
+
+If you find in your custom interface that you are changing class/self attributes during instantiation, you will also need to include two extra methods called `from_metadata` (staticmethod) as well as a `__new__` method. The reason for this is (1), pyo3 does not currently support custom `__init__` methods (2) `from_metadata` is called on all interfaces when loading a card from the registry and is used to initialize the class with metadata attributes.
+
+The below example shows an example of how you can implement this. In the example, we are adding the `preprocessor` attribute
+
+```python
+class CustomModel(ModelInterface):
+    def __new__( #(1)
+        cls,
+        preprocessor=None, #(2)
+        model: None | Any = None,
+        sample_data: None | Any = None,
+        task_type: None | TaskType = None,
+    ):
+        instance = super(CustomModel, cls).__new__(
+            cls,
+            model=model,
+            sample_data=sample_data,
+            task_type=task_type,
+        )
+
+        return instance
+
+    def __init__(self, preprocessor, model, sample_data, task_type):
+        """Init method for the custom model interface."""
+
+        super().__init__()
+
+        self.preprocessor = preprocessor #(3)
+
+    def save(self, path, to_onnx=False, save_kwargs=None):
+        ...
+
+    def load(self, path, metadata, load_kwargs=None):
+        ...
+
+    @staticmethod
+    def from_metadata(metadata: ModelInterfaceMetadata) -> "CustomModel":
+        """Load model from metadata."""
+
+        return CustomModel(
+            model=None,
+            sample_data=None,
+            task_type=metadata.task_type,
+            preprocessor=None,
+        )
+```
+
+1. Custom __new__ method
+2. Adding preprocessor as a class argument
+3. Assigning preprocessor to the class attribute
+
+**Note**: If you are not changing the default class attributes, you do not need to to implement `__new__` or `from_metadata`.
+
+
+### Method Overriding Checklist
+
+| Changing Class Attributes? | Methods to Implement |
+| -------------------------- | -------------------- |
+| <span class="text-alert">**No**</span> | `save`, `load`       |
+| <span class="text-alert">**Yes**</span> | `save`, `load`, `__new__`, `from_metadata` |
+
 ### Loading from a Registry
 
 To load a custom interface from the registry, you will need to supply the python definition of the interface class to the `load_card` method. This is important to keep in mind for reproducibility and sharing. Another user will not be able to use your interface unless they have the same class definition.
+
+```python
+
+class MyCustomInterface(ModelInterface):
+    ...
+
+registry.load_card(uid="{{model uid}}", interface=MyCustomInterface) #(1)
+```
+
+1. The interface class is passed to the `load_card` method. This is required for custom interfaces
