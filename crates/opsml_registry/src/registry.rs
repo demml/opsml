@@ -14,6 +14,18 @@ use std::path::PathBuf;
 use tempfile::TempDir;
 use tracing::{debug, error, instrument};
 
+/// Helper struct to hold parameters for card registration
+#[derive(Debug)]
+struct CardRegistrationParams<'py> {
+    card: &'py Bound<'py, PyAny>,
+    registry: &'py OpsmlRegistry,
+    version_type: VersionType,
+    pre_tag: Option<String>,
+    build_tag: Option<String>,
+    save_kwargs: Option<&'py Bound<'py, PyAny>>,
+    registry_type: &'py RegistryType,
+}
+
 /// Extract registry type from a PyAny object
 ///
 /// # Arguments
@@ -151,17 +163,19 @@ impl CardRegistry {
     ) -> PyResult<()> {
         debug!("Registering card");
 
-        // Wrap all operations in a single block_on to handle async operations
-        Self::verify_and_register_card(
+        let params = CardRegistrationParams {
             card,
-            &self.registry,
+            registry: &self.registry,
             version_type,
             pre_tag,
             build_tag,
             save_kwargs,
-            &self.registry_type,
-        )
-        .map_err(|e: RegistryError| OpsmlError::new_err(e.to_string()))
+            registry_type: &self.registry_type,
+        };
+
+        // Wrap all operations in a single block_on to handle async operations
+        Self::verify_and_register_card(params)
+            .map_err(|e: RegistryError| OpsmlError::new_err(e.to_string()))
     }
 
     #[pyo3(signature = (uid=None, space=None, name=None, version=None, interface=None))]
@@ -232,35 +246,97 @@ impl CardRegistry {
 }
 
 impl CardRegistry {
-    #[allow(clippy::too_many_arguments)]
-    #[instrument(skip_all)]
-    fn verify_and_register_card(
-        card: &Bound<'_, PyAny>,
+    /// Rolls back card registration if card update or save fails
+    /// This will delete the card from the registry and remove any existing artifacts
+    ///
+    /// # Arguments
+    ///
+    /// * `registry` - OpsmlRegistry
+    /// * `card` - CreateCardResponse
+    ///
+    fn rollback_card(
         registry: &OpsmlRegistry,
-        version_type: VersionType,
-        pre_tag: Option<String>,
-        build_tag: Option<String>,
-        save_kwargs: Option<&Bound<'_, PyAny>>,
-        registry_type: &RegistryType,
+        card: &CreateCardResponse,
     ) -> Result<(), RegistryError> {
+        let request = DeleteCardRequest {
+            uid: card.key.uid.clone(),
+            space: card.space.clone(),
+            registry_type: card.key.registry_type.clone(),
+        };
+
+        error!(
+            "Rolling back card - {} - {}/{} - v{}",
+            card.key.uid, card.space, card.name, card.version
+        );
+        registry.delete_card(request)?;
+
+        Ok(())
+    }
+
+    #[instrument(skip_all)]
+    fn verify_and_register_card(params: CardRegistrationParams) -> Result<(), RegistryError> {
         // Verify card for registration
         debug!("Verifying card");
-        verify_card(card, registry_type)?;
+        verify_card(params.card, params.registry_type)?;
 
         // Register card
         debug!("Registering card");
         let create_response = Self::_register_card(
-            registry,
-            card,
-            registry_type,
-            version_type,
-            pre_tag,
-            build_tag,
+            params.registry,
+            params.card,
+            params.registry_type,
+            params.version_type,
+            params.pre_tag,
+            params.build_tag,
         )?;
 
         // Update card attributes
+        Self::update_card_and_save(
+            params.card,
+            &create_response,
+            params.save_kwargs,
+            params.registry_type,
+        )
+        .map_err(|e| {
+            error!("Failed to register card: {}", e);
+            Self::rollback_card(params.registry, &create_response).unwrap_or_else(|_| {
+                error!("Failed to rollback card registration");
+            });
+            e
+        })?;
+
+        println!(
+            "{} - {} - {}/{} - v{}",
+            Colorize::green("Registered card"),
+            Colorize::purple(&params.registry_type.to_string()),
+            create_response.space,
+            create_response.name,
+            create_response.version
+        );
+
+        Ok(())
+    }
+
+    /// Update card with server response and save artifacts
+    /// If any method fails, it will return an error, which will then be used to rollback the card
+    /// and delete the artifacts
+    ///
+    /// # Arguments
+    ///
+    /// * `card` - Card to update
+    /// * `response` - CreateCardResponse
+    /// * `save_kwargs` - Optional save kwargs
+    /// * `registry_type` - RegistryType
+    ///
+    fn update_card_and_save(
+        card: &Bound<'_, PyAny>,
+        response: &CreateCardResponse,
+        save_kwargs: Option<&Bound<'_, PyAny>>,
+        registry_type: &RegistryType,
+    ) -> Result<(), RegistryError> {
+        // Update card attributes
         debug!("Updating card with server response");
-        Self::update_card_with_server_response(&create_response, card)?;
+        Self::update_card_with_server_response(&response, card)?;
 
         // Save card artifacts to temp path
         debug!("Saving card artifacts");
@@ -268,9 +344,8 @@ impl CardRegistry {
 
         // Save artifacts
         debug!("Uploading card artifacts");
-        upload_card_artifacts(tmp_path, &create_response.key)?;
+        upload_card_artifacts(tmp_path, &response.key)?;
 
-        debug!("Successfully registered card");
         Ok(())
     }
 
