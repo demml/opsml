@@ -2,27 +2,33 @@
 # pylint: disable=no-name-in-module
 from .. import scouter
 
-AlertDispatchType = scouter.alert.AlertDispatchType
-AlertThreshold = scouter.alert.AlertThreshold
-AlertZone = scouter.alert.AlertZone
-CustomMetricAlertCondition = scouter.alert.CustomMetricAlertCondition
-CustomMetricAlertConfig = scouter.alert.CustomMetricAlertConfig
-PsiAlertConfig = scouter.alert.PsiAlertConfig
-SpcAlert = scouter.alert.SpcAlert
-SpcAlertConfig = scouter.alert.SpcAlertConfig
-SpcAlertRule = scouter.alert.SpcAlertRule
-SpcAlertType = scouter.alert.SpcAlertType
+OpsGenieDispatchConfig = scouter.alertOpsGenieDispatchConfig
+ConsoleDispatchConfig = scouter.alertConsoleDispatchConfig
+AlertDispatchType = scouter.alertAlertDispatchType
+AlertThreshold = scouter.alertAlertThreshold
+AlertZone = scouter.alertAlertZone
+CustomMetricAlertCondition = scouter.alertCustomMetricAlertCondition
+CustomMetricAlertConfig = scouter.alertCustomMetricAlertConfig
+PsiAlertConfig = scouter.alertPsiAlertConfig
+SpcAlert = scouter.alertSpcAlert
+SpcAlertConfig = scouter.alertSpcAlertConfig
+SpcAlertRule = scouter.alertSpcAlertRule
+SpcAlertType = scouter.alertSpcAlertType
+SlackDispatchConfig = scouter.alertSlackDispatchConfig
 
 
 __all__ = [
     "AlertZone",
     "SpcAlertType",
     "SpcAlertRule",
-    "AlertDispatchType",
     "PsiAlertConfig",
     "SpcAlertConfig",
     "SpcAlert",
     "AlertThreshold",
     "CustomMetricAlertCondition",
     "CustomMetricAlertConfig",
+    "SlackDispatchConfig",
+    "OpsGenieDispatchConfig",
+    "ConsoleDispatchConfig",
+    "AlertDispatchType",
 ]

@@ -1,13 +1,10 @@
 # type: ignore
-# pylint: disable=no-name-in-module,protected-access
-
-
 from .. import scouter
 
-CommonCrons = scouter._types.CommonCrons
-DataType = scouter._types.DataType
-DriftType = scouter._types.DriftType
-ScouterError = scouter._types.ScouterError
+CommonCrons = scouter._typesCommonCrons
+DataType = scouter._typesDataType
+DriftType = scouter._typesDriftType
+ScouterError = scouter._typesScouterError
 
 __all__ = [
     "DriftType",

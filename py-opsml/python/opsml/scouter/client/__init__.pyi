@@ -1,19 +1,18 @@
 import datetime
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from ..types import DriftType
 
 class HTTPConfig:
-    server_url: str
-    use_auth: bool
+    server_uri: str
     username: str
     password: str
     auth_token: str
 
     def __init__(
         self,
-        server_url: Optional[str] = None,
-        use_auth: bool = False,
+        server_uri: Optional[str] = None,
         username: Optional[str] = None,
         password: Optional[str] = None,
         auth_token: Optional[str] = None,
@@ -21,13 +20,9 @@ class HTTPConfig:
         """HTTP configuration to use with the HTTPProducer.
 
         Args:
-            server_url:
+            server_uri:
                 URL of the HTTP server to publish messages to.
-                If not provided, the value of the HTTP_SERVER_URL environment variable is used.
-
-            use_auth:
-                Whether to use basic authentication.
-                Default is False.
+                If not provided, the value of the HTTP_server_uri environment variable is used.
 
             username:
                 Username for basic authentication.
@@ -96,6 +91,21 @@ class ProfileStatusRequest:
                 Whether to set the profile as active or inactive
         """
 
+class GetProfileRequest:
+    def __init__(self, name: str, space: str, version: str, drift_type: DriftType) -> None:
+        """Initialize get profile request
+
+        Args:
+            name:
+                Profile name
+            space:
+                Profile space
+            version:
+                Profile version
+            drift_type:
+                Profile drift type. A (repo/name/version can be associated with more than one drift type)
+        """
+
 class Alert:
     created_at: datetime.datetime
     name: str
@@ -122,7 +132,7 @@ class DriftAlertRequest:
             name:
                 Name
             space:
-                space
+                Space
             version:
                 Version
             active:
@@ -157,7 +167,7 @@ class ScouterClient:
         """
 
     def register_profile(self, profile: Any, set_active: bool = False) -> bool:
-        """Insert drift profile into server
+        """Registers a drift profile with the server
 
         Args:
             profile:
@@ -189,6 +199,19 @@ class ScouterClient:
 
         Returns:
             List[Alert]
+        """
+
+    def download_profile(self, request: GetProfileRequest, path: Optional[Path]) -> str:
+        """Download profile
+
+        Args:
+            request:
+                GetProfileRequest
+            path:
+                Path to save profile
+
+        Returns:
+            Path to downloaded profile
         """
 
 class BinnedCustomMetricStats:

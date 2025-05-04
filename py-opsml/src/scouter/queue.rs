@@ -3,10 +3,9 @@ use scouter_client::*;
 
 #[pymodule]
 pub fn queue(m: &Bound<'_, PyModule>) -> PyResult<()> {
-    m.add_class::<ScouterQueue>()?;
-    m.add_class::<ScouterProducer>()?;
     m.add_class::<KafkaConfig>()?;
     m.add_class::<RabbitMQConfig>()?;
+    //m.add_class::<RedisConfig>()?;
 
     m.add_class::<SpcServerRecord>()?;
     m.add_class::<PsiServerRecord>()?;
@@ -17,6 +16,13 @@ pub fn queue(m: &Bound<'_, PyModule>) -> PyResult<()> {
 
     m.add_class::<Feature>()?;
     m.add_class::<Features>()?;
+    m.add_class::<Metric>()?;
+    m.add_class::<Metrics>()?;
+    m.add_class::<EntityType>()?;
+
+    // queue
+    m.add_class::<QueueBus>()?;
+    m.add_class::<ScouterQueue>()?;
 
     Ok(())
 }

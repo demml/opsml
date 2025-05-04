@@ -10,7 +10,7 @@
 
 ## **Note from maintainers**
 
-Version 3.0.0 is under active development. In the meantime, we are releasing pre-v3 releases under the `0.3.*` tags to ensure that users can still access the latest features and test out the new version. Note - the `0.3.*` releases are not stable and are subject to change until the final release of v3.0.0.
+Version 3.0.0 is under active development. All pre-releases will be released under the `3.0.0-rc.*` tag.
 
 <h1 align="center"><a href="https://demml.github.io/opsml/">OpsML Documentation</h1>
 
