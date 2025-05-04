@@ -236,7 +236,7 @@ def custom_interface(example_dataframe):
 
 
 @pytest.fixture
-def incorrect__custom_interface(example_dataframe):
+def incorrect_custom_interface(example_dataframe):
     X_train, y_train, X_test, y_test = example_dataframe
     reg = ensemble.RandomForestClassifier(n_estimators=5)
     reg.fit(X_train.to_numpy(), y_train)

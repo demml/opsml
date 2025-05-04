@@ -6,6 +6,7 @@ from opsml import (  # type: ignore
     ModelInterface,
     TaskType,
 )
+from opsml.error import OpsmlError
 import pytest
 from tests.conftest import CustomModel
 from tests.conftest import WINDOWS_EXCLUDE
@@ -56,5 +57,13 @@ def test_crud_artifactcard_failure(
             tags=["foo:bar", "baz:qux"],
         )
 
-        # this should fail
-        reg.register_card(card)
+        with pytest.raises(OpsmlError) as error:
+            reg.register_card(card)
+
+        assert (
+            str(error.value)
+            == "OpsmlError: AttributeError: 'IncorrectCustomModel' object has no attribute 'preprocessor'"
+        )
+
+        # check that no cards are registered
+        assert len(reg.list_cards()) == 0
