@@ -150,7 +150,6 @@ mod tests {
     use super::*;
     use crate::key::{derive_encryption_key, derive_master_key, generate_salt};
     use rand::distr::Alphanumeric;
-    use rand::rng;
     use rand::Rng;
     use std::io::Read;
 
@@ -159,7 +158,7 @@ mod tests {
         let file_size = *chunk_size as f64 * 2.1;
 
         while file.metadata().unwrap().len() <= file_size as u64 {
-            let rand_string: String = rng()
+            let rand_string: String = rand::rng()
                 .sample_iter(&Alphanumeric)
                 .take(256)
                 .map(char::from)
