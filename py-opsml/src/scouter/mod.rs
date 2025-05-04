@@ -1,6 +1,7 @@
 pub mod alert;
 pub mod client;
 pub mod drift;
+pub mod observe;
 pub mod profile;
 pub mod queue;
 pub mod types;
@@ -17,6 +18,7 @@ pub fn scouter(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_wrapped(wrap_pymodule!(alert::alert))?;
     m.add_wrapped(wrap_pymodule!(types::_types))?;
     m.add_wrapped(wrap_pymodule!(profile::profile))?;
+    m.add_wrapped(wrap_pymodule!(observe::observe))?;
 
     Ok(())
 }
