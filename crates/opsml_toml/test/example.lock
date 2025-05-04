@@ -5,6 +5,7 @@ space = "test-space"
 name = "test-artifact"
 version = "1.0.0"
 uid = "abc123"
+write_dir = "artifacts"
 registry_type = "model"
 
 [[artifact]]
@@ -12,4 +13,5 @@ space = "test-space-2"
 name = "test-artifact-2"
 version = "2.0.0"
 uid = "def456"
+write_dir = "artifacts"
 registry_type = "data"
