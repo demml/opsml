@@ -4,7 +4,7 @@ from opsml.model import Feature
 from opsml.logging import RustyLogger, LoggingConfig, LogLevel
 from opsml.card import RegistryTestHelper
 from opsml.potato_head import Prompt
-from typing import Tuple, Dict, Any
+from typing import Tuple, Dict
 from pydantic import BaseModel
 import sys
 import platform
