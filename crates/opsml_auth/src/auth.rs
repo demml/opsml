@@ -127,10 +127,7 @@ impl AuthManager {
 impl AuthManager {
     pub async fn exchange_token_for_scouter(&self, user: &User) -> Result<String, AuthError> {
         // Generate a new token using Scouter's secret
-        let scouter_token = self.generate_jwt_with_secret(
-            user,
-            &self.scouter_secret, // You'll need to add this to AuthManager
-        )?;
+        let scouter_token = self.generate_jwt_with_secret(user, &self.scouter_secret)?;
 
         Ok(scouter_token)
     }

@@ -2,13 +2,13 @@
 
 import tensorflow as tf
 import numpy as np
-from opsml.model import TensorFlowModel, ModelSaveKwargs, ModelType
+from opsml.model import TensorFlowModel, ModelSaveKwargs, ModelType, ModelLoadKwargs
 from opsml.data import DataType
 from tempfile import TemporaryDirectory
 from pathlib import Path
 from tensorflow.keras import Input, Model
 from tensorflow.keras.layers import Dense, Concatenate
-from opsml.core import RustyLogger, LoggingConfig, LogLevel
+from opsml.logging import RustyLogger, LoggingConfig, LogLevel
 
 
 # Sets up logging for tests
@@ -197,7 +197,11 @@ def tf_test_model(tf_model, onnx: bool = False, data_type: DataType = DataType.N
             interface.onnx_session.session = None
             assert interface.onnx_session.session is None
 
-        interface.load(temp_path, metadata.save_metadata, onnx=onnx)
+        interface.load(
+            temp_path,
+            metadata.save_metadata,
+            ModelLoadKwargs(load_onnx=onnx),
+        )
 
         assert interface.model is not None
 

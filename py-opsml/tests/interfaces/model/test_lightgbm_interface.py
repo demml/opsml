@@ -1,4 +1,10 @@
-from opsml.model import LightGBMModel, ModelType, ModelSaveKwargs, SklearnModel
+from opsml.model import (
+    LightGBMModel,
+    ModelType,
+    ModelSaveKwargs,
+    SklearnModel,
+    ModelLoadKwargs,
+)
 import lightgbm as lgb
 import pandas as pd
 from typing import Tuple
@@ -22,7 +28,11 @@ def test_lightgbm_model_interface(
     interface.model = None
     assert interface.model is None
 
-    interface.load(save_path, metadata.save_metadata, onnx=True)
+    interface.load(
+        save_path,
+        metadata.save_metadata,
+        load_kwargs=ModelLoadKwargs(load_onnx=True),
+    )
 
     assert interface.model is not None
     assert interface.onnx_session is not None

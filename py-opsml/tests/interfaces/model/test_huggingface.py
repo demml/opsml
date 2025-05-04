@@ -4,6 +4,7 @@ from opsml.model import (
     HuggingFaceOnnxArgs,
     HuggingFaceORTModel,
     ModelSaveKwargs,
+    ModelLoadKwargs,
 )
 from pathlib import Path
 from typing import Tuple
@@ -50,7 +51,11 @@ def test_hugging_face_text_pipeline(
     interface.onnx_session.session = None
     assert interface.onnx_session.session is None
 
-    interface.load(save_path, metadata.save_metadata, onnx=True)
+    interface.load(
+        save_path,
+        metadata.save_metadata,
+        load_kwargs=ModelLoadKwargs(load_onnx=True),
+    )
 
     assert interface.onnx_session is not None
 
@@ -87,7 +92,11 @@ def test_hugging_face_model(
     interface.tokenizer = None
     assert interface.tokenizer is None
 
-    interface.load(save_path, metadata.save_metadata, onnx=True)
+    interface.load(
+        save_path,
+        metadata.save_metadata,
+        load_kwargs=ModelLoadKwargs(load_onnx=True),
+    )
 
     assert interface.onnx_session is not None
     assert interface.tokenizer is not None

@@ -1,22 +1,23 @@
+use crate::model::error::interface_error;
+use crate::utils::BaseArgs;
 use chrono::{DateTime, Utc};
 use opsml_crypt::decrypt_directory;
 use opsml_error::{
     error::{CardError, OpsmlError},
     map_err_with_logging,
 };
-use opsml_interfaces::ModelInterface;
+use opsml_interfaces::OnnxSession;
 use opsml_interfaces::{
     CatBoostModel, HuggingFaceModel, LightGBMModel, LightningModel, SklearnModel, TorchModel,
     XGBoostModel,
 };
+use opsml_interfaces::{ModelInterface, TensorFlowModel};
 use opsml_interfaces::{ModelInterfaceMetadata, ModelLoadKwargs, ModelSaveKwargs};
+use opsml_storage::storage_client;
 use opsml_types::contracts::{ArtifactKey, CardRecord, ModelCardClientRecord};
 use opsml_types::{
     BaseArgsType, DataType, ModelInterfaceType, ModelType, RegistryType, SaveName, Suffix, TaskType,
 };
-
-use crate::utils::BaseArgs;
-use opsml_storage::storage_client;
 use opsml_utils::{create_tmp_path, extract_py_attr, get_utc_datetime, PyHelperFuncs};
 use pyo3::prelude::*;
 use pyo3::types::{PyDict, PyList};
@@ -43,6 +44,7 @@ fn interface_from_metadata<'py>(
         ModelInterfaceType::Torch => TorchModel::from_metadata(py, metadata),
         ModelInterfaceType::Lightning => LightningModel::from_metadata(py, metadata),
         ModelInterfaceType::HuggingFace => HuggingFaceModel::from_metadata(py, metadata),
+        ModelInterfaceType::TensorFlow => TensorFlowModel::from_metadata(py, metadata),
 
         _ => {
             error!("Interface type not found");
@@ -136,7 +138,7 @@ pub struct ModelCard {
 impl ModelCard {
     #[new]
     #[allow(clippy::too_many_arguments)]
-    #[pyo3(signature = (interface, space=None, name=None,   version=None, uid=None, tags=None,    metadata=None, to_onnx=None))]
+    #[pyo3(signature = (interface, space=None, name=None, version=None, uid=None, tags=None, datacard_uid=None, metadata=None, to_onnx=None))]
     pub fn new(
         py: Python,
         interface: &Bound<'_, PyAny>,
@@ -145,6 +147,7 @@ impl ModelCard {
         version: Option<&str>,
         uid: Option<&str>,
         tags: Option<&Bound<'_, PyList>>,
+        datacard_uid: Option<&str>,
         metadata: Option<ModelCardMetadata>,
         to_onnx: Option<bool>,
     ) -> PyResult<Self> {
@@ -164,9 +167,7 @@ impl ModelCard {
         if interface.is_instance_of::<ModelInterface>() {
             //
         } else {
-            return Err(OpsmlError::new_err(
-                "interface must be an instance of ModelInterface",
-            ));
+            return Err(OpsmlError::new_err(interface_error()));
         }
 
         let interface_type = extract_py_attr::<ModelInterfaceType>(interface, "interface_type")?;
@@ -175,6 +176,12 @@ impl ModelCard {
         let task_type = extract_py_attr::<TaskType>(interface, "task_type")?;
 
         let mut metadata = metadata.unwrap_or_default();
+
+        // if metadata.datacard_uid is None, set it to datacard_uid
+        if metadata.datacard_uid.is_none() {
+            metadata.datacard_uid = datacard_uid.map(|s| s.to_string());
+        }
+
         metadata.interface_metadata.interface_type = interface_type;
         metadata.interface_metadata.data_type = data_type;
         metadata.interface_metadata.model_type = model_type;
@@ -200,6 +207,30 @@ impl ModelCard {
             is_card: true,
             opsml_version: opsml_version::version(),
         })
+    }
+
+    #[getter]
+    pub fn get_onnx_session<'py>(
+        &self,
+        py: Python<'py>,
+    ) -> PyResult<Option<Bound<'py, OnnxSession>>> {
+        if let Some(interface) = self.interface.as_ref() {
+            let session = interface
+                .bind(py)
+                .getattr("onnx_session")
+                .map_err(|e| OpsmlError::new_err(e.to_string()))?;
+
+            if session.is_none() {
+                Ok(None)
+            } else {
+                let session = session
+                    .downcast::<OnnxSession>()
+                    .map_err(|e| OpsmlError::new_err(e.to_string()))?;
+                Ok(Some(session.clone()))
+            }
+        } else {
+            Ok(None)
+        }
     }
 
     #[getter]
@@ -294,13 +325,12 @@ impl ModelCard {
         Ok(())
     }
 
-    #[pyo3(signature = (path=None, onnx=false, load_kwargs=None))]
+    #[pyo3(signature = (path=None, load_kwargs=None))]
     #[allow(clippy::too_many_arguments)]
     pub fn load(
         &mut self,
         py: Python,
         path: Option<PathBuf>,
-        onnx: bool,
         load_kwargs: Option<ModelLoadKwargs>,
     ) -> PyResult<()> {
         let path = if let Some(p) = path {
@@ -322,7 +352,7 @@ impl ModelCard {
         // load model interface
         self.interface.as_ref().unwrap().bind(py).call_method(
             "load",
-            (path, save_metadata, onnx, load_kwargs),
+            (path, save_metadata, load_kwargs),
             None,
         )?;
 
@@ -463,7 +493,13 @@ impl ModelCard {
 
     fn load_interface(&mut self, py: Python, interface: Option<&Bound<'_, PyAny>>) -> PyResult<()> {
         if let Some(interface) = interface {
-            self.set_interface(interface)
+            // this for custom interfaces (uninstantiated)
+
+            let interface = interface
+                .call_method1("from_metadata", (self.metadata.interface_metadata.clone(),))
+                .map_err(|e| OpsmlError::new_err(e.to_string()))?;
+
+            self.set_interface(&interface)
         } else {
             // match interface type
             let interface = interface_from_metadata(py, &self.metadata.interface_metadata)?;

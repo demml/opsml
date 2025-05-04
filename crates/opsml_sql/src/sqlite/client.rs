@@ -161,6 +161,7 @@ impl SqlClient for SqliteClient {
         version: Option<String>,
     ) -> Result<Vec<String>, SqlError> {
         // if version is None, get the latest version
+
         let query = SqliteQueryHelper::get_versions_query(table, version)?;
 
         let cards: Vec<VersionResult> = sqlx::query_as(&query)

@@ -1,22 +1,30 @@
 import pytest
 
-from opsml.core import Feature, RustyLogger, LoggingConfig, LogLevel
+from opsml.model import Feature
+from opsml.logging import RustyLogger, LoggingConfig, LogLevel
 from opsml.card import RegistryTestHelper
 from opsml.potato_head import Prompt
-from typing import Tuple, Dict
+from typing import Tuple, Dict, Any
 from pydantic import BaseModel
 import sys
 import platform
-
+from opsml import ModelInterface
+from opsml.model import (
+    ModelInterfaceSaveMetadata,
+    ModelInterfaceMetadata,
+    DataProcessor,
+    ProcessorType,
+)
 from typing import cast
 import pandas as pd
+from pathlib import Path
 from opsml.model import SklearnModel, TaskType
 from opsml.data import PandasData
 from opsml.helpers.data import create_fake_data  # type: ignore
 from sklearn.preprocessing import StandardScaler  # type: ignore
 from sklearn import ensemble  # type: ignore
 from opsml.data import ColType, ColumnSplit, DataSplit
-
+import joblib  # type: ignore
 
 DARWIN_EXCLUDE = sys.platform == "darwin" and platform.machine() == "arm64"
 WINDOWS_EXCLUDE = sys.platform == "win32"
@@ -25,11 +33,92 @@ EXCLUDE = bool(DARWIN_EXCLUDE or WINDOWS_EXCLUDE)
 
 
 # Sets up logging for tests
-RustyLogger.setup_logging(LoggingConfig(log_level=LogLevel.Debug))
+RustyLogger.setup_logging(LoggingConfig(log_level=LogLevel.Info))
 
 
 class MockInterface(BaseModel):
     is_interface: bool = True
+
+
+class CustomModel(ModelInterface):
+    def __new__(
+        cls,
+        preprocessor=None,
+        model: None | Any = None,
+        sample_data: None | Any = None,
+        task_type: None | TaskType = None,
+    ):
+        instance = super(CustomModel, cls).__new__(
+            cls,
+            model=model,
+            sample_data=sample_data,
+            task_type=task_type,
+        )
+
+        return instance
+
+    def __init__(self, preprocessor, model, sample_data, task_type):
+        """Init method for the custom model interface."""
+
+        super().__init__()
+
+        self.preprocessor = preprocessor
+
+    def save(self, path, to_onnx=False, save_kwargs=None):
+        """Custom save method for the model interface.
+
+        Args:
+            path (Path): Path to save the model.
+            to_onnx (bool): Whether to save the model as ONNX.
+            save_kwargs (ModelSaveKwargs): Save kwargs for the model.
+
+        """
+        model_save_path = Path("model").with_suffix(".joblib")
+        preprocessor_save_path = Path("preprocessor").with_suffix(".joblib")
+
+        assert self.model is not None
+        joblib.dump(self.model, path / model_save_path)
+
+        assert self.preprocessor is not None
+        joblib.dump(self.preprocessor, path / preprocessor_save_path)
+
+        save_metadata = ModelInterfaceSaveMetadata(
+            model_uri=model_save_path,
+            data_processor_map={
+                "preprocessor": DataProcessor(
+                    name="preprocessor",
+                    uri=preprocessor_save_path,
+                    type=ProcessorType.Preprocessor,
+                )
+            },
+        )
+
+        return ModelInterfaceMetadata(
+            task_type=self.task_type,
+            model_type=self.model_type,
+            data_type=self.data_type,
+            save_metadata=save_metadata,
+        )
+
+    def load(self, path, metadata, load_kwargs=None):
+        """Custom load method for the model interface."""
+        model_path = path / metadata.model_uri
+        preprocessor_path = path / metadata.data_processor_map["preprocessor"].uri
+
+        self.model = joblib.load(model_path)
+        self.preprocessor = joblib.load(preprocessor_path)
+
+    # staticmethod to load from metadata
+    @staticmethod
+    def from_metadata(metadata: ModelInterfaceMetadata) -> "CustomModel":
+        """Load model from metadata."""
+
+        return CustomModel(
+            model=None,
+            sample_data=None,
+            task_type=metadata.task_type,
+            preprocessor=None,
+        )
 
 
 @pytest.fixture
@@ -97,6 +186,20 @@ def random_forest_classifier(example_dataframe):
         model=reg,
         sample_data=X_train,
         task_type=TaskType.Classification,
+        preprocessor=StandardScaler(),
+    )
+
+
+@pytest.fixture
+def custom_interface(example_dataframe):
+    X_train, y_train, X_test, y_test = example_dataframe
+    reg = ensemble.RandomForestClassifier(n_estimators=5)
+    reg.fit(X_train.to_numpy(), y_train)
+
+    return CustomModel(
+        model=reg,
+        sample_data=X_train,
+        task_type=TaskType.AnomalyDetection,
         preprocessor=StandardScaler(),
     )
 

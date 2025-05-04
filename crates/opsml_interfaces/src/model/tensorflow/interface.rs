@@ -33,7 +33,6 @@ pub struct TensorFlowModel {
     #[pyo3(get, set)]
     preprocessor_name: String,
 
-    #[pyo3(get, set)]
     pub onnx_session: Option<Py<OnnxSession>>,
 
     #[pyo3(get)]
@@ -49,14 +48,13 @@ pub struct TensorFlowModel {
 impl TensorFlowModel {
     #[new]
     #[allow(clippy::too_many_arguments)]
-    #[pyo3(signature = (model=None, preprocessor=None, sample_data=None, task_type=None, schema=None, drift_profile=None))]
+    #[pyo3(signature = (model=None, preprocessor=None, sample_data=None, task_type=None,  drift_profile=None))]
     pub fn new<'py>(
         py: Python,
         model: Option<&Bound<'py, PyAny>>,
         preprocessor: Option<&Bound<'py, PyAny>>,
         sample_data: Option<&Bound<'py, PyAny>>,
         task_type: Option<TaskType>,
-        schema: Option<FeatureSchema>,
         drift_profile: Option<&Bound<'py, PyAny>>,
     ) -> PyResult<(Self, ModelInterface)> {
         // check if model is base estimator for sklearn validation
@@ -76,8 +74,7 @@ impl TensorFlowModel {
             None
         };
 
-        let mut model_interface =
-            ModelInterface::new(py, None, None, task_type, schema, drift_profile, None)?;
+        let mut model_interface = ModelInterface::new(py, None, None, task_type, drift_profile)?;
 
         // override ModelInterface SampleData with TensorFlowSampleData
         let sample_data = match sample_data {
@@ -140,9 +137,21 @@ impl TensorFlowModel {
         Ok(())
     }
 
+    #[getter]
+    pub fn get_onnx_session<'py>(
+        &self,
+        py: Python<'py>,
+    ) -> PyResult<Option<&Bound<'py, OnnxSession>>> {
+        // return mutable reference to onnx session
+        Ok(self.onnx_session.as_ref().map(|sess| sess.bind(py)))
+    }
+
     #[setter]
-    pub fn set_onnx_session(&mut self, onnx_session: Option<Py<OnnxSession>>) {
-        self.onnx_session = onnx_session;
+    pub fn set_onnx_session(&mut self, onnx_session: Option<Bound<'_, OnnxSession>>) {
+        self.onnx_session = onnx_session.map(|sess| sess.unbind()).or_else(|| {
+            warn!("Failed to set onnx session. Defaulting to None");
+            None
+        });
     }
 
     #[setter]
@@ -277,7 +286,7 @@ impl TensorFlowModel {
         };
 
         let onnx_session = {
-            self_.as_super().onnx_session.as_ref().map(|sess| {
+            self_.onnx_session.as_ref().map(|sess| {
                 let sess = sess.bind(py);
                 // extract OnnxSession from py object
                 sess.extract::<OnnxSession>().unwrap()
@@ -311,7 +320,7 @@ impl TensorFlowModel {
     /// # Returns
     ///
     /// * `PyResult<DataInterfaceMetadata>` - DataInterfaceMetadata
-    #[pyo3(signature = (path, metadata, onnx=false, load_kwargs=None))]
+    #[pyo3(signature = (path, metadata, load_kwargs=None))]
     #[allow(clippy::too_many_arguments)]
     #[instrument(skip_all)]
     pub fn load(
@@ -319,7 +328,6 @@ impl TensorFlowModel {
         py: Python,
         path: PathBuf,
         metadata: ModelInterfaceSaveMetadata,
-        onnx: bool,
         load_kwargs: Option<ModelLoadKwargs>,
     ) -> PyResult<()> {
         // if kwargs is not None, unwrap, else default to None
@@ -329,7 +337,7 @@ impl TensorFlowModel {
         let model_path = path.join(&metadata.model_uri);
         self_.load_model(py, &model_path, load_kwargs.model_kwargs(py))?;
 
-        if onnx {
+        if load_kwargs.load_onnx {
             debug!("Loading ONNX model");
             let onnx_path = path.join(
                 &metadata
@@ -421,16 +429,10 @@ impl TensorFlowModel {
             sample_data: TensorFlowSampleData::default(),
         };
 
-        let mut interface = ModelInterface::new(
-            py,
-            None,
-            None,
-            Some(metadata.task_type.clone()),
-            Some(metadata.schema.clone()),
-            None,
-            None,
-        )?;
+        let mut interface =
+            ModelInterface::new(py, None, None, Some(metadata.task_type.clone()), None)?;
 
+        interface.schema = metadata.schema.clone();
         interface.data_type = metadata.data_type.clone();
 
         Py::new(py, (model_interface, interface))?.into_bound_py_any(py)

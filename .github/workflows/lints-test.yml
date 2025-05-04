@@ -37,53 +37,7 @@ jobs:
       - name: Run lints
         run: make lints
 
-  test-cli-windows:
-    runs-on: windows-latest
-    needs: format-and-lint
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup cmake
-        uses: jwlawson/actions-setup-cmake@v2
-        with:
-          cmake-version: "3.x"
-
-      - name: Set up Rust
-        run: rustup override set stable && rustup update
-
-      - name: Cache Rust
-        uses: Swatinem/rust-cache@v2
-
-      - name: Run CLI tests
-        run: make test.cli
-        env:
-          RUST_BACKTRACE: 1
-          RUST_LOG: debug
-
-  test-cli-macos:
-    runs-on: macos-latest
-    needs: format-and-lint
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup cmake
-        uses: jwlawson/actions-setup-cmake@v2
-        with:
-          cmake-version: "3.x"
-
-      - name: Set up Rust
-        run: rustup override set stable && rustup update
-
-      - name: Cache Rust
-        uses: Swatinem/rust-cache@v2
-
-      - name: Run CLI tests
-        run: make test.cli
-        env:
-          RUST_BACKTRACE: 1
-          RUST_LOG: debug
-
-  test-unit:
+  test-Sql-Storage-Utils:
     runs-on: ubuntu-22.04
     needs: format-and-lint
     steps:
@@ -103,9 +57,11 @@ jobs:
       - name: Run Unit Tests
         run: make test.unit
 
-  test-storage-client:
+  # this will run local client and server storage tests.
+  # Intergration tests will be run when prs are merged to main
+  test-server:
     runs-on: ubuntu-22.04
-    needs: [format-and-lint, test-unit]
+    needs: format-and-lint
     steps:
       - uses: actions/checkout@v4
 
@@ -135,6 +91,9 @@ jobs:
       - name: Run storage client tests
         run: make test.storage.client
 
+      - name: Run server tests
+        run: make test.server
+
       - name: Shutdown Server
         run: make stop.server
 
@@ -148,7 +107,7 @@ jobs:
         python-version: ["3.10", "3.11", "3.12"]
 
     runs-on: ${{ matrix.os }}-latest
-    needs: [test-storage-client, test-cli-windows, test-cli-macos]
+    needs: [format-and-lint]
     steps:
       - uses: actions/checkout@v4
 

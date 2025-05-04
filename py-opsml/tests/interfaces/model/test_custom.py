@@ -4,6 +4,7 @@ from opsml.model import (
     ModelInterfaceMetadata,
     ModelInterfaceSaveMetadata,
     ModelSaveKwargs,
+    ModelLoadKwargs,
 )
 from sklearn import linear_model  # type: ignore
 from pathlib import Path
@@ -26,7 +27,11 @@ class CustomInterface(ModelInterface):
         to_onnx: bool = False,
         save_kwargs: ModelSaveKwargs | None = None,
     ) -> ModelInterfaceMetadata:
-        save_metadata = ModelInterfaceSaveMetadata(model_uri=path)
+        model_save_path = Path("model").with_suffix(".joblib")
+
+        # joblib.dump(self.model, path / model_save_path)
+
+        save_metadata = ModelInterfaceSaveMetadata(model_uri=model_save_path)
 
         return ModelInterfaceMetadata(
             task_type=self.task_type,
@@ -35,6 +40,17 @@ class CustomInterface(ModelInterface):
             save_metadata=save_metadata,
             extra_metadata={"foo": str(self.foo)},
         )
+
+    def load(
+        self,
+        path: Path,
+        metadata: ModelInterfaceSaveMetadata,
+        load_kwargs: ModelLoadKwargs | None = None,
+    ) -> None:
+        model_path = path / metadata.model_uri
+
+        # self.model = joblib.load(model_path)
+        self.model = None
 
 
 def test_custom_interface(tmp_path: Path, regression_data):

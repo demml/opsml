@@ -325,7 +325,7 @@ impl Default for ModelCardClientRecord {
             experimentcard_uid: None,
             auditcard_uid: None,
             interface_type: ModelInterfaceType::Base.to_string(),
-            task_type: TaskType::Other.to_string(),
+            task_type: TaskType::Undefined.to_string(),
             opsml_version: opsml_version::version(),
             username: "guest".to_string(),
         }

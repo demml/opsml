@@ -33,7 +33,6 @@ pub struct TorchModel {
     #[pyo3(get, set)]
     preprocessor_name: String,
 
-    #[pyo3(get, set)]
     pub onnx_session: Option<Py<OnnxSession>>,
 
     #[pyo3(get)]
@@ -49,14 +48,13 @@ pub struct TorchModel {
 impl TorchModel {
     #[new]
     #[allow(clippy::too_many_arguments)]
-    #[pyo3(signature = (model=None, preprocessor=None, sample_data=None, task_type=None, schema=None, drift_profile=None))]
+    #[pyo3(signature = (model=None, preprocessor=None, sample_data=None, task_type=None,  drift_profile=None))]
     pub fn new<'py>(
         py: Python,
         model: Option<&Bound<'py, PyAny>>,
         preprocessor: Option<&Bound<'py, PyAny>>,
         sample_data: Option<&Bound<'py, PyAny>>,
         task_type: Option<TaskType>,
-        schema: Option<FeatureSchema>,
         drift_profile: Option<&Bound<'py, PyAny>>,
     ) -> PyResult<(Self, ModelInterface)> {
         // check if model is base estimator for sklearn validation
@@ -73,8 +71,7 @@ impl TorchModel {
             None
         };
 
-        let mut model_interface =
-            ModelInterface::new(py, None, None, task_type, schema, drift_profile, None)?;
+        let mut model_interface = ModelInterface::new(py, None, None, task_type, drift_profile)?;
 
         // override ModelInterface SampleData with TorchSampleData
         let sample_data = match sample_data {
@@ -137,9 +134,21 @@ impl TorchModel {
         Ok(())
     }
 
+    #[getter]
+    pub fn get_onnx_session<'py>(
+        &self,
+        py: Python<'py>,
+    ) -> PyResult<Option<&Bound<'py, OnnxSession>>> {
+        // return mutable reference to onnx session
+        Ok(self.onnx_session.as_ref().map(|sess| sess.bind(py)))
+    }
+
     #[setter]
-    pub fn set_onnx_session(&mut self, onnx_session: Option<Py<OnnxSession>>) {
-        self.onnx_session = onnx_session;
+    pub fn set_onnx_session(&mut self, onnx_session: Option<Bound<'_, OnnxSession>>) {
+        self.onnx_session = onnx_session.map(|sess| sess.unbind()).or_else(|| {
+            warn!("Failed to set onnx session. Defaulting to None");
+            None
+        });
     }
 
     #[setter]
@@ -277,7 +286,7 @@ impl TorchModel {
         };
 
         let onnx_session = {
-            self_.as_super().onnx_session.as_ref().map(|sess| {
+            self_.onnx_session.as_ref().map(|sess| {
                 let sess = sess.bind(py);
                 // extract OnnxSession from py object
                 sess.extract::<OnnxSession>().unwrap()
@@ -311,7 +320,7 @@ impl TorchModel {
     /// # Returns
     ///
     /// * `PyResult<DataInterfaceMetadata>` - DataInterfaceMetadata
-    #[pyo3(signature = (path, metadata, onnx=false, load_kwargs=None))]
+    #[pyo3(signature = (path, metadata, load_kwargs=None))]
     #[allow(clippy::too_many_arguments)]
     #[instrument(skip_all)]
     pub fn load(
@@ -319,9 +328,9 @@ impl TorchModel {
         py: Python,
         path: PathBuf,
         metadata: ModelInterfaceSaveMetadata,
-        onnx: bool,
         load_kwargs: Option<ModelLoadKwargs>,
     ) -> PyResult<()> {
+        debug!("kwargs: {:?}", load_kwargs);
         // if kwargs is not None, unwrap, else default to None
         let load_kwargs = load_kwargs.unwrap_or_default();
 
@@ -329,7 +338,7 @@ impl TorchModel {
         let model_path = path.join(&metadata.model_uri);
         self_.load_model(py, &model_path, load_kwargs.model_kwargs(py))?;
 
-        if onnx {
+        if load_kwargs.load_onnx {
             debug!("Loading ONNX model");
             let onnx_path = path.join(
                 &metadata
@@ -337,6 +346,7 @@ impl TorchModel {
                     .ok_or_else(|| OpsmlError::new_err("ONNX model URI not found in metadata"))?,
             );
             self_.load_onnx_model(py, &onnx_path, load_kwargs.onnx_kwargs(py))?;
+            debug!("Loaded ONNX model");
         }
 
         let data_type = self_.as_super().data_type.clone();
@@ -421,16 +431,10 @@ impl TorchModel {
             sample_data: TorchSampleData::default(),
         };
 
-        let mut interface = ModelInterface::new(
-            py,
-            None,
-            None,
-            Some(metadata.task_type.clone()),
-            Some(metadata.schema.clone()),
-            None,
-            None,
-        )?;
+        let mut interface =
+            ModelInterface::new(py, None, None, Some(metadata.task_type.clone()), None)?;
 
+        interface.schema = metadata.schema.clone();
         interface.data_type = metadata.data_type.clone();
 
         Py::new(py, (model_interface, interface))?.into_bound_py_any(py)

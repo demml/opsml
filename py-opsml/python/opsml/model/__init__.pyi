@@ -3,7 +3,6 @@
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union, overload
 
-from ..core import ExtraMetadata, FeatureSchema, OnnxSchema
 from ..data import DataType
 from ..scouter.drift import (
     CustomDriftProfile,
@@ -14,6 +13,111 @@ from ..scouter.drift import (
     SpcDriftConfig,
     SpcDriftProfile,
 )
+
+DriftProfileType = Union[
+    List[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile],
+    SpcDriftProfile | PsiDriftProfile | CustomDriftProfile,
+]
+
+class ProcessorType:
+    Preprocessor: "ProcessorType"
+    Tokenizer: "ProcessorType"
+    FeatureExtractor: "ProcessorType"
+    ImageProcessor: "ProcessorType"
+
+class ExtraMetadata:
+    metadata: Dict[str, Any]
+
+class Feature:
+    feature_type: str
+    shape: List[int]
+    extra_args: Dict[str, str]
+
+    def __init__(
+        self,
+        feature_type: str,
+        shape: List[int],
+        extra_args: Optional[Dict[str, str]] = None,
+    ) -> None:
+        """Define a feature
+
+        Args:
+            feature_type:
+                The type of the feature
+            shape:
+                The shape of the feature
+            extra_args:
+                Extra arguments to pass to the feature
+        """
+
+    def __str__(self) -> str:
+        """Return a string representation of the Feature.
+
+        Returns:
+            String representation of the Feature.
+        """
+
+class FeatureSchema:
+    def __init__(self, items: Optional[dict[str, Feature]] = None) -> None:
+        """Define a feature map
+
+        Args:
+            features:
+                The features to use in the feature map
+        """
+
+    def __str__(self) -> str:
+        """Return a string representation of the FeatureSchema."""
+
+    def __getitem__(self, key: str) -> Feature:
+        """Returns the feature at the given key."""
+
+# Utils
+
+class OnnxSchema:
+    def __init__(
+        self,
+        input_features: FeatureSchema,
+        output_features: FeatureSchema,
+        onnx_version: str,
+        feature_names: Optional[List[str]] = None,
+    ) -> None:
+        """Define an onnx schema
+
+        Args:
+            input_features (FeatureSchema):
+                The input features of the onnx schema
+            output_features (FeatureSchema):
+                The output features of the onnx schema
+            onnx_version (str):
+                The onnx version of the schema
+            feature_names (List[str] | None):
+                The feature names and order for onnx.
+
+        """
+
+    def __str__(self) -> str:
+        """Return a string representation of the OnnxSchema.
+
+        Returns:
+            String representation of the OnnxSchema.
+        """
+
+    @property
+    def input_features(self) -> FeatureSchema:
+        """Return the input features of the OnnxSchema."""
+
+    @property
+    def output_features(self) -> FeatureSchema:
+        """Return the output features of the OnnxSchema."""
+
+    @property
+    def onnx_version(self) -> str:
+        """Return the onnx version of the OnnxSchema."""
+
+    @property
+    def feature_names(self) -> List[str]:
+        """Return the feature names and order for onnx."""
 
 class ModelSaveKwargs:
     def __init__(
@@ -183,8 +287,21 @@ class HuggingFaceOnnxArgs:
         """
 
 class DataProcessor:
+    """Generic class that holds uri information for data preprocessors and postprocessors"""
+
     name: str
     uri: Path
+    type: ProcessorType
+
+    def __init__(self, name: str, uri: Path) -> None:
+        """Define a data processor
+
+        Args:
+            name:
+                Name of the data processor
+            uri:
+                Path to the data processor
+        """
 
     def __str__(self): ...
 
@@ -270,7 +387,7 @@ class TaskType:
     TimeSeriesVideo: "TaskType"
     TimeSeriesGraph: "TaskType"
     TimeSeriesTabular: "TaskType"
-    Other: "TaskType"
+    Undefined: "TaskType"
 
 class OnnxSession:
     @property
@@ -329,7 +446,7 @@ class ModelInterfaceMetadata:
     def __init__(
         self,
         save_metadata: ModelInterfaceSaveMetadata,
-        task_type: TaskType = TaskType.Other,
+        task_type: TaskType = TaskType.Undefined,
         model_type: ModelType = ModelType.Unknown,
         data_type: DataType = DataType.NotProvided,
         schema: FeatureSchema = FeatureSchema(),
@@ -373,7 +490,6 @@ class ModelInterface:
         model: None | Any = None,
         sample_data: None | Any = None,
         task_type: None | TaskType = None,
-        schema: None | FeatureSchema = None,
         drift_profile: (
             None
             | List[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile]
@@ -383,15 +499,12 @@ class ModelInterface:
         """Base class for ModelInterface
 
         Args:
-            data:
-                Data. Can be a pyarrow table, pandas dataframe, polars dataframe
-                or numpy array
+            model:
+                Model to associate with interface.
             sample_data:
                 Sample data to use to make predictions
             task_type:
                 The type of task the model performs
-            schema:
-                Feature schema for model features
             drift_profile:
                 Drift profile to use. Can be a list of SpcDriftProfile, PsiDriftProfile or CustomDriftProfile
         """
@@ -534,7 +647,6 @@ class ModelInterface:
         self,
         path: Path,
         metadata: ModelInterfaceSaveMetadata,
-        onnx: bool = False,
         load_kwargs: None | ModelLoadKwargs = None,
     ) -> None:
         """Load ModelInterface components
@@ -544,8 +656,6 @@ class ModelInterface:
                 Path to load the model
             metadata (ModelInterfaceSaveMetadata):
                 Metadata to use to load the model
-            onnx (bool):
-                Whether to load the onnx model
             load_kwargs (ModelLoadKwargs):
                 Optional load kwargs to pass to the different load methods
         """
@@ -569,12 +679,7 @@ class SklearnModel(ModelInterface):
         preprocessor: Optional[Any] = None,
         sample_data: Optional[Any] = None,
         task_type: Optional[TaskType] = None,
-        schema: Optional[FeatureSchema] = None,
-        drift_profile: (
-            None
-            | List[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile]
-            | Union[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile]
-        ) = None,
+        drift_profile: Optional[DriftProfileType] = None,
     ) -> None:
         """Instantiate an SklearnModel interface
 
@@ -589,8 +694,6 @@ class SklearnModel(ModelInterface):
                 Sample data to use to make predictions
             task_type:
                 The type of task the model performs
-            schema:
-                Feature schema for model features
             drift_profile:
                 Drift profile to use. Can be a list of SpcDriftProfile, PsiDriftProfile or CustomDriftProfile
         """
@@ -620,12 +723,7 @@ class LightGBMModel(ModelInterface):
         preprocessor: Optional[Any] = None,
         sample_data: Optional[Any] = None,
         task_type: Optional[TaskType] = None,
-        schema: Optional[FeatureSchema] = None,
-        drift_profile: (
-            None
-            | List[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile]
-            | Union[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile]
-        ) = None,
+        drift_profile: Optional[DriftProfileType] = None,
     ) -> None:
         """Instantiate a LightGBMModel interface
 
@@ -638,8 +736,6 @@ class LightGBMModel(ModelInterface):
                 Sample data to use to make predictions
             task_type:
                 The type of task the model performs
-            schema:
-                Feature schema for model features
             drift_profile:
                 Drift profile to use. Can be a list of SpcDriftProfile, PsiDriftProfile or CustomDriftProfile
         """
@@ -669,12 +765,7 @@ class XGBoostModel(ModelInterface):
         preprocessor: Optional[Any] = None,
         sample_data: Optional[Any] = None,
         task_type: Optional[TaskType] = None,
-        schema: Optional[FeatureSchema] = None,
-        drift_profile: (
-            None
-            | List[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile]
-            | Union[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile]
-        ) = None,
+        drift_profile: Optional[DriftProfileType] = None,
     ) -> None:
         """Interface for saving XGBoost Booster models
 
@@ -687,8 +778,6 @@ class XGBoostModel(ModelInterface):
                 Sample data to use to make predictions.
             task_type:
                 The type of task the model performs
-            schema:
-                Feature schema for model features
             drift_profile:
                 Drift profile to use. Can be a list of SpcDriftProfile, PsiDriftProfile or CustomDriftProfile
         """
@@ -718,12 +807,7 @@ class TorchModel(ModelInterface):
         preprocessor: Optional[Any] = None,
         sample_data: Optional[Any] = None,
         task_type: Optional[TaskType] = None,
-        schema: Optional[FeatureSchema] = None,
-        drift_profile: (
-            None
-            | List[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile]
-            | Union[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile]
-        ) = None,
+        drift_profile: Optional[DriftProfileType] = None,
     ) -> None:
         """Interface for saving PyTorch models
 
@@ -738,8 +822,6 @@ class TorchModel(ModelInterface):
                 List[torch.Tensor], Tuple[torch.Tensor].
             task_type:
                 The intended task type of the model.
-            schema:
-                Feature schema for model features. Will be inferred from the sample data if not provided.
             drift_profile:
                 Drift profile to use. Can be a list of SpcDriftProfile, PsiDriftProfile or CustomDriftProfile
         """
@@ -780,10 +862,6 @@ class TorchModel(ModelInterface):
                 Optional kwargs to pass to the various underlying methods. This is a passthrough object meaning
                 that the kwargs will be passed to the underlying methods as is and are expected to be supported by
                 the underlying library.
-
-                - model: Kwargs that will be passed to save_model. See save_model for more details.
-                - preprocessor: Kwargs that will be passed to save_preprocessor
-                - onnx: Kwargs that will be passed to save_onnx_model. See convert_onnx_model for more details.
         """
 
 class LightningModel(ModelInterface):
@@ -793,12 +871,7 @@ class LightningModel(ModelInterface):
         preprocessor: Optional[Any] = None,
         sample_data: Optional[Any] = None,
         task_type: Optional[TaskType] = None,
-        schema: Optional[FeatureSchema] = None,
-        drift_profile: (
-            None
-            | List[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile]
-            | Union[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile]
-        ) = None,
+        drift_profile: Optional[DriftProfileType] = None,
     ) -> None:
         """Interface for saving PyTorch Lightning models
 
@@ -813,8 +886,6 @@ class LightningModel(ModelInterface):
                 List[torch.Tensor], Tuple[torch.Tensor].
             task_type:
                 The intended task type of the model.
-            schema:
-                Feature schema for model features. Will be inferred from the sample data if not provided.
             drift_profile:
                 Drift profile to use. Can be a list of SpcDriftProfile, PsiDriftProfile or CustomDriftProfile
         """
@@ -878,12 +949,7 @@ class HuggingFaceModel(ModelInterface):
         sample_data: Optional[Any] = None,
         hf_task: Optional[HuggingFaceTask] = None,
         task_type: Optional[TaskType] = None,
-        schema: Optional[FeatureSchema] = None,
-        drift_profile: (
-            None
-            | List[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile]
-            | Union[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile]
-        ) = None,
+        drift_profile: Optional[DriftProfileType] = None,
     ) -> None:
         """Interface for saving HuggingFace models and pipelines
 
@@ -941,8 +1007,6 @@ class HuggingFaceModel(ModelInterface):
                     - `"zero-shot-object-detection"`: will return a [`ZeroShotObjectDetectionPipeline`].
             task_type:
                 The intended task type for the model. Note: This is the OpsML task type, not the HuggingFace task type.
-            schema:
-                Feature schema for model features. Will be inferred from the sample data if not provided.
             drift_profile:
                 Drift profile to use. Can be a list of SpcDriftProfile, PsiDriftProfile or CustomDriftProfile
         """
@@ -1044,12 +1108,7 @@ class CatBoostModel(ModelInterface):
         preprocessor: Optional[Any] = None,
         sample_data: Optional[Any] = None,
         task_type: Optional[TaskType] = None,
-        schema: Optional[FeatureSchema] = None,
-        drift_profile: (
-            None
-            | List[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile]
-            | Union[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile]
-        ) = None,
+        drift_profile: Optional[DriftProfileType] = None,
     ) -> None:
         """Interface for saving CatBoost models
 
@@ -1062,8 +1121,6 @@ class CatBoostModel(ModelInterface):
                 Sample data to use to make predictions.
             task_type:
                 The type of task the model performs
-            schema:
-                Feature schema for model features
             drift_profile:
                 Drift profile to use. Can be a list of SpcDriftProfile, PsiDriftProfile or CustomDriftProfile
         """
@@ -1094,11 +1151,7 @@ class TensorFlowModel(ModelInterface):
         sample_data: Optional[Any] = None,
         task_type: Optional[TaskType] = None,
         schema: Optional[FeatureSchema] = None,
-        drift_profile: (
-            None
-            | List[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile]
-            | Union[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile]
-        ) = None,
+        drift_profile: Optional[DriftProfileType] = None,
     ) -> None:
         """Interface for saving PyTorch models
 
@@ -1113,8 +1166,6 @@ class TensorFlowModel(ModelInterface):
                 List[tf.Tensor], Tuple[tf.Tensor].
             task_type:
                 The intended task type of the model.
-            schema:
-                Feature schema for model features. Will be inferred from the sample data if not provided.
             drift_profile:
                 Drift profile to use. Can be a list of SpcDriftProfile, PsiDriftProfile or CustomDriftProfile
         """
@@ -1129,8 +1180,7 @@ class TensorFlowModel(ModelInterface):
 
         Args:
             preprocessor:
-                Preprocessor to associate with the model. This preprocessor must be from the
-                scikit-learn ecosystem
+                Preprocessor to associate with the model
         """
 
     @property

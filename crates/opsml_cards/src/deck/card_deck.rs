@@ -340,21 +340,13 @@ impl CardDeck {
                     bound.call_method1("load", (Option::<PathBuf>::None, kwargs))?;
                 }
                 RegistryType::Model => {
-                    let (load_onnx, kwargs) = match load_kwargs
+                    let kwargs = load_kwargs
                         .as_ref()
                         .and_then(|kwargs| kwargs.get(alias))
                         .map(|kwargs| kwargs.extract::<ModelLoadKwargs>())
-                        .transpose()?
-                    {
-                        Some(model_kwargs) => {
-                            let load_onnx = model_kwargs.load_onnx;
-                            let kwargs = Some(model_kwargs);
-                            (load_onnx, kwargs)
-                        }
-                        None => (false, None),
-                    };
+                        .transpose()?;
 
-                    bound.call_method1("load", (Option::<PathBuf>::None, load_onnx, kwargs))?;
+                    bound.call_method1("load", (Option::<PathBuf>::None, kwargs))?;
                 }
                 _ => {}
             }
@@ -657,14 +649,11 @@ impl CardDeck {
         let mut card_obj =
             ModelCard::model_validate_json(py, card_json.to_string(), interface.as_ref())?;
         let kwargs = load_kwargs.and_then(|kwargs| kwargs.extract::<ModelLoadKwargs>().ok());
-        let onnx = kwargs.as_ref().map(|k| k.load_onnx).unwrap_or(false);
 
-        card_obj
-            .load(py, Some(card_path), onnx, kwargs)
-            .map_err(|e| {
-                error!("Failed to load card: {}", e);
-                OpsmlError::new_err(e.to_string())
-            })?;
+        card_obj.load(py, Some(card_path), kwargs).map_err(|e| {
+            error!("Failed to load card: {}", e);
+            OpsmlError::new_err(e.to_string())
+        })?;
 
         card_obj.into_py_any(py).map_err(|e| {
             error!("Failed to convert card to PyAny: {}", e);

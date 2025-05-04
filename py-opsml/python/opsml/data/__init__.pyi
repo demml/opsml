@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
-from ..core import ExtraMetadata, FeatureSchema
+from ..model import ExtraMetadata, FeatureSchema
 from ..scouter.profile import DataProfile
 
 class DataInterfaceType:
