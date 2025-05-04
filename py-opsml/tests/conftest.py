@@ -41,23 +41,15 @@ class MockInterface(BaseModel):
 
 
 class CustomModel(ModelInterface):
-    def __new__(
-        cls,
-        preprocessor=None,
-        model: None | Any = None,
-        sample_data: None | Any = None,
-        task_type: None | TaskType = None,
-    ):
+    def __new__(cls, preprocessor=None, **kwargs):
         instance = super(CustomModel, cls).__new__(
             cls,
-            model=model,
-            sample_data=sample_data,
-            task_type=task_type,
+            **kwargs,
         )
 
         return instance
 
-    def __init__(self, preprocessor, model, sample_data, task_type):
+    def __init__(self, preprocessor, **kwargs):
         """Init method for the custom model interface."""
 
         super().__init__()
@@ -118,6 +110,45 @@ class CustomModel(ModelInterface):
             sample_data=None,
             task_type=metadata.task_type,
             preprocessor=None,
+        )
+
+
+class IncorrectCustomModel(ModelInterface):
+    def save(self, path, to_onnx=False, save_kwargs=None):
+        """Custom save method for the model interface.
+
+        Args:
+            path (Path): Path to save the model.
+            to_onnx (bool): Whether to save the model as ONNX.
+            save_kwargs (ModelSaveKwargs): Save kwargs for the model.
+
+        """
+        model_save_path = Path("model").with_suffix(".joblib")
+        preprocessor_save_path = Path("preprocessor").with_suffix(".joblib")
+
+        assert self.model is not None
+        joblib.dump(self.model, path / model_save_path)
+
+        # Incorrectly saving the preprocessor (this doesnt exist, should cause error)
+        assert self.preprocessor is not None
+        joblib.dump(self.preprocessor, path / preprocessor_save_path)
+
+        save_metadata = ModelInterfaceSaveMetadata(
+            model_uri=model_save_path,
+            data_processor_map={
+                "preprocessor": DataProcessor(
+                    name="preprocessor",
+                    uri=preprocessor_save_path,
+                    type=ProcessorType.Preprocessor,
+                )
+            },
+        )
+
+        return ModelInterfaceMetadata(
+            task_type=self.task_type,
+            model_type=self.model_type,
+            data_type=self.data_type,
+            save_metadata=save_metadata,
         )
 
 
@@ -202,6 +233,15 @@ def custom_interface(example_dataframe):
         task_type=TaskType.AnomalyDetection,
         preprocessor=StandardScaler(),
     )
+
+
+@pytest.fixture
+def incorrect__custom_interface(example_dataframe):
+    X_train, y_train, X_test, y_test = example_dataframe
+    reg = ensemble.RandomForestClassifier(n_estimators=5)
+    reg.fit(X_train.to_numpy(), y_train)
+
+    return IncorrectCustomModel(model=reg)
 
 
 @pytest.fixture
