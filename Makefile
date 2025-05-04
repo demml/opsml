@@ -57,6 +57,10 @@ test.sql: test.sql.sqlite test.sql.enum test.sql.postgres test.sql.mysql
 test.storage.local.server:
 	cargo test --release -p opsml-storage test_local_storage_server -- --nocapture --test-threads 1
 
+######## Collective Unit Tests
+.PHONY: test.unit
+test.unit: test.toml test.cli test.sql test.storage.server test.utils
+
 ######## Server tests
 
 .PHONY: start.server
@@ -113,6 +117,7 @@ install.ui.deps:
 
 .PHONY: ui.build
 build.ui:
+	cd $(UI_DIR) && pnpm install
 	cd $(UI_DIR) && pnpm build
 	touch $(UI_DIR)/site/.gitkeep # to make sure the site folder is not ignored by git
 

@@ -64,8 +64,8 @@ pub trait SqlClient: Sized {
     async fn get_versions(
         &self,
         table: &CardTable,
-        name: &str,
         space: &str,
+        name: &str,
         version: Option<String>,
     ) -> Result<Vec<String>, SqlError>;
 

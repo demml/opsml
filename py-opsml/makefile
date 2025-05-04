@@ -22,15 +22,13 @@ lints: lints.ruff lints.pylint lints.mypy
 lints.ci: lints.format_check lints.ruff lints.pylint lints.mypy
 
 setup.project:
-	uv sync --all-extras --group dev
+	uv sync --all-extras --group dev --group docs
 	uv run maturin develop --features server
 
 setup.project.numpy1:
 	uv sync --all-extras --group dev --group numpy1
 	uv run maturin develop --features server
 
-setup.docs:
-	uv sync --all-extras --group dev --group docs
 
 test.unit.numpy1: setup.project.numpy1
 	uv run pytest \
@@ -55,7 +53,7 @@ test.unit:
 		--cov-report term 
 
 setup.integration:
-	uv sync --all-extras --group dev
+	uv sync --all-extras --group dev,docs
 	uv run maturin develop --release 
 
 test.integration:
@@ -72,3 +70,13 @@ uv.sub.pre.tag:
 	@sed -i "s/$(VER)/$(REL_CANDIDATE)/" pyproject.toml
 
 prep.pre.patch: uv.pre.patch uv.sub.pre.tag
+
+setup.docs:
+	uv sync --all-extras --group docs
+	uv run maturin develop --features server
+
+build.docs:
+	uv run mkdocs build
+
+publish.docs:
+	uv run mkdocs gh-deploy --force

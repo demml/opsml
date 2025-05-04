@@ -1,81 +1,97 @@
 # Contributing to demml/opsml
 
 ## Welcome
-Hello! We're glad and grateful that you're interested in contributing to `OpsML` :tada:! Below you will find the general guidelines for setting up your environment and creating/submitting `pull requests`.
-
-## Very Important
-To contribute to `OpsML` you will need to sign a Contributor License Agreement (CLA) via HelloSign when you create your first `pull_request` (this is an automated process). For a `pull_request` to be valid, your Github email address must match the email address used to sign the CLA. Github has [documentation](https://help.github.com/articles/setting-your-commit-email-address-on-github/) on setting email addresses. Your git email must also match this email address
-
+Hello! We're glad and grateful that you're interested in contributing to opsml :tada:! Below you will find the general guidelines for setting up your environment and creating/submitting `pull requests` and `issues`.
 
 ## Table of contents
 
-- [Environment setup](#environment-setup)
-- [Contributing changes](#contributing-changes)
-- [Contributing TLDR](#contributing-tldr)
-- [Community guidelines](#community-guidelines)
-- [Reporting bugs](#submitting-issues/bugs)
-- [Suggesting enhancements](#suggesting-enhancements)
+- [Contributing to demml/opsml](#contributing-to-demmlopsml)
+  - [Welcome](#welcome)
+  - [Table of contents](#table-of-contents)
+  - [Submitting Issues](#submitting-issues)
+  - [Pull Requests](#pull-requests)
+    - [Environment Setup](#environment-setup)
+    - [Contributing Changes](#contributing-changes)
+    - [Community Guidelines](#community-guidelines)
+  - [_Thank you!_](#thank-you)
 
 
-## Environment Setup
-Steps:
-1. Create a new env. `OpsML` currently supports python 3.9 -> 3.11
-2. Fork `OpsML`
-3. Install all required and development packages in your new env (we use [poetry](https://github.com/python-poetry/poetry) for dependency management).
+## Submitting Issues
 
-```bash
-make setup
+Documentation issues, bugs, and feature requests are all welcome! We want to make opsml as useful as possible, so please let us know if you find something that doesn't work or if you have an idea for a new feature. To create a new issue, click [here](https://github.com/demml/opsml/issues/new/choose) and select the appropriate issue template.
+
+## Pull Requests 
+
+There's always something to improve in opsml, and we want to make it as easy as possible for you to contribute. We welcome all contributions, big or small, and we appreciate your help in making opsml better. The following sections will guide you through the process of contributing to opsml.
+
+### Environment Setup
+
+Depending on what area you're interested in contributing to, you may need to set up your environment differently. Opsml primarily uses a Rust backend and exposes a Python API via PyO3. For python environment management, OpsML leverages [uv](https://docs.astral.sh/uv/) For the frontend, opsml exposes a static SPA built with [Svelte](https://svelte.dev/) and [SvelteKit](https://svelte.dev/docs/kit/introduction).
+
+1. Install Rust and Cargo by following the instructions [here](https://www.rust-lang.org/tools/install).
+2. Install uv by following the instructions [here](https://docs.astral.sh/uv/getting-started/installation/).
+3. Install python 3.10 or higher (e.g. `uv python install 3.12`).
+4. (Optional for UI contributions) Make sure npm and [pnpm](https://pnpm.io/installation) are installed on your system.
+
+**Ensure everything works**:
+
+From the root directory of the project, run the following commands to ensure everything is working correctly:
+
+```console
+$ make start.server
 ```
-or with poetry directly
 
-```bash
-poetry install --all-extras --with dev,dev-lints
+This should start the OpsML server, after which you should be able to access the UI on your localhost. The following will shutdown the server:
+
+```console
+$ make stop.server
 ```
 
-## Contributing Changes
+To make sure the python client is working, run the following commands:
+
+```console
+$ cd py-opsml
+$ make setup.project
+$ make test.unit
+```
+
+The above will cd into the py-opsml directory, setup the python environment, build the python wheel and run the unit tests.
+
+** You're now ready to start contributing! **
+
+Feel free to explore more of the makefile and codebase to get a better sense of how we run some of our tests and lints, but the above commands should be enough to get you started.
+
+### Contributing Changes
 1. Create a new branch for your addition
    * General naming conventions (we're not picky):
       * `/username/<featureName>`: for features
       * `/username/<fixName>`: for general refactoring or bug fixes
 2. Test your changes:
-   * You can run formatting, lints and tests locally via `make format`, `make lints` and `make unit.tests`, respectively.
+   - Testing Rust changes:
+     - make sure you are in the `opsml` directory
+     - run `make format` to format the code
+     - run `make lints` to run the linter
+     - run `make test.unit` to run util, sql, and server-side storage tests
+   - Testing Python changes:
+     - make sure you are in the `py-opsml` directory
+     - run `make setup.project` to setup the python environment and build the python wheel
+     - run `make format` to format the code
+     - run `make lints` to run the linter
+     - run `make test.unit` to run the python unit tests
 3. Submit a Draft Pull Request. Do it early and mark it `WIP` so a maintainer knows it's not ready for review just yet. You can also add a label to it if you feel like it :smile:.
-4. If you haven't signed our CLA before, then you will receive an email from HelloSign to sign the CLA (mentioned above).
-    * The CLA request will be sent to the email address associated with your github account.
-    * You cannot have your PR merged without signing the PR.
-    * If you already submitted a PR and need to correct your user.name and/or user.email please do so and then use `git commit --amend --reset-author` and then `git push --force` to correct the PR.
-5. Move the `pull_request` out of draft state.
+4. Move the `pull_request` out of draft state.
    * Make sure you fill out the `pull_request` template (included with every `pull_request`)
-6. Request review from one of our maintainers (this should happen automatically via `.github/CODEOWNERS`). 
-7. Get Approval. We'll let you know if there are any changes that are needed. 
-8. Merge your changes into `OpsML`!
+5. Request review from one of our maintainers (this should happen automatically via `.github/CODEOWNERS`). 
+6. Get Approval. We'll let you know if there are any changes that are needed. 
+7. Merge your changes into opsml!
 
-## Contributing TLDR
-1. Create branch
-2. Add changes
-3. Test locally
-4. Create PR (fill out CLA if you haven't before)
-5. Get your awesome work reviewed and approved by a maintainer
-6. Merge
-7. Celebrate!
 
-## Community Guidelines
+### Community Guidelines
   1. Be Kind
-    - Working with us should be a fun learning opportunity, and we want it to be a good experience for everyone. Please treat each other with respect.  
-    - If something looks outdated or incorrect, please let us know! We want to make `OpsML` as useful as possible. 
+    - Working with us should be a fun learning opportunity (for all parties!), and we want it to be a good experience for everyone. Please treat each other with respect.  
+    - If something looks outdated or incorrect, please let us know! We want to make opsml as useful as possible. 
   2. Own Your Work
-     * Creating a PR for `OpsML` is your first step to becoming a contributor, so make sure that you own your changes. 
+     * Creating a PR for opsml is your first step to becoming a contributor, so make sure that you own your changes. 
      * Our maintainers will do their best to respond to you in a timely manner, but we ask the same from you as the contributor. 
-
-## Submitting issues/bugs
-
-We use [GitHub issues](https://github.com/thorrester/opsml/issues) to track bugs and suggested enhancements. You can report a bug by opening a new issue [new issue](https://github.com/demml/opsml/issues/new/choose) Before reporting a bug/issue, please check that it has not already been reported, and that it is not already fixed in the latest version. If you find a closed issue related to your current issue, please open a new issue and include a link to the original issue in the body of your new one. Please include as much information about your bug as possible.
-
-## Suggesting enhancements
-
-You can suggest an enhancement by opening a [new feature request](https://github.com/demml/opsml/issues/new?labels=enhancement&template=feature_request.yml).
-Before creating an enhancement suggestion, please check that a similar issue does not already exist.
-
-Please describe the behavior you want and why, and provide examples of how `OpsML` would be used if your feature were added.
 
 ## _Thank you!_

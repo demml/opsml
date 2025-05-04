@@ -4,13 +4,15 @@
 from .opsml import (  # noqa: F401
     card,
     cli,
-    core,
     data,
+    error,
     experiment,
+    logging,
     model,
     potato_head,
     scouter,
     test,
+    types,
 )
 
 CardRegistry = card.CardRegistry
@@ -59,10 +61,14 @@ start_experiment = experiment.start_experiment
 get_experiment_metrics = experiment.get_experiment_metrics
 get_experiment_parameters = experiment.get_experiment_parameters
 
-# core
-RustyLogger = core.RustyLogger
-LoggingConfig = core.LoggingConfig
-VersionType = core.VersionType
+# logging
+RustyLogger = logging.RustyLogger
+LoggingConfig = logging.LoggingConfig
+WriteLevel = logging.WriteLevel
+LogLevel = logging.LogLevel
+
+
+VersionType = types.VersionType
 
 # Potato Head
 PromptCard = card.PromptCard

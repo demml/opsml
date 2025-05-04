@@ -78,14 +78,13 @@ pub struct XGBoostModel {
 impl XGBoostModel {
     #[new]
     #[allow(clippy::too_many_arguments)]
-    #[pyo3(signature = (model=None, preprocessor=None, sample_data=None, task_type=None, schema=None, drift_profile=None))]
+    #[pyo3(signature = (model=None, preprocessor=None, sample_data=None, task_type=None,  drift_profile=None))]
     pub fn new<'py>(
         py: Python,
         model: Option<&Bound<'py, PyAny>>,
         preprocessor: Option<&Bound<'py, PyAny>>,
         sample_data: Option<&Bound<'py, PyAny>>,
         task_type: Option<TaskType>,
-        schema: Option<FeatureSchema>,
         drift_profile: Option<&Bound<'py, PyAny>>,
     ) -> PyResult<(Self, ModelInterface)> {
         // check if model is base estimator for sklearn validation
@@ -102,15 +101,8 @@ impl XGBoostModel {
             }
         }
 
-        let mut model_interface = ModelInterface::new(
-            py,
-            model,
-            sample_data,
-            task_type,
-            schema,
-            drift_profile,
-            None,
-        )?;
+        let mut model_interface =
+            ModelInterface::new(py, model, sample_data, task_type, drift_profile)?;
 
         model_interface.interface_type = ModelInterfaceType::XGBoost;
         let mut preprocessor_name = CommonKwargs::Undefined.to_string();
@@ -294,14 +286,13 @@ impl XGBoostModel {
     /// # Returns
     ///
     /// * `PyResult<DataInterfaceMetadata>` - DataInterfaceMetadata
-    #[pyo3(signature = (path, metadata, onnx=false, load_kwargs=None))]
+    #[pyo3(signature = (path, metadata, load_kwargs=None))]
     #[allow(clippy::too_many_arguments)]
     pub fn load(
         mut self_: PyRefMut<'_, Self>,
         py: Python,
         path: PathBuf,
         metadata: ModelInterfaceSaveMetadata,
-        onnx: bool,
         load_kwargs: Option<ModelLoadKwargs>,
     ) -> PyResult<()> {
         // if kwargs is not None, unwrap, else default to None
@@ -328,7 +319,7 @@ impl XGBoostModel {
         {
             let parent = self_.as_super();
 
-            if onnx {
+            if load_kwargs.load_onnx {
                 let onnx_path =
                     path.join(&metadata.onnx_model_uri.ok_or_else(|| {
                         OpsmlError::new_err("ONNX model URI not found in metadata")
@@ -389,16 +380,10 @@ impl XGBoostModel {
             preprocessor_name,
         };
 
-        let mut interface = ModelInterface::new(
-            py,
-            None,
-            None,
-            Some(metadata.task_type.clone()),
-            Some(metadata.schema.clone()),
-            None,
-            None,
-        )?;
+        let mut interface =
+            ModelInterface::new(py, None, None, Some(metadata.task_type.clone()), None)?;
 
+        interface.schema = metadata.schema.clone();
         interface.data_type = metadata.data_type.clone();
         interface.model_type = metadata.model_type.clone();
         interface.interface_type = metadata.interface_type.clone();

@@ -1,0 +1,152 @@
+:root {
+  --black: #2d2532;
+  --grey: #F5F5F5;
+  --white: #ffffff;
+  --primary-300: #cdbff8;
+  --primary-500: #6340ac;
+  --primary-700: #2c1c44;
+  --primary-900: #231239;
+  --secondary: #5cd38a;
+  --tertiary: #86aaf1;
+  --alert: #E06C75;
+  --warn: #f8b05d;
+  --yellow: #e8e833;
+
+}
+
+.text-primary { color: var(--primary-500); }
+.text-secondary { color: var(--secondary); }
+.text-alert { color: var(--alert); }
+
+[data-md-color-scheme="opsml-light"] {
+  --md-default-bg-color--dark: var(--black);
+  --md-primary-fg-color: var(--primary-500);
+  --md-typeset-a-color: var(--primary-500);
+  --md-accent-fg-color: var(--secondary);
+}
+
+[data-md-color-scheme="opsml-dark"] {
+  --md-default-bg-color: var(--primary-900);
+  --md-default-fg-color: var(--white);
+  --md-default-fg-color--light: var(--white);
+  --md-default-fg-color--lighter: var(--white);
+  --md-primary-fg-color: var(--primary-500);
+  --md-primary-bg-color: var(--white);
+  --md-accent-fg-color: var(--secondary);
+
+  --md-typeset-color: var(--white);
+  --md-typeset-a-color: var(--secondary);
+  --md-typeset-mark-color: var(--warn);
+  --md-typeset-bg-color: var(--primary-300);
+
+  --md-code-fg-color: var(--white);
+  --md-code-bg-color: var(--primary-700);
+
+  --md-code-hl-comment-color: var(--primary-300);
+  --md-code-hl-punctuation-color: var(--primary-300);
+  --md-code-hl-generic-color: var(--secondary);
+  --md-code-hl-variable-color: var(--tertiary);
+  --md-code-hl-string-color: var(--secondary);
+  --md-code-hl-keyword-color: var(--alert);
+  --md-code-hl-operator-color: var(--alert);
+  --md-code-hl-number-color: var(--alert);
+  --md-code-hl-special-color: var(--alert);
+  --md-code-hl-function-color: var(--tertiary);
+  --md-code-hl-constant-color: var(--secondary);
+  --md-code-hl-name-color: var(--md-code-fg-color);
+
+  --md-typeset-del-color: hsla(6, 90%, 60%, 0.15);
+  --md-typeset-ins-color: hsla(150, 90%, 44%, 0.15);
+
+  --md-typeset-table-color: hsla(0, 0%, 100%, 0.12);
+  --md-typeset-table-color--light: hsla(0, 0%, 100%, 0.035);
+
+}
+
+[data-md-color-scheme="opsml-dark"] .quote,
+[data-md-color-scheme="opsml-dark"] details.quote {
+  background-color: var(--primary-700) !important;
+  color: var(--white) !important;
+}
+
+[data-md-color-scheme="opsml-dark"] .admonition.info,
+[data-md-color-scheme="opsml-dark"] div.admonition.info {
+  background-color: var(--primary-700) !important;
+  color: var(--white) !important;
+}
+
+[data-md-color-scheme="opsml-dark"] .success,
+[data-md-color-scheme="opsml-dark"] details.success {
+  background-color: var(--primary-700) !important;
+  color: var(--white) !important;
+}
+
+[data-md-color-scheme="opsml-dark"] .note,
+[data-md-color-scheme="opsml-dark"] details.note {
+  background-color: var(--primary-700) !important;
+  color: var(--white) !important;
+}
+
+[data-md-color-scheme="opsml-dark"] .tip,
+[data-md-color-scheme="opsml-dark"] details.tip {
+  background-color: var(--primary-700) !important;
+  color: var(--white) !important;
+}
+
+[data-md-color-scheme="opsml-dark"] div.tip {
+  color: var(--md-code-fg-color);
+  background-color: var(--md-code-bg-color);
+}
+
+[data-md-color-scheme="opsml-dark"] .md-nav__source {
+  background-color: var(--primary-700) !important;
+}
+
+
+[data-md-color-scheme="opsml-dark"] .md-tooltip__inner {
+  background-color: var(--primary-700) !important;
+  color: var(--white) !important;
+  border: 1px solid var(--secondary) !important;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5) !important;
+}
+
+
+.md-typeset__table {
+  min-width: 100%;
+}
+.md-typeset table:not([class]) {
+  display: table;
+}
+
+
+@media screen and (min-width: 76.25em) {
+  .md-nav__title {
+    display: none;
+  }
+}
+
+
+.md-nav--primary .md-nav__link {
+  margin: 0;
+}
+
+.md-nav--primary .md-nav__item {
+  margin-top: 0.35em;
+}
+
+
+.md-nav--primary .md-nav__item--section {
+  margin-bottom: 0.75em;
+  margin-top: 1em;
+}
+
+
+.md-nav--primary > .md-nav__list > .md-nav__item:first-of-type {
+  font-size: 0.85rem;
+  margin-bottom: 0.75em; 
+}
+
+
+.md-nav__link--active {
+font-weight: bold;
+}

@@ -15,10 +15,16 @@ from typing import (
     overload,
 )
 
-from ..core import FeatureSchema, VersionType
 from ..data import DataInterface, DataLoadKwargs, DataSaveKwargs, DataType
-from ..model import ModelInterface, ModelLoadKwargs, ModelSaveKwargs
+from ..model import (
+    FeatureSchema,
+    ModelInterface,
+    ModelLoadKwargs,
+    ModelSaveKwargs,
+    OnnxSession,
+)
 from ..potato_head import Prompt
+from ..types import VersionType
 
 CardInterfaceType: TypeAlias = Union[DataInterface, ModelInterface]
 CardDeckInterfaceType: TypeAlias = Dict[str, Union[DataInterface, ModelInterface]]
@@ -356,6 +362,7 @@ class ModelCard:
         version: Optional[str] = None,
         uid: Optional[str] = None,
         tags: List[str] = [],
+        datacard_uid: Optional[str] = None,
         metadata: ModelCardMetadata = ModelCardMetadata(),
         to_onnx: bool = False,
     ) -> None:
@@ -379,6 +386,9 @@ class ModelCard:
             tags (List[str]):
                 Tags to associate with `ModelCard`. Can be a dictionary of strings or
                 a `Tags` object.
+            datacard_uid (str | None):
+                The datacard uid to associate with the model card. This is used to link the
+                model card to the data card. Datacard uid can also be set in card metadata.
             metadata (ModelCardMetadata):
                 Metadata to associate with the `ModelCard. Defaults to an empty `ModelCardMetadata` object.
             to_onnx:
@@ -424,6 +434,14 @@ class ModelCard:
     def model(self) -> Any:
         """Returns the model. This is a special property that is used to
         access the model from the interface. It is not settable. It will also
+        raise an error if the interface is not set or if the model
+        has not been loaded.
+        """
+
+    @property
+    def onnx_session(self) -> Optional[OnnxSession]:
+        """Returns the onnx session. This is a special property that is used to
+        access the onnx session from the interface. It is not settable. It will also
         raise an error if the interface is not set or if the model
         has not been loaded.
         """
@@ -534,7 +552,6 @@ class ModelCard:
     def load(
         self,
         path: Optional[Path] = None,
-        onnx: bool = False,
         load_kwargs: None | ModelLoadKwargs = None,
     ) -> None:
         """Load ModelCard interface components
@@ -543,9 +560,6 @@ class ModelCard:
             path (Path | None):
                 The path to load the data card from. If no path is provided,
                 the model interface will be loaded from the server.
-            onnx (bool):
-                Whether to load the model as onnx or not.
-                Only available for models that have been converted to onnx.
             load_kwargs (ModelLoadKwargs):
                 Optional kwargs to pass to `ModelInterface` load method.
         """

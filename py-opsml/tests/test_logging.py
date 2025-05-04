@@ -1,4 +1,4 @@
-from opsml.core import RustyLogger, LoggingConfig
+from opsml.logging import RustyLogger, LoggingConfig
 
 
 def test_loglevel():

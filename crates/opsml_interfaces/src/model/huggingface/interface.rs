@@ -229,7 +229,7 @@ pub struct HuggingFaceModel {
 impl HuggingFaceModel {
     #[new]
     #[allow(clippy::too_many_arguments)]
-    #[pyo3(signature = (model=None, tokenizer=None, feature_extractor=None, image_processor=None, sample_data=None, hf_task=None, task_type=None, schema=None, drift_profile=None))]
+    #[pyo3(signature = (model=None, tokenizer=None, feature_extractor=None, image_processor=None, sample_data=None, hf_task=None, task_type=None, drift_profile=None))]
     pub fn new<'py>(
         py: Python,
         model: Option<&Bound<'py, PyAny>>,
@@ -239,7 +239,6 @@ impl HuggingFaceModel {
         sample_data: Option<&Bound<'py, PyAny>>,
         hf_task: Option<HuggingFaceTask>,
         task_type: Option<TaskType>,
-        schema: Option<FeatureSchema>,
         drift_profile: Option<&Bound<'py, PyAny>>,
     ) -> PyResult<(Self, ModelInterface)> {
         // check if model is a Transformers Pipeline, PreTrainedModel, or TFPPreTrainedModel
@@ -311,8 +310,7 @@ impl HuggingFaceModel {
 
         // process preprocessor
 
-        let mut model_interface =
-            ModelInterface::new(py, None, None, task_type, schema, drift_profile, None)?;
+        let mut model_interface = ModelInterface::new(py, None, None, task_type, drift_profile)?;
 
         // override ModelInterface SampleData with TorchSampleData
         let sample_data = match sample_data {
@@ -438,9 +436,12 @@ impl HuggingFaceModel {
     }
 
     #[getter]
-    pub fn get_onnx_session(&self, py: Python) -> PyResult<Option<Py<OnnxSession>>> {
+    pub fn get_onnx_session<'py>(
+        &self,
+        py: Python<'py>,
+    ) -> PyResult<Option<&Bound<'py, OnnxSession>>> {
         // return mutable reference to onnx session
-        Ok(self.onnx_session.as_ref().map(|sess| sess.clone_ref(py)))
+        Ok(self.onnx_session.as_ref().map(|sess| sess.bind(py)))
     }
 
     #[getter]
@@ -522,7 +523,7 @@ impl HuggingFaceModel {
         };
 
         let onnx_session = {
-            self_.as_super().onnx_session.as_ref().map(|sess| {
+            self_.onnx_session.as_ref().map(|sess| {
                 let sess = sess.bind(py);
                 // extract OnnxSession from py object
                 sess.extract::<OnnxSession>().unwrap()
@@ -558,7 +559,7 @@ impl HuggingFaceModel {
     /// # Returns
     ///
     /// * `PyResult<DataInterfaceMetadata>` - DataInterfaceMetadata
-    #[pyo3(signature = (path, metadata, onnx=false, load_kwargs=None))]
+    #[pyo3(signature = (path, metadata, load_kwargs=None))]
     #[allow(clippy::too_many_arguments)]
     #[instrument(
         skip_all
@@ -569,7 +570,6 @@ impl HuggingFaceModel {
         py: Python,
         path: PathBuf,
         metadata: ModelInterfaceSaveMetadata,
-        onnx: bool,
         load_kwargs: Option<ModelLoadKwargs>,
     ) -> PyResult<()> {
         // if kwargs is not None, unwrap, else default to None
@@ -579,7 +579,7 @@ impl HuggingFaceModel {
         let model_path = path.join(&metadata.model_uri);
         self_.load_model(py, &model_path, load_kwargs.model_kwargs(py))?;
 
-        if onnx {
+        if load_kwargs.load_onnx {
             debug!("Loading ONNX model");
             let onnx_path = path.join(
                 &metadata
@@ -679,16 +679,10 @@ impl HuggingFaceModel {
             base_args,
         };
 
-        let mut interface = ModelInterface::new(
-            py,
-            None,
-            None,
-            Some(metadata.task_type.clone()),
-            Some(metadata.schema.clone()),
-            None,
-            None,
-        )?;
+        let mut interface =
+            ModelInterface::new(py, None, None, Some(metadata.task_type.clone()), None)?;
 
+        interface.schema = metadata.schema.clone();
         interface.data_type = metadata.data_type.clone();
         interface.model_type = metadata.model_type.clone();
         interface.interface_type = metadata.interface_type.clone();

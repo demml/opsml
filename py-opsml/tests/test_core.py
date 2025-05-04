@@ -1,10 +1,13 @@
-from opsml.model import HuggingFaceORTModel, HuggingFaceOnnxArgs
-from opsml.core import (
+from opsml.model import (
+    HuggingFaceORTModel,
+    HuggingFaceOnnxArgs,
     Feature,
     OnnxSchema,
-    OpsmlError,
     FeatureSchema,
 )
+
+from opsml.error import OpsmlError
+
 from optimum.onnxruntime.configuration import AutoQuantizationConfig  # type: ignore
 import pytest
 

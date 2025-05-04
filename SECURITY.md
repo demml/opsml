@@ -1,16 +1,5 @@
 # Security Policy
 
-## Supported Versions
-
-We release patches for security vulnerabilities. Which versions are eligible
-receiving such patches depend on the CVSS v3.0 Rating:
-
-| CVSS v3.0 | Supported Versions                        |
-| --------- | ----------------------------------------- |
-| 8.0-10.0  | Major version releases within the previous three months |
-| 4.0-7.9   | Most recent release                       |
-
-
 ## Reporting a Vulnerability
 
 **Please do not report security vulnerabilities through public GitHub issues, discussions, or pull requests.**
@@ -26,3 +15,7 @@ Please include as much of the information listed below as you can to help us bet
   * Impact of the issue, including how an attacker might exploit the issue
 
 This information will help us triage your report more quickly.
+
+To submit vulnerability or security issue, please navigate to the **security** tab of the repository and click on **"Report a vulnerability"**. This will guide you through the process of submitting a security report.
+
+Thank you for helping us improve the security of our project! Your contributions are greatly appreciated.
