@@ -50,12 +50,11 @@ class CustomModel(ModelInterface):
     ):
         instance = super(CustomModel, cls).__new__(
             cls,
-            **{
-                "model": model,
-                "sample_data": sample_data,
-                "task_type": task_type,
-            },
+            model=model,
+            sample_data=sample_data,
+            task_type=task_type,
         )
+
         return instance
 
     def __init__(self, preprocessor, model, sample_data, task_type):
@@ -66,7 +65,14 @@ class CustomModel(ModelInterface):
         self.preprocessor = preprocessor
 
     def save(self, path, to_onnx=False, save_kwargs=None):
-        """Custom save method for the model interface."""
+        """Custom save method for the model interface.
+
+        Args:
+            path (Path): Path to save the model.
+            to_onnx (bool): Whether to save the model as ONNX.
+            save_kwargs (ModelSaveKwargs): Save kwargs for the model.
+
+        """
         model_save_path = Path("model").with_suffix(".joblib")
         preprocessor_save_path = Path("preprocessor").with_suffix(".joblib")
 
@@ -193,7 +199,7 @@ def custom_interface(example_dataframe):
     return CustomModel(
         model=reg,
         sample_data=X_train,
-        task_type=TaskType.Classification,
+        task_type=TaskType.AnomalyDetection,
         preprocessor=StandardScaler(),
     )
 
