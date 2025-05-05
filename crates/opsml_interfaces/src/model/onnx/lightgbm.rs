@@ -1,6 +1,6 @@
+use crate::error::OnnxError;
 use crate::model::base::utils::OnnxExtension;
 use crate::model::onnx::OnnxSession;
-use opsml_error::OpsmlError;
 use opsml_types::ModelType;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
@@ -22,7 +22,7 @@ impl LightGBMOnnxModelConverter {
         &self,
         onnx_model: &Bound<'_, PyAny>,
         feature_names: Vec<String>,
-    ) -> PyResult<OnnxSession> {
+    ) -> Result<OnnxSession, OnnxError> {
         let py = onnx_model.py();
 
         let onnx_version = py
@@ -30,19 +30,7 @@ impl LightGBMOnnxModelConverter {
             .getattr("__version__")?
             .extract::<String>()?;
 
-        let onnx_bytes = onnx_model
-            .call_method("SerializeToString", (), None)
-            .map_err(|e| OpsmlError::new_err(format!("Failed to serialize ONNX model: {}", e)))?;
-
-        OnnxSession::new(
-            py,
-            onnx_version,
-            onnx_bytes.extract::<Vec<u8>>()?,
-            "onnx".to_string(),
-            Some(feature_names),
-            Some(onnx_model),
-        )
-        .map_err(|e| OpsmlError::new_err(format!("Failed to create ONNX session: {}", e)))
+        OnnxSession::from_onnx_session(onnx_version, onnx_model, Some(feature_names))
     }
 
     pub fn convert_model<'py, T>(
@@ -52,13 +40,11 @@ impl LightGBMOnnxModelConverter {
         model_type: &ModelType,
         sample_data: &T,
         kwargs: Option<&Bound<'py, PyDict>>,
-    ) -> PyResult<OnnxSession>
+    ) -> Result<OnnxSession, OnnxError>
     where
         T: OnnxExtension,
     {
-        let onnxmltools = py
-            .import("onnxmltools")
-            .map_err(|e| OpsmlError::new_err(format!("Failed to import onnxmltools: {}", e)))?;
+        let onnxmltools = py.import("onnxmltools").map_err(OnnxError::ImportError)?;
 
         let type_helper = py
             .import("skl2onnx")
@@ -82,7 +68,7 @@ impl LightGBMOnnxModelConverter {
 
         let onnx_model = onnxmltools
             .call_method("convert_lightgbm", (model,), Some(&kwargs))
-            .map_err(|e| OpsmlError::new_err(format!("Failed to convert model to ONNX: {}", e)))?;
+            .map_err(OnnxError::PyOnnxConversionError)?;
 
         debug!("Step 3: Extracting ONNX schema");
         let onnx_session = self.get_onnx_session(&onnx_model, sample_data.get_feature_names(py)?);
