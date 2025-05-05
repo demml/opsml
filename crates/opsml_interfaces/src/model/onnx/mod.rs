@@ -1,6 +1,7 @@
 pub mod catboost;
 pub mod converter;
 pub mod huggingface;
+pub mod interface;
 pub mod lightgbm;
 pub mod lightning;
 pub mod sklearn;
