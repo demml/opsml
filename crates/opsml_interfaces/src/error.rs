@@ -146,6 +146,9 @@ pub enum ModelInterfaceError {
 
     #[error("Model must be an sklearn model and inherit from BaseEstimator")]
     SklearnTypeError,
+
+    #[error("Model must be an instance of tensorflow.keras.Model")]
+    TensorFlowTypeError,
 }
 
 impl From<ModelInterfaceError> for PyErr {
