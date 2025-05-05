@@ -129,6 +129,9 @@ pub enum ModelInterfaceError {
 
     #[error("No model detected for saving")]
     NoModelError,
+
+    #[error("Model must be an lightgbm booster or inherit from Booster. If using the Sklearn api version of LightGBMModel, use an SklearnModel interface instead")]
+    LightGBMTypeError,
 }
 
 impl From<ModelInterfaceError> for PyErr {
