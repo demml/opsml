@@ -1,7 +1,7 @@
 use crate::base::{parse_save_kwargs, ModelInterfaceMetadata, ModelInterfaceSaveMetadata};
 use crate::data::generate_feature_schema;
 use crate::data::DataInterface;
-use crate::error::ModelInterfaceError;
+use crate::error::{ModelInterfaceError, OnnxError};
 use crate::model::torch::TorchSampleData;
 use crate::model::ModelInterface;
 use crate::types::{FeatureSchema, ProcessorType};
@@ -674,9 +674,9 @@ impl TorchModel {
         py: Python,
         path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
-    ) -> Result<(), ModelInterfaceError> {
+    ) -> Result<(), OnnxError> {
         if self.onnx_session.is_none() {
-            return Err(ModelInterfaceError::OnnxSessionMissing);
+            return Err(OnnxError::SessionNotFound);
         }
 
         // just call "load_onnx_model" method on the onnx_session
