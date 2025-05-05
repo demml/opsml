@@ -149,6 +149,14 @@ pub enum ModelInterfaceError {
 
     #[error("Model must be an instance of tensorflow.keras.Model")]
     TensorFlowTypeError,
+
+    #[error("Model must be an instance of torch.nn.Module")]
+    TorchTypeError,
+
+    #[error(
+        "TorchModel loading requires model to be passed into model kwargs for loading {{'model': {{your_model_architecture}}}}"
+    )]
+    TorchLoadModelError,
 }
 
 impl From<ModelInterfaceError> for PyErr {
