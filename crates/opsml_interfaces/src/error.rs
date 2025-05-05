@@ -37,6 +37,18 @@ pub enum OnnxError {
 
     #[error("Provider error - {0}")]
     ProviderError(pyo3::PyErr),
+
+    #[error("Cannot save ONNX model without sample data")]
+    MissingSampleData,
+
+    #[error("Failed to convert model to ONNX - {0}")]
+    PyOnnxConversionError(pyo3::PyErr),
+
+    #[error(transparent)]
+    PyError(#[from] pyo3::PyErr),
+
+    #[error("Failed to downcast- {0}")]
+    DowncastError(String),
 }
 
 impl From<OnnxError> for PyErr {
@@ -44,12 +56,6 @@ impl From<OnnxError> for PyErr {
         let msg = err.to_string();
         error!("{}", msg);
         PyRuntimeError::new_err(msg)
-    }
-}
-
-impl From<PyErr> for OnnxError {
-    fn from(err: PyErr) -> Self {
-        OnnxError::Error(err.to_string())
     }
 }
 
@@ -64,11 +70,5 @@ impl From<ModelInterfaceError> for PyErr {
         let msg = err.to_string();
         error!("{}", msg);
         PyRuntimeError::new_err(msg)
-    }
-}
-
-impl From<PyErr> for ModelInterfaceError {
-    fn from(err: PyErr) -> Self {
-        ModelInterfaceError::Error(err.to_string())
     }
 }

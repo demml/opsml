@@ -1,3 +1,4 @@
+use crate::error::OnnxError;
 use crate::model::base::utils::OnnxExtension;
 use crate::model::onnx::catboost::CatBoostOnnxModelConverter;
 use crate::model::onnx::huggingface::HuggingFaceOnnxModelConverter;
@@ -8,7 +9,6 @@ use crate::model::onnx::tensorflow::TensorFlowOnnxModelConverter;
 use crate::model::onnx::torch::TorchOnnxModelConverter;
 use crate::model::onnx::xgboost::XGBoostOnnxModelConverter;
 use crate::OnnxSession;
-use opsml_error::OpsmlError;
 use opsml_types::{ModelInterfaceType, ModelType};
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
@@ -32,7 +32,7 @@ impl BaseOnnxConverter {
     pub fn get_onnx_session(
         onnx_model: &Bound<'_, PyAny>,
         feature_names: Vec<String>,
-    ) -> PyResult<OnnxSession> {
+    ) -> Result<OnnxSession, OnnxError> {
         let py = onnx_model.py();
 
         let onnx_version = py
@@ -40,19 +40,7 @@ impl BaseOnnxConverter {
             .getattr("__version__")?
             .extract::<String>()?;
 
-        let onnx_bytes = onnx_model
-            .call_method("SerializeToString", (), None)
-            .map_err(|e| OpsmlError::new_err(format!("Failed to serialize ONNX model: {}", e)))?;
-
-        OnnxSession::new(
-            py,
-            onnx_version,
-            onnx_bytes.extract::<Vec<u8>>()?,
-            "onnx".to_string(),
-            Some(feature_names),
-            Some(onnx_model), // pass is onnx_model so we don't need to re-create
-        )
-        .map_err(|e| OpsmlError::new_err(format!("Failed to create ONNX session: {}", e)))
+        OnnxSession::from_onnx_session(onnx_version, onnx_model, Some(feature_names))
     }
 }
 
@@ -68,16 +56,13 @@ impl OnnxModelConverter {
         model_type: &ModelType,
         path: &Path,
         kwargs: Option<&Bound<'py, PyDict>>,
-    ) -> PyResult<OnnxSession>
+    ) -> Result<OnnxSession, OnnxError>
     where
         T: OnnxExtension + std::fmt::Debug,
     {
         // check if sample data is none
         if sample_data.is_none() {
-            error!("Cannot save ONNX model without sample data");
-            return Err(OpsmlError::new_err(
-                "Cannot save ONNX model without sample data",
-            ));
+            return Err(OnnxError::MissingSampleData);
         }
 
         match interface_type {
