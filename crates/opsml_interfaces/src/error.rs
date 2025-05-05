@@ -52,6 +52,24 @@ pub enum OnnxError {
 
     #[error(transparent)]
     IoError(#[from] std::io::Error),
+
+    #[error("No onnx file found")]
+    NoOnnxFile,
+
+    #[error("No onnx kwargs found. Onnx kwargs are required for HuggingFace models")]
+    MissingOnnxKwargs,
+
+    #[error("No ort type found. Ort type is required for HuggingFace models - {0}")]
+    MissingOrtType(pyo3::PyErr),
+
+    #[error("Failed to get quantize args - {0}")]
+    QuantizeArgError(pyo3::PyErr),
+
+    #[error("{0}")]
+    LoadModelError(pyo3::PyErr),
+
+    #[error("Model type not supported for onnx conversion")]
+    ModelTypeError,
 }
 
 impl From<OnnxError> for PyErr {
