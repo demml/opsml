@@ -1,5 +1,5 @@
+use crate::error::OnnxError;
 use crate::model::onnx::OnnxSession;
-use opsml_error::OpsmlError;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use tracing::debug;
@@ -17,7 +17,7 @@ impl TensorFlowOnnxModelConverter {
         TensorFlowOnnxModelConverter {}
     }
 
-    fn get_onnx_session(&self, onnx_model: &Bound<'_, PyAny>) -> PyResult<OnnxSession> {
+    fn get_onnx_session(&self, onnx_model: &Bound<'_, PyAny>) -> Result<OnnxSession, OnnxError> {
         let py = onnx_model.py();
 
         let onnx_version = py
@@ -25,19 +25,7 @@ impl TensorFlowOnnxModelConverter {
             .getattr("__version__")?
             .extract::<String>()?;
 
-        let onnx_bytes = onnx_model
-            .call_method("SerializeToString", (), None)
-            .map_err(|e| OpsmlError::new_err(format!("Failed to serialize ONNX model: {}", e)))?;
-
-        OnnxSession::new(
-            py,
-            onnx_version,
-            onnx_bytes.extract::<Vec<u8>>()?,
-            "onnx".to_string(),
-            None,
-            Some(onnx_model),
-        )
-        .map_err(|e| OpsmlError::new_err(format!("Failed to create ONNX session: {}", e)))
+        OnnxSession::from_onnx_session(onnx_version, onnx_model, None)
     }
 
     pub fn convert_model<'py>(
@@ -45,21 +33,19 @@ impl TensorFlowOnnxModelConverter {
         py: Python<'py>,
         model: &Bound<'py, PyAny>,
         kwargs: Option<&Bound<'py, PyDict>>,
-    ) -> PyResult<OnnxSession> {
+    ) -> Result<OnnxSession, OnnxError> {
         let tf_onnx = py
             .import("tf2onnx")
-            .map_err(|e| OpsmlError::new_err(format!("Failed to import tf2onnx: {:?}", e)))?
+            .map_err(OnnxError::ImportError)?
             .getattr("convert")?;
 
         debug!("Step 1: Converting tensorflow model to ONNX");
 
         let onnx_tuple = tf_onnx
             .call_method("from_keras", (model,), kwargs)
-            .map_err(|e| OpsmlError::new_err(format!("Failed to convert model to ONNX: {}", e)))?;
+            .map_err(OnnxError::PyOnnxConversionError)?;
 
-        let onnx_model = onnx_tuple.get_item(0).map_err(|e| {
-            OpsmlError::new_err(format!("Failed to extract ONNX model from tuple: {}", e))
-        })?;
+        let onnx_model = onnx_tuple.get_item(0)?;
 
         debug!("Step 3: Extracting ONNX schema");
         let onnx_session = self.get_onnx_session(&onnx_model);
