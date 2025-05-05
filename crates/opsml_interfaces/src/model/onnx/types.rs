@@ -2,7 +2,6 @@ use std::path::PathBuf;
 use std::vec;
 
 use crate::error::OnnxError;
-use crate::onnx::error::OnnxError;
 use crate::{Feature, FeatureSchema, OnnxSchema};
 use opsml_utils::PyHelperFuncs;
 use ort::session::Session;

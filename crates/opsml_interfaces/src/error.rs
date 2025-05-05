@@ -49,6 +49,9 @@ pub enum OnnxError {
 
     #[error("Failed to downcast- {0}")]
     DowncastError(String),
+
+    #[error(transparent)]
+    IoError(#[from] std::io::Error),
 }
 
 impl From<OnnxError> for PyErr {
