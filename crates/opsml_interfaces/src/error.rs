@@ -132,6 +132,17 @@ pub enum ModelInterfaceError {
 
     #[error("Model must be an lightgbm booster or inherit from Booster. If using the Sklearn api version of LightGBMModel, use an SklearnModel interface instead")]
     LightGBMTypeError,
+
+    #[error("Model must be an instance of a Lightning Trainer")]
+    LightningTypeError,
+
+    #[error("No trainer detected in interface for saving")]
+    NoTrainerError,
+
+    #[error(
+        "LightningModel loading requires model to be passed into model kwargs for loading {{'model': {{your_model_architecture}}}}"
+    )]
+    LightningLoadModelError,
 }
 
 impl From<ModelInterfaceError> for PyErr {
