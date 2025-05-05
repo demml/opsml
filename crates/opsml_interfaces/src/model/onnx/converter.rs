@@ -14,7 +14,7 @@ use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use std::path::Path;
 
-use tracing::{debug, error, instrument};
+use tracing::{debug, instrument};
 
 pub struct BaseOnnxConverter {}
 
@@ -111,7 +111,7 @@ impl OnnxModelConverter {
                 debug!("Extracting Onnx model schema");
                 BaseOnnxConverter::get_onnx_session(model, sample_data.get_feature_names(py)?)
             }
-            _ => Err(OpsmlError::new_err("Model type not supported")),
+            _ => Err(OnnxError::ModelTypeError),
         }
     }
 }
