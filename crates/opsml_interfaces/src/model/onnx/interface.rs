@@ -48,6 +48,8 @@ impl OnnxModel {
             model_interface.model_type = ModelType::SklearnEstimator;
         }
 
+        // extract and convert to onnx_session
+
         Ok((OnnxModel {}, model_interface))
     }
 }

@@ -16,6 +16,46 @@ use std::path::Path;
 
 use tracing::{debug, error, instrument};
 
+pub struct BaseOnnxConverter {}
+
+impl Default for BaseOnnxConverter {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl BaseOnnxConverter {
+    pub fn new() -> Self {
+        BaseOnnxConverter {}
+    }
+
+    fn get_onnx_session(
+        &self,
+        onnx_model: &Bound<'_, PyAny>,
+        feature_names: Vec<String>,
+    ) -> PyResult<OnnxSession> {
+        let py = onnx_model.py();
+
+        let onnx_version = py
+            .import("onnx")?
+            .getattr("__version__")?
+            .extract::<String>()?;
+
+        let onnx_bytes = onnx_model
+            .call_method("SerializeToString", (), None)
+            .map_err(|e| OpsmlError::new_err(format!("Failed to serialize ONNX model: {}", e)))?;
+
+        OnnxSession::new(
+            py,
+            onnx_version,
+            onnx_bytes.extract::<Vec<u8>>()?,
+            "onnx".to_string(),
+            Some(feature_names),
+        )
+        .map_err(|e| OpsmlError::new_err(format!("Failed to create ONNX session: {}", e)))
+    }
+}
+
 pub struct OnnxModelConverter {}
 
 impl OnnxModelConverter {
@@ -80,6 +120,12 @@ impl OnnxModelConverter {
                 debug!("Converting TensorFlow model to ONNX");
                 let converter = TensorFlowOnnxModelConverter::default();
                 converter.convert_model(py, model, kwargs)
+            }
+
+            ModelInterfaceType::Onnx => {
+                debug!("Extracting Onnx model schema");
+                let converter = BaseOnnxConverter::default();
+                converter.get_onnx_session(model, sample_data.get_feature_names(py)?)
             }
             _ => Err(OpsmlError::new_err("Model type not supported")),
         }
