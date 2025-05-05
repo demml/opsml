@@ -1,9 +1,9 @@
 use crate::base::{parse_save_kwargs, ModelInterfaceMetadata, ModelInterfaceSaveMetadata};
+use crate::error::ModelInterfaceError;
 use crate::model::ModelInterface;
 use crate::types::{FeatureSchema, ProcessorType};
 use crate::OnnxSession;
 use crate::{DataProcessor, ModelLoadKwargs, ModelSaveKwargs};
-use opsml_error::OpsmlError;
 use opsml_types::{CommonKwargs, ModelInterfaceType, SaveName, Suffix, TaskType};
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
@@ -86,7 +86,7 @@ impl XGBoostModel {
         sample_data: Option<&Bound<'py, PyAny>>,
         task_type: Option<TaskType>,
         drift_profile: Option<&Bound<'py, PyAny>>,
-    ) -> PyResult<(Self, ModelInterface)> {
+    ) -> Result<(Self, ModelInterface), ModelInterfaceError> {
         // check if model is base estimator for sklearn validation
         if let Some(model) = model {
             let booster = py.import("xgboost")?.getattr("Booster")?;
@@ -94,10 +94,7 @@ impl XGBoostModel {
             if model.is_instance(&booster).unwrap() {
                 //
             } else {
-                return Err(OpsmlError::new_err(
-                    "Model must be an xgboost booster or inherit from Booster. If
-                    using the Sklearn api version of XGBoost, use the SklearnModel interface instead",
-                ));
+                return Err(ModelInterfaceError::XGBoostTypeError);
             }
         }
 
@@ -149,7 +146,7 @@ impl XGBoostModel {
         &mut self,
         py: Python,
         preprocessor: &Bound<'py, PyAny>,
-    ) -> PyResult<()> {
+    ) -> Result<(), ModelInterfaceError> {
         if PyAnyMethods::is_none(preprocessor) {
             self.preprocessor = None;
             self.preprocessor_name = CommonKwargs::Undefined.to_string();
@@ -176,7 +173,7 @@ impl XGBoostModel {
     ///
     /// # Returns
     ///
-    /// * `PyResult<DataInterfaceSaveMetadata>` - DataInterfaceSaveMetadata
+    /// * `Result<DataInterfaceSaveMetadata>` - DataInterfaceSaveMetadata
     #[pyo3(signature = (path, to_onnx=false, save_kwargs=None))]
     #[instrument(skip_all)]
     pub fn save<'py>(
@@ -185,7 +182,7 @@ impl XGBoostModel {
         path: PathBuf,
         to_onnx: bool,
         save_kwargs: Option<ModelSaveKwargs>,
-    ) -> PyResult<ModelInterfaceMetadata> {
+    ) -> Result<ModelInterfaceMetadata, ModelInterfaceError> {
         debug!("Saving XGBoost model");
 
         // parse the save args
@@ -205,10 +202,7 @@ impl XGBoostModel {
 
         let sample_data_uri = self_.as_super().save_data(py, &path, None)?;
 
-        self_.as_super().schema = self_.as_super().create_feature_schema(py).map_err(|e| {
-            error!("Failed to create feature schema: {}", e);
-            OpsmlError::new_err(e.to_string())
-        })?;
+        self_.as_super().schema = self_.as_super().create_feature_schema(py)?;
 
         let mut onnx_model_uri = None;
         if to_onnx {
@@ -285,7 +279,7 @@ impl XGBoostModel {
     ///
     /// # Returns
     ///
-    /// * `PyResult<DataInterfaceMetadata>` - DataInterfaceMetadata
+    /// * `Result<DataInterfaceMetadata>` - DataInterfaceMetadata
     #[pyo3(signature = (path, metadata, load_kwargs=None))]
     #[allow(clippy::too_many_arguments)]
     pub fn load(
@@ -294,7 +288,7 @@ impl XGBoostModel {
         path: PathBuf,
         metadata: ModelInterfaceSaveMetadata,
         load_kwargs: Option<ModelLoadKwargs>,
-    ) -> PyResult<()> {
+    ) -> Result<(), ModelInterfaceError> {
         // if kwargs is not None, unwrap, else default to None
         let load_kwargs = load_kwargs.unwrap_or_default();
 
@@ -308,7 +302,7 @@ impl XGBoostModel {
                 .data_processor_map
                 .values()
                 .next()
-                .ok_or_else(|| OpsmlError::new_err("No preprocessor URI found in metadata"))?;
+                .ok_or_else(|| ModelInterfaceError::MissingPreprocessorUriError)?;
 
             let preprocessor_uri = path.join(&processor.uri);
 
@@ -320,26 +314,30 @@ impl XGBoostModel {
             let parent = self_.as_super();
 
             if load_kwargs.load_onnx {
-                let onnx_path =
-                    path.join(&metadata.onnx_model_uri.ok_or_else(|| {
-                        OpsmlError::new_err("ONNX model URI not found in metadata")
-                    })?);
+                let onnx_path = path.join(
+                    &metadata
+                        .onnx_model_uri
+                        .ok_or_else(|| ModelInterfaceError::MissingOnnxUriError)?,
+                );
                 parent.load_onnx_model(py, &onnx_path, load_kwargs.onnx_kwargs(py))?;
             }
 
             if metadata.drift_profile_uri.is_some() {
-                let drift_path = path.join(&metadata.drift_profile_uri.ok_or_else(|| {
-                    OpsmlError::new_err("Drift profile URI not found in metadata")
-                })?);
+                let drift_path = path.join(
+                    &metadata
+                        .drift_profile_uri
+                        .ok_or_else(|| ModelInterfaceError::MissingDriftProfileUriError)?,
+                );
 
                 parent.load_drift_profile(py, &drift_path)?;
             }
 
             if metadata.sample_data_uri.is_some() {
-                let sample_data_path =
-                    path.join(&metadata.sample_data_uri.ok_or_else(|| {
-                        OpsmlError::new_err("Sample data URI not found in metadata")
-                    })?);
+                let sample_data_path = path.join(
+                    &metadata
+                        .sample_data_uri
+                        .ok_or_else(|| ModelInterfaceError::MissingSampleDataUriError)?,
+                );
                 parent.load_data(py, &sample_data_path, None)?;
             }
         }
@@ -363,7 +361,7 @@ impl XGBoostModel {
     pub fn from_metadata<'py>(
         py: Python<'py>,
         metadata: &ModelInterfaceMetadata,
-    ) -> PyResult<Bound<'py, PyAny>> {
+    ) -> Result<Bound<'py, PyAny>, ModelInterfaceError> {
         // get first key from metadata.save_metadata.data_processor_map.keys() or default to unknow
         let preprocessor_name = metadata
             .save_metadata
@@ -394,7 +392,9 @@ impl XGBoostModel {
             .as_ref()
             .map(|session| Py::new(py, session.clone()).unwrap());
 
-        Py::new(py, (model_interface, interface))?.into_bound_py_any(py)
+        let interface = Py::new(py, (model_interface, interface))?.into_bound_py_any(py)?;
+
+        Ok(interface)
     }
 
     /// Save the model to a file
@@ -409,13 +409,11 @@ impl XGBoostModel {
         self_: PyRefMut<'py, Self>,
         py: Python<'py>,
         path: &Path,
-    ) -> PyResult<PathBuf> {
+    ) -> Result<PathBuf, ModelInterfaceError> {
         let super_ = self_.as_ref();
         if super_.model.is_none() {
             error!("No model detected in interface for saving");
-            return Err(OpsmlError::new_err(
-                "No model detected in interface for saving",
-            ));
+            return Err(ModelInterfaceError::NoModelError);
         }
 
         let save_path = PathBuf::from(SaveName::Model).with_extension(Suffix::Json);
@@ -426,11 +424,7 @@ impl XGBoostModel {
             .model
             .as_ref()
             .unwrap()
-            .call_method1(py, "save_model", (full_save_path,))
-            .map_err(|e| {
-                error!("Failed to save model: {}", e);
-                OpsmlError::new_err(e.to_string())
-            })?;
+            .call_method1(py, "save_model", (full_save_path,))?;
 
         debug!("Model saved");
         Ok(save_path)
@@ -442,19 +436,16 @@ impl XGBoostModel {
         py: Python<'py>,
         path: &Path,
         kwargs: Option<&Bound<'py, PyDict>>,
-    ) -> PyResult<PyObject> {
+    ) -> Result<PyObject, ModelInterfaceError> {
         let booster = py.import("xgboost")?.getattr("Booster")?;
         let kwargs = kwargs.map_or(PyDict::new(py), |kwargs| kwargs.clone());
         kwargs.set_item("model_file", path)?;
-
-        let model = booster.call((), Some(&kwargs)).map_err(|e| {
-            error!("Failed to load model: {}", e);
-            OpsmlError::new_err(e.to_string())
-        })?;
+        let model = booster.call((), Some(&kwargs))?;
 
         debug!("Model loaded");
+        let model = model.into_py_any(py)?;
 
-        model.into_py_any(py)
+        Ok(model)
     }
 
     /// Save the preprocessor to a file
@@ -470,13 +461,11 @@ impl XGBoostModel {
         py: Python,
         path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
-    ) -> PyResult<PathBuf> {
+    ) -> Result<PathBuf, ModelInterfaceError> {
         // check if data is None
         if self.preprocessor.is_none() {
             error!("No preprocessor detected in interface for saving");
-            return Err(OpsmlError::new_err(
-                "No model detected in interface for saving",
-            ));
+            return Err(ModelInterfaceError::NoPreprocessorError);
         }
 
         let save_path = PathBuf::from(SaveName::Preprocessor).with_extension(Suffix::Joblib);
@@ -503,7 +492,7 @@ impl XGBoostModel {
         py: Python,
         path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
-    ) -> PyResult<()> {
+    ) -> Result<(), ModelInterfaceError> {
         let joblib = py.import("joblib")?;
 
         // Load the data using joblib

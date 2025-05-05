@@ -157,6 +157,9 @@ pub enum ModelInterfaceError {
         "TorchModel loading requires model to be passed into model kwargs for loading {{'model': {{your_model_architecture}}}}"
     )]
     TorchLoadModelError,
+
+    #[error("Model must be an xgboost booster or inherit from Booster. If using the Sklearn api version of XGBoost, use the SklearnModel interface instead")]
+    XGBoostTypeError,
 }
 
 impl From<ModelInterfaceError> for PyErr {
