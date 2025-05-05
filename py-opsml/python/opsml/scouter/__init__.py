@@ -1,7 +1,7 @@
 # type: ignore
-# pylint: disable=no-name-in-module
+# pylint: disable=no-name-in-module,protected-access
 
-from .. import scouter
+from .. import scouter  # noqa: F401
 
 # Drift imports
 Drifter = scouter.drift.Drifter
@@ -42,7 +42,6 @@ ScouterClient = scouter.client.ScouterClient
 
 
 __all__ = [
-    "__version__",
     # Drift
     "Drifter",
     "SpcDriftConfig",

@@ -1,19 +1,21 @@
 # type: ignore
+# pylint: disable=no-name-in-module
+
 from .. import scouter
 
-FeatureMap = scouter.driftFeatureMap
-SpcFeatureDriftProfile = scouter.driftSpcFeatureDriftProfile
-SpcDriftConfig = scouter.driftSpcDriftConfig
-SpcDriftProfile = scouter.driftSpcDriftProfile
-SpcFeatureDrift = scouter.driftSpcFeatureDrift
-SpcDriftMap = scouter.driftSpcDriftMap
-PsiDriftConfig = scouter.driftPsiDriftConfig
-PsiDriftProfile = scouter.driftPsiDriftProfile
-PsiDriftMap = scouter.driftPsiDriftMap
-CustomMetricDriftConfig = scouter.driftCustomMetricDriftConfig
-CustomMetric = scouter.driftCustomMetric
-CustomDriftProfile = scouter.driftCustomDriftProfile
-Drifter = scouter.driftDrifter
+FeatureMap = scouter.drift.FeatureMap
+SpcFeatureDriftProfile = scouter.drift.SpcFeatureDriftProfile
+SpcDriftConfig = scouter.drift.SpcDriftConfig
+SpcDriftProfile = scouter.drift.SpcDriftProfile
+SpcFeatureDrift = scouter.drift.SpcFeatureDrift
+SpcDriftMap = scouter.drift.SpcDriftMap
+PsiDriftConfig = scouter.drift.PsiDriftConfig
+PsiDriftProfile = scouter.drift.PsiDriftProfile
+PsiDriftMap = scouter.drift.PsiDriftMap
+CustomMetricDriftConfig = scouter.drift.CustomMetricDriftConfig
+CustomMetric = scouter.drift.CustomMetric
+CustomDriftProfile = scouter.drift.CustomDriftProfile
+Drifter = scouter.drift.Drifter
 
 __all__ = [
     "FeatureMap",
