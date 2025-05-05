@@ -19,6 +19,24 @@ pub enum OnnxError {
 
     #[error("Failed to extract model bytes - {0}")]
     PyModelBytesExtractError(pyo3::PyErr),
+
+    #[error("Session must be an instance of InferenceSession")]
+    MustBeInferenceSession,
+
+    #[error("Session is not set. Please load an onnx model first")]
+    SessionNotFound,
+
+    #[error("Session error - {0}")]
+    SessionRunError(pyo3::PyErr),
+
+    #[error("InferenceSession error - {0}")]
+    InferenceSessionError(pyo3::PyErr),
+
+    #[error("Import error - {0}")]
+    ImportError(pyo3::PyErr),
+
+    #[error("Provider error - {0}")]
+    ProviderError(pyo3::PyErr),
 }
 
 impl From<OnnxError> for PyErr {

@@ -708,12 +708,12 @@ impl TorchModel {
             ));
         }
 
-        let sess = OnnxSession::load_onnx_session(py, path, kwargs)?;
-
-        self.onnx_session
-            .as_ref()
-            .unwrap()
-            .setattr(py, "session", Some(sess))?;
+        // just call "load_onnx_model" method on the onnx_session
+        self.onnx_session.as_ref().unwrap().bind(py).call_method(
+            "load_onnx_model",
+            (path,),
+            kwargs,
+        )?;
 
         debug!("ONNX model loaded");
 

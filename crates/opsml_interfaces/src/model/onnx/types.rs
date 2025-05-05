@@ -90,7 +90,7 @@ impl OnnxSession {
     ) -> Result<Self, OnnxError> {
         // get model bytes for loading into rust ort
         let model_bytes = model
-            .call_method("SerializeToString", (), None)
+            .call_method0("SerializeToString")
             .map_err(OnnxError::PySerializeError)?
             .extract::<Vec<u8>>()
             .map_err(OnnxError::PyModelBytesExtractError)?;
@@ -120,7 +120,11 @@ impl OnnxSession {
     }
 
     #[setter]
-    pub fn set_session(&mut self, py: Python, session: Option<&Bound<'_, PyAny>>) -> PyResult<()> {
+    pub fn set_session(
+        &mut self,
+        py: Python,
+        session: Option<&Bound<'_, PyAny>>,
+    ) -> Result<(), OnnxError> {
         if session.is_none() {
             self.session = None;
             Ok(())
@@ -137,9 +141,7 @@ impl OnnxSession {
                 self.session = Some(session.clone().unbind());
                 Ok(())
             } else {
-                Err(OpsmlError::new_err(
-                    "Session must be an instance of InferenceSession",
-                ))
+                Err(OnnxError::MustBeInferenceSession)
             }
         }
     }
@@ -156,26 +158,19 @@ impl OnnxSession {
         input_feed: &Bound<'py, PyDict>,
         output_names: Option<&Bound<'py, PyList>>,
         run_options: Option<&Bound<'py, PyDict>>,
-    ) -> PyResult<PyObject> {
-        let sess = self.session.as_ref().ok_or_else(|| {
-            OnnxError::Error("Session is not set. Please load an onnx model first".to_string())
-        })?;
+    ) -> Result<PyObject, OnnxError> {
+        // get session
+        let sess = self
+            .session
+            .as_ref()
+            .ok_or_else(|| OnnxError::SessionNotFound)?;
+
+        // call run
         let result = sess
             .call_method(py, "run", (output_names, input_feed), run_options)
-            .map_err(|e| OnnxError::Error(e.to_string()))?;
+            .map_err(OnnxError::SessionRunError)?;
 
         Ok(result)
-    }
-
-    pub fn model_bytes(&self, py: Python) -> PyResult<Vec<u8>> {
-        let sess = self.session.as_ref().ok_or_else(|| {
-            OnnxError::Error("Session is not set. Please load an onnx model first".to_string())
-        })?;
-
-        sess.bind(py)
-            .getattr("_model_bytes")
-            .map_err(|e| OnnxError::Error(e.to_string()))?
-            .extract()
     }
 
     #[pyo3(signature = (path, **kwargs))]
@@ -184,30 +179,8 @@ impl OnnxSession {
         py: Python,
         path: PathBuf,
         kwargs: Option<&Bound<'_, PyDict>>,
-    ) -> PyResult<()> {
-        let rt = py
-            .import("onnxruntime")
-            .map_err(|e| OnnxError::Error(e.to_string()))?;
-
-        let providers = rt
-            .call_method0("get_available_providers")
-            .map_err(|e| OnnxError::Error(e.to_string()))?;
-
-        let args = (path,);
-
-        if let Some(kwargs) = kwargs {
-            kwargs.set_item("providers", providers).unwrap();
-        } else {
-            let kwargs = PyDict::new(py);
-            kwargs.set_item("providers", providers).unwrap();
-        };
-
-        let session = rt
-            .call_method("InferenceSession", args, kwargs)
-            .map_err(|e| OnnxError::Error(e.to_string()))?
-            .unbind();
-
-        debug!("Loaded ONNX model");
+    ) -> Result<(), OnnxError> {
+        let session = OnnxSession::get_py_session_from_path(py, &path, kwargs)?;
         self.session = Some(session);
 
         Ok(())
@@ -228,6 +201,47 @@ impl OnnxSession {
 }
 
 impl OnnxSession {
+    /// Helper method for loading the ONNX model from a file path.
+    /// This method is used internally to load the ONNX model into the session.
+    ///
+    /// # Arguments
+    /// * `py` - Python interpreter
+    /// * `path` - Path to the ONNX model file
+    /// * `kwargs` - Additional keyword arguments for the session
+    ///
+    /// # Returns
+    /// * `PyResult<PyObject>` - The loaded ONNX session
+    ///
+    pub fn get_py_session_from_path(
+        py: Python,
+        path: &Path,
+        kwargs: Option<&Bound<'_, PyDict>>,
+    ) -> PyResult<PyObject> {
+        let rt = py.import("onnxruntime").map_err(OnnxError::ImportError)?;
+
+        let providers = rt
+            .call_method0("get_available_providers")
+            .map_err(OnnxError::ProviderError)?;
+
+        let args = (path,);
+
+        if let Some(kwargs) = kwargs {
+            kwargs.set_item("providers", providers).unwrap();
+        } else {
+            let kwargs = PyDict::new(py);
+            kwargs.set_item("providers", providers).unwrap();
+        };
+
+        let session = rt
+            .call_method("InferenceSession", args, kwargs)
+            .map_err(OnnxError::InferenceSessionError)?
+            .unbind();
+
+        debug!("Loaded ONNX model");
+
+        Ok(session)
+    }
+
     pub fn from_onnx_session(
         onnx_version: String,
         model: &Bound<'_, PyAny>,
@@ -244,38 +258,6 @@ impl OnnxSession {
         feature_names: Option<Vec<String>>,
     ) -> Result<Self, OnnxError> {
         OnnxSession::new(py, onnx_version, model_bytes, onnx_type, feature_names)
-    }
-
-    pub fn load_onnx_session(
-        py: Python,
-        path: &Path,
-        kwargs: Option<&Bound<'_, PyDict>>,
-    ) -> PyResult<PyObject> {
-        let rt = py
-            .import("onnxruntime")
-            .map_err(|e| OnnxError::Error(e.to_string()))?;
-
-        let providers = rt
-            .call_method0("get_available_providers")
-            .map_err(|e| OnnxError::Error(e.to_string()))?;
-
-        let args = (path,);
-
-        if let Some(kwargs) = kwargs {
-            kwargs.set_item("providers", providers).unwrap();
-        } else {
-            let kwargs = PyDict::new(py);
-            kwargs.set_item("providers", providers).unwrap();
-        };
-
-        let session = rt
-            .call_method("InferenceSession", args, kwargs)
-            .map_err(|e| OnnxError::Error(e.to_string()))?
-            .unbind();
-
-        debug!("Loaded ONNX model");
-
-        Ok(session)
     }
 
     fn __traverse__(&self, visit: PyVisit) -> Result<(), PyTraverseError> {

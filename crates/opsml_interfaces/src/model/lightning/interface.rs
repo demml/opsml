@@ -717,7 +717,7 @@ impl LightningModel {
             ));
         }
 
-        let sess = OnnxSession::load_onnx_session(py, path, kwargs)?;
+        let sess = OnnxSession::get_py_session_from_path(py, path, kwargs)?;
 
         self.onnx_session
             .as_ref()

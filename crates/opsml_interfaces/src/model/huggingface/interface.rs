@@ -1054,7 +1054,7 @@ impl HuggingFaceModel {
             .next()
             .ok_or_else(|| OpsmlError::new_err("No ONNX file found"))?;
 
-        let sess = OnnxSession::load_onnx_session(py, &file_path, kwargs)?;
+        let sess = OnnxSession::get_py_session_from_path(py, &file_path, kwargs)?;
 
         self.onnx_session
             .as_ref()
