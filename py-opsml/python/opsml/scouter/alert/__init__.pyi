@@ -1,4 +1,61 @@
-from typing import Any, Dict, List, Optional
+# pylint: disable=dangerous-default-value
+
+from typing import List, Optional
+
+from ..types import CommonCrons
+
+class ConsoleDispatchConfig:
+    def __init__(self):
+        """Initialize alert config"""
+
+    @property
+    def enabled(self) -> bool:
+        """Return the alert dispatch type"""
+
+class SlackDispatchConfig:
+    def __init__(self, channel: str):
+        """Initialize alert config
+
+        Args:
+            channel:
+                Slack channel name for where alerts will be reported
+        """
+
+    @property
+    def channel(self) -> str:
+        """Return the slack channel name"""
+
+    @channel.setter
+    def channel(self, channel: str) -> None:
+        """Set the slack channel name for where alerts will be reported"""
+
+class OpsGenieDispatchConfig:
+    def __init__(self, team: str):
+        """Initialize alert config
+
+        Args:
+            team:
+                Opsegenie team to be notified in the event of drift
+        """
+
+    @property
+    def team(self) -> str:
+        """Return the opesgenie team name"""
+
+    @team.setter
+    def team(self, team: str) -> None:
+        """Set the opesgenie team name"""
+
+class AlertDispatchType:
+    Slack: "AlertDispatchType"
+    OpsGenie: "AlertDispatchType"
+    Console: "AlertDispatchType"
+
+    @staticmethod
+    def to_string() -> str:
+        """Return the string representation of the alert dispatch type"""
+
+DispatchConfigType = ConsoleDispatchConfig | SlackDispatchConfig | OpsGenieDispatchConfig
 
 class AlertZone:
     Zone1: "AlertZone"
@@ -17,8 +74,13 @@ class SpcAlertType:
 class SpcAlertRule:
     def __init__(
         self,
-        rule: Optional[str] = None,
-        zones_to_monitor: Optional[List[AlertZone]] = None,
+        rule: str = "8 16 4 8 2 4 1 1",
+        zones_to_monitor: List[AlertZone] = [
+            AlertZone.Zone1,
+            AlertZone.Zone2,
+            AlertZone.Zone3,
+            AlertZone.Zone4,
+        ],
     ) -> None:
         """Initialize alert rule
 
@@ -46,51 +108,36 @@ class SpcAlertRule:
     def zones_to_monitor(self, zones_to_monitor: List[AlertZone]) -> None:
         """Set the zones to monitor"""
 
-class AlertDispatchType:
-    Email: "AlertDispatchType"
-    Console: "AlertDispatchType"
-    Slack: "AlertDispatchType"
-    OpsGenie: "AlertDispatchType"
-
 class PsiAlertConfig:
     def __init__(
         self,
-        dispatch_type: Optional[AlertDispatchType] = None,
-        schedule: Optional[str] = None,
-        features_to_monitor: Optional[List[str]] = None,
-        dispatch_kwargs: Optional[Dict[str, Any]] = None,
-        psi_threshold: Optional[float] = None,
+        dispatch_config: Optional[SlackDispatchConfig | OpsGenieDispatchConfig] = None,
+        schedule: Optional[str | CommonCrons] = None,
+        features_to_monitor: List[str] = [],
+        psi_threshold: float = 0.25,
     ):
         """Initialize alert config
 
         Args:
-            dispatch_type:
-                Alert dispatch type to use. Defaults to console
+            dispatch_config:
+                Alert dispatch configuration to use. Defaults to an internal "Console" type where
+                the alerts will be logged to the console
             schedule:
                 Schedule to run monitor. Defaults to daily at midnight
             features_to_monitor:
                 List of features to monitor. Defaults to empty list, which means all features
-            dispatch_kwargs:
-                Additional alert kwargs to pass to the alerting service
-
-                Supported alert_kwargs:
-                Slack:
-                    - channel: str (channel to send slack message)
-                OpsGenie:
-                    - team: str (team to send opsgenie message)
-                    - priority: str (priority for opsgenie alerts)
             psi_threshold:
                 What threshold must be met before sending alert messages default is 0.25
 
         """
 
     @property
-    def dispatch_type(self) -> str:
+    def dispatch_type(self) -> AlertDispatchType:
         """Return the alert dispatch type"""
 
-    @dispatch_type.setter
-    def dispatch_type(self, alert_dispatch_type: str) -> None:
-        """Set the alert dispatch type"""
+    @property
+    def dispatch_config(self) -> DispatchConfigType:
+        """Return the dispatch config"""
 
     @property
     def schedule(self) -> str:
@@ -109,14 +156,6 @@ class PsiAlertConfig:
         """Set the features to monitor"""
 
     @property
-    def dispatch_kwargs(self) -> Dict[str, Any]:
-        """Return the dispatch kwargs"""
-
-    @dispatch_kwargs.setter
-    def dispatch_kwargs(self, dispatch_kwargs: Dict[str, Any]) -> None:
-        """Set the dispatch kwargs"""
-
-    @property
     def psi_threshold(self) -> float:
         """Return the schedule"""
 
@@ -127,42 +166,32 @@ class PsiAlertConfig:
 class SpcAlertConfig:
     def __init__(
         self,
-        rule: Optional[SpcAlertRule] = None,
-        dispatch_type: Optional[AlertDispatchType] = None,
-        schedule: Optional[str] = None,
-        features_to_monitor: Optional[List[str]] = None,
-        dispatch_kwargs: Optional[Dict[str, Any]] = None,
+        rule: SpcAlertRule = SpcAlertRule(),
+        dispatch_config: Optional[SlackDispatchConfig | OpsGenieDispatchConfig] = None,
+        schedule: Optional[str | CommonCrons] = None,
+        features_to_monitor: List[str] = [],
     ):
         """Initialize alert config
 
         Args:
             rule:
                 Alert rule to use. Defaults to Standard
-            dispatch_type:
-                Alert dispatch type to use. Defaults to console
+            dispatch_config:
+                Alert dispatch config. Defaults to console
             schedule:
                 Schedule to run monitor. Defaults to daily at midnight
             features_to_monitor:
                 List of features to monitor. Defaults to empty list, which means all features
-            dispatch_kwargs:
-                Additional alert kwargs to pass to the alerting service
-
-                Supported alert_kwargs:
-                Slack:
-                    - channel: str (channel to send slack message)
-                OpsGenie:
-                    - team: str (team to send opsgenie message)
-                    - priority: str (priority for opsgenie alerts)
 
         """
 
     @property
-    def dispatch_type(self) -> str:
+    def dispatch_type(self) -> AlertDispatchType:
         """Return the alert dispatch type"""
 
-    @dispatch_type.setter
-    def dispatch_type(self, alert_dispatch_type: str) -> None:
-        """Set the alert dispatch type"""
+    @property
+    def dispatch_config(self) -> DispatchConfigType:
+        """Return the dispatch config"""
 
     @property
     def rule(self) -> SpcAlertRule:
@@ -188,14 +217,6 @@ class SpcAlertConfig:
     def features_to_monitor(self, features_to_monitor: List[str]) -> None:
         """Set the features to monitor"""
 
-    @property
-    def dispatch_kwargs(self) -> Dict[str, Any]:
-        """Return the dispatch kwargs"""
-
-    @dispatch_kwargs.setter
-    def dispatch_kwargs(self, dispatch_kwargs: Dict[str, Any]) -> None:
-        """Set the dispatch kwargs"""
-
 class SpcAlert:
     def __init__(self, kind: SpcAlertType, zone: AlertZone):
         """Initialize alert"""
@@ -216,9 +237,9 @@ class AlertThreshold:
     Enum representing different alert conditions for monitoring metrics.
 
     Attributes:
-        BELOW: Indicates that an alert should be triggered when the metric is below a threshold.
-        ABOVE: Indicates that an alert should be triggered when the metric is above a threshold.
-        OUTSIDE: Indicates that an alert should be triggered when the metric is outside a specified range.
+        Below: Indicates that an alert should be triggered when the metric is below a threshold.
+        Above: Indicates that an alert should be triggered when the metric is above a threshold.
+        Outside: Indicates that an alert should be triggered when the metric is outside a specified range.
     """
 
     Below: "AlertThreshold"
@@ -274,36 +295,26 @@ class CustomMetricAlertCondition:
 class CustomMetricAlertConfig:
     def __init__(
         self,
-        dispatch_type: Optional[AlertDispatchType] = None,
-        schedule: Optional[str] = None,
-        dispatch_kwargs: Optional[Dict[str, Any]] = None,
+        dispatch_config: Optional[SlackDispatchConfig | OpsGenieDispatchConfig] = None,
+        schedule: Optional[str | CommonCrons] = None,
     ):
         """Initialize alert config
 
         Args:
-            dispatch_type:
-                Alert dispatch type to use. Defaults to console
+            dispatch_config:
+                Alert dispatch config. Defaults to console
             schedule:
                 Schedule to run monitor. Defaults to daily at midnight
-            dispatch_kwargs:
-                Additional alert kwargs to pass to the alerting service
-
-                Supported alert_kwargs:
-                Slack:
-                    - channel: str (channel to send slack message)
-                OpsGenie:
-                    - team: str (team to send opsgenie message)
-                    - priority: str (priority for opsgenie alerts)
 
         """
 
     @property
-    def dispatch_type(self) -> str:
+    def dispatch_type(self) -> AlertDispatchType:
         """Return the alert dispatch type"""
 
-    @dispatch_type.setter
-    def dispatch_type(self, alert_dispatch_type: str) -> None:
-        """Set the alert dispatch type"""
+    @property
+    def dispatch_config(self) -> DispatchConfigType:
+        """Return the dispatch config"""
 
     @property
     def schedule(self) -> str:
@@ -312,14 +323,6 @@ class CustomMetricAlertConfig:
     @schedule.setter
     def schedule(self, schedule: str) -> None:
         """Set the schedule"""
-
-    @property
-    def dispatch_kwargs(self) -> Dict[str, Any]:
-        """Return the dispatch kwargs"""
-
-    @dispatch_kwargs.setter
-    def dispatch_kwargs(self, dispatch_kwargs: Dict[str, Any]) -> None:
-        """Set the dispatch kwargs"""
 
     @property
     def alert_conditions(self) -> dict[str, CustomMetricAlertCondition]:

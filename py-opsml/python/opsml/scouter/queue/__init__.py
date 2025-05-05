@@ -1,11 +1,13 @@
 # type: ignore
 # pylint: disable=no-name-in-module
+
 from .. import scouter  # noqa: F401
 
 ScouterQueue = scouter.queue.ScouterQueue
-ScouterProducer = scouter.queue.ScouterProducer
+Queue = scouter.queue.Queue
 KafkaConfig = scouter.queue.KafkaConfig
 RabbitMQConfig = scouter.queue.RabbitMQConfig
+RedisConfig = scouter.queue.RedisConfig
 SpcServerRecord = scouter.queue.SpcServerRecord
 PsiServerRecord = scouter.queue.PsiServerRecord
 CustomMetricServerRecord = scouter.queue.CustomMetricServerRecord
@@ -13,15 +15,18 @@ ServerRecord = scouter.queue.ServerRecord
 ServerRecords = scouter.queue.ServerRecords
 Feature = scouter.queue.Feature
 Features = scouter.queue.Features
-PsiFeatureQueue = scouter.queue.PsiFeatureQueue
-SpcFeatureQueue = scouter.queue.SpcFeatureQueue
 RecordType = scouter.queue.RecordType
+Metric = scouter.queue.Metric
+Metrics = scouter.queue.Metrics
+EntityType = scouter.queue.EntityType
+
 
 __all__ = [
     "ScouterQueue",
-    "ScouterProducer",
+    "Queue",
     "KafkaConfig",
     "RabbitMQConfig",
+    "RedisConfig",
     "SpcServerRecord",
     "PsiServerRecord",
     "CustomMetricServerRecord",
@@ -29,7 +34,8 @@ __all__ = [
     "ServerRecords",
     "Feature",
     "Features",
-    "PsiFeatureQueue",
-    "SpcFeatureQueue",
     "RecordType",
+    "Metric",
+    "Metrics",
+    "EntityType",
 ]

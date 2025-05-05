@@ -1,5 +1,6 @@
 # type: ignore
 # pylint: disable=no-name-in-module
+
 from .. import scouter  # noqa: F401
 
 TimeInterval = scouter.client.TimeInterval
@@ -16,6 +17,7 @@ HTTPConfig = scouter.client.HTTPConfig
 ProfileStatusRequest = scouter.client.ProfileStatusRequest
 Alert = scouter.client.Alert
 DriftAlertRequest = scouter.client.DriftAlertRequest
+GetProfileRequest = scouter.client.GetProfileRequest
 
 __all__ = [
     "TimeInterval",
@@ -32,4 +34,5 @@ __all__ = [
     "ProfileStatusRequest",
     "Alert",
     "DriftAlertRequest",
+    "GetProfileRequest",
 ]
