@@ -1,9 +1,9 @@
 use std::path::PathBuf;
 use std::vec;
 
+use crate::error::OnnxError;
+use crate::onnx::error::OnnxError;
 use crate::{Feature, FeatureSchema, OnnxSchema};
-use opsml_error::OnnxError;
-use opsml_error::OpsmlError;
 use opsml_utils::PyHelperFuncs;
 use ort::session::Session;
 use ort::value::ValueType;
@@ -20,6 +20,53 @@ use std::fmt;
 use std::path::Path;
 use tracing::debug;
 
+/// Extracts input and output schema from the ort ONNX session.
+fn parse_session_schema(
+    ort_session: &Session,
+) -> Result<(FeatureSchema, FeatureSchema), OnnxError> {
+    let input_schema = ort_session
+        .inputs
+        .iter()
+        .map(|input| {
+            let name = input.name.clone();
+            let input_type = input.input_type.clone();
+
+            let feature = match input_type {
+                ValueType::Tensor {
+                    ty,
+                    dimensions,
+                    dimension_symbols: _,
+                } => Feature::new(ty.to_string(), dimensions, None),
+                _ => Feature::new("Unknown".to_string(), vec![], None),
+            };
+
+            Ok((name, feature))
+        })
+        .collect::<Result<FeatureSchema, OnnxError>>()?;
+
+    let output_schema = ort_session
+        .outputs
+        .iter()
+        .map(|output| {
+            let name = output.name.clone();
+            let input_type = output.output_type.clone();
+
+            let feature = match input_type {
+                ValueType::Tensor {
+                    ty,
+                    dimensions,
+                    dimension_symbols: _,
+                } => Feature::new(ty.to_string(), dimensions, None),
+                _ => Feature::new("Unknown".to_string(), vec![], None),
+            };
+
+            Ok((name, feature))
+        })
+        .collect::<Result<FeatureSchema, OnnxError>>()?;
+
+    Ok((input_schema, output_schema))
+}
+
 #[pyclass]
 #[derive(Debug)]
 pub struct OnnxSession {
@@ -35,96 +82,38 @@ pub struct OnnxSession {
 #[pymethods]
 impl OnnxSession {
     #[new]
-    #[pyo3(signature = (onnx_version, model_bytes, onnx_type, feature_names=None, model=None))]
+    #[pyo3(signature = (onnx_version, model, feature_names=None))]
     pub fn new(
-        py: Python,
         onnx_version: String,
-        model_bytes: Vec<u8>,
-        onnx_type: String,
+        model: &Bound<'_, PyAny>,
         feature_names: Option<Vec<String>>,
-        model: Option<&Bound<'_, PyAny>>,
     ) -> Result<Self, OnnxError> {
+        // get model bytes for loading into rust ort
+        let model_bytes = model
+            .call_method("SerializeToString", (), None)
+            .map_err(OnnxError::PySerializeError)?
+            .extract::<Vec<u8>>()
+            .map_err(OnnxError::PyModelBytesExtractError)?;
+
         // extract onnx_bytes
         let session = Session::builder()
-            .map_err(|e| OnnxError::Error(format!("Failed to create onnx session: {}", e)))?
+            .map_err(OnnxError::SessionCreateError)?
             .commit_from_memory(&model_bytes)
-            .map_err(|e| OnnxError::Error(format!("Failed to commit onnx session: {}", e)))?;
+            .map_err(OnnxError::SessionCommitError)?;
 
-        let input_schema = session
-            .inputs
-            .iter()
-            .map(|input| {
-                let name = input.name.clone();
-                let input_type = input.input_type.clone();
-
-                let feature = match input_type {
-                    ValueType::Tensor {
-                        ty,
-                        dimensions,
-                        dimension_symbols: _,
-                    } => Feature::new(ty.to_string(), dimensions, None),
-                    _ => Feature::new("Unknown".to_string(), vec![], None),
-                };
-
-                Ok((name, feature))
-            })
-            .collect::<Result<FeatureSchema, OnnxError>>()
-            .map_err(|_| OnnxError::Error("Failed to collect feature schema".to_string()))?;
-
-        let output_schema = session
-            .outputs
-            .iter()
-            .map(|output| {
-                let name = output.name.clone();
-                let input_type = output.output_type.clone();
-
-                let feature = match input_type {
-                    ValueType::Tensor {
-                        ty,
-                        dimensions,
-                        dimension_symbols: _,
-                    } => Feature::new(ty.to_string(), dimensions, None),
-                    _ => Feature::new("Unknown".to_string(), vec![], None),
-                };
-
-                Ok((name, feature))
-            })
-            .collect::<Result<FeatureSchema, OnnxError>>()
-            .map_err(|_| OnnxError::Error("Failed to collect feature schema".to_string()))?;
+        let (input_schema, output_schema) = parse_session_schema(&session)?;
 
         let schema = OnnxSchema {
             input_features: input_schema,
             output_features: output_schema,
             onnx_version,
             feature_names: feature_names.unwrap_or_default(),
-            onnx_type,
         };
 
         // setup python onnxruntime
 
-        let session = match model {
-            Some(model) => model.clone().unbind(),
-            None => {
-                let rt = py
-                    .import("onnxruntime")
-                    .map_err(|e| OnnxError::Error(e.to_string()))?;
-
-                let providers = rt
-                    .call_method0("get_available_providers")
-                    .map_err(|e| OnnxError::Error(e.to_string()))?;
-
-                let args = (model_bytes,);
-                let kwargs = PyDict::new(py);
-                kwargs.set_item("providers", providers).unwrap();
-
-                rt.call_method("InferenceSession", args, Some(&kwargs))
-                    .map_err(|e| OnnxError::Error(e.to_string()))?
-                    .unbind()
-            }
-        };
-
         Ok(OnnxSession {
-            session: Some(session),
+            session: Some(model.clone().unbind()),
             schema,
             quantized: false,
         })
@@ -239,6 +228,24 @@ impl OnnxSession {
 }
 
 impl OnnxSession {
+    pub fn from_onnx_session(
+        onnx_version: String,
+        model: &Bound<'_, PyAny>,
+
+        feature_names: Option<Vec<String>>,
+    ) -> Result<Self, OnnxError> {
+        OnnxSession::new(onnx_version, model, feature_names)
+    }
+
+    pub fn from_file(
+        py: Python,
+        onnx_version: String,
+        file: &Path,
+        feature_names: Option<Vec<String>>,
+    ) -> Result<Self, OnnxError> {
+        OnnxSession::new(py, onnx_version, model_bytes, onnx_type, feature_names)
+    }
+
     pub fn load_onnx_session(
         py: Python,
         path: &Path,
