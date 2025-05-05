@@ -1,6 +1,5 @@
 pub mod catboost;
 pub mod converter;
-pub mod error;
 pub mod huggingface;
 pub mod interface;
 pub mod lightgbm;
