@@ -1,12 +1,22 @@
 # pylint: skip-file
 
 import datetime
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
+from ...logging import LogLevel
 from ..client import HTTPConfig
-from ..drift import PsiDriftProfile, SpcDriftProfile
-from ..logging import LogLevel
 from ..observe import ObservabilityMetrics
+
+class TransportType:
+    Kafka = "TransportType"
+    RabbitMQ = "TransportType"
+    Redis = "TransportType"
+    HTTP = "TransportType"
+
+class EntityType:
+    Feature = "EntityType"
+    Metric = "EntityType"
 
 class RecordType:
     Spc = "RecordType"
@@ -23,13 +33,13 @@ class KafkaConfig:
     log_level: LogLevel
     config: Dict[str, str]
     max_retries: int
+    transport_type: TransportType
 
     def __init__(
         self,
         brokers: Optional[str] = None,
         topic: Optional[str] = None,
         compression_type: Optional[str] = None,
-        raise_on_error: bool = False,
         message_timeout_ms: int = 600_000,
         message_max_bytes: int = 2097164,
         log_level: LogLevel = LogLevel.Info,
@@ -50,10 +60,6 @@ class KafkaConfig:
             compression_type:
                 Compression type to use for messages.
                 Default is "gzip".
-
-            raise_on_error:
-                Whether to raise an error if message delivery fails.
-                Default is True.
 
             message_timeout_ms:
                 Message timeout in milliseconds.
@@ -80,8 +86,8 @@ class KafkaConfig:
 class RabbitMQConfig:
     address: str
     queue: str
-    raise_on_error: bool
     max_retries: int
+    transport_type: TransportType
 
     def __init__(
         self,
@@ -90,7 +96,6 @@ class RabbitMQConfig:
         username: Optional[str] = None,
         password: Optional[str] = None,
         queue: Optional[str] = None,
-        raise_on_error: bool = False,
         max_retries: int = 3,
     ) -> None:
         """RabbitMQ configuration to use with the RabbitMQProducer.
@@ -116,13 +121,31 @@ class RabbitMQConfig:
                 RabbitMQ queue to publish messages to.
                 If not provided, the value of the RABBITMQ_QUEUE environment variable is used.
 
-            raise_on_error:
-                Whether to raise an error if message delivery fails.
-                Default is False.
-
             max_retries:
                 Maximum number of retries to attempt when publishing messages.
                 Default is 3.
+        """
+
+class RedisConfig:
+    address: str
+    channel: str
+    transport_type: TransportType
+
+    def __init__(
+        self,
+        address: Optional[str] = None,
+        chanel: Optional[str] = None,
+    ) -> None:
+        """Redis configuration to use with a Redis producer
+
+        Args:
+            address (str):
+                Redis address.
+                If not provided, the value of the REDIS_ADDR environment variable is used and defaults to "redis://localhost:6379".
+
+            channel (str):
+                Redis channel to publish messages to.
+                If not provided, the value of the REDIS_CHANNEL environment variable is used and defaults to "scouter_monitoring".
         """
 
 class ServerRecord:
@@ -146,19 +169,13 @@ class ServerRecord:
         """Return the drift server record."""
 
 class ServerRecords:
-    def __init__(self, records: List[ServerRecord], record_type: RecordType) -> None:
+    def __init__(self, records: List[ServerRecord]) -> None:
         """Initialize server records
 
         Args:
             records:
                 List of server records
-            record_type:
-                Type of server records
         """
-
-    @property
-    def record_type(self) -> RecordType:
-        """Return the drift type."""
 
     @property
     def records(self) -> List[ServerRecord]:
@@ -169,64 +186,6 @@ class ServerRecords:
 
     def __str__(self) -> str:
         """Return the string representation of the record."""
-
-class ScouterProducer:
-    def __init__(
-        self,
-        config: Union[KafkaConfig, HTTPConfig, RabbitMQConfig],
-    ) -> None:
-        """Top-level Producer class.
-
-        Args:
-            config:
-                Configuration object for the producer that specifies the type of producer to use.
-
-            max_retries:
-                Maximum number of retries to attempt when publishing messages.
-                Default is 3.
-        """
-
-    def publish(self, message: ServerRecords) -> None:
-        """Publish a message to the queue.
-
-        Args:
-            message:
-                Message to publish.
-        """
-
-    def flush(self) -> None:
-        """Flush the producer queue."""
-
-class ScouterQueue:
-    def __init__(
-        self,
-        drift_profile: Union[SpcDriftProfile, PsiDriftProfile],
-        config: Union[KafkaConfig, HTTPConfig, RabbitMQConfig],
-    ) -> None:
-        """Scouter monitoring queue.
-
-        Args:
-            drift_profile:
-                Drift profile to use for monitoring.
-
-            config:
-                Configuration object for the queue that specifies the type of queue to use.
-
-            max_retries:
-                Maximum number of retries to attempt when publishing via the producer.
-                Default is 3.
-        """
-
-    def insert(self, features: Features) -> None:
-        """Insert features into the queue.
-
-        Args:
-            features:
-                Features to insert.
-        """
-
-    def flush(self) -> None:
-        """Flush the queue."""
 
 class SpcServerRecord:
     def __init__(
@@ -292,7 +251,7 @@ class PsiServerRecord:
         name: str,
         version: str,
         feature: str,
-        bin_id: str,
+        bin_id: int,
         bin_count: int,
     ):
         """Initialize spc drift server record
@@ -333,8 +292,8 @@ class PsiServerRecord:
         """Return the feature."""
 
     @property
-    def bin_id(self) -> str:
-        """Return the sample value."""
+    def bin_id(self) -> int:
+        """Return the bin id."""
 
     @property
     def bin_count(self) -> int:
@@ -356,7 +315,7 @@ class CustomMetricServerRecord:
         name: str,
         version: str,
         metric: str,
-        value: int,
+        value: float,
     ):
         """Initialize spc drift server record
 
@@ -452,63 +411,128 @@ class Features:
     def __str__(self) -> str:
         """Return the string representation of the features"""
 
-class PsiFeatureQueue:
-    def __init__(self, drift_profile: PsiDriftProfile) -> None:
-        """Initialize the feature queue
+    @property
+    def features(self) -> List[Feature]:
+        """Return the list of features"""
+
+    @property
+    def entity_type(self) -> EntityType:
+        """Return the entity type"""
+
+class Metric:
+    def __init__(self, name: str, value: float) -> None:
+        """Initialize metric
 
         Args:
-            drift_profile:
-                Drift profile to use for feature queue.
+            name:
+                Name of the metric
+            value:
+                Value to assign to the metric
         """
 
-    def insert(self, features: Features) -> None:
-        """Insert data into the feature queue
-        Args:
-            features:
-                List of features to insert into the monitoring queue.
-        """
+    def __str__(self) -> str:
+        """Return the string representation of the metric"""
 
-    def is_empty(self) -> bool:
-        """check if queue is empty
-        Returns:
-            bool
-        """
+    @property
+    def metrics(self) -> List[Metric]:
+        """Return the list of metrics"""
 
-    def clear_queue(self) -> None:
-        """Clears the feature queue"""
+    @property
+    def entity_type(self) -> EntityType:
+        """Return the entity type"""
 
-    def create_drift_records(self) -> ServerRecords:
-        """Create drift server record from data
-
-
-        Returns:
-            `DriftServerRecord`
-        """
-
-class SpcFeatureQueue:
-    def __init__(self, drift_profile: SpcDriftProfile) -> None:
-        """Initialize the feature queue
+class Metrics:
+    def __init__(self, metrics: List[Metric]) -> None:
+        """Initialize metrics
 
         Args:
-            drift_profile:
-                Drift profile to use for feature queue.
+            metrics:
+                List of metrics
         """
 
-    def insert(self, features: Features) -> None:
-        """Insert data into the feature queue
+    def __str__(self) -> str:
+        """Return the string representation of the metrics"""
+
+class Queue:
+    """Individual queue associated with a drift profile"""
+
+    def insert(self, entity: Union[Features, Metrics]) -> None:
+        """Insert a record into the queue
 
         Args:
-            features:
-                List of features to insert into the monitoring queue.
+            entity:
+                Entity to insert into the queue.
+                Can be an instance for Features or Metrics
+
+        Example:
+            ```python
+            features = Features(
+                features=[
+                    Feature.int("feature_1", 1),
+                    Feature.float("feature_2", 2.0),
+                    Feature.string("feature_3", "value"),
+                ]
+            )
+            queue.insert(Features(features))
+            ```
         """
 
-    def create_drift_records(self) -> ServerRecords:
-        """Create drift server record from data
+class ScouterQueue:
+    """Main queue class for Scouter. Publishes drift records to the configured transport"""
 
+    @staticmethod
+    def from_path(
+        path: Dict[str, Path],
+        transport_config: Union[
+            KafkaConfig,
+            RabbitMQConfig,
+            RedisConfig,
+            HTTPConfig,
+        ],
+    ) -> ScouterQueue:
+        """Initializes Scouter queue from one or more drift profile paths
 
-        Returns:
-            `DriftServerRecord`
+        Args:
+            path (Dict[str, Path]):
+                Dictionary of drift profile paths.
+                Each key is a user-defined alias for accessing a queue
+            transport_config (Union[KafkaConfig, RabbitMQConfig, RedisConfig, HTTPConfig]):
+                Transport configuration for the queue publisher
+                Can be KafkaConfig, RabbitMQConfig RedisConfig, or HTTPConfig
+
+        Example:
+            ```python
+            queue = ScouterQueue(
+                path={
+                    "spc": Path("spc_profile.json"),
+                    "psi": Path("psi_profile.json"),
+                },
+                transport_config=KafkaConfig(
+                    brokers="localhost:9092",
+                    topic="scouter_topic",
+                ),
+            )
+
+            queue["psi"].insert(
+                Features(
+                    features=[
+                        Feature.int("feature_1", 1),
+                        Feature.float("feature_2", 2.0),
+                        Feature.string("feature_3", "value"),
+                    ]
+                )
+            )
+            ```
         """
 
-    def clear_queue(self) -> None:
-        """Clears the feature queue"""
+    def __getitem__(self, key: str) -> Queue:
+        """Get the queue for the specified key
+
+        Args:
+            key (str):
+                Key to get the queue for
+
+        """
+
+    def shutdown(self) -> None:
+        """Shutdown the queue. This will close and flush all queues and transports"""
