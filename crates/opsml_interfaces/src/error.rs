@@ -109,6 +109,9 @@ pub enum ModelInterfaceError {
     #[error("Onnx URI not found in metadata")]
     MissingOnnxUriError,
 
+    #[error("Preprocessor URI not found in metadata")]
+    MissingPreprocessorUriError,
+
     #[error("Sample data URI not found in metadata")]
     MissingSampleDataUriError,
 
@@ -117,6 +120,15 @@ pub enum ModelInterfaceError {
 
     #[error("Failed to deserialize model specific metadata - {0}")]
     DeserializeMetadataError(#[from] serde_json::Error),
+
+    #[error("Model must be an CatBoost model or inherit from CatBoost")]
+    CatBoostTypeError,
+
+    #[error("No preprocessor detected for saving")]
+    NoPreprocessorError,
+
+    #[error("No model detected for saving")]
+    NoModelError,
 }
 
 impl From<ModelInterfaceError> for PyErr {
