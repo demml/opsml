@@ -143,6 +143,9 @@ pub enum ModelInterfaceError {
         "LightningModel loading requires model to be passed into model kwargs for loading {{'model': {{your_model_architecture}}}}"
     )]
     LightningLoadModelError,
+
+    #[error("Model must be an sklearn model and inherit from BaseEstimator")]
+    SklearnTypeError,
 }
 
 impl From<ModelInterfaceError> for PyErr {
