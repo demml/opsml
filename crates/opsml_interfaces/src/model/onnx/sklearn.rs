@@ -1,6 +1,6 @@
+use crate::error::OnnxError;
 use crate::model::base::utils::OnnxExtension;
 use crate::model::onnx::{OnnxRegistryUpdater, OnnxSession};
-use opsml_error::OpsmlError;
 use opsml_types::ModelType;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
@@ -40,7 +40,7 @@ impl SklearnOnnxModelConverter {
         matches!(model_type, ModelType::SklearnPipeline)
     }
 
-    fn update_registry(&self, py: Python, estimator_type: &ModelType) -> PyResult<()> {
+    fn update_registry(&self, py: Python, estimator_type: &ModelType) -> Result<(), OnnxError> {
         if estimator_type.in_update_registry() {
             OnnxRegistryUpdater::update_registry(py, estimator_type)?;
         }
@@ -58,7 +58,7 @@ impl SklearnOnnxModelConverter {
         &self,
         py: Python<'py>,
         model: &Bound<'py, PyAny>,
-    ) -> PyResult<()> {
+    ) -> Result<(), OnnxError> {
         let model_type = ModelType::from_pyobject(&model.getattr("estimator")?);
         self.update_registry(py, &model_type)?;
 
@@ -69,10 +69,14 @@ impl SklearnOnnxModelConverter {
         &self,
         py: Python,
         model: &Bound<'_, PyAny>,
-    ) -> PyResult<()> {
+    ) -> Result<(), OnnxError> {
         let model_steps = model.getattr("steps")?;
 
-        for model_step in model_steps.downcast::<PyList>()?.iter() {
+        for model_step in model_steps
+            .downcast::<PyList>()
+            .map_err(|e| OnnxError::DowncastError(e.to_string()))?
+            .iter()
+        {
             let mut estimator_type = ModelType::from_pyobject(&model_step.get_item(1)?);
 
             debug!(
@@ -95,13 +99,18 @@ impl SklearnOnnxModelConverter {
         &self,
         py: Python,
         model: &Bound<'_, PyAny>,
-    ) -> PyResult<()> {
+    ) -> Result<(), OnnxError> {
         // update the stacking registry
         let estimators = model.getattr("estimators_")?;
         let final_estimator = model.getattr("final_estimator")?;
         let mut estimators_list = Vec::new();
 
-        estimators_list.extend(estimators.downcast::<PyList>()?.iter());
+        estimators_list.extend(
+            estimators
+                .downcast::<PyList>()
+                .map_err(|e| OnnxError::DowncastError(e.to_string()))?
+                .iter(),
+        );
         estimators_list.push(final_estimator);
 
         for estimator in estimators_list {
@@ -122,7 +131,7 @@ impl SklearnOnnxModelConverter {
         py: Python,
         model: &Bound<'_, PyAny>,
         model_type: &ModelType,
-    ) -> PyResult<()> {
+    ) -> Result<(), OnnxError> {
         if self.is_pipeline_model_type(model_type) {
             debug!("Updating pipeline registries for ONNX");
             self.update_onnx_pipeline_registries(py, model)
@@ -146,7 +155,7 @@ impl SklearnOnnxModelConverter {
         &self,
         onnx_model: &Bound<'_, PyAny>,
         feature_names: Vec<String>,
-    ) -> PyResult<OnnxSession> {
+    ) -> Result<OnnxSession, OnnxError> {
         let py = onnx_model.py();
 
         let onnx_version = py
@@ -154,19 +163,7 @@ impl SklearnOnnxModelConverter {
             .getattr("__version__")?
             .extract::<String>()?;
 
-        let onnx_bytes = onnx_model
-            .call_method("SerializeToString", (), None)
-            .map_err(|e| OpsmlError::new_err(format!("Failed to serialize ONNX model: {}", e)))?;
-
-        OnnxSession::new(
-            py,
-            onnx_version,
-            onnx_bytes.extract::<Vec<u8>>()?,
-            "onnx".to_string(),
-            Some(feature_names),
-            Some(onnx_model),
-        )
-        .map_err(|e| OpsmlError::new_err(format!("Failed to create ONNX session: {}", e)))
+        OnnxSession::from_onnx_session(onnx_version, onnx_model, Some(feature_names))
     }
 
     pub fn convert_model<'py, T>(
@@ -176,23 +173,21 @@ impl SklearnOnnxModelConverter {
         model_type: &ModelType,
         sample_data: &T,
         kwargs: Option<&Bound<'py, PyDict>>,
-    ) -> PyResult<OnnxSession>
+    ) -> Result<OnnxSession, OnnxError>
     where
         T: OnnxExtension,
     {
         debug!("Step 1: Updating registries for ONNX");
         self.update_sklearn_onnx_registries(py, model, model_type)?;
 
-        let skl2onnx = py
-            .import("skl2onnx")
-            .map_err(|e| OpsmlError::new_err(format!("Failed to import skl2onnx: {}", e)))?;
+        let skl2onnx = py.import("skl2onnx").map_err(OnnxError::ImportError)?;
 
         let args = (model, sample_data.get_data_for_onnx(py, model_type)?);
 
         debug!("Step 2: Converting model to ONNX");
         let onnx_model = skl2onnx
             .call_method("to_onnx", args, kwargs)
-            .map_err(|e| OpsmlError::new_err(format!("Failed to convert model to ONNX: {}", e)))?;
+            .map_err(OnnxError::PyOnnxConversionError)?;
 
         debug!("Step 3: Extracting ONNX schema");
         let onnx_session = self.get_onnx_session(&onnx_model, sample_data.get_feature_names(py)?);
