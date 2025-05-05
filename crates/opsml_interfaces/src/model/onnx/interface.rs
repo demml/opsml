@@ -1,7 +1,15 @@
-use crate::model::ModelInterface;
+use crate::base::parse_save_kwargs;
+use crate::model::{
+    ModelInterface, ModelInterfaceMetadata, ModelInterfaceSaveMetadata, ModelLoadKwargs,
+};
+use crate::ModelSaveKwargs;
+use crate::OnnxSession;
 use opsml_error::OpsmlError;
 use opsml_types::{ModelInterfaceType, ModelType, TaskType};
 use pyo3::prelude::*;
+use std::collections::HashMap;
+use std::path::PathBuf;
+use tracing::{debug, error, instrument};
 
 #[pyclass(extends=ModelInterface, subclass)]
 #[derive(Debug)]
@@ -51,5 +59,137 @@ impl OnnxModel {
         // extract and convert to onnx_session
 
         Ok((OnnxModel {}, model_interface))
+    }
+
+    /// Save the interface model
+    ///
+    /// # Arguments
+    ///
+    /// * `py` - Python interpreter
+    /// * `path` - Path to save the data
+    /// * `kwargs` - Additional save kwargs
+    ///
+    /// # Returns
+    ///
+    /// * `PyResult<DataInterfaceSaveMetadata>` - DataInterfaceSaveMetadata
+    #[pyo3(signature = (path, to_onnx=false, save_kwargs=None))]
+    #[instrument(skip_all)]
+    pub fn save<'py>(
+        mut self_: PyRefMut<'py, Self>,
+        py: Python<'py>,
+        path: PathBuf,
+        to_onnx: bool,
+        save_kwargs: Option<ModelSaveKwargs>,
+    ) -> PyResult<ModelInterfaceMetadata> {
+        debug!("Saving model interface");
+
+        let (onnx_kwargs, _, _) = parse_save_kwargs(py, &save_kwargs);
+
+        let parent = self_.as_super();
+        let onnx_model_uri = parent
+            .save_onnx_model(py, &path, onnx_kwargs.as_ref())
+            .map_err(|e| {
+                error!("Failed to save ONNX model. Error: {}", e);
+                e
+            })?;
+
+        let sample_data_uri = parent.save_data(py, &path, None).map_err(|e| {
+            error!("Failed to save sample data. Error: {}", e);
+            e
+        })?;
+
+        let drift_profile_uri = if parent.drift_profile.is_empty() {
+            None
+        } else {
+            Some(parent.save_drift_profile(py, &path).map_err(|e| {
+                error!("Failed to save drift profile. Error: {}", e);
+                e
+            })?)
+        };
+
+        parent.schema = parent.create_feature_schema(py).map_err(|e| {
+            error!("Failed to create feature schema. Error: {}", e);
+            e
+        })?;
+
+        let save_metadata = ModelInterfaceSaveMetadata {
+            model_uri: onnx_model_uri.clone(),
+            data_processor_map: HashMap::new(),
+            sample_data_uri,
+            onnx_model_uri: Some(onnx_model_uri),
+            drift_profile_uri,
+            extra: None,
+            save_kwargs,
+        };
+
+        let onnx_session = parent.onnx_session.as_ref().map(|sess| {
+            let sess = sess.bind(py);
+            // extract OnnxSession from py object
+            sess.extract::<OnnxSession>().unwrap()
+        });
+
+        let metadata = ModelInterfaceMetadata::new(
+            save_metadata,
+            parent.task_type.clone(),
+            parent.model_type.clone(),
+            parent.data_type.clone(),
+            parent.schema.clone(),
+            parent.interface_type.clone(),
+            onnx_session,
+            HashMap::new(),
+            parent.drift_type.clone(),
+        );
+
+        Ok(metadata)
+    }
+
+    /// Dynamically load the model interface components
+    ///
+    /// # Arguments
+    ///
+    /// * `py` - Python interpreter
+    /// * `path` - Path to load from
+    /// * `onnx` - Whether to load the onnx model (default: false)
+    /// * `load_kwargs` - Additional load kwargs to pass to the individual load methods
+    ///
+    /// # Returns
+    ///
+    /// * `PyResult<DataInterfaceMetadata>` - DataInterfaceMetadata
+    #[pyo3(signature = (path, metadata, load_kwargs=None, ))]
+    #[allow(clippy::too_many_arguments)]
+    pub fn load(
+        mut self_: PyRefMut<'_, Self>,
+        py: Python,
+        path: PathBuf,
+        metadata: ModelInterfaceSaveMetadata,
+        load_kwargs: Option<ModelLoadKwargs>,
+    ) -> PyResult<()> {
+        let load_kwargs = load_kwargs.unwrap_or_default();
+
+        // parent scope - can only borrow mutable one at a time
+        {
+            let parent = self_.as_super();
+
+            let onnx_path = path.join(&metadata.model_uri);
+            parent.load_onnx_model(py, &onnx_path, load_kwargs.onnx_kwargs(py))?;
+
+            if metadata.drift_profile_uri.is_some() {
+                let drift_path = path.join(&metadata.drift_profile_uri.ok_or_else(|| {
+                    OpsmlError::new_err("Drift profile URI not found in metadata")
+                })?);
+
+                parent.load_drift_profile(py, &drift_path)?;
+            }
+
+            if metadata.sample_data_uri.is_some() {
+                let sample_data_path =
+                    path.join(&metadata.sample_data_uri.ok_or_else(|| {
+                        OpsmlError::new_err("Sample data URI not found in metadata")
+                    })?);
+                parent.load_data(py, &sample_data_path, None)?;
+            }
+        }
+
+        Ok(())
     }
 }
