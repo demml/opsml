@@ -1,3 +1,4 @@
+use opsml_error::UtilError;
 use pyo3::exceptions::PyRuntimeError;
 use pyo3::PyErr;
 use thiserror::Error;
@@ -160,6 +161,12 @@ pub enum ModelInterfaceError {
 
     #[error("Model must be an xgboost booster or inherit from Booster. If using the Sklearn api version of XGBoost, use the SklearnModel interface instead")]
     XGBoostTypeError,
+
+    #[error("Drift type not found in drift profile filename: {0}")]
+    DriftTypeNotFoundError(String),
+
+    #[error(transparent)]
+    UtilError(#[from] UtilError),
 }
 
 impl From<ModelInterfaceError> for PyErr {
