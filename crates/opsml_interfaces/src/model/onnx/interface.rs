@@ -1,4 +1,5 @@
 use crate::base::parse_save_kwargs;
+use crate::model::base::utils::OnnxExtension;
 use crate::model::{
     ModelInterface, ModelInterfaceMetadata, ModelInterfaceSaveMetadata, ModelLoadKwargs,
 };
@@ -7,9 +8,12 @@ use crate::OnnxSession;
 use opsml_error::OpsmlError;
 use opsml_types::{ModelInterfaceType, ModelType, TaskType};
 use pyo3::prelude::*;
+use pyo3::IntoPyObjectExt;
 use std::collections::HashMap;
 use std::path::PathBuf;
 use tracing::{debug, error, instrument};
+
+use crate::BaseOnnxConverter;
 
 #[pyclass(extends=ModelInterface, subclass)]
 #[derive(Debug)]
@@ -57,6 +61,28 @@ impl OnnxModel {
         }
 
         // extract and convert to onnx_session
+        let onnx_session = if let Some(model) = model {
+            let sess = BaseOnnxConverter::get_onnx_session(
+                model,
+                model_interface
+                    .sample_data
+                    .get_feature_names(py)
+                    .map_err(|e| {
+                        OpsmlError::new_err(format!(
+                            "Failed to get feature names from sample data: {}",
+                            e
+                        ))
+                    })?,
+            )?;
+
+            Some(Py::new(py, sess).map_err(|e| {
+                OpsmlError::new_err(format!("Failed to create ONNX session: {}", e))
+            })?)
+        } else {
+            None
+        };
+
+        model_interface.onnx_session = onnx_session;
 
         Ok((OnnxModel {}, model_interface))
     }
@@ -81,7 +107,7 @@ impl OnnxModel {
         to_onnx: bool,
         save_kwargs: Option<ModelSaveKwargs>,
     ) -> PyResult<ModelInterfaceMetadata> {
-        debug!("Saving model interface");
+        debug!("Saving model interface {:?}", to_onnx);
 
         let (onnx_kwargs, _, _) = parse_save_kwargs(py, &save_kwargs);
 
@@ -191,5 +217,29 @@ impl OnnxModel {
         }
 
         Ok(())
+    }
+}
+
+impl OnnxModel {
+    pub fn from_metadata<'py>(
+        py: Python<'py>,
+        metadata: &ModelInterfaceMetadata,
+    ) -> PyResult<Bound<'py, PyAny>> {
+        let onnx_interface = OnnxModel {};
+
+        let mut interface =
+            ModelInterface::new(py, None, None, Some(metadata.task_type.clone()), None)?;
+
+        interface.schema = metadata.schema.clone();
+        interface.data_type = metadata.data_type.clone();
+        interface.model_type = metadata.model_type.clone();
+        interface.interface_type = metadata.interface_type.clone();
+
+        interface.onnx_session = metadata
+            .onnx_session
+            .as_ref()
+            .map(|session| Py::new(py, session.clone()).unwrap());
+
+        Py::new(py, (onnx_interface, interface))?.into_bound_py_any(py)
     }
 }

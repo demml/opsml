@@ -35,6 +35,7 @@ impl TensorFlowOnnxModelConverter {
             onnx_bytes.extract::<Vec<u8>>()?,
             "onnx".to_string(),
             None,
+            Some(onnx_model),
         )
         .map_err(|e| OpsmlError::new_err(format!("Failed to create ONNX session: {}", e)))
     }

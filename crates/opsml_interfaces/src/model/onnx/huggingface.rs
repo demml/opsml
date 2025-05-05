@@ -58,8 +58,15 @@ impl HuggingFaceOnnxModelConverter {
         let onnx_bytes = fs::read(&onnx_file)
             .map_err(|e| OpsmlError::new_err(format!("Failed to read ONNX model: {}", e)))?;
 
-        OnnxSession::new(py, onnx_version, onnx_bytes, ort_type.to_string(), None)
-            .map_err(|e| OpsmlError::new_err(format!("Failed to create ONNX session: {}", e)))
+        OnnxSession::new(
+            py,
+            onnx_version,
+            onnx_bytes,
+            ort_type.to_string(),
+            None,
+            None,
+        )
+        .map_err(|e| OpsmlError::new_err(format!("Failed to create ONNX session: {}", e)))
     }
 
     pub fn parse_kwargs<'py>(

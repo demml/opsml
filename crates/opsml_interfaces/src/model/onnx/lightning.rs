@@ -32,7 +32,7 @@ impl LightningOnnxModelConverter {
         let onnx_bytes = fs::read(model_path)
             .map_err(|e| OpsmlError::new_err(format!("Failed to read ONNX model: {}", e)))?;
 
-        OnnxSession::new(py, onnx_version, onnx_bytes, "onnx".to_string(), None)
+        OnnxSession::new(py, onnx_version, onnx_bytes, "onnx".to_string(), None, None)
             .map_err(|e| OpsmlError::new_err(format!("Failed to create ONNX session: {}", e)))
     }
 
