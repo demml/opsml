@@ -216,7 +216,7 @@ impl OnnxSession {
         py: Python,
         path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
-    ) -> PyResult<PyObject> {
+    ) -> Result<PyObject, OnnxError> {
         let rt = py.import("onnxruntime").map_err(OnnxError::ImportError)?;
 
         let providers = rt
@@ -224,7 +224,6 @@ impl OnnxSession {
             .map_err(OnnxError::ProviderError)?;
 
         let args = (path,);
-
         if let Some(kwargs) = kwargs {
             kwargs.set_item("providers", providers).unwrap();
         } else {
@@ -245,19 +244,51 @@ impl OnnxSession {
     pub fn from_onnx_session(
         onnx_version: String,
         model: &Bound<'_, PyAny>,
-
         feature_names: Option<Vec<String>>,
     ) -> Result<Self, OnnxError> {
         OnnxSession::new(onnx_version, model, feature_names)
     }
 
+    /// Loads the ONNX model from a file path.
+    ///
+    /// # Arguments
+    ///
+    /// * `py` - Python interpreter
+    /// * `onnx_version` - Version of the ONNX model
+    /// * `filepath` - Path to the ONNX model file
+    /// * `feature_names` - Optional feature names
+    ///
+    /// # Returns
+    /// * `Result<Self, OnnxError>` - The loaded ONNX session
     pub fn from_file(
         py: Python,
         onnx_version: String,
-        file: &Path,
+        filepath: &Path,
         feature_names: Option<Vec<String>>,
     ) -> Result<Self, OnnxError> {
-        OnnxSession::new(py, onnx_version, model_bytes, onnx_type, feature_names)
+        let session = Session::builder()
+            .map_err(OnnxError::SessionCreateError)?
+            .commit_from_file(filepath)
+            .map_err(OnnxError::SessionCommitError)?;
+
+        let (input_schema, output_schema) = parse_session_schema(&session)?;
+
+        let schema = OnnxSchema {
+            input_features: input_schema,
+            output_features: output_schema,
+            onnx_version,
+            feature_names: feature_names.unwrap_or_default(),
+        };
+
+        let session = Self::get_py_session_from_path(py, filepath, None)?;
+
+        // setup python onnxruntime
+
+        Ok(OnnxSession {
+            session: Some(session),
+            schema,
+            quantized: false,
+        })
     }
 
     fn __traverse__(&self, visit: PyVisit) -> Result<(), PyTraverseError> {

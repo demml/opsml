@@ -52,3 +52,23 @@ impl From<PyErr> for OnnxError {
         OnnxError::Error(err.to_string())
     }
 }
+
+#[derive(Error, Debug)]
+pub enum ModelInterfaceError {
+    #[error("No ONNX session detected in interface for loading")]
+    OnnxSessionMissing,
+}
+
+impl From<ModelInterfaceError> for PyErr {
+    fn from(err: ModelInterfaceError) -> PyErr {
+        let msg = err.to_string();
+        error!("{}", msg);
+        PyRuntimeError::new_err(msg)
+    }
+}
+
+impl From<PyErr> for ModelInterfaceError {
+    fn from(err: PyErr) -> Self {
+        ModelInterfaceError::Error(err.to_string())
+    }
+}
