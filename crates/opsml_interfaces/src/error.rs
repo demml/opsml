@@ -84,6 +84,39 @@ impl From<OnnxError> for PyErr {
 pub enum ModelInterfaceError {
     #[error("No ONNX session detected in interface for loading")]
     OnnxSessionMissing,
+
+    #[error("Image Processor must be an instance of BaseImageProcessor")]
+    ImageProcessorValidationError,
+
+    #[error("Tokenizer must be an instance of PreTrainedTokenizerBase")]
+    TokenizerValidationError,
+
+    #[error("Feature Extractor must be an instance of PreTrainedFeatureExtractor")]
+    FeatureExtractorValidationError,
+
+    #[error("Model must be an instance of transformers")]
+    TransformerTypeError,
+
+    #[error(transparent)]
+    PyError(#[from] pyo3::PyErr),
+
+    #[error(transparent)]
+    OnnxError(#[from] OnnxError),
+
+    #[error(transparent)]
+    IoError(#[from] std::io::Error),
+
+    #[error("Onnx URI not found in metadata")]
+    MissingOnnxUriError,
+
+    #[error("Sample data URI not found in metadata")]
+    MissingSampleDataUriError,
+
+    #[error("Drift profile URI not found in metadata")]
+    MissingDriftProfileUriError,
+
+    #[error("Failed to deserialize model specific metadata - {0}")]
+    DeserializeMetadataError(#[from] serde_json::Error),
 }
 
 impl From<ModelInterfaceError> for PyErr {
