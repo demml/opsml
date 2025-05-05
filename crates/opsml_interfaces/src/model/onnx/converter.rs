@@ -29,8 +29,7 @@ impl BaseOnnxConverter {
         BaseOnnxConverter {}
     }
 
-    fn get_onnx_session(
-        &self,
+    pub fn get_onnx_session(
         onnx_model: &Bound<'_, PyAny>,
         feature_names: Vec<String>,
     ) -> PyResult<OnnxSession> {
@@ -51,6 +50,7 @@ impl BaseOnnxConverter {
             onnx_bytes.extract::<Vec<u8>>()?,
             "onnx".to_string(),
             Some(feature_names),
+            Some(onnx_model), // pass is onnx_model so we don't need to re-create
         )
         .map_err(|e| OpsmlError::new_err(format!("Failed to create ONNX session: {}", e)))
     }
@@ -124,8 +124,7 @@ impl OnnxModelConverter {
 
             ModelInterfaceType::Onnx => {
                 debug!("Extracting Onnx model schema");
-                let converter = BaseOnnxConverter::default();
-                converter.get_onnx_session(model, sample_data.get_feature_names(py)?)
+                BaseOnnxConverter::get_onnx_session(model, sample_data.get_feature_names(py)?)
             }
             _ => Err(OpsmlError::new_err("Model type not supported")),
         }

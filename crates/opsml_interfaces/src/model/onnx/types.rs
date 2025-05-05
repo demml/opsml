@@ -35,13 +35,14 @@ pub struct OnnxSession {
 #[pymethods]
 impl OnnxSession {
     #[new]
-    #[pyo3(signature = (onnx_version, model_bytes, onnx_type, feature_names=None))]
+    #[pyo3(signature = (onnx_version, model_bytes, onnx_type, feature_names=None, model=None))]
     pub fn new(
         py: Python,
         onnx_version: String,
         model_bytes: Vec<u8>,
         onnx_type: String,
         feature_names: Option<Vec<String>>,
+        model: Option<&Bound<'_, PyAny>>,
     ) -> Result<Self, OnnxError> {
         // extract onnx_bytes
         let session = Session::builder()
@@ -101,22 +102,26 @@ impl OnnxSession {
 
         // setup python onnxruntime
 
-        let rt = py
-            .import("onnxruntime")
-            .map_err(|e| OnnxError::Error(e.to_string()))?;
+        let session = match model {
+            Some(model) => model.clone().unbind(),
+            None => {
+                let rt = py
+                    .import("onnxruntime")
+                    .map_err(|e| OnnxError::Error(e.to_string()))?;
 
-        let providers = rt
-            .call_method0("get_available_providers")
-            .map_err(|e| OnnxError::Error(e.to_string()))?;
+                let providers = rt
+                    .call_method0("get_available_providers")
+                    .map_err(|e| OnnxError::Error(e.to_string()))?;
 
-        let args = (model_bytes,);
-        let kwargs = PyDict::new(py);
-        kwargs.set_item("providers", providers).unwrap();
+                let args = (model_bytes,);
+                let kwargs = PyDict::new(py);
+                kwargs.set_item("providers", providers).unwrap();
 
-        let session = rt
-            .call_method("InferenceSession", args, Some(&kwargs))
-            .map_err(|e| OnnxError::Error(e.to_string()))?
-            .unbind();
+                rt.call_method("InferenceSession", args, Some(&kwargs))
+                    .map_err(|e| OnnxError::Error(e.to_string()))?
+                    .unbind()
+            }
+        };
 
         Ok(OnnxSession {
             session: Some(session),
