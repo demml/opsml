@@ -1,9 +1,9 @@
 use crate::base::{parse_save_kwargs, ModelInterfaceMetadata, ModelInterfaceSaveMetadata};
 use crate::data::generate_feature_schema;
 use crate::data::DataInterface;
+use crate::error::ModelInterfaceError;
 use crate::model::torch::TorchSampleData;
 use crate::model::ModelInterface;
-
 use crate::types::{FeatureSchema, ProcessorType};
 use crate::OnnxModelConverter;
 use crate::OnnxSession;
@@ -701,11 +701,9 @@ impl TorchModel {
         py: Python,
         path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
-    ) -> PyResult<()> {
+    ) -> Result<(), ModelInterfaceError> {
         if self.onnx_session.is_none() {
-            return Err(OpsmlError::new_err(
-                "No ONNX model detected in interface for loading",
-            ));
+            return Err(ModelInterfaceError::OnnxSessionMissing);
         }
 
         // just call "load_onnx_model" method on the onnx_session
