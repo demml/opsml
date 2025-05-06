@@ -1,17 +1,17 @@
 use crate::base::parse_save_kwargs;
+use crate::error::ModelInterfaceError;
 use crate::model::base::utils::OnnxExtension;
 use crate::model::{
     ModelInterface, ModelInterfaceMetadata, ModelInterfaceSaveMetadata, ModelLoadKwargs,
 };
 use crate::ModelSaveKwargs;
 use crate::OnnxSession;
-use opsml_error::OpsmlError;
 use opsml_types::{ModelInterfaceType, ModelType, TaskType};
 use pyo3::prelude::*;
 use pyo3::IntoPyObjectExt;
 use std::collections::HashMap;
 use std::path::PathBuf;
-use tracing::{debug, error, instrument};
+use tracing::{debug, instrument};
 
 use crate::OnnxModelConverter;
 
@@ -30,13 +30,11 @@ impl OnnxModel {
         sample_data: Option<&Bound<'py, PyAny>>,
         task_type: Option<TaskType>,
         drift_profile: Option<&Bound<'py, PyAny>>,
-    ) -> PyResult<(Self, ModelInterface)> {
+    ) -> Result<(Self, ModelInterface), ModelInterfaceError> {
         if let Some(model) = model {
             let has_serialize = model.hasattr("SerializeToString")?;
             if !has_serialize {
-                return Err(OpsmlError::new_err(
-                    "Model must be an Onnx ModelProto with SerializeToString method",
-                ));
+                return Err(ModelInterfaceError::OnnxModelTypeError);
             }
         }
 
@@ -50,20 +48,10 @@ impl OnnxModel {
         let onnx_session = if let Some(model) = model {
             let sess = OnnxModelConverter::get_onnx_session(
                 model,
-                model_interface
-                    .sample_data
-                    .get_feature_names(py)
-                    .map_err(|e| {
-                        OpsmlError::new_err(format!(
-                            "Failed to get feature names from sample data: {}",
-                            e
-                        ))
-                    })?,
+                model_interface.sample_data.get_feature_names(py)?,
             )?;
 
-            Some(Py::new(py, sess).map_err(|e| {
-                OpsmlError::new_err(format!("Failed to create ONNX session: {}", e))
-            })?)
+            Some(Py::new(py, sess)?)
         } else {
             None
         };
@@ -78,12 +66,12 @@ impl OnnxModel {
     pub fn get_session<'py>(
         self_: PyRef<'py, Self>,
         py: Python<'py>,
-    ) -> PyResult<Bound<'py, OnnxSession>> {
+    ) -> Result<Bound<'py, OnnxSession>, ModelInterfaceError> {
         let parent = self_.as_super();
         if let Some(session) = &parent.onnx_session {
             Ok(session.bind(py).clone())
         } else {
-            Err(OpsmlError::new_err("ONNX session not found"))
+            Err(ModelInterfaceError::OnnxSessionMissing)
         }
     }
 
@@ -106,37 +94,23 @@ impl OnnxModel {
         path: PathBuf,
         to_onnx: bool,
         save_kwargs: Option<ModelSaveKwargs>,
-    ) -> PyResult<ModelInterfaceMetadata> {
+    ) -> Result<ModelInterfaceMetadata, ModelInterfaceError> {
         debug!("Saving model interface {:?}", to_onnx);
 
         let (onnx_kwargs, _, _) = parse_save_kwargs(py, &save_kwargs);
 
         let parent = self_.as_super();
-        let onnx_model_uri = parent
-            .save_onnx_model(py, &path, onnx_kwargs.as_ref())
-            .map_err(|e| {
-                error!("Failed to save ONNX model. Error: {}", e);
-                e
-            })?;
+        let onnx_model_uri = parent.save_onnx_model(py, &path, onnx_kwargs.as_ref())?;
 
-        let sample_data_uri = parent.save_data(py, &path, None).map_err(|e| {
-            error!("Failed to save sample data. Error: {}", e);
-            e
-        })?;
+        let sample_data_uri = parent.save_data(py, &path, None)?;
 
         let drift_profile_uri = if parent.drift_profile.is_empty() {
             None
         } else {
-            Some(parent.save_drift_profile(py, &path).map_err(|e| {
-                error!("Failed to save drift profile. Error: {}", e);
-                e
-            })?)
+            Some(parent.save_drift_profile(py, &path)?)
         };
 
-        parent.schema = parent.create_feature_schema(py).map_err(|e| {
-            error!("Failed to create feature schema. Error: {}", e);
-            e
-        })?;
+        parent.schema = parent.create_feature_schema(py)?;
 
         let save_metadata = ModelInterfaceSaveMetadata {
             model_uri: onnx_model_uri.clone(),
@@ -189,7 +163,7 @@ impl OnnxModel {
         path: PathBuf,
         metadata: ModelInterfaceSaveMetadata,
         load_kwargs: Option<ModelLoadKwargs>,
-    ) -> PyResult<()> {
+    ) -> Result<(), ModelInterfaceError> {
         let load_kwargs = load_kwargs.unwrap_or_default();
 
         // parent scope - can only borrow mutable one at a time
@@ -200,18 +174,21 @@ impl OnnxModel {
             parent.load_onnx_model(py, &onnx_path, load_kwargs.onnx_kwargs(py))?;
 
             if metadata.drift_profile_uri.is_some() {
-                let drift_path = path.join(&metadata.drift_profile_uri.ok_or_else(|| {
-                    OpsmlError::new_err("Drift profile URI not found in metadata")
-                })?);
+                let drift_path = path.join(
+                    &metadata
+                        .drift_profile_uri
+                        .ok_or_else(|| ModelInterfaceError::MissingDriftProfileUriError)?,
+                );
 
                 parent.load_drift_profile(py, &drift_path)?;
             }
 
             if metadata.sample_data_uri.is_some() {
-                let sample_data_path =
-                    path.join(&metadata.sample_data_uri.ok_or_else(|| {
-                        OpsmlError::new_err("Sample data URI not found in metadata")
-                    })?);
+                let sample_data_path = path.join(
+                    &metadata
+                        .sample_data_uri
+                        .ok_or_else(|| ModelInterfaceError::MissingSampleDataUriError)?,
+                );
                 parent.load_data(py, &sample_data_path, None)?;
             }
         }
@@ -224,7 +201,7 @@ impl OnnxModel {
     pub fn from_metadata<'py>(
         py: Python<'py>,
         metadata: &ModelInterfaceMetadata,
-    ) -> PyResult<Bound<'py, PyAny>> {
+    ) -> Result<Bound<'py, PyAny>, ModelInterfaceError> {
         let onnx_interface = OnnxModel {};
 
         let mut interface =
@@ -240,6 +217,8 @@ impl OnnxModel {
             .as_ref()
             .map(|session| Py::new(py, session.clone()).unwrap());
 
-        Py::new(py, (onnx_interface, interface))?.into_bound_py_any(py)
+        let interface = Py::new(py, (onnx_interface, interface))?.into_bound_py_any(py)?;
+
+        Ok(interface)
     }
 }
