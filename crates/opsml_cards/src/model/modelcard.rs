@@ -45,7 +45,6 @@ fn interface_from_metadata<'py>(
         ModelInterfaceType::Lightning => LightningModel::from_metadata(py, metadata),
         ModelInterfaceType::HuggingFace => HuggingFaceModel::from_metadata(py, metadata),
         ModelInterfaceType::TensorFlow => TensorFlowModel::from_metadata(py, metadata),
-
         _ => Err(ModelInterfaceError::InterfaceTypeNotFoundError),
     }
 }
