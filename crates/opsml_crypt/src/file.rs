@@ -1,10 +1,10 @@
+use crate::error::CryptError;
 use aes_gcm::Nonce;
 use aes_gcm::{
     aead::{Aead, AeadCore, KeyInit, OsRng},
     Aes256Gcm,
     Key, // Or `Aes128Gcm`
 };
-use opsml_error::CryptError;
 use opsml_utils::FileUtils;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use std::fs::{self, File};
@@ -33,7 +33,7 @@ pub fn encrypt_file(input_path: &Path, key_bytes: &[u8]) -> Result<(), CryptErro
         let nonce = Aes256Gcm::generate_nonce(&mut OsRng);
         let encrypted = cipher
             .encrypt(&nonce, chunk)
-            .map_err(|e| CryptError::Error(e.to_string()))?;
+            .map_err(|e| CryptError::EncryptError(e.to_string()))?;
 
         // Write nonce length, nonce, ciphertext length, ciphertext
         output.write_all(&(nonce.as_slice().len() as u64).to_le_bytes())?;
@@ -76,7 +76,7 @@ pub fn decrypt_file(input_path: &Path, key_bytes: &[u8]) -> Result<(), CryptErro
         let nonce = Nonce::from_slice(&nonce_buf);
         let decrypted = cipher
             .decrypt(nonce, ct_buf.as_ref())
-            .map_err(|e| CryptError::Error(e.to_string()))?;
+            .map_err(|e| CryptError::DecryptError(e.to_string()))?;
         output.write_all(&decrypted)?;
     }
     output.flush()?;
