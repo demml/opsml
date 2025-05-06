@@ -1,4 +1,3 @@
-use opsml_error::UtilError;
 use pyo3::exceptions::PyRuntimeError;
 use pyo3::PyErr;
 use thiserror::Error;
@@ -180,6 +179,28 @@ pub enum ModelInterfaceError {
 
 impl From<ModelInterfaceError> for PyErr {
     fn from(err: ModelInterfaceError) -> PyErr {
+        let msg = err.to_string();
+        error!("{}", msg);
+        PyRuntimeError::new_err(msg)
+    }
+}
+
+#[derive(Error, Debug)]
+pub enum DataInterfaceError {}
+
+impl From<DataInterfaceError> for PyErr {
+    fn from(err: DataInterfaceError) -> PyErr {
+        let msg = err.to_string();
+        error!("{}", msg);
+        PyRuntimeError::new_err(msg)
+    }
+}
+
+#[derive(Error, Debug)]
+pub enum TypeError {}
+
+impl From<TypeError> for PyErr {
+    fn from(err: TypeError) -> PyErr {
         let msg = err.to_string();
         error!("{}", msg);
         PyRuntimeError::new_err(msg)
