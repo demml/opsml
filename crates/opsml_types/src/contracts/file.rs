@@ -1,7 +1,7 @@
+use crate::error::TypeError;
 use crate::RegistryType;
 use crate::StorageType;
 use opsml_crypt::decrypt_key;
-use opsml_error::TypeError;
 use opsml_utils::{uid_to_byte_key, PyHelperFuncs};
 use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -181,7 +181,7 @@ impl ArtifactKey {
         // convert uid to byte key (used for card encryption)
         let uid_key = uid_to_byte_key(&self.uid)?;
 
-        decrypt_key(&uid_key, &self.encrypted_key).map_err(|e| TypeError::Error(format!("{}", e)))
+        Ok(decrypt_key(&uid_key, &self.encrypted_key)?)
     }
 
     pub fn storage_path(&self) -> PathBuf {

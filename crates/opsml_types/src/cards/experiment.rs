@@ -1,5 +1,5 @@
+use crate::error::TypeError;
 use chrono::{DateTime, Utc};
-use opsml_error::TypeError;
 use opsml_utils::PyHelperFuncs;
 use pyo3::prelude::*;
 use pyo3::IntoPyObjectExt;
@@ -123,7 +123,7 @@ impl ParameterValue {
         } else if let Ok(value) = value.extract::<String>() {
             Ok(ParameterValue::Str(value))
         } else {
-            Err(TypeError::Error("Invalid type for value".to_string()))
+            Err(TypeError::InvalidType)
         }
     }
 }
@@ -140,7 +140,7 @@ pub struct Parameter {
 impl Parameter {
     #[new]
     #[pyo3(signature = (name, value))]
-    pub fn new(name: String, value: Bound<'_, PyAny>) -> PyResult<Self> {
+    pub fn new(name: String, value: Bound<'_, PyAny>) -> Result<Self, TypeError> {
         let value = ParameterValue::from_any(value)?;
 
         Ok(Self { name, value })

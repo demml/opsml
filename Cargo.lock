@@ -4237,7 +4237,6 @@ dependencies = [
  "chrono",
  "opsml-colors",
  "opsml-crypt",
- "opsml-error",
  "opsml-semver",
  "opsml-utils",
  "opsml-version",
@@ -4247,6 +4246,7 @@ dependencies = [
  "serde_json",
  "sysinfo",
  "tabled",
+ "thiserror 2.0.12",
  "tracing",
 ]
 
