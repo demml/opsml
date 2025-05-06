@@ -3953,13 +3953,13 @@ dependencies = [
  "aes-gcm",
  "hkdf",
  "hmac",
- "opsml-error",
  "opsml-utils",
  "pbkdf2",
  "rand 0.9.1",
  "rayon",
  "sha2",
  "tempfile",
+ "thiserror 2.0.12",
  "tracing",
 ]
 
@@ -4256,7 +4256,6 @@ version = "3.0.0-rc.1"
 dependencies = [
  "chrono",
  "colored_json",
- "opsml-error",
  "pyo3",
  "regex",
  "serde",

@@ -1,6 +1,5 @@
 use pyo3::exceptions::PyRuntimeError;
 use pyo3::PyErr;
-use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use tracing::error;
 
@@ -30,9 +29,6 @@ pub enum UtilError {
     #[error("Failed to read to file")]
     ReadError,
 
-    #[error("Failed to create regex")]
-    RegexError,
-
     #[error("Invalid space/name pattern")]
     InvalidSpaceNamePattern,
 
@@ -44,6 +40,24 @@ pub enum UtilError {
 
     #[error("File path not found")]
     FilePathNotFoundError,
+
+    #[error(transparent)]
+    PyErr(#[from] pyo3::PyErr),
+
+    #[error(transparent)]
+    RegexError(#[from] regex::Error),
+
+    #[error("Space/name pattern is too long")]
+    SpaceNamePatternTooLong,
+
+    #[error("Invalid number")]
+    InvalidNumber,
+
+    #[error("Root must be an object")]
+    RootMustBeObjectError,
+
+    #[error("Downcast error: {0}")]
+    DowncastError(String),
 }
 
 impl From<UtilError> for PyErr {
