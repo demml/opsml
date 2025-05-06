@@ -4,7 +4,7 @@ use crate::model::onnx::OnnxSession;
 use opsml_types::ModelType;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
-use std::path::PathBuf;
+use std::path::Path;
 use tempfile::tempdir;
 use tracing::debug;
 
@@ -21,7 +21,7 @@ impl LightningOnnxModelConverter {
         LightningOnnxModelConverter {}
     }
 
-    fn get_onnx_session(&self, py: Python, model_path: &PathBuf) -> Result<OnnxSession, OnnxError> {
+    fn get_onnx_session(&self, py: Python, model_path: &Path) -> Result<OnnxSession, OnnxError> {
         let onnx_version = py
             .import("onnx")?
             .getattr("__version__")?

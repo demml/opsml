@@ -167,6 +167,9 @@ pub enum ModelInterfaceError {
 
     #[error(transparent)]
     UtilError(#[from] UtilError),
+
+    #[error("Interface type not found")]
+    InterfaceTypeNotFoundError,
 }
 
 impl From<ModelInterfaceError> for PyErr {

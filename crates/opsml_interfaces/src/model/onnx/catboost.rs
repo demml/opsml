@@ -2,7 +2,7 @@ use crate::error::OnnxError;
 use crate::model::onnx::OnnxSession;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use tracing::debug;
 
 pub struct CatBoostOnnxModelConverter {}
@@ -18,7 +18,7 @@ impl CatBoostOnnxModelConverter {
         CatBoostOnnxModelConverter {}
     }
 
-    fn get_onnx_session(&self, py: Python, model_path: &PathBuf) -> Result<OnnxSession, OnnxError> {
+    fn get_onnx_session(&self, py: Python, model_path: &Path) -> Result<OnnxSession, OnnxError> {
         let onnx_version = py
             .import("onnx")?
             .getattr("__version__")?
@@ -44,7 +44,7 @@ impl CatBoostOnnxModelConverter {
 
         debug!("Step 2: Extracting ONNX schema");
 
-        let onnx_session = self.get_onnx_session(py, &path.to_path_buf());
+        let onnx_session = self.get_onnx_session(py, path);
         debug!("ONNX model conversion complete");
 
         onnx_session
