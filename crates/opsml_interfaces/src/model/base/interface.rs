@@ -9,7 +9,7 @@ use opsml_utils::FileUtils;
 use opsml_utils::PyHelperFuncs;
 use scouter_client::{CustomDriftProfile, DriftType, PsiDriftProfile, SpcDriftProfile};
 
-use crate::error::{ModelInterfaceError, OnnxError};
+use crate::error::ModelInterfaceError;
 use crate::model::base::utils;
 use opsml_types::DataType;
 use opsml_types::{
@@ -29,7 +29,7 @@ use std::path::{Path, PathBuf};
 use pyo3::gc::PyVisit;
 use pyo3::PyTraverseError;
 use serde_json::Value;
-use tracing::{debug, error, instrument, warn};
+use tracing::{debug, instrument, warn};
 
 #[pyclass]
 #[derive(Debug, Serialize, Deserialize, Clone)]
