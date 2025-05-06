@@ -4019,7 +4019,6 @@ dependencies = [
 name = "opsml-interfaces"
 version = "3.0.0-rc.1"
 dependencies = [
- "opsml-error",
  "opsml-types",
  "opsml-utils",
  "ort",
@@ -4263,6 +4262,7 @@ dependencies = [
  "serde",
  "serde_json",
  "tempfile",
+ "thiserror 2.0.12",
  "tokio",
  "tracing",
  "uuid",
