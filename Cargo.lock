@@ -3144,15 +3144,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "itertools"
-version = "0.14.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2b192c782037fadd9cfa75548310488aabdbf3d2da73885b31bd0abd03351285"
-dependencies = [
- "either",
-]
-
-[[package]]
 name = "itoa"
 version = "1.0.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5606,8 +5597,8 @@ checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
 
 [[package]]
 name = "scouter-client"
-version = "0.4.5"
-source = "git+https://github.com/demml/scouter.git?branch=main#12e53b3be5db433c49f1de44b4cd30ebe74f7bee"
+version = "0.4.6"
+source = "git+https://github.com/demml/scouter.git?tag=v0.4.6#9f05ea21051d1553dad9f56db04b0a1b99c145e7"
 dependencies = [
  "chrono",
  "ndarray",
@@ -5627,15 +5618,15 @@ dependencies = [
  "scouter-types",
  "serde",
  "serde_json",
- "serde_qs 0.15.0",
+ "serde_qs 0.8.5",
  "tokio",
  "tracing",
 ]
 
 [[package]]
 name = "scouter-contracts"
-version = "0.4.5"
-source = "git+https://github.com/demml/scouter.git?branch=main#12e53b3be5db433c49f1de44b4cd30ebe74f7bee"
+version = "0.4.6"
+source = "git+https://github.com/demml/scouter.git?tag=v0.4.6#9f05ea21051d1553dad9f56db04b0a1b99c145e7"
 dependencies = [
  "chrono",
  "pyo3",
@@ -5648,8 +5639,8 @@ dependencies = [
 
 [[package]]
 name = "scouter-dispatch"
-version = "0.4.5"
-source = "git+https://github.com/demml/scouter.git?branch=main#12e53b3be5db433c49f1de44b4cd30ebe74f7bee"
+version = "0.4.6"
+source = "git+https://github.com/demml/scouter.git?tag=v0.4.6#9f05ea21051d1553dad9f56db04b0a1b99c145e7"
 dependencies = [
  "futures",
  "pyo3",
@@ -5663,13 +5654,13 @@ dependencies = [
 
 [[package]]
 name = "scouter-drift"
-version = "0.4.5"
-source = "git+https://github.com/demml/scouter.git?branch=main#12e53b3be5db433c49f1de44b4cd30ebe74f7bee"
+version = "0.4.6"
+source = "git+https://github.com/demml/scouter.git?tag=v0.4.6#9f05ea21051d1553dad9f56db04b0a1b99c145e7"
 dependencies = [
  "chrono",
  "cron",
  "indicatif",
- "itertools 0.14.0",
+ "itertools 0.12.1",
  "ndarray",
  "ndarray-stats",
  "noisy_float",
@@ -5690,8 +5681,8 @@ dependencies = [
 
 [[package]]
 name = "scouter-error"
-version = "0.4.5"
-source = "git+https://github.com/demml/scouter.git?branch=main#12e53b3be5db433c49f1de44b4cd30ebe74f7bee"
+version = "0.4.6"
+source = "git+https://github.com/demml/scouter.git?tag=v0.4.6#9f05ea21051d1553dad9f56db04b0a1b99c145e7"
 dependencies = [
  "pyo3",
  "serde",
@@ -5701,8 +5692,8 @@ dependencies = [
 
 [[package]]
 name = "scouter-events"
-version = "0.4.5"
-source = "git+https://github.com/demml/scouter.git?branch=main#12e53b3be5db433c49f1de44b4cd30ebe74f7bee"
+version = "0.4.6"
+source = "git+https://github.com/demml/scouter.git?tag=v0.4.6#9f05ea21051d1553dad9f56db04b0a1b99c145e7"
 dependencies = [
  "async-trait",
  "chrono",
@@ -5731,10 +5722,10 @@ dependencies = [
 
 [[package]]
 name = "scouter-observability"
-version = "0.4.5"
-source = "git+https://github.com/demml/scouter.git?branch=main#12e53b3be5db433c49f1de44b4cd30ebe74f7bee"
+version = "0.4.6"
+source = "git+https://github.com/demml/scouter.git?tag=v0.4.6#9f05ea21051d1553dad9f56db04b0a1b99c145e7"
 dependencies = [
- "itertools 0.14.0",
+ "itertools 0.12.1",
  "ndarray",
  "ndarray-stats",
  "noisy_float",
@@ -5748,12 +5739,12 @@ dependencies = [
 
 [[package]]
 name = "scouter-profile"
-version = "0.4.5"
-source = "git+https://github.com/demml/scouter.git?branch=main#12e53b3be5db433c49f1de44b4cd30ebe74f7bee"
+version = "0.4.6"
+source = "git+https://github.com/demml/scouter.git?tag=v0.4.6#9f05ea21051d1553dad9f56db04b0a1b99c145e7"
 dependencies = [
  "chrono",
  "indicatif",
- "itertools 0.14.0",
+ "itertools 0.12.1",
  "ndarray",
  "ndarray-stats",
  "noisy_float",
@@ -5770,8 +5761,8 @@ dependencies = [
 
 [[package]]
 name = "scouter-settings"
-version = "0.4.5"
-source = "git+https://github.com/demml/scouter.git?branch=main#12e53b3be5db433c49f1de44b4cd30ebe74f7bee"
+version = "0.4.6"
+source = "git+https://github.com/demml/scouter.git?tag=v0.4.6#9f05ea21051d1553dad9f56db04b0a1b99c145e7"
 dependencies = [
  "base64 0.22.1",
  "pyo3",
@@ -5783,8 +5774,8 @@ dependencies = [
 
 [[package]]
 name = "scouter-types"
-version = "0.4.5"
-source = "git+https://github.com/demml/scouter.git?branch=main#12e53b3be5db433c49f1de44b4cd30ebe74f7bee"
+version = "0.4.6"
+source = "git+https://github.com/demml/scouter.git?tag=v0.4.6#9f05ea21051d1553dad9f56db04b0a1b99c145e7"
 dependencies = [
  "chrono",
  "colored_json",
