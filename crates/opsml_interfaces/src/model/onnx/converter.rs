@@ -30,23 +30,10 @@ impl OnnxModelConverter {
     }
 
     pub fn get_onnx_session(
-        ort_session: &Bound<'_, PyAny>,
+        model_proto: &Bound<'_, PyAny>,
         feature_names: Vec<String>,
     ) -> Result<OnnxSession, OnnxError> {
-        let py = ort_session.py();
-
-        let onnx_version = py
-            .import("onnx")?
-            .getattr("__version__")?
-            .extract::<String>()?;
-
-        let model_bytes = ort_session
-            .getattr("_model_bytes")
-            .map_err(OnnxError::PyOnnxConversionError)?
-            .extract::<Vec<u8>>()
-            .map_err(OnnxError::PyOnnxExtractError)?;
-
-        OnnxSession::from_bytes(onnx_version, &model_bytes, ort_session, Some(feature_names))
+        OnnxSession::from_model_proto(model_proto, Some(feature_names))
     }
 }
 

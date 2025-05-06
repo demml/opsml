@@ -23,31 +23,19 @@ pub struct OnnxModel {}
 impl OnnxModel {
     #[new]
     #[allow(clippy::too_many_arguments)]
-    #[pyo3(signature = (session=None, sample_data=None, task_type=None, drift_profile=None))]
+    #[pyo3(signature = (model=None, sample_data=None, task_type=None, drift_profile=None))]
     pub fn new<'py>(
         py: Python,
-        session: Option<&Bound<'py, PyAny>>,
+        model: Option<&Bound<'py, PyAny>>,
         sample_data: Option<&Bound<'py, PyAny>>,
         task_type: Option<TaskType>,
         drift_profile: Option<&Bound<'py, PyAny>>,
     ) -> PyResult<(Self, ModelInterface)> {
-        // check if model is an onnxruntime.InferenceSession
-        let rt = py
-            .import("onnxruntime")
-            .map_err(|e| OpsmlError::new_err(format!("Failed to import onnxruntime: {}", e)))?;
-
-        if let Some(session) = session {
-            let inference_session = rt.getattr("InferenceSession")?;
-            if session.is_instance(&inference_session).map_err(|e| {
-                OpsmlError::new_err(format!(
-                    "Failed to check if model is an InferenceSession: {}",
-                    e
-                ))
-            })? {
-                //
-            } else {
+        if let Some(model) = model {
+            let has_serialize = model.hasattr("SerializeToString")?;
+            if !has_serialize {
                 return Err(OpsmlError::new_err(
-                    "Session must be an onnxruntime.InferenceSession",
+                    "Model must be an Onnx ModelProto with SerializeToString method",
                 ));
             }
         }
@@ -59,9 +47,9 @@ impl OnnxModel {
         model_interface.model_type = ModelType::Onnx;
 
         // extract and convert to onnx_session
-        let onnx_session = if let Some(session) = session {
+        let onnx_session = if let Some(model) = model {
             let sess = OnnxModelConverter::get_onnx_session(
-                session,
+                model,
                 model_interface
                     .sample_data
                     .get_feature_names(py)

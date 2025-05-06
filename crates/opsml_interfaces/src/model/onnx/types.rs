@@ -81,14 +81,19 @@ pub struct OnnxSession {
 #[pymethods]
 impl OnnxSession {
     #[new]
-    #[pyo3(signature = (onnx_version, model, feature_names=None))]
+    #[pyo3(signature = (model_proto, feature_names=None))]
     pub fn new(
-        onnx_version: String,
-        model: &Bound<'_, PyAny>,
+        model_proto: &Bound<'_, PyAny>,
         feature_names: Option<Vec<String>>,
     ) -> Result<Self, OnnxError> {
+        let py = model_proto.py();
+        let onnx_version = py
+            .import("onnx")?
+            .getattr("__version__")?
+            .extract::<String>()?;
+
         // get model bytes for loading into rust ort
-        let model_bytes = model
+        let model_bytes = model_proto
             .call_method0("SerializeToString")
             .map_err(OnnxError::PySerializeError)?
             .extract::<Vec<u8>>()
@@ -110,9 +115,10 @@ impl OnnxSession {
         };
 
         // setup python onnxruntime
+        let session = OnnxSession::get_py_session_from_bytes(py, &model_bytes, None)?;
 
         Ok(OnnxSession {
-            session: Some(model.clone().unbind()),
+            session: Some(session),
             schema,
             quantized: false,
         })
@@ -252,42 +258,51 @@ impl OnnxSession {
         Ok(session)
     }
 
-    pub fn from_onnx_session(
-        onnx_version: String,
-        model: &Bound<'_, PyAny>,
-        feature_names: Option<Vec<String>>,
-    ) -> Result<Self, OnnxError> {
-        OnnxSession::new(onnx_version, model, feature_names)
-    }
+    /// Helper method for loading the ONNX model from a file path.
+    /// This method is used internally to load the ONNX model into the session.
+    ///
+    /// # Arguments
+    /// * `py` - Python interpreter
+    /// * `proto` - Onnx ModelProto
+    /// * `kwargs` - Additional keyword arguments for the session
+    ///
+    /// # Returns
+    /// * `PyResult<PyObject>` - The loaded ONNX session
+    ///
+    pub fn get_py_session_from_bytes(
+        py: Python,
+        bytes: &[u8],
+        kwargs: Option<&Bound<'_, PyDict>>,
+    ) -> Result<PyObject, OnnxError> {
+        let rt = py.import("onnxruntime").map_err(OnnxError::ImportError)?;
 
-    pub fn from_bytes(
-        onnx_version: String,
-        model_bytes: &[u8],
-        ort_session: &Bound<'_, PyAny>,
-        feature_names: Option<Vec<String>>,
-    ) -> Result<Self, OnnxError> {
-        // extract onnx_bytes
-        let session = Session::builder()
-            .map_err(OnnxError::SessionCreateError)?
-            .commit_from_memory(model_bytes)
-            .map_err(OnnxError::SessionCommitError)?;
+        let providers = rt
+            .call_method0("get_available_providers")
+            .map_err(OnnxError::ProviderError)?;
 
-        let (input_schema, output_schema) = parse_session_schema(&session)?;
-
-        let schema = OnnxSchema {
-            input_features: input_schema,
-            output_features: output_schema,
-            onnx_version,
-            feature_names: feature_names.unwrap_or_default(),
+        let args = (bytes,);
+        if let Some(kwargs) = kwargs {
+            kwargs.set_item("providers", providers).unwrap();
+        } else {
+            let kwargs = PyDict::new(py);
+            kwargs.set_item("providers", providers).unwrap();
         };
 
-        // setup python onnxruntime
+        let session = rt
+            .call_method("InferenceSession", args, kwargs)
+            .map_err(OnnxError::InferenceSessionError)?
+            .unbind();
 
-        Ok(OnnxSession {
-            session: Some(ort_session.clone().unbind()),
-            schema,
-            quantized: false,
-        })
+        debug!("Loaded ONNX model");
+
+        Ok(session)
+    }
+
+    pub fn from_model_proto(
+        model_proto: &Bound<'_, PyAny>,
+        feature_names: Option<Vec<String>>,
+    ) -> Result<Self, OnnxError> {
+        OnnxSession::new(model_proto, feature_names)
     }
 
     /// Loads the ONNX model from a file path.
@@ -303,10 +318,14 @@ impl OnnxSession {
     /// * `Result<Self, OnnxError>` - The loaded ONNX session
     pub fn from_file(
         py: Python,
-        onnx_version: String,
         filepath: &Path,
         feature_names: Option<Vec<String>>,
     ) -> Result<Self, OnnxError> {
+        let onnx_version = py
+            .import("onnx")?
+            .getattr("__version__")?
+            .extract::<String>()?;
+
         let session = Session::builder()
             .map_err(OnnxError::SessionCreateError)?
             .commit_from_file(filepath)

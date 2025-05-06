@@ -22,13 +22,8 @@ impl TorchOnnxConverter {
     }
 
     fn get_onnx_session(&self, py: Python, model_path: &Path) -> Result<OnnxSession, OnnxError> {
-        let onnx_version = py
-            .import("onnx")?
-            .getattr("__version__")?
-            .extract::<String>()?;
-
         // load model_path to onnx_bytes
-        OnnxSession::from_file(py, onnx_version, model_path, None)
+        OnnxSession::from_file(py, model_path, None)
     }
 
     pub fn convert_model<'py, T>(

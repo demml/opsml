@@ -21,17 +21,10 @@ impl XGBoostOnnxConverter {
 
     fn get_onnx_session(
         &self,
-        onnx_model: &Bound<'_, PyAny>,
+        model_proto: &Bound<'_, PyAny>,
         feature_names: Vec<String>,
     ) -> Result<OnnxSession, OnnxError> {
-        let py = onnx_model.py();
-
-        let onnx_version = py
-            .import("onnx")?
-            .getattr("__version__")?
-            .extract::<String>()?;
-
-        OnnxSession::from_onnx_session(onnx_version, onnx_model, Some(feature_names))
+        OnnxSession::from_model_proto(model_proto, Some(feature_names))
     }
 
     pub fn convert_model<'py, T>(
@@ -67,12 +60,12 @@ impl XGBoostOnnxConverter {
         let kwargs = kwargs.map_or(PyDict::new(py), |kwargs| kwargs.clone());
         kwargs.set_item("initial_types", initial_types).unwrap();
 
-        let onnx_model = onnxmltools
+        let model_proto = onnxmltools
             .call_method("convert_xgboost", (model,), Some(&kwargs))
             .map_err(OnnxError::PyOnnxConversionError)?;
 
         debug!("Step 3: Extracting ONNX schema");
-        let onnx_session = self.get_onnx_session(&onnx_model, sample_data.get_feature_names(py)?);
+        let onnx_session = self.get_onnx_session(&model_proto, sample_data.get_feature_names(py)?);
         debug!("ONNX model conversion complete");
 
         onnx_session

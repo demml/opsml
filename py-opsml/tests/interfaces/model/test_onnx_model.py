@@ -35,4 +35,18 @@ def test_onnx_model(tmp_path: Path):
         providers=["CPUExecutionProvider"],
     )
 
-    interface_model = OnnxModel(session=sess)
+    input_name = sess.get_inputs()[0].name
+    label_name = sess.get_outputs()[0].name
+    pred_onx = sess.run(
+        input_feed={input_name: X_test.astype(np.float32)},
+        output_names=[label_name],
+    )[0]
+
+    interface_model = OnnxModel(model=onx)
+
+    result = interface_model.session.run(
+        input_feed={input_name: X_test.astype(np.float32)},
+        output_names=[label_name],
+    )[0]
+
+    assert np.array_equal(pred_onx, result)
