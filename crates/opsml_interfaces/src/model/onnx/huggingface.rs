@@ -11,13 +11,13 @@ use tracing::debug;
 
 pub type HuggingFaceKwargs<'py> = (String, Option<Bound<'py, PyDict>>, bool, Bound<'py, PyDict>);
 
-pub struct HuggingFaceOnnxModelConverter {
+pub struct HuggingFaceOnnxConverter {
     pub model_path: PathBuf,
     pub onnx_path: PathBuf,
     pub quantize_path: PathBuf,
 }
 
-impl HuggingFaceOnnxModelConverter {
+impl HuggingFaceOnnxConverter {
     pub fn new(path: &Path) -> Self {
         let model_save_path = path.join(SaveName::Model);
 
@@ -27,7 +27,7 @@ impl HuggingFaceOnnxModelConverter {
         let quantize_save_path = PathBuf::from(SaveName::QuantizedModel);
         let full_quantize_save_path = path.join(&quantize_save_path);
 
-        HuggingFaceOnnxModelConverter {
+        HuggingFaceOnnxConverter {
             model_path: model_save_path,
             onnx_path: full_onnx_save_path,
             quantize_path: full_quantize_save_path,

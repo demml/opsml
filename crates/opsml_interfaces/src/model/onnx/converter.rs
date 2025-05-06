@@ -1,13 +1,13 @@
 use crate::error::OnnxError;
 use crate::model::base::utils::OnnxExtension;
-use crate::model::onnx::catboost::CatBoostOnnxModelConverter;
-use crate::model::onnx::huggingface::HuggingFaceOnnxModelConverter;
-use crate::model::onnx::lightgbm::LightGBMOnnxModelConverter;
-use crate::model::onnx::lightning::LightningOnnxModelConverter;
-use crate::model::onnx::sklearn::SklearnOnnxModelConverter;
-use crate::model::onnx::tensorflow::TensorFlowOnnxModelConverter;
-use crate::model::onnx::torch::TorchOnnxModelConverter;
-use crate::model::onnx::xgboost::XGBoostOnnxModelConverter;
+use crate::model::onnx::catboost::CatBoostOnnxConverter;
+use crate::model::onnx::huggingface::HuggingFaceOnnxConverter;
+use crate::model::onnx::lightgbm::LightGBMOnnxConverter;
+use crate::model::onnx::lightning::LightningOnnxConverter;
+use crate::model::onnx::sklearn::SklearnOnnxConverter;
+use crate::model::onnx::tensorflow::TensorFlowOnnxConverter;
+use crate::model::onnx::torch::TorchOnnxConverter;
+use crate::model::onnx::xgboost::XGBoostOnnxConverter;
 use crate::OnnxSession;
 use opsml_types::{ModelInterfaceType, ModelType};
 use pyo3::prelude::*;
@@ -16,37 +16,43 @@ use std::path::Path;
 
 use tracing::{debug, instrument};
 
-pub struct BaseOnnxConverter {}
+pub struct OnnxModelConverter {}
 
-impl Default for BaseOnnxConverter {
+impl Default for OnnxModelConverter {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl BaseOnnxConverter {
+impl OnnxModelConverter {
     pub fn new() -> Self {
-        BaseOnnxConverter {}
+        OnnxModelConverter {}
     }
 
     pub fn get_onnx_session(
-        onnx_model: &Bound<'_, PyAny>,
+        ort_session: &Bound<'_, PyAny>,
         feature_names: Vec<String>,
     ) -> Result<OnnxSession, OnnxError> {
-        let py = onnx_model.py();
+        let py = ort_session.py();
 
         let onnx_version = py
             .import("onnx")?
             .getattr("__version__")?
             .extract::<String>()?;
 
-        OnnxSession::from_onnx_session(onnx_version, onnx_model, Some(feature_names))
+        let model_bytes = ort_session
+            .getattr("_model_bytes")
+            .map_err(OnnxError::PyOnnxConversionError)?
+            .extract::<Vec<u8>>()
+            .map_err(OnnxError::PyOnnxExtractError)?;
+
+        OnnxSession::from_bytes(onnx_version, &model_bytes, ort_session, Some(feature_names))
     }
 }
 
-pub struct OnnxModelConverter {}
+pub struct OnnxConverter {}
 
-impl OnnxModelConverter {
+impl OnnxConverter {
     #[instrument(skip_all, name = "convert_model_to_onnx")]
     pub fn convert_model<'py, T>(
         py: Python,
@@ -68,48 +74,48 @@ impl OnnxModelConverter {
         match interface_type {
             ModelInterfaceType::Sklearn => {
                 debug!("Converting Sklearn model to ONNX");
-                let converter = SklearnOnnxModelConverter::default();
+                let converter = SklearnOnnxConverter::default();
                 converter.convert_model(py, model, model_type, sample_data, kwargs)
             }
             ModelInterfaceType::LightGBM => {
                 debug!("Converting LightGBM model to ONNX");
-                let converter = LightGBMOnnxModelConverter::default();
+                let converter = LightGBMOnnxConverter::default();
                 converter.convert_model(py, model, model_type, sample_data, kwargs)
             }
             ModelInterfaceType::XGBoost => {
                 debug!("Converting XGBoost model to ONNX");
-                let converter = XGBoostOnnxModelConverter::default();
+                let converter = XGBoostOnnxConverter::default();
                 converter.convert_model(py, model, model_type, sample_data, kwargs)
             }
             ModelInterfaceType::Torch => {
                 debug!("Converting Torch model to ONNX");
-                let converter = TorchOnnxModelConverter::default();
+                let converter = TorchOnnxConverter::default();
                 converter.convert_model(py, model, sample_data, kwargs)
             }
             ModelInterfaceType::Lightning => {
                 debug!("Converting Lightning model to ONNX");
-                let converter = LightningOnnxModelConverter::default();
+                let converter = LightningOnnxConverter::default();
                 converter.convert_model(py, model, sample_data, kwargs)
             }
             ModelInterfaceType::HuggingFace => {
                 debug!("Converting HuggingFace model to ONNX");
-                let converter = HuggingFaceOnnxModelConverter::new(path);
+                let converter = HuggingFaceOnnxConverter::new(path);
                 converter.convert_model(py, kwargs)
             }
             ModelInterfaceType::CatBoost => {
                 debug!("Converting CatBoost model to ONNX");
-                let converter = CatBoostOnnxModelConverter::default();
+                let converter = CatBoostOnnxConverter::default();
                 converter.convert_model(py, model, path, kwargs)
             }
             ModelInterfaceType::TensorFlow => {
                 debug!("Converting TensorFlow model to ONNX");
-                let converter = TensorFlowOnnxModelConverter::default();
+                let converter = TensorFlowOnnxConverter::default();
                 converter.convert_model(py, model, kwargs)
             }
 
             ModelInterfaceType::Onnx => {
                 debug!("Extracting Onnx model schema");
-                BaseOnnxConverter::get_onnx_session(model, sample_data.get_feature_names(py)?)
+                OnnxModelConverter::get_onnx_session(model, sample_data.get_feature_names(py)?)
             }
             _ => Err(OnnxError::ModelTypeError),
         }

@@ -45,6 +45,9 @@ pub enum OnnxError {
     #[error("Failed to convert model to ONNX - {0}")]
     PyOnnxConversionError(pyo3::PyErr),
 
+    #[error("Failed to extract model bytes - {0}")]
+    PyOnnxExtractError(pyo3::PyErr),
+
     #[error(transparent)]
     PyError(#[from] pyo3::PyErr),
 

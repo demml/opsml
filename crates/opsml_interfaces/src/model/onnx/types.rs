@@ -185,6 +185,18 @@ impl OnnxSession {
         Ok(())
     }
 
+    pub fn model_bytes(&self, py: Python) -> PyResult<Vec<u8>> {
+        let sess = self
+            .session
+            .as_ref()
+            .ok_or_else(|| OnnxError::SessionNotFound)?;
+
+        sess.bind(py)
+            .getattr("_model_bytes")
+            .map_err(|e| OnnxError::Error(e.to_string()))?
+            .extract()
+    }
+
     pub fn __str__(&self) -> String {
         PyHelperFuncs::__str__(self)
     }
@@ -246,6 +258,36 @@ impl OnnxSession {
         feature_names: Option<Vec<String>>,
     ) -> Result<Self, OnnxError> {
         OnnxSession::new(onnx_version, model, feature_names)
+    }
+
+    pub fn from_bytes(
+        onnx_version: String,
+        model_bytes: &[u8],
+        ort_session: &Bound<'_, PyAny>,
+        feature_names: Option<Vec<String>>,
+    ) -> Result<Self, OnnxError> {
+        // extract onnx_bytes
+        let session = Session::builder()
+            .map_err(OnnxError::SessionCreateError)?
+            .commit_from_memory(model_bytes)
+            .map_err(OnnxError::SessionCommitError)?;
+
+        let (input_schema, output_schema) = parse_session_schema(&session)?;
+
+        let schema = OnnxSchema {
+            input_features: input_schema,
+            output_features: output_schema,
+            onnx_version,
+            feature_names: feature_names.unwrap_or_default(),
+        };
+
+        // setup python onnxruntime
+
+        Ok(OnnxSession {
+            session: Some(ort_session.clone().unbind()),
+            schema,
+            quantized: false,
+        })
     }
 
     /// Loads the ONNX model from a file path.

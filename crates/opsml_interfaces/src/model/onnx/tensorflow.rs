@@ -4,17 +4,17 @@ use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use tracing::debug;
 
-pub struct TensorFlowOnnxModelConverter {}
+pub struct TensorFlowOnnxConverter {}
 
-impl Default for TensorFlowOnnxModelConverter {
+impl Default for TensorFlowOnnxConverter {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl TensorFlowOnnxModelConverter {
+impl TensorFlowOnnxConverter {
     pub fn new() -> Self {
-        TensorFlowOnnxModelConverter {}
+        TensorFlowOnnxConverter {}
     }
 
     fn get_onnx_session(&self, onnx_model: &Bound<'_, PyAny>) -> Result<OnnxSession, OnnxError> {

@@ -13,20 +13,20 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 use tracing::{debug, error, instrument};
 
-use crate::BaseOnnxConverter;
+use crate::OnnxModelConverter;
 
 #[pyclass(extends=ModelInterface, subclass)]
 #[derive(Debug)]
-pub struct OnnxModel;
+pub struct OnnxModel {}
 
 #[pymethods]
 impl OnnxModel {
     #[new]
     #[allow(clippy::too_many_arguments)]
-    #[pyo3(signature = (model=None, sample_data=None, task_type=None, drift_profile=None))]
+    #[pyo3(signature = (session=None, sample_data=None, task_type=None, drift_profile=None))]
     pub fn new<'py>(
         py: Python,
-        model: Option<&Bound<'py, PyAny>>,
+        session: Option<&Bound<'py, PyAny>>,
         sample_data: Option<&Bound<'py, PyAny>>,
         task_type: Option<TaskType>,
         drift_profile: Option<&Bound<'py, PyAny>>,
@@ -36,9 +36,9 @@ impl OnnxModel {
             .import("onnxruntime")
             .map_err(|e| OpsmlError::new_err(format!("Failed to import onnxruntime: {}", e)))?;
 
-        if let Some(model) = model {
+        if let Some(session) = session {
             let inference_session = rt.getattr("InferenceSession")?;
-            if model.is_instance(&inference_session).map_err(|e| {
+            if session.is_instance(&inference_session).map_err(|e| {
                 OpsmlError::new_err(format!(
                     "Failed to check if model is an InferenceSession: {}",
                     e
@@ -47,23 +47,21 @@ impl OnnxModel {
                 //
             } else {
                 return Err(OpsmlError::new_err(
-                    "Model must be an onnxruntime.InferenceSession",
+                    "Session must be an onnxruntime.InferenceSession",
                 ));
             }
         }
 
         let mut model_interface =
-            ModelInterface::new(py, model, sample_data, task_type, drift_profile)?;
-        model_interface.interface_type = ModelInterfaceType::Onnx;
+            ModelInterface::new(py, None, sample_data, task_type, drift_profile)?;
 
-        if model_interface.model_type == ModelType::Unknown {
-            model_interface.model_type = ModelType::SklearnEstimator;
-        }
+        model_interface.interface_type = ModelInterfaceType::Onnx;
+        model_interface.model_type = ModelType::Onnx;
 
         // extract and convert to onnx_session
-        let onnx_session = if let Some(model) = model {
-            let sess = BaseOnnxConverter::get_onnx_session(
-                model,
+        let onnx_session = if let Some(session) = session {
+            let sess = OnnxModelConverter::get_onnx_session(
+                session,
                 model_interface
                     .sample_data
                     .get_feature_names(py)
@@ -85,6 +83,20 @@ impl OnnxModel {
         model_interface.onnx_session = onnx_session;
 
         Ok((OnnxModel {}, model_interface))
+    }
+
+    /// Get the ONNX session from the parent class
+    #[getter]
+    pub fn get_session<'py>(
+        self_: PyRef<'py, Self>,
+        py: Python<'py>,
+    ) -> PyResult<Bound<'py, OnnxSession>> {
+        let parent = self_.as_super();
+        if let Some(session) = &parent.onnx_session {
+            Ok(session.bind(py).clone())
+        } else {
+            Err(OpsmlError::new_err("ONNX session not found"))
+        }
     }
 
     /// Save the interface model

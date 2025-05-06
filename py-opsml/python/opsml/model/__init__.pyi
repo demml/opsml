@@ -1189,7 +1189,7 @@ class TensorFlowModel(ModelInterface):
 class OnnxModel(ModelInterface):
     def __init__(
         self,
-        model: Optional[Any] = None,
+        session: Optional[Any] = None,
         sample_data: Optional[Any] = None,
         task_type: Optional[TaskType] = None,
         drift_profile: Optional[DriftProfileType] = None,
@@ -1197,8 +1197,8 @@ class OnnxModel(ModelInterface):
         """Interface for saving an OnnxModel
 
         Args:
-            model:
-                Model to associate with interface. This model must be an ONNX `InferenceSession`
+            session:
+                Onnxruntime session to associate with the interface. This model must be an ONNX `InferenceSession`
             sample_data:
                 Sample data to use to make predictions
             task_type:
