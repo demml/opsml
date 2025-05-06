@@ -40,6 +40,7 @@ from .model import ModelInterfaceSaveMetadata as ModelInterfaceSaveMetadata
 from .model import ModelLoadKwargs as ModelLoadKwargs
 from .model import ModelSaveKwargs as ModelSaveKwargs
 from .model import ModelType as ModelType
+from .model import OnnxModel as OnnxModel
 from .model import OnnxSession as OnnxSession
 from .model import SklearnModel as SklearnModel
 from .model import TaskType as TaskType

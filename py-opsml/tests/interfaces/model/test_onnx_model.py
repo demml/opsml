@@ -53,6 +53,14 @@ def test_onnx_model(tmp_path: Path):
     save_path.mkdir()
 
     metadata = interface.save(save_path, False, None)
+    interface.session.session = None
     assert metadata.save_metadata.save_kwargs is None
+    assert interface.session.session is None
 
     interface.load(save_path, metadata.save_metadata)
+    assert interface.session.session is not None
+
+    interface.session.run(
+        input_feed={input_name: X_test.astype(np.float32)},
+        output_names=[label_name],
+    )[0]

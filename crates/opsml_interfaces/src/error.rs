@@ -173,6 +173,9 @@ pub enum ModelInterfaceError {
 
     #[error("Interface type not found")]
     InterfaceTypeNotFoundError,
+
+    #[error("Model must be an Onnx ModelProto with SerializeToString method")]
+    OnnxModelTypeError,
 }
 
 impl From<ModelInterfaceError> for PyErr {
