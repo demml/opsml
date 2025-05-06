@@ -5,7 +5,7 @@ use crate::error::{ModelInterfaceError, OnnxError};
 use crate::model::torch::TorchSampleData;
 use crate::model::ModelInterface;
 use crate::types::{FeatureSchema, ProcessorType};
-use crate::OnnxModelConverter;
+use crate::OnnxConverter;
 use crate::OnnxSession;
 use crate::{DataProcessor, ModelLoadKwargs, ModelSaveKwargs};
 use opsml_types::{
@@ -481,7 +481,7 @@ impl LightningModel {
             return Err(ModelInterfaceError::NoModelError);
         };
 
-        let session = OnnxModelConverter::convert_model(
+        let session = OnnxConverter::convert_model(
             py,
             &model, // need to get model from trainer
             &self.sample_data,

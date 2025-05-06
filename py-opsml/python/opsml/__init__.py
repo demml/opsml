@@ -37,6 +37,7 @@ TorchModel = model.TorchModel
 LightningModel = model.LightningModel
 HuggingFaceModel = model.HuggingFaceModel
 CatBoostModel = model.CatBoostModel
+OnnxModel = model.OnnxModel
 OnnxSession = model.OnnxSession
 TensorFlowModel = model.TensorFlowModel
 ModelLoadKwargs = model.ModelLoadKwargs

@@ -8,17 +8,17 @@ use std::path::Path;
 use tempfile::tempdir;
 use tracing::debug;
 
-pub struct LightningOnnxModelConverter {}
+pub struct LightningOnnxConverter {}
 
-impl Default for LightningOnnxModelConverter {
+impl Default for LightningOnnxConverter {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl LightningOnnxModelConverter {
+impl LightningOnnxConverter {
     pub fn new() -> Self {
-        LightningOnnxModelConverter {}
+        LightningOnnxConverter {}
     }
 
     fn get_onnx_session(&self, py: Python, model_path: &Path) -> Result<OnnxSession, OnnxError> {

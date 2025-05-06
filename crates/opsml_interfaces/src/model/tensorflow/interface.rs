@@ -6,7 +6,7 @@ use crate::model::tensorflow::TensorFlowSampleData;
 use crate::model::ModelInterface;
 use crate::types::{FeatureSchema, ProcessorType};
 use crate::ModelInterfaceMetadata;
-use crate::OnnxModelConverter;
+use crate::OnnxConverter;
 use crate::OnnxSession;
 use crate::{DataProcessor, ModelLoadKwargs, ModelSaveKwargs};
 use opsml_types::{CommonKwargs, SaveName, Suffix};
@@ -457,7 +457,7 @@ impl TensorFlowModel {
         path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> Result<(), ModelInterfaceError> {
-        let session = OnnxModelConverter::convert_model(
+        let session = OnnxConverter::convert_model(
             py,
             self.model.as_ref().unwrap().bind(py),
             &self.sample_data,

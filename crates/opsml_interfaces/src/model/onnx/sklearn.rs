@@ -7,17 +7,17 @@ use pyo3::types::PyDict;
 use pyo3::types::PyList;
 use tracing::debug;
 
-pub struct SklearnOnnxModelConverter {}
+pub struct SklearnOnnxConverter {}
 
-impl Default for SklearnOnnxModelConverter {
+impl Default for SklearnOnnxConverter {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl SklearnOnnxModelConverter {
+impl SklearnOnnxConverter {
     pub fn new() -> Self {
-        SklearnOnnxModelConverter {}
+        SklearnOnnxConverter {}
     }
 
     fn is_stacking_model_type(&self, model_type: &ModelType) -> bool {

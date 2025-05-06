@@ -6,17 +6,17 @@ use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use tracing::debug;
 
-pub struct XGBoostOnnxModelConverter {}
+pub struct XGBoostOnnxConverter {}
 
-impl Default for XGBoostOnnxModelConverter {
+impl Default for XGBoostOnnxConverter {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl XGBoostOnnxModelConverter {
+impl XGBoostOnnxConverter {
     pub fn new() -> Self {
-        XGBoostOnnxModelConverter {}
+        XGBoostOnnxConverter {}
     }
 
     fn get_onnx_session(

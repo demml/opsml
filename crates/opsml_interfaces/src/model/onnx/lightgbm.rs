@@ -5,17 +5,17 @@ use opsml_types::ModelType;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use tracing::debug;
-pub struct LightGBMOnnxModelConverter {}
+pub struct LightGBMOnnxConverter {}
 
-impl Default for LightGBMOnnxModelConverter {
+impl Default for LightGBMOnnxConverter {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl LightGBMOnnxModelConverter {
+impl LightGBMOnnxConverter {
     pub fn new() -> Self {
-        LightGBMOnnxModelConverter {}
+        LightGBMOnnxConverter {}
     }
 
     fn get_onnx_session(

@@ -5,17 +5,17 @@ use pyo3::types::PyDict;
 use std::path::Path;
 use tracing::debug;
 
-pub struct CatBoostOnnxModelConverter {}
+pub struct CatBoostOnnxConverter {}
 
-impl Default for CatBoostOnnxModelConverter {
+impl Default for CatBoostOnnxConverter {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl CatBoostOnnxModelConverter {
+impl CatBoostOnnxConverter {
     pub fn new() -> Self {
-        CatBoostOnnxModelConverter {}
+        CatBoostOnnxConverter {}
     }
 
     fn get_onnx_session(&self, py: Python, model_path: &Path) -> Result<OnnxSession, OnnxError> {

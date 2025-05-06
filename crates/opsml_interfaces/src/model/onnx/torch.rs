@@ -8,17 +8,17 @@ use std::path::Path;
 use tempfile::tempdir;
 use tracing::debug;
 
-pub struct TorchOnnxModelConverter {}
+pub struct TorchOnnxConverter {}
 
-impl Default for TorchOnnxModelConverter {
+impl Default for TorchOnnxConverter {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl TorchOnnxModelConverter {
+impl TorchOnnxConverter {
     pub fn new() -> Self {
-        TorchOnnxModelConverter {}
+        TorchOnnxConverter {}
     }
 
     fn get_onnx_session(&self, py: Python, model_path: &Path) -> Result<OnnxSession, OnnxError> {

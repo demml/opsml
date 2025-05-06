@@ -1,7 +1,7 @@
 use crate::base::{parse_save_kwargs, ExtraMetadata, ModelLoadKwargs, ModelSaveKwargs};
 use crate::data::generate_feature_schema;
 use crate::data::DataInterface;
-use crate::model::onnx::OnnxModelConverter;
+use crate::model::onnx::OnnxConverter;
 use crate::model::SampleData;
 use crate::types::{FeatureSchema, ProcessorType};
 use crate::OnnxSession;
@@ -626,7 +626,7 @@ impl ModelInterface {
             return Ok(());
         }
 
-        let session = OnnxModelConverter::convert_model(
+        let session = OnnxConverter::convert_model(
             py,
             self.model.as_ref().unwrap().bind(py),
             &self.sample_data,
