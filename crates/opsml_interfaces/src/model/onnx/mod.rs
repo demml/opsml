@@ -14,6 +14,7 @@ pub mod xgboost;
 pub use catboost::*;
 pub use converter::*;
 pub use huggingface::*;
+pub use interface::*;
 pub use lightgbm::*;
 pub use lightning::*;
 pub use sklearn::*;
