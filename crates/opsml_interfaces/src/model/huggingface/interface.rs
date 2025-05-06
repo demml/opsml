@@ -671,7 +671,7 @@ impl HuggingFaceModel {
     pub fn from_metadata<'py>(
         py: Python<'py>,
         metadata: &ModelInterfaceMetadata,
-    ) -> PyResult<Bound<'py, PyAny>> {
+    ) -> Result<Bound<'py, PyAny>, ModelInterfaceError> {
         let base_args: HFBaseArgs =
             serde_json::from_value(metadata.model_specific_metadata.clone())
                 .map_err(ModelInterfaceError::DeserializeMetadataError)?;
@@ -703,7 +703,9 @@ impl HuggingFaceModel {
         interface.model_type = metadata.model_type.clone();
         interface.interface_type = metadata.interface_type.clone();
 
-        Py::new(py, (huggingface_interface, interface))?.into_bound_py_any(py)
+        let interface = Py::new(py, (huggingface_interface, interface))?.into_bound_py_any(py)?;
+
+        Ok(interface)
     }
 
     /// Load the preprocessor from a file
