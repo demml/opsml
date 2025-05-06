@@ -1205,6 +1205,27 @@ class OnnxModel(ModelInterface):
                 The type of task the model performs
             drift_profile:
                 Drift profile to use. Can be a list of SpcDriftProfile, PsiDriftProfile or CustomDriftProfile
+
+        Example:
+            ```python
+            from sklearn.datasets import load_iris  # type: ignore
+            from sklearn.model_selection import train_test_split  # type: ignore
+            from sklearn.ensemble import RandomForestClassifier  # type: ignore
+            from skl2onnx import to_onnx  # type: ignore
+            import onnxruntime as rt  # type: ignore
+
+            iris = load_iris()
+
+            X, y = iris.data, iris.target
+            X = X.astype(np.float32)
+            X_train, X_test, y_train, y_test = train_test_split(X, y)
+            clr = RandomForestClassifier()
+            clr.fit(X_train, y_train)
+
+            onx = to_onnx(clr, X[:1])
+
+            interface = OnnxModel(model=onx, sample_data=X_train)
+            ```
         """
 
     @property
