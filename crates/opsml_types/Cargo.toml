@@ -12,7 +12,6 @@ doctest = false
 chrono = { workspace = true }
 opsml-colors = { workspace = true }
 opsml-crypt = { workspace = true }
-opsml-error = { workspace = true }
 opsml-semver = { workspace = true }
 opsml-utils = { workspace = true }
 opsml-version = { workspace = true }
@@ -22,5 +21,6 @@ serde = { workspace = true }
 serde_json = { workspace = true }
 sysinfo = { workspace = true }
 tabled = { workspace = true, features = ["ansi"] }
+thiserror = { workspace = true }
 tracing = { workspace = true }
 
