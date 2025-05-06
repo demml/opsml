@@ -1150,7 +1150,6 @@ class TensorFlowModel(ModelInterface):
         preprocessor: Optional[Any] = None,
         sample_data: Optional[Any] = None,
         task_type: Optional[TaskType] = None,
-        schema: Optional[FeatureSchema] = None,
         drift_profile: Optional[DriftProfileType] = None,
     ) -> None:
         """Interface for saving PyTorch models
@@ -1186,3 +1185,24 @@ class TensorFlowModel(ModelInterface):
     @property
     def preprocessor_name(self) -> Optional[str]:
         """Returns the preprocessor name"""
+
+class OnnxModel(ModelInterface):
+    def __init__(
+        self,
+        model: Optional[Any] = None,
+        sample_data: Optional[Any] = None,
+        task_type: Optional[TaskType] = None,
+        drift_profile: Optional[DriftProfileType] = None,
+    ) -> None:
+        """Interface for saving an OnnxModel
+
+        Args:
+            model:
+                Model to associate with interface. This model must be an ONNX `InferenceSession`
+            sample_data:
+                Sample data to use to make predictions
+            task_type:
+                The type of task the model performs
+            drift_profile:
+                Drift profile to use. Can be a list of SpcDriftProfile, PsiDriftProfile or CustomDriftProfile
+        """
