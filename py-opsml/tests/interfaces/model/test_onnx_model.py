@@ -1,8 +1,5 @@
-from typing import Tuple
-import warnings
 from pathlib import Path
-from opsml.model import OnnxModel, OnnxSession, ModelInterfaceMetadata
-from opsml.data import NumpyData
+from opsml.model import OnnxModel
 
 import numpy as np
 from sklearn.datasets import load_iris  # type: ignore
@@ -42,11 +39,20 @@ def test_onnx_model(tmp_path: Path):
         output_names=[label_name],
     )[0]
 
-    interface_model = OnnxModel(model=onx)
+    interface = OnnxModel(model=onx, sample_data=X_train)
+    interface.create_drift_profile(X_train)
 
-    result = interface_model.session.run(
+    result = interface.session.run(
         input_feed={input_name: X_test.astype(np.float32)},
         output_names=[label_name],
     )[0]
 
     assert np.array_equal(pred_onx, result)
+
+    save_path = tmp_path / "test"
+    save_path.mkdir()
+
+    metadata = interface.save(save_path, False, None)
+    assert metadata.save_metadata.save_kwargs is None
+
+    interface.load(save_path, metadata.save_metadata)
