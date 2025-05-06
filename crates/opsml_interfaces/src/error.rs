@@ -9,16 +9,16 @@ pub enum OnnxError {
     #[error("{0}")]
     Error(String),
 
-    #[error("Failed to create onnx session - {0}")]
+    #[error("Failed to create onnx session: {0}")]
     SessionCreateError(ort::Error),
 
-    #[error("Failed to commit onnx session - {0}")]
+    #[error("Failed to commit onnx session: {0}")]
     SessionCommitError(ort::Error),
 
-    #[error("Failed to serialize py error - {0}")]
+    #[error("Failed to serialize py error: {0}")]
     PySerializeError(pyo3::PyErr),
 
-    #[error("Failed to extract model bytes - {0}")]
+    #[error("Failed to extract model bytes: {0}")]
     PyModelBytesExtractError(pyo3::PyErr),
 
     #[error("Session must be an instance of InferenceSession")]
@@ -27,25 +27,25 @@ pub enum OnnxError {
     #[error("Session is not set. Please load an onnx model first")]
     SessionNotFound,
 
-    #[error("Session error - {0}")]
+    #[error("Session error: {0}")]
     SessionRunError(pyo3::PyErr),
 
-    #[error("InferenceSession error - {0}")]
+    #[error("InferenceSession error: {0}")]
     InferenceSessionError(pyo3::PyErr),
 
-    #[error("Import error - {0}")]
+    #[error("Import error: {0}")]
     ImportError(pyo3::PyErr),
 
-    #[error("Provider error - {0}")]
+    #[error("Provider error: {0}")]
     ProviderError(pyo3::PyErr),
 
     #[error("Cannot save ONNX model without sample data")]
     MissingSampleData,
 
-    #[error("Failed to convert model to ONNX - {0}")]
+    #[error("Failed to convert model to ONNX: {0}")]
     PyOnnxConversionError(pyo3::PyErr),
 
-    #[error("Failed to extract model bytes - {0}")]
+    #[error("Failed to extract model bytes: {0}")]
     PyOnnxExtractError(pyo3::PyErr),
 
     #[error(transparent)]
@@ -63,10 +63,10 @@ pub enum OnnxError {
     #[error("No onnx kwargs found. Onnx kwargs are required for HuggingFace models")]
     MissingOnnxKwargs,
 
-    #[error("No ort type found. Ort type is required for HuggingFace models - {0}")]
+    #[error("No ort type found. Ort type is required for HuggingFace models: {0}")]
     MissingOrtType(pyo3::PyErr),
 
-    #[error("Failed to get quantize args - {0}")]
+    #[error("Failed to get quantize args: {0}")]
     QuantizeArgError(pyo3::PyErr),
 
     #[error("{0}")]
@@ -122,7 +122,7 @@ pub enum ModelInterfaceError {
     #[error("Drift profile URI not found in metadata")]
     MissingDriftProfileUriError,
 
-    #[error("Failed to deserialize model specific metadata - {0}")]
+    #[error("Failed to deserialize model specific metadata: {0}")]
     DeserializeMetadataError(#[from] serde_json::Error),
 
     #[error("Model must be an CatBoost model or inherit from CatBoost")]

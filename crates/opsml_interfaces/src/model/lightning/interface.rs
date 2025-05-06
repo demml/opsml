@@ -696,7 +696,8 @@ impl LightningModel {
             return Err(ModelInterfaceError::OnnxSessionMissing);
         }
 
-        let sess = OnnxSession::get_py_session_from_path(py, path, kwargs)?;
+        let onnx_bytes = std::fs::read(&path)?;
+        let sess = OnnxSession::get_py_session_from_bytes(py, &onnx_bytes, kwargs)?;
 
         self.onnx_session
             .as_ref()

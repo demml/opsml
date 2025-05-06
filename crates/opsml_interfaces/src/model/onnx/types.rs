@@ -17,7 +17,7 @@ use serde::{
 };
 use std::fmt;
 use std::path::Path;
-use tracing::debug;
+use tracing::{debug, instrument};
 
 /// Extracts input and output schema from the ort ONNX session.
 fn parse_session_schema(
@@ -185,12 +185,14 @@ impl OnnxSession {
         path: PathBuf,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> Result<(), OnnxError> {
-        let session = OnnxSession::get_py_session_from_path(py, &path, kwargs)?;
+        let onnx_bytes = std::fs::read(&path)?;
+        let session = OnnxSession::get_py_session_from_bytes(py, &onnx_bytes, kwargs)?;
         self.session = Some(session);
 
         Ok(())
     }
 
+    #[instrument(skip_all)]
     pub fn model_bytes(&self, py: Python) -> PyResult<Vec<u8>> {
         let sess = self
             .session
@@ -218,46 +220,6 @@ impl OnnxSession {
 }
 
 impl OnnxSession {
-    /// Helper method for loading the ONNX model from a file path.
-    /// This method is used internally to load the ONNX model into the session.
-    ///
-    /// # Arguments
-    /// * `py` - Python interpreter
-    /// * `path` - Path to the ONNX model file
-    /// * `kwargs` - Additional keyword arguments for the session
-    ///
-    /// # Returns
-    /// * `PyResult<PyObject>` - The loaded ONNX session
-    ///
-    pub fn get_py_session_from_path(
-        py: Python,
-        path: &Path,
-        kwargs: Option<&Bound<'_, PyDict>>,
-    ) -> Result<PyObject, OnnxError> {
-        let rt = py.import("onnxruntime").map_err(OnnxError::ImportError)?;
-
-        let providers = rt
-            .call_method0("get_available_providers")
-            .map_err(OnnxError::ProviderError)?;
-
-        let args = (path,);
-        if let Some(kwargs) = kwargs {
-            kwargs.set_item("providers", providers).unwrap();
-        } else {
-            let kwargs = PyDict::new(py);
-            kwargs.set_item("providers", providers).unwrap();
-        };
-
-        let session = rt
-            .call_method("InferenceSession", args, kwargs)
-            .map_err(OnnxError::InferenceSessionError)?
-            .unbind();
-
-        debug!("Loaded ONNX model");
-
-        Ok(session)
-    }
-
     /// Helper method for loading the ONNX model from a file path.
     /// This method is used internally to load the ONNX model into the session.
     ///
@@ -340,7 +302,10 @@ impl OnnxSession {
             feature_names: feature_names.unwrap_or_default(),
         };
 
-        let session = Self::get_py_session_from_path(py, filepath, None)?;
+        // read onnx file to Vec<u8>
+        let onnx_bytes = std::fs::read(filepath)?;
+
+        let session = Self::get_py_session_from_bytes(py, &onnx_bytes, None)?;
 
         // setup python onnxruntime
 

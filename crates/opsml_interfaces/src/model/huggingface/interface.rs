@@ -1054,7 +1054,8 @@ impl HuggingFaceModel {
             .next()
             .ok_or_else(|| OnnxError::NoOnnxFile)?;
 
-        let sess = OnnxSession::get_py_session_from_path(py, &file_path, kwargs)?;
+        let onnx_bytes = std::fs::read(&file_path)?;
+        let sess = OnnxSession::get_py_session_from_bytes(py, &onnx_bytes, kwargs)?;
 
         self.onnx_session
             .as_ref()
