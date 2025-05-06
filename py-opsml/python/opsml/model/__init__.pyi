@@ -409,17 +409,17 @@ class OnnxSession:
 
     def run(
         self,
-        input_data: Dict[str, Any],
+        input_feed: Dict[str, Any],
         output_names: Optional[list[str]] = None,
         run_options: Optional[Dict[str, Any]] = None,
     ) -> Any:
         """Run the onnx session
 
         Args:
+            input_feed:
+                Dictionary of input data
             output_names:
                 List of output names
-            input_data:
-                Dictionary of input data
             run_options:
                 Optional run options
 
@@ -1189,7 +1189,7 @@ class TensorFlowModel(ModelInterface):
 class OnnxModel(ModelInterface):
     def __init__(
         self,
-        session: Optional[Any] = None,
+        model: Optional[Any] = None,
         sample_data: Optional[Any] = None,
         task_type: Optional[TaskType] = None,
         drift_profile: Optional[DriftProfileType] = None,
@@ -1197,8 +1197,8 @@ class OnnxModel(ModelInterface):
         """Interface for saving an OnnxModel
 
         Args:
-            session:
-                Onnxruntime session to associate with the interface. This model must be an ONNX `InferenceSession`
+            model:
+                Onnx model to associate with the interface. This model must be an Onnx ModelProto
             sample_data:
                 Sample data to use to make predictions
             task_type:
@@ -1206,3 +1206,7 @@ class OnnxModel(ModelInterface):
             drift_profile:
                 Drift profile to use. Can be a list of SpcDriftProfile, PsiDriftProfile or CustomDriftProfile
         """
+
+    @property
+    def session(self) -> OnnxSession:
+        """Returns the onnx session. This will error if the OnnxSession is not set"""

@@ -17,15 +17,8 @@ impl TensorFlowOnnxConverter {
         TensorFlowOnnxConverter {}
     }
 
-    fn get_onnx_session(&self, onnx_model: &Bound<'_, PyAny>) -> Result<OnnxSession, OnnxError> {
-        let py = onnx_model.py();
-
-        let onnx_version = py
-            .import("onnx")?
-            .getattr("__version__")?
-            .extract::<String>()?;
-
-        OnnxSession::from_onnx_session(onnx_version, onnx_model, None)
+    fn get_onnx_session(&self, model_proto: &Bound<'_, PyAny>) -> Result<OnnxSession, OnnxError> {
+        OnnxSession::from_model_proto(model_proto, None)
     }
 
     pub fn convert_model<'py>(
@@ -45,10 +38,10 @@ impl TensorFlowOnnxConverter {
             .call_method("from_keras", (model,), kwargs)
             .map_err(OnnxError::PyOnnxConversionError)?;
 
-        let onnx_model = onnx_tuple.get_item(0)?;
+        let model_proto = onnx_tuple.get_item(0)?;
 
         debug!("Step 3: Extracting ONNX schema");
-        let onnx_session = self.get_onnx_session(&onnx_model);
+        let onnx_session = self.get_onnx_session(&model_proto);
         debug!("ONNX model conversion complete");
 
         onnx_session

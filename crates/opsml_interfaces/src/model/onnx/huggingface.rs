@@ -35,11 +35,6 @@ impl HuggingFaceOnnxConverter {
     }
 
     fn get_onnx_session(&self, py: Python) -> Result<OnnxSession, OnnxError> {
-        let onnx_version = py
-            .import("onnx")?
-            .getattr("__version__")?
-            .extract::<String>()?;
-
         //get path to file ending with .onnx
         let onnx_file = fs::read_dir(&self.onnx_path)?
             .filter_map(|entry| {
@@ -56,7 +51,7 @@ impl HuggingFaceOnnxConverter {
             .ok_or_else(|| OnnxError::NoOnnxFile)?;
 
         // load model_path to onnx_bytes
-        OnnxSession::from_file(py, onnx_version, &onnx_file, None)
+        OnnxSession::from_file(py, &onnx_file, None)
     }
 
     pub fn parse_kwargs<'py>(

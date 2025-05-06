@@ -19,12 +19,7 @@ impl CatBoostOnnxConverter {
     }
 
     fn get_onnx_session(&self, py: Python, model_path: &Path) -> Result<OnnxSession, OnnxError> {
-        let onnx_version = py
-            .import("onnx")?
-            .getattr("__version__")?
-            .extract::<String>()?;
-
-        OnnxSession::from_file(py, onnx_version, model_path, None)
+        OnnxSession::from_file(py, model_path, None)
     }
 
     pub fn convert_model<'py>(
