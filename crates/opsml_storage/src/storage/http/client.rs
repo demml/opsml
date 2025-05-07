@@ -1,8 +1,8 @@
 use crate::storage::base::get_files;
 use crate::storage::base::PathExt;
+use crate::storage::error::StorageError;
 use crate::storage::http::base::HttpStorageClient;
 use opsml_client::OpsmlApiClient;
-use opsml_error::error::StorageError;
 use opsml_types::contracts::FileInfo;
 use opsml_types::StorageType;
 use opsml_utils::FileUtils;
@@ -24,9 +24,7 @@ impl HttpFSStorageClient {
 
     pub fn new(api_client: Arc<OpsmlApiClient>) -> Result<Self, StorageError> {
         Ok(HttpFSStorageClient {
-            client: HttpStorageClient::new(api_client).map_err(|e| {
-                StorageError::Error(format!("Failed to create http storage client {}", e))
-            })?,
+            client: HttpStorageClient::new(api_client).map_err(|e| e)?,
         })
     }
 
@@ -58,9 +56,7 @@ impl HttpFSStorageClient {
                 Ok::<(), StorageError>(())
             })?;
         } else {
-            let file = objects
-                .first()
-                .ok_or(StorageError::Error("No files found".to_string()))?;
+            let file = objects.first().ok_or(StorageError::NoFilesFoundError)?;
             self.client
                 .get_object(lpath.to_str().unwrap(), rpath.to_str().unwrap(), file.size)?;
         }
@@ -90,9 +86,7 @@ impl HttpFSStorageClient {
 
         if recursive {
             if !lpath.is_dir() {
-                return Err(StorageError::Error(
-                    "Local path must be a directory for recursive put".to_string(),
-                ));
+                return Err(StorageError::PathMustBeDirectoryError);
             }
 
             let files: Vec<PathBuf> = get_files(lpath)?;

@@ -21,6 +21,9 @@ pub enum ApiClientError {
     #[error("Forbidden: {0}")]
     ForbiddenError(String),
 
+    #[error("Permission denied: {0}")]
+    PermissionDeniedError(String),
+
     #[error(transparent)]
     SerdeQsError(#[from] serde_qs::Error),
 
