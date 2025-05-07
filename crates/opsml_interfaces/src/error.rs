@@ -95,6 +95,9 @@ pub enum DataInterfaceError {
     #[error("Data must be a pandas dataframe")]
     PandasTypeError,
 
+    #[error("Data must be a polars.DataFrame")]
+    PolarsTypeError,
+
     #[error("No data detected in interface for saving")]
     MissingDataError,
 
