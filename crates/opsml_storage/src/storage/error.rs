@@ -7,6 +7,24 @@ use thiserror::Error;
 use tracing::error;
 
 #[derive(Error, Debug)]
+pub enum AzureError {
+    #[error(transparent)]
+    CoreError(#[from] azure_core::error::Error),
+
+    #[error(transparent)]
+    IoError(#[from] std::io::Error),
+
+    #[error(transparent)]
+    ReqwestError(#[from] reqwest::Error),
+
+    #[error(transparent)]
+    VarError(#[from] std::env::VarError),
+
+    #[error("Invalid parts type for Azure storage")]
+    InvalidPartsTypeError,
+}
+
+#[derive(Error, Debug)]
 pub enum AwsError {
     #[error("No eTag is response")]
     MissingEtagError,
@@ -20,6 +38,13 @@ pub enum AwsError {
     #[error(transparent)]
     PresignError(#[from] aws_sdk_s3::presigning::PresigningConfigError),
 
+    #[error(transparent)]
+    CreateMultipartUploadError(
+        #[from]
+        aws_sdk_s3::error::SdkError<
+            aws_sdk_s3::operation::create_multipart_upload::CreateMultipartUploadError,
+        >,
+    ),
     #[error(transparent)]
     UploadPartError(
         #[from] aws_sdk_s3::error::SdkError<aws_sdk_s3::operation::upload_part::UploadPartError>,
@@ -60,7 +85,7 @@ pub enum AwsError {
     #[error(transparent)]
     DeleteObjectError(
         #[from]
-        aws_sdk_s3::error::SdkError<aws_sdk_s3::operation::delete_objects::DeleteObjectError>,
+        aws_sdk_s3::error::SdkError<aws_sdk_s3::operation::delete_object::DeleteObjectError>,
     ),
 
     #[error(transparent)]
@@ -86,6 +111,9 @@ pub enum AwsError {
 
     #[error("Invalid parts type for AWS storage")]
     InvalidPartsTypeError,
+
+    #[error(transparent)]
+    ApiClientError(#[from] ApiClientError),
 }
 
 #[derive(Error, Debug)]
@@ -110,10 +138,22 @@ pub enum GoogleError {
 
     #[error("Failed to upload chunks")]
     UploadChunksError,
+
+    #[error("Upload failed with status: {0}")]
+    UploadError(StatusCode),
+
+    #[error(transparent)]
+    ReqwestError(#[from] reqwest::Error),
+
+    #[error(transparent)]
+    ApiClientError(#[from] ApiClientError),
 }
 
 #[derive(Error, Debug)]
 pub enum StorageError {
+    #[error(transparent)]
+    AzureError(#[from] AzureError),
+
     #[error(transparent)]
     AwsError(#[from] AwsError),
 

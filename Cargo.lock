@@ -4173,6 +4173,7 @@ dependencies = [
  "async-trait",
  "aws-config",
  "aws-sdk-s3",
+ "azure_core",
  "azure_identity",
  "azure_storage",
  "azure_storage_blobs",

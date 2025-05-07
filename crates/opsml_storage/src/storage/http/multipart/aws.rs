@@ -1,4 +1,4 @@
-use crate::storage::error::{AwsError, StorageError};
+use crate::storage::error::AwsError;
 use bytes::Bytes;
 use opsml_client::OpsmlApiClient;
 use opsml_types::contracts::{
@@ -25,7 +25,7 @@ impl S3MultipartUpload {
         rpath: &Path,
         upload_id: String,
         client: Arc<OpsmlApiClient>,
-    ) -> Result<Self, StorageError> {
+    ) -> Result<Self, AwsError> {
         let file = File::open(lpath)?;
 
         let file_reader = BufReader::new(file);
@@ -40,7 +40,7 @@ impl S3MultipartUpload {
         })
     }
 
-    pub fn upload_part(&mut self, part_number: i32, chunk: Bytes) -> Result<(), StorageError> {
+    pub fn upload_part(&mut self, part_number: i32, chunk: Bytes) -> Result<(), AwsError> {
         // First get presigned URL for this part from server
         let presigned_url = self.get_upload_url(part_number)?;
 
@@ -59,11 +59,11 @@ impl S3MultipartUpload {
                 Err(AwsError::MissingEtagError.into())
             }
         } else {
-            Err(StorageError::UploadError(response.status()))
+            Err(AwsError::UploadError(response.status()))
         }
     }
 
-    fn get_upload_url(&self, part_number: i32) -> Result<String, StorageError> {
+    fn get_upload_url(&self, part_number: i32) -> Result<String, AwsError> {
         Ok(self.client.generate_presigned_url_for_part(
             &self.rpath,
             &self.upload_id,
@@ -71,7 +71,7 @@ impl S3MultipartUpload {
         )?)
     }
 
-    pub fn upload_file_in_chunks(&mut self, chunk_size: usize) -> Result<(), StorageError> {
+    pub fn upload_file_in_chunks(&mut self, chunk_size: usize) -> Result<(), AwsError> {
         let mut buffer = vec![0; chunk_size];
         let mut part_number = 1;
 
@@ -93,7 +93,7 @@ impl S3MultipartUpload {
         Ok(())
     }
 
-    fn complete_upload(&self) -> Result<UploadResponse, StorageError> {
+    fn complete_upload(&self) -> Result<UploadResponse, AwsError> {
         let completed_parts = CompletedUploadParts {
             parts: self.completed_parts.clone(),
         };
