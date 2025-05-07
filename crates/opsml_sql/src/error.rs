@@ -1,4 +1,6 @@
+use opsml_semver::error::VersionError;
 use opsml_types::error::TypeError;
+use opsml_utils::error::UtilError;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -14,4 +16,22 @@ pub enum SqlError {
 
     #[error(transparent)]
     TypeError(#[from] TypeError),
+
+    #[error(transparent)]
+    SemverError(#[from] VersionError),
+
+    #[error(transparent)]
+    UtilError(#[from] UtilError),
+
+    #[error(transparent)]
+    IoError(#[from] std::io::Error),
+
+    #[error("Invalid table name")]
+    InvalidTableName,
+
+    #[error("Invalid card type")]
+    InvalidCardType,
+
+    #[error(transparent)]
+    SerdeError(#[from] serde_json::Error),
 }
