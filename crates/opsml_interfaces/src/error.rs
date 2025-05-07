@@ -98,6 +98,12 @@ pub enum DataInterfaceError {
     #[error("Data must be a polars.DataFrame")]
     PolarsTypeError,
 
+    #[error("Data must be a Torch tensor")]
+    TorchTypeError,
+
+    #[error("Torch dataset requires kwargs with torch_dataset")]
+    MissingTorchKwargsError,
+
     #[error("No data detected in interface for saving")]
     MissingDataError,
 
