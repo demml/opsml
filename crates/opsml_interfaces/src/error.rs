@@ -121,6 +121,12 @@ pub enum DataInterfaceError {
 
     #[error("Invalid data type")]
     InvalidDataType,
+
+    #[error("Data must be a pyarrow array")]
+    ArrowTypeError,
+
+    #[error("Data type not supported for profiling")]
+    DataTypeNotSupportedForProfilingError,
 }
 
 impl From<DataInterfaceError> for PyErr {
