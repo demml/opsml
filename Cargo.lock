@@ -3925,7 +3925,6 @@ dependencies = [
  "futures",
  "mockito",
  "opsml-crypt",
- "opsml-error",
  "opsml-semver",
  "opsml-settings",
  "opsml-types",
@@ -3935,6 +3934,7 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_qs 0.15.0",
+ "thiserror 2.0.12",
  "tokio",
  "tracing",
 ]

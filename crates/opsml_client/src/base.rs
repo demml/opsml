@@ -1,4 +1,4 @@
-use opsml_error::error::ApiError;
+use crate::error::ApiClientError;
 use opsml_settings::config::{ApiSettings, OpsmlStorageSettings};
 use opsml_types::{
     api::{JwtToken, RequestType, Routes},
@@ -15,25 +15,23 @@ use tracing::{debug, error, instrument};
 const TIMEOUT_SECS: u64 = 30;
 
 /// Create a new HTTP client that can be shared across different clients
-pub fn build_http_client(settings: &ApiSettings) -> Result<Client, ApiError> {
+pub fn build_http_client(settings: &ApiSettings) -> Result<Client, ApiClientError> {
     let mut headers = HeaderMap::new();
 
     headers.insert(
         "X-Prod-Token",
         HeaderValue::from_str(settings.prod_token.as_deref().unwrap_or(""))
-            .map_err(|e| ApiError::Error(format!("Failed to create header with error: {}", e)))?,
+            .map_err(ApiClientError::CreateHeaderError)?,
     );
 
     headers.insert(
         "Username",
-        HeaderValue::from_str(&settings.username)
-            .map_err(|e| ApiError::Error(format!("Failed to create header with error: {}", e)))?,
+        HeaderValue::from_str(&settings.username).map_err(ApiClientError::CreateHeaderError)?,
     );
 
     headers.insert(
         "Password",
-        HeaderValue::from_str(&settings.password)
-            .map_err(|e| ApiError::Error(format!("Failed to create header with error: {}", e)))?,
+        HeaderValue::from_str(&settings.password).map_err(ApiClientError::CreateHeaderError)?,
     );
 
     headers.insert(
@@ -45,7 +43,7 @@ pub fn build_http_client(settings: &ApiSettings) -> Result<Client, ApiError> {
     let client = client_builder
         .default_headers(headers)
         .build()
-        .map_err(|e| ApiError::Error(format!("Failed to create client with error: {}", e)))?;
+        .map_err(|e| ApiClientError::CreateClientError(e.to_string()))?;
 
     Ok(client)
 }
@@ -69,7 +67,7 @@ pub struct OpsmlApiClient {
 }
 
 impl OpsmlApiClient {
-    pub fn new(url: String, client: &Client) -> Result<Self, ApiError> {
+    pub fn new(url: String, client: &Client) -> Result<Self, ApiClientError> {
         // setup headers
         let api_client = Self {
             client: client.clone(),
@@ -79,37 +77,37 @@ impl OpsmlApiClient {
 
         api_client.refresh_token().map_err(|e| {
             error!("Failed to get JWT token: {}", e);
-            ApiError::Error(format!("Failed to get JWT token with error: {}", e))
+            e
         })?;
 
         Ok(api_client)
     }
 
     #[instrument(skip_all)]
-    fn refresh_token(&self) -> Result<(), ApiError> {
+    fn refresh_token(&self) -> Result<(), ApiClientError> {
         let url = format!("{}/{}", self.base_path, Routes::AuthLogin.as_str());
         debug!("Getting JWT token from {}", url);
 
-        let response =
-            self.client.get(url).send().map_err(|e| {
-                ApiError::Error(format!("Failed to send request with error: {}", e))
-            })?;
+        let response = self
+            .client
+            .get(url)
+            .send()
+            .map_err(ApiClientError::RequestError)?;
 
         // check if unauthorized
         if response.status().is_client_error() {
-            error!("Failed to get JWT token: Unauthorized");
-            return Err(ApiError::Error("Unauthorized".to_string()));
+            return Err(ApiClientError::Unauthorized);
         }
 
         let token = response
             .json::<JwtToken>()
-            .map_err(|e| ApiError::Error(format!("Failed to parse jwt token with error: {}", e)))?;
+            .map_err(ApiClientError::RequestError)?;
 
         if let Ok(mut token_guard) = self.auth_token.write() {
             *token_guard = token.token;
         } else {
             error!("Failed to acquire write lock for token update");
-            return Err(ApiError::Error("Failed to update auth token".to_string()));
+            return Err(ApiClientError::UpdateAuthError);
         }
 
         Ok(())
@@ -150,7 +148,7 @@ impl OpsmlApiClient {
         body_params: Option<Value>,
         query_string: Option<String>,
         headers: Option<HeaderMap>,
-    ) -> Result<Response, ApiError> {
+    ) -> Result<Response, ApiClientError> {
         let headers = headers.unwrap_or_default();
 
         let url = format!("{}/{}", self.base_path, route.as_str());
@@ -167,9 +165,7 @@ impl OpsmlApiClient {
                     .headers(headers)
                     .bearer_auth(self.get_current_token())
                     .send()
-                    .map_err(|e| {
-                        ApiError::Error(format!("Failed to send request with error: {}", e))
-                    })?
+                    .map_err(ApiClientError::RequestError)?
             }
             RequestType::Post => self
                 .client
@@ -178,9 +174,7 @@ impl OpsmlApiClient {
                 .json(&body_params)
                 .bearer_auth(self.get_current_token())
                 .send()
-                .map_err(|e| {
-                    ApiError::Error(format!("Failed to send request with error: {}", e))
-                })?,
+                .map_err(ApiClientError::RequestError)?,
             RequestType::Put => self
                 .client
                 .put(url)
@@ -188,9 +182,7 @@ impl OpsmlApiClient {
                 .json(&body_params)
                 .bearer_auth(self.get_current_token())
                 .send()
-                .map_err(|e| {
-                    ApiError::Error(format!("Failed to send request with error: {}", e))
-                })?,
+                .map_err(ApiClientError::RequestError)?,
             RequestType::Delete => {
                 let url = if let Some(query_string) = query_string {
                     format!("{}?{}", url, query_string)
@@ -202,9 +194,7 @@ impl OpsmlApiClient {
                     .headers(headers)
                     .bearer_auth(self.get_current_token())
                     .send()
-                    .map_err(|e| {
-                        ApiError::Error(format!("Failed to send request with error: {}", e))
-                    })?
+                    .map_err(ApiClientError::RequestError)?
             }
         };
 
@@ -218,7 +208,7 @@ impl OpsmlApiClient {
         body_params: Option<Value>,
         query_params: Option<String>,
         headers: Option<HeaderMap>,
-    ) -> Result<Response, ApiError> {
+    ) -> Result<Response, ApiClientError> {
         let response = self._request(
             route.clone(),
             request_type,
@@ -234,14 +224,14 @@ impl OpsmlApiClient {
     }
 
     // specific method for multipart uploads (mainly used for localstorageclient)
-    pub fn multipart_upload(&self, form: Form) -> Result<Response, ApiError> {
+    pub fn multipart_upload(&self, form: Form) -> Result<Response, ApiClientError> {
         let response = self
             .client
             .post(format!("{}/files/multipart", self.base_path))
             .multipart(form)
             .bearer_auth(self.get_current_token())
             .send()
-            .map_err(|e| ApiError::Error(format!("Failed to send request with error: {}", e)))?;
+            .map_err(ApiClientError::RequestError)?;
         Ok(response)
     }
 
@@ -251,19 +241,14 @@ impl OpsmlApiClient {
         path: &str,
         session_url: &str,
         part_number: i32,
-    ) -> Result<String, ApiError> {
+    ) -> Result<String, ApiClientError> {
         let args = PresignedQuery {
             path: path.to_string(),
             session_url: Some(session_url.to_string()),
             part_number: Some(part_number),
             for_multi_part: Some(true),
         };
-        let query_string = serde_qs::to_string(&args).map_err(|e| {
-            ApiError::Error(format!(
-                "Failed to serialize query string with error: {}",
-                e
-            ))
-        })?;
+        let query_string = serde_qs::to_string(&args)?;
 
         let response = self
             .request(
@@ -273,12 +258,13 @@ impl OpsmlApiClient {
                 Some(query_string),
                 None,
             )
-            .map_err(|e| ApiError::Error(format!("Failed to generate presigned url: {}", e)))?;
+            .map_err(|e| {
+                error!("Failed to get presigned url with error: {}", e.to_string());
+                e
+            })?;
 
         // move response into PresignedUrl
-        let response = response.json::<PresignedUrl>().map_err(|e| {
-            ApiError::Error(format!("Failed to parse presigned url with error: {}", e))
-        })?;
+        let response = response.json::<PresignedUrl>()?;
 
         Ok(response.url)
     }
@@ -287,12 +273,13 @@ impl OpsmlApiClient {
     pub fn complete_multipart_upload(
         &self,
         complete_request: CompleteMultipartUpload,
-    ) -> Result<Response, ApiError> {
+    ) -> Result<Response, ApiClientError> {
         let body = serde_json::to_value(complete_request).map_err(|e| {
-            ApiError::Error(format!(
+            error!(
                 "Failed to serialize completed upload parts with error: {}",
                 e
-            ))
+            );
+            e
         })?;
 
         let url = format!("{}/{}", self.base_path, Routes::CompleteMultipart);
@@ -302,12 +289,12 @@ impl OpsmlApiClient {
             .json(&body)
             .bearer_auth(self.get_current_token())
             .send()
-            .map_err(|e| ApiError::Error(format!("Failed to send request with error: {}", e)))?;
+            .map_err(ApiClientError::RequestError)?;
         Ok(response)
     }
 }
 
-pub fn build_api_client(settings: &OpsmlStorageSettings) -> Result<OpsmlApiClient, ApiError> {
+pub fn build_api_client(settings: &OpsmlStorageSettings) -> Result<OpsmlApiClient, ApiClientError> {
     let client = build_http_client(&settings.api_settings)?;
 
     let url = format!(

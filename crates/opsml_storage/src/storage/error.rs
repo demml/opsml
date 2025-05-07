@@ -1,3 +1,4 @@
+use opsml_settings::error::SettingsError;
 use opsml_state::error::StateError;
 use opsml_utils::error::UtilError;
 use thiserror::Error;
@@ -10,4 +11,10 @@ pub enum StorageError {
 
     #[error(transparent)]
     StateError(#[from] StateError),
+
+    #[error(transparent)]
+    SettingsError(#[from] SettingsError),
+
+    #[error("Failed to get relative path: {0}")]
+    GetRelativePathError(#[source] std::path::StripPrefixError),
 }
