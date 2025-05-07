@@ -72,11 +72,7 @@ impl SklearnOnnxConverter {
     ) -> Result<(), OnnxError> {
         let model_steps = model.getattr("steps")?;
 
-        for model_step in model_steps
-            .downcast::<PyList>()
-            .map_err(|e| OnnxError::DowncastError(e.to_string()))?
-            .iter()
-        {
+        for model_step in model_steps.downcast::<PyList>()?.iter() {
             let mut estimator_type = ModelType::from_pyobject(&model_step.get_item(1)?);
 
             debug!(
@@ -105,12 +101,7 @@ impl SklearnOnnxConverter {
         let final_estimator = model.getattr("final_estimator")?;
         let mut estimators_list = Vec::new();
 
-        estimators_list.extend(
-            estimators
-                .downcast::<PyList>()
-                .map_err(|e| OnnxError::DowncastError(e.to_string()))?
-                .iter(),
-        );
+        estimators_list.extend(estimators.downcast::<PyList>()?.iter());
         estimators_list.push(final_estimator);
 
         for estimator in estimators_list {

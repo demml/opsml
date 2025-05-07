@@ -1,6 +1,5 @@
 use crate::error::DataInterfaceError;
 use crate::types::{Feature, FeatureSchema};
-use opsml_utils::error::UtilError;
 use pyo3::prelude::*;
 use pyo3::types::PyList;
 
@@ -19,8 +18,7 @@ impl ArrowSchemaValidator {
         // get types, downcast to list, iterate and call str() on each element
         let schema_types = schema
             .getattr("types")?
-            .downcast::<PyList>()
-            .map_err(|e| UtilError::DowncastError(e.to_string()))
+            .downcast::<PyList>()?
             .iter()
             .map(|x| Ok(x.str()?.to_string()))
             .collect::<Result<Vec<String>, PyErr>>()?;

@@ -1,9 +1,9 @@
 use crate::data::{DataInterface, TorchData};
+use crate::error::{OnnxError, SampleDataError};
 use crate::model::{
     base::{get_class_full_name, load_from_joblib, save_to_joblib, OnnxExtension},
     InterfaceDataType,
 };
-use opsml_error::OpsmlError;
 use opsml_types::{DataType, ModelType};
 use pyo3::types::{PyDict, PyList, PyListMethods, PyTuple, PyTupleMethods};
 use pyo3::IntoPyObjectExt;
@@ -45,7 +45,7 @@ impl TorchSampleData {
     ///
     /// # Returns
     ///
-    pub fn new(data: &Bound<'_, PyAny>) -> PyResult<Self> {
+    pub fn new(data: &Bound<'_, PyAny>) -> Result<Self, SampleDataError> {
         let py = data.py();
 
         if data.is_instance_of::<DataInterface>() {
@@ -81,7 +81,7 @@ impl TorchSampleData {
         Ok(TorchSampleData::None)
     }
 
-    fn handle_pylist(data: &Bound<'_, PyAny>) -> PyResult<Self> {
+    fn handle_pylist(data: &Bound<'_, PyAny>) -> Result<Self, SampleDataError> {
         let py = data.py();
         let py_list = data.downcast::<PyList>()?;
         let torch_tensor = py.import("torch")?.getattr("Tensor")?;
@@ -94,7 +94,7 @@ impl TorchSampleData {
             let is_tensor = sliced_item.is_instance(&torch_tensor)?;
 
             if !is_tensor {
-                Err(OpsmlError::new_err("Data must be of type torch tensor"))?;
+                Err(SampleDataError::TorchDataTypeError)?;
             }
 
             py_list.set_item(idx, sliced_item)?;
@@ -103,7 +103,7 @@ impl TorchSampleData {
         Ok(TorchSampleData::List(py_list.clone().unbind()))
     }
 
-    fn handle_pytuple(data: &Bound<'_, PyAny>) -> PyResult<Self> {
+    fn handle_pytuple(data: &Bound<'_, PyAny>) -> Result<Self, SampleDataError> {
         let py = data.py();
         let torch_tensor = py.import("torch")?.getattr("Tensor")?;
 
@@ -117,7 +117,7 @@ impl TorchSampleData {
             let is_tensor = sliced_item.is_instance(&torch_tensor)?;
 
             if !is_tensor {
-                Err(OpsmlError::new_err("Data must be of type torch tensor"))?;
+                Err(SampleDataError::TorchDataTypeError)?;
             }
 
             py_list.set_item(idx, sliced_item)?;
@@ -128,7 +128,7 @@ impl TorchSampleData {
         Ok(TorchSampleData::Tuple(tuple))
     }
 
-    fn handle_pydict(data: &Bound<'_, PyAny>) -> PyResult<Self> {
+    fn handle_pydict(data: &Bound<'_, PyAny>) -> Result<Self, SampleDataError> {
         let py = data.py();
         let py_dict = data.downcast::<PyDict>()?;
         let torch_tensor = py.import("torch")?.getattr("Tensor")?;
@@ -140,7 +140,7 @@ impl TorchSampleData {
             let is_tensor = sliced_item.is_instance(&torch_tensor)?;
 
             if !is_tensor {
-                Err(OpsmlError::new_err("Data must be of type torch tensor"))?;
+                Err(SampleDataError::TorchDataTypeError)?;
             }
 
             py_dict.set_item(k, sliced_item)?;
@@ -149,13 +149,13 @@ impl TorchSampleData {
         Ok(TorchSampleData::Dict(py_dict.clone().unbind()))
     }
 
-    fn handle_dataset(data: &Bound<'_, PyAny>) -> PyResult<Self> {
+    fn handle_dataset(data: &Bound<'_, PyAny>) -> Result<Self, SampleDataError> {
         let samples = data.call_method1("__getitem__", (0,))?;
 
         Ok(TorchSampleData::DataSet(samples.unbind()))
     }
 
-    fn slice_and_return<F>(data: &Bound<'_, PyAny>, constructor: F) -> PyResult<Self>
+    fn slice_and_return<F>(data: &Bound<'_, PyAny>, constructor: F) -> Result<Self, SampleDataError>
     where
         F: FnOnce(PyObject) -> TorchSampleData,
     {
@@ -166,7 +166,7 @@ impl TorchSampleData {
         Ok(constructor(data.clone().unbind()))
     }
 
-    fn get_interface_for_sample(data: &Bound<'_, PyAny>) -> PyResult<Option<Self>> {
+    fn get_interface_for_sample(data: &Bound<'_, PyAny>) -> Result<Option<Self>, SampleDataError> {
         let py = data.py();
         let class = data.getattr("__class__")?;
         let full_class_name = get_class_full_name(&class)?;
@@ -178,12 +178,12 @@ impl TorchSampleData {
         Ok(None)
     }
 
-    fn handle_data_interface(data: &Bound<'_, PyAny>) -> PyResult<Self> {
+    fn handle_data_interface(data: &Bound<'_, PyAny>) -> Result<Self, SampleDataError> {
         let data_type = data.getattr("data_type")?.extract::<DataType>()?;
 
         match data_type {
             DataType::TorchTensor => Self::slice_and_return(data, TorchSampleData::Torch),
-            _ => Err(OpsmlError::new_err("Data type not supported")),
+            _ => Err(SampleDataError::DataTypeError),
         }
     }
 
@@ -191,7 +191,7 @@ impl TorchSampleData {
         py: Python,
         interface_type: &InterfaceDataType,
         data: &Bound<'_, PyAny>,
-    ) -> PyResult<Self> {
+    ) -> Result<Self, SampleDataError> {
         let slice = PySlice::new(py, 0, 1, 1);
         let sliced_data = data.get_item(slice)?;
 
@@ -203,7 +203,7 @@ impl TorchSampleData {
                 Ok(TorchSampleData::Torch(bound))
             }
 
-            _ => Err(OpsmlError::new_err("Data type not supported")),
+            _ => Err(SampleDataError::DataTypeError),
         }
     }
 
@@ -212,7 +212,7 @@ impl TorchSampleData {
         py: Python,
         path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
-    ) -> PyResult<Option<PathBuf>> {
+    ) -> Result<Option<PathBuf>, SampleDataError> {
         match self {
             TorchSampleData::Torch(data) => {
                 let bound = data.bind(py);
@@ -259,10 +259,10 @@ impl TorchSampleData {
         path: &Path,
         data_type: &DataType,
         kwargs: Option<&Bound<'py, PyDict>>,
-    ) -> PyResult<TorchSampleData> {
+    ) -> Result<TorchSampleData, SampleDataError> {
         match data_type {
             DataType::TorchTensor => {
-                TorchData::from_path(py, path, kwargs).map(TorchSampleData::Torch)
+                Ok(TorchData::from_path(py, path, kwargs).map(TorchSampleData::Torch)?)
             }
 
             DataType::List => {
@@ -290,7 +290,7 @@ impl TorchSampleData {
                 Ok(TorchSampleData::DataSet(data.clone().unbind()))
             }
 
-            _ => Err(OpsmlError::new_err("Data type not supported")),
+            _ => Err(SampleDataError::DataTypeError),
         }
     }
 
@@ -305,7 +305,7 @@ impl TorchSampleData {
         }
     }
 
-    pub fn get_data(&self, py: Python) -> PyResult<PyObject> {
+    pub fn get_data(&self, py: Python) -> Result<PyObject, SampleDataError> {
         match self {
             TorchSampleData::Torch(data) => Ok(data.into_py_any(py).unwrap()),
             TorchSampleData::List(data) => Ok(data.into_py_any(py).unwrap()),
@@ -322,7 +322,7 @@ impl OnnxExtension for TorchSampleData {
         &self,
         py: Python<'py>,
         _model_type: &ModelType,
-    ) -> PyResult<Bound<'py, PyAny>> {
+    ) -> Result<Bound<'py, PyAny>, OnnxError> {
         match self {
             TorchSampleData::Torch(data) => Ok(data.bind(py).getattr("data")?),
             TorchSampleData::List(data) => Ok({

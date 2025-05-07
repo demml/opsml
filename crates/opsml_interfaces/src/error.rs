@@ -5,79 +5,31 @@ use thiserror::Error;
 use tracing::error;
 
 #[derive(Error, Debug)]
-pub enum OnnxError {
-    #[error("{0}")]
-    Error(String),
+pub enum TypeError {
+    #[error("Key {0} not found in FeatureMap")]
+    MissingKeyError(String),
 
-    #[error("Failed to create onnx session: {0}")]
-    SessionCreateError(ort::Error),
+    #[error("Only one of query or filename can be provided")]
+    OnlyOneQueryorFilenameError,
 
-    #[error("Failed to commit onnx session: {0}")]
-    SessionCommitError(ort::Error),
-
-    #[error("Failed to serialize py error: {0}")]
-    PySerializeError(pyo3::PyErr),
-
-    #[error("Failed to extract model bytes: {0}")]
-    PyModelBytesExtractError(pyo3::PyErr),
-
-    #[error("Session must be an instance of InferenceSession")]
-    MustBeInferenceSession,
-
-    #[error("Session is not set. Please load an onnx model first")]
-    SessionNotFound,
-
-    #[error("Session error: {0}")]
-    SessionRunError(pyo3::PyErr),
-
-    #[error("InferenceSession error: {0}")]
-    InferenceSessionError(pyo3::PyErr),
-
-    #[error("Import error: {0}")]
-    ImportError(pyo3::PyErr),
-
-    #[error("Provider error: {0}")]
-    ProviderError(pyo3::PyErr),
-
-    #[error("Cannot save ONNX model without sample data")]
-    MissingSampleData,
-
-    #[error("Failed to convert model to ONNX: {0}")]
-    PyOnnxConversionError(pyo3::PyErr),
-
-    #[error("Failed to extract model bytes: {0}")]
-    PyOnnxExtractError(pyo3::PyErr),
+    #[error("Key not found")]
+    KeyNotFound,
 
     #[error(transparent)]
-    PyError(#[from] pyo3::PyErr),
-
-    #[error("Failed to downcast: {0}")]
-    DowncastError(String),
+    UtilError(#[from] UtilError),
 
     #[error(transparent)]
     IoError(#[from] std::io::Error),
 
-    #[error("No onnx file found")]
-    NoOnnxFile,
+    #[error("Invalid data type")]
+    InvalidDataType,
 
-    #[error("No onnx kwargs found. Onnx kwargs are required for HuggingFace models")]
-    MissingOnnxKwargs,
-
-    #[error("No ort type found. Ort type is required for HuggingFace models: {0}")]
-    MissingOrtType(pyo3::PyErr),
-
-    #[error("Failed to get quantize args: {0}")]
-    QuantizeArgError(pyo3::PyErr),
-
-    #[error("{0}")]
-    LoadModelError(pyo3::PyErr),
-
-    #[error("Model type not supported for onnx conversion")]
-    ModelTypeError,
+    #[error("Invalid onnx type")]
+    InvalidOnnxType,
 }
 
-impl From<OnnxError> for PyErr {
-    fn from(err: OnnxError) -> PyErr {
+impl From<TypeError> for PyErr {
+    fn from(err: TypeError) -> PyErr {
         let msg = err.to_string();
         error!("{}", msg);
         PyRuntimeError::new_err(msg)
@@ -145,10 +97,145 @@ pub enum DataInterfaceError {
 
     #[error("Failed to save scouter profile: {0}")]
     ScouterError(String),
+
+    #[error("Failed to downcast Python object: {0}")]
+    DowncastError(String),
+}
+
+impl<'a> From<pyo3::DowncastError<'a, 'a>> for DataInterfaceError {
+    fn from(err: pyo3::DowncastError) -> Self {
+        DataInterfaceError::DowncastError(err.to_string())
+    }
 }
 
 impl From<DataInterfaceError> for PyErr {
     fn from(err: DataInterfaceError) -> PyErr {
+        let msg = err.to_string();
+        error!("{}", msg);
+        PyRuntimeError::new_err(msg)
+    }
+}
+
+#[derive(Error, Debug)]
+pub enum SampleDataError {
+    #[error(transparent)]
+    PyError(#[from] pyo3::PyErr),
+
+    #[error(transparent)]
+    DataInterfaceError(#[from] DataInterfaceError),
+
+    #[error("Invalid data type")]
+    InvalidDataType,
+
+    #[error("Failed to downcast Python object: {0}")]
+    DowncastError(String),
+
+    #[error("Data must be of type tensorflow tensor or ndarray")]
+    TensorFlowDataTypeError,
+
+    #[error("Data must be of type torch tensor")]
+    TorchDataTypeError,
+
+    #[error("Data type not supported")]
+    DataTypeError,
+}
+
+impl<'a> From<pyo3::DowncastError<'a, 'a>> for SampleDataError {
+    fn from(err: pyo3::DowncastError) -> Self {
+        SampleDataError::DowncastError(err.to_string())
+    }
+}
+
+impl From<SampleDataError> for PyErr {
+    fn from(err: SampleDataError) -> PyErr {
+        let msg = err.to_string();
+        error!("{}", msg);
+        PyRuntimeError::new_err(msg)
+    }
+}
+
+#[derive(Error, Debug)]
+pub enum OnnxError {
+    #[error("{0}")]
+    Error(String),
+
+    #[error("Failed to create onnx session: {0}")]
+    SessionCreateError(ort::Error),
+
+    #[error("Failed to commit onnx session: {0}")]
+    SessionCommitError(ort::Error),
+
+    #[error("Failed to serialize py error: {0}")]
+    PySerializeError(pyo3::PyErr),
+
+    #[error("Failed to extract model bytes: {0}")]
+    PyModelBytesExtractError(pyo3::PyErr),
+
+    #[error("Session must be an instance of InferenceSession")]
+    MustBeInferenceSession,
+
+    #[error("Session is not set. Please load an onnx model first")]
+    SessionNotFound,
+
+    #[error("Session error: {0}")]
+    SessionRunError(pyo3::PyErr),
+
+    #[error("InferenceSession error: {0}")]
+    InferenceSessionError(pyo3::PyErr),
+
+    #[error("Import error: {0}")]
+    ImportError(pyo3::PyErr),
+
+    #[error("Provider error: {0}")]
+    ProviderError(pyo3::PyErr),
+
+    #[error("Cannot save ONNX model without sample data")]
+    MissingSampleData,
+
+    #[error("Failed to convert model to ONNX: {0}")]
+    PyOnnxConversionError(pyo3::PyErr),
+
+    #[error("Failed to extract model bytes: {0}")]
+    PyOnnxExtractError(pyo3::PyErr),
+
+    #[error(transparent)]
+    PyError(#[from] pyo3::PyErr),
+
+    #[error(transparent)]
+    IoError(#[from] std::io::Error),
+
+    #[error(transparent)]
+    SampleDataError(#[from] SampleDataError),
+
+    #[error("No onnx file found")]
+    NoOnnxFile,
+
+    #[error("No onnx kwargs found. Onnx kwargs are required for HuggingFace models")]
+    MissingOnnxKwargs,
+
+    #[error("No ort type found. Ort type is required for HuggingFace models: {0}")]
+    MissingOrtType(pyo3::PyErr),
+
+    #[error("Failed to get quantize args: {0}")]
+    QuantizeArgError(pyo3::PyErr),
+
+    #[error("{0}")]
+    LoadModelError(pyo3::PyErr),
+
+    #[error("Model type not supported for onnx conversion")]
+    ModelTypeError,
+
+    #[error("Failed to downcast Python object: {0}")]
+    DowncastError(String),
+}
+
+impl<'a> From<pyo3::DowncastError<'a, 'a>> for OnnxError {
+    fn from(err: pyo3::DowncastError) -> Self {
+        OnnxError::DowncastError(err.to_string())
+    }
+}
+impl From<OnnxError> for PyErr {
+    fn from(err: OnnxError) -> PyErr {
         let msg = err.to_string();
         error!("{}", msg);
         PyRuntimeError::new_err(msg)
@@ -180,6 +267,9 @@ pub enum ModelInterfaceError {
 
     #[error(transparent)]
     IoError(#[from] std::io::Error),
+
+    #[error(transparent)]
+    SampleDataError(#[from] SampleDataError),
 
     #[error("Onnx URI not found in metadata")]
     MissingOnnxUriError,
@@ -242,47 +332,32 @@ pub enum ModelInterfaceError {
     #[error(transparent)]
     UtilError(#[from] UtilError),
 
+    #[error(transparent)]
+    DataInterfaceError(#[from] DataInterfaceError),
+
     #[error("Interface type not found")]
     InterfaceTypeNotFoundError,
 
     #[error("Model must be an Onnx ModelProto with SerializeToString method")]
     OnnxModelTypeError,
 
-    #[error("Data must be of type tensorflow tensor or ndarray")]
-    TensorFlowDataTypeError,
+    #[error(
+        "Config must be an instance of AutoQuantizationConfig, ORTConfig, or QuantizationConfig"
+    )]
+    HuggingFaceOnnxArgTypeError,
 
-    #[error("Data type not supported")]
-    DataTypeError,
+    #[error("Failed to downcast Python object: {0}")]
+    DowncastError(String),
+}
+
+impl<'a> From<pyo3::DowncastError<'a, 'a>> for ModelInterfaceError {
+    fn from(err: pyo3::DowncastError) -> Self {
+        ModelInterfaceError::DowncastError(err.to_string())
+    }
 }
 
 impl From<ModelInterfaceError> for PyErr {
     fn from(err: ModelInterfaceError) -> PyErr {
-        let msg = err.to_string();
-        error!("{}", msg);
-        PyRuntimeError::new_err(msg)
-    }
-}
-
-#[derive(Error, Debug)]
-pub enum TypeError {
-    #[error("Key {0} not found in FeatureMap")]
-    MissingKeyError(String),
-
-    #[error("Only one of query or filename can be provided")]
-    OnlyOneQueryorFilenameError,
-
-    #[error("Key not found")]
-    KeyNotFound,
-
-    #[error(transparent)]
-    UtilError(#[from] UtilError),
-
-    #[error(transparent)]
-    IoError(#[from] std::io::Error),
-}
-
-impl From<TypeError> for PyErr {
-    fn from(err: TypeError) -> PyErr {
         let msg = err.to_string();
         error!("{}", msg);
         PyRuntimeError::new_err(msg)

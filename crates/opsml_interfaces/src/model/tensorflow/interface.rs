@@ -696,6 +696,9 @@ impl TensorFlowModel {
             data = data.getattr("data")?;
         }
 
-        generate_feature_schema(&data, &self.sample_data.get_data_type())
+        Ok(generate_feature_schema(
+            &data,
+            &self.sample_data.get_data_type(),
+        )?)
     }
 }

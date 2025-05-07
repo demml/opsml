@@ -1,7 +1,6 @@
 use crate::data::DependentVars;
 use crate::error::DataInterfaceError;
 use opsml_types::DataType;
-use opsml_utils::error::UtilError;
 use opsml_utils::PyHelperFuncs;
 use pyo3::types::PyTuple;
 use pyo3::types::{PyDateTime, PyFloat, PyInt, PySlice, PyString};
@@ -358,9 +357,7 @@ fn create_pyarrow_data(
         })
     } else if !dependent_vars.idx_empty() {
         let shape = data.getattr("shape")?;
-        let shape_tuple = shape
-            .downcast::<PyTuple>()
-            .map_err(|e| UtilError::DowncastError(e.to_string()))?;
+        let shape_tuple = shape.downcast::<PyTuple>()?;
 
         let num_cols = shape_tuple.get_item(1).unwrap().extract::<usize>()?;
 
@@ -391,9 +388,7 @@ fn create_numpy_data(
     let py = data.py();
     if !dependent_vars.idx_empty() {
         let shape = data.getattr("shape")?;
-        let shape_tuple = shape
-            .downcast::<PyTuple>()
-            .map_err(|e| UtilError::DowncastError(e.to_string()))?;
+        let shape_tuple = shape.downcast::<PyTuple>()?;
 
         let num_cols = shape_tuple.get_item(1).unwrap().extract::<usize>()?;
 
