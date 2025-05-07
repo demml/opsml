@@ -1,7 +1,6 @@
 use crate::types::{Feature, FeatureSchema};
 
 use crate::error::DataInterfaceError;
-use opsml_utils::error::UtilError;
 use pyo3::prelude::*;
 use pyo3::types::{PyDict, PyList};
 use std::collections::HashMap;
@@ -659,9 +658,7 @@ impl Struct {
         let mut extra_args = HashMap::new();
 
         let fields = data_type.getattr("fields")?;
-        let fields = fields
-            .downcast::<PyList>()
-            .map_err(|e| UtilError::DowncastError(e.to_string()))?;
+        let fields = fields.downcast::<PyList>()?;
 
         // iterate over fields and extract name and dtype
         for field in fields.iter() {
@@ -714,9 +711,7 @@ impl PolarsSchemaValidator {
         data: &Bound<'_, PyAny>,
     ) -> Result<FeatureSchema, DataInterfaceError> {
         let binding = data.as_ref().getattr("schema")?;
-        let schema_items = binding
-            .downcast::<PyDict>()
-            .map_err(|e| UtilError::DowncastError(e.to_string()))?;
+        let schema_items = binding.downcast::<PyDict>()?;
 
         let feature_map = schema_items
             .iter()

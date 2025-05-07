@@ -1,5 +1,5 @@
+use crate::error::TypeError;
 use crate::model::huggingface::types::HuggingFaceOnnxArgs;
-use opsml_error::{OpsmlError, TypeError};
 use opsml_utils::{json_to_pyobject, pyobject_to_json, PyHelperFuncs};
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
@@ -26,7 +26,7 @@ impl InterfaceDataType {
             "numpy.ndarray" => Ok(InterfaceDataType::Numpy),
             "pyarrow.lib.Table" => Ok(InterfaceDataType::Arrow),
             "torch.Tensor" => Ok(InterfaceDataType::Torch),
-            _ => Err(TypeError::Error("Invalid data type".to_string())),
+            _ => Err(TypeError::InvalidDataType),
         }
     }
 }
@@ -47,7 +47,7 @@ impl ModelSaveKwargs {
         onnx: Option<Bound<'py, PyAny>>,
         model: Option<Bound<'py, PyDict>>,
         preprocessor: Option<Bound<'py, PyDict>>,
-    ) -> PyResult<Self> {
+    ) -> Result<Self, TypeError> {
         // check if onnx is None, PyDict or HuggingFaceOnnxArgs
 
         let onnx = onnx.map(|onnx| {
@@ -57,7 +57,7 @@ impl ModelSaveKwargs {
             } else if onnx.is_instance_of::<PyDict>() {
                 Ok(onnx.downcast::<PyDict>().unwrap().clone().unbind())
             } else {
-                Err(OpsmlError::new_err("Invalid onnx type"))
+                Err(TypeError::InvalidOnnxType)
             }
         });
 
@@ -290,7 +290,7 @@ impl ModelLoadKwargs {
         model: Option<Bound<'py, PyDict>>,
         preprocessor: Option<Bound<'py, PyDict>>,
         load_onnx: Option<bool>,
-    ) -> PyResult<Self> {
+    ) -> Result<Self, TypeError> {
         // check if onnx is None, PyDict or HuggingFaceOnnxArgs
 
         let onnx = onnx.map(|onnx| {
@@ -301,7 +301,7 @@ impl ModelLoadKwargs {
                 Ok(onnx.downcast::<PyDict>().unwrap().clone().unbind())
             } else {
                 // return error
-                Err(OpsmlError::new_err("Invalid onnx type"))
+                Err(TypeError::InvalidOnnxType)
             }
         });
 

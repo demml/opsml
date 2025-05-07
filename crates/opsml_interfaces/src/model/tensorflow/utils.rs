@@ -1,11 +1,10 @@
 use crate::data::{DataInterface, NumpyData};
-use crate::error::ModelInterfaceError;
+use crate::error::{OnnxError, SampleDataError};
 use crate::model::{
     base::{get_class_full_name, load_from_joblib, save_to_joblib, OnnxExtension},
     InterfaceDataType,
 };
 use opsml_types::{DataType, ModelType};
-use opsml_utils::error::UtilError;
 use pyo3::types::{PyDict, PyList, PyListMethods, PyTuple, PyTupleMethods};
 use pyo3::IntoPyObjectExt;
 use pyo3::{prelude::*, types::PySlice};
@@ -46,7 +45,7 @@ impl TensorFlowSampleData {
     ///
     /// # Returns
     ///
-    pub fn new(data: &Bound<'_, PyAny>) -> Result<Self, ModelInterfaceError> {
+    pub fn new(data: &Bound<'_, PyAny>) -> Result<Self, SampleDataError> {
         let py = data.py();
 
         if data.is_instance_of::<DataInterface>() {
@@ -78,18 +77,16 @@ impl TensorFlowSampleData {
         Ok(TensorFlowSampleData::None)
     }
 
-    fn handle_tensor(py: Python, data: &Bound<'_, PyAny>) -> Result<Self, ModelInterfaceError> {
+    fn handle_tensor(py: Python, data: &Bound<'_, PyAny>) -> Result<Self, SampleDataError> {
         let slice = PySlice::new(py, 0, 1, 1);
         let sliced_item = data.get_item(slice)?;
 
         Ok(TensorFlowSampleData::Tensor(sliced_item.unbind()))
     }
 
-    fn handle_pylist(data: &Bound<'_, PyAny>) -> Result<Self, ModelInterfaceError> {
+    fn handle_pylist(data: &Bound<'_, PyAny>) -> Result<Self, SampleDataError> {
         let py = data.py();
-        let py_list = data
-            .downcast::<PyList>()
-            .map_err(|e| UtilError::DowncastError(e.to_string()))?;
+        let py_list = data.downcast::<PyList>()?;
         let tf_tensor = py.import("tensorflow")?.getattr("Tensor")?;
         let ndarray = py.import("numpy")?.getattr("ndarray")?;
 
@@ -102,7 +99,7 @@ impl TensorFlowSampleData {
             let is_ndarray = sliced_item.is_instance(&ndarray)?;
 
             if !is_tensor && !is_ndarray {
-                Err(ModelInterfaceError::TensorFlowDataTypeError)?;
+                Err(SampleDataError::TensorFlowDataTypeError)?;
             }
 
             py_list.set_item(idx, sliced_item)?;
@@ -111,18 +108,13 @@ impl TensorFlowSampleData {
         Ok(TensorFlowSampleData::List(py_list.clone().unbind()))
     }
 
-    fn handle_pytuple(data: &Bound<'_, PyAny>) -> Result<Self, ModelInterfaceError> {
+    fn handle_pytuple(data: &Bound<'_, PyAny>) -> Result<Self, SampleDataError> {
         let py = data.py();
         let tf_tensor = py.import("tensorflow")?.getattr("Tensor")?;
         let ndarray = py.import("numpy")?.getattr("ndarray")?;
 
         // convert data from PyTuple to PyList
-        let py_list = PyList::new(
-            py,
-            data.downcast::<PyTuple>()
-                .map_err(|e| UtilError::DowncastError(e.to_string()))?
-                .iter(),
-        )?;
+        let py_list = PyList::new(py, data.downcast::<PyTuple>()?.iter())?;
 
         for (idx, item) in py_list.iter().enumerate() {
             let slice = PySlice::new(py, 0, 1, 1);
@@ -132,7 +124,7 @@ impl TensorFlowSampleData {
             let is_ndarray = sliced_item.is_instance(&ndarray)?;
 
             if !is_tensor && !is_ndarray {
-                Err(ModelInterfaceError::TensorFlowDataTypeError)?;
+                Err(SampleDataError::TensorFlowDataTypeError)?;
             }
 
             py_list.set_item(idx, sliced_item)?;
@@ -143,11 +135,9 @@ impl TensorFlowSampleData {
         Ok(TensorFlowSampleData::Tuple(tuple))
     }
 
-    fn handle_pydict(data: &Bound<'_, PyAny>) -> Result<Self, ModelInterfaceError> {
+    fn handle_pydict(data: &Bound<'_, PyAny>) -> Result<Self, SampleDataError> {
         let py = data.py();
-        let py_dict = data
-            .downcast::<PyDict>()
-            .map_err(|e| UtilError::DowncastError(e.to_string()))?;
+        let py_dict = data.downcast::<PyDict>()?;
         let tf_tensor = py.import("tensorflow")?.getattr("Tensor")?;
         let ndarray = py.import("numpy")?.getattr("ndarray")?;
 
@@ -159,7 +149,7 @@ impl TensorFlowSampleData {
             let is_ndarray = sliced_item.is_instance(&ndarray)?;
 
             if !is_tensor && !is_ndarray {
-                Err(ModelInterfaceError::TensorFlowDataTypeError)?;
+                Err(SampleDataError::TensorFlowDataTypeError)?;
             }
 
             py_dict.set_item(k, sliced_item)?;
@@ -168,10 +158,7 @@ impl TensorFlowSampleData {
         Ok(TensorFlowSampleData::Dict(py_dict.clone().unbind()))
     }
 
-    fn slice_and_return<F>(
-        data: &Bound<'_, PyAny>,
-        constructor: F,
-    ) -> Result<Self, ModelInterfaceError>
+    fn slice_and_return<F>(data: &Bound<'_, PyAny>, constructor: F) -> Result<Self, SampleDataError>
     where
         F: FnOnce(PyObject) -> TensorFlowSampleData,
     {
@@ -182,9 +169,7 @@ impl TensorFlowSampleData {
         Ok(constructor(data.clone().unbind()))
     }
 
-    fn get_interface_for_sample(
-        data: &Bound<'_, PyAny>,
-    ) -> Result<Option<Self>, ModelInterfaceError> {
+    fn get_interface_for_sample(data: &Bound<'_, PyAny>) -> Result<Option<Self>, SampleDataError> {
         let py = data.py();
         let class = data.getattr("__class__")?;
         let full_class_name = get_class_full_name(&class)?;
@@ -196,12 +181,12 @@ impl TensorFlowSampleData {
         Ok(None)
     }
 
-    fn handle_data_interface(data: &Bound<'_, PyAny>) -> Result<Self, ModelInterfaceError> {
+    fn handle_data_interface(data: &Bound<'_, PyAny>) -> Result<Self, SampleDataError> {
         let data_type = data.getattr("data_type")?.extract::<DataType>()?;
 
         match data_type {
             DataType::Numpy => Self::slice_and_return(data, TensorFlowSampleData::Numpy),
-            _ => Err(ModelInterfaceError::DataTypeError),
+            _ => Err(SampleDataError::DataTypeError),
         }
     }
 
@@ -209,7 +194,7 @@ impl TensorFlowSampleData {
         py: Python,
         interface_type: &InterfaceDataType,
         data: &Bound<'_, PyAny>,
-    ) -> Result<Self, ModelInterfaceError> {
+    ) -> Result<Self, SampleDataError> {
         let slice = PySlice::new(py, 0, 1, 1);
         let sliced_data = data.get_item(slice)?;
 
@@ -221,7 +206,7 @@ impl TensorFlowSampleData {
                 Ok(TensorFlowSampleData::Numpy(bound))
             }
 
-            _ => Err(ModelInterfaceError::DataTypeError),
+            _ => Err(SampleDataError::DataTypeError),
         }
     }
 
@@ -277,10 +262,10 @@ impl TensorFlowSampleData {
         path: &Path,
         data_type: &DataType,
         kwargs: Option<&Bound<'py, PyDict>>,
-    ) -> Result<TensorFlowSampleData, ModelInterfaceError> {
+    ) -> Result<TensorFlowSampleData, SampleDataError> {
         match data_type {
             DataType::Numpy => {
-                NumpyData::from_path(py, path, kwargs).map(TensorFlowSampleData::Numpy)
+                Ok(NumpyData::from_path(py, path, kwargs).map(TensorFlowSampleData::Numpy)?)
             }
 
             DataType::List => {
@@ -308,7 +293,7 @@ impl TensorFlowSampleData {
                 Ok(TensorFlowSampleData::Tensor(data.clone().unbind()))
             }
 
-            _ => Err(ModelInterfaceError::DataTypeError),
+            _ => Err(SampleDataError::DataTypeError),
         }
     }
 
@@ -340,7 +325,7 @@ impl OnnxExtension for TensorFlowSampleData {
         &self,
         py: Python<'py>,
         _model_type: &ModelType,
-    ) -> PyResult<Bound<'py, PyAny>> {
+    ) -> Result<Bound<'py, PyAny>, OnnxError> {
         match self {
             TensorFlowSampleData::Numpy(data) => Ok(data.bind(py).getattr("data")?),
             TensorFlowSampleData::List(data) => Ok({

@@ -1,4 +1,4 @@
-use opsml_error::error::OpsmlError;
+use crate::error::ModelInterfaceError;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use pyo3::types::PyType;
@@ -37,7 +37,7 @@ impl HuggingFaceOnnxArgs {
         quantize: Option<bool>,
         config: Option<&Bound<'_, PyAny>>,
         extra_kwargs: Option<&Bound<'_, PyDict>>,
-    ) -> PyResult<Self> {
+    ) -> Result<Self, ModelInterfaceError> {
         // check if ort_type is valid (does it match any of the HuggingFaceORTModel enum variants?)
 
         let config = HuggingFaceOnnxArgs::check_optimum_config(py, config)?;
@@ -52,7 +52,7 @@ impl HuggingFaceOnnxArgs {
         })
     }
 
-    pub fn to_dict<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyDict>> {
+    pub fn to_dict<'py>(&self, py: Python<'py>) -> Result<Bound<'py, PyDict>, ModelInterfaceError> {
         let dict = PyDict::new(py);
         dict.set_item("ort_type", self.ort_type.to_string().clone())?;
         dict.set_item("provider", self.provider.clone())?;
@@ -68,7 +68,7 @@ impl HuggingFaceOnnxArgs {
     fn check_optimum_config(
         py: Python,
         config: Option<&Bound<'_, PyAny>>,
-    ) -> PyResult<Option<PyObject>> {
+    ) -> Result<Option<PyObject>, ModelInterfaceError> {
         if config.is_none() {
             return Ok(None);
         }
@@ -78,19 +78,13 @@ impl HuggingFaceOnnxArgs {
         // Import the necessary classes from the optimum.onnxruntime module
         let optimum_module = py.import("optimum.onnxruntime")?;
         let auto_quantization_config_attr = optimum_module.getattr("AutoQuantizationConfig")?;
-        let auto_quantization_config = auto_quantization_config_attr
-            .downcast::<PyType>()
-            .map_err(|e| OpsmlError::new_err(e.to_string()))?;
+        let auto_quantization_config = auto_quantization_config_attr.downcast::<PyType>()?;
 
         let ort_config_attr = optimum_module.getattr("ORTConfig")?;
-        let ort_config = ort_config_attr
-            .downcast::<PyType>()
-            .map_err(|e| OpsmlError::new_err(e.to_string()))?;
+        let ort_config = ort_config_attr.downcast::<PyType>()?;
 
         let quantization_config_attr = optimum_module.getattr("QuantizationConfig")?;
-        let quantization_config = quantization_config_attr
-            .downcast::<PyType>()
-            .map_err(|e| OpsmlError::new_err(e.to_string()))?;
+        let quantization_config = quantization_config_attr.downcast::<PyType>()?;
 
         // Assert that config is an instance of one of the specified classes
         let is_valid_config = config.is_instance(auto_quantization_config)?
@@ -98,16 +92,10 @@ impl HuggingFaceOnnxArgs {
             || config.is_instance(quantization_config)?;
 
         if !is_valid_config {
-            return Err(OpsmlError::new_err(
-                "config must be an instance of AutoQuantizationConfig, ORTConfig, or QuantizationConfig".to_string(),
-            ));
+            return Err(ModelInterfaceError::HuggingFaceOnnxArgTypeError);
         }
 
-        Ok(Some(
-            config
-                .into_py_any(py)
-                .map_err(|e| OpsmlError::new_err(e.to_string()))?,
-        ))
+        Ok(Some(config.into_py_any(py)?))
     }
 }
 

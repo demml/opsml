@@ -1,6 +1,5 @@
 use crate::error::DataInterfaceError;
 use crate::types::{Feature, FeatureSchema};
-use opsml_utils::error::UtilError;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 
@@ -13,9 +12,7 @@ impl PandasSchemaValidator {
         data: &Bound<'_, PyAny>,
     ) -> Result<FeatureSchema, DataInterfaceError> {
         let columns = data.getattr("dtypes")?.call_method0("to_dict")?;
-        let columns = columns
-            .downcast::<PyDict>()
-            .map_err(|e| UtilError::DowncastError(e.to_string()))?;
+        let columns = columns.downcast::<PyDict>()?;
 
         let feature_map = columns
             .iter()

@@ -1,7 +1,8 @@
 use crate::base::ModelSaveKwargs;
 use crate::data::{ArrowData, DataInterface, NumpyData, PandasData, PolarsData, TorchData};
+use crate::error::{OnnxError, SampleDataError};
 use crate::model::InterfaceDataType;
-use opsml_error::OpsmlError;
+
 use opsml_types::{DataType, ModelType, SaveName, Suffix};
 use pyo3::types::{PyDict, PyList, PyListMethods, PyTuple, PyTupleMethods};
 use pyo3::IntoPyObjectExt;
@@ -53,7 +54,7 @@ impl SampleData {
     ///
     /// # Returns
     ///
-    pub fn new(data: &Bound<'_, PyAny>) -> PyResult<Self> {
+    pub fn new(data: &Bound<'_, PyAny>) -> Result<Self, SampleDataError> {
         let py = data.py();
 
         if data.is_instance_of::<DataInterface>() {
@@ -92,7 +93,7 @@ impl SampleData {
         py: Python,
         interface_type: &InterfaceDataType,
         data: &Bound<'_, PyAny>,
-    ) -> PyResult<Self> {
+    ) -> Result<Self, SampleDataError> {
         let slice = PySlice::new(py, 0, 1, 1);
         let sliced_data = data.get_item(slice)?;
 
@@ -130,7 +131,7 @@ impl SampleData {
         }
     }
 
-    fn get_interface_for_sample(data: &Bound<'_, PyAny>) -> PyResult<Option<Self>> {
+    fn get_interface_for_sample(data: &Bound<'_, PyAny>) -> Result<Option<Self>, SampleDataError> {
         let py = data.py();
         let class = data.getattr("__class__")?;
         let full_class_name = get_class_full_name(&class)?;
@@ -142,7 +143,7 @@ impl SampleData {
         Ok(None)
     }
 
-    fn handle_data_interface(data: &Bound<'_, PyAny>) -> PyResult<Self> {
+    fn handle_data_interface(data: &Bound<'_, PyAny>) -> Result<Self, SampleDataError> {
         let data_type = data.getattr("data_type")?.extract::<DataType>()?;
 
         match data_type {
@@ -151,11 +152,11 @@ impl SampleData {
             DataType::Numpy => Self::slice_and_return(data, SampleData::Numpy),
             DataType::Arrow => Self::slice_and_return(data, SampleData::Arrow),
             DataType::TorchTensor => Self::slice_and_return(data, SampleData::Torch),
-            _ => Err(OpsmlError::new_err("Data type not supported")),
+            _ => Err(SampleDataError::InvalidDataType),
         }
     }
 
-    fn slice_and_return<F>(data: &Bound<'_, PyAny>, constructor: F) -> PyResult<Self>
+    fn slice_and_return<F>(data: &Bound<'_, PyAny>, constructor: F) -> Result<Self, SampleDataError>
     where
         F: FnOnce(PyObject) -> SampleData,
     {
@@ -166,7 +167,7 @@ impl SampleData {
         Ok(constructor(data.clone().unbind()))
     }
 
-    fn handle_pylist(data: &Bound<'_, PyAny>) -> PyResult<Self> {
+    fn handle_pylist(data: &Bound<'_, PyAny>) -> Result<Self, SampleDataError> {
         let py = data.py();
         let py_list = data.downcast::<PyList>()?;
 
@@ -179,7 +180,7 @@ impl SampleData {
         Ok(SampleData::List(py_list.clone().unbind()))
     }
 
-    fn handle_pytuple(data: &Bound<'_, PyAny>) -> PyResult<Self> {
+    fn handle_pytuple(data: &Bound<'_, PyAny>) -> Result<Self, SampleDataError> {
         let py = data.py();
 
         // convert data from PyTuple to PyList
@@ -196,7 +197,7 @@ impl SampleData {
         Ok(SampleData::Tuple(tuple))
     }
 
-    fn handle_pydict(data: &Bound<'_, PyAny>) -> PyResult<Self> {
+    fn handle_pydict(data: &Bound<'_, PyAny>) -> Result<Self, SampleDataError> {
         let py = data.py();
         let py_dict = data.downcast::<PyDict>()?;
 
@@ -224,7 +225,7 @@ impl SampleData {
         }
     }
 
-    pub fn get_data(&self, py: Python) -> PyResult<PyObject> {
+    pub fn get_data(&self, py: Python) -> Result<PyObject, SampleDataError> {
         match self {
             SampleData::Pandas(data) => Ok(data.clone_ref(py)),
             SampleData::Polars(data) => Ok(data.clone_ref(py)),
@@ -239,7 +240,11 @@ impl SampleData {
         }
     }
 
-    fn save_binary(&self, data: &Bound<'_, PyAny>, path: &Path) -> PyResult<PathBuf> {
+    fn save_binary(
+        &self,
+        data: &Bound<'_, PyAny>,
+        path: &Path,
+    ) -> Result<PathBuf, SampleDataError> {
         let save_path = PathBuf::from(SaveName::Data.to_string()).with_extension(Suffix::Bin);
         let full_save_path = path.join(&save_path);
         data.call_method("save_binary", (full_save_path,), None)?;
@@ -252,7 +257,7 @@ impl SampleData {
         data: &Bound<'_, PyAny>,
         path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
-    ) -> PyResult<PathBuf> {
+    ) -> Result<PathBuf, SampleDataError> {
         debug!("Saving data to path: {:?} with kwargs: {:?}", path, kwargs);
         let metadata = data.call_method("save", (path,), kwargs)?;
 
@@ -271,7 +276,7 @@ impl SampleData {
         py: Python,
         path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
-    ) -> PyResult<Option<PathBuf>> {
+    ) -> Result<Option<PathBuf>, SampleDataError> {
         match self {
             SampleData::Pandas(data) => Ok(Some(
                 self.save_interface_data(data.bind(py), path, kwargs)
@@ -338,7 +343,10 @@ impl SampleData {
 
     // helper method for converting all pandas numeric types to f32
     // primarily used with sklearn pipelines and onnx
-    fn convert_pandas_to_f32<'py>(&self, data: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyAny>> {
+    fn convert_pandas_to_f32<'py>(
+        &self,
+        data: Bound<'py, PyAny>,
+    ) -> Result<Bound<'py, PyAny>, SampleDataError> {
         let py = data.py();
         let npfloat32 = py.import("numpy")?.getattr("float32")?;
         let numeric_cols = data
@@ -359,13 +367,19 @@ impl SampleData {
         path: &Path,
         data_type: &DataType,
         kwargs: Option<&Bound<'py, PyDict>>,
-    ) -> PyResult<SampleData> {
+    ) -> Result<SampleData, SampleDataError> {
         match data_type {
-            DataType::Pandas => PandasData::from_path(py, path, kwargs).map(SampleData::Pandas),
-            DataType::Polars => PolarsData::from_path(py, path, kwargs).map(SampleData::Polars),
-            DataType::Numpy => NumpyData::from_path(py, path, kwargs).map(SampleData::Numpy),
-            DataType::Arrow => ArrowData::from_path(py, path, kwargs).map(SampleData::Arrow),
-            DataType::TorchTensor => TorchData::from_path(py, path, kwargs).map(SampleData::Torch),
+            DataType::Pandas => {
+                Ok(PandasData::from_path(py, path, kwargs).map(SampleData::Pandas)?)
+            }
+            DataType::Polars => {
+                Ok(PolarsData::from_path(py, path, kwargs).map(SampleData::Polars)?)
+            }
+            DataType::Numpy => Ok(NumpyData::from_path(py, path, kwargs).map(SampleData::Numpy)?),
+            DataType::Arrow => Ok(ArrowData::from_path(py, path, kwargs).map(SampleData::Arrow)?),
+            DataType::TorchTensor => {
+                Ok(TorchData::from_path(py, path, kwargs).map(SampleData::Torch)?)
+            }
             DataType::List => {
                 let data = load_from_joblib(py, path)?;
                 Ok(SampleData::List(
@@ -394,7 +408,9 @@ impl SampleData {
     }
 }
 
-pub fn extract_drift_profile(py_profiles: &Bound<'_, PyAny>) -> PyResult<Vec<PyObject>> {
+pub fn extract_drift_profile(
+    py_profiles: &Bound<'_, PyAny>,
+) -> Result<Vec<PyObject>, SampleDataError> {
     let py = py_profiles.py();
 
     if py_profiles.is_instance_of::<PyList>() {
@@ -418,9 +434,9 @@ pub trait OnnxExtension {
         &self,
         py: Python<'py>,
         model_type: &ModelType,
-    ) -> PyResult<Bound<'py, PyAny>>;
+    ) -> Result<Bound<'py, PyAny>, OnnxError>;
 
-    fn get_feature_names(&self, _py: Python) -> PyResult<Vec<String>> {
+    fn get_feature_names(&self, _py: Python) -> Result<Vec<String>, OnnxError> {
         Ok(vec![])
     }
 
@@ -432,7 +448,7 @@ impl OnnxExtension for SampleData {
         &self,
         py: Python<'py>,
         model_type: &ModelType,
-    ) -> PyResult<Bound<'py, PyAny>> {
+    ) -> Result<Bound<'py, PyAny>, OnnxError> {
         match self {
             SampleData::Pandas(data) => Ok({
                 let data = data.bind(py).getattr("data")?;
@@ -492,7 +508,7 @@ impl OnnxExtension for SampleData {
         }
     }
 
-    fn get_feature_names(&self, py: Python) -> PyResult<Vec<String>> {
+    fn get_feature_names(&self, py: Python) -> Result<Vec<String>, OnnxError> {
         match self {
             SampleData::Pandas(data) => {
                 let data = data.bind(py).getattr("data")?;
@@ -549,7 +565,7 @@ pub fn parse_save_kwargs<'py>(
     (onnx_kwargs, model_kwargs, preprocessor_kwargs)
 }
 
-pub fn save_to_joblib(data: &Bound<'_, PyAny>, path: &Path) -> PyResult<PathBuf> {
+pub fn save_to_joblib(data: &Bound<'_, PyAny>, path: &Path) -> Result<PathBuf, SampleDataError> {
     let py = data.py();
     let save_path = PathBuf::from(SaveName::Data.to_string()).with_extension(Suffix::Joblib);
     let full_save_path = path.join(&save_path);
@@ -559,20 +575,23 @@ pub fn save_to_joblib(data: &Bound<'_, PyAny>, path: &Path) -> PyResult<PathBuf>
     Ok(save_path)
 }
 
-pub fn load_from_joblib<'py>(py: Python<'py>, path: &Path) -> PyResult<Bound<'py, PyAny>> {
+pub fn load_from_joblib<'py>(
+    py: Python<'py>,
+    path: &Path,
+) -> Result<Bound<'py, PyAny>, SampleDataError> {
     let joblib = py.import("joblib")?;
     let data = joblib.call_method1("load", (path,))?;
 
     Ok(data)
 }
 
-fn load_dmatrix<'py>(py: Python<'py>, path: &Path) -> PyResult<Bound<'py, PyAny>> {
+fn load_dmatrix<'py>(py: Python<'py>, path: &Path) -> Result<Bound<'py, PyAny>, SampleDataError> {
     let xgb = py.import("xgboost")?;
     let data = xgb.call_method1("DMatrix", (path,))?;
     Ok(data)
 }
 
-pub fn get_class_full_name(class: &Bound<'_, PyAny>) -> PyResult<String> {
+pub fn get_class_full_name(class: &Bound<'_, PyAny>) -> Result<String, SampleDataError> {
     let module = class.getattr("__module__")?.str()?.to_string();
     let name = class.getattr("__name__")?.str()?.to_string();
     Ok(format!("{}.{}", module, name))

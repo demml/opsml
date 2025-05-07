@@ -56,8 +56,14 @@ pub enum UtilError {
     #[error("Root must be an object")]
     RootMustBeObjectError,
 
-    #[error("Downcast error: {0}")]
+    #[error("Failed to downcast Python object: {0}")]
     DowncastError(String),
+}
+
+impl<'a> From<pyo3::DowncastError<'a, 'a>> for UtilError {
+    fn from(err: pyo3::DowncastError) -> Self {
+        UtilError::DowncastError(err.to_string())
+    }
 }
 
 impl From<UtilError> for PyErr {

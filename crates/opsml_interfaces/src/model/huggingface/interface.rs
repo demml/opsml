@@ -476,7 +476,7 @@ impl HuggingFaceModel {
     ///
     /// # Returns
     ///
-    /// * `PyResult<DataInterfaceSaveMetadata>` - DataInterfaceSaveMetadata
+    /// * `Result<DataInterfaceSaveMetadata>` - DataInterfaceSaveMetadata
     #[pyo3(signature = (path, to_onnx=false, save_kwargs=None))]
     #[instrument(skip(self_, py, path, to_onnx, save_kwargs) name = "save_huggingface_interface")]
     pub fn save(
@@ -575,7 +575,7 @@ impl HuggingFaceModel {
     ///
     /// # Returns
     ///
-    /// * `PyResult<DataInterfaceMetadata>` - DataInterfaceMetadata
+    /// * `Result<DataInterfaceMetadata>` - DataInterfaceMetadata
     #[pyo3(signature = (path, metadata, load_kwargs=None))]
     #[allow(clippy::too_many_arguments)]
     #[instrument(
@@ -991,7 +991,7 @@ impl HuggingFaceModel {
         py: Python,
         path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
-    ) -> PyResult<Option<PathBuf>> {
+    ) -> Result<Option<PathBuf>, ModelInterfaceError> {
         // if sample_data is not None, save the sample data
         let sample_data_uri = self
             .sample_data
@@ -1012,7 +1012,7 @@ impl HuggingFaceModel {
         path: &Path,
         data_type: &DataType,
         kwargs: Option<&Bound<'_, PyDict>>,
-    ) -> PyResult<()> {
+    ) -> Result<(), ModelInterfaceError> {
         // load sample data
         self.sample_data = HuggingFaceSampleData::load_data(py, path, data_type, kwargs)?;
 
@@ -1075,8 +1075,11 @@ impl HuggingFaceModel {
     ///
     /// # Returns
     ///
-    /// * `PyResult<FeatureMap>` - FeatureMap
-    pub fn create_feature_schema(&mut self, py: Python) -> PyResult<FeatureSchema> {
+    /// * `Result<FeatureMap>` - FeatureMap
+    pub fn create_feature_schema(
+        &mut self,
+        py: Python,
+    ) -> Result<FeatureSchema, ModelInterfaceError> {
         // Create and insert the feature
 
         let mut data = self.sample_data.get_data(py)?.bind(py).clone();
@@ -1086,6 +1089,9 @@ impl HuggingFaceModel {
             data = data.getattr("data")?;
         }
 
-        generate_feature_schema(&data, &self.sample_data.get_data_type())
+        Ok(generate_feature_schema(
+            &data,
+            &self.sample_data.get_data_type(),
+        )?)
     }
 }
