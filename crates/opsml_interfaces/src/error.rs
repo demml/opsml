@@ -92,6 +92,9 @@ pub enum DataInterfaceError {
     #[error("Data must be a numpy array")]
     NumpyTypeError,
 
+    #[error("Data must be a pandas dataframe")]
+    PandasTypeError,
+
     #[error("No data detected in interface for saving")]
     MissingDataError,
 
@@ -127,10 +130,13 @@ pub enum DataInterfaceError {
 
     #[error("Data type not supported for profiling")]
     DataTypeNotSupportedForProfilingError,
+
+    #[error("Failed to save scouter profile: {0}")]
+    ScouterError(String),
 }
 
 impl From<DataInterfaceError> for PyErr {
-    fn from(err: ModelInterfaceError) -> PyErr {
+    fn from(err: DataInterfaceError) -> PyErr {
         let msg = err.to_string();
         error!("{}", msg);
         PyRuntimeError::new_err(msg)
@@ -239,17 +245,6 @@ pub enum ModelInterfaceError {
 
 impl From<ModelInterfaceError> for PyErr {
     fn from(err: ModelInterfaceError) -> PyErr {
-        let msg = err.to_string();
-        error!("{}", msg);
-        PyRuntimeError::new_err(msg)
-    }
-}
-
-#[derive(Error, Debug)]
-pub enum DataInterfaceError {}
-
-impl From<DataInterfaceError> for PyErr {
-    fn from(err: DataInterfaceError) -> PyErr {
         let msg = err.to_string();
         error!("{}", msg);
         PyRuntimeError::new_err(msg)
