@@ -1,3 +1,4 @@
+use crate::error::DataInterfaceError;
 use crate::types::FeatureSchema;
 
 use crate::data::schema::arrow::ArrowSchemaValidator;
@@ -12,7 +13,7 @@ use pyo3::prelude::*;
 pub fn generate_feature_schema(
     data: &Bound<'_, PyAny>,
     data_type: &DataType,
-) -> PyResult<FeatureSchema> {
+) -> Result<FeatureSchema, DataInterfaceError> {
     let feature_map = match data_type {
         DataType::Polars => PolarsSchemaValidator::generate_feature_map(data)?,
         DataType::Numpy => NumpySchemaValidator::generate_feature_map(data)?,

@@ -1,6 +1,7 @@
 use crate::types::{Feature, FeatureSchema};
 
-use opsml_error::OpsmlError;
+use crate::error::DataInterfaceError;
+use opsml_utils::error::UtilError;
 use pyo3::prelude::*;
 use pyo3::types::{PyDict, PyList};
 use std::collections::HashMap;
@@ -69,12 +70,12 @@ impl PolarsType {
 pub struct Int8 {}
 
 impl Int8 {
-    fn as_feature(_data_type: &Bound<'_, PyAny>) -> PyResult<Feature> {
+    fn as_feature(_data_type: &Bound<'_, PyAny>) -> Result<Feature, DataInterfaceError> {
         let feature = Feature::new("Int8".to_string(), vec![1], None);
         Ok(feature)
     }
 
-    fn validate(data_type: &Bound<'_, PyAny>) -> PyResult<bool> {
+    fn validate(data_type: &Bound<'_, PyAny>) -> Result<bool, DataInterfaceError> {
         let py = data_type.py();
 
         let signed_int = py.import("polars")?.getattr("datatypes")?.getattr("Int8")?;
@@ -88,12 +89,12 @@ impl Int8 {
 pub struct Int16 {}
 
 impl Int16 {
-    fn as_feature(_data_type: &Bound<'_, PyAny>) -> PyResult<Feature> {
+    fn as_feature(_data_type: &Bound<'_, PyAny>) -> Result<Feature, DataInterfaceError> {
         let feature = Feature::new("Int16".to_string(), vec![1], None);
         Ok(feature)
     }
 
-    fn validate(data_type: &Bound<'_, PyAny>) -> PyResult<bool> {
+    fn validate(data_type: &Bound<'_, PyAny>) -> Result<bool, DataInterfaceError> {
         let py = data_type.py();
 
         let signed_int = py
@@ -110,12 +111,12 @@ impl Int16 {
 pub struct Int32 {}
 
 impl Int32 {
-    fn as_feature(_data_type: &Bound<'_, PyAny>) -> PyResult<Feature> {
+    fn as_feature(_data_type: &Bound<'_, PyAny>) -> Result<Feature, DataInterfaceError> {
         let feature = Feature::new("Int32".to_string(), vec![1], None);
         Ok(feature)
     }
 
-    fn validate(data_type: &Bound<'_, PyAny>) -> PyResult<bool> {
+    fn validate(data_type: &Bound<'_, PyAny>) -> Result<bool, DataInterfaceError> {
         let py = data_type.py();
 
         let signed_int = py
@@ -132,12 +133,12 @@ impl Int32 {
 pub struct Int64 {}
 
 impl Int64 {
-    fn as_feature(_data_type: &Bound<'_, PyAny>) -> PyResult<Feature> {
+    fn as_feature(_data_type: &Bound<'_, PyAny>) -> Result<Feature, DataInterfaceError> {
         let feature = Feature::new("Int64".to_string(), vec![1], None);
         Ok(feature)
     }
 
-    fn validate(data_type: &Bound<'_, PyAny>) -> PyResult<bool> {
+    fn validate(data_type: &Bound<'_, PyAny>) -> Result<bool, DataInterfaceError> {
         let py = data_type.py();
 
         let signed_int = py
@@ -154,12 +155,12 @@ impl Int64 {
 pub struct UInt8 {}
 
 impl UInt8 {
-    fn as_feature(_data_type: &Bound<'_, PyAny>) -> PyResult<Feature> {
+    fn as_feature(_data_type: &Bound<'_, PyAny>) -> Result<Feature, DataInterfaceError> {
         let feature = Feature::new("UInt8".to_string(), vec![1], None);
         Ok(feature)
     }
 
-    fn validate(data_type: &Bound<'_, PyAny>) -> PyResult<bool> {
+    fn validate(data_type: &Bound<'_, PyAny>) -> Result<bool, DataInterfaceError> {
         let py = data_type.py();
 
         let unsigned_int = py
@@ -176,12 +177,12 @@ impl UInt8 {
 pub struct UInt16 {}
 
 impl UInt16 {
-    fn as_feature(_data_type: &Bound<'_, PyAny>) -> PyResult<Feature> {
+    fn as_feature(_data_type: &Bound<'_, PyAny>) -> Result<Feature, DataInterfaceError> {
         let feature = Feature::new("UInt16".to_string(), vec![1], None);
         Ok(feature)
     }
 
-    fn validate(data_type: &Bound<'_, PyAny>) -> PyResult<bool> {
+    fn validate(data_type: &Bound<'_, PyAny>) -> Result<bool, DataInterfaceError> {
         let py = data_type.py();
 
         let unsigned_int = py
@@ -198,12 +199,12 @@ impl UInt16 {
 pub struct UInt32 {}
 
 impl UInt32 {
-    fn as_feature(_data_type: &Bound<'_, PyAny>) -> PyResult<Feature> {
+    fn as_feature(_data_type: &Bound<'_, PyAny>) -> Result<Feature, DataInterfaceError> {
         let feature = Feature::new("UInt32".to_string(), vec![1], None);
         Ok(feature)
     }
 
-    fn validate(data_type: &Bound<'_, PyAny>) -> PyResult<bool> {
+    fn validate(data_type: &Bound<'_, PyAny>) -> Result<bool, DataInterfaceError> {
         let py = data_type.py();
 
         let unsigned_int = py
@@ -220,12 +221,12 @@ impl UInt32 {
 pub struct UInt64 {}
 
 impl UInt64 {
-    fn as_feature(_data_type: &Bound<'_, PyAny>) -> PyResult<Feature> {
+    fn as_feature(_data_type: &Bound<'_, PyAny>) -> Result<Feature, DataInterfaceError> {
         let feature = Feature::new("UInt64".to_string(), vec![1], None);
         Ok(feature)
     }
 
-    fn validate(data_type: &Bound<'_, PyAny>) -> PyResult<bool> {
+    fn validate(data_type: &Bound<'_, PyAny>) -> Result<bool, DataInterfaceError> {
         let py = data_type.py();
 
         let unsigned_int = py
@@ -242,12 +243,12 @@ impl UInt64 {
 pub struct Float32 {}
 
 impl Float32 {
-    fn as_feature(_data_type: &Bound<'_, PyAny>) -> PyResult<Feature> {
+    fn as_feature(_data_type: &Bound<'_, PyAny>) -> Result<Feature, DataInterfaceError> {
         let feature = Feature::new("Float32".to_string(), vec![1], None);
         Ok(feature)
     }
 
-    fn validate(data_type: &Bound<'_, PyAny>) -> PyResult<bool> {
+    fn validate(data_type: &Bound<'_, PyAny>) -> Result<bool, DataInterfaceError> {
         let py = data_type.py();
 
         let float = py
@@ -264,12 +265,12 @@ impl Float32 {
 pub struct Float64 {}
 
 impl Float64 {
-    fn as_feature(_data_type: &Bound<'_, PyAny>) -> PyResult<Feature> {
+    fn as_feature(_data_type: &Bound<'_, PyAny>) -> Result<Feature, DataInterfaceError> {
         let feature = Feature::new("Float64".to_string(), vec![1], None);
         Ok(feature)
     }
 
-    fn validate(data_type: &Bound<'_, PyAny>) -> PyResult<bool> {
+    fn validate(data_type: &Bound<'_, PyAny>) -> Result<bool, DataInterfaceError> {
         let py = data_type.py();
 
         let float = py
@@ -286,7 +287,7 @@ impl Float64 {
 pub struct Decimal {}
 
 impl Decimal {
-    fn as_feature(data_type: &Bound<'_, PyAny>) -> PyResult<Feature> {
+    fn as_feature(data_type: &Bound<'_, PyAny>) -> Result<Feature, DataInterfaceError> {
         let mut extra_args = HashMap::new();
 
         let precision = data_type
@@ -309,7 +310,7 @@ impl Decimal {
         Ok(feature)
     }
 
-    fn validate(data_type: &Bound<'_, PyAny>) -> PyResult<bool> {
+    fn validate(data_type: &Bound<'_, PyAny>) -> Result<bool, DataInterfaceError> {
         let py = data_type.py();
 
         let decimal = py
@@ -326,12 +327,12 @@ impl Decimal {
 pub struct Boolean {}
 
 impl Boolean {
-    fn as_feature(_data_type: &Bound<'_, PyAny>) -> PyResult<Feature> {
+    fn as_feature(_data_type: &Bound<'_, PyAny>) -> Result<Feature, DataInterfaceError> {
         let feature = Feature::new("Boolean".to_string(), vec![1], None);
         Ok(feature)
     }
 
-    fn validate(data_type: &Bound<'_, PyAny>) -> PyResult<bool> {
+    fn validate(data_type: &Bound<'_, PyAny>) -> Result<bool, DataInterfaceError> {
         let py = data_type.py();
 
         let boolean = py
@@ -348,12 +349,12 @@ impl Boolean {
 pub struct PolarsString {}
 
 impl PolarsString {
-    fn as_feature(_data_type: &Bound<'_, PyAny>) -> PyResult<Feature> {
+    fn as_feature(_data_type: &Bound<'_, PyAny>) -> Result<Feature, DataInterfaceError> {
         let feature = Feature::new("String".to_string(), vec![1], None);
         Ok(feature)
     }
 
-    fn validate(data_type: &Bound<'_, PyAny>) -> PyResult<bool> {
+    fn validate(data_type: &Bound<'_, PyAny>) -> Result<bool, DataInterfaceError> {
         let py = data_type.py();
 
         let string = py
@@ -370,12 +371,12 @@ impl PolarsString {
 pub struct Utf8 {}
 
 impl Utf8 {
-    fn as_feature(_data_type: &Bound<'_, PyAny>) -> PyResult<Feature> {
+    fn as_feature(_data_type: &Bound<'_, PyAny>) -> Result<Feature, DataInterfaceError> {
         let feature = Feature::new("Utf8".to_string(), vec![1], None);
         Ok(feature)
     }
 
-    fn validate(data_type: &Bound<'_, PyAny>) -> PyResult<bool> {
+    fn validate(data_type: &Bound<'_, PyAny>) -> Result<bool, DataInterfaceError> {
         let py = data_type.py();
 
         let string = py.import("polars")?.getattr("datatypes")?.getattr("Utf8")?;
@@ -389,12 +390,12 @@ impl Utf8 {
 pub struct Binary {}
 
 impl Binary {
-    fn as_feature(_data_type: &Bound<'_, PyAny>) -> PyResult<Feature> {
+    fn as_feature(_data_type: &Bound<'_, PyAny>) -> Result<Feature, DataInterfaceError> {
         let feature = Feature::new("Binary".to_string(), vec![1], None);
         Ok(feature)
     }
 
-    fn validate(data_type: &Bound<'_, PyAny>) -> PyResult<bool> {
+    fn validate(data_type: &Bound<'_, PyAny>) -> Result<bool, DataInterfaceError> {
         let py = data_type.py();
 
         let binary = py
@@ -411,12 +412,12 @@ impl Binary {
 pub struct Date {}
 
 impl Date {
-    fn as_feature(_data_type: &Bound<'_, PyAny>) -> PyResult<Feature> {
+    fn as_feature(_data_type: &Bound<'_, PyAny>) -> Result<Feature, DataInterfaceError> {
         let feature = Feature::new("Date".to_string(), vec![1], None);
         Ok(feature)
     }
 
-    fn validate(data_type: &Bound<'_, PyAny>) -> PyResult<bool> {
+    fn validate(data_type: &Bound<'_, PyAny>) -> Result<bool, DataInterfaceError> {
         let py = data_type.py();
 
         let date = py.import("polars")?.getattr("datatypes")?.getattr("Date")?;
@@ -430,7 +431,7 @@ impl Date {
 pub struct Time {}
 
 impl Time {
-    fn as_feature(_data_type: &Bound<'_, PyAny>) -> PyResult<Feature> {
+    fn as_feature(_data_type: &Bound<'_, PyAny>) -> Result<Feature, DataInterfaceError> {
         let feature = Feature::new("Time".to_string(), vec![1], None);
         Ok(feature)
     }
@@ -439,7 +440,7 @@ impl Time {
 pub struct DateTime {}
 
 impl DateTime {
-    fn as_feature(data_type: &Bound<'_, PyAny>) -> PyResult<Feature> {
+    fn as_feature(data_type: &Bound<'_, PyAny>) -> Result<Feature, DataInterfaceError> {
         let mut extra_args = HashMap::new();
 
         let time_unit = data_type
@@ -462,7 +463,7 @@ impl DateTime {
         Ok(feature)
     }
 
-    fn validate(data_type: &Bound<'_, PyAny>) -> PyResult<bool> {
+    fn validate(data_type: &Bound<'_, PyAny>) -> Result<bool, DataInterfaceError> {
         let py = data_type.py();
 
         let datetime = py
@@ -479,7 +480,7 @@ impl DateTime {
 pub struct Duration {}
 
 impl Duration {
-    fn as_feature(data_type: &Bound<'_, PyAny>) -> PyResult<Feature> {
+    fn as_feature(data_type: &Bound<'_, PyAny>) -> Result<Feature, DataInterfaceError> {
         let mut extra_args = HashMap::new();
 
         let time_unit = data_type
@@ -495,7 +496,7 @@ impl Duration {
         Ok(feature)
     }
 
-    fn validate(data_type: &Bound<'_, PyAny>) -> PyResult<bool> {
+    fn validate(data_type: &Bound<'_, PyAny>) -> Result<bool, DataInterfaceError> {
         let py = data_type.py();
 
         let duration = py
@@ -512,7 +513,7 @@ impl Duration {
 pub struct Categorical {}
 
 impl Categorical {
-    fn as_feature(data_type: &Bound<'_, PyAny>) -> PyResult<Feature> {
+    fn as_feature(data_type: &Bound<'_, PyAny>) -> Result<Feature, DataInterfaceError> {
         let mut extra_args = HashMap::new();
 
         let time_unit = data_type
@@ -528,7 +529,7 @@ impl Categorical {
         Ok(feature)
     }
 
-    fn validate(data_type: &Bound<'_, PyAny>) -> PyResult<bool> {
+    fn validate(data_type: &Bound<'_, PyAny>) -> Result<bool, DataInterfaceError> {
         let py = data_type.py();
 
         let categorical = py
@@ -545,7 +546,7 @@ impl Categorical {
 pub struct PolarsEnum {}
 
 impl PolarsEnum {
-    fn as_feature(data_type: &Bound<'_, PyAny>) -> PyResult<Feature> {
+    fn as_feature(data_type: &Bound<'_, PyAny>) -> Result<Feature, DataInterfaceError> {
         let mut extra_args = HashMap::new();
 
         let categories = data_type.getattr("categories")?;
@@ -559,7 +560,7 @@ impl PolarsEnum {
         Ok(feature)
     }
 
-    fn validate(data_type: &Bound<'_, PyAny>) -> PyResult<bool> {
+    fn validate(data_type: &Bound<'_, PyAny>) -> Result<bool, DataInterfaceError> {
         let py = data_type.py();
 
         let polars_enum = py.import("polars")?.getattr("datatypes")?.getattr("Enum")?;
@@ -573,7 +574,7 @@ impl PolarsEnum {
 pub struct List {}
 
 impl List {
-    fn as_feature(data_type: &Bound<'_, PyAny>) -> PyResult<Feature> {
+    fn as_feature(data_type: &Bound<'_, PyAny>) -> Result<Feature, DataInterfaceError> {
         let mut extra_args = HashMap::new();
 
         let inner = data_type.getattr("inner")?;
@@ -590,7 +591,7 @@ impl List {
         Ok(feature)
     }
 
-    fn validate(data_type: &Bound<'_, PyAny>) -> PyResult<bool> {
+    fn validate(data_type: &Bound<'_, PyAny>) -> Result<bool, DataInterfaceError> {
         let py = data_type.py();
 
         let list = py.import("polars")?.getattr("datatypes")?.getattr("List")?;
@@ -604,7 +605,7 @@ impl List {
 pub struct Array {}
 
 impl Array {
-    fn recursive_check_class(data_type: &Bound<'_, PyAny>) -> PyResult<String> {
+    fn recursive_check_class(data_type: &Bound<'_, PyAny>) -> Result<String, DataInterfaceError> {
         let inner = data_type.getattr("inner")?;
         let class_name = inner
             .getattr("__class__")?
@@ -618,7 +619,7 @@ impl Array {
         Ok(class_name)
     }
 
-    fn as_feature(data_type: &Bound<'_, PyAny>) -> PyResult<Feature> {
+    fn as_feature(data_type: &Bound<'_, PyAny>) -> Result<Feature, DataInterfaceError> {
         let mut extra_args = HashMap::new();
 
         let inner_class_name = Array::recursive_check_class(data_type)?;
@@ -637,7 +638,7 @@ impl Array {
         Ok(feature)
     }
 
-    fn validate(data_type: &Bound<'_, PyAny>) -> PyResult<bool> {
+    fn validate(data_type: &Bound<'_, PyAny>) -> Result<bool, DataInterfaceError> {
         let py = data_type.py();
 
         let array = py
@@ -654,11 +655,13 @@ impl Array {
 pub struct Struct {}
 
 impl Struct {
-    fn as_feature(data_type: &Bound<'_, PyAny>) -> PyResult<Feature> {
+    fn as_feature(data_type: &Bound<'_, PyAny>) -> Result<Feature, DataInterfaceError> {
         let mut extra_args = HashMap::new();
 
         let fields = data_type.getattr("fields")?;
-        let fields = fields.downcast::<PyList>()?;
+        let fields = fields
+            .downcast::<PyList>()
+            .map_err(|e| UtilError::DowncastError(e.to_string()))?;
 
         // iterate over fields and extract name and dtype
         for field in fields.iter() {
@@ -677,7 +680,7 @@ impl Struct {
         Ok(feature)
     }
 
-    fn validate(data_type: &Bound<'_, PyAny>) -> PyResult<bool> {
+    fn validate(data_type: &Bound<'_, PyAny>) -> Result<bool, DataInterfaceError> {
         let py = data_type.py();
 
         let struct_ = py
@@ -696,7 +699,7 @@ impl Struct {
 pub struct DefaultDataType {}
 
 impl DefaultDataType {
-    fn as_feature(data_type: &Bound<'_, PyAny>) -> PyResult<Feature> {
+    fn as_feature(data_type: &Bound<'_, PyAny>) -> Result<Feature, DataInterfaceError> {
         let feature = Feature::new(data_type.str().unwrap().to_string(), vec![1], None);
         Ok(feature)
     }
@@ -705,11 +708,15 @@ impl DefaultDataType {
 pub struct PolarsSchemaValidator {}
 
 impl PolarsSchemaValidator {
-    //pub fn get_polars_feature(value: &Bound<'_, PyAny>) -> PyResult<Feature> {}
+    //pub fn get_polars_feature(value: &Bound<'_, PyAny>) -> Result<Feature, DataInterfaceError> {}
 
-    pub fn generate_feature_map(data: &Bound<'_, PyAny>) -> PyResult<FeatureSchema> {
+    pub fn generate_feature_map(
+        data: &Bound<'_, PyAny>,
+    ) -> Result<FeatureSchema, DataInterfaceError> {
         let binding = data.as_ref().getattr("schema")?;
-        let schema_items = binding.downcast::<PyDict>()?;
+        let schema_items = binding
+            .downcast::<PyDict>()
+            .map_err(|e| UtilError::DowncastError(e.to_string()))?;
 
         let feature_map = schema_items
             .iter()
@@ -725,301 +732,176 @@ impl PolarsSchemaValidator {
                 let feature = match polars_type {
                     PolarsType::Int64 => {
                         if Int64::validate(&value)? {
-                            Int64::as_feature(&value).map_err(|e| {
-                                OpsmlError::new_err(format!(
-                                    "Error encountered converting polars type for feature: {}",
-                                    e
-                                ))
-                            })
+                            Int64::as_feature(&value)?
                         } else {
-                            return Err(OpsmlError::new_err("Invalid data type"));
+                            return Err(DataInterfaceError::InvalidDataType);
                         }
                     }
                     PolarsType::Int32 => {
                         if Int32::validate(&value)? {
-                            Int32::as_feature(&value).map_err(|e| {
-                                OpsmlError::new_err(format!(
-                                    "Error encountered converting polars type for feature: {}",
-                                    e
-                                ))
-                            })
+                            Int32::as_feature(&value)?
                         } else {
-                            return Err(OpsmlError::new_err("Invalid data type"));
+                            return Err(DataInterfaceError::InvalidDataType);
                         }
                     }
                     PolarsType::Int16 => {
                         if Int16::validate(&value)? {
-                            Int16::as_feature(&value).map_err(|e| {
-                                OpsmlError::new_err(format!(
-                                    "Error encountered converting polars type for feature: {}",
-                                    e
-                                ))
-                            })
+                            Int16::as_feature(&value)?
                         } else {
-                            return Err(OpsmlError::new_err("Invalid data type"));
+                            return Err(DataInterfaceError::InvalidDataType);
                         }
                     }
                     PolarsType::Int8 => {
                         if Int8::validate(&value)? {
-                            Int8::as_feature(&value).map_err(|e| {
-                                OpsmlError::new_err(format!(
-                                    "Error encountered converting polars type for feature: {}",
-                                    e
-                                ))
-                            })
+                            Int8::as_feature(&value)?
                         } else {
-                            return Err(OpsmlError::new_err("Invalid data type"));
+                            return Err(DataInterfaceError::InvalidDataType);
                         }
                     }
                     PolarsType::UInt64 => {
                         if UInt64::validate(&value)? {
-                            UInt64::as_feature(&value).map_err(|e| {
-                                OpsmlError::new_err(format!(
-                                    "Error encountered converting polars type for feature: {}",
-                                    e
-                                ))
-                            })
+                            UInt64::as_feature(&value)?
                         } else {
-                            return Err(OpsmlError::new_err("Invalid data type"));
+                            return Err(DataInterfaceError::InvalidDataType);
                         }
                     }
                     PolarsType::UInt32 => {
                         if UInt32::validate(&value)? {
-                            UInt32::as_feature(&value).map_err(|e| {
-                                OpsmlError::new_err(format!(
-                                    "Error encountered converting polars type for feature: {}",
-                                    e
-                                ))
-                            })
+                            UInt32::as_feature(&value)?
                         } else {
-                            return Err(OpsmlError::new_err("Invalid data type"));
+                            return Err(DataInterfaceError::InvalidDataType);
                         }
                     }
                     PolarsType::UInt16 => {
                         if UInt16::validate(&value)? {
-                            UInt16::as_feature(&value).map_err(|e| {
-                                OpsmlError::new_err(format!(
-                                    "Error encountered converting polars type for feature: {}",
-                                    e
-                                ))
-                            })
+                            UInt16::as_feature(&value)?
                         } else {
-                            return Err(OpsmlError::new_err("Invalid data type"));
+                            return Err(DataInterfaceError::InvalidDataType);
                         }
                     }
                     PolarsType::UInt8 => {
                         if UInt8::validate(&value)? {
-                            UInt8::as_feature(&value).map_err(|e| {
-                                OpsmlError::new_err(format!(
-                                    "Error encountered converting polars type for feature: {}",
-                                    e
-                                ))
-                            })
+                            UInt8::as_feature(&value)?
                         } else {
-                            return Err(OpsmlError::new_err("Invalid data type"));
+                            return Err(DataInterfaceError::InvalidDataType);
                         }
                     }
                     PolarsType::Float32 => {
                         if Float32::validate(&value)? {
-                            Float32::as_feature(&value).map_err(|e| {
-                                OpsmlError::new_err(format!(
-                                    "Error encountered converting polars type for feature: {}",
-                                    e
-                                ))
-                            })
+                            Float32::as_feature(&value)?
                         } else {
-                            return Err(OpsmlError::new_err("Invalid data type"));
+                            return Err(DataInterfaceError::InvalidDataType);
                         }
                     }
                     PolarsType::Float64 => {
                         if Float64::validate(&value)? {
-                            Float64::as_feature(&value).map_err(|e| {
-                                OpsmlError::new_err(format!(
-                                    "Error encountered converting polars type for feature: {}",
-                                    e
-                                ))
-                            })
+                            Float64::as_feature(&value)?
                         } else {
-                            return Err(OpsmlError::new_err("Invalid data type"));
+                            return Err(DataInterfaceError::InvalidDataType);
                         }
                     }
                     PolarsType::Decimal => {
                         if Decimal::validate(&value)? {
-                            Decimal::as_feature(&value).map_err(|e| {
-                                OpsmlError::new_err(format!(
-                                    "Error encountered converting polars type for feature: {}",
-                                    e
-                                ))
-                            })
+                            Decimal::as_feature(&value)?
                         } else {
-                            return Err(OpsmlError::new_err("Invalid data type"));
+                            return Err(DataInterfaceError::InvalidDataType);
                         }
                     }
                     PolarsType::Boolean => {
                         if Boolean::validate(&value)? {
-                            Boolean::as_feature(&value).map_err(|e| {
-                                OpsmlError::new_err(format!(
-                                    "Error encountered converting polars type for feature: {}",
-                                    e
-                                ))
-                            })
+                            Boolean::as_feature(&value)?
                         } else {
-                            return Err(OpsmlError::new_err("Invalid data type"));
+                            return Err(DataInterfaceError::InvalidDataType);
                         }
                     }
                     PolarsType::PolarsString => {
                         if PolarsString::validate(&value)? {
-                            PolarsString::as_feature(&value).map_err(|e| {
-                                OpsmlError::new_err(format!(
-                                    "Error encountered converting polars type for feature: {}",
-                                    e
-                                ))
-                            })
+                            PolarsString::as_feature(&value)?
                         } else {
-                            return Err(OpsmlError::new_err("Invalid data type"));
+                            return Err(DataInterfaceError::InvalidDataType);
                         }
                     }
                     PolarsType::Utf8 => {
                         if Utf8::validate(&value)? {
-                            Utf8::as_feature(&value).map_err(|e| {
-                                OpsmlError::new_err(format!(
-                                    "Error encountered converting polars type for feature: {}",
-                                    e
-                                ))
-                            })
+                            Utf8::as_feature(&value)?
                         } else {
-                            return Err(OpsmlError::new_err("Invalid data type"));
+                            return Err(DataInterfaceError::InvalidDataType);
                         }
                     }
                     PolarsType::Binary => {
                         if Binary::validate(&value)? {
-                            Binary::as_feature(&value).map_err(|e| {
-                                OpsmlError::new_err(format!(
-                                    "Error encountered converting polars type for feature: {}",
-                                    e
-                                ))
-                            })
+                            Binary::as_feature(&value)?
                         } else {
-                            return Err(OpsmlError::new_err("Invalid data type"));
+                            return Err(DataInterfaceError::InvalidDataType);
                         }
                     }
                     PolarsType::Date => {
                         if Date::validate(&value)? {
-                            Date::as_feature(&value).map_err(|e| {
-                                OpsmlError::new_err(format!(
-                                    "Error encountered converting polars type for feature: {}",
-                                    e
-                                ))
-                            })
+                            Date::as_feature(&value)?
                         } else {
-                            return Err(OpsmlError::new_err("Invalid data type"));
+                            return Err(DataInterfaceError::InvalidDataType);
                         }
                     }
                     PolarsType::Time => {
                         // the underlying data type in polars does not work as expected.
                         // We only validate based on the Time __repr__ and enum
-                        Time::as_feature(&value).map_err(|e| {
-                            OpsmlError::new_err(format!(
-                                "Error encountered converting polars type for feature: {}",
-                                e
-                            ))
-                        })
+                        Time::as_feature(&value)?
                     }
                     PolarsType::DateTime => {
                         if DateTime::validate(&value)? {
-                            DateTime::as_feature(&value).map_err(|e| {
-                                OpsmlError::new_err(format!(
-                                    "Error encountered converting polars type for feature: {}",
-                                    e
-                                ))
-                            })
+                            DateTime::as_feature(&value)?
                         } else {
-                            return Err(OpsmlError::new_err("Invalid data type"));
+                            return Err(DataInterfaceError::InvalidDataType);
                         }
                     }
                     PolarsType::Duration => {
                         if Duration::validate(&value)? {
-                            Duration::as_feature(&value).map_err(|e| {
-                                OpsmlError::new_err(format!(
-                                    "Error encountered converting polars type for feature: {}",
-                                    e
-                                ))
-                            })
+                            Duration::as_feature(&value)?
                         } else {
-                            return Err(OpsmlError::new_err("Invalid data type"));
+                            return Err(DataInterfaceError::InvalidDataType);
                         }
                     }
                     PolarsType::Categorical => {
                         if Categorical::validate(&value)? {
-                            Categorical::as_feature(&value).map_err(|e| {
-                                OpsmlError::new_err(format!(
-                                    "Error encountered converting polars type for feature: {}",
-                                    e
-                                ))
-                            })
+                            Categorical::as_feature(&value)?
                         } else {
-                            return Err(OpsmlError::new_err("Invalid data type"));
+                            return Err(DataInterfaceError::InvalidDataType);
                         }
                     }
                     PolarsType::Enum => {
                         if PolarsEnum::validate(&value)? {
-                            PolarsEnum::as_feature(&value).map_err(|e| {
-                                OpsmlError::new_err(format!(
-                                    "Error encountered converting polars type for feature: {}",
-                                    e
-                                ))
-                            })
+                            PolarsEnum::as_feature(&value)?
                         } else {
-                            return Err(OpsmlError::new_err("Invalid data type"));
+                            return Err(DataInterfaceError::InvalidDataType);
                         }
                     }
                     PolarsType::List => {
                         if List::validate(&value)? {
-                            List::as_feature(&value).map_err(|e| {
-                                OpsmlError::new_err(format!(
-                                    "Error encountered converting polars type for feature: {}",
-                                    e
-                                ))
-                            })
+                            List::as_feature(&value)?
                         } else {
-                            return Err(OpsmlError::new_err("Invalid data type"));
+                            return Err(DataInterfaceError::InvalidDataType);
                         }
                     }
                     PolarsType::Array => {
                         if Array::validate(&value)? {
-                            Array::as_feature(&value).map_err(|e| {
-                                OpsmlError::new_err(format!(
-                                    "Error encountered converting polars type for feature: {}",
-                                    e
-                                ))
-                            })
+                            Array::as_feature(&value)?
                         } else {
-                            return Err(OpsmlError::new_err("Invalid data type"));
+                            return Err(DataInterfaceError::InvalidDataType);
                         }
                     }
                     PolarsType::Struct => {
                         if Struct::validate(&value)? {
-                            Struct::as_feature(&value).map_err(|e| {
-                                OpsmlError::new_err(format!(
-                                    "Error encountered converting polars type for feature: {}",
-                                    e
-                                ))
-                            })
+                            Struct::as_feature(&value)?
                         } else {
-                            return Err(OpsmlError::new_err("Invalid data type"));
+                            return Err(DataInterfaceError::InvalidDataType);
                         }
                     }
-                    _ => DefaultDataType::as_feature(&value).map_err(|e| {
-                        OpsmlError::new_err(format!(
-                            "Error encountered converting polars type for feature: {}",
-                            e
-                        ))
-                    }),
+                    _ => DefaultDataType::as_feature(&value)?,
                 };
 
-                Ok((feature_name, feature?))
+                Ok((feature_name, feature))
             })
-            .collect::<Result<FeatureSchema, PyErr>>()?;
+            .collect::<Result<FeatureSchema, DataInterfaceError>>()?;
 
         Ok(feature_map)
     }
