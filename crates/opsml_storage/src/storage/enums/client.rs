@@ -5,9 +5,9 @@ use crate::storage::local::client::{LocalFSStorageClient, LocalMultiPartUpload};
 
 use crate::storage::aws::client::{AWSMulitPartUpload, S3FStorageClient};
 use crate::storage::azure::client::{AzureFSStorageClient, AzureMultipartUpload};
+use crate::storage::error::StorageError;
 use crate::storage::gcs::client::{GCSFSStorageClient, GoogleMultipartUpload};
 use anyhow::{Context, Result as AnyhowResult};
-use opsml_error::error::StorageError;
 use opsml_settings::config::{OpsmlConfig, OpsmlStorageSettings};
 use opsml_types::contracts::CompleteMultipartUpload;
 use opsml_types::contracts::FileInfo;
