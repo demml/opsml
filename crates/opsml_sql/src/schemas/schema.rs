@@ -1,6 +1,6 @@
+use crate::error::SqlError;
 use chrono::{DateTime, Utc};
-use opsml_error::error::VersionError;
-use opsml_error::{ServerError, SqlError};
+use opsml_semver::error::VersionError;
 use opsml_types::cards::{CardTable, ParameterValue};
 use opsml_types::contracts::{
     AuditCardClientRecord, CardDeckClientRecord, CardEntry, CardRecord, DataCardClientRecord,
@@ -101,17 +101,17 @@ pub struct VersionResult {
 }
 
 impl VersionResult {
-    pub fn to_version(&self) -> Result<Version, VersionError> {
+    pub fn to_version(&self) -> Result<Version, SqlError> {
         let mut version = Version::new(self.major as u64, self.minor as u64, self.patch as u64);
 
         if self.pre_tag.is_some() {
             version.pre = Prerelease::new(self.pre_tag.as_ref().unwrap())
-                .map_err(|e| VersionError::InvalidPreRelease(format!("{}", e)))?;
+                .map_err(VersionError::InvalidVersion)?;
         }
 
         if self.build_tag.is_some() {
             version.build = BuildMetadata::new(self.build_tag.as_ref().unwrap())
-                .map_err(|e| VersionError::InvalidBuild(format!("{}", e)))?;
+                .map_err(VersionError::InvalidVersion)?;
         }
 
         Ok(version)
@@ -223,9 +223,7 @@ impl DataCardRecord {
     }
 
     pub fn from_client_card(client_card: DataCardClientRecord) -> Result<Self, SqlError> {
-        let version = Version::parse(&client_card.version).map_err(|_| {
-            SqlError::GeneralError(format!("Failed to parse version: {}", client_card.version))
-        })?;
+        let version = Version::parse(&client_card.version).map_err(VersionError::InvalidVersion)?;
         Ok(DataCardRecord {
             uid: client_card.uid,
             created_at: client_card.created_at,
@@ -356,9 +354,7 @@ impl ModelCardRecord {
     }
 
     pub fn from_client_card(client_card: ModelCardClientRecord) -> Result<Self, SqlError> {
-        let version = Version::parse(&client_card.version).map_err(|_| {
-            SqlError::GeneralError(format!("Failed to parse version: {}", client_card.version))
-        })?;
+        let version = Version::parse(&client_card.version).map_err(VersionError::InvalidVersion)?;
 
         Ok(ModelCardRecord {
             uid: client_card.uid,
@@ -516,9 +512,7 @@ impl ExperimentCardRecord {
     }
 
     pub fn from_client_card(client_card: ExperimentCardClientRecord) -> Result<Self, SqlError> {
-        let version = Version::parse(&client_card.version).map_err(|_| {
-            SqlError::GeneralError(format!("Failed to parse version: {}", client_card.version))
-        })?;
+        let version = Version::parse(&client_card.version).map_err(VersionError::InvalidVersion)?;
 
         Ok(ExperimentCardRecord {
             uid: client_card.uid,
@@ -617,9 +611,7 @@ impl AuditCardRecord {
     }
 
     pub fn from_client_card(client_card: AuditCardClientRecord) -> Result<Self, SqlError> {
-        let version = Version::parse(&client_card.version).map_err(|_| {
-            SqlError::GeneralError(format!("Failed to parse version: {}", client_card.version))
-        })?;
+        let version = Version::parse(&client_card.version).map_err(VersionError::InvalidVersion)?;
         Ok(AuditCardRecord {
             uid: client_card.uid,
             created_at: client_card.created_at,
@@ -735,9 +727,7 @@ impl PromptCardRecord {
     }
 
     pub fn from_client_card(client_card: PromptCardClientRecord) -> Result<Self, SqlError> {
-        let version = Version::parse(&client_card.version).map_err(|_| {
-            SqlError::GeneralError(format!("Failed to parse version: {}", client_card.version))
-        })?;
+        let version = Version::parse(&client_card.version).map_err(VersionError::InvalidVersion)?;
 
         Ok(PromptCardRecord {
             uid: client_card.uid,
@@ -843,9 +833,7 @@ impl CardDeckRecord {
     }
 
     pub fn from_client_card(client_card: CardDeckClientRecord) -> Result<Self, SqlError> {
-        let version = Version::parse(&client_card.version).map_err(|_| {
-            SqlError::GeneralError(format!("Failed to parse version: {}", client_card.version))
-        })?;
+        let version = Version::parse(&client_card.version).map_err(VersionError::InvalidVersion)?;
 
         Ok(CardDeckRecord {
             uid: client_card.uid,
@@ -1053,7 +1041,7 @@ impl ServerCard {
     ///
     /// # Arguments
     /// * `card` - A `Card` enum variant.
-    pub fn from_card(card: CardRecord) -> Result<Self, ServerError> {
+    pub fn from_card(card: CardRecord) -> Result<Self, SqlError> {
         match card {
             CardRecord::Data(card) => Ok(ServerCard::Data(DataCardRecord::from_client_card(card)?)),
             CardRecord::Model(card) => {
