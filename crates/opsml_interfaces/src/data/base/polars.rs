@@ -3,8 +3,8 @@ use crate::data::{
     DataInterfaceMetadata, DataInterfaceSaveMetadata, DataLoadKwargs, DataSaveKwargs, DataSplit,
     DataSplits, DependentVars, SqlLogic,
 };
+use crate::error::DataInterfaceError;
 use crate::types::FeatureSchema;
-use opsml_error::OpsmlError;
 use opsml_types::{DataInterfaceType, DataType, SaveName, Suffix};
 use pyo3::prelude::*;
 use pyo3::types::{PyDict, PyList};
@@ -42,7 +42,7 @@ impl PolarsData {
         feature_map: Option<FeatureSchema>,
         sql_logic: Option<SqlLogic>,
         data_profile: Option<DataProfile>,
-    ) -> PyResult<(Self, DataInterface)> {
+    ) -> Result<(Self, DataInterface), DataInterfaceError> {
         // check if data is a numpy array
         let data = match data {
             Some(data) => {
@@ -54,7 +54,7 @@ impl PolarsData {
                 if data.is_instance(&polars_data_frame).unwrap() {
                     Some(data.into_py_any(py)?)
                 } else {
-                    return Err(OpsmlError::new_err("Data must be a polars.DataFrame"));
+                    return Err(DataInterfaceError::PolarsTypeError);
                 }
             }
             None => None,
@@ -82,7 +82,7 @@ impl PolarsData {
 
     #[setter]
     #[allow(clippy::needless_lifetimes)]
-    pub fn set_data(&mut self, data: &Bound<'_, PyAny>) -> PyResult<()> {
+    pub fn set_data(&mut self, data: &Bound<'_, PyAny>) -> Result<(), DataInterfaceError> {
         let py = data.py();
 
         // check if data is None
@@ -99,13 +99,16 @@ impl PolarsData {
                 self.data = Some(data.into_py_any(py)?);
                 Ok(())
             } else {
-                Err(OpsmlError::new_err("Data must be a polars dataframe"))
+                Err(DataInterfaceError::PolarsTypeError)
             }
         }
     }
 
     #[setter]
-    pub fn set_data_splits(&mut self, data_splits: &Bound<'_, PyAny>) -> PyResult<()> {
+    pub fn set_data_splits(
+        &mut self,
+        data_splits: &Bound<'_, PyAny>,
+    ) -> Result<(), DataInterfaceError> {
         // check if data_splits is None
         if PyAnyMethods::is_none(data_splits) {
             self.data_splits = DataSplits::default();
@@ -126,7 +129,10 @@ impl PolarsData {
     }
 
     #[setter]
-    pub fn set_dependent_vars(&mut self, dependent_vars: &Bound<'_, PyAny>) -> PyResult<()> {
+    pub fn set_dependent_vars(
+        &mut self,
+        dependent_vars: &Bound<'_, PyAny>,
+    ) -> Result<(), DataInterfaceError> {
         // check if dependent_vars is None
         if PyAnyMethods::is_none(dependent_vars) {
             self.dependent_vars = DependentVars::default();
@@ -154,18 +160,14 @@ impl PolarsData {
         Ok(())
     }
 
-    pub fn split_data(&mut self, py: Python) -> PyResult<HashMap<String, Data>> {
+    pub fn split_data(&mut self, py: Python) -> Result<HashMap<String, Data>, DataInterfaceError> {
         // check if data is None
         if self.data.is_none() {
-            return Err(OpsmlError::new_err(
-                "No data detected in interface for saving",
-            ));
+            return Err(DataInterfaceError::MissingDataError);
         }
 
         if self.data_splits.is_empty() {
-            return Err(OpsmlError::new_err(
-                "No data splits detected in interface for splitting",
-            ));
+            return Err(DataInterfaceError::MissingDataSplitsError);
         }
 
         let dependent_vars = self.dependent_vars.clone();
@@ -183,7 +185,7 @@ impl PolarsData {
         py: Python,
         path: PathBuf,
         save_kwargs: Option<DataSaveKwargs>,
-    ) -> PyResult<DataInterfaceMetadata> {
+    ) -> Result<DataInterfaceMetadata, DataInterfaceError> {
         let data_kwargs = save_kwargs
             .as_ref()
             .and_then(|args| args.data_kwargs(py))
@@ -220,7 +222,7 @@ impl PolarsData {
         path: PathBuf,
         metadata: DataInterfaceSaveMetadata,
         load_kwargs: Option<DataLoadKwargs>,
-    ) -> PyResult<()> {
+    ) -> Result<(), DataInterfaceError> {
         let load_path = path.join(metadata.data_uri);
         let load_kwargs = load_kwargs.unwrap_or_default();
 
@@ -240,7 +242,7 @@ impl PolarsData {
         py: Python,
         bin_size: Option<usize>,
         compute_correlations: Option<bool>,
-    ) -> PyResult<DataProfile> {
+    ) -> Result<DataProfile, DataInterfaceError> {
         let mut profiler = DataProfiler::new();
 
         // get ScouterDataType from opsml DataType
@@ -250,7 +252,7 @@ impl PolarsData {
             DataType::Pandas => Some(&scouter_client::DataType::Pandas),
             DataType::Polars => Some(&scouter_client::DataType::Polars),
             DataType::Arrow => Some(&scouter_client::DataType::Arrow),
-            _ => Err(OpsmlError::new_err("Data type not supported for profiling"))?,
+            _ => Err(DataInterfaceError::DataTypeNotSupportedForProfilingError)?,
         };
 
         let profile = profiler.create_data_profile(
@@ -282,7 +284,7 @@ impl PolarsData {
     pub fn from_metadata<'py>(
         py: Python<'py>,
         metadata: &DataInterfaceMetadata,
-    ) -> PyResult<Bound<'py, PyAny>> {
+    ) -> Result<Bound<'py, PyAny>, DataInterfaceError> {
         let interface = DataInterface {
             data_type: metadata.data_type.clone(),
             interface_type: metadata.interface_type.clone(),
@@ -301,7 +303,7 @@ impl PolarsData {
             data_type: metadata.data_type.clone(),
         };
 
-        Py::new(py, (data_interface, interface))?.into_bound_py_any(py)
+        Ok(Py::new(py, (data_interface, interface))?.into_bound_py_any(py)?)
     }
 
     pub fn save_data(
@@ -309,29 +311,30 @@ impl PolarsData {
         py: Python,
         path: PathBuf,
         kwargs: Option<&Bound<'_, PyDict>>,
-    ) -> PyResult<PathBuf> {
+    ) -> Result<PathBuf, DataInterfaceError> {
         // check if data is None
 
         if self.data.is_none() {
-            return Err(OpsmlError::new_err(
-                "No data detected in interface for saving",
-            ));
+            return Err(DataInterfaceError::MissingDataError);
         }
 
         let save_path = PathBuf::from(SaveName::Data).with_extension(Suffix::Parquet);
         let full_save_path = path.join(&save_path);
 
-        let _ = self
-            .data
-            .as_ref()
-            .unwrap()
-            .call_method(py, "write_parquet", (full_save_path,), kwargs)
-            .map_err(|e| OpsmlError::new_err(e.to_string()))?;
+        let _ = self.data.as_ref().unwrap().call_method(
+            py,
+            "write_parquet",
+            (full_save_path,),
+            kwargs,
+        )?;
 
         Ok(save_path)
     }
 
-    pub fn create_feature_schema(&mut self, py: Python) -> PyResult<FeatureSchema> {
+    pub fn create_feature_schema(
+        &mut self,
+        py: Python,
+    ) -> Result<FeatureSchema, DataInterfaceError> {
         // Create and insert the feature
         let feature_map =
             generate_feature_schema(self.data.as_ref().unwrap().bind(py), &DataType::Polars)?;
@@ -343,7 +346,7 @@ impl PolarsData {
         py: Python,
         path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
-    ) -> PyResult<PyObject> {
+    ) -> Result<PyObject, DataInterfaceError> {
         let polars = PyModule::import(py, "polars")?;
 
         // Load the data using polars
