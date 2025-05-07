@@ -4061,10 +4061,10 @@ dependencies = [
 name = "opsml-semver"
 version = "3.0.0-rc.1"
 dependencies = [
- "opsml-error",
  "pyo3",
  "semver",
  "serde",
+ "thiserror 2.0.12",
 ]
 
 [[package]]
@@ -4135,7 +4135,6 @@ dependencies = [
  "anyhow",
  "async-trait",
  "chrono",
- "opsml-error",
  "opsml-semver",
  "opsml-settings",
  "opsml-types",
@@ -4145,6 +4144,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sqlx",
+ "thiserror 2.0.12",
  "tokio",
  "tracing",
  "uuid",
@@ -4222,11 +4222,11 @@ dependencies = [
 name = "opsml-toml"
 version = "3.0.0-rc.1"
 dependencies = [
- "opsml-error",
  "opsml-types",
  "opsml-version",
  "serde",
  "tempfile",
+ "thiserror 2.0.12",
  "toml_edit",
 ]
 

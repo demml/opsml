@@ -1,4 +1,5 @@
 use crate::base::SqlClient;
+use crate::error::SqlError;
 use crate::mysql::helper::MySQLQueryHelper;
 use crate::schemas::schema::{
     AuditCardRecord, CardDeckRecord, CardSummary, DataCardRecord, ExperimentCardRecord,
@@ -7,7 +8,6 @@ use crate::schemas::schema::{
 };
 use crate::schemas::schema::{CardResults, VersionResult};
 use async_trait::async_trait;
-use opsml_error::error::SqlError;
 use opsml_semver::VersionValidator;
 use opsml_settings::config::DatabaseSettings;
 use opsml_types::{
@@ -68,7 +68,7 @@ impl SqlClient for MySqlClient {
             .max_connections(settings.max_connections)
             .connect(&settings.connection_uri)
             .await
-            .map_err(|e| SqlError::ConnectionError(format!("{}", e)))?;
+            .map_err(SqlError::ConnectionError)?;
 
         let client = Self { pool };
 
@@ -82,7 +82,7 @@ impl SqlClient for MySqlClient {
         sqlx::migrate!("src/mysql/migrations")
             .run(&self.pool)
             .await
-            .map_err(|e| SqlError::MigrationError(format!("{}", e)))?;
+            .map_err(SqlError::MigrationError)?;
 
         Ok(())
     }
@@ -102,8 +102,7 @@ impl SqlClient for MySqlClient {
         let exists: Option<String> = sqlx::query_scalar(&query)
             .bind(uid)
             .fetch_optional(&self.pool)
-            .await
-            .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+            .await?;
 
         Ok(exists.is_some())
     }
@@ -132,8 +131,7 @@ impl SqlClient for MySqlClient {
             .bind(name)
             .bind(space)
             .fetch_all(&self.pool)
-            .await
-            .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+            .await?;
 
         let versions = cards
             .iter()

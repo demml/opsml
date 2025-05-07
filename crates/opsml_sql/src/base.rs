@@ -1,9 +1,9 @@
+use crate::error::SqlError;
 use crate::schemas::schema::{
     CardResults, CardSummary, HardwareMetricsRecord, MetricRecord, ParameterRecord, QueryStats,
     ServerCard, User, VersionSummary,
 };
 use async_trait::async_trait;
-use opsml_error::error::SqlError;
 use opsml_semver::VersionParser;
 use opsml_settings::config::DatabaseSettings;
 use opsml_types::{
