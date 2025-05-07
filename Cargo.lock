@@ -4157,11 +4157,11 @@ version = "3.0.0-rc.1"
 dependencies = [
  "futures",
  "opsml-client",
- "opsml-error",
  "opsml-settings",
  "opsml-toml",
  "opsml-types",
  "opsml-utils",
+ "thiserror 2.0.12",
  "tokio",
  "tracing",
 ]
@@ -4187,7 +4187,6 @@ dependencies = [
  "mockito",
  "opsml-client",
  "opsml-colors",
- "opsml-error",
  "opsml-settings",
  "opsml-state",
  "opsml-types",
@@ -4199,6 +4198,7 @@ dependencies = [
  "serde_json",
  "serde_qs 0.15.0",
  "tempfile",
+ "thiserror 2.0.12",
  "time",
  "tokio",
  "tokio-util",
