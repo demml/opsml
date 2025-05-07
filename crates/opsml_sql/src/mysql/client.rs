@@ -135,15 +135,11 @@ impl SqlClient for MySqlClient {
 
         let versions = cards
             .iter()
-            .map(|c| {
-                c.to_version()
-                    .map_err(|e| SqlError::VersionError(format!("{}", e)))
-            })
+            .map(|c| c.to_version())
             .collect::<Result<Vec<Version>, SqlError>>()?;
 
         // sort semvers
-        VersionValidator::sort_semver_versions(versions, true)
-            .map_err(|e| SqlError::VersionError(format!("{}", e)))
+        Ok(VersionValidator::sort_semver_versions(versions, true)?)
     }
 
     /// Query cards based on the query arguments
@@ -176,8 +172,7 @@ impl SqlClient for MySqlClient {
                     .bind(query_args.max_date.as_ref())
                     .bind(query_args.limit.unwrap_or(50))
                     .fetch_all(&self.pool)
-                    .await
-                    .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+                    .await?;
 
                 return Ok(CardResults::Data(card));
             }
@@ -193,8 +188,7 @@ impl SqlClient for MySqlClient {
                     .bind(query_args.max_date.as_ref())
                     .bind(query_args.limit.unwrap_or(50))
                     .fetch_all(&self.pool)
-                    .await
-                    .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+                    .await?;
 
                 return Ok(CardResults::Model(card));
             }
@@ -210,8 +204,7 @@ impl SqlClient for MySqlClient {
                     .bind(query_args.max_date.as_ref())
                     .bind(query_args.limit.unwrap_or(50))
                     .fetch_all(&self.pool)
-                    .await
-                    .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+                    .await?;
 
                 return Ok(CardResults::Experiment(card));
             }
@@ -228,8 +221,7 @@ impl SqlClient for MySqlClient {
                     .bind(query_args.max_date.as_ref())
                     .bind(query_args.limit.unwrap_or(50))
                     .fetch_all(&self.pool)
-                    .await
-                    .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+                    .await?;
 
                 return Ok(CardResults::Audit(card));
             }
@@ -246,8 +238,7 @@ impl SqlClient for MySqlClient {
                     .bind(query_args.max_date.as_ref())
                     .bind(query_args.limit.unwrap_or(50))
                     .fetch_all(&self.pool)
-                    .await
-                    .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+                    .await?;
 
                 return Ok(CardResults::Prompt(card));
             }
@@ -264,16 +255,13 @@ impl SqlClient for MySqlClient {
                     .bind(query_args.max_date.as_ref())
                     .bind(query_args.limit.unwrap_or(50))
                     .fetch_all(&self.pool)
-                    .await
-                    .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+                    .await?;
 
                 return Ok(CardResults::Deck(card));
             }
 
             _ => {
-                return Err(SqlError::QueryError(
-                    "Invalid table name for query".to_string(),
-                ));
+                return Err(SqlError::InvalidTableName);
             }
         }
     }
@@ -302,14 +290,11 @@ impl SqlClient for MySqlClient {
                         .bind(&record.username)
                         .bind(&record.opsml_version)
                         .execute(&self.pool)
-                        .await
-                        .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+                        .await?;
                     Ok(())
                 }
                 _ => {
-                    return Err(SqlError::QueryError(
-                        "Invalid card type for insert".to_string(),
-                    ));
+                    return Err(SqlError::InvalidCardType);
                 }
             },
             CardTable::Model => match card {
@@ -337,14 +322,11 @@ impl SqlClient for MySqlClient {
                         .bind(&record.username)
                         .bind(&record.opsml_version)
                         .execute(&self.pool)
-                        .await
-                        .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+                        .await?;
                     Ok(())
                 }
                 _ => {
-                    return Err(SqlError::QueryError(
-                        "Invalid card type for insert".to_string(),
-                    ));
+                    return Err(SqlError::InvalidCardType);
                 }
             },
             CardTable::Experiment => match card {
@@ -370,14 +352,11 @@ impl SqlClient for MySqlClient {
                         .bind(&record.username)
                         .bind(&record.opsml_version)
                         .execute(&self.pool)
-                        .await
-                        .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+                        .await?;
                     Ok(())
                 }
                 _ => {
-                    return Err(SqlError::QueryError(
-                        "Invalid card type for insert".to_string(),
-                    ));
+                    return Err(SqlError::InvalidCardType);
                 }
             },
             CardTable::Audit => match card {
@@ -402,14 +381,11 @@ impl SqlClient for MySqlClient {
                         .bind(&record.username)
                         .bind(&record.opsml_version)
                         .execute(&self.pool)
-                        .await
-                        .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+                        .await?;
                     Ok(())
                 }
                 _ => {
-                    return Err(SqlError::QueryError(
-                        "Invalid card type for insert".to_string(),
-                    ));
+                    return Err(SqlError::InvalidCardType);
                 }
             },
 
@@ -433,15 +409,12 @@ impl SqlClient for MySqlClient {
                         .bind(&record.username)
                         .bind(&record.opsml_version)
                         .execute(&self.pool)
-                        .await
-                        .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+                        .await?;
                     Ok(())
                 }
 
                 _ => {
-                    return Err(SqlError::QueryError(
-                        "Invalid card type for insert".to_string(),
-                    ));
+                    return Err(SqlError::InvalidCardType);
                 }
             },
 
@@ -463,21 +436,16 @@ impl SqlClient for MySqlClient {
                         .bind(&record.username)
                         .bind(&record.opsml_version)
                         .execute(&self.pool)
-                        .await
-                        .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+                        .await?;
                     Ok(())
                 }
                 _ => {
-                    return Err(SqlError::QueryError(
-                        "Invalid card type for insert".to_string(),
-                    ));
+                    return Err(SqlError::InvalidCardType);
                 }
             },
 
             _ => {
-                return Err(SqlError::QueryError(
-                    "Invalid table name for insert".to_string(),
-                ));
+                return Err(SqlError::InvalidTableName);
             }
         }
     }
@@ -506,14 +474,11 @@ impl SqlClient for MySqlClient {
                         .bind(&record.opsml_version)
                         .bind(&record.uid)
                         .execute(&self.pool)
-                        .await
-                        .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+                        .await?;
                     Ok(())
                 }
                 _ => {
-                    return Err(SqlError::QueryError(
-                        "Invalid card type for insert".to_string(),
-                    ));
+                    return Err(SqlError::InvalidCardType);
                 }
             },
             CardTable::Model => match card {
@@ -541,14 +506,11 @@ impl SqlClient for MySqlClient {
                         .bind(&record.opsml_version)
                         .bind(&record.uid)
                         .execute(&self.pool)
-                        .await
-                        .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+                        .await?;
                     Ok(())
                 }
                 _ => {
-                    return Err(SqlError::QueryError(
-                        "Invalid card type for insert".to_string(),
-                    ));
+                    return Err(SqlError::InvalidCardType);
                 }
             },
             CardTable::Experiment => match card {
@@ -574,14 +536,11 @@ impl SqlClient for MySqlClient {
                         .bind(&record.opsml_version)
                         .bind(&record.uid)
                         .execute(&self.pool)
-                        .await
-                        .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+                        .await?;
                     Ok(())
                 }
                 _ => {
-                    return Err(SqlError::QueryError(
-                        "Invalid card type for insert".to_string(),
-                    ));
+                    return Err(SqlError::InvalidCardType);
                 }
             },
             CardTable::Audit => match card {
@@ -606,14 +565,11 @@ impl SqlClient for MySqlClient {
                         .bind(&record.opsml_version)
                         .bind(&record.uid)
                         .execute(&self.pool)
-                        .await
-                        .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+                        .await?;
                     Ok(())
                 }
                 _ => {
-                    return Err(SqlError::QueryError(
-                        "Invalid card type for insert".to_string(),
-                    ));
+                    return Err(SqlError::InvalidCardType);
                 }
             },
 
@@ -637,15 +593,12 @@ impl SqlClient for MySqlClient {
                         .bind(&record.opsml_version)
                         .bind(&record.uid)
                         .execute(&self.pool)
-                        .await
-                        .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+                        .await?;
                     Ok(())
                 }
 
                 _ => {
-                    return Err(SqlError::QueryError(
-                        "Invalid card type for insert".to_string(),
-                    ));
+                    return Err(SqlError::InvalidCardType);
                 }
             },
 
@@ -665,21 +618,16 @@ impl SqlClient for MySqlClient {
                         .bind(&record.opsml_version)
                         .bind(&record.uid)
                         .execute(&self.pool)
-                        .await
-                        .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+                        .await?;
                     Ok(())
                 }
                 _ => {
-                    return Err(SqlError::QueryError(
-                        "Invalid card type for insert".to_string(),
-                    ));
+                    return Err(SqlError::InvalidCardType);
                 }
             },
 
             _ => {
-                return Err(SqlError::QueryError(
-                    "Invalid table name for insert".to_string(),
-                ));
+                return Err(SqlError::InvalidTableName);
             }
         }
     }
@@ -695,10 +643,7 @@ impl SqlClient for MySqlClient {
     /// * `Vec<String>` - A vector of unique space names
     async fn get_unique_space_names(&self, table: &CardTable) -> Result<Vec<String>, SqlError> {
         let query = format!("SELECT DISTINCT space FROM {}", table);
-        let repos: Vec<String> = sqlx::query_scalar(&query)
-            .fetch_all(&self.pool)
-            .await
-            .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+        let repos: Vec<String> = sqlx::query_scalar(&query).fetch_all(&self.pool).await?;
 
         Ok(repos)
     }
@@ -718,8 +663,7 @@ impl SqlClient for MySqlClient {
             .bind(space)
             .bind(space)
             .fetch_one(&self.pool)
-            .await
-            .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+            .await?;
 
         Ok(stats)
     }
@@ -788,8 +732,7 @@ impl SqlClient for MySqlClient {
             .bind(lower_bound)
             .bind(upper_bound)
             .fetch_all(&self.pool)
-            .await
-            .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+            .await?;
 
         Ok(records)
     }
@@ -797,11 +740,7 @@ impl SqlClient for MySqlClient {
     async fn delete_card(&self, table: &CardTable, uid: &str) -> Result<(), SqlError> {
         let query = format!("DELETE FROM {} WHERE uid = ?", table);
 
-        sqlx::query(&query)
-            .bind(uid)
-            .execute(&self.pool)
-            .await
-            .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+        sqlx::query(&query).bind(uid).execute(&self.pool).await?;
 
         Ok(())
     }
@@ -816,8 +755,7 @@ impl SqlClient for MySqlClient {
             .bind(record.step)
             .bind(record.timestamp)
             .execute(&self.pool)
-            .await
-            .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+            .await?;
 
         Ok(())
     }
@@ -839,10 +777,7 @@ impl SqlClient for MySqlClient {
                 .bind(r.timestamp);
         }
 
-        query_builder
-            .execute(&self.pool)
-            .await
-            .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+        query_builder.execute(&self.pool).await?;
 
         Ok(())
     }
@@ -860,10 +795,7 @@ impl SqlClient for MySqlClient {
             query_builder = query_builder.bind(binding);
         }
 
-        let records: Vec<MetricRecord> = query_builder
-            .fetch_all(&self.pool)
-            .await
-            .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+        let records: Vec<MetricRecord> = query_builder.fetch_all(&self.pool).await?;
 
         Ok(records)
     }
@@ -877,8 +809,7 @@ impl SqlClient for MySqlClient {
         let records: Vec<String> = sqlx::query_scalar(&query)
             .bind(uid)
             .fetch_all(&self.pool)
-            .await
-            .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+            .await?;
 
         Ok(records)
     }
@@ -900,8 +831,7 @@ impl SqlClient for MySqlClient {
             .bind(record.bytes_recv)
             .bind(record.bytes_sent)
             .execute(&self.pool)
-            .await
-            .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+            .await?;
 
         Ok(())
     }
@@ -915,8 +845,7 @@ impl SqlClient for MySqlClient {
         let records: Vec<HardwareMetricsRecord> = sqlx::query_as(&query)
             .bind(uid)
             .fetch_all(&self.pool)
-            .await
-            .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+            .await?;
 
         Ok(records)
     }
@@ -936,10 +865,7 @@ impl SqlClient for MySqlClient {
                 .bind(&record.value);
         }
 
-        query_builder
-            .execute(&self.pool)
-            .await
-            .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+        query_builder.execute(&self.pool).await?;
 
         Ok(())
     }
@@ -956,10 +882,7 @@ impl SqlClient for MySqlClient {
             query_builder = query_builder.bind(binding);
         }
 
-        let records: Vec<ParameterRecord> = query_builder
-            .fetch_all(&self.pool)
-            .await
-            .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+        let records: Vec<ParameterRecord> = query_builder.fetch_all(&self.pool).await?;
 
         Ok(records)
     }
@@ -967,11 +890,9 @@ impl SqlClient for MySqlClient {
     async fn insert_user(&self, user: &User) -> Result<(), SqlError> {
         let query = MySQLQueryHelper::get_user_insert_query();
 
-        let group_permissions = serde_json::to_value(&user.group_permissions)
-            .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+        let group_permissions = serde_json::to_value(&user.group_permissions)?;
 
-        let permissions = serde_json::to_value(&user.permissions)
-            .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+        let permissions = serde_json::to_value(&user.permissions)?;
 
         sqlx::query(&query)
             .bind(&user.username)
@@ -981,8 +902,7 @@ impl SqlClient for MySqlClient {
             .bind(&user.role)
             .bind(user.active)
             .execute(&self.pool)
-            .await
-            .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+            .await?;
 
         Ok(())
     }
@@ -993,8 +913,7 @@ impl SqlClient for MySqlClient {
         let user: Option<User> = sqlx::query_as(&query)
             .bind(username)
             .fetch_optional(&self.pool)
-            .await
-            .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+            .await?;
 
         Ok(user)
     }
@@ -1002,11 +921,9 @@ impl SqlClient for MySqlClient {
     async fn update_user(&self, user: &User) -> Result<(), SqlError> {
         let query = MySQLQueryHelper::get_user_update_query();
 
-        let group_permissions = serde_json::to_value(&user.group_permissions)
-            .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+        let group_permissions = serde_json::to_value(&user.group_permissions)?;
 
-        let permissions = serde_json::to_value(&user.permissions)
-            .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+        let permissions = serde_json::to_value(&user.permissions)?;
 
         sqlx::query(&query)
             .bind(user.active)
@@ -1016,8 +933,7 @@ impl SqlClient for MySqlClient {
             .bind(&user.refresh_token)
             .bind(&user.username)
             .execute(&self.pool)
-            .await
-            .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+            .await?;
 
         Ok(())
     }
@@ -1027,8 +943,7 @@ impl SqlClient for MySqlClient {
 
         let users = sqlx::query_as::<_, User>(&query)
             .fetch_all(&self.pool)
-            .await
-            .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+            .await?;
 
         Ok(users)
     }
@@ -1037,10 +952,7 @@ impl SqlClient for MySqlClient {
         // Count admins in the system
         let query = MySQLQueryHelper::get_last_admin_query();
 
-        let admins: Vec<String> = sqlx::query_scalar(&query)
-            .fetch_all(&self.pool)
-            .await
-            .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+        let admins: Vec<String> = sqlx::query_scalar(&query).fetch_all(&self.pool).await?;
 
         // If there are no other admins, this is the last one
         if admins.len() > 1 {
@@ -1062,8 +974,7 @@ impl SqlClient for MySqlClient {
         sqlx::query(&query)
             .bind(username)
             .execute(&self.pool)
-            .await
-            .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+            .await?;
 
         Ok(())
     }
@@ -1076,8 +987,7 @@ impl SqlClient for MySqlClient {
             .bind(key.encrypted_key.clone())
             .bind(&key.storage_key)
             .execute(&self.pool)
-            .await
-            .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+            .await?;
 
         Ok(())
     }
@@ -1093,8 +1003,7 @@ impl SqlClient for MySqlClient {
             .bind(uid)
             .bind(registry_type)
             .fetch_one(&self.pool)
-            .await
-            .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+            .await?;
 
         Ok(ArtifactKey {
             uid: key.0,
@@ -1115,8 +1024,7 @@ impl SqlClient for MySqlClient {
             .bind(storage_path)
             .bind(registry_type)
             .fetch_optional(&self.pool)
-            .await
-            .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+            .await?;
 
         return match key {
             Some(k) => Ok(Some(ArtifactKey {
@@ -1136,8 +1044,7 @@ impl SqlClient for MySqlClient {
             .bind(&key.uid)
             .bind(key.registry_type.to_string())
             .execute(&self.pool)
-            .await
-            .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+            .await?;
 
         Ok(())
     }
@@ -1158,8 +1065,7 @@ impl SqlClient for MySqlClient {
             .bind(event.registry_type.map(|r| r.to_string()))
             .bind(event.route)
             .execute(&self.pool)
-            .await
-            .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+            .await?;
 
         Ok(())
     }
@@ -1182,8 +1088,7 @@ impl SqlClient for MySqlClient {
             .bind(query_args.max_date.as_ref())
             .bind(query_args.limit.unwrap_or(1))
             .fetch_one(&self.pool)
-            .await
-            .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+            .await?;
 
         Ok(ArtifactKey {
             uid: key.0,
@@ -1199,8 +1104,7 @@ impl SqlClient for MySqlClient {
             .bind(uid)
             .bind(registry_type)
             .execute(&self.pool)
-            .await
-            .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+            .await?;
 
         Ok(())
     }

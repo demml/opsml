@@ -1,4 +1,5 @@
 use crate::base::SqlClient;
+use crate::error::SqlError;
 use crate::mysql::client::MySqlClient;
 use crate::postgres::client::PostgresClient;
 use crate::schemas::schema::{
@@ -10,7 +11,6 @@ use crate::sqlite::client::SqliteClient;
 use anyhow::Context;
 use anyhow::Result as AnyhowResult;
 use async_trait::async_trait;
-use opsml_error::error::SqlError;
 use opsml_settings::config::DatabaseSettings;
 use opsml_types::contracts::AuditEvent;
 use opsml_types::{
