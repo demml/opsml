@@ -55,4 +55,7 @@ pub enum StorageError {
 
     #[error("Upload failed with status: {0}")]
     UploadError(StatusCode),
+
+    #[error("Failed to upload file")]
+    UploadFileError,
 }
