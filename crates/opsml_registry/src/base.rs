@@ -1,5 +1,5 @@
+use crate::error::RegistryError;
 use opsml_client::ClientRegistry;
-use opsml_error::error::RegistryError;
 use opsml_semver::VersionType;
 use opsml_settings::config::OpsmlMode;
 use opsml_state::{app_state, get_api_client};
@@ -50,10 +50,7 @@ impl OpsmlRegistry {
                     let config = state.config()?;
                     let settings = config.storage_settings().map_err(|e| {
                         error!("Failed to get storage settings: {}", e);
-                        RegistryError::Error(format!(
-                            "Failed to get storage settings with error: {}",
-                            e
-                        ))
+                        e
                     })?;
                     let db_settings = config.database_settings.clone();
                     let server_registry = state.block_on(async {
@@ -69,9 +66,7 @@ impl OpsmlRegistry {
                 #[cfg(not(feature = "server"))]
                 {
                     error!("Server feature not enabled");
-                    Err(RegistryError::Error(
-                        "Server feature not enabled".to_string(),
-                    ))
+                    Err(RegistryError::ServerFeatureNotEnabled)
                 }
             }
         }

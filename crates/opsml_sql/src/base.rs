@@ -12,8 +12,7 @@ use opsml_types::{
 };
 
 pub fn add_version_bounds(builder: &mut String, version: &str) -> Result<(), SqlError> {
-    let version_bounds = VersionParser::get_version_to_search(version)
-        .map_err(|e| SqlError::VersionError(format!("{}", e)))?;
+    let version_bounds = VersionParser::get_version_to_search(version)?;
 
     // construct lower bound (already validated)
     builder.push_str(
