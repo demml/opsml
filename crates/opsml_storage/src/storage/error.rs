@@ -2,11 +2,21 @@ use opsml_client::error::ApiClientError;
 use opsml_settings::error::SettingsError;
 use opsml_state::error::StateError;
 use opsml_utils::error::UtilError;
+use reqwest::StatusCode;
 use thiserror::Error;
 use tracing::error;
 
 #[derive(Error, Debug)]
+pub enum AwsError {
+    #[error("No eTag is response")]
+    MissingEtagError,
+}
+
+#[derive(Error, Debug)]
 pub enum StorageError {
+    #[error(transparent)]
+    AwsError(#[from] AwsError),
+
     #[error(transparent)]
     IoError(#[from] std::io::Error),
 
@@ -42,4 +52,7 @@ pub enum StorageError {
 
     #[error("Local path must be a directory for recursive put")]
     PathMustBeDirectoryError,
+
+    #[error("Upload failed with status: {0}")]
+    UploadError(StatusCode),
 }
