@@ -1,9 +1,9 @@
 #[cfg(feature = "server")]
 use crate::storage::enums::client::StorageClientEnum;
 
+use crate::storage::error::StorageError;
 use crate::storage::http::client::HttpFSStorageClient;
 use async_trait::async_trait;
-use opsml_error::error::StorageError;
 use opsml_settings::config::{OpsmlMode, OpsmlStorageSettings};
 use opsml_state::{app_state, get_api_client};
 use opsml_types::contracts::CompleteMultipartUpload;
