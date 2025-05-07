@@ -7,6 +7,15 @@ use thiserror::Error;
 use tracing::error;
 
 #[derive(Error, Debug)]
+pub enum LocalError {
+    #[error(transparent)]
+    IoError(#[from] std::io::Error),
+
+    #[error("Path does not exist: {0}")]
+    PathNotExistError(String),
+}
+
+#[derive(Error, Debug)]
 pub enum AzureError {
     #[error(transparent)]
     CoreError(#[from] azure_core::error::Error),
@@ -45,6 +54,7 @@ pub enum AwsError {
             aws_sdk_s3::operation::create_multipart_upload::CreateMultipartUploadError,
         >,
     ),
+
     #[error(transparent)]
     UploadPartError(
         #[from] aws_sdk_s3::error::SdkError<aws_sdk_s3::operation::upload_part::UploadPartError>,
@@ -161,6 +171,9 @@ pub enum StorageError {
     GoogleError(#[from] GoogleError),
 
     #[error(transparent)]
+    LocalError(#[from] LocalError),
+
+    #[error(transparent)]
     IoError(#[from] std::io::Error),
 
     #[error(transparent)]
@@ -207,4 +220,10 @@ pub enum StorageError {
 
     #[error("Local and remote paths must have suffixes")]
     LocalAndRemotePathsMustHaveSuffixesError,
+
+    #[error(transparent)]
+    WalkDirError(#[from] walkdir::Error),
+
+    #[error(transparent)]
+    StripPrefixError(#[from] std::path::StripPrefixError),
 }

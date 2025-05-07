@@ -11,8 +11,6 @@ use opsml_types::contracts::FileInfo;
 use opsml_types::StorageType;
 use std::path::Path;
 use std::sync::{Arc, RwLock};
-
-use tracing::error;
 use tracing::{debug, instrument};
 
 #[async_trait]
@@ -197,10 +195,7 @@ impl StorageClientManager {
     }
 
     pub fn create_storage_client(&self) -> Result<Arc<FileSystemStorage>, StorageError> {
-        FileSystemStorage::new().map(Arc::new).map_err(|e| {
-            error!("Error creating FileSystemStorage: {}", e);
-            StorageError::Error(format!("Error creating FileSystemStorage: {}", e))
-        })
+        FileSystemStorage::new().map(Arc::new)
     }
 
     pub fn get_client(&self) -> Result<Arc<FileSystemStorage>, StorageError> {
@@ -212,10 +207,7 @@ impl StorageClientManager {
         }
 
         // If no client exists, create one
-        let new_client = Arc::new(FileSystemStorage::new().map_err(|e| {
-            error!("Error creating FileSystemStorage: {}", e);
-            StorageError::Error(format!("Error creating FileSystemStorage: {}", e))
-        })?);
+        let new_client = Arc::new(FileSystemStorage::new()?);
 
         if let Ok(mut guard) = self.client.write() {
             if guard.is_none() {

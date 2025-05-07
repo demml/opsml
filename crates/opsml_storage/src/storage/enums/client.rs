@@ -48,7 +48,7 @@ impl MultiPartUploader {
                 .upload_file_in_chunks(chunk_count, size_of_last_chunk)
                 .await?),
 
-            MultiPartUploader::Local(uploader) => uploader.upload_file_in_chunks().await,
+            MultiPartUploader::Local(uploader) => Ok(uploader.upload_file_in_chunks().await?),
             MultiPartUploader::Azure(uploader) => Ok(uploader
                 .upload_file_in_chunks(chunk_count, size_of_last_chunk, chunk_size)
                 .await?),
