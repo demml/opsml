@@ -165,7 +165,7 @@ impl NumpyData {
         py: Python,
         path: PathBuf,
         save_kwargs: Option<DataSaveKwargs>,
-    ) -> PyResult<DataInterfaceMetadata> {
+    ) -> Result<DataInterfaceMetadata, DataInterfaceError> {
         let data_kwargs = save_kwargs
             .as_ref()
             .and_then(|args| args.data_kwargs(py))
@@ -240,7 +240,7 @@ impl NumpyData {
         py: Python,
         bin_size: Option<usize>,
         compute_correlations: Option<bool>,
-    ) -> PyResult<DataProfile> {
+    ) -> Result<DataProfile, DataInterfaceError> {
         let mut profiler = DataProfiler::new();
 
         // get ScouterDataType from opsml DataType
@@ -250,7 +250,7 @@ impl NumpyData {
             DataType::Pandas => Some(&scouter_client::DataType::Pandas),
             DataType::Polars => Some(&scouter_client::DataType::Polars),
             DataType::Arrow => Some(&scouter_client::DataType::Arrow),
-            _ => Err(OpsmlError::new_err("Data type not supported for profiling"))?,
+            _ => Err(DataInterfaceError::DataTypeNotSupportedForProfilingError)?,
         };
 
         let profile = profiler.create_data_profile(
@@ -282,7 +282,7 @@ impl NumpyData {
     pub fn from_metadata<'py>(
         py: Python<'py>,
         metadata: &DataInterfaceMetadata,
-    ) -> PyResult<Bound<'py, PyAny>> {
+    ) -> Result<Bound<'py, PyAny>, DataInterfaceError> {
         let interface = DataInterface {
             data_type: metadata.data_type.clone(),
             interface_type: metadata.interface_type.clone(),
@@ -301,7 +301,7 @@ impl NumpyData {
             data_type: metadata.data_type.clone(),
         };
 
-        Py::new(py, (data_interface, interface))?.into_bound_py_any(py)
+        Ok(Py::new(py, (data_interface, interface))?.into_bound_py_any(py)?)
     }
 
     pub fn save_data(
@@ -309,11 +309,9 @@ impl NumpyData {
         py: Python,
         path: PathBuf,
         kwargs: Option<&Bound<'_, PyDict>>,
-    ) -> PyResult<PathBuf> {
+    ) -> Result<PathBuf, DataInterfaceError> {
         if self.data.is_none() {
-            return Err(OpsmlError::new_err(
-                "No data detected in interface for saving",
-            ));
+            return Err(DataInterfaceError::MissingDataError);
         }
 
         let save_path = PathBuf::from(SaveName::Data.to_string()).with_extension(Suffix::Numpy);
@@ -323,14 +321,15 @@ impl NumpyData {
         let args = (full_save_path, self.data.as_ref().unwrap());
 
         // Save the data using joblib
-        numpy
-            .call_method("save", args, kwargs)
-            .map_err(|e| OpsmlError::new_err(e.to_string()))?;
+        numpy.call_method("save", args, kwargs)?;
 
         Ok(save_path)
     }
 
-    pub fn create_feature_schema(&mut self, py: Python) -> PyResult<FeatureSchema> {
+    pub fn create_feature_schema(
+        &mut self,
+        py: Python,
+    ) -> Result<FeatureSchema, DataInterfaceError> {
         // Create and insert the feature
         let feature_map =
             generate_feature_schema(self.data.as_ref().unwrap().bind(py), &DataType::Numpy)?;
@@ -342,7 +341,7 @@ impl NumpyData {
         py: Python,
         path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
-    ) -> PyResult<PyObject> {
+    ) -> Result<PyObject, DataInterfaceError> {
         let numpy = PyModule::import(py, "numpy")?;
 
         // Load the data using numpy
