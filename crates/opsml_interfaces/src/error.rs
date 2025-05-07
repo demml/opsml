@@ -51,7 +51,7 @@ pub enum OnnxError {
     #[error(transparent)]
     PyError(#[from] pyo3::PyErr),
 
-    #[error("Failed to downcast- {0}")]
+    #[error("Failed to downcast: {0}")]
     DowncastError(String),
 
     #[error(transparent)]
@@ -78,6 +78,47 @@ pub enum OnnxError {
 
 impl From<OnnxError> for PyErr {
     fn from(err: OnnxError) -> PyErr {
+        let msg = err.to_string();
+        error!("{}", msg);
+        PyRuntimeError::new_err(msg)
+    }
+}
+
+#[derive(Error, Debug)]
+pub enum DataInterfaceError {
+    #[error(transparent)]
+    PyError(#[from] pyo3::PyErr),
+
+    #[error("Data must be a numpy array")]
+    NumpyTypeError,
+
+    #[error("No data detected in interface for saving")]
+    MissingDataError,
+
+    #[error("No data splits detected in interface for splitting")]
+    MissingDataSplitsError,
+
+    #[error("Invalid timestamp")]
+    InvalidTimeStamp,
+
+    #[error("Invalid value type. Supported types are String, Float, Int")]
+    InvalidType,
+
+    #[error("Only one split type can be provided")]
+    OnlyOneSplitError,
+
+    #[error("At least one split type must be provided")]
+    AtLeastOneSplitError,
+
+    #[error("Invalid split type")]
+    InvalidSplitType,
+
+    #[error(transparent)]
+    UtilError(#[from] UtilError),
+}
+
+impl From<DataInterfaceError> for PyErr {
+    fn from(err: ModelInterfaceError) -> PyErr {
         let msg = err.to_string();
         error!("{}", msg);
         PyRuntimeError::new_err(msg)

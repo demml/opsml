@@ -3,8 +3,8 @@ use crate::data::{
     DataInterfaceMetadata, DataInterfaceSaveMetadata, DataLoadKwargs, DataSaveKwargs, DataSplit,
     DataSplits, DependentVars, SqlLogic,
 };
+use crate::error::DataInterfaceError;
 use crate::types::FeatureSchema;
-use opsml_error::OpsmlError;
 use opsml_types::{DataInterfaceType, DataType, SaveName, Suffix};
 use pyo3::prelude::*;
 use pyo3::types::{PyDict, PyList};
@@ -42,7 +42,7 @@ impl NumpyData {
         feature_map: Option<FeatureSchema>,
         sql_logic: Option<SqlLogic>,
         data_profile: Option<DataProfile>,
-    ) -> PyResult<(Self, DataInterface)> {
+    ) -> Result<(Self, DataInterface), DataInterfaceError> {
         // check if data is a numpy array
         let data = match data {
             Some(data) => {
@@ -53,7 +53,7 @@ impl NumpyData {
                 if data.is_instance(&numpy).unwrap() {
                     Some(data.into_py_any(py)?)
                 } else {
-                    return Err(OpsmlError::new_err("Data must be a numpy array"));
+                    return Err(DataInterfaceError::NumpyTypeError);
                 }
             }
             None => None,
@@ -81,7 +81,7 @@ impl NumpyData {
 
     #[setter]
     #[allow(clippy::needless_lifetimes)]
-    pub fn set_data(&mut self, data: &Bound<'_, PyAny>) -> PyResult<()> {
+    pub fn set_data(&mut self, data: &Bound<'_, PyAny>) -> Result<(), DataInterfaceError> {
         let py = data.py();
 
         // check if data is None
@@ -98,13 +98,16 @@ impl NumpyData {
                 self.data = Some(data.into_py_any(py)?);
                 Ok(())
             } else {
-                Err(OpsmlError::new_err("Data must be a numpy array"))
+                Err(DataInterfaceError::NumpyTypeError)
             }
         }
     }
 
     #[setter]
-    pub fn set_data_splits(&mut self, data_splits: &Bound<'_, PyAny>) -> PyResult<()> {
+    pub fn set_data_splits(
+        &mut self,
+        data_splits: &Bound<'_, PyAny>,
+    ) -> Result<(), DataInterfaceError> {
         // check if data_splits is None
         if PyAnyMethods::is_none(data_splits) {
             self.data_splits = DataSplits::default();
@@ -125,7 +128,10 @@ impl NumpyData {
     }
 
     #[setter]
-    pub fn set_dependent_vars(&mut self, dependent_vars: &Bound<'_, PyAny>) -> PyResult<()> {
+    pub fn set_dependent_vars(
+        &mut self,
+        dependent_vars: &Bound<'_, PyAny>,
+    ) -> Result<(), DataInterfaceError> {
         // check if dependent_vars is None
         if PyAnyMethods::is_none(dependent_vars) {
             self.dependent_vars = DependentVars::default();
@@ -196,7 +202,7 @@ impl NumpyData {
         path: PathBuf,
         metadata: DataInterfaceSaveMetadata,
         load_kwargs: Option<DataLoadKwargs>,
-    ) -> PyResult<()> {
+    ) -> Result<(), DataInterfaceError> {
         let load_path = path.join(metadata.data_uri);
         let load_kwargs = load_kwargs.unwrap_or_default();
         let numpy = PyModule::import(py, "numpy")?;
@@ -209,18 +215,14 @@ impl NumpyData {
         Ok(())
     }
 
-    pub fn split_data(&mut self, py: Python) -> PyResult<HashMap<String, Data>> {
+    pub fn split_data(&mut self, py: Python) -> Result<HashMap<String, Data>, DataInterfaceError> {
         // check if data is None
         if self.data.is_none() {
-            return Err(OpsmlError::new_err(
-                "No data detected in interface for saving",
-            ));
+            return Err(DataInterfaceError::MissingDataError);
         }
 
         if self.data_splits.is_empty() {
-            return Err(OpsmlError::new_err(
-                "No data splits detected in interface for splitting",
-            ));
+            return Err(DataInterfaceError::MissingDataSplitsError);
         }
 
         let dependent_vars = self.dependent_vars.clone();

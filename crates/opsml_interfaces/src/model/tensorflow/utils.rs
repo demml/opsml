@@ -277,7 +277,7 @@ impl TensorFlowSampleData {
         path: &Path,
         data_type: &DataType,
         kwargs: Option<&Bound<'py, PyDict>>,
-    ) -> PyResult<TensorFlowSampleData> {
+    ) -> Result<TensorFlowSampleData, ModelInterfaceError> {
         match data_type {
             DataType::Numpy => {
                 NumpyData::from_path(py, path, kwargs).map(TensorFlowSampleData::Numpy)
