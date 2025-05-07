@@ -13,9 +13,36 @@ pub enum AwsError {
 }
 
 #[derive(Error, Debug)]
+pub enum GoogleError {
+    #[error(transparent)]
+    GCloudAuthError(#[from] google_cloud_auth::error::Error),
+
+    #[error(transparent)]
+    GCloudStorageError(#[from] google_cloud_storage::http::Error),
+
+    #[error(transparent)]
+    SignedURLError(#[from] google_cloud_storage::sign::SignedURLError),
+
+    #[error(transparent)]
+    DecodeError(#[from] base64::DecodeError),
+
+    #[error(transparent)]
+    Utf8Error(#[from] std::string::FromUtf8Error),
+
+    #[error(transparent)]
+    IoError(#[from] std::io::Error),
+
+    #[error("Failed to upload chunks")]
+    UploadChunksError,
+}
+
+#[derive(Error, Debug)]
 pub enum StorageError {
     #[error(transparent)]
     AwsError(#[from] AwsError),
+
+    #[error(transparent)]
+    GoogleError(#[from] GoogleError),
 
     #[error(transparent)]
     IoError(#[from] std::io::Error),
@@ -58,4 +85,10 @@ pub enum StorageError {
 
     #[error("Failed to upload file")]
     UploadFileError,
+
+    #[error(transparent)]
+    DecodeError(#[from] base64::DecodeError),
+
+    #[error("Failed to cancel upload")]
+    CancelUploadError,
 }
