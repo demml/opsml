@@ -128,6 +128,9 @@ pub enum DataInterfaceError {
     #[error(transparent)]
     UtilError(#[from] UtilError),
 
+    #[error(transparent)]
+    TypeError(#[from] TypeError),
+
     #[error("Error encountered converting polars type for feature: {0}")]
     FeatureConversionError(String),
 
@@ -264,6 +267,18 @@ impl From<ModelInterfaceError> for PyErr {
 pub enum TypeError {
     #[error("Key {0} not found in FeatureMap")]
     MissingKeyError(String),
+
+    #[error("Only one of query or filename can be provided")]
+    OnlyOneQueryorFilenameError,
+
+    #[error("Key not found")]
+    KeyNotFound,
+
+    #[error(transparent)]
+    UtilError(#[from] UtilError),
+
+    #[error(transparent)]
+    IoError(#[from] std::io::Error),
 }
 
 impl From<TypeError> for PyErr {
