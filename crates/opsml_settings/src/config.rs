@@ -1,7 +1,6 @@
+use crate::error::SettingsError;
 use base64::prelude::*;
-use opsml_error::StorageError;
 use opsml_types::{SqlType, StorageType};
-use pyo3::prelude::*;
 use rusty_logging::logger::{LoggingConfig, WriteLevel};
 use rusty_logging::LogLevel;
 use serde::Serialize;
@@ -17,8 +16,6 @@ pub enum OpsmlMode {
     Server,
 }
 
-/// ApiSettings for use with ApiClient
-#[pyclass]
 #[derive(Debug, Clone)]
 pub struct ApiSettings {
     pub base_url: String,
@@ -318,11 +315,11 @@ impl OpsmlConfig {
     }
 
     /// Get the storage settings for the OpsmlConfig
-    pub fn storage_settings(&self) -> Result<OpsmlStorageSettings, StorageError> {
+    pub fn storage_settings(&self) -> Result<OpsmlStorageSettings, SettingsError> {
         Ok(OpsmlStorageSettings {
             encryption_key: BASE64_STANDARD
                 .decode(self.auth_settings.jwt_secret.clone())
-                .map_err(|e| StorageError::Error(e.to_string()))?,
+                .map_err(SettingsError::Base64DecodeError)?,
             storage_uri: self.opsml_storage_uri.clone(),
             storage_type: self.get_storage_type(),
             api_settings: ApiSettings {

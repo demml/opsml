@@ -4119,13 +4119,12 @@ name = "opsml-settings"
 version = "3.0.0-rc.1"
 dependencies = [
  "base64 0.22.1",
- "opsml-error",
  "opsml-types",
  "opsml-utils",
  "opsml-version",
- "pyo3",
  "rusty-logging",
  "serde",
+ "thiserror 2.0.12",
  "tracing",
 ]
 
