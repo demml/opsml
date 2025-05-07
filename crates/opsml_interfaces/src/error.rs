@@ -1,3 +1,4 @@
+use opsml_utils::error::UtilError;
 use pyo3::exceptions::PyRuntimeError;
 use pyo3::PyErr;
 use thiserror::Error;
@@ -175,6 +176,12 @@ pub enum ModelInterfaceError {
 
     #[error("Model must be an Onnx ModelProto with SerializeToString method")]
     OnnxModelTypeError,
+
+    #[error("Data must be of type tensorflow tensor or ndarray")]
+    TensorFlowDataTypeError,
+
+    #[error("Data type not supported")]
+    DataTypeError,
 }
 
 impl From<ModelInterfaceError> for PyErr {
@@ -197,7 +204,10 @@ impl From<DataInterfaceError> for PyErr {
 }
 
 #[derive(Error, Debug)]
-pub enum TypeError {}
+pub enum TypeError {
+    #[error("Key {0} not found in FeatureMap")]
+    MissingKeyError(String),
+}
 
 impl From<TypeError> for PyErr {
     fn from(err: TypeError) -> PyErr {

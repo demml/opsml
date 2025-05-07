@@ -1,4 +1,4 @@
-use opsml_error::OpsmlError;
+use crate::error::TypeError;
 use opsml_utils::PyHelperFuncs;
 use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -61,13 +61,10 @@ impl FeatureSchema {
         PyHelperFuncs::__str__(self)
     }
 
-    pub fn __getitem__(&self, key: &str) -> PyResult<Feature> {
+    pub fn __getitem__(&self, key: &str) -> Result<Feature, TypeError> {
         match self.items.get(key) {
             Some(value) => Ok(value.clone()),
-            None => Err(OpsmlError::new_err(format!(
-                "KeyError: key '{}' not found in FeatureMap",
-                key
-            ))),
+            None => Err(TypeError::MissingKeyError(key.to_string())),
         }
     }
 }
