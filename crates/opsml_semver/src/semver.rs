@@ -1,4 +1,4 @@
-use opsml_error::error::VersionError;
+use crate::error::VersionError;
 use pyo3::prelude::*;
 use semver::{BuildMetadata, Prerelease, Version};
 use serde::{Deserialize, Serialize};
@@ -62,7 +62,7 @@ impl VersionValidator {
     pub fn validate_version(version: &str) -> Result<(), VersionError> {
         match Version::parse(version) {
             Ok(_) => Ok(()),
-            Err(e) => Err(VersionError::InvalidVersion(e.to_string())),
+            Err(e) => Err(VersionError::InvalidVersion(e)),
         }
     }
 
@@ -70,7 +70,7 @@ impl VersionValidator {
         // parse the version
         let version = match Version::parse(&version_args.version) {
             Ok(v) => v,
-            Err(e) => return Err(VersionError::InvalidVersion(e.to_string())),
+            Err(e) => return Err(VersionError::InvalidVersion(e)),
         };
 
         let mut new_version = Version::new(version.major, version.minor, version.patch);
@@ -97,14 +97,14 @@ impl VersionValidator {
         if let Some(pre) = &version_args.pre {
             new_version.pre = match Prerelease::new(pre) {
                 Ok(p) => p,
-                Err(e) => return Err(VersionError::InvalidPreRelease(e.to_string())),
+                Err(e) => return Err(VersionError::InvalidPreReleaseIdentifier(e)),
             };
         }
 
         if let Some(build) = &version_args.build {
             new_version.build = match BuildMetadata::new(build) {
                 Ok(b) => b,
-                Err(e) => return Err(VersionError::InvalidPreRelease(e.to_string())),
+                Err(e) => return Err(VersionError::InvalidPreReleaseIdentifier(e)),
             };
         }
 
@@ -114,7 +114,7 @@ impl VersionValidator {
     pub fn sort_string_versions(versions: Vec<String>) -> Result<Vec<String>, VersionError> {
         let mut versions: Vec<Version> = versions
             .iter()
-            .map(|v| Version::parse(v).map_err(|e| VersionError::InvalidVersion(e.to_string())))
+            .map(|v| Version::parse(v).map_err(VersionError::InvalidVersion))
             .collect::<Result<Vec<_>, _>>()?;
 
         versions.sort();
@@ -164,14 +164,12 @@ impl VersionValidator {
     pub fn clean_version(version: &str) -> Result<Version, VersionError> {
         // Check if the version is empty
         if version.is_empty() {
-            return Err(VersionError::InvalidVersion(
-                "Version string is empty".to_string(),
-            ));
+            return Err(VersionError::EmptyVersionString);
         }
 
         match Version::parse(&Self::expand_version(version)) {
             Ok(version) => Ok(version),
-            Err(e) => Err(VersionError::InvalidVersion(e.to_string())),
+            Err(e) => Err(VersionError::InvalidVersion(e)),
         }
     }
 }
@@ -227,7 +225,7 @@ impl VersionParser {
     /// # Errors
     /// Errors if the version string is invalid
     fn parse_version(version: &str) -> Result<Version, VersionError> {
-        Version::parse(version).map_err(|e| VersionError::InvalidVersion(e.to_string()))
+        Version::parse(version).map_err(VersionError::InvalidVersion)
     }
 
     /// Create a VersionBounds struct from a lower and upper version string
@@ -261,7 +259,7 @@ impl VersionParser {
             .filter(|v| !v.is_empty())
             .map(str::parse::<u64>)
             .collect::<Result<Vec<_>, _>>()
-            .map_err(|e| VersionError::InvalidVersion(e.to_string()))?;
+            .map_err(VersionError::ParseError)?;
 
         let num_parts = version_parts.len();
 
@@ -297,9 +295,7 @@ impl VersionParser {
                     num_parts,
                     false,
                 ),
-                _ => Err(VersionError::InvalidVersion(
-                    "Invalid version provided with * syntax".to_string(),
-                )),
+                _ => Err(VersionError::StarSyntaxError),
             },
             VersionParser::Tilde => match num_parts {
                 1 => Self::create_bounds(
@@ -340,9 +336,7 @@ impl VersionParser {
                         false,
                     )
                 } else {
-                    Err(VersionError::InvalidVersion(
-                        "Invalid version provided with ^ syntax".to_string(),
-                    ))
+                    Err(VersionError::CaretSyntaxError)
                 }
             }
             VersionParser::Exact => match num_parts {
@@ -375,9 +369,7 @@ impl VersionParser {
                     num_parts,
                     false,
                 ),
-                _ => Err(VersionError::InvalidVersion(
-                    "Invalid version provided with exact syntax".to_string(),
-                )),
+                _ => Err(VersionError::ExactSyntaxError),
             },
         }
     }

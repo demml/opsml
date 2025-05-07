@@ -4,7 +4,6 @@ use opsml_state::error::StateError;
 use opsml_utils::error::UtilError;
 use reqwest::StatusCode;
 use thiserror::Error;
-use tracing::error;
 
 #[derive(Error, Debug)]
 pub enum LocalError {
