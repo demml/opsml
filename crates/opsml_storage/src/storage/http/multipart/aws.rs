@@ -1,6 +1,6 @@
+use crate::storage::error::{AwsError, StorageError};
 use bytes::Bytes;
 use opsml_client::OpsmlApiClient;
-use opsml_error::StorageError;
 use opsml_types::contracts::{
     CompleteMultipartUpload, CompletedUploadPart, CompletedUploadParts, MultipartCompleteParts,
     UploadResponse,
@@ -26,8 +26,7 @@ impl S3MultipartUpload {
         upload_id: String,
         client: Arc<OpsmlApiClient>,
     ) -> Result<Self, StorageError> {
-        let file = File::open(lpath)
-            .map_err(|e| StorageError::Error(format!("Failed to open file: {}", e)))?;
+        let file = File::open(lpath)?;
 
         let file_reader = BufReader::new(file);
 
@@ -46,13 +45,7 @@ impl S3MultipartUpload {
         let presigned_url = self.get_upload_url(part_number)?;
 
         // Upload chunk using presigned URL
-        let response = self
-            .client
-            .client
-            .put(&presigned_url)
-            .body(chunk)
-            .send()
-            .map_err(|e| StorageError::Error(format!("Failed to upload part: {}", e)))?;
+        let response = self.client.client.put(&presigned_url).body(chunk).send()?;
 
         if response.status().is_success() {
             // Get ETag from response headers
@@ -63,20 +56,19 @@ impl S3MultipartUpload {
                 });
                 Ok(())
             } else {
-                Err(StorageError::Error("No ETag in response".to_string()))
+                Err(AwsError::MissingEtagError.into())
             }
         } else {
-            Err(StorageError::Error(format!(
-                "Upload failed with status: {}",
-                response.status()
-            )))
+            Err(StorageError::UploadError(response.status()))
         }
     }
 
     fn get_upload_url(&self, part_number: i32) -> Result<String, StorageError> {
-        self.client
-            .generate_presigned_url_for_part(&self.rpath, &self.upload_id, part_number)
-            .map_err(|e| StorageError::Error(format!("Failed to get presigned URL: {}", e)))
+        Ok(self.client.generate_presigned_url_for_part(
+            &self.rpath,
+            &self.upload_id,
+            part_number,
+        )?)
     }
 
     pub fn upload_file_in_chunks(&mut self, chunk_size: usize) -> Result<(), StorageError> {
@@ -84,10 +76,7 @@ impl S3MultipartUpload {
         let mut part_number = 1;
 
         loop {
-            let bytes_read = self
-                .file_reader
-                .read(&mut buffer)
-                .map_err(|e| StorageError::Error(format!("Failed to read file: {}", e)))?;
+            let bytes_read = self.file_reader.read(&mut buffer)?;
 
             if bytes_read == 0 {
                 break;
@@ -118,14 +107,9 @@ impl S3MultipartUpload {
             cancel: false,
         };
 
-        let response = self
-            .client
-            .complete_multipart_upload(request)
-            .map_err(|e| StorageError::Error(format!("Failed to complete upload: {}", e)))?;
+        let response = self.client.complete_multipart_upload(request)?;
 
-        let uploaded = response.json::<UploadResponse>().map_err(|e| {
-            StorageError::Error(format!("Failed to parse complete upload response: {}", e))
-        })?;
+        let uploaded = response.json::<UploadResponse>()?;
 
         Ok(uploaded)
     }
