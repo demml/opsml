@@ -115,6 +115,12 @@ pub enum DataInterfaceError {
 
     #[error(transparent)]
     UtilError(#[from] UtilError),
+
+    #[error("Error encountered converting polars type for feature: {0}")]
+    FeatureConversionError(String),
+
+    #[error("Invalid data type")]
+    InvalidDataType,
 }
 
 impl From<DataInterfaceError> for PyErr {
