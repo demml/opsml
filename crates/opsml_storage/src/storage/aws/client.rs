@@ -841,7 +841,7 @@ impl FileSystem for S3FStorageClient {
 }
 
 impl S3FStorageClient {
-    pub async fn create_multipart_upload(&self, path: &Path) -> Result<String, StorageError> {
+    pub async fn create_multipart_upload(&self, path: &Path) -> Result<String, AwsError> {
         Ok(self
             .client
             .create_multipart_upload(path.to_str().unwrap())
@@ -852,7 +852,7 @@ impl S3FStorageClient {
         &self,
         rpath: &Path,
         lpath: &Path,
-    ) -> Result<AWSMulitPartUpload, StorageError> {
+    ) -> Result<AWSMulitPartUpload, AwsError> {
         let upload_id = self
             .client
             .create_multipart_upload(rpath.to_str().unwrap())
@@ -874,7 +874,7 @@ impl S3FStorageClient {
         part_number: i32,
         path: &Path,
         upload_id: &str,
-    ) -> Result<String, StorageError> {
+    ) -> Result<String, AwsError> {
         Ok(self
             .client
             .generate_presigned_url_for_part(part_number, path.to_str().unwrap(), upload_id)

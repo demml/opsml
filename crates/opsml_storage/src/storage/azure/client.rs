@@ -1,6 +1,8 @@
 use crate::storage::base::get_files;
 use crate::storage::base::PathExt;
 use crate::storage::base::StorageClient;
+use crate::storage::error::AzureError;
+use crate::storage::error::StorageError;
 use crate::storage::filesystem::FileSystem;
 use async_trait::async_trait;
 use azure_storage::prelude::*;
@@ -9,7 +11,6 @@ use azure_storage_blobs::container::operations::BlobItem;
 use azure_storage_blobs::prelude::*;
 use base64::prelude::*;
 use futures::stream::StreamExt;
-use opsml_error::error::StorageError;
 use opsml_settings::config::OpsmlStorageSettings;
 use opsml_types::contracts::CompleteMultipartUpload;
 use opsml_types::contracts::MultipartCompleteParts;
@@ -32,15 +33,9 @@ pub struct AzureCreds {
 }
 
 impl AzureCreds {
-    pub async fn new() -> Result<Self, StorageError> {
-        let credential = azure_identity::create_credential().map_err(|e| {
-            StorageError::Error(format!("Failed to create Azure credential: {:?}", e))
-        })?;
-
-        let account = env::var("AZURE_STORAGE_ACCOUNT").map_err(|e| {
-            StorageError::Error(format!("Failed to get Azure storage account: {:?}", e))
-        })?;
-
+    pub async fn new() -> Result<Self, AzureError> {
+        let credential = azure_identity::create_credential()?;
+        let account = env::var("AZURE_STORAGE_ACCOUNT")?;
         let creds = StorageCredentials::token_credential(credential);
 
         Ok(Self { account, creds })
@@ -59,13 +54,8 @@ pub struct UploadState {
 }
 
 impl AzureMultipartUpload {
-    pub async fn new(
-        signed_url: &str,
-        path: &str,
-        client: HttpClient,
-    ) -> Result<Self, StorageError> {
-        let file = File::open(path)
-            .map_err(|e| StorageError::Error(format!("Failed to open file: {}", e)))?;
+    pub async fn new(signed_url: &str, path: &str, client: HttpClient) -> Result<Self, AzureError> {
+        let file = File::open(path)?;
 
         Ok(Self {
             client,
@@ -79,7 +69,7 @@ impl AzureMultipartUpload {
         chunk_count: u64,
         size_of_last_chunk: u64,
         chunk_size: u64,
-    ) -> Result<(), StorageError> {
+    ) -> Result<(), AzureError> {
         let mut upload_state = UploadState {
             block_parts: Vec::new(),
             bytes_uploaded: 0,
@@ -112,7 +102,7 @@ impl AzureMultipartUpload {
         &self,
         upload_args: &UploadPartArgs,
         mut state: UploadState,
-    ) -> Result<UploadState, StorageError> {
+    ) -> Result<UploadState, AzureError> {
         let buffer = self.read_chunk(upload_args)?;
         let block_id = format!("{:06}", upload_args.chunk_index);
 
@@ -126,41 +116,32 @@ impl AzureMultipartUpload {
         Ok(state)
     }
 
-    fn read_chunk(&self, upload_args: &UploadPartArgs) -> Result<Vec<u8>, StorageError> {
+    fn read_chunk(&self, upload_args: &UploadPartArgs) -> Result<Vec<u8>, AzureError> {
         let mut reader = BufReader::new(&self.file);
         let offset = upload_args.chunk_index * upload_args.chunk_size;
 
-        reader
-            .seek(std::io::SeekFrom::Start(offset))
-            .map_err(|e| StorageError::Error(format!("Failed to seek file: {}", e)))?;
+        reader.seek(std::io::SeekFrom::Start(offset))?;
 
         let mut buffer = vec![0; upload_args.this_chunk_size as usize];
-        let bytes_read = reader
-            .read(&mut buffer)
-            .map_err(|e| StorageError::Error(format!("Failed to read file: {}", e)))?;
+        let bytes_read = reader.read(&mut buffer)?;
 
         buffer.truncate(bytes_read);
         Ok(buffer)
     }
 
-    async fn upload_block(&self, block_id: &str, data: &[u8]) -> Result<(), StorageError> {
+    async fn upload_block(&self, block_id: &str, data: &[u8]) -> Result<(), AzureError> {
         let url = format!(
             "{}&comp=block&blockid={}",
             self.signed_url,
             BASE64_STANDARD.encode(block_id)
         );
 
-        self.client
-            .put(&url)
-            .body(data.to_vec())
-            .send()
-            .await
-            .map_err(|e| StorageError::Error(format!("Failed to upload block: {:?}", e)))?;
+        self.client.put(&url).body(data.to_vec()).send().await?;
 
         Ok(())
     }
 
-    async fn complete_upload(&self, block_parts: Vec<BlobBlockType>) -> Result<(), StorageError> {
+    async fn complete_upload(&self, block_parts: Vec<BlobBlockType>) -> Result<(), AzureError> {
         let url = format!("{}&comp=blocklist", self.signed_url);
         let block_list = BlockList {
             blocks: block_parts,
@@ -172,8 +153,7 @@ impl AzureMultipartUpload {
             .header("Content-Type", "application/xml")
             .body(block_xml)
             .send()
-            .await
-            .map_err(|e| StorageError::Error(format!("Failed to commit block list: {:?}", e)))?;
+            .await?;
 
         Ok(())
     }
@@ -216,13 +196,9 @@ impl StorageClient for AzureStorageClient {
         let dest_blob = container.blob_client(dest);
 
         let _response = dest_blob
-            .copy_from_url(
-                src_blob
-                    .url()
-                    .map_err(|e| StorageError::Error(format!("Error: {}", e)))?,
-            )
+            .copy_from_url(src_blob.url().map_err(AzureError::CoreError)?)
             .await
-            .map_err(|e| StorageError::Error(format!("Error: {}", e)))?;
+            .map_err(AzureError::CoreError)?;
 
         Ok(true)
     }
@@ -249,9 +225,7 @@ impl StorageClient for AzureStorageClient {
         let rpath = Path::new(rpath);
 
         if lpath.extension().is_none() || rpath.extension().is_none() {
-            return Err(StorageError::Error(
-                "Local and remote paths must have suffixes".to_string(),
-            ));
+            return Err(StorageError::PathMustBeDirectoryError);
         }
 
         // create and open lpath file
@@ -259,13 +233,11 @@ impl StorageClient for AzureStorageClient {
 
         if !prefix.exists() {
             // create the directory if it does not exist and skip errors
-            std::fs::create_dir_all(prefix)
-                .map_err(|e| StorageError::Error(format!("Unable to create directory: {}", e)))?;
+            std::fs::create_dir_all(prefix)?;
         }
 
         // create and open lpath file
-        let mut file = File::create(lpath)
-            .map_err(|e| StorageError::Error(format!("Unable to create file: {}", e)))?;
+        let mut file = File::create(lpath)?;
 
         let container = self.client.container_client(self.bucket.as_str());
         let blob = container.blob_client(rpath.to_str().unwrap());
@@ -277,18 +249,12 @@ impl StorageClient for AzureStorageClient {
 
         // iterate over the stream and write to the file
         while let Some(value) = stream.next().await {
-            let chunk = value
-                .map_err(|e| StorageError::Error(format!("Error: {}", e)))?
-                .data;
+            let chunk = value.map_err(AzureError::CoreError)?.data;
 
             // collect into bytes
-            let bytes = chunk
-                .collect()
-                .await
-                .map_err(|e| StorageError::Error(format!("Error: {}", e)))?;
+            let bytes = chunk.collect().await.map_err(AzureError::CoreError)?;
 
-            file.write_all(&bytes)
-                .map_err(|e| StorageError::Error(format!("Unable to write to file: {}", e)))?;
+            file.write_all(&bytes)?;
         }
 
         Ok(())
@@ -305,7 +271,7 @@ impl StorageClient for AzureStorageClient {
             .client
             .get_user_deligation_key(start, expiry)
             .await
-            .map_err(|e| StorageError::Error(format!("{}", e)))?;
+            .map_err(AzureError::CoreError)?;
 
         let container = self.client.container_client(self.bucket.as_str());
         let blob = container.blob_client(path);
@@ -319,10 +285,10 @@ impl StorageClient for AzureStorageClient {
                 &response.user_deligation_key,
             )
             .await
-            .map_err(|e| StorageError::Error(format!("{}", e)))?;
+            .map_err(AzureError::CoreError)?;
         let url = blob
             .generate_signed_blob_url(&sas)
-            .map_err(|e| StorageError::Error(format!("{}", e)))?;
+            .map_err(AzureError::CoreError)?;
 
         Ok(url.to_string())
     }
@@ -362,7 +328,7 @@ impl StorageClient for AzureStorageClient {
         let mut stream = container.list_blobs().prefix(rpath).into_stream();
 
         while let Some(value) = stream.next().await {
-            let value = value.map_err(|e| StorageError::Error(format!("Error: {}", e)))?;
+            let value = value.map_err(AzureError::CoreError)?;
             let blobs = value.blobs.items;
             // iterate over the blobs and match to enum
             for blob in blobs {
@@ -406,10 +372,7 @@ impl StorageClient for AzureStorageClient {
         let container = self.client.container_client(self.bucket.as_str());
         let blob = container.blob_client(path);
 
-        let response = blob
-            .delete()
-            .await
-            .map_err(|e| StorageError::Error(format!("Error: {}", e)))?;
+        let response = blob.delete().await.map_err(AzureError::CoreError)?;
 
         Ok(response.delete_type_permanent)
     }
@@ -430,14 +393,10 @@ impl AzureStorageClient {
         &self,
         path: &str,
         expiration: u64,
-    ) -> Result<String, StorageError> {
+    ) -> Result<String, AzureError> {
         let start = OffsetDateTime::now_utc();
         let expiry = start + Duration::seconds(expiration as i64);
-        let response = self
-            .client
-            .get_user_deligation_key(start, expiry)
-            .await
-            .map_err(|e| StorageError::Error(format!("{}", e)))?;
+        let response = self.client.get_user_deligation_key(start, expiry).await?;
 
         let container = self.client.container_client(self.bucket.as_str());
         let blob = container.blob_client(path);
@@ -453,10 +412,8 @@ impl AzureStorageClient {
                 &response.user_deligation_key,
             )
             .await
-            .map_err(|e| StorageError::Error(format!("{}", e)))?;
-        let url = blob
-            .generate_signed_blob_url(&sas)
-            .map_err(|e| StorageError::Error(format!("{}", e)))?;
+            .map_err(AzureError::CoreError)?;
+        let url = blob.generate_signed_blob_url(&sas)?;
 
         Ok(url.to_string())
     }
@@ -599,9 +556,7 @@ impl FileSystem for AzureFSStorageClient {
 
         if recursive {
             if !stripped_lpath.is_dir() {
-                return Err(StorageError::Error(
-                    "Local path must be a directory for recursive put".to_string(),
-                ));
+                return Err(StorageError::PathMustBeDirectoryError);
             }
 
             let files: Vec<PathBuf> = get_files(&stripped_lpath)?;
@@ -654,7 +609,7 @@ impl FileSystem for AzureFSStorageClient {
                     })
                     .collect(),
             },
-            _ => return Err(StorageError::Error("Invalid parts type".to_string())),
+            _ => return Err(AzureError::InvalidPartsTypeError.into()),
         };
 
         let block_xml = block_list.to_xml();
@@ -665,7 +620,7 @@ impl FileSystem for AzureFSStorageClient {
             .body(block_xml)
             .send()
             .await
-            .map_err(|e| StorageError::Error(format!("Failed to commit block list: {:?}", e)))?;
+            .map_err(AzureError::ReqwestError)?;
 
         Ok(())
     }
@@ -676,7 +631,7 @@ impl AzureFSStorageClient {
         &self,
         lpath: &Path,
         rpath: &Path,
-    ) -> Result<AzureMultipartUpload, StorageError> {
+    ) -> Result<AzureMultipartUpload, AzureError> {
         let signed_url = self
             .client
             .generate_presigned_url_for_block_upload(rpath.to_str().unwrap(), 600)
@@ -690,7 +645,7 @@ impl AzureFSStorageClient {
         .await
     }
 
-    pub async fn create_multipart_upload(&self, rpath: &Path) -> Result<String, StorageError> {
+    pub async fn create_multipart_upload(&self, rpath: &Path) -> Result<String, AzureError> {
         self.client
             .generate_presigned_url_for_block_upload(rpath.to_str().unwrap(), 600)
             .await
@@ -700,7 +655,7 @@ impl AzureFSStorageClient {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use opsml_error::error::StorageError;
+    use crate::storage::error::StorageError;
     use opsml_settings::config::OpsmlConfig;
     use opsml_utils::create_uuid7;
     use rand::distr::Alphanumeric;

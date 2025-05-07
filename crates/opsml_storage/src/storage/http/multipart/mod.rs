@@ -29,11 +29,10 @@ impl MultiPartUploader {
         session_url: String,
     ) -> Result<Self, StorageError> {
         match *storage_type {
-            StorageType::Aws => {
-                S3MultipartUpload::new(lpath, rpath, session_url, client).map(MultiPartUploader::S3)
-            }
-            StorageType::Google => GcsMultipartUpload::new(lpath, rpath, session_url, client)
-                .map(MultiPartUploader::Gcs),
+            StorageType::Aws => Ok(S3MultipartUpload::new(lpath, rpath, session_url, client)
+                .map(MultiPartUploader::S3)?),
+            StorageType::Google => Ok(GcsMultipartUpload::new(lpath, rpath, session_url, client)
+                .map(MultiPartUploader::Gcs)?),
             StorageType::Local => {
                 LocalMultipartUpload::new(lpath, rpath, client).map(MultiPartUploader::Local)
             }
@@ -49,9 +48,9 @@ impl MultiPartUploader {
         chunk_size: u64,
     ) -> Result<(), StorageError> {
         match self {
-            MultiPartUploader::S3(s3) => s3.upload_file_in_chunks(chunk_size as usize),
+            MultiPartUploader::S3(s3) => Ok(s3.upload_file_in_chunks(chunk_size as usize)?),
             MultiPartUploader::Gcs(gcs) => {
-                gcs.upload_file_in_chunks(chunk_count, size_of_last_chunk, chunk_size)
+                Ok(gcs.upload_file_in_chunks(chunk_count, size_of_last_chunk, chunk_size)?)
             }
             MultiPartUploader::Local(local) => local.upload_file_in_chunks(),
             MultiPartUploader::Azure(azure) => {
