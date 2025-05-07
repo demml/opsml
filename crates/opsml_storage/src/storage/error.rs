@@ -10,6 +10,82 @@ use tracing::error;
 pub enum AwsError {
     #[error("No eTag is response")]
     MissingEtagError,
+
+    #[error("Invalid eTag in response: {0}")]
+    InvalidEtagError(String),
+
+    #[error(transparent)]
+    IoError(#[from] std::io::Error),
+
+    #[error(transparent)]
+    PresignError(#[from] aws_sdk_s3::presigning::PresigningConfigError),
+
+    #[error(transparent)]
+    UploadPartError(
+        #[from] aws_sdk_s3::error::SdkError<aws_sdk_s3::operation::upload_part::UploadPartError>,
+    ),
+
+    #[error(transparent)]
+    CompleteUploadError(
+        #[from]
+        aws_sdk_s3::error::SdkError<
+            aws_sdk_s3::operation::complete_multipart_upload::CompleteMultipartUploadError,
+        >,
+    ),
+
+    #[error(transparent)]
+    AportUploadError(
+        #[from]
+        aws_sdk_s3::error::SdkError<
+            aws_sdk_s3::operation::abort_multipart_upload::AbortMultipartUploadError,
+        >,
+    ),
+
+    #[error(transparent)]
+    GetObjectError(
+        #[from] aws_sdk_s3::error::SdkError<aws_sdk_s3::operation::get_object::GetObjectError>,
+    ),
+
+    #[error(transparent)]
+    ListObjectsV2Error(
+        #[from]
+        aws_sdk_s3::error::SdkError<aws_sdk_s3::operation::list_objects_v2::ListObjectsV2Error>,
+    ),
+
+    #[error(transparent)]
+    CopyObjectError(
+        #[from] aws_sdk_s3::error::SdkError<aws_sdk_s3::operation::copy_object::CopyObjectError>,
+    ),
+
+    #[error(transparent)]
+    DeleteObjectError(
+        #[from]
+        aws_sdk_s3::error::SdkError<aws_sdk_s3::operation::delete_objects::DeleteObjectError>,
+    ),
+
+    #[error(transparent)]
+    DeleteObjectsError(
+        #[from]
+        aws_sdk_s3::error::SdkError<aws_sdk_s3::operation::delete_objects::DeleteObjectsError>,
+    ),
+
+    #[error("Failed to build object identifier: {0}")]
+    BuildError(String),
+
+    #[error("Failed to collect ByteStream: {0}")]
+    ByteStreamError(String),
+
+    #[error("Failed to get next chunk: {0}")]
+    NextChunkError(String),
+
+    #[error(transparent)]
+    ReqwestError(#[from] reqwest::Error),
+
+    #[error("Upload failed with status: {0}")]
+    UploadError(StatusCode),
+
+    #[error("Invalid parts type for AWS storage")]
+    InvalidPartsTypeError,
 }
 
 #[derive(Error, Debug)]
@@ -80,9 +156,6 @@ pub enum StorageError {
     #[error("Local path must be a directory for recursive put")]
     PathMustBeDirectoryError,
 
-    #[error("Upload failed with status: {0}")]
-    UploadError(StatusCode),
-
     #[error("Failed to upload file")]
     UploadFileError,
 
@@ -91,4 +164,7 @@ pub enum StorageError {
 
     #[error("Failed to cancel upload")]
     CancelUploadError,
+
+    #[error("Local and remote paths must have suffixes")]
+    LocalAndRemotePathsMustHaveSuffixesError,
 }
