@@ -18,7 +18,7 @@ def test_linear_regression_numpy(
     tmp_path: Path, linear_regression: Tuple[SklearnModel, NumpyData]
 ):
     model, _ = linear_regression
-    model.save(tmp_path, True)
+    model.save(tmp_path, ModelSaveKwargs(save_onnx=True))
     assert model.onnx_session is not None
     model.onnx_session.run({"X": model.sample_data.data}, None)  # type: ignore
 
@@ -27,7 +27,7 @@ def test_random_forest_classifier(
     tmp_path: Path, random_forest_classifier: SklearnModel
 ):
     model = random_forest_classifier
-    model.save(tmp_path, True)
+    model.save(tmp_path, ModelSaveKwargs(save_onnx=True))
     assert model.onnx_session is not None
 
 
@@ -35,8 +35,10 @@ def test_sklearn_pipeline(
     tmp_path: Path, sklearn_pipeline: Tuple[SklearnModel, PandasData]
 ):
     model, _ = sklearn_pipeline
-    save_kwargs = ModelSaveKwargs(onnx={"target_opset": {"ai.onnx.ml": 3, "": 9}})
-    model.save(tmp_path, True, save_kwargs=save_kwargs)
+    save_kwargs = ModelSaveKwargs(
+        onnx={"target_opset": {"ai.onnx.ml": 3, "": 9}}, save_onnx=True
+    )
+    model.save(tmp_path, save_kwargs=save_kwargs)
     assert model.onnx_session is not None
 
 
@@ -52,7 +54,7 @@ def test_lgb_classifier_calibrated(
             },
         }
     )
-    model.save(tmp_path, True, save_kwargs=save_kwargs)
+    model.save(tmp_path, save_kwargs=save_kwargs)
     assert model.onnx_session is not None
 
 
@@ -60,15 +62,17 @@ def test_sklearn_pipeline_advanced(
     tmp_path: Path, sklearn_pipeline_advanced: SklearnModel
 ):
     model = sklearn_pipeline_advanced
-    save_kwargs = ModelSaveKwargs(onnx={"target_opset": {"ai.onnx.ml": 3, "": 9}})
-    model.save(tmp_path, True, save_kwargs=save_kwargs)
+    save_kwargs = ModelSaveKwargs(
+        onnx={"target_opset": {"ai.onnx.ml": 3, "": 9}}, save_onnx=True
+    )
+    model.save(tmp_path, save_kwargs=save_kwargs)
     assert model.onnx_session is not None
 
 
 def test_stacking_regressor(tmp_path: Path, stacking_regressor: SklearnModel):
     model = stacking_regressor
     save_kwargs = ModelSaveKwargs(onnx={"target_opset": {"ai.onnx.ml": 3, "": 9}})
-    model.save(tmp_path, True, save_kwargs=save_kwargs)
+    model.save(tmp_path, save_kwargs=save_kwargs)
     assert model.onnx_session is not None
 
 
@@ -83,7 +87,7 @@ def test_sklearn_pipeline_xgb_classifier(
             "target_opset": {"ai.onnx.ml": 3, "": 9},
         }
     )
-    model.save(tmp_path, True, save_kwargs=save_kwargs)
+    model.save(tmp_path, save_kwargs=save_kwargs)
 
 
 def test_stacking_classifier(tmp_path: Path, stacking_classifier: SklearnModel):
@@ -93,7 +97,7 @@ def test_stacking_classifier(tmp_path: Path, stacking_classifier: SklearnModel):
             "options": {"zipmap": False},
         }
     )
-    model.save(tmp_path, True, save_kwargs=save_kwargs)
+    model.save(tmp_path, save_kwargs=save_kwargs)
 
 
 def test_lgb_classifier_calibrated_pipeline(
@@ -105,9 +109,10 @@ def test_lgb_classifier_calibrated_pipeline(
         onnx={
             "options": {"zipmap": False},
             "target_opset": {"ai.onnx.ml": 3, "": 9},
-        }
+        },
+        save_onnx=True,
     )
-    model.save(tmp_path, True, save_kwargs=save_kwargs)
+    model.save(tmp_path, save_kwargs=save_kwargs)
 
 
 @pytest.mark.parametrize(
@@ -186,4 +191,4 @@ def test_lgb_classifier_calibrated_pipeline(
 )
 def test_sklearn_models(tmp_path: Path, interface: SklearnModel):
     model = interface
-    model.save(tmp_path, True)
+    model.save(tmp_path, ModelSaveKwargs(save_onnx=True))

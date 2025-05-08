@@ -1,4 +1,4 @@
-from opsml.model import TorchModel, ModelLoadKwargs
+from opsml.model import TorchModel, ModelLoadKwargs, ModelSaveKwargs
 from opsml.data import DataType
 from typing import Tuple
 import torch
@@ -20,7 +20,7 @@ def test_pytorch_simple(tmp_path: Path, pytorch_simple: Tuple[torch.nn.Module, d
     assert isinstance(interface.sample_data, dict)
     assert interface.data_type == DataType.Dict
 
-    metadata = interface.save(save_path, True)
+    metadata = interface.save(save_path, ModelSaveKwargs(save_onnx=True))
 
     assert interface.onnx_session is not None
     interface.onnx_session.session = None
@@ -53,7 +53,7 @@ def test_pytorch_simple_tuple(
     assert isinstance(interface.sample_data, tuple)
     assert interface.data_type == DataType.Tuple
 
-    metadata = interface.save(save_path, True)
+    metadata = interface.save(save_path, ModelSaveKwargs(save_onnx=True))
 
     assert interface.onnx_session is not None
     assert interface.onnx_session.session is not None

@@ -1,7 +1,7 @@
 from typing import Tuple
 from catboost import CatBoostRegressor, CatBoostClassifier, CatBoostRanker  # type: ignore
 import pandas as pd
-from opsml.model import CatBoostModel, ModelType, ModelLoadKwargs
+from opsml.model import CatBoostModel, ModelType, ModelLoadKwargs, ModelSaveKwargs
 from pathlib import Path
 
 
@@ -17,7 +17,7 @@ def test_catboost_regressor(
     interface = CatBoostModel(model=model, sample_data=data)
 
     assert interface.model_type == ModelType.Catboost
-    metadata = interface.save(save_path, True)
+    metadata = interface.save(save_path, ModelSaveKwargs(save_onnx=True))
 
     interface.model = None
     assert interface.model is None
@@ -49,7 +49,7 @@ def test_catboost_classifier(
     interface = CatBoostModel(model=model, sample_data=data.to_numpy())
 
     assert interface.model_type == ModelType.Catboost
-    metadata = interface.save(save_path, True)
+    metadata = interface.save(save_path, ModelSaveKwargs(save_onnx=True))
 
     interface.model = None
     assert interface.model is None
@@ -81,7 +81,7 @@ def test_catboost_ranker(
     interface = CatBoostModel(model=model, sample_data=data)
 
     assert interface.model_type == ModelType.Catboost
-    metadata = interface.save(save_path, True)
+    metadata = interface.save(save_path, ModelSaveKwargs(save_onnx=True))
 
     interface.model = None
     assert interface.model is None
