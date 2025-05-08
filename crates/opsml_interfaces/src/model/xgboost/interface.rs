@@ -174,13 +174,12 @@ impl XGBoostModel {
     /// # Returns
     ///
     /// * `Result<DataInterfaceSaveMetadata>` - DataInterfaceSaveMetadata
-    #[pyo3(signature = (path, to_onnx=false, save_kwargs=None))]
+    #[pyo3(signature = (path, save_kwargs=None))]
     #[instrument(skip_all)]
     pub fn save<'py>(
         mut self_: PyRefMut<'py, Self>,
         py: Python<'py>,
         path: PathBuf,
-        to_onnx: bool,
         save_kwargs: Option<ModelSaveKwargs>,
     ) -> Result<ModelInterfaceMetadata, ModelInterfaceError> {
         debug!("Saving XGBoost model");
@@ -205,7 +204,7 @@ impl XGBoostModel {
         self_.as_super().schema = self_.as_super().create_feature_schema(py)?;
 
         let mut onnx_model_uri = None;
-        if to_onnx {
+        if kwargs.save_onnx {
             onnx_model_uri = Some(self_.as_super().save_onnx_model(
                 py,
                 &path,

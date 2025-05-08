@@ -422,7 +422,7 @@ impl ModelInterface {
         // save model
         let model_uri = self.save_model(py, &path, kwargs.model.as_ref())?;
 
-        // if to_onnx is true, convert the model to onnx
+        // if save_onnx is true, convert the model to onnx
         let mut onnx_model_uri = None;
         if kwargs.save_onnx {
             onnx_model_uri = Some(self.save_onnx_model(py, &path, kwargs.onnx.as_ref())?);
