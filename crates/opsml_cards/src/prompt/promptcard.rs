@@ -1,11 +1,8 @@
+use crate::error::CardError;
 use crate::utils::BaseArgs;
 use chrono::{DateTime, Utc};
-use opsml_error::{
-    error::{CardError, OpsmlError},
-    map_err_with_logging,
-};
 use opsml_types::contracts::{CardRecord, PromptCardClientRecord};
-use opsml_types::{BaseArgsType, RegistryType, SaveName, Suffix};
+use opsml_types::{RegistryType, SaveName, Suffix};
 use opsml_utils::{get_utc_datetime, PyHelperFuncs};
 use potato_head::Prompt;
 use pyo3::prelude::*;
@@ -76,23 +73,18 @@ impl PromptCard {
         version: Option<&str>,
         uid: Option<&str>,
         tags: Option<&Bound<'_, PyList>>,
-    ) -> PyResult<Self> {
+    ) -> Result<Self, CardError> {
         let registry_type = RegistryType::Prompt;
         let tags = match tags {
             None => Vec::new(),
-            Some(t) => t
-                .extract::<Vec<String>>()
-                .map_err(|e| OpsmlError::new_err(e.to_string()))?,
+            Some(t) => t.extract::<Vec<String>>()?,
         };
 
-        let base_args = map_err_with_logging::<BaseArgsType, _>(
-            BaseArgs::create_args(name, space, version, uid, &registry_type),
-            "Failed to create base args for PromptCard",
-        )?;
+        let base_args = BaseArgs::create_args(name, space, version, uid, &registry_type)?;
 
         let prompt = prompt.extract::<Prompt>().map_err(|e| {
             error!("Failed to extract prompt: {}", e);
-            OpsmlError::new_err(e.to_string())
+            e
         })?;
 
         Ok(Self {
@@ -112,15 +104,15 @@ impl PromptCard {
     }
 
     #[getter]
-    pub fn prompt<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyAny>> {
-        self.prompt.clone().into_bound_py_any(py)
+    pub fn prompt<'py>(&self, py: Python<'py>) -> Result<Bound<'py, PyAny>, CardError> {
+        Ok(self.prompt.clone().into_bound_py_any(py)?)
     }
 
     #[setter]
-    pub fn set_prompt(&mut self, prompt: &Bound<'_, PyAny>) -> PyResult<()> {
+    pub fn set_prompt(&mut self, prompt: &Bound<'_, PyAny>) -> Result<(), CardError> {
         self.prompt = prompt.extract::<Prompt>().map_err(|e| {
             error!("Failed to extract prompt: {}", e);
-            OpsmlError::new_err(e.to_string())
+            e
         })?;
 
         Ok(())
@@ -151,11 +143,11 @@ impl PromptCard {
 
     #[staticmethod]
     #[pyo3(signature = (json_string))]
-    pub fn model_validate_json(json_string: String) -> PyResult<PromptCard> {
-        serde_json::from_str(&json_string).map_err(|e| {
+    pub fn model_validate_json(json_string: String) -> Result<PromptCard, CardError> {
+        Ok(serde_json::from_str(&json_string).map_err(|e| {
             error!("Failed to validate json: {}", e);
-            OpsmlError::new_err(e.to_string())
-        })
+            e
+        })?)
     }
 
     pub fn get_registry_card(&self) -> Result<CardRecord, CardError> {

@@ -3854,11 +3854,11 @@ name = "opsml-auth"
 version = "3.0.0-rc.1"
 dependencies = [
  "jsonwebtoken",
- "opsml-error",
  "opsml-sql",
  "password-auth",
  "rand 0.9.1",
  "serde",
+ "thiserror 2.0.12",
 ]
 
 [[package]]
@@ -3868,7 +3868,6 @@ dependencies = [
  "chrono",
  "opsml-colors",
  "opsml-crypt",
- "opsml-error",
  "opsml-interfaces",
  "opsml-state",
  "opsml-storage",
@@ -3881,6 +3880,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sysinfo",
+ "thiserror 2.0.12",
  "tokio",
  "tracing",
 ]
@@ -4085,7 +4085,6 @@ dependencies = [
  "opsml-client",
  "opsml-colors",
  "opsml-crypt",
- "opsml-error",
  "opsml-events",
  "opsml-semver",
  "opsml-settings",
@@ -4105,6 +4104,7 @@ dependencies = [
  "serde_qs 0.15.0",
  "sqlx",
  "tempfile",
+ "thiserror 2.0.12",
  "tokio",
  "tokio-stream",
  "tokio-util",

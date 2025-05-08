@@ -1,9 +1,9 @@
+use crate::core::error::ServerError;
 use anyhow::Result;
 use opsml_crypt::{
     decrypt_directory, decrypt_file, encrypt_directory,
     key::{derive_encryption_key, encrypted_key, generate_salt},
 };
-use opsml_error::ApiError;
 use opsml_sql::base::SqlClient;
 use opsml_sql::enums::client::SqlClientEnum;
 
@@ -27,7 +27,7 @@ pub async fn create_artifact_key(
     uid: &str,
     registry_type: &str,
     storage_key: &str,
-) -> Result<ArtifactKey, ApiError> {
+) -> Result<ArtifactKey, ServerError> {
     debug!(
         "Creating artifact key for: {:?} and path {:?}",
         uid, storage_key
@@ -56,7 +56,7 @@ pub async fn create_artifact_key(
         .await
         .map_err(|e| {
             error!("Failed to insert artifact key: {}", e);
-            ApiError::Error("Failed to insert artifact key".to_string())
+            e
         })?;
 
     Ok(artifact_key)
@@ -68,16 +68,16 @@ pub async fn create_and_store_encrypted_file(
     lpath: &str,
     rpath: &str,
     key: &ArtifactKey,
-) -> Result<UploadResponse, ApiError> {
+) -> Result<UploadResponse, ServerError> {
     let encryption_key = key.get_decrypt_key().map_err(|e| {
         error!("Failed to get decryption key: {}", e);
-        ApiError::Error("Failed to get decryption key".to_string())
+        e
     })?;
 
     // Create temp directory
     let tmp_dir = TempDir::new().map_err(|e| {
         error!("Failed to create temp dir: {}", e);
-        ApiError::Error("Failed to create temp dir".to_string())
+        e
     })?;
 
     // Create local path
@@ -86,13 +86,13 @@ pub async fn create_and_store_encrypted_file(
     // Write content to file
     std::fs::write(&local_path, content).map_err(|e| {
         error!("Failed to write content to file: {}", e);
-        ApiError::Error("Failed to write content to file".to_string())
+        e
     })?;
 
     // Encrypt directory
     encrypt_directory(&local_path, &encryption_key).map_err(|e| {
         error!("Failed to encrypt directory: {}", e);
-        ApiError::Error("Failed to encrypt directory".to_string())
+        e
     })?;
 
     let remote_path = PathBuf::from(rpath);
@@ -102,7 +102,7 @@ pub async fn create_and_store_encrypted_file(
         .await
         .map_err(|e| {
             error!("Failed to store file: {}", e);
-            ApiError::Error("Failed to store file".to_string())
+            e
         })?;
 
     Ok(UploadResponse {
@@ -119,14 +119,14 @@ pub async fn download_artifact(
     rpath: &str,
     registry_type: &str,
     uid: Option<&str>,
-) -> Result<DownloadResponse, ApiError> {
+) -> Result<DownloadResponse, ServerError> {
     let key = if uid.is_none() {
         sql_client
             .get_artifact_key_from_path(rpath, registry_type)
             .await
             .map_err(|e| {
                 error!("Failed to get artifact key: {}", e);
-                ApiError::Error("Failed to get artifact key".to_string())
+                e
             })?
     } else {
         Some(
@@ -135,13 +135,13 @@ pub async fn download_artifact(
                 .await
                 .map_err(|e| {
                     error!("Failed to get artifact key: {}", e);
-                    ApiError::Error("Failed to get artifact key".to_string())
+                    e
                 })?,
         )
     };
 
     if key.is_none() {
-        return Err(ApiError::Error("Artifact key not found".to_string()));
+        return Err(ServerError::ArtifactKeyNotFound);
     }
 
     let key = key.unwrap();
@@ -150,11 +150,11 @@ pub async fn download_artifact(
     // Check if file exists in storage
     let files = storage_client.find(&rpath).await.map_err(|e| {
         error!("Failed to find artifact: {}", e);
-        ApiError::Error("Failed to find artifact".to_string())
+        e
     })?;
 
     if files.is_empty() {
-        return Err(ApiError::Error("Artifact not found".to_string()));
+        return Err(ServerError::ArtifactNotFound);
     }
 
     // Set up paths
@@ -166,18 +166,18 @@ pub async fn download_artifact(
         .await
         .map_err(|e| {
             error!("Failed to download artifact: {}", e);
-            ApiError::Error("Failed to download artifact".to_string())
+            e
         })?;
 
     // Get decryption key and decrypt
     let decryption_key = key.get_decrypt_key().map_err(|e| {
         error!("Failed to get decryption key: {}", e);
-        ApiError::Error("Failed to get decryption key".to_string())
+        e
     })?;
 
     decrypt_file(lpath, &decryption_key).map_err(|e| {
         error!("Failed to decrypt artifact: {}", e);
-        ApiError::Error("Failed to decrypt artifact".to_string())
+        e
     })?;
 
     Ok(DownloadResponse { exists: true })
@@ -191,13 +191,13 @@ pub async fn download_artifacts(
     rpath: &Path,
     registry_type: &str,
     uid: Option<&str>,
-) -> Result<DownloadResponse, ApiError> {
+) -> Result<DownloadResponse, ServerError> {
     let key = sql_client
         .get_artifact_key(uid.unwrap(), registry_type)
         .await
         .map_err(|e| {
             error!("Failed to get artifact key: {}", e);
-            ApiError::Error("Failed to get artifact key".to_string())
+            e
         })?;
 
     let rpath = key.storage_path().join(rpath);
@@ -205,28 +205,28 @@ pub async fn download_artifacts(
     // Check if file exists in storage
     let files = storage_client.find(&rpath).await.map_err(|e| {
         error!("Failed to find artifact: {}", e);
-        ApiError::Error("Failed to find artifact".to_string())
+        e
     })?;
 
     if files.is_empty() {
-        return Err(ApiError::Error("Artifact not found".to_string()));
+        return Err(ServerError::ArtifactNotFound);
     }
 
     // Download files
     storage_client.get(lpath, &rpath, true).await.map_err(|e| {
         error!("Failed to download artifact: {}", e);
-        ApiError::Error("Failed to download artifact".to_string())
+        e
     })?;
 
     // Get decryption key and decrypt
     let decryption_key = key.get_decrypt_key().map_err(|e| {
         error!("Failed to get decryption key: {}", e);
-        ApiError::Error("Failed to get decryption key".to_string())
+        e
     })?;
 
     decrypt_directory(lpath, &decryption_key).map_err(|e| {
         error!("Failed to decrypt artifact: {}", e);
-        ApiError::Error("Failed to decrypt artifact".to_string())
+        e
     })?;
 
     Ok(DownloadResponse { exists: true })
@@ -237,13 +237,13 @@ pub async fn get_artifact_key(
     encryption_key: &[u8],
     registry_type: &str,
     storage_key: &str,
-) -> Result<ArtifactKey, ApiError> {
+) -> Result<ArtifactKey, ServerError> {
     match sql_client
         .get_artifact_key_from_path(storage_key, registry_type)
         .await
         .map_err(|e| {
             error!("Failed to get artifact key: {}", e);
-            ApiError::Error("Failed to get artifact key".to_string())
+            e
         })? {
         Some(key) => Ok(key),
         None => {

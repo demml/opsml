@@ -16,7 +16,6 @@ use axum::{
 };
 use headers::HeaderMap;
 use opsml_auth::permission::UserPermissions;
-use opsml_error::error::ServerError;
 use opsml_sql::base::SqlClient;
 use opsml_types::{contracts::*, StorageType, MAX_FILE_SIZE};
 
@@ -79,11 +78,7 @@ pub async fn create_multipart_upload(
     let path = Path::new(&params.path);
     debug!("Creating multipart upload for path: {}", path.display());
 
-    let session_url = state
-        .storage_client
-        .create_multipart_upload(path)
-        .await
-        .map_err(|e| ServerError::MultipartError(e.to_string()));
+    let session_url = state.storage_client.create_multipart_upload(path).await;
 
     debug!("Session URL: {:?}", session_url);
 
@@ -158,8 +153,7 @@ pub async fn generate_presigned_url(
         let url = state
             .storage_client
             .generate_presigned_url_for_part(part_number, path, session_url)
-            .await
-            .map_err(|e| ServerError::PresignedError(e.to_string()));
+            .await;
 
         let url = match url {
             Ok(url) => url,
@@ -171,11 +165,7 @@ pub async fn generate_presigned_url(
         return Ok(Json(PresignedUrl { url }));
     }
 
-    let url = state
-        .storage_client
-        .generate_presigned_url(path, 600)
-        .await
-        .map_err(|e| ServerError::PresignedError(e.to_string()));
+    let url = state.storage_client.generate_presigned_url(path, 600).await;
 
     let url = match url {
         Ok(url) => url,
@@ -205,7 +195,6 @@ pub async fn complete_multipart_upload(
         .storage_client
         .complete_multipart_upload(req)
         .await
-        .map_err(|e| ServerError::MultipartError(e.to_string()))
         .map_err(|e| {
             error!("Failed to complete multipart upload: {}", e);
             internal_server_error(e, "Failed to complete multipart upload")
@@ -265,11 +254,7 @@ pub async fn list_files(
     let path = Path::new(&params.path);
     info!("Listing files for: {}", path.display());
 
-    let files = state
-        .storage_client
-        .find(path)
-        .await
-        .map_err(|e| ServerError::ListFileError(e.to_string()));
+    let files = state.storage_client.find(path).await;
 
     let files = match files {
         Ok(files) => files,
@@ -295,11 +280,7 @@ pub async fn list_file_info(
 
     debug!("Getting file info for: {}", path.display(),);
 
-    let files = state
-        .storage_client
-        .find_info(path)
-        .await
-        .map_err(|e| ServerError::ListFileError(e.to_string()));
+    let files = state.storage_client.find_info(path).await;
 
     let files = match files {
         Ok(files) => files,
@@ -323,11 +304,7 @@ pub async fn file_tree(
 
     let path = Path::new(&params.path);
 
-    let files = state
-        .storage_client
-        .find_info(path)
-        .await
-        .map_err(|e| ServerError::ListFileError(e.to_string()));
+    let files = state.storage_client.find_info(path).await;
 
     let files = match files {
         Ok(files) => files,
@@ -401,11 +378,7 @@ pub async fn get_file_for_ui(
 
     let file_path = PathBuf::from(&req.path);
 
-    let files = state
-        .storage_client
-        .find_info(&file_path)
-        .await
-        .map_err(|e| ServerError::ListFileError(e.to_string()));
+    let files = state.storage_client.find_info(&file_path).await;
 
     let files = match files {
         Ok(files) => files,
@@ -500,14 +473,14 @@ pub async fn delete_file(
 
     info!("Deleting path: {}", path.display());
 
-    let files = state.storage_client.rm(path, recursive).await.map_err(|e| {
-        error!("Failed to delete files: {}", e);
-        ServerError::DeleteError(e.to_string())
-    });
+    let files = state.storage_client.rm(path, recursive).await;
 
     //
     if let Err(e) = files {
-        return Err(internal_server_error(e, "Failed to delete files"));
+        return Err({
+            error!("Failed to delete files: {}", e);
+            internal_server_error(e, "Failed to delete files")
+        });
     }
 
     // check if file exists

@@ -1,8 +1,14 @@
-use std::fmt::Display;
-
 use axum::http::StatusCode;
 use axum::Json;
+use opsml_crypt::error::CryptError;
+use opsml_semver::error::VersionError;
+use opsml_sql::error::SqlError;
+use opsml_storage::storage::error::StorageError;
+use opsml_types::error::TypeError;
+use opsml_utils::error::UtilError;
 use serde::{Deserialize, Serialize};
+use std::fmt::Display;
+use thiserror::Error;
 use tracing::error;
 
 /// Error structure for OpsML server
@@ -205,4 +211,49 @@ pub fn internal_server_error<E: std::fmt::Display>(
         StatusCode::INTERNAL_SERVER_ERROR,
         Json(OpsmlServerError::new(msg)),
     )
+}
+
+#[derive(Error, Debug)]
+pub enum ServerError {
+    #[error("Failed to create client with error")]
+    CreateClientError(#[source] reqwest::Error),
+
+    #[error(transparent)]
+    StorageError(#[from] StorageError),
+
+    #[error(transparent)]
+    UtilError(#[from] UtilError),
+
+    #[error("Invalid drift profile file")]
+    InvalidDriftProfile,
+
+    #[error(transparent)]
+    IoError(#[from] std::io::Error),
+
+    #[error("Failed to load drift profile from string: {0}")]
+    LoadDriftProfileError(String),
+
+    #[error("Failed to get filename from path")]
+    FileNameError,
+
+    #[error(transparent)]
+    SqlError(#[from] SqlError),
+
+    #[error(transparent)]
+    TypeError(#[from] TypeError),
+
+    #[error(transparent)]
+    CryptError(#[from] CryptError),
+
+    #[error("Artifact key not found")]
+    ArtifactKeyNotFound,
+
+    #[error("Artifact not found")]
+    ArtifactNotFound,
+
+    #[error(transparent)]
+    VersionError(#[from] VersionError),
+
+    #[error("User not found in database")]
+    UserNotFoundError,
 }
