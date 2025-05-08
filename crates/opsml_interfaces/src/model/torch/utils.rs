@@ -10,7 +10,6 @@ use pyo3::IntoPyObjectExt;
 use pyo3::{prelude::*, types::PySlice};
 use std::path::Path;
 use std::path::PathBuf;
-use tracing::error;
 
 #[derive(Default, Debug)]
 pub enum TorchSampleData {
