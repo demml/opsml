@@ -1,7 +1,7 @@
+use crate::error::CliError;
 use base64::prelude::*;
 use opsml_colors::Colorize;
 pub use opsml_crypt::{derive_master_key, generate_salt};
-use opsml_error::CliError;
 use pyo3::prelude::*;
 
 /// Create a structured response for the generated key
@@ -52,8 +52,7 @@ pub fn generate_key(password: &str, rounds: u32) -> Result<(), CliError> {
     // convert password to bytes
     let password = password.as_bytes();
 
-    let key =
-        derive_master_key(password, &salt, Some(rounds)).map_err(|_| CliError::GenerateKeyError)?;
+    let key = derive_master_key(password, &salt, Some(rounds))?;
 
     // base64 encode the key
     let encoded_key = BASE64_STANDARD.encode(key);

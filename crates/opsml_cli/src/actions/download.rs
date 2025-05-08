@@ -1,9 +1,9 @@
 use crate::cli::arg::DownloadCard;
 use crate::cli::arg::IntoQueryArgs;
+use crate::error::CliError;
 use opsml_cards::CardDeck;
 use opsml_colors::Colorize;
 use opsml_crypt::decrypt_directory;
-use opsml_error::CliError;
 use opsml_registry::base::OpsmlRegistry;
 use opsml_storage::storage_client;
 use opsml_types::contracts::ArtifactKey;
@@ -26,13 +26,10 @@ fn download_card_artifacts(key: &ArtifactKey, lpath: &Path) -> Result<(), CliErr
     let rpath = key.storage_path();
 
     if !lpath.exists() {
-        std::fs::create_dir_all(lpath).map_err(|e| CliError::Error(format!("{}", e)))?;
+        std::fs::create_dir_all(lpath)?;
     }
     // download card artifacts
-    storage_client()
-        .map_err(|e| CliError::Error(format!("{}", e)))?
-        .get(lpath, &rpath, true)
-        .map_err(|e| CliError::Error(format!("{}", e)))?;
+    storage_client()?.get(lpath, &rpath, true)?;
 
     decrypt_directory(lpath, &decryption_key)?;
 
@@ -96,15 +93,15 @@ pub fn download_deck(args: &DownloadCard) -> Result<(), CliError> {
 
     // delete directory if it exists
     if base_path.exists() {
-        std::fs::remove_dir_all(&base_path).map_err(CliError::DeleteBasePathError)?;
+        std::fs::remove_dir_all(&base_path)?;
     }
 
     // download card deck card
     download_card_artifacts(&key, &base_path)?;
 
     // read Card.json file
-    let card_deck = CardDeck::load_card_deck_json(&base_path)
-        .map_err(|e| CliError::Error(format!("Failed to load card deck JSON file: {}", e)))?;
+    let card_deck =
+        CardDeck::load_card_deck_json(&base_path).map_err(CliError::LoadCardDeckError)?;
 
     let card_deck_name = format!(
         "{}/{}/v{}",

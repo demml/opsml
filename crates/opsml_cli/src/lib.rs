@@ -1,5 +1,6 @@
 pub mod actions;
 pub mod cli;
+pub mod error;
 
 use crate::actions::{download_card, list_cards};
 use crate::cli::{Cli, Commands, GenerateCommands, GetCommands, InstallCommands, ListCommands};
