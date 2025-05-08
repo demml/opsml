@@ -110,9 +110,6 @@ pub struct ModelCard {
     #[pyo3(get)]
     pub registry_type: RegistryType,
 
-    #[pyo3(get)]
-    pub to_onnx: bool,
-
     #[pyo3(get, set)]
     pub app_env: String,
 
@@ -132,7 +129,7 @@ pub struct ModelCard {
 impl ModelCard {
     #[new]
     #[allow(clippy::too_many_arguments)]
-    #[pyo3(signature = (interface, space=None, name=None, version=None, uid=None, tags=None, datacard_uid=None, metadata=None, to_onnx=None))]
+    #[pyo3(signature = (interface, space=None, name=None, version=None, uid=None, tags=None, datacard_uid=None, metadata=None))]
     pub fn new(
         py: Python,
         interface: &Bound<'_, PyAny>,
@@ -143,7 +140,6 @@ impl ModelCard {
         tags: Option<&Bound<'_, PyList>>,
         datacard_uid: Option<&str>,
         metadata: Option<ModelCardMetadata>,
-        to_onnx: Option<bool>,
     ) -> Result<Self, CardError> {
         let registry_type = RegistryType::Model;
         let tags = match tags {
@@ -185,7 +181,6 @@ impl ModelCard {
             tags,
             metadata,
             registry_type,
-            to_onnx: to_onnx.unwrap_or(false),
             artifact_key: None,
             app_env: std::env::var("APP_ENV").unwrap_or_else(|_| "dev".to_string()),
             created_at: get_utc_datetime(),
@@ -276,7 +271,7 @@ impl ModelCard {
 
         let metadata = model
             .bind(py)
-            .call_method("save", (path.clone(), self.to_onnx, save_kwargs), None)
+            .call_method("save", (path.clone(), save_kwargs), None)
             .inspect_err(|e| {
                 error!("Failed to save model interface: {}", e);
             })?;
@@ -491,7 +486,6 @@ impl Serialize for ModelCard {
         state.serialize_field("tags", &self.tags)?;
         state.serialize_field("metadata", &self.metadata)?;
         state.serialize_field("registry_type", &self.registry_type)?;
-        state.serialize_field("to_onnx", &self.to_onnx)?;
         state.serialize_field("created_at", &self.created_at)?;
         state.serialize_field("app_env", &self.app_env)?;
         state.serialize_field("is_card", &self.is_card)?;
@@ -511,7 +505,6 @@ impl FromPyObject<'_> for ModelCard {
         let tags = ob.getattr("tags")?.extract()?;
         let metadata = ob.getattr("metadata")?.extract()?;
         let registry_type = ob.getattr("registry_type")?.extract()?;
-        let to_onnx = ob.getattr("to_onnx")?.extract()?;
         let created_at = ob.getattr("created_at")?.extract()?;
         let app_env = ob.getattr("app_env")?.extract()?;
         let opsml_version = ob.getattr("opsml_version")?.extract()?;
@@ -525,7 +518,6 @@ impl FromPyObject<'_> for ModelCard {
             tags,
             metadata,
             registry_type,
-            to_onnx,
             artifact_key: None,
             app_env,
             created_at,
@@ -551,7 +543,6 @@ impl<'de> Deserialize<'de> for ModelCard {
             Tags,
             Metadata,
             RegistryType,
-            ToOnnx,
             AppEnv,
             CreatedAt,
             IsCard,
@@ -579,7 +570,6 @@ impl<'de> Deserialize<'de> for ModelCard {
                 let mut tags = None;
                 let mut metadata = None;
                 let mut registry_type = None;
-                let mut to_onnx = None;
                 let mut app_env = None;
                 let mut created_at = None;
                 let mut is_card = None;
@@ -613,9 +603,6 @@ impl<'de> Deserialize<'de> for ModelCard {
                         Field::RegistryType => {
                             registry_type = Some(map.next_value()?);
                         }
-                        Field::ToOnnx => {
-                            to_onnx = Some(map.next_value()?);
-                        }
                         Field::AppEnv => {
                             app_env = Some(map.next_value()?);
                         }
@@ -639,7 +626,6 @@ impl<'de> Deserialize<'de> for ModelCard {
                 let metadata = metadata.ok_or_else(|| de::Error::missing_field("metadata"))?;
                 let registry_type =
                     registry_type.ok_or_else(|| de::Error::missing_field("registry_type"))?;
-                let to_onnx = to_onnx.ok_or_else(|| de::Error::missing_field("to_onnx"))?;
                 let app_env = app_env.ok_or_else(|| de::Error::missing_field("app_env"))?;
                 let created_at =
                     created_at.ok_or_else(|| de::Error::missing_field("created_at"))?;
@@ -656,7 +642,6 @@ impl<'de> Deserialize<'de> for ModelCard {
                     tags,
                     metadata,
                     registry_type,
-                    to_onnx,
                     artifact_key: None,
                     app_env,
                     created_at,
@@ -675,7 +660,6 @@ impl<'de> Deserialize<'de> for ModelCard {
             "tags",
             "metadata",
             "registry_type",
-            "to_onnx",
             "app_env",
             "created_at",
             "is_card",

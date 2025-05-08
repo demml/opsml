@@ -11,11 +11,13 @@ use std::path::Path;
 use std::path::PathBuf;
 use tracing::{debug, error, instrument};
 
-type PyDictKwargs<'py> = (
-    Option<Bound<'py, PyDict>>,
-    Option<Bound<'py, PyDict>>,
-    Option<Bound<'py, PyDict>>,
-);
+#[derive(Default)]
+pub struct SaveKwargsResult<'py> {
+    pub onnx: Option<Bound<'py, PyDict>>,
+    pub model: Option<Bound<'py, PyDict>>,
+    pub preprocessor: Option<Bound<'py, PyDict>>,
+    pub save_onnx: bool,
+}
 
 #[derive(Default, Debug)]
 pub enum SampleData {
@@ -534,26 +536,20 @@ impl OnnxExtension for SampleData {
     }
 }
 
+/// Parse the save kwargs from the model save kwargs
 pub fn parse_save_kwargs<'py>(
     py: Python<'py>,
-    save_kwargs: &Option<ModelSaveKwargs>,
-) -> PyDictKwargs<'py> {
-    let onnx_kwargs = save_kwargs
-        .as_ref()
-        .and_then(|args| args.onnx_kwargs(py))
-        .cloned();
-
-    let model_kwargs = save_kwargs
-        .as_ref()
-        .and_then(|args| args.model_kwargs(py))
-        .cloned();
-
-    let preprocessor_kwargs = save_kwargs
-        .as_ref()
-        .and_then(|args| args.preprocessor_kwargs(py))
-        .cloned();
-
-    (onnx_kwargs, model_kwargs, preprocessor_kwargs)
+    save_kwargs: Option<&ModelSaveKwargs>,
+) -> SaveKwargsResult<'py> {
+    match save_kwargs {
+        Some(kwargs) => SaveKwargsResult {
+            onnx: kwargs.onnx_kwargs(py).cloned(),
+            model: kwargs.model_kwargs(py).cloned(),
+            preprocessor: kwargs.preprocessor_kwargs(py).cloned(),
+            save_onnx: kwargs.save_onnx(),
+        },
+        None => SaveKwargsResult::default(),
+    }
 }
 
 pub fn save_to_joblib(data: &Bound<'_, PyAny>, path: &Path) -> Result<PathBuf, SampleDataError> {

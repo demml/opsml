@@ -35,18 +35,24 @@ impl InterfaceDataType {
 #[derive(Debug, Default)]
 pub struct ModelSaveKwargs {
     pub onnx: Option<Py<PyDict>>,
+
     pub model: Option<Py<PyDict>>,
+
     pub preprocessor: Option<Py<PyDict>>,
+
+    #[pyo3(get, set)]
+    pub save_onnx: bool,
 }
 
 #[pymethods]
 impl ModelSaveKwargs {
     #[new]
-    #[pyo3(signature = (onnx=None, model=None, preprocessor=None))]
+    #[pyo3(signature = (onnx=None, model=None, preprocessor=None, save_onnx=None))]
     pub fn new<'py>(
         onnx: Option<Bound<'py, PyAny>>,
         model: Option<Bound<'py, PyDict>>,
         preprocessor: Option<Bound<'py, PyDict>>,
+        save_onnx: Option<bool>,
     ) -> Result<Self, TypeError> {
         // check if onnx is None, PyDict or HuggingFaceOnnxArgs
 
@@ -73,6 +79,7 @@ impl ModelSaveKwargs {
             onnx,
             model,
             preprocessor,
+            save_onnx: save_onnx.unwrap_or(false),
         })
     }
 
@@ -129,6 +136,10 @@ impl ModelSaveKwargs {
             .as_ref()
             .map(|preprocessor| preprocessor.bind(py))
     }
+
+    pub fn save_onnx(&self) -> bool {
+        self.save_onnx
+    }
 }
 
 impl Serialize for ModelSaveKwargs {
@@ -137,7 +148,7 @@ impl Serialize for ModelSaveKwargs {
         S: serde::Serializer,
     {
         Python::with_gil(|py| {
-            let mut state = serializer.serialize_struct("ModelSaveKwargs", 3)?;
+            let mut state = serializer.serialize_struct("ModelSaveKwargs", 4)?;
             let onnx = self
                 .onnx
                 .as_ref()
@@ -150,10 +161,12 @@ impl Serialize for ModelSaveKwargs {
                 .preprocessor
                 .as_ref()
                 .map(|preprocessor| pyobject_to_json(preprocessor.bind(py)).unwrap());
+            let save_onnx = self.save_onnx;
 
             state.serialize_field("onnx", &onnx)?;
             state.serialize_field("model", &model)?;
             state.serialize_field("preprocessor", &preprocessor)?;
+            state.serialize_field("save_onnx", &save_onnx)?;
             state.end()
         })
     }
@@ -181,6 +194,7 @@ impl<'de> Deserialize<'de> for ModelSaveKwargs {
                     let mut onnx = None;
                     let mut model = None;
                     let mut preprocessor = None;
+                    let mut save_onnx = None;
 
                     while let Some(key) = map.next_key::<String>()? {
                         match key.as_str() {
@@ -223,6 +237,11 @@ impl<'de> Deserialize<'de> for ModelSaveKwargs {
                                     }
                                 }
                             }
+
+                            "save_onnx" => {
+                                let value = map.next_value::<Option<bool>>()?;
+                                save_onnx = value;
+                            }
                             _ => {
                                 let _: serde::de::IgnoredAny = map.next_value()?;
                             }
@@ -232,6 +251,7 @@ impl<'de> Deserialize<'de> for ModelSaveKwargs {
                         onnx,
                         model,
                         preprocessor,
+                        save_onnx: save_onnx.unwrap_or(false),
                     };
                     Ok(kwargs)
                 })
@@ -240,7 +260,7 @@ impl<'de> Deserialize<'de> for ModelSaveKwargs {
 
         deserializer.deserialize_struct(
             "ModelSaveKwargs",
-            &["onnx", "model", "preprocessor"],
+            &["onnx", "model", "preprocessor", "save_onnx"],
             ModelSaveKwargsVisitor,
         )
     }
@@ -255,11 +275,13 @@ impl Clone for ModelSaveKwargs {
                 .preprocessor
                 .as_ref()
                 .map(|preprocessor| preprocessor.clone_ref(py));
+            let save_onnx = self.save_onnx;
 
             ModelSaveKwargs {
                 onnx,
                 model,
                 preprocessor,
+                save_onnx,
             }
         })
     }

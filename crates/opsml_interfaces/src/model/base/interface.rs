@@ -406,27 +406,26 @@ impl ModelInterface {
     /// # Returns
     ///
     /// * `PyResult<DataInterfaceSaveMetadata>` - DataInterfaceSaveMetadata
-    #[pyo3(signature = (path, to_onnx=false, save_kwargs=None))]
-    #[instrument(skip(self, py, path, to_onnx, save_kwargs) name = "save_model_interface")]
+    #[pyo3(signature = (path, save_kwargs=None))]
+    #[instrument(skip(self, py, path, save_kwargs) name = "save_model_interface")]
     pub fn save(
         &mut self,
         py: Python,
         path: PathBuf,
-        to_onnx: bool,
         save_kwargs: Option<ModelSaveKwargs>,
     ) -> Result<ModelInterfaceMetadata, ModelInterfaceError> {
         debug!("Saving model interface");
 
         // get onnx and model kwargs
-        let (onnx_kwargs, model_kwargs, _) = parse_save_kwargs(py, &save_kwargs);
+        let kwargs = parse_save_kwargs(py, save_kwargs.as_ref());
 
         // save model
-        let model_uri = self.save_model(py, &path, model_kwargs.as_ref())?;
+        let model_uri = self.save_model(py, &path, kwargs.model.as_ref())?;
 
         // if to_onnx is true, convert the model to onnx
         let mut onnx_model_uri = None;
-        if to_onnx {
-            onnx_model_uri = Some(self.save_onnx_model(py, &path, onnx_kwargs.as_ref())?);
+        if kwargs.save_onnx {
+            onnx_model_uri = Some(self.save_onnx_model(py, &path, kwargs.onnx.as_ref())?);
         }
 
         let sample_data_uri = self.save_data(py, &path, None)?;
