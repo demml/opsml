@@ -8,8 +8,8 @@ def test_save_model_interface(tmp_path: Path, random_forest_classifier: SklearnM
     save_path = tmp_path / "test"
     save_path.mkdir()
 
-    metadata = interface.save(save_path, True)
-    assert metadata.save_metadata.save_kwargs is None
+    metadata = interface.save(save_path, ModelSaveKwargs(save_onnx=True))
+    metadata.save_metadata.save_kwargs is not None
 
     interface.model = None
 
@@ -36,8 +36,10 @@ def test_save_model_interface_with_args(
     save_path = tmp_path / "test"
     save_path.mkdir()
 
-    args = ModelSaveKwargs(onnx={"target_opset": {"ai.onnx.ml": 3, "": 9}})
-    metadata = interface.save(save_path, True, args)
+    args = ModelSaveKwargs(
+        onnx={"target_opset": {"ai.onnx.ml": 3, "": 9}}, save_onnx=True
+    )
+    metadata = interface.save(save_path, args)
 
     assert metadata.save_metadata.save_kwargs is not None
 

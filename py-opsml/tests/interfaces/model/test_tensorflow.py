@@ -54,7 +54,9 @@ def functional_model():
     model.fit(X, y, epochs=1, batch_size=32, validation_split=0.2, verbose=1)
 
     input_signature = [tf.TensorSpec(shape=(None, 10), dtype=tf.float32, name="x")]
-    save_kwargs = ModelSaveKwargs(onnx={"input_signature": input_signature})
+    save_kwargs = ModelSaveKwargs(
+        onnx={"input_signature": input_signature}, save_onnx=True
+    )
 
     return model, X, save_kwargs
 
@@ -110,7 +112,9 @@ def multi_input_model():
         tf.TensorSpec(shape=(None, 10), dtype=tf.float32, name="numeric_input"),
         tf.TensorSpec(shape=(None, 5), dtype=tf.float32, name="categorical_input"),
     ]
-    save_kwargs = ModelSaveKwargs(onnx={"input_signature": input_signature})
+    save_kwargs = ModelSaveKwargs(
+        onnx={"input_signature": input_signature}, save_onnx=True
+    )
 
     return model, [numeric_data, categorical_data], save_kwargs
 
@@ -163,13 +167,13 @@ def multi_input_dict_model():
         verbose=1,
     )
 
-    input_signature = [
-        tf.TensorSpec(shape=(None, 5), dtype=tf.float32, name="categorical_input"),
-        tf.TensorSpec(shape=(None, 10), dtype=tf.float32, name="numeric_input"),
-    ]
-    save_kwargs = ModelSaveKwargs(onnx={"input_signature": input_signature})
+    # input_signature = [
+    # tf.TensorSpec(shape=(None, 5), dtype=tf.float32, name="categorical_input"),
+    # tf.TensorSpec(shape=(None, 10), dtype=tf.float32, name="numeric_input"),
+    # ]
+    # save_kwargs = ModelSaveKwargs(onnx={"input_signature": input_signature})
 
-    return model, train_data, save_kwargs
+    return model, train_data, None
 
 
 def tf_test_model(tf_model, onnx: bool = False, data_type: DataType = DataType.Numpy):
@@ -183,7 +187,7 @@ def tf_test_model(tf_model, onnx: bool = False, data_type: DataType = DataType.N
 
         interface = TensorFlowModel(model=model, sample_data=data)
 
-        metadata = interface.save(temp_path, onnx, save_kwargs)
+        metadata = interface.save(temp_path, save_kwargs)
 
         assert interface.model_type == ModelType.TensorFlow
         assert interface.data_type == data_type

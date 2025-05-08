@@ -1,7 +1,12 @@
 from typing import Tuple
 import warnings
 from pathlib import Path
-from opsml.model import SklearnModel, OnnxSession, ModelInterfaceMetadata
+from opsml.model import (
+    SklearnModel,
+    OnnxSession,
+    ModelInterfaceMetadata,
+    ModelSaveKwargs,
+)
 from opsml.data import NumpyData
 
 
@@ -16,7 +21,7 @@ def test_onnx_session(
     tmp_path: Path, linear_regression: Tuple[SklearnModel, NumpyData]
 ):
     model, _ = linear_regression
-    metadata = model.save(tmp_path, True)
+    metadata = model.save(tmp_path, ModelSaveKwargs(save_onnx=True))
     assert model.onnx_session is not None
     model.onnx_session.run({"X": model.sample_data.data}, None)  # type: ignore
 
