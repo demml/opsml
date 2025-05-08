@@ -2,8 +2,8 @@ use crate::data::{
     generate_feature_schema, DataInterface, DataInterfaceMetadata, DataInterfaceSaveMetadata,
     DataLoadKwargs, DataSaveKwargs, SqlLogic,
 };
+use crate::error::DataInterfaceError;
 use crate::types::FeatureSchema;
-use opsml_error::OpsmlError;
 use opsml_types::{DataInterfaceType, DataType, SaveName, Suffix};
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
@@ -34,7 +34,7 @@ impl TorchData {
         feature_map: Option<FeatureSchema>,
         sql_logic: Option<SqlLogic>,
         data_profile: Option<DataProfile>,
-    ) -> PyResult<(Self, DataInterface)> {
+    ) -> Result<(Self, DataInterface), DataInterfaceError> {
         // check if data is a numpy array
 
         let data = match data {
@@ -46,7 +46,7 @@ impl TorchData {
                 if data.is_instance(&tensor).unwrap() {
                     Some(data.into_py_any(py)?)
                 } else {
-                    return Err(OpsmlError::new_err("Data must be a Torch tensor"));
+                    return Err(DataInterfaceError::TorchTypeError);
                 }
             }
             None => None,
@@ -75,7 +75,7 @@ impl TorchData {
 
     #[setter]
     #[allow(clippy::needless_lifetimes)]
-    pub fn set_data(&mut self, data: &Bound<'_, PyAny>) -> PyResult<()> {
+    pub fn set_data(&mut self, data: &Bound<'_, PyAny>) -> Result<(), DataInterfaceError> {
         let py = data.py();
 
         // check if data is None
@@ -92,7 +92,7 @@ impl TorchData {
                 self.data = Some(data.into_py_any(py)?);
                 Ok(())
             } else {
-                Err(OpsmlError::new_err("Data must be a torch tensor"))
+                Err(DataInterfaceError::TorchTypeError)
             }
         }
     }
@@ -103,7 +103,7 @@ impl TorchData {
         py: Python,
         path: PathBuf,
         save_kwargs: Option<DataSaveKwargs>,
-    ) -> PyResult<DataInterfaceMetadata> {
+    ) -> Result<DataInterfaceMetadata, DataInterfaceError> {
         let data_kwargs = save_kwargs
             .as_ref()
             .and_then(|args| args.data_kwargs(py))
@@ -140,7 +140,7 @@ impl TorchData {
         path: PathBuf,
         metadata: DataInterfaceSaveMetadata,
         load_kwargs: Option<DataLoadKwargs>,
-    ) -> PyResult<()> {
+    ) -> Result<(), DataInterfaceError> {
         let load_path = path.join(metadata.data_uri);
         let torch = PyModule::import(py, "torch")?;
         let load_kwargs = load_kwargs.unwrap_or_default();
@@ -150,18 +150,14 @@ impl TorchData {
                 // get "torch_dataset from kwargs"
                 // return error with kwargs is none
                 let kwargs = load_kwargs.data_kwargs(py);
-                let kwargs = kwargs.ok_or_else(|| {
-                    OpsmlError::new_err("Torch dataset requires kwargs with torch_dataset")
-                })?;
+                let kwargs = kwargs.ok_or_else(|| DataInterfaceError::MissingTorchKwargsError)?;
 
                 let torch_dataset = kwargs.get_item("torch_dataset").unwrap();
 
                 if let Some(dataset) = torch_dataset {
                     dataset
                 } else {
-                    return Err(OpsmlError::new_err(
-                        "Torch dataset requires kwargs with torch_dataset",
-                    ));
+                    return Err(DataInterfaceError::MissingTorchKwargsError);
                 };
 
                 // pop torch_dataset from kwargs
@@ -184,10 +180,8 @@ impl TorchData {
         _py: Python,
         _bin_size: Option<usize>,
         _compute_correlations: Option<bool>,
-    ) -> PyResult<DataProfile> {
-        Err(OpsmlError::new_err(
-            "Data profiling not supported for Torch data",
-        ))
+    ) -> Result<DataProfile, DataInterfaceError> {
+        Err(DataInterfaceError::DataTypeNotSupportedForProfilingError)
     }
 
     fn __traverse__(&self, visit: PyVisit) -> Result<(), PyTraverseError> {
@@ -206,7 +200,7 @@ impl TorchData {
     pub fn from_metadata<'py>(
         py: Python<'py>,
         metadata: &DataInterfaceMetadata,
-    ) -> PyResult<Bound<'py, PyAny>> {
+    ) -> Result<Bound<'py, PyAny>, DataInterfaceError> {
         let interface = DataInterface {
             data_type: metadata.data_type.clone(),
             interface_type: metadata.interface_type.clone(),
@@ -223,7 +217,7 @@ impl TorchData {
             data_type: metadata.data_type.clone(),
         };
 
-        Py::new(py, (data_interface, interface))?.into_bound_py_any(py)
+        Ok(Py::new(py, (data_interface, interface))?.into_bound_py_any(py)?)
     }
 
     pub fn save_data(
@@ -231,11 +225,9 @@ impl TorchData {
         py: Python,
         path: PathBuf,
         kwargs: Option<&Bound<'_, PyDict>>,
-    ) -> PyResult<PathBuf> {
+    ) -> Result<PathBuf, DataInterfaceError> {
         if self.data.is_none() {
-            return Err(OpsmlError::new_err(
-                "No data detected in interface for saving",
-            ));
+            return Err(DataInterfaceError::MissingDataError);
         }
 
         let save_path = PathBuf::from(SaveName::Data.to_string()).with_extension(Suffix::Pt);
@@ -249,31 +241,23 @@ impl TorchData {
                 // get "torch_dataset from kwargs"
                 // return error with kwargs is none
 
-                let kwargs = kwargs.ok_or_else(|| {
-                    OpsmlError::new_err("Torch dataset requires kwargs with torch_dataset")
-                })?;
+                let kwargs = kwargs.ok_or_else(|| DataInterfaceError::MissingTorchKwargsError)?;
 
                 let torch_dataset = kwargs.get_item("torch_dataset").unwrap();
 
                 if let Some(dataset) = torch_dataset {
                     dataset
                 } else {
-                    return Err(OpsmlError::new_err(
-                        "Torch dataset requires kwargs with torch_dataset",
-                    ));
+                    return Err(DataInterfaceError::MissingTorchKwargsError);
                 };
 
                 // pop torch_dataset from kwargs
                 kwargs.del_item("torch_dataset")?;
 
-                torch
-                    .call_method("save", args, Some(kwargs))
-                    .map_err(|e| OpsmlError::new_err(e.to_string()))?;
+                torch.call_method("save", args, Some(kwargs))?;
             }
             _ => {
-                torch
-                    .call_method("save", args, kwargs)
-                    .map_err(|e| OpsmlError::new_err(e.to_string()))?;
+                torch.call_method("save", args, kwargs)?;
             }
         }
 
@@ -282,7 +266,10 @@ impl TorchData {
         Ok(save_path)
     }
 
-    pub fn create_feature_schema(&mut self, py: Python) -> PyResult<FeatureSchema> {
+    pub fn create_feature_schema(
+        &mut self,
+        py: Python,
+    ) -> Result<FeatureSchema, DataInterfaceError> {
         // Create and insert the feature
         let feature_map =
             generate_feature_schema(self.data.as_ref().unwrap().bind(py), &self.data_type)?;
@@ -294,7 +281,7 @@ impl TorchData {
         py: Python,
         path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
-    ) -> PyResult<PyObject> {
+    ) -> Result<PyObject, DataInterfaceError> {
         let numpy = PyModule::import(py, "torch")?;
 
         // Load the data using numpy

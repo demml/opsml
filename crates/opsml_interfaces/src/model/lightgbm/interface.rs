@@ -126,25 +126,24 @@ impl LightGBMModel {
     /// # Returns
     ///
     /// * `PyResult<DataInterfaceSaveMetadata>` - DataInterfaceSaveMetadata
-    #[pyo3(signature = (path, to_onnx=false, save_kwargs=None))]
+    #[pyo3(signature = (path, save_kwargs=None))]
     #[instrument(skip_all)]
     pub fn save<'py>(
         mut self_: PyRefMut<'py, Self>,
         py: Python<'py>,
         path: PathBuf,
-        to_onnx: bool,
         save_kwargs: Option<ModelSaveKwargs>,
     ) -> Result<ModelInterfaceMetadata, ModelInterfaceError> {
         debug!("Saving lightgbm interface");
 
         // parse the save args
-        let (onnx_kwargs, model_kwargs, preprocessor_kwargs) = parse_save_kwargs(py, &save_kwargs);
+        let kwargs = parse_save_kwargs(py, save_kwargs.as_ref());
 
         // save the preprocessor if it exists
         let preprocessor_entity = if self_.preprocessor.is_none() {
             None
         } else {
-            let uri = self_.save_preprocessor(py, &path, preprocessor_kwargs.as_ref())?;
+            let uri = self_.save_preprocessor(py, &path, kwargs.preprocessor.as_ref())?;
 
             Some(DataProcessor {
                 name: self_.preprocessor_name.clone(),
@@ -157,11 +156,11 @@ impl LightGBMModel {
         self_.as_super().create_feature_schema(py)?;
 
         let mut onnx_model_uri = None;
-        if to_onnx {
+        if kwargs.save_onnx {
             onnx_model_uri = Some(self_.as_super().save_onnx_model(
                 py,
                 &path,
-                onnx_kwargs.as_ref(),
+                kwargs.onnx.as_ref(),
             )?);
         }
 
@@ -214,7 +213,7 @@ impl LightGBMModel {
         );
 
         // save model (needs to be last because we pass self_ to save_model, which takes ownership)
-        let model_uri = LightGBMModel::save_model(self_, py, &path, model_kwargs.as_ref())?;
+        let model_uri = LightGBMModel::save_model(self_, py, &path, kwargs.model.as_ref())?;
 
         metadata.save_metadata.model_uri = model_uri;
 

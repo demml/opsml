@@ -5,9 +5,9 @@ use aes_gcm::{
     Nonce,
 };
 
+use crate::error::CryptError;
 use hkdf::Hkdf;
 use hmac::Hmac;
-use opsml_error::CryptError;
 use pbkdf2::pbkdf2;
 use rand::{rngs::OsRng as RandOsRng, TryRngCore};
 use sha2::Sha256;
@@ -38,7 +38,7 @@ pub fn derive_master_key(
         rounds.unwrap_or(PBKDF2_ITERATIONS),
         &mut master_key,
     )
-    .map_err(|_| CryptError::Error("Failed to derive master key".to_string()))?;
+    .map_err(|e| CryptError::DeriveKeyError(e.to_string()))?;
 
     Ok(master_key)
 }
@@ -60,7 +60,7 @@ pub fn derive_encryption_key(
     let hk = Hkdf::<Sha256>::new(Some(salt), master_key);
     let mut okm = [0u8; 32];
     hk.expand(info, &mut okm)
-        .map_err(|_| CryptError::Error("Failed to derive encryption key".to_string()))?;
+        .map_err(|e| CryptError::DeriveKeyError(e.to_string()))?;
     Ok(okm)
 }
 
@@ -69,7 +69,7 @@ pub fn generate_salt() -> Result<[u8; 16], CryptError> {
     let mut salt = [0u8; 16];
     RandOsRng
         .try_fill_bytes(&mut salt)
-        .map_err(|_| CryptError::Error("Failed to generate salt".to_string()))?;
+        .map_err(|_| CryptError::GenerateSaltError)?;
     Ok(salt)
 }
 
@@ -92,10 +92,7 @@ pub fn encrypted_key(master_key: &[u8], key: &[u8]) -> Result<Vec<u8>, CryptErro
             .or_else(|| panic.downcast_ref::<&str>().copied())
             .unwrap_or("Unknown panic message");
 
-        return Err(CryptError::Error(format!(
-            "Failed to create AES-256-GCM key: {}",
-            panic_msg
-        )));
+        return Err(CryptError::AesCreateError(panic_msg.to_string()));
     }
 
     let cipher = Aes256Gcm::new(aes_key.unwrap());
@@ -103,7 +100,7 @@ pub fn encrypted_key(master_key: &[u8], key: &[u8]) -> Result<Vec<u8>, CryptErro
 
     let encrypted_key = cipher
         .encrypt(&nonce, key)
-        .map_err(|_| CryptError::Error("Failed to encrypt key using AES-256-GCM".to_string()))?;
+        .map_err(|_| CryptError::EncryptKeyError)?;
 
     Ok([nonce.as_slice(), encrypted_key.as_slice()].concat())
 }
@@ -128,17 +125,14 @@ pub fn decrypt_key(master_key: &[u8], encrypted_key: &[u8]) -> Result<Vec<u8>, C
             .or_else(|| panic.downcast_ref::<&str>().copied())
             .unwrap_or("Unknown panic message");
 
-        return Err(CryptError::Error(format!(
-            "Failed to create AES-256-GCM key: {}",
-            panic_msg
-        )));
+        return Err(CryptError::AesCreateError(panic_msg.to_string()));
     }
 
     let cipher = Aes256Gcm::new(aes_key.unwrap());
     let nonce = Nonce::from_slice(&encrypted_key[..12]);
     let key = cipher
         .decrypt(nonce, &encrypted_key[12..])
-        .map_err(|_| CryptError::Error("Failed to decrypt key using AES-256-GCM".to_string()))?;
+        .map_err(|_| CryptError::DecryptKeyError)?;
     Ok(key)
 }
 

@@ -3854,11 +3854,11 @@ name = "opsml-auth"
 version = "3.0.0-rc.1"
 dependencies = [
  "jsonwebtoken",
- "opsml-error",
  "opsml-sql",
  "password-auth",
  "rand 0.9.1",
  "serde",
+ "thiserror 2.0.12",
 ]
 
 [[package]]
@@ -3868,7 +3868,6 @@ dependencies = [
  "chrono",
  "opsml-colors",
  "opsml-crypt",
- "opsml-error",
  "opsml-interfaces",
  "opsml-state",
  "opsml-storage",
@@ -3881,6 +3880,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sysinfo",
+ "thiserror 2.0.12",
  "tokio",
  "tracing",
 ]
@@ -3899,7 +3899,6 @@ dependencies = [
  "opsml-cards",
  "opsml-colors",
  "opsml-crypt",
- "opsml-error",
  "opsml-registry",
  "opsml-semver",
  "opsml-state",
@@ -3914,6 +3913,7 @@ dependencies = [
  "tabled",
  "tar",
  "tempfile",
+ "thiserror 2.0.12",
  "tracing",
  "zip",
 ]
@@ -3925,7 +3925,6 @@ dependencies = [
  "futures",
  "mockito",
  "opsml-crypt",
- "opsml-error",
  "opsml-semver",
  "opsml-settings",
  "opsml-types",
@@ -3935,6 +3934,7 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_qs 0.15.0",
+ "thiserror 2.0.12",
  "tokio",
  "tracing",
 ]
@@ -3953,24 +3953,13 @@ dependencies = [
  "aes-gcm",
  "hkdf",
  "hmac",
- "opsml-error",
  "opsml-utils",
  "pbkdf2",
  "rand 0.9.1",
  "rayon",
  "sha2",
  "tempfile",
- "tracing",
-]
-
-[[package]]
-name = "opsml-error"
-version = "3.0.0-rc.1"
-dependencies = [
- "pyo3",
- "serde",
  "thiserror 2.0.12",
- "toml_edit",
  "tracing",
 ]
 
@@ -3982,10 +3971,10 @@ dependencies = [
  "chrono",
  "futures",
  "headers",
- "opsml-error",
  "opsml-sql",
  "opsml-types",
  "serde",
+ "thiserror 2.0.12",
  "tokio",
  "tokio-stream",
  "tracing",
@@ -3999,7 +3988,6 @@ dependencies = [
  "names",
  "opsml-cards",
  "opsml-crypt",
- "opsml-error",
  "opsml-registry",
  "opsml-semver",
  "opsml-settings",
@@ -4011,6 +3999,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sysinfo",
+ "thiserror 2.0.12",
  "tokio",
  "tracing",
 ]
@@ -4019,7 +4008,6 @@ dependencies = [
 name = "opsml-interfaces"
 version = "3.0.0-rc.1"
 dependencies = [
- "opsml-error",
  "opsml-types",
  "opsml-utils",
  "ort",
@@ -4037,11 +4025,11 @@ dependencies = [
 name = "opsml-registry"
 version = "3.0.0-rc.1"
 dependencies = [
+ "anyhow",
  "opsml-cards",
  "opsml-client",
  "opsml-colors",
  "opsml-crypt",
- "opsml-error",
  "opsml-interfaces",
  "opsml-semver",
  "opsml-settings",
@@ -4054,6 +4042,7 @@ dependencies = [
  "semver",
  "sqlx",
  "tempfile",
+ "thiserror 2.0.12",
  "tokio",
  "tracing",
 ]
@@ -4062,10 +4051,10 @@ dependencies = [
 name = "opsml-semver"
 version = "3.0.0-rc.1"
 dependencies = [
- "opsml-error",
  "pyo3",
  "semver",
  "serde",
+ "thiserror 2.0.12",
 ]
 
 [[package]]
@@ -4086,7 +4075,6 @@ dependencies = [
  "opsml-client",
  "opsml-colors",
  "opsml-crypt",
- "opsml-error",
  "opsml-events",
  "opsml-semver",
  "opsml-settings",
@@ -4106,6 +4094,7 @@ dependencies = [
  "serde_qs 0.15.0",
  "sqlx",
  "tempfile",
+ "thiserror 2.0.12",
  "tokio",
  "tokio-stream",
  "tokio-util",
@@ -4120,13 +4109,12 @@ name = "opsml-settings"
 version = "3.0.0-rc.1"
 dependencies = [
  "base64 0.22.1",
- "opsml-error",
  "opsml-types",
  "opsml-utils",
  "opsml-version",
- "pyo3",
  "rusty-logging",
  "serde",
+ "thiserror 2.0.12",
  "tracing",
 ]
 
@@ -4137,7 +4125,6 @@ dependencies = [
  "anyhow",
  "async-trait",
  "chrono",
- "opsml-error",
  "opsml-semver",
  "opsml-settings",
  "opsml-types",
@@ -4147,6 +4134,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sqlx",
+ "thiserror 2.0.12",
  "tokio",
  "tracing",
  "uuid",
@@ -4158,11 +4146,11 @@ version = "3.0.0-rc.1"
 dependencies = [
  "futures",
  "opsml-client",
- "opsml-error",
  "opsml-settings",
  "opsml-toml",
  "opsml-types",
  "opsml-utils",
+ "thiserror 2.0.12",
  "tokio",
  "tracing",
 ]
@@ -4175,6 +4163,7 @@ dependencies = [
  "async-trait",
  "aws-config",
  "aws-sdk-s3",
+ "azure_core",
  "azure_identity",
  "azure_storage",
  "azure_storage_blobs",
@@ -4188,7 +4177,6 @@ dependencies = [
  "mockito",
  "opsml-client",
  "opsml-colors",
- "opsml-error",
  "opsml-settings",
  "opsml-state",
  "opsml-types",
@@ -4200,6 +4188,7 @@ dependencies = [
  "serde_json",
  "serde_qs 0.15.0",
  "tempfile",
+ "thiserror 2.0.12",
  "time",
  "tokio",
  "tokio-util",
@@ -4223,11 +4212,11 @@ dependencies = [
 name = "opsml-toml"
 version = "3.0.0-rc.1"
 dependencies = [
- "opsml-error",
  "opsml-types",
  "opsml-version",
  "serde",
  "tempfile",
+ "thiserror 2.0.12",
  "toml_edit",
 ]
 
@@ -4238,7 +4227,6 @@ dependencies = [
  "chrono",
  "opsml-colors",
  "opsml-crypt",
- "opsml-error",
  "opsml-semver",
  "opsml-utils",
  "opsml-version",
@@ -4248,6 +4236,7 @@ dependencies = [
  "serde_json",
  "sysinfo",
  "tabled",
+ "thiserror 2.0.12",
  "tracing",
 ]
 
@@ -4257,12 +4246,12 @@ version = "3.0.0-rc.1"
 dependencies = [
  "chrono",
  "colored_json",
- "opsml-error",
  "pyo3",
  "regex",
  "serde",
  "serde_json",
  "tempfile",
+ "thiserror 2.0.12",
  "tokio",
  "tracing",
  "uuid",
@@ -4785,7 +4774,6 @@ dependencies = [
  "anyhow",
  "opsml-cards",
  "opsml-cli",
- "opsml-error",
  "opsml-experiment",
  "opsml-interfaces",
  "opsml-registry",
@@ -4801,6 +4789,7 @@ dependencies = [
  "reqwest",
  "rusty-logging",
  "scouter-client",
+ "thiserror 2.0.12",
  "tokio",
 ]
 

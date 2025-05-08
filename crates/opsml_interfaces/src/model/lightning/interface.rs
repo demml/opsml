@@ -222,13 +222,12 @@ impl LightningModel {
     /// # Returns
     ///
     /// * `PyResult<DataInterfaceSaveMetadata>` - DataInterfaceSaveMetadata
-    #[pyo3(signature = (path, to_onnx=false, save_kwargs=None))]
+    #[pyo3(signature = (path, save_kwargs=None))]
     #[instrument(skip_all)]
     pub fn save(
         mut self_: PyRefMut<'_, Self>,
         py: Python,
         path: PathBuf,
-        to_onnx: bool,
         save_kwargs: Option<ModelSaveKwargs>,
     ) -> Result<ModelInterfaceMetadata, ModelInterfaceError> {
         debug!("Saving drift profile");
@@ -239,13 +238,13 @@ impl LightningModel {
         };
 
         // parse the save args
-        let (onnx_kwargs, model_kwargs, preprocessor_kwargs) = parse_save_kwargs(py, &save_kwargs);
+        let kwargs = parse_save_kwargs(py, save_kwargs.as_ref());
 
         debug!("Saving preprocessor");
         let preprocessor_entity = if self_.preprocessor.is_none() {
             None
         } else {
-            let uri = self_.save_preprocessor(py, &path, preprocessor_kwargs.as_ref())?;
+            let uri = self_.save_preprocessor(py, &path, kwargs.preprocessor.as_ref())?;
             Some(DataProcessor {
                 name: self_.preprocessor_name.clone(),
                 uri,
@@ -261,13 +260,13 @@ impl LightningModel {
 
         let mut onnx_model_uri = None;
 
-        if to_onnx {
+        if kwargs.save_onnx {
             debug!("Saving ONNX model");
-            onnx_model_uri = Some(self_.save_onnx_model(py, &path, onnx_kwargs.as_ref())?);
+            onnx_model_uri = Some(self_.save_onnx_model(py, &path, kwargs.onnx.as_ref())?);
         }
 
         debug!("Saving model");
-        let model_uri = self_.save_model(py, &path, model_kwargs.as_ref())?;
+        let model_uri = self_.save_model(py, &path, kwargs.model.as_ref())?;
 
         let data_processor_map = preprocessor_entity
             .map(|preprocessor| {

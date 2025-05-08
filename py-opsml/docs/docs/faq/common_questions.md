@@ -16,10 +16,6 @@ Recommendation based on needs
 - I like grouping runs/experiments by projects. UI doesn't really matter.
     * Use the `OpsmlProject` context manager
 
-### How do I turn off onnx conversion?
-
-Auto onnx conversion is turned off by default. It can be turned on by setting `to_onnx=True` in the `ModelCard` constructor.
-
 ### How do I supply my own onnx definition?
 
 If you'd like to create your onnx model yourself and associate that with the ModelCard, you will need to provide your own implementation of the `onnx_model` arg. An example of this can be seen [here](../interfaces/model/extras.md#onnxmodel).

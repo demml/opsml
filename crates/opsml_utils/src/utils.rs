@@ -1,8 +1,7 @@
+use crate::error::{PyUtilError, UtilError};
 use chrono::Timelike;
 use chrono::{DateTime, NaiveDateTime, Utc};
 use colored_json::{Color, ColorMode, ColoredFormatter, PrettyFormatter, Styler};
-use opsml_error::error::UtilError;
-use pyo3::exceptions::PyValueError;
 use pyo3::{prelude::*, types::PyAnyMethods};
 use regex::Regex;
 
@@ -11,7 +10,6 @@ use pyo3::IntoPyObjectExt;
 use serde::Serialize;
 use serde_json::{json, Value};
 use std::path::{Path, PathBuf};
-use tracing::error;
 use uuid::Uuid;
 
 const PUNCTUATION: &str = "!\"#$%&'()*+,./:;<=>?@[\\]^`{|}~";
@@ -32,8 +30,7 @@ const NAME_SPACE_PATTERN: &str = r"^[a-z0-9]+(?:[-a-z0-9]+)*/[-a-z0-9]+$";
 /// - The regex pattern cannot be created.
 pub fn clean_string(input: &str) -> Result<String, UtilError> {
     let pattern = format!("[{}]", regex::escape(PUNCTUATION));
-    let re = Regex::new(&pattern.to_string())
-        .map_err(|_| UtilError::Error("Failed to create regex".to_string()))?;
+    let re = Regex::new(&pattern.to_string())?;
     Ok(re
         .replace_all(&input.trim().to_lowercase(), "")
         .to_string()
@@ -43,14 +40,14 @@ pub fn clean_string(input: &str) -> Result<String, UtilError> {
 pub fn validate_name_space_pattern(name: &str, space: &str) -> Result<(), UtilError> {
     let space_name = format!("{space}/{name}");
 
-    let re = Regex::new(NAME_SPACE_PATTERN).map_err(|_| UtilError::RegexError)?;
+    let re = Regex::new(NAME_SPACE_PATTERN)?;
 
     if !re.is_match(&space_name) {
         return Err(UtilError::InvalidSpaceNamePattern);
     }
 
     if name.len() > 53 {
-        return Err(UtilError::Error("Name is too long".to_string()));
+        return Err(UtilError::SpaceNamePatternTooLong);
     }
 
     Ok(())
@@ -169,7 +166,7 @@ impl PyHelperFuncs {
     ///
     /// This function will return an error if:
     /// - The struct cannot be serialized to a string
-    pub fn save_to_json<T>(model: T, path: &Path) -> Result<(), UtilError>
+    pub fn save_to_json<T>(model: T, path: &Path) -> Result<(), PyUtilError>
     where
         T: Serialize,
     {
@@ -197,97 +194,77 @@ pub fn json_to_pyobject<'py>(
     py: Python,
     value: &Value,
     dict: &Bound<'py, PyDict>,
-) -> PyResult<Bound<'py, PyDict>> {
+) -> Result<Bound<'py, PyDict>, PyUtilError> {
     match value {
         Value::Object(map) => {
             for (k, v) in map {
                 let py_value = match v {
                     Value::Null => py.None(),
-                    Value::Bool(b) => b
-                        .into_py_any(py)
-                        .map_err(|_| PyValueError::new_err("Invalid bool"))?,
+                    Value::Bool(b) => b.into_py_any(py)?,
                     Value::Number(n) => {
                         if let Some(i) = n.as_i64() {
-                            i.into_py_any(py)
-                                .map_err(|_| PyValueError::new_err("Invalid number"))?
+                            i.into_py_any(py)?
                         } else if let Some(f) = n.as_f64() {
-                            f.into_py_any(py)
-                                .map_err(|_| PyValueError::new_err("Invalid number"))?
+                            f.into_py_any(py)?
                         } else {
-                            return Err(PyValueError::new_err("Invalid number"));
+                            return Err(PyUtilError::InvalidNumber);
                         }
                     }
-                    Value::String(s) => s
-                        .into_py_any(py)
-                        .map_err(|_| PyValueError::new_err("Invalid string"))?,
+                    Value::String(s) => s.into_py_any(py)?,
                     Value::Array(arr) => {
                         let py_list = PyList::empty(py);
                         for item in arr {
                             let py_item = json_to_pyobject_value(py, item)?;
                             py_list.append(py_item)?;
                         }
-                        py_list
-                            .into_py_any(py)
-                            .map_err(|_| PyValueError::new_err("Invalid list"))?
+                        py_list.into_py_any(py)?
                     }
                     Value::Object(_) => {
                         let nested_dict = PyDict::new(py);
                         json_to_pyobject(py, v, &nested_dict)?;
-                        nested_dict
-                            .into_py_any(py)
-                            .map_err(|_| PyValueError::new_err("Invalid object"))?
+                        nested_dict.into_py_any(py)?
                     }
                 };
                 dict.set_item(k, py_value)?;
             }
         }
-        _ => return Err(PyValueError::new_err("Root must be an object")),
+        _ => return Err(PyUtilError::RootMustBeObjectError),
     }
 
     Ok(dict.clone())
 }
 
-pub fn json_to_pyobject_value(py: Python, value: &Value) -> PyResult<PyObject> {
+pub fn json_to_pyobject_value(py: Python, value: &Value) -> Result<PyObject, PyUtilError> {
     Ok(match value {
         Value::Null => py.None(),
-        Value::Bool(b) => b
-            .into_py_any(py)
-            .map_err(|_| PyValueError::new_err("Invalid bool"))?,
+        Value::Bool(b) => b.into_py_any(py)?,
         Value::Number(n) => {
             if let Some(i) = n.as_i64() {
-                i.into_py_any(py)
-                    .map_err(|_| PyValueError::new_err("Invalid number"))?
+                i.into_py_any(py)?
             } else if let Some(f) = n.as_f64() {
-                f.into_py_any(py)
-                    .map_err(|_| PyValueError::new_err("Invalid number"))?
+                f.into_py_any(py)?
             } else {
-                return Err(PyValueError::new_err("Invalid number"));
+                return Err(PyUtilError::InvalidNumber);
             }
         }
-        Value::String(s) => s
-            .into_py_any(py)
-            .map_err(|_| PyValueError::new_err("Invalid string"))?,
+        Value::String(s) => s.into_py_any(py)?,
         Value::Array(arr) => {
             let py_list = PyList::empty(py);
             for item in arr {
                 let py_item = json_to_pyobject_value(py, item)?;
                 py_list.append(py_item)?;
             }
-            py_list
-                .into_py_any(py)
-                .map_err(|_| PyValueError::new_err("Invalid list"))?
+            py_list.into_py_any(py)?
         }
         Value::Object(_) => {
             let nested_dict = PyDict::new(py);
             json_to_pyobject(py, value, &nested_dict)?;
-            nested_dict
-                .into_py_any(py)
-                .map_err(|_| PyValueError::new_err("Invalid object"))?
+            nested_dict.into_py_any(py)?
         }
     })
 }
 
-pub fn pyobject_to_json(obj: &Bound<'_, PyAny>) -> PyResult<Value> {
+pub fn pyobject_to_json(obj: &Bound<'_, PyAny>) -> Result<Value, PyUtilError> {
     if obj.is_instance_of::<PyDict>() {
         let dict = obj.downcast::<PyDict>()?;
         let mut map = serde_json::Map::new();
@@ -362,10 +339,7 @@ pub fn uid_to_byte_key(uid: &str) -> Result<[u8; 32], UtilError> {
 /// This function will return an error if:
 /// - the temporary directory cannot be created.
 pub fn create_tmp_path() -> Result<PathBuf, UtilError> {
-    let tmp_dir = tempfile::TempDir::new().map_err(|e| {
-        error!("Failed to create temporary directory: {}", e);
-        UtilError::Error("Failed to create temporary directory".to_string())
-    })?;
+    let tmp_dir = tempfile::TempDir::new()?;
 
     let tmp_path = tmp_dir.into_path();
 
@@ -387,17 +361,8 @@ pub fn create_tmp_path() -> Result<PathBuf, UtilError> {
 /// This function will return an error if:
 /// - The attribute cannot be found.
 /// - The attribute cannot be extracted as a string.
-pub fn unwrap_pystring(obj: &Bound<'_, PyAny>, field: &str) -> Result<String, UtilError> {
-    obj.getattr(field)
-        .map_err(|e| {
-            error!("Failed to get field: {}", e);
-            UtilError::Error("Failed to get field".to_string())
-        })?
-        .extract::<String>()
-        .map_err(|e| {
-            error!("Failed to extract field: {}", e);
-            UtilError::Error("Failed to extract field".to_string())
-        })
+pub fn unwrap_pystring(obj: &Bound<'_, PyAny>, field: &str) -> Result<String, PyUtilError> {
+    Ok(obj.getattr(field)?.extract::<String>()?)
 }
 
 #[cfg(test)]

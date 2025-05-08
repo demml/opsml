@@ -23,7 +23,7 @@ def test_lightgbm_model_interface(
 
     assert interface.model_type == ModelType.LgbmBooster
 
-    metadata = interface.save(save_path, True)
+    metadata = interface.save(save_path, ModelSaveKwargs(save_onnx=True))
 
     interface.model = None
     assert interface.model is None
@@ -44,8 +44,11 @@ def test_lightgbm_regression_metadata(
     save_path = tmp_path / "test"
     save_path.mkdir()
 
-    save_kwargs = ModelSaveKwargs(onnx={"target_opset": {"ai.onnx.ml": 3, "": 9}})
+    save_kwargs = ModelSaveKwargs(
+        onnx={"target_opset": {"ai.onnx.ml": 3, "": 9}},
+        save_onnx=True,
+    )
 
     assert lightgbm_regression.model_type == ModelType.LgbmRegressor
 
-    lightgbm_regression.save(save_path, True, save_kwargs)
+    lightgbm_regression.save(save_path, save_kwargs)

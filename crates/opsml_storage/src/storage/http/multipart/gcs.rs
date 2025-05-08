@@ -1,5 +1,5 @@
+use crate::storage::http::multipart::error::MultiPartError;
 use opsml_client::OpsmlApiClient;
-use opsml_error::StorageError;
 use opsml_types::contracts::CompleteMultipartUpload;
 use opsml_types::contracts::UploadPartArgs;
 use opsml_types::contracts::UploadResponse;
@@ -65,13 +65,10 @@ impl GcsMultipartUpload {
         rpath: &Path,
         session_url: String,
         client: Arc<OpsmlApiClient>,
-    ) -> Result<Self, StorageError> {
-        let file = File::open(lpath)
-            .map_err(|e| StorageError::Error(format!("Failed to open file: {}", e)))?;
+    ) -> Result<Self, MultiPartError> {
+        let file = File::open(lpath)?;
 
-        let metadata = file
-            .metadata()
-            .map_err(|e| StorageError::Error(format!("Failed to get file metadata: {}", e)))?;
+        let metadata = file.metadata()?;
 
         let file_size = metadata.len();
         let file_reader = BufReader::new(file);
@@ -85,17 +82,17 @@ impl GcsMultipartUpload {
         })
     }
 
-    pub fn upload_next_chunk(&mut self, upload_args: &UploadPartArgs) -> Result<(), StorageError> {
+    pub fn upload_next_chunk(
+        &mut self,
+        upload_args: &UploadPartArgs,
+    ) -> Result<(), MultiPartError> {
         let first_byte = upload_args.chunk_index * upload_args.chunk_size;
         let last_byte = first_byte + upload_args.this_chunk_size - 1;
 
         let size = ChunkSize::new(first_byte, last_byte, Some(self.file_size));
 
         let mut buffer = vec![0; upload_args.this_chunk_size as usize];
-        let bytes_read = self
-            .file_reader
-            .read(&mut buffer)
-            .map_err(|e| StorageError::Error(format!("Failed to read file: {}", e)))?;
+        let bytes_read = self.file_reader.read(&mut buffer)?;
 
         buffer.truncate(bytes_read);
 
@@ -107,14 +104,10 @@ impl GcsMultipartUpload {
             .header(CONTENT_RANGE, size.to_string())
             .header(CONTENT_LENGTH, size.size())
             .body(buffer)
-            .send()
-            .map_err(|e| StorageError::Error(format!("Failed to upload chunk: {}", e)))?;
+            .send()?;
 
         if !response.status().is_success() {
-            return Err(StorageError::Error(format!(
-                "Failed to upload chunk: {}",
-                response.status()
-            )));
+            return Err(MultiPartError::UploadError(response.status()));
         }
 
         Ok(())
@@ -125,7 +118,7 @@ impl GcsMultipartUpload {
         chunk_count: u64,
         size_of_last_chunk: u64,
         chunk_size: u64,
-    ) -> Result<(), StorageError> {
+    ) -> Result<(), MultiPartError> {
         for chunk_index in 0..chunk_count {
             let this_chunk = if chunk_count - 1 == chunk_index {
                 size_of_last_chunk
@@ -152,27 +145,7 @@ impl GcsMultipartUpload {
         Ok(())
     }
 
-    //async fn complete_upload(&self) -> Result<UploadResponse, StorageError> {
-    //    let request = CompleteMultipartUpload {
-    //        path: self.rpath.clone(),
-    //        session_url: self.session_url.clone(),
-    //        ..Default::default()
-    //    };
-    //
-    //    let response = self
-    //        .client
-    //        .complete_multipart_upload(request)
-    //        .await
-    //        .map_err(|e| StorageError::Error(format!("Failed to complete upload: {}", e)))?;
-    //
-    //    let uploaded = response.json::<UploadResponse>().await.map_err(|e| {
-    //        StorageError::Error(format!("Failed to parse complete upload response: {}", e))
-    //    })?;
-    //
-    //    Ok(uploaded)
-    //}
-
-    fn cancel_upload(&self) -> Result<UploadResponse, StorageError> {
+    fn cancel_upload(&self) -> Result<UploadResponse, MultiPartError> {
         let request = CompleteMultipartUpload {
             path: self.rpath.clone(),
             session_url: self.session_url.clone(),
@@ -180,14 +153,8 @@ impl GcsMultipartUpload {
             ..Default::default()
         };
 
-        let response = self
-            .client
-            .complete_multipart_upload(request)
-            .map_err(|e| StorageError::Error(format!("Failed to complete upload: {}", e)))?;
-
-        let uploaded = response.json::<UploadResponse>().map_err(|e| {
-            StorageError::Error(format!("Failed to parse complete upload response: {}", e))
-        })?;
+        let response = self.client.complete_multipart_upload(request)?;
+        let uploaded = response.json::<UploadResponse>()?;
 
         Ok(uploaded)
     }

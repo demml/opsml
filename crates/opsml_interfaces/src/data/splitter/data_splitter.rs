@@ -1,11 +1,9 @@
 use crate::data::DependentVars;
-use opsml_error::error::OpsmlError;
+use crate::error::DataInterfaceError;
 use opsml_types::DataType;
 use opsml_utils::PyHelperFuncs;
-use pyo3::exceptions::PyValueError;
 use pyo3::types::PyTuple;
 use pyo3::types::{PyDateTime, PyFloat, PyInt, PySlice, PyString};
-use pyo3::PyResult;
 use pyo3::{prelude::*, IntoPyObjectExt};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -90,7 +88,7 @@ impl ColumnSplit {
         column_value: &Bound<'_, PyAny>,
         column_type: ColType,
         inequality: Option<&Bound<'_, PyAny>>,
-    ) -> PyResult<Self> {
+    ) -> Result<Self, DataInterfaceError> {
         let py = column_value.py();
         let fallback_ineq = PyString::new(py, "==");
         let inequality = inequality.unwrap_or(&fallback_ineq);
@@ -107,12 +105,10 @@ impl ColumnSplit {
             ColType::Timestamp => {
                 if column_value.is_instance_of::<PyFloat>() {
                     let timestamp: f64 = column_value.extract()?;
-                    PyDateTime::from_timestamp(py, timestamp, None).map_err(|e| {
-                        OpsmlError::new_err(format!("Failed to convert timestamp: {}", e))
-                    })?;
+                    PyDateTime::from_timestamp(py, timestamp, None)?;
                     ColValType::Timestamp(timestamp)
                 } else {
-                    return Err(OpsmlError::new_err("Invalid timestamp"));
+                    return Err(DataInterfaceError::InvalidTimeStamp);
                 }
             }
             ColType::Builtin => {
@@ -123,9 +119,7 @@ impl ColumnSplit {
                 } else if column_value.is_instance_of::<PyInt>() {
                     ColValType::Int(column_value.extract()?)
                 } else {
-                    return Err(OpsmlError::new_err(
-                        "Invalid value type. Supported types are String, Float, Int",
-                    ));
+                    return Err(DataInterfaceError::InvalidType);
                 }
             }
         };
@@ -205,7 +199,7 @@ impl DataSplit {
         column_split: Option<ColumnSplit>,
         start_stop_split: Option<StartStopSplit>,
         indice_split: Option<IndiceSplit>,
-    ) -> PyResult<Self> {
+    ) -> Result<Self, DataInterfaceError> {
         // check that only one of the splits is provided
         let mut count = 0;
         if column_split.is_some() {
@@ -219,14 +213,12 @@ impl DataSplit {
         }
 
         if count > 1 {
-            return Err(PyValueError::new_err("Only one split type can be provided"));
+            return Err(DataInterfaceError::OnlyOneSplitError);
         }
 
         // check if at least 1 split type is provided
         if count == 0 {
-            return Err(PyValueError::new_err(
-                "At least one split type must be provided",
-            ));
+            return Err(DataInterfaceError::AtLeastOneSplitError);
         }
 
         Ok(DataSplit {
@@ -265,7 +257,7 @@ impl DataSplits {
         data: &Bound<'_, PyAny>,
         data_type: &DataType,
         dependent_vars: &DependentVars,
-    ) -> PyResult<HashMap<String, Data>> {
+    ) -> Result<HashMap<String, Data>, DataInterfaceError> {
         let mut split_data = HashMap::new();
 
         for split in &self.splits {
@@ -300,7 +292,10 @@ fn remove_diff<T: PartialEq + Clone>(a: &[T], b: &[T]) -> Vec<T> {
         .collect::<Vec<T>>()
 }
 
-fn create_polars_data(dependent_vars: &DependentVars, data: &Bound<'_, PyAny>) -> PyResult<Data> {
+fn create_polars_data(
+    dependent_vars: &DependentVars,
+    data: &Bound<'_, PyAny>,
+) -> Result<Data, DataInterfaceError> {
     let py = data.py();
 
     if !dependent_vars.column_empty() {
@@ -323,7 +318,10 @@ fn create_polars_data(dependent_vars: &DependentVars, data: &Bound<'_, PyAny>) -
     }
 }
 
-fn create_pandas_data(dependent_vars: &DependentVars, data: &Bound<'_, PyAny>) -> PyResult<Data> {
+fn create_pandas_data(
+    dependent_vars: &DependentVars,
+    data: &Bound<'_, PyAny>,
+) -> Result<Data, DataInterfaceError> {
     let py = data.py();
     if !dependent_vars.column_empty() {
         let columns: Vec<String> = data.getattr("columns")?.extract()?;
@@ -342,7 +340,10 @@ fn create_pandas_data(dependent_vars: &DependentVars, data: &Bound<'_, PyAny>) -
     }
 }
 
-fn create_pyarrow_data(dependent_vars: &DependentVars, data: &Bound<'_, PyAny>) -> PyResult<Data> {
+fn create_pyarrow_data(
+    dependent_vars: &DependentVars,
+    data: &Bound<'_, PyAny>,
+) -> Result<Data, DataInterfaceError> {
     let py = data.py();
     if !dependent_vars.column_empty() {
         let columns: Vec<String> = data.getattr("column_names")?.extract()?;
@@ -380,7 +381,10 @@ fn create_pyarrow_data(dependent_vars: &DependentVars, data: &Bound<'_, PyAny>) 
     }
 }
 
-fn create_numpy_data(dependent_vars: &DependentVars, data: &Bound<'_, PyAny>) -> PyResult<Data> {
+fn create_numpy_data(
+    dependent_vars: &DependentVars,
+    data: &Bound<'_, PyAny>,
+) -> Result<Data, DataInterfaceError> {
     let py = data.py();
     if !dependent_vars.idx_empty() {
         let shape = data.getattr("shape")?;
@@ -415,7 +419,7 @@ impl PolarsColumnSplitter {
         data: &Bound<'_, PyAny>,
         column_split: &ColumnSplit,
         dependent_vars: &DependentVars,
-    ) -> PyResult<Data> {
+    ) -> Result<Data, DataInterfaceError> {
         let py = data.py();
 
         // check if polars dataframe
@@ -468,7 +472,7 @@ impl PolarsIndexSplitter {
         data: &Bound<'_, PyAny>,
         indice_split: &IndiceSplit,
         dependent_vars: &DependentVars,
-    ) -> PyResult<Data> {
+    ) -> Result<Data, DataInterfaceError> {
         let py = data.py();
 
         let indices = &indice_split.indices;
@@ -485,7 +489,7 @@ impl PolarsStartStopSplitter {
         data: &Bound<'_, PyAny>,
         start_stop_split: &StartStopSplit,
         dependent_vars: &DependentVars,
-    ) -> PyResult<Data> {
+    ) -> Result<Data, DataInterfaceError> {
         // Slice the DataFrame using the start and stop indices
         let start = &start_stop_split.start;
         let stop = &start_stop_split.stop;
@@ -504,7 +508,7 @@ impl PandasColumnSplitter {
         data: &Bound<'_, PyAny>,
         column_split: &ColumnSplit,
         dependent_vars: &DependentVars,
-    ) -> PyResult<Data> {
+    ) -> Result<Data, DataInterfaceError> {
         let py = data.py();
 
         // check if polars dataframe
@@ -557,7 +561,7 @@ impl PandasIndexSplitter {
         data: &Bound<'_, PyAny>,
         indice_split: &IndiceSplit,
         dependent_vars: &DependentVars,
-    ) -> PyResult<Data> {
+    ) -> Result<Data, DataInterfaceError> {
         let py = data.py();
 
         let indices = &indice_split.indices;
@@ -577,7 +581,7 @@ impl PandasStartStopSplitter {
         data: &Bound<'_, PyAny>,
         start_stop_split: &StartStopSplit,
         dependent_vars: &DependentVars,
-    ) -> PyResult<Data> {
+    ) -> Result<Data, DataInterfaceError> {
         // Slice the DataFrame using the start and stop indices
         let py = data.py();
         let start = start_stop_split.start as isize;
@@ -597,7 +601,7 @@ impl PyArrowIndexSplitter {
         data: &Bound<'_, PyAny>,
         indice_split: &IndiceSplit,
         dependent_vars: &DependentVars,
-    ) -> PyResult<Data> {
+    ) -> Result<Data, DataInterfaceError> {
         let py = data.py();
 
         let indices = &indice_split.indices;
@@ -614,7 +618,7 @@ impl PyArrowStartStopSplitter {
         data: &Bound<'_, PyAny>,
         start_stop_split: &StartStopSplit,
         dependent_vars: &DependentVars,
-    ) -> PyResult<Data> {
+    ) -> Result<Data, DataInterfaceError> {
         // Slice the DataFrame using the start and stop indices
 
         let start = &start_stop_split.start;
@@ -634,7 +638,7 @@ impl NumpyIndexSplitter {
         data: &Bound<'_, PyAny>,
         indice_split: &IndiceSplit,
         dependent_vars: &DependentVars,
-    ) -> PyResult<Data> {
+    ) -> Result<Data, DataInterfaceError> {
         let py = data.py();
 
         let indices = &indice_split.indices;
@@ -651,7 +655,7 @@ impl NumpyStartStopSplitter {
         data: &Bound<'_, PyAny>,
         start_stop_split: &StartStopSplit,
         dependent_vars: &DependentVars,
-    ) -> PyResult<Data> {
+    ) -> Result<Data, DataInterfaceError> {
         // Slice the DataFrame using the start and stop indices
         let py = data.py();
         let start = start_stop_split.start as isize;
@@ -676,7 +680,7 @@ impl DataSplitter {
         data: &Bound<'_, PyAny>,
         data_type: &DataType,
         dependent_vars: &DependentVars,
-    ) -> PyResult<Data> {
+    ) -> Result<Data, DataInterfaceError> {
         if split.column_split.is_some() {
             match data_type {
                 DataType::Polars => {
@@ -765,6 +769,6 @@ impl DataSplitter {
             }
         };
 
-        Err(OpsmlError::new_err("Invalid split type"))
+        Err(DataInterfaceError::InvalidSplitType)
     }
 }

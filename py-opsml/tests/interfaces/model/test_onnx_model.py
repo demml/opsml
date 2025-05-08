@@ -52,7 +52,7 @@ def test_onnx_model(tmp_path: Path):
     save_path = tmp_path / "test"
     save_path.mkdir()
 
-    metadata = interface.save(save_path, False, None)
+    metadata = interface.save(save_path, None)
     interface.session.session = None
     assert metadata.save_metadata.save_kwargs is None
     assert interface.session.session is None

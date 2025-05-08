@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
+use crate::error::CliError;
 use clap::Args;
-use opsml_error::CliError;
 use opsml_types::{contracts::CardQueryArgs, RegistryType};
 use opsml_utils::clean_string;
 

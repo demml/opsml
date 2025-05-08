@@ -4,8 +4,8 @@ use opsml_cards::{
     traits::OpsmlCard, Card, CardDeck, DataCard, ExperimentCard, ModelCard, PromptCard,
 };
 
+use crate::error::RegistryError;
 use opsml_crypt::{decrypt_directory, encrypt_directory};
-use opsml_error::{error::RegistryError, OpsmlError};
 use opsml_storage::storage_client;
 use opsml_types::contracts::*;
 use opsml_types::*;
@@ -31,7 +31,7 @@ fn load_and_extract_card(
     card_registries: &CardRegistries,
     card: &Card,
     interface: Option<&Bound<'_, PyAny>>,
-) -> PyResult<PyObject> {
+) -> Result<PyObject, RegistryError> {
     let card_obj = match card.registry_type {
         RegistryType::Model => card_registries.model.load_card(
             py,
@@ -66,17 +66,13 @@ fn load_and_extract_card(
             None,
         )?,
         _ => {
-            return Err(OpsmlError::new_err(format!(
-                "Card type {} not supported",
-                card.registry_type
-            )))
+            return Err(RegistryError::CardTypeNotSupported(
+                card.registry_type.clone(),
+            ));
         }
     };
 
-    card_obj.into_py_any(py).map_err(|e| {
-        error!("Failed to convert card to PyObject: {}", e);
-        OpsmlError::new_err(e.to_string())
-    })
+    Ok(card_obj.into_py_any(py)?)
 }
 
 pub enum CardEnum {
@@ -101,13 +97,7 @@ impl CardEnum {
             CardEnum::CardDeck(card) => card.into_bound_py_any(py),
         };
 
-        match card {
-            Ok(card) => Ok(card),
-            Err(e) => {
-                error!("Failed to convert card to bound: {}", e);
-                Err(RegistryError::Error(e.to_string()))
-            }
-        }
+        Ok(card?)
     }
 }
 
@@ -116,9 +106,8 @@ pub fn load_card_deck<'py>(
     deck: &mut CardDeck,
     interfaces: Option<HashMap<String, Bound<'py, PyAny>>>,
 ) -> Result<(), RegistryError> {
-    let card_registries = CardRegistries::new().map_err(|e| {
+    let card_registries = CardRegistries::new().inspect_err(|e| {
         error!("Failed to create card registries: {}", e);
-        RegistryError::Error(e.to_string())
     })?;
 
     for card in &deck.cards {
@@ -134,7 +123,7 @@ pub fn load_card_deck<'py>(
         let card_obj =
             load_and_extract_card(py, &card_registries, card, interface).map_err(|e| {
                 error!("Failed to load card: {}", e);
-                RegistryError::Error(e.to_string())
+                e
             })?;
         deck.card_objs.insert(card.alias.clone(), card_obj);
     }
@@ -143,17 +132,7 @@ pub fn load_card_deck<'py>(
 }
 
 pub fn check_if_card(card: &Bound<'_, PyAny>) -> Result<(), RegistryError> {
-    let is_card: bool = card
-        .getattr("is_card")
-        .map_err(|e| {
-            error!("Failed to access is_card attribute: {}", e);
-            RegistryError::Error("Invalid card structure".to_string())
-        })?
-        .extract()
-        .map_err(|e| {
-            error!("Failed to extract is_card value: {}", e);
-            RegistryError::Error("Invalid card type".to_string())
-        })?;
+    let is_card: bool = card.getattr("is_card")?.extract()?;
 
     if is_card {
         Ok(())
@@ -162,9 +141,7 @@ pub fn check_if_card(card: &Bound<'_, PyAny>) -> Result<(), RegistryError> {
             .get_type()
             .name()
             .unwrap_or_else(|_| PyString::new(card.py(), &CommonKwargs::Undefined.to_string()));
-        Err(RegistryError::Error(format!(
-            "Invalid card type: {type_name}"
-        )))
+        Err(RegistryError::InvalidCardType(type_name.to_string()))
     }
 }
 
@@ -192,9 +169,8 @@ pub fn card_from_string<'py>(
     let card = match key.registry_type {
         RegistryType::Model => {
             let mut card =
-                ModelCard::model_validate_json(py, card_json, interface).map_err(|e| {
+                ModelCard::model_validate_json(py, card_json, interface).inspect_err(|e| {
                     error!("Failed to validate ModelCard: {}", e);
-                    RegistryError::Error(e.to_string())
                 })?;
 
             card.set_artifact_key(key);
@@ -203,9 +179,8 @@ pub fn card_from_string<'py>(
 
         RegistryType::Data => {
             let mut card =
-                DataCard::model_validate_json(py, card_json, interface).map_err(|e| {
+                DataCard::model_validate_json(py, card_json, interface).inspect_err(|e| {
                     error!("Failed to validate DataCard: {}", e);
-                    RegistryError::Error(e.to_string())
                 })?;
 
             card.set_artifact_key(key);
@@ -213,9 +188,8 @@ pub fn card_from_string<'py>(
         }
 
         RegistryType::Experiment => {
-            let mut card = ExperimentCard::model_validate_json(card_json).map_err(|e| {
+            let mut card = ExperimentCard::model_validate_json(card_json).inspect_err(|e| {
                 error!("Failed to validate ExperimentCard: {}", e);
-                RegistryError::Error(e.to_string())
             })?;
 
             card.set_artifact_key(key);
@@ -223,26 +197,24 @@ pub fn card_from_string<'py>(
         }
 
         RegistryType::Prompt => {
-            let card = PromptCard::model_validate_json(card_json).map_err(|e| {
+            let card = PromptCard::model_validate_json(card_json).inspect_err(|e| {
                 error!("Failed to validate PromptCard: {}", e);
-                RegistryError::Error(e.to_string())
             })?;
 
             CardEnum::PromptCard(card)
         }
 
         RegistryType::Deck => {
-            let card = CardDeck::model_validate_json(card_json).map_err(|e| {
+            let card = CardDeck::model_validate_json(card_json).inspect_err(|e| {
                 error!("Failed to validate CardDeck: {}", e);
-                RegistryError::Error(e.to_string())
             })?;
 
             CardEnum::CardDeck(Box::new(card))
         }
 
         _ => {
-            return Err(RegistryError::Error(
-                "Registry type not supported".to_string(),
+            return Err(RegistryError::RegistryTypeNotSupported(
+                key.registry_type.clone(),
             ));
         }
     };
@@ -269,15 +241,11 @@ pub fn download_card<'py>(
     key: ArtifactKey,
     interface: Option<&Bound<'py, PyAny>>,
 ) -> Result<Bound<'py, PyAny>, RegistryError> {
-    let decryption_key = key.get_decrypt_key().map_err(|e| {
+    let decryption_key = key.get_decrypt_key().inspect_err(|e| {
         error!("Failed to get decryption key: {}", e);
-        RegistryError::Error(e.to_string())
     })?;
 
-    let tmp_dir = TempDir::new().map_err(|e| {
-        error!("Failed to create temporary directory: {}", e);
-        RegistryError::Error("Failed to create temporary directory".to_string())
-    })?;
+    let tmp_dir = TempDir::new()?;
 
     let tmp_path = tmp_dir.into_path();
     let rpath = PathBuf::from(&key.storage_key);
@@ -290,9 +258,8 @@ pub fn download_card<'py>(
     storage_client()?.get(&lpath, &rpath, false)?;
     decrypt_directory(&tmp_path, &decryption_key)?;
 
-    let json_string = std::fs::read_to_string(&lpath).map_err(|e| {
+    let json_string = std::fs::read_to_string(&lpath).inspect_err(|e| {
         error!("Failed to read card json: {}", e);
-        RegistryError::Error("Failed to read card json".to_string())
     })?;
 
     let mut card = card_from_string(py, json_string, interface, key)?;
@@ -330,9 +297,7 @@ pub fn download_card<'py>(
 #[instrument(skip_all)]
 pub fn upload_card_artifacts(path: PathBuf, key: &ArtifactKey) -> Result<(), RegistryError> {
     // create temp path for saving
-    let encryption_key = key
-        .get_decrypt_key()
-        .map_err(|e| RegistryError::Error(e.to_string()))?;
+    let encryption_key = key.get_decrypt_key()?;
 
     encrypt_directory(&path, &encryption_key)?;
     storage_client()?.put(&path, &key.storage_path(), true)?;
@@ -379,13 +344,12 @@ fn validate_and_update_card(card: &mut Card) -> Result<(), RegistryError> {
         ..Default::default()
     };
 
-    let cards = reg.list_cards(args).map_err(|e| {
+    let cards = reg.list_cards(args).inspect_err(|e| {
         error!("Failed to list cards: {}", e);
-        RegistryError::Error("Failed to list cards".to_string())
     })?;
 
     if cards.is_empty() {
-        return Err(RegistryError::Error(format!(
+        return Err(RegistryError::CustomError(format!(
             "Card {:?}/{:?} does not exist in the {:?} registry",
             card.space, card.name, card.registry_type
         )));
@@ -399,7 +363,7 @@ fn validate_and_update_card(card: &mut Card) -> Result<(), RegistryError> {
         card.uid = found_card.uid().to_string();
         debug!("Updated card metadata for name: {:?}", card.name);
     } else {
-        return Err(RegistryError::Error(format!(
+        return Err(RegistryError::CustomError(format!(
             "Card {:?}/{:?} does not exist in the {:?} registry",
             card.space, card.name, card.registry_type
         )));
@@ -464,9 +428,7 @@ pub fn verify_card(
             let exists = data_registry.check_card_uid(&datacard_uid)?;
 
             if !exists {
-                return Err(RegistryError::Error(
-                    "Datacard does not exist in the registry".to_string(),
-                ));
+                return Err(RegistryError::DataCardNotExistError);
             }
         }
     }
@@ -476,12 +438,12 @@ pub fn verify_card(
             .getattr("cards")
             .map_err(|e| {
                 error!("Failed to get cards from deck: {}", e);
-                RegistryError::Error("Failed to get cards from deck".to_string())
+                RegistryError::FailedToGetCardsFromDeck
             })?
             .extract::<Vec<Card>>()
             .map_err(|e| {
                 error!("Failed to extract cards from deck: {}", e);
-                RegistryError::Error("Failed to extract cards from deck".to_string())
+                RegistryError::FailedToExtractCardsFromDeck
             })?;
 
         validate_card_deck_cards(&mut deck)?;
@@ -490,27 +452,15 @@ pub fn verify_card(
         card.setattr("cards", deck.into_py_any(card.py()).unwrap())
             .map_err(|e| {
                 error!("Failed to update card deck: {}", e);
-                RegistryError::Error("Failed to update card deck".to_string())
+                RegistryError::UpdateCardDeckError
             })?;
     }
 
-    let card_registry_type = card
-        .getattr("registry_type")
-        .map_err(|e| {
-            error!("Failed to get card type: {}", e);
-            RegistryError::Error("Failed to get card type".to_string())
-        })?
-        .extract::<RegistryType>()
-        .map_err(|e| {
-            error!("Failed to extract card type: {}", e);
-            RegistryError::Error("Failed to extract card type".to_string())
-        })?;
+    let card_registry_type = card.getattr("registry_type")?.extract::<RegistryType>()?;
 
     // assert that the card registry type is the same as the registry type
     if card_registry_type != *registry_type {
-        return Err(RegistryError::Error(
-            "Card registry type does not match registry type".to_string(),
-        ));
+        return Err(RegistryError::RegistryTypeMismatchError);
     }
 
     debug!("Verified card");
@@ -526,7 +476,7 @@ where
     T: OpsmlCard,
 {
     if !card.is_card() {
-        return Err(RegistryError::Error("Card is not a valid card".to_string()));
+        return Err(RegistryError::NotValidCardError);
     }
 
     debug!("Verified card");

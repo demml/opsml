@@ -1,4 +1,4 @@
-use opsml_error::error::SqlError;
+use crate::error::SqlError;
 
 /// this file contains helper logic for generating sql queries across different databases
 use crate::base::add_version_bounds;
@@ -325,8 +325,7 @@ impl SqliteQueryHelper {
         // check for uid. If uid is present, we only return that card
         if query_args.uid.is_some() {
             // validate uid
-            is_valid_uuidv7(query_args.uid.as_ref().unwrap())
-                .map_err(|e| SqlError::GeneralError(e.to_string()))?;
+            is_valid_uuidv7(query_args.uid.as_ref().unwrap())?;
         } else {
             // add where clause due to multiple combinations
 

@@ -1,3 +1,4 @@
+use crate::error::DataInterfaceError;
 use crate::types::{Feature, FeatureSchema};
 use pyo3::prelude::*;
 
@@ -6,7 +7,9 @@ pub struct NumpySchemaValidator {}
 impl NumpySchemaValidator {
     //pub fn get_polars_feature(value: &Bound<'_, PyAny>) -> PyResult<Feature> {}
 
-    pub fn generate_feature_map(data: &Bound<'_, PyAny>) -> PyResult<FeatureSchema> {
+    pub fn generate_feature_map(
+        data: &Bound<'_, PyAny>,
+    ) -> Result<FeatureSchema, DataInterfaceError> {
         let mut feature_map = FeatureSchema::new(None);
 
         let data_type = data.getattr("dtype")?.str()?.to_string();

@@ -1,8 +1,158 @@
-use opsml_error::UtilError;
+use opsml_utils::error::{PyUtilError, UtilError};
 use pyo3::exceptions::PyRuntimeError;
 use pyo3::PyErr;
 use thiserror::Error;
 use tracing::error;
+
+#[derive(Error, Debug)]
+pub enum TypeError {
+    #[error("Key {0} not found in FeatureMap")]
+    MissingKeyError(String),
+
+    #[error("Only one of query or filename can be provided")]
+    OnlyOneQueryorFilenameError,
+
+    #[error("Key not found")]
+    KeyNotFound,
+
+    #[error(transparent)]
+    UtilError(#[from] UtilError),
+
+    #[error(transparent)]
+    IoError(#[from] std::io::Error),
+
+    #[error("Invalid data type")]
+    InvalidDataType,
+
+    #[error("Invalid onnx type")]
+    InvalidOnnxType,
+}
+
+impl From<TypeError> for PyErr {
+    fn from(err: TypeError) -> PyErr {
+        let msg = err.to_string();
+        error!("{}", msg);
+        PyRuntimeError::new_err(msg)
+    }
+}
+
+#[derive(Error, Debug)]
+pub enum DataInterfaceError {
+    #[error(transparent)]
+    PyError(#[from] pyo3::PyErr),
+
+    #[error("Data must be a numpy array")]
+    NumpyTypeError,
+
+    #[error("Data must be a pandas dataframe")]
+    PandasTypeError,
+
+    #[error("Data must be a polars.DataFrame")]
+    PolarsTypeError,
+
+    #[error("Data must be a Torch tensor")]
+    TorchTypeError,
+
+    #[error("Torch dataset requires kwargs with torch_dataset")]
+    MissingTorchKwargsError,
+
+    #[error("No data detected in interface for saving")]
+    MissingDataError,
+
+    #[error("No data splits detected in interface for splitting")]
+    MissingDataSplitsError,
+
+    #[error("Invalid timestamp")]
+    InvalidTimeStamp,
+
+    #[error("Invalid value type. Supported types are String, Float, Int")]
+    InvalidType,
+
+    #[error("Only one split type can be provided")]
+    OnlyOneSplitError,
+
+    #[error("At least one split type must be provided")]
+    AtLeastOneSplitError,
+
+    #[error("Invalid split type")]
+    InvalidSplitType,
+
+    #[error(transparent)]
+    UtilError(#[from] UtilError),
+
+    #[error(transparent)]
+    TypeError(#[from] TypeError),
+
+    #[error("Error encountered converting polars type for feature: {0}")]
+    FeatureConversionError(String),
+
+    #[error("Invalid data type")]
+    InvalidDataType,
+
+    #[error("Data must be a pyarrow array")]
+    ArrowTypeError,
+
+    #[error("Data type not supported for profiling")]
+    DataTypeNotSupportedForProfilingError,
+
+    #[error("Failed to save scouter profile: {0}")]
+    ScouterError(String),
+
+    #[error("Failed to downcast Python object: {0}")]
+    DowncastError(String),
+}
+
+impl<'a> From<pyo3::DowncastError<'a, 'a>> for DataInterfaceError {
+    fn from(err: pyo3::DowncastError) -> Self {
+        DataInterfaceError::DowncastError(err.to_string())
+    }
+}
+
+impl From<DataInterfaceError> for PyErr {
+    fn from(err: DataInterfaceError) -> PyErr {
+        let msg = err.to_string();
+        error!("{}", msg);
+        PyRuntimeError::new_err(msg)
+    }
+}
+
+#[derive(Error, Debug)]
+pub enum SampleDataError {
+    #[error(transparent)]
+    PyError(#[from] pyo3::PyErr),
+
+    #[error(transparent)]
+    DataInterfaceError(#[from] DataInterfaceError),
+
+    #[error("Invalid data type")]
+    InvalidDataType,
+
+    #[error("Failed to downcast Python object: {0}")]
+    DowncastError(String),
+
+    #[error("Data must be of type tensorflow tensor or ndarray")]
+    TensorFlowDataTypeError,
+
+    #[error("Data must be of type torch tensor")]
+    TorchDataTypeError,
+
+    #[error("Data type not supported")]
+    DataTypeError,
+}
+
+impl<'a> From<pyo3::DowncastError<'a, 'a>> for SampleDataError {
+    fn from(err: pyo3::DowncastError) -> Self {
+        SampleDataError::DowncastError(err.to_string())
+    }
+}
+
+impl From<SampleDataError> for PyErr {
+    fn from(err: SampleDataError) -> PyErr {
+        let msg = err.to_string();
+        error!("{}", msg);
+        PyRuntimeError::new_err(msg)
+    }
+}
 
 #[derive(Error, Debug)]
 pub enum OnnxError {
@@ -51,11 +201,11 @@ pub enum OnnxError {
     #[error(transparent)]
     PyError(#[from] pyo3::PyErr),
 
-    #[error("Failed to downcast- {0}")]
-    DowncastError(String),
-
     #[error(transparent)]
     IoError(#[from] std::io::Error),
+
+    #[error(transparent)]
+    SampleDataError(#[from] SampleDataError),
 
     #[error("No onnx file found")]
     NoOnnxFile,
@@ -74,8 +224,16 @@ pub enum OnnxError {
 
     #[error("Model type not supported for onnx conversion")]
     ModelTypeError,
+
+    #[error("Failed to downcast Python object: {0}")]
+    DowncastError(String),
 }
 
+impl<'a> From<pyo3::DowncastError<'a, 'a>> for OnnxError {
+    fn from(err: pyo3::DowncastError) -> Self {
+        OnnxError::DowncastError(err.to_string())
+    }
+}
 impl From<OnnxError> for PyErr {
     fn from(err: OnnxError) -> PyErr {
         let msg = err.to_string();
@@ -109,6 +267,9 @@ pub enum ModelInterfaceError {
 
     #[error(transparent)]
     IoError(#[from] std::io::Error),
+
+    #[error(transparent)]
+    SampleDataError(#[from] SampleDataError),
 
     #[error("Onnx URI not found in metadata")]
     MissingOnnxUriError,
@@ -171,11 +332,31 @@ pub enum ModelInterfaceError {
     #[error(transparent)]
     UtilError(#[from] UtilError),
 
+    #[error(transparent)]
+    PyUtilError(#[from] PyUtilError),
+
+    #[error(transparent)]
+    DataInterfaceError(#[from] DataInterfaceError),
+
     #[error("Interface type not found")]
     InterfaceTypeNotFoundError,
 
     #[error("Model must be an Onnx ModelProto with SerializeToString method")]
     OnnxModelTypeError,
+
+    #[error(
+        "Config must be an instance of AutoQuantizationConfig, ORTConfig, or QuantizationConfig"
+    )]
+    HuggingFaceOnnxArgTypeError,
+
+    #[error("Failed to downcast Python object: {0}")]
+    DowncastError(String),
+}
+
+impl<'a> From<pyo3::DowncastError<'a, 'a>> for ModelInterfaceError {
+    fn from(err: pyo3::DowncastError) -> Self {
+        ModelInterfaceError::DowncastError(err.to_string())
+    }
 }
 
 impl From<ModelInterfaceError> for PyErr {

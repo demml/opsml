@@ -12,6 +12,7 @@ async-trait = { workspace = true }
 
 aws-config = { workspace = true, optional = true }
 aws-sdk-s3 = { workspace = true, optional = true }
+azure_core = { workspace = true, optional = true }
 azure_identity = { workspace = true, optional = true }
 azure_storage = { workspace = true, optional = true }
 azure_storage_blobs = { workspace = true, optional = true }
@@ -26,7 +27,6 @@ google-cloud-storage = { workspace = true, optional = true }
 
 opsml-client = { workspace = true }
 opsml-colors = { workspace = true }
-opsml-error = { workspace = true }
 opsml-settings = { workspace = true }
 opsml-state = { workspace = true }
 opsml-types = { workspace = true }
@@ -37,6 +37,7 @@ serde = { workspace = true }
 serde_json = { workspace = true }
 serde_qs = { workspace = true }
 time = { workspace = true }
+thiserror = { workspace = true }
 tokio = { workspace = true }
 tokio-util = { workspace = true }
 tracing = { workspace = true }
@@ -45,7 +46,7 @@ walkdir = { workspace = true }
 
 [features]
 default = []
-server = ["aws-config", "aws-sdk-s3", "azure_identity", "azure_storage", "azure_storage_blobs", "google-cloud-auth", "google-cloud-storage"]
+server = ["aws-config", "aws-sdk-s3", "azure_identity", "azure_storage", "azure_storage_blobs", "azure_core", "google-cloud-auth", "google-cloud-storage"]
 
 [dev-dependencies]
 mockall = { workspace = true }

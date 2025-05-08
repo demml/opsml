@@ -1,4 +1,6 @@
+use crate::storage::aws::error::AwsError;
 use crate::storage::base::{get_files, PathExt, StorageClient};
+use crate::storage::error::StorageError;
 use crate::storage::filesystem::FileSystem;
 use async_trait::async_trait;
 use aws_config::BehaviorVersion;
@@ -9,7 +11,6 @@ use aws_sdk_s3::primitives::ByteStream;
 use aws_sdk_s3::primitives::Length;
 use aws_sdk_s3::types::{CompletedMultipartUpload, CompletedPart};
 use aws_sdk_s3::Client;
-use opsml_error::error::StorageError;
 use opsml_settings::config::OpsmlStorageSettings;
 use opsml_types::contracts::{CompleteMultipartUpload, FileInfo, MultipartCompleteParts};
 use opsml_types::{StorageType, UPLOAD_CHUNK_SIZE};
@@ -32,7 +33,7 @@ pub struct AWSCreds {
 }
 
 impl AWSCreds {
-    pub async fn new() -> Result<Self, StorageError> {
+    pub async fn new() -> Result<Self, AwsError> {
         let config = aws_config::load_defaults(BehaviorVersion::latest()).await;
 
         Ok(Self { config })
@@ -46,21 +47,17 @@ pub async fn generate_presigned_url_for_part(
     path: &str,
     upload_id: &str,
     client: &Client,
-) -> Result<String, StorageError> {
+) -> Result<String, AwsError> {
     let expires_in = Duration::from_secs(600); // Set expiration time for presigned URL
 
-    let presigned_request =
-        client
-            .upload_part()
-            .bucket(bucket)
-            .key(path)
-            .upload_id(upload_id)
-            .part_number(part_number)
-            .presigned(PresigningConfig::expires_in(expires_in).map_err(|e| {
-                StorageError::Error(format!("Failed to set presigned config: {}", e))
-            })?)
-            .await
-            .map_err(|e| StorageError::Error(format!("Failed to generate presigned url: {}", e)))?;
+    let presigned_request = client
+        .upload_part()
+        .bucket(bucket)
+        .key(path)
+        .upload_id(upload_id)
+        .part_number(part_number)
+        .presigned(PresigningConfig::expires_in(expires_in)?)
+        .await?;
 
     Ok(presigned_request.uri().to_string())
 }
@@ -87,7 +84,7 @@ impl AWSMulitPartUpload {
         lpath: &str,
         rpath: &str,
         upload_id: &str,
-    ) -> Result<Self, StorageError> {
+    ) -> Result<Self, AwsError> {
         let creds = AWSCreds::new().await?;
         let client = Client::new(&creds.config);
         let file_size = Self::get_file_size(lpath)?;
@@ -104,9 +101,8 @@ impl AWSMulitPartUpload {
         })
     }
 
-    fn get_file_size(path: &str) -> Result<u64, StorageError> {
-        let metadata = std::fs::metadata(path)
-            .map_err(|e| StorageError::Error(format!("Failed to get file metadata: {}", e)))?;
+    fn get_file_size(path: &str) -> Result<u64, AwsError> {
+        let metadata = std::fs::metadata(path)?;
         Ok(metadata.len())
     }
 
@@ -117,39 +113,35 @@ impl AWSMulitPartUpload {
         part_number: i32,
         body: ByteStream,
         presigned_url: &str,
-    ) -> Result<UploadPart, StorageError> {
+    ) -> Result<UploadPart, AwsError> {
         let body = body
             .collect()
             .await
-            .map_err(|e| StorageError::Error(format!("Failed to collect ByteStream: {}", e)))?;
+            .map_err(|e| AwsError::ByteStreamError(e.to_string()))?;
 
         let response = self
             .http_client
             .put(presigned_url)
             .body(body.into_bytes())
             .send()
-            .await
-            .map_err(|e| StorageError::Error(format!("Failed to upload part: {}", e)))?;
+            .await?;
 
         if response.status().is_success() {
             let e_tag = response
                 .headers()
                 .get("ETag")
-                .ok_or_else(|| StorageError::Error("Missing ETag header".to_string()))?
+                .ok_or_else(|| AwsError::MissingEtagError)?
                 .to_str()
-                .map_err(|e| StorageError::Error(format!("Invalid ETag header: {}", e)))?
+                .map_err(|e| AwsError::InvalidEtagError(e.to_string()))?
                 .to_string();
 
             Ok(UploadPart { e_tag, part_number })
         } else {
-            Err(StorageError::Error(format!(
-                "Failed to upload part: {}",
-                response.status()
-            )))
+            Err(AwsError::UploadError(response.status()))
         }
     }
 
-    pub async fn complete_upload(&self, parts: Vec<UploadPart>) -> Result<(), StorageError> {
+    pub async fn complete_upload(&self, parts: Vec<UploadPart>) -> Result<(), AwsError> {
         let completed_parts: Vec<CompletedPart> = parts
             .into_iter()
             .map(|part| {
@@ -171,13 +163,12 @@ impl AWSMulitPartUpload {
             .multipart_upload(completed_multipart_upload)
             .upload_id(&self.upload_id)
             .send()
-            .await
-            .map_err(|e| StorageError::Error(format!("Failed to complete upload: {}", e)))?;
+            .await?;
 
         Ok(())
     }
 
-    pub async fn abort_multipart_upload(&self) -> Result<(), StorageError> {
+    pub async fn abort_multipart_upload(&self) -> Result<(), AwsError> {
         let _abort_multipart_upload_res = self
             .client
             .abort_multipart_upload()
@@ -185,8 +176,7 @@ impl AWSMulitPartUpload {
             .key(&self.rpath)
             .upload_id(&self.upload_id)
             .send()
-            .await
-            .map_err(|e| StorageError::Error(format!("Failed to abort upload: {}", e)))?;
+            .await?;
 
         Ok(())
     }
@@ -197,14 +187,14 @@ impl AWSMulitPartUpload {
         chunk_size: u64,
         chunk_index: u64,
         this_chunk_size: u64,
-    ) -> Result<ByteStream, StorageError> {
+    ) -> Result<ByteStream, AwsError> {
         let stream = ByteStream::read_from()
             .path(path)
             .offset(chunk_index * chunk_size)
             .length(Length::Exact(this_chunk_size))
             .build()
             .await
-            .map_err(|e| StorageError::Error(format!("Failed to get next chunk: {}", e)))?;
+            .map_err(|e| AwsError::NextChunkError(e.to_string()))?;
 
         Ok(stream)
     }
@@ -213,7 +203,7 @@ impl AWSMulitPartUpload {
         &self,
         chunk_count: u64,
         size_of_last_chunk: u64,
-    ) -> Result<(), StorageError> {
+    ) -> Result<(), AwsError> {
         let chunk_size = std::cmp::min(self.file_size, UPLOAD_CHUNK_SIZE as u64);
         let mut upload_parts = Vec::new();
 
@@ -240,7 +230,7 @@ impl AWSMulitPartUpload {
                 .length(Length::Exact(this_chunk))
                 .build()
                 .await
-                .map_err(|e| StorageError::Error(format!("Failed to get next chunk: {}", e)))?;
+                .map_err(|e| AwsError::NextChunkError(e.to_string()))?;
 
             let part = self
                 .upload_part((chunk_index + 1) as i32, body, &presigned_url)
@@ -294,9 +284,7 @@ impl StorageClient for AWSStorageClient {
 
         // fail if lpath and rpath have no suffixes
         if lpath.extension().is_none() || rpath.extension().is_none() {
-            return Err(StorageError::Error(
-                "Local and remote paths must have suffixes".to_string(),
-            ));
+            return Err(StorageError::LocalAndRemotePathsMustHaveSuffixesError);
         }
 
         // create and open lpath file
@@ -304,22 +292,19 @@ impl StorageClient for AWSStorageClient {
 
         if !prefix.exists() {
             // create the directory if it does not exist and skip errors
-            std::fs::create_dir_all(prefix)
-                .map_err(|e| StorageError::Error(format!("Unable to create directory: {}", e)))?;
+            std::fs::create_dir_all(prefix)?;
         }
 
         // create and open lpath file
-        let mut file = File::create(lpath)
-            .map_err(|e| StorageError::Error(format!("Unable to create file: {}", e)))?;
+        let mut file = File::create(lpath)?;
 
         // get stream
         let mut response = self.get_object_stream(rpath.to_str().unwrap()).await?;
 
         // iterate over the stream and write to the file
         while let Some(v) = response.body.next().await {
-            let chunk = v.map_err(|e| StorageError::Error(format!("Stream error: {}", e)))?;
-            file.write_all(&chunk)
-                .map_err(|e| StorageError::Error(format!("Unable to write to file: {}", e)))?;
+            let chunk = v.map_err(|e| AwsError::ByteStreamError(e.to_string()))?;
+            file.write_all(&chunk)?;
         }
 
         Ok(())
@@ -348,11 +333,9 @@ impl StorageClient for AWSStorageClient {
             .get_object()
             .bucket(&self.bucket)
             .key(path)
-            .presigned(PresigningConfig::expires_in(expires_in).map_err(|e| {
-                StorageError::Error(format!("Failed to set presigned config: {}", e))
-            })?)
+            .presigned(PresigningConfig::expires_in(expires_in).map_err(AwsError::PresignError)?)
             .await
-            .map_err(|e| StorageError::Error(format!("Failed to generate presigned url: {}", e)))?;
+            .map_err(AwsError::GetObjectError)?;
 
         Ok(uri.uri().to_string())
     }
@@ -374,7 +357,7 @@ impl StorageClient for AWSStorageClient {
                 .bucket(&self.bucket)
                 .send()
                 .await
-                .map_err(|e| StorageError::Error(format!("Failed to list objects: {}", e)))?
+                .map_err(AwsError::ListObjectsV2Error)?
         } else {
             self.client
                 .list_objects_v2()
@@ -382,7 +365,7 @@ impl StorageClient for AWSStorageClient {
                 .prefix(path)
                 .send()
                 .await
-                .map_err(|e| StorageError::Error(format!("Failed to list objects: {}", e)))?
+                .map_err(AwsError::ListObjectsV2Error)?
         };
 
         Ok(objects
@@ -409,7 +392,7 @@ impl StorageClient for AWSStorageClient {
             .prefix(path)
             .send()
             .await
-            .map_err(|e| StorageError::Error(format!("Failed to list objects: {}", e)))?;
+            .map_err(AwsError::ListObjectsV2Error)?;
 
         Ok(response
             .contents
@@ -471,7 +454,7 @@ impl StorageClient for AWSStorageClient {
             .key(dest)
             .send()
             .await
-            .map_err(|e| StorageError::Error(format!("Failed to copy object: {}", e)))?;
+            .map_err(AwsError::CopyObjectError)?;
 
         Ok(true)
     }
@@ -507,7 +490,7 @@ impl StorageClient for AWSStorageClient {
             .key(path)
             .send()
             .await
-            .map_err(|e| StorageError::Error(format!("Failed to delete object: {}", e)))?;
+            .map_err(AwsError::DeleteObjectError)?;
 
         Ok(true)
     }
@@ -526,9 +509,7 @@ impl StorageClient for AWSStorageClient {
             let obj_id = aws_sdk_s3::types::ObjectIdentifier::builder()
                 .key(obj)
                 .build()
-                .map_err(|err| {
-                    StorageError::Error(format!("Failed to build object identifier: {}", err))
-                })?;
+                .map_err(|e| AwsError::BuildError(e.to_string()))?;
             delete_object_ids.push(obj_id);
         }
 
@@ -539,19 +520,11 @@ impl StorageClient for AWSStorageClient {
                 aws_sdk_s3::types::Delete::builder()
                     .set_objects(Some(delete_object_ids))
                     .build()
-                    .map_err(|err| {
-                        StorageError::Error(format!(
-                            "Failed to build delete object request: {}",
-                            err
-                        ))
-                    })?,
+                    .map_err(|e| AwsError::BuildError(e.to_string()))?,
             )
             .send()
             .await
-            .map_err(|e| StorageError::Error(format!("Failed to delete objects: {}", e)))
-            .map_err(|e: StorageError| {
-                StorageError::Error(format!("Failed to delete objects: {}", e))
-            })?;
+            .map_err(AwsError::DeleteObjectsError)?;
 
         Ok(true)
     }
@@ -570,27 +543,25 @@ impl AWSStorageClient {
     ///
     /// A Result with the object stream if successful
     ///
-    pub async fn get_object_stream(&self, rpath: &str) -> Result<GetObjectOutput, StorageError> {
+    pub async fn get_object_stream(&self, rpath: &str) -> Result<GetObjectOutput, AwsError> {
         let response = self
             .client
             .get_object()
             .bucket(&self.bucket)
             .key(rpath)
             .send()
-            .await
-            .map_err(|e| StorageError::Error(format!("Failed to get object stream: {}", e)))?;
+            .await?;
         Ok(response)
     }
 
-    pub async fn create_multipart_upload(&self, path: &str) -> Result<String, StorageError> {
+    pub async fn create_multipart_upload(&self, path: &str) -> Result<String, AwsError> {
         let response = self
             .client
             .create_multipart_upload()
             .bucket(&self.bucket)
             .key(path)
             .send()
-            .await
-            .unwrap();
+            .await?;
 
         Ok(response.upload_id.unwrap())
     }
@@ -599,7 +570,7 @@ impl AWSStorageClient {
         &self,
         lpath: &str,
         rpath: &str,
-    ) -> Result<AWSMulitPartUpload, StorageError> {
+    ) -> Result<AWSMulitPartUpload, AwsError> {
         let upload_id = self.create_multipart_upload(rpath).await?;
         AWSMulitPartUpload::new(&self.bucket, lpath, rpath, &upload_id).await
     }
@@ -611,7 +582,7 @@ impl AWSStorageClient {
         part_number: i32,
         path: &str,
         upload_id: &str,
-    ) -> Result<String, StorageError> {
+    ) -> Result<String, AwsError> {
         let expires_in = Duration::from_secs(600); // Set expiration time for presigned URL
 
         let presigned_request = self
@@ -621,11 +592,8 @@ impl AWSStorageClient {
             .key(path)
             .upload_id(upload_id)
             .part_number(part_number)
-            .presigned(PresigningConfig::expires_in(expires_in).map_err(|e| {
-                StorageError::Error(format!("Failed to set presigned config: {}", e))
-            })?)
-            .await
-            .map_err(|e| StorageError::Error(format!("Failed to generate presigned url: {}", e)))?;
+            .presigned(PresigningConfig::expires_in(expires_in)?)
+            .await?;
 
         Ok(presigned_request.uri().to_string())
     }
@@ -645,15 +613,11 @@ impl AWSStorageClient {
         upload_id: &str,
         parts: MultipartCompleteParts,
         path: &str,
-    ) -> Result<(), StorageError> {
+    ) -> Result<(), AwsError> {
         // convert the parts to CompletedPart
         let parts = match parts {
             MultipartCompleteParts::Aws(parts) => parts,
-            _ => {
-                return Err(StorageError::Error(
-                    "Invalid parts type for AWS storage".to_string(),
-                ))
-            }
+            _ => return Err(AwsError::InvalidPartsTypeError),
         };
 
         let upload_parts = parts
@@ -680,8 +644,7 @@ impl AWSStorageClient {
             .multipart_upload(completed_multipart_upload)
             .upload_id(upload_id)
             .send()
-            .await
-            .map_err(|e| StorageError::Error(format!("Failed to complete upload: {}", e)))?;
+            .await?;
 
         Ok(())
     }
@@ -819,9 +782,7 @@ impl FileSystem for S3FStorageClient {
 
         if recursive {
             if !stripped_lpath.is_dir() {
-                return Err(StorageError::Error(
-                    "Local path must be a directory for recursive put".to_string(),
-                ));
+                return Err(StorageError::PathMustBeDirectoryError);
             }
 
             let files: Vec<PathBuf> = get_files(&stripped_lpath)?;
@@ -871,14 +832,15 @@ impl FileSystem for S3FStorageClient {
         request: CompleteMultipartUpload,
     ) -> Result<(), StorageError> {
         let parts = request.parts;
-        self.client
+        Ok(self
+            .client
             .complete_upload_from_parts(&request.session_url, parts, &request.path)
-            .await
+            .await?)
     }
 }
 
 impl S3FStorageClient {
-    pub async fn create_multipart_upload(&self, path: &Path) -> Result<String, StorageError> {
+    pub async fn create_multipart_upload(&self, path: &Path) -> Result<String, AwsError> {
         self.client
             .create_multipart_upload(path.to_str().unwrap())
             .await
@@ -888,7 +850,7 @@ impl S3FStorageClient {
         &self,
         rpath: &Path,
         lpath: &Path,
-    ) -> Result<AWSMulitPartUpload, StorageError> {
+    ) -> Result<AWSMulitPartUpload, AwsError> {
         let upload_id = self
             .client
             .create_multipart_upload(rpath.to_str().unwrap())
@@ -910,7 +872,7 @@ impl S3FStorageClient {
         part_number: i32,
         path: &Path,
         upload_id: &str,
-    ) -> Result<String, StorageError> {
+    ) -> Result<String, AwsError> {
         self.client
             .generate_presigned_url_for_part(part_number, path.to_str().unwrap(), upload_id)
             .await
@@ -920,7 +882,7 @@ impl S3FStorageClient {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use opsml_error::error::StorageError;
+    use crate::storage::error::StorageError;
     use opsml_settings::config::OpsmlConfig;
     use opsml_utils::create_uuid7;
     use rand::distr::Alphanumeric;

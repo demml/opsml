@@ -23,7 +23,6 @@ opsml-cli = { path = "crates/opsml_cli" }
 opsml-crypt = { path = "crates/opsml_crypt" }
 opsml-client = { path = "crates/opsml_client" }
 opsml-colors = { path = "crates/opsml_colors" }
-opsml-error = { path = "crates/opsml_error" }
 opsml-events = { path = "crates/opsml_events" }
 opsml-interfaces = { path = "crates/opsml_interfaces" }
 opsml-registry = { path = "crates/opsml_registry" }
@@ -47,6 +46,7 @@ async-trait = "0.*"
 axum = { version = "0.*", features = ["multipart", "macros"] }
 axum-extra = { version =  "0.*", features = ["cookie", "typed-header"] }
 aws-sdk-s3 = "1.75.0"
+azure_core = "0.21.0"
 azure_identity = "0.21.0" 
 azure_storage = "0.21.0"
 azure_storage_blobs = "0.21.0"

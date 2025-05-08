@@ -1,4 +1,4 @@
-use opsml_error::PyProjectTomlError;
+use crate::error::PyProjectTomlError;
 use opsml_types::RegistryType;
 use serde::{de::IntoDeserializer, Deserialize, Serialize};
 use std::collections::HashMap;

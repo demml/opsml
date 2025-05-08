@@ -1,6 +1,6 @@
 // create pyo3 async iterator
+use crate::storage::error::StorageError;
 use async_trait::async_trait;
-use opsml_error::error::StorageError;
 use opsml_settings::config::OpsmlStorageSettings;
 use opsml_types::{contracts::FileInfo, StorageType};
 use std::path::Path;
@@ -21,7 +21,7 @@ impl PathExt for Path {
     fn relative_path(&self, base: &Path) -> Result<PathBuf, StorageError> {
         let result = self
             .strip_prefix(base)
-            .map_err(|e| StorageError::Error(format!("Failed to get relative path: {}", e)))
+            .map_err(StorageError::GetRelativePathError)
             .map(|p| p.to_path_buf());
 
         // if result is error, check if prefix occurs in the path (this happens with LocalStorageClient) and remove anything before the prefix and the prefix itself

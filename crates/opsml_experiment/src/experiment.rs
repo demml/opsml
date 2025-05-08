@@ -1,9 +1,9 @@
+use crate::error::ExperimentError;
 use crate::HardwareQueue;
 use chrono::{DateTime, Utc};
 use names::Generator;
 use opsml_cards::ExperimentCard;
 use opsml_crypt::{decrypt_directory, encrypt_directory};
-use opsml_error::{ExperimentError, OpsmlError};
 use opsml_registry::base::OpsmlRegistry;
 use opsml_registry::CardRegistries;
 use opsml_semver::VersionType;
@@ -113,7 +113,7 @@ impl Experiment {
         log_hardware: bool,
         code_dir: Option<PathBuf>,
         experiment_uid: String,
-    ) -> PyResult<Self> {
+    ) -> Result<Self, ExperimentError> {
         // need artifact key for encryption/decryption
 
         let experiment_registry = &registries.experiment.registry;
@@ -147,10 +147,7 @@ impl Experiment {
         };
 
         Ok(Self {
-            experiment: experiment.into_py_any(py).map_err(|e| {
-                error!("Failed to bind experiment card: {}", e);
-                ExperimentError::Error(e.to_string())
-            })?,
+            experiment: experiment.into_py_any(py)?,
             registries,
             hardware_queue,
             uid: experiment_uid,
@@ -183,7 +180,7 @@ impl Experiment {
         name: Option<&str>,
         registries: &mut CardRegistries,
         subexperiment: bool,
-    ) -> PyResult<(Bound<'py, PyAny>, String)> {
+    ) -> Result<(Bound<'py, PyAny>, String), ExperimentError> {
         let name = name.map(String::from).unwrap_or_else(|| {
             let mut generator = Generator::default();
             generator.next().unwrap_or_else(|| "experiment".to_string())
@@ -219,14 +216,11 @@ impl Experiment {
         space: Option<&str>,
         name: Option<&str>,
         subexperiment: bool,
-    ) -> PyResult<Bound<'py, PyAny>> {
+    ) -> Result<Bound<'py, PyAny>, ExperimentError> {
         let mut card = ExperimentCard::new(py, space, name, None, None, None)?;
         card.subexperiment = subexperiment;
 
-        let experiment = Py::new(py, card)?.into_bound_py_any(py).map_err(|e| {
-            error!("Failed to register experiment card: {}", e);
-            ExperimentError::Error(e.to_string())
-        })?;
+        let experiment = Py::new(py, card)?.into_bound_py_any(py)?;
 
         Ok(experiment)
     }
@@ -252,14 +246,10 @@ impl Experiment {
     fn register_experiment(
         experiment: &Bound<'_, PyAny>,
         registries: &mut CardRegistries,
-    ) -> PyResult<String> {
+    ) -> Result<String, ExperimentError> {
         registries
             .experiment
-            .register_card(experiment, VersionType::Minor, None, None, None)
-            .map_err(|e| {
-                error!("Failed to register experiment card: {}", e);
-                OpsmlError::new_err(e.to_string())
-            })?;
+            .register_card(experiment, VersionType::Minor, None, None, None)?;
 
         let uid = experiment.getattr("uid")?.extract::<String>()?;
 
@@ -283,7 +273,7 @@ impl Experiment {
         slf: &PyRefMut<'py, Self>,
         py: Python<'py>,
         subexperiment: &Experiment,
-    ) -> PyResult<()> {
+    ) -> Result<(), ExperimentError> {
         let subexperiment_uid = subexperiment.uid.clone();
         slf.experiment
             .call_method1(py, "add_subexperiment_experiment", (&subexperiment_uid,))?;
@@ -308,20 +298,13 @@ impl Experiment {
         py: Python<'py>,
         experiment_uid: &str,
         registries: &mut CardRegistries,
-    ) -> PyResult<Bound<'py, PyAny>> {
+    ) -> Result<Bound<'py, PyAny>, ExperimentError> {
         // Logic to load the existing experiment using the experiment_id
         let experiment = registries
             .experiment
             .load_card(py, Some(experiment_uid.to_string()), None, None, None, None)
-            .map_err(|e| {
-                error!("Failed to load experiment card: {}", e);
-                OpsmlError::new_err(e.to_string())
-            })?
-            .into_bound_py_any(py)
-            .map_err(|e| {
-                error!("Failed to bind experiment card: {}", e);
-                OpsmlError::new_err(e.to_string())
-            })?;
+            .map_err(ExperimentError::LoadCardError)?
+            .into_bound_py_any(py)?;
 
         Ok(experiment)
     }
@@ -363,7 +346,7 @@ impl Experiment {
         code_dir: Option<PathBuf>,
         log_hardware: bool,
         experiment_uid: Option<&str>,
-    ) -> PyResult<Bound<'py, Experiment>> {
+    ) -> Result<Bound<'py, Experiment>, ExperimentError> {
         debug!("Starting experiment");
         let registries = &mut slf.registries;
         let experiment = match experiment_uid {
@@ -401,7 +384,7 @@ impl Experiment {
         Ok(Py::new(py, experiment)?.bind(py).clone())
     }
 
-    fn __enter__(slf: PyRef<'_, Self>) -> PyResult<PyRef<'_, Self>> {
+    fn __enter__(slf: PyRef<'_, Self>) -> Result<PyRef<'_, Self>, ExperimentError> {
         debug!("Starting experiment");
         Ok(slf)
     }
@@ -413,7 +396,7 @@ impl Experiment {
         exc_type: Option<PyObject>,
         exc_value: Option<PyObject>,
         traceback: Option<PyObject>,
-    ) -> PyResult<bool> {
+    ) -> Result<bool, ExperimentError> {
         if let (Some(exc_type), Some(exc_value), Some(traceback)) = (exc_type, exc_value, traceback)
         {
             error!(
@@ -446,7 +429,7 @@ impl Experiment {
         step: Option<i32>,
         timestamp: Option<i64>,
         created_at: Option<DateTime<Utc>>,
-    ) -> PyResult<()> {
+    ) -> Result<(), ExperimentError> {
         let registry = &self.registries.experiment.registry;
 
         let metric_request = MetricRequest {
@@ -460,15 +443,14 @@ impl Experiment {
             }],
         };
 
-        registry.insert_metrics(&metric_request).map_err(|e| {
-            error!("Failed to insert metric: {}", e);
-            ExperimentError::Error(e.to_string())
-        })?;
+        registry
+            .insert_metrics(&metric_request)
+            .map_err(ExperimentError::InsertMetricError)?;
 
         Ok(())
     }
 
-    pub fn log_metrics(&self, metrics: Vec<Metric>) -> PyResult<()> {
+    pub fn log_metrics(&self, metrics: Vec<Metric>) -> Result<(), ExperimentError> {
         let registry = &self.registries.experiment.registry;
 
         let metric_request = MetricRequest {
@@ -476,16 +458,19 @@ impl Experiment {
             metrics,
         };
 
-        registry.insert_metrics(&metric_request).map_err(|e| {
-            error!("Failed to insert metric: {}", e);
-            ExperimentError::Error(e.to_string())
-        })?;
+        registry
+            .insert_metrics(&metric_request)
+            .map_err(ExperimentError::InsertMetricError)?;
 
         Ok(())
     }
 
     #[pyo3(signature = (name, value))]
-    pub fn log_parameter(&self, name: String, value: Bound<'_, PyAny>) -> PyResult<()> {
+    pub fn log_parameter(
+        &self,
+        name: String,
+        value: Bound<'_, PyAny>,
+    ) -> Result<(), ExperimentError> {
         let registry = &self.registries.experiment.registry;
 
         let param_request = ParameterRequest {
@@ -493,15 +478,14 @@ impl Experiment {
             parameters: vec![Parameter::new(name, value)?],
         };
 
-        registry.insert_parameters(&param_request).map_err(|e| {
-            error!("Failed to insert metric: {}", e);
-            ExperimentError::Error(e.to_string())
-        })?;
+        registry
+            .insert_parameters(&param_request)
+            .map_err(ExperimentError::InsertParameterError)?;
 
         Ok(())
     }
 
-    pub fn log_parameters(&self, parameters: Vec<Parameter>) -> PyResult<()> {
+    pub fn log_parameters(&self, parameters: Vec<Parameter>) -> Result<(), ExperimentError> {
         let registry = &self.registries.experiment.registry;
 
         let param_request = ParameterRequest {
@@ -509,32 +493,25 @@ impl Experiment {
             parameters,
         };
 
-        registry.insert_parameters(&param_request).map_err(|e| {
-            error!("Failed to insert metric: {}", e);
-            ExperimentError::Error(e.to_string())
-        })?;
+        registry
+            .insert_parameters(&param_request)
+            .map_err(ExperimentError::InsertParameterError)?;
 
         Ok(())
     }
 
-    pub fn log_artifact(&self, path: PathBuf) -> PyResult<()> {
+    pub fn log_artifact(&self, path: PathBuf) -> Result<(), ExperimentError> {
         // get current working directory
-        let cwd = std::env::current_dir().map_err(|e| {
-            error!("Failed to get current working directory: {}", e);
-            ExperimentError::Error(e.to_string())
-        })?;
+        let cwd = std::env::current_dir()?;
 
         // check that path exists
         if !path.exists() {
-            return Err(OpsmlError::new_err("Path does not exist".to_string()));
+            return Err(ExperimentError::PathNotExistError);
         }
 
         // check that path is a file
         if !path.is_file() {
-            return Err(OpsmlError::new_err(
-                "Path is not a file. Use log_artifacts if you wish to log multiple artifacts "
-                    .to_string(),
-            ));
+            return Err(ExperimentError::PathNotFileError);
         }
 
         // get relative path
@@ -560,7 +537,7 @@ impl Experiment {
         Ok(())
     }
 
-    fn log_artifacts(&self, path: PathBuf) -> PyResult<()> {
+    fn log_artifacts(&self, path: PathBuf) -> Result<(), ExperimentError> {
         let encryption_key = self.artifact_key.get_decrypt_key()?;
         encrypt_directory(&path, &encryption_key)?;
 
@@ -574,7 +551,7 @@ impl Experiment {
     }
 
     #[getter]
-    pub fn card<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyAny>> {
+    pub fn card<'py>(&self, py: Python<'py>) -> Result<Bound<'py, PyAny>, ExperimentError> {
         Ok(self.experiment.bind(py).clone())
     }
 
@@ -586,7 +563,7 @@ impl Experiment {
         pre_tag: Option<String>,
         build_tag: Option<String>,
         save_kwargs: Option<&Bound<'_, PyAny>>,
-    ) -> PyResult<()> {
+    ) -> Result<(), ExperimentError> {
         let py = card.py();
         // get registry type of card
         let registry_type = card.getattr("registry_type")?.extract::<RegistryType>()?;
@@ -697,7 +674,7 @@ pub fn start_experiment<'py>(
     code_dir: Option<PathBuf>,
     log_hardware: bool,
     experiment_uid: Option<&str>,
-) -> PyResult<Bound<'py, Experiment>> {
+) -> Result<Bound<'py, Experiment>, ExperimentError> {
     debug!("Initializing experiment");
 
     // runtime should be shared across all registries and all child experiments to prevent deadlocks
@@ -740,7 +717,7 @@ pub fn start_experiment<'py>(
 pub fn get_experiment_metrics(
     experiment_uid: &str,
     names: Option<Vec<String>>,
-) -> PyResult<Metrics> {
+) -> Result<Metrics, ExperimentError> {
     let metric_request = GetMetricRequest {
         experiment_uid: experiment_uid.to_string(),
         names: names.unwrap_or_default(),
@@ -757,7 +734,7 @@ pub fn get_experiment_metrics(
 pub fn get_experiment_parameters(
     experiment_uid: &str,
     names: Option<Vec<String>>,
-) -> PyResult<Parameters> {
+) -> Result<Parameters, ExperimentError> {
     let param_request = GetParameterRequest {
         experiment_uid: experiment_uid.to_string(),
         names: names.unwrap_or_default(),

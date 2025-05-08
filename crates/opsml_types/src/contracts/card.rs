@@ -1,5 +1,6 @@
 use crate::contracts::ArtifactKey;
 use crate::contracts::AuditableRequest;
+use crate::error::TypeError;
 use crate::{
     cards::CardTable,
     interfaces::{types::DataInterfaceType, ModelType, TaskType},
@@ -7,7 +8,6 @@ use crate::{
 };
 use chrono::{DateTime, Utc};
 use opsml_colors::Colorize;
-use opsml_error::CardError;
 use opsml_semver::VersionType;
 use opsml_utils::{get_utc_datetime, PyHelperFuncs};
 use pyo3::prelude::*;
@@ -693,7 +693,7 @@ impl CardRecord {
         }
     }
 
-    pub fn uri(&self) -> Result<PathBuf, CardError> {
+    pub fn uri(&self) -> Result<PathBuf, TypeError> {
         match self {
             Self::Data(card) => {
                 let uri = format!(

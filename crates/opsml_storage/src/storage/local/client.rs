@@ -1,9 +1,9 @@
 use crate::storage::base::get_files;
 use crate::storage::base::PathExt;
 use crate::storage::base::StorageClient;
+use crate::storage::error::{LocalError, StorageError};
 use crate::storage::filesystem::FileSystem;
 use async_trait::async_trait;
-use opsml_error::error::StorageError;
 use opsml_settings::config::OpsmlStorageSettings;
 use opsml_types::contracts::CompleteMultipartUpload;
 use opsml_types::{contracts::FileInfo, StorageType};
@@ -20,7 +20,7 @@ pub struct LocalMultiPartUpload {
 }
 
 impl LocalMultiPartUpload {
-    pub async fn new(lpath: &str, rpath: &str) -> Result<Self, StorageError> {
+    pub async fn new(lpath: &str, rpath: &str) -> Result<Self, LocalError> {
         Ok(Self {
             lpath: PathBuf::from(lpath),
             rpath: PathBuf::from(rpath),
@@ -32,19 +32,17 @@ impl LocalMultiPartUpload {
         })
     }
 
-    pub async fn upload_file_in_chunks(&self) -> Result<(), StorageError> {
+    pub async fn upload_file_in_chunks(&self) -> Result<(), LocalError> {
         // if not client mode, copy the file to rpath
 
         // join client bucket to rpath
         // create rpath parents if they don't exist
         debug!("Uploading to {} via server", self.rpath.display());
         if let Some(parent) = self.rpath.parent() {
-            fs::create_dir_all(parent)
-                .map_err(|e| StorageError::Error(format!("Failed to create directory: {}", e)))?;
+            fs::create_dir_all(parent)?;
         }
 
-        fs::copy(&self.lpath, self.rpath.as_path())
-            .map_err(|e| StorageError::Error(format!("Failed to copy file: {}", e)))?;
+        fs::copy(&self.lpath, self.rpath.as_path())?;
 
         Ok(())
     }
@@ -72,11 +70,7 @@ impl StorageClient for LocalStorageClient {
 
         // bucket should be a dir. Check if it exists. If not, create it
         if !bucket.exists() {
-            fs::create_dir_all(&bucket)
-                .map_err(|e| {
-                    StorageError::Error(format!("Unable to create bucket directory: {}", e))
-                })
-                .unwrap();
+            fs::create_dir_all(&bucket)?;
         }
 
         Ok(Self { bucket })
@@ -89,23 +83,14 @@ impl StorageClient for LocalStorageClient {
 
         if !src_path.exists() {
             error!("Source path does not exist: {}", src_path.display());
-            return Err(StorageError::Error(format!(
-                "Source path does not exist: {}",
-                src_path.display()
-            )));
+            return Err(LocalError::PathNotExistError(src_path.display().to_string()).into());
         }
 
         if let Some(parent) = dest_path.parent() {
-            fs::create_dir_all(parent).map_err(|e| {
-                error!("Unable to create directory: {}", e);
-                StorageError::Error(format!("Unable to create directory: {}", e))
-            })?;
+            fs::create_dir_all(parent)?;
         }
 
-        fs::copy(&src_path, dest_path).map_err(|e| {
-            error!("Unable to copy file: {}", e);
-            StorageError::Error(format!("Unable to copy file: {}", e))
-        })?;
+        fs::copy(&src_path, dest_path)?;
 
         Ok(())
     }
@@ -121,10 +106,7 @@ impl StorageClient for LocalStorageClient {
             Ok(full_path.to_str().unwrap().to_string())
         } else {
             error!("Path does not exist: {}", full_path.display());
-            Err(StorageError::Error(format!(
-                "Path does not exist: {}",
-                full_path.display()
-            )))
+            Err(LocalError::PathNotExistError(full_path.display().to_string()).into())
         }
     }
 
@@ -137,10 +119,7 @@ impl StorageClient for LocalStorageClient {
         }
 
         for entry in WalkDir::new(full_path) {
-            let entry = entry.map_err(|e| {
-                error!("Unable to read directory: {}", e);
-                StorageError::Error(format!("Unable to read directory: {}", e))
-            })?;
+            let entry = entry?;
             if entry.file_type().is_file() {
                 files.push(entry.path().to_str().unwrap().to_string());
             }
@@ -163,23 +142,14 @@ impl StorageClient for LocalStorageClient {
         let full_path = self.bucket.join(path);
         if !full_path.exists() {
             error!("Path does not exist: {}", full_path.display());
-            return Err(StorageError::Error(format!(
-                "Path does not exist: {}",
-                full_path.display()
-            )));
+            return Err(LocalError::PathNotExistError(full_path.display().to_string()).into());
         }
 
         let mut files_info = Vec::new();
         for entry in WalkDir::new(full_path) {
-            let entry = entry.map_err(|e| {
-                error!("Unable to read directory: {}", e);
-                StorageError::Error(format!("Unable to read directory: {}", e))
-            })?;
+            let entry = entry?;
             if entry.file_type().is_file() {
-                let metadata = entry.metadata().map_err(|e| {
-                    error!("Unable to read metadata: {}", e);
-                    StorageError::Error(format!("Unable to read metadata: {}", e))
-                })?;
+                let metadata = entry.metadata()?;
                 let created = metadata
                     .created()
                     .unwrap_or(SystemTime::now())
@@ -232,23 +202,14 @@ impl StorageClient for LocalStorageClient {
 
         if !src_path.exists() {
             error!("Source path does not exist: {}", src_path.display());
-            return Err(StorageError::Error(format!(
-                "Source path does not exist: {}",
-                src_path.display()
-            )));
+            return Err(LocalError::PathNotExistError(src_path.display().to_string()).into());
         }
 
         if let Some(parent) = dest_path.parent() {
-            fs::create_dir_all(parent).map_err(|e| {
-                error!("Unable to create directory: {}", e);
-                StorageError::Error(format!("Unable to create directory: {}", e))
-            })?;
+            fs::create_dir_all(parent)?;
         }
 
-        fs::copy(&src_path, &dest_path).map_err(|e| {
-            error!("Unable to copy file: {}", e);
-            StorageError::Error(format!("Unable to copy file: {}", e))
-        })?;
+        fs::copy(&src_path, &dest_path)?;
 
         Ok(true)
     }
@@ -258,30 +219,20 @@ impl StorageClient for LocalStorageClient {
         let dest_path = self.bucket.join(dest);
 
         if !src_path.exists() {
-            return Err(StorageError::Error(format!(
-                "Source path does not exist: {}",
-                src_path.display()
-            )));
+            return Err(LocalError::PathNotExistError(src_path.display().to_string()).into());
         }
 
         for entry in WalkDir::new(&src_path) {
-            let entry = entry
-                .map_err(|e| StorageError::Error(format!("Unable to read directory: {}", e)))?;
-            let relative_path = entry
-                .path()
-                .strip_prefix(&src_path)
-                .map_err(|e| StorageError::Error(format!("Unable to strip prefix: {}", e)))?;
+            let entry = entry?;
+            let relative_path = entry.path().strip_prefix(&src_path)?;
             let dest_file_path = dest_path.join(relative_path);
 
             if entry.file_type().is_file() {
                 if let Some(parent) = dest_file_path.parent() {
-                    fs::create_dir_all(parent).map_err(|e| {
-                        StorageError::Error(format!("Unable to create directory: {}", e))
-                    })?;
+                    fs::create_dir_all(parent)?;
                 }
 
-                fs::copy(entry.path(), &dest_file_path)
-                    .map_err(|e| StorageError::Error(format!("Unable to copy file: {}", e)))?;
+                fs::copy(entry.path(), &dest_file_path)?;
             }
         }
 
@@ -296,10 +247,7 @@ impl StorageClient for LocalStorageClient {
             return Ok(true);
         }
 
-        fs::remove_file(&full_path).map_err(|e| {
-            error!("Unable to delete file: {}", e);
-            StorageError::Error(format!("Unable to delete file: {}", e))
-        })?;
+        fs::remove_file(&full_path)?;
 
         Ok(true)
     }
@@ -312,11 +260,9 @@ impl StorageClient for LocalStorageClient {
         }
 
         for entry in WalkDir::new(&full_path) {
-            let entry = entry
-                .map_err(|e| StorageError::Error(format!("Unable to read directory: {}", e)))?;
+            let entry = entry?;
             if entry.file_type().is_file() {
-                fs::remove_file(entry.path())
-                    .map_err(|e| StorageError::Error(format!("Unable to delete file: {}", e)))?;
+                fs::remove_file(entry.path())?;
             }
         }
 
@@ -329,7 +275,7 @@ impl LocalStorageClient {
         &self,
         lpath: &str,
         rpath: &str,
-    ) -> Result<LocalMultiPartUpload, StorageError> {
+    ) -> Result<LocalMultiPartUpload, LocalError> {
         LocalMultiPartUpload::new(lpath, rpath).await
     }
 }
@@ -462,9 +408,7 @@ impl FileSystem for LocalFSStorageClient {
 
         if recursive {
             if !stripped_lpath.is_dir() {
-                return Err(StorageError::Error(
-                    "Local path must be a directory for recursive put".to_string(),
-                ));
+                return Err(StorageError::PathMustBeDirectoryError);
             }
 
             let files: Vec<PathBuf> = get_files(&stripped_lpath)?;
@@ -506,7 +450,7 @@ impl LocalFSStorageClient {
         &self,
         lpath: &Path,
         rpath: &Path,
-    ) -> Result<LocalMultiPartUpload, StorageError> {
+    ) -> Result<LocalMultiPartUpload, LocalError> {
         debug!(
             "Creating multipart uploader for {} -> {}",
             lpath.display(),
@@ -529,7 +473,7 @@ impl LocalFSStorageClient {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use opsml_error::error::StorageError;
+    use crate::storage::error::StorageError;
     use opsml_settings::config::OpsmlConfig;
     use opsml_utils::create_uuid7;
     use rand::distr::Alphanumeric;

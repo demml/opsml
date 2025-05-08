@@ -1,5 +1,5 @@
+use crate::error::TypeError;
 use crate::model::huggingface::types::HuggingFaceOnnxArgs;
-use opsml_error::{OpsmlError, TypeError};
 use opsml_utils::{json_to_pyobject, pyobject_to_json, PyHelperFuncs};
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
@@ -26,7 +26,7 @@ impl InterfaceDataType {
             "numpy.ndarray" => Ok(InterfaceDataType::Numpy),
             "pyarrow.lib.Table" => Ok(InterfaceDataType::Arrow),
             "torch.Tensor" => Ok(InterfaceDataType::Torch),
-            _ => Err(TypeError::Error("Invalid data type".to_string())),
+            _ => Err(TypeError::InvalidDataType),
         }
     }
 }
@@ -35,19 +35,26 @@ impl InterfaceDataType {
 #[derive(Debug, Default)]
 pub struct ModelSaveKwargs {
     pub onnx: Option<Py<PyDict>>,
+
     pub model: Option<Py<PyDict>>,
+
     pub preprocessor: Option<Py<PyDict>>,
+
+    #[pyo3(get, set)]
+    pub save_onnx: bool,
 }
 
 #[pymethods]
 impl ModelSaveKwargs {
     #[new]
-    #[pyo3(signature = (onnx=None, model=None, preprocessor=None))]
+    #[pyo3(signature = (onnx=None, model=None, preprocessor=None, save_onnx=None))]
     pub fn new<'py>(
         onnx: Option<Bound<'py, PyAny>>,
         model: Option<Bound<'py, PyDict>>,
         preprocessor: Option<Bound<'py, PyDict>>,
-    ) -> PyResult<Self> {
+        save_onnx: Option<bool>,
+    ) -> Result<Self, TypeError> {
+        let mut save_onnx = save_onnx.unwrap_or(false);
         // check if onnx is None, PyDict or HuggingFaceOnnxArgs
 
         let onnx = onnx.map(|onnx| {
@@ -57,12 +64,16 @@ impl ModelSaveKwargs {
             } else if onnx.is_instance_of::<PyDict>() {
                 Ok(onnx.downcast::<PyDict>().unwrap().clone().unbind())
             } else {
-                Err(OpsmlError::new_err("Invalid onnx type"))
+                Err(TypeError::InvalidOnnxType)
             }
         });
 
+        // set save_onnx to true if onnx is not None
         let onnx = match onnx {
-            Some(Ok(onnx)) => Some(onnx),
+            Some(Ok(onnx)) => {
+                save_onnx = true;
+                Some(onnx)
+            }
             Some(Err(e)) => return Err(e),
             None => None,
         };
@@ -73,6 +84,7 @@ impl ModelSaveKwargs {
             onnx,
             model,
             preprocessor,
+            save_onnx,
         })
     }
 
@@ -129,6 +141,10 @@ impl ModelSaveKwargs {
             .as_ref()
             .map(|preprocessor| preprocessor.bind(py))
     }
+
+    pub fn save_onnx(&self) -> bool {
+        self.save_onnx
+    }
 }
 
 impl Serialize for ModelSaveKwargs {
@@ -137,7 +153,7 @@ impl Serialize for ModelSaveKwargs {
         S: serde::Serializer,
     {
         Python::with_gil(|py| {
-            let mut state = serializer.serialize_struct("ModelSaveKwargs", 3)?;
+            let mut state = serializer.serialize_struct("ModelSaveKwargs", 4)?;
             let onnx = self
                 .onnx
                 .as_ref()
@@ -150,10 +166,12 @@ impl Serialize for ModelSaveKwargs {
                 .preprocessor
                 .as_ref()
                 .map(|preprocessor| pyobject_to_json(preprocessor.bind(py)).unwrap());
+            let save_onnx = self.save_onnx;
 
             state.serialize_field("onnx", &onnx)?;
             state.serialize_field("model", &model)?;
             state.serialize_field("preprocessor", &preprocessor)?;
+            state.serialize_field("save_onnx", &save_onnx)?;
             state.end()
         })
     }
@@ -181,6 +199,7 @@ impl<'de> Deserialize<'de> for ModelSaveKwargs {
                     let mut onnx = None;
                     let mut model = None;
                     let mut preprocessor = None;
+                    let mut save_onnx = None;
 
                     while let Some(key) = map.next_key::<String>()? {
                         match key.as_str() {
@@ -223,6 +242,11 @@ impl<'de> Deserialize<'de> for ModelSaveKwargs {
                                     }
                                 }
                             }
+
+                            "save_onnx" => {
+                                let value = map.next_value::<Option<bool>>()?;
+                                save_onnx = value;
+                            }
                             _ => {
                                 let _: serde::de::IgnoredAny = map.next_value()?;
                             }
@@ -232,6 +256,7 @@ impl<'de> Deserialize<'de> for ModelSaveKwargs {
                         onnx,
                         model,
                         preprocessor,
+                        save_onnx: save_onnx.unwrap_or(false),
                     };
                     Ok(kwargs)
                 })
@@ -240,7 +265,7 @@ impl<'de> Deserialize<'de> for ModelSaveKwargs {
 
         deserializer.deserialize_struct(
             "ModelSaveKwargs",
-            &["onnx", "model", "preprocessor"],
+            &["onnx", "model", "preprocessor", "save_onnx"],
             ModelSaveKwargsVisitor,
         )
     }
@@ -255,11 +280,13 @@ impl Clone for ModelSaveKwargs {
                 .preprocessor
                 .as_ref()
                 .map(|preprocessor| preprocessor.clone_ref(py));
+            let save_onnx = self.save_onnx;
 
             ModelSaveKwargs {
                 onnx,
                 model,
                 preprocessor,
+                save_onnx,
             }
         })
     }
@@ -290,7 +317,7 @@ impl ModelLoadKwargs {
         model: Option<Bound<'py, PyDict>>,
         preprocessor: Option<Bound<'py, PyDict>>,
         load_onnx: Option<bool>,
-    ) -> PyResult<Self> {
+    ) -> Result<Self, TypeError> {
         // check if onnx is None, PyDict or HuggingFaceOnnxArgs
 
         let onnx = onnx.map(|onnx| {
@@ -301,7 +328,7 @@ impl ModelLoadKwargs {
                 Ok(onnx.downcast::<PyDict>().unwrap().clone().unbind())
             } else {
                 // return error
-                Err(OpsmlError::new_err("Invalid onnx type"))
+                Err(TypeError::InvalidOnnxType)
             }
         });
 

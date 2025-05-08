@@ -44,7 +44,7 @@ def test_hugging_face_text_pipeline(
 
     kwargs = ModelSaveKwargs(onnx=onnx_args)
 
-    metadata = interface.save(save_path, True, save_kwargs=kwargs)
+    metadata = interface.save(save_path, save_kwargs=kwargs)
 
     assert interface.onnx_session is not None
 
@@ -83,7 +83,7 @@ def test_hugging_face_model(
     )
 
     kwargs = ModelSaveKwargs(onnx=onnx_args)
-    metadata = interface.save(save_path, True, save_kwargs=kwargs)
+    metadata = interface.save(save_path, save_kwargs=kwargs)
     assert interface.onnx_session is not None
 
     interface.onnx_session.session = None
@@ -147,4 +147,4 @@ def test_huggingface_vit(
         hf_task=HuggingFaceTask.ImageClassification,
     )
 
-    interface.save(save_path, False)
+    interface.save(save_path)

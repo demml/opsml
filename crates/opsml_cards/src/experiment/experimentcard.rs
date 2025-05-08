@@ -1,11 +1,11 @@
+use crate::error::CardError;
 use crate::utils::BaseArgs;
 use chrono::{DateTime, Utc};
 use opsml_crypt::decrypt_directory;
-use opsml_error::{map_err_with_logging, CardError, OpsmlError};
 use opsml_storage::storage_client;
 use opsml_types::contracts::{CardRecord, ExperimentCardClientRecord};
 use opsml_types::{
-    cards::ComputeEnvironment, contracts::ArtifactKey, BaseArgsType, RegistryType, SaveName, Suffix,
+    cards::ComputeEnvironment, contracts::ArtifactKey, RegistryType, SaveName, Suffix,
 };
 use opsml_utils::{get_utc_datetime, PyHelperFuncs};
 use pyo3::prelude::*;
@@ -95,19 +95,14 @@ impl ExperimentCard {
         version: Option<&str>,
         uid: Option<&str>,
         tags: Option<&Bound<'_, PyList>>,
-    ) -> PyResult<Self> {
+    ) -> Result<Self, CardError> {
         let registry_type = RegistryType::Experiment;
         let tags = match tags {
             None => Vec::new(),
-            Some(t) => t
-                .extract::<Vec<String>>()
-                .map_err(|e| OpsmlError::new_err(e.to_string()))?,
+            Some(t) => t.extract::<Vec<String>>()?,
         };
 
-        let base_args = map_err_with_logging::<BaseArgsType, _>(
-            BaseArgs::create_args(name, space, version, uid, &registry_type),
-            "Failed to create base args for ExperimentCard",
-        )?;
+        let base_args = BaseArgs::create_args(name, space, version, uid, &registry_type)?;
 
         Ok(Self {
             space: base_args.0,
@@ -178,15 +173,14 @@ impl ExperimentCard {
 
     #[staticmethod]
     #[pyo3(signature = (json_string))]
-    pub fn model_validate_json(json_string: String) -> PyResult<ExperimentCard> {
-        serde_json::from_str(&json_string).map_err(|e| {
+    pub fn model_validate_json(json_string: String) -> Result<ExperimentCard, CardError> {
+        Ok(serde_json::from_str(&json_string).inspect_err(|e| {
             error!("Failed to validate json: {}", e);
-            OpsmlError::new_err(e.to_string())
-        })
+        })?)
     }
 
     #[pyo3(signature = (path=None))]
-    pub fn list_artifacts(&self, path: Option<PathBuf>) -> PyResult<Vec<String>> {
+    pub fn list_artifacts(&self, path: Option<PathBuf>) -> Result<Vec<String>, CardError> {
         let storage_path = self.artifact_key.as_ref().unwrap().storage_path();
 
         let rpath = match path {
@@ -194,16 +188,15 @@ impl ExperimentCard {
             Some(p) => storage_path.join(SaveName::Artifacts).join(p),
         };
 
-        let files = storage_client()?.find(&rpath).map_err(|e| {
+        let files = storage_client()?.find(&rpath).inspect_err(|e| {
             error!("Failed to list artifacts: {}", e);
-            OpsmlError::new_err(e.to_string())
         })?;
 
         // iterate through and remove storage_path if it exists
-        let storage_path_str = storage_path
-            .into_os_string()
-            .into_string()
-            .map_err(OpsmlError::new_err)?;
+        let storage_path_str = storage_path.into_os_string().into_string().map_err(|_| {
+            error!("Failed to convert storage path to string");
+            CardError::IntoStringError
+        })?;
 
         let files = files
             .iter()
@@ -221,7 +214,7 @@ impl ExperimentCard {
         &self,
         path: Option<PathBuf>,
         lpath: Option<PathBuf>,
-    ) -> PyResult<()> {
+    ) -> Result<(), CardError> {
         let storage_path = self.artifact_key.as_ref().unwrap().storage_path();
 
         // if lpath is None, download to "artifacts" directory
@@ -229,9 +222,8 @@ impl ExperimentCard {
 
         // assert that lpath exists, if not create it
         if !lpath.exists() {
-            std::fs::create_dir_all(&lpath).map_err(|e| {
+            std::fs::create_dir_all(&lpath).inspect_err(|e| {
                 error!("Failed to create directory: {}", e);
-                OpsmlError::new_err(e.to_string())
             })?;
         }
 
@@ -250,9 +242,8 @@ impl ExperimentCard {
 
         storage_client()?
             .get(&lpath, &rpath, recursive)
-            .map_err(|e| {
+            .inspect_err(|e| {
                 error!("Failed to download artifacts: {}", e);
-                OpsmlError::new_err(e.to_string())
             })?;
 
         let decrypt_key = self
@@ -260,9 +251,8 @@ impl ExperimentCard {
             .as_ref()
             .unwrap()
             .get_decrypt_key()
-            .map_err(|e| {
+            .inspect_err(|e| {
                 error!("Failed to get decryption key: {}", e);
-                OpsmlError::new_err(e.to_string())
             })?;
         decrypt_directory(&lpath, &decrypt_key)?;
 

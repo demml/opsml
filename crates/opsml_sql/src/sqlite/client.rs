@@ -1,5 +1,6 @@
 use crate::base::SqlClient;
 
+use crate::error::SqlError;
 use crate::schemas::schema::{
     AuditCardRecord, CardResults, CardSummary, DataCardRecord, ExperimentCardRecord,
     HardwareMetricsRecord, MetricRecord, ModelCardRecord, ParameterRecord, PromptCardRecord,
@@ -8,7 +9,6 @@ use crate::schemas::schema::{
 use crate::schemas::CardDeckRecord;
 use crate::sqlite::helper::SqliteQueryHelper;
 use async_trait::async_trait;
-use opsml_error::error::SqlError;
 use opsml_semver::VersionValidator;
 use opsml_settings::config::DatabaseSettings;
 use opsml_types::contracts::{ArtifactKey, AuditEvent};
@@ -74,26 +74,12 @@ impl SqlClient for SqliteClient {
                 // Ensure the parent directory exists
                 if let Some(parent) = path.parent() {
                     if !parent.exists() {
-                        std::fs::create_dir_all(parent)
-                            .map_err(|e| {
-                                SqlError::FileError(format!(
-                                    "Failed to create SQLite file parents: {} with error: {}",
-                                    &uri, e
-                                ))
-                            })
-                            .unwrap();
+                        std::fs::create_dir_all(parent)?;
                     }
                 }
 
                 // create the file
-                std::fs::File::create(&uri)
-                    .map_err(|e| {
-                        SqlError::FileError(format!(
-                            "Failed to create SQLite file: {} with error: {}",
-                            &uri, e
-                        ))
-                    })
-                    .unwrap();
+                std::fs::File::create(&uri)?;
             }
         }
 
@@ -101,7 +87,7 @@ impl SqlClient for SqliteClient {
             .max_connections(settings.max_connections)
             .connect(&settings.connection_uri)
             .await
-            .map_err(|e| SqlError::ConnectionError(format!("{}", e)))?;
+            .map_err(SqlError::ConnectionError)?;
 
         let client = Self { pool };
 
@@ -115,7 +101,7 @@ impl SqlClient for SqliteClient {
         sqlx::migrate!("src/sqlite/migrations")
             .run(&self.pool)
             .await
-            .map_err(|e| SqlError::MigrationError(format!("{}", e)))?;
+            .map_err(SqlError::MigrationError)?;
         Ok(())
     }
 
@@ -134,8 +120,7 @@ impl SqlClient for SqliteClient {
         let exists: Option<String> = sqlx::query_scalar(&query)
             .bind(uid)
             .fetch_optional(&self.pool)
-            .await
-            .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+            .await?;
 
         Ok(exists.is_some())
     }
@@ -168,27 +153,19 @@ impl SqlClient for SqliteClient {
             .bind(name)
             .bind(space)
             .fetch_all(&self.pool)
-            .await
-            .map_err(|e| {
-                error!("{}", e);
-                SqlError::QueryError(format!("{}", e))
-            })?;
+            .await?;
 
         let versions = cards
             .iter()
-            .map(|c| {
-                c.to_version().map_err(|e| {
-                    error!("{}", e);
-                    SqlError::VersionError(format!("{}", e))
-                })
-            })
+            .map(|c| c.to_version())
             .collect::<Result<Vec<Version>, SqlError>>()?;
 
         // sort semvers
-        VersionValidator::sort_semver_versions(versions, true).map_err(|e| {
-            error!("{}", e);
-            SqlError::VersionError(format!("{}", e))
-        })
+        Ok(
+            VersionValidator::sort_semver_versions(versions, true).inspect_err(|e| {
+                error!("{}", e);
+            })?,
+        )
     }
 
     /// Query cards based on the query arguments
@@ -217,8 +194,7 @@ impl SqlClient for SqliteClient {
                     .bind(query_args.max_date.as_ref())
                     .bind(query_args.limit.unwrap_or(50))
                     .fetch_all(&self.pool)
-                    .await
-                    .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+                    .await?;
 
                 return Ok(CardResults::Data(card));
             }
@@ -230,8 +206,7 @@ impl SqlClient for SqliteClient {
                     .bind(query_args.max_date.as_ref())
                     .bind(query_args.limit.unwrap_or(50))
                     .fetch_all(&self.pool)
-                    .await
-                    .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+                    .await?;
 
                 return Ok(CardResults::Model(card));
             }
@@ -243,8 +218,7 @@ impl SqlClient for SqliteClient {
                     .bind(query_args.max_date.as_ref())
                     .bind(query_args.limit.unwrap_or(50))
                     .fetch_all(&self.pool)
-                    .await
-                    .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+                    .await?;
 
                 return Ok(CardResults::Experiment(card));
             }
@@ -257,8 +231,7 @@ impl SqlClient for SqliteClient {
                     .bind(query_args.max_date.as_ref())
                     .bind(query_args.limit.unwrap_or(50))
                     .fetch_all(&self.pool)
-                    .await
-                    .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+                    .await?;
 
                 return Ok(CardResults::Audit(card));
             }
@@ -271,8 +244,7 @@ impl SqlClient for SqliteClient {
                     .bind(query_args.max_date.as_ref())
                     .bind(query_args.limit.unwrap_or(50))
                     .fetch_all(&self.pool)
-                    .await
-                    .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+                    .await?;
 
                 return Ok(CardResults::Prompt(card));
             }
@@ -285,16 +257,13 @@ impl SqlClient for SqliteClient {
                     .bind(query_args.max_date.as_ref())
                     .bind(query_args.limit.unwrap_or(50))
                     .fetch_all(&self.pool)
-                    .await
-                    .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+                    .await?;
 
                 return Ok(CardResults::Deck(card));
             }
 
             _ => {
-                return Err(SqlError::QueryError(
-                    "Invalid table name for query".to_string(),
-                ));
+                return Err(SqlError::InvalidTableName);
             }
         }
     }
@@ -323,14 +292,11 @@ impl SqlClient for SqliteClient {
                         .bind(&record.username)
                         .bind(&record.opsml_version)
                         .execute(&self.pool)
-                        .await
-                        .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+                        .await?;
                     Ok(())
                 }
                 _ => {
-                    return Err(SqlError::QueryError(
-                        "Invalid card type for insert".to_string(),
-                    ));
+                    return Err(SqlError::InvalidCardType);
                 }
             },
             CardTable::Model => match card {
@@ -358,14 +324,11 @@ impl SqlClient for SqliteClient {
                         .bind(&record.username)
                         .bind(&record.opsml_version)
                         .execute(&self.pool)
-                        .await
-                        .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+                        .await?;
                     Ok(())
                 }
                 _ => {
-                    return Err(SqlError::QueryError(
-                        "Invalid card type for insert".to_string(),
-                    ));
+                    return Err(SqlError::InvalidCardType);
                 }
             },
             CardTable::Experiment => match card {
@@ -391,14 +354,11 @@ impl SqlClient for SqliteClient {
                         .bind(&record.username)
                         .bind(&record.opsml_version)
                         .execute(&self.pool)
-                        .await
-                        .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+                        .await?;
                     Ok(())
                 }
                 _ => {
-                    return Err(SqlError::QueryError(
-                        "Invalid card type for insert".to_string(),
-                    ));
+                    return Err(SqlError::InvalidCardType);
                 }
             },
             CardTable::Audit => match card {
@@ -423,14 +383,11 @@ impl SqlClient for SqliteClient {
                         .bind(&record.username)
                         .bind(&record.opsml_version)
                         .execute(&self.pool)
-                        .await
-                        .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+                        .await?;
                     Ok(())
                 }
                 _ => {
-                    return Err(SqlError::QueryError(
-                        "Invalid card type for insert".to_string(),
-                    ));
+                    return Err(SqlError::InvalidCardType);
                 }
             },
 
@@ -454,15 +411,12 @@ impl SqlClient for SqliteClient {
                         .bind(&record.username)
                         .bind(&record.opsml_version)
                         .execute(&self.pool)
-                        .await
-                        .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+                        .await?;
                     Ok(())
                 }
 
                 _ => {
-                    return Err(SqlError::QueryError(
-                        "Invalid card type for insert".to_string(),
-                    ));
+                    return Err(SqlError::InvalidCardType);
                 }
             },
             CardTable::Deck => match card {
@@ -483,21 +437,16 @@ impl SqlClient for SqliteClient {
                         .bind(&record.username)
                         .bind(&record.opsml_version)
                         .execute(&self.pool)
-                        .await
-                        .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+                        .await?;
                     Ok(())
                 }
                 _ => {
-                    return Err(SqlError::QueryError(
-                        "Invalid card type for insert".to_string(),
-                    ));
+                    return Err(SqlError::InvalidCardType);
                 }
             },
 
             _ => {
-                return Err(SqlError::QueryError(
-                    "Invalid table name for insert".to_string(),
-                ));
+                return Err(SqlError::InvalidTableName);
             }
         }
     }
@@ -526,14 +475,11 @@ impl SqlClient for SqliteClient {
                         .bind(&record.opsml_version)
                         .bind(&record.uid)
                         .execute(&self.pool)
-                        .await
-                        .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+                        .await?;
                     Ok(())
                 }
                 _ => {
-                    return Err(SqlError::QueryError(
-                        "Invalid card type for insert".to_string(),
-                    ));
+                    return Err(SqlError::InvalidCardType);
                 }
             },
             CardTable::Model => match card {
@@ -561,14 +507,11 @@ impl SqlClient for SqliteClient {
                         .bind(&record.opsml_version)
                         .bind(&record.uid)
                         .execute(&self.pool)
-                        .await
-                        .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+                        .await?;
                     Ok(())
                 }
                 _ => {
-                    return Err(SqlError::QueryError(
-                        "Invalid card type for insert".to_string(),
-                    ));
+                    return Err(SqlError::InvalidCardType);
                 }
             },
             CardTable::Experiment => match card {
@@ -594,14 +537,11 @@ impl SqlClient for SqliteClient {
                         .bind(&record.opsml_version)
                         .bind(&record.uid)
                         .execute(&self.pool)
-                        .await
-                        .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+                        .await?;
                     Ok(())
                 }
                 _ => {
-                    return Err(SqlError::QueryError(
-                        "Invalid card type for insert".to_string(),
-                    ));
+                    return Err(SqlError::InvalidCardType);
                 }
             },
             CardTable::Audit => match card {
@@ -626,14 +566,11 @@ impl SqlClient for SqliteClient {
                         .bind(&record.opsml_version)
                         .bind(&record.uid)
                         .execute(&self.pool)
-                        .await
-                        .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+                        .await?;
                     Ok(())
                 }
                 _ => {
-                    return Err(SqlError::QueryError(
-                        "Invalid card type for insert".to_string(),
-                    ));
+                    return Err(SqlError::InvalidCardType);
                 }
             },
 
@@ -657,15 +594,12 @@ impl SqlClient for SqliteClient {
                         .bind(&record.opsml_version)
                         .bind(&record.uid)
                         .execute(&self.pool)
-                        .await
-                        .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+                        .await?;
                     Ok(())
                 }
 
                 _ => {
-                    return Err(SqlError::QueryError(
-                        "Invalid card type for insert".to_string(),
-                    ));
+                    return Err(SqlError::InvalidCardType);
                 }
             },
 
@@ -685,21 +619,16 @@ impl SqlClient for SqliteClient {
                         .bind(&record.opsml_version)
                         .bind(&record.uid)
                         .execute(&self.pool)
-                        .await
-                        .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+                        .await?;
                     Ok(())
                 }
                 _ => {
-                    return Err(SqlError::QueryError(
-                        "Invalid card type for insert".to_string(),
-                    ));
+                    return Err(SqlError::InvalidCardType);
                 }
             },
 
             _ => {
-                return Err(SqlError::QueryError(
-                    "Invalid table name for insert".to_string(),
-                ));
+                return Err(SqlError::InvalidTableName);
             }
         }
     }
@@ -715,10 +644,7 @@ impl SqlClient for SqliteClient {
     /// * `Vec<String>` - A vector of unique space names
     async fn get_unique_space_names(&self, table: &CardTable) -> Result<Vec<String>, SqlError> {
         let query = format!("SELECT DISTINCT space FROM {}", table);
-        let repos: Vec<String> = sqlx::query_scalar(&query)
-            .fetch_all(&self.pool)
-            .await
-            .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+        let repos: Vec<String> = sqlx::query_scalar(&query).fetch_all(&self.pool).await?;
 
         Ok(repos)
     }
@@ -747,8 +673,7 @@ impl SqlClient for SqliteClient {
             .bind(search_term.map(|term| format!("%{}%", term)))
             .bind(space)
             .fetch_one(&self.pool)
-            .await
-            .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+            .await?;
 
         Ok(stats)
     }
@@ -786,8 +711,7 @@ impl SqlClient for SqliteClient {
             .bind(lower_bound)
             .bind(upper_bound)
             .fetch_all(&self.pool)
-            .await
-            .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+            .await?;
 
         Ok(records)
     }
@@ -810,19 +734,14 @@ impl SqlClient for SqliteClient {
             .bind(lower_bound)
             .bind(upper_bound)
             .fetch_all(&self.pool)
-            .await
-            .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+            .await?;
 
         Ok(records)
     }
 
     async fn delete_card(&self, table: &CardTable, uid: &str) -> Result<(), SqlError> {
         let query = format!("DELETE FROM {} WHERE uid = ?1", table);
-        sqlx::query(&query)
-            .bind(uid)
-            .execute(&self.pool)
-            .await
-            .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+        sqlx::query(&query).bind(uid).execute(&self.pool).await?;
 
         Ok(())
     }
@@ -837,8 +756,7 @@ impl SqlClient for SqliteClient {
             .bind(record.step)
             .bind(record.timestamp)
             .execute(&self.pool)
-            .await
-            .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+            .await?;
 
         Ok(())
     }
@@ -860,10 +778,7 @@ impl SqlClient for SqliteClient {
                 .bind(r.timestamp);
         }
 
-        query_builder
-            .execute(&self.pool)
-            .await
-            .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+        query_builder.execute(&self.pool).await?;
 
         Ok(())
     }
@@ -880,10 +795,7 @@ impl SqlClient for SqliteClient {
             query_builder = query_builder.bind(binding);
         }
 
-        let records: Vec<MetricRecord> = query_builder
-            .fetch_all(&self.pool)
-            .await
-            .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+        let records: Vec<MetricRecord> = query_builder.fetch_all(&self.pool).await?;
 
         Ok(records)
     }
@@ -897,8 +809,7 @@ impl SqlClient for SqliteClient {
         let records: Vec<String> = sqlx::query_scalar(&query)
             .bind(uid)
             .fetch_all(&self.pool)
-            .await
-            .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+            .await?;
 
         Ok(records)
     }
@@ -921,8 +832,7 @@ impl SqlClient for SqliteClient {
             .bind(record.bytes_recv)
             .bind(record.bytes_sent)
             .execute(&self.pool)
-            .await
-            .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+            .await?;
 
         Ok(())
     }
@@ -933,8 +843,7 @@ impl SqlClient for SqliteClient {
         let records: Vec<HardwareMetricsRecord> = sqlx::query_as(&query)
             .bind(uid)
             .fetch_all(&self.pool)
-            .await
-            .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+            .await?;
 
         Ok(records)
     }
@@ -954,10 +863,7 @@ impl SqlClient for SqliteClient {
                 .bind(&record.value);
         }
 
-        query_builder
-            .execute(&self.pool)
-            .await
-            .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+        query_builder.execute(&self.pool).await?;
 
         Ok(())
     }
@@ -974,10 +880,7 @@ impl SqlClient for SqliteClient {
             query_builder = query_builder.bind(binding);
         }
 
-        let records: Vec<ParameterRecord> = query_builder
-            .fetch_all(&self.pool)
-            .await
-            .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+        let records: Vec<ParameterRecord> = query_builder.fetch_all(&self.pool).await?;
 
         Ok(records)
     }
@@ -985,11 +888,9 @@ impl SqlClient for SqliteClient {
     async fn insert_user(&self, user: &User) -> Result<(), SqlError> {
         let query = SqliteQueryHelper::get_user_insert_query();
 
-        let group_permissions = serde_json::to_string(&user.group_permissions)
-            .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+        let group_permissions = serde_json::to_string(&user.group_permissions)?;
 
-        let permissions = serde_json::to_string(&user.permissions)
-            .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+        let permissions = serde_json::to_string(&user.permissions)?;
 
         sqlx::query(&query)
             .bind(&user.username)
@@ -999,8 +900,7 @@ impl SqlClient for SqliteClient {
             .bind(&user.role)
             .bind(user.active)
             .execute(&self.pool)
-            .await
-            .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+            .await?;
 
         Ok(())
     }
@@ -1011,8 +911,7 @@ impl SqlClient for SqliteClient {
         let user: Option<User> = sqlx::query_as(&query)
             .bind(username)
             .fetch_optional(&self.pool)
-            .await
-            .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+            .await?;
 
         Ok(user)
     }
@@ -1022,8 +921,7 @@ impl SqlClient for SqliteClient {
 
         let users = sqlx::query_as::<_, User>(&query)
             .fetch_all(&self.pool)
-            .await
-            .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+            .await?;
 
         Ok(users)
     }
@@ -1032,10 +930,7 @@ impl SqlClient for SqliteClient {
         // Count admins in the system
         let query = SqliteQueryHelper::get_last_admin_query();
 
-        let admins: Vec<String> = sqlx::query_scalar(&query)
-            .fetch_all(&self.pool)
-            .await
-            .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+        let admins: Vec<String> = sqlx::query_scalar(&query).fetch_all(&self.pool).await?;
 
         // If there are no other admins, this is the last one
         if admins.len() > 1 {
@@ -1057,19 +952,16 @@ impl SqlClient for SqliteClient {
         sqlx::query(&query)
             .bind(username)
             .execute(&self.pool)
-            .await
-            .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+            .await?;
 
         Ok(())
     }
 
     async fn update_user(&self, user: &User) -> Result<(), SqlError> {
         let query = SqliteQueryHelper::get_user_update_query();
-        let group_permissions = serde_json::to_string(&user.group_permissions)
-            .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+        let group_permissions = serde_json::to_string(&user.group_permissions)?;
 
-        let permissions = serde_json::to_string(&user.permissions)
-            .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+        let permissions = serde_json::to_string(&user.permissions)?;
 
         sqlx::query(&query)
             .bind(user.active)
@@ -1079,8 +971,7 @@ impl SqlClient for SqliteClient {
             .bind(&user.refresh_token)
             .bind(&user.username)
             .execute(&self.pool)
-            .await
-            .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+            .await?;
 
         Ok(())
     }
@@ -1093,8 +984,7 @@ impl SqlClient for SqliteClient {
             .bind(key.encrypted_key.clone())
             .bind(&key.storage_key)
             .execute(&self.pool)
-            .await
-            .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+            .await?;
 
         Ok(())
     }
@@ -1110,8 +1000,7 @@ impl SqlClient for SqliteClient {
             .bind(uid)
             .bind(registry_type)
             .fetch_one(&self.pool)
-            .await
-            .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+            .await?;
 
         Ok(ArtifactKey {
             uid: key.0,
@@ -1128,8 +1017,7 @@ impl SqlClient for SqliteClient {
             .bind(&key.uid)
             .bind(key.registry_type.to_string())
             .execute(&self.pool)
-            .await
-            .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+            .await?;
 
         Ok(())
     }
@@ -1150,8 +1038,7 @@ impl SqlClient for SqliteClient {
             .bind(event.registry_type.map(|r| r.to_string()))
             .bind(event.route)
             .execute(&self.pool)
-            .await
-            .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+            .await?;
 
         Ok(())
     }
@@ -1170,8 +1057,7 @@ impl SqlClient for SqliteClient {
             .bind(query_args.max_date.as_ref())
             .bind(query_args.limit.unwrap_or(1))
             .fetch_one(&self.pool)
-            .await
-            .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+            .await?;
 
         Ok(ArtifactKey {
             uid: key.0,
@@ -1192,8 +1078,7 @@ impl SqlClient for SqliteClient {
             .bind(storage_path)
             .bind(registry_type)
             .fetch_optional(&self.pool)
-            .await
-            .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+            .await?;
 
         return match key {
             Some(k) => Ok(Some(ArtifactKey {
@@ -1212,8 +1097,7 @@ impl SqlClient for SqliteClient {
             .bind(uid)
             .bind(registry_type)
             .execute(&self.pool)
-            .await
-            .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+            .await?;
 
         Ok(())
     }

@@ -8,7 +8,7 @@ repository = { workspace = true }
 doctest = false
 
 [dependencies]
-opsml-error = { workspace = true }
 pyo3 = { workspace = true }
 semver = { workspace = true }
 serde = { workspace = true }
+thiserror = { workspace = true }
