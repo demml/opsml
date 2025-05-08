@@ -1,6 +1,3 @@
-use pyo3::prelude::*;
-use std::path::PathBuf;
-
 #[cfg(feature = "server")]
 use opsml_server::{start_server_in_background, stop_server};
 #[cfg(feature = "server")]
@@ -17,6 +14,35 @@ use std::thread::sleep;
 use std::time::Duration;
 #[cfg(feature = "server")]
 use tokio::{runtime::Runtime, sync::Mutex, task::JoinHandle};
+
+use pyo3::exceptions::PyRuntimeError;
+use pyo3::prelude::*;
+use pyo3::PyErr;
+use pyo3::PyResult;
+use std::path::PathBuf;
+use thiserror::Error;
+
+#[derive(Error, Debug)]
+pub enum TestServerError {
+    #[error("Failed to find available port")]
+    PortNotFound,
+
+    #[error("Failed to start Opsml Server")]
+    ServerStartError,
+
+    #[error("Failed to set environment variables for client")]
+    SetEnvVarsError,
+
+    #[error("{0}")]
+    CustomError(String),
+}
+
+impl From<TestServerError> for PyErr {
+    fn from(err: TestServerError) -> PyErr {
+        let msg = err.to_string();
+        PyRuntimeError::new_err(msg)
+    }
+}
 
 #[pyclass]
 #[allow(dead_code)]
@@ -53,9 +79,7 @@ impl OpsmlTestServer {
         }
         #[cfg(not(feature = "server"))]
         {
-            Err(opsml_error::OpsmlError::new_err(
-                "Opsml Server feature not enabled",
-            ))
+            Err(TestServerError::CustomError("Opsml Server feature not enabled".to_string()).into())
         }
     }
 
@@ -80,9 +104,7 @@ impl OpsmlTestServer {
             {
                 Some(p) => p,
                 None => {
-                    return Err(opsml_error::OpsmlError::new_err(
-                        "Failed to find available port",
-                    ))
+                    return Err(TestServerError::PortNotFound.into());
                 }
             };
 
@@ -105,7 +127,12 @@ impl OpsmlTestServer {
                     if response.status() == 200 {
                         self.set_env_vars_for_client()?;
                         println!("Opsml Server started successfully");
-                        app_state().reset_app_state()?;
+                        app_state().reset_app_state().map_err(|e| {
+                            TestServerError::CustomError(format!(
+                                "Failed to reset app state: {}",
+                                e
+                            ))
+                        })?;
                         return Ok(());
                     }
                 }
@@ -115,15 +142,11 @@ impl OpsmlTestServer {
                 // set env vars for OPSML_TRACKING_URI
             }
 
-            return Err(opsml_error::OpsmlError::new_err(
-                "Failed to start Opsml Server",
-            ));
+            return Err(TestServerError::ServerStartError.into());
         }
         #[cfg(not(feature = "server"))]
         {
-            Err(opsml_error::OpsmlError::new_err(
-                "Opsml Server feature not enabled",
-            ))
+            Err(TestServerError::CustomError("Opsml Server feature not enabled".to_string()).into())
         }
     }
 
@@ -145,9 +168,7 @@ impl OpsmlTestServer {
         }
         #[cfg(not(feature = "server"))]
         {
-            Err(opsml_error::OpsmlError::new_err(
-                "Opsml Server feature not enabled",
-            ))
+            Err(TestServerError::CustomError("Opsml Server feature not enabled".to_string()).into())
         }
     }
 
@@ -208,8 +229,12 @@ impl OpsmlServerContext {
     fn __enter__(&self) -> PyResult<()> {
         #[cfg(feature = "server")]
         {
-            app_state().reset_app_state()?;
-            reset_storage_client()?;
+            app_state().reset_app_state().map_err(|e| {
+                TestServerError::CustomError(format!("Failed to reset app state: {}", e))
+            })?;
+            reset_storage_client().map_err(|e| {
+                TestServerError::CustomError(format!("Failed to reset storage client: {}", e))
+            })?;
         }
 
         self.cleanup()?;

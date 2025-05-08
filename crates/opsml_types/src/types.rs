@@ -1,4 +1,4 @@
-use opsml_error::TypeError;
+use crate::error::TypeError;
 use pyo3::prelude::*;
 use serde::{Deserialize, Deserializer, Serialize};
 use std::ffi::OsStr;
@@ -85,7 +85,7 @@ impl RegistryType {
             "prompt" => Ok(RegistryType::Prompt),
             "deck" => Ok(RegistryType::Deck),
 
-            _ => Err(TypeError::Error("Invalid RegistryType".to_string())),
+            _ => Err(TypeError::InvalidRegistryType),
         }
     }
 

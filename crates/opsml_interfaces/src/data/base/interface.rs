@@ -3,9 +3,8 @@ use crate::data::{
     generate_feature_schema, Data, DataInterfaceSaveMetadata, DataLoadKwargs, DataSplit,
     DataSplits, DependentVars, SqlLogic,
 };
+use crate::error::DataInterfaceError;
 use crate::types::FeatureSchema;
-use opsml_error::error::OpsmlError;
-use opsml_error::InterfaceError;
 use opsml_types::{DataInterfaceType, DataType, SaveName, Suffix};
 use opsml_utils::PyHelperFuncs;
 use pyo3::prelude::*;
@@ -94,7 +93,7 @@ impl DataInterfaceMetadata {
 
 pub fn check_data_splits(
     data_splits: Option<&Bound<'_, PyAny>>,
-) -> Result<DataSplits, InterfaceError> {
+) -> Result<DataSplits, DataInterfaceError> {
     let splits: DataSplits = {
         if let Some(data_splits) = data_splits {
             // check if data_splits is either Vec<DataSplit> or DataSplits
@@ -116,7 +115,7 @@ pub fn check_data_splits(
 
 pub fn check_dependent_vars(
     dependent_vars: Option<&Bound<'_, PyAny>>,
-) -> Result<DependentVars, InterfaceError> {
+) -> Result<DependentVars, DataInterfaceError> {
     // define dependent vars
     let depen_vars: DependentVars = {
         if let Some(dependent_vars) = dependent_vars {
@@ -185,7 +184,7 @@ impl DataInterface {
         schema: Option<FeatureSchema>,
         sql_logic: Option<SqlLogic>,
         data_profile: Option<DataProfile>,
-    ) -> PyResult<Self> {
+    ) -> Result<Self, DataInterfaceError> {
         // define data splits
         let splits: DataSplits = check_data_splits(data_splits)?;
         let depen_vars: DependentVars = check_dependent_vars(dependent_vars)?;
@@ -210,7 +209,7 @@ impl DataInterface {
     }
 
     #[setter]
-    pub fn set_data(&mut self, data: &Bound<'_, PyAny>) -> PyResult<()> {
+    pub fn set_data(&mut self, data: &Bound<'_, PyAny>) -> Result<(), DataInterfaceError> {
         let py = data.py();
 
         // check if data is None
@@ -225,7 +224,10 @@ impl DataInterface {
     }
 
     #[setter]
-    pub fn set_data_splits(&mut self, data_splits: &Bound<'_, PyAny>) -> PyResult<()> {
+    pub fn set_data_splits(
+        &mut self,
+        data_splits: &Bound<'_, PyAny>,
+    ) -> Result<(), DataInterfaceError> {
         // check if data_splits is None
         if PyAnyMethods::is_none(data_splits) {
             self.data_splits = DataSplits::default();
@@ -246,7 +248,10 @@ impl DataInterface {
     }
 
     #[setter]
-    pub fn set_dependent_vars(&mut self, dependent_vars: &Bound<'_, PyAny>) -> PyResult<()> {
+    pub fn set_dependent_vars(
+        &mut self,
+        dependent_vars: &Bound<'_, PyAny>,
+    ) -> Result<(), DataInterfaceError> {
         // check if dependent_vars is None
         if PyAnyMethods::is_none(dependent_vars) {
             self.dependent_vars = DependentVars::default();
@@ -284,14 +289,14 @@ impl DataInterface {
     ///
     /// # Returns
     ///
-    /// * `PyResult<DataInterfaceSaveMetadata>` - DataInterfaceSaveMetadata
+    /// * `Result<DataInterfaceSaveMetadata>` - DataInterfaceSaveMetadata
     #[pyo3(signature = (path, save_kwargs=None))]
     pub fn save(
         &mut self,
         py: Python,
         path: PathBuf,
         save_kwargs: Option<DataSaveKwargs>,
-    ) -> PyResult<DataInterfaceMetadata> {
+    ) -> Result<DataInterfaceMetadata, DataInterfaceError> {
         let data_kwargs = save_kwargs
             .as_ref()
             .and_then(|args| args.data_kwargs(py))
@@ -330,7 +335,7 @@ impl DataInterface {
         path: PathBuf,
         metadata: DataInterfaceSaveMetadata,
         load_kwargs: Option<DataLoadKwargs>,
-    ) -> PyResult<()> {
+    ) -> Result<(), DataInterfaceError> {
         let load_path = path.join(metadata.data_uri);
         let joblib = py.import("joblib")?;
         let load_kwargs = load_kwargs.unwrap_or_default();
@@ -349,24 +354,20 @@ impl DataInterface {
         name: String,
         query: Option<String>,
         filepath: Option<String>,
-    ) -> PyResult<()> {
+    ) -> Result<(), DataInterfaceError> {
         self.sql_logic.add_sql_logic(name, query, filepath)?;
 
         Ok(())
     }
 
-    pub fn split_data(&mut self, py: Python) -> PyResult<HashMap<String, Data>> {
+    pub fn split_data(&mut self, py: Python) -> Result<HashMap<String, Data>, DataInterfaceError> {
         // check if data is None
         if self.data.is_none() {
-            return Err(OpsmlError::new_err(
-                "No data detected in interface for saving",
-            ));
+            return Err(DataInterfaceError::MissingDataError);
         }
 
         if self.data_splits.is_empty() {
-            return Err(OpsmlError::new_err(
-                "No data splits detected in interface for splitting",
-            ));
+            return Err(DataInterfaceError::MissingDataSplitsError);
         }
 
         let dependent_vars = self.dependent_vars.clone();
@@ -384,7 +385,7 @@ impl DataInterface {
         py: Python,
         bin_size: Option<usize>,
         compute_correlations: Option<bool>,
-    ) -> PyResult<DataProfile> {
+    ) -> Result<DataProfile, DataInterfaceError> {
         let mut profiler = DataProfiler::new();
 
         // get ScouterDataType from opsml DataType
@@ -394,7 +395,7 @@ impl DataInterface {
             DataType::Pandas => Some(&scouter_client::DataType::Pandas),
             DataType::Polars => Some(&scouter_client::DataType::Polars),
             DataType::Arrow => Some(&scouter_client::DataType::Arrow),
-            _ => Err(OpsmlError::new_err("Data type not supported for profiling"))?,
+            _ => Err(DataInterfaceError::DataTypeNotSupportedForProfilingError)?,
         };
 
         let profile = profiler.create_data_profile(
@@ -432,7 +433,7 @@ impl DataInterface {
     /// # Returns
     ///
     /// * `Option<PathBuf>` - Path to the saved SQL logic
-    pub fn save_sql(&self, path: PathBuf) -> PyResult<Option<PathBuf>> {
+    pub fn save_sql(&self, path: PathBuf) -> Result<Option<PathBuf>, DataInterfaceError> {
         if !self.sql_logic.queries.is_empty() {
             Ok(Some(self.sql_logic.save(&path)?))
         } else {
@@ -448,8 +449,8 @@ impl DataInterface {
     ///
     /// # Returns
     ///
-    /// * `PyResult<FeatureMap>` - FeatureMap
-    pub fn create_schema(&mut self, py: Python) -> PyResult<FeatureSchema> {
+    /// * `Result<FeatureMap>` - FeatureMap
+    pub fn create_schema(&mut self, py: Python) -> Result<FeatureSchema, DataInterfaceError> {
         // Create and insert the feature
         let feature_map =
             generate_feature_schema(self.data.as_ref().unwrap().bind(py), &self.data_type)?;
@@ -469,19 +470,17 @@ impl DataInterface {
     ///
     /// # Returns
     ///
-    /// * `PyResult<PathBuf>` - Path to the saved data
+    /// * `Result<PathBuf>` - Path to the saved data
     ///
     pub fn save_data(
         &mut self,
         py: Python,
         path: PathBuf,
         kwargs: Option<&Bound<'_, PyDict>>,
-    ) -> PyResult<PathBuf> {
+    ) -> Result<PathBuf, DataInterfaceError> {
         // check if data is None
         if self.data.is_none() {
-            return Err(OpsmlError::new_err(
-                "No data detected in interface for saving",
-            ));
+            return Err(DataInterfaceError::MissingDataError);
         }
 
         let save_path = PathBuf::from(SaveName::Data.to_string()).with_extension(Suffix::Joblib);
@@ -502,15 +501,16 @@ impl DataInterface {
     ///
     /// # Returns
     ///
-    /// * `PyResult<PathBuf>` - Path to saved drift profile
+    /// * `Result<PathBuf>` - Path to saved drift profile
     #[instrument(skip_all)]
-    pub fn save_data_profile(&self, path: &Path) -> PyResult<PathBuf> {
+    pub fn save_data_profile(&self, path: &Path) -> Result<PathBuf, DataInterfaceError> {
         let profile_path = PathBuf::from(SaveName::DataProfile).with_extension(Suffix::Json);
         let profile_save_path = path.join(profile_path.clone());
         self.data_profile
             .as_ref()
             .unwrap()
-            .save_to_json(Some(profile_save_path.clone()))?;
+            .save_to_json(Some(profile_save_path.clone()))
+            .map_err(|e| DataInterfaceError::ScouterError(e.to_string()))?;
 
         Ok(profile_path)
     }

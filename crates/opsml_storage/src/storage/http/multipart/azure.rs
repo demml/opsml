@@ -1,6 +1,6 @@
+use crate::storage::http::multipart::error::MultiPartError;
 use base64::prelude::*;
 use opsml_client::OpsmlApiClient;
-use opsml_error::StorageError;
 use opsml_types::contracts::CompleteMultipartUpload;
 use opsml_types::contracts::MultipartCompleteParts;
 use opsml_types::contracts::UploadPartArgs;
@@ -25,9 +25,8 @@ impl AzureMultipartUpload {
         rpath: &Path,
         session_url: String,
         client: Arc<OpsmlApiClient>,
-    ) -> Result<Self, StorageError> {
-        let file = File::open(lpath)
-            .map_err(|e| StorageError::Error(format!("Failed to open file: {}", e)))?;
+    ) -> Result<Self, MultiPartError> {
+        let file = File::open(lpath)?;
 
         let file_reader = BufReader::new(file);
 
@@ -45,7 +44,7 @@ impl AzureMultipartUpload {
         chunk_count: u64,
         size_of_last_chunk: u64,
         chunk_size: u64,
-    ) -> Result<(), StorageError> {
+    ) -> Result<(), MultiPartError> {
         for chunk_index in 0..chunk_count {
             let this_chunk = if chunk_count - 1 == chunk_index {
                 size_of_last_chunk
@@ -67,47 +66,37 @@ impl AzureMultipartUpload {
         Ok(())
     }
 
-    pub fn upload_block(&self, block_id: &str, data: &[u8]) -> Result<(), StorageError> {
+    pub fn upload_block(&self, block_id: &str, data: &[u8]) -> Result<(), MultiPartError> {
         let url = format!(
             "{}&comp=block&blockid={}",
             self.session_url,
             BASE64_STANDARD.encode(block_id)
         );
 
-        self.client
-            .client
-            .put(&url)
-            .body(data.to_vec())
-            .send()
-            .map_err(|e| StorageError::Error(format!("Failed to upload block: {:?}", e)))?;
+        self.client.client.put(&url).body(data.to_vec()).send()?;
 
         Ok(())
     }
 
-    pub fn upload_next_chunk(&mut self, upload_args: &UploadPartArgs) -> Result<(), StorageError> {
+    pub fn upload_next_chunk(
+        &mut self,
+        upload_args: &UploadPartArgs,
+    ) -> Result<(), MultiPartError> {
         let mut buffer = vec![0; upload_args.this_chunk_size as usize];
-        let bytes_read = self
-            .file_reader
-            .read(&mut buffer)
-            .map_err(|e| StorageError::Error(format!("Failed to read file: {}", e)))?;
+        let bytes_read = self.file_reader.read(&mut buffer)?;
 
         buffer.truncate(bytes_read);
 
         let block_id = format!("{:06}", upload_args.chunk_index);
 
-        self.upload_block(&block_id, &buffer).map_err(|e| {
-            StorageError::Error(format!(
-                "Unable to upload multiple chunks to resumable upload: {}",
-                e
-            ))
-        })?;
+        self.upload_block(&block_id, &buffer)?;
 
         self.block_parts.push(block_id);
 
         Ok(())
     }
 
-    pub fn complete_upload(&self) -> Result<UploadResponse, StorageError> {
+    pub fn complete_upload(&self) -> Result<UploadResponse, MultiPartError> {
         let parts = MultipartCompleteParts::Azure(self.block_parts.clone());
         let request = CompleteMultipartUpload {
             path: self.rpath.clone(),
@@ -116,14 +105,9 @@ impl AzureMultipartUpload {
             ..Default::default()
         };
 
-        let response = self
-            .client
-            .complete_multipart_upload(request)
-            .map_err(|e| StorageError::Error(format!("Failed to complete upload: {}", e)))?;
+        let response = self.client.complete_multipart_upload(request)?;
 
-        let uploaded = response.json::<UploadResponse>().map_err(|e| {
-            StorageError::Error(format!("Failed to parse complete upload response: {}", e))
-        })?;
+        let uploaded = response.json::<UploadResponse>()?;
 
         Ok(uploaded)
     }

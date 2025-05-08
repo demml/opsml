@@ -12,7 +12,6 @@ crate-type = ["cdylib", "rlib"]
 anyhow = { workspace = true }
 opsml-cards = { workspace = true }
 opsml-cli = { workspace = true }
-opsml-error = { workspace = true }
 opsml-interfaces = { workspace = true }
 opsml-registry = { workspace = true }
 opsml-experiment = { workspace = true }
@@ -28,6 +27,7 @@ pyo3 = { workspace = true }
 reqwest = { workspace = true, optional = true }
 rusty-logging = { workspace = true }
 scouter-client = { workspace = true }
+thiserror = { workspace = true }
 tokio = { workspace = true, optional = true }
 
 [features]

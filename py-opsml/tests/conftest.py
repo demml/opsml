@@ -56,12 +56,11 @@ class CustomModel(ModelInterface):
 
         self.preprocessor = preprocessor
 
-    def save(self, path, to_onnx=False, save_kwargs=None):
+    def save(self, path, save_kwargs=None):
         """Custom save method for the model interface.
 
         Args:
             path (Path): Path to save the model.
-            to_onnx (bool): Whether to save the model as ONNX.
             save_kwargs (ModelSaveKwargs): Save kwargs for the model.
 
         """
@@ -114,12 +113,11 @@ class CustomModel(ModelInterface):
 
 
 class IncorrectCustomModel(ModelInterface):
-    def save(self, path, to_onnx=False, save_kwargs=None):
+    def save(self, path, save_kwargs=None):
         """Custom save method for the model interface.
 
         Args:
             path (Path): Path to save the model.
-            to_onnx (bool): Whether to save the model as ONNX.
             save_kwargs (ModelSaveKwargs): Save kwargs for the model.
 
         """

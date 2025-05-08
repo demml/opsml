@@ -1,6 +1,6 @@
 use crate::base::add_version_bounds;
 
-use opsml_error::error::SqlError;
+use crate::error::SqlError;
 use opsml_types::{cards::CardTable, contracts::CardQueryArgs};
 use opsml_utils::utils::is_valid_uuidv7;
 pub struct MySQLQueryHelper;
@@ -312,8 +312,7 @@ impl MySQLQueryHelper {
         // check for uid. If uid is present, we only return that card
         if query_args.uid.is_some() {
             // validate uid
-            is_valid_uuidv7(query_args.uid.as_ref().unwrap())
-                .map_err(|e| SqlError::GeneralError(e.to_string()))?;
+            is_valid_uuidv7(query_args.uid.as_ref().unwrap())?;
         } else {
             // add where clause due to multiple combinations
 

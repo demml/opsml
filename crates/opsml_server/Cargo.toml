@@ -20,7 +20,6 @@ opsml-settings = { workspace = true }
 opsml-storage = { workspace = true, features = ["server"] }
 opsml-sql = { workspace = true }
 opsml-utils = { workspace = true }
-opsml-error = { workspace = true }
 opsml-types = { workspace = true }
 scouter-client = { workspace = true }
 
@@ -38,6 +37,7 @@ serde_qs = { workspace = true }
 semver = { workspace = true }
 sqlx = { workspace = true }
 tempfile = { workspace = true }
+thiserror = { workspace = true }
 tokio = { workspace = true }
 tokio-util = { workspace = true }
 tokio-stream = { workspace = true }

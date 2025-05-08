@@ -1,7 +1,7 @@
 use crate::base::{get_class_full_name, load_from_joblib, save_to_joblib, OnnxExtension};
 use crate::data::{ArrowData, DataInterface, NumpyData, PandasData, PolarsData, TorchData};
+use crate::error::{OnnxError, SampleDataError};
 use crate::model::InterfaceDataType;
-use opsml_error::OpsmlError;
 use opsml_types::{DataType, ModelType};
 use pyo3::types::{PyDict, PyList, PyListMethods, PyTuple, PyTupleMethods};
 use pyo3::IntoPyObjectExt;
@@ -40,7 +40,7 @@ impl HuggingFaceSampleData {
     ///
     /// # Returns
     ///
-    pub fn new(data: &Bound<'_, PyAny>) -> PyResult<Self> {
+    pub fn new(data: &Bound<'_, PyAny>) -> Result<Self, SampleDataError> {
         let py = data.py();
         let transformers = py.import("transformers")?;
 
@@ -83,7 +83,7 @@ impl HuggingFaceSampleData {
         py: Python,
         interface_type: &InterfaceDataType,
         data: &Bound<'_, PyAny>,
-    ) -> PyResult<Self> {
+    ) -> Result<Self, SampleDataError> {
         let slice = PySlice::new(py, 0, 1, 1);
         let sliced_data = data.get_item(slice)?;
 
@@ -121,7 +121,7 @@ impl HuggingFaceSampleData {
         }
     }
 
-    fn get_interface_for_sample(data: &Bound<'_, PyAny>) -> PyResult<Option<Self>> {
+    fn get_interface_for_sample(data: &Bound<'_, PyAny>) -> Result<Option<Self>, SampleDataError> {
         let py = data.py();
         let class = data.getattr("__class__")?;
         let full_class_name = get_class_full_name(&class)?;
@@ -133,7 +133,7 @@ impl HuggingFaceSampleData {
         Ok(None)
     }
 
-    fn handle_data_interface(data: &Bound<'_, PyAny>) -> PyResult<Self> {
+    fn handle_data_interface(data: &Bound<'_, PyAny>) -> Result<Self, SampleDataError> {
         let data_type = data.getattr("data_type")?.extract::<DataType>()?;
 
         match data_type {
@@ -142,11 +142,11 @@ impl HuggingFaceSampleData {
             DataType::Numpy => Self::slice_and_return(data, HuggingFaceSampleData::Numpy),
             DataType::Arrow => Self::slice_and_return(data, HuggingFaceSampleData::Arrow),
             DataType::TorchTensor => Self::slice_and_return(data, HuggingFaceSampleData::Torch),
-            _ => Err(OpsmlError::new_err("Data type not supported")),
+            _ => Err(SampleDataError::InvalidDataType),
         }
     }
 
-    fn slice_and_return<F>(data: &Bound<'_, PyAny>, constructor: F) -> PyResult<Self>
+    fn slice_and_return<F>(data: &Bound<'_, PyAny>, constructor: F) -> Result<Self, SampleDataError>
     where
         F: FnOnce(PyObject) -> HuggingFaceSampleData,
     {
@@ -157,7 +157,7 @@ impl HuggingFaceSampleData {
         Ok(constructor(data.clone().unbind()))
     }
 
-    fn handle_pylist(data: &Bound<'_, PyAny>) -> PyResult<Self> {
+    fn handle_pylist(data: &Bound<'_, PyAny>) -> Result<Self, SampleDataError> {
         let py = data.py();
         let py_list = data.downcast::<PyList>()?;
 
@@ -170,7 +170,7 @@ impl HuggingFaceSampleData {
         Ok(HuggingFaceSampleData::List(py_list.clone().unbind()))
     }
 
-    fn handle_pytuple(data: &Bound<'_, PyAny>) -> PyResult<Self> {
+    fn handle_pytuple(data: &Bound<'_, PyAny>) -> Result<Self, SampleDataError> {
         let py = data.py();
 
         // convert data from PyTuple to PyList
@@ -187,7 +187,7 @@ impl HuggingFaceSampleData {
         Ok(HuggingFaceSampleData::Tuple(tuple))
     }
 
-    fn handle_pydict(data: &Bound<'_, PyAny>) -> PyResult<Self> {
+    fn handle_pydict(data: &Bound<'_, PyAny>) -> Result<Self, SampleDataError> {
         let py = data.py();
         let py_dict = data.downcast::<PyDict>()?;
 
@@ -200,7 +200,7 @@ impl HuggingFaceSampleData {
         Ok(HuggingFaceSampleData::Dict(py_dict.clone().unbind()))
     }
 
-    fn handle_batch_data(data: &Bound<'_, PyAny>) -> PyResult<Self> {
+    fn handle_batch_data(data: &Bound<'_, PyAny>) -> Result<Self, SampleDataError> {
         let py = data.py();
         let py_dict = PyDict::new(py);
 
@@ -230,7 +230,7 @@ impl HuggingFaceSampleData {
         }
     }
 
-    pub fn get_data(&self, py: Python) -> PyResult<PyObject> {
+    pub fn get_data(&self, py: Python) -> Result<PyObject, SampleDataError> {
         match self {
             HuggingFaceSampleData::Pandas(data) => Ok(data.clone_ref(py)),
             HuggingFaceSampleData::Polars(data) => Ok(data.clone_ref(py)),
@@ -250,7 +250,7 @@ impl HuggingFaceSampleData {
         data: &Bound<'_, PyAny>,
         path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
-    ) -> PyResult<PathBuf> {
+    ) -> Result<PathBuf, SampleDataError> {
         let metadata = data.call_method("save", (path,), kwargs)?;
 
         // convert pyany to pathbuf
@@ -268,68 +268,59 @@ impl HuggingFaceSampleData {
         py: Python,
         path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
-    ) -> PyResult<Option<PathBuf>> {
+    ) -> Result<Option<PathBuf>, SampleDataError> {
         match self {
             HuggingFaceSampleData::Pandas(data) => Ok(Some(
                 self.save_interface_data(data.bind(py), path, kwargs)
-                    .map_err(|e| {
+                    .inspect_err(|e| {
                         error!("Error saving pandas data: {}", e);
-                        e
                     })?,
             )),
             HuggingFaceSampleData::Polars(data) => Ok(Some(
                 self.save_interface_data(data.bind(py), path, kwargs)
-                    .map_err(|e| {
+                    .inspect_err(|e| {
                         error!("Error saving polars data: {}", e);
-                        e
                     })?,
             )),
             HuggingFaceSampleData::Numpy(data) => Ok(Some(
                 self.save_interface_data(data.bind(py), path, kwargs)
-                    .map_err(|e| {
+                    .inspect_err(|e| {
                         error!("Error saving numpy data: {}", e);
-                        e
                     })?,
             )),
             HuggingFaceSampleData::Arrow(data) => Ok(Some(
                 self.save_interface_data(data.bind(py), path, kwargs)
-                    .map_err(|e| {
+                    .inspect_err(|e| {
                         error!("Error saving arrow data: {}", e);
-                        e
                     })?,
             )),
             HuggingFaceSampleData::Torch(data) => Ok(Some(
                 self.save_interface_data(data.bind(py), path, kwargs)
-                    .map_err(|e| {
+                    .inspect_err(|e| {
                         error!("Error saving torch data: {}", e);
-                        e
                     })?,
             )),
-            HuggingFaceSampleData::List(data) => {
-                Ok(Some(save_to_joblib(data.bind(py), path).map_err(|e| {
+            HuggingFaceSampleData::List(data) => Ok(Some(
+                save_to_joblib(data.bind(py), path).inspect_err(|e| {
                     error!("Error saving list data: {}", e);
-                    e
-                })?))
-            }
-            HuggingFaceSampleData::Tuple(data) => {
-                Ok(Some(save_to_joblib(data.bind(py), path).map_err(|e| {
+                })?,
+            )),
+            HuggingFaceSampleData::Tuple(data) => Ok(Some(
+                save_to_joblib(data.bind(py), path).inspect_err(|e| {
                     error!("Error saving tuple data: {}", e);
-                    e
-                })?))
-            }
-            HuggingFaceSampleData::Dict(data) => {
-                Ok(Some(save_to_joblib(data.bind(py), path).map_err(|e| {
+                })?,
+            )),
+            HuggingFaceSampleData::Dict(data) => Ok(Some(
+                save_to_joblib(data.bind(py), path).inspect_err(|e| {
                     error!("Error saving dict data: {}", e);
-                    e
-                })?))
-            }
+                })?,
+            )),
 
-            HuggingFaceSampleData::Str(data) => {
-                Ok(Some(save_to_joblib(data.bind(py), path).map_err(|e| {
+            HuggingFaceSampleData::Str(data) => Ok(Some(
+                save_to_joblib(data.bind(py), path).inspect_err(|e| {
                     error!("Error saving string data: {}", e);
-                    e
-                })?))
-            }
+                })?,
+            )),
 
             HuggingFaceSampleData::None => Ok(None),
         }
@@ -340,23 +331,23 @@ impl HuggingFaceSampleData {
         path: &Path,
         data_type: &DataType,
         kwargs: Option<&Bound<'py, PyDict>>,
-    ) -> PyResult<HuggingFaceSampleData> {
+    ) -> Result<HuggingFaceSampleData, SampleDataError> {
         match data_type {
-            DataType::Pandas => {
-                PandasData::from_path(py, path, kwargs).map(HuggingFaceSampleData::Pandas)
-            }
-            DataType::Polars => {
-                PolarsData::from_path(py, path, kwargs).map(HuggingFaceSampleData::Polars)
-            }
-            DataType::Numpy => {
-                NumpyData::from_path(py, path, kwargs).map(HuggingFaceSampleData::Numpy)
-            }
-            DataType::Arrow => {
-                ArrowData::from_path(py, path, kwargs).map(HuggingFaceSampleData::Arrow)
-            }
-            DataType::TorchTensor => {
-                TorchData::from_path(py, path, kwargs).map(HuggingFaceSampleData::Torch)
-            }
+            DataType::Pandas => Ok(HuggingFaceSampleData::Pandas(PandasData::from_path(
+                py, path, kwargs,
+            )?)),
+            DataType::Polars => Ok(HuggingFaceSampleData::Polars(PolarsData::from_path(
+                py, path, kwargs,
+            )?)),
+            DataType::Numpy => Ok(HuggingFaceSampleData::Numpy(NumpyData::from_path(
+                py, path, kwargs,
+            )?)),
+            DataType::Arrow => Ok(HuggingFaceSampleData::Arrow(ArrowData::from_path(
+                py, path, kwargs,
+            )?)),
+            DataType::TorchTensor => Ok(HuggingFaceSampleData::Torch(TorchData::from_path(
+                py, path, kwargs,
+            )?)),
             DataType::List => {
                 let data = load_from_joblib(py, path)?;
                 Ok(HuggingFaceSampleData::List(
@@ -393,11 +384,11 @@ impl OnnxExtension for HuggingFaceSampleData {
         &self,
         py: Python<'py>,
         _model_type: &ModelType,
-    ) -> PyResult<Bound<'py, PyAny>> {
+    ) -> Result<Bound<'py, PyAny>, OnnxError> {
         Ok(py.None().bind(py).clone())
     }
 
-    fn get_feature_names(&self, _py: Python) -> PyResult<Vec<String>> {
+    fn get_feature_names(&self, _py: Python) -> Result<Vec<String>, OnnxError> {
         Ok(vec![])
     }
 

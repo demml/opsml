@@ -1,5 +1,5 @@
-use crate::base::*;
-use opsml_error::error::RegistryError;
+use crate::error::RegistryError;
+use crate::{base::*, error::ApiClientError};
 use opsml_semver::VersionType;
 use opsml_types::{
     api::*,
@@ -44,9 +44,9 @@ impl ClientRegistry {
         CardTable::from_registry_type(&self.registry_type).to_string()
     }
 
+    #[instrument(skip_all)]
     pub fn list_cards(&self, args: CardQueryArgs) -> Result<Vec<CardRecord>, RegistryError> {
-        let query_string = serde_qs::to_string(&args)
-            .map_err(|e| RegistryError::Error(format!("Failed to serialize query args {}", e)))?;
+        let query_string = serde_qs::to_string(&args)?;
 
         let response = self
             .api_client
@@ -57,11 +57,13 @@ impl ClientRegistry {
                 Some(query_string),
                 None,
             )
-            .map_err(|e| RegistryError::Error(format!("Failed to list cards {}", e)))?;
+            .inspect_err(|e| {
+                error!("Failed to list cards {}", e);
+            })?;
 
         response
             .json::<Vec<CardRecord>>()
-            .map_err(|e| RegistryError::Error(format!("Failed to parse card response {}", e)))
+            .map_err(RegistryError::RequestError)
     }
 
     #[instrument(skip_all)]
@@ -90,9 +92,8 @@ impl ClientRegistry {
             version_request,
         };
 
-        let body = serde_json::to_value(card_request).map_err(|e| {
+        let body = serde_json::to_value(card_request).inspect_err(|e| {
             error!("Failed to serialize card request {}", e);
-            RegistryError::Error(format!("Failed to serialize card {}", e))
         })?;
 
         let response = self
@@ -104,32 +105,32 @@ impl ClientRegistry {
                 None,
                 None,
             )
-            .map_err(|e| {
+            .inspect_err(|e| {
                 error!("Failed to create card {}", e);
-                RegistryError::Error(format!("Failed to create card {}", e))
             })?;
 
         // check if 403 forbidden and get error message
         if response.status().as_u16() == 403 {
             let error = response
                 .json::<ErrorResponse>()
-                .map_err(|e| RegistryError::Error(format!("Failed to parse error response {e}")))?;
+                .map_err(RegistryError::RequestError)?;
 
-            return Err(RegistryError::Forbidden(error.error));
+            return Err(ApiClientError::ForbiddenError(error.error).into());
         }
 
-        let created = response.json::<CreateCardResponse>().map_err(|e| {
-            RegistryError::Error(format!("Failed to parse create card response {e}"))
-        })?;
+        let created = response
+            .json::<CreateCardResponse>()
+            .map_err(RegistryError::RequestError)?;
 
         if created.registered {
             Ok(created)
         } else {
             error!("Failed to create card");
-            Err(RegistryError::Error("Failed to create card".to_string()))
+            Err(RegistryError::CreateCardError)
         }
     }
 
+    #[instrument(skip_all)]
     pub fn update_card(&self, card: &CardRecord) -> Result<(), RegistryError> {
         let update_request = UpdateCardRequest {
             card: card.clone(),
@@ -137,10 +138,7 @@ impl ClientRegistry {
         };
 
         // serialize card to json
-        let body = serde_json::to_value(update_request).map_err(|e| {
-            error!("Failed to serialize card {}", e);
-            RegistryError::Error(format!("Failed to serialize card {e}"))
-        })?;
+        let body = serde_json::to_value(update_request)?;
 
         let response = self.api_client.request(
             Routes::CardUpdate,
@@ -154,25 +152,25 @@ impl ClientRegistry {
         if response.status().as_u16() == 403 {
             let error = response
                 .json::<ErrorResponse>()
-                .map_err(|e| RegistryError::Error(format!("Failed to parse error response {e}")))?;
+                .map_err(RegistryError::RequestError)?;
 
-            return Err(RegistryError::Forbidden(error.error));
+            return Err(ApiClientError::ForbiddenError(error.error).into());
         }
 
-        let updated = response.json::<UpdateCardResponse>().map_err(|e| {
-            RegistryError::Error(format!("Failed to parse update card response {e}"))
-        })?;
+        let updated = response
+            .json::<UpdateCardResponse>()
+            .map_err(RegistryError::RequestError)?;
 
         if updated.updated {
             Ok(())
         } else {
-            Err(RegistryError::Error("Failed to update card".to_string()))
+            Err(RegistryError::UpdateCardError)
         }
     }
 
+    #[instrument(skip_all)]
     pub fn delete_card(&self, delete_request: DeleteCardRequest) -> Result<(), RegistryError> {
-        let query_string = serde_qs::to_string(&delete_request)
-            .map_err(|e| RegistryError::Error(format!("Failed to serialize query args {e}")))?;
+        let query_string = serde_qs::to_string(&delete_request)?;
 
         let response = self
             .api_client
@@ -183,35 +181,33 @@ impl ClientRegistry {
                 Some(query_string),
                 None,
             )
-            .map_err(|e| {
+            .inspect_err(|e| {
                 error!("Request failed {}", e);
-                e
             })?;
 
         // check if 403 forbidden and get error message
         if response.status().as_u16() == 403 {
             let error = response
                 .json::<ErrorResponse>()
-                .map_err(|e| RegistryError::Error(format!("Failed to parse error response {e}")))?;
+                .map_err(RegistryError::RequestError)?;
 
-            return Err(RegistryError::Forbidden(error.error));
+            return Err(ApiClientError::ForbiddenError(error.error).into());
         }
 
         let deleted = response
             .json::<UidResponse>()
-            .map_err(|e| RegistryError::Error(format!("Failed to parse uid response {e}")))?;
+            .map_err(RegistryError::RequestError)?;
 
         if !deleted.exists {
             Ok(())
         } else {
-            Err(RegistryError::Error("Failed to delete card".to_string()))
+            Err(RegistryError::DeleteCardError)
         }
     }
 
     #[instrument(skip_all)]
     pub fn get_key(&self, args: CardQueryArgs) -> Result<ArtifactKey, RegistryError> {
-        let query_string = serde_qs::to_string(&args)
-            .map_err(|e| RegistryError::Error(format!("Failed to serialize query args {}", e)))?;
+        let query_string = serde_qs::to_string(&args)?;
 
         let response = self
             .api_client
@@ -222,20 +218,22 @@ impl ClientRegistry {
                 Some(query_string),
                 None,
             )
-            .map_err(|e| RegistryError::Error(format!("Failed to load_card {}", e)))?;
+            .inspect_err(|e| {
+                error!("Failed to get artifact key {}", e);
+            })?;
 
-        response.json::<ArtifactKey>().map_err(|e| {
-            RegistryError::Error(format!("Failed to parse artifact key response {}", e))
-        })
+        response
+            .json::<ArtifactKey>()
+            .map_err(RegistryError::RequestError)
     }
 
+    #[instrument(skip_all)]
     pub fn check_uid_exists(&self, uid: &str) -> Result<bool, RegistryError> {
         let uid_request = UidRequest {
             uid: uid.to_string(),
             registry_type: self.registry_type.clone(),
         };
-        let query_string = serde_qs::to_string(&uid_request)
-            .map_err(|e| RegistryError::Error(format!("Failed to serialize query args {}", e)))?;
+        let query_string = serde_qs::to_string(&uid_request)?;
 
         let response = self
             .api_client
@@ -246,11 +244,13 @@ impl ClientRegistry {
                 Some(query_string),
                 None,
             )
-            .map_err(|e| RegistryError::Error(format!("Failed to check uid exists {}", e)))?;
+            .inspect_err(|e| {
+                error!("Failed to check uid exists {}", e);
+            })?;
 
         let exists = response
             .json::<UidResponse>()
-            .map_err(|e| RegistryError::Error(format!("Failed to parse uid response {}", e)))?;
+            .map_err(RegistryError::RequestError)?;
 
         Ok(exists.exists)
     }
@@ -266,23 +266,18 @@ impl ClientRegistry {
             registry_type: registry_type.clone(),
         };
 
-        let query_string = serde_qs::to_string(&key_request).map_err(|e| {
-            error!("Failed to serialize query args {}", e);
-            RegistryError::Error(format!("Failed to serialize query args {}", e))
-        })?;
+        let query_string = serde_qs::to_string(&key_request)?;
 
         let response = self
             .api_client
             .request(route, RequestType::Get, None, Some(query_string), None)
-            .map_err(|e| {
+            .inspect_err(|e| {
                 error!("Failed to get artifact key {}", e);
-                RegistryError::Error(format!("Failed to get artifact key {}", e))
             })?;
 
-        let key = response.json::<ArtifactKey>().map_err(|e| {
-            error!("Failed to parse artifact key {}", e);
-            RegistryError::Error(format!("Failed to parse artifact key {}", e))
-        })?;
+        let key = response
+            .json::<ArtifactKey>()
+            .map_err(RegistryError::RequestError)?;
 
         Ok(key)
     }
@@ -299,10 +294,7 @@ impl ClientRegistry {
         &self,
         metrics: &HardwareMetricRequest,
     ) -> Result<(), RegistryError> {
-        let body = serde_json::to_value(metrics).map_err(|e| {
-            error!("Failed to serialize metrics {}", e);
-            RegistryError::Error(format!("Failed to serialize metrics {}", e))
-        })?;
+        let body = serde_json::to_value(metrics)?;
 
         let response = self
             .api_client
@@ -313,22 +305,18 @@ impl ClientRegistry {
                 None,
                 None,
             )
-            .map_err(|e| {
+            .inspect_err(|e| {
                 error!("Failed to insert hardware metrics {}", e);
-                RegistryError::Error(format!("Failed to insert hardware metrics {}", e))
             })?;
 
-        let inserted = response.json::<HardwareMetricResponse>().map_err(|e| {
-            error!("Failed to parse hardware metric response {}", e);
-            RegistryError::Error(format!("Failed to parse hardware metric response {}", e))
-        })?;
+        let inserted = response
+            .json::<HardwareMetricResponse>()
+            .map_err(RegistryError::RequestError)?;
 
         if inserted.success {
             Ok(())
         } else {
-            Err(RegistryError::Error(
-                "Failed to insert hardware metrics".to_string(),
-            ))
+            Err(RegistryError::InsertHardwareMetricError)
         }
     }
 
@@ -336,10 +324,7 @@ impl ClientRegistry {
         &self,
         metrics: &GetHardwareMetricRequest,
     ) -> Result<Vec<HardwareMetrics>, RegistryError> {
-        let query_string = serde_qs::to_string(metrics).map_err(|e| {
-            error!("Failed to serialize metrics {}", e);
-            RegistryError::Error(format!("Failed to serialize metrics {}", e))
-        })?;
+        let query_string = serde_qs::to_string(metrics)?;
 
         let response = self
             .api_client
@@ -350,21 +335,17 @@ impl ClientRegistry {
                 Some(query_string),
                 None,
             )
-            .map_err(|e| {
+            .inspect_err(|e| {
                 error!("Failed to get hardware metrics {}", e);
-                RegistryError::Error(format!("Failed to get hardware metrics {}", e))
             })?;
 
-        response.json::<Vec<HardwareMetrics>>().map_err(|e| {
-            RegistryError::Error(format!("Failed to parse hardware metric response {}", e))
-        })
+        response
+            .json::<Vec<HardwareMetrics>>()
+            .map_err(RegistryError::RequestError)
     }
 
     pub fn insert_metrics(&self, metrics: &MetricRequest) -> Result<(), RegistryError> {
-        let body = serde_json::to_value(metrics).map_err(|e| {
-            error!("Failed to serialize metrics {}", e);
-            RegistryError::Error(format!("Failed to serialize metrics {}", e))
-        })?;
+        let body = serde_json::to_value(metrics)?;
 
         let response = self
             .api_client
@@ -375,28 +356,23 @@ impl ClientRegistry {
                 None,
                 None,
             )
-            .map_err(|e| {
+            .inspect_err(|e| {
                 error!("Failed to insert metrics {}", e);
-                RegistryError::Error(format!("Failed to insert metrics {}", e))
             })?;
 
-        let inserted = response.json::<MetricResponse>().map_err(|e| {
-            error!("Failed to parse metric response {}", e);
-            RegistryError::Error(format!("Failed to parse metric response {}", e))
-        })?;
+        let inserted = response
+            .json::<MetricResponse>()
+            .map_err(RegistryError::RequestError)?;
 
         if inserted.success {
             Ok(())
         } else {
-            Err(RegistryError::Error("Failed to insert metrics".to_string()))
+            Err(RegistryError::InsertMetricError)
         }
     }
 
     pub fn get_metrics(&self, metrics: &GetMetricRequest) -> Result<Vec<Metric>, RegistryError> {
-        let body = serde_json::to_value(metrics).map_err(|e| {
-            error!("Failed to serialize metrics {}", e);
-            RegistryError::Error(format!("Failed to serialize metrics {}", e))
-        })?;
+        let body = serde_json::to_value(metrics)?;
 
         let response = self
             .api_client
@@ -407,21 +383,17 @@ impl ClientRegistry {
                 None,
                 None,
             )
-            .map_err(|e| {
+            .inspect_err(|e| {
                 error!("Failed to get metrics {}", e);
-                RegistryError::Error(format!("Failed to get metrics {}", e))
             })?;
 
         response
             .json::<Vec<Metric>>()
-            .map_err(|e| RegistryError::Error(format!("Failed to parse metric response {}", e)))
+            .map_err(RegistryError::RequestError)
     }
 
     pub fn insert_parameters(&self, parameters: &ParameterRequest) -> Result<(), RegistryError> {
-        let body = serde_json::to_value(parameters).map_err(|e| {
-            error!("Failed to serialize parameters {}", e);
-            RegistryError::Error(format!("Failed to serialize parameters {}", e))
-        })?;
+        let body = serde_json::to_value(parameters)?;
 
         let response = self
             .api_client
@@ -432,22 +404,16 @@ impl ClientRegistry {
                 None,
                 None,
             )
-            .map_err(|e| {
+            .inspect_err(|e| {
                 error!("Failed to insert parameters {}", e);
-                RegistryError::Error(format!("Failed to insert parameters {}", e))
             })?;
 
-        let inserted = response.json::<ParameterResponse>().map_err(|e| {
-            error!("Failed to parse parameter response {}", e);
-            RegistryError::Error(format!("Failed to parse parameter response {}", e))
-        })?;
+        let inserted = response.json::<ParameterResponse>()?;
 
         if inserted.success {
             Ok(())
         } else {
-            Err(RegistryError::Error(
-                "Failed to insert parameters".to_string(),
-            ))
+            Err(RegistryError::InsertParameterError)
         }
     }
 
@@ -455,10 +421,7 @@ impl ClientRegistry {
         &self,
         parameters: &GetParameterRequest,
     ) -> Result<Vec<Parameter>, RegistryError> {
-        let body = serde_json::to_value(parameters).map_err(|e| {
-            error!("Failed to serialize parameters {}", e);
-            RegistryError::Error(format!("Failed to serialize parameters {}", e))
-        })?;
+        let body = serde_json::to_value(parameters)?;
 
         let response = self
             .api_client
@@ -469,13 +432,12 @@ impl ClientRegistry {
                 None,
                 None,
             )
-            .map_err(|e| {
+            .inspect_err(|e| {
                 error!("Failed to get parameters {}", e);
-                RegistryError::Error(format!("Failed to get parameters {}", e))
             })?;
 
         response
             .json::<Vec<Parameter>>()
-            .map_err(|e| RegistryError::Error(format!("Failed to parse parameter response {}", e)))
+            .map_err(RegistryError::RequestError)
     }
 }

@@ -476,14 +476,14 @@ impl HuggingFaceModel {
     ///
     /// # Returns
     ///
-    /// * `PyResult<DataInterfaceSaveMetadata>` - DataInterfaceSaveMetadata
-    #[pyo3(signature = (path, to_onnx=false, save_kwargs=None))]
-    #[instrument(skip(self_, py, path, to_onnx, save_kwargs) name = "save_huggingface_interface")]
+    /// * `Result<DataInterfaceSaveMetadata>` - DataInterfaceSaveMetadata
+    #[pyo3(signature = (path, save_kwargs=None))]
+    #[instrument(skip_all name = "save_huggingface_interface")]
     pub fn save(
         mut self_: PyRefMut<'_, Self>,
         py: Python,
         path: PathBuf,
-        to_onnx: bool,
+
         save_kwargs: Option<ModelSaveKwargs>,
     ) -> Result<ModelInterfaceMetadata, ModelInterfaceError> {
         let mut extra = None;
@@ -496,9 +496,9 @@ impl HuggingFaceModel {
         };
 
         // parse the save args
-        let (onnx_kwargs, model_kwargs, preprocessor_kwargs) = parse_save_kwargs(py, &save_kwargs);
+        let kwargs = parse_save_kwargs(py, save_kwargs.as_ref());
 
-        let processors = self_.save_processors(py, &path, preprocessor_kwargs.as_ref())?;
+        let processors = self_.save_processors(py, &path, kwargs.preprocessor.as_ref())?;
 
         let data_processor_map = processors
             .iter()
@@ -514,11 +514,11 @@ impl HuggingFaceModel {
         let mut onnx_model_uri = None;
 
         debug!("Saving model");
-        let model_uri = self_.save_model(py, &path, model_kwargs.as_ref())?;
+        let model_uri = self_.save_model(py, &path, kwargs.model.as_ref())?;
 
-        if to_onnx {
+        if kwargs.save_onnx {
             debug!("Saving ONNX model");
-            let paths = self_.convert_to_onnx(py, &path, onnx_kwargs.as_ref())?;
+            let paths = self_.convert_to_onnx(py, &path, kwargs.onnx.as_ref())?;
             onnx_model_uri = paths.get("onnx").cloned();
 
             // if quantized exists, add to extra metadata
@@ -575,7 +575,7 @@ impl HuggingFaceModel {
     ///
     /// # Returns
     ///
-    /// * `PyResult<DataInterfaceMetadata>` - DataInterfaceMetadata
+    /// * `Result<DataInterfaceMetadata>` - DataInterfaceMetadata
     #[pyo3(signature = (path, metadata, load_kwargs=None))]
     #[allow(clippy::too_many_arguments)]
     #[instrument(
@@ -991,7 +991,7 @@ impl HuggingFaceModel {
         py: Python,
         path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
-    ) -> PyResult<Option<PathBuf>> {
+    ) -> Result<Option<PathBuf>, ModelInterfaceError> {
         // if sample_data is not None, save the sample data
         let sample_data_uri = self
             .sample_data
@@ -1012,7 +1012,7 @@ impl HuggingFaceModel {
         path: &Path,
         data_type: &DataType,
         kwargs: Option<&Bound<'_, PyDict>>,
-    ) -> PyResult<()> {
+    ) -> Result<(), ModelInterfaceError> {
         // load sample data
         self.sample_data = HuggingFaceSampleData::load_data(py, path, data_type, kwargs)?;
 
@@ -1075,8 +1075,11 @@ impl HuggingFaceModel {
     ///
     /// # Returns
     ///
-    /// * `PyResult<FeatureMap>` - FeatureMap
-    pub fn create_feature_schema(&mut self, py: Python) -> PyResult<FeatureSchema> {
+    /// * `Result<FeatureMap>` - FeatureMap
+    pub fn create_feature_schema(
+        &mut self,
+        py: Python,
+    ) -> Result<FeatureSchema, ModelInterfaceError> {
         // Create and insert the feature
 
         let mut data = self.sample_data.get_data(py)?.bind(py).clone();
@@ -1086,6 +1089,9 @@ impl HuggingFaceModel {
             data = data.getattr("data")?;
         }
 
-        generate_feature_schema(&data, &self.sample_data.get_data_type())
+        Ok(generate_feature_schema(
+            &data,
+            &self.sample_data.get_data_type(),
+        )?)
     }
 }

@@ -1,4 +1,4 @@
-use opsml_error::error::SqlError;
+use crate::error::SqlError;
 
 use opsml_semver::VersionParser;
 /// this file contains helper logic for generating sql queries across different databases
@@ -6,8 +6,7 @@ use opsml_types::{cards::CardTable, contracts::CardQueryArgs};
 use opsml_utils::utils::is_valid_uuidv7;
 
 pub fn add_version_bounds(builder: &mut String, version: &str) -> Result<(), SqlError> {
-    let version_bounds = VersionParser::get_version_to_search(version)
-        .map_err(|e| SqlError::VersionError(format!("{}", e)))?;
+    let version_bounds = VersionParser::get_version_to_search(version)?;
 
     // construct lower bound (already validated)
     builder.push_str(
@@ -347,8 +346,7 @@ impl PostgresQueryHelper {
         // check for uid. If uid is present, we only return that card
         if query_args.uid.is_some() {
             // validate uid
-            is_valid_uuidv7(query_args.uid.as_ref().unwrap())
-                .map_err(|e| SqlError::GeneralError(e.to_string()))?;
+            is_valid_uuidv7(query_args.uid.as_ref().unwrap())?;
         } else {
             // add where clause due to multiple combinations
 

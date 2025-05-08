@@ -1,3 +1,4 @@
+pub mod error;
 pub mod file;
 pub mod py_helpers;
 pub mod utils;

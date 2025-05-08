@@ -86,7 +86,6 @@ interface = SklearnModel(
 modelcard = ModelCard(
     interface=interface,
     info=info,
-    to_onnx=True,  # lets convert onnx
     datacard_uid=datacard.uid,  # modelcards must be associated with a datacard
 )
 registries.model.register_card(card=modelcard)

@@ -1,5 +1,5 @@
 use crate::base::ExtraMetadata;
-use opsml_error::{OpsmlError, SaveError};
+use crate::error::TypeError;
 use opsml_types::{SaveName, Suffix};
 use opsml_utils::{json_to_pyobject, pyobject_to_json};
 use opsml_utils::{FileUtils, PyHelperFuncs};
@@ -74,7 +74,7 @@ pub struct SqlLogic {
 impl SqlLogic {
     #[new]
     #[pyo3(signature = (queries=None))]
-    pub fn new(queries: Option<HashMap<String, String>>) -> PyResult<Self> {
+    pub fn new(queries: Option<HashMap<String, String>>) -> Result<Self, TypeError> {
         Ok(SqlLogic {
             queries: SqlLogic::extract_sql_logic(queries.unwrap_or_default())?,
         })
@@ -90,14 +90,12 @@ impl SqlLogic {
         name: String,
         query: Option<String>,
         filepath: Option<String>,
-    ) -> PyResult<()> {
+    ) -> Result<(), TypeError> {
         let query = query.unwrap_or_default();
         let filepath = filepath.unwrap_or_default();
 
         if !query.is_empty() && !filepath.is_empty() {
-            return Err(OpsmlError::new_err(
-                "Only one of query or filename can be provided",
-            ));
+            return Err(TypeError::OnlyOneQueryorFilenameError);
         }
 
         if !query.is_empty() {
@@ -110,50 +108,50 @@ impl SqlLogic {
         Ok(())
     }
 
-    pub fn __getitem__(&self, key: &str) -> PyResult<String> {
+    pub fn __getitem__(&self, key: &str) -> Result<String, TypeError> {
         match self.queries.get(key) {
             Some(query) => Ok(query.clone()),
-            None => Err(OpsmlError::new_err("Key not found")),
+            None => Err(TypeError::KeyNotFound),
         }
     }
 }
 
 impl SqlLogic {
-    fn extract_sql_logic(sql_logic: HashMap<String, String>) -> PyResult<HashMap<String, String>> {
+    fn extract_sql_logic(
+        sql_logic: HashMap<String, String>,
+    ) -> Result<HashMap<String, String>, TypeError> {
         // check if sql logic is present
         if sql_logic.is_empty() {
             return Ok(sql_logic);
         }
 
         // get the sql logic
-        let sql_logic = sql_logic
-            .iter()
+        sql_logic
+            .into_iter()
             .map(|(key, value)| {
-                if value.contains(".sql") {
-                    let sql = FileUtils::open_file(value)?;
-                    Ok((key.clone(), sql))
+                if value.ends_with(".sql") {
+                    let sql = FileUtils::open_file(&value)?;
+                    Ok((key, sql))
                 } else {
-                    Ok((key.clone(), value.clone()))
+                    Ok((key, value))
                 }
             })
-            .collect::<PyResult<HashMap<String, String>>>()?;
-
-        Ok(sql_logic)
+            .collect()
     }
 
-    pub fn save(&self, save_path: &Path) -> Result<PathBuf, SaveError> {
+    pub fn save(&self, save_path: &Path) -> Result<PathBuf, TypeError> {
         let sql_directory = save_path.join(SaveName::Sql);
 
         // create directory if it does not exist
         if !sql_directory.exists() {
-            std::fs::create_dir_all(&sql_directory).map_err(|e| SaveError::Error(e.to_string()))?;
+            std::fs::create_dir_all(&sql_directory)?;
         }
 
         for (key, value) in &self.queries {
             let save_path = sql_directory.join(key).with_extension(Suffix::Sql);
 
             // save string to file
-            std::fs::write(save_path, value).map_err(|e| SaveError::Error(e.to_string()))?;
+            std::fs::write(save_path, value)?;
         }
 
         Ok(sql_directory)
@@ -218,7 +216,7 @@ pub struct DataSaveKwargs {
 impl DataSaveKwargs {
     #[new]
     #[pyo3(signature = (data=None))]
-    pub fn new(data: Option<Bound<'_, PyDict>>) -> PyResult<Self> {
+    pub fn new(data: Option<Bound<'_, PyDict>>) -> Result<Self, TypeError> {
         // check if onnx is None, PyDict or HuggingFaceOnnxArgs
 
         let data = data.map(|data| data.unbind());
@@ -351,7 +349,7 @@ pub struct DataLoadKwargs {
 impl DataLoadKwargs {
     #[new]
     #[pyo3(signature = (data=None))]
-    pub fn new(data: Option<Bound<'_, PyDict>>) -> PyResult<Self> {
+    pub fn new(data: Option<Bound<'_, PyDict>>) -> Result<Self, TypeError> {
         let data = data.map(|data| data.unbind());
 
         Ok(Self { data })

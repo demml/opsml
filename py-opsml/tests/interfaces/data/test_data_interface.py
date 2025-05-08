@@ -16,7 +16,6 @@ from opsml.data import (
     ColType,
     Inequality,
 )
-from opsml.error import OpsmlError
 import numpy as np
 import polars as pl
 import pyarrow as pa  # type: ignore
@@ -60,7 +59,7 @@ def test_data_interface(tmp_path: Path, numpy_array: NDArray[np.float64]):
     assert data_interface.data is None
 
     ## should raise an error if we try to save again
-    with pytest.raises(OpsmlError) as error:
+    with pytest.raises(RuntimeError) as error:
         data_interface.save(save_path)
     assert str(error.value) == "No data detected in interface for saving"
 
@@ -123,7 +122,7 @@ def test_numpy_interface(tmp_path: Path, numpy_array: NDArray[np.float64]):
     assert metadata.save_metadata.data_uri == Path("data.npy")
     assert metadata.data_type == DataType.Numpy
 
-    with pytest.raises(OpsmlError):
+    with pytest.raises(RuntimeError):
         _ = NumpyData(data=10)
 
     interface.data = None
@@ -183,7 +182,7 @@ def test_polars_interface(multi_type_polars_dataframe2: pl.DataFrame, tmp_path: 
 
     assert interface.data is not None
 
-    with pytest.raises(OpsmlError):
+    with pytest.raises(RuntimeError):
         interface.data = 10
 
 
@@ -232,7 +231,7 @@ def test_pandas_interface(pandas_mixed_type_dataframe: pd.DataFrame, tmp_path: P
             interface.data.dtypes.iloc[i] == pandas_mixed_type_dataframe.dtypes.iloc[i]
         )
 
-    with pytest.raises(OpsmlError):
+    with pytest.raises(RuntimeError):
         interface.data = 10
 
     split_data = interface.split_data()
@@ -266,7 +265,7 @@ def test_arrow_interface(arrow_dataframe: pa.Table, tmp_path: Path):
 
     assert interface.data is not None
 
-    with pytest.raises(OpsmlError):
+    with pytest.raises(RuntimeError):
         interface.data = 10
 
 
@@ -295,7 +294,7 @@ def test_torch_data(torch_tensor: torch.Tensor, tmp_path: Path):
 
     assert interface.data is not None
 
-    with pytest.raises(OpsmlError):
+    with pytest.raises(RuntimeError):
         interface.data = 10
 
 

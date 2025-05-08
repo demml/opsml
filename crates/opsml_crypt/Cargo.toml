@@ -9,7 +9,6 @@ description = "Error handling for OpsML"
 doctest = false
 
 [dependencies]
-opsml-error = { workspace = true }
 opsml-utils = { workspace = true }
 aes-gcm = { workspace = true }
 hkdf = { workspace = true }
@@ -18,6 +17,7 @@ pbkdf2 = { workspace = true }
 rand = { workspace = true }
 rayon = { workspace = true }
 sha2 = { workspace = true }
+thiserror = { workspace = true }
 tracing = { workspace = true }
 
 [dev-dependencies]

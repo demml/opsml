@@ -1,3 +1,4 @@
+use crate::error::DataInterfaceError;
 use crate::types::{Feature, FeatureSchema};
 use pyo3::prelude::*;
 use pyo3::types::PyList;
@@ -7,7 +8,9 @@ pub struct ArrowSchemaValidator {}
 impl ArrowSchemaValidator {
     //pub fn get_polars_feature(value: &Bound<'_, PyAny>) -> PyResult<Feature> {}
 
-    pub fn generate_feature_map(data: &Bound<'_, PyAny>) -> PyResult<FeatureSchema> {
+    pub fn generate_feature_map(
+        data: &Bound<'_, PyAny>,
+    ) -> Result<FeatureSchema, DataInterfaceError> {
         let schema = data.getattr("schema")?;
 
         let schema_names = schema.getattr("names")?.extract::<Vec<String>>()?;

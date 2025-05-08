@@ -1,10 +1,7 @@
+use crate::error::CardError;
 use crate::utils::BaseArgs;
 use chrono::{DateTime, Utc};
 use opsml_crypt::decrypt_directory;
-use opsml_error::{
-    error::{CardError, OpsmlError},
-    map_err_with_logging,
-};
 use opsml_interfaces::data::{
     ArrowData, DataInterface, DataInterfaceMetadata, DataLoadKwargs, DataSaveKwargs, NumpyData,
     PandasData, PolarsData, SqlData, TorchData,
@@ -13,7 +10,7 @@ use opsml_interfaces::FeatureSchema;
 use opsml_storage::storage_client;
 use opsml_types::contracts::{ArtifactKey, CardRecord, DataCardClientRecord};
 use opsml_types::interfaces::types::DataInterfaceType;
-use opsml_types::{BaseArgsType, DataType, RegistryType, SaveName, Suffix};
+use opsml_types::{DataType, RegistryType, SaveName, Suffix};
 use opsml_utils::{create_tmp_path, extract_py_attr, get_utc_datetime, PyHelperFuncs};
 use pyo3::types::PyList;
 use pyo3::{prelude::*, IntoPyObjectExt};
@@ -29,18 +26,18 @@ use tracing::error;
 fn interface_from_metadata<'py>(
     py: Python<'py>,
     metadata: &DataInterfaceMetadata,
-) -> PyResult<Bound<'py, PyAny>> {
+) -> Result<Bound<'py, PyAny>, CardError> {
     match metadata.interface_type {
-        DataInterfaceType::Arrow => ArrowData::from_metadata(py, metadata),
-        DataInterfaceType::Pandas => PandasData::from_metadata(py, metadata),
-        DataInterfaceType::Numpy => NumpyData::from_metadata(py, metadata),
-        DataInterfaceType::Polars => PolarsData::from_metadata(py, metadata),
-        DataInterfaceType::Torch => TorchData::from_metadata(py, metadata),
-        DataInterfaceType::Sql => SqlData::from_metadata(py, metadata),
+        DataInterfaceType::Arrow => Ok(ArrowData::from_metadata(py, metadata)?),
+        DataInterfaceType::Pandas => Ok(PandasData::from_metadata(py, metadata)?),
+        DataInterfaceType::Numpy => Ok(NumpyData::from_metadata(py, metadata)?),
+        DataInterfaceType::Polars => Ok(PolarsData::from_metadata(py, metadata)?),
+        DataInterfaceType::Torch => Ok(TorchData::from_metadata(py, metadata)?),
+        DataInterfaceType::Sql => Ok(SqlData::from_metadata(py, metadata)?),
 
         _ => {
             error!("Interface type not found");
-            Err(OpsmlError::new_err("Interface type not found"))
+            Err(CardError::InterfaceNotFoundError)
         }
     }
 }
@@ -114,28 +111,21 @@ impl DataCard {
         uid: Option<&str>,
         tags: Option<&Bound<'_, PyList>>,
         metadata: Option<DataCardMetadata>,
-    ) -> PyResult<Self> {
+    ) -> Result<Self, CardError> {
         let registry_type = RegistryType::Data;
         let tags = match tags {
             None => Vec::new(),
-            Some(t) => t
-                .extract::<Vec<String>>()
-                .map_err(|e| OpsmlError::new_err(e.to_string()))?,
+            Some(t) => t.extract::<Vec<String>>()?,
         };
 
-        let base_args = map_err_with_logging::<BaseArgsType, _>(
-            BaseArgs::create_args(name, space, version, uid, &registry_type),
-            "Failed to create base args for DataCard",
-        )?;
+        let base_args = BaseArgs::create_args(name, space, version, uid, &registry_type)?;
 
         let py = interface.py();
 
         if interface.is_instance_of::<DataInterface>() {
             //
         } else {
-            return Err(OpsmlError::new_err(
-                "interface must be an instance of DataInterface",
-            ));
+            return Err(CardError::MustBeDataInterfaceError);
         }
 
         let interface_type = extract_py_attr::<DataInterfaceType>(interface, "interface_type")?;
@@ -146,11 +136,7 @@ impl DataCard {
         metadata.interface_metadata.data_type = data_type;
 
         Ok(Self {
-            interface: Some(
-                interface
-                    .into_py_any(py)
-                    .map_err(|e| OpsmlError::new_err(e.to_string()))?,
-            ),
+            interface: Some(interface.into_py_any(py)?),
             space: base_args.0,
             name: base_args.1,
             version: base_args.2,
@@ -167,19 +153,12 @@ impl DataCard {
     }
 
     #[setter]
-    pub fn set_interface(&mut self, interface: &Bound<'_, PyAny>) -> PyResult<()> {
+    pub fn set_interface(&mut self, interface: &Bound<'_, PyAny>) -> Result<(), CardError> {
         if interface.is_instance_of::<DataInterface>() {
-            self.interface = Some(
-                interface
-                    .into_py_any(interface.py())
-                    .map_err(|e| OpsmlError::new_err(e.to_string()))
-                    .unwrap(),
-            );
+            self.interface = Some(interface.into_py_any(interface.py())?);
             Ok(())
         } else {
-            Err(OpsmlError::new_err(
-                "interface must be an instance of ModelInterface",
-            ))
+            Err(CardError::MustBeDataInterfaceError)
         }
     }
 
@@ -205,22 +184,15 @@ impl DataCard {
         save_kwargs: Option<DataSaveKwargs>,
     ) -> Result<(), CardError> {
         // if option raise error
-        let data = self.interface.as_ref().ok_or_else(|| {
-            OpsmlError::new_err(
-                "Interface not found. Ensure DataCard has been initialized correctly",
-            )
-        })?;
+        let data = self
+            .interface
+            .as_ref()
+            .ok_or_else(|| CardError::InterfaceNotFoundError)?;
 
         // call save on interface
         let metadata = data
-            .call_method(py, "save", (&path, save_kwargs), None)
-            .map_err(|e| {
-                OpsmlError::new_err(format!("Error calling save method on interface: {e}"))
-            })?
-            .extract::<DataInterfaceMetadata>(py)
-            .map_err(|e| {
-                OpsmlError::new_err(format!("Error extracting metadata from interface: {}", e))
-            })?;
+            .call_method(py, "save", (&path, save_kwargs), None)?
+            .extract::<DataInterfaceMetadata>(py)?;
 
         // update metadata
         self.metadata.interface_metadata = metadata;
@@ -233,7 +205,7 @@ impl DataCard {
 
     #[allow(clippy::too_many_arguments)]
     #[pyo3(signature = (path=None))]
-    pub fn download_artifacts(&mut self, path: Option<PathBuf>) -> PyResult<()> {
+    pub fn download_artifacts(&mut self, path: Option<PathBuf>) -> Result<(), CardError> {
         let path = path.unwrap_or_else(|| PathBuf::from("card_artifacts"));
         self.download_all_artifacts(&path)?;
         Ok(())
@@ -246,7 +218,7 @@ impl DataCard {
         py: Python,
         path: Option<PathBuf>,
         load_kwargs: Option<DataLoadKwargs>,
-    ) -> PyResult<()> {
+    ) -> Result<(), CardError> {
         let path = if let Some(p) = path {
             p
         } else {
@@ -283,10 +255,9 @@ impl DataCard {
         py: Python,
         json_string: String,
         interface: Option<&Bound<'_, PyAny>>,
-    ) -> PyResult<DataCard> {
-        let mut card: DataCard = serde_json::from_str(&json_string).map_err(|e| {
+    ) -> Result<DataCard, CardError> {
+        let mut card: DataCard = serde_json::from_str(&json_string).inspect_err(|e| {
             error!("Failed to validate json: {}", e);
-            OpsmlError::new_err(e.to_string())
         })?;
 
         card.load_interface(py, interface)?;
@@ -338,7 +309,11 @@ impl DataCard {
         self.artifact_key = Some(key);
     }
 
-    fn load_interface(&mut self, py: Python, interface: Option<&Bound<'_, PyAny>>) -> PyResult<()> {
+    fn load_interface(
+        &mut self,
+        py: Python,
+        interface: Option<&Bound<'_, PyAny>>,
+    ) -> Result<(), CardError> {
         if let Some(interface) = interface {
             self.set_interface(interface)
         } else {
@@ -350,7 +325,7 @@ impl DataCard {
 
     fn get_decryption_key(&self) -> Result<Vec<u8>, CardError> {
         if self.artifact_key.is_none() {
-            Err(CardError::Error("Decryption key not found".to_string()))
+            Err(CardError::DecryptionKeyNotFoundError)
         } else {
             Ok(self.artifact_key.as_ref().unwrap().get_decrypt_key()?)
         }
@@ -360,9 +335,7 @@ impl DataCard {
         let decrypt_key = self.get_decryption_key()?;
         let uri = self.artifact_key.as_ref().unwrap().storage_path();
 
-        storage_client()?
-            .get(lpath, &uri, true)
-            .map_err(|e| CardError::Error(format!("Failed to download artifacts: {}", e)))?;
+        storage_client()?.get(lpath, &uri, true)?;
 
         decrypt_directory(lpath, &decrypt_key)?;
 

@@ -1,5 +1,6 @@
+use crate::core::error::ServerError;
 use anyhow::Result;
-use opsml_error::{ApiError, ServerError};
+use opsml_client::error::ApiClientError;
 use opsml_settings::config::ScouterSettings;
 use opsml_sql::schemas::User;
 use opsml_types::api::RequestType;
@@ -46,7 +47,7 @@ pub async fn build_scouter_http_client(settings: &ScouterSettings) -> Result<Sco
     let client_builder = Client::builder().timeout(std::time::Duration::from_secs(TIMEOUT_SECS));
     let client = client_builder
         .build()
-        .map_err(|e| ServerError::Error(format!("Failed to create client with error: {}", e)))?;
+        .map_err(ServerError::CreateClientError)?;
 
     let base_path = settings.server_uri.clone();
 
@@ -77,7 +78,7 @@ impl ScouterApiClient {
         query_string: Option<String>,
         headers: Option<HeaderMap>,
         bearer_token: String,
-    ) -> Result<Response, ApiError> {
+    ) -> Result<Response, ApiClientError> {
         let headers = headers.unwrap_or_default();
 
         let url = format!("{}/{}", self.base_path, route.as_str());
@@ -94,33 +95,26 @@ impl ScouterApiClient {
                     .headers(headers)
                     .bearer_auth(&bearer_token)
                     .send()
-                    .await
-                    .map_err(|e| {
-                        ApiError::Error(format!("Failed to send request with error: {}", e))
-                    })?
+                    .await?
             }
-            RequestType::Post => self
-                .client
-                .post(url)
-                .headers(headers)
-                .json(&body_params)
-                .bearer_auth(&bearer_token)
-                .send()
-                .await
-                .map_err(|e| {
-                    ApiError::Error(format!("Failed to send request with error: {}", e))
-                })?,
-            RequestType::Put => self
-                .client
-                .put(url)
-                .headers(headers)
-                .json(&body_params)
-                .bearer_auth(&bearer_token)
-                .send()
-                .await
-                .map_err(|e| {
-                    ApiError::Error(format!("Failed to send request with error: {}", e))
-                })?,
+            RequestType::Post => {
+                self.client
+                    .post(url)
+                    .headers(headers)
+                    .json(&body_params)
+                    .bearer_auth(&bearer_token)
+                    .send()
+                    .await?
+            }
+            RequestType::Put => {
+                self.client
+                    .put(url)
+                    .headers(headers)
+                    .json(&body_params)
+                    .bearer_auth(&bearer_token)
+                    .send()
+                    .await?
+            }
             RequestType::Delete => {
                 let url = if let Some(query_string) = query_string {
                     format!("{}?{}", url, query_string)
@@ -132,10 +126,7 @@ impl ScouterApiClient {
                     .headers(headers)
                     .bearer_auth(&bearer_token)
                     .send()
-                    .await
-                    .map_err(|e| {
-                        ApiError::Error(format!("Failed to send request with error: {}", e))
-                    })?
+                    .await?
             }
         };
 
@@ -150,7 +141,7 @@ impl ScouterApiClient {
         query_params: Option<String>,
         headers: Option<HeaderMap>,
         bearer_token: String,
-    ) -> Result<Response, ApiError> {
+    ) -> Result<Response, ApiClientError> {
         let response = self
             ._request(
                 route.clone(),
@@ -168,19 +159,12 @@ impl ScouterApiClient {
     /// Create the initial user in scouter
     /// This is used to create the first users shared between scouter and opsml and is only used once
     /// during the initial setup of the system if no users exist
-    pub async fn create_initial_user(&self, user: &User) -> Result<Response, ApiError> {
-        let user_val = serde_json::to_value(user).map_err(|e| {
-            ApiError::Error(format!("Failed to convert user to json with error: {}", e))
-        })?;
+    pub async fn create_initial_user(&self, user: &User) -> Result<Response, ApiClientError> {
+        let user_val = serde_json::to_value(user)?;
 
         // create header to X-Bootstrap-Token
         let mut headers = HeaderMap::new();
-        headers.insert(
-            "X-Bootstrap-Token",
-            self.bootstrap_token.parse().map_err(|e| {
-                ApiError::Error(format!("Failed to parse bootstrap token with error: {}", e))
-            })?,
-        );
+        headers.insert("X-Bootstrap-Token", self.bootstrap_token.parse()?);
         self.request(
             Routes::Users,
             RequestType::Post,
@@ -196,14 +180,14 @@ impl ScouterApiClient {
         &self,
         username: &str,
         bearer_token: String,
-    ) -> Result<Response, ApiError> {
+    ) -> Result<Response, ApiClientError> {
         let url = format!("{}/{}/{}", self.base_path, Routes::Users.as_str(), username);
 
-        self.client
+        Ok(self
+            .client
             .delete(url)
             .bearer_auth(&bearer_token)
             .send()
-            .await
-            .map_err(|e| ApiError::Error(format!("Failed to send request with error: {}", e)))
+            .await?)
     }
 }

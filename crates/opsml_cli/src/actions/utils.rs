@@ -1,6 +1,6 @@
 // This module contains utility functions for the opsml_cli crate.
+use crate::error::CliError;
 use opsml_cards::{Card, CardDeck};
-use opsml_error::CliError;
 pub use opsml_registry::utils::validate_card_deck_cards;
 use opsml_registry::CardRegistry;
 use opsml_semver::VersionType;

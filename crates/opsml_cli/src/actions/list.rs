@@ -1,7 +1,7 @@
 use crate::cli::arg::IntoQueryArgs;
 use crate::cli::arg::ListCards;
+use crate::error::CliError;
 use opsml_colors::Colorize;
-use opsml_error::CliError;
 use opsml_registry::base::OpsmlRegistry;
 use opsml_types::contracts::CardList;
 use opsml_types::RegistryType;

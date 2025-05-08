@@ -8,7 +8,14 @@ import numpy as np
 
 from typing import Any
 
-from opsml import LightningModel, CardRegistry, RegistryType, ModelCard, ModelLoadKwargs
+from opsml import (
+    LightningModel,
+    CardRegistry,
+    RegistryType,
+    ModelCard,
+    ModelLoadKwargs,
+    ModelSaveKwargs,
+)
 
 registry = CardRegistry(RegistryType.Model)
 
@@ -69,11 +76,13 @@ modelcard = ModelCard(
     interface=interface,
     space="opsml",
     name="my_model",
-    to_onnx=True,
 )
 
 # Register the model card
-registry.register_card(modelcard)
+registry.register_card(
+    modelcard,
+    save_kwargs=ModelSaveKwargs(save_onnx=True),  # convert to onnx
+)
 
 # List the model card
 modelcard_list = registry.list_cards(uid=modelcard.uid).as_table()

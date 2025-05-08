@@ -1,7 +1,7 @@
+use crate::core::error::ServerError;
 use crate::core::scouter::client::ScouterApiClient;
 use opsml_auth::auth::AuthManager;
 use opsml_auth::permission::UserPermissions;
-use opsml_error::ApiError;
 use opsml_events::EventBus;
 use opsml_settings::config::{OpsmlConfig, OpsmlStorageSettings};
 use opsml_sql::base::SqlClient;
@@ -24,18 +24,14 @@ impl AppState {
     pub async fn exchange_token_from_perms(
         &self,
         perms: &UserPermissions,
-    ) -> Result<String, ApiError> {
+    ) -> Result<String, ServerError> {
         let user = self
             .sql_client
             .get_user(&perms.username)
-            .await
-            .map_err(|e| {
-                error!("Failed to get user from database: {}", e);
-                ApiError::Error("Failed to get user from database".to_string())
-            })?
+            .await?
             .ok_or_else(|| {
                 error!("User not found in database");
-                ApiError::Error("User not found in database".to_string())
+                ServerError::UserNotFoundError
             })?;
 
         self.auth_manager
@@ -43,7 +39,7 @@ impl AppState {
             .await
             .map_err(|e| {
                 error!("Failed to exchange token from permissions: {}", e);
-                ApiError::Error("Failed to exchange token from permissions".to_string())
+                e.into()
             })
     }
 }

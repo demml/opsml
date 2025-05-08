@@ -1,13 +1,14 @@
 pub mod aws;
 pub mod azure;
+pub mod error;
 pub mod gcs;
 pub mod local;
+use crate::storage::http::multipart::error::MultiPartError;
 pub use aws::S3MultipartUpload;
 pub use azure::AzureMultipartUpload;
 pub use gcs::GcsMultipartUpload;
 pub use local::LocalMultipartUpload;
 use opsml_client::OpsmlApiClient;
-use opsml_error::StorageError;
 use opsml_types::StorageType;
 use std::path::Path;
 use std::sync::Arc;
@@ -27,13 +28,12 @@ impl MultiPartUploader {
         storage_type: &StorageType,
         client: Arc<OpsmlApiClient>,
         session_url: String,
-    ) -> Result<Self, StorageError> {
+    ) -> Result<Self, MultiPartError> {
         match *storage_type {
-            StorageType::Aws => {
-                S3MultipartUpload::new(lpath, rpath, session_url, client).map(MultiPartUploader::S3)
-            }
-            StorageType::Google => GcsMultipartUpload::new(lpath, rpath, session_url, client)
-                .map(MultiPartUploader::Gcs),
+            StorageType::Aws => Ok(S3MultipartUpload::new(lpath, rpath, session_url, client)
+                .map(MultiPartUploader::S3)?),
+            StorageType::Google => Ok(GcsMultipartUpload::new(lpath, rpath, session_url, client)
+                .map(MultiPartUploader::Gcs)?),
             StorageType::Local => {
                 LocalMultipartUpload::new(lpath, rpath, client).map(MultiPartUploader::Local)
             }
@@ -47,11 +47,11 @@ impl MultiPartUploader {
         chunk_count: u64,
         size_of_last_chunk: u64,
         chunk_size: u64,
-    ) -> Result<(), StorageError> {
+    ) -> Result<(), MultiPartError> {
         match self {
-            MultiPartUploader::S3(s3) => s3.upload_file_in_chunks(chunk_size as usize),
+            MultiPartUploader::S3(s3) => Ok(s3.upload_file_in_chunks(chunk_size as usize)?),
             MultiPartUploader::Gcs(gcs) => {
-                gcs.upload_file_in_chunks(chunk_count, size_of_last_chunk, chunk_size)
+                Ok(gcs.upload_file_in_chunks(chunk_count, size_of_last_chunk, chunk_size)?)
             }
             MultiPartUploader::Local(local) => local.upload_file_in_chunks(),
             MultiPartUploader::Azure(azure) => {

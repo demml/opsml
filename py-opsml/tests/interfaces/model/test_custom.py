@@ -24,7 +24,6 @@ class CustomInterface(ModelInterface):
     def save(
         self,
         path: Path,
-        to_onnx: bool = False,
         save_kwargs: ModelSaveKwargs | None = None,
     ) -> ModelInterfaceMetadata:
         model_save_path = Path("model").with_suffix(".joblib")
@@ -47,7 +46,7 @@ class CustomInterface(ModelInterface):
         metadata: ModelInterfaceSaveMetadata,
         load_kwargs: ModelLoadKwargs | None = None,
     ) -> None:
-        model_path = path / metadata.model_uri
+        _model_path = path / metadata.model_uri
 
         # self.model = joblib.load(model_path)
         self.model = None
@@ -60,4 +59,4 @@ def test_custom_interface(tmp_path: Path, regression_data):
     kwargs = {"model": reg, "task_type": TaskType.Regression, "sample_data": X}
     interface = CustomInterface(foo=2, **kwargs)
 
-    interface.save(tmp_path, False)
+    interface.save(tmp_path)

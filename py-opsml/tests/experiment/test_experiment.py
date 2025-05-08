@@ -17,6 +17,7 @@ from opsml import (  # type: ignore
     CardDeck,
     Card,
     RegistryType,
+    ModelSaveKwargs,
 )
 from opsml.card import CardRegistries
 import joblib  # type: ignore
@@ -166,13 +167,15 @@ def test_experimentcard_register(
                 interface=random_forest_classifier,
                 space="test",
                 name="test",
-                to_onnx=True,
                 tags=["foo:bar", "baz:qux"],
                 metadata=ModelCardMetadata(
                     datacard_uid=datacard.uid,
                 ),
             )
-            exp.register_card(modelcard)
+            exp.register_card(
+                card=modelcard,
+                save_kwargs=ModelSaveKwargs(save_onnx=True),
+            )
 
             assert modelcard.experimentcard_uid == exp.card.uid
 

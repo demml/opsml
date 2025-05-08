@@ -1,11 +1,8 @@
+use crate::error::CardError;
 use crate::model::error::interface_error;
 use crate::utils::BaseArgs;
 use chrono::{DateTime, Utc};
 use opsml_crypt::decrypt_directory;
-use opsml_error::{
-    error::{CardError, OpsmlError},
-    map_err_with_logging,
-};
 use opsml_interfaces::{error::ModelInterfaceError, OnnxModel, OnnxSession};
 use opsml_interfaces::{
     CatBoostModel, HuggingFaceModel, LightGBMModel, LightningModel, SklearnModel, TorchModel,
@@ -16,7 +13,7 @@ use opsml_interfaces::{ModelInterfaceMetadata, ModelLoadKwargs, ModelSaveKwargs}
 use opsml_storage::storage_client;
 use opsml_types::contracts::{ArtifactKey, CardRecord, ModelCardClientRecord};
 use opsml_types::{
-    BaseArgsType, DataType, ModelInterfaceType, ModelType, RegistryType, SaveName, Suffix, TaskType,
+    DataType, ModelInterfaceType, ModelType, RegistryType, SaveName, Suffix, TaskType,
 };
 use opsml_utils::{create_tmp_path, extract_py_attr, get_utc_datetime, PyHelperFuncs};
 use pyo3::prelude::*;
@@ -113,9 +110,6 @@ pub struct ModelCard {
     #[pyo3(get)]
     pub registry_type: RegistryType,
 
-    #[pyo3(get)]
-    pub to_onnx: bool,
-
     #[pyo3(get, set)]
     pub app_env: String,
 
@@ -135,7 +129,7 @@ pub struct ModelCard {
 impl ModelCard {
     #[new]
     #[allow(clippy::too_many_arguments)]
-    #[pyo3(signature = (interface, space=None, name=None, version=None, uid=None, tags=None, datacard_uid=None, metadata=None, to_onnx=None))]
+    #[pyo3(signature = (interface, space=None, name=None, version=None, uid=None, tags=None, datacard_uid=None, metadata=None))]
     pub fn new(
         py: Python,
         interface: &Bound<'_, PyAny>,
@@ -146,25 +140,19 @@ impl ModelCard {
         tags: Option<&Bound<'_, PyList>>,
         datacard_uid: Option<&str>,
         metadata: Option<ModelCardMetadata>,
-        to_onnx: Option<bool>,
-    ) -> PyResult<Self> {
+    ) -> Result<Self, CardError> {
         let registry_type = RegistryType::Model;
         let tags = match tags {
             None => Vec::new(),
-            Some(t) => t
-                .extract::<Vec<String>>()
-                .map_err(|e| OpsmlError::new_err(e.to_string()))?,
+            Some(t) => t.extract::<Vec<String>>()?,
         };
 
-        let base_args = map_err_with_logging::<BaseArgsType, _>(
-            BaseArgs::create_args(name, space, version, uid, &registry_type),
-            "Failed to create base args for ModelCard",
-        )?;
+        let base_args = BaseArgs::create_args(name, space, version, uid, &registry_type)?;
 
         if interface.is_instance_of::<ModelInterface>() {
             //
         } else {
-            return Err(OpsmlError::new_err(interface_error()));
+            return Err(CardError::CustomError(interface_error()));
         }
 
         let interface_type = extract_py_attr::<ModelInterfaceType>(interface, "interface_type")?;
@@ -185,11 +173,7 @@ impl ModelCard {
         metadata.interface_metadata.task_type = task_type;
 
         Ok(Self {
-            interface: Some(
-                interface
-                    .into_py_any(py)
-                    .map_err(|e| OpsmlError::new_err(e.to_string()))?,
-            ),
+            interface: Some(interface.into_py_any(py)?),
             space: base_args.0,
             name: base_args.1,
             version: base_args.2,
@@ -197,7 +181,6 @@ impl ModelCard {
             tags,
             metadata,
             registry_type,
-            to_onnx: to_onnx.unwrap_or(false),
             artifact_key: None,
             app_env: std::env::var("APP_ENV").unwrap_or_else(|_| "dev".to_string()),
             created_at: get_utc_datetime(),
@@ -210,19 +193,14 @@ impl ModelCard {
     pub fn get_onnx_session<'py>(
         &self,
         py: Python<'py>,
-    ) -> PyResult<Option<Bound<'py, OnnxSession>>> {
+    ) -> Result<Option<Bound<'py, OnnxSession>>, CardError> {
         if let Some(interface) = self.interface.as_ref() {
-            let session = interface
-                .bind(py)
-                .getattr("onnx_session")
-                .map_err(|e| OpsmlError::new_err(e.to_string()))?;
+            let session = interface.bind(py).getattr("onnx_session")?;
 
             if session.is_none() {
                 Ok(None)
             } else {
-                let session = session
-                    .downcast::<OnnxSession>()
-                    .map_err(|e| OpsmlError::new_err(e.to_string()))?;
+                let session = session.downcast::<OnnxSession>()?;
                 Ok(Some(session.clone()))
             }
         } else {
@@ -261,19 +239,12 @@ impl ModelCard {
     }
 
     #[setter]
-    pub fn set_interface(&mut self, interface: &Bound<'_, PyAny>) -> PyResult<()> {
+    pub fn set_interface(&mut self, interface: &Bound<'_, PyAny>) -> Result<(), CardError> {
         if interface.is_instance_of::<ModelInterface>() {
-            self.interface = Some(
-                interface
-                    .into_py_any(interface.py())
-                    .map_err(|e| OpsmlError::new_err(e.to_string()))
-                    .unwrap(),
-            );
+            self.interface = Some(interface.into_py_any(interface.py())?);
             Ok(())
         } else {
-            Err(OpsmlError::new_err(
-                "interface must be an instance of ModelInterface",
-            ))
+            Err(CardError::MustBeModelInterfaceError)
         }
     }
 
@@ -293,24 +264,24 @@ impl ModelCard {
         let model = self
             .interface
             .as_ref()
-            .ok_or_else(|| CardError::Error("Model interface not found".to_string()))?;
+            .ok_or_else(|| CardError::InterfaceNotFoundError)?;
 
         // scouter integration: update drift config args
         self.update_drift_config_args(py)?;
 
         let metadata = model
             .bind(py)
-            .call_method("save", (path.clone(), self.to_onnx, save_kwargs), None)
-            .map_err(|e| {
+            .call_method("save", (path.clone(), save_kwargs), None)
+            .inspect_err(|e| {
                 error!("Failed to save model interface: {}", e);
-                e
             })?;
 
         // extract into ModelInterfaceMetadata
-        let interface_metadata = metadata.extract::<ModelInterfaceMetadata>().map_err(|e| {
-            error!("Failed to extract metadata: {}", e);
-            e
-        })?;
+        let interface_metadata = metadata
+            .extract::<ModelInterfaceMetadata>()
+            .inspect_err(|e| {
+                error!("Failed to extract metadata: {}", e);
+            })?;
 
         // update metadata
         self.metadata.interface_metadata = interface_metadata;
@@ -329,7 +300,7 @@ impl ModelCard {
         py: Python,
         path: Option<PathBuf>,
         load_kwargs: Option<ModelLoadKwargs>,
-    ) -> PyResult<()> {
+    ) -> Result<(), CardError> {
         let path = if let Some(p) = path {
             p
         } else {
@@ -358,7 +329,7 @@ impl ModelCard {
 
     #[allow(clippy::too_many_arguments)]
     #[pyo3(signature = (path=None))]
-    pub fn download_artifacts(&mut self, path: Option<PathBuf>) -> PyResult<()> {
+    pub fn download_artifacts(&mut self, path: Option<PathBuf>) -> Result<(), CardError> {
         let path = path.unwrap_or_else(|| PathBuf::from("card_artifacts"));
         self.download_all_artifacts(&path)?;
         Ok(())
@@ -374,10 +345,9 @@ impl ModelCard {
         py: Python,
         json_string: String,
         interface: Option<&Bound<'_, PyAny>>,
-    ) -> PyResult<ModelCard> {
-        let mut card: ModelCard = serde_json::from_str(&json_string).map_err(|e| {
+    ) -> Result<ModelCard, CardError> {
+        let mut card: ModelCard = serde_json::from_str(&json_string).inspect_err(|e| {
             error!("Failed to validate json: {}", e);
-            OpsmlError::new_err(e.to_string())
         })?;
 
         card.load_interface(py, interface)?;
@@ -434,27 +404,20 @@ impl ModelCard {
     /// This will result in an error if the interface is not set and
     /// the model is not available.
     #[getter]
-    pub fn model<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyAny>> {
+    pub fn model<'py>(&self, py: Python<'py>) -> Result<Bound<'py, PyAny>, CardError> {
         if let Some(interface) = self.interface.as_ref() {
             // get property "model" from interface
-            let model = interface
-                .bind(py)
-                .getattr("model")
-                .map_err(|e| OpsmlError::new_err(e.to_string()))?;
+            let model = interface.bind(py).getattr("model")?;
 
             // check if model is None
             if model.is_none() {
-                Err(OpsmlError::new_err(
-                    "Model has not been set. Load the model and retry.",
-                ))
+                Err(CardError::ModelNotSetError)
             // return model
             } else {
                 Ok(model)
             }
         } else {
-            Err(OpsmlError::new_err(
-                "Model interface not found. Load the interface and retry.",
-            ))
+            Err(CardError::InterfaceNotFoundError)
         }
     }
 }
@@ -463,7 +426,7 @@ impl ModelCard {
     pub fn set_artifact_key(&mut self, key: ArtifactKey) {
         self.artifact_key = Some(key);
     }
-    fn update_drift_config_args(&self, py: Python) -> PyResult<()> {
+    fn update_drift_config_args(&self, py: Python) -> Result<(), CardError> {
         let interface = self.interface.as_ref().unwrap().bind(py);
         let drift_profiles = interface.getattr("drift_profile")?;
         // downcast to list
@@ -488,13 +451,16 @@ impl ModelCard {
         }
     }
 
-    fn load_interface(&mut self, py: Python, interface: Option<&Bound<'_, PyAny>>) -> PyResult<()> {
+    fn load_interface(
+        &mut self,
+        py: Python,
+        interface: Option<&Bound<'_, PyAny>>,
+    ) -> Result<(), CardError> {
         if let Some(interface) = interface {
             // this for custom interfaces (uninstantiated)
 
             let interface = interface
-                .call_method1("from_metadata", (self.metadata.interface_metadata.clone(),))
-                .map_err(|e| OpsmlError::new_err(e.to_string()))?;
+                .call_method1("from_metadata", (self.metadata.interface_metadata.clone(),))?;
 
             self.set_interface(&interface)
         } else {
@@ -520,7 +486,6 @@ impl Serialize for ModelCard {
         state.serialize_field("tags", &self.tags)?;
         state.serialize_field("metadata", &self.metadata)?;
         state.serialize_field("registry_type", &self.registry_type)?;
-        state.serialize_field("to_onnx", &self.to_onnx)?;
         state.serialize_field("created_at", &self.created_at)?;
         state.serialize_field("app_env", &self.app_env)?;
         state.serialize_field("is_card", &self.is_card)?;
@@ -540,7 +505,6 @@ impl FromPyObject<'_> for ModelCard {
         let tags = ob.getattr("tags")?.extract()?;
         let metadata = ob.getattr("metadata")?.extract()?;
         let registry_type = ob.getattr("registry_type")?.extract()?;
-        let to_onnx = ob.getattr("to_onnx")?.extract()?;
         let created_at = ob.getattr("created_at")?.extract()?;
         let app_env = ob.getattr("app_env")?.extract()?;
         let opsml_version = ob.getattr("opsml_version")?.extract()?;
@@ -554,7 +518,6 @@ impl FromPyObject<'_> for ModelCard {
             tags,
             metadata,
             registry_type,
-            to_onnx,
             artifact_key: None,
             app_env,
             created_at,
@@ -580,7 +543,6 @@ impl<'de> Deserialize<'de> for ModelCard {
             Tags,
             Metadata,
             RegistryType,
-            ToOnnx,
             AppEnv,
             CreatedAt,
             IsCard,
@@ -608,7 +570,6 @@ impl<'de> Deserialize<'de> for ModelCard {
                 let mut tags = None;
                 let mut metadata = None;
                 let mut registry_type = None;
-                let mut to_onnx = None;
                 let mut app_env = None;
                 let mut created_at = None;
                 let mut is_card = None;
@@ -642,9 +603,6 @@ impl<'de> Deserialize<'de> for ModelCard {
                         Field::RegistryType => {
                             registry_type = Some(map.next_value()?);
                         }
-                        Field::ToOnnx => {
-                            to_onnx = Some(map.next_value()?);
-                        }
                         Field::AppEnv => {
                             app_env = Some(map.next_value()?);
                         }
@@ -668,7 +626,6 @@ impl<'de> Deserialize<'de> for ModelCard {
                 let metadata = metadata.ok_or_else(|| de::Error::missing_field("metadata"))?;
                 let registry_type =
                     registry_type.ok_or_else(|| de::Error::missing_field("registry_type"))?;
-                let to_onnx = to_onnx.ok_or_else(|| de::Error::missing_field("to_onnx"))?;
                 let app_env = app_env.ok_or_else(|| de::Error::missing_field("app_env"))?;
                 let created_at =
                     created_at.ok_or_else(|| de::Error::missing_field("created_at"))?;
@@ -685,7 +642,6 @@ impl<'de> Deserialize<'de> for ModelCard {
                     tags,
                     metadata,
                     registry_type,
-                    to_onnx,
                     artifact_key: None,
                     app_env,
                     created_at,
@@ -704,7 +660,6 @@ impl<'de> Deserialize<'de> for ModelCard {
             "tags",
             "metadata",
             "registry_type",
-            "to_onnx",
             "app_env",
             "created_at",
             "is_card",
@@ -717,7 +672,7 @@ impl<'de> Deserialize<'de> for ModelCard {
 impl ModelCard {
     fn get_decryption_key(&self) -> Result<Vec<u8>, CardError> {
         if self.artifact_key.is_none() {
-            Err(CardError::Error("Decryption key not found".to_string()))
+            Err(CardError::DecryptionKeyNotFoundError)
         } else {
             Ok(self.artifact_key.as_ref().unwrap().get_decrypt_key()?)
         }
@@ -726,9 +681,7 @@ impl ModelCard {
         let decrypt_key = self.get_decryption_key()?;
         let uri = self.artifact_key.as_ref().unwrap().storage_path();
 
-        storage_client()?
-            .get(lpath, &uri, true)
-            .map_err(|e| CardError::Error(format!("Failed to download artifacts: {}", e)))?;
+        storage_client()?.get(lpath, &uri, true)?;
 
         decrypt_directory(lpath, &decrypt_key)?;
 

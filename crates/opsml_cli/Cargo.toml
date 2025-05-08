@@ -8,7 +8,6 @@ repository = { workspace = true }
 opsml-cards = { workspace = true }
 opsml-colors = { workspace = true }
 opsml-crypt = { workspace = true }
-opsml-error = { workspace = true }
 opsml-registry = { workspace = true }
 opsml-semver = { workspace = true }
 opsml-state = { workspace = true }
@@ -26,11 +25,11 @@ pyo3 = { workspace = true }
 reqwest = { workspace = true }
 serde = { workspace = true }
 tabled = { workspace = true }
+thiserror = { workspace = true }
 tracing = { workspace = true }
 zip = { workspace = true }
 
-
-
+# this should only be downloaded for linux deps
 [target.'cfg(target_os = "linux")'.dependencies]
 flate2 = "1.*"
 tar = "*"

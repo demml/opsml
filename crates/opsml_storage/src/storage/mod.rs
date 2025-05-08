@@ -8,6 +8,7 @@ pub mod enums;
 pub mod gcs;
 
 pub mod base;
+pub mod error;
 pub mod filesystem;
 pub mod http;
 pub mod local;

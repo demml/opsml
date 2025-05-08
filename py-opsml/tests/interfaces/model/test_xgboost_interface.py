@@ -1,4 +1,4 @@
-from opsml.model import XGBoostModel, ModelType, ModelLoadKwargs
+from opsml.model import XGBoostModel, ModelType, ModelLoadKwargs, ModelSaveKwargs
 import xgboost as xgb
 from typing import Tuple
 from pathlib import Path
@@ -18,7 +18,7 @@ def test_xgboost_model_interface(
 
     assert interface.model_type == ModelType.XgbBooster
 
-    metadata = interface.save(save_path, True)
+    metadata = interface.save(save_path, ModelSaveKwargs(save_onnx=True))
 
     interface.model = None
     assert interface.model is None

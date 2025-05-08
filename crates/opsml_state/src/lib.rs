@@ -1,5 +1,6 @@
+pub mod error;
+pub use error::StateError;
 use opsml_client::base::{build_api_client, OpsmlApiClient};
-use opsml_error::error::StateError;
 use opsml_settings::OpsmlConfig;
 use opsml_settings::OpsmlMode;
 use opsml_toml::{OpsmlTools, PyProjectToml};
@@ -8,9 +9,7 @@ use std::sync::Arc;
 use std::sync::OnceLock;
 use std::sync::RwLock;
 use tokio::runtime::Runtime;
-use tracing::{debug, error};
-
-//    pub api_client: Arc<OpsmlApiClient>,
+use tracing::debug;
 
 pub struct OpsmlState {
     pub config: RwLock<OpsmlConfig>,
@@ -23,10 +22,7 @@ impl OpsmlState {
     fn new() -> Result<Self, StateError> {
         let config = OpsmlConfig::new();
 
-        let runtime = Arc::new(Runtime::new().map_err(|e| {
-            error!("Failed to create runtime: {}", e);
-            StateError::Error(format!("Failed to create runtime with error: {}", e))
-        })?);
+        let runtime = Arc::new(Runtime::new().map_err(StateError::RuntimeError)?);
         // Initialize tools from pyproject.toml
 
         let tools = Self::load_tools(&config.base_path)?;
@@ -55,19 +51,19 @@ impl OpsmlState {
     pub fn tools(&self) -> Result<std::sync::RwLockReadGuard<'_, Option<OpsmlTools>>, StateError> {
         self.tools
             .read()
-            .map_err(|e| StateError::Error(format!("Failed to read tools: {}", e)))
+            .map_err(|e| StateError::ReadToolsError(e.to_string()))
     }
 
     pub fn config(&self) -> Result<std::sync::RwLockReadGuard<'_, OpsmlConfig>, StateError> {
         self.config
             .read()
-            .map_err(|e| StateError::Error(format!("Failed to read config: {}", e)))
+            .map_err(|e| StateError::ReadConfigError(e.to_string()))
     }
 
     pub fn mode(&self) -> Result<std::sync::RwLockReadGuard<'_, OpsmlMode>, StateError> {
         self.mode
             .read()
-            .map_err(|e| StateError::Error(format!("Failed to read mode: {}", e)))
+            .map_err(|e| StateError::ReadModeError(e.to_string()))
     }
 
     pub fn reset_mode(&self) -> Result<(), StateError> {
@@ -78,7 +74,7 @@ impl OpsmlState {
         let mut mode = self
             .mode
             .write()
-            .map_err(|e| StateError::Error(format!("Failed to write mode: {}", e)))?;
+            .map_err(|e| StateError::ReadModeError(e.to_string()))?;
         *mode = new_mode;
         Ok(())
     }
@@ -87,7 +83,7 @@ impl OpsmlState {
         let mut config = self
             .config
             .write()
-            .map_err(|e| StateError::Error(format!("Failed to write config: {}", e)))?;
+            .map_err(|e| StateError::WriteConfigError(e.to_string()))?;
 
         *config = OpsmlConfig::new();
         Ok(())
@@ -99,7 +95,7 @@ impl OpsmlState {
         let mut tools_lock = self
             .tools
             .write()
-            .map_err(|e| StateError::Error(format!("Failed to write tools: {}", e)))?;
+            .map_err(|e| StateError::WriteToolsError(e.to_string()))?;
         *tools_lock = tools;
         debug!("Tools reset to: {:?}", tools_lock);
         Ok(())
@@ -131,14 +127,7 @@ static INSTANCE: OnceLock<OpsmlState> = OnceLock::new();
 // Global accessor
 // Then modify your app_state() to use this runtime
 pub fn app_state() -> &'static OpsmlState {
-    INSTANCE.get_or_init(|| {
-        OpsmlState::new()
-            .map_err(|e| {
-                error!("Failed to get state: {}", e);
-                StateError::Error(format!("Failed to get state with error: {}", e))
-            })
-            .expect("Failed to initialize state")
-    })
+    INSTANCE.get_or_init(|| OpsmlState::new().expect("Failed to initialize state"))
 }
 
 static API_CLIENT: OnceLock<Arc<OpsmlApiClient>> = OnceLock::new();
@@ -150,19 +139,10 @@ pub fn get_api_client() -> &'static Arc<OpsmlApiClient> {
 
         let settings = config
             .storage_settings()
-            .map_err(|e| {
-                error!("Failed to get storage settings: {}", e);
-                StateError::Error(format!("Failed to get storage settings with error: {}", e))
-            })
             .expect("Failed to get storage settings");
 
         // Initialize API client
-        let api_client = build_api_client(&settings)
-            .map_err(|e| {
-                error!("Failed to create api client: {}", e);
-                StateError::Error(format!("Failed to create api client with error: {}", e))
-            })
-            .expect("Failed to create api client");
+        let api_client = build_api_client(&settings).expect("Failed to create api client");
 
         Arc::new(api_client)
     })

@@ -1,8 +1,8 @@
+use crate::error::CardError;
 use crate::traits::OpsmlCard;
 use crate::utils::BaseArgs;
 use crate::{DataCard, ExperimentCard, ModelCard, PromptCard};
 use chrono::{DateTime, Utc};
-use opsml_error::{CardError, OpsmlError};
 use opsml_interfaces::{DataLoadKwargs, ModelLoadKwargs};
 use opsml_types::contracts::CardEntry;
 use opsml_types::CommonKwargs;
@@ -62,22 +62,22 @@ impl Card {
         version: Option<&str>,
         uid: Option<&str>,
         card: Option<Bound<'_, PyAny>>,
-    ) -> PyResult<Self> {
+    ) -> Result<Self, CardError> {
         // if card is not None, then set the registry_type and alias
         if let Some(card) = card {
             let registry_type = extract_py_attr::<RegistryType>(&card, "registry_type")?;
 
             let uid = extract_py_attr::<Option<String>>(&card, "uid")?
-                .ok_or_else(|| CardError::MissingAttribute("uid".to_string()))?;
+                .ok_or_else(|| CardError::MissingAttributeError("uid".to_string()))?;
 
             let name = extract_py_attr::<Option<String>>(&card, "name")?
-                .ok_or_else(|| CardError::MissingAttribute("name".to_string()))?;
+                .ok_or_else(|| CardError::MissingAttributeError("name".to_string()))?;
 
             let space = extract_py_attr::<Option<String>>(&card, "space")?
-                .ok_or_else(|| CardError::MissingAttribute("space".to_string()))?;
+                .ok_or_else(|| CardError::MissingAttributeError("space".to_string()))?;
 
             let version = extract_py_attr::<Option<String>>(&card, "version")?
-                .ok_or_else(|| CardError::MissingAttribute("version".to_string()))?;
+                .ok_or_else(|| CardError::MissingAttributeError("version".to_string()))?;
 
             return Ok(Card {
                 space,
@@ -94,7 +94,7 @@ impl Card {
             Some(registry_type) => registry_type,
             None => {
                 error!("Registry type is required unless a registered card is provided");
-                return Err(OpsmlError::new_err("Registry type is required"));
+                return Err(CardError::MissingRegistryTypeError);
             }
         };
 
@@ -104,9 +104,7 @@ impl Card {
 
         if !has_space_or_name && !has_uid {
             error!("Either space/name or uid must be provided");
-            return Err(OpsmlError::new_err(
-                "Either space/name or uid must be provided",
-            ));
+            return Err(CardError::MissingCardDeckArgsError);
         }
 
         Ok(Card {
@@ -179,23 +177,20 @@ pub struct CardList {
 
 #[pymethods]
 impl CardList {
-    fn __iter__(slf: PyRef<'_, Self>) -> PyResult<Py<CardListIter>> {
+    fn __iter__(slf: PyRef<'_, Self>) -> Result<Py<CardListIter>, CardError> {
         let iter = CardListIter {
             inner: slf.cards.clone().into_iter(),
         };
-        Py::new(slf.py(), iter)
+        Ok(Py::new(slf.py(), iter)?)
     }
 
     pub fn __len__(&self) -> usize {
         self.cards.len()
     }
 
-    pub fn __getitem__(&self, index: usize) -> PyResult<Card> {
+    pub fn __getitem__(&self, index: usize) -> Result<Card, CardError> {
         if index >= self.cards.len() {
-            return Err(OpsmlError::new_err(format!(
-                "Index out of bounds: {}",
-                index
-            )));
+            return Err(CardError::IndexOutOfBoundsError(index));
         }
         Ok(self.cards[index].clone())
     }
@@ -278,16 +273,10 @@ impl CardDeck {
         name: &str,
         cards: Vec<Card>, // can be Vec<Card> or Vec<ModelCard, DataCard, etc.>
         version: Option<&str>,
-    ) -> PyResult<Self> {
+    ) -> Result<Self, CardError> {
         let registry_type = RegistryType::Deck;
         let base_args =
-            BaseArgs::create_args(Some(name), Some(space), version, None, &registry_type).map_err(
-                |e| {
-                    let msg = format!("Failed to create base args for CardDeck: {}", e);
-                    error!(msg);
-                    OpsmlError::new_err(msg)
-                },
-            )?;
+            BaseArgs::create_args(Some(name), Some(space), version, None, &registry_type)?;
 
         Ok(CardDeck {
             space: base_args.0,
@@ -321,7 +310,7 @@ impl CardDeck {
         &mut self,
         py: Python<'py>,
         load_kwargs: Option<HashMap<String, Bound<'_, PyAny>>>,
-    ) -> PyResult<()> {
+    ) -> Result<(), CardError> {
         debug!("Loading CardDeck: {}", self.name);
 
         // iterate over card_objs and call load (only for datacard and modelcard)
@@ -364,11 +353,10 @@ impl CardDeck {
 
     #[staticmethod]
     #[pyo3(signature = (json_string))]
-    pub fn model_validate_json(json_string: String) -> PyResult<CardDeck> {
-        serde_json::from_str(&json_string).map_err(|e| {
+    pub fn model_validate_json(json_string: String) -> Result<CardDeck, CardError> {
+        Ok(serde_json::from_str(&json_string).inspect_err(|e| {
             error!("Failed to validate json: {}", e);
-            OpsmlError::new_err(e.to_string())
-        })
+        })?)
     }
 
     fn __traverse__(&self, visit: PyVisit) -> Result<(), PyTraverseError> {
@@ -400,13 +388,14 @@ impl CardDeck {
     }
 
     /// enable __getitem__ for CardDeck alias calls
-    pub fn __getitem__<'py>(&self, py: Python<'py>, key: &str) -> PyResult<Bound<'py, PyAny>> {
+    pub fn __getitem__<'py>(
+        &self,
+        py: Python<'py>,
+        key: &str,
+    ) -> Result<Bound<'py, PyAny>, CardError> {
         match self.card_objs.get(key) {
             Some(value) => Ok(value.clone_ref(py).into_bound(py)),
-            None => Err(OpsmlError::new_err(format!(
-                "KeyError: key '{}' not found in CardDeck",
-                key
-            ))),
+            None => Err(CardError::CardDeckKeyError(key.to_string())),
         }
     }
 
@@ -418,21 +407,24 @@ impl CardDeck {
     /// Path follows the format: `card_deck/{name}-{version}/{alias}`.
     ///
     /// # Returns
-    /// Returns `PyResult<()>` indicating success or failure.
+    /// Returns `Result<()>` indicating success or failure.
     ///
     /// # Errors
-    /// Will return `PyResult::Err` if:
+    /// Will return `Result::Err` if:
     /// - The path cannot be created or written to.
     /// - The artifacts cannot be downloaded.
     #[pyo3(signature = (path=None))]
-    pub fn download_artifacts(&mut self, py: Python, path: Option<PathBuf>) -> PyResult<()> {
+    pub fn download_artifacts(
+        &mut self,
+        py: Python,
+        path: Option<PathBuf>,
+    ) -> Result<(), CardError> {
         let base_path = path.unwrap_or_else(|| PathBuf::from("card_deck"));
 
         // delete the path if it exists
         if base_path.exists() {
-            std::fs::remove_dir_all(&base_path).map_err(|e| {
+            std::fs::remove_dir_all(&base_path).inspect_err(|e| {
                 error!("Failed to remove directory: {}", e);
-                OpsmlError::new_err(e.to_string())
             })?;
         }
 
@@ -492,10 +484,10 @@ impl CardDeck {
     /// ```
     ///
     /// # Returns
-    /// Returns `PyResult<CardDeck>` containing the loaded card deck or an error
+    /// Returns `Result<CardDeck>` containing the loaded card deck or an error
     ///
     /// # Errors
-    /// Will return `PyResult::Err` if:
+    /// Will return `Result::Err` if:
     /// - Card deck JSON file cannot be read
     /// - Individual card files cannot be loaded
     /// - Invalid kwargs are provided
@@ -505,16 +497,15 @@ impl CardDeck {
         py: Python,
         path: Option<PathBuf>,
         load_kwargs: Option<&Bound<'_, PyDict>>,
-    ) -> PyResult<CardDeck> {
+    ) -> Result<CardDeck, CardError> {
         let path = path.unwrap_or_else(|| PathBuf::from(SaveName::CardDeck));
 
         // check path exists
         if !path.exists() {
             error!("Path does not exist: {:?}", path);
-            return Err(OpsmlError::new_err(format!(
-                "Path does not exist: {:?}",
-                path
-            )));
+            return Err(CardError::PathDoesNotExistError(
+                path.to_string_lossy().to_string(),
+            ));
         }
 
         let mut card_deck = Self::load_card_deck_json(&path)?;
@@ -538,13 +529,12 @@ impl CardDeck {
         base_path: &Path,
         card: &Card,
         load_kwargs: Option<&Bound<'_, PyDict>>,
-    ) -> PyResult<PyObject> {
+    ) -> Result<PyObject, CardError> {
         let card_path = base_path.join(&card.alias);
 
-        let (interface, load_kwargs) =
-            Self::extract_kwargs(py, load_kwargs, &card.alias).map_err(|e| {
+        let (interface, load_kwargs) = Self::extract_kwargs(py, load_kwargs, &card.alias)
+            .inspect_err(|e| {
                 error!("Failed to extract kwargs: {}", e);
-                OpsmlError::new_err(e.to_string())
             })?;
 
         let card_json = Self::read_card_json(&card_path)?;
@@ -560,20 +550,18 @@ impl CardDeck {
             RegistryType::Prompt => Self::load_prompt_card(&card_json)?,
             _ => {
                 error!("Unsupported registry type: {:?}", card.registry_type);
-                return Err(OpsmlError::new_err(format!(
-                    "Unsupported registry type: {:?}",
-                    card.registry_type
-                )));
+                return Err(CardError::UnsupportedRegistryTypeError(
+                    card.registry_type.clone(),
+                ));
             }
         };
 
         Ok(card_obj)
     }
-    pub fn load_card_deck_json(path: &Path) -> PyResult<CardDeck> {
+    pub fn load_card_deck_json(path: &Path) -> Result<CardDeck, CardError> {
         let card_deck_path = path.join(SaveName::Card).with_extension(Suffix::Json);
-        let json_string = std::fs::read_to_string(card_deck_path).map_err(|e| {
+        let json_string = std::fs::read_to_string(card_deck_path).inspect_err(|e| {
             error!("Failed to read file: {}", e);
-            OpsmlError::new_err(e.to_string())
         })?;
         Self::model_validate_json(json_string)
     }
@@ -582,7 +570,7 @@ impl CardDeck {
         py: Python<'py>,
         kwargs: Option<&Bound<'py, PyDict>>,
         alias: &str,
-    ) -> PyResult<ExtractedKwargs<'py>> {
+    ) -> Result<ExtractedKwargs<'py>, CardError> {
         let card_kwargs = kwargs
             .and_then(|kwargs| kwargs.get_item(alias).ok())
             .and_then(|bound| match bound {
@@ -612,9 +600,10 @@ impl CardDeck {
         }
     }
 
-    fn read_card_json(card_path: &Path) -> PyResult<String> {
-        std::fs::read_to_string(card_path.join(SaveName::Card).with_extension(Suffix::Json))
-            .map_err(|e| OpsmlError::new_err(e.to_string()))
+    fn read_card_json(card_path: &Path) -> Result<String, CardError> {
+        Ok(std::fs::read_to_string(
+            card_path.join(SaveName::Card).with_extension(Suffix::Json),
+        )?)
     }
 
     fn load_data_card(
@@ -623,20 +612,20 @@ impl CardDeck {
         card_path: PathBuf,
         interface: Option<Bound<'_, PyAny>>,
         load_kwargs: Option<Bound<'_, PyAny>>,
-    ) -> PyResult<PyObject> {
+    ) -> Result<PyObject, CardError> {
         let mut card_obj =
             DataCard::model_validate_json(py, card_json.to_string(), interface.as_ref())?;
         let kwargs = load_kwargs.and_then(|kwargs| kwargs.extract::<DataLoadKwargs>().ok());
 
-        card_obj.load(py, Some(card_path), kwargs).map_err(|e| {
-            error!("Failed to load card: {}", e);
-            OpsmlError::new_err(e.to_string())
-        })?;
+        card_obj
+            .load(py, Some(card_path), kwargs)
+            .inspect_err(|e| {
+                error!("Failed to load card: {}", e);
+            })?;
 
-        card_obj.into_py_any(py).map_err(|e| {
+        Ok(card_obj.into_py_any(py).inspect_err(|e| {
             error!("Failed to convert card to PyAny: {}", e);
-            OpsmlError::new_err(e.to_string())
-        })
+        })?)
     }
 
     fn load_model_card(
@@ -645,40 +634,30 @@ impl CardDeck {
         card_path: PathBuf,
         interface: Option<Bound<'_, PyAny>>,
         load_kwargs: Option<Bound<'_, PyAny>>,
-    ) -> PyResult<PyObject> {
+    ) -> Result<PyObject, CardError> {
         let mut card_obj =
             ModelCard::model_validate_json(py, card_json.to_string(), interface.as_ref())?;
         let kwargs = load_kwargs.and_then(|kwargs| kwargs.extract::<ModelLoadKwargs>().ok());
 
-        card_obj.load(py, Some(card_path), kwargs).map_err(|e| {
-            error!("Failed to load card: {}", e);
-            OpsmlError::new_err(e.to_string())
-        })?;
+        card_obj
+            .load(py, Some(card_path), kwargs)
+            .inspect_err(|e| {
+                error!("Failed to load card: {}", e);
+            })?;
 
-        card_obj.into_py_any(py).map_err(|e| {
+        Ok(card_obj.into_py_any(py).inspect_err(|e| {
             error!("Failed to convert card to PyAny: {}", e);
-            OpsmlError::new_err(e.to_string())
-        })
+        })?)
     }
 
-    fn load_experiment_card(card_json: &str) -> PyResult<PyObject> {
+    fn load_experiment_card(card_json: &str) -> Result<PyObject, CardError> {
         let card_obj = ExperimentCard::model_validate_json(card_json.to_string())?;
-        Python::with_gil(|py| {
-            card_obj.into_py_any(py).map_err(|e| {
-                error!("Failed to convert card to PyAny: {}", e);
-                OpsmlError::new_err(e.to_string())
-            })
-        })
+        Python::with_gil(|py| Ok(card_obj.into_py_any(py)?))
     }
 
-    fn load_prompt_card(card_json: &str) -> PyResult<PyObject> {
+    fn load_prompt_card(card_json: &str) -> Result<PyObject, CardError> {
         let card_obj = PromptCard::model_validate_json(card_json.to_string())?;
-        Python::with_gil(|py| {
-            card_obj.into_py_any(py).map_err(|e| {
-                error!("Failed to convert card to PyAny: {}", e);
-                OpsmlError::new_err(e.to_string())
-            })
-        })
+        Python::with_gil(|py| Ok(card_obj.into_py_any(py)?))
     }
 }
 
@@ -692,12 +671,7 @@ impl CardDeck {
     ) -> Result<CardDeck, CardError> {
         let registry_type = RegistryType::Deck;
         let base_args =
-            BaseArgs::create_args(Some(&name), Some(&space), version, None, &registry_type)
-                .map_err(|e| {
-                    let msg = format!("Failed to create base args for CardDeck: {}", e);
-                    error!(msg);
-                    CardError::TypeError(e)
-                })?;
+            BaseArgs::create_args(Some(&name), Some(&space), version, None, &registry_type)?;
 
         Ok(CardDeck {
             space: base_args.0,

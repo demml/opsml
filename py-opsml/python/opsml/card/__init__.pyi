@@ -364,7 +364,6 @@ class ModelCard:
         tags: List[str] = [],
         datacard_uid: Optional[str] = None,
         metadata: ModelCardMetadata = ModelCardMetadata(),
-        to_onnx: bool = False,
     ) -> None:
         """Create a ModelCard from a machine learning model.
 
@@ -391,8 +390,6 @@ class ModelCard:
                 model card to the data card. Datacard uid can also be set in card metadata.
             metadata (ModelCardMetadata):
                 Metadata to associate with the `ModelCard. Defaults to an empty `ModelCardMetadata` object.
-            to_onnx:
-                Whether to convert the model to onnx or not during registration
 
         Example:
         ```python
@@ -420,12 +417,11 @@ class ModelCard:
             interface=random_forest_classifier,
             space="my-repo",
             name="my-model",
-            to_onnx=True, # auto-convert to onnx
             tags=["foo:bar", "baz:qux"],
         )
 
         # register card
-        registry = CardRegistry(RegistryType.Model)
+        registry = CardRegistry(RegistryType.Model, save_kwargs=ModelSaveKwargs(save_onnx=True)) # convert to onnx
         registry.register_card(modelcard)
         ```
         """

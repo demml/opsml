@@ -1,4 +1,4 @@
-from opsml.model import LightningModel, ModelLoadKwargs
+from opsml.model import LightningModel, ModelLoadKwargs, ModelSaveKwargs
 from opsml.data import DataType
 import lightning as L
 import torch
@@ -40,7 +40,7 @@ def test_lightning_regression(
     assert interface.model is None
     assert interface.trainer is not None
 
-    metadata = interface.save(save_path, True)
+    metadata = interface.save(save_path, ModelSaveKwargs(save_onnx=True))
 
     interface.load(
         save_path,
@@ -67,7 +67,7 @@ def test_lightning_classification(
     assert interface.model is None
     assert interface.trainer is not None
 
-    metadata = interface.save(save_path, True)
+    metadata = interface.save(save_path, ModelSaveKwargs(save_onnx=True))
 
     interface.load(
         save_path,

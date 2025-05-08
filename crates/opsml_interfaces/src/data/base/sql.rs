@@ -2,7 +2,7 @@ use crate::data::{
     DataInterface, DataInterfaceMetadata, DataInterfaceSaveMetadata, DataLoadKwargs,
     DataSaveKwargs, SqlLogic,
 };
-use opsml_error::OpsmlError;
+use crate::error::DataInterfaceError;
 use opsml_types::DataInterfaceType;
 use pyo3::prelude::*;
 use pyo3::IntoPyObjectExt;
@@ -22,7 +22,7 @@ impl SqlData {
         py: Python,
         sql_logic: SqlLogic,
         data_profile: Option<DataProfile>,
-    ) -> PyResult<(Self, DataInterface)> {
+    ) -> Result<(Self, DataInterface), DataInterfaceError> {
         // check if data is a numpy array
 
         let mut data_interface =
@@ -39,7 +39,7 @@ impl SqlData {
         py: Python,
         path: PathBuf,
         save_kwargs: Option<DataSaveKwargs>,
-    ) -> PyResult<DataInterfaceMetadata> {
+    ) -> Result<DataInterfaceMetadata, DataInterfaceError> {
         let sql_uri = self_.as_super().save_sql(path.clone())?;
         let data_profile_uri = if self_.as_super().data_profile.is_none() {
             None
@@ -76,7 +76,7 @@ impl SqlData {
         path: PathBuf,
         metadata: DataInterfaceSaveMetadata,
         load_kwargs: Option<DataLoadKwargs>,
-    ) -> PyResult<()> {
+    ) -> Result<(), DataInterfaceError> {
         Ok(())
     }
 
@@ -86,10 +86,8 @@ impl SqlData {
         _py: Python,
         _bin_size: Option<usize>,
         _compute_correlations: Option<bool>,
-    ) -> PyResult<DataProfile> {
-        Err(OpsmlError::new_err(
-            "Data profiling not supported for Torch data",
-        ))
+    ) -> Result<DataProfile, DataInterfaceError> {
+        Err(DataInterfaceError::DataTypeNotSupportedForProfilingError)
     }
 }
 
@@ -97,7 +95,7 @@ impl SqlData {
     pub fn from_metadata<'py>(
         py: Python<'py>,
         metadata: &DataInterfaceMetadata,
-    ) -> PyResult<Bound<'py, PyAny>> {
+    ) -> Result<Bound<'py, PyAny>, DataInterfaceError> {
         let interface = DataInterface {
             data_type: metadata.data_type.clone(),
             interface_type: metadata.interface_type.clone(),
@@ -111,6 +109,6 @@ impl SqlData {
 
         let data_interface = SqlData {};
 
-        Py::new(py, (data_interface, interface))?.into_bound_py_any(py)
+        Ok(Py::new(py, (data_interface, interface))?.into_bound_py_any(py)?)
     }
 }

@@ -5,9 +5,9 @@ use crate::storage::local::client::{LocalFSStorageClient, LocalMultiPartUpload};
 
 use crate::storage::aws::client::{AWSMulitPartUpload, S3FStorageClient};
 use crate::storage::azure::client::{AzureFSStorageClient, AzureMultipartUpload};
+use crate::storage::error::StorageError;
 use crate::storage::gcs::client::{GCSFSStorageClient, GoogleMultipartUpload};
 use anyhow::{Context, Result as AnyhowResult};
-use opsml_error::error::StorageError;
 use opsml_settings::config::{OpsmlConfig, OpsmlStorageSettings};
 use opsml_types::contracts::CompleteMultipartUpload;
 use opsml_types::contracts::FileInfo;
@@ -41,22 +41,17 @@ impl MultiPartUploader {
         chunk_size: u64,
     ) -> Result<(), StorageError> {
         match self {
-            MultiPartUploader::Google(uploader) => {
-                uploader
-                    .upload_file_in_chunks(chunk_count, size_of_last_chunk, chunk_size)
-                    .await
-            }
-            MultiPartUploader::AWS(uploader) => {
-                uploader
-                    .upload_file_in_chunks(chunk_count, size_of_last_chunk)
-                    .await
-            }
-            MultiPartUploader::Local(uploader) => uploader.upload_file_in_chunks().await,
-            MultiPartUploader::Azure(uploader) => {
-                uploader
-                    .upload_file_in_chunks(chunk_count, size_of_last_chunk, chunk_size)
-                    .await
-            }
+            MultiPartUploader::Google(uploader) => Ok(uploader
+                .upload_file_in_chunks(chunk_count, size_of_last_chunk, chunk_size)
+                .await?),
+            MultiPartUploader::AWS(uploader) => Ok(uploader
+                .upload_file_in_chunks(chunk_count, size_of_last_chunk)
+                .await?),
+
+            MultiPartUploader::Local(uploader) => Ok(uploader.upload_file_in_chunks().await?),
+            MultiPartUploader::Azure(uploader) => Ok(uploader
+                .upload_file_in_chunks(chunk_count, size_of_last_chunk, chunk_size)
+                .await?),
         }
     }
 }
@@ -222,11 +217,9 @@ impl StorageClientEnum {
         match self {
             StorageClientEnum::Google(_client) => Ok(session_url),
 
-            StorageClientEnum::AWS(client) => {
-                client
-                    .generate_presigned_url_for_part(part_number, path, &session_url)
-                    .await
-            }
+            StorageClientEnum::AWS(client) => Ok(client
+                .generate_presigned_url_for_part(part_number, path, &session_url)
+                .await?),
             StorageClientEnum::Local(_client) => Ok(session_url),
             StorageClientEnum::Azure(_client) => Ok(session_url),
         }
@@ -242,7 +235,7 @@ impl StorageClientEnum {
 
             StorageClientEnum::AWS(client) => {
                 // aws returns the session uri
-                client.create_multipart_upload(path).await
+                Ok(client.create_multipart_upload(path).await?)
             }
             StorageClientEnum::Local(client) => {
                 // local returns the path
@@ -252,7 +245,7 @@ impl StorageClientEnum {
 
             StorageClientEnum::Azure(client) => {
                 // azure returns the session uri
-                client.create_multipart_upload(path).await
+                Ok(client.create_multipart_upload(path).await?)
             }
         }
     }

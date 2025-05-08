@@ -169,7 +169,6 @@ export interface ModelCard {
   tags: string[];
   metadata: ModelCardMetadata;
   registry_type: RegistryType.Model;
-  to_onnx: boolean;
   app_env: string;
   created_at: string; // ISO datetime string
   is_card: boolean;

@@ -1,3 +1,4 @@
+pub mod error;
 pub mod experiment;
 pub mod hardware_queue;
 

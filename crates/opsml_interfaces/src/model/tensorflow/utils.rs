@@ -1,9 +1,9 @@
 use crate::data::{DataInterface, NumpyData};
+use crate::error::{OnnxError, SampleDataError};
 use crate::model::{
     base::{get_class_full_name, load_from_joblib, save_to_joblib, OnnxExtension},
     InterfaceDataType,
 };
-use opsml_error::OpsmlError;
 use opsml_types::{DataType, ModelType};
 use pyo3::types::{PyDict, PyList, PyListMethods, PyTuple, PyTupleMethods};
 use pyo3::IntoPyObjectExt;
@@ -45,7 +45,7 @@ impl TensorFlowSampleData {
     ///
     /// # Returns
     ///
-    pub fn new(data: &Bound<'_, PyAny>) -> PyResult<Self> {
+    pub fn new(data: &Bound<'_, PyAny>) -> Result<Self, SampleDataError> {
         let py = data.py();
 
         if data.is_instance_of::<DataInterface>() {
@@ -77,14 +77,14 @@ impl TensorFlowSampleData {
         Ok(TensorFlowSampleData::None)
     }
 
-    fn handle_tensor(py: Python, data: &Bound<'_, PyAny>) -> PyResult<Self> {
+    fn handle_tensor(py: Python, data: &Bound<'_, PyAny>) -> Result<Self, SampleDataError> {
         let slice = PySlice::new(py, 0, 1, 1);
         let sliced_item = data.get_item(slice)?;
 
         Ok(TensorFlowSampleData::Tensor(sliced_item.unbind()))
     }
 
-    fn handle_pylist(data: &Bound<'_, PyAny>) -> PyResult<Self> {
+    fn handle_pylist(data: &Bound<'_, PyAny>) -> Result<Self, SampleDataError> {
         let py = data.py();
         let py_list = data.downcast::<PyList>()?;
         let tf_tensor = py.import("tensorflow")?.getattr("Tensor")?;
@@ -99,10 +99,7 @@ impl TensorFlowSampleData {
             let is_ndarray = sliced_item.is_instance(&ndarray)?;
 
             if !is_tensor && !is_ndarray {
-                error!("Data must be of type tensorflow tensor or ndarray");
-                Err(OpsmlError::new_err(
-                    "Data must be of type tensorflow tensor or ndarray",
-                ))?;
+                Err(SampleDataError::TensorFlowDataTypeError)?;
             }
 
             py_list.set_item(idx, sliced_item)?;
@@ -111,7 +108,7 @@ impl TensorFlowSampleData {
         Ok(TensorFlowSampleData::List(py_list.clone().unbind()))
     }
 
-    fn handle_pytuple(data: &Bound<'_, PyAny>) -> PyResult<Self> {
+    fn handle_pytuple(data: &Bound<'_, PyAny>) -> Result<Self, SampleDataError> {
         let py = data.py();
         let tf_tensor = py.import("tensorflow")?.getattr("Tensor")?;
         let ndarray = py.import("numpy")?.getattr("ndarray")?;
@@ -127,9 +124,7 @@ impl TensorFlowSampleData {
             let is_ndarray = sliced_item.is_instance(&ndarray)?;
 
             if !is_tensor && !is_ndarray {
-                Err(OpsmlError::new_err(
-                    "Data must be of type tensorflow tensor or ndarray",
-                ))?;
+                Err(SampleDataError::TensorFlowDataTypeError)?;
             }
 
             py_list.set_item(idx, sliced_item)?;
@@ -140,7 +135,7 @@ impl TensorFlowSampleData {
         Ok(TensorFlowSampleData::Tuple(tuple))
     }
 
-    fn handle_pydict(data: &Bound<'_, PyAny>) -> PyResult<Self> {
+    fn handle_pydict(data: &Bound<'_, PyAny>) -> Result<Self, SampleDataError> {
         let py = data.py();
         let py_dict = data.downcast::<PyDict>()?;
         let tf_tensor = py.import("tensorflow")?.getattr("Tensor")?;
@@ -154,9 +149,7 @@ impl TensorFlowSampleData {
             let is_ndarray = sliced_item.is_instance(&ndarray)?;
 
             if !is_tensor && !is_ndarray {
-                Err(OpsmlError::new_err(
-                    "Data must be of type tensorflow tensor or ndarray",
-                ))?;
+                Err(SampleDataError::TensorFlowDataTypeError)?;
             }
 
             py_dict.set_item(k, sliced_item)?;
@@ -165,7 +158,7 @@ impl TensorFlowSampleData {
         Ok(TensorFlowSampleData::Dict(py_dict.clone().unbind()))
     }
 
-    fn slice_and_return<F>(data: &Bound<'_, PyAny>, constructor: F) -> PyResult<Self>
+    fn slice_and_return<F>(data: &Bound<'_, PyAny>, constructor: F) -> Result<Self, SampleDataError>
     where
         F: FnOnce(PyObject) -> TensorFlowSampleData,
     {
@@ -176,7 +169,7 @@ impl TensorFlowSampleData {
         Ok(constructor(data.clone().unbind()))
     }
 
-    fn get_interface_for_sample(data: &Bound<'_, PyAny>) -> PyResult<Option<Self>> {
+    fn get_interface_for_sample(data: &Bound<'_, PyAny>) -> Result<Option<Self>, SampleDataError> {
         let py = data.py();
         let class = data.getattr("__class__")?;
         let full_class_name = get_class_full_name(&class)?;
@@ -188,12 +181,12 @@ impl TensorFlowSampleData {
         Ok(None)
     }
 
-    fn handle_data_interface(data: &Bound<'_, PyAny>) -> PyResult<Self> {
+    fn handle_data_interface(data: &Bound<'_, PyAny>) -> Result<Self, SampleDataError> {
         let data_type = data.getattr("data_type")?.extract::<DataType>()?;
 
         match data_type {
             DataType::Numpy => Self::slice_and_return(data, TensorFlowSampleData::Numpy),
-            _ => Err(OpsmlError::new_err("Data type not supported")),
+            _ => Err(SampleDataError::DataTypeError),
         }
     }
 
@@ -201,7 +194,7 @@ impl TensorFlowSampleData {
         py: Python,
         interface_type: &InterfaceDataType,
         data: &Bound<'_, PyAny>,
-    ) -> PyResult<Self> {
+    ) -> Result<Self, SampleDataError> {
         let slice = PySlice::new(py, 0, 1, 1);
         let sliced_data = data.get_item(slice)?;
 
@@ -213,7 +206,7 @@ impl TensorFlowSampleData {
                 Ok(TensorFlowSampleData::Numpy(bound))
             }
 
-            _ => Err(OpsmlError::new_err("Data type not supported")),
+            _ => Err(SampleDataError::DataTypeError),
         }
     }
 
@@ -232,33 +225,29 @@ impl TensorFlowSampleData {
                 Ok(Some(save_path))
             }
 
-            TensorFlowSampleData::List(data) => {
-                Ok(Some(save_to_joblib(data.bind(py), path).map_err(|e| {
+            TensorFlowSampleData::List(data) => Ok(Some(
+                save_to_joblib(data.bind(py), path).inspect_err(|e| {
                     error!("Error saving list data: {}", e);
-                    e
-                })?))
-            }
+                })?,
+            )),
 
-            TensorFlowSampleData::Tuple(data) => {
-                Ok(Some(save_to_joblib(data.bind(py), path).map_err(|e| {
+            TensorFlowSampleData::Tuple(data) => Ok(Some(
+                save_to_joblib(data.bind(py), path).inspect_err(|e| {
                     error!("Error saving list data: {}", e);
-                    e
-                })?))
-            }
+                })?,
+            )),
 
-            TensorFlowSampleData::Dict(data) => {
-                Ok(Some(save_to_joblib(data.bind(py), path).map_err(|e| {
+            TensorFlowSampleData::Dict(data) => Ok(Some(
+                save_to_joblib(data.bind(py), path).inspect_err(|e| {
                     error!("Error saving list data: {}", e);
-                    e
-                })?))
-            }
+                })?,
+            )),
 
-            TensorFlowSampleData::Tensor(data) => {
-                Ok(Some(save_to_joblib(data.bind(py), path).map_err(|e| {
+            TensorFlowSampleData::Tensor(data) => Ok(Some(
+                save_to_joblib(data.bind(py), path).inspect_err(|e| {
                     error!("Error saving list data: {}", e);
-                    e
-                })?))
-            }
+                })?,
+            )),
 
             TensorFlowSampleData::None => Ok(None),
         }
@@ -269,10 +258,10 @@ impl TensorFlowSampleData {
         path: &Path,
         data_type: &DataType,
         kwargs: Option<&Bound<'py, PyDict>>,
-    ) -> PyResult<TensorFlowSampleData> {
+    ) -> Result<TensorFlowSampleData, SampleDataError> {
         match data_type {
             DataType::Numpy => {
-                NumpyData::from_path(py, path, kwargs).map(TensorFlowSampleData::Numpy)
+                Ok(NumpyData::from_path(py, path, kwargs).map(TensorFlowSampleData::Numpy)?)
             }
 
             DataType::List => {
@@ -300,7 +289,7 @@ impl TensorFlowSampleData {
                 Ok(TensorFlowSampleData::Tensor(data.clone().unbind()))
             }
 
-            _ => Err(OpsmlError::new_err("Data type not supported")),
+            _ => Err(SampleDataError::DataTypeError),
         }
     }
 
@@ -332,7 +321,7 @@ impl OnnxExtension for TensorFlowSampleData {
         &self,
         py: Python<'py>,
         _model_type: &ModelType,
-    ) -> PyResult<Bound<'py, PyAny>> {
+    ) -> Result<Bound<'py, PyAny>, OnnxError> {
         match self {
             TensorFlowSampleData::Numpy(data) => Ok(data.bind(py).getattr("data")?),
             TensorFlowSampleData::List(data) => Ok({
