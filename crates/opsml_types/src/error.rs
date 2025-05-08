@@ -18,6 +18,9 @@ pub enum TypeError {
 
     #[error("Invalid type")]
     InvalidType,
+
+    #[error("Key not found")]
+    MissingKeyError,
 }
 
 impl From<TypeError> for PyErr {

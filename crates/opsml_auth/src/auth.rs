@@ -1,5 +1,5 @@
+use crate::error::AuthError;
 use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
-use opsml_error::error::AuthError;
 use opsml_sql::schemas::schema::User;
 use password_auth::verify_password;
 use rand::{distr::Alphanumeric, Rng};

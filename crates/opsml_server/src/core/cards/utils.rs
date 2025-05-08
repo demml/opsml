@@ -1,4 +1,4 @@
-use opsml_error::ApiError;
+use crate::core::error::ServerError;
 use opsml_semver::{VersionArgs, VersionValidator};
 use opsml_sql::base::SqlClient;
 use opsml_sql::enums::client::SqlClientEnum;
@@ -16,7 +16,7 @@ pub async fn get_next_version(
     sql_client: Arc<SqlClientEnum>,
     table: &CardTable,
     request: CardVersionRequest,
-) -> Result<Version, ApiError> {
+) -> Result<Version, ServerError> {
     let versions = sql_client
         .get_versions(
             table,
@@ -27,14 +27,14 @@ pub async fn get_next_version(
         .await
         .map_err(|e| {
             error!("Failed to get versions: {}", e);
-            ApiError::Error("Failed to get versions".to_string())
+            e
         })?;
 
     if versions.is_empty() {
         return match &request.version {
             Some(version_str) => VersionValidator::clean_version(version_str).map_err(|e| {
                 error!("Invalid version format: {}", e);
-                ApiError::Error("Invalid version format. Version must be a full semver".to_string())
+                e.into()
             }),
             None => Ok(Version::new(0, 1, 0)),
         };
@@ -52,7 +52,7 @@ pub async fn get_next_version(
 
     VersionValidator::bump_version(&args).map_err(|e| {
         error!("Failed to bump version: {}", e);
-        ApiError::Error("Failed to bump version".to_string())
+        e.into()
     })
 }
 
@@ -72,7 +72,7 @@ pub async fn insert_card_into_db(
     card: CardRecord,
     version: Version,
     table: &CardTable,
-) -> Result<(String, String, String, String, DateTime<Utc>), ApiError> {
+) -> Result<(String, String, String, String, DateTime<Utc>), ServerError> {
     // match on registry type
     let card = match card {
         CardRecord::Data(client_card) => {
@@ -169,7 +169,7 @@ pub async fn insert_card_into_db(
     };
     sql_client.insert_card(table, &card).await.map_err(|e| {
         error!("Failed to insert card: {}", e);
-        ApiError::Error("Failed to insert card".to_string())
+        e
     })?;
 
     Ok((
@@ -188,7 +188,7 @@ pub async fn cleanup_artifacts(
     uid: String,
     registry_type: RegistryType,
     table: &CardTable,
-) -> Result<(), ApiError> {
+) -> Result<(), ServerError> {
     // get artifact key
     let key = sql_client
         .get_card_key_for_loading(
@@ -202,7 +202,7 @@ pub async fn cleanup_artifacts(
         .await
         .map_err(|e| {
             error!("Failed to get artifact key: {}", e);
-            ApiError::Error("Failed to get artifact key".to_string())
+            e
         })?;
 
     storage_client
@@ -210,7 +210,7 @@ pub async fn cleanup_artifacts(
         .await
         .map_err(|e| {
             error!("Failed to remove artifact: {}", e);
-            ApiError::Error("Failed to remove artifact".to_string())
+            e
         })?;
 
     sql_client
@@ -218,7 +218,7 @@ pub async fn cleanup_artifacts(
         .await
         .map_err(|e| {
             error!("Failed to delete artifact key: {}", e);
-            ApiError::Error("Failed to delete artifact key".to_string())
+            e
         })?;
 
     Ok(())

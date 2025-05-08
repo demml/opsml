@@ -1,7 +1,9 @@
-use opsml_error::TypeError;
-use opsml_state::app_state;
+use opsml_state::{app_state, StateError};
+use opsml_types::error::TypeError;
 use opsml_types::{CommonKwargs, RegistryType};
 use opsml_utils::{clean_string, validate_name_space_pattern};
+
+use crate::error::CardError;
 
 pub type BaseArgsResult = (String, String, String, String);
 
@@ -25,7 +27,7 @@ impl BaseArgs {
         version: Option<&str>,
         uid: Option<&str>,
         registry_type: &RegistryType,
-    ) -> Result<BaseArgsResult, TypeError> {
+    ) -> Result<BaseArgsResult, CardError> {
         let name = clean_string(&Self::get_value("name", name, registry_type)?)?;
         let space = clean_string(&Self::get_value("space", space, registry_type)?)?;
 
@@ -47,20 +49,20 @@ impl BaseArgs {
         key: &str,
         value: Option<&str>,
         registry_type: &RegistryType,
-    ) -> Result<String, TypeError> {
+    ) -> Result<String, CardError> {
         let config_value = Self::get_config_value(key, registry_type)?;
 
-        value
+        Ok(value
             .as_ref()
             .map(|s| s.to_string())
             .or(config_value)
-            .ok_or_else(|| TypeError::Error(format!("{key} not provided")))
+            .ok_or_else(|| TypeError::MissingKeyError)?)
     }
 
     fn get_config_value(
         key: &str,
         registry_type: &RegistryType,
-    ) -> Result<Option<String>, TypeError> {
+    ) -> Result<Option<String>, StateError> {
         // Get reference to Arc<Option<OpsmlTools>> once
         let state = app_state();
         let tools = state.tools()?;
