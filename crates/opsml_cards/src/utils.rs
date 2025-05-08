@@ -56,7 +56,7 @@ impl BaseArgs {
             .as_ref()
             .map(|s| s.to_string())
             .or(config_value)
-            .ok_or_else(|| TypeError::MissingKeyError)?)
+            .ok_or(TypeError::MissingKeyError)?)
     }
 
     fn get_config_value(

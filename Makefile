@@ -58,8 +58,8 @@ test.storage.local.server:
 	cargo test --release -p opsml-storage test_local_storage_server -- --nocapture --test-threads 1
 
 ######## Collective Unit Tests
-.PHONY: test.unit
-test.unit: test.toml test.cli test.sql test.storage.server test.utils
+##.PHONY: test.unit
+##test.unit: test.toml test.cli test.sql test.storage.server test.utils
 
 ######## Server tests
 
@@ -102,7 +102,7 @@ test.version:
 	cargo test -p opsml-version -- --nocapture --test-threads=1
 
 .PHONY: test.unit
-test.unit: test.sql test.storage.server test.server test.utils test.version test.cli
+test.unit: test.toml test.cli  test.sql test.storage.server test.server test.utils test.version test.cli
 
 ###### UI ######
 UI_DIR = crates/opsml_server/opsml_ui

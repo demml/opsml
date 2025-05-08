@@ -57,14 +57,28 @@ pub enum CliError {
     #[error("Opsml tools missing app configuration")]
     MissingAppError,
 
-    #[error("Unsupported platform - os: {0}, arch: {1}")]
-    UnsupportedPlatformError(&'static str, &'static str),
+    #[error(transparent)]
+    UiError(#[from] UiError),
+}
 
+impl From<CliError> for PyErr {
+    fn from(err: CliError) -> PyErr {
+        let msg = err.to_string();
+        error!("{}", msg);
+        PyRuntimeError::new_err(msg)
+    }
+}
+
+#[derive(Error, Debug)]
+pub enum UiError {
     #[error("Failed to get home directory")]
     HomeDirError,
 
     #[error("Failed to get create cache directory")]
     CreateCacheDirError(#[source] std::io::Error),
+
+    #[error("Unsupported platform - os: {0}, arch: {1}")]
+    UnsupportedPlatformError(&'static str, &'static str),
 
     #[error("Failed to extract archive")]
     ArchiveExtractionError(#[source] std::io::Error),
@@ -110,12 +124,4 @@ pub enum CliError {
 
     #[error("Could not extract UI archive due to unsupported platform")]
     UnsupportedPlatformExtractionError,
-}
-
-impl From<CliError> for PyErr {
-    fn from(err: CliError) -> PyErr {
-        let msg = err.to_string();
-        error!("{}", msg);
-        PyRuntimeError::new_err(msg)
-    }
 }

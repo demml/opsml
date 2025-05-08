@@ -1,4 +1,4 @@
-use crate::error::UtilError;
+use crate::error::{PyUtilError, UtilError};
 use chrono::Timelike;
 use chrono::{DateTime, NaiveDateTime, Utc};
 use colored_json::{Color, ColorMode, ColoredFormatter, PrettyFormatter, Styler};
@@ -166,7 +166,7 @@ impl PyHelperFuncs {
     ///
     /// This function will return an error if:
     /// - The struct cannot be serialized to a string
-    pub fn save_to_json<T>(model: T, path: &Path) -> Result<(), UtilError>
+    pub fn save_to_json<T>(model: T, path: &Path) -> Result<(), PyUtilError>
     where
         T: Serialize,
     {
@@ -194,7 +194,7 @@ pub fn json_to_pyobject<'py>(
     py: Python,
     value: &Value,
     dict: &Bound<'py, PyDict>,
-) -> Result<Bound<'py, PyDict>, UtilError> {
+) -> Result<Bound<'py, PyDict>, PyUtilError> {
     match value {
         Value::Object(map) => {
             for (k, v) in map {
@@ -207,7 +207,7 @@ pub fn json_to_pyobject<'py>(
                         } else if let Some(f) = n.as_f64() {
                             f.into_py_any(py)?
                         } else {
-                            return Err(UtilError::InvalidNumber);
+                            return Err(PyUtilError::InvalidNumber);
                         }
                     }
                     Value::String(s) => s.into_py_any(py)?,
@@ -228,13 +228,13 @@ pub fn json_to_pyobject<'py>(
                 dict.set_item(k, py_value)?;
             }
         }
-        _ => return Err(UtilError::RootMustBeObjectError),
+        _ => return Err(PyUtilError::RootMustBeObjectError),
     }
 
     Ok(dict.clone())
 }
 
-pub fn json_to_pyobject_value(py: Python, value: &Value) -> Result<PyObject, UtilError> {
+pub fn json_to_pyobject_value(py: Python, value: &Value) -> Result<PyObject, PyUtilError> {
     Ok(match value {
         Value::Null => py.None(),
         Value::Bool(b) => b.into_py_any(py)?,
@@ -244,7 +244,7 @@ pub fn json_to_pyobject_value(py: Python, value: &Value) -> Result<PyObject, Uti
             } else if let Some(f) = n.as_f64() {
                 f.into_py_any(py)?
             } else {
-                return Err(UtilError::InvalidNumber);
+                return Err(PyUtilError::InvalidNumber);
             }
         }
         Value::String(s) => s.into_py_any(py)?,
@@ -264,7 +264,7 @@ pub fn json_to_pyobject_value(py: Python, value: &Value) -> Result<PyObject, Uti
     })
 }
 
-pub fn pyobject_to_json(obj: &Bound<'_, PyAny>) -> Result<Value, UtilError> {
+pub fn pyobject_to_json(obj: &Bound<'_, PyAny>) -> Result<Value, PyUtilError> {
     if obj.is_instance_of::<PyDict>() {
         let dict = obj.downcast::<PyDict>()?;
         let mut map = serde_json::Map::new();
@@ -361,7 +361,7 @@ pub fn create_tmp_path() -> Result<PathBuf, UtilError> {
 /// This function will return an error if:
 /// - The attribute cannot be found.
 /// - The attribute cannot be extracted as a string.
-pub fn unwrap_pystring(obj: &Bound<'_, PyAny>, field: &str) -> Result<String, UtilError> {
+pub fn unwrap_pystring(obj: &Bound<'_, PyAny>, field: &str) -> Result<String, PyUtilError> {
     Ok(obj.getattr(field)?.extract::<String>()?)
 }
 
