@@ -54,6 +54,7 @@ impl ModelSaveKwargs {
         preprocessor: Option<Bound<'py, PyDict>>,
         save_onnx: Option<bool>,
     ) -> Result<Self, TypeError> {
+        let mut save_onnx = save_onnx.unwrap_or(false);
         // check if onnx is None, PyDict or HuggingFaceOnnxArgs
 
         let onnx = onnx.map(|onnx| {
@@ -67,8 +68,12 @@ impl ModelSaveKwargs {
             }
         });
 
+        // set save_onnx to true if onnx is not None
         let onnx = match onnx {
-            Some(Ok(onnx)) => Some(onnx),
+            Some(Ok(onnx)) => {
+                save_onnx = true;
+                Some(onnx)
+            }
             Some(Err(e)) => return Err(e),
             None => None,
         };
@@ -79,7 +84,7 @@ impl ModelSaveKwargs {
             onnx,
             model,
             preprocessor,
-            save_onnx: save_onnx.unwrap_or(false),
+            save_onnx,
         })
     }
 

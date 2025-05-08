@@ -9,6 +9,7 @@ from opsml import (  # type: ignore
     DataCard,
     ModelCard,
     ModelLoadKwargs,
+    ModelSaveKwargs,
 )
 
 from opsml.data import DataSplit, StartStopSplit
@@ -78,11 +79,13 @@ modelcard = ModelCard(
     name="my_model",
     tags=["foo:bar", "baz:qux"],
     datacard_uid=datacard.uid,
-    to_onnx=True,
 )
 
 # register model
-reg.model.register_card(modelcard)
+reg.model.register_card(
+    card=modelcard,
+    save_kwargs=ModelSaveKwargs(save_onnx=True),
+)
 
 
 # load model

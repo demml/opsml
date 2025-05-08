@@ -125,6 +125,7 @@ class ModelSaveKwargs:
         onnx: Optional[Dict | HuggingFaceOnnxArgs] = None,
         model: Optional[Dict] = None,
         preprocessor: Optional[Dict] = None,
+        save_onnx: bool = False,
     ) -> None:
         """Optional arguments to pass to save_model
 
@@ -135,6 +136,10 @@ class ModelSaveKwargs:
                 Optional model arguments to use when saving
             preprocessor (Dict):
                 Optional preprocessor arguments to use when saving
+            save_onnx (bool):
+                Whether to save the onnx model. Defaults to false. This is independent of the
+                onnx argument since it's possible to convert a model to onnx without additional kwargs.
+                If onnx args are provided, this will be set to true.
         """
 
     def __str__(self): ...
@@ -623,7 +628,6 @@ class ModelInterface:
     def save(
         self,
         path: Path,
-        to_onnx: bool = False,
         save_kwargs: None | ModelSaveKwargs = None,
     ) -> ModelInterfaceMetadata:
         """Save the model interface
@@ -631,8 +635,6 @@ class ModelInterface:
         Args:
             path (Path):
                 Path to save the model
-            to_onnx (bool):
-                Whether to save the model to onnx
             save_kwargs (ModelSaveKwargs):
                 Optional kwargs to pass to the various underlying methods. This is a passthrough object meaning
                 that the kwargs will be passed to the underlying methods as is and are expected to be supported by
@@ -640,7 +642,8 @@ class ModelInterface:
 
                 - model: Kwargs that will be passed to save_model. See save_model for more details.
                 - preprocessor: Kwargs that will be passed to save_preprocessor
-                - onnx: Kwargs that will be passed to save_onnx_model. See convert_onnx_model for more details
+                - onnx: Library specific kwargs to pass to the onnx conversion. Independent of save_onnx.
+                - save_onnx: Whether to save the onnx model. Defaults to false.
         """
 
     def load(
@@ -847,7 +850,6 @@ class TorchModel(ModelInterface):
     def save(
         self,
         path: Path,
-        to_onnx: bool = False,
         save_kwargs: None | ModelSaveKwargs = None,
     ) -> ModelInterfaceMetadata:
         """Save the TorchModel interface. Torch models are saved
@@ -856,8 +858,6 @@ class TorchModel(ModelInterface):
         Args:
             path (Path):
                 Base path to save artifacts
-            to_onnx (bool):
-                Whether to save the model to onnx
             save_kwargs (ModelSaveKwargs):
                 Optional kwargs to pass to the various underlying methods. This is a passthrough object meaning
                 that the kwargs will be passed to the underlying methods as is and are expected to be supported by
@@ -919,7 +919,6 @@ class LightningModel(ModelInterface):
     def save(
         self,
         path: Path,
-        to_onnx: bool = False,
         save_kwargs: None | ModelSaveKwargs = None,
     ) -> ModelInterfaceMetadata:
         """Save the LightningModel interface. Lightning models are saved via checkpoints.
@@ -927,8 +926,6 @@ class LightningModel(ModelInterface):
         Args:
             path (Path):
                 Base path to save artifacts
-            to_onnx (bool):
-                Whether to save the model to onnx
             save_kwargs (ModelSaveKwargs):
                 Optional kwargs to pass to the various underlying methods. This is a passthrough object meaning
                 that the kwargs will be passed to the underlying methods as is and are expected to be supported by
@@ -936,7 +933,8 @@ class LightningModel(ModelInterface):
 
                 - model: Kwargs that will be passed to save_model. See save_model for more details.
                 - preprocessor: Kwargs that will be passed to save_preprocessor
-                - onnx: Kwargs that will be passed to save_onnx_model. See convert_onnx_model for more details.
+                - onnx: Library specific kwargs to pass to the onnx conversion. Independent of save_onnx.
+                - save_onnx: Whether to save the onnx model. Defaults to false.
         """
 
 class HuggingFaceModel(ModelInterface):
@@ -1014,7 +1012,6 @@ class HuggingFaceModel(ModelInterface):
     def save(
         self,
         path: Path,
-        to_onnx: bool = False,
         save_kwargs: None | ModelSaveKwargs = None,
     ) -> ModelInterfaceMetadata:
         """Save the HuggingFaceModel interface
@@ -1022,8 +1019,6 @@ class HuggingFaceModel(ModelInterface):
         Args:
             path (Path):
                 Base path to save artifacts
-            to_onnx (bool):
-                Whether to save the model/pipeline to onnx
             save_kwargs (ModelSaveKwargs):
                 Optional kwargs to pass to the various underlying methods. This is a passthrough object meaning
                 that the kwargs will be passed to the underlying methods as is and are expected to be supported by
@@ -1033,6 +1028,7 @@ class HuggingFaceModel(ModelInterface):
                 - preprocessor: Kwargs that will be passed to save_preprocessor
                 - onnx: Kwargs that will be passed when saving the onnx model
                     - For the HuggingFaceModel, this should be an instance of HuggingFaceOnnxArgs
+                - save_onnx: Whether to save the onnx model. Defaults to false.
         """
 
     @property

@@ -6,6 +6,7 @@ from opsml import (  # type: ignore
     PromptCard,
     Prompt,
     ModelLoadKwargs,
+    ModelSaveKwargs,
 )
 from opsml.test import OpsmlServerContext
 from opsml.card import RegistryMode, CardList  # type: ignore
@@ -161,7 +162,6 @@ def crud_modelcard(random_forest_classifier: SklearnModel, datacard: DataCard):
         interface=interface,
         space="test",
         name="test",
-        to_onnx=True,
         tags=["foo:bar", "baz:qux"],
     )
 
@@ -171,7 +171,7 @@ def crud_modelcard(random_forest_classifier: SklearnModel, datacard: DataCard):
     card.experimentcard_uid = "test"
     assert card.experimentcard_uid == "test"
 
-    reg.register_card(card)
+    reg.register_card(card=card, save_kwargs=ModelSaveKwargs(save_onnx=True))
     cards = reg.list_cards()
     cards.as_table()
 

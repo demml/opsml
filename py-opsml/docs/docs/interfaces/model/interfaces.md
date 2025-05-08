@@ -78,7 +78,6 @@ interface = SklearnModel(model=reg,sample_data=X_train)
 modelcard = ModelCard(
     interface=interface,
     info=info,
-    to_onnx=True,  # lets convert onnx
     datacard_uid=datacard.uid,
 )
 
@@ -140,7 +139,6 @@ interface = LightGBMModel(model=gbm, sample_data=X_train[:100], preprocessor=sca
 modelcard = ModelCard(
     interface=interface,
     info=info,
-    to_onnx=True,
     datacard_uid=datacard.uid,
 )
 model_registry.register_card(card=modelcard)
@@ -311,7 +309,6 @@ interface = TorchModel(
 modelcard = ModelCard(
     interface=interface,
     info=info,
-    to_onnx=True, 
     datacard_uid=datacard.uid,  
 )
 
@@ -388,7 +385,6 @@ interface = LightningModel(
 modelcard = ModelCard(
     interface=interface,
     info=info,
-    to_onnx=True, 
     datacard_uid=datacard.uid,  
 )
 
@@ -454,7 +450,6 @@ interface = TensorFlowModel(model=model, sample_data=X)
 modelcard = ModelCard(
     interface=interface,
     info=info,
-    to_onnx=True, 
     datacard_uid=datacard.uid,  
 )
 
@@ -526,7 +521,6 @@ model = HuggingFaceModel(
 modelcard = ModelCard(
     interface=interface,
     info=info,
-    to_onnx=True, 
     datacard_uid=datacard.uid,  
 )
 

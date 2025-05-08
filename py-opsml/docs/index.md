@@ -65,7 +65,6 @@ modelcard = ModelCard( # (4)
     interface=model_interface,
     space="opsml",
     name="my_model",
-    to_onnx=True,  # aut-convert to onnx (optional)
 )
 
 # register model
@@ -265,7 +264,6 @@ reg.model.register_card(modelcard)
         }
       },
       "registry_type": "Model",
-      "to_onnx": true,
       "created_at": "2025-04-12T13:55:41.388075Z",
       "app_env": "development",
       "is_card": true,
