@@ -29,7 +29,7 @@ thiserror = { workspace = true }
 tracing = { workspace = true }
 zip = { workspace = true }
 
-
+# this should only be downloaded for linux deps
 [target.'cfg(target_os = "linux")'.dependencies]
 flate2 = "1.*"
 tar = "*"
