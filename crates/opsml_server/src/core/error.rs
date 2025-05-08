@@ -1,5 +1,6 @@
 use axum::http::StatusCode;
 use axum::Json;
+use opsml_auth::error::AuthError;
 use opsml_crypt::error::CryptError;
 use opsml_semver::error::VersionError;
 use opsml_sql::error::SqlError;
@@ -220,6 +221,9 @@ pub enum ServerError {
 
     #[error(transparent)]
     StorageError(#[from] StorageError),
+
+    #[error(transparent)]
+    AuthError(#[from] AuthError),
 
     #[error(transparent)]
     UtilError(#[from] UtilError),

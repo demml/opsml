@@ -2,8 +2,9 @@
 pub mod server_logic {
     // We implement 2 versions of the registry, one for rust compatibility and one for python compatibility
 
+    use crate::error::RegistryError;
     use opsml_crypt::{derive_encryption_key, encrypted_key, generate_salt};
-    use opsml_error::error::RegistryError;
+    use opsml_semver::error::VersionError;
     use opsml_semver::{VersionArgs, VersionType, VersionValidator};
     use opsml_settings::config::DatabaseSettings;
     use opsml_settings::config::OpsmlStorageSettings;
@@ -40,9 +41,7 @@ pub mod server_logic {
             storage_settings: OpsmlStorageSettings,
             database_settings: DatabaseSettings,
         ) -> Result<Self, RegistryError> {
-            let sql_client = get_sql_client(&database_settings).await.map_err(|e| {
-                RegistryError::NewError(format!("Failed to create sql client {}", e))
-            })?;
+            let sql_client = get_sql_client(&database_settings).await?;
 
             let table_name = CardTable::from_registry_type(&registry_type);
             Ok(Self {
@@ -65,11 +64,7 @@ pub mod server_logic {
             &self,
             args: CardQueryArgs,
         ) -> Result<Vec<CardRecord>, RegistryError> {
-            let cards = self
-                .sql_client
-                .query_cards(&self.table_name, &args)
-                .await
-                .map_err(|e| RegistryError::Error(format!("Failed to list cards {}", e)))?;
+            let cards = self.sql_client.query_cards(&self.table_name, &args).await?;
 
             match cards {
                 CardResults::Data(data) => {
@@ -113,19 +108,16 @@ pub mod server_logic {
             let versions = self
                 .sql_client
                 .get_versions(&self.table_name, space, name, version.clone())
-                .await
-                .map_err(|e| RegistryError::Error(format!("Failed to get versions {}", e)))?;
+                .await?;
 
             // if no versions exist, return the default version
             if versions.is_empty() {
                 return match &version {
                     Some(version_str) => {
-                        VersionValidator::clean_version(version_str).map_err(|e| {
+                        Ok(VersionValidator::clean_version(version_str).map_err(|e| {
                             error!("Invalid version format: {}", e);
-                            RegistryError::Error(
-                                "Invalid version format. Version must be a full semver".to_string(),
-                            )
-                        })
+                            e
+                        })?)
                     }
                     None => Ok(Version::new(0, 1, 0)),
                 };
@@ -140,10 +132,10 @@ pub mod server_logic {
                 build: build_tag,
             };
 
-            VersionValidator::bump_version(&args).map_err(|e| {
+            Ok(VersionValidator::bump_version(&args).map_err(|e| {
                 error!("Failed to bump version: {}", e);
-                RegistryError::Error("Failed to bump version".to_string())
-            })
+                e
+            })?)
         }
 
         async fn create_artifact_key(
@@ -289,17 +281,11 @@ pub mod server_logic {
                 }
             };
 
-            self.sql_client
-                .insert_card(&self.table_name, &card)
-                .await
-                .map_err(|e| RegistryError::Error(format!("Failed to create card {}", e)))?;
+            self.sql_client.insert_card(&self.table_name, &card).await?;
 
             let key = self
                 .create_artifact_key(card.uid(), &card.registry_type(), &card.uri())
-                .await
-                .map_err(|e| {
-                    RegistryError::Error(format!("Failed to create artifact key {}", e))
-                })?;
+                .await?;
 
             let response = CreateCardResponse {
                 registered: true,
@@ -324,7 +310,7 @@ pub mod server_logic {
                 CardRecord::Data(client_card) => {
                     let version = Version::parse(&client_card.version).map_err(|e| {
                         error!("Failed to parse version: {}", e);
-                        RegistryError::Error("Failed to parse version".to_string())
+                        VersionError::InvalidVersion(e)
                     })?;
 
                     let server_card = DataCardRecord {
@@ -353,7 +339,7 @@ pub mod server_logic {
                 CardRecord::Model(client_card) => {
                     let version = Version::parse(&client_card.version).map_err(|e| {
                         error!("Failed to parse version: {}", e);
-                        RegistryError::Error("Failed to parse version".to_string())
+                        VersionError::InvalidVersion(e)
                     })?;
 
                     let server_card = ModelCardRecord {
@@ -385,7 +371,7 @@ pub mod server_logic {
                 CardRecord::Experiment(client_card) => {
                     let version = Version::parse(&client_card.version).map_err(|e| {
                         error!("Failed to parse version: {}", e);
-                        RegistryError::Error("Failed to parse version".to_string())
+                        VersionError::InvalidVersion(e)
                     })?;
 
                     let server_card = ExperimentCardRecord {
@@ -415,7 +401,7 @@ pub mod server_logic {
                 CardRecord::Audit(client_card) => {
                     let version = Version::parse(&client_card.version).map_err(|e| {
                         error!("Failed to parse version: {}", e);
-                        RegistryError::Error("Failed to parse version".to_string())
+                        VersionError::InvalidVersion(e)
                     })?;
 
                     let server_card = AuditCardRecord {
@@ -444,7 +430,7 @@ pub mod server_logic {
                 CardRecord::Prompt(client_card) => {
                     let version = Version::parse(&client_card.version).map_err(|e| {
                         error!("Failed to parse version: {}", e);
-                        RegistryError::Error("Failed to parse version".to_string())
+                        VersionError::InvalidVersion(e)
                     })?;
 
                     let server_card = PromptCardRecord {
@@ -471,7 +457,7 @@ pub mod server_logic {
                 CardRecord::Deck(client_card) => {
                     let version = Version::parse(&client_card.version).map_err(|e| {
                         error!("Failed to parse version: {}", e);
-                        RegistryError::Error("Failed to parse version".to_string())
+                        VersionError::InvalidVersion(e)
                     })?;
 
                     let server_card = CardDeckRecord {
@@ -494,10 +480,7 @@ pub mod server_logic {
                 }
             };
 
-            self.sql_client
-                .update_card(&self.table_name, &card)
-                .await
-                .map_err(|e| RegistryError::Error(format!("Failed to update card {}", e)))?;
+            self.sql_client.update_card(&self.table_name, &card).await?;
 
             Ok(())
         }
@@ -512,15 +495,10 @@ pub mod server_logic {
                     uid: Some(delete_request.uid.to_string()),
                     ..Default::default()
                 })
-                .await
-                .map_err(|e| RegistryError::Error(format!("Failed to load card {}", e)))?;
+                .await?;
 
             // get storage client and delete artifacts
-            let storage_client = StorageClientEnum::new(&self.storage_settings)
-                .await
-                .map_err(|e| {
-                    RegistryError::Error(format!("Failed to create storage client {}", e))
-                })?;
+            let storage_client = StorageClientEnum::new(&self.storage_settings).await?;
 
             // Delete saved artifacts if they exist
             if storage_client.find(&key.storage_path()).await?.is_empty() {
@@ -532,32 +510,28 @@ pub mod server_logic {
             // Delete the artifact key
             self.sql_client
                 .delete_artifact_key(&delete_request.uid, &key.registry_type.to_string())
-                .await
-                .map_err(|e| {
-                    RegistryError::Error(format!("Failed to delete artifact key {}", e))
-                })?;
+                .await?;
 
             // Delete the card from registry
             self.sql_client
                 .delete_card(&self.table_name, &delete_request.uid)
-                .await
-                .map_err(|e| RegistryError::Error(format!("Failed to delete card {}", e)))?;
+                .await?;
 
             Ok(())
         }
 
         pub async fn get_key(&self, args: CardQueryArgs) -> Result<ArtifactKey, RegistryError> {
-            self.sql_client
+            Ok(self
+                .sql_client
                 .get_card_key_for_loading(&self.table_name, &args)
-                .await
-                .map_err(|e| RegistryError::Error(format!("Failed to list cards {}", e)))
+                .await?)
         }
 
         pub async fn check_uid_exists(&self, uid: &str) -> Result<bool, RegistryError> {
-            self.sql_client
+            Ok(self
+                .sql_client
                 .check_uid_exists(uid, &self.table_name)
-                .await
-                .map_err(|e| RegistryError::Error(format!("Failed to check uid exists {}", e)))
+                .await?)
         }
 
         pub async fn get_artifact_key(
@@ -568,8 +542,7 @@ pub mod server_logic {
             let key = self
                 .sql_client
                 .get_artifact_key(uid, &registry_type.to_string())
-                .await
-                .map_err(|e| RegistryError::Error(format!("Failed to get artifact key {}", e)))?;
+                .await?;
 
             Ok(key)
         }
@@ -593,12 +566,7 @@ pub mod server_logic {
                 bytes_recv: metrics.metrics.network.bytes_recv,
                 bytes_sent: metrics.metrics.network.bytes_sent,
             };
-            self.sql_client
-                .insert_hardware_metrics(&record)
-                .await
-                .map_err(|e| {
-                    RegistryError::Error(format!("Failed to insert hardware metrics {}", e))
-                })
+            Ok(self.sql_client.insert_hardware_metrics(&record).await?)
         }
 
         pub async fn get_hardware_metrics(
@@ -608,8 +576,7 @@ pub mod server_logic {
             let records = self
                 .sql_client
                 .get_hardware_metric(&request.experiment_uid)
-                .await
-                .map_err(|e| RegistryError::Error(format!("Failed to get metrics {}", e)))?;
+                .await?;
 
             let metrics = records
                 .into_iter()
@@ -651,12 +618,7 @@ pub mod server_logic {
                 })
                 .collect::<Vec<_>>();
 
-            self.sql_client
-                .insert_experiment_metrics(&records)
-                .await
-                .map_err(|e| {
-                    RegistryError::Error(format!("Failed to insert experiment metrics {}", e))
-                })
+            Ok(self.sql_client.insert_experiment_metrics(&records).await?)
         }
 
         pub async fn get_metrics(
@@ -666,8 +628,7 @@ pub mod server_logic {
             let records = self
                 .sql_client
                 .get_experiment_metric(&metrics.experiment_uid, &metrics.names)
-                .await
-                .map_err(|e| RegistryError::Error(format!("Failed to get metrics {}", e)))?;
+                .await?;
 
             let metrics = records
                 .into_iter()
@@ -699,12 +660,10 @@ pub mod server_logic {
                 })
                 .collect::<Vec<_>>();
 
-            self.sql_client
+            Ok(self
+                .sql_client
                 .insert_experiment_parameters(&records)
-                .await
-                .map_err(|e| {
-                    RegistryError::Error(format!("Failed to insert experiment parameters {}", e))
-                })
+                .await?)
         }
 
         pub async fn get_parameters(
@@ -714,8 +673,7 @@ pub mod server_logic {
             let records = self
                 .sql_client
                 .get_experiment_parameter(&parameters.experiment_uid, &parameters.names)
-                .await
-                .map_err(|e| RegistryError::Error(format!("Failed to get parameters {}", e)))?;
+                .await?;
 
             let params = records
                 .into_iter()
