@@ -1,4 +1,4 @@
-use crate::error::CliError;
+use crate::error::UiError;
 use anyhow::Result;
 use reqwest;
 use std::{
@@ -27,7 +27,7 @@ pub enum Platform {
 ///
 /// # Arguments
 /// * `version` - The version of the OpsML UI to start. If not provided, the latest version will be used.
-pub fn start_ui(version: &str, artifact_url: Option<String>) -> Result<(), CliError> {
+pub fn start_ui(version: &str, artifact_url: Option<String>) -> Result<(), UiError> {
     let platform = detect_platform()?;
     let cache_dir = get_cache_dir()?;
     let binary_path = cache_dir.join(format!("opsml-server-v{}", version));
@@ -42,7 +42,7 @@ pub fn start_ui(version: &str, artifact_url: Option<String>) -> Result<(), CliEr
 }
 
 /// Attempts to detect the current platform (Windows, MacOS, or Linux) and architecture (x86_64 or aarch64).
-fn detect_platform() -> Result<Platform, CliError> {
+fn detect_platform() -> Result<Platform, UiError> {
     let os = env::consts::OS;
     let arch = env::consts::ARCH;
 
@@ -52,17 +52,17 @@ fn detect_platform() -> Result<Platform, CliError> {
         ("macos", "aarch64") => Ok(Platform::MacOS("aarch64".to_string())),
         ("linux", "x86_64") => Ok(Platform::Linux("x86_64".to_string())),
         ("linux", "aarch64") => Ok(Platform::Linux("aarch64".to_string())),
-        _ => Err(CliError::UnsupportedPlatformError(os, arch)),
+        _ => Err(UiError::UnsupportedPlatformError(os, arch)),
     }
 }
 
 /// Gets/Creates a cache directory for OpsML
-fn get_cache_dir() -> Result<PathBuf, CliError> {
-    let home = dirs::home_dir().ok_or(CliError::HomeDirError)?;
+fn get_cache_dir() -> Result<PathBuf, UiError> {
+    let home = dirs::home_dir().ok_or(UiError::HomeDirError)?;
     let cache_dir = home.join(CACHE_DIR);
 
     if !cache_dir.exists() {
-        fs::create_dir_all(&cache_dir).map_err(CliError::CreateCacheDirError)?;
+        fs::create_dir_all(&cache_dir).map_err(UiError::CreateCacheDirError)?;
     }
 
     Ok(cache_dir)
@@ -82,7 +82,7 @@ fn download_binary(
     version: &str,
     cache_dir: &Path,
     artifact_url: Option<String>,
-) -> Result<(), CliError> {
+) -> Result<(), UiError> {
     // standardize naming
     let archive_name = match platform {
         Platform::Windows => "opsml-server-x86_64-windows.zip".to_string(),
@@ -95,34 +95,34 @@ fn download_binary(
         GITHUB_REPO, version, archive_name
     ));
 
-    let response = reqwest::blocking::get(&url).map_err(CliError::DownloadBinaryError)?;
+    let response = reqwest::blocking::get(&url).map_err(UiError::DownloadBinaryError)?;
     let archive_path = cache_dir.join(&archive_name);
 
-    let bytes = response.bytes().map_err(CliError::DownloadBinaryError)?;
-    fs::write(&archive_path, bytes).map_err(CliError::WriteBinaryError)?;
+    let bytes = response.bytes().map_err(UiError::DownloadBinaryError)?;
+    fs::write(&archive_path, bytes).map_err(UiError::WriteBinaryError)?;
 
     match platform {
         Platform::Windows | Platform::MacOS(_) => {
-            let reader = fs::File::open(&archive_path).map_err(CliError::ArchiveOpenError)?;
-            let mut archive = zip::ZipArchive::new(reader).map_err(CliError::ArchiveZipError)?;
+            let reader = fs::File::open(&archive_path).map_err(UiError::ArchiveOpenError)?;
+            let mut archive = zip::ZipArchive::new(reader).map_err(UiError::ArchiveZipError)?;
 
             archive
                 .extract(cache_dir)
-                .map_err(CliError::ZipArchiveExtractionError)?;
+                .map_err(UiError::ZipArchiveExtractionError)?;
         }
         Platform::Linux(_) => {
             #[cfg(target_os = "linux")]
             {
-                let tar_gz = fs::File::open(&archive_path).map_err(CliError::ArchiveOpenError)?;
+                let tar_gz = fs::File::open(&archive_path).map_err(UiError::ArchiveOpenError)?;
                 let tar = flate2::read::GzDecoder::new(tar_gz);
                 let mut archive = tar::Archive::new(tar);
                 archive
                     .unpack(cache_dir)
-                    .map_err(CliError::ArchiveExtractionError)?;
+                    .map_err(UiError::ArchiveExtractionError)?;
             }
             #[cfg(not(target_os = "linux"))]
             {
-                return Err(CliError::UnsupportedPlatformExtractionError);
+                return Err(UiError::UnsupportedPlatformExtractionError);
             }
         }
     }
@@ -143,14 +143,14 @@ fn download_binary(
 
     let extracted_path = cache_dir.join(extracted_binary_name);
     if !extracted_path.exists() {
-        return Err(CliError::BinaryNotFound);
+        return Err(UiError::BinaryNotFound);
     } else {
         // rename the extracted binary to the versioned name while preserving the .exe extension for Windows
-        fs::rename(&extracted_path, &expected_binary_path).map_err(CliError::RenameBinaryError)?;
+        fs::rename(&extracted_path, &expected_binary_path).map_err(UiError::RenameBinaryError)?;
     }
 
     // Clean up archive
-    fs::remove_file(archive_path).map_err(CliError::RemoveArchiveError)?;
+    fs::remove_file(archive_path).map_err(UiError::RemoveArchiveError)?;
 
     Ok(())
 }
@@ -164,17 +164,17 @@ fn download_binary(
 /// A Result indicating success or failure
 ///
 /// # Errors
-/// * `CliError::BinaryExecutionError` - If the binary execution fails
-fn execute_binary(binary_path: &Path) -> Result<(), CliError> {
+/// * `UiError::BinaryExecutionError` - If the binary execution fails
+fn execute_binary(binary_path: &Path) -> Result<(), UiError> {
     let mut child_process = Command::new(binary_path)
         .spawn()
-        .map_err(CliError::BinarySpawnError)?;
+        .map_err(UiError::BinarySpawnError)?;
 
     // Wait for the process to finish
-    let status = child_process.wait().map_err(CliError::BinaryWaitError)?;
+    let status = child_process.wait().map_err(UiError::BinaryWaitError)?;
 
     if !status.success() {
-        return Err(CliError::BinaryStartError);
+        return Err(UiError::BinaryStartError);
     }
 
     Ok(())
@@ -191,7 +191,7 @@ fn cleanup_old_binaries(
     cache_dir: &Path,
     current_version: &str,
     platform: &Platform,
-) -> Result<(), CliError> {
+) -> Result<(), UiError> {
     let extension = match platform {
         Platform::Windows => ".exe",
         _ => "",
@@ -200,8 +200,8 @@ fn cleanup_old_binaries(
     let prefix = "opsml-server-v";
     let current_binary = format!("{}{}{}", prefix, current_version, extension);
 
-    for entry in fs::read_dir(cache_dir).map_err(CliError::ReadError)? {
-        let entry = entry.map_err(CliError::ReadError)?;
+    for entry in fs::read_dir(cache_dir).map_err(UiError::ReadError)? {
+        let entry = entry.map_err(UiError::ReadError)?;
         let path = entry.path();
 
         if let Some(file_name) = path.file_name().and_then(|f| f.to_str()) {
@@ -210,7 +210,7 @@ fn cleanup_old_binaries(
                 && file_name.ends_with(extension)
                 && file_name != current_binary
             {
-                fs::remove_file(&path).map_err(CliError::RemoveFileError)?;
+                fs::remove_file(&path).map_err(UiError::RemoveFileError)?;
             }
         }
     }

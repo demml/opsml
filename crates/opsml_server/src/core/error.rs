@@ -214,6 +214,10 @@ pub fn internal_server_error<E: std::fmt::Display>(
     )
 }
 
+// Server error enum
+// reminder: none of this Errors should implement a pyerr conversion
+// pyerr will require a python runtime. In rust-only code (like the server) we
+// don't want this
 #[derive(Error, Debug)]
 pub enum ServerError {
     #[error("Failed to create client with error")]

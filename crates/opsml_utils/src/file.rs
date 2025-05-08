@@ -17,9 +17,9 @@ impl FileUtils {
         // get file name of path
         let path = std::path::Path::new(&filepath)
             .file_name()
-            .ok_or_else(|| UtilError::FilePathNotFoundError)?
+            .ok_or(UtilError::FilePathNotFoundError)?
             .to_str()
-            .ok_or_else(|| UtilError::FilePathNotFoundError)?;
+            .ok_or(UtilError::FilePathNotFoundError)?;
 
         let current_dir = std::env::current_dir()?;
         // recursively search for file in current directory

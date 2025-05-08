@@ -1,4 +1,4 @@
-use crate::error::TypeError;
+use crate::error::{PyTypeError, TypeError};
 use chrono::{DateTime, Utc};
 use opsml_utils::PyHelperFuncs;
 use pyo3::prelude::*;
@@ -115,7 +115,7 @@ pub enum ParameterValue {
 }
 
 impl ParameterValue {
-    pub fn from_any(value: Bound<'_, PyAny>) -> Result<Self, TypeError> {
+    pub fn from_any(value: Bound<'_, PyAny>) -> Result<Self, PyTypeError> {
         if let Ok(value) = value.extract::<i64>() {
             Ok(ParameterValue::Int(value))
         } else if let Ok(value) = value.extract::<f64>() {
@@ -123,7 +123,7 @@ impl ParameterValue {
         } else if let Ok(value) = value.extract::<String>() {
             Ok(ParameterValue::Str(value))
         } else {
-            Err(TypeError::InvalidType)
+            Err(TypeError::InvalidType.into())
         }
     }
 }
@@ -140,7 +140,7 @@ pub struct Parameter {
 impl Parameter {
     #[new]
     #[pyo3(signature = (name, value))]
-    pub fn new(name: String, value: Bound<'_, PyAny>) -> Result<Self, TypeError> {
+    pub fn new(name: String, value: Bound<'_, PyAny>) -> Result<Self, PyTypeError> {
         let value = ParameterValue::from_any(value)?;
 
         Ok(Self { name, value })
@@ -393,7 +393,7 @@ pub struct ComputeEnvironment {
 #[pymethods]
 impl ComputeEnvironment {
     #[new]
-    pub fn new(py: Python) -> Result<Self, TypeError> {
+    pub fn new(py: Python) -> Result<Self, PyTypeError> {
         let sys = System::new_all();
 
         Ok(Self {

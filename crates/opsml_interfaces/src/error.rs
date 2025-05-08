@@ -1,4 +1,4 @@
-use opsml_utils::error::UtilError;
+use opsml_utils::error::{PyUtilError, UtilError};
 use pyo3::exceptions::PyRuntimeError;
 use pyo3::PyErr;
 use thiserror::Error;
@@ -331,6 +331,9 @@ pub enum ModelInterfaceError {
 
     #[error(transparent)]
     UtilError(#[from] UtilError),
+
+    #[error(transparent)]
+    PyUtilError(#[from] PyUtilError),
 
     #[error(transparent)]
     DataInterfaceError(#[from] DataInterfaceError),

@@ -42,32 +42,38 @@ pub enum UtilError {
     FilePathNotFoundError,
 
     #[error(transparent)]
-    PyErr(#[from] pyo3::PyErr),
-
-    #[error(transparent)]
     RegexError(#[from] regex::Error),
 
     #[error("Space/name pattern is too long")]
     SpaceNamePatternTooLong,
+}
+
+#[derive(Error, Debug)]
+pub enum PyUtilError {
+    #[error(transparent)]
+    PyErr(#[from] pyo3::PyErr),
+
+    #[error(transparent)]
+    UtilError(#[from] UtilError),
+
+    #[error("Failed to downcast Python object: {0}")]
+    DowncastError(String),
 
     #[error("Invalid number")]
     InvalidNumber,
 
     #[error("Root must be an object")]
     RootMustBeObjectError,
-
-    #[error("Failed to downcast Python object: {0}")]
-    DowncastError(String),
 }
 
-impl<'a> From<pyo3::DowncastError<'a, 'a>> for UtilError {
+impl<'a> From<pyo3::DowncastError<'a, 'a>> for PyUtilError {
     fn from(err: pyo3::DowncastError) -> Self {
-        UtilError::DowncastError(err.to_string())
+        PyUtilError::DowncastError(err.to_string())
     }
 }
 
-impl From<UtilError> for PyErr {
-    fn from(err: UtilError) -> PyErr {
+impl From<PyUtilError> for PyErr {
+    fn from(err: PyUtilError) -> PyErr {
         let msg = err.to_string();
         error!("{}", msg);
         PyRuntimeError::new_err(msg)

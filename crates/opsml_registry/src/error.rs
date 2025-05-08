@@ -3,9 +3,10 @@ use opsml_cards::error::CardError;
 use opsml_client::error::RegistryError as ApiRegistryError;
 use opsml_settings::error::SettingsError;
 use opsml_state::error::StateError;
+use opsml_storage::storage::error::StorageError;
 use opsml_types::error::TypeError;
 use opsml_types::RegistryType;
-use opsml_utils::error::UtilError;
+use opsml_utils::error::{PyUtilError, UtilError};
 use pyo3::exceptions::PyRuntimeError;
 use pyo3::prelude::*;
 use thiserror::Error;
@@ -41,6 +42,9 @@ pub enum RegistryError {
     UtilError(#[from] UtilError),
 
     #[error(transparent)]
+    PyUtilError(#[from] PyUtilError),
+
+    #[error(transparent)]
     IoError(#[from] std::io::Error),
 
     #[error(transparent)]
@@ -50,7 +54,7 @@ pub enum RegistryError {
     CryptError(#[from] opsml_crypt::error::CryptError),
 
     #[error(transparent)]
-    StorageError(#[from] opsml_storage::storage::error::StorageError),
+    StorageError(#[from] StorageError),
 
     #[error("At least one of uid, name, space, version must be provided")]
     MissingArgsError,

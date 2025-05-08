@@ -23,8 +23,14 @@ pub enum TypeError {
     MissingKeyError,
 }
 
-impl From<TypeError> for PyErr {
-    fn from(err: TypeError) -> PyErr {
+#[derive(Error, Debug)]
+pub enum PyTypeError {
+    #[error(transparent)]
+    TypeError(#[from] TypeError),
+}
+
+impl From<PyTypeError> for PyErr {
+    fn from(err: PyTypeError) -> PyErr {
         let msg = err.to_string();
         error!("{}", msg);
         PyRuntimeError::new_err(msg)
