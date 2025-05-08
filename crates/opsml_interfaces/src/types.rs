@@ -96,9 +96,6 @@ pub struct OnnxSchema {
 
     #[pyo3(get)]
     pub feature_names: Vec<String>,
-
-    #[pyo3(get, set)]
-    pub onnx_type: String,
 }
 
 #[pymethods]
@@ -116,7 +113,6 @@ impl OnnxSchema {
             output_features,
             onnx_version,
             feature_names: feature_names.unwrap_or_default(),
-            onnx_type: "onnx".to_string(),
         }
     }
     pub fn __str__(&self) -> String {

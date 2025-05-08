@@ -93,6 +93,7 @@ pub enum ModelInterfaceType {
     TensorFlow,
     VowpalWabbit,
     XGBoost,
+    Onnx,
 }
 
 impl Display for ModelInterfaceType {
@@ -109,6 +110,7 @@ impl Display for ModelInterfaceType {
             ModelInterfaceType::TensorFlow => "TensorFlow",
             ModelInterfaceType::VowpalWabbit => "VowpalWabbit",
             ModelInterfaceType::XGBoost => "XGBoost",
+            ModelInterfaceType::Onnx => "Onnx",
         };
 
         write!(f, "{}", model_interface_type)
@@ -167,6 +169,7 @@ pub enum ModelType {
     PytorchLightning,
     Catboost,
     Vowpal,
+    Onnx,
 
     #[default]
     Unknown,
@@ -196,6 +199,7 @@ impl Display for ModelType {
             ModelType::Catboost => "CatBoost",
             ModelType::Vowpal => "VowpalWabbit",
             ModelType::Unknown => "Unknown",
+            ModelType::Onnx => "onnx",
         };
 
         write!(f, "{}", model_type)

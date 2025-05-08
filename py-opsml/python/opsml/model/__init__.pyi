@@ -409,17 +409,17 @@ class OnnxSession:
 
     def run(
         self,
-        input_data: Dict[str, Any],
+        input_feed: Dict[str, Any],
         output_names: Optional[list[str]] = None,
         run_options: Optional[Dict[str, Any]] = None,
     ) -> Any:
         """Run the onnx session
 
         Args:
+            input_feed:
+                Dictionary of input data
             output_names:
                 List of output names
-            input_data:
-                Dictionary of input data
             run_options:
                 Optional run options
 
@@ -1150,7 +1150,6 @@ class TensorFlowModel(ModelInterface):
         preprocessor: Optional[Any] = None,
         sample_data: Optional[Any] = None,
         task_type: Optional[TaskType] = None,
-        schema: Optional[FeatureSchema] = None,
         drift_profile: Optional[DriftProfileType] = None,
     ) -> None:
         """Interface for saving PyTorch models
@@ -1186,3 +1185,49 @@ class TensorFlowModel(ModelInterface):
     @property
     def preprocessor_name(self) -> Optional[str]:
         """Returns the preprocessor name"""
+
+class OnnxModel(ModelInterface):
+    def __init__(
+        self,
+        model: Optional[Any] = None,
+        sample_data: Optional[Any] = None,
+        task_type: Optional[TaskType] = None,
+        drift_profile: Optional[DriftProfileType] = None,
+    ) -> None:
+        """Interface for saving an OnnxModel
+
+        Args:
+            model:
+                Onnx model to associate with the interface. This model must be an Onnx ModelProto
+            sample_data:
+                Sample data to use to make predictions
+            task_type:
+                The type of task the model performs
+            drift_profile:
+                Drift profile to use. Can be a list of SpcDriftProfile, PsiDriftProfile or CustomDriftProfile
+
+        Example:
+            ```python
+            from sklearn.datasets import load_iris  # type: ignore
+            from sklearn.model_selection import train_test_split  # type: ignore
+            from sklearn.ensemble import RandomForestClassifier  # type: ignore
+            from skl2onnx import to_onnx  # type: ignore
+            import onnxruntime as rt  # type: ignore
+
+            iris = load_iris()
+
+            X, y = iris.data, iris.target
+            X = X.astype(np.float32)
+            X_train, X_test, y_train, y_test = train_test_split(X, y)
+            clr = RandomForestClassifier()
+            clr.fit(X_train, y_train)
+
+            onx = to_onnx(clr, X[:1])
+
+            interface = OnnxModel(model=onx, sample_data=X_train)
+            ```
+        """
+
+    @property
+    def session(self) -> OnnxSession:
+        """Returns the onnx session. This will error if the OnnxSession is not set"""

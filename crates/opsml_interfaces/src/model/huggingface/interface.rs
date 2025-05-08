@@ -11,18 +11,18 @@ use crate::base::{
 };
 use crate::data::generate_feature_schema;
 use crate::data::DataInterface;
+use crate::error::{ModelInterfaceError, OnnxError};
 use crate::model::ModelInterface;
 use crate::types::{FeatureSchema, ProcessorType};
-use crate::OnnxModelConverter;
+use crate::OnnxConverter;
 use crate::OnnxSession;
 use crate::{DataProcessor, ModelLoadKwargs, ModelSaveKwargs};
-use opsml_error::{InterfaceError, OnnxError, OpsmlError};
 use pyo3::types::PyDict;
 use pyo3::IntoPyObjectExt;
 use pyo3::PyTraverseError;
 use pyo3::PyVisit;
 use std::path::{Path, PathBuf};
-use tracing::{debug, error, instrument, warn};
+use tracing::{debug, instrument, warn};
 
 pub type ProcessorNames = (String, String, String);
 
@@ -74,7 +74,10 @@ fn get_processor_names_from_pipeline(pipeline: &Bound<'_, PyAny>) -> ProcessorNa
     )
 }
 
-fn validate_image_processor(py: Python, image_processor: &Bound<'_, PyAny>) -> PyResult<bool> {
+fn validate_image_processor(
+    py: Python,
+    image_processor: &Bound<'_, PyAny>,
+) -> Result<bool, ModelInterfaceError> {
     let base_processor = py
         .import("transformers")
         .unwrap()
@@ -82,26 +85,28 @@ fn validate_image_processor(py: Python, image_processor: &Bound<'_, PyAny>) -> P
 
     match image_processor.is_instance(&base_processor).unwrap() {
         true => Ok(true),
-        false => Err(OpsmlError::new_err(
-            "Image Processor must be an instance of BaseImageProcessor",
-        )),
+        false => Err(ModelInterfaceError::ImageProcessorValidationError),
     }
 }
 
-fn validate_tokenizer(py: Python, tokenizer: &Bound<'_, PyAny>) -> PyResult<bool> {
+fn validate_tokenizer(
+    py: Python,
+    tokenizer: &Bound<'_, PyAny>,
+) -> Result<bool, ModelInterfaceError> {
     let base_processor = py
         .import("transformers")?
         .getattr("PreTrainedTokenizerBase")?;
 
     match tokenizer.is_instance(&base_processor).unwrap() {
         true => Ok(true),
-        false => Err(OpsmlError::new_err(
-            "Tokenizer must be an instance of PreTrainedTokenizerBase",
-        )),
+        false => Err(ModelInterfaceError::TokenizerValidationError),
     }
 }
 
-fn validate_feature_extractor(py: Python, feature_extractor: &Bound<'_, PyAny>) -> PyResult<bool> {
+fn validate_feature_extractor(
+    py: Python,
+    feature_extractor: &Bound<'_, PyAny>,
+) -> Result<bool, ModelInterfaceError> {
     let base_processor = py
         .import("transformers")?
         .getattr("feature_extraction_utils")?
@@ -109,25 +114,29 @@ fn validate_feature_extractor(py: Python, feature_extractor: &Bound<'_, PyAny>) 
 
     match feature_extractor.is_instance(&base_processor).unwrap() {
         true => Ok(true),
-        false => Err(OpsmlError::new_err(
-            "Feature Extractor must be an instance of PreTrainedFeatureExtractor",
-        )),
+        false => Err(ModelInterfaceError::FeatureExtractorValidationError),
     }
 }
 
-fn is_pretrained_torch_model(py: Python, model: &Bound<'_, PyAny>) -> PyResult<bool> {
+fn is_pretrained_torch_model(
+    py: Python,
+    model: &Bound<'_, PyAny>,
+) -> Result<bool, ModelInterfaceError> {
     let transformers = py.import("transformers")?.getattr("PreTrainedModel")?;
 
     Ok(model.is_instance(&transformers).unwrap())
 }
 
-fn is_pretrained_tensorflow_model(py: Python, model: &Bound<'_, PyAny>) -> PyResult<bool> {
+fn is_pretrained_tensorflow_model(
+    py: Python,
+    model: &Bound<'_, PyAny>,
+) -> Result<bool, ModelInterfaceError> {
     let transformers = py.import("transformers")?.getattr("TFPreTrainedModel")?;
 
     Ok(model.is_instance(&transformers).unwrap())
 }
 
-fn is_hf_pipeline(py: Python, pipeline: &Bound<'_, PyAny>) -> PyResult<bool> {
+fn is_hf_pipeline(py: Python, pipeline: &Bound<'_, PyAny>) -> Result<bool, ModelInterfaceError> {
     let transformers = py.import("transformers")?;
 
     Ok(pipeline
@@ -240,7 +249,7 @@ impl HuggingFaceModel {
         hf_task: Option<HuggingFaceTask>,
         task_type: Option<TaskType>,
         drift_profile: Option<&Bound<'py, PyAny>>,
-    ) -> PyResult<(Self, ModelInterface)> {
+    ) -> Result<(Self, ModelInterface), ModelInterfaceError> {
         // check if model is a Transformers Pipeline, PreTrainedModel, or TFPPreTrainedModel
         let mut base_args = HFBaseArgs::default();
 
@@ -273,9 +282,7 @@ impl HuggingFaceModel {
                 base_args.hf_model_type =
                     model.getattr("__class__")?.getattr("__name__")?.to_string();
             } else {
-                return Err(OpsmlError::new_err(
-                    "Model must be an instance of transformers",
-                ));
+                return Err(ModelInterfaceError::TransformerTypeError);
             }
             Some(model.into_py_any(py)?)
         } else {
@@ -346,7 +353,10 @@ impl HuggingFaceModel {
     }
 
     #[setter]
-    pub fn set_tokenizer(&mut self, tokenizer: &Bound<'_, PyAny>) -> PyResult<()> {
+    pub fn set_tokenizer(
+        &mut self,
+        tokenizer: &Bound<'_, PyAny>,
+    ) -> Result<(), ModelInterfaceError> {
         let py = tokenizer.py();
 
         // check if data is None
@@ -362,7 +372,10 @@ impl HuggingFaceModel {
     }
 
     #[setter]
-    pub fn set_feature_extractor(&mut self, feature_extractor: &Bound<'_, PyAny>) -> PyResult<()> {
+    pub fn set_feature_extractor(
+        &mut self,
+        feature_extractor: &Bound<'_, PyAny>,
+    ) -> Result<(), ModelInterfaceError> {
         let py = feature_extractor.py();
 
         // check if data is None
@@ -378,7 +391,10 @@ impl HuggingFaceModel {
     }
 
     #[setter]
-    pub fn set_image_processor(&mut self, image_processor: &Bound<'_, PyAny>) -> PyResult<()> {
+    pub fn set_image_processor(
+        &mut self,
+        image_processor: &Bound<'_, PyAny>,
+    ) -> Result<(), ModelInterfaceError> {
         let py = image_processor.py();
 
         // check if data is None
@@ -394,7 +410,7 @@ impl HuggingFaceModel {
     }
 
     #[setter]
-    pub fn set_model(&mut self, model: &Bound<'_, PyAny>) -> PyResult<()> {
+    pub fn set_model(&mut self, model: &Bound<'_, PyAny>) -> Result<(), ModelInterfaceError> {
         let py = model.py();
 
         // check if data is None
@@ -425,9 +441,7 @@ impl HuggingFaceModel {
                 self.base_args.hf_model_type =
                     model.getattr("__class__")?.getattr("__name__")?.to_string();
             } else {
-                return Err(OpsmlError::new_err(
-                    "Model must be an instance of transformers",
-                ));
+                return Err(ModelInterfaceError::TransformerTypeError);
             }
             self.model = Some(model.into_py_any(py)?)
         };
@@ -439,13 +453,16 @@ impl HuggingFaceModel {
     pub fn get_onnx_session<'py>(
         &self,
         py: Python<'py>,
-    ) -> PyResult<Option<&Bound<'py, OnnxSession>>> {
+    ) -> Result<Option<&Bound<'py, OnnxSession>>, ModelInterfaceError> {
         // return mutable reference to onnx session
         Ok(self.onnx_session.as_ref().map(|sess| sess.bind(py)))
     }
 
     #[getter]
-    pub fn get_sample_data<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyAny>> {
+    pub fn get_sample_data<'py>(
+        &self,
+        py: Python<'py>,
+    ) -> Result<Bound<'py, PyAny>, ModelInterfaceError> {
         Ok(self.sample_data.get_data(py).unwrap().bind(py).clone())
     }
 
@@ -468,7 +485,7 @@ impl HuggingFaceModel {
         path: PathBuf,
         to_onnx: bool,
         save_kwargs: Option<ModelSaveKwargs>,
-    ) -> PyResult<ModelInterfaceMetadata> {
+    ) -> Result<ModelInterfaceMetadata, ModelInterfaceError> {
         let mut extra = None;
         let cloned_kwargs = save_kwargs.clone();
 
@@ -571,7 +588,7 @@ impl HuggingFaceModel {
         path: PathBuf,
         metadata: ModelInterfaceSaveMetadata,
         load_kwargs: Option<ModelLoadKwargs>,
-    ) -> PyResult<()> {
+    ) -> Result<(), ModelInterfaceError> {
         // if kwargs is not None, unwrap, else default to None
         let load_kwargs = load_kwargs.unwrap_or_default();
 
@@ -584,7 +601,7 @@ impl HuggingFaceModel {
             let onnx_path = path.join(
                 &metadata
                     .onnx_model_uri
-                    .ok_or_else(|| OpsmlError::new_err("ONNX model URI not found in metadata"))?,
+                    .ok_or_else(|| ModelInterfaceError::MissingOnnxUriError)?,
             );
             self_.load_onnx_model(py, &onnx_path, load_kwargs.onnx_kwargs(py))?;
         }
@@ -595,7 +612,7 @@ impl HuggingFaceModel {
             let sample_data_path = path.join(
                 &metadata
                     .sample_data_uri
-                    .ok_or_else(|| OpsmlError::new_err("Sample data URI not found in metadata"))?,
+                    .ok_or_else(|| ModelInterfaceError::MissingSampleDataUriError)?,
             );
             self_.load_data(py, &sample_data_path, &data_type, None)?;
         }
@@ -607,10 +624,11 @@ impl HuggingFaceModel {
 
         if metadata.drift_profile_uri.is_some() {
             debug!("Loading drift profile");
-            let drift_path =
-                path.join(&metadata.drift_profile_uri.ok_or_else(|| {
-                    OpsmlError::new_err("Drift profile URI not found in metadata")
-                })?);
+            let drift_path = path.join(
+                &metadata
+                    .drift_profile_uri
+                    .ok_or_else(|| ModelInterfaceError::MissingDriftProfileUriError)?,
+            );
             self_.as_super().load_drift_profile(py, &drift_path)?;
         }
 
@@ -653,12 +671,10 @@ impl HuggingFaceModel {
     pub fn from_metadata<'py>(
         py: Python<'py>,
         metadata: &ModelInterfaceMetadata,
-    ) -> PyResult<Bound<'py, PyAny>> {
+    ) -> Result<Bound<'py, PyAny>, ModelInterfaceError> {
         let base_args: HFBaseArgs =
-            serde_json::from_value(metadata.model_specific_metadata.clone()).map_err(|e| {
-                error!("Failed to deserialize model specific metadata: {}", e);
-                OpsmlError::new_err("Failed to deserialize model specific metadata")
-            })?;
+            serde_json::from_value(metadata.model_specific_metadata.clone())
+                .map_err(ModelInterfaceError::DeserializeMetadataError)?;
 
         // convert onnx session to to Py<OnnxSession>
         let onnx_session = metadata
@@ -687,7 +703,9 @@ impl HuggingFaceModel {
         interface.model_type = metadata.model_type.clone();
         interface.interface_type = metadata.interface_type.clone();
 
-        Py::new(py, (huggingface_interface, interface))?.into_bound_py_any(py)
+        let interface = Py::new(py, (huggingface_interface, interface))?.into_bound_py_any(py)?;
+
+        Ok(interface)
     }
 
     /// Load the preprocessor from a file
@@ -703,7 +721,7 @@ impl HuggingFaceModel {
         py: Python,
         path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
-    ) -> Result<(), InterfaceError> {
+    ) -> Result<(), ModelInterfaceError> {
         // self.tokenizer = getattr(transformers, self.tokenizer_name).from_pretrained(path)
         if self.base_args.has_tokenizer {
             let save_path = PathBuf::from(SaveName::Tokenizer);
@@ -757,7 +775,7 @@ impl HuggingFaceModel {
     ) -> Result<HashMap<String, PathBuf>, OnnxError> {
         let mut paths = HashMap::new();
 
-        let session = OnnxModelConverter::convert_model(
+        let session = OnnxConverter::convert_model(
             py,
             py.None().bind(py),
             &self.sample_data,
@@ -789,20 +807,16 @@ impl HuggingFaceModel {
         py: Python,
         path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
-    ) -> Result<PathBuf, InterfaceError> {
+    ) -> Result<PathBuf, ModelInterfaceError> {
         let save_path = PathBuf::from(SaveName::Tokenizer);
         let full_save_path = path.join(&save_path);
 
         // Save the data using joblib
-        self.tokenizer
-            .as_ref()
-            .unwrap()
-            .bind(py)
-            .call_method("save_pretrained", (full_save_path,), kwargs)
-            .map_err(|e| {
-                error!("Failed to save tokenizer: {}", e);
-                InterfaceError::Error(e.to_string())
-            })?;
+        self.tokenizer.as_ref().unwrap().bind(py).call_method(
+            "save_pretrained",
+            (full_save_path,),
+            kwargs,
+        )?;
 
         debug!("Tokenizer saved");
 
@@ -815,7 +829,7 @@ impl HuggingFaceModel {
         py: Python,
         path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
-    ) -> Result<PathBuf, InterfaceError> {
+    ) -> Result<PathBuf, ModelInterfaceError> {
         let save_path = PathBuf::from(SaveName::FeatureExtractor);
         let full_save_path = path.join(&save_path);
 
@@ -824,11 +838,7 @@ impl HuggingFaceModel {
             .as_ref()
             .unwrap()
             .bind(py)
-            .call_method("save_pretrained", (full_save_path,), kwargs)
-            .map_err(|e| {
-                error!("Failed to save feature extractor: {}", e);
-                InterfaceError::Error(e.to_string())
-            })?;
+            .call_method("save_pretrained", (full_save_path,), kwargs)?;
 
         debug!("Feature Extractor saved");
 
@@ -841,7 +851,7 @@ impl HuggingFaceModel {
         py: Python,
         path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
-    ) -> Result<PathBuf, InterfaceError> {
+    ) -> Result<PathBuf, ModelInterfaceError> {
         let save_path = PathBuf::from(SaveName::ImageProcessor);
         let full_save_path = path.join(&save_path);
 
@@ -850,11 +860,7 @@ impl HuggingFaceModel {
             .as_ref()
             .unwrap()
             .bind(py)
-            .call_method("save_pretrained", (full_save_path,), kwargs)
-            .map_err(|e| {
-                error!("Failed to save image processor: {}", e);
-                InterfaceError::Error(e.to_string())
-            })?;
+            .call_method("save_pretrained", (full_save_path,), kwargs)?;
 
         debug!("Image Processor saved");
 
@@ -874,7 +880,7 @@ impl HuggingFaceModel {
         py: Python,
         path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
-    ) -> Result<Vec<DataProcessor>, InterfaceError> {
+    ) -> Result<Vec<DataProcessor>, ModelInterfaceError> {
         let mut preprocessors = vec![];
 
         if self.base_args.has_tokenizer {
@@ -924,20 +930,16 @@ impl HuggingFaceModel {
         py: Python,
         path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
-    ) -> PyResult<PathBuf> {
+    ) -> Result<PathBuf, ModelInterfaceError> {
         let save_path = PathBuf::from(SaveName::Model);
         let full_save_path = path.join(&save_path);
 
         // Save the data using joblib
-        self.model
-            .as_ref()
-            .unwrap()
-            .bind(py)
-            .call_method("save_pretrained", (full_save_path,), kwargs)
-            .map_err(|e| {
-                error!("Failed to save model: {}", e);
-                OpsmlError::new_err(e.to_string())
-            })?;
+        self.model.as_ref().unwrap().bind(py).call_method(
+            "save_pretrained",
+            (full_save_path,),
+            kwargs,
+        )?;
 
         debug!("Model saved");
 
@@ -950,7 +952,7 @@ impl HuggingFaceModel {
         py: Python,
         path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
-    ) -> PyResult<()> {
+    ) -> Result<(), ModelInterfaceError> {
         if self.base_args.is_pipeline {
             let pipeline = py.import("transformers")?.getattr("pipeline")?;
 
@@ -1032,11 +1034,9 @@ impl HuggingFaceModel {
         py: Python,
         path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
-    ) -> PyResult<()> {
+    ) -> Result<(), OnnxError> {
         if self.onnx_session.is_none() {
-            return Err(OpsmlError::new_err(
-                "No ONNX model detected in interface for loading",
-            ));
+            return Err(OnnxError::SessionNotFound);
         }
 
         // get file path to onnx model
@@ -1052,9 +1052,10 @@ impl HuggingFaceModel {
                 })
             })
             .next()
-            .ok_or_else(|| OpsmlError::new_err("No ONNX file found"))?;
+            .ok_or_else(|| OnnxError::NoOnnxFile)?;
 
-        let sess = OnnxSession::load_onnx_session(py, &file_path, kwargs)?;
+        let onnx_bytes = std::fs::read(&file_path)?;
+        let sess = OnnxSession::get_py_session_from_bytes(py, &onnx_bytes, kwargs)?;
 
         self.onnx_session
             .as_ref()

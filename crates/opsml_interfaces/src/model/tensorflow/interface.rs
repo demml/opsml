@@ -1,14 +1,14 @@
 use crate::base::{parse_save_kwargs, ModelInterfaceSaveMetadata};
 use crate::data::generate_feature_schema;
 use crate::data::DataInterface;
+use crate::error::{ModelInterfaceError, OnnxError};
 use crate::model::tensorflow::TensorFlowSampleData;
 use crate::model::ModelInterface;
 use crate::types::{FeatureSchema, ProcessorType};
 use crate::ModelInterfaceMetadata;
-use crate::OnnxModelConverter;
+use crate::OnnxConverter;
 use crate::OnnxSession;
 use crate::{DataProcessor, ModelLoadKwargs, ModelSaveKwargs};
-use opsml_error::OpsmlError;
 use opsml_types::{CommonKwargs, SaveName, Suffix};
 use opsml_types::{DataType, ModelInterfaceType, ModelType, TaskType};
 use pyo3::prelude::*;
@@ -56,7 +56,7 @@ impl TensorFlowModel {
         sample_data: Option<&Bound<'py, PyAny>>,
         task_type: Option<TaskType>,
         drift_profile: Option<&Bound<'py, PyAny>>,
-    ) -> PyResult<(Self, ModelInterface)> {
+    ) -> Result<(Self, ModelInterface), ModelInterfaceError> {
         // check if model is base estimator for sklearn validation
         let model = if let Some(model) = model {
             let tf_model = py
@@ -66,9 +66,7 @@ impl TensorFlowModel {
             if model.is_instance(&tf_model).unwrap() {
                 Some(model.into_py_any(py)?)
             } else {
-                return Err(OpsmlError::new_err(
-                    "Model must be an instance of tensorflow.keras.Model",
-                ));
+                return Err(ModelInterfaceError::TensorFlowTypeError);
             }
         } else {
             None
@@ -116,7 +114,7 @@ impl TensorFlowModel {
     }
 
     #[setter]
-    pub fn set_model(&mut self, model: &Bound<'_, PyAny>) -> PyResult<()> {
+    pub fn set_model(&mut self, model: &Bound<'_, PyAny>) -> Result<(), ModelInterfaceError> {
         let py = model.py();
 
         // check if data is None
@@ -124,13 +122,14 @@ impl TensorFlowModel {
             self.model = None;
             return Ok(());
         } else {
-            let torch_module = py.import("torch")?.getattr("nn")?.getattr("Module")?;
-            if model.is_instance(&torch_module).unwrap() {
+            let tf_model = py
+                .import("tensorflow")?
+                .getattr("keras")?
+                .getattr("Model")?;
+            if model.is_instance(&tf_model).unwrap() {
                 self.model = Some(model.into_py_any(py)?)
             } else {
-                return Err(OpsmlError::new_err(
-                    "Model must be an instance of torch.nn.Module",
-                ));
+                return Err(ModelInterfaceError::TensorFlowTypeError);
             }
         };
 
@@ -141,7 +140,7 @@ impl TensorFlowModel {
     pub fn get_onnx_session<'py>(
         &self,
         py: Python<'py>,
-    ) -> PyResult<Option<&Bound<'py, OnnxSession>>> {
+    ) -> Result<Option<&Bound<'py, OnnxSession>>, ModelInterfaceError> {
         // return mutable reference to onnx session
         Ok(self.onnx_session.as_ref().map(|sess| sess.bind(py)))
     }
@@ -158,7 +157,7 @@ impl TensorFlowModel {
     pub fn set_sample_data<'py>(
         mut self_: PyRefMut<'py, Self>,
         sample_data: &Bound<'py, PyAny>,
-    ) -> PyResult<()> {
+    ) -> Result<(), ModelInterfaceError> {
         self_.sample_data = TensorFlowSampleData::new(sample_data)?;
 
         // set the data type
@@ -168,7 +167,10 @@ impl TensorFlowModel {
     }
 
     #[getter]
-    pub fn get_sample_data<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyAny>> {
+    pub fn get_sample_data<'py>(
+        &self,
+        py: Python<'py>,
+    ) -> Result<Bound<'py, PyAny>, ModelInterfaceError> {
         Ok(self.sample_data.get_data(py).unwrap().bind(py).clone())
     }
 
@@ -193,7 +195,7 @@ impl TensorFlowModel {
         &mut self,
         py: Python,
         preprocessor: &Bound<'py, PyAny>,
-    ) -> PyResult<()> {
+    ) -> Result<(), ModelInterfaceError> {
         if PyAnyMethods::is_none(preprocessor) {
             self.preprocessor = None;
             self.preprocessor_name = CommonKwargs::Undefined.to_string();
@@ -228,7 +230,7 @@ impl TensorFlowModel {
         path: PathBuf,
         to_onnx: bool,
         save_kwargs: Option<ModelSaveKwargs>,
-    ) -> PyResult<ModelInterfaceMetadata> {
+    ) -> Result<ModelInterfaceMetadata, ModelInterfaceError> {
         debug!("Saving drift profile");
         let drift_profile_uri = if self_.as_super().drift_profile.is_empty() {
             None
@@ -329,7 +331,7 @@ impl TensorFlowModel {
         path: PathBuf,
         metadata: ModelInterfaceSaveMetadata,
         load_kwargs: Option<ModelLoadKwargs>,
-    ) -> PyResult<()> {
+    ) -> Result<(), ModelInterfaceError> {
         // if kwargs is not None, unwrap, else default to None
         let load_kwargs = load_kwargs.unwrap_or_default();
 
@@ -342,7 +344,7 @@ impl TensorFlowModel {
             let onnx_path = path.join(
                 &metadata
                     .onnx_model_uri
-                    .ok_or_else(|| OpsmlError::new_err("ONNX model URI not found in metadata"))?,
+                    .ok_or_else(|| ModelInterfaceError::MissingOnnxUriError)?,
             );
             self_.load_onnx_model(py, &onnx_path, load_kwargs.onnx_kwargs(py))?;
         }
@@ -353,7 +355,7 @@ impl TensorFlowModel {
             let sample_data_path = path.join(
                 &metadata
                     .sample_data_uri
-                    .ok_or_else(|| OpsmlError::new_err("Sample data URI not found in metadata"))?,
+                    .ok_or_else(|| ModelInterfaceError::MissingSampleDataUriError)?,
             );
             self_.load_data(py, &sample_data_path, &data_type, None)?;
         }
@@ -365,10 +367,11 @@ impl TensorFlowModel {
 
         if metadata.drift_profile_uri.is_some() {
             debug!("Loading drift profile");
-            let drift_path =
-                path.join(&metadata.drift_profile_uri.ok_or_else(|| {
-                    OpsmlError::new_err("Drift profile URI not found in metadata")
-                })?);
+            let drift_path = path.join(
+                &metadata
+                    .drift_profile_uri
+                    .ok_or_else(|| ModelInterfaceError::MissingDriftProfileUriError)?,
+            );
             self_.as_super().load_drift_profile(py, &drift_path)?;
         }
 
@@ -401,7 +404,7 @@ impl TensorFlowModel {
     pub fn from_metadata<'py>(
         py: Python<'py>,
         metadata: &ModelInterfaceMetadata,
-    ) -> PyResult<Bound<'py, PyAny>> {
+    ) -> Result<Bound<'py, PyAny>, ModelInterfaceError> {
         // get first key from metadata.save_metadata.data_processor_map.keys() or default to unknow
         let preprocessor_name = metadata
             .save_metadata
@@ -435,7 +438,9 @@ impl TensorFlowModel {
         interface.schema = metadata.schema.clone();
         interface.data_type = metadata.data_type.clone();
 
-        Py::new(py, (model_interface, interface))?.into_bound_py_any(py)
+        let interface = Py::new(py, (model_interface, interface))?.into_bound_py_any(py)?;
+
+        Ok(interface)
     }
 
     /// Converts the model to onnx
@@ -451,8 +456,8 @@ impl TensorFlowModel {
         py: Python,
         path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
-    ) -> PyResult<()> {
-        let session = OnnxModelConverter::convert_model(
+    ) -> Result<(), ModelInterfaceError> {
+        let session = OnnxConverter::convert_model(
             py,
             self.model.as_ref().unwrap().bind(py),
             &self.sample_data,
@@ -480,23 +485,16 @@ impl TensorFlowModel {
         py: Python,
         path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
-    ) -> PyResult<PathBuf> {
+    ) -> Result<PathBuf, ModelInterfaceError> {
         if self.preprocessor.is_none() {
             error!("No preprocessor detected in interface for saving");
-            return Err(OpsmlError::new_err(
-                "No model detected in interface for saving",
-            ));
+            return Err(ModelInterfaceError::NoPreprocessorError);
         }
         let save_path = PathBuf::from(SaveName::Preprocessor).with_extension(Suffix::Joblib);
         let full_save_path = path.join(&save_path);
         let joblib = py.import("joblib")?;
         // Save the data using joblib
-        joblib
-            .call_method("dump", (&self.preprocessor, full_save_path), kwargs)
-            .map_err(|e| {
-                error!("Failed to save preprocessor: {}", e);
-                OpsmlError::new_err(e.to_string())
-            })?;
+        joblib.call_method("dump", (&self.preprocessor, full_save_path), kwargs)?;
 
         debug!("Preprocessor saved");
         Ok(save_path)
@@ -517,10 +515,7 @@ impl TensorFlowModel {
     ) -> PyResult<()> {
         let joblib = py.import("joblib")?;
         // Load the data using joblib
-        let preprocessor = joblib.call_method("load", (path,), kwargs).map_err(|e| {
-            error!("Failed to load preprocessor: {}", e);
-            OpsmlError::new_err(e.to_string())
-        })?;
+        let preprocessor = joblib.call_method("load", (path,), kwargs)?;
 
         self.preprocessor = Some(preprocessor.unbind());
 
@@ -540,13 +535,10 @@ impl TensorFlowModel {
         py: Python,
         path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
-    ) -> PyResult<PathBuf> {
+    ) -> Result<PathBuf, ModelInterfaceError> {
         // check if model is None
         if self.model.is_none() {
-            error!("No model detected in interface for saving");
-            return Err(OpsmlError::new_err(
-                "No model detected in interface for saving",
-            ));
+            return Err(ModelInterfaceError::NoModelError);
         }
 
         let save_path = PathBuf::from(SaveName::Model).with_extension(Suffix::Keras);
@@ -570,7 +562,7 @@ impl TensorFlowModel {
         py: Python,
         path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
-    ) -> PyResult<()> {
+    ) -> Result<(), ModelInterfaceError> {
         let tf_models = py
             .import("tensorflow")?
             .getattr("keras")?
@@ -589,7 +581,7 @@ impl TensorFlowModel {
         py: Python,
         path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
-    ) -> PyResult<Option<PathBuf>> {
+    ) -> Result<Option<PathBuf>, ModelInterfaceError> {
         // if sample_data is not None, save the sample data
         let sample_data_uri = self
             .sample_data
@@ -610,7 +602,7 @@ impl TensorFlowModel {
         path: &Path,
         data_type: &DataType,
         kwargs: Option<&Bound<'_, PyDict>>,
-    ) -> PyResult<()> {
+    ) -> Result<(), ModelInterfaceError> {
         // load sample data
 
         self.sample_data = TensorFlowSampleData::load_data(py, path, data_type, kwargs)?;
@@ -633,7 +625,7 @@ impl TensorFlowModel {
         py: Python,
         path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
-    ) -> PyResult<PathBuf> {
+    ) -> Result<PathBuf, ModelInterfaceError> {
         if self.onnx_session.is_none() {
             self.convert_to_onnx(py, path, kwargs)?;
         }
@@ -669,19 +661,16 @@ impl TensorFlowModel {
         py: Python,
         path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
-    ) -> PyResult<()> {
+    ) -> Result<(), OnnxError> {
         if self.onnx_session.is_none() {
-            return Err(OpsmlError::new_err(
-                "No ONNX model detected in interface for loading",
-            ));
+            return Err(OnnxError::SessionNotFound);
         }
 
-        let sess = OnnxSession::load_onnx_session(py, path, kwargs)?;
-
-        self.onnx_session
-            .as_ref()
-            .unwrap()
-            .setattr(py, "session", Some(sess))?;
+        self.onnx_session.as_ref().unwrap().bind(py).call_method(
+            "load_onnx_model",
+            (path,),
+            kwargs,
+        )?;
 
         debug!("ONNX model loaded");
 
