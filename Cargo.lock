@@ -3899,7 +3899,6 @@ dependencies = [
  "opsml-cards",
  "opsml-colors",
  "opsml-crypt",
- "opsml-error",
  "opsml-registry",
  "opsml-semver",
  "opsml-state",
@@ -3964,17 +3963,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "opsml-error"
-version = "3.0.0-rc.1"
-dependencies = [
- "pyo3",
- "serde",
- "thiserror 2.0.12",
- "toml_edit",
- "tracing",
-]
-
-[[package]]
 name = "opsml-events"
 version = "3.0.0-rc.1"
 dependencies = [
@@ -3982,7 +3970,6 @@ dependencies = [
  "chrono",
  "futures",
  "headers",
- "opsml-error",
  "opsml-sql",
  "opsml-types",
  "serde",
@@ -3999,7 +3986,6 @@ dependencies = [
  "names",
  "opsml-cards",
  "opsml-crypt",
- "opsml-error",
  "opsml-registry",
  "opsml-semver",
  "opsml-settings",
@@ -4011,6 +3997,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sysinfo",
+ "thiserror 2.0.12",
  "tokio",
  "tracing",
 ]
@@ -4036,6 +4023,7 @@ dependencies = [
 name = "opsml-registry"
 version = "3.0.0-rc.1"
 dependencies = [
+ "anyhow",
  "opsml-cards",
  "opsml-client",
  "opsml-colors",
@@ -4784,7 +4772,6 @@ dependencies = [
  "anyhow",
  "opsml-cards",
  "opsml-cli",
- "opsml-error",
  "opsml-experiment",
  "opsml-interfaces",
  "opsml-registry",

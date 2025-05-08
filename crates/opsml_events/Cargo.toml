@@ -12,7 +12,6 @@ axum = { workspace = true }
 chrono = { workspace = true }
 futures = { workspace = true }
 headers = { workspace = true }
-opsml-error = { workspace = true }
 opsml-sql = { workspace = true }
 opsml-types = { workspace = true }
 serde = { workspace = true }

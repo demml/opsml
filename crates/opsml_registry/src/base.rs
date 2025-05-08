@@ -90,7 +90,7 @@ impl OpsmlRegistry {
 
     pub fn list_cards(&self, args: CardQueryArgs) -> Result<Vec<CardRecord>, RegistryError> {
         match self {
-            Self::ClientRegistry(client_registry) => client_registry.list_cards(args),
+            Self::ClientRegistry(client_registry) => Ok(client_registry.list_cards(args)?),
             #[cfg(feature = "server")]
             Self::ServerRegistry(server_registry) => {
                 app_state().block_on(async { server_registry.list_cards(args).await })
@@ -100,7 +100,7 @@ impl OpsmlRegistry {
 
     pub fn check_card_uid(&self, uid: &str) -> Result<bool, RegistryError> {
         match self {
-            Self::ClientRegistry(client_registry) => client_registry.check_uid_exists(uid),
+            Self::ClientRegistry(client_registry) => Ok(client_registry.check_uid_exists(uid)?),
             #[cfg(feature = "server")]
             Self::ServerRegistry(server_registry) => {
                 app_state().block_on(async { server_registry.check_uid_exists(uid).await })
@@ -118,7 +118,7 @@ impl OpsmlRegistry {
     ) -> Result<CreateCardResponse, RegistryError> {
         match self {
             Self::ClientRegistry(client_registry) => {
-                client_registry.create_card(card, version, version_type, pre_tag, build_tag)
+                Ok(client_registry.create_card(card, version, version_type, pre_tag, build_tag)?)
             }
             #[cfg(feature = "server")]
             Self::ServerRegistry(server_registry) => app_state().block_on(async {
@@ -136,7 +136,7 @@ impl OpsmlRegistry {
     ) -> Result<ArtifactKey, RegistryError> {
         match self {
             Self::ClientRegistry(client_registry) => {
-                client_registry.get_artifact_key(uid, registry_type)
+                Ok(client_registry.get_artifact_key(uid, registry_type)?)
             }
             #[cfg(feature = "server")]
             Self::ServerRegistry(server_registry) => app_state()
@@ -146,7 +146,7 @@ impl OpsmlRegistry {
 
     pub fn get_key(&self, args: CardQueryArgs) -> Result<ArtifactKey, RegistryError> {
         match self {
-            Self::ClientRegistry(client_registry) => client_registry.get_key(args),
+            Self::ClientRegistry(client_registry) => Ok(client_registry.get_key(args)?),
             #[cfg(feature = "server")]
             Self::ServerRegistry(server_registry) => {
                 app_state().block_on(async {
@@ -166,7 +166,9 @@ impl OpsmlRegistry {
 
     pub fn delete_card(&self, delete_request: DeleteCardRequest) -> Result<(), RegistryError> {
         match self {
-            Self::ClientRegistry(client_registry) => client_registry.delete_card(delete_request),
+            Self::ClientRegistry(client_registry) => {
+                Ok(client_registry.delete_card(delete_request)?)
+            }
             #[cfg(feature = "server")]
             Self::ServerRegistry(server_registry) => {
                 app_state().block_on(async { server_registry.delete_card(delete_request).await })
@@ -176,7 +178,7 @@ impl OpsmlRegistry {
 
     pub fn update_card(&self, card: &CardRecord) -> Result<(), RegistryError> {
         match self {
-            Self::ClientRegistry(client_registry) => client_registry.update_card(card),
+            Self::ClientRegistry(client_registry) => Ok(client_registry.update_card(card)?),
             #[cfg(feature = "server")]
             Self::ServerRegistry(server_registry) => {
                 app_state().block_on(async { server_registry.update_card(card).await })
@@ -192,11 +194,15 @@ impl OpsmlRegistry {
             Self::ClientRegistry(client_registry) => {
                 // Clone the client_registry to avoid lifetime issues
                 let client_registry = client_registry.clone();
-                app_state()
+                let _ = app_state()
                     .runtime
                     .spawn_blocking(move || client_registry.insert_hardware_metrics(&metrics))
                     .await
-                    .map_err(|e| RegistryError::Error(format!("Task join error: {}", e)))?
+                    .map_err(|e| {
+                        error!("Failed to insert hardware metrics: {}", e);
+                        RegistryError::from(e)
+                    })?;
+                Ok(())
             }
             #[cfg(feature = "server")]
             Self::ServerRegistry(server_registry) => {
@@ -210,7 +216,9 @@ impl OpsmlRegistry {
         request: &GetHardwareMetricRequest,
     ) -> Result<Vec<HardwareMetrics>, RegistryError> {
         match self {
-            Self::ClientRegistry(client_registry) => client_registry.get_hardware_metrics(request),
+            Self::ClientRegistry(client_registry) => {
+                Ok(client_registry.get_hardware_metrics(request)?)
+            }
             #[cfg(feature = "server")]
             Self::ServerRegistry(server_registry) => {
                 app_state().block_on(async { server_registry.get_hardware_metrics(request).await })
@@ -220,7 +228,7 @@ impl OpsmlRegistry {
 
     pub fn insert_metrics(&self, metrics: &MetricRequest) -> Result<(), RegistryError> {
         match self {
-            Self::ClientRegistry(client_registry) => client_registry.insert_metrics(metrics),
+            Self::ClientRegistry(client_registry) => Ok(client_registry.insert_metrics(metrics)?),
             #[cfg(feature = "server")]
             Self::ServerRegistry(server_registry) => {
                 app_state().block_on(async { server_registry.insert_metrics(metrics).await })
@@ -230,7 +238,7 @@ impl OpsmlRegistry {
 
     pub fn get_metrics(&self, metrics: &GetMetricRequest) -> Result<Vec<Metric>, RegistryError> {
         match self {
-            Self::ClientRegistry(client_registry) => client_registry.get_metrics(metrics),
+            Self::ClientRegistry(client_registry) => Ok(client_registry.get_metrics(metrics)?),
             #[cfg(feature = "server")]
             Self::ServerRegistry(server_registry) => {
                 app_state().block_on(async { server_registry.get_metrics(metrics).await })
@@ -240,7 +248,9 @@ impl OpsmlRegistry {
 
     pub fn insert_parameters(&self, parameters: &ParameterRequest) -> Result<(), RegistryError> {
         match self {
-            Self::ClientRegistry(client_registry) => client_registry.insert_parameters(parameters),
+            Self::ClientRegistry(client_registry) => {
+                Ok(client_registry.insert_parameters(parameters)?)
+            }
             #[cfg(feature = "server")]
             Self::ServerRegistry(server_registry) => {
                 app_state().block_on(async { server_registry.insert_parameters(parameters).await })
@@ -253,7 +263,9 @@ impl OpsmlRegistry {
         parameters: &GetParameterRequest,
     ) -> Result<Vec<Parameter>, RegistryError> {
         match self {
-            Self::ClientRegistry(client_registry) => client_registry.get_parameters(parameters),
+            Self::ClientRegistry(client_registry) => {
+                Ok(client_registry.get_parameters(parameters)?)
+            }
             #[cfg(feature = "server")]
             Self::ServerRegistry(server_registry) => {
                 app_state().block_on(async { server_registry.get_parameters(parameters).await })

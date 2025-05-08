@@ -3,6 +3,7 @@ use opsml_interfaces::error::{DataInterfaceError, ModelInterfaceError};
 use opsml_state::error::StateError;
 use opsml_storage::storage::error::StorageError;
 use opsml_types::error::TypeError;
+use opsml_types::RegistryType;
 use opsml_utils::error::UtilError;
 use pyo3::exceptions::PyRuntimeError;
 use pyo3::prelude::*;
@@ -35,6 +36,9 @@ pub enum CardError {
     #[error("Interface must be an instance of ModelInterface")]
     MustBeModelInterfaceError,
 
+    #[error("Interface must be an instance of DataInterface")]
+    MustBeDataInterfaceError,
+
     #[error("Interface not found")]
     InterfaceNotFoundError,
 
@@ -55,6 +59,33 @@ pub enum CardError {
 
     #[error(transparent)]
     CryptError(#[from] CryptError),
+
+    #[error("Failed to convert into string")]
+    IntoStringError,
+
+    #[error(transparent)]
+    IoError(#[from] std::io::Error),
+
+    #[error("Failed to get attribute {0}. Has this card been registered?")]
+    MissingAttributeError(String),
+
+    #[error("Registry type is required")]
+    MissingRegistryTypeError,
+
+    #[error("Either space/name or uid must be provided")]
+    MissingCardDeckArgsError,
+
+    #[error("Index out of bounds: {0}")]
+    IndexOutOfBoundsError(usize),
+
+    #[error("KeyError: key {0} not found in CardDeck")]
+    CardDeckKeyError(String),
+
+    #[error("Path does not exist: {0}")]
+    PathDoesNotExistError(String),
+
+    #[error("Unsupported registry type: {0}")]
+    UnsupportedRegistryTypeError(RegistryType),
 }
 
 impl<'a> From<pyo3::DowncastError<'a, 'a>> for CardError {

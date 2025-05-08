@@ -8,6 +8,7 @@ repository = { workspace = true }
 doctest = false
 
 [dependencies]
+anyhow = { workspace = true }
 opsml-cards = { workspace = true }
 opsml-client = { workspace = true }
 opsml-colors = { workspace = true }
