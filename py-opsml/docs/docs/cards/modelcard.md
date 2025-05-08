@@ -138,7 +138,6 @@ modelcard.load(load_kwargs=ModelLoadKwargs(load_onnx=True)) #(1)
             tags: List[str] = [],
             datacard_uid: Optional[str] = None,
             metadata: ModelCardMetadata = ModelCardMetadata(),
-            to_onnx: bool = False,
         ) -> None:
             """Create a ModelCard from a machine learning model.
 
@@ -165,8 +164,6 @@ modelcard.load(load_kwargs=ModelLoadKwargs(load_onnx=True)) #(1)
                     model card to the data card. Datacard uid can also be set in card metadata.
                 metadata (ModelCardMetadata):
                     Metadata to associate with the `ModelCard. Defaults to an empty `ModelCardMetadata` object.
-                to_onnx:
-                    Whether to convert the model to onnx or not during registration
 
             Example:
             ```python
@@ -194,7 +191,6 @@ modelcard.load(load_kwargs=ModelLoadKwargs(load_onnx=True)) #(1)
                 interface=random_forest_classifier,
                 space="my-repo",
                 name="my-model",
-                to_onnx=True, # auto-convert to onnx
                 tags=["foo:bar", "baz:qux"],
             )
 
@@ -567,7 +563,6 @@ The `ModelInterface` is the primary interface for working with models in `Opsml`
         def save(
             self,
             path: Path,
-            to_onnx: bool = False,
             save_kwargs: None | ModelSaveKwargs = None,
         ) -> ModelInterfaceMetadata:
             """Save the model interface
@@ -575,8 +570,6 @@ The `ModelInterface` is the primary interface for working with models in `Opsml`
             Args:
                 path (Path):
                     Path to save the model
-                to_onnx (bool):
-                    Whether to save the model to onnx
                 save_kwargs (ModelSaveKwargs):
                     Optional kwargs to pass to the various underlying methods. This is a passthrough object meaning
                     that the kwargs will be passed to the underlying methods as is and are expected to be supported by
@@ -648,6 +641,7 @@ model_registry.register_card(
             onnx: Optional[Dict | HuggingFaceOnnxArgs] = None,
             model: Optional[Dict] = None,
             preprocessor: Optional[Dict] = None,
+            save_onnx: bool = False,
         ) -> None:
             """Optional arguments to pass to save_model
 
@@ -658,6 +652,10 @@ model_registry.register_card(
                     Optional model arguments to use when saving
                 preprocessor (Dict):
                     Optional preprocessor arguments to use when saving
+                save_onnx (bool):
+                    Whether to save the onnx model. Defaults to false. This is independent of the
+                    onnx argument since it's possible to convert a model to onnx without additional kwargs.
+                    If onnx args are provided, this will be set to true.
             """
 
         def __str__(self): ...
@@ -964,7 +962,6 @@ Booster models are saved via `save_model` which exports a `.json` file. Preproce
         def save(
             self,
             path: Path,
-            to_onnx: bool = False,
             save_kwargs: None | ModelSaveKwargs = None,
         ) -> ModelInterfaceMetadata:
             """Save the HuggingFaceModel interface
@@ -972,8 +969,6 @@ Booster models are saved via `save_model` which exports a `.json` file. Preproce
             Args:
                 path (Path):
                     Base path to save artifacts
-                to_onnx (bool):
-                    Whether to save the model/pipeline to onnx
                 save_kwargs (ModelSaveKwargs):
                     Optional kwargs to pass to the various underlying methods. This is a passthrough object meaning
                     that the kwargs will be passed to the underlying methods as is and are expected to be supported by
@@ -1267,7 +1262,6 @@ Interface for saving a CatBoost model
         def save(
             self,
             path: Path,
-            to_onnx: bool = False,
             save_kwargs: None | ModelSaveKwargs = None,
         ) -> ModelInterfaceMetadata:
             """Save the TorchModel interface. Torch models are saved
@@ -1276,8 +1270,6 @@ Interface for saving a CatBoost model
             Args:
                 path (Path):
                     Base path to save artifacts
-                to_onnx (bool):
-                    Whether to save the model to onnx
                 save_kwargs (ModelSaveKwargs):
                     Optional kwargs to pass to the various underlying methods. This is a passthrough object meaning
                     that the kwargs will be passed to the underlying methods as is and are expected to be supported by
@@ -1405,7 +1397,6 @@ Interface for saving a Lightning model
         def save(
             self,
             path: Path,
-            to_onnx: bool = False,
             save_kwargs: None | ModelSaveKwargs = None,
         ) -> ModelInterfaceMetadata:
             """Save the LightningModel interface. Lightning models are saved via checkpoints.
@@ -1413,8 +1404,6 @@ Interface for saving a Lightning model
             Args:
                 path (Path):
                     Base path to save artifacts
-                to_onnx (bool):
-                    Whether to save the model to onnx
                 save_kwargs (ModelSaveKwargs):
                     Optional kwargs to pass to the various underlying methods. This is a passthrough object meaning
                     that the kwargs will be passed to the underlying methods as is and are expected to be supported by
@@ -1792,7 +1781,7 @@ class CustomModel(ModelInterface):
 
         self.preprocessor = preprocessor #(3)
 
-    def save(self, path, to_onnx=False, save_kwargs=None):
+    def save(self, path, save_kwargs=None):
         ...
 
     def load(self, path, metadata, load_kwargs=None):

@@ -60,7 +60,7 @@ with project.run() as run:
     interface = SklearnModel(model=reg, sample_data=data["train"].X.to_numpy())
 
     # create modelcard
-    modelcard = ModelCard(interface=interface, to_onnx=True, datacard_uid=datacard.uid)
+    modelcard = ModelCard(interface=interface, datacard_uid=datacard.uid)
 
     # you can log metrics view log_metric or log_metrics
     run.log_metric("test_metric", 10)

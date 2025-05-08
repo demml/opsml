@@ -5,6 +5,7 @@ from opsml import (  # type: ignore
     ModelCard,
     ModelInterface,
     TaskType,
+    ModelSaveKwargs,
 )
 
 import pytest
@@ -24,11 +25,10 @@ def test_crud_artifactcard(
             interface=custom_interface,
             space="test",
             name="test",
-            to_onnx=True,
             tags=["foo:bar", "baz:qux"],
         )
 
-        reg.register_card(card)
+        reg.register_card(card=card, save_kwargs=ModelSaveKwargs(save_onnx=True))
 
         ## load the card
         loaded_card = reg.load_card(card.uid, interface=CustomModel)
@@ -53,12 +53,11 @@ def test_crud_artifactcard_failure(
             interface=incorrect_custom_interface,
             space="test",
             name="test",
-            to_onnx=True,
             tags=["foo:bar", "baz:qux"],
         )
 
         with pytest.raises(RuntimeError) as error:
-            reg.register_card(card)
+            reg.register_card(card=card, save_kwargs=ModelSaveKwargs(save_onnx=True))
 
         assert (
             str(error.value)

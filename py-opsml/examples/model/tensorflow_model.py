@@ -68,7 +68,10 @@ def multi_input_model():
         tf.TensorSpec(shape=(None, 10), dtype=tf.float32, name="numeric_input"),
         tf.TensorSpec(shape=(None, 5), dtype=tf.float32, name="categorical_input"),
     ]
-    save_kwargs = ModelSaveKwargs(onnx={"input_signature": input_signature})
+    save_kwargs = ModelSaveKwargs(
+        onnx={"input_signature": input_signature},
+        save_onnx=True,
+    )
 
     return model, [numeric_data, categorical_data], save_kwargs
 
@@ -80,7 +83,6 @@ modelcard = ModelCard(
     interface=interface,
     space="opsml",
     name="my_model",
-    to_onnx=True,
 )
 
 # Register the model card

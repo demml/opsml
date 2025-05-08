@@ -75,13 +75,14 @@ class CustomSklearnInterface(ModelInterface):
 
         return extra
 
-    def save(self, path, to_onnx=False, save_kwargs=None):
+    def save(self, path, save_kwargs=None):
         """Custom save method for the model interface.
 
         Args:
-            path (Path): Path to save the model.
-            to_onnx (bool): Whether to save the model as ONNX.
-            save_kwargs (ModelSaveKwargs): Save kwargs for the model.
+            path (Path):
+                Path to save the model.
+            save_kwargs (ModelSaveKwargs):
+                Save kwargs for the model.
 
         """
 
