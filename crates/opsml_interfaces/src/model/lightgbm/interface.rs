@@ -126,13 +126,12 @@ impl LightGBMModel {
     /// # Returns
     ///
     /// * `PyResult<DataInterfaceSaveMetadata>` - DataInterfaceSaveMetadata
-    #[pyo3(signature = (path, to_onnx=false, save_kwargs=None))]
+    #[pyo3(signature = (path, save_kwargs=None))]
     #[instrument(skip_all)]
     pub fn save<'py>(
         mut self_: PyRefMut<'py, Self>,
         py: Python<'py>,
         path: PathBuf,
-        to_onnx: bool,
         save_kwargs: Option<ModelSaveKwargs>,
     ) -> Result<ModelInterfaceMetadata, ModelInterfaceError> {
         debug!("Saving lightgbm interface");
