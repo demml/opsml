@@ -27,6 +27,7 @@ pyo3 = { workspace = true }
 reqwest = { workspace = true, optional = true }
 rusty-logging = { workspace = true }
 scouter-client = { workspace = true }
+thiserror = { workspace = true }
 tokio = { workspace = true, optional = true }
 
 [features]

@@ -4789,6 +4789,7 @@ dependencies = [
  "reqwest",
  "rusty-logging",
  "scouter-client",
+ "thiserror 2.0.12",
  "tokio",
 ]
 
