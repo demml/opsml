@@ -69,9 +69,7 @@ impl FileSystemStorage {
     fn create_server_storage(
         _settings: &OpsmlStorageSettings,
     ) -> Result<FileSystemStorage, StorageError> {
-        Err(StorageError::Error(
-            "Server mode requires the 'server' feature to be enabled".to_string(),
-        ))
+        Err(StorageError::ServerFeatureError)
     }
 
     #[instrument(skip_all)]

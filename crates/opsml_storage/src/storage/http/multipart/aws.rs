@@ -1,4 +1,4 @@
-use crate::storage::error::AwsError;
+use crate::storage::http::multipart::error::MultiPartError;
 use bytes::Bytes;
 use opsml_client::OpsmlApiClient;
 use opsml_types::contracts::{
@@ -25,7 +25,7 @@ impl S3MultipartUpload {
         rpath: &Path,
         upload_id: String,
         client: Arc<OpsmlApiClient>,
-    ) -> Result<Self, AwsError> {
+    ) -> Result<Self, MultiPartError> {
         let file = File::open(lpath)?;
 
         let file_reader = BufReader::new(file);
@@ -40,7 +40,7 @@ impl S3MultipartUpload {
         })
     }
 
-    pub fn upload_part(&mut self, part_number: i32, chunk: Bytes) -> Result<(), AwsError> {
+    pub fn upload_part(&mut self, part_number: i32, chunk: Bytes) -> Result<(), MultiPartError> {
         // First get presigned URL for this part from server
         let presigned_url = self.get_upload_url(part_number)?;
 
@@ -56,14 +56,14 @@ impl S3MultipartUpload {
                 });
                 Ok(())
             } else {
-                Err(AwsError::MissingEtagError)
+                Err(MultiPartError::MissingEtagError)
             }
         } else {
-            Err(AwsError::UploadError(response.status()))
+            Err(MultiPartError::UploadError(response.status()))
         }
     }
 
-    fn get_upload_url(&self, part_number: i32) -> Result<String, AwsError> {
+    fn get_upload_url(&self, part_number: i32) -> Result<String, MultiPartError> {
         Ok(self.client.generate_presigned_url_for_part(
             &self.rpath,
             &self.upload_id,
@@ -71,7 +71,7 @@ impl S3MultipartUpload {
         )?)
     }
 
-    pub fn upload_file_in_chunks(&mut self, chunk_size: usize) -> Result<(), AwsError> {
+    pub fn upload_file_in_chunks(&mut self, chunk_size: usize) -> Result<(), MultiPartError> {
         let mut buffer = vec![0; chunk_size];
         let mut part_number = 1;
 
@@ -93,7 +93,7 @@ impl S3MultipartUpload {
         Ok(())
     }
 
-    fn complete_upload(&self) -> Result<UploadResponse, AwsError> {
+    fn complete_upload(&self) -> Result<UploadResponse, MultiPartError> {
         let completed_parts = CompletedUploadParts {
             parts: self.completed_parts.clone(),
         };

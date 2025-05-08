@@ -1,4 +1,4 @@
-use crate::storage::error::StorageError;
+use crate::storage::http::multipart::error::MultiPartError;
 use base64::prelude::*;
 use opsml_client::OpsmlApiClient;
 use opsml_types::contracts::CompleteMultipartUpload;
@@ -25,7 +25,7 @@ impl AzureMultipartUpload {
         rpath: &Path,
         session_url: String,
         client: Arc<OpsmlApiClient>,
-    ) -> Result<Self, StorageError> {
+    ) -> Result<Self, MultiPartError> {
         let file = File::open(lpath)?;
 
         let file_reader = BufReader::new(file);
@@ -44,7 +44,7 @@ impl AzureMultipartUpload {
         chunk_count: u64,
         size_of_last_chunk: u64,
         chunk_size: u64,
-    ) -> Result<(), StorageError> {
+    ) -> Result<(), MultiPartError> {
         for chunk_index in 0..chunk_count {
             let this_chunk = if chunk_count - 1 == chunk_index {
                 size_of_last_chunk
@@ -66,7 +66,7 @@ impl AzureMultipartUpload {
         Ok(())
     }
 
-    pub fn upload_block(&self, block_id: &str, data: &[u8]) -> Result<(), StorageError> {
+    pub fn upload_block(&self, block_id: &str, data: &[u8]) -> Result<(), MultiPartError> {
         let url = format!(
             "{}&comp=block&blockid={}",
             self.session_url,
@@ -78,7 +78,10 @@ impl AzureMultipartUpload {
         Ok(())
     }
 
-    pub fn upload_next_chunk(&mut self, upload_args: &UploadPartArgs) -> Result<(), StorageError> {
+    pub fn upload_next_chunk(
+        &mut self,
+        upload_args: &UploadPartArgs,
+    ) -> Result<(), MultiPartError> {
         let mut buffer = vec![0; upload_args.this_chunk_size as usize];
         let bytes_read = self.file_reader.read(&mut buffer)?;
 
@@ -93,7 +96,7 @@ impl AzureMultipartUpload {
         Ok(())
     }
 
-    pub fn complete_upload(&self) -> Result<UploadResponse, StorageError> {
+    pub fn complete_upload(&self) -> Result<UploadResponse, MultiPartError> {
         let parts = MultipartCompleteParts::Azure(self.block_parts.clone());
         let request = CompleteMultipartUpload {
             path: self.rpath.clone(),

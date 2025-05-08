@@ -282,13 +282,13 @@ impl HttpStorageClient {
                 error!("Failed to create multipart upload: {}", e);
             })?;
 
-        MultiPartUploader::new(
+        Ok(MultiPartUploader::new(
             rpath,
             lpath,
             &self.storage_type,
             self.api_client.clone(),
             multipart_session.session_url,
-        )
+        )?)
     }
 
     #[instrument(skip_all)]
