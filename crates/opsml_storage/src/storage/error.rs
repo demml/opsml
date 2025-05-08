@@ -1,9 +1,16 @@
+use crate::storage::http::multipart::error::MultiPartError;
 use opsml_client::error::ApiClientError;
 use opsml_settings::error::SettingsError;
 use opsml_state::error::StateError;
 use opsml_utils::error::UtilError;
-use reqwest::StatusCode;
 use thiserror::Error;
+
+#[cfg(feature = "server")]
+use crate::storage::aws::error::AwsError;
+#[cfg(feature = "server")]
+use crate::storage::azure::error::AzureError;
+#[cfg(feature = "server")]
+use crate::storage::gcs::error::GoogleError;
 
 #[derive(Error, Debug)]
 pub enum LocalError {
@@ -15,157 +22,16 @@ pub enum LocalError {
 }
 
 #[derive(Error, Debug)]
-pub enum AzureError {
-    #[error(transparent)]
-    CoreError(#[from] azure_core::error::Error),
-
-    #[error(transparent)]
-    IoError(#[from] std::io::Error),
-
-    #[error(transparent)]
-    ReqwestError(#[from] reqwest::Error),
-
-    #[error(transparent)]
-    VarError(#[from] std::env::VarError),
-
-    #[error("Invalid parts type for Azure storage")]
-    InvalidPartsTypeError,
-}
-
-#[derive(Error, Debug)]
-pub enum AwsError {
-    #[error("No eTag is response")]
-    MissingEtagError,
-
-    #[error("Invalid eTag in response: {0}")]
-    InvalidEtagError(String),
-
-    #[error(transparent)]
-    IoError(#[from] std::io::Error),
-
-    #[error(transparent)]
-    PresignError(#[from] aws_sdk_s3::presigning::PresigningConfigError),
-
-    #[error(transparent)]
-    CreateMultipartUploadError(
-        #[from]
-        aws_sdk_s3::error::SdkError<
-            aws_sdk_s3::operation::create_multipart_upload::CreateMultipartUploadError,
-        >,
-    ),
-
-    #[error(transparent)]
-    UploadPartError(
-        #[from] aws_sdk_s3::error::SdkError<aws_sdk_s3::operation::upload_part::UploadPartError>,
-    ),
-
-    #[error(transparent)]
-    CompleteUploadError(
-        #[from]
-        aws_sdk_s3::error::SdkError<
-            aws_sdk_s3::operation::complete_multipart_upload::CompleteMultipartUploadError,
-        >,
-    ),
-
-    #[error(transparent)]
-    AportUploadError(
-        #[from]
-        aws_sdk_s3::error::SdkError<
-            aws_sdk_s3::operation::abort_multipart_upload::AbortMultipartUploadError,
-        >,
-    ),
-
-    #[error(transparent)]
-    GetObjectError(
-        #[from] aws_sdk_s3::error::SdkError<aws_sdk_s3::operation::get_object::GetObjectError>,
-    ),
-
-    #[error(transparent)]
-    ListObjectsV2Error(
-        #[from]
-        aws_sdk_s3::error::SdkError<aws_sdk_s3::operation::list_objects_v2::ListObjectsV2Error>,
-    ),
-
-    #[error(transparent)]
-    CopyObjectError(
-        #[from] aws_sdk_s3::error::SdkError<aws_sdk_s3::operation::copy_object::CopyObjectError>,
-    ),
-
-    #[error(transparent)]
-    DeleteObjectError(
-        #[from]
-        aws_sdk_s3::error::SdkError<aws_sdk_s3::operation::delete_object::DeleteObjectError>,
-    ),
-
-    #[error(transparent)]
-    DeleteObjectsError(
-        #[from]
-        aws_sdk_s3::error::SdkError<aws_sdk_s3::operation::delete_objects::DeleteObjectsError>,
-    ),
-
-    #[error("Failed to build object identifier: {0}")]
-    BuildError(String),
-
-    #[error("Failed to collect ByteStream: {0}")]
-    ByteStreamError(String),
-
-    #[error("Failed to get next chunk: {0}")]
-    NextChunkError(String),
-
-    #[error(transparent)]
-    ReqwestError(#[from] reqwest::Error),
-
-    #[error("Upload failed with status: {0}")]
-    UploadError(StatusCode),
-
-    #[error("Invalid parts type for AWS storage")]
-    InvalidPartsTypeError,
-
-    #[error(transparent)]
-    ApiClientError(#[from] ApiClientError),
-}
-
-#[derive(Error, Debug)]
-pub enum GoogleError {
-    #[error(transparent)]
-    GCloudAuthError(#[from] google_cloud_auth::error::Error),
-
-    #[error(transparent)]
-    GCloudStorageError(#[from] google_cloud_storage::http::Error),
-
-    #[error(transparent)]
-    SignedURLError(#[from] google_cloud_storage::sign::SignedURLError),
-
-    #[error(transparent)]
-    DecodeError(#[from] base64::DecodeError),
-
-    #[error(transparent)]
-    Utf8Error(#[from] std::string::FromUtf8Error),
-
-    #[error(transparent)]
-    IoError(#[from] std::io::Error),
-
-    #[error("Failed to upload chunks")]
-    UploadChunksError,
-
-    #[error("Upload failed with status: {0}")]
-    UploadError(StatusCode),
-
-    #[error(transparent)]
-    ReqwestError(#[from] reqwest::Error),
-
-    #[error(transparent)]
-    ApiClientError(#[from] ApiClientError),
-}
-
-#[derive(Error, Debug)]
 pub enum StorageError {
+    #[cfg(feature = "server")]
     #[error(transparent)]
     AzureError(#[from] AzureError),
 
+    #[cfg(feature = "server")]
     #[error(transparent)]
     AwsError(#[from] AwsError),
 
+    #[cfg(feature = "server")]
     #[error(transparent)]
     GoogleError(#[from] GoogleError),
 
@@ -209,7 +75,7 @@ pub enum StorageError {
     PathMustBeDirectoryError,
 
     #[error("Failed to upload file")]
-    UploadFileError,
+    FileUploadError,
 
     #[error(transparent)]
     DecodeError(#[from] base64::DecodeError),
@@ -225,4 +91,10 @@ pub enum StorageError {
 
     #[error(transparent)]
     StripPrefixError(#[from] std::path::StripPrefixError),
+
+    #[error("Server mode requires the 'server' feature to be enabled")]
+    ServerFeatureError,
+
+    #[error(transparent)]
+    MultipartError(#[from] MultiPartError),
 }

@@ -1,4 +1,4 @@
-use crate::storage::error::GoogleError;
+use crate::storage::http::multipart::error::MultiPartError;
 use opsml_client::OpsmlApiClient;
 use opsml_types::contracts::CompleteMultipartUpload;
 use opsml_types::contracts::UploadPartArgs;
@@ -65,7 +65,7 @@ impl GcsMultipartUpload {
         rpath: &Path,
         session_url: String,
         client: Arc<OpsmlApiClient>,
-    ) -> Result<Self, GoogleError> {
+    ) -> Result<Self, MultiPartError> {
         let file = File::open(lpath)?;
 
         let metadata = file.metadata()?;
@@ -82,7 +82,10 @@ impl GcsMultipartUpload {
         })
     }
 
-    pub fn upload_next_chunk(&mut self, upload_args: &UploadPartArgs) -> Result<(), GoogleError> {
+    pub fn upload_next_chunk(
+        &mut self,
+        upload_args: &UploadPartArgs,
+    ) -> Result<(), MultiPartError> {
         let first_byte = upload_args.chunk_index * upload_args.chunk_size;
         let last_byte = first_byte + upload_args.this_chunk_size - 1;
 
@@ -104,7 +107,7 @@ impl GcsMultipartUpload {
             .send()?;
 
         if !response.status().is_success() {
-            return Err(GoogleError::UploadError(response.status()));
+            return Err(MultiPartError::UploadError(response.status()));
         }
 
         Ok(())
@@ -115,7 +118,7 @@ impl GcsMultipartUpload {
         chunk_count: u64,
         size_of_last_chunk: u64,
         chunk_size: u64,
-    ) -> Result<(), GoogleError> {
+    ) -> Result<(), MultiPartError> {
         for chunk_index in 0..chunk_count {
             let this_chunk = if chunk_count - 1 == chunk_index {
                 size_of_last_chunk
@@ -142,7 +145,7 @@ impl GcsMultipartUpload {
         Ok(())
     }
 
-    fn cancel_upload(&self) -> Result<UploadResponse, GoogleError> {
+    fn cancel_upload(&self) -> Result<UploadResponse, MultiPartError> {
         let request = CompleteMultipartUpload {
             path: self.rpath.clone(),
             session_url: self.session_url.clone(),

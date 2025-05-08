@@ -1,6 +1,7 @@
 use crate::storage::base::{get_files, PathExt, StorageClient};
-use crate::storage::error::{GoogleError, StorageError};
+use crate::storage::error::StorageError;
 use crate::storage::filesystem::FileSystem;
+use crate::storage::gcs::error::GoogleError;
 use async_trait::async_trait;
 use base64::prelude::*;
 use futures::stream::Stream;

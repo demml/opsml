@@ -1,5 +1,6 @@
+use crate::storage::aws::error::AwsError;
 use crate::storage::base::{get_files, PathExt, StorageClient};
-use crate::storage::error::{AwsError, StorageError};
+use crate::storage::error::StorageError;
 use crate::storage::filesystem::FileSystem;
 use async_trait::async_trait;
 use aws_config::BehaviorVersion;

@@ -1,4 +1,4 @@
-use crate::storage::error::StorageError;
+use crate::storage::http::multipart::error::MultiPartError;
 use opsml_client::OpsmlApiClient;
 use opsml_types::contracts::UploadResponse;
 use reqwest::blocking::multipart::{Form, Part};
@@ -17,7 +17,7 @@ impl LocalMultipartUpload {
         lpath: &Path,
         rpath: &Path,
         client: Arc<OpsmlApiClient>,
-    ) -> Result<Self, StorageError> {
+    ) -> Result<Self, MultiPartError> {
         Ok(LocalMultipartUpload {
             lpath: lpath.to_str().unwrap().to_string(),
             rpath: rpath.to_str().unwrap().to_string(),
@@ -25,7 +25,7 @@ impl LocalMultipartUpload {
         })
     }
 
-    pub fn upload_file_in_chunks(&self) -> Result<(), StorageError> {
+    pub fn upload_file_in_chunks(&self) -> Result<(), MultiPartError> {
         // Create multipart form with file
         let part = Part::file(&self.lpath)?
             .file_name(self.rpath.clone())
@@ -38,7 +38,7 @@ impl LocalMultipartUpload {
         let response = response.json::<UploadResponse>()?;
 
         if !response.uploaded {
-            return Err(StorageError::UploadFileError);
+            return Err(MultiPartError::FileUploadError);
         }
 
         Ok(())

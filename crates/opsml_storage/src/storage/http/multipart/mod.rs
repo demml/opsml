@@ -1,8 +1,9 @@
 pub mod aws;
 pub mod azure;
+pub mod error;
 pub mod gcs;
 pub mod local;
-use crate::storage::error::StorageError;
+use crate::storage::http::multipart::error::MultiPartError;
 pub use aws::S3MultipartUpload;
 pub use azure::AzureMultipartUpload;
 pub use gcs::GcsMultipartUpload;
@@ -27,7 +28,7 @@ impl MultiPartUploader {
         storage_type: &StorageType,
         client: Arc<OpsmlApiClient>,
         session_url: String,
-    ) -> Result<Self, StorageError> {
+    ) -> Result<Self, MultiPartError> {
         match *storage_type {
             StorageType::Aws => Ok(S3MultipartUpload::new(lpath, rpath, session_url, client)
                 .map(MultiPartUploader::S3)?),
@@ -46,7 +47,7 @@ impl MultiPartUploader {
         chunk_count: u64,
         size_of_last_chunk: u64,
         chunk_size: u64,
-    ) -> Result<(), StorageError> {
+    ) -> Result<(), MultiPartError> {
         match self {
             MultiPartUploader::S3(s3) => Ok(s3.upload_file_in_chunks(chunk_size as usize)?),
             MultiPartUploader::Gcs(gcs) => {
