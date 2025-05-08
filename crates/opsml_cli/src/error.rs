@@ -58,7 +58,7 @@ pub enum CliError {
     MissingAppError,
 
     #[error("Unsupported platform - os: {0}, arch: {1}")]
-    UnsupportedPlatformError(String, String),
+    UnsupportedPlatformError(&'static str, &'static str),
 
     #[error("Failed to get home directory")]
     HomeDirError,
@@ -66,26 +66,38 @@ pub enum CliError {
     #[error("Failed to get create cache directory")]
     CreateCacheDirError(#[source] std::io::Error),
 
-    #[error("Failed to extract archive: {0}")]
-    ArchiveExtractionError(String),
+    #[error("Failed to extract archive")]
+    ArchiveExtractionError(#[source] std::io::Error),
 
-    #[error("Failed to download binary: {0}")]
-    DownloadBinaryError(String),
+    #[error("Failed to extract archive")]
+    ZipArchiveExtractionError(#[source] zip::result::ZipError),
 
-    #[error("Failed to write binary: {0}")]
-    WriteBinaryError(String),
+    #[error("Failed to download binary")]
+    DownloadBinaryError(#[source] reqwest::Error),
 
-    #[error("Failed to open archive: {0}")]
-    ArchiveOpenError(String),
+    #[error("Failed to write binary")]
+    WriteBinaryError(#[source] std::io::Error),
+
+    #[error("Failed to open archive")]
+    ArchiveOpenError(#[source] std::io::Error),
+
+    #[error("Failed to unzip archive")]
+    ArchiveZipError(#[source] zip::result::ZipError),
 
     #[error("Binary not found")]
     BinaryNotFound,
 
-    #[error("Failed to remove archive: {0}")]
-    RemoveArchiveError(String),
+    #[error("Failed to remove archive")]
+    RemoveArchiveError(#[source] std::io::Error),
 
-    #[error("{0}")]
-    BinaryExecutionError(String),
+    #[error("Failed to spawn child process")]
+    BinarySpawnError(#[source] std::io::Error),
+
+    #[error("Failed to wait for child process")]
+    BinaryWaitError(#[source] std::io::Error),
+
+    #[error("Failed to start the UI")]
+    BinaryStartError,
 
     #[error("Failed to rename binary")]
     RenameBinaryError(#[source] std::io::Error),
@@ -95,6 +107,9 @@ pub enum CliError {
 
     #[error("Failed to remove file")]
     RemoveFileError(#[source] std::io::Error),
+
+    #[error("Could not extract UI archive due to unsupported platform")]
+    UnsupportedPlatformExtractionError,
 }
 
 impl From<CliError> for PyErr {

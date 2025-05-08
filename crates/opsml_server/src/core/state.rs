@@ -28,11 +28,7 @@ impl AppState {
         let user = self
             .sql_client
             .get_user(&perms.username)
-            .await
-            .map_err(|e| {
-                error!("Failed to get user from database: {}", e);
-                e
-            })?
+            .await?
             .ok_or_else(|| {
                 error!("User not found in database");
                 ServerError::UserNotFoundError

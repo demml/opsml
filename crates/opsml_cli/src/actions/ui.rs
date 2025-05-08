@@ -52,10 +52,7 @@ fn detect_platform() -> Result<Platform, CliError> {
         ("macos", "aarch64") => Ok(Platform::MacOS("aarch64".to_string())),
         ("linux", "x86_64") => Ok(Platform::Linux("x86_64".to_string())),
         ("linux", "aarch64") => Ok(Platform::Linux("aarch64".to_string())),
-        _ => Err(CliError::UnsupportedPlatformError(
-            os.to_string(),
-            arch.to_string(),
-        )),
+        _ => Err(CliError::UnsupportedPlatformError(os, arch)),
     }
 }
 
@@ -98,42 +95,34 @@ fn download_binary(
         GITHUB_REPO, version, archive_name
     ));
 
-    let response =
-        reqwest::blocking::get(&url).map_err(|e| CliError::DownloadBinaryError(e.to_string()))?;
+    let response = reqwest::blocking::get(&url).map_err(CliError::DownloadBinaryError)?;
     let archive_path = cache_dir.join(&archive_name);
 
-    let bytes = response
-        .bytes()
-        .map_err(|e| CliError::DownloadBinaryError(e.to_string()))?;
-    fs::write(&archive_path, bytes).map_err(|e| CliError::WriteBinaryError(e.to_string()))?;
+    let bytes = response.bytes().map_err(CliError::DownloadBinaryError)?;
+    fs::write(&archive_path, bytes).map_err(CliError::WriteBinaryError)?;
 
     match platform {
         Platform::Windows | Platform::MacOS(_) => {
-            let reader = fs::File::open(&archive_path)
-                .map_err(|e| CliError::ArchiveOpenError(e.to_string()))?;
-            let mut archive = zip::ZipArchive::new(reader)
-                .map_err(|e| CliError::ArchiveOpenError(e.to_string()))?;
+            let reader = fs::File::open(&archive_path).map_err(CliError::ArchiveOpenError)?;
+            let mut archive = zip::ZipArchive::new(reader).map_err(CliError::ArchiveZipError)?;
 
             archive
                 .extract(cache_dir)
-                .map_err(|e| CliError::ArchiveExtractionError(e.to_string()))?;
+                .map_err(CliError::ZipArchiveExtractionError)?;
         }
         Platform::Linux(_) => {
             #[cfg(target_os = "linux")]
             {
-                let tar_gz = fs::File::open(&archive_path)
-                    .map_err(|e| CliError::ArchiveOpenError(e.to_string()))?;
+                let tar_gz = fs::File::open(&archive_path).map_err(CliError::ArchiveOpenError)?;
                 let tar = flate2::read::GzDecoder::new(tar_gz);
                 let mut archive = tar::Archive::new(tar);
                 archive
                     .unpack(cache_dir)
-                    .map_err(|e| CliError::ArchiveExtractionError(e.to_string()))?;
+                    .map_err(CliError::ArchiveExtractionError)?;
             }
             #[cfg(not(target_os = "linux"))]
             {
-                return Err(CliError::ArchiveExtractionError(
-                    "Could not extract UI archive due to unsupported platform".to_string(),
-                ));
+                return Err(CliError::UnsupportedPlatformExtractionError);
             }
         }
     }
@@ -161,8 +150,7 @@ fn download_binary(
     }
 
     // Clean up archive
-    fs::remove_file(archive_path)
-        .map_err(|e| CliError::RemoveArchiveError(format!("Failed to remove archive: {}", e)))?;
+    fs::remove_file(archive_path).map_err(CliError::RemoveArchiveError)?;
 
     Ok(())
 }
@@ -178,19 +166,15 @@ fn download_binary(
 /// # Errors
 /// * `CliError::BinaryExecutionError` - If the binary execution fails
 fn execute_binary(binary_path: &Path) -> Result<(), CliError> {
-    let mut child_process = Command::new(binary_path).spawn().map_err(|e| {
-        CliError::BinaryExecutionError(format!("Failed to spawn child process: {}", e))
-    })?;
+    let mut child_process = Command::new(binary_path)
+        .spawn()
+        .map_err(CliError::BinarySpawnError)?;
 
     // Wait for the process to finish
-    let status = child_process.wait().map_err(|e| {
-        CliError::BinaryExecutionError(format!("Failed to wait for child process: {}", e))
-    })?;
+    let status = child_process.wait().map_err(CliError::BinaryWaitError)?;
 
     if !status.success() {
-        return Err(CliError::BinaryExecutionError(
-            "Failed to start the UI".to_string(),
-        ));
+        return Err(CliError::BinaryStartError);
     }
 
     Ok(())

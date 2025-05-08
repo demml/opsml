@@ -354,9 +354,8 @@ impl CardDeck {
     #[staticmethod]
     #[pyo3(signature = (json_string))]
     pub fn model_validate_json(json_string: String) -> Result<CardDeck, CardError> {
-        Ok(serde_json::from_str(&json_string).map_err(|e| {
+        Ok(serde_json::from_str(&json_string).inspect_err(|e| {
             error!("Failed to validate json: {}", e);
-            e
         })?)
     }
 
@@ -424,9 +423,8 @@ impl CardDeck {
 
         // delete the path if it exists
         if base_path.exists() {
-            std::fs::remove_dir_all(&base_path).map_err(|e| {
+            std::fs::remove_dir_all(&base_path).inspect_err(|e| {
                 error!("Failed to remove directory: {}", e);
-                e
             })?;
         }
 
@@ -534,10 +532,9 @@ impl CardDeck {
     ) -> Result<PyObject, CardError> {
         let card_path = base_path.join(&card.alias);
 
-        let (interface, load_kwargs) =
-            Self::extract_kwargs(py, load_kwargs, &card.alias).map_err(|e| {
+        let (interface, load_kwargs) = Self::extract_kwargs(py, load_kwargs, &card.alias)
+            .inspect_err(|e| {
                 error!("Failed to extract kwargs: {}", e);
-                e
             })?;
 
         let card_json = Self::read_card_json(&card_path)?;
@@ -563,9 +560,8 @@ impl CardDeck {
     }
     pub fn load_card_deck_json(path: &Path) -> Result<CardDeck, CardError> {
         let card_deck_path = path.join(SaveName::Card).with_extension(Suffix::Json);
-        let json_string = std::fs::read_to_string(card_deck_path).map_err(|e| {
+        let json_string = std::fs::read_to_string(card_deck_path).inspect_err(|e| {
             error!("Failed to read file: {}", e);
-            e
         })?;
         Self::model_validate_json(json_string)
     }
@@ -621,14 +617,14 @@ impl CardDeck {
             DataCard::model_validate_json(py, card_json.to_string(), interface.as_ref())?;
         let kwargs = load_kwargs.and_then(|kwargs| kwargs.extract::<DataLoadKwargs>().ok());
 
-        card_obj.load(py, Some(card_path), kwargs).map_err(|e| {
-            error!("Failed to load card: {}", e);
-            e
-        })?;
+        card_obj
+            .load(py, Some(card_path), kwargs)
+            .inspect_err(|e| {
+                error!("Failed to load card: {}", e);
+            })?;
 
-        Ok(card_obj.into_py_any(py).map_err(|e| {
+        Ok(card_obj.into_py_any(py).inspect_err(|e| {
             error!("Failed to convert card to PyAny: {}", e);
-            e
         })?)
     }
 
@@ -643,14 +639,14 @@ impl CardDeck {
             ModelCard::model_validate_json(py, card_json.to_string(), interface.as_ref())?;
         let kwargs = load_kwargs.and_then(|kwargs| kwargs.extract::<ModelLoadKwargs>().ok());
 
-        card_obj.load(py, Some(card_path), kwargs).map_err(|e| {
-            error!("Failed to load card: {}", e);
-            e
-        })?;
+        card_obj
+            .load(py, Some(card_path), kwargs)
+            .inspect_err(|e| {
+                error!("Failed to load card: {}", e);
+            })?;
 
-        Ok(card_obj.into_py_any(py).map_err(|e| {
+        Ok(card_obj.into_py_any(py).inspect_err(|e| {
             error!("Failed to convert card to PyAny: {}", e);
-            e
         })?)
     }
 

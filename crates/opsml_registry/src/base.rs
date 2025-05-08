@@ -48,9 +48,8 @@ impl OpsmlRegistry {
                 #[cfg(feature = "server")]
                 {
                     let config = state.config()?;
-                    let settings = config.storage_settings().map_err(|e| {
+                    let settings = config.storage_settings().inspect_err(|e| {
                         error!("Failed to get storage settings: {}", e);
-                        e
                     })?;
                     let db_settings = config.database_settings.clone();
                     let server_registry = state.block_on(async {

@@ -174,9 +174,8 @@ impl ExperimentCard {
     #[staticmethod]
     #[pyo3(signature = (json_string))]
     pub fn model_validate_json(json_string: String) -> Result<ExperimentCard, CardError> {
-        Ok(serde_json::from_str(&json_string).map_err(|e| {
+        Ok(serde_json::from_str(&json_string).inspect_err(|e| {
             error!("Failed to validate json: {}", e);
-            e
         })?)
     }
 
@@ -189,9 +188,8 @@ impl ExperimentCard {
             Some(p) => storage_path.join(SaveName::Artifacts).join(p),
         };
 
-        let files = storage_client()?.find(&rpath).map_err(|e| {
+        let files = storage_client()?.find(&rpath).inspect_err(|e| {
             error!("Failed to list artifacts: {}", e);
-            e
         })?;
 
         // iterate through and remove storage_path if it exists
@@ -224,9 +222,8 @@ impl ExperimentCard {
 
         // assert that lpath exists, if not create it
         if !lpath.exists() {
-            std::fs::create_dir_all(&lpath).map_err(|e| {
+            std::fs::create_dir_all(&lpath).inspect_err(|e| {
                 error!("Failed to create directory: {}", e);
-                e
             })?;
         }
 
@@ -245,9 +242,8 @@ impl ExperimentCard {
 
         storage_client()?
             .get(&lpath, &rpath, recursive)
-            .map_err(|e| {
+            .inspect_err(|e| {
                 error!("Failed to download artifacts: {}", e);
-                e
             })?;
 
         let decrypt_key = self
@@ -255,9 +251,8 @@ impl ExperimentCard {
             .as_ref()
             .unwrap()
             .get_decrypt_key()
-            .map_err(|e| {
+            .inspect_err(|e| {
                 error!("Failed to get decryption key: {}", e);
-                e
             })?;
         decrypt_directory(&lpath, &decrypt_key)?;
 

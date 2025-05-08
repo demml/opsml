@@ -43,7 +43,7 @@ pub fn build_http_client(settings: &ApiSettings) -> Result<Client, ApiClientErro
     let client = client_builder
         .default_headers(headers)
         .build()
-        .map_err(|e| ApiClientError::CreateClientError(e.to_string()))?;
+        .map_err(ApiClientError::CreateClientError)?;
 
     Ok(client)
 }
@@ -75,9 +75,8 @@ impl OpsmlApiClient {
             auth_token: Arc::new(RwLock::new(String::new())),
         };
 
-        api_client.refresh_token().map_err(|e| {
+        api_client.refresh_token().inspect_err(|e| {
             error!("Failed to get JWT token: {}", e);
-            e
         })?;
 
         Ok(api_client)
@@ -258,9 +257,8 @@ impl OpsmlApiClient {
                 Some(query_string),
                 None,
             )
-            .map_err(|e| {
+            .inspect_err(|e| {
                 error!("Failed to get presigned url with error: {}", e.to_string());
-                e
             })?;
 
         // move response into PresignedUrl
@@ -274,12 +272,11 @@ impl OpsmlApiClient {
         &self,
         complete_request: CompleteMultipartUpload,
     ) -> Result<Response, ApiClientError> {
-        let body = serde_json::to_value(complete_request).map_err(|e| {
+        let body = serde_json::to_value(complete_request).inspect_err(|e| {
             error!(
                 "Failed to serialize completed upload parts with error: {}",
                 e
             );
-            e
         })?;
 
         let url = format!("{}/{}", self.base_path, Routes::CompleteMultipart);

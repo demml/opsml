@@ -162,9 +162,8 @@ impl SqlClient for SqliteClient {
 
         // sort semvers
         Ok(
-            VersionValidator::sort_semver_versions(versions, true).map_err(|e| {
+            VersionValidator::sort_semver_versions(versions, true).inspect_err(|e| {
                 error!("{}", e);
-                e
             })?,
         )
     }

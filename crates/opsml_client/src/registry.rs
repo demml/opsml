@@ -57,9 +57,8 @@ impl ClientRegistry {
                 Some(query_string),
                 None,
             )
-            .map_err(|e| {
+            .inspect_err(|e| {
                 error!("Failed to list cards {}", e);
-                e
             })?;
 
         response
@@ -93,9 +92,8 @@ impl ClientRegistry {
             version_request,
         };
 
-        let body = serde_json::to_value(card_request).map_err(|e| {
+        let body = serde_json::to_value(card_request).inspect_err(|e| {
             error!("Failed to serialize card request {}", e);
-            e
         })?;
 
         let response = self
@@ -107,9 +105,8 @@ impl ClientRegistry {
                 None,
                 None,
             )
-            .map_err(|e| {
+            .inspect_err(|e| {
                 error!("Failed to create card {}", e);
-                e
             })?;
 
         // check if 403 forbidden and get error message
@@ -184,9 +181,8 @@ impl ClientRegistry {
                 Some(query_string),
                 None,
             )
-            .map_err(|e| {
+            .inspect_err(|e| {
                 error!("Request failed {}", e);
-                e
             })?;
 
         // check if 403 forbidden and get error message
@@ -222,9 +218,8 @@ impl ClientRegistry {
                 Some(query_string),
                 None,
             )
-            .map_err(|e| {
+            .inspect_err(|e| {
                 error!("Failed to get artifact key {}", e);
-                e
             })?;
 
         response
@@ -249,9 +244,8 @@ impl ClientRegistry {
                 Some(query_string),
                 None,
             )
-            .map_err(|e| {
+            .inspect_err(|e| {
                 error!("Failed to check uid exists {}", e);
-                e
             })?;
 
         let exists = response
@@ -277,9 +271,8 @@ impl ClientRegistry {
         let response = self
             .api_client
             .request(route, RequestType::Get, None, Some(query_string), None)
-            .map_err(|e| {
+            .inspect_err(|e| {
                 error!("Failed to get artifact key {}", e);
-                e
             })?;
 
         let key = response
@@ -312,9 +305,8 @@ impl ClientRegistry {
                 None,
                 None,
             )
-            .map_err(|e| {
+            .inspect_err(|e| {
                 error!("Failed to insert hardware metrics {}", e);
-                e
             })?;
 
         let inserted = response
@@ -343,9 +335,8 @@ impl ClientRegistry {
                 Some(query_string),
                 None,
             )
-            .map_err(|e| {
+            .inspect_err(|e| {
                 error!("Failed to get hardware metrics {}", e);
-                e
             })?;
 
         response
@@ -365,9 +356,8 @@ impl ClientRegistry {
                 None,
                 None,
             )
-            .map_err(|e| {
+            .inspect_err(|e| {
                 error!("Failed to insert metrics {}", e);
-                e
             })?;
 
         let inserted = response
@@ -393,9 +383,8 @@ impl ClientRegistry {
                 None,
                 None,
             )
-            .map_err(|e| {
+            .inspect_err(|e| {
                 error!("Failed to get metrics {}", e);
-                e
             })?;
 
         response
@@ -415,9 +404,8 @@ impl ClientRegistry {
                 None,
                 None,
             )
-            .map_err(|e| {
+            .inspect_err(|e| {
                 error!("Failed to insert parameters {}", e);
-                e
             })?;
 
         let inserted = response.json::<ParameterResponse>()?;
@@ -444,9 +432,8 @@ impl ClientRegistry {
                 None,
                 None,
             )
-            .map_err(|e| {
+            .inspect_err(|e| {
                 error!("Failed to get parameters {}", e);
-                e
             })?;
 
         response
