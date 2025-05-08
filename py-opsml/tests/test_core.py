@@ -6,8 +6,6 @@ from opsml.model import (
     FeatureSchema,
 )
 
-from opsml.error import OpsmlError
-
 from optimum.onnxruntime.configuration import AutoQuantizationConfig  # type: ignore
 import pytest
 
@@ -66,7 +64,7 @@ def test_hugging_face_ort_model():
 
     assert args.quantize is True
 
-    with pytest.raises(OpsmlError) as error:
+    with pytest.raises(RuntimeError) as error:
         args = HuggingFaceOnnxArgs(
             ort_type=HuggingFaceORTModel.OrtAudioClassification,
             provider="CPUExecutionProvider",
@@ -76,7 +74,7 @@ def test_hugging_face_ort_model():
 
     assert (
         str(error.value)
-        == "config must be an instance of AutoQuantizationConfig, ORTConfig, or QuantizationConfig"
+        == "Config must be an instance of AutoQuantizationConfig, ORTConfig, or QuantizationConfig"
     )
 
     args = HuggingFaceOnnxArgs(

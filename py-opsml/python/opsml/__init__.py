@@ -5,7 +5,6 @@ from .opsml import (  # noqa: F401
     card,
     cli,
     data,
-    error,
     experiment,
     logging,
     model,
