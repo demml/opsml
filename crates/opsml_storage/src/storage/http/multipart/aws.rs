@@ -56,7 +56,7 @@ impl S3MultipartUpload {
                 });
                 Ok(())
             } else {
-                Err(AwsError::MissingEtagError.into())
+                Err(AwsError::MissingEtagError)
             }
         } else {
             Err(AwsError::UploadError(response.status()))

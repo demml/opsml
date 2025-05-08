@@ -72,10 +72,7 @@ fn load_and_extract_card(
         }
     };
 
-    Ok(card_obj.into_py_any(py).map_err(|e| {
-        error!("Failed to convert card to PyObject: {}", e);
-        e
-    })?)
+    Ok(card_obj.into_py_any(py)?)
 }
 
 pub enum CardEnum {
@@ -109,9 +106,8 @@ pub fn load_card_deck<'py>(
     deck: &mut CardDeck,
     interfaces: Option<HashMap<String, Bound<'py, PyAny>>>,
 ) -> Result<(), RegistryError> {
-    let card_registries = CardRegistries::new().map_err(|e| {
+    let card_registries = CardRegistries::new().inspect_err(|e| {
         error!("Failed to create card registries: {}", e);
-        e
     })?;
 
     for card in &deck.cards {
@@ -136,17 +132,7 @@ pub fn load_card_deck<'py>(
 }
 
 pub fn check_if_card(card: &Bound<'_, PyAny>) -> Result<(), RegistryError> {
-    let is_card: bool = card
-        .getattr("is_card")
-        .map_err(|e| {
-            error!("Failed to access is_card attribute: {}", e);
-            e
-        })?
-        .extract()
-        .map_err(|e| {
-            error!("Failed to extract is_card value: {}", e);
-            e
-        })?;
+    let is_card: bool = card.getattr("is_card")?.extract()?;
 
     if is_card {
         Ok(())
@@ -183,9 +169,8 @@ pub fn card_from_string<'py>(
     let card = match key.registry_type {
         RegistryType::Model => {
             let mut card =
-                ModelCard::model_validate_json(py, card_json, interface).map_err(|e| {
+                ModelCard::model_validate_json(py, card_json, interface).inspect_err(|e| {
                     error!("Failed to validate ModelCard: {}", e);
-                    e
                 })?;
 
             card.set_artifact_key(key);
@@ -194,9 +179,8 @@ pub fn card_from_string<'py>(
 
         RegistryType::Data => {
             let mut card =
-                DataCard::model_validate_json(py, card_json, interface).map_err(|e| {
+                DataCard::model_validate_json(py, card_json, interface).inspect_err(|e| {
                     error!("Failed to validate DataCard: {}", e);
-                    e
                 })?;
 
             card.set_artifact_key(key);
@@ -204,9 +188,8 @@ pub fn card_from_string<'py>(
         }
 
         RegistryType::Experiment => {
-            let mut card = ExperimentCard::model_validate_json(card_json).map_err(|e| {
+            let mut card = ExperimentCard::model_validate_json(card_json).inspect_err(|e| {
                 error!("Failed to validate ExperimentCard: {}", e);
-                e
             })?;
 
             card.set_artifact_key(key);
@@ -214,18 +197,16 @@ pub fn card_from_string<'py>(
         }
 
         RegistryType::Prompt => {
-            let card = PromptCard::model_validate_json(card_json).map_err(|e| {
+            let card = PromptCard::model_validate_json(card_json).inspect_err(|e| {
                 error!("Failed to validate PromptCard: {}", e);
-                e
             })?;
 
             CardEnum::PromptCard(card)
         }
 
         RegistryType::Deck => {
-            let card = CardDeck::model_validate_json(card_json).map_err(|e| {
+            let card = CardDeck::model_validate_json(card_json).inspect_err(|e| {
                 error!("Failed to validate CardDeck: {}", e);
-                e
             })?;
 
             CardEnum::CardDeck(Box::new(card))
@@ -260,15 +241,11 @@ pub fn download_card<'py>(
     key: ArtifactKey,
     interface: Option<&Bound<'py, PyAny>>,
 ) -> Result<Bound<'py, PyAny>, RegistryError> {
-    let decryption_key = key.get_decrypt_key().map_err(|e| {
+    let decryption_key = key.get_decrypt_key().inspect_err(|e| {
         error!("Failed to get decryption key: {}", e);
-        e
     })?;
 
-    let tmp_dir = TempDir::new().map_err(|e| {
-        error!("Failed to create temporary directory: {}", e);
-        e
-    })?;
+    let tmp_dir = TempDir::new()?;
 
     let tmp_path = tmp_dir.into_path();
     let rpath = PathBuf::from(&key.storage_key);
@@ -281,9 +258,8 @@ pub fn download_card<'py>(
     storage_client()?.get(&lpath, &rpath, false)?;
     decrypt_directory(&tmp_path, &decryption_key)?;
 
-    let json_string = std::fs::read_to_string(&lpath).map_err(|e| {
+    let json_string = std::fs::read_to_string(&lpath).inspect_err(|e| {
         error!("Failed to read card json: {}", e);
-        e
     })?;
 
     let mut card = card_from_string(py, json_string, interface, key)?;
@@ -368,9 +344,8 @@ fn validate_and_update_card(card: &mut Card) -> Result<(), RegistryError> {
         ..Default::default()
     };
 
-    let cards = reg.list_cards(args).map_err(|e| {
+    let cards = reg.list_cards(args).inspect_err(|e| {
         error!("Failed to list cards: {}", e);
-        e
     })?;
 
     if cards.is_empty() {
@@ -481,17 +456,7 @@ pub fn verify_card(
             })?;
     }
 
-    let card_registry_type = card
-        .getattr("registry_type")
-        .map_err(|e| {
-            error!("Failed to get card type: {}", e);
-            e
-        })?
-        .extract::<RegistryType>()
-        .map_err(|e| {
-            error!("Failed to extract card type: {}", e);
-            e
-        })?;
+    let card_registry_type = card.getattr("registry_type")?.extract::<RegistryType>()?;
 
     // assert that the card registry type is the same as the registry type
     if card_registry_type != *registry_type {

@@ -332,11 +332,9 @@ impl StorageClient for AWSStorageClient {
             .get_object()
             .bucket(&self.bucket)
             .key(path)
-            .presigned(
-                PresigningConfig::expires_in(expires_in).map_err(|e| AwsError::PresignError(e))?,
-            )
+            .presigned(PresigningConfig::expires_in(expires_in).map_err(AwsError::PresignError)?)
             .await
-            .map_err(|e| AwsError::GetObjectError(e))?;
+            .map_err(AwsError::GetObjectError)?;
 
         Ok(uri.uri().to_string())
     }
@@ -358,7 +356,7 @@ impl StorageClient for AWSStorageClient {
                 .bucket(&self.bucket)
                 .send()
                 .await
-                .map_err(|e| AwsError::ListObjectsV2Error(e))?
+                .map_err(AwsError::ListObjectsV2Error)?
         } else {
             self.client
                 .list_objects_v2()
@@ -366,7 +364,7 @@ impl StorageClient for AWSStorageClient {
                 .prefix(path)
                 .send()
                 .await
-                .map_err(|e| AwsError::ListObjectsV2Error(e))?
+                .map_err(AwsError::ListObjectsV2Error)?
         };
 
         Ok(objects
@@ -393,7 +391,7 @@ impl StorageClient for AWSStorageClient {
             .prefix(path)
             .send()
             .await
-            .map_err(|e| AwsError::ListObjectsV2Error(e))?;
+            .map_err(AwsError::ListObjectsV2Error)?;
 
         Ok(response
             .contents
@@ -455,7 +453,7 @@ impl StorageClient for AWSStorageClient {
             .key(dest)
             .send()
             .await
-            .map_err(|e| AwsError::CopyObjectError(e))?;
+            .map_err(AwsError::CopyObjectError)?;
 
         Ok(true)
     }
@@ -491,7 +489,7 @@ impl StorageClient for AWSStorageClient {
             .key(path)
             .send()
             .await
-            .map_err(|e| AwsError::DeleteObjectError(e))?;
+            .map_err(AwsError::DeleteObjectError)?;
 
         Ok(true)
     }
@@ -525,7 +523,7 @@ impl StorageClient for AWSStorageClient {
             )
             .send()
             .await
-            .map_err(|e| AwsError::DeleteObjectsError(e))?;
+            .map_err(AwsError::DeleteObjectsError)?;
 
         Ok(true)
     }
@@ -842,10 +840,9 @@ impl FileSystem for S3FStorageClient {
 
 impl S3FStorageClient {
     pub async fn create_multipart_upload(&self, path: &Path) -> Result<String, AwsError> {
-        Ok(self
-            .client
+        self.client
             .create_multipart_upload(path.to_str().unwrap())
-            .await?)
+            .await
     }
 
     pub async fn create_multipart_uploader(
@@ -860,13 +857,13 @@ impl S3FStorageClient {
 
         let bucket = self.client.bucket().await.to_string();
 
-        Ok(AWSMulitPartUpload::new(
+        AWSMulitPartUpload::new(
             &bucket,
             lpath.to_str().unwrap(),
             rpath.to_str().unwrap(),
             &upload_id,
         )
-        .await?)
+        .await
     }
 
     pub async fn generate_presigned_url_for_part(
@@ -875,10 +872,9 @@ impl S3FStorageClient {
         path: &Path,
         upload_id: &str,
     ) -> Result<String, AwsError> {
-        Ok(self
-            .client
+        self.client
             .generate_presigned_url_for_part(part_number, path.to_str().unwrap(), upload_id)
-            .await?)
+            .await
     }
 }
 

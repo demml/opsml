@@ -24,7 +24,7 @@ impl HttpFSStorageClient {
 
     pub fn new(api_client: Arc<OpsmlApiClient>) -> Result<Self, StorageError> {
         Ok(HttpFSStorageClient {
-            client: HttpStorageClient::new(api_client).map_err(|e| e)?,
+            client: HttpStorageClient::new(api_client)?,
         })
     }
 

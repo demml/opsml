@@ -24,11 +24,7 @@ pub async fn get_next_version(
             &request.name,
             request.version.clone(),
         )
-        .await
-        .map_err(|e| {
-            error!("Failed to get versions: {}", e);
-            e
-        })?;
+        .await?;
 
     if versions.is_empty() {
         return match &request.version {
@@ -167,10 +163,7 @@ pub async fn insert_card_into_db(
             ServerCard::Deck(server_card)
         }
     };
-    sql_client.insert_card(table, &card).await.map_err(|e| {
-        error!("Failed to insert card: {}", e);
-        e
-    })?;
+    sql_client.insert_card(table, &card).await?;
 
     Ok((
         card.uid().to_string(),
@@ -200,25 +193,22 @@ pub async fn cleanup_artifacts(
             },
         )
         .await
-        .map_err(|e| {
+        .inspect_err(|e| {
             error!("Failed to get artifact key: {}", e);
-            e
         })?;
 
     storage_client
         .rm(&key.storage_path(), true)
         .await
-        .map_err(|e| {
+        .inspect_err(|e| {
             error!("Failed to remove artifact: {}", e);
-            e
         })?;
 
     sql_client
         .delete_artifact_key(&uid, &registry_type.to_string())
         .await
-        .map_err(|e| {
+        .inspect_err(|e| {
             error!("Failed to delete artifact key: {}", e);
-            e
         })?;
 
     Ok(())

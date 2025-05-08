@@ -25,7 +25,7 @@ pub mod server_logic {
     use pyo3::prelude::*;
     use semver::Version;
     use sqlx::types::Json as SqlxJson;
-    use tracing::{error, info};
+    use tracing::info;
 
     #[derive(Debug, Clone)]
     pub struct ServerRegistry {
@@ -113,12 +113,7 @@ pub mod server_logic {
             // if no versions exist, return the default version
             if versions.is_empty() {
                 return match &version {
-                    Some(version_str) => {
-                        Ok(VersionValidator::clean_version(version_str).map_err(|e| {
-                            error!("Invalid version format: {}", e);
-                            e
-                        })?)
-                    }
+                    Some(version_str) => Ok(VersionValidator::clean_version(version_str)?),
                     None => Ok(Version::new(0, 1, 0)),
                 };
             }
@@ -132,10 +127,7 @@ pub mod server_logic {
                 build: build_tag,
             };
 
-            Ok(VersionValidator::bump_version(&args).map_err(|e| {
-                error!("Failed to bump version: {}", e);
-                e
-            })?)
+            Ok(VersionValidator::bump_version(&args)?)
         }
 
         async fn create_artifact_key(
@@ -308,10 +300,8 @@ pub mod server_logic {
             let card = card.clone();
             let card = match card {
                 CardRecord::Data(client_card) => {
-                    let version = Version::parse(&client_card.version).map_err(|e| {
-                        error!("Failed to parse version: {}", e);
-                        VersionError::InvalidVersion(e)
-                    })?;
+                    let version = Version::parse(&client_card.version)
+                        .map_err(VersionError::InvalidVersion)?;
 
                     let server_card = DataCardRecord {
                         uid: client_card.uid,
@@ -337,10 +327,8 @@ pub mod server_logic {
                 }
 
                 CardRecord::Model(client_card) => {
-                    let version = Version::parse(&client_card.version).map_err(|e| {
-                        error!("Failed to parse version: {}", e);
-                        VersionError::InvalidVersion(e)
-                    })?;
+                    let version = Version::parse(&client_card.version)
+                        .map_err(VersionError::InvalidVersion)?;
 
                     let server_card = ModelCardRecord {
                         uid: client_card.uid,
@@ -369,10 +357,8 @@ pub mod server_logic {
                 }
 
                 CardRecord::Experiment(client_card) => {
-                    let version = Version::parse(&client_card.version).map_err(|e| {
-                        error!("Failed to parse version: {}", e);
-                        VersionError::InvalidVersion(e)
-                    })?;
+                    let version = Version::parse(&client_card.version)
+                        .map_err(VersionError::InvalidVersion)?;
 
                     let server_card = ExperimentCardRecord {
                         uid: client_card.uid,
@@ -399,10 +385,8 @@ pub mod server_logic {
                 }
 
                 CardRecord::Audit(client_card) => {
-                    let version = Version::parse(&client_card.version).map_err(|e| {
-                        error!("Failed to parse version: {}", e);
-                        VersionError::InvalidVersion(e)
-                    })?;
+                    let version = Version::parse(&client_card.version)
+                        .map_err(VersionError::InvalidVersion)?;
 
                     let server_card = AuditCardRecord {
                         uid: client_card.uid,
@@ -428,10 +412,8 @@ pub mod server_logic {
                 }
 
                 CardRecord::Prompt(client_card) => {
-                    let version = Version::parse(&client_card.version).map_err(|e| {
-                        error!("Failed to parse version: {}", e);
-                        VersionError::InvalidVersion(e)
-                    })?;
+                    let version = Version::parse(&client_card.version)
+                        .map_err(VersionError::InvalidVersion)?;
 
                     let server_card = PromptCardRecord {
                         uid: client_card.uid,
@@ -455,10 +437,8 @@ pub mod server_logic {
                 }
 
                 CardRecord::Deck(client_card) => {
-                    let version = Version::parse(&client_card.version).map_err(|e| {
-                        error!("Failed to parse version: {}", e);
-                        VersionError::InvalidVersion(e)
-                    })?;
+                    let version = Version::parse(&client_card.version)
+                        .map_err(VersionError::InvalidVersion)?;
 
                     let server_card = CardDeckRecord {
                         uid: client_card.uid,

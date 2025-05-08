@@ -280,63 +280,54 @@ impl SampleData {
         match self {
             SampleData::Pandas(data) => Ok(Some(
                 self.save_interface_data(data.bind(py), path, kwargs)
-                    .map_err(|e| {
+                    .inspect_err(|e| {
                         error!("Error saving pandas data: {}", e);
-                        e
                     })?,
             )),
             SampleData::Polars(data) => Ok(Some(
                 self.save_interface_data(data.bind(py), path, kwargs)
-                    .map_err(|e| {
+                    .inspect_err(|e| {
                         error!("Error saving polars data: {}", e);
-                        e
                     })?,
             )),
             SampleData::Numpy(data) => Ok(Some(
                 self.save_interface_data(data.bind(py), path, kwargs)
-                    .map_err(|e| {
+                    .inspect_err(|e| {
                         error!("Error saving numpy data: {}", e);
-                        e
                     })?,
             )),
             SampleData::Arrow(data) => Ok(Some(
                 self.save_interface_data(data.bind(py), path, kwargs)
-                    .map_err(|e| {
+                    .inspect_err(|e| {
                         error!("Error saving arrow data: {}", e);
-                        e
                     })?,
             )),
             SampleData::Torch(data) => Ok(Some(
                 self.save_interface_data(data.bind(py), path, kwargs)
-                    .map_err(|e| {
+                    .inspect_err(|e| {
                         error!("Error saving torch data: {}", e);
-                        e
                     })?,
             )),
-            SampleData::List(data) => {
-                Ok(Some(save_to_joblib(data.bind(py), path).map_err(|e| {
-                    error!("Error saving list data: {}", e);
-                    e
-                })?))
-            }
-            SampleData::Tuple(data) => {
-                Ok(Some(save_to_joblib(data.bind(py), path).map_err(|e| {
-                    error!("Error saving tuple data: {}", e);
-                    e
-                })?))
-            }
-            SampleData::Dict(data) => {
-                Ok(Some(save_to_joblib(data.bind(py), path).map_err(|e| {
-                    error!("Error saving dict data: {}", e);
-                    e
-                })?))
-            }
-            SampleData::DMatrix(data) => Ok(Some(self.save_binary(data.bind(py), path).map_err(
+            SampleData::List(data) => Ok(Some(save_to_joblib(data.bind(py), path).inspect_err(
                 |e| {
-                    error!("Error saving dmatrix data: {}", e);
-                    e
+                    error!("Error saving list data: {}", e);
                 },
             )?)),
+            SampleData::Tuple(data) => Ok(Some(save_to_joblib(data.bind(py), path).inspect_err(
+                |e| {
+                    error!("Error saving tuple data: {}", e);
+                },
+            )?)),
+            SampleData::Dict(data) => Ok(Some(save_to_joblib(data.bind(py), path).inspect_err(
+                |e| {
+                    error!("Error saving dict data: {}", e);
+                },
+            )?)),
+            SampleData::DMatrix(data) => Ok(Some(
+                self.save_binary(data.bind(py), path).inspect_err(|e| {
+                    error!("Error saving dmatrix data: {}", e);
+                })?,
+            )),
             SampleData::None => Ok(None),
         }
     }

@@ -277,16 +277,16 @@ impl ModelCard {
         let metadata = model
             .bind(py)
             .call_method("save", (path.clone(), self.to_onnx, save_kwargs), None)
-            .map_err(|e| {
+            .inspect_err(|e| {
                 error!("Failed to save model interface: {}", e);
-                e
             })?;
 
         // extract into ModelInterfaceMetadata
-        let interface_metadata = metadata.extract::<ModelInterfaceMetadata>().map_err(|e| {
-            error!("Failed to extract metadata: {}", e);
-            e
-        })?;
+        let interface_metadata = metadata
+            .extract::<ModelInterfaceMetadata>()
+            .inspect_err(|e| {
+                error!("Failed to extract metadata: {}", e);
+            })?;
 
         // update metadata
         self.metadata.interface_metadata = interface_metadata;
@@ -351,9 +351,8 @@ impl ModelCard {
         json_string: String,
         interface: Option<&Bound<'_, PyAny>>,
     ) -> Result<ModelCard, CardError> {
-        let mut card: ModelCard = serde_json::from_str(&json_string).map_err(|e| {
+        let mut card: ModelCard = serde_json::from_str(&json_string).inspect_err(|e| {
             error!("Failed to validate json: {}", e);
-            e
         })?;
 
         card.load_interface(py, interface)?;

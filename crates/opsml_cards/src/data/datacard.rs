@@ -256,9 +256,8 @@ impl DataCard {
         json_string: String,
         interface: Option<&Bound<'_, PyAny>>,
     ) -> Result<DataCard, CardError> {
-        let mut card: DataCard = serde_json::from_str(&json_string).map_err(|e| {
+        let mut card: DataCard = serde_json::from_str(&json_string).inspect_err(|e| {
             error!("Failed to validate json: {}", e);
-            e
         })?;
 
         card.load_interface(py, interface)?;

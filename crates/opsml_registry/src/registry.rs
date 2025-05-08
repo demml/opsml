@@ -37,15 +37,13 @@ struct CardRegistrationParams<'py> {
 /// * `OpsmlError` - Error
 fn extract_registry_type(registry_type: &Bound<'_, PyAny>) -> Result<RegistryType, RegistryError> {
     match registry_type.is_instance_of::<RegistryType>() {
-        true => Ok(registry_type.extract::<RegistryType>().map_err(|e| {
+        true => Ok(registry_type.extract::<RegistryType>().inspect_err(|e| {
             error!("Failed to extract registry type: {}", e);
-            e
         })?),
         false => {
             let registry_type = registry_type.extract::<String>().unwrap();
-            Ok(RegistryType::from_string(&registry_type).map_err(|e| {
+            Ok(RegistryType::from_string(&registry_type).inspect_err(|e| {
                 error!("Failed to convert string to registry type: {}", e);
-                e
             })?)
         }
     }
@@ -407,27 +405,22 @@ impl CardRegistry {
         save_kwargs: Option<&Bound<'_, PyAny>>,
         registry_type: &RegistryType,
     ) -> Result<PathBuf, RegistryError> {
-        let tmp_dir = TempDir::new().map_err(|e| {
-            error!("Failed to create temporary directory: {}", e);
-            e
-        })?;
+        let tmp_dir = TempDir::new()?;
 
         let tmp_path = tmp_dir.into_path();
 
         match registry_type {
             RegistryType::Experiment | RegistryType::Prompt | RegistryType::Deck => {
                 card.call_method1("save", (tmp_path.to_path_buf(),))
-                    .map_err(|e| {
+                    .inspect_err(|e| {
                         error!("Failed to save card: {}", e);
-                        e
                     })?;
             }
 
             _ => {
                 card.call_method1("save", (tmp_path.to_path_buf(), save_kwargs))
-                    .map_err(|e| {
+                    .inspect_err(|e| {
                         error!("Failed to save card: {}", e);
-                        e
                     })?;
             }
         }
@@ -452,26 +445,21 @@ impl CardRegistry {
         card: &Bound<'_, PyAny>,
         registry_type: &RegistryType,
     ) -> Result<PathBuf, RegistryError> {
-        let tmp_dir = TempDir::new().map_err(|e| {
-            error!("Failed to create temporary directory: {}", e);
-            e
-        })?;
+        let tmp_dir = TempDir::new()?;
 
         let tmp_path = tmp_dir.into_path();
 
         match registry_type {
             RegistryType::Experiment | RegistryType::Deck => {
                 card.call_method1("save", (tmp_path.to_path_buf(),))
-                    .map_err(|e| {
+                    .inspect_err(|e| {
                         error!("Failed to save card: {}", e);
-                        e
                     })?;
             }
             _ => {
                 card.call_method1("save_card", (tmp_path.to_path_buf(),))
-                    .map_err(|e| {
+                    .inspect_err(|e| {
                         error!("Failed to save card: {}", e);
-                        e
                     })?;
             }
         }
@@ -500,14 +488,12 @@ impl CardRegistry {
     ) -> Result<CreateCardResponse, RegistryError> {
         let registry_card = card
             .call_method0("get_registry_card")
-            .map_err(|e| {
+            .inspect_err(|e| {
                 error!("Failed to get registry card: {}", e);
-                e
             })?
             .extract::<CardRecord>()
-            .map_err(|e| {
+            .inspect_err(|e| {
                 error!("Failed to extract registry card: {}", e);
-                e
             })?;
 
         let version = unwrap_pystring(card, "version")?;
@@ -560,22 +546,11 @@ impl CardRegistry {
         registry_type: &RegistryType,
     ) -> Result<ArtifactKey, RegistryError> {
         let registry_card = card
-            .call_method0("get_registry_card")
-            .map_err(|e| {
-                error!("Failed to get registry card: {}", e);
-                e
-            })?
-            .extract::<CardRecord>()
-            .map_err(|e| {
-                error!("Failed to extract registry card: {}", e);
-                e
-            })?;
+            .call_method0("get_registry_card")?
+            .extract::<CardRecord>()?;
 
         // update card
-        registry.update_card(&registry_card).map_err(|e| {
-            error!("Failed to update card: {}", e);
-            e
-        })?;
+        registry.update_card(&registry_card)?;
 
         // get key to re-save Card.json
         let uid = registry_card.uid().to_string();
@@ -585,9 +560,8 @@ impl CardRegistry {
                 registry_type: registry_type.clone(),
                 ..Default::default()
             })
-            .map_err(|e| {
+            .inspect_err(|e| {
                 error!("Failed to load card: {}", e);
-                e
             })?;
 
         println!(
@@ -655,18 +629,9 @@ impl CardRegistry {
     where
         T: OpsmlCard,
     {
-        let tmp_dir = TempDir::new().map_err(|e| {
-            error!("Failed to create temporary directory: {}", e);
-            e
-        })?;
-
+        let tmp_dir = TempDir::new()?;
         let tmp_path = tmp_dir.into_path();
-
-        card.save(tmp_path.clone()).map_err(|e| {
-            error!("Failed to save card: {}", e);
-            e
-        })?;
-
+        card.save(tmp_path.clone())?;
         Ok(tmp_path)
     }
 

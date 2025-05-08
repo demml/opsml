@@ -222,34 +222,10 @@ impl TorchSampleData {
                 Ok(Some(save_path))
             }
 
-            TorchSampleData::List(data) => {
-                Ok(Some(save_to_joblib(data.bind(py), path).map_err(|e| {
-                    error!("Error saving list data: {}", e);
-                    e
-                })?))
-            }
-
-            TorchSampleData::Tuple(data) => {
-                Ok(Some(save_to_joblib(data.bind(py), path).map_err(|e| {
-                    error!("Error saving list data: {}", e);
-                    e
-                })?))
-            }
-
-            TorchSampleData::Dict(data) => {
-                Ok(Some(save_to_joblib(data.bind(py), path).map_err(|e| {
-                    error!("Error saving list data: {}", e);
-                    e
-                })?))
-            }
-
-            TorchSampleData::DataSet(data) => {
-                Ok(Some(save_to_joblib(data.bind(py), path).map_err(|e| {
-                    error!("Error saving list data: {}", e);
-                    e
-                })?))
-            }
-
+            TorchSampleData::List(data) => Ok(Some(save_to_joblib(data.bind(py), path)?)),
+            TorchSampleData::Tuple(data) => Ok(Some(save_to_joblib(data.bind(py), path)?)),
+            TorchSampleData::Dict(data) => Ok(Some(save_to_joblib(data.bind(py), path)?)),
+            TorchSampleData::DataSet(data) => Ok(Some(save_to_joblib(data.bind(py), path)?)),
             TorchSampleData::None => Ok(None),
         }
     }

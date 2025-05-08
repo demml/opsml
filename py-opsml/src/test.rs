@@ -79,9 +79,7 @@ impl OpsmlTestServer {
         }
         #[cfg(not(feature = "server"))]
         {
-            Err(opsml_error::OpsmlError::new_err(
-                "Opsml Server feature not enabled",
-            ))
+            Err(TestServerError::CustomError("Opsml Server feature not enabled".to_string()).into())
         }
     }
 
@@ -148,9 +146,7 @@ impl OpsmlTestServer {
         }
         #[cfg(not(feature = "server"))]
         {
-            Err(opsml_error::OpsmlError::new_err(
-                "Opsml Server feature not enabled",
-            ))
+            Err(TestServerError::CustomError("Opsml Server feature not enabled".to_string()).into())
         }
     }
 
@@ -172,9 +168,7 @@ impl OpsmlTestServer {
         }
         #[cfg(not(feature = "server"))]
         {
-            Err(opsml_error::OpsmlError::new_err(
-                "Opsml Server feature not enabled",
-            ))
+            Err(TestServerError::CustomError("Opsml Server feature not enabled".to_string()).into())
         }
     }
 
