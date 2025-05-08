@@ -1,36 +1,25 @@
+use crate::error::OnnxError;
 use crate::model::onnx::OnnxSession;
-use opsml_error::OpsmlError;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
-use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use tracing::debug;
 
-pub struct CatBoostOnnxModelConverter {}
+pub struct CatBoostOnnxConverter {}
 
-impl Default for CatBoostOnnxModelConverter {
+impl Default for CatBoostOnnxConverter {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl CatBoostOnnxModelConverter {
+impl CatBoostOnnxConverter {
     pub fn new() -> Self {
-        CatBoostOnnxModelConverter {}
+        CatBoostOnnxConverter {}
     }
 
-    fn get_onnx_session(&self, py: Python, model_path: &PathBuf) -> PyResult<OnnxSession> {
-        let onnx_version = py
-            .import("onnx")?
-            .getattr("__version__")?
-            .extract::<String>()?;
-
-        // load model_path to onnx_bytes
-        let onnx_bytes = fs::read(model_path)
-            .map_err(|e| OpsmlError::new_err(format!("Failed to read ONNX model: {}", e)))?;
-
-        OnnxSession::new(py, onnx_version, onnx_bytes, "onnx".to_string(), None)
-            .map_err(|e| OpsmlError::new_err(format!("Failed to create ONNX session: {}", e)))
+    fn get_onnx_session(&self, py: Python, model_path: &Path) -> Result<OnnxSession, OnnxError> {
+        OnnxSession::from_file(py, model_path, None)
     }
 
     pub fn convert_model<'py>(
@@ -39,7 +28,7 @@ impl CatBoostOnnxModelConverter {
         model: &Bound<'py, PyAny>,
         path: &Path,
         kwargs: Option<&Bound<'py, PyDict>>,
-    ) -> PyResult<OnnxSession> {
+    ) -> Result<OnnxSession, OnnxError> {
         debug!("Step 1: Converting CatBoost model to ONNX");
 
         let args = (path,);
@@ -50,7 +39,7 @@ impl CatBoostOnnxModelConverter {
 
         debug!("Step 2: Extracting ONNX schema");
 
-        let onnx_session = self.get_onnx_session(py, &path.to_path_buf());
+        let onnx_session = self.get_onnx_session(py, path);
         debug!("ONNX model conversion complete");
 
         onnx_session

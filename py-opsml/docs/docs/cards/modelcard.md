@@ -670,7 +670,7 @@ model_registry.register_card(
 
 Interface for saving an Sklearn model
 
-**Example**: [`Link`](https://github.com/opsml/py-opsml/examples/model/sklean.py)
+**Example**: [`Link`](https://github.com/demml/opsml/tree/main/py-opsml/examples/model/sklean.py)
 
 
 | Argument     | Description                          |
@@ -742,7 +742,7 @@ The `SklearnModel` and it's associated model and preprocessor are saved using jo
 Interface for saving a LightGBM Booster model. **Note** - If using a LGBMRegressor or LGBMClassifier, you should use the SklearnModelInterface instead.
 
 
-**Example**: [`Link`](https://github.com/opsml/py-opsml/examples/model/lightgbm_booster.py)
+**Example**: [`Link`](https://github.com/demml/opsml/tree/main/py-opsml/examples/model/lightgbm_booster.py)
 
 
 | Argument     | Description                          |
@@ -810,7 +810,7 @@ Booster models are saved via `save_model` which exports a `.txt` file. Preproces
 Interface for saving a XGBoostBooster model. **Note** - If using a XGBRegressor or XGBClassifier, you should use the SklearnModelInterface instead.
 
 
-**Example**: [`Link`](https://github.com/opsml/py-opsml/examples/model/xgb_booster.py)
+**Example**: [`Link`](https://github.com/demml/opsml/tree/main/py-opsml/examples/model/xgb_booster.py)
 
 
 | Argument     | Description                          |
@@ -872,7 +872,7 @@ Booster models are saved via `save_model` which exports a `.json` file. Preproce
 
 ## HuggingFaceModel
 
-**Example**: [`Link`](https://github.com/opsml/py-opsml/examples/model/hf_model.py)
+**Example**: [`Link`](https://github.com/demml/opsml/tree/main/py-opsml/examples/model/hf_model.py)
 
 
 | Argument     | Description                          |
@@ -1143,7 +1143,7 @@ There are times where you may want to convert your HuggingFace model to onnx for
 
 Interface for saving a CatBoost model
 
-**Example**: [`Link`](https://github.com/opsml/py-opsml/examples/model/catboost_model.py)
+**Example**: [`Link`](https://github.com/demml/opsml/tree/main/py-opsml/examples/model/catboost_model.py)
 
 | Argument     | Description                          |
 | ----------- | ------------------------------------ |
@@ -1206,7 +1206,7 @@ CatBoost models are saved via `save_model` which exports a `.cbm` file. Preproce
 
 Interface for saving a CatBoost model
 
-**Example**: [`Link`](https://github.com/opsml/py-opsml/examples/model/torch_model.py)
+**Example**: [`Link`](https://github.com/demml/opsml/tree/main/py-opsml/examples/model/torch_model.py)
 
 
 | Argument     | Description                          |
@@ -1336,7 +1336,7 @@ modelcard.load(load_kwargs = ModelLoadKwargs(model={"model": model})) #(1)
 
 Interface for saving a Lightning model
 
-**Example**: [`Link`](https://github.com/opsml/py-opsml/examples/model/lightning_model.py)
+**Example**: [`Link`](https://github.com/demml/opsml/tree/main/py-opsml/examples/model/lightning_model.py)
 
 
 | Argument     | Description                          |
@@ -1447,7 +1447,7 @@ The following steps are executed when saving a LightningModel:
 Interface for saving a TensorFlow model
 
 
-**Example**: [`Link`](https://github.com/opsml/py-opsml/examples/model/tensorflow_model.py)
+**Example**: [`Link`](https://github.com/demml/opsml/tree/main/py-opsml/examples/model/tensorflow_model.py)
 
 
 | Argument     | Description                          |
@@ -1511,13 +1511,78 @@ Interface for saving a TensorFlow model
 The model is saved using the preferred **keras** format via `model.save`. Loading is done through `tensorflow.keras.models` `load_model` method. If a user provides a custom load kwarg, it is passed to the `load_model` method as a dictionary
 
 
+### Onnx Model
+
+As mention elsewhere, all supported model interfaces can be automatically converted to onnx format. However, you may find that you only want to save the convert onnx model. In this case, you can leverage the `OnnxModel` interface for saving an onnx model directly.
+
+| Argument     | Description                          |
+| ----------- | ------------------------------------ |
+| <span class="text-alert">**model**</span>       | Onnx model to associate with the interface. This model must be an Onnx ModelProto  |
+| <span class="text-alert">**sample_data**</span>      | Optional ample of data that is fed to the model at inference time |
+| <span class="text-alert">**task_type**</span>    | Optional task type of the model. Defaults to `TaskType.Undefined` |
+| <span class="text-alert">**drift_profile**</span> | Optional `Scouter` drift profile to associated with model. This is a convenience argument if you already created a drift profile. You can also use interface.create_drift_profile(..) to create a drift profile from the model interface. |
+
+**Example**: [`Link`](https://github.com/demml/opsml/tree/main/py-opsml/examples/model/onnx_model.py)
+
+???success "OnnxModel"
+    ```python
+    class OnnxModel(ModelInterface):
+        def __init__(
+            self,
+            model: Optional[Any] = None,
+            sample_data: Optional[Any] = None,
+            task_type: Optional[TaskType] = None,
+            drift_profile: Optional[DriftProfileType] = None,
+        ) -> None:
+            """Interface for saving an OnnxModel
+
+            Args:
+                model:
+                    Onnx model to associate with the interface. This model must be an Onnx ModelProto
+                sample_data:
+                    Sample data to use to make predictions
+                task_type:
+                    The type of task the model performs
+                drift_profile:
+                    Drift profile to use. Can be a list of SpcDriftProfile, PsiDriftProfile or CustomDriftProfile
+
+            Example:
+                ```python
+                from sklearn.datasets import load_iris  # type: ignore
+                from sklearn.model_selection import train_test_split  # type: ignore
+                from sklearn.ensemble import RandomForestClassifier  # type: ignore
+                from skl2onnx import to_onnx  # type: ignore
+                import onnxruntime as rt  # type: ignore
+
+                iris = load_iris()
+
+                X, y = iris.data, iris.target
+                X = X.astype(np.float32)
+                X_train, X_test, y_train, y_test = train_test_split(X, y)
+                clr = RandomForestClassifier()
+                clr.fit(X_train, y_train)
+
+                onx = to_onnx(clr, X[:1])
+
+                interface = OnnxModel(model=onx, sample_data=X_train)
+                ```
+            """
+
+        @property
+        def session(self) -> OnnxSession:
+            """Returns the onnx session. This will error if the OnnxSession is not set"""
+    ```
+
+### Nuts and Bolts
+
+`OnnxModel` uses the onnxruntime library to save and load the model. Input and out schema are derived using the [ort](https://github.com/pykeio/ort) crate.
+
 ## CustomModel
 
 While the above interfaces cover the most common use cases, there may be times where you want to create your own custom model interface. By design, the `ModelInterface` can be subclassed in cases where a more flexible implementation is needed. However to make sure all other components work nicely together, you will need to implement the following.
 
 
-**Example**: [`Link`](https://github.com/opsml/py-opsml/examples/model/custom_model.py)
-
+**Example**: [`Link`](https://github.com/demml/opsml/tree/main/py-opsml/examples/model/custom_model.py)
 
 ### Custom Save 
 

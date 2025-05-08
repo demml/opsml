@@ -516,6 +516,9 @@ impl From<RunError> for PyErr {
 pub enum OnnxError {
     #[error("{0}")]
     Error(String),
+
+    #[error("Failed to create onnx session - {0}")]
+    SessionCreateError(std::io::Error),
 }
 
 impl From<OnnxError> for PyErr {

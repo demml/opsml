@@ -33,7 +33,7 @@ EXCLUDE = bool(DARWIN_EXCLUDE or WINDOWS_EXCLUDE)
 
 
 # Sets up logging for tests
-RustyLogger.setup_logging(LoggingConfig(log_level=LogLevel.Info))
+RustyLogger.setup_logging(LoggingConfig(log_level=LogLevel.Debug))
 
 
 class MockInterface(BaseModel):
@@ -199,9 +199,9 @@ def pandas_data(example_dataframe) -> PandasData:
 
 
 @pytest.fixture
-def example_dataframe() -> (
-    Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]
-):
+def example_dataframe() -> Tuple[
+    pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame
+]:
     X, y = cast(Tuple[pd.DataFrame, pd.DataFrame], create_fake_data(n_samples=1200))
 
     return X, y, X, y

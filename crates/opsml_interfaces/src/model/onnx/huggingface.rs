@@ -1,5 +1,6 @@
+use crate::error::OnnxError;
 use crate::model::onnx::OnnxSession;
-use opsml_error::OpsmlError;
+
 use opsml_types::SaveName;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
@@ -10,13 +11,13 @@ use tracing::debug;
 
 pub type HuggingFaceKwargs<'py> = (String, Option<Bound<'py, PyDict>>, bool, Bound<'py, PyDict>);
 
-pub struct HuggingFaceOnnxModelConverter {
+pub struct HuggingFaceOnnxConverter {
     pub model_path: PathBuf,
     pub onnx_path: PathBuf,
     pub quantize_path: PathBuf,
 }
 
-impl HuggingFaceOnnxModelConverter {
+impl HuggingFaceOnnxConverter {
     pub fn new(path: &Path) -> Self {
         let model_save_path = path.join(SaveName::Model);
 
@@ -26,19 +27,14 @@ impl HuggingFaceOnnxModelConverter {
         let quantize_save_path = PathBuf::from(SaveName::QuantizedModel);
         let full_quantize_save_path = path.join(&quantize_save_path);
 
-        HuggingFaceOnnxModelConverter {
+        HuggingFaceOnnxConverter {
             model_path: model_save_path,
             onnx_path: full_onnx_save_path,
             quantize_path: full_quantize_save_path,
         }
     }
 
-    fn get_onnx_session(&self, py: Python, ort_type: &str) -> PyResult<OnnxSession> {
-        let onnx_version = py
-            .import("onnx")?
-            .getattr("__version__")?
-            .extract::<String>()?;
-
+    fn get_onnx_session(&self, py: Python) -> Result<OnnxSession, OnnxError> {
         //get path to file ending with .onnx
         let onnx_file = fs::read_dir(&self.onnx_path)?
             .filter_map(|entry| {
@@ -52,31 +48,27 @@ impl HuggingFaceOnnxModelConverter {
                 })
             })
             .next()
-            .ok_or_else(|| OpsmlError::new_err("No ONNX file found"))?;
+            .ok_or_else(|| OnnxError::NoOnnxFile)?;
 
         // load model_path to onnx_bytes
-        let onnx_bytes = fs::read(&onnx_file)
-            .map_err(|e| OpsmlError::new_err(format!("Failed to read ONNX model: {}", e)))?;
-
-        OnnxSession::new(py, onnx_version, onnx_bytes, ort_type.to_string(), None)
-            .map_err(|e| OpsmlError::new_err(format!("Failed to create ONNX session: {}", e)))
+        OnnxSession::from_file(py, &onnx_file, None)
     }
 
     pub fn parse_kwargs<'py>(
         py: Python<'py>,
         kwargs: Option<&Bound<'py, PyDict>>,
     ) -> PyResult<HuggingFaceKwargs<'py>> {
-        let kwargs = kwargs.ok_or_else(|| OpsmlError::new_err("ONNX kwargs are required"))?;
+        let kwargs = kwargs.ok_or_else(|| OnnxError::MissingOnnxKwargs)?;
 
         let ort_type = kwargs
             .get_item("ort_type")
-            .map_err(|e| OpsmlError::new_err(format!("Failed to get ort_type: {}", e)))?
+            .map_err(OnnxError::MissingOrtType)?
             .unwrap()
             .to_string();
 
         let quantize = kwargs
             .get_item("quantize")
-            .map_err(|e| OpsmlError::new_err(format!("Failed to get quantize: {}", e)))?
+            .map_err(OnnxError::QuantizeArgError)?
             .unwrap()
             .extract::<bool>()
             .unwrap();
@@ -97,7 +89,7 @@ impl HuggingFaceOnnxModelConverter {
         ort_module: &Bound<'py, PyModule>,
         onnx_model: &Bound<'py, PyAny>,
         quantize_kwargs: Bound<'py, PyDict>,
-    ) -> PyResult<()> {
+    ) -> Result<(), OnnxError> {
         let quantizer = ort_module.getattr("ORTQuantizer")?;
 
         debug!("Loading model for quantization");
@@ -114,7 +106,7 @@ impl HuggingFaceOnnxModelConverter {
         &self,
         py: Python<'py>,
         kwargs: Option<&Bound<'py, PyDict>>,
-    ) -> PyResult<OnnxSession> {
+    ) -> Result<OnnxSession, OnnxError> {
         debug!("Step 1: Converting HuggingFace model to ONNX");
 
         let kwargs = Self::parse_kwargs(py, kwargs)?;
@@ -129,17 +121,15 @@ impl HuggingFaceOnnxModelConverter {
                 (&self.model_path, true),
                 kwargs.1.as_ref(),
             )
-            .map_err(|e| {
-                OpsmlError::new_err(format!("Failed to load model for onnx conversion: {}", e))
-            })?;
+            .map_err(OnnxError::LoadModelError)?;
 
         // saves to model.onnx
         ort_model
             .call_method("save_pretrained", (&self.onnx_path,), kwargs.1.as_ref())
-            .map_err(|e| OpsmlError::new_err(format!("Failed to save ONNX model: {}", e)))?;
+            .map_err(OnnxError::PyOnnxConversionError)?;
 
         debug!("Step 2: Extracting ONNX schema");
-        let mut onnx_session = self.get_onnx_session(py, &kwargs.0)?;
+        let mut onnx_session = self.get_onnx_session(py)?;
 
         if kwargs.2 {
             debug!("Step 3: Quantizing ONNX model");

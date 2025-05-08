@@ -1,11 +1,11 @@
 use crate::base::DataProcessor;
 use crate::base::ModelInterfaceMetadata;
+use crate::error::ModelInterfaceError;
 use crate::model::ModelInterface;
 use crate::types::ProcessorType;
 use crate::ModelInterfaceSaveMetadata;
 use crate::OnnxSession;
 use crate::{ModelLoadKwargs, ModelSaveKwargs};
-use opsml_error::OpsmlError;
 use opsml_types::CommonKwargs;
 use opsml_types::{ModelInterfaceType, ModelType, TaskType};
 use opsml_types::{SaveName, Suffix};
@@ -16,8 +16,8 @@ use pyo3::types::PyDict;
 use pyo3::IntoPyObjectExt;
 use pyo3::{PyTraverseError, PyVisit};
 use std::path::{Path, PathBuf};
+use tracing::debug;
 use tracing::instrument;
-use tracing::{debug, error};
 
 #[pyclass(extends=ModelInterface, subclass)]
 #[derive(Debug)]
@@ -41,7 +41,7 @@ impl SklearnModel {
         sample_data: Option<&Bound<'py, PyAny>>,
         task_type: Option<TaskType>,
         drift_profile: Option<&Bound<'py, PyAny>>,
-    ) -> PyResult<(Self, ModelInterface)> {
+    ) -> Result<(Self, ModelInterface), ModelInterfaceError> {
         // check if model is base estimator for sklearn validation
         if let Some(model) = model {
             let base_estimator = py
@@ -51,9 +51,7 @@ impl SklearnModel {
             if model.is_instance(&base_estimator).unwrap() {
                 //
             } else {
-                return Err(OpsmlError::new_err(
-                    "Model must be an sklearn model and inherit from BaseEstimator",
-                ));
+                return Err(ModelInterfaceError::SklearnTypeError);
             }
         }
 
@@ -109,7 +107,7 @@ impl SklearnModel {
         &mut self,
         py: Python,
         preprocessor: Option<&Bound<'py, PyAny>>,
-    ) -> PyResult<()> {
+    ) -> Result<(), ModelInterfaceError> {
         if let Some(preprocessor) = preprocessor {
             let preprocessor_name = preprocessor
                 .getattr("__class__")?
@@ -136,7 +134,7 @@ impl SklearnModel {
     ///
     /// # Returns
     ///
-    /// * `PyResult<DataInterfaceSaveMetadata>` - DataInterfaceSaveMetadata
+    /// * `Result<DataInterfaceSaveMetadata>` - DataInterfaceSaveMetadata
     #[pyo3(signature = (path, to_onnx=false, save_kwargs=None))]
     #[instrument(skip_all)]
     pub fn save<'py>(
@@ -145,7 +143,7 @@ impl SklearnModel {
         path: PathBuf,
         to_onnx: bool,
         save_kwargs: Option<ModelSaveKwargs>,
-    ) -> PyResult<ModelInterfaceMetadata> {
+    ) -> Result<ModelInterfaceMetadata, ModelInterfaceError> {
         debug!("Saving model interface");
 
         // save the preprocessor if it exists
@@ -193,7 +191,7 @@ impl SklearnModel {
     ///
     /// # Returns
     ///
-    /// * `PyResult<DataInterfaceMetadata>` - DataInterfaceMetadata
+    /// * `Result<DataInterfaceMetadata>` - DataInterfaceMetadata
     #[pyo3(signature = (path, metadata, load_kwargs=None))]
     #[allow(clippy::too_many_arguments)]
     pub fn load(
@@ -202,7 +200,7 @@ impl SklearnModel {
         path: PathBuf,
         metadata: ModelInterfaceSaveMetadata,
         load_kwargs: Option<ModelLoadKwargs>,
-    ) -> PyResult<()> {
+    ) -> Result<(), ModelInterfaceError> {
         // if kwargs is not None, unwrap, else default to None
         let load_kwargs = load_kwargs.unwrap_or_default();
 
@@ -213,26 +211,30 @@ impl SklearnModel {
             parent.load_model(py, &model_path, load_kwargs.model_kwargs(py))?;
 
             if load_kwargs.load_onnx {
-                let onnx_path =
-                    path.join(&metadata.onnx_model_uri.ok_or_else(|| {
-                        OpsmlError::new_err("ONNX model URI not found in metadata")
-                    })?);
+                let onnx_path = path.join(
+                    &metadata
+                        .onnx_model_uri
+                        .ok_or_else(|| ModelInterfaceError::MissingOnnxUriError)?,
+                );
                 parent.load_onnx_model(py, &onnx_path, load_kwargs.onnx_kwargs(py))?;
             }
 
             if metadata.drift_profile_uri.is_some() {
-                let drift_path = path.join(&metadata.drift_profile_uri.ok_or_else(|| {
-                    OpsmlError::new_err("Drift profile URI not found in metadata")
-                })?);
+                let drift_path = path.join(
+                    &metadata
+                        .drift_profile_uri
+                        .ok_or_else(|| ModelInterfaceError::MissingDriftProfileUriError)?,
+                );
 
                 parent.load_drift_profile(py, &drift_path)?;
             }
 
             if metadata.sample_data_uri.is_some() {
-                let sample_data_path =
-                    path.join(&metadata.sample_data_uri.ok_or_else(|| {
-                        OpsmlError::new_err("Sample data URI not found in metadata")
-                    })?);
+                let sample_data_path = path.join(
+                    &metadata
+                        .sample_data_uri
+                        .ok_or_else(|| ModelInterfaceError::MissingSampleDataUriError)?,
+                );
                 parent.load_data(py, &sample_data_path, None)?;
             }
         }
@@ -243,7 +245,7 @@ impl SklearnModel {
                 .data_processor_map
                 .values()
                 .next()
-                .ok_or_else(|| OpsmlError::new_err("No preprocessor URI found in metadata"))?;
+                .ok_or_else(|| ModelInterfaceError::MissingPreprocessorUriError)?;
 
             let preprocessor_uri = path.join(&processor.uri);
 
@@ -293,7 +295,7 @@ impl SklearnModel {
     pub fn from_metadata<'py>(
         py: Python<'py>,
         metadata: &ModelInterfaceMetadata,
-    ) -> PyResult<Bound<'py, PyAny>> {
+    ) -> Result<Bound<'py, PyAny>, ModelInterfaceError> {
         // get first key from metadata.save_metadata.data_processor_map.keys() or default to unknow
         let preprocessor_name = metadata
             .save_metadata
@@ -321,7 +323,8 @@ impl SklearnModel {
             .as_ref()
             .map(|session| Py::new(py, session.clone()).unwrap());
 
-        Py::new(py, (sklearn_interface, interface))?.into_bound_py_any(py)
+        let interface = Py::new(py, (sklearn_interface, interface))?.into_bound_py_any(py)?;
+        Ok(interface)
     }
 
     /// Save the preprocessor to a file
@@ -337,13 +340,10 @@ impl SklearnModel {
         py: Python,
         path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
-    ) -> PyResult<PathBuf> {
+    ) -> Result<PathBuf, ModelInterfaceError> {
         // check if data is None
         if self.preprocessor.is_none() {
-            error!("No preprocessor detected in interface for saving");
-            return Err(OpsmlError::new_err(
-                "No model detected in interface for saving",
-            ));
+            return Err(ModelInterfaceError::NoPreprocessorError);
         }
 
         let save_path = PathBuf::from(SaveName::Preprocessor).with_extension(Suffix::Joblib);
@@ -370,7 +370,7 @@ impl SklearnModel {
         py: Python,
         path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
-    ) -> PyResult<()> {
+    ) -> Result<(), ModelInterfaceError> {
         let joblib = py.import("joblib")?;
 
         // Load the data using joblib
@@ -382,13 +382,15 @@ impl SklearnModel {
     pub fn extract_model_params(
         py: Python,
         model: &Bound<'_, PyAny>,
-    ) -> PyResult<serde_json::Value> {
+    ) -> Result<serde_json::Value, ModelInterfaceError> {
         let new_dict = PyDict::new(py);
 
         new_dict.set_item("params", model.call_method0("get_params")?)?;
         set_sklearn_model_attribute(model, &new_dict)?;
 
-        pyobject_to_json(&new_dict).map_err(OpsmlError::new_err)
+        let value = pyobject_to_json(&new_dict)?;
+
+        Ok(value)
     }
 }
 
@@ -455,7 +457,7 @@ impl CommonSklearnAttributes {
 pub fn set_sklearn_model_attribute(
     model: &Bound<'_, PyAny>,
     dict: &Bound<'_, PyDict>,
-) -> PyResult<()> {
+) -> Result<(), ModelInterfaceError> {
     let attributes = CommonSklearnAttributes::to_vec();
 
     for attribute in attributes {

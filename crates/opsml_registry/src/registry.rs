@@ -291,19 +291,17 @@ impl CardRegistry {
         )?;
 
         // Update card attributes
-        Self::update_card_and_save(
+        if let Err(e) = Self::update_card_and_save(
             params.card,
             &create_response,
             params.save_kwargs,
             params.registry_type,
-        )
-        .map_err(|e| {
-            error!("Failed to register card: {}", e);
-            Self::rollback_card(params.registry, &create_response).unwrap_or_else(|_| {
-                error!("Failed to rollback card registration");
-            });
-            e
-        })?;
+        ) {
+            Self::rollback_card(params.registry, &create_response)?;
+
+            // raise error
+            return Err(e);
+        }
 
         println!(
             "{} - {} - {}/{} - v{}",
@@ -531,17 +529,8 @@ impl CardRegistry {
         let response =
             registry.create_card(registry_card, version, version_type, pre_tag, build_tag)?;
 
-        println!(
-            "{} - {} - {}/{} - v{}",
-            Colorize::green("Registered card"),
-            Colorize::purple(&registry_type.to_string()),
-            response.space,
-            response.name,
-            response.version
-        );
-
         debug!(
-            "Successfully registered card - {} - {}/{} - v{}",
+            "Successfully registered card with server - {} - {}/{} - v{}",
             registry_type, response.space, response.name, response.version
         );
 

@@ -1,9 +1,9 @@
 use crate::base::{parse_save_kwargs, ModelInterfaceMetadata, ModelInterfaceSaveMetadata};
+use crate::error::{ModelInterfaceError, OnnxError};
 use crate::model::ModelInterface;
 use crate::types::ProcessorType;
 use crate::OnnxSession;
 use crate::{DataProcessor, ModelLoadKwargs, ModelSaveKwargs};
-use opsml_error::OpsmlError;
 use opsml_types::{CommonKwargs, ModelInterfaceType, SaveName, Suffix, TaskType};
 use opsml_utils::pyobject_to_json;
 use pyo3::gc::PyVisit;
@@ -13,7 +13,7 @@ use pyo3::IntoPyObjectExt;
 use pyo3::PyTraverseError;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
-use tracing::{debug, error, instrument};
+use tracing::{debug, instrument};
 
 #[pyclass(extends=ModelInterface, subclass)]
 #[derive(Debug)]
@@ -38,7 +38,7 @@ impl LightGBMModel {
         task_type: Option<TaskType>,
 
         drift_profile: Option<&Bound<'py, PyAny>>,
-    ) -> PyResult<(Self, ModelInterface)> {
+    ) -> Result<(Self, ModelInterface), ModelInterfaceError> {
         // check if model is base estimator for sklearn validation
         if let Some(model) = model {
             let booster = py.import("lightgbm")?.getattr("Booster")?;
@@ -46,10 +46,7 @@ impl LightGBMModel {
             if model.is_instance(&booster).unwrap() {
                 //
             } else {
-                return Err(OpsmlError::new_err(
-                    "Model must be an lightgbm booster or inherit from Booster. If
-                    using the Sklearn api version of LightGBMModel, use an SklearnModel interface instead",
-                ));
+                return Err(ModelInterfaceError::LightGBMTypeError);
             }
         }
 
@@ -101,7 +98,7 @@ impl LightGBMModel {
         &mut self,
         py: Python,
         preprocessor: &Bound<'py, PyAny>,
-    ) -> PyResult<()> {
+    ) -> Result<(), ModelInterfaceError> {
         if PyAnyMethods::is_none(preprocessor) {
             self.preprocessor = None;
             self.preprocessor_name = CommonKwargs::Undefined.to_string();
@@ -137,7 +134,7 @@ impl LightGBMModel {
         path: PathBuf,
         to_onnx: bool,
         save_kwargs: Option<ModelSaveKwargs>,
-    ) -> PyResult<ModelInterfaceMetadata> {
+    ) -> Result<ModelInterfaceMetadata, ModelInterfaceError> {
         debug!("Saving lightgbm interface");
 
         // parse the save args
@@ -244,7 +241,7 @@ impl LightGBMModel {
         path: PathBuf,
         metadata: ModelInterfaceSaveMetadata,
         load_kwargs: Option<ModelLoadKwargs>,
-    ) -> PyResult<()> {
+    ) -> Result<(), ModelInterfaceError> {
         // if kwargs is not None, unwrap, else default to None
         let load_kwargs = load_kwargs.unwrap_or_default();
 
@@ -258,7 +255,7 @@ impl LightGBMModel {
                 .data_processor_map
                 .values()
                 .next()
-                .ok_or_else(|| OpsmlError::new_err("No preprocessor URI found in metadata"))?;
+                .ok_or_else(|| ModelInterfaceError::MissingPreprocessorUriError)?;
 
             let preprocessor_uri = path.join(&processor.uri);
 
@@ -270,26 +267,30 @@ impl LightGBMModel {
             let parent = self_.as_super();
 
             if load_kwargs.load_onnx {
-                let onnx_path =
-                    path.join(&metadata.onnx_model_uri.ok_or_else(|| {
-                        OpsmlError::new_err("ONNX model URI not found in metadata")
-                    })?);
+                let onnx_path = path.join(
+                    &metadata
+                        .onnx_model_uri
+                        .ok_or_else(|| OnnxError::NoOnnxFile)?,
+                );
                 parent.load_onnx_model(py, &onnx_path, load_kwargs.onnx_kwargs(py))?;
             }
 
             if metadata.drift_profile_uri.is_some() {
-                let drift_path = path.join(&metadata.drift_profile_uri.ok_or_else(|| {
-                    OpsmlError::new_err("Drift profile URI not found in metadata")
-                })?);
+                let drift_path = path.join(
+                    &metadata
+                        .drift_profile_uri
+                        .ok_or_else(|| ModelInterfaceError::MissingDriftProfileUriError)?,
+                );
 
                 parent.load_drift_profile(py, &drift_path)?;
             }
 
             if metadata.sample_data_uri.is_some() {
-                let sample_data_path =
-                    path.join(&metadata.sample_data_uri.ok_or_else(|| {
-                        OpsmlError::new_err("Sample data URI not found in metadata")
-                    })?);
+                let sample_data_path = path.join(
+                    &metadata
+                        .sample_data_uri
+                        .ok_or_else(|| ModelInterfaceError::MissingSampleDataUriError)?,
+                );
                 parent.load_data(py, &sample_data_path, None)?;
             }
         }
@@ -313,7 +314,7 @@ impl LightGBMModel {
     pub fn from_metadata<'py>(
         py: Python<'py>,
         metadata: &ModelInterfaceMetadata,
-    ) -> PyResult<Bound<'py, PyAny>> {
+    ) -> Result<Bound<'py, PyAny>, ModelInterfaceError> {
         // get first key from metadata.save_metadata.data_processor_map.keys() or default to unknow
         let preprocessor_name = metadata
             .save_metadata
@@ -344,7 +345,9 @@ impl LightGBMModel {
             .as_ref()
             .map(|session| Py::new(py, session.clone()).unwrap());
 
-        Py::new(py, (lightgbm_interface, interface))?.into_bound_py_any(py)
+        let interface = Py::new(py, (lightgbm_interface, interface))?.into_bound_py_any(py)?;
+
+        Ok(interface)
     }
     /// Save the preprocessor to a file
     ///
@@ -359,13 +362,10 @@ impl LightGBMModel {
         py: Python,
         path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
-    ) -> PyResult<PathBuf> {
+    ) -> Result<PathBuf, ModelInterfaceError> {
         // check if data is None
         if self.preprocessor.is_none() {
-            error!("No preprocessor detected in interface for saving");
-            return Err(OpsmlError::new_err(
-                "No model detected in interface for saving",
-            ));
+            return Err(ModelInterfaceError::NoPreprocessorError);
         }
 
         let save_path = PathBuf::from(SaveName::Preprocessor).with_extension(Suffix::Joblib);
@@ -392,7 +392,7 @@ impl LightGBMModel {
         py: Python,
         path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
-    ) -> PyResult<()> {
+    ) -> Result<(), ModelInterfaceError> {
         let joblib = py.import("joblib")?;
 
         // Load the data using joblib
@@ -416,14 +416,11 @@ impl LightGBMModel {
         py: Python<'py>,
         path: &Path,
         kwargs: Option<&Bound<'py, PyDict>>,
-    ) -> PyResult<PathBuf> {
+    ) -> Result<PathBuf, ModelInterfaceError> {
         let super_ = self_.as_ref();
 
         if super_.model.is_none() {
-            error!("No model detected in interface for saving");
-            return Err(OpsmlError::new_err(
-                "No model detected in interface for saving",
-            ));
+            return Err(ModelInterfaceError::NoModelError);
         }
 
         let save_path = PathBuf::from(SaveName::Model).with_extension(Suffix::Text);
@@ -456,32 +453,33 @@ impl LightGBMModel {
         py: Python<'py>,
         path: &Path,
         kwargs: Option<&Bound<'py, PyDict>>,
-    ) -> PyResult<PyObject> {
+    ) -> Result<PyObject, ModelInterfaceError> {
         let booster = py.import("lightgbm")?.getattr("Booster")?;
 
         let kwargs = kwargs.map_or(PyDict::new(py), |kwargs| kwargs.clone());
         kwargs.set_item("model_file", path)?;
 
-        let model = booster.call((), Some(&kwargs)).map_err(|e| {
-            error!("Failed to load model from file: {}", e);
-            OpsmlError::new_err(format!("Failed to load model from file: {}", e))
-        })?;
+        let model = booster.call((), Some(&kwargs))?;
 
         debug!("Model loaded");
 
-        model.into_py_any(py)
+        let model = model.into_py_any(py)?;
+
+        Ok(model)
     }
 
     pub fn extract_model_params(
         py: Python,
         model: &Bound<'_, PyAny>,
-    ) -> PyResult<serde_json::Value> {
+    ) -> Result<serde_json::Value, ModelInterfaceError> {
         let new_dict = PyDict::new(py);
 
         new_dict.set_item("params", model.call_method0("get_params")?)?;
         set_lightgbm_model_attribute(model, &new_dict)?;
 
-        pyobject_to_json(&new_dict).map_err(OpsmlError::new_err)
+        let value = pyobject_to_json(&new_dict)?;
+
+        Ok(value)
     }
 }
 
@@ -530,7 +528,7 @@ impl CommonLightGBMAttributes {
 pub fn set_lightgbm_model_attribute(
     model: &Bound<'_, PyAny>,
     dict: &Bound<'_, PyDict>,
-) -> PyResult<()> {
+) -> Result<(), ModelInterfaceError> {
     let attributes = CommonLightGBMAttributes::to_vec();
 
     for attribute in attributes {
