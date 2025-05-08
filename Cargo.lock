@@ -3913,6 +3913,7 @@ dependencies = [
  "tabled",
  "tar",
  "tempfile",
+ "thiserror 2.0.12",
  "tracing",
  "zip",
 ]

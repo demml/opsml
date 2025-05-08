@@ -1,5 +1,5 @@
+use crate::error::CliError;
 use anyhow::Result;
-use opsml_error::CliError;
 use reqwest;
 use std::{
     env, fs,
@@ -52,7 +52,7 @@ fn detect_platform() -> Result<Platform, CliError> {
         ("macos", "aarch64") => Ok(Platform::MacOS("aarch64".to_string())),
         ("linux", "x86_64") => Ok(Platform::Linux("x86_64".to_string())),
         ("linux", "aarch64") => Ok(Platform::Linux("aarch64".to_string())),
-        _ => Err(CliError::UnsupportedPlatform(
+        _ => Err(CliError::UnsupportedPlatformError(
             os.to_string(),
             arch.to_string(),
         )),

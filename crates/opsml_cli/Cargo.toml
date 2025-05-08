@@ -25,9 +25,9 @@ pyo3 = { workspace = true }
 reqwest = { workspace = true }
 serde = { workspace = true }
 tabled = { workspace = true }
+thiserror = { workspace = true }
 tracing = { workspace = true }
 zip = { workspace = true }
-
 
 
 [target.'cfg(target_os = "linux")'.dependencies]

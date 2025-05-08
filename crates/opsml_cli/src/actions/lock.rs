@@ -1,8 +1,9 @@
 use crate::actions::utils::register_card_deck;
 use crate::cli::arg::DownloadCard;
 use crate::download_deck;
+use crate::error::CliError;
 use opsml_colors::Colorize;
-use opsml_error::CliError;
+use opsml_registry::error::RegistryError;
 use opsml_registry::{CardRegistries, CardRegistry};
 use opsml_toml::{
     toml::{AppConfig, Card},
@@ -60,11 +61,7 @@ fn get_latest_card(registries: &CardRegistries, card: &Card) -> Result<CardRecor
         RegistryType::Data => &registries.data,
         RegistryType::Prompt => &registries.prompt,
         RegistryType::Deck => &registries.deck,
-        _ => {
-            return Err(CliError::RegistryTypeNotSupported(
-                registry_type.to_string(),
-            ))
-        }
+        _ => return Err(RegistryError::RegistryTypeNotSupported(registry_type).into()),
     };
 
     let latest_cards = registry.list_cards(
@@ -81,7 +78,7 @@ fn get_latest_card(registries: &CardRegistries, card: &Card) -> Result<CardRecor
     // return the first card in the list
     latest_cards.cards.first().cloned().ok_or({
         error!("Failed to get latest card");
-        CliError::MissingCardRecord
+        CliError::MissingCardError
     })
 }
 
@@ -159,7 +156,7 @@ fn lock_deck(config: AppConfig) -> Result<LockArtifact, CliError> {
     let deck = deck.unwrap();
     //
     //// Get card UIDs from deck
-    let card_entries = deck.cards().ok_or(CliError::MissingCardDeckUids)?;
+    let card_entries = deck.cards().ok_or(CliError::MissingCardEntriesError)?;
     let needs_refresh = process_deck_cards(card_entries, app_cards, &registries)?;
     //
     let lock_entry = match needs_refresh {
@@ -197,9 +194,7 @@ fn lock_app(app: AppConfig) -> Result<LockArtifact, CliError> {
     // Only support's  deck currently
     match app.registry_type {
         RegistryType::Deck => lock_deck(app),
-        _ => Err(CliError::UnsupportedRegistryType(
-            app.registry_type.to_string(),
-        )),
+        _ => Err(RegistryError::RegistryTypeNotSupported(app.registry_type).into()),
     }
 }
 
@@ -227,8 +222,7 @@ pub fn install_app(path: PathBuf, write_path: Option<PathBuf>) -> Result<(), Cli
                 let write_path = if let Some(path) = write_path.as_ref() {
                     path.to_path_buf()
                 } else {
-                    let current_dir =
-                        std::env::current_dir().map_err(|_| CliError::WritePathError)?;
+                    let current_dir = std::env::current_dir()?;
                     // Store the `PathBuf` in a variable and return a reference to it
                     current_dir.as_path().to_path_buf()
                 };
@@ -248,9 +242,7 @@ pub fn install_app(path: PathBuf, write_path: Option<PathBuf>) -> Result<(), Cli
                 download_deck(&args)?;
             }
             _ => {
-                return Err(CliError::UnsupportedRegistryType(
-                    artifact.registry_type.to_string(),
-                ))
+                return Err(RegistryError::RegistryTypeNotSupported(artifact.registry_type).into());
             }
         }
     }
@@ -265,9 +257,9 @@ pub fn lock_project(path: Option<PathBuf>, toml_name: Option<&str>) -> Result<()
 
     let pyproject = PyProjectToml::load(path.as_deref(), toml_name)?;
 
-    let tools = pyproject.get_tools().ok_or(CliError::MissingTools)?;
+    let tools = pyproject.get_tools().ok_or(CliError::MissingToolsError)?;
 
-    let apps = tools.get_apps().ok_or(CliError::MissingApp)?;
+    let apps = tools.get_apps().ok_or(CliError::MissingAppError)?;
 
     // Create a lock file
     let lock_file = LockFile {
