@@ -1,5 +1,5 @@
+use crate::error::ExperimentError;
 use chrono::Utc;
-use opsml_error::ExperimentError;
 use opsml_registry::base::OpsmlRegistry;
 use opsml_state::app_state;
 use opsml_types::{cards::HardwareMetricLogger, contracts::HardwareMetricRequest};
