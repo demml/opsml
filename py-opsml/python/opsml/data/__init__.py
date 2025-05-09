@@ -14,6 +14,7 @@ Inequality = data.Inequality
 DataSplitter = data.DataSplitter
 DataInterface = data.DataInterface
 SqlLogic = data.SqlLogic
+DataInterfaceMetadata = data.DataInterfaceMetadata
 DataInterfaceSaveMetadata = data.DataInterfaceSaveMetadata
 NumpyData = data.NumpyData
 PolarsData = data.PolarsData
@@ -43,6 +44,7 @@ __all__ = [
     "DataInterface",
     "SqlLogic",
     "DataInterfaceSaveMetadata",
+    "DataInterfaceMetadata",
     "NumpyData",
     "PolarsData",
     "PandasData",
