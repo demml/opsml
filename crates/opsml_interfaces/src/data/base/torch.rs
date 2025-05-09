@@ -31,7 +31,6 @@ impl TorchData {
         data: Option<&Bound<'py, PyAny>>, // data can be any pyobject
         data_splits: Option<&Bound<'py, PyAny>>, //
         dependent_vars: Option<&Bound<'py, PyAny>>,
-        feature_map: Option<FeatureSchema>,
         sql_logic: Option<SqlLogic>,
         data_profile: Option<DataProfile>,
     ) -> Result<(Self, DataInterface), DataInterfaceError> {
@@ -57,7 +56,6 @@ impl TorchData {
             None,
             data_splits,
             dependent_vars,
-            feature_map,
             sql_logic,
             data_profile,
         )?;

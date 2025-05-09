@@ -39,7 +39,6 @@ impl PolarsData {
         data: Option<&Bound<'py, PyAny>>, // data can be any pyobject
         data_splits: Option<&Bound<'py, PyAny>>, //
         dependent_vars: Option<&Bound<'py, PyAny>>,
-        feature_map: Option<FeatureSchema>,
         sql_logic: Option<SqlLogic>,
         data_profile: Option<DataProfile>,
     ) -> Result<(Self, DataInterface), DataInterfaceError> {
@@ -60,8 +59,7 @@ impl PolarsData {
             None => None,
         };
 
-        let mut data_interface =
-            DataInterface::new(py, None, None, None, feature_map, sql_logic, data_profile)?;
+        let mut data_interface = DataInterface::new(py, None, None, None, sql_logic, data_profile)?;
 
         let data_type = DataType::Polars;
         let data_splits: DataSplits = check_data_splits(data_splits)?;

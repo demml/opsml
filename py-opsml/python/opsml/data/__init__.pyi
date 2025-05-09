@@ -96,7 +96,7 @@ class ColumnSplit:
         self,
         column_name: str,
         column_value: Union[str, float, int],
-        column_type: ColType,
+        column_type: ColType = ColType.Builtin,
         inequality: Optional[Union[str, Inequality]] = None,
     ) -> None:
         """Define a column split
@@ -108,7 +108,8 @@ class ColumnSplit:
                 The value of the column. Can be a string, float, or int. If
                 timestamp, convert to isoformat (str) and specify timestamp coltype
             column_type:
-                The type of the column
+                The type of the column. Defaults to ColType.Builtin. If providing ColtType.Timestamp, the
+                column_value should be a float
             inequality:
                 The inequality of the column
         """
@@ -355,7 +356,6 @@ class DataInterface:
         data: Optional[Any] = None,
         data_splits: Optional[Union[DataSplits, List[DataSplit]]] = None,
         dependent_vars: Optional[Union[DependentVars, List[str], List[int]]] = None,
-        schema: Optional[FeatureSchema] = None,
         sql_logic: Optional[SqlLogic] = None,
         data_profile: Optional[DataProfile] = None,
     ) -> None:
@@ -369,8 +369,6 @@ class DataInterface:
                 List of dependent variables to associate with data
             data_splits (DataSplits):
                 Optional list of `DataSplit`
-            schema (FeatureSchema):
-                Dictionary of features -> automatically generated
             sql_logic (SqlLogic):
                 SqlLogic class used to generate data.
             data_profile (DataProfile):
@@ -437,7 +435,11 @@ class DataInterface:
                 The optional filepath to open the query from
         """
 
-    def save(self, path: Path, save_kwargs: Optional[DataSaveKwargs] = None) -> DataInterfaceMetadata:
+    def save(
+        self,
+        path: Path,
+        save_kwargs: Optional[DataSaveKwargs] = None,
+    ) -> DataInterfaceMetadata:
         """Saves all data interface component to the given path. This used as part of saving a
         DataCard
 
@@ -553,7 +555,6 @@ class NumpyData(DataInterface):
         data: Optional[Any] = None,
         data_splits: Optional[Union[DataSplits, List[DataSplit]]] = None,
         dependent_vars: Optional[Union[DependentVars, List[str], List[int]]] = None,
-        schema: Optional[FeatureSchema] = None,
         sql_logic: Optional[SqlLogic] = None,
         data_profile: Optional[DataProfile] = None,
     ) -> None:
@@ -566,8 +567,6 @@ class NumpyData(DataInterface):
                 List of dependent variables to associate with data
             data_splits (DataSplits | List[DataSplit]):
                 Optional list of `DataSplit`
-            schema (FeatureSchema | None):
-                Dictionary of features -> automatically generated
             sql_logic (SqlLogic | None):
                 Sql logic used to generate data represented as a dictionary.
             data_profile (DataProfile | None):
@@ -636,7 +635,6 @@ class PolarsData(DataInterface):
         data: Optional[Any] = None,
         data_splits: Optional[Union[DataSplits, List[DataSplit]]] = None,
         dependent_vars: Optional[Union[DependentVars, List[str], List[int]]] = None,
-        schema: Optional[FeatureSchema] = None,
         sql_logic: Optional[SqlLogic] = None,
         data_profile: Optional[DataProfile] = None,
     ) -> None:
@@ -649,8 +647,6 @@ class PolarsData(DataInterface):
                 List of dependent variables to associate with data
             data_splits (DataSplits | List[DataSplit]):
                 Optional list of `DataSplit`
-            schema (FeatureSchema | None):
-                Dictionary of features -> automatically generated
             sql_logic (SqlLogic | None):
                 Sql logic used to generate data represented as a dictionary.
             data_profile (DataProfile | None):
@@ -658,7 +654,9 @@ class PolarsData(DataInterface):
 
         """
 
-    def save(self, path: Path, save_kwargs: Optional[DataSaveKwargs] = None) -> DataInterfaceMetadata:
+    def save(
+        self, path: Path, save_kwargs: Optional[DataSaveKwargs] = None
+    ) -> DataInterfaceMetadata:
         """Saves polars dataframe to parquet dataset via write_parquet
 
         Args:
@@ -768,7 +766,6 @@ class PandasData(DataInterface):
         data: Optional[Any] = None,
         data_splits: Optional[Union[DataSplits, List[DataSplit]]] = None,
         dependent_vars: Optional[Union[DependentVars, List[str], List[int]]] = None,
-        schema: Optional[FeatureSchema] = None,
         sql_logic: Optional[SqlLogic] = None,
         data_profile: Optional[DataProfile] = None,
     ) -> None:
@@ -781,15 +778,15 @@ class PandasData(DataInterface):
                 List of dependent variables to associate with data
             data_splits (DataSplits | List[DataSplit]):
                 Optional list of `DataSplit`
-            schema (FeatureSchema | None):
-                Dictionary of features -> automatically generated
             sql_logic (SqlLogic | None):
                 Sql logic used to generate data represented as a dictionary.
             data_profile (DataProfile | None):
                 Data profile
         """
 
-    def save(self, path: Path, save_kwargs: Optional[DataSaveKwargs] = None) -> DataInterfaceMetadata:
+    def save(
+        self, path: Path, save_kwargs: Optional[DataSaveKwargs] = None
+    ) -> DataInterfaceMetadata:
         """Saves pandas dataframe as parquet file via to_parquet
 
         Args:
@@ -892,7 +889,6 @@ class ArrowData(DataInterface):
         data: Optional[Any] = None,
         data_splits: Optional[Union[DataSplits, List[DataSplit]]] = None,
         dependent_vars: Optional[Union[DependentVars, List[str], List[int]]] = None,
-        schema: Optional[FeatureSchema] = None,
         sql_logic: Optional[SqlLogic] = None,
         data_profile: Optional[DataProfile] = None,
     ) -> None:
@@ -905,15 +901,15 @@ class ArrowData(DataInterface):
                 List of dependent variables to associate with data
             data_splits (DataSplits | List[DataSplit]):
                 Optional list of `DataSplit`
-            schema (FeatureSchema | None):
-                Dictionary of features -> automatically generated
             sql_logic (SqlLogic | None):
                 Sql logic used to generate data represented as a dictionary.
             data_profile (DataProfile | None):
                 Data profile
         """
 
-    def save(self, path: Path, save_kwargs: Optional[DataSaveKwargs] = None) -> DataInterfaceMetadata:
+    def save(
+        self, path: Path, save_kwargs: Optional[DataSaveKwargs] = None
+    ) -> DataInterfaceMetadata:
         """Saves pyarrow table to parquet via write_table
 
         Args:
@@ -1052,7 +1048,6 @@ class TorchData(DataInterface):
         data: Optional[Any] = None,
         data_splits: Optional[Union[DataSplits, List[DataSplit]]] = None,
         dependent_vars: Optional[Union[DependentVars, List[str], List[int]]] = None,
-        schema: Optional[FeatureSchema] = None,
         sql_logic: Optional[SqlLogic] = None,
         data_profile: Optional[DataProfile] = None,
     ) -> None:
@@ -1065,15 +1060,15 @@ class TorchData(DataInterface):
                 List of dependent variables to associate with data
             data_splits (DataSplits | List[DataSplit]):
                 Optional list of `DataSplit`
-            schema (FeatureSchema | None):
-                Dictionary of features -> automatically generated
             sql_logic (SqlLogic | None):
                 Sql logic used to generate data represented as a dictionary.
             data_profile (DataProfile | None):
                 Data profile
         """
 
-    def save(self, path: Path, save_kwargs: Optional[DataSaveKwargs] = None) -> DataInterfaceMetadata:
+    def save(
+        self, path: Path, save_kwargs: Optional[DataSaveKwargs] = None
+    ) -> DataInterfaceMetadata:
         """Saves torch tensor to a file
 
         Args:
@@ -1135,12 +1130,18 @@ class TorchData(DataInterface):
 class SqlData:
     data_type: DataType
 
-    def __init__(self, sql_logic: SqlLogic) -> None:
+    def __init__(
+        self,
+        sql_logic: SqlLogic,
+        data_profile: Optional[DataProfile] = None,
+    ) -> None:
         """Define a sql data interface
 
         Args:
             sql (SqlLogic):
                 Sql logic used to generate data represented as a dictionary.
+            data_profile (DataProfile | None):
+                Data profile
         """
 
     def save(
