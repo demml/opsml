@@ -659,6 +659,7 @@ class ExperimentCard:
         """
 
     def get_metrics(
+        self,
         names: Optional[list[str]] = None,
     ) -> Metrics:
         """
@@ -673,6 +674,7 @@ class ExperimentCard:
         """
 
     def get_parameters(
+        self,
         names: Optional[list[str]] = None,
     ) -> Parameters:
         """
