@@ -34,7 +34,7 @@ pub struct ArrowData {
 impl ArrowData {
     #[new]
     #[allow(clippy::too_many_arguments)]
-    #[pyo3(signature = (data=None, data_splits=None, dependent_vars=None, schema=None, sql_logic=None, data_profile=None))]
+    #[pyo3(signature = (data=None, data_splits=None, dependent_vars=None, sql_logic=None, data_profile=None))]
     pub fn new<'py>(
         py: Python,
         data: Option<&Bound<'py, PyAny>>, // data can be any pyobject
@@ -310,7 +310,7 @@ impl ArrowData {
         // Load the data using numpy
         let data = parquet.call_method("read_table", (path,), kwargs)?;
 
-        let interface = ArrowData::new(py, Some(&data), None, None, None, None, None)?;
+        let interface = ArrowData::new(py, Some(&data), None, None, None, None)?;
 
         let bound = Py::new(py, interface)?.as_any().clone_ref(py);
 
