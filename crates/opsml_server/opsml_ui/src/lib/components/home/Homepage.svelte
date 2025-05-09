@@ -58,14 +58,14 @@
         <div class="relative grid grid-cols-1 gap-6 lg:grid-cols-2 md:mx-8 justify-self-center">
           <HomeCard 
             header="Prompts" 
-            cards={cards.modelcards}
+            cards={cards.promptcards}
             headerColor="bg-secondary-500" 
             headerTextColor="text-black" 
             iconColor="#5fd68d"
           />
           <HomeCard 
             header="Experiments"
-            cards={cards.datacards}
+            cards={cards.experimentcards}
             headerColor="bg-secondary-500" 
             headerTextColor="text-black"
             iconColor="#5fd68d"

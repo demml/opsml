@@ -106,7 +106,7 @@ async function toggle(toggle: string) {
 
 </script>
 
-<div class="flex flex-col h-screen rounded-base w-full">
+<div class="flex flex-col rounded-base w-full">
   <div class="flex px-3 py-2 min-w-96 rounded-t-base justify-between border-b-2 border-black pb-4 bg-primary-300">
     <div class="flex gap-4 justify-start">
       <button 
