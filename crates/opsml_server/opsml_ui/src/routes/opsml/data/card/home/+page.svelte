@@ -1,10 +1,9 @@
 <script lang="ts">
-  // version $props() in +page.svelte
-
   import { goto } from '$app/navigation';
   import type { DataCard } from '$lib/components/card/card_interfaces/datacard';
   import type { PageProps } from './$types';
   import CardReadMe from '$lib/components/card/CardReadMe.svelte';
+  import NoReadme from '$lib/components/readme/NoReadme.svelte';
   import Metadata from '$lib/components/card/data/Metadata.svelte';
 
 
@@ -23,29 +22,24 @@
 
     {#if data.readme.exists}
     <div class="gap-1 flex flex-col rounded-base border-black border-3 shadow bg-surface-50 w-[1200px]">
-        <CardReadMe
-          name={metadata.name}
-          space={metadata.space}
-          registryPath={data.registryPath}
-          version={metadata.version}
-          readMe={data.readme}
-        />
+      <CardReadMe
+        name={metadata.name}
+        space={metadata.space}
+        registryPath={data.registryPath}
+        version={metadata.version}
+        readMe={data.readme}
+      />
       </div>
 
      
     {:else}
-    <div class="mx-auto gap-1 flex flex-col rounded-base border-black border-3 shadow bg-primary-100 w-1/3 h-1/4">
-        <div class="flex flex-col items-center justify-center h-full gap-4">
-          <div class="text-center text-xl font-bold text-black">No ReadMe found</div>
-          <div>
-            <button 
-              class="mb-2 text-black bg-primary-500 rounded-lg shadow shadow-hover border-black border-2 px-4 w-38 h-10"
-              onclick={navigateToReadMe}
-            >
-              add ReadMe
-            </button>
-          </div>
-        </div>
+      <div class="gap-1 flex flex-col rounded-base border-black border-3 shadow bg-primary-100 w-[600px] h-[200px]">
+        <NoReadme
+          name={metadata.name}
+          space={metadata.space}
+          registryPath={data.registryPath}
+          version={metadata.version}
+        />
       </div>
     {/if}
 
