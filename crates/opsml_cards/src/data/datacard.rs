@@ -302,6 +302,27 @@ impl DataCard {
     fn __clear__(&mut self) {
         self.interface = None;
     }
+
+    /// Get the model from the interface if available.
+    /// This will result in an error if the interface is not set and
+    /// the model is not available.
+    #[getter]
+    pub fn data<'py>(&self, py: Python<'py>) -> Result<Bound<'py, PyAny>, CardError> {
+        if let Some(interface) = self.interface.as_ref() {
+            // get property "model" from interface
+            let data = interface.bind(py).getattr("data")?;
+
+            // check if model is None
+            if data.is_none() {
+                Err(CardError::DataNotSetError)
+            // return model
+            } else {
+                Ok(data)
+            }
+        } else {
+            Err(CardError::InterfaceNotFoundError)
+        }
+    }
 }
 
 impl DataCard {
@@ -315,7 +336,10 @@ impl DataCard {
         interface: Option<&Bound<'_, PyAny>>,
     ) -> Result<(), CardError> {
         if let Some(interface) = interface {
-            self.set_interface(interface)
+            let interface = interface
+                .call_method1("from_metadata", (self.metadata.interface_metadata.clone(),))?;
+
+            self.set_interface(&interface)
         } else {
             // match interface type
             let interface = interface_from_metadata(py, &self.metadata.interface_metadata)?;
