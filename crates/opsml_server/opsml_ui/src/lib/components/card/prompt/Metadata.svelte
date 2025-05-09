@@ -5,7 +5,8 @@
   import { Info, Diamond, Tags } from 'lucide-svelte';
   import CodeModal from "../CodeModal.svelte";
   import Pill from "$lib/components/utils/Pill.svelte";
-  import { Braces, CheckCheck } from 'lucide-svelte';
+  import { Braces, CheckCheck, MessageSquareText, Settings } from 'lucide-svelte';
+  import PromptModal from "./PromptModal.svelte";
 
 
   let {
@@ -55,7 +56,24 @@ datacard = registry.load_card(uid="${metadata.uid}")
 
   </div>
 
- 
+  <div class="flex flex-col space-y-1 gap-1">
+    <div class="flex flex-row items-center mb-1 border-b-2 border-black">
+      <MessageSquareText color="#8059b6" />
+      <header class="pl-2 text-primary-900 text-lg font-bold">Prompts</header>
+    </div>
+  </div>
+
+  <div class="flex flex-wrap gap-1">
+    <PromptModal prompt={metadata.prompt}/>
+  </div>
+
+
+  <div class="flex flex-col space-y-1 gap-1">
+    <div class="flex flex-row items-center mb-1 border-b-2 border-black">
+      <Settings color="#8059b6" />
+      <header class="pl-2 text-primary-900 text-lg font-bold">Model Settings</header>
+    </div>
+  </div>
 
   {#if metadata.tags.length > 0}
     <div class="flex flex-col space-y-1 gap-1">
