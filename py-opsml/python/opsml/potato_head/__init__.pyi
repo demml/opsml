@@ -178,7 +178,11 @@ class PromptSanitizer:
         """
 
 class ImageUrl:
-    def __init__(self, url: str, kind: Literal["image-url"] = "image-url") -> None:
+    def __init__(
+        self,
+        url: str,
+        kind: Literal["image-url"] = "image-url",
+    ) -> None:
         """Create an ImageUrl object.
 
         Args:
@@ -189,6 +193,14 @@ class ImageUrl:
         """
 
     @property
+    def url(self) -> str:
+        """The URL of the image."""
+
+    @property
+    def kind(self) -> str:
+        """The kind of the content."""
+
+    @property
     def media_type(self) -> str:
         """The media type of the image URL."""
 
@@ -197,7 +209,11 @@ class ImageUrl:
         """The format of the image URL."""
 
 class AudioUrl:
-    def __init__(self, url: str, kind: Literal["audio-url"] = "audio-url") -> None:
+    def __init__(
+        self,
+        url: str,
+        kind: Literal["audio-url"] = "audio-url",
+    ) -> None:
         """Create an AudioUrl object.
 
         Args:
@@ -206,6 +222,13 @@ class AudioUrl:
             kind (Literal["audio-url"]):
                 The kind of the content.
         """
+    @property
+    def url(self) -> str:
+        """The URL of the audio."""
+
+    @property
+    def kind(self) -> str:
+        """The kind of the content."""
 
     @property
     def media_type(self) -> str:
@@ -233,6 +256,22 @@ class BinaryContent:
                 The kind of the content
         """
 
+    @property
+    def media_type(self) -> str:
+        """The media type of the binary content."""
+
+    @property
+    def format(self) -> str:
+        """The format of the binary content."""
+
+    @property
+    def data(self) -> bytes:
+        """The binary data."""
+
+    @property
+    def kind(self) -> str:
+        """The kind of the content."""
+
 class DocumentUrl:
     def __init__(
         self,
@@ -249,6 +288,14 @@ class DocumentUrl:
         """
 
     @property
+    def url(self) -> str:
+        """The URL of the document."""
+
+    @property
+    def kind(self) -> str:
+        """The kind of the content."""
+
+    @property
     def media_type(self) -> str:
         """The media type of the document URL."""
 
@@ -257,7 +304,9 @@ class DocumentUrl:
         """The format of the document URL."""
 
 class Message:
-    def __init__(self, content: str | ImageUrl | AudioUrl | BinaryContent | DocumentUrl) -> None:
+    def __init__(
+        self, content: str | ImageUrl | AudioUrl | BinaryContent | DocumentUrl
+    ) -> None:
         """Create a Message object.
 
         Args:
@@ -446,7 +495,10 @@ class ModelSettings:
 class Prompt:
     def __init__(
         self,
-        prompt: str | Sequence[str | ImageUrl | AudioUrl | BinaryContent | DocumentUrl] | Message | List[Message],
+        prompt: str
+        | Sequence[str | ImageUrl | AudioUrl | BinaryContent | DocumentUrl]
+        | Message
+        | List[Message],
         model: Optional[str] = None,
         provider: Optional[str] = None,
         system_prompt: Optional[str | List[str]] = None,
