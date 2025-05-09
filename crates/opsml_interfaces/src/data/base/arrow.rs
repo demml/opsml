@@ -330,7 +330,7 @@ impl ArrowData {
         let save_path = PathBuf::from(SaveName::Data.to_string()).with_extension(Suffix::Parquet);
         let full_save_path = path.join(&save_path);
 
-        let parquet = py.import("pyarrow")?.getattr("parquet")?;
+        let parquet = py.import("pyarrow.parquet")?;
         let args = (self.data.as_ref().unwrap(), full_save_path);
 
         // Save the data using joblib
