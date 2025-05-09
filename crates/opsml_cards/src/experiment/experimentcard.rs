@@ -130,8 +130,13 @@ impl ExperimentCard {
         py: Python,
         names: Option<Vec<String>>,
     ) -> Result<Parameters, CardError> {
-        // get the experiment registry
-        let func = py.import("opsml.get_experiment_parameters")?;
+        // a little nested import here
+        // It would be preferable to use "get_experiment_parameters" from opsml_experiment
+        // but opsml_experiment relies on opsml_registry which relies on opsml_cards
+        // thus, it would create a circular dependency. We can always revisit this later
+        let func = py
+            .import("opsml.experiment")?
+            .getattr("get_experiment_parameters")?;
 
         let parameters = func.call1((&self.uid, names))?.extract::<Parameters>()?;
 
@@ -145,7 +150,9 @@ impl ExperimentCard {
         names: Option<Vec<String>>,
     ) -> Result<Metrics, CardError> {
         // get the experiment registry
-        let func = py.import("opsml.get_experiment_metrics")?;
+        let func = py
+            .import("opsml.experiment")?
+            .getattr("get_experiment_metrics")?;
 
         let memory_metrics = func.call1((&self.uid, names))?.extract::<Metrics>()?;
 
