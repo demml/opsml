@@ -40,7 +40,6 @@ impl ArrowData {
         data: Option<&Bound<'py, PyAny>>, // data can be any pyobject
         data_splits: Option<&Bound<'py, PyAny>>, //
         dependent_vars: Option<&Bound<'py, PyAny>>,
-        schema: Option<FeatureSchema>,
         sql_logic: Option<SqlLogic>,
         data_profile: Option<DataProfile>,
     ) -> Result<(Self, DataInterface), DataInterfaceError> {
@@ -60,8 +59,7 @@ impl ArrowData {
             None => None,
         };
 
-        let mut data_interface =
-            DataInterface::new(py, None, None, None, schema, sql_logic, data_profile)?;
+        let mut data_interface = DataInterface::new(py, None, None, None, sql_logic, data_profile)?;
 
         let data_type = DataType::Arrow;
         let data_splits: DataSplits = check_data_splits(data_splits)?;
