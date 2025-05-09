@@ -33,13 +33,12 @@ pub struct NumpyData {
 impl NumpyData {
     #[new]
     #[allow(clippy::too_many_arguments)]
-    #[pyo3(signature = (data=None, data_splits=None, dependent_vars=None, feature_map=None, sql_logic=None, data_profile=None))]
+    #[pyo3(signature = (data=None, data_splits=None, dependent_vars=None, sql_logic=None, data_profile=None))]
     pub fn new<'py>(
         py: Python,
         data: Option<&Bound<'py, PyAny>>, // data can be any pyobject
         data_splits: Option<&Bound<'py, PyAny>>, //
         dependent_vars: Option<&Bound<'py, PyAny>>,
-        feature_map: Option<FeatureSchema>,
         sql_logic: Option<SqlLogic>,
         data_profile: Option<DataProfile>,
     ) -> Result<(Self, DataInterface), DataInterfaceError> {
@@ -59,8 +58,7 @@ impl NumpyData {
             None => None,
         };
 
-        let mut data_interface =
-            DataInterface::new(py, None, None, None, feature_map, sql_logic, data_profile)?;
+        let mut data_interface = DataInterface::new(py, None, None, None, sql_logic, data_profile)?;
 
         let data_type = DataType::Numpy;
         let data_splits: DataSplits = check_data_splits(data_splits)?;
@@ -347,7 +345,7 @@ impl NumpyData {
         // Load the data using numpy
         let data = numpy.call_method("load", (path,), kwargs)?;
 
-        let interface = NumpyData::new(py, Some(&data), None, None, None, None, None)?;
+        let interface = NumpyData::new(py, Some(&data), None, None, None, None)?;
 
         let bound = Py::new(py, interface)?.as_any().clone_ref(py);
 

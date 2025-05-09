@@ -101,32 +101,27 @@ impl SampleData {
 
         match interface_type {
             InterfaceDataType::Pandas => {
-                let interface =
-                    PandasData::new(py, Some(&sliced_data), None, None, None, None, None)?;
+                let interface = PandasData::new(py, Some(&sliced_data), None, None, None, None)?;
                 let bound = Py::new(py, interface)?.as_any().clone_ref(py);
                 Ok(SampleData::Pandas(bound))
             }
             InterfaceDataType::Polars => {
-                let interface =
-                    PolarsData::new(py, Some(&sliced_data), None, None, None, None, None)?;
+                let interface = PolarsData::new(py, Some(&sliced_data), None, None, None, None)?;
                 let bound = Py::new(py, interface)?.as_any().clone_ref(py);
                 Ok(SampleData::Polars(bound))
             }
             InterfaceDataType::Numpy => {
-                let interface =
-                    NumpyData::new(py, Some(&sliced_data), None, None, None, None, None)?;
+                let interface = NumpyData::new(py, Some(&sliced_data), None, None, None, None)?;
                 let bound = Py::new(py, interface)?.as_any().clone_ref(py);
                 Ok(SampleData::Numpy(bound))
             }
             InterfaceDataType::Arrow => {
-                let interface =
-                    ArrowData::new(py, Some(&sliced_data), None, None, None, None, None)?;
+                let interface = ArrowData::new(py, Some(&sliced_data), None, None, None, None)?;
                 let bound = Py::new(py, interface)?.as_any().clone_ref(py);
                 Ok(SampleData::Arrow(bound))
             }
             InterfaceDataType::Torch => {
-                let interface =
-                    TorchData::new(py, Some(&sliced_data), None, None, None, None, None)?;
+                let interface = TorchData::new(py, Some(&sliced_data), None, None, None, None)?;
                 let bound = Py::new(py, interface)?.as_any().clone_ref(py);
                 Ok(SampleData::Numpy(bound))
             }

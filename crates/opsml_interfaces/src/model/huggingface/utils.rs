@@ -89,32 +89,27 @@ impl HuggingFaceSampleData {
 
         match interface_type {
             InterfaceDataType::Pandas => {
-                let interface =
-                    PandasData::new(py, Some(&sliced_data), None, None, None, None, None)?;
+                let interface = PandasData::new(py, Some(&sliced_data), None, None, None, None)?;
                 let bound = Py::new(py, interface)?.as_any().clone_ref(py);
                 Ok(HuggingFaceSampleData::Pandas(bound))
             }
             InterfaceDataType::Polars => {
-                let interface =
-                    PolarsData::new(py, Some(&sliced_data), None, None, None, None, None)?;
+                let interface = PolarsData::new(py, Some(&sliced_data), None, None, None, None)?;
                 let bound = Py::new(py, interface)?.as_any().clone_ref(py);
                 Ok(HuggingFaceSampleData::Polars(bound))
             }
             InterfaceDataType::Numpy => {
-                let interface =
-                    NumpyData::new(py, Some(&sliced_data), None, None, None, None, None)?;
+                let interface = NumpyData::new(py, Some(&sliced_data), None, None, None, None)?;
                 let bound = Py::new(py, interface)?.as_any().clone_ref(py);
                 Ok(HuggingFaceSampleData::Numpy(bound))
             }
             InterfaceDataType::Arrow => {
-                let interface =
-                    ArrowData::new(py, Some(&sliced_data), None, None, None, None, None)?;
+                let interface = ArrowData::new(py, Some(&sliced_data), None, None, None, None)?;
                 let bound = Py::new(py, interface)?.as_any().clone_ref(py);
                 Ok(HuggingFaceSampleData::Arrow(bound))
             }
             InterfaceDataType::Torch => {
-                let interface =
-                    TorchData::new(py, Some(&sliced_data), None, None, None, None, None)?;
+                let interface = TorchData::new(py, Some(&sliced_data), None, None, None, None)?;
                 let bound = Py::new(py, interface)?.as_any().clone_ref(py);
                 Ok(HuggingFaceSampleData::Numpy(bound))
             }

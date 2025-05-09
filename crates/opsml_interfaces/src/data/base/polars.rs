@@ -33,7 +33,7 @@ pub struct PolarsData {
 impl PolarsData {
     #[new]
     #[allow(clippy::too_many_arguments)]
-    #[pyo3(signature = (data=None, data_splits=None, dependent_vars=None, feature_map=None, sql_logic=None, data_profile=None))]
+    #[pyo3(signature = (data=None, data_splits=None, dependent_vars=None, sql_logic=None, data_profile=None))]
     pub fn new<'py>(
         py: Python,
         data: Option<&Bound<'py, PyAny>>, // data can be any pyobject
@@ -350,7 +350,7 @@ impl PolarsData {
         // Load the data using polars
         let data = polars.call_method("read_parquet", (path,), kwargs)?;
 
-        let interface = PolarsData::new(py, Some(&data), None, None, None, None, None)?;
+        let interface = PolarsData::new(py, Some(&data), None, None, None, None)?;
 
         let bound = Py::new(py, interface)?.as_any().clone_ref(py);
 

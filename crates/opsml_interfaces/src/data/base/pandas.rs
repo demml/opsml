@@ -35,7 +35,7 @@ pub struct PandasData {
 impl PandasData {
     #[new]
     #[allow(clippy::too_many_arguments)]
-    #[pyo3(signature = (data=None, data_splits=None, dependent_vars=None, feature_map=None, sql_logic=None, data_profile=None))]
+    #[pyo3(signature = (data=None, data_splits=None, dependent_vars=None, sql_logic=None, data_profile=None))]
     pub fn new<'py>(
         py: Python,
         data: Option<&Bound<'py, PyAny>>, // data can be any pyobject
@@ -61,8 +61,7 @@ impl PandasData {
             None => None,
         };
 
-        let mut data_interface =
-            DataInterface::new(py, None, None, None, feature_map, sql_logic, data_profile)?;
+        let mut data_interface = DataInterface::new(py, None, None, None, sql_logic, data_profile)?;
 
         let data_type = DataType::Pandas;
         let data_splits: DataSplits = check_data_splits(data_splits)?;
@@ -353,7 +352,7 @@ impl PandasData {
         // Load the data using polars
         let data = pandas.call_method("read_parquet", (path,), kwargs)?;
 
-        let interface = PandasData::new(py, Some(&data), None, None, None, None, None)?;
+        let interface = PandasData::new(py, Some(&data), None, None, None, None)?;
 
         let bound = Py::new(py, interface)?.as_any().clone_ref(py);
 
