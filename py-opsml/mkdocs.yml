@@ -88,6 +88,7 @@ nav:
       - "docs/cards/overview.md"
       - "docs/cards/versioning.md"
       - "docs/cards/modelcard.md"
+      - "docs/cards/datacard.md"
 #    - "cards/metadata.md"
 #    - DataCard:
 #        - "cards/datacard.md"
