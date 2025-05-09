@@ -738,6 +738,8 @@ sql_logic = SqlLogic(queries={"test": "SELECT * FROM TEST_TABLE"})
 
 Interface for saving a Pandas DataFrame
 
+**Example**: [`Link`](https://github.com/demml/opsml/tree/main/py-opsml/examples/data/pandas_data.py)
+
 | Argument     | Description                          |
 | ----------- | ------------------------------------ |
 | <span class="text-alert">**data**</span>       | Data to associate with interface. This data must be a Pandas DataFrame  |
@@ -879,6 +881,8 @@ The `PandasData` interface uses the `to_parquet` method to save the data as a pa
 ## PolarsData
 
 Interface for saving a Polars DataFrame
+
+**Example**: [`Link`](https://github.com/demml/opsml/tree/main/py-opsml/examples/data/polars_data.py)
 
 | Argument     | Description                          |
 | ----------- | ------------------------------------ |
@@ -1029,6 +1033,8 @@ The `PolarsData` interface uses the `write_parquet` method to save the data as a
 ## ArrowData
 
 Interface for saving pyarrow Table
+
+**Example**: [`Link`](https://github.com/demml/opsml/tree/main/py-opsml/examples/data/arrow_data.py)
 
 | Argument     | Description                          |
 | ----------- | ------------------------------------ |
@@ -1207,6 +1213,8 @@ Arrow data is saved to parquet using the pyarrow library.
 ## NumpyData
 
 Interface for saving a Numpy ndarray
+
+**Example**: [`Link`](https://github.com/demml/opsml/tree/main/py-opsml/examples/data/numpy_data.py)
 
 | Argument     | Description                          |
 | ----------- | ------------------------------------ |
@@ -1451,6 +1459,8 @@ Interface for saving a SqlLogic. The `SqlData` interface is great for instances 
     ```
 
 ## CustomData
+
+**Example**: [`Link`](https://github.com/demml/opsml/tree/main/py-opsml/examples/data/custom_data.py)
 
 While the above interfaces cover the most common use cases, there may be times where you want to create your own custom data interface similar to how ModelInterfaces work. By design, the `DataInterface` can be subclassed in cases where a more flexible implementation is needed. However to make sure all other components work nicely together, you will need to implement the following.
 
