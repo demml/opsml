@@ -16,6 +16,7 @@ from typing import (
 )
 
 from ..data import DataInterface, DataLoadKwargs, DataSaveKwargs, DataType
+from ..experiment import Metrics, Parameters
 from ..model import (
     FeatureSchema,
     ModelInterface,
@@ -655,6 +656,34 @@ class ExperimentCard:
             exp.log_metric("accuracy", 0.95)
             exp.log_parameter("epochs", 10)
         ```
+        """
+
+    def get_metrics(
+        names: Optional[list[str]] = None,
+    ) -> Metrics:
+        """
+        Get metrics of an experiment
+
+        Args:
+            names (list[str] | None):
+                Names of the metrics to get. If None, all metrics will be returned.
+
+        Returns:
+            Metrics
+        """
+
+    def get_parameters(
+        names: Optional[list[str]] = None,
+    ) -> Parameters:
+        """
+        Get parameters of an experiment
+
+        Args:
+            names (list[str] | None):
+                Names of the parameters to get. If None, all parameters will be returned.
+
+        Returns:
+            Parameters
         """
 
     @property
