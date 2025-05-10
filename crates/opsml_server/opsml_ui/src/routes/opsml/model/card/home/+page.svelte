@@ -10,11 +10,11 @@
 
 
   let { data }: PageProps = $props();
-  let metadata: ModelCard = data.metadata;
+  let card: ModelCard = data.metadata;
 
   function navigateToReadMe() {
       // navigate to readme
-      goto(`/opsml/${data.registryPath}/card/readme?space=${metadata.space}&name=${metadata.name}&version=${metadata.version}`);
+      goto(`/opsml/${data.registryPath}/card/readme?space=${card.space}&name=${card.name}&version=${card.version}`);
     }
 
 </script>
@@ -26,10 +26,10 @@
     {#if data.readme.exists}
       <div class="gap-1 flex flex-col rounded-base border-black border-3 shadow bg-surface-50 w-[1000px]">
         <CardReadMe
-          name={metadata.name}
-          space={metadata.space}
+          name={card.name}
+          space={card.space}
           registryPath={data.registryPath}
-          version={metadata.version}
+          version={card.version}
           readMe={data.readme}
         />
       </div>
@@ -38,10 +38,10 @@
     {:else}
       <div class="gap-1 flex flex-col rounded-base border-black border-3 shadow bg-primary-100 w-[600px] h-[200px]">
         <NoReadme
-          name={metadata.name}
-          space={metadata.space}
+          name={card.name}
+          space={card.space}
           registryPath={data.registryPath}
-          version={metadata.version}
+          version={card.version}
         />
       </div>
     {/if}
@@ -50,8 +50,8 @@
     
     <div class="bg-primary-200 p-4 flex flex-col rounded-base bg-surface-50 border-primary-800 border-3 shadow-primary min-w-112 max-h-[800px] overflow-y-auto self-start">
       <Metadata 
-        metadata={metadata} 
-        savedata={metadata.metadata.interface_metadata.save_metadata} 
+        card={card} 
+        savedata={card.metadata.interface_metadata.save_metadata} 
         />
     </div>
   </div>
