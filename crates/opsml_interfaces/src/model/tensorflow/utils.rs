@@ -200,8 +200,7 @@ impl TensorFlowSampleData {
 
         match interface_type {
             InterfaceDataType::Numpy => {
-                let interface =
-                    NumpyData::new(py, Some(&sliced_data), None, None, None, None, None)?;
+                let interface = NumpyData::new(py, Some(&sliced_data), None, None, None, None)?;
                 let bound = Py::new(py, interface)?.as_any().clone_ref(py);
                 Ok(TensorFlowSampleData::Numpy(bound))
             }

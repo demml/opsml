@@ -51,6 +51,9 @@ pub enum CardError {
     #[error("Model has not been set. Load the model and retry")]
     ModelNotSetError,
 
+    #[error("Data has not been set. Load the data and retry")]
+    DataNotSetError,
+
     #[error(transparent)]
     DataInterfaceError(#[from] DataInterfaceError),
 

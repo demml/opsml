@@ -5,7 +5,9 @@ use opsml_crypt::decrypt_directory;
 use opsml_storage::storage_client;
 use opsml_types::contracts::{CardRecord, ExperimentCardClientRecord};
 use opsml_types::{
-    cards::ComputeEnvironment, contracts::ArtifactKey, RegistryType, SaveName, Suffix,
+    cards::{ComputeEnvironment, Metrics, Parameters},
+    contracts::ArtifactKey,
+    RegistryType, SaveName, Suffix,
 };
 use opsml_utils::{get_utc_datetime, PyHelperFuncs};
 use pyo3::prelude::*;
@@ -120,6 +122,41 @@ impl ExperimentCard {
             is_card: true,
             opsml_version: opsml_version::version(),
         })
+    }
+
+    #[pyo3(signature = (names = None))]
+    pub fn get_parameters(
+        &self,
+        py: Python,
+        names: Option<Vec<String>>,
+    ) -> Result<Parameters, CardError> {
+        // a little nested import here
+        // It would be preferable to use "get_experiment_parameters" from opsml_experiment
+        // but opsml_experiment relies on opsml_registry which relies on opsml_cards
+        // thus, it would create a circular dependency. We can always revisit this later
+        let func = py
+            .import("opsml.experiment")?
+            .getattr("get_experiment_parameters")?;
+
+        let parameters = func.call1((&self.uid, names))?.extract::<Parameters>()?;
+
+        Ok(parameters)
+    }
+
+    #[pyo3(signature = (names = None))]
+    pub fn get_metrics(
+        &self,
+        py: Python,
+        names: Option<Vec<String>>,
+    ) -> Result<Metrics, CardError> {
+        // get the experiment registry
+        let func = py
+            .import("opsml.experiment")?
+            .getattr("get_experiment_metrics")?;
+
+        let memory_metrics = func.call1((&self.uid, names))?.extract::<Metrics>()?;
+
+        Ok(memory_metrics)
     }
 
     pub fn add_subexperiment_experiment(&mut self, uid: &str) {
