@@ -154,7 +154,7 @@ async function toggle(toggle: string) {
       box-sizing: border-box;
       margin: 0 auto;
       width: 100%;
-      font-size: 24px;
+      font-size: 16px;
     }
 
 :global(.markdown-body) {
