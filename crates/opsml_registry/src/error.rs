@@ -98,6 +98,15 @@ pub enum RegistryError {
     #[cfg(feature = "server")]
     #[error(transparent)]
     SqlError(#[from] opsml_sql::error::SqlError),
+
+    #[error("Failed to downcast")]
+    DowncastError(String),
+
+    #[error("Failed to create scouter client")]
+    CreateClientError,
+
+    #[error(transparent)]
+    ScouterError(String),
 }
 
 impl From<RegistryError> for PyErr {
@@ -105,5 +114,11 @@ impl From<RegistryError> for PyErr {
         let msg = err.to_string();
         error!("{}", msg);
         PyRuntimeError::new_err(msg)
+    }
+}
+
+impl<'a> From<pyo3::DowncastError<'a, 'a>> for RegistryError {
+    fn from(err: pyo3::DowncastError) -> Self {
+        RegistryError::DowncastError(err.to_string())
     }
 }

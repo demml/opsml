@@ -9,6 +9,7 @@ use opsml_types::*;
 use opsml_types::{cards::CardTable, contracts::*};
 use opsml_utils::{clean_string, unwrap_pystring};
 use pyo3::prelude::*;
+use pyo3::types::PyList;
 use std::path::PathBuf;
 use tempfile::TempDir;
 use tracing::{debug, error, instrument};
@@ -418,6 +419,7 @@ impl CardRegistry {
             }
 
             _ => {
+                // save model card artifacts
                 card.call_method1("save", (tmp_path.to_path_buf(), save_kwargs))
                     .inspect_err(|e| {
                         error!("Failed to save card: {}", e);
@@ -426,6 +428,23 @@ impl CardRegistry {
         }
 
         Ok(tmp_path)
+    }
+
+    fn upload_scouter_artifacts(
+        registry: &OpsmlRegistry,
+        card: &Bound<'_, PyAny>,
+    ) -> Result<(), RegistryError> {
+        let drift_profiles = card.getattr("interface")?.getattr("drift_profile")?;
+
+        // downcast to list
+        let drift_profiles = drift_profiles.downcast::<PyList>()?;
+
+        // if drift_profiles is empty, return
+        // if drift_profiles.len() == 0 {
+        // Ok(())
+        //}
+
+        Ok(())
     }
 
     /// Save card to storage

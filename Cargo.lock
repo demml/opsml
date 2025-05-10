@@ -3931,6 +3931,7 @@ dependencies = [
  "opsml-utils",
  "opsml-version",
  "reqwest",
+ "scouter-client",
  "serde",
  "serde_json",
  "serde_qs 0.15.0",
@@ -4039,6 +4040,7 @@ dependencies = [
  "opsml-types",
  "opsml-utils",
  "pyo3",
+ "scouter-client",
  "semver",
  "sqlx",
  "tempfile",
@@ -5587,7 +5589,7 @@ checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
 [[package]]
 name = "scouter-client"
 version = "0.4.6"
-source = "git+https://github.com/demml/scouter.git?tag=v0.4.6#9f05ea21051d1553dad9f56db04b0a1b99c145e7"
+source = "git+https://github.com/demml/scouter.git?branch=update%2Frust-client-for-opsml#55bffb1fa9d3d456e6b7a1210a5fc0ea539f34a4"
 dependencies = [
  "chrono",
  "ndarray",
@@ -5615,7 +5617,7 @@ dependencies = [
 [[package]]
 name = "scouter-contracts"
 version = "0.4.6"
-source = "git+https://github.com/demml/scouter.git?tag=v0.4.6#9f05ea21051d1553dad9f56db04b0a1b99c145e7"
+source = "git+https://github.com/demml/scouter.git?branch=update%2Frust-client-for-opsml#55bffb1fa9d3d456e6b7a1210a5fc0ea539f34a4"
 dependencies = [
  "chrono",
  "pyo3",
@@ -5629,7 +5631,7 @@ dependencies = [
 [[package]]
 name = "scouter-dispatch"
 version = "0.4.6"
-source = "git+https://github.com/demml/scouter.git?tag=v0.4.6#9f05ea21051d1553dad9f56db04b0a1b99c145e7"
+source = "git+https://github.com/demml/scouter.git?branch=update%2Frust-client-for-opsml#55bffb1fa9d3d456e6b7a1210a5fc0ea539f34a4"
 dependencies = [
  "futures",
  "pyo3",
@@ -5644,7 +5646,7 @@ dependencies = [
 [[package]]
 name = "scouter-drift"
 version = "0.4.6"
-source = "git+https://github.com/demml/scouter.git?tag=v0.4.6#9f05ea21051d1553dad9f56db04b0a1b99c145e7"
+source = "git+https://github.com/demml/scouter.git?branch=update%2Frust-client-for-opsml#55bffb1fa9d3d456e6b7a1210a5fc0ea539f34a4"
 dependencies = [
  "chrono",
  "cron",
@@ -5671,7 +5673,7 @@ dependencies = [
 [[package]]
 name = "scouter-error"
 version = "0.4.6"
-source = "git+https://github.com/demml/scouter.git?tag=v0.4.6#9f05ea21051d1553dad9f56db04b0a1b99c145e7"
+source = "git+https://github.com/demml/scouter.git?branch=update%2Frust-client-for-opsml#55bffb1fa9d3d456e6b7a1210a5fc0ea539f34a4"
 dependencies = [
  "pyo3",
  "serde",
@@ -5682,7 +5684,7 @@ dependencies = [
 [[package]]
 name = "scouter-events"
 version = "0.4.6"
-source = "git+https://github.com/demml/scouter.git?tag=v0.4.6#9f05ea21051d1553dad9f56db04b0a1b99c145e7"
+source = "git+https://github.com/demml/scouter.git?branch=update%2Frust-client-for-opsml#55bffb1fa9d3d456e6b7a1210a5fc0ea539f34a4"
 dependencies = [
  "async-trait",
  "chrono",
@@ -5712,7 +5714,7 @@ dependencies = [
 [[package]]
 name = "scouter-observability"
 version = "0.4.6"
-source = "git+https://github.com/demml/scouter.git?tag=v0.4.6#9f05ea21051d1553dad9f56db04b0a1b99c145e7"
+source = "git+https://github.com/demml/scouter.git?branch=update%2Frust-client-for-opsml#55bffb1fa9d3d456e6b7a1210a5fc0ea539f34a4"
 dependencies = [
  "itertools 0.12.1",
  "ndarray",
@@ -5729,7 +5731,7 @@ dependencies = [
 [[package]]
 name = "scouter-profile"
 version = "0.4.6"
-source = "git+https://github.com/demml/scouter.git?tag=v0.4.6#9f05ea21051d1553dad9f56db04b0a1b99c145e7"
+source = "git+https://github.com/demml/scouter.git?branch=update%2Frust-client-for-opsml#55bffb1fa9d3d456e6b7a1210a5fc0ea539f34a4"
 dependencies = [
  "chrono",
  "indicatif",
@@ -5751,7 +5753,7 @@ dependencies = [
 [[package]]
 name = "scouter-settings"
 version = "0.4.6"
-source = "git+https://github.com/demml/scouter.git?tag=v0.4.6#9f05ea21051d1553dad9f56db04b0a1b99c145e7"
+source = "git+https://github.com/demml/scouter.git?branch=update%2Frust-client-for-opsml#55bffb1fa9d3d456e6b7a1210a5fc0ea539f34a4"
 dependencies = [
  "base64 0.22.1",
  "pyo3",
@@ -5764,7 +5766,7 @@ dependencies = [
 [[package]]
 name = "scouter-types"
 version = "0.4.6"
-source = "git+https://github.com/demml/scouter.git?tag=v0.4.6#9f05ea21051d1553dad9f56db04b0a1b99c145e7"
+source = "git+https://github.com/demml/scouter.git?branch=update%2Frust-client-for-opsml#55bffb1fa9d3d456e6b7a1210a5fc0ea539f34a4"
 dependencies = [
  "chrono",
  "colored_json",
