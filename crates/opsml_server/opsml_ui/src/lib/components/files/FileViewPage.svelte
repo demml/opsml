@@ -74,7 +74,7 @@
         </h1>
   
       </div>
-      <div class="rounded-lg border-2 border-black shadow overflow-x-auto bg-slate-100 max-h-screen overflow-y-auto">
+      <div class="rounded-lg border-2 border-black shadow overflow-x-auto bg-slate-100 overflow-y-auto">
         <FileViewer {file} />
       </div>
     </div>
