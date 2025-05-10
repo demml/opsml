@@ -22,6 +22,7 @@
     let useCardContent = $state('');
 
     onMount(() => {
+      console.log(modelSettings);
       useCardContent = `from opsml import CardRegistry
 
 # load the card
@@ -49,12 +50,12 @@ datacard = registry.load_card(uid="${metadata.uid}")
 
 
   <div class="flex flex-col space-y-1 text-base">
-    <Pill key="Created At" value={metadata.created_at} />
-    <Pill key="ID" value={metadata.uid} />
-    <Pill key="space" value={metadata.space} />
-    <Pill key="Name" value={metadata.name} />
-    <Pill key="Version" value={metadata.version} />
-    <Pill key="OpsML Version" value={metadata.opsml_version} />
+    <Pill key="Created At" value={metadata.created_at} textSize="text-base"/>
+    <Pill key="ID" value={metadata.uid} textSize="text-base"/>
+    <Pill key="space" value={metadata.space} textSize="text-base"/>
+    <Pill key="Name" value={metadata.name} textSize="text-base"/>
+    <Pill key="Version" value={metadata.version} textSize="text-base"/>
+    <Pill key="OpsML Version" value={metadata.opsml_version} textSize="text-base"/>
 
   </div>
 
@@ -79,99 +80,48 @@ datacard = registry.load_card(uid="${metadata.uid}")
 
   <div class="flex flex-wrap gap-1">
 
-    <div class="inline-flex items-center overflow-hidden rounded-lg border-2 border-primary-700 w-fit text-sm">
-      <div class="border-r border-primary-70 px-2 text-primary-950 bg-primary-100 italic">Model</div> 
-      <div class="flex px-1.5 bg-surface-50 border-surface-300 hover:bg-gradient-to-b from-surface-50 to-surface-100 text-primary-950">
-        {modelSettings.model}
-      </div>
-    </div>
+    <Pill key="Model" value={modelSettings.model} textSize="text-sm"/>
+    <Pill key="Provider" value={modelSettings.provider} textSize="text-sm"/>
 
-    <div class="inline-flex items-center overflow-hidden rounded-lg border-2 border-primary-700 w-fit text-sm">
-      <div class="border-r border-primary-70 px-2 text-primary-950 bg-primary-100 italic">Provider</div> 
-      <div class="flex px-1.5 bg-surface-50 border-surface-300 hover:bg-gradient-to-b from-surface-50 to-surface-100 text-primary-950">
-        {modelSettings.provider}
-      </div>
-    </div>
-
-    {#if modelSettings.maxTokens}
-      <div class="inline-flex items-center overflow-hidden rounded-lg border-2 border-primary-700 w-fit text-sm">
-        <div class="border-r border-primary-70 px-2 text-primary-950 bg-primary-100 italic">Max Tokens</div> 
-        <div class="flex px-1.5 bg-surface-50 border-surface-300 hover:bg-gradient-to-b from-surface-50 to-surface-100 text-primary-950">
-          {modelSettings.max_tokens}
-        </div>
-      </div>
+    {#if modelSettings.max_tokens !== undefined}
+      <Pill key="Max Tokens" value={modelSettings.max_tokens} textSize="text-sm"/>
     {/if}
 
-    {#if modelSettings.temperature}
-      <div class="inline-flex items-center overflow-hidden rounded-lg border-2 border-primary-700 w-fit text-sm">
-        <div class="border-r border-primary-70 px-2 text-primary-950 bg-primary-100 italic">Temperature</div> 
-        <div class="flex px-1.5 bg-surface-50 border-surface-300 hover:bg-gradient-to-b from-surface-50 to-surface-100 text-primary-950">
-          {modelSettings.temperature}
-        </div>
-      </div>
+    {#if modelSettings.temperature !== undefined}
+      <Pill key="Temperature" value={modelSettings.temperature} textSize="text-sm"/>
     {/if}
 
-    {#if modelSettings.top_p}
-      <div class="inline-flex items-center overflow-hidden rounded-lg border-2 border-primary-700 w-fit text-sm">
-        <div class="border-r border-primary-70 px-2 text-primary-950 bg-primary-100 italic">Top P</div> 
-        <div class="flex px-1.5 bg-surface-50 border-surface-300 hover:bg-gradient-to-b from-surface-50 to-surface-100 text-primary-950">
-          {modelSettings.top_p}
-        </div>
-      </div>
+    {#if modelSettings.top_p !== undefined}
+      <Pill key="Top P" value={modelSettings.top_p} textSize="text-sm"/>
     {/if}
 
-    {#if modelSettings.frequency_penalty}
-      <div class="inline-flex items-center overflow-hidden rounded-lg border-2 border-primary-700 w-fit text-sm">
-        <div class="border-r border-primary-70 px-2 text-primary-950 bg-primary-100 italic">Frequency Penalty</div> 
-        <div class="flex px-1.5 bg-surface-50 border-surface-300 hover:bg-gradient-to-b from-surface-50 to-surface-100 text-primary-950">
-          {modelSettings.frequency_penalty}
-        </div>
-      </div>
+    {#if modelSettings.frequency_penalty !== undefined}
+      <Pill key="Frequency Penalty" value={modelSettings.frequency_penalty} textSize="text-sm"/>
     {/if}
 
-    {#if modelSettings.presence_penalty}
-      <div class="inline-flex items-center overflow-hidden rounded-lg border-2 border-primary-700 w-fit text-sm">
-        <div class="border-r border-primary-70 px-2 text-primary-950 bg-primary-100 italic">Presence Penalty</div> 
-        <div class="flex px-1.5 bg-surface-50 border-surface-300 hover:bg-gradient-to-b from-surface-50 to-surface-100 text-primary-950">
-          {modelSettings.presence_penalty}
-        </div>
-      </div>
+    {#if modelSettings.presence_penalty !== undefined}
+      <Pill key="Presence Penalty" value={modelSettings.presence_penalty} textSize="text-sm"/>
     {/if}
 
-    {#if modelSettings.timeout}
-      <div class="inline-flex items-center overflow-hidden rounded-lg border-2 border-primary-700 w-fit text-sm">
-        <div class="border-r border-primary-70 px-2 text-primary-950 bg-primary-100 italic">Timeout</div> 
-        <div class="flex px-1.5 bg-surface-50 border-surface-300 hover:bg-gradient-to-b from-surface-50 to-surface-100 text-primary-950">
-          {modelSettings.timeout}
-        </div>
-      </div>
+    {#if modelSettings.timeout !== undefined}
+      <Pill key="Timeout" value={modelSettings.timeout} textSize="text-sm"/>
     {/if}
 
-    {#if modelSettings.parallel_tool_calls}
-      <div class="inline-flex items-center overflow-hidden rounded-lg border-2 border-primary-700 w-fit text-sm">
-        <div class="border-r border-primary-70 px-2 text-primary-950 bg-primary-100 italic">Parallel Tool Calls</div> 
-        <div class="flex px-1.5 bg-surface-50 border-surface-300 hover:bg-gradient-to-b from-surface-50 to-surface-100 text-primary-950">
-          {modelSettings.parallel_tool_calls}
-        </div>
-      </div>
+    {#if modelSettings.parallel_tool_calls !== undefined}
+      <Pill key="Parallel Tool Calls" value={modelSettings.parallel_tool_calls} textSize="text-sm"/>
     {/if}
 
-    {#if modelSettings.seed}
-      <div class="inline-flex items-center overflow-hidden rounded-lg border-2 border-primary-700 w-fit text-sm">
-        <div class="border-r border-primary-70 px-2 text-primary-950 bg-primary-100 italic">Seed</div> 
-        <div class="flex px-1.5 bg-surface-50 border-surface-300 hover:bg-gradient-to-b from-surface-50 to-surface-100 text-primary-950">
-          {modelSettings.seed}
-        </div>
-      </div>
-    {/if}
-
-    {#if modelSettings.logit_bias || 
-      modelSettings.stop_sequences?.length > 0 || 
-      modelSettings.extra_body}
-      <ExtraModelSettings settings={modelSettings}/>
+    {#if modelSettings.seed !== undefined}
+      <Pill key="Seed" value={modelSettings.seed} textSize="text-sm"/>
     {/if}
 
   </div>
+
+  {#if modelSettings.logit_bias !== undefined || 
+    modelSettings.stop_sequences?.length > 0 || 
+    modelSettings.extra_body !== undefined }
+    <ExtraModelSettings settings={modelSettings}/>
+  {/if}
 
   {#if metadata.tags.length > 0}
     <div class="flex flex-col space-y-1 gap-1">

@@ -58,7 +58,7 @@
   open={openState}
   onOpenChange={(e) => (openState = e.open)}
   triggerBase="btn bg-primary-500 text-black shadow shadow-hover border-black border-2"
-  contentBase="card p-2 bg-slate-100 border-2 border-black shadow max-w-screen-xl w-[700px] max-h-[700px]"
+  contentBase="card p-4 bg-slate-100 border-2 border-black shadow max-w-screen-xl w-[700px] max-h-[700px] overflow-auto"
   backdropClasses="backdrop-blur-sm"
   >
   {#snippet trigger()}Prompt Messages{/snippet}
@@ -79,8 +79,8 @@
             {copiedButton === 'user' ? 'Copied 👍' : 'Copy'}
           </button>
         </div>
-        <div class="overflow-auto px-4">
-          <div class="rounded-lg border-2 border-black overflow-hidden">
+        <div class="overflow-auto">
+          <div class="rounded-lg border-2 border-black overflow-y-scroll max-h-[200px]">
             <Highlight language={json} code={user_messages} let:highlighted>
               <LineNumbers {highlighted} hideBorder wrapLines />
             </Highlight>
@@ -99,8 +99,8 @@
             {copiedButton === 'system' ? 'Copied 👍' : 'Copy'}
           </button>
         </div>
-        <div class="overflow-auto px-4">
-          <div class="rounded-lg border-2 border-black overflow-hidden">
+        <div class="overflow-auto">
+          <div class="rounded-lg border-2 border-black overflow-y-scroll max-h-[200px]">
             <Highlight language={json} code={system_messages} let:highlighted>
               <LineNumbers {highlighted} hideBorder wrapLines />
             </Highlight>

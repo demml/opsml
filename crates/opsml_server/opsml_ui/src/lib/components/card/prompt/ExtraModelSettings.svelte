@@ -60,22 +60,22 @@
     open={openState}
     onOpenChange={(e) => (openState = e.open)}
     triggerBase="btn bg-primary-500 text-black shadow shadow-hover border-black border-2"
-    contentBase="card p-2 bg-slate-100 border-2 border-black shadow max-w-screen-xl w-[700px] max-h-[700px]"
+    contentBase="card p-4 bg-slate-100 border-2 border-black shadow max-w-screen-xl w-[700px] max-h-[800px] overflow-y-auto"
     backdropClasses="backdrop-blur-sm"
     >
     {#snippet trigger()}Extra Settings{/snippet}
     {#snippet content()}
-      <div class="flex flex-row pb-3 justify-between items-center pr-2">
+      <div class="flex flex-row pb-3 justify-between items-center">
         <header class="text-xl font-bold text-primary-800">Extra Model Settings</header> 
       </div>
   
       <div class="flex flex-col gap-2">
         <div>
-          <div class="flex flex-row pb-3 justify-between items-center pr-2">
+          <div class="flex flex-row pb-3 justify-between items-center">
             <header class="text-lg font-bold text-black">Logit Bias</header> 
           </div>
-          <div class="overflow-auto px-4">
-            <div class="rounded-lg border-2 border-black overflow-hidden">
+          <div class="overflow-auto">
+            <div class="rounded-lg border-2 border-black overflow-y-scroll max-h-[200px]">
               <Highlight language={json} code={logit_bias} let:highlighted>
                 <LineNumbers {highlighted} hideBorder wrapLines />
               </Highlight>
@@ -84,11 +84,11 @@
         </div>
   
         <div>
-          <div class="flex flex-row pb-3 justify-between items-center pr-2">
+          <div class="flex flex-row pb-3 justify-between items-center">
             <header class="text-lg font-bold text-black">Stop Sequences</header> 
           </div>
-          <div class="overflow-auto px-4">
-            <div class="rounded-lg border-2 border-black overflow-hidden">
+          <div class="overflow-auto">
+            <div class="rounded-lg border-2 border-black overflow-y-scroll max-h-[200px]">
               <Highlight language={json} code={stop_sequences} let:highlighted>
                 <LineNumbers {highlighted} hideBorder wrapLines />
               </Highlight>
@@ -97,11 +97,11 @@
         </div>
 
         <div>
-          <div class="flex flex-row pb-3 justify-between items-center pr-2">
+          <div class="flex flex-row pb-3 justify-between items-center">
             <header class="text-lg font-bold text-black">Extra Arguments</header> 
           </div>
-          <div class="overflow-auto px-4">
-            <div class="rounded-lg border-2 border-black overflow-hidden">
+          <div class="overflow-auto">
+            <div class="rounded-lg border-2 border-black overflow-y-scroll max-h-[200px]">
               <Highlight language={json} code={extra_body} let:highlighted>
                 <LineNumbers {highlighted} hideBorder wrapLines />
               </Highlight>
