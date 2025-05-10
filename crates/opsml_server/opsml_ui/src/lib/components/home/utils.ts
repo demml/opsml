@@ -7,6 +7,7 @@ interface RecentCards {
   modelcards: Card[];
   datacards: Card[];
   experimentcards: Card[];
+  promptcards: Card[];
 }
 
 async function getCards(registry: string): Promise<Card[]> {
@@ -20,16 +21,19 @@ async function getCards(registry: string): Promise<Card[]> {
 }
 
 async function getRecentCards(): Promise<RecentCards> {
-  const [modelcards, datacards, experimentcards] = await Promise.all([
-    getCards(RegistryType.Model),
-    getCards(RegistryType.Data),
-    getCards(RegistryType.Experiment),
-  ]);
+  const [modelcards, datacards, experimentcards, promptcards] =
+    await Promise.all([
+      getCards(RegistryType.Model),
+      getCards(RegistryType.Data),
+      getCards(RegistryType.Experiment),
+      getCards(RegistryType.Prompt),
+    ]);
 
   return {
     modelcards,
     datacards,
     experimentcards,
+    promptcards,
   };
 }
 

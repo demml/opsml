@@ -26,14 +26,14 @@
   </svelte:head>
 
 {#if show}
-  <div class="layout h-screen font-sans overflow-hidden" id="page">
+  <div class="layout flex flex-col h-screen font-sans overflow-hidden" id="page">
     <Navbar/>
       <ToastProvider 
         messageBase="text-base" 
         placement="top-end" 
         stateError="bg-error-500 justify-center text-black border-2 border-black" 
         stateSuccess="bg-secondary-500 text-black border-2 border-black">
-        <div class="flex-1 overflow-auto">
+        <div class="flex-1 grid-background">
           {@render children()}
         </div>
       </ToastProvider>
@@ -43,3 +43,14 @@
       <div class="animate-spin h-8 w-8 border-4 border-primary-500 rounded-full border-t-transparent"></div>
   </div>
 {/if}
+
+
+<style>
+  .grid-background {
+    background-color: #E3DFF2;
+    background-image: 
+      linear-gradient(to right, #CECBDB 1px, transparent 1px),
+      linear-gradient(to bottom, #CECBDB 1px, transparent 1px);
+    background-size: 60px 60px;
+  }
+</style>

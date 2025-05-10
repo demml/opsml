@@ -1,16 +1,14 @@
 <script lang="ts">
-  // version $props() in +page.svelte
-
   import { goto } from '$app/navigation';
-  import type { ExperimentCard } from '$lib/components/card/card_interfaces/experimentcard';
+  import type { PromptCard } from '$lib/components/card/card_interfaces/promptcard';
   import type { PageProps } from './$types';
   import CardReadMe from '$lib/components/card/CardReadMe.svelte';
   import NoReadme from '$lib/components/readme/NoReadme.svelte';
-  import Metadata from '$lib/components/card/experiment/Metadata.svelte';
+  import Metadata from '$lib/components/card/prompt/Metadata.svelte';
 
 
   let { data }: PageProps = $props();
-  let card: ExperimentCard = data.metadata;
+  let card: PromptCard = data.metadata;
 
   function navigateToReadMe() {
       // navigate to readme
@@ -21,6 +19,7 @@
 
 <div class="flex-1 mx-auto w-11/12 flex justify-center px-4 pb-10">
   <div class="flex flex-wrap xl:flex-row pt-4 gap-4 w-full justify-center">
+
     {#if data.readme.exists}
       <div class="gap-1 flex flex-col rounded-base border-black border-3 shadow bg-surface-50 w-[1000px]">
         <CardReadMe
@@ -44,12 +43,13 @@
       </div>
     {/if}
 
-
     
-    <div class="bg-primary-200 p-4 flex flex-col rounded-base bg-surface-50 border-primary-800 border-3 shadow-primary min-w-112 max-h-[800px] overflow-y-auto self-start">
-      <Metadata card={card} />
+    <div class="bg-primary-200 p-4 flex flex-col rounded-base bg-surface-50 border-primary-800 border-3 shadow-primary min-w-112 max-h-[1000px] max-w-[600px] overflow-y-auto self-start">
+      <Metadata 
+        card={card} 
+        modelSettings={card.prompt.model_settings} 
+      />
     </div>
-
   </div>
 </div>
   
