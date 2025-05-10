@@ -48,7 +48,7 @@
 
 
     
-    <div class="bg-primary-200 p-4 flex flex-col rounded-base bg-surface-50 border-primary-800 border-3 shadow-primary min-w-112 max-h-[800px] overflow-y-auto self-start">
+    <div class="bg-primary-200 p-4 flex flex-col rounded-base bg-surface-50 border-primary-800 border-3 shadow-primary min-w-112 max-h-[1000px] overflow-y-auto self-start">
       <Metadata 
         card={card} 
         savedata={card.metadata.interface_metadata.save_metadata} 

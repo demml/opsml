@@ -44,7 +44,7 @@
     {/if}
 
     
-    <div class="bg-primary-200 p-4 flex flex-col rounded-base bg-surface-50 border-primary-800 border-3 shadow-primary min-w-112 max-h-[800px] max-w-[600px] overflow-y-auto self-start">
+    <div class="bg-primary-200 p-4 flex flex-col rounded-base bg-surface-50 border-primary-800 border-3 shadow-primary min-w-112 max-h-[1000px] max-w-[600px] overflow-y-auto self-start">
       <Metadata 
         card={card} 
         modelSettings={card.prompt.model_settings} 

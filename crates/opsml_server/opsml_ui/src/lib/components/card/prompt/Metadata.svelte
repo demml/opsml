@@ -5,9 +5,11 @@
   import { Info, Diamond, Tags } from 'lucide-svelte';
   import CodeModal from "../CodeModal.svelte";
   import Pill from "$lib/components/utils/Pill.svelte";
-  import { Braces, CheckCheck, MessageSquareText, Settings } from 'lucide-svelte';
+  import { MessageSquareText, Settings } from 'lucide-svelte';
   import PromptModal from "./PromptModal.svelte";
   import ExtraModelSettings from "./ExtraModelSettings.svelte";
+  import LinkPill from "$lib/components/utils/LinkPill.svelte";
+  import { RegistryType } from "$lib/utils";
 
 
   let {
@@ -58,6 +60,21 @@ datacard = registry.load_card(uid="${card.uid}")
     <Pill key="OpsML Version" value={card.opsml_version} textSize="text-base"/>
 
   </div>
+
+  {#if card.metadata.experimentcard_uid ||  card.metadata.auditcard_uid}
+    <div class="flex flex-row items-center mb-1 border-b-2 border-black">
+      <Diamond color="#8059b6" fill="#8059b6"/>
+      <header class="pl-2 text-primary-900 text-lg font-bold">Cards</header>
+    </div>
+
+    <div class="flex flex-wrap space-y-1 gap-1">
+
+      {#if card.metadata.experimentcard_uid}
+        <LinkPill key="Experiment" value={card.metadata.experimentcard_uid} registryType={RegistryType.Experiment} />
+      {/if}
+
+    </div>
+  {/if}
 
   <div class="flex flex-col space-y-1 gap-1">
     <div class="flex flex-row items-center mb-1 border-b-2 border-black">
