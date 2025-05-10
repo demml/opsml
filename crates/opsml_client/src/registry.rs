@@ -7,6 +7,7 @@ use opsml_types::{
     contracts::*,
     RegistryMode, RegistryType,
 };
+use scouter_client::{ProfileRequest, ScouterResponse, ScouterServerError};
 use serde::Deserialize;
 use std::sync::Arc;
 use tracing::error;
@@ -439,5 +440,37 @@ impl ClientRegistry {
         response
             .json::<Vec<Parameter>>()
             .map_err(RegistryError::RequestError)
+    }
+
+    pub fn insert_scouter_profile(&self, profile: &ProfileRequest) -> Result<(), RegistryError> {
+        let body = serde_json::to_value(profile)?;
+
+        let response = self
+            .api_client
+            .request(
+                Routes::ScouterProfile,
+                RequestType::Post,
+                Some(body),
+                None,
+                None,
+            )
+            .inspect_err(|e| {
+                error!("Failed to insert scouter profile {}", e);
+            })?;
+
+        // check response status for error
+        if response.status().as_u16() == 500 {
+            // raise error
+            let error = response
+                .json::<ScouterServerError>()
+                .map_err(RegistryError::RequestError)?;
+            return Err(ApiClientError::ForbiddenError(error.error).into());
+        }
+
+        let _inserted = response
+            .json::<ScouterResponse>()
+            .map_err(RegistryError::RequestError)?;
+
+        Ok(())
     }
 }

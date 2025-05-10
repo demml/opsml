@@ -14,6 +14,7 @@ use opsml_types::{
         HardwareMetricRequest, ParameterRequest,
     },
 };
+use scouter_client::ProfileRequest;
 use tracing::{error, instrument};
 
 #[derive(Debug, Clone)]
@@ -52,6 +53,7 @@ impl OpsmlRegistry {
                         error!("Failed to get storage settings: {}", e);
                     })?;
                     let db_settings = config.database_settings.clone();
+                    let scouter_settings = config.scouter_settings.clone();
                     let server_registry = state.block_on(async {
                         crate::server::registry::server_logic::ServerRegistry::new(
                             registry_type,
@@ -269,6 +271,17 @@ impl OpsmlRegistry {
             Self::ServerRegistry(server_registry) => {
                 app_state().block_on(async { server_registry.get_parameters(parameters).await })
             }
+        }
+    }
+
+    pub fn insert_scouter_profile(&self, profile: &ProfileRequest) -> Result<(), RegistryError> {
+        match self {
+            Self::ClientRegistry(client_registry) => {
+                Ok(client_registry.insert_scouter_profile(profile)?)
+            }
+            #[cfg(feature = "server")]
+            Self::ServerRegistry(server_registry) => app_state()
+                .block_on(async { server_registry.insert_scouter_profile(profile).await }),
         }
     }
 }

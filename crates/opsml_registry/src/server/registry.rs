@@ -6,8 +6,8 @@ pub mod server_logic {
     use opsml_crypt::{derive_encryption_key, encrypted_key, generate_salt};
     use opsml_semver::error::VersionError;
     use opsml_semver::{VersionArgs, VersionType, VersionValidator};
-    use opsml_settings::config::DatabaseSettings;
-    use opsml_settings::config::OpsmlStorageSettings;
+    use opsml_settings::config::{DatabaseSettings, OpsmlStorageSettings};
+
     use opsml_sql::{
         base::SqlClient,
         enums::client::{get_sql_client, SqlClientEnum},
@@ -23,6 +23,8 @@ pub mod server_logic {
     };
     use opsml_utils::{get_utc_datetime, uid_to_byte_key};
     use pyo3::prelude::*;
+    use scouter_client::ProfileRequest;
+    use scouter_client::ScouterClient;
     use semver::Version;
     use sqlx::types::Json as SqlxJson;
     use tracing::info;
@@ -30,6 +32,7 @@ pub mod server_logic {
     #[derive(Debug, Clone)]
     pub struct ServerRegistry {
         sql_client: SqlClientEnum,
+        scouter_client: ScouterClient,
         pub registry_type: RegistryType,
         pub table_name: CardTable,
         pub storage_settings: OpsmlStorageSettings,
@@ -42,13 +45,15 @@ pub mod server_logic {
             database_settings: DatabaseSettings,
         ) -> Result<Self, RegistryError> {
             let sql_client = get_sql_client(&database_settings).await?;
-
             let table_name = CardTable::from_registry_type(&registry_type);
+            let scouter_client =
+                ScouterClient::new(None).map_err(|e| RegistryError::ScouterError(e.to_string()))?;
             Ok(Self {
                 sql_client,
                 table_name,
                 registry_type,
                 storage_settings,
+                scouter_client,
             })
         }
 
@@ -664,6 +669,16 @@ pub mod server_logic {
                 .collect::<Vec<_>>();
 
             Ok(params)
+        }
+
+        pub fn insert_scouter_profile(
+            &mut self,
+            request: ProfileRequest,
+        ) -> Result<(), RegistryError> {
+            self.scouter_client
+                .insert_profile(request)
+                .map_err(|e| RegistryError::ScouterError(e.to_string()))?;
+            Ok(())
         }
     }
 
