@@ -431,7 +431,7 @@ impl CardRegistry {
         Ok(tmp_path)
     }
 
-    fn upload_scouter_artifacts(
+    fn _upload_scouter_artifacts(
         registry: &mut OpsmlRegistry,
         card: &Bound<'_, PyAny>,
     ) -> Result<(), RegistryError> {
@@ -443,7 +443,7 @@ impl CardRegistry {
         if drift_profiles.len() == 0 {
             return Ok(());
         } else {
-            for profile in drift_profiles.iter() {
+            if let Some(profile) = drift_profiles.iter().next() {
                 let drift_type = profile
                     .getattr("config")?
                     .getattr("drift_type")?
