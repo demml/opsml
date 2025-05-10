@@ -5,13 +5,15 @@
   import { Info, Diamond, Tags } from 'lucide-svelte';
   import CodeModal from "../CodeModal.svelte";
   import Pill from "$lib/components/utils/Pill.svelte";
+  import LinkPill from "$lib/components/utils/LinkPill.svelte";
   import { formatBytes } from "$lib/components/files/utils";
   import { HardDrive } from 'lucide-svelte';
+  import { RegistryType } from "$lib/utils";
 
 let {
-    metadata,
+    card,
   } = $props<{
-    metadata: ExperimentCard;
+    card: ExperimentCard;
   }>();
 
 
@@ -22,7 +24,7 @@ let {
 
 # load the card
 registry = CardRegistry('experiment')
-experimentcard = registry.load_card(uid="${metadata.uid}")
+experimentcard = registry.load_card(uid="${card.uid}")
 `;
   })
 
@@ -45,16 +47,16 @@ experimentcard = registry.load_card(uid="${metadata.uid}")
 
 
   <div class="flex flex-col space-y-1 text-base">
-    <Pill key="Created At" value={metadata.created_at} />
-    <Pill key="ID" value={metadata.uid} />
-    <Pill key="space" value={metadata.space} />
-    <Pill key="Name" value={metadata.name} />
-    <Pill key="Version" value={metadata.version} />
-    <Pill key="OpsML Version" value={metadata.opsml_version} />
+    <Pill key="Created At" value={card.created_at} textSize="text-base" />
+    <Pill key="ID" value={card.uid} textSize="text-base" />
+    <Pill key="space" value={card.space} textSize="text-base" />
+    <Pill key="Name" value={card.name} textSize="text-base" />
+    <Pill key="Version" value={card.version} textSize="text-base" />
+    <Pill key="OpsML Version" value={card.opsml_version} textSize="text-base" />
 
   </div>
 
-  {#if metadata.uids.datacard_uids || metadata.uids.modelcard_uids ||  metadata.uids.promptcard_uids ||  metadata.uids.experimentcard_uids}
+  {#if card.uids.datacard_uids || card.uids.modelcard_uids ||  card.uids.promptcard_uids ||  card.uids.experimentcard_uids}
     <div class="flex flex-row items-center mb-1 border-b-2 border-black">
       <Diamond color="#8059b6" fill="#8059b6"/>
       <header class="pl-2 text-primary-900 text-lg font-bold">Cards</header>
@@ -62,61 +64,33 @@ experimentcard = registry.load_card(uid="${metadata.uid}")
 
     <div class="flex flex-wrap space-y-1 gap-1">
 
-      {#if metadata.uids.datacard_uids}
-        {#each metadata.uids.datacard_uids as datacard_uid}
-          <div class="inline-flex items-center overflow-hidden rounded-lg border-2 border-primary-700 w-fit shadow-primary-small shadow-hover-small h-7">
-            <div class="border-r border-primary-700 px-2 text-primary-950 bg-primary-100 italic">Data</div> 
-            <div class="flex px-1.5 bg-surface-50 border-surface-300 hover:bg-gradient-to-b from-surface-50 to-surface-100 text-primary-950">
-              <a href="/opsml/data/card/home?uid={datacard_uid}" class="text-primary-900">
-                Link
-              </a>
-            </div>
-          </div>
+      {#if card.uids.datacard_uids}
+        {#each card.uids.datacard_uids as datacard_uid}
+          <LinkPill key="Data" value={datacard_uid} registryType={RegistryType.Data} />
         {/each}
       {/if}
 
-      {#if metadata.uids.experimentcard_uids}
-        {#each metadata.uids.experimentcard_uids as experimentcard_uid}
-          <div class="inline-flex items-center overflow-hidden rounded-lg border-2 border-primary-700 w-fit shadow-primary-small shadow-hover-small h-7">
-            <div class="border-r border-primary-700 px-2 text-primary-950 bg-primary-100 italic">Experiment</div> 
-            <div class="flex px-1.5 bg-surface-50 border-surface-300 hover:bg-gradient-to-b from-surface-50 to-surface-100 text-primary-950">
-              <a href="/opsml/experiment/card/home?uid={experimentcard_uid}" class="text-primary-900">
-                Link
-              </a>
-            </div>
-          </div>
+      {#if card.uids.experimentcard_uids}
+        {#each card.uids.experimentcard_uids as experimentcard_uid}
+          <LinkPill key="Experiment" value={experimentcard_uid} registryType={RegistryType.Experiment} />
         {/each}
       {/if}
 
-      {#if metadata.uids.modelcard_uids}
-        {#each metadata.uids.modelcard_uids as modelcard_uid}
-          <div class="inline-flex items-center overflow-hidden rounded-lg border-2 border-primary-700 w-fit shadow-primary-small shadow-hover-small h-7">
-            <div class="border-r border-primary-700 px-2 text-primary-950 bg-primary-100 italic">Model</div> 
-            <div class="flex px-1.5 bg-surface-50 border-surface-300 hover:bg-gradient-to-b from-surface-50 to-surface-100 text-primary-950">
-              <a href="/opsml/model/card/home?uid={modelcard_uid}" class="text-primary-900">
-                Link
-              </a>
-            </div>
-          </div>
+      {#if card.uids.modelcard_uids}
+        {#each card.uids.modelcard_uids as modelcard_uid}
+          <LinkPill key="Model" value={modelcard_uid} registryType={RegistryType.Model} />
         {/each}
       {/if}
 
-      {#if metadata.uids.promptcard_uids}
-        {#each metadata.uids.promptcard_uids as promptcard_uid}
-          <div class="inline-flex items-center overflow-hidden rounded-lg border-2 border-primary-700 w-fit shadow-primary-small shadow-hover-small h-7">
-            <div class="border-r border-primary-700 px-2 text-primary-950 bg-primary-100 italic">Prompt</div> 
-            <div class="flex px-1.5 bg-surface-50 border-surface-300 hover:bg-gradient-to-b from-surface-50 to-surface-100 text-primary-950">
-              <a href="/opsml/prompt/card/home?uid={promptcard_uid}" class="text-primary-900">
-                Link
-              </a>
-            </div>
-          </div>
+      {#if card.uids.promptcard_uids}
+        {#each card.uids.promptcard_uids as promptcard_uid}
+          <LinkPill key="Prompt" value={promptcard_uid} registryType={RegistryType.Prompt} />
         {/each}
       {/if}
     </div>
   {/if}
 
-  {#if metadata.tags.length > 0}
+  {#if card.tags.length > 0}
     <div class="flex flex-col space-y-1 gap-1">
       <div class="flex flex-row items-center mb-1 border-b-2 border-black">
         <Tags color="#8059b6" />
@@ -125,7 +99,7 @@ experimentcard = registry.load_card(uid="${metadata.uid}")
     </div>
 
     <div class="flex flex-wrap gap-1">
-      {#each metadata.tags as tag}
+      {#each card.tags as tag}
         <div class="inline-flex items-center overflow-hidden rounded-lg bg-primary-100 border border-primary-800 text-sm w-fit px-2 text-primary-900">
           {tag}
         </div>
@@ -139,13 +113,13 @@ experimentcard = registry.load_card(uid="${metadata.uid}")
   </div>
 
   <div class="flex flex-col space-y-1 text-base">
-    <Pill key="CPU Count" value={metadata.compute_environment.cpu_count} />
-    <Pill key="Total Memory" value={formatBytes(metadata.compute_environment.total_memory)} />
-    <Pill key="Total Swap" value={formatBytes(metadata.compute_environment.total_swap)} />
-    <Pill key="System" value={metadata.compute_environment.system} />
-    <Pill key="OS Version" value={metadata.compute_environment.os_version} />
-    <Pill key="Hostname" value={metadata.compute_environment.hostname} />
-    <Pill key="Python" value={metadata.compute_environment.python_version} />
+    <Pill key="CPU Count" value={card.compute_environment.cpu_count} textSize="text-base" />
+    <Pill key="Total Memory" value={formatBytes(card.compute_environment.total_memory)} textSize="text-base" />
+    <Pill key="Total Swap" value={formatBytes(card.compute_environment.total_swap)} textSize="text-base" />
+    <Pill key="System" value={card.compute_environment.system} textSize="text-base" />
+    <Pill key="OS Version" value={card.compute_environment.os_version} textSize="text-base" />
+    <Pill key="Hostname" value={card.compute_environment.hostname} textSize="text-base" />
+    <Pill key="Python" value={card.compute_environment.python_version} textSize="text-base" />
   </div>
 
   

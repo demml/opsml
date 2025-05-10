@@ -9,6 +9,5 @@
 
 </script>
   
-
 <Homepage {cards} />
-  
+

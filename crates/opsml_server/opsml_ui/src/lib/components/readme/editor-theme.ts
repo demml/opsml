@@ -9,7 +9,7 @@ export const editorTheme = EditorView.theme({
     color: base,
     backgroundColor: background,
     border: "none",
-    fontSize: "14pt",
+    fontSize: "12pt",
   },
 
   "&.cm-editor.cm-focused": {

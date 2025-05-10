@@ -87,7 +87,6 @@
     <!-- Footer -->
     <footer class="flex justify-end gap-4 p-2 mt-6">
       <button type="button" class="btn bg-primary-500 text-black shadow shadow-hover border-black border-2" onclick={modalClose}>Cancel</button>
-      <button type="submit" class="btn bg-primary-500 text-black shadow shadow-hover border-black border-2">Submit</button>
     </footer>
   </div>
   {/snippet}

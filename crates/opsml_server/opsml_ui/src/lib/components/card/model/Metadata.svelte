@@ -2,15 +2,18 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import type { DataProcessor, ModelCard, ModelInterfaceSaveMetadata } from "$lib/components/card/card_interfaces/modelcard";
-  import { Info, Diamond, Tags, CheckCheck, Database } from 'lucide-svelte';
+  import { Info, Diamond, Tags, CheckCheck, Link} from 'lucide-svelte';
   import CodeModal from "../CodeModal.svelte";
-  import { use } from "marked";
+  import Pill from "$lib/components/utils/Pill.svelte";
+  import LinkPill from "$lib/components/utils/LinkPill.svelte";
+  import ExtraModelMetadata from "./ExtraModelMetadata.svelte";
+  import { RegistryType } from "$lib/utils";
 
 let {
-    metadata,
+    card,
     savedata
   } = $props<{
-    metadata: ModelCard;
+    card: ModelCard;
     savedata: ModelInterfaceSaveMetadata
   }>();
 
@@ -26,7 +29,7 @@ let {
 
 # load the card
 registry = CardRegistry('model')
-modelcard = registry.load_card(uid="${metadata.uid}")
+modelcard = registry.load_card(uid="${card.uid}")
 
 # load the model
 modelcard.load()
@@ -53,70 +56,23 @@ modelcard.load()
 
 
   <div class="flex flex-col space-y-1 text-base">
-    <div class="inline-flex items-center overflow-hidden rounded-lg border-2 border-primary-700 w-fit">
-      <div class="border-r border-primary-70 px-2 text-primary-950 bg-primary-100 italic">Created At</div> 
-      <div class="flex px-1.5 bg-surface-50 border-surface-300 hover:bg-gradient-to-b from-surface-50 to-surface-100 text-primary-950">
-        {metadata.created_at}
-      </div>
-    </div>
+    
+    <Pill key="Created At" value={card.created_at} textSize="text-base"/>
+    <Pill key="ID" value={card.uid} textSize="text-base"/>
+    <Pill key="Space" value={card.space} textSize="text-base"/>
+    <Pill key="Name" value={card.name} textSize="text-base"/>
+    <Pill key="Interface" value={card.metadata.interface_metadata.interface_type} textSize="text-base"/>
+    <Pill key="Task Type" value={card.metadata.interface_metadata.task_type} textSize="text-base"/>
+    <Pill key="Model Type" value={card.metadata.interface_metadata.model_type} textSize="text-base"/>
+    <Pill key="Version" value={card.opsml_version} textSize="text-base"/>
 
-    <div class="inline-flex items-center overflow-hidden rounded-lg border-2 border-primary-700 w-fit bg-primary-100">
-      <div class="px-2 text-primary-950 bg-primary-100 italic">ID</div> 
-      <div class="flex px-1.5 bg-surface-50 border-l border-primary-70 hover:bg-gradient-to-b from-surface-50 to-surface-100 text-primary-950">
-        {metadata.uid}
-      </div>
-    </div>
-    <div class="inline-flex items-center overflow-hidden rounded-lg border-2 border-primary-700 w-fit">
-      <div class="border-r border-primary-70 px-2 text-primary-950 bg-primary-100 italic">Space</div> 
-      <div class="flex px-1.5 bg-surface-50 border-surface-300 hover:bg-gradient-to-b from-surface-50 to-surface-100 text-primary-950">
-        {metadata.space}
-      </div>
-    </div>
-    <div class="inline-flex items-center overflow-hidden rounded-lg border-2 border-primary-700 w-fit">
-      <div class="border-r border-primary-70 px-2 text-primary-950 bg-primary-100 italic">Name</div> 
-      <div class="flex px-1.5 bg-surface-50 border-surface-300 hover:bg-gradient-to-b from-surface-50 to-surface-100 text-primary-950">
-        {metadata.name}
-      </div>
-    </div>
-    <div class="inline-flex items-center overflow-hidden rounded-lg border-2 border-primary-700 w-fit">
-      <div class="border-r border-primary-70 px-2 text-primary-950 bg-primary-100 italic">Interface</div> 
-      <div class="flex px-1.5 bg-surface-50 border-surface-300 hover:bg-gradient-to-b from-surface-50 to-surface-100 text-primary-950">
-        {metadata.metadata.interface_metadata.interface_type}
-      </div>
-    </div>
 
-    <div class="inline-flex items-center overflow-hidden rounded-lg border-2 border-primary-700 w-fit">
-      <div class="border-r border-primary-70 px-2 text-primary-950 bg-primary-100 italic">Task Type</div> 
-      <div class="flex px-1.5 bg-surface-50 border-surface-300 hover:bg-gradient-to-b from-surface-50 to-surface-100 text-primary-950">
-        {metadata.metadata.interface_metadata.task_type}
-      </div>
-    </div>
-
-    <div class="inline-flex items-center overflow-hidden rounded-lg border-2 border-primary-700 w-fit">
-      <div class="border-r border-primary-70 px-2 text-primary-950 bg-primary-100 italic">Model Type</div> 
-      <div class="flex px-1.5 bg-surface-50 border-surface-300 hover:bg-gradient-to-b from-surface-50 to-surface-100 text-primary-950">
-        {metadata.metadata.interface_metadata.model_type}
-      </div>
-    </div>
-
-    <div class="inline-flex items-center overflow-hidden rounded-lg border-2 border-primary-700 w-fit">
-      <div class="border-r border-primary-70 px-2 text-primary-950 bg-primary-100 italic">OpsML Version</div> 
-      <div class="flex px-1.5 bg-surface-50 border-surface-300 hover:bg-gradient-to-b from-surface-50 to-surface-100 text-primary-950">
-        {metadata.opsml_version}
-      </div>
-    </div>
-
-    {#if  metadata.metadata.interface_metadata.onnx_session !== undefined}
-      <div class="inline-flex items-center overflow-hidden rounded-lg border-2 border-primary-700 w-fit">
-        <div class="border-r border-primary-700 px-2 text-primary-950 bg-primary-100 italic">Onnx Version</div> 
-        <div class="flex px-1.5 bg-surface-50 border-surface-300 hover:bg-gradient-to-b from-surface-50 to-surface-100 text-primary-950">
-          {metadata.metadata.interface_metadata.onnx_session.schema.onnx_version}
-        </div>
-      </div>
+    {#if  card.metadata.interface_metadata.onnx_session !== undefined}
+      <Pill key="Onnx Version" value={card.metadata.interface_metadata.onnx_session.schema.onnx_version} textSize="text-base"/>
     {/if}
   </div>
 
-  {#if metadata.metadata.datacard_uid || metadata.metadata.experimentcard_uid ||  metadata.metadata.auditcard_uid}
+  {#if card.metadata.datacard_uid || card.metadata.experimentcard_uid ||  card.metadata.auditcard_uid}
     <div class="flex flex-row items-center mb-1 border-b-2 border-black">
       <Diamond color="#8059b6" fill="#8059b6"/>
       <header class="pl-2 text-primary-900 text-lg font-bold">Cards</header>
@@ -124,31 +80,17 @@ modelcard.load()
 
     <div class="flex flex-wrap space-y-1 gap-1">
 
-      {#if metadata.metadata.datacard_uid}
-        <div class="inline-flex items-center overflow-hidden rounded-lg border-2 border-primary-700 w-fit shadow-primary-small shadow-hover-small h-7">
-          <div class="border-r border-primary-700 px-2 text-primary-950 bg-primary-100 italic">Data</div> 
-          <div class="flex px-1.5 bg-surface-50 border-surface-300 hover:bg-gradient-to-b from-surface-50 to-surface-100 text-primary-950">
-            <a href="/opsml/data/card/home?uid={metadata.metadata.datacard_uid}" class="text-primary-900">
-              Link
-            </a>
-          </div>
-        </div>
+      {#if card.metadata.datacard_uid}
+        <LinkPill key="Data" value={card.metadata.datacard_uid} registryType={RegistryType.Data} />
       {/if}
 
-      {#if metadata.metadata.experimentcard_uid}
-        <div class="inline-flex items-center overflow-hidden rounded-lg border-2 border-primary-700 w-fit shadow-primary-small shadow-hover-small h-7">
-          <div class="border-r border-primary-700 px-2 text-primary-950 bg-primary-100 italic">Experiment</div> 
-          <div class="flex px-1.5 bg-surface-50 border-surface-300 hover:bg-gradient-to-b from-surface-50 to-surface-100 text-primary-950">
-            <a href="/opsml/experiment/card/home?uid={metadata.metadata.experimentcard_uid}" class="text-primary-900">
-              Link
-            </a>
-          </div>
-        </div>
+      {#if card.metadata.experimentcard_uid}
+        <LinkPill key="Experiment" value={card.metadata.experimentcard_uid} registryType={RegistryType.Experiment} />
       {/if}
     </div>
   {/if}
 
-  {#if metadata.tags.length > 0}
+  {#if card.tags.length > 0}
     <div class="flex flex-col space-y-1 gap-1">
       <div class="flex flex-row items-center mb-1 border-b-2 border-black">
         <Tags color="#8059b6" />
@@ -157,7 +99,7 @@ modelcard.load()
     </div>
 
     <div class="flex flex-wrap gap-1">
-      {#each metadata.tags as tag}
+      {#each card.tags as tag}
         <div class="inline-flex items-center overflow-hidden rounded-lg bg-primary-100 border border-primary-800 text-sm w-fit px-2 text-primary-900">
           {tag}
         </div>
@@ -174,21 +116,20 @@ modelcard.load()
   <div class="flex flex-wrap gap-1">
     {#if data_processor_keys && data_processor_keys.length > 0}
       {#each data_processor_values as processor}
-        <div class="inline-flex items-center overflow-hidden rounded-lg border-2 border-primary-700 w-fit text-sm">
-          <div class="border-r border-primary-70 px-2 text-primary-950 bg-primary-100 italic">Processor</div> 
-          <div class="flex px-1.5 bg-surface-50 border-surface-300 hover:bg-gradient-to-b from-surface-50 to-surface-100 text-primary-950">
-            {processor.name}
-          </div>
-        </div>
+        <Pill key="Processor" value={processor.name} textSize="text-sm"/>
       {/each}
     {/if}
 
     {#if savedata.drift_profile_uri}
-      <div class="inline-flex items-center overflow-hidden rounded-lg bg-primary-100 border-2 border-primary-800 text-sm w-fit px-2 text-primary-900">
-        Drift Profile
-      </div>
+      <Pill key="Profile" value="Drift" textSize="text-sm"/>
     {/if}
-
   </div>
+
+  {#if card.metadata.interface_metadata.model_specific_metadata}
+    <div class="flex flex-wrap gap-1">
+      <ExtraModelMetadata extra_metadata={card.metadata.interface_metadata.model_specific_metadata}/>
+    </div>
+  {/if}
+
   
 </div>
