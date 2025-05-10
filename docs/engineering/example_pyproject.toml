@@ -1,0 +1,9 @@
+[tool.poetry]
+name = "opsml-server"
+version = "0.1.0"
+description = ""
+authors = ["ml-platform"]
+
+[tool.poetry.dependencies]
+python = ">=3.9,<=3.11"
+opsml = { version = "^1.4.0" }
