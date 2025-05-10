@@ -85,20 +85,20 @@ export interface Message {
   next_param: number;
 }
 
-interface ModelSettings {
+export interface ModelSettings {
   model: string;
   provider: string;
-  maxTokens?: number;
+  max_token?: number;
   temperature?: number;
-  topP?: number;
-  frequencyPenalty?: number;
-  presencePenalty?: number;
+  top_p?: number;
+  frequency_penalty?: number;
+  presence_penalty?: number;
   timeout?: number;
-  parallelToolCalls?: boolean;
+  parallel_tool_calls?: boolean;
   seed?: number;
-  logitBias?: Record<string, number>;
-  stopSequences?: string[];
-  extraBody?: any;
+  logit_bias?: Record<string, number>;
+  stop_sequences?: string[];
+  extra_body?: any;
 }
 
 export interface Prompt {
