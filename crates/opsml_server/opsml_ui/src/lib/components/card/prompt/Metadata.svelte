@@ -11,10 +11,10 @@
 
 
   let {
-      metadata,
+      card,
       modelSettings,
     } = $props<{
-      metadata: PromptCard;
+      card: PromptCard;
       modelSettings: ModelSettings;
     }>();
 
@@ -27,7 +27,7 @@
 
 # load the card
 registry = CardRegistry('prompt')
-datacard = registry.load_card(uid="${metadata.uid}")
+datacard = registry.load_card(uid="${card.uid}")
 `;
   })
 
@@ -50,12 +50,12 @@ datacard = registry.load_card(uid="${metadata.uid}")
 
 
   <div class="flex flex-col space-y-1 text-base">
-    <Pill key="Created At" value={metadata.created_at} textSize="text-base"/>
-    <Pill key="ID" value={metadata.uid} textSize="text-base"/>
-    <Pill key="space" value={metadata.space} textSize="text-base"/>
-    <Pill key="Name" value={metadata.name} textSize="text-base"/>
-    <Pill key="Version" value={metadata.version} textSize="text-base"/>
-    <Pill key="OpsML Version" value={metadata.opsml_version} textSize="text-base"/>
+    <Pill key="Created At" value={card.created_at} textSize="text-base"/>
+    <Pill key="ID" value={card.uid} textSize="text-base"/>
+    <Pill key="space" value={card.space} textSize="text-base"/>
+    <Pill key="Name" value={card.name} textSize="text-base"/>
+    <Pill key="Version" value={card.version} textSize="text-base"/>
+    <Pill key="OpsML Version" value={card.opsml_version} textSize="text-base"/>
 
   </div>
 
@@ -67,7 +67,7 @@ datacard = registry.load_card(uid="${metadata.uid}")
   </div>
 
   <div class="flex flex-wrap gap-1">
-    <PromptModal prompt={metadata.prompt}/>
+    <PromptModal prompt={card.prompt}/>
   </div>
 
 
@@ -123,7 +123,7 @@ datacard = registry.load_card(uid="${metadata.uid}")
     <ExtraModelSettings settings={modelSettings}/>
   {/if}
 
-  {#if metadata.tags.length > 0}
+  {#if card.tags.length > 0}
     <div class="flex flex-col space-y-1 gap-1">
       <div class="flex flex-row items-center mb-1 border-b-2 border-black">
         <Tags color="#8059b6" />
@@ -132,7 +132,7 @@ datacard = registry.load_card(uid="${metadata.uid}")
     </div>
 
     <div class="flex flex-wrap gap-1">
-      {#each metadata.tags as tag}
+      {#each card.tags as tag}
         <div class="inline-flex items-center overflow-hidden rounded-lg bg-primary-100 border border-primary-800 text-sm w-fit px-2 text-primary-900">
           {tag}
         </div>
