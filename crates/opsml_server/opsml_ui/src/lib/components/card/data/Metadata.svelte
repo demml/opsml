@@ -52,13 +52,13 @@ datacard = registry.load_card(uid="${metadata.uid}")
 
 
   <div class="flex flex-col space-y-1 text-base">
-    <Pill key="Created At" value={metadata.created_at} />
-    <Pill key="ID" value={metadata.uid} />
-    <Pill key="space" value={metadata.space} />
-    <Pill key="Name" value={metadata.name} />
-    <Pill key="Version" value={metadata.version} />
-    <Pill key="Interface Type" value={interfaceMetadata.interface_type} />
-    <Pill key="OpsML Version" value={metadata.opsml_version} />
+    <Pill key="Created At" value={metadata.created_at} textSize="text-base"/>
+    <Pill key="ID" value={metadata.uid} textSize="text-base"/>
+    <Pill key="space" value={metadata.space} textSize="text-base"/>
+    <Pill key="Name" value={metadata.name} textSize="text-base"/>
+    <Pill key="Version" value={metadata.version} textSize="text-base"/>
+    <Pill key="Interface Type" value={interfaceMetadata.interface_type} textSize="text-base"/>
+    <Pill key="OpsML Version" value={metadata.opsml_version} textSize="text-base"/>
 
   </div>
 
