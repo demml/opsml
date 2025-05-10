@@ -440,34 +440,28 @@ impl CardRegistry {
         // downcast to list
         let drift_profiles = drift_profiles.downcast::<PyList>()?;
 
-        if drift_profiles.len() == 0 {
-            return Ok(());
-        } else {
-            if let Some(profile) = drift_profiles.iter().next() {
-                let drift_type = profile
-                    .getattr("config")?
-                    .getattr("drift_type")?
-                    .extract::<DriftType>()?;
+        if let Some(profile) = drift_profiles.iter().next() {
+            let drift_type = profile
+                .getattr("config")?
+                .getattr("drift_type")?
+                .extract::<DriftType>()?;
 
-                let space = profile
-                    .getattr("config")?
-                    .getattr("space")?
-                    .extract::<String>()?;
+            let space = profile
+                .getattr("config")?
+                .getattr("space")?
+                .extract::<String>()?;
 
-                let json = profile
-                    .call_method0("model_dump_json")?
-                    .extract::<String>()?;
+            let json = profile
+                .call_method0("model_dump_json")?
+                .extract::<String>()?;
 
-                let profile_request = ProfileRequest {
-                    space,
-                    profile: json,
-                    drift_type,
-                };
+            let profile_request = ProfileRequest {
+                space,
+                profile: json,
+                drift_type,
+            };
 
-                registry.insert_scouter_profile(&profile_request)?;
-
-                return Ok(());
-            }
+            registry.insert_scouter_profile(&profile_request)?;
         }
         // if drift_profiles is empty, return
         // if drift_profiles.len() == 0 {
