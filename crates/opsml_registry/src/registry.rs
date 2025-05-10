@@ -10,6 +10,7 @@ use opsml_types::{cards::CardTable, contracts::*};
 use opsml_utils::{clean_string, unwrap_pystring};
 use pyo3::prelude::*;
 use pyo3::types::PyList;
+use scouter_client::{DriftType, ProfileRequest};
 use std::path::PathBuf;
 use tempfile::TempDir;
 use tracing::{debug, error, instrument};
@@ -431,7 +432,7 @@ impl CardRegistry {
     }
 
     fn upload_scouter_artifacts(
-        registry: &OpsmlRegistry,
+        registry: &mut OpsmlRegistry,
         card: &Bound<'_, PyAny>,
     ) -> Result<(), RegistryError> {
         let drift_profiles = card.getattr("interface")?.getattr("drift_profile")?;
@@ -439,6 +440,35 @@ impl CardRegistry {
         // downcast to list
         let drift_profiles = drift_profiles.downcast::<PyList>()?;
 
+        if drift_profiles.len() == 0 {
+            return Ok(());
+        } else {
+            for profile in drift_profiles.iter() {
+                let drift_type = profile
+                    .getattr("config")?
+                    .getattr("drift_type")?
+                    .extract::<DriftType>()?;
+
+                let space = profile
+                    .getattr("config")?
+                    .getattr("space")?
+                    .extract::<String>()?;
+
+                let json = profile
+                    .call_method0("model_dump_json")?
+                    .extract::<String>()?;
+
+                let profile_request = ProfileRequest {
+                    space,
+                    profile: json,
+                    drift_type,
+                };
+
+                registry.insert_scouter_profile(&profile_request)?;
+
+                return Ok(());
+            }
+        }
         // if drift_profiles is empty, return
         // if drift_profiles.len() == 0 {
         // Ok(())

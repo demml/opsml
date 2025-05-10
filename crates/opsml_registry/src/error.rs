@@ -105,7 +105,7 @@ pub enum RegistryError {
     #[error("Failed to create scouter client")]
     CreateClientError,
 
-    #[error(transparent)]
+    #[error("{0}")]
     ScouterError(String),
 }
 

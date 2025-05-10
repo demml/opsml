@@ -53,7 +53,6 @@ impl OpsmlRegistry {
                         error!("Failed to get storage settings: {}", e);
                     })?;
                     let db_settings = config.database_settings.clone();
-                    let scouter_settings = config.scouter_settings.clone();
                     let server_registry = state.block_on(async {
                         crate::server::registry::server_logic::ServerRegistry::new(
                             registry_type,
@@ -274,7 +273,10 @@ impl OpsmlRegistry {
         }
     }
 
-    pub fn insert_scouter_profile(&self, profile: &ProfileRequest) -> Result<(), RegistryError> {
+    pub fn insert_scouter_profile(
+        &mut self,
+        profile: &ProfileRequest,
+    ) -> Result<(), RegistryError> {
         match self {
             Self::ClientRegistry(client_registry) => {
                 Ok(client_registry.insert_scouter_profile(profile)?)

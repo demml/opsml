@@ -671,9 +671,9 @@ pub mod server_logic {
             Ok(params)
         }
 
-        pub fn insert_scouter_profile(
+        pub async fn insert_scouter_profile(
             &mut self,
-            request: ProfileRequest,
+            request: &ProfileRequest,
         ) -> Result<(), RegistryError> {
             self.scouter_client
                 .insert_profile(request)
