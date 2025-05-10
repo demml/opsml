@@ -5,8 +5,10 @@
   import { Info, Diamond, Tags } from 'lucide-svelte';
   import CodeModal from "../CodeModal.svelte";
   import Pill from "$lib/components/utils/Pill.svelte";
+  import LinkPill from "$lib/components/utils/LinkPill.svelte";
   import { formatBytes } from "$lib/components/files/utils";
   import { HardDrive } from 'lucide-svelte';
+  import { RegistryType } from "$lib/utils";
 
 let {
     card,
@@ -64,53 +66,25 @@ experimentcard = registry.load_card(uid="${card.uid}")
 
       {#if card.uids.datacard_uids}
         {#each card.uids.datacard_uids as datacard_uid}
-          <div class="inline-flex items-center overflow-hidden rounded-lg border-2 border-primary-700 w-fit shadow-primary-small shadow-hover-small h-7">
-            <div class="border-r border-primary-700 px-2 text-primary-950 bg-primary-100 italic">Data</div> 
-            <div class="flex px-1.5 bg-surface-50 border-surface-300 hover:bg-gradient-to-b from-surface-50 to-surface-100 text-primary-950">
-              <a href="/opsml/data/card/home?uid={datacard_uid}" class="text-primary-900">
-                Link
-              </a>
-            </div>
-          </div>
+          <LinkPill key="Data" value={datacard_uid} registryType={RegistryType.Data} />
         {/each}
       {/if}
 
       {#if card.uids.experimentcard_uids}
         {#each card.uids.experimentcard_uids as experimentcard_uid}
-          <div class="inline-flex items-center overflow-hidden rounded-lg border-2 border-primary-700 w-fit shadow-primary-small shadow-hover-small h-7">
-            <div class="border-r border-primary-700 px-2 text-primary-950 bg-primary-100 italic">Experiment</div> 
-            <div class="flex px-1.5 bg-surface-50 border-surface-300 hover:bg-gradient-to-b from-surface-50 to-surface-100 text-primary-950">
-              <a href="/opsml/experiment/card/home?uid={experimentcard_uid}" class="text-primary-900">
-                Link
-              </a>
-            </div>
-          </div>
+          <LinkPill key="Experiment" value={experimentcard_uid} registryType={RegistryType.Experiment} />
         {/each}
       {/if}
 
       {#if card.uids.modelcard_uids}
         {#each card.uids.modelcard_uids as modelcard_uid}
-          <div class="inline-flex items-center overflow-hidden rounded-lg border-2 border-primary-700 w-fit shadow-primary-small shadow-hover-small h-7">
-            <div class="border-r border-primary-700 px-2 text-primary-950 bg-primary-100 italic">Model</div> 
-            <div class="flex px-1.5 bg-surface-50 border-surface-300 hover:bg-gradient-to-b from-surface-50 to-surface-100 text-primary-950">
-              <a href="/opsml/model/card/home?uid={modelcard_uid}" class="text-primary-900">
-                Link
-              </a>
-            </div>
-          </div>
+          <LinkPill key="Model" value={modelcard_uid} registryType={RegistryType.Model} />
         {/each}
       {/if}
 
       {#if card.uids.promptcard_uids}
         {#each card.uids.promptcard_uids as promptcard_uid}
-          <div class="inline-flex items-center overflow-hidden rounded-lg border-2 border-primary-700 w-fit shadow-primary-small shadow-hover-small h-7">
-            <div class="border-r border-primary-700 px-2 text-primary-950 bg-primary-100 italic">Prompt</div> 
-            <div class="flex px-1.5 bg-surface-50 border-surface-300 hover:bg-gradient-to-b from-surface-50 to-surface-100 text-primary-950">
-              <a href="/opsml/prompt/card/home?uid={promptcard_uid}" class="text-primary-900">
-                Link
-              </a>
-            </div>
-          </div>
+          <LinkPill key="Prompt" value={promptcard_uid} registryType={RegistryType.Prompt} />
         {/each}
       {/if}
     </div>
