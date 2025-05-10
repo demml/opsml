@@ -129,6 +129,10 @@ def test_experimentcard():
 
         assert len(metrics) == 3
 
+        metrics = card.get_metrics()
+
+        assert len(metrics) == 3
+
         # ensure metrics are iterable
         for _ in metrics:
             continue
@@ -136,6 +140,9 @@ def test_experimentcard():
         # parameters
         parameters = get_experiment_parameters(card.uid)
 
+        assert len(parameters) == 2
+
+        parameters = card.get_parameters()
         assert len(parameters) == 2
 
         # ensure parameters are iterable

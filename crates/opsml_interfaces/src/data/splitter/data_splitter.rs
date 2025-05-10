@@ -82,7 +82,7 @@ pub struct ColumnSplit {
 #[pymethods]
 impl ColumnSplit {
     #[new]
-    #[pyo3(signature = (column_name, column_value, column_type, inequality=None))]
+    #[pyo3(signature = (column_name, column_value, column_type=ColType::Builtin, inequality=None))]
     pub fn new(
         column_name: String,
         column_value: &Bound<'_, PyAny>,

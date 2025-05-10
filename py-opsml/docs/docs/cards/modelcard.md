@@ -359,45 +359,6 @@ modelcard.load(load_kwargs=ModelLoadKwargs(load_onnx=True)) #(1)
             """
     ```
 
-### Load arguments
-
-| Argument     | Description                          |
-| ----------- | ------------------------------------ |
-| <span class="text-alert">**onnx**</span>       | Optional onnx arguments to use when loading  |
-| <span class="text-alert">**model**</span>  | Optional model arguments to use when loading time |
-| <span class="text-alert">**preprocessor**</span>    | Optional preprocessor arguments to use when loading |
-| <span class="text-alert">**load_onnx**</span> |  Whether to load the onnx model. Defaults to false unless onnx args are provided. If true, the onnx model will be loaded.. |
-
-???success "ModelLoadKwargs"
-    ```python
-    class ModelLoadKwargs:
-        onnx: Optional[Dict]
-        model: Optional[Dict]
-        preprocessor: Optional[Dict]
-        load_onnx: bool
-
-        def __init__(
-            self,
-            onnx: Optional[Dict] = None,
-            model: Optional[Dict] = None,
-            preprocessor: Optional[Dict] = None,
-            load_onnx: bool = False,
-        ) -> None:
-            """Optional arguments to pass to load_model
-
-            Args:
-                onnx (Dict):
-                    Optional onnx arguments to use when loading
-                model (Dict):
-                    Optional model arguments to use when loading
-                preprocessor (Dict):
-                    Optional preprocessor arguments to use when loading
-                load_onnx (bool):
-                    Whether to load the onnx model. Defaults to false unless onnx args are
-                    provided. If true, the onnx model will be loaded.
-
-            """
-    ```
 
 ## Model Interface
 
@@ -413,7 +374,7 @@ The `ModelInterface` is the primary interface for working with models in `Opsml`
 - `CatBoostModel`: Stores data from a catboost model - [link](#catboostmodel)
 - `Custom`: Create your own model interface - [link](#custommodel)
 
-### Shared Arguments for all ModelInterfaces
+### Shared Arguments for all Model Interfaces
 
 | Argument     | Description                          |
 | ----------- | ------------------------------------ |
@@ -422,7 +383,7 @@ The `ModelInterface` is the primary interface for working with models in `Opsml`
 | <span class="text-alert">**task_type**</span>    | Optional task type of the model. Defaults to `TaskType.Undefined` |
 | <span class="text-alert">**drift_profile**</span> | Optional `Scouter` drift profile to associated with model. This is a convenience argument if you already created a drift profile. You can also use interface.create_drift_profile(..) to create a drift profile from the model interface. |
 
-???success "ModelInterfacec"
+???success "ModelInterface"
     ```python
     class ModelInterface:
         def __init__(
@@ -610,7 +571,7 @@ The `ModelInterface` is the primary interface for working with models in `Opsml`
             """
     ```
 
-### Default Save Method
+### Save Method
 
 All ModelInterfaces have a default save method that will save the model and any interface-specific addons. You typically will not have to call this method since it will be called by the specific registry. However, when registering a card, if your model requires specific kwargs such as any onnx, model or preprocessor kwargs, you can pass them in via an optional `ModelSaveKwargs` object.
 
@@ -662,6 +623,48 @@ model_registry.register_card(
         def model_dump_json(self) -> str: ...
         @staticmethod
         def model_validate_json(json_string: str) -> "ModelSaveKwargs": ...
+    ```
+
+### Load Method
+
+All ModelInterfaces have a default load method that will load the model and any interface-specific addons. You typically will not have to call this method since it will be called by the specific registry (`load`). However, when loading a card's model attributes, if your model requires specific kwargs such as any onnx, model or preprocessor kwargs, you can pass them in via an optional `ModelLoadKwargs` object.
+
+| Argument     | Description                          |
+| ----------- | ------------------------------------ |
+| <span class="text-alert">**onnx**</span>       | Optional onnx arguments to use when loading  |
+| <span class="text-alert">**model**</span>  | Optional model arguments to use when loading time |
+| <span class="text-alert">**preprocessor**</span>    | Optional preprocessor arguments to use when loading |
+| <span class="text-alert">**load_onnx**</span> |  Whether to load the onnx model. Defaults to false unless onnx args are provided. If true, the onnx model will be loaded |
+
+???success "ModelLoadKwargs"
+    ```python
+    class ModelLoadKwargs:
+        onnx: Optional[Dict]
+        model: Optional[Dict]
+        preprocessor: Optional[Dict]
+        load_onnx: bool
+
+        def __init__(
+            self,
+            onnx: Optional[Dict] = None,
+            model: Optional[Dict] = None,
+            preprocessor: Optional[Dict] = None,
+            load_onnx: bool = False,
+        ) -> None:
+            """Optional arguments to pass to load_model
+
+            Args:
+                onnx (Dict):
+                    Optional onnx arguments to use when loading
+                model (Dict):
+                    Optional model arguments to use when loading
+                preprocessor (Dict):
+                    Optional preprocessor arguments to use when loading
+                load_onnx (bool):
+                    Whether to load the onnx model. Defaults to false unless onnx args are
+                    provided. If true, the onnx model will be loaded.
+
+            """
     ```
 
 ## SklearnModel

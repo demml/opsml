@@ -175,13 +175,12 @@ pub struct DataInterface {
 impl DataInterface {
     #[new]
     #[allow(clippy::too_many_arguments)]
-    #[pyo3(signature = (data=None, data_splits=None, dependent_vars=None, schema=None, sql_logic=None, data_profile=None))]
+    #[pyo3(signature = (data=None, data_splits=None, dependent_vars=None, sql_logic=None, data_profile=None))]
     pub fn new<'py>(
         py: Python,
         data: Option<&Bound<'py, PyAny>>, // data can be any pyobject
         data_splits: Option<&Bound<'py, PyAny>>, //
         dependent_vars: Option<&Bound<'py, PyAny>>,
-        schema: Option<FeatureSchema>,
         sql_logic: Option<SqlLogic>,
         data_profile: Option<DataProfile>,
     ) -> Result<Self, DataInterfaceError> {
@@ -189,7 +188,6 @@ impl DataInterface {
         let splits: DataSplits = check_data_splits(data_splits)?;
         let depen_vars: DependentVars = check_dependent_vars(dependent_vars)?;
 
-        let schema = schema.unwrap_or_default();
         let sql_logic = sql_logic.unwrap_or_default();
 
         let data = match data {
@@ -200,7 +198,7 @@ impl DataInterface {
             data,
             data_splits: splits,
             dependent_vars: depen_vars,
-            schema,
+            schema: FeatureSchema::default(),
             sql_logic,
             data_type: DataType::Base,
             interface_type: DataInterfaceType::Base,

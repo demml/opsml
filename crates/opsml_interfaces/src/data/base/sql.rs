@@ -26,7 +26,7 @@ impl SqlData {
         // check if data is a numpy array
 
         let mut data_interface =
-            DataInterface::new(py, None, None, None, None, Some(sql_logic), data_profile)?;
+            DataInterface::new(py, None, None, None, Some(sql_logic), data_profile)?;
         data_interface.interface_type = DataInterfaceType::Sql;
 
         Ok((SqlData {}, data_interface))

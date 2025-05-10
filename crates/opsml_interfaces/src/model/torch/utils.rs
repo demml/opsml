@@ -196,8 +196,7 @@ impl TorchSampleData {
 
         match interface_type {
             InterfaceDataType::Torch => {
-                let interface =
-                    TorchData::new(py, Some(&sliced_data), None, None, None, None, None)?;
+                let interface = TorchData::new(py, Some(&sliced_data), None, None, None, None)?;
                 let bound = Py::new(py, interface)?.as_any().clone_ref(py);
                 Ok(TorchSampleData::Torch(bound))
             }

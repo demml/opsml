@@ -36,8 +36,8 @@ Let's make sure everything is setup correctly before moving on to other sections
 pip install pandas scikit-learn
 ```
 
-???note Note
-    This is intended for demo purposes only. When you you are ready to use OpsML in a production environment, take a look at the [Server Setup](./server_setup.md) section to learn how to setup the server and connect to it from your client.
+???warning Note
+    This is intended for demo purposes only. When you you are ready to use OpsML in a production environment, take a look at the [Server Setup](./setup.md) section to learn how to setup the server and connect to it from your client.
    
 
 Run the following CLI commands from within your python environment to make sure everything is working as expected.

@@ -16,6 +16,7 @@ from typing import (
 )
 
 from ..data import DataInterface, DataLoadKwargs, DataSaveKwargs, DataType
+from ..experiment import Metrics, Parameters
 from ..model import (
     FeatureSchema,
     ModelInterface,
@@ -131,6 +132,14 @@ class DataCard:
         registry = CardRegistry(RegistryType.Data)
         registry.register_card(datacard)
         ```
+        """
+
+    @property
+    def data(self) -> Any:
+        """Return the data. This is a special property that is used to
+        access the data from the interface. It is not settable. It will also
+        raise an error if the interface is not set or if the data
+        has not been loaded.
         """
 
     @property
@@ -619,7 +628,7 @@ class ExperimentCard:
         uid: Optional[str] = None,
         tags: List[str] = [],
     ) -> None:
-        """Creates a ExperimentCard.
+        """Instantiates a ExperimentCard.
 
         Cards are stored in the ExperimentCard Registry and follow the naming convention of:
         {registry}/{space}/{name}/v{version}
@@ -647,6 +656,36 @@ class ExperimentCard:
             exp.log_metric("accuracy", 0.95)
             exp.log_parameter("epochs", 10)
         ```
+        """
+
+    def get_metrics(
+        self,
+        names: Optional[list[str]] = None,
+    ) -> Metrics:
+        """
+        Get metrics of an experiment
+
+        Args:
+            names (list[str] | None):
+                Names of the metrics to get. If None, all metrics will be returned.
+
+        Returns:
+            Metrics
+        """
+
+    def get_parameters(
+        self,
+        names: Optional[list[str]] = None,
+    ) -> Parameters:
+        """
+        Get parameters of an experiment
+
+        Args:
+            names (list[str] | None):
+                Names of the parameters to get. If None, all parameters will be returned.
+
+        Returns:
+            Parameters
         """
 
     @property

@@ -31,7 +31,8 @@ Depending on what area you're interested in contributing to, you may need to set
 1. Install Rust and Cargo by following the instructions [here](https://www.rust-lang.org/tools/install).
 2. Install uv by following the instructions [here](https://docs.astral.sh/uv/getting-started/installation/).
 3. Install python 3.10 or higher (e.g. `uv python install 3.12`).
-4. (Optional for UI contributions) Make sure npm and [pnpm](https://pnpm.io/installation) are installed on your system.
+4. Install docker (needed for postgres and mysql unit tests)
+5. (Optional for UI contributions) Make sure npm and [pnpm](https://pnpm.io/installation) are installed on your system.
 
 **Ensure everything works**:
 
@@ -57,7 +58,7 @@ $ make test.unit
 
 The above will cd into the py-opsml directory, setup the python environment, build the python wheel and run the unit tests.
 
-**You're now ready to start contributing!**
+** You're now ready to start contributing! **
 
 Feel free to explore more of the makefile and codebase to get a better sense of how we run some of our tests and lints, but the above commands should be enough to get you started.
 
@@ -78,7 +79,7 @@ Feel free to explore more of the makefile and codebase to get a better sense of 
      - run `make format` to format the code
      - run `make lints` to run the linter
      - run `make test.unit` to run the python unit tests
-3. Submit a Draft Pull Request. Do it early and mark it `WIP` so a maintainer knows it's not ready for review just yet.
+3. Submit a Draft Pull Request. Do it early and mark it `WIP` so a maintainer knows it's not ready for review just yet. You can also add a label to it if you feel like it.
 4. Move the `pull_request` out of draft state.
    * Make sure you fill out the `pull_request` template (included with every `pull_request`)
 5. Request review from one of our maintainers (this should happen automatically via `.github/CODEOWNERS`). 

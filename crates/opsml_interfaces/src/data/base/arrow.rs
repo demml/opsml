@@ -34,13 +34,12 @@ pub struct ArrowData {
 impl ArrowData {
     #[new]
     #[allow(clippy::too_many_arguments)]
-    #[pyo3(signature = (data=None, data_splits=None, dependent_vars=None, schema=None, sql_logic=None, data_profile=None))]
+    #[pyo3(signature = (data=None, data_splits=None, dependent_vars=None, sql_logic=None, data_profile=None))]
     pub fn new<'py>(
         py: Python,
         data: Option<&Bound<'py, PyAny>>, // data can be any pyobject
         data_splits: Option<&Bound<'py, PyAny>>, //
         dependent_vars: Option<&Bound<'py, PyAny>>,
-        schema: Option<FeatureSchema>,
         sql_logic: Option<SqlLogic>,
         data_profile: Option<DataProfile>,
     ) -> Result<(Self, DataInterface), DataInterfaceError> {
@@ -60,8 +59,7 @@ impl ArrowData {
             None => None,
         };
 
-        let mut data_interface =
-            DataInterface::new(py, None, None, None, schema, sql_logic, data_profile)?;
+        let mut data_interface = DataInterface::new(py, None, None, None, sql_logic, data_profile)?;
 
         let data_type = DataType::Arrow;
         let data_splits: DataSplits = check_data_splits(data_splits)?;
@@ -312,7 +310,7 @@ impl ArrowData {
         // Load the data using numpy
         let data = parquet.call_method("read_table", (path,), kwargs)?;
 
-        let interface = ArrowData::new(py, Some(&data), None, None, None, None, None)?;
+        let interface = ArrowData::new(py, Some(&data), None, None, None, None)?;
 
         let bound = Py::new(py, interface)?.as_any().clone_ref(py);
 
@@ -332,7 +330,7 @@ impl ArrowData {
         let save_path = PathBuf::from(SaveName::Data.to_string()).with_extension(Suffix::Parquet);
         let full_save_path = path.join(&save_path);
 
-        let parquet = py.import("pyarrow")?.getattr("parquet")?;
+        let parquet = py.import("pyarrow.parquet")?;
         let args = (self.data.as_ref().unwrap(), full_save_path);
 
         // Save the data using joblib
