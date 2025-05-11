@@ -10,7 +10,7 @@ use opsml_types::{cards::CardTable, contracts::*};
 use opsml_utils::{clean_string, unwrap_pystring};
 use pyo3::prelude::*;
 use pyo3::types::PyList;
-use scouter_client::{DriftType, ProfileRequest};
+use scouter_client::ProfileRequest;
 use std::path::PathBuf;
 use tempfile::TempDir;
 use tracing::{debug, error, instrument};
@@ -337,6 +337,13 @@ impl CardRegistry {
         debug!("Uploading card artifacts");
         upload_card_artifacts(tmp_path, &response.key)?;
 
+        // Upload Integration artifacts
+        if registry_type == &RegistryType::Model {
+            Self::_upload_scouter_artifacts(&response.key, card)?;
+        }
+
+        Self::upload_integration_artifacts(registry, registry_type, card)
+
         Ok(())
     }
 
@@ -431,7 +438,27 @@ impl CardRegistry {
         Ok(tmp_path)
     }
 
-    fn _upload_scouter_artifacts(
+    /// General method used to upload artifacts to independent services depending on registry type
+    /// For example, if registering a modelcard with a drift profile, we will need to register and upload
+    /// the drift profile to the scouter service
+    fn upload_integration_artifacts(
+        registry: &mut OpsmlRegistry,
+        registry_type: &RegistryType,
+        card: &Bound<'_, PyAny>,
+    ) -> Result<(), RegistryError> {
+
+        match registry_type {
+        
+            RegistryType::Model => {
+                Self::upload_scouter_artifacts(registry, card)?;
+            }
+            _ => {}
+        }
+    
+        Ok(())
+    }
+
+    fn upload_scouter_artifacts(
         registry: &mut OpsmlRegistry,
         card: &Bound<'_, PyAny>,
     ) -> Result<(), RegistryError> {
@@ -441,32 +468,12 @@ impl CardRegistry {
         let drift_profiles = drift_profiles.downcast::<PyList>()?;
 
         if let Some(profile) = drift_profiles.iter().next() {
-            let drift_type = profile
-                .getattr("config")?
-                .getattr("drift_type")?
-                .extract::<DriftType>()?;
-
-            let space = profile
-                .getattr("config")?
-                .getattr("space")?
-                .extract::<String>()?;
-
-            let json = profile
-                .call_method0("model_dump_json")?
-                .extract::<String>()?;
-
-            let profile_request = ProfileRequest {
-                space,
-                profile: json,
-                drift_type,
-            };
+            let profile_request = profile
+                .call_method0("create_profile_request")?
+                .extract::<ProfileRequest>()?;
 
             registry.insert_scouter_profile(&profile_request)?;
         }
-        // if drift_profiles is empty, return
-        // if drift_profiles.len() == 0 {
-        // Ok(())
-        //}
 
         Ok(())
     }
