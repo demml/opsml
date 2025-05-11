@@ -8,6 +8,7 @@ use opsml_types::api::RequestType;
 use reqwest::Response;
 use reqwest::{header::HeaderMap, Client};
 use serde_json::Value;
+use tracing::error;
 
 #[derive(Debug, Clone)]
 #[allow(dead_code)]
@@ -55,14 +56,30 @@ pub async fn build_scouter_http_client(settings: &ScouterSettings) -> Result<Sco
 
     let base_path = settings.server_uri.clone();
 
-    let enabled = !base_path.is_empty();
+    let enabled = false;
 
-    Ok(ScouterApiClient {
+    let mut scouter_client = ScouterApiClient {
         client,
         base_path,
         enabled,
         bootstrap_token: settings.bootstrap_token.clone(),
-    })
+    };
+
+    // ping the healthcheck endpoint to see if the server is up
+    let healthcheck = scouter_client
+        .healthcheck(scouter_client.bootstrap_token.clone())
+        .await?;
+
+    scouter_client.enabled = healthcheck.status().is_success();
+
+    if !scouter_client.enabled {
+        error!(
+            "Scouter is configured but healthcheck failed with status: {}",
+            healthcheck.status()
+        );
+    }
+
+    Ok(scouter_client)
 }
 
 #[derive(Debug, Clone)]
@@ -190,6 +207,17 @@ impl ScouterApiClient {
         Ok(self
             .client
             .delete(url)
+            .bearer_auth(&bearer_token)
+            .send()
+            .await?)
+    }
+
+    pub async fn healthcheck(&self, bearer_token: String) -> Result<Response, ApiClientError> {
+        let url = format!("{}/{}", self.base_path, Routes::Healthcheck.as_str());
+
+        Ok(self
+            .client
+            .get(url)
             .bearer_auth(&bearer_token)
             .send()
             .await?)
