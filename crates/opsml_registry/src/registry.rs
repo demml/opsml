@@ -443,17 +443,13 @@ impl CardRegistry {
         registry_type: &RegistryType,
         card: &Bound<'_, PyAny>,
     ) -> Result<(), RegistryError> {
-        match registry_type {
-            RegistryType::Model => {
-                // Send drift profiles to scouter if exist and scouter is enabled
-                // need to check app_state if scouter is
-                if registry.check_service_health(IntegratedService::Scouter)? {
-                    Self::upload_scouter_artifacts(registry, card)?;
-                }
+        // If our integration types expand to other services and registry types, consider using a match statement
+        if registry_type == &RegistryType::Model {
+            // Send drift profiles to scouter if exist and scouter is enabled
+            if registry.check_service_health(IntegratedService::Scouter)? {
+                Self::upload_scouter_artifacts(registry, card)?;
             }
-            _ => {}
         }
-
         Ok(())
     }
 
