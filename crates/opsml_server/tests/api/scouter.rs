@@ -115,6 +115,7 @@ async fn test_scouter_routes_update_profile() {
         version: profile.config.version.clone(),
         active: true,
         drift_type: Some(DriftType::Spc),
+        deactivate_others: true,
     };
 
     let body = serde_json::to_string(&request).unwrap();

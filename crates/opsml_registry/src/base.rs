@@ -273,17 +273,25 @@ impl OpsmlRegistry {
         }
     }
 
-    pub fn insert_scouter_profile(
-        &mut self,
-        profile: &ProfileRequest,
-    ) -> Result<(), RegistryError> {
+    pub fn insert_scouter_profile(&self, profile: &ProfileRequest) -> Result<(), RegistryError> {
         match self {
             Self::ClientRegistry(client_registry) => {
                 Ok(client_registry.insert_scouter_profile(profile)?)
             }
             #[cfg(feature = "server")]
-            Self::ServerRegistry(server_registry) => app_state()
-                .block_on(async { server_registry.insert_scouter_profile(profile).await }),
+            Self::ServerRegistry(server_registry) => {
+                server_registry.insert_scouter_profile(profile)
+            }
+        }
+    }
+
+    pub fn check_service_health(&self, service: IntegratedService) -> Result<bool, RegistryError> {
+        match self {
+            Self::ClientRegistry(client_registry) => {
+                Ok(client_registry.check_service_health(service)?)
+            }
+            #[cfg(feature = "server")]
+            Self::ServerRegistry(server_registry) => server_registry.check_service_health(service),
         }
     }
 }

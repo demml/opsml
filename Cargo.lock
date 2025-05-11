@@ -5583,7 +5583,7 @@ checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
 [[package]]
 name = "scouter-client"
 version = "0.4.6"
-source = "git+https://github.com/demml/scouter.git?branch=update%2Frust-client-for-opsml#8e66d460e77f0220405df26a59f2b30f72a105c3"
+source = "git+https://github.com/demml/scouter.git?branch=update%2Frust-client-for-opsml#3ec00c27aa41e37423ef0a8b5d740b4de2e3f158"
 dependencies = [
  "chrono",
  "ndarray",
@@ -5610,7 +5610,7 @@ dependencies = [
 [[package]]
 name = "scouter-dispatch"
 version = "0.4.6"
-source = "git+https://github.com/demml/scouter.git?branch=update%2Frust-client-for-opsml#8e66d460e77f0220405df26a59f2b30f72a105c3"
+source = "git+https://github.com/demml/scouter.git?branch=update%2Frust-client-for-opsml#3ec00c27aa41e37423ef0a8b5d740b4de2e3f158"
 dependencies = [
  "futures",
  "pyo3",
@@ -5625,7 +5625,7 @@ dependencies = [
 [[package]]
 name = "scouter-drift"
 version = "0.4.6"
-source = "git+https://github.com/demml/scouter.git?branch=update%2Frust-client-for-opsml#8e66d460e77f0220405df26a59f2b30f72a105c3"
+source = "git+https://github.com/demml/scouter.git?branch=update%2Frust-client-for-opsml#3ec00c27aa41e37423ef0a8b5d740b4de2e3f158"
 dependencies = [
  "chrono",
  "cron",
@@ -5651,7 +5651,7 @@ dependencies = [
 [[package]]
 name = "scouter-error"
 version = "0.4.6"
-source = "git+https://github.com/demml/scouter.git?branch=update%2Frust-client-for-opsml#8e66d460e77f0220405df26a59f2b30f72a105c3"
+source = "git+https://github.com/demml/scouter.git?branch=update%2Frust-client-for-opsml#3ec00c27aa41e37423ef0a8b5d740b4de2e3f158"
 dependencies = [
  "pyo3",
  "serde",
@@ -5662,7 +5662,7 @@ dependencies = [
 [[package]]
 name = "scouter-events"
 version = "0.4.6"
-source = "git+https://github.com/demml/scouter.git?branch=update%2Frust-client-for-opsml#8e66d460e77f0220405df26a59f2b30f72a105c3"
+source = "git+https://github.com/demml/scouter.git?branch=update%2Frust-client-for-opsml#3ec00c27aa41e37423ef0a8b5d740b4de2e3f158"
 dependencies = [
  "async-trait",
  "chrono",
@@ -5691,7 +5691,7 @@ dependencies = [
 [[package]]
 name = "scouter-observability"
 version = "0.4.6"
-source = "git+https://github.com/demml/scouter.git?branch=update%2Frust-client-for-opsml#8e66d460e77f0220405df26a59f2b30f72a105c3"
+source = "git+https://github.com/demml/scouter.git?branch=update%2Frust-client-for-opsml#3ec00c27aa41e37423ef0a8b5d740b4de2e3f158"
 dependencies = [
  "itertools 0.14.0",
  "ndarray",
@@ -5708,7 +5708,7 @@ dependencies = [
 [[package]]
 name = "scouter-profile"
 version = "0.4.6"
-source = "git+https://github.com/demml/scouter.git?branch=update%2Frust-client-for-opsml#8e66d460e77f0220405df26a59f2b30f72a105c3"
+source = "git+https://github.com/demml/scouter.git?branch=update%2Frust-client-for-opsml#3ec00c27aa41e37423ef0a8b5d740b4de2e3f158"
 dependencies = [
  "chrono",
  "indicatif",
@@ -5730,7 +5730,7 @@ dependencies = [
 [[package]]
 name = "scouter-settings"
 version = "0.4.6"
-source = "git+https://github.com/demml/scouter.git?branch=update%2Frust-client-for-opsml#8e66d460e77f0220405df26a59f2b30f72a105c3"
+source = "git+https://github.com/demml/scouter.git?branch=update%2Frust-client-for-opsml#3ec00c27aa41e37423ef0a8b5d740b4de2e3f158"
 dependencies = [
  "base64 0.22.1",
  "pyo3",
@@ -5743,7 +5743,7 @@ dependencies = [
 [[package]]
 name = "scouter-types"
 version = "0.4.6"
-source = "git+https://github.com/demml/scouter.git?branch=update%2Frust-client-for-opsml#8e66d460e77f0220405df26a59f2b30f72a105c3"
+source = "git+https://github.com/demml/scouter.git?branch=update%2Frust-client-for-opsml#3ec00c27aa41e37423ef0a8b5d740b4de2e3f158"
 dependencies = [
  "chrono",
  "colored_json",
