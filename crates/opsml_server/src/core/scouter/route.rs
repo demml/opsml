@@ -78,7 +78,7 @@ pub async fn insert_drift_profile(
             Some(profile),
             None,
             None,
-            exchange_token,
+            &exchange_token,
         )
         .await
         .map_err(|e| {
@@ -159,7 +159,7 @@ pub async fn update_drift_profile(
             })?),
             None,
             None,
-            exchange_token,
+            &exchange_token,
         )
         .await
         .map_err(|e| {
@@ -205,7 +205,7 @@ pub async fn update_drift_profile_status(
             })?),
             None,
             None,
-            exchange_token,
+            &exchange_token,
         )
         .await
         .map_err(|e| {
@@ -242,7 +242,7 @@ pub async fn get_spc_drift(
             None,
             Some(query_string),
             None,
-            exchange_token,
+            &exchange_token,
         )
         .await
         .map_err(|e| {
@@ -284,7 +284,7 @@ pub async fn get_psi_drift(
             None,
             Some(query_string),
             None,
-            exchange_token,
+            &exchange_token,
         )
         .await
         .map_err(|e| {
@@ -331,7 +331,7 @@ pub async fn get_custom_drift(
             None,
             Some(query_string),
             None,
-            exchange_token,
+            &exchange_token,
         )
         .await
         .map_err(|e| {
@@ -421,7 +421,7 @@ pub async fn get_drift_alerts(
             None,
             Some(query_string),
             None,
-            exchange_token,
+            &exchange_token,
         )
         .await
         .map_err(|e| {
@@ -467,7 +467,7 @@ pub async fn check_scouter_health(
             None,
             None,
             None,
-            exchange_token,
+            &exchange_token,
         )
         .await
         .map_err(|e| {
