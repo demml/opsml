@@ -19,6 +19,7 @@ pub enum Routes {
     ProfileStatus,
     Users,
     Alerts,
+    Healthcheck,
 }
 
 impl Routes {
@@ -38,6 +39,9 @@ impl Routes {
 
             // Scouter Alerts Routes
             Routes::Alerts => "scouter/alerts",
+
+            // Scouter Healthcheck
+            Routes::Healthcheck => "scouter/healthcheck",
         }
     }
 }

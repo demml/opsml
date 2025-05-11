@@ -1,6 +1,7 @@
 use crate::core::error::{internal_server_error, OpsmlServerError};
 use crate::core::files::utils::download_artifacts;
 use crate::core::scouter;
+use crate::core::scouter::types::Alive;
 use crate::core::scouter::utils::{find_drift_profile, save_encrypted_profile};
 use crate::core::state::AppState;
 use anyhow::{Context, Result};
@@ -448,6 +449,51 @@ pub async fn get_drift_alerts(
     }
 }
 
+#[instrument(skip_all)]
+pub async fn check_scouter_health(
+    State(state): State<Arc<AppState>>,
+    Extension(perms): Extension<UserPermissions>,
+) -> Result<Json<Alive>, (StatusCode, Json<OpsmlServerError>)> {
+    let exchange_token = state.exchange_token_from_perms(&perms).await.map_err(|e| {
+        error!("Failed to exchange token for scouter: {}", e);
+        internal_server_error(e, "Failed to exchange token for scouter")
+    })?;
+
+    let response = state
+        .scouter_client
+        .request(
+            scouter::Routes::Healthcheck,
+            RequestType::Get,
+            None,
+            None,
+            None,
+            exchange_token,
+        )
+        .await
+        .map_err(|e| {
+            error!("Failed to get scouter healthcheck: {}", e);
+            internal_server_error(e, "Failed to get scouter healthcheck")
+        })?;
+
+    let status_code = response.status();
+    match status_code.is_success() {
+        true => {
+            let body = response.json::<Alive>().await.map_err(|e| {
+                error!("Failed to parse scouter response: {}", e);
+                internal_server_error(e, "Failed to parse scouter response")
+            })?;
+            Ok(Json(body))
+        }
+        false => {
+            let body = response.json::<ScouterServerError>().await.map_err(|e| {
+                error!("Failed to parse scouter error response: {}", e);
+                internal_server_error(e, "Failed to parse scouter error response")
+            })?;
+            Err((status_code, Json(OpsmlServerError::new(body.error))))
+        }
+    }
+}
+
 pub async fn get_scouter_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
     let result = catch_unwind(AssertUnwindSafe(|| {
         Router::new()
@@ -470,6 +516,10 @@ pub async fn get_scouter_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
                 get(get_custom_drift),
             )
             .route(&format!("{}/scouter/alerts", prefix), get(get_drift_alerts))
+            .route(
+                &format!("{}/scouter/healthcheck", prefix),
+                get(check_scouter_health),
+            )
     }));
 
     match result {

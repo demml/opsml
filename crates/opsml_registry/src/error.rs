@@ -23,6 +23,9 @@ pub enum RegistryError {
     #[error("Server feature not enabled")]
     ServerFeatureNotEnabled,
 
+    #[error("Service not supported")]
+    ServiceNotSupported,
+
     #[error(transparent)]
     VersionError(#[from] opsml_semver::error::VersionError),
 

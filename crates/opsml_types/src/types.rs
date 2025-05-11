@@ -754,6 +754,19 @@ impl SaverPath {
     }
 }
 
+#[derive(Debug, Clone)]
+pub enum IntegratedService {
+    Scouter,
+}
+
+impl Display for IntegratedService {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            IntegratedService::Scouter => write!(f, "scouter"),
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

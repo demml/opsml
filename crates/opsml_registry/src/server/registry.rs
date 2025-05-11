@@ -671,8 +671,20 @@ pub mod server_logic {
             Ok(params)
         }
 
-        pub async fn insert_scouter_profile(
-            &mut self,
+        pub fn check_service_health(
+            &self,
+            service: IntegratedService,
+        ) -> Result<bool, RegistryError> {
+            match service {
+                IntegratedService::Scouter => Ok(self
+                    .scouter_client
+                    .check_service_health()
+                    .map_err(|e| RegistryError::ScouterError(e.to_string()))?),
+            }
+        }
+
+        pub fn insert_scouter_profile(
+            &self,
             request: &ProfileRequest,
         ) -> Result<(), RegistryError> {
             self.scouter_client

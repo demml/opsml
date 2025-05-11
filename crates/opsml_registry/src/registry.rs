@@ -285,6 +285,7 @@ impl CardRegistry {
 
         // Update card attributes
         if let Err(e) = Self::update_card_and_save(
+            params.registry,
             params.card,
             &create_response,
             params.save_kwargs,
@@ -320,6 +321,7 @@ impl CardRegistry {
     /// * `registry_type` - RegistryType
     ///
     fn update_card_and_save(
+        registry: &OpsmlRegistry,
         card: &Bound<'_, PyAny>,
         response: &CreateCardResponse,
         save_kwargs: Option<&Bound<'_, PyAny>>,
@@ -337,12 +339,7 @@ impl CardRegistry {
         debug!("Uploading card artifacts");
         upload_card_artifacts(tmp_path, &response.key)?;
 
-        // Upload Integration artifacts
-        if registry_type == &RegistryType::Model {
-            Self::_upload_scouter_artifacts(&response.key, card)?;
-        }
-
-        Self::upload_integration_artifacts(registry, registry_type, card)
+        Self::upload_integration_artifacts(registry, registry_type, card)?;
 
         Ok(())
     }
@@ -442,28 +439,29 @@ impl CardRegistry {
     /// For example, if registering a modelcard with a drift profile, we will need to register and upload
     /// the drift profile to the scouter service
     fn upload_integration_artifacts(
-        registry: &mut OpsmlRegistry,
+        registry: &OpsmlRegistry,
         registry_type: &RegistryType,
         card: &Bound<'_, PyAny>,
     ) -> Result<(), RegistryError> {
-
         match registry_type {
-        
             RegistryType::Model => {
-                Self::upload_scouter_artifacts(registry, card)?;
+                // Send drift profiles to scouter if exist and scouter is enabled
+                // need to check app_state if scouter is
+                if registry.check_service_health(IntegratedService::Scouter)? {
+                    Self::upload_scouter_artifacts(registry, card)?;
+                }
             }
             _ => {}
         }
-    
+
         Ok(())
     }
 
     fn upload_scouter_artifacts(
-        registry: &mut OpsmlRegistry,
+        registry: &OpsmlRegistry,
         card: &Bound<'_, PyAny>,
     ) -> Result<(), RegistryError> {
         let drift_profiles = card.getattr("interface")?.getattr("drift_profile")?;
-
         // downcast to list
         let drift_profiles = drift_profiles.downcast::<PyList>()?;
 
