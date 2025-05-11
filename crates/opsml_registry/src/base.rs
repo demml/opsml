@@ -273,6 +273,13 @@ impl OpsmlRegistry {
         }
     }
 
+    /// Inserts a scouter profile into the registry when opsml is integrated with scouter
+    ///
+    /// # Arguments
+    /// * `profile` - The profile to be inserted
+    ///
+    /// # Returns
+    /// * `Result<(), RegistryError>` - Ok if the profile was inserted successfully, Err if there was an error
     pub fn insert_scouter_profile(&self, profile: &ProfileRequest) -> Result<(), RegistryError> {
         match self {
             Self::ClientRegistry(client_registry) => {
@@ -285,6 +292,13 @@ impl OpsmlRegistry {
         }
     }
 
+    /// Generic function to check the health of an integrated service
+    ///
+    /// # Arguments
+    /// * `service` - The integrated service to check
+    ///
+    /// # Returns
+    /// * `Result<bool, RegistryError>` - Ok if the service is healthy, Err if there was an error
     pub fn check_service_health(&self, service: IntegratedService) -> Result<bool, RegistryError> {
         match self {
             Self::ClientRegistry(client_registry) => {
