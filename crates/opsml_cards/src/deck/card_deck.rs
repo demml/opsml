@@ -262,6 +262,9 @@ pub struct CardDeck {
 
     // this is the holder for the card objects (ModelCard, DataCard, etc.)
     pub card_objs: HashMap<String, PyObject>,
+
+    #[pyo3(get, set)]
+    pub experimentcard_uid: Option<String>,
 }
 
 #[pymethods]
@@ -290,6 +293,7 @@ impl CardDeck {
             app_env: std::env::var("APP_ENV").unwrap_or_else(|_| "dev".to_string()),
             is_card: true,
             registry_type,
+            experimentcard_uid: None,
         })
     }
 
@@ -685,6 +689,7 @@ impl CardDeck {
             app_env: std::env::var("APP_ENV").unwrap_or_else(|_| "dev".to_string()),
             is_card: true,
             registry_type,
+            experimentcard_uid: None,
         })
     }
 }
@@ -751,6 +756,7 @@ impl Serialize for CardDeck {
         state.serialize_field("app_env", &self.app_env)?;
         state.serialize_field("is_card", &self.is_card)?;
         state.serialize_field("registry_type", &self.registry_type)?;
+        state.serialize_field("experimentcard_uid", &self.experimentcard_uid)?;
         state.end()
     }
 }
@@ -774,6 +780,7 @@ impl<'de> Deserialize<'de> for CardDeck {
             AppEnv,
             IsCard,
             RegistryType,
+            ExperimentcardUid,
         }
 
         struct CardDeckVisitor;
@@ -800,6 +807,7 @@ impl<'de> Deserialize<'de> for CardDeck {
                 let mut app_env = None;
                 let mut is_card = None;
                 let mut registry_type = None;
+                let mut experimentcard_uid = None;
 
                 while let Some(key) = map.next_key()? {
                     match key {
@@ -838,6 +846,9 @@ impl<'de> Deserialize<'de> for CardDeck {
                         Field::RegistryType => {
                             registry_type = Some(map.next_value()?);
                         }
+                        Field::ExperimentcardUid => {
+                            experimentcard_uid = Some(map.next_value()?);
+                        }
                     }
                 }
 
@@ -854,6 +865,7 @@ impl<'de> Deserialize<'de> for CardDeck {
                 let app_env = app_env.ok_or_else(|| de::Error::missing_field("app_env"))?;
                 let is_card = is_card.unwrap_or(true);
                 let registry_type = registry_type.unwrap_or(RegistryType::Deck);
+                let experimentcard_uid = experimentcard_uid.unwrap_or(None);
 
                 Ok(CardDeck {
                     space,
@@ -867,6 +879,7 @@ impl<'de> Deserialize<'de> for CardDeck {
                     is_card,
                     app_env,
                     registry_type,
+                    experimentcard_uid,
                 })
             }
         }
@@ -883,6 +896,7 @@ impl<'de> Deserialize<'de> for CardDeck {
             "app_env",
             "is_card",
             "registry_type",
+            "experimentcard_uid",
         ];
         deserializer.deserialize_struct("CardDeck", FIELDS, CardDeckVisitor)
     }

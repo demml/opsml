@@ -339,6 +339,10 @@ impl CardRegistry {
         debug!("Uploading card artifacts");
         upload_card_artifacts(tmp_path, &response.key)?;
 
+        // Helper function for handling integrations with other services
+        // For example, Opsml will allow a user to register and store a Scouter drift profile
+        // with a modelcard. However, this drift profile still needs to be registered with Scouter
+        // so we can preform model monitoring and drift detection
         Self::upload_integration_artifacts(registry, registry_type, card)?;
 
         Ok(())
@@ -445,7 +449,8 @@ impl CardRegistry {
     ) -> Result<(), RegistryError> {
         // If our integration types expand to other services and registry types, consider using a match statement
         if registry_type == &RegistryType::Model {
-            // Send drift profiles to scouter if exist and scouter is enabled
+            // ensure scouter integration is enabled before uploading artifacts
+            // TODO: add secondary cli helper to upload artifacts to scouter
             if registry.check_service_health(IntegratedService::Scouter)? {
                 Self::upload_scouter_artifacts(registry, card)?;
             }

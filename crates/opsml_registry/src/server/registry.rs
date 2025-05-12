@@ -46,8 +46,7 @@ pub mod server_logic {
         ) -> Result<Self, RegistryError> {
             let sql_client = get_sql_client(&database_settings).await?;
             let table_name = CardTable::from_registry_type(&registry_type);
-            let scouter_client =
-                ScouterClient::new(None).map_err(|e| RegistryError::ScouterError(e.to_string()))?;
+            let scouter_client = ScouterClient::new(None)?;
             Ok(Self {
                 sql_client,
                 table_name,
@@ -676,10 +675,7 @@ pub mod server_logic {
             service: IntegratedService,
         ) -> Result<bool, RegistryError> {
             match service {
-                IntegratedService::Scouter => Ok(self
-                    .scouter_client
-                    .check_service_health()
-                    .map_err(|e| RegistryError::ScouterError(e.to_string()))?),
+                IntegratedService::Scouter => Ok(self.scouter_client.check_service_health()?),
             }
         }
 
@@ -687,9 +683,7 @@ pub mod server_logic {
             &self,
             request: &ProfileRequest,
         ) -> Result<(), RegistryError> {
-            self.scouter_client
-                .insert_profile(request)
-                .map_err(|e| RegistryError::ScouterError(e.to_string()))?;
+            self.scouter_client.insert_profile(request)?;
             Ok(())
         }
     }
