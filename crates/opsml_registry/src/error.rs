@@ -15,6 +15,9 @@ use tracing::error;
 #[derive(Error, Debug)]
 pub enum RegistryError {
     #[error(transparent)]
+    ScouterClientError(#[from] scouter_client::ClientError),
+
+    #[error(transparent)]
     SettingsError(#[from] SettingsError),
 
     #[error(transparent)]
@@ -107,9 +110,6 @@ pub enum RegistryError {
 
     #[error("Failed to create scouter client")]
     CreateClientError,
-
-    #[error("{0}")]
-    ScouterError(String),
 }
 
 impl From<RegistryError> for PyErr {

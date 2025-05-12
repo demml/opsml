@@ -3338,9 +3338,9 @@ checksum = "47e1ffaa40ddd1f3ed91f717a33c8c0ee23fff369e3aa8772b9605cc1d22f4c3"
 
 [[package]]
 name = "matrixmultiply"
-version = "0.3.9"
+version = "0.3.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9380b911e3e96d10c1f415da0876389aaf1b56759054eeb0de7df940c456ba1a"
+checksum = "a06de3016e9fae57a36fd14dba131fccf49f74b40b7fbdb472f96e361ec71a08"
 dependencies = [
  "autocfg",
  "rawpointer",
@@ -5583,7 +5583,7 @@ checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
 [[package]]
 name = "scouter-client"
 version = "0.4.6"
-source = "git+https://github.com/demml/scouter.git?branch=update%2Frust-client-for-opsml#3ec00c27aa41e37423ef0a8b5d740b4de2e3f158"
+source = "git+https://github.com/demml/scouter.git?branch=update%2Frust-client-for-opsml#00c50e150a7dcdda1bba9cb017602d145476e3cb"
 dependencies = [
  "chrono",
  "ndarray",
@@ -5594,7 +5594,6 @@ dependencies = [
  "reqwest",
  "scouter-dispatch",
  "scouter-drift",
- "scouter-error",
  "scouter-events",
  "scouter-observability",
  "scouter-profile",
@@ -5603,6 +5602,7 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_qs 0.15.0",
+ "thiserror 2.0.12",
  "tokio",
  "tracing",
 ]
@@ -5610,22 +5610,22 @@ dependencies = [
 [[package]]
 name = "scouter-dispatch"
 version = "0.4.6"
-source = "git+https://github.com/demml/scouter.git?branch=update%2Frust-client-for-opsml#3ec00c27aa41e37423ef0a8b5d740b4de2e3f158"
+source = "git+https://github.com/demml/scouter.git?branch=update%2Frust-client-for-opsml#00c50e150a7dcdda1bba9cb017602d145476e3cb"
 dependencies = [
  "futures",
  "pyo3",
  "reqwest",
- "scouter-error",
  "scouter-types",
  "serde",
  "serde_json",
+ "thiserror 2.0.12",
  "tracing",
 ]
 
 [[package]]
 name = "scouter-drift"
 version = "0.4.6"
-source = "git+https://github.com/demml/scouter.git?branch=update%2Frust-client-for-opsml#3ec00c27aa41e37423ef0a8b5d740b4de2e3f158"
+source = "git+https://github.com/demml/scouter.git?branch=update%2Frust-client-for-opsml#00c50e150a7dcdda1bba9cb017602d145476e3cb"
 dependencies = [
  "chrono",
  "cron",
@@ -5639,30 +5639,19 @@ dependencies = [
  "pyo3",
  "rayon",
  "scouter-dispatch",
- "scouter-error",
  "scouter-settings",
  "scouter-types",
  "serde",
  "serde_json",
- "tokio",
- "tracing",
-]
-
-[[package]]
-name = "scouter-error"
-version = "0.4.6"
-source = "git+https://github.com/demml/scouter.git?branch=update%2Frust-client-for-opsml#3ec00c27aa41e37423ef0a8b5d740b4de2e3f158"
-dependencies = [
- "pyo3",
- "serde",
  "thiserror 2.0.12",
+ "tokio",
  "tracing",
 ]
 
 [[package]]
 name = "scouter-events"
 version = "0.4.6"
-source = "git+https://github.com/demml/scouter.git?branch=update%2Frust-client-for-opsml#3ec00c27aa41e37423ef0a8b5d740b4de2e3f158"
+source = "git+https://github.com/demml/scouter.git?branch=update%2Frust-client-for-opsml#00c50e150a7dcdda1bba9cb017602d145476e3cb"
 dependencies = [
  "async-trait",
  "chrono",
@@ -5676,11 +5665,11 @@ dependencies = [
  "reqwest",
  "rusty-logging",
  "scouter-drift",
- "scouter-error",
  "scouter-settings",
  "scouter-types",
  "serde",
  "serde_json",
+ "thiserror 2.0.12",
  "time",
  "tokio",
  "tokio-stream",
@@ -5691,7 +5680,7 @@ dependencies = [
 [[package]]
 name = "scouter-observability"
 version = "0.4.6"
-source = "git+https://github.com/demml/scouter.git?branch=update%2Frust-client-for-opsml#3ec00c27aa41e37423ef0a8b5d740b4de2e3f158"
+source = "git+https://github.com/demml/scouter.git?branch=update%2Frust-client-for-opsml#00c50e150a7dcdda1bba9cb017602d145476e3cb"
 dependencies = [
  "itertools 0.14.0",
  "ndarray",
@@ -5699,16 +5688,16 @@ dependencies = [
  "noisy_float",
  "pyo3",
  "rayon",
- "scouter-error",
  "scouter-types",
  "serde",
+ "thiserror 2.0.12",
  "tracing",
 ]
 
 [[package]]
 name = "scouter-profile"
 version = "0.4.6"
-source = "git+https://github.com/demml/scouter.git?branch=update%2Frust-client-for-opsml#3ec00c27aa41e37423ef0a8b5d740b4de2e3f158"
+source = "git+https://github.com/demml/scouter.git?branch=update%2Frust-client-for-opsml#00c50e150a7dcdda1bba9cb017602d145476e3cb"
 dependencies = [
  "chrono",
  "indicatif",
@@ -5720,21 +5709,20 @@ dependencies = [
  "numpy",
  "pyo3",
  "rayon",
- "scouter-error",
  "scouter-types",
  "serde",
  "serde_json",
+ "thiserror 2.0.12",
  "tracing",
 ]
 
 [[package]]
 name = "scouter-settings"
 version = "0.4.6"
-source = "git+https://github.com/demml/scouter.git?branch=update%2Frust-client-for-opsml#3ec00c27aa41e37423ef0a8b5d740b4de2e3f158"
+source = "git+https://github.com/demml/scouter.git?branch=update%2Frust-client-for-opsml#00c50e150a7dcdda1bba9cb017602d145476e3cb"
 dependencies = [
  "base64 0.22.1",
  "pyo3",
- "scouter-error",
  "scouter-types",
  "serde",
  "tracing",
@@ -5743,14 +5731,13 @@ dependencies = [
 [[package]]
 name = "scouter-types"
 version = "0.4.6"
-source = "git+https://github.com/demml/scouter.git?branch=update%2Frust-client-for-opsml#3ec00c27aa41e37423ef0a8b5d740b4de2e3f158"
+source = "git+https://github.com/demml/scouter.git?branch=update%2Frust-client-for-opsml#00c50e150a7dcdda1bba9cb017602d145476e3cb"
 dependencies = [
  "chrono",
  "colored_json",
  "cron",
  "pyo3",
  "rayon",
- "scouter-error",
  "serde",
  "serde_json",
  "strum",
@@ -6381,9 +6368,9 @@ dependencies = [
 
 [[package]]
 name = "sysinfo"
-version = "0.35.0"
+version = "0.35.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b897c8ea620e181c7955369a31be5f48d9a9121cb59fd33ecef9ff2a34323422"
+checksum = "79251336d17c72d9762b8b54be4befe38d2db56fbbc0241396d70f173c39d47a"
 dependencies = [
  "libc",
  "memchr",
@@ -6450,9 +6437,9 @@ dependencies = [
 
 [[package]]
 name = "tempfile"
-version = "3.19.1"
+version = "3.20.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7437ac7763b9b123ccf33c338a5cc1bac6f69b45a136c19bdd8a65e3916435bf"
+checksum = "e8a64e3985349f2441a1a9ef0b853f869006c3855f2cda6862a94d26ebb9d6a1"
 dependencies = [
  "fastrand 2.3.0",
  "getrandom 0.3.3",

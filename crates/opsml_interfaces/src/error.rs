@@ -78,6 +78,9 @@ pub enum DataInterfaceError {
     InvalidSplitType,
 
     #[error(transparent)]
+    DataProfileError(#[from] scouter_client::DataProfileError),
+
+    #[error(transparent)]
     UtilError(#[from] UtilError),
 
     #[error(transparent)]
@@ -95,8 +98,8 @@ pub enum DataInterfaceError {
     #[error("Data type not supported for profiling")]
     DataTypeNotSupportedForProfilingError,
 
-    #[error("Failed to save scouter profile: {0}")]
-    ScouterError(String),
+    #[error("Failed to save scouter profile")]
+    ScouterSaveError(#[source] scouter_client::UtilError),
 
     #[error("Failed to downcast Python object: {0}")]
     DowncastError(String),
@@ -270,6 +273,9 @@ pub enum ModelInterfaceError {
 
     #[error(transparent)]
     SampleDataError(#[from] SampleDataError),
+
+    #[error(transparent)]
+    DriftProfileError(#[from] scouter_client::DriftError),
 
     #[error("Onnx URI not found in metadata")]
     MissingOnnxUriError,

@@ -341,7 +341,7 @@ pub fn uid_to_byte_key(uid: &str) -> Result<[u8; 32], UtilError> {
 pub fn create_tmp_path() -> Result<PathBuf, UtilError> {
     let tmp_dir = tempfile::TempDir::new()?;
 
-    let tmp_path = tmp_dir.into_path();
+    let tmp_path = tmp_dir.keep();
 
     Ok(tmp_path)
 }
