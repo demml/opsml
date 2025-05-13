@@ -14,7 +14,8 @@ use opsml_types::{
         HardwareMetricRequest, ParameterRequest,
     },
 };
-use scouter_client::ProfileRequest;
+use scouter_client::{ProfileRequest, ProfileStatusRequest};
+
 use tracing::{error, instrument};
 
 #[derive(Debug, Clone)]
@@ -306,6 +307,21 @@ impl OpsmlRegistry {
             }
             #[cfg(feature = "server")]
             Self::ServerRegistry(server_registry) => server_registry.check_service_health(service),
+        }
+    }
+
+    pub fn update_drift_profile_status(
+        &self,
+        request: &ProfileStatusRequest,
+    ) -> Result<(), RegistryError> {
+        match self {
+            Self::ClientRegistry(client_registry) => {
+                Ok(client_registry.update_drift_profile_status(request)?)
+            }
+            #[cfg(feature = "server")]
+            Self::ServerRegistry(server_registry) => {
+                server_registry.update_drift_profile_status(request)
+            }
         }
     }
 }

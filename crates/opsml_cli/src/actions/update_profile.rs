@@ -1,16 +1,26 @@
 use crate::cli::arg::ScouterArgs;
 use crate::error::CliError;
 use opsml_registry::base::OpsmlRegistry;
-use pyo3::prelude::*;
+use opsml_types::RegistryType;
 use scouter_client::{DriftType, ProfileStatusRequest};
 
+/// Update the drift profile status
+///
+/// # Arguments
+/// * `args` - The command line arguments
+///
 pub fn update_drift_profile_status(args: &ScouterArgs) -> Result<(), CliError> {
-    let prequest = ProfileStatusRequest {
+    let request = ProfileStatusRequest {
         space: args.space.clone(),
         name: args.name.clone(),
         version: args.version.clone(),
         active: args.active,
         drift_type: Some(DriftType::from(args.drift_type.clone())),
+        deactivate_others: args.deactivate_others,
     };
+
+    let client = OpsmlRegistry::new(RegistryType::Model)?;
+
+    client.update_drift_profile_status(&request)?;
     Ok(())
 }

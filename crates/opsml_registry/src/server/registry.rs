@@ -23,8 +23,8 @@ pub mod server_logic {
     };
     use opsml_utils::{get_utc_datetime, uid_to_byte_key};
     use pyo3::prelude::*;
-    use scouter_client::ProfileRequest;
     use scouter_client::ScouterClient;
+    use scouter_client::{ProfileRequest, ProfileStatusRequest};
     use semver::Version;
     use sqlx::types::Json as SqlxJson;
     use tracing::info;
@@ -684,6 +684,14 @@ pub mod server_logic {
             request: &ProfileRequest,
         ) -> Result<(), RegistryError> {
             self.scouter_client.insert_profile(request)?;
+            Ok(())
+        }
+
+        pub fn update_drift_profile_status(
+            &self,
+            request: &ProfileStatusRequest,
+        ) -> Result<(), RegistryError> {
+            self.scouter_client.update_profile_status(request)?;
             Ok(())
         }
     }
