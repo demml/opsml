@@ -452,6 +452,7 @@ impl CardRegistry {
             // ensure scouter integration is enabled before uploading artifacts
             // TODO: add secondary cli helper to upload artifacts to scouter
             if registry.check_service_health(IntegratedService::Scouter)? {
+                debug!("Uploading scouter artifacts");
                 Self::upload_scouter_artifacts(registry, card)?;
             }
         }
@@ -472,6 +473,7 @@ impl CardRegistry {
                 .extract::<ProfileRequest>()?;
 
             registry.insert_scouter_profile(&profile_request)?;
+            debug!("Successfully uploaded scouter profile");
         }
 
         Ok(())
