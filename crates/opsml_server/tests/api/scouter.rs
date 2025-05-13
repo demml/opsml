@@ -52,6 +52,20 @@ fn create_drift_profile(key: ArtifactKey) -> SpcDriftProfile {
 }
 
 #[tokio::test]
+async fn test_scouter_routes_healthcheck() {
+    let helper = TestHelper::new().await;
+
+    let request = Request::builder()
+        .uri("/opsml/api/scouter/healthcheck")
+        .method("GET")
+        .body(Body::empty())
+        .unwrap();
+
+    let response = helper.send_oneshot(request).await;
+    assert_eq!(response.status(), StatusCode::OK);
+}
+
+#[tokio::test]
 async fn test_scouter_routes_insert_profile() {
     let helper = TestHelper::new().await;
 

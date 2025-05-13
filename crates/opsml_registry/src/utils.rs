@@ -247,7 +247,7 @@ pub fn download_card<'py>(
 
     let tmp_dir = TempDir::new()?;
 
-    let tmp_path = tmp_dir.into_path();
+    let tmp_path = tmp_dir.keep();
     let rpath = PathBuf::from(&key.storage_key);
 
     let rpath = rpath.join(SaveName::Card).with_extension(Suffix::Json);
