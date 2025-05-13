@@ -191,6 +191,7 @@ impl OpsmlTestServer {
     pub fn start_mock_scouter(&mut self) -> PyResult<()> {
         let scouter_server = ScouterServer::new();
         std::env::set_var("SCOUTER_SERVER_URI", &scouter_server.url);
+        println!("Mock Scouter Server started at {}", scouter_server.url);
         self.scouter_server = Some(scouter_server);
         Ok(())
     }
@@ -201,6 +202,7 @@ impl OpsmlTestServer {
             drop(server);
             std::env::remove_var("SCOUTER_SERVER_URI");
         }
+        println!("Mock Scouter Server stopped");
     }
 
     pub fn set_env_vars_for_client(&self) -> PyResult<()> {
