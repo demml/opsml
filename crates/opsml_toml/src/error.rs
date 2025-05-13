@@ -32,4 +32,7 @@ pub enum PyProjectTomlError {
 
     #[error("Failed to parse opsml.lock file")]
     FailedToParseLockFile(#[source] toml_edit::TomlError),
+
+    #[error("Drift configuration is only valid for model cards")]
+    InvalidConfiguration,
 }

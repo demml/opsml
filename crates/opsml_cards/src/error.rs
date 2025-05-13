@@ -54,6 +54,9 @@ pub enum CardError {
     #[error("Data has not been set. Load the data and retry")]
     DataNotSetError,
 
+    #[error("Alias not found in CardDeck")]
+    AliasNotFoundInDeckError,
+
     #[error(transparent)]
     DataInterfaceError(#[from] DataInterfaceError),
 

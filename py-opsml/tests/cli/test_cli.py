@@ -10,11 +10,14 @@ from opsml.cli import (
     update_drift_profile_status,
     ScouterArgs,
 )  # type: ignore
+import pandas as pd
 import os
 from pathlib import Path
 import shutil
 from opsml.test import OpsmlTestServer
 from opsml.scouter.types import DriftType
+from opsml.scouter import PsiDriftConfig, CustomMetricDriftConfig, CustomMetric
+from opsml.scouter.alert import AlertThreshold
 
 from opsml import (  # type: ignore
     start_experiment,
@@ -35,8 +38,28 @@ CURRENT_DIRECTORY = Path(os.getcwd()) / "tests" / "cli" / "assets"
 def run_experiment(
     random_forest_classifier: SklearnModel,
     chat_prompt: Prompt,
+    example_dataframe: pd.DataFrame,
 ):
     with start_experiment(space="test", log_hardware=True) as exp:
+        X, _, _, _ = example_dataframe
+        # create psi drift profile
+        random_forest_classifier.create_drift_profile(
+            data=X,
+            config=PsiDriftConfig(),
+        )
+
+        # create custom metric drift profile
+        metric = CustomMetric(
+            name="custom",
+            value=0.5,
+            alert_threshold=AlertThreshold.Above,
+        )
+
+        random_forest_classifier.create_drift_profile(
+            data=[metric],
+            config=CustomMetricDriftConfig(),
+        )
+
         modelcard = ModelCard(
             interface=random_forest_classifier,
             tags=["foo:bar", "baz:qux"],
@@ -55,6 +78,7 @@ def run_experiment(
 def test_pyproject_app_lock_project(
     random_forest_classifier: SklearnModel,
     chat_prompt: Prompt,
+    example_dataframe: pd.DataFrame,
 ):
     """
     This test is meant to test creating an opsml.lock file and installing the app/downloading
@@ -76,7 +100,7 @@ def test_pyproject_app_lock_project(
     """
     with OpsmlTestServer(True, CURRENT_DIRECTORY):
         # run experiment to populate registry
-        run_experiment(random_forest_classifier, chat_prompt)
+        run_experiment(random_forest_classifier, chat_prompt, example_dataframe)
 
         lock_project(CURRENT_DIRECTORY)
 
@@ -110,7 +134,7 @@ def test_pyproject_app_lock_project(
         os.remove(lock_file)
 
         # write new experiment to the registry
-        run_experiment(random_forest_classifier, chat_prompt)
+        run_experiment(random_forest_classifier, chat_prompt, example_dataframe)
 
         # check multiple files exist
         reg = CardRegistry("model")

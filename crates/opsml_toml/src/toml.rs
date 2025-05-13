@@ -12,6 +12,15 @@ pub struct CardAttr {
     pub version: Option<String>,
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+pub struct DriftConfig {
+    #[serde(default)]
+    pub active: bool,
+    #[serde(default)]
+    pub deactivate_others: bool,
+    pub drift_type: Vec<String>,
+}
+
 /// toml equivalent of opsml_cards::CardDeck Card
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Card {
@@ -21,10 +30,25 @@ pub struct Card {
     pub version: Option<String>,
     #[serde(rename = "type")]
     pub registry_type: RegistryType,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub drift: Option<DriftConfig>,
+}
+
+impl Card {
+    /// Validate the card configuration to ensure drift is only used for model cards
+    pub fn validate(&self) -> Result<(), PyProjectTomlError> {
+        // Only allow drift configuration for model cards
+        if let Some(_) = &self.drift {
+            if self.registry_type != RegistryType::Model {
+                return Err(PyProjectTomlError::InvalidConfiguration);
+            }
+        }
+        Ok(())
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct AppConfig {
+pub struct DeckConfig {
     #[serde(rename = "type")]
     pub registry_type: RegistryType,
     pub name: String,
@@ -64,7 +88,7 @@ pub struct OpsmlTools {
     ///    {alias="data", space = "opsml", name = "opsml", version="1", type="data"},
     ///    {alias="model", space = "opsml", name = "opsml", version="1", type="model"},
     /// ]
-    app: Option<Vec<AppConfig>>,
+    deck: Option<Vec<DeckConfig>>,
 }
 
 impl OpsmlTools {
@@ -114,8 +138,8 @@ impl OpsmlTools {
     }
 
     /// Get the deck configuration
-    pub fn get_apps(&self) -> Option<&Vec<AppConfig>> {
-        self.app.as_ref()
+    pub fn get_decks(&self) -> Option<&Vec<DeckConfig>> {
+        self.deck.as_ref()
     }
 }
 
@@ -153,9 +177,23 @@ impl PyProjectToml {
     pub fn from_string(content: &str) -> Result<Self, PyProjectTomlError> {
         let pyproject: toml_edit::ImDocument<_> =
             toml_edit::ImDocument::from_str(content).map_err(PyProjectTomlError::ParseError)?;
-        //
+
         let pyproject = PyProjectToml::deserialize(pyproject.into_deserializer())
             .map_err(PyProjectTomlError::TomlSchema)?;
+
+        if let Some(tool) = &pyproject.tool {
+            if let Some(opsml) = &tool.opsml {
+                if let Some(apps) = &opsml.deck {
+                    for app in apps {
+                        if let Some(cards) = &app.cards {
+                            for card in cards {
+                                card.validate()?;
+                            }
+                        }
+                    }
+                }
+            }
+        }
 
         Ok(pyproject)
     }
@@ -240,15 +278,26 @@ mod tests {
     #[test]
     fn test_deck_configuration_load() {
         let content = r#"
-            [[tool.opsml.app]]
+            [[tool.opsml.deck]]
             type = "deck"
             space = "opsml"
             name = "opsml"
             version = "1"
-            cards = [
-                {alias = "data", space="space", name="name", version = "1", type = "data"},
-                {alias = "model", space="space", name="name", version = "1", type = "model"}
-            ]
+            
+            [[tool.opsml.deck.cards]]
+            alias = "data"
+            space = "space"
+            name = "name"
+            version = "1"
+            type = "data"
+
+            [[tool.opsml.deck.cards]]
+            alias = "model"
+            space = "space"
+            name = "name"
+            version = "1"
+            type = "model"
+            drift = { active = true, deactivate_others = false, drift_type = ["custom", "psi"] }
 
         "#;
 
@@ -266,11 +315,11 @@ mod tests {
             .opsml
             .as_ref()
             .unwrap()
-            .app
+            .deck
             .is_some());
 
         let tools = pyproject.get_tools().unwrap();
-        let app = tools.app.as_ref().unwrap()[0].clone();
+        let app = tools.deck.as_ref().unwrap()[0].clone();
         let cards = app.cards.clone().unwrap();
         assert_eq!(app.name, "opsml");
         assert_eq!(app.space, "opsml");
@@ -285,6 +334,9 @@ mod tests {
         assert_eq!(cards[1].space, "space".to_string());
         assert_eq!(cards[1].name, "name".to_string());
         assert_eq!(cards[1].version, Some("1".to_string()));
+        assert_eq!(cards[1].registry_type, RegistryType::Model);
+        assert_eq!(cards[1].drift.as_ref().unwrap().active, true);
+        assert_eq!(cards[1].drift.as_ref().unwrap().deactivate_others, false);
     }
 
     #[test]
