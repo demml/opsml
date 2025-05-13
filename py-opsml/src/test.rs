@@ -398,11 +398,11 @@ impl OpsmlServerContext {
         println!("Mock Scouter Server stopped");
     }
 
-    fn __enter__(mut self_: PyRefMut<Self>) -> PyResult<PyRefMut<Self>> {
+    fn __enter__(&mut self) -> PyResult<()> {
         #[cfg(feature = "server")]
         {
             #[cfg(feature = "test")]
-            self_.start_mock_scouter()?;
+            self.start_mock_scouter()?;
 
             app_state().reset_app_state().map_err(|e| {
                 TestServerError::CustomError(format!("Failed to reset app state: {}", e))
@@ -412,9 +412,9 @@ impl OpsmlServerContext {
             })?;
         }
 
-        self_.cleanup()?;
+        self.cleanup()?;
 
-        Ok(self_)
+        Ok(())
     }
 
     #[getter]
