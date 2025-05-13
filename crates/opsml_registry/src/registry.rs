@@ -453,10 +453,7 @@ impl CardRegistry {
         // If our integration types expand to other services and registry types, consider using a match statement
         if registry_type == &RegistryType::Model {
             // ensure scouter integration is enabled before uploading artifacts
-            // TODO: add secondary cli helper to upload artifacts to scouter
             if registry.check_service_health(IntegratedService::Scouter)? {
-                debug!("Uploading scouter artifacts");
-
                 let drift_args = save_kwargs
                     .and_then(|kwargs| kwargs.getattr("drift").ok())
                     .and_then(|args| args.extract::<DriftArgs>().ok());

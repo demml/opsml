@@ -110,6 +110,9 @@ pub enum RegistryError {
 
     #[error("Failed to create scouter client")]
     CreateClientError,
+
+    #[error("ScouterClient not found")]
+    ScouterClientNotFoundError,
 }
 
 impl From<RegistryError> for PyErr {

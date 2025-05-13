@@ -32,7 +32,7 @@ pub mod server_logic {
     #[derive(Debug, Clone)]
     pub struct ServerRegistry {
         sql_client: SqlClientEnum,
-        scouter_client: ScouterClient,
+        pub scouter_client: Option<ScouterClient>,
         pub registry_type: RegistryType,
         pub table_name: CardTable,
         pub storage_settings: OpsmlStorageSettings,
@@ -43,10 +43,11 @@ pub mod server_logic {
             registry_type: RegistryType,
             storage_settings: OpsmlStorageSettings,
             database_settings: DatabaseSettings,
+            scouter_client: Option<ScouterClient>,
         ) -> Result<Self, RegistryError> {
             let sql_client = get_sql_client(&database_settings).await?;
             let table_name = CardTable::from_registry_type(&registry_type);
-            let scouter_client = ScouterClient::new(None)?;
+
             Ok(Self {
                 sql_client,
                 table_name,
@@ -675,7 +676,13 @@ pub mod server_logic {
             service: IntegratedService,
         ) -> Result<bool, RegistryError> {
             match service {
-                IntegratedService::Scouter => Ok(self.scouter_client.check_service_health()?),
+                IntegratedService::Scouter => {
+                    let client = self
+                        .scouter_client
+                        .as_ref()
+                        .ok_or(RegistryError::ScouterClientNotFoundError)?;
+                    Ok(client.check_service_health()?)
+                }
             }
         }
 
@@ -683,7 +690,11 @@ pub mod server_logic {
             &self,
             request: &ProfileRequest,
         ) -> Result<(), RegistryError> {
-            self.scouter_client.insert_profile(request)?;
+            let client = self
+                .scouter_client
+                .as_ref()
+                .ok_or(RegistryError::ScouterClientNotFoundError)?;
+            client.insert_profile(request)?;
             Ok(())
         }
 
@@ -691,7 +702,11 @@ pub mod server_logic {
             &self,
             request: &ProfileStatusRequest,
         ) -> Result<(), RegistryError> {
-            self.scouter_client.update_profile_status(request)?;
+            let client = self
+                .scouter_client
+                .as_ref()
+                .ok_or(RegistryError::ScouterClientNotFoundError)?;
+            client.update_profile_status(request)?;
             Ok(())
         }
     }
