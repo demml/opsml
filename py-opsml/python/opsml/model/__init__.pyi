@@ -119,6 +119,25 @@ class OnnxSchema:
     def feature_names(self) -> List[str]:
         """Return the feature names and order for onnx."""
 
+class DriftArgs:
+    def __init__(self, active: bool = True, deactivate_others: bool = False) -> None:
+        """Define a drift config
+
+        Args:
+            active (bool):
+                Whether to set the drift profile to active
+            deactivate_others (bool):
+                Whether to deactivate all other drift profiles of the same space and name
+        """
+
+    @property
+    def active(self) -> bool:
+        """Return the active status of the drift profile."""
+
+    @property
+    def deactivate_others(self) -> bool:
+        """Return the deactivate_others status of the drift profile."""
+
 class ModelSaveKwargs:
     def __init__(
         self,
@@ -126,6 +145,7 @@ class ModelSaveKwargs:
         model: Optional[Dict] = None,
         preprocessor: Optional[Dict] = None,
         save_onnx: bool = False,
+        drift: Optional[DriftArgs] = None,
     ) -> None:
         """Optional arguments to pass to save_model
 
@@ -140,6 +160,8 @@ class ModelSaveKwargs:
                 Whether to save the onnx model. Defaults to false. This is independent of the
                 onnx argument since it's possible to convert a model to onnx without additional kwargs.
                 If onnx args are provided, this will be set to true.
+            drift (DriftArgs):
+                Optional drift args to use when saving and registering a model.
         """
 
     def __str__(self): ...
