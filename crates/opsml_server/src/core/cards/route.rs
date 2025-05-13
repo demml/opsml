@@ -523,13 +523,10 @@ pub async fn get_readme(
                 exists: true,
             }))
         }
-        Err(e) => {
-            error!("Failed to download artifact: {}", e);
-            Ok(Json(ReadeMe {
-                readme: "".to_string(),
-                exists: false,
-            }))
-        }
+        Err(_) => Ok(Json(ReadeMe {
+            readme: "".to_string(),
+            exists: false,
+        })),
     }
 }
 

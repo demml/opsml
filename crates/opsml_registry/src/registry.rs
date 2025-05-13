@@ -15,7 +15,7 @@ use scouter_client::ProfileRequest;
 use scouter_client::ProfileStatusRequest;
 use std::path::PathBuf;
 use tempfile::TempDir;
-use tracing::{debug, error, instrument};
+use tracing::{debug, error, info, instrument};
 /// Helper struct to hold parameters for card registration
 #[derive(Debug)]
 struct CardRegistrationParams<'py> {
@@ -493,7 +493,7 @@ impl CardRegistry {
                     deactivate_others: drift_args.deactivate_others,
                 };
                 registry.update_drift_profile_status(&profile_status_request)?;
-                debug!("Successfully updated scouter profile status");
+                info!("Successfully updated scouter profile status");
             }
         }
 

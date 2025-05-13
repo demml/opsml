@@ -50,7 +50,7 @@ const STYLES: Styles = Styles::styled()
 #[command(styles=STYLES)]
 #[command(name = "OpsML", author, long_version = VersionInfo::new())]
 #[command(about = "CLI tool for Interacting with OpsML")]
-#[command(propagate_version = true)]
+#[command(propagate_version = false)]
 pub struct Cli {
     #[command(subcommand)]
     pub command: Option<Commands>,
@@ -123,6 +123,7 @@ pub enum Commands {
 }
 
 #[derive(Subcommand)]
+#[command(version = None)]
 pub enum GetCommands {
     /// Download card model artifacts
     ///
@@ -137,7 +138,7 @@ pub enum GetCommands {
 }
 
 #[derive(Subcommand)]
-
+#[command(version = None)]
 pub enum ListCommands {
     Model(ListCards),
     Deck(ListCards),

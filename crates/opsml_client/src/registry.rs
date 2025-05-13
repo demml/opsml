@@ -484,9 +484,11 @@ impl ClientRegistry {
             return Err(ApiClientError::ForbiddenError(error.error).into());
         }
 
-        let _inserted = response
-            .json::<ScouterResponse>()
-            .map_err(RegistryError::RequestError)?;
+        // check for any other errors
+        if response.status() != 200 {
+            let error_text = response.text().map_err(RegistryError::RequestError)?;
+            return Err(ApiClientError::ServerError(error_text).into());
+        }
 
         Ok(())
     }
@@ -501,7 +503,7 @@ impl ClientRegistry {
             .api_client
             .request(
                 Routes::ScouterProfileStatus,
-                RequestType::Post,
+                RequestType::Put,
                 Some(body),
                 None,
                 None,
@@ -517,6 +519,11 @@ impl ClientRegistry {
                 .json::<ScouterServerError>()
                 .map_err(RegistryError::RequestError)?;
             return Err(ApiClientError::ForbiddenError(error.error).into());
+        }
+
+        if response.status() != 200 {
+            let error_text = response.text().map_err(RegistryError::RequestError)?;
+            return Err(ApiClientError::ServerError(error_text).into());
         }
 
         Ok(())
