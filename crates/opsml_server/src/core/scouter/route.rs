@@ -65,6 +65,8 @@ pub async fn insert_drift_profile(
         internal_server_error(e, "Failed to exchange token for scouter")
     })?;
 
+    info!("Inserting drift profile for space: {:?}", &body.space);
+
     let profile = serde_json::to_value(&body).map_err(|e| {
         error!("Failed to serialize profile request: {}", e);
         internal_server_error(e, "Failed to serialize profile request")
@@ -178,7 +180,7 @@ pub async fn update_drift_profile(
 ///
 /// # Returns
 /// * `Result<impl IntoResponse, (StatusCode, Json<serde_json::Value>)>` - Result of the request
-#[instrument(skip(data, body))]
+#[instrument(skip_all)]
 pub async fn update_drift_profile_status(
     State(data): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
