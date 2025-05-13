@@ -138,16 +138,18 @@ fn process_deck_cards(
     registries: &CardRegistries,
 ) -> Result<bool, CliError> {
     debug!("Processing deck cards");
-    for card in toml_cards {
+    for toml_card in toml_cards {
         // Find the latest card given the constraints provided in toml file
-        let latest_card = get_latest_card(registries, card)?;
+        let latest_card = get_latest_card(registries, toml_card)?;
 
         // Find the card in the deck
         // If the entry is not found - return true (need to increment version)
         // If the entry is found - check if the uid is different from latest card - if different - return true
         // Otherwise - return false
         // Find matching entry in existing deck
-        let current_card = deck_cards.iter().find(|card| card.alias == card.alias);
+        let current_card = deck_cards
+            .iter()
+            .find(|deck_card| deck_card.alias == toml_card.alias);
 
         // Check
         match current_card {
