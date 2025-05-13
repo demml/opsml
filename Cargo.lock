@@ -4767,6 +4767,7 @@ name = "py-opsml"
 version = "3.0.0-rc.1"
 dependencies = [
  "anyhow",
+ "mockito",
  "opsml-cards",
  "opsml-cli",
  "opsml-experiment",
@@ -4784,6 +4785,7 @@ dependencies = [
  "reqwest",
  "rusty-logging",
  "scouter-client",
+ "serde_json",
  "thiserror 2.0.12",
  "tokio",
 ]

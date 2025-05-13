@@ -97,10 +97,6 @@ pub fn run_cli(args: Vec<String>) -> anyhow::Result<()> {
                     .context("Failed to update Scouter profile status")?;
                 Ok(())
             }
-            _ => {
-                println!("Scouter command not implemented yet");
-                Ok(())
-            }
         },
         None => {
             println!("No command provided");
