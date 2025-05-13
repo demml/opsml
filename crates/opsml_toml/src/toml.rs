@@ -38,7 +38,7 @@ impl Card {
     /// Validate the card configuration to ensure drift is only used for model cards
     pub fn validate(&self) -> Result<(), PyProjectTomlError> {
         // Only allow drift configuration for model cards
-        if let Some(_) = &self.drift {
+        if self.drift.is_some() {
             if self.registry_type != RegistryType::Model {
                 return Err(PyProjectTomlError::InvalidConfiguration);
             }
@@ -335,8 +335,8 @@ mod tests {
         assert_eq!(cards[1].name, "name".to_string());
         assert_eq!(cards[1].version, Some("1".to_string()));
         assert_eq!(cards[1].registry_type, RegistryType::Model);
-        assert_eq!(cards[1].drift.as_ref().unwrap().active, true);
-        assert_eq!(cards[1].drift.as_ref().unwrap().deactivate_others, false);
+        assert!(cards[1].drift.as_ref().unwrap().active);
+        assert!(!cards[1].drift.as_ref().unwrap().deactivate_others);
     }
 
     #[test]
