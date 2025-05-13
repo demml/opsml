@@ -4,6 +4,7 @@ use crate::utils::verify_card_rs;
 use crate::utils::{check_if_card, download_card, upload_card_artifacts, verify_card};
 use opsml_cards::traits::OpsmlCard;
 use opsml_colors::Colorize;
+use opsml_interfaces::DriftArgs;
 use opsml_semver::VersionType;
 use opsml_types::*;
 use opsml_types::{cards::CardTable, contracts::*};
@@ -11,10 +12,10 @@ use opsml_utils::{clean_string, unwrap_pystring};
 use pyo3::prelude::*;
 use pyo3::types::PyList;
 use scouter_client::ProfileRequest;
+use scouter_client::ProfileStatusRequest;
 use std::path::PathBuf;
 use tempfile::TempDir;
 use tracing::{debug, error, instrument};
-
 /// Helper struct to hold parameters for card registration
 #[derive(Debug)]
 struct CardRegistrationParams<'py> {
@@ -343,7 +344,7 @@ impl CardRegistry {
         // For example, Opsml will allow a user to register and store a Scouter drift profile
         // with a modelcard. However, this drift profile still needs to be registered with Scouter
         // so we can preform model monitoring and drift detection
-        Self::upload_integration_artifacts(registry, registry_type, card)?;
+        Self::upload_integration_artifacts(registry, registry_type, card, save_kwargs, response)?;
 
         Ok(())
     }
@@ -446,6 +447,8 @@ impl CardRegistry {
         registry: &OpsmlRegistry,
         registry_type: &RegistryType,
         card: &Bound<'_, PyAny>,
+        save_kwargs: Option<&Bound<'_, PyAny>>,
+        response: &CreateCardResponse,
     ) -> Result<(), RegistryError> {
         // If our integration types expand to other services and registry types, consider using a match statement
         if registry_type == &RegistryType::Model {
@@ -453,7 +456,12 @@ impl CardRegistry {
             // TODO: add secondary cli helper to upload artifacts to scouter
             if registry.check_service_health(IntegratedService::Scouter)? {
                 debug!("Uploading scouter artifacts");
-                Self::upload_scouter_artifacts(registry, card)?;
+
+                let drift_args = save_kwargs
+                    .and_then(|kwargs| kwargs.getattr("drift").ok())
+                    .and_then(|args| args.extract::<DriftArgs>().ok());
+
+                Self::upload_scouter_artifacts(registry, card, drift_args, response)?;
             }
         }
         Ok(())
@@ -462,6 +470,8 @@ impl CardRegistry {
     fn upload_scouter_artifacts(
         registry: &OpsmlRegistry,
         card: &Bound<'_, PyAny>,
+        drift_args: Option<DriftArgs>,
+        response: &CreateCardResponse,
     ) -> Result<(), RegistryError> {
         let drift_profiles = card.getattr("interface")?.getattr("drift_profile")?;
         // downcast to list
@@ -474,6 +484,20 @@ impl CardRegistry {
 
             registry.insert_scouter_profile(&profile_request)?;
             debug!("Successfully uploaded scouter profile");
+
+            // if drift_args is Some, then we need to update the drift profile status
+            if let Some(drift_args) = drift_args {
+                let profile_status_request = ProfileStatusRequest {
+                    space: response.space.clone(),
+                    name: response.name.clone(),
+                    version: response.version.clone(),
+                    active: drift_args.active,
+                    drift_type: Some(profile_request.drift_type.clone()),
+                    deactivate_others: drift_args.deactivate_others,
+                };
+                registry.update_drift_profile_status(&profile_status_request)?;
+                debug!("Successfully updated scouter profile status");
+            }
         }
 
         Ok(())
