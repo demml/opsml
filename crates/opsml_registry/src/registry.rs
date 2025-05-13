@@ -417,7 +417,7 @@ impl CardRegistry {
     ) -> Result<PathBuf, RegistryError> {
         let tmp_dir = TempDir::new()?;
 
-        let tmp_path = tmp_dir.into_path();
+        let tmp_path = tmp_dir.keep();
 
         match registry_type {
             RegistryType::Experiment | RegistryType::Prompt | RegistryType::Deck => {
@@ -496,7 +496,7 @@ impl CardRegistry {
     ) -> Result<PathBuf, RegistryError> {
         let tmp_dir = TempDir::new()?;
 
-        let tmp_path = tmp_dir.into_path();
+        let tmp_path = tmp_dir.keep();
 
         match registry_type {
             RegistryType::Experiment | RegistryType::Deck => {
@@ -679,7 +679,7 @@ impl CardRegistry {
         T: OpsmlCard,
     {
         let tmp_dir = TempDir::new()?;
-        let tmp_path = tmp_dir.into_path();
+        let tmp_path = tmp_dir.keep();
         card.save(tmp_path.clone())?;
         Ok(tmp_path)
     }

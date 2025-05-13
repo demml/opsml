@@ -25,7 +25,7 @@ use opsml_types::{SaveName, Suffix};
 use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::sync::Arc;
 use tempfile::tempdir;
-use tracing::{debug, error, instrument};
+use tracing::{debug, error, info, instrument};
 /// Route for checking if a card UID exists
 #[axum::debug_handler]
 pub async fn check_card_uid(
@@ -207,7 +207,7 @@ pub async fn create_card(
         return OpsmlServerError::permission_denied().into_response(StatusCode::FORBIDDEN);
     }
 
-    debug!(
+    info!(
         "Creating card: {}/{}/{} - registry: {:?}",
         &card_request.card.space(),
         &card_request.card.name(),
@@ -286,7 +286,7 @@ pub async fn update_card(
     State(state): State<Arc<AppState>>,
     Json(card_request): Json<UpdateCardRequest>,
 ) -> Result<Response, (StatusCode, Json<OpsmlServerError>)> {
-    debug!(
+    info!(
         "Updating card: {}/{}/{} - registry: {:?}",
         &card_request.card.space(),
         &card_request.card.name(),
@@ -332,7 +332,7 @@ pub async fn delete_card(
     Extension(perms): Extension<UserPermissions>,
     Query(params): Query<DeleteCardRequest>,
 ) -> Result<Response, (StatusCode, Json<OpsmlServerError>)> {
-    debug!("Deleting card: {}", &params.uid);
+    info!("Deleting card: {}", &params.uid);
 
     if !perms.has_delete_permission(&params.space) {
         return OpsmlServerError::permission_denied().into_response(StatusCode::FORBIDDEN);
@@ -385,8 +385,6 @@ pub async fn load_card(
     State(state): State<Arc<AppState>>,
     Query(params): Query<CardQueryArgs>,
 ) -> Result<Json<ArtifactKey>, (StatusCode, Json<OpsmlServerError>)> {
-    // get uid if exists
-
     let table = CardTable::from_registry_type(&params.registry_type);
     let key = state
         .sql_client

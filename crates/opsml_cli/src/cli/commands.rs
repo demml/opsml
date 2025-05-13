@@ -1,4 +1,4 @@
-use crate::cli::arg::{DownloadCard, KeyArgs, ListCards};
+use crate::cli::arg::{DownloadCard, KeyArgs, ListCards, ScouterArgs};
 use clap::builder::styling::{AnsiColor, Effects};
 use clap::builder::Styles;
 use clap::command;
@@ -111,6 +111,15 @@ pub enum Commands {
         #[command(subcommand)]
         command: GenerateCommands,
     },
+
+    /// Update Scouter Drift Profile Status
+    ///
+    /// # Example
+    /// opsml scouter update-profile --space space --name name --version version --drift-type drift_type --status status
+    Scouter {
+        #[command(subcommand)]
+        command: ScouterCommands,
+    },
 }
 
 #[derive(Subcommand)]
@@ -146,6 +155,15 @@ pub enum InstallCommands {
 #[derive(Subcommand)]
 pub enum GenerateCommands {
     Key(KeyArgs),
+}
+
+#[derive(Subcommand)]
+pub enum ScouterCommands {
+    /// Update Scouter Drift Profile Status
+    ///
+    /// # Example
+    /// opsml scouter update-profile --space space --name name --version version --drift-type drift_type --status status
+    UpdateProfileStatus(ScouterArgs),
 }
 
 pub const LOGO_TEXT: &str = "

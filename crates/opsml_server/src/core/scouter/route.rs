@@ -28,7 +28,7 @@ use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::path::PathBuf;
 use std::sync::Arc;
 use tempfile::tempdir;
-use tracing::{debug, error, instrument};
+use tracing::{error, info, instrument};
 
 use crate::core::scouter::utils::load_drift_profiles;
 
@@ -187,7 +187,7 @@ pub async fn update_drift_profile_status(
     if !perms.has_write_permission(&body.space) {
         return OpsmlServerError::permission_denied().into_response(StatusCode::FORBIDDEN);
     }
-    debug!("Updating drift profile status: {:?}", &body);
+    info!("Updating drift profile status: {:?}", &body);
 
     let exchange_token = data.exchange_token_from_perms(&perms).await.map_err(|e| {
         error!("Failed to exchange token for scouter: {}", e);

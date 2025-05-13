@@ -71,6 +71,15 @@ impl ScouterServer {
     pub async fn new() -> Self {
         let mut server = mockito::Server::new_async().await;
 
+        // scouter healthcheck
+        server
+            .mock("GET", "/scouter/healthcheck")
+            .with_status(200)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{"status": "Alive"}"#)
+            .create_async()
+            .await;
+
         // insert user mock
         server
             .mock("POST", "/scouter/user")

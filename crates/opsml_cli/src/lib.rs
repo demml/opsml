@@ -8,6 +8,7 @@ use actions::download::download_deck;
 pub use actions::{generate_key, lock::install_app};
 use anyhow::Context;
 use clap::Parser;
+use cli::commands::ScouterCommands;
 use opsml_colors::Colorize;
 use opsml_types::RegistryType;
 
@@ -85,6 +86,19 @@ pub fn run_cli(args: Vec<String>) -> anyhow::Result<()> {
         Some(Commands::Generate { command }) => match command {
             GenerateCommands::Key(args) => {
                 generate_key(&args.password, args.rounds).context("Failed to generate key")?;
+                Ok(())
+            }
+        },
+        Some(Commands::Scouter { command }) => match command {
+            // Scouter commands can be added here
+            ScouterCommands::UpdateProfileStatus(args) => {
+                println!("Updating Scouter profile...");
+                // Implement the logic to update the Scouter profile here
+
+                Ok(())
+            }
+            _ => {
+                println!("Scouter command not implemented yet");
                 Ok(())
             }
         },
