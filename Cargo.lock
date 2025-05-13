@@ -3834,7 +3834,7 @@ dependencies = [
 
 [[package]]
 name = "opsml-auth"
-version = "3.0.0-rc.1"
+version = "3.0.0-alpha.1"
 dependencies = [
  "jsonwebtoken",
  "opsml-sql",
@@ -3846,7 +3846,7 @@ dependencies = [
 
 [[package]]
 name = "opsml-cards"
-version = "3.0.0-rc.1"
+version = "3.0.0-alpha.1"
 dependencies = [
  "chrono",
  "opsml-colors",
@@ -3870,7 +3870,7 @@ dependencies = [
 
 [[package]]
 name = "opsml-cli"
-version = "3.0.0-rc.1"
+version = "3.0.0-alpha.1"
 dependencies = [
  "anyhow",
  "base64 0.22.1",
@@ -3904,7 +3904,7 @@ dependencies = [
 
 [[package]]
 name = "opsml-client"
-version = "3.0.0-rc.1"
+version = "3.0.0-alpha.1"
 dependencies = [
  "futures",
  "mockito",
@@ -3926,14 +3926,14 @@ dependencies = [
 
 [[package]]
 name = "opsml-colors"
-version = "3.0.0-rc.1"
+version = "3.0.0-alpha.1"
 dependencies = [
  "owo-colors",
 ]
 
 [[package]]
 name = "opsml-crypt"
-version = "3.0.0-rc.1"
+version = "3.0.0-alpha.1"
 dependencies = [
  "aes-gcm",
  "hkdf",
@@ -3950,7 +3950,7 @@ dependencies = [
 
 [[package]]
 name = "opsml-events"
-version = "3.0.0-rc.1"
+version = "3.0.0-alpha.1"
 dependencies = [
  "axum",
  "chrono",
@@ -3967,7 +3967,7 @@ dependencies = [
 
 [[package]]
 name = "opsml-experiment"
-version = "3.0.0-rc.1"
+version = "3.0.0-alpha.1"
 dependencies = [
  "chrono",
  "names",
@@ -3991,7 +3991,7 @@ dependencies = [
 
 [[package]]
 name = "opsml-interfaces"
-version = "3.0.0-rc.1"
+version = "3.0.0-alpha.1"
 dependencies = [
  "opsml-types",
  "opsml-utils",
@@ -4008,7 +4008,7 @@ dependencies = [
 
 [[package]]
 name = "opsml-registry"
-version = "3.0.0-rc.1"
+version = "3.0.0-alpha.1"
 dependencies = [
  "anyhow",
  "opsml-cards",
@@ -4035,7 +4035,7 @@ dependencies = [
 
 [[package]]
 name = "opsml-semver"
-version = "3.0.0-rc.1"
+version = "3.0.0-alpha.1"
 dependencies = [
  "pyo3",
  "semver",
@@ -4045,7 +4045,7 @@ dependencies = [
 
 [[package]]
 name = "opsml-server"
-version = "3.0.0-rc.1"
+version = "3.0.0-alpha.1"
 dependencies = [
  "anyhow",
  "axum",
@@ -4092,7 +4092,7 @@ dependencies = [
 
 [[package]]
 name = "opsml-settings"
-version = "3.0.0-rc.1"
+version = "3.0.0-alpha.1"
 dependencies = [
  "base64 0.22.1",
  "opsml-types",
@@ -4106,7 +4106,7 @@ dependencies = [
 
 [[package]]
 name = "opsml-sql"
-version = "3.0.0-rc.1"
+version = "3.0.0-alpha.1"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -4128,7 +4128,7 @@ dependencies = [
 
 [[package]]
 name = "opsml-state"
-version = "3.0.0-rc.1"
+version = "3.0.0-alpha.1"
 dependencies = [
  "futures",
  "opsml-client",
@@ -4143,7 +4143,7 @@ dependencies = [
 
 [[package]]
 name = "opsml-storage"
-version = "3.0.0-rc.1"
+version = "3.0.0-alpha.1"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -4185,7 +4185,7 @@ dependencies = [
 
 [[package]]
 name = "opsml-todo"
-version = "3.0.0-rc.1"
+version = "3.0.0-alpha.1"
 dependencies = [
  "clap 4.5.38",
  "opsml-colors",
@@ -4196,7 +4196,7 @@ dependencies = [
 
 [[package]]
 name = "opsml-toml"
-version = "3.0.0-rc.1"
+version = "3.0.0-alpha.1"
 dependencies = [
  "opsml-types",
  "opsml-version",
@@ -4208,7 +4208,7 @@ dependencies = [
 
 [[package]]
 name = "opsml-types"
-version = "3.0.0-rc.1"
+version = "3.0.0-alpha.1"
 dependencies = [
  "chrono",
  "opsml-colors",
@@ -4228,7 +4228,7 @@ dependencies = [
 
 [[package]]
 name = "opsml-utils"
-version = "3.0.0-rc.1"
+version = "3.0.0-alpha.1"
 dependencies = [
  "chrono",
  "colored_json",
@@ -4246,7 +4246,7 @@ dependencies = [
 
 [[package]]
 name = "opsml-version"
-version = "3.0.0-rc.1"
+version = "3.0.0-alpha.1"
 
 [[package]]
 name = "option-ext"
@@ -4624,7 +4624,7 @@ dependencies = [
 
 [[package]]
 name = "potato-head"
-version = "3.0.0-rc.1"
+version = "3.0.0-alpha.1"
 dependencies = [
  "mime_guess",
  "opsml-types",
@@ -4764,7 +4764,7 @@ dependencies = [
 
 [[package]]
 name = "py-opsml"
-version = "3.0.0-rc.1"
+version = "3.0.0-alpha.1"
 dependencies = [
  "anyhow",
  "mockito",
@@ -5586,7 +5586,7 @@ checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
 [[package]]
 name = "scouter-client"
 version = "0.4.6"
-source = "git+https://github.com/demml/scouter.git?branch=update%2Frust-client-for-opsml#00c50e150a7dcdda1bba9cb017602d145476e3cb"
+source = "git+https://github.com/demml/scouter.git?branch=update%2Frust-client-for-opsml#ab43247818410b66ed4c4003f4642584001ed66b"
 dependencies = [
  "chrono",
  "ndarray",
@@ -5613,7 +5613,7 @@ dependencies = [
 [[package]]
 name = "scouter-dispatch"
 version = "0.4.6"
-source = "git+https://github.com/demml/scouter.git?branch=update%2Frust-client-for-opsml#00c50e150a7dcdda1bba9cb017602d145476e3cb"
+source = "git+https://github.com/demml/scouter.git?branch=update%2Frust-client-for-opsml#ab43247818410b66ed4c4003f4642584001ed66b"
 dependencies = [
  "futures",
  "pyo3",
@@ -5628,7 +5628,7 @@ dependencies = [
 [[package]]
 name = "scouter-drift"
 version = "0.4.6"
-source = "git+https://github.com/demml/scouter.git?branch=update%2Frust-client-for-opsml#00c50e150a7dcdda1bba9cb017602d145476e3cb"
+source = "git+https://github.com/demml/scouter.git?branch=update%2Frust-client-for-opsml#ab43247818410b66ed4c4003f4642584001ed66b"
 dependencies = [
  "chrono",
  "cron",
@@ -5654,7 +5654,7 @@ dependencies = [
 [[package]]
 name = "scouter-events"
 version = "0.4.6"
-source = "git+https://github.com/demml/scouter.git?branch=update%2Frust-client-for-opsml#00c50e150a7dcdda1bba9cb017602d145476e3cb"
+source = "git+https://github.com/demml/scouter.git?branch=update%2Frust-client-for-opsml#ab43247818410b66ed4c4003f4642584001ed66b"
 dependencies = [
  "async-trait",
  "chrono",
@@ -5683,7 +5683,7 @@ dependencies = [
 [[package]]
 name = "scouter-observability"
 version = "0.4.6"
-source = "git+https://github.com/demml/scouter.git?branch=update%2Frust-client-for-opsml#00c50e150a7dcdda1bba9cb017602d145476e3cb"
+source = "git+https://github.com/demml/scouter.git?branch=update%2Frust-client-for-opsml#ab43247818410b66ed4c4003f4642584001ed66b"
 dependencies = [
  "itertools 0.14.0",
  "ndarray",
@@ -5700,7 +5700,7 @@ dependencies = [
 [[package]]
 name = "scouter-profile"
 version = "0.4.6"
-source = "git+https://github.com/demml/scouter.git?branch=update%2Frust-client-for-opsml#00c50e150a7dcdda1bba9cb017602d145476e3cb"
+source = "git+https://github.com/demml/scouter.git?branch=update%2Frust-client-for-opsml#ab43247818410b66ed4c4003f4642584001ed66b"
 dependencies = [
  "chrono",
  "indicatif",
@@ -5722,7 +5722,7 @@ dependencies = [
 [[package]]
 name = "scouter-settings"
 version = "0.4.6"
-source = "git+https://github.com/demml/scouter.git?branch=update%2Frust-client-for-opsml#00c50e150a7dcdda1bba9cb017602d145476e3cb"
+source = "git+https://github.com/demml/scouter.git?branch=update%2Frust-client-for-opsml#ab43247818410b66ed4c4003f4642584001ed66b"
 dependencies = [
  "base64 0.22.1",
  "pyo3",
@@ -5734,7 +5734,7 @@ dependencies = [
 [[package]]
 name = "scouter-types"
 version = "0.4.6"
-source = "git+https://github.com/demml/scouter.git?branch=update%2Frust-client-for-opsml#00c50e150a7dcdda1bba9cb017602d145476e3cb"
+source = "git+https://github.com/demml/scouter.git?branch=update%2Frust-client-for-opsml#ab43247818410b66ed4c4003f4642584001ed66b"
 dependencies = [
  "chrono",
  "colored_json",
