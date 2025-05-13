@@ -4,6 +4,7 @@ use crate::error::CliError;
 use clap::Args;
 use opsml_types::{contracts::CardQueryArgs, RegistryType};
 use opsml_utils::clean_string;
+use pyo3::{pyclass, pymethods};
 use scouter_client::DriftType;
 
 #[allow(clippy::wrong_self_convention)]
@@ -154,7 +155,8 @@ pub struct KeyArgs {
     pub rounds: u32,
 }
 
-#[derive(Args)]
+#[derive(Args, Clone)]
+#[pyclass]
 pub struct ScouterArgs {
     /// Space name
     #[arg(long = "space")]
@@ -178,4 +180,27 @@ pub struct ScouterArgs {
 
     #[arg(long = "deactivate-others", default_value = "false")]
     pub deactivate_others: bool,
+}
+
+#[pymethods]
+impl ScouterArgs {
+    /// Convert the ScouterArgs to a CardQueryArgs
+    #[new]
+    pub fn new(
+        space: String,
+        name: String,
+        version: String,
+        drift_type: DriftType,
+        active: bool,
+        deactivate_others: bool,
+    ) -> Self {
+        Self {
+            space,
+            name,
+            version,
+            drift_type,
+            active,
+            deactivate_others,
+        }
+    }
 }
