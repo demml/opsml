@@ -32,6 +32,28 @@ impl InterfaceDataType {
 }
 
 #[pyclass]
+#[derive(Debug, Default, Clone, Deserialize, Serialize)]
+pub struct DriftArgs {
+    #[pyo3(get, set)]
+    pub active: bool,
+
+    #[pyo3(get, set)]
+    pub deactivate_others: bool,
+}
+
+#[pymethods]
+impl DriftArgs {
+    #[new]
+    #[pyo3(signature = (active=true, deactivate_others=false))]
+    pub fn new(active: bool, deactivate_others: bool) -> Self {
+        Self {
+            active,
+            deactivate_others,
+        }
+    }
+}
+
+#[pyclass]
 #[derive(Debug, Default)]
 pub struct ModelSaveKwargs {
     pub onnx: Option<Py<PyDict>>,
@@ -42,17 +64,21 @@ pub struct ModelSaveKwargs {
 
     #[pyo3(get, set)]
     pub save_onnx: bool,
+
+    #[pyo3(get, set)]
+    pub drift: Option<DriftArgs>,
 }
 
 #[pymethods]
 impl ModelSaveKwargs {
     #[new]
-    #[pyo3(signature = (onnx=None, model=None, preprocessor=None, save_onnx=None))]
+    #[pyo3(signature = (onnx=None, model=None, preprocessor=None, save_onnx=None, drift=None))]
     pub fn new<'py>(
         onnx: Option<Bound<'py, PyAny>>,
         model: Option<Bound<'py, PyDict>>,
         preprocessor: Option<Bound<'py, PyDict>>,
         save_onnx: Option<bool>,
+        drift: Option<DriftArgs>,
     ) -> Result<Self, TypeError> {
         let mut save_onnx = save_onnx.unwrap_or(false);
         // check if onnx is None, PyDict or HuggingFaceOnnxArgs
@@ -85,6 +111,7 @@ impl ModelSaveKwargs {
             model,
             preprocessor,
             save_onnx,
+            drift,
         })
     }
 
@@ -172,6 +199,7 @@ impl Serialize for ModelSaveKwargs {
             state.serialize_field("model", &model)?;
             state.serialize_field("preprocessor", &preprocessor)?;
             state.serialize_field("save_onnx", &save_onnx)?;
+            state.serialize_field("drift", &self.drift)?;
             state.end()
         })
     }
@@ -200,6 +228,7 @@ impl<'de> Deserialize<'de> for ModelSaveKwargs {
                     let mut model = None;
                     let mut preprocessor = None;
                     let mut save_onnx = None;
+                    let mut drift = None;
 
                     while let Some(key) = map.next_key::<String>()? {
                         match key.as_str() {
@@ -247,6 +276,11 @@ impl<'de> Deserialize<'de> for ModelSaveKwargs {
                                 let value = map.next_value::<Option<bool>>()?;
                                 save_onnx = value;
                             }
+
+                            "drift" => {
+                                let value = map.next_value::<Option<DriftArgs>>()?;
+                                drift = value;
+                            }
                             _ => {
                                 let _: serde::de::IgnoredAny = map.next_value()?;
                             }
@@ -257,6 +291,7 @@ impl<'de> Deserialize<'de> for ModelSaveKwargs {
                         model,
                         preprocessor,
                         save_onnx: save_onnx.unwrap_or(false),
+                        drift,
                     };
                     Ok(kwargs)
                 })
@@ -281,12 +316,14 @@ impl Clone for ModelSaveKwargs {
                 .as_ref()
                 .map(|preprocessor| preprocessor.clone_ref(py));
             let save_onnx = self.save_onnx;
+            let drift = self.drift.clone();
 
             ModelSaveKwargs {
                 onnx,
                 model,
                 preprocessor,
                 save_onnx,
+                drift,
             }
         })
     }

@@ -16,7 +16,7 @@ from opsml import (  # type: ignore
 )
 from opsml.card import CardDeck, Card  # type: ignore
 from opsml.card import RegistryMode, CardList  # type: ignore
-from opsml.model import SklearnModel  # type: ignore
+from opsml.model import SklearnModel, DriftArgs  # type: ignore
 from opsml.data import PandasData  # type: ignore
 from pathlib import Path
 import shutil
@@ -177,7 +177,16 @@ def crud_modelcard(random_forest_classifier: SklearnModel, datacard: DataCard):
     card.experimentcard_uid = "test"
     assert card.experimentcard_uid == "test"
 
-    reg.register_card(card=card, save_kwargs=ModelSaveKwargs(save_onnx=True))
+    reg.register_card(
+        card=card,
+        save_kwargs=ModelSaveKwargs(
+            save_onnx=True,
+            drift=DriftArgs(  # we want to set the drift profile to active
+                active=True,
+                deactivate_others=True,
+            ),
+        ),
+    )
     cards = reg.list_cards()
     cards.as_table()
 
