@@ -38,10 +38,8 @@ impl Card {
     /// Validate the card configuration to ensure drift is only used for model cards
     pub fn validate(&self) -> Result<(), PyProjectTomlError> {
         // Only allow drift configuration for model cards
-        if self.drift.is_some() {
-            if self.registry_type != RegistryType::Model {
-                return Err(PyProjectTomlError::InvalidConfiguration);
-            }
+        if self.drift.is_some() && self.registry_type != RegistryType::Model {
+            return Err(PyProjectTomlError::InvalidConfiguration);
         }
         Ok(())
     }
