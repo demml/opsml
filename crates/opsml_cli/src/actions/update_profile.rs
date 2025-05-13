@@ -2,7 +2,7 @@ use crate::cli::arg::ScouterArgs;
 use crate::error::CliError;
 use opsml_registry::base::OpsmlRegistry;
 use opsml_types::RegistryType;
-use scouter_client::{DriftType, ProfileStatusRequest};
+use scouter_client::ProfileStatusRequest;
 
 /// Update the drift profile status
 ///
@@ -15,7 +15,7 @@ pub fn update_drift_profile_status(args: &ScouterArgs) -> Result<(), CliError> {
         name: args.name.clone(),
         version: args.version.clone(),
         active: args.active,
-        drift_type: Some(DriftType::from(args.drift_type.clone())),
+        drift_type: Some(args.drift_type.clone()),
         deactivate_others: args.deactivate_others,
     };
 

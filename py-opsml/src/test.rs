@@ -15,12 +15,121 @@ use std::time::Duration;
 #[cfg(feature = "server")]
 use tokio::{runtime::Runtime, sync::Mutex, task::JoinHandle};
 
+#[cfg(feature = "test")]
+use mockito;
+#[cfg(feature = "test")]
+use scouter_client::{BinnedCustomMetrics, BinnedPsiFeatureMetrics, SpcDriftFeatures};
+#[cfg(feature = "test")]
+use serde_json;
+
 use pyo3::exceptions::PyRuntimeError;
 use pyo3::prelude::*;
 use pyo3::PyErr;
 use pyo3::PyResult;
+
 use std::path::PathBuf;
 use thiserror::Error;
+
+#[cfg(feature = "test")]
+pub struct ScouterServer {
+    pub url: String,
+    pub server: mockito::ServerGuard,
+}
+
+#[cfg(feature = "test")]
+impl ScouterServer {
+    pub fn new() -> Self {
+        let mut server = mockito::Server::new();
+
+        // Healthcheck mock
+        server
+            .mock("GET", "/scouter/healthcheck")
+            .with_status(200)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{"status": "Alive"}"#)
+            .create();
+
+        // User mocks
+        server
+            .mock("POST", "/scouter/user")
+            .with_status(200)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{"status": "success", "message": "created_user"}"#)
+            .create();
+
+        server
+            .mock("PUT", "/scouter/user")
+            .with_status(200)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{"status": "success", "message": "updated_user"}"#)
+            .create();
+
+        server
+            .mock("DELETE", "/scouter/user")
+            .with_status(200)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{"status": "success", "message": "deleted_user"}"#)
+            .create();
+
+        // Profile mocks
+        server
+            .mock("POST", "/scouter/profile")
+            .match_header("content-type", mockito::Matcher::Any)
+            .match_header("authorization", mockito::Matcher::Any)
+            .match_body(mockito::Matcher::Any)
+            .with_status(200)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{"status": "success", "message": "Profile created"}"#)
+            .create();
+
+        server
+            .mock("PUT", "/scouter/profile")
+            .match_header("content-type", mockito::Matcher::Any)
+            .match_header("authorization", mockito::Matcher::Any)
+            .match_body(mockito::Matcher::Any)
+            .with_status(200)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{"status": "success", "message": "Profile updated"}"#)
+            .create();
+
+        server
+            .mock("PUT", "/scouter/profile/status")
+            .match_header("content-type", mockito::Matcher::Any)
+            .match_header("authorization", mockito::Matcher::Any)
+            .match_body(mockito::Matcher::Any)
+            .with_status(200)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{"status": "success", "message": "Profile updated"}"#)
+            .create();
+
+        // Drift feature mocks
+        server
+            .mock("GET", "/scouter/drift/spc")
+            .match_query(mockito::Matcher::Any)
+            .with_status(200)
+            .with_body(serde_json::to_string(&SpcDriftFeatures::default()).unwrap())
+            .create();
+
+        server
+            .mock("GET", "/scouter/drift/psi")
+            .match_query(mockito::Matcher::Any)
+            .with_status(200)
+            .with_body(serde_json::to_string(&BinnedPsiFeatureMetrics::default()).unwrap())
+            .create();
+
+        server
+            .mock("GET", "/scouter/drift/custom")
+            .match_query(mockito::Matcher::Any)
+            .with_status(200)
+            .with_body(serde_json::to_string(&BinnedCustomMetrics::default()).unwrap())
+            .create();
+
+        Self {
+            url: server.url(),
+            server,
+        }
+    }
+}
 
 #[derive(Error, Debug)]
 pub enum TestServerError {
@@ -49,9 +158,15 @@ impl From<TestServerError> for PyErr {
 pub struct OpsmlTestServer {
     #[cfg(feature = "server")]
     handle: Arc<Mutex<Option<JoinHandle<()>>>>,
+
     #[cfg(feature = "server")]
     runtime: Arc<Runtime>,
+
+    #[cfg(feature = "test")]
+    scouter_server: Option<ScouterServer>,
+
     cleanup: bool,
+
     base_path: Option<PathBuf>,
 }
 
@@ -65,8 +180,26 @@ impl OpsmlTestServer {
             handle: Arc::new(Mutex::new(None)),
             #[cfg(feature = "server")]
             runtime: Arc::new(Runtime::new().unwrap()),
+            #[cfg(feature = "test")]
+            scouter_server: None,
             cleanup,
             base_path,
+        }
+    }
+
+    #[cfg(feature = "test")]
+    pub fn start_mock_scouter(&mut self) -> PyResult<()> {
+        let scouter_server = ScouterServer::new();
+        std::env::set_var("SCOUTER_SERVER_URI", &scouter_server.url);
+        self.scouter_server = Some(scouter_server);
+        Ok(())
+    }
+
+    #[cfg(feature = "test")]
+    pub fn stop_mock_scouter(&mut self) {
+        if let Some(server) = self.scouter_server.take() {
+            drop(server);
+            std::env::remove_var("SCOUTER_SERVER_URI");
         }
     }
 
@@ -86,8 +219,12 @@ impl OpsmlTestServer {
     fn start_server(&mut self) -> PyResult<()> {
         #[cfg(feature = "server")]
         {
-            println!("Starting Opsml Server...");
             self.cleanup()?;
+
+            println!("Starting Scouter Server...");
+            self.start_mock_scouter()?;
+
+            println!("Starting Opsml Server...");
 
             // set server env vars
             std::env::set_var("APP_ENV", "dev_server");
@@ -150,7 +287,7 @@ impl OpsmlTestServer {
         }
     }
 
-    fn stop_server(&self) -> PyResult<()> {
+    fn stop_server(&mut self) -> PyResult<()> {
         #[cfg(feature = "server")]
         {
             let handle = self.handle.clone();
@@ -161,6 +298,7 @@ impl OpsmlTestServer {
 
             if self.cleanup {
                 println!("Cleaning up Opsml Server...");
+                self.stop_mock_scouter();
                 self.cleanup()?;
             }
 
@@ -205,7 +343,7 @@ impl OpsmlTestServer {
     }
 
     fn __exit__(
-        &self,
+        &mut self,
         _exc_type: PyObject,
         _exc_value: PyObject,
         _traceback: PyObject,
