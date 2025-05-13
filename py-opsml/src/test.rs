@@ -49,6 +49,14 @@ impl ScouterServer {
             .with_body(r#"{"status": "Alive"}"#)
             .create();
 
+        // auth mocks
+        server
+            .mock("GET", "/scouter/auth/login")
+            .with_status(200)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{"token": "my-jwt-token"}"#)
+            .create();
+
         // User mocks
         server
             .mock("POST", "/scouter/user")
@@ -357,18 +365,45 @@ impl OpsmlTestServer {
 // create context manager that can be use in server test to cleanup resources
 
 #[pyclass]
-pub struct OpsmlServerContext {}
+pub struct OpsmlServerContext {
+    #[cfg(feature = "test")]
+    scouter_server: Option<ScouterServer>,
+}
 
 #[pymethods]
 impl OpsmlServerContext {
     #[new]
     fn new() -> Self {
-        OpsmlServerContext {}
+        OpsmlServerContext {
+            #[cfg(feature = "test")]
+            scouter_server: None,
+        }
     }
 
-    fn __enter__(&self) -> PyResult<()> {
+    #[cfg(feature = "test")]
+    pub fn start_mock_scouter(&mut self) -> PyResult<()> {
+        let scouter_server = ScouterServer::new();
+        std::env::set_var("SCOUTER_SERVER_URI", &scouter_server.url);
+        println!("Mock Scouter Server started at {}", scouter_server.url);
+        self.scouter_server = Some(scouter_server);
+        Ok(())
+    }
+
+    #[cfg(feature = "test")]
+    pub fn stop_mock_scouter(&mut self) {
+        if let Some(server) = self.scouter_server.take() {
+            drop(server);
+            std::env::remove_var("SCOUTER_SERVER_URI");
+        }
+        println!("Mock Scouter Server stopped");
+    }
+
+    fn __enter__(mut self_: PyRefMut<Self>) -> PyResult<PyRefMut<Self>> {
         #[cfg(feature = "server")]
         {
+            #[cfg(feature = "test")]
+            self_.start_mock_scouter()?;
+
             app_state().reset_app_state().map_err(|e| {
                 TestServerError::CustomError(format!("Failed to reset app state: {}", e))
             })?;
@@ -377,16 +412,36 @@ impl OpsmlServerContext {
             })?;
         }
 
-        self.cleanup()?;
-        Ok(())
+        self_.cleanup()?;
+
+        Ok(self_)
+    }
+
+    #[getter]
+    pub fn server_uri(&self) -> PyResult<String> {
+        #[cfg(feature = "test")]
+        {
+            if let Some(server) = &self.scouter_server {
+                Ok(server.url.clone())
+            } else {
+                Err(TestServerError::CustomError("Scouter server not started".to_string()).into())
+            }
+        }
+        #[cfg(not(feature = "test"))]
+        {
+            Err(TestServerError::CustomError("Test feature not enabled".to_string()).into())
+        }
     }
 
     fn __exit__(
-        &self,
+        &mut self,
         _exc_type: PyObject,
         _exc_value: PyObject,
         _traceback: PyObject,
     ) -> PyResult<()> {
+        #[cfg(feature = "test")]
+        self.stop_mock_scouter();
+
         self.cleanup()?;
         Ok(())
     }

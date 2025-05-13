@@ -2,6 +2,7 @@ use crate::error::RegistryError;
 use opsml_client::ClientRegistry;
 use opsml_semver::VersionType;
 use opsml_settings::config::OpsmlMode;
+use opsml_settings::ScouterSettings;
 use opsml_state::{app_state, get_api_client};
 use opsml_types::contracts::{
     CardQueryArgs, CardRecord, CreateCardResponse, GetMetricRequest, MetricRequest,
@@ -14,9 +15,22 @@ use opsml_types::{
         HardwareMetricRequest, ParameterRequest,
     },
 };
+use scouter_client::ScouterClient;
 use scouter_client::{ProfileRequest, ProfileStatusRequest};
+use tracing::{error, info, instrument};
 
-use tracing::{error, instrument};
+pub fn setup_scouter_client(
+    settings: &ScouterSettings,
+) -> Result<Option<ScouterClient>, RegistryError> {
+    if settings.server_uri.is_empty() {
+        info!("Scouter client is disabled");
+        return Ok(None);
+    }
+
+    // Create a new HTTP client with default config
+    let scouter_client = ScouterClient::new(None)?;
+    Ok(Some(scouter_client))
+}
 
 #[derive(Debug, Clone)]
 pub enum OpsmlRegistry {
@@ -53,15 +67,22 @@ impl OpsmlRegistry {
                     let settings = config.storage_settings().inspect_err(|e| {
                         error!("Failed to get storage settings: {}", e);
                     })?;
+
                     let db_settings = config.database_settings.clone();
+
+                    // check if scouter is enabled
+                    let scouter_client = setup_scouter_client(&config.scouter_settings)?;
+
                     let server_registry = state.block_on(async {
                         crate::server::registry::server_logic::ServerRegistry::new(
                             registry_type,
                             settings,
                             db_settings,
+                            scouter_client,
                         )
                         .await
                     })?;
+
                     Ok(Self::ServerRegistry(server_registry))
                 }
                 #[cfg(not(feature = "server"))]

@@ -52,3 +52,7 @@ class OpsmlServerContext:
 
     def __exit__(self, exc_type, exc_value, traceback) -> None:
         """Stops the server context."""
+
+    @property
+    def server_uri(self) -> str:
+        """Returns the server URI."""
