@@ -7,7 +7,7 @@ use opsml_types::{
     contracts::*,
     IntegratedService, RegistryMode, RegistryType,
 };
-use scouter_client::{ProfileRequest, ScouterResponse, ScouterServerError};
+use scouter_client::{ProfileRequest, ProfileStatusRequest, ScouterResponse, ScouterServerError};
 use serde::Deserialize;
 use std::sync::Arc;
 use tracing::error;
@@ -487,6 +487,37 @@ impl ClientRegistry {
         let _inserted = response
             .json::<ScouterResponse>()
             .map_err(RegistryError::RequestError)?;
+
+        Ok(())
+    }
+
+    pub fn update_drift_profile_status(
+        &self,
+        profile: &ProfileStatusRequest,
+    ) -> Result<(), RegistryError> {
+        let body = serde_json::to_value(profile)?;
+
+        let response = self
+            .api_client
+            .request(
+                Routes::ScouterProfileStatus,
+                RequestType::Post,
+                Some(body),
+                None,
+                None,
+            )
+            .inspect_err(|e| {
+                error!("Failed to update scouter profile status {}", e);
+            })?;
+
+        // check response status for error
+        if response.status() == 500 {
+            // raise error
+            let error = response
+                .json::<ScouterServerError>()
+                .map_err(RegistryError::RequestError)?;
+            return Err(ApiClientError::ForbiddenError(error.error).into());
+        }
 
         Ok(())
     }

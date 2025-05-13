@@ -5,6 +5,7 @@ pub mod error;
 use crate::actions::{download_card, list_cards};
 use crate::cli::{Cli, Commands, GenerateCommands, GetCommands, InstallCommands, ListCommands};
 use actions::download::download_deck;
+use actions::update_profile::update_drift_profile_status;
 pub use actions::{generate_key, lock::install_app};
 use anyhow::Context;
 use clap::Parser;
@@ -92,9 +93,8 @@ pub fn run_cli(args: Vec<String>) -> anyhow::Result<()> {
         Some(Commands::Scouter { command }) => match command {
             // Scouter commands can be added here
             ScouterCommands::UpdateProfileStatus(args) => {
-                println!("Updating Scouter profile...");
-                // Implement the logic to update the Scouter profile here
-
+                update_drift_profile_status(args)
+                    .context("Failed to update Scouter profile status")?;
                 Ok(())
             }
             _ => {
