@@ -6,11 +6,9 @@ from .. import scouter  # noqa: F401
 CommonCrons = scouter._types.CommonCrons
 DataType = scouter._types.DataType
 DriftType = scouter._types.DriftType
-ScouterError = scouter._types.ScouterError
 
 __all__ = [
     "DriftType",
     "CommonCrons",
     "DataType",
-    "ScouterError",
 ]

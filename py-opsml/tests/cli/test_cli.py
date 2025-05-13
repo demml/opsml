@@ -3,11 +3,18 @@
 # In order to test the CLI, we expose some of the top-level functions in the opsml.cli module.
 ###################################################################################################
 
-from opsml.cli import lock_project, install_app, generate_key  # type: ignore
+from opsml.cli import (
+    lock_project,
+    install_app,
+    generate_key,
+    update_drift_profile_status,
+    ScouterArgs,
+)  # type: ignore
 import os
 from pathlib import Path
 import shutil
 from opsml.test import OpsmlTestServer
+from opsml.scouter.types import DriftType
 
 from opsml import (  # type: ignore
     start_experiment,
@@ -67,7 +74,7 @@ def test_pyproject_app_lock_project(
 
 
     """
-    with OpsmlTestServer(False, CURRENT_DIRECTORY):
+    with OpsmlTestServer(True, CURRENT_DIRECTORY):
         # run experiment to populate registry
         run_experiment(random_forest_classifier, chat_prompt)
 
@@ -148,3 +155,21 @@ def test_generate_key():
     rounds = 10
 
     generate_key(password=password, rounds=rounds)
+
+
+def test_update_profile_status_key():
+    """
+    This test is meant to test updating the status of a drift profile via the CLI.
+    """
+
+    # need to start the server to create a mock scouter server
+    with OpsmlTestServer():
+        args = ScouterArgs(
+            space="test",
+            name="test",
+            version="1.0.0",
+            active=True,
+            drift_type=DriftType.Psi,
+            deactivate_others=False,
+        )
+        update_drift_profile_status(args)
