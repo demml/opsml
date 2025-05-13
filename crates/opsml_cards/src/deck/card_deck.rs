@@ -692,6 +692,22 @@ impl CardDeck {
             experimentcard_uid: None,
         })
     }
+
+    /// Helper method for getting a card by alias
+    ///
+    /// # Arguments
+    /// * `alias` - The alias of the card to retrieve
+    ///
+    /// # Returns
+    /// Returns a `Result<Card, CardError>` containing the card if found, or an error if not found
+    pub fn get_card(&self, alias: &str) -> Result<Card, CardError> {
+        self.cards
+            .cards
+            .iter()
+            .find(|card| card.alias == alias)
+            .cloned()
+            .ok_or_else(|| CardError::AliasNotFoundInDeckError)
+    }
 }
 
 // generic trait for compatibility and use in rust-based card functions
