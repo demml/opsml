@@ -103,7 +103,7 @@ impl OnnxModel {
 
         let sample_data_uri = parent.save_data(py, &path, None)?;
 
-        let drift_profile_map = if parent.drift_profile.is_empty() {
+        let drift_profile_uri_map = if parent.drift_profile.is_empty() {
             None
         } else {
             Some(parent.save_drift_profile(py, &path)?)
@@ -116,7 +116,7 @@ impl OnnxModel {
             data_processor_map: HashMap::new(),
             sample_data_uri,
             onnx_model_uri: Some(onnx_model_uri),
-            drift_profile_map,
+            drift_profile_uri_map,
             extra: None,
             save_kwargs,
         };
@@ -136,7 +136,6 @@ impl OnnxModel {
             parent.interface_type.clone(),
             onnx_session,
             HashMap::new(),
-            parent.drift_type.clone(),
         );
 
         Ok(metadata)
@@ -172,7 +171,7 @@ impl OnnxModel {
             let onnx_path = path.join(&metadata.model_uri);
             parent.load_onnx_model(py, &onnx_path, load_kwargs.onnx_kwargs(py))?;
 
-            if let Some(ref drift_map) = metadata.drift_profile_map {
+            if let Some(ref drift_map) = metadata.drift_profile_uri_map {
                 parent.load_drift_profile(py, &path, drift_map)?;
             }
 

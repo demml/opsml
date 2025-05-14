@@ -181,7 +181,7 @@ impl CatBoostModel {
         };
 
         // save drift profile
-        let drift_profile_map = if self_.as_super().drift_profile.is_empty() {
+        let drift_profile_uri_map = if self_.as_super().drift_profile.is_empty() {
             None
         } else {
             Some(self_.as_super().save_drift_profile(py, &path)?)
@@ -201,7 +201,7 @@ impl CatBoostModel {
             data_processor_map,
             sample_data_uri,
             onnx_model_uri,
-            drift_profile_map,
+            drift_profile_uri_map,
             extra: None,
             save_kwargs,
             ..Default::default()
@@ -220,7 +220,6 @@ impl CatBoostModel {
             self_.as_super().interface_type.clone(),
             onnx_session,
             extra,
-            self_.as_super().drift_type.clone(),
         );
 
         // save model
@@ -285,7 +284,7 @@ impl CatBoostModel {
                 parent.load_onnx_model(py, &onnx_path, load_kwargs.onnx_kwargs(py))?;
             }
 
-            if let Some(ref drift_map) = metadata.drift_profile_map {
+            if let Some(ref drift_map) = metadata.drift_profile_uri_map {
                 parent.load_drift_profile(py, &path, drift_map)?;
             }
 

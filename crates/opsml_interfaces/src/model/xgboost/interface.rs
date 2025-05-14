@@ -220,7 +220,7 @@ impl XGBoostModel {
             })
         };
 
-        let drift_profile_map = if self_.as_super().drift_profile.is_empty() {
+        let drift_profile_uri_map = if self_.as_super().drift_profile.is_empty() {
             None
         } else {
             Some(self_.as_super().save_drift_profile(py, &path)?)
@@ -241,7 +241,7 @@ impl XGBoostModel {
             data_processor_map,
             sample_data_uri,
             onnx_model_uri,
-            drift_profile_map,
+            drift_profile_uri_map,
             extra: None,
             save_kwargs,
             ..Default::default()
@@ -257,7 +257,6 @@ impl XGBoostModel {
             self_.as_super().interface_type.clone(),
             onnx_session,
             HashMap::new(),
-            self_.as_super().drift_type.clone(),
         );
 
         let model_uri = XGBoostModel::save_model(self_, py, &path)?;
@@ -322,7 +321,7 @@ impl XGBoostModel {
             }
 
             debug!("Loading drift profile");
-            if let Some(ref drift_map) = metadata.drift_profile_map {
+            if let Some(ref drift_map) = metadata.drift_profile_uri_map {
                 parent.load_drift_profile(py, &path, drift_map)?;
             }
 

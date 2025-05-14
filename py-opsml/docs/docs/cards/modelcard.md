@@ -372,6 +372,14 @@ modelcard.load(load_kwargs=ModelLoadKwargs(load_onnx=True)) #(1)
             Returns:
                 String representation of the ModelCard.
             """
+
+        @property
+        def drift_profile(self) -> DriftProfileMap:
+            """Return the drift profile map from the model interface.
+
+            Returns:
+                DriftProfileMap
+            """
     ```
 
 
@@ -1658,7 +1666,7 @@ class CustomInterface(ModelInterface): #(1)
         data_processor_map: Dict[str, DataProcessor]
         sample_data_uri: Path
         onnx_model_uri: Optional[Path]
-        drift_profile_map: Optional[Dict[str, DriftProfileUri]]
+        drift_profile_uri_map: Optional[Dict[str, DriftProfileUri]]
         extra: Optional[ExtraMetadata]
         save_kwargs: Optional[ModelSaveKwargs]
 
@@ -1668,7 +1676,7 @@ class CustomInterface(ModelInterface): #(1)
             data_processor_map: Optional[Dict[str, DataProcessor]] = {},  # type: ignore
             sample_data_uri: Optional[Path] = None,
             onnx_model_uri: Optional[Path] = None,
-            drift_profile_map: Optional[Dict[str, DriftProfileUri]] = None,
+            drift_profile_uri_map: Optional[Dict[str, DriftProfileUri]] = None,
             extra: Optional[ExtraMetadata] = None,
             save_kwargs: Optional[ModelSaveKwargs] = None,
         ) -> None:
@@ -1683,7 +1691,7 @@ class CustomInterface(ModelInterface): #(1)
                     Path to the sample data
                 onnx_model_uri:
                     Path to the onnx model
-                drift_profile_map:
+                drift_profile_uri_map:
                     Dictionary of drift profiles
                 extra_metadata:
                     Extra metadata

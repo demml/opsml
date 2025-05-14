@@ -10,7 +10,7 @@ use opsml_types::*;
 use opsml_types::{cards::CardTable, contracts::*};
 use opsml_utils::{clean_string, unwrap_pystring};
 use pyo3::prelude::*;
-use pyo3::types::PyDict;
+use pyo3::types::PyList;
 use scouter_client::ProfileRequest;
 use scouter_client::ProfileStatusRequest;
 use std::path::PathBuf;
@@ -465,17 +465,35 @@ impl CardRegistry {
         Ok(())
     }
 
+    /// This method will upload the scouter drift profile(s) to the registry
+    /// This is done by:
+    /// (1) Extracting the drift profile from the card (DriftProfileMap)
+    /// (2) Extracting the values as a PyList if drift profiles
+    /// (3) For each profile in list, create a profile request
+    /// (4) Upload the profile to the registry
+    /// (5) If drift_args is Some, update the drift profile status (allows users to immediately activate a drift profile)
+    ///
+    /// # Arguments
+    /// * `registry` - OpsmlRegistry
+    /// * `card` - Card to upload (ModelCard)
+    /// * `drift_args` - DriftArgs
+    /// * `response` - CreateCardResponse
+    ///
+    /// # Returns
+    /// * `Result<(), RegistryError>` - Result
     fn upload_scouter_artifacts(
         registry: &OpsmlRegistry,
         card: &Bound<'_, PyAny>,
         drift_args: Option<DriftArgs>,
         response: &CreateCardResponse,
     ) -> Result<(), RegistryError> {
-        let drift_profiles = card.getattr("interface")?.getattr("drift_profile")?;
-        // downcast to list
-        let drift_profiles = drift_profiles.downcast::<PyDict>()?;
+        let drift_profiles = card.getattr("drift_profile")?;
+        let binding = drift_profiles.call_method0("values")?;
+        let collected_profiles = binding
+            .downcast::<PyList>()
+            .inspect_err(|e| error!("Failed to downcast drift profiles: {:?}", e))?;
 
-        if let Some(profile) = drift_profiles.values().iter().next() {
+        if let Some(profile) = collected_profiles.iter().next() {
             let profile_request = profile
                 .call_method0("create_profile_request")?
                 .extract::<ProfileRequest>()?;
