@@ -45,7 +45,7 @@ def test_model_interface_drift_profile(
         sample_data=X,
         task_type=TaskType.Classification,
         preprocessor=StandardScaler(),
-        drift_profile=custom_profile1,
+        drift_profile={"custom1": custom_profile1},
     )
 
     # create spc

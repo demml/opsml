@@ -3,6 +3,7 @@ use crate::model::huggingface::types::HuggingFaceOnnxArgs;
 use opsml_utils::{json_to_pyobject, pyobject_to_json, PyHelperFuncs};
 use pyo3::prelude::*;
 use pyo3::types::{PyDict, PyList};
+use pyo3::IntoPyObjectExt;
 use scouter_client::DriftType;
 use serde::ser::SerializeStruct;
 use serde::{Deserialize, Serialize};
@@ -579,8 +580,14 @@ impl DriftProfileMap {
         DriftProfileMap { profiles }
     }
 
-    pub fn add_profile(&mut self, alias: String, profile: PyObject) {
-        self.profiles.insert(alias, profile);
+    pub fn add_profile(
+        &mut self,
+        py: Python,
+        alias: String,
+        profile: Bound<'_, PyAny>,
+    ) -> Result<(), ModelInterfaceError> {
+        self.profiles.insert(alias, profile.into_py_any(py)?);
+        Ok(())
     }
 
     /// Get a drift profile by alias
