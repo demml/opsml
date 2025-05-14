@@ -10,7 +10,7 @@ use opsml_types::*;
 use opsml_types::{cards::CardTable, contracts::*};
 use opsml_utils::{clean_string, unwrap_pystring};
 use pyo3::prelude::*;
-use pyo3::types::PyList;
+use pyo3::types::PyDict;
 use scouter_client::ProfileRequest;
 use scouter_client::ProfileStatusRequest;
 use std::path::PathBuf;
@@ -344,6 +344,7 @@ impl CardRegistry {
         // For example, Opsml will allow a user to register and store a Scouter drift profile
         // with a modelcard. However, this drift profile still needs to be registered with Scouter
         // so we can preform model monitoring and drift detection
+        debug!("Uploading integration artifacts");
         Self::upload_integration_artifacts(registry, registry_type, card, save_kwargs, response)?;
 
         Ok(())
@@ -472,9 +473,9 @@ impl CardRegistry {
     ) -> Result<(), RegistryError> {
         let drift_profiles = card.getattr("interface")?.getattr("drift_profile")?;
         // downcast to list
-        let drift_profiles = drift_profiles.downcast::<PyList>()?;
+        let drift_profiles = drift_profiles.downcast::<PyDict>()?;
 
-        if let Some(profile) = drift_profiles.iter().next() {
+        if let Some(profile) = drift_profiles.values().iter().next() {
             let profile_request = profile
                 .call_method0("create_profile_request")?
                 .extract::<ProfileRequest>()?;

@@ -610,7 +610,6 @@ class ModelCard:
         Returns:
             Path to the drift profile
         """
-        ...
 
     def __str__(self) -> str:
         """Return a string representation of the ModelCard.
