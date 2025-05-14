@@ -224,7 +224,7 @@ impl TorchModel {
         save_kwargs: Option<ModelSaveKwargs>,
     ) -> Result<ModelInterfaceMetadata, ModelInterfaceError> {
         debug!("Saving drift profile");
-        let drift_profile_map = if self_.as_super().drift_profile.is_empty() {
+        let drift_profile_uri_map = if self_.as_super().drift_profile.is_empty() {
             None
         } else {
             Some(self_.as_super().save_drift_profile(py, &path)?)
@@ -274,7 +274,7 @@ impl TorchModel {
             data_processor_map,
             sample_data_uri,
             onnx_model_uri,
-            drift_profile_map,
+            drift_profile_uri_map,
             extra: None,
             save_kwargs,
         };
@@ -296,7 +296,6 @@ impl TorchModel {
             self_.interface_type.clone(),
             onnx_session,
             HashMap::new(),
-            self_.as_super().drift_type.clone(),
         );
 
         Ok(metadata)
@@ -360,7 +359,7 @@ impl TorchModel {
         }
 
         debug!("Loading drift profile");
-        if let Some(ref drift_map) = metadata.drift_profile_map {
+        if let Some(ref drift_map) = metadata.drift_profile_uri_map {
             self_.as_super().load_drift_profile(py, &path, drift_map)?;
         }
 

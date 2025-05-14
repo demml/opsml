@@ -1,12 +1,15 @@
-use crate::error::TypeError;
+use crate::error::{ModelInterfaceError, TypeError};
 use crate::model::huggingface::types::HuggingFaceOnnxArgs;
 use opsml_utils::{json_to_pyobject, pyobject_to_json, PyHelperFuncs};
 use pyo3::prelude::*;
-use pyo3::types::PyDict;
+use pyo3::types::{PyDict, PyList};
+use scouter_client::DriftType;
 use serde::ser::SerializeStruct;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use serde_json::Value;
+use std::collections::HashMap;
+use std::path::PathBuf;
 
 #[pyclass(eq)]
 #[derive(PartialEq, Debug)]
@@ -540,5 +543,101 @@ impl Clone for ExtraMetadata {
 
             ExtraMetadata { metadata }
         })
+    }
+}
+
+#[pyclass]
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+pub struct DriftProfileUri {
+    pub uri: PathBuf,
+    pub drift_type: DriftType,
+}
+
+#[pyclass]
+#[derive(Debug)]
+pub struct DriftProfileMap {
+    pub profiles: HashMap<String, PyObject>,
+}
+
+impl Clone for DriftProfileMap {
+    fn clone(&self) -> Self {
+        Python::with_gil(|py| {
+            let mut profiles = HashMap::new();
+            for (k, v) in &self.profiles {
+                profiles.insert(k.clone(), v.clone_ref(py));
+            }
+            Self { profiles }
+        })
+    }
+}
+
+#[pymethods]
+impl DriftProfileMap {
+    #[new]
+    pub fn new() -> Self {
+        let profiles = HashMap::new();
+        DriftProfileMap { profiles }
+    }
+
+    pub fn add_profile(&mut self, alias: String, profile: PyObject) {
+        self.profiles.insert(alias, profile);
+    }
+
+    /// Get a drift profile by alias
+    ///
+    /// # Arguments
+    /// * `alias` - The alias of the drift profile
+    ///
+    /// # Returns
+    /// * `PyResult<Bound<'py, PyAny>>` - The drift profile
+    pub fn __getitem__<'py>(
+        &self,
+        py: Python<'py>,
+        key: String,
+    ) -> Result<&Bound<'py, PyAny>, ModelInterfaceError> {
+        let profile = self
+            .profiles
+            .get(&key)
+            .ok_or_else(|| ModelInterfaceError::DriftProfileNotFound)
+            .map(|profile| profile.bind(py))?;
+
+        Ok(profile)
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.profiles.is_empty()
+    }
+
+    pub fn update_config_args(
+        &mut self,
+        py: Python,
+        config_args: &Bound<'_, PyDict>,
+    ) -> Result<(), ModelInterfaceError> {
+        // iterate over the profiles and update the config args
+
+        for (_, profile) in &self.profiles {
+            let profile = profile.bind(py);
+            profile.call_method("update_config_args", (), Some(config_args))?;
+        }
+        Ok(())
+    }
+
+    /// Get the drift profile map as a list of profiles
+    /// This is a helper method used during card registration and artifact saving
+    pub fn values<'py>(&self, py: Python<'py>) -> Result<Bound<'py, PyList>, ModelInterfaceError> {
+        let py_list = PyList::empty(py);
+        for (_, profile) in &self.profiles {
+            py_list.append(profile.bind(py))?;
+        }
+
+        Ok(py_list)
+    }
+}
+
+impl DriftProfileMap {}
+
+impl Default for DriftProfileMap {
+    fn default() -> Self {
+        Self::new()
     }
 }

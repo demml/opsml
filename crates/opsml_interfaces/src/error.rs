@@ -360,6 +360,9 @@ pub enum ModelInterfaceError {
 
     #[error("Drift profile argument must be a dictionary of alias (string) and drift profile")]
     DriftProfileMustBeDictionary,
+
+    #[error("Drift profile not found in map")]
+    DriftProfileNotFound,
 }
 
 impl<'a> From<pyo3::DowncastError<'a, 'a>> for ModelInterfaceError {

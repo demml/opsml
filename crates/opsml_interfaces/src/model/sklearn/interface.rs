@@ -218,7 +218,7 @@ impl SklearnModel {
                 parent.load_onnx_model(py, &onnx_path, load_kwargs.onnx_kwargs(py))?;
             }
 
-            if let Some(ref drift_map) = metadata.drift_profile_map {
+            if let Some(ref drift_map) = metadata.drift_profile_uri_map {
                 parent.load_drift_profile(py, &path, drift_map)?;
             }
 

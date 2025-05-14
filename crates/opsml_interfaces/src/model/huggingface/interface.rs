@@ -489,7 +489,7 @@ impl HuggingFaceModel {
         let mut extra = None;
         let cloned_kwargs = save_kwargs.clone();
 
-        let drift_profile_map = if self_.as_super().drift_profile.is_empty() {
+        let drift_profile_uri_map = if self_.as_super().drift_profile.is_empty() {
             None
         } else {
             Some(self_.as_super().save_drift_profile(py, &path)?)
@@ -534,7 +534,7 @@ impl HuggingFaceModel {
             data_processor_map,
             sample_data_uri,
             onnx_model_uri,
-            drift_profile_map,
+            drift_profile_uri_map,
             extra,
             save_kwargs: cloned_kwargs,
         };
@@ -556,7 +556,6 @@ impl HuggingFaceModel {
             self_.interface_type.clone(),
             onnx_session,
             HashMap::new(),
-            self_.as_super().drift_type.clone(),
         );
 
         metadata.model_specific_metadata = self_.base_args.model_dump_json();
@@ -622,7 +621,7 @@ impl HuggingFaceModel {
             self_.load_preprocessor(py, &path, load_kwargs.preprocessor_kwargs(py))?;
         }
 
-        if let Some(ref drift_map) = metadata.drift_profile_map {
+        if let Some(ref drift_map) = metadata.drift_profile_uri_map {
             self_.as_super().load_drift_profile(py, &path, drift_map)?;
         }
 
