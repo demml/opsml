@@ -2344,9 +2344,6 @@ dependencies = [
 ]
 
 [package.optional-dependencies]
-fastapi = [
-    { name = "fastapi" },
-]
 onnx = [
     { name = "onnx", version = "1.16.1", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform == 'win32'" },
     { name = "onnx", version = "1.16.2", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version < '3.12' and sys_platform == 'darwin') or (python_full_version < '3.12' and sys_platform == 'linux')" },
@@ -2375,6 +2372,7 @@ tf-onnx = [
 dev = [
     { name = "black" },
     { name = "catboost" },
+    { name = "fastapi" },
     { name = "isort" },
     { name = "lightgbm" },
     { name = "lightning", version = "2.1.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
@@ -2414,7 +2412,6 @@ numpy1 = [
 
 [package.metadata]
 requires-dist = [
-    { name = "fastapi", marker = "extra == 'fastapi'", specifier = ">=0.113.0,<1.0.0" },
     { name = "joblib", specifier = "~=1.3" },
     { name = "onnx", marker = "(python_full_version >= '3.12' and sys_platform == 'darwin' and extra == 'onnx') or (python_full_version >= '3.12' and sys_platform == 'linux' and extra == 'onnx')", specifier = ">=1.17.0" },
     { name = "onnx", marker = "python_full_version < '3.12' and sys_platform == 'darwin' and extra == 'onnx'", specifier = "~=1.16.0" },
@@ -2428,12 +2425,13 @@ requires-dist = [
     { name = "tf2onnx", marker = "python_full_version < '3.12' and sys_platform == 'darwin' and extra == 'tf-onnx'", specifier = "~=1.16.1" },
     { name = "tf2onnx", marker = "python_full_version < '3.12' and sys_platform == 'linux' and extra == 'tf-onnx'", specifier = "~=1.16.1" },
 ]
-provides-extras = ["fastapi", "onnx", "onnxruntime", "sklearn-onnx", "tf-onnx"]
+provides-extras = ["onnx", "onnxruntime", "sklearn-onnx", "tf-onnx"]
 
 [package.metadata.requires-dev]
 dev = [
     { name = "black", specifier = ">=24.3.0,<25.0.0" },
     { name = "catboost", specifier = ">=1.2.5" },
+    { name = "fastapi", specifier = ">=0.115.0,<1.0.0" },
     { name = "isort", specifier = ">=5.13.2,<6.0.0" },
     { name = "lightgbm", specifier = ">=4.0.0" },
     { name = "lightning", marker = "python_full_version < '3.12'", specifier = "~=2.1.2" },

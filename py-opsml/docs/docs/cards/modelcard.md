@@ -81,7 +81,7 @@ model_interface = SklearnModel( # (2)
     task_type=TaskType.Classification,
 )
 
-model_interface.create_drift_profile(X)
+model_interface.create_drift_profile(alias="drift", X)
 
 modelcard = ModelCard( # (3)
     interface=model_interface,
@@ -351,6 +351,21 @@ modelcard.load(load_kwargs=ModelLoadKwargs(load_onnx=True)) #(1)
                     (as in the case of custom interfaces), it will be used.
             """
 
+        def drift_profile_path(self, alias: str) -> Path:
+            """Helper method that returns the path to a specific drift profile.
+            This method will fail if there is no drift profile map or the alias
+            does not exist.
+
+            Args:
+                alias (str):
+                    The alias of the drift profile
+
+            Returns:
+                Path to the drift profile
+            """
+            ...
+
+
         def __str__(self) -> str:
             """Return a string representation of the ModelCard.
 
@@ -476,6 +491,7 @@ The `ModelInterface` is the primary interface for working with models in `Opsml`
         @overload
         def create_drift_profile(
             self,
+            alias: str,
             data: CustomMetric | List[CustomMetric],
             config: CustomMetricDriftConfig,
             data_type: Optional[DataType] = None,
@@ -483,6 +499,7 @@ The `ModelInterface` is the primary interface for working with models in `Opsml`
         @overload
         def create_drift_profile(
             self,
+            alias: str,
             data: Any,
             config: SpcDriftConfig,
             data_type: Optional[DataType] = None,
@@ -490,6 +507,7 @@ The `ModelInterface` is the primary interface for working with models in `Opsml`
         @overload
         def create_drift_profile(
             self,
+            alias: str,
             data: Any,
             config: PsiDriftConfig,
             data_type: Optional[DataType] = None,
@@ -497,11 +515,13 @@ The `ModelInterface` is the primary interface for working with models in `Opsml`
         @overload
         def create_drift_profile(
             self,
+            alias: str,
             data: Any,
             data_type: Optional[DataType] = None,
         ) -> SpcDriftProfile: ...
         def create_drift_profile(  # type: ignore
             self,
+            alias: str,
             data: Any,
             config: None | SpcDriftConfig | PsiDriftConfig | CustomMetricDriftConfig = None,
             data_type: None | DataType = None,
@@ -509,6 +529,8 @@ The `ModelInterface` is the primary interface for working with models in `Opsml`
             """Create a drift profile and append it to the drift profile list
 
             Args:
+                alias:
+                    Alias to use for the drift profile. This is used to identify the drift profile in the UI and in the model card.
                 data:
                     Data to use to create the drift profile. Can be a pandas dataframe,
                     polars dataframe, pyarrow table or numpy array.
@@ -1636,7 +1658,7 @@ class CustomInterface(ModelInterface): #(1)
         data_processor_map: Dict[str, DataProcessor]
         sample_data_uri: Path
         onnx_model_uri: Optional[Path]
-        drift_profile_uri: Optional[Path]
+        drift_profile_map: Optional[Dict[str, DriftProfileUri]]
         extra: Optional[ExtraMetadata]
         save_kwargs: Optional[ModelSaveKwargs]
 
@@ -1646,7 +1668,7 @@ class CustomInterface(ModelInterface): #(1)
             data_processor_map: Optional[Dict[str, DataProcessor]] = {},  # type: ignore
             sample_data_uri: Optional[Path] = None,
             onnx_model_uri: Optional[Path] = None,
-            drift_profile_uri: Optional[Path] = None,
+            drift_profile_map: Optional[Dict[str, DriftProfileUri]] = None,
             extra: Optional[ExtraMetadata] = None,
             save_kwargs: Optional[ModelSaveKwargs] = None,
         ) -> None:
@@ -1661,8 +1683,8 @@ class CustomInterface(ModelInterface): #(1)
                     Path to the sample data
                 onnx_model_uri:
                     Path to the onnx model
-                drift_profile_uri:
-                    Path to the drift profile
+                drift_profile_map:
+                    Dictionary of drift profiles
                 extra_metadata:
                     Extra metadata
                 save_kwargs:

@@ -1,12 +1,13 @@
 use crate::base::ModelSaveKwargs;
 use crate::data::{ArrowData, DataInterface, NumpyData, PandasData, PolarsData, TorchData};
-use crate::error::{OnnxError, SampleDataError};
+use crate::error::{ModelInterfaceError, OnnxError, SampleDataError};
 use crate::model::InterfaceDataType;
 
 use opsml_types::{DataType, ModelType, SaveName, Suffix};
 use pyo3::types::{PyDict, PyList, PyListMethods, PyTuple, PyTupleMethods};
 use pyo3::IntoPyObjectExt;
 use pyo3::{prelude::*, types::PySlice};
+use std::collections::HashMap;
 use std::path::Path;
 use std::path::PathBuf;
 use tracing::{debug, error, instrument};
@@ -398,22 +399,23 @@ impl SampleData {
 
 pub fn extract_drift_profile(
     py_profiles: &Bound<'_, PyAny>,
-) -> Result<Vec<PyObject>, SampleDataError> {
+) -> Result<HashMap<String, PyObject>, ModelInterfaceError> {
     let py = py_profiles.py();
 
-    if py_profiles.is_instance_of::<PyList>() {
-        let py_profiles = py_profiles.downcast::<PyList>()?;
-        let mut profiles = Vec::new();
+    if py_profiles.is_instance_of::<PyDict>() {
+        let py_profiles = py_profiles.downcast::<PyDict>()?;
+        let mut profiles = HashMap::new();
 
-        for profile in py_profiles.iter() {
+        for (alias, profile) in py_profiles.iter() {
             // For each profile in the list, get its profile attribute
+            let alias = alias.extract::<String>()?;
             let profile_obj = profile.getattr("profile")?;
-            profiles.push(profile_obj.into_py_any(py)?);
+            profiles.insert(alias, profile_obj.into_py_any(py)?);
         }
 
         Ok(profiles)
     } else {
-        Ok(vec![py_profiles.into_py_any(py)?])
+        Err(ModelInterfaceError::DriftProfileMustBeDictionary)
     }
 }
 

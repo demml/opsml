@@ -44,6 +44,7 @@ def run_experiment(
         X, _, _, _ = example_dataframe
         # create psi drift profile
         random_forest_classifier.create_drift_profile(
+            alias="psi",
             data=X,
             config=PsiDriftConfig(),
         )
@@ -56,6 +57,7 @@ def run_experiment(
         )
 
         random_forest_classifier.create_drift_profile(
+            alias="custom",
             data=[metric],
             config=CustomMetricDriftConfig(),
         )

@@ -33,7 +33,7 @@
         placement="top-end" 
         stateError="bg-error-500 justify-center text-black border-2 border-black" 
         stateSuccess="bg-secondary-500 text-black border-2 border-black">
-        <div class="flex-1 grid-background">
+        <div class="flex-1 grid-background overflow-auto">
           {@render children()}
         </div>
       </ToastProvider>

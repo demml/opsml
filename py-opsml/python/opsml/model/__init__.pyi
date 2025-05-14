@@ -13,6 +13,7 @@ from ..scouter.drift import (
     SpcDriftConfig,
     SpcDriftProfile,
 )
+from ..scouter.types import DriftType
 
 DriftProfileType = Union[
     List[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile],
@@ -332,13 +333,17 @@ class DataProcessor:
 
     def __str__(self): ...
 
+class DriftProfileUri:
+    uri: Path
+    drift_type: DriftType
+
 # Define interface save and metadata arguments
 class ModelInterfaceSaveMetadata:
     model_uri: Path
     data_processor_map: Dict[str, DataProcessor]
     sample_data_uri: Path
     onnx_model_uri: Optional[Path]
-    drift_profile_uri: Optional[Path]
+    drift_profile_map: Optional[Dict[str, DriftProfileUri]]
     extra: Optional[ExtraMetadata]
     save_kwargs: Optional[ModelSaveKwargs]
 
@@ -348,7 +353,7 @@ class ModelInterfaceSaveMetadata:
         data_processor_map: Optional[Dict[str, DataProcessor]] = {},  # type: ignore
         sample_data_uri: Optional[Path] = None,
         onnx_model_uri: Optional[Path] = None,
-        drift_profile_uri: Optional[Path] = None,
+        drift_profile_map: Optional[Dict[str, DriftProfileUri]] = None,
         extra: Optional[ExtraMetadata] = None,
         save_kwargs: Optional[ModelSaveKwargs] = None,
     ) -> None:
@@ -363,8 +368,8 @@ class ModelInterfaceSaveMetadata:
                 Path to the sample data
             onnx_model_uri:
                 Path to the onnx model
-            drift_profile_uri:
-                Path to the drift profile
+            drift_profile_map:
+                Dictionary of drift profiles
             extra_metadata:
                 Extra metadata
             save_kwargs:
@@ -602,6 +607,7 @@ class ModelInterface:
     @overload
     def create_drift_profile(
         self,
+        alias: str,
         data: CustomMetric | List[CustomMetric],
         config: CustomMetricDriftConfig,
         data_type: Optional[DataType] = None,
@@ -609,6 +615,7 @@ class ModelInterface:
     @overload
     def create_drift_profile(
         self,
+        alias: str,
         data: Any,
         config: SpcDriftConfig,
         data_type: Optional[DataType] = None,
@@ -616,6 +623,7 @@ class ModelInterface:
     @overload
     def create_drift_profile(
         self,
+        alias: str,
         data: Any,
         config: PsiDriftConfig,
         data_type: Optional[DataType] = None,
@@ -623,11 +631,13 @@ class ModelInterface:
     @overload
     def create_drift_profile(
         self,
+        alias: str,
         data: Any,
         data_type: Optional[DataType] = None,
     ) -> SpcDriftProfile: ...
     def create_drift_profile(  # type: ignore
         self,
+        alias: str,
         data: Any,
         config: None | SpcDriftConfig | PsiDriftConfig | CustomMetricDriftConfig = None,
         data_type: None | DataType = None,
@@ -635,6 +645,8 @@ class ModelInterface:
         """Create a drift profile and append it to the drift profile list
 
         Args:
+            alias:
+                Alias to use for the drift profile
             data:
                 Data to use to create the drift profile. Can be a pandas dataframe,
                 polars dataframe, pyarrow table or numpy array.

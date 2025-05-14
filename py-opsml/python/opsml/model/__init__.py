@@ -26,11 +26,11 @@ ModelLoadKwargs = model.ModelLoadKwargs
 ModelSaveKwargs = model.ModelSaveKwargs
 DriftArgs = model.DriftArgs
 
+
 Feature = model.Feature
 FeatureSchema = model.FeatureSchema
 OnnxSchema = model.OnnxSchema
 ExtraMetadata = model.ExtraMetadata
-
 ProcessorType = model.ProcessorType
 
 

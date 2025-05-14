@@ -98,6 +98,9 @@ pub enum CardError {
 
     #[error("Unsupported registry type: {0}")]
     UnsupportedRegistryTypeError(RegistryType),
+
+    #[error("Failed to get drift profile")]
+    DriftProfileNotFoundError,
 }
 
 impl<'a> From<pyo3::DowncastError<'a, 'a>> for CardError {

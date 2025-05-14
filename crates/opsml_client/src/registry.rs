@@ -7,7 +7,7 @@ use opsml_types::{
     contracts::*,
     IntegratedService, RegistryMode, RegistryType,
 };
-use scouter_client::{ProfileRequest, ProfileStatusRequest, ScouterResponse, ScouterServerError};
+use scouter_client::{ProfileRequest, ProfileStatusRequest, ScouterServerError};
 use serde::Deserialize;
 use std::sync::Arc;
 use tracing::error;
