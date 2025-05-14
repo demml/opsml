@@ -357,6 +357,9 @@ pub enum ModelInterfaceError {
 
     #[error("Failed to downcast Python object: {0}")]
     DowncastError(String),
+
+    #[error("Drift profile argument must be a dictionary of alias (string) and drift profile")]
+    DriftProfileMustBeDictionary,
 }
 
 impl<'a> From<pyo3::DowncastError<'a, 'a>> for ModelInterfaceError {

@@ -355,6 +355,32 @@ impl ModelCard {
         Ok(card)
     }
 
+    /// Helper function to get the drift profile path from the metadata.
+    /// This function will return an error if the no drift profile map is found or
+    /// if the alias is not found in the map.
+    ///
+    /// # Arguments
+    /// * `alias` - The alias of the drift profile to get the path for.
+    ///
+    /// # Returns
+    /// * `Result<PathBuf, CardError>` - The path to the drift profile.
+    pub fn drift_profile_path(&self, alias: &str) -> Result<PathBuf, CardError> {
+        // Use as_ref() to avoid unwrapping the Option
+        let map = self
+            .metadata
+            .interface_metadata
+            .save_metadata
+            .drift_profile_map
+            .as_ref()
+            .ok_or(CardError::DriftProfileNotFoundError)?;
+
+        // Get the profile directly without checking contains_key first
+        map.get(alias)
+            .ok_or(CardError::DriftProfileNotFoundError)
+            // Use clone only at the final return point
+            .map(|profile| profile.uri.clone())
+    }
+
     pub fn __str__(&self) -> String {
         PyHelperFuncs::__str__(self)
     }

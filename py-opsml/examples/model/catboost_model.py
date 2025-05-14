@@ -27,7 +27,7 @@ model_interface = CatBoostModel(
     task_type=TaskType.Regression,
 )
 
-model_interface.create_drift_profile(X_train)
+model_interface.create_drift_profile("drift", X_train)
 modelcard = ModelCard(interface=model_interface, space="opsml", name="my_model")
 
 # register model

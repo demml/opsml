@@ -49,18 +49,18 @@ def test_model_interface_drift_profile(
     )
 
     # create spc
-    model.create_drift_profile(X)
+    model.create_drift_profile(alias="spc", data=X)
 
     # create psi
-    model.create_drift_profile(X, PsiDriftConfig(), DataType.Pandas)
+    model.create_drift_profile("psi", X, PsiDriftConfig(), DataType.Pandas)
 
     # custom
     metric = CustomMetric(
         name="custom", value=0.5, alert_threshold=AlertThreshold.Above
     )
-    model.create_drift_profile([metric], CustomMetricDriftConfig())
+    model.create_drift_profile("custom", [metric], CustomMetricDriftConfig())
 
     # save
     metadata = model.save(tmp_path)
 
-    assert metadata.save_metadata.drift_profile_uri is not None
+    assert metadata.save_metadata.drift_profile_map is not None

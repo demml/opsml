@@ -162,7 +162,7 @@ def crud_modelcard(random_forest_classifier: SklearnModel, datacard: DataCard):
     assert len(cards) == 0
 
     interface: SklearnModel = random_forest_classifier
-    interface.create_drift_profile(datacard.interface.data)
+    interface.create_drift_profile("spc", datacard.interface.data)
 
     card = ModelCard(
         interface=interface,
@@ -204,6 +204,7 @@ def crud_modelcard(random_forest_classifier: SklearnModel, datacard: DataCard):
     assert loaded_card.tags == card.tags
     assert loaded_card.uid == card.uid
     assert loaded_card.version == card.version
+    assert loaded_card.drift_profile_path("spc") is not None
 
     assert isinstance(loaded_card.interface, SklearnModel)
     assert loaded_card.interface.sample_data is not None
