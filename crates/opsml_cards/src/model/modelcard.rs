@@ -456,7 +456,7 @@ impl ModelCard {
         let interface = self.interface.as_ref().unwrap().bind(py);
         let drift_profiles = interface.getattr("drift_profile")?;
         // downcast to list
-        let drift_profiles = drift_profiles.downcast::<PyList>()?;
+        let drift_profiles = drift_profiles.downcast::<PyDict>()?;
 
         // if drift_profiles is empty, return
         if drift_profiles.len() == 0 {
@@ -468,7 +468,7 @@ impl ModelCard {
             kwargs.set_item("space", self.space.clone())?;
             kwargs.set_item("version", self.version.clone())?;
 
-            for profile in drift_profiles.iter() {
+            for profile in drift_profiles.values() {
                 // get actual profile from enum
                 profile.call_method("update_config_args", (), Some(&kwargs))?;
             }

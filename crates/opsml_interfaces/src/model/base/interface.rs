@@ -671,6 +671,7 @@ impl ModelInterface {
                 .extract::<DriftType>(py)?;
 
             profile.call_method1(py, "save_to_json", (Some(&profile_save_path),))?;
+
             drift_url_map.insert(
                 alias.to_string(),
                 DriftProfileUri {
@@ -704,6 +705,8 @@ impl ModelInterface {
 
             // load file to json string
             let file = std::fs::read_to_string(&filepath)?;
+
+            println!("profile: {:?}", file);
 
             match drift_profile_uri.drift_type {
                 DriftType::Spc => {
