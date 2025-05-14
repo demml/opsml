@@ -472,8 +472,7 @@ impl ModelInterface {
         });
 
         let profile = drifter.create_drift_profile(py, data, config, data_type)?;
-        self.drift_profile
-            .add_profile(alias, profile.clone().into_py_any(py)?);
+        self.drift_profile.add_profile(py, alias, profile.clone())?;
 
         Ok(profile)
     }
@@ -668,18 +667,27 @@ impl ModelInterface {
             match drift_profile_uri.drift_type {
                 DriftType::Spc => {
                     let profile = SpcDriftProfile::model_validate_json(file);
-                    self.drift_profile
-                        .add_profile(alias.to_string(), profile.into_py_any(py)?);
+                    self.drift_profile.add_profile(
+                        py,
+                        alias.to_string(),
+                        profile.into_bound_py_any(py)?,
+                    )?;
                 }
                 DriftType::Psi => {
                     let profile = PsiDriftProfile::model_validate_json(file);
-                    self.drift_profile
-                        .add_profile(alias.to_string(), profile.into_py_any(py)?);
+                    self.drift_profile.add_profile(
+                        py,
+                        alias.to_string(),
+                        profile.into_bound_py_any(py)?,
+                    )?;
                 }
                 DriftType::Custom => {
                     let profile = CustomDriftProfile::model_validate_json(file);
-                    self.drift_profile
-                        .add_profile(alias.to_string(), profile.into_py_any(py)?);
+                    self.drift_profile.add_profile(
+                        py,
+                        alias.to_string(),
+                        profile.into_bound_py_any(py)?,
+                    )?;
                 }
             }
         }

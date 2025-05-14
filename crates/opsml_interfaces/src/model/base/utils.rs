@@ -408,8 +408,7 @@ pub fn extract_drift_profile(
         for (alias, profile) in py_profiles.iter() {
             // For each profile in the list, get its profile attribute
             let alias = alias.extract::<String>()?;
-            let profile_obj = profile.getattr("profile")?;
-            profiles.add_profile(alias, profile_obj.into_py_any(py)?);
+            profiles.add_profile(py, alias, profile)?;
         }
 
         Ok(profiles)
