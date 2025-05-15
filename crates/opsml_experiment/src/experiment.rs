@@ -401,7 +401,9 @@ impl Experiment {
         {
             error!(
                 "An error occurred: {:?}, {:?}, {:?}",
-                exc_type, exc_value, traceback
+                exc_type.to_string(),
+                exc_value.to_string(),
+                traceback.to_string()
             );
         } else {
             debug!("Exiting experiment");

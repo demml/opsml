@@ -15,9 +15,8 @@ export interface Alert {
   feature: string;
   alert: Record<string, string>;
   id: number;
-  status: string;
+  active: boolean;
 }
 export interface AlertResponse {
-  status: string;
-  data: Alert[];
+  alerts: Alert[];
 }

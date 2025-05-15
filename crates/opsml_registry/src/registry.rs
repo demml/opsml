@@ -15,7 +15,7 @@ use scouter_client::ProfileRequest;
 use scouter_client::ProfileStatusRequest;
 use std::path::PathBuf;
 use tempfile::TempDir;
-use tracing::{debug, error, info, instrument};
+use tracing::{debug, error, instrument};
 /// Helper struct to hold parameters for card registration
 #[derive(Debug)]
 struct CardRegistrationParams<'py> {
@@ -493,7 +493,7 @@ impl CardRegistry {
             .downcast::<PyList>()
             .inspect_err(|e| error!("Failed to downcast drift profiles: {:?}", e))?;
 
-        if let Some(profile) = collected_profiles.iter().next() {
+        for profile in collected_profiles.iter() {
             let profile_request = profile
                 .call_method0("create_profile_request")?
                 .extract::<ProfileRequest>()?;
@@ -502,7 +502,7 @@ impl CardRegistry {
             debug!("Successfully uploaded scouter profile");
 
             // if drift_args is Some, then we need to update the drift profile status
-            if let Some(drift_args) = drift_args {
+            if let Some(ref drift_args) = drift_args {
                 let profile_status_request = ProfileStatusRequest {
                     space: response.space.clone(),
                     name: response.name.clone(),
@@ -512,7 +512,7 @@ impl CardRegistry {
                     deactivate_others: drift_args.deactivate_others,
                 };
                 registry.update_drift_profile_status(&profile_status_request)?;
-                info!("Successfully updated scouter profile status");
+                debug!("Successfully updated scouter profile status");
             }
         }
 

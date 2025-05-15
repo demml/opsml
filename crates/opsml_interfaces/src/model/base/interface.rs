@@ -1,6 +1,5 @@
 use crate::base::{
-    parse_save_kwargs, DriftProfileMap, DriftProfileUri, ExtraMetadata, ModelLoadKwargs,
-    ModelSaveKwargs,
+    parse_save_kwargs, DriftProfileMap, ExtraMetadata, ModelLoadKwargs, ModelSaveKwargs,
 };
 use crate::data::generate_feature_schema;
 use crate::data::DataInterface;
@@ -13,10 +12,10 @@ use scouter_client::{CustomDriftProfile, DriftType, PsiDriftProfile, SpcDriftPro
 
 use crate::error::ModelInterfaceError;
 use crate::model::base::utils;
-use opsml_types::DataType;
+
 use opsml_types::{
     interfaces::{ModelInterfaceType, ModelType, TaskType},
-    SaveName, Suffix,
+    DataType, DriftProfileUri, SaveName, Suffix,
 };
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
@@ -633,6 +632,7 @@ impl ModelInterface {
             drift_url_map.insert(
                 alias.to_string(),
                 DriftProfileUri {
+                    root_dir: save_dir.clone(),
                     uri: relative_path,
                     drift_type,
                 },

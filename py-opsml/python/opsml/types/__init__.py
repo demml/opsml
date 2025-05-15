@@ -7,6 +7,7 @@ SaveName = types.SaveName
 SaverPath = types.SaverPath
 Suffix = types.Suffix
 VersionType = types.VersionType
+DriftProfileUri = types.DriftProfileUri
 
 
 __all__ = [
@@ -14,4 +15,5 @@ __all__ = [
     "SaveName",
     "Suffix",
     "VersionType",
+    "DriftProfileUri",
 ]

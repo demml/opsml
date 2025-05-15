@@ -7,7 +7,7 @@
   import VizBody from '$lib/components/card/model/monitoring/VizBody.svelte';
   import Header from '$lib/components/card/model/monitoring/Header.svelte';
   import { getMaxDataPoints, debounce } from '$lib/utils';
-  import { getLatestMetricsExample, getCurrentMetricData } from '$lib/components/card/model/monitoring/util';
+  import { getLatestMetrics, getCurrentMetricData } from '$lib/components/card/model/monitoring/util';
   import { onMount, onDestroy } from 'svelte';
   import { getProfileFeatures, getProfileConfig, type DriftConfigType } from '$lib/components/card/model/monitoring/util';
   import type { Alert } from '$lib/components/card/model/monitoring/alert/types';
@@ -43,7 +43,7 @@
     const newMaxDataPoints = getMaxDataPoints();
       if (newMaxDataPoints !== currentMaxDataPoints) {
         currentMaxDataPoints = newMaxDataPoints;
-        latestMetrics = await getLatestMetricsExample(
+        latestMetrics = await getLatestMetrics(
           profiles,
           currentTimeInterval,
           currentMaxDataPoints  
@@ -96,7 +96,7 @@
 
   async function handleTimeChange(timeInterval: TimeInterval) {
     currentTimeInterval = timeInterval;
-    latestMetrics = await getLatestMetricsExample(
+    latestMetrics = await getLatestMetrics(
           profiles,
           currentTimeInterval,
           currentMaxDataPoints  

@@ -4,13 +4,11 @@ use opsml_utils::{json_to_pyobject, pyobject_to_json, PyHelperFuncs};
 use pyo3::prelude::*;
 use pyo3::types::{PyDict, PyList};
 use pyo3::IntoPyObjectExt;
-use scouter_client::DriftType;
 use serde::ser::SerializeStruct;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use serde_json::Value;
 use std::collections::HashMap;
-use std::path::PathBuf;
 
 #[pyclass(eq)]
 #[derive(PartialEq, Debug)]
@@ -548,13 +546,6 @@ impl Clone for ExtraMetadata {
 }
 
 #[pyclass]
-#[derive(Debug, Serialize, Deserialize, Clone, Default)]
-pub struct DriftProfileUri {
-    pub uri: PathBuf,
-    pub drift_type: DriftType,
-}
-
-#[pyclass]
 #[derive(Debug)]
 pub struct DriftProfileMap {
     pub profiles: HashMap<String, PyObject>,
@@ -638,6 +629,22 @@ impl DriftProfileMap {
         }
 
         Ok(py_list)
+    }
+
+    pub fn __str__(&self, py: Python) -> String {
+        let mut map = json!({});
+        for (k, v) in &self.profiles {
+            let profile = v.bind(py);
+            let profile_json = profile
+                .call_method0("model_dump_json")
+                .unwrap()
+                .extract::<String>()
+                .unwrap();
+
+            map[k] = serde_json::from_str(&profile_json).unwrap();
+        }
+
+        PyHelperFuncs::__str__(map)
     }
 }
 

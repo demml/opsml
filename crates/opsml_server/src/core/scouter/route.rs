@@ -14,7 +14,7 @@ use axum::{
 use opsml_auth::permission::UserPermissions;
 use opsml_sql::base::SqlClient;
 use opsml_types::api::RequestType;
-use opsml_types::contracts::{RawFileRequest, UpdateProfileRequest};
+use opsml_types::contracts::{DriftProfileRequest, UpdateProfileRequest};
 use opsml_types::RegistryType;
 use opsml_types::SaveName;
 use reqwest::Response;
@@ -25,7 +25,6 @@ use scouter_client::{
     ProfileRequest, ProfileStatusRequest, ScouterResponse, ScouterServerError, SpcDriftFeatures,
 };
 use std::panic::{catch_unwind, AssertUnwindSafe};
-use std::path::PathBuf;
 use std::sync::Arc;
 use tempfile::tempdir;
 use tracing::{error, info, instrument};
@@ -359,7 +358,7 @@ pub async fn get_custom_drift(
 pub async fn get_drift_profiles_for_ui(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
-    Json(req): Json<RawFileRequest>,
+    Json(req): Json<DriftProfileRequest>,
 ) -> DriftProfileResult {
     if !perms.has_read_permission() {
         return OpsmlServerError::permission_denied().into_response(StatusCode::FORBIDDEN);
@@ -370,15 +369,34 @@ pub async fn get_drift_profiles_for_ui(
         error!("Failed to create temp dir: {}", e);
         internal_server_error(e, "Failed to create temp dir")
     })?;
-    let lpath = tmp_dir.path();
-    let rpath = PathBuf::from(&req.path);
+    let tmp_path = tmp_dir.path();
+
+    // extract root dir from first profile
+    // Get source path (where files live in storage)
+    let source_path = &req
+        .drift_profile_uri_map
+        .values()
+        .next()
+        .ok_or_else(|| {
+            error!("No profiles found");
+            internal_server_error("No profiles found", "No profiles found")
+        })?
+        .root_dir;
+
+    // Create destination subdirectory inside temp_dir
+    let dest_path = tmp_dir.path().join(source_path);
+
+    std::fs::create_dir_all(&dest_path).map_err(|e| {
+        error!("Failed to create directory: {}", e);
+        internal_server_error(e, "Failed to create directory")
+    })?;
 
     download_artifacts(
         state.storage_client.clone(),
         state.sql_client.clone(),
-        lpath,
-        &rpath,
-        &req.registry_type.to_string(),
+        &dest_path,
+        &source_path,
+        &RegistryType::Model.to_string(),
         Some(&req.uid),
     )
     .await
@@ -387,7 +405,7 @@ pub async fn get_drift_profiles_for_ui(
         internal_server_error(e, "Failed to download artifact")
     })?;
 
-    let profiles = load_drift_profiles(lpath).map_err(|e| {
+    let profiles = load_drift_profiles(tmp_path, &req.drift_profile_uri_map).map_err(|e| {
         error!("Failed to load drift profile: {}", e);
         internal_server_error(e, "Failed to load drift profile")
     })?;
@@ -439,6 +457,7 @@ pub async fn get_drift_alerts(
                 error!("Failed to parse scouter response: {}", e);
                 internal_server_error(e, "Failed to parse scouter response")
             })?;
+
             Ok(Json(body))
         }
         false => {

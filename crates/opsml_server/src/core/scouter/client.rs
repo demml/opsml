@@ -1,4 +1,5 @@
 use crate::core::error::ServerError;
+use crate::core::user::schema::CreateUserRequest;
 use anyhow::Result;
 use opsml_client::error::ApiClientError;
 use opsml_settings::config::ScouterSettings;
@@ -9,6 +10,8 @@ use reqwest::Response;
 use reqwest::{header::HeaderMap, Client};
 use serde_json::Value;
 use tracing::error;
+
+const X_BOOTSTRAP_TOKEN: &str = "x-bootstrap-token";
 
 #[derive(Debug, Clone)]
 #[allow(dead_code)]
@@ -186,12 +189,25 @@ impl ScouterApiClient {
     /// Create the initial user in scouter
     /// This is used to create the first users shared between scouter and opsml and is only used once
     /// during the initial setup of the system if no users exist
-    pub async fn create_initial_user(&self, user: &User) -> Result<Response, ApiClientError> {
-        let user_val = serde_json::to_value(user)?;
+    pub async fn create_initial_user(
+        &self,
+        user: &User,
+        password: &str,
+    ) -> Result<Response, ApiClientError> {
+        let user_request = CreateUserRequest {
+            username: user.username.clone(),
+            password: password.to_string(),
+            permissions: Some(user.permissions.clone()),
+            group_permissions: Some(user.group_permissions.clone()),
+            role: Some(user.role.clone()),
+            active: Some(user.active),
+        };
+
+        let user_val = serde_json::to_value(user_request)?;
 
         // create header to X-Bootstrap-Token
         let mut headers = HeaderMap::new();
-        headers.insert("X-Bootstrap-Token", self.bootstrap_token.parse()?);
+        headers.insert(X_BOOTSTRAP_TOKEN, self.bootstrap_token.parse()?);
         self.request(
             Routes::Users,
             RequestType::Post,

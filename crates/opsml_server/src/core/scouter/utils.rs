@@ -5,12 +5,14 @@ use anyhow::Result;
 use axum::{http::StatusCode, Json};
 use opsml_crypt::encrypt_file;
 use opsml_storage::StorageClientEnum;
+use opsml_types::DriftProfileUri;
 use opsml_utils::FileUtils;
 use scouter_client::{DriftProfile, DriftType};
 use std::collections::HashMap;
 use std::path::Path;
 use tracing::debug;
 use tracing::error;
+use tracing::info;
 
 pub fn find_drift_profile(
     files: &[String],
@@ -70,32 +72,24 @@ pub async fn save_encrypted_profile(
     Ok(())
 }
 
-pub fn load_drift_profiles(path: &Path) -> Result<HashMap<DriftType, DriftProfile>, ServerError> {
-    FileUtils::list_files(path)?
-        .into_iter()
-        .try_fold(HashMap::new(), |mut acc, filepath| {
-            let filename = filepath
-                .file_name()
-                .and_then(|f| f.to_str())
-                .ok_or_else(|| ServerError::FileNameError)?;
-
-            debug!("Loading drift profile: {:?}", &filepath);
-
-            let drift_type = filename
-                .split('-')
-                .next()
-                .map(str::to_lowercase)
-                .and_then(|s| DriftType::from_value(&s))
-                .ok_or_else(|| ServerError::InvalidDriftProfile)?;
-
+pub fn load_drift_profiles(
+    path: &Path,
+    drift_profile_uri_map: &HashMap<String, DriftProfileUri>,
+) -> Result<HashMap<DriftType, DriftProfile>, ServerError> {
+    let profiles = drift_profile_uri_map
+        .values()
+        .map(|uri| {
+            let filepath = path.join(&uri.uri);
             let file = std::fs::read_to_string(&filepath)?;
-
-            let profile = DriftProfile::from_str(drift_type.clone(), file).map_err(|e| {
-                error!("Failed to load drift profile: {}", e);
-                ServerError::LoadDriftProfileError(e.to_string())
-            })?;
-
-            acc.insert(drift_type, profile);
-            Ok(acc)
+            DriftProfile::from_str(uri.drift_type.clone(), file)
+                .map_err(|e| {
+                    error!("Failed to load drift profile: {}", e);
+                    ServerError::LoadDriftProfileError(e.to_string())
+                })
+                .map(|profile| (uri.drift_type.clone(), profile))
         })
+        .collect::<Result<HashMap<_, _>, _>>()?;
+
+    debug!("Loaded drift profiles: {:?}", profiles);
+    Ok(profiles)
 }
