@@ -14,7 +14,7 @@ export interface Alert {
   name: string;
   space: string;
   version: string;
-  feature: string;
+  entity_name: string;
   alert: Record<string, string>;
   id: number;
   active: boolean;
@@ -22,4 +22,14 @@ export interface Alert {
 }
 export interface AlertResponse {
   alerts: Alert[];
+}
+
+export interface UpdateAlertStatus {
+  id: number;
+  active: boolean;
+  space: string;
+}
+
+export interface UpdateAlertResponse {
+  updated: boolean;
 }

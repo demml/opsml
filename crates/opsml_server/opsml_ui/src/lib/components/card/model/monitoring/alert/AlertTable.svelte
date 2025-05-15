@@ -3,12 +3,13 @@
   import AlertModal from "./AlertModal.svelte";
 
 
+
 let { 
-    alerts,
-    acknowledgeAlert,
+    alerts, // need to make an effect that updates this when the alerts change
+    updateAlert
   } = $props<{
     alerts: Alert[];
-    acknowledgeAlert: (id: string) => void;
+    updateAlert: (id: number, space: string) => Promise<void>;
   }>();
 
 
@@ -37,15 +38,16 @@ let {
     </thead>
     <tbody>
       {#each alerts as alert}
+      
       <tr class="border-t hover:bg-primary-300 py-2">
         <td class="pl-4 py-2">{alert.created_at}</td>
         <td class="p-2 text-center">{alert.id}</td>
         <td class="p-2 text-center">{alert.drift_type}</td>
-        <td class="p-2 text-center">{alert.feature}</td>
+        <td class="p-2 text-center">{alert.entity_name}</td>
         <td class="p-2 text-center" ><AlertModal code={JSON.stringify(alert.alert)} /></td>
         <td class="pr-4 py-2 text-black">
           <div class="flex justify-center items-center">
-            <button class="btn flex flex-row gap-2 bg-error-500 shadow shadow-hover border-black border-2 rounded-lg" onclick={() => acknowledgeAlert(alert.id)}>
+            <button class="btn flex flex-row gap-2 bg-error-500 shadow shadow-hover border-black border-2 rounded-lg" onclick={() =>  updateAlert(alert.id, alert.space)}>
               <div class="text-black">Acknowledge</div>
             </button>
           </div>

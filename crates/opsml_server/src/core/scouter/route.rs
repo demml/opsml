@@ -20,16 +20,17 @@ use opsml_types::SaveName;
 use reqwest::Response;
 
 use crate::core::scouter::types::DriftProfileResult;
+use crate::core::scouter::utils::load_drift_profiles;
+
 use scouter_client::{
     Alerts, BinnedCustomMetrics, BinnedPsiFeatureMetrics, DriftAlertRequest, DriftRequest,
     ProfileRequest, ProfileStatusRequest, ScouterResponse, ScouterServerError, SpcDriftFeatures,
+    UpdateAlertResponse, UpdateAlertStatus,
 };
 use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::sync::Arc;
 use tempfile::tempdir;
 use tracing::{error, info, instrument};
-
-use crate::core::scouter::utils::load_drift_profiles;
 
 async fn parse_scouter_response(
     response: Response,
@@ -458,6 +459,59 @@ pub async fn get_drift_alerts(
                 internal_server_error(e, "Failed to parse scouter response")
             })?;
 
+            Ok(Json(body))
+        }
+        false => {
+            let body = response.json::<ScouterServerError>().await.map_err(|e| {
+                error!("Failed to parse scouter error response: {}", e);
+                internal_server_error(e, "Failed to parse scouter error response")
+            })?;
+            Err((status_code, Json(OpsmlServerError::new(body.error))))
+        }
+    }
+}
+
+/// Acknowledge drift alerts
+pub async fn update_alert_status(
+    State(state): State<Arc<AppState>>,
+    Extension(perms): Extension<UserPermissions>,
+    Json(body): Json<UpdateAlertStatus>,
+) -> Result<Json<UpdateAlertResponse>, (StatusCode, Json<OpsmlServerError>)> {
+    if !perms.has_write_permission(&body.space) {
+        return OpsmlServerError::permission_denied().into_response(StatusCode::FORBIDDEN);
+    }
+
+    let exchange_token = state.exchange_token_from_perms(&perms).await.map_err(|e| {
+        error!("Failed to exchange token for scouter: {}", e);
+        internal_server_error(e, "Failed to exchange token for scouter")
+    })?;
+
+    let response = state
+        .scouter_client
+        .request(
+            scouter::Routes::Alerts,
+            RequestType::Put,
+            Some(serde_json::to_value(&body).map_err(|e| {
+                error!("Failed to serialize alert request: {}", e);
+                internal_server_error(e, "Failed to serialize alert request")
+            })?),
+            None,
+            None,
+            &exchange_token,
+        )
+        .await
+        .map_err(|e| {
+            error!("Failed to acknowledge drift alerts: {}", e);
+            internal_server_error(e, "Failed to acknowledge drift alerts")
+        })?;
+
+    let status_code = response.status();
+    match status_code.is_success() {
+        true => {
+            let body = response.json::<UpdateAlertResponse>().await.map_err(|e| {
+                error!("Failed to parse scouter response: {}", e);
+                internal_server_error(e, "Failed to parse scouter response")
+            })?;
             Ok(Json(body))
         }
         false => {
