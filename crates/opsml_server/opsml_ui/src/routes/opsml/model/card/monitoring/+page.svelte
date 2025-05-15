@@ -11,7 +11,7 @@
   import { onMount, onDestroy } from 'svelte';
   import { getProfileFeatures, getProfileConfig, type DriftConfigType } from '$lib/components/card/model/monitoring/util';
   import type { Alert } from '$lib/components/card/model/monitoring/alert/types';
-  import { getDriftAlerts } from '$lib/components/card/model/monitoring/alert/utils';
+  import { getDriftAlerts, acknowledgeAlert } from '$lib/components/card/model/monitoring/alert/utils';
   import AlertTable from '$lib/components/card/model/monitoring/alert/AlertTable.svelte';
 
  
@@ -117,9 +117,25 @@
     );
   }
 
-  async function acknowledgeAlert(id: string) {
+  async function updateAlert(id: number, space: string) {
     console.log("Acknowledge alert with id: ", id);
     // Call API to acknowledge alert
+    let updated = await acknowledgeAlert(id, space);
+
+    if (updated) {
+      console.log("Alert acknowledged successfully");
+
+      currentAlerts = await getDriftAlerts(
+          currentConfig.space,
+          currentConfig.name,
+          currentConfig.version,
+          currentTimeInterval,
+          true
+        );
+
+
+      }
+     
   }
 
 
@@ -174,7 +190,7 @@
       <div class="h-full">
         <AlertTable
           alerts={currentAlerts}
-          acknowledgeAlert={acknowledgeAlert}
+          updateAlert={updateAlert}
         />
       </div>
     </div>
