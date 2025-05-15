@@ -14,6 +14,7 @@ import {
 } from "$lib/components/card/model/monitoring/types";
 import {
   getLatestMetricsExample,
+  getLatestMetrics,
   getCurrentMetricData,
 } from "$lib/components/card/model/monitoring/util";
 import { getDriftAlerts } from "$lib/components/card/model/monitoring/alert/utils";
@@ -42,13 +43,14 @@ export const load: PageLoad = async ({ parent }) => {
   let currentConfig = getProfileConfig(currentDriftType, currentProfile);
   let maxDataPoints = getMaxDataPoints();
 
-  // get latest metrics
-  let latestMetrics = await getLatestMetricsExample(
+  // get latest metrics for all available drift profiles
+  let latestMetrics = await getLatestMetrics(
     profiles,
     TimeInterval.SixHours,
     maxDataPoints
   );
 
+  // Filter latest metrics to the current drift type
   let currentMetricData = getCurrentMetricData(
     latestMetrics,
     currentDriftType,

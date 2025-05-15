@@ -25,7 +25,6 @@ TensorFlowModel = model.TensorFlowModel
 ModelLoadKwargs = model.ModelLoadKwargs
 ModelSaveKwargs = model.ModelSaveKwargs
 DriftArgs = model.DriftArgs
-DriftProfileUri = model.DriftProfileUri
 
 Feature = model.Feature
 FeatureSchema = model.FeatureSchema
@@ -63,5 +62,4 @@ __all__ = [
     "OnnxSchema",
     "ExtraMetadata",
     "ProcessorType",
-    "DriftProfileUri",
 ]

@@ -17,16 +17,16 @@ export interface FeatureMap {
 }
 
 export enum TimeInterval {
-  FiveMinutes = "5minute",
-  FifteenMinutes = "15minute",
-  ThirtyMinutes = "30minute",
-  OneHour = "1hour",
-  ThreeHours = "3hour",
-  SixHours = "6hour",
-  TwelveHours = "12hour",
-  TwentyFourHours = "24hour",
-  TwoDays = "2day",
-  FiveDays = "5day",
+  FiveMinutes = "FiveMinutes",
+  FifteenMinutes = "FifteenMinutes",
+  ThirtyMinutes = "ThirtyMinutes",
+  OneHour = "OneHour",
+  ThreeHours = "ThreeHours",
+  SixHours = "SixHours",
+  TwelveHours = "TwelveHours",
+  TwentyFourHours = "TwentyFourHours",
+  TwoDays = "TwoDays",
+  FiveDays = "FiveDays",
 }
 
 export interface ConsoleDispatchConfig {
@@ -104,6 +104,8 @@ export interface DriftRequest {
   time_interval: TimeInterval;
   max_data_points: number;
   drift_type: DriftType;
+  begin_custom_datetime?: string;
+  end_custom_datetime?: string;
 }
 
 export type DriftMetrics = {

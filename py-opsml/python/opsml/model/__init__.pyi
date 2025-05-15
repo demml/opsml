@@ -13,9 +13,11 @@ from ..scouter.drift import (
     SpcDriftConfig,
     SpcDriftProfile,
 )
-from ..scouter.types import DriftType
+from ..types import DriftProfileUri
 
-DriftProfileType = Dict[str, Union[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile,]]
+DriftProfileType = Dict[
+    str, Union[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile,]
+]
 
 class ProcessorType:
     Preprocessor: "ProcessorType"
@@ -330,20 +332,6 @@ class DataProcessor:
 
     def __str__(self): ...
 
-class DriftProfileUri:
-    uri: Path
-    drift_type: DriftType
-
-    def __init__(self, uri: Path, drift_type: DriftType) -> None:
-        """Define a drift profile
-
-        Args:
-            uri:
-                The relative path to the drift profile
-            drift_type:
-                Drift profile type
-        """
-
 class DriftProfileMap:
     def __init__(self) -> None:
         """Creates an empty drift profile map"""
@@ -601,15 +589,8 @@ class ModelInterface:
     @property
     def drift_profile(
         self,
-    ) -> List[Any]:
-        """Returns the drift profile"""
-
-    @drift_profile.setter
-    def drift_profile(
-        self,
-        profile: List[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile],
-    ) -> None:
-        """Sets the drift profile"""
+    ) -> DriftProfileMap:
+        """Returns the drift profile mapping"""
 
     @property
     def onnx_session(self) -> None | OnnxSession:

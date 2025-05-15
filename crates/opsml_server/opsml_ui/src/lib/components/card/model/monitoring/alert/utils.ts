@@ -20,11 +20,12 @@ export async function getDriftAlerts(
     active: active,
   };
 
-  //const response = await opsmlClient.post(RoutePaths.DRIFT_ALERT, alertRequest);
-  //const alertResponse = (await response.json()) as AlertResponse;
-  //if (alertResponse.status !== "success") {
-  //throw new Error(`Failed to fetch drift alerts: ${alertResponse.status}`);
-  //}
-  //return alertResponse.data;
-  return sampleAlerts;
+  const response = await opsmlClient.get(RoutePaths.DRIFT_ALERT, alertRequest);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch drift alerts: ${response.status}`);
+  }
+  const alertResponse = (await response.json()) as AlertResponse;
+
+  return alertResponse.alerts;
+  //return sampleAlerts;
 }

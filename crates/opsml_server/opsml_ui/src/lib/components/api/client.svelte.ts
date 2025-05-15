@@ -157,6 +157,7 @@ export class OpsmlClient {
 
   async get(url: string, params?: Record<string, any>): Promise<Response> {
     const urlWithParams = this.addQueryParams(url, params);
+
     return this.request(urlWithParams, "GET");
   }
 

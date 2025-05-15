@@ -1,10 +1,12 @@
 use crate::error::TypeError;
+use crate::interfaces::DriftProfileUri;
 use crate::RegistryType;
 use crate::StorageType;
 use opsml_crypt::decrypt_key;
 use opsml_utils::{uid_to_byte_key, PyHelperFuncs};
 use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::fmt::Display;
 use std::path::PathBuf;
 
@@ -280,6 +282,18 @@ pub struct RawFileRequest {
     pub uid: String,
     pub path: String,
     pub registry_type: RegistryType,
+}
+
+/// Request to get model drift profiles for ui rendering
+///
+/// # Arguments
+/// * `uid` - The unique identifier of card that is requesting the file
+/// * `file` - The file tree node
+/// * `registry_type` - The type of registry
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct DriftProfileRequest {
+    pub uid: String,
+    pub drift_profile_uri_map: HashMap<String, DriftProfileUri>,
 }
 
 /// Response to get a file from the registry
