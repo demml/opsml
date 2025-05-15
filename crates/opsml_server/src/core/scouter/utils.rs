@@ -6,13 +6,11 @@ use axum::{http::StatusCode, Json};
 use opsml_crypt::encrypt_file;
 use opsml_storage::StorageClientEnum;
 use opsml_types::DriftProfileUri;
-use opsml_utils::FileUtils;
 use scouter_client::{DriftProfile, DriftType};
 use std::collections::HashMap;
 use std::path::Path;
 use tracing::debug;
 use tracing::error;
-use tracing::info;
 
 pub fn find_drift_profile(
     files: &[String],

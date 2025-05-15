@@ -1,3 +1,5 @@
+import type { DriftType } from "../types";
+
 export interface DriftAlertRequest {
   name: string;
   space: string;
@@ -16,6 +18,7 @@ export interface Alert {
   alert: Record<string, string>;
   id: number;
   active: boolean;
+  drift_type: string;
 }
 export interface AlertResponse {
   alerts: Alert[];

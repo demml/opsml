@@ -29,7 +29,8 @@ let {
       <tr>
         <th class="text-black pl-4 py-2 text-left">Created At</th>
         <th class="text-black p-2">Id</th>
-        <th class="text-black p-2">Feature</th>
+        <th class="text-black p-2">Drift Type</th>
+        <th class="text-black p-2">Name</th>
         <th class="text-black p-2">Details</th>
         <th class="text-black pr-4 py-2">Status</th>
       </tr>
@@ -39,6 +40,7 @@ let {
       <tr class="border-t hover:bg-primary-300 py-2">
         <td class="pl-4 py-2">{alert.created_at}</td>
         <td class="p-2 text-center">{alert.id}</td>
+        <td class="p-2 text-center">{alert.drift_type}</td>
         <td class="p-2 text-center">{alert.feature}</td>
         <td class="p-2 text-center" ><AlertModal code={JSON.stringify(alert.alert)} /></td>
         <td class="pr-4 py-2 text-black">
