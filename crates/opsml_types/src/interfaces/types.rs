@@ -1,8 +1,10 @@
 use pyo3::prelude::*;
+use scouter_client::DriftType;
 use serde::{Deserialize, Serialize};
 use std::fmt;
 use std::fmt::Display;
 use std::fmt::Formatter;
+use std::path::PathBuf;
 use tracing::debug;
 
 #[pyclass(eq)]
@@ -319,4 +321,12 @@ impl ModelType {
             _ => self.clone(),
         }
     }
+}
+
+#[pyclass]
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+pub struct DriftProfileUri {
+    pub root_dir: PathBuf,
+    pub uri: PathBuf,
+    pub drift_type: DriftType,
 }

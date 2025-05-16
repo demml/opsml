@@ -40,7 +40,7 @@ def test_onnx_model(tmp_path: Path):
     )[0]
 
     interface = OnnxModel(model=onx, sample_data=X_train)
-    interface.create_drift_profile(X_train)
+    interface.create_drift_profile("drift", X_train)
 
     result = interface.session.run(
         input_feed={input_name: X_test.astype(np.float32)},

@@ -508,7 +508,7 @@ impl DataInterface {
             .as_ref()
             .unwrap()
             .save_to_json(Some(profile_save_path.clone()))
-            .map_err(|e| DataInterfaceError::ScouterError(e.to_string()))?;
+            .map_err(DataInterfaceError::ScouterSaveError)?;
 
         Ok(profile_path)
     }

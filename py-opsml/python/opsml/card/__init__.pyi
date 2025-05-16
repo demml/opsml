@@ -18,6 +18,7 @@ from typing import (
 from ..data import DataInterface, DataLoadKwargs, DataSaveKwargs, DataType
 from ..experiment import Metrics, Parameters
 from ..model import (
+    DriftProfileMap,
     FeatureSchema,
     ModelInterface,
     ModelLoadKwargs,
@@ -594,11 +595,32 @@ class ModelCard:
                 (as in the case of custom interfaces), it will be used.
         """
 
+    def drift_profile_path(self, alias: str) -> Path:
+        """Helper method that returns the path to a specific drift profile.
+        This method will fail if there is no drift profile map or the alias
+        does not exist.
+
+        Args:
+            alias (str):
+                The alias of the drift profile
+
+        Returns:
+            Path to the drift profile
+        """
+
     def __str__(self) -> str:
         """Return a string representation of the ModelCard.
 
         Returns:
             String representation of the ModelCard.
+        """
+
+    @property
+    def drift_profile(self) -> DriftProfileMap:
+        """Return the drift profile map from the model interface.
+
+        Returns:
+            DriftProfileMap
         """
 
 class ComputeEnvironment:

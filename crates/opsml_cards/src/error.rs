@@ -54,6 +54,9 @@ pub enum CardError {
     #[error("Data has not been set. Load the data and retry")]
     DataNotSetError,
 
+    #[error("Alias not found in CardDeck")]
+    AliasNotFoundInDeckError,
+
     #[error(transparent)]
     DataInterfaceError(#[from] DataInterfaceError),
 
@@ -95,6 +98,9 @@ pub enum CardError {
 
     #[error("Unsupported registry type: {0}")]
     UnsupportedRegistryTypeError(RegistryType),
+
+    #[error("Failed to get drift profile")]
+    DriftProfileNotFoundError,
 }
 
 impl<'a> From<pyo3::DowncastError<'a, 'a>> for CardError {

@@ -5,8 +5,9 @@ use opsml_types::{
     api::*,
     cards::{CardTable, HardwareMetrics, Metric, Parameter},
     contracts::*,
-    RegistryMode, RegistryType,
+    IntegratedService, RegistryMode, RegistryType,
 };
+use scouter_client::{ProfileRequest, ProfileStatusRequest, ScouterServerError};
 use serde::Deserialize;
 use std::sync::Arc;
 use tracing::error;
@@ -110,7 +111,7 @@ impl ClientRegistry {
             })?;
 
         // check if 403 forbidden and get error message
-        if response.status().as_u16() == 403 {
+        if response.status() == 403 {
             let error = response
                 .json::<ErrorResponse>()
                 .map_err(RegistryError::RequestError)?;
@@ -149,7 +150,7 @@ impl ClientRegistry {
         )?;
 
         // check if 403 forbidden and get error message
-        if response.status().as_u16() == 403 {
+        if response.status() == 403 {
             let error = response
                 .json::<ErrorResponse>()
                 .map_err(RegistryError::RequestError)?;
@@ -186,7 +187,7 @@ impl ClientRegistry {
             })?;
 
         // check if 403 forbidden and get error message
-        if response.status().as_u16() == 403 {
+        if response.status() == 403 {
             let error = response
                 .json::<ErrorResponse>()
                 .map_err(RegistryError::RequestError)?;
@@ -439,5 +440,92 @@ impl ClientRegistry {
         response
             .json::<Vec<Parameter>>()
             .map_err(RegistryError::RequestError)
+    }
+
+    #[instrument(skip_all)]
+    pub fn check_service_health(&self, service: IntegratedService) -> Result<bool, RegistryError> {
+        let route = match service {
+            IntegratedService::Scouter => Routes::ScouterHealthcheck,
+            // Add other service routes as needed
+        };
+
+        let response = self
+            .api_client
+            .request(route, RequestType::Get, None, None, None)
+            .inspect_err(|e| {
+                error!("Failed to check {} service health: {}", service, e);
+            })?;
+
+        Ok(response.status().is_success())
+    }
+
+    pub fn insert_scouter_profile(&self, profile: &ProfileRequest) -> Result<(), RegistryError> {
+        let body = serde_json::to_value(profile)?;
+
+        let response = self
+            .api_client
+            .request(
+                Routes::ScouterProfile,
+                RequestType::Post,
+                Some(body),
+                None,
+                None,
+            )
+            .inspect_err(|e| {
+                error!("Failed to insert scouter profile {}", e);
+            })?;
+
+        // check response status for error
+        if response.status() == 500 {
+            // raise error
+            let error = response
+                .json::<ScouterServerError>()
+                .map_err(RegistryError::RequestError)?;
+            return Err(ApiClientError::ForbiddenError(error.error).into());
+        }
+
+        // check for any other errors
+        if response.status() != 200 {
+            let error_text = response.text().map_err(RegistryError::RequestError)?;
+            return Err(ApiClientError::ServerError(error_text).into());
+        }
+
+        Ok(())
+    }
+
+    pub fn update_drift_profile_status(
+        &self,
+        profile: &ProfileStatusRequest,
+    ) -> Result<(), RegistryError> {
+        let body = serde_json::to_value(profile)?;
+
+        let response = self
+            .api_client
+            .request(
+                Routes::ScouterProfileStatus,
+                RequestType::Put,
+                Some(body),
+                None,
+                None,
+            )
+            .inspect_err(|e| {
+                error!("Failed to update scouter profile status {}", e);
+            })?;
+
+        // check response status for error
+        if response.status() == 500 {
+            // raise error
+            let error = response
+                .json::<ScouterServerError>()
+                .map_err(RegistryError::RequestError)?;
+            return Err(ApiClientError::ForbiddenError(error.error).into());
+        }
+
+        if response.status() != 200 {
+            let error_text = response.text().map_err(RegistryError::RequestError)?;
+            return Err(ApiClientError::ServerError(error_text).into());
+        }
+
+        Ok(())
     }
 }

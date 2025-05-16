@@ -16,7 +16,7 @@ from opsml import (  # type: ignore
 )
 from opsml.card import CardDeck, Card  # type: ignore
 from opsml.card import RegistryMode, CardList  # type: ignore
-from opsml.model import SklearnModel  # type: ignore
+from opsml.model import SklearnModel, DriftArgs  # type: ignore
 from opsml.data import PandasData  # type: ignore
 from pathlib import Path
 import shutil
@@ -162,7 +162,7 @@ def crud_modelcard(random_forest_classifier: SklearnModel, datacard: DataCard):
     assert len(cards) == 0
 
     interface: SklearnModel = random_forest_classifier
-    interface.create_drift_profile(datacard.interface.data)
+    interface.create_drift_profile("spc", datacard.interface.data)
 
     card = ModelCard(
         interface=interface,
@@ -177,7 +177,16 @@ def crud_modelcard(random_forest_classifier: SklearnModel, datacard: DataCard):
     card.experimentcard_uid = "test"
     assert card.experimentcard_uid == "test"
 
-    reg.register_card(card=card, save_kwargs=ModelSaveKwargs(save_onnx=True))
+    reg.register_card(
+        card=card,
+        save_kwargs=ModelSaveKwargs(
+            save_onnx=True,
+            drift=DriftArgs(  # we want to set the drift profile to active
+                active=True,
+                deactivate_others=True,
+            ),
+        ),
+    )
     cards = reg.list_cards()
     cards.as_table()
 
@@ -195,6 +204,8 @@ def crud_modelcard(random_forest_classifier: SklearnModel, datacard: DataCard):
     assert loaded_card.tags == card.tags
     assert loaded_card.uid == card.uid
     assert loaded_card.version == card.version
+    assert loaded_card.drift_profile["spc"] is not None
+    assert loaded_card.drift_profile_path("spc") is not None
 
     assert isinstance(loaded_card.interface, SklearnModel)
     assert loaded_card.interface.sample_data is not None

@@ -29,6 +29,9 @@ pub enum ApiClientError {
 
     #[error(transparent)]
     SerdeError(#[from] serde_json::Error),
+
+    #[error("{0}")]
+    ServerError(String),
 }
 
 #[derive(Error, Debug)]

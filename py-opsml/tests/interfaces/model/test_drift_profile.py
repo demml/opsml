@@ -45,22 +45,22 @@ def test_model_interface_drift_profile(
         sample_data=X,
         task_type=TaskType.Classification,
         preprocessor=StandardScaler(),
-        drift_profile=custom_profile1,
+        drift_profile={"custom1": custom_profile1},
     )
 
     # create spc
-    model.create_drift_profile(X)
+    model.create_drift_profile(alias="spc", data=X)
 
     # create psi
-    model.create_drift_profile(X, PsiDriftConfig(), DataType.Pandas)
+    model.create_drift_profile("psi", X, PsiDriftConfig(), DataType.Pandas)
 
     # custom
     metric = CustomMetric(
         name="custom", value=0.5, alert_threshold=AlertThreshold.Above
     )
-    model.create_drift_profile([metric], CustomMetricDriftConfig())
+    model.create_drift_profile("custom", [metric], CustomMetricDriftConfig())
 
     # save
     metadata = model.save(tmp_path)
 
-    assert metadata.save_metadata.drift_profile_uri is not None
+    assert metadata.save_metadata.drift_profile_uri_map is not None

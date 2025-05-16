@@ -6,8 +6,8 @@ pub mod server_logic {
     use opsml_crypt::{derive_encryption_key, encrypted_key, generate_salt};
     use opsml_semver::error::VersionError;
     use opsml_semver::{VersionArgs, VersionType, VersionValidator};
-    use opsml_settings::config::DatabaseSettings;
-    use opsml_settings::config::OpsmlStorageSettings;
+    use opsml_settings::config::{DatabaseSettings, OpsmlStorageSettings};
+
     use opsml_sql::{
         base::SqlClient,
         enums::client::{get_sql_client, SqlClientEnum},
@@ -23,6 +23,8 @@ pub mod server_logic {
     };
     use opsml_utils::{get_utc_datetime, uid_to_byte_key};
     use pyo3::prelude::*;
+    use scouter_client::ScouterClient;
+    use scouter_client::{ProfileRequest, ProfileStatusRequest};
     use semver::Version;
     use sqlx::types::Json as SqlxJson;
     use tracing::info;
@@ -30,6 +32,7 @@ pub mod server_logic {
     #[derive(Debug, Clone)]
     pub struct ServerRegistry {
         sql_client: SqlClientEnum,
+        pub scouter_client: Option<ScouterClient>,
         pub registry_type: RegistryType,
         pub table_name: CardTable,
         pub storage_settings: OpsmlStorageSettings,
@@ -40,15 +43,17 @@ pub mod server_logic {
             registry_type: RegistryType,
             storage_settings: OpsmlStorageSettings,
             database_settings: DatabaseSettings,
+            scouter_client: Option<ScouterClient>,
         ) -> Result<Self, RegistryError> {
             let sql_client = get_sql_client(&database_settings).await?;
-
             let table_name = CardTable::from_registry_type(&registry_type);
+
             Ok(Self {
                 sql_client,
                 table_name,
                 registry_type,
                 storage_settings,
+                scouter_client,
             })
         }
 
@@ -664,6 +669,45 @@ pub mod server_logic {
                 .collect::<Vec<_>>();
 
             Ok(params)
+        }
+
+        pub fn check_service_health(
+            &self,
+            service: IntegratedService,
+        ) -> Result<bool, RegistryError> {
+            match service {
+                IntegratedService::Scouter => {
+                    let client = self
+                        .scouter_client
+                        .as_ref()
+                        .ok_or(RegistryError::ScouterClientNotFoundError)?;
+                    Ok(client.check_service_health()?)
+                }
+            }
+        }
+
+        pub fn insert_scouter_profile(
+            &self,
+            request: &ProfileRequest,
+        ) -> Result<(), RegistryError> {
+            let client = self
+                .scouter_client
+                .as_ref()
+                .ok_or(RegistryError::ScouterClientNotFoundError)?;
+            client.insert_profile(request)?;
+            Ok(())
+        }
+
+        pub fn update_drift_profile_status(
+            &self,
+            request: &ProfileStatusRequest,
+        ) -> Result<(), RegistryError> {
+            let client = self
+                .scouter_client
+                .as_ref()
+                .ok_or(RegistryError::ScouterClientNotFoundError)?;
+            client.update_profile_status(request)?;
+            Ok(())
         }
     }
 

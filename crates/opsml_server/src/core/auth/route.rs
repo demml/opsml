@@ -16,7 +16,7 @@ use opsml_sql::base::SqlClient;
 use opsml_types::JwtToken;
 use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::sync::Arc;
-use tracing::{debug, error, instrument};
+use tracing::{debug, error, info, instrument};
 
 /// Route for the login endpoint when using the API
 ///
@@ -131,7 +131,7 @@ pub async fn api_login_handler(
     })?;
 
     // update scouter with new refresh token
-
+    info!("User connected: {}", user.username);
     Ok(Json(JwtToken { token: jwt_token }))
 }
 

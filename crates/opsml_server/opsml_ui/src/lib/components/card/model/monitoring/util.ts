@@ -41,13 +41,12 @@ export type DriftProfileResponse = {
 export async function getDriftProfiles(
   metadata: ModelCard
 ): Promise<DriftProfileResponse> {
-  let driftUri =
-    metadata.metadata.interface_metadata.save_metadata.drift_profile_uri;
+  let driftUriMap =
+    metadata.metadata.interface_metadata.save_metadata.drift_profile_uri_map;
 
   const body = {
-    path: driftUri,
     uid: metadata.uid,
-    registry_type: RegistryType.Model,
+    drift_profile_uri_map: driftUriMap,
   };
 
   const response = await opsmlClient.post(RoutePaths.DRIFT_PROFILE_UI, body);
@@ -58,14 +57,14 @@ export function getProfileFeatures(
   drift_type: DriftType,
   profile: DriftProfile
 ): string[] {
-  const variables =
+  const variables: string[] =
     drift_type === DriftType.Custom
-      ? profile.Custom.metrics
+      ? Object.keys(profile.Custom.metrics)
       : drift_type === DriftType.Psi
-      ? profile.Psi.features
-      : profile.Spc.features;
+      ? profile.Psi.config.alert_config.features_to_monitor
+      : profile.Spc.config.alert_config.features_to_monitor;
 
-  return Object.keys(variables).sort();
+  return variables.sort();
 }
 
 export function extractProfile(
@@ -129,7 +128,7 @@ export async function getLatestMetrics(
       })();
 
       // Make the request and store result in driftMap
-      const response = await opsmlClient.post(route, request);
+      const response = await opsmlClient.get(route, request);
       const data = await response.json();
       driftMap[driftType as DriftType] = data;
     }
@@ -141,6 +140,7 @@ export async function getLatestMetrics(
   return driftMap;
 }
 
+// this is used for mocking
 export async function getLatestMetricsExample(
   profiles: DriftProfileResponse,
   time_interval: TimeInterval,
@@ -220,5 +220,5 @@ export function timeIntervalToDateTime(interval: TimeInterval): string {
   const past = new Date(now.getTime() - minutes * 60000);
 
   // Format to YYYY-MM-DD HH:MM:SS
-  return past.toISOString().replace("T", " ").slice(0, 19);
+  return past.toISOString();
 }

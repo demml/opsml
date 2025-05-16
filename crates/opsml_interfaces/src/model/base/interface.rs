@@ -1,28 +1,28 @@
-use crate::base::{parse_save_kwargs, ExtraMetadata, ModelLoadKwargs, ModelSaveKwargs};
+use crate::base::{
+    parse_save_kwargs, DriftProfileMap, ExtraMetadata, ModelLoadKwargs, ModelSaveKwargs,
+};
 use crate::data::generate_feature_schema;
 use crate::data::DataInterface;
 use crate::model::onnx::OnnxConverter;
 use crate::model::SampleData;
 use crate::types::{FeatureSchema, ProcessorType};
 use crate::OnnxSession;
-use opsml_utils::FileUtils;
 use opsml_utils::PyHelperFuncs;
 use scouter_client::{CustomDriftProfile, DriftType, PsiDriftProfile, SpcDriftProfile};
 
 use crate::error::ModelInterfaceError;
 use crate::model::base::utils;
-use opsml_types::DataType;
+
 use opsml_types::{
     interfaces::{ModelInterfaceType, ModelType, TaskType},
-    SaveName, Suffix,
+    DataType, DriftProfileUri, SaveName, Suffix,
 };
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use pyo3::IntoPyObjectExt;
-use rand::Rng;
 use scouter_client::{drifter::PyDrifter, DataType as DriftDataType};
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -74,7 +74,7 @@ pub struct ModelInterfaceSaveMetadata {
 
     #[pyo3(get)]
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub drift_profile_uri: Option<PathBuf>,
+    pub drift_profile_uri_map: Option<HashMap<String, DriftProfileUri>>,
 
     #[pyo3(get)]
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -88,13 +88,13 @@ pub struct ModelInterfaceSaveMetadata {
 #[pymethods]
 impl ModelInterfaceSaveMetadata {
     #[new]
-    #[pyo3(signature = (model_uri, data_processor_map=HashMap::new(), sample_data_uri=None, onnx_model_uri=None,  drift_profile_uri=None, extra=None, save_kwargs=None))]
+    #[pyo3(signature = (model_uri, data_processor_map=HashMap::new(), sample_data_uri=None, onnx_model_uri=None, drift_profile_uri_map=None, extra=None, save_kwargs=None))]
     pub fn new(
         model_uri: PathBuf,
         data_processor_map: Option<HashMap<String, DataProcessor>>,
         sample_data_uri: Option<PathBuf>,
         onnx_model_uri: Option<PathBuf>,
-        drift_profile_uri: Option<PathBuf>,
+        drift_profile_uri_map: Option<HashMap<String, DriftProfileUri>>,
         extra: Option<ExtraMetadata>,
         save_kwargs: Option<ModelSaveKwargs>,
     ) -> Self {
@@ -103,7 +103,7 @@ impl ModelInterfaceSaveMetadata {
             sample_data_uri,
             onnx_model_uri,
             data_processor_map: data_processor_map.unwrap_or_default(),
-            drift_profile_uri,
+            drift_profile_uri_map,
             extra,
             save_kwargs,
         }
@@ -148,9 +148,6 @@ pub struct ModelInterfaceMetadata {
     pub interface_type: ModelInterfaceType,
 
     pub model_specific_metadata: Value,
-
-    #[pyo3(get)]
-    pub drift_type: HashSet<DriftType>,
 }
 
 #[pymethods]
@@ -165,7 +162,7 @@ impl ModelInterfaceMetadata {
         interface_type=ModelInterfaceType::Base,
         onnx_session=None,
         extra_metadata=HashMap::new(),
-        drift_type=HashSet::new())
+     )
     )]
     #[allow(clippy::too_many_arguments)]
     pub fn new(
@@ -177,7 +174,6 @@ impl ModelInterfaceMetadata {
         interface_type: ModelInterfaceType,
         onnx_session: Option<OnnxSession>,
         extra_metadata: HashMap<String, String>,
-        drift_type: HashSet<DriftType>,
     ) -> Self {
         ModelInterfaceMetadata {
             task_type,
@@ -189,7 +185,6 @@ impl ModelInterfaceMetadata {
             save_metadata,
             extra_metadata,
             model_specific_metadata: Value::Null,
-            drift_type,
         }
     }
     pub fn __str__(&self) -> String {
@@ -231,11 +226,9 @@ pub struct ModelInterface {
     pub onnx_session: Option<Py<OnnxSession>>,
 
     #[pyo3(get)]
-    pub drift_profile: Vec<PyObject>,
+    pub drift_profile: DriftProfileMap,
 
     pub sample_data: SampleData,
-
-    pub drift_type: HashSet<DriftType>,
 }
 
 #[pymethods]
@@ -275,26 +268,7 @@ impl ModelInterface {
 
         let profiles = match drift_profile {
             Some(profile) => utils::extract_drift_profile(profile)?,
-            None => vec![],
-        };
-
-        // if profile is not empty, iterate through and get the drift type else default create empty vec
-        let drift_type = if !profiles.is_empty() {
-            profiles
-                .iter()
-                .map(|profile| {
-                    profile
-                        .bind(py)
-                        .getattr("config")
-                        .unwrap()
-                        .getattr("drift_type")
-                        .unwrap()
-                        .extract::<DriftType>()
-                        .unwrap()
-                })
-                .collect::<HashSet<DriftType>>()
-        } else {
-            HashSet::new()
+            None => DriftProfileMap::new(),
         };
 
         Ok(ModelInterface {
@@ -307,7 +281,6 @@ impl ModelInterface {
             interface_type: ModelInterfaceType::Base,
             onnx_session: None,
             drift_profile: profiles,
-            drift_type,
         })
     }
 
@@ -430,7 +403,7 @@ impl ModelInterface {
 
         let sample_data_uri = self.save_data(py, &path, None)?;
 
-        let drift_profile_uri = if self.drift_profile.is_empty() {
+        let drift_profile_uri_map = if self.drift_profile.is_empty() {
             None
         } else {
             Some(self.save_drift_profile(py, &path)?)
@@ -443,7 +416,7 @@ impl ModelInterface {
             data_processor_map: HashMap::new(),
             sample_data_uri,
             onnx_model_uri,
-            drift_profile_uri,
+            drift_profile_uri_map,
             extra: None,
             save_kwargs,
         };
@@ -464,7 +437,6 @@ impl ModelInterface {
             self.interface_type.clone(),
             onnx_session,
             HashMap::new(),
-            self.drift_type.clone(),
         );
 
         Ok(metadata)
@@ -478,10 +450,11 @@ impl ModelInterface {
     /// * `config` - Configuration for drift profile
     /// * `data_type` - Data type for drift profile
     ///
-    #[pyo3(signature = (data, config=None, data_type=None))]
+    #[pyo3(signature = (alias, data, config=None, data_type=None))]
     pub fn create_drift_profile<'py>(
         &mut self,
         py: Python<'py>,
+        alias: String,
         data: &Bound<'py, PyAny>,
         config: Option<&Bound<'py, PyAny>>,
         data_type: Option<&DataType>,
@@ -498,16 +471,7 @@ impl ModelInterface {
         });
 
         let profile = drifter.create_drift_profile(py, data, config, data_type)?;
-        self.drift_profile.push(profile.clone().into_py_any(py)?);
-
-        // get drift_type from config and push to drift_type
-
-        let drift_type = profile
-            .getattr("config")?
-            .getattr("drift_type")?
-            .extract::<DriftType>()?;
-
-        self.drift_type.insert(drift_type);
+        self.drift_profile.add_profile(py, alias, profile.clone())?;
 
         Ok(profile)
     }
@@ -539,13 +503,8 @@ impl ModelInterface {
         let model_path = path.join(&metadata.model_uri);
         self.load_model(py, &model_path, load_kwargs.model_kwargs(py))?;
 
-        if metadata.drift_profile_uri.is_some() {
-            let drift_path = path.join(
-                &metadata
-                    .drift_profile_uri
-                    .ok_or_else(|| ModelInterfaceError::MissingDriftProfileUriError)?,
-            );
-            self.load_drift_profile(py, &drift_path)?;
+        if let Some(ref drift_map) = metadata.drift_profile_uri_map {
+            self.load_drift_profile(py, &path, drift_map)?;
         }
 
         if metadata.sample_data_uri.is_some() {
@@ -585,9 +544,8 @@ impl ModelInterface {
                 .onnx_session
                 .as_ref()
                 .map(|session| Py::new(py, session.clone()).unwrap()),
-            drift_profile: vec![],
+            drift_profile: DriftProfileMap::new(),
             sample_data: SampleData::default(),
-            drift_type: metadata.drift_type.clone(),
         };
 
         Ok(interface)
@@ -656,34 +614,33 @@ impl ModelInterface {
         &mut self,
         py: Python,
         path: &Path,
-    ) -> Result<PathBuf, ModelInterfaceError> {
+    ) -> Result<HashMap<String, DriftProfileUri>, ModelInterfaceError> {
+        let mut drift_url_map = HashMap::new();
         let save_dir = PathBuf::from(SaveName::Drift);
-        let save_path = path.join(save_dir.clone());
 
-        for profile in self.drift_profile.iter() {
+        for (alias, profile) in self.drift_profile.profiles.iter() {
+            let relative_path = save_dir.join(alias).with_extension(Suffix::Json);
+            let full_path = path.join(&relative_path);
+
             let drift_type = profile
-                .bind(py)
-                .getattr("config")?
-                .getattr("drift_type")?
-                .extract::<DriftType>()?;
+                .getattr(py, "config")?
+                .getattr(py, "drift_type")?
+                .extract::<DriftType>(py)?;
 
-            // add small hex to filename to avoid overwriting
-            // this would only have if someone creates multiple drift profiles of the same type
-            // probably won't happen, but lets be a little safe
-            let random_hex: String = rand::rng()
-                .sample_iter(&rand::distr::Alphanumeric)
-                .take(3)
-                .map(char::from)
-                .collect();
+            profile.call_method1(py, "save_to_json", (Some(&full_path),))?;
 
-            let filename = format!("{}-{}-{}", drift_type, SaveName::DriftProfile, random_hex);
-            let profile_save_path = save_path.join(filename).with_extension(Suffix::Json);
-
-            profile.call_method1(py, "save_to_json", (Some(profile_save_path),))?;
+            drift_url_map.insert(
+                alias.to_string(),
+                DriftProfileUri {
+                    root_dir: save_dir.clone(),
+                    uri: relative_path,
+                    drift_type,
+                },
+            );
         }
         debug!("Drift profile saved");
 
-        Ok(save_dir)
+        Ok(drift_url_map)
     }
 
     /// Load drift profile
@@ -699,39 +656,38 @@ impl ModelInterface {
         &mut self,
         py: Python,
         path: &Path,
+        drift_profile_uri_map: &HashMap<String, DriftProfileUri>,
     ) -> Result<(), ModelInterfaceError> {
-        // list all files in dir
-        let files = FileUtils::list_files(path)?;
-
-        for filepath in files {
-            // get file name
-            let filename = filepath.file_name().unwrap().to_str().unwrap();
-
-            let drift_type_str = filename.split('-').next().unwrap().to_lowercase();
-            let drift_type = DriftType::from_value(&drift_type_str);
-
-            // fail if drift type is not found
-            if drift_type.is_none() {
-                return Err(ModelInterfaceError::DriftTypeNotFoundError(
-                    filename.to_string(),
-                ));
-            }
+        for (alias, drift_profile_uri) in drift_profile_uri_map {
+            let filepath = path.join(&drift_profile_uri.uri);
 
             // load file to json string
             let file = std::fs::read_to_string(&filepath)?;
 
-            match drift_type.unwrap() {
+            match drift_profile_uri.drift_type {
                 DriftType::Spc => {
                     let profile = SpcDriftProfile::model_validate_json(file);
-                    self.drift_profile.push(profile.into_py_any(py)?);
+                    self.drift_profile.add_profile(
+                        py,
+                        alias.to_string(),
+                        profile.into_bound_py_any(py)?,
+                    )?;
                 }
                 DriftType::Psi => {
                     let profile = PsiDriftProfile::model_validate_json(file);
-                    self.drift_profile.push(profile.into_py_any(py)?);
+                    self.drift_profile.add_profile(
+                        py,
+                        alias.to_string(),
+                        profile.into_bound_py_any(py)?,
+                    )?;
                 }
                 DriftType::Custom => {
                     let profile = CustomDriftProfile::model_validate_json(file);
-                    self.drift_profile.push(profile.into_py_any(py)?);
+                    self.drift_profile.add_profile(
+                        py,
+                        alias.to_string(),
+                        profile.into_bound_py_any(py)?,
+                    )?;
                 }
             }
         }

@@ -1,4 +1,5 @@
 import type { RegistryType } from "$lib/utils";
+import type { DriftType } from "../model/monitoring/types";
 import type { FeatureSchema } from "./datacard";
 
 // Enums
@@ -126,6 +127,12 @@ export interface DataProcessor {
   type: ProcessorType;
 }
 
+export interface DriftProfileUri {
+  root_dir: string;
+  uri: string;
+  drift_type: DriftType;
+}
+
 export interface ModelSaveKwargs {
   onnx?: Record<string, any>;
   model?: Record<string, any>;
@@ -137,7 +144,7 @@ export interface ModelInterfaceSaveMetadata {
   data_processor_map: Record<string, DataProcessor>;
   sample_data_uri?: string;
   onnx_model_uri?: string;
-  drift_profile_uri?: string;
+  drift_profile_uri_map?: Record<string, DriftProfileUri>;
   extra?: Record<string, any>;
   save_kwargs?: ModelSaveKwargs;
 }

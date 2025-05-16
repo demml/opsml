@@ -24,12 +24,12 @@ OnnxSession = model.OnnxSession
 TensorFlowModel = model.TensorFlowModel
 ModelLoadKwargs = model.ModelLoadKwargs
 ModelSaveKwargs = model.ModelSaveKwargs
+DriftArgs = model.DriftArgs
 
 Feature = model.Feature
 FeatureSchema = model.FeatureSchema
 OnnxSchema = model.OnnxSchema
 ExtraMetadata = model.ExtraMetadata
-
 ProcessorType = model.ProcessorType
 
 
@@ -55,6 +55,7 @@ __all__ = [
     "OnnxSession",
     "TensorFlowModel",
     "ModelLoadKwargs",
+    "DriftArgs",
     "ModelSaveKwargs",
     "Feature",
     "FeatureSchema",

@@ -232,17 +232,11 @@ pub enum ServerError {
     #[error(transparent)]
     UtilError(#[from] UtilError),
 
-    #[error("Invalid drift profile file")]
-    InvalidDriftProfile,
-
     #[error(transparent)]
     IoError(#[from] std::io::Error),
 
     #[error("Failed to load drift profile from string: {0}")]
     LoadDriftProfileError(String),
-
-    #[error("Failed to get filename from path")]
-    FileNameError,
 
     #[error(transparent)]
     SqlError(#[from] SqlError),
@@ -264,4 +258,7 @@ pub enum ServerError {
 
     #[error("User not found in database")]
     UserNotFoundError,
+
+    #[error(transparent)]
+    StripPrefixError(#[from] std::path::StripPrefixError),
 }

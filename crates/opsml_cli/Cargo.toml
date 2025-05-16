@@ -16,6 +16,7 @@ opsml-toml = { workspace = true }
 opsml-types = { workspace = true }
 opsml-utils = { workspace = true }
 opsml-version = { workspace = true }
+scouter-client = { workspace = true }
 
 anyhow = { workspace = true }
 base64 = { workspace = true }
