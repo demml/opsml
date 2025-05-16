@@ -590,7 +590,10 @@ pub async fn get_scouter_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
                 &format!("{}/scouter/drift/custom", prefix),
                 get(get_custom_drift),
             )
-            .route(&format!("{}/scouter/alerts", prefix), get(get_drift_alerts))
+            .route(
+                &format!("{}/scouter/alerts", prefix),
+                get(get_drift_alerts).put(update_alert_status),
+            )
             .route(
                 &format!("{}/scouter/healthcheck", prefix),
                 get(check_scouter_health),
