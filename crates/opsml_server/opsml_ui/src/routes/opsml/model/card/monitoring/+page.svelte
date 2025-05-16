@@ -161,7 +161,7 @@
     </div>
 
     <!-- Row 2: 1 column -->
-    <div class="bg-white p-4 border-2 border-black rounded-lg shadow h-[500px]">
+    <div class="bg-white p-4 border-2 border-black rounded-lg shadow min-h-[500px]">
       
       {#if currentName && latestMetrics}
         {#if currentMetricData}
@@ -186,13 +186,11 @@
     </div>
 
     <!-- Row 3: 1 column  alerts -->
-    <div class="rounded-lg shadow bg-slate-100 h-[500px]">
-      <div class="h-full">
-        <AlertTable
-          alerts={currentAlerts}
-          updateAlert={updateAlert}
-        />
-      </div>
+    <div class="rounded-lg shadow border-2 border-black bg-slate-100 min-h-[100px] max-h-[500px]">
+      <AlertTable
+        alerts={currentAlerts}
+        updateAlert={updateAlert}
+      />
     </div>
 
 

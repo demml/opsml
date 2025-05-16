@@ -37,7 +37,10 @@ export async function getDriftAlerts(
 }
 
 //// Acknowledge an alert by its ID
-async function acknowledgeAlert(id: number, space: string): Promise<boolean> {
+export async function acknowledgeAlert(
+  id: number,
+  space: string
+): Promise<boolean> {
   console.log("Acknowledge alert with id: ", id);
 
   const request: UpdateAlertStatus = {
