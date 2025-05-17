@@ -59,6 +59,7 @@ async fn create_user(
     let mut user = User::new(
         create_req.username,
         password_hash,
+        create_req.email,
         hashed_recovery_codes,
         create_req.permissions,
         create_req.group_permissions,

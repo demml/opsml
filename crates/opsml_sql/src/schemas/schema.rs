@@ -1106,12 +1106,15 @@ pub struct User {
     pub group_permissions: Vec<String>,
     pub role: String,
     pub refresh_token: Option<String>,
+    pub email: String,
+    pub updated_at: DateTime<Utc>,
 }
 
 impl User {
     pub fn new(
         username: String,
         password_hash: String,
+        email: String,
         hashed_recovery_codes: Vec<String>,
         permissions: Option<Vec<String>>,
         group_permissions: Option<Vec<String>>,
@@ -1130,6 +1133,8 @@ impl User {
             group_permissions: group_permissions.unwrap_or(vec!["user".to_string()]),
             role: role.unwrap_or("user".to_string()),
             refresh_token: None,
+            email,
+            updated_at: created_at,
         }
     }
 
@@ -1141,6 +1146,7 @@ impl User {
         map.insert("created_at".to_string(), self.created_at.to_string().into());
         map.insert("active".to_string(), self.active.into());
         map.insert("username".to_string(), self.username.clone().into());
+        map.insert("email".to_string(), self.email.clone().into());
         map.insert("password_hash".to_string(), "[redacted]".into());
         map.insert("hashed_recovery_codes".to_string(), "[redacted]".into());
         map.insert("permissions".to_string(), "[redacted]".into());
@@ -1156,6 +1162,7 @@ impl std::fmt::Debug for User {
         f.debug_struct("User")
             .field("id", &self.id)
             .field("username", &self.username)
+            .field("email", &self.email)
             .field("active", &self.active)
             .field("password_hash", &"[redacted]")
             .field("hashed_recovery_codes", &"[redacted]")

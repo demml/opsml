@@ -12,21 +12,21 @@ impl MySQLQueryHelper {
 
     pub fn get_user_insert_query() -> String {
         format!(
-            "INSERT INTO {} (username, password_hash, hashed_recovery_codes, permissions, group_permissions, role, active) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            "INSERT INTO {} (username, password_hash, hashed_recovery_codes, permissions, group_permissions, role, active, email) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
             CardTable::Users
         )
     }
 
     pub fn get_user_query() -> String {
         format!(
-            "SELECT id, created_at, active, username, password_hash, hashed_recovery_codes, permissions, group_permissions, role, refresh_token FROM {} WHERE username = ?",
+            "SELECT id, created_at, active, username, password_hash, hashed_recovery_codes, permissions, group_permissions, role, refresh_token, email, updated_at FROM {} WHERE username = ?",
             CardTable::Users
         )
     }
 
     pub fn get_users_query() -> String {
         format!(
-            "SELECT id, created_at, active, username, password_hash, hashed_recovery_codes, permissions, group_permissions, role, refresh_token FROM {}",
+            "SELECT id, created_at, active, username, password_hash, hashed_recovery_codes, permissions, group_permissions, role, refresh_token, email, updated_at FROM {}",
             CardTable::Users
         )
         .to_string()
@@ -52,7 +52,9 @@ impl MySQLQueryHelper {
             hashed_recovery_codes = ?,
             permissions = ?, 
             group_permissions = ?,
-            refresh_token = ? 
+            refresh_token = ?,
+            email = ?,
+            updated_at = CURRENT_TIMESTAMP
             WHERE username = ? ",
             CardTable::Users
         )

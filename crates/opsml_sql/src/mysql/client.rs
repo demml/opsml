@@ -28,9 +28,11 @@ impl FromRow<'_, MySqlRow> for User {
     fn from_row(row: &MySqlRow) -> Result<Self, sqlx::Error> {
         let id: Option<i32> = row.try_get("id")?;
         let created_at: DateTime<Utc> = row.try_get("created_at")?;
+        let updated_at: DateTime<Utc> = row.try_get("updated_at")?;
         let active: bool = row.try_get("active")?;
         let username: String = row.try_get("username")?;
         let password_hash: String = row.try_get("password_hash")?;
+        let email: String = row.try_get("email")?;
 
         let hashed_recovery_codes: serde_json::Value = row.try_get("hashed_recovery_codes")?;
         let hashed_recovery_codes: Vec<String> =
@@ -57,6 +59,8 @@ impl FromRow<'_, MySqlRow> for User {
             group_permissions,
             role,
             refresh_token,
+            email,
+            updated_at,
         })
     }
 }
@@ -907,6 +911,7 @@ impl SqlClient for MySqlClient {
             .bind(&group_permissions)
             .bind(&user.role)
             .bind(user.active)
+            .bind(&user.email)
             .execute(&self.pool)
             .await?;
 
@@ -938,6 +943,7 @@ impl SqlClient for MySqlClient {
             .bind(&permissions)
             .bind(&group_permissions)
             .bind(&user.refresh_token)
+            .bind(&user.email)
             .bind(&user.username)
             .execute(&self.pool)
             .await?;
@@ -1750,6 +1756,7 @@ mod tests {
         let user = User::new(
             "user".to_string(),
             "pass".to_string(),
+            "email".to_string(),
             recovery_codes,
             None,
             None,
@@ -1760,6 +1767,7 @@ mod tests {
         let mut user = client.get_user("user").await.unwrap().unwrap();
         assert_eq!(user.username, "user");
         assert_eq!(user.group_permissions, vec!["user"]);
+        assert_eq!(user.email, "email");
 
         // update user
         user.active = false;

@@ -197,6 +197,7 @@ impl ScouterApiClient {
         let user_request = CreateUserRequest {
             username: user.username.clone(),
             password: password.to_string(),
+            email: user.email.clone(),
             permissions: Some(user.permissions.clone()),
             group_permissions: Some(user.group_permissions.clone()),
             role: Some(user.role.clone()),

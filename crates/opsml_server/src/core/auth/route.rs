@@ -155,27 +155,34 @@ async fn ui_login_handler(
     let mut user = match get_user(&state.sql_client, &req.username).await {
         Ok(user) => user,
         Err(_) => {
-            return OpsmlServerError::user_validation_error()
-                .into_response(StatusCode::BAD_REQUEST);
+            error!("User not found {:?}", req.username);
+            return Ok(Json(LoginResponse {
+                authenticated: false,
+                message: "User not found".to_string(),
+                ..Default::default()
+            }));
         }
     };
 
     // check if password is correct
-    state
-        .auth_manager
-        .validate_user(&user, &req.password)
-        .map_err(|_| {
-            (
-                StatusCode::UNAUTHORIZED,
-                Json(OpsmlServerError::user_validation_error()),
-            )
-        })?;
+    match state.auth_manager.validate_user(&user, &req.password) {
+        Ok(_) => {}
+        Err(_) => {
+            error!("Invalid password for user {:?}", req.username);
+            return Ok(Json(LoginResponse {
+                authenticated: false,
+                message: "Invalid password".to_string(),
+                ..Default::default()
+            }));
+        }
+    }
 
     // generate JWT token
     let jwt_token = state.auth_manager.generate_jwt(&user).map_err(|e| {
         error!("Failed to generate JWT token: {}", e);
         internal_server_error(e, "Failed to generate JWT token")
     })?;
+
     let refresh_token = state
         .auth_manager
         .generate_refresh_token(&user)
@@ -197,6 +204,8 @@ async fn ui_login_handler(
     })?;
 
     Ok(Json(LoginResponse {
+        authenticated: true,
+        message: "User authenticated".to_string(),
         username: user.username,
         jwt_token,
     }))

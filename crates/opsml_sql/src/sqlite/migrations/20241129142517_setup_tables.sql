@@ -157,7 +157,9 @@ CREATE TABLE IF NOT EXISTS opsml_user (
     permissions TEXT NOT NULL,
     group_permissions TEXT NOT NULL,
     role TEXT DEFAULT 'user',
-    refresh_token TEXT
+    refresh_token TEXT,
+    email TEXT NOT NULL UNIQUE,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS opsml_artifact_key (
