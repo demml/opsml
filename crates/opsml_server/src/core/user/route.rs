@@ -2,7 +2,8 @@ use crate::core::error::{internal_server_error, OpsmlServerError};
 use crate::core::scouter;
 use crate::core::state::AppState;
 use crate::core::user::schema::{
-    CreateUserRequest, CreateUserResponse, UpdateUserRequest, UserListResponse, UserResponse,
+    CreateUserRequest, CreateUserResponse, RecoveryResetRequest, UpdateUserRequest,
+    UserListResponse, UserResponse,
 };
 use crate::core::user::utils::get_user as get_user_from_db;
 use anyhow::{Context, Result};
@@ -31,7 +32,7 @@ async fn create_user(
     Extension(perms): Extension<UserPermissions>,
 
     Json(create_req): Json<CreateUserRequest>,
-) -> Result<Json<UserResponse>, (StatusCode, Json<OpsmlServerError>)> {
+) -> Result<Json<CreateUserResponse>, (StatusCode, Json<OpsmlServerError>)> {
     // Check if requester has admin permissions
     if !perms.group_permissions.contains(&"admin".to_string()) {
         return OpsmlServerError::need_admin_permission().into_response(StatusCode::FORBIDDEN);
@@ -292,11 +293,53 @@ async fn delete_user(
     Ok(Json(serde_json::json!({"success": true})))
 }
 
+async fn reset_password_with_recovery(
+    State(state): State<Arc<AppState>>,
+    Json(req): Json<RecoveryResetRequest>,
+) -> Result<Json<serde_json::Value>, (StatusCode, Json<OpsmlServerError>)> {
+    // Get user and their recovery codes
+    let mut user = get_user_from_db(&state.sql_client, &req.username).await?;
+
+    // Find and verify the recovery code
+    let code_index = match user.hashed_recovery_codes.iter().position(|stored_hash| {
+        password_auth::verify_password(&req.recovery_code, stored_hash)
+            .map(|_| true)
+            .unwrap_or(false)
+    }) {
+        Some(index) => index,
+        None => {
+            return Err((
+                StatusCode::UNAUTHORIZED,
+                Json(OpsmlServerError::invalid_recovery_code()),
+            ))
+        }
+    };
+    // Update password
+    user.password_hash = generate_hash(&req.new_password);
+
+    // Remove used recovery code
+    user.hashed_recovery_codes.remove(code_index);
+
+    // Save changes
+    if let Err(e) = state.sql_client.update_user(&user).await {
+        return Err(internal_server_error(e, "Failed to update password"));
+    }
+
+    Ok(Json(serde_json::json!({
+        "message": "Password updated successfully",
+        "remaining_codes": user.hashed_recovery_codes.len()
+    })))
+}
+
 pub async fn get_user_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
     let result = catch_unwind(AssertUnwindSafe(|| {
         Router::new()
             .route(&format!("{}/user", prefix), post(create_user))
             .route(&format!("{}/user", prefix), get(list_users))
+            .route(
+                &format!("{}/user/reset-password/recovery", prefix),
+                post(reset_password_with_recovery),
+            )
             .route(&format!("{}/user/{{username}}", prefix), get(get_user))
             .route(&format!("{}/user/{{username}}", prefix), put(update_user))
             .route(
