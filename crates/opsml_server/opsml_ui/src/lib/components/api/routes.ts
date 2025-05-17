@@ -29,10 +29,10 @@ export enum RoutePaths {
   EXPERIMENT_METRIC_NAMES = "/opsml/api/experiment/metrics/names",
   EXPERIMENT_PARAMETERS = "/opsml/api/experiment/parameters",
   HARDWARE_METRICS = "/opsml/api/experiment/hardware/metrics",
+  USER = "/opsml/api/user",
 
   // everything below is old and may be removed
 
-  REGISTER = "/opsml/auth/register",
   UPDATE = "/opsml/auth/update",
   AUTH_SETTINGS = "/opsml/auth/verify",
   TOKEN = "/opsml/auth/token",

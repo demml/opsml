@@ -6,6 +6,26 @@ export const useLoginSchema = z.object({
   password: z.string(),
 });
 
+// Validation schema for creating/registering user
+export const userRegisterSchema = z.object({
+  username: z.string(),
+  password: z
+    .string()
+    .min(8, { message: "Password must be at least 8 characters long" })
+    .max(32, { message: "Password cannot be longer than 32 characters" })
+    .regex(/[A-Z]/, {
+      message: "Password must contain at least one uppercase letter",
+    })
+    .regex(/[a-z]/, {
+      message: "Password must contain at least one lowercase letter",
+    })
+    .regex(/[0-9]/, { message: "Password must contain at least one number" })
+    .regex(/[^A-Za-z0-9\s]/, {
+      message: "Password must contain at least one special character",
+    }),
+  email: z.string().email(),
+});
+
 // Generic return for data or errors to be handled in UI
 export type ValidationResult<T> = {
   success: boolean;
@@ -14,6 +34,7 @@ export type ValidationResult<T> = {
 };
 
 export type UseLoginSchema = z.infer<typeof useLoginSchema>;
+export type UserRegisterSchema = z.infer<typeof userRegisterSchema>;
 
 /**
  * Function to validate login schema
@@ -40,6 +61,46 @@ export function validateLoginSchema(
       acc[path] = curr.message;
       return acc;
     }, {} as Record<keyof UseLoginSchema, string>);
+    return {
+      success: false,
+      errors,
+    };
+  }
+}
+
+/**
+ * Function to validate user registration schema
+ * @param username - Username string
+ * @param password - Password string
+ * @param email - Email string
+ * @returns ValidationResult object containing success status, data, or errors
+ */
+export function validateUserRegisterSchema(
+  username: string,
+  password: string,
+  email: string
+): ValidationResult<UserRegisterSchema> {
+  // if email is not provided, use username
+  // this is for cases where a user wants to use their email address as a username
+  if (!email) {
+    email = username;
+  }
+
+  let parsed = userRegisterSchema.safeParse({ username, password, email });
+
+  if (parsed.success) {
+    return {
+      success: true,
+      data: parsed.data,
+    };
+  } else {
+    let errors = parsed.error.errors.reduce<
+      Record<keyof UserRegisterSchema, string>
+    >((acc, curr) => {
+      const path = curr.path[0] as keyof UserRegisterSchema;
+      acc[path] = curr.message;
+      return acc;
+    }, {} as Record<keyof UserRegisterSchema, string>);
     return {
       success: false,
       errors,
