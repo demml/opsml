@@ -964,13 +964,15 @@ impl SqlClient for SqliteClient {
 
     async fn update_user(&self, user: &User) -> Result<(), SqlError> {
         let query = SqliteQueryHelper::get_user_update_query();
-        let group_permissions = serde_json::to_string(&user.group_permissions)?;
 
+        let hashed_recovery_codes = serde_json::to_string(&user.hashed_recovery_codes)?;
+        let group_permissions = serde_json::to_string(&user.group_permissions)?;
         let permissions = serde_json::to_string(&user.permissions)?;
 
         sqlx::query(&query)
             .bind(user.active)
             .bind(&user.password_hash)
+            .bind(&hashed_recovery_codes)
             .bind(&permissions)
             .bind(&group_permissions)
             .bind(&user.refresh_token)
