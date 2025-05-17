@@ -4,3 +4,22 @@ export interface LoginResponse {
   username: string;
   jwt_token: string;
 }
+
+export interface UserResponse {
+  username: string;
+  active: boolean;
+  permissions: string[];
+  group_permissions: string[];
+}
+
+export interface CreateUserResponse {
+  user: UserResponse;
+  recovery_codes: string[];
+  message: string;
+}
+
+export interface CreateUserRequest {
+  username: string;
+  password: string;
+  email: string;
+}

@@ -6,26 +6,25 @@
   import { goTop } from "$lib/utils";
   import { opsmlClient } from "$lib/components/api/client.svelte";
   import type { PageProps } from './$types';
-  import { validateLoginSchema, type UseLoginSchema } from "$lib/components/user/schema";
+  import { CreateUserRequest, validateUserRegisterSchema, type UserRegisterSchema } from "$lib/components/user/schema";
+  import { registerUser } from "$lib/components/user/utils";
 
 
   let username: string = $state('');
   let password: string = $state('');
-  let showLoginError: boolean = $state(false);
-  let errorMessage: string = $state("Invalid username or password");
+  let email: string = $state('');
 
-  let loginErrors = $state<Partial<Record<keyof UseLoginSchema, string>>>({});
+  let registerErrors = $state<Partial<Record<keyof UserRegisterSchema, string>>>({});
 
+  async function handleRegister() {
+    // Handle registration logic here
 
-  async function handleLogin() {
-    // Handle login logic here
-
-    let argsValid = validateLoginSchema(username, password);
+    let argsValid = validateUserRegisterSchema(username, password, email);
 
     if (argsValid.success) {
-      let loginResponse = await opsmlClient.login(username, password);
+        let response = await registerUser(username, password, email);
 
-      if (loginResponse.authenticated === true) {
+      if (registerResponse.success === true) {
         // need to reload the page to update the nav bar
         if (previousPath) {
           goto(previousPath);
