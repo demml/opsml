@@ -21,7 +21,7 @@
   
   function logInHandle() {
     const currentPage = page.url.pathname;
-    goto('/opsml/auth/login?url=' + currentPage);
+    goto('/opsml/user/login?url=' + currentPage);
   }
 
   let imageLoaded = $state(false);

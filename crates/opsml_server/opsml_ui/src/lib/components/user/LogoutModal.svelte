@@ -9,7 +9,7 @@
  
 	function logOutHandler(): void {
     opsmlClient.logout();
-    goto('/opsml/auth/login');
+    goto('/opsml/user/login');
 	}
 
 
