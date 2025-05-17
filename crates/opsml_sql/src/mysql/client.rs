@@ -1759,6 +1759,7 @@ mod tests {
 
         let mut user = client.get_user("user").await.unwrap().unwrap();
         assert_eq!(user.username, "user");
+        assert_eq!(user.group_permissions, vec!["user"]);
 
         // update user
         user.active = false;
