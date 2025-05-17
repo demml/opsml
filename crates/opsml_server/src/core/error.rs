@@ -268,7 +268,4 @@ pub enum ServerError {
 
     #[error(transparent)]
     StripPrefixError(#[from] std::path::StripPrefixError),
-
-    #[error("Invalid recovery code")]
-    InvalidRecoveryCode,
 }
