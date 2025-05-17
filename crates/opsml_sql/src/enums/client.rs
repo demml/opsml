@@ -434,6 +434,7 @@ mod tests {
         AuditCardRecord, DataCardRecord, ExperimentCardRecord, ModelCardRecord,
     };
     use opsml_utils::utils::get_utc_datetime;
+
     use std::env;
 
     fn get_connection_uri() -> String {
@@ -1117,8 +1118,16 @@ mod tests {
     #[tokio::test]
     async fn test_enum_user() {
         let client = get_client().await;
+        let recovery_codes = vec!["recovery_code_1".to_string(), "recovery_code_2".to_string()];
 
-        let user = User::new("user".to_string(), "pass".to_string(), None, None, None);
+        let user = User::new(
+            "user".to_string(),
+            "pass".to_string(),
+            recovery_codes,
+            None,
+            None,
+            None,
+        );
         client.insert_user(&user).await.unwrap();
 
         let mut user = client.get_user("user").await.unwrap().unwrap();
