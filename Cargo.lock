@@ -4084,6 +4084,7 @@ dependencies = [
  "opsml-utils",
  "password-auth",
  "rand 0.9.1",
+ "rayon",
  "reqwest",
  "rust-embed",
  "rusty-logging",

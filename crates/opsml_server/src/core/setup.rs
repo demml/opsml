@@ -7,6 +7,7 @@ use opsml_sql::base::SqlClient;
 use opsml_sql::enums::client::{get_sql_client, SqlClientEnum};
 use opsml_sql::schemas::User;
 use opsml_storage::storage::enums::client::{get_storage_system, StorageClientEnum};
+use rayon::prelude::*;
 use reqwest::StatusCode;
 use rusty_logging::setup_logging;
 use tracing::{debug, info};
@@ -35,7 +36,7 @@ pub async fn initialize_default_user(
 
     let recovery_codes = generate_recovery_codes(8);
     let hashed_recovery_codes: Vec<String> = recovery_codes
-        .iter()
+        .par_iter() // Parallel iterator
         .map(|code| password_auth::generate_hash(code))
         .collect();
 
@@ -57,7 +58,7 @@ pub async fn initialize_default_user(
 
     let recovery_codes = generate_recovery_codes(8);
     let hashed_recovery_codes: Vec<String> = recovery_codes
-        .iter()
+        .par_iter() // Parallel iterator
         .map(|code| password_auth::generate_hash(code))
         .collect();
 
