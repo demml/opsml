@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS opsml_data_registry (
     username TEXT NOT NULL DEFAULT 'guest'
 );
 
+
 -- ModelSchema
 CREATE TABLE IF NOT EXISTS opsml_model_registry (
     uid TEXT PRIMARY KEY,
@@ -143,7 +144,7 @@ CREATE TABLE IF NOT EXISTS opsml_experiment_hardware_metric (
     bytes_sent BIGINT,
     idx SERIAL PRIMARY KEY
 );
-CREATE INDEX idx_experiment_hardware_metrics_created_at ON opsml_experiment_hardware_metric (created_at);
+CREATE INDEX idx_experiment_hardware_metrics_created_at ON opsml_experiment_hardware_metric (experiment_uid, created_at);
 
 CREATE TABLE IF NOT EXISTS opsml_user (
     id SERIAL PRIMARY KEY,
@@ -151,6 +152,7 @@ CREATE TABLE IF NOT EXISTS opsml_user (
     active BOOLEAN DEFAULT TRUE,
     username TEXT NOT NULL UNIQUE,
     password_hash TEXT NOT NULL,
+    hashed_recovery_codes JSONB NOT NULL,
     permissions JSONB NOT NULL,
     group_permissions JSONB NOT NULL,
     role TEXT DEFAULT 'user',
