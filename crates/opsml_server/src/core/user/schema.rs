@@ -19,11 +19,17 @@ pub struct UpdateUserRequest {
     pub active: Option<bool>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct RecoveryResetRequest {
     pub username: String,
     pub recovery_code: String,
     pub new_password: String,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct ResetPasswordResponse {
+    pub message: String,
+    pub remaining_recovery_codes: usize,
 }
 
 #[derive(Serialize, Deserialize)]
