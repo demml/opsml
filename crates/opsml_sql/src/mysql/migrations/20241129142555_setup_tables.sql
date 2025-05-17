@@ -153,6 +153,7 @@ CREATE TABLE IF NOT EXISTS opsml_user (
     active BOOLEAN DEFAULT TRUE,
     username VARCHAR(255) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
+    hashed_recovery_codes JSON NOT NULL,
     permissions JSON NOT NULL,
     group_permissions JSON NOT NULL,
     role VARCHAR(255) DEFAULT 'user',
