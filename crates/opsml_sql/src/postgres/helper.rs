@@ -58,14 +58,14 @@ impl PostgresQueryHelper {
 
     pub fn get_user_insert_query() -> String {
         format!(
-            "INSERT INTO {} (username, password_hash, permissions, group_permissions, role, active) VALUES ($1, $2, $3, $4, $5, $6)",
+            "INSERT INTO {} (username, password_hash, hashed_recovery_codes, permissions, group_permissions, role, active) VALUES ($1, $2, $3, $4, $5, $6, $7)",
             CardTable::Users
         )
     }
 
     pub fn get_user_query() -> String {
         format!(
-            "SELECT id, created_at, active, username, password_hash, permissions, group_permissions, role, refresh_token FROM {} WHERE username = $1",
+            "SELECT id, created_at, active, username, password_hash, hashed_recovery_codes, permissions, group_permissions, role, refresh_token FROM {} WHERE username = $1",
             CardTable::Users
         )
     }
@@ -76,7 +76,7 @@ impl PostgresQueryHelper {
 
     pub fn get_users_query() -> String {
         format!(
-            "SELECT id, created_at, active, username, password_hash, permissions, group_permissions, role, refresh_token FROM {}",
+            "SELECT id, created_at, active, username, password_hash, hashed_recovery_codes, permissions, group_permissions, role, refresh_token FROM {}",
             CardTable::Users
         )
         .to_string()
@@ -95,10 +95,11 @@ impl PostgresQueryHelper {
             "UPDATE {} SET 
             active = $1, 
             password_hash = $2, 
-            permissions = $3, 
-            group_permissions = $4,
-            refresh_token = $5
-            WHERE username = $6",
+            hashed_recovery_codes = $3,
+            permissions = $4, 
+            group_permissions = $5,
+            refresh_token = $6
+            WHERE username = $7",
             CardTable::Users
         )
     }
