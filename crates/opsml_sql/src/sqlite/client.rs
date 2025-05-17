@@ -893,13 +893,14 @@ impl SqlClient for SqliteClient {
     async fn insert_user(&self, user: &User) -> Result<(), SqlError> {
         let query = SqliteQueryHelper::get_user_insert_query();
 
+        let hashed_recovery_codes = serde_json::to_string(&user.hashed_recovery_codes)?;
         let group_permissions = serde_json::to_string(&user.group_permissions)?;
-
         let permissions = serde_json::to_string(&user.permissions)?;
 
         sqlx::query(&query)
             .bind(&user.username)
             .bind(&user.password_hash)
+            .bind(&hashed_recovery_codes)
             .bind(&permissions)
             .bind(&group_permissions)
             .bind(&user.role)
@@ -1731,9 +1732,10 @@ mod tests {
         );
 
         client.insert_user(&user).await.unwrap();
-
         let mut user = client.get_user("user").await.unwrap().unwrap();
         assert_eq!(user.username, "user");
+        assert_eq!(user.password_hash, "pass");
+        assert_eq!(user.group_permissions, vec!["user"]);
 
         // update user
         user.active = false;

@@ -32,10 +32,10 @@ use super::schema::ResetPasswordResponse;
 async fn create_user(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
-
     Json(create_req): Json<CreateUserRequest>,
 ) -> Result<Json<CreateUserResponse>, (StatusCode, Json<OpsmlServerError>)> {
     // Check if requester has admin permissions
+
     if !perms.group_permissions.contains(&"admin".to_string()) {
         return OpsmlServerError::need_admin_permission().into_response(StatusCode::FORBIDDEN);
     }

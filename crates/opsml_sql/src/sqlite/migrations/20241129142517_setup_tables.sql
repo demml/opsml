@@ -150,7 +150,7 @@ CREATE TABLE IF NOT EXISTS opsml_experiment_hardware_metric (
 CREATE TABLE IF NOT EXISTS opsml_user (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    active BOOLEAN DEFAULT TRUE,
+    active BOOLEAN NOT NULL DEFAULT TRUE,
     username TEXT NOT NULL UNIQUE,
     password_hash TEXT NOT NULL,
     hashed_recovery_codes TEXT NOT NULL,

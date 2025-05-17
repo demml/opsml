@@ -1101,11 +1101,11 @@ pub struct User {
     pub active: bool,
     pub username: String,
     pub password_hash: String,
+    pub hashed_recovery_codes: Vec<String>,
     pub permissions: Vec<String>,
     pub group_permissions: Vec<String>,
     pub role: String,
     pub refresh_token: Option<String>,
-    pub hashed_recovery_codes: Vec<String>,
 }
 
 impl User {
@@ -1125,11 +1125,11 @@ impl User {
             active: true,
             username,
             password_hash,
+            hashed_recovery_codes,
             permissions: permissions.unwrap_or(vec!["read".to_string(), "write".to_string()]),
             group_permissions: group_permissions.unwrap_or(vec!["user".to_string()]),
             role: role.unwrap_or("user".to_string()),
             refresh_token: None,
-            hashed_recovery_codes,
         }
     }
 

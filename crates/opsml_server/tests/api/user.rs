@@ -145,7 +145,7 @@ async fn test_opsml_server_user_crud() {
 
     let body = response.into_body().collect().await.unwrap().to_bytes();
     let reset_response: ResetPasswordResponse = serde_json::from_slice(&body).unwrap();
-    assert_eq!(reset_response.message, "Password reset successfully");
+    assert_eq!(reset_response.message, "Password updated successfully");
     assert_eq!(reset_response.remaining_recovery_codes, 7);
 
     // 6. Delete the user
