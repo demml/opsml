@@ -1105,12 +1105,14 @@ pub struct User {
     pub group_permissions: Vec<String>,
     pub role: String,
     pub refresh_token: Option<String>,
+    pub hashed_recovery_codes: Vec<String>,
 }
 
 impl User {
     pub fn new(
         username: String,
         password_hash: String,
+        hashed_recovery_codes: Vec<String>,
         permissions: Option<Vec<String>>,
         group_permissions: Option<Vec<String>>,
         role: Option<String>,
@@ -1127,6 +1129,7 @@ impl User {
             group_permissions: group_permissions.unwrap_or(vec!["user".to_string()]),
             role: role.unwrap_or("user".to_string()),
             refresh_token: None,
+            hashed_recovery_codes,
         }
     }
 

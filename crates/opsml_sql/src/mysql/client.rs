@@ -32,6 +32,10 @@ impl FromRow<'_, MySqlRow> for User {
         let username: String = row.try_get("username")?;
         let password_hash: String = row.try_get("password_hash")?;
 
+        let hashed_recovery_codes: serde_json::Value = row.try_get("hashed_recovery_codes")?;
+        let hashed_recovery_codes: Vec<String> =
+            serde_json::from_value(hashed_recovery_codes).unwrap_or_default();
+
         // Deserialize JSON strings into Vec<String>
         let permissions: serde_json::Value = row.try_get("permissions")?;
         let permissions: Vec<String> = serde_json::from_value(permissions).unwrap_or_default();
@@ -48,6 +52,7 @@ impl FromRow<'_, MySqlRow> for User {
             active,
             username,
             password_hash,
+            hashed_recovery_codes,
             permissions,
             group_permissions,
             role,
@@ -1738,8 +1743,16 @@ mod tests {
     #[tokio::test]
     async fn test_mysql_user() {
         let client = db_client().await;
+        let recovery_codes = vec!["recovery_code_1".to_string(), "recovery_code_2".to_string()];
 
-        let user = User::new("user".to_string(), "pass".to_string(), None, None, None);
+        let user = User::new(
+            "user".to_string(),
+            "pass".to_string(),
+            recovery_codes,
+            None,
+            None,
+            None,
+        );
         client.insert_user(&user).await.unwrap();
 
         let mut user = client.get_user("user").await.unwrap().unwrap();

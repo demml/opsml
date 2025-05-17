@@ -28,6 +28,23 @@ pub struct UserResponse {
 }
 
 #[derive(Serialize, Deserialize)]
+pub struct CreateUserResponse {
+    pub user: UserResponse,
+    pub recovery_codes: Vec<String>,
+    pub message: String,
+}
+
+impl CreateUserResponse {
+    pub fn new(user: UserResponse, recovery_codes: Vec<String>) -> Self {
+        Self {
+            user,
+            recovery_codes,
+            message: "Save these recovery codes securely. They cannot be shown again!".to_string(),
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize)]
 pub struct UserListResponse {
     pub users: Vec<UserResponse>,
 }

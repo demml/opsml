@@ -2,7 +2,7 @@ use crate::core::error::{internal_server_error, OpsmlServerError};
 use crate::core::scouter;
 use crate::core::state::AppState;
 use crate::core::user::schema::{
-    CreateUserRequest, UpdateUserRequest, UserListResponse, UserResponse,
+    CreateUserRequest, CreateUserResponse, UpdateUserRequest, UserListResponse, UserResponse,
 };
 use crate::core::user::utils::get_user as get_user_from_db;
 use anyhow::{Context, Result};
@@ -14,7 +14,7 @@ use axum::{
     Extension, Json, Router,
 };
 
-use opsml_auth::permission::UserPermissions;
+use opsml_auth::{permission::UserPermissions, util::generate_recovery_codes};
 use opsml_sql::base::SqlClient;
 use opsml_sql::schemas::schema::User;
 use opsml_types::RequestType;
@@ -45,10 +45,18 @@ async fn create_user(
     // Hash the password
     let password_hash = generate_hash(&create_req.password);
 
+    // generate recover codes
+    let recovery_codes = generate_recovery_codes(8);
+    let hashed_recovery_codes: Vec<String> = recovery_codes
+        .iter()
+        .map(|code| generate_hash(code))
+        .collect();
+
     // Create the user
     let mut user = User::new(
         create_req.username,
         password_hash,
+        hashed_recovery_codes,
         create_req.permissions,
         create_req.group_permissions,
         create_req.role,
@@ -91,7 +99,10 @@ async fn create_user(
             })?;
     }
 
-    Ok(Json(UserResponse::from(user)))
+    Ok(Json(CreateUserResponse::new(
+        UserResponse::from(user),
+        recovery_codes,
+    )))
 }
 
 /// Get a user by username
