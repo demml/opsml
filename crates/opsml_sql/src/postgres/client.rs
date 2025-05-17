@@ -859,13 +859,14 @@ impl SqlClient for PostgresClient {
     async fn insert_user(&self, user: &User) -> Result<(), SqlError> {
         let query = PostgresQueryHelper::get_user_insert_query();
 
+        let hashed_recovery_codes = serde_json::to_value(&user.hashed_recovery_codes)?;
         let group_permissions = serde_json::to_value(&user.group_permissions)?;
-
         let permissions = serde_json::to_value(&user.permissions)?;
 
         sqlx::query(&query)
             .bind(&user.username)
             .bind(&user.password_hash)
+            .bind(&hashed_recovery_codes)
             .bind(&permissions)
             .bind(&group_permissions)
             .bind(&user.role)
@@ -890,13 +891,14 @@ impl SqlClient for PostgresClient {
     async fn update_user(&self, user: &User) -> Result<(), SqlError> {
         let query = PostgresQueryHelper::get_user_update_query();
 
+        let hashed_recovery_codes = serde_json::to_value(&user.hashed_recovery_codes)?;
         let group_permissions = serde_json::to_value(&user.group_permissions)?;
-
         let permissions = serde_json::to_value(&user.permissions)?;
 
         sqlx::query(&query)
             .bind(user.active)
             .bind(&user.password_hash)
+            .bind(&hashed_recovery_codes)
             .bind(&permissions)
             .bind(&group_permissions)
             .bind(&user.refresh_token)

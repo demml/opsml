@@ -12,7 +12,7 @@ impl SqliteQueryHelper {
     }
     pub fn get_user_insert_query() -> String {
         format!(
-            "INSERT INTO {} (username, password_hash, permissions, group_permissions, role, active) VALUES (?, ?, ?, ?, ?, ?)",
+            "INSERT INTO {} (username, password_hash, hashed_recovery_codes, permissions, group_permissions, role, active) VALUES (?, ?, ?, ?, ?, ?, ?)",
             CardTable::Users
         )
         .to_string()
@@ -20,7 +20,7 @@ impl SqliteQueryHelper {
 
     pub fn get_user_query() -> String {
         format!(
-            "SELECT id, created_at, active, username, password_hash, permissions, group_permissions, role, refresh_token FROM {} WHERE username = ?",
+            "SELECT id, created_at, active, username, password_hash, hashed_recovery_codes, permissions, group_permissions, role, refresh_token FROM {} WHERE username = ?",
             CardTable::Users
         )
         .to_string()
@@ -32,7 +32,7 @@ impl SqliteQueryHelper {
 
     pub fn get_users_query() -> String {
         format!(
-            "SELECT id, created_at, active, username, password_hash, permissions, group_permissions, role, refresh_token FROM {}",
+            "SELECT id, created_at, active, username, password_hash, hashed_recovery_codes, permissions, group_permissions, role, refresh_token FROM {}",
             CardTable::Users
         )
         .to_string()
@@ -51,6 +51,7 @@ impl SqliteQueryHelper {
             "UPDATE {} SET 
             active = ?, 
             password_hash = ?, 
+            hashed_recovery_codes = ?,
             permissions = ?, 
             group_permissions = ? ,
             refresh_token = ? 
