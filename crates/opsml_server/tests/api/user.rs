@@ -15,6 +15,7 @@ async fn test_opsml_server_user_crud() {
     let create_req = CreateUserRequest {
         username: "test_user".to_string(),
         password: "test_password".to_string(),
+        email: "test_user@example.com".to_string(),
         permissions: Some(vec!["read".to_string(), "write".to_string()]),
         group_permissions: Some(vec!["user".to_string()]),
         role: Some("user".to_string()),

@@ -1123,6 +1123,7 @@ mod tests {
         let user = User::new(
             "user".to_string(),
             "pass".to_string(),
+            "email".to_string(),
             recovery_codes,
             None,
             None,
@@ -1132,6 +1133,7 @@ mod tests {
 
         let mut user = client.get_user("user").await.unwrap().unwrap();
         assert_eq!(user.username, "user");
+        assert_eq!(user.email, "email");
 
         // update user
         user.active = false;

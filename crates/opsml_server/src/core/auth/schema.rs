@@ -17,8 +17,10 @@ pub struct LoginRequest {
     pub password: String,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Default)]
 pub struct LoginResponse {
+    pub authenticated: bool,
+    pub message: String,
     pub username: String,
     pub jwt_token: String,
 }

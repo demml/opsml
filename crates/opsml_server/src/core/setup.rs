@@ -44,6 +44,7 @@ pub async fn initialize_default_user(
     let admin_user = User::new(
         default_username.clone(),
         password_hash,
+        "admin".to_string(),
         hashed_recovery_codes,                               // recovery codes
         Some(vec!["read".to_string(), "write".to_string()]), // permissions
         Some(vec!["admin".to_string()]),                     // group_permissions
@@ -66,6 +67,7 @@ pub async fn initialize_default_user(
     let guest_user = User::new(
         "guest".to_string(),
         password_auth::generate_hash("guest"),
+        "default".to_string(),
         hashed_recovery_codes,
         Some(vec![
             "read".to_string(),

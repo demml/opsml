@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 pub struct CreateUserRequest {
     pub username: String,
     pub password: String,
+    pub email: String,
     pub permissions: Option<Vec<String>>,
     pub group_permissions: Option<Vec<String>>,
     pub role: Option<String>,

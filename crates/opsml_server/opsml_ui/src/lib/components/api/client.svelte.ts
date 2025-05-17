@@ -1,6 +1,7 @@
 import { goto } from "$app/navigation";
 import { RoutePaths } from "$lib/components/api/routes";
 import { browser } from "$app/environment";
+import type { LoginResponse } from "../user/types";
 
 export class OpsmlClient {
   // UserStore functionality as class properties with runes
@@ -70,18 +71,22 @@ export class OpsmlClient {
   }
 
   // Auth manager methods
-  async login(username: string, password: string): Promise<boolean> {
-    const response = await this.post(RoutePaths.LOGIN, {
+
+  /**
+   * Login to the API using username and password
+   *
+   * @param username
+   * @param password
+   * @returns
+   */
+  async login(username: string, password: string): Promise<LoginResponse> {
+    const data = (await this.post(RoutePaths.LOGIN, {
       username,
       password,
-    });
+    }).then((res) => res.json())) as LoginResponse;
 
-    if (response.ok) {
-      const data = await response.json();
-      this.updateUser(data.username, data.jwt_token);
-      return true;
-    }
-    return false;
+    if (data.authenticated) this.updateUser(data.username, data.jwt_token);
+    return data;
   }
 
   async logout(): Promise<void> {

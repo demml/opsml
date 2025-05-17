@@ -25,9 +25,11 @@ impl FromRow<'_, SqliteRow> for User {
     fn from_row(row: &SqliteRow) -> Result<Self, sqlx::Error> {
         let id: Option<i32> = row.try_get("id")?;
         let created_at: DateTime<Utc> = row.try_get("created_at")?;
+        let updated_at: DateTime<Utc> = row.try_get("updated_at")?;
         let active: bool = row.try_get("active")?;
         let username: String = row.try_get("username")?;
         let password_hash: String = row.try_get("password_hash")?;
+        let email: String = row.try_get("email")?;
 
         // Deserialize JSON strings into Vec<String>
         let hashed_recovery_codes: String = row.try_get("hashed_recovery_codes")?;
@@ -55,6 +57,8 @@ impl FromRow<'_, SqliteRow> for User {
             group_permissions,
             role,
             refresh_token,
+            email,
+            updated_at,
         })
     }
 }
@@ -905,6 +909,7 @@ impl SqlClient for SqliteClient {
             .bind(&group_permissions)
             .bind(&user.role)
             .bind(user.active)
+            .bind(&user.email)
             .execute(&self.pool)
             .await?;
 
@@ -977,6 +982,7 @@ impl SqlClient for SqliteClient {
             .bind(&permissions)
             .bind(&group_permissions)
             .bind(&user.refresh_token)
+            .bind(&user.email)
             .bind(&user.username)
             .execute(&self.pool)
             .await?;
@@ -1725,6 +1731,7 @@ mod tests {
         let user = User::new(
             "user".to_string(),
             "pass".to_string(),
+            "email".to_string(),
             recovery_codes,
             None,
             None,
@@ -1736,6 +1743,7 @@ mod tests {
         assert_eq!(user.username, "user");
         assert_eq!(user.password_hash, "pass");
         assert_eq!(user.group_permissions, vec!["user"]);
+        assert_eq!(user.email, "email");
 
         // update user
         user.active = false;
