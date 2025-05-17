@@ -1,5 +1,6 @@
 use crate::core::scouter::client::{build_scouter_http_client, ScouterApiClient};
 use anyhow::{Context, Result as AnyhowResult};
+use opsml_auth::util::generate_recovery_codes;
 use opsml_colors::Colorize;
 use opsml_settings::config::{OpsmlConfig, ScouterSettings};
 use opsml_sql::base::SqlClient;
@@ -32,10 +33,17 @@ pub async fn initialize_default_user(
     let default_password = std::env::var("OPSML_DEFAULT_PASSWORD").unwrap_or("admin".to_string());
     let password_hash = password_auth::generate_hash(&default_password);
 
+    let recovery_codes = generate_recovery_codes(8);
+    let hashed_recovery_codes: Vec<String> = recovery_codes
+        .iter()
+        .map(|code| password_auth::generate_hash(code))
+        .collect();
+
     // Create admin user with admin permissions
     let admin_user = User::new(
         default_username.clone(),
         password_hash,
+        hashed_recovery_codes,                               // recovery codes
         Some(vec!["read".to_string(), "write".to_string()]), // permissions
         Some(vec!["admin".to_string()]),                     // group_permissions
         Some("admin".to_string()),                           // role
@@ -47,10 +55,17 @@ pub async fn initialize_default_user(
         .await
         .context(Colorize::purple("❌ Failed to create default admin user"))?;
 
+    let recovery_codes = generate_recovery_codes(8);
+    let hashed_recovery_codes: Vec<String> = recovery_codes
+        .iter()
+        .map(|code| password_auth::generate_hash(code))
+        .collect();
+
     // create guest user
     let guest_user = User::new(
         "guest".to_string(),
         password_auth::generate_hash("guest"),
+        hashed_recovery_codes,
         Some(vec![
             "read".to_string(),
             "write:all".to_string(),
