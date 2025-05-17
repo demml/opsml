@@ -194,6 +194,13 @@ impl OpsmlServerError {
         }
     }
 
+    pub fn invalid_recovery_code() -> Self {
+        error!("Invalid recovery token");
+        OpsmlServerError {
+            error: "Invalid recovery token".to_string(),
+        }
+    }
+
     pub fn into_response<T>(
         self,
         code: StatusCode,
@@ -261,4 +268,7 @@ pub enum ServerError {
 
     #[error(transparent)]
     StripPrefixError(#[from] std::path::StripPrefixError),
+
+    #[error("Invalid recovery code")]
+    InvalidRecoveryCode,
 }
