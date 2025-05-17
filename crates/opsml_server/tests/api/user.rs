@@ -34,14 +34,19 @@ async fn test_opsml_server_user_crud() {
     assert_eq!(response.status(), StatusCode::OK);
 
     let body = response.into_body().collect().await.unwrap().to_bytes();
-    let user_response: UserResponse = serde_json::from_slice(&body).unwrap();
-    assert_eq!(user_response.username, "test_user");
+    let user_response: CreateUserResponse = serde_json::from_slice(&body).unwrap();
+    assert_eq!(user_response.user.username, "test_user");
     assert_eq!(
-        user_response.permissions,
+        user_response.user.permissions,
         vec!["read".to_string(), "write".to_string()]
     );
-    assert_eq!(user_response.group_permissions, vec!["user".to_string()]);
-    assert!(user_response.active);
+    assert_eq!(
+        user_response.user.group_permissions,
+        vec!["user".to_string()]
+    );
+    assert!(user_response.user.active);
+
+    let recovery_codes = user_response.recovery_codes;
 
     // 2. Get the user
     let request = Request::builder()
@@ -119,7 +124,31 @@ async fn test_opsml_server_user_crud() {
         .find(|u| u.username == "test_user");
     assert!(test_user.is_some());
 
-    // 5. Delete the user
+    // 5. Reset user password
+
+    let body = serde_json::to_string(&RecoveryResetRequest {
+        username: "test_user".to_string(),
+        recovery_code: recovery_codes[0].clone(),
+        new_password: "new_password".to_string(),
+    })
+    .unwrap();
+
+    let request = Request::builder()
+        .uri("/opsml/api/user/reset-password/recovery")
+        .method("POST")
+        .header(header::CONTENT_TYPE, "application/json")
+        .body(Body::from(body))
+        .unwrap();
+
+    let response = helper.send_oneshot(request).await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let body = response.into_body().collect().await.unwrap().to_bytes();
+    let reset_response: ResetPasswordResponse = serde_json::from_slice(&body).unwrap();
+    assert_eq!(reset_response.message, "Password reset successfully");
+    assert_eq!(reset_response.remaining_recovery_codes, 7);
+
+    // 6. Delete the user
     let request = Request::builder()
         .uri("/opsml/api/user/test_user")
         .method("DELETE")

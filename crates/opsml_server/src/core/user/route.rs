@@ -24,6 +24,8 @@ use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::sync::Arc;
 use tracing::{error, info};
 
+use super::schema::ResetPasswordResponse;
+
 /// Create a new user via SDK
 ///
 /// Requires admin permissions
@@ -325,9 +327,9 @@ async fn reset_password_with_recovery(
         return Err(internal_server_error(e, "Failed to update password"));
     }
 
-    Ok(Json(serde_json::json!({
-        "message": "Password updated successfully",
-        "remaining_codes": user.hashed_recovery_codes.len()
+    Ok(Json(serde_json::json!(ResetPasswordResponse {
+        message: "Password updated successfully".to_string(),
+        remaining_recovery_codes: user.hashed_recovery_codes.len(),
     })))
 }
 
