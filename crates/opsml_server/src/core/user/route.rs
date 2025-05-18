@@ -39,7 +39,7 @@ async fn create_user(
         && create_req
             .group_permissions
             .as_ref()
-            .map_or(false, |p| p.contains(&"admin".to_string()))
+            .is_some_and(|p| p.contains(&"admin".to_string()))
     {
         return OpsmlServerError::need_admin_permission().into_response(StatusCode::FORBIDDEN);
     }
@@ -54,10 +54,7 @@ async fn create_user(
 
     // generate recover codes
     let recovery_codes = generate_recovery_codes(8);
-    let hashed_recovery_codes: Vec<String> = recovery_codes
-        .iter()
-        .map(|code| generate_hash(code))
-        .collect();
+    let hashed_recovery_codes: Vec<String> = recovery_codes.iter().map(generate_hash).collect();
 
     // Create the user
     let mut user = User::new(
