@@ -158,7 +158,7 @@ CREATE TABLE IF NOT EXISTS opsml_user (
     role TEXT DEFAULT 'user',
     refresh_token TEXT,
     email TEXT NOT NULL UNIQUE,
-    updated_at TIMESTAMPTZ DEFAULT NOW()
+    updated_at TIMESTAMPTZ DEFAULT NOW() ON UPDATE NOW(),
 );
   
 CREATE TABLE IF NOT EXISTS opsml_artifact_key (
@@ -166,7 +166,8 @@ CREATE TABLE IF NOT EXISTS opsml_artifact_key (
     registry_type TEXT,
     encrypted_key BYTEA,
     storage_key TEXT,
-    created_at TIMESTAMPTZ DEFAULT NOW()
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW() ON UPDATE NOW()
 );
 
 CREATE TABLE IF NOT EXISTS opsml_audit_event (

@@ -6,8 +6,9 @@
   import { goTop } from "$lib/utils";
   import { opsmlClient } from "$lib/components/api/client.svelte";
   import type { PageProps } from './$types';
-  import { CreateUserRequest, validateUserRegisterSchema, type UserRegisterSchema } from "$lib/components/user/schema";
+  import {  validateUserRegisterSchema, type UserRegisterSchema } from "$lib/components/user/schema";
   import { registerUser } from "$lib/components/user/utils";
+  import { type CreateUserRequest } from "$lib/components/user/types";
 
 
   let username: string = $state('');
@@ -24,7 +25,7 @@
     if (argsValid.success) {
         let response = await registerUser(username, password, email);
 
-      if (registerResponse.success === true) {
+      if (response.success === true) {
         // need to reload the page to update the nav bar
         if (previousPath) {
           goto(previousPath);
