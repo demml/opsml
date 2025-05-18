@@ -2,7 +2,7 @@ import { opsmlClient } from "$lib/components/api/client.svelte";
 import { RoutePaths } from "$lib/components/api/routes";
 import type {
   CreateUserRequest,
-  CreateUserResponse,
+  CreateUserUiResponse,
 } from "$lib/components/user/types";
 
 // Helper function for registering a user via the api client
@@ -11,12 +11,12 @@ export async function registerUser(
   username: string,
   password: string,
   email: string
-): Promise<CreateUserResponse> {
+): Promise<CreateUserUiResponse> {
   const request: CreateUserRequest = {
     username: username,
     password: password,
     email: email,
   };
-  const response = await opsmlClient.post(RoutePaths.USER, request);
-  return (await response.json()) as CreateUserResponse;
+  const response = await opsmlClient.post(RoutePaths.REGISTER, request);
+  return (await response.json()) as CreateUserUiResponse;
 }

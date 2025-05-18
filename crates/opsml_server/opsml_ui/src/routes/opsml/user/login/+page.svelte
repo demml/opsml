@@ -3,7 +3,7 @@
   import { goto } from "$app/navigation";
   import logo from "$lib/images/opsml-logo.png";
   import LoginWarning from "$lib/components/user/LoginWarning.svelte";
-  import { RoutePaths } from "$lib/components/api/routes";
+  import { RoutePaths, UiPaths } from "$lib/components/api/routes";
   import { goTop } from "$lib/utils";
   import { opsmlClient } from "$lib/components/api/client.svelte";
   import type { PageProps } from './$types';
@@ -34,7 +34,7 @@
         if (previousPath) {
           goto(previousPath);
         } else {
-          goto(RoutePaths.HOME);
+          goto(UiPaths.HOME);
         }
       } else {
         showLoginError = true;
@@ -59,7 +59,7 @@
     <img alt="OpsML logo" class="mx-auto -mt-12 mb-2 w-20" src={logo}>
     <h1 class="pt-1 text-center text-3xl font-bold text-primary-800">Log In</h1>
     <p class="mb-6 text-center text-surface-950">New to OpsML?
-      <a class="underline hover:text-primary-700" href={RoutePaths.REGISTER}>Register</a>
+      <a class="underline hover:text-primary-700" href={UiPaths.REGISTER}>Register</a>
     </p>
 
     {#if showLoginError}
@@ -101,7 +101,7 @@
         Login
       </button>
 
-      <a class="text-primary-700 hover:text-primary-700" href={RoutePaths.FORGOT}>Forgot password?</a>
+      <a class="text-primary-700 hover:text-primary-700" href={UiPaths.FORGOT}>Forgot password?</a>
     </div>
   </form>
 </section>

@@ -1,7 +1,7 @@
 <script lang="ts">
 
   import { goto } from '$app/navigation';
-  import { RoutePaths } from '$lib/components/api/routes';
+  import { UiPaths } from '$lib/components/api/routes';
   import logo from '$lib/images/opsml-logo.png';
   import type { PageProps } from './$types';
 
@@ -9,7 +9,7 @@
   let message = data.message;
 
   function navigateToHome() {
-    goto(RoutePaths.HOME);
+    goto(UiPaths.HOME);
   }
 
 </script>
