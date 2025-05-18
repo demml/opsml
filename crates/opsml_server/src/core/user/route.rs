@@ -36,9 +36,15 @@ async fn create_user(
 ) -> Result<Json<CreateUserResponse>, (StatusCode, Json<OpsmlServerError>)> {
     // Check if requester has admin permissions
 
-    //if !perms.group_permissions.contains(&"admin".to_string()) {
-    //return OpsmlServerError::need_admin_permission().into_response(StatusCode::FORBIDDEN);
-    //}
+    // need to ensure that a create request that has admin perms can only be created by an admin
+    if !perms.group_permissions.contains(&"admin".to_string())
+        && create_req
+            .group_permissions
+            .as_ref()
+            .map_or(false, |p| p.contains(&"admin".to_string()))
+    {
+        return OpsmlServerError::need_admin_permission().into_response(StatusCode::FORBIDDEN);
+    }
 
     // Check if user already exists
     if let Ok(Some(_)) = state.sql_client.get_user(&create_req.username).await {
