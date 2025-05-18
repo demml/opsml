@@ -396,7 +396,7 @@ pub async fn get_drift_profiles_for_ui(
         state.storage_client.clone(),
         state.sql_client.clone(),
         &dest_path,
-        &source_path,
+        source_path,
         &RegistryType::Model.to_string(),
         Some(&req.uid),
     )
