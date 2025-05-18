@@ -1,6 +1,6 @@
 export const ssr = false;
 
-import { RoutePaths } from "$lib/components/api/routes";
+import { RoutePaths, UiPaths } from "$lib/components/api/routes";
 import type { PageLoad } from "./$types";
 
 export const load: PageLoad = ({ url }) => {
@@ -9,11 +9,8 @@ export const load: PageLoad = ({ url }) => {
     | string
     | undefined;
 
-  if (
-    previousPath === RoutePaths.LOGIN ||
-    previousPath === RoutePaths.REGISTER
-  ) {
-    previousPath = RoutePaths.HOME;
+  if (previousPath === UiPaths.LOGIN || previousPath === UiPaths.REGISTER) {
+    previousPath = UiPaths.HOME;
   }
 
   return {

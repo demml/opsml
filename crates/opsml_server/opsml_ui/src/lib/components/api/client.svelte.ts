@@ -1,5 +1,5 @@
 import { goto } from "$app/navigation";
-import { RoutePaths } from "$lib/components/api/routes";
+import { RoutePaths, UiPaths } from "$lib/components/api/routes";
 import { browser } from "$app/environment";
 import type { LoginResponse } from "../user/types";
 
@@ -115,7 +115,7 @@ export class OpsmlClient {
   // API handler methods
   private async handleError(response: Response): Promise<Response> {
     const errorMessage = await response.text();
-    void goto(`${RoutePaths.ERROR}?message=${errorMessage}`);
+    void goto(`${UiPaths.ERROR}?message=${errorMessage}`);
     return new Response(null, { status: 500, statusText: "Failure" });
   }
 

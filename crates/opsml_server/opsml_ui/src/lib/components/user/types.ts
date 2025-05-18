@@ -23,3 +23,9 @@ export interface CreateUserRequest {
   password: string;
   email: string;
 }
+
+export interface CreateUserUiResponse {
+  registered: boolean;
+  response?: CreateUserResponse;
+  error?: string;
+}

@@ -2,8 +2,8 @@ use crate::core::error::{internal_server_error, OpsmlServerError};
 use crate::core::scouter;
 use crate::core::state::AppState;
 use crate::core::user::schema::{
-    CreateUserRequest, CreateUserResponse, RecoveryResetRequest, UpdateUserRequest,
-    UserListResponse, UserResponse,
+    CreateUserRequest, CreateUserResponse, CreateUserUiResponse, RecoveryResetRequest,
+    UpdateUserRequest, UserListResponse, UserResponse,
 };
 use crate::core::user::utils::get_user as get_user_from_db;
 use anyhow::{Context, Result};
@@ -26,9 +26,7 @@ use tracing::{error, info};
 
 use super::schema::ResetPasswordResponse;
 
-/// Create a new user via SDK
-///
-/// Requires admin permissions
+/// Create a new user via SDK.
 async fn create_user(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
@@ -113,6 +111,37 @@ async fn create_user(
         UserResponse::from(user),
         recovery_codes,
     )))
+}
+
+/// Create a new user via UI. This will always return a response so that
+/// errors will be handled in the UI.
+async fn register_user_from_ui(
+    State(state): State<Arc<AppState>>,
+    Extension(perms): Extension<UserPermissions>,
+    Json(create_req): Json<CreateUserRequest>,
+) -> Result<Json<CreateUserUiResponse>, (StatusCode, Json<OpsmlServerError>)> {
+    let response = create_user(
+        axum::extract::State(state),
+        axum::extract::Extension(perms),
+        axum::extract::Json(create_req),
+    )
+    .await;
+
+    match response {
+        Ok(res) => Ok(Json(CreateUserUiResponse {
+            registered: true,
+            response: Some(res.0),
+            error: None,
+        })),
+        Err((_, err)) => {
+            error!("Failed to create user: {:?}", err.0.error);
+            Ok(Json(CreateUserUiResponse {
+                registered: false,
+                response: None,
+                error: Some(err.0.error),
+            }))
+        }
+    }
 }
 
 /// Get a user by username
@@ -344,6 +373,10 @@ pub async fn get_user_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
     let result = catch_unwind(AssertUnwindSafe(|| {
         Router::new()
             .route(&format!("{}/user", prefix), post(create_user))
+            .route(
+                &format!("{}/user/register", prefix),
+                post(register_user_from_ui),
+            )
             .route(&format!("{}/user", prefix), get(list_users))
             .route(
                 &format!("{}/user/reset-password/recovery", prefix),

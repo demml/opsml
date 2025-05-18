@@ -33,7 +33,7 @@ pub struct ResetPasswordResponse {
     pub remaining_recovery_codes: usize,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Default)]
 pub struct UserResponse {
     pub username: String,
     pub active: bool,
@@ -41,7 +41,7 @@ pub struct UserResponse {
     pub group_permissions: Vec<String>,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Default)]
 pub struct CreateUserResponse {
     pub user: UserResponse,
     pub recovery_codes: Vec<String>,
@@ -56,6 +56,13 @@ impl CreateUserResponse {
             message: "Save these recovery codes securely. They cannot be shown again!".to_string(),
         }
     }
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct CreateUserUiResponse {
+    pub registered: bool,
+    pub response: Option<CreateUserResponse>,
+    pub error: Option<String>,
 }
 
 #[derive(Serialize, Deserialize)]
