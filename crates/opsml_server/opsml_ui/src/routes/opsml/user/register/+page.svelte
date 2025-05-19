@@ -10,6 +10,7 @@
   import { registerUser } from "$lib/components/user/utils";
   import { type CreateUserUiResponse } from "$lib/components/user/types";
   import { HelpCircle } from 'lucide-svelte';
+  import { userStore } from "$lib/components/user/user.svelte";
   
 
 
@@ -31,8 +32,10 @@
         let response = await registerUser(username, password, email);
 
       if (response.registered) {
-        // need to reload the page to update the nav bar
-        goto(UiPaths.HOME);
+        // need to goto the register success page to give user recovery codes
+        userStore.setRecoveryCodes(response.response?.recovery_codes ?? []);
+
+        goto(UiPaths.REGISTER_SUCCESS);
 
       } else {
         showLoginError = true;

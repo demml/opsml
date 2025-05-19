@@ -34,6 +34,7 @@ export enum RoutePaths {
 export enum UiPaths {
   LOGIN = "/opsml/user/login",
   REGISTER = "/opsml/user/register",
+  REGISTER_SUCCESS = "/opsml/user/register/success",
   FORGOT = "/opsml/user/forgot",
   USER = "/opsml/user",
   HOME = "/opsml/home",
