@@ -1,35 +1,31 @@
+use password_auth::generate_hash;
 use rand::distr::Alphanumeric;
 use rand::Rng;
+use rayon::prelude::*;
 
-/// helper for generating recovery codes
-///
-/// # Arguments
-/// * `count` - The number of recovery codes to generate
-///
-/// # Returns
-/// A vector of recovery codes
-pub fn generate_recovery_codes(count: usize) -> Vec<String> {
-    let mut codes = Vec::with_capacity(count);
+pub fn generate_recovery_codes_with_hashes(count: usize) -> (Vec<String>, Vec<String>) {
+    // Pre-allocate vectors with capacity
+    let mut codes: Vec<String> = Vec::with_capacity(count);
+    let mut hashed_codes: Vec<String> = Vec::with_capacity(count);
 
-    for _ in 0..count {
-        // Generate 16 random alphanumeric characters
-        let rand_string: String = rand::rng()
-            .sample_iter(&Alphanumeric)
-            .take(16)
-            .map(char::from)
-            .collect();
+    // Generate codes in parallel
+    let results: Vec<(String, String)> = (0..count)
+        .into_par_iter()
+        .map(|_| {
+            // Generate random code
+            let code: String = rand::rng()
+                .sample_iter(&Alphanumeric)
+                .take(16)
+                .map(char::from)
+                .collect();
 
-        // Split into groups of 4 for readability
-        let formatted = rand_string
-            .chars()
-            .collect::<Vec<char>>()
-            .chunks(4)
-            .map(|c| c.iter().collect::<String>())
-            .collect::<Vec<String>>()
-            .join("-");
+            // Hash the code
+            let hashed = generate_hash(&code);
 
-        codes.push(formatted);
-    }
+            (code, hashed)
+        })
+        .collect();
 
-    codes
+    // Unzip results into separate vectors
+    results.into_iter().unzip()
 }
