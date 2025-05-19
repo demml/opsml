@@ -9,6 +9,8 @@
   import {  validateUserRegisterSchema, type UserRegisterSchema } from "$lib/components/user/schema";
   import { registerUser } from "$lib/components/user/utils";
   import { type CreateUserUiResponse } from "$lib/components/user/types";
+  import { HelpCircle } from 'lucide-svelte';
+  
 
 
   let username: string = $state('');
@@ -16,6 +18,7 @@
   let email: string = $state('');
   let showLoginError: boolean = $state(false);
   let errorMessage: string = $state("Error encountered during registration");
+  let showPasswordHelp: boolean = $state(false);
 
   let registerErrors = $state<Partial<Record<keyof UserRegisterSchema, string>>>({});
 
@@ -53,7 +56,7 @@
 
   <form class="z-10 mx-auto rounded-2xl bg-surface-50 border-black border-2 shadow p-4 md:w-96 md:px-5" onsubmit={handleRegister}>
 
-    <img alt="OpsML logo" class="mx-auto -mt-12 mb-2 w-20" src={logo}>
+    <img alt="OpsML logo" class="mx-auto -mt-12 mb-3 w-20" src={logo}>
     <h1 class="pt-1 text-center text-3xl font-bold text-primary-800">Register a new profile</h1>
 
     {#if showLoginError}
@@ -77,13 +80,40 @@
       </label>
 
 
-      <label class="text-surface-950">Password
+      <label class="text-surface-950 relative">
+        <div class="flex items-center gap-2">
+          Password
+          <button
+            type="button"
+            class="text-surface-600 hover:text-surface-900"
+            onmouseenter={() => showPasswordHelp = true}
+            onmouseleave={() => showPasswordHelp = false}
+            onfocus={() => showPasswordHelp = true}
+            onblur={() => showPasswordHelp = false}
+          >
+            <HelpCircle size={16} />
+          </button>
+        </div>
+        
+        {#if showPasswordHelp}
+          <div class="absolute z-50 mt-1 p-2 bg-surface-100 border border-surface-300 rounded-md shadow-lg text-sm w-64">
+            Password must:
+            <ul class="list-disc ml-4 mt-1">
+              <li>Be 8-32 characters long</li>
+              <li>Include at least one uppercase letter</li>
+              <li>Include at least one number</li>
+              <li>Include at least one special character</li>
+            </ul>
+          </div>
+        {/if}
+
         <input
           class="input text-sm rounded-base bg-surface-50 text-black disabled:opacity-50 placeholder-surface-800 placeholder-text-sm focus-visible:ring-2 focus-visible:ring-primary-800"
-          type="text" 
+          type="password"
           placeholder="Password"
           bind:value={password}
         />
+        
         {#if registerErrors.password}
           <span class="text-red-500 text-sm">{registerErrors.password}</span>
         {/if}
