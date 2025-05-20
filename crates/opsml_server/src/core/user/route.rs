@@ -15,7 +15,8 @@ use axum::{
     Extension, Json, Router,
 };
 
-use opsml_auth::{permission::UserPermissions, util::generate_recovery_codes};
+use opsml_auth::permission::UserPermissions;
+use opsml_auth::util::generate_recovery_codes_with_hashes;
 use opsml_sql::base::SqlClient;
 use opsml_sql::schemas::schema::User;
 use opsml_types::RequestType;
@@ -52,9 +53,8 @@ async fn create_user(
     // Hash the password
     let password_hash = generate_hash(&create_req.password);
 
-    // generate recover codes
-    let recovery_codes = generate_recovery_codes(8);
-    let hashed_recovery_codes: Vec<String> = recovery_codes.iter().map(generate_hash).collect();
+    // generate recovery codes
+    let (recovery_codes, hashed_recovery_codes) = generate_recovery_codes_with_hashes(8);
 
     // Create the user
     let mut user = User::new(

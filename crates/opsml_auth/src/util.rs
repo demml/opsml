@@ -4,10 +4,6 @@ use rand::Rng;
 use rayon::prelude::*;
 
 pub fn generate_recovery_codes_with_hashes(count: usize) -> (Vec<String>, Vec<String>) {
-    // Pre-allocate vectors with capacity
-    let mut codes: Vec<String> = Vec::with_capacity(count);
-    let mut hashed_codes: Vec<String> = Vec::with_capacity(count);
-
     // Generate codes in parallel
     let results: Vec<(String, String)> = (0..count)
         .into_par_iter()

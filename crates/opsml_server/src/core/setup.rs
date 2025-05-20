@@ -1,6 +1,6 @@
 use crate::core::scouter::client::{build_scouter_http_client, ScouterApiClient};
 use anyhow::{Context, Result as AnyhowResult};
-use opsml_auth::util::generate_recovery_codes;
+use opsml_auth::util::generate_recovery_codes_with_hashes;
 use opsml_colors::Colorize;
 use opsml_settings::config::{OpsmlConfig, ScouterSettings};
 use opsml_sql::base::SqlClient;
@@ -8,7 +8,6 @@ use opsml_sql::enums::client::{get_sql_client, SqlClientEnum};
 use opsml_sql::schemas::User;
 use opsml_storage::storage::enums::client::{get_storage_system, StorageClientEnum};
 use password_auth::generate_hash;
-use rayon::prelude::*;
 use reqwest::StatusCode;
 use rusty_logging::setup_logging;
 use tracing::{debug, info};
@@ -35,11 +34,7 @@ pub async fn initialize_default_user(
     let default_password = std::env::var("OPSML_DEFAULT_PASSWORD").unwrap_or("admin".to_string());
     let password_hash = password_auth::generate_hash(&default_password);
 
-    let recovery_codes = generate_recovery_codes(8);
-    let hashed_recovery_codes: Vec<String> = recovery_codes
-        .par_iter() // Parallel iterator
-        .map(generate_hash)
-        .collect();
+    let (_, hashed_recovery_codes) = generate_recovery_codes_with_hashes(8);
 
     // Create admin user with admin permissions
     let admin_user = User::new(
@@ -58,11 +53,7 @@ pub async fn initialize_default_user(
         .await
         .context(Colorize::purple("❌ Failed to create default admin user"))?;
 
-    let recovery_codes = generate_recovery_codes(8);
-    let hashed_recovery_codes: Vec<String> = recovery_codes
-        .par_iter() // Parallel iterator
-        .map(generate_hash)
-        .collect();
+    let (_, hashed_recovery_codes) = generate_recovery_codes_with_hashes(8);
 
     // create guest user
     let guest_user = User::new(
