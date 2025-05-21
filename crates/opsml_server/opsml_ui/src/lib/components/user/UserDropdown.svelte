@@ -21,30 +21,34 @@
 
 <svelte:window on:click={handleClickOutside}/>
 
-<div class="dropdown relative">
+<div class="dropdown w-full h-full">
     <button 
         type="button"
         onclick={toggleDropdown}
-        class="custom-scrollbar"
+        class="w-full h-full flex items-center justify-center"
     >
-        <UserRound color="#5948a3"/>
+        <UserRound color="#5948a3" size={24}/>
     </button>
 
     {#if isOpen}
-      <div class="absolute top-full left-0 w-full mt-1 bg-primary-500 border-black border-2 rounded-lg z-50">
-        <div class="max-h-72 overflow-y-auto px-2 py-1 custom-scrollbar">
-        {#each values as value}
-          <button
-              class="w-full {py} px-4 text-left border-2 border-transparent hover:border-black rounded-lg transition-colors text-black"
-              onclick={() => selectValue(value)}
+      <div class="absolute right-0 mt-2 w-36 bg-primary-500 border-black border-2 rounded-lg shadow-lg z-50">
+        <div class="border-b-2 border-black text-center text-black">User</div>
+        <div class="flex flex-col">
+          <a
+              href="opsml/user/profile"
+              class="block px-1 m-1 text-left border-2 border-transparent hover:border-black rounded-lg transition-colors text-black"
           >
-              {value}
-          </button>
-        {/each}
+            Profile
+          </a>
+          <a
+              href="opsml/user/logout"
+              class="block px-1 m-1 text-left border-2 border-transparent hover:border-black rounded-lg transition-colors text-black"
+          >
+            Logout
+          </a>
         </div>
       </div>
     {/if}
-
 </div>
 
 

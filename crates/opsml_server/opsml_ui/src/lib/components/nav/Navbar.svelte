@@ -105,7 +105,10 @@
           <KeySquare color="#5948a3"/>
         </button>
 
-        <div aria-label="user" class="m800:hidden flex gap-2 items-center justify-center rounded-base border-2 border-black shadow p-2 shadow-hover bg-surface-50 w-12 h-12">
+        <div 
+          aria-label="user" 
+          class="m800:hidden relative flex items-center justify-center rounded-base border-2 border-black shadow p-2 shadow-hover bg-surface-50 w-12 h-12"
+        >
           <UserDropdown/>
         </div>
 
