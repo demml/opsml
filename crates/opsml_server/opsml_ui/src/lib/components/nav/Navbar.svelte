@@ -4,11 +4,15 @@
   import { page } from "$app/state";
   import { goto } from "$app/navigation";
   import IconX from 'lucide-svelte/icons/x';
-  import { KeySquare } from 'lucide-svelte';
+  import { KeySquare, User } from 'lucide-svelte';
   import { UserRound } from 'lucide-svelte';
+  import Dropdown from "../utils/Dropdown.svelte";
+  import UserDropdown from "../user/UserDropdown.svelte";
 
 
   let isSidebarOpen = $state(false);
+  let userSelect = $state('navigate');
+  let userDropdown = $state(["navigate", "logout"]);
 
   function toggleSidebar() {
     isSidebarOpen = !isSidebarOpen;
@@ -85,7 +89,7 @@
     <div class="flex items-center gap-5 m1000:gap-5">
       <div class="flex items-center justify-end gap-5 m800:w-[unset] m400:gap-3">
 
-        <a aria-label="Close" href="https://github.com/demml/opsml" class="m800:hidden flex gap-2 items-center justify-center rounded-base border-2 border-black shadow p-2 shadow-hover bg-surface-50">
+        <a aria-label="github" href="https://github.com/demml/opsml" class="m800:hidden flex gap-2 items-center justify-center rounded-base border-2 border-black shadow p-2 shadow-hover bg-surface-50 w-12 h-12">
           <svg 
             role="img" 
             viewBox="0 0 24 24" 
@@ -97,13 +101,13 @@
           </svg>
         </a>
 
-        <button aria-label="Close" onclick={logInHandle} class="m800:hidden flex gap-2 items-center justify-center rounded-base border-2 border-black shadow p-2 shadow-hover bg-surface-50">
+        <button aria-label="login" onclick={logInHandle} class="m800:hidden flex gap-2 items-center justify-center rounded-base border-2 border-black shadow p-2 shadow-hover bg-surface-50 w-12 h-12">
           <KeySquare color="#5948a3"/>
         </button>
 
-        <button aria-label="Close" onclick={logInHandle} class="m800:hidden flex gap-2 items-center justify-center rounded-base border-2 border-black shadow p-2 shadow-hover bg-surface-50">
-          <UserRound color="#5948a3"/>
-        </button>
+        <div aria-label="user" class="m800:hidden flex gap-2 items-center justify-center rounded-base border-2 border-black shadow p-2 shadow-hover bg-surface-50 w-12 h-12">
+          <UserDropdown/>
+        </div>
 
       </div>
 
