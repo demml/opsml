@@ -4,7 +4,9 @@
   import { UiPaths } from "$lib/components/api/routes";
   import { userStore } from "$lib/components/user/user.svelte";
   import Highlight, { LineNumbers } from "svelte-highlight";
-  import json from "svelte-highlight/languages/json";
+  import { bash } from "svelte-highlight/languages";
+  import CodeModal from "$lib/components/card/CodeModal.svelte";
+
   
   
 
@@ -14,6 +16,10 @@
 
   let copied = $state(false);
   let timeoutId: number = 0;
+  let codes = $state(userStore.recovery_codes);
+  let usageCode = `export OPSML_USERNAME={{username}}
+export OPSML_PASSWORD={{password}}
+`;
 
   function formatExtraBody(body: any): string {
       return JSON.stringify(body, null, 2);
@@ -50,9 +56,21 @@
         <p class="text-left text-primary-500">You have successfully registered as a new user!</p>
         <p class="text-left text-primary-500">Your username is: <span class="font-bold">{userStore.username}</span></p>
 
-        <div class="flex flex-row pb-3 justify-between items-center pt-3">
-          <header class="text-xl font-bold text-black">Recovery Codes</header> 
-          <button class="btn bg-primary-500 text-black shadow shadow-hover border-black border-2 mr-2" onclick={copyToClipboard} disabled={copied}>
+
+        <div class="flex flex-row pb-2 justify-between items-center pt-2">
+          <h2 class="text-xl font-bold text-black my-auto">Usage</h2>
+            <CodeModal 
+            code={usageCode} 
+            language={bash} 
+            message="Set the following environment variables to use your profile"
+            display="SDK Usage"
+          />
+        </div>
+
+        
+        <div class="flex flex-row pb-3 justify-between items-center">
+          <h2 class="text-xl font-bold text-black my-auto">Recovery Codes</h2> 
+          <button class="btn bg-primary-500 text-black shadow shadow-hover border-black border-2 my-auto" onclick={copyToClipboard} disabled={copied}>
             {copied ? 'Copied 👍' : 'Copy'}
           </button>
         </div>
@@ -62,10 +80,12 @@
         
         <div class="flex flex-col gap-2">
           <div>
-            <div class="rounded-lg border-2 border-black overflow-y-scroll max-h-[600px]">
-              <Highlight language={json} code={formatExtraBody(userStore.recovery_codes)} let:highlighted>
-                <LineNumbers {highlighted} hideBorder wrapLines />
-              </Highlight>
+            <div class="rounded-lg border-2 border-black overflow-y-scroll bg-slate-100 max-h-[600px]">
+              <ul class="list-disc pl-6 py-2">
+                {#each codes as code}
+                  <li class="text-black">{code}</li>
+                {/each}
+              </ul>
             </div>
           </div>
         </div>

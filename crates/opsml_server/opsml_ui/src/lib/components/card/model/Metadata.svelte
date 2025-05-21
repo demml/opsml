@@ -8,6 +8,7 @@
   import LinkPill from "$lib/components/utils/LinkPill.svelte";
   import ExtraModelMetadata from "./ExtraModelMetadata.svelte";
   import { RegistryType } from "$lib/utils";
+  import { python } from "svelte-highlight/languages";
 
 let {
     card,
@@ -49,8 +50,12 @@ modelcard.load()
     </div>
 
     <div>
-        <!--<button type="button" class="btn btn-md bg-primary-500 text-black justify-end mb-2 text-base shadow shadow-hover border-black border-2" >Use this card</button>-->
-        <CodeModal code={useCardContent} language="python" />
+        <CodeModal 
+          code={useCardContent} 
+          language={python} 
+          message="Paste the following code into your Python script to load the card"
+          display="Use this card"
+        />
     </div>
   </div>
 
