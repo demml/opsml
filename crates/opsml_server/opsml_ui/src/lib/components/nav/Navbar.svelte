@@ -5,14 +5,10 @@
   import { goto } from "$app/navigation";
   import IconX from 'lucide-svelte/icons/x';
   import { KeySquare, User } from 'lucide-svelte';
-  import { UserRound } from 'lucide-svelte';
-  import Dropdown from "../utils/Dropdown.svelte";
   import UserDropdown from "../user/UserDropdown.svelte";
 
 
   let isSidebarOpen = $state(false);
-  let userSelect = $state('navigate');
-  let userDropdown = $state(["navigate", "logout"]);
 
   function toggleSidebar() {
     isSidebarOpen = !isSidebarOpen;

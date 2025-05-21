@@ -23,8 +23,13 @@ export class OpsmlClient {
     this.user.resetUser();
   }
 
-  updateUser(username: string, jwt_token: string) {
-    this.user.updateUser(username, jwt_token);
+  updateUser(
+    username: string,
+    jwt_token: string,
+    permissions: string[],
+    group_permissions: string[]
+  ) {
+    this.user.updateUser(username, jwt_token, permissions, group_permissions);
   }
   // Auth manager methods
 
@@ -41,7 +46,13 @@ export class OpsmlClient {
       password,
     }).then((res) => res.json())) as LoginResponse;
 
-    if (data.authenticated) this.updateUser(data.username, data.jwt_token);
+    if (data.authenticated)
+      this.updateUser(
+        data.username,
+        data.jwt_token,
+        data.permissions,
+        data.group_permissions
+      );
     return data;
   }
 

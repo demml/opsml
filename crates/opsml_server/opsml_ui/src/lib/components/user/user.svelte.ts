@@ -4,6 +4,8 @@ export class UserStore {
   username = $state("");
   jwt_token = $state("");
   logged_in = $state(false);
+  permissions = $state<string[]>([]);
+  group_permissions = $state<string[]>([]);
   repositories = $state<string[]>([]);
   recovery_codes = $state<string[]>([]);
 
@@ -43,6 +45,8 @@ export class UserStore {
     this.logged_in = false;
     this.repositories = [];
     this.recovery_codes = [];
+    this.permissions = [];
+    this.group_permissions = [];
 
     if (browser) {
       this.removeTokenCookie();
@@ -57,10 +61,17 @@ export class UserStore {
     document.cookie = `jwt_token=${token}; expires=${expirationDate.toUTCString()}; path=/; SameSite=Strict`;
   }
 
-  public updateUser(username: string, jwt_token: string) {
+  public updateUser(
+    username: string,
+    jwt_token: string,
+    permissions: string[],
+    group_permissions: string[]
+  ) {
     this.username = username;
     this.jwt_token = jwt_token;
     this.logged_in = true;
+    this.permissions = permissions;
+    this.group_permissions = group_permissions;
 
     if (browser) {
       this.setTokenCookie(jwt_token);
@@ -77,6 +88,17 @@ export class UserStore {
 
   public setUsername(username: string) {
     this.username = username;
+  }
+
+  // all perms are stored as <operation>:<resource>
+  // split permissions by : and get resource
+  public getPermissions(): string[] {
+    return this.permissions.map((perm) => perm.split(":")[1]);
+  }
+
+  // same as permissions
+  public getGroupPermissions(): string[] {
+    return this.group_permissions.map((perm) => perm.split(":")[1]);
   }
 }
 

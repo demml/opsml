@@ -208,6 +208,8 @@ async fn ui_login_handler(
         message: "User authenticated".to_string(),
         username: user.username,
         jwt_token,
+        group_permissions: user.group_permissions,
+        permissions: user.permissions,
     }))
 }
 

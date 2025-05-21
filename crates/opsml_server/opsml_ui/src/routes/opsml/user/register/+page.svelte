@@ -8,7 +8,6 @@
   import type { PageProps } from './$types';
   import {  validateUserRegisterSchema, type UserRegisterSchema } from "$lib/components/user/schema";
   import { registerUser } from "$lib/components/user/utils";
-  import { type CreateUserUiResponse } from "$lib/components/user/types";
   import { HelpCircle } from 'lucide-svelte';
   import { userStore } from "$lib/components/user/user.svelte";
   
@@ -34,7 +33,6 @@
       if (response.registered) {
         // need to goto the register success page to give user recovery codes
         userStore.setRecoveryCodes(response.response?.recovery_codes ?? []);
-
         goto(UiPaths.REGISTER_SUCCESS);
 
       } else {

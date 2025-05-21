@@ -3,6 +3,8 @@ export interface LoginResponse {
   message: string;
   username: string;
   jwt_token: string;
+  permissions: string[];
+  group_permissions: string[];
 }
 
 export interface UserResponse {
