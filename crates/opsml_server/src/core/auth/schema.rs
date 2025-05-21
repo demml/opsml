@@ -23,4 +23,6 @@ pub struct LoginResponse {
     pub message: String,
     pub username: String,
     pub jwt_token: String,
+    pub permissions: Vec<String>,
+    pub group_permissions: Vec<String>,
 }
