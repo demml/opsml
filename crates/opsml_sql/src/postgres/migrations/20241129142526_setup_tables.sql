@@ -163,6 +163,7 @@ CREATE TABLE IF NOT EXISTS opsml_user (
   
 CREATE TABLE IF NOT EXISTS opsml_artifact_key (
     uid TEXT PRIMARY KEY,
+    space TEXT,
     registry_type TEXT,
     encrypted_key BYTEA,
     storage_key TEXT,

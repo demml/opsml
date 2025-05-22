@@ -227,7 +227,7 @@ pub async fn create_card(
         internal_server_error(e, "Failed to get next version")
     })?;
     // (2) ------- Insert the card into the database
-    let (uid, registry_type, card_uri, app_env, created_at) = insert_card_into_db(
+    let (uid, space, registry_type, card_uri, app_env, created_at) = insert_card_into_db(
         state.sql_client.clone(),
         card_request.card.clone(),
         version.clone(),
@@ -244,6 +244,7 @@ pub async fn create_card(
         &state.sql_client,
         &state.storage_settings.encryption_key,
         &uid,
+        &space,
         &registry_type,
         &card_uri,
     )
@@ -404,10 +405,6 @@ pub async fn get_card(
     Extension(perms): Extension<UserPermissions>,
     Query(params): Query<CardQueryArgs>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<OpsmlServerError>)> {
-    if !perms.has_read_permission() {
-        return OpsmlServerError::permission_denied().into_response(StatusCode::FORBIDDEN);
-    }
-
     let table = CardTable::from_registry_type(&params.registry_type);
 
     let key = state
@@ -418,6 +415,10 @@ pub async fn get_card(
             error!("Failed to get card key for loading: {}", e);
             internal_server_error(e, "Failed to get card key for loading")
         })?;
+
+    if !perms.has_read_permission(&key.space) {
+        return OpsmlServerError::permission_denied().into_response(StatusCode::FORBIDDEN);
+    }
 
     // create temp dir
     let tmp_dir = tempdir().map_err(|e| {
@@ -556,6 +557,7 @@ pub async fn create_readme(
         &state.sql_client,
         &state.storage_settings.encryption_key,
         &req.registry_type.to_string(),
+        &req.space,
         &readme_path,
     )
     .await

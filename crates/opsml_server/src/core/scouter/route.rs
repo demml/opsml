@@ -361,7 +361,17 @@ pub async fn get_drift_profiles_for_ui(
     Extension(perms): Extension<UserPermissions>,
     Json(req): Json<DriftProfileRequest>,
 ) -> DriftProfileResult {
-    if !perms.has_read_permission() {
+    // get artifact key for the given uid
+    let artifact_key = state
+        .sql_client
+        .get_artifact_key(&req.uid, &RegistryType::Model.to_string())
+        .await
+        .map_err(|e| {
+            error!("Failed to get artifact key: {}", e);
+            internal_server_error(e, "Failed to get artifact key")
+        })?;
+
+    if !perms.has_read_permission(&artifact_key.space) {
         return OpsmlServerError::permission_denied().into_response(StatusCode::FORBIDDEN);
     }
 
@@ -420,7 +430,7 @@ pub async fn get_drift_alerts(
     Extension(perms): Extension<UserPermissions>,
     Query(params): Query<DriftAlertRequest>,
 ) -> Result<Json<Alerts>, (StatusCode, Json<OpsmlServerError>)> {
-    if !perms.has_read_permission() {
+    if !perms.has_read_permission(&params.space) {
         return OpsmlServerError::permission_denied().into_response(StatusCode::FORBIDDEN);
     }
 

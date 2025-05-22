@@ -996,6 +996,7 @@ impl SqlClient for MySqlClient {
         let query = MySQLQueryHelper::get_artifact_key_insert_query();
         sqlx::query(&query)
             .bind(&key.uid)
+            .bind(&key.space)
             .bind(key.registry_type.to_string())
             .bind(key.encrypted_key.clone())
             .bind(&key.storage_key)
@@ -1012,7 +1013,7 @@ impl SqlClient for MySqlClient {
     ) -> Result<ArtifactKey, SqlError> {
         let query = MySQLQueryHelper::get_artifact_key_select_query();
 
-        let key: (String, String, Vec<u8>, String) = sqlx::query_as(&query)
+        let key: (String, String, String, Vec<u8>, String) = sqlx::query_as(&query)
             .bind(uid)
             .bind(registry_type)
             .fetch_one(&self.pool)
@@ -1020,9 +1021,10 @@ impl SqlClient for MySqlClient {
 
         Ok(ArtifactKey {
             uid: key.0,
-            registry_type: RegistryType::from_string(&key.1)?,
-            encrypted_key: key.2,
-            storage_key: key.3,
+            space: key.1,
+            registry_type: RegistryType::from_string(&key.2)?,
+            encrypted_key: key.3,
+            storage_key: key.4,
         })
     }
 
@@ -1033,7 +1035,7 @@ impl SqlClient for MySqlClient {
     ) -> Result<Option<ArtifactKey>, SqlError> {
         let query = MySQLQueryHelper::get_artifact_key_from_storage_path_query();
 
-        let key: Option<(String, String, Vec<u8>, String)> = sqlx::query_as(&query)
+        let key: Option<(String, String, String, Vec<u8>, String)> = sqlx::query_as(&query)
             .bind(storage_path)
             .bind(registry_type)
             .fetch_optional(&self.pool)
@@ -1042,9 +1044,10 @@ impl SqlClient for MySqlClient {
         return match key {
             Some(k) => Ok(Some(ArtifactKey {
                 uid: k.0,
-                registry_type: RegistryType::from_string(&k.1)?,
-                encrypted_key: k.2,
-                storage_key: k.3,
+                space: k.1,
+                registry_type: RegistryType::from_string(&k.2)?,
+                encrypted_key: k.3,
+                storage_key: k.4,
             })),
             None => Ok(None),
         };
@@ -1090,7 +1093,7 @@ impl SqlClient for MySqlClient {
     ) -> Result<ArtifactKey, SqlError> {
         let query = MySQLQueryHelper::get_load_card_query(table, query_args)?;
 
-        let key: (String, String, Vec<u8>, String) = sqlx::query_as(&query)
+        let key: (String, String, String, Vec<u8>, String) = sqlx::query_as(&query)
             .bind(query_args.uid.as_ref())
             .bind(query_args.uid.as_ref())
             .bind(query_args.name.as_ref())
@@ -1105,9 +1108,10 @@ impl SqlClient for MySqlClient {
 
         Ok(ArtifactKey {
             uid: key.0,
-            registry_type: RegistryType::from_string(&key.1)?,
-            encrypted_key: key.2,
-            storage_key: key.3,
+            space: key.1,
+            registry_type: RegistryType::from_string(&key.2)?,
+            encrypted_key: key.3,
+            storage_key: key.4,
         })
     }
 
@@ -1798,6 +1802,7 @@ mod tests {
 
         let key = ArtifactKey {
             uid: "550e8400-e29b-41d4-a716-446655440000".to_string(),
+            space: "repo1".to_string(),
             registry_type: RegistryType::Data,
             encrypted_key: encrypted_key.clone(),
             storage_key: "opsml_registry".to_string(),
@@ -1816,6 +1821,7 @@ mod tests {
         let encrypted_key: Vec<u8> = (32..64).collect();
         let key = ArtifactKey {
             uid: "550e8400-e29b-41d4-a716-446655440000".to_string(),
+            space: "repo1".to_string(),
             registry_type: RegistryType::Data,
             encrypted_key: encrypted_key.clone(),
             storage_key: "opsml_registry".to_string(),
@@ -1860,6 +1866,7 @@ mod tests {
         let encrypted_key: Vec<u8> = (0..32).collect();
         let key = ArtifactKey {
             uid: data_card.uid.clone(),
+            space: "repo1".to_string(),
             registry_type: RegistryType::Data,
             encrypted_key: encrypted_key.clone(),
             storage_key: "opsml_registry".to_string(),

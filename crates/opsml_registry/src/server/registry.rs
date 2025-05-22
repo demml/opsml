@@ -138,6 +138,7 @@ pub mod server_logic {
         async fn create_artifact_key(
             &self,
             uid: &str,
+            space: &str,
             registry_type: &str,
             storage_key: &str,
         ) -> Result<ArtifactKey, RegistryError> {
@@ -155,6 +156,7 @@ pub mod server_logic {
 
             let artifact_key = ArtifactKey {
                 uid: uid.to_string(),
+                space: space.to_string(),
                 registry_type: RegistryType::from_string(registry_type)?,
                 encrypted_key,
                 storage_key: storage_key.to_string(),
@@ -281,18 +283,24 @@ pub mod server_logic {
             self.sql_client.insert_card(&self.table_name, &card).await?;
 
             let key = self
-                .create_artifact_key(card.uid(), &card.registry_type(), &card.uri())
+                .create_artifact_key(
+                    card.uid(),
+                    &card.space(),
+                    &card.registry_type(),
+                    &card.uri(),
+                )
                 .await?;
 
             let response = CreateCardResponse {
                 registered: true,
                 version: card.version(),
-                space: card.registry_type(),
+                space: card.space(),
                 name: card.name(),
                 app_env: card.app_env(),
                 created_at: card.created_at(),
                 key: ArtifactKey {
                     uid: key.uid,
+                    space: key.space,
                     registry_type: key.registry_type,
                     encrypted_key: key.encrypted_key,
                     storage_key: key.storage_key,

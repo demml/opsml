@@ -25,6 +25,7 @@ pub async fn create_artifact_key(
     sql_client: &SqlClientEnum,
     encryption_key: &[u8],
     uid: &str,
+    space: &str,
     registry_type: &str,
     storage_key: &str,
 ) -> Result<ArtifactKey, ServerError> {
@@ -45,6 +46,7 @@ pub async fn create_artifact_key(
 
     let artifact_key = ArtifactKey {
         uid: uid.to_string(),
+        space: space.to_string(),
         registry_type: RegistryType::from_string(registry_type)?,
         encrypted_key,
         storage_key: storage_key.to_string(),
@@ -222,6 +224,7 @@ pub async fn get_artifact_key(
     sql_client: &SqlClientEnum,
     encryption_key: &[u8],
     registry_type: &str,
+    space: &str,
     storage_key: &str,
 ) -> Result<ArtifactKey, ServerError> {
     match sql_client
@@ -233,7 +236,15 @@ pub async fn get_artifact_key(
         Some(key) => Ok(key),
         None => {
             let uid = Uuid::new_v4().to_string();
-            create_artifact_key(sql_client, encryption_key, &uid, registry_type, storage_key).await
+            create_artifact_key(
+                sql_client,
+                encryption_key,
+                &uid,
+                space,
+                registry_type,
+                storage_key,
+            )
+            .await
         }
     }
 }
