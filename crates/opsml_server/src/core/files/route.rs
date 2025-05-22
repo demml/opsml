@@ -131,7 +131,7 @@ pub async fn generate_presigned_url(
         )
     })?;
 
-    if !perms.has_read_permission(&space_id.to_str().unwrap()) {
+    if !perms.has_read_permission(space_id.to_str().unwrap()) {
         return OpsmlServerError::permission_denied().into_response(StatusCode::FORBIDDEN);
     }
 

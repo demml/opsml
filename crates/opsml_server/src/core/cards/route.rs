@@ -484,7 +484,7 @@ pub async fn get_readme(
     let name = params.name.as_ref().unwrap();
     let space = params.space.as_ref().unwrap();
 
-    if !perms.has_read_permission(&space) {
+    if !perms.has_read_permission(space) {
         return OpsmlServerError::permission_denied().into_response(StatusCode::FORBIDDEN);
     }
 

@@ -1,3 +1,4 @@
+use chrono::{DateTime, Utc};
 use opsml_sql::schemas::{
     schema::{CardSummary, QueryStats},
     VersionSummary,
@@ -38,3 +39,13 @@ pub struct CreateReadeMe {
     pub registry_type: RegistryType,
     pub readme: String,
 }
+
+// create intertresponse type
+pub type InsertCardResponse = (
+    String,        // uid
+    String,        // space
+    String,        // registry type
+    String,        // uri
+    String,        // app env
+    DateTime<Utc>, // created at
+);
