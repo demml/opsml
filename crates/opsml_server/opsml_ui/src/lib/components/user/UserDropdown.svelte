@@ -35,13 +35,13 @@
         <div class="border-b-2 border-black text-center text-black">User</div>
         <div class="flex flex-col">
           <a
-              href="opsml/user/profile"
+              href="/opsml/user/profile"
               class="block px-1 m-1 text-left border-2 border-transparent hover:border-black rounded-lg transition-colors text-black"
           >
             Profile
           </a>
           <a
-              href="opsml/user/logout"
+              href="/opsml/user/logout"
               class="block px-1 m-1 text-left border-2 border-transparent hover:border-black rounded-lg transition-colors text-black"
           >
             Logout

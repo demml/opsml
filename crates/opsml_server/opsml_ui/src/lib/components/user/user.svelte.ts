@@ -92,13 +92,22 @@ export class UserStore {
 
   // all perms are stored as <operation>:<resource>
   // split permissions by : and get resource
-  public getPermissions(): string[] {
-    return this.permissions.map((perm) => perm.split(":")[1]);
+  // if index at 1 is empty set it to "all"
+  public getPermissions(): string[][] {
+    return this.permissions.map((perm) => {
+      const parts = perm.split(":");
+      if (parts[1] === "") parts[1] = "all";
+      return parts;
+    });
   }
 
   // same as permissions
-  public getGroupPermissions(): string[] {
-    return this.group_permissions.map((perm) => perm.split(":")[1]);
+  public getGroupPermissions(): string[][] {
+    return this.group_permissions.map((perm) => {
+      const parts = perm.split(":");
+      if (parts[1] === "") parts[1] = "all";
+      return parts;
+    });
   }
 }
 

@@ -16,7 +16,7 @@ async fn test_opsml_server_user_crud() {
         username: "test_user".to_string(),
         password: "test_password".to_string(),
         email: "test_user@example.com".to_string(),
-        permissions: Some(vec!["read".to_string(), "write".to_string()]),
+        permissions: Some(vec!["read:all".to_string(), "write:all".to_string()]),
         group_permissions: Some(vec!["user".to_string()]),
         role: Some("user".to_string()),
         active: Some(true),
@@ -39,7 +39,7 @@ async fn test_opsml_server_user_crud() {
     assert_eq!(user_response.user.username, "test_user");
     assert_eq!(
         user_response.user.permissions,
-        vec!["read".to_string(), "write".to_string()]
+        vec!["read:all".to_string(), "write:all".to_string()]
     );
     assert_eq!(
         user_response.user.group_permissions,
@@ -67,9 +67,9 @@ async fn test_opsml_server_user_crud() {
     let update_req = UpdateUserRequest {
         password: Some("new_password".to_string()),
         permissions: Some(vec![
-            "read".to_string(),
-            "write".to_string(),
-            "execute".to_string(),
+            "read:all".to_string(),
+            "write:all".to_string(),
+            "execute:all".to_string(),
         ]),
         group_permissions: Some(vec!["user".to_string(), "developer".to_string()]),
         active: Some(true),
@@ -92,9 +92,9 @@ async fn test_opsml_server_user_crud() {
     assert_eq!(
         user_response.permissions,
         vec![
-            "read".to_string(),
-            "write".to_string(),
-            "execute".to_string()
+            "read:all".to_string(),
+            "write:all".to_string(),
+            "execute:all".to_string()
         ]
     );
     assert_eq!(

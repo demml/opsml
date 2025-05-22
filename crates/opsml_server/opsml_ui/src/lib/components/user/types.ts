@@ -12,6 +12,8 @@ export interface UserResponse {
   active: boolean;
   permissions: string[];
   group_permissions: string[];
+  email: string;
+  role: string;
 }
 
 export interface CreateUserResponse {

@@ -473,10 +473,6 @@ pub async fn get_readme(
     Extension(perms): Extension<UserPermissions>,
     Query(params): Query<CardQueryArgs>,
 ) -> Result<Json<ReadeMe>, (StatusCode, Json<OpsmlServerError>)> {
-    if !perms.has_read_permission() {
-        return OpsmlServerError::permission_denied().into_response(StatusCode::FORBIDDEN);
-    }
-
     let table = CardTable::from_registry_type(&params.registry_type);
 
     // name and space are required
@@ -486,6 +482,10 @@ pub async fn get_readme(
 
     let name = params.name.as_ref().unwrap();
     let space = params.space.as_ref().unwrap();
+
+    if !perms.has_read_permission(&space) {
+        return OpsmlServerError::permission_denied().into_response(StatusCode::FORBIDDEN);
+    }
 
     let tmp_dir = tempdir().map_err(|e| {
         error!("Failed to create temp dir: {}", e);
