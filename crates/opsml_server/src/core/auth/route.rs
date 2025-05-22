@@ -145,6 +145,7 @@ pub async fn api_login_handler(
 /// # Returns
 ///
 /// Returns a `Result` containing either the JWT token or an error
+#[instrument(skip_all)]
 async fn ui_login_handler(
     State(state): State<Arc<AppState>>,
     Json(req): Json<LoginRequest>,
@@ -203,6 +204,7 @@ async fn ui_login_handler(
         )
     })?;
 
+    info!("User logged in: {}", user.username);
     Ok(Json(LoginResponse {
         authenticated: true,
         message: "User authenticated".to_string(),
@@ -223,6 +225,7 @@ async fn ui_login_handler(
 /// # Returns
 ///
 /// Returns a `Result` containing either the JWT token or an error
+#[instrument(skip_all)]
 pub async fn api_refresh_token_handler(
     State(state): State<Arc<AppState>>,
     headers: HeaderMap,
@@ -290,6 +293,7 @@ pub async fn api_refresh_token_handler(
     }
 }
 
+#[instrument(skip_all)]
 async fn validate_jwt_token(
     State(state): State<Arc<AppState>>,
     headers: HeaderMap,

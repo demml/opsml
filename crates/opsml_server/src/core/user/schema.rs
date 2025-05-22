@@ -36,7 +36,9 @@ pub struct ResetPasswordResponse {
 #[derive(Serialize, Deserialize, Default)]
 pub struct UserResponse {
     pub username: String,
+    pub email: String,
     pub active: bool,
+    pub role: String,
     pub permissions: Vec<String>,
     pub group_permissions: Vec<String>,
 }
@@ -78,6 +80,8 @@ impl From<User> for UserResponse {
             active: user.active,
             permissions: user.permissions,
             group_permissions: user.group_permissions,
+            email: user.email,
+            role: user.role,
         }
     }
 }

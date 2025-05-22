@@ -12,6 +12,7 @@ export class OpsmlClient {
     if (browser) {
       // start active user session
       // This will load any stored token from the cookie
+      this.user = userStore;
       if (this.user.jwt_token !== "") {
         this.validateAuth();
       }
@@ -62,6 +63,7 @@ export class OpsmlClient {
 
   async validateAuth(test: boolean = false): Promise<void> {
     if (test) {
+      console.log("test mode");
       await this.login("guest", "guest");
       return;
     }

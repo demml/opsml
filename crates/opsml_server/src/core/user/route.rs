@@ -23,11 +23,12 @@ use opsml_types::RequestType;
 use password_auth::generate_hash;
 use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::sync::Arc;
-use tracing::{error, info};
+use tracing::{error, info, instrument};
 
 use super::schema::ResetPasswordResponse;
 
 /// Create a new user via SDK.
+#[instrument(skip_all)]
 async fn create_user(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
@@ -112,6 +113,7 @@ async fn create_user(
 
 /// Create a new user via UI. This will always return a response so that
 /// errors will be handled in the UI.
+#[instrument(skip_all)]
 async fn register_user_from_ui(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
@@ -142,10 +144,10 @@ async fn register_user_from_ui(
 }
 
 /// Get a user by username
+#[instrument(skip_all)]
 async fn get_user(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
-
     Path(username): Path<String>,
 ) -> Result<Json<UserResponse>, (StatusCode, Json<OpsmlServerError>)> {
     // Check permissions - user can only get their own data or admin can get any user
@@ -162,12 +164,15 @@ async fn get_user(
         Err(e) => return Err(e),
     };
 
+    info!("User {} retrieved successfully", user.username);
+
     Ok(Json(UserResponse::from(user)))
 }
 
 /// List all users
 ///
 /// Requires admin permissions
+#[instrument(skip_all)]
 async fn list_users(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
@@ -194,6 +199,7 @@ async fn list_users(
 }
 
 /// Update a user
+#[instrument(skip_all)]
 async fn update_user(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
@@ -270,6 +276,7 @@ async fn update_user(
 /// Delete a user
 ///
 /// Requires admin permissions
+#[instrument(skip_all)]
 async fn delete_user(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
@@ -328,6 +335,7 @@ async fn delete_user(
     Ok(Json(serde_json::json!({"success": true})))
 }
 
+#[instrument(skip_all)]
 async fn reset_password_with_recovery(
     State(state): State<Arc<AppState>>,
     Json(req): Json<RecoveryResetRequest>,

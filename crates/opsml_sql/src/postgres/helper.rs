@@ -717,14 +717,14 @@ impl PostgresQueryHelper {
 
     pub fn get_artifact_key_insert_query() -> String {
         format!(
-            "INSERT INTO {} (uid, registry_type, encrypted_key, storage_key) VALUES ($1, $2, $3, $4)",
+            "INSERT INTO {} (uid, space, registry_type, encrypted_key, storage_key) VALUES ($1, $2, $3, $4, $5)",
             CardTable::ArtifactKey
         )
     }
 
     pub fn get_artifact_key_select_query() -> String {
         format!(
-            "SELECT uid, registry_type, encrypted_key, storage_key FROM {} WHERE uid = $1 AND registry_type = $2",
+            "SELECT uid, space, registry_type, encrypted_key, storage_key FROM {} WHERE uid = $1 AND registry_type = $2",
             CardTable::ArtifactKey
         )
     }
@@ -768,7 +768,7 @@ impl PostgresQueryHelper {
             "WITH query_cards AS (
                 {}
             )
-            SELECT a.uid, a.registry_type, a.encrypted_key, a.storage_key
+            SELECT a.uid, a.space, a.registry_type, a.encrypted_key, a.storage_key
             FROM {} as a
             INNER JOIN query_cards as b 
                 ON a.uid = b.uid;",

@@ -1129,7 +1129,7 @@ impl User {
             username,
             password_hash,
             hashed_recovery_codes,
-            permissions: permissions.unwrap_or(vec!["read".to_string(), "write".to_string()]),
+            permissions: permissions.unwrap_or(vec!["read:all".to_string()]),
             group_permissions: group_permissions.unwrap_or(vec!["user".to_string()]),
             role: role.unwrap_or("user".to_string()),
             refresh_token: None,

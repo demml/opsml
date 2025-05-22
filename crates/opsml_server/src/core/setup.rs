@@ -41,10 +41,10 @@ pub async fn initialize_default_user(
         default_username.clone(),
         password_hash,
         "admin".to_string(),
-        hashed_recovery_codes,                               // recovery codes
-        Some(vec!["read".to_string(), "write".to_string()]), // permissions
-        Some(vec!["admin".to_string()]),                     // group_permissions
-        Some("admin".to_string()),                           // role
+        hashed_recovery_codes, // recovery codes
+        Some(vec!["read:all".to_string(), "write:all".to_string()]), // permissions
+        Some(vec!["admin".to_string()]), // group_permissions
+        Some("admin".to_string()), // role
     );
 
     // Insert the user
@@ -62,7 +62,7 @@ pub async fn initialize_default_user(
         "default".to_string(),
         hashed_recovery_codes,
         Some(vec![
-            "read".to_string(),
+            "read:all".to_string(),
             "write:all".to_string(),
             "delete:all".to_string(),
         ]),
