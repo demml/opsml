@@ -177,6 +177,7 @@ impl OpsmlRegistry {
                     // convert to client ArtifactKey
                     Ok(ArtifactKey {
                         uid: key.uid,
+                        space: key.space,
                         registry_type: key.registry_type,
                         encrypted_key: key.encrypted_key,
                         storage_key: key.storage_key,
