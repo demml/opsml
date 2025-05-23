@@ -34,7 +34,7 @@ pub async fn initialize_default_user(
     let default_password = std::env::var("OPSML_DEFAULT_PASSWORD").unwrap_or("admin".to_string());
     let password_hash = password_auth::generate_hash(&default_password);
 
-    let (_, hashed_recovery_codes) = generate_recovery_codes_with_hashes(8);
+    let (_, hashed_recovery_codes) = generate_recovery_codes_with_hashes(1);
 
     // Create admin user with admin permissions
     let admin_user = User::new(
@@ -53,7 +53,7 @@ pub async fn initialize_default_user(
         .await
         .context(Colorize::purple("❌ Failed to create default admin user"))?;
 
-    let (_, hashed_recovery_codes) = generate_recovery_codes_with_hashes(8);
+    let (_, hashed_recovery_codes) = generate_recovery_codes_with_hashes(1);
 
     // create guest user
     let guest_user = User::new(
