@@ -12,7 +12,7 @@ import type { ExperimentCard } from "$lib/components/card/card_interfaces/experi
 // @ts-ignore
 export const load: LayoutServerLoad = async ({ url }) => {
   console.log("loading experiment");
-  await opsmlClient.validateAuth(true);
+  await opsmlClient.validateAuth();
 
   let registry = RegistryType.Experiment;
   let uid = await getUID(url, registry);

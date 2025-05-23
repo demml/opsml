@@ -20,7 +20,7 @@ import {
 import { getDriftAlerts } from "$lib/components/card/model/monitoring/alert/utils";
 
 export const load: PageLoad = async ({ parent }) => {
-  await opsmlClient.validateAuth(true);
+  await opsmlClient.validateAuth();
 
   const { metadata, registry, registryPath } = await parent();
 

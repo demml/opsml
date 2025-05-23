@@ -6,7 +6,7 @@ import type { PageLoad } from "./$types";
 import { getRawFile } from "$lib/components/files/utils";
 
 export const load: PageLoad = async ({ parent, url }) => {
-  await opsmlClient.validateAuth(true);
+  await opsmlClient.validateAuth();
   const { metadata, registry, registryPath } = await parent();
   const viewPath = (url as URL).searchParams.get("path") as string;
 

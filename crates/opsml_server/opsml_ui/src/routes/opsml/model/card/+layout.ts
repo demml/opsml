@@ -12,7 +12,7 @@ import { getCardReadMe } from "$lib/components/readme/util";
 // @ts-ignore
 export const load: LayoutServerLoad = async ({ url }) => {
   console.log("loading layout");
-  await opsmlClient.validateAuth(true);
+  await opsmlClient.validateAuth();
 
   let registry = RegistryType.Model;
   let uid = await getUID(url, registry);
