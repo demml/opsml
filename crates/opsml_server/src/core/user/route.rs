@@ -55,7 +55,7 @@ async fn create_user(
     let password_hash = generate_hash(&create_req.password);
 
     // generate recovery codes
-    let (recovery_codes, hashed_recovery_codes) = generate_recovery_codes_with_hashes(8);
+    let (recovery_codes, hashed_recovery_codes) = generate_recovery_codes_with_hashes(4);
 
     // Create the user
     let mut user = User::new(
