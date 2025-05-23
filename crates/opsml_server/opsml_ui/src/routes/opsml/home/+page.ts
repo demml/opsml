@@ -4,6 +4,7 @@ import type { PageLoad } from "./$types";
 
 export const load: PageLoad = async () => {
   await opsmlClient.validateAuth();
+
   let cards = await getRecentCards();
   return { cards: cards };
 };

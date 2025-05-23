@@ -7,6 +7,6 @@ import { opsmlClient } from "$lib/components/api/client.svelte";
 import type { LayoutServerLoad } from "./$types";
 
 export const load: LayoutServerLoad = async () => {
-  await opsmlClient.validateAuth(true);
+  //await opsmlClient.validateAuth();
   return {};
 };
