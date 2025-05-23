@@ -5,6 +5,7 @@ export interface LoginResponse {
   jwt_token: string;
   permissions: string[];
   group_permissions: string[];
+  favorite_spaces: string[];
 }
 
 export interface UserResponse {
@@ -14,6 +15,7 @@ export interface UserResponse {
   group_permissions: string[];
   email: string;
   role: string;
+  favorite_spaces: string[];
 }
 
 export interface CreateUserResponse {

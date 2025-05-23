@@ -10,7 +10,7 @@ export const load: PageLoad = async ({ url }) => {
   const space: string | undefined = url.searchParams.get("space") || undefined;
   const name = url.searchParams.get("name") || undefined;
 
-  await opsmlClient.validateAuth(true);
+  await opsmlClient.validateAuth();
   let registryPage = await setupRegistryPage(RegistryType.Model, space, name);
   return { page: registryPage, selectedSpace: space, selectedName: name };
 };

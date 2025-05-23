@@ -8,6 +8,7 @@ export class UserStore {
   group_permissions = $state<string[]>([]);
   repositories = $state<string[]>([]);
   recovery_codes = $state<string[]>([]);
+  favorite_spaces = $state<string[]>([]);
 
   constructor() {
     if (browser) {
@@ -47,6 +48,7 @@ export class UserStore {
     this.recovery_codes = [];
     this.permissions = [];
     this.group_permissions = [];
+    this.favorite_spaces = [];
 
     if (browser) {
       this.removeTokenCookie();
@@ -65,13 +67,15 @@ export class UserStore {
     username: string,
     jwt_token: string,
     permissions: string[],
-    group_permissions: string[]
+    group_permissions: string[],
+    favorite_spaces: string[] = []
   ) {
     this.username = username;
     this.jwt_token = jwt_token;
     this.logged_in = true;
     this.permissions = permissions;
     this.group_permissions = group_permissions;
+    this.favorite_spaces = favorite_spaces;
 
     if (browser) {
       this.setTokenCookie(jwt_token);

@@ -5,7 +5,7 @@ import { opsmlClient } from "$lib/components/api/client.svelte";
 import type { PageLoad } from "./$types";
 
 export const load: PageLoad = async () => {
-  await opsmlClient.validateAuth(true);
+  await opsmlClient.validateAuth();
   let userInfo = await getUser(userStore.username);
 
   return { userInfo };

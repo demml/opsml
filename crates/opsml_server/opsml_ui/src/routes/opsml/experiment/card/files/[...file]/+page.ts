@@ -7,7 +7,7 @@ import { getFileTree } from "$lib/components/files/utils";
 import { getRegistryTableName } from "$lib/utils";
 
 export const load: PageLoad = async ({ parent, params }) => {
-  await opsmlClient.validateAuth(true);
+  await opsmlClient.validateAuth();
 
   let slug = params.file as string;
 
