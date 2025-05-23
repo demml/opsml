@@ -18,7 +18,6 @@ use opsml_types::{
 use semver::Version;
 use sqlx::{
     mysql::{MySql, MySqlPoolOptions, MySqlRow},
-    types::chrono::{DateTime, Utc},
     FromRow, Pool, Row,
 };
 
@@ -26,41 +25,40 @@ use tracing::info;
 
 impl FromRow<'_, MySqlRow> for User {
     fn from_row(row: &MySqlRow) -> Result<Self, sqlx::Error> {
-        let id: Option<i32> = row.try_get("id")?;
-        let created_at: DateTime<Utc> = row.try_get("created_at")?;
-        let updated_at: DateTime<Utc> = row.try_get("updated_at")?;
-        let active: bool = row.try_get("active")?;
-        let username: String = row.try_get("username")?;
-        let password_hash: String = row.try_get("password_hash")?;
-        let email: String = row.try_get("email")?;
+        fn parse_json_vec(row: &MySqlRow, field: &str) -> Vec<String> {
+            let json = row.try_get::<String, _>(field).unwrap_or_default();
+            serde_json::from_str(&json).unwrap_or_default()
+        }
 
-        let hashed_recovery_codes: serde_json::Value = row.try_get("hashed_recovery_codes")?;
-        let hashed_recovery_codes: Vec<String> =
-            serde_json::from_value(hashed_recovery_codes).unwrap_or_default();
-
-        // Deserialize JSON strings into Vec<String>
-        let permissions: serde_json::Value = row.try_get("permissions")?;
-        let permissions: Vec<String> = serde_json::from_value(permissions).unwrap_or_default();
-
-        let group_permissions: serde_json::Value = row.try_get("group_permissions")?;
-        let group_permissions: Vec<String> =
-            serde_json::from_value(group_permissions).unwrap_or_default();
+        let id = row.try_get("id")?;
+        let created_at = row.try_get("created_at")?;
+        let updated_at = row.try_get("updated_at")?;
+        let active = row.try_get("active")?;
+        let username = row.try_get("username")?;
+        let password_hash = row.try_get("password_hash")?;
+        let email = row.try_get("email")?;
         let role = row.try_get("role")?;
-        let refresh_token: Option<String> = row.try_get("refresh_token")?;
+        let refresh_token = row.try_get("refresh_token")?;
+
+        let hashed_recovery_codes = parse_json_vec(row, "hashed_recovery_codes");
+        let permissions = parse_json_vec(row, "permissions");
+        let group_permissions = parse_json_vec(row, "group_permissions");
+        let favorite_spaces = parse_json_vec(row, "favorite_spaces");
 
         Ok(User {
             id,
             created_at,
+            updated_at,
             active,
             username,
             password_hash,
+            email,
+            role,
+            refresh_token,
             hashed_recovery_codes,
             permissions,
             group_permissions,
-            role,
-            refresh_token,
-            email,
-            updated_at,
+            favorite_spaces,
         })
     }
 }
@@ -902,6 +900,7 @@ impl SqlClient for MySqlClient {
         let hashed_recovery_codes = serde_json::to_value(&user.hashed_recovery_codes)?;
         let group_permissions = serde_json::to_value(&user.group_permissions)?;
         let permissions = serde_json::to_value(&user.permissions)?;
+        let favorite_spaces = serde_json::to_value(&user.favorite_spaces)?;
 
         sqlx::query(&query)
             .bind(&user.username)
@@ -909,6 +908,7 @@ impl SqlClient for MySqlClient {
             .bind(&hashed_recovery_codes)
             .bind(&permissions)
             .bind(&group_permissions)
+            .bind(&favorite_spaces)
             .bind(&user.role)
             .bind(user.active)
             .bind(&user.email)
@@ -935,6 +935,7 @@ impl SqlClient for MySqlClient {
         let hashed_recovery_codes = serde_json::to_value(&user.hashed_recovery_codes)?;
         let group_permissions = serde_json::to_value(&user.group_permissions)?;
         let permissions = serde_json::to_value(&user.permissions)?;
+        let favorite_spaces = serde_json::to_value(&user.favorite_spaces)?;
 
         sqlx::query(&query)
             .bind(user.active)
@@ -942,6 +943,7 @@ impl SqlClient for MySqlClient {
             .bind(&hashed_recovery_codes)
             .bind(&permissions)
             .bind(&group_permissions)
+            .bind(&favorite_spaces)
             .bind(&user.refresh_token)
             .bind(&user.email)
             .bind(&user.username)
@@ -1762,6 +1764,7 @@ mod tests {
             "pass".to_string(),
             "email".to_string(),
             recovery_codes,
+            None,
             None,
             None,
             None,
