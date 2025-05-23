@@ -45,6 +45,7 @@ pub async fn initialize_default_user(
         Some(vec!["read:all".to_string(), "write:all".to_string()]), // permissions
         Some(vec!["admin".to_string()]), // group_permissions
         Some("admin".to_string()), // role
+        None,
     );
 
     // Insert the user
@@ -68,6 +69,7 @@ pub async fn initialize_default_user(
         ]),
         Some(vec!["user".to_string()]),
         Some("guest".to_string()),
+        None,
     );
 
     // Insert the user

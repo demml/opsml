@@ -1128,6 +1128,7 @@ mod tests {
             None,
             None,
             None,
+            None,
         );
         client.insert_user(&user).await.unwrap();
 

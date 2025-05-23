@@ -66,6 +66,7 @@ async fn create_user(
         create_req.permissions,
         create_req.group_permissions,
         create_req.role,
+        None,
     );
 
     // Set active status if provided
