@@ -317,7 +317,9 @@ async fn validate_jwt_token(
         }
     } else {
         debug!("No bearer token found");
-        OpsmlServerError::bearer_token_not_found().into_response(StatusCode::BAD_REQUEST)
+        Ok(Json(Authenticated {
+            is_authenticated: false,
+        }))
     }
 }
 

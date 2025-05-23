@@ -13,6 +13,8 @@ export const load: PageLoad = ({ url }) => {
     previousPath = UiPaths.HOME;
   }
 
+  console.log("Login");
+
   return {
     currentPath,
     previousPath,

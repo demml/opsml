@@ -3,6 +3,7 @@ import { RoutePaths, UiPaths } from "$lib/components/api/routes";
 import { browser } from "$app/environment";
 import type { LoginResponse } from "../user/types";
 import { userStore, UserStore } from "../user/user.svelte";
+import { c } from "svelte-highlight/languages";
 
 export class OpsmlClient {
   // UserStore functionality as class properties with runes
@@ -69,23 +70,33 @@ export class OpsmlClient {
     this.resetUser();
   }
 
-  async validateAuth(test: boolean = false): Promise<void> {
+  async validateAuth(test: boolean = false): Promise<boolean> {
     if (test) {
       console.log("test mode");
       await this.login("guest", "guest");
-      return;
+      return true;
     }
 
-    const response = await this.get(RoutePaths.VALIDATE_AUTH);
-    if (!response.ok) {
-      console.error("Failed to validate auth");
-      void goto(RoutePaths.LOGIN);
-      return;
-    }
+    try {
+      const response = await this.get(RoutePaths.VALIDATE_AUTH);
 
-    const authenticated = await response.json();
-    if (!authenticated.is_authenticated) {
-      void goto(RoutePaths.LOGIN);
+      if (!response.ok) {
+        console.error("Failed to validate auth. Redirecting to login.");
+        await goto(UiPaths.LOGIN);
+        return false;
+      }
+
+      const authenticated = await response.json();
+      if (!authenticated.is_authenticated) {
+        await goto(UiPaths.LOGIN);
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      this.resetUser();
+      await goto(UiPaths.LOGIN);
+      return false;
     }
   }
 
