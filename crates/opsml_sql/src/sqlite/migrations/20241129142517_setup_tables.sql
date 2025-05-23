@@ -157,6 +157,7 @@ CREATE TABLE IF NOT EXISTS opsml_user (
     permissions TEXT NOT NULL,
     group_permissions TEXT NOT NULL,
     role TEXT DEFAULT 'user',
+    favorite_spaces TEXT DEFAULT '[]',
     refresh_token TEXT,
     email TEXT NOT NULL UNIQUE,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
