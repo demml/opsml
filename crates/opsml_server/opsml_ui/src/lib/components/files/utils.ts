@@ -7,13 +7,18 @@ import json from "svelte-highlight/languages/json";
 import python from "svelte-highlight/languages/python";
 import yaml from "svelte-highlight/languages/yaml";
 import sql from "svelte-highlight/languages/sql";
+import { userStore } from "../user/user.svelte";
 
 export async function getFileTree(path: string): Promise<FileTreeResponse> {
   const params = {
     path: path,
   };
 
-  const response = await opsmlClient.get(RoutePaths.FILE_TREE, params);
+  const response = await opsmlClient.get(
+    RoutePaths.FILE_TREE,
+    params,
+    userStore.jwt_token
+  );
   return (await response.json()) as FileTreeResponse;
 }
 
@@ -70,7 +75,11 @@ export async function getRawFile(
     registry_type: registry_type,
   };
 
-  const response = await opsmlClient.post(RoutePaths.FILE_CONTENT, body);
+  const response = await opsmlClient.post(
+    RoutePaths.FILE_CONTENT,
+    body,
+    userStore.jwt_token
+  );
   return (await response.json()) as RawFile;
 }
 

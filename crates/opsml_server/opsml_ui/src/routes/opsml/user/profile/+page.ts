@@ -1,6 +1,6 @@
 import { userStore } from "$lib/components/user/user.svelte";
 import { getUser } from "$lib/components/user/utils";
-import { validateUserOrRedirect } from "$lib/components/api/client.svelte";
+import { validateUserOrRedirect } from "$lib/components/user/user.svelte";
 
 import type { PageLoad } from "./$types";
 

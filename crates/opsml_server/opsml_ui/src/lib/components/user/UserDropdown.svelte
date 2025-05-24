@@ -36,12 +36,14 @@
         <div class="flex flex-col">
           <a
               href="/opsml/user/profile"
+              onclick={toggleDropdown}
               class="block px-1 m-1 text-left border-2 border-transparent hover:border-black rounded-lg transition-colors text-black"
           >
             Profile
           </a>
           <a
               href="/opsml/user/logout"
+              onclick={toggleDropdown}
               class="block px-1 m-1 text-left border-2 border-transparent hover:border-black rounded-lg transition-colors text-black"
           >
             Logout

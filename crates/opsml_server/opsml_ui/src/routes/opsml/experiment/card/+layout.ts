@@ -1,6 +1,6 @@
 export const prerender = true;
 export const ssr = false;
-import { validateUserOrRedirect } from "$lib/components/api/client.svelte";
+import { validateUserOrRedirect } from "$lib/components/user/user.svelte";
 import { getRegistryTypeLowerCase, RegistryType } from "$lib/utils";
 import { getCardMetadata, getUID } from "$lib/components/card/utils";
 

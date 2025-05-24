@@ -17,72 +17,6 @@ export class OpsmlClient {
     }
   }
 
-  // Auth manager methods
-
-  ///**
-  // * Login to the API using username and password
-  // *
-  // * @param username
-  // * @param password
-  // * @returns
-  // */
-  //async login(username: string, password: string): Promise<LoginResponse> {
-  //  const data = (await this.post(RoutePaths.LOGIN, {
-  //    username,
-  //    password,
-  //  }).then((res) => res.json())) as LoginResponse;
-
-  //  if (data.authenticated)
-  //    this.updateUser(
-  //      data.username,
-  //      data.jwt_token,
-  //      data.permissions,
-  //      data.group_permissions,
-  //      data.favorite_spaces
-  //    );
-  //  return data;
-  //}
-
-  //async logout(): Promise<void> {
-  //  this.resetUser();
-  //}
-
-  //async validateAuth(test: boolean = false): Promise<boolean> {
-  //  if (test) {
-  //    console.log("test mode");
-  //    await this.login("guest", "guest");
-  //    return true;
-  //  }
-
-  //  try {
-  //    const response = await this.get(RoutePaths.VALIDATE_AUTH);
-
-  //    if (!response.ok) {
-  //      console.error("Failed to validate auth. Redirecting to login.");
-  //      return false;
-  //    }
-
-  //    const authenticated = (await response.json()) as AuthenticatedResponse;
-  //    if (!authenticated.is_authenticated) {
-  //      return false;
-  //    }
-
-  //    // Update user information if authenticated
-  //    this.updateUser(
-  //      authenticated.user_response.username,
-  //      authenticated.user_response.jwt_token,
-  //      authenticated.user_response.permissions,
-  //      authenticated.user_response.group_permissions,
-  //      authenticated.user_response.favorite_spaces
-  //    );
-
-  //    return true;
-  //  } catch (error) {
-  //    this.resetUser();
-  //    return false;
-  //  }
-  //}
-
   //// API handler methods
   private async handleError(response: Response): Promise<Response> {
     const errorMessage = await response.text();
@@ -180,23 +114,3 @@ export class OpsmlClient {
 
 // Create and export a singleton instance
 export const opsmlClient = new OpsmlClient();
-
-// Function to validate user authentication and redirect if not authenticated
-//export async function validateUserOrRedirect(): Promise<void> {
-//  const redirectPath = UiPaths.LOGIN;
-//  try {
-//    const isAuthenticated = await opsmlClient.validateAuth();
-//
-//    if (!isAuthenticated) {
-//      opsmlClient.resetUser(); // Clear any stale user data
-//      throw redirect(303, redirectPath);
-//    }
-//  } catch (error) {
-//    if (error instanceof Response) throw error; // Re-throw redirect
-//
-//    // Handle unexpected errors
-//    console.error("Authentication error:", error);
-//    throw redirect(303, redirectPath);
-//  }
-//}
-//
