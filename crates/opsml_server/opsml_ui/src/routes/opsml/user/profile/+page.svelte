@@ -11,9 +11,9 @@
 
 </script>
 
-<div class="flex pt-24 justify-center w-full px-4">
+<div class="col-span-12 md:col-start-5 md:col-span-4 flex items-center justify-center px-4">
 
-  <div class="mx-auto rounded-2xl bg-surface-50 border-black border-2 shadow p-4 md:w-96 md:px-5">
+  <div class="rounded-2xl bg-surface-50 border-black border-2 shadow p-4 md:w-96 md:px-5">
 
     <div class="flex flex-row items-center pt-2">
       <Cog color="#8059b6"/>

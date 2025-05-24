@@ -41,6 +41,7 @@ pub struct UserResponse {
     pub role: String,
     pub permissions: Vec<String>,
     pub group_permissions: Vec<String>,
+    pub favorite_spaces: Vec<String>,
 }
 
 #[derive(Serialize, Deserialize, Default)]
@@ -82,6 +83,7 @@ impl From<User> for UserResponse {
             group_permissions: user.group_permissions,
             email: user.email,
             role: user.role,
+            favorite_spaces: user.favorite_spaces,
         }
     }
 }

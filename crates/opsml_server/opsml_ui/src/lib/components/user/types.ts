@@ -35,3 +35,8 @@ export interface CreateUserUiResponse {
   response?: CreateUserResponse;
   error?: string;
 }
+
+export interface AuthenticatedResponse {
+  is_authenticated: boolean;
+  user_response: UserResponse;
+}

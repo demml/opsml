@@ -1,7 +1,7 @@
 import { goto } from "$app/navigation";
 import { RoutePaths, UiPaths } from "$lib/components/api/routes";
 import { browser } from "$app/environment";
-import type { LoginResponse } from "../user/types";
+import type { AuthenticatedResponse, LoginResponse } from "../user/types";
 import { userStore, UserStore } from "../user/user.svelte";
 import { redirect } from "@sveltejs/kit";
 
@@ -85,10 +85,19 @@ export class OpsmlClient {
         return false;
       }
 
-      const authenticated = await response.json();
+      const authenticated = (await response.json()) as AuthenticatedResponse;
       if (!authenticated.is_authenticated) {
         return false;
       }
+
+      // Update user information if authenticated
+      this.updateUser(
+        authenticated.user_response.username,
+        authenticated.user_response.jwt_token,
+        authenticated.user_response.permissions,
+        authenticated.user_response.group_permissions,
+        authenticated.user_response.favorite_spaces
+      );
 
       return true;
     } catch (error) {

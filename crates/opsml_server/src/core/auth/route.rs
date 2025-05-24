@@ -1,6 +1,7 @@
 use crate::core::auth::schema::{Authenticated, LoginRequest, LoginResponse};
 use crate::core::error::{internal_server_error, OpsmlServerError};
 use crate::core::state::AppState;
+use crate::core::user::schema::UserResponse;
 use crate::core::user::utils::get_user;
 use anyhow::{Context, Result};
 /// Route for debugging information
@@ -310,15 +311,45 @@ async fn validate_jwt_token(
     if let Some(bearer_token) = bearer_token {
         debug!("Validating JWT token");
         match state.auth_manager.validate_jwt(&bearer_token) {
-            Ok(_) => Ok(Json(Authenticated {
-                is_authenticated: true,
-            })),
+            Ok(_) => {
+                // get claims and user
+                let claims = state
+                    .auth_manager
+                    .decode_jwt_without_validation(&bearer_token)
+                    .map_err(|e| {
+                        (
+                            StatusCode::UNAUTHORIZED,
+                            Json(OpsmlServerError::jwt_decode_error(e)),
+                        )
+                    })?;
+
+                let user = match get_user(&state.sql_client, &claims.sub).await {
+                    Ok(user) => user,
+                    Err(_) => {
+                        return OpsmlServerError::user_validation_error()
+                            .into_response(StatusCode::BAD_REQUEST);
+                    }
+                };
+                Ok(Json(Authenticated {
+                    is_authenticated: true,
+                    user_response: UserResponse {
+                        username: user.username,
+                        permissions: user.permissions,
+                        group_permissions: user.group_permissions,
+                        active: user.active,
+                        email: user.email,
+                        role: user.role,
+                        favorite_spaces: user.favorite_spaces,
+                    },
+                }))
+            }
             Err(_) => OpsmlServerError::invalid_token().into_response(StatusCode::UNAUTHORIZED),
         }
     } else {
         debug!("No bearer token found");
         Ok(Json(Authenticated {
             is_authenticated: false,
+            ..Default::default()
         }))
     }
 }

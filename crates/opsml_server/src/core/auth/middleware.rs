@@ -14,7 +14,7 @@ use opsml_auth::permission::UserPermissions;
 use opsml_sql::base::SqlClient;
 use serde::Serialize;
 use std::sync::Arc;
-use tracing::info;
+use tracing::{debug, info};
 
 #[derive(Debug, Serialize)]
 pub struct ErrorResponse {
