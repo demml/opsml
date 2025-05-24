@@ -29,7 +29,7 @@ pub async fn auth_api_middleware(
     next: Next,
 ) -> Result<impl IntoResponse, (StatusCode, Json<AuthError>)> {
     // print route being accessed
-    info!("Accessing route: {}", req.uri());
+    debug!("Accessing route: {}", req.uri());
     // get the access token from the cookie or the authorization header
     let access_token = cookie_jar
         .get("access_token")

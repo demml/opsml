@@ -1,6 +1,5 @@
 export const ssr = false;
 
-import { opsmlClient } from "$lib/components/api/client.svelte";
 import { getMaxDataPoints } from "$lib/utils";
 import type { PageLoad } from "./$types";
 import {
@@ -20,8 +19,6 @@ import {
 import { getDriftAlerts } from "$lib/components/card/model/monitoring/alert/utils";
 
 export const load: PageLoad = async ({ parent }) => {
-  await opsmlClient.validateAuth();
-
   const { metadata, registry, registryPath } = await parent();
 
   let profiles = await getDriftProfiles(metadata);

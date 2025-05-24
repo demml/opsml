@@ -1,5 +1,3 @@
-import { getCardReadMe, type ReadMe } from "$lib/components/readme/util";
-import { RegistryType } from "$lib/utils";
 import type { PageLoad } from "./$types";
 
 export const load: PageLoad = async ({ parent, url }) => {
