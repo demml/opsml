@@ -3,7 +3,7 @@ import { RoutePaths, UiPaths } from "$lib/components/api/routes";
 import { browser } from "$app/environment";
 import type { LoginResponse } from "../user/types";
 import { userStore, UserStore } from "../user/user.svelte";
-import { c } from "svelte-highlight/languages";
+import { redirect } from "@sveltejs/kit";
 
 export class OpsmlClient {
   // UserStore functionality as class properties with runes
@@ -82,20 +82,17 @@ export class OpsmlClient {
 
       if (!response.ok) {
         console.error("Failed to validate auth. Redirecting to login.");
-        await goto(UiPaths.LOGIN);
         return false;
       }
 
       const authenticated = await response.json();
       if (!authenticated.is_authenticated) {
-        await goto(UiPaths.LOGIN);
         return false;
       }
 
       return true;
     } catch (error) {
       this.resetUser();
-      await goto(UiPaths.LOGIN);
       return false;
     }
   }
@@ -182,3 +179,22 @@ export class OpsmlClient {
 
 // Create and export a singleton instance
 export const opsmlClient = new OpsmlClient();
+
+// Function to validate user authentication and redirect if not authenticated
+export async function validateUserOrRedirect(): Promise<void> {
+  const redirectPath = UiPaths.LOGIN;
+  try {
+    const isAuthenticated = await opsmlClient.validateAuth();
+
+    if (!isAuthenticated) {
+      opsmlClient.resetUser(); // Clear any stale user data
+      throw redirect(303, redirectPath);
+    }
+  } catch (error) {
+    if (error instanceof Response) throw error; // Re-throw redirect
+
+    // Handle unexpected errors
+    console.error("Authentication error:", error);
+    throw redirect(303, redirectPath);
+  }
+}

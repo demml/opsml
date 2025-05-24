@@ -1,6 +1,5 @@
 export const ssr = false;
 
-import { opsmlClient } from "$lib/components/api/client.svelte";
 import {
   getCardMetricNames,
   getCardParameters,
@@ -9,8 +8,6 @@ import {
 import type { PageLoad } from "./$types";
 
 export const load: PageLoad = async ({ parent }) => {
-  await opsmlClient.validateAuth();
-
   const { metadata } = await parent();
 
   // get metric names, parameters
