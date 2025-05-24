@@ -3,9 +3,9 @@
   import { goto } from "$app/navigation";
   import logo from "$lib/images/opsml-logo.png";
   import LoginWarning from "$lib/components/user/LoginWarning.svelte";
-  import { RoutePaths, UiPaths } from "$lib/components/api/routes";
+  import {  UiPaths } from "$lib/components/api/routes";
   import { goTop } from "$lib/utils";
-  import { opsmlClient } from "$lib/components/api/client.svelte";
+  import { userStore } from "$lib/components/user/user.svelte";
   import type { PageProps } from './$types';
   import { validateLoginSchema, type UseLoginSchema } from "$lib/components/user/schema";
 
@@ -27,7 +27,8 @@
     let argsValid = validateLoginSchema(username, password);
 
     if (argsValid.success) {
-      let loginResponse = await opsmlClient.login(username, password);
+      console.log("Login arguments are valid");
+      let loginResponse = await userStore.login(username, password);
 
       if (loginResponse.authenticated === true) {
         // need to reload the page to update the nav bar

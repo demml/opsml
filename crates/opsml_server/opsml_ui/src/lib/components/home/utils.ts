@@ -2,6 +2,7 @@ import { opsmlClient } from "$lib/components/api/client.svelte";
 import { RoutePaths } from "$lib/components/api/routes";
 import { type Card } from "$lib/components/home/types";
 import { RegistryType } from "$lib/utils";
+import { userStore } from "../user/user.svelte";
 
 interface RecentCards {
   modelcards: Card[];
@@ -11,11 +12,15 @@ interface RecentCards {
 }
 
 async function getCards(registry: string): Promise<Card[]> {
-  const response = await opsmlClient.get(RoutePaths.LIST_CARDS, {
-    registry_type: registry,
-    limit: "10",
-    sort_by_timestamp: "true",
-  });
+  const response = await opsmlClient.get(
+    RoutePaths.LIST_CARDS,
+    {
+      registry_type: registry,
+      limit: "10",
+      sort_by_timestamp: "true",
+    },
+    userStore.jwt_token
+  );
   const data = (await response.json()) as Card[];
   return data;
 }

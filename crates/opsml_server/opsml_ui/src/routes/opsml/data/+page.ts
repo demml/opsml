@@ -1,7 +1,7 @@
 export const ssr = false;
 
 import { setupRegistryPage } from "$lib/components/card/utils";
-import { validateUserOrRedirect } from "$lib/components/api/client.svelte";
+import { validateUserOrRedirect } from "$lib/components/user/user.svelte";
 import { RegistryType } from "$lib/utils";
 import type { PageLoad } from "./$types";
 

@@ -6,6 +6,7 @@ import type {
   UserResponse,
 } from "$lib/components/user/types";
 import { format } from "date-fns";
+import { userStore } from "./user.svelte";
 
 // Helper function for registering a user via the api client
 // It is assumed that all arguments have been validated prior to calling this function
@@ -19,7 +20,11 @@ export async function registerUser(
     password: password,
     email: email,
   };
-  const response = await opsmlClient.post(RoutePaths.REGISTER, request);
+  const response = await opsmlClient.post(
+    RoutePaths.REGISTER,
+    request,
+    userStore.jwt_token
+  );
   return (await response.json()) as CreateUserUiResponse;
 }
 
@@ -27,7 +32,7 @@ export async function registerUser(
 export async function getUser(username: string): Promise<UserResponse> {
   let path = `${RoutePaths.USER}/${username}`;
 
-  const response = await opsmlClient.get(path);
+  const response = await opsmlClient.get(path, undefined, userStore.jwt_token);
 
   return (await response.json()) as UserResponse;
 }

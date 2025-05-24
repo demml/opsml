@@ -201,16 +201,18 @@ export class UserStore {
     });
   }
 
-  public async login(username: string, password: string): Promise<boolean> {
-    const response = await opsmlClient.post(RoutePaths.LOGIN, {
-      username,
-      password,
-    });
-
-    if (!response.ok) {
-      console.error("Login failed");
-      return false;
-    }
+  public async login(
+    username: string,
+    password: string
+  ): Promise<LoginResponse> {
+    const response = await opsmlClient.post(
+      RoutePaths.LOGIN,
+      {
+        username,
+        password,
+      },
+      userStore.jwt_token
+    );
 
     const data = (await response.json()) as LoginResponse;
 
@@ -222,10 +224,11 @@ export class UserStore {
         data.group_permissions,
         data.favorite_spaces
       );
-      return true;
+
+      return data;
     }
 
-    return false;
+    return data;
   }
 }
 
@@ -235,7 +238,10 @@ export async function validateUserOrRedirect(): Promise<void> {
   const redirectPath = UiPaths.LOGIN;
 
   try {
+    console.log("Validating user authentication...");
     const isAuthenticated = await userStore.validateAuth();
+
+    console.log("User authentication status:", isAuthenticated);
 
     if (!isAuthenticated) {
       // Clear any stale user data
