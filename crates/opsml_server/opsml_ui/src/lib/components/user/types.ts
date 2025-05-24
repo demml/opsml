@@ -40,3 +40,7 @@ export interface AuthenticatedResponse {
   is_authenticated: boolean;
   user_response: UserResponse;
 }
+
+export interface JwtToken {
+  token: string;
+}

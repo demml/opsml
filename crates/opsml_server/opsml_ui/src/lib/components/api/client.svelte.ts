@@ -1,112 +1,89 @@
 import { goto } from "$app/navigation";
-import { RoutePaths, UiPaths } from "$lib/components/api/routes";
+import { UiPaths } from "$lib/components/api/routes";
 import { browser } from "$app/environment";
-import type { AuthenticatedResponse, LoginResponse } from "../user/types";
-import { userStore, UserStore } from "../user/user.svelte";
-import { redirect } from "@sveltejs/kit";
 
 export class OpsmlClient {
   // UserStore functionality as class properties with runes
-  user = $state<UserStore>(userStore);
+  // user = $state<UserStore>(userStore);
 
   constructor() {
     if (browser) {
       // start active user session
       // This will load any stored token from the cookie
-      this.user = userStore;
-      if (this.user.jwt_token !== "") {
-        this.validateAuth();
-      }
+      //this.user = userStore;
+      //if (this.user.jwt_token !== "") {
+      //  this.validateAuth();
+      //}
     }
   }
 
-  // UserStore methods
-  resetUser() {
-    this.user.resetUser();
-  }
-
-  updateUser(
-    username: string,
-    jwt_token: string,
-    permissions: string[],
-    group_permissions: string[],
-    favorite_spaces: string[] = []
-  ) {
-    this.user.updateUser(
-      username,
-      jwt_token,
-      permissions,
-      group_permissions,
-      favorite_spaces
-    );
-  }
   // Auth manager methods
 
-  /**
-   * Login to the API using username and password
-   *
-   * @param username
-   * @param password
-   * @returns
-   */
-  async login(username: string, password: string): Promise<LoginResponse> {
-    const data = (await this.post(RoutePaths.LOGIN, {
-      username,
-      password,
-    }).then((res) => res.json())) as LoginResponse;
+  ///**
+  // * Login to the API using username and password
+  // *
+  // * @param username
+  // * @param password
+  // * @returns
+  // */
+  //async login(username: string, password: string): Promise<LoginResponse> {
+  //  const data = (await this.post(RoutePaths.LOGIN, {
+  //    username,
+  //    password,
+  //  }).then((res) => res.json())) as LoginResponse;
 
-    if (data.authenticated)
-      this.updateUser(
-        data.username,
-        data.jwt_token,
-        data.permissions,
-        data.group_permissions,
-        data.favorite_spaces
-      );
-    return data;
-  }
+  //  if (data.authenticated)
+  //    this.updateUser(
+  //      data.username,
+  //      data.jwt_token,
+  //      data.permissions,
+  //      data.group_permissions,
+  //      data.favorite_spaces
+  //    );
+  //  return data;
+  //}
 
-  async logout(): Promise<void> {
-    this.resetUser();
-  }
+  //async logout(): Promise<void> {
+  //  this.resetUser();
+  //}
 
-  async validateAuth(test: boolean = false): Promise<boolean> {
-    if (test) {
-      console.log("test mode");
-      await this.login("guest", "guest");
-      return true;
-    }
+  //async validateAuth(test: boolean = false): Promise<boolean> {
+  //  if (test) {
+  //    console.log("test mode");
+  //    await this.login("guest", "guest");
+  //    return true;
+  //  }
 
-    try {
-      const response = await this.get(RoutePaths.VALIDATE_AUTH);
+  //  try {
+  //    const response = await this.get(RoutePaths.VALIDATE_AUTH);
 
-      if (!response.ok) {
-        console.error("Failed to validate auth. Redirecting to login.");
-        return false;
-      }
+  //    if (!response.ok) {
+  //      console.error("Failed to validate auth. Redirecting to login.");
+  //      return false;
+  //    }
 
-      const authenticated = (await response.json()) as AuthenticatedResponse;
-      if (!authenticated.is_authenticated) {
-        return false;
-      }
+  //    const authenticated = (await response.json()) as AuthenticatedResponse;
+  //    if (!authenticated.is_authenticated) {
+  //      return false;
+  //    }
 
-      // Update user information if authenticated
-      this.updateUser(
-        authenticated.user_response.username,
-        authenticated.user_response.jwt_token,
-        authenticated.user_response.permissions,
-        authenticated.user_response.group_permissions,
-        authenticated.user_response.favorite_spaces
-      );
+  //    // Update user information if authenticated
+  //    this.updateUser(
+  //      authenticated.user_response.username,
+  //      authenticated.user_response.jwt_token,
+  //      authenticated.user_response.permissions,
+  //      authenticated.user_response.group_permissions,
+  //      authenticated.user_response.favorite_spaces
+  //    );
 
-      return true;
-    } catch (error) {
-      this.resetUser();
-      return false;
-    }
-  }
+  //    return true;
+  //  } catch (error) {
+  //    this.resetUser();
+  //    return false;
+  //  }
+  //}
 
-  // API handler methods
+  //// API handler methods
   private async handleError(response: Response): Promise<Response> {
     const errorMessage = await response.text();
     void goto(`${UiPaths.ERROR}?message=${errorMessage}`);
@@ -129,6 +106,7 @@ export class OpsmlClient {
     url: string,
     method: string,
     body: any = null,
+    bearerToken: string,
     contentType: string = "application/json",
     additionalHeaders: Record<string, string> = {}
   ): Promise<Response> {
@@ -137,7 +115,7 @@ export class OpsmlClient {
     const headers = {
       "Content-Type": contentType,
       "User-Agent": userAgent,
-      Authorization: `Bearer ${this.user.jwt_token}`,
+      Authorization: `Bearer ${bearerToken}`,
       ...additionalHeaders,
     };
 
@@ -154,35 +132,49 @@ export class OpsmlClient {
     return new Response(null, { status: 500, statusText: "Failure" });
   }
 
-  async get(url: string, params?: Record<string, any>): Promise<Response> {
+  async get(
+    url: string,
+    params?: Record<string, any>,
+    bearerToken: string = ""
+  ): Promise<Response> {
     const urlWithParams = this.addQueryParams(url, params);
 
-    return this.request(urlWithParams, "GET");
+    return this.request(urlWithParams, "GET", null, bearerToken);
   }
 
   async put(
     url: string,
     body: any,
+    bearerToken: string = "",
     contentType: string = "application/json"
   ): Promise<Response> {
-    return this.request(url, "PUT", body, contentType);
+    return this.request(url, "PUT", body, bearerToken, contentType);
   }
 
   async patch(
     url: string,
     body: any,
+    bearerToken: string = "",
     contentType: string = "application/json"
   ): Promise<Response> {
-    return this.request(url, "PATCH", body, contentType);
+    return this.request(url, "PATCH", body, bearerToken, contentType);
   }
 
   async post(
     url: string,
     body: any,
+    bearerToken: string = "",
     contentType: string = "application/json",
     additionalHeaders: Record<string, string> = {}
   ): Promise<Response> {
-    return this.request(url, "POST", body, contentType, additionalHeaders);
+    return this.request(
+      url,
+      "POST",
+      body,
+      bearerToken,
+      contentType,
+      additionalHeaders
+    );
   }
 }
 
@@ -190,20 +182,21 @@ export class OpsmlClient {
 export const opsmlClient = new OpsmlClient();
 
 // Function to validate user authentication and redirect if not authenticated
-export async function validateUserOrRedirect(): Promise<void> {
-  const redirectPath = UiPaths.LOGIN;
-  try {
-    const isAuthenticated = await opsmlClient.validateAuth();
-
-    if (!isAuthenticated) {
-      opsmlClient.resetUser(); // Clear any stale user data
-      throw redirect(303, redirectPath);
-    }
-  } catch (error) {
-    if (error instanceof Response) throw error; // Re-throw redirect
-
-    // Handle unexpected errors
-    console.error("Authentication error:", error);
-    throw redirect(303, redirectPath);
-  }
-}
+//export async function validateUserOrRedirect(): Promise<void> {
+//  const redirectPath = UiPaths.LOGIN;
+//  try {
+//    const isAuthenticated = await opsmlClient.validateAuth();
+//
+//    if (!isAuthenticated) {
+//      opsmlClient.resetUser(); // Clear any stale user data
+//      throw redirect(303, redirectPath);
+//    }
+//  } catch (error) {
+//    if (error instanceof Response) throw error; // Re-throw redirect
+//
+//    // Handle unexpected errors
+//    console.error("Authentication error:", error);
+//    throw redirect(303, redirectPath);
+//  }
+//}
+//

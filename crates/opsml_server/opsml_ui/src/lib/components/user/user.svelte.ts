@@ -1,9 +1,12 @@
 import { browser } from "$app/environment";
+import { RoutePaths, UiPaths } from "../api/routes";
+import { opsmlClient } from "../api/client.svelte";
+import type { AuthenticatedResponse, JwtToken, LoginResponse } from "./types";
+import { redirect } from "@sveltejs/kit";
 
 export class UserStore {
   username = $state("");
   jwt_token = $state("");
-  refresh_token = $state("");
   logged_in = $state(false);
   permissions = $state<string[]>([]);
   group_permissions = $state<string[]>([]);
@@ -13,51 +16,85 @@ export class UserStore {
 
   constructor() {
     if (browser) {
-      const storedToken = this.getTokenFromCookie();
-      const storedRefreshToken = this.getRefreshTokenFromCookie();
-      if (storedToken) {
-        this.jwt_token = storedToken;
-        this.logged_in = true;
-      }
-      if (storedRefreshToken) {
-        this.refresh_token = storedRefreshToken;
-      }
+      // checks if a refresh token exists in the cookie
+      // If it does, will refresh the token and populate user
+      this.validateAndRefreshToken();
     }
   }
 
-  public async validateAndRefreshTokens(): Promise<boolean> {
-    const token = this.getTokenFromCookie();
-    if (!token) return false;
+  // Attempts to validate the current jwt token
+  // If the token is valid, updates the user information
+  public async validateAuth(test: boolean = false): Promise<boolean> {
+    try {
+      const response = await opsmlClient.get(
+        RoutePaths.VALIDATE_AUTH,
+        undefined,
+        this.jwt_token
+      );
 
-    if (this.isTokenExpired(token)) {
-      const refreshToken = this.getRefreshTokenFromCookie();
-      if (!refreshToken) {
+      if (!response.ok) {
+        console.error("Failed to validate auth. Redirecting to login.");
+        return false;
+      }
+
+      const authenticated = (await response.json()) as AuthenticatedResponse;
+      if (!authenticated.is_authenticated) {
         this.resetUser();
         return false;
       }
 
-      try {
-        // Call your refresh token API endpoint
-        const response = await fetch("/opsml/api/auth/refresh", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ refresh_token: refreshToken }),
-        });
+      // Update user information if authenticated
+      this.updateUser(
+        authenticated.user_response.username,
+        this.jwt_token,
+        authenticated.user_response.permissions,
+        authenticated.user_response.group_permissions,
+        authenticated.user_response.favorite_spaces
+      );
 
-        if (!response.ok) throw new Error("Refresh failed");
+      return true;
+    } catch (error) {
+      this.resetUser();
+      return false;
+    }
+  }
 
-        const { new_token, new_refresh_token } = await response.json();
-        this.setTokenCookies(new_token, new_refresh_token);
-        return true;
-      } catch {
-        this.resetUser();
-        return false;
-      }
+  // Checks and validates any existing JWT token in the cookie
+  public async validateAndRefreshToken(): Promise<boolean> {
+    // check if refresh token exists
+    const cookieToken = this.getTokenFromCookie();
+    if (!cookieToken) {
+      this.resetUser();
+      return false;
     }
 
-    return true;
+    // if exists, check if it is expired
+    if (this.isTokenExpired(cookieToken)) {
+      // If the JWT token is expired, reset the user state, attempt to refresh the token
+      this.resetUser();
+    }
+
+    try {
+      const response = await opsmlClient.get(
+        RoutePaths.REFRESH_TOKEN,
+        undefined,
+        cookieToken
+      );
+
+      if (!response.ok) throw new Error("Refresh failed");
+
+      const jwtToken = (await response.json()) as JwtToken;
+      this.setTokenCookie(jwtToken.token);
+      this.jwt_token = jwtToken.token;
+
+      // Use new jwt to get user information
+      this.validateAuth();
+
+      return true;
+    } catch {
+      this.resetUser();
+      return false;
+    }
   }
 
   public getTokenFromCookie(): string | null {
@@ -75,26 +112,10 @@ export class UserStore {
     return null;
   }
 
-  public getRefreshTokenFromCookie(): string | null {
-    if (!browser) return null;
-    const cookies = document.cookie.split(";");
-    const tokenCookie = cookies.find((cookie) =>
-      cookie.trim().startsWith("refresh_token=")
-    );
-    if (tokenCookie) {
-      return tokenCookie.split("=")[1].trim();
-    }
-    return null;
-  }
-
   private removeTokenCookies() {
     // Remove JWT token
     document.cookie =
       "jwt_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Strict; Secure";
-
-    // Remove refresh token
-    document.cookie =
-      "refresh_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Strict; Secure";
   }
 
   public resetUser() {
@@ -112,20 +133,10 @@ export class UserStore {
     }
   }
 
-  private setTokenCookies(token: string, refreshToken: string) {
+  private setTokenCookie(token: string) {
     const expirationDate = new Date();
     expirationDate.setTime(expirationDate.getTime() + 1 * 60 * 60 * 1000); // 1 hour
     document.cookie = `jwt_token=${token}; expires=${expirationDate.toUTCString()}; domain=${
-      window.location.hostname
-    }; path=/; SameSite=Strict; Secure`;
-
-    // Refresh token with longer expiration
-    const refreshExpiration = new Date();
-    refreshExpiration.setTime(
-      refreshExpiration.getTime() + 24 * 60 * 60 * 1000
-    ); // 24 hours
-
-    document.cookie = `refresh_token=${refreshToken}; expires=${refreshExpiration.toUTCString()}; domain=${
       window.location.hostname
     }; path=/; SameSite=Strict; Secure`;
   }
@@ -133,21 +144,19 @@ export class UserStore {
   public updateUser(
     username: string,
     jwt_token: string,
-    refresh_token: string,
     permissions: string[],
     group_permissions: string[],
     favorite_spaces: string[] = []
   ) {
     this.username = username;
     this.jwt_token = jwt_token;
-    this.refresh_token = refresh_token;
     this.logged_in = true;
     this.permissions = permissions;
     this.group_permissions = group_permissions;
     this.favorite_spaces = favorite_spaces;
 
     if (browser) {
-      this.setTokenCookies(jwt_token, refresh_token);
+      this.setTokenCookie(jwt_token);
     }
   }
 
@@ -191,6 +200,51 @@ export class UserStore {
       return parts;
     });
   }
+
+  public async login(username: string, password: string): Promise<boolean> {
+    const response = await opsmlClient.post(RoutePaths.LOGIN, {
+      username,
+      password,
+    });
+
+    if (!response.ok) {
+      console.error("Login failed");
+      return false;
+    }
+
+    const data = (await response.json()) as LoginResponse;
+
+    if (data.authenticated) {
+      this.updateUser(
+        data.username,
+        data.jwt_token,
+        data.permissions,
+        data.group_permissions,
+        data.favorite_spaces
+      );
+      return true;
+    }
+
+    return false;
+  }
 }
 
 export const userStore = new UserStore();
+
+export async function validateUserOrRedirect(): Promise<void> {
+  const redirectPath = UiPaths.LOGIN;
+
+  try {
+    const isAuthenticated = await userStore.validateAuth();
+
+    if (!isAuthenticated) {
+      // Clear any stale user data
+      throw redirect(303, redirectPath);
+    }
+  } catch (error) {
+    if (error instanceof Response) throw error; // Re-throw redirect
+
+    console.error("Authentication error:", error);
+    throw redirect(303, redirectPath);
+  }
+}
