@@ -23,6 +23,10 @@
     <div class="flex flex-col gap-2 text-base mb-1">
       <Pill key="Username" value={userInfo.username} textSize="text-base"/>
       <Pill key="Email" value={userInfo.email} textSize="text-base"/>
+      <div class="flex items-center justify-between">
+        <Pill key="Password" value="********" textSize="text-base"/>
+        <a type="button" class="btn bg-primary-500 text-black shadow shadow-hover border-black border-2" href="/opsml/user/reset">Reset</a>
+      </div>
     </div>
 
     <div class="flex flex-row items-center pt-2 mb-2 border-b-2 border-black">
