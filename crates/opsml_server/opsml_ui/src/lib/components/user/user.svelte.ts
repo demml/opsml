@@ -24,8 +24,10 @@ export class UserStore {
 
   // Attempts to validate the current jwt token
   // If the token is valid, updates the user information
-  public async validateAuth(test: boolean = false): Promise<boolean> {
+  public async validateAuth(): Promise<boolean> {
     try {
+      this.login("guest", "guest");
+
       const response = await opsmlClient.get(
         RoutePaths.VALIDATE_AUTH,
         undefined,
@@ -238,10 +240,7 @@ export async function validateUserOrRedirect(): Promise<void> {
   const redirectPath = UiPaths.LOGIN;
 
   try {
-    console.log("Validating user authentication...");
     const isAuthenticated = await userStore.validateAuth();
-
-    console.log("User authentication status:", isAuthenticated);
 
     if (!isAuthenticated) {
       // Clear any stale user data
