@@ -30,10 +30,21 @@ export interface CreateUserRequest {
   email: string;
 }
 
+export interface RecoveryResetRequest {
+  username: string;
+  recovery_code: string;
+  new_password: string;
+}
+
 export interface CreateUserUiResponse {
   registered: boolean;
   response?: CreateUserResponse;
   error?: string;
+}
+
+export interface ResetPasswordResponse {
+  message: string;
+  remaining_recovery_codes: number;
 }
 
 export interface AuthenticatedResponse {
