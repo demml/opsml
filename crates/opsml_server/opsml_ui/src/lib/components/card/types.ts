@@ -58,3 +58,15 @@ export interface VersionPageRequest {
   name?: string;
   page?: number;
 }
+
+export interface SpaceStats {
+  space: string;
+  nbr_experiments: number;
+  nbr_models: number;
+  nbr_data: number;
+  nbr_prompt: number;
+}
+
+export interface SpacesResponse {
+  spaces: SpaceStats[];
+}

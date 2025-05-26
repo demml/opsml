@@ -5,9 +5,7 @@
   import type { RegistryPageReturn, RegistryStatsResponse, QueryPageResponse} from "$lib/components/card/types";
   import  CardPage  from "$lib/components/card/CardPage.svelte";
   import  { RegistryType, delay } from "$lib/utils";
-  import { Settings } from 'lucide-svelte';
-  import { Search } from 'lucide-svelte';
-  import { ArrowLeft, ArrowRight } from 'lucide-svelte';
+  import { ArrowLeft, ArrowRight, Search, Settings } from 'lucide-svelte';
 
   
   let { selectedSpace, page, selectedName, title } = $props<{
