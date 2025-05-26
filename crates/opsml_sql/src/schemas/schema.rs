@@ -1114,6 +1114,7 @@ pub struct User {
 }
 
 impl User {
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         username: String,
         password_hash: String,
@@ -1135,7 +1136,7 @@ impl User {
             hashed_recovery_codes,
             permissions: permissions.unwrap_or(vec!["read:all".to_string()]),
             group_permissions: group_permissions.unwrap_or(vec!["user".to_string()]),
-            favorite_spaces: favorite_spaces.unwrap_or(vec![]),
+            favorite_spaces: favorite_spaces.unwrap_or_default(),
             role: role.unwrap_or("user".to_string()),
             refresh_token: None,
             email,
