@@ -613,7 +613,7 @@ impl DriftProfileMap {
     ) -> Result<(), ModelInterfaceError> {
         // iterate over the profiles and update the config args
 
-        for (_, profile) in &self.profiles {
+        for profile in &self.profiles.values() {
             let profile = profile.bind(py);
             profile.call_method("update_config_args", (), Some(config_args))?;
         }
@@ -624,7 +624,7 @@ impl DriftProfileMap {
     /// This is a helper method used during card registration and artifact saving
     pub fn values<'py>(&self, py: Python<'py>) -> Result<Bound<'py, PyList>, ModelInterfaceError> {
         let py_list = PyList::empty(py);
-        for (_, profile) in &self.profiles {
+        for profile in self.profiles.values() {
             py_list.append(profile.bind(py))?;
         }
 
