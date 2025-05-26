@@ -12,7 +12,7 @@ use anyhow::Context;
 use anyhow::Result as AnyhowResult;
 use async_trait::async_trait;
 use opsml_settings::config::DatabaseSettings;
-use opsml_types::contracts::{AuditEvent, SpaceStats};
+use opsml_types::contracts::AuditEvent;
 use opsml_types::{
     SqlType,
     {
@@ -181,14 +181,6 @@ impl SqlClient for SqlClientEnum {
             SqlClientEnum::Postgres(client) => client.get_unique_space_names(table).await,
             SqlClientEnum::Sqlite(client) => client.get_unique_space_names(table).await,
             SqlClientEnum::MySql(client) => client.get_unique_space_names(table).await,
-        }
-    }
-
-    async fn get_unique_space_names_all_registries(&self) -> Result<Vec<SpaceStats>, SqlError> {
-        match self {
-            SqlClientEnum::Postgres(client) => client.get_unique_space_names_all_registries().await,
-            SqlClientEnum::Sqlite(client) => client.get_unique_space_names_all_registries().await,
-            SqlClientEnum::MySql(client) => client.get_unique_space_names_all_registries().await,
         }
     }
 

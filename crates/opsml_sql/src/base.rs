@@ -6,7 +6,6 @@ use crate::schemas::schema::{
 use async_trait::async_trait;
 use opsml_semver::VersionParser;
 use opsml_settings::config::DatabaseSettings;
-use opsml_types::contracts::SpaceStats;
 use opsml_types::{
     cards::CardTable,
     contracts::{ArtifactKey, AuditEvent, CardQueryArgs},
@@ -353,7 +352,4 @@ pub trait SqlClient: Sized {
         name: Option<&str>,
         table: &CardTable,
     ) -> Result<Vec<VersionSummary>, SqlError>;
-
-    /// Get all unique spaces
-    async fn get_unique_space_names_all_registries(&self) -> Result<Vec<SpaceStats>, SqlError>;
 }
