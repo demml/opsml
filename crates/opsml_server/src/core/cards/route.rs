@@ -49,7 +49,7 @@ pub async fn check_card_uid(
 pub async fn get_card_spaces(
     State(state): State<Arc<AppState>>,
     Query(params): Query<SpaceRequest>,
-) -> Result<Json<SpaceResponse>, (StatusCode, Json<OpsmlServerError>)> {
+) -> Result<Json<CardSpaceResponse>, (StatusCode, Json<OpsmlServerError>)> {
     let table = CardTable::from_registry_type(&params.registry_type);
 
     let spaces = state
@@ -61,7 +61,22 @@ pub async fn get_card_spaces(
             internal_server_error(e, "Failed to get unique space names")
         })?;
 
-    Ok(Json(SpaceResponse { spaces }))
+    Ok(Json(CardSpaceResponse { spaces }))
+}
+
+pub async fn get_all_registry_spaces(
+    State(state): State<Arc<AppState>>,
+) -> Result<Json<SpacesResponse>, (StatusCode, Json<OpsmlServerError>)> {
+    let spaces = state
+        .sql_client
+        .get_unique_space_names_all_registries()
+        .await
+        .map_err(|e| {
+            error!("Failed to get all space names: {}", e);
+            internal_server_error(e, "Failed to get all space names")
+        })?;
+
+    Ok(Json(SpacesResponse { spaces }))
 }
 
 /// query stats page
@@ -588,6 +603,8 @@ pub async fn create_readme(
 pub async fn get_card_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
     let result = catch_unwind(AssertUnwindSafe(|| {
         Router::new()
+            // placing spaces here for now as there's not enough routes to justify a separate router
+            .route(&format!("{}/spaces", prefix), get(get_all_registry_spaces))
             .route(&format!("{}/card", prefix), get(check_card_uid))
             .route(&format!("{}/card/metadata", prefix), get(get_card))
             .route(&format!("{}/card/readme", prefix), get(get_readme))

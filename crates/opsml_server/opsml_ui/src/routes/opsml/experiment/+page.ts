@@ -6,11 +6,12 @@ import { RegistryType } from "$lib/utils";
 import type { PageLoad } from "./$types";
 
 export const load: PageLoad = async ({ url }) => {
+  await validateUserOrRedirect();
+
   // get space for url if exists
   const space: string | undefined = url.searchParams.get("space") || undefined;
   const name = url.searchParams.get("name") || undefined;
 
-  await validateUserOrRedirect();
   let registryPage = await setupRegistryPage(
     RegistryType.Experiment,
     space,

@@ -16,9 +16,65 @@ export class UserStore {
 
   constructor() {
     if (browser) {
-      // checks if a refresh token exists in the cookie
-      // If it does, will refresh the token and populate user
-      this.validateAndRefreshToken();
+    }
+  }
+
+  public async validateSession(): Promise<boolean> {
+    try {
+      // Step 1: Check if user is already logged in with valid token
+      if (this.logged_in && this.jwt_token) {
+        const isValid = await this.validateAuth();
+        if (isValid) {
+          return true;
+        }
+      }
+
+      // Step 2: Attempt to restore session from cookie
+      const cookieToken = this.getTokenFromCookie();
+      if (!cookieToken) {
+        console.warn("No JWT token found in cookies");
+        this.resetUser();
+        return false;
+      }
+
+      // Check if cookie token is expired
+      if (this.isTokenExpired(cookieToken)) {
+        console.warn("Cookie token is expired, attempting refresh");
+        const refreshed = await this.refreshToken(cookieToken);
+        if (!refreshed) {
+          this.resetUser();
+          return false;
+        }
+      } else {
+        // Valid cookie token found, set it
+        this.jwt_token = cookieToken;
+      }
+
+      // Step 3: Validate authentication with current token
+      return await this.validateAuth();
+    } catch (error) {
+      console.error("Session validation failed:", error);
+      this.resetUser();
+      return false;
+    }
+  }
+
+  private async refreshToken(token: string): Promise<boolean> {
+    try {
+      const response = await opsmlClient.get(
+        RoutePaths.REFRESH_TOKEN,
+        undefined,
+        token
+      );
+
+      if (!response.ok) return false;
+
+      const jwtToken = (await response.json()) as JwtToken;
+      this.jwt_token = jwtToken.token;
+      this.setTokenCookie(jwtToken.token);
+      return true;
+    } catch {
+      return false;
     }
   }
 
@@ -26,8 +82,6 @@ export class UserStore {
   // If the token is valid, updates the user information
   public async validateAuth(): Promise<boolean> {
     try {
-      this.login("guest", "guest");
-
       const response = await opsmlClient.get(
         RoutePaths.VALIDATE_AUTH,
         undefined,
@@ -45,6 +99,8 @@ export class UserStore {
         return false;
       }
 
+      console.log("User is authenticated:", JSON.stringify(authenticated));
+
       // Update user information if authenticated
       this.updateUser(
         authenticated.user_response.username,
@@ -61,44 +117,6 @@ export class UserStore {
     }
   }
 
-  // Checks and validates any existing JWT token in the cookie
-  public async validateAndRefreshToken(): Promise<boolean> {
-    // check if refresh token exists
-    const cookieToken = this.getTokenFromCookie();
-    if (!cookieToken) {
-      this.resetUser();
-      return false;
-    }
-
-    // if exists, check if it is expired
-    if (this.isTokenExpired(cookieToken)) {
-      // If the JWT token is expired, reset the user state, attempt to refresh the token
-      this.resetUser();
-    }
-
-    try {
-      const response = await opsmlClient.get(
-        RoutePaths.REFRESH_TOKEN,
-        undefined,
-        cookieToken
-      );
-
-      if (!response.ok) throw new Error("Refresh failed");
-
-      const jwtToken = (await response.json()) as JwtToken;
-      this.setTokenCookie(jwtToken.token);
-      this.jwt_token = jwtToken.token;
-
-      // Use new jwt to get user information
-      this.validateAuth();
-
-      return true;
-    } catch {
-      this.resetUser();
-      return false;
-    }
-  }
-
   public getTokenFromCookie(): string | null {
     if (!browser) return null;
 
@@ -106,6 +124,8 @@ export class UserStore {
     const tokenCookie = cookies.find((cookie) =>
       cookie.trim().startsWith("jwt_token=")
     );
+
+    console.log("Token cookie found:", tokenCookie);
 
     if (tokenCookie) {
       return tokenCookie.split("=")[1].trim();
@@ -136,6 +156,7 @@ export class UserStore {
   }
 
   private setTokenCookie(token: string) {
+    console.log("Setting JWT token cookie");
     const expirationDate = new Date();
     expirationDate.setTime(expirationDate.getTime() + 1 * 60 * 60 * 1000); // 1 hour
     document.cookie = `jwt_token=${token}; expires=${expirationDate.toUTCString()}; domain=${
@@ -240,15 +261,13 @@ export async function validateUserOrRedirect(): Promise<void> {
   const redirectPath = UiPaths.LOGIN;
 
   try {
-    const isAuthenticated = await userStore.validateAuth();
+    const isValid = await userStore.validateSession();
 
-    if (!isAuthenticated) {
-      // Clear any stale user data
+    if (!isValid) {
       throw redirect(303, redirectPath);
     }
   } catch (error) {
     if (error instanceof Response) throw error; // Re-throw redirect
-
     console.error("Authentication error:", error);
     throw redirect(303, redirectPath);
   }

@@ -104,8 +104,22 @@ impl AuditableRequest for SpaceRequest {
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct SpaceResponse {
+pub struct CardSpaceResponse {
     pub spaces: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SpaceStats {
+    pub space: String,
+    pub nbr_experiments: i32,
+    pub nbr_models: i32,
+    pub nbr_data: i32,
+    pub nbr_prompts: i32,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct SpacesResponse {
+    pub spaces: Vec<SpaceStats>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
