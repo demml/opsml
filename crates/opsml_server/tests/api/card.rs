@@ -109,7 +109,7 @@ async fn test_opsml_server_card_spaces() {
     assert_eq!(response.status(), StatusCode::OK);
 
     let body = response.into_body().collect().await.unwrap().to_bytes();
-    let space_response: SpaceResponse = serde_json::from_slice(&body).unwrap();
+    let space_response: CardSpaceResponse = serde_json::from_slice(&body).unwrap();
 
     // assert 10
     assert_eq!(space_response.spaces.len(), 10);

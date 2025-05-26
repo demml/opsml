@@ -17,7 +17,7 @@ use opsml_sql::base::SqlClient;
 use opsml_types::JwtToken;
 use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::sync::Arc;
-use tracing::{debug, error, info, instrument};
+use tracing::{error, info, instrument};
 
 /// Route for the login endpoint when using the API
 ///
@@ -309,7 +309,7 @@ async fn validate_jwt_token(
         });
 
     if let Some(bearer_token) = bearer_token {
-        debug!("Validating JWT token");
+        info!("Validating JWT token");
         match state.auth_manager.validate_jwt(&bearer_token) {
             Ok(_) => {
                 // get claims and user
@@ -346,7 +346,7 @@ async fn validate_jwt_token(
             Err(_) => OpsmlServerError::invalid_token().into_response(StatusCode::UNAUTHORIZED),
         }
     } else {
-        debug!("No bearer token found");
+        info!("No bearer token found");
         Ok(Json(Authenticated {
             is_authenticated: false,
             ..Default::default()

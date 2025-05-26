@@ -2,16 +2,17 @@ use crate::base::SqlClient;
 
 use crate::error::SqlError;
 use crate::schemas::schema::{
-    AuditCardRecord, CardResults, CardSummary, DataCardRecord, ExperimentCardRecord,
-    HardwareMetricsRecord, MetricRecord, ModelCardRecord, ParameterRecord, PromptCardRecord,
-    QueryStats, ServerCard, User, VersionResult, VersionSummary,
+    AuditCardRecord, CardDeckRecord, CardResults, CardSummary, DataCardRecord,
+    ExperimentCardRecord, HardwareMetricsRecord, MetricRecord, ModelCardRecord, ParameterRecord,
+    PromptCardRecord, QueryStats, ServerCard, UniqueSpaceStats, User, VersionResult,
+    VersionSummary,
 };
-use crate::schemas::CardDeckRecord;
+
 use crate::sqlite::helper::SqliteQueryHelper;
 use async_trait::async_trait;
 use opsml_semver::VersionValidator;
 use opsml_settings::config::DatabaseSettings;
-use opsml_types::contracts::{ArtifactKey, AuditEvent};
+use opsml_types::contracts::{ArtifactKey, AuditEvent, SpaceStats};
 use opsml_types::{cards::CardTable, contracts::CardQueryArgs, RegistryType};
 use semver::Version;
 use sqlx::{
@@ -653,6 +654,22 @@ impl SqlClient for SqliteClient {
         let repos: Vec<String> = sqlx::query_scalar(&query).fetch_all(&self.pool).await?;
 
         Ok(repos)
+    }
+
+    async fn get_unique_space_names_all_registries(&self) -> Result<Vec<SpaceStats>, SqlError> {
+        let query = SqliteQueryHelper::get_unique_spaces_query();
+        let spaces: Vec<UniqueSpaceStats> = sqlx::query_as(&query).fetch_all(&self.pool).await?;
+
+        Ok(spaces
+            .into_iter()
+            .map(|s| SpaceStats {
+                space: s.0,
+                nbr_experiments: s.1,
+                nbr_models: s.2,
+                nbr_data: s.3,
+                nbr_prompts: s.4,
+            })
+            .collect())
     }
 
     /// Query stats for a table

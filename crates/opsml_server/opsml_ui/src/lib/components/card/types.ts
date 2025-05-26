@@ -5,7 +5,7 @@ export interface RegistryStatsRequest {
   search_term?: string;
   space?: string;
 }
-export interface spaceResponse {
+export interface CardSpaceResponse {
   spaces: string[];
 }
 

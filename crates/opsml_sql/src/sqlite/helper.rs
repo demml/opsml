@@ -46,6 +46,52 @@ impl SqliteQueryHelper {
         .to_string()
     }
 
+    pub fn get_unique_spaces_query() -> String {
+        r#"
+    SELECT 
+        space,
+        SUM(nbr_exp) as nbr_experiments,
+        SUM(nbr_models) as nbr_models,
+        SUM(nbr_data) as nbr_data,
+        SUM(nbr_prompts) as nbr_prompts
+    FROM (
+            SELECT 
+                space,
+                COUNT(DISTINCT name) as nbr_exp,
+                0 as nbr_models,
+                0 as nbr_data,
+                0 as nbr_prompts
+            FROM opsml_experiment_registry
+        UNION
+            SELECT
+                space,
+                0 as nbr_exp,
+                COUNT(DISTINCT name) as nbr_models,
+                0 as nbr_data,
+                0 as nbr_prompts 
+        UNION
+            SELECT 
+                space,
+                0 as nbr_exp,
+                0 as nbr_models,
+                COUNT(DISTINCT name) as nbr_data,
+                0 as nbr_prompts
+            FROM opsml_data_registry
+        UNION
+            SELECT
+                space,
+                0 as nbr_exp,
+                0 as nbr_models,
+                0 as nbr_data,
+                COUNT(DISTINCT name) as nbr_prompts
+            FROM opsml_prompt_registry
+    ) AS combined_spaces
+    GROUP BY space
+    ORDER BY space;
+    "#
+        .to_string()
+    }
+
     pub fn get_user_update_query() -> String {
         format!(
             "UPDATE {} SET 

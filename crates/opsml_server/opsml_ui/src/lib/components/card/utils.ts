@@ -3,7 +3,7 @@ import { RoutePaths } from "$lib/components/api/routes";
 import { RegistryType } from "$lib/utils";
 import type {
   QueryPageResponse,
-  spaceResponse,
+  CardSpaceResponse,
   RegistryStatsResponse,
   RegistryPageReturn,
   RegistryStatsRequest,
@@ -16,10 +16,10 @@ import { userStore } from "../user/user.svelte";
 
 export async function getSpaces(
   registry_type: RegistryType
-): Promise<spaceResponse> {
+): Promise<CardSpaceResponse> {
   let params = { registry_type: registry_type };
   const response = await opsmlClient.get(
-    RoutePaths.LIST_SPACES,
+    RoutePaths.LIST_CARD_SPACES,
     params,
     userStore.jwt_token
   );
@@ -194,6 +194,15 @@ export async function getVersionPage(
   const response = await opsmlClient.get(
     RoutePaths.GET_VERSION_PAGE,
     params,
+    userStore.jwt_token
+  );
+  return await response.json();
+}
+
+export async function getAllSpaces(): Promise<CardSpaceResponse> {
+  const response = await opsmlClient.get(
+    RoutePaths.SPACES,
+    undefined,
     userStore.jwt_token
   );
   return await response.json();

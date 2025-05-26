@@ -4,15 +4,16 @@ use crate::mysql::helper::MySQLQueryHelper;
 use crate::schemas::schema::{
     AuditCardRecord, CardDeckRecord, CardSummary, DataCardRecord, ExperimentCardRecord,
     HardwareMetricsRecord, MetricRecord, ModelCardRecord, ParameterRecord, PromptCardRecord,
-    QueryStats, ServerCard, User, VersionSummary,
+    QueryStats, ServerCard, UniqueSpaceStats, User, VersionSummary,
 };
 use crate::schemas::schema::{CardResults, VersionResult};
+
 use async_trait::async_trait;
 use opsml_semver::VersionValidator;
 use opsml_settings::config::DatabaseSettings;
 use opsml_types::{
     cards::CardTable,
-    contracts::{ArtifactKey, AuditEvent, CardQueryArgs},
+    contracts::{ArtifactKey, AuditEvent, CardQueryArgs, SpaceStats},
     RegistryType,
 };
 use semver::Version;
@@ -653,6 +654,22 @@ impl SqlClient for MySqlClient {
         let repos: Vec<String> = sqlx::query_scalar(&query).fetch_all(&self.pool).await?;
 
         Ok(repos)
+    }
+
+    async fn get_unique_space_names_all_registries(&self) -> Result<Vec<SpaceStats>, SqlError> {
+        let query = MySQLQueryHelper::get_unique_spaces_query();
+        let spaces: Vec<UniqueSpaceStats> = sqlx::query_as(&query).fetch_all(&self.pool).await?;
+
+        Ok(spaces
+            .into_iter()
+            .map(|s| SpaceStats {
+                space: s.0,
+                nbr_experiments: s.1,
+                nbr_models: s.2,
+                nbr_data: s.3,
+                nbr_prompts: s.4,
+            })
+            .collect())
     }
 
     async fn query_stats(
