@@ -613,7 +613,7 @@ impl DriftProfileMap {
     ) -> Result<(), ModelInterfaceError> {
         // iterate over the profiles and update the config args
 
-        for profile in &self.profiles.values() {
+        for profile in self.profiles.values() {
             let profile = profile.bind(py);
             profile.call_method("update_config_args", (), Some(config_args))?;
         }
