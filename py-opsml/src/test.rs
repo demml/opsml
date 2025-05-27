@@ -306,6 +306,8 @@ impl OpsmlTestServer {
                 stop_server(handle).await;
             });
 
+            std::thread::sleep(std::time::Duration::from_millis(100));
+
             if self.cleanup {
                 println!("Cleaning up Opsml Server...");
                 self.stop_mock_scouter();
@@ -333,18 +335,36 @@ impl OpsmlTestServer {
         let db_file = current_dir.join("opsml.db");
         let storage_dir = current_dir.join("opsml_registries");
 
-        // unset env vars
+        // Remove env vars first
         self.remove_env_vars_for_client()?;
 
-        if db_file.exists() {
-            std::fs::remove_file(db_file).unwrap();
+        // Add retry logic for file deletion
+        let max_retries = 3;
+        let mut attempts = 0;
+
+        while attempts < max_retries {
+            let db_result = if db_file.exists() {
+                std::fs::remove_file(&db_file)
+            } else {
+                Ok(())
+            };
+
+            let storage_result = if storage_dir.exists() {
+                std::fs::remove_dir_all(&storage_dir)
+            } else {
+                Ok(())
+            };
+
+            if db_result.is_ok() && storage_result.is_ok() {
+                return Ok(());
+            }
+
+            attempts += 1;
+            std::thread::sleep(std::time::Duration::from_millis(100));
         }
 
-        if storage_dir.exists() {
-            std::fs::remove_dir_all(storage_dir).unwrap();
-        }
-
-        Ok(())
+        // If we get here, we failed to clean up
+        Err(TestServerError::CustomError("Failed to cleanup test resources".to_string()).into())
     }
 
     fn __enter__(mut self_: PyRefMut<Self>) -> PyResult<PyRefMut<Self>> {

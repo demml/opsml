@@ -188,14 +188,22 @@ def test_update_profile_status_key():
     This test is meant to test updating the status of a drift profile via the CLI.
     """
 
-    # need to start the server to create a mock scouter server
-    with OpsmlTestServer():
-        args = ScouterArgs(
-            space="test",
-            name="test",
-            version="1.0.0",
-            active=True,
-            drift_type=DriftType.Psi,
-            deactivate_others=False,
-        )
-        update_drift_profile_status(args)
+    test_dir = Path(os.getcwd()) / f"test_profile_status_{os.getpid()}"
+    test_dir.mkdir(exist_ok=True)
+
+    try:
+        # need to start the server to create a mock scouter server
+        with OpsmlTestServer(cleanup=True, base_path=test_dir):
+            args = ScouterArgs(
+                space="test",
+                name="test",
+                version="1.0.0",
+                active=True,
+                drift_type=DriftType.Psi,
+                deactivate_others=False,
+            )
+            update_drift_profile_status(args)
+    finally:
+        # Clean up test directory
+        if test_dir.exists():
+            shutil.rmtree(test_dir, ignore_errors=True)
