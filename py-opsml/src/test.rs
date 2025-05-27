@@ -364,7 +364,12 @@ impl OpsmlTestServer {
         }
 
         // If we get here, we failed to clean up
-        Err(TestServerError::CustomError("Failed to cleanup test resources".to_string()).into())
+        error!(
+            "Failed to clean up test environment after {} attempts",
+            max_retries
+        );
+
+        Ok(())
     }
 
     fn __enter__(mut self_: PyRefMut<Self>) -> PyResult<PyRefMut<Self>> {
