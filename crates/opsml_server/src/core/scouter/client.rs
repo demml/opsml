@@ -71,7 +71,7 @@ impl ScouterApiClient {
             bootstrap_token: settings.bootstrap_token.clone(),
         };
 
-        // scouter not integrate - exist early
+        // scouter not integrated - exist early
         if client.base_path.is_empty() {
             return Ok(client);
         }

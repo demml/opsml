@@ -176,6 +176,8 @@ pub struct OpsmlTestServer {
     cleanup: bool,
 
     base_path: Option<PathBuf>,
+
+    root_dir: PathBuf,
 }
 
 #[pymethods]
@@ -183,6 +185,8 @@ impl OpsmlTestServer {
     #[new]
     #[pyo3(signature = (cleanup = true, base_path = None))]
     fn new(cleanup: bool, base_path: Option<PathBuf>) -> Self {
+        let rand = opsml_utils::create_uuid7();
+        let root_dir = std::env::current_dir().unwrap().join(rand);
         OpsmlTestServer {
             #[cfg(feature = "server")]
             handle: Arc::new(Mutex::new(None)),
@@ -192,6 +196,7 @@ impl OpsmlTestServer {
             scouter_server: None,
             cleanup,
             base_path,
+            root_dir,
         }
     }
 
@@ -257,7 +262,12 @@ impl OpsmlTestServer {
 
             std::env::set_var("OPSML_SERVER_PORT", port.to_string());
 
+            let sql_path = format!("sqlite://{}/opsml.db", self.root_dir.display());
+            let registry_path = self.root_dir.join("opsml_registries").display().to_string();
+
             runtime.spawn(async move {
+                std::env::set_var("OPSML_TRACKING_URI", sql_path);
+                std::env::set_var("OPSML_STORAGE_URI", registry_path);
                 let server_handle = start_server_in_background();
                 *handle.lock().await = server_handle.lock().await.take();
             });
@@ -329,24 +339,13 @@ impl OpsmlTestServer {
     }
 
     fn cleanup(&self) -> PyResult<()> {
-        let current_dir = std::env::current_dir().unwrap();
-        let db_file = current_dir.join("opsml.db");
-        let storage_dir = current_dir.join("opsml_registries");
-
         // unset env vars
         self.remove_env_vars_for_client()?;
 
-        if db_file.exists() {
-            std::fs::remove_file(db_file).map_err(|e| {
-                tracing::error!("Failed to remove db file: {}", e);
-                TestServerError::CustomError(format!("Failed to remove db file: {}", e))
-            })?;
-        }
-
-        if storage_dir.exists() {
-            std::fs::remove_dir_all(storage_dir).map_err(|e| {
-                tracing::error!("Failed to remove storage dir: {}", e);
-                TestServerError::CustomError(format!("Failed to remove storage dir: {}", e))
+        if self.root_dir.exists() {
+            std::fs::remove_dir_all(&self.root_dir).map_err(|e| {
+                tracing::error!("Failed to remove root directory: {}", e);
+                TestServerError::CustomError(format!("Failed to remove root directory: {}", e))
             })?;
         }
 
