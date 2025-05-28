@@ -27,7 +27,7 @@ setup.project:
 
 setup.project.numpy1:
 	uv sync --all-extras --group dev --group numpy1
-	uv run maturin develop --features server
+	uv run maturin develop --features server,test
 
 
 test.unit.numpy1: setup.project.numpy1

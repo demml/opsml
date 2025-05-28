@@ -10,8 +10,7 @@ use std::net::TcpListener as StdTcpListener;
 use std::sync::Arc;
 #[cfg(feature = "server")]
 use std::thread::sleep;
-#[cfg(feature = "server")]
-use std::time::Duration;
+
 #[cfg(feature = "server")]
 use tokio::{runtime::Runtime, sync::Mutex, task::JoinHandle};
 
@@ -26,6 +25,7 @@ use pyo3::exceptions::PyRuntimeError;
 use pyo3::prelude::*;
 use pyo3::PyErr;
 use pyo3::PyResult;
+use std::time::Duration;
 
 use std::path::PathBuf;
 use thiserror::Error;
@@ -176,6 +176,8 @@ pub struct OpsmlTestServer {
     cleanup: bool,
 
     base_path: Option<PathBuf>,
+
+    root_dir: PathBuf,
 }
 
 #[pymethods]
@@ -183,6 +185,8 @@ impl OpsmlTestServer {
     #[new]
     #[pyo3(signature = (cleanup = true, base_path = None))]
     fn new(cleanup: bool, base_path: Option<PathBuf>) -> Self {
+        let rand = opsml_utils::create_uuid7();
+        let root_dir = std::env::current_dir().unwrap().join(rand);
         OpsmlTestServer {
             #[cfg(feature = "server")]
             handle: Arc::new(Mutex::new(None)),
@@ -192,6 +196,7 @@ impl OpsmlTestServer {
             scouter_server: None,
             cleanup,
             base_path,
+            root_dir,
         }
     }
 
@@ -257,7 +262,12 @@ impl OpsmlTestServer {
 
             std::env::set_var("OPSML_SERVER_PORT", port.to_string());
 
+            let sql_path = format!("sqlite://{}/opsml.db", self.root_dir.display());
+            let registry_path = self.root_dir.join("opsml_registries").display().to_string();
+
             runtime.spawn(async move {
+                std::env::set_var("OPSML_TRACKING_URI", sql_path);
+                std::env::set_var("OPSML_STORAGE_URI", registry_path);
                 let server_handle = start_server_in_background();
                 *handle.lock().await = server_handle.lock().await.take();
             });
@@ -306,6 +316,8 @@ impl OpsmlTestServer {
                 stop_server(handle).await;
             });
 
+            std::thread::sleep(Duration::from_millis(500));
+
             if self.cleanup {
                 println!("Cleaning up Opsml Server...");
                 self.stop_mock_scouter();
@@ -329,19 +341,35 @@ impl OpsmlTestServer {
     }
 
     fn cleanup(&self) -> PyResult<()> {
-        let current_dir = std::env::current_dir().unwrap();
-        let db_file = current_dir.join("opsml.db");
-        let storage_dir = current_dir.join("opsml_registries");
-
         // unset env vars
         self.remove_env_vars_for_client()?;
 
-        if db_file.exists() {
-            std::fs::remove_file(db_file).unwrap();
-        }
+        if self.root_dir.exists() {
+            let max_attempts = 5;
+            let mut attempt = 0;
 
-        if storage_dir.exists() {
-            std::fs::remove_dir_all(storage_dir).unwrap();
+            while attempt < max_attempts {
+                match std::fs::remove_dir_all(&self.root_dir) {
+                    Ok(_) => return Ok(()),
+                    Err(e) => {
+                        if attempt == max_attempts - 1 {
+                            tracing::error!(
+                                "Failed to remove root directory after {} attempts: {}",
+                                max_attempts,
+                                e
+                            );
+                            return Err(TestServerError::CustomError(format!(
+                                "Failed to remove root directory: {}",
+                                e
+                            ))
+                            .into());
+                        }
+                        // Wait before retrying
+                        std::thread::sleep(Duration::from_millis(100 * (attempt + 1) as u64));
+                        attempt += 1;
+                    }
+                }
+            }
         }
 
         Ok(())
