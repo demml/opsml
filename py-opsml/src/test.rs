@@ -278,11 +278,11 @@ impl OpsmlTestServer {
 
             while attempts < max_attempts {
                 println!(
-                    "Checking if Opsml Server is running at http://localhost:{}/opsml/healthcheck",
+                    "Checking if Opsml Server is running at http://localhost:{}/opsml/api/healthcheck",
                     port
                 );
                 let res = client
-                    .get(&format!("http://localhost:{}/opsml/healthcheck", port))
+                    .get(&format!("http://localhost:{}/opsml/api/healthcheck", port))
                     .send();
                 if let Ok(response) = res {
                     if response.status() == 200 {
