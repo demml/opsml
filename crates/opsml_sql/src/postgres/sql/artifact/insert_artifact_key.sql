@@ -1,0 +1,1 @@
+INSERT INTO opsml_artifact_key (uid, space, registry_type, encrypted_key, storage_key) VALUES ($1, $2, $3, $4, $5);

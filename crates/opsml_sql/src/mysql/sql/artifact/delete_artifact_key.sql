@@ -1,0 +1,1 @@
+DELETE FROM opsml_artifact_key WHERE uid = ? AND registry_type = ?;
