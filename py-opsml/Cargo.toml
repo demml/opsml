@@ -30,12 +30,12 @@ rusty-logging = { workspace = true }
 scouter-client = { workspace = true }
 serde_json = { workspace = true, optional = true }
 thiserror = { workspace = true }
+tracing = { workspace = true }
 tokio = { workspace = true, optional = true }
 
 [features]
 default = []
-server = ["opsml-registry/server", "opsml-server", "tokio", "reqwest", "opsml-storage"]
-test = ["mockito", "serde_json"]
+server = ["opsml-registry/server", "opsml-server", "tokio", "reqwest", "opsml-storage", "mockito", "serde_json"]
 
 [profile.release]
 lto = "fat"

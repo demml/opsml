@@ -159,7 +159,7 @@ CREATE TABLE IF NOT EXISTS opsml_user (
     favorite_spaces JSONB DEFAULT '[]',
     refresh_token TEXT,
     email TEXT NOT NULL UNIQUE,
-    updated_at TIMESTAMPTZ DEFAULT NOW() ON UPDATE NOW()
+    updated_at TIMESTAMPTZ DEFAULT NOW()
 );
   
 CREATE TABLE IF NOT EXISTS opsml_artifact_key (
@@ -169,7 +169,7 @@ CREATE TABLE IF NOT EXISTS opsml_artifact_key (
     encrypted_key BYTEA,
     storage_key TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW() ON UPDATE NOW()
+    updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS opsml_audit_event (

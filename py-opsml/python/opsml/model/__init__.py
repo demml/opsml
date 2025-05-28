@@ -31,6 +31,7 @@ FeatureSchema = model.FeatureSchema
 OnnxSchema = model.OnnxSchema
 ExtraMetadata = model.ExtraMetadata
 ProcessorType = model.ProcessorType
+DriftProfileMap = model.DriftProfileMap
 
 
 __all__ = [
@@ -62,4 +63,5 @@ __all__ = [
     "OnnxSchema",
     "ExtraMetadata",
     "ProcessorType",
+    "DriftProfileMap",
 ]

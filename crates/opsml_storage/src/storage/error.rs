@@ -25,15 +25,15 @@ pub enum LocalError {
 pub enum StorageError {
     #[cfg(feature = "server")]
     #[error(transparent)]
-    AzureError(#[from] AzureError),
+    AzureError(#[from] Box<AzureError>),
 
     #[cfg(feature = "server")]
     #[error(transparent)]
-    AwsError(#[from] AwsError),
+    AwsError(#[from] Box<AwsError>),
 
     #[cfg(feature = "server")]
     #[error(transparent)]
-    GoogleError(#[from] GoogleError),
+    GoogleError(#[from] Box<GoogleError>),
 
     #[error(transparent)]
     LocalError(#[from] LocalError),
@@ -97,4 +97,24 @@ pub enum StorageError {
 
     #[error(transparent)]
     MultipartError(#[from] MultiPartError),
+}
+
+#[cfg(feature = "server")]
+impl From<GoogleError> for StorageError {
+    fn from(error: GoogleError) -> Self {
+        StorageError::GoogleError(Box::new(error))
+    }
+}
+#[cfg(feature = "server")]
+impl From<AzureError> for StorageError {
+    fn from(error: AzureError) -> Self {
+        StorageError::AzureError(Box::new(error))
+    }
+}
+
+#[cfg(feature = "server")]
+impl From<AwsError> for StorageError {
+    fn from(error: AwsError) -> Self {
+        StorageError::AwsError(Box::new(error))
+    }
 }
