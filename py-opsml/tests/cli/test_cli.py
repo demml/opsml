@@ -10,6 +10,7 @@ from opsml.cli import (
     update_drift_profile_status,
     ScouterArgs,
 )  # type: ignore
+
 import pandas as pd
 import os
 from pathlib import Path
@@ -183,6 +184,7 @@ def test_generate_key():
     generate_key(password=password, rounds=rounds)
 
 
+@pytest.mark.skipif(WINDOWS_EXCLUDE, reason="skipping")
 def test_update_profile_status_key():
     """
     This test is meant to test updating the status of a drift profile via the CLI.
