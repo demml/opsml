@@ -7,11 +7,11 @@
   import VizBody from '$lib/components/card/model/monitoring/VizBody.svelte';
   import Header from '$lib/components/card/model/monitoring/Header.svelte';
   import { getMaxDataPoints, debounce } from '$lib/utils';
-  import { getLatestMetricsExample, getCurrentMetricData } from '$lib/components/card/model/monitoring/util';
+  import { getLatestMetrics, getCurrentMetricData } from '$lib/components/card/model/monitoring/util';
   import { onMount, onDestroy } from 'svelte';
   import { getProfileFeatures, getProfileConfig, type DriftConfigType } from '$lib/components/card/model/monitoring/util';
   import type { Alert } from '$lib/components/card/model/monitoring/alert/types';
-  import { getDriftAlerts } from '$lib/components/card/model/monitoring/alert/utils';
+  import { getDriftAlerts, acknowledgeAlert } from '$lib/components/card/model/monitoring/alert/utils';
   import AlertTable from '$lib/components/card/model/monitoring/alert/AlertTable.svelte';
 
  
@@ -43,7 +43,7 @@
     const newMaxDataPoints = getMaxDataPoints();
       if (newMaxDataPoints !== currentMaxDataPoints) {
         currentMaxDataPoints = newMaxDataPoints;
-        latestMetrics = await getLatestMetricsExample(
+        latestMetrics = await getLatestMetrics(
           profiles,
           currentTimeInterval,
           currentMaxDataPoints  
@@ -96,7 +96,7 @@
 
   async function handleTimeChange(timeInterval: TimeInterval) {
     currentTimeInterval = timeInterval;
-    latestMetrics = await getLatestMetricsExample(
+    latestMetrics = await getLatestMetrics(
           profiles,
           currentTimeInterval,
           currentMaxDataPoints  
@@ -117,9 +117,25 @@
     );
   }
 
-  async function acknowledgeAlert(id: string) {
+  async function updateAlert(id: number, space: string) {
     console.log("Acknowledge alert with id: ", id);
     // Call API to acknowledge alert
+    let updated = await acknowledgeAlert(id, space);
+
+    if (updated) {
+      console.log("Alert acknowledged successfully");
+
+      currentAlerts = await getDriftAlerts(
+          currentConfig.space,
+          currentConfig.name,
+          currentConfig.version,
+          currentTimeInterval,
+          true
+        );
+
+
+      }
+     
   }
 
 
@@ -145,7 +161,7 @@
     </div>
 
     <!-- Row 2: 1 column -->
-    <div class="bg-white p-4 border-2 border-black rounded-lg shadow h-[500px]">
+    <div class="bg-white p-4 border-2 border-black rounded-lg shadow min-h-[500px]">
       
       {#if currentName && latestMetrics}
         {#if currentMetricData}
@@ -170,13 +186,11 @@
     </div>
 
     <!-- Row 3: 1 column  alerts -->
-    <div class="rounded-lg shadow bg-slate-100 h-[500px]">
-      <div class="h-full">
-        <AlertTable
-          alerts={currentAlerts}
-          acknowledgeAlert={acknowledgeAlert}
-        />
-      </div>
+    <div class="rounded-lg shadow border-2 border-black bg-slate-100 min-h-[100px] max-h-[500px]">
+      <AlertTable
+        alerts={currentAlerts}
+        updateAlert={updateAlert}
+      />
     </div>
 
 

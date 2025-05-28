@@ -1,6 +1,8 @@
 from pathlib import Path
 from typing import Optional
 
+from ..scouter.types import DriftType
+
 # shared
 class CommonKwargs:
     IsPipeline: "CommonKwargs"
@@ -170,3 +172,20 @@ class VersionType:
 
     def __init__(self, version_type: str) -> None: ...
     def __eq__(self, other: object) -> bool: ...
+
+class DriftProfileUri:
+    root_dir: Path
+    uri: Path
+    drift_type: DriftType
+
+    def __init__(self, uri: Path, drift_type: DriftType) -> None:
+        """Define a drift profile
+
+        Args:
+            root_dir:
+                The root directory of the drift profile
+            uri:
+                The relative path to the drift profile
+            drift_type:
+                Drift profile type
+        """

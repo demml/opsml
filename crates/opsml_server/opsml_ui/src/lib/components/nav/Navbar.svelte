@@ -26,7 +26,7 @@
 
   let imageLoaded = $state(false);
 
-  const names = ["Models", "Data", "Prompt", "Experiments"];
+  const names = ["Models", "Data", "Prompts", "Experiments"];
 
 
   onMount(() => {

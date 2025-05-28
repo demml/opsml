@@ -15,7 +15,7 @@
   {#await cards}
     <div></div>
     {:then cards}
-    <div class="flex h-full flex-col pt-18">
+    <div class="flex flex-col pt-18">
       <div class="flex items-center justify-center border-2 border-black bg-slate-100 p-2">
         <div class="rounded-full bg-surface-200 border-black border-2 p-1 shadow-small">
           <BrainCircuit color="#8059b6" />
@@ -34,7 +34,7 @@
         </div>
       </div>
     
-      <div class="mx-auto w-container grid grid-cols-1 2xl:grid-cols-2 flex-1">
+      <div class="mx-auto w-container grid grid-cols-1 2xl:grid-cols-2">
         <div class="max-w-full pt-4 pb-10">
           <div class="relative grid grid-cols-1 gap-6 lg:grid-cols-2 md:mx-8 justify-self-center">
             <HomeCard 
@@ -58,14 +58,14 @@
             <HomeCard 
               header="Prompts" 
               cards={cards.promptcards}
-              headerColor="bg-secondary-500" 
+              headerColor="bg-secondary-300" 
               headerTextColor="text-black" 
               iconColor="#5fd68d"
             />
             <HomeCard 
               header="Experiments"
               cards={cards.experimentcards}
-              headerColor="bg-secondary-500" 
+              headerColor="bg-secondary-300" 
               headerTextColor="text-black"
               iconColor="#5fd68d"
             />

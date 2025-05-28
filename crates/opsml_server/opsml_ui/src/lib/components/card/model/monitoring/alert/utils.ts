@@ -1,5 +1,11 @@
 import { RoutePaths } from "$lib/components/api/routes";
-import type { AlertResponse, DriftAlertRequest, Alert } from "./types";
+import type {
+  AlertResponse,
+  DriftAlertRequest,
+  Alert,
+  UpdateAlertResponse,
+  UpdateAlertStatus,
+} from "./types";
 import { opsmlClient } from "$lib/components/api/client.svelte";
 import type { TimeInterval } from "../types";
 import { timeIntervalToDateTime } from "../util";
@@ -20,11 +26,39 @@ export async function getDriftAlerts(
     active: active,
   };
 
-  //const response = await opsmlClient.post(RoutePaths.DRIFT_ALERT, alertRequest);
-  //const alertResponse = (await response.json()) as AlertResponse;
-  //if (alertResponse.status !== "success") {
-  //throw new Error(`Failed to fetch drift alerts: ${alertResponse.status}`);
-  //}
-  //return alertResponse.data;
-  return sampleAlerts;
+  const response = await opsmlClient.get(RoutePaths.DRIFT_ALERT, alertRequest);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch drift alerts: ${response.status}`);
+  }
+  const alertResponse = (await response.json()) as AlertResponse;
+
+  return alertResponse.alerts;
+  //return sampleAlerts;
+}
+
+//// Acknowledge an alert by its ID
+export async function acknowledgeAlert(
+  id: number,
+  space: string
+): Promise<boolean> {
+  console.log("Acknowledge alert with id: ", id);
+
+  const request: UpdateAlertStatus = {
+    id: id,
+    active: false,
+    space: space,
+  };
+
+  const response = await opsmlClient.put(RoutePaths.DRIFT_ALERT, request);
+
+  if (!response.ok) {
+    throw new Error(`Failed to acknowledge alert: ${response.status}`);
+  }
+  const updateResponse = (await response.json()) as UpdateAlertResponse;
+
+  if (!updateResponse.updated) {
+    throw new Error("Failed to acknowledge alert");
+  }
+
+  return updateResponse.updated;
 }

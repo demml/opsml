@@ -218,14 +218,8 @@ impl SklearnModel {
                 parent.load_onnx_model(py, &onnx_path, load_kwargs.onnx_kwargs(py))?;
             }
 
-            if metadata.drift_profile_uri.is_some() {
-                let drift_path = path.join(
-                    &metadata
-                        .drift_profile_uri
-                        .ok_or_else(|| ModelInterfaceError::MissingDriftProfileUriError)?,
-                );
-
-                parent.load_drift_profile(py, &drift_path)?;
+            if let Some(ref drift_map) = metadata.drift_profile_uri_map {
+                parent.load_drift_profile(py, &path, drift_map)?;
             }
 
             if metadata.sample_data_uri.is_some() {

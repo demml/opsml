@@ -9,7 +9,7 @@ default-members = [
 ]
 
 [workspace.package]
-version = "3.0.0-rc.1"
+version = "3.0.0-alpha.1"
 authors = ["Steven Forrester <sjforrester32@gmail.com>"]
 edition = "2021"
 license = "MIT"
@@ -76,14 +76,14 @@ owo-colors = "4.*"
 password-auth = "1.*"
 pbkdf2 = "0.*"
 pyo3 = { version = "0.*", features = ["extension-module", "anyhow", "serde", "chrono"] }
-rand = { version = "0.*"}
+rand = { version = "0.9.1"}
 rayon = "1.*"
 regex = "1.*"
 reqwest = { version = "0.12.*", features = ["json", "stream", "multipart", "rustls-tls", "rustls-tls-native-roots", "blocking" ], default-features = false }
 rust-embed = "8.*"
 reqwest-middleware = "0.*"
 rusty-logging = "0.*"
-scouter-client = { git = "https://github.com/demml/scouter.git", tag = "v0.4.6" }
+scouter-client = { git = "https://github.com/demml/scouter.git", branch = "main" }
 sha2 = "0.*"
 semver = "1.*"
 serde = { version = "1.*", features = ["derive"] }

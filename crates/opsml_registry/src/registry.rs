@@ -4,15 +4,18 @@ use crate::utils::verify_card_rs;
 use crate::utils::{check_if_card, download_card, upload_card_artifacts, verify_card};
 use opsml_cards::traits::OpsmlCard;
 use opsml_colors::Colorize;
+use opsml_interfaces::DriftArgs;
 use opsml_semver::VersionType;
 use opsml_types::*;
 use opsml_types::{cards::CardTable, contracts::*};
 use opsml_utils::{clean_string, unwrap_pystring};
 use pyo3::prelude::*;
+use pyo3::types::PyList;
+use scouter_client::ProfileRequest;
+use scouter_client::ProfileStatusRequest;
 use std::path::PathBuf;
 use tempfile::TempDir;
 use tracing::{debug, error, instrument};
-
 /// Helper struct to hold parameters for card registration
 #[derive(Debug)]
 struct CardRegistrationParams<'py> {
@@ -283,6 +286,7 @@ impl CardRegistry {
 
         // Update card attributes
         if let Err(e) = Self::update_card_and_save(
+            params.registry,
             params.card,
             &create_response,
             params.save_kwargs,
@@ -318,6 +322,7 @@ impl CardRegistry {
     /// * `registry_type` - RegistryType
     ///
     fn update_card_and_save(
+        registry: &OpsmlRegistry,
         card: &Bound<'_, PyAny>,
         response: &CreateCardResponse,
         save_kwargs: Option<&Bound<'_, PyAny>>,
@@ -334,6 +339,13 @@ impl CardRegistry {
         // Save artifacts
         debug!("Uploading card artifacts");
         upload_card_artifacts(tmp_path, &response.key)?;
+
+        // Helper function for handling integrations with other services
+        // For example, Opsml will allow a user to register and store a Scouter drift profile
+        // with a modelcard. However, this drift profile still needs to be registered with Scouter
+        // so we can preform model monitoring and drift detection
+        debug!("Uploading integration artifacts");
+        Self::upload_integration_artifacts(registry, registry_type, card, save_kwargs, response)?;
 
         Ok(())
     }
@@ -407,7 +419,7 @@ impl CardRegistry {
     ) -> Result<PathBuf, RegistryError> {
         let tmp_dir = TempDir::new()?;
 
-        let tmp_path = tmp_dir.into_path();
+        let tmp_path = tmp_dir.keep();
 
         match registry_type {
             RegistryType::Experiment | RegistryType::Prompt | RegistryType::Deck => {
@@ -418,6 +430,7 @@ impl CardRegistry {
             }
 
             _ => {
+                // save model card artifacts
                 card.call_method1("save", (tmp_path.to_path_buf(), save_kwargs))
                     .inspect_err(|e| {
                         error!("Failed to save card: {}", e);
@@ -426,6 +439,84 @@ impl CardRegistry {
         }
 
         Ok(tmp_path)
+    }
+
+    /// General method used to upload artifacts to independent services depending on registry type
+    /// For example, if registering a modelcard with a drift profile, we will need to register and upload
+    /// the drift profile to the scouter service
+    fn upload_integration_artifacts(
+        registry: &OpsmlRegistry,
+        registry_type: &RegistryType,
+        card: &Bound<'_, PyAny>,
+        save_kwargs: Option<&Bound<'_, PyAny>>,
+        response: &CreateCardResponse,
+    ) -> Result<(), RegistryError> {
+        // If our integration types expand to other services and registry types, consider using a match statement
+        if registry_type == &RegistryType::Model {
+            // ensure scouter integration is enabled before uploading artifacts
+            if registry.check_service_health(IntegratedService::Scouter)? {
+                let drift_args = save_kwargs
+                    .and_then(|kwargs| kwargs.getattr("drift").ok())
+                    .and_then(|args| args.extract::<DriftArgs>().ok());
+
+                Self::upload_scouter_artifacts(registry, card, drift_args, response)?;
+            }
+        }
+        Ok(())
+    }
+
+    /// This method will upload the scouter drift profile(s) to the registry
+    /// This is done by:
+    /// (1) Extracting the drift profile from the card (DriftProfileMap)
+    /// (2) Extracting the values as a PyList if drift profiles
+    /// (3) For each profile in list, create a profile request
+    /// (4) Upload the profile to the registry
+    /// (5) If drift_args is Some, update the drift profile status (allows users to immediately activate a drift profile)
+    ///
+    /// # Arguments
+    /// * `registry` - OpsmlRegistry
+    /// * `card` - Card to upload (ModelCard)
+    /// * `drift_args` - DriftArgs
+    /// * `response` - CreateCardResponse
+    ///
+    /// # Returns
+    /// * `Result<(), RegistryError>` - Result
+    fn upload_scouter_artifacts(
+        registry: &OpsmlRegistry,
+        card: &Bound<'_, PyAny>,
+        drift_args: Option<DriftArgs>,
+        response: &CreateCardResponse,
+    ) -> Result<(), RegistryError> {
+        let drift_profiles = card.getattr("drift_profile")?;
+        let binding = drift_profiles.call_method0("values")?;
+        let collected_profiles = binding
+            .downcast::<PyList>()
+            .inspect_err(|e| error!("Failed to downcast drift profiles: {:?}", e))?;
+
+        for profile in collected_profiles.iter() {
+            let profile_request = profile
+                .call_method0("create_profile_request")?
+                .extract::<ProfileRequest>()?;
+
+            registry.insert_scouter_profile(&profile_request)?;
+            debug!("Successfully uploaded scouter profile");
+
+            // if drift_args is Some, then we need to update the drift profile status
+            if let Some(ref drift_args) = drift_args {
+                let profile_status_request = ProfileStatusRequest {
+                    space: response.space.clone(),
+                    name: response.name.clone(),
+                    version: response.version.clone(),
+                    active: drift_args.active,
+                    drift_type: Some(profile_request.drift_type.clone()),
+                    deactivate_others: drift_args.deactivate_others,
+                };
+                registry.update_drift_profile_status(&profile_status_request)?;
+                debug!("Successfully updated scouter profile status");
+            }
+        }
+
+        Ok(())
     }
 
     /// Save card to storage
@@ -447,7 +538,7 @@ impl CardRegistry {
     ) -> Result<PathBuf, RegistryError> {
         let tmp_dir = TempDir::new()?;
 
-        let tmp_path = tmp_dir.into_path();
+        let tmp_path = tmp_dir.keep();
 
         match registry_type {
             RegistryType::Experiment | RegistryType::Deck => {
@@ -630,7 +721,7 @@ impl CardRegistry {
         T: OpsmlCard,
     {
         let tmp_dir = TempDir::new()?;
-        let tmp_path = tmp_dir.into_path();
+        let tmp_path = tmp_dir.keep();
         card.save(tmp_path.clone())?;
         Ok(tmp_path)
     }

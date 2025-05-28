@@ -4,8 +4,10 @@ pub mod ui;
 
 pub mod list;
 pub mod lock;
+pub mod update_profile;
 pub mod utils;
 
 pub use download::download_card;
 pub use generate::generate_key;
 pub use list::list_cards;
+pub use update_profile::update_drift_profile_status;

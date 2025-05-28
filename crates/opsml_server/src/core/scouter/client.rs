@@ -1,4 +1,5 @@
 use crate::core::error::ServerError;
+use crate::core::user::schema::CreateUserRequest;
 use anyhow::Result;
 use opsml_client::error::ApiClientError;
 use opsml_settings::config::ScouterSettings;
@@ -8,6 +9,9 @@ use opsml_types::api::RequestType;
 use reqwest::Response;
 use reqwest::{header::HeaderMap, Client};
 use serde_json::Value;
+use tracing::error;
+
+const X_BOOTSTRAP_TOKEN: &str = "x-bootstrap-token";
 
 #[derive(Debug, Clone)]
 #[allow(dead_code)]
@@ -19,6 +23,7 @@ pub enum Routes {
     ProfileStatus,
     Users,
     Alerts,
+    Healthcheck,
 }
 
 impl Routes {
@@ -38,28 +43,14 @@ impl Routes {
 
             // Scouter Alerts Routes
             Routes::Alerts => "scouter/alerts",
+
+            // Scouter Healthcheck
+            Routes::Healthcheck => "scouter/healthcheck",
         }
     }
 }
 
 const TIMEOUT_SECS: u64 = 30;
-pub async fn build_scouter_http_client(settings: &ScouterSettings) -> Result<ScouterApiClient> {
-    let client_builder = Client::builder().timeout(std::time::Duration::from_secs(TIMEOUT_SECS));
-    let client = client_builder
-        .build()
-        .map_err(ServerError::CreateClientError)?;
-
-    let base_path = settings.server_uri.clone();
-
-    let enabled = !base_path.is_empty();
-
-    Ok(ScouterApiClient {
-        client,
-        base_path,
-        enabled,
-        bootstrap_token: settings.bootstrap_token.clone(),
-    })
-}
 
 #[derive(Debug, Clone)]
 pub struct ScouterApiClient {
@@ -70,6 +61,45 @@ pub struct ScouterApiClient {
 }
 
 impl ScouterApiClient {
+    pub async fn new(settings: &ScouterSettings) -> Result<Self> {
+        let client = Self::build_http_client()?;
+
+        let client = Self {
+            client,
+            base_path: settings.server_uri.clone(),
+            enabled: false,
+            bootstrap_token: settings.bootstrap_token.clone(),
+        };
+
+        // scouter not integrated - exist early
+        if client.base_path.is_empty() {
+            return Ok(client);
+        }
+
+        client.check_and_enable_service().await
+    }
+
+    fn build_http_client() -> Result<Client, ServerError> {
+        Client::builder()
+            .timeout(std::time::Duration::from_secs(TIMEOUT_SECS))
+            .build()
+            .map_err(ServerError::CreateClientError)
+    }
+
+    async fn check_and_enable_service(mut self) -> Result<Self> {
+        let healthcheck = self.healthcheck(&self.bootstrap_token).await?;
+        self.enabled = healthcheck.status().is_success();
+
+        if !self.enabled {
+            error!(
+                "Scouter is configured but healthcheck failed with status: {}",
+                healthcheck.status()
+            );
+        }
+
+        Ok(self)
+    }
+
     async fn _request(
         &self,
         route: Routes,
@@ -77,7 +107,7 @@ impl ScouterApiClient {
         body_params: Option<Value>,
         query_string: Option<String>,
         headers: Option<HeaderMap>,
-        bearer_token: String,
+        bearer_token: &str,
     ) -> Result<Response, ApiClientError> {
         let headers = headers.unwrap_or_default();
 
@@ -93,7 +123,7 @@ impl ScouterApiClient {
                 self.client
                     .get(url)
                     .headers(headers)
-                    .bearer_auth(&bearer_token)
+                    .bearer_auth(bearer_token)
                     .send()
                     .await?
             }
@@ -102,7 +132,7 @@ impl ScouterApiClient {
                     .post(url)
                     .headers(headers)
                     .json(&body_params)
-                    .bearer_auth(&bearer_token)
+                    .bearer_auth(bearer_token)
                     .send()
                     .await?
             }
@@ -111,7 +141,7 @@ impl ScouterApiClient {
                     .put(url)
                     .headers(headers)
                     .json(&body_params)
-                    .bearer_auth(&bearer_token)
+                    .bearer_auth(bearer_token)
                     .send()
                     .await?
             }
@@ -124,7 +154,7 @@ impl ScouterApiClient {
                 self.client
                     .delete(url)
                     .headers(headers)
-                    .bearer_auth(&bearer_token)
+                    .bearer_auth(bearer_token)
                     .send()
                     .await?
             }
@@ -140,7 +170,7 @@ impl ScouterApiClient {
         body_params: Option<Value>,
         query_params: Option<String>,
         headers: Option<HeaderMap>,
-        bearer_token: String,
+        bearer_token: &str,
     ) -> Result<Response, ApiClientError> {
         let response = self
             ._request(
@@ -159,19 +189,32 @@ impl ScouterApiClient {
     /// Create the initial user in scouter
     /// This is used to create the first users shared between scouter and opsml and is only used once
     /// during the initial setup of the system if no users exist
-    pub async fn create_initial_user(&self, user: &User) -> Result<Response, ApiClientError> {
-        let user_val = serde_json::to_value(user)?;
+    pub async fn create_initial_user(
+        &self,
+        user: &User,
+        password: &str,
+    ) -> Result<Response, ApiClientError> {
+        let user_request = CreateUserRequest {
+            username: user.username.clone(),
+            password: password.to_string(),
+            permissions: Some(user.permissions.clone()),
+            group_permissions: Some(user.group_permissions.clone()),
+            role: Some(user.role.clone()),
+            active: Some(user.active),
+        };
+
+        let user_val = serde_json::to_value(user_request)?;
 
         // create header to X-Bootstrap-Token
         let mut headers = HeaderMap::new();
-        headers.insert("X-Bootstrap-Token", self.bootstrap_token.parse()?);
+        headers.insert(X_BOOTSTRAP_TOKEN, self.bootstrap_token.parse()?);
         self.request(
             Routes::Users,
             RequestType::Post,
             Some(user_val),
             None,
             Some(headers),
-            self.bootstrap_token.clone(),
+            &self.bootstrap_token,
         )
         .await
     }
@@ -179,15 +222,30 @@ impl ScouterApiClient {
     pub async fn delete_user(
         &self,
         username: &str,
-        bearer_token: String,
+        bearer_token: &str,
     ) -> Result<Response, ApiClientError> {
         let url = format!("{}/{}/{}", self.base_path, Routes::Users.as_str(), username);
 
         Ok(self
             .client
             .delete(url)
-            .bearer_auth(&bearer_token)
+            .bearer_auth(bearer_token)
             .send()
             .await?)
     }
+
+    pub async fn healthcheck(&self, bearer_token: &str) -> Result<Response, ApiClientError> {
+        let url = format!("{}/{}", self.base_path, Routes::Healthcheck.as_str());
+
+        Ok(self
+            .client
+            .get(url)
+            .bearer_auth(bearer_token)
+            .send()
+            .await?)
+    }
+}
+
+pub async fn build_scouter_http_client(settings: &ScouterSettings) -> Result<ScouterApiClient> {
+    ScouterApiClient::new(settings).await
 }

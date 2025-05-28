@@ -44,27 +44,27 @@
 open={openState}
 onOpenChange={(e) => (openState = e.open)}
 triggerBase="btn bg-primary-500 text-black shadow shadow-hover border-black border-2"
-contentBase="card p-2 bg-primary-500 border-2 border-black shadow max-w-screen-md"
+contentBase="card p-4 bg-slate-100 border-2 border-black shadow max-w-screen-xl"
 backdropClasses="backdrop-blur-sm"
 >
 {#snippet trigger()}Use this card{/snippet}
 {#snippet content()}
-  <div class="flex flex-row justify-between">
+  <div class="flex flex-row pb-3 justify-between items-center">
     <header class="pl-2 text-xl font-bold text-black">Usage</header> 
-    <button class="btn bg-white text-black shadow shadow-hover border-black border-2 mr-3 mt-1" onclick={copyToClipboard} disabled={copied}>
+    <button class="btn bg-primary-500 text-black shadow shadow-hover border-black border-2 mr-3 mt-1" onclick={copyToClipboard} disabled={copied}>
       {copied ? 'Copied 👍' : 'Copy'}
     </button>
   </div>
   <article class="pl-2 max-h-[200px] overflow-hidden text-black">Paste the following code into your Python script to load the card</article>
-  <div class="border-2 border-black m-2">
+  <div class="rounded-lg border-2 border-black overflow-y-scroll max-h-[600px]">
     <Highlight language={python}  
         code={code} 
         let:highlighted>
     </Highlight>
   </div>
   <footer class="flex justify-end gap-4 p-2">
-    <button type="button" class="btn bg-white text-black shadow shadow-hover border-black border-2" onclick={modalClose}>Cancel</button>
-    <button type="button" class="btn bg-white text-black shadow shadow-hover border-black border-2" onclick={modalClose}>Confirm</button>
+    <button type="button" class="btn bg-primary-500 text-black shadow shadow-hover border-black border-2" onclick={modalClose}>Cancel</button>
+    <button type="button" class="btn bg-primary-500 text-black shadow shadow-hover border-black border-2" onclick={modalClose}>Confirm</button>
   </footer>
 {/snippet}
 </Modal>

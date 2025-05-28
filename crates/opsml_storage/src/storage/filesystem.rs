@@ -11,7 +11,7 @@ use opsml_types::contracts::FileInfo;
 use opsml_types::StorageType;
 use std::path::Path;
 use std::sync::{Arc, RwLock};
-use tracing::{debug, instrument};
+use tracing::instrument;
 
 #[async_trait]
 pub trait FileSystem {
@@ -38,11 +38,17 @@ pub trait FileSystem {
     ) -> Result<(), StorageError>;
 }
 
-pub enum FileSystemStorage {
+pub struct FileSystemStorage {
     #[cfg(feature = "server")]
-    Server(StorageClientEnum),
+    server: Option<StorageClientEnum>,
+    client: Option<HttpFSStorageClient>,
+    active_type: ActiveStorageType,
+}
 
-    Client(HttpFSStorageClient),
+enum ActiveStorageType {
+    #[cfg(feature = "server")]
+    Server,
+    Client,
 }
 
 /// FileSystemStorage implementation that is called from the client by a user (either in client or server mode)
@@ -53,116 +59,119 @@ pub enum FileSystemStorage {
 /// server FileSystemStorage calls will make use of the app_state.runtime in order to interact with the StorageClientEnum.
 ///
 impl FileSystemStorage {
-    #[cfg(feature = "server")]
-    fn create_server_storage(
-        settings: &OpsmlStorageSettings,
-    ) -> Result<FileSystemStorage, StorageError> {
-        app_state().start_runtime().block_on(async {
-            debug!("Creating FileSystemStorage with StorageClientEnum for server storage");
-            Ok(FileSystemStorage::Server(
-                StorageClientEnum::new(settings).await?,
-            ))
-        })
-    }
-
-    #[cfg(not(feature = "server"))]
-    fn create_server_storage(
-        _settings: &OpsmlStorageSettings,
-    ) -> Result<FileSystemStorage, StorageError> {
-        Err(StorageError::ServerFeatureError)
-    }
-
     #[instrument(skip_all)]
     pub fn new() -> Result<Self, StorageError> {
         let state = app_state();
-        let settings = state.config()?.storage_settings()?;
         let mode = &*state.mode()?;
 
         match mode {
-            OpsmlMode::Server => Self::create_server_storage(&settings),
-            OpsmlMode::Client => {
-                debug!("Creating FileSystemStorage with HttpFSStorageClient for client storage");
-
-                Ok(FileSystemStorage::Client(HttpFSStorageClient::new(
-                    get_api_client().clone(),
-                )?))
+            OpsmlMode::Server => {
+                #[cfg(feature = "server")]
+                {
+                    let settings = state.config()?.storage_settings()?;
+                    let server = Some(
+                        app_state()
+                            .start_runtime()
+                            .block_on(async { StorageClientEnum::new(&settings).await })?,
+                    );
+                    Ok(Self {
+                        server,
+                        client: None,
+                        active_type: ActiveStorageType::Server,
+                    })
+                }
+                #[cfg(not(feature = "server"))]
+                Err(StorageError::ServerFeatureError)
             }
+            OpsmlMode::Client => Ok(Self {
+                #[cfg(feature = "server")]
+                server: None,
+                client: Some(HttpFSStorageClient::new(get_api_client().clone())?),
+                active_type: ActiveStorageType::Client,
+            }),
         }
     }
 
     pub fn name(&self) -> &str {
-        match self {
+        match self.active_type {
             #[cfg(feature = "server")]
-            FileSystemStorage::Server(client) => client.name(),
-            FileSystemStorage::Client(client) => client.name(),
+            ActiveStorageType::Server => self.server.as_ref().unwrap().name(),
+            ActiveStorageType::Client => self.client.as_ref().unwrap().name(),
         }
     }
 
     pub fn storage_type(&self) -> StorageType {
-        match self {
+        match self.active_type {
             #[cfg(feature = "server")]
-            FileSystemStorage::Server(client) => client.storage_type(),
-            FileSystemStorage::Client(client) => client.storage_type(),
+            ActiveStorageType::Server => self.server.as_ref().unwrap().storage_type(),
+            ActiveStorageType::Client => self.client.as_ref().unwrap().storage_type(),
         }
     }
 
     pub fn find(&self, path: &Path) -> Result<Vec<String>, StorageError> {
-        match self {
+        match self.active_type {
             #[cfg(feature = "server")]
-            FileSystemStorage::Server(client) => {
-                app_state().block_on(async { client.find(path).await })
+            ActiveStorageType::Server => {
+                app_state().block_on(async { self.server.as_ref().unwrap().find(path).await })
             }
-            FileSystemStorage::Client(client) => client.find(path),
+            ActiveStorageType::Client => self.client.as_ref().unwrap().find(path),
         }
     }
 
     pub fn find_info(&self, path: &Path) -> Result<Vec<FileInfo>, StorageError> {
-        match self {
+        match self.active_type {
             #[cfg(feature = "server")]
-            FileSystemStorage::Server(client) => {
-                app_state().block_on(async { client.find_info(path).await })
+            ActiveStorageType::Server => {
+                app_state().block_on(async { self.server.as_ref().unwrap().find_info(path).await })
             }
-            FileSystemStorage::Client(client) => client.find_info(path),
+            ActiveStorageType::Client => self.client.as_ref().unwrap().find_info(path),
         }
     }
 
     pub fn get(&self, lpath: &Path, rpath: &Path, recursive: bool) -> Result<(), StorageError> {
-        match self {
+        match self.active_type {
             #[cfg(feature = "server")]
-            FileSystemStorage::Server(client) => {
-                app_state().block_on(async { client.get(lpath, rpath, recursive).await })
-            }
-            FileSystemStorage::Client(client) => client.get(lpath, rpath, recursive),
+            ActiveStorageType::Server => app_state().block_on(async {
+                self.server
+                    .as_ref()
+                    .unwrap()
+                    .get(lpath, rpath, recursive)
+                    .await
+            }),
+            ActiveStorageType::Client => self.client.as_ref().unwrap().get(lpath, rpath, recursive),
         }
     }
 
     pub fn put(&self, lpath: &Path, rpath: &Path, recursive: bool) -> Result<(), StorageError> {
-        match self {
+        match self.active_type {
             #[cfg(feature = "server")]
-            FileSystemStorage::Server(client) => {
-                app_state().block_on(async { client.put(lpath, rpath, recursive).await })
-            }
-            FileSystemStorage::Client(client) => client.put(lpath, rpath, recursive),
+            ActiveStorageType::Server => app_state().block_on(async {
+                self.server
+                    .as_ref()
+                    .unwrap()
+                    .put(lpath, rpath, recursive)
+                    .await
+            }),
+            ActiveStorageType::Client => self.client.as_ref().unwrap().put(lpath, rpath, recursive),
         }
     }
 
     pub fn rm(&self, path: &Path, recursive: bool) -> Result<(), StorageError> {
-        match self {
+        match self.active_type {
             #[cfg(feature = "server")]
-            FileSystemStorage::Server(client) => {
-                app_state().block_on(async { client.rm(path, recursive).await })
-            }
-            FileSystemStorage::Client(client) => client.rm(path, recursive),
+            ActiveStorageType::Server => app_state()
+                .block_on(async { self.server.as_ref().unwrap().rm(path, recursive).await }),
+            ActiveStorageType::Client => self.client.as_ref().unwrap().rm(path, recursive),
         }
     }
 
     pub fn exists(&self, path: &Path) -> Result<bool, StorageError> {
-        match self {
+        match self.active_type {
             #[cfg(feature = "server")]
-            FileSystemStorage::Server(client) => {
-                app_state().block_on(async { client.exists(path).await })
+            ActiveStorageType::Server => {
+                app_state().block_on(async { self.server.as_ref().unwrap().exists(path).await })
             }
-            FileSystemStorage::Client(client) => client.exists(path),
+            ActiveStorageType::Client => self.client.as_ref().unwrap().exists(path),
         }
     }
 
@@ -171,11 +180,16 @@ impl FileSystemStorage {
         path: &Path,
         _expiration: u64,
     ) -> Result<String, StorageError> {
-        match self {
+        match self.active_type {
             #[cfg(feature = "server")]
-            FileSystemStorage::Server(client) => app_state()
-                .block_on(async { client.generate_presigned_url(path, _expiration).await }),
-            FileSystemStorage::Client(client) => client.generate_presigned_url(path),
+            ActiveStorageType::Server => app_state().block_on(async {
+                self.server
+                    .as_ref()
+                    .unwrap()
+                    .generate_presigned_url(path, _expiration)
+                    .await
+            }),
+            ActiveStorageType::Client => self.client.as_ref().unwrap().generate_presigned_url(path),
         }
     }
 }

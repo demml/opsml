@@ -3,6 +3,7 @@ use crate::model::error::interface_error;
 use crate::utils::BaseArgs;
 use chrono::{DateTime, Utc};
 use opsml_crypt::decrypt_directory;
+use opsml_interfaces::base::DriftProfileMap;
 use opsml_interfaces::{error::ModelInterfaceError, OnnxModel, OnnxSession};
 use opsml_interfaces::{
     CatBoostModel, HuggingFaceModel, LightGBMModel, LightningModel, SklearnModel, TorchModel,
@@ -248,6 +249,19 @@ impl ModelCard {
         }
     }
 
+    #[getter]
+    pub fn drift_profile<'py>(
+        &self,
+        py: Python<'py>,
+    ) -> Result<Bound<'py, DriftProfileMap>, CardError> {
+        if let Some(interface) = self.interface.as_ref() {
+            let drift_profiles = interface.bind(py).getattr("drift_profile")?;
+            Ok(drift_profiles.downcast::<DriftProfileMap>()?.clone())
+        } else {
+            Err(CardError::InterfaceNotFoundError)
+        }
+    }
+
     pub fn add_tags(&mut self, tags: Vec<String>) {
         self.tags.extend(tags);
     }
@@ -355,6 +369,32 @@ impl ModelCard {
         Ok(card)
     }
 
+    /// Helper function to get the drift profile path from the metadata.
+    /// This function will return an error if the no drift profile map is found or
+    /// if the alias is not found in the map.
+    ///
+    /// # Arguments
+    /// * `alias` - The alias of the drift profile to get the path for.
+    ///
+    /// # Returns
+    /// * `Result<PathBuf, CardError>` - The path to the drift profile.
+    pub fn drift_profile_path(&self, alias: &str) -> Result<PathBuf, CardError> {
+        // Use as_ref() to avoid unwrapping the Option
+        let map = self
+            .metadata
+            .interface_metadata
+            .save_metadata
+            .drift_profile_uri_map
+            .as_ref()
+            .ok_or(CardError::DriftProfileNotFoundError)?;
+
+        // Get the profile directly without checking contains_key first
+        map.get(alias)
+            .ok_or(CardError::DriftProfileNotFoundError)
+            // Use clone only at the final return point
+            .map(|profile| profile.uri.clone())
+    }
+
     pub fn __str__(&self) -> String {
         PyHelperFuncs::__str__(self)
     }
@@ -430,22 +470,19 @@ impl ModelCard {
         let interface = self.interface.as_ref().unwrap().bind(py);
         let drift_profiles = interface.getattr("drift_profile")?;
         // downcast to list
-        let drift_profiles = drift_profiles.downcast::<PyList>()?;
+        let drift_profiles = drift_profiles.downcast::<DriftProfileMap>()?;
 
         // if drift_profiles is empty, return
-        if drift_profiles.len() == 0 {
+        if drift_profiles.call_method0("is_empty")?.extract::<bool>()? {
             Ok(())
         } else {
-            // iterate over drift_profiles and call "update_config_args"
-            let kwargs = PyDict::new(py);
-            kwargs.set_item("name", self.name.clone())?;
-            kwargs.set_item("space", self.space.clone())?;
-            kwargs.set_item("version", self.version.clone())?;
+            // set new config args from card and update all profiles
+            let config_args = PyDict::new(py);
+            config_args.set_item("name", &self.name)?;
+            config_args.set_item("space", &self.space)?;
+            config_args.set_item("version", &self.version)?;
 
-            for profile in drift_profiles.iter() {
-                // get actual profile from enum
-                profile.call_method("update_config_args", (), Some(&kwargs))?;
-            }
+            drift_profiles.call_method1("update_config_args", (&config_args,))?;
 
             Ok(())
         }

@@ -6,7 +6,7 @@ classifiers = [
     "Programming Language :: Python :: Implementation :: CPython",
     "Programming Language :: Python :: Implementation :: PyPy",
 ]
-version = "3.0.0-rc.1"
+version = "3.0.0-alpha.1"
 description = ""
 authors = [{name = "Thorrester", email = "<support@demmlai.com>"}]
 readme = "README.md"
@@ -15,9 +15,6 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-fastapi = [
-    "fastapi >= 0.113.0, < 1.0.0",
-    ]
 onnx = [
     "onnx~=1.16.0; platform_system == 'Linux' and python_version <= '3.11'",
     "onnx==1.16.1; platform_system == 'Windows'",
@@ -41,6 +38,7 @@ tf_onnx = [
 
 [dependency-groups]
 dev = [
+    "fastapi >= 0.115.0, < 1.0.0",
     "maturin >= 1.4.0, < 2.0.0",
     "pytest >= 7.0.0, < 8.0.0",
     "pytest-cov >= 5.0.0, < 6.0.0",
