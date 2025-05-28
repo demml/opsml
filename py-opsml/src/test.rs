@@ -316,6 +316,8 @@ impl OpsmlTestServer {
                 stop_server(handle).await;
             });
 
+            std::thread::sleep(Duration::from_millis(500));
+
             if self.cleanup {
                 println!("Cleaning up Opsml Server...");
                 self.stop_mock_scouter();
@@ -343,10 +345,31 @@ impl OpsmlTestServer {
         self.remove_env_vars_for_client()?;
 
         if self.root_dir.exists() {
-            std::fs::remove_dir_all(&self.root_dir).map_err(|e| {
-                tracing::error!("Failed to remove root directory: {}", e);
-                TestServerError::CustomError(format!("Failed to remove root directory: {}", e))
-            })?;
+            let max_attempts = 5;
+            let mut attempt = 0;
+
+            while attempt < max_attempts {
+                match std::fs::remove_dir_all(&self.root_dir) {
+                    Ok(_) => return Ok(()),
+                    Err(e) => {
+                        if attempt == max_attempts - 1 {
+                            tracing::error!(
+                                "Failed to remove root directory after {} attempts: {}",
+                                max_attempts,
+                                e
+                            );
+                            return Err(TestServerError::CustomError(format!(
+                                "Failed to remove root directory: {}",
+                                e
+                            ))
+                            .into());
+                        }
+                        // Wait before retrying
+                        std::thread::sleep(Duration::from_millis(100 * (attempt + 1) as u64));
+                        attempt += 1;
+                    }
+                }
+            }
         }
 
         Ok(())
