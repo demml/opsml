@@ -23,11 +23,11 @@ lints.ci: lints.format_check lints.ruff lints.pylint lints.mypy
 
 setup.project:
 	uv sync --all-extras --group dev --group docs
-	uv run maturin develop --features server
+	uv run maturin develop --features server,test
 
 setup.project.numpy1:
 	uv sync --all-extras --group dev --group numpy1
-	uv run maturin develop --features server
+	uv run maturin develop --features server,test
 
 
 test.unit.numpy1: setup.project.numpy1

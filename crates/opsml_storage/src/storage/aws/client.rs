@@ -335,7 +335,7 @@ impl StorageClient for AWSStorageClient {
             .key(path)
             .presigned(PresigningConfig::expires_in(expires_in).map_err(AwsError::PresignError)?)
             .await
-            .map_err(AwsError::GetObjectError)?;
+            .map_err(|e| AwsError::GetObjectError(Box::new(e)))?;
 
         Ok(uri.uri().to_string())
     }
@@ -357,7 +357,7 @@ impl StorageClient for AWSStorageClient {
                 .bucket(&self.bucket)
                 .send()
                 .await
-                .map_err(AwsError::ListObjectsV2Error)?
+                .map_err(|e| AwsError::ListObjectsV2Error(Box::new(e)))?
         } else {
             self.client
                 .list_objects_v2()
@@ -365,7 +365,7 @@ impl StorageClient for AWSStorageClient {
                 .prefix(path)
                 .send()
                 .await
-                .map_err(AwsError::ListObjectsV2Error)?
+                .map_err(|e| AwsError::ListObjectsV2Error(Box::new(e)))?
         };
 
         Ok(objects
@@ -392,7 +392,7 @@ impl StorageClient for AWSStorageClient {
             .prefix(path)
             .send()
             .await
-            .map_err(AwsError::ListObjectsV2Error)?;
+            .map_err(|e| AwsError::ListObjectsV2Error(Box::new(e)))?;
 
         Ok(response
             .contents
@@ -454,7 +454,7 @@ impl StorageClient for AWSStorageClient {
             .key(dest)
             .send()
             .await
-            .map_err(AwsError::CopyObjectError)?;
+            .map_err(|e| AwsError::CopyObjectError(Box::new(e)))?;
 
         Ok(true)
     }
@@ -490,7 +490,7 @@ impl StorageClient for AWSStorageClient {
             .key(path)
             .send()
             .await
-            .map_err(AwsError::DeleteObjectError)?;
+            .map_err(|e| AwsError::DeleteObjectError(Box::new(e)))?;
 
         Ok(true)
     }
@@ -524,7 +524,7 @@ impl StorageClient for AWSStorageClient {
             )
             .send()
             .await
-            .map_err(AwsError::DeleteObjectsError)?;
+            .map_err(|e| AwsError::DeleteObjectsError(Box::new(e)))?;
 
         Ok(true)
     }

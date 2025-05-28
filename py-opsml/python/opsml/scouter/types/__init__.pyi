@@ -30,8 +30,3 @@ class DataType:
     Polars: "DataType"
     Numpy: "DataType"
     Arrow: "DataType"
-
-# Errors
-class ScouterError(Exception):
-    def __init__(self, message: str) -> None: ...
-    def __str__(self) -> str: ...

@@ -70,7 +70,10 @@ pub async fn initialize_default_user(
 
     if scouter_client.enabled {
         // send admin user to scouter
-        match scouter_client.create_initial_user(&admin_user).await {
+        match scouter_client
+            .create_initial_user(&admin_user, &default_password)
+            .await
+        {
             Ok(response) => {
                 if response.status() == StatusCode::CONFLICT {
                     info!("ℹ️ Admin user already exists in Scouter");
@@ -94,7 +97,10 @@ pub async fn initialize_default_user(
         }
 
         // send guest user to scouter
-        match scouter_client.create_initial_user(&guest_user).await {
+        match scouter_client
+            .create_initial_user(&guest_user, "guest")
+            .await
+        {
             Ok(response) => {
                 if response.status() == StatusCode::CONFLICT {
                     info!("ℹ️ Guest user already exists in Scouter");

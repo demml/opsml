@@ -13,11 +13,9 @@ from ..scouter.drift import (
     SpcDriftConfig,
     SpcDriftProfile,
 )
+from ..types import DriftProfileUri
 
-DriftProfileType = Union[
-    List[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile],
-    SpcDriftProfile | PsiDriftProfile | CustomDriftProfile,
-]
+DriftProfileType = Dict[str, Union[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile,]]
 
 class ProcessorType:
     Preprocessor: "ProcessorType"
@@ -119,6 +117,25 @@ class OnnxSchema:
     def feature_names(self) -> List[str]:
         """Return the feature names and order for onnx."""
 
+class DriftArgs:
+    def __init__(self, active: bool = True, deactivate_others: bool = False) -> None:
+        """Define a drift config
+
+        Args:
+            active (bool):
+                Whether to set the drift profile to active
+            deactivate_others (bool):
+                Whether to deactivate all other drift profiles of the same space and name
+        """
+
+    @property
+    def active(self) -> bool:
+        """Return the active status of the drift profile."""
+
+    @property
+    def deactivate_others(self) -> bool:
+        """Return the deactivate_others status of the drift profile."""
+
 class ModelSaveKwargs:
     def __init__(
         self,
@@ -126,6 +143,7 @@ class ModelSaveKwargs:
         model: Optional[Dict] = None,
         preprocessor: Optional[Dict] = None,
         save_onnx: bool = False,
+        drift: Optional[DriftArgs] = None,
     ) -> None:
         """Optional arguments to pass to save_model
 
@@ -140,6 +158,8 @@ class ModelSaveKwargs:
                 Whether to save the onnx model. Defaults to false. This is independent of the
                 onnx argument since it's possible to convert a model to onnx without additional kwargs.
                 If onnx args are provided, this will be set to true.
+            drift (DriftArgs):
+                Optional drift args to use when saving and registering a model.
         """
 
     def __str__(self): ...
@@ -310,13 +330,30 @@ class DataProcessor:
 
     def __str__(self): ...
 
+class DriftProfileMap:
+    def __init__(self) -> None:
+        """Creates an empty drift profile map"""
+
+    def add_profile(self, alias: str, profile: Any) -> None:
+        """Add a drift profile to the map
+
+        Args:
+            alias:
+                Alias to use for the drift profile
+            profile:
+                Drift profile to add
+        """
+
+    def __getitem__(self, key: str) -> Any:
+        """Returns the drift profile at the given key"""
+
 # Define interface save and metadata arguments
 class ModelInterfaceSaveMetadata:
     model_uri: Path
     data_processor_map: Dict[str, DataProcessor]
     sample_data_uri: Path
     onnx_model_uri: Optional[Path]
-    drift_profile_uri: Optional[Path]
+    drift_profile_uri_map: Optional[Dict[str, DriftProfileUri]]
     extra: Optional[ExtraMetadata]
     save_kwargs: Optional[ModelSaveKwargs]
 
@@ -326,7 +363,7 @@ class ModelInterfaceSaveMetadata:
         data_processor_map: Optional[Dict[str, DataProcessor]] = {},  # type: ignore
         sample_data_uri: Optional[Path] = None,
         onnx_model_uri: Optional[Path] = None,
-        drift_profile_uri: Optional[Path] = None,
+        drift_profile_uri_map: Optional[Dict[str, DriftProfileUri]] = None,
         extra: Optional[ExtraMetadata] = None,
         save_kwargs: Optional[ModelSaveKwargs] = None,
     ) -> None:
@@ -341,8 +378,8 @@ class ModelInterfaceSaveMetadata:
                 Path to the sample data
             onnx_model_uri:
                 Path to the onnx model
-            drift_profile_uri:
-                Path to the drift profile
+            drift_profile_uri_map:
+                Dictionary of drift profiles
             extra_metadata:
                 Extra metadata
             save_kwargs:
@@ -492,14 +529,10 @@ class ModelInterfaceMetadata:
 class ModelInterface:
     def __init__(
         self,
-        model: None | Any = None,
-        sample_data: None | Any = None,
-        task_type: None | TaskType = None,
-        drift_profile: (
-            None
-            | List[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile]
-            | Union[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile]
-        ) = None,
+        model: Any = None,
+        sample_data: Any = None,
+        task_type: Optional[TaskType] = None,
+        drift_profile: Optional[DriftProfileType] = None,
     ) -> None:
         """Base class for ModelInterface
 
@@ -511,7 +544,8 @@ class ModelInterface:
             task_type:
                 The type of task the model performs
             drift_profile:
-                Drift profile to use. Can be a list of SpcDriftProfile, PsiDriftProfile or CustomDriftProfile
+                Drift profile(s) to associate with the model. Must be a dictionary of
+                alias and drift profile.
         """
 
     @property
@@ -553,15 +587,8 @@ class ModelInterface:
     @property
     def drift_profile(
         self,
-    ) -> List[Any]:
-        """Returns the drift profile"""
-
-    @drift_profile.setter
-    def drift_profile(
-        self,
-        profile: List[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile],
-    ) -> None:
-        """Sets the drift profile"""
+    ) -> DriftProfileMap:
+        """Returns the drift profile mapping"""
 
     @property
     def onnx_session(self) -> None | OnnxSession:
@@ -580,6 +607,7 @@ class ModelInterface:
     @overload
     def create_drift_profile(
         self,
+        alias: str,
         data: CustomMetric | List[CustomMetric],
         config: CustomMetricDriftConfig,
         data_type: Optional[DataType] = None,
@@ -587,6 +615,7 @@ class ModelInterface:
     @overload
     def create_drift_profile(
         self,
+        alias: str,
         data: Any,
         config: SpcDriftConfig,
         data_type: Optional[DataType] = None,
@@ -594,6 +623,7 @@ class ModelInterface:
     @overload
     def create_drift_profile(
         self,
+        alias: str,
         data: Any,
         config: PsiDriftConfig,
         data_type: Optional[DataType] = None,
@@ -601,11 +631,13 @@ class ModelInterface:
     @overload
     def create_drift_profile(
         self,
+        alias: str,
         data: Any,
         data_type: Optional[DataType] = None,
     ) -> SpcDriftProfile: ...
     def create_drift_profile(  # type: ignore
         self,
+        alias: str,
         data: Any,
         config: None | SpcDriftConfig | PsiDriftConfig | CustomMetricDriftConfig = None,
         data_type: None | DataType = None,
@@ -613,6 +645,8 @@ class ModelInterface:
         """Create a drift profile and append it to the drift profile list
 
         Args:
+            alias:
+                Alias to use for the drift profile
             data:
                 Data to use to create the drift profile. Can be a pandas dataframe,
                 polars dataframe, pyarrow table or numpy array.
@@ -698,7 +732,8 @@ class SklearnModel(ModelInterface):
             task_type:
                 The type of task the model performs
             drift_profile:
-                Drift profile to use. Can be a list of SpcDriftProfile, PsiDriftProfile or CustomDriftProfile
+                Drift profile(s) to associate with the model. Must be a dictionary of
+                alias and drift profile.
         """
 
     @property
@@ -740,7 +775,8 @@ class LightGBMModel(ModelInterface):
             task_type:
                 The type of task the model performs
             drift_profile:
-                Drift profile to use. Can be a list of SpcDriftProfile, PsiDriftProfile or CustomDriftProfile
+                Drift profile(s) to associate with the model. Must be a dictionary of
+                alias and drift profile.
         """
 
     @property
@@ -782,7 +818,8 @@ class XGBoostModel(ModelInterface):
             task_type:
                 The type of task the model performs
             drift_profile:
-                Drift profile to use. Can be a list of SpcDriftProfile, PsiDriftProfile or CustomDriftProfile
+                Drift profile(s) to associate with the model. Must be a dictionary of
+                alias and drift profile.
         """
 
     @property
@@ -826,7 +863,8 @@ class TorchModel(ModelInterface):
             task_type:
                 The intended task type of the model.
             drift_profile:
-                Drift profile to use. Can be a list of SpcDriftProfile, PsiDriftProfile or CustomDriftProfile
+                Drift profile(s) to associate with the model. Must be a dictionary of
+                alias and drift profile.
         """
 
     @property
@@ -887,7 +925,8 @@ class LightningModel(ModelInterface):
             task_type:
                 The intended task type of the model.
             drift_profile:
-                Drift profile to use. Can be a list of SpcDriftProfile, PsiDriftProfile or CustomDriftProfile
+                Drift profile(s) to associate with the model. Must be a dictionary of
+                alias and drift profile.
         """
 
     @property
@@ -1006,7 +1045,8 @@ class HuggingFaceModel(ModelInterface):
             task_type:
                 The intended task type for the model. Note: This is the OpsML task type, not the HuggingFace task type.
             drift_profile:
-                Drift profile to use. Can be a list of SpcDriftProfile, PsiDriftProfile or CustomDriftProfile
+                Drift profile(s) to associate with the model. Must be a dictionary of
+                alias and drift profile.
         """
 
     def save(
@@ -1118,7 +1158,8 @@ class CatBoostModel(ModelInterface):
             task_type:
                 The type of task the model performs
             drift_profile:
-                Drift profile to use. Can be a list of SpcDriftProfile, PsiDriftProfile or CustomDriftProfile
+                Drift profile(s) to associate with the model. Must be a dictionary of
+                alias and drift profile.
         """
 
     @property
@@ -1162,7 +1203,8 @@ class TensorFlowModel(ModelInterface):
             task_type:
                 The intended task type of the model.
             drift_profile:
-                Drift profile to use. Can be a list of SpcDriftProfile, PsiDriftProfile or CustomDriftProfile
+                Drift profile(s) to associate with the model. Must be a dictionary of
+                alias and drift profile.
         """
 
     @property
@@ -1200,7 +1242,8 @@ class OnnxModel(ModelInterface):
             task_type:
                 The type of task the model performs
             drift_profile:
-                Drift profile to use. Can be a list of SpcDriftProfile, PsiDriftProfile or CustomDriftProfile
+                Drift profile(s) to associate with the model. Must be a dictionary of
+                alias and drift profile.
 
         Example:
             ```python

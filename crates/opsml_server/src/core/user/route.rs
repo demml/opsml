@@ -82,7 +82,7 @@ async fn create_user(
                 Some(serde_json::json!(&user)),
                 None,
                 None,
-                exchange_token,
+                &exchange_token,
             )
             .await
             .map_err(|e| {
@@ -207,7 +207,7 @@ async fn update_user(
                 Some(serde_json::json!(&user)),
                 None,
                 None,
-                exchange_token,
+                &exchange_token,
             )
             .await
             .map_err(|e| {
@@ -260,7 +260,7 @@ async fn delete_user(
 
         state
             .scouter_client
-            .delete_user(&username, exchange_token)
+            .delete_user(&username, &exchange_token)
             .await
             .map_err(|e| {
                 error!("Failed to delete user in scouter: {}", e);

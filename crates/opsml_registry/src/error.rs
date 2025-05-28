@@ -15,6 +15,9 @@ use tracing::error;
 #[derive(Error, Debug)]
 pub enum RegistryError {
     #[error(transparent)]
+    ScouterClientError(#[from] scouter_client::ClientError),
+
+    #[error(transparent)]
     SettingsError(#[from] SettingsError),
 
     #[error(transparent)]
@@ -22,6 +25,9 @@ pub enum RegistryError {
 
     #[error("Server feature not enabled")]
     ServerFeatureNotEnabled,
+
+    #[error("Service not supported")]
+    ServiceNotSupported,
 
     #[error(transparent)]
     VersionError(#[from] opsml_semver::error::VersionError),
@@ -98,6 +104,15 @@ pub enum RegistryError {
     #[cfg(feature = "server")]
     #[error(transparent)]
     SqlError(#[from] opsml_sql::error::SqlError),
+
+    #[error("Failed to downcast")]
+    DowncastError(String),
+
+    #[error("Failed to create scouter client")]
+    CreateClientError,
+
+    #[error("ScouterClient not found")]
+    ScouterClientNotFoundError,
 }
 
 impl From<RegistryError> for PyErr {
@@ -105,5 +120,11 @@ impl From<RegistryError> for PyErr {
         let msg = err.to_string();
         error!("{}", msg);
         PyRuntimeError::new_err(msg)
+    }
+}
+
+impl<'a> From<pyo3::DowncastError<'a, 'a>> for RegistryError {
+    fn from(err: pyo3::DowncastError) -> Self {
+        RegistryError::DowncastError(err.to_string())
     }
 }

@@ -8,6 +8,7 @@ from opsml import (  # type: ignore
     ModelLoadKwargs,
     ModelSaveKwargs,
 )
+from opsml.model import DriftArgs
 from opsml.test import OpsmlServerContext
 from opsml.card import RegistryMode, CardList  # type: ignore
 from opsml.model import SklearnModel  # type: ignore
@@ -156,7 +157,7 @@ def crud_modelcard(random_forest_classifier: SklearnModel, datacard: DataCard):
     assert len(cards) == 0
 
     interface: SklearnModel = random_forest_classifier
-    interface.create_drift_profile(datacard.interface.data)
+    interface.create_drift_profile("spc", datacard.interface.data)
 
     card = ModelCard(
         interface=interface,
@@ -171,7 +172,16 @@ def crud_modelcard(random_forest_classifier: SklearnModel, datacard: DataCard):
     card.experimentcard_uid = "test"
     assert card.experimentcard_uid == "test"
 
-    reg.register_card(card=card, save_kwargs=ModelSaveKwargs(save_onnx=True))
+    reg.register_card(
+        card=card,
+        save_kwargs=ModelSaveKwargs(
+            save_onnx=True,
+            drift=DriftArgs(  # we want to set the drift profile to active
+                active=True,
+                deactivate_others=True,
+            ),
+        ),
+    )
     cards = reg.list_cards()
     cards.as_table()
 

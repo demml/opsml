@@ -1,6 +1,7 @@
 use crate::core::error::{internal_server_error, OpsmlServerError};
 use crate::core::files::utils::download_artifacts;
 use crate::core::scouter;
+use crate::core::scouter::types::Alive;
 use crate::core::scouter::utils::{find_drift_profile, save_encrypted_profile};
 use crate::core::state::AppState;
 use anyhow::{Context, Result};
@@ -13,23 +14,23 @@ use axum::{
 use opsml_auth::permission::UserPermissions;
 use opsml_sql::base::SqlClient;
 use opsml_types::api::RequestType;
-use opsml_types::contracts::{RawFileRequest, UpdateProfileRequest};
+use opsml_types::contracts::{DriftProfileRequest, UpdateProfileRequest};
 use opsml_types::RegistryType;
 use opsml_types::SaveName;
 use reqwest::Response;
 
 use crate::core::scouter::types::DriftProfileResult;
+use crate::core::scouter::utils::load_drift_profiles;
+
 use scouter_client::{
     Alerts, BinnedCustomMetrics, BinnedPsiFeatureMetrics, DriftAlertRequest, DriftRequest,
     ProfileRequest, ProfileStatusRequest, ScouterResponse, ScouterServerError, SpcDriftFeatures,
+    UpdateAlertResponse, UpdateAlertStatus,
 };
 use std::panic::{catch_unwind, AssertUnwindSafe};
-use std::path::PathBuf;
 use std::sync::Arc;
 use tempfile::tempdir;
-use tracing::{debug, error, instrument};
-
-use crate::core::scouter::utils::load_drift_profiles;
+use tracing::{error, info, instrument};
 
 async fn parse_scouter_response(
     response: Response,
@@ -64,6 +65,8 @@ pub async fn insert_drift_profile(
         internal_server_error(e, "Failed to exchange token for scouter")
     })?;
 
+    info!("Inserting drift profile for space: {:?}", &body.space);
+
     let profile = serde_json::to_value(&body).map_err(|e| {
         error!("Failed to serialize profile request: {}", e);
         internal_server_error(e, "Failed to serialize profile request")
@@ -77,7 +80,7 @@ pub async fn insert_drift_profile(
             Some(profile),
             None,
             None,
-            exchange_token,
+            &exchange_token,
         )
         .await
         .map_err(|e| {
@@ -158,7 +161,7 @@ pub async fn update_drift_profile(
             })?),
             None,
             None,
-            exchange_token,
+            &exchange_token,
         )
         .await
         .map_err(|e| {
@@ -177,7 +180,7 @@ pub async fn update_drift_profile(
 ///
 /// # Returns
 /// * `Result<impl IntoResponse, (StatusCode, Json<serde_json::Value>)>` - Result of the request
-#[instrument(skip(data, body))]
+#[instrument(skip_all)]
 pub async fn update_drift_profile_status(
     State(data): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
@@ -186,7 +189,7 @@ pub async fn update_drift_profile_status(
     if !perms.has_write_permission(&body.space) {
         return OpsmlServerError::permission_denied().into_response(StatusCode::FORBIDDEN);
     }
-    debug!("Updating drift profile status: {:?}", &body);
+    info!("Updating drift profile status: {:?}", &body);
 
     let exchange_token = data.exchange_token_from_perms(&perms).await.map_err(|e| {
         error!("Failed to exchange token for scouter: {}", e);
@@ -204,7 +207,7 @@ pub async fn update_drift_profile_status(
             })?),
             None,
             None,
-            exchange_token,
+            &exchange_token,
         )
         .await
         .map_err(|e| {
@@ -241,7 +244,7 @@ pub async fn get_spc_drift(
             None,
             Some(query_string),
             None,
-            exchange_token,
+            &exchange_token,
         )
         .await
         .map_err(|e| {
@@ -283,7 +286,7 @@ pub async fn get_psi_drift(
             None,
             Some(query_string),
             None,
-            exchange_token,
+            &exchange_token,
         )
         .await
         .map_err(|e| {
@@ -330,7 +333,7 @@ pub async fn get_custom_drift(
             None,
             Some(query_string),
             None,
-            exchange_token,
+            &exchange_token,
         )
         .await
         .map_err(|e| {
@@ -356,7 +359,7 @@ pub async fn get_custom_drift(
 pub async fn get_drift_profiles_for_ui(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
-    Json(req): Json<RawFileRequest>,
+    Json(req): Json<DriftProfileRequest>,
 ) -> DriftProfileResult {
     if !perms.has_read_permission() {
         return OpsmlServerError::permission_denied().into_response(StatusCode::FORBIDDEN);
@@ -367,15 +370,34 @@ pub async fn get_drift_profiles_for_ui(
         error!("Failed to create temp dir: {}", e);
         internal_server_error(e, "Failed to create temp dir")
     })?;
-    let lpath = tmp_dir.path();
-    let rpath = PathBuf::from(&req.path);
+    let tmp_path = tmp_dir.path();
+
+    // extract root dir from first profile
+    // Get source path (where files live in storage)
+    let source_path = &req
+        .drift_profile_uri_map
+        .values()
+        .next()
+        .ok_or_else(|| {
+            error!("No profiles found");
+            internal_server_error("No profiles found", "No profiles found")
+        })?
+        .root_dir;
+
+    // Create destination subdirectory inside temp_dir
+    let dest_path = tmp_dir.path().join(source_path);
+
+    std::fs::create_dir_all(&dest_path).map_err(|e| {
+        error!("Failed to create directory: {}", e);
+        internal_server_error(e, "Failed to create directory")
+    })?;
 
     download_artifacts(
         state.storage_client.clone(),
         state.sql_client.clone(),
-        lpath,
-        &rpath,
-        &req.registry_type.to_string(),
+        &dest_path,
+        source_path,
+        &RegistryType::Model.to_string(),
         Some(&req.uid),
     )
     .await
@@ -384,7 +406,7 @@ pub async fn get_drift_profiles_for_ui(
         internal_server_error(e, "Failed to download artifact")
     })?;
 
-    let profiles = load_drift_profiles(lpath).map_err(|e| {
+    let profiles = load_drift_profiles(tmp_path, &req.drift_profile_uri_map).map_err(|e| {
         error!("Failed to load drift profile: {}", e);
         internal_server_error(e, "Failed to load drift profile")
     })?;
@@ -420,7 +442,7 @@ pub async fn get_drift_alerts(
             None,
             Some(query_string),
             None,
-            exchange_token,
+            &exchange_token,
         )
         .await
         .map_err(|e| {
@@ -433,6 +455,105 @@ pub async fn get_drift_alerts(
     match status_code.is_success() {
         true => {
             let body = response.json::<Alerts>().await.map_err(|e| {
+                error!("Failed to parse scouter response: {}", e);
+                internal_server_error(e, "Failed to parse scouter response")
+            })?;
+
+            Ok(Json(body))
+        }
+        false => {
+            let body = response.json::<ScouterServerError>().await.map_err(|e| {
+                error!("Failed to parse scouter error response: {}", e);
+                internal_server_error(e, "Failed to parse scouter error response")
+            })?;
+            Err((status_code, Json(OpsmlServerError::new(body.error))))
+        }
+    }
+}
+
+/// Acknowledge drift alerts
+pub async fn update_alert_status(
+    State(state): State<Arc<AppState>>,
+    Extension(perms): Extension<UserPermissions>,
+    Json(body): Json<UpdateAlertStatus>,
+) -> Result<Json<UpdateAlertResponse>, (StatusCode, Json<OpsmlServerError>)> {
+    if !perms.has_write_permission(&body.space) {
+        return OpsmlServerError::permission_denied().into_response(StatusCode::FORBIDDEN);
+    }
+
+    let exchange_token = state.exchange_token_from_perms(&perms).await.map_err(|e| {
+        error!("Failed to exchange token for scouter: {}", e);
+        internal_server_error(e, "Failed to exchange token for scouter")
+    })?;
+
+    let response = state
+        .scouter_client
+        .request(
+            scouter::Routes::Alerts,
+            RequestType::Put,
+            Some(serde_json::to_value(&body).map_err(|e| {
+                error!("Failed to serialize alert request: {}", e);
+                internal_server_error(e, "Failed to serialize alert request")
+            })?),
+            None,
+            None,
+            &exchange_token,
+        )
+        .await
+        .map_err(|e| {
+            error!("Failed to acknowledge drift alerts: {}", e);
+            internal_server_error(e, "Failed to acknowledge drift alerts")
+        })?;
+
+    let status_code = response.status();
+    match status_code.is_success() {
+        true => {
+            let body = response.json::<UpdateAlertResponse>().await.map_err(|e| {
+                error!("Failed to parse scouter response: {}", e);
+                internal_server_error(e, "Failed to parse scouter response")
+            })?;
+            Ok(Json(body))
+        }
+        false => {
+            let body = response.json::<ScouterServerError>().await.map_err(|e| {
+                error!("Failed to parse scouter error response: {}", e);
+                internal_server_error(e, "Failed to parse scouter error response")
+            })?;
+            Err((status_code, Json(OpsmlServerError::new(body.error))))
+        }
+    }
+}
+
+#[instrument(skip_all)]
+pub async fn check_scouter_health(
+    State(state): State<Arc<AppState>>,
+    Extension(perms): Extension<UserPermissions>,
+) -> Result<Json<Alive>, (StatusCode, Json<OpsmlServerError>)> {
+    let exchange_token = state.exchange_token_from_perms(&perms).await.map_err(|e| {
+        error!("Failed to exchange token for scouter: {}", e);
+        internal_server_error(e, "Failed to exchange token for scouter")
+    })?;
+
+    let response = state
+        .scouter_client
+        .request(
+            scouter::Routes::Healthcheck,
+            RequestType::Get,
+            None,
+            None,
+            None,
+            &exchange_token,
+        )
+        .await
+        .map_err(|e| {
+            error!("Failed to get scouter healthcheck: {}", e);
+            internal_server_error(e, "Failed to get scouter healthcheck")
+        })?;
+
+    let status_code = response.status();
+    match status_code.is_success() {
+        true => {
+            let body = response.json::<Alive>().await.map_err(|e| {
                 error!("Failed to parse scouter response: {}", e);
                 internal_server_error(e, "Failed to parse scouter response")
             })?;
@@ -469,7 +590,14 @@ pub async fn get_scouter_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
                 &format!("{}/scouter/drift/custom", prefix),
                 get(get_custom_drift),
             )
-            .route(&format!("{}/scouter/alerts", prefix), get(get_drift_alerts))
+            .route(
+                &format!("{}/scouter/alerts", prefix),
+                get(get_drift_alerts).put(update_alert_status),
+            )
+            .route(
+                &format!("{}/scouter/healthcheck", prefix),
+                get(check_scouter_health),
+            )
     }));
 
     match result {

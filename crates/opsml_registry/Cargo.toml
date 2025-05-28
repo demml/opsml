@@ -23,6 +23,7 @@ opsml-storage = { workspace = true }
 opsml-utils = { workspace = true }
 pyo3 = { workspace = true }
 sqlx = { workspace = true, optional = true }
+scouter-client = { workspace = true }
 semver = { workspace = true, optional = true }
 tempfile = { workspace = true }
 thiserror = { workspace = true }

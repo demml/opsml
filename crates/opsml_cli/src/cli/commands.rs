@@ -1,4 +1,4 @@
-use crate::cli::arg::{DownloadCard, KeyArgs, ListCards};
+use crate::cli::arg::{DownloadCard, KeyArgs, ListCards, ScouterArgs};
 use clap::builder::styling::{AnsiColor, Effects};
 use clap::builder::Styles;
 use clap::command;
@@ -50,7 +50,7 @@ const STYLES: Styles = Styles::styled()
 #[command(styles=STYLES)]
 #[command(name = "OpsML", author, long_version = VersionInfo::new())]
 #[command(about = "CLI tool for Interacting with OpsML")]
-#[command(propagate_version = true)]
+#[command(propagate_version = false)]
 pub struct Cli {
     #[command(subcommand)]
     pub command: Option<Commands>,
@@ -111,9 +111,19 @@ pub enum Commands {
         #[command(subcommand)]
         command: GenerateCommands,
     },
+
+    /// Update Scouter Drift Profile Status
+    ///
+    /// # Example
+    /// opsml scouter update-profile --space space --name name --version version --drift-type drift_type --status status
+    Scouter {
+        #[command(subcommand)]
+        command: ScouterCommands,
+    },
 }
 
 #[derive(Subcommand)]
+#[command(version = None)]
 pub enum GetCommands {
     /// Download card model artifacts
     ///
@@ -128,7 +138,7 @@ pub enum GetCommands {
 }
 
 #[derive(Subcommand)]
-
+#[command(version = None)]
 pub enum ListCommands {
     Model(ListCards),
     Deck(ListCards),
@@ -146,6 +156,15 @@ pub enum InstallCommands {
 #[derive(Subcommand)]
 pub enum GenerateCommands {
     Key(KeyArgs),
+}
+
+#[derive(Subcommand)]
+pub enum ScouterCommands {
+    /// Update Scouter Drift Profile Status
+    ///
+    /// # Example
+    /// opsml scouter update-profile --space space --name name --version version --drift-type drift_type --status status
+    UpdateProfileStatus(ScouterArgs),
 }
 
 pub const LOGO_TEXT: &str = "

@@ -3,11 +3,22 @@
 # In order to test the CLI, we expose some of the top-level functions in the opsml.cli module.
 ###################################################################################################
 
-from opsml.cli import lock_project, install_app, generate_key  # type: ignore
+from opsml.cli import (
+    lock_project,
+    install_app,
+    generate_key,
+    update_drift_profile_status,
+    ScouterArgs,
+)  # type: ignore
+
+import pandas as pd
 import os
 from pathlib import Path
 import shutil
 from opsml.test import OpsmlTestServer
+from opsml.scouter.types import DriftType
+from opsml.scouter import PsiDriftConfig, CustomMetricDriftConfig, CustomMetric
+from opsml.scouter.alert import AlertThreshold
 
 from opsml import (  # type: ignore
     start_experiment,
@@ -28,8 +39,30 @@ CURRENT_DIRECTORY = Path(os.getcwd()) / "tests" / "cli" / "assets"
 def run_experiment(
     random_forest_classifier: SklearnModel,
     chat_prompt: Prompt,
+    example_dataframe: pd.DataFrame,
 ):
     with start_experiment(space="test", log_hardware=True) as exp:
+        X, _, _, _ = example_dataframe
+        # create psi drift profile
+        random_forest_classifier.create_drift_profile(
+            alias="psi",
+            data=X,
+            config=PsiDriftConfig(),
+        )
+
+        # create custom metric drift profile
+        metric = CustomMetric(
+            name="custom",
+            value=0.5,
+            alert_threshold=AlertThreshold.Above,
+        )
+
+        random_forest_classifier.create_drift_profile(
+            alias="custom",
+            data=[metric],
+            config=CustomMetricDriftConfig(),
+        )
+
         modelcard = ModelCard(
             interface=random_forest_classifier,
             tags=["foo:bar", "baz:qux"],
@@ -48,6 +81,7 @@ def run_experiment(
 def test_pyproject_app_lock_project(
     random_forest_classifier: SklearnModel,
     chat_prompt: Prompt,
+    example_dataframe: pd.DataFrame,
 ):
     """
     This test is meant to test creating an opsml.lock file and installing the app/downloading
@@ -67,9 +101,9 @@ def test_pyproject_app_lock_project(
 
 
     """
-    with OpsmlTestServer(False, CURRENT_DIRECTORY):
+    with OpsmlTestServer(True, CURRENT_DIRECTORY):
         # run experiment to populate registry
-        run_experiment(random_forest_classifier, chat_prompt)
+        run_experiment(random_forest_classifier, chat_prompt, example_dataframe)
 
         lock_project(CURRENT_DIRECTORY)
 
@@ -103,7 +137,7 @@ def test_pyproject_app_lock_project(
         os.remove(lock_file)
 
         # write new experiment to the registry
-        run_experiment(random_forest_classifier, chat_prompt)
+        run_experiment(random_forest_classifier, chat_prompt, example_dataframe)
 
         # check multiple files exist
         reg = CardRegistry("model")
@@ -148,3 +182,22 @@ def test_generate_key():
     rounds = 10
 
     generate_key(password=password, rounds=rounds)
+
+
+@pytest.mark.skipif(WINDOWS_EXCLUDE, reason="skipping")
+def test_update_profile_status_key():
+    """
+    This test is meant to test updating the status of a drift profile via the CLI.
+    """
+
+    # need to start the server to create a mock scouter server
+    with OpsmlTestServer():
+        args = ScouterArgs(
+            space="test",
+            name="test",
+            version="1.0.0",
+            active=True,
+            drift_type=DriftType.Psi,
+            deactivate_others=False,
+        )
+        update_drift_profile_status(args)

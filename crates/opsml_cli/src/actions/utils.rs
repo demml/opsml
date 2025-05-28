@@ -4,12 +4,12 @@ use opsml_cards::{Card, CardDeck};
 pub use opsml_registry::utils::validate_card_deck_cards;
 use opsml_registry::CardRegistry;
 use opsml_semver::VersionType;
-use opsml_toml::toml::AppConfig;
+use opsml_toml::toml::DeckConfig;
 
 /// Create a new card deck from an app configuration
 ///
 /// # Arguments
-/// * `app` - AppConfig
+/// * `app` - DeckConfig
 ///
 /// # Returns
 /// Result<CardDeck, CliError>
@@ -19,7 +19,7 @@ use opsml_toml::toml::AppConfig;
 /// * The app configuration is invalid
 /// * The cards in the app configuration are invalid
 /// * The card deck cannot be created
-pub fn create_card_deck(app: &AppConfig) -> Result<CardDeck, CliError> {
+pub fn create_card_deck(app: &DeckConfig) -> Result<CardDeck, CliError> {
     // extract cards into Vec<Card>
 
     let mut cards = app
@@ -52,9 +52,12 @@ pub fn create_card_deck(app: &AppConfig) -> Result<CardDeck, CliError> {
     .map_err(CliError::CreateDeckError)
 }
 
-pub fn register_card_deck(app: &AppConfig, registry: &CardRegistry) -> Result<CardDeck, CliError> {
+pub fn register_card_deck(
+    config: &DeckConfig,
+    registry: &CardRegistry,
+) -> Result<CardDeck, CliError> {
     // Validate the app configuration
-    let mut card_deck = create_card_deck(app)?;
+    let mut card_deck = create_card_deck(config)?;
     registry.register_card_rs(&mut card_deck, VersionType::Minor)?;
 
     Ok(card_deck)

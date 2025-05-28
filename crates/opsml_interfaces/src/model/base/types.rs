@@ -1,12 +1,14 @@
-use crate::error::TypeError;
+use crate::error::{ModelInterfaceError, TypeError};
 use crate::model::huggingface::types::HuggingFaceOnnxArgs;
 use opsml_utils::{json_to_pyobject, pyobject_to_json, PyHelperFuncs};
 use pyo3::prelude::*;
-use pyo3::types::PyDict;
+use pyo3::types::{PyDict, PyList};
+use pyo3::IntoPyObjectExt;
 use serde::ser::SerializeStruct;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use serde_json::Value;
+use std::collections::HashMap;
 
 #[pyclass(eq)]
 #[derive(PartialEq, Debug)]
@@ -32,6 +34,28 @@ impl InterfaceDataType {
 }
 
 #[pyclass]
+#[derive(Debug, Default, Clone, Deserialize, Serialize)]
+pub struct DriftArgs {
+    #[pyo3(get, set)]
+    pub active: bool,
+
+    #[pyo3(get, set)]
+    pub deactivate_others: bool,
+}
+
+#[pymethods]
+impl DriftArgs {
+    #[new]
+    #[pyo3(signature = (active=true, deactivate_others=false))]
+    pub fn new(active: bool, deactivate_others: bool) -> Self {
+        Self {
+            active,
+            deactivate_others,
+        }
+    }
+}
+
+#[pyclass]
 #[derive(Debug, Default)]
 pub struct ModelSaveKwargs {
     pub onnx: Option<Py<PyDict>>,
@@ -42,17 +66,21 @@ pub struct ModelSaveKwargs {
 
     #[pyo3(get, set)]
     pub save_onnx: bool,
+
+    #[pyo3(get, set)]
+    pub drift: Option<DriftArgs>,
 }
 
 #[pymethods]
 impl ModelSaveKwargs {
     #[new]
-    #[pyo3(signature = (onnx=None, model=None, preprocessor=None, save_onnx=None))]
+    #[pyo3(signature = (onnx=None, model=None, preprocessor=None, save_onnx=None, drift=None))]
     pub fn new<'py>(
         onnx: Option<Bound<'py, PyAny>>,
         model: Option<Bound<'py, PyDict>>,
         preprocessor: Option<Bound<'py, PyDict>>,
         save_onnx: Option<bool>,
+        drift: Option<DriftArgs>,
     ) -> Result<Self, TypeError> {
         let mut save_onnx = save_onnx.unwrap_or(false);
         // check if onnx is None, PyDict or HuggingFaceOnnxArgs
@@ -85,6 +113,7 @@ impl ModelSaveKwargs {
             model,
             preprocessor,
             save_onnx,
+            drift,
         })
     }
 
@@ -172,6 +201,7 @@ impl Serialize for ModelSaveKwargs {
             state.serialize_field("model", &model)?;
             state.serialize_field("preprocessor", &preprocessor)?;
             state.serialize_field("save_onnx", &save_onnx)?;
+            state.serialize_field("drift", &self.drift)?;
             state.end()
         })
     }
@@ -200,6 +230,7 @@ impl<'de> Deserialize<'de> for ModelSaveKwargs {
                     let mut model = None;
                     let mut preprocessor = None;
                     let mut save_onnx = None;
+                    let mut drift = None;
 
                     while let Some(key) = map.next_key::<String>()? {
                         match key.as_str() {
@@ -247,6 +278,11 @@ impl<'de> Deserialize<'de> for ModelSaveKwargs {
                                 let value = map.next_value::<Option<bool>>()?;
                                 save_onnx = value;
                             }
+
+                            "drift" => {
+                                let value = map.next_value::<Option<DriftArgs>>()?;
+                                drift = value;
+                            }
                             _ => {
                                 let _: serde::de::IgnoredAny = map.next_value()?;
                             }
@@ -257,6 +293,7 @@ impl<'de> Deserialize<'de> for ModelSaveKwargs {
                         model,
                         preprocessor,
                         save_onnx: save_onnx.unwrap_or(false),
+                        drift,
                     };
                     Ok(kwargs)
                 })
@@ -281,12 +318,14 @@ impl Clone for ModelSaveKwargs {
                 .as_ref()
                 .map(|preprocessor| preprocessor.clone_ref(py));
             let save_onnx = self.save_onnx;
+            let drift = self.drift.clone();
 
             ModelSaveKwargs {
                 onnx,
                 model,
                 preprocessor,
                 save_onnx,
+                drift,
             }
         })
     }
@@ -503,5 +542,116 @@ impl Clone for ExtraMetadata {
 
             ExtraMetadata { metadata }
         })
+    }
+}
+
+#[pyclass]
+#[derive(Debug)]
+pub struct DriftProfileMap {
+    pub profiles: HashMap<String, PyObject>,
+}
+
+impl Clone for DriftProfileMap {
+    fn clone(&self) -> Self {
+        Python::with_gil(|py| {
+            let mut profiles = HashMap::new();
+            for (k, v) in &self.profiles {
+                profiles.insert(k.clone(), v.clone_ref(py));
+            }
+            Self { profiles }
+        })
+    }
+}
+
+#[pymethods]
+impl DriftProfileMap {
+    #[new]
+    pub fn new() -> Self {
+        let profiles = HashMap::new();
+        DriftProfileMap { profiles }
+    }
+
+    pub fn add_profile(
+        &mut self,
+        py: Python,
+        alias: String,
+        profile: Bound<'_, PyAny>,
+    ) -> Result<(), ModelInterfaceError> {
+        self.profiles.insert(alias, profile.into_py_any(py)?);
+        Ok(())
+    }
+
+    /// Get a drift profile by alias
+    ///
+    /// # Arguments
+    /// * `alias` - The alias of the drift profile
+    ///
+    /// # Returns
+    /// * `PyResult<Bound<'py, PyAny>>` - The drift profile
+    pub fn __getitem__<'py>(
+        &self,
+        py: Python<'py>,
+        key: String,
+    ) -> Result<&Bound<'py, PyAny>, ModelInterfaceError> {
+        let profile = self
+            .profiles
+            .get(&key)
+            .ok_or_else(|| ModelInterfaceError::DriftProfileNotFound)
+            .map(|profile| profile.bind(py))?;
+
+        Ok(profile)
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.profiles.is_empty()
+    }
+
+    pub fn update_config_args(
+        &mut self,
+        py: Python,
+        config_args: &Bound<'_, PyDict>,
+    ) -> Result<(), ModelInterfaceError> {
+        // iterate over the profiles and update the config args
+
+        for profile in self.profiles.values() {
+            let profile = profile.bind(py);
+            profile.call_method("update_config_args", (), Some(config_args))?;
+        }
+        Ok(())
+    }
+
+    /// Get the drift profile map as a list of profiles
+    /// This is a helper method used during card registration and artifact saving
+    pub fn values<'py>(&self, py: Python<'py>) -> Result<Bound<'py, PyList>, ModelInterfaceError> {
+        let py_list = PyList::empty(py);
+        for profile in self.profiles.values() {
+            py_list.append(profile.bind(py))?;
+        }
+
+        Ok(py_list)
+    }
+
+    pub fn __str__(&self, py: Python) -> String {
+        let mut map = json!({});
+        for (k, v) in &self.profiles {
+            let profile = v.bind(py);
+            let profile_json = profile
+                .call_method0("model_dump_json")
+                .unwrap()
+                .extract::<String>()
+                .unwrap();
+
+            map[k] = serde_json::from_str(&profile_json).unwrap();
+        }
+
+        PyHelperFuncs::__str__(map)
+    }
+}
+
+impl DriftProfileMap {}
+
+impl Default for DriftProfileMap {
+    fn default() -> Self {
+        Self::new()
     }
 }

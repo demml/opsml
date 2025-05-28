@@ -5,9 +5,11 @@ pub mod error;
 use crate::actions::{download_card, list_cards};
 use crate::cli::{Cli, Commands, GenerateCommands, GetCommands, InstallCommands, ListCommands};
 use actions::download::download_deck;
-pub use actions::{generate_key, lock::install_app};
+pub use actions::{generate_key, lock::install_app, update_drift_profile_status};
 use anyhow::Context;
 use clap::Parser;
+pub use cli::arg::ScouterArgs;
+use cli::commands::ScouterCommands;
 use opsml_colors::Colorize;
 use opsml_types::RegistryType;
 
@@ -85,6 +87,14 @@ pub fn run_cli(args: Vec<String>) -> anyhow::Result<()> {
         Some(Commands::Generate { command }) => match command {
             GenerateCommands::Key(args) => {
                 generate_key(&args.password, args.rounds).context("Failed to generate key")?;
+                Ok(())
+            }
+        },
+        Some(Commands::Scouter { command }) => match command {
+            // Scouter commands can be added here
+            ScouterCommands::UpdateProfileStatus(args) => {
+                update_drift_profile_status(args)
+                    .context("Failed to update Scouter profile status")?;
                 Ok(())
             }
         },

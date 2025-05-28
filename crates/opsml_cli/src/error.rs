@@ -7,6 +7,7 @@ use opsml_types::error::TypeError;
 use opsml_utils::error::UtilError;
 use pyo3::exceptions::PyRuntimeError;
 use pyo3::prelude::*;
+use scouter_client::ProfileError;
 use thiserror::Error;
 use tracing::error;
 
@@ -59,6 +60,12 @@ pub enum CliError {
 
     #[error(transparent)]
     UiError(#[from] UiError),
+
+    #[error(transparent)]
+    ProfileError(#[from] ProfileError),
+
+    #[error(transparent)]
+    CardError(#[from] CardError),
 }
 
 impl From<CliError> for PyErr {

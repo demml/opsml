@@ -2,6 +2,7 @@ use crate::error::RegistryError;
 use opsml_client::ClientRegistry;
 use opsml_semver::VersionType;
 use opsml_settings::config::OpsmlMode;
+use opsml_settings::ScouterSettings;
 use opsml_state::{app_state, get_api_client};
 use opsml_types::contracts::{
     CardQueryArgs, CardRecord, CreateCardResponse, GetMetricRequest, MetricRequest,
@@ -14,7 +15,22 @@ use opsml_types::{
         HardwareMetricRequest, ParameterRequest,
     },
 };
-use tracing::{error, instrument};
+use scouter_client::ScouterClient;
+use scouter_client::{ProfileRequest, ProfileStatusRequest};
+use tracing::{error, info, instrument};
+
+pub fn setup_scouter_client(
+    settings: &ScouterSettings,
+) -> Result<Option<ScouterClient>, RegistryError> {
+    if settings.server_uri.is_empty() {
+        info!("Scouter client is disabled");
+        return Ok(None);
+    }
+
+    // Create a new HTTP client with default config
+    let scouter_client = ScouterClient::new(None)?;
+    Ok(Some(scouter_client))
+}
 
 #[derive(Debug, Clone)]
 pub enum OpsmlRegistry {
@@ -51,15 +67,22 @@ impl OpsmlRegistry {
                     let settings = config.storage_settings().inspect_err(|e| {
                         error!("Failed to get storage settings: {}", e);
                     })?;
+
                     let db_settings = config.database_settings.clone();
+
+                    // check if scouter is enabled
+                    let scouter_client = setup_scouter_client(&config.scouter_settings)?;
+
                     let server_registry = state.block_on(async {
                         crate::server::registry::server_logic::ServerRegistry::new(
                             registry_type,
                             settings,
                             db_settings,
+                            scouter_client,
                         )
                         .await
                     })?;
+
                     Ok(Self::ServerRegistry(server_registry))
                 }
                 #[cfg(not(feature = "server"))]
@@ -268,6 +291,57 @@ impl OpsmlRegistry {
             #[cfg(feature = "server")]
             Self::ServerRegistry(server_registry) => {
                 app_state().block_on(async { server_registry.get_parameters(parameters).await })
+            }
+        }
+    }
+
+    /// Inserts a scouter profile into the registry when opsml is integrated with scouter
+    ///
+    /// # Arguments
+    /// * `profile` - The profile to be inserted
+    ///
+    /// # Returns
+    /// * `Result<(), RegistryError>` - Ok if the profile was inserted successfully, Err if there was an error
+    pub fn insert_scouter_profile(&self, profile: &ProfileRequest) -> Result<(), RegistryError> {
+        match self {
+            Self::ClientRegistry(client_registry) => {
+                Ok(client_registry.insert_scouter_profile(profile)?)
+            }
+            #[cfg(feature = "server")]
+            Self::ServerRegistry(server_registry) => {
+                server_registry.insert_scouter_profile(profile)
+            }
+        }
+    }
+
+    /// Generic function to check the health of an integrated service
+    ///
+    /// # Arguments
+    /// * `service` - The integrated service to check
+    ///
+    /// # Returns
+    /// * `Result<bool, RegistryError>` - Ok if the service is healthy, Err if there was an error
+    pub fn check_service_health(&self, service: IntegratedService) -> Result<bool, RegistryError> {
+        match self {
+            Self::ClientRegistry(client_registry) => {
+                Ok(client_registry.check_service_health(service)?)
+            }
+            #[cfg(feature = "server")]
+            Self::ServerRegistry(server_registry) => server_registry.check_service_health(service),
+        }
+    }
+
+    pub fn update_drift_profile_status(
+        &self,
+        request: &ProfileStatusRequest,
+    ) -> Result<(), RegistryError> {
+        match self {
+            Self::ClientRegistry(client_registry) => {
+                Ok(client_registry.update_drift_profile_status(request)?)
+            }
+            #[cfg(feature = "server")]
+            Self::ServerRegistry(server_registry) => {
+                server_registry.update_drift_profile_status(request)
             }
         }
     }
