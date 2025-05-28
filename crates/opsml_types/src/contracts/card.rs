@@ -118,8 +118,8 @@ pub struct SpaceStats {
     pub user_count: i32,
 }
 
-#[derive(Serialize, Deserialize)]
-pub struct SpacesResponse {
+#[derive(Serialize, Deserialize, Debug)]
+pub struct SpaceStatsResponse {
     pub spaces: Vec<SpaceStats>,
 }
 

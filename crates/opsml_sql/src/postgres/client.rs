@@ -713,11 +713,15 @@ impl SqlClient for PostgresClient {
         Ok(records)
     }
 
-    async fn delete_card(&self, table: &CardTable, uid: &str) -> Result<(), SqlError> {
-        let query = format!("DELETE FROM {} WHERE uid = $1", table);
-        sqlx::query(&query).bind(uid).execute(&self.pool).await?;
+    async fn delete_card(&self, table: &CardTable, uid: &str) -> Result<String, SqlError> {
+        // First get the space
+        let query = format!("DELETE FROM {} WHERE uid = $1 RETURNING space", table);
+        let space: String = sqlx::query_scalar(&query)
+            .bind(uid)
+            .fetch_one(&self.pool)
+            .await?;
 
-        Ok(())
+        Ok(space)
     }
 
     async fn insert_experiment_metric(&self, record: &MetricRecord) -> Result<(), SqlError> {

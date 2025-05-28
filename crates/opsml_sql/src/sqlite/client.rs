@@ -748,11 +748,21 @@ impl SqlClient for SqliteClient {
         Ok(records)
     }
 
-    async fn delete_card(&self, table: &CardTable, uid: &str) -> Result<(), SqlError> {
-        let query = format!("DELETE FROM {} WHERE uid = ?1", table);
-        sqlx::query(&query).bind(uid).execute(&self.pool).await?;
+    async fn delete_card(&self, table: &CardTable, uid: &str) -> Result<String, SqlError> {
+        // SQLite doesn't support RETURNING clause, so we need to do this in two steps
+        let select_query = format!("SELECT space FROM {} WHERE uid = ?", table);
+        let space: String = sqlx::query_scalar(&select_query)
+            .bind(uid)
+            .fetch_one(&self.pool)
+            .await?;
 
-        Ok(())
+        let delete_query = format!("DELETE FROM {} WHERE uid = ?", table);
+        sqlx::query(&delete_query)
+            .bind(uid)
+            .execute(&self.pool)
+            .await?;
+
+        Ok(space)
     }
 
     async fn insert_experiment_metric(&self, record: &MetricRecord) -> Result<(), SqlError> {
