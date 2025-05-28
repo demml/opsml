@@ -1,0 +1,1 @@
+UPDATE opsml_artifact_key SET encrypted_key = ?, created_at = CURRENT_TIMESTAMP WHERE uid = ? AND registry_type = ?;

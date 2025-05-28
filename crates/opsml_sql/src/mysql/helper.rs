@@ -3,6 +3,51 @@ use crate::base::add_version_bounds;
 use crate::error::SqlError;
 use opsml_types::{cards::CardTable, contracts::CardQueryArgs};
 use opsml_utils::utils::is_valid_uuidv7;
+
+// user
+const INSERT_USER_SQL: &str = include_str!("sql/user/insert_user.sql");
+const GET_USER_SQL: &str = include_str!("sql/user/get_user.sql");
+const GET_USERS_SQL: &str = include_str!("sql/user/get_users.sql");
+const UPDATE_USER_SQL: &str = include_str!("sql/user/update_user.sql");
+const DELETE_USER_SQL: &str = include_str!("sql/user/delete_user.sql");
+const LAST_ADMIN_SQL: &str = include_str!("sql/user/last_admin.sql");
+
+// space stats
+const UPDATE_SPACE_STATS_SQL: &str = include_str!("sql/card/update_space_stats.sql");
+const GET_SPACE_STATS: &str = include_str!("sql/card/get_space_stats.sql");
+
+// experiment
+const GET_HARDWARE_METRIC_SQL: &str = include_str!("sql/experiment/get_hardware_metric.sql");
+const INSERT_EXPERIMENT_METRIC_SQL: &str =
+    include_str!("sql/experiment/insert_experiment_metric.sql");
+const GET_EXPERIMENT_METRIC_SQL: &str = include_str!("sql/experiment/get_experiment_metric.sql");
+const INSERT_HARDWARE_METRIC_SQL: &str = include_str!("sql/experiment/insert_hardware_metric.sql");
+
+// cards
+const INSERT_DATACARD_SQL: &str = include_str!("sql/card/insert_datacard.sql");
+const INSERT_PROMPTCARD_SQL: &str = include_str!("sql/card/insert_promptcard.sql");
+const INSERT_MODELCARD_SQL: &str = include_str!("sql/card/insert_modelcard.sql");
+const INSERT_EXPERIMENTCARD_SQL: &str = include_str!("sql/card/insert_experimentcard.sql");
+const INSERT_AUDITCARD_SQL: &str = include_str!("sql/card/insert_auditcard.sql");
+const INSERT_CARDDECK_SQL: &str = include_str!("sql/card/insert_carddeck.sql");
+const UPDATE_DATACARD_SQL: &str = include_str!("sql/card/update_datacard.sql");
+const UPDATE_PROMPTCARD_SQL: &str = include_str!("sql/card/update_promptcard.sql");
+const UPDATE_MODELCARD_SQL: &str = include_str!("sql/card/update_modelcard.sql");
+const UPDATE_EXPERIMENTCARD_SQL: &str = include_str!("sql/card/update_experimentcard.sql");
+const UPDATE_AUDITCARD_SQL: &str = include_str!("sql/card/update_auditcard.sql");
+const UPDATE_CARDDECK_SQL: &str = include_str!("sql/card/update_carddeck.sql");
+
+// artifact keys
+const INSERT_ARTIFACT_KEY_SQL: &str = include_str!("sql/artifact/insert_artifact_key.sql");
+const GET_ARTIFACT_KEY_SQL: &str = include_str!("sql/artifact/get_artifact_key.sql");
+const UPDATE_ARTIFACT_KEY_SQL: &str = include_str!("sql/artifact/update_artifact_key.sql");
+const GET_ARTIFACT_KEY_FROM_STORAGE_PATH_SQL: &str =
+    include_str!("sql/artifact/get_artifact_key_from_storage_path.sql");
+const DELETE_ARTIFACT_KEY_SQL: &str = include_str!("sql/artifact/delete_artifact_key.sql");
+
+// audit events
+const INSERT_AUDIT_EVENT_SQL: &str = include_str!("sql/audit/insert_audit_event.sql");
+
 pub struct MySQLQueryHelper;
 
 impl MySQLQueryHelper {
@@ -11,207 +56,42 @@ impl MySQLQueryHelper {
     }
 
     pub fn get_user_insert_query() -> String {
-        format!(
-            "INSERT INTO {} (username, password_hash, hashed_recovery_codes, permissions, group_permissions, favorite_spaces, role, active, email) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            CardTable::Users
-        )
+        INSERT_USER_SQL.to_string()
     }
 
     pub fn get_user_query() -> String {
-        format!(
-            "SELECT id, created_at, active, username, password_hash, hashed_recovery_codes, permissions, group_permissions, favorite_spaces, role, refresh_token, email, updated_at FROM {} WHERE username = ?",
-            CardTable::Users
-        )
+        GET_USER_SQL.to_string()
     }
 
     pub fn get_users_query() -> String {
-        format!(
-            "SELECT id, created_at, active, username, password_hash, hashed_recovery_codes, permissions, group_permissions, favorite_spaces, role, refresh_token, email, updated_at FROM {}",
-            CardTable::Users
-        )
-        .to_string()
+        GET_USERS_SQL.to_string()
     }
 
     pub fn get_update_space_stats_query() -> String {
-        r#"
-    INSERT INTO opsml_space_stats (
-        space,
-        data_count,
-        model_count,
-        experiment_count,
-        prompt_count,
-        user_count,
-        updated_at
-    )	
-    WITH 
-        SPACE_STATS AS (
-            SELECT 
-                space,
-                SUM(experiment_count) as experiment_count,
-                SUM(model_count) as model_count,
-                SUM(data_count) as data_count,
-                SUM(prompt_count) as prompt_count
-            FROM (
-                SELECT 
-                    space,
-                    COUNT(DISTINCT name) as experiment_count,
-                    0 as model_count,
-                    0 as data_count,
-                    0 as prompt_count
-                FROM opsml_experiment_registry
-                WHERE space = ?
-                GROUP BY space
-                UNION ALL
-                SELECT
-                    space,
-                    0 as experiment_count,
-                    COUNT(DISTINCT name) as model_count,
-                    0 as data_count,
-                    0 as prompt_count
-                FROM opsml_model_registry
-                WHERE space = ?
-                GROUP BY space
-                UNION ALL
-                SELECT 
-                    space,
-                    0 as experiment_count,
-                    0 as model_count,
-                    COUNT(DISTINCT name) as data_count,
-                    0 as prompt_count
-                FROM opsml_data_registry
-                WHERE space = ?
-                GROUP BY space
-                UNION ALL
-                SELECT
-                    space,
-                    0 as experiment_count,
-                    0 as model_count,
-                    0 as data_count,
-                    COUNT(DISTINCT name) as prompt_count
-                FROM opsml_prompt_registry
-                WHERE space = ?
-                GROUP BY space
-            
-            ) AS combined_spaces
-            GROUP BY space
-        ),
-
-        SPACE_USER_COUNT AS (
-            SELECT 
-                space,
-                COUNT(DISTINCT username) AS user_count
-            FROM (
-                SELECT DISTINCT username, space 
-                FROM opsml_experiment_registry
-                WHERE space = ?
-                UNION ALL
-                SELECT DISTINCT username, space
-                FROM opsml_model_registry 
-                WHERE space = ?
-                UNION ALL
-                SELECT DISTINCT username, space
-                FROM opsml_data_registry
-                WHERE space = ?
-                UNION ALL
-                SELECT DISTINCT username, space 
-                FROM opsml_prompt_registry
-                WHERE space = ?
-            ) AS combined_users
-            GROUP BY space
-        ), 
-    
-        SPACE_STATS_WITH_USERS AS (
-            SELECT 
-                ss.space,
-                ss.experiment_count,
-                ss.model_count,
-                ss.data_count,
-                ss.prompt_count,
-                COALESCE(su.user_count, 0) as user_count
-            FROM SPACE_STATS ss
-            LEFT JOIN SPACE_USER_COUNT su ON ss.space = su.space
-        )
-    
-    SELECT 
-        space,
-        data_count,
-        model_count,
-        experiment_count,
-        prompt_count,
-        user_count,
-        CURRENT_TIMESTAMP
-    FROM SPACE_STATS_WITH_USERS as stats
-    ON DUPLICATE KEY UPDATE
-        experiment_count = stats.experiment_count,
-        model_count =stats.model_count,
-        data_count = stats.data_count,
-        prompt_count = stats.prompt_count,
-        user_count = stats.user_count,
-        updated_at = CURRENT_TIMESTAMP;
-    "#
-        .to_string()
+        UPDATE_SPACE_STATS_SQL.to_string()
     }
 
     pub fn get_spaces_stats() -> String {
-        r#"
-        SELECT space,
-            experiment_count,
-            model_count,
-            data_count,
-            prompt_count,
-            user_count
-        FROM opsml_space_stats
-    "#
-        .to_string()
+        GET_SPACE_STATS.to_string()
     }
 
     pub fn get_last_admin_query() -> String {
-        format!(
-            "SELECT username FROM {} WHERE role = 'admin'",
-            CardTable::Users
-        )
-        .to_string()
+        LAST_ADMIN_SQL.to_string()
     }
 
     pub fn get_user_delete_query() -> String {
-        format!("DELETE FROM {} WHERE username = ?", CardTable::Users).to_string()
+        DELETE_USER_SQL.to_string()
     }
 
     pub fn get_user_update_query() -> String {
-        format!(
-            "UPDATE {} SET 
-            active = ?, 
-            password_hash = ?, 
-            hashed_recovery_codes = ?,
-            permissions = ?, 
-            group_permissions = ?,
-            favorite_spaces = ?,
-            refresh_token = ?,
-            email = ?,
-            updated_at = CURRENT_TIMESTAMP
-            WHERE username = ? ",
-            CardTable::Users
-        )
+        UPDATE_USER_SQL.to_string()
     }
-    pub fn get_hardware_metric_query() -> String {
-        let query = format!(
-            "SELECT * FROM {} WHERE experiment_uid = ?",
-            CardTable::HardwareMetrics
-        );
 
-        query
+    pub fn get_hardware_metric_query() -> String {
+        GET_HARDWARE_METRIC_SQL.to_string()
     }
     pub fn get_experiment_metric_insert_query() -> String {
-        format!(
-            "INSERT INTO {} (
-                experiment_uid, 
-                name, 
-                value,
-                step,
-                timestamp
-            ) VALUES (?, ?, ?, ?, ?)",
-            CardTable::Metrics
-        )
+        INSERT_EXPERIMENT_METRIC_SQL.to_string()
     }
 
     pub fn get_experiment_metrics_insert_query(nbr_records: usize) -> String {
@@ -244,13 +124,7 @@ impl MySQLQueryHelper {
     }
 
     pub fn get_experiment_metric_query(names: &[String]) -> (String, Vec<String>) {
-        let mut query = format!(
-            "SELECT *
-            FROM {}
-            WHERE experiment_uid = ?",
-            CardTable::Metrics
-        );
-
+        let mut query = GET_EXPERIMENT_METRIC_SQL.to_string();
         let mut bindings: Vec<String> = Vec::new();
 
         // loop through names and bind them. First name = and and others are or
@@ -528,306 +402,75 @@ impl MySQLQueryHelper {
         (query, bindings)
     }
     pub fn get_hardware_metrics_insert_query() -> String {
-        format!(
-            "INSERT INTO {} (
-                experiment_uid,
-                created_at,
-                cpu_percent_utilization,
-                cpu_percent_per_core,
-                free_memory,
-                total_memory,
-                used_memory,
-                available_memory,
-                used_percent_memory,
-                bytes_recv,
-                bytes_sent
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
-            CardTable::HardwareMetrics
-        )
+        INSERT_HARDWARE_METRIC_SQL.to_string()
     }
 
     pub fn get_datacard_insert_query() -> String {
-        format!("INSERT INTO {} (uid, app_env, name, space, major, minor, patch, version,  data_type, interface_type, tags, experimentcard_uid, auditcard_uid, pre_tag, build_tag, username, opsml_version) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", CardTable::Data)
+        INSERT_DATACARD_SQL.to_string()
     }
 
     pub fn get_promptcard_insert_query() -> String {
-        format!("INSERT INTO {} (uid, app_env, name, space, major, minor, patch, version, tags, experimentcard_uid, auditcard_uid, pre_tag, build_tag, username, opsml_version) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", CardTable::Prompt)
+        INSERT_PROMPTCARD_SQL.to_string()
     }
 
     pub fn get_modelcard_insert_query() -> String {
-        format!(
-            "INSERT INTO {} (
-            uid, 
-            app_env, 
-            name, 
-            space, 
-            major, 
-            minor, 
-            patch, 
-            version, 
-            datacard_uid, 
-            data_type, 
-            model_type, 
-            interface_type, 
-            task_type, 
-            tags, 
-            experimentcard_uid, 
-            auditcard_uid, 
-            pre_tag, 
-            build_tag,
-            username,
-            opsml_version
-            ) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            CardTable::Model
-        )
+        INSERT_MODELCARD_SQL.to_string()
     }
 
     pub fn get_experimentcard_insert_query() -> String {
-        format!(
-            "INSERT INTO {} (
-            uid, 
-            app_env, 
-            name, 
-            space, 
-            major, 
-            minor, 
-            patch, 
-            version,
-            tags, 
-            datacard_uids,
-            modelcard_uids, 
-            promptcard_uids,
-            card_deck_uids,
-            experimentcard_uids,
-            pre_tag, 
-            build_tag,
-            username,
-            opsml_version
-            ) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            CardTable::Experiment
-        )
+        INSERT_EXPERIMENTCARD_SQL.to_string()
     }
 
     pub fn get_auditcard_insert_query() -> String {
-        format!(
-            "INSERT INTO {} (
-            uid, 
-            app_env, 
-            name, 
-            space, 
-            major, 
-            minor, 
-            patch, 
-            version, 
-            tags, 
-            approved, 
-            datacard_uids, 
-            modelcard_uids, 
-            experimentcard_uids, 
-            pre_tag, 
-            build_tag,
-            username,
-            opsml_version
-            ) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            CardTable::Audit
-        )
+        INSERT_AUDITCARD_SQL.to_string()
     }
 
     pub fn get_carddeck_insert_query() -> String {
-        format!("INSERT INTO {} (uid, app_env, name, space, major, minor, patch, version, pre_tag, build_tag, cards, username, opsml_version) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", CardTable::Deck)
-            .to_string()
+        INSERT_CARDDECK_SQL.to_string()
     }
 
     pub fn get_carddeck_update_query() -> String {
-        format!(
-            "UPDATE {} SET 
-            app_env = ?, 
-            name = ?, 
-            space = ?, 
-            major = ?, 
-            minor = ?, 
-            patch = ?, 
-            version = ?, 
-            cards = ?,
-            username = ?,
-            opsml_version = ?
-            WHERE uid = ?",
-            CardTable::Deck
-        )
-        .to_string()
+        UPDATE_CARDDECK_SQL.to_string()
     }
 
     pub fn get_promptcard_update_query() -> String {
-        format!(
-            "UPDATE {} SET 
-            app_env = ?, 
-            name = ?, 
-            space = ?, 
-            major = ?, 
-            minor = ?, 
-            patch = ?, 
-            version = ?,  
-            tags = ?, 
-            experimentcard_uid = ?, 
-            auditcard_uid = ?, 
-            pre_tag = ?, 
-            build_tag = ?,
-            username = ?,
-            opsml_version = ?
-            WHERE uid = ?",
-            CardTable::Prompt
-        )
+        UPDATE_PROMPTCARD_SQL.to_string()
     }
 
     pub fn get_datacard_update_query() -> String {
-        format!(
-            "UPDATE {} SET  
-            app_env = ?, 
-            name = ?, 
-            space = ?, 
-            major = ?, 
-            minor = ?, 
-            patch = ?, 
-            version = ?, 
-            data_type = ?, 
-            interface_type = ?, 
-            tags = ?, 
-            experimentcard_uid = ?, 
-            auditcard_uid = ?, 
-            pre_tag = ?, 
-            build_tag = ?,
-            username = ?,
-            opsml_version = ?
-            WHERE uid = ?",
-            CardTable::Data
-        )
+        UPDATE_DATACARD_SQL.to_string()
     }
 
     pub fn get_modelcard_update_query() -> String {
-        format!(
-            "UPDATE {} SET 
-            app_env = ?, 
-            name = ?, 
-            space = ?, 
-            major = ?, 
-            minor = ?, 
-            patch = ?, 
-            version = ?, 
-            datacard_uid = ?, 
-            data_type = ?, 
-            model_type = ?, 
-            interface_type = ?, 
-            task_type = ?, 
-            tags = ?, 
-            experimentcard_uid = ?, 
-            auditcard_uid = ?, 
-            pre_tag = ?, 
-            build_tag = ?,
-            username = ?,
-            opsml_version = ?
-            WHERE uid = ?",
-            CardTable::Model
-        )
+        UPDATE_MODELCARD_SQL.to_string()
     }
 
     pub fn get_experimentcard_update_query() -> String {
-        format!(
-            "UPDATE {} SET 
-            app_env = ?, 
-            name = ?, 
-            space = ?, 
-            major = ?, 
-            minor = ?, 
-            patch = ?, 
-            version = ?,
-            tags = ?, 
-            datacard_uids = ?, 
-            modelcard_uids = ?, 
-            promptcard_uids = ?,
-            card_deck_uids = ?,
-            experimentcard_uids = ?,
-            pre_tag = ?, 
-            build_tag = ?,
-            username = ?,
-            opsml_version = ?
-            WHERE uid = ?",
-            CardTable::Experiment
-        )
+        UPDATE_EXPERIMENTCARD_SQL.to_string()
     }
 
     pub fn get_auditcard_update_query() -> String {
-        format!(
-            "UPDATE {} SET 
-            app_env = ?, 
-            name = ?, 
-            space = ?, 
-            major = ?, 
-            minor = ?, 
-            patch = ?, 
-            version = ?, 
-            tags = ?, 
-            approved = ?, 
-            datacard_uids = ?, 
-            modelcard_uids = ?, 
-            experimentcard_uids = ?, 
-            pre_tag = ?, 
-            build_tag = ?,
-            username = ?,
-            opsml_version = ?
-            WHERE uid = ?",
-            CardTable::Audit
-        )
+        UPDATE_AUDITCARD_SQL.to_string()
     }
 
     pub fn get_artifact_key_insert_query() -> String {
-        format!(
-            "INSERT INTO {} (uid, space, registry_type, encrypted_key, storage_key) VALUES (?, ?, ?, ?, ?)",
-            CardTable::ArtifactKey
-        )
+        INSERT_ARTIFACT_KEY_SQL.to_string()
     }
 
     pub fn get_artifact_key_select_query() -> String {
-        format!(
-            "SELECT uid, space, registry_type, encrypted_key, storage_key FROM {} WHERE uid = ? AND registry_type = ?",
-            CardTable::ArtifactKey
-        )
+        GET_ARTIFACT_KEY_SQL.to_string()
     }
 
     pub fn get_artifact_key_update_query() -> String {
-        format!(
-            "UPDATE {} SET encrypted_key = ?, created_at = CURRENT_TIMESTAMP WHERE uid = ? AND registry_type = ?",
-            CardTable::ArtifactKey
-        )
+        UPDATE_ARTIFACT_KEY_SQL.to_string()
     }
 
     pub fn get_artifact_key_from_storage_path_query() -> String {
-        format!(
-            "SELECT uid, space, registry_type, encrypted_key, storage_key FROM {} WHERE storage_key = ? AND registry_type = ?",
-            CardTable::ArtifactKey
-        )
+        GET_ARTIFACT_KEY_FROM_STORAGE_PATH_SQL.to_string()
     }
 
     pub fn get_audit_event_insert_query() -> String {
-        format!(
-            "INSERT INTO {} (
-            username, 
-            client_ip, 
-            user_agent, 
-            operation, 
-            resource_type, 
-            resource_id,
-            access_location,
-            status,
-            error_message,
-            metadata,
-            registry_type,
-            route
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            CardTable::AuditEvent
-        )
+        INSERT_AUDIT_EVENT_SQL.to_string()
     }
 
     pub fn get_load_card_query(
@@ -854,9 +497,6 @@ impl MySQLQueryHelper {
     }
 
     pub fn get_artifact_key_delete_query() -> String {
-        format!(
-            "DELETE FROM {} WHERE uid = ? AND registry_type = ?",
-            CardTable::ArtifactKey
-        )
+        DELETE_ARTIFACT_KEY_SQL.to_string()
     }
 }

@@ -1,0 +1,1 @@
+SELECT id, created_at, active, username, password_hash, hashed_recovery_codes, permissions, group_permissions, favorite_spaces, role, refresh_token, email, updated_at FROM opsml_user;
