@@ -274,7 +274,7 @@ impl OpsmlTestServer {
 
             let client = reqwest::blocking::Client::new();
             let mut attempts = 0;
-            let max_attempts = 20;
+            let max_attempts = 30;
 
             while attempts < max_attempts {
                 println!(
@@ -298,7 +298,7 @@ impl OpsmlTestServer {
                     }
                 }
                 attempts += 1;
-                sleep(Duration::from_millis(100));
+                sleep(Duration::from_millis(100 + (attempts * 10)));
 
                 // set env vars for OPSML_TRACKING_URI
             }
