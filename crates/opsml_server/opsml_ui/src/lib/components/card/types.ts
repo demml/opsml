@@ -61,12 +61,13 @@ export interface VersionPageRequest {
 
 export interface SpaceStats {
   space: string;
-  nbr_experiments: number;
-  nbr_models: number;
-  nbr_data: number;
-  nbr_prompt: number;
+  experiment_count: number;
+  model_count: number;
+  data_count: number;
+  prompt_count: number;
+  user_count: number;
 }
 
-export interface SpacesResponse {
+export interface SpaceStatsResponse {
   spaces: SpaceStats[];
 }

@@ -3,11 +3,11 @@
   import CardsSearch from "$lib/components/card/CardsSearch.svelte";
   import type { PageProps } from './$types';
   import { onMount } from "svelte";
-  import type { SpacesResponse, SpaceStats } from "$lib/components/card/types";
+  import type { SpaceStatsResponse, SpaceStats } from "$lib/components/card/types";
   import { ArrowLeft, ArrowRight, Search, Settings } from 'lucide-svelte';
 
   let { data }: PageProps = $props();
-  let spaces: SpacesResponse  = data.spaces;
+  let spaces: SpaceStatsResponse  = data.spaces;
 
   let currentPage = $state(1);
   let totalPages = $state(1);
@@ -16,8 +16,7 @@
   let filteredSpaces = $state<SpaceStats[]>([]);
   let availableSpaces = spaces.spaces
 
-
-  const searchSpaces = () => {	
+  const searchSpaces = () => {
     // filter based on item.space
     return filteredSpaces = availableSpaces.filter((item: SpaceStats) => {
       let itemName = item.space.toLowerCase();

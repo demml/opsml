@@ -11,5 +11,7 @@ export const load: PageLoad = async ({}) => {
   // get space for url if exists
   let spaces = await getAllSpaces();
 
+  console.log("Spaces loaded:", spaces);
+
   return { spaces };
 };
