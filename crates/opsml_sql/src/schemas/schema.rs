@@ -1155,8 +1155,11 @@ impl User {
         map.insert("email".to_string(), self.email.clone().into());
         map.insert("password_hash".to_string(), "[redacted]".into());
         map.insert("hashed_recovery_codes".to_string(), "[redacted]".into());
-        map.insert("permissions".to_string(), "[redacted]".into());
-        map.insert("group_permissions".to_string(), "[redacted]".into());
+        map.insert("permissions".to_string(), self.permissions.clone().into());
+        map.insert(
+            "group_permissions".to_string(),
+            self.group_permissions.clone().into(),
+        );
         map.insert("role".to_string(), self.role.clone().into());
         map.insert(
             "favorite_spaces".to_string(),
@@ -1180,7 +1183,7 @@ impl std::fmt::Debug for User {
             .field("password_hash", &"[redacted]")
             .field("hashed_recovery_codes", &"[redacted]")
             .field("permissions", &"[redacted]")
-            .field("group_permissions", &"[redacted]")
+            .field("group_permissions", &self.group_permissions)
             .field("role", &self.role)
             .field("favorite_spaces", &self.favorite_spaces)
             .field("created_at", &self.created_at)
