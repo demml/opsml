@@ -24,11 +24,6 @@ use tracing::info;
 
 impl FromRow<'_, PgRow> for User {
     fn from_row(row: &PgRow) -> Result<Self, sqlx::Error> {
-        fn parse_json_vec(row: &PgRow, field: &str) -> Vec<String> {
-            let json = row.try_get::<String, _>(field).unwrap_or_default();
-            serde_json::from_str(&json).unwrap_or_default()
-        }
-
         let id = row.try_get("id")?;
         let created_at = row.try_get("created_at")?;
         let updated_at = row.try_get("updated_at")?;
@@ -39,10 +34,17 @@ impl FromRow<'_, PgRow> for User {
         let role = row.try_get("role")?;
         let refresh_token = row.try_get("refresh_token")?;
 
-        let hashed_recovery_codes = parse_json_vec(row, "hashed_recovery_codes");
-        let permissions = parse_json_vec(row, "permissions");
-        let group_permissions = parse_json_vec(row, "group_permissions");
-        let favorite_spaces = parse_json_vec(row, "favorite_spaces");
+        let group_permissions: Vec<String> =
+            serde_json::from_value(row.try_get("group_permissions")?).unwrap_or_default();
+
+        let permissions: Vec<String> =
+            serde_json::from_value(row.try_get("permissions")?).unwrap_or_default();
+
+        let hashed_recovery_codes: Vec<String> =
+            serde_json::from_value(row.try_get("hashed_recovery_codes")?).unwrap_or_default();
+
+        let favorite_spaces: Vec<String> =
+            serde_json::from_value(row.try_get("favorite_spaces")?).unwrap_or_default();
 
         Ok(User {
             id,
@@ -1721,6 +1723,7 @@ mod tests {
 
         // Read
         let mut user = client.get_user("user").await.unwrap().unwrap();
+
         assert_eq!(user.username, "user");
         assert_eq!(user.group_permissions, vec!["user"]);
         assert_eq!(user.email, "email");

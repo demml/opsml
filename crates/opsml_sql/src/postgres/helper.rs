@@ -828,7 +828,7 @@ impl PostgresQueryHelper {
 
     pub fn get_artifact_key_from_storage_path_query() -> String {
         format!(
-            "SELECT uid, registry_type, encrypted_key, storage_key FROM {} WHERE storage_key = $1 AND registry_type = $2",
+            "SELECT uid, space, registry_type, encrypted_key, storage_key FROM {} WHERE storage_key = $1 AND registry_type = $2",
             CardTable::ArtifactKey
         )
     }
