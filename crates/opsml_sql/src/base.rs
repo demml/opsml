@@ -8,7 +8,7 @@ use opsml_semver::VersionParser;
 use opsml_settings::config::DatabaseSettings;
 use opsml_types::{
     cards::CardTable,
-    contracts::{ArtifactKey, AuditEvent, CardQueryArgs},
+    contracts::{ArtifactKey, AuditEvent, CardQueryArgs, SpaceStats, SpaceStatsEvent},
 };
 
 pub fn add_version_bounds(builder: &mut String, version: &str) -> Result<(), SqlError> {
@@ -352,4 +352,8 @@ pub trait SqlClient: Sized {
         name: Option<&str>,
         table: &CardTable,
     ) -> Result<Vec<VersionSummary>, SqlError>;
+
+    async fn get_space_stats(&self) -> Result<Vec<SpaceStats>, SqlError>;
+
+    async fn update_space_stats(&self, space: &SpaceStatsEvent) -> Result<(), SqlError>;
 }

@@ -12,7 +12,7 @@ use anyhow::Context;
 use anyhow::Result as AnyhowResult;
 use async_trait::async_trait;
 use opsml_settings::config::DatabaseSettings;
-use opsml_types::contracts::AuditEvent;
+use opsml_types::contracts::{AuditEvent, SpaceStats, SpaceStatsEvent};
 use opsml_types::{
     SqlType,
     {
@@ -413,6 +413,22 @@ impl SqlClient for SqlClientEnum {
             SqlClientEnum::Postgres(client) => client.delete_artifact_key(uid, registry_type).await,
             SqlClientEnum::Sqlite(client) => client.delete_artifact_key(uid, registry_type).await,
             SqlClientEnum::MySql(client) => client.delete_artifact_key(uid, registry_type).await,
+        }
+    }
+
+    async fn get_space_stats(&self) -> Result<Vec<SpaceStats>, SqlError> {
+        match self {
+            SqlClientEnum::Postgres(client) => client.get_space_stats().await,
+            SqlClientEnum::Sqlite(client) => client.get_space_stats().await,
+            SqlClientEnum::MySql(client) => client.get_space_stats().await,
+        }
+    }
+
+    async fn update_space_stats(&self, stats: &SpaceStatsEvent) -> Result<(), SqlError> {
+        match self {
+            SqlClientEnum::Postgres(client) => client.update_space_stats(stats).await,
+            SqlClientEnum::Sqlite(client) => client.update_space_stats(stats).await,
+            SqlClientEnum::MySql(client) => client.update_space_stats(stats).await,
         }
     }
 }

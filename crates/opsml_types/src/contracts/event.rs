@@ -35,3 +35,8 @@ impl Default for AuditEvent {
         }
     }
 }
+
+#[derive(Debug, Clone)]
+pub struct SpaceStatsEvent {
+    pub space: String,
+}

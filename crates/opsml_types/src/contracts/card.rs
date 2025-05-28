@@ -111,10 +111,11 @@ pub struct CardSpaceResponse {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SpaceStats {
     pub space: String,
-    pub nbr_experiments: i32,
-    pub nbr_models: i32,
-    pub nbr_data: i32,
-    pub nbr_prompts: i32,
+    pub experiment_count: i32,
+    pub model_count: i32,
+    pub data_count: i32,
+    pub prompt_count: i32,
+    pub user_count: i32,
 }
 
 #[derive(Serialize, Deserialize)]
