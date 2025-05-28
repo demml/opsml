@@ -150,17 +150,22 @@ CREATE TABLE IF NOT EXISTS opsml_experiment_hardware_metric (
 CREATE TABLE IF NOT EXISTS opsml_user (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    active BOOLEAN DEFAULT TRUE,
+    active BOOLEAN NOT NULL DEFAULT TRUE,
     username TEXT NOT NULL UNIQUE,
     password_hash TEXT NOT NULL,
+    hashed_recovery_codes TEXT DEFAULT '[]',
     permissions TEXT NOT NULL,
     group_permissions TEXT NOT NULL,
     role TEXT DEFAULT 'user',
-    refresh_token TEXT
+    favorite_spaces TEXT DEFAULT '[]',
+    refresh_token TEXT,
+    email TEXT NOT NULL UNIQUE,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS opsml_artifact_key (
     uid TEXT PRIMARY KEY,
+    space TEXT,
     registry_type TEXT,
     encrypted_key TEXT,
     storage_key TEXT,

@@ -19,4 +19,7 @@ pub enum AuthError {
 
     #[error("Error creating JWT token")]
     JWTError,
+
+    #[error("Invalid recovery code provided")]
+    InvalidRecoveryCode,
 }

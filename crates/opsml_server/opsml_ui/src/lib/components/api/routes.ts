@@ -1,14 +1,18 @@
 export enum RoutePaths {
+  // Auth
   VALIDATE_AUTH = "/opsml/api/auth/validate",
   LOGIN = "/opsml/api/auth/ui/login",
+  REFRESH_TOKEN = "/opsml/api/auth/refresh",
+  RESET_PASSWORD = "/opsml/api/user/reset-password/recovery",
+
+  // Card
   LIST_CARDS = "/opsml/api/card/list",
-  LIST_SPACES = "/opsml/api/card/spaces",
+  LIST_CARD_SPACES = "/opsml/api/card/spaces",
+  SPACES = "/opsml/api/spaces",
   GET_STATS = "/opsml/api/card/registry/stats",
   GET_REGISTRY_PAGE = "/opsml/api/card/registry/page",
   GET_VERSION_PAGE = "/opsml/api/card/registry/version/page",
 
-  ERROR = "/opsml/error",
-  HOME = "/opsml/home",
   METADATA = "/opsml/api/card/metadata",
   README = "/opsml/api/card/readme",
   FILE_INFO = "/opsml/api/files/list/info",
@@ -29,36 +33,19 @@ export enum RoutePaths {
   EXPERIMENT_METRIC_NAMES = "/opsml/api/experiment/metrics/names",
   EXPERIMENT_PARAMETERS = "/opsml/api/experiment/parameters",
   HARDWARE_METRICS = "/opsml/api/experiment/hardware/metrics",
+  USER = "/opsml/api/user",
+  REGISTER = "/opsml/api/user/register",
+}
 
-  // everything below is old and may be removed
-
-  REGISTER = "/opsml/auth/register",
-  UPDATE = "/opsml/auth/update",
-  AUTH_SETTINGS = "/opsml/auth/verify",
-  TOKEN = "/opsml/auth/token",
-  USER_AUTH = "/opsml/auth/user",
-  EXISTS = "/opsml/auth/user/exists",
-  REGISTRY_STATS = "/opsml/cards/registry/stats",
-  QUERY_PAGE = "/opsml/cards/registry/query/page",
-  DATACARD = "/opsml/data/card",
-  RUNCARD = "/opsml/run/card",
+export enum UiPaths {
+  LOGIN = "/opsml/user/login",
+  REGISTER = "/opsml/user/register",
+  REGISTER_SUCCESS = "/opsml/user/register/success",
+  FORGOT = "/opsml/user/forgot",
+  USER = "/opsml/user",
+  HOME = "/opsml/home",
   METRICS = "/opsml/metrics",
-
-  GRAPHS = "/opsml/runs/graphs",
-  FILE_EXISTS = "/opsml/files/exists",
-  FILES_VIEW = "/opsml/files/view",
-  MODEL_METADATA = "/opsml/models/metadata",
-
-  FORGOT = "/opsml/auth/forgot",
-  SECURITY_QUESTION = "/opsml/auth/security",
-  TEMP_TOKEN = "/opsml/auth/temp",
-  ROTATE_TOKEN = "/opsml/auth/token/rotate",
-  REFRESH_TOKEN = "/opsml/auth/token/refresh",
-
-  HARDWARE = "/opsml/metrics/hardware",
-  DRIFT_VALUES = "/opsml/scouter/drift/values",
-  FEATURE_DISTRIBUTION = "/opsml/scouter/feature/distribution",
-  MONITOR_ALERTS = "/opsml/scouter/alerts",
-  MONITOR_ALERT_METRICS = "/opsml/scouter/alerts/metrics",
-  OBSERVABILITY_METRICS = "/opsml/scouter/observability/metrics",
+  SCOUTER = "/opsml/scouter",
+  EXPERIMENT = "/opsml/experiment",
+  ERROR = "/opsml/error",
 }

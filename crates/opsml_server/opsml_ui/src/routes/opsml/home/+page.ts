@@ -1,9 +1,10 @@
 import { getRecentCards } from "$lib/components/home/utils";
-import { opsmlClient } from "$lib/components/api/client.svelte";
+import { validateUserOrRedirect } from "$lib/components/user/user.svelte";
+import { userStore } from "$lib/components/user/user.svelte";
 import type { PageLoad } from "./$types";
 
-export const load: PageLoad = async () => {
-  await opsmlClient.validateAuth(true);
+export const load: PageLoad = async ({}) => {
+  await validateUserOrRedirect();
   let cards = await getRecentCards();
   return { cards: cards };
 };

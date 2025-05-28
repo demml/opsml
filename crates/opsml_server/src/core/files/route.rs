@@ -122,11 +122,19 @@ pub async fn generate_presigned_url(
 ) -> Result<Json<PresignedUrl>, (StatusCode, Json<OpsmlServerError>)> {
     // check for read access
 
-    if !perms.has_read_permission() {
+    let path = Path::new(&params.path);
+
+    let space_id = path.iter().next().ok_or_else(|| {
+        (
+            StatusCode::BAD_REQUEST,
+            Json(OpsmlServerError::invalid_path()),
+        )
+    })?;
+
+    if !perms.has_read_permission(space_id.to_str().unwrap()) {
         return OpsmlServerError::permission_denied().into_response(StatusCode::FORBIDDEN);
     }
 
-    let path = Path::new(&params.path);
     let for_multi_part = params.for_multi_part.unwrap_or(false);
 
     // for multi part uploads, we need to get the session url and part number
@@ -272,13 +280,20 @@ pub async fn list_file_info(
     Extension(perms): Extension<UserPermissions>,
     Query(params): Query<ListFileQuery>,
 ) -> Result<Json<ListFileInfoResponse>, (StatusCode, Json<OpsmlServerError>)> {
-    if !perms.has_read_permission() {
-        return OpsmlServerError::permission_denied().into_response(StatusCode::FORBIDDEN);
-    }
-
     let path = Path::new(&params.path);
 
     debug!("Getting file info for: {}", path.display(),);
+
+    let space_id = path.iter().next().ok_or_else(|| {
+        (
+            StatusCode::BAD_REQUEST,
+            Json(OpsmlServerError::invalid_path()),
+        )
+    })?;
+
+    if !perms.has_read_permission(space_id.to_str().unwrap()) {
+        return OpsmlServerError::permission_denied().into_response(StatusCode::FORBIDDEN);
+    }
 
     let files = state.storage_client.find_info(path).await;
 
@@ -298,11 +313,18 @@ pub async fn file_tree(
     Extension(perms): Extension<UserPermissions>,
     Query(params): Query<ListFileQuery>,
 ) -> Result<Json<FileTreeResponse>, (StatusCode, Json<OpsmlServerError>)> {
-    if !perms.has_read_permission() {
+    let path = Path::new(&params.path);
+
+    let space_id = path.iter().next().ok_or_else(|| {
+        (
+            StatusCode::BAD_REQUEST,
+            Json(OpsmlServerError::invalid_path()),
+        )
+    })?;
+
+    if !perms.has_read_permission(space_id.to_str().unwrap()) {
         return OpsmlServerError::permission_denied().into_response(StatusCode::FORBIDDEN);
     }
-
-    let path = Path::new(&params.path);
 
     let files = state.storage_client.find_info(path).await;
 
@@ -371,12 +393,18 @@ pub async fn get_file_for_ui(
     Extension(perms): Extension<UserPermissions>,
     Json(req): Json<RawFileRequest>,
 ) -> Result<Json<RawFile>, (StatusCode, Json<OpsmlServerError>)> {
-    if !perms.has_read_permission() {
-        error!("Permission denied");
+    let file_path = PathBuf::from(&req.path);
+
+    let space_id = file_path.iter().next().ok_or_else(|| {
+        (
+            StatusCode::BAD_REQUEST,
+            Json(OpsmlServerError::invalid_path()),
+        )
+    })?;
+
+    if !perms.has_read_permission(space_id.to_str().unwrap()) {
         return OpsmlServerError::permission_denied().into_response(StatusCode::FORBIDDEN);
     }
-
-    let file_path = PathBuf::from(&req.path);
 
     let files = state.storage_client.find_info(&file_path).await;
 

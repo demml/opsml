@@ -3854,6 +3854,7 @@ dependencies = [
  "opsml-sql",
  "password-auth",
  "rand 0.9.1",
+ "rayon",
  "serde",
  "thiserror 2.0.12",
 ]

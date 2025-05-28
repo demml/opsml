@@ -3,7 +3,7 @@ import { RoutePaths } from "$lib/components/api/routes";
 import { RegistryType } from "$lib/utils";
 import type {
   QueryPageResponse,
-  spaceResponse,
+  CardSpaceResponse,
   RegistryStatsResponse,
   RegistryPageReturn,
   RegistryStatsRequest,
@@ -12,12 +12,17 @@ import type {
 } from "$lib/components/card/types";
 import type { CardQueryArgs } from "../api/schema";
 import { type Card } from "$lib/components/home/types";
+import { userStore } from "../user/user.svelte";
 
 export async function getSpaces(
   registry_type: RegistryType
-): Promise<spaceResponse> {
+): Promise<CardSpaceResponse> {
   let params = { registry_type: registry_type };
-  const response = await opsmlClient.get(RoutePaths.LIST_SPACES, params);
+  const response = await opsmlClient.get(
+    RoutePaths.LIST_CARD_SPACES,
+    params,
+    userStore.jwt_token
+  );
   return await response.json();
 }
 
@@ -32,7 +37,11 @@ export async function getRegistryStats(
     space: space,
   };
 
-  const response = await opsmlClient.get(RoutePaths.GET_STATS, request);
+  const response = await opsmlClient.get(
+    RoutePaths.GET_STATS,
+    request,
+    userStore.jwt_token
+  );
   return await response.json();
 }
 
@@ -69,7 +78,11 @@ export async function getRegistryPage(
     params["page"] = page;
   }
 
-  const response = await opsmlClient.get(RoutePaths.GET_REGISTRY_PAGE, params);
+  const response = await opsmlClient.get(
+    RoutePaths.GET_REGISTRY_PAGE,
+    params,
+    userStore.jwt_token
+  );
   return await response.json();
 }
 
@@ -119,7 +132,11 @@ export async function getCardUid(
     limit: 1,
   };
 
-  const response = await opsmlClient.get(RoutePaths.LIST_CARDS, params);
+  const response = await opsmlClient.get(
+    RoutePaths.LIST_CARDS,
+    params,
+    userStore.jwt_token
+  );
   const data = (await response.json()) as Card[];
 
   // @ts-ignore
@@ -153,7 +170,11 @@ export async function getCardMetadata(
     registry_type: registry_type,
   };
 
-  const response = await opsmlClient.get(RoutePaths.METADATA, params);
+  const response = await opsmlClient.get(
+    RoutePaths.METADATA,
+    params,
+    userStore.jwt_token
+  );
   return await response.json();
 }
 
@@ -170,6 +191,19 @@ export async function getVersionPage(
     page: page,
   };
 
-  const response = await opsmlClient.get(RoutePaths.GET_VERSION_PAGE, params);
+  const response = await opsmlClient.get(
+    RoutePaths.GET_VERSION_PAGE,
+    params,
+    userStore.jwt_token
+  );
+  return await response.json();
+}
+
+export async function getAllSpaces(): Promise<CardSpaceResponse> {
+  const response = await opsmlClient.get(
+    RoutePaths.SPACES,
+    undefined,
+    userStore.jwt_token
+  );
   return await response.json();
 }

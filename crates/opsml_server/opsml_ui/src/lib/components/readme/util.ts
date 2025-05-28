@@ -7,6 +7,7 @@ import { markedHighlight } from "marked-highlight";
 import hljs from "highlight.js";
 import "highlight.js/styles/github.css";
 import "github-markdown-css/github-markdown-light.css";
+import { userStore } from "../user/user.svelte";
 
 export type ReadMe = {
   readme: string;
@@ -24,7 +25,11 @@ export async function getCardReadMe(
     registry_type: registry_type,
   };
 
-  const response = await opsmlClient.get(RoutePaths.README, params);
+  const response = await opsmlClient.get(
+    RoutePaths.README,
+    params,
+    userStore.jwt_token
+  );
   return await response.json();
 }
 
@@ -62,5 +67,7 @@ export async function createReadMe(
     readme: content,
   };
 
-  return (await opsmlClient.post(RoutePaths.README, args)).json();
+  return (
+    await opsmlClient.post(RoutePaths.README, args, userStore.jwt_token)
+  ).json();
 }

@@ -153,18 +153,24 @@ CREATE TABLE IF NOT EXISTS opsml_user (
     active BOOLEAN DEFAULT TRUE,
     username VARCHAR(255) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
+    hashed_recovery_codes JSON NOT NULL,
     permissions JSON NOT NULL,
     group_permissions JSON NOT NULL,
     role VARCHAR(255) DEFAULT 'user',
-    refresh_token VARCHAR(255)
+    favorite_spaces JSON NOT NULL DEFAULT ('[]'),
+    refresh_token VARCHAR(255),
+    email VARCHAR(255),
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS opsml_artifact_key (
     uid VARCHAR(64) PRIMARY KEY,
+    space VARCHAR(255),
     registry_type VARCHAR(32),
     encrypted_key VARBINARY(255),
     storage_key VARCHAR(255),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS opsml_audit_event (

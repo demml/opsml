@@ -7,6 +7,7 @@ use crate::schemas::schema::{
     QueryStats, ServerCard, User, VersionSummary,
 };
 use crate::schemas::schema::{CardResults, VersionResult};
+
 use async_trait::async_trait;
 use opsml_semver::VersionValidator;
 use opsml_settings::config::DatabaseSettings;
@@ -18,7 +19,6 @@ use opsml_types::{
 use semver::Version;
 use sqlx::{
     mysql::{MySql, MySqlPoolOptions, MySqlRow},
-    types::chrono::{DateTime, Utc},
     FromRow, Pool, Row,
 };
 
@@ -26,32 +26,42 @@ use tracing::info;
 
 impl FromRow<'_, MySqlRow> for User {
     fn from_row(row: &MySqlRow) -> Result<Self, sqlx::Error> {
-        let id: Option<i32> = row.try_get("id")?;
-        let created_at: DateTime<Utc> = row.try_get("created_at")?;
-        let active: bool = row.try_get("active")?;
-        let username: String = row.try_get("username")?;
-        let password_hash: String = row.try_get("password_hash")?;
-
-        // Deserialize JSON strings into Vec<String>
-        let permissions: serde_json::Value = row.try_get("permissions")?;
-        let permissions: Vec<String> = serde_json::from_value(permissions).unwrap_or_default();
-
-        let group_permissions: serde_json::Value = row.try_get("group_permissions")?;
-        let group_permissions: Vec<String> =
-            serde_json::from_value(group_permissions).unwrap_or_default();
+        let id = row.try_get("id")?;
+        let created_at = row.try_get("created_at")?;
+        let updated_at = row.try_get("updated_at")?;
+        let active = row.try_get("active")?;
+        let username = row.try_get("username")?;
+        let password_hash = row.try_get("password_hash")?;
+        let email = row.try_get("email")?;
         let role = row.try_get("role")?;
-        let refresh_token: Option<String> = row.try_get("refresh_token")?;
+        let refresh_token = row.try_get("refresh_token")?;
+
+        let group_permissions: Vec<String> =
+            serde_json::from_value(row.try_get("group_permissions")?).unwrap_or_default();
+
+        let permissions: Vec<String> =
+            serde_json::from_value(row.try_get("permissions")?).unwrap_or_default();
+
+        let hashed_recovery_codes: Vec<String> =
+            serde_json::from_value(row.try_get("hashed_recovery_codes")?).unwrap_or_default();
+
+        let favorite_spaces: Vec<String> =
+            serde_json::from_value(row.try_get("favorite_spaces")?).unwrap_or_default();
 
         Ok(User {
             id,
             created_at,
+            updated_at,
             active,
             username,
             password_hash,
-            permissions,
-            group_permissions,
+            email,
             role,
             refresh_token,
+            hashed_recovery_codes,
+            permissions,
+            group_permissions,
+            favorite_spaces,
         })
     }
 }
@@ -890,17 +900,21 @@ impl SqlClient for MySqlClient {
     async fn insert_user(&self, user: &User) -> Result<(), SqlError> {
         let query = MySQLQueryHelper::get_user_insert_query();
 
+        let hashed_recovery_codes = serde_json::to_value(&user.hashed_recovery_codes)?;
         let group_permissions = serde_json::to_value(&user.group_permissions)?;
-
         let permissions = serde_json::to_value(&user.permissions)?;
+        let favorite_spaces = serde_json::to_value(&user.favorite_spaces)?;
 
         sqlx::query(&query)
             .bind(&user.username)
             .bind(&user.password_hash)
+            .bind(&hashed_recovery_codes)
             .bind(&permissions)
             .bind(&group_permissions)
+            .bind(&favorite_spaces)
             .bind(&user.role)
             .bind(user.active)
+            .bind(&user.email)
             .execute(&self.pool)
             .await?;
 
@@ -921,16 +935,20 @@ impl SqlClient for MySqlClient {
     async fn update_user(&self, user: &User) -> Result<(), SqlError> {
         let query = MySQLQueryHelper::get_user_update_query();
 
+        let hashed_recovery_codes = serde_json::to_value(&user.hashed_recovery_codes)?;
         let group_permissions = serde_json::to_value(&user.group_permissions)?;
-
         let permissions = serde_json::to_value(&user.permissions)?;
+        let favorite_spaces = serde_json::to_value(&user.favorite_spaces)?;
 
         sqlx::query(&query)
             .bind(user.active)
             .bind(&user.password_hash)
+            .bind(&hashed_recovery_codes)
             .bind(&permissions)
             .bind(&group_permissions)
+            .bind(&favorite_spaces)
             .bind(&user.refresh_token)
+            .bind(&user.email)
             .bind(&user.username)
             .execute(&self.pool)
             .await?;
@@ -983,6 +1001,7 @@ impl SqlClient for MySqlClient {
         let query = MySQLQueryHelper::get_artifact_key_insert_query();
         sqlx::query(&query)
             .bind(&key.uid)
+            .bind(&key.space)
             .bind(key.registry_type.to_string())
             .bind(key.encrypted_key.clone())
             .bind(&key.storage_key)
@@ -999,7 +1018,7 @@ impl SqlClient for MySqlClient {
     ) -> Result<ArtifactKey, SqlError> {
         let query = MySQLQueryHelper::get_artifact_key_select_query();
 
-        let key: (String, String, Vec<u8>, String) = sqlx::query_as(&query)
+        let key: (String, String, String, Vec<u8>, String) = sqlx::query_as(&query)
             .bind(uid)
             .bind(registry_type)
             .fetch_one(&self.pool)
@@ -1007,9 +1026,10 @@ impl SqlClient for MySqlClient {
 
         Ok(ArtifactKey {
             uid: key.0,
-            registry_type: RegistryType::from_string(&key.1)?,
-            encrypted_key: key.2,
-            storage_key: key.3,
+            space: key.1,
+            registry_type: RegistryType::from_string(&key.2)?,
+            encrypted_key: key.3,
+            storage_key: key.4,
         })
     }
 
@@ -1020,7 +1040,7 @@ impl SqlClient for MySqlClient {
     ) -> Result<Option<ArtifactKey>, SqlError> {
         let query = MySQLQueryHelper::get_artifact_key_from_storage_path_query();
 
-        let key: Option<(String, String, Vec<u8>, String)> = sqlx::query_as(&query)
+        let key: Option<(String, String, String, Vec<u8>, String)> = sqlx::query_as(&query)
             .bind(storage_path)
             .bind(registry_type)
             .fetch_optional(&self.pool)
@@ -1029,9 +1049,10 @@ impl SqlClient for MySqlClient {
         return match key {
             Some(k) => Ok(Some(ArtifactKey {
                 uid: k.0,
-                registry_type: RegistryType::from_string(&k.1)?,
-                encrypted_key: k.2,
-                storage_key: k.3,
+                space: k.1,
+                registry_type: RegistryType::from_string(&k.2)?,
+                encrypted_key: k.3,
+                storage_key: k.4,
             })),
             None => Ok(None),
         };
@@ -1077,7 +1098,7 @@ impl SqlClient for MySqlClient {
     ) -> Result<ArtifactKey, SqlError> {
         let query = MySQLQueryHelper::get_load_card_query(table, query_args)?;
 
-        let key: (String, String, Vec<u8>, String) = sqlx::query_as(&query)
+        let key: (String, String, String, Vec<u8>, String) = sqlx::query_as(&query)
             .bind(query_args.uid.as_ref())
             .bind(query_args.uid.as_ref())
             .bind(query_args.name.as_ref())
@@ -1092,9 +1113,10 @@ impl SqlClient for MySqlClient {
 
         Ok(ArtifactKey {
             uid: key.0,
-            registry_type: RegistryType::from_string(&key.1)?,
-            encrypted_key: key.2,
-            storage_key: key.3,
+            space: key.1,
+            registry_type: RegistryType::from_string(&key.2)?,
+            encrypted_key: key.3,
+            storage_key: key.4,
         })
     }
 
@@ -1738,12 +1760,24 @@ mod tests {
     #[tokio::test]
     async fn test_mysql_user() {
         let client = db_client().await;
+        let recovery_codes = vec!["recovery_code_1".to_string(), "recovery_code_2".to_string()];
 
-        let user = User::new("user".to_string(), "pass".to_string(), None, None, None);
+        let user = User::new(
+            "user".to_string(),
+            "pass".to_string(),
+            "email".to_string(),
+            recovery_codes,
+            None,
+            None,
+            None,
+            None,
+        );
         client.insert_user(&user).await.unwrap();
 
         let mut user = client.get_user("user").await.unwrap().unwrap();
         assert_eq!(user.username, "user");
+        assert_eq!(user.group_permissions, vec!["user"]);
+        assert_eq!(user.email, "email");
 
         // update user
         user.active = false;
@@ -1774,6 +1808,7 @@ mod tests {
 
         let key = ArtifactKey {
             uid: "550e8400-e29b-41d4-a716-446655440000".to_string(),
+            space: "repo1".to_string(),
             registry_type: RegistryType::Data,
             encrypted_key: encrypted_key.clone(),
             storage_key: "opsml_registry".to_string(),
@@ -1792,6 +1827,7 @@ mod tests {
         let encrypted_key: Vec<u8> = (32..64).collect();
         let key = ArtifactKey {
             uid: "550e8400-e29b-41d4-a716-446655440000".to_string(),
+            space: "repo1".to_string(),
             registry_type: RegistryType::Data,
             encrypted_key: encrypted_key.clone(),
             storage_key: "opsml_registry".to_string(),
@@ -1836,6 +1872,7 @@ mod tests {
         let encrypted_key: Vec<u8> = (0..32).collect();
         let key = ArtifactKey {
             uid: data_card.uid.clone(),
+            space: "repo1".to_string(),
             registry_type: RegistryType::Data,
             encrypted_key: encrypted_key.clone(),
             storage_key: "opsml_registry".to_string(),

@@ -14,11 +14,11 @@ use std::thread::sleep;
 #[cfg(feature = "server")]
 use tokio::{runtime::Runtime, sync::Mutex, task::JoinHandle};
 
-#[cfg(feature = "test")]
+#[cfg(feature = "server")]
 use mockito;
-#[cfg(feature = "test")]
+#[cfg(feature = "server")]
 use scouter_client::{BinnedCustomMetrics, BinnedPsiFeatureMetrics, SpcDriftFeatures};
-#[cfg(feature = "test")]
+#[cfg(feature = "server")]
 use serde_json;
 
 use pyo3::exceptions::PyRuntimeError;
@@ -30,13 +30,13 @@ use std::time::Duration;
 use std::path::PathBuf;
 use thiserror::Error;
 
-#[cfg(feature = "test")]
+#[cfg(feature = "server")]
 pub struct ScouterServer {
     pub url: String,
     pub server: mockito::ServerGuard,
 }
 
-#[cfg(feature = "test")]
+#[cfg(feature = "server")]
 impl ScouterServer {
     pub fn new() -> Self {
         let mut server = mockito::Server::new();
@@ -170,7 +170,7 @@ pub struct OpsmlTestServer {
     #[cfg(feature = "server")]
     runtime: Arc<Runtime>,
 
-    #[cfg(feature = "test")]
+    #[cfg(feature = "server")]
     scouter_server: Option<ScouterServer>,
 
     cleanup: bool,
@@ -192,7 +192,7 @@ impl OpsmlTestServer {
             handle: Arc::new(Mutex::new(None)),
             #[cfg(feature = "server")]
             runtime: Arc::new(Runtime::new().unwrap()),
-            #[cfg(feature = "test")]
+            #[cfg(feature = "server")]
             scouter_server: None,
             cleanup,
             base_path,
@@ -200,7 +200,7 @@ impl OpsmlTestServer {
         }
     }
 
-    #[cfg(feature = "test")]
+    #[cfg(feature = "server")]
     pub fn start_mock_scouter(&mut self) -> PyResult<()> {
         let scouter_server = ScouterServer::new();
         std::env::set_var("SCOUTER_SERVER_URI", &scouter_server.url);
@@ -209,7 +209,7 @@ impl OpsmlTestServer {
         Ok(())
     }
 
-    #[cfg(feature = "test")]
+    #[cfg(feature = "server")]
     pub fn stop_mock_scouter(&mut self) {
         if let Some(server) = self.scouter_server.take() {
             drop(server);
@@ -274,11 +274,15 @@ impl OpsmlTestServer {
 
             let client = reqwest::blocking::Client::new();
             let mut attempts = 0;
-            let max_attempts = 20;
+            let max_attempts = 30;
 
             while attempts < max_attempts {
+                println!(
+                    "Checking if Opsml Server is running at http://localhost:{}/opsml/api/healthcheck",
+                    port
+                );
                 let res = client
-                    .get("http://localhost:3000/opsml/api/healthcheck")
+                    .get(&format!("http://localhost:{}/opsml/api/healthcheck", port))
                     .send();
                 if let Ok(response) = res {
                     if response.status() == 200 {
@@ -292,9 +296,13 @@ impl OpsmlTestServer {
                         })?;
                         return Ok(());
                     }
+                } else {
+                    let resp_msg = res.unwrap_err().to_string();
+                    println!("Opsml Server not yet ready: {}", resp_msg);
                 }
+
                 attempts += 1;
-                sleep(Duration::from_millis(100));
+                sleep(Duration::from_millis(100 + (attempts * 10)));
 
                 // set env vars for OPSML_TRACKING_URI
             }
@@ -394,7 +402,7 @@ impl OpsmlTestServer {
 
 #[pyclass]
 pub struct OpsmlServerContext {
-    #[cfg(feature = "test")]
+    #[cfg(feature = "server")]
     scouter_server: Option<ScouterServer>,
 }
 
@@ -403,12 +411,12 @@ impl OpsmlServerContext {
     #[new]
     fn new() -> Self {
         OpsmlServerContext {
-            #[cfg(feature = "test")]
+            #[cfg(feature = "server")]
             scouter_server: None,
         }
     }
 
-    #[cfg(feature = "test")]
+    #[cfg(feature = "server")]
     pub fn start_mock_scouter(&mut self) -> PyResult<()> {
         let scouter_server = ScouterServer::new();
         std::env::set_var("SCOUTER_SERVER_URI", &scouter_server.url);
@@ -417,7 +425,7 @@ impl OpsmlServerContext {
         Ok(())
     }
 
-    #[cfg(feature = "test")]
+    #[cfg(feature = "server")]
     pub fn stop_mock_scouter(&mut self) {
         if let Some(server) = self.scouter_server.take() {
             drop(server);
@@ -429,7 +437,7 @@ impl OpsmlServerContext {
     fn __enter__(&mut self) -> PyResult<()> {
         #[cfg(feature = "server")]
         {
-            #[cfg(feature = "test")]
+            #[cfg(feature = "server")]
             self.start_mock_scouter()?;
 
             app_state().reset_app_state().map_err(|e| {
@@ -447,7 +455,7 @@ impl OpsmlServerContext {
 
     #[getter]
     pub fn server_uri(&self) -> PyResult<String> {
-        #[cfg(feature = "test")]
+        #[cfg(feature = "server")]
         {
             if let Some(server) = &self.scouter_server {
                 Ok(server.url.clone())
@@ -455,9 +463,9 @@ impl OpsmlServerContext {
                 Err(TestServerError::CustomError("Scouter server not started".to_string()).into())
             }
         }
-        #[cfg(not(feature = "test"))]
+        #[cfg(not(feature = "server"))]
         {
-            Err(TestServerError::CustomError("Test feature not enabled".to_string()).into())
+            Err(TestServerError::CustomError("Server feature not enabled".to_string()).into())
         }
     }
 
@@ -467,7 +475,7 @@ impl OpsmlServerContext {
         _exc_value: PyObject,
         _traceback: PyObject,
     ) -> PyResult<()> {
-        #[cfg(feature = "test")]
+        #[cfg(feature = "server")]
         self.stop_mock_scouter();
 
         self.cleanup()?;

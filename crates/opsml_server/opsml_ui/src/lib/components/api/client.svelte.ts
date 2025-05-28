@@ -1,116 +1,26 @@
 import { goto } from "$app/navigation";
-import { RoutePaths } from "$lib/components/api/routes";
+import { UiPaths } from "$lib/components/api/routes";
 import { browser } from "$app/environment";
 
 export class OpsmlClient {
   // UserStore functionality as class properties with runes
-  username = $state("");
-  jwt_token = $state("");
-  logged_in = $state(false);
+  // user = $state<UserStore>(userStore);
 
   constructor() {
     if (browser) {
-      const storedToken = this.getTokenFromCookie();
-      if (storedToken) {
-        this.jwt_token = storedToken;
-        this.logged_in = true;
-        // Optionally validate the token here
-        this.validateAuth();
-      }
+      // start active user session
+      // This will load any stored token from the cookie
+      //this.user = userStore;
+      //if (this.user.jwt_token !== "") {
+      //  this.validateAuth();
+      //}
     }
   }
 
-  private setTokenCookie(token: string) {
-    // Set cookie to expire in 24 hours (or match your token expiration)
-    const expirationDate = new Date();
-    expirationDate.setTime(expirationDate.getTime() + 1 * 60 * 60 * 1000);
-
-    document.cookie = `jwt_token=${token}; expires=${expirationDate.toUTCString()}; path=/; SameSite=Strict`;
-  }
-
-  private getTokenFromCookie(): string | null {
-    if (!browser) return null;
-
-    const cookies = document.cookie.split(";");
-    const tokenCookie = cookies.find((cookie) =>
-      cookie.trim().startsWith("jwt_token=")
-    );
-
-    if (tokenCookie) {
-      return tokenCookie.split("=")[1].trim();
-    }
-
-    return null;
-  }
-
-  private removeTokenCookie() {
-    document.cookie =
-      "jwt_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-  }
-
-  // UserStore methods
-  resetUser() {
-    this.username = "";
-    this.jwt_token = "";
-    this.logged_in = false;
-
-    if (browser) {
-      this.removeTokenCookie();
-    }
-  }
-
-  updateUser(username: string, jwt_token: string) {
-    this.username = username;
-    this.jwt_token = jwt_token;
-    this.logged_in = true;
-
-    if (browser) {
-      this.setTokenCookie(jwt_token);
-    }
-  }
-
-  // Auth manager methods
-  async login(username: string, password: string): Promise<boolean> {
-    const response = await this.post(RoutePaths.LOGIN, {
-      username,
-      password,
-    });
-
-    if (response.ok) {
-      const data = await response.json();
-      this.updateUser(data.username, data.jwt_token);
-      return true;
-    }
-    return false;
-  }
-
-  async logout(): Promise<void> {
-    this.resetUser();
-  }
-
-  async validateAuth(test: boolean = false): Promise<void> {
-    if (test) {
-      await this.login("guest", "guest");
-      return;
-    }
-
-    const response = await this.get(RoutePaths.VALIDATE_AUTH);
-    if (!response.ok) {
-      console.error("Failed to validate auth");
-      void goto(RoutePaths.LOGIN);
-      return;
-    }
-
-    const authenticated = await response.json();
-    if (!authenticated.is_authenticated) {
-      void goto(RoutePaths.LOGIN);
-    }
-  }
-
-  // API handler methods
+  //// API handler methods
   private async handleError(response: Response): Promise<Response> {
     const errorMessage = await response.text();
-    void goto(`${RoutePaths.ERROR}?message=${errorMessage}`);
+    void goto(`${UiPaths.ERROR}?message=${errorMessage}`);
     return new Response(null, { status: 500, statusText: "Failure" });
   }
 
@@ -130,6 +40,7 @@ export class OpsmlClient {
     url: string,
     method: string,
     body: any = null,
+    bearerToken: string,
     contentType: string = "application/json",
     additionalHeaders: Record<string, string> = {}
   ): Promise<Response> {
@@ -138,7 +49,7 @@ export class OpsmlClient {
     const headers = {
       "Content-Type": contentType,
       "User-Agent": userAgent,
-      Authorization: `Bearer ${this.jwt_token}`,
+      Authorization: `Bearer ${bearerToken}`,
       ...additionalHeaders,
     };
 
@@ -155,35 +66,49 @@ export class OpsmlClient {
     return new Response(null, { status: 500, statusText: "Failure" });
   }
 
-  async get(url: string, params?: Record<string, any>): Promise<Response> {
+  async get(
+    url: string,
+    params?: Record<string, any>,
+    bearerToken: string = ""
+  ): Promise<Response> {
     const urlWithParams = this.addQueryParams(url, params);
 
-    return this.request(urlWithParams, "GET");
+    return this.request(urlWithParams, "GET", null, bearerToken);
   }
 
   async put(
     url: string,
     body: any,
+    bearerToken: string = "",
     contentType: string = "application/json"
   ): Promise<Response> {
-    return this.request(url, "PUT", body, contentType);
+    return this.request(url, "PUT", body, bearerToken, contentType);
   }
 
   async patch(
     url: string,
     body: any,
+    bearerToken: string = "",
     contentType: string = "application/json"
   ): Promise<Response> {
-    return this.request(url, "PATCH", body, contentType);
+    return this.request(url, "PATCH", body, bearerToken, contentType);
   }
 
   async post(
     url: string,
     body: any,
+    bearerToken: string = "",
     contentType: string = "application/json",
     additionalHeaders: Record<string, string> = {}
   ): Promise<Response> {
-    return this.request(url, "POST", body, contentType, additionalHeaders);
+    return this.request(
+      url,
+      "POST",
+      body,
+      bearerToken,
+      contentType,
+      additionalHeaders
+    );
   }
 }
 

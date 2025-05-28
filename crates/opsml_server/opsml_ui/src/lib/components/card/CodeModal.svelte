@@ -1,10 +1,14 @@
 <script lang="ts">
   import { Modal } from '@skeletonlabs/skeleton-svelte';
-  import { onMount } from 'svelte';
-  import Highlight, { LineNumbers } from "svelte-highlight";
-  import python from "svelte-highlight/languages/python";
+  import Highlight from "svelte-highlight";
+  import github from "svelte-highlight/styles/github";
 
-  let { code, language } = $props<{code: string; language: string}>();
+  let { 
+    code,
+    language,
+    message,
+    display
+  } = $props<{code: string; language: any; message: string; display: string}>();
   let openState = $state(false);
   let copied = $state(false);
   let timeoutId: number = 0;
@@ -40,6 +44,12 @@
 
 </script>
 
+
+<svelte:head>
+  {@html github}
+</svelte:head>
+
+
 <Modal
 open={openState}
 onOpenChange={(e) => (openState = e.open)}
@@ -47,7 +57,7 @@ triggerBase="btn bg-primary-500 text-black shadow shadow-hover border-black bord
 contentBase="card p-4 bg-slate-100 border-2 border-black shadow max-w-screen-xl"
 backdropClasses="backdrop-blur-sm"
 >
-{#snippet trigger()}Use this card{/snippet}
+{#snippet trigger()}{display}{/snippet}
 {#snippet content()}
   <div class="flex flex-row pb-3 justify-between items-center">
     <header class="pl-2 text-xl font-bold text-black">Usage</header> 
@@ -55,9 +65,9 @@ backdropClasses="backdrop-blur-sm"
       {copied ? 'Copied 👍' : 'Copy'}
     </button>
   </div>
-  <article class="pl-2 max-h-[200px] overflow-hidden text-black">Paste the following code into your Python script to load the card</article>
+  <article class="pl-2 max-h-[200px] overflow-hidden text-black py-1">{message}</article>
   <div class="rounded-lg border-2 border-black overflow-y-scroll max-h-[600px]">
-    <Highlight language={python}  
+    <Highlight language={language}  
         code={code} 
         let:highlighted>
     </Highlight>
