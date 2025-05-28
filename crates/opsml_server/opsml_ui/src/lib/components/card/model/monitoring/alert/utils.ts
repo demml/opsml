@@ -10,6 +10,7 @@ import { opsmlClient } from "$lib/components/api/client.svelte";
 import type { TimeInterval } from "../types";
 import { timeIntervalToDateTime } from "../util";
 import { sampleAlerts } from "../example";
+import { userStore } from "$lib/components/user/user.svelte";
 
 export async function getDriftAlerts(
   space: string,
@@ -26,7 +27,11 @@ export async function getDriftAlerts(
     active: active,
   };
 
-  const response = await opsmlClient.get(RoutePaths.DRIFT_ALERT, alertRequest);
+  const response = await opsmlClient.get(
+    RoutePaths.DRIFT_ALERT,
+    alertRequest,
+    userStore.jwt_token
+  );
   if (!response.ok) {
     throw new Error(`Failed to fetch drift alerts: ${response.status}`);
   }
@@ -49,7 +54,11 @@ export async function acknowledgeAlert(
     space: space,
   };
 
-  const response = await opsmlClient.put(RoutePaths.DRIFT_ALERT, request);
+  const response = await opsmlClient.put(
+    RoutePaths.DRIFT_ALERT,
+    request,
+    userStore.jwt_token
+  );
 
   if (!response.ok) {
     throw new Error(`Failed to acknowledge alert: ${response.status}`);

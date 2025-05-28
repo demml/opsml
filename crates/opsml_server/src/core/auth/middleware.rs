@@ -14,7 +14,7 @@ use opsml_auth::permission::UserPermissions;
 use opsml_sql::base::SqlClient;
 use serde::Serialize;
 use std::sync::Arc;
-use tracing::info;
+use tracing::{error, info};
 
 #[derive(Debug, Serialize)]
 pub struct ErrorResponse {
@@ -28,6 +28,8 @@ pub async fn auth_api_middleware(
     mut req: Request,
     next: Next,
 ) -> Result<impl IntoResponse, (StatusCode, Json<AuthError>)> {
+    // print route being accessed
+
     // get the access token from the cookie or the authorization header
     let access_token = cookie_jar
         .get("access_token")
@@ -44,6 +46,7 @@ pub async fn auth_api_middleware(
         });
 
     let access_token = access_token.ok_or_else(|| {
+        error!("Error accessing route: {}", req.uri());
         (
             StatusCode::UNAUTHORIZED,
             Json(AuthError {

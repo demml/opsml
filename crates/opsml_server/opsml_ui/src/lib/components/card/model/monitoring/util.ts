@@ -22,6 +22,7 @@ import {
   sampleSpcMetrics,
   sampleCustomMetrics,
 } from "./example";
+import { userStore } from "$lib/components/user/user.svelte";
 
 export type DriftProfile = {
   Spc: SpcDriftProfile;
@@ -49,7 +50,11 @@ export async function getDriftProfiles(
     drift_profile_uri_map: driftUriMap,
   };
 
-  const response = await opsmlClient.post(RoutePaths.DRIFT_PROFILE_UI, body);
+  const response = await opsmlClient.post(
+    RoutePaths.DRIFT_PROFILE_UI,
+    body,
+    userStore.jwt_token
+  );
   return (await response.json()) as DriftProfileResponse;
 }
 
@@ -128,7 +133,11 @@ export async function getLatestMetrics(
       })();
 
       // Make the request and store result in driftMap
-      const response = await opsmlClient.get(route, request);
+      const response = await opsmlClient.get(
+        route,
+        request,
+        userStore.jwt_token
+      );
       const data = await response.json();
       driftMap[driftType as DriftType] = data;
     }
@@ -196,7 +205,8 @@ export async function updateDriftProfile(
 ): Promise<UpdateResponse> {
   const response = await opsmlClient.put(
     RoutePaths.DRIFT_PROFILE,
-    updateRequest
+    updateRequest,
+    userStore.jwt_token
   );
   return (await response.json()) as UpdateResponse;
 }

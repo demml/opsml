@@ -1,3 +1,4 @@
+use crate::core::cards::schema::InsertCardResponse;
 use crate::core::error::ServerError;
 use opsml_semver::{VersionArgs, VersionValidator};
 use opsml_sql::base::SqlClient;
@@ -7,7 +8,6 @@ use opsml_storage::StorageClientEnum;
 use opsml_types::cards::CardTable;
 use opsml_types::{contracts::*, RegistryType};
 use semver::Version;
-use sqlx::types::chrono::{DateTime, Utc};
 use std::sync::Arc;
 use tracing::{error, instrument};
 
@@ -68,7 +68,7 @@ pub async fn insert_card_into_db(
     card: CardRecord,
     version: Version,
     table: &CardTable,
-) -> Result<(String, String, String, String, DateTime<Utc>), ServerError> {
+) -> Result<InsertCardResponse, ServerError> {
     // match on registry type
     let card = match card {
         CardRecord::Data(client_card) => {
@@ -167,6 +167,7 @@ pub async fn insert_card_into_db(
 
     Ok((
         card.uid().to_string(),
+        card.space().to_string(),
         card.registry_type(),
         card.uri(),
         card.app_env(),

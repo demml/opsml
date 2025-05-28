@@ -1,3 +1,4 @@
+use crate::core::user::schema::UserResponse;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize)]
@@ -6,9 +7,10 @@ pub struct AuthError {
     pub message: String,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Default)]
 pub struct Authenticated {
     pub is_authenticated: bool,
+    pub user_response: UserResponse,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -17,8 +19,12 @@ pub struct LoginRequest {
     pub password: String,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Default)]
 pub struct LoginResponse {
+    pub authenticated: bool,
+    pub message: String,
     pub username: String,
     pub jwt_token: String,
+    pub permissions: Vec<String>,
+    pub group_permissions: Vec<String>,
 }

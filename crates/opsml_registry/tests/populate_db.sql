@@ -52,5 +52,5 @@ INSERT INTO opsml_audit_registry (uid, app_env, name, space, major, minor, patch
 
 
 
-INSERT INTO opsml_user (username, password_hash, permissions, group_permissions, refresh_token) VALUES
-('admin', '$argon2id$v=19$m=19456,t=2,p=1$+OB+o3Q2x9jwj0Tz1Y8vcA$TXAyajadxyCdaYwjU3zvEylBt9KMosfwfx7xC6PERgI', '["read", "write"]', '["admin"]', NULL)
+INSERT INTO opsml_user (username, password_hash, permissions, group_permissions, refresh_token, email) VALUES
+('admin', '$argon2id$v=19$m=19456,t=2,p=1$+OB+o3Q2x9jwj0Tz1Y8vcA$TXAyajadxyCdaYwjU3zvEylBt9KMosfwfx7xC6PERgI', '["read", "write"]', '["admin"]', NULL, 'admin@example.com')

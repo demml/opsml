@@ -58,14 +58,14 @@ impl PostgresQueryHelper {
 
     pub fn get_user_insert_query() -> String {
         format!(
-            "INSERT INTO {} (username, password_hash, permissions, group_permissions, role, active) VALUES ($1, $2, $3, $4, $5, $6)",
+            "INSERT INTO {} (username, password_hash, hashed_recovery_codes, permissions, group_permissions, favorite_spaces, role, active, email) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)",
             CardTable::Users
         )
     }
 
     pub fn get_user_query() -> String {
         format!(
-            "SELECT id, created_at, active, username, password_hash, permissions, group_permissions, role, refresh_token FROM {} WHERE username = $1",
+            "SELECT id, created_at, active, username, password_hash, hashed_recovery_codes, permissions, group_permissions, favorite_spaces, role, refresh_token, email, updated_at FROM {} WHERE username = $1",
             CardTable::Users
         )
     }
@@ -76,9 +76,55 @@ impl PostgresQueryHelper {
 
     pub fn get_users_query() -> String {
         format!(
-            "SELECT id, created_at, active, username, password_hash, permissions, group_permissions, role, refresh_token FROM {}",
+            "SELECT id, created_at, active, username, password_hash, hashed_recovery_codes, permissions, group_permissions, favorite_spaces, role, refresh_token, email, updated_at FROM {}",
             CardTable::Users
         )
+        .to_string()
+    }
+
+    pub fn get_unique_spaces_query() -> String {
+        r#"
+    SELECT 
+        space,
+        SUM(nbr_exp) as nbr_experiments,
+        SUM(nbr_models) as nbr_models,
+        SUM(nbr_data) as nbr_data,
+        SUM(nbr_prompts) as nbr_prompts
+    FROM (
+            SELECT 
+                space,
+                COUNT(DISTINCT name) as nbr_exp,
+                0 as nbr_models,
+                0 as nbr_data,
+                0 as nbr_prompts
+            FROM opsml_experiment_registry
+        UNION
+            SELECT
+                space,
+                0 as nbr_exp,
+                COUNT(DISTINCT name) as nbr_models,
+                0 as nbr_data,
+                0 as nbr_prompts 
+        UNION
+            SELECT 
+                space,
+                0 as nbr_exp,
+                0 as nbr_models,
+                COUNT(DISTINCT name) as nbr_data,
+                0 as nbr_prompts
+            FROM opsml_data_registry
+        UNION
+            SELECT
+                space,
+                0 as nbr_exp,
+                0 as nbr_models,
+                0 as nbr_data,
+                COUNT(DISTINCT name) as nbr_prompts
+            FROM opsml_prompt_registry
+    ) AS combined_spaces
+    GROUP BY space
+    ORDER BY space;
+    "#
         .to_string()
     }
 
@@ -95,10 +141,14 @@ impl PostgresQueryHelper {
             "UPDATE {} SET 
             active = $1, 
             password_hash = $2, 
-            permissions = $3, 
-            group_permissions = $4,
-            refresh_token = $5
-            WHERE username = $6",
+            hashed_recovery_codes = $3,
+            permissions = $4, 
+            group_permissions = $5,
+            favorite_spaces = $6,
+            refresh_token = $7,
+            email = $8,
+            updated_at = CURRENT_TIMESTAMP
+            WHERE username = $9",
             CardTable::Users
         )
     }
@@ -714,14 +764,14 @@ impl PostgresQueryHelper {
 
     pub fn get_artifact_key_insert_query() -> String {
         format!(
-            "INSERT INTO {} (uid, registry_type, encrypted_key, storage_key) VALUES ($1, $2, $3, $4)",
+            "INSERT INTO {} (uid, space, registry_type, encrypted_key, storage_key) VALUES ($1, $2, $3, $4, $5)",
             CardTable::ArtifactKey
         )
     }
 
     pub fn get_artifact_key_select_query() -> String {
         format!(
-            "SELECT uid, registry_type, encrypted_key, storage_key FROM {} WHERE uid = $1 AND registry_type = $2",
+            "SELECT uid, space, registry_type, encrypted_key, storage_key FROM {} WHERE uid = $1 AND registry_type = $2",
             CardTable::ArtifactKey
         )
     }
@@ -765,7 +815,7 @@ impl PostgresQueryHelper {
             "WITH query_cards AS (
                 {}
             )
-            SELECT a.uid, a.registry_type, a.encrypted_key, a.storage_key
+            SELECT a.uid, a.space, a.registry_type, a.encrypted_key, a.storage_key
             FROM {} as a
             INNER JOIN query_cards as b 
                 ON a.uid = b.uid;",
@@ -778,7 +828,7 @@ impl PostgresQueryHelper {
 
     pub fn get_artifact_key_from_storage_path_query() -> String {
         format!(
-            "SELECT uid, registry_type, encrypted_key, storage_key FROM {} WHERE storage_key = $1 AND registry_type = $2",
+            "SELECT uid, space, registry_type, encrypted_key, storage_key FROM {} WHERE storage_key = $1 AND registry_type = $2",
             CardTable::ArtifactKey
         )
     }

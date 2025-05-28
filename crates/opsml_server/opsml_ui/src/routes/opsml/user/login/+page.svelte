@@ -2,17 +2,20 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
   import logo from "$lib/images/opsml-logo.png";
-  import LoginWarning from "$lib/components/auth/LoginWarning.svelte";
-  import { RoutePaths } from "$lib/components/api/routes";
+  import LoginWarning from "$lib/components/user/LoginWarning.svelte";
+  import {  UiPaths } from "$lib/components/api/routes";
   import { goTop } from "$lib/utils";
-  import { opsmlClient } from "$lib/components/api/client.svelte";
+  import { userStore } from "$lib/components/user/user.svelte";
   import type { PageProps } from './$types';
-
+  import { validateLoginSchema, type UseLoginSchema } from "$lib/components/user/schema";
 
 
   let username: string = $state('');
   let password: string = $state('');
   let showLoginError: boolean = $state(false);
+  let errorMessage: string = $state("Invalid username or password");
+
+  let loginErrors = $state<Partial<Record<keyof UseLoginSchema, string>>>({});
 
  
   let { data }: PageProps = $props();
@@ -20,39 +23,51 @@
 
   async function handleLogin() {
     // Handle login logic here
-    let authenticated = await opsmlClient.login(username, password);
 
-    if (authenticated === true) {
-      // need to reload the page to update the nav bar
-      if (previousPath) {
-        goto(previousPath);
+    let argsValid = validateLoginSchema(username, password);
+
+    if (argsValid.success) {
+      console.log("Login arguments are valid");
+      let loginResponse = await userStore.login(username, password);
+
+      if (loginResponse.authenticated === true) {
+        // need to reload the page to update the nav bar
+        if (previousPath) {
+          goto(previousPath);
+        } else {
+          goto(UiPaths.HOME);
+        }
       } else {
-        goto(RoutePaths.HOME);
+        showLoginError = true;
+        errorMessage = loginResponse.message;
       }
+      goTop();
     } else {
       showLoginError = true;
+      loginErrors = argsValid.errors ?? {};
       goTop();
     }
-
-  }
+}
 
 
 </script>
 
 <section class="pt-24 border-gray-100 col-span-full flex-1 pb-16 md:pb-0 items-center">
-  {#if showLoginError}
-    <LoginWarning
-    errorMessage="Invalid username or password"
-    />
-  {/if}
+  
 
   <form class="z-10 mx-auto rounded-2xl bg-surface-50 border-black border-2 shadow p-4 md:w-96 md:px-5" onsubmit={handleLogin}>
 
     <img alt="OpsML logo" class="mx-auto -mt-12 mb-2 w-20" src={logo}>
     <h1 class="pt-1 text-center text-3xl font-bold text-primary-800">Log In</h1>
     <p class="mb-6 text-center text-surface-950">New to OpsML?
-      <a class="underline hover:text-primary-700" href={RoutePaths.REGISTER}>Register</a>
+      <a class="underline hover:text-primary-700" href={UiPaths.REGISTER}>Register</a>
     </p>
+
+    {#if showLoginError}
+      <LoginWarning
+      errorMessage={errorMessage}
+      />
+    {/if}
 
     <div class="mb-8 grid grid-cols-1 gap-3">
       <label class="text-surface-950">Username
@@ -62,6 +77,10 @@
           placeholder="Username"
           bind:value={username}
         />
+
+        {#if loginErrors.username}
+          <span class="text-red-500 text-sm">{loginErrors.username}</span>
+        {/if}
       </label>
 
 
@@ -71,8 +90,10 @@
           type="text" 
           placeholder="Password"
           bind:value={password}
-
         />
+        {#if loginErrors.password}
+          <span class="text-red-500 text-sm">{loginErrors.password}</span>
+        {/if}
       </label>
     </div>
 
@@ -81,7 +102,7 @@
         Login
       </button>
 
-      <a class="text-primary-700 hover:text-primary-700" href={RoutePaths.FORGOT}>Forgot password?</a>
+      <a class="text-primary-700 hover:text-primary-700" href={UiPaths.FORGOT}>Forgot password?</a>
     </div>
   </form>
 </section>

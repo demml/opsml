@@ -173,6 +173,7 @@ pub struct ArtifactKeyRequest {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ArtifactKey {
     pub uid: String,
+    pub space: String,
     pub registry_type: RegistryType,
     pub encrypted_key: Vec<u8>,
     pub storage_key: String,

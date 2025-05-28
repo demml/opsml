@@ -16,6 +16,8 @@ use sqlx::{prelude::FromRow, types::Json};
 use std::collections::HashMap;
 use std::env;
 
+pub type UniqueSpaceStats = (String, i32, i32, i32, i32);
+
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct MetricRecord {
     pub experiment_uid: String,
@@ -1101,19 +1103,27 @@ pub struct User {
     pub active: bool,
     pub username: String,
     pub password_hash: String,
+    pub hashed_recovery_codes: Vec<String>,
     pub permissions: Vec<String>,
     pub group_permissions: Vec<String>,
     pub role: String,
+    pub favorite_spaces: Vec<String>,
     pub refresh_token: Option<String>,
+    pub email: String,
+    pub updated_at: DateTime<Utc>,
 }
 
 impl User {
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         username: String,
         password_hash: String,
+        email: String,
+        hashed_recovery_codes: Vec<String>,
         permissions: Option<Vec<String>>,
         group_permissions: Option<Vec<String>>,
         role: Option<String>,
+        favorite_spaces: Option<Vec<String>>,
     ) -> Self {
         let created_at = get_utc_datetime();
 
@@ -1123,10 +1133,14 @@ impl User {
             active: true,
             username,
             password_hash,
-            permissions: permissions.unwrap_or(vec!["read".to_string(), "write".to_string()]),
+            hashed_recovery_codes,
+            permissions: permissions.unwrap_or(vec!["read:all".to_string()]),
             group_permissions: group_permissions.unwrap_or(vec!["user".to_string()]),
+            favorite_spaces: favorite_spaces.unwrap_or_default(),
             role: role.unwrap_or("user".to_string()),
             refresh_token: None,
+            email,
+            updated_at: created_at,
         }
     }
 
@@ -1138,9 +1152,21 @@ impl User {
         map.insert("created_at".to_string(), self.created_at.to_string().into());
         map.insert("active".to_string(), self.active.into());
         map.insert("username".to_string(), self.username.clone().into());
+        map.insert("email".to_string(), self.email.clone().into());
         map.insert("password_hash".to_string(), "[redacted]".into());
-        map.insert("permissions".to_string(), "[redacted]".into());
-        map.insert("group_permissions".to_string(), "[redacted]".into());
+        map.insert("hashed_recovery_codes".to_string(), "[redacted]".into());
+        map.insert("permissions".to_string(), self.permissions.clone().into());
+        map.insert(
+            "group_permissions".to_string(),
+            self.group_permissions.clone().into(),
+        );
+        map.insert("role".to_string(), self.role.clone().into());
+        map.insert(
+            "favorite_spaces".to_string(),
+            self.favorite_spaces.clone().into(),
+        );
+        map.insert("refresh_token".to_string(), "[redacted]".into());
+        map.insert("updated_at".to_string(), self.updated_at.to_string().into());
 
         // convert to JSON
         serde_json::to_string(&map).unwrap_or_else(|_| "{}".to_string())
@@ -1152,10 +1178,15 @@ impl std::fmt::Debug for User {
         f.debug_struct("User")
             .field("id", &self.id)
             .field("username", &self.username)
+            .field("email", &self.email)
             .field("active", &self.active)
             .field("password_hash", &"[redacted]")
+            .field("hashed_recovery_codes", &"[redacted]")
             .field("permissions", &"[redacted]")
-            .field("group_permissions", &"[redacted]")
+            .field("group_permissions", &self.group_permissions)
+            .field("role", &self.role)
+            .field("favorite_spaces", &self.favorite_spaces)
+            .field("created_at", &self.created_at)
             .finish()
     }
 }

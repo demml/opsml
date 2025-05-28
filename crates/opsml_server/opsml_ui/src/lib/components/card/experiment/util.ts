@@ -16,6 +16,7 @@ import type {
   HardwareMetrics,
   UiHardwareMetrics,
 } from "./types";
+import { userStore } from "$lib/components/user/user.svelte";
 
 const BYTES_TO_MB = 1024 * 1024;
 
@@ -27,7 +28,8 @@ export async function getCardMetricNames(uid: string): Promise<string[]> {
 
   const response = await opsmlClient.get(
     RoutePaths.EXPERIMENT_METRIC_NAMES,
-    request
+    request,
+    userStore.jwt_token
   );
   return (await response.json()) as string[];
 }
@@ -40,7 +42,8 @@ export async function getCardParameters(uid: string): Promise<Parameter[]> {
 
   const response = await opsmlClient.post(
     RoutePaths.EXPERIMENT_PARAMETERS,
-    request
+    request,
+    userStore.jwt_token
   );
   return (await response.json()) as Parameter[];
 }
@@ -57,7 +60,8 @@ export async function getCardMetrics(
 
   const response = await opsmlClient.post(
     RoutePaths.EXPERIMENT_METRICS,
-    request
+    request,
+    userStore.jwt_token
   );
   return (await response.json()) as Metric[];
 }
@@ -87,7 +91,11 @@ export async function getRecentExperiments(
     limit: 50,
   };
 
-  const response = await opsmlClient.get(RoutePaths.LIST_CARDS, params);
+  const response = await opsmlClient.get(
+    RoutePaths.LIST_CARDS,
+    params,
+    userStore.jwt_token
+  );
   const cards = (await response.json()) as Card[];
 
   return cards
@@ -114,7 +122,8 @@ export async function getGroupedMetrics(
   // Process current card metrics
   const response = await opsmlClient.post(
     RoutePaths.EXPERIMENT_GROUPED_METRICS,
-    uiMetricRequest
+    uiMetricRequest,
+    userStore.jwt_token
   );
 
   return (await response.json()) as GroupedMetrics;
@@ -147,7 +156,11 @@ export async function getHardwareMetrics(
     experiment_uid: uid,
   };
 
-  const response = await opsmlClient.get(RoutePaths.HARDWARE_METRICS, request);
+  const response = await opsmlClient.get(
+    RoutePaths.HARDWARE_METRICS,
+    request,
+    userStore.jwt_token
+  );
   let metrics = (await response.json()) as HardwareMetrics[];
 
   return extractAllHardwareMetrics(metrics);

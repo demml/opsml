@@ -92,13 +92,6 @@ impl OpsmlServerError {
         }
     }
 
-    pub fn bearer_token_not_found() -> Self {
-        error!("Bearer token not found");
-        OpsmlServerError {
-            error: "Bearer token not found".to_string(),
-        }
-    }
-
     pub fn refresh_token_error<T: Display>(e: T) -> Self {
         error!("Failed to refresh token: {}", e);
         OpsmlServerError {
@@ -191,6 +184,13 @@ impl OpsmlServerError {
         error!("Invalid token");
         OpsmlServerError {
             error: "Invalid token".to_string(),
+        }
+    }
+
+    pub fn invalid_recovery_code() -> Self {
+        error!("Invalid recovery token");
+        OpsmlServerError {
+            error: "Invalid recovery token".to_string(),
         }
     }
 

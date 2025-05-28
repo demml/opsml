@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 pub struct CreateUserRequest {
     pub username: String,
     pub password: String,
+    pub email: String,
     pub permissions: Option<Vec<String>>,
     pub group_permissions: Option<Vec<String>>,
     pub role: Option<String>,
@@ -19,12 +20,52 @@ pub struct UpdateUserRequest {
     pub active: Option<bool>,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct RecoveryResetRequest {
+    pub username: String,
+    pub recovery_code: String,
+    pub new_password: String,
+}
+
 #[derive(Serialize, Deserialize)]
+pub struct ResetPasswordResponse {
+    pub message: String,
+    pub remaining_recovery_codes: usize,
+}
+
+#[derive(Serialize, Deserialize, Default)]
 pub struct UserResponse {
     pub username: String,
+    pub email: String,
     pub active: bool,
+    pub role: String,
     pub permissions: Vec<String>,
     pub group_permissions: Vec<String>,
+    pub favorite_spaces: Vec<String>,
+}
+
+#[derive(Serialize, Deserialize, Default)]
+pub struct CreateUserResponse {
+    pub user: UserResponse,
+    pub recovery_codes: Vec<String>,
+    pub message: String,
+}
+
+impl CreateUserResponse {
+    pub fn new(user: UserResponse, recovery_codes: Vec<String>) -> Self {
+        Self {
+            user,
+            recovery_codes,
+            message: "Save these recovery codes securely. They cannot be shown again!".to_string(),
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct CreateUserUiResponse {
+    pub registered: bool,
+    pub response: Option<CreateUserResponse>,
+    pub error: Option<String>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -40,6 +81,9 @@ impl From<User> for UserResponse {
             active: user.active,
             permissions: user.permissions,
             group_permissions: user.group_permissions,
+            email: user.email,
+            role: user.role,
+            favorite_spaces: user.favorite_spaces,
         }
     }
 }

@@ -226,6 +226,7 @@ impl TestHelper {
             version,
             key: ArtifactKey {
                 uid: "550e8400-e29b-41d4-a716-446655440000".to_string(),
+                space: "space".to_string(),
                 registry_type: RegistryType::Data,
                 encrypted_key: vec![],
                 storage_key: "".to_string(),

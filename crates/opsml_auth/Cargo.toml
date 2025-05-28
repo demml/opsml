@@ -11,6 +11,7 @@ doctest = false
 password-auth = { workspace = true }
 jsonwebtoken = { workspace = true }
 rand = { workspace = true }
+rayon = { workspace = true }
 serde = { workspace = true }
 opsml-sql = { workspace = true }
 thiserror = { workspace = true }

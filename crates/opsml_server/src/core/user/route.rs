@@ -2,7 +2,8 @@ use crate::core::error::{internal_server_error, OpsmlServerError};
 use crate::core::scouter;
 use crate::core::state::AppState;
 use crate::core::user::schema::{
-    CreateUserRequest, UpdateUserRequest, UserListResponse, UserResponse,
+    CreateUserRequest, CreateUserResponse, CreateUserUiResponse, RecoveryResetRequest,
+    UpdateUserRequest, UserListResponse, UserResponse,
 };
 use crate::core::user::utils::get_user as get_user_from_db;
 use anyhow::{Context, Result};
@@ -15,25 +16,33 @@ use axum::{
 };
 
 use opsml_auth::permission::UserPermissions;
+use opsml_auth::util::generate_recovery_codes_with_hashes;
 use opsml_sql::base::SqlClient;
 use opsml_sql::schemas::schema::User;
 use opsml_types::RequestType;
 use password_auth::generate_hash;
 use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::sync::Arc;
-use tracing::{error, info};
+use tracing::{error, info, instrument};
 
-/// Create a new user via SDK
-///
-/// Requires admin permissions
+use super::schema::ResetPasswordResponse;
+
+/// Create a new user via SDK.
+#[instrument(skip_all)]
 async fn create_user(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
-
     Json(create_req): Json<CreateUserRequest>,
-) -> Result<Json<UserResponse>, (StatusCode, Json<OpsmlServerError>)> {
+) -> Result<Json<CreateUserResponse>, (StatusCode, Json<OpsmlServerError>)> {
     // Check if requester has admin permissions
-    if !perms.group_permissions.contains(&"admin".to_string()) {
+
+    // need to ensure that a create request that has admin perms can only be created by an admin
+    if !perms.group_permissions.contains(&"admin".to_string())
+        && create_req
+            .group_permissions
+            .as_ref()
+            .is_some_and(|p| p.contains(&"admin".to_string()))
+    {
         return OpsmlServerError::need_admin_permission().into_response(StatusCode::FORBIDDEN);
     }
 
@@ -45,13 +54,19 @@ async fn create_user(
     // Hash the password
     let password_hash = generate_hash(&create_req.password);
 
+    // generate recovery codes
+    let (recovery_codes, hashed_recovery_codes) = generate_recovery_codes_with_hashes(4);
+
     // Create the user
     let mut user = User::new(
         create_req.username,
         password_hash,
+        create_req.email,
+        hashed_recovery_codes,
         create_req.permissions,
         create_req.group_permissions,
         create_req.role,
+        None,
     );
 
     // Set active status if provided
@@ -91,14 +106,49 @@ async fn create_user(
             })?;
     }
 
-    Ok(Json(UserResponse::from(user)))
+    Ok(Json(CreateUserResponse::new(
+        UserResponse::from(user),
+        recovery_codes,
+    )))
+}
+
+/// Create a new user via UI. This will always return a response so that
+/// errors will be handled in the UI.
+#[instrument(skip_all)]
+async fn register_user_from_ui(
+    State(state): State<Arc<AppState>>,
+    Extension(perms): Extension<UserPermissions>,
+    Json(create_req): Json<CreateUserRequest>,
+) -> Result<Json<CreateUserUiResponse>, (StatusCode, Json<OpsmlServerError>)> {
+    let response = create_user(
+        axum::extract::State(state),
+        axum::extract::Extension(perms),
+        axum::extract::Json(create_req),
+    )
+    .await;
+
+    match response {
+        Ok(res) => Ok(Json(CreateUserUiResponse {
+            registered: true,
+            response: Some(res.0),
+            error: None,
+        })),
+        Err((_, err)) => {
+            error!("Failed to create user: {:?}", err.0.error);
+            Ok(Json(CreateUserUiResponse {
+                registered: false,
+                response: None,
+                error: Some(err.0.error),
+            }))
+        }
+    }
 }
 
 /// Get a user by username
+#[instrument(skip_all)]
 async fn get_user(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
-
     Path(username): Path<String>,
 ) -> Result<Json<UserResponse>, (StatusCode, Json<OpsmlServerError>)> {
     // Check permissions - user can only get their own data or admin can get any user
@@ -115,12 +165,15 @@ async fn get_user(
         Err(e) => return Err(e),
     };
 
+    info!("User {} retrieved successfully", user.username);
+
     Ok(Json(UserResponse::from(user)))
 }
 
 /// List all users
 ///
 /// Requires admin permissions
+#[instrument(skip_all)]
 async fn list_users(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
@@ -147,6 +200,7 @@ async fn list_users(
 }
 
 /// Update a user
+#[instrument(skip_all)]
 async fn update_user(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
@@ -223,6 +277,7 @@ async fn update_user(
 /// Delete a user
 ///
 /// Requires admin permissions
+#[instrument(skip_all)]
 async fn delete_user(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
@@ -281,11 +336,58 @@ async fn delete_user(
     Ok(Json(serde_json::json!({"success": true})))
 }
 
+#[instrument(skip_all)]
+async fn reset_password_with_recovery(
+    State(state): State<Arc<AppState>>,
+    Json(req): Json<RecoveryResetRequest>,
+) -> Result<Json<serde_json::Value>, (StatusCode, Json<OpsmlServerError>)> {
+    // Get user and their recovery codes
+    let mut user = get_user_from_db(&state.sql_client, &req.username).await?;
+
+    // Find and verify the recovery code
+    let code_index = match user.hashed_recovery_codes.iter().position(|stored_hash| {
+        password_auth::verify_password(&req.recovery_code, stored_hash)
+            .map(|_| true)
+            .unwrap_or(false)
+    }) {
+        Some(index) => index,
+        None => {
+            return Err((
+                StatusCode::UNAUTHORIZED,
+                Json(OpsmlServerError::invalid_recovery_code()),
+            ))
+        }
+    };
+    // Update password
+    user.password_hash = generate_hash(&req.new_password);
+
+    // Remove used recovery code
+    user.hashed_recovery_codes.remove(code_index);
+
+    // Save changes
+    if let Err(e) = state.sql_client.update_user(&user).await {
+        return Err(internal_server_error(e, "Failed to update password"));
+    }
+
+    Ok(Json(serde_json::json!(ResetPasswordResponse {
+        message: "Password updated successfully".to_string(),
+        remaining_recovery_codes: user.hashed_recovery_codes.len(),
+    })))
+}
+
 pub async fn get_user_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
     let result = catch_unwind(AssertUnwindSafe(|| {
         Router::new()
             .route(&format!("{}/user", prefix), post(create_user))
+            .route(
+                &format!("{}/user/register", prefix),
+                post(register_user_from_ui),
+            )
             .route(&format!("{}/user", prefix), get(list_users))
+            .route(
+                &format!("{}/user/reset-password/recovery", prefix),
+                post(reset_password_with_recovery),
+            )
             .route(&format!("{}/user/{{username}}", prefix), get(get_user))
             .route(&format!("{}/user/{{username}}", prefix), put(update_user))
             .route(

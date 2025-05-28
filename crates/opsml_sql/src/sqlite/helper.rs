@@ -12,7 +12,7 @@ impl SqliteQueryHelper {
     }
     pub fn get_user_insert_query() -> String {
         format!(
-            "INSERT INTO {} (username, password_hash, permissions, group_permissions, role, active) VALUES (?, ?, ?, ?, ?, ?)",
+            "INSERT INTO {} (username, password_hash, hashed_recovery_codes, permissions, group_permissions, favorite_spaces, role, active, email) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
             CardTable::Users
         )
         .to_string()
@@ -20,7 +20,7 @@ impl SqliteQueryHelper {
 
     pub fn get_user_query() -> String {
         format!(
-            "SELECT id, created_at, active, username, password_hash, permissions, group_permissions, role, refresh_token FROM {} WHERE username = ?",
+            "SELECT id, created_at, active, username, password_hash, hashed_recovery_codes, permissions, group_permissions, favorite_spaces, role, refresh_token, email, updated_at FROM {} WHERE username = ?",
             CardTable::Users
         )
         .to_string()
@@ -32,7 +32,7 @@ impl SqliteQueryHelper {
 
     pub fn get_users_query() -> String {
         format!(
-            "SELECT id, created_at, active, username, password_hash, permissions, group_permissions, role, refresh_token FROM {}",
+            "SELECT id, created_at, active, username, password_hash, hashed_recovery_codes, permissions, group_permissions, favorite_spaces, role, refresh_token, email, updated_at FROM {}",
             CardTable::Users
         )
         .to_string()
@@ -46,14 +46,64 @@ impl SqliteQueryHelper {
         .to_string()
     }
 
+    pub fn get_unique_spaces_query() -> String {
+        r#"
+    SELECT 
+        space,
+        SUM(nbr_exp) as nbr_experiments,
+        SUM(nbr_models) as nbr_models,
+        SUM(nbr_data) as nbr_data,
+        SUM(nbr_prompts) as nbr_prompts
+    FROM (
+            SELECT 
+                space,
+                COUNT(DISTINCT name) as nbr_exp,
+                0 as nbr_models,
+                0 as nbr_data,
+                0 as nbr_prompts
+            FROM opsml_experiment_registry
+        UNION
+            SELECT
+                space,
+                0 as nbr_exp,
+                COUNT(DISTINCT name) as nbr_models,
+                0 as nbr_data,
+                0 as nbr_prompts 
+        UNION
+            SELECT 
+                space,
+                0 as nbr_exp,
+                0 as nbr_models,
+                COUNT(DISTINCT name) as nbr_data,
+                0 as nbr_prompts
+            FROM opsml_data_registry
+        UNION
+            SELECT
+                space,
+                0 as nbr_exp,
+                0 as nbr_models,
+                0 as nbr_data,
+                COUNT(DISTINCT name) as nbr_prompts
+            FROM opsml_prompt_registry
+    ) AS combined_spaces
+    GROUP BY space
+    ORDER BY space;
+    "#
+        .to_string()
+    }
+
     pub fn get_user_update_query() -> String {
         format!(
             "UPDATE {} SET 
             active = ?, 
             password_hash = ?, 
+            hashed_recovery_codes = ?,
             permissions = ?, 
             group_permissions = ? ,
-            refresh_token = ? 
+            favorite_spaces = ?,
+            refresh_token = ?,
+            email = ?,
+            updated_at = CURRENT_TIMESTAMP
             WHERE username = ?",
             CardTable::Users
         )
@@ -676,7 +726,7 @@ impl SqliteQueryHelper {
 
     pub fn get_artifact_key_insert_query() -> String {
         format!(
-            "INSERT INTO {} (uid, registry_type, encrypted_key, storage_key) VALUES (?, ?, ?, ?)",
+            "INSERT INTO {} (uid, space, registry_type, encrypted_key, storage_key) VALUES (?, ?, ?, ?, ?)",
             CardTable::ArtifactKey
         )
         .to_string()
@@ -684,7 +734,7 @@ impl SqliteQueryHelper {
 
     pub fn get_artifact_key_select_query() -> String {
         format!(
-            "SELECT uid, registry_type, encrypted_key, storage_key FROM {} WHERE uid = ? AND registry_type = ?",
+            "SELECT uid, space, registry_type, encrypted_key, storage_key FROM {} WHERE uid = ? AND registry_type = ?",
             CardTable::ArtifactKey
         )
         .to_string()
@@ -700,7 +750,7 @@ impl SqliteQueryHelper {
 
     pub fn get_artifact_key_from_storage_path_query() -> String {
         format!(
-            "SELECT uid, registry_type, encrypted_key, storage_key FROM {} WHERE storage_key = ? AND registry_type = ?",
+            "SELECT uid, space, registry_type, encrypted_key, storage_key FROM {} WHERE storage_key = ? AND registry_type = ?",
             CardTable::ArtifactKey
         )
     }
@@ -738,7 +788,7 @@ impl SqliteQueryHelper {
             "WITH query_cards AS (
                 {}
             )
-            SELECT a.uid, a.registry_type, a.encrypted_key, a.storage_key
+            SELECT a.uid, a.space, a.registry_type, a.encrypted_key, a.storage_key
             FROM {} as a
             INNER JOIN query_cards as b 
                 ON a.uid = b.uid;",

@@ -1,6 +1,6 @@
 export const prerender = true;
 export const ssr = false;
-import { opsmlClient } from "$lib/components/api/client.svelte";
+import { validateUserOrRedirect } from "$lib/components/user/user.svelte";
 import { getRegistryTypeLowerCase, RegistryType } from "$lib/utils";
 import { getCardMetadata, getUID } from "$lib/components/card/utils";
 
@@ -11,8 +11,7 @@ import type { ExperimentCard } from "$lib/components/card/card_interfaces/experi
 
 // @ts-ignore
 export const load: LayoutServerLoad = async ({ url }) => {
-  console.log("loading experiment");
-  await opsmlClient.validateAuth(true);
+  await validateUserOrRedirect();
 
   let registry = RegistryType.Experiment;
   let uid = await getUID(url, registry);

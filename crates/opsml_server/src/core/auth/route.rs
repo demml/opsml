@@ -1,6 +1,7 @@
 use crate::core::auth::schema::{Authenticated, LoginRequest, LoginResponse};
 use crate::core::error::{internal_server_error, OpsmlServerError};
 use crate::core::state::AppState;
+use crate::core::user::schema::UserResponse;
 use crate::core::user::utils::get_user;
 use anyhow::{Context, Result};
 /// Route for debugging information
@@ -16,7 +17,7 @@ use opsml_sql::base::SqlClient;
 use opsml_types::JwtToken;
 use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::sync::Arc;
-use tracing::{debug, error, info, instrument};
+use tracing::{error, info, instrument};
 
 /// Route for the login endpoint when using the API
 ///
@@ -145,6 +146,7 @@ pub async fn api_login_handler(
 /// # Returns
 ///
 /// Returns a `Result` containing either the JWT token or an error
+#[instrument(skip_all)]
 async fn ui_login_handler(
     State(state): State<Arc<AppState>>,
     Json(req): Json<LoginRequest>,
@@ -155,27 +157,34 @@ async fn ui_login_handler(
     let mut user = match get_user(&state.sql_client, &req.username).await {
         Ok(user) => user,
         Err(_) => {
-            return OpsmlServerError::user_validation_error()
-                .into_response(StatusCode::BAD_REQUEST);
+            error!("User not found {:?}", req.username);
+            return Ok(Json(LoginResponse {
+                authenticated: false,
+                message: "User not found".to_string(),
+                ..Default::default()
+            }));
         }
     };
 
     // check if password is correct
-    state
-        .auth_manager
-        .validate_user(&user, &req.password)
-        .map_err(|_| {
-            (
-                StatusCode::UNAUTHORIZED,
-                Json(OpsmlServerError::user_validation_error()),
-            )
-        })?;
+    match state.auth_manager.validate_user(&user, &req.password) {
+        Ok(_) => {}
+        Err(_) => {
+            error!("Invalid password for user {:?}", req.username);
+            return Ok(Json(LoginResponse {
+                authenticated: false,
+                message: "Invalid password".to_string(),
+                ..Default::default()
+            }));
+        }
+    }
 
     // generate JWT token
     let jwt_token = state.auth_manager.generate_jwt(&user).map_err(|e| {
         error!("Failed to generate JWT token: {}", e);
         internal_server_error(e, "Failed to generate JWT token")
     })?;
+
     let refresh_token = state
         .auth_manager
         .generate_refresh_token(&user)
@@ -196,9 +205,14 @@ async fn ui_login_handler(
         )
     })?;
 
+    info!("User logged in: {}", user.username);
     Ok(Json(LoginResponse {
+        authenticated: true,
+        message: "User authenticated".to_string(),
         username: user.username,
         jwt_token,
+        group_permissions: user.group_permissions,
+        permissions: user.permissions,
     }))
 }
 
@@ -212,6 +226,7 @@ async fn ui_login_handler(
 /// # Returns
 ///
 /// Returns a `Result` containing either the JWT token or an error
+#[instrument(skip_all)]
 pub async fn api_refresh_token_handler(
     State(state): State<Arc<AppState>>,
     headers: HeaderMap,
@@ -279,6 +294,7 @@ pub async fn api_refresh_token_handler(
     }
 }
 
+#[instrument(skip_all)]
 async fn validate_jwt_token(
     State(state): State<Arc<AppState>>,
     headers: HeaderMap,
@@ -293,16 +309,48 @@ async fn validate_jwt_token(
         });
 
     if let Some(bearer_token) = bearer_token {
-        debug!("Validating JWT token");
+        info!("Validating JWT token");
         match state.auth_manager.validate_jwt(&bearer_token) {
-            Ok(_) => Ok(Json(Authenticated {
-                is_authenticated: true,
-            })),
+            Ok(_) => {
+                // get claims and user
+                let claims = state
+                    .auth_manager
+                    .decode_jwt_without_validation(&bearer_token)
+                    .map_err(|e| {
+                        (
+                            StatusCode::UNAUTHORIZED,
+                            Json(OpsmlServerError::jwt_decode_error(e)),
+                        )
+                    })?;
+
+                let user = match get_user(&state.sql_client, &claims.sub).await {
+                    Ok(user) => user,
+                    Err(_) => {
+                        return OpsmlServerError::user_validation_error()
+                            .into_response(StatusCode::BAD_REQUEST);
+                    }
+                };
+                Ok(Json(Authenticated {
+                    is_authenticated: true,
+                    user_response: UserResponse {
+                        username: user.username,
+                        permissions: user.permissions,
+                        group_permissions: user.group_permissions,
+                        active: user.active,
+                        email: user.email,
+                        role: user.role,
+                        favorite_spaces: user.favorite_spaces,
+                    },
+                }))
+            }
             Err(_) => OpsmlServerError::invalid_token().into_response(StatusCode::UNAUTHORIZED),
         }
     } else {
-        debug!("No bearer token found");
-        OpsmlServerError::bearer_token_not_found().into_response(StatusCode::BAD_REQUEST)
+        info!("No bearer token found");
+        Ok(Json(Authenticated {
+            is_authenticated: false,
+            ..Default::default()
+        }))
     }
 }
 

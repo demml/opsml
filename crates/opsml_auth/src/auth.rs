@@ -122,6 +122,15 @@ impl AuthManager {
     pub fn validate_user(&self, user: &User, password: &str) -> Result<(), AuthError> {
         verify_password(password, &user.password_hash).map_err(|_| AuthError::InvalidPassword)
     }
+
+    pub fn validate_recovery_code(
+        &self,
+        recovery_code: &str,
+        server_hashed_recovery_code: &str,
+    ) -> Result<(), AuthError> {
+        verify_password(recovery_code, server_hashed_recovery_code)
+            .map_err(|_| AuthError::InvalidRecoveryCode)
+    }
 }
 
 impl AuthManager {
