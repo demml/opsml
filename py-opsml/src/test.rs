@@ -296,7 +296,11 @@ impl OpsmlTestServer {
                         })?;
                         return Ok(());
                     }
+                } else {
+                    let resp_msg = res.unwrap_err().to_string();
+                    println!("Opsml Server not yet ready: {}", resp_msg);
                 }
+
                 attempts += 1;
                 sleep(Duration::from_millis(100 + (attempts * 10)));
 
