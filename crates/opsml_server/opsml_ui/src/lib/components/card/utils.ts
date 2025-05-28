@@ -9,7 +9,7 @@ import type {
   RegistryStatsRequest,
   VersionPageResponse,
   VersionPageRequest,
-  SpacesResponse,
+  SpaceStatsResponse,
 } from "$lib/components/card/types";
 import type { CardQueryArgs } from "../api/schema";
 import { type Card } from "$lib/components/home/types";
@@ -200,7 +200,7 @@ export async function getVersionPage(
   return await response.json();
 }
 
-export async function getAllSpaces(): Promise<SpacesResponse> {
+export async function getAllSpaces(): Promise<SpaceStatsResponse> {
   const response = await opsmlClient.get(
     RoutePaths.SPACES,
     undefined,
