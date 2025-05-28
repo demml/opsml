@@ -10,8 +10,7 @@ use std::net::TcpListener as StdTcpListener;
 use std::sync::Arc;
 #[cfg(feature = "server")]
 use std::thread::sleep;
-#[cfg(feature = "server")]
-use std::time::Duration;
+
 #[cfg(feature = "server")]
 use tokio::{runtime::Runtime, sync::Mutex, task::JoinHandle};
 
@@ -26,6 +25,7 @@ use pyo3::exceptions::PyRuntimeError;
 use pyo3::prelude::*;
 use pyo3::PyErr;
 use pyo3::PyResult;
+use std::time::Duration;
 
 use std::path::PathBuf;
 use thiserror::Error;
