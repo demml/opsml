@@ -747,12 +747,22 @@ impl SqlClient for MySqlClient {
         Ok(records)
     }
 
-    async fn delete_card(&self, table: &CardTable, uid: &str) -> Result<(), SqlError> {
-        let query = format!("DELETE FROM {} WHERE uid = ?", table);
+    async fn delete_card(&self, table: &CardTable, uid: &str) -> Result<String, SqlError> {
+        // First get the space
+        let select_query = format!("SELECT space FROM {} WHERE uid = ?", table);
+        let space: String = sqlx::query_scalar(&select_query)
+            .bind(uid)
+            .fetch_one(&self.pool)
+            .await?;
 
-        sqlx::query(&query).bind(uid).execute(&self.pool).await?;
+        // Then delete the record
+        let delete_query = format!("DELETE FROM {} WHERE uid = ?", table);
+        sqlx::query(&delete_query)
+            .bind(uid)
+            .execute(&self.pool)
+            .await?;
 
-        Ok(())
+        Ok(space)
     }
 
     async fn insert_experiment_metric(&self, record: &MetricRecord) -> Result<(), SqlError> {

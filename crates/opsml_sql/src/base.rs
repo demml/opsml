@@ -93,7 +93,7 @@ pub trait SqlClient: Sized {
         table: &CardTable,
     ) -> Result<Vec<CardSummary>, SqlError>;
 
-    async fn delete_card(&self, table: &CardTable, uid: &str) -> Result<(), SqlError>;
+    async fn delete_card(&self, table: &CardTable, uid: &str) -> Result<String, SqlError>;
 
     /// Insert run metric
     ///

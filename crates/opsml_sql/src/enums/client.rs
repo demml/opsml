@@ -149,7 +149,7 @@ impl SqlClient for SqlClientEnum {
         }
     }
 
-    async fn delete_card(&self, table: &CardTable, uid: &str) -> Result<(), SqlError> {
+    async fn delete_card(&self, table: &CardTable, uid: &str) -> Result<String, SqlError> {
         match self {
             SqlClientEnum::Postgres(client) => client.delete_card(table, uid).await,
             SqlClientEnum::Sqlite(client) => client.delete_card(table, uid).await,

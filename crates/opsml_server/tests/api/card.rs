@@ -1247,3 +1247,53 @@ async fn test_opsml_server_card_get_readme() {
 
     //
 }
+
+#[tokio::test]
+async fn test_opsml_server_space_stats() {
+    let mut helper = TestHelper::new().await;
+
+    helper.create_modelcard().await;
+
+    // wait 200 ms
+    tokio::time::sleep(tokio::time::Duration::from_millis(200)).await;
+
+    let request = Request::builder()
+        .uri("/opsml/api/card/space/stats")
+        .method("GET")
+        .body(Body::empty())
+        .unwrap();
+
+    let response = helper.send_oneshot(request).await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    //
+    let body = response.into_body().collect().await.unwrap().to_bytes();
+    let space_stats: SpaceStatsResponse = serde_json::from_slice(&body).unwrap();
+
+    assert_eq!(space_stats.spaces[0].space, "space");
+    assert_eq!(space_stats.spaces[0].model_count, 1);
+    assert_eq!(space_stats.spaces[0].data_count, 0);
+
+    // create datacard
+
+    helper.create_datacard().await;
+
+    // wait 200 ms
+    tokio::time::sleep(tokio::time::Duration::from_millis(200)).await;
+
+    let request = Request::builder()
+        .uri("/opsml/api/card/space/stats")
+        .method("GET")
+        .body(Body::empty())
+        .unwrap();
+
+    let response = helper.send_oneshot(request).await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let body = response.into_body().collect().await.unwrap().to_bytes();
+    let space_stats: SpaceStatsResponse = serde_json::from_slice(&body).unwrap();
+
+    assert_eq!(space_stats.spaces[0].space, "space");
+    assert_eq!(space_stats.spaces[0].model_count, 1);
+    assert_eq!(space_stats.spaces[0].data_count, 1);
+}
