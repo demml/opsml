@@ -4,14 +4,15 @@ use crate::error::SqlError;
 use crate::schemas::schema::{
     AuditCardRecord, CardDeckRecord, CardResults, CardSummary, DataCardRecord,
     ExperimentCardRecord, HardwareMetricsRecord, MetricRecord, ModelCardRecord, ParameterRecord,
-    PromptCardRecord, QueryStats, ServerCard, User, VersionResult, VersionSummary,
+    PromptCardRecord, QueryStats, ServerCard, UniqueSpaceStats, User, VersionResult,
+    VersionSummary,
 };
 
 use crate::sqlite::helper::SqliteQueryHelper;
 use async_trait::async_trait;
 use opsml_semver::VersionValidator;
 use opsml_settings::config::DatabaseSettings;
-use opsml_types::contracts::{ArtifactKey, AuditEvent};
+use opsml_types::contracts::{ArtifactKey, AuditEvent, SpaceStats, SpaceStatsEvent};
 use opsml_types::{cards::CardTable, contracts::CardQueryArgs, RegistryType};
 use semver::Version;
 use sqlx::{
@@ -1122,6 +1123,40 @@ impl SqlClient for SqliteClient {
 
         Ok(())
     }
+
+    async fn update_space_stats(&self, space: &SpaceStatsEvent) -> Result<(), SqlError> {
+        let query = SqliteQueryHelper::get_update_space_stats_query();
+        sqlx::query(&query)
+            .bind(&space.space)
+            .bind(&space.space)
+            .bind(&space.space)
+            .bind(&space.space)
+            .bind(&space.space)
+            .bind(&space.space)
+            .bind(&space.space)
+            .bind(&space.space)
+            .execute(&self.pool)
+            .await?;
+
+        Ok(())
+    }
+
+    async fn get_space_stats(&self) -> Result<Vec<SpaceStats>, SqlError> {
+        let query = SqliteQueryHelper::get_spaces_stats();
+        let spaces: Vec<UniqueSpaceStats> = sqlx::query_as(&query).fetch_all(&self.pool).await?;
+
+        Ok(spaces
+            .into_iter()
+            .map(|s| SpaceStats {
+                space: s.0,
+                experiment_count: s.1,
+                model_count: s.2,
+                data_count: s.3,
+                prompt_count: s.4,
+                user_count: s.5,
+            })
+            .collect())
+    }
 }
 
 #[cfg(test)]
@@ -1905,5 +1940,61 @@ mod tests {
             .delete_artifact_key(&data_card.uid, &RegistryType::Data.to_string())
             .await
             .unwrap();
+    }
+
+    #[tokio::test]
+    async fn test_sqlite_update_get_space_stats() {
+        cleanup();
+
+        let config = DatabaseSettings {
+            connection_uri: get_connection_uri(),
+            max_connections: 1,
+            sql_type: SqlType::Sqlite,
+        };
+
+        let client = SqliteClient::new(&config).await.unwrap();
+
+        // insert datacard
+        let data_card = DataCardRecord::default();
+        let card = ServerCard::Data(data_card.clone());
+        client.insert_card(&CardTable::Data, &card).await.unwrap();
+
+        // insert modelcard
+        let model_card = ModelCardRecord::default();
+        let card = ServerCard::Model(model_card.clone());
+        client.insert_card(&CardTable::Model, &card).await.unwrap();
+
+        let space_event = SpaceStatsEvent {
+            space: data_card.space.clone(),
+        };
+        client.update_space_stats(&space_event).await.unwrap();
+
+        // get space stats
+        let stats = client.get_space_stats().await.unwrap();
+        assert_eq!(stats.len(), 1);
+        // assert model_count
+        assert_eq!(stats[0].model_count, 1);
+
+        //create a new modelcard
+        let model_card2 = ModelCardRecord {
+            name: "Model2".to_string(),
+            ..Default::default()
+        };
+        let card = ServerCard::Model(model_card2.clone());
+        client.insert_card(&CardTable::Model, &card).await.unwrap();
+
+        // update space stats again
+        let space_event = SpaceStatsEvent {
+            space: model_card2.space.clone(),
+        };
+        client.update_space_stats(&space_event).await.unwrap();
+        // get space stats again
+
+        let stats = client.get_space_stats().await.unwrap();
+        assert_eq!(stats.len(), 1);
+
+        // assert model_count
+        assert_eq!(stats[0].model_count, 2);
+        cleanup();
     }
 }

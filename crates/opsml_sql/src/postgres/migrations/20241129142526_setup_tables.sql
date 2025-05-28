@@ -210,3 +210,15 @@ CREATE TABLE IF NOT EXISTS opsml_prompt_registry (
     opsml_version TEXT NOT NULL DEFAULT '0.0.0',
     username TEXT NOT NULL DEFAULT 'guest'
 );
+
+
+CREATE TABLE IF NOT EXISTS opsml_space_stats (
+    space TEXT PRIMARY KEY,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    data_count INTEGER DEFAULT 0,
+    model_count INTEGER DEFAULT 0,
+    experiment_count INTEGER DEFAULT 0,
+    prompt_count INTEGER DEFAULT 0,
+    user_count INTEGER DEFAULT 0,
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);

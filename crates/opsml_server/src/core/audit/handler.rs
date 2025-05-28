@@ -26,6 +26,7 @@ impl AuditEventHandler {
                             error!("Failed to log audit event: {}", e);
                         }
                     }
+                    Event::SpaceStats(record)
                 }
             }
         });
