@@ -376,7 +376,7 @@ async fn validate_jwt_token(
         });
 
     if let Some(bearer_token) = bearer_token {
-        info!("Validating JWT token");
+        debug!("Validating JWT token");
         match state.auth_manager.validate_jwt(&bearer_token) {
             Ok(claims) => {
                 let user = match get_user(&state.sql_client, &claims.sub).await {
