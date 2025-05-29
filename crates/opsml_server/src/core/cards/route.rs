@@ -47,7 +47,7 @@ pub async fn check_card_uid(
 }
 
 /// Get card spaces
-pub async fn get_card_spaces(
+pub async fn get_registry_spaces(
     State(state): State<Arc<AppState>>,
     Query(params): Query<RegistrySpaceRequest>,
 ) -> Result<Json<CardSpaceResponse>, (StatusCode, Json<OpsmlServerError>)> {
@@ -82,13 +82,13 @@ pub async fn get_all_space_records(
 
 pub async fn get_space_record(
     State(state): State<Arc<AppState>>,
-    Query(params): Query<SpaceRequest>,
+    Query(params): Query<CrudSpaceRequest>,
 ) -> Result<Json<SpaceRecordResponse>, (StatusCode, Json<OpsmlServerError>)> {
     match state.sql_client.get_space_record(&params.space).await {
         Ok(Some(space)) => Ok(Json(SpaceRecordResponse {
             spaces: vec![space],
         })),
-        Ok(None) => OpsmlServerError::space_not_found().into_response(StatusCode::NOT_FOUND),
+        Ok(None) => Ok(Json(SpaceRecordResponse { spaces: vec![] })),
         Err(e) => {
             error!("Failed to get space record: {}", e);
             Err(internal_server_error(e, "Failed to get space record"))
@@ -141,7 +141,7 @@ pub async fn update_space_record(
 #[instrument(skip_all)]
 pub async fn delete_space_record(
     State(state): State<Arc<AppState>>,
-    Json(space_request): Json<CrudSpaceRequest>,
+    Query(space_request): Query<CrudSpaceRequest>,
 ) -> Result<Json<CrudSpaceResponse>, (StatusCode, Json<OpsmlServerError>)> {
     state
         .sql_client
@@ -717,7 +717,7 @@ pub async fn get_card_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
             .route(&format!("{}/card/metadata", prefix), get(get_card))
             .route(&format!("{}/card/readme", prefix), get(get_readme))
             .route(&format!("{}/card/readme", prefix), post(create_readme))
-            .route(&format!("{}/card/spaces", prefix), get(get_card_spaces))
+            .route(&format!("{}/card/spaces", prefix), get(get_registry_spaces))
             .route(
                 &format!("{}/card/registry/stats", prefix),
                 get(get_registry_stats),
