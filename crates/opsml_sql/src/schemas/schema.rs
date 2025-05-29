@@ -16,7 +16,7 @@ use sqlx::{prelude::FromRow, types::Json};
 use std::collections::HashMap;
 use std::env;
 
-pub type UniqueSpaceStats = (String, i32, i32, i32, i32, i32);
+pub type SqlSpaceRecord = (String, String, i32, i32, i32, i32, i32);
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct MetricRecord {

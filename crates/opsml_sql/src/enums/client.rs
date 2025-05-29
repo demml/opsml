@@ -12,7 +12,7 @@ use anyhow::Context;
 use anyhow::Result as AnyhowResult;
 use async_trait::async_trait;
 use opsml_settings::config::DatabaseSettings;
-use opsml_types::contracts::{AuditEvent, SpaceStats, SpaceStatsEvent};
+use opsml_types::contracts::{AuditEvent, SpaceRecord, SpaceStatsEvent};
 use opsml_types::{
     SqlType,
     {
@@ -416,19 +416,19 @@ impl SqlClient for SqlClientEnum {
         }
     }
 
-    async fn get_space_stats(&self) -> Result<Vec<SpaceStats>, SqlError> {
+    async fn get_space_record(&self) -> Result<Vec<SpaceRecord>, SqlError> {
         match self {
-            SqlClientEnum::Postgres(client) => client.get_space_stats().await,
-            SqlClientEnum::Sqlite(client) => client.get_space_stats().await,
-            SqlClientEnum::MySql(client) => client.get_space_stats().await,
+            SqlClientEnum::Postgres(client) => client.get_space_record().await,
+            SqlClientEnum::Sqlite(client) => client.get_space_record().await,
+            SqlClientEnum::MySql(client) => client.get_space_record().await,
         }
     }
 
-    async fn update_space_stats(&self, stats: &SpaceStatsEvent) -> Result<(), SqlError> {
+    async fn update_space_record_stats(&self, stats: &SpaceStatsEvent) -> Result<(), SqlError> {
         match self {
-            SqlClientEnum::Postgres(client) => client.update_space_stats(stats).await,
-            SqlClientEnum::Sqlite(client) => client.update_space_stats(stats).await,
-            SqlClientEnum::MySql(client) => client.update_space_stats(stats).await,
+            SqlClientEnum::Postgres(client) => client.update_space_record_stats(stats).await,
+            SqlClientEnum::Sqlite(client) => client.update_space_record_stats(stats).await,
+            SqlClientEnum::MySql(client) => client.update_space_record_stats(stats).await,
         }
     }
 }

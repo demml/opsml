@@ -109,8 +109,9 @@ pub struct CardSpaceResponse {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct SpaceStats {
+pub struct SpaceRecord {
     pub space: String,
+    pub description: String,
     pub experiment_count: i32,
     pub model_count: i32,
     pub data_count: i32,
@@ -119,8 +120,8 @@ pub struct SpaceStats {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct SpaceStatsResponse {
-    pub spaces: Vec<SpaceStats>,
+pub struct SpaceRecordResponse {
+    pub spaces: Vec<SpaceRecord>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

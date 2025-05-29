@@ -64,15 +64,15 @@ pub async fn get_card_spaces(
     Ok(Json(CardSpaceResponse { spaces }))
 }
 
-pub async fn get_space_stats(
+pub async fn get_space_record(
     State(state): State<Arc<AppState>>,
-) -> Result<Json<SpaceStatsResponse>, (StatusCode, Json<OpsmlServerError>)> {
-    let spaces = state.sql_client.get_space_stats().await.map_err(|e| {
+) -> Result<Json<SpaceRecordResponse>, (StatusCode, Json<OpsmlServerError>)> {
+    let spaces = state.sql_client.get_space_record().await.map_err(|e| {
         error!("Failed to get all space names: {}", e);
         internal_server_error(e, "Failed to get all space names")
     })?;
 
-    Ok(Json(SpaceStatsResponse { spaces }))
+    Ok(Json(SpaceRecordResponse { spaces }))
 }
 
 /// query stats page
@@ -624,7 +624,7 @@ pub async fn get_card_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
         Router::new()
             .route(
                 &format!("{}/card/space/stats", prefix),
-                get(get_space_stats),
+                get(get_space_record),
             )
             // placing spaces here for now as there's not enough routes to justify a separate router
             .route(&format!("{}/card", prefix), get(check_card_uid))

@@ -30,16 +30,19 @@ pub async fn log_audit_event(
 }
 
 #[instrument(skip_all)]
-pub async fn update_space_stats(
+pub async fn update_space_record(
     event: SpaceStatsEvent,
     sql_client: Arc<SqlClientEnum>,
 ) -> Result<(), EventError> {
     debug!("Logging space stats event");
 
-    sql_client.update_space_stats(&event).await.map_err(|e| {
-        error!("Failed to log space stats event: {}", e);
-        EventError::LogEventError(e)
-    })?;
+    sql_client
+        .update_space_record_stats(&event)
+        .await
+        .map_err(|e| {
+            error!("Failed to log space stats event: {}", e);
+            EventError::LogEventError(e)
+        })?;
 
     Ok(())
 }
