@@ -424,6 +424,14 @@ impl SqlClient for SqlClientEnum {
         }
     }
 
+    async fn get_space_record(&self, space: &str) -> Result<Option<SpaceRecord>, SqlError> {
+        match self {
+            SqlClientEnum::Postgres(client) => client.get_space_record(space).await,
+            SqlClientEnum::Sqlite(client) => client.get_space_record(space).await,
+            SqlClientEnum::MySql(client) => client.get_space_record(space).await,
+        }
+    }
+
     async fn update_space_record_stats(&self, stats: &SpaceStatsEvent) -> Result<(), SqlError> {
         match self {
             SqlClientEnum::Postgres(client) => client.update_space_record_stats(stats).await,

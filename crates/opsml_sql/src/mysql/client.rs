@@ -1175,6 +1175,24 @@ impl SqlClient for MySqlClient {
             .collect())
     }
 
+    async fn get_space_record(&self, space: &str) -> Result<Option<SpaceRecord>, SqlError> {
+        let query = MySQLQueryHelper::get_space_record_query();
+        let record: Option<SqlSpaceRecord> = sqlx::query_as(&query)
+            .bind(space)
+            .fetch_optional(&self.pool)
+            .await?;
+
+        Ok(record.map(|r| SpaceRecord {
+            space: r.0,
+            description: r.1,
+            experiment_count: r.2,
+            model_count: r.3,
+            data_count: r.4,
+            prompt_count: r.5,
+            user_count: r.6,
+        }))
+    }
+
     async fn insert_space_record(&self, space: &SpaceRecord) -> Result<(), SqlError> {
         let query = MySQLQueryHelper::get_insert_space_record_query();
         sqlx::query(&query)
@@ -1211,7 +1229,7 @@ mod tests {
     use crate::schemas::CardDeckRecord;
 
     use super::*;
-    use opsml_types::{RegistryType, SqlType};
+    use opsml_types::{CommonKwargs, RegistryType, SqlType};
     use opsml_utils::utils::get_utc_datetime;
     use std::env;
 
@@ -1984,8 +2002,17 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_mysql_update_get_space_record() {
+    async fn test_mysql_crud_space_record() {
         let client = db_client().await;
+
+        // create a new space record
+        let space_record = SpaceRecord {
+            space: CommonKwargs::Undefined.to_string(),
+            description: "Space description".to_string(),
+            ..Default::default()
+        };
+
+        client.insert_space_record(&space_record).await.unwrap();
 
         // insert datacard
         let data_card = DataCardRecord::default();
@@ -2010,6 +2037,7 @@ mod tests {
         assert_eq!(stats.len(), 1);
         // assert model_count
         assert_eq!(stats[0].model_count, 1);
+        assert_eq!(stats[0].description, "Space description");
 
         //create a new modelcard
         let model_card2 = ModelCardRecord {
@@ -2034,5 +2062,36 @@ mod tests {
 
         // assert model_count
         assert_eq!(stats[0].model_count, 2);
+
+        // update space record
+        let updated_space_record = SpaceRecord {
+            space: model_card2.space.clone(),
+            description: "Updated Space description".to_string(),
+            ..Default::default()
+        };
+
+        client
+            .update_space_record(&updated_space_record)
+            .await
+            .unwrap();
+
+        // get space record
+        let record = client
+            .get_space_record(&model_card2.space)
+            .await
+            .unwrap()
+            .unwrap();
+
+        assert_eq!(record.description, "Updated Space description");
+
+        // delete
+        client
+            .delete_space_record(&model_card2.space)
+            .await
+            .unwrap();
+
+        // get space stats again
+        let stats = client.get_all_space_records().await.unwrap();
+        assert_eq!(stats.len(), 0);
     }
 }
