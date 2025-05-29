@@ -7,7 +7,7 @@ pub struct AuthError {
     pub message: String,
 }
 
-#[derive(Serialize, Default)]
+#[derive(Serialize, Deserialize, Default)]
 pub struct Authenticated {
     pub is_authenticated: bool,
     pub user_response: UserResponse,
@@ -19,7 +19,7 @@ pub struct LoginRequest {
     pub password: String,
 }
 
-#[derive(Serialize, Default)]
+#[derive(Serialize, Deserialize, Default)]
 pub struct LoginResponse {
     pub authenticated: bool,
     pub message: String,
@@ -27,4 +27,9 @@ pub struct LoginResponse {
     pub jwt_token: String,
     pub permissions: Vec<String>,
     pub group_permissions: Vec<String>,
+}
+
+#[derive(Serialize, Deserialize, Default)]
+pub struct LogoutResponse {
+    pub logged_out: bool,
 }

@@ -202,7 +202,7 @@ export async function getVersionPage(
 
 export async function getAllSpaces(): Promise<SpaceRecordResponse> {
   const response = await opsmlClient.get(
-    RoutePaths.SPACES,
+    RoutePaths.ALL_SPACES,
     undefined,
     userStore.jwt_token
   );

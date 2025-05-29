@@ -2,13 +2,15 @@ export enum RoutePaths {
   // Auth
   VALIDATE_AUTH = "/opsml/api/auth/validate",
   LOGIN = "/opsml/api/auth/ui/login",
+  LOGOUT = "/opsml/api/auth/logout",
   REFRESH_TOKEN = "/opsml/api/auth/refresh",
   RESET_PASSWORD = "/opsml/api/user/reset-password/recovery",
 
   // Card
   LIST_CARDS = "/opsml/api/card/list",
   LIST_CARD_SPACES = "/opsml/api/card/spaces",
-  SPACES = "/opsml/api/card/space/stats",
+  ALL_SPACES = "/opsml/api/card/space/all",
+  SPACES = "/opsml/api/card/space",
   GET_STATS = "/opsml/api/card/registry/stats",
   GET_REGISTRY_PAGE = "/opsml/api/card/registry/page",
   GET_VERSION_PAGE = "/opsml/api/card/registry/version/page",

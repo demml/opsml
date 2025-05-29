@@ -3,25 +3,25 @@
   import CardsSearch from "$lib/components/card/CardsSearch.svelte";
   import type { PageProps } from './$types';
   import { onMount } from "svelte";
-  import type { SpaceStatsResponse, SpaceStats } from "$lib/components/card/types";
+  import type { SpaceRecord, SpaceRecordResponse } from "$lib/components/card/types";
   import { ArrowLeft, ArrowRight, Search, Settings } from 'lucide-svelte';
   import  { delay } from "$lib/utils";
   import CreateSpaceModal from "$lib/components/space/CreateSpaceModal.svelte";
   import SpacePage from "$lib/components/space/SpacePage.svelte";
 
   let { data }: PageProps = $props();
-  let spaces: SpaceStatsResponse  = data.spaces;
+  let spaces: SpaceRecordResponse  = data.spaces;
 
   let currentPage = $state(1);
   let totalPages = $state(1);
 
   let searchQuery = $state('');
-  let filteredSpaces = $state<SpaceStats[]>([]);
+  let filteredSpaces = $state<SpaceRecord[]>([]);
   let availableSpaces = spaces.spaces
 
   const searchSpaces = () => {
     // filter based on item.space
-    filteredSpaces = availableSpaces.filter((item: SpaceStats) => {
+    filteredSpaces = availableSpaces.filter((item: SpaceRecord) => {
       let itemName = item.space.toLowerCase();
       return itemName.includes(searchQuery!.toLowerCase())
     });
@@ -78,9 +78,9 @@
 
     {#if filteredSpaces.length > 0}
       <div class="pt-4 grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-4 gap-4 justify-items-center">
-        {#each filteredSpaces as stats}
+        {#each filteredSpaces as record}
           <div class="flex justify-center w-full">
-            <SpacePage {stats} />
+            <SpacePage {record} />
           </div>
         {/each}
       </div>
