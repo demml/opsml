@@ -77,7 +77,7 @@
 
 <div class="grid grid-cols-1 md:grid-cols-6 gap-4 w-full">
   <!-- Left column -->
-  <div class="col-span-1 md:col-span-2 bg-slate-100 p-4 flex flex-col rounded-base border-black border-2 shadow h-[400px]">
+  <div class="col-span-1 md:col-span-2 bg-slate-100 p-4 flex flex-col rounded-base border-black border-2 shadow min-h-[400px] h-fit">
     <!-- Top Section -->
     <div class="mb-4">
       <h2 class="font-bold text-primary-800 text-xl pb-3">Search Spaces</h2>
@@ -96,23 +96,22 @@
     </div>
 
     <!-- Bottom Section -->
-    <div class="h-1/3">
-      <div class="space-y-2 flex flex-wrap pl-2 pt-4 pb-4 gap-1 overflow-y-scroll">
-        <!-- Add your tags or other content here -->
-        {#if searchQuery && filteredSpaces.length == 0}
-          <p class="text-black">No spaces found</p>
-        {:else if filteredSpaces.length > 0}
+    <div class="overflow-y-auto pt-2">
+      {#if searchQuery && filteredSpaces.length == 0}
+        <p class="text-black">No spaces found</p>
+      {:else if filteredSpaces.length > 0}
+        <div class="flex flex-wrap gap-2 my-2">
           {#each filteredSpaces as space}
-
             {#if activeSpace === space}
-              <button class="chip text-black bg-primary-300 border-black border-1 reverse-shadow-small reverse-shadow-hover-small lg:text-base" onclick={() => setActiveRepo(space)}>{space}</button>
+              <button class="chip text-black bg-primary-300 border-black border-1 reverse-shadow-small reverse-shadow-hover-small lg:text-base" 
+                onclick={() => setActiveRepo(space)}>{space}</button>
             {:else}
-              <button class="chip text-black border-black border-1 shadow-small shadow-hover-small bg-surface-50 lg:text-base" onclick={() => setActiveRepo(space)}>{space}</button>
+              <button class="chip text-black border-black border-1 shadow-small shadow-hover-small bg-surface-50 lg:text-base" 
+                onclick={() => setActiveRepo(space)}>{space}</button>
             {/if}
-          
           {/each}
-        {/if}
-      </div>
+        </div>
+      {/if}
     </div>
   </div>
 
