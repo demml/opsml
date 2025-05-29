@@ -16,9 +16,11 @@ const LAST_ADMIN_SQL: &str = include_str!("sql/user/last_admin.sql");
 // space stats
 const UPDATE_SPACE_RECORD_STATS_SQL: &str = include_str!("sql/space/update_space_record_stats.sql");
 const GET_ALL_SPACE_RECORDS_SQL: &str = include_str!("sql/space/get_all_space_records.sql");
+const GET_SPACE_RECORD_SQL: &str = include_str!("sql/space/get_space_record.sql");
 const INSERT_SPACE_RECORD_SQL: &str = include_str!("sql/space/insert_space_record.sql");
 const UPDATE_SPACE_RECORD_SQL: &str = include_str!("sql/space/update_space_record.sql");
 const DELETE_SPACE_RECORD_SQL: &str = include_str!("sql/space/delete_space_record.sql");
+
 // experiment
 const GET_HARDWARE_METRIC_SQL: &str = include_str!("sql/experiment/get_hardware_metric.sql");
 const INSERT_EXPERIMENT_METRIC_SQL: &str =
@@ -86,6 +88,10 @@ impl SqliteQueryHelper {
     }
     pub fn get_all_space_records() -> String {
         GET_ALL_SPACE_RECORDS_SQL.to_string()
+    }
+
+    pub fn get_space_record_query() -> String {
+        GET_SPACE_RECORD_SQL.to_string()
     }
 
     pub fn get_hardware_metric_query() -> String {

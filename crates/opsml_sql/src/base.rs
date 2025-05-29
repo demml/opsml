@@ -355,6 +355,8 @@ pub trait SqlClient: Sized {
 
     async fn get_all_space_records(&self) -> Result<Vec<SpaceRecord>, SqlError>;
 
+    async fn get_space_record(&self, space: &str) -> Result<Option<SpaceRecord>, SqlError>;
+
     async fn update_space_record_stats(&self, space: &SpaceStatsEvent) -> Result<(), SqlError>;
 
     async fn insert_space_record(&self, space: &SpaceRecord) -> Result<(), SqlError>;

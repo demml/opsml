@@ -1168,6 +1168,24 @@ impl SqlClient for SqliteClient {
             .collect())
     }
 
+    async fn get_space_record(&self, space: &str) -> Result<Option<SpaceRecord>, SqlError> {
+        let query = SqliteQueryHelper::get_space_record_query();
+        let record: Option<SqlSpaceRecord> = sqlx::query_as(&query)
+            .bind(space)
+            .fetch_optional(&self.pool)
+            .await?;
+
+        Ok(record.map(|r| SpaceRecord {
+            space: r.0,
+            description: r.1,
+            experiment_count: r.2,
+            model_count: r.3,
+            data_count: r.4,
+            prompt_count: r.5,
+            user_count: r.6,
+        }))
+    }
+
     async fn insert_space_record(&self, space: &SpaceRecord) -> Result<(), SqlError> {
         let query = SqliteQueryHelper::get_insert_space_record_query();
         sqlx::query(&query)
@@ -1982,7 +2000,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_sqlite_update_get_space_record() {
+    async fn test_sqlite_crud_space_record() {
         cleanup();
 
         let config = DatabaseSettings {
