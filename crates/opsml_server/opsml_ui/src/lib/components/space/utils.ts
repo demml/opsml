@@ -3,8 +3,11 @@ import { RoutePaths } from "$lib/components/api/routes";
 import type { CreateSpaceResponse } from "./types";
 import { userStore } from "../user/user.svelte";
 
-export async function createSpace(space: string): Promise<CreateSpaceResponse> {
-  let params = { space: space };
+export async function createSpace(
+  space: string,
+  description: string
+): Promise<CreateSpaceResponse> {
+  let params = { space: space, description: description };
   const response = await opsmlClient.post(
     RoutePaths.CREATE_SPACE,
     params,
