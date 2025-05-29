@@ -59,8 +59,9 @@ export interface VersionPageRequest {
   page?: number;
 }
 
-export interface SpaceStats {
+export interface SpaceRecord {
   space: string;
+  description: string;
   experiment_count: number;
   model_count: number;
   data_count: number;
@@ -68,6 +69,6 @@ export interface SpaceStats {
   user_count: number;
 }
 
-export interface SpaceStatsResponse {
-  spaces: SpaceStats[];
+export interface SpaceRecordResponse {
+  spaces: SpaceRecord[];
 }
