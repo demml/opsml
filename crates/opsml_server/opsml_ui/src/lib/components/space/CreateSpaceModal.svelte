@@ -7,6 +7,7 @@
   // Validation schema for space
   const spaceSchema = z.object({
     space: z.string(),
+    description: z.string().optional(),
   });
 
   type ValidationResult<T> = {
@@ -21,9 +22,10 @@
 
 
   function validateSpaceSchema(
-    space: string
+    space: string,
+    description: string
   ): ValidationResult<UseSpaceSchema> {
-    let parsed = spaceSchema.safeParse({ space });
+    let parsed = spaceSchema.safeParse({ space, description });
 
     if (parsed.success) {
       return {
@@ -48,6 +50,7 @@
   let openState = $state(false);
   let showError = $state(false);
   let space = $state<string>('');
+  let description = $state<string>('');
   let errorMessage: string = $state("Failed to create space");
 
 
@@ -56,12 +59,12 @@
   }
 
   async function createCardSpace() {
-    let argsValid = validateSpaceSchema(space);
+    let argsValid = validateSpaceSchema(space, description);
 
     if (argsValid.success) {
       console.log("Space arguments are valid");
-    
-      let response = await createSpace(space);
+
+      let response = await createSpace(space, description);
 
       if (!response.created) {
         showError = true;
@@ -80,7 +83,7 @@
 open={openState}
 onOpenChange={(e) => (openState = e.open)}
 triggerBase="btn bg-primary-500 text-black shadow shadow-hover border-black border-2"
-contentBase="card p-4 bg-slate-100 border-2 border-black shadow min-w-[300px]"
+contentBase="card p-4 bg-slate-100 border-2 border-black shadow min-w-[500px]"
 backdropClasses="backdrop-blur-sm"
 >
 {#snippet trigger()}Create Space{/snippet}
@@ -93,7 +96,8 @@ backdropClasses="backdrop-blur-sm"
     <Warning errorMessage={errorMessage}/>
   {/if}
 
-   <div class="px-2">
+   <div class="mb-8 grid grid-cols-1 gap-3">
+
     <label class="text-surface-950">Space
       <input
           class="input text-sm rounded-base bg-surface-50 text-black disabled:opacity-50 placeholder-surface-800 placeholder-text-sm focus-visible:ring-2 focus-visible:ring-primary-800"
@@ -105,9 +109,21 @@ backdropClasses="backdrop-blur-sm"
           <span class="text-red-500 text-sm">{spaceErrors.space}</span>
       {/if}
     </label>
+
+
+    <label class="text-surface-950">Description
+      <textarea
+          class="textarea text-sm rounded-base bg-surface-50 text-black disabled:opacity-50 placeholder-surface-800 placeholder-text-sm focus-visible:ring-2 focus-visible:ring-primary-800 w-full min-h-[100px] resize-y"
+          placeholder="Provide a description for the space"
+          bind:value={description}
+      ></textarea>
+      {#if spaceErrors.description}
+          <span class="text-red-500 text-sm">{spaceErrors.description}</span>
+      {/if}
+    </label>
   </div>
 
-  <footer class="flex justify-end gap-4 p-2">
+  <footer class="flex justify-center gap-4 p-2">
     <button type="button" class="btn bg-primary-500 text-black shadow shadow-hover border-black border-2" onclick={modalClose}>Cancel</button>
     <button type="button" class="btn bg-primary-500 text-black shadow shadow-hover border-black border-2" onclick={createCardSpace}>Create</button>
   </footer>
