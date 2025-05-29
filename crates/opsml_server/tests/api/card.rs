@@ -1268,7 +1268,7 @@ async fn test_opsml_server_space_stats() {
 
     //
     let body = response.into_body().collect().await.unwrap().to_bytes();
-    let space_stats: SpaceStatsResponse = serde_json::from_slice(&body).unwrap();
+    let space_stats: SpaceRecordResponse = serde_json::from_slice(&body).unwrap();
 
     assert_eq!(space_stats.spaces[0].space, "space");
     assert_eq!(space_stats.spaces[0].model_count, 1);
@@ -1291,7 +1291,7 @@ async fn test_opsml_server_space_stats() {
     assert_eq!(response.status(), StatusCode::OK);
 
     let body = response.into_body().collect().await.unwrap().to_bytes();
-    let space_stats: SpaceStatsResponse = serde_json::from_slice(&body).unwrap();
+    let space_stats: SpaceRecordResponse = serde_json::from_slice(&body).unwrap();
 
     assert_eq!(space_stats.spaces[0].space, "space");
     assert_eq!(space_stats.spaces[0].model_count, 1);

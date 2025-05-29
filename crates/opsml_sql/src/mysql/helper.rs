@@ -13,8 +13,8 @@ const DELETE_USER_SQL: &str = include_str!("sql/user/delete_user.sql");
 const LAST_ADMIN_SQL: &str = include_str!("sql/user/last_admin.sql");
 
 // space stats
-const UPDATE_SPACE_STATS_SQL: &str = include_str!("sql/card/update_space_stats.sql");
-const GET_SPACE_STATS: &str = include_str!("sql/card/get_space_stats.sql");
+const UPDATE_SPACE_RECORD_STATS_SQL: &str = include_str!("sql/card/update_space_record_stats.sql");
+const GET_SPACE_RECORD_SQL: &str = include_str!("sql/card/get_space_record.sql");
 
 // experiment
 const GET_HARDWARE_METRIC_SQL: &str = include_str!("sql/experiment/get_hardware_metric.sql");
@@ -67,12 +67,12 @@ impl MySQLQueryHelper {
         GET_USERS_SQL.to_string()
     }
 
-    pub fn get_update_space_stats_query() -> String {
-        UPDATE_SPACE_STATS_SQL.to_string()
+    pub fn get_update_space_record_stats_query() -> String {
+        UPDATE_SPACE_RECORD_STATS_SQL.to_string()
     }
 
     pub fn get_spaces_stats() -> String {
-        GET_SPACE_STATS.to_string()
+        GET_SPACE_RECORD_SQL.to_string()
     }
 
     pub fn get_last_admin_query() -> String {

@@ -4,15 +4,14 @@ use crate::error::SqlError;
 use crate::schemas::schema::{
     AuditCardRecord, CardDeckRecord, CardResults, CardSummary, DataCardRecord,
     ExperimentCardRecord, HardwareMetricsRecord, MetricRecord, ModelCardRecord, ParameterRecord,
-    PromptCardRecord, QueryStats, ServerCard, UniqueSpaceStats, User, VersionResult,
-    VersionSummary,
+    PromptCardRecord, QueryStats, ServerCard, SqlSpaceRecord, User, VersionResult, VersionSummary,
 };
 
 use crate::sqlite::helper::SqliteQueryHelper;
 use async_trait::async_trait;
 use opsml_semver::VersionValidator;
 use opsml_settings::config::DatabaseSettings;
-use opsml_types::contracts::{ArtifactKey, AuditEvent, SpaceStats, SpaceStatsEvent};
+use opsml_types::contracts::{ArtifactKey, AuditEvent, SpaceRecord, SpaceStatsEvent};
 use opsml_types::{cards::CardTable, contracts::CardQueryArgs, RegistryType};
 use semver::Version;
 use sqlx::{
@@ -1134,8 +1133,8 @@ impl SqlClient for SqliteClient {
         Ok(())
     }
 
-    async fn update_space_stats(&self, space: &SpaceStatsEvent) -> Result<(), SqlError> {
-        let query = SqliteQueryHelper::get_update_space_stats_query();
+    async fn update_space_record_stats(&self, space: &SpaceStatsEvent) -> Result<(), SqlError> {
+        let query = SqliteQueryHelper::get_update_space_record_stats_query();
         sqlx::query(&query)
             .bind(&space.space)
             .bind(&space.space)
@@ -1151,19 +1150,20 @@ impl SqlClient for SqliteClient {
         Ok(())
     }
 
-    async fn get_space_stats(&self) -> Result<Vec<SpaceStats>, SqlError> {
+    async fn get_space_record(&self) -> Result<Vec<SpaceRecord>, SqlError> {
         let query = SqliteQueryHelper::get_spaces_stats();
-        let spaces: Vec<UniqueSpaceStats> = sqlx::query_as(&query).fetch_all(&self.pool).await?;
+        let spaces: Vec<SqlSpaceRecord> = sqlx::query_as(&query).fetch_all(&self.pool).await?;
 
         Ok(spaces
             .into_iter()
-            .map(|s| SpaceStats {
+            .map(|s| SpaceRecord {
                 space: s.0,
-                experiment_count: s.1,
-                model_count: s.2,
-                data_count: s.3,
-                prompt_count: s.4,
-                user_count: s.5,
+                description: s.1,
+                experiment_count: s.2,
+                model_count: s.3,
+                data_count: s.4,
+                prompt_count: s.5,
+                user_count: s.6,
             })
             .collect())
     }
@@ -1953,7 +1953,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_sqlite_update_get_space_stats() {
+    async fn test_sqlite_update_get_space_record() {
         cleanup();
 
         let config = DatabaseSettings {
@@ -1977,10 +1977,13 @@ mod tests {
         let space_event = SpaceStatsEvent {
             space: data_card.space.clone(),
         };
-        client.update_space_stats(&space_event).await.unwrap();
+        client
+            .update_space_record_stats(&space_event)
+            .await
+            .unwrap();
 
         // get space stats
-        let stats = client.get_space_stats().await.unwrap();
+        let stats = client.get_space_record().await.unwrap();
         assert_eq!(stats.len(), 1);
         // assert model_count
         assert_eq!(stats[0].model_count, 1);
@@ -1997,10 +2000,13 @@ mod tests {
         let space_event = SpaceStatsEvent {
             space: model_card2.space.clone(),
         };
-        client.update_space_stats(&space_event).await.unwrap();
+        client
+            .update_space_record_stats(&space_event)
+            .await
+            .unwrap();
         // get space stats again
 
-        let stats = client.get_space_stats().await.unwrap();
+        let stats = client.get_space_record().await.unwrap();
         assert_eq!(stats.len(), 1);
 
         // assert model_count
