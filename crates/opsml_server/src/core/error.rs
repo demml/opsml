@@ -194,6 +194,13 @@ impl OpsmlServerError {
         }
     }
 
+    pub fn space_not_found() -> Self {
+        error!("Space not found");
+        OpsmlServerError {
+            error: "Space not found".to_string(),
+        }
+    }
+
     pub fn into_response<T>(
         self,
         code: StatusCode,
