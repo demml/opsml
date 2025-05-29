@@ -80,18 +80,18 @@ pub struct UidResponse {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct SpaceRequest {
+pub struct RegistrySpaceRequest {
     pub registry_type: RegistryType,
 }
 
-impl AuditableRequest for SpaceRequest {
+impl AuditableRequest for RegistrySpaceRequest {
     fn get_resource_id(&self) -> String {
         self.registry_type.to_string()
     }
 
     fn get_metadata(&self) -> String {
         serde_json::to_string(self)
-            .unwrap_or_else(|e| format!("Failed to serialize spaceRequest: {}", e))
+            .unwrap_or_else(|e| format!("Failed to serialize RegistrySpaceRequest: {}", e))
     }
 
     fn get_registry_type(&self) -> Option<RegistryType> {
@@ -106,6 +106,22 @@ impl AuditableRequest for SpaceRequest {
 #[derive(Serialize, Deserialize)]
 pub struct CardSpaceResponse {
     pub spaces: Vec<String>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct SpaceRequest {
+    pub space: String,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct CrudSpaceRequest {
+    pub space: String,
+    pub description: Option<String>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct CrudSpaceResponse {
+    pub success: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
