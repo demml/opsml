@@ -89,7 +89,7 @@ backdropClasses="backdrop-blur-sm"
 {#snippet trigger()}Create Space{/snippet}
 {#snippet content()}
   <div class="flex flex-row pb-3 justify-between items-center">
-    <header class="pl-2 text-xl font-bold text-black">Create Space</header> 
+    <header class="text-xl font-bold text-primary-800">Create a Space!</header> 
   </div>
 
   {#if showError}
