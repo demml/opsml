@@ -86,7 +86,7 @@ WITH space_stats AS (
         FROM space_stats ss
         LEFT JOIN SPACE_USER_COUNT su ON ss.space = su.space
     )
-    INSERT OR REPLACE INTO opsml_space_stats (
+    INSERT OR REPLACE INTO opsml_space (
         space,
         data_count,
         model_count,
