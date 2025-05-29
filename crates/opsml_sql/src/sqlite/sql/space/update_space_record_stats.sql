@@ -86,21 +86,28 @@ WITH space_stats AS (
         FROM space_stats ss
         LEFT JOIN SPACE_USER_COUNT su ON ss.space = su.space
     )
-    INSERT OR REPLACE INTO opsml_space (
-        space,
-        data_count,
-        model_count,
-        experiment_count,
-        prompt_count,
-        user_count,
-        updated_at
-    )
-    SELECT 
-        space,
-        data_count,
-        model_count,
-        experiment_count,
-        prompt_count,
-        user_count,
-        CURRENT_TIMESTAMP
-    FROM SPACE_STATS_WITH_USERS;
+INSERT INTO opsml_space (
+    space,
+    data_count,
+    model_count,
+    experiment_count,
+    prompt_count,
+    user_count,
+    updated_at
+)
+VALUES (
+    (SELECT space FROM SPACE_STATS_WITH_USERS),
+    (SELECT data_count FROM SPACE_STATS_WITH_USERS),
+    (SELECT model_count FROM SPACE_STATS_WITH_USERS),
+    (SELECT experiment_count FROM SPACE_STATS_WITH_USERS),
+    (SELECT prompt_count FROM SPACE_STATS_WITH_USERS),
+    (SELECT user_count FROM SPACE_STATS_WITH_USERS),
+    CURRENT_TIMESTAMP
+)
+ON CONFLICT(space) DO UPDATE SET
+    data_count = excluded.data_count,
+    model_count = excluded.model_count,
+    experiment_count = excluded.experiment_count,
+    prompt_count = excluded.prompt_count,
+    user_count = excluded.user_count,
+    updated_at = CURRENT_TIMESTAMP;

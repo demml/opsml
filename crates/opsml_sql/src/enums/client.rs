@@ -481,6 +481,7 @@ mod tests {
     use crate::schemas::schema::{
         AuditCardRecord, DataCardRecord, ExperimentCardRecord, ModelCardRecord,
     };
+    use opsml_types::CommonKwargs;
     use opsml_utils::utils::get_utc_datetime;
 
     use std::env;
@@ -1197,6 +1198,101 @@ mod tests {
 
         // delete user
         client.delete_user("user").await.unwrap();
+
+        cleanup();
+    }
+
+    #[tokio::test]
+    async fn test_enum_crud_space() {
+        let client = get_client().await;
+
+        // create a new space record
+        let space_record = SpaceRecord {
+            space: CommonKwargs::Undefined.to_string(),
+            description: "Space description".to_string(),
+            ..Default::default()
+        };
+
+        client.insert_space_record(&space_record).await.unwrap();
+
+        // insert datacard
+        let data_card = DataCardRecord::default();
+        let card = ServerCard::Data(data_card.clone());
+        client.insert_card(&CardTable::Data, &card).await.unwrap();
+
+        // insert modelcard
+        let model_card = ModelCardRecord::default();
+        let card = ServerCard::Model(model_card.clone());
+        client.insert_card(&CardTable::Model, &card).await.unwrap();
+
+        let space_event = SpaceStatsEvent {
+            space: data_card.space.clone(),
+        };
+        client
+            .update_space_record_stats(&space_event)
+            .await
+            .unwrap();
+
+        // get space stats
+        let stats = client.get_all_space_records().await.unwrap();
+        assert_eq!(stats.len(), 1);
+        // assert model_count
+        assert_eq!(stats[0].model_count, 1);
+        assert_eq!(stats[0].description, "Space description");
+
+        //create a new modelcard
+        let model_card2 = ModelCardRecord {
+            name: "Model2".to_string(),
+            ..Default::default()
+        };
+        let card = ServerCard::Model(model_card2.clone());
+        client.insert_card(&CardTable::Model, &card).await.unwrap();
+
+        // update space stats again
+        let space_event = SpaceStatsEvent {
+            space: model_card2.space.clone(),
+        };
+        client
+            .update_space_record_stats(&space_event)
+            .await
+            .unwrap();
+        // get space stats again
+
+        let stats = client.get_all_space_records().await.unwrap();
+        assert_eq!(stats.len(), 1);
+
+        // assert model_count
+        assert_eq!(stats[0].model_count, 2);
+
+        // update space record
+        let updated_space_record = SpaceRecord {
+            space: model_card2.space.clone(),
+            description: "Updated Space description".to_string(),
+            ..Default::default()
+        };
+        client
+            .update_space_record(&updated_space_record)
+            .await
+            .unwrap();
+
+        // get space record
+        let record = client
+            .get_space_record(&model_card2.space)
+            .await
+            .unwrap()
+            .unwrap();
+
+        assert_eq!(record.description, "Updated Space description");
+
+        // delete
+        client
+            .delete_space_record(&model_card2.space)
+            .await
+            .unwrap();
+
+        // get space stats again
+        let stats = client.get_all_space_records().await.unwrap();
+        assert_eq!(stats.len(), 0);
 
         cleanup();
     }
