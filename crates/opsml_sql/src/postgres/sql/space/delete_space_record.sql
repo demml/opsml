@@ -1,0 +1,1 @@
+DELETE FROM opsml_space WHERE space = $1;

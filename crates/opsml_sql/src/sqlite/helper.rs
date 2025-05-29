@@ -14,9 +14,11 @@ const DELETE_USER_SQL: &str = include_str!("sql/user/delete_user.sql");
 const LAST_ADMIN_SQL: &str = include_str!("sql/user/last_admin.sql");
 
 // space stats
-const UPDATE_SPACE_RECORD_STATS_SQL: &str = include_str!("sql/card/update_space_record_stats.sql");
-const GET_SPACE_RECORD: &str = include_str!("sql/card/get_space_record.sql");
-
+const UPDATE_SPACE_RECORD_STATS_SQL: &str = include_str!("sql/space/update_space_record_stats.sql");
+const GET_ALL_SPACE_RECORDS_SQL: &str = include_str!("sql/space/get_all_space_records.sql");
+const INSERT_SPACE_RECORD_SQL: &str = include_str!("sql/space/insert_space_record.sql");
+const UPDATE_SPACE_RECORD_SQL: &str = include_str!("sql/space/update_space_record.sql");
+const DELETE_SPACE_RECORD_SQL: &str = include_str!("sql/space/delete_space_record.sql");
 // experiment
 const GET_HARDWARE_METRIC_SQL: &str = include_str!("sql/experiment/get_hardware_metric.sql");
 const INSERT_EXPERIMENT_METRIC_SQL: &str =
@@ -82,8 +84,8 @@ impl SqliteQueryHelper {
     pub fn get_update_space_record_stats_query() -> String {
         UPDATE_SPACE_RECORD_STATS_SQL.to_string()
     }
-    pub fn get_spaces_stats() -> String {
-        GET_SPACE_RECORD.to_string()
+    pub fn get_all_space_records() -> String {
+        GET_ALL_SPACE_RECORDS_SQL.to_string()
     }
 
     pub fn get_hardware_metric_query() -> String {
@@ -501,5 +503,17 @@ impl SqliteQueryHelper {
 
     pub fn get_artifact_key_delete_query() -> String {
         DELETE_ARTIFACT_KEY_SQL.to_string()
+    }
+
+    pub fn get_insert_space_record_query() -> String {
+        INSERT_SPACE_RECORD_SQL.to_string()
+    }
+
+    pub fn get_update_space_record_query() -> String {
+        UPDATE_SPACE_RECORD_SQL.to_string()
+    }
+
+    pub fn get_delete_space_record_query() -> String {
+        DELETE_SPACE_RECORD_SQL.to_string()
     }
 }

@@ -108,7 +108,7 @@ pub struct CardSpaceResponse {
     pub spaces: Vec<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct SpaceRecord {
     pub space: String,
     pub description: String,

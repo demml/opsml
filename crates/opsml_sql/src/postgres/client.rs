@@ -1103,8 +1103,8 @@ impl SqlClient for PostgresClient {
         Ok(())
     }
 
-    async fn get_space_record(&self) -> Result<Vec<SpaceRecord>, SqlError> {
-        let query = PostgresQueryHelper::get_spaces_stats();
+    async fn get_all_space_records(&self) -> Result<Vec<SpaceRecord>, SqlError> {
+        let query = PostgresQueryHelper::get_all_space_records();
         let spaces: Vec<SqlSpaceRecord> = sqlx::query_as(&query).fetch_all(&self.pool).await?;
 
         Ok(spaces
@@ -1119,6 +1119,35 @@ impl SqlClient for PostgresClient {
                 user_count: s.6,
             })
             .collect())
+    }
+
+    async fn insert_space_record(&self, space: &SpaceRecord) -> Result<(), SqlError> {
+        let query = PostgresQueryHelper::get_insert_space_record_query();
+        sqlx::query(&query)
+            .bind(&space.space)
+            .bind(&space.description)
+            .execute(&self.pool)
+            .await?;
+
+        Ok(())
+    }
+
+    async fn update_space_record(&self, space: &SpaceRecord) -> Result<(), SqlError> {
+        let query = PostgresQueryHelper::get_update_space_record_query();
+        sqlx::query(&query)
+            .bind(&space.description)
+            .bind(&space.space)
+            .execute(&self.pool)
+            .await?;
+
+        Ok(())
+    }
+
+    async fn delete_space_record(&self, space: &str) -> Result<(), SqlError> {
+        let query = PostgresQueryHelper::get_delete_space_record_query();
+        sqlx::query(&query).bind(space).execute(&self.pool).await?;
+
+        Ok(())
     }
 }
 
@@ -1168,6 +1197,9 @@ mod tests {
 
             DELETE
             FROM opsml_deck_registry;
+
+            DELETE
+            FROM opsml_space;
             "#,
         )
         .fetch_all(pool)
@@ -1912,7 +1944,7 @@ mod tests {
             .unwrap();
 
         // get space stats
-        let stats = client.get_space_record().await.unwrap();
+        let stats = client.get_all_space_records().await.unwrap();
         assert_eq!(stats.len(), 1);
         // assert model_count
         assert_eq!(stats[0].model_count, 1);
@@ -1935,7 +1967,7 @@ mod tests {
             .unwrap();
         // get space stats again
 
-        let stats = client.get_space_record().await.unwrap();
+        let stats = client.get_all_space_records().await.unwrap();
         assert_eq!(stats.len(), 1);
 
         // assert model_count

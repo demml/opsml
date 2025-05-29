@@ -67,10 +67,14 @@ pub async fn get_card_spaces(
 pub async fn get_space_record(
     State(state): State<Arc<AppState>>,
 ) -> Result<Json<SpaceRecordResponse>, (StatusCode, Json<OpsmlServerError>)> {
-    let spaces = state.sql_client.get_space_record().await.map_err(|e| {
-        error!("Failed to get all space names: {}", e);
-        internal_server_error(e, "Failed to get all space names")
-    })?;
+    let spaces = state
+        .sql_client
+        .get_all_space_records()
+        .await
+        .map_err(|e| {
+            error!("Failed to get all space names: {}", e);
+            internal_server_error(e, "Failed to get all space names")
+        })?;
 
     Ok(Json(SpaceRecordResponse { spaces }))
 }
