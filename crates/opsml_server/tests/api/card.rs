@@ -92,7 +92,7 @@ async fn test_opsml_server_card_spaces() {
     let helper = TestHelper::new().await;
 
     /////////////////////// Test respositories ///////////////////////
-    let params = SpaceRequest {
+    let params = RegistrySpaceRequest {
         registry_type: RegistryType::Model,
     };
 
@@ -1249,6 +1249,124 @@ async fn test_opsml_server_card_get_readme() {
 }
 
 #[tokio::test]
+async fn test_opsml_server_space_crud() {
+    let helper = TestHelper::new().await;
+
+    // 1. Create
+    let request = CrudSpaceRequest {
+        space: "space".to_string(),
+        description: Some("This is a test space".to_string()),
+    };
+
+    let request = Request::builder()
+        .uri("/opsml/api/card/space")
+        .method("POST")
+        .header(header::CONTENT_TYPE, "application/json")
+        .body(Body::from(serde_json::to_string(&request).unwrap()))
+        .unwrap();
+
+    let response = helper.send_oneshot(request).await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    //
+    let body = response.into_body().collect().await.unwrap().to_bytes();
+    let space_crud: CrudSpaceResponse = serde_json::from_slice(&body).unwrap();
+
+    assert!(space_crud.success);
+
+    // 2. Read
+    let params = CrudSpaceRequest {
+        space: "space".to_string(),
+        description: None, // We don't need a description for this request
+    };
+
+    let query_string = serde_qs::to_string(&params).unwrap();
+    let request = Request::builder()
+        .uri(format!("/opsml/api/card/space?{}", query_string))
+        .method("GET")
+        .body(Body::empty())
+        .unwrap();
+
+    let response = helper.send_oneshot(request).await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let body = response.into_body().collect().await.unwrap().to_bytes();
+    let space_record: SpaceRecordResponse = serde_json::from_slice(&body).unwrap();
+
+    assert_eq!(space_record.spaces.len(), 1);
+    assert_eq!(space_record.spaces[0].space, "space");
+    assert_eq!(
+        space_record.spaces[0].description,
+        "This is a test space".to_string()
+    );
+
+    // 3. Update
+    let update_request = CrudSpaceRequest {
+        space: "space".to_string(),
+        description: Some("Updated description".to_string()),
+    };
+
+    let request = Request::builder()
+        .uri("/opsml/api/card/space")
+        .method("PUT")
+        .header(header::CONTENT_TYPE, "application/json")
+        .body(Body::from(serde_json::to_string(&update_request).unwrap()))
+        .unwrap();
+    let response = helper.send_oneshot(request).await;
+    assert_eq!(response.status(), StatusCode::OK);
+    let body = response.into_body().collect().await.unwrap().to_bytes();
+    let update_response: CrudSpaceResponse = serde_json::from_slice(&body).unwrap();
+    assert!(update_response.success);
+
+    // Verify the update
+    let request = Request::builder()
+        .uri(format!("/opsml/api/card/space?space={}", "space"))
+        .method("GET")
+        .body(Body::empty())
+        .unwrap();
+    let response = helper.send_oneshot(request).await;
+    assert_eq!(response.status(), StatusCode::OK);
+    let body = response.into_body().collect().await.unwrap().to_bytes();
+    let space_record: SpaceRecordResponse = serde_json::from_slice(&body).unwrap();
+    assert_eq!(space_record.spaces.len(), 1);
+    assert_eq!(space_record.spaces[0].space, "space");
+    assert_eq!(
+        space_record.spaces[0].description,
+        "Updated description".to_string()
+    );
+
+    // 4. Delete
+    let delete_request = CrudSpaceRequest {
+        space: "space".to_string(),
+        description: None, // No description needed for deletion
+    };
+
+    let query_string = serde_qs::to_string(&delete_request).unwrap();
+    let request = Request::builder()
+        .uri(format!("/opsml/api/card/space?{}", query_string))
+        .method("DELETE")
+        .body(Body::empty())
+        .unwrap();
+    let response = helper.send_oneshot(request).await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let body = response.into_body().collect().await.unwrap().to_bytes();
+    let delete_response: CrudSpaceResponse = serde_json::from_slice(&body).unwrap();
+    assert!(delete_response.success);
+    // Verify deletion
+    let request = Request::builder()
+        .uri(format!("/opsml/api/card/space?space={}", "space"))
+        .method("GET")
+        .body(Body::empty())
+        .unwrap();
+    let response = helper.send_oneshot(request).await;
+    assert_eq!(response.status(), StatusCode::OK);
+    let body = response.into_body().collect().await.unwrap().to_bytes();
+    let space_record: SpaceRecordResponse = serde_json::from_slice(&body).unwrap();
+    assert!(space_record.spaces.is_empty(), "Space should be deleted");
+}
+
+#[tokio::test]
 async fn test_opsml_server_space_stats() {
     let mut helper = TestHelper::new().await;
 
@@ -1258,7 +1376,7 @@ async fn test_opsml_server_space_stats() {
     tokio::time::sleep(tokio::time::Duration::from_millis(200)).await;
 
     let request = Request::builder()
-        .uri("/opsml/api/card/space/stats")
+        .uri("/opsml/api/card/space/all")
         .method("GET")
         .body(Body::empty())
         .unwrap();

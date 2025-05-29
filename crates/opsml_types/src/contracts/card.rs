@@ -109,11 +109,6 @@ pub struct CardSpaceResponse {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct SpaceRequest {
-    pub space: String,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct CrudSpaceRequest {
     pub space: String,
     pub description: Option<String>,
