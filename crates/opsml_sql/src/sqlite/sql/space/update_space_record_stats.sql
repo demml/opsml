@@ -1,4 +1,14 @@
-WITH space_stats AS (
+INSERT INTO opsml_space (
+    space,
+    data_count,
+    model_count,
+    experiment_count,
+    prompt_count,
+    user_count,
+    updated_at
+)	
+WITH 
+    SPACE_STATS AS (
         SELECT 
             space,
             SUM(experiment_count) as experiment_count,
@@ -72,10 +82,9 @@ WITH space_stats AS (
             WHERE space = ?
         ) AS combined_users
         GROUP BY space
-    )
+    ), 
 
-
-    , SPACE_STATS_WITH_USERS AS (
+    SPACE_STATS_WITH_USERS AS (
         SELECT 
             ss.space,
             ss.experiment_count,
@@ -83,24 +92,23 @@ WITH space_stats AS (
             ss.data_count,
             ss.prompt_count,
             COALESCE(su.user_count, 0) as user_count
-        FROM space_stats ss
+        FROM SPACE_STATS ss
         LEFT JOIN SPACE_USER_COUNT su ON ss.space = su.space
     )
-    INSERT OR REPLACE INTO opsml_space (
-        space,
-        data_count,
-        model_count,
-        experiment_count,
-        prompt_count,
-        user_count,
-        updated_at
-    )
-    SELECT 
-        space,
-        data_count,
-        model_count,
-        experiment_count,
-        prompt_count,
-        user_count,
-        CURRENT_TIMESTAMP
-    FROM SPACE_STATS_WITH_USERS;
+
+SELECT 
+    space,
+    data_count,
+    model_count,
+    experiment_count,
+    prompt_count,
+    user_count,
+    CURRENT_TIMESTAMP
+FROM SPACE_STATS_WITH_USERS as stats
+ON DUPLICATE KEY UPDATE
+    experiment_count = stats.experiment_count,
+    model_count = stats.model_count,
+    data_count = stats.data_count,
+    prompt_count = stats.prompt_count,
+    user_count = stats.user_count,
+    updated_at = CURRENT_TIMESTAMP;

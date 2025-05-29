@@ -416,11 +416,11 @@ impl SqlClient for SqlClientEnum {
         }
     }
 
-    async fn get_space_record(&self) -> Result<Vec<SpaceRecord>, SqlError> {
+    async fn get_all_space_records(&self) -> Result<Vec<SpaceRecord>, SqlError> {
         match self {
-            SqlClientEnum::Postgres(client) => client.get_space_record().await,
-            SqlClientEnum::Sqlite(client) => client.get_space_record().await,
-            SqlClientEnum::MySql(client) => client.get_space_record().await,
+            SqlClientEnum::Postgres(client) => client.get_all_space_records().await,
+            SqlClientEnum::Sqlite(client) => client.get_all_space_records().await,
+            SqlClientEnum::MySql(client) => client.get_all_space_records().await,
         }
     }
 
@@ -429,6 +429,30 @@ impl SqlClient for SqlClientEnum {
             SqlClientEnum::Postgres(client) => client.update_space_record_stats(stats).await,
             SqlClientEnum::Sqlite(client) => client.update_space_record_stats(stats).await,
             SqlClientEnum::MySql(client) => client.update_space_record_stats(stats).await,
+        }
+    }
+
+    async fn insert_space_record(&self, record: &SpaceRecord) -> Result<(), SqlError> {
+        match self {
+            SqlClientEnum::Postgres(client) => client.insert_space_record(record).await,
+            SqlClientEnum::Sqlite(client) => client.insert_space_record(record).await,
+            SqlClientEnum::MySql(client) => client.insert_space_record(record).await,
+        }
+    }
+
+    async fn update_space_record(&self, record: &SpaceRecord) -> Result<(), SqlError> {
+        match self {
+            SqlClientEnum::Postgres(client) => client.update_space_record(record).await,
+            SqlClientEnum::Sqlite(client) => client.update_space_record(record).await,
+            SqlClientEnum::MySql(client) => client.update_space_record(record).await,
+        }
+    }
+
+    async fn delete_space_record(&self, space: &str) -> Result<(), SqlError> {
+        match self {
+            SqlClientEnum::Postgres(client) => client.delete_space_record(space).await,
+            SqlClientEnum::Sqlite(client) => client.delete_space_record(space).await,
+            SqlClientEnum::MySql(client) => client.delete_space_record(space).await,
         }
     }
 }
