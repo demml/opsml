@@ -1,4 +1,4 @@
-INSERT INTO opsml_space_stats (
+INSERT INTO opsml_space (
     space,
     data_count,
     model_count,
