@@ -42,7 +42,7 @@ impl AuthManager {
             .duration_since(UNIX_EPOCH)
             .unwrap()
             .as_secs()
-            + 60; // 1 minute expiration
+            + 3600; // 1 hour
 
         let claims = Claims {
             sub: user.username.clone(),
