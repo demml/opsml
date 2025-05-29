@@ -66,7 +66,7 @@
             class="input w-full text-sm rounded-base bg-surface-50 text-black disabled:opacity-50 placeholder-surface-800 placeholder-text-sm focus-visible:ring-1 border-black border-2 h-9"
             type="text"
             bind:value={searchQuery}
-            placeholder="Search artifacts"
+            placeholder="Search spaces..."
             onkeydown={delay(searchSpaces, 1000)}
           />
       </div>
