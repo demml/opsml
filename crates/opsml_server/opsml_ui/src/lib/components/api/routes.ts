@@ -35,6 +35,10 @@ export enum RoutePaths {
   HARDWARE_METRICS = "/opsml/api/experiment/hardware/metrics",
   USER = "/opsml/api/user",
   REGISTER = "/opsml/api/user/register",
+
+  // Space
+  CREATE_SPACE = "/opsml/api/space/create",
+  DELETE_SPACE = "/opsml/api/space/delete",
 }
 
 export enum UiPaths {

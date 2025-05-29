@@ -5,6 +5,9 @@
   import { onMount } from "svelte";
   import type { SpaceStatsResponse, SpaceStats } from "$lib/components/card/types";
   import { ArrowLeft, ArrowRight, Search, Settings } from 'lucide-svelte';
+  import  { delay } from "$lib/utils";
+  import CreateSpaceModal from "$lib/components/space/CreateSpaceModal.svelte";
+  import SpacePage from "$lib/components/space/SpacePage.svelte";
 
   let { data }: PageProps = $props();
   let spaces: SpaceStatsResponse  = data.spaces;
@@ -18,10 +21,12 @@
 
   const searchSpaces = () => {
     // filter based on item.space
-    return filteredSpaces = availableSpaces.filter((item: SpaceStats) => {
+    filteredSpaces = availableSpaces.filter((item: SpaceStats) => {
       let itemName = item.space.toLowerCase();
       return itemName.includes(searchQuery!.toLowerCase())
-    })
+    });
+
+    totalPages = Math.ceil(filteredSpaces.length / 30);
   }
 
   onMount(() => {
@@ -43,16 +48,69 @@
   }
 
 
+
 </script>
+<div class="flex-1 mx-auto w-7/12 pt-20 pt-[100px] justify-center px-4 pb-10">
+  <div class="gap-1 p-4 flex flex-col rounded-base border-primary-500 border-2 shadow-primary bg-surface-50  w-full h-auto">
 
-<div class="mx-auto w-9/12 pt-20 pt-[100px] flex justify-center px-4">
-
-  <div class="gap-1 p-4 flex flex-col rounded-base border-primary-500 border-2 shadow-primary bg-surface-50 h-auto">
     <div class="flex flex-row items-center gap-2 pb-2">
       <div class="rounded-full bg-surface-200 border-black border-2 p-1 shadow-small">
         <Settings color="#40328b" />
       </div>
       <h2 class="font-bold text-primary-800 text-xl">Spaces</h2>
+    </div>
+
+    <div class="flex flex-row justify-between pb-2 mb-2 items-center min-w-lg">
+      <div class="ml-1 w-2/3">
+          <input
+            class="input w-full text-sm rounded-base bg-surface-50 text-black disabled:opacity-50 placeholder-surface-800 placeholder-text-sm focus-visible:ring-1 border-black border-2 h-9"
+            type="text"
+            bind:value={searchQuery}
+            placeholder="Search artifacts"
+            onkeydown={delay(searchSpaces, 1000)}
+          />
+      </div>
+
+      <div>
+        <CreateSpaceModal/>
+      </div>
+    </div>
+
+    {#if filteredSpaces.length > 0}
+      <div class="pt-4 grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-4 justify-items-center">
+        {#each filteredSpaces as stats}
+          <div class="flex justify-center w-full">
+            <SpacePage {stats} />
+          </div>
+        {/each}
+      </div>
+
+    {:else}
+      <div class="flex flex-col gap-2 mt-2 items-center justify-center">
+        <p class="text-primary-800 text-lg">No spaces found</p>
+        <p class="text-gray-500">Register cards to see spaces appear here</p>
+      </div>
+    {/if}
+
+    <div class="flex justify-center pt-4 gap-2">
+
+      {#if currentPage > 1}
+        <button class="btn bg-surface-50 border-black border-2 shadow-small shadow-hover-small h-9" onclick={() => changePage(currentPage - 1)}>
+          <ArrowLeft color="#5948a3"/>
+        </button>
+      {/if}
+      
+      <div class="flex bg-surface-50 border-black border-2 text-center items-center rounded-base px-2 shadow-small h-9">
+        <span class="text-primary-800 mr-1">{currentPage}</span>
+        <span class="text-primary-400">of {totalPages}</span>
+      </div>
+
+      {#if currentPage < totalPages }
+        <button class="btn bg-surface-50 border-black border-2 shadow-small shadow-hover-small h-9" onclick={() => changePage(currentPage + 1)}>
+          <ArrowRight color="#5948a3"/>
+        </button>
+      {/if}
+    
     </div>
 
   </div>
