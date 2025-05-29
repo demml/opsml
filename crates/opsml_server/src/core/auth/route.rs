@@ -1,4 +1,4 @@
-use crate::core::auth::schema::{Authenticated, LoginRequest, LoginResponse};
+use crate::core::auth::schema::{Authenticated, LoginRequest, LoginResponse, LogoutResponse};
 use crate::core::error::{internal_server_error, OpsmlServerError};
 use crate::core::state::AppState;
 use crate::core::user::schema::UserResponse;
@@ -106,11 +106,7 @@ pub async fn api_login_handler(
     // if it is, check if its valid and return it
     // if it is not, generate a new one
     if let Some(refresh_token) = &user.refresh_token {
-        if state
-            .auth_manager
-            .validate_refresh_token(refresh_token)
-            .is_ok()
-        {
+        if state.auth_manager.validate_jwt(refresh_token).is_ok() {
             return Ok(Json(JwtToken { token: jwt_token }));
         }
     }
@@ -134,6 +130,62 @@ pub async fn api_login_handler(
     // update scouter with new refresh token
     info!("User connected: {}", user.username);
     Ok(Json(JwtToken { token: jwt_token }))
+}
+
+#[instrument(skip_all)]
+pub async fn ui_logout_handler(
+    State(state): State<Arc<AppState>>,
+    headers: HeaderMap,
+) -> Result<Json<LogoutResponse>, (StatusCode, Json<OpsmlServerError>)> {
+    let bearer_token = headers
+        .get(header::AUTHORIZATION)
+        .and_then(|auth_header| auth_header.to_str().ok())
+        .and_then(|auth_value| {
+            auth_value
+                .strip_prefix("Bearer ")
+                .map(|token| token.to_owned())
+        });
+
+    // validate token and then remove refresh token from user
+    if let Some(bearer_token) = bearer_token {
+        let claims = state
+            .auth_manager
+            .validate_jwt(&bearer_token)
+            .map_err(|e| {
+                (
+                    StatusCode::UNAUTHORIZED,
+                    Json(OpsmlServerError::jwt_decode_error(e)),
+                )
+            })?;
+        info!("Logging out user: {}", claims.sub);
+        // get user from database
+        let mut user = match get_user(&state.sql_client, &claims.sub).await {
+            Ok(user) => user,
+            Err(_) => {
+                return OpsmlServerError::user_validation_error()
+                    .into_response(StatusCode::BAD_REQUEST);
+            }
+        };
+
+        // invalidate the refresh token
+        user.refresh_token = None;
+
+        // update user in database
+        state.sql_client.update_user(&user).await.map_err(|e| {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(OpsmlServerError::refresh_token_error(e)),
+            )
+        })?;
+
+        info!("User logged out: {}", user.username);
+        return Ok(Json(LogoutResponse { logged_out: true }));
+    }
+
+    Err((
+        StatusCode::UNAUTHORIZED,
+        Json(OpsmlServerError::missing_token()),
+    ))
 }
 
 /// Route for the login endpoint when using the API
@@ -241,7 +293,7 @@ pub async fn api_refresh_token_handler(
         });
 
     if let Some(bearer_token) = bearer_token {
-        // validate the refresh token
+        // validate the bearer token
         let claims = state
             .auth_manager
             .decode_jwt_without_validation(&bearer_token)
@@ -261,7 +313,21 @@ pub async fn api_refresh_token_handler(
             }
         };
 
-        // generate JWT token
+        // validate refresh token (if this fails, we return an error)
+        // We are ensuring that the refresh token is still valid before generating a new one.
+        state
+            .auth_manager
+            .validate_jwt(user.refresh_token.as_deref().unwrap_or(""))
+            .map_err(|_| {
+                (
+                    StatusCode::UNAUTHORIZED,
+                    Json(OpsmlServerError::refresh_token_error(
+                        "Invalid refresh token",
+                    )),
+                )
+            })?;
+
+        // generate new JWT token
         let jwt_token = state.auth_manager.generate_jwt(&user).map_err(|_| {
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
@@ -269,7 +335,8 @@ pub async fn api_refresh_token_handler(
             )
         })?;
 
-        // generate refresh token
+        // generate new refresh token
+        info!("Generating new refresh token for user: {}", user.username);
         let refresh_token = state
             .auth_manager
             .generate_refresh_token(&user)
@@ -311,18 +378,7 @@ async fn validate_jwt_token(
     if let Some(bearer_token) = bearer_token {
         info!("Validating JWT token");
         match state.auth_manager.validate_jwt(&bearer_token) {
-            Ok(_) => {
-                // get claims and user
-                let claims = state
-                    .auth_manager
-                    .decode_jwt_without_validation(&bearer_token)
-                    .map_err(|e| {
-                        (
-                            StatusCode::UNAUTHORIZED,
-                            Json(OpsmlServerError::jwt_decode_error(e)),
-                        )
-                    })?;
-
+            Ok(claims) => {
                 let user = match get_user(&state.sql_client, &claims.sub).await {
                     Ok(user) => user,
                     Err(_) => {
@@ -367,6 +423,10 @@ pub async fn get_auth_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
                 get(validate_jwt_token),
             )
             .route(&format!("{}/auth/ui/login", prefix), post(ui_login_handler))
+            .route(
+                &format!("{}/auth/ui/logout", prefix),
+                get(ui_logout_handler),
+            )
     }));
 
     match result {

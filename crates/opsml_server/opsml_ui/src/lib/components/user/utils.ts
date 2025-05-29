@@ -6,6 +6,7 @@ import type {
   RecoveryResetRequest,
   ResetPasswordResponse,
   UserResponse,
+  LogOutResponse,
 } from "$lib/components/user/types";
 import { format } from "date-fns";
 import { userStore } from "./user.svelte";
@@ -57,4 +58,12 @@ export async function resetUserPassword(
   );
 
   return (await response.json()) as ResetPasswordResponse;
+}
+
+export async function logout(): Promise<LogOutResponse> {
+  let path = `${RoutePaths.LOGOUT}`;
+
+  const response = await opsmlClient.get(path, undefined, userStore.jwt_token);
+
+  return (await response.json()) as LogOutResponse;
 }

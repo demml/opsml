@@ -55,3 +55,7 @@ export interface AuthenticatedResponse {
 export interface JwtToken {
   token: string;
 }
+
+export interface LogOutResponse {
+  logged_out: boolean;
+}
