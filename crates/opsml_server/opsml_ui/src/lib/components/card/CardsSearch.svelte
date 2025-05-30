@@ -6,7 +6,6 @@
   import  CardPage  from "$lib/components/card/CardPage.svelte";
   import  { RegistryType, delay } from "$lib/utils";
   import { ArrowLeft, ArrowRight, Search, Settings } from 'lucide-svelte';
-
   
   let { selectedSpace, page, selectedName, title } = $props<{
     selectedSpace: string | undefined;

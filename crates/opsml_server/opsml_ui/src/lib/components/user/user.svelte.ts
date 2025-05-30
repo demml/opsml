@@ -98,9 +98,6 @@ export class UserStore {
         this.resetUser();
         return false;
       }
-
-      console.log("User is authenticated:", JSON.stringify(authenticated));
-
       // Update user information if authenticated
       this.updateUser(
         authenticated.user_response.username,
@@ -202,6 +199,10 @@ export class UserStore {
 
   public setUsername(username: string) {
     this.username = username;
+  }
+
+  public setFavoriteSpaces(favorite_spaces: string[]) {
+    this.favorite_spaces = favorite_spaces;
   }
 
   // all perms are stored as <operation>:<resource>

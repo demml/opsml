@@ -4,6 +4,8 @@
   import type { SpaceRecord} from '$lib/components/space/types';
   import { BrainCircuit, Table, NotebookText, FlaskConical } from 'lucide-svelte';
   import type { PageProps } from './$types';
+  import { updateUser } from '$lib/components/user/utils';
+  import { userStore } from '$lib/components/user/user.svelte';
 
   let { data }: PageProps = $props();
   let spaceRecord: SpaceRecord= data.spaceRecord;
@@ -11,15 +13,48 @@
   let badgeColor = "#40328b";
   let iconColor = "#40328b"; // Default icon color, can be customized
 
+  async function favoriteSpace() {
+    let userFavoriteSpaces = userStore.favorite_spaces;
+    userFavoriteSpaces.push(spaceRecord.space);
+
+    let updatedUser = await updateUser({ favorite_spaces: userFavoriteSpaces });
+    userStore.setFavoriteSpaces(updatedUser.favorite_spaces);
+  }
+
+  async function unfavoriteSpace() {
+    let userFavoriteSpaces = userStore.favorite_spaces;
+    userFavoriteSpaces = userFavoriteSpaces.filter(space => space !== spaceRecord.space);
+
+    let updatedUser = await updateUser({ favorite_spaces: userFavoriteSpaces });
+    userStore.setFavoriteSpaces(updatedUser.favorite_spaces);
+  }
+
 
 </script>
 
+<div class="flex-none pt-20 m500:pt-14 lg:pt-[85px] border-b-2 border-black bg-slate-100 pb-2">
+  <div class="flex justify-center items-center w-11/12 mx-auto gap-4">
+    <h1 class="text-2xl">
+      <div class="font-bold text-primary-800">{spaceRecord.space}</div>
+    </h1>
+    {#if userStore.favorite_spaces.includes(spaceRecord.space)}
+      <button class="btn bg-primary-500 rounded-lg justify-self-center text-black mb-2 ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 border-black border-2 border-border reverse-shadow-hover" 
+        onclick={unfavoriteSpace}>Unfavorite
+      </button>
+    {:else}
+      <button class="btn bg-surface-50 rounded-lg justify-self-center text-black mb-2 ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 border-black border-2 border-border shadow shadow-hover" 
+        onclick={favoriteSpace}>Favorite
+      </button>
+    {/if}
+    
+  </div>
+</div>
 
 {#await cards}
   <p>Loading...</p>
 {:then cards}
   <!-- Cards loaded successfully -->
-<div class="flex-1 mx-auto w-7/12 pt-20 pt-[100px] justify-center px-4 pb-10">
+<div class="flex-1 mx-auto w-7/12 justify-center px-4 pb-10 pt-10">
 
     <!-- Left column for activity and members-->
     <div class="grid grid-cols-1 lg:grid-cols-4 gap-4 w-full">

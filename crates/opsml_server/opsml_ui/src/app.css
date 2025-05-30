@@ -49,6 +49,10 @@
     @apply transition-all hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-small;
 }
 
+.reverse-shadow-hover {
+    @apply transition-all hover:translate-x-[-4px] hover:translate-y-[-4px] hover:shadow;
+}
+
 
 ::selection {
     @apply bg-secondary-100; /* Replace with your desired color */
