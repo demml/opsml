@@ -93,13 +93,15 @@ async fn test_opsml_server_user_crud() {
     assert_eq!(response.status(), StatusCode::OK);
 
     let body = response.into_body().collect().await.unwrap().to_bytes();
-    let user_response: UserResponse = serde_json::from_slice(&body).unwrap();
+    let mut user_response: UserResponse = serde_json::from_slice(&body).unwrap();
+    user_response.permissions.sort();
+
     assert_eq!(
         user_response.permissions,
         vec![
+            "execute:all".to_string(),
             "read:all".to_string(),
-            "write:all".to_string(),
-            "execute:all".to_string()
+            "write:all".to_string()
         ]
     );
     assert_eq!(
