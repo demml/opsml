@@ -35,3 +35,10 @@ impl Default for AuditEvent {
         }
     }
 }
+
+#[derive(Debug, Clone)]
+pub struct SpaceNameEvent {
+    pub space: String,
+    pub name: String,
+    pub registry_type: RegistryType,
+}

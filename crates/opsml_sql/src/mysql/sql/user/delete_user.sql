@@ -1,0 +1,1 @@
+DELETE FROM opsml_user WHERE username = ?;

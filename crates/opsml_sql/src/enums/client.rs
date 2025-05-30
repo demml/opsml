@@ -12,9 +12,9 @@ use anyhow::Context;
 use anyhow::Result as AnyhowResult;
 use async_trait::async_trait;
 use opsml_settings::config::DatabaseSettings;
-use opsml_types::contracts::AuditEvent;
+use opsml_types::contracts::{AuditEvent, SpaceNameEvent, SpaceRecord, SpaceStats};
 use opsml_types::{
-    SqlType,
+    RegistryType, SqlType,
     {
         cards::CardTable,
         contracts::{ArtifactKey, CardQueryArgs},
@@ -149,7 +149,11 @@ impl SqlClient for SqlClientEnum {
         }
     }
 
-    async fn delete_card(&self, table: &CardTable, uid: &str) -> Result<(), SqlError> {
+    async fn delete_card(
+        &self,
+        table: &CardTable,
+        uid: &str,
+    ) -> Result<(String, String), SqlError> {
         match self {
             SqlClientEnum::Postgres(client) => client.delete_card(table, uid).await,
             SqlClientEnum::Sqlite(client) => client.delete_card(table, uid).await,
@@ -415,6 +419,79 @@ impl SqlClient for SqlClientEnum {
             SqlClientEnum::MySql(client) => client.delete_artifact_key(uid, registry_type).await,
         }
     }
+
+    async fn insert_space_record(&self, record: &SpaceRecord) -> Result<(), SqlError> {
+        match self {
+            SqlClientEnum::Postgres(client) => client.insert_space_record(record).await,
+            SqlClientEnum::Sqlite(client) => client.insert_space_record(record).await,
+            SqlClientEnum::MySql(client) => client.insert_space_record(record).await,
+        }
+    }
+
+    async fn insert_space_name_record(&self, event: &SpaceNameEvent) -> Result<(), SqlError> {
+        match self {
+            SqlClientEnum::Postgres(client) => client.insert_space_name_record(event).await,
+            SqlClientEnum::Sqlite(client) => client.insert_space_name_record(event).await,
+            SqlClientEnum::MySql(client) => client.insert_space_name_record(event).await,
+        }
+    }
+
+    async fn get_all_space_stats(&self) -> Result<Vec<SpaceStats>, SqlError> {
+        match self {
+            SqlClientEnum::Postgres(client) => client.get_all_space_stats().await,
+            SqlClientEnum::Sqlite(client) => client.get_all_space_stats().await,
+            SqlClientEnum::MySql(client) => client.get_all_space_stats().await,
+        }
+    }
+
+    async fn get_space_record(&self, space: &str) -> Result<Option<SpaceRecord>, SqlError> {
+        match self {
+            SqlClientEnum::Postgres(client) => client.get_space_record(space).await,
+            SqlClientEnum::Sqlite(client) => client.get_space_record(space).await,
+            SqlClientEnum::MySql(client) => client.get_space_record(space).await,
+        }
+    }
+
+    async fn update_space_record(&self, record: &SpaceRecord) -> Result<(), SqlError> {
+        match self {
+            SqlClientEnum::Postgres(client) => client.update_space_record(record).await,
+            SqlClientEnum::Sqlite(client) => client.update_space_record(record).await,
+            SqlClientEnum::MySql(client) => client.update_space_record(record).await,
+        }
+    }
+
+    async fn delete_space_record(&self, space: &str) -> Result<(), SqlError> {
+        match self {
+            SqlClientEnum::Postgres(client) => client.delete_space_record(space).await,
+            SqlClientEnum::Sqlite(client) => client.delete_space_record(space).await,
+            SqlClientEnum::MySql(client) => client.delete_space_record(space).await,
+        }
+    }
+
+    async fn delete_space_name_record(
+        &self,
+        space: &str,
+        name: &str,
+        registry_type: &RegistryType,
+    ) -> Result<(), SqlError> {
+        match self {
+            SqlClientEnum::Postgres(client) => {
+                client
+                    .delete_space_name_record(space, name, registry_type)
+                    .await
+            }
+            SqlClientEnum::Sqlite(client) => {
+                client
+                    .delete_space_name_record(space, name, registry_type)
+                    .await
+            }
+            SqlClientEnum::MySql(client) => {
+                client
+                    .delete_space_name_record(space, name, registry_type)
+                    .await
+            }
+        }
+    }
 }
 
 pub async fn get_sql_client(db_settings: &DatabaseSettings) -> AnyhowResult<SqlClientEnum> {
@@ -433,6 +510,7 @@ mod tests {
     use crate::schemas::schema::{
         AuditCardRecord, DataCardRecord, ExperimentCardRecord, ModelCardRecord,
     };
+    use opsml_types::{CommonKwargs, RegistryType};
     use opsml_utils::utils::get_utc_datetime;
 
     use std::env;
@@ -1149,6 +1227,111 @@ mod tests {
 
         // delete user
         client.delete_user("user").await.unwrap();
+
+        cleanup();
+    }
+
+    #[tokio::test]
+    async fn test_enum_crud_space() {
+        let client = get_client().await;
+
+        // create a new space record
+        let space_record = SpaceRecord {
+            space: CommonKwargs::Undefined.to_string(),
+            description: "Space description".to_string(),
+        };
+
+        client.insert_space_record(&space_record).await.unwrap();
+
+        // insert datacard
+        let data_card = DataCardRecord::default();
+        let card = ServerCard::Data(data_card.clone());
+        client.insert_card(&CardTable::Data, &card).await.unwrap();
+
+        // insert modelcard
+        let model_card = ModelCardRecord::default();
+        let card = ServerCard::Model(model_card.clone());
+        client.insert_card(&CardTable::Model, &card).await.unwrap();
+
+        let space_event = SpaceNameEvent {
+            space: data_card.space.clone(),
+            name: data_card.name.clone(),
+            registry_type: RegistryType::Data,
+        };
+        client.insert_space_name_record(&space_event).await.unwrap();
+
+        let space_event = SpaceNameEvent {
+            space: model_card.space.clone(),
+            name: model_card.name.clone(),
+            registry_type: RegistryType::Model,
+        };
+
+        client.insert_space_name_record(&space_event).await.unwrap();
+
+        // get space stats
+        let stats = client.get_all_space_stats().await.unwrap();
+        assert_eq!(stats.len(), 1);
+        // assert model_count
+        assert_eq!(stats[0].model_count, 1);
+
+        //create a new modelcard
+        let model_card2 = ModelCardRecord {
+            name: "Model2".to_string(),
+            ..Default::default()
+        };
+        let card = ServerCard::Model(model_card2.clone());
+        client.insert_card(&CardTable::Model, &card).await.unwrap();
+
+        // update space stats again
+        let space_event = SpaceNameEvent {
+            space: model_card2.space.clone(),
+            name: model_card2.name.clone(),
+            registry_type: RegistryType::Model,
+        };
+        client.insert_space_name_record(&space_event).await.unwrap();
+        // get space stats again
+
+        let stats = client.get_all_space_stats().await.unwrap();
+        assert_eq!(stats.len(), 1);
+
+        // assert model_count
+        assert_eq!(stats[0].model_count, 2);
+
+        // update space record
+        let updated_space_record = SpaceRecord {
+            space: model_card2.space.clone(),
+            description: "Updated Space description".to_string(),
+        };
+        client
+            .update_space_record(&updated_space_record)
+            .await
+            .unwrap();
+
+        // get space record
+        let record = client
+            .get_space_record(&model_card2.space)
+            .await
+            .unwrap()
+            .unwrap();
+
+        assert_eq!(record.description, "Updated Space description");
+
+        // delete
+        client
+            .delete_space_record(&model_card2.space)
+            .await
+            .unwrap();
+
+        // delete space name record
+        client
+            .delete_space_name_record(&model_card2.space, &model_card2.name, &RegistryType::Model)
+            .await
+            .unwrap();
+
+        // get space stats again
+        let stats = client.get_all_space_stats().await.unwrap();
+        assert_eq!(stats.len(), 1);
+        assert_eq!(stats[0].model_count, 1);
 
         cleanup();
     }

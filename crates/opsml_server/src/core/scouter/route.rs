@@ -1,7 +1,7 @@
 use crate::core::error::{internal_server_error, OpsmlServerError};
 use crate::core::files::utils::download_artifacts;
 use crate::core::scouter;
-use crate::core::scouter::types::Alive;
+
 use crate::core::scouter::utils::{find_drift_profile, save_encrypted_profile};
 use crate::core::state::AppState;
 use anyhow::{Context, Result};
@@ -15,8 +15,7 @@ use opsml_auth::permission::UserPermissions;
 use opsml_sql::base::SqlClient;
 use opsml_types::api::RequestType;
 use opsml_types::contracts::{DriftProfileRequest, UpdateProfileRequest};
-use opsml_types::RegistryType;
-use opsml_types::SaveName;
+use opsml_types::{Alive, RegistryType, SaveName};
 use reqwest::Response;
 
 use crate::core::scouter::types::DriftProfileResult;
@@ -539,6 +538,11 @@ pub async fn check_scouter_health(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
 ) -> Result<Json<Alive>, (StatusCode, Json<OpsmlServerError>)> {
+    // exit early if scouter is not enabled
+    if !state.scouter_client.enabled {
+        return Ok(Json(Alive { alive: false }));
+    }
+
     let exchange_token = state.exchange_token_from_perms(&perms).await.map_err(|e| {
         error!("Failed to exchange token for scouter: {}", e);
         internal_server_error(e, "Failed to exchange token for scouter")
@@ -563,17 +567,18 @@ pub async fn check_scouter_health(
     let status_code = response.status();
     match status_code.is_success() {
         true => {
-            let body = response.json::<Alive>().await.map_err(|e| {
+            let _ = response.json::<Alive>().await.map_err(|e| {
                 error!("Failed to parse scouter response: {}", e);
                 internal_server_error(e, "Failed to parse scouter response")
             })?;
-            Ok(Json(body))
+            Ok(Json(Alive { alive: true }))
         }
         false => {
             let body = response.json::<ScouterServerError>().await.map_err(|e| {
                 error!("Failed to parse scouter error response: {}", e);
                 internal_server_error(e, "Failed to parse scouter error response")
             })?;
+            // return error response
             Err((status_code, Json(OpsmlServerError::new(body.error))))
         }
     }

@@ -11,7 +11,7 @@
 
 </script>
 
-<div class="mx-auto w-9/12 pb-10 pt-[100px] flex justify-center px-4">
+<div class="flex-1 mx-auto w-9/12 pt-20 pt-[100px] justify-center px-4 pb-10">
   <CardsSearch 
     selectedSpace={selectedSpace}
     selectedName={selectedName}

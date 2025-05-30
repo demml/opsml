@@ -6,8 +6,9 @@ import type {
   RecoveryResetRequest,
   ResetPasswordResponse,
   UserResponse,
+  LogOutResponse,
+  UpdateUserRequest,
 } from "$lib/components/user/types";
-import { format } from "date-fns";
 import { userStore } from "./user.svelte";
 
 // Helper function for registering a user via the api client
@@ -57,4 +58,33 @@ export async function resetUserPassword(
   );
 
   return (await response.json()) as ResetPasswordResponse;
+}
+
+export async function logout(): Promise<LogOutResponse> {
+  let path = `${RoutePaths.LOGOUT}`;
+
+  const response = await opsmlClient.get(path, undefined, userStore.jwt_token);
+
+  return (await response.json()) as LogOutResponse;
+}
+
+interface UpdateUserOptions {
+  permissions?: string[];
+  group_permissions?: string[];
+  favorite_spaces?: string[];
+}
+
+export async function updateUser(
+  options: UpdateUserOptions
+): Promise<UserResponse> {
+  const request: UpdateUserRequest = {
+    permissions: options.permissions,
+    group_permissions: options.group_permissions,
+    favorite_spaces: options.favorite_spaces,
+  };
+
+  let path = `${RoutePaths.USER}/${userStore.username}`;
+
+  const response = await opsmlClient.put(path, request, userStore.jwt_token);
+  return (await response.json()) as UserResponse;
 }

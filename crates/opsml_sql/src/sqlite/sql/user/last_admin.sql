@@ -1,0 +1,1 @@
+SELECT username FROM opsml_user WHERE role = 'admin';

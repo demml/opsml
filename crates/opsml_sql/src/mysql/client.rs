@@ -2,18 +2,17 @@ use crate::base::SqlClient;
 use crate::error::SqlError;
 use crate::mysql::helper::MySQLQueryHelper;
 use crate::schemas::schema::{
-    AuditCardRecord, CardDeckRecord, CardSummary, DataCardRecord, ExperimentCardRecord,
-    HardwareMetricsRecord, MetricRecord, ModelCardRecord, ParameterRecord, PromptCardRecord,
-    QueryStats, ServerCard, User, VersionSummary,
+    AuditCardRecord, CardDeckRecord, CardResults, CardSummary, DataCardRecord,
+    ExperimentCardRecord, HardwareMetricsRecord, MetricRecord, ModelCardRecord, ParameterRecord,
+    PromptCardRecord, QueryStats, ServerCard, SqlSpaceRecord, User, VersionResult, VersionSummary,
 };
-use crate::schemas::schema::{CardResults, VersionResult};
 
 use async_trait::async_trait;
 use opsml_semver::VersionValidator;
 use opsml_settings::config::DatabaseSettings;
 use opsml_types::{
     cards::CardTable,
-    contracts::{ArtifactKey, AuditEvent, CardQueryArgs},
+    contracts::{ArtifactKey, AuditEvent, CardQueryArgs, SpaceNameEvent, SpaceRecord, SpaceStats},
     RegistryType,
 };
 use semver::Version;
@@ -747,12 +746,26 @@ impl SqlClient for MySqlClient {
         Ok(records)
     }
 
-    async fn delete_card(&self, table: &CardTable, uid: &str) -> Result<(), SqlError> {
-        let query = format!("DELETE FROM {} WHERE uid = ?", table);
+    async fn delete_card(
+        &self,
+        table: &CardTable,
+        uid: &str,
+    ) -> Result<(String, String), SqlError> {
+        // First get the space
+        let select_query = format!("SELECT space, name FROM {} WHERE uid = ?", table);
+        let (space, name): (String, String) = sqlx::query_as(&select_query)
+            .bind(uid)
+            .fetch_one(&self.pool)
+            .await?;
 
-        sqlx::query(&query).bind(uid).execute(&self.pool).await?;
+        // Then delete the record
+        let delete_query = format!("DELETE FROM {} WHERE uid = ?", table);
+        sqlx::query(&delete_query)
+            .bind(uid)
+            .execute(&self.pool)
+            .await?;
 
-        Ok(())
+        Ok((space, name))
     }
 
     async fn insert_experiment_metric(&self, record: &MetricRecord) -> Result<(), SqlError> {
@@ -1130,6 +1143,93 @@ impl SqlClient for MySqlClient {
 
         Ok(())
     }
+
+    async fn insert_space_record(&self, space: &SpaceRecord) -> Result<(), SqlError> {
+        let query = MySQLQueryHelper::get_insert_space_record_query();
+        sqlx::query(&query)
+            .bind(&space.space)
+            .bind(&space.description)
+            .execute(&self.pool)
+            .await?;
+
+        Ok(())
+    }
+
+    async fn insert_space_name_record(&self, event: &SpaceNameEvent) -> Result<(), SqlError> {
+        let query = MySQLQueryHelper::get_insert_space_name_record_query();
+        sqlx::query(&query)
+            .bind(&event.space)
+            .bind(&event.name)
+            .bind(event.registry_type.to_string())
+            .execute(&self.pool)
+            .await?;
+
+        Ok(())
+    }
+
+    async fn get_all_space_stats(&self) -> Result<Vec<SpaceStats>, SqlError> {
+        let query = MySQLQueryHelper::get_all_space_stats_query();
+        let spaces: Vec<SqlSpaceRecord> = sqlx::query_as(&query).fetch_all(&self.pool).await?;
+
+        Ok(spaces
+            .into_iter()
+            .map(|s| SpaceStats {
+                space: s.0,
+                model_count: s.1,
+                data_count: s.2,
+                prompt_count: s.3,
+                experiment_count: s.4,
+            })
+            .collect())
+    }
+
+    async fn get_space_record(&self, space: &str) -> Result<Option<SpaceRecord>, SqlError> {
+        let query = MySQLQueryHelper::get_space_record_query();
+        let record: Option<(String, String)> = sqlx::query_as(&query)
+            .bind(space)
+            .fetch_optional(&self.pool)
+            .await?;
+
+        Ok(record.map(|r| SpaceRecord {
+            space: r.0,
+            description: r.1,
+        }))
+    }
+
+    async fn update_space_record(&self, space: &SpaceRecord) -> Result<(), SqlError> {
+        let query = MySQLQueryHelper::get_update_space_record_query();
+        sqlx::query(&query)
+            .bind(&space.description)
+            .bind(&space.space)
+            .execute(&self.pool)
+            .await?;
+
+        Ok(())
+    }
+
+    async fn delete_space_record(&self, space: &str) -> Result<(), SqlError> {
+        let query = MySQLQueryHelper::get_delete_space_record_query();
+        sqlx::query(&query).bind(space).execute(&self.pool).await?;
+
+        Ok(())
+    }
+
+    async fn delete_space_name_record(
+        &self,
+        space: &str,
+        name: &str,
+        registry_type: &RegistryType,
+    ) -> Result<(), SqlError> {
+        let query = MySQLQueryHelper::get_delete_space_name_record_query();
+        sqlx::query(&query)
+            .bind(space)
+            .bind(name)
+            .bind(registry_type.to_string())
+            .execute(&self.pool)
+            .await?;
+
+        Ok(())
+    }
 }
 
 #[cfg(test)]
@@ -1138,7 +1238,7 @@ mod tests {
     use crate::schemas::CardDeckRecord;
 
     use super::*;
-    use opsml_types::{RegistryType, SqlType};
+    use opsml_types::{CommonKwargs, RegistryType, SqlType};
     use opsml_utils::utils::get_utc_datetime;
     use std::env;
 
@@ -1180,6 +1280,9 @@ mod tests {
 
             DELETE
             FROM opsml_deck_registry;
+
+            DELETE
+            FROM opsml_space;
             "#,
         )
         .fetch_all(pool)
@@ -1903,6 +2006,109 @@ mod tests {
         // delete
         client
             .delete_artifact_key(&data_card.uid, &RegistryType::Data.to_string())
+            .await
+            .unwrap();
+    }
+
+    #[tokio::test]
+    async fn test_mysql_crud_space_record() {
+        let client = db_client().await;
+
+        // Create a space record
+        let space_record = SpaceRecord {
+            space: CommonKwargs::Undefined.to_string(),
+            description: "Space description".to_string(),
+        };
+
+        client.insert_space_record(&space_record).await.unwrap();
+
+        // insert datacard
+        let data_card = DataCardRecord::default();
+        let card = ServerCard::Data(data_card.clone());
+        client.insert_card(&CardTable::Data, &card).await.unwrap();
+
+        // insert modelcard
+        let model_card = ModelCardRecord::default();
+        let card = ServerCard::Model(model_card.clone());
+        client.insert_card(&CardTable::Model, &card).await.unwrap();
+
+        let space_event = SpaceNameEvent {
+            space: data_card.space.clone(),
+            name: data_card.name.clone(),
+            registry_type: RegistryType::Data,
+        };
+        client.insert_space_name_record(&space_event).await.unwrap();
+
+        let space_event = SpaceNameEvent {
+            space: model_card.space.clone(),
+            name: model_card.name.clone(),
+            registry_type: RegistryType::Model,
+        };
+
+        client.insert_space_name_record(&space_event).await.unwrap();
+
+        // get space stats
+        let stats = client.get_all_space_stats().await.unwrap();
+        assert_eq!(stats.len(), 1);
+
+        // assert model_count
+        assert_eq!(stats[0].data_count, 1);
+
+        //create a new modelcard
+        let model_card2 = ModelCardRecord {
+            name: "Model2".to_string(),
+            ..Default::default()
+        };
+        let card = ServerCard::Model(model_card2.clone());
+        client.insert_card(&CardTable::Model, &card).await.unwrap();
+
+        // update space stats again
+        let space_event = SpaceNameEvent {
+            space: model_card2.space.clone(),
+            name: model_card2.name.clone(),
+            registry_type: RegistryType::Model,
+        };
+
+        client.insert_space_name_record(&space_event).await.unwrap();
+        // get space stats again
+
+        let stats = client.get_all_space_stats().await.unwrap();
+        assert_eq!(stats.len(), 1);
+
+        // assert model_count
+        assert_eq!(stats[0].model_count, 2);
+
+        // update space record
+        let updated_space_record = SpaceRecord {
+            space: model_card2.space.clone(),
+            description: "Updated Space description".to_string(),
+        };
+        client
+            .update_space_record(&updated_space_record)
+            .await
+            .unwrap();
+
+        // get space record
+        let record = client
+            .get_space_record(&model_card2.space)
+            .await
+            .unwrap()
+            .unwrap();
+
+        assert_eq!(record.description, "Updated Space description");
+
+        // delete
+        client
+            .delete_space_record(&model_card2.space)
+            .await
+            .unwrap();
+
+        // get space stats again
+        let record = client.get_space_record(&model_card2.space).await.unwrap();
+        assert_eq!(record, None);
+
+        client
+            .delete_space_name_record(&model_card2.space, &model_card2.name, &RegistryType::Model)
             .await
             .unwrap();
     }

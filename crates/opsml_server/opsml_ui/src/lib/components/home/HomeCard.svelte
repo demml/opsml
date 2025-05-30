@@ -9,6 +9,7 @@
     headerColor, 
     headerTextColor = "text-black",
     iconColor,
+    badgeColor
 
   } = $props<{
     header: string;
@@ -16,30 +17,35 @@
     headerTextColor?: string;
     headerColor: string; 
     iconColor: string;
-
+    badgeColor: string;
 
   }>();
 
   
 </script>
 
-<div class="relative flex flex-col items-stretch text-center">
-  <div class="inline-block pb-4">
-    <div class="{headerColor} inline-block rounded-full border-black border-2 px-2 shadow-small">
-      <h2 class="text-xl {headerTextColor} font-bold">
-        {header}
-      </h2>
+<div class="flex flex-col w-full">
+  <!-- Header -->
+  <div class="flex justify-center mb-4">
+    <div class="{headerColor} rounded-full border-black border-2 px-2 shadow-small">
+      <h2 class="text-xl {headerTextColor} font-bold">{header}</h2>
     </div>
   </div>
 
-
-  <div class="flex flex-col items-center gap-4">
+  <!-- Cards -->
+  <div class="flex flex-col gap-4">
     {#each cards as card}
-      <Card 
-        iconColor={iconColor} 
-        registry={card.type.toLowerCase()}
-        {...card.data} 
+      <div class="flex justify-center w-full">
+        <Card 
+          iconColor={iconColor} 
+          badgeColor={badgeColor}
+          name={card.data.name}
+          space={card.data.space}
+          version={card.data.version}
+          registry={card.type.toLowerCase()}
+          created_at={card.data.created_at}
         />
+      </div>
     {/each}
   </div>
 </div>

@@ -5,7 +5,7 @@ use opsml_types::{
     api::*,
     cards::{CardTable, HardwareMetrics, Metric, Parameter},
     contracts::*,
-    IntegratedService, RegistryMode, RegistryType,
+    Alive, IntegratedService, RegistryMode, RegistryType,
 };
 use scouter_client::{ProfileRequest, ProfileStatusRequest, ScouterServerError};
 use serde::Deserialize;
@@ -456,7 +456,16 @@ impl ClientRegistry {
                 error!("Failed to check {} service health: {}", service, e);
             })?;
 
-        Ok(response.status().is_success())
+        if response.status() != 200 {
+            let error_text = response.text().map_err(RegistryError::RequestError)?;
+            return Err(ApiClientError::ServerError(error_text).into());
+        }
+
+        let alive = response
+            .json::<Alive>()
+            .map_err(RegistryError::RequestError)?;
+
+        Ok(alive.alive)
     }
 
     pub fn insert_scouter_profile(&self, profile: &ProfileRequest) -> Result<(), RegistryError> {

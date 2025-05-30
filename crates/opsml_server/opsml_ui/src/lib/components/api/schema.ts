@@ -7,6 +7,7 @@ export interface CardQueryArgs {
   version?: string;
   registry_type: RegistryType;
   limit?: number;
+  sort_by_timestamp?: boolean;
 }
 
 export interface ReadMeArgs {

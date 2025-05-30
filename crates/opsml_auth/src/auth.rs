@@ -42,7 +42,7 @@ impl AuthManager {
             .duration_since(UNIX_EPOCH)
             .unwrap()
             .as_secs()
-            + 3600; // 1 hour expiration
+            + 3600; // 1 hour
 
         let claims = Claims {
             sub: user.username.clone(),
@@ -97,25 +97,15 @@ impl AuthManager {
         token: &str,
     ) -> Result<Claims, jsonwebtoken::errors::Error> {
         let mut validation = Validation::default();
-        validation.insecure_disable_signature_validation();
+        validation.validate_exp = false; // Disable expiration validation
+        validation.validate_nbf = false; // Disable "not before" validation
+        validation.required_spec_claims.clear();
         let token_data = decode::<Claims>(
             token,
             &DecodingKey::from_secret(self.jwt_secret.as_ref()),
             &validation,
         )?;
 
-        Ok(token_data.claims)
-    }
-
-    pub fn validate_refresh_token(
-        &self,
-        token: &str,
-    ) -> Result<Claims, jsonwebtoken::errors::Error> {
-        let token_data = decode::<Claims>(
-            token,
-            &DecodingKey::from_secret(self.refresh_secret.as_ref()),
-            &Validation::default(),
-        )?;
         Ok(token_data.claims)
     }
 
