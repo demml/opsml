@@ -1260,6 +1260,14 @@ mod tests {
         };
         client.insert_space_name_record(&space_event).await.unwrap();
 
+        let space_event = SpaceNameEvent {
+            space: model_card.space.clone(),
+            name: model_card.name.clone(),
+            registry_type: RegistryType::Model,
+        };
+
+        client.insert_space_name_record(&space_event).await.unwrap();
+
         // get space stats
         let stats = client.get_all_space_stats().await.unwrap();
         assert_eq!(stats.len(), 1);
