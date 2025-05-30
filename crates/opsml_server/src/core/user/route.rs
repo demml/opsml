@@ -232,21 +232,13 @@ async fn update_user(
     // Only admins can change permissions
     if is_admin {
         if let Some(permissions) = update_req.permissions {
-            let new_permissions: Vec<String> = permissions
-                .into_iter()
-                .filter(|perm| !user.permissions.contains(perm))
-                .collect();
-
-            user.permissions.extend(new_permissions);
+            let hash_set: std::collections::HashSet<_> = permissions.into_iter().collect();
+            user.permissions = hash_set.into_iter().collect();
         }
 
         if let Some(group_permissions) = update_req.group_permissions {
-            let new_group_permissions: Vec<String> = group_permissions
-                .into_iter()
-                .filter(|perm| !user.group_permissions.contains(perm))
-                .collect();
-
-            user.group_permissions.extend(new_group_permissions);
+            let hash_set: std::collections::HashSet<_> = group_permissions.into_iter().collect();
+            user.group_permissions = hash_set.into_iter().collect();
         }
 
         if let Some(active) = update_req.active {
