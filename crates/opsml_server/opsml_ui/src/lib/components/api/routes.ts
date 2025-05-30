@@ -41,6 +41,9 @@ export enum RoutePaths {
   // Space
   CREATE_SPACE = "/opsml/api/space/create",
   DELETE_SPACE = "/opsml/api/space/delete",
+
+  // Settings
+  SETTINGS = "/opsml/api/ui/settings",
 }
 
 export enum UiPaths {

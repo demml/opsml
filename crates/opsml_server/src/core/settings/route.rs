@@ -4,7 +4,7 @@ use anyhow::{Context, Result};
 use axum::extract::State;
 use axum::Json;
 use axum::{routing::get, Router};
-use opsml_types::contracts::StorageSettings;
+use opsml_types::contracts::{StorageSettings, UiSettings};
 use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::sync::Arc;
 use tracing::error;
@@ -15,12 +15,20 @@ pub async fn storage_settings(State(data): State<Arc<AppState>>) -> Json<Storage
     })
 }
 
+pub async fn ui_settings(State(data): State<Arc<AppState>>) -> Json<UiSettings> {
+    Json(UiSettings {
+        scouter_enabled: data.scouter_client.enabled,
+    })
+}
+
 pub async fn get_settings_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
     let result = catch_unwind(AssertUnwindSafe(|| {
-        Router::new().route(
-            &format!("{}/storage/settings", prefix),
-            get(storage_settings),
-        )
+        Router::new()
+            .route(
+                &format!("{}/storage/settings", prefix),
+                get(storage_settings),
+            )
+            .route(&format!("{}/ui/settings", prefix), get(ui_settings))
     }));
 
     match result {
