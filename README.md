@@ -10,11 +10,13 @@
 
 ## **Note from maintainers**
 
-Version 3.0.0 is under active development. All pre-releases will be released under the `3.0.0-rc.*` tag.
+Version 3.0.0 is under active development. All pre-releases will be released under the `3.0.0-alpha.*` tag.
 
 <h1 align="center"><a href="https://demml.github.io/opsml/">OpsML Documentation</h1>
 
-[![Unit Tests](https://github.com/demml/opsml/actions/workflows/lint-unit-tests.yml/badge.svg)](https://github.com/demml/opsml/actions/workflows/lint-unit-tests.yml)
+<h2 align="center"><a href="https://docs.google.com/spreadsheets/d/1xU0RqYpFwnaj1cuNhTnd-2W8iQm7lBXw99O0Nh9oh0A/edit?usp=sharing">Task Backlog</h2>
+
+[![OpsML Unit Tests](https://github.com/demml/opsml/actions/workflows/lints-test.yml/badge.svg)](https://github.com/demml/opsml/actions/workflows/lints-test.yml)
 ![Style](https://img.shields.io/badge/code%20style-black-000000.svg)
 [![Py-Versions](https://img.shields.io/pypi/pyversions/opsml.svg?color=%2334D058)](https://pypi.org/project/opsml)
 [![gitleaks](https://img.shields.io/badge/protected%20by-gitleaks-purple)](https://github.com/zricethezav/gitleaks-action)
