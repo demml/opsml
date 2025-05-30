@@ -3,25 +3,25 @@
   import CardsSearch from "$lib/components/card/CardsSearch.svelte";
   import type { PageProps } from './$types';
   import { onMount } from "svelte";
-  import type { SpaceRecord, SpaceRecordResponse } from "$lib/components/card/types";
+  import type { SpaceStats, SpaceStatsResponse } from "$lib/components/space/types";
   import { ArrowLeft, ArrowRight, Search, Settings } from 'lucide-svelte';
   import  { delay } from "$lib/utils";
   import CreateSpaceModal from "$lib/components/space/CreateSpaceModal.svelte";
   import SpacePage from "$lib/components/space/SpacePage.svelte";
 
   let { data }: PageProps = $props();
-  let spaces: SpaceRecordResponse  = data.spaces;
+  let spaces: SpaceStatsResponse = data.spaces;
 
   let currentPage = $state(1);
   let totalPages = $state(1);
 
   let searchQuery = $state('');
-  let filteredSpaces = $state<SpaceRecord[]>([]);
-  let availableSpaces = spaces.spaces
+  let filteredSpaces = $state<SpaceStats[]>([]);
+  let availableSpaces = spaces.stats;
 
   const searchSpaces = () => {
     // filter based on item.space
-    filteredSpaces = availableSpaces.filter((item: SpaceRecord) => {
+    filteredSpaces = availableSpaces.filter((item: SpaceStats) => {
       let itemName = item.space.toLowerCase();
       return itemName.includes(searchQuery!.toLowerCase())
     });
@@ -31,8 +31,8 @@
 
   onMount(() => {
     // get first 30 spaces
-    filteredSpaces = spaces.spaces.slice(0, 30);
-    totalPages = Math.ceil(spaces.spaces.length / 30);
+    filteredSpaces = spaces.stats.slice(0, 30);
+    totalPages = Math.ceil(spaces.stats.length / 30);
   });
 
 
@@ -42,7 +42,7 @@
 
     const start = (page - 1) * 30;
     const end = start + 30;
-    filteredSpaces = spaces.spaces.slice(start, end);
+    filteredSpaces = spaces.stats.slice(start, end);
 
     currentPage = page;
   }
