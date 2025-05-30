@@ -321,8 +321,8 @@ impl PostgresQueryHelper {
              uid
              FROM {}
              WHERE 1=1
-                AND name = $1
-                AND space = $2
+                AND space = $1
+                AND name = $2
             ",
             table
         );
@@ -340,42 +340,53 @@ impl PostgresQueryHelper {
         table: &CardTable,
         query_args: &CardQueryArgs,
     ) -> Result<String, SqlError> {
+        if query_args.uid.is_some() {
+            is_valid_uuidv7(query_args.uid.as_ref().unwrap())?;
+            return Ok(format!("SELECT * FROM {} WHERE uid = $1 LIMIT 1", table));
+        }
+
         let mut query = format!(
             "
         SELECT * FROM {}
         WHERE 1=1
-        AND ($1 IS NULL OR uid = $1)
-        AND ($3 IS NULL OR space = $3)
-        AND ($2 IS NULL OR name = $2)
-        AND ($4 IS NULL OR created_at <= TO_DATE($4, 'YYYY-MM-DD'))
         ",
             table
         );
 
-        // check for uid. If uid is present, we only return that card
-        if query_args.uid.is_some() {
-            // validate uid
-            is_valid_uuidv7(query_args.uid.as_ref().unwrap())?;
+        // Add conditions in order of index columns to maximize index usage
+        if query_args.space.is_some() {
+            query.push_str(" AND space = $2"); // space is first column in index
+        }
+
+        if query_args.name.is_some() {
+            query.push_str(" AND name = $3"); // name is second column in index
+        }
+
+        // Date doesn't have an index but keep it in the original bind position
+        if query_args.max_date.is_some() {
+            query.push_str(" AND created_at <= TO_DATE($4, 'YYYY-MM-DD')");
+        }
+
+        // Add version bounds - will use the version part of the index
+        if query_args.version.is_some() {
+            add_version_bounds(&mut query, query_args.version.as_ref().unwrap())?;
+        }
+
+        // Tags query using jsonb operator
+        if let Some(tags) = &query_args.tags {
+            for tag in tags {
+                query.push_str(&format!(
+                    " AND tags @> '[\"{}\"]'::jsonb", // Using @> operator is more efficient than EXISTS
+                    tag
+                ));
+            }
+        }
+
+        // Add ordering
+        if query_args.sort_by_timestamp.unwrap_or(false) {
+            query.push_str(" ORDER BY created_at DESC");
         } else {
-            // add where clause due to multiple combinations
-
-            if query_args.version.is_some() {
-                add_version_bounds(&mut query, query_args.version.as_ref().unwrap())?;
-            }
-
-            if query_args.tags.is_some() {
-                let tags = query_args.tags.as_ref().unwrap();
-                for tag in tags.iter() {
-                    query.push_str(format!(" AND EXISTS(SELECT 1 FROM jsonb_array_elements(tags) WHERE value::text = '\"{}\"')", tag).as_str());
-                }
-            }
-
-            if query_args.sort_by_timestamp.unwrap_or(false) {
-                query.push_str(" ORDER BY created_at DESC");
-            } else {
-                // sort by major, minor, patch
-                query.push_str(" ORDER BY major DESC, minor DESC, patch DESC");
-            }
+            query.push_str(" ORDER BY major DESC, minor DESC, patch DESC");
         }
 
         query.push_str(" LIMIT $5");
