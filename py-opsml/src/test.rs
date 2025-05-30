@@ -46,7 +46,7 @@ impl ScouterServer {
             .mock("GET", "/scouter/healthcheck")
             .with_status(200)
             .with_header("content-type", "application/json")
-            .with_body(r#"{"status": "Alive"}"#)
+            .with_body(r#"{"alive": true}"#)
             .create();
 
         // auth mocks
