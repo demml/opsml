@@ -1,3 +1,3 @@
-INSERT INTO opsml_space 
+INSERT INTO opsml_space
 (space, description) 
 VALUES (?, ?);

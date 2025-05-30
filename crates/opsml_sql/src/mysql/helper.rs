@@ -13,12 +13,15 @@ const DELETE_USER_SQL: &str = include_str!("sql/user/delete_user.sql");
 const LAST_ADMIN_SQL: &str = include_str!("sql/user/last_admin.sql");
 
 // space stats
-const UPDATE_SPACE_RECORD_STATS_SQL: &str = include_str!("sql/space/update_space_record_stats.sql");
-const GET_ALL_SPACE_RECORDS_SQL: &str = include_str!("sql/space/get_all_space_records.sql");
-const GET_SPACE_RECORD_SQL: &str = include_str!("sql/space/get_space_record.sql");
 const INSERT_SPACE_RECORD_SQL: &str = include_str!("sql/space/insert_space_record.sql");
+const INSERT_SPACE_NAME_RECORD_SQL: &str = include_str!("sql/space/insert_space_name_record.sql");
+
+const GET_ALL_SPACE_STATS_SQL: &str = include_str!("sql/space/get_all_space_stats.sql");
+const GET_SPACE_RECORD_SQL: &str = include_str!("sql/space/get_space_record.sql");
+
 const UPDATE_SPACE_RECORD_SQL: &str = include_str!("sql/space/update_space_record.sql");
 const DELETE_SPACE_RECORD_SQL: &str = include_str!("sql/space/delete_space_record.sql");
+const DELETE_SPACE_NAME_RECORD_SQL: &str = include_str!("sql/space/delete_space_name_record.sql");
 
 // experiment
 const GET_HARDWARE_METRIC_SQL: &str = include_str!("sql/experiment/get_hardware_metric.sql");
@@ -69,14 +72,6 @@ impl MySQLQueryHelper {
 
     pub fn get_users_query() -> String {
         GET_USERS_SQL.to_string()
-    }
-
-    pub fn get_update_space_record_stats_query() -> String {
-        UPDATE_SPACE_RECORD_STATS_SQL.to_string()
-    }
-
-    pub fn get_all_space_records() -> String {
-        GET_ALL_SPACE_RECORDS_SQL.to_string()
     }
 
     pub fn get_last_admin_query() -> String {
@@ -504,6 +499,18 @@ impl MySQLQueryHelper {
         DELETE_ARTIFACT_KEY_SQL.to_string()
     }
 
+    pub fn get_all_space_stats_query() -> String {
+        GET_ALL_SPACE_STATS_SQL.to_string()
+    }
+
+    pub fn get_space_record_query() -> String {
+        GET_SPACE_RECORD_SQL.to_string()
+    }
+
+    pub fn get_insert_space_name_record_query() -> String {
+        INSERT_SPACE_NAME_RECORD_SQL.to_string()
+    }
+
     pub fn get_insert_space_record_query() -> String {
         INSERT_SPACE_RECORD_SQL.to_string()
     }
@@ -511,10 +518,12 @@ impl MySQLQueryHelper {
     pub fn get_update_space_record_query() -> String {
         UPDATE_SPACE_RECORD_SQL.to_string()
     }
-    pub fn get_space_record_query() -> String {
-        GET_SPACE_RECORD_SQL.to_string()
-    }
+
     pub fn get_delete_space_record_query() -> String {
         DELETE_SPACE_RECORD_SQL.to_string()
+    }
+
+    pub fn get_delete_space_name_record_query() -> String {
+        DELETE_SPACE_NAME_RECORD_SQL.to_string()
     }
 }

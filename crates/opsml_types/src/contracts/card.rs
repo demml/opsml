@@ -119,20 +119,36 @@ pub struct CrudSpaceResponse {
     pub success: bool,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default, PartialEq)]
 pub struct SpaceRecord {
     pub space: String,
     pub description: String,
-    pub experiment_count: i32,
-    pub model_count: i32,
-    pub data_count: i32,
-    pub prompt_count: i32,
-    pub user_count: i32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct SpaceNameRecord {
+    pub space: String,
+    pub name: String,
+    pub registry_type: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct SpaceRecordResponse {
     pub spaces: Vec<SpaceRecord>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct SpaceStats {
+    pub space: String,
+    pub model_count: i64,
+    pub data_count: i64,
+    pub prompt_count: i64,
+    pub experiment_count: i64,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct SpaceStatsResponse {
+    pub stats: Vec<SpaceStats>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

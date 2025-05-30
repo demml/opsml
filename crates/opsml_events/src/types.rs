@@ -1,7 +1,7 @@
 use axum::http::HeaderMap;
 use headers::UserAgent;
 
-use opsml_types::contracts::{AuditEvent, AuditStatus, Operation, ResourceType, SpaceStatsEvent};
+use opsml_types::contracts::{AuditEvent, AuditStatus, Operation, ResourceType, SpaceNameEvent};
 use opsml_types::RegistryType;
 
 use std::net::SocketAddr;
@@ -51,6 +51,6 @@ pub fn create_audit_event(
 #[derive(Debug, Clone)]
 pub enum Event {
     Audit(AuditEvent),
-    SpaceStats(SpaceStatsEvent),
+    SpaceName(SpaceNameEvent),
     // Add other events as needed
 }

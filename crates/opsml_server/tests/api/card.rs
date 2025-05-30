@@ -1376,7 +1376,7 @@ async fn test_opsml_server_space_stats() {
     tokio::time::sleep(tokio::time::Duration::from_millis(200)).await;
 
     let request = Request::builder()
-        .uri("/opsml/api/card/space/all")
+        .uri("/opsml/api/card/space/stats")
         .method("GET")
         .body(Body::empty())
         .unwrap();
@@ -1386,11 +1386,11 @@ async fn test_opsml_server_space_stats() {
 
     //
     let body = response.into_body().collect().await.unwrap().to_bytes();
-    let space_stats: SpaceRecordResponse = serde_json::from_slice(&body).unwrap();
+    let space_stats: SpaceStatsResponse = serde_json::from_slice(&body).unwrap();
 
-    assert_eq!(space_stats.spaces[0].space, "space");
-    assert_eq!(space_stats.spaces[0].model_count, 1);
-    assert_eq!(space_stats.spaces[0].data_count, 0);
+    assert_eq!(space_stats.stats[0].space, "space");
+    assert_eq!(space_stats.stats[0].model_count, 1);
+    assert_eq!(space_stats.stats[0].data_count, 0);
 
     // create datacard
 
@@ -1409,9 +1409,45 @@ async fn test_opsml_server_space_stats() {
     assert_eq!(response.status(), StatusCode::OK);
 
     let body = response.into_body().collect().await.unwrap().to_bytes();
-    let space_stats: SpaceRecordResponse = serde_json::from_slice(&body).unwrap();
+    let space_stats: SpaceStatsResponse = serde_json::from_slice(&body).unwrap();
 
-    assert_eq!(space_stats.spaces[0].space, "space");
-    assert_eq!(space_stats.spaces[0].model_count, 1);
-    assert_eq!(space_stats.spaces[0].data_count, 1);
+    assert_eq!(space_stats.stats[0].space, "space");
+    assert_eq!(space_stats.stats[0].model_count, 1);
+    assert_eq!(space_stats.stats[0].data_count, 1);
+
+    // delete the datacard
+    let delete_args = DeleteCardRequest {
+        uid: helper.key.uid.clone(),
+        space: helper.space.clone(),
+        registry_type: RegistryType::Data,
+    };
+    let query_string = serde_qs::to_string(&delete_args).unwrap();
+    let request = Request::builder()
+        .uri(format!("/opsml/api/card/delete?{}", query_string))
+        .method("DELETE")
+        .body(Body::empty())
+        .unwrap();
+
+    let response = helper.send_oneshot(request).await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    // wait 200 ms
+    tokio::time::sleep(tokio::time::Duration::from_millis(200)).await;
+
+    let request = Request::builder()
+        .uri("/opsml/api/card/space/stats")
+        .method("GET")
+        .body(Body::empty())
+        .unwrap();
+
+    let response = helper.send_oneshot(request).await;
+    assert_eq!(response.status(), StatusCode::OK);
+    let body = response.into_body().collect().await.unwrap().to_bytes();
+    let space_stats: SpaceStatsResponse = serde_json::from_slice(&body).unwrap();
+
+    assert_eq!(space_stats.stats[0].space, "space");
+    assert_eq!(space_stats.stats[0].model_count, 1);
+    assert_eq!(space_stats.stats[0].data_count, 0);
+    assert_eq!(space_stats.stats[0].prompt_count, 0);
+    assert_eq!(space_stats.stats[0].experiment_count, 0);
 }
