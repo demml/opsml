@@ -5,6 +5,8 @@ export enum RoutePaths {
   LOGOUT = "/opsml/api/auth/ui/logout",
   REFRESH_TOKEN = "/opsml/api/auth/refresh",
   RESET_PASSWORD = "/opsml/api/user/reset-password/recovery",
+  REGISTER = "/opsml/api/user/register",
+  USER = "/opsml/api/user",
 
   // Card
   LIST_CARDS = "/opsml/api/card/list",
@@ -35,8 +37,6 @@ export enum RoutePaths {
   EXPERIMENT_METRIC_NAMES = "/opsml/api/experiment/metrics/names",
   EXPERIMENT_PARAMETERS = "/opsml/api/experiment/parameters",
   HARDWARE_METRICS = "/opsml/api/experiment/hardware/metrics",
-  USER = "/opsml/api/user",
-  REGISTER = "/opsml/api/user/register",
 
   // Space
   CREATE_SPACE = "/opsml/api/space/create",

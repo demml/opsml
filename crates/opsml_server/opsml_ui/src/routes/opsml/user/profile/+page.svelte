@@ -62,9 +62,7 @@
     {#if userStore.favorite_spaces.length >= 0}
       <div class="flex flex-wrap gap-2">
         {#each userStore.favorite_spaces as space}
-          <div class="inline-flex items-center overflow-hidden rounded-lg bg-primary-100 border-2 border-primary-800 text-base w-fit px-2 text-primary-900">
-            {space}
-          </div>
+          <a type="button" class="btn bg-primary-500 text-black shadow shadow-hover border-black border-2" href={`/opsml/space/${space}`}>{space}</a>
         {/each}
       </div>
     {/if}
