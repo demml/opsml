@@ -14,10 +14,7 @@ export class UserStore {
   recovery_codes = $state<string[]>([]);
   favorite_spaces = $state<string[]>([]);
 
-  constructor() {
-    if (browser) {
-    }
-  }
+  constructor() {}
 
   public async validateSession(): Promise<boolean> {
     try {

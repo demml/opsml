@@ -77,6 +77,7 @@ async fn test_opsml_server_user_crud() {
         ]),
         group_permissions: Some(vec!["user".to_string(), "developer".to_string()]),
         active: Some(true),
+        favorite_spaces: None,
     };
 
     let body = serde_json::to_string(&update_req).unwrap();

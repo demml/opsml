@@ -15,7 +15,6 @@ use axum::{
     Extension, Json, Router,
 };
 
-use core::hash;
 use opsml_auth::permission::UserPermissions;
 use opsml_auth::util::generate_recovery_codes_with_hashes;
 use opsml_sql::base::SqlClient;

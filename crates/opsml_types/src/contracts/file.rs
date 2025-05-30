@@ -131,6 +131,11 @@ pub struct StorageSettings {
     pub storage_type: StorageType,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct UiSettings {
+    pub scouter_enabled: bool,
+}
+
 #[derive(Serialize, Deserialize)]
 pub struct UploadResponse {
     pub uploaded: bool,
