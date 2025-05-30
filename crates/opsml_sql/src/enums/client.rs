@@ -1322,15 +1322,16 @@ mod tests {
             .await
             .unwrap();
 
-        // get space stats again
-        let stats = client.get_all_space_stats().await.unwrap();
-        assert_eq!(stats.len(), 0);
-
         // delete space name record
         client
             .delete_space_name_record(&model_card2.space, &model_card2.name, &RegistryType::Model)
             .await
             .unwrap();
+
+        // get space stats again
+        let stats = client.get_all_space_stats().await.unwrap();
+        assert_eq!(stats.len(), 1);
+        assert_eq!(stats[0].model_count, 1);
 
         cleanup();
     }
