@@ -55,3 +55,14 @@ export interface AuthenticatedResponse {
 export interface JwtToken {
   token: string;
 }
+
+export interface LogOutResponse {
+  logged_out: boolean;
+}
+
+export interface UpdateUserRequest {
+  permissions?: string[];
+  group_permissions?: string[];
+  favorite_spaces?: string[];
+  active?: boolean;
+}

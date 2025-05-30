@@ -18,6 +18,7 @@ pub struct UpdateUserRequest {
     pub permissions: Option<Vec<String>>,
     pub group_permissions: Option<Vec<String>>,
     pub active: Option<bool>,
+    pub favorite_spaces: Option<Vec<String>>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]

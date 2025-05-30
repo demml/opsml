@@ -1,0 +1,1 @@
+SELECT uid, space, registry_type, encrypted_key, storage_key FROM opsml_artifact_key WHERE storage_key = $1 AND registry_type = $2;

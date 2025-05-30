@@ -5,6 +5,7 @@
   import { IdCard, FolderTree, Activity, Tag } from 'lucide-svelte';
   import { goto } from '$app/navigation';
   import { page } from '$app/state';
+  import { uiSettingsStore } from "$lib/components/settings/settings.svelte";
 
   function getLastPartOfPath(path: string): string {
     const parts = path.split("/");
@@ -61,10 +62,14 @@
           <FolderTree color="#8059b6"/>
           <span>Files</span>
         </button>
-        <button class="flex items-center gap-x-2 border-b-3 {activeTab === 'monitoring' ? 'border-secondary-500' : 'border-transparent'} hover:border-secondary-500 hover:border-b-3" onclick={() => navigateTab('monitoring')}>
-          <Activity color="#8059b6"/>
-          <span>Monitoring</span>
-        </button>
+
+        {#if uiSettingsStore.scouterEnabled}
+          <button class="flex items-center gap-x-2 border-b-3 {activeTab === 'monitoring' ? 'border-secondary-500' : 'border-transparent'} hover:border-secondary-500 hover:border-b-3" onclick={() => navigateTab('monitoring')}>
+            <Activity color="#8059b6"/>
+            <span>Monitoring</span>
+          </button>
+        {/if}
+
         <button class="flex items-center gap-x-2 border-b-3 {activeTab === 'versions' ? 'border-secondary-500' : 'border-transparent'} hover:border-secondary-500 hover:border-b-3" onclick={() => navigateTab('versions')}>
           <Tag color="#8059b6" fill="#8059b6"/>
           <span>Versions</span>

@@ -4,14 +4,14 @@ use crate::error::SqlError;
 use crate::schemas::schema::{
     AuditCardRecord, CardDeckRecord, CardResults, CardSummary, DataCardRecord,
     ExperimentCardRecord, HardwareMetricsRecord, MetricRecord, ModelCardRecord, ParameterRecord,
-    PromptCardRecord, QueryStats, ServerCard, User, VersionResult, VersionSummary,
+    PromptCardRecord, QueryStats, ServerCard, SqlSpaceRecord, User, VersionResult, VersionSummary,
 };
 
 use crate::sqlite::helper::SqliteQueryHelper;
 use async_trait::async_trait;
 use opsml_semver::VersionValidator;
 use opsml_settings::config::DatabaseSettings;
-use opsml_types::contracts::{ArtifactKey, AuditEvent};
+use opsml_types::contracts::{ArtifactKey, AuditEvent, SpaceNameEvent, SpaceRecord, SpaceStats};
 use opsml_types::{cards::CardTable, contracts::CardQueryArgs, RegistryType};
 use semver::Version;
 use sqlx::{
@@ -747,11 +747,25 @@ impl SqlClient for SqliteClient {
         Ok(records)
     }
 
-    async fn delete_card(&self, table: &CardTable, uid: &str) -> Result<(), SqlError> {
-        let query = format!("DELETE FROM {} WHERE uid = ?1", table);
-        sqlx::query(&query).bind(uid).execute(&self.pool).await?;
+    async fn delete_card(
+        &self,
+        table: &CardTable,
+        uid: &str,
+    ) -> Result<(String, String), SqlError> {
+        // SQLite doesn't support RETURNING clause, so we need to do this in two steps
+        let select_query = format!("SELECT space, name FROM {} WHERE uid = ?", table);
+        let (space, name): (String, String) = sqlx::query_as(&select_query)
+            .bind(uid)
+            .fetch_one(&self.pool)
+            .await?;
 
-        Ok(())
+        let delete_query = format!("DELETE FROM {} WHERE uid = ?", table);
+        sqlx::query(&delete_query)
+            .bind(uid)
+            .execute(&self.pool)
+            .await?;
+
+        Ok((space, name))
     }
 
     async fn insert_experiment_metric(&self, record: &MetricRecord) -> Result<(), SqlError> {
@@ -1122,6 +1136,93 @@ impl SqlClient for SqliteClient {
 
         Ok(())
     }
+
+    async fn insert_space_record(&self, space: &SpaceRecord) -> Result<(), SqlError> {
+        let query = SqliteQueryHelper::get_insert_space_record_query();
+        sqlx::query(&query)
+            .bind(&space.space)
+            .bind(&space.description)
+            .execute(&self.pool)
+            .await?;
+
+        Ok(())
+    }
+
+    async fn insert_space_name_record(&self, event: &SpaceNameEvent) -> Result<(), SqlError> {
+        let query = SqliteQueryHelper::get_insert_space_name_record_query();
+        sqlx::query(&query)
+            .bind(&event.space)
+            .bind(&event.name)
+            .bind(event.registry_type.to_string())
+            .execute(&self.pool)
+            .await?;
+
+        Ok(())
+    }
+
+    async fn get_all_space_stats(&self) -> Result<Vec<SpaceStats>, SqlError> {
+        let query = SqliteQueryHelper::get_all_space_stats_query();
+        let spaces: Vec<SqlSpaceRecord> = sqlx::query_as(&query).fetch_all(&self.pool).await?;
+
+        Ok(spaces
+            .into_iter()
+            .map(|s| SpaceStats {
+                space: s.0,
+                model_count: s.1,
+                data_count: s.2,
+                prompt_count: s.3,
+                experiment_count: s.4,
+            })
+            .collect())
+    }
+
+    async fn get_space_record(&self, space: &str) -> Result<Option<SpaceRecord>, SqlError> {
+        let query = SqliteQueryHelper::get_space_record_query();
+        let record: Option<(String, String)> = sqlx::query_as(&query)
+            .bind(space)
+            .fetch_optional(&self.pool)
+            .await?;
+
+        Ok(record.map(|r| SpaceRecord {
+            space: r.0,
+            description: r.1,
+        }))
+    }
+
+    async fn update_space_record(&self, space: &SpaceRecord) -> Result<(), SqlError> {
+        let query = SqliteQueryHelper::get_update_space_record_query();
+        sqlx::query(&query)
+            .bind(&space.description)
+            .bind(&space.space)
+            .execute(&self.pool)
+            .await?;
+
+        Ok(())
+    }
+
+    async fn delete_space_record(&self, space: &str) -> Result<(), SqlError> {
+        let query = SqliteQueryHelper::get_delete_space_record_query();
+        sqlx::query(&query).bind(space).execute(&self.pool).await?;
+
+        Ok(())
+    }
+
+    async fn delete_space_name_record(
+        &self,
+        space: &str,
+        name: &str,
+        registry_type: &RegistryType,
+    ) -> Result<(), SqlError> {
+        let query = SqliteQueryHelper::get_delete_space_name_record_query();
+        sqlx::query(&query)
+            .bind(space)
+            .bind(name)
+            .bind(registry_type.to_string())
+            .execute(&self.pool)
+            .await?;
+
+        Ok(())
+    }
 }
 
 #[cfg(test)]
@@ -1131,7 +1232,7 @@ mod tests {
 
     use super::*;
 
-    use opsml_types::{RegistryType, SqlType};
+    use opsml_types::{contracts::SpaceNameEvent, RegistryType, SqlType};
     use opsml_utils::utils::get_utc_datetime;
     use std::env;
 
@@ -1905,5 +2006,78 @@ mod tests {
             .delete_artifact_key(&data_card.uid, &RegistryType::Data.to_string())
             .await
             .unwrap();
+    }
+
+    #[tokio::test]
+    async fn test_sqlite_crud_space_record() {
+        cleanup();
+
+        let config = DatabaseSettings {
+            connection_uri: get_connection_uri(),
+            max_connections: 1,
+            sql_type: SqlType::Sqlite,
+        };
+
+        let client = SqliteClient::new(&config).await.unwrap();
+
+        // insert datacard
+        let data_card = DataCardRecord::default();
+        let card = ServerCard::Data(data_card.clone());
+        client.insert_card(&CardTable::Data, &card).await.unwrap();
+
+        // insert modelcard
+        let model_card = ModelCardRecord::default();
+        let card = ServerCard::Model(model_card.clone());
+        client.insert_card(&CardTable::Model, &card).await.unwrap();
+
+        let space_event = SpaceNameEvent {
+            space: data_card.space.clone(),
+            name: data_card.name.clone(),
+            registry_type: RegistryType::Data,
+        };
+        client.insert_space_name_record(&space_event).await.unwrap();
+
+        let space_event = SpaceNameEvent {
+            space: model_card.space.clone(),
+            name: model_card.name.clone(),
+            registry_type: RegistryType::Model,
+        };
+        client.insert_space_name_record(&space_event).await.unwrap();
+
+        // get space stats
+        let stats = client.get_all_space_stats().await.unwrap();
+        assert_eq!(stats.len(), 1);
+        // assert model_count
+        assert_eq!(stats[0].data_count, 1);
+
+        //create a new modelcard
+        let model_card2 = ModelCardRecord {
+            name: "Model2".to_string(),
+            ..Default::default()
+        };
+        let card = ServerCard::Model(model_card2.clone());
+        client.insert_card(&CardTable::Model, &card).await.unwrap();
+
+        // update space stats again
+        let space_event = SpaceNameEvent {
+            space: model_card2.space.clone(),
+            name: model_card2.name.clone(),
+            registry_type: RegistryType::Model,
+        };
+        client.insert_space_name_record(&space_event).await.unwrap();
+        // get space stats again
+
+        let stats = client.get_all_space_stats().await.unwrap();
+        assert_eq!(stats.len(), 1);
+
+        // assert model_count
+        assert_eq!(stats[0].model_count, 2);
+
+        // delete space name record
+        client
+            .delete_space_name_record(&data_card.space, &data_card.name, &RegistryType::Data)
+            .await
+            .unwrap();
+        cleanup();
     }
 }

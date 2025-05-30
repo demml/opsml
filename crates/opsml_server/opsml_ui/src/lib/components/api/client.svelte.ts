@@ -76,6 +76,15 @@ export class OpsmlClient {
     return this.request(urlWithParams, "GET", null, bearerToken);
   }
 
+  async delete(
+    url: string,
+    body: any = null,
+    bearerToken: string = "",
+    contentType: string = "application/json"
+  ): Promise<Response> {
+    return this.request(url, "DELETE", body, bearerToken, contentType);
+  }
+
   async put(
     url: string,
     body: any,

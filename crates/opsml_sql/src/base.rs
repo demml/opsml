@@ -8,7 +8,8 @@ use opsml_semver::VersionParser;
 use opsml_settings::config::DatabaseSettings;
 use opsml_types::{
     cards::CardTable,
-    contracts::{ArtifactKey, AuditEvent, CardQueryArgs},
+    contracts::{ArtifactKey, AuditEvent, CardQueryArgs, SpaceNameEvent, SpaceRecord, SpaceStats},
+    RegistryType,
 };
 
 pub fn add_version_bounds(builder: &mut String, version: &str) -> Result<(), SqlError> {
@@ -93,7 +94,8 @@ pub trait SqlClient: Sized {
         table: &CardTable,
     ) -> Result<Vec<CardSummary>, SqlError>;
 
-    async fn delete_card(&self, table: &CardTable, uid: &str) -> Result<(), SqlError>;
+    async fn delete_card(&self, table: &CardTable, uid: &str)
+        -> Result<(String, String), SqlError>;
 
     /// Insert run metric
     ///
@@ -352,4 +354,30 @@ pub trait SqlClient: Sized {
         name: Option<&str>,
         table: &CardTable,
     ) -> Result<Vec<VersionSummary>, SqlError>;
+
+    /// inserts record to `opsml_space`
+    async fn insert_space_record(&self, space: &SpaceRecord) -> Result<(), SqlError>;
+
+    /// inserts a space name record to `opsml_space_name` - this is done via the EventBus
+    async fn insert_space_name_record(&self, event: &SpaceNameEvent) -> Result<(), SqlError>;
+
+    /// get statistics for all spaces from `opsml_space_name`
+    async fn get_all_space_stats(&self) -> Result<Vec<SpaceStats>, SqlError>;
+
+    /// get a specific space record from `opsml_space`
+    async fn get_space_record(&self, space: &str) -> Result<Option<SpaceRecord>, SqlError>;
+
+    /// Update a space name record in `opsml_space`
+    async fn update_space_record(&self, space: &SpaceRecord) -> Result<(), SqlError>;
+
+    /// Delete a space record from `opsml_space`
+    async fn delete_space_record(&self, space: &str) -> Result<(), SqlError>;
+
+    /// Delete a space name record from `opsml_space_name`
+    async fn delete_space_name_record(
+        &self,
+        space: &str,
+        name: &str,
+        registry_type: &RegistryType,
+    ) -> Result<(), SqlError>;
 }

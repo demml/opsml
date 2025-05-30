@@ -1,4 +1,3 @@
-use crate::core::audit::middleware::audit_middleware;
 use crate::core::auth::middleware::auth_api_middleware;
 use crate::core::auth::route::get_auth_router;
 use crate::core::cards::route::get_card_router;
@@ -6,6 +5,7 @@ use crate::core::debug::route::get_debug_router;
 use crate::core::experiment::route::get_experiment_router;
 use crate::core::files::route::get_file_router;
 use crate::core::health::route::get_health_router;
+use crate::core::middleware::event::event_middleware;
 use crate::core::scouter::route::get_scouter_router;
 use crate::core::settings::route::get_settings_router;
 use crate::core::state::AppState;
@@ -59,7 +59,7 @@ pub async fn create_router(app_state: Arc<AppState>) -> Result<Router> {
             // Audit middleware occurs last.
             //Audit middleware passes the request to the request handler
             app_state.clone(),
-            audit_middleware,
+            event_middleware,
         ))
         .route_layer(middleware::from_fn_with_state(
             // Auth middleware occurs first

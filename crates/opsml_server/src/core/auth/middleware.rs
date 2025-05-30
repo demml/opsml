@@ -97,11 +97,7 @@ pub async fn auth_api_middleware(
 
             // Validate stored refresh token
             if let Some(stored_refresh) = user.refresh_token.as_ref() {
-                if state
-                    .auth_manager
-                    .validate_refresh_token(stored_refresh)
-                    .is_ok()
-                {
+                if state.auth_manager.validate_jwt(stored_refresh).is_ok() {
                     // Generate new tokens
                     let new_access_token =
                         state.auth_manager.generate_jwt(&user).map_err(|_| {

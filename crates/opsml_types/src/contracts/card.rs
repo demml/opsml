@@ -80,18 +80,18 @@ pub struct UidResponse {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct SpaceRequest {
+pub struct RegistrySpaceRequest {
     pub registry_type: RegistryType,
 }
 
-impl AuditableRequest for SpaceRequest {
+impl AuditableRequest for RegistrySpaceRequest {
     fn get_resource_id(&self) -> String {
         self.registry_type.to_string()
     }
 
     fn get_metadata(&self) -> String {
         serde_json::to_string(self)
-            .unwrap_or_else(|e| format!("Failed to serialize spaceRequest: {}", e))
+            .unwrap_or_else(|e| format!("Failed to serialize RegistrySpaceRequest: {}", e))
     }
 
     fn get_registry_type(&self) -> Option<RegistryType> {
@@ -108,18 +108,47 @@ pub struct CardSpaceResponse {
     pub spaces: Vec<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct SpaceStats {
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct CrudSpaceRequest {
     pub space: String,
-    pub nbr_experiments: i32,
-    pub nbr_models: i32,
-    pub nbr_data: i32,
-    pub nbr_prompts: i32,
+    pub description: Option<String>,
 }
 
-#[derive(Serialize, Deserialize)]
-pub struct SpacesResponse {
-    pub spaces: Vec<SpaceStats>,
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct CrudSpaceResponse {
+    pub success: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default, PartialEq)]
+pub struct SpaceRecord {
+    pub space: String,
+    pub description: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct SpaceNameRecord {
+    pub space: String,
+    pub name: String,
+    pub registry_type: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct SpaceRecordResponse {
+    pub spaces: Vec<SpaceRecord>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct SpaceStats {
+    pub space: String,
+    pub model_count: i64,
+    pub data_count: i64,
+    pub prompt_count: i64,
+    pub experiment_count: i64,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct SpaceStatsResponse {
+    pub stats: Vec<SpaceStats>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

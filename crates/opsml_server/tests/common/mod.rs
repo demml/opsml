@@ -349,4 +349,46 @@ impl TestHelper {
         let create_response: CreateCardResponse = serde_json::from_slice(&body).unwrap();
         self.key = create_response.key.clone();
     }
+
+    pub async fn create_datacard(&mut self) {
+        // 1. First create a card so we have something to get
+        let card_version_request = CardVersionRequest {
+            name: self.name.clone(),
+            space: self.space.clone(),
+            version: Some(self.version.clone()),
+            version_type: VersionType::Minor,
+            pre_tag: None,
+            build_tag: None,
+        };
+
+        // Create a test card with some data
+        let card_request = CreateCardRequest {
+            card: CardRecord::Data(DataCardClientRecord {
+                name: self.name.clone(),
+                space: self.space.clone(),
+                version: self.version.clone(),
+                tags: vec!["test".to_string()],
+                ..DataCardClientRecord::default()
+            }),
+            registry_type: RegistryType::Data,
+            version_request: card_version_request,
+        };
+
+        let body = serde_json::to_string(&card_request).unwrap();
+
+        // Create the card first
+        let request = Request::builder()
+            .uri("/opsml/api/card/create")
+            .method("POST")
+            .header(header::CONTENT_TYPE, "application/json")
+            .body(Body::from(body))
+            .unwrap();
+
+        let response = self.send_oneshot(request).await;
+        assert_eq!(response.status(), StatusCode::OK);
+        //
+        let body = response.into_body().collect().await.unwrap().to_bytes();
+        let create_response: CreateCardResponse = serde_json::from_slice(&body).unwrap();
+        self.key = create_response.key.clone();
+    }
 }

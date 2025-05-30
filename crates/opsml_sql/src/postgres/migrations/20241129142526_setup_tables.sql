@@ -210,3 +210,19 @@ CREATE TABLE IF NOT EXISTS opsml_prompt_registry (
     opsml_version TEXT NOT NULL DEFAULT '0.0.0',
     username TEXT NOT NULL DEFAULT 'guest'
 );
+
+CREATE TABLE IF NOT EXISTS opsml_space (
+    space TEXT PRIMARY KEY,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    description TEXT,
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS opsml_space_name (
+    space TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    name TEXT NOT NULL,
+    registry_type TEXT NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    PRIMARY KEY (space, name, registry_type)
+);

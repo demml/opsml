@@ -187,6 +187,13 @@ impl OpsmlServerError {
         }
     }
 
+    pub fn missing_token() -> Self {
+        error!("Missing token");
+        OpsmlServerError {
+            error: "Missing token".to_string(),
+        }
+    }
+
     pub fn invalid_recovery_code() -> Self {
         error!("Invalid recovery token");
         OpsmlServerError {

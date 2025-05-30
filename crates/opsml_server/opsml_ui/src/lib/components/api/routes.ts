@@ -2,13 +2,17 @@ export enum RoutePaths {
   // Auth
   VALIDATE_AUTH = "/opsml/api/auth/validate",
   LOGIN = "/opsml/api/auth/ui/login",
+  LOGOUT = "/opsml/api/auth/ui/logout",
   REFRESH_TOKEN = "/opsml/api/auth/refresh",
   RESET_PASSWORD = "/opsml/api/user/reset-password/recovery",
+  REGISTER = "/opsml/api/user/register",
+  USER = "/opsml/api/user",
 
   // Card
   LIST_CARDS = "/opsml/api/card/list",
   LIST_CARD_SPACES = "/opsml/api/card/spaces",
-  SPACES = "/opsml/api/spaces",
+  ALL_SPACES = "/opsml/api/card/space/stats",
+  SPACES = "/opsml/api/card/space",
   GET_STATS = "/opsml/api/card/registry/stats",
   GET_REGISTRY_PAGE = "/opsml/api/card/registry/page",
   GET_VERSION_PAGE = "/opsml/api/card/registry/version/page",
@@ -33,8 +37,13 @@ export enum RoutePaths {
   EXPERIMENT_METRIC_NAMES = "/opsml/api/experiment/metrics/names",
   EXPERIMENT_PARAMETERS = "/opsml/api/experiment/parameters",
   HARDWARE_METRICS = "/opsml/api/experiment/hardware/metrics",
-  USER = "/opsml/api/user",
-  REGISTER = "/opsml/api/user/register",
+
+  // Space
+  CREATE_SPACE = "/opsml/api/space/create",
+  DELETE_SPACE = "/opsml/api/space/delete",
+
+  // Settings
+  SETTINGS = "/opsml/api/ui/settings",
 }
 
 export enum UiPaths {

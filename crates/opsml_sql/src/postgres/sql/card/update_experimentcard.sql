@@ -1,0 +1,19 @@
+UPDATE opsml_experiment_registry SET 
+app_env = $1, 
+name = $2, 
+space = $3, 
+major = $4, 
+minor = $5, 
+patch = $6, 
+version = $7, 
+tags = $8, 
+datacard_uids = $9, 
+modelcard_uids = $10, 
+promptcard_uids = $11,
+card_deck_uids = $12,
+experimentcard_uids = $13, 
+pre_tag = $14, 
+build_tag = $15,
+username = $16,
+opsml_version = $17
+WHERE uid = $18;

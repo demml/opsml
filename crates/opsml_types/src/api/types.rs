@@ -136,3 +136,14 @@ impl Display for Routes {
 pub struct JwtToken {
     pub token: String,
 }
+
+#[derive(Serialize, Deserialize)]
+pub struct Alive {
+    pub alive: bool,
+}
+
+impl Default for Alive {
+    fn default() -> Self {
+        Self { alive: true }
+    }
+}
