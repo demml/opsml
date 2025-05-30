@@ -1,36 +1,145 @@
 <script lang="ts">
-  import {CircuitBoard, NotebookText, FlaskConical, Table, BrainCircuit } from 'lucide-svelte';
+  import Card from '$lib/components/card/Card.svelte';
+  import type { RecentCards } from '$lib/components/home/utils';
+  import type { SpaceRecord} from '$lib/components/space/types';
+  import { BrainCircuit, Table, NotebookText, FlaskConical } from 'lucide-svelte';
+  import type { PageProps } from './$types';
+
+  let { data }: PageProps = $props();
+  let spaceRecord: SpaceRecord= data.spaceRecord;
+  let cards: RecentCards = data.recentCards;
+  let badgeColor = "#40328b";
+  let iconColor = "#40328b"; // Default icon color, can be customized
+
 
 </script>
 
 
-<div class="flex-1 mx-auto w-9/12 pt-20 pt-[100px] justify-center px-4 pb-10">
+{#await cards}
+  <p>Loading...</p>
+{:then cards}
+  <!-- Cards loaded successfully -->
+<div class="flex-1 mx-auto w-7/12 pt-20 pt-[100px] justify-center px-4 pb-10">
 
     <!-- Left column for activity and members-->
-    <div class="grid grid-cols-1 md:grid-cols-6 gap-4 w-full">
-        <div class="col-span-1 md:col-span-2 bg-slate-100 p-4 flex flex-col rounded-base border-black border-2 shadow min-h-[400px] h-fit">
-            <!-- Top Section -->
-          <div class="mb-4">
-            <h3 class="font-bold text-lg">Activity</h3>
-            <p class="text-sm text-gray-500">View recent activity in this space</p>
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-4 w-full">
+
+      <!-- Right column for experiments, models, prompts -->
+      <div class="col-span-1 lg:col-span-4 flex flex-col h-auto gap-y-4">
+
+        <div class="rounded-base border-primary-500 border-2 shadow-primary bg-surface-50 pb-4 px-4">
+          <div class="flex flex-row items-center gap-2 py-4">
+            <div class="rounded-full bg-surface-200 border-black border-2 p-1 shadow-small">
+              <BrainCircuit color={iconColor} />
+            </div>
+            <h2 class="font-bold text-primary-800 text-xl">Models</h2>
           </div>
-          
+
+          <div class="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-4">
+            
+              {#each cards.modelcards as card}
+              <div class="flex justify-center w-full">
+                <Card 
+                  iconColor={iconColor} 
+                  badgeColor={badgeColor}
+                  name={card.data.name}
+                  space={card.data.space}
+                  version={card.data.version}
+                  registry={card.type.toLowerCase()}
+                  created_at={card.data.created_at}
+                />
+                </div>
+              {/each}
+            
+          </div>
         </div>
 
-    </div>
-
-    <!-- Right column for experiments, models, prompts -->
-    <div class="col-span-1 md:col-span-4 gap-1 p-4 flex flex-col h-auto">
-
-      <div class="rounded-base border-primary-500 border-2 shadow-primary bg-surface-50">
-        <div class="flex flex-row items-center gap-2 pb-2">
-          <div class="rounded-full bg-surface-200 border-black border-2 p-1 shadow-small">
-            <BrainCircuit color="#40328b" />
+        <div class="rounded-base border-primary-500 border-2 shadow-primary bg-surface-50 pb-4 px-4">
+          <div class="flex flex-row items-center gap-2 py-4">
+            <div class="rounded-full bg-surface-200 border-black border-2 p-1 shadow-small">
+              <Table color={iconColor} />
+            </div>
+            <h2 class="font-bold text-primary-800 text-xl">Data</h2>
           </div>
-          <h2 class="font-bold text-primary-800 text-xl">Models</h2>
+
+          <div class="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-4">
+
+              {#each cards.datacards as card}
+              <div class="flex justify-center w-full">
+                <Card 
+                  iconColor={iconColor} 
+                  badgeColor={badgeColor}
+                  name={card.data.name}
+                  space={card.data.space}
+                  version={card.data.version}
+                  registry={card.type.toLowerCase()}
+                  created_at={card.data.created_at}
+                />
+                </div>
+              {/each}
+            
+          </div>
+        </div>
+
+        <div class="rounded-base border-primary-500 border-2 shadow-primary bg-surface-50 pb-4 px-4">
+          <div class="flex flex-row items-center gap-2 py-4">
+            <div class="rounded-full bg-surface-200 border-black border-2 p-1 shadow-small">
+              <NotebookText color={iconColor} />
+            </div>
+            <h2 class="font-bold text-primary-800 text-xl">Prompts</h2>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-4">
+
+              {#each cards.promptcards as card}
+              <div class="flex justify-center w-full">
+                <Card 
+                  iconColor={iconColor} 
+                  badgeColor={badgeColor}
+                  name={card.data.name}
+                  space={card.data.space}
+                  version={card.data.version}
+                  registry={card.type.toLowerCase()}
+                  created_at={card.data.created_at}
+                />
+                </div>
+              {/each}
+            
+          </div>
+        </div>
+
+
+        <div class="rounded-base border-primary-500 border-2 shadow-primary bg-surface-50 pb-4 px-4">
+          <div class="flex flex-row items-center gap-2 py-4">
+            <div class="rounded-full bg-surface-200 border-black border-2 p-1 shadow-small">
+              <FlaskConical color={iconColor} />
+            </div>
+            <h2 class="font-bold text-primary-800 text-xl">Experiments</h2>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-4">
+
+              {#each cards.experimentcards as card}
+              <div class="flex justify-center w-full">
+                <Card 
+                  iconColor={iconColor} 
+                  badgeColor={badgeColor}
+                  name={card.data.name}
+                  space={card.data.space}
+                  version={card.data.version}
+                  registry={card.type.toLowerCase()}
+                  created_at={card.data.created_at}
+                />
+                </div>
+              {/each}
+            
+          </div>
         </div>
       </div>
 
     </div>
 
+   
+
 </div>
+{/await}

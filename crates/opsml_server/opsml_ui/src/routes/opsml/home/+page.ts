@@ -5,6 +5,8 @@ import type { PageLoad } from "./$types";
 
 export const load: PageLoad = async ({}) => {
   await validateUserOrRedirect();
+
   let cards = await getRecentCards();
+
   return { cards: cards };
 };

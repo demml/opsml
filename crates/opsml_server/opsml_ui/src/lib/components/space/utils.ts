@@ -4,8 +4,11 @@ import type {
   CreateSpaceResponse,
   SpaceStatsResponse,
   SpaceRecordResponse,
+  SpaceRecord,
 } from "./types";
 import { userStore } from "../user/user.svelte";
+import { listRecentSpaceCards } from "../card/utils";
+import { RegistryType } from "$lib/utils";
 
 export async function createSpace(
   space: string,
@@ -39,12 +42,20 @@ export async function getAllSpaceStats(): Promise<SpaceStatsResponse> {
   return await response.json();
 }
 
-export async function getSpace(space: string): Promise<SpaceRecordResponse> {
+export async function getSpace(space: string): Promise<SpaceRecord> {
   let params = { space: space };
   const response = await opsmlClient.get(
     RoutePaths.SPACES,
     params,
     userStore.jwt_token
   );
-  return await response.json();
+  let recordResponse = (await response.json()) as SpaceRecordResponse;
+  // if no items found, return empty record
+  if (recordResponse.spaces.length === 0) {
+    return {
+      space: space,
+      description: "",
+    };
+  }
+  return recordResponse.spaces[0];
 }
