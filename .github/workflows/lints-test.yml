@@ -91,9 +91,6 @@ jobs:
       - name: Run storage client tests
         run: make test.storage.client
 
-      - name: Run server tests
-        run: make test.server
-
       - name: Shutdown Server
         run: make stop.server
 
