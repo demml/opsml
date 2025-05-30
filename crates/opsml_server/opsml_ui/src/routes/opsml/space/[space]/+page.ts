@@ -1,6 +1,6 @@
 export const prerender = false;
 
-import { getSpace } from "$lib/components/card/utils";
+import { getSpace } from "$lib/components/space/utils";
 import { validateUserOrRedirect } from "$lib/components/user/user.svelte";
 import type { PageLoad } from "./$types";
 

@@ -1,15 +1,14 @@
 export const ssr = false;
 
-import { getAllSpaces, setupRegistryPage } from "$lib/components/card/utils";
+import { getAllSpaceStats } from "$lib/components/space/utils";
 import { validateUserOrRedirect } from "$lib/components/user/user.svelte";
-import { RegistryType } from "$lib/utils";
 import type { PageLoad } from "./$types";
 
 export const load: PageLoad = async ({}) => {
   await validateUserOrRedirect();
 
   // get space for url if exists
-  let spaces = await getAllSpaces();
+  let spaces = await getAllSpaceStats();
 
   console.log("Spaces loaded:", spaces);
 

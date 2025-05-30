@@ -58,17 +58,3 @@ export interface VersionPageRequest {
   name?: string;
   page?: number;
 }
-
-export interface SpaceRecord {
-  space: string;
-  description: string;
-  experiment_count: number;
-  model_count: number;
-  data_count: number;
-  prompt_count: number;
-  user_count: number;
-}
-
-export interface SpaceRecordResponse {
-  spaces: SpaceRecord[];
-}

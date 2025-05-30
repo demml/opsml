@@ -9,7 +9,7 @@ export enum RoutePaths {
   // Card
   LIST_CARDS = "/opsml/api/card/list",
   LIST_CARD_SPACES = "/opsml/api/card/spaces",
-  ALL_SPACES = "/opsml/api/card/space/all",
+  ALL_SPACES = "/opsml/api/card/space/stats",
   SPACES = "/opsml/api/card/space",
   GET_STATS = "/opsml/api/card/registry/stats",
   GET_REGISTRY_PAGE = "/opsml/api/card/registry/page",
