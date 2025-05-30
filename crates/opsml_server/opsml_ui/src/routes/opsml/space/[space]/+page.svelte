@@ -32,7 +32,7 @@
             <div class="rounded-full bg-surface-200 border-black border-2 p-1 shadow-small">
               <BrainCircuit color={iconColor} />
             </div>
-            <h2 class="font-bold text-primary-800 text-xl">Models</h2>
+            <a class="font-bold text-primary-800 text-xl" href="/opsml/model?space={spaceRecord.space}">Models</a>
           </div>
 
           <div class="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-4">
@@ -59,7 +59,7 @@
             <div class="rounded-full bg-surface-200 border-black border-2 p-1 shadow-small">
               <Table color={iconColor} />
             </div>
-            <h2 class="font-bold text-primary-800 text-xl">Data</h2>
+            <a class="font-bold text-primary-800 text-xl" href="/opsml/data?space={spaceRecord.space}">Data</a>
           </div>
 
           <div class="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-4">
@@ -86,7 +86,7 @@
             <div class="rounded-full bg-surface-200 border-black border-2 p-1 shadow-small">
               <NotebookText color={iconColor} />
             </div>
-            <h2 class="font-bold text-primary-800 text-xl">Prompts</h2>
+            <a class="font-bold text-primary-800 text-xl" href="/opsml/prompt?space={spaceRecord.space}">Prompts</a>
           </div>
 
           <div class="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-4">
@@ -114,7 +114,7 @@
             <div class="rounded-full bg-surface-200 border-black border-2 p-1 shadow-small">
               <FlaskConical color={iconColor} />
             </div>
-            <h2 class="font-bold text-primary-800 text-xl">Experiments</h2>
+            <a class="font-bold text-primary-800 text-xl" href="/opsml/experiment?space={spaceRecord.space}">Experiments</a>
           </div>
 
           <div class="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-4">
