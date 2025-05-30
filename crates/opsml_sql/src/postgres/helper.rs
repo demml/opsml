@@ -345,8 +345,8 @@ impl PostgresQueryHelper {
         SELECT * FROM {}
         WHERE 1=1
         AND ($1 IS NULL OR uid = $1)
-        AND ($2 IS NULL OR name = $2)
         AND ($3 IS NULL OR space = $3)
+        AND ($2 IS NULL OR name = $2)
         AND ($4 IS NULL OR created_at <= TO_DATE($4, 'YYYY-MM-DD'))
         ",
             table

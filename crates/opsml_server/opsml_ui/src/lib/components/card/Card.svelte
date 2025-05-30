@@ -10,16 +10,16 @@
     version,
     created_at,
     registry,
-    uid,
     iconColor,
+    badgeColor,
   } = $props<{
     name: string;
     space: string;
     version: string;
     created_at: string;
     registry: string;
-    uid: string;
-    cardColor: string;
+    iconColor: string;
+    badgeColor: string;
   }>();
 
   // function to navigate to the card page
@@ -31,7 +31,7 @@
 
 </script>
 
-<button class="text-black rounded-base shadow border-2 border-black bg-surface-300 w-[400px] h-[75px] overflow-hidden whitespace-nowrap hover:translate-x-[4px] hover:translate-y-[4px] hover:shadow-none" onclick={navigateToCardPage}>
+<button class="text-black rounded-base shadow border-2 border-black bg-surface-300 w-full max-w-[400px] h-[75px] overflow-hidden whitespace-nowrap hover:translate-x-[4px] hover:translate-y-[4px] hover:shadow-none" onclick={navigateToCardPage}>
   <div class="flex items-center justify-between">
     <div class="flex items-center justify-start gap-2 mb-1">
       <div class="ml-2">
@@ -42,13 +42,13 @@
     <div class="mr-2">
 
       {#if registry === "model"}
-        <BrainCircuit color="#8059b6" />
+        <BrainCircuit color={badgeColor} />
       {:else if registry === "data"}
-        <Table color="#5fd68d" />
+        <Table color={badgeColor} />
       {:else if registry === "prompt"}
-        <NotebookText color="#f9b25e" />
+        <NotebookText color={badgeColor} />
       {:else if registry === "experiment"}
-        <FlaskConical color="#f54c54" />
+        <FlaskConical color={badgeColor} />
       {/if}
   
     </div>

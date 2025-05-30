@@ -198,3 +198,24 @@ export async function getVersionPage(
   );
   return await response.json();
 }
+
+export async function listRecentSpaceCards(
+  registry_type: RegistryType,
+  space: string
+): Promise<Card[]> {
+  const params: CardQueryArgs = {
+    space: space,
+    registry_type: registry_type,
+    sort_by_timestamp: true,
+    limit: 10,
+  };
+
+  const response = await opsmlClient.get(
+    RoutePaths.LIST_CARDS,
+    params,
+    userStore.jwt_token
+  );
+  const data = (await response.json()) as Card[];
+
+  return data;
+}

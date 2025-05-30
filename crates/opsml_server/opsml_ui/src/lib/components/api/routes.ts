@@ -2,7 +2,7 @@ export enum RoutePaths {
   // Auth
   VALIDATE_AUTH = "/opsml/api/auth/validate",
   LOGIN = "/opsml/api/auth/ui/login",
-  LOGOUT = "/opsml/api/auth/logout",
+  LOGOUT = "/opsml/api/auth/ui/logout",
   REFRESH_TOKEN = "/opsml/api/auth/refresh",
   RESET_PASSWORD = "/opsml/api/user/reset-password/recovery",
 

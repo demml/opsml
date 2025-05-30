@@ -11,12 +11,13 @@ interface RecentCards {
   promptcards: Card[];
 }
 
-async function getCards(registry: string): Promise<Card[]> {
+async function getCards(registry: string, space?: string): Promise<Card[]> {
   const response = await opsmlClient.get(
     RoutePaths.LIST_CARDS,
     {
       registry_type: registry,
       limit: "10",
+      space: space,
       sort_by_timestamp: "true",
     },
     userStore.jwt_token
@@ -25,13 +26,13 @@ async function getCards(registry: string): Promise<Card[]> {
   return data;
 }
 
-async function getRecentCards(): Promise<RecentCards> {
+async function getRecentCards(space?: string): Promise<RecentCards> {
   const [modelcards, datacards, experimentcards, promptcards] =
     await Promise.all([
-      getCards(RegistryType.Model),
-      getCards(RegistryType.Data),
-      getCards(RegistryType.Experiment),
-      getCards(RegistryType.Prompt),
+      getCards(RegistryType.Model, space),
+      getCards(RegistryType.Data, space),
+      getCards(RegistryType.Experiment, space),
+      getCards(RegistryType.Prompt, space),
     ]);
 
   return {
