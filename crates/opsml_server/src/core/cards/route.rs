@@ -65,19 +65,15 @@ pub async fn get_registry_spaces(
     Ok(Json(CardSpaceResponse { spaces }))
 }
 
-pub async fn get_all_space_records(
+pub async fn get_all_space_stats(
     State(state): State<Arc<AppState>>,
-) -> Result<Json<SpaceRecordResponse>, (StatusCode, Json<OpsmlServerError>)> {
-    let spaces = state
-        .sql_client
-        .get_all_space_records()
-        .await
-        .map_err(|e| {
-            error!("Failed to get all space names: {}", e);
-            internal_server_error(e, "Failed to get all space names")
-        })?;
+) -> Result<Json<SpaceStatsResponse>, (StatusCode, Json<OpsmlServerError>)> {
+    let stats = state.sql_client.get_all_space_stats().await.map_err(|e| {
+        error!("Failed to get all space stats: {}", e);
+        internal_server_error(e, "Failed to get all space stats")
+    })?;
 
-    Ok(Json(SpaceRecordResponse { spaces }))
+    Ok(Json(SpaceStatsResponse { stats }))
 }
 
 pub async fn get_space_record(
@@ -104,7 +100,6 @@ pub async fn create_space_record(
     let record = SpaceRecord {
         space: space_request.space,
         description: space_request.description.unwrap_or_default(),
-        ..Default::default()
     };
     state
         .sql_client
@@ -125,7 +120,6 @@ pub async fn update_space_record(
     let record = SpaceRecord {
         space: space_request.space,
         description: space_request.description.unwrap_or_default(),
-        ..Default::default()
     };
     state
         .sql_client
@@ -367,14 +361,17 @@ pub async fn create_card(
         access_location: None,
     };
 
-    let space_stats = SpaceStatsEvent {
+    // (5) ------- Create space name registry event
+    let space_name = SpaceNameEvent {
         space: card_request.card.space().to_string(),
+        name: card_request.card.name().to_string(),
+        registry_type: card_request.registry_type.clone(),
     };
 
     {
         let extensions = response.extensions_mut();
         extensions.insert(audit_context);
-        extensions.insert(space_stats);
+        extensions.insert(space_name);
     }
 
     Ok(response)
@@ -421,15 +418,7 @@ pub async fn update_card(
         access_location: None,
     };
 
-    let space_stats = SpaceStatsEvent {
-        space: card.space().to_string(),
-    };
-
-    {
-        let extensions = response.extensions_mut();
-        extensions.insert(audit_context);
-        extensions.insert(space_stats);
-    }
+    response.extensions_mut().insert(audit_context);
 
     Ok(response)
 }
@@ -463,7 +452,7 @@ pub async fn delete_card(
     })?;
 
     // delete card
-    let space = state
+    let (space, name) = state
         .sql_client
         .delete_card(&table, &params.uid)
         .await
@@ -483,12 +472,35 @@ pub async fn delete_card(
         access_location: None,
     };
 
-    let space_stats = SpaceStatsEvent { space };
+    response.extensions_mut().insert(audit_context);
 
-    {
-        let extensions = response.extensions_mut();
-        extensions.insert(audit_context);
-        extensions.insert(space_stats);
+    // Get count of remaining cards in the space
+    let query_params = CardQueryArgs {
+        space: Some(space.clone()),
+        name: Some(name.clone()),
+        registry_type: params.registry_type.clone(),
+        ..Default::default()
+    };
+
+    let cards = state
+        .sql_client
+        .query_cards(&table, &query_params)
+        .await
+        .map_err(|e| {
+            error!("Failed to get unique space names: {}", e);
+            internal_server_error(e, "Failed to get unique space names")
+        })?;
+
+    // If no cards remain in the space, delete the space name record
+    if cards.is_empty() {
+        state
+            .sql_client
+            .delete_space_name_record(&space, &name, &params.registry_type)
+            .await
+            .map_err(|e| {
+                error!("Failed to delete space name record: {}", e);
+                internal_server_error(e, "Failed to delete space name record")
+            })?;
     }
 
     Ok(response)
@@ -702,8 +714,8 @@ pub async fn get_card_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
     let result = catch_unwind(AssertUnwindSafe(|| {
         Router::new()
             .route(
-                &format!("{}/card/space/all", prefix),
-                get(get_all_space_records),
+                &format!("{}/card/space/stats", prefix),
+                get(get_all_space_stats),
             )
             .route(&format!("{}/card/space", prefix), get(get_space_record))
             .route(&format!("{}/card/space", prefix), post(create_space_record))

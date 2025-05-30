@@ -1,6 +1,6 @@
 use crate::core::state::AppState;
 use opsml_events::{
-    event::{log_audit_event, update_space_record},
+    event::{insert_space_name_record, log_audit_event},
     Event,
 };
 use std::sync::Arc;
@@ -30,11 +30,11 @@ impl AuditEventHandler {
                             error!("Failed to log audit event: {}", e);
                         }
                     }
-                    Event::SpaceStats(record) => {
+                    Event::SpaceName(record) => {
                         if let Err(e) =
-                            update_space_record(record, self.state.sql_client.clone()).await
+                            insert_space_name_record(record, self.state.sql_client.clone()).await
                         {
-                            error!("Failed to log space stats: {}", e);
+                            error!("Failed to log space name event: {}", e);
                         }
                     }
                 }

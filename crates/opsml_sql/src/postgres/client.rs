@@ -12,7 +12,7 @@ use opsml_semver::VersionValidator;
 use opsml_settings::config::DatabaseSettings;
 use opsml_types::{
     cards::CardTable,
-    contracts::{ArtifactKey, AuditEvent, CardQueryArgs, SpaceRecord, SpaceStatsEvent},
+    contracts::{ArtifactKey, AuditEvent, CardQueryArgs, SpaceNameEvent, SpaceRecord, SpaceStats},
     RegistryType,
 };
 use semver::Version;
@@ -712,15 +712,19 @@ impl SqlClient for PostgresClient {
         Ok(records)
     }
 
-    async fn delete_card(&self, table: &CardTable, uid: &str) -> Result<String, SqlError> {
+    async fn delete_card(
+        &self,
+        table: &CardTable,
+        uid: &str,
+    ) -> Result<(String, String), SqlError> {
         // First get the space
-        let query = format!("DELETE FROM {} WHERE uid = $1 RETURNING space", table);
-        let space: String = sqlx::query_scalar(&query)
+        let query = format!("DELETE FROM {} WHERE uid = $1 RETURNING space, name", table);
+        let (space, name): (String, String) = sqlx::query_as(&query)
             .bind(uid)
             .fetch_one(&self.pool)
             .await?;
 
-        Ok(space)
+        Ok((space, name))
     }
 
     async fn insert_experiment_metric(&self, record: &MetricRecord) -> Result<(), SqlError> {
@@ -1093,52 +1097,6 @@ impl SqlClient for PostgresClient {
         Ok(())
     }
 
-    async fn update_space_record_stats(&self, space: &SpaceStatsEvent) -> Result<(), SqlError> {
-        let query = PostgresQueryHelper::get_update_space_record_stats_query();
-        sqlx::query(&query)
-            .bind(&space.space)
-            .execute(&self.pool)
-            .await?;
-
-        Ok(())
-    }
-
-    async fn get_all_space_records(&self) -> Result<Vec<SpaceRecord>, SqlError> {
-        let query = PostgresQueryHelper::get_all_space_records();
-        let spaces: Vec<SqlSpaceRecord> = sqlx::query_as(&query).fetch_all(&self.pool).await?;
-
-        Ok(spaces
-            .into_iter()
-            .map(|s| SpaceRecord {
-                space: s.0,
-                description: s.1,
-                experiment_count: s.2,
-                model_count: s.3,
-                data_count: s.4,
-                prompt_count: s.5,
-                user_count: s.6,
-            })
-            .collect())
-    }
-
-    async fn get_space_record(&self, space: &str) -> Result<Option<SpaceRecord>, SqlError> {
-        let query = PostgresQueryHelper::get_space_record_query();
-        let record: Option<SqlSpaceRecord> = sqlx::query_as(&query)
-            .bind(space)
-            .fetch_optional(&self.pool)
-            .await?;
-
-        Ok(record.map(|r| SpaceRecord {
-            space: r.0,
-            description: r.1,
-            experiment_count: r.2,
-            model_count: r.3,
-            data_count: r.4,
-            prompt_count: r.5,
-            user_count: r.6,
-        }))
-    }
-
     async fn insert_space_record(&self, space: &SpaceRecord) -> Result<(), SqlError> {
         let query = PostgresQueryHelper::get_insert_space_record_query();
         sqlx::query(&query)
@@ -1148,6 +1106,47 @@ impl SqlClient for PostgresClient {
             .await?;
 
         Ok(())
+    }
+
+    async fn insert_space_name_record(&self, event: &SpaceNameEvent) -> Result<(), SqlError> {
+        let query = PostgresQueryHelper::get_insert_space_name_record_query();
+        sqlx::query(&query)
+            .bind(&event.space)
+            .bind(&event.name)
+            .bind(event.registry_type.to_string())
+            .execute(&self.pool)
+            .await?;
+
+        Ok(())
+    }
+
+    async fn get_all_space_stats(&self) -> Result<Vec<SpaceStats>, SqlError> {
+        let query = PostgresQueryHelper::get_all_space_stats_query();
+        let spaces: Vec<SqlSpaceRecord> = sqlx::query_as(&query).fetch_all(&self.pool).await?;
+
+        Ok(spaces
+            .into_iter()
+            .map(|s| SpaceStats {
+                space: s.0,
+                model_count: s.1,
+                data_count: s.2,
+                prompt_count: s.3,
+                experiment_count: s.4,
+            })
+            .collect())
+    }
+
+    async fn get_space_record(&self, space: &str) -> Result<Option<SpaceRecord>, SqlError> {
+        let query = PostgresQueryHelper::get_space_record_query();
+        let record: Option<(String, String)> = sqlx::query_as(&query)
+            .bind(space)
+            .fetch_optional(&self.pool)
+            .await?;
+
+        Ok(record.map(|r| SpaceRecord {
+            space: r.0,
+            description: r.1,
+        }))
     }
 
     async fn update_space_record(&self, space: &SpaceRecord) -> Result<(), SqlError> {
@@ -1164,6 +1163,23 @@ impl SqlClient for PostgresClient {
     async fn delete_space_record(&self, space: &str) -> Result<(), SqlError> {
         let query = PostgresQueryHelper::get_delete_space_record_query();
         sqlx::query(&query).bind(space).execute(&self.pool).await?;
+
+        Ok(())
+    }
+
+    async fn delete_space_name_record(
+        &self,
+        space: &str,
+        name: &str,
+        registry_type: &RegistryType,
+    ) -> Result<(), SqlError> {
+        let query = PostgresQueryHelper::get_delete_space_name_record_query();
+        sqlx::query(&query)
+            .bind(space)
+            .bind(name)
+            .bind(registry_type.to_string())
+            .execute(&self.pool)
+            .await?;
 
         Ok(())
     }
@@ -1947,7 +1963,6 @@ mod tests {
         let space_record = SpaceRecord {
             space: CommonKwargs::Undefined.to_string(),
             description: "Space description".to_string(),
-            ..Default::default()
         };
 
         client.insert_space_record(&space_record).await.unwrap();
@@ -1962,20 +1977,27 @@ mod tests {
         let card = ServerCard::Model(model_card.clone());
         client.insert_card(&CardTable::Model, &card).await.unwrap();
 
-        let space_event = SpaceStatsEvent {
+        let space_event = SpaceNameEvent {
             space: data_card.space.clone(),
+            name: data_card.name.clone(),
+            registry_type: RegistryType::Data,
         };
-        client
-            .update_space_record_stats(&space_event)
-            .await
-            .unwrap();
+        client.insert_space_name_record(&space_event).await.unwrap();
+
+        let space_event = SpaceNameEvent {
+            space: model_card.space.clone(),
+            name: model_card.name.clone(),
+            registry_type: RegistryType::Model,
+        };
+
+        client.insert_space_name_record(&space_event).await.unwrap();
 
         // get space stats
-        let stats = client.get_all_space_records().await.unwrap();
+        let stats = client.get_all_space_stats().await.unwrap();
         assert_eq!(stats.len(), 1);
+
         // assert model_count
-        assert_eq!(stats[0].model_count, 1);
-        assert_eq!(stats[0].description, "Space description");
+        assert_eq!(stats[0].data_count, 1);
 
         //create a new modelcard
         let model_card2 = ModelCardRecord {
@@ -1986,16 +2008,16 @@ mod tests {
         client.insert_card(&CardTable::Model, &card).await.unwrap();
 
         // update space stats again
-        let space_event = SpaceStatsEvent {
+        let space_event = SpaceNameEvent {
             space: model_card2.space.clone(),
+            name: model_card2.name.clone(),
+            registry_type: RegistryType::Model,
         };
-        client
-            .update_space_record_stats(&space_event)
-            .await
-            .unwrap();
+
+        client.insert_space_name_record(&space_event).await.unwrap();
         // get space stats again
 
-        let stats = client.get_all_space_records().await.unwrap();
+        let stats = client.get_all_space_stats().await.unwrap();
         assert_eq!(stats.len(), 1);
 
         // assert model_count
@@ -2005,7 +2027,6 @@ mod tests {
         let updated_space_record = SpaceRecord {
             space: model_card2.space.clone(),
             description: "Updated Space description".to_string(),
-            ..Default::default()
         };
         client
             .update_space_record(&updated_space_record)
@@ -2028,7 +2049,13 @@ mod tests {
             .unwrap();
 
         // get space stats again
-        let stats = client.get_all_space_records().await.unwrap();
-        assert_eq!(stats.len(), 0);
+        let record = client.get_space_record(&model_card2.space).await.unwrap();
+        assert_eq!(record, None);
+
+        // delete space name record
+        client
+            .delete_space_name_record(&model_card2.space, &model_card2.name, &RegistryType::Model)
+            .await
+            .unwrap();
     }
 }

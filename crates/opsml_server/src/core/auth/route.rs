@@ -17,7 +17,7 @@ use opsml_sql::base::SqlClient;
 use opsml_types::JwtToken;
 use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::sync::Arc;
-use tracing::{error, info, instrument};
+use tracing::{debug, error, info, instrument};
 
 /// Route for the login endpoint when using the API
 ///

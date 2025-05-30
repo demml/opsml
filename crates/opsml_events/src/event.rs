@@ -3,7 +3,7 @@ use tokio::sync::broadcast;
 use tokio_stream::wrappers::BroadcastStream;
 use tokio_stream::StreamExt;
 
-use opsml_types::contracts::{AuditEvent, SpaceStatsEvent};
+use opsml_types::contracts::{AuditEvent, SpaceNameEvent};
 
 use crate::error::EventError;
 use opsml_sql::{base::SqlClient, enums::client::SqlClientEnum};
@@ -30,17 +30,17 @@ pub async fn log_audit_event(
 }
 
 #[instrument(skip_all)]
-pub async fn update_space_record(
-    event: SpaceStatsEvent,
+pub async fn insert_space_name_record(
+    event: SpaceNameEvent,
     sql_client: Arc<SqlClientEnum>,
 ) -> Result<(), EventError> {
-    debug!("Logging space stats event");
+    debug!("Logging space name event");
 
     sql_client
-        .update_space_record_stats(&event)
+        .insert_space_name_record(&event)
         .await
         .map_err(|e| {
-            error!("Failed to log space stats event: {}", e);
+            error!("Failed to log space name event: {}", e);
             EventError::LogEventError(e)
         })?;
 

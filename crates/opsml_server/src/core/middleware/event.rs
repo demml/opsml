@@ -14,7 +14,7 @@ use axum_extra::TypedHeader;
 use headers::UserAgent;
 use opsml_events::create_audit_event;
 use opsml_events::{AuditContext, Event};
-use opsml_types::contracts::SpaceStatsEvent;
+use opsml_types::contracts::SpaceNameEvent;
 use std::net::SocketAddr;
 use std::sync::Arc;
 
@@ -39,10 +39,10 @@ pub async fn event_middleware(
         response.extensions_mut().remove::<AuditContext>();
     }
 
-    // Handle space stats events
-    if let Some(event) = response.extensions().get::<SpaceStatsEvent>().cloned() {
-        state.event_bus.publish(Event::SpaceStats(event));
-        response.extensions_mut().remove::<SpaceStatsEvent>();
+    // Handle space name events
+    if let Some(event) = response.extensions().get::<SpaceNameEvent>().cloned() {
+        state.event_bus.publish(Event::SpaceName(event));
+        response.extensions_mut().remove::<SpaceNameEvent>();
     }
 
     Ok(response)
