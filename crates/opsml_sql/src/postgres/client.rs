@@ -139,8 +139,8 @@ impl SqlClient for PostgresClient {
         let query = PostgresQueryHelper::get_versions_query(table, version)?;
 
         let cards: Vec<VersionResult> = sqlx::query_as(&query)
-            .bind(name)
             .bind(space)
+            .bind(name)
             .fetch_all(&self.pool)
             .await?;
 
@@ -174,8 +174,8 @@ impl SqlClient for PostgresClient {
             CardTable::Data => {
                 let card: Vec<DataCardRecord> = sqlx::query_as(&query)
                     .bind(query_args.uid.as_ref())
-                    .bind(query_args.name.as_ref())
                     .bind(query_args.space.as_ref())
+                    .bind(query_args.name.as_ref())
                     .bind(query_args.max_date.as_ref())
                     .bind(query_args.limit.unwrap_or(50))
                     .fetch_all(&self.pool)
@@ -186,8 +186,8 @@ impl SqlClient for PostgresClient {
             CardTable::Model => {
                 let card: Vec<ModelCardRecord> = sqlx::query_as(&query)
                     .bind(query_args.uid.as_ref())
-                    .bind(query_args.name.as_ref())
                     .bind(query_args.space.as_ref())
+                    .bind(query_args.name.as_ref())
                     .bind(query_args.max_date.as_ref())
                     .bind(query_args.limit.unwrap_or(50))
                     .fetch_all(&self.pool)
@@ -198,8 +198,8 @@ impl SqlClient for PostgresClient {
             CardTable::Experiment => {
                 let card: Vec<ExperimentCardRecord> = sqlx::query_as(&query)
                     .bind(query_args.uid.as_ref())
-                    .bind(query_args.name.as_ref())
                     .bind(query_args.space.as_ref())
+                    .bind(query_args.name.as_ref())
                     .bind(query_args.max_date.as_ref())
                     .bind(query_args.limit.unwrap_or(50))
                     .fetch_all(&self.pool)
@@ -211,8 +211,8 @@ impl SqlClient for PostgresClient {
             CardTable::Audit => {
                 let card: Vec<AuditCardRecord> = sqlx::query_as(&query)
                     .bind(query_args.uid.as_ref())
-                    .bind(query_args.name.as_ref())
                     .bind(query_args.space.as_ref())
+                    .bind(query_args.name.as_ref())
                     .bind(query_args.max_date.as_ref())
                     .bind(query_args.limit.unwrap_or(50))
                     .fetch_all(&self.pool)
@@ -224,8 +224,8 @@ impl SqlClient for PostgresClient {
             CardTable::Prompt => {
                 let card: Vec<PromptCardRecord> = sqlx::query_as(&query)
                     .bind(query_args.uid.as_ref())
-                    .bind(query_args.name.as_ref())
                     .bind(query_args.space.as_ref())
+                    .bind(query_args.name.as_ref())
                     .bind(query_args.max_date.as_ref())
                     .bind(query_args.limit.unwrap_or(50))
                     .fetch_all(&self.pool)
@@ -237,8 +237,8 @@ impl SqlClient for PostgresClient {
             CardTable::Deck => {
                 let card: Vec<CardDeckRecord> = sqlx::query_as(&query)
                     .bind(query_args.uid.as_ref())
-                    .bind(query_args.name.as_ref())
                     .bind(query_args.space.as_ref())
+                    .bind(query_args.name.as_ref())
                     .bind(query_args.max_date.as_ref())
                     .bind(query_args.limit.unwrap_or(50))
                     .fetch_all(&self.pool)
