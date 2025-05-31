@@ -41,7 +41,7 @@ If you answered yes to any of the above, then `OpsML` is for you.
 from opsml.helpers.data import create_fake_data
 from typing import Tuple, cast
 import pandas as pd
-from opsml import SklearnModel, CardRegistry, TaskType,  ModelCard
+from opsml import SklearnModel, CardRegistry, TaskType,  ModelCard, RegistryType
 from sklearn import ensemble  # type: ignore
 
 # start registries
@@ -68,7 +68,7 @@ modelcard = ModelCard( # (4)
 )
 
 # register model
-reg.model.register_card(modelcard)
+reg.register_card(modelcard)
 
 # This code will run as is
 ```
