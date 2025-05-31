@@ -204,3 +204,10 @@ impl ScouterArgs {
         }
     }
 }
+
+#[derive(Args, Clone)]
+pub struct UiArgs {
+    /// Version
+    #[arg(long = "version")]
+    pub version: Option<String>,
+}
