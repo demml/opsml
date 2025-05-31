@@ -25,7 +25,6 @@
     let useCardContent = $state('');
 
     onMount(() => {
-      console.log(modelSettings);
       useCardContent = `from opsml import CardRegistry
 
 # load the card

@@ -119,8 +119,6 @@ export class UserStore {
       cookie.trim().startsWith("jwt_token=")
     );
 
-    console.log("Token cookie found:", tokenCookie);
-
     if (tokenCookie) {
       return tokenCookie.split("=")[1].trim();
     }
@@ -150,7 +148,6 @@ export class UserStore {
   }
 
   private setTokenCookie(token: string) {
-    console.log("Setting JWT token cookie");
     const expirationDate = new Date();
     expirationDate.setTime(expirationDate.getTime() + 1 * 60 * 60 * 1000); // 1 hour
     document.cookie = `jwt_token=${token}; expires=${expirationDate.toUTCString()}; domain=${
