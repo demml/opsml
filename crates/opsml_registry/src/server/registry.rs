@@ -685,6 +685,11 @@ pub mod server_logic {
         ) -> Result<bool, RegistryError> {
             match service {
                 IntegratedService::Scouter => {
+                    // check if scouter client is initialized. If not, return false
+                    if self.scouter_client.is_none() {
+                        return Ok(false);
+                    }
+                    // if scouter client is initialized, check service health
                     let client = self
                         .scouter_client
                         .as_ref()
