@@ -20,8 +20,6 @@
 
   const changePage = async function (page: number) {
     registryPage = await getVersionPage(data.registry, data.metadata.space, data.metadata.name, page);
-
-    console.log("registryPage", JSON.stringify(registryPage, null, 2));
     currentPage = page;
   }
 

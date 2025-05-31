@@ -25,7 +25,6 @@
     let useCardContent = $state('');
 
     onMount(() => {
-      console.log(modelSettings);
       useCardContent = `from opsml import CardRegistry
 
 # load the card
@@ -106,43 +105,43 @@ datacard = registry.load_card(uid="${card.uid}")
     <Pill key="Model" value={modelSettings.model} textSize="text-sm"/>
     <Pill key="Provider" value={modelSettings.provider} textSize="text-sm"/>
 
-    {#if modelSettings.max_tokens !== undefined}
+    {#if modelSettings.max_tokens}
       <Pill key="Max Tokens" value={modelSettings.max_tokens} textSize="text-sm"/>
     {/if}
 
-    {#if modelSettings.temperature !== undefined}
+    {#if modelSettings.temperature}
       <Pill key="Temperature" value={modelSettings.temperature} textSize="text-sm"/>
     {/if}
 
-    {#if modelSettings.top_p !== undefined}
+    {#if modelSettings.top_p}
       <Pill key="Top P" value={modelSettings.top_p} textSize="text-sm"/>
     {/if}
 
-    {#if modelSettings.frequency_penalty !== undefined}
+    {#if modelSettings.frequency_penalty}
       <Pill key="Frequency Penalty" value={modelSettings.frequency_penalty} textSize="text-sm"/>
     {/if}
 
-    {#if modelSettings.presence_penalty !== undefined}
+    {#if modelSettings.presence_penalty}
       <Pill key="Presence Penalty" value={modelSettings.presence_penalty} textSize="text-sm"/>
     {/if}
 
-    {#if modelSettings.timeout !== undefined}
+    {#if modelSettings.timeout}
       <Pill key="Timeout" value={modelSettings.timeout} textSize="text-sm"/>
     {/if}
 
-    {#if modelSettings.parallel_tool_calls !== undefined}
+    {#if modelSettings.parallel_tool_calls}
       <Pill key="Parallel Tool Calls" value={modelSettings.parallel_tool_calls} textSize="text-sm"/>
     {/if}
 
-    {#if modelSettings.seed !== undefined}
+    {#if modelSettings.seed}
       <Pill key="Seed" value={modelSettings.seed} textSize="text-sm"/>
     {/if}
 
   </div>
 
-  {#if modelSettings.logit_bias !== undefined || 
+  {#if modelSettings.logit_bias || 
     modelSettings.stop_sequences?.length > 0 || 
-    modelSettings.extra_body !== undefined }
+    modelSettings.extra_body }
     <ExtraModelSettings settings={modelSettings}/>
   {/if}
 

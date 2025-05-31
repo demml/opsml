@@ -11,7 +11,6 @@ import { getCardReadMe } from "$lib/components/readme/util";
 
 // @ts-ignore
 export const load: LayoutServerLoad = async ({ url }) => {
-  console.log("loading layout");
   await validateUserOrRedirect();
 
   let registry = RegistryType.Prompt;

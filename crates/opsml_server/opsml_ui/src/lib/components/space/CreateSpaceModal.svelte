@@ -62,7 +62,6 @@
     let argsValid = validateSpaceSchema(space, description);
 
     if (argsValid.success) {
-      console.log("Space arguments are valid");
 
       let response = await createSpace(space, description);
 

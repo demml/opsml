@@ -95,6 +95,7 @@ async fn test_opsml_server_user_crud() {
     let body = response.into_body().collect().await.unwrap().to_bytes();
     let mut user_response: UserResponse = serde_json::from_slice(&body).unwrap();
     user_response.permissions.sort();
+    user_response.group_permissions.sort();
 
     assert_eq!(
         user_response.permissions,
@@ -106,7 +107,7 @@ async fn test_opsml_server_user_crud() {
     );
     assert_eq!(
         user_response.group_permissions,
-        vec!["user".to_string(), "developer".to_string()]
+        vec!["developer".to_string(), "user".to_string()]
     );
 
     // 4. List all users

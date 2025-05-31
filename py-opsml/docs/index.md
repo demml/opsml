@@ -38,10 +38,10 @@ If you answered yes to any of the above, then `OpsML` is for you.
 
 ### Traditional ML Workflow
 ``` py { title="ML Workflow Quickstart" }
+
+# create_fake_data requires polars and pandas to be installed 
 from opsml.helpers.data import create_fake_data
-from typing import Tuple, cast
-import pandas as pd
-from opsml import SklearnModel, CardRegistry, TaskType,  ModelCard
+from opsml import SklearnModel, CardRegistry, TaskType,  ModelCard, RegistryType
 from sklearn import ensemble  # type: ignore
 
 # start registries
@@ -68,7 +68,7 @@ modelcard = ModelCard( # (4)
 )
 
 # register model
-reg.model.register_card(modelcard)
+reg.register_card(modelcard)
 
 # This code will run as is
 ```
@@ -100,53 +100,7 @@ reg.model.register_card(modelcard)
           "task_type": "Classification",
           "model_type": "SklearnEstimator",
           "data_type": "Pandas",
-          "onnx_session": {
-            "schema": {
-              "input_features": {
-                "items": {
-                  "X": {
-                    "feature_type": "f32",
-                    "shape": [
-                      -1,
-                      10
-                    ],
-                    "extra_args": {}
-                  }
-                }
-              },
-              "output_features": {
-                "items": {
-                  "output_probability": {
-                    "feature_type": "Unknown",
-                    "shape": [],
-                    "extra_args": {}
-                  },
-                  "output_label": {
-                    "feature_type": "i64",
-                    "shape": [
-                      -1
-                    ],
-                    "extra_args": {}
-                  }
-                }
-              },
-              "onnx_version": "1.16.2",
-              "feature_names": [
-                "col_0",
-                "col_1",
-                "col_2",
-                "col_3",
-                "col_4",
-                "col_5",
-                "col_6",
-                "col_7",
-                "col_8",
-                "col_9"
-              ],
-              "onnx_type": "onnx"
-            },
-            "quantized": false
-          },
+          "onnx_session": null,
           "schema": {
             "items": {
               "col_8": {
@@ -282,7 +236,7 @@ card = PromptCard(
     space="opsml",
     name="my_prompt",
     prompt=Prompt(
-        model="gpt-4o",
+        model="o4-mini",
         provider="openai",
         prompt="Provide a brief summary of the programming language $1.", # (1)
         system_prompt="Be concise, reply with one sentence.",
@@ -295,7 +249,7 @@ def chat_app(language: str):
     user_prompt = card.prompt.prompt[0].bind(language).unwrap()
 
     response = client.chat.completions.create(
-        model=card.prompt.model_identifier,
+        model=card.prompt.model,
         messages=[
             {"role": "system", "content": user_prompt},
             {"role": "user", "content": card.prompt.prompt[0].unwrap()},
@@ -332,6 +286,7 @@ card = PromptCard(
     prompt=Prompt(
         model="gpt-4o",
         provider="openai",
+        prompt='Where does "hello world" come from?',
         system_prompt="Be concise, reply with one sentence.",
     ),
 )
@@ -341,8 +296,8 @@ agent = Agent(
     system_prompt=card.prompt.system_prompt[0].unwrap(),
 )
 
-result = agent.run_sync('Where does "hello world" come from?')
-print(result.data)
+result = agent.run_sync(card.prompt.prompt[0].unwrap())
+print(result.output)
 
 registry = CardRegistry(RegistryType.Prompt)
 registry.register_card(card)

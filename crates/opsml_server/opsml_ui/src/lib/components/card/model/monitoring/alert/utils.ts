@@ -46,8 +46,6 @@ export async function acknowledgeAlert(
   id: number,
   space: string
 ): Promise<boolean> {
-  console.log("Acknowledge alert with id: ", id);
-
   const request: UpdateAlertStatus = {
     id: id,
     active: false,

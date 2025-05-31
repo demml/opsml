@@ -118,13 +118,10 @@
   }
 
   async function updateAlert(id: number, space: string) {
-    console.log("Acknowledge alert with id: ", id);
     // Call API to acknowledge alert
     let updated = await acknowledgeAlert(id, space);
 
     if (updated) {
-      console.log("Alert acknowledged successfully");
-
       currentAlerts = await getDriftAlerts(
           currentConfig.space,
           currentConfig.name,
