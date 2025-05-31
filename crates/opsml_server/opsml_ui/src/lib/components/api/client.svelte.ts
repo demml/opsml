@@ -28,7 +28,7 @@ export class OpsmlClient {
     if (!params) return url;
     const searchParams = new URLSearchParams();
     Object.entries(params).forEach(([key, value]) => {
-      if (value !== undefined && value !== null) {
+      if (value) {
         searchParams.append(key, value);
       }
     });
