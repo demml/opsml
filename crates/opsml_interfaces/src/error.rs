@@ -1,6 +1,7 @@
 use opsml_utils::error::{PyUtilError, UtilError};
 use pyo3::exceptions::PyRuntimeError;
 use pyo3::PyErr;
+use reqwest::StatusCode;
 use thiserror::Error;
 use tracing::error;
 
@@ -377,4 +378,25 @@ impl From<ModelInterfaceError> for PyErr {
         error!("{}", msg);
         PyRuntimeError::new_err(msg)
     }
+}
+
+#[derive(Error, Debug)]
+pub enum AgentError {
+    #[error("Failed to create header value for the agent client")]
+    CreateHeaderValueError(#[from] reqwest::header::InvalidHeaderValue),
+
+    #[error("Failed to create header name for the agent client")]
+    CreateHeaderNameError(#[from] reqwest::header::InvalidHeaderName),
+
+    #[error("Failed to create agent client")]
+    CreateClientError(#[source] reqwest::Error),
+
+    #[error("Request failed")]
+    RequestError(#[from] reqwest::Error),
+
+    #[error("Failed to serialize chat request")]
+    SerializationError(#[from] serde_json::Error),
+
+    #[error("Failed to get chat completion response: {0}")]
+    ChatCompletionError(StatusCode),
 }
