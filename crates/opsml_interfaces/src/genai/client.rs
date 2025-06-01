@@ -1,10 +1,12 @@
 use crate::error::AgentError;
 use crate::genai::types::ChatResponse;
-use crate::genai::types::{ChatMessage, OpenAIChatRequest};
+use crate::genai::types::{ChatMessage, OpenAIChatRequest, OpenAIChatResponse};
 use potato_head::{Message, ModelSettings};
+use pyo3::prelude::*;
 use reqwest::blocking::Client;
 use reqwest::header::HeaderName;
 use reqwest::header::{HeaderMap, HeaderValue, AUTHORIZATION};
+
 use std::collections::HashMap;
 use std::str::FromStr;
 use tracing::debug;
@@ -12,6 +14,12 @@ use tracing::debug;
 const TIMEOUT_SECS: u64 = 30;
 const USER: &str = "user";
 const DEVELOPER: &str = "developer";
+
+#[derive(Debug, Clone)]
+#[pyclass]
+pub enum ClientType {
+    OpenAI,
+}
 
 pub enum ClientUrl {
     OpenAI,
@@ -51,32 +59,71 @@ pub fn build_http_client(
 }
 
 #[derive(Debug, Clone)]
+#[pyclass]
 pub struct OpenAIClient {
     client: Client,
     api_key: String,
     base_url: String,
+    #[pyo3(get)]
+    client_type: ClientType,
 }
 
+#[pymethods]
 impl OpenAIClient {
+    #[new]
+    #[pyo3(signature = (api_key, base_url = ClientUrl::OpenAI.url().to_string(), headers = None))]
+    /// Creates a new OpenAIClient instance.
+    ///
+    /// # Arguments:
+    /// * `api_key`: The API key for authenticating with the OpenAI API.
+    /// * `base_url`: The base URL for the OpenAI API (default is the OpenAI API URL).
+    /// * `headers`: Optional headers to include in the HTTP requests.
+    ///
+    /// # Returns:
+    /// * `Result<OpenAIClient, AgentError>`: Returns an `OpenAIClient` instance on success or an `AgentError` on failure.
     pub fn new(
-        api_key: String,
-        base_url: String,
+        api_key: Option<String>,
+        base_url: Option<String>,
         headers: Option<HashMap<String, String>>,
     ) -> Result<Self, AgentError> {
         let client = build_http_client(headers)?;
+
+        //  if optional api_key is None, check the environment variable `OPENAI_API_KEY`
+        let api_key = match api_key {
+            Some(key) => key,
+            None => std::env::var("OPENAI_API_KEY").map_err(AgentError::EnvVarError)?,
+        };
+
+        // if optional base_url is None, use the default OpenAI API URL
+        let base_url = base_url.unwrap_or_else(|| ClientUrl::OpenAI.url().to_string());
+
         Ok(Self {
             client,
             api_key,
             base_url,
+            client_type: ClientType::OpenAI,
         })
     }
+}
 
+impl OpenAIClient {
+    /// Sends a chat completion request to the OpenAI API. This is a rust-only method
+    /// that allows you to interact with the OpenAI API without needing Python.
+    ///
+    /// # Arguments:
+    /// * `user_messages`: A slice of `Message` objects representing user messages.
+    /// * `developer_messages`: A slice of `Message` objects representing developer messages.
+    /// * `settings`: A reference to `ModelSettings` containing model configuration.
+    ///
+    /// # Returns:
+    /// * `Result<ChatResponse, AgentError>`: Returns a `ChatResponse` on success or an `AgentError` on failure.
+    ///
     pub fn chat_completion(
         &self,
-        user_messages: &Vec<Message>,
-        developer_messages: &Vec<Message>,
+        user_messages: &[Message],
+        developer_messages: &[Message],
         settings: &ModelSettings,
-    ) -> Result<ChatResponse, AgentError> {
+    ) -> Result<OpenAIChatResponse, AgentError> {
         let mut messages: Vec<ChatMessage> = developer_messages
             .iter()
             .map(|msg| ChatMessage {
@@ -133,8 +180,31 @@ impl OpenAIClient {
             return Err(AgentError::ChatCompletionError(status));
         }
 
-        let chat_response: ChatResponse = response.json()?;
+        let chat_response: OpenAIChatResponse = response.json()?;
         debug!("Chat completion successful");
+
         Ok(chat_response)
+    }
+}
+
+#[derive(Debug, Clone)]
+pub enum GenAiClient {
+    OpenAI(OpenAIClient),
+}
+
+impl GenAiClient {
+    pub fn execute(
+        &self,
+        user_messages: &[Message],
+        developer_messages: &[Message],
+        settings: &ModelSettings,
+    ) -> Result<ChatResponse, AgentError> {
+        match self {
+            GenAiClient::OpenAI(client) => {
+                let response =
+                    client.chat_completion(user_messages, developer_messages, settings)?;
+                Ok(ChatResponse::OpenAI(response))
+            }
+        }
     }
 }

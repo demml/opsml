@@ -399,4 +399,33 @@ pub enum AgentError {
 
     #[error("Failed to get chat completion response: {0}")]
     ChatCompletionError(StatusCode),
+
+    #[error("Failed to downcast Python object: {0}")]
+    DowncastError(String),
+
+    #[error("Failed to get environment variable: {0}")]
+    EnvVarError(#[from] std::env::VarError),
+
+    #[error("Failed to extract client: {0}")]
+    ClientExtractionError(String),
+
+    #[error(transparent)]
+    PyError(#[from] pyo3::PyErr),
+
+    #[error("Client did not provide response")]
+    ClientNoResponseError,
+}
+
+impl<'a> From<pyo3::DowncastError<'a, 'a>> for AgentError {
+    fn from(err: pyo3::DowncastError) -> Self {
+        AgentError::DowncastError(err.to_string())
+    }
+}
+
+impl From<AgentError> for PyErr {
+    fn from(err: AgentError) -> PyErr {
+        let msg = err.to_string();
+        error!("{}", msg);
+        PyRuntimeError::new_err(msg)
+    }
 }
