@@ -43,9 +43,7 @@ def create_fake_data(
     x_data = np.random.randn(n_samples, num_features)  # pylint: disable=invalid-name
 
     if n_categorical_features > 0:
-        cat_cols = np.random.randint(
-            0, n_classes, size=(n_samples, n_categorical_features)
-        ).astype(str)
+        cat_cols = np.random.randint(0, n_classes, size=(n_samples, n_categorical_features)).astype(str)
 
     y_data = np.random.randint(0, n_classes, n_samples)  # pylint: disable=invalid-name
     if task_type == "regression":
@@ -55,9 +53,7 @@ def create_fake_data(
     x_data = pd.DataFrame(x_data, columns=[f"col_{i}" for i in range(num_features)])  # pylint: disable=invalid-name
 
     if n_categorical_features > 0:
-        cat_df = pd.DataFrame(
-            cat_cols, columns=[f"cat_col_{i}" for i in range(n_categorical_features)]
-        )
+        cat_df = pd.DataFrame(cat_cols, columns=[f"cat_col_{i}" for i in range(n_categorical_features)])
 
         # add to X
         x_data = pd.concat([x_data, cat_df], axis=1)

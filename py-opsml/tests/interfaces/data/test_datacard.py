@@ -1,5 +1,4 @@
 from opsml.data import PolarsData, DataSaveKwargs, PandasData
-import pandas as pd
 from opsml.card import DataCard
 import polars as pl
 from pathlib import Path
@@ -26,13 +25,12 @@ def test_polars_datacard(multi_type_polars_dataframe2: pl.DataFrame, tmp_path: P
     card.load(save_path)
 
 
-def test_pandas_datacard_data_profile(pandas_data: pd.DataFrame):
-    interface = PandasData(data=pandas_data)
-
-    card = DataCard(interface=interface, name="test", space="test")
+def test_pandas_datacard_data_profile(pandas_data: PandasData):
+    card = DataCard(interface=pandas_data, name="test", space="test")
 
     assert card.interface is not None
 
-    # validate creating an by accessing interface via card getter attribute
+    # validate creating a data profile by accessing interface via card getter attribute
+    assert card.interface.data_profile is None
     card.interface.create_data_profile()
     assert card.interface.data_profile is not None
