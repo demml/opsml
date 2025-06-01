@@ -76,7 +76,7 @@ test.examples.model:
 	uv run python examples/model/sklearn_model.py && \
 	uv run python examples/model/tensorflow_model.py && \
 	uv run python examples/model/torch_model.py && \
-	uv run python examples/model/xgb_model.py
+	uv run python examples/model/xgb_booster.py
 
 test.examples: test.examples.data test.examples.model
 
