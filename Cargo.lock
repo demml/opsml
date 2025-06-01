@@ -4014,6 +4014,7 @@ dependencies = [
  "opsml-types",
  "opsml-utils",
  "ort",
+ "potato-head",
  "pyo3",
  "rand 0.9.1",
  "scouter-client",

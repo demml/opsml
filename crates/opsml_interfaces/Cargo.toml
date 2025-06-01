@@ -11,6 +11,7 @@ doctest = false
 opsml-types = { workspace = true }
 opsml-utils = { workspace = true }
 ort = { workspace = true }
+potato-head = { workspace = true }
 pyo3 = { workspace = true }
 rand = { workspace = true }
 scouter-client = { workspace = true }
