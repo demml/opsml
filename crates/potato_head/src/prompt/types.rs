@@ -373,7 +373,7 @@ pub fn get_pydantic_module<'py>(py: Python<'py>, module_name: &str) -> PyResult<
 #[pyclass]
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Message {
-    content: PromptContent,
+    pub content: PromptContent,
     next_param: usize,
     sanitized_output: Option<SanitizedResult>,
 }
