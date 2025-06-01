@@ -55,7 +55,8 @@ impl PandasData {
                 if data.is_instance(&pandas).unwrap() {
                     Some(data.into_py_any(py)?)
                 } else {
-                    return Err(DataInterfaceError::PandasTypeError);
+                    let type_name = data.get_type().name()?;
+                    return Err(DataInterfaceError::PandasTypeError(type_name.to_string()));
                 }
             }
             None => None,
@@ -98,7 +99,8 @@ impl PandasData {
                 self.data = Some(data.into_py_any(py)?);
                 Ok(())
             } else {
-                Err(DataInterfaceError::PandasTypeError)
+                let type_name = data.get_type().name()?;
+                Err(DataInterfaceError::PandasTypeError(type_name.to_string()))
             }
         }
     }

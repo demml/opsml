@@ -1,4 +1,4 @@
-use crate::cli::arg::{DownloadCard, KeyArgs, ListCards, ScouterArgs};
+use crate::cli::arg::{DownloadCard, KeyArgs, ListCards, ScouterArgs, UiArgs};
 use clap::builder::styling::{AnsiColor, Effects};
 use clap::builder::Styles;
 use clap::command;
@@ -120,6 +120,12 @@ pub enum Commands {
         #[command(subcommand)]
         command: ScouterCommands,
     },
+
+    /// Start commands for Opsml. Current use case is for start a local UI
+    Start {
+        #[command(subcommand)]
+        command: StartCommands,
+    },
 }
 
 #[derive(Subcommand)]
@@ -165,6 +171,15 @@ pub enum ScouterCommands {
     /// # Example
     /// opsml scouter update-profile --space space --name name --version version --drift-type drift_type --status status
     UpdateProfileStatus(ScouterArgs),
+}
+
+#[derive(Subcommand)]
+pub enum StartCommands {
+    /// Start a local OpsML UI
+    ///
+    /// # Example
+    /// opsml start ui
+    Ui(UiArgs),
 }
 
 pub const LOGO_TEXT: &str = "

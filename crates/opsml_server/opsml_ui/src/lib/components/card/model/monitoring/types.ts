@@ -50,15 +50,15 @@ export interface AlertDispatchConfig {
 
 // Add these type guard functions
 export function hasConsoleConfig(config: AlertDispatchConfig): boolean {
-  return config.Console !== undefined;
+  return !!config.Console;
 }
 
 export function hasSlackConfig(config: AlertDispatchConfig): boolean {
-  return config.Slack !== undefined;
+  return !!config.Slack;
 }
 
 export function hasOpsGenieConfig(config: AlertDispatchConfig): boolean {
-  return config.OpsGenie !== undefined;
+  return !!config.OpsGenie;
 }
 
 export interface SpcDriftFeature {

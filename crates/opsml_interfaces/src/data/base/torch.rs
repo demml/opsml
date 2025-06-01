@@ -45,7 +45,8 @@ impl TorchData {
                 if data.is_instance(&tensor).unwrap() {
                     Some(data.into_py_any(py)?)
                 } else {
-                    return Err(DataInterfaceError::TorchTypeError);
+                    let type_name = data.get_type().name()?;
+                    return Err(DataInterfaceError::TorchTypeError(type_name.to_string()));
                 }
             }
             None => None,
@@ -90,7 +91,8 @@ impl TorchData {
                 self.data = Some(data.into_py_any(py)?);
                 Ok(())
             } else {
-                Err(DataInterfaceError::TorchTypeError)
+                let type_name = data.get_type().name()?;
+                Err(DataInterfaceError::TorchTypeError(type_name.to_string()))
             }
         }
     }
@@ -146,7 +148,7 @@ impl TorchData {
         let data = match self_.as_super().data_type {
             DataType::TorchDataset => {
                 // get "torch_dataset from kwargs"
-                // return error with kwargs is none
+                // return error when kwargs is none
                 let kwargs = load_kwargs.data_kwargs(py);
                 let kwargs = kwargs.ok_or_else(|| DataInterfaceError::MissingTorchKwargsError)?;
 
@@ -160,7 +162,6 @@ impl TorchData {
 
                 // pop torch_dataset from kwargs
                 kwargs.del_item("torch_dataset")?;
-
                 torch.call_method("load", (load_path,), Some(kwargs))?
             }
 

@@ -6,7 +6,7 @@ classifiers = [
     "Programming Language :: Python :: Implementation :: CPython",
     "Programming Language :: Python :: Implementation :: PyPy",
 ]
-version = "3.0.0-alpha.1"
+version = "3.0.0-alpha.2"
 description = ""
 authors = [{name = "Thorrester", email = "<support@demmlai.com>"}]
 readme = "README.md"
@@ -34,7 +34,9 @@ tf_onnx = [
     "tf2onnx~=1.16.1; platform_system=='Darwin' and python_version <= '3.11'",
     "opsml[onnx,onnxruntime]",
 ]
-
+pyarrow = [
+    "pyarrow>=18.0.0",
+]
 
 [dependency-groups]
 dev = [

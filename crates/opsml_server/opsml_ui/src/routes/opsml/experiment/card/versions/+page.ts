@@ -13,8 +13,6 @@ export const load: PageLoad = async ({ parent }) => {
     metadata.name
   );
 
-  console.log("versionPage", JSON.stringify(versionPage));
-
   let versionStats = await getRegistryStats(
     registry,
     metadata.name,

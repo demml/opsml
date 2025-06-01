@@ -1,10 +1,6 @@
 # mypy: ignore-errors
 
-from typing import Tuple, Union
-
-import numpy as np
-import pandas as pd
-import polars as pl
+from typing import Any, Tuple
 
 
 def create_fake_data(
@@ -15,7 +11,7 @@ def create_fake_data(
     task_type: str = "classification",
     random_state: int = 42,
     to_polars: bool = False,
-) -> Tuple[Union[pd.DataFrame, pl.DataFrame], Union[pd.DataFrame, pl.DataFrame]]:
+) -> Tuple[Any, Any]:
     """Creates fake data for testing
 
     Args:
@@ -35,8 +31,22 @@ def create_fake_data(
             Whether to convert to polars
 
     Returns:
-        Tuple of pd.DataFrame
+        Tuple of pd.DataFrame or pl.DataFrame
+
+    Raises:
+        ImportError: If required dependencies (numpy, pandas, polars) are not installed
     """
+    # move imports
+    try:
+        import numpy as np
+        import pandas as pd
+        import polars as pl
+    except ImportError as e:
+        raise ImportError(
+            "To use create_fake_data function, the environment must have numpy, pandas, "
+            "and polars installed. Please install these dependencies first."
+        ) from e
+
     num_features = n_features - n_categorical_features
 
     np.random.seed(random_state)
