@@ -1,11 +1,11 @@
 use opsml_utils::create_uuid7;
+use potato_head::Prompt;
 use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
 
 #[pyclass]
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum TaskStatus {
-    #[default]
     Pending,
     Running,
     Completed,
@@ -13,12 +13,12 @@ pub enum TaskStatus {
 }
 
 #[pyclass]
-#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Task {
     #[pyo3(get)]
     pub id: String,
     #[pyo3(get, set)]
-    pub description: String,
+    pub prompt: Prompt,
     #[pyo3(get, set)]
     pub dependencies: Vec<String>,
     #[pyo3(get)]
@@ -30,11 +30,11 @@ pub struct Task {
 #[pymethods]
 impl Task {
     #[new]
-    #[pyo3(signature = (description, dependencies = Vec::<String>::new(), id = None))]
-    pub fn new(description: &str, dependencies: Vec<String>, id: Option<String>) -> Self {
+    #[pyo3(signature = (prompt, dependencies = Vec::<String>::new(), id = None))]
+    pub fn new(prompt: Prompt, dependencies: Vec<String>, id: Option<String>) -> Self {
         Self {
             id: id.unwrap_or_else(|| create_uuid7()),
-            description: description.to_string(),
+            prompt,
             dependencies,
             status: TaskStatus::Pending,
             result: None,
