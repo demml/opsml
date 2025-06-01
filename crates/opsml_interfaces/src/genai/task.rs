@@ -1,3 +1,4 @@
+use crate::genai::types::ChatResponse;
 use opsml_utils::create_uuid7;
 use potato_head::Prompt;
 use pyo3::prelude::*;
@@ -24,7 +25,7 @@ pub struct Task {
     #[pyo3(get)]
     pub status: TaskStatus,
     #[pyo3(get)]
-    pub result: Option<String>,
+    pub result: Option<ChatResponse>,
     #[pyo3(get)]
     pub agent_id: String,
 }
@@ -57,7 +58,7 @@ impl Task {
         self.status = status;
     }
 
-    pub fn set_result(&mut self, result: String) {
+    pub fn set_result(&mut self, result: ChatResponse) {
         self.result = Some(result);
     }
 }
