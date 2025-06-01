@@ -162,7 +162,6 @@ impl TorchData {
 
                 // pop torch_dataset from kwargs
                 kwargs.del_item("torch_dataset")?;
-
                 torch.call_method("load", (load_path,), Some(kwargs))?
             }
 
