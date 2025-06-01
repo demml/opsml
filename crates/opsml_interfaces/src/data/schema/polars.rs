@@ -710,7 +710,7 @@ impl PolarsSchemaValidator {
     pub fn generate_feature_map(
         data: &Bound<'_, PyAny>,
     ) -> Result<FeatureSchema, DataInterfaceError> {
-        let binding = data.as_ref().getattr("schema")?;
+        let binding = data.getattr("schema")?;
         let schema_items = binding.downcast::<PyDict>()?;
 
         let feature_map = schema_items
