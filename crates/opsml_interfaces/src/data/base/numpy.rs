@@ -52,7 +52,8 @@ impl NumpyData {
                 if data.is_instance(&numpy).unwrap() {
                     Some(data.into_py_any(py)?)
                 } else {
-                    return Err(DataInterfaceError::NumpyTypeError);
+                    let type_name = data.get_type().name()?;
+                    return Err(DataInterfaceError::NumpyTypeError(type_name.to_string()));
                 }
             }
             None => None,
@@ -96,7 +97,8 @@ impl NumpyData {
                 self.data = Some(data.into_py_any(py)?);
                 Ok(())
             } else {
-                Err(DataInterfaceError::NumpyTypeError)
+                let type_name = data.get_type().name()?;
+                Err(DataInterfaceError::NumpyTypeError(type_name.to_string()))
             }
         }
     }

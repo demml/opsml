@@ -33,9 +33,9 @@ fn parse_session_schema(
             let feature = match input_type {
                 ValueType::Tensor {
                     ty,
-                    dimensions,
+                    shape,
                     dimension_symbols: _,
-                } => Feature::new(ty.to_string(), dimensions, None),
+                } => Feature::new(ty.to_string(), shape.to_vec(), None),
                 _ => Feature::new("Unknown".to_string(), vec![], None),
             };
 
@@ -53,9 +53,9 @@ fn parse_session_schema(
             let feature = match input_type {
                 ValueType::Tensor {
                     ty,
-                    dimensions,
+                    shape,
                     dimension_symbols: _,
-                } => Feature::new(ty.to_string(), dimensions, None),
+                } => Feature::new(ty.to_string(), shape.to_vec(), None),
                 _ => Feature::new("Unknown".to_string(), vec![], None),
             };
 

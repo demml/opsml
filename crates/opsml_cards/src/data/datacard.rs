@@ -162,6 +162,11 @@ impl DataCard {
         }
     }
 
+    #[getter]
+    pub fn interface<'py>(&self, py: Python<'py>) -> Option<Bound<'py, PyAny>> {
+        self.interface.as_ref().map(|i| i.bind(py).clone())
+    }
+
     pub fn add_tags(&mut self, tags: Vec<String>) {
         self.tags.extend(tags);
     }

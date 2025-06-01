@@ -72,7 +72,7 @@ modelcard.load()
     <Pill key="Version" value={card.opsml_version} textSize="text-base"/>
 
 
-    {#if  card.metadata.interface_metadata.onnx_session !== undefined}
+    {#if card.metadata.interface_metadata.onnx_session && card.metadata.interface_metadata.onnx_session.schema}
       <Pill key="Onnx Version" value={card.metadata.interface_metadata.onnx_session.schema.onnx_version} textSize="text-base"/>
     {/if}
   </div>

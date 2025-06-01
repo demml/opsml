@@ -27,7 +27,7 @@
     let argsValid = validateLoginSchema(username, password);
 
     if (argsValid.success) {
-      console.log("Login arguments are valid");
+  
       let loginResponse = await userStore.login(username, password);
 
       if (loginResponse.authenticated === true) {

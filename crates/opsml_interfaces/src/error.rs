@@ -41,17 +41,17 @@ pub enum DataInterfaceError {
     #[error(transparent)]
     PyError(#[from] pyo3::PyErr),
 
-    #[error("Data must be a numpy array")]
-    NumpyTypeError,
+    #[error("Data must be a numpy array. Received: {0}")]
+    NumpyTypeError(String),
 
-    #[error("Data must be a pandas dataframe")]
-    PandasTypeError,
+    #[error("Data must be a pandas dataframe. Received: {0}")]
+    PandasTypeError(String),
 
-    #[error("Data must be a polars.DataFrame")]
-    PolarsTypeError,
+    #[error("Data must be a polars.DataFrame. Received: {0}")]
+    PolarsTypeError(String),
 
-    #[error("Data must be a Torch tensor")]
-    TorchTypeError,
+    #[error("Data must be a Torch tensor. Received: {0}")]
+    TorchTypeError(String),
 
     #[error("Torch dataset requires kwargs with torch_dataset")]
     MissingTorchKwargsError,
