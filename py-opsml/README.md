@@ -14,7 +14,7 @@ Version 3.0.0 is under active development. All pre-releases will be released und
 
 <h1 align="center"><a href="https://demml.github.io/opsml/">OpsML Documentation</h1>
 
-<h2 align="center"><a href="https://docs.google.com/spreadsheets/d/1xU0RqYpFwnaj1cuNhTnd-2W8iQm7lBXw99O0Nh9oh0A/edit?usp=sharing">Task Backlog</h2>
+<h2 align="center"><a href="https://github.com/orgs/demml/projects/1">Task Backlog</h2>
 
 [![OpsML Unit Tests](https://github.com/demml/opsml/actions/workflows/lints-test.yml/badge.svg)](https://github.com/demml/opsml/actions/workflows/lints-test.yml)
 ![Style](https://img.shields.io/badge/code%20style-black-000000.svg)
