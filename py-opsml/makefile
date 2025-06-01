@@ -59,8 +59,28 @@ setup.integration:
 test.integration:
 	uv run pytest -s tests/integration
 
-uv.pre.patch:
+test.examples.data:
+	uv run python examples/data/arrow_data.py && \
+	uv run python examples/data/numpy_data.py && \
+	uv run python examples/data/pandas_data.py && \
+	uv run python examples/data/polars_data.py && \
+	uv run python examples/data/custom_data.py
 
+test.examples.model:
+	uv run python examples/model/catboost_model.py && \
+	uv run python examples/model/custom_model.py && \
+	uv run python examples/model/hf_model.py && \
+	uv run python examples/model/lightgbm_booster.py && \
+	uv run python examples/model/lightning_model.py && \
+	uv run python examples/model/onnx_model.py && \
+	uv run python examples/model/sklearn_model.py && \
+	uv run python examples/model/tensorflow_model.py && \
+	uv run python examples/model/torch_model.py && \
+	uv run python examples/model/xgb_model.py
+
+test.examples: test.examples.data test.examples.model
+
+uv.pre.patch:
 	uv version prepatch
 
 uv.sub.pre.tag:
