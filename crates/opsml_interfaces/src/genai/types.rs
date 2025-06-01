@@ -1,4 +1,5 @@
 use potato_head::prompt::types::PromptContent;
+use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
@@ -65,8 +66,9 @@ pub struct Usage {
     pub finish_reason: String,
 }
 
+#[pyclass]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
-pub struct ChatResponse {
+pub struct OpenAIChatResponse {
     pub id: String,
     pub object: String,
     pub created: u64,
@@ -95,4 +97,35 @@ pub struct OpenAIChatRequest {
 pub struct ChatMessage {
     pub role: String,
     pub content: PromptContent,
+}
+
+#[pyclass]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum ChatResponse {
+    OpenAI(OpenAIChatResponse),
+}
+
+#[pyclass]
+pub struct AgentResponse {
+    #[pyo3(get)]
+    pub id: String,
+    pub response: ChatResponse,
+}
+
+#[pymethods]
+impl AgentResponse {
+    #[getter]
+    pub fn output(&self) -> String {
+        match &self.response {
+            ChatResponse::OpenAI(resp) => resp.choices.first().map_or("".to_string(), |c| {
+                c.message.content.clone().unwrap_or_default()
+            }),
+        }
+    }
+}
+
+impl AgentResponse {
+    pub fn new(id: String, response: ChatResponse) -> Self {
+        Self { id, response }
+    }
 }
