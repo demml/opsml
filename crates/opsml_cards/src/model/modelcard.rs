@@ -250,6 +250,11 @@ impl ModelCard {
     }
 
     #[getter]
+    pub fn interface<'py>(&self, py: Python<'py>) -> Option<Bound<'py, PyAny>> {
+        self.interface.as_ref().map(|i| i.bind(py).clone())
+    }
+
+    #[getter]
     pub fn drift_profile<'py>(
         &self,
         py: Python<'py>,

@@ -53,7 +53,8 @@ impl PolarsData {
                 if data.is_instance(&polars_data_frame).unwrap() {
                     Some(data.into_py_any(py)?)
                 } else {
-                    return Err(DataInterfaceError::PolarsTypeError);
+                    let type_name = data.get_type().name()?;
+                    return Err(DataInterfaceError::PolarsTypeError(type_name.to_string()));
                 }
             }
             None => None,
@@ -97,7 +98,8 @@ impl PolarsData {
                 self.data = Some(data.into_py_any(py)?);
                 Ok(())
             } else {
-                Err(DataInterfaceError::PolarsTypeError)
+                let type_name = data.get_type().name()?;
+                Err(DataInterfaceError::PolarsTypeError(type_name.to_string()))
             }
         }
     }
