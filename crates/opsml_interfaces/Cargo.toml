@@ -9,6 +9,7 @@ doctest = false
 
 [dependencies]
 opsml-types = { workspace = true }
+opsml-state = { workspace = true }
 opsml-utils = { workspace = true }
 ort = { workspace = true }
 potato-head = { workspace = true }

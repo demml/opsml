@@ -4011,6 +4011,7 @@ dependencies = [
 name = "opsml-interfaces"
 version = "3.0.0-alpha.2"
 dependencies = [
+ "opsml-state",
  "opsml-types",
  "opsml-utils",
  "ort",
