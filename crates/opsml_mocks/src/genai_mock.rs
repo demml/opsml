@@ -1,13 +1,14 @@
 #[cfg(feature = "server")]
 use mockito;
 #[cfg(feature = "server")]
+use opsml_interfaces::genai::types::ChatCompletionMessage;
+#[cfg(feature = "server")]
 use serde_json;
 
 use pyo3::prelude::*;
 use pyo3::PyResult;
 
-use opsml_interfaces::genai::types::ChatCompletionMessage;
-
+#[cfg(feature = "server")]
 const OPENAI_CHAT_COMPLETION_RESPONSE: &str =
     include_str!("assets/openai_chat_completion_response.json");
 
@@ -88,7 +89,10 @@ impl OpenAITestServer {
         }
         #[cfg(not(feature = "server"))]
         {
-            Err(TestServerError::CustomError("Opsml Server feature not enabled".to_string()).into())
+            Err(crate::error::TestServerError::CustomError(
+                "Opsml Server feature not enabled".to_string(),
+            )
+            .into())
         }
     }
 
@@ -109,7 +113,10 @@ impl OpenAITestServer {
         }
         #[cfg(not(feature = "server"))]
         {
-            Err(TestServerError::CustomError("Opsml Server feature not enabled".to_string()).into())
+            Err(crate::error::TestServerError::CustomError(
+                "Opsml Server feature not enabled".to_string(),
+            )
+            .into())
         }
     }
 
@@ -122,7 +129,10 @@ impl OpenAITestServer {
         }
         #[cfg(not(feature = "server"))]
         {
-            Err(TestServerError::CustomError("Opsml Server feature not enabled".to_string()).into())
+            Err(crate::error::TestServerError::CustomError(
+                "Opsml Server feature not enabled".to_string(),
+            )
+            .into())
         }
     }
 

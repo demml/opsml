@@ -14,7 +14,8 @@ use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 use std::sync::RwLock;
 use tracing::{info, warn};
-#[derive(Debug, Clone)]
+
+#[derive(Debug, Clone, Default)]
 pub struct TaskList {
     pub tasks: HashMap<String, Task>,
     pub execution_order: Vec<String>,

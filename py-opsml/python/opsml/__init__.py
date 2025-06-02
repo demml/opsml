@@ -7,10 +7,10 @@ from .opsml import (  # noqa: F401
     data,
     experiment,
     logging,
+    mock,
     model,
     potato_head,
     scouter,
-    mock,
     types,
 )
 

@@ -41,7 +41,7 @@ impl Task {
         id: Option<String>,
     ) -> Self {
         Self {
-            id: id.unwrap_or_else(|| create_uuid7()),
+            id: id.unwrap_or_else(create_uuid7),
             prompt,
             dependencies,
             status: TaskStatus::Pending,

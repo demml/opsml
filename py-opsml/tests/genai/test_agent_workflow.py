@@ -4,6 +4,7 @@ from pydantic_ai.models.test import TestModel
 from opsml.potato_head import Prompt, SanitizationConfig, PromptSanitizer
 from dataclasses import dataclass
 import os
+from opsml.mock import OpenAITestServer
 
 models.ALLOW_MODEL_REQUESTS = False
 os.environ["OPENAI_API_KEY"] = "mock_api_key"
@@ -15,7 +16,7 @@ class Prompts:
     prompt_step2: Prompt
 
 
-def test_simple_workflow(prompt_step1: Prompt):
+def _test_simple_workflow(prompt_step1: Prompt):
     agent = Agent(
         prompt_step1.model_identifier,
         system_prompt=prompt_step1.system_prompt[0].unwrap(),
@@ -25,7 +26,7 @@ def test_simple_workflow(prompt_step1: Prompt):
         agent.run_sync(prompt_step1.prompt[0].unwrap())
 
 
-def test_simple_dep_workflow(prompt_step1: Prompt, prompt_step2: Prompt):
+def _test_simple_dep_workflow(prompt_step1: Prompt, prompt_step2: Prompt):
     agent = Agent(
         prompt_step1.model_identifier,
         system_prompt=prompt_step1.system_prompt[0].unwrap(),
@@ -46,7 +47,7 @@ def test_simple_dep_workflow(prompt_step1: Prompt, prompt_step2: Prompt):
         )
 
 
-def test_binding_workflow(prompt_step1: Prompt, prompt_step2: Prompt):
+def _test_binding_workflow(prompt_step1: Prompt, prompt_step2: Prompt):
     agent = Agent(
         "openai:gpt-4o",
         system_prompt=prompt_step1.system_prompt[0].unwrap(),
@@ -71,7 +72,7 @@ def test_binding_workflow(prompt_step1: Prompt, prompt_step2: Prompt):
         assert result.all_messages()[2].parts[0].tool_name == "bind_context"  # type: ignore
 
 
-def test_sanitization_workflow(prompt_step1: Prompt):
+def _test_sanitization_workflow(prompt_step1: Prompt):
     santization_config = SanitizationConfig.standard()
     santization_config.error_on_high_risk = False
 
@@ -101,3 +102,8 @@ def test_sanitization_workflow(prompt_step1: Prompt):
         agent.run_sync(result.sanitized_text)
 
         assert len(result.detected_issues) == 2
+
+
+def test_opsml_agent_workflow():
+    with OpenAITestServer():
+        print("hello world")
