@@ -1,19 +1,21 @@
 use crate::error::AgentError;
 use opsml_state::app_state;
 use opsml_utils::create_uuid7;
+use opsml_utils::json_to_pyobject;
 pub use potato_head::agents::{
     agent::Agent,
     task::{Task, TaskStatus},
     types::ChatResponse,
 };
 use potato_head::prompt::types::Role;
-use pyo3::prelude::*;
+use pyo3::{prelude::*, types::PyDict};
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 use std::sync::RwLock;
 use tracing::{info, warn};
 
 #[derive(Debug, Clone, Default)]
+#[pyclass]
 pub struct TaskList {
     pub tasks: HashMap<String, Task>,
     pub execution_order: Vec<String>,
@@ -131,9 +133,16 @@ impl TaskList {
 #[pyclass]
 #[derive(Debug, Clone)]
 pub struct Workflow {
+    #[pyo3(get)]
     pub id: String,
+
+    #[pyo3(get)]
     pub name: String,
+
+    #[pyo3(get)]
     pub tasks: TaskList,
+
+    #[pyo3(get)]
     pub agents: HashMap<String, Agent>,
 }
 
@@ -154,8 +163,8 @@ impl Workflow {
         self.tasks.add_task(task);
     }
 
-    pub fn add_agent(&mut self, name: &str, agent: Agent) {
-        self.agents.insert(name.to_string(), agent);
+    pub fn add_agent(&mut self, agent: Agent) {
+        self.agents.insert(agent.id.clone(), agent);
     }
 
     pub fn is_complete(&self) -> bool {
@@ -164,6 +173,48 @@ impl Workflow {
 
     pub fn pending_count(&self) -> usize {
         self.tasks.pending_count()
+    }
+
+    pub fn execution_plan<'py>(&self, py: Python<'py>) -> Result<Bound<'py, PyDict>, AgentError> {
+        let mut remaining: HashMap<String, HashSet<String>> = self
+            .tasks
+            .tasks
+            .iter()
+            .map(|(id, task)| (id.clone(), task.dependencies.iter().cloned().collect()))
+            .collect();
+
+        let mut executed = HashSet::new();
+        let mut plan = serde_json::json!({});
+        let mut step = 1;
+
+        while !remaining.is_empty() {
+            // Find all tasks that can be executed in parallel
+            let ready: Vec<String> = remaining
+                .iter()
+                .filter(|(_, deps)| deps.is_subset(&executed))
+                .map(|(id, _)| id.clone())
+                .collect();
+
+            if ready.is_empty() {
+                // Circular dependency detected
+                break;
+            }
+
+            // Add parallel tasks to the current step
+            plan[format!("step{}", step)] = serde_json::json!(ready);
+
+            // Update tracking sets
+            for task_id in &ready {
+                executed.insert(task_id.clone());
+                remaining.remove(task_id);
+            }
+            step += 1;
+        }
+
+        let pydict = PyDict::new(py);
+        json_to_pyobject(py, &plan, &pydict)?;
+
+        Ok(pydict)
     }
 
     pub fn run(&self) {
@@ -197,6 +248,8 @@ pub async fn execute_workflow(workflow: Arc<RwLock<Workflow>>) -> Result<(), Age
             let wf = workflow.read().unwrap();
             wf.tasks.get_ready_tasks()
         };
+
+        info!("Found {} ready tasks for execution.", ready_tasks.len());
 
         if ready_tasks.is_empty() {
             // (4) If no tasks are ready, and there are still pending tasks, log a warning

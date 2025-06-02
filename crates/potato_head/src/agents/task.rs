@@ -33,17 +33,17 @@ pub struct Task {
 #[pymethods]
 impl Task {
     #[new]
-    #[pyo3(signature = (prompt, agent_id, dependencies = Vec::<String>::new(), id = None))]
+    #[pyo3(signature = (prompt, agent_id, dependencies = None, id = None))]
     pub fn new(
         prompt: Prompt,
         agent_id: String,
-        dependencies: Vec<String>,
+        dependencies: Option<Vec<String>>,
         id: Option<String>,
     ) -> Self {
         Self {
             id: id.unwrap_or_else(create_uuid7),
             prompt,
-            dependencies,
+            dependencies: dependencies.unwrap_or_default(),
             status: TaskStatus::Pending,
             result: None,
             agent_id,

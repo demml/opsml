@@ -20,6 +20,9 @@ PIIConfig = potato_head.PIIConfig
 # agents
 OpenAIClient = potato_head.OpenAIClient
 Agent = potato_head.Agent
+Task = potato_head.Task
+TaskList = potato_head.TaskList
+Workflow = potato_head.Workflow
 
 
 __all__ = [
@@ -34,4 +37,7 @@ __all__ = [
     "ModelSettings",
     "OpenAIClient",
     "Agent",
+    "Task",
+    "TaskList",
+    "Workflow",
 ]

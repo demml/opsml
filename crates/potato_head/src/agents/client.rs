@@ -1,19 +1,20 @@
+use crate::agents::client_types::openai::{
+    OpenAIChatMessage, OpenAIChatRequest, OpenAIChatResponse,
+};
 use crate::agents::types::ChatResponse;
-use crate::agents::types::{ChatMessage, OpenAIChatRequest, OpenAIChatResponse};
 use crate::error::AgentError;
 use crate::{Message, ModelSettings};
+use opsml_state::app_state;
 use pyo3::prelude::*;
+use pyo3::IntoPyObjectExt;
 use reqwest::header::HeaderName;
 use reqwest::header::{HeaderMap, HeaderValue, AUTHORIZATION};
 use reqwest::Client;
-
 use std::collections::HashMap;
 use std::str::FromStr;
 use tracing::debug;
 
 const TIMEOUT_SECS: u64 = 30;
-const USER: &str = "user";
-const DEVELOPER: &str = "developer";
 
 #[derive(Debug, Clone)]
 #[pyclass]
@@ -71,7 +72,7 @@ pub struct OpenAIClient {
 #[pymethods]
 impl OpenAIClient {
     #[new]
-    #[pyo3(signature = (api_key, base_url = None, headers = None))]
+    #[pyo3(signature = (api_key=None, base_url = None, headers = None))]
     /// Creates a new OpenAIClient instance.
     ///
     /// # Arguments:
@@ -91,7 +92,9 @@ impl OpenAIClient {
         //  if optional api_key is None, check the environment variable `OPENAI_API_KEY`
         let api_key = match api_key {
             Some(key) => key,
-            None => std::env::var("OPENAI_API_KEY").map_err(AgentError::EnvVarError)?,
+            None => {
+                std::env::var("OPENAI_API_KEY").map_err(AgentError::MissingOpenAIApiKeyError)?
+            }
         };
 
         // if optional base_url is None, use the default OpenAI API URL
@@ -99,12 +102,39 @@ impl OpenAIClient {
         let base_url = base_url
             .unwrap_or_else(|| env_base_url.unwrap_or_else(|| ClientUrl::OpenAI.url().to_string()));
 
+        debug!("Creating OpenAIClient with base URL iwth key: {}", base_url);
+
         Ok(Self {
             client,
             api_key,
             base_url,
             client_type: ClientType::OpenAI,
         })
+    }
+
+    /// Sends a chat completion request to the OpenAI API. This is a blocking method used in python.
+    /// This is only provided as a convenience method for Python users. When running with an Agent,
+    /// the async version will be used instead.
+    ///
+    /// # Arguments:
+    /// * `user_messages`: A vector of `Message` objects representing user messages.
+    /// * `developer_messages`: A vector of `Message` objects representing developer messages.
+    /// * `settings`: A reference to `ModelSettings` containing model configuration.
+    ///
+    /// # Returns:
+    /// * `Result<OpenAIChatResponse, AgentError>`: Returns an `OpenAIChatResponse` on success or an `AgentError` on failure.
+    pub fn chat_completion<'py>(
+        &self,
+        py: Python<'py>,
+        user_message: Vec<Message>,
+        developer_message: Vec<Message>,
+        settings: &ModelSettings,
+    ) -> Result<Bound<'py, PyAny>, AgentError> {
+        let resp = app_state().runtime.block_on(async {
+            self.async_chat_completion(&user_message, &developer_message, settings)
+                .await
+        })?;
+        Ok(resp.into_bound_py_any(py)?)
     }
 }
 
@@ -120,25 +150,24 @@ impl OpenAIClient {
     /// # Returns:
     /// * `Result<ChatResponse, AgentError>`: Returns a `ChatResponse` on success or an `AgentError` on failure.
     ///
-    pub async fn chat_completion(
+    pub async fn async_chat_completion(
         &self,
-        user_messages: &[Message],
-        developer_messages: &[Message],
+        user_message: &[Message],
+        developer_message: &[Message],
         settings: &ModelSettings,
     ) -> Result<OpenAIChatResponse, AgentError> {
-        let mut messages: Vec<ChatMessage> = developer_messages
+        let mut messages: Vec<OpenAIChatMessage> = developer_message
             .iter()
-            .map(|msg| ChatMessage {
-                role: DEVELOPER.to_string(),
-                content: msg.content.clone(),
-            })
-            .collect();
+            .map(OpenAIChatMessage::from_message)
+            .collect::<Result<Vec<_>, _>>()?;
 
         // Add user messages to the chat
-        messages.extend(user_messages.iter().map(|msg| ChatMessage {
-            role: USER.to_string(),
-            content: msg.content.clone(),
-        }));
+        messages.extend(
+            user_message
+                .iter()
+                .map(OpenAIChatMessage::from_message)
+                .collect::<Result<Vec<_>, _>>()?,
+        );
 
         // Create the OpenAI chat request
         let prompt = OpenAIChatRequest {
@@ -169,6 +198,11 @@ impl OpenAIClient {
             }
         }
 
+        debug!(
+            "Sending chat completion request to OpenAI API: {:?}",
+            prompt
+        );
+
         let response = self
             .client
             .post(format!("{}/v1/chat/completions", self.base_url))
@@ -180,7 +214,12 @@ impl OpenAIClient {
 
         let status = response.status();
         if !status.is_success() {
-            return Err(AgentError::ChatCompletionError(status));
+            // print the response body for debugging
+            let body = response
+                .text()
+                .await
+                .unwrap_or_else(|_| "No response body".to_string());
+            return Err(AgentError::ChatCompletionError(body, status));
         }
 
         let chat_response: OpenAIChatResponse = response.json().await?;
@@ -205,7 +244,7 @@ impl GenAiClient {
         match self {
             GenAiClient::OpenAI(client) => {
                 let response = client
-                    .chat_completion(user_messages, developer_messages, settings)
+                    .async_chat_completion(user_messages, developer_messages, settings)
                     .await?;
                 Ok(ChatResponse::OpenAI(response))
             }

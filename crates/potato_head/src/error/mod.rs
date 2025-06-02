@@ -70,14 +70,17 @@ pub enum AgentError {
     #[error("Failed to serialize chat request")]
     SerializationError(#[from] serde_json::Error),
 
-    #[error("Failed to get chat completion response: {0}")]
-    ChatCompletionError(StatusCode),
+    #[error("Failed to get chat completion response: {0} with status code {1}")]
+    ChatCompletionError(String, StatusCode),
 
     #[error("Failed to downcast Python object: {0}")]
     DowncastError(String),
 
     #[error("Failed to get environment variable: {0}")]
     EnvVarError(#[from] std::env::VarError),
+
+    #[error("Failed to retrieve OPENAI_API_KEY from the environment")]
+    MissingOpenAIApiKeyError(#[source] std::env::VarError),
 
     #[error("Failed to extract client: {0}")]
     ClientExtractionError(String),
@@ -90,6 +93,9 @@ pub enum AgentError {
 
     #[error("No ready tasks found but pending tasks remain. Possible circular dependency.")]
     NoTaskFoundError,
+
+    #[error("Unsupported content type")]
+    UnsupportedContentTypeError,
 }
 
 impl<'a> From<pyo3::DowncastError<'a, 'a>> for AgentError {

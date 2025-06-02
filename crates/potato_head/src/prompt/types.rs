@@ -150,9 +150,9 @@ impl AudioUrl {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ImageUrl {
     #[pyo3(get, set)]
-    url: String,
+    pub url: String,
     #[pyo3(get)]
-    kind: String,
+    pub kind: String,
 }
 
 #[pymethods]
@@ -451,15 +451,15 @@ impl Message {
         })
     }
 
-    pub fn content<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyAny>> {
+    pub fn unwrap<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyAny>> {
         self.content.to_pyobject(py)
     }
 
-    pub fn to_dict<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyDict>> {
+    pub fn model_dump<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyDict>> {
         let message = PyDict::new(py);
 
         message.set_item("role", self.role.clone())?;
-        message.set_item("content", self.content(py)?)?;
+        message.set_item("content", self.unwrap(py)?)?;
         Ok(message)
     }
 
