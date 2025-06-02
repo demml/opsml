@@ -9,7 +9,7 @@ from opsml import (  # type: ignore
     ModelSaveKwargs,
 )
 from opsml.model import DriftArgs
-from opsml.test import OpsmlServerContext
+from opsml.mock import OpsmlServerContext
 from opsml.card import RegistryMode, CardList  # type: ignore
 from opsml.model import SklearnModel  # type: ignore
 from opsml.data import PandasData  # type: ignore

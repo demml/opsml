@@ -4,6 +4,7 @@ use crate::{
     genai::task::Task,
     genai::types::AgentResponse,
 };
+use opsml_state::app_state;
 use potato_head::Message;
 use pyo3::prelude::*;
 use std::collections::HashMap;
@@ -52,12 +53,51 @@ impl Agent {
             }
         }
 
+        let chat_response = app_state().runtime.block_on(async {
+            self.client
+                .execute(
+                    &user_messages,
+                    &task.prompt.system_messages,
+                    &task.prompt.model_settings,
+                )
+                .await
+        })?;
+
+        Ok(AgentResponse::new(task.id.clone(), chat_response))
+    }
+}
+
+/// Rust method implementation of the Agent
+impl Agent {
+    pub async fn execute_async_task(
+        &self,
+        task: &Task,
+        context_messages: HashMap<String, Vec<Message>>,
+    ) -> Result<AgentResponse, AgentError> {
+        // Extract the prompt from the task
+        debug!("Executing task: {}", task.id);
+        let mut user_messages = task.prompt.user_messages.clone();
+
+        if !task.dependencies.is_empty() {
+            for dep in &task.dependencies {
+                if let Some(messages) = context_messages.get(dep) {
+                    for message in messages {
+                        // prepend the messages from dependencies
+                        user_messages.insert(0, message.clone());
+                    }
+                }
+            }
+        }
+
         // Use the client to execute the task
-        let chat_response = self.client.execute(
-            &user_messages,
-            &task.prompt.system_messages,
-            &task.prompt.model_settings,
-        )?;
+        let chat_response = self
+            .client
+            .execute(
+                &user_messages,
+                &task.prompt.system_messages,
+                &task.prompt.model_settings,
+            )
+            .await?;
 
         Ok(AgentResponse::new(task.id.clone(), chat_response))
     }

@@ -498,10 +498,3 @@ impl OpsmlServerContext {
         Ok(())
     }
 }
-
-#[pymodule]
-pub fn test(m: &Bound<'_, PyModule>) -> PyResult<()> {
-    m.add_class::<OpsmlTestServer>()?;
-    m.add_class::<OpsmlServerContext>()?;
-    Ok(())
-}

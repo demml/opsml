@@ -4,7 +4,7 @@ from opsml import (  # type: ignore
     Prompt,
     PromptCard,
 )
-from opsml.test import OpsmlTestServer
+from opsml.mock import OpsmlTestServer
 import pytest
 from tests.conftest import WINDOWS_EXCLUDE
 

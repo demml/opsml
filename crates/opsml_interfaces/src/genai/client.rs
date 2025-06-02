@@ -28,7 +28,7 @@ pub enum ClientUrl {
 impl ClientUrl {
     pub fn url(&self) -> &str {
         match self {
-            ClientUrl::OpenAI => "https://api.openai.com/v1",
+            ClientUrl::OpenAI => "https://api.openai.com",
         }
     }
 }
@@ -95,7 +95,9 @@ impl OpenAIClient {
         };
 
         // if optional base_url is None, use the default OpenAI API URL
-        let base_url = base_url.unwrap_or_else(|| ClientUrl::OpenAI.url().to_string());
+        let env_base_url = std::env::var("OPENAI_API_URL").ok();
+        let base_url = base_url
+            .unwrap_or_else(|| env_base_url.unwrap_or_else(|| ClientUrl::OpenAI.url().to_string()));
 
         Ok(Self {
             client,
@@ -169,7 +171,7 @@ impl OpenAIClient {
 
         let response = self
             .client
-            .post(&format!("{}/chat/completions", self.base_url))
+            .post(&format!("{}/v1/chat/completions", self.base_url))
             .header(AUTHORIZATION, format!("Bearer {}", self.api_key))
             .json(&prompt)
             .send()

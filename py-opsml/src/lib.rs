@@ -3,10 +3,10 @@ pub mod cli;
 pub mod data;
 pub mod experiment;
 pub mod logging;
+pub mod mocks;
 pub mod model;
 pub mod potato_head;
 pub mod scouter;
-pub mod test;
 pub mod types;
 
 use pyo3::prelude::*;
@@ -30,7 +30,7 @@ fn opsml(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_wrapped(wrap_pymodule!(logging::logging))?;
 
     // test
-    m.add_wrapped(wrap_pymodule!(test::test))?;
+    m.add_wrapped(wrap_pymodule!(mocks::mock))?;
 
     // cli
     m.add_wrapped(wrap_pymodule!(cli::cli))?;
