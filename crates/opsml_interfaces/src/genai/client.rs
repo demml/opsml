@@ -171,7 +171,7 @@ impl OpenAIClient {
 
         let response = self
             .client
-            .post(&format!("{}/v1/chat/completions", self.base_url))
+            .post(format!("{}/v1/chat/completions", self.base_url))
             .header(AUTHORIZATION, format!("Bearer {}", self.api_key))
             .json(&prompt)
             .send()
