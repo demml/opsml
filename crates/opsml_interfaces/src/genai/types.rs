@@ -1,8 +1,11 @@
-use potato_head::prompt::types::PromptContent;
+use potato_head::prompt::types::Role;
+use potato_head::{prompt::types::PromptContent, Message};
 use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
+
+use crate::error::AgentError;
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct ToolCall {
@@ -103,6 +106,29 @@ pub struct ChatMessage {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ChatResponse {
     OpenAI(OpenAIChatResponse),
+}
+
+impl ChatResponse {
+    pub fn is_empty(&self) -> bool {
+        match self {
+            ChatResponse::OpenAI(resp) => resp.choices.is_empty(),
+        }
+    }
+
+    pub fn to_message(&self, role: Role) -> Result<Vec<Message>, AgentError> {
+        match self {
+            ChatResponse::OpenAI(resp) => {
+                let first_choice = resp
+                    .choices
+                    .first()
+                    .ok_or_else(|| AgentError::ClientNoResponseError)?;
+
+                let message =
+                    PromptContent::Str(first_choice.message.content.clone().unwrap_or_default());
+                Ok(vec![Message::from(message, role)])
+            }
+        }
+    }
 }
 
 #[pyclass]
