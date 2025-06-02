@@ -1,7 +1,7 @@
 #[cfg(feature = "server")]
 use mockito;
 #[cfg(feature = "server")]
-use opsml_interfaces::genai::types::OpenAIChatResponse;
+use potato_head::agents::types::OpenAIChatResponse;
 #[cfg(feature = "server")]
 use serde_json;
 

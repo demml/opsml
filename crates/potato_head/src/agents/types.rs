@@ -1,5 +1,7 @@
-use potato_head::prompt::types::Role;
-use potato_head::{prompt::types::PromptContent, Message};
+use crate::{
+    prompt::types::{PromptContent, Role},
+    Message,
+};
 use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;

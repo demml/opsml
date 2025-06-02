@@ -119,10 +119,10 @@ impl ModelSettings {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Prompt {
     #[pyo3(get)]
-    pub user_messages: Vec<Message>,
+    pub user_message: Vec<Message>,
 
     #[pyo3(get)]
-    pub system_messages: Vec<Message>,
+    pub system_message: Vec<Message>,
 
     #[pyo3(get)]
     pub sanitization_config: Option<SanitizationConfig>,
@@ -184,7 +184,7 @@ impl Prompt {
     ) -> PyResult<Self> {
         // extract messages
 
-        let system_messages = if let Some(system_messages) = system_messages {
+        let system_message = if let Some(system_messages) = system_messages {
             parse_prompt(system_messages)?
                 .into_iter()
                 .map(|mut msg| {
@@ -196,7 +196,7 @@ impl Prompt {
             vec![]
         };
 
-        let user_messages = parse_prompt(user_messages)?
+        let user_message = parse_prompt(user_messages)?
             .into_iter()
             .map(|mut msg| {
                 msg.role = Role::User.to_string();
@@ -229,11 +229,11 @@ impl Prompt {
         };
 
         Ok(Self {
-            user_messages,
+            user_message,
             sanitization_config,
             sanitizer,
             version,
-            system_messages,
+            system_message,
             model_settings,
         })
     }

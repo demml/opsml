@@ -1,7 +1,7 @@
+use crate::agents::types::ChatResponse;
+use crate::agents::types::{ChatMessage, OpenAIChatRequest, OpenAIChatResponse};
 use crate::error::AgentError;
-use crate::genai::types::ChatResponse;
-use crate::genai::types::{ChatMessage, OpenAIChatRequest, OpenAIChatResponse};
-use potato_head::{Message, ModelSettings};
+use crate::{Message, ModelSettings};
 use pyo3::prelude::*;
 use reqwest::header::HeaderName;
 use reqwest::header::{HeaderMap, HeaderValue, AUTHORIZATION};

@@ -1,11 +1,11 @@
+use crate::Message;
 use crate::{
+    agents::client::{GenAiClient, OpenAIClient},
+    agents::task::Task,
+    agents::types::AgentResponse,
     error::AgentError,
-    genai::client::{GenAiClient, OpenAIClient},
-    genai::task::Task,
-    genai::types::AgentResponse,
 };
 use opsml_state::app_state;
-use potato_head::Message;
 use pyo3::prelude::*;
 use std::collections::HashMap;
 use tracing::debug;
@@ -40,7 +40,7 @@ impl Agent {
     ) -> Result<AgentResponse, AgentError> {
         // Extract the prompt from the task
         debug!("Executing task");
-        let mut user_messages = task.prompt.user_messages.clone();
+        let mut user_messages = task.prompt.user_message.clone();
 
         if !task.dependencies.is_empty() {
             for dep in &task.dependencies {
@@ -57,7 +57,7 @@ impl Agent {
             self.client
                 .execute(
                     &user_messages,
-                    &task.prompt.system_messages,
+                    &task.prompt.system_message,
                     &task.prompt.model_settings,
                 )
                 .await
@@ -76,7 +76,7 @@ impl Agent {
     ) -> Result<AgentResponse, AgentError> {
         // Extract the prompt from the task
         debug!("Executing task: {}", task.id);
-        let mut user_messages = task.prompt.user_messages.clone();
+        let mut user_messages = task.prompt.user_message.clone();
 
         if !task.dependencies.is_empty() {
             for dep in &task.dependencies {
@@ -94,7 +94,7 @@ impl Agent {
             .client
             .execute(
                 &user_messages,
-                &task.prompt.system_messages,
+                &task.prompt.system_message,
                 &task.prompt.model_settings,
             )
             .await?;

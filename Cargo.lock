@@ -4033,12 +4033,12 @@ name = "opsml-mocks"
 version = "3.0.0-alpha.2"
 dependencies = [
  "mockito",
- "opsml-interfaces",
  "opsml-registry",
  "opsml-server",
  "opsml-state",
  "opsml-storage",
  "opsml-utils",
+ "potato-head",
  "pyo3",
  "reqwest",
  "scouter-client",
@@ -4669,11 +4669,13 @@ name = "potato-head"
 version = "3.0.0-alpha.2"
 dependencies = [
  "mime_guess",
+ "opsml-state",
  "opsml-types",
  "opsml-utils",
  "opsml-version",
  "pyo3",
  "regex",
+ "reqwest",
  "serde",
  "serde_json",
  "thiserror 2.0.12",
