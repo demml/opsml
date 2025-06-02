@@ -414,6 +414,9 @@ pub enum AgentError {
 
     #[error("Client did not provide response")]
     ClientNoResponseError,
+
+    #[error("No ready tasks found but pending tasks remain. Possible circular dependency.")]
+    NoTaskFoundError,
 }
 
 impl<'a> From<pyo3::DowncastError<'a, 'a>> for AgentError {

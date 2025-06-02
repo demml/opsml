@@ -15,13 +15,11 @@ card = PromptCard(
 
 
 def chat_app(language: str):
-    user_prompt = card.prompt.prompt[0].bind(language).unwrap()
-
     response = client.chat.completions.create(
         model=card.prompt.model,
         messages=[
-            {"role": "system", "content": user_prompt},
-            {"role": "user", "content": card.prompt.prompt[0].unwrap()},
+            {"role": "system", "content": card.prompt.system_prompt[0].unwrap()},
+            {"role": "user", "content": card.prompt.prompt[0].bind(language).unwrap()},
         ],
     )
 

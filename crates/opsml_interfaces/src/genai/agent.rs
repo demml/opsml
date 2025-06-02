@@ -33,7 +33,7 @@ impl Agent {
     }
 
     pub fn execute_task(
-        &mut self,
+        &self,
         task: &Task,
         context_messages: HashMap<String, Vec<Message>>,
     ) -> Result<AgentResponse, AgentError> {

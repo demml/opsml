@@ -5,11 +5,28 @@ use pyo3::types::PyString;
 use pyo3::{prelude::*, IntoPyObjectExt};
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
+use std::fmt::Display;
 use std::sync::OnceLock;
 static DOCUMENT_MEDIA_TYPES: OnceLock<HashSet<&'static str>> = OnceLock::new();
 use crate::prompt::sanitize::PromptSanitizer;
+use crate::SanitizedResult;
+use pyo3::types::PyDict;
 
-use super::sanitize::SanitizedResult;
+pub enum Role {
+    User,
+    Assistant,
+    Developer,
+}
+
+impl Display for Role {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Role::User => write!(f, "user"),
+            Role::Assistant => write!(f, "assistant"),
+            Role::Developer => write!(f, "developer"),
+        }
+    }
+}
 
 fn get_document_media_types() -> &'static HashSet<&'static str> {
     DOCUMENT_MEDIA_TYPES.get_or_init(|| {
@@ -376,6 +393,7 @@ pub struct Message {
     pub content: PromptContent,
     next_param: usize,
     sanitized_output: Option<SanitizedResult>,
+    role: String,
 }
 
 #[pymethods]
@@ -388,6 +406,7 @@ impl Message {
             content,
             next_param: 1,
             sanitized_output: None,
+            role: Role::User.to_string(),
         })
     }
 
@@ -406,6 +425,7 @@ impl Message {
             content,
             next_param: self.next_param + 1,
             sanitized_output: None,
+            role: self.role.clone(),
         })
     }
 
@@ -427,14 +447,41 @@ impl Message {
             content,
             next_param: self.next_param,
             sanitized_output: sanitized,
+            role: self.role.clone(),
         })
     }
 
-    pub fn unwrap<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyAny>> {
+    pub fn content<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyAny>> {
         self.content.to_pyobject(py)
+    }
+
+    pub fn to_dict<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyDict>> {
+        let message = PyDict::new(py);
+
+        message.set_item("role", self.role.clone())?;
+        message.set_item("content", self.content(py)?)?;
+        Ok(message)
     }
 
     pub fn __str__(&self) -> String {
         PyHelperFuncs::__str__(self)
+    }
+}
+
+impl Message {
+    pub fn from(content: PromptContent, role: Role) -> Self {
+        Self {
+            content,
+            next_param: 1,
+            sanitized_output: None,
+            role: role.to_string(),
+        }
+    }
+
+    pub fn is_empty(&self) -> bool {
+        match &self.content {
+            PromptContent::Str(s) => s.is_empty(),
+            _ => false,
+        }
     }
 }
