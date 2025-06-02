@@ -249,7 +249,7 @@ pub async fn execute_workflow(workflow: Arc<RwLock<Workflow>>) -> Result<(), Age
 
             let handle = tokio::spawn(async move {
                 if let Some(agent) = agent {
-                    match agent.execute_task(&task, context) {
+                    match agent.execute_async_task(&task, context).await {
                         Ok(response) => {
                             let mut wf = workflow.write().unwrap();
                             wf.tasks.update_task_status(

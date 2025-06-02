@@ -4029,6 +4029,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "opsml-mocks"
+version = "3.0.0-alpha.2"
+dependencies = [
+ "mockito",
+ "opsml-interfaces",
+ "opsml-registry",
+ "opsml-server",
+ "opsml-state",
+ "opsml-storage",
+ "opsml-utils",
+ "pyo3",
+ "reqwest",
+ "scouter-client",
+ "serde_json",
+ "thiserror 2.0.12",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
 name = "opsml-registry"
 version = "3.0.0-alpha.2"
 dependencies = [
@@ -4794,6 +4814,7 @@ dependencies = [
  "opsml-cli",
  "opsml-experiment",
  "opsml-interfaces",
+ "opsml-mocks",
  "opsml-registry",
  "opsml-semver",
  "opsml-server",

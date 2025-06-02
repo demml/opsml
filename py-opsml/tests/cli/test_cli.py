@@ -15,7 +15,7 @@ import pandas as pd
 import os
 from pathlib import Path
 import shutil
-from opsml.test import OpsmlTestServer
+from opsml.mock import OpsmlTestServer
 from opsml.scouter.types import DriftType
 from opsml.scouter import PsiDriftConfig, CustomMetricDriftConfig, CustomMetric
 from opsml.scouter.alert import AlertThreshold

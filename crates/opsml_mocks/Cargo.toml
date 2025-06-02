@@ -1,33 +1,23 @@
 [package]
-name = "py-opsml"
+name = "opsml-mocks"
 version = { workspace = true }
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [lib]
-name = "opsml"
+name = "opsml_mocks"
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-anyhow = { workspace = true }
-opsml-cards = { workspace = true }
 mockito = { workspace = true, optional = true }
-opsml-cli = { workspace = true }
 opsml-interfaces = { workspace = true }
 opsml-registry = { workspace = true }
-opsml-experiment = { workspace = true }
-opsml-mocks = { workspace = true }
-opsml-semver = { workspace = true }
 opsml-server = { workspace = true, optional = true }
 opsml-storage = { workspace = true, optional = true }
-opsml-settings = { workspace = true }
 opsml-state = { workspace = true }
-opsml-types = { workspace = true }
 opsml-utils = { workspace = true }
-potato-head = { workspace = true }
 pyo3 = { workspace = true }
 reqwest = { workspace = true, optional = true }
-rusty-logging = { workspace = true }
 scouter-client = { workspace = true }
 serde_json = { workspace = true, optional = true }
 thiserror = { workspace = true }
@@ -37,10 +27,13 @@ tokio = { workspace = true, optional = true }
 [features]
 default = []
 server = [
-    "opsml-registry/server", 
-    "opsml-server", 
-    "opsml-storage", 
-    "opsml-mocks/server"
+    "opsml-registry/server",
+    "opsml-server",
+    "tokio",
+    "reqwest",
+    "opsml-storage",
+    "mockito",
+    "serde_json"
 ]
 
 [profile.release]
