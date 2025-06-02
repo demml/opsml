@@ -1,7 +1,7 @@
 #[cfg(feature = "server")]
 use mockito;
 #[cfg(feature = "server")]
-use potato_head::agents::types::OpenAIChatResponse;
+use potato_head::agents::client_types::openai::OpenAIChatResponse;
 #[cfg(feature = "server")]
 use serde_json;
 
@@ -70,7 +70,7 @@ impl OpenAITestServer {
     pub fn stop_mock_server(&mut self) {
         if let Some(server) = self.openai_server.take() {
             drop(server);
-            std::env::remove_var("OPENAI_API_URI");
+            std::env::remove_var("OPENAI_API_URL");
             std::env::remove_var("OPENAI_API_KEY");
         }
         println!("Mock OpenAI Server stopped");
@@ -80,11 +80,11 @@ impl OpenAITestServer {
         #[cfg(feature = "server")]
         {
             std::env::set_var("APP_ENV", "dev_client");
+            std::env::set_var("OPENAI_API_KEY", "test_key");
             std::env::set_var(
-                "OPENAI_API_URI",
+                "OPENAI_API_URL",
                 self.openai_server.as_ref().unwrap().url.clone(),
             );
-            std::env::set_var("OPENAI_API_KEY", "test_key");
             Ok(())
         }
         #[cfg(not(feature = "server"))]
@@ -103,6 +103,7 @@ impl OpenAITestServer {
 
             println!("Starting Mock GenAI Server...");
             self.start_mock_server()?;
+            self.set_env_vars_for_client()?;
 
             // set server env vars
             std::env::set_var("APP_ENV", "dev_server");

@@ -412,6 +412,9 @@ pub enum AgentError {
     #[error(transparent)]
     PyError(#[from] pyo3::PyErr),
 
+    #[error(transparent)]
+    UtilError(#[from] PyUtilError),
+
     #[error("Client did not provide response")]
     ClientNoResponseError,
 

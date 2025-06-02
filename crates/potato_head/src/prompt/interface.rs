@@ -14,6 +14,7 @@ use super::types::Role;
 
 #[pyclass]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
+
 pub struct ModelSettings {
     #[pyo3(get, set)]
     pub model: String,
@@ -22,35 +23,46 @@ pub struct ModelSettings {
     pub provider: String,
 
     #[pyo3(get, set)]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub max_tokens: Option<usize>,
 
     #[pyo3(get, set)]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub temperature: Option<f32>,
 
     #[pyo3(get, set)]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub top_p: Option<f32>,
 
     #[pyo3(get, set)]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub frequency_penalty: Option<f32>,
 
     #[pyo3(get, set)]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub presence_penalty: Option<f32>,
 
     #[pyo3(get, set)]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub timeout: Option<f32>,
 
     #[pyo3(get, set)]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub parallel_tool_calls: Option<bool>,
 
     #[pyo3(get, set)]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub seed: Option<u64>,
 
     #[pyo3(get, set)]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub logit_bias: Option<HashMap<String, i32>>,
 
     #[pyo3(get, set)]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub stop_sequences: Option<Vec<String>>,
 
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub extra_body: Option<Value>,
 }
 
@@ -113,6 +125,49 @@ impl ModelSettings {
             .transpose()
             .map_err(|e| PotatoHeadError::new_err(format!("Failed to get extra body: {}", e)))
     }
+
+    pub fn model_dump<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyDict>> {
+        // iterate over each field in model_settings and add to the dict if it is not None
+        let pydict = PyDict::new(py);
+
+        pydict.set_item("model", &self.model)?;
+        pydict.set_item("provider", &self.provider)?;
+
+        if let Some(max_tokens) = self.max_tokens {
+            pydict.set_item("max_tokens", max_tokens)?;
+        }
+        if let Some(temperature) = self.temperature {
+            pydict.set_item("temperature", temperature)?;
+        }
+        if let Some(top_p) = self.top_p {
+            pydict.set_item("top_p", top_p)?;
+        }
+        if let Some(frequency_penalty) = self.frequency_penalty {
+            pydict.set_item("frequency_penalty", frequency_penalty)?;
+        }
+        if let Some(presence_penalty) = self.presence_penalty {
+            pydict.set_item("presence_penalty", presence_penalty)?;
+        }
+        if let Some(parallel_tool_calls) = self.parallel_tool_calls {
+            pydict.set_item("parallel_tool_calls", parallel_tool_calls)?;
+        }
+        if let Some(seed) = self.seed {
+            pydict.set_item("seed", seed)?;
+        }
+        if let Some(logit_bias) = &self.logit_bias {
+            pydict.set_item("logit_bias", logit_bias)?;
+        }
+        if let Some(stop_sequences) = &self.stop_sequences {
+            pydict.set_item("stop_sequences", stop_sequences)?;
+        }
+        let extra = self.extra_body(py)?;
+
+        if let Some(extra) = extra {
+            pydict.set_item("extra_body", extra)?;
+        }
+
+        Ok(pydict)
+    }
 }
 
 #[pyclass]
@@ -132,6 +187,7 @@ pub struct Prompt {
 
     pub version: String,
 
+    #[pyo3(get)]
     pub model_settings: ModelSettings,
 }
 
@@ -173,19 +229,19 @@ fn parse_prompt(messages: &Bound<'_, PyAny>) -> PyResult<Vec<Message>> {
 #[pymethods]
 impl Prompt {
     #[new]
-    #[pyo3(signature = (user_messages, model=None, provider=None, system_messages=None, sanitization_config=None, model_settings=None))]
+    #[pyo3(signature = (user_message, model=None, provider=None, system_message=None, sanitization_config=None, model_settings=None))]
     pub fn new(
-        user_messages: &Bound<'_, PyAny>,
+        user_message: &Bound<'_, PyAny>,
         model: Option<&str>,
         provider: Option<&str>,
-        system_messages: Option<&Bound<'_, PyAny>>,
+        system_message: Option<&Bound<'_, PyAny>>,
         sanitization_config: Option<SanitizationConfig>,
         model_settings: Option<ModelSettings>,
     ) -> PyResult<Self> {
         // extract messages
 
-        let system_message = if let Some(system_messages) = system_messages {
-            parse_prompt(system_messages)?
+        let system_message = if let Some(system_message) = system_message {
+            parse_prompt(system_message)?
                 .into_iter()
                 .map(|mut msg| {
                     msg.role = Role::Developer.to_string();
@@ -196,7 +252,7 @@ impl Prompt {
             vec![]
         };
 
-        let user_message = parse_prompt(user_messages)?
+        let user_message = parse_prompt(user_message)?
             .into_iter()
             .map(|mut msg| {
                 msg.role = Role::User.to_string();
@@ -256,50 +312,6 @@ impl Prompt {
             "{}:{}",
             self.model_settings.provider, self.model_settings.model
         )
-    }
-
-    #[getter]
-    pub fn model_settings<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyDict>> {
-        // iterate over each field in model_settings and add to the dict if it is not None
-        let pydict = PyDict::new(py);
-
-        pydict.set_item("model", &self.model_settings.model)?;
-        pydict.set_item("provider", &self.model_settings.provider)?;
-
-        if let Some(max_tokens) = self.model_settings.max_tokens {
-            pydict.set_item("max_tokens", max_tokens)?;
-        }
-        if let Some(temperature) = self.model_settings.temperature {
-            pydict.set_item("temperature", temperature)?;
-        }
-        if let Some(top_p) = self.model_settings.top_p {
-            pydict.set_item("top_p", top_p)?;
-        }
-        if let Some(frequency_penalty) = self.model_settings.frequency_penalty {
-            pydict.set_item("frequency_penalty", frequency_penalty)?;
-        }
-        if let Some(presence_penalty) = self.model_settings.presence_penalty {
-            pydict.set_item("presence_penalty", presence_penalty)?;
-        }
-        if let Some(parallel_tool_calls) = self.model_settings.parallel_tool_calls {
-            pydict.set_item("parallel_tool_calls", parallel_tool_calls)?;
-        }
-        if let Some(seed) = self.model_settings.seed {
-            pydict.set_item("seed", seed)?;
-        }
-        if let Some(logit_bias) = &self.model_settings.logit_bias {
-            pydict.set_item("logit_bias", logit_bias)?;
-        }
-        if let Some(stop_sequences) = &self.model_settings.stop_sequences {
-            pydict.set_item("stop_sequences", stop_sequences)?;
-        }
-        let extra = self.model_settings.extra_body(py)?;
-
-        if let Some(extra) = extra {
-            pydict.set_item("extra_body", extra)?;
-        }
-
-        Ok(pydict)
     }
 
     #[pyo3(signature = (path = None))]

@@ -6,6 +6,7 @@ use crate::{
     error::AgentError,
 };
 use opsml_state::app_state;
+use opsml_utils::create_uuid7;
 use pyo3::prelude::*;
 use std::collections::HashMap;
 use tracing::debug;
@@ -13,6 +14,9 @@ use tracing::debug;
 #[derive(Debug, Clone)]
 #[pyclass]
 pub struct Agent {
+    #[pyo3(get)]
+    pub id: String,
+
     client: GenAiClient,
 }
 
@@ -30,9 +34,13 @@ impl Agent {
                 "Client must be an instance of OpenAIClient".to_string(),
             ));
         };
-        Ok(Self { client })
+        Ok(Self {
+            client,
+            id: create_uuid7(),
+        })
     }
 
+    #[pyo3(signature = (task, context_messages = HashMap::new()))]
     pub fn execute_task(
         &self,
         task: &Task,

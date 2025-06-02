@@ -382,11 +382,19 @@ class Message:
         """
 
     def unwrap(self) -> Any:
-        """Unwrap the message content to python compatible content.
+        """Unwrap the message content.
 
         Returns:
             str:
-                The unwrapped message content.
+                The message content.
+        """
+
+    def model_dump(self) -> Dict[str, Any]:
+        """Unwrap the message content and serialize it to a dictionary.
+
+        Returns:
+            Dict[str, Any]:
+                The message dictionary with keys "content" and "role".
         """
 
 class ModelSettings:
@@ -493,6 +501,10 @@ class ModelSettings:
     def extra_body(self) -> Optional[dict[str, Any]]:
         """The extra body to use."""
 
+    @property
+    def model_dump(self) -> Dict[str, Any]:
+        """The model settings to use for the prompt."""
+
 class Prompt:
     def __init__(
         self,
@@ -554,7 +566,7 @@ class Prompt:
         """
 
     @property
-    def model_settings(self) -> Dict[str, Any]:
+    def model_settings(self) -> ModelSettings:
         """The model settings to use for the prompt."""
 
     @property
@@ -562,14 +574,14 @@ class Prompt:
         """The prompt sanitizer to use for the prompt."""
 
     @property
-    def prompt(
+    def user_message(
         self,
     ) -> List[Message]:
-        """The user prompt to use in the prompt."""
+        """The user message to use in the prompt."""
 
     @property
-    def system_prompt(self) -> List[Message]:
-        """The system prompt to use in the prompt."""
+    def system_message(self) -> List[Message]:
+        """The system message to use in the prompt."""
 
     def save_prompt(self, path: Optional[Path] = None) -> None:
         """Save the prompt to a file.

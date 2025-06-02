@@ -1,7 +1,15 @@
-from pydantic_ai import Agent, RunContext, models
+from pydantic_ai import Agent as PydanticAgent, RunContext, models
 
 from pydantic_ai.models.test import TestModel
-from opsml.potato_head import Prompt, SanitizationConfig, PromptSanitizer
+from opsml.potato_head import (
+    Prompt,
+    SanitizationConfig,
+    PromptSanitizer,
+    OpenAIClient,
+    Agent,
+    Task,
+    Workflow,
+)
 from dataclasses import dataclass
 import os
 from opsml.mock import OpenAITestServer
@@ -17,7 +25,7 @@ class Prompts:
 
 
 def _test_simple_workflow(prompt_step1: Prompt):
-    agent = Agent(
+    agent = PydanticAgent(
         prompt_step1.model_identifier,
         system_prompt=prompt_step1.system_prompt[0].unwrap(),
     )
@@ -27,7 +35,7 @@ def _test_simple_workflow(prompt_step1: Prompt):
 
 
 def _test_simple_dep_workflow(prompt_step1: Prompt, prompt_step2: Prompt):
-    agent = Agent(
+    agent = PydanticAgent(
         prompt_step1.model_identifier,
         system_prompt=prompt_step1.system_prompt[0].unwrap(),
         deps_type=Prompts,
@@ -48,7 +56,7 @@ def _test_simple_dep_workflow(prompt_step1: Prompt, prompt_step2: Prompt):
 
 
 def _test_binding_workflow(prompt_step1: Prompt, prompt_step2: Prompt):
-    agent = Agent(
+    agent = PydanticAgent(
         "openai:gpt-4o",
         system_prompt=prompt_step1.system_prompt[0].unwrap(),
         deps_type=Prompts,
@@ -78,7 +86,7 @@ def _test_sanitization_workflow(prompt_step1: Prompt):
 
     sanitizer = PromptSanitizer(santization_config)
 
-    agent = Agent(
+    agent = PydanticAgent(
         prompt_step1.model_identifier,
         system_prompt=prompt_step1.system_prompt[0].unwrap(),
     )
@@ -104,6 +112,96 @@ def _test_sanitization_workflow(prompt_step1: Prompt):
         assert len(result.detected_issues) == 2
 
 
+def test_openai_client_chat_completion():
+    with OpenAITestServer():
+        prompt = Prompt(
+            user_message="Hello, how are you?",
+            system_message="You are a helpful assistant.",
+            model="gpt-4o",
+            provider="openai",
+        )
+        client = OpenAIClient()
+        client.chat_completion(
+            user_message=prompt.user_message,
+            developer_message=prompt.system_message,
+            settings=prompt.model_settings,
+        )
+
+
+def test_opsml_agent_task_execution():
+    with OpenAITestServer():
+        prompt = Prompt(
+            user_message="Hello, how are you?",
+            system_message="You are a helpful assistant.",
+            model="gpt-4o",
+            provider="openai",
+        )
+        client = OpenAIClient()
+        agent = Agent(client)
+
+        agent.execute_task(
+            Task(
+                prompt=prompt,
+                agent_id="my_agent",
+            ),
+        )
+
+
 def test_opsml_agent_workflow():
     with OpenAITestServer():
-        print("hello world")
+        prompt = Prompt(
+            user_message="Hello, how are you?",
+            system_message="You are a helpful assistant.",
+            model="gpt-4o",
+            provider="openai",
+        )
+        client = OpenAIClient()
+        open_agent1 = Agent(client)
+        open_agent2 = Agent(client)
+
+        workflow = Workflow(name="test_workflow")
+        workflow.add_agent(open_agent1)
+        workflow.add_agent(open_agent2)
+        workflow.add_task(
+            Task(
+                prompt=prompt,
+                agent_id=open_agent1.id,
+                id="task1",
+            ),
+        )
+
+        workflow.add_task(
+            Task(
+                prompt=prompt,
+                agent_id=open_agent1.id,
+                id="task2",
+            ),
+        )
+        workflow.add_task(
+            Task(
+                prompt=prompt,
+                agent_id=open_agent2.id,  # maybe default this to first agent if none
+                id="task3",
+                dependencies=["task1", "task2"],
+            ),
+        )
+
+        workflow.add_task(
+            Task(
+                prompt=prompt,
+                agent_id=open_agent2.id,
+                id="task4",
+                dependencies=["task1"],
+            ),
+        )
+
+        workflow.add_task(
+            Task(
+                prompt=prompt,
+                agent_id=open_agent1.id,
+                id="task5",
+                dependencies=["task4", "task3"],
+            ),
+        )
+
+        workflow.run()
