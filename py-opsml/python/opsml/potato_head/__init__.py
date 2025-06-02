@@ -17,6 +17,10 @@ PromptSanitizer = potato_head.PromptSanitizer
 RiskLevel = potato_head.RiskLevel
 PIIConfig = potato_head.PIIConfig
 
+# agents
+OpenAIClient = potato_head.OpenAIClient
+Agent = potato_head.Agent
+
 
 __all__ = [
     "Prompt",
@@ -28,4 +32,6 @@ __all__ = [
     "PIIConfig",
     "PromptSanitizer",
     "ModelSettings",
+    "OpenAIClient",
+    "Agent",
 ]

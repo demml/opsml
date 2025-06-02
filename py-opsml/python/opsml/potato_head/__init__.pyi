@@ -305,7 +305,9 @@ class DocumentUrl:
         """The format of the document URL."""
 
 class Message:
-    def __init__(self, content: str | ImageUrl | AudioUrl | BinaryContent | DocumentUrl) -> None:
+    def __init__(
+        self, content: str | ImageUrl | AudioUrl | BinaryContent | DocumentUrl
+    ) -> None:
         """Create a Message object.
 
         Args:
@@ -494,23 +496,26 @@ class ModelSettings:
 class Prompt:
     def __init__(
         self,
-        prompt: str | Sequence[str | ImageUrl | AudioUrl | BinaryContent | DocumentUrl] | Message | List[Message],
+        user_message: str
+        | Sequence[str | ImageUrl | AudioUrl | BinaryContent | DocumentUrl]
+        | Message
+        | List[Message],
         model: Optional[str] = None,
         provider: Optional[str] = None,
-        system_prompt: Optional[str | List[str]] = None,
+        system_message: Optional[str | List[str]] = None,
         sanitization_config: Optional[SanitizationConfig] = None,
         model_settings: Optional[ModelSettings] = None,
     ) -> None:
         """Prompt for interacting with an LLM API.
 
         Args:
-            prompt (str | Sequence[str | ImageUrl | AudioUrl | BinaryContent | DocumentUrl] | Message | List[Message]):
+            user_message (str | Sequence[str | ImageUrl | AudioUrl | BinaryContent | DocumentUrl] | Message | List[Message]):
                 The prompt to use.
             model (str | None):
                 The model to use for the prompt. Required if model_settings is not provided.
             provider (str | None):
                 The provider to use for the prompt. Required if model_settings is not provided.
-            system_prompt (Optional[str, Sequence[str]]):
+            system_message (Optional[str | List[str]]):
                 The system prompt to use in the prompt.
             sanitization_config (None):
                 The santization configuration to use for the prompt.
@@ -538,12 +543,12 @@ class Prompt:
                 prompt = Prompt(
                     model="gpt-4o",
                     prompt="My prompt $1 is $2",
-                    system_prompt="system_prompt",
+                    system_message="system_message",
                     provider="openai",
                 )
                 agent = Agent(
                     prompt.model_identifier, # "openai:gpt-4o"
-                    system_prompt=prompt.system_prompt[0].unwrap(),
+                    system_messages=prompt.system_message[0].unwrap(),
                 )
             ```
         """

@@ -1,13 +1,11 @@
-use crate::{
-    error::AgentError,
-    genai::{
-        agent::Agent,
-        task::{Task, TaskStatus},
-        types::ChatResponse,
-    },
-};
+use crate::error::AgentError;
 use opsml_state::app_state;
 use opsml_utils::create_uuid7;
+pub use potato_head::agents::{
+    agent::Agent,
+    task::{Task, TaskStatus},
+    types::ChatResponse,
+};
 use potato_head::prompt::types::Role;
 use pyo3::prelude::*;
 use std::collections::{HashMap, HashSet};

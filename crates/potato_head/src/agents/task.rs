@@ -1,6 +1,6 @@
-use crate::genai::types::ChatResponse;
+use crate::agents::types::ChatResponse;
+use crate::Prompt;
 use opsml_utils::create_uuid7;
-use potato_head::Prompt;
 use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
 
