@@ -393,7 +393,7 @@ pub struct Message {
     pub content: PromptContent,
     next_param: usize,
     sanitized_output: Option<SanitizedResult>,
-    role: String,
+    pub role: String,
 }
 
 #[pymethods]
