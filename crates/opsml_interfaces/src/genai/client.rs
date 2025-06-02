@@ -71,7 +71,7 @@ pub struct OpenAIClient {
 #[pymethods]
 impl OpenAIClient {
     #[new]
-    #[pyo3(signature = (api_key, base_url = ClientUrl::OpenAI.url().to_string(), headers = None))]
+    #[pyo3(signature = (api_key, base_url = None, headers = None))]
     /// Creates a new OpenAIClient instance.
     ///
     /// # Arguments:

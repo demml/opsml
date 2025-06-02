@@ -2,26 +2,43 @@ use potato_head::prompt::types::Role;
 use potato_head::{prompt::types::PromptContent, Message};
 use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
 use std::collections::HashMap;
 
 use crate::error::AgentError;
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
+#[serde(default)]
+pub struct Function {
+    pub arguments: String,
+    pub name: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+#[serde(default)]
 pub struct ToolCall {
     pub id: String,
     pub type_: String,
-    pub function: Value,
-    pub arguments: Value,
+    pub function: Function,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
+#[serde(default)]
+pub struct UrlCitation {
+    pub end_index: u64,
+    pub start_index: u64,
+    pub title: String,
+    pub url: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+#[serde(default)]
 pub struct Annotations {
     pub r#type: String,
-    pub url_citations: Value,
+    pub url_citations: Vec<UrlCitation>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
+#[serde(default)]
 pub struct Audio {
     pub data: String,
     pub expires_at: u64, // Unix timestamp
@@ -30,22 +47,50 @@ pub struct Audio {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
+#[serde(default)]
 pub struct ChatCompletionMessage {
     pub content: Option<String>,
     pub refusal: Option<String>,
     pub role: String,
-    pub annotations: Annotations,
+    pub annotations: Vec<Annotations>,
     pub tool_calls: Vec<ToolCall>,
-    pub audio: Audio,
+    pub audio: Option<Audio>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
+#[serde(default)]
+pub struct TopLogProbs {
+    pub bytes: Option<Vec<u8>>,
+    pub logprob: f64,
+    pub token: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+#[serde(default)]
+pub struct LogContent {
+    pub bytes: Option<Vec<u8>>,
+    pub logprob: f64,
+    pub token: String,
+    pub top_logprobs: Option<Vec<TopLogProbs>>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+#[serde(default)]
+pub struct LogProbs {
+    pub content: Option<Vec<LogContent>>,
+    pub refusal: Option<Vec<LogContent>>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+#[serde(default)]
 pub struct Choice {
     pub message: ChatCompletionMessage,
     pub finish_reason: String,
+    pub logprobs: Option<LogProbs>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
+#[serde(default)]
 pub struct CompletionTokenDetails {
     pub accepted_prediction_tokens: u64,
     pub audio_tokens: u64,
@@ -54,12 +99,14 @@ pub struct CompletionTokenDetails {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
+#[serde(default)]
 pub struct PromptTokenDetails {
     pub audio_tokens: u64,
     pub cached_tokens: u64,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
+#[serde(default)]
 pub struct Usage {
     pub completion_tokens: u64,
     pub prompt_tokens: u64,
@@ -71,6 +118,7 @@ pub struct Usage {
 
 #[pyclass]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
+#[serde(default)]
 pub struct OpenAIChatResponse {
     pub id: String,
     pub object: String,

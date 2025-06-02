@@ -1,7 +1,7 @@
 #[cfg(feature = "server")]
 use mockito;
 #[cfg(feature = "server")]
-use opsml_interfaces::genai::types::ChatCompletionMessage;
+use opsml_interfaces::genai::types::OpenAIChatResponse;
 #[cfg(feature = "server")]
 use serde_json;
 
@@ -23,7 +23,7 @@ impl OpenAIMock {
     pub fn new() -> Self {
         let mut server = mockito::Server::new();
         // load the OpenAI chat completion response
-        let chat_msg_response: ChatCompletionMessage =
+        let chat_msg_response: OpenAIChatResponse =
             serde_json::from_str(OPENAI_CHAT_COMPLETION_RESPONSE).unwrap();
 
         // Openai chat completion mock
@@ -101,10 +101,8 @@ impl OpenAITestServer {
         {
             self.cleanup()?;
 
-            println!("Starting Scouter Server...");
+            println!("Starting Mock GenAI Server...");
             self.start_mock_server()?;
-
-            println!("Starting Opsml Server...");
 
             // set server env vars
             std::env::set_var("APP_ENV", "dev_server");
@@ -114,7 +112,7 @@ impl OpenAITestServer {
         #[cfg(not(feature = "server"))]
         {
             Err(crate::error::TestServerError::CustomError(
-                "Opsml Server feature not enabled".to_string(),
+                "GenAI Server feature not enabled".to_string(),
             )
             .into())
         }
@@ -130,7 +128,7 @@ impl OpenAITestServer {
         #[cfg(not(feature = "server"))]
         {
             Err(crate::error::TestServerError::CustomError(
-                "Opsml Server feature not enabled".to_string(),
+                "GenAI Server feature not enabled".to_string(),
             )
             .into())
         }
