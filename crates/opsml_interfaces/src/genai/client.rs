@@ -3,9 +3,9 @@ use crate::genai::types::ChatResponse;
 use crate::genai::types::{ChatMessage, OpenAIChatRequest, OpenAIChatResponse};
 use potato_head::{Message, ModelSettings};
 use pyo3::prelude::*;
-use reqwest::blocking::Client;
 use reqwest::header::HeaderName;
 use reqwest::header::{HeaderMap, HeaderValue, AUTHORIZATION};
+use reqwest::Client;
 
 use std::collections::HashMap;
 use std::str::FromStr;
@@ -118,7 +118,7 @@ impl OpenAIClient {
     /// # Returns:
     /// * `Result<ChatResponse, AgentError>`: Returns a `ChatResponse` on success or an `AgentError` on failure.
     ///
-    pub fn chat_completion(
+    pub async fn chat_completion(
         &self,
         user_messages: &[Message],
         developer_messages: &[Message],
@@ -173,6 +173,7 @@ impl OpenAIClient {
             .header(AUTHORIZATION, format!("Bearer {}", self.api_key))
             .json(&prompt)
             .send()
+            .await
             .map_err(AgentError::RequestError)?;
 
         let status = response.status();
@@ -180,7 +181,7 @@ impl OpenAIClient {
             return Err(AgentError::ChatCompletionError(status));
         }
 
-        let chat_response: OpenAIChatResponse = response.json()?;
+        let chat_response: OpenAIChatResponse = response.json().await?;
         debug!("Chat completion successful");
 
         Ok(chat_response)
@@ -193,7 +194,7 @@ pub enum GenAiClient {
 }
 
 impl GenAiClient {
-    pub fn execute(
+    pub async fn execute(
         &self,
         user_messages: &[Message],
         developer_messages: &[Message],
@@ -201,8 +202,9 @@ impl GenAiClient {
     ) -> Result<ChatResponse, AgentError> {
         match self {
             GenAiClient::OpenAI(client) => {
-                let response =
-                    client.chat_completion(user_messages, developer_messages, settings)?;
+                let response = client
+                    .chat_completion(user_messages, developer_messages, settings)
+                    .await?;
                 Ok(ChatResponse::OpenAI(response))
             }
         }
