@@ -10,6 +10,8 @@ use serde_json::Value;
 use std::collections::HashMap;
 use std::path::PathBuf;
 
+use super::types::Role;
+
 #[pyclass]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct ModelSettings {
@@ -117,10 +119,10 @@ impl ModelSettings {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Prompt {
     #[pyo3(get)]
-    pub prompt: Vec<Message>,
+    pub user_messages: Vec<Message>,
 
     #[pyo3(get)]
-    pub system_prompt: Vec<Message>,
+    pub system_messages: Vec<Message>,
 
     #[pyo3(get)]
     pub sanitization_config: Option<SanitizationConfig>,
@@ -133,24 +135,24 @@ pub struct Prompt {
     pub model_settings: ModelSettings,
 }
 
-fn parse_prompt(prompt: &Bound<'_, PyAny>) -> PyResult<Vec<Message>> {
-    if prompt.is_instance_of::<Message>() {
-        return Ok(vec![prompt.extract::<Message>()?]);
+fn parse_prompt(messages: &Bound<'_, PyAny>) -> PyResult<Vec<Message>> {
+    if messages.is_instance_of::<Message>() {
+        return Ok(vec![messages.extract::<Message>()?]);
     }
 
-    if prompt.is_instance_of::<PyString>() {
-        return Ok(vec![Message::new(prompt)?]);
+    if messages.is_instance_of::<PyString>() {
+        return Ok(vec![Message::new(messages)?]);
     }
 
-    let initial_capacity = prompt.len().unwrap_or(1);
-    let mut messages = Vec::with_capacity(initial_capacity);
+    let initial_capacity = messages.len().unwrap_or(1);
+    let mut revised_messages = Vec::with_capacity(initial_capacity);
 
     // Explicitly check for list or tuple
-    if prompt.is_instance_of::<PyList>() || prompt.is_instance_of::<PyTuple>() {
-        for item in prompt.try_iter()? {
+    if messages.is_instance_of::<PyList>() || messages.is_instance_of::<PyTuple>() {
+        for item in messages.try_iter()? {
             match item {
                 Ok(item) => {
-                    messages.push(if item.is_instance_of::<Message>() {
+                    revised_messages.push(if item.is_instance_of::<Message>() {
                         item.extract::<Message>()?
                     } else {
                         Message::new(&item)?
@@ -161,34 +163,46 @@ fn parse_prompt(prompt: &Bound<'_, PyAny>) -> PyResult<Vec<Message>> {
                 }
             }
         }
-        Ok(messages)
+        Ok(revised_messages)
     } else {
         // Not a list or tuple, try to convert directly to Message
-        Ok(vec![Message::new(prompt)?])
+        Ok(vec![Message::new(messages)?])
     }
 }
 
 #[pymethods]
 impl Prompt {
     #[new]
-    #[pyo3(signature = (prompt, model=None, provider=None, system_prompt=None, sanitization_config=None, model_settings=None))]
+    #[pyo3(signature = (user_messages, model=None, provider=None, system_messages=None, sanitization_config=None, model_settings=None))]
     pub fn new(
-        prompt: &Bound<'_, PyAny>,
+        user_messages: &Bound<'_, PyAny>,
         model: Option<&str>,
         provider: Option<&str>,
-        system_prompt: Option<&Bound<'_, PyAny>>,
+        system_messages: Option<&Bound<'_, PyAny>>,
         sanitization_config: Option<SanitizationConfig>,
         model_settings: Option<ModelSettings>,
     ) -> PyResult<Self> {
         // extract messages
 
-        let system_prompt = if let Some(system_prompt) = system_prompt {
-            parse_prompt(system_prompt)?
+        let system_messages = if let Some(system_messages) = system_messages {
+            parse_prompt(system_messages)?
+                .into_iter()
+                .map(|mut msg| {
+                    msg.role = Role::Developer.to_string();
+                    msg
+                })
+                .collect::<Vec<Message>>()
         } else {
             vec![]
         };
 
-        let prompt = parse_prompt(prompt)?;
+        let user_messages = parse_prompt(user_messages)?
+            .into_iter()
+            .map(|mut msg| {
+                msg.role = Role::User.to_string();
+                msg
+            })
+            .collect::<Vec<Message>>();
 
         // get version from crate
         let version = opsml_version::version();
@@ -215,11 +229,11 @@ impl Prompt {
         };
 
         Ok(Self {
-            prompt: prompt.clone(),
+            user_messages,
             sanitization_config,
             sanitizer,
             version,
-            system_prompt,
+            system_messages,
             model_settings,
         })
     }
