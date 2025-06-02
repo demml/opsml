@@ -39,7 +39,7 @@ impl Agent {
     ) -> Result<AgentResponse, AgentError> {
         // Extract the prompt from the task
         debug!("Executing task");
-        let mut user_messages = task.prompt.prompt.clone();
+        let mut user_messages = task.prompt.user_messages.clone();
 
         if !task.dependencies.is_empty() {
             for dep in &task.dependencies {
@@ -55,7 +55,7 @@ impl Agent {
         // Use the client to execute the task
         let chat_response = self.client.execute(
             &user_messages,
-            &task.prompt.system_prompt,
+            &task.prompt.system_messages,
             &task.prompt.model_settings,
         )?;
 

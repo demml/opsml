@@ -6,6 +6,7 @@ use crate::{
         types::ChatResponse,
     },
 };
+use opsml_state::app_state;
 use opsml_utils::create_uuid7;
 use potato_head::prompt::types::Role;
 use pyo3::prelude::*;
@@ -13,7 +14,6 @@ use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 use std::sync::RwLock;
 use tracing::{info, warn};
-
 #[derive(Debug, Clone)]
 pub struct TaskList {
     pub tasks: HashMap<String, Task>,
@@ -166,11 +166,25 @@ impl Workflow {
     pub fn pending_count(&self) -> usize {
         self.tasks.pending_count()
     }
+
+    pub fn run(&self) {
+        info!("Running workflow: {}", self.name);
+        // Here you would implement the logic to run the workflow
+        // clone the workflow and pass it to the execute_workflow function
+        let workflow = self.clone();
+        let workflow = Arc::new(RwLock::new(workflow));
+        app_state().runtime.block_on(async {
+            if let Err(e) = execute_workflow(workflow).await {
+                warn!("Workflow execution failed: {}", e);
+            } else {
+                info!("Workflow execution completed successfully.");
+            }
+        });
+    }
 }
 
-pub async fn execute_workflow(workflow: Workflow) -> Result<(), AgentError> {
+pub async fn execute_workflow(workflow: Arc<RwLock<Workflow>>) -> Result<(), AgentError> {
     // (1) Creating a shared workflow instance using Arc and RwLock
-    let workflow = Arc::new(RwLock::new(workflow));
 
     info!(
         "Starting workflow execution: {}",
