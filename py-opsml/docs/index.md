@@ -246,13 +246,13 @@ card = PromptCard(
 def chat_app(language: str):
 
     # create the prompt and bind the context
-    user_prompt = card.prompt.prompt[0].bind(language).unwrap()
+    user_prompt = card.prompt.user_message[0].bind(language).unwrap()
 
     response = client.chat.completions.create(
         model=card.prompt.model,
         messages=[
             {"role": "system", "content": user_prompt},
-            {"role": "user", "content": card.prompt.prompt[0].unwrap()},
+            {"role": "user", "content": card.prompt.user_message[0].unwrap()},
         ],
     )
 
@@ -293,10 +293,10 @@ card = PromptCard(
 
 agent = Agent(
     card.prompt.model_identifier,
-    system_prompt=card.prompt.system_prompt[0].unwrap(),
+    system_prompt=card.prompt.system_message[0].unwrap(),
 )
 
-result = agent.run_sync(card.prompt.prompt[0].unwrap())
+result = agent.run_sync(card.prompt.user_message[0].unwrap())
 print(result.output)
 
 registry = CardRegistry(RegistryType.Prompt)

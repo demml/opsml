@@ -18,10 +18,11 @@ RiskLevel = potato_head.RiskLevel
 PIIConfig = potato_head.PIIConfig
 
 # agents
-OpenAIClient = potato_head.OpenAIClient
-Agent = potato_head.Agent
+Provider = potato_head.Provider
+TaskStatus = potato_head.TaskStatus
 Task = potato_head.Task
 TaskList = potato_head.TaskList
+Agent = potato_head.Agent
 Workflow = potato_head.Workflow
 
 
@@ -35,9 +36,10 @@ __all__ = [
     "PIIConfig",
     "PromptSanitizer",
     "ModelSettings",
-    "OpenAIClient",
-    "Agent",
+    "Provider",
+    "TaskStatus",
     "Task",
     "TaskList",
+    "Agent",
     "Workflow",
 ]

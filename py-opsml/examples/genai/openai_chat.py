@@ -18,8 +18,11 @@ def chat_app(language: str):
     response = client.chat.completions.create(
         model=card.prompt.model,
         messages=[
-            {"role": "system", "content": card.prompt.system_prompt[0].unwrap()},
-            {"role": "user", "content": card.prompt.prompt[0].bind(language).unwrap()},
+            {"role": "system", "content": card.prompt.system_message[0].unwrap()},
+            {
+                "role": "user",
+                "content": card.prompt.user_message[0].bind(language).unwrap(),
+            },
         ],
     )
 

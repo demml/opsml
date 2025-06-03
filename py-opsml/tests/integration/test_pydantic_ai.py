@@ -20,9 +20,9 @@ def test_string_openai_prompt():
 
     agent = Agent(
         prompt.model_identifier,
-        system_prompt=prompt.system_prompt[0].unwrap(),
+        system_prompt=prompt.system_message[0].unwrap(),
         result_type=TodaysDate,
     )
-    result = agent.run_sync(prompt.prompt[0].unwrap())
+    result = agent.run_sync(prompt.user_message[0].unwrap())
 
     assert result.data.date is not None

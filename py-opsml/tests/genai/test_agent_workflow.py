@@ -5,10 +5,10 @@ from opsml.potato_head import (
     Prompt,
     SanitizationConfig,
     PromptSanitizer,
-    OpenAIClient,
     Agent,
     Task,
     Workflow,
+    Provider,
 )
 from dataclasses import dataclass
 import os
@@ -24,26 +24,26 @@ class Prompts:
     prompt_step2: Prompt
 
 
-def _test_simple_workflow(prompt_step1: Prompt):
+def test_simple_workflow(prompt_step1: Prompt):
     agent = PydanticAgent(
         prompt_step1.model_identifier,
-        system_prompt=prompt_step1.system_prompt[0].unwrap(),
+        system_prompt=prompt_step1.system_message[0].unwrap(),
     )
 
     with agent.override(model=TestModel()):
-        agent.run_sync(prompt_step1.prompt[0].unwrap())
+        agent.run_sync(prompt_step1.user_message[0].unwrap())
 
 
-def _test_simple_dep_workflow(prompt_step1: Prompt, prompt_step2: Prompt):
+def test_simple_dep_workflow(prompt_step1: Prompt, prompt_step2: Prompt):
     agent = PydanticAgent(
         prompt_step1.model_identifier,
-        system_prompt=prompt_step1.system_prompt[0].unwrap(),
+        system_prompt=prompt_step1.system_message[0].unwrap(),
         deps_type=Prompts,
     )
 
     @agent.system_prompt
-    def get_system_prompt(ctx: RunContext[Prompts]) -> str:
-        return ctx.deps.prompt_step1.system_prompt[0].unwrap()
+    def get_system_message(ctx: RunContext[Prompts]) -> str:
+        return ctx.deps.prompt_step1.system_message[0].unwrap()
 
     with agent.override(model=TestModel()):
         agent.run_sync(
@@ -55,16 +55,16 @@ def _test_simple_dep_workflow(prompt_step1: Prompt, prompt_step2: Prompt):
         )
 
 
-def _test_binding_workflow(prompt_step1: Prompt, prompt_step2: Prompt):
+def test_binding_workflow(prompt_step1: Prompt, prompt_step2: Prompt):
     agent = PydanticAgent(
         "openai:gpt-4o",
-        system_prompt=prompt_step1.system_prompt[0].unwrap(),
+        system_prompt=prompt_step1.system_message[0].unwrap(),
         deps_type=Prompts,
     )
 
     @agent.tool
     def bind_context(ctx: RunContext[Prompts], search_query: str) -> str:
-        bound = ctx.deps.prompt_step1.prompt[0].bind(search_query).unwrap()
+        bound = ctx.deps.prompt_step1.user_message[0].bind(search_query).unwrap()
         return bound
 
     with agent.override(model=TestModel()):
@@ -80,7 +80,7 @@ def _test_binding_workflow(prompt_step1: Prompt, prompt_step2: Prompt):
         assert result.all_messages()[2].parts[0].tool_name == "bind_context"  # type: ignore
 
 
-def _test_sanitization_workflow(prompt_step1: Prompt):
+def test_sanitization_workflow(prompt_step1: Prompt):
     santization_config = SanitizationConfig.standard()
     santization_config.error_on_high_risk = False
 
@@ -88,7 +88,7 @@ def _test_sanitization_workflow(prompt_step1: Prompt):
 
     agent = PydanticAgent(
         prompt_step1.model_identifier,
-        system_prompt=prompt_step1.system_prompt[0].unwrap(),
+        system_prompt=prompt_step1.system_message[0].unwrap(),
     )
 
     with agent.override(model=TestModel()):
@@ -112,22 +112,6 @@ def _test_sanitization_workflow(prompt_step1: Prompt):
         assert len(result.detected_issues) == 2
 
 
-def test_openai_client_chat_completion():
-    with OpenAITestServer():
-        prompt = Prompt(
-            user_message="Hello, how are you?",
-            system_message="You are a helpful assistant.",
-            model="gpt-4o",
-            provider="openai",
-        )
-        client = OpenAIClient()
-        client.chat_completion(
-            user_message=prompt.user_message,
-            developer_message=prompt.system_message,
-            settings=prompt.model_settings,
-        )
-
-
 def test_opsml_agent_task_execution():
     with OpenAITestServer():
         prompt = Prompt(
@@ -136,15 +120,8 @@ def test_opsml_agent_task_execution():
             model="gpt-4o",
             provider="openai",
         )
-        client = OpenAIClient()
-        agent = Agent(client)
-
-        agent.execute_task(
-            Task(
-                prompt=prompt,
-                agent_id="my_agent",
-            ),
-        )
+        agent = Agent(Provider.OpenAI)
+        agent.execute_task(Task(prompt=prompt, agent_id=agent.id))
 
 
 def test_opsml_agent_workflow():

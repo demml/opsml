@@ -338,7 +338,7 @@ class Message:
                     ],
                     system_prompt="system_prompt",
                 )
-                bounded_prompt = prompt.prompt[0].bind("world").unwrap() # we bind "world" to the first message
+                bounded_prompt = prompt.user_message[0].bind("world").unwrap() # we bind "world" to the first message
             ```
 
         Args:
@@ -369,7 +369,7 @@ class Message:
                 # Note: sanitization will fail if no sanitizer is provided (either through prompt.sanitizer or standalone)
 
                 # we bind "world" to the first message
-                bounded_prompt = prompt.prompt[0].bind("world").sanitize(prompt.sanitizer).unwrap()
+                bounded_prompt = prompt.user_message[0].bind("world").sanitize(prompt.sanitizer).unwrap()
             ```
 
         Args:
@@ -636,9 +636,19 @@ class TaskStatus:
     Completed: "TaskStatus"
     Failed: "TaskStatus"
 
+class AgentResponse:
+    @property
+    def id(self) -> str:
+        """The ID of the agent response."""
+
+    @property
+    def output(self) -> str:
+        """The output of the agent response."""
+
 class Task:
     def __init__(
         self,
+        agent_id: str,
         prompt: Prompt,
         dependencies: List[str] = [],
         id: Optional[str] = None,
@@ -646,6 +656,8 @@ class Task:
         """Create a Task object.
 
         Args:
+            agent_id (str):
+                The ID of the agent that will execute the task.
             prompt (Prompt):
                 The prompt to use for the task.
             dependencies (List[str]):
@@ -669,3 +681,111 @@ class Task:
     @property
     def status(self) -> TaskStatus:
         """The status of the task."""
+
+class TaskList:
+    def __init__(self) -> None:
+        """Create a TaskList object."""
+
+class Agent:
+    def __init__(self, provider: Provider | str) -> None:
+        """Create an Agent object.
+
+        Args:
+            provider (Provider | str):
+                The provider to use for the agent. This can be a Provider enum or a string
+                representing the provider.
+        """
+
+    def execute_task(
+        self,
+        task: Task,
+        context_messages: Dict[str, List[Message]],
+    ) -> AgentResponse:
+        """Execute a task.
+
+        Args:
+            task (Task):
+                The task to execute.
+            context_messages (Dict[str, List[Message]]):
+                The context messages to use for the task. This is a dictionary where the keys
+                are the task IDs and the values are lists of messages that will be used as context
+                for the task.
+
+        Returns:
+            AgentResponse:
+                The response from the agent after executing the task.
+        """
+
+    @property
+    def id(self) -> str:
+        """The ID of the agent. This is a random uuid7 that is generated when the agent is created."""
+
+class Workflow:
+    def __init__(self, name: str) -> None:
+        """Create a Workflow object.
+
+        Args:
+            name (str):
+                The name of the workflow.
+        """
+
+    @property
+    def id(self) -> str:
+        """The ID of the workflow. This is a random uuid7 that is generated when the workflow is created."""
+
+    @property
+    def name(self) -> str:
+        """The name of the workflow."""
+
+    @property
+    def tasks(self) -> List[Task]:
+        """The tasks in the workflow."""
+
+    @property
+    def agents(self) -> Dict[str, Agent]:
+        """The agents in the workflow."""
+
+    def add_task(self, task: Task) -> None:
+        """Add a task to the workflow.
+
+        Args:
+            task (Task):
+                The task to add to the workflow.
+        """
+
+    def add_agent(self, agent: Agent) -> None:
+        """Add an agent to the workflow.
+
+        Args:
+            agent (Agent):
+                The agent to add to the workflow.
+        """
+
+    def is_complete(self) -> bool:
+        """Check if the workflow is complete.
+
+        Returns:
+            bool:
+                True if the workflow is complete, False otherwise.
+        """
+
+    def pending_count(self) -> int:
+        """Get the number of pending tasks in the workflow.
+
+        Returns:
+            int:
+                The number of pending tasks in the workflow.
+        """
+        return sum(1 for task in self.tasks if task.status == TaskStatus.Pending)
+
+    def execution_plan(self) -> Dict[str, List[str]]:
+        """Get the execution plan for the workflow.
+
+        Returns:
+            Dict[str, List[str]]:
+                A dictionary where the keys are task IDs and the values are lists of task IDs
+                that the task depends on.
+        """
+
+    def run(self) -> None:
+        """Run the workflow. This will execute all tasks in the workflow and return when all tasks are complete."""
