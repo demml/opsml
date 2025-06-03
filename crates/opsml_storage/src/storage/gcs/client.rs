@@ -731,6 +731,10 @@ impl FileSystem for GCSFSStorageClient {
                     .await?;
 
                 if !response.status().is_success() {
+                    // log the error
+                    // get the response text
+                    let error_text = response.text().await.unwrap_or_default();
+                    error!("Failed to cancel upload: {}", error_text);
                     return Err(StorageError::CancelUploadError);
                 } else {
                     Ok(())

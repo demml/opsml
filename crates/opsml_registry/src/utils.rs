@@ -300,8 +300,9 @@ pub fn upload_card_artifacts(path: PathBuf, key: &ArtifactKey) -> Result<(), Reg
     let encryption_key = key.get_decrypt_key()?;
 
     encrypt_directory(&path, &encryption_key)?;
-    storage_client()?.put(&path, &key.storage_path(), true)?;
+    debug!("Encrypted card artifacts");
 
+    storage_client()?.put(&path, &key.storage_path(), true)?;
     debug!("Saved card artifacts to storage");
 
     Ok(())
