@@ -330,13 +330,13 @@ class Message:
             ```python
                 prompt = Prompt(
                     model="openai:gpt-4o",
-                    prompt=[
+                    user_message=[
                         "My prompt $1 is $2",
                         "My prompt $3 is $4",
                     ],
-                    system_prompt="system_prompt",
+                    system_message="system_prompt",
                 )
-                bounded_prompt = prompt.prompt[0].bind("world").unwrap() # we bind "world" to the first message
+                bounded_prompt = prompt.user_message[0].bind("world").unwrap() # we bind "world" to the first message
             ```
 
         Args:
@@ -356,18 +356,18 @@ class Message:
             ```python
                 prompt = Prompt(
                     model="openai:gpt-4o",
-                    prompt=[
+                    user_message=[
                         "My prompt $1 is $2",
                         "My prompt $3 is $4",
                     ],
-                    system_prompt="system_prompt",
+                    system_message="system_prompt",
                 )
 
                 # sanitize the first message
                 # Note: sanitization will fail if no sanitizer is provided (either through prompt.sanitizer or standalone)
 
                 # we bind "world" to the first message
-                bounded_prompt = prompt.prompt[0].bind("world").sanitize(prompt.sanitizer).unwrap()
+                bounded_prompt = prompt.user_message[0].bind("world").sanitize(prompt.sanitizer).unwrap()
             ```
 
         Args:
@@ -380,11 +380,19 @@ class Message:
         """
 
     def unwrap(self) -> Any:
-        """Unwrap the message content to python compatible content.
+        """Unwrap the message content.
 
         Returns:
             str:
-                The unwrapped message content.
+                The message content.
+        """
+
+    def model_dump(self) -> Dict[str, Any]:
+        """Unwrap the message content and serialize it to a dictionary.
+
+        Returns:
+            Dict[str, Any]:
+                The message dictionary with keys "content" and "role".
         """
 
 class ModelSettings:
@@ -491,26 +499,29 @@ class ModelSettings:
     def extra_body(self) -> Optional[dict[str, Any]]:
         """The extra body to use."""
 
+    def model_dump(self) -> Dict[str, Any]:
+        """The model settings to use for the prompt."""
+
 class Prompt:
     def __init__(
         self,
-        prompt: str | Sequence[str | ImageUrl | AudioUrl | BinaryContent | DocumentUrl] | Message | List[Message],
+        user_message: str | Sequence[str | ImageUrl | AudioUrl | BinaryContent | DocumentUrl] | Message | List[Message],
         model: Optional[str] = None,
         provider: Optional[str] = None,
-        system_prompt: Optional[str | List[str]] = None,
+        system_message: Optional[str | List[str]] = None,
         sanitization_config: Optional[SanitizationConfig] = None,
         model_settings: Optional[ModelSettings] = None,
     ) -> None:
         """Prompt for interacting with an LLM API.
 
         Args:
-            prompt (str | Sequence[str | ImageUrl | AudioUrl | BinaryContent | DocumentUrl] | Message | List[Message]):
+            user_message (str | Sequence[str | ImageUrl | AudioUrl | BinaryContent | DocumentUrl] | Message | List[Message]):
                 The prompt to use.
             model (str | None):
                 The model to use for the prompt. Required if model_settings is not provided.
             provider (str | None):
                 The provider to use for the prompt. Required if model_settings is not provided.
-            system_prompt (Optional[str, Sequence[str]]):
+            system_message (Optional[str | List[str]]):
                 The system prompt to use in the prompt.
             sanitization_config (None):
                 The santization configuration to use for the prompt.
@@ -537,19 +548,19 @@ class Prompt:
             ```python
                 prompt = Prompt(
                     model="gpt-4o",
-                    prompt="My prompt $1 is $2",
-                    system_prompt="system_prompt",
+                    user_message="My prompt $1 is $2",
+                    system_message="system_message",
                     provider="openai",
                 )
                 agent = Agent(
                     prompt.model_identifier, # "openai:gpt-4o"
-                    system_prompt=prompt.system_prompt[0].unwrap(),
+                    system_messages=prompt.system_message[0].unwrap(),
                 )
             ```
         """
 
     @property
-    def model_settings(self) -> Dict[str, Any]:
+    def model_settings(self) -> ModelSettings:
         """The model settings to use for the prompt."""
 
     @property
@@ -557,14 +568,14 @@ class Prompt:
         """The prompt sanitizer to use for the prompt."""
 
     @property
-    def prompt(
+    def user_message(
         self,
     ) -> List[Message]:
-        """The user prompt to use in the prompt."""
+        """The user message to use in the prompt."""
 
     @property
-    def system_prompt(self) -> List[Message]:
-        """The system prompt to use in the prompt."""
+    def system_message(self) -> List[Message]:
+        """The system message to use in the prompt."""
 
     def save_prompt(self, path: Optional[Path] = None) -> None:
         """Save the prompt to a file.
@@ -609,3 +620,166 @@ class Prompt:
         """
 
     def __str__(self): ...
+
+class Provider:
+    OpenAI: "Provider"
+
+class TaskStatus:
+    Pending: "TaskStatus"
+    Running: "TaskStatus"
+    Completed: "TaskStatus"
+    Failed: "TaskStatus"
+
+class AgentResponse:
+    @property
+    def id(self) -> str:
+        """The ID of the agent response."""
+
+    @property
+    def output(self) -> str:
+        """The output of the agent response."""
+
+class Task:
+    def __init__(
+        self,
+        agent_id: str,
+        prompt: Prompt,
+        dependencies: List[str] = [],
+        id: Optional[str] = None,
+    ) -> None:
+        """Create a Task object.
+
+        Args:
+            agent_id (str):
+                The ID of the agent that will execute the task.
+            prompt (Prompt):
+                The prompt to use for the task.
+            dependencies (List[str]):
+                The dependencies of the task.
+            id (Optional[str]):
+                The ID of the task. If None, a random uuid7 will be generated.
+        """
+
+    @property
+    def prompt(self) -> Prompt:
+        """The prompt to use for the task."""
+
+    @property
+    def dependencies(self) -> List[str]:
+        """The dependencies of the task."""
+
+    @property
+    def id(self) -> str:
+        """The ID of the task."""
+
+    @property
+    def status(self) -> TaskStatus:
+        """The status of the task."""
+
+class TaskList:
+    def __init__(self) -> None:
+        """Create a TaskList object."""
+
+class Agent:
+    def __init__(self, provider: Provider | str) -> None:
+        """Create an Agent object.
+
+        Args:
+            provider (Provider | str):
+                The provider to use for the agent. This can be a Provider enum or a string
+                representing the provider.
+        """
+
+    def execute_task(
+        self,
+        task: Task,
+        context_messages: Dict[str, List[Message]],
+    ) -> AgentResponse:
+        """Execute a task.
+
+        Args:
+            task (Task):
+                The task to execute.
+            context_messages (Dict[str, List[Message]]):
+                The context messages to use for the task. This is a dictionary where the keys
+                are the task IDs and the values are lists of messages that will be used as context
+                for the task.
+
+        Returns:
+            AgentResponse:
+                The response from the agent after executing the task.
+        """
+
+    @property
+    def id(self) -> str:
+        """The ID of the agent. This is a random uuid7 that is generated when the agent is created."""
+
+class Workflow:
+    def __init__(self, name: str) -> None:
+        """Create a Workflow object.
+
+        Args:
+            name (str):
+                The name of the workflow.
+        """
+
+    @property
+    def id(self) -> str:
+        """The ID of the workflow. This is a random uuid7 that is generated when the workflow is created."""
+
+    @property
+    def name(self) -> str:
+        """The name of the workflow."""
+
+    @property
+    def tasks(self) -> List[Task]:
+        """The tasks in the workflow."""
+
+    @property
+    def agents(self) -> Dict[str, Agent]:
+        """The agents in the workflow."""
+
+    def add_task(self, task: Task) -> None:
+        """Add a task to the workflow.
+
+        Args:
+            task (Task):
+                The task to add to the workflow.
+        """
+
+    def add_agent(self, agent: Agent) -> None:
+        """Add an agent to the workflow.
+
+        Args:
+            agent (Agent):
+                The agent to add to the workflow.
+        """
+
+    def is_complete(self) -> bool:
+        """Check if the workflow is complete.
+
+        Returns:
+            bool:
+                True if the workflow is complete, False otherwise.
+        """
+
+    def pending_count(self) -> int:
+        """Get the number of pending tasks in the workflow.
+
+        Returns:
+            int:
+                The number of pending tasks in the workflow.
+        """
+        return sum(1 for task in self.tasks if task.status == TaskStatus.Pending)
+
+    def execution_plan(self) -> Dict[str, List[str]]:
+        """Get the execution plan for the workflow.
+
+        Returns:
+            Dict[str, List[str]]:
+                A dictionary where the keys are task IDs and the values are lists of task IDs
+                that the task depends on.
+        """
+
+    def run(self) -> None:
+        """Run the workflow. This will execute all tasks in the workflow and return when all tasks are complete."""

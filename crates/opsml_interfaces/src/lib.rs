@@ -1,5 +1,6 @@
 pub mod data;
 pub mod error;
+pub mod genai;
 pub mod model;
 pub mod types;
 

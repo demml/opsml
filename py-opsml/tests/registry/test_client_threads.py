@@ -3,7 +3,7 @@
 # OpsmlTestServer will spin up a server in a background task that the client will connect to
 ###################################################################################################
 
-from opsml.test import OpsmlTestServer  # type: ignore
+from opsml.mock import OpsmlTestServer  # type: ignore
 from opsml import (  # type: ignore
     CardRegistry,
     RegistryType,

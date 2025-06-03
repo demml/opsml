@@ -33,7 +33,7 @@ EXCLUDE = bool(DARWIN_EXCLUDE or WINDOWS_EXCLUDE)
 
 
 # Sets up logging for tests
-RustyLogger.setup_logging(LoggingConfig(log_level=LogLevel.Info))
+RustyLogger.setup_logging(LoggingConfig(log_level=LogLevel.Debug))
 
 
 class MockInterface(BaseModel):
@@ -246,8 +246,8 @@ def incorrect_custom_interface(example_dataframe):
 def chat_prompt() -> Prompt:
     prompt = Prompt(
         model="gpt-4o",
-        prompt="what is 2 + 2?",
+        user_message="what is 2 + 2?",
         provider="openai",
-        system_prompt="You are a helpful assistant.",
+        system_message="You are a helpful assistant.",
     )
     return prompt

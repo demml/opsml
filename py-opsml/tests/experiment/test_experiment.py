@@ -1,4 +1,4 @@
-from opsml.test import OpsmlTestServer
+from opsml.mock import OpsmlTestServer
 from opsml.experiment import (
     Metric,
     Parameter,

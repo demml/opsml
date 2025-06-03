@@ -10,8 +10,11 @@ use serde_json::Value;
 use std::collections::HashMap;
 use std::path::PathBuf;
 
+use super::types::Role;
+
 #[pyclass]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
+
 pub struct ModelSettings {
     #[pyo3(get, set)]
     pub model: String,
@@ -20,35 +23,46 @@ pub struct ModelSettings {
     pub provider: String,
 
     #[pyo3(get, set)]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub max_tokens: Option<usize>,
 
     #[pyo3(get, set)]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub temperature: Option<f32>,
 
     #[pyo3(get, set)]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub top_p: Option<f32>,
 
     #[pyo3(get, set)]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub frequency_penalty: Option<f32>,
 
     #[pyo3(get, set)]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub presence_penalty: Option<f32>,
 
     #[pyo3(get, set)]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub timeout: Option<f32>,
 
     #[pyo3(get, set)]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub parallel_tool_calls: Option<bool>,
 
     #[pyo3(get, set)]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub seed: Option<u64>,
 
     #[pyo3(get, set)]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub logit_bias: Option<HashMap<String, i32>>,
 
     #[pyo3(get, set)]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub stop_sequences: Option<Vec<String>>,
 
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub extra_body: Option<Value>,
 }
 
@@ -111,16 +125,59 @@ impl ModelSettings {
             .transpose()
             .map_err(|e| PotatoHeadError::new_err(format!("Failed to get extra body: {}", e)))
     }
+
+    pub fn model_dump<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyDict>> {
+        // iterate over each field in model_settings and add to the dict if it is not None
+        let pydict = PyDict::new(py);
+
+        pydict.set_item("model", &self.model)?;
+        pydict.set_item("provider", &self.provider)?;
+
+        if let Some(max_tokens) = self.max_tokens {
+            pydict.set_item("max_tokens", max_tokens)?;
+        }
+        if let Some(temperature) = self.temperature {
+            pydict.set_item("temperature", temperature)?;
+        }
+        if let Some(top_p) = self.top_p {
+            pydict.set_item("top_p", top_p)?;
+        }
+        if let Some(frequency_penalty) = self.frequency_penalty {
+            pydict.set_item("frequency_penalty", frequency_penalty)?;
+        }
+        if let Some(presence_penalty) = self.presence_penalty {
+            pydict.set_item("presence_penalty", presence_penalty)?;
+        }
+        if let Some(parallel_tool_calls) = self.parallel_tool_calls {
+            pydict.set_item("parallel_tool_calls", parallel_tool_calls)?;
+        }
+        if let Some(seed) = self.seed {
+            pydict.set_item("seed", seed)?;
+        }
+        if let Some(logit_bias) = &self.logit_bias {
+            pydict.set_item("logit_bias", logit_bias)?;
+        }
+        if let Some(stop_sequences) = &self.stop_sequences {
+            pydict.set_item("stop_sequences", stop_sequences)?;
+        }
+        let extra = self.extra_body(py)?;
+
+        if let Some(extra) = extra {
+            pydict.set_item("extra_body", extra)?;
+        }
+
+        Ok(pydict)
+    }
 }
 
 #[pyclass]
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Prompt {
     #[pyo3(get)]
-    pub prompt: Vec<Message>,
+    pub user_message: Vec<Message>,
 
     #[pyo3(get)]
-    pub system_prompt: Vec<Message>,
+    pub system_message: Vec<Message>,
 
     #[pyo3(get)]
     pub sanitization_config: Option<SanitizationConfig>,
@@ -130,27 +187,28 @@ pub struct Prompt {
 
     pub version: String,
 
+    #[pyo3(get)]
     pub model_settings: ModelSettings,
 }
 
-fn parse_prompt(prompt: &Bound<'_, PyAny>) -> PyResult<Vec<Message>> {
-    if prompt.is_instance_of::<Message>() {
-        return Ok(vec![prompt.extract::<Message>()?]);
+fn parse_prompt(messages: &Bound<'_, PyAny>) -> PyResult<Vec<Message>> {
+    if messages.is_instance_of::<Message>() {
+        return Ok(vec![messages.extract::<Message>()?]);
     }
 
-    if prompt.is_instance_of::<PyString>() {
-        return Ok(vec![Message::new(prompt)?]);
+    if messages.is_instance_of::<PyString>() {
+        return Ok(vec![Message::new(messages)?]);
     }
 
-    let initial_capacity = prompt.len().unwrap_or(1);
-    let mut messages = Vec::with_capacity(initial_capacity);
+    let initial_capacity = messages.len().unwrap_or(1);
+    let mut revised_messages = Vec::with_capacity(initial_capacity);
 
     // Explicitly check for list or tuple
-    if prompt.is_instance_of::<PyList>() || prompt.is_instance_of::<PyTuple>() {
-        for item in prompt.try_iter()? {
+    if messages.is_instance_of::<PyList>() || messages.is_instance_of::<PyTuple>() {
+        for item in messages.try_iter()? {
             match item {
                 Ok(item) => {
-                    messages.push(if item.is_instance_of::<Message>() {
+                    revised_messages.push(if item.is_instance_of::<Message>() {
                         item.extract::<Message>()?
                     } else {
                         Message::new(&item)?
@@ -161,34 +219,46 @@ fn parse_prompt(prompt: &Bound<'_, PyAny>) -> PyResult<Vec<Message>> {
                 }
             }
         }
-        Ok(messages)
+        Ok(revised_messages)
     } else {
         // Not a list or tuple, try to convert directly to Message
-        Ok(vec![Message::new(prompt)?])
+        Ok(vec![Message::new(messages)?])
     }
 }
 
 #[pymethods]
 impl Prompt {
     #[new]
-    #[pyo3(signature = (prompt, model=None, provider=None, system_prompt=None, sanitization_config=None, model_settings=None))]
+    #[pyo3(signature = (user_message, model=None, provider=None, system_message=None, sanitization_config=None, model_settings=None))]
     pub fn new(
-        prompt: &Bound<'_, PyAny>,
+        user_message: &Bound<'_, PyAny>,
         model: Option<&str>,
         provider: Option<&str>,
-        system_prompt: Option<&Bound<'_, PyAny>>,
+        system_message: Option<&Bound<'_, PyAny>>,
         sanitization_config: Option<SanitizationConfig>,
         model_settings: Option<ModelSettings>,
     ) -> PyResult<Self> {
         // extract messages
 
-        let system_prompt = if let Some(system_prompt) = system_prompt {
-            parse_prompt(system_prompt)?
+        let system_message = if let Some(system_message) = system_message {
+            parse_prompt(system_message)?
+                .into_iter()
+                .map(|mut msg| {
+                    msg.role = Role::Developer.to_string();
+                    msg
+                })
+                .collect::<Vec<Message>>()
         } else {
             vec![]
         };
 
-        let prompt = parse_prompt(prompt)?;
+        let user_message = parse_prompt(user_message)?
+            .into_iter()
+            .map(|mut msg| {
+                msg.role = Role::User.to_string();
+                msg
+            })
+            .collect::<Vec<Message>>();
 
         // get version from crate
         let version = opsml_version::version();
@@ -215,11 +285,11 @@ impl Prompt {
         };
 
         Ok(Self {
-            prompt: prompt.clone(),
+            user_message,
             sanitization_config,
             sanitizer,
             version,
-            system_prompt,
+            system_message,
             model_settings,
         })
     }
@@ -242,50 +312,6 @@ impl Prompt {
             "{}:{}",
             self.model_settings.provider, self.model_settings.model
         )
-    }
-
-    #[getter]
-    pub fn model_settings<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyDict>> {
-        // iterate over each field in model_settings and add to the dict if it is not None
-        let pydict = PyDict::new(py);
-
-        pydict.set_item("model", &self.model_settings.model)?;
-        pydict.set_item("provider", &self.model_settings.provider)?;
-
-        if let Some(max_tokens) = self.model_settings.max_tokens {
-            pydict.set_item("max_tokens", max_tokens)?;
-        }
-        if let Some(temperature) = self.model_settings.temperature {
-            pydict.set_item("temperature", temperature)?;
-        }
-        if let Some(top_p) = self.model_settings.top_p {
-            pydict.set_item("top_p", top_p)?;
-        }
-        if let Some(frequency_penalty) = self.model_settings.frequency_penalty {
-            pydict.set_item("frequency_penalty", frequency_penalty)?;
-        }
-        if let Some(presence_penalty) = self.model_settings.presence_penalty {
-            pydict.set_item("presence_penalty", presence_penalty)?;
-        }
-        if let Some(parallel_tool_calls) = self.model_settings.parallel_tool_calls {
-            pydict.set_item("parallel_tool_calls", parallel_tool_calls)?;
-        }
-        if let Some(seed) = self.model_settings.seed {
-            pydict.set_item("seed", seed)?;
-        }
-        if let Some(logit_bias) = &self.model_settings.logit_bias {
-            pydict.set_item("logit_bias", logit_bias)?;
-        }
-        if let Some(stop_sequences) = &self.model_settings.stop_sequences {
-            pydict.set_item("stop_sequences", stop_sequences)?;
-        }
-        let extra = self.model_settings.extra_body(py)?;
-
-        if let Some(extra) = extra {
-            pydict.set_item("extra_body", extra)?;
-        }
-
-        Ok(pydict)
     }
 
     #[pyo3(signature = (path = None))]

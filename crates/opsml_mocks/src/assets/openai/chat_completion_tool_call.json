@@ -1,0 +1,31 @@
+{
+    "id": "chatcmpl-tool456",
+    "object": "chat.completion",
+    "created": 1717350100,
+    "model": "gpt-4o",
+    "choices": [
+        {
+            "index": 0,
+            "message": {
+                "role": "assistant",
+                "content": null,
+                "tool_calls": [
+                    {
+                        "id": "call_001",
+                        "type": "function",
+                        "function": {
+                            "name": "roll_dice",
+                            "arguments": "{\"sides\": 20}"
+                        }
+                    }
+                ]
+            },
+            "finish_reason": "tool_calls"
+        }
+    ],
+    "usage": {
+        "prompt_tokens": 12,
+        "completion_tokens": 13,
+        "total_tokens": 25
+    }
+}

@@ -1680,9 +1680,9 @@ checksum = "19d374276b40fb8bbdee95aef7c7fa6b5316ec764510eb64b8dd0e2ed0d7e7f5"
 
 [[package]]
 name = "crc-fast"
-version = "1.2.1"
+version = "1.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "add8d3a4c789d77eeb0f0e3c1035f73610d017f9047e87db94f89c02a56d8fef"
+checksum = "68fcb2be5386ffb77e30bf10820934cb89a628bcb976e7cc632dcd88c059ebea"
 dependencies = [
  "cc",
  "crc",
@@ -2566,11 +2566,11 @@ dependencies = [
 
 [[package]]
 name = "headers"
-version = "0.4.0"
+version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "322106e6bd0cba2d5ead589ddb8150a13d7c4217cf80d7c4f682ca994ccc6aa9"
+checksum = "b3314d5adb5d94bcdf56771f2e50dbbc80bb4bdf88967526706205ac9eff24eb"
 dependencies = [
- "base64 0.21.7",
+ "base64 0.22.1",
  "bytes",
  "headers-core",
  "http 1.3.1",
@@ -4011,16 +4011,40 @@ dependencies = [
 name = "opsml-interfaces"
 version = "3.0.0-alpha.2"
 dependencies = [
+ "opsml-state",
  "opsml-types",
  "opsml-utils",
  "ort",
+ "potato-head",
  "pyo3",
  "rand 0.9.1",
+ "reqwest",
  "scouter-client",
  "serde",
  "serde_json",
  "tempfile",
  "thiserror 2.0.12",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
+name = "opsml-mocks"
+version = "3.0.0-alpha.2"
+dependencies = [
+ "mockito",
+ "opsml-registry",
+ "opsml-server",
+ "opsml-state",
+ "opsml-storage",
+ "opsml-utils",
+ "potato-head",
+ "pyo3",
+ "reqwest",
+ "scouter-client",
+ "serde_json",
+ "thiserror 2.0.12",
+ "tokio",
  "tracing",
 ]
 
@@ -4645,11 +4669,13 @@ name = "potato-head"
 version = "3.0.0-alpha.2"
 dependencies = [
  "mime_guess",
+ "opsml-state",
  "opsml-types",
  "opsml-utils",
  "opsml-version",
  "pyo3",
  "regex",
+ "reqwest",
  "serde",
  "serde_json",
  "thiserror 2.0.12",
@@ -4790,6 +4816,7 @@ dependencies = [
  "opsml-cli",
  "opsml-experiment",
  "opsml-interfaces",
+ "opsml-mocks",
  "opsml-registry",
  "opsml-semver",
  "opsml-server",
@@ -5211,9 +5238,9 @@ checksum = "2b15c43186be67a4fd63bee50d0303afffcef381492ebe2c5d87f324e1b8815c"
 
 [[package]]
 name = "reqwest"
-version = "0.12.18"
+version = "0.12.19"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e98ff6b0dbbe4d5a37318f433d4fc82babd21631f194d370409ceb2e40b2f0b5"
+checksum = "a2f8e5513d63f2e5b386eb5106dc67eaf3f84e95258e210489136b8b92ad6119"
 dependencies = [
  "base64 0.22.1",
  "bytes",
@@ -6784,9 +6811,9 @@ dependencies = [
 
 [[package]]
 name = "tower-http"
-version = "0.6.4"
+version = "0.6.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0fdb0c213ca27a9f57ab69ddb290fd80d970922355b83ae380b395d3986b8a2e"
+checksum = "5cc2d9e086a412a451384326f521c8123a99a466b329941a9403696bff9b0da2"
 dependencies = [
  "bitflags 2.9.1",
  "bytes",
