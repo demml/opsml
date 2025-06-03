@@ -10,6 +10,7 @@ pub use gcs::GcsMultipartUpload;
 pub use local::LocalMultipartUpload;
 use opsml_client::OpsmlApiClient;
 use opsml_types::StorageType;
+use opsml_utils::ChunkParts;
 use std::path::Path;
 use std::sync::Arc;
 
@@ -42,21 +43,22 @@ impl MultiPartUploader {
         }
     }
 
-    pub fn upload_file_in_chunks(
-        &mut self,
-        chunk_count: u64,
-        size_of_last_chunk: u64,
-        chunk_size: u64,
-    ) -> Result<(), MultiPartError> {
+    pub fn upload_file_in_chunks(&mut self, chunk_parts: ChunkParts) -> Result<(), MultiPartError> {
         match self {
-            MultiPartUploader::S3(s3) => Ok(s3.upload_file_in_chunks(chunk_size as usize)?),
-            MultiPartUploader::Gcs(gcs) => {
-                Ok(gcs.upload_file_in_chunks(chunk_count, size_of_last_chunk, chunk_size)?)
+            MultiPartUploader::S3(s3) => {
+                Ok(s3.upload_file_in_chunks(chunk_parts.chunk_size as usize)?)
             }
+            MultiPartUploader::Gcs(gcs) => Ok(gcs.upload_file_in_chunks(
+                chunk_parts.chunk_count,
+                chunk_parts.size_of_last_chunk,
+                chunk_parts.chunk_size,
+            )?),
             MultiPartUploader::Local(local) => local.upload_file_in_chunks(),
-            MultiPartUploader::Azure(azure) => {
-                azure.upload_file_in_chunks(chunk_count, size_of_last_chunk, chunk_size)
-            }
+            MultiPartUploader::Azure(azure) => azure.upload_file_in_chunks(
+                chunk_parts.chunk_count,
+                chunk_parts.size_of_last_chunk,
+                chunk_parts.chunk_size,
+            ),
         }
     }
 }

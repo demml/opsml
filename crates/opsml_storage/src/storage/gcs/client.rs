@@ -2,6 +2,7 @@ use crate::storage::base::{get_files, PathExt, StorageClient};
 use crate::storage::error::StorageError;
 use crate::storage::filesystem::FileSystem;
 use crate::storage::gcs::error::GoogleError;
+use crate::storage::utils::get_chunk_parts;
 use async_trait::async_trait;
 use base64::prelude::*;
 use futures::stream::Stream;
@@ -22,8 +23,8 @@ use google_cloud_storage::sign::SignedURLMethod;
 use google_cloud_storage::sign::SignedURLOptions;
 use opsml_settings::config::OpsmlStorageSettings;
 use opsml_types::contracts::{CompleteMultipartUpload, FileInfo, UploadPartArgs};
-use opsml_types::{StorageType, UPLOAD_CHUNK_SIZE};
-use opsml_utils::FileUtils;
+use opsml_types::StorageType;
+use opsml_utils::ChunkParts;
 use reqwest::header::CONTENT_LENGTH;
 use std::env;
 use std::fs::File;
@@ -125,23 +126,18 @@ impl GoogleMultipartUpload {
         Ok(uploaded)
     }
 
-    pub async fn upload_file_in_chunks(
-        &self,
-        chunk_count: u64,
-        size_of_last_chunk: u64,
-        chunk_size: u64,
-    ) -> Result<(), GoogleError> {
+    pub async fn upload_file_in_chunks(&self, chunk_parts: ChunkParts) -> Result<(), GoogleError> {
         let mut current_status = UploadStatus::NotStarted;
 
-        for chunk_index in 0..chunk_count {
-            let this_chunk = if chunk_count - 1 == chunk_index {
-                size_of_last_chunk
+        for chunk_index in 0..chunk_parts.chunk_count {
+            let this_chunk = if chunk_parts.chunk_count - 1 == chunk_index {
+                chunk_parts.size_of_last_chunk
             } else {
-                chunk_size
+                chunk_parts.chunk_size
             };
 
             let upload_args = UploadPartArgs {
-                chunk_size,
+                chunk_size: chunk_parts.chunk_size,
                 chunk_index,
                 this_chunk_size: this_chunk,
             };
@@ -677,8 +673,7 @@ impl FileSystem for GCSFSStorageClient {
             let files: Vec<PathBuf> = get_files(&stripped_lpath)?;
 
             for file in files {
-                let (chunk_count, size_of_last_chunk, chunk_size) =
-                    FileUtils::get_chunk_count(&file, UPLOAD_CHUNK_SIZE as u64)?;
+                let chunks_parts = get_chunk_parts(&file)?;
 
                 let stripped_file_path = file.strip_path(self.client.bucket().await);
                 let relative_path = file.relative_path(&stripped_lpath)?;
@@ -692,13 +687,10 @@ impl FileSystem for GCSFSStorageClient {
                     )
                     .await?;
 
-                uploader
-                    .upload_file_in_chunks(chunk_count, size_of_last_chunk, chunk_size)
-                    .await?;
+                uploader.upload_file_in_chunks(chunks_parts).await?;
             }
         } else {
-            let (chunk_count, size_of_last_chunk, chunk_size) =
-                FileUtils::get_chunk_count(&stripped_lpath, UPLOAD_CHUNK_SIZE as u64)?;
+            let chunks_parts = get_chunk_parts(&stripped_lpath)?;
 
             let uploader = self
                 .client
@@ -708,9 +700,7 @@ impl FileSystem for GCSFSStorageClient {
                 )
                 .await?;
 
-            uploader
-                .upload_file_in_chunks(chunk_count, size_of_last_chunk, chunk_size)
-                .await?;
+            uploader.upload_file_in_chunks(chunks_parts).await?;
         };
 
         Ok(())

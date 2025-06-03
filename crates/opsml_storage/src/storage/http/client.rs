@@ -2,10 +2,10 @@ use crate::storage::base::get_files;
 use crate::storage::base::PathExt;
 use crate::storage::error::StorageError;
 use crate::storage::http::base::HttpStorageClient;
+use crate::storage::utils::get_chunk_parts;
 use opsml_client::OpsmlApiClient;
 use opsml_types::contracts::FileInfo;
 use opsml_types::StorageType;
-use opsml_utils::FileUtils;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
@@ -97,9 +97,7 @@ impl HttpFSStorageClient {
             let files: Vec<PathBuf> = get_files(lpath)?;
 
             files.into_par_iter().try_for_each(|file| {
-                let (chunk_count, size_of_last_chunk, chunk_size) =
-                    FileUtils::get_chunk_count(&file, 5 * 1024 * 1024)?;
-
+                let chunk_parts = get_chunk_parts(&file)?;
                 let relative_path = file.relative_path(&lpath_clone)?;
                 let remote_path = rpath_clone.join(relative_path);
 
@@ -109,16 +107,14 @@ impl HttpFSStorageClient {
                 let mut uploader = self.client.create_multipart_uploader(&remote_path, &file)?;
 
                 debug!("Uploading file: {:?}", file);
-                uploader.upload_file_in_chunks(chunk_count, size_of_last_chunk, chunk_size)?;
+                uploader.upload_file_in_chunks(chunk_parts)?;
 
                 Ok::<(), StorageError>(())
             })?;
         } else {
-            let (chunk_count, size_of_last_chunk, chunk_size) =
-                FileUtils::get_chunk_count(&lpath_clone, 5 * 1024 * 1024)?;
-
+            let chunk_parts = get_chunk_parts(&lpath_clone)?;
             let mut uploader = self.client.create_multipart_uploader(rpath, lpath)?;
-            uploader.upload_file_in_chunks(chunk_count, size_of_last_chunk, chunk_size)?;
+            uploader.upload_file_in_chunks(chunk_parts)?;
         };
 
         Ok(())
