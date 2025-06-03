@@ -1,7 +1,7 @@
 use ::potato_head::agents::provider::types::Provider;
 use ::potato_head::{
-    Agent, AudioUrl, BinaryContent, DocumentUrl, ImageUrl, Message, ModelSettings, OpenAIClient,
-    PIIConfig, Prompt, PromptSanitizer, RiskLevel, SanitizationConfig, SanitizedResult, Task,
+    Agent, AudioUrl, BinaryContent, DocumentUrl, ImageUrl, Message, ModelSettings, PIIConfig,
+    Prompt, PromptSanitizer, RiskLevel, SanitizationConfig, SanitizedResult, Task,
 };
 use opsml_interfaces::genai::workflow::{TaskList, TaskStatus, Workflow};
 
