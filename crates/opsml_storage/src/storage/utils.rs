@@ -34,10 +34,9 @@ pub fn set_upload_chunk_size(file_size: u64, available_memory: Option<u64>) -> u
 
     optimal_size = optimal_size
         .min(memory_limit)
-        .max(MIN_CHUNK_SIZE)
-        .min(MAX_CHUNK_SIZE);
+        .clamp(MIN_CHUNK_SIZE, MAX_CHUNK_SIZE);
 
-    tracing::info!(
+    tracing::debug!(
         "Set upload chunk size to {} bytes ({} MB)",
         optimal_size,
         optimal_size as f64 / (1024.0 * 1024.0)
@@ -70,10 +69,9 @@ pub fn set_download_chunk_size(file_size: i64, available_memory: Option<i64>) ->
 
     optimal_size = optimal_size
         .min(memory_limit)
-        .max(MIN_CHUNK_SIZE)
-        .min(MAX_CHUNK_SIZE);
+        .clamp(MIN_CHUNK_SIZE, MAX_CHUNK_SIZE);
 
-    tracing::info!(
+    tracing::debug!(
         "Set download chunk size to {} bytes ({:.2} MB)",
         optimal_size,
         optimal_size as f64 / (1024.0 * 1024.0)
