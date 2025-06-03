@@ -13,8 +13,8 @@ card = PromptCard(
     prompt=Prompt(
         model="gpt-4o",
         provider="openai",
-        prompt="Provide a brief summary of the programming language $1.",
-        system_prompt="Be concise, reply with one sentence.",
+        user_message="Provide a brief summary of the programming language $1.",
+        system_message="Be concise, reply with one sentence.",
     ),
 )
 
@@ -146,13 +146,13 @@ The same arguments all apply to `system_prompt`
                 ```python
                     prompt = Prompt(
                         model="gpt-4o",
-                        prompt="My prompt $1 is $2",
-                        system_prompt="system_prompt",
+                        user_message="My prompt $1 is $2",
+                        system_message="system_prompt",
                         provider="openai",
                     )
                     agent = Agent(
                         prompt.model_identifier, # "openai:gpt-4o"
-                        system_prompt=prompt.system_message[0].unwrap(),
+                        system_message=prompt.system_message[0].unwrap(),
                     )
                 ```
             """
@@ -248,11 +248,11 @@ The same arguments all apply to `system_prompt`
                 ```python
                     prompt = Prompt(
                         model="openai:gpt-4o",
-                        prompt=[
+                        user_message=[
                             "My prompt $1 is $2",
                             "My prompt $3 is $4",
                         ],
-                        system_prompt="system_prompt",
+                        system_message="system_prompt",
                     )
                     bounded_prompt = prompt.user_message[0].bind("world").unwrap() # we bind "world" to the first message
                 ```
@@ -274,11 +274,11 @@ The same arguments all apply to `system_prompt`
                 ```python
                     prompt = Prompt(
                         model="openai:gpt-4o",
-                        prompt=[
+                        user_message=[
                             "My prompt $1 is $2",
                             "My prompt $3 is $4",
                         ],
-                        system_prompt="system_prompt",
+                        system_message="system_prompt",
                     )
 
                     # sanitize the first message

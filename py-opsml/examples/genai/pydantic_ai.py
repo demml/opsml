@@ -9,13 +9,13 @@ card = PromptCard(
     name="my_prompt",
     prompt=Prompt(
         model="openai:gpt-4o",
-        system_prompt="Be concise, reply with one sentence.",
+        system_message="Be concise, reply with one sentence.",
     ),
 )
 
 agent = Agent(
     card.prompt.model,
-    system_prompt=card.prompt.system_message[0].unwrap(),
+    system_message=card.prompt.system_message[0].unwrap(),
 )
 
 result = agent.run_sync('Where does "hello world" come from?')

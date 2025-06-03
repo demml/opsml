@@ -878,11 +878,11 @@ class PromptCard:
         # create prompt
         prompt = Prompt(
             model="openai:gpt-4o",
-            prompt=[
+            user_message=[
                 "My prompt $1 is $2",
                 "My prompt $3 is $4",
             ],
-            system_prompt="system_prompt",
+            system_message="system_prompt",
         )
 
         # create card

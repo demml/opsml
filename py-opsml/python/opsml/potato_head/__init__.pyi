@@ -330,11 +330,11 @@ class Message:
             ```python
                 prompt = Prompt(
                     model="openai:gpt-4o",
-                    prompt=[
+                    user_message=[
                         "My prompt $1 is $2",
                         "My prompt $3 is $4",
                     ],
-                    system_prompt="system_prompt",
+                    system_message="system_prompt",
                 )
                 bounded_prompt = prompt.user_message[0].bind("world").unwrap() # we bind "world" to the first message
             ```
@@ -356,11 +356,11 @@ class Message:
             ```python
                 prompt = Prompt(
                     model="openai:gpt-4o",
-                    prompt=[
+                    user_message=[
                         "My prompt $1 is $2",
                         "My prompt $3 is $4",
                     ],
-                    system_prompt="system_prompt",
+                    system_message="system_prompt",
                 )
 
                 # sanitize the first message
@@ -549,7 +549,7 @@ class Prompt:
             ```python
                 prompt = Prompt(
                     model="gpt-4o",
-                    prompt="My prompt $1 is $2",
+                    user_message="My prompt $1 is $2",
                     system_message="system_message",
                     provider="openai",
                 )

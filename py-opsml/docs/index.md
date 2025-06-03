@@ -238,8 +238,8 @@ card = PromptCard(
     prompt=Prompt(
         model="o4-mini",
         provider="openai",
-        prompt="Provide a brief summary of the programming language $1.", # (1)
-        system_prompt="Be concise, reply with one sentence.",
+        user_message="Provide a brief summary of the programming language $1.", # (1)
+        system_message="Be concise, reply with one sentence.",
     ),
 )
 
@@ -286,14 +286,14 @@ card = PromptCard(
     prompt=Prompt(
         model="gpt-4o",
         provider="openai",
-        prompt='Where does "hello world" come from?',
-        system_prompt="Be concise, reply with one sentence.",
+        user_message='Where does "hello world" come from?',
+        system_message="Be concise, reply with one sentence.",
     ),
 )
 
 agent = Agent(
     card.prompt.model_identifier,
-    system_prompt=card.prompt.system_message[0].unwrap(),
+    system_message=card.prompt.system_message[0].unwrap(),
 )
 
 result = agent.run_sync(card.prompt.user_message[0].unwrap())
