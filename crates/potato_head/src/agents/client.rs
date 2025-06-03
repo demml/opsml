@@ -63,7 +63,7 @@ impl GenAiClient {
     pub async fn execute(&self, task: &Prompt) -> Result<ChatResponse, AgentError> {
         match self {
             GenAiClient::OpenAI(client) => {
-                let response = client.async_chat_completion(&task).await?;
+                let response = client.async_chat_completion(task).await?;
                 Ok(ChatResponse::OpenAI(response))
             }
         }
