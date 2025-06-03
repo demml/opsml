@@ -120,15 +120,15 @@ impl GcsMultipartUpload {
                 "Chunk {} uploaded successfully (308 Resume Incomplete)",
                 upload_args.chunk_index
             );
-            return Ok(false); // Not finished yet
+            Ok(false)
         } else if response.status().is_success() {
             tracing::debug!(
                 "Upload completed successfully with status: {}",
                 response.status()
             );
-            return Ok(true); // Upload complete
+            Ok(true)
         } else {
-            return Err(MultiPartError::UploadError(response.status()));
+            Err(MultiPartError::UploadError(response.status()))
         }
     }
 
