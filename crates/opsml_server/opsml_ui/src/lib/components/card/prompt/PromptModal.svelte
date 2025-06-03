@@ -46,8 +46,8 @@
   }
 
   onMount(() => {
-    user_messages = formatMessages(prompt.prompt);
-    system_messages = formatMessages(prompt.system_prompt);
+    user_messages = formatMessages(prompt.user_message);
+    system_messages = formatMessages(prompt.system_message);
   });
   
   

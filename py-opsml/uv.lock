@@ -1545,11 +1545,11 @@ wheels = [
 
 [[package]]
 name = "logfire-api"
-version = "3.16.1"
+version = "3.16.2"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/86/d5/1fde2adc24a2535faee363cdb5a8a15fe0c0cc542d1f731c37cd4689e258/logfire_api-3.16.1.tar.gz", hash = "sha256:b624927dd2da1f3ce7031434a3db61ecbbfecb94d1e2636b9eb616adde0dfeee", size = 48243, upload-time = "2025-05-26T12:08:49.334Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/3e/61/83d8197f9885efb0e06d3abc16b4959b9579f1751b5469f929caf58e8732/logfire_api-3.16.2.tar.gz", hash = "sha256:74f98f28bc35c138dfa0d06b022f810aeae823e499be765c97fb5805165c4363", size = 48366, upload-time = "2025-06-03T12:06:04.276Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ee/a4/8200b279a44990ad9d4233f05c2bc4029ba02f25de51fee61f51bc5c5a98/logfire_api-3.16.1-py3-none-any.whl", hash = "sha256:da0d232fffadded58339b91a5a1b5f45c4bd05a62e9241c973de9c5bebe34521", size = 80121, upload-time = "2025-05-26T12:08:46.108Z" },
+    { url = "https://files.pythonhosted.org/packages/1f/6f/3d84f860020add858a413d89846378ebdea7a6fa39e86606a00f68f3881a/logfire_api-3.16.2-py3-none-any.whl", hash = "sha256:44efe0b1da5874725bb65027c442ad3268aa03fb75e4009f1461c2688e5466d3", size = 80325, upload-time = "2025-06-03T12:06:00.573Z" },
 ]
 
 [[package]]
@@ -1876,7 +1876,7 @@ python = [
 
 [[package]]
 name = "mkdocstrings-python"
-version = "1.16.11"
+version = "1.16.12"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "griffe" },
@@ -1884,9 +1884,9 @@ dependencies = [
     { name = "mkdocstrings" },
     { name = "typing-extensions", marker = "python_full_version < '3.11'" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/90/a3/0c7559a355fa21127a174a5aa2d3dca2de6e479ddd9c63ca4082d5f9980c/mkdocstrings_python-1.16.11.tar.gz", hash = "sha256:935f95efa887f99178e4a7becaaa1286fb35adafffd669b04fd611d97c00e5ce", size = 205392, upload-time = "2025-05-24T10:41:32.078Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/bf/ed/b886f8c714fd7cccc39b79646b627dbea84cd95c46be43459ef46852caf0/mkdocstrings_python-1.16.12.tar.gz", hash = "sha256:9b9eaa066e0024342d433e332a41095c4e429937024945fea511afe58f63175d", size = 206065, upload-time = "2025-06-03T12:52:49.276Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/cb/c4/ffa32f2c7cdb1728026c7a34aab87796b895767893aaa54611a79b4eef45/mkdocstrings_python-1.16.11-py3-none-any.whl", hash = "sha256:25d96cc9c1f9c272ea1bd8222c900b5f852bf46c984003e9c7c56eaa4696190f", size = 124282, upload-time = "2025-05-24T10:41:30.008Z" },
+    { url = "https://files.pythonhosted.org/packages/3b/dd/a24ee3de56954bfafb6ede7cd63c2413bb842cc48eb45e41c43a05a33074/mkdocstrings_python-1.16.12-py3-none-any.whl", hash = "sha256:22ded3a63b3d823d57457a70ff9860d5a4de9e8b1e482876fc9baabaf6f5f374", size = 124287, upload-time = "2025-06-03T12:52:47.819Z" },
 ]
 
 [[package]]
@@ -2558,7 +2558,7 @@ requires-dist = [
     { name = "opsml", extras = ["onnx", "onnxruntime"], marker = "extra == 'sklearn-onnx'" },
     { name = "opsml", extras = ["onnx", "onnxruntime"], marker = "extra == 'tf-onnx'" },
     { name = "pyarrow", marker = "extra == 'pyarrow'", specifier = ">=18.0.0" },
-    { name = "skl2onnx", marker = "extra == 'sklearn-onnx'", specifier = ">=1.16.0" },
+    { name = "skl2onnx", marker = "extra == 'sklearn-onnx'", specifier = ">=1.16.0,<1.19.0" },
     { name = "tf2onnx", marker = "python_full_version < '3.12' and sys_platform == 'darwin' and extra == 'tf-onnx'", specifier = "~=1.16.1" },
     { name = "tf2onnx", marker = "python_full_version < '3.12' and sys_platform == 'linux' and extra == 'tf-onnx'", specifier = "~=1.16.1" },
 ]
@@ -3833,17 +3833,18 @@ wheels = [
 
 [[package]]
 name = "skl2onnx"
-version = "1.19.1"
+version = "1.18.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "onnx", version = "1.16.1", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform == 'win32'" },
     { name = "onnx", version = "1.16.2", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version < '3.12' and sys_platform == 'darwin') or (python_full_version < '3.12' and sys_platform == 'linux')" },
     { name = "onnx", version = "1.18.0", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.12' and sys_platform == 'darwin') or (python_full_version >= '3.12' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux' and sys_platform != 'win32')" },
+    { name = "onnxconverter-common" },
     { name = "scikit-learn" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/e1/59/3f4d82eb96d8a80fd80325fc658d20e772ee6ac1c6f5cc85dd6aaaf7ccff/skl2onnx-1.19.1.tar.gz", hash = "sha256:0c105f2a3b87a624dd218d1fb98fdd19cf1bf6217190d25ce7e15484127d0e5d", size = 948919, upload-time = "2025-05-28T17:37:02.746Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/a9/fb/f91b284365bab4ddcb0f77f573e60dc96bc232648de997814e3ddd832e97/skl2onnx-1.18.0.tar.gz", hash = "sha256:39ea4ae30c5c182355a1824467013158214444e0ce0b18f33338bd827d4fb00f", size = 935240, upload-time = "2024-12-18T07:25:09.448Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/57/ec/9a0d709217aa385d87b3eadcf19e2ae32eca097077fa2236312d5fc8f656/skl2onnx-1.19.1-py3-none-any.whl", hash = "sha256:fddf2f49e3ffc355f332e676b43c6fec5e63797627925b279d9f5b2c4d0c81a7", size = 315511, upload-time = "2025-05-28T17:37:00.61Z" },
+    { url = "https://files.pythonhosted.org/packages/08/de/e8825727acd80484aa28080de62e4dc21f076d6887c10db49e2c8a66578f/skl2onnx-1.18.0-py2.py3-none-any.whl", hash = "sha256:1345d8a1d3aa4a11abfbed4bc984b777023dad85e1c9fe4eb727cba5ee0fcaa8", size = 300310, upload-time = "2024-12-18T07:25:06.469Z" },
 ]
 
 [[package]]

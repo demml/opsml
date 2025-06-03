@@ -138,4 +138,4 @@ def test_model_settings_prompt():
         model_settings=settings,
     )
 
-    settings = PydanticModelSettings(**prompt.model_settings)
+    settings = PydanticModelSettings(**prompt.model_settings.model_dump())
