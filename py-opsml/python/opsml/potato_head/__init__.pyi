@@ -626,3 +626,46 @@ class Prompt:
         """
 
     def __str__(self): ...
+
+class Provider:
+    OpenAI: "Provider"
+
+class TaskStatus:
+    Pending: "TaskStatus"
+    Running: "TaskStatus"
+    Completed: "TaskStatus"
+    Failed: "TaskStatus"
+
+class Task:
+    def __init__(
+        self,
+        prompt: Prompt,
+        dependencies: List[str] = [],
+        id: Optional[str] = None,
+    ) -> None:
+        """Create a Task object.
+
+        Args:
+            prompt (Prompt):
+                The prompt to use for the task.
+            dependencies (List[str]):
+                The dependencies of the task.
+            id (Optional[str]):
+                The ID of the task. If None, a random uuid7 will be generated.
+        """
+
+    @property
+    def prompt(self) -> Prompt:
+        """The prompt to use for the task."""
+
+    @property
+    def dependencies(self) -> List[str]:
+        """The dependencies of the task."""
+
+    @property
+    def id(self) -> str:
+        """The ID of the task."""
+
+    @property
+    def status(self) -> TaskStatus:
+        """The status of the task."""

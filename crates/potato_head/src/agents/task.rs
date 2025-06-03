@@ -24,29 +24,21 @@ pub struct Task {
     pub dependencies: Vec<String>,
     #[pyo3(get)]
     pub status: TaskStatus,
-    #[pyo3(get)]
+
     pub result: Option<ChatResponse>,
-    #[pyo3(get)]
-    pub agent_id: String,
 }
 
 #[pymethods]
 impl Task {
     #[new]
-    #[pyo3(signature = (prompt, agent_id, dependencies = None, id = None))]
-    pub fn new(
-        prompt: Prompt,
-        agent_id: String,
-        dependencies: Option<Vec<String>>,
-        id: Option<String>,
-    ) -> Self {
+    #[pyo3(signature = (prompt, dependencies = None, id = None))]
+    pub fn new(prompt: Prompt, dependencies: Option<Vec<String>>, id: Option<String>) -> Self {
         Self {
-            id: id.unwrap_or_else(create_uuid7),
             prompt,
             dependencies: dependencies.unwrap_or_default(),
             status: TaskStatus::Pending,
             result: None,
-            agent_id,
+            id: id.unwrap_or_else(create_uuid7),
         }
     }
 
