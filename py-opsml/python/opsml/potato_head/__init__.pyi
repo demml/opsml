@@ -305,7 +305,9 @@ class DocumentUrl:
         """The format of the document URL."""
 
 class Message:
-    def __init__(self, content: str | ImageUrl | AudioUrl | BinaryContent | DocumentUrl) -> None:
+    def __init__(
+        self, content: str | ImageUrl | AudioUrl | BinaryContent | DocumentUrl
+    ) -> None:
         """Create a Message object.
 
         Args:
@@ -499,14 +501,16 @@ class ModelSettings:
     def extra_body(self) -> Optional[dict[str, Any]]:
         """The extra body to use."""
 
-    @property
     def model_dump(self) -> Dict[str, Any]:
         """The model settings to use for the prompt."""
 
 class Prompt:
     def __init__(
         self,
-        user_message: str | Sequence[str | ImageUrl | AudioUrl | BinaryContent | DocumentUrl] | Message | List[Message],
+        user_message: str
+        | Sequence[str | ImageUrl | AudioUrl | BinaryContent | DocumentUrl]
+        | Message
+        | List[Message],
         model: Optional[str] = None,
         provider: Optional[str] = None,
         system_message: Optional[str | List[str]] = None,

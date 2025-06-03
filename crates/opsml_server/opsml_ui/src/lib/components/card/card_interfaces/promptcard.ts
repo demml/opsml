@@ -83,6 +83,7 @@ export interface BinaryContent {
 export interface Message {
   content: PromptContent;
   next_param: number;
+  role: string;
 }
 
 export interface ModelSettings {
@@ -102,8 +103,8 @@ export interface ModelSettings {
 }
 
 export interface Prompt {
-  prompt: Message[];
-  system_prompt: Message[];
+  user_message: Message[];
+  system_message: Message[];
   sanitization_config: SanitizationConfig | undefined;
   version: string;
   model_settings: ModelSettings;
