@@ -50,9 +50,9 @@ with start_experiment(space="opsml", log_hardware=True) as exp:
 
     prompt = Prompt(
         model="gpt-4o",
-        prompt="what is 2 + 2?",
+        user_message="what is 2 + 2?",
         provider="openai",
-        system_prompt="You are a helpful assistant.",
+        system_message="You are a helpful assistant.",
     )
 
     # ... your code here to test and validate the prompt

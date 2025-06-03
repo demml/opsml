@@ -8,8 +8,8 @@ card = PromptCard(
     name="my_prompt",
     prompt=Prompt(
         model="gpt-4o",
-        prompt="Provide a brief summary of the programming language $1.",
-        system_prompt="Be concise, reply with one sentence.",
+        user_message="Provide a brief summary of the programming language $1.",
+        system_message="Be concise, reply with one sentence.",
     ),
 )
 
