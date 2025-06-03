@@ -9,6 +9,8 @@ use std::fs::File;
 use std::io::{BufReader, Read};
 use std::path::Path;
 use std::sync::Arc;
+use tracing::error;
+use tracing::instrument;
 
 #[derive(Clone, Debug)]
 pub struct ChunkSize {
@@ -85,11 +87,18 @@ impl GcsMultipartUpload {
     pub fn upload_next_chunk(
         &mut self,
         upload_args: &UploadPartArgs,
-    ) -> Result<(), MultiPartError> {
+    ) -> Result<bool, MultiPartError> {
         let first_byte = upload_args.chunk_index * upload_args.chunk_size;
         let last_byte = first_byte + upload_args.this_chunk_size - 1;
 
         let size = ChunkSize::new(first_byte, last_byte, Some(self.file_size));
+
+        // trace the size of the chunk being uploaded in mbs
+        tracing::trace!(
+            "Uploading chunk {} with  bytes ({} MB)",
+            upload_args.chunk_index,
+            size.size() as f64 / (1024.0 * 1024.0)
+        );
 
         let mut buffer = vec![0; upload_args.this_chunk_size as usize];
         let bytes_read = self.file_reader.read(&mut buffer)?;
@@ -106,19 +115,31 @@ impl GcsMultipartUpload {
             .body(buffer)
             .send()?;
 
-        if !response.status().is_success() {
+        if response.status() == reqwest::StatusCode::PERMANENT_REDIRECT {
+            tracing::debug!(
+                "Chunk {} uploaded successfully (308 Resume Incomplete)",
+                upload_args.chunk_index
+            );
+            return Ok(false); // Not finished yet
+        } else if response.status().is_success() {
+            tracing::debug!(
+                "Upload completed successfully with status: {}",
+                response.status()
+            );
+            return Ok(true); // Upload complete
+        } else {
             return Err(MultiPartError::UploadError(response.status()));
         }
-
-        Ok(())
     }
 
+    #[instrument(skip_all)]
     pub fn upload_file_in_chunks(
         &mut self,
         chunk_count: u64,
         size_of_last_chunk: u64,
         chunk_size: u64,
     ) -> Result<(), MultiPartError> {
+        let mut upload_complete = false;
         for chunk_index in 0..chunk_count {
             let this_chunk = if chunk_count - 1 == chunk_index {
                 size_of_last_chunk
@@ -132,14 +153,50 @@ impl GcsMultipartUpload {
                 this_chunk_size: this_chunk,
             };
 
-            // if error, cancel upload
-            match self.upload_next_chunk(&upload_args) {
-                Ok(_) => (),
-                Err(e) => {
-                    self.cancel_upload()?;
-                    return Err(e);
+            const MAX_RETRIES: u32 = 3;
+            let mut retry_count = 0;
+
+            while retry_count < MAX_RETRIES {
+                match self.upload_next_chunk(&upload_args) {
+                    Ok(is_complete) => {
+                        upload_complete = is_complete;
+                        // If we got a 308, this is normal for chunked uploads
+                        break;
+                    }
+                    Err(e) => {
+                        retry_count += 1;
+                        if retry_count == MAX_RETRIES {
+                            error!(
+                                "Error uploading chunk {} after {} retries: {}",
+                                chunk_index, MAX_RETRIES, e
+                            );
+                            if let Err(cancel_err) = self.cancel_upload() {
+                                error!("Failed to cancel upload after error: {}", cancel_err);
+                            }
+                            return Err(e);
+                        }
+
+                        tracing::warn!("Retry {} for chunk {}: {}", retry_count, chunk_index, e);
+                        std::thread::sleep(std::time::Duration::from_millis(
+                            500 * retry_count as u64,
+                        ));
+                    }
                 }
             }
+
+            // If the upload was marked complete before the last chunk, we can exit early
+            if upload_complete && chunk_index < chunk_count - 1 {
+                tracing::info!(
+                    "Upload completed early at chunk {}/{}",
+                    chunk_index + 1,
+                    chunk_count
+                );
+                break;
+            }
+        }
+
+        if !upload_complete {
+            tracing::warn!("Upload may be incomplete - never received final success status");
         }
 
         Ok(())

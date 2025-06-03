@@ -84,6 +84,11 @@ impl HttpFSStorageClient {
         let lpath_clone = lpath.to_path_buf();
         let rpath_clone = rpath.to_path_buf();
 
+        debug!(
+            "lpath: {:?}, rpath: {:?} recursive: {:?}",
+            lpath_clone, rpath_clone, recursive
+        );
+
         if recursive {
             if !lpath.is_dir() {
                 return Err(StorageError::PathMustBeDirectoryError);
