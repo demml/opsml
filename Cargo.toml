@@ -72,8 +72,7 @@ mime_guess = "2.*"
 mockall = "0.*"
 mockito = "1.*"
 names = "0.*"
-ort = { version = "2.0.0-rc.9" }
-ort-sys = { version = "=2.0.0-rc.9", default-features = false }
+ort = { version = "2.0.0-rc.10" }
 owo-colors = "4.*"
 password-auth = "1.*"
 pbkdf2 = "0.*"
