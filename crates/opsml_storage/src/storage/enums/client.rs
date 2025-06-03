@@ -43,18 +43,14 @@ impl MultiPartUploader {
             MultiPartUploader::Google(uploader) => {
                 Ok(uploader.upload_file_in_chunks(chunk_parts).await?)
             }
-            MultiPartUploader::AWS(uploader) => Ok(uploader
-                .upload_file_in_chunks(chunk_parts.chunk_count, chunk_parts.size_of_last_chunk)
-                .await?),
+            MultiPartUploader::AWS(uploader) => {
+                Ok(uploader.upload_file_in_chunks(chunk_parts).await?)
+            }
 
             MultiPartUploader::Local(uploader) => Ok(uploader.upload_file_in_chunks().await?),
-            MultiPartUploader::Azure(uploader) => Ok(uploader
-                .upload_file_in_chunks(
-                    chunk_parts.chunk_count,
-                    chunk_parts.size_of_last_chunk,
-                    chunk_parts.chunk_size,
-                )
-                .await?),
+            MultiPartUploader::Azure(uploader) => {
+                Ok(uploader.upload_file_in_chunks(chunk_parts).await?)
+            }
         }
     }
 }

@@ -113,7 +113,7 @@ mod tests {
 
         // Test with a medium file size (500 mb)
         let upload_size = set_upload_chunk_size(1024 * 1024 * 500, Some(test_memory_size));
-        assert!(upload_size >= MIN_CHUNK_SIZE && upload_size <= MAX_CHUNK_SIZE);
+        assert!((MIN_CHUNK_SIZE..=MAX_CHUNK_SIZE).contains(&upload_size));
     }
 
     #[test]
@@ -130,6 +130,6 @@ mod tests {
 
         // Test with a medium file size (500 mb)
         let download_size = set_download_chunk_size(1024 * 1024 * 500, Some(test_memory_size));
-        assert!(download_size >= MIN_CHUNK_SIZE && download_size <= MAX_CHUNK_SIZE);
+        assert!((MIN_CHUNK_SIZE..=MAX_CHUNK_SIZE).contains(&download_size));
     }
 }
