@@ -1,4 +1,8 @@
+use crate::storage::error::StorageError;
 use opsml_types::cards::MemoryMetricLogger;
+use opsml_utils::{ChunkParts, FileUtils};
+use std::path::PathBuf;
+
 // Default sizes in bytes
 pub const DEFAULT_UPLOAD_CHUNK_SIZE: usize = 1024 * 1024 * 32; // 32 MB default
 pub const DEFAULT_DOWNLOAD_CHUNK_SIZE: usize = 1024 * 1024 * 32; // 32 MB default
@@ -12,10 +16,10 @@ pub const MAX_FILE_SIZE: usize = 1024 * 1024 * 1024 * 50; // 50 GB maximum
 /// * `available_memory` - The available memory in bytes, if None, it will use the system's available memory
 /// # Returns
 /// * `usize` - The optimal chunk size in bytes
-pub fn set_upload_chunk_size(file_size: usize, available_memory: Option<usize>) -> usize {
+pub fn set_upload_chunk_size(file_size: u64, available_memory: Option<u64>) -> usize {
     let mut optimal_size = DEFAULT_UPLOAD_CHUNK_SIZE;
-    let available_memory = available_memory
-        .unwrap_or(MemoryMetricLogger::new().get_metrics().available_memory as usize);
+    let available_memory =
+        available_memory.unwrap_or(MemoryMetricLogger::new().get_metrics().available_memory as u64);
 
     if file_size < 1024 * 1024 * 100 {
         // Under 100MB
@@ -48,10 +52,10 @@ pub fn set_upload_chunk_size(file_size: usize, available_memory: Option<usize>) 
 /// * `available_memory` - The available memory in bytes, if None, it will use the system's available memory
 /// # Returns
 /// * `usize` - The optimal chunk size in bytes
-pub fn set_download_chunk_size(file_size: usize, available_memory: Option<usize>) -> usize {
+pub fn set_download_chunk_size(file_size: i64, available_memory: Option<i64>) -> usize {
     let mut optimal_size = DEFAULT_DOWNLOAD_CHUNK_SIZE;
-    let available_memory = available_memory
-        .unwrap_or(MemoryMetricLogger::new().get_metrics().available_memory as usize);
+    let available_memory =
+        available_memory.unwrap_or(MemoryMetricLogger::new().get_metrics().available_memory);
 
     if file_size < 1024 * 1024 * 100 {
         // Under 100MB
@@ -76,6 +80,18 @@ pub fn set_download_chunk_size(file_size: usize, available_memory: Option<usize>
     );
 
     optimal_size
+}
+
+/// Helper for getting the number of parts for a file based on its size and chunk size
+/// # Arguments
+/// * `file` - The path to the file
+/// # Returns
+/// * `Result<ChunkParts, StorageError>` - A struct containing the total number of parts, size of the last part, and chunk size
+pub fn get_chunk_parts(file: &PathBuf) -> Result<ChunkParts, StorageError> {
+    let file_size = std::fs::metadata(file)?.len();
+    let chunk_size = set_upload_chunk_size(file_size, None);
+
+    Ok(FileUtils::get_chunk_count(file_size, chunk_size as u64)?)
 }
 
 //test
