@@ -9,6 +9,7 @@ Hello! We're glad and grateful that you're interested in contributing to opsml :
   - [Welcome](#welcome)
   - [Table of contents](#table-of-contents)
   - [Submitting Issues](#submitting-issues)
+  - [Finding Issues to Work On](#finding-issues-to-work-on)
   - [Pull Requests](#pull-requests)
     - [Environment Setup](#environment-setup)
     - [Contributing Changes](#contributing-changes)
@@ -19,6 +20,10 @@ Hello! We're glad and grateful that you're interested in contributing to opsml :
 ## Submitting Issues
 
 Documentation issues, bugs, and feature requests are all welcome! We want to make opsml as useful as possible, so please let us know if you find something that doesn't work or if you have an idea for a new feature. To create a new issue, click [here](https://github.com/demml/opsml/issues/new/choose) and select the appropriate issue template.
+
+## Finding Issues to Work On
+
+If you are interested in taking on one of our existing backlog items, check out our project backlog [here](https://github.com/orgs/demml/projects/1)
 
 ## Pull Requests 
 
@@ -65,8 +70,9 @@ Feel free to explore more of the makefile and codebase to get a better sense of 
 ### Contributing Changes
 1. Create a new branch for your addition
    * General naming conventions (we're not picky):
-      * `/username/<featureName>`: for features
-      * `/username/<fixName>`: for general refactoring or bug fixes
+      * `/name/<short-description>`: for features
+      * `/name/<short-description>`: for general refactoring or bug fixes
+      * `/name/<issueNumber>/<short-description>`: for fixes related to an issue
 2. Test your changes:
    - Testing Rust changes:
      - make sure you are in the `opsml` directory

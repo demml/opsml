@@ -16,6 +16,7 @@ opsml-cli = { workspace = true }
 opsml-interfaces = { workspace = true }
 opsml-registry = { workspace = true }
 opsml-experiment = { workspace = true }
+opsml-mocks = { workspace = true }
 opsml-semver = { workspace = true }
 opsml-server = { workspace = true, optional = true }
 opsml-storage = { workspace = true, optional = true }
@@ -35,7 +36,12 @@ tokio = { workspace = true, optional = true }
 
 [features]
 default = []
-server = ["opsml-registry/server", "opsml-server", "tokio", "reqwest", "opsml-storage", "mockito", "serde_json"]
+server = [
+    "opsml-registry/server", 
+    "opsml-server", 
+    "opsml-storage", 
+    "opsml-mocks/server"
+]
 
 [profile.release]
 lto = "fat"

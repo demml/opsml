@@ -5,11 +5,28 @@ use pyo3::types::PyString;
 use pyo3::{prelude::*, IntoPyObjectExt};
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
+use std::fmt::Display;
 use std::sync::OnceLock;
 static DOCUMENT_MEDIA_TYPES: OnceLock<HashSet<&'static str>> = OnceLock::new();
 use crate::prompt::sanitize::PromptSanitizer;
+use crate::SanitizedResult;
+use pyo3::types::PyDict;
 
-use super::sanitize::SanitizedResult;
+pub enum Role {
+    User,
+    Assistant,
+    Developer,
+}
+
+impl Display for Role {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Role::User => write!(f, "user"),
+            Role::Assistant => write!(f, "assistant"),
+            Role::Developer => write!(f, "developer"),
+        }
+    }
+}
 
 fn get_document_media_types() -> &'static HashSet<&'static str> {
     DOCUMENT_MEDIA_TYPES.get_or_init(|| {
@@ -133,9 +150,9 @@ impl AudioUrl {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ImageUrl {
     #[pyo3(get, set)]
-    url: String,
+    pub url: String,
     #[pyo3(get)]
-    kind: String,
+    pub kind: String,
 }
 
 #[pymethods]
@@ -373,9 +390,10 @@ pub fn get_pydantic_module<'py>(py: Python<'py>, module_name: &str) -> PyResult<
 #[pyclass]
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Message {
-    content: PromptContent,
+    pub content: PromptContent,
     next_param: usize,
     sanitized_output: Option<SanitizedResult>,
+    pub role: String,
 }
 
 #[pymethods]
@@ -388,6 +406,7 @@ impl Message {
             content,
             next_param: 1,
             sanitized_output: None,
+            role: Role::User.to_string(),
         })
     }
 
@@ -406,6 +425,7 @@ impl Message {
             content,
             next_param: self.next_param + 1,
             sanitized_output: None,
+            role: self.role.clone(),
         })
     }
 
@@ -427,6 +447,7 @@ impl Message {
             content,
             next_param: self.next_param,
             sanitized_output: sanitized,
+            role: self.role.clone(),
         })
     }
 
@@ -434,7 +455,33 @@ impl Message {
         self.content.to_pyobject(py)
     }
 
+    pub fn model_dump<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyDict>> {
+        let message = PyDict::new(py);
+
+        message.set_item("role", self.role.clone())?;
+        message.set_item("content", self.unwrap(py)?)?;
+        Ok(message)
+    }
+
     pub fn __str__(&self) -> String {
         PyHelperFuncs::__str__(self)
+    }
+}
+
+impl Message {
+    pub fn from(content: PromptContent, role: Role) -> Self {
+        Self {
+            content,
+            next_param: 1,
+            sanitized_output: None,
+            role: role.to_string(),
+        }
+    }
+
+    pub fn is_empty(&self) -> bool {
+        match &self.content {
+            PromptContent::Str(s) => s.is_empty(),
+            _ => false,
+        }
     }
 }

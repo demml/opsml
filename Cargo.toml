@@ -27,6 +27,7 @@ opsml-events = { path = "crates/opsml_events" }
 opsml-interfaces = { path = "crates/opsml_interfaces" }
 opsml-registry = { path = "crates/opsml_registry" }
 opsml-experiment = { path = "crates/opsml_experiment" }
+opsml-mocks = { path = "crates/opsml_mocks" }
 opsml-server = { path = "crates/opsml_server" }
 opsml-semver = { path = "crates/opsml_semver" }
 opsml-settings = { path = "crates/opsml_settings" }
@@ -71,7 +72,7 @@ mime_guess = "2.*"
 mockall = "0.*"
 mockito = "1.*"
 names = "0.*"
-ort = { version = "2.0.0-rc.9" }
+ort = { version = "2.0.0-rc.10" }
 owo-colors = "4.*"
 password-auth = "1.*"
 pbkdf2 = "0.*"

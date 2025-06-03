@@ -4,7 +4,7 @@ from opsml import (  # type: ignore
     Prompt,
     PromptCard,
 )
-from opsml.test import OpsmlTestServer
+from opsml.mock import OpsmlTestServer
 import pytest
 from tests.conftest import WINDOWS_EXCLUDE
 
@@ -17,8 +17,8 @@ def test_promptcard_crud() -> None:
         prompt = Prompt(
             model="gpt-4o",
             provider="openai",
-            prompt="Hello!",
-            system_prompt="You are a helpful assistant.",
+            user_message="Hello!",
+            system_message="You are a helpful assistant.",
         )
 
         card = PromptCard(prompt=prompt, space="test", name="test")

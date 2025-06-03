@@ -21,14 +21,11 @@ use scouter_client::{BinnedCustomMetrics, BinnedPsiFeatureMetrics, SpcDriftFeatu
 #[cfg(feature = "server")]
 use serde_json;
 
-use pyo3::exceptions::PyRuntimeError;
+use crate::error::TestServerError;
 use pyo3::prelude::*;
-use pyo3::PyErr;
 use pyo3::PyResult;
-use std::time::Duration;
-
 use std::path::PathBuf;
-use thiserror::Error;
+use std::time::Duration;
 
 #[cfg(feature = "server")]
 pub struct ScouterServer {
@@ -136,28 +133,6 @@ impl ScouterServer {
             url: server.url(),
             server,
         }
-    }
-}
-
-#[derive(Error, Debug)]
-pub enum TestServerError {
-    #[error("Failed to find available port")]
-    PortNotFound,
-
-    #[error("Failed to start Opsml Server")]
-    ServerStartError,
-
-    #[error("Failed to set environment variables for client")]
-    SetEnvVarsError,
-
-    #[error("{0}")]
-    CustomError(String),
-}
-
-impl From<TestServerError> for PyErr {
-    fn from(err: TestServerError) -> PyErr {
-        let msg = err.to_string();
-        PyRuntimeError::new_err(msg)
     }
 }
 
@@ -497,11 +472,4 @@ impl OpsmlServerContext {
 
         Ok(())
     }
-}
-
-#[pymodule]
-pub fn test(m: &Bound<'_, PyModule>) -> PyResult<()> {
-    m.add_class::<OpsmlTestServer>()?;
-    m.add_class::<OpsmlServerContext>()?;
-    Ok(())
 }

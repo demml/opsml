@@ -1,0 +1,21 @@
+{
+    "id": "chatcmpl-struct789",
+    "object": "chat.completion",
+    "created": 1717350200,
+    "model": "gpt-4o",
+    "choices": [
+        {
+            "index": 0,
+            "message": {
+                "role": "assistant",
+                "content": "{ \"tasks\": [\"Write code\", \"Test code\", \"Deploy code\"], \"status\": \"pending\" }"
+            },
+            "finish_reason": "stop"
+        }
+    ],
+    "usage": {
+        "prompt_tokens": 15,
+        "completion_tokens": 17,
+        "total_tokens": 32
+    }
+}

@@ -9,13 +9,17 @@ doctest = false
 
 [dependencies]
 opsml-types = { workspace = true }
+opsml-state = { workspace = true }
 opsml-utils = { workspace = true }
 ort = { workspace = true }
+potato-head = { workspace = true }
 pyo3 = { workspace = true }
 rand = { workspace = true }
+reqwest = { workspace = true }
 scouter-client = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 tempfile = { workspace = true }
 thiserror = { workspace = true }
+tokio = { workspace = true }
 tracing = { workspace = true }

@@ -17,6 +17,14 @@ PromptSanitizer = potato_head.PromptSanitizer
 RiskLevel = potato_head.RiskLevel
 PIIConfig = potato_head.PIIConfig
 
+# agents
+Provider = potato_head.Provider
+TaskStatus = potato_head.TaskStatus
+Task = potato_head.Task
+TaskList = potato_head.TaskList
+Agent = potato_head.Agent
+Workflow = potato_head.Workflow
+
 
 __all__ = [
     "Prompt",
@@ -28,4 +36,10 @@ __all__ = [
     "PIIConfig",
     "PromptSanitizer",
     "ModelSettings",
+    "Provider",
+    "TaskStatus",
+    "Task",
+    "TaskList",
+    "Agent",
+    "Workflow",
 ]
