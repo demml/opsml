@@ -196,7 +196,17 @@ impl GcsMultipartUpload {
         }
 
         if !upload_complete {
-            tracing::warn!("Upload may be incomplete - never received final success status");
+            tracing::warn!("Upload may be incomplete - never received final success status. Attempting to complete");
+            // Attempt to complete the upload
+            match self.complete_multipart_upload() {
+                Ok(_) => {
+                    tracing::info!("Multipart upload finalized successfully");
+                }
+                Err(e) => {
+                    tracing::warn!("Failed to finalize multipart upload: {}", e);
+                    // Even if finalization fails, we've uploaded all chunks, so continue
+                }
+            }
         }
 
         Ok(())
@@ -207,6 +217,19 @@ impl GcsMultipartUpload {
             path: self.rpath.clone(),
             session_url: self.session_url.clone(),
             cancel: true,
+            ..Default::default()
+        };
+
+        let response = self.client.complete_multipart_upload(request)?;
+        let uploaded = response.json::<UploadResponse>()?;
+
+        Ok(uploaded)
+    }
+
+    fn complete_multipart_upload(&self) -> Result<UploadResponse, MultiPartError> {
+        let request = CompleteMultipartUpload {
+            path: self.rpath.clone(),
+            session_url: self.session_url.clone(),
             ..Default::default()
         };
 
