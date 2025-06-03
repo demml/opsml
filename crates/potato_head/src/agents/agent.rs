@@ -1,8 +1,6 @@
 use crate::Message;
 use crate::{
-    agents::client::{GenAiClient, OpenAIClient},
-    agents::task::Task,
-    agents::types::AgentResponse,
+    agents::client::GenAiClient, agents::task::Task, agents::types::AgentResponse,
     error::AgentError,
 };
 use opsml_state::app_state;
@@ -23,7 +21,7 @@ pub struct Agent {
 #[pymethods]
 impl Agent {
     #[new]
-    pub fn new(client: &Bound<'_, PyAny>) -> Result<Self, AgentError> {
+    pub fn new(provider: &Bound<'_, PyAny>) -> Result<Self, AgentError> {
         // get the client_type from the client py object
         let client: GenAiClient = if client.is_instance_of::<OpenAIClient>() {
             let extracted = client.extract::<OpenAIClient>()?;
@@ -48,28 +46,23 @@ impl Agent {
     ) -> Result<AgentResponse, AgentError> {
         // Extract the prompt from the task
         debug!("Executing task");
-        let mut user_messages = task.prompt.user_message.clone();
+        // we need to clone in order to not modify the original task
+        let mut cloned_task = task.clone();
 
-        if !task.dependencies.is_empty() {
-            for dep in &task.dependencies {
+        if !cloned_task.dependencies.is_empty() {
+            for dep in &cloned_task.dependencies {
                 if let Some(messages) = context_messages.get(dep) {
                     for message in messages {
                         // prepend the messages from dependencies
-                        user_messages.insert(0, message.clone());
+                        cloned_task.prompt.user_message.insert(0, message.clone());
                     }
                 }
             }
         }
 
-        let chat_response = app_state().runtime.block_on(async {
-            self.client
-                .execute(
-                    &user_messages,
-                    &task.prompt.system_message,
-                    &task.prompt.model_settings,
-                )
-                .await
-        })?;
+        let chat_response = app_state()
+            .runtime
+            .block_on(async { self.client.execute(&cloned_task.prompt).await })?;
 
         Ok(AgentResponse::new(task.id.clone(), chat_response))
     }

@@ -1,7 +1,4 @@
-use crate::agents::provider::openai::OpenAIClient;
-use crate::agents::types::ChatResponse;
 use crate::error::AgentError;
-use crate::Prompt;
 use pyo3::prelude::*;
 use reqwest::header::HeaderName;
 use reqwest::header::{HeaderMap, HeaderValue};
@@ -52,20 +49,4 @@ pub fn build_http_client(
         .map_err(AgentError::CreateClientError)?;
 
     Ok(client)
-}
-
-#[derive(Debug, Clone)]
-pub enum GenAiClient {
-    OpenAI(OpenAIClient),
-}
-
-impl GenAiClient {
-    pub async fn execute(&self, task: &Prompt) -> Result<ChatResponse, AgentError> {
-        match self {
-            GenAiClient::OpenAI(client) => {
-                let response = client.async_chat_completion(&task).await?;
-                Ok(ChatResponse::OpenAI(response))
-            }
-        }
-    }
 }
