@@ -2,6 +2,7 @@ use crate::storage::aws::error::AwsError;
 use crate::storage::base::{get_files, PathExt, StorageClient};
 use crate::storage::error::StorageError;
 use crate::storage::filesystem::FileSystem;
+use crate::storage::utils::get_chunk_parts;
 use async_trait::async_trait;
 use aws_config::BehaviorVersion;
 use aws_config::SdkConfig;
@@ -13,8 +14,8 @@ use aws_sdk_s3::types::{CompletedMultipartUpload, CompletedPart};
 use aws_sdk_s3::Client;
 use opsml_settings::config::OpsmlStorageSettings;
 use opsml_types::contracts::{CompleteMultipartUpload, FileInfo, MultipartCompleteParts};
-use opsml_types::{StorageType, UPLOAD_CHUNK_SIZE};
-use opsml_utils::FileUtils;
+use opsml_types::StorageType;
+use opsml_utils::ChunkParts;
 use reqwest::Client as HttpClient;
 use std::fs::File;
 use std::io::Write;
@@ -199,17 +200,14 @@ impl AWSMulitPartUpload {
         Ok(stream)
     }
 
-    pub async fn upload_file_in_chunks(
-        &self,
-        chunk_count: u64,
-        size_of_last_chunk: u64,
-    ) -> Result<(), AwsError> {
-        let chunk_size = std::cmp::min(self.file_size, UPLOAD_CHUNK_SIZE as u64);
+    pub async fn upload_file_in_chunks(&self, chunk_parts: ChunkParts) -> Result<(), AwsError> {
+        let chunk_size = std::cmp::min(self.file_size, chunk_parts.chunk_size);
+
         let mut upload_parts = Vec::new();
 
-        for chunk_index in 0..chunk_count {
-            let this_chunk = if chunk_count - 1 == chunk_index {
-                size_of_last_chunk
+        for chunk_index in 0..chunk_parts.chunk_count {
+            let this_chunk = if chunk_parts.chunk_count - 1 == chunk_index {
+                chunk_parts.size_of_last_chunk
             } else {
                 chunk_size
             };
@@ -788,8 +786,7 @@ impl FileSystem for S3FStorageClient {
             let files: Vec<PathBuf> = get_files(&stripped_lpath)?;
 
             for file in files {
-                let (chunk_count, size_of_last_chunk, _) =
-                    FileUtils::get_chunk_count(&file, UPLOAD_CHUNK_SIZE as u64).unwrap();
+                let chunk_parts = get_chunk_parts(&file)?;
 
                 let stripped_file_path = file.strip_path(self.client.bucket().await);
                 let relative_path = file.relative_path(&stripped_lpath)?;
@@ -803,13 +800,10 @@ impl FileSystem for S3FStorageClient {
                     )
                     .await?;
 
-                uploader
-                    .upload_file_in_chunks(chunk_count, size_of_last_chunk)
-                    .await?;
+                uploader.upload_file_in_chunks(chunk_parts).await?;
             }
         } else {
-            let (chunk_count, size_of_last_chunk, _) =
-                FileUtils::get_chunk_count(&stripped_lpath, UPLOAD_CHUNK_SIZE as u64).unwrap();
+            let chunk_parts = get_chunk_parts(&stripped_lpath)?;
 
             let uploader = self
                 .client
@@ -819,10 +813,8 @@ impl FileSystem for S3FStorageClient {
                 )
                 .await?;
 
-            uploader
-                .upload_file_in_chunks(chunk_count, size_of_last_chunk)
-                .await?;
-        };
+            uploader.upload_file_in_chunks(chunk_parts).await?;
+        }
 
         Ok(())
     }
