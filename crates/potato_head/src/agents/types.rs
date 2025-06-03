@@ -1,4 +1,4 @@
-use crate::agents::client_types::openai::OpenAIChatResponse;
+use crate::agents::provider::openai::OpenAIChatResponse;
 use crate::{
     prompt::types::{PromptContent, Role},
     Message,
