@@ -74,6 +74,7 @@ impl S3MultipartUpload {
     pub fn upload_file_in_chunks(&mut self, chunk_size: usize) -> Result<(), MultiPartError> {
         let mut buffer = vec![0; chunk_size];
         let mut part_number = 1;
+        const MAX_RETRIES: u32 = 3;
 
         loop {
             let bytes_read = self.file_reader.read(&mut buffer)?;
@@ -83,7 +84,28 @@ impl S3MultipartUpload {
             }
 
             let chunk = Bytes::copy_from_slice(&buffer[..bytes_read]);
-            self.upload_part(part_number, chunk)?;
+
+            let mut retry_count = 0;
+            while retry_count < MAX_RETRIES {
+                match self.upload_part(part_number, chunk.clone()) {
+                    Ok(()) => break,
+                    Err(e) => {
+                        retry_count += 1;
+
+                        if retry_count >= MAX_RETRIES {
+                            return Err(e);
+                        }
+
+                        tracing::warn!(
+                            "Retrying upload for part {} (attempt {}/{}) due to error: {}",
+                            part_number,
+                            retry_count,
+                            MAX_RETRIES,
+                            e
+                        );
+                    }
+                }
+            }
 
             part_number += 1;
         }

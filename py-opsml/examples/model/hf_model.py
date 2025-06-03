@@ -1,7 +1,3 @@
-import os
-
-os.environ["OPSML_TRACKING_URI"] = "http://localhost:3000"
-
 from transformers import DistilBertForSequenceClassification, DistilBertTokenizerFast  # type: ignore
 
 from opsml.model import HuggingFaceTask, HuggingFaceModel, TaskType
