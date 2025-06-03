@@ -1,3 +1,5 @@
+use crate::agents::provider::openai::OpenAIClient;
+use crate::agents::provider::types::Provider;
 use crate::Message;
 use crate::{
     agents::client::GenAiClient, agents::task::Task, agents::types::AgentResponse,
@@ -21,17 +23,21 @@ pub struct Agent {
 #[pymethods]
 impl Agent {
     #[new]
+    #[pyo3(signature = (provider))]
+    /// Creates a new Agent instance.
+    ///
+    /// # Arguments:
+    /// * `provider` - A Python object representing the provider, expected to be an a variant of Provider or a string
+    /// that can be mapped to a provider variant
+    ///
     pub fn new(provider: &Bound<'_, PyAny>) -> Result<Self, AgentError> {
-        // get the client_type from the client py object
-        let client: GenAiClient = if client.is_instance_of::<OpenAIClient>() {
-            let extracted = client.extract::<OpenAIClient>()?;
+        let provider = Provider::extract_provider(provider)?;
 
-            GenAiClient::OpenAI(extracted)
-        } else {
-            return Err(AgentError::ClientExtractionError(
-                "Client must be an instance of OpenAIClient".to_string(),
-            ));
+        let client = match provider {
+            Provider::OpenAI => GenAiClient::OpenAI(OpenAIClient::new(None, None, None)?),
+            // Add other providers here as needed
         };
+
         Ok(Self {
             client,
             id: create_uuid7(),
@@ -77,28 +83,21 @@ impl Agent {
     ) -> Result<AgentResponse, AgentError> {
         // Extract the prompt from the task
         debug!("Executing task: {}", task.id);
-        let mut user_messages = task.prompt.user_message.clone();
+        let mut cloned_task = task.clone();
 
-        if !task.dependencies.is_empty() {
-            for dep in &task.dependencies {
+        if !cloned_task.dependencies.is_empty() {
+            for dep in &cloned_task.dependencies {
                 if let Some(messages) = context_messages.get(dep) {
                     for message in messages {
                         // prepend the messages from dependencies
-                        user_messages.insert(0, message.clone());
+                        cloned_task.prompt.user_message.insert(0, message.clone());
                     }
                 }
             }
         }
 
         // Use the client to execute the task
-        let chat_response = self
-            .client
-            .execute(
-                &user_messages,
-                &task.prompt.system_message,
-                &task.prompt.model_settings,
-            )
-            .await?;
+        let chat_response = self.client.execute(&cloned_task.prompt).await?;
 
         Ok(AgentResponse::new(task.id.clone(), chat_response))
     }

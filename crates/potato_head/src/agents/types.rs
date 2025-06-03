@@ -1,12 +1,11 @@
 use crate::agents::provider::openai::OpenAIChatResponse;
+use crate::error::AgentError;
 use crate::{
     prompt::types::{PromptContent, Role},
     Message,
 };
 use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
-
-use crate::error::AgentError;
 
 #[pyclass]
 #[derive(Debug, Clone, Serialize, Deserialize)]

@@ -1,7 +1,7 @@
 #[cfg(feature = "server")]
 use mockito;
 #[cfg(feature = "server")]
-use potato_head::agents::client_types::openai::OpenAIChatResponse;
+use potato_head::agents::provider::openai::OpenAIChatResponse;
 #[cfg(feature = "server")]
 use serde_json;
 

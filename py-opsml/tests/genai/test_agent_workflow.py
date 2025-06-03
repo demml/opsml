@@ -155,14 +155,16 @@ def test_opsml_agent_workflow():
             model="gpt-4o",
             provider="openai",
         )
-        client = OpenAIClient()
-        open_agent1 = Agent(client)
-        open_agent2 = Agent(client)
 
-        workflow = Workflow(name="test_workflow")
-        workflow.add_agent(open_agent1)
+        open_agent1 = Agent(Provider.OpenAI)
+        open_agent2 = Agent(Provider.OpenAI)
+
+        workflow = Workflow(
+            name="test_workflow"
+        )  # expand named argument to allow agents and tasks
+        workflow.add_agent(open_agent1)  # allow adding list of agents
         workflow.add_agent(open_agent2)
-        workflow.add_task(
+        workflow.add_task(  # allow adding list of tasks
             Task(
                 prompt=prompt,
                 agent_id=open_agent1.id,

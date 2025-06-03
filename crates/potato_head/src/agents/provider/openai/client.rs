@@ -1,5 +1,5 @@
 use crate::agents::provider::openai::{OpenAIChatMessage, OpenAIChatRequest, OpenAIChatResponse};
-use crate::agents::provider::types::{build_http_client, ClientType, ClientUrl};
+use crate::agents::provider::types::{build_http_client, Provider};
 use crate::error::AgentError;
 use crate::Prompt;
 use opsml_state::app_state;
@@ -17,7 +17,7 @@ pub struct OpenAIClient {
     api_key: String,
     base_url: String,
     #[pyo3(get)]
-    client_type: ClientType,
+    provider: Provider,
 }
 
 #[pymethods]
@@ -51,15 +51,15 @@ impl OpenAIClient {
         // if optional base_url is None, use the default OpenAI API URL
         let env_base_url = std::env::var("OPENAI_API_URL").ok();
         let base_url = base_url
-            .unwrap_or_else(|| env_base_url.unwrap_or_else(|| ClientUrl::OpenAI.url().to_string()));
+            .unwrap_or_else(|| env_base_url.unwrap_or_else(|| Provider::OpenAI.url().to_string()));
 
-        debug!("Creating OpenAIClient with base URL iwth key: {}", base_url);
+        debug!("Creating OpenAIClient with base URL with key: {}", base_url);
 
         Ok(Self {
             client,
             api_key,
             base_url,
-            client_type: ClientType::OpenAI,
+            provider: Provider::OpenAI,
         })
     }
 

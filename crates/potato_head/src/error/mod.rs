@@ -96,6 +96,9 @@ pub enum AgentError {
 
     #[error("Unsupported content type")]
     UnsupportedContentTypeError,
+
+    #[error("Unknown provider: {0}")]
+    UnknownProviderError(String),
 }
 
 impl<'a> From<pyo3::DowncastError<'a, 'a>> for AgentError {
