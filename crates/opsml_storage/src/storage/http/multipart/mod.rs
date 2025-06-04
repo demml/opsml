@@ -7,12 +7,13 @@ use crate::storage::http::multipart::error::MultiPartError;
 pub use aws::S3MultipartUpload;
 pub use azure::AzureMultipartUpload;
 pub use gcs::GcsMultipartUpload;
+use indicatif::ProgressBar;
 pub use local::LocalMultipartUpload;
 use opsml_client::OpsmlApiClient;
 use opsml_types::StorageType;
+use opsml_utils::ChunkParts;
 use std::path::Path;
 use std::sync::Arc;
-
 #[derive(Debug)]
 pub enum MultiPartUploader {
     S3(S3MultipartUpload),
@@ -32,8 +33,10 @@ impl MultiPartUploader {
         match *storage_type {
             StorageType::Aws => Ok(S3MultipartUpload::new(lpath, rpath, session_url, client)
                 .map(MultiPartUploader::S3)?),
-            StorageType::Google => Ok(GcsMultipartUpload::new(lpath, rpath, session_url, client)
-                .map(MultiPartUploader::Gcs)?),
+            StorageType::Google => {
+                Ok(GcsMultipartUpload::new(lpath, session_url, client)
+                    .map(MultiPartUploader::Gcs)?)
+            }
             StorageType::Local => {
                 LocalMultipartUpload::new(lpath, rpath, client).map(MultiPartUploader::Local)
             }
@@ -44,19 +47,26 @@ impl MultiPartUploader {
 
     pub fn upload_file_in_chunks(
         &mut self,
-        chunk_count: u64,
-        size_of_last_chunk: u64,
-        chunk_size: u64,
+        chunk_parts: ChunkParts,
+        progress_bar: &ProgressBar,
     ) -> Result<(), MultiPartError> {
         match self {
-            MultiPartUploader::S3(s3) => Ok(s3.upload_file_in_chunks(chunk_size as usize)?),
-            MultiPartUploader::Gcs(gcs) => {
-                Ok(gcs.upload_file_in_chunks(chunk_count, size_of_last_chunk, chunk_size)?)
+            MultiPartUploader::S3(s3) => {
+                Ok(s3.upload_file_in_chunks(chunk_parts.chunk_size as usize, progress_bar)?)
             }
-            MultiPartUploader::Local(local) => local.upload_file_in_chunks(),
-            MultiPartUploader::Azure(azure) => {
-                azure.upload_file_in_chunks(chunk_count, size_of_last_chunk, chunk_size)
-            }
+            MultiPartUploader::Gcs(gcs) => Ok(gcs.upload_file_in_chunks(
+                chunk_parts.chunk_count,
+                chunk_parts.size_of_last_chunk,
+                chunk_parts.chunk_size,
+                progress_bar,
+            )?),
+            MultiPartUploader::Local(local) => local.upload_file_in_chunks(progress_bar),
+            MultiPartUploader::Azure(azure) => azure.upload_file_in_chunks(
+                chunk_parts.chunk_count,
+                chunk_parts.size_of_last_chunk,
+                chunk_parts.chunk_size,
+                progress_bar,
+            ),
         }
     }
 }

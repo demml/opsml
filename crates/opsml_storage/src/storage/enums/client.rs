@@ -12,6 +12,7 @@ use opsml_settings::config::{OpsmlConfig, OpsmlStorageSettings};
 use opsml_types::contracts::CompleteMultipartUpload;
 use opsml_types::contracts::FileInfo;
 use opsml_types::StorageType;
+use opsml_utils::ChunkParts;
 use std::path::Path;
 use tracing::debug;
 
@@ -36,22 +37,20 @@ impl MultiPartUploader {
 
     pub async fn upload_file_in_chunks(
         &mut self,
-        chunk_count: u64,
-        size_of_last_chunk: u64,
-        chunk_size: u64,
+        chunk_parts: ChunkParts,
     ) -> Result<(), StorageError> {
         match self {
-            MultiPartUploader::Google(uploader) => Ok(uploader
-                .upload_file_in_chunks(chunk_count, size_of_last_chunk, chunk_size)
-                .await?),
-            MultiPartUploader::AWS(uploader) => Ok(uploader
-                .upload_file_in_chunks(chunk_count, size_of_last_chunk)
-                .await?),
+            MultiPartUploader::Google(uploader) => {
+                Ok(uploader.upload_file_in_chunks(chunk_parts).await?)
+            }
+            MultiPartUploader::AWS(uploader) => {
+                Ok(uploader.upload_file_in_chunks(chunk_parts).await?)
+            }
 
             MultiPartUploader::Local(uploader) => Ok(uploader.upload_file_in_chunks().await?),
-            MultiPartUploader::Azure(uploader) => Ok(uploader
-                .upload_file_in_chunks(chunk_count, size_of_last_chunk, chunk_size)
-                .await?),
+            MultiPartUploader::Azure(uploader) => {
+                Ok(uploader.upload_file_in_chunks(chunk_parts).await?)
+            }
         }
     }
 }

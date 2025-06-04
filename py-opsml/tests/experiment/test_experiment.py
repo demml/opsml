@@ -69,7 +69,7 @@ def cleanup_fake_directory(save_path: Path):
 
 @pytest.mark.skipif(WINDOWS_EXCLUDE, reason="skipping")
 def test_experimentcard():
-    with OpsmlTestServer(cleanup=False):
+    with OpsmlTestServer():
         cleanup_manually_created_directories()
         with start_experiment(space="test", log_hardware=True) as exp:
             metric1 = Metric(name="test", value=1.0)
@@ -158,7 +158,7 @@ def test_experimentcard_register(
     random_forest_classifier: SklearnModel,
     chat_prompt: Prompt,
 ):
-    with OpsmlTestServer(True):
+    with OpsmlTestServer():
         with start_experiment(space="test", log_hardware=True) as exp:
             datacard = DataCard(
                 interface=pandas_data,

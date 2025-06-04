@@ -4,6 +4,8 @@ use crate::storage::base::PathExt;
 use crate::storage::base::StorageClient;
 use crate::storage::error::StorageError;
 use crate::storage::filesystem::FileSystem;
+use crate::storage::utils::get_chunk_parts;
+use crate::storage::utils::set_download_chunk_size;
 use async_trait::async_trait;
 use azure_storage::prelude::*;
 use azure_storage::shared_access_signature::service_sas::BlobSasPermissions;
@@ -15,8 +17,8 @@ use opsml_settings::config::OpsmlStorageSettings;
 use opsml_types::contracts::CompleteMultipartUpload;
 use opsml_types::contracts::MultipartCompleteParts;
 use opsml_types::contracts::{FileInfo, UploadPartArgs};
-use opsml_types::{StorageType, DOWNLOAD_CHUNK_SIZE, UPLOAD_CHUNK_SIZE};
-use opsml_utils::FileUtils;
+use opsml_types::StorageType;
+use opsml_utils::ChunkParts;
 use reqwest::Client as HttpClient;
 use std::env;
 use std::fs::File;
@@ -64,26 +66,21 @@ impl AzureMultipartUpload {
         })
     }
 
-    pub async fn upload_file_in_chunks(
-        &self,
-        chunk_count: u64,
-        size_of_last_chunk: u64,
-        chunk_size: u64,
-    ) -> Result<(), AzureError> {
+    pub async fn upload_file_in_chunks(&self, chunk_parts: ChunkParts) -> Result<(), AzureError> {
         let mut upload_state = UploadState {
             block_parts: Vec::new(),
             bytes_uploaded: 0,
         };
 
-        for chunk_index in 0..chunk_count {
-            let this_chunk = if chunk_count - 1 == chunk_index {
-                size_of_last_chunk
+        for chunk_index in 0..chunk_parts.chunk_count {
+            let this_chunk = if chunk_parts.chunk_count - 1 == chunk_index {
+                chunk_parts.size_of_last_chunk
             } else {
-                chunk_size
+                chunk_parts.chunk_size
             };
 
             let upload_args = UploadPartArgs {
-                chunk_size,
+                chunk_size: chunk_parts.chunk_size,
                 chunk_index,
                 this_chunk_size: this_chunk,
             };
@@ -238,14 +235,14 @@ impl StorageClient for AzureStorageClient {
 
         // create and open lpath file
         let mut file = File::create(lpath)?;
+        let file_size = file.metadata()?.len();
+
+        let chunk_size = set_download_chunk_size(file_size, None);
 
         let container = self.client.container_client(self.bucket.as_str());
         let blob = container.blob_client(rpath.to_str().unwrap());
 
-        let mut stream = blob
-            .get()
-            .chunk_size(DOWNLOAD_CHUNK_SIZE as u64)
-            .into_stream();
+        let mut stream = blob.get().chunk_size(chunk_size as u64).into_stream();
 
         // iterate over the stream and write to the file
         while let Some(value) = stream.next().await {
@@ -562,8 +559,7 @@ impl FileSystem for AzureFSStorageClient {
             let files: Vec<PathBuf> = get_files(&stripped_lpath)?;
 
             for file in files {
-                let (chunk_count, size_of_last_chunk, chunk_size) =
-                    FileUtils::get_chunk_count(&file, UPLOAD_CHUNK_SIZE as u64)?;
+                let chunk_parts = get_chunk_parts(&file)?;
 
                 let stripped_file_path = file.strip_path(self.client.bucket().await);
                 let relative_path = file.relative_path(&stripped_lpath)?;
@@ -573,21 +569,16 @@ impl FileSystem for AzureFSStorageClient {
                     .create_multipart_uploader(&stripped_file_path, &remote_path)
                     .await?;
 
-                uploader
-                    .upload_file_in_chunks(chunk_count, size_of_last_chunk, chunk_size)
-                    .await?;
+                uploader.upload_file_in_chunks(chunk_parts).await?;
             }
         } else {
-            let (chunk_count, size_of_last_chunk, chunk_size) =
-                FileUtils::get_chunk_count(&stripped_lpath, UPLOAD_CHUNK_SIZE as u64)?;
+            let chunk_parts = get_chunk_parts(&stripped_lpath)?;
 
             let uploader = self
                 .create_multipart_uploader(&stripped_lpath, &stripped_rpath)
                 .await?;
 
-            uploader
-                .upload_file_in_chunks(chunk_count, size_of_last_chunk, chunk_size)
-                .await?;
+            uploader.upload_file_in_chunks(chunk_parts).await?;
         };
 
         Ok(())

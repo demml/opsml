@@ -1,6 +1,6 @@
-use google_cloud_auth::error::Error as GCloudAuthError;
-use google_cloud_storage::http::Error as GCloudStorageError;
-use google_cloud_storage::sign::SignedURLError;
+use gcloud_auth::error::Error as GCloudAuthError;
+use gcloud_storage::http::Error as GCloudStorageError;
+use gcloud_storage::sign::SignedURLError;
 
 use opsml_client::error::ApiClientError;
 

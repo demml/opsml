@@ -6,8 +6,6 @@ use std::fmt;
 use std::fmt::Display;
 use std::path::{Path, PathBuf};
 
-pub const UPLOAD_CHUNK_SIZE: usize = 1024 * 1024 * 5;
-pub const DOWNLOAD_CHUNK_SIZE: usize = 1024 * 1024 * 5;
 pub const MAX_FILE_SIZE: usize = 1024 * 1024 * 1024 * 50;
 
 #[pyclass(eq, eq_int)]
