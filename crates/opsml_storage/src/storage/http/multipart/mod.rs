@@ -48,11 +48,11 @@ impl MultiPartUploader {
     pub fn upload_file_in_chunks(
         &mut self,
         chunk_parts: ChunkParts,
-        progress_bar: Option<&ProgressBar>,
+        progress_bar: &ProgressBar,
     ) -> Result<(), MultiPartError> {
         match self {
             MultiPartUploader::S3(s3) => {
-                Ok(s3.upload_file_in_chunks(chunk_parts.chunk_size as usize)?)
+                Ok(s3.upload_file_in_chunks(chunk_parts.chunk_size as usize, progress_bar)?)
             }
             MultiPartUploader::Gcs(gcs) => Ok(gcs.upload_file_in_chunks(
                 chunk_parts.chunk_count,
@@ -60,11 +60,12 @@ impl MultiPartUploader {
                 chunk_parts.chunk_size,
                 progress_bar,
             )?),
-            MultiPartUploader::Local(local) => local.upload_file_in_chunks(),
+            MultiPartUploader::Local(local) => local.upload_file_in_chunks(progress_bar),
             MultiPartUploader::Azure(azure) => azure.upload_file_in_chunks(
                 chunk_parts.chunk_count,
                 chunk_parts.size_of_last_chunk,
                 chunk_parts.chunk_size,
+                progress_bar,
             ),
         }
     }

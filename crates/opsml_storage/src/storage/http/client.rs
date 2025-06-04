@@ -85,6 +85,12 @@ impl HttpFSStorageClient {
         let lpath_clone = lpath.to_path_buf();
         let rpath_clone = rpath.to_path_buf();
 
+        // Create progress style
+        let style = ProgressStyle::default_bar()
+                .template("{spinner:.green} [{elapsed_precise}] [{bar:40.green/bright_green}] {pos}/{len} chunks ({eta_precise} remaining) {msg}")
+                .unwrap()
+                .progress_chars("█▉▊▋▌▍▎▏  ");
+
         debug!(
             "lpath: {:?}, rpath: {:?} recursive: {:?}",
             lpath_clone, rpath_clone, recursive
@@ -99,12 +105,6 @@ impl HttpFSStorageClient {
 
             // Create multi-progress bar
             let multi_progress = MultiProgress::new();
-
-            // Create progress style
-            let style = ProgressStyle::default_bar()
-                .template("{spinner:.green} [{elapsed_precise}] [{bar:40.green/bright_green}] {pos}/{len} chunks ({eta_precise} remaining) {msg}")
-                .unwrap()
-                .progress_chars("█▉▊▋▌▍▎▏  ");
 
             files.into_par_iter().try_for_each(|file| {
                 let chunk_parts = get_chunk_parts(&file)?;
@@ -125,7 +125,7 @@ impl HttpFSStorageClient {
                 let mut uploader = self.client.create_multipart_uploader(&remote_path, &file)?;
 
                 debug!("Uploading file: {:?}", file);
-                uploader.upload_file_in_chunks(chunk_parts, Some(&progress_bar))?;
+                uploader.upload_file_in_chunks(chunk_parts, &progress_bar)?;
 
                 // Clean up the progress bar
                 progress_bar.finish_and_clear();
@@ -135,8 +135,15 @@ impl HttpFSStorageClient {
             multi_progress.clear()?;
         } else {
             let chunk_parts = get_chunk_parts(&lpath_clone)?;
+            let progress_bar = ProgressBar::new(chunk_parts.chunk_count);
+            progress_bar.set_style(style.clone());
+            progress_bar.set_message(format!(
+                "Uploading {}",
+                lpath.file_name().unwrap_or_default().to_string_lossy()
+            ));
+
             let mut uploader = self.client.create_multipart_uploader(rpath, lpath)?;
-            uploader.upload_file_in_chunks(chunk_parts, None)?;
+            uploader.upload_file_in_chunks(chunk_parts, &progress_bar)?;
         }
 
         Ok(())
