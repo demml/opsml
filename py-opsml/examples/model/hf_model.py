@@ -1,3 +1,7 @@
+import os
+
+os.environ["OPSML_TRACKING_URI"] = "http://localhost:3000"
+
 from transformers import DistilBertForSequenceClassification, DistilBertTokenizerFast  # type: ignore
 
 from opsml.model import HuggingFaceTask, HuggingFaceModel, TaskType
@@ -6,7 +10,7 @@ from opsml.logging import RustyLogger, LoggingConfig, LogLevel
 
 
 logger = RustyLogger.get_logger(
-    config=LoggingConfig(log_level=LogLevel.Debug),
+    config=LoggingConfig(log_level=LogLevel.Info),
 )
 
 logger.info("Starting the model card example...")

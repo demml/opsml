@@ -1,8 +1,8 @@
 use crate::storage::http::multipart::error::MultiPartError;
+
+use indicatif::ProgressBar;
 use opsml_client::OpsmlApiClient;
-use opsml_types::contracts::CompleteMultipartUpload;
 use opsml_types::contracts::UploadPartArgs;
-use opsml_types::contracts::UploadResponse;
 use reqwest::header::{CONTENT_LENGTH, CONTENT_RANGE};
 use std::fmt;
 use std::fs::File;
@@ -57,14 +57,12 @@ pub struct GcsMultipartUpload {
     session_url: String,
     file_reader: BufReader<File>,
     file_size: u64,
-    rpath: String,
     client: Arc<OpsmlApiClient>,
 }
 
 impl GcsMultipartUpload {
     pub fn new(
         lpath: &Path,
-        rpath: &Path,
         session_url: String,
         client: Arc<OpsmlApiClient>,
     ) -> Result<Self, MultiPartError> {
@@ -80,7 +78,6 @@ impl GcsMultipartUpload {
             session_url,
             file_reader,
             file_size,
-            rpath: rpath.to_str().unwrap().to_string(),
         })
     }
 
@@ -138,6 +135,7 @@ impl GcsMultipartUpload {
         chunk_count: u64,
         size_of_last_chunk: u64,
         chunk_size: u64,
+        progress_bar: Option<&ProgressBar>,
     ) -> Result<(), MultiPartError> {
         let mut upload_complete = false;
         for chunk_index in 0..chunk_count {
@@ -160,7 +158,10 @@ impl GcsMultipartUpload {
                 match self.upload_next_chunk(&upload_args) {
                     Ok(is_complete) => {
                         upload_complete = is_complete;
-                        // If we got a 308, this is normal for chunked uploads
+
+                        if let Some(pb) = progress_bar {
+                            pb.inc(1);
+                        }
                         break;
                     }
                     Err(e) => {
@@ -209,33 +210,50 @@ impl GcsMultipartUpload {
             }
         }
 
+        if let Some(pb) = progress_bar {
+            pb.finish_with_message("Upload complete");
+        }
+
         Ok(())
     }
 
-    fn cancel_upload(&self) -> Result<UploadResponse, MultiPartError> {
-        let request = CompleteMultipartUpload {
-            path: self.rpath.clone(),
-            session_url: self.session_url.clone(),
-            cancel: true,
-            ..Default::default()
-        };
+    fn complete_multipart_upload(&self) -> Result<(), MultiPartError> {
+        let response = self
+            .client
+            .client
+            .delete(self.session_url.clone())
+            .header(CONTENT_LENGTH, 0)
+            .send()?;
 
-        let response = self.client.complete_multipart_upload(request)?;
-        let uploaded = response.json::<UploadResponse>()?;
-
-        Ok(uploaded)
+        if !response.status().is_success() {
+            // log the error
+            // get the response text
+            let error_text = response.text().unwrap_or_default();
+            error!("Failed to cancel upload: {}", error_text);
+            Err(MultiPartError::CancelUploadError(error_text))
+        } else {
+            Ok(())
+        }
     }
 
-    fn complete_multipart_upload(&self) -> Result<UploadResponse, MultiPartError> {
-        let request = CompleteMultipartUpload {
-            path: self.rpath.clone(),
-            session_url: self.session_url.clone(),
-            ..Default::default()
-        };
+    fn cancel_upload(&self) -> Result<(), MultiPartError> {
+        let response = self
+            .client
+            .client
+            .delete(&self.session_url)
+            .header(CONTENT_LENGTH, 0)
+            .send()?;
+        if response.status() == 499 {
+            Ok(())
+        } else {
+            let error = match response.error_for_status_ref() {
+                Ok(_) => return Ok(()),
+                Err(error) => error,
+            };
 
-        let response = self.client.complete_multipart_upload(request)?;
-        let uploaded = response.json::<UploadResponse>()?;
-
-        Ok(uploaded)
+            // trace error and raise
+            error!("Failed to cancel upload: {}", error);
+            Err(MultiPartError::CancelUploadError(error.to_string()))
+        }
     }
 }

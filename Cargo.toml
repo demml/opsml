@@ -67,6 +67,7 @@ google-cloud-auth = { version = "0.17.2" }
 headers = { version = "0.*" }
 hmac = "0.*"
 hkdf = "0.*"
+indicatif = "0.*"
 jsonwebtoken = "9.*"
 mime_guess = "2.*"
 mockall = "0.*"

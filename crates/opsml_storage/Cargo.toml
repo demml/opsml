@@ -24,6 +24,7 @@ futures-util = { workspace = true }
 
 google-cloud-auth = { workspace = true, optional = true }
 google-cloud-storage = { workspace = true, optional = true }
+indicatif = { workspace = true }
 
 opsml-client = { workspace = true }
 opsml-colors = { workspace = true }
