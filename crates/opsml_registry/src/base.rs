@@ -73,6 +73,7 @@ impl OpsmlRegistry {
                     // check if scouter is enabled
                     let scouter_client = setup_scouter_client(&config.scouter_settings)?;
 
+                    // TODO (steven): Why clone config when we could use app state directly in server registry?
                     let server_registry = state.block_on(async {
                         crate::server::registry::server_logic::ServerRegistry::new(
                             registry_type,

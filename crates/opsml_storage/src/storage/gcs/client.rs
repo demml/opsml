@@ -7,20 +7,20 @@ use async_trait::async_trait;
 use base64::prelude::*;
 use futures::stream::Stream;
 use futures::StreamExt;
-use google_cloud_auth::credentials::CredentialsFile;
-use google_cloud_storage::client::{Client, ClientConfig};
-use google_cloud_storage::http::objects::delete::DeleteObjectRequest;
-use google_cloud_storage::http::objects::download::Range;
-use google_cloud_storage::http::objects::get::GetObjectRequest;
-use google_cloud_storage::http::objects::list::ListObjectsRequest;
-use google_cloud_storage::http::objects::upload::UploadObjectRequest;
-use google_cloud_storage::http::objects::upload::UploadType;
-use google_cloud_storage::http::objects::Object;
-use google_cloud_storage::http::resumable_upload_client::ChunkSize;
-use google_cloud_storage::http::resumable_upload_client::ResumableUploadClient;
-use google_cloud_storage::http::resumable_upload_client::UploadStatus;
-use google_cloud_storage::sign::SignedURLMethod;
-use google_cloud_storage::sign::SignedURLOptions;
+use gcloud_auth::credentials::CredentialsFile;
+use gcloud_storage::client::{Client, ClientConfig};
+use gcloud_storage::http::objects::delete::DeleteObjectRequest;
+use gcloud_storage::http::objects::download::Range;
+use gcloud_storage::http::objects::get::GetObjectRequest;
+use gcloud_storage::http::objects::list::ListObjectsRequest;
+use gcloud_storage::http::objects::upload::UploadObjectRequest;
+use gcloud_storage::http::objects::upload::UploadType;
+use gcloud_storage::http::objects::Object;
+use gcloud_storage::http::resumable_upload_client::ChunkSize;
+use gcloud_storage::http::resumable_upload_client::ResumableUploadClient;
+use gcloud_storage::http::resumable_upload_client::UploadStatus;
+use gcloud_storage::sign::SignedURLMethod;
+use gcloud_storage::sign::SignedURLOptions;
 use opsml_settings::config::OpsmlStorageSettings;
 use opsml_types::contracts::{CompleteMultipartUpload, FileInfo, UploadPartArgs};
 use opsml_types::StorageType;
@@ -379,15 +379,13 @@ impl StorageClient for GoogleStorageClient {
     /// A Result with the object name if successful
     async fn copy_object(&self, src: &str, dest: &str) -> Result<bool, StorageError> {
         self.client
-            .copy_object(
-                &google_cloud_storage::http::objects::copy::CopyObjectRequest {
-                    source_bucket: self.bucket.clone(),
-                    source_object: src.to_string(),
-                    destination_bucket: self.bucket.clone(),
-                    destination_object: dest.to_string(),
-                    ..Default::default()
-                },
-            )
+            .copy_object(&gcloud_storage::http::objects::copy::CopyObjectRequest {
+                source_bucket: self.bucket.clone(),
+                source_object: src.to_string(),
+                destination_bucket: self.bucket.clone(),
+                destination_object: dest.to_string(),
+                ..Default::default()
+            })
             .await
             .map_err(GoogleError::GCloudStorageError)?;
 
@@ -470,10 +468,8 @@ impl GoogleStorageClient {
     pub async fn get_object_stream(
         &self,
         rpath: &str,
-    ) -> Result<
-        impl Stream<Item = Result<bytes::Bytes, google_cloud_storage::http::Error>>,
-        GoogleError,
-    > {
+    ) -> Result<impl Stream<Item = Result<bytes::Bytes, gcloud_storage::http::Error>>, GoogleError>
+    {
         // open a bucket and blob and return the stream
         let result = self
             .client

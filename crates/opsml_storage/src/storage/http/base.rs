@@ -158,7 +158,7 @@ impl HttpStorageClient {
 
         // create buffer to store downloaded data
         let mut reader = response;
-        let mut buffer = vec![0; set_download_chunk_size(file_size, None)];
+        let mut buffer = vec![0; set_download_chunk_size(file_size as u64, None)];
 
         loop {
             let bytes_read = reader.read(&mut buffer).inspect_err(|e| {

@@ -1,3 +1,5 @@
+// This is actually a GCS resumable upload implementation, not a multipart upload. We are keeping the name as MultipartUpload for consistency with the rest of the codebase.
+
 use crate::storage::http::multipart::error::MultiPartError;
 
 use indicatif::ProgressBar;
@@ -127,6 +129,8 @@ impl GcsMultipartUpload {
         } else {
             Err(MultiPartError::UploadError(response.status()))
         }
+
+        // print the time taken to upload the chunk
     }
 
     #[instrument(skip_all)]

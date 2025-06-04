@@ -235,7 +235,7 @@ impl StorageClient for AzureStorageClient {
 
         // create and open lpath file
         let mut file = File::create(lpath)?;
-        let file_size = file.metadata()?.len() as i64;
+        let file_size = file.metadata()?.len();
 
         let chunk_size = set_download_chunk_size(file_size, None);
 

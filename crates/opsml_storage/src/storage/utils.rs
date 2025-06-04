@@ -18,8 +18,7 @@ pub const MAX_FILE_SIZE: usize = 1024 * 1024 * 1024 * 50; // 50 GB maximum
 /// * `usize` - The optimal chunk size in bytes
 pub fn set_upload_chunk_size(file_size: u64, available_memory: Option<u64>) -> usize {
     let mut optimal_size = DEFAULT_UPLOAD_CHUNK_SIZE;
-    let available_memory =
-        available_memory.unwrap_or(MemoryMetricLogger::new().get_metrics().available_memory as u64);
+    let available_memory = available_memory.unwrap_or(MemoryMetricLogger::new().available_memory());
 
     if file_size < 1024 * 1024 * 100 {
         // Under 100MB
@@ -51,10 +50,9 @@ pub fn set_upload_chunk_size(file_size: u64, available_memory: Option<u64>) -> u
 /// * `available_memory` - The available memory in bytes, if None, it will use the system's available memory
 /// # Returns
 /// * `usize` - The optimal chunk size in bytes
-pub fn set_download_chunk_size(file_size: i64, available_memory: Option<i64>) -> usize {
+pub fn set_download_chunk_size(file_size: u64, available_memory: Option<u64>) -> usize {
     let mut optimal_size = DEFAULT_DOWNLOAD_CHUNK_SIZE;
-    let available_memory =
-        available_memory.unwrap_or(MemoryMetricLogger::new().get_metrics().available_memory);
+    let available_memory = available_memory.unwrap_or(MemoryMetricLogger::new().available_memory());
 
     if file_size < 1024 * 1024 * 100 {
         // Under 100MB

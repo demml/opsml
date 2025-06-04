@@ -62,8 +62,8 @@ dirs = "6.*"
 dynfmt = { version = "0.*", features = ["curly"] }
 futures = "0.*"
 futures-util = "0.*"
-google-cloud-storage = { version = "0.24.*", features  = ["auth"] }
-google-cloud-auth = { version = "0.17.2" }
+gcloud-storage = { version = "1.*", features = ["auth"] }
+gcloud-auth = { version = "1.*" }
 headers = { version = "0.*" }
 hmac = "0.*"
 hkdf = "0.*"
