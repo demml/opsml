@@ -47,7 +47,6 @@ pub fn encrypt_file(input_path: &Path, key_bytes: &[u8]) -> Result<(), CryptErro
         output.write_all(&encrypted)?;
     }
     output.flush()?;
-    drop(output); // Ensure the file is closed before renaming
     fs::rename(temp_output_path, input_path)?;
 
     Ok(())
@@ -95,7 +94,6 @@ pub fn decrypt_file(input_path: &Path, key_bytes: &[u8]) -> Result<(), CryptErro
         output.write_all(&decrypted)?;
     }
     output.flush()?;
-    drop(output); // Ensure the file is closed before renaming
     fs::rename(temp_output_path, input_path)?;
 
     Ok(())
