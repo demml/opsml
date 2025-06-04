@@ -1,3 +1,7 @@
+import os
+
+os.environ["OPSML_TRACKING_URI"] = "http://localhost:3000"
+
 from opsml.helpers.data import create_fake_data
 from typing import Tuple, cast
 import pandas as pd

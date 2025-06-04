@@ -14,6 +14,9 @@ pub enum MultiPartError {
     #[error(transparent)]
     ReqwestError(#[from] ReqwestError),
 
+    #[error("Multipart upload session creation failed: {0}")]
+    CancelUploadError(String),
+
     #[error("Upload failed with status: {0}")]
     UploadError(StatusCode),
 
