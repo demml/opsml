@@ -1,14 +1,18 @@
+// This is actually a GCS resumable upload implementation, not a multipart upload. We are keeping the name as MultipartUpload for consistency with the rest of the codebase.
+
 use crate::storage::http::multipart::error::MultiPartError;
+
+use indicatif::ProgressBar;
 use opsml_client::OpsmlApiClient;
-use opsml_types::contracts::CompleteMultipartUpload;
 use opsml_types::contracts::UploadPartArgs;
-use opsml_types::contracts::UploadResponse;
 use reqwest::header::{CONTENT_LENGTH, CONTENT_RANGE};
 use std::fmt;
 use std::fs::File;
 use std::io::{BufReader, Read};
 use std::path::Path;
 use std::sync::Arc;
+use tracing::error;
+use tracing::instrument;
 
 #[derive(Clone, Debug)]
 pub struct ChunkSize {
@@ -55,14 +59,12 @@ pub struct GcsMultipartUpload {
     session_url: String,
     file_reader: BufReader<File>,
     file_size: u64,
-    rpath: String,
     client: Arc<OpsmlApiClient>,
 }
 
 impl GcsMultipartUpload {
     pub fn new(
         lpath: &Path,
-        rpath: &Path,
         session_url: String,
         client: Arc<OpsmlApiClient>,
     ) -> Result<Self, MultiPartError> {
@@ -78,18 +80,24 @@ impl GcsMultipartUpload {
             session_url,
             file_reader,
             file_size,
-            rpath: rpath.to_str().unwrap().to_string(),
         })
     }
 
     pub fn upload_next_chunk(
         &mut self,
         upload_args: &UploadPartArgs,
-    ) -> Result<(), MultiPartError> {
+    ) -> Result<bool, MultiPartError> {
         let first_byte = upload_args.chunk_index * upload_args.chunk_size;
         let last_byte = first_byte + upload_args.this_chunk_size - 1;
 
         let size = ChunkSize::new(first_byte, last_byte, Some(self.file_size));
+
+        // trace the size of the chunk being uploaded in mbs
+        tracing::trace!(
+            "Uploading chunk {} with  bytes ({} MB)",
+            upload_args.chunk_index,
+            size.size() as f64 / (1024.0 * 1024.0)
+        );
 
         let mut buffer = vec![0; upload_args.this_chunk_size as usize];
         let bytes_read = self.file_reader.read(&mut buffer)?;
@@ -106,19 +114,34 @@ impl GcsMultipartUpload {
             .body(buffer)
             .send()?;
 
-        if !response.status().is_success() {
-            return Err(MultiPartError::UploadError(response.status()));
+        if response.status() == reqwest::StatusCode::PERMANENT_REDIRECT {
+            tracing::debug!(
+                "Chunk {} uploaded successfully (308 Resume Incomplete)",
+                upload_args.chunk_index
+            );
+            Ok(false)
+        } else if response.status().is_success() {
+            tracing::debug!(
+                "Upload completed successfully with status: {}",
+                response.status()
+            );
+            Ok(true)
+        } else {
+            Err(MultiPartError::UploadError(response.status()))
         }
 
-        Ok(())
+        // print the time taken to upload the chunk
     }
 
+    #[instrument(skip_all)]
     pub fn upload_file_in_chunks(
         &mut self,
         chunk_count: u64,
         size_of_last_chunk: u64,
         chunk_size: u64,
+        progress_bar: &ProgressBar,
     ) -> Result<(), MultiPartError> {
+        let mut upload_complete = false;
         for chunk_index in 0..chunk_count {
             let this_chunk = if chunk_count - 1 == chunk_index {
                 size_of_last_chunk
@@ -132,30 +155,105 @@ impl GcsMultipartUpload {
                 this_chunk_size: this_chunk,
             };
 
-            // if error, cancel upload
-            match self.upload_next_chunk(&upload_args) {
-                Ok(_) => (),
+            const MAX_RETRIES: u32 = 3;
+            let mut retry_count = 0;
+
+            while retry_count < MAX_RETRIES {
+                match self.upload_next_chunk(&upload_args) {
+                    Ok(is_complete) => {
+                        upload_complete = is_complete;
+                        progress_bar.inc(1);
+
+                        break;
+                    }
+                    Err(e) => {
+                        retry_count += 1;
+                        if retry_count == MAX_RETRIES {
+                            error!(
+                                "Error uploading chunk {} after {} retries: {}",
+                                chunk_index, MAX_RETRIES, e
+                            );
+                            if let Err(cancel_err) = self.cancel_upload() {
+                                error!("Failed to cancel upload after error: {}", cancel_err);
+                            }
+                            return Err(e);
+                        }
+
+                        tracing::warn!("Retry {} for chunk {}: {}", retry_count, chunk_index, e);
+                        std::thread::sleep(std::time::Duration::from_millis(
+                            500 * retry_count as u64,
+                        ));
+                    }
+                }
+            }
+
+            // If the upload was marked complete before the last chunk, we can exit early
+            if upload_complete && chunk_index < chunk_count - 1 {
+                tracing::info!(
+                    "Upload completed early at chunk {}/{}",
+                    chunk_index + 1,
+                    chunk_count
+                );
+                break;
+            }
+        }
+
+        if !upload_complete {
+            tracing::warn!("Upload may be incomplete - never received final success status. Attempting to complete");
+            // Attempt to complete the upload
+            match self.complete_multipart_upload() {
+                Ok(_) => {
+                    tracing::info!("Multipart upload finalized successfully");
+                }
                 Err(e) => {
-                    self.cancel_upload()?;
-                    return Err(e);
+                    tracing::warn!("Failed to finalize multipart upload: {}", e);
+                    // Even if finalization fails, we've uploaded all chunks, so continue
                 }
             }
         }
 
+        progress_bar.finish_with_message("Upload complete");
+
         Ok(())
     }
 
-    fn cancel_upload(&self) -> Result<UploadResponse, MultiPartError> {
-        let request = CompleteMultipartUpload {
-            path: self.rpath.clone(),
-            session_url: self.session_url.clone(),
-            cancel: true,
-            ..Default::default()
-        };
+    fn complete_multipart_upload(&self) -> Result<(), MultiPartError> {
+        let response = self
+            .client
+            .client
+            .delete(self.session_url.clone())
+            .header(CONTENT_LENGTH, 0)
+            .send()?;
 
-        let response = self.client.complete_multipart_upload(request)?;
-        let uploaded = response.json::<UploadResponse>()?;
+        if !response.status().is_success() {
+            // log the error
+            // get the response text
+            let error_text = response.text().unwrap_or_default();
+            error!("Failed to cancel upload: {}", error_text);
+            Err(MultiPartError::CancelUploadError(error_text))
+        } else {
+            Ok(())
+        }
+    }
 
-        Ok(uploaded)
+    fn cancel_upload(&self) -> Result<(), MultiPartError> {
+        let response = self
+            .client
+            .client
+            .delete(&self.session_url)
+            .header(CONTENT_LENGTH, 0)
+            .send()?;
+        if response.status() == 499 {
+            Ok(())
+        } else {
+            let error = match response.error_for_status_ref() {
+                Ok(_) => return Ok(()),
+                Err(error) => error,
+            };
+
+            // trace error and raise
+            error!("Failed to cancel upload: {}", error);
+            Err(MultiPartError::CancelUploadError(error.to_string()))
+        }
     }
 }

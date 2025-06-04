@@ -1,5 +1,6 @@
 use crate::storage::http::multipart::error::MultiPartError;
 use base64::prelude::*;
+use indicatif::ProgressBar;
 use opsml_client::OpsmlApiClient;
 use opsml_types::contracts::CompleteMultipartUpload;
 use opsml_types::contracts::MultipartCompleteParts;
@@ -44,7 +45,9 @@ impl AzureMultipartUpload {
         chunk_count: u64,
         size_of_last_chunk: u64,
         chunk_size: u64,
+        progress_bar: &ProgressBar,
     ) -> Result<(), MultiPartError> {
+        const MAX_RETRIES: u32 = 3;
         for chunk_index in 0..chunk_count {
             let this_chunk = if chunk_count - 1 == chunk_index {
                 size_of_last_chunk
@@ -58,8 +61,34 @@ impl AzureMultipartUpload {
                 this_chunk_size: this_chunk,
             };
 
-            self.upload_next_chunk(&upload_args)?;
+            let mut retry_count = 0;
+
+            while retry_count < MAX_RETRIES {
+                match self.upload_next_chunk(&upload_args) {
+                    Ok(()) => {
+                        progress_bar.inc(1);
+                        break; // Exit retry loop on success
+                    }
+                    Err(e) => {
+                        retry_count += 1;
+
+                        if retry_count >= MAX_RETRIES {
+                            return Err(e);
+                        }
+
+                        tracing::warn!(
+                            "Retrying upload for chunk {} (attempt {}/{}) due to error: {}",
+                            chunk_index,
+                            retry_count,
+                            MAX_RETRIES,
+                            e
+                        );
+                    }
+                }
+            }
         }
+
+        progress_bar.finish_with_message("Upload complete");
 
         self.complete_upload()?;
 

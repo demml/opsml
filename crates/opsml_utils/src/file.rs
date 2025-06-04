@@ -47,9 +47,7 @@ impl FileUtils {
         Ok(files)
     }
 
-    pub fn get_chunk_count(path: &PathBuf, chunk_size: u64) -> Result<(u64, u64, u64), UtilError> {
-        let file_size = std::fs::metadata(path)?.len();
-
+    pub fn get_chunk_count(file_size: u64, chunk_size: u64) -> Result<ChunkParts, UtilError> {
         let chunk_size = std::cmp::min(file_size, chunk_size);
 
         let mut chunk_count = (file_size / chunk_size) + 1;
@@ -61,6 +59,16 @@ impl FileUtils {
             chunk_count -= 1;
         }
 
-        Ok((chunk_count, size_of_last_chunk, chunk_size))
+        Ok(ChunkParts {
+            chunk_count,
+            size_of_last_chunk,
+            chunk_size,
+        })
     }
+}
+
+pub struct ChunkParts {
+    pub chunk_count: u64,
+    pub size_of_last_chunk: u64,
+    pub chunk_size: u64,
 }

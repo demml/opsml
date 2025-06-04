@@ -18,7 +18,7 @@ def test_crud_artifactcard(
     custom_interface: ModelInterface,
 ):
     # start server
-    with OpsmlTestServer(True):
+    with OpsmlTestServer():
         reg = CardRegistry(registry_type=RegistryType.Model)
 
         card = ModelCard(
@@ -46,7 +46,7 @@ def test_crud_artifactcard_failure(
 ):
     """This test is to check whether the rollback card logic works correctly."""
     # start server
-    with OpsmlTestServer(True):
+    with OpsmlTestServer():
         reg = CardRegistry(registry_type=RegistryType.Model)
 
         card = ModelCard(

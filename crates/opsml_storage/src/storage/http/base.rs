@@ -1,10 +1,11 @@
 use crate::storage::error::StorageError;
 use crate::storage::http::multipart::MultiPartUploader;
+use crate::storage::utils::set_download_chunk_size;
 use opsml_client::error::ApiClientError;
 use opsml_client::OpsmlApiClient;
 use opsml_colors::Colorize;
 use opsml_types::api::{RequestType, Routes};
-use opsml_types::{contracts::*, StorageType, DOWNLOAD_CHUNK_SIZE};
+use opsml_types::{contracts::*, StorageType};
 use std::io::{Read, Write};
 use std::path::Path;
 use std::sync::Arc;
@@ -110,7 +111,7 @@ impl HttpStorageClient {
         &self,
         local_path: &str,
         remote_path: &str,
-        _file_size: i64,
+        file_size: i64,
     ) -> Result<(), StorageError> {
         // check if local path exists, create it if it doesn't
         let local_path = Path::new(local_path);
@@ -157,7 +158,7 @@ impl HttpStorageClient {
 
         // create buffer to store downloaded data
         let mut reader = response;
-        let mut buffer = vec![0; DOWNLOAD_CHUNK_SIZE];
+        let mut buffer = vec![0; set_download_chunk_size(file_size as u64, None)];
 
         loop {
             let bytes_read = reader.read(&mut buffer).inspect_err(|e| {
