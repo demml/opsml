@@ -299,7 +299,7 @@ pub fn upload_card_artifacts(path: PathBuf, key: &ArtifactKey) -> Result<(), Reg
     // create temp path for saving
     let encryption_key = key.get_decrypt_key()?;
 
-    //encrypt_directory(&path, &encryption_key)?;
+    encrypt_directory(&path, &encryption_key)?;
     debug!("Encrypted card artifacts");
 
     storage_client()?.put(&path, &key.storage_path(), true)?;

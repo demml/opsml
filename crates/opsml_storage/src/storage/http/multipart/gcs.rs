@@ -135,7 +135,7 @@ impl GcsMultipartUpload {
         chunk_count: u64,
         size_of_last_chunk: u64,
         chunk_size: u64,
-        progress_bar: Option<&ProgressBar>,
+        progress_bar: &ProgressBar,
     ) -> Result<(), MultiPartError> {
         let mut upload_complete = false;
         for chunk_index in 0..chunk_count {
@@ -158,10 +158,8 @@ impl GcsMultipartUpload {
                 match self.upload_next_chunk(&upload_args) {
                     Ok(is_complete) => {
                         upload_complete = is_complete;
+                        progress_bar.inc(1);
 
-                        if let Some(pb) = progress_bar {
-                            pb.inc(1);
-                        }
                         break;
                     }
                     Err(e) => {
@@ -210,9 +208,7 @@ impl GcsMultipartUpload {
             }
         }
 
-        if let Some(pb) = progress_bar {
-            pb.finish_with_message("Upload complete");
-        }
+        progress_bar.finish_with_message("Upload complete");
 
         Ok(())
     }
