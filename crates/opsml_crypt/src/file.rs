@@ -13,16 +13,21 @@ use std::io::{BufReader, BufWriter, Read, Write};
 use std::path::Path;
 use tracing::{debug, instrument};
 
-static CHUNK_SIZE: usize = 1024 * 1024 * 4; // 4MiB
+static CHUNK_SIZE: usize = 1024 * 1024 * 16; // 16 MiB chunk size
+const BUFFER_SIZE: usize = 1024 * 1024 * 2; // 2 MiB buffer size
 
 pub fn encrypt_file(input_path: &Path, key_bytes: &[u8]) -> Result<(), CryptError> {
     let key = Key::<Aes256Gcm>::from_slice(key_bytes);
     let cipher = Aes256Gcm::new(key);
 
     let temp_output_path = input_path.with_extension("enc.tmp");
-    let mut input = BufReader::new(File::open(input_path)?);
-    let mut output = BufWriter::new(File::create(&temp_output_path)?);
-    let mut buffer = vec![0u8; CHUNK_SIZE]; // 1MiB chunk
+    let input_file = File::open(input_path)?;
+    let mut input = BufReader::with_capacity(BUFFER_SIZE, input_file);
+
+    let output_file = File::create(&temp_output_path)?;
+    let mut output = BufWriter::with_capacity(BUFFER_SIZE, output_file);
+
+    let mut buffer = vec![0u8; CHUNK_SIZE]; // 16MiB chunk
 
     loop {
         let read_bytes = input.read(&mut buffer)?;
@@ -37,14 +42,12 @@ pub fn encrypt_file(input_path: &Path, key_bytes: &[u8]) -> Result<(), CryptErro
             .map_err(|e| CryptError::EncryptError(e.to_string()))?;
 
         // Write nonce length, nonce, ciphertext length, ciphertext
-        output.write_all(&(nonce.as_slice().len() as u64).to_le_bytes())?;
         output.write_all(nonce.as_slice())?;
-        output.write_all(&(encrypted.len() as u64).to_le_bytes())?;
+        output.write_all(&(encrypted.len() as u32).to_le_bytes())?;
         output.write_all(&encrypted)?;
     }
     output.flush()?;
     drop(output); // Ensure the file is closed before renaming
-
     fs::rename(temp_output_path, input_path)?;
 
     Ok(())
@@ -55,22 +58,32 @@ pub fn decrypt_file(input_path: &Path, key_bytes: &[u8]) -> Result<(), CryptErro
     let cipher = Aes256Gcm::new(key);
 
     let temp_output_path = input_path.with_extension("dec.tmp");
-    let mut input = BufReader::new(File::open(input_path)?);
-    let mut output = BufWriter::new(File::create(&temp_output_path)?);
+    let input_file = File::open(input_path)?;
+    let mut input = BufReader::with_capacity(BUFFER_SIZE, input_file);
+    let output_file = File::create(&temp_output_path)?;
+    let mut output = BufWriter::with_capacity(BUFFER_SIZE, output_file);
 
-    let mut len_buf = [0u8; 8];
+    let mut nonce_buf = [0u8; 12]; // AES-GCM nonce is always 12 bytes
+    let mut len_buf = [0u8; 4]; // Use u32 instead of u64 for length
+
     loop {
         // Read nonce
-        if input.read(&mut len_buf)? == 0 {
-            break; // end
+        match input.read_exact(&mut nonce_buf) {
+            Ok(_) => {}
+            Err(e) if e.kind() == std::io::ErrorKind::UnexpectedEof => break,
+            Err(e) => return Err(CryptError::IoError(e)),
         }
-        let nonce_len = u64::from_le_bytes(len_buf) as usize;
-        let mut nonce_buf = vec![0u8; nonce_len];
-        input.read_exact(&mut nonce_buf)?;
 
-        // Read ciphertext
         input.read_exact(&mut len_buf)?;
-        let ct_len = u64::from_le_bytes(len_buf) as usize;
+        let ct_len = u32::from_le_bytes(len_buf) as usize;
+
+        if ct_len > CHUNK_SIZE + 16 {
+            // +16 for GCM tag
+            return Err(CryptError::DecryptError(format!(
+                "Invalid ciphertext length: {} bytes",
+                ct_len
+            )));
+        }
         let mut ct_buf = vec![0u8; ct_len];
         input.read_exact(&mut ct_buf)?;
 
@@ -78,11 +91,11 @@ pub fn decrypt_file(input_path: &Path, key_bytes: &[u8]) -> Result<(), CryptErro
         let decrypted = cipher
             .decrypt(nonce, ct_buf.as_ref())
             .map_err(|e| CryptError::DecryptError(e.to_string()))?;
+
         output.write_all(&decrypted)?;
     }
     output.flush()?;
     drop(output); // Ensure the file is closed before renaming
-
     fs::rename(temp_output_path, input_path)?;
 
     Ok(())

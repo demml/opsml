@@ -359,7 +359,7 @@ def test_crud_artifactcard(
     chat_prompt: Prompt,
 ):
     # start server
-    with OpsmlTestServer(True):
+    with OpsmlTestServer():
         # datacard is required for modelcard, so we cant delete it before using it,
         # which is why there is a separate delete_card function
 

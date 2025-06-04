@@ -251,7 +251,7 @@ def test_crud_artifactcard_threads(
     chat_prompt: Prompt,
 ):
     # start server
-    with OpsmlTestServer(True):
+    with OpsmlTestServer():
         # Using ThreadPoolExecutor for concurrent execution
         with ThreadPoolExecutor(max_workers=3) as executor:
             # Submit all tasks

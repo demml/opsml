@@ -274,6 +274,11 @@ impl MemoryMetricLogger {
         MemoryMetricLogger { system }
     }
 
+    pub fn available_memory(&mut self) -> u64 {
+        self.system.refresh_memory();
+        self.system.total_memory() - self.system.used_memory()
+    }
+
     pub fn get_metrics(&mut self) -> MemoryMetrics {
         self.system.refresh_memory();
 

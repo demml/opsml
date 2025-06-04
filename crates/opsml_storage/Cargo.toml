@@ -22,8 +22,9 @@ bytes = { workspace = true }
 futures = { workspace = true }
 futures-util = { workspace = true }
 
-google-cloud-auth = { workspace = true, optional = true }
-google-cloud-storage = { workspace = true, optional = true }
+gcloud-storage = { workspace = true, optional = true }
+gcloud-auth = { workspace = true, optional = true }
+
 indicatif = { workspace = true }
 
 opsml-client = { workspace = true }
@@ -47,7 +48,7 @@ walkdir = { workspace = true }
 
 [features]
 default = []
-server = ["aws-config", "aws-sdk-s3", "azure_identity", "azure_storage", "azure_storage_blobs", "azure_core", "google-cloud-auth", "google-cloud-storage"]
+server = ["aws-config", "aws-sdk-s3", "azure_identity", "azure_storage", "azure_storage_blobs", "azure_core", "gcloud-auth", "gcloud-storage"]
 
 [dev-dependencies]
 mockall = { workspace = true }
