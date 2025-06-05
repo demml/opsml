@@ -208,7 +208,7 @@ impl KeycloakProvider {
     ///
     /// # Returns
     /// * `Result<Claims, SsoError>` - The decoded claims if successful, or an error if validation fails.
-    fn decode_jwt_token_with_validation(
+    fn decode_jwt_with_validation(
         &self,
         token: &str,
         public_key: &str,
@@ -220,24 +220,6 @@ impl KeycloakProvider {
             &DecodingKey::from_rsa_pem(public_key.as_bytes())?,
             &validation,
         )?;
-
-        Ok(token_data.claims)
-    }
-
-    /// Decode a JWT token without any validation.
-    /// This method is useful when you want to extract claims without verifying the signature or expiration.
-    /// # Arguments
-    /// * `token` - The JWT token to decode.
-    /// # Returns
-    /// * `Result<Claims, SsoError>` - The decoded claims if successful, or an error if decoding fails.
-    fn decode_jwt_without_validation(&self, token: &str) -> Result<KeycloakClaims, SsoError> {
-        let mut validation = Validation::new(jsonwebtoken::Algorithm::RS256);
-        validation.validate_exp = false; // Disable expiration validation
-        validation.validate_nbf = false; // Disable "not before" validation
-        validation.required_spec_claims.clear();
-
-        let token_data =
-            decode::<KeycloakClaims>(token, &DecodingKey::from_secret(&[]), &validation)?;
 
         Ok(token_data.claims)
     }
@@ -256,10 +238,10 @@ impl KeycloakProvider {
 
         // Decode the token to get user info
         let claims = if let Some(public_key) = &self.settings.public_key {
-            self.decode_jwt_token_with_validation(&token_response.access_token, public_key)?
+            self.decode_jwt_with_validation(&token_response.access_token, public_key)?
         } else {
             // If public key is not available, decode without validation
-            self.decode_jwt_without_validation(&token_response.access_token)?
+            return Err(SsoError::MissingPublicKey);
         };
 
         Ok(UserInfo {
@@ -309,7 +291,6 @@ impl SsoProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use base64::prelude::*;
     use jsonwebtoken::encode;
     use jsonwebtoken::EncodingKey;
     use jsonwebtoken::Header;
@@ -399,7 +380,7 @@ R3rJENWcXj473lMzYW0/DBDd0OrfFPd8s7ef6umP5Jj7jS4RuXZn
     }
 
     struct MockServer {
-        server: ServerGuard,
+        _server: ServerGuard,
         url: String,
     }
     impl MockServer {
@@ -429,12 +410,15 @@ R3rJENWcXj473lMzYW0/DBDd0OrfFPd8s7ef6umP5Jj7jS4RuXZn
                 .with_body(create_mock_token_response())
                 .create();
 
-            MockServer { server, url }
+            MockServer {
+                _server: server,
+                url,
+            }
         }
     }
 
     #[tokio::test]
-    async fn test_sso_provider_keycloak_with_validation() {
+    async fn test_sso_provider_keycloak() {
         let mock_server = MockServer::new().await;
 
         // Set the SSO provider environment variable
