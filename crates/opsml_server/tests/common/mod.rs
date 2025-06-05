@@ -345,6 +345,7 @@ impl TestHelper {
                 std::env::set_var("KEYCLOAK_REDIRECT_URI", "http://localhost:8080/callback");
                 std::env::set_var("KEYCLOAK_AUTH_URL", &mock_sso_server.url);
                 std::env::set_var("KEYCLOAK_AUTH_REALM", "opsml");
+                std::env::set_var("OPSML_USE_SSO", "true");
 
                 Some(mock_sso_server)
             } else {
@@ -389,16 +390,20 @@ impl TestHelper {
     }
 
     pub async fn login(app: &Router) -> JwtToken {
+        let mut builder = Request::builder()
+            .uri("/opsml/api/auth/login")
+            .header("Username", "admin")
+            .header("Password", "admin");
+
+        // if sso provider is set, add Use-SSO header
+        let use_sso = env::var("OPSML_USE_SSO").unwrap_or_else(|_| "false".to_string());
+        if use_sso == "true" {
+            builder = builder.header("Use-SSO", "true");
+        }
+
         let response = app
             .clone()
-            .oneshot(
-                Request::builder()
-                    .uri("/opsml/api/auth/login")
-                    .header("Username", "admin")
-                    .header("Password", "admin")
-                    .body(Body::empty())
-                    .unwrap(),
-            )
+            .oneshot(builder.body(Body::empty()).unwrap())
             .await
             .unwrap();
 
