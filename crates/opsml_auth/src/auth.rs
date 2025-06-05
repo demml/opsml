@@ -1,4 +1,5 @@
 use crate::error::AuthError;
+use crate::sso::types::SsoProvider;
 use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
 use opsml_sql::schemas::schema::User;
 use password_auth::verify_password;
@@ -19,13 +20,21 @@ pub struct AuthManager {
     jwt_secret: String,
     refresh_secret: String,
     scouter_secret: String,
+    pub sso_provider: Option<SsoProvider>,
 }
 impl AuthManager {
     pub fn new(jwt_secret: &str, refresh_secret: &str, scouter_secret: &str) -> Self {
+        let sso_provider = if let Ok(provider) = SsoProvider::from_env() {
+            Some(provider)
+        } else {
+            None
+        };
+
         Self {
             jwt_secret: jwt_secret.to_string(),
             refresh_secret: refresh_secret.to_string(),
             scouter_secret: scouter_secret.to_string(),
+            sso_provider,
         }
     }
 
@@ -120,6 +129,10 @@ impl AuthManager {
     ) -> Result<(), AuthError> {
         verify_password(recovery_code, server_hashed_recovery_code)
             .map_err(|_| AuthError::InvalidRecoveryCode)
+    }
+
+    pub fn is_sso_enabled(&self) -> bool {
+        self.sso_provider.is_some()
     }
 }
 
