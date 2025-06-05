@@ -59,7 +59,7 @@ pub async fn api_login_handler(
     let password = parse_header(&headers, "Password")?;
 
     let use_sso = headers.get("Use-SSO").map_or(false, |v| {
-        v.to_str().map_or(false, |s| s.eq_ignore_ascii_case("true"))
+        v.to_str().is_ok_and(|s| s.eq_ignore_ascii_case("true"))
     });
 
     // Validation flow
