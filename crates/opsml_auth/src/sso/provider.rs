@@ -47,6 +47,12 @@ impl SsoProvider {
             SsoProvider::Keycloak(provider) => provider.authenticate(username, password).await,
         }
     }
+
+    pub fn authorization_url(&self, state: &str) -> String {
+        match self {
+            SsoProvider::Keycloak(provider) => provider.authorization_url(state),
+        }
+    }
 }
 #[cfg(test)]
 mod tests {

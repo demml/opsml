@@ -5,7 +5,7 @@ use axum::{
     body::Body,
     http::{header, Request, StatusCode},
 };
-use http_body_util::BodyExt; // for `collect`
+use http_body_util::BodyExt;
 use jsonwebtoken::encode;
 use jsonwebtoken::EncodingKey;
 use jsonwebtoken::Header;
@@ -23,7 +23,7 @@ use scouter_client::{BinnedCustomMetrics, BinnedPsiFeatureMetrics, SpcDriftFeatu
 use std::time::SystemTime;
 use std::time::UNIX_EPOCH;
 use std::{env, net::SocketAddr, vec};
-use tower::ServiceExt; // for `call`, `oneshot`, and `ready`
+use tower::ServiceExt;
 
 fn cleanup() {
     // cleanup delete opsml.db and opsml_registries folder from the current directory
