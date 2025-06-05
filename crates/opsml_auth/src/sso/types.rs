@@ -264,23 +264,24 @@ impl KeycloakProvider {
 }
 
 pub enum SsoProvider {
-    Keycloak,
+    Keycloak(KeycloakProvider),
 }
 
 impl SsoProvider {
     pub fn as_str(&self) -> &str {
         match self {
-            SsoProvider::Keycloak => "keycloak",
+            SsoProvider::Keycloak(_) => "keycloak",
         }
     }
 
-    pub fn from_env() -> Result<Self, SsoError> {
+    pub async fn from_env() -> Result<Self, SsoError> {
+        let client = Client::new();
         match std::env::var("SSO_PROVIDER")
             .map_err(|_| SsoError::EnvVarNotSet)?
             .to_lowercase()
             .as_str()
         {
-            "keycloak" => Ok(SsoProvider::Keycloak),
+            "keycloak" => Ok(SsoProvider::Keycloak(KeycloakProvider::new(client).await?)),
             _ => Err(SsoError::InvalidProvider(
                 std::env::var("SSO_PROVIDER").unwrap_or_default(),
             )),

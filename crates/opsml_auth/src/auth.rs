@@ -23,19 +23,32 @@ pub struct AuthManager {
     pub sso_provider: Option<SsoProvider>,
 }
 impl AuthManager {
-    pub fn new(jwt_secret: &str, refresh_secret: &str, scouter_secret: &str) -> Self {
-        let sso_provider = if let Ok(provider) = SsoProvider::from_env() {
+    /// Creates a new instance of `AuthManager` with the provided secrets and optional SSO provider.
+    ///
+    /// # Arguments
+    /// * `jwt_secret`: The secret key used for signing JWT tokens.
+    /// * `refresh_secret`: The secret key used for signing refresh tokens.
+    /// * `scouter_secret`: The secret key used for Scouter integration.
+    ///
+    /// # Returns
+    /// A `Result` containing the `AuthManager` instance or an `AuthError` if initialization fails.
+    pub async fn new(
+        jwt_secret: &str,
+        refresh_secret: &str,
+        scouter_secret: &str,
+    ) -> Result<Self, AuthError> {
+        let sso_provider = if let Ok(provider) = SsoProvider::from_env().await {
             Some(provider)
         } else {
             None
         };
 
-        Self {
+        Ok(Self {
             jwt_secret: jwt_secret.to_string(),
             refresh_secret: refresh_secret.to_string(),
             scouter_secret: scouter_secret.to_string(),
             sso_provider,
-        }
+        })
     }
 
     fn generate_salt(&self) -> String {
