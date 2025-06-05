@@ -18,3 +18,8 @@ opsml-sql = { workspace = true }
 thiserror = { workspace = true }
 tracing = { workspace = true }
  
+[dev-dependencies]
+base64 = { workspace = true }
+mockito = { workspace = true }
+serde_json = { workspace = true }
+tokio = { workspace = true }

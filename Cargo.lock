@@ -3821,14 +3821,18 @@ dependencies = [
 name = "opsml-auth"
 version = "3.0.0-rc.2"
 dependencies = [
+ "base64 0.22.1",
  "jsonwebtoken",
+ "mockito",
  "opsml-sql",
  "password-auth",
  "rand 0.9.1",
  "rayon",
  "reqwest",
  "serde",
+ "serde_json",
  "thiserror 2.0.12",
+ "tokio",
  "tracing",
 ]
 
