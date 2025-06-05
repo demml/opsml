@@ -239,6 +239,7 @@ impl KeycloakProvider {
 
         Ok(UserInfo {
             username: claims.preferred_username,
+            email: claims.email,
         })
     }
 }

@@ -26,6 +26,12 @@ impl OpsmlServerError {
         }
     }
 
+    pub fn sso_provider_not_set() -> Self {
+        OpsmlServerError {
+            error: "SSO provider not set".to_string(),
+        }
+    }
+
     pub fn need_admin_permission() -> Self {
         error!("User does not have admin permissions");
         OpsmlServerError {

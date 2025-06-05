@@ -22,4 +22,7 @@ pub enum AuthError {
 
     #[error("Invalid recovery code provided")]
     InvalidRecoveryCode,
+
+    #[error("No SSO provider configured")]
+    SsoProviderNotSet,
 }
