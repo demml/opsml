@@ -58,9 +58,9 @@ pub async fn api_login_handler(
     let username = parse_header(&headers, "Username")?;
     let password = parse_header(&headers, "Password")?;
 
-    let use_sso = headers.get("Use-SSO").map_or(false, |v| {
-        v.to_str().is_ok_and(|s| s.eq_ignore_ascii_case("true"))
-    });
+    let use_sso = headers
+        .get("Use-SSO")
+        .is_some_and(|v| v.to_str().is_ok_and(|s| s.eq_ignore_ascii_case("true")));
 
     // Validation flow
     // If SSO is enabled, and the Use-SSO header is present, the username and password will be authenticated against the SSO provider.
