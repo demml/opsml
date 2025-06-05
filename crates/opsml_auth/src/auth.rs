@@ -37,11 +37,7 @@ impl AuthManager {
         refresh_secret: &str,
         scouter_secret: &str,
     ) -> Result<Self, AuthError> {
-        let sso_provider = if let Ok(provider) = SsoProvider::from_env().await {
-            Some(provider)
-        } else {
-            None
-        };
+        let sso_provider = SsoProvider::from_env().await.ok();
 
         Ok(Self {
             jwt_secret: jwt_secret.to_string(),
