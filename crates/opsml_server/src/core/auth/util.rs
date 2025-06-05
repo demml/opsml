@@ -121,7 +121,7 @@ async fn validate_user_with_opsml(
         Some(opsml_user) => {
             // user exists, return it
             info!("User {} found in database", user.username);
-            return Ok(opsml_user);
+            Ok(opsml_user)
         }
         None => {
             // user does not exist, create it
