@@ -46,6 +46,7 @@ pub struct KeycloakSettings {
     pub auth_realm: String,
     pub token_url: String,
     pub public_key: Option<String>,
+    pub scope: String,
 }
 
 impl KeycloakSettings {
@@ -63,6 +64,9 @@ impl KeycloakSettings {
 
         let auth_realm =
             std::env::var("KEYCLOAK_AUTH_REALM").map_err(SsoError::KeycloakEnvVarError)?;
+
+        let scope =
+            std::env::var("KEYCLOAK_SCOPE").unwrap_or_else(|_| "openid profile email".to_string());
 
         // if provide, the public key should have the format:
         // -----BEGIN PUBLIC KEY-----
@@ -85,6 +89,7 @@ impl KeycloakSettings {
             auth_realm,
             token_url,
             public_key,
+            scope,
         })
     }
 
@@ -241,5 +246,17 @@ impl KeycloakProvider {
             username: claims.preferred_username,
             email: claims.email,
         })
+    }
+
+    pub fn authorization_url(&self, state: &str) -> String {
+        format!(
+            "{}/realms/{}/protocol/openid-connect/auth?client_id={}&response_type=code&scope={}&redirect_uri={}&state={}",
+            self.settings.auth_url,
+            self.settings.auth_realm,
+            self.settings.client_id,
+            self.settings.scope,
+            self.settings.redirect_uri,
+            state
+        )
     }
 }
