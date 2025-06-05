@@ -13,7 +13,7 @@ use opsml_server::core::{
 
 #[tokio::test]
 async fn test_opsml_server_user_crud() {
-    let helper = TestHelper::new().await;
+    let helper = TestHelper::new(None).await;
 
     // 1. Create a new user
     let create_req = CreateUserRequest {
@@ -182,7 +182,7 @@ async fn test_opsml_server_user_crud() {
 
 #[tokio::test]
 async fn test_opsml_login_logout() {
-    let helper = TestHelper::new().await;
+    let helper = TestHelper::new(None).await;
 
     // 1. Create a new user
     let create_req = CreateUserRequest {

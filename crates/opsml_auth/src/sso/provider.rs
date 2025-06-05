@@ -14,6 +14,14 @@ impl SsoProvider {
         }
     }
 
+    pub async fn from_str(provider: &str) -> Result<Self, SsoError> {
+        let client = Client::new();
+        match provider.to_lowercase().as_str() {
+            "keycloak" => Ok(SsoProvider::Keycloak(KeycloakProvider::new(client).await?)),
+            _ => Err(SsoError::InvalidProvider(provider.to_string())),
+        }
+    }
+
     pub async fn from_env() -> Result<Self, SsoError> {
         let client = Client::new();
         match std::env::var("SSO_PROVIDER")

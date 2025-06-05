@@ -51,6 +51,7 @@ mockall = { workspace = true }
 mockito = { workspace = true }
 rand = "0.*"
 tower = { version = "0.*", features = ["util"] }
+jsonwebtoken = { workspace = true }
 
 [[test]]
 name = "integration"
