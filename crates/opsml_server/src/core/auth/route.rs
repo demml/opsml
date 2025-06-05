@@ -22,6 +22,23 @@ use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::sync::Arc;
 use tracing::{debug, error, info, instrument};
 
+fn parse_header(
+    headers: &HeaderMap,
+    key: &str,
+) -> Result<String, (StatusCode, Json<OpsmlServerError>)> {
+    headers
+        .get(key)
+        .and_then(|v| v.to_str().ok())
+        .map(|s| s.to_string())
+        .ok_or_else(|| {
+            error!("{} not found in headers", key);
+            (
+                StatusCode::BAD_REQUEST,
+                Json(OpsmlServerError::key_header_not_found(key.to_string())),
+            )
+        })
+}
+
 /// Route for the login endpoint when using the API
 ///
 /// # Parameters
@@ -38,48 +55,17 @@ pub async fn api_login_handler(
     headers: HeaderMap,
 ) -> Result<Json<JwtToken>, (StatusCode, Json<OpsmlServerError>)> {
     // get Username and Password from headers
-    let username = headers
-        .get("Username")
-        .ok_or_else(|| {
-            error!("Username not found in headers");
-            (
-                StatusCode::BAD_REQUEST,
-                Json(OpsmlServerError::username_header_not_found()),
-            )
-        })?
-        .to_str()
-        .map_err(|_| {
-            error!("Invalid UTF-8 in Username header");
-            (
-                StatusCode::BAD_REQUEST,
-                Json(OpsmlServerError::invalid_username_format()),
-            )
-        })?
-        .to_string();
+    let username = parse_header(&headers, "Username")?;
+    let password = parse_header(&headers, "Password")?;
 
-    let password = headers
-        .get("Password")
-        .ok_or_else(|| {
-            error!("Password not found in headers");
-            (
-                StatusCode::BAD_REQUEST,
-                Json(OpsmlServerError::password_header_not_found()),
-            )
-        })?
-        .to_str()
-        .map_err(|_| {
-            error!("Invalid UTF-8 in Password header");
-            (
-                StatusCode::BAD_REQUEST,
-                Json(OpsmlServerError::invalid_password_format()),
-            )
-        })?
-        .to_string();
+    let use_sso = headers.get("Use-SSO").map_or(false, |v| {
+        v.to_str().map_or(false, |s| s.eq_ignore_ascii_case("true"))
+    });
 
     // Validation flow
-    // If SSO is enabled, the username and password will be authenticated against the SSO provider.
+    // If SSO is enabled, and the Use-SSO header is present, the username and password will be authenticated against the SSO provider.
     // If SSO is not enabled, we will get the user from the database.
-    let mut user = if state.auth_manager.is_sso_enabled() {
+    let mut user = if state.auth_manager.is_sso_enabled() && use_sso {
         let user = authenticate_user_with_sso(&state, &username, &password).await?;
         info!("User authenticated with SSO: {}", username);
         user
