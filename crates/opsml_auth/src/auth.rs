@@ -1,5 +1,5 @@
 use crate::error::AuthError;
-use crate::sso::types::SsoProvider;
+use crate::sso::SsoProvider;
 use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
 use opsml_sql::schemas::schema::User;
 use password_auth::verify_password;
