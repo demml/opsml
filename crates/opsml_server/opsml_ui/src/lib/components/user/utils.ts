@@ -8,6 +8,8 @@ import type {
   UserResponse,
   LogOutResponse,
   UpdateUserRequest,
+  SsoAuthUrl,
+  LoginResponse,
 } from "$lib/components/user/types";
 import { userStore } from "./user.svelte";
 
@@ -87,4 +89,22 @@ export async function updateUser(
 
   const response = await opsmlClient.put(path, request, userStore.jwt_token);
   return (await response.json()) as UserResponse;
+}
+
+export async function getSsoAuthURL(state: string): Promise<SsoAuthUrl> {
+  const path = `${RoutePaths.SSO_AUTH}`;
+  const response = await opsmlClient.get(path, { state });
+
+  const data = await response.json();
+  return data as SsoAuthUrl;
+}
+
+export async function exchangeSsoCallbackCode(
+  code: string
+): Promise<LoginResponse> {
+  const path = `${RoutePaths.SSO_CALLBACK}`;
+  const response = await opsmlClient.get(path, { code });
+
+  const data = await response.json();
+  return data as LoginResponse;
 }

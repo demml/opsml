@@ -107,6 +107,16 @@ impl KeycloakSettings {
             ("password", password),
         ]
     }
+
+    pub fn build_callback_auth_params<'a>(&'a self, code: &'a str) -> Vec<(&'a str, &'a str)> {
+        vec![
+            ("grant_type", "authorization_code"),
+            ("client_id", &self.client_id),
+            ("client_secret", &self.client_secret),
+            ("redirect_uri", &self.redirect_uri),
+            ("code", code),
+        ]
+    }
 }
 
 #[derive(Deserialize, Debug)]
@@ -197,6 +207,39 @@ impl KeycloakProvider {
         Ok(response.json::<KeycloakTokenResponse>().await?)
     }
 
+    pub async fn get_token_from_code(&self, code: &str) -> Result<KeycloakTokenResponse, SsoError> {
+        // Implement the token retrieval logic using the authorization code
+        let params = self.settings.build_callback_auth_params(code);
+        let response = self
+            .client
+            .post(&self.settings.token_url)
+            .form(&params)
+            .header("Content-Type", "application/x-www-form-urlencoded")
+            .send()
+            .await?;
+
+        // check for 401
+        if response.status() == StatusCode::UNAUTHORIZED {
+            return Err(SsoError::Unauthorized);
+        }
+
+        // handle other errors
+        if !response.status().is_success() {
+            let status = response.status();
+            // Try to parse error response for more detail
+            if let Ok(error_response) = response.json::<KeycloakErrorResponse>().await {
+                return Err(SsoError::AuthenticationFailed(
+                    error_response.error_description,
+                ));
+            }
+
+            // Fallback to generic error
+            return Err(SsoError::FallbackError(status.to_string()));
+        }
+
+        Ok(response.json::<KeycloakTokenResponse>().await?)
+    }
+
     /// Decode a JWT token with validation against the Keycloak public key.
     /// If the public key is not available, it will fall back to decoding without validation.
     ///
@@ -239,6 +282,22 @@ impl KeycloakProvider {
             self.decode_jwt_with_validation(&token_response.access_token, public_key)?
         } else {
             // If public key is not available, decode without validation
+            return Err(SsoError::MissingPublicKey);
+        };
+
+        Ok(UserInfo {
+            username: claims.preferred_username,
+            email: claims.email,
+        })
+    }
+
+    pub async fn authenticate_callback_code(&self, code: &str) -> Result<UserInfo, SsoError> {
+        let token_response = self.get_token_from_code(code).await?;
+
+        // Decode the code to get user info
+        let claims = if let Some(public_key) = &self.settings.public_key {
+            self.decode_jwt_with_validation(&token_response.access_token, public_key)?
+        } else {
             return Err(SsoError::MissingPublicKey);
         };
 

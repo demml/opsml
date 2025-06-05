@@ -1,11 +1,14 @@
-use crate::core::auth::schema::{Authenticated, LoginRequest, LoginResponse, LogoutResponse};
-use crate::core::auth::util::authenticate_user_with_sso;
+use crate::core::auth::schema::{
+    Authenticated, LoginRequest, LoginResponse, LogoutResponse, SsoCallbackParams,
+};
+use crate::core::auth::util::{authenticate_user_with_sso, authenticate_user_with_sso_callback};
 use crate::core::error::{internal_server_error, OpsmlServerError};
 
 use crate::core::state::AppState;
 use crate::core::user::schema::UserResponse;
 use crate::core::user::utils::get_user;
 use anyhow::{Context, Result};
+use axum::extract::Query;
 /// Route for debugging information
 use axum::extract::State;
 use axum::{
@@ -21,6 +24,8 @@ use opsml_types::JwtToken;
 use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::sync::Arc;
 use tracing::{debug, error, info, instrument};
+
+use super::schema::{SsoAuthUrl, SsoAuthUrlParams};
 
 fn parse_header(
     headers: &HeaderMap,
@@ -407,6 +412,79 @@ async fn validate_jwt_token(
     }
 }
 
+#[instrument(skip_all)]
+async fn get_sso_authorization_url(
+    State(state): State<Arc<AppState>>,
+    Query(params): Query<SsoAuthUrlParams>,
+) -> Result<Json<SsoAuthUrl>, (StatusCode, Json<OpsmlServerError>)> {
+    if !state.auth_manager.is_sso_enabled() {
+        return Err((
+            StatusCode::NOT_IMPLEMENTED,
+            Json(OpsmlServerError::sso_not_enabled()),
+        ));
+    }
+
+    let provider = state.auth_manager.get_sso_provider().map_err(|e| {
+        error!("SSO provider not set: {}", e);
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(OpsmlServerError::sso_provider_not_set()),
+        )
+    })?;
+    // This should be a securely generated random value
+    let url = provider.authorization_url(&params.state);
+
+    Ok(Json(SsoAuthUrl { url }))
+}
+
+#[instrument(skip_all)]
+async fn exchange_callback_token(
+    State(state): State<Arc<AppState>>,
+    Query(params): Query<SsoCallbackParams>,
+) -> Result<Json<LoginResponse>, (StatusCode, Json<OpsmlServerError>)> {
+    info!("Exchanging SSO callback token");
+    let code = params.code;
+
+    let mut user = authenticate_user_with_sso_callback(&state, &code).await?;
+
+    // generate JWT token
+    let jwt_token = state.auth_manager.generate_jwt(&user).map_err(|e| {
+        error!("Failed to generate JWT token: {}", e);
+        internal_server_error(e, "Failed to generate JWT token")
+    })?;
+
+    let refresh_token = state
+        .auth_manager
+        .generate_refresh_token(&user)
+        .map_err(|e| {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(OpsmlServerError::refresh_token_error(e)),
+            )
+        })?;
+
+    user.refresh_token = Some(refresh_token);
+
+    // set refresh token in db
+    state.sql_client.update_user(&user).await.map_err(|e| {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(OpsmlServerError::refresh_token_error(e)),
+        )
+    })?;
+
+    info!("User logged in with sso: {}", user.username);
+
+    Ok(Json(LoginResponse {
+        authenticated: true,
+        message: "User authenticated".to_string(),
+        username: user.username,
+        jwt_token,
+        group_permissions: user.group_permissions,
+        permissions: user.permissions,
+    }))
+}
+
 pub async fn get_auth_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
     let result = catch_unwind(AssertUnwindSafe(|| {
         Router::new()
@@ -423,6 +501,14 @@ pub async fn get_auth_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
             .route(
                 &format!("{}/auth/ui/logout", prefix),
                 get(ui_logout_handler),
+            )
+            .route(
+                &format!("{}/auth/sso/authorization", prefix),
+                get(get_sso_authorization_url),
+            )
+            .route(
+                &format!("{}/auth/sso/callback", prefix),
+                get(exchange_callback_token),
             )
     }));
 
