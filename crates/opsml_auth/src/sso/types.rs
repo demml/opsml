@@ -29,18 +29,12 @@ pub struct KeycloakUserInfo {
 }
 
 pub enum SsoProvider {
-    Google,
-    Microsoft,
-    GitHub,
     Keycloak,
 }
 
 impl SsoProvider {
     pub fn as_str(&self) -> &str {
         match self {
-            SsoProvider::Google => "google",
-            SsoProvider::Microsoft => "microsoft",
-            SsoProvider::GitHub => "github",
             SsoProvider::Keycloak => "keycloak",
         }
     }
@@ -51,9 +45,6 @@ impl SsoProvider {
             .to_lowercase()
             .as_str()
         {
-            "google" => Ok(SsoProvider::Google),
-            "microsoft" => Ok(SsoProvider::Microsoft),
-            "github" => Ok(SsoProvider::GitHub),
             "keycloak" => Ok(SsoProvider::Keycloak),
             _ => Err(SsoError::InvalidProvider(
                 std::env::var("SSO_PROVIDER").unwrap_or_default(),
