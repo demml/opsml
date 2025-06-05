@@ -143,6 +143,12 @@ impl AuthManager {
     pub fn is_sso_enabled(&self) -> bool {
         self.sso_provider.is_some()
     }
+
+    pub fn get_sso_provider(&self) -> Result<&SsoProvider, AuthError> {
+        self.sso_provider
+            .as_ref()
+            .ok_or(AuthError::SsoProviderNotSet)
+    }
 }
 
 impl AuthManager {

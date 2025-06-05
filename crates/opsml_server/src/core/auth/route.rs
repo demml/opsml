@@ -1,5 +1,7 @@
 use crate::core::auth::schema::{Authenticated, LoginRequest, LoginResponse, LogoutResponse};
+use crate::core::auth::util::authenticate_user_with_sso;
 use crate::core::error::{internal_server_error, OpsmlServerError};
+
 use crate::core::state::AppState;
 use crate::core::user::schema::UserResponse;
 use crate::core::user::utils::get_user;
@@ -15,6 +17,7 @@ use axum::{
 };
 use opsml_sql::base::SqlClient;
 use opsml_types::JwtToken;
+
 use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::sync::Arc;
 use tracing::{debug, error, info, instrument};
@@ -73,12 +76,20 @@ pub async fn api_login_handler(
         })?
         .to_string();
 
-    // get user from database
-    let mut user = match get_user(&state.sql_client, &username).await {
-        Ok(user) => user,
-        Err(_) => {
-            return OpsmlServerError::user_validation_error()
-                .into_response(StatusCode::BAD_REQUEST);
+    // Validation flow
+    // If SSO is enabled, the username and password will be authenticated against the SSO provider.
+    // If SSO is not enabled, we will get the user from the database.
+    let mut user = if state.auth_manager.is_sso_enabled() {
+        // authenticate user with SSO
+        authenticate_user_with_sso(&state, &username, &password).await?
+    } else {
+        // if SSO is not enabled, we will get the user from the database
+        match get_user(&state.sql_client, &username).await {
+            Ok(user) => user,
+            Err(_) => {
+                return OpsmlServerError::user_validation_error()
+                    .into_response(StatusCode::BAD_REQUEST);
+            }
         }
     };
 

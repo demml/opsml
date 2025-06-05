@@ -5,4 +5,5 @@ use serde::Deserialize;
 #[derive(Deserialize, Debug)]
 pub struct UserInfo {
     pub username: String,
+    pub email: String,
 }
