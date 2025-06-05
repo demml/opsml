@@ -12,7 +12,9 @@ password-auth = { workspace = true }
 jsonwebtoken = { workspace = true }
 rand = { workspace = true }
 rayon = { workspace = true }
+reqwest = { workspace = true }
 serde = { workspace = true }
 opsml-sql = { workspace = true }
 thiserror = { workspace = true }
+tracing = { workspace = true }
  
