@@ -50,6 +50,34 @@ async fn authenticate_user_with_sso_provider(
     Ok(user)
 }
 
+async fn authenticate_user_with_sso_provider_callback(
+    state: &Arc<AppState>,
+    code: &str,
+) -> Result<UserInfo, (StatusCode, Json<OpsmlServerError>)> {
+    // get provider
+    let provider = state.auth_manager.get_sso_provider().map_err(|e| {
+        error!("SSO provider not set: {}", e);
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(OpsmlServerError::sso_provider_not_set()),
+        )
+    })?;
+
+    // authenticate with SSO provider
+    let user = provider
+        .authenticate_callback_code(code)
+        .await
+        .map_err(|e| {
+            error!("Failed to authenticate with SSO provider: {}", e);
+            (
+                StatusCode::UNAUTHORIZED,
+                Json(OpsmlServerError::user_validation_error()),
+            )
+        })?;
+
+    Ok(user)
+}
+
 async fn create_user(
     state: &Arc<AppState>,
     user: &UserInfo,
@@ -141,6 +169,19 @@ pub async fn authenticate_user_with_sso(
 ) -> Result<User, (StatusCode, Json<OpsmlServerError>)> {
     // authenticate user with sso provider
     let user_info = authenticate_user_with_sso_provider(state, username, password).await?;
+
+    // validate user with opsml
+    let user = validate_user_with_opsml(state, &user_info).await?;
+
+    Ok(user)
+}
+
+pub async fn authenticate_user_with_sso_callback(
+    state: &Arc<AppState>,
+    code: &str,
+) -> Result<User, (StatusCode, Json<OpsmlServerError>)> {
+    // authenticate user with sso provider
+    let user_info = authenticate_user_with_sso_provider_callback(state, code).await?;
 
     // validate user with opsml
     let user = validate_user_with_opsml(state, &user_info).await?;

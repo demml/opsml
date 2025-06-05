@@ -20,6 +20,11 @@ pub struct OpsmlServerError {
 }
 
 impl OpsmlServerError {
+    pub fn sso_not_enabled() -> Self {
+        OpsmlServerError {
+            error: "SSO is not enabled".to_string(),
+        }
+    }
     pub fn permission_denied() -> Self {
         OpsmlServerError {
             error: "Permission denied".to_string(),

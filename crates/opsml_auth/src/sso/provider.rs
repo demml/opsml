@@ -48,6 +48,12 @@ impl SsoProvider {
         }
     }
 
+    pub async fn authenticate_callback_code(&self, code: &str) -> Result<UserInfo, SsoError> {
+        match self {
+            SsoProvider::Keycloak(provider) => provider.authenticate_callback_code(code).await,
+        }
+    }
+
     pub fn authorization_url(&self, state: &str) -> String {
         match self {
             SsoProvider::Keycloak(provider) => provider.authorization_url(state),
