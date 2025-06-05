@@ -22,8 +22,8 @@ pub struct ApiSettings {
     pub opsml_dir: String,
     pub username: String,
     pub password: String,
-    pub auth_token: String,
     pub prod_token: Option<String>,
+    pub use_sso: bool,
 }
 
 /// StorageSettings for used with all storage clients
@@ -50,7 +50,7 @@ impl OpsmlStorageSettings {
                 opsml_dir: "".to_string(),
                 username: "guest".to_string(),
                 password: "guest".to_string(),
-                auth_token: "".to_string(),
+                use_sso: false,
                 prod_token: None,
             },
             storage_type: StorageType::Local,
@@ -74,6 +74,7 @@ pub struct AuthSettings {
     pub password: String,
     pub prod_token: Option<String>,
     pub scouter_secret: String,
+    pub use_sso: bool,
 }
 
 #[derive(Debug, Clone, Default, Serialize)]
@@ -170,6 +171,10 @@ impl Default for OpsmlConfig {
 
             username: env::var("OPSML_USERNAME").unwrap_or("guest".to_string()),
             password: env::var("OPSML_PASSWORD").unwrap_or("guest".to_string()),
+            use_sso: env::var("OPSML_USE_SSO")
+                .unwrap_or_else(|_| "false".to_string())
+                .parse()
+                .unwrap_or(false),
             prod_token: env::var("OPSML_PROD_TOKEN").ok(),
         };
 
@@ -327,7 +332,7 @@ impl OpsmlConfig {
                 opsml_dir: "opsml/api".to_string(),
                 username: self.auth_settings.username.clone(),
                 password: self.auth_settings.password.clone(),
-                auth_token: "".to_string(),
+                use_sso: self.auth_settings.use_sso,
                 prod_token: self.auth_settings.prod_token.clone(),
             },
         })
