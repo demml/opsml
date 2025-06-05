@@ -80,32 +80,32 @@ pub async fn api_login_handler(
     // If SSO is enabled, the username and password will be authenticated against the SSO provider.
     // If SSO is not enabled, we will get the user from the database.
     let mut user = if state.auth_manager.is_sso_enabled() {
-        // authenticate user with SSO
-        authenticate_user_with_sso(&state, &username, &password).await?
+        let user = authenticate_user_with_sso(&state, &username, &password).await?;
+        info!("User authenticated with SSO: {}", username);
+        user
     } else {
         // if SSO is not enabled, we will get the user from the database
         match get_user(&state.sql_client, &username).await {
-            Ok(user) => user,
+            Ok(user) => {
+                // check if password is correct
+                state
+                    .auth_manager
+                    .validate_user(&user, &password)
+                    .map_err(|_| {
+                        (
+                            StatusCode::UNAUTHORIZED,
+                            Json(OpsmlServerError::user_validation_error()),
+                        )
+                    })?;
+
+                user
+            }
             Err(_) => {
                 return OpsmlServerError::user_validation_error()
                     .into_response(StatusCode::BAD_REQUEST);
             }
         }
     };
-
-    // check if password is correct
-    state
-        .auth_manager
-        .validate_user(&user, &password)
-        .map_err(|_| {
-            (
-                StatusCode::UNAUTHORIZED,
-                Json(OpsmlServerError::user_validation_error()),
-            )
-        })?;
-
-    // we may get multiple requests for the same user (setting up storage and registries), so we
-    // need to check if current refresh and jwt tokens are valid and return them if they are
 
     // generate JWT token
     let jwt_token = state.auth_manager.generate_jwt(&user).map_err(|e| {

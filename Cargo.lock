@@ -4069,6 +4069,7 @@ dependencies = [
  "chrono",
  "headers",
  "http-body-util",
+ "jsonwebtoken",
  "mime_guess",
  "mockall",
  "mockito",
