@@ -180,7 +180,7 @@ pub async fn authenticate_user_with_sso_callback(
     state: &Arc<AppState>,
     code: &str,
 ) -> Result<User, (StatusCode, Json<OpsmlServerError>)> {
-    // authenticate user with sso provider
+    // authenticate user with sso provider callback code
     let user_info = authenticate_user_with_sso_provider_callback(state, code).await?;
 
     // validate user with opsml

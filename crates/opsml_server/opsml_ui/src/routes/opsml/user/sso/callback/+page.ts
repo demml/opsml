@@ -12,11 +12,6 @@ export const load: PageLoad = async ({ url }) => {
   // get local storage state
   const storedState = localStorage.getItem("ssoState") || "";
 
-  // log code and state
-  console.log("SSO Callback Code:", code);
-  console.log("SSO Callback State:", state);
-  console.log("Stored SSO State:", storedState);
-
   if (!code || !state || state !== storedState) {
     throw new Error("Invalid state or missing authorization code");
   }
@@ -24,7 +19,7 @@ export const load: PageLoad = async ({ url }) => {
   let loginResponse = await exchangeSsoCallbackCode(code);
 
   if (loginResponse.authenticated) {
-    userStore.setSsoState("");
+    localStorage.removeItem("ssoState"); // Clear the stored state after successful login
     userStore.updateUser(
       loginResponse.username,
       loginResponse.jwt_token,

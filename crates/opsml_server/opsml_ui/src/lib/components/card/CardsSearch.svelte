@@ -102,10 +102,10 @@
         <div class="flex flex-wrap gap-2 my-2">
           {#each filteredSpaces as space}
             {#if activeSpace === space}
-              <button class="chip text-black bg-primary-300 border-black border-1 reverse-shadow-small reverse-shadow-hover-small lg:text-base" 
+              <button class="chip text-black bg-primary-300 border-black border-1 reverse-shadow-small reverse-shadow-hover-small" 
                 onclick={() => setActiveRepo(space)}>{space}</button>
             {:else}
-              <button class="chip text-black border-black border-1 shadow-small shadow-hover-small bg-surface-50 lg:text-base" 
+              <button class="chip text-black border-black border-1 shadow-small shadow-hover-small bg-surface-50" 
                 onclick={() => setActiveRepo(space)}>{space}</button>
             {/if}
           {/each}
@@ -125,13 +125,13 @@
     </div>
     <div class="flex flex-row flex-wrap gap-1 items-center">
       <div>
-        <span class="badge text-base text-primary-800 border-black border-1 shadow-small bg-surface-50">{registryStats.stats.nbr_names} artifacts</span>
+        <span class="badge text-primary-800 border-black border-1 shadow-small bg-surface-50">{registryStats.stats.nbr_names} artifacts</span>
       </div>
       <div>
-        <span class="badge text-base text-primary-800 border-black border-1 shadow-small bg-surface-50">{registryStats.stats.nbr_versions} versions</span>
+        <span class="badge text-primary-800 border-black border-1 shadow-small bg-surface-50">{registryStats.stats.nbr_versions} versions</span>
       </div>
       <div>
-        <span class="badge text-base text-primary-800 border-black border-1 shadow-small bg-surface-50">{registryStats.stats.nbr_spaces} spaces</span>
+        <span class="badge text-primary-800 border-black border-1 shadow-small bg-surface-50">{registryStats.stats.nbr_spaces} spaces</span>
       </div>
       <div class="ml-1 w-full md:w-auto lg:flex-1">
         <input

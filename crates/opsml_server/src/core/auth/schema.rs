@@ -32,7 +32,6 @@ pub struct SsoAuthUrl {
 #[derive(Serialize, Deserialize)]
 pub struct SsoCallbackParams {
     pub code: String,
-    pub state: String,
 }
 
 #[derive(Serialize, Deserialize, Default)]

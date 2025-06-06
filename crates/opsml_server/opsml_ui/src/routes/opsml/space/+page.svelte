@@ -60,8 +60,8 @@
       <h2 class="font-bold text-primary-800 text-xl">Spaces</h2>
     </div>
 
-    <div class="flex flex-row justify-between pb-2 mb-2 items-center min-w-lg">
-      <div class="ml-1 w-2/3">
+    <div class="flex flex-col md:flex-row justify-between pb-2 items-start gap-3 md:gap-1 w-full ">
+      <div class="w-full md:w-2/3">
           <input
             class="input w-full text-sm rounded-base bg-surface-50 text-black disabled:opacity-50 placeholder-surface-800 placeholder-text-sm focus-visible:ring-1 border-black border-2 h-9"
             type="text"
@@ -70,8 +70,7 @@
             onkeydown={delay(searchSpaces, 1000)}
           />
       </div>
-
-      <div>
+      <div class="w-full md:w-auto">
         <CreateSpaceModal/>
       </div>
     </div>
