@@ -8,6 +8,7 @@ repository = { workspace = true }
 doctest = false
 
 [dependencies]
+base64 = { workspace = true }
 password-auth = { workspace = true }
 jsonwebtoken = { workspace = true }
 rand = { workspace = true }

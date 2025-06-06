@@ -175,7 +175,7 @@ impl KeycloakProvider {
         Ok(Self { client, settings })
     }
 
-    pub async fn get_token(
+    pub async fn get_token_from_user_pass(
         &self,
         username: &str,
         password: &str,
@@ -297,7 +297,11 @@ impl KeycloakProvider {
         Ok(token_data.claims)
     }
 
-    pub async fn authenticate(&self, username: &str, password: &str) -> Result<UserInfo, SsoError> {
+    pub async fn authenticate_resource_password(
+        &self,
+        username: &str,
+        password: &str,
+    ) -> Result<UserInfo, SsoError> {
         // Implement the authentication logic here
         debug!(
             "Requesting token from Keycloak at {}",
@@ -305,7 +309,7 @@ impl KeycloakProvider {
         );
 
         // Get access token from Keycloak
-        let token_response = self.get_token(username, password).await?;
+        let token_response = self.get_token_from_user_pass(username, password).await?;
 
         // Decode the token to get user info
         let claims = if let Some(public_key) = &self.settings.public_key {
@@ -321,7 +325,7 @@ impl KeycloakProvider {
         })
     }
 
-    pub async fn authenticate_callback_code(&self, code: &str) -> Result<UserInfo, SsoError> {
+    pub async fn authenticate_auth_flow(&self, code: &str) -> Result<UserInfo, SsoError> {
         let token_response = self.get_token_from_code(code).await?;
 
         // Decode the code to get user info

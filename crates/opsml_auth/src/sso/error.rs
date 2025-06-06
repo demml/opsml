@@ -6,7 +6,10 @@ pub enum SsoError {
     EnvVarNotSet,
 
     #[error("Failed to parse Keycloak settings from environment variables")]
-    KeycloakEnvVarError(#[from] std::env::VarError),
+    KeycloakEnvVarError(#[source] std::env::VarError),
+
+    #[error("Failed to parse Okta settings from environment variables")]
+    OktaEnvVarError(#[source] std::env::VarError),
 
     #[error("Invalid SSO provider specified: {0}")]
     InvalidProvider(String),
