@@ -56,10 +56,6 @@ async function redirectToSsoUrl() {
   // set to local storage instead of session storage
   localStorage.setItem("ssoState", state);
  
-
-  // delay for 5 seconds to ensure state is set
-  await new Promise(resolve => setTimeout(resolve, 5000));
-
   const ssoAuthUrl = await getSsoAuthURL(state);
 
   window.location.href = ssoAuthUrl.url;
