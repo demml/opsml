@@ -15,7 +15,7 @@
   {#await cards}
     <div></div>
     {:then cards}
-    <div class="flex flex-col pt-18">
+    <div class="flex flex-col pt-16">
       <div class="flex items-center justify-center border-2 border-black bg-slate-100 p-2">
         <div class="rounded-full bg-surface-200 border-black border-2 p-1 shadow-small">
           <BrainCircuit color="#8059b6" />

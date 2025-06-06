@@ -38,7 +38,7 @@
   </script>
   
   <div class="h-screen flex flex-col">
-    <div class="flex-none pt-20 m500:pt-14 lg:pt-[85px] border-b-2 border-black bg-slate-100">
+    <div class="flex-none pt-17 border-b-2 border-black bg-slate-100">
       <div class="flex flex-col mx-auto w-11/12 justify-start">
         <h1 class="flex flex-row flex-wrap items-center text-xl">
           <div class="group flex flex-none items-center">

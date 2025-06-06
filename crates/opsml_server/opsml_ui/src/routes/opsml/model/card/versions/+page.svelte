@@ -29,12 +29,10 @@
 
   </script>
   
-  <div class="flex-1 mx-auto w-9/12 pb-10 flex justify-center overflow-auto px-4 pt-4">
+  <div class="flex-1 mx-auto w-9/12 pt-4 justify-center px-4 pb-10">
 
-    <div class="grid grid-cols-1 w-full">
+    <div class="gap-1 p-4 flex flex-col rounded-base border-primary-500 border-2 shadow-primary bg-surface-50  w-full h-auto">
 
-      <div class="col-span-1 md:col-span-4 gap-1 p-4 flex flex-col rounded-base border-primary-500 border-2 shadow-primary bg-surface-50 h-auto">
-        <!-- Add your items here -->
         <div class="flex flex-row items-center gap-2 pb-2">
           <div class="rounded-full bg-surface-200 border-black border-2 p-1 shadow-small">
             <Settings color="#40328b" />
@@ -52,16 +50,19 @@
             <span class="badge text-base text-primary-800 border-black border-1 shadow-small bg-surface-50">{registryStats.stats.nbr_spaces} spaces</span>
           </div>
         </div>
-        <div class="pt-4 grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-4">
+
+        <div class="pt-4 grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-4 gap-4 justify-items-center">
           {#each registryPage.summaries as summary}
-            <VersionPage
-              space={summary.space}
-              name={summary.name}
-              version={summary.version}
-              updated_at={summary.created_at}
-              registry={data.registry}
-              bgColor={"bg-primary-400"}
-            />
+            <div class="flex justify-center w-full">
+              <VersionPage
+                space={summary.space}
+                name={summary.name}
+                version={summary.version}
+                updated_at={summary.created_at}
+                registry={data.registry}
+                bgColor={"bg-primary-400"}
+              />
+            </div>
           {/each}
         </div>
     
@@ -87,6 +88,4 @@
         </div>
       </div>
 
-    </div>
-  
   </div>
