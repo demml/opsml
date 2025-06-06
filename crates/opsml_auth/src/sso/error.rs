@@ -29,8 +29,14 @@ pub enum SsoError {
     #[error("Unauthorized access")]
     Unauthorized,
 
+    #[error("Bad request: {0}")]
+    BadRequest(String),
+
     #[error("Missing public key for SSO provider")]
     MissingPublicKey,
+
+    #[error("Missing signing key for SSO provider")]
+    MissingSigningKey,
 
     #[error("JWT decode error")]
     JwtDecodeError(#[from] jsonwebtoken::errors::Error),
