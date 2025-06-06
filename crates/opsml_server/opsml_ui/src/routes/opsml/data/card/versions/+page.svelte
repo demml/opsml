@@ -51,8 +51,9 @@
             <span class="badge text-base text-primary-800 border-black border-1 shadow-small bg-surface-50">{registryStats.stats.nbr_spaces} spaces</span>
           </div>
         </div>
-        <div class="pt-4 grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-4">
+        <div class="pt-4 grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-4 justify-items-center">
           {#each registryPage.summaries as summary}
+          <div class="flex justify-center w-full">
             <VersionPage
               space={summary.space}
               name={summary.name}
@@ -61,6 +62,7 @@
               registry={data.registry}
               bgColor={"bg-primary-400"}
             />
+          </div>
           {/each}
         </div>
     
