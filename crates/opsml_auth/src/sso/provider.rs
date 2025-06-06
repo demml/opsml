@@ -1,16 +1,19 @@
 use crate::sso::error::SsoError;
 use crate::sso::providers::keycloak::KeycloakProvider;
+use crate::sso::providers::okta::OktaProvider;
 use crate::sso::types::UserInfo;
 use reqwest::Client;
 
 pub enum SsoProvider {
     Keycloak(KeycloakProvider),
+    Okta(OktaProvider),
 }
 
 impl SsoProvider {
     pub fn as_str(&self) -> &str {
         match self {
             SsoProvider::Keycloak(_) => "keycloak",
+            SsoProvider::Okta(_) => "okta",
         }
     }
 
@@ -18,6 +21,7 @@ impl SsoProvider {
         let client = Client::new();
         match provider.to_lowercase().as_str() {
             "keycloak" => Ok(SsoProvider::Keycloak(KeycloakProvider::new(client).await?)),
+            "okta" => Ok(SsoProvider::Okta(OktaProvider::new(client).await?)),
             _ => Err(SsoError::InvalidProvider(provider.to_string())),
         }
     }
@@ -30,6 +34,7 @@ impl SsoProvider {
             .as_str()
         {
             "keycloak" => Ok(SsoProvider::Keycloak(KeycloakProvider::new(client).await?)),
+            "okta" => Ok(SsoProvider::Okta(OktaProvider::new(client).await?)),
             _ => Err(SsoError::InvalidProvider(
                 std::env::var("SSO_PROVIDER").unwrap_or_default(),
             )),
@@ -42,21 +47,36 @@ impl SsoProvider {
             .unwrap_or(false)
     }
 
-    pub async fn authenticate(&self, username: &str, password: &str) -> Result<UserInfo, SsoError> {
+    pub async fn authenticate_resource_password(
+        &self,
+        username: &str,
+        password: &str,
+    ) -> Result<UserInfo, SsoError> {
         match self {
-            SsoProvider::Keycloak(provider) => provider.authenticate(username, password).await,
+            SsoProvider::Keycloak(provider) => {
+                provider
+                    .authenticate_resource_password(username, password)
+                    .await
+            }
+            SsoProvider::Okta(provider) => {
+                provider
+                    .authenticate_resource_password(username, password)
+                    .await
+            }
         }
     }
 
-    pub async fn authenticate_callback_code(&self, code: &str) -> Result<UserInfo, SsoError> {
+    pub async fn authenticate_auth_flow(&self, code: &str) -> Result<UserInfo, SsoError> {
         match self {
-            SsoProvider::Keycloak(provider) => provider.authenticate_callback_code(code).await,
+            SsoProvider::Keycloak(provider) => provider.authenticate_auth_flow(code).await,
+            SsoProvider::Okta(provider) => provider.authenticate_auth_flow(code).await,
         }
     }
 
     pub fn authorization_url(&self, state: &str) -> String {
         match self {
             SsoProvider::Keycloak(provider) => provider.authorization_url(state),
+            SsoProvider::Okta(provider) => provider.authorization_url(state),
         }
     }
 }
@@ -210,14 +230,14 @@ R3rJENWcXj473lMzYW0/DBDd0OrfFPd8s7ef6umP5Jj7jS4RuXZn
 
         // Test the public key endpoint
         let user_info = sso_provider
-            .authenticate("guest", "guest")
+            .authenticate_resource_password("guest", "guest")
             .await
             .expect("Failed to authenticate with Keycloak");
 
         assert_eq!(user_info.username, "guest");
 
         let user_info = sso_provider
-            .authenticate_callback_code("mock_code")
+            .authenticate_auth_flow("mock_code")
             .await
             .expect("Failed to authenticate with Keycloak using callback code");
 
