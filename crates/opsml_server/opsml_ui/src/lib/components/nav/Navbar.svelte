@@ -40,16 +40,16 @@
 
 </script>
 
-<nav class="fixed left-0 top-0 z-20 mx-auto flex h-[75px] w-full items-center border-b-4 border-border bg-primary-700 border-b-2 border-black px-5 m500:h-16">
+<nav class="fixed left-0 top-0 z-20 mx-auto flex w-full items-center border-b-4 border-border bg-primary-700 border-b-2 border-black px-5 h-14">
   <div class="mx-auto flex w-full items-center justify-between px-8 lg:px-10">
   
-    <div class="w-[236px] md:hidden" aria-label="hamburger">
+    <div class="md:hidden" aria-label="hamburger">
       <button 
         type="button" 
         onclick={toggleSidebar}
         aria-label="Toggle menu" 
         aria-expanded={isSidebarOpen} 
-        class="m800:hidden flex gap-2 items-center justify-center rounded-base border-2 border-border shadow p-2 transition-all hover:translate-x-[4px] hover:translate-y-[4px] hover:shadow-none bg-surface-50"
+        class="m800:hidden flex items-center justify-center rounded-base border-2 border-border shadow transition-all hover:translate-x-[4px] hover:translate-y-[4px] hover:shadow-none bg-surface-50 w-9 h-9"
       >
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-menu h-6 w-6 m500:h-4 m500:w-4">
           <line x1="4" x2="20" y1="12" y2="12"></line>
@@ -74,7 +74,7 @@
         <div class="flex items-center gap-2 md:gap-4 lg:gap-6">
           {#each names as name}
             {@const path = '/opsml/' + name.replace(/s$/, '').toLowerCase()}
-              <a class="text-xl" href={path} class:active={page.url.pathname.includes(path)} data-sveltekit-preload-data="hover">
+              <a class="text-lg" href={path} class:active={page.url.pathname.includes(path)} data-sveltekit-preload-data="hover">
                 {name}
               </a>
           {/each}
@@ -84,7 +84,7 @@
 
     <div class="flex items-center justify-end gap-4 m800:w-[unset] m400:gap-2">
 
-      <a aria-label="github" href="https://github.com/demml/opsml" class="m800:hidden flex gap-2 items-center justify-center rounded-base border-2 border-black shadow p-2 shadow-hover bg-surface-50 w-12 h-12">
+      <a aria-label="github" href="https://github.com/demml/opsml" class="m800:hidden flex gap-2 items-center justify-center rounded-base border-2 border-black shadow p-2 shadow-hover bg-surface-50 w-9 h-9">
         <svg
           role="img"
           viewBox="0 0 24 24"
@@ -96,13 +96,13 @@
           </svg>
       </a>
 
-        <button aria-label="login" onclick={logInHandle} class="m800:hidden flex gap-2 items-center justify-center rounded-base border-2 border-black shadow p-2 shadow-hover bg-surface-50 w-12 h-12">
+        <button aria-label="login" onclick={logInHandle} class="m800:hidden flex gap-2 items-center justify-center rounded-base border-2 border-black shadow p-2 shadow-hover bg-surface-50 w-9 h-9">
           <KeySquare color="#5948a3"/>
         </button>
 
         <div 
           aria-label="user" 
-          class="m800:hidden relative flex items-center justify-center rounded-base border-2 border-black shadow p-2 shadow-hover bg-surface-50 w-12 h-12"
+          class="m800:hidden relative flex items-center justify-center rounded-base border-2 border-black shadow p-2 shadow-hover bg-surface-50 w-9 h-9"
         >
           <UserDropdown/>
         </div>
