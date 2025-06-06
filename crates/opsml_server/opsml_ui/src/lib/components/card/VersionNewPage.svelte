@@ -1,22 +1,30 @@
 <script lang="ts">
   import type { VersionPageResponse, RegistryStatsResponse } from "$lib/components/card/types";
-  import { getRegistryPage, getVersionPage, } from "$lib/components/card/utils";
-  import type { PageProps } from './$types';
+  import {  getVersionPage } from "$lib/components/card/utils";
+  import type { RegistryType } from "$lib/utils";
   import { onMount } from "svelte";
   import { Settings } from 'lucide-svelte';
-  import VersionPage from "$lib/components/card/VersionPage.svelte";
   import { ArrowLeft, ArrowRight } from 'lucide-svelte';
+  import type { AnyCard, CardMetadata } from "./card_interfaces/enum";
+  import VersionButton from "./VersionButton.svelte";
 
-  let { data }: PageProps = $props();
+
+  let {  metadata, registry, versionPage, cardRegistryStats } = $props<{ 
+      metadata: AnyCard
+      registry: RegistryType, 
+      versionPage: VersionPageResponse, 
+      cardRegistryStats: RegistryStatsResponse
+  }>();
+
   let currentPage = $state(1);
   let totalPages = $state(1);
- 
+  
   // registry-specific state
-  let registryPage = $state<VersionPageResponse>(data.versionPage);
-  let registryStats = $state<RegistryStatsResponse>(data.versionStats);
+  let registryPage = $state<VersionPageResponse>(versionPage);
+  let registryStats = $state<RegistryStatsResponse>(cardRegistryStats);
 
   const changePage = async function (page: number) {
-    registryPage = await getVersionPage(data.registry, data.metadata.space, data.metadata.name, page);
+    registryPage = await getVersionPage(registry, metadata.space, metadata.name, page);
     currentPage = page;
   }
 
@@ -26,7 +34,7 @@
 
   </script>
   
-  <div class="flex-1 mx-auto w-9/12 pb-10 flex justify-center overflow-auto px-4 pt-4">
+  <div class="flex-1 mx-auto w-10/12 pb-10 flex justify-center overflow-auto px-4 pt-4">
 
     <div class="grid grid-cols-1 w-full">
 
@@ -49,14 +57,14 @@
             <span class="badge text-base text-primary-800 border-black border-1 shadow-small bg-surface-50">{registryStats.stats.nbr_spaces} spaces</span>
           </div>
         </div>
-        <div class="pt-4 grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-4">
+        <div class="pt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4 justify-items-center">
           {#each registryPage.summaries as summary}
-            <VersionPage
+            <VersionButton
               space={summary.space}
               name={summary.name}
               version={summary.version}
               updated_at={summary.created_at}
-              registry={data.registry}
+              registry={registry}
               bgColor={"bg-primary-400"}
             />
           {/each}

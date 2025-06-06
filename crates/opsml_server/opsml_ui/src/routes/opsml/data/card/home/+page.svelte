@@ -18,7 +18,7 @@
 </script>
 
 <div class="flex-1 mx-auto w-11/12 flex justify-center px-4 pb-10">
-  <div class="flex flex-wrap xl:flex-row pt-4 gap-4 w-full justify-center">
+  <div class="flex flex-wrap pt-4 gap-4 w-full justify-center">
 
     {#if data.readme.exists}
     <div class="gap-1 flex flex-col rounded-base border-black border-3 shadow bg-surface-50 w-[1000px]">
