@@ -1,6 +1,5 @@
 <script lang="ts">
   
-  import CardsSearch from "$lib/components/card/CardsSearch.svelte";
   import type { PageProps } from './$types';
   import { onMount } from "svelte";
   import type { SpaceStats, SpaceStatsResponse } from "$lib/components/space/types";
