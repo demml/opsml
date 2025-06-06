@@ -1,13 +1,13 @@
 <script lang="ts">
   import type { PageProps } from './$types';
-  import VersionNewPage from "$lib/components/card/VersionNewPage.svelte";
+  import VersionPage from "$lib/components/card/VersionPage.svelte";
 
   let { data }: PageProps = $props();
  
 
   </script>
 
-  <VersionNewPage
+  <VersionPage
     metadata={data.metadata}
     registry={data.registry}
     versionPage={data.versionPage}
