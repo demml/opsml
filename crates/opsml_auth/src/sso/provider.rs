@@ -92,13 +92,13 @@ mod tests {
     use std::time::SystemTime;
     use std::time::UNIX_EPOCH;
 
-    const PUBLIC_KEY: &str = r#"MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAm2ATGZ7dHUqqRNP5JQ73
-    2Vao7XNEU1XyldoD2P/2dk2pnDKVYkfN+KW5p8c0l9ITFRt77b99i9EGa0ybuV65
-    wpMZKVahj8u0rLZEMWqBDQ/1E4ZeeVQSV0SlWzH5uTEkP5DgNB1ZnI31Wrro+X7m
-    uhRzy45hqoE+43vnvhRM4Xwgo7Xgf7iwvmVv4iQVxZg5BnXVkeKP1Z4rlnAAa3EJ
-    c9OkbW+LznNPyHVQxF9BlUg824Z0momQfLeNoZbuFU+wXIE5F1QMWpNesR/+iniO
-    KTataEwMkwyB6YST3RCiXLij8XaqFMO/E8r1jBs4RzS1bk1KtRVjIKIoqjY8kwkQ
-    0wIDAQAB"#;
+    const PUBLIC_KEY: &str = r#"MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAy2YCQSwO7b8yapX4gZ5U
+    Mqr/lQ/XzdGwyF1pF/ihbrZTKLNlGd42Ui2+vEA+EsNFLr7PlabsW6O54pXXbQC6
+    8HCRfS76hTI9SarXzpnEKLiW61EcQXenNAeRFV6ttKNrnWdBblh5lA62bwr9G0xR
+    NS4GhIrI196smXp4W4IIW14nazUd4AF+xnUuHMuyETDe2pWVhqVyWMsgf+kHTs7M
+    4WeB9XkTWHWGHYCU58vKATN0//wsBYmkeu5arPbXY+sXuQX4KEWuZB/VrUQN9ftn
+    1CPX/hbS82Kce/TrG8mICZcx/SnKOpj2b7EZ7N32+DPfkh7FKBTEIbycey7dmw1J
+    MQIDAQAB"#;
 
     impl Default for KeycloakClaims {
         fn default() -> Self {
@@ -121,33 +121,35 @@ mod tests {
 
     fn create_mock_token_response() -> String {
         // this is a mock private key generated offline for testing purposes
-        let mock_private_key = r#"-----BEGIN RSA PRIVATE KEY-----
-MIIEowIBAAKCAQEAm2ATGZ7dHUqqRNP5JQ732Vao7XNEU1XyldoD2P/2dk2pnDKV
-YkfN+KW5p8c0l9ITFRt77b99i9EGa0ybuV65wpMZKVahj8u0rLZEMWqBDQ/1E4Ze
-eVQSV0SlWzH5uTEkP5DgNB1ZnI31Wrro+X7muhRzy45hqoE+43vnvhRM4Xwgo7Xg
-f7iwvmVv4iQVxZg5BnXVkeKP1Z4rlnAAa3EJc9OkbW+LznNPyHVQxF9BlUg824Z0
-momQfLeNoZbuFU+wXIE5F1QMWpNesR/+iniOKTataEwMkwyB6YST3RCiXLij8Xaq
-FMO/E8r1jBs4RzS1bk1KtRVjIKIoqjY8kwkQ0wIDAQABAoIBACYzY97LuU+HWP+d
-IkdjO7q63MOssGLQ4djIBmQm4oDJrWbS5PmJ7/EvRcsjZiHhq4FoBXs5tnNWy/47
-kpnr2T4mjmwkeYpyKhTAp1mC9wGwJ7BKPBYWfn/oR8N5MQ3AMEpUo1sM0Eh2epl5
-FOiqs62Sc7nbYtXZ+w1RHHQWZ6SUTtRlLIT2FsunVUEPhuajOfOdNKqIWD9cNplh
-YmW2tF1VRSChjytDhV3/eS3mFurhRJqNyVHhS7TvmnUapAUp39pUubHAJQ5YqDBX
-ZvUQcvMyH/blAs13zhJIoKac346RXBqcLqERg0GSYYvnfLGqRPiUm8sJOKEwRPUO
-AVLuj6kCgYEA1xchIhsEuUSgGMP707ZKGpQ91Ko/VCD3yrjROu18ryhdjOytd8hN
-OC0d/aLFOHW6ZykApcavpzOKkNrhiGi2OmvjCRm0jgI0QQXAqAmgVGcNQ/j2H0Hj
-K+Sw5JIHcNIkCNl5GysSpNRDxAJ+xfBvGynozoZv4/s4qsAl7ebs2j8CgYEAuO1i
-oo5JniB2qlkCVaGEu1c0/wzUrfWfqJLiYKaP5JjvnDcbd1NWLK6BG1fi0g6A5Pfm
-ArDK/8uP2dPk1g07DiA1ZCSM+LB1QUYkU232pogrjd2ElBFUnyYh6tIjKth2ueJ9
-4VGgozs6cA0tacn1foN5Rrm2S52Ss9UTlw7e3G0CgYEAx62gQ9JDY19zJSqkWZos
-V1pxwEFAw3BLufYzv3oDu3REzPRX4hCgp1szMWjvoIeiwexNvpiiLx3pMKsSnxle
-uwO3ZJZpiUBAlHCrtxQgtNpqdUTl8ISxSeln0vpCUBm1/EUwaellyIGKW6hZWpbn
-/pa8myYxL7vkkpgJXj94eO8CgYA4rVjLpXxeoGh+MSWMBSLfIA04FkCgyGUUj2Ae
-ay4yy8S0Rhd+7OW+cAVV0gvMgXFzu56dOH4fA86k3lKGYCu3WpvCg4lJNxvY05yS
-jWNJCvb+VeQqVV1wIYnHpHvux8Url4UpJ5FqNd7lNMS0ZZd+HOFwkb6TUkoCH84P
-QBmByQKBgB7G8k+LbWMU34foEWwefTI8nuFYdiuSNakFhHcJ9T+zFlpVS7bMQMfK
-TcuAZ2BC53r9hNlfkGh+F5si2XB5AYJhai2tTdYtWjdJhAgLzeorZTa685Ny6Vmp
-R3rJENWcXj473lMzYW0/DBDd0OrfFPd8s7ef6umP5Jj7jS4RuXZn
------END RSA PRIVATE KEY-----
+        let mock_private_key = r#"-----BEGIN PRIVATE KEY-----
+MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDLZgJBLA7tvzJq
+lfiBnlQyqv+VD9fN0bDIXWkX+KFutlMos2UZ3jZSLb68QD4Sw0Uuvs+Vpuxbo7ni
+lddtALrwcJF9LvqFMj1JqtfOmcQouJbrURxBd6c0B5EVXq20o2udZ0FuWHmUDrZv
+Cv0bTFE1LgaEisjX3qyZenhbgghbXidrNR3gAX7GdS4cy7IRMN7alZWGpXJYyyB/
+6QdOzszhZ4H1eRNYdYYdgJTny8oBM3T//CwFiaR67lqs9tdj6xe5BfgoRa5kH9Wt
+RA31+2fUI9f+FtLzYpx79OsbyYgJlzH9Kco6mPZvsRns3fb4M9+SHsUoFMQhvJx7
+Lt2bDUkxAgMBAAECggEBAIJhf2x7a45nE1BTlhqwfVSFXJQWtcUPd3zYs/dTv1eS
+tDfQ1yv/z15aSHuvypqIZZ6TXcmWWMhdaVifqJoM78gUwI44QQqEq9i/FNswohdg
+TA3Hzo8AvkOR3iSOrlaustsRR1YOjNClpbgEmT6Yay3ltPPdauVFreosIV63Odgm
+mtifvmQHO3Fs61o/jUG/yRY//CYibF+heMxvrSkSHkRa86A1ludFLqy0sY80j4wn
+vggszRCxsAX14/LMBwcnIl0d0sf9ni6379fMn/W2qcBoRUSnUFFmxfAdnnZzdaVD
+UyzXaYDWHP7IMzJxu8vywkYoQdhCxqzTtJrqL/e2oikCgYEAz+OwqDt0Eu60Rxn5
+nxzjgm42/vhNWuXtlGaTS7i2+sM40cA3YMqk8LPP2Codf18D+3NEkzXbW3CoWZxr
+pQyrOL2/BQ1SDyLsf9YZSFvMANjo/+hgPBoMksGtAyqubnCXFfcGjvVf7AgbSq/3
+lD7bTNm1c+My/DrcBcedQnnJIi8CgYEA+nhBRoPLZfbg3Zt25t0p8Ff8PoAFLSqn
+rPHt+F+VGdOiwC3KWZd0Yo4Gf+a0FpaWUxkvoxBniDXhkSE3a5pgrtOw1f2EJ0pU
+CxiAdtT5ZwLriqCM8DpwpcJ/fXJFLt9tL4LJ3sDFRZs9tKciI80vGPLfOFSDy/mV
+OWO8PrMyUp8CgYAcvTlayH1PcLhza9/aY0AAdAQeU20+N7MUZOnP+gUxvXNJa+07
+8EfFDtaY55mUVipSxKiiQTvF9FkRqlInSw0QlwqlRCYn+YgAVDTCkA4vv8zWM+W5
+6U/7qdKlMW1TzzTT0IaTlNBh7Oz48kKjt9zRTveKwcn2nJx2IBZZbkSj+QKBgFD7
+7O8l0fAoANDmYW2H+PVzHWX/8qyF7C0pFC6IiScOnMLSi2ioZcMv9L4KFBRxoC1C
+KXrp5O/PrB1GxiqOgdBFNhoanE4v5DiqNW82sWUzNoFeI/PQkXenCZ3AAsqDB0Sj
+Xy4c2iwFY9AzcgBtaVsBvFb0TKD5E9y4eLc1LYI1AoGAbusWCkSQCOaN0c8KW81M
+W6xV1rPJOHYtOedTWXf7N/5SMl+ioEqpo6eP5ZswOzqLqgCJ+Kpl5DmvA4Ht8qel
+NTHa9XqoGvyPbaauojI0TIGa+mHYhY7hD2U/Z3xuegfDhm93CdgTwwWqJsezPXXV
+GrrNOufvPsvmCRO9m4ESRrk=
+-----END PRIVATE KEY-----
+
         "#;
 
         let claims = KeycloakClaims::default();
@@ -242,5 +244,25 @@ R3rJENWcXj473lMzYW0/DBDd0OrfFPd8s7ef6umP5Jj7jS4RuXZn
             .expect("Failed to authenticate with Keycloak using callback code");
 
         assert_eq!(user_info.username, "guest");
+    }
+
+    #[tokio::test]
+    async fn test_sso_provider_okta() {
+        let mock_server = MockServer::new().await;
+
+        // Set the SSO provider environment variable
+        std::env::set_var("SSO_PROVIDER", "okta");
+        std::env::set_var("OKTA_CLIENT_ID", "client");
+        std::env::set_var("OKTA_CLIENT_SECRET", "secret");
+        std::env::set_var("OKTA_REDIRECT_URI", "http://localhost:8080/callback");
+        std::env::set_var("OKTA_DOMAIN", &mock_server.url);
+
+        // Initialize the SSO provider
+        let sso_provider = SsoProvider::from_env().await.unwrap();
+
+        let user_info = sso_provider
+            .authenticate_resource_password("guest", "guest")
+            .await
+            .expect("Failed to authenticate with Okta");
     }
 }

@@ -48,7 +48,14 @@ impl OktaOktaJwkResponse {
     /// Currently only support jwk format
     pub fn decode_jwk(&self) -> Result<DecodingKey, SsoError> {
         // get first key
-        let key = self.keys.get(0).ok_or(SsoError::MissingPublicKey)?;
+        //let key = self.keys.get(0).ok_or(SsoError::MissingPublicKey)?;
+        // get key with sig use
+        let key = self
+            .keys
+            .iter()
+            .find(|k| k.use_ == "sig")
+            .ok_or(SsoError::MissingSigningKey)?;
+
         Ok(DecodingKey::from_rsa_components(&key.n, &key.e).map_err(SsoError::JwtDecodeError)?)
     }
 }
@@ -82,9 +89,9 @@ impl OktaSettings {
 
         let format_okta_url = |endpoint: &str| {
             if let Some(server_id) = &authorization_server_id {
-                format!("https://{}/oauth2/{}/{}", okta_domain, server_id, endpoint)
+                format!("{}/oauth2/{}/{}", okta_domain, server_id, endpoint)
             } else {
-                format!("https://{}/oauth2/{}", okta_domain, endpoint)
+                format!("{}/oauth2/{}", okta_domain, endpoint)
             }
         };
 
@@ -187,13 +194,20 @@ impl OktaProvider {
             .post(&self.settings.token_url)
             .basic_auth(&self.settings.client_id, Some(&self.settings.client_secret))
             .form(&params)
-            .header("Content-Type", "application/x-www-form-urlencoded")
+            .header("Accept", "application/json")
             .send()
             .await?;
 
         // check for 401
         if response.status() == StatusCode::UNAUTHORIZED {
             return Err(SsoError::Unauthorized);
+        }
+
+        if response.status() == StatusCode::BAD_REQUEST {
+            // get response text
+            let text = response.text().await.map_err(SsoError::ReqwestError)?;
+            error!("Bad request from Okta: {}", text);
+            return Err(SsoError::BadRequest(text));
         }
 
         // handle other errors
@@ -210,6 +224,11 @@ impl OktaProvider {
                         "User account requires additional setup in Keycloak".to_string(),
                     ));
                 }
+                // print error response
+                error!(
+                    "Authentication failed with error: {} - {}",
+                    error_response.error, error_response.error_description
+                );
                 return Err(SsoError::AuthenticationFailed(
                     error_response.error_description,
                 ));
@@ -218,6 +237,8 @@ impl OktaProvider {
             // Fallback to generic error
             return Err(SsoError::FallbackError(status.to_string()));
         }
+
+        debug!("Successfully retrieved token from Okta");
 
         Ok(response.json::<OktaTokenResponse>().await?)
     }
@@ -231,17 +252,20 @@ impl OktaProvider {
             .post(&self.settings.token_url)
             .basic_auth(&self.settings.client_id, Some(&self.settings.client_secret))
             .form(&params)
-            .header("Content-Type", "application/x-www-form-urlencoded")
+            .header("Accept", "application/json")
             .send()
-            .await
-            .map_err(|e| {
-                error!("Failed to send request to Okta: {}", e);
-                SsoError::ReqwestError(e)
-            })?;
+            .await?;
 
         // check for 401
         if response.status() == StatusCode::UNAUTHORIZED {
             return Err(SsoError::Unauthorized);
+        }
+
+        if response.status() == StatusCode::BAD_REQUEST {
+            // get response text
+            let text = response.text().await.map_err(SsoError::ReqwestError)?;
+            error!("Bad request from Okta: {}", text);
+            return Err(SsoError::BadRequest(text));
         }
 
         // handle other errors
@@ -299,10 +323,16 @@ impl OktaProvider {
         password: &str,
     ) -> Result<UserInfo, SsoError> {
         // Implement the authentication logic here
-        debug!("Requesting token from Okta at {}", self.settings.token_url);
+        debug!("Requesting token from Okta for {}", username);
 
         // Get access token from Okta
-        let token_response = self.get_token_from_user_pass(username, password).await?;
+        let token_response = self
+            .get_token_from_user_pass(username, password)
+            .await
+            .map_err(|e| {
+                error!("Failed to get token from Okta: {}", e);
+                e
+            })?;
 
         // Decode the token to get user info
         let claims =
