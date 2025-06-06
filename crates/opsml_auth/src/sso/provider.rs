@@ -68,6 +68,7 @@ mod tests {
     use jsonwebtoken::EncodingKey;
     use jsonwebtoken::Header;
     use mockito::{Server, ServerGuard};
+
     use std::time::SystemTime;
     use std::time::UNIX_EPOCH;
 
@@ -147,7 +148,9 @@ R3rJENWcXj473lMzYW0/DBDd0OrfFPd8s7ef6umP5Jj7jS4RuXZn
             "token_type": "Bearer",
             "not_before_policy": 0,
             "session_state": "mock_session_state",
-            "scope": "openid profile email"
+            "scope": "openid profile email",
+            "not-before-policy": 0,
+            "id_token": "id_token"
         })
         .to_string()
     }
@@ -210,6 +213,13 @@ R3rJENWcXj473lMzYW0/DBDd0OrfFPd8s7ef6umP5Jj7jS4RuXZn
             .authenticate("guest", "guest")
             .await
             .expect("Failed to authenticate with Keycloak");
+
+        assert_eq!(user_info.username, "guest");
+
+        let user_info = sso_provider
+            .authenticate_callback_code("mock_code")
+            .await
+            .expect("Failed to authenticate with Keycloak using callback code");
 
         assert_eq!(user_info.username, "guest");
     }

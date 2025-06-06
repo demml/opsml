@@ -188,7 +188,7 @@ impl ScouterServer {
 
 pub struct MockSsoServer {
     _server: mockito::ServerGuard,
-    url: String,
+    pub url: String,
     public_key_mock: mockito::Mock, // Store mock references
     token_mock: mockito::Mock,
 }
@@ -268,7 +268,9 @@ R3rJENWcXj473lMzYW0/DBDd0OrfFPd8s7ef6umP5Jj7jS4RuXZn
             "token_type": "Bearer",
             "not_before_policy": 0,
             "session_state": "mock_session_state",
-            "scope": "openid profile email"
+            "scope": "openid profile email",
+            "not-before-policy": 0,
+            "id_token": "id_token"
         })
         .to_string()
     }
