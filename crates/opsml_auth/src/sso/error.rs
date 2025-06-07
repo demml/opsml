@@ -2,14 +2,8 @@ use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum SsoError {
-    #[error("Environment variable not set")]
-    EnvVarNotSet,
-
-    #[error("Failed to parse Keycloak settings from environment variables")]
-    KeycloakEnvVarError(#[source] std::env::VarError),
-
-    #[error("Failed to parse Okta settings from environment variables")]
-    OktaEnvVarError(#[source] std::env::VarError),
+    #[error("Environment variable not set: {0}")]
+    EnvVarNotSet(String),
 
     #[error("Invalid SSO provider specified: {0}")]
     InvalidProvider(String),
@@ -35,9 +29,12 @@ pub enum SsoError {
     #[error("Missing public key for SSO provider")]
     MissingPublicKey,
 
+    #[error("Failed to fetch JWK: {0}")]
+    FailedToFetchJwk(String),
+
     #[error("Missing signing key for SSO provider")]
     MissingSigningKey,
 
-    #[error("JWT decode error")]
+    #[error("JWT decode error: {0}")]
     JwtDecodeError(#[from] jsonwebtoken::errors::Error),
 }

@@ -75,10 +75,6 @@ pub struct OktaSettings {
 
 impl OktaSettings {
     pub async fn from_env(client: &Client) -> Result<Self, SsoError> {
-        fn get_env_var(name: &str) -> Result<String, SsoError> {
-            std::env::var(name).map_err(SsoError::OktaEnvVarError)
-        }
-
         let client_id = get_env_var("OKTA_CLIENT_ID")?;
         let client_secret = get_env_var("OKTA_CLIENT_SECRET")?;
         let redirect_uri = get_env_var("OKTA_REDIRECT_URI")?;
