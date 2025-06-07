@@ -25,4 +25,7 @@ pub enum AuthError {
 
     #[error("No SSO provider configured")]
     SsoProviderNotSet,
+
+    #[error("Failed to hash: {0}")]
+    HashingError(String),
 }

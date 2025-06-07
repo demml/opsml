@@ -20,12 +20,14 @@ use axum::{
 };
 use opsml_sql::base::SqlClient;
 use opsml_types::JwtToken;
+use password_auth::verify_password;
+use rand::Rng;
 
 use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::sync::Arc;
 use tracing::{debug, error, info, instrument};
 
-use super::schema::{SsoAuthUrl, SsoAuthUrlParams};
+use crate::core::auth::schema::{SsoAuthUrl, SsoAuthUrlParams};
 
 fn parse_header(
     headers: &HeaderMap,
@@ -84,7 +86,7 @@ pub async fn api_login_handler(
                     .validate_user(&user, &password)
                     .map_err(|_| {
                         (
-                            StatusCode::UNAUTHORIZED,
+                            StatusCode::BAD_REQUEST,
                             Json(OpsmlServerError::user_validation_error()),
                         )
                     })?;
@@ -92,6 +94,26 @@ pub async fn api_login_handler(
                 user
             }
             Err(_) => {
+                // create dummy pass to verify (this is to avoid time-based attacks)
+                // if a user does not exist, the time it takes to return an error will be shorter than the validation step
+                // so we create a dummy validation step to increase the time it takes to return an error
+                let _is_valid = verify_password(
+                    "dummy_password",
+                    &state.auth_manager.dummy_user.password_hash,
+                )
+                .map_err(|_| {
+                    error!("Invalid password for user: {}", username);
+                    (
+                        StatusCode::BAD_REQUEST,
+                        Json(OpsmlServerError::user_validation_error()),
+                    )
+                })?;
+
+                // add small amount of random jitter (between 0 and 100 milliseconds)
+                // to avoid timing attacks
+                let millis = rand::rng().random_range(0..30);
+                tokio::time::sleep(std::time::Duration::from_millis(millis)).await;
+
                 return OpsmlServerError::user_validation_error()
                     .into_response(StatusCode::BAD_REQUEST);
             }
