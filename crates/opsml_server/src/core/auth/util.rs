@@ -37,7 +37,7 @@ async fn authenticate_user_with_sso_provider(
 
     // authenticate with SSO provider
     let user = provider
-        .authenticate(username, password)
+        .authenticate_resource_password(username, password)
         .await
         .map_err(|e| {
             error!("Failed to authenticate with SSO provider: {}", e);
@@ -64,16 +64,13 @@ async fn authenticate_user_with_sso_provider_callback(
     })?;
 
     // authenticate with SSO provider
-    let user = provider
-        .authenticate_callback_code(code)
-        .await
-        .map_err(|e| {
-            error!("Failed to authenticate with SSO provider: {}", e);
-            (
-                StatusCode::UNAUTHORIZED,
-                Json(OpsmlServerError::user_validation_error()),
-            )
-        })?;
+    let user = provider.authenticate_auth_flow(code).await.map_err(|e| {
+        error!("Failed to authenticate with SSO provider: {}", e);
+        (
+            StatusCode::UNAUTHORIZED,
+            Json(OpsmlServerError::user_validation_error()),
+        )
+    })?;
 
     Ok(user)
 }
