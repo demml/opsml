@@ -1096,7 +1096,7 @@ impl Default for HardwareMetricsRecord {
     }
 }
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Clone, Default)]
 pub struct User {
     pub id: Option<i32>,
     pub created_at: DateTime<Utc>,

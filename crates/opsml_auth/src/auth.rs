@@ -2,9 +2,9 @@ use crate::error::AuthError;
 use crate::sso::SsoProvider;
 use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
 use opsml_sql::schemas::schema::User;
-use password_auth::verify_password;
+use password_auth::{generate_hash, verify_password};
 use rand::{distr::Alphanumeric, Rng};
-use serde::{Deserialize, Serialize};
+use serde::{de, Deserialize, Serialize};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -21,6 +21,7 @@ pub struct AuthManager {
     refresh_secret: String,
     scouter_secret: String,
     pub sso_provider: Option<SsoProvider>,
+    pub dummy_user: User,
 }
 impl AuthManager {
     /// Creates a new instance of `AuthManager` with the provided secrets and optional SSO provider.
@@ -39,11 +40,18 @@ impl AuthManager {
     ) -> Result<Self, AuthError> {
         let sso_provider = SsoProvider::from_env().await.ok();
 
+        let dummy_user = User {
+            username: "dummy_user".to_string(),
+            password_hash: generate_hash("dummy_password"),
+            ..Default::default()
+        };
+
         Ok(Self {
             jwt_secret: jwt_secret.to_string(),
             refresh_secret: refresh_secret.to_string(),
             scouter_secret: scouter_secret.to_string(),
             sso_provider,
+            dummy_user,
         })
     }
 
