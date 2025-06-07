@@ -6,10 +6,14 @@ use jsonwebtoken::{decode, DecodingKey, Validation};
 use reqwest::StatusCode;
 use tracing::{debug, error};
 #[async_trait]
-pub trait SsoProvider {
+pub trait SsoProviderExt {
     fn client(&self) -> &reqwest::Client;
-
     fn token_url(&self) -> &str;
+    fn authorization_url(&self) -> &str;
+    fn client_id(&self) -> &str;
+    fn redirect_uri(&self) -> &str;
+    fn scope(&self) -> &str;
+    fn client_secret(&self) -> &str;
     fn build_auth_params<'a>(
         &'a self,
         username: &'a str,
@@ -143,5 +147,14 @@ pub trait SsoProvider {
         })
     }
 
-    fn authorization_url(&self, state: &str) -> String;
+    fn get_authorization_url(&self, state: &str) -> String {
+        format!(
+            "{}?client_id={}&response_type=code&scope={}&redirect_uri={}&state={}",
+            self.authorization_url(),
+            self.client_id(),
+            self.scope(),
+            self.redirect_uri(),
+            state
+        )
+    }
 }
