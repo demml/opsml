@@ -1,6 +1,7 @@
 use crate::sso::error::SsoError;
 use crate::sso::providers::keycloak::KeycloakProvider;
 use crate::sso::providers::okta::OktaProvider;
+use crate::sso::providers::traits::SsoProviderExt;
 use crate::sso::types::UserInfo;
 use reqwest::Client;
 
@@ -29,7 +30,7 @@ impl SsoProvider {
     pub async fn from_env() -> Result<Self, SsoError> {
         let client = Client::new();
         match std::env::var("SSO_PROVIDER")
-            .map_err(|_| SsoError::EnvVarNotSet)?
+            .map_err(|_| SsoError::EnvVarNotSet("SSO_PROVIDER".to_string()))?
             .to_lowercase()
             .as_str()
         {
@@ -75,15 +76,14 @@ impl SsoProvider {
 
     pub fn authorization_url(&self, state: &str) -> String {
         match self {
-            SsoProvider::Keycloak(provider) => provider.authorization_url(state),
-            SsoProvider::Okta(provider) => provider.authorization_url(state),
+            SsoProvider::Keycloak(provider) => provider.get_authorization_url(state),
+            SsoProvider::Okta(provider) => provider.get_authorization_url(state),
         }
     }
 }
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::sso::providers::keycloak::*;
     use jsonwebtoken::encode;
     use jsonwebtoken::EncodingKey;
     use jsonwebtoken::Header;

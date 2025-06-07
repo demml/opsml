@@ -2,7 +2,7 @@ use crate::sso::error::SsoError;
 
 use jsonwebtoken::DecodingKey;
 
-use crate::sso::providers::traits::SsoProvider;
+use crate::sso::providers::traits::SsoProviderExt;
 use crate::sso::providers::types::{get_env_var, JwkResponse};
 
 use reqwest::{Client, StatusCode};
@@ -115,13 +115,29 @@ impl OktaProvider {
     }
 }
 
-impl SsoProvider for OktaProvider {
+impl SsoProviderExt for OktaProvider {
     fn client(&self) -> &Client {
         &self.client
     }
 
     fn token_url(&self) -> &str {
         &self.settings.token_url
+    }
+
+    fn authorization_url(&self) -> &str {
+        &self.settings.authorization_url
+    }
+    fn client_id(&self) -> &str {
+        &self.settings.client_id
+    }
+    fn redirect_uri(&self) -> &str {
+        &self.settings.redirect_uri
+    }
+    fn scope(&self) -> &str {
+        &self.settings.scope
+    }
+    fn client_secret(&self) -> &str {
+        &self.settings.client_secret
     }
 
     fn build_auth_params<'a>(
@@ -138,16 +154,5 @@ impl SsoProvider for OktaProvider {
 
     fn decoding_key(&self) -> &DecodingKey {
         &self.settings.decoding_key
-    }
-
-    fn authorization_url(&self, state: &str) -> String {
-        format!(
-            "{}?client_id={}&response_type=code&scope={}&redirect_uri={}&state={}",
-            self.settings.authorization_url,
-            self.settings.client_id,
-            self.settings.scope,
-            self.settings.redirect_uri,
-            state
-        )
     }
 }
