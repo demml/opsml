@@ -3,93 +3,81 @@ use crate::sso::types::UserInfo;
 use jsonwebtoken::DecodingKey;
 use jsonwebtoken::{decode, Validation};
 use reqwest::{Client, StatusCode};
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use tracing::{debug, error};
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct KeycloakClaims {
-    pub sub: String,
-    pub scope: String,
-    pub name: String,
-    pub preferred_username: String,
-    pub email: String,
-    pub exp: usize, // Expiration time in seconds since epoch
-}
+use crate::sso::providers::types::{
+    get_env_var, IdTokenClaims, JwkResponse, OidcErrorResponse, TokenResponse,
+};
 
-#[derive(Debug, Deserialize)]
-pub struct KeycloakErrorResponse {
-    pub error: String,
-    pub error_description: String,
-}
-
-#[derive(Debug, Deserialize, Serialize)]
-pub struct KeycloakPublicKeyResponse {
-    pub realm: String,
-    pub public_key: String,
-}
-
-impl KeycloakPublicKeyResponse {
-    pub fn format_public_key(&self) -> String {
-        // Format the public key as needed, e.g., removing newlines or spaces
-        format!(
-            "-----BEGIN PUBLIC KEY-----\n{}\n-----END PUBLIC KEY-----",
-            self.public_key
-        )
-    }
-}
-#[derive(Debug, Clone, Default, Serialize)]
+#[derive(Clone)]
 pub struct KeycloakSettings {
     pub client_id: String,
     pub client_secret: String,
     pub redirect_uri: String,
-    pub auth_url: String,
-    pub auth_realm: String,
-    pub token_url: String,
-    pub public_key: Option<String>,
+    pub decoding_key: DecodingKey,
     pub scope: String,
+    pub token_url: String,
+    pub authorization_url: String,
 }
 
 impl KeycloakSettings {
-    pub fn from_env() -> Result<Self, SsoError> {
-        let client_id =
-            std::env::var("KEYCLOAK_CLIENT_ID").map_err(SsoError::KeycloakEnvVarError)?;
+    pub async fn from_env(client: &Client) -> Result<Self, SsoError> {
+        let client_id = get_env_var("KEYCLOAK_CLIENT_ID")?;
+        let client_secret = get_env_var("KEYCLOAK_CLIENT_SECRET")?;
+        let redirect_uri = get_env_var("KEYCLOAK_REDIRECT_URI")?;
+        let auth_domain = get_env_var("KEYCLOAK_AUTH_DOMAIN")?;
 
-        let client_secret =
-            std::env::var("KEYCLOAK_CLIENT_SECRET").map_err(SsoError::KeycloakEnvVarError)?;
-
-        let redirect_uri =
-            std::env::var("KEYCLOAK_REDIRECT_URI").map_err(SsoError::KeycloakEnvVarError)?;
-
-        let auth_url = std::env::var("KEYCLOAK_AUTH_URL").map_err(SsoError::KeycloakEnvVarError)?;
-
-        let auth_realm =
-            std::env::var("KEYCLOAK_AUTH_REALM").map_err(SsoError::KeycloakEnvVarError)?;
+        let auth_realm = get_env_var("KEYCLOAK_AUTH_REALM")?;
 
         let scope =
             std::env::var("KEYCLOAK_SCOPE").unwrap_or_else(|_| "openid profile email".to_string());
 
-        // if provide, the public key should have the format:
-        // -----BEGIN PUBLIC KEY-----
-        // <base64 encoded key>
-        // ----END PUBLIC KEY-----
-        let public_key = std::env::var("KEYCLOAK_PUBLIC_KEY")
-            .ok()
-            .map(|key| key.trim().to_string());
-
         let token_url = format!(
             "{}/realms/{}/protocol/openid-connect/token",
-            auth_url, auth_realm
+            auth_domain, auth_realm
         );
+
+        let authorization_url = format!(
+            "{}/realms/{}/protocol/openid-connect/auth",
+            auth_domain, auth_realm
+        );
+
+        let certs_url = format!(
+            "{}/realms/{}/protocol/openid-connect/certs",
+            auth_domain, auth_realm
+        );
+
+        let response = client
+            .get(&certs_url)
+            .send()
+            .await
+            .map_err(SsoError::ReqwestError)?;
+
+        let decoding_key = match response.status() {
+            StatusCode::OK => {
+                let jwk_response = response
+                    .json::<JwkResponse>()
+                    .await
+                    .map_err(SsoError::ReqwestError)?;
+                jwk_response.get_decoded_key()?
+            }
+            _ => {
+                // get response body
+                let body = response.text().await.map_err(SsoError::ReqwestError)?;
+                error!("Failed to fetch public key from Keycloak at {}. Tokens will not be validated when decoding", certs_url);
+                return Err(SsoError::FailedToFetchJwk(body));
+            }
+        };
 
         Ok(Self {
             client_id,
             client_secret,
             redirect_uri,
-            auth_url,
-            auth_realm,
-            token_url,
-            public_key,
+            decoding_key,
             scope,
+            token_url,
+            authorization_url,
         })
     }
 
@@ -120,19 +108,6 @@ impl KeycloakSettings {
 }
 
 #[derive(Deserialize, Debug, Default)]
-pub struct KeycloakTokenResponse {
-    pub access_token: String,
-    pub expires_in: u64,
-    pub refresh_token: String,
-    pub refresh_expires_in: u64,
-    pub token_type: String,
-    #[serde(rename = "not-before-policy")]
-    pub not_before_policy: u64,
-    pub session_state: String,
-    pub scope: String,
-}
-
-#[derive(Deserialize, Debug, Default)]
 pub struct KeycloakCodeResponse {
     pub access_token: String,
     pub expires_in: u64,
@@ -153,36 +128,15 @@ pub struct KeycloakProvider {
 
 impl KeycloakProvider {
     pub async fn new(client: Client) -> Result<Self, SsoError> {
-        let mut settings = KeycloakSettings::from_env()?;
-
-        // if settings.public_key is missing attempt to fetch it from the Keycloak server
-        if settings.public_key.is_none() {
-            // Fetch the public key from Keycloak
-            let public_key_url = format!("{}/realms/{}", settings.auth_url, settings.auth_realm);
-            let response = client.get(&public_key_url).send().await?;
-
-            let public_key = if response.status().is_success() {
-                let certs: KeycloakPublicKeyResponse =
-                    response.json().await.map_err(SsoError::ReqwestError)?;
-                Some(certs.format_public_key())
-            } else {
-                error!("Failed to fetch public key from Keycloak. Tokens will not be validated when decoding");
-                None
-            };
-            settings.public_key = public_key;
-        }
+        let settings = KeycloakSettings::from_env(&client).await?;
 
         Ok(Self { client, settings })
     }
 
-    pub async fn get_token_from_user_pass(
+    pub async fn make_token_request(
         &self,
-        username: &str,
-        password: &str,
-    ) -> Result<KeycloakTokenResponse, SsoError> {
-        // Implement the token retrieval logic here
-        let params = self.settings.build_auth_params(username, password);
-
+        params: Vec<(&str, &str)>,
+    ) -> Result<TokenResponse, SsoError> {
         let response = self
             .client
             .post(&self.settings.token_url)
@@ -198,9 +152,11 @@ impl KeycloakProvider {
 
         // handle other errors
         if !response.status().is_success() {
-            let status = response.status();
+            // Get response body text first
+            let body = response.text().await.map_err(SsoError::ReqwestError)?;
+
             // Try to parse error response for more detail
-            if let Ok(error_response) = response.json::<KeycloakErrorResponse>().await {
+            if let Ok(error_response) = serde_json::from_str::<OidcErrorResponse>(&body) {
                 if error_response.error == "invalid_grant"
                     && error_response
                         .error_description
@@ -215,54 +171,29 @@ impl KeycloakProvider {
                 ));
             }
 
-            // Fallback to generic error
-            return Err(SsoError::FallbackError(status.to_string()));
+            // Fallback to generic error with the body we already have
+            return Err(SsoError::FallbackError(body));
         }
 
-        Ok(response.json::<KeycloakTokenResponse>().await?)
+        Ok(response.json::<TokenResponse>().await?)
     }
 
-    pub async fn get_token_from_code(&self, code: &str) -> Result<KeycloakCodeResponse, SsoError> {
+    pub async fn get_token_from_user_pass(
+        &self,
+        username: &str,
+        password: &str,
+    ) -> Result<TokenResponse, SsoError> {
+        let params = self.settings.build_auth_params(username, password);
+
+        debug!("Requesting token from Keycloak");
+        self.make_token_request(params).await
+    }
+
+    pub async fn get_token_from_code(&self, code: &str) -> Result<TokenResponse, SsoError> {
         // Implement the token retrieval logic using the authorization code
         let params = self.settings.build_callback_auth_params(code);
-
-        let response = self
-            .client
-            .post(&self.settings.token_url)
-            .form(&params)
-            .header("Content-Type", "application/x-www-form-urlencoded")
-            .send()
-            .await
-            .map_err(|e| {
-                error!("Failed to send request to Keycloak: {}", e);
-                SsoError::ReqwestError(e)
-            })?;
-
-        // check for 401
-        if response.status() == StatusCode::UNAUTHORIZED {
-            return Err(SsoError::Unauthorized);
-        }
-
-        // handle other errors
-        if !response.status().is_success() {
-            let status = response.status();
-            // Try to parse error response for more detail
-            if let Ok(error_response) = response.json::<KeycloakErrorResponse>().await {
-                return Err(SsoError::AuthenticationFailed(
-                    error_response.error_description,
-                ));
-            }
-
-            // Fallback to generic error
-            return Err(SsoError::FallbackError(status.to_string()));
-        }
-
-        let token = response
-            .json::<KeycloakCodeResponse>()
-            .await
-            .map_err(SsoError::ReqwestError)?;
-
-        Ok(token)
+        debug!("Requesting token from Keycloak with code");
+        self.make_token_request(params).await
     }
 
     /// Decode a JWT token with validation against the Keycloak public key.
@@ -274,25 +205,19 @@ impl KeycloakProvider {
     ///
     /// # Returns
     /// * `Result<Claims, SsoError>` - The decoded claims if successful, or an error if validation fails.
-    fn decode_jwt_with_validation(
-        &self,
-        token: &str,
-        public_key: &str,
-    ) -> Result<KeycloakClaims, SsoError> {
+    fn decode_jwt_with_validation(&self, id_token: &str) -> Result<IdTokenClaims, SsoError> {
         let mut validation = Validation::new(jsonwebtoken::Algorithm::RS256);
         validation.validate_aud = false;
 
-        let token_data = decode::<KeycloakClaims>(
-            token,
-            &DecodingKey::from_rsa_pem(public_key.as_bytes())?,
-            &validation,
-        )
-        .map_err({
-            |e| {
-                error!("Failed to decode JWT token: {}", e);
-                SsoError::JwtDecodeError(e)
-            }
-        })?;
+        let token_data =
+            decode::<IdTokenClaims>(id_token, &self.settings.decoding_key, &validation).map_err(
+                {
+                    |e| {
+                        error!("Failed to decode JWT token: {}", e);
+                        SsoError::JwtDecodeError(e)
+                    }
+                },
+            )?;
 
         Ok(token_data.claims)
     }
@@ -312,12 +237,7 @@ impl KeycloakProvider {
         let token_response = self.get_token_from_user_pass(username, password).await?;
 
         // Decode the token to get user info
-        let claims = if let Some(public_key) = &self.settings.public_key {
-            self.decode_jwt_with_validation(&token_response.access_token, public_key)?
-        } else {
-            // If public key is not available, decode without validation
-            return Err(SsoError::MissingPublicKey);
-        };
+        let claims = self.decode_jwt_with_validation(&token_response.id_token)?;
 
         Ok(UserInfo {
             username: claims.preferred_username,
@@ -329,11 +249,7 @@ impl KeycloakProvider {
         let token_response = self.get_token_from_code(code).await?;
 
         // Decode the code to get user info
-        let claims = if let Some(public_key) = &self.settings.public_key {
-            self.decode_jwt_with_validation(&token_response.access_token, public_key)?
-        } else {
-            return Err(SsoError::MissingPublicKey);
-        };
+        let claims = self.decode_jwt_with_validation(&token_response.id_token)?;
 
         Ok(UserInfo {
             username: claims.preferred_username,
@@ -343,9 +259,8 @@ impl KeycloakProvider {
 
     pub fn authorization_url(&self, state: &str) -> String {
         format!(
-            "{}/realms/{}/protocol/openid-connect/auth?client_id={}&response_type=code&scope={}&redirect_uri={}&state={}",
-            self.settings.auth_url,
-            self.settings.auth_realm,
+            "{}?client_id={}&response_type=code&scope={}&redirect_uri={}&state={}",
+            self.settings.authorization_url,
             self.settings.client_id,
             self.settings.scope,
             self.settings.redirect_uri,
