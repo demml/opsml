@@ -108,7 +108,7 @@ pub trait SsoProviderExt {
         let mut validation = Validation::new(jsonwebtoken::Algorithm::RS256);
         validation.validate_aud = false;
 
-        let token_data = decode::<IdTokenClaims>(id_token, &self.decoding_key(), &validation)
+        let token_data = decode::<IdTokenClaims>(id_token, self.decoding_key(), &validation)
             .map_err({
                 |e| {
                     error!("Failed to decode JWT token: {}", e);
