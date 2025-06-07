@@ -3821,6 +3821,7 @@ dependencies = [
 name = "opsml-auth"
 version = "3.0.0-rc.2"
 dependencies = [
+ "async-trait",
  "base64 0.22.1",
  "jsonwebtoken",
  "mockito",
