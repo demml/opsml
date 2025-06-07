@@ -9,11 +9,13 @@ use tracing::{debug, error};
 pub trait SsoProviderExt {
     fn client(&self) -> &reqwest::Client;
     fn token_url(&self) -> &str;
+    fn require_basic_auth(&self) -> bool;
     fn authorization_url(&self) -> &str;
     fn client_id(&self) -> &str;
     fn redirect_uri(&self) -> &str;
     fn scope(&self) -> &str;
     fn client_secret(&self) -> &str;
+    fn headers(&self) -> reqwest::header::HeaderMap;
     fn build_auth_params<'a>(
         &'a self,
         username: &'a str,
@@ -30,9 +32,10 @@ pub trait SsoProviderExt {
             .client()
             .post(self.token_url())
             .form(&params)
-            .header("Content-Type", "application/x-www-form-urlencoded")
+            .headers(self.headers())
             .send()
-            .await?;
+            .await
+            .map_err(SsoError::ReqwestError)?;
 
         // check for 401
         if response.status() == StatusCode::UNAUTHORIZED {
@@ -64,7 +67,14 @@ pub trait SsoProviderExt {
             return Err(SsoError::FallbackError(body));
         }
 
-        Ok(response.json::<TokenResponse>().await?)
+        let body = response.text().await.map_err(SsoError::ReqwestError)?;
+
+        // Parse the response body as TokenResponse
+        let response: TokenResponse = serde_json::from_str(&body).unwrap();
+
+        Ok(response)
+
+        //Ok(response.json::<TokenResponse>().await?)
     }
 
     async fn get_token_from_user_pass(
