@@ -35,6 +35,12 @@ pub fn build_http_client(settings: &ApiSettings) -> Result<Client, ApiClientErro
     );
 
     headers.insert(
+        "Use-SSO",
+        HeaderValue::from_str(&settings.use_sso.to_string())
+            .map_err(ApiClientError::CreateHeaderError)?,
+    );
+
+    headers.insert(
         reqwest::header::USER_AGENT,
         HeaderValue::from_static(concat!("opsml-client/",)),
     );

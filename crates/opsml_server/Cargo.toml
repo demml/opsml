@@ -28,6 +28,7 @@ chrono = { workspace = true }
 headers = { workspace = true }
 mime_guess = { workspace = true }
 password-auth = { workspace = true }
+rand = { workspace = true }
 reqwest = { workspace = true }
 rust-embed = { workspace = true }
 rusty-logging = { workspace = true }
@@ -51,6 +52,7 @@ mockall = { workspace = true }
 mockito = { workspace = true }
 rand = "0.*"
 tower = { version = "0.*", features = ["util"] }
+jsonwebtoken = { workspace = true }
 
 [[test]]
 name = "integration"

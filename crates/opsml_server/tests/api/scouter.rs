@@ -53,7 +53,7 @@ fn create_drift_profile(key: ArtifactKey) -> SpcDriftProfile {
 
 #[tokio::test]
 async fn test_scouter_routes_healthcheck() {
-    let helper = TestHelper::new().await;
+    let helper = TestHelper::new(None).await;
 
     let request = Request::builder()
         .uri("/opsml/api/scouter/healthcheck")
@@ -67,7 +67,7 @@ async fn test_scouter_routes_healthcheck() {
 
 #[tokio::test]
 async fn test_scouter_routes_insert_profile() {
-    let helper = TestHelper::new().await;
+    let helper = TestHelper::new(None).await;
 
     let request = ProfileRequest {
         space: helper.space.clone(),
@@ -91,7 +91,7 @@ async fn test_scouter_routes_insert_profile() {
 
 #[tokio::test]
 async fn test_scouter_routes_update_profile() {
-    let mut helper = TestHelper::new().await;
+    let mut helper = TestHelper::new(None).await;
     helper.create_modelcard().await;
 
     let mut profile = create_drift_profile(helper.key.clone());
@@ -146,7 +146,7 @@ async fn test_scouter_routes_update_profile() {
 
 #[tokio::test]
 async fn test_scouter_routes_spc_drift_features() {
-    let helper = TestHelper::new().await;
+    let helper = TestHelper::new(None).await;
 
     let drift_request = DriftRequest {
         name: helper.name.clone(),
@@ -171,7 +171,7 @@ async fn test_scouter_routes_spc_drift_features() {
 
 #[tokio::test]
 async fn test_scouter_routes_psi_drift_features() {
-    let helper = TestHelper::new().await;
+    let helper = TestHelper::new(None).await;
 
     let drift_request = DriftRequest {
         name: helper.name.clone(),
@@ -196,7 +196,7 @@ async fn test_scouter_routes_psi_drift_features() {
 
 #[tokio::test]
 async fn test_scouter_routes_custom_drift_features() {
-    let helper = TestHelper::new().await;
+    let helper = TestHelper::new(None).await;
 
     let drift_request = DriftRequest {
         name: helper.name.clone(),

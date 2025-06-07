@@ -1,11 +1,18 @@
+use axum::extract::connect_info::MockConnectInfo;
 use axum::response::Response;
 use axum::Router;
 use axum::{
     body::Body,
     http::{header, Request, StatusCode},
 };
-use http_body_util::BodyExt; // for `collect`
+use base64::prelude::*;
+use http_body_util::BodyExt;
+use jsonwebtoken::encode;
+use jsonwebtoken::EncodingKey;
+use jsonwebtoken::Header;
 use mockito;
+use opsml_auth::sso::providers::types::IdTokenClaims;
+use opsml_auth::sso::providers::types::*;
 use opsml_crypt::encrypt_file;
 use opsml_semver::VersionType;
 use opsml_server::create_app;
@@ -15,10 +22,10 @@ use opsml_sql::enums::client::SqlClientEnum;
 use opsml_types::contracts::*;
 use opsml_types::*;
 use scouter_client::{BinnedCustomMetrics, BinnedPsiFeatureMetrics, SpcDriftFeatures};
-
-use axum::extract::connect_info::MockConnectInfo;
+use std::time::SystemTime;
+use std::time::UNIX_EPOCH;
 use std::{env, net::SocketAddr, vec};
-use tower::ServiceExt; // for `call`, `oneshot`, and `ready`
+use tower::ServiceExt;
 
 fn cleanup() {
     // cleanup delete opsml.db and opsml_registries folder from the current directory
@@ -181,6 +188,204 @@ impl ScouterServer {
     }
 }
 
+pub struct MockSsoServer {
+    _server: mockito::ServerGuard,
+    pub url: String,
+    pub keycloak_certs_mock: mockito::Mock,
+    pub okta_certs_mock: mockito::Mock,
+    pub keycloak_token_mock: mockito::Mock,
+    pub okta_token_mock: mockito::Mock,
+}
+
+impl MockSsoServer {
+    fn create_mock_token_response() -> String {
+        // this is a mock private key generated offline for testing purposes
+        let mock_private_key = r#"-----BEGIN PRIVATE KEY-----
+MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDLZgJBLA7tvzJq
+lfiBnlQyqv+VD9fN0bDIXWkX+KFutlMos2UZ3jZSLb68QD4Sw0Uuvs+Vpuxbo7ni
+lddtALrwcJF9LvqFMj1JqtfOmcQouJbrURxBd6c0B5EVXq20o2udZ0FuWHmUDrZv
+Cv0bTFE1LgaEisjX3qyZenhbgghbXidrNR3gAX7GdS4cy7IRMN7alZWGpXJYyyB/
+6QdOzszhZ4H1eRNYdYYdgJTny8oBM3T//CwFiaR67lqs9tdj6xe5BfgoRa5kH9Wt
+RA31+2fUI9f+FtLzYpx79OsbyYgJlzH9Kco6mPZvsRns3fb4M9+SHsUoFMQhvJx7
+Lt2bDUkxAgMBAAECggEBAIJhf2x7a45nE1BTlhqwfVSFXJQWtcUPd3zYs/dTv1eS
+tDfQ1yv/z15aSHuvypqIZZ6TXcmWWMhdaVifqJoM78gUwI44QQqEq9i/FNswohdg
+TA3Hzo8AvkOR3iSOrlaustsRR1YOjNClpbgEmT6Yay3ltPPdauVFreosIV63Odgm
+mtifvmQHO3Fs61o/jUG/yRY//CYibF+heMxvrSkSHkRa86A1ludFLqy0sY80j4wn
+vggszRCxsAX14/LMBwcnIl0d0sf9ni6379fMn/W2qcBoRUSnUFFmxfAdnnZzdaVD
+UyzXaYDWHP7IMzJxu8vywkYoQdhCxqzTtJrqL/e2oikCgYEAz+OwqDt0Eu60Rxn5
+nxzjgm42/vhNWuXtlGaTS7i2+sM40cA3YMqk8LPP2Codf18D+3NEkzXbW3CoWZxr
+pQyrOL2/BQ1SDyLsf9YZSFvMANjo/+hgPBoMksGtAyqubnCXFfcGjvVf7AgbSq/3
+lD7bTNm1c+My/DrcBcedQnnJIi8CgYEA+nhBRoPLZfbg3Zt25t0p8Ff8PoAFLSqn
+rPHt+F+VGdOiwC3KWZd0Yo4Gf+a0FpaWUxkvoxBniDXhkSE3a5pgrtOw1f2EJ0pU
+CxiAdtT5ZwLriqCM8DpwpcJ/fXJFLt9tL4LJ3sDFRZs9tKciI80vGPLfOFSDy/mV
+OWO8PrMyUp8CgYAcvTlayH1PcLhza9/aY0AAdAQeU20+N7MUZOnP+gUxvXNJa+07
+8EfFDtaY55mUVipSxKiiQTvF9FkRqlInSw0QlwqlRCYn+YgAVDTCkA4vv8zWM+W5
+6U/7qdKlMW1TzzTT0IaTlNBh7Oz48kKjt9zRTveKwcn2nJx2IBZZbkSj+QKBgFD7
+7O8l0fAoANDmYW2H+PVzHWX/8qyF7C0pFC6IiScOnMLSi2ioZcMv9L4KFBRxoC1C
+KXrp5O/PrB1GxiqOgdBFNhoanE4v5DiqNW82sWUzNoFeI/PQkXenCZ3AAsqDB0Sj
+Xy4c2iwFY9AzcgBtaVsBvFb0TKD5E9y4eLc1LYI1AoGAbusWCkSQCOaN0c8KW81M
+W6xV1rPJOHYtOedTWXf7N/5SMl+ioEqpo6eP5ZswOzqLqgCJ+Kpl5DmvA4Ht8qel
+NTHa9XqoGvyPbaauojI0TIGa+mHYhY7hD2U/Z3xuegfDhm93CdgTwwWqJsezPXXV
+GrrNOufvPsvmCRO9m4ESRrk=
+-----END PRIVATE KEY-----"#;
+
+        let claims = IdTokenClaims {
+            preferred_username: "guest".to_string(),
+            exp: SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_secs()
+                + 3600,
+            ..Default::default()
+        };
+
+        let header = Header::new(jsonwebtoken::Algorithm::RS256);
+
+        let token = encode(
+            &header,
+            &claims,
+            &EncodingKey::from_rsa_pem(mock_private_key.as_bytes()).unwrap(),
+        )
+        .unwrap();
+
+        serde_json::json!({
+            "access_token": "token",
+            "expires_in": 3600,
+            "refresh_token": "mock_refresh_token",
+            "refresh_expires_in": 3600,
+            "token_type": "Bearer",
+            "not_before_policy": 0,
+            "session_state": "mock_session_state",
+            "scope": "openid profile email",
+            "not-before-policy": 0,
+            "id_token": token,
+        })
+        .to_string()
+    }
+
+    async fn new() -> Self {
+        let mut server = mockito::Server::new_async().await;
+        let url = server.url().to_string();
+
+        let jswk = Jwk {
+                kty: "RSA".to_string(),
+                alg: Algorithm ::RS256,
+                kid: "mock_key_id".to_string(),
+                use_: "sig".to_string(),
+                e: "AQAB".to_string(), // public exponent
+                n: "y2YCQSwO7b8yapX4gZ5UMqr_lQ_XzdGwyF1pF_ihbrZTKLNlGd42Ui2-vEA-EsNFLr7PlabsW6O54pXXbQC68HCRfS76hTI9SarXzpnEKLiW61EcQXenNAeRFV6ttKNrnWdBblh5lA62bwr9G0xRNS4GhIrI196smXp4W4IIW14nazUd4AF-xnUuHMuyETDe2pWVhqVyWMsgf-kHTs7M4WeB9XkTWHWGHYCU58vKATN0__wsBYmkeu5arPbXY-sXuQX4KEWuZB_VrUQN9ftn1CPX_hbS82Kce_TrG8mICZcx_SnKOpj2b7EZ7N32-DPfkh7FKBTEIbycey7dmw1JMQ".to_string(), // mock public key modulus
+            };
+
+        let cert_response = JwkResponse { keys: vec![jswk] };
+        let body = serde_json::to_string(&cert_response).unwrap();
+
+        // mock keycloak JWKS endpoint
+        let keycloak_certs_mock = server
+            .mock("GET", "/realms/opsml/protocol/openid-connect/certs")
+            .with_status(200)
+            .with_header("content-type", "application/json")
+            .with_body(body.clone())
+            .create();
+
+        // mock okta JWKS endpoint
+        let okta_certs_mock = server
+            .mock("GET", "/oauth2/v1/keys")
+            .with_status(200)
+            .with_header("content-type", "application/json")
+            .with_body(body.clone())
+            .create();
+
+        // mock keycloak token endpoint
+        let keycloak_token_mock = server
+            .mock("POST", "/realms/opsml/protocol/openid-connect/token")
+            .match_header("Content-Type", "application/x-www-form-urlencoded")
+            .with_status(200)
+            .with_header("content-type", "application/json")
+            .with_body(Self::create_mock_token_response())
+            .create();
+
+        // mock okta token endpoint
+        let credentials = format!("{}:{}", "opsml-client", "client-secret");
+        let encoded_credentials = BASE64_STANDARD.encode(credentials);
+        let auth_header = format!("Basic {}", encoded_credentials);
+
+        let okta_token_mock = server
+            .mock("POST", "/oauth2/v1/token")
+            .match_header("Authorization", &*auth_header)
+            // match the content type
+            .match_header("Content-Type", "application/x-www-form-urlencoded")
+            // match accept
+            .match_header("Accept", "application/json")
+            .with_status(200)
+            .with_header("content-type", "application/json")
+            .with_body(Self::create_mock_token_response())
+            .create();
+
+        Self {
+            _server: server,
+            url,
+            keycloak_certs_mock,
+            okta_certs_mock,
+            keycloak_token_mock,
+            okta_token_mock,
+        }
+    }
+
+    pub fn verify_keycloak_certs_called(&self) -> bool {
+        self.keycloak_certs_mock.matched()
+    }
+
+    pub fn verify_keycloak_token_called(&self) -> bool {
+        self.keycloak_token_mock.matched()
+    }
+
+    pub fn verify_okta_certs_called(&self) -> bool {
+        self.okta_certs_mock.matched()
+    }
+
+    pub fn verify_okta_token_called(&self) -> bool {
+        self.okta_token_mock.matched()
+    }
+}
+
+fn set_common_env_vars(scouter_url: &str) {
+    env::set_var("SCOUTER_SERVER_URI", scouter_url);
+    env::set_var("RUST_LOG", "debug");
+    env::set_var("LOG_LEVEL", "debug");
+    env::set_var("LOG_JSON", "false");
+    env::set_var("OPSML_AUTH", "true");
+}
+
+/// Set up the SSO provider and return the mock server
+async fn setup_sso_provider(provider: &str) -> Option<MockSsoServer> {
+    // Create initial mock server and set common SSO variables
+    let mock_sso_server = MockSsoServer::new().await;
+
+    std::env::set_var("OPSML_CLIENT_ID", "opsml-client");
+    std::env::set_var("OPSML_CLIENT_SECRET", "client-secret");
+    std::env::set_var("OPSML_REDIRECT_URI", "http://localhost:8080/callback");
+    std::env::set_var("OPSML_AUTH_DOMAIN", &mock_sso_server.url);
+    std::env::set_var("OPSML_USE_SSO", "true");
+
+    println!("Setting up SSO provider: {}", provider);
+
+    match provider {
+        "keycloak" => {
+            std::env::set_var("SSO_PROVIDER", "keycloak");
+            std::env::set_var("OPSML_AUTH_REALM", "opsml");
+            Some(mock_sso_server)
+        }
+        "okta" => {
+            std::env::set_var("SSO_PROVIDER", "okta");
+            Some(mock_sso_server)
+        }
+        _ => panic!(
+            "{:?}",
+            "SSO provider not set, skipping SSO tests".to_string()
+        ),
+    }
+}
+
 pub struct TestHelper {
     app: Router,
     token: JwtToken,
@@ -189,41 +394,43 @@ pub struct TestHelper {
     pub version: String,
     pub key: ArtifactKey,
     pub server: ScouterServer,
+    pub sso_server: Option<MockSsoServer>,
 }
 
 impl TestHelper {
-    pub async fn new() -> Self {
+    pub async fn new(sso_provider: Option<String>) -> Self {
+        // Set up the mock Scouter server
         let scouter_server = ScouterServer::new().await;
 
-        // set OPSML_AUTH to true
-        env::set_var("SCOUTER_SERVER_URI", scouter_server.url.clone());
-        env::set_var("RUST_LOG", "debug");
-        env::set_var("LOG_LEVEL", "debug");
-        env::set_var("LOG_JSON", "false");
-        env::set_var("OPSML_AUTH", "true");
+        // Set common environment variables
+        set_common_env_vars(&scouter_server.url);
 
+        // Set up SSO if a provider was specified
+        let mock_sso_server = match sso_provider {
+            Some(provider) => setup_sso_provider(&provider).await,
+            None => None,
+        };
+
+        // Clean up any existing data
         cleanup();
 
-        // create the app
+        // Create and configure the application
         let app = create_app().await.unwrap();
-
         let app = app.layer(MockConnectInfo(SocketAddr::from(([0, 0, 0, 0], 1337))));
 
-        // populate db
+        // Set up the database
         setup().await;
 
-        // retrieve the token
+        // Retrieve the authentication token
         let token = TestHelper::login(&app).await;
-        let name = "name".to_string();
-        let space = "space".to_string();
-        let version = "1.0.0".to_string();
 
+        // Create a new test helper
         Self {
             app,
             token,
-            name,
-            space,
-            version,
+            name: "name".to_string(),
+            space: "space".to_string(),
+            version: "1.0.0".to_string(),
             key: ArtifactKey {
                 uid: "550e8400-e29b-41d4-a716-446655440000".to_string(),
                 space: "space".to_string(),
@@ -232,20 +439,25 @@ impl TestHelper {
                 storage_key: "".to_string(),
             },
             server: scouter_server,
+            sso_server: mock_sso_server,
         }
     }
 
     pub async fn login(app: &Router) -> JwtToken {
+        let mut builder = Request::builder()
+            .uri("/opsml/api/auth/login")
+            .header("Username", "admin")
+            .header("Password", "admin");
+
+        // if sso provider is set, add Use-SSO header
+        let use_sso = env::var("OPSML_USE_SSO").unwrap_or_else(|_| "false".to_string());
+        if use_sso == "true" {
+            builder = builder.header("Use-SSO", "true");
+        }
+
         let response = app
             .clone()
-            .oneshot(
-                Request::builder()
-                    .uri("/opsml/api/auth/login")
-                    .header("Username", "admin")
-                    .header("Password", "admin")
-                    .body(Body::empty())
-                    .unwrap(),
-            )
+            .oneshot(builder.body(Body::empty()).unwrap())
             .await
             .unwrap();
 
@@ -390,5 +602,21 @@ impl TestHelper {
         let body = response.into_body().collect().await.unwrap().to_bytes();
         let create_response: CreateCardResponse = serde_json::from_slice(&body).unwrap();
         self.key = create_response.key.clone();
+    }
+
+    pub fn verify_keycloak_sso_called(&self) -> bool {
+        if let Some(sso_server) = &self.sso_server {
+            sso_server.verify_keycloak_certs_called() && sso_server.verify_keycloak_token_called()
+        } else {
+            false
+        }
+    }
+
+    pub fn verify_okta_sso_called(&self) -> bool {
+        if let Some(sso_server) = &self.sso_server {
+            sso_server.verify_okta_certs_called() && sso_server.verify_okta_token_called()
+        } else {
+            false
+        }
     }
 }

@@ -66,3 +66,7 @@ export interface UpdateUserRequest {
   favorite_spaces?: string[];
   active?: boolean;
 }
+
+export interface SsoAuthUrl {
+  url: string;
+}

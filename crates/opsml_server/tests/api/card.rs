@@ -32,7 +32,7 @@ fn create_card_metadata(key: ArtifactKey) {
 
 #[tokio::test]
 async fn test_opsml_server_card_uid() {
-    let helper = TestHelper::new().await;
+    let helper = TestHelper::new(None).await;
 
     /////////////////////// Test check uid ///////////////////////
 
@@ -89,7 +89,7 @@ async fn test_opsml_server_card_uid() {
 
 #[tokio::test]
 async fn test_opsml_server_card_spaces() {
-    let helper = TestHelper::new().await;
+    let helper = TestHelper::new(None).await;
 
     /////////////////////// Test respositories ///////////////////////
     let params = RegistrySpaceRequest {
@@ -119,7 +119,7 @@ async fn test_opsml_server_card_spaces() {
 
 #[tokio::test]
 async fn test_opsml_server_card_stats_and_query() {
-    let helper = TestHelper::new().await;
+    let helper = TestHelper::new(None).await;
 
     /////////////////////// Test registry stats ///////////////////////
 
@@ -243,7 +243,7 @@ async fn test_opsml_server_card_stats_and_query() {
 
 #[tokio::test]
 async fn test_opsml_server_card_list_cards() {
-    let helper = TestHelper::new().await;
+    let helper = TestHelper::new(None).await;
 
     let args = CardQueryArgs {
         uid: None,
@@ -306,7 +306,7 @@ async fn test_opsml_server_card_list_cards() {
 
 #[tokio::test]
 async fn test_opsml_server_card_datacard_crud() {
-    let helper = TestHelper::new().await;
+    let helper = TestHelper::new(None).await;
 
     let card_version_request = CardVersionRequest {
         name: "DataCard".to_string(),
@@ -436,7 +436,7 @@ async fn test_opsml_server_card_datacard_crud() {
 
 #[tokio::test]
 async fn test_opsml_server_card_modelcard_crud() {
-    let helper = TestHelper::new().await;
+    let helper = TestHelper::new(None).await;
 
     let card_version_request = CardVersionRequest {
         name: "ModelCard".to_string(),
@@ -596,7 +596,7 @@ async fn test_opsml_server_card_modelcard_crud() {
 
 #[tokio::test]
 async fn test_opsml_server_card_experimentcard_crud() {
-    let helper = TestHelper::new().await;
+    let helper = TestHelper::new(None).await;
 
     let card_version_request = CardVersionRequest {
         name: "experimentcard".to_string(),
@@ -729,7 +729,7 @@ async fn test_opsml_server_card_experimentcard_crud() {
 
 #[tokio::test]
 async fn test_opsml_server_card_auditcard_crud() {
-    let helper = TestHelper::new().await;
+    let helper = TestHelper::new(None).await;
 
     let card_version_request = CardVersionRequest {
         name: "AuditCard".to_string(),
@@ -860,7 +860,7 @@ async fn test_opsml_server_card_auditcard_crud() {
 
 #[tokio::test]
 async fn test_opsml_server_card_card_deck_crud() {
-    let helper = TestHelper::new().await;
+    let helper = TestHelper::new(None).await;
 
     let card_version_request = CardVersionRequest {
         name: "deck".to_string(),
@@ -985,7 +985,7 @@ async fn test_opsml_server_card_card_deck_crud() {
 
 #[tokio::test]
 async fn test_opsml_server_card_promptcard_crud() {
-    let helper = TestHelper::new().await;
+    let helper = TestHelper::new(None).await;
 
     let card_version_request = CardVersionRequest {
         name: "prompt".to_string(),
@@ -1112,7 +1112,7 @@ async fn test_opsml_server_card_promptcard_crud() {
 
 #[tokio::test]
 async fn test_opsml_server_card_get_card() {
-    let helper = TestHelper::new().await;
+    let helper = TestHelper::new(None).await;
 
     // 1. First create a card so we have something to get
     let card_version_request = CardVersionRequest {
@@ -1192,7 +1192,7 @@ async fn test_opsml_server_card_get_card() {
 
 #[tokio::test]
 async fn test_opsml_server_card_get_readme() {
-    let mut helper = TestHelper::new().await;
+    let mut helper = TestHelper::new(None).await;
 
     helper.create_modelcard().await;
 
@@ -1250,7 +1250,7 @@ async fn test_opsml_server_card_get_readme() {
 
 #[tokio::test]
 async fn test_opsml_server_space_crud() {
-    let helper = TestHelper::new().await;
+    let helper = TestHelper::new(None).await;
 
     // 1. Create
     let request = CrudSpaceRequest {
@@ -1368,7 +1368,7 @@ async fn test_opsml_server_space_crud() {
 
 #[tokio::test]
 async fn test_opsml_server_space_stats() {
-    let mut helper = TestHelper::new().await;
+    let mut helper = TestHelper::new(None).await;
 
     helper.create_modelcard().await;
 

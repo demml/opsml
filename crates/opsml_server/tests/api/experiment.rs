@@ -12,7 +12,7 @@ use opsml_types::{
 use std::collections::HashMap;
 #[tokio::test]
 async fn test_opsml_server_experiment_routes() {
-    let helper = TestHelper::new().await;
+    let helper = TestHelper::new(None).await;
     let experiment_uid = "550e8400-e29b-41d4-a716-446655440000".to_string();
 
     let request = MetricRequest {
@@ -210,7 +210,7 @@ async fn test_opsml_server_experiment_routes() {
 
 #[tokio::test]
 async fn test_opsml_server_grouped_experiment_metrics() {
-    let helper = TestHelper::new().await;
+    let helper = TestHelper::new(None).await;
     let experiment_uid1 = "550e8400-e29b-41d4-a716-446655440000".to_string();
 
     let request = MetricRequest {

@@ -19,6 +19,21 @@ pub struct LoginRequest {
     pub password: String,
 }
 
+#[derive(Serialize, Deserialize)]
+pub struct SsoAuthUrlParams {
+    pub state: String,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct SsoAuthUrl {
+    pub url: String,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct SsoCallbackParams {
+    pub code: String,
+}
+
 #[derive(Serialize, Deserialize, Default)]
 pub struct LoginResponse {
     pub authenticated: bool,

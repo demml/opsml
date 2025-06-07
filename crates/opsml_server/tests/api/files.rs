@@ -9,7 +9,7 @@ use opsml_types::{contracts::*, RegistryType};
 
 #[tokio::test]
 async fn test_opsml_server_render_file() {
-    let mut helper = TestHelper::new().await;
+    let mut helper = TestHelper::new(None).await;
 
     helper.create_modelcard().await;
     let path = helper.create_files();

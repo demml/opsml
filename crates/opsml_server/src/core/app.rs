@@ -15,15 +15,19 @@ pub async fn create_app() -> Result<Router> {
     let (config, storage_client, sql_client, scouter_client) = setup_components().await?;
     let storage_settings = config.storage_settings()?;
 
+    // Setup basic auth and sso
+    let auth_manager = AuthManager::new(
+        &config.auth_settings.jwt_secret,
+        &config.auth_settings.refresh_secret,
+        &config.auth_settings.scouter_secret,
+    )
+    .await?;
+
     // Create shared state for the application (storage client, auth manager, config)
     let app_state = Arc::new(AppState {
         storage_client: Arc::new(storage_client),
         sql_client: Arc::new(sql_client),
-        auth_manager: AuthManager::new(
-            &config.auth_settings.jwt_secret,
-            &config.auth_settings.refresh_secret,
-            &config.auth_settings.scouter_secret,
-        ),
+        auth_manager,
         config,
         storage_settings,
         scouter_client,

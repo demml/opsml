@@ -1096,7 +1096,7 @@ impl Default for HardwareMetricsRecord {
     }
 }
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Clone, Default)]
 pub struct User {
     pub id: Option<i32>,
     pub created_at: DateTime<Utc>,
@@ -1140,6 +1140,27 @@ impl User {
             role: role.unwrap_or("user".to_string()),
             refresh_token: None,
             email,
+            updated_at: created_at,
+        }
+    }
+
+    /// Convenience constructor for creating a new user from SSO (Single Sign-On) data.
+    pub fn new_from_sso(username: &str, email: &str) -> Self {
+        let created_at = get_utc_datetime();
+
+        User {
+            id: None,
+            created_at,
+            active: true,
+            username: username.to_string(),
+            password_hash: "[redacted]".to_string(),
+            hashed_recovery_codes: Vec::new(),
+            permissions: vec!["read:all".to_string()],
+            group_permissions: vec!["user".to_string()],
+            favorite_spaces: Vec::new(),
+            role: "user".to_string(),
+            refresh_token: None,
+            email: email.to_string(),
             updated_at: created_at,
         }
     }

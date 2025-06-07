@@ -1,60 +1,97 @@
 <script lang="ts">
+  import type { VersionPageResponse, RegistryStatsResponse } from "$lib/components/card/types";
+  import {  getVersionPage } from "$lib/components/card/utils";
+  import type { RegistryType } from "$lib/utils";
+  import { onMount } from "svelte";
+  import { Settings } from 'lucide-svelte';
+  import { ArrowLeft, ArrowRight } from 'lucide-svelte';
+  import type { AnyCard, CardMetadata } from "./card_interfaces/enum";
+  import VersionButton from "./VersionButton.svelte";
 
-    import { calculateTimeBetween, getRegistryTypeLowerCase, RegistryType } from "$lib/utils";
-    import { goto } from "$app/navigation";
-    import {CircuitBoard, Clock, Tag } from 'lucide-svelte';
+
+  let {  metadata, registry, versionPage, cardRegistryStats } = $props<{ 
+      metadata: AnyCard
+      registry: RegistryType, 
+      versionPage: VersionPageResponse, 
+      cardRegistryStats: RegistryStatsResponse
+  }>();
+
+  let currentPage = $state(1);
+  let totalPages = $state(1);
   
-    let {
-      name,
-      space,
-      version,
-      registry,
-      updated_at,
-      bgColor
-    } = $props<{
-      name: string;
-      space: string;
-      version: string;
-      registry: RegistryType;
-      updated_at: string;
-      bgColor: string;
-    }>();
-  
-    // function to navigate to the card page
-    function navigateToCardPage() {
-      // navigate to the card page
-      let registry_name = getRegistryTypeLowerCase(registry);
-      goto(`/opsml/${registry_name}/card/home?space=${space}&name=${name}&version=${version}`);
-    }
-  
-  
+  // registry-specific state
+  let registryPage = $state<VersionPageResponse>(versionPage);
+  let registryStats = $state<RegistryStatsResponse>(cardRegistryStats);
+
+  const changePage = async function (page: number) {
+    registryPage = await getVersionPage(registry, metadata.space, metadata.name, page);
+    currentPage = page;
+  }
+
+  onMount(() => {
+      totalPages = Math.ceil(registryStats.stats.nbr_versions / 30);
+  });
+
   </script>
   
-  <button class="text-black rounded-lg shadow border-2 border-black {bgColor} max-w-96 h-[84px] lg:h-[90px] overflow-auto whitespace-nowrap hover:translate-x-[4px] hover:translate-y-[4px] hover:shadow-none" onclick={navigateToCardPage}>
-    <div class="flex items-center justify-start gap-2">
-      <div class="ml-2">
-        <CircuitBoard color="#5948a3" />
-      </div>
-      <div><h4 class="truncate font-bold">{space}/{name}</h4></div>
-    </div>
- 
-    <div class="flex items-center justify-start gap-2 overflow-hidden whitespace-nowrap text-xs lg:text-sm mb-1">
-      <div class="ml-2">
-        <Clock color="#5948a3" />
-      </div>
-      <div>
-        <time datetime={ Date() } >
-          Last updated { calculateTimeBetween(updated_at) }
-        </time>
-      </div>
-    </div>
+  <div class="flex-1 mx-auto w-10/12 pb-10 flex justify-center overflow-auto px-4 pt-4">
 
-    <div class="flex items-center justify-start gap-2 overflow-hidden whitespace-nowrap text-xs lg:text-sm">
-      <div class="ml-2">
-        <Tag color="#5948a3" />
+    <div class="grid grid-cols-1 w-full">
+
+      <div class="col-span-1 md:col-span-4 gap-1 p-4 flex flex-col rounded-base border-primary-500 border-2 shadow-primary bg-surface-50 h-auto">
+        <!-- Add your items here -->
+        <div class="flex flex-row items-center gap-2 pb-2">
+          <div class="rounded-full bg-surface-200 border-black border-2 p-1 shadow-small">
+            <Settings color="#40328b" />
+          </div>
+          <h2 class="font-bold text-primary-800 text-xl">Artifacts</h2>
+        </div>
+        <div class="flex flex-row flex-wrap gap-1 items-center">
+          <div>
+            <span class="badge text-base text-primary-800 border-black border-1 shadow-small bg-surface-50">{registryStats.stats.nbr_names} artifacts</span>
+          </div>
+          <div>
+            <span class="badge text-base text-primary-800 border-black border-1 shadow-small bg-surface-50">{registryStats.stats.nbr_versions} versions</span>
+          </div>
+          <div>
+            <span class="badge text-base text-primary-800 border-black border-1 shadow-small bg-surface-50">{registryStats.stats.nbr_spaces} spaces</span>
+          </div>
+        </div>
+        <div class="pt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4 justify-items-center">
+          {#each registryPage.summaries as summary}
+            <VersionButton
+              space={summary.space}
+              name={summary.name}
+              version={summary.version}
+              updated_at={summary.created_at}
+              registry={registry}
+              bgColor={"bg-primary-400"}
+            />
+          {/each}
+        </div>
+    
+        <div class="flex justify-center pt-4 gap-2">
+    
+          {#if currentPage > 1}
+            <button class="btn bg-surface-50 border-black border-2 shadow-small shadow-hover-small h-9" onclick={() => changePage(currentPage - 1)}>
+              <ArrowLeft color="#5948a3"/>
+            </button>
+          {/if}
+          
+          <div class="flex bg-surface-50 border-black border-2 text-center items-center rounded-base px-2 shadow-small h-9">
+            <span class="text-primary-800 mr-1">{currentPage}</span>
+            <span class="text-primary-400">of {totalPages}</span>
+          </div>
+    
+          {#if currentPage < totalPages}
+            <button class="btn bg-surface-50 border-black border-2 shadow-small shadow-hover-small h-9" onclick={() => changePage(currentPage + 1)}>
+              <ArrowRight color="#5948a3"/>
+            </button>
+          {/if}
+        
+        </div>
       </div>
-      <div class="text-black">{version}</div>
+
     </div>
-  </button>
   
-  
+  </div>

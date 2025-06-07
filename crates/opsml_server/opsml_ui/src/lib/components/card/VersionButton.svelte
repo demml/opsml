@@ -10,7 +10,6 @@
       version,
       registry,
       updated_at,
-      nbr_versions,
       bgColor
     } = $props<{
       name: string;
@@ -18,7 +17,6 @@
       version: string;
       registry: RegistryType;
       updated_at: string;
-      nbr_versions: number;
       bgColor: string;
     }>();
   
@@ -55,7 +53,7 @@
       <div class="ml-2">
         <Tag color="#5948a3" />
       </div>
-      <div class="text-black">{nbr_versions} versions</div>
+      <div class="text-black">{version}</div>
     </div>
   </button>
   

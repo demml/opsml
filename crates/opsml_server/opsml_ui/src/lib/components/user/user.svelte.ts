@@ -8,6 +8,7 @@ export class UserStore {
   username = $state("");
   jwt_token = $state("");
   logged_in = $state(false);
+  sso_state = $state("");
   permissions = $state<string[]>([]);
   group_permissions = $state<string[]>([]);
   repositories = $state<string[]>([]);
@@ -199,6 +200,10 @@ export class UserStore {
     this.favorite_spaces = favorite_spaces;
   }
 
+  public setSsoState(state: string) {
+    this.sso_state = state;
+  }
+
   // all perms are stored as <operation>:<resource>
   // split permissions by : and get resource
   // if index at 1 is empty set it to "all"
@@ -217,6 +222,10 @@ export class UserStore {
       if (parts[1] === "") parts[1] = "all";
       return parts;
     });
+  }
+
+  public getSsoState(): string {
+    return this.sso_state;
   }
 
   public async login(

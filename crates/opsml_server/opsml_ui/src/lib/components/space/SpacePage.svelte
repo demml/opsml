@@ -1,12 +1,12 @@
 <script lang="ts">
     import { goto } from "$app/navigation";
     import {CircuitBoard, NotebookText, FlaskConical, Table, BrainCircuit } from 'lucide-svelte';
-    import { type SpaceRecord } from "../card/types";
+    import { type SpaceStats } from "./types";
   
     let {
       record
     } = $props<{
-      record: SpaceRecord;
+      record: SpaceStats;
     }>();
 
     function navigateToSpacePage() {
