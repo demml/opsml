@@ -27,7 +27,7 @@ impl KeycloakSettings {
         let auth_realm = get_env_var("OPSML_AUTH_REALM")?;
 
         let scope = std::env::var("OPSML_AUTH_SCOPE")
-            .unwrap_or_else(|_| "openid profile email".to_string());
+            .unwrap_or_else(|_| "openid email profile".to_string());
 
         let token_url = format!(
             "{}/realms/{}/protocol/openid-connect/token",
@@ -52,10 +52,13 @@ impl KeycloakSettings {
 
         let decoding_key = match response.status() {
             StatusCode::OK => {
-                let jwk_response = response
-                    .json::<JwkResponse>()
-                    .await
-                    .map_err(SsoError::ReqwestError)?;
+                let jwk_response = response.json::<JwkResponse>().await.map_err({
+                    error!(
+                        "Failed to parse JWK response from Keycloak at {}",
+                        certs_url
+                    );
+                    SsoError::ReqwestError
+                })?;
                 jwk_response.get_decoded_key()?
             }
             _ => {
@@ -89,6 +92,7 @@ impl KeycloakSettings {
             ("redirect_uri", &self.redirect_uri),
             ("username", username),
             ("password", password),
+            ("scope", &self.scope),
         ]
     }
 
@@ -99,6 +103,7 @@ impl KeycloakSettings {
             ("client_secret", &self.client_secret),
             ("redirect_uri", &self.redirect_uri),
             ("code", code),
+            ("scope", &self.scope),
         ]
     }
 }
@@ -139,6 +144,14 @@ impl SsoProviderExt for KeycloakProvider {
     }
     fn client_secret(&self) -> &str {
         &self.settings.client_secret
+    }
+
+    fn require_basic_auth(&self) -> bool {
+        false
+    }
+
+    fn headers(&self) -> reqwest::header::HeaderMap {
+        reqwest::header::HeaderMap::new()
     }
 
     fn build_auth_params<'a>(

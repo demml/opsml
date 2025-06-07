@@ -4,10 +4,10 @@ use jsonwebtoken::DecodingKey;
 
 use crate::sso::providers::traits::SsoProviderExt;
 use crate::sso::providers::types::{get_env_var, JwkResponse};
-
+use base64::prelude::*;
 use reqwest::{Client, StatusCode};
 
-use tracing::{debug, error};
+use tracing::error;
 
 #[derive(Clone)]
 pub struct OktaSettings {
@@ -22,15 +22,15 @@ pub struct OktaSettings {
 
 impl OktaSettings {
     pub async fn from_env(client: &Client) -> Result<Self, SsoError> {
-        let client_id = get_env_var("OKTA_CLIENT_ID")?;
-        let client_secret = get_env_var("OKTA_CLIENT_SECRET")?;
-        let redirect_uri = get_env_var("OKTA_REDIRECT_URI")?;
-        let okta_domain = get_env_var("OKTA_DOMAIN")?;
+        let client_id = get_env_var("OPSML_CLIENT_ID")?;
+        let client_secret = get_env_var("OPSML_CLIENT_SECRET")?;
+        let redirect_uri = get_env_var("OPSML_REDIRECT_URI")?;
+        let okta_domain = get_env_var("OPSML_AUTH_DOMAIN")?;
 
-        let scope =
-            std::env::var("OKTA_SCOPE").unwrap_or_else(|_| "openid profile email".to_string());
+        let scope = std::env::var("OPSML_AUTH_SCOPE")
+            .unwrap_or_else(|_| "openid email profile".to_string());
 
-        let authorization_server_id = std::env::var("OKTA_AUTHORIZATION_SERVER_ID").ok();
+        let authorization_server_id = std::env::var("OPSML_AUTHORIZATION_SERVER_ID").ok();
 
         let format_okta_url = |endpoint: &str| {
             if let Some(server_id) = &authorization_server_id {
@@ -44,14 +44,13 @@ impl OktaSettings {
         let certs_url = format_okta_url("v1/keys");
         let authorization_url = format_okta_url("v1/authorize");
 
-        // Fetch public key from Okta
-        debug!("Fetching public key from Okta at {}", certs_url);
-
         let response = client
             .get(&certs_url)
             .send()
             .await
             .map_err(SsoError::ReqwestError)?;
+
+        println!("Response status: {}", response.status());
 
         let decoding_key = match response.status() {
             StatusCode::OK => {
@@ -98,6 +97,7 @@ impl OktaSettings {
             ("grant_type", "authorization_code"),
             ("redirect_uri", &self.redirect_uri),
             ("code", code),
+            ("scope", &self.scope),
         ]
     }
 }
@@ -138,6 +138,27 @@ impl SsoProviderExt for OktaProvider {
     }
     fn client_secret(&self) -> &str {
         &self.settings.client_secret
+    }
+
+    fn require_basic_auth(&self) -> bool {
+        true // Okta requires basic auth for token requests
+    }
+
+    fn headers(&self) -> reqwest::header::HeaderMap {
+        let mut headers = reqwest::header::HeaderMap::new();
+
+        headers.insert(
+            reqwest::header::AUTHORIZATION,
+            format!(
+                "Basic {}",
+                BASE64_STANDARD.encode(format!("{}:{}", self.client_id(), self.client_secret()))
+            )
+            .parse()
+            .unwrap(),
+        );
+        // application json
+        headers.insert(reqwest::header::ACCEPT, "application/json".parse().unwrap());
+        headers
     }
 
     fn build_auth_params<'a>(

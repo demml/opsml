@@ -2,12 +2,23 @@ use jsonwebtoken::DecodingKey;
 use serde::{Deserialize, Serialize};
 
 use crate::sso::error::SsoError;
+
+pub enum Provider {
+    Keycloak,
+    Okta,
+    Other,
+}
+
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone, Default)]
 pub enum Algorithm {
     #[default]
     RS256,
     RS384,
     RS512,
+    #[serde(rename = "RSA-OAEP")]
+    RsaOaep,
+    #[serde(other)]
+    Unknown,
 }
 #[derive(Debug, Deserialize, Serialize, Clone, Default)]
 pub struct JwkResponse {
@@ -67,4 +78,6 @@ pub struct TokenResponse {
 pub struct IdTokenClaims {
     pub email: String,
     pub preferred_username: String,
+    pub exp: u64,
+    pub sub: String,
 }

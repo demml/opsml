@@ -83,41 +83,19 @@ impl SsoProvider {
 }
 #[cfg(test)]
 mod tests {
+    use crate::sso::providers::types::{Algorithm, JwkResponse};
+    use crate::sso::providers::types::{IdTokenClaims, Jwk};
+
     use super::*;
+    use base64::prelude::*;
     use jsonwebtoken::encode;
+
     use jsonwebtoken::EncodingKey;
     use jsonwebtoken::Header;
     use mockito::{Server, ServerGuard};
 
     use std::time::SystemTime;
     use std::time::UNIX_EPOCH;
-
-    const PUBLIC_KEY: &str = r#"MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAy2YCQSwO7b8yapX4gZ5U
-    Mqr/lQ/XzdGwyF1pF/ihbrZTKLNlGd42Ui2+vEA+EsNFLr7PlabsW6O54pXXbQC6
-    8HCRfS76hTI9SarXzpnEKLiW61EcQXenNAeRFV6ttKNrnWdBblh5lA62bwr9G0xR
-    NS4GhIrI196smXp4W4IIW14nazUd4AF+xnUuHMuyETDe2pWVhqVyWMsgf+kHTs7M
-    4WeB9XkTWHWGHYCU58vKATN0//wsBYmkeu5arPbXY+sXuQX4KEWuZB/VrUQN9ftn
-    1CPX/hbS82Kce/TrG8mICZcx/SnKOpj2b7EZ7N32+DPfkh7FKBTEIbycey7dmw1J
-    MQIDAQAB"#;
-
-    impl Default for KeycloakClaims {
-        fn default() -> Self {
-            let expiration = SystemTime::now()
-                .duration_since(UNIX_EPOCH)
-                .unwrap()
-                .as_secs()
-                + 3600; // 1 hour
-
-            Self {
-                sub: String::new(),
-                scope: String::new(),
-                name: "guest".into(),
-                preferred_username: "guest".into(),
-                email: String::new(),
-                exp: expiration as usize,
-            }
-        }
-    }
 
     fn create_mock_token_response() -> String {
         // this is a mock private key generated offline for testing purposes
@@ -148,11 +126,18 @@ Xy4c2iwFY9AzcgBtaVsBvFb0TKD5E9y4eLc1LYI1AoGAbusWCkSQCOaN0c8KW81M
 W6xV1rPJOHYtOedTWXf7N/5SMl+ioEqpo6eP5ZswOzqLqgCJ+Kpl5DmvA4Ht8qel
 NTHa9XqoGvyPbaauojI0TIGa+mHYhY7hD2U/Z3xuegfDhm93CdgTwwWqJsezPXXV
 GrrNOufvPsvmCRO9m4ESRrk=
------END PRIVATE KEY-----
+-----END PRIVATE KEY-----"#;
 
-        "#;
+        let claims = IdTokenClaims {
+            preferred_username: "guest".to_string(),
+            exp: SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_secs()
+                + 3600,
+            ..Default::default()
+        };
 
-        let claims = KeycloakClaims::default();
         let header = Header::new(jsonwebtoken::Algorithm::RS256);
 
         let token = encode(
@@ -163,7 +148,7 @@ GrrNOufvPsvmCRO9m4ESRrk=
         .unwrap();
 
         serde_json::json!({
-            "access_token": token,
+            "access_token": "token",
             "expires_in": 3600,
             "refresh_token": "mock_refresh_token",
             "refresh_expires_in": 3600,
@@ -172,7 +157,7 @@ GrrNOufvPsvmCRO9m4ESRrk=
             "session_state": "mock_session_state",
             "scope": "openid profile email",
             "not-before-policy": 0,
-            "id_token": "id_token"
+            "id_token": token,
         })
         .to_string()
     }
@@ -186,23 +171,55 @@ GrrNOufvPsvmCRO9m4ESRrk=
             let mut server = Server::new_async().await;
             let url = server.url().to_string();
 
-            let public_key_response = KeycloakPublicKeyResponse {
-                realm: "opsml".to_string(),
-                // this is a mock public key
-                public_key: PUBLIC_KEY.to_string(),
+            let jswk = Jwk {
+                kty: "RSA".to_string(),
+                alg: Algorithm ::RS256,
+                kid: "mock_key_id".to_string(),
+                use_: "sig".to_string(),
+                e: "AQAB".to_string(), // public exponent
+                n: "y2YCQSwO7b8yapX4gZ5UMqr_lQ_XzdGwyF1pF_ihbrZTKLNlGd42Ui2-vEA-EsNFLr7PlabsW6O54pXXbQC68HCRfS76hTI9SarXzpnEKLiW61EcQXenNAeRFV6ttKNrnWdBblh5lA62bwr9G0xRNS4GhIrI196smXp4W4IIW14nazUd4AF-xnUuHMuyETDe2pWVhqVyWMsgf-kHTs7M4WeB9XkTWHWGHYCU58vKATN0__wsBYmkeu5arPbXY-sXuQX4KEWuZB_VrUQN9ftn1CPX_hbS82Kce_TrG8mICZcx_SnKOpj2b7EZ7N32-DPfkh7FKBTEIbycey7dmw1JMQ".to_string(), // mock public key modulus
             };
 
-            // mock public key endpoint
+            let cert_response = JwkResponse { keys: vec![jswk] };
+            let body = serde_json::to_string(&cert_response).unwrap();
+
+            // mock keycloak JWKS endpoint
             server
-                .mock("GET", "/realms/opsml")
+                .mock("GET", "/realms/opsml/protocol/openid-connect/certs")
                 .with_status(200)
                 .with_header("content-type", "application/json")
-                .with_body(serde_json::to_string(&public_key_response).unwrap())
+                .with_body(body.clone())
                 .create();
 
-            // mock token endpoint
+            // mock okta JWKS endpoint
+            server
+                .mock("GET", "/oauth2/v1/keys")
+                .with_status(200)
+                .with_header("content-type", "application/json")
+                .with_body(body.clone())
+                .create();
+
+            // mock keycloak token endpoint
             server
                 .mock("POST", "/realms/opsml/protocol/openid-connect/token")
+                .match_header("Content-Type", "application/x-www-form-urlencoded")
+                .with_status(200)
+                .with_header("content-type", "application/json")
+                .with_body(create_mock_token_response())
+                .create();
+
+            // mock okta token endpoint
+            let credentials = format!("{}:{}", "opsml-client", "client-secret");
+            let encoded_credentials = BASE64_STANDARD.encode(credentials);
+            let auth_header = format!("Basic {}", encoded_credentials);
+
+            server
+                .mock("POST", "/oauth2/v1/token")
+                .match_header("Authorization", &*auth_header)
+                // match the content type
+                .match_header("Content-Type", "application/x-www-form-urlencoded")
+                // match accept
+                .match_header("Accept", "application/json")
                 .with_status(200)
                 .with_header("content-type", "application/json")
                 .with_body(create_mock_token_response())
@@ -221,11 +238,11 @@ GrrNOufvPsvmCRO9m4ESRrk=
 
         // Set the SSO provider environment variable
         std::env::set_var("SSO_PROVIDER", "keycloak");
-        std::env::set_var("KEYCLOAK_CLIENT_ID", "opsml-client");
-        std::env::set_var("KEYCLOAK_CLIENT_SECRET", "opsml-client-secret");
-        std::env::set_var("KEYCLOAK_REDIRECT_URI", "http://localhost:8080/callback");
-        std::env::set_var("KEYCLOAK_AUTH_URL", &mock_server.url);
-        std::env::set_var("KEYCLOAK_AUTH_REALM", "opsml");
+        std::env::set_var("OPSML_CLIENT_ID", "opsml-client");
+        std::env::set_var("OPSML_CLIENT_SECRET", "client-secret");
+        std::env::set_var("OPSML_REDIRECT_URI", "http://localhost:8080/callback");
+        std::env::set_var("OPSML_AUTH_DOMAIN", &mock_server.url);
+        std::env::set_var("OPSML_AUTH_REALM", "opsml");
 
         // Initialize the SSO provider
         let sso_provider = SsoProvider::from_env().await.unwrap();
@@ -252,10 +269,10 @@ GrrNOufvPsvmCRO9m4ESRrk=
 
         // Set the SSO provider environment variable
         std::env::set_var("SSO_PROVIDER", "okta");
-        std::env::set_var("OKTA_CLIENT_ID", "client");
-        std::env::set_var("OKTA_CLIENT_SECRET", "secret");
-        std::env::set_var("OKTA_REDIRECT_URI", "http://localhost:8080/callback");
-        std::env::set_var("OKTA_DOMAIN", &mock_server.url);
+        std::env::set_var("OPSML_CLIENT_ID", "opsml-client");
+        std::env::set_var("OPSML_CLIENT_SECRET", "client-secret");
+        std::env::set_var("OPSML_REDIRECT_URI", "https://localhost:8080/callback");
+        std::env::set_var("OPSML_AUTH_DOMAIN", &mock_server.url);
 
         // Initialize the SSO provider
         let sso_provider = SsoProvider::from_env().await.unwrap();
@@ -264,5 +281,14 @@ GrrNOufvPsvmCRO9m4ESRrk=
             .authenticate_resource_password("guest", "guest")
             .await
             .expect("Failed to authenticate with Okta");
+
+        assert_eq!(user_info.username, "guest");
+
+        let user_info = sso_provider
+            .authenticate_auth_flow("mock_code")
+            .await
+            .expect("Failed to authenticate with Keycloak using callback code");
+
+        assert_eq!(user_info.username, "guest");
     }
 }
