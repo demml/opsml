@@ -4,7 +4,7 @@ use crate::sso::providers::types::{get_env_var, JwkResponse};
 use jsonwebtoken::DecodingKey;
 use reqwest::{Client, StatusCode};
 
-use tracing::error;
+use tracing::{error, info};
 
 #[derive(Clone)]
 pub struct KeycloakSettings {
@@ -52,12 +52,12 @@ impl KeycloakSettings {
 
         let decoding_key = match response.status() {
             StatusCode::OK => {
-                let jwk_response = response.json::<JwkResponse>().await.map_err({
+                let jwk_response = response.json::<JwkResponse>().await.map_err(|e| {
                     error!(
-                        "Failed to parse JWK response from Keycloak at {}",
-                        certs_url
+                        "Failed to parse JWK response from Keycloak at {} error: {}",
+                        certs_url, e
                     );
-                    SsoError::ReqwestError
+                    SsoError::ReqwestError(e)
                 })?;
                 jwk_response.get_decoded_key()?
             }
@@ -96,13 +96,18 @@ impl KeycloakSettings {
         ]
     }
 
-    pub fn build_callback_auth_params<'a>(&'a self, code: &'a str) -> Vec<(&'a str, &'a str)> {
+    pub fn build_callback_auth_params<'a>(
+        &'a self,
+        code: &'a str,
+        code_verifier: &'a str,
+    ) -> Vec<(&'a str, &'a str)> {
         vec![
             ("grant_type", "authorization_code"),
             ("client_id", &self.client_id),
             ("client_secret", &self.client_secret),
             ("redirect_uri", &self.redirect_uri),
             ("code", code),
+            ("code_verifier", code_verifier),
             ("scope", &self.scope),
         ]
     }
@@ -117,6 +122,9 @@ impl KeycloakProvider {
     pub async fn new(client: Client) -> Result<Self, SsoError> {
         let settings = KeycloakSettings::from_env(&client).await?;
 
+        info!("Keycloak SSO provider initialized");
+
+        // scouter not integrated - exist early
         Ok(Self { client, settings })
     }
 }
@@ -162,8 +170,13 @@ impl SsoProviderExt for KeycloakProvider {
         self.settings.build_auth_params(username, password)
     }
 
-    fn build_callback_auth_params<'a>(&'a self, code: &'a str) -> Vec<(&'a str, &'a str)> {
-        self.settings.build_callback_auth_params(code)
+    fn build_callback_auth_params<'a>(
+        &'a self,
+        code: &'a str,
+        code_verifier: &'a str,
+    ) -> Vec<(&'a str, &'a str)> {
+        self.settings
+            .build_callback_auth_params(code, code_verifier)
     }
 
     fn decoding_key(&self) -> &DecodingKey {

@@ -6,10 +6,14 @@ use aes_gcm::{
 };
 
 use crate::error::CryptError;
+use base64::engine::general_purpose::URL_SAFE_NO_PAD;
+use base64::Engine;
 use hkdf::Hkdf;
 use hmac::Hmac;
 use pbkdf2::pbkdf2;
-use rand::{rngs::OsRng as RandOsRng, TryRngCore};
+use rand::distr::Alphanumeric;
+use rand::{rngs::OsRng as RandOsRng, Rng, TryRngCore};
+use sha2::Digest;
 use sha2::Sha256;
 
 const PBKDF2_ITERATIONS: u32 = 100_000;
@@ -134,6 +138,19 @@ pub fn decrypt_key(master_key: &[u8], encrypted_key: &[u8]) -> Result<Vec<u8>, C
         .decrypt(nonce, &encrypted_key[12..])
         .map_err(|_| CryptError::DecryptKeyError)?;
     Ok(key)
+}
+
+pub fn generate_code_verifier() -> String {
+    rand::rng()
+        .sample_iter(&Alphanumeric)
+        .take(64)
+        .map(char::from)
+        .collect()
+}
+
+pub fn generate_code_challenge(code_verifier: &str) -> String {
+    let hash = Sha256::digest(code_verifier.as_bytes());
+    URL_SAFE_NO_PAD.encode(hash)
 }
 
 // tests

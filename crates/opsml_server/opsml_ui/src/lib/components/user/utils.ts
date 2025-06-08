@@ -91,19 +91,23 @@ export async function updateUser(
   return (await response.json()) as UserResponse;
 }
 
-export async function getSsoAuthURL(state: string): Promise<SsoAuthUrl> {
+export async function getSsoAuthURL(): Promise<SsoAuthUrl> {
   const path = `${RoutePaths.SSO_AUTH}`;
-  const response = await opsmlClient.get(path, { state });
+  const response = await opsmlClient.get(path);
 
   const data = await response.json();
   return data as SsoAuthUrl;
 }
 
 export async function exchangeSsoCallbackCode(
-  code: string
+  code: string,
+  codeVerifier: string
 ): Promise<LoginResponse> {
   const path = `${RoutePaths.SSO_CALLBACK}`;
-  const response = await opsmlClient.get(path, { code });
+  const response = await opsmlClient.get(path, {
+    code,
+    code_verifier: codeVerifier,
+  });
 
   const data = await response.json();
   return data as LoginResponse;

@@ -67,17 +67,34 @@ impl SsoProvider {
         }
     }
 
-    pub async fn authenticate_auth_flow(&self, code: &str) -> Result<UserInfo, SsoError> {
+    pub async fn authenticate_auth_flow(
+        &self,
+        code: &str,
+        code_verifier: &str,
+    ) -> Result<UserInfo, SsoError> {
         match self {
-            SsoProvider::Keycloak(provider) => provider.authenticate_auth_flow(code).await,
-            SsoProvider::Okta(provider) => provider.authenticate_auth_flow(code).await,
+            SsoProvider::Keycloak(provider) => {
+                provider.authenticate_auth_flow(code, code_verifier).await
+            }
+            SsoProvider::Okta(provider) => {
+                provider.authenticate_auth_flow(code, code_verifier).await
+            }
         }
     }
 
-    pub fn authorization_url(&self, state: &str) -> String {
+    pub fn authorization_url(
+        &self,
+        state: &str,
+        code_challenge: &str,
+        code_challenge_method: &str,
+    ) -> String {
         match self {
-            SsoProvider::Keycloak(provider) => provider.get_authorization_url(state),
-            SsoProvider::Okta(provider) => provider.get_authorization_url(state),
+            SsoProvider::Keycloak(provider) => {
+                provider.get_authorization_url(state, code_challenge, code_challenge_method)
+            }
+            SsoProvider::Okta(provider) => {
+                provider.get_authorization_url(state, code_challenge, code_challenge_method)
+            }
         }
     }
 }
@@ -256,7 +273,7 @@ GrrNOufvPsvmCRO9m4ESRrk=
         assert_eq!(user_info.username, "guest");
 
         let user_info = sso_provider
-            .authenticate_auth_flow("mock_code")
+            .authenticate_auth_flow("mock_code", "mock_code_verifier")
             .await
             .expect("Failed to authenticate with Keycloak using callback code");
 
@@ -285,7 +302,7 @@ GrrNOufvPsvmCRO9m4ESRrk=
         assert_eq!(user_info.username, "guest");
 
         let user_info = sso_provider
-            .authenticate_auth_flow("mock_code")
+            .authenticate_auth_flow("mock_code", "mock_code_verifier")
             .await
             .expect("Failed to authenticate with Keycloak using callback code");
 
