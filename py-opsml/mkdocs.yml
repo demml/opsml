@@ -68,22 +68,7 @@ nav:
       - Features:
           - Builds: "docs/specs/ts-feature-builds.md"
           - Async Registry: "docs/specs/ts-feature-opsml-registry-hardware-async.md"
-  #- Quickstart: "quickstart.md"
-  #- Reference: "reference.md"
-  #- Interfaces:
-  #    - "interfaces/overview.md"
-  #    - Data Interface:
-  #        - "interfaces/data/interfaces.md"
-  #        - "interfaces/data/data_splits.md"
-  #        - "interfaces/data/datasets.md"
-  #        - "interfaces/data/data_profile.md"
-  #        - "interfaces/data/feature.md"
-  #
-  #    - Model Interface:
-  #        - "interfaces/model/interfaces.md"
-  #        - "interfaces/model/onnx.md"
-  #        - "interfaces/model/extras.md"
-  #        - "interfaces/model/deployment.md"
+
   - Cards:
       - "docs/cards/overview.md"
       - "docs/cards/versioning.md"
@@ -91,6 +76,8 @@ nav:
       - "docs/cards/datacard.md"
       - "docs/cards/experimentcard.md"
       - "docs/cards/promptcard.md"
+  - Authentication:
+      - "docs/authentication/overview.md"
 #    - "cards/metadata.md"
 #    - DataCard:
 #        - "cards/datacard.md"

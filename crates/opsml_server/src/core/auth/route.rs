@@ -1,9 +1,14 @@
-use crate::core::auth::schema::{Authenticated, LoginRequest, LoginResponse, LogoutResponse};
+use crate::core::auth::schema::{
+    Authenticated, LoginRequest, LoginResponse, LogoutResponse, SsoCallbackParams,
+};
+use crate::core::auth::util::{authenticate_user_with_sso, authenticate_user_with_sso_callback};
 use crate::core::error::{internal_server_error, OpsmlServerError};
+
 use crate::core::state::AppState;
 use crate::core::user::schema::UserResponse;
 use crate::core::user::utils::get_user;
 use anyhow::{Context, Result};
+use axum::extract::Query;
 /// Route for debugging information
 use axum::extract::State;
 use axum::{
@@ -13,11 +18,35 @@ use axum::{
     routing::{get, post},
     Json, Router,
 };
+use opsml_crypt::{generate_code_challenge, generate_code_verifier};
 use opsml_sql::base::SqlClient;
 use opsml_types::JwtToken;
+use opsml_utils::create_uuid7;
+use password_auth::verify_password;
+use rand::Rng;
+
 use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::sync::Arc;
 use tracing::{debug, error, info, instrument};
+
+use crate::core::auth::schema::SsoAuthUrl;
+
+fn parse_header(
+    headers: &HeaderMap,
+    key: &str,
+) -> Result<String, (StatusCode, Json<OpsmlServerError>)> {
+    headers
+        .get(key)
+        .and_then(|v| v.to_str().ok())
+        .map(|s| s.to_string())
+        .ok_or_else(|| {
+            error!("{} not found in headers", key);
+            (
+                StatusCode::BAD_REQUEST,
+                Json(OpsmlServerError::key_header_not_found(key.to_string())),
+            )
+        })
+}
 
 /// Route for the login endpoint when using the API
 ///
@@ -35,66 +64,63 @@ pub async fn api_login_handler(
     headers: HeaderMap,
 ) -> Result<Json<JwtToken>, (StatusCode, Json<OpsmlServerError>)> {
     // get Username and Password from headers
-    let username = headers
-        .get("Username")
-        .ok_or_else(|| {
-            error!("Username not found in headers");
-            (
-                StatusCode::BAD_REQUEST,
-                Json(OpsmlServerError::username_header_not_found()),
-            )
-        })?
-        .to_str()
-        .map_err(|_| {
-            error!("Invalid UTF-8 in Username header");
-            (
-                StatusCode::BAD_REQUEST,
-                Json(OpsmlServerError::invalid_username_format()),
-            )
-        })?
-        .to_string();
+    let username = parse_header(&headers, "Username")?;
+    let password = parse_header(&headers, "Password")?;
 
-    let password = headers
-        .get("Password")
-        .ok_or_else(|| {
-            error!("Password not found in headers");
-            (
-                StatusCode::BAD_REQUEST,
-                Json(OpsmlServerError::password_header_not_found()),
-            )
-        })?
-        .to_str()
-        .map_err(|_| {
-            error!("Invalid UTF-8 in Password header");
-            (
-                StatusCode::BAD_REQUEST,
-                Json(OpsmlServerError::invalid_password_format()),
-            )
-        })?
-        .to_string();
+    let use_sso = headers
+        .get("Use-SSO")
+        .is_some_and(|v| v.to_str().is_ok_and(|s| s.eq_ignore_ascii_case("true")));
 
-    // get user from database
-    let mut user = match get_user(&state.sql_client, &username).await {
-        Ok(user) => user,
-        Err(_) => {
-            return OpsmlServerError::user_validation_error()
-                .into_response(StatusCode::BAD_REQUEST);
+    // Validation flow
+    // If SSO is enabled, and the Use-SSO header is present, the username and password will be authenticated against the SSO provider.
+    // If SSO is not enabled, we will get the user from the database.
+    let mut user = if state.auth_manager.is_sso_enabled() && use_sso {
+        let user = authenticate_user_with_sso(&state, &username, &password).await?;
+        info!("User authenticated with SSO: {}", username);
+        user
+    } else {
+        // if SSO is not enabled, we will get the user from the database
+        match get_user(&state.sql_client, &username).await {
+            Ok(user) => {
+                // check if password is correct
+                state
+                    .auth_manager
+                    .validate_user(&user, &password)
+                    .map_err(|_| {
+                        (
+                            StatusCode::BAD_REQUEST,
+                            Json(OpsmlServerError::user_validation_error()),
+                        )
+                    })?;
+
+                user
+            }
+            Err(_) => {
+                // create dummy pass to verify (this is to avoid time-based attacks)
+                // if a user does not exist, the time it takes to return an error will be shorter than the validation step
+                // so we create a dummy validation step to increase the time it takes to return an error
+                verify_password(
+                    "dummy_password",
+                    &state.auth_manager.dummy_user.password_hash,
+                )
+                .map_err(|_| {
+                    error!("Invalid password for user: {}", username);
+                    (
+                        StatusCode::BAD_REQUEST,
+                        Json(OpsmlServerError::user_validation_error()),
+                    )
+                })?;
+
+                // add small amount of random jitter (between 0 and 100 milliseconds)
+                // to avoid timing attacks
+                let millis = rand::rng().random_range(0..30);
+                tokio::time::sleep(std::time::Duration::from_millis(millis)).await;
+
+                return OpsmlServerError::user_validation_error()
+                    .into_response(StatusCode::BAD_REQUEST);
+            }
         }
     };
-
-    // check if password is correct
-    state
-        .auth_manager
-        .validate_user(&user, &password)
-        .map_err(|_| {
-            (
-                StatusCode::UNAUTHORIZED,
-                Json(OpsmlServerError::user_validation_error()),
-            )
-        })?;
-
-    // we may get multiple requests for the same user (setting up storage and registries), so we
-    // need to check if current refresh and jwt tokens are valid and return them if they are
 
     // generate JWT token
     let jwt_token = state.auth_manager.generate_jwt(&user).map_err(|e| {
@@ -410,6 +436,89 @@ async fn validate_jwt_token(
     }
 }
 
+#[instrument(skip_all)]
+async fn get_sso_authorization_url(
+    State(state): State<Arc<AppState>>,
+) -> Result<Json<SsoAuthUrl>, (StatusCode, Json<OpsmlServerError>)> {
+    if !state.auth_manager.is_sso_enabled() {
+        return Err((
+            StatusCode::NOT_IMPLEMENTED,
+            Json(OpsmlServerError::sso_not_enabled()),
+        ));
+    }
+
+    let provider = state.auth_manager.get_sso_provider().map_err(|e| {
+        error!("SSO provider not set: {}", e);
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(OpsmlServerError::sso_provider_not_set()),
+        )
+    })?;
+
+    let state = create_uuid7();
+    let code_verifier = generate_code_verifier();
+    let code_challenge = generate_code_challenge(&code_verifier);
+    let code_challenge_method = "S256".to_string();
+    let url = provider.authorization_url(&state, &code_challenge, &code_challenge_method);
+
+    Ok(Json(SsoAuthUrl {
+        url,
+        code_challenge,
+        code_challenge_method,
+        code_verifier,
+        state,
+    }))
+}
+
+#[instrument(skip_all)]
+async fn exchange_callback_token(
+    State(state): State<Arc<AppState>>,
+    Query(params): Query<SsoCallbackParams>,
+) -> Result<Json<LoginResponse>, (StatusCode, Json<OpsmlServerError>)> {
+    info!("Exchanging SSO callback token");
+    let code = params.code;
+    let code_verifier = params.code_verifier;
+
+    let mut user = authenticate_user_with_sso_callback(&state, &code, &code_verifier).await?;
+
+    // generate JWT token
+    let jwt_token = state.auth_manager.generate_jwt(&user).map_err(|e| {
+        error!("Failed to generate JWT token: {}", e);
+        internal_server_error(e, "Failed to generate JWT token")
+    })?;
+
+    let refresh_token = state
+        .auth_manager
+        .generate_refresh_token(&user)
+        .map_err(|e| {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(OpsmlServerError::refresh_token_error(e)),
+            )
+        })?;
+
+    user.refresh_token = Some(refresh_token);
+
+    // set refresh token in db
+    state.sql_client.update_user(&user).await.map_err(|e| {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(OpsmlServerError::refresh_token_error(e)),
+        )
+    })?;
+
+    info!("User logged in with sso: {}", user.username);
+
+    Ok(Json(LoginResponse {
+        authenticated: true,
+        message: "User authenticated".to_string(),
+        username: user.username,
+        jwt_token,
+        group_permissions: user.group_permissions,
+        permissions: user.permissions,
+    }))
+}
+
 pub async fn get_auth_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
     let result = catch_unwind(AssertUnwindSafe(|| {
         Router::new()
@@ -426,6 +535,14 @@ pub async fn get_auth_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
             .route(
                 &format!("{}/auth/ui/logout", prefix),
                 get(ui_logout_handler),
+            )
+            .route(
+                &format!("{}/auth/sso/authorization", prefix),
+                get(get_sso_authorization_url),
+            )
+            .route(
+                &format!("{}/auth/sso/callback", prefix),
+                get(exchange_callback_token),
             )
     }));
 

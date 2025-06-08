@@ -8,3 +8,5 @@ export type CardMetadata =
   | { Model: ModelCard }
   | { Prompt: PromptCard }
   | { Experiment: ExperimentCard };
+
+export type AnyCard = DataCard | ModelCard | PromptCard | ExperimentCard;
