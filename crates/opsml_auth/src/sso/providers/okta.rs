@@ -50,8 +50,6 @@ impl OktaSettings {
             .await
             .map_err(SsoError::ReqwestError)?;
 
-        println!("Response status: {}", response.status());
-
         let decoding_key = match response.status() {
             StatusCode::OK => {
                 let jwk_response = response
