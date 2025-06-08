@@ -1,4 +1,5 @@
 use crate::sso::error::SsoError;
+use crate::sso::providers::default::DefaultProvider;
 use crate::sso::providers::keycloak::KeycloakProvider;
 use crate::sso::providers::okta::OktaProvider;
 use crate::sso::providers::traits::SsoProviderExt;
@@ -8,6 +9,7 @@ use reqwest::Client;
 pub enum SsoProvider {
     Keycloak(KeycloakProvider),
     Okta(OktaProvider),
+    Default(DefaultProvider),
 }
 
 impl SsoProvider {
@@ -15,6 +17,7 @@ impl SsoProvider {
         match self {
             SsoProvider::Keycloak(_) => "keycloak",
             SsoProvider::Okta(_) => "okta",
+            SsoProvider::Default(_) => "default",
         }
     }
 
@@ -23,6 +26,7 @@ impl SsoProvider {
         match provider.to_lowercase().as_str() {
             "keycloak" => Ok(SsoProvider::Keycloak(KeycloakProvider::new(client).await?)),
             "okta" => Ok(SsoProvider::Okta(OktaProvider::new(client).await?)),
+            "default" => Ok(SsoProvider::Default(DefaultProvider::new(client).await?)),
             _ => Err(SsoError::InvalidProvider(provider.to_string())),
         }
     }
@@ -36,9 +40,7 @@ impl SsoProvider {
         {
             "keycloak" => Ok(SsoProvider::Keycloak(KeycloakProvider::new(client).await?)),
             "okta" => Ok(SsoProvider::Okta(OktaProvider::new(client).await?)),
-            _ => Err(SsoError::InvalidProvider(
-                std::env::var("SSO_PROVIDER").unwrap_or_default(),
-            )),
+            _ => Ok(SsoProvider::Default(DefaultProvider::new(client).await?)),
         }
     }
 
@@ -64,6 +66,11 @@ impl SsoProvider {
                     .authenticate_resource_password(username, password)
                     .await
             }
+            SsoProvider::Default(provider) => {
+                provider
+                    .authenticate_resource_password(username, password)
+                    .await
+            }
         }
     }
 
@@ -77,6 +84,9 @@ impl SsoProvider {
                 provider.authenticate_auth_flow(code, code_verifier).await
             }
             SsoProvider::Okta(provider) => {
+                provider.authenticate_auth_flow(code, code_verifier).await
+            }
+            SsoProvider::Default(provider) => {
                 provider.authenticate_auth_flow(code, code_verifier).await
             }
         }
@@ -93,6 +103,9 @@ impl SsoProvider {
                 provider.get_authorization_url(state, code_challenge, code_challenge_method)
             }
             SsoProvider::Okta(provider) => {
+                provider.get_authorization_url(state, code_challenge, code_challenge_method)
+            }
+            SsoProvider::Default(provider) => {
                 provider.get_authorization_url(state, code_challenge, code_challenge_method)
             }
         }
@@ -216,9 +229,25 @@ GrrNOufvPsvmCRO9m4ESRrk=
                 .with_body(body.clone())
                 .create();
 
+            // mock default jwks endpoint
+            server
+                .mock("GET", "/oauth/keys")
+                .with_status(200)
+                .with_header("content-type", "application/json")
+                .with_body(body.clone())
+                .create();
+
             // mock keycloak token endpoint
             server
                 .mock("POST", "/realms/opsml/protocol/openid-connect/token")
+                .match_header("Content-Type", "application/x-www-form-urlencoded")
+                .with_status(200)
+                .with_header("content-type", "application/json")
+                .with_body(create_mock_token_response())
+                .create();
+
+            server
+                .mock("POST", "/oauth/token")
                 .match_header("Content-Type", "application/x-www-form-urlencoded")
                 .with_status(200)
                 .with_header("content-type", "application/json")
@@ -305,6 +334,39 @@ GrrNOufvPsvmCRO9m4ESRrk=
             .authenticate_auth_flow("mock_code", "mock_code_verifier")
             .await
             .expect("Failed to authenticate with Keycloak using callback code");
+
+        assert_eq!(user_info.username, "guest");
+    }
+
+    #[tokio::test]
+    async fn test_sso_provider_default() {
+        let mock_server = MockServer::new().await;
+
+        // Set the SSO provider environment variable
+        std::env::set_var("SSO_PROVIDER", "default");
+        std::env::set_var("OPSML_CLIENT_ID", "opsml-client");
+        std::env::set_var("OPSML_CLIENT_SECRET", "client-secret");
+        std::env::set_var("OPSML_REDIRECT_URI", "http://localhost:8080/callback");
+        std::env::set_var("OPSML_AUTH_DOMAIN", &mock_server.url);
+        std::env::set_var("OPSML_TOKEN_ENDPOINT", "oauth/token");
+        std::env::set_var("OPSML_CERT_ENDPOINT", "oauth/keys");
+        std::env::set_var("OPSML_AUTHORIZATION_ENDPOINT", "oauth/authorize");
+
+        // Initialize the SSO provider
+        let sso_provider = SsoProvider::from_env().await.unwrap();
+
+        // Test the public key endpoint
+        let user_info = sso_provider
+            .authenticate_resource_password("guest", "guest")
+            .await
+            .expect("Failed to authenticate with default");
+
+        assert_eq!(user_info.username, "guest");
+
+        let user_info = sso_provider
+            .authenticate_auth_flow("mock_code", "mock_code_verifier")
+            .await
+            .expect("Failed to authenticate with default using callback code");
 
         assert_eq!(user_info.username, "guest");
     }
