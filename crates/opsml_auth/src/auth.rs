@@ -4,7 +4,7 @@ use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation}
 use opsml_sql::schemas::schema::User;
 use password_auth::{generate_hash, verify_password};
 use rand::{distr::Alphanumeric, Rng};
-use serde::{de, Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 #[derive(Debug, Serialize, Deserialize)]

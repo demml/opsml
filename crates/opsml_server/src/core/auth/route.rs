@@ -97,7 +97,7 @@ pub async fn api_login_handler(
                 // create dummy pass to verify (this is to avoid time-based attacks)
                 // if a user does not exist, the time it takes to return an error will be shorter than the validation step
                 // so we create a dummy validation step to increase the time it takes to return an error
-                let _is_valid = verify_password(
+                verify_password(
                     "dummy_password",
                     &state.auth_manager.dummy_user.password_hash,
                 )
