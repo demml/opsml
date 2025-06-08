@@ -11,6 +11,7 @@ doctest = false
 [dependencies]
 opsml-utils = { workspace = true }
 aes-gcm = { workspace = true }
+base64 = { workspace = true }
 hkdf = { workspace = true }
 hmac = { workspace = true }
 pbkdf2 = { workspace = true }

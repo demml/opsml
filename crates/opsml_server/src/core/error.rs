@@ -20,9 +20,20 @@ pub struct OpsmlServerError {
 }
 
 impl OpsmlServerError {
+    pub fn sso_not_enabled() -> Self {
+        OpsmlServerError {
+            error: "SSO is not enabled".to_string(),
+        }
+    }
     pub fn permission_denied() -> Self {
         OpsmlServerError {
             error: "Permission denied".to_string(),
+        }
+    }
+
+    pub fn sso_provider_not_set() -> Self {
+        OpsmlServerError {
+            error: "SSO provider not set".to_string(),
         }
     }
 
@@ -51,30 +62,9 @@ impl OpsmlServerError {
             error: "Cannot delete the last admin user".to_string(),
         }
     }
-    pub fn username_header_not_found() -> Self {
-        error!("Username header not found");
+    pub fn key_header_not_found(key: String) -> Self {
         OpsmlServerError {
-            error: "Username header not found".to_string(),
-        }
-    }
-
-    pub fn invalid_username_format() -> Self {
-        error!("Invalid username format");
-        OpsmlServerError {
-            error: "Invalid username format".to_string(),
-        }
-    }
-
-    pub fn password_header_not_found() -> Self {
-        error!("Password header not found");
-        OpsmlServerError {
-            error: "Password header not found".to_string(),
-        }
-    }
-    pub fn invalid_password_format() -> Self {
-        error!("Invalid password format");
-        OpsmlServerError {
-            error: "Invalid password format".to_string(),
+            error: format!("{} header not found", key),
         }
     }
 

@@ -32,7 +32,7 @@
   
   </script>
   
-  <button class="text-black rounded-lg shadow border-2 border-black {bgColor} max-w-96 h-[84px] lg:h-[90px] overflow-auto whitespace-nowrap hover:translate-x-[4px] hover:translate-y-[4px] hover:shadow-none" onclick={navigateToCardPage}>
+  <button class="w-full max-w-96 h-auto p-3 text-black rounded-lg shadow border-2 border-black {bgColor} hover:translate-x-[4px] hover:translate-y-[4px] hover:shadow-none overflow-scroll" onclick={navigateToCardPage}>
     <div class="flex items-center justify-start gap-2">
       <div class="ml-2">
         <CircuitBoard color="#5948a3" />

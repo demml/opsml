@@ -1,7 +1,8 @@
 use crate::error::AuthError;
+use crate::sso::SsoProvider;
 use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
 use opsml_sql::schemas::schema::User;
-use password_auth::verify_password;
+use password_auth::{generate_hash, verify_password};
 use rand::{distr::Alphanumeric, Rng};
 use serde::{Deserialize, Serialize};
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -19,14 +20,39 @@ pub struct AuthManager {
     jwt_secret: String,
     refresh_secret: String,
     scouter_secret: String,
+    pub sso_provider: Option<SsoProvider>,
+    pub dummy_user: User,
 }
 impl AuthManager {
-    pub fn new(jwt_secret: &str, refresh_secret: &str, scouter_secret: &str) -> Self {
-        Self {
+    /// Creates a new instance of `AuthManager` with the provided secrets and optional SSO provider.
+    ///
+    /// # Arguments
+    /// * `jwt_secret`: The secret key used for signing JWT tokens.
+    /// * `refresh_secret`: The secret key used for signing refresh tokens.
+    /// * `scouter_secret`: The secret key used for Scouter integration.
+    ///
+    /// # Returns
+    /// A `Result` containing the `AuthManager` instance or an `AuthError` if initialization fails.
+    pub async fn new(
+        jwt_secret: &str,
+        refresh_secret: &str,
+        scouter_secret: &str,
+    ) -> Result<Self, AuthError> {
+        let sso_provider = SsoProvider::from_env().await.ok();
+
+        let dummy_user = User {
+            username: "dummy_user".to_string(),
+            password_hash: generate_hash("dummy_password"),
+            ..Default::default()
+        };
+
+        Ok(Self {
             jwt_secret: jwt_secret.to_string(),
             refresh_secret: refresh_secret.to_string(),
             scouter_secret: scouter_secret.to_string(),
-        }
+            sso_provider,
+            dummy_user,
+        })
     }
 
     fn generate_salt(&self) -> String {
@@ -120,6 +146,16 @@ impl AuthManager {
     ) -> Result<(), AuthError> {
         verify_password(recovery_code, server_hashed_recovery_code)
             .map_err(|_| AuthError::InvalidRecoveryCode)
+    }
+
+    pub fn is_sso_enabled(&self) -> bool {
+        self.sso_provider.is_some()
+    }
+
+    pub fn get_sso_provider(&self) -> Result<&SsoProvider, AuthError> {
+        self.sso_provider
+            .as_ref()
+            .ok_or(AuthError::SsoProviderNotSet)
     }
 }
 
