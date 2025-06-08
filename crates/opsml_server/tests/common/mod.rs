@@ -236,7 +236,7 @@ GrrNOufvPsvmCRO9m4ESRrk=
 -----END PRIVATE KEY-----"#;
 
         let claims = IdTokenClaims {
-            preferred_username: "guest".to_string(),
+            preferred_username: Some("guest".to_string()),
             exp: SystemTime::now()
                 .duration_since(UNIX_EPOCH)
                 .unwrap()

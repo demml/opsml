@@ -7,24 +7,36 @@ export const useLoginSchema = z.object({
 });
 
 // Validation schema for creating/registering user
-export const userRegisterSchema = z.object({
-  username: z.string(),
-  password: z
-    .string()
-    .min(8, { message: "Password must be at least 8 characters long" })
-    .max(32, { message: "Password cannot be longer than 32 characters" })
-    .regex(/[A-Z]/, {
-      message: "Password must contain at least one uppercase letter",
-    })
-    .regex(/[a-z]/, {
-      message: "Password must contain at least one lowercase letter",
-    })
-    .regex(/[0-9]/, { message: "Password must contain at least one number" })
-    .regex(/[^A-Za-z0-9\s]/, {
-      message: "Password must contain at least one special character",
-    }),
-  email: z.string().email(),
-});
+export const userRegisterSchema = z
+  .object({
+    email: z.string().email(),
+    username: z.string(),
+    password: z
+      .string()
+      .min(8, { message: "Password must be at least 8 characters long" })
+      .max(32, { message: "Password cannot be longer than 32 characters" })
+      .regex(/[A-Z]/, {
+        message: "Password must contain at least one uppercase letter",
+      })
+      .regex(/[a-z]/, {
+        message: "Password must contain at least one lowercase letter",
+      })
+      .regex(/[0-9]/, { message: "Password must contain at least one number" })
+      .regex(/[^A-Za-z0-9\s]/, {
+        message: "Password must contain at least one special character",
+      }),
+    reEnterPassword: z.string(),
+  })
+  .superRefine(({ reEnterPassword, password }, ctx) => {
+    if (reEnterPassword !== password) {
+      ctx.addIssue({
+        code: "custom",
+        message: "The passwords did not match",
+      });
+    }
+  });
+
+export const emailSchema = z.string().email();
 
 // Validation schema for resetting password
 export const passwordResetSchema = z
@@ -110,6 +122,7 @@ export function validateLoginSchema(
 export function validateUserRegisterSchema(
   username: string,
   password: string,
+  reEnterPassword: string,
   email: string
 ): ValidationResult<UserRegisterSchema> {
   // if email is not provided, use username
