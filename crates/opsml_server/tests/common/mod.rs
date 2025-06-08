@@ -188,13 +188,19 @@ impl ScouterServer {
     }
 }
 
+pub struct SsoMocks {
+    pub keycloak_certs_mock: mockito::Mock,
+    pub okta_certs_mock: mockito::Mock,
+    pub default_certs_mock: mockito::Mock,
+    pub keycloak_token_mock: mockito::Mock,
+    pub okta_token_mock: mockito::Mock,
+    pub default_token_mock: mockito::Mock,
+}
+
 pub struct MockSsoServer {
     _server: mockito::ServerGuard,
     pub url: String,
-    pub keycloak_certs_mock: mockito::Mock,
-    pub okta_certs_mock: mockito::Mock,
-    pub keycloak_token_mock: mockito::Mock,
-    pub okta_token_mock: mockito::Mock,
+    pub sso_mocks: SsoMocks,
 }
 
 impl MockSsoServer {
@@ -295,9 +301,26 @@ GrrNOufvPsvmCRO9m4ESRrk=
             .with_body(body.clone())
             .create();
 
+        // mock default jwks endpoint
+        let default_certs_mock = server
+            .mock("GET", "/oauth/keys")
+            .with_status(200)
+            .with_header("content-type", "application/json")
+            .with_body(body.clone())
+            .create();
+
         // mock keycloak token endpoint
         let keycloak_token_mock = server
             .mock("POST", "/realms/opsml/protocol/openid-connect/token")
+            .match_header("Content-Type", "application/x-www-form-urlencoded")
+            .with_status(200)
+            .with_header("content-type", "application/json")
+            .with_body(Self::create_mock_token_response())
+            .create();
+
+        // mock default token endpoint
+        let default_token_mock = server
+            .mock("POST", "/oauth/token")
             .match_header("Content-Type", "application/x-www-form-urlencoded")
             .with_status(200)
             .with_header("content-type", "application/json")
@@ -324,27 +347,38 @@ GrrNOufvPsvmCRO9m4ESRrk=
         Self {
             _server: server,
             url,
-            keycloak_certs_mock,
-            okta_certs_mock,
-            keycloak_token_mock,
-            okta_token_mock,
+            sso_mocks: SsoMocks {
+                keycloak_certs_mock,
+                okta_certs_mock,
+                default_certs_mock,
+                keycloak_token_mock,
+                okta_token_mock,
+                default_token_mock,
+            },
         }
     }
 
     pub fn verify_keycloak_certs_called(&self) -> bool {
-        self.keycloak_certs_mock.matched()
+        self.sso_mocks.keycloak_certs_mock.matched()
     }
 
     pub fn verify_keycloak_token_called(&self) -> bool {
-        self.keycloak_token_mock.matched()
+        self.sso_mocks.keycloak_token_mock.matched()
     }
 
     pub fn verify_okta_certs_called(&self) -> bool {
-        self.okta_certs_mock.matched()
+        self.sso_mocks.okta_certs_mock.matched()
     }
 
     pub fn verify_okta_token_called(&self) -> bool {
-        self.okta_token_mock.matched()
+        self.sso_mocks.okta_token_mock.matched()
+    }
+
+    pub fn verify_default_certs_called(&self) -> bool {
+        self.sso_mocks.default_certs_mock.matched()
+    }
+    pub fn verify_default_token_called(&self) -> bool {
+        self.sso_mocks.default_token_mock.matched()
     }
 }
 
@@ -367,6 +401,11 @@ async fn setup_sso_provider(provider: &str) -> Option<MockSsoServer> {
     std::env::set_var("OPSML_AUTH_DOMAIN", &mock_sso_server.url);
     std::env::set_var("OPSML_USE_SSO", "true");
 
+    // default env vars for sso (these are only use for DefaultSsoSettings)
+    std::env::set_var("OPSML_TOKEN_ENDPOINT", "oauth/token");
+    std::env::set_var("OPSML_CERT_ENDPOINT", "oauth/keys");
+    std::env::set_var("OPSML_AUTHORIZATION_ENDPOINT", "oauth/authorize");
+
     println!("Setting up SSO provider: {}", provider);
 
     match provider {
@@ -379,10 +418,10 @@ async fn setup_sso_provider(provider: &str) -> Option<MockSsoServer> {
             std::env::set_var("SSO_PROVIDER", "okta");
             Some(mock_sso_server)
         }
-        _ => panic!(
-            "{:?}",
-            "SSO provider not set, skipping SSO tests".to_string()
-        ),
+        _ => {
+            std::env::set_var("SSO_PROVIDER", "default");
+            Some(mock_sso_server)
+        }
     }
 }
 
@@ -615,6 +654,14 @@ impl TestHelper {
     pub fn verify_okta_sso_called(&self) -> bool {
         if let Some(sso_server) = &self.sso_server {
             sso_server.verify_okta_certs_called() && sso_server.verify_okta_token_called()
+        } else {
+            false
+        }
+    }
+
+    pub fn verify_default_sso_called(&self) -> bool {
+        if let Some(sso_server) = &self.sso_server {
+            sso_server.verify_default_certs_called() && sso_server.verify_default_token_called()
         } else {
             false
         }
