@@ -77,7 +77,8 @@ pub struct TokenResponse {
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct IdTokenClaims {
     pub email: String,
-    pub preferred_username: String,
+    pub preferred_username: Option<String>,
+    pub name: Option<String>,
     pub exp: u64,
     pub sub: String,
 }

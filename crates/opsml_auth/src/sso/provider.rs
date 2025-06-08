@@ -160,7 +160,7 @@ GrrNOufvPsvmCRO9m4ESRrk=
 -----END PRIVATE KEY-----"#;
 
         let claims = IdTokenClaims {
-            preferred_username: "guest".to_string(),
+            preferred_username: Some("guest".to_string()),
             exp: SystemTime::now()
                 .duration_since(UNIX_EPOCH)
                 .unwrap()
@@ -347,8 +347,9 @@ GrrNOufvPsvmCRO9m4ESRrk=
         std::env::set_var("SSO_PROVIDER", "default");
         std::env::set_var("OPSML_CLIENT_ID", "opsml-client");
         std::env::set_var("OPSML_CLIENT_SECRET", "client-secret");
-        std::env::set_var("OPSML_REDIRECT_URI", "http://localhost:8080/callback");
+        std::env::set_var("OPSML_REDIRECT_URI", "https://localhost:8080/callback");
         std::env::set_var("OPSML_AUTH_DOMAIN", &mock_server.url);
+
         std::env::set_var("OPSML_TOKEN_ENDPOINT", "oauth/token");
         std::env::set_var("OPSML_CERT_ENDPOINT", "oauth/keys");
         std::env::set_var("OPSML_AUTHORIZATION_ENDPOINT", "oauth/authorize");
