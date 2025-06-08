@@ -40,7 +40,8 @@ impl SsoProvider {
         {
             "keycloak" => Ok(SsoProvider::Keycloak(KeycloakProvider::new(client).await?)),
             "okta" => Ok(SsoProvider::Okta(OktaProvider::new(client).await?)),
-            _ => Ok(SsoProvider::Default(DefaultProvider::new(client).await?)),
+            "default" => Ok(SsoProvider::Default(DefaultProvider::new(client).await?)),
+            _ => Err(SsoError::SsoNotConfigured),
         }
     }
 
