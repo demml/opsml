@@ -16,10 +16,13 @@ export const load: PageLoad = async ({ url }) => {
     throw new Error("Invalid state or missing authorization code");
   }
 
-  let loginResponse = await exchangeSsoCallbackCode(code);
+  let codeVerifier = localStorage.getItem("ssoCodeVerifier") || "";
+  let loginResponse = await exchangeSsoCallbackCode(code, codeVerifier);
 
   if (loginResponse.authenticated) {
     localStorage.removeItem("ssoState"); // Clear the stored state after successful login
+    localStorage.removeItem("ssoCodeVerifier"); // Clear the code verifier after successful login
+
     userStore.updateUser(
       loginResponse.username,
       loginResponse.jwt_token,

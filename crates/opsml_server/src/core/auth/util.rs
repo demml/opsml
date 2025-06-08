@@ -1,11 +1,9 @@
 use crate::core::error::{internal_server_error, OpsmlServerError};
 use crate::core::scouter::Routes as ScouterRoutes;
 use crate::core::state::AppState;
-
 use anyhow::Result;
 /// Route for debugging information
 use axum::{http::StatusCode, Json};
-
 use opsml_auth::sso::types::UserInfo;
 use opsml_sql::base::SqlClient;
 use opsml_sql::schemas::User;
@@ -53,6 +51,7 @@ async fn authenticate_user_with_sso_provider(
 async fn authenticate_user_with_sso_provider_callback(
     state: &Arc<AppState>,
     code: &str,
+    code_verifier: &str,
 ) -> Result<UserInfo, (StatusCode, Json<OpsmlServerError>)> {
     // get provider
     let provider = state.auth_manager.get_sso_provider().map_err(|e| {
@@ -64,13 +63,16 @@ async fn authenticate_user_with_sso_provider_callback(
     })?;
 
     // authenticate with SSO provider
-    let user = provider.authenticate_auth_flow(code).await.map_err(|e| {
-        error!("Failed to authenticate with SSO provider: {}", e);
-        (
-            StatusCode::UNAUTHORIZED,
-            Json(OpsmlServerError::user_validation_error()),
-        )
-    })?;
+    let user = provider
+        .authenticate_auth_flow(code, code_verifier)
+        .await
+        .map_err(|e| {
+            error!("Failed to authenticate with SSO provider: {}", e);
+            (
+                StatusCode::UNAUTHORIZED,
+                Json(OpsmlServerError::user_validation_error()),
+            )
+        })?;
 
     Ok(user)
 }
@@ -176,9 +178,11 @@ pub async fn authenticate_user_with_sso(
 pub async fn authenticate_user_with_sso_callback(
     state: &Arc<AppState>,
     code: &str,
+    code_verifier: &str,
 ) -> Result<User, (StatusCode, Json<OpsmlServerError>)> {
     // authenticate user with sso provider callback code
-    let user_info = authenticate_user_with_sso_provider_callback(state, code).await?;
+    let user_info =
+        authenticate_user_with_sso_provider_callback(state, code, code_verifier).await?;
 
     // validate user with opsml
     let user = validate_user_with_opsml(state, &user_info).await?;

@@ -51,12 +51,10 @@
 }
 
 async function redirectToSsoUrl() {
-  const state = Math.random().toString(36).substring(2);
-
-  // set to local storage instead of session storage
-  localStorage.setItem("ssoState", state);
- 
-  const ssoAuthUrl = await getSsoAuthURL(state);
+  
+  const ssoAuthUrl = await getSsoAuthURL();
+  localStorage.setItem("ssoState", ssoAuthUrl.state);
+  localStorage.setItem("ssoCodeVerifier", ssoAuthUrl.code_verifier);
 
   window.location.href = ssoAuthUrl.url;
 }

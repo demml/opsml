@@ -20,18 +20,18 @@ pub struct LoginRequest {
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct SsoAuthUrlParams {
-    pub state: String,
-}
-
-#[derive(Serialize, Deserialize)]
 pub struct SsoAuthUrl {
     pub url: String,
+    pub code_challenge: String,
+    pub code_challenge_method: String,
+    pub code_verifier: String,
+    pub state: String,
 }
 
 #[derive(Serialize, Deserialize)]
 pub struct SsoCallbackParams {
     pub code: String,
+    pub code_verifier: String,
 }
 
 #[derive(Serialize, Deserialize, Default)]

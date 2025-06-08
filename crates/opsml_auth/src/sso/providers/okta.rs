@@ -7,7 +7,7 @@ use crate::sso::providers::types::{get_env_var, JwkResponse};
 use base64::prelude::*;
 use reqwest::{Client, StatusCode};
 
-use tracing::error;
+use tracing::{error, info};
 
 #[derive(Clone)]
 pub struct OktaSettings {
@@ -92,12 +92,17 @@ impl OktaSettings {
         ]
     }
 
-    pub fn build_callback_auth_params<'a>(&'a self, code: &'a str) -> Vec<(&'a str, &'a str)> {
+    pub fn build_callback_auth_params<'a>(
+        &'a self,
+        code: &'a str,
+        code_verifier: &'a str,
+    ) -> Vec<(&'a str, &'a str)> {
         vec![
             ("grant_type", "authorization_code"),
             ("redirect_uri", &self.redirect_uri),
             ("code", code),
             ("scope", &self.scope),
+            ("code_verifier", code_verifier),
         ]
     }
 }
@@ -111,6 +116,7 @@ impl OktaProvider {
     pub async fn new(client: Client) -> Result<Self, SsoError> {
         let settings = OktaSettings::from_env(&client).await?;
 
+        info!("Okta SSO provider initialized");
         Ok(Self { client, settings })
     }
 }
@@ -169,8 +175,13 @@ impl SsoProviderExt for OktaProvider {
         self.settings.build_auth_params(username, password)
     }
 
-    fn build_callback_auth_params<'a>(&'a self, code: &'a str) -> Vec<(&'a str, &'a str)> {
-        self.settings.build_callback_auth_params(code)
+    fn build_callback_auth_params<'a>(
+        &'a self,
+        code: &'a str,
+        code_verifier: &'a str,
+    ) -> Vec<(&'a str, &'a str)> {
+        self.settings
+            .build_callback_auth_params(code, code_verifier)
     }
 
     fn decoding_key(&self) -> &DecodingKey {

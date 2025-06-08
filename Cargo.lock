@@ -3929,6 +3929,7 @@ name = "opsml-crypt"
 version = "3.0.0-rc.2"
 dependencies = [
  "aes-gcm",
+ "base64 0.22.1",
  "hkdf",
  "hmac",
  "opsml-utils",

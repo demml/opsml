@@ -21,7 +21,11 @@ pub trait SsoProviderExt {
         username: &'a str,
         password: &'a str,
     ) -> Vec<(&'a str, &'a str)>;
-    fn build_callback_auth_params<'a>(&'a self, code: &'a str) -> Vec<(&'a str, &'a str)>;
+    fn build_callback_auth_params<'a>(
+        &'a self,
+        code: &'a str,
+        code_verifier: &'a str,
+    ) -> Vec<(&'a str, &'a str)>;
     fn decoding_key(&self) -> &DecodingKey;
 
     async fn make_token_request(
@@ -88,9 +92,13 @@ pub trait SsoProviderExt {
         self.make_token_request(params).await
     }
 
-    async fn get_token_from_code(&self, code: &str) -> Result<TokenResponse, SsoError> {
+    async fn get_token_from_code(
+        &self,
+        code: &str,
+        code_verifier: &str,
+    ) -> Result<TokenResponse, SsoError> {
         // Implement the token retrieval logic using the authorization code
-        let params = self.build_callback_auth_params(code);
+        let params = self.build_callback_auth_params(code, code_verifier);
         debug!("Requesting token from Keycloak with code");
         self.make_token_request(params).await
     }
@@ -145,8 +153,12 @@ pub trait SsoProviderExt {
         })
     }
 
-    async fn authenticate_auth_flow(&self, code: &str) -> Result<UserInfo, SsoError> {
-        let token_response = self.get_token_from_code(code).await?;
+    async fn authenticate_auth_flow(
+        &self,
+        code: &str,
+        code_verifier: &str,
+    ) -> Result<UserInfo, SsoError> {
+        let token_response = self.get_token_from_code(code, code_verifier).await?;
 
         // Decode the code to get user info
         let claims = self.decode_jwt_with_validation(&token_response.id_token)?;
@@ -157,14 +169,21 @@ pub trait SsoProviderExt {
         })
     }
 
-    fn get_authorization_url(&self, state: &str) -> String {
+    fn get_authorization_url(
+        &self,
+        state: &str,
+        code_challenge: &str,
+        code_challenge_method: &str,
+    ) -> String {
         format!(
-            "{}?client_id={}&response_type=code&scope={}&redirect_uri={}&state={}",
+            "{}?client_id={}&response_type=code&scope={}&redirect_uri={}&state={}&code_challenge={}&code_challenge_method={}",
             self.authorization_url(),
             self.client_id(),
             self.scope(),
             self.redirect_uri(),
-            state
+            state,
+            code_challenge,
+            code_challenge_method
         )
     }
 }

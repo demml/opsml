@@ -18,8 +18,10 @@ use axum::{
     routing::{get, post},
     Json, Router,
 };
+use opsml_crypt::{generate_code_challenge, generate_code_verifier};
 use opsml_sql::base::SqlClient;
 use opsml_types::JwtToken;
+use opsml_utils::create_uuid7;
 use password_auth::verify_password;
 use rand::Rng;
 
@@ -27,7 +29,7 @@ use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::sync::Arc;
 use tracing::{debug, error, info, instrument};
 
-use crate::core::auth::schema::{SsoAuthUrl, SsoAuthUrlParams};
+use crate::core::auth::schema::SsoAuthUrl;
 
 fn parse_header(
     headers: &HeaderMap,
@@ -437,7 +439,6 @@ async fn validate_jwt_token(
 #[instrument(skip_all)]
 async fn get_sso_authorization_url(
     State(state): State<Arc<AppState>>,
-    Query(params): Query<SsoAuthUrlParams>,
 ) -> Result<Json<SsoAuthUrl>, (StatusCode, Json<OpsmlServerError>)> {
     if !state.auth_manager.is_sso_enabled() {
         return Err((
@@ -453,10 +454,20 @@ async fn get_sso_authorization_url(
             Json(OpsmlServerError::sso_provider_not_set()),
         )
     })?;
-    // This should be a securely generated random value
-    let url = provider.authorization_url(&params.state);
 
-    Ok(Json(SsoAuthUrl { url }))
+    let state = create_uuid7();
+    let code_verifier = generate_code_verifier();
+    let code_challenge = generate_code_challenge(&code_verifier);
+    let code_challenge_method = "S256".to_string();
+    let url = provider.authorization_url(&state, &code_challenge, &code_challenge_method);
+
+    Ok(Json(SsoAuthUrl {
+        url,
+        code_challenge,
+        code_challenge_method,
+        code_verifier,
+        state,
+    }))
 }
 
 #[instrument(skip_all)]
@@ -466,8 +477,9 @@ async fn exchange_callback_token(
 ) -> Result<Json<LoginResponse>, (StatusCode, Json<OpsmlServerError>)> {
     info!("Exchanging SSO callback token");
     let code = params.code;
+    let code_verifier = params.code_verifier;
 
-    let mut user = authenticate_user_with_sso_callback(&state, &code).await?;
+    let mut user = authenticate_user_with_sso_callback(&state, &code, &code_verifier).await?;
 
     // generate JWT token
     let jwt_token = state.auth_manager.generate_jwt(&user).map_err(|e| {
