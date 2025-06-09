@@ -322,3 +322,5 @@ registry.register_card(card)
 | **Low-friction Integration Into Your Current Tech Stack** | ✅ | ❌ |
 | **Standardized Patterns and Workflows** | ✅ | ❌ |
 | **Open Source** | ✅ | ❌ (some) |
+
+

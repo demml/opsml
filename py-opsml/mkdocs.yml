@@ -56,8 +56,8 @@ nav:
   - Overview: "index.md"
   - Quality Control: "quality_control.md"
   - Installation: "installation.md"
-  - Setup: "setup.md"
   - Contributing: "contributing.md"
+
   - Tech Specs:
       - Overview: "docs/specs/Readme.md"
       - Components:
@@ -76,28 +76,9 @@ nav:
       - "docs/cards/datacard.md"
       - "docs/cards/experimentcard.md"
       - "docs/cards/promptcard.md"
-  - Authentication:
-      - "docs/authentication/overview.md"
-#    - "cards/metadata.md"
-#    - DataCard:
-#        - "cards/datacard.md"
-#    - ModelCard:
-#        - "cards/modelcard.md"
-#        - "cards/challenger.md"
-#    - "cards/experimentcard.md"
-#    - "cards/auditcard.md"
-#- CLI:
-#    - Overview: "cli/overview.md"
-#- FAQ:
-#    - Common Questions: "faq/common_questions.md"
-#- Engineering:
-#    - Ownership: "engineering/ownership.md"
-#    - Server: "engineering/server.md"
-#    - How It Works: "engineering/how-it-works.md"
-#- Contributing:
-#    - Contributing: "faq/contributing.md"
-#- API Documentation:
-#    - Specs: "api/index.html"
+  - Setup:
+      - "docs/setup/overview.md"
+      - "docs/setup/authentication.md"
 
 markdown_extensions:
   - tables
@@ -133,6 +114,7 @@ markdown_extensions:
 
 plugins:
   - search
+  - mkdocstrings:
 
 extra_css:
   - docs/css/custom.css
