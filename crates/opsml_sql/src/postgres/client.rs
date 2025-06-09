@@ -931,8 +931,8 @@ impl SqlClient for PostgresClient {
             .bind(&favorite_spaces)
             .bind(&user.refresh_token)
             .bind(&user.email)
-            .bind(&user.username)
             .bind(&user.authentication_type)
+            .bind(&user.username)
             .execute(&self.pool)
             .await?;
 
@@ -1832,7 +1832,11 @@ mod tests {
             None,
             None,
         );
+
+        let sso_user = User::new_from_sso("sso_user", "user@email.com");
+
         client.insert_user(&user).await.unwrap();
+        client.insert_user(&sso_user).await.unwrap();
 
         // Read
         let mut user = client.get_user("user", None).await.unwrap().unwrap();
@@ -1853,7 +1857,17 @@ mod tests {
 
         // get users
         let users = client.get_users().await.unwrap();
-        assert_eq!(users.len(), 1);
+        assert_eq!(users.len(), 2);
+
+        let user = client
+            .get_user("sso_user", Some("sso"))
+            .await
+            .unwrap()
+            .unwrap();
+        assert!(user.active);
+
+        // delete
+        client.delete_user("sso_user").await.unwrap();
 
         // get last admin
         let is_last_admin = client.is_last_admin("user").await.unwrap();

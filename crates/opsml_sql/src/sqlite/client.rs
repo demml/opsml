@@ -1013,6 +1013,7 @@ impl SqlClient for SqliteClient {
             .bind(&favorite_spaces)
             .bind(&user.refresh_token)
             .bind(&user.email)
+            .bind(&user.authentication_type)
             .bind(&user.username)
             .bind(&user.authentication_type)
             .execute(&self.pool)
@@ -1866,18 +1867,21 @@ mod tests {
 
         client.insert_user(&user).await.unwrap();
         client.insert_user(&sso_user).await.unwrap();
-        let mut user = client.get_user("user", None).await.unwrap().unwrap();
-        assert_eq!(user.username, "user");
-        assert_eq!(user.password_hash, "pass");
-        assert_eq!(user.group_permissions, vec!["user"]);
-        assert_eq!(user.email, "email");
+
+        let mut user_to_update = client.get_user("user", None).await.unwrap().unwrap();
+
+        assert_eq!(user_to_update.username, "user");
+        assert_eq!(user_to_update.password_hash, "pass");
+        assert_eq!(user_to_update.group_permissions, vec!["user"]);
+        assert_eq!(user_to_update.email, "email");
 
         // update user
-        user.active = false;
-        user.refresh_token = Some("token".to_string());
+        user_to_update.active = false;
+        user_to_update.refresh_token = Some("token".to_string());
 
-        client.update_user(&user).await.unwrap();
+        client.update_user(&user_to_update).await.unwrap();
         let user = client.get_user("user", None).await.unwrap().unwrap();
+
         assert!(!user.active);
         assert_eq!(user.refresh_token.unwrap(), "token");
 
