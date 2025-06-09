@@ -10,4 +10,4 @@ refresh_token = $7,
 email = $8,
 authentication_type = $9,
 updated_at = CURRENT_TIMESTAMP
-WHERE username = $10;
+WHERE username = $10 and authentication_type = $9;

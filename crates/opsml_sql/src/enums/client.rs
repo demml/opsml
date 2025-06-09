@@ -293,11 +293,15 @@ impl SqlClient for SqlClientEnum {
         }
     }
 
-    async fn get_user(&self, username: &str) -> Result<Option<User>, SqlError> {
+    async fn get_user(
+        &self,
+        username: &str,
+        auth_type: Option<&str>,
+    ) -> Result<Option<User>, SqlError> {
         match self {
-            SqlClientEnum::Postgres(client) => client.get_user(username).await,
-            SqlClientEnum::Sqlite(client) => client.get_user(username).await,
-            SqlClientEnum::MySql(client) => client.get_user(username).await,
+            SqlClientEnum::Postgres(client) => client.get_user(username, auth_type).await,
+            SqlClientEnum::Sqlite(client) => client.get_user(username, auth_type).await,
+            SqlClientEnum::MySql(client) => client.get_user(username, auth_type).await,
         }
     }
 
@@ -1207,10 +1211,11 @@ mod tests {
             None,
             None,
             None,
+            None,
         );
         client.insert_user(&user).await.unwrap();
 
-        let mut user = client.get_user("user").await.unwrap().unwrap();
+        let mut user = client.get_user("user", None).await.unwrap().unwrap();
         assert_eq!(user.username, "user");
         assert_eq!(user.email, "email");
 
@@ -1218,7 +1223,7 @@ mod tests {
         user.active = false;
 
         client.update_user(&user).await.unwrap();
-        let user = client.get_user("user").await.unwrap().unwrap();
+        let user = client.get_user("user", None).await.unwrap().unwrap();
         assert!(!user.active);
 
         // get all users
