@@ -210,7 +210,11 @@ pub trait SqlClient: Sized {
     /// # Returns
     ///
     /// * `User` - The user
-    async fn get_user(&self, username: &str) -> Result<Option<User>, SqlError>;
+    async fn get_user(
+        &self,
+        username: &str,
+        auth_type: Option<&str>,
+    ) -> Result<Option<User>, SqlError>;
 
     /// update user
     ///

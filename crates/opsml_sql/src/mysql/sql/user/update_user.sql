@@ -8,5 +8,6 @@ group_permissions = ?,
 favorite_spaces = ?,
 refresh_token = ?,
 email = ?,
+authentication_type = ?,
 updated_at = CURRENT_TIMESTAMP
 WHERE username = ?;

@@ -8,6 +8,7 @@ use opsml_utils::utils::is_valid_uuidv7;
 // user
 const INSERT_USER_SQL: &str = include_str!("sql/user/insert_user.sql");
 const GET_USER_SQL: &str = include_str!("sql/user/get_user.sql");
+const GET_USER_AUTH_TYPE_SQL: &str = include_str!("sql/user/get_user_auth_type.sql");
 const GET_USERS_SQL: &str = include_str!("sql/user/get_users.sql");
 const UPDATE_USER_SQL: &str = include_str!("sql/user/update_user.sql");
 const DELETE_USER_SQL: &str = include_str!("sql/user/delete_user.sql");
@@ -113,6 +114,10 @@ impl PostgresQueryHelper {
 
     pub fn get_user_query() -> String {
         GET_USER_SQL.to_string()
+    }
+
+    pub fn get_user_query_by_auth_type() -> String {
+        GET_USER_AUTH_TYPE_SQL.to_string()
     }
 
     pub fn get_users_query() -> String {
