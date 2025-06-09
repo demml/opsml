@@ -3819,7 +3819,7 @@ dependencies = [
 
 [[package]]
 name = "opsml-auth"
-version = "3.0.0-rc.2"
+version = "3.0.0-rc.3"
 dependencies = [
  "async-trait",
  "base64 0.22.1",
@@ -3839,7 +3839,7 @@ dependencies = [
 
 [[package]]
 name = "opsml-cards"
-version = "3.0.0-rc.2"
+version = "3.0.0-rc.3"
 dependencies = [
  "chrono",
  "opsml-colors",
@@ -3863,7 +3863,7 @@ dependencies = [
 
 [[package]]
 name = "opsml-cli"
-version = "3.0.0-rc.2"
+version = "3.0.0-rc.3"
 dependencies = [
  "anyhow",
  "base64 0.22.1",
@@ -3897,7 +3897,7 @@ dependencies = [
 
 [[package]]
 name = "opsml-client"
-version = "3.0.0-rc.2"
+version = "3.0.0-rc.3"
 dependencies = [
  "futures",
  "mockito",
@@ -3911,7 +3911,7 @@ dependencies = [
  "scouter-client",
  "serde",
  "serde_json",
- "serde_qs 0.15.0",
+ "serde_qs 0.8.5",
  "thiserror 2.0.12",
  "tokio",
  "tracing",
@@ -3919,14 +3919,14 @@ dependencies = [
 
 [[package]]
 name = "opsml-colors"
-version = "3.0.0-rc.2"
+version = "3.0.0-rc.3"
 dependencies = [
  "owo-colors",
 ]
 
 [[package]]
 name = "opsml-crypt"
-version = "3.0.0-rc.2"
+version = "3.0.0-rc.3"
 dependencies = [
  "aes-gcm",
  "base64 0.22.1",
@@ -3944,7 +3944,7 @@ dependencies = [
 
 [[package]]
 name = "opsml-events"
-version = "3.0.0-rc.2"
+version = "3.0.0-rc.3"
 dependencies = [
  "axum",
  "chrono",
@@ -3961,7 +3961,7 @@ dependencies = [
 
 [[package]]
 name = "opsml-experiment"
-version = "3.0.0-rc.2"
+version = "3.0.0-rc.3"
 dependencies = [
  "chrono",
  "names",
@@ -3985,7 +3985,7 @@ dependencies = [
 
 [[package]]
 name = "opsml-interfaces"
-version = "3.0.0-rc.2"
+version = "3.0.0-rc.3"
 dependencies = [
  "opsml-state",
  "opsml-types",
@@ -4006,7 +4006,7 @@ dependencies = [
 
 [[package]]
 name = "opsml-mocks"
-version = "3.0.0-rc.2"
+version = "3.0.0-rc.3"
 dependencies = [
  "mockito",
  "opsml-registry",
@@ -4026,7 +4026,7 @@ dependencies = [
 
 [[package]]
 name = "opsml-registry"
-version = "3.0.0-rc.2"
+version = "3.0.0-rc.3"
 dependencies = [
  "anyhow",
  "opsml-cards",
@@ -4053,7 +4053,7 @@ dependencies = [
 
 [[package]]
 name = "opsml-semver"
-version = "3.0.0-rc.2"
+version = "3.0.0-rc.3"
 dependencies = [
  "pyo3",
  "semver",
@@ -4063,7 +4063,7 @@ dependencies = [
 
 [[package]]
 name = "opsml-server"
-version = "3.0.0-rc.2"
+version = "3.0.0-rc.3"
 dependencies = [
  "anyhow",
  "axum",
@@ -4088,6 +4088,7 @@ dependencies = [
  "opsml-types",
  "opsml-utils",
  "password-auth",
+ "rand 0.7.3",
  "rand 0.9.1",
  "reqwest",
  "rust-embed",
@@ -4096,7 +4097,7 @@ dependencies = [
  "semver",
  "serde",
  "serde_json",
- "serde_qs 0.15.0",
+ "serde_qs 0.8.5",
  "sqlx",
  "tempfile",
  "thiserror 2.0.12",
@@ -4111,7 +4112,7 @@ dependencies = [
 
 [[package]]
 name = "opsml-settings"
-version = "3.0.0-rc.2"
+version = "3.0.0-rc.3"
 dependencies = [
  "base64 0.22.1",
  "opsml-types",
@@ -4125,7 +4126,7 @@ dependencies = [
 
 [[package]]
 name = "opsml-sql"
-version = "3.0.0-rc.2"
+version = "3.0.0-rc.3"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -4147,7 +4148,7 @@ dependencies = [
 
 [[package]]
 name = "opsml-state"
-version = "3.0.0-rc.2"
+version = "3.0.0-rc.3"
 dependencies = [
  "futures",
  "opsml-client",
@@ -4162,7 +4163,7 @@ dependencies = [
 
 [[package]]
 name = "opsml-storage"
-version = "3.0.0-rc.2"
+version = "3.0.0-rc.3"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -4187,12 +4188,12 @@ dependencies = [
  "opsml-state",
  "opsml-types",
  "opsml-utils",
- "rand 0.9.1",
+ "rand 0.7.3",
  "rayon",
  "reqwest",
  "serde",
  "serde_json",
- "serde_qs 0.15.0",
+ "serde_qs 0.8.5",
  "tempfile",
  "thiserror 2.0.12",
  "time",
@@ -4205,7 +4206,7 @@ dependencies = [
 
 [[package]]
 name = "opsml-todo"
-version = "3.0.0-rc.2"
+version = "3.0.0-rc.3"
 dependencies = [
  "clap 4.5.39",
  "opsml-colors",
@@ -4216,7 +4217,7 @@ dependencies = [
 
 [[package]]
 name = "opsml-toml"
-version = "3.0.0-rc.2"
+version = "3.0.0-rc.3"
 dependencies = [
  "opsml-types",
  "opsml-version",
@@ -4228,7 +4229,7 @@ dependencies = [
 
 [[package]]
 name = "opsml-types"
-version = "3.0.0-rc.2"
+version = "3.0.0-rc.3"
 dependencies = [
  "chrono",
  "opsml-colors",
@@ -4248,7 +4249,7 @@ dependencies = [
 
 [[package]]
 name = "opsml-utils"
-version = "3.0.0-rc.2"
+version = "3.0.0-rc.3"
 dependencies = [
  "chrono",
  "colored_json",
@@ -4266,7 +4267,7 @@ dependencies = [
 
 [[package]]
 name = "opsml-version"
-version = "3.0.0-rc.2"
+version = "3.0.0-rc.3"
 
 [[package]]
 name = "option-ext"
@@ -4644,7 +4645,7 @@ dependencies = [
 
 [[package]]
 name = "potato-head"
-version = "3.0.0-rc.2"
+version = "3.0.0-rc.3"
 dependencies = [
  "mime_guess",
  "opsml-state",
@@ -4786,7 +4787,7 @@ dependencies = [
 
 [[package]]
 name = "py-opsml"
-version = "3.0.0-rc.2"
+version = "3.0.0-rc.3"
 dependencies = [
  "anyhow",
  "mockito",
