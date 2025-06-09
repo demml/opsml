@@ -80,7 +80,7 @@ pub async fn api_login_handler(
         user
     } else {
         // if SSO is not enabled, we will get the user from the database
-        match get_user(&state.sql_client, &username).await {
+        match get_user(&state.sql_client, &username, Some("basic")).await {
             Ok(user) => {
                 // check if password is correct
                 state
@@ -185,7 +185,7 @@ pub async fn ui_logout_handler(
             })?;
         info!("Logging out user: {}", claims.sub);
         // get user from database
-        let mut user = match get_user(&state.sql_client, &claims.sub).await {
+        let mut user = match get_user(&state.sql_client, &claims.sub, None).await {
             Ok(user) => user,
             Err(_) => {
                 return OpsmlServerError::user_validation_error()
@@ -214,7 +214,7 @@ pub async fn ui_logout_handler(
     ))
 }
 
-/// Route for the login endpoint when using the API
+/// Route for the login endpoint when using the UI and non-sso
 ///
 /// # Parameters
 ///
@@ -232,7 +232,7 @@ async fn ui_login_handler(
     // get Username and Password from headers
 
     // get user from database
-    let mut user = match get_user(&state.sql_client, &req.username).await {
+    let mut user = match get_user(&state.sql_client, &req.username, Some("basic")).await {
         Ok(user) => user,
         Err(_) => {
             error!("User not found {:?}", req.username);
@@ -331,7 +331,7 @@ pub async fn api_refresh_token_handler(
             })?;
 
         // get user from database
-        let mut user = match get_user(&state.sql_client, &claims.sub).await {
+        let mut user = match get_user(&state.sql_client, &claims.sub, None).await {
             Ok(user) => user,
             Err(_) => {
                 return OpsmlServerError::user_validation_error()
@@ -405,7 +405,7 @@ async fn validate_jwt_token(
         debug!("Validating JWT token");
         match state.auth_manager.validate_jwt(&bearer_token) {
             Ok(claims) => {
-                let user = match get_user(&state.sql_client, &claims.sub).await {
+                let user = match get_user(&state.sql_client, &claims.sub, None).await {
                     Ok(user) => user,
                     Err(_) => {
                         return OpsmlServerError::user_validation_error()

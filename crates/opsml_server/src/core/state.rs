@@ -27,7 +27,7 @@ impl AppState {
     ) -> Result<String, ServerError> {
         let user = self
             .sql_client
-            .get_user(&perms.username)
+            .get_user(&perms.username, None)
             .await?
             .ok_or_else(|| {
                 error!("User not found in database");

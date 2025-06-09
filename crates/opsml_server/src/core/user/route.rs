@@ -47,7 +47,8 @@ async fn create_user(
     }
 
     // Check if user already exists
-    if let Ok(Some(_)) = state.sql_client.get_user(&create_req.username).await {
+    // This route is only use from creating non-sso users, so auth_type is None
+    if let Ok(Some(_)) = state.sql_client.get_user(&create_req.username, None).await {
         return OpsmlServerError::user_already_exists().into_response(StatusCode::CONFLICT);
     }
 
@@ -66,6 +67,7 @@ async fn create_user(
         create_req.permissions,
         create_req.group_permissions,
         create_req.role,
+        None,
         None,
     );
 
@@ -160,7 +162,7 @@ async fn get_user(
     }
 
     // Get user from database
-    let user = match get_user_from_db(&state.sql_client, &username).await {
+    let user = match get_user_from_db(&state.sql_client, &username, None).await {
         Ok(user) => user,
         Err(e) => return Err(e),
     };
@@ -216,7 +218,7 @@ async fn update_user(
     }
 
     // Get the current user state
-    let mut user = get_user_from_db(&state.sql_client, &username).await?;
+    let mut user = get_user_from_db(&state.sql_client, &username, None).await?;
 
     // Update fields based on request
     if let Some(password) = update_req.password {
@@ -349,7 +351,7 @@ async fn reset_password_with_recovery(
     Json(req): Json<RecoveryResetRequest>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<OpsmlServerError>)> {
     // Get user and their recovery codes
-    let mut user = get_user_from_db(&state.sql_client, &req.username).await?;
+    let mut user = get_user_from_db(&state.sql_client, &req.username, Some("basic")).await?;
 
     // Find and verify the recovery code
     let code_index = match user.hashed_recovery_codes.iter().position(|stored_hash| {
