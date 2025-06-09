@@ -117,10 +117,10 @@ fn main() -> io::Result<()> {
     let mut table = Table::new(todos);
 
     table.with(Style::sharp());
-    table.modify(Columns::single(0), Width::wrap(10).keep_words(true));
-    table.modify(Columns::single(1), Width::wrap(10).keep_words(true));
-    table.modify(Columns::single(2), Width::wrap(50));
-    table.modify(Columns::single(3), Width::wrap(100).keep_words(true));
+    table.modify(Columns::one(0), Width::wrap(10).keep_words(true));
+    table.modify(Columns::one(1), Width::wrap(10).keep_words(true));
+    table.modify(Columns::one(2), Width::wrap(50));
+    table.modify(Columns::one(3), Width::wrap(100).keep_words(true));
     table.modify(
         Rows::new(0..1),
         (

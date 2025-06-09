@@ -216,7 +216,7 @@ impl CardRegistry {
 
     #[pyo3(signature = (card))]
     #[instrument(skip_all)]
-    pub fn delete_card<'py>(&mut self, card: &Bound<'_, PyAny>) -> Result<(), RegistryError> {
+    pub fn delete_card(&mut self, card: &Bound<'_, PyAny>) -> Result<(), RegistryError> {
         debug!("Deleting card");
 
         check_if_card(card)?;
@@ -226,7 +226,7 @@ impl CardRegistry {
 
     #[pyo3(signature = (card))]
     #[instrument(skip_all)]
-    pub fn update_card<'py>(&mut self, card: &Bound<'_, PyAny>) -> Result<(), RegistryError> {
+    pub fn update_card(&mut self, card: &Bound<'_, PyAny>) -> Result<(), RegistryError> {
         debug!("Updating card");
         check_if_card(card)?;
         let key = Self::_update_card(&mut self.registry, card, &self.registry_type)?;
