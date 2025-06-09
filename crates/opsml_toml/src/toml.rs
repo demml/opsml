@@ -47,8 +47,6 @@ impl Card {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct DeckConfig {
-    #[serde(rename = "type")]
-    pub registry_type: RegistryType,
     pub name: String,
     pub space: String,
     pub version: Option<String>,
@@ -277,7 +275,6 @@ mod tests {
     fn test_deck_configuration_load() {
         let content = r#"
             [[tool.opsml.deck]]
-            type = "deck"
             space = "opsml"
             name = "opsml"
             version = "1"
