@@ -185,6 +185,9 @@ fn lock_deck(config: DeckConfig) -> Result<LockArtifact, CliError> {
     if deck.is_none() {
         let card = register_card_deck(&config, &registries.deck)?;
 
+        // Postprocess the card deck if needed (e.g., activate drift profiles)
+        postprocess_card_deck(toml_cards, &card, &registries.deck)?;
+
         return Ok(LockArtifact {
             space: card.space.clone(),
             name: card.name.clone(),
@@ -204,6 +207,10 @@ fn lock_deck(config: DeckConfig) -> Result<LockArtifact, CliError> {
         true => {
             // If refresh is needed, register the deck again
             let card = register_card_deck(&config, &registries.deck)?;
+
+            // Postprocess the card deck if needed (e.g., activate drift profiles)
+            postprocess_card_deck(toml_cards, &card, &registries.deck)?;
+
             LockArtifact {
                 space: card.space.clone(),
                 name: card.name.clone(),
