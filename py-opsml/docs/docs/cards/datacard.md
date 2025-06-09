@@ -3,8 +3,18 @@ DataCards are used for storing, versioning, and tracking data. All DataCards req
 ## Create a Card
 
 ```python
+from opsml.data import (
+    DataSplit,
+    DataSplits,
+    DependentVars,
+    PandasData,
+    ColumnSplit,
+)
+from opsml import DataCard, CardRegistry, RegistryType
 from opsml.helpers.data import create_fake_data
 import pandas as pd
+
+registry = CardRegistry(RegistryType.Data)
 
 # create data
 X, y = cast(Tuple[pd.DataFrame, pd.DataFrame], create_fake_data(n_samples=1200))
