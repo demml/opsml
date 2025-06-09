@@ -83,7 +83,7 @@ pub async fn auth_api_middleware(
                     )
                 })?;
 
-            let mut user = get_user(&state.sql_client, &expired_claims.sub)
+            let mut user = get_user(&state.sql_client, &expired_claims.sub, None)
                 .await
                 .map_err(|_| {
                     (
