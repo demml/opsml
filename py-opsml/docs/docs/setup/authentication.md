@@ -32,9 +32,9 @@ Opsml also supports support for Single Sign-On (SSO) authentication using the OA
 ### Setup (Server)
 To configure Opsml for SSO authentication, there are a few additional environment variables that need to be set when starting the Opsml server:
 
-| Variable    |   Provider  |   Description                          |
+| Variable    |  Required By  |   Description       |
 |-------------|-------------|--------------------------------------|
-| <span class="text-alert">**SSO_PROVIDER**</span> | all | The SSO provider to use. Current options are `keycloak` and `okta`. |
+| <span class="text-alert">**SSO_PROVIDER**</span> | all | The SSO provider to use. Current options are `default`, `keycloak` and `okta`. |
 | <span class="text-alert">**OPSML_CLIENT_ID**</span> | all | The client ID registered with the identity provider. |
 | <span class="text-alert">**OPSML_CLIENT_SECRET**</span> | all | The client secret registered with the identity provider. |
 | <span class="text-alert">**OPSML_REDIRECT_URI**</span> | all | The redirect URI for the application (must match the identity provider configuration). Note the standard callback for Opsml is `http://{{hostname}}/opsml/user/sso/callback` |
@@ -42,6 +42,53 @@ To configure Opsml for SSO authentication, there are a few additional environmen
 | <span class="text-alert">**OPSML_AUTH_SCOPE**</span> | all | The scopes to request from the identity provider (e.g., `openid profile email`). Default is `openid profile email`. |
 | <span class="text-alert">**OPSML_AUTH_REALM**</span> | keycloak | The Keycloak auth realm |
 | <span class="text-alert">**OPSML_AUTHORIZATION_SERVER_ID**</span> | okta | The Okta authorization server ID (if using a custom authorization server). |
+| <span class="text-alert">**OPSML_TOKEN_ENDPOINT**</span> | default | The token endpoint for the identity provider. |
+| <span class="text-alert">**OPSML_CERT_ENDPOINT**</span> | default | The certificate endpoint for the identity provider. |
+| <span class="text-alert">**OPSML_AUTHORIZATION_ENDPOINT**</span> | default | The authorization endpoint for the identity provider. |
+
+### Provider Types and Examples
+Opsml supports multiple SSO provider types, each with its own configuration requirements. The following are the currently supported provider types (we will add more in the future):
+
+#### Default
+This is a generic default provider type that can be used for most SSO providers.
+
+##### Example Configuration (using Auth0 as an example)
+```shell
+export SSO_PROVIDER=default && \
+export OPSML_CLIENT_ID=my-client-id && \
+export OPSML_CLIENT_SECRET=my-client-secret && \
+export OPSML_REDIRECT_URI={{opsml-server-domain}}/opsml/user/sso/callback && \
+export OPSML_AUTH_DOMAIN={{auth0-domain}} && \
+export OPSML_TOKEN_ENDPOINT=oauth/token && \
+export OPSML_AUTHORIZATION_ENDPOINT=oauth/authorize && \
+export OPSML_CERT_ENDPOINT=.well-known/jwks.json
+```
+
+#### Keycloak
+This provider type is specifically for [Keycloak](https://www.keycloak.org/) a popular open-source identity and access management solution.
+
+##### Example Configuration
+```shell
+export SSO_PROVIDER=keycloak && \
+export OPSML_CLIENT_ID=my-client-id && \
+export OPSML_CLIENT_SECRET=my-client-secret && \
+export OPSML_REDIRECT_URI={{opsml-server-domain}}/opsml/user/sso/callback && \
+export OPSML_AUTH_DOMAIN={{keycloak-domain}} && \
+export OPSML_AUTH_REALM={{keycloak-realm}}
+```
+
+#### Okta
+This provider type is specifically for [Okta](https://www.okta.com/), a cloud-based identity management service.
+
+##### Example Configuration
+```shell
+export SSO_PROVIDER=okta && \
+export OPSML_CLIENT_ID=my-client-id && \
+export OPSML_CLIENT_SECRET=my-client-secret && \
+export OPSML_REDIRECT_URI={{opsml-server-domain}}/opsml/user/sso/callback && \
+export OPSML_AUTH_DOMAIN={{okta-domain}} && \
+export OPSML_AUTHORIZATION_SERVER_ID={{okta-auth-server-id}} # optional is using a custom server
+```
 
 ### SSO Flow Requirements
 

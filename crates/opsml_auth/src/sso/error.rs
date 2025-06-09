@@ -8,6 +8,9 @@ pub enum SsoError {
     #[error("Invalid SSO provider specified: {0}")]
     InvalidProvider(String),
 
+    #[error("SSO provider not configured")]
+    SsoNotConfigured,
+
     #[error("Account error: {0}")]
     AccountNotConfigured(String),
 
