@@ -57,7 +57,19 @@ nav:
   - Quality Control: "quality_control.md"
   - Installation: "installation.md"
   - Contributing: "contributing.md"
-
+  - Setup:
+      - "docs/setup/overview.md"
+      - "docs/setup/authentication.md"
+  - Cards:
+      - "docs/cards/overview.md"
+      - "docs/cards/versioning.md"
+      - "docs/cards/modelcard.md"
+      - "docs/cards/datacard.md"
+      - "docs/cards/experimentcard.md"
+      - "docs/cards/promptcard.md"
+  - Automation:
+      - "docs/automation/carddeck.md"
+      - "docs/automation/pyproject.md"
   - Tech Specs:
       - Overview: "docs/specs/Readme.md"
       - Components:
@@ -68,17 +80,6 @@ nav:
       - Features:
           - Builds: "docs/specs/ts-feature-builds.md"
           - Async Registry: "docs/specs/ts-feature-opsml-registry-hardware-async.md"
-
-  - Cards:
-      - "docs/cards/overview.md"
-      - "docs/cards/versioning.md"
-      - "docs/cards/modelcard.md"
-      - "docs/cards/datacard.md"
-      - "docs/cards/experimentcard.md"
-      - "docs/cards/promptcard.md"
-  - Setup:
-      - "docs/setup/overview.md"
-      - "docs/setup/authentication.md"
 
 markdown_extensions:
   - tables
