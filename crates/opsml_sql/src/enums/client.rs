@@ -1213,7 +1213,10 @@ mod tests {
             None,
             None,
         );
+        let sso_user = User::new_from_sso("sso_user", "user@email.com");
+
         client.insert_user(&user).await.unwrap();
+        client.insert_user(&sso_user).await.unwrap();
 
         let mut user = client.get_user("user", None).await.unwrap().unwrap();
         assert_eq!(user.username, "user");
@@ -1228,7 +1231,17 @@ mod tests {
 
         // get all users
         let users = client.get_users().await.unwrap();
-        assert_eq!(users.len(), 1);
+        assert_eq!(users.len(), 2);
+
+        let user = client
+            .get_user("sso_user", Some("sso"))
+            .await
+            .unwrap()
+            .unwrap();
+        assert!(user.active);
+
+        // delete
+        client.delete_user("sso_user").await.unwrap();
 
         // delete user
         client.delete_user("user").await.unwrap();
