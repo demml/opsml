@@ -1,16 +1,13 @@
 use crate::sso::error::SsoError;
-
-use jsonwebtoken::DecodingKey;
-
 use crate::sso::providers::traits::SsoProviderExt;
 use crate::sso::providers::types::{get_env_var, JwkResponse};
-use base64::prelude::*;
+use jsonwebtoken::DecodingKey;
 use reqwest::{Client, StatusCode};
 
 use tracing::{error, info};
 
 #[derive(Clone)]
-pub struct OktaSettings {
+pub struct DefaultSsoSettings {
     pub client_id: String,
     pub client_secret: String,
     pub redirect_uri: String,
@@ -20,29 +17,23 @@ pub struct OktaSettings {
     pub authorization_url: String,
 }
 
-impl OktaSettings {
+impl DefaultSsoSettings {
     pub async fn from_env(client: &Client) -> Result<Self, SsoError> {
         let client_id = get_env_var("OPSML_CLIENT_ID")?;
         let client_secret = get_env_var("OPSML_CLIENT_SECRET")?;
         let redirect_uri = get_env_var("OPSML_REDIRECT_URI")?;
-        let okta_domain = get_env_var("OPSML_AUTH_DOMAIN")?;
+        let auth_domain = get_env_var("OPSML_AUTH_DOMAIN")?;
+
+        let token_endpoint = get_env_var("OPSML_TOKEN_ENDPOINT")?;
+        let certs_endpoint = get_env_var("OPSML_CERT_ENDPOINT")?;
+        let authorization_endpoint = get_env_var("OPSML_AUTHORIZATION_ENDPOINT")?;
 
         let scope = std::env::var("OPSML_AUTH_SCOPE")
             .unwrap_or_else(|_| "openid email profile".to_string());
 
-        let authorization_server_id = std::env::var("OPSML_AUTHORIZATION_SERVER_ID").ok();
-
-        let format_okta_url = |endpoint: &str| {
-            if let Some(server_id) = &authorization_server_id {
-                format!("{}/oauth2/{}/{}", okta_domain, server_id, endpoint)
-            } else {
-                format!("{}/oauth2/{}", okta_domain, endpoint)
-            }
-        };
-
-        let token_url = format_okta_url("v1/token");
-        let certs_url = format_okta_url("v1/keys");
-        let authorization_url = format_okta_url("v1/authorize");
+        let token_url = format!("{}/{}", auth_domain, token_endpoint);
+        let authorization_url = format!("{}/{}", auth_domain, authorization_endpoint);
+        let certs_url = format!("{}/{}", auth_domain, certs_endpoint);
 
         let response = client
             .get(&certs_url)
@@ -52,10 +43,13 @@ impl OktaSettings {
 
         let decoding_key = match response.status() {
             StatusCode::OK => {
-                let jwk_response = response
-                    .json::<JwkResponse>()
-                    .await
-                    .map_err(SsoError::ReqwestError)?;
+                let jwk_response = response.json::<JwkResponse>().await.map_err(|e| {
+                    error!(
+                        "Failed to parse JWK response from Keycloak at {} error: {}",
+                        certs_url, e
+                    );
+                    SsoError::ReqwestError(e)
+                })?;
                 jwk_response.get_decoded_key()?
             }
             _ => {
@@ -70,13 +64,19 @@ impl OktaSettings {
             client_id,
             client_secret,
             redirect_uri,
-            token_url,
             decoding_key,
             scope,
+            token_url,
             authorization_url,
         })
     }
 
+    /// params for resource owner password credentials grant
+    /// # Arguments
+    /// * `username` - the username of the user
+    /// * `password` - the password of the user
+    /// # Returns
+    /// a vector of tuples containing the parameters for the request
     pub fn build_auth_params<'a>(
         &'a self,
         username: &'a str,
@@ -84,12 +84,21 @@ impl OktaSettings {
     ) -> Vec<(&'a str, &'a str)> {
         vec![
             ("grant_type", "password"),
+            ("client_id", &self.client_id),
+            ("client_secret", &self.client_secret),
+            ("redirect_uri", &self.redirect_uri),
             ("username", username),
             ("password", password),
             ("scope", &self.scope),
         ]
     }
 
+    /// params for authorization code grant
+    /// # Arguments
+    /// * `code` - the authorization code received from the authorization server
+    /// * `code_verifier` - the code verifier used in the PKCE flow
+    /// # Returns
+    /// a vector of tuples containing the parameters for the request
     pub fn build_callback_auth_params<'a>(
         &'a self,
         code: &'a str,
@@ -97,29 +106,33 @@ impl OktaSettings {
     ) -> Vec<(&'a str, &'a str)> {
         vec![
             ("grant_type", "authorization_code"),
+            ("client_id", &self.client_id),
+            ("client_secret", &self.client_secret),
             ("redirect_uri", &self.redirect_uri),
             ("code", code),
-            ("scope", &self.scope),
             ("code_verifier", code_verifier),
+            ("scope", &self.scope),
         ]
     }
 }
 
-pub struct OktaProvider {
+pub struct DefaultProvider {
     pub client: Client,
-    pub settings: OktaSettings,
+    pub settings: DefaultSsoSettings,
 }
 
-impl OktaProvider {
+impl DefaultProvider {
     pub async fn new(client: Client) -> Result<Self, SsoError> {
-        let settings = OktaSettings::from_env(&client).await?;
+        let settings = DefaultSsoSettings::from_env(&client).await?;
 
-        info!("Okta SSO provider initialized");
+        info!("Default SSO provider initialized");
+
+        // scouter not integrated - exist early
         Ok(Self { client, settings })
     }
 }
 
-impl SsoProviderExt for OktaProvider {
+impl SsoProviderExt for DefaultProvider {
     fn client(&self) -> &Client {
         &self.client
     }
@@ -145,24 +158,11 @@ impl SsoProviderExt for OktaProvider {
     }
 
     fn require_basic_auth(&self) -> bool {
-        true // Okta requires basic auth for token requests
+        false
     }
 
     fn headers(&self) -> reqwest::header::HeaderMap {
-        let mut headers = reqwest::header::HeaderMap::new();
-
-        headers.insert(
-            reqwest::header::AUTHORIZATION,
-            format!(
-                "Basic {}",
-                BASE64_STANDARD.encode(format!("{}:{}", self.client_id(), self.client_secret()))
-            )
-            .parse()
-            .unwrap(),
-        );
-        // application json
-        headers.insert(reqwest::header::ACCEPT, "application/json".parse().unwrap());
-        headers
+        reqwest::header::HeaderMap::new()
     }
 
     fn build_auth_params<'a>(

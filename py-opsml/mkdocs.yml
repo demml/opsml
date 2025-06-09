@@ -56,8 +56,20 @@ nav:
   - Overview: "index.md"
   - Quality Control: "quality_control.md"
   - Installation: "installation.md"
-  - Setup: "setup.md"
   - Contributing: "contributing.md"
+  - Setup:
+      - "docs/setup/overview.md"
+      - "docs/setup/authentication.md"
+  - Cards:
+      - "docs/cards/overview.md"
+      - "docs/cards/versioning.md"
+      - "docs/cards/modelcard.md"
+      - "docs/cards/datacard.md"
+      - "docs/cards/experimentcard.md"
+      - "docs/cards/promptcard.md"
+  - Automation:
+      - "docs/automation/carddeck.md"
+      - "docs/automation/pyproject.md"
   - Tech Specs:
       - Overview: "docs/specs/Readme.md"
       - Components:
@@ -68,36 +80,20 @@ nav:
       - Features:
           - Builds: "docs/specs/ts-feature-builds.md"
           - Async Registry: "docs/specs/ts-feature-opsml-registry-hardware-async.md"
-
-  - Cards:
-      - "docs/cards/overview.md"
-      - "docs/cards/versioning.md"
-      - "docs/cards/modelcard.md"
-      - "docs/cards/datacard.md"
-      - "docs/cards/experimentcard.md"
-      - "docs/cards/promptcard.md"
-  - Authentication:
-      - "docs/authentication/overview.md"
-#    - "cards/metadata.md"
-#    - DataCard:
-#        - "cards/datacard.md"
-#    - ModelCard:
-#        - "cards/modelcard.md"
-#        - "cards/challenger.md"
-#    - "cards/experimentcard.md"
-#    - "cards/auditcard.md"
-#- CLI:
-#    - Overview: "cli/overview.md"
-#- FAQ:
-#    - Common Questions: "faq/common_questions.md"
-#- Engineering:
-#    - Ownership: "engineering/ownership.md"
-#    - Server: "engineering/server.md"
-#    - How It Works: "engineering/how-it-works.md"
-#- Contributing:
-#    - Contributing: "faq/contributing.md"
-#- API Documentation:
-#    - Specs: "api/index.html"
+  - API Documentation:
+      - Cards: "docs/api/cards.md"
+      - Model: "docs/api/model.md"
+      - Experiment: "docs/api/experiment.md"
+      - Data: "docs/api/data.md"
+      - PotatoHead: "docs/api/potato_head.md"
+      - Types: "docs/api/types.md"
+      - Scouter:
+          - Alert: "docs/api/scouter/alert.md"
+          - Client: "docs/api/scouter/client.md"
+          - Drift: "docs/api/scouter/drift.md"
+          - Profile: "docs/api/scouter/profile.md"
+          - Queue: "docs/api/scouter/queue.md"
+          - Types: "docs/api/scouter/types.md"
 
 markdown_extensions:
   - tables
@@ -133,6 +129,20 @@ markdown_extensions:
 
 plugins:
   - search
+  - mkdocstrings:
+      handlers:
+      python:
+        paths: [.] # see also: build-docs.sh
+        options:
+          members_order: source
+          separate_signature: true
+          filters: ["!^_"]
+          docstring_options:
+            ignore_init_summary: true
+          docstring_style: google
+          merge_init_into_class: true
+          show_signature_annotations: true
+          signature_crossrefs: true
 
 extra_css:
   - docs/css/custom.css

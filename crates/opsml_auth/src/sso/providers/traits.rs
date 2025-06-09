@@ -147,10 +147,18 @@ pub trait SsoProviderExt {
         // Decode the token to get user info
         let claims = self.decode_jwt_with_validation(&token_response.id_token)?;
 
-        Ok(UserInfo {
-            username: claims.preferred_username,
-            email: claims.email,
-        })
+        let email = claims.email;
+
+        // check if preferred_username or name is available. if not, use email
+        let username = if let Some(username) = claims.preferred_username {
+            username
+        } else if let Some(name) = claims.name {
+            name
+        } else {
+            email.clone() // fallback to email if no username or name is available
+        };
+
+        Ok(UserInfo { username, email })
     }
 
     async fn authenticate_auth_flow(
@@ -163,10 +171,18 @@ pub trait SsoProviderExt {
         // Decode the code to get user info
         let claims = self.decode_jwt_with_validation(&token_response.id_token)?;
 
-        Ok(UserInfo {
-            username: claims.preferred_username,
-            email: claims.email,
-        })
+        let email = claims.email;
+
+        // check if preferred_username or name is available. if not, use email
+        let username = if let Some(username) = claims.preferred_username {
+            username
+        } else if let Some(name) = claims.name {
+            name
+        } else {
+            email.clone() // fallback to email if no username or name is available
+        };
+
+        Ok(UserInfo { username, email })
     }
 
     fn get_authorization_url(

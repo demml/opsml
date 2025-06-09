@@ -10,6 +10,7 @@ use opsml_toml::{
     toml::{Card, DeckConfig},
     LockArtifact, LockFile, PyProjectToml,
 };
+use opsml_types::IntegratedService;
 use opsml_types::{
     contracts::{CardEntry, CardRecord},
     RegistryType,
@@ -88,29 +89,35 @@ fn postprocess_card_deck(
     deck: &CardDeck,
     registry: &CardRegistry,
 ) -> Result<(), CliError> {
-    toml_cards
-        .iter()
-        .filter_map(|card| card.drift.as_ref().map(|drift| (card, drift)))
-        .try_for_each(|(card, drift_config)| -> Result<(), CliError> {
-            let current_card = deck.get_card(&card.alias)?;
+    if registry
+        .registry
+        .check_service_health(IntegratedService::Scouter)?
+    {
+        // check if scouter is enabled and running first
+        toml_cards
+            .iter()
+            .filter_map(|card| card.drift.as_ref().map(|drift| (card, drift)))
+            .try_for_each(|(card, drift_config)| -> Result<(), CliError> {
+                let current_card = deck.get_card(&card.alias)?;
 
-            drift_config.drift_type.iter().try_for_each(|drift_type| {
-                let drift_type = DriftType::from_str(drift_type)?;
+                drift_config.drift_type.iter().try_for_each(|drift_type| {
+                    let drift_type = DriftType::from_str(drift_type)?;
 
-                let request = ProfileStatusRequest {
-                    space: current_card.space.clone(),
-                    name: current_card.name.clone(),
-                    version: current_card.version.clone(),
-                    active: drift_config.active,
-                    drift_type: Some(drift_type),
-                    deactivate_others: drift_config.deactivate_others,
-                };
+                    let request = ProfileStatusRequest {
+                        space: current_card.space.clone(),
+                        name: current_card.name.clone(),
+                        version: current_card.version.clone(),
+                        active: drift_config.active,
+                        drift_type: Some(drift_type),
+                        deactivate_others: drift_config.deactivate_others,
+                    };
 
-                registry.registry.update_drift_profile_status(&request)?;
-                debug!("Drift profile status updated for card: {:?}", request);
-                Ok(())
-            })
-        })?;
+                    registry.registry.update_drift_profile_status(&request)?;
+                    debug!("Drift profile status updated for card: {:?}", request);
+                    Ok(())
+                })
+            })?;
+    }
 
     Ok(())
 }
@@ -185,6 +192,9 @@ fn lock_deck(config: DeckConfig) -> Result<LockArtifact, CliError> {
     if deck.is_none() {
         let card = register_card_deck(&config, &registries.deck)?;
 
+        // Postprocess the card deck if needed (e.g., activate drift profiles)
+        postprocess_card_deck(toml_cards, &card, &registries.deck)?;
+
         return Ok(LockArtifact {
             space: card.space.clone(),
             name: card.name.clone(),
@@ -194,11 +204,9 @@ fn lock_deck(config: DeckConfig) -> Result<LockArtifact, CliError> {
             write_dir: config.write_dir.unwrap_or("opsml_deck".to_string()),
         });
     }
-    //
-    //// Process existing deck (need to compare existing deck cards to those degfined in toml)
+    // Process existing deck (need to compare existing deck cards to those defined in toml)
     let deck = deck.unwrap();
-    //
-    //// Get card UIDs from deck
+    // Get card UIDs from deck
     let deck_cards = deck.cards().ok_or(CliError::MissingCardEntriesError)?;
     let needs_refresh = process_deck_cards(&deck_cards, toml_cards, &registries)?;
 
@@ -206,6 +214,10 @@ fn lock_deck(config: DeckConfig) -> Result<LockArtifact, CliError> {
         true => {
             // If refresh is needed, register the deck again
             let card = register_card_deck(&config, &registries.deck)?;
+
+            // Postprocess the card deck if needed (e.g., activate drift profiles)
+            postprocess_card_deck(toml_cards, &card, &registries.deck)?;
+
             LockArtifact {
                 space: card.space.clone(),
                 name: card.name.clone(),
@@ -235,10 +247,7 @@ fn lock_deck(config: DeckConfig) -> Result<LockArtifact, CliError> {
 fn lock_app(app: DeckConfig) -> Result<LockArtifact, CliError> {
     // Create a lock file for the app
     // Only support's  deck currently
-    match app.registry_type {
-        RegistryType::Deck => lock_deck(app),
-        _ => Err(RegistryError::RegistryTypeNotSupported(app.registry_type).into()),
-    }
+    lock_deck(app)
 }
 
 #[pyfunction]
