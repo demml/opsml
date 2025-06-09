@@ -80,6 +80,20 @@ nav:
       - Features:
           - Builds: "docs/specs/ts-feature-builds.md"
           - Async Registry: "docs/specs/ts-feature-opsml-registry-hardware-async.md"
+  - API Documentation:
+      - Cards: "docs/api/cards.md"
+      - Model: "docs/api/model.md"
+      - Experiment: "docs/api/experiment.md"
+      - Data: "docs/api/data.md"
+      - PotatoHead: "docs/api/potato_head.md"
+      - Types: "docs/api/types.md"
+      - Scouter:
+          - Alert: "docs/api/scouter/alert.md"
+          - Client: "docs/api/scouter/client.md"
+          - Drift: "docs/api/scouter/drift.md"
+          - Profile: "docs/api/scouter/profile.md"
+          - Queue: "docs/api/scouter/queue.md"
+          - Types: "docs/api/scouter/types.md"
 
 markdown_extensions:
   - tables
@@ -116,6 +130,19 @@ markdown_extensions:
 plugins:
   - search
   - mkdocstrings:
+      handlers:
+      python:
+        paths: [.] # see also: build-docs.sh
+        options:
+          members_order: source
+          separate_signature: true
+          filters: ["!^_"]
+          docstring_options:
+            ignore_init_summary: true
+          docstring_style: google
+          merge_init_into_class: true
+          show_signature_annotations: true
+          signature_crossrefs: true
 
 extra_css:
   - docs/css/custom.css

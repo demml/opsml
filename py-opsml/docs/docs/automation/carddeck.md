@@ -2,7 +2,9 @@
 
 Just like you can create cards, you can also create a deck of cards called a `CardDeck`. The most important benefit of a `CardDeck` is that is allows you to create a collection of cards that can be loaded and used together. 
 
-A prime example of this is in model apis where you may need to load more than one model, or an agentic workflows that associated with a more than one prompt. By using a `CardDeck`, you can group these cards together and load them all at once (with a few extra nice features that we'll get into).
+A prime example of this is in model apis where you may need to load more than one model, or agentic workflows that are associated with more than one prompt. By using a `CardDeck`, you can group these cards together and load them all at once (with a few extra nice features that we'll get into).
+
+## Example Usage (Details below)
 
 ### Create a CardDeck
 ```python
@@ -27,7 +29,6 @@ registry.register_card(deck)
 
 ### Using a CardDeck in FastAPI
 ```python
-
 
 @asynccontextmanager
 async def lifespan(fast_app: FastAPI):
@@ -66,7 +67,35 @@ async def predict_model_2(request: Request, payload: PredictRequest) -> Response
 1. Load the `CardDeck` and it's components directly from a path after downloading with the Opsml CLI
 2. Access a specific card in the deck by its alias. This allows you to use the card's interface to perform operations, such as making predictions with a model.
 
-
 Currently you can create a card deck through the client api or through a tool configuration in your `pyproject.toml` file.
 
 ## Create a Deck (API)
+Just like all other cards, you can think of a `CardDeck` as just another card (even though it is a collection of cards). As such, all decks are registered through the CardDeck `CardRegistry`.
+
+```python
+from opsml import CardDeck, Card, RegistryType
+
+registry = CardRegistry(RegistryType.Deck)
+
+deck = CardDeck(
+    space="opsml-space",
+    name="opsml-deck",
+    cards=[
+        Card(
+            alias="model1",
+            uid=modelcard1.uid,
+            registry_type=RegistryType.Model,
+        ),
+        Card(
+            alias="model2",
+            uid=modelcard2.uid,
+            registry_type=RegistryType.Model,
+        ),
+    ],
+)
+registry.register_card(deck)
+```
+
+In the above example, we create a `CardDeck` with two cards, `model1` and `model2`, each referencing a `ModelCard` that has **already been registered** by its unique identifier (UID). The deck is then registered in the `CardRegistry` under the `RegistryType.Deck`.
+
+
