@@ -1158,7 +1158,7 @@ impl User {
             username: username.to_string(),
             password_hash: "[redacted]".to_string(),
             hashed_recovery_codes: Vec::new(),
-            permissions: vec!["read:all".to_string()],
+            permissions: vec!["read:all".to_string(), "write:all".to_string()],
             group_permissions: vec!["user".to_string()],
             favorite_spaces: Vec::new(),
             role: "user".to_string(),
