@@ -110,13 +110,13 @@ async function toggle(toggle: string) {
   <div class="flex px-3 py-2 min-w-96 rounded-t-base justify-between border-b-2 border-black pb-4 bg-primary-300">
     <div class="flex gap-4 justify-start">
       <button 
-          class="btn btn-md bg-primary-500 border-black border-black border-2 text-black {mode === 'edit' ? '' : 'shadow shadow-hover'}"
+          class="btn text-sm bg-primary-500 border-black border-black border-2 text-black {mode === 'edit' ? '' : 'shadow shadow-hover'}"
           onclick={() => toggle('edit')}
       >
           Edit
       </button>
       <button 
-          class="btn btn-md bg-primary-500 border-black border-black border-2 text-black {mode === 'preview' ? '' : 'shadow shadow-hover'}"
+          class="btn text-sm bg-primary-500 border-black border-black border-2 text-black {mode === 'preview' ? '' : 'shadow shadow-hover'}"
           onclick={() => toggle('preview')}
       >
           Preview
@@ -126,7 +126,7 @@ async function toggle(toggle: string) {
     <div class="justify-end">
       <button 
           type="button" 
-          class="btn btn-md bg-primary-500 border-black border-black border-2 text-black shadow shadow-hover" 
+          class="btn text-sm bg-primary-500 border-black border-black border-2 text-black shadow shadow-hover" 
           onclick={saveReadme}
         >Save
       </button>
@@ -139,7 +139,7 @@ async function toggle(toggle: string) {
          style="display: {mode === 'edit' ? 'block' : 'none'}">
     </div>
     {#if mode === 'preview'}
-      <div class="markdown-body p-4 md:p-11 w-full h-full overflow-y-auto rounded-base">
+      <div class="markdown-body p-4 md:p-11 w-full h-full overflow-y-auto rounded-base text-sm">
         {@html html_content}
       </div>
     {/if}
@@ -154,14 +154,14 @@ async function toggle(toggle: string) {
       box-sizing: border-box;
       margin: 0 auto;
       width: 100%;
-      font-size: 16px;
+      font-size: 14px;
     }
 
 :global(.markdown-body) {
   box-sizing: border-box;
   margin: 0 auto;
   width: 100%;
-  font-size: large;
+  font-size: small;
   max-height: 100%;
 }
 

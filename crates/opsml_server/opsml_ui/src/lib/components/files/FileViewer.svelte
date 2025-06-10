@@ -34,7 +34,7 @@
 
 
 
-<div class="w-full">
+<div class="w-full text-sm">
   {#if isImage(file.mime_type)}
     <div class="flex justify-center p-4">
       <img 
@@ -49,14 +49,18 @@
     </div>
 
   {:else if file.suffix === 'json' || file.suffix === 'jsonl' }
+ 
     <Highlight language={json}  code={formatJson(file.content)} let:highlighted>
         <LineNumbers {highlighted} />
     </Highlight>
 
+
   {:else if file.suffix === 'yaml' || file.suffix === 'yml'}
+
     <Highlight language={yaml} code={file.content} let:highlighted>
         <LineNumbers {highlighted} />
     </Highlight>
+ 
 
   {:else if file.suffix === 'py'}
     <Highlight language={python} code={file.content} let:highlighted>
@@ -69,7 +73,7 @@
     </Highlight>
 
   {:else}
-    <div class="markdown-body rounded-base px-4 pb-4 md:px-11 md:pb-11 w-full">
+    <div class="markdown-body rounded-base px-4 pb-4 md:px-11 md:pb-11 w-full text-sm">
       {@html file.content}
     </div>
   {/if}

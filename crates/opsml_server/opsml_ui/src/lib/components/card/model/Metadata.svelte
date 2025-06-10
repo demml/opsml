@@ -46,7 +46,7 @@ modelcard.load()
     
     <div class="flex flex-row items-center pt-2">
       <Info color="#8059b6"/>
-      <header class="pl-2 text-primary-950 text-2xl font-bold">Metadata</header>
+      <header class="pl-2 text-primary-950 text-base font-bold">Metadata</header>
     </div>
 
     <div>
@@ -60,27 +60,27 @@ modelcard.load()
   </div>
 
 
-  <div class="flex flex-col space-y-1 text-base">
-    
-    <Pill key="Created At" value={card.created_at} textSize="text-base"/>
-    <Pill key="ID" value={card.uid} textSize="text-base"/>
-    <Pill key="Space" value={card.space} textSize="text-base"/>
-    <Pill key="Name" value={card.name} textSize="text-base"/>
-    <Pill key="Interface" value={card.metadata.interface_metadata.interface_type} textSize="text-base"/>
-    <Pill key="Task Type" value={card.metadata.interface_metadata.task_type} textSize="text-base"/>
-    <Pill key="Model Type" value={card.metadata.interface_metadata.model_type} textSize="text-base"/>
-    <Pill key="Version" value={card.opsml_version} textSize="text-base"/>
+  <div class="flex flex-col space-y-1 text-sm">
+
+    <Pill key="Created At" value={card.created_at} textSize="text-sm"/>
+    <Pill key="ID" value={card.uid} textSize="text-sm"/>
+    <Pill key="Space" value={card.space} textSize="text-sm"/>
+    <Pill key="Name" value={card.name} textSize="text-sm"/>
+    <Pill key="Interface" value={card.metadata.interface_metadata.interface_type} textSize="text-sm"/>
+    <Pill key="Task Type" value={card.metadata.interface_metadata.task_type} textSize="text-sm"/>
+    <Pill key="Model Type" value={card.metadata.interface_metadata.model_type} textSize="text-sm"/>
+    <Pill key="Version" value={card.opsml_version} textSize="text-sm"/>
 
 
     {#if card.metadata.interface_metadata.onnx_session && card.metadata.interface_metadata.onnx_session.schema}
-      <Pill key="Onnx Version" value={card.metadata.interface_metadata.onnx_session.schema.onnx_version} textSize="text-base"/>
+      <Pill key="Onnx Version" value={card.metadata.interface_metadata.onnx_session.schema.onnx_version} textSize="text-sm"/>
     {/if}
   </div>
 
   {#if card.metadata.datacard_uid || card.metadata.experimentcard_uid ||  card.metadata.auditcard_uid}
-    <div class="flex flex-row items-center mb-1 border-b-2 border-black">
+    <div class="flex flex-row items-center pb-1 border-b-2 border-black">
       <Diamond color="#8059b6" fill="#8059b6"/>
-      <header class="pl-2 text-primary-900 text-lg font-bold">Cards</header>
+      <header class="pl-2 text-primary-900 text-sm font-bold">Cards</header>
     </div>
 
     <div class="flex flex-wrap space-y-1 gap-1">
@@ -97,9 +97,9 @@ modelcard.load()
 
   {#if card.tags.length > 0}
     <div class="flex flex-col space-y-1 gap-1">
-      <div class="flex flex-row items-center mb-1 border-b-2 border-black">
+      <div class="flex flex-row items-center pb-1 border-b-2 border-black">
         <Tags color="#8059b6" />
-        <header class="pl-2 text-primary-900 text-lg font-bold">Tags</header>
+        <header class="pl-2 text-primary-900 text-sm font-bold">Tags</header>
       </div>
     </div>
 
@@ -113,9 +113,9 @@ modelcard.load()
   {/if}
 
 
-  <div class="flex flex-row items-center mb-1 border-b-2 border-black">
+  <div class="flex flex-row items-center pb-1 border-b-2 border-black">
     <CheckCheck color="#8059b6" />
-    <header class="pl-2 text-primary-900 text-lg font-bold">Extras</header>
+    <header class="pl-2 text-primary-900 text-sm font-bold">Extras</header>
   </div>
 
   <div class="flex flex-wrap gap-1">

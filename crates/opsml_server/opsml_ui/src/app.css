@@ -10,7 +10,11 @@
 
 @source '../node_modules/@skeletonlabs/skeleton-svelte/dist';
 
-
+@layer base {
+  html {
+    font-size: 15px; /* Adjust this value to your preferred base font size */
+  }
+}
 
 @theme {
     --font-sans: Roboto, sans-serif; 
@@ -27,6 +31,7 @@
     --mtext: #000;
     --ring-offset: #fff;
     --text-smd: 0.9375rem;
+    --text-xss: 0.8125rem;
    
 
     --box-shadow-x-small: 2px;

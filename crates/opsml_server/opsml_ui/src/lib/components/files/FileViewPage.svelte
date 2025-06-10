@@ -50,7 +50,7 @@
 
     <div class="w-full pt-4">
       <div class="rounded-lg border-2 border-black shadow overflow-x-auto bg-primary-500 py-2 mb-2 justify-center">
-        <h1 class="ml-4 flex flex-row flex-wrap items-center text-lg">
+        <h1 class="ml-4 flex flex-row flex-wrap items-center">
           {#each splitPath as path, index}
             {#if index < 3}
               <div class="group flex flex-none items-center">
@@ -86,7 +86,7 @@
       box-sizing: border-box;
       margin: 0 auto;
       width: 100%;
-      font-size: large;
+      font-size: medium;
     }
   
     :global(.markdown-body pre) {

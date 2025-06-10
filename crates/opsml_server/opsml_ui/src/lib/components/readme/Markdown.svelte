@@ -43,7 +43,7 @@
       box-sizing: border-box;
       margin: 0 auto;
       width: 100%;
-      font-size: large;
+      font-size: small;
     }
   
     :global(.markdown-body pre) {

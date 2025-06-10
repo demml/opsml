@@ -24,7 +24,7 @@
   <div class="flex flex-wrap pt-4 gap-4 w-full justify-center">
 
     {#if data.readme.exists}
-      <div class="gap-1 flex flex-col rounded-base border-black border-3 shadow bg-surface-50 w-[1000px]">
+      <div class="gap-1 flex flex-col rounded-base border-black border-3 shadow bg-surface-50 w-[800px]">
         <CardReadMe
           name={card.name}
           space={card.space}
@@ -36,7 +36,7 @@
 
      
     {:else}
-      <div class="gap-1 flex flex-col rounded-base border-black border-3 shadow bg-primary-100 w-[600px] h-[200px]">
+      <div class="gap-1 flex flex-col rounded-base border-black border-3 shadow bg-primary-100 w-[500px] h-[200px]">
         <NoReadme
           name={card.name}
           space={card.space}

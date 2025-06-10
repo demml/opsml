@@ -32,15 +32,15 @@
   
   </script>
   
-  <button class="w-full max-w-96 h-auto p-3 text-black rounded-lg shadow border-2 border-black {bgColor} hover:translate-x-[4px] hover:translate-y-[4px] hover:shadow-none overflow-scroll" onclick={navigateToCardPage}>
+  <button class="w-full max-w-96 h-auto p-2 text-black rounded-lg shadow border-2 border-black {bgColor} hover:translate-x-[4px] hover:translate-y-[4px] hover:shadow-none overflow-scroll" onclick={navigateToCardPage}>
     <div class="flex items-center justify-start gap-2">
       <div class="ml-2">
         <CircuitBoard color="#5948a3" />
       </div>
-      <div><h4 class="truncate font-bold">{space}/{name}</h4></div>
+      <div><h4 class="truncate font-bold text-smd">{space}/{name}</h4></div>
     </div>
  
-    <div class="flex items-center justify-start gap-2 overflow-hidden whitespace-nowrap text-xs lg:text-sm mb-1">
+    <div class="flex items-center justify-start gap-2 overflow-hidden whitespace-nowrap text-xs mb-1">
       <div class="ml-2">
         <Clock color="#5948a3" />
       </div>
@@ -51,7 +51,7 @@
       </div>
     </div>
 
-    <div class="flex items-center justify-start gap-2 overflow-hidden whitespace-nowrap text-xs lg:text-sm">
+    <div class="flex items-center justify-start gap-2 overflow-hidden whitespace-nowrap text-xs">
       <div class="ml-2">
         <Tag color="#5948a3" />
       </div>
