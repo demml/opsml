@@ -11,6 +11,7 @@
 @source '../node_modules/@skeletonlabs/skeleton-svelte/dist';
 
 
+
 @theme {
     --font-sans: Roboto, sans-serif; 
     --border: #000;
@@ -25,6 +26,7 @@
     --ring: #000;
     --mtext: #000;
     --ring-offset: #fff;
+   
 
     --box-shadow-x-small: 2px;
     --box-shadow-y-small: 2px;
