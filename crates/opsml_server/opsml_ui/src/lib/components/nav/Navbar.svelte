@@ -40,7 +40,7 @@
 
 </script>
 
-<nav class="fixed left-0 top-0 z-20 mx-auto flex w-full items-center border-b-4 border-border bg-primary-700 border-b-2 border-black px-5 h-16">
+<nav class="fixed left-0 top-0 z-20 mx-auto flex w-full items-center border-b-4 border-border bg-primary-700 border-b-2 border-black px-5 h-14">
   <div class="mx-auto flex w-full items-center justify-between px-8 lg:px-10">
   
     <div class="md:hidden" aria-label="hamburger">
@@ -49,7 +49,7 @@
         onclick={toggleSidebar}
         aria-label="Toggle menu" 
         aria-expanded={isSidebarOpen} 
-        class="m800:hidden flex items-center justify-center rounded-base border-2 border-border shadow transition-all hover:translate-x-[4px] hover:translate-y-[4px] hover:shadow-none bg-surface-50 w-9 h-9"
+        class="m800:hidden flex items-center justify-center rounded-base border-2 border-border shadow transition-all hover:translate-x-[4px] hover:translate-y-[4px] hover:shadow-none bg-surface-50 w-7 h-7"
       >
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-menu h-6 w-6 m500:h-4 m500:w-4">
           <line x1="4" x2="20" y1="12" y2="12"></line>
@@ -74,7 +74,7 @@
         <div class="flex items-center gap-2 md:gap-4 lg:gap-6">
           {#each names as name}
             {@const path = '/opsml/' + name.replace(/s$/, '').toLowerCase()}
-              <a class="text-lg" href={path} class:active={page.url.pathname.includes(path)} data-sveltekit-preload-data="hover">
+              <a href={path} class:active={page.url.pathname.includes(path)} data-sveltekit-preload-data="hover">
                 {name}
               </a>
           {/each}
