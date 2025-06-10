@@ -60,8 +60,8 @@ backdropClasses="backdrop-blur-sm"
 {#snippet trigger()}{display}{/snippet}
 {#snippet content()}
   <div class="flex flex-row pb-3 justify-between items-center">
-    <header class="pl-2 text-xl font-bold text-black">Usage</header> 
-    <button class="btn bg-primary-500 text-black shadow shadow-hover border-black border-2 mr-3 mt-1" onclick={copyToClipboard} disabled={copied}>
+    <header class="pl-2 text-lg font-bold text-black">Usage</header> 
+    <button class="btn text-smd bg-primary-500 text-black shadow shadow-hover border-black border-2 mr-3 mt-1" onclick={copyToClipboard} disabled={copied}>
       {copied ? 'Copied 👍' : 'Copy'}
     </button>
   </div>
@@ -73,8 +73,8 @@ backdropClasses="backdrop-blur-sm"
     </Highlight>
   </div>
   <footer class="flex justify-end gap-4 p-2">
-    <button type="button" class="btn bg-primary-500 text-black shadow shadow-hover border-black border-2" onclick={modalClose}>Cancel</button>
-    <button type="button" class="btn bg-primary-500 text-black shadow shadow-hover border-black border-2" onclick={modalClose}>Confirm</button>
+    <button type="button" class="btn text-smd bg-primary-500 text-black shadow shadow-hover border-black border-2" onclick={modalClose}>Cancel</button>
+    <button type="button" class="btn text-smd bg-primary-500 text-black shadow shadow-hover border-black border-2" onclick={modalClose}>Confirm</button>
   </footer>
 {/snippet}
 </Modal>

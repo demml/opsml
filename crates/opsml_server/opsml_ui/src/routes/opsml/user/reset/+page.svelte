@@ -49,13 +49,13 @@
 
 </script>
 
-<section class="pt-24 border-gray-100 col-span-full flex-1 pb-16 md:pb-0 items-center">
+<section class="pt-20 border-gray-100 col-span-full flex-1 pb-16 md:pb-0 items-center">
   
 
   <form class="z-10 mx-auto rounded-2xl bg-surface-50 border-black border-2 shadow p-4 md:w-96 md:px-5" onsubmit={handleReset}>
 
     <img alt="OpsML logo" class="mx-auto -mt-12 mb-3 w-20" src={logo}>
-    <h1 class="pt-1 text-center text-3xl font-bold text-primary-800">Reset your password</h1>
+    <h1 class="pt-1 text-center text-lg font-bold text-primary-800">Reset your password</h1>
 
     {#if showResetMessage}                  
       <PasswordMessage
@@ -64,7 +64,7 @@
     {/if}
 
     <div class="mb-8 grid grid-cols-1 gap-3">
-      <label class="text-surface-950">Username
+      <label class="text-surface-950 text-sm">Username
         <input
           class="input text-sm rounded-base bg-surface-50 text-black disabled:opacity-50 placeholder-surface-800 placeholder-text-sm focus-visible:ring-2 focus-visible:ring-primary-800"
           type="text" 
@@ -79,7 +79,7 @@
 
 
       <label class="text-surface-950 relative">
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-2 text-sm">
           New Password
           <button
             type="button"
@@ -117,7 +117,7 @@
         {/if}
       </label>
 
-      <label class="text-surface-950">Confirm Password
+      <label class="text-surface-950 text-sm">Confirm Password
         <input
           class="input text-sm rounded-base bg-surface-50 text-black disabled:opacity-50 placeholder-surface-800 placeholder-text-sm focus-visible:ring-2 focus-visible:ring-primary-800"
           type="password"
@@ -131,7 +131,7 @@
       </label>
 
 
-      <label class="text-surface-950">Recovery Code
+      <label class="text-surface-950 text-sm">Recovery Code
         <input
           class="input text-sm rounded-base bg-surface-50 text-black disabled:opacity-50 placeholder-surface-800 placeholder-text-sm focus-visible:ring-2 focus-visible:ring-primary-800"
           type="text" 
@@ -145,7 +145,7 @@
     </div>
 
     <div class="grid justify-items-center">
-      <button type="submit" class="btn bg-primary-500 rounded-lg md:w-72 justify-self-center text-black mb-2 ring-offset-white  focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 border-black border-2 border-border shadow transition-all hover:translate-x-[4px] hover:translate-y-[4px] hover:shadow-none">
+      <button type="submit" class="btn text-sm bg-primary-500 rounded-lg md:w-72 justify-self-center text-black mb-2 ring-offset-white  focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 border-black border-2 border-border shadow transition-all hover:translate-x-[4px] hover:translate-y-[4px] hover:shadow-none">
         Reset
       </button>
 
