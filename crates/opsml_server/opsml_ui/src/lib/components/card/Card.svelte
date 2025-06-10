@@ -37,7 +37,7 @@
       <div class="ml-2">
         <CircuitBoard color={iconColor} />
       </div>
-      <div><h4 class="truncate font-bold text-lg">{space}/{name}</h4></div>
+      <div><h4 class="truncate font-bold text-smd">{space}/{name}</h4></div>
     </div>
     <div class="mr-2">
 

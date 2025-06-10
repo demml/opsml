@@ -31,20 +31,20 @@
     </button>
 
     {#if isOpen}
-      <div class="absolute right-0 mt-2 w-36 bg-primary-500 border-black border-2 rounded-lg shadow-lg z-50">
-        <div class="border-b-2 border-black text-center text-black">User</div>
+      <div class="absolute right-0 mt-2 w-30 bg-primary-500 border-black border-2 rounded-lg shadow-lg z-50">
+        <div class="border-b-2 border-black text-center text-black text-sm">User</div>
         <div class="flex flex-col">
           <a
               href="/opsml/user/profile"
               onclick={toggleDropdown}
-              class="block px-1 m-1 text-left border-2 border-transparent hover:border-black rounded-lg transition-colors text-black"
+              class="block px-1 m-1 text-left border-2 border-transparent hover:border-black rounded-lg transition-colors text-black text-sm"
           >
             Profile
           </a>
           <a
               href="/opsml/user/logout"
               onclick={toggleDropdown}
-              class="block px-1 m-1 text-left border-2 border-transparent hover:border-black rounded-lg transition-colors text-black"
+              class="block px-1 m-1 text-left border-2 border-transparent hover:border-black rounded-lg transition-colors text-black text-sm"
           >
             Logout
           </a>

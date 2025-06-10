@@ -15,7 +15,7 @@
   {#await cards}
     <div></div>
     {:then cards}
-    <div class="flex flex-col pt-16">
+    <div class="flex flex-col pt-13">
       <div class="flex items-center justify-center border-2 border-black bg-slate-100 p-2">
         <div class="rounded-full bg-surface-200 border-black border-2 p-1 shadow-small">
           <BrainCircuit color="#8059b6" />
@@ -24,7 +24,7 @@
           <Table color="#5fd68d" />
         </div>
         <div class="rounded-full bg-surface-200 border-black border-2 p-1 shadow-small">
-          <h2 class="text-center text-xl font-heading m1300:text-xl m700:text-xl m500:text-xl text-black font-bold">Recent</h2>
+          <h2 class="text-center font-heading text-lg text-black font-bold">Recent</h2>
         </div>
         <div class="rounded-full bg-surface-200 border-black border-2 p-1 shadow-small">
           <NotebookText color="#f9b25e" />
