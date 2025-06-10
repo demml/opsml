@@ -45,7 +45,7 @@
   
 
 <div class="rounded-lg border-2 border-black shadow overflow-x-auto bg-slate-100">
-  <table class="table-auto w-full text-black rounded-lg overflow-hidden text-sm md:text-base bg-slate-100">
+  <table class="table-auto w-full text-black rounded-lg overflow-hidden text-sm bg-slate-100">
     <thead class="bg-primary-500">
       <tr>
         <th class="text-black pl-4 py-2 text-left">Name</th>
@@ -72,12 +72,12 @@
       <tr class="border-t hover:bg-primary-300 py-2">
         <td class="pl-4 py-2">
           {#if file.object_type === 'directory'}
-            <button class="btn flex flex-row gap-2 bg-primary-500 shadow shadow-hover border-black border-2 rounded-lg" onclick={() => navigateToPath(file.name)}>
+            <button class="btn text-sm flex flex-row gap-2 bg-primary-500 shadow shadow-hover border-black border-2 rounded-lg" onclick={() => navigateToPath(file.name)}>
                 <Folder />
               <div class="text-black">{file.name}</div>
             </button>
             {:else if file.size < 50 * 1024 * 1024 && isAcceptableSuffix(file.suffix)}
-              <button class="btn flex flex-row gap-2 bg-primary-500 shadow shadow-hover border-black border-2 rounded-lg" onclick={() => navigateToView(file.path)}>
+              <button class="btn text-sm flex flex-row gap-2 bg-primary-500 shadow shadow-hover border-black border-2 rounded-lg" onclick={() => navigateToView(file.path)}>
                   <File />
                   <div class="text-black">{file.name}</div>
               </button>

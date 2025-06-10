@@ -14,10 +14,10 @@
   </script>
 
 {#if alertInfo}
-    <Pill key="Baseline" value={value} />  
-    <Pill key="Threshold" value={alertInfo.threshold} />  
+    <Pill key="Baseline" value={value} textSize="text-sm"/>  
+    <Pill key="Threshold" value={alertInfo.threshold} textSize="text-sm"/>  
   {#if alertInfo.number}
-    <Pill key="Number" value={alertInfo.number} />  
+    <Pill key="Number" value={alertInfo.number} textSize="text-sm"/>  
   {/if}
 
 {/if}
