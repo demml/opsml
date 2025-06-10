@@ -27,9 +27,10 @@ use tracing::error;
 pub async fn get_user(
     sql_client: &SqlClientEnum,
     username: &str,
+    auth_type: Option<&str>,
 ) -> Result<User, (StatusCode, Json<OpsmlServerError>)> {
     sql_client
-        .get_user(username)
+        .get_user(username, auth_type)
         .await
         .map_err(|e| {
             error!("Failed to get user from database: {}", e);

@@ -8,5 +8,6 @@ group_permissions = $5,
 favorite_spaces = $6,
 refresh_token = $7,
 email = $8,
+authentication_type = $9,
 updated_at = CURRENT_TIMESTAMP
-WHERE username = $9;
+WHERE username = $10 and authentication_type = $9;
