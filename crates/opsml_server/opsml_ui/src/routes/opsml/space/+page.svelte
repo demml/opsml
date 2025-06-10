@@ -56,10 +56,10 @@
       <div class="rounded-full bg-surface-200 border-black border-2 p-1 shadow-small">
         <Settings color="#40328b" />
       </div>
-      <h2 class="font-bold text-primary-800 text-xl">Spaces</h2>
+      <h2 class="font-bold text-primary-800 text-lg">Spaces</h2>
     </div>
 
-    <div class="flex flex-col md:flex-row justify-between pb-2 items-start gap-3 md:gap-1 w-full ">
+    <div class="flex flex-col md:flex-row justify-between pb-1 items-start gap-3 md:gap-1 w-full ">
       <div class="w-full md:w-2/3">
           <input
             class="input w-full text-sm rounded-base bg-surface-50 text-black disabled:opacity-50 placeholder-surface-800 placeholder-text-sm focus-visible:ring-1 border-black border-2 h-9"
@@ -86,7 +86,7 @@
     {:else}
       <div class="flex flex-col gap-2 mt-2 items-center justify-center">
         <p class="text-primary-800 text-lg">No spaces found</p>
-        <p class="text-gray-500">Register cards to see spaces appear here</p>
+        <p class="text-gray-500 text-smd">Register cards to see spaces appear here</p>
       </div>
     {/if}
 
@@ -99,8 +99,8 @@
       {/if}
       
       <div class="flex bg-surface-50 border-black border-2 text-center items-center rounded-base px-2 shadow-small h-9">
-        <span class="text-primary-800 mr-1">{currentPage}</span>
-        <span class="text-primary-400">of {totalPages}</span>
+        <span class="text-primary-800 mr-1 text-sm">{currentPage}</span>
+        <span class="text-primary-400 text-sm">of {totalPages}</span>
       </div>
 
       {#if currentPage < totalPages }
