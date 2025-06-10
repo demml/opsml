@@ -1111,6 +1111,7 @@ pub struct User {
     pub refresh_token: Option<String>,
     pub email: String,
     pub updated_at: DateTime<Utc>,
+    pub authentication_type: String,
 }
 
 impl User {
@@ -1124,6 +1125,7 @@ impl User {
         group_permissions: Option<Vec<String>>,
         role: Option<String>,
         favorite_spaces: Option<Vec<String>>,
+        authentication_type: Option<String>,
     ) -> Self {
         let created_at = get_utc_datetime();
 
@@ -1141,6 +1143,7 @@ impl User {
             refresh_token: None,
             email,
             updated_at: created_at,
+            authentication_type: authentication_type.unwrap_or("basic".to_string()),
         }
     }
 
@@ -1155,13 +1158,14 @@ impl User {
             username: username.to_string(),
             password_hash: "[redacted]".to_string(),
             hashed_recovery_codes: Vec::new(),
-            permissions: vec!["read:all".to_string()],
+            permissions: vec!["read:all".to_string(), "write:all".to_string()],
             group_permissions: vec!["user".to_string()],
             favorite_spaces: Vec::new(),
             role: "user".to_string(),
             refresh_token: None,
             email: email.to_string(),
             updated_at: created_at,
+            authentication_type: "sso".to_string(),
         }
     }
 
@@ -1188,6 +1192,10 @@ impl User {
         );
         map.insert("refresh_token".to_string(), "[redacted]".into());
         map.insert("updated_at".to_string(), self.updated_at.to_string().into());
+        map.insert(
+            "authentication_type".to_string(),
+            self.authentication_type.clone().into(),
+        );
 
         // convert to JSON
         serde_json::to_string(&map).unwrap_or_else(|_| "{}".to_string())
@@ -1208,6 +1216,8 @@ impl std::fmt::Debug for User {
             .field("role", &self.role)
             .field("favorite_spaces", &self.favorite_spaces)
             .field("created_at", &self.created_at)
+            .field("updated_at", &self.updated_at)
+            .field("authentication_type", &self.authentication_type)
             .finish()
     }
 }

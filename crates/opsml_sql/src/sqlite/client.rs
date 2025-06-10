@@ -31,6 +31,7 @@ impl FromRow<'_, SqliteRow> for User {
         let email = row.try_get("email")?;
         let role = row.try_get("role")?;
         let refresh_token = row.try_get("refresh_token")?;
+        let authentication_type: String = row.try_get("authentication_type")?;
 
         let group_permissions: Vec<String> =
             serde_json::from_value(row.try_get("group_permissions")?).unwrap_or_default();
@@ -58,6 +59,7 @@ impl FromRow<'_, SqliteRow> for User {
             permissions,
             group_permissions,
             favorite_spaces,
+            authentication_type,
         })
     }
 }
@@ -925,19 +927,30 @@ impl SqlClient for SqliteClient {
             .bind(&user.role)
             .bind(user.active)
             .bind(&user.email)
+            .bind(&user.authentication_type)
             .execute(&self.pool)
             .await?;
 
         Ok(())
     }
 
-    async fn get_user(&self, username: &str) -> Result<Option<User>, SqlError> {
-        let query = SqliteQueryHelper::get_user_query();
+    async fn get_user(
+        &self,
+        username: &str,
+        auth_type: Option<&str>,
+    ) -> Result<Option<User>, SqlError> {
+        let query = match auth_type {
+            Some(_) => SqliteQueryHelper::get_user_query_by_auth_type(),
+            None => SqliteQueryHelper::get_user_query(),
+        };
 
-        let user: Option<User> = sqlx::query_as(&query)
-            .bind(username)
-            .fetch_optional(&self.pool)
-            .await?;
+        let mut query_builder = sqlx::query_as(&query).bind(username);
+
+        if let Some(auth_type) = auth_type {
+            query_builder = query_builder.bind(auth_type);
+        }
+
+        let user: Option<User> = query_builder.fetch_optional(&self.pool).await?;
 
         Ok(user)
     }
@@ -1000,7 +1013,9 @@ impl SqlClient for SqliteClient {
             .bind(&favorite_spaces)
             .bind(&user.refresh_token)
             .bind(&user.email)
+            .bind(&user.authentication_type)
             .bind(&user.username)
+            .bind(&user.authentication_type)
             .execute(&self.pool)
             .await?;
 
@@ -1845,27 +1860,44 @@ mod tests {
             None,
             None,
             None,
+            None,
         );
 
+        let sso_user = User::new_from_sso("sso_user", "user@email.com");
+
         client.insert_user(&user).await.unwrap();
-        let mut user = client.get_user("user").await.unwrap().unwrap();
-        assert_eq!(user.username, "user");
-        assert_eq!(user.password_hash, "pass");
-        assert_eq!(user.group_permissions, vec!["user"]);
-        assert_eq!(user.email, "email");
+        client.insert_user(&sso_user).await.unwrap();
+
+        let mut user_to_update = client.get_user("user", None).await.unwrap().unwrap();
+
+        assert_eq!(user_to_update.username, "user");
+        assert_eq!(user_to_update.password_hash, "pass");
+        assert_eq!(user_to_update.group_permissions, vec!["user"]);
+        assert_eq!(user_to_update.email, "email");
 
         // update user
-        user.active = false;
-        user.refresh_token = Some("token".to_string());
+        user_to_update.active = false;
+        user_to_update.refresh_token = Some("token".to_string());
 
-        client.update_user(&user).await.unwrap();
-        let user = client.get_user("user").await.unwrap().unwrap();
+        client.update_user(&user_to_update).await.unwrap();
+        let user = client.get_user("user", None).await.unwrap().unwrap();
+
         assert!(!user.active);
         assert_eq!(user.refresh_token.unwrap(), "token");
 
         // get users
         let users = client.get_users().await.unwrap();
-        assert_eq!(users.len(), 1);
+        assert_eq!(users.len(), 2);
+
+        let user = client
+            .get_user("sso_user", Some("sso"))
+            .await
+            .unwrap()
+            .unwrap();
+        assert!(user.active);
+
+        // delete
+        client.delete_user("sso_user").await.unwrap();
 
         // get last admin
         let is_last_admin = client.is_last_admin("user").await.unwrap();

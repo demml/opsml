@@ -124,7 +124,7 @@ async fn create_user(
     Ok(new_user)
 }
 
-/// Validates a user with OpsML
+/// Validates a user with OpsML when logging in with SSO.
 /// If the user does not exist in the database, it will be created.
 /// # Arguments
 /// * `state` - The application state
@@ -139,7 +139,7 @@ async fn validate_user_with_opsml(
     // check if user exists in db
     match state
         .sql_client
-        .get_user(&user.username)
+        .get_user(&user.username, Some("sso"))
         .await
         .map_err(|e| {
             error!("Failed to get user from database: {}", e);
