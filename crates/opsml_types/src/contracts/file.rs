@@ -134,6 +134,7 @@ pub struct StorageSettings {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct UiSettings {
     pub scouter_enabled: bool,
+    pub sso_enabled: bool,
 }
 
 #[derive(Serialize, Deserialize)]

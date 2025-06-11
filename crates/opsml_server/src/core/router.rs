@@ -47,10 +47,9 @@ pub async fn create_router(app_state: Arc<AppState>) -> Result<Router> {
     let ui_routes = get_ui_router().await?;
 
     // merge all the routes except the auth routes
-    // All routes except the auth routes will be protected by the auth middleware
+    // All routes except the auth, healthcheck, ui and ui settings routes are protect by the auth middleware
     let merged_routes = Router::new()
         .merge(debug_routes)
-        .merge(settings_routes)
         .merge(file_routes)
         .merge(card_routes)
         .merge(run_routes)
@@ -72,6 +71,7 @@ pub async fn create_router(app_state: Arc<AppState>) -> Result<Router> {
     Ok(Router::new()
         .merge(merged_routes)
         .merge(health_routes)
+        .merge(settings_routes)
         .merge(auth_routes)
         .merge(ui_routes)
         .layer(cors)

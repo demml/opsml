@@ -84,6 +84,8 @@ export function buildTimeChart(
           display: showLegend,
           position: "bottom",
         },
+
+        //@ts-ignore
         annotation: annotation,
       },
       responsive: true,
