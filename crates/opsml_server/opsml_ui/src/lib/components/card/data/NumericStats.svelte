@@ -27,20 +27,20 @@ let {
           <div class="font-bold text-primary-950">General Stats</div>
         </div>
         <div class="flex flex-row items-center px-2">
-          <div class="font-bold text-primary-800 pr-1">Distinct:</div>
-          <div class="text-black">{numericData.distinct.count} ({numericData.distinct.percent}%)</div>
+          <div class="font-bold text-sm text-primary-800 pr-1">Distinct:</div>
+          <div class="text-black text-sm">{numericData.distinct.count} ({numericData.distinct.percent}%)</div>
         </div>
         <div class="flex flex-row items-center px-2">
-          <div class="font-bold text-primary-800 pr-1">Mean:</div>
-          <div class="text-black">{numericData.stddev.toFixed(3)}</div>
+          <div class="font-bold text-sm text-primary-800 pr-1">Mean:</div>
+          <div class="text-black text-sm">{numericData.stddev.toFixed(3)}</div>
         </div>
         <div class="flex flex-row items-center px-2">
-          <div class="font-bold text-primary-800 pr-1">Minimum:</div>
-          <div class="text-black">{numericData.min.toFixed(3)}</div>
+          <div class="font-bold text-sm text-primary-800 pr-1">Minimum:</div>
+          <div class="text-black text-sm">{numericData.min.toFixed(3)}</div>
         </div>
         <div class="flex flex-row items-center px-2">
-          <div class="font-bold text-primary-800 pr-1">Maximum:</div>
-          <div class="text-black">{numericData.min.toFixed(3)}</div>
+          <div class="font-bold text-sm text-primary-800 pr-1">Maximum:</div>
+          <div class="text-black text-sm">{numericData.max.toFixed(3)}</div>
         </div>
       </div>
 
@@ -50,20 +50,20 @@ let {
           <div class="font-bold text-primary-950">Quantiles</div>
         </div>
         <div class="flex flex-row items-center px-2">
-          <div class="font-bold text-primary-800 pr-1">Q25:</div>
-          <div class="text-black">{numericData.quantiles.q25.toFixed(3)}</div>
+          <div class="font-bold text-sm text-primary-800 pr-1">Q25:</div>
+          <div class="text-black text-sm">{numericData.quantiles.q25.toFixed(3)}</div>
         </div>
         <div class="flex flex-row items-center px-2">
-          <div class="font-bold text-primary-800 pr-1">Q50:</div>
-          <div class="text-black">{numericData.quantiles.q50.toFixed(3)}</div>
+          <div class="font-bold text-sm text-primary-800 pr-1">Q50:</div>
+          <div class="text-black text-sm">{numericData.quantiles.q50.toFixed(3)}</div>
         </div>
         <div class="flex flex-row items-center px-2">
-          <div class="font-bold text-primary-800 pr-1">Q75:</div>
-          <div class="text-black">{numericData.quantiles.q75.toFixed(3)}</div>
+          <div class="font-bold text-sm text-primary-800 pr-1">Q75:</div>
+          <div class="text-black text-sm">{numericData.quantiles.q75.toFixed(3)}</div>
         </div>
         <div class="flex flex-row items-center px-2">
-          <div class="font-bold text-primary-800 pr-1">Q99:</div>
-          <div class="text-black">{numericData.quantiles.q99.toFixed(3)}</div>
+          <div class="font-bold text-sm text-primary-800 pr-1">Q99:</div>
+          <div class="text-black text-sm">{numericData.quantiles.q99.toFixed(3)}</div>
         </div>
       </div>
     </div>
@@ -75,7 +75,7 @@ let {
       <div class="flex items-center justify-center">
         <div class="font-bold text-primary-950">Distribution</div>
       </div>
-      <button class="btn flex items-center gap-2 bg-primary-500 shadow shadow-hover border-black border-2 rounded-lg self-center" onclick={() => resetZoomClicked()}>
+      <button class="btn text-sm flex items-center gap-2 bg-primary-500 shadow shadow-hover border-black border-2 rounded-lg self-center" onclick={() => resetZoomClicked()}>
         <div class="text-black">Reset Zoom</div>
       </button>
     </div>
