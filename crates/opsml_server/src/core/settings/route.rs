@@ -18,6 +18,7 @@ pub async fn storage_settings(State(data): State<Arc<AppState>>) -> Json<Storage
 pub async fn ui_settings(State(data): State<Arc<AppState>>) -> Json<UiSettings> {
     Json(UiSettings {
         scouter_enabled: data.scouter_client.enabled,
+        sso_enabled: data.auth_manager.sso_provider.is_some(),
     })
 }
 

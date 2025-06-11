@@ -3,7 +3,7 @@
  let { 
     selectedValue = $bindable(), 
     values = $bindable(),
-    width = 'w-48',
+    width = 'w-[9rem]',
     py = 'py-2',
   } = $props<{
     selectedValue: string;
@@ -42,7 +42,7 @@
     <button 
         type="button"
         onclick={toggleDropdown}
-        class="w-full text-sm px-4 {py} bg-primary-500 text-black border-black border-2 rounded-lg flex justify-between items-center"
+        class="w-full text-sm px-2 {py} bg-primary-500 text-black border-black border-2 rounded-lg flex justify-between items-center"
     >
         <span>{selectedValue}</span>
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-down h-4 w-4" aria-hidden="true">
@@ -52,10 +52,10 @@
 
     {#if isOpen}
       <div class="absolute top-full left-0 w-full mt-1 bg-primary-500 border-black border-2 rounded-lg z-50">
-        <div class="max-h-72 overflow-y-auto px-2 py-1 custom-scrollbar">
+        <div class="max-h-72 overflow-y-auto overflow-x-auto px-1 py-1 custom-scrollbar">
         {#each values as value}
           <button
-              class="w-full text-sm {py} px-4 text-left border-2 border-transparent hover:border-black rounded-lg transition-colors text-black"
+              class="min-w-full inline-flex text-sm {py} px-2 text-left border-2 border-transparent hover:border-black rounded-lg transition-colors text-black whitespace-nowrap"
               onclick={() => selectValue(value)}
           >
               {value}

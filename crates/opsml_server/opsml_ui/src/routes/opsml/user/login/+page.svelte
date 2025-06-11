@@ -9,7 +9,7 @@
   import type { PageProps } from './$types';
   import { validateLoginSchema, type UseLoginSchema } from "$lib/components/user/schema";
   import { getSsoAuthURL } from "$lib/components/user/utils";
-
+import { uiSettingsStore } from "$lib/components/settings/settings.svelte";
 
   let username: string = $state('');
   let password: string = $state('');
@@ -116,12 +116,15 @@ async function redirectToSsoUrl() {
       </div>
     </form>
 
-    <div class="grid justify-items-center py-1 gap-1">
-      <span class="px-4 text-surface-950 bg-surface-50">or</span>
-      <button class="btn text-sm bg-secondary-500 rounded-lg md:w-64 justify-self-center text-black mb-2 ring-offset-white  focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 border-black border-2 border-border shadow transition-all hover:translate-x-[4px] hover:translate-y-[4px] hover:shadow-none" onclick={redirectToSsoUrl}>
-        Login with SSO
-      </button>
-    </div>
+    {#if uiSettingsStore.ssoEnabled}
+      <div class="grid justify-items-center gap-1">
+        <span class="px-4 text-surface-950 bg-surface-50">or</span>
+        <button class="btn text-sm bg-secondary-500 rounded-lg md:w-64 justify-self-center text-black mb-2 ring-offset-white  focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 border-black border-2 border-border shadow transition-all hover:translate-x-[4px] hover:translate-y-[4px] hover:shadow-none" onclick={redirectToSsoUrl}>
+          Login with SSO
+        </button>
+      </div>
+    {/if}
+   
   </div>
 
 </section>
