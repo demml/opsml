@@ -66,15 +66,15 @@
 
   <div class="flex flex-col justify-center p-4 bg-white p-4 md:col-span-2 rounded-lg border-2 border-black shadow min-h-[160px]">
     <div class="flex flex-row flex-wrap gap-2 items-center justify-center">
-      <div class="items-center text-xl mr-2 font-bold text-primary-800">Drift Type:</div>
+      <div class="items-center text-lg mr-2 font-bold text-primary-800">Drift Type:</div>
         {#each availableDriftTypes as drift_type}
           {#if drift_type === currentDriftType}
-            <button class="btn flex items-center gap-2 bg-slate-100 border-primary-800 border-2 rounded-lg">
+            <button class="btn text-sm flex items-center gap-2 bg-slate-100 border-primary-800 border-2 rounded-lg">
               <div class="text-primary-800
               ">{drift_type}</div>
             </button>
           {:else}
-            <button class="btn flex items-center gap-2 bg-primary-500 shadow shadow-hover border-black border-2 rounded-lg" onclick={() => handleDriftTypeChange(drift_type)}>
+            <button class="btn text-sm flex items-center gap-2 bg-primary-500 shadow shadow-hover border-black border-2 rounded-lg" onclick={() => handleDriftTypeChange(drift_type)}>
               <div class="text-black">{drift_type}</div>
             </button>
           {/if}

@@ -58,13 +58,13 @@
 </script>
 
 <div class="flex flex-col">
-  <div class="items-center text-xl mr-2 font-bold text-primary-800">Recent Metrics</div>
+  <div class="items-center text-lg mr-2 font-bold text-primary-800">Recent Metrics</div>
 
   <div class="flex flex-row flex-wrap gap-2 pb-2 items-center justify-between w-full">
     <div class="flex flex-row flex-wrap gap-2 items-center">
-      <Pill key="Key" value={currentName} />
-      <Pill key="drift" value={currentDriftType} />
-      <Pill key="Time Window" value={currentTimeInterval} />
+      <Pill key="Key" value={currentName} textSize="text-sm"/>
+      <Pill key="drift" value={currentDriftType} textSize="text-sm"/>
+      <Pill key="Time Window" value={currentTimeInterval} textSize="text-sm"/>
 
       {#if currentConfig && currentDriftType === DriftType.Custom}
         {@const alertInfo = getCustomAlertCondition(currentConfig as CustomMetricDriftConfig, currentName)}
@@ -78,7 +78,7 @@
       {/if}
     </div>
 
-    <button class="btn flex items-center gap-2 bg-primary-500 shadow shadow-hover border-black border-2 rounded-lg self-center" onclick={() => resetZoomClicked()}>
+    <button class="btn text-sm flex items-center gap-2 bg-primary-500 shadow shadow-hover border-black border-2 rounded-lg self-center" onclick={() => resetZoomClicked()}>
       <div class="text-black">Reset Zoom</div>
     </button>
   </div>

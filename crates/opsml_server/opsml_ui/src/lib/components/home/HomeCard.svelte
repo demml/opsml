@@ -28,7 +28,7 @@
   <!-- Header -->
   <div class="flex justify-center mb-4">
     <div class="{headerColor} rounded-full border-black border-2 px-2 shadow-small">
-      <h2 class="text-xl {headerTextColor} font-bold">{header}</h2>
+      <h2 class="{headerTextColor} font-bold">{header}</h2>
     </div>
   </div>
 

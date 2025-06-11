@@ -28,24 +28,24 @@
               <div class="font-bold text-primary-950">Stats</div>
             </div>
             <div class="flex flex-row items-center px-2">
-              <div class="font-bold text-primary-800 pr-1">Distinct:</div>
-              <div class="text-black">{stringData.distinct.count} ({stringData.distinct.percent}%)</div>
+              <div class="font-bold text-sm text-primary-800 pr-1">Distinct:</div>
+              <div class="text-black text-sm">{stringData.distinct.count} ({stringData.distinct.percent}%)</div>
             </div>
             <div class="flex flex-row items-center px-2">
-              <div class="font-bold text-primary-800 pr-1">Min Length:</div>
-              <div class="text-black">{stringData.char_stats.min_length}</div>
+              <div class="font-bold text-sm text-primary-800 pr-1">Min Length:</div>
+              <div class="text-black text-sm">{stringData.char_stats.min_length}</div>
             </div>
             <div class="flex flex-row items-center px-2">
-              <div class="font-bold text-primary-800 pr-1">Max Length:</div>
-              <div class="text-black">{stringData.char_stats.max_length}</div>
+              <div class="font-bold text-sm text-primary-800 pr-1">Max Length:</div>
+              <div class="text-black text-sm">{stringData.char_stats.max_length}</div>
             </div>
             <div class="flex flex-row items-center px-2">
-              <div class="font-bold text-primary-800 pr-1">Median Length:</div>
-              <div class="text-black">{stringData.char_stats.median_length}</div>
+              <div class="font-bold text-sm text-primary-800 pr-1">Median Length:</div>
+              <div class="text-black text-sm">{stringData.char_stats.median_length}</div>
             </div>
             <div class="flex flex-row items-center px-2">
-              <div class="font-bold text-primary-800 pr-1">Mean Length:</div>
-              <div class="text-black">{stringData.char_stats.mean_length}</div>
+              <div class="font-bold text-sm text-primary-800 pr-1">Mean Length:</div>
+              <div class="text-black text-sm">{stringData.char_stats.mean_length}</div>
             </div>
           </div>
         </div>
@@ -57,7 +57,7 @@
           <div class="flex items-center justify-center">
             <div class="font-bold text-primary-950">Word Occurrence (Top 10)</div>
           </div>
-          <button class="btn flex items-center gap-2 bg-primary-500 shadow shadow-hover border-black border-2 rounded-lg self-center" onclick={() => resetZoomClicked()}>
+          <button class="btn text-sm flex items-center gap-2 bg-primary-500 shadow shadow-hover border-black border-2 rounded-lg self-center" onclick={() => resetZoomClicked()}>
             <div class="text-black">Reset Zoom</div>
           </button>
         </div>

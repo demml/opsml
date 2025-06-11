@@ -1,43 +1,37 @@
-use opsml_colors::Colorize;
-use tracing::info;
-mod core;
+pub mod core;
 
-use crate::core::app::create_app;
-use std::net::SocketAddr;
+use tracing::info;
+
+use crate::core::middleware::metrics::metrics_app;
+use crate::core::shutdown::shutdown_metric_signal;
+use anyhow::Context;
+use opsml_server::start_server;
+/// Start the metrics server for prometheus
+async fn start_metrics_server() -> Result<(), anyhow::Error> {
+    let app = metrics_app().with_context(|| "Failed to setup metrics app")?;
+
+    let port: usize = std::env::var("OPSML_SERVER_PORT")
+        .unwrap_or_else(|_| "3000".to_string())
+        .parse()
+        .with_context(|| "Failed to parse OPSML_SERVER_PORT")?;
+
+    let addr = format!("0.0.0.0:{}", port + 1); // Metric server runs on different port
+
+    info!("Starting metrics server on {}", addr);
+    let listener = tokio::net::TcpListener::bind(addr)
+        .await
+        .with_context(|| "Failed to bind to port 3001 for metrics server")?;
+
+    axum::serve(listener, app)
+        .with_graceful_shutdown(shutdown_metric_signal())
+        .await
+        .with_context(|| "Failed to start metrics server")?;
+
+    Ok(())
+}
 
 #[tokio::main]
-async fn main() {
-    let logo = r#"
-     ____             __  _____       _____                          
-    / __ \____  _____/  |/  / /      / ___/___  ______   _____  _____
-   / / / / __ \/ ___/ /|_/ / /       \__ \/ _ \/ ___/ | / / _ \/ ___/
-  / /_/ / /_/ (__  ) /  / / /___    ___/ /  __/ /   | |/ /  __/ /    
-  \____/ .___/____/_/  /_/_____/   /____/\___/_/    |___/\___/_/     
-      /_/                                                            
-               
-    "#;
-
-    println!("{}", Colorize::green(logo));
-
-    // build our application with routes
-    let app = create_app().await.unwrap();
-
-    // get OPSML_SERVER_PORT from env
-    let port = std::env::var("OPSML_SERVER_PORT").unwrap_or_else(|_| "3000".to_string());
-    let addr = format!("0.0.0.0:{}", port);
-
-    // run it
-    let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
-
-    info!("listening on {}", listener.local_addr().unwrap());
-
-    println!("🚀 Server Running 🚀");
-    //axum::serve(listener, app).await.unwrap();
-
-    axum::serve(
-        listener,
-        app.into_make_service_with_connect_info::<SocketAddr>(),
-    )
-    .await
-    .unwrap();
+pub async fn main() -> Result<(), anyhow::Error> {
+    let (_main_server, _metrics_server) = tokio::join!(start_server(), start_metrics_server());
+    Ok(())
 }

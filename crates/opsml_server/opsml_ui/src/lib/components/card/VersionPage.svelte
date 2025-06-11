@@ -44,17 +44,17 @@
           <div class="rounded-full bg-surface-200 border-black border-2 p-1 shadow-small">
             <Settings color="#40328b" />
           </div>
-          <h2 class="font-bold text-primary-800 text-xl">Artifacts</h2>
+          <h2 class="font-bold text-primary-800 text-lg">Artifacts</h2>
         </div>
         <div class="flex flex-row flex-wrap gap-1 items-center">
           <div>
-            <span class="badge text-base text-primary-800 border-black border-1 shadow-small bg-surface-50">{registryStats.stats.nbr_names} artifacts</span>
+            <span class="badge text-sm text-primary-800 border-black border-1 shadow-small bg-surface-50">{registryStats.stats.nbr_names} artifacts</span>
           </div>
           <div>
-            <span class="badge text-base text-primary-800 border-black border-1 shadow-small bg-surface-50">{registryStats.stats.nbr_versions} versions</span>
+            <span class="badge text-sm text-primary-800 border-black border-1 shadow-small bg-surface-50">{registryStats.stats.nbr_versions} versions</span>
           </div>
           <div>
-            <span class="badge text-base text-primary-800 border-black border-1 shadow-small bg-surface-50">{registryStats.stats.nbr_spaces} spaces</span>
+            <span class="badge text-sm text-primary-800 border-black border-1 shadow-small bg-surface-50">{registryStats.stats.nbr_spaces} spaces</span>
           </div>
         </div>
         <div class="pt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4 justify-items-center">
@@ -73,18 +73,18 @@
         <div class="flex justify-center pt-4 gap-2">
     
           {#if currentPage > 1}
-            <button class="btn bg-surface-50 border-black border-2 shadow-small shadow-hover-small h-9" onclick={() => changePage(currentPage - 1)}>
+            <button class="btn text-sm bg-surface-50 border-black border-2 shadow-small shadow-hover-small h-9" onclick={() => changePage(currentPage - 1)}>
               <ArrowLeft color="#5948a3"/>
             </button>
           {/if}
           
           <div class="flex bg-surface-50 border-black border-2 text-center items-center rounded-base px-2 shadow-small h-9">
-            <span class="text-primary-800 mr-1">{currentPage}</span>
-            <span class="text-primary-400">of {totalPages}</span>
+            <span class="text-primary-800 text-sm mr-1">{currentPage}</span>
+            <span class="text-primary-400 text-sm">of {totalPages}</span>
           </div>
     
           {#if currentPage < totalPages}
-            <button class="btn bg-surface-50 border-black border-2 shadow-small shadow-hover-small h-9" onclick={() => changePage(currentPage + 1)}>
+            <button class="btn text-sm bg-surface-50 border-black border-2 shadow-small shadow-hover-small h-9" onclick={() => changePage(currentPage + 1)}>
               <ArrowRight color="#5948a3"/>
             </button>
           {/if}

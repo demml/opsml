@@ -6,6 +6,7 @@ use crate::core::experiment::route::get_experiment_router;
 use crate::core::files::route::get_file_router;
 use crate::core::health::route::get_health_router;
 use crate::core::middleware::event::event_middleware;
+use crate::core::middleware::metrics::track_metrics;
 use crate::core::scouter::route::get_scouter_router;
 use crate::core::settings::route::get_settings_router;
 use crate::core::state::AppState;
@@ -72,6 +73,7 @@ pub async fn create_router(app_state: Arc<AppState>) -> Result<Router> {
         .merge(health_routes)
         .merge(auth_routes)
         .merge(ui_routes)
+        .route_layer(middleware::from_fn(track_metrics))
         .layer(cors)
         .with_state(app_state))
 }

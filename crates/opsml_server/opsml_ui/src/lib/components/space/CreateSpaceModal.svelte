@@ -81,14 +81,14 @@
 <Modal
 open={openState}
 onOpenChange={(e) => (openState = e.open)}
-triggerBase="btn bg-primary-500 text-black shadow shadow-hover border-black border-2"
-contentBase="card p-4 bg-slate-100 border-2 border-black shadow min-w-[500px]"
+triggerBase="btn bg-primary-500 text-black shadow shadow-hover border-black border-2 text-smd"
+contentBase="card p-4 bg-slate-100 border-2 border-black shadow min-w-[400px]"
 backdropClasses="backdrop-blur-sm"
 >
 {#snippet trigger()}Create Space{/snippet}
 {#snippet content()}
-  <div class="flex flex-row pb-3 justify-between items-center">
-    <header class="text-xl font-bold text-primary-800">Create a Space!</header> 
+  <div class="flex flex-row pb-1 justify-between items-center">
+    <header class="text-smd font-bold text-primary-800">Create a Space!</header> 
   </div>
 
   {#if showError}
@@ -97,7 +97,7 @@ backdropClasses="backdrop-blur-sm"
 
    <div class="mb-8 grid grid-cols-1 gap-3">
 
-    <label class="text-surface-950">Space
+    <label class="text-surface-950 text-sm">Space
       <input
           class="input text-sm rounded-base bg-surface-50 text-black disabled:opacity-50 placeholder-surface-800 placeholder-text-sm focus-visible:ring-2 focus-visible:ring-primary-800"
           type="text" 
@@ -110,7 +110,7 @@ backdropClasses="backdrop-blur-sm"
     </label>
 
 
-    <label class="text-surface-950">Description
+    <label class="text-surface-950 text-sm">Description
       <textarea
           class="textarea text-sm rounded-base bg-surface-50 text-black disabled:opacity-50 placeholder-surface-800 placeholder-text-sm focus-visible:ring-2 focus-visible:ring-primary-800 w-full min-h-[100px] resize-y"
           placeholder="Provide a description for the space"
@@ -123,8 +123,8 @@ backdropClasses="backdrop-blur-sm"
   </div>
 
   <footer class="flex justify-center gap-4 p-2">
-    <button type="button" class="btn bg-primary-500 text-black shadow shadow-hover border-black border-2" onclick={modalClose}>Cancel</button>
-    <button type="button" class="btn bg-primary-500 text-black shadow shadow-hover border-black border-2" onclick={createCardSpace}>Create</button>
+    <button type="button" class="btn text-sm bg-primary-500 text-black shadow shadow-hover border-black border-2" onclick={modalClose}>Cancel</button>
+    <button type="button" class="btn text-sm bg-primary-500 text-black shadow shadow-hover border-black border-2" onclick={createCardSpace}>Create</button>
   </footer>
 {/snippet}
 </Modal>

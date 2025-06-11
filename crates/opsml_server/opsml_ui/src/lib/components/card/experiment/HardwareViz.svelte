@@ -26,8 +26,8 @@
 
 <div class="flex flex-col">
   <div class="flex flex-row flex-wrap gap-2 pb-2 items-center justify-between w-full">
-    <div class="items-center text-xl mr-2 font-bold text-primary-800">{vizLabel}</div>
-    <button class="btn flex items-center gap-2 bg-primary-500 shadow shadow-hover border-black border-2 rounded-lg self-center" onclick={() => resetZoomClicked()}>
+    <div class="items-center mr-2 font-bold text-primary-800">{vizLabel}</div>
+    <button class="btn text-sm flex items-center gap-2 bg-primary-500 shadow shadow-hover border-black border-2 rounded-lg self-center" onclick={() => resetZoomClicked()}>
       <div class="text-black">Reset Zoom</div>
     </button>
   </div>

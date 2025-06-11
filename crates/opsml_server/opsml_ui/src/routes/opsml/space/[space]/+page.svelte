@@ -32,17 +32,17 @@
 
 </script>
 
-<div class="flex-none pt-20 m500:pt-14 lg:pt-[85px] border-b-2 border-black bg-slate-100 pb-2">
+<div class="flex-none pt-20 border-b-2 border-black bg-slate-100 pb-2">
   <div class="flex justify-center items-center w-11/12 mx-auto gap-4">
-    <h1 class="text-2xl">
+    <h1 class="text-lg">
       <div class="font-bold text-primary-800">{spaceRecord.space}</div>
     </h1>
     {#if userStore.favorite_spaces.includes(spaceRecord.space)}
-      <button class="btn bg-primary-500 rounded-lg justify-self-center text-black mb-2 ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 border-black border-2 border-border reverse-shadow-hover" 
+      <button class="btn text-sm bg-primary-500 rounded-lg justify-self-center text-black mb-2 ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 border-black border-2 border-border reverse-shadow-hover" 
         onclick={unfavoriteSpace}>Unfavorite
       </button>
     {:else}
-      <button class="btn bg-surface-50 rounded-lg justify-self-center text-black mb-2 ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 border-black border-2 border-border shadow shadow-hover" 
+      <button class="btn text-sm bg-surface-50 rounded-lg justify-self-center text-black mb-2 ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 border-black border-2 border-border shadow shadow-hover" 
         onclick={favoriteSpace}>Favorite
       </button>
     {/if}
@@ -56,10 +56,8 @@
   <!-- Cards loaded successfully -->
 <div class="flex-1 mx-auto w-7/12 justify-center px-4 pb-10 pt-10">
 
-    <!-- Left column for activity and members-->
     <div class="grid grid-cols-1 lg:grid-cols-4 gap-4 w-full">
 
-      <!-- Right column for experiments, models, prompts -->
       <div class="col-span-1 lg:col-span-4 flex flex-col h-auto gap-y-4">
 
         <div class="rounded-base border-primary-500 border-2 shadow-primary bg-surface-50 pb-4 px-4">
