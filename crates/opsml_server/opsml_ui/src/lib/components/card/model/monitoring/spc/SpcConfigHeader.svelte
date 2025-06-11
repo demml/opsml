@@ -23,11 +23,11 @@
 <div class="grid grid-cols-1 gap-2 w-full h-auto">
   <div class="flex flex-row flex-wrap gap-2">
     <div class="items-center text-lg mr-2 font-bold text-primary-800">Config:</div>
-    <Pill key="Schedule" value={alertConfig.schedule} />
-    <Pill key="Rule" value={alertConfig.rule.rule} />
-    <Pill key="Zones" value={alertConfig.rule.zones_to_monitor} />
+    <Pill key="Schedule" value={alertConfig.schedule} textSize="text-sm"/>
+    <Pill key="Rule" value={alertConfig.rule.rule} textSize="text-sm"/>
+    <Pill key="Zones" value={alertConfig.rule.zones_to_monitor} textSize="text-sm"/>
     {#if config.sample}
-      <Pill key="Sample size" value={config.sample_size} />
+      <Pill key="Sample size" value={config.sample_size} textSize="text-sm"/>
     {/if}
   </div>
 

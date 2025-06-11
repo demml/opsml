@@ -175,7 +175,7 @@
             type="button"
             role="menuitem"
             onclick={() => handleLinkClick(path)}
-            class="px-6 py-3 text-xl text-left hover:bg-surface-50 transition-colors duration-200"
+            class="px-6 py-3 text-left hover:bg-surface-50 transition-colors duration-200"
             class:active={page.url.pathname.includes(path)}
             aria-current={page.url.pathname.includes(path) ? 'page' : undefined}
           >
