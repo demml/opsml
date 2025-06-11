@@ -144,7 +144,7 @@
         />
       </div>
     </div>
-    <div class="pt-4 grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-4 justify-items-center">
+    <div class="pt-4 grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-2 justify-items-center">
       {#each registryPage.summaries as summary}
           <CardPage
             space={summary.space}

@@ -45,11 +45,11 @@ export const tooltip = {
   enabled: true,
   titleColor: "rgb(0, 0, 0)",
   titleFont: {
-    size: 16,
+    size: 14,
   },
   bodyColor: "rgb(0, 0, 0)",
   bodyFont: {
-    size: 16,
+    size: 12,
   },
 };
 
@@ -79,7 +79,7 @@ export function getLegend(
     position: position,
     labels: {
       font: {
-        size: 16, // Increase legend font size (in pixels)
+        size: 14, // Increase legend font size (in pixels)
       },
       color: "rgb(0, 0, 0)",
     },

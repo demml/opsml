@@ -34,11 +34,11 @@
   <div class="flex flex-row flex-wrap gap-2 pb-2 items-center justify-between w-full">
     <div class="flex flex-row flex-wrap gap-2 items-center">
       {#each selectedMetrics as metric}
-        <Pill key="metric" value={metric} />
+        <Pill key="metric" value={metric} textSize="text-sm"/>
       {/each}
     </div>
 
-    <button class="btn flex items-center gap-2 bg-primary-500 shadow shadow-hover border-black border-2 rounded-lg self-center" onclick={() => resetZoomClicked()}>
+    <button class="btn text-sm flex items-center gap-2 bg-primary-500 shadow shadow-hover border-black border-2 rounded-lg self-center" onclick={() => resetZoomClicked()}>
       <div class="text-black">Reset Zoom</div>
     </button>
   </div>

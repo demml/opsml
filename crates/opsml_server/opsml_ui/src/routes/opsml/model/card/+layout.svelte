@@ -42,7 +42,7 @@
 <div class="h-screen flex flex-col">
   <div class="flex-none pt-15 border-b-2 border-black bg-slate-100">
     <div class="flex flex-col mx-auto flex w-11/12 justify-start">
-      <h1 class="flex flex-row flex-wrap items-center text-base">
+      <h1 class="flex flex-row flex-wrap items-center">
         <div class="group flex flex-none items-center">
           <a class="font-semibold text-black hover:text-secondary-500" href="/opsml/{registry}?space={space}">{space}</a>
           <div class="mx-0.5 text-gray-800">/</div>

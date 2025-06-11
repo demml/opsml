@@ -90,20 +90,20 @@
     <div class="col-span-1 lg:col-span-2 bg-surface-50 p-4 flex flex-col rounded-base border-black border-2 shadow h-[calc(100vh-200px)] overflow-y-auto">
       <!-- Top Section -->
       <div class="mb-4 sticky top-0 z-10">
-        <div class="flex flex-row justify-between pt-2 pb-1">
+        <div class="flex flex-row justify-between pb-2">
           <div class="flex flex-row">
             <div class="self-center" aria-label="Time Interval">
               <CircleDot color="#8059b6"/>
             </div>
-            <header class="pl-2 text-primary-800 text-xl lg:text-2xl self-center font-bold">Search Metrics</header>
+            <header class="pl-2 text-primary-800 self-center font-bold">Search Metrics</header>
           </div>
           <div class="flex flex-row">
-            <button type="button" class="btn bg-primary-500 text-black shadow shadow-hover border-black border-2 self-center" onclick={plotMetrics}>Plot</button>
+            <button type="button" class="btn text-sm bg-primary-500 text-black shadow shadow-hover border-black border-2 self-center" onclick={plotMetrics}>Plot</button>
           </div>
         </div>
 
-        <div class="flex flex-row pb-2">
-          <div class="text-primary-800 self-center text-lg">Plot Type:</div>
+        <div class="flex flex-row pb-4">
+          <div class="text-primary-800 self-center">Plot Type:</div>
           <div class="ml-2 self-center">
             <Dropdown  
               bind:selectedValue={plotType} 
@@ -131,16 +131,16 @@
         <div class="mb-4">
           <div class="flex flex-row items-center mb-1 border-b-2 border-black">
             <List color="#8059b6"/>
-            <header class="pl-2 text-primary-900 text-lg font-bold">Items</header>
+            <header class="pl-2 text-primary-900 font-bold">Items</header>
           </div>
           <div class="space-y-2 flex flex-wrap pl-2 pt-4 pb-4 gap-1 overflow-y-scroll">
             <!-- Iterate of available entities -->
             {#each filteredEntities as entity}
           
               {#if selectedMetrics.includes(entity)}
-                <button class="chip bg-slate-100 border-primary-800 border-2 text-primary-800 border-1 lg:text-base" onclick={() => selectMetric(entity)}>{entity}</button>
+                <button class="chip text-black bg-primary-500 border-black border-1 text-sm" onclick={() => selectMetric(entity)}>{entity}</button>
               {:else}
-                <button class="chip text-black bg-primary-500 shadow-small shadow-hover-small border-black border-1 lg:text-base" onclick={() => selectMetric(entity)}>{entity}</button>
+                <button class="chip bg-slate-100 border-primary-800 shadow-small shadow-hover-small border-2 text-primary-800 border-1 text-sm" onclick={() => selectMetric(entity)}>{entity}</button>
               {/if}
         
             {/each}
@@ -150,9 +150,9 @@
         <div class="mb-4">
           <div class="flex flex-row items-center mb-1 border-b-2 border-black">
             <List color="#8059b6"/>
-            <header class="pl-2 text-primary-900 text-lg font-bold">Previous Versions</header>
+            <header class="pl-2 text-primary-900 font-bold">Previous Versions</header>
           </div>
-          <p class="pl-2 text-black">Select previous version to compare metrics</p>
+          <p class="pl-2 text-black text-sm">Select previous version to compare metrics</p>
           <div class="grid grid-cols-3 gap-2 pl-2 pt-4 pb-4 overflow-auto">
             {#each recentExperiments as experiment}
               {#if selectedExperiments.includes(experiment)}
@@ -177,19 +177,19 @@
           <div class="self-center" aria-label="Metric Plot">
             <ChartNoAxesColumn color="#8059b6"/>
           </div>
-          <header class="pl-2 text-primary-800 text-xl lg:text-2xl self-center font-bold">Metrics</header>
+          <header class="pl-2 text-primary-800 text-lg self-center font-bold">Metrics</header>
         </div>
 
         {#if plot}
           {#if groupedMetrics}
             <VizBody {groupedMetrics} {selectedMetrics} {plotType} />
           {:else}
-            <div class="flex items-center justify-center h-full text-gray-500">
+            <div class="flex items-center justify-center h-full text-gray-500 text-lg">
               No data available for selected metric
             </div>
           {/if}
         {:else}
-          <div class="flex items-center justify-center h-full text-gray-500">
+          <div class="flex items-center justify-center h-full text-gray-500 text-lg">
             Select a metric to view data
           </div>
         {/if}

@@ -71,7 +71,7 @@
           </div>
         </a>
 
-        <div class="flex items-center gap-2 md:gap-4 lg:gap-6 text-lg">
+        <div class="flex items-center gap-2 md:gap-4 lg:gap-6">
           {#each names as name}
             {@const path = '/opsml/' + name.replace(/s$/, '').toLowerCase()}
               <a href={path} class:active={page.url.pathname.includes(path)} data-sveltekit-preload-data="hover">

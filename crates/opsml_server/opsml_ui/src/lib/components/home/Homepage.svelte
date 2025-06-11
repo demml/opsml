@@ -24,7 +24,7 @@
           <Table color="#5fd68d" />
         </div>
         <div class="rounded-full bg-surface-200 border-black border-2 p-1 shadow-small">
-          <h2 class="text-center font-heading text-lg text-black font-bold">Recent</h2>
+          <h2 class="text-center font-heading text-black font-bold">Recent</h2>
         </div>
         <div class="rounded-full bg-surface-200 border-black border-2 p-1 shadow-small">
           <NotebookText color="#f9b25e" />
@@ -34,7 +34,7 @@
         </div>
       </div>
     
-      <div class="mx-auto w-10/12 grid grid-cols-1 2xl:grid-cols-2 gap-x-2">
+      <div class="mx-auto w-10/12 grid grid-cols-1 lg:grid-cols-2 gap-x-2">
         <div class="w-full pt-4 pb-10">
           <div class="relative grid grid-cols-1 gap-4 lg:grid-cols-2 mx-4 md:mx-8">
             <HomeCard 
