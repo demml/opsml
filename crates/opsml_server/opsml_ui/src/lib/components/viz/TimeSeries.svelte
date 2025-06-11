@@ -12,12 +12,14 @@
   let { 
     timestamps, 
     values,
+    baselineValue,
     label,
     yLabel,
     resetZoom = $bindable(),
   } = $props<{
     timestamps: string[];
     values: number[];
+    baselineValue: number | undefined;
     label: string;
     yLabel: string;
     resetZoom: boolean;
@@ -34,7 +36,7 @@
     function initChart() {
 
       const dates = timestamps.map((ts: string | number | Date) => new Date(ts));
-      const config = createTimeSeriesChart(dates, values, label, yLabel);
+      const config = createTimeSeriesChart(dates, values, baselineValue, label, yLabel);
       if (chart) {
         chart.destroy();
       }
@@ -70,6 +72,6 @@
   });
   </script>
 
-  <div class="w-full h-[400px]">
+  <div class="w-full h-[28rem]">
     <canvas bind:this={canvas}></canvas>
   </div>

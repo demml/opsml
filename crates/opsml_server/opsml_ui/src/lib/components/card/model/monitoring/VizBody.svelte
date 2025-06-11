@@ -55,12 +55,26 @@
   }
 }
 
+function getBaselineValue(): number | undefined {
+  // get custom value
+  if (currentConfig && currentDriftType === DriftType.Custom) {
+      return (currentProfile as DriftProfile).Custom.metrics[currentName];
+  }
+
+  // get psi threshold
+  if (currentDriftType === DriftType.Psi) {
+    return (currentProfile as DriftProfile).Psi.config.alert_config.psi_threshold;
+  }
+
+  return undefined;
+}
+
 </script>
 
 <div class="flex flex-col">
   <div class="items-center text-lg mr-2 font-bold text-primary-800">Recent Metrics</div>
 
-  <div class="flex flex-row flex-wrap gap-2 pb-2 items-center justify-between w-full">
+  <div class="flex flex-row flex-wrap gap-2 pb-2 items-center justify-between w-full px-2">
     <div class="flex flex-row flex-wrap gap-2 items-center">
       <Pill key="Key" value={currentName} textSize="text-sm"/>
       <Pill key="drift" value={currentDriftType} textSize="text-sm"/>
@@ -87,6 +101,7 @@
     <TimeSeries
         timestamps={metricData.created_at}
         values={getYValues(metricData)}
+        baselineValue={getBaselineValue()}
         label={currentName}
         yLabel={currentDriftType === DriftType.Psi ? 'PSI Value' : 'Value'}
         bind:resetZoom={resetZoom}
