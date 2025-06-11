@@ -15,7 +15,7 @@ use opsml_auth::sso::providers::types::IdTokenClaims;
 use opsml_auth::sso::providers::types::*;
 use opsml_crypt::encrypt_file;
 use opsml_semver::VersionType;
-use opsml_server::create_app;
+use opsml_server::core::app::create_app;
 use opsml_settings::config::DatabaseSettings;
 use opsml_sql::base::SqlClient;
 use opsml_sql::enums::client::SqlClientEnum;

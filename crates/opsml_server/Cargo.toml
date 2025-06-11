@@ -26,6 +26,8 @@ scouter-client = { workspace = true }
 base64 = { workspace = true }
 chrono = { workspace = true }
 headers = { workspace = true }
+metrics = { workspace = true }
+metrics-exporter-prometheus = { workspace = true }
 mime_guess = { workspace = true }
 password-auth = { workspace = true }
 rand = { workspace = true }
