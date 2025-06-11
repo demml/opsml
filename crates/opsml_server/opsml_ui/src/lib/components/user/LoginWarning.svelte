@@ -13,7 +13,7 @@ let { errorMessage = 'unset'} = $props();
    </div>
   
    <div class="flex justify-center items-center">
-      <p class="text-md text-error-700">{errorMessage}</p>
+      <p class="text-md text-error-700 text-sm">{errorMessage}</p>
   </div>
 
 </div>

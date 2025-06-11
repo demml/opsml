@@ -45,14 +45,14 @@ export function createHistogramViz(data: Histogram): ChartConfiguration {
             text: "Bins",
             color: "rgb(0,0,0)",
             font: {
-              size: 16,
+              size: 14,
             },
           },
           ticks: {
             maxTicksLimit: 10,
             color: "rgb(0,0,0)",
             font: {
-              size: 14,
+              size: 12,
             },
           },
         },
@@ -62,14 +62,14 @@ export function createHistogramViz(data: Histogram): ChartConfiguration {
             text: "Count",
             color: "rgb(0,0,0)",
             font: {
-              size: 16,
+              size: 14,
             },
           },
           ticks: {
             maxTicksLimit: 10,
             color: "rgb(0,0,0)",
             font: {
-              size: 14,
+              size: 12,
             },
           },
           border: {

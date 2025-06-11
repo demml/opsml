@@ -256,7 +256,7 @@ function validateDispatchForm(): boolean {
   <Modal
   open={openState}
   onOpenChange={(e) => (openState = e.open)}
-  triggerBase="btn bg-primary-500 text-black shadow shadow-hover border-black border-2"
+  triggerBase="btn bg-primary-500 text-black shadow shadow-hover border-black border-2 text-sm"
   contentBase="card p-2 bg-surface-50 border-2 border-black shadow max-w-screen-xl w-[700px] overflow-visible"
   backdropClasses="backdrop-blur-sm"
   >
@@ -267,7 +267,7 @@ function validateDispatchForm(): boolean {
     <div class="grid grid-cols-2 gap-8 min-h-[300px]">
       <!-- Left Column -->
       <div class="flex flex-col">
-        <header class="text-xl font-bold text-primary-800 mb-2">Update Config</header> 
+        <header class="text-lg font-bold text-primary-800 mb-2">Update Config</header> 
         <p class="mb-4 text-left text-surface-950">Update the following config elements</p>
   
         {#if driftType === DriftType.Spc}
@@ -296,7 +296,7 @@ function validateDispatchForm(): boolean {
 
         <div class="flex flex-col overflow-auto min-h-full">
           <div class="flex flex-col pb-2 justify-between">
-            <header class="pl-2 text-xl font-bold text-primary-800">Update Dispatch</header> 
+            <header class="pl-2 text-lg font-bold text-primary-800">Update Dispatch</header> 
             <Dropdown 
                   bind:selectedValue={dispatchType}
                   bind:values={dispatchOptions}
@@ -332,8 +332,8 @@ function validateDispatchForm(): boolean {
       </div>
   
     <footer class="flex justify-end gap-4 p-2 mt-6">
-      <button type="button" class="btn bg-primary-500 text-black shadow shadow-hover border-black border-2" onclick={modalClose}>Cancel</button>
-      <button type="submit" class="btn bg-primary-500 text-black shadow shadow-hover border-black border-2">Submit</button>
+      <button type="button" class="btn text-sm bg-primary-500 text-black shadow shadow-hover border-black border-2" onclick={modalClose}>Cancel</button>
+      <button type="submit" class="btn text-sm bg-primary-500 text-black shadow shadow-hover border-black border-2">Submit</button>
     </footer>
   </form>
    

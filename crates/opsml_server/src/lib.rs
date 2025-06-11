@@ -1,6 +1,6 @@
 pub mod core;
 
-pub use core::app::create_app;
+use crate::core::app::create_app;
 use opsml_colors::Colorize;
 use std::net::SocketAddr;
 use std::sync::Arc;

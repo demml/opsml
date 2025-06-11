@@ -49,14 +49,14 @@
   <div class="grid justify-items-end py-4 px-4">
     <div>
       <button 
-        class="mb-2 text-black bg-primary-500 rounded-lg shadow shadow-hover border-black border-2 justify-start w-38 h-10"
+        class="mb-2 text-sm text-black bg-primary-500 rounded-lg shadow shadow-hover border-black border-2 justify-start w-34 h-10"
         onclick={navigateToReadMe}
       >
         Edit ReadMe
       </button>
     </div>
   </div>
-  <div class="markdown-body rounded-base px-4 pb-4 md:px-11 md:pb-11 w-full">
+  <div class="markdown-body rounded-base px-4 pb-4 md:px-11 md:pb-11 w-full text-sm">
     {@html html}
   </div>
   <style>
@@ -66,14 +66,12 @@
       box-sizing: border-box;
       margin: 0 auto;
       width: 100%;
-      font-size: large;
+      font-size: medium;
     }
   
     :global(.markdown-body pre) {
       overflow-x: auto;
       white-space: nowrap;
     }
-  
-  
   
   </style>

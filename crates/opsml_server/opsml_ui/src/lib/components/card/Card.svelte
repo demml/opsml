@@ -31,13 +31,13 @@
 
 </script>
 
-<button class="text-black rounded-base shadow border-2 border-black bg-surface-300 w-full max-w-[400px] h-[75px] overflow-hidden whitespace-nowrap hover:translate-x-[4px] hover:translate-y-[4px] hover:shadow-none" onclick={navigateToCardPage}>
+<button class="text-black rounded-base shadow border-2 border-black bg-surface-300 w-full max-w-[300px] h-[75px] overflow-hidden whitespace-nowrap hover:translate-x-[4px] hover:translate-y-[4px] hover:shadow-none" onclick={navigateToCardPage}>
   <div class="flex items-center justify-between">
     <div class="flex items-center justify-start gap-2 mb-1">
       <div class="ml-2">
         <CircuitBoard color={iconColor} />
       </div>
-      <div><h4 class="truncate font-bold text-lg">{space}/{name}</h4></div>
+      <div><h4 class="truncate font-bold text-smd">{space}/{name}</h4></div>
     </div>
     <div class="mr-2">
 

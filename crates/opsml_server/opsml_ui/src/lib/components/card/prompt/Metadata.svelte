@@ -42,7 +42,7 @@ datacard = registry.load_card(uid="${card.uid}")
     
     <div class="flex flex-row items-center pt-2">
       <Info color="#8059b6"/>
-      <header class="pl-2 text-primary-950 text-2xl font-bold">Metadata</header>
+      <header class="pl-2 text-primary-950 font-bold">Metadata</header>
     </div>
 
     <div>
@@ -56,20 +56,20 @@ datacard = registry.load_card(uid="${card.uid}")
   </div>
 
 
-  <div class="flex flex-col space-y-1 text-base">
-    <Pill key="Created At" value={card.created_at} textSize="text-base"/>
-    <Pill key="ID" value={card.uid} textSize="text-base"/>
-    <Pill key="space" value={card.space} textSize="text-base"/>
-    <Pill key="Name" value={card.name} textSize="text-base"/>
-    <Pill key="Version" value={card.version} textSize="text-base"/>
-    <Pill key="OpsML Version" value={card.opsml_version} textSize="text-base"/>
+  <div class="flex flex-col space-y-1 text-sm">
+    <Pill key="Created At" value={card.created_at} textSize="text-sm"/>
+    <Pill key="ID" value={card.uid} textSize="text-sm"/>
+    <Pill key="space" value={card.space} textSize="text-sm"/>
+    <Pill key="Name" value={card.name} textSize="text-sm"/>
+    <Pill key="Version" value={card.version} textSize="text-sm"/>
+    <Pill key="OpsML Version" value={card.opsml_version} textSize="text-sm"/>
 
   </div>
 
   {#if card.metadata.experimentcard_uid ||  card.metadata.auditcard_uid}
     <div class="flex flex-row items-center mb-1 border-b-2 border-black">
       <Diamond color="#8059b6" fill="#8059b6"/>
-      <header class="pl-2 text-primary-900 text-lg font-bold">Cards</header>
+      <header class="pl-2 text-primary-900 text-sm font-bold">Cards</header>
     </div>
 
     <div class="flex flex-wrap space-y-1 gap-1">
@@ -84,7 +84,7 @@ datacard = registry.load_card(uid="${card.uid}")
   <div class="flex flex-col space-y-1 gap-1">
     <div class="flex flex-row items-center mb-1 border-b-2 border-black">
       <MessageSquareText color="#8059b6" />
-      <header class="pl-2 text-primary-900 text-lg font-bold">Prompts</header>
+      <header class="pl-2 text-primary-900 text-sm font-bold">Prompts</header>
     </div>
   </div>
 
@@ -96,7 +96,7 @@ datacard = registry.load_card(uid="${card.uid}")
   <div class="flex flex-col space-y-1 gap-1">
     <div class="flex flex-row items-center mb-1 border-b-2 border-black">
       <Settings color="#8059b6" />
-      <header class="pl-2 text-primary-900 text-lg font-bold">Model Settings</header>
+      <header class="pl-2 text-primary-900 text-sm font-bold">Model Settings</header>
     </div>
   </div>
 
@@ -149,7 +149,7 @@ datacard = registry.load_card(uid="${card.uid}")
     <div class="flex flex-col space-y-1 gap-1">
       <div class="flex flex-row items-center mb-1 border-b-2 border-black">
         <Tags color="#8059b6" />
-        <header class="pl-2 text-primary-900 text-lg font-bold">Tags</header>
+        <header class="pl-2 text-primary-900 text-sm font-bold">Tags</header>
       </div>
     </div>
 

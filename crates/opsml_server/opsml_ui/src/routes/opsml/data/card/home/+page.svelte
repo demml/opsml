@@ -21,19 +21,19 @@
   <div class="flex flex-wrap pt-4 gap-4 w-full justify-center">
 
     {#if data.readme.exists}
-    <div class="gap-1 flex flex-col rounded-base border-black border-3 shadow bg-surface-50 w-[1000px]">
-      <CardReadMe
-        name={card.name}
-        space={card.space}
-        registryPath={data.registryPath}
-        version={card.version}
-        readMe={data.readme}
-      />
+      <div class="gap-1 flex flex-col rounded-base border-black border-3 shadow bg-surface-50 w-[800px]">
+        <CardReadMe
+          name={card.name}
+          space={card.space}
+          registryPath={data.registryPath}
+          version={card.version}
+          readMe={data.readme}
+        />
       </div>
 
      
     {:else}
-      <div class="gap-1 flex flex-col rounded-base border-black border-3 shadow bg-primary-100 w-[600px] h-[200px]">
+      <div class="gap-1 flex flex-col rounded-base border-black border-3 shadow bg-primary-100 w-[500px] h-[200px]">
         <NoReadme
           name={card.name}
           space={card.space}
@@ -44,7 +44,7 @@
     {/if}
 
     
-    <div class="bg-primary-200 p-4 flex flex-col rounded-base bg-surface-50 border-primary-800 border-3 shadow-primary min-w-112 max-h-[800px] overflow-y-auto self-start">
+    <div class="bg-primary-200 p-4 flex-1 flex-col rounded-base bg-surface-50 border-primary-800 border-3 shadow-primary max-h-[800px] overflow-y-auto self-start min-w-0 max-w-[300px] md:min-w-[26rem] md:max-w-[32rem]">
       <Metadata 
         card={card} 
         interfaceMetadata={card.metadata.interface_metadata}
