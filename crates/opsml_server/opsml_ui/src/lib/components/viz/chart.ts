@@ -202,7 +202,14 @@ export function createLineChart(
   // Build the line chart configuration if effectiveXLabel is Time
   if (effectiveXLabel === "Time") {
     const xAsDate = xValues.map((x) => new Date(x));
-    return buildTimeChart(xAsDate, datasets, effectiveXLabel, y_label, true);
+    return buildTimeChart(
+      xAsDate,
+      datasets,
+      effectiveXLabel,
+      y_label,
+      true,
+      undefined
+    );
   }
   return buildChart(xValues, datasets, effectiveXLabel, y_label, true);
 }

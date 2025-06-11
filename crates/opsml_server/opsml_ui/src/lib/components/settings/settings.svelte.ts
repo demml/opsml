@@ -7,6 +7,7 @@ import { userStore } from "../user/user.svelte";
 
 export class UiSettingsStore {
   scouterEnabled = $state(false);
+  ssoEnabled = $state(false);
 
   constructor() {}
 
@@ -19,6 +20,7 @@ export class UiSettingsStore {
       );
       const data = (await response.json()) as UiSettings;
       this.scouterEnabled = data.scouter_enabled;
+      this.ssoEnabled = data.sso_enabled;
     }
   }
 }

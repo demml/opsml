@@ -1,5 +1,6 @@
 import type { ChartConfiguration } from "chart.js";
 import "chartjs-plugin-zoom";
+import "chartjs-plugin-annotation";
 import { format } from "date-fns";
 import {
   generateColors,
@@ -13,7 +14,8 @@ export function buildTimeChart(
   datasets: ChartjsLineDataset[],
   x_label: string,
   y_label: string,
-  showLegend: boolean = false
+  showLegend: boolean = false,
+  baselineValue: number | undefined
 ): ChartConfiguration {
   const timeRange =
     x.length > 1 ? Math.abs(x[x.length - 1].getTime() - x[0].getTime()) : 0;
@@ -25,6 +27,32 @@ export function buildTimeChart(
       Array.isArray(dataset.data) ? (dataset.data as number[]) : []
     )
   );
+
+  const annotation =
+    typeof baselineValue === "number"
+      ? {
+          annotations: {
+            baseline: {
+              type: "line",
+              yMin: baselineValue,
+              yMax: baselineValue,
+              borderColor: "rgb(255, 99, 132)",
+              borderWidth: 2,
+              borderDash: [5, 5],
+              label: {
+                display: true,
+                content: `Threshold: ${baselineValue.toFixed(2)}`,
+                position: "end",
+                backgroundColor: "rgb(255, 99, 132)",
+                color: "white",
+                padding: 4,
+              },
+              drawTime: "afterDatasetsDraw",
+              z: 100,
+            },
+          },
+        }
+      : undefined;
 
   return {
     type: "line",
@@ -56,6 +84,9 @@ export function buildTimeChart(
           display: showLegend,
           position: "bottom",
         },
+
+        //@ts-ignore
+        annotation: annotation,
       },
       responsive: true,
       onResize: handleResize,
@@ -150,6 +181,7 @@ export function buildTimeChart(
 export function createTimeSeriesChart(
   x: Date[],
   y: number[],
+  baselineValue: number | undefined,
   label: string,
   y_label: string
 ): ChartConfiguration {
@@ -164,5 +196,5 @@ export function createTimeSeriesChart(
     },
   ];
 
-  return buildTimeChart(x, datasets, "Time", y_label, false);
+  return buildTimeChart(x, datasets, "Time", y_label, false, baselineValue);
 }

@@ -45,7 +45,7 @@
       <Pill key="Console" value= {alertConfig.dispatch_config.Console.enabled} textSize="text-sm"/>
     {/if}
   </div>
-  <div class="flex flex-row justify-end gap-2">
+  <div class="flex flex-row justify-start gap-2">
 
     <UpdateModal 
       config={config} 

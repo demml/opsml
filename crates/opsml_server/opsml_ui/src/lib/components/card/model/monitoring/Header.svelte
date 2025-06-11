@@ -64,9 +64,9 @@
 
 <div class="flex flex-row flex-wrap gap-4">
 
-  <div class="flex flex-col justify-center p-4 bg-white p-4 md:col-span-2 rounded-lg border-2 border-black shadow min-h-[160px]">
-    <div class="flex flex-row flex-wrap gap-2 items-center justify-center">
-      <div class="items-center text-lg mr-2 font-bold text-primary-800">Drift Type:</div>
+  <div class="flex flex-col justify-center p-2 bg-white md:col-span-2 rounded-lg border-2 border-black shadow min-h-[4rem]">
+    <div class="flex flex-row flex-wrap gap-2 items-center justify-start">
+      <div class="items-start mr-1 font-bold text-primary-800">Drift Type:</div>
         {#each availableDriftTypes as drift_type}
           {#if drift_type === currentDriftType}
             <button class="btn text-sm flex items-center gap-2 bg-slate-100 border-primary-800 border-2 rounded-lg">
@@ -90,8 +90,8 @@
         <Dropdown 
           bind:selectedValue={currentTimeInterval}
           values={timeIntervals}
-          width='w-48'
-          py="py-2"
+          width='w-[9rem]'
+          py="py-1"
         />
       </div>
 
@@ -103,8 +103,8 @@
         <Dropdown 
           bind:selectedValue={currentName}
           bind:values={currentNames}
-          width='w-48'
-          py="py-2"
+          width='w-[9rem]'
+          py="py-1"
         />
       </div>
     </div>
