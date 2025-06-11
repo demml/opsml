@@ -19,7 +19,6 @@ export class UiSettingsStore {
         userStore.jwt_token
       );
       const data = (await response.json()) as UiSettings;
-      console.log("UI Settings:", data);
       this.scouterEnabled = data.scouter_enabled;
       this.ssoEnabled = data.sso_enabled;
     }
