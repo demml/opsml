@@ -49,7 +49,7 @@
 
 
 </script>
-<div class="flex-1 mx-auto w-9/12 pt-20 pt-[100px] justify-center px-4 pb-10">
+<div class="flex-1 mx-auto w-9/12 pt-20 justify-center px-4 pb-10">
   <div class="gap-1 p-4 flex flex-col rounded-base border-primary-500 border-2 shadow-primary bg-surface-50  w-full h-auto">
 
     <div class="flex flex-row items-center gap-2 pb-2">

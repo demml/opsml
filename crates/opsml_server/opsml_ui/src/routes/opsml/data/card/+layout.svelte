@@ -38,7 +38,7 @@
 </script>
 
 <div class="h-screen flex flex-col">
-  <div class="flex-none pt-17 border-b-2 border-black bg-slate-100">
+  <div class="flex-none pt-16 pb-1 border-b-2 border-black bg-slate-100">
     <div class="flex flex-col mx-auto w-11/12 justify-start">
       <h1 class="flex flex-row flex-wrap items-center">
         <div class="group flex flex-none items-center">
@@ -51,6 +51,7 @@
       </h1>
 
       <div class="flex flex-row gap-x-4 text-black pl-4 h-8 mb-1 text-smd">
+
         <button class="flex items-center gap-x-2 border-b-3 {activeTab === 'home' ? 'border-secondary-500' : 'border-transparent'} hover:border-secondary-500 hover:border-b-3" onclick={() => navigateTab('home')}>
           <IdCard color="#8059b6"/>
           <span>Card</span>

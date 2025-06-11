@@ -57,22 +57,22 @@
   <Modal
   open={openState}
   onOpenChange={(e) => (openState = e.open)}
-  triggerBase="btn bg-primary-500 text-black shadow shadow-hover border-black border-2"
+  triggerBase="btn bg-primary-500 text-black shadow shadow-hover border-black border-2 text-sm"
   contentBase="card p-4 bg-slate-100 border-2 border-black shadow max-w-screen-xl w-[700px] max-h-[700px] overflow-auto"
   backdropClasses="backdrop-blur-sm"
   >
   {#snippet trigger()}Prompt Messages{/snippet}
   {#snippet content()}
-    <div class="flex flex-row pb-3 justify-between items-center pr-2">
-      <header class="text-xl font-bold text-primary-800">Messages</header> 
+    <div class="flex flex-row pb-2 justify-between items-center pr-2">
+      <header class="text-lg font-bold text-primary-800">Messages</header> 
     </div>
 
     <div class="flex flex-col gap-2">
       <div>
-        <div class="flex flex-row pb-3 justify-between items-center pr-2">
-          <header class="text-lg font-bold text-black">User Messages</header> 
+        <div class="flex flex-row pb-2 justify-between items-center pr-2">
+          <header class="font-bold text-black">User Messages</header> 
           <button 
-            class="btn bg-primary-500 text-black shadow shadow-hover border-black border-2" 
+            class="btn text-sm bg-primary-500 text-black shadow shadow-hover border-black border-2" 
             onclick={() => copyToClipboard(user_messages, 'user')} 
             disabled={!user_messages}
           >
@@ -80,7 +80,7 @@
           </button>
         </div>
         <div class="overflow-auto">
-          <div class="rounded-lg border-2 border-black overflow-y-scroll max-h-[200px]">
+          <div class="rounded-lg border-2 border-black overflow-y-scroll max-h-[200px] text-sm">
             <Highlight language={json} code={user_messages} let:highlighted>
               <LineNumbers {highlighted} hideBorder wrapLines />
             </Highlight>
@@ -89,10 +89,10 @@
       </div>
 
       <div>
-        <div class="flex flex-row pb-3 justify-between items-center pr-2">
-          <header class="text-lg font-bold text-black">System Messages</header> 
+        <div class="flex flex-row pb-2 justify-between items-center pr-2">
+          <header class="font-bold text-black">System Messages</header> 
           <button 
-            class="btn bg-primary-500 text-black shadow shadow-hover border-black border-2" 
+            class="btn text-sm bg-primary-500 text-black shadow shadow-hover border-black border-2" 
             onclick={() => copyToClipboard(system_messages, 'system')} 
             disabled={!system_messages}
           >
@@ -100,7 +100,7 @@
           </button>
         </div>
         <div class="overflow-auto">
-          <div class="rounded-lg border-2 border-black overflow-y-scroll max-h-[200px]">
+          <div class="rounded-lg border-2 border-black overflow-y-scroll max-h-[200px] text-sm">
             <Highlight language={json} code={system_messages} let:highlighted>
               <LineNumbers {highlighted} hideBorder wrapLines />
             </Highlight>
@@ -110,7 +110,7 @@
     </div>
 
     <footer class="flex justify-end gap-4 p-2">
-      <button type="button" class="btn bg-primary-500 text-black shadow shadow-hover border-black border-2" onclick={modalClose}>Close</button>   
+      <button type="button" class="btn text-sm bg-primary-500 text-black shadow shadow-hover border-black border-2" onclick={modalClose}>Close</button>   
     </footer>
   {/snippet}
   </Modal>
