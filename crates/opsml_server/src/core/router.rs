@@ -55,7 +55,6 @@ pub async fn create_router(app_state: Arc<AppState>) -> Result<Router> {
         .merge(run_routes)
         .merge(user_routes)
         .merge(scouter_routes)
-        .route_layer(middleware::from_fn(track_metrics))
         .route_layer(middleware::from_fn_with_state(
             // Audit middleware occurs last.
             //Audit middleware passes the request to the request handler
@@ -74,6 +73,7 @@ pub async fn create_router(app_state: Arc<AppState>) -> Result<Router> {
         .merge(settings_routes)
         .merge(auth_routes)
         .merge(ui_routes)
+        .route_layer(middleware::from_fn(track_metrics))
         .layer(cors)
         .with_state(app_state))
 }
