@@ -53,7 +53,7 @@
     </div>
       <div class="flex flex-col gap-2">
         <div>
-          <div class="rounded-lg border-2 border-black overflow-y-scroll max-h-[600px] text-sm">
+          <div class="rounded-lg border-2 border-black overflow-y-scroll max-h-[32rem] text-sm">
             <Highlight language={json} code={formatExtraBody(code)} let:highlighted>
               <LineNumbers {highlighted} hideBorder wrapLines />
             </Highlight>
