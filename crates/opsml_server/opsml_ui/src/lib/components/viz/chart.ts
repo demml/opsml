@@ -34,11 +34,11 @@ export function buildChart(
           enabled: true,
           titleColor: "rgb(0, 0, 0)",
           titleFont: {
-            size: 16,
+            size: 14,
           },
           bodyColor: "rgb(0, 0, 0)",
           bodyFont: {
-            size: 16,
+            size: 12,
           },
         },
         //@ts-ignore
@@ -63,7 +63,7 @@ export function buildChart(
           position: "bottom",
           labels: {
             font: {
-              size: 16, // Increase legend font size (in pixels)
+              size: 12, // Increase legend font size (in pixels)
             },
             color: "rgb(0, 0, 0)",
           },
@@ -92,14 +92,14 @@ export function buildChart(
             text: x_label,
             color: "rgb(0,0,0)",
             font: {
-              size: 16,
+              size: 14,
             },
           },
           ticks: {
             maxTicksLimit: 10,
             color: "rgb(0,0,0)",
             font: {
-              size: 14,
+              size: 12,
             },
           },
         },
@@ -109,14 +109,14 @@ export function buildChart(
             text: y_label,
             color: "rgb(0,0,0)",
             font: {
-              size: 16,
+              size: 14,
             },
           },
           ticks: {
             maxTicksLimit: 10,
             color: "rgb(0,0,0)",
             font: {
-              size: 14,
+              size: 12,
             },
           },
           border: {

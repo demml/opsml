@@ -92,14 +92,14 @@ export function buildTimeChart(
             text: x_label,
             color: "rgb(0,0,0)", // gray-600
             font: {
-              size: 16,
+              size: 14,
             },
           },
           ticks: {
             maxTicksLimit: isMultiDay ? 12 : 25,
             color: "rgb(0,0,0)", // gray-600
             font: {
-              size: 14,
+              size: 12,
             },
             callback: function (value) {
               const date = new Date(value);
@@ -117,14 +117,14 @@ export function buildTimeChart(
             text: y_label,
             color: "rgb(0,0,0)", // gray-600
             font: {
-              size: 16,
+              size: 14,
             },
           },
           ticks: {
             maxTicksLimit: 10,
             color: "rgb(0,0,0)", // gray-600
             font: {
-              size: 14,
+              size: 12,
             },
           },
           border: {

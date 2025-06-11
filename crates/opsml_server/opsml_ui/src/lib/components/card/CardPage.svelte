@@ -33,30 +33,33 @@
   </script>
   
   <button class="w-full max-w-96 h-auto p-2 text-black rounded-lg shadow border-2 border-black {bgColor} hover:translate-x-[4px] hover:translate-y-[4px] hover:shadow-none overflow-scroll" onclick={navigateToCardPage}>
-    <div class="flex items-center justify-start gap-2">
-      <div class="ml-2">
+    <div class="flex items-center justify-start gap-2 text-smd">
+      <div class="ml-1">
         <CircuitBoard color="#5948a3" />
       </div>
       <div><h4 class="truncate font-bold text-smd">{space}/{name}</h4></div>
     </div>
  
     <div class="flex items-center justify-start gap-2 overflow-hidden whitespace-nowrap text-xs mb-1">
-      <div class="ml-2">
+      
+      <div class="ml-1">
         <Clock color="#5948a3" />
       </div>
+
       <div>
         <time datetime={ Date() } >
           Last updated { calculateTimeBetween(updated_at) }
         </time>
       </div>
-    </div>
 
-    <div class="flex items-center justify-start gap-2 overflow-hidden whitespace-nowrap text-xs">
-      <div class="ml-2">
+      <div class="ml-1">
         <Tag color="#5948a3" />
       </div>
       <div class="text-black">{nbr_versions} versions</div>
+
     </div>
+
+   
   </button>
   
   
