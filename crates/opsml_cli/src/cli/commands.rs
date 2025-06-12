@@ -126,6 +126,8 @@ pub enum Commands {
         #[command(subcommand)]
         command: UiCommands,
     },
+
+    Demo,
 }
 
 #[derive(Subcommand)]

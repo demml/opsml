@@ -66,6 +66,9 @@ pub enum CliError {
 
     #[error(transparent)]
     CardError(#[from] CardError),
+
+    #[error("Failed to run opsml demo")]
+    FailedToRunDemo,
 }
 
 impl From<CliError> for PyErr {

@@ -6,6 +6,7 @@ use crate::actions::{download_card, list_cards};
 use crate::cli::{Cli, Commands, GenerateCommands, GetCommands, InstallCommands, ListCommands};
 use actions::download::download_deck;
 pub use actions::{
+    demo::run_python_code,
     generate_key,
     lock::install_app,
     ui::{start_ui, stop_ui},
@@ -119,6 +120,11 @@ pub fn run_cli(args: Vec<String>) -> anyhow::Result<()> {
                 Ok(())
             }
         },
+        Some(Commands::Demo) => {
+            println!("Running demo...");
+            run_python_code().context("Failed to run demo")?;
+            Ok(())
+        }
 
         None => {
             println!("No command provided");
