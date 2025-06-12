@@ -53,15 +53,17 @@ impl BaseArgs {
         let config_value = Self::get_config_value(key, registry_type)?;
 
         // exception for experiment card. If not name provided, default to random name
-        if key == "name" && value.is_none() && config_value.is_none() {
-            if registry_type == &RegistryType::Experiment {
-                let name = value.map(String::from).unwrap_or_else(|| {
-                    let mut generator = Generator::default();
-                    generator.next().unwrap_or_else(|| "experiment".to_string())
-                });
+        if key == "name"
+            && value.is_none()
+            && config_value.is_none()
+            && registry_type == &RegistryType::Experiment
+        {
+            let name = value.map(String::from).unwrap_or_else(|| {
+                let mut generator = Generator::default();
+                generator.next().unwrap_or_else(|| "experiment".to_string())
+            });
 
-                return Ok(name);
-            }
+            return Ok(name);
         }
 
         Ok(value
