@@ -121,11 +121,13 @@ pub enum Commands {
         command: ScouterCommands,
     },
 
-    /// Start commands for Opsml. Current use case is for start a local UI
-    Start {
+    /// Start commands for Opsml
+    Ui {
         #[command(subcommand)]
-        command: StartCommands,
+        command: UiCommands,
     },
+
+    Demo,
 }
 
 #[derive(Subcommand)]
@@ -174,12 +176,18 @@ pub enum ScouterCommands {
 }
 
 #[derive(Subcommand)]
-pub enum StartCommands {
+pub enum UiCommands {
     /// Start a local OpsML UI
     ///
     /// # Example
     /// opsml start ui
-    Ui(UiArgs),
+    Start(UiArgs),
+
+    /// Stop the currently running OpsML UI
+    ///
+    /// # Example
+    /// opsml stop ui
+    Stop,
 }
 
 pub const LOGO_TEXT: &str = "

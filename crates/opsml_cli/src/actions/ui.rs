@@ -1,14 +1,27 @@
 use crate::error::UiError;
 use anyhow::Result;
 use reqwest;
+use std::process::Child;
 use std::{
     env, fs,
     path::{Path, PathBuf},
     process::Command,
 };
+use sysinfo::{Pid, System};
 
 const GITHUB_REPO: &str = "demml/opsml";
 const CACHE_DIR: &str = ".opsml-cache";
+const PID_FILE: &str = "opsml-server.pid";
+
+pub fn save_process_id(process: &Child) -> Result<(), UiError> {
+    let pid_path = get_pid_file_path()?;
+    fs::write(&pid_path, process.id().to_string()).map_err(UiError::ProcessIdWriteError)
+}
+
+fn get_pid_file_path() -> Result<PathBuf, UiError> {
+    let cache_dir = get_cache_dir()?;
+    Ok(cache_dir.join(PID_FILE))
+}
 
 #[derive(Debug)]
 pub enum Platform {
@@ -38,6 +51,31 @@ pub fn start_ui(version: &str, artifact_url: Option<String>) -> Result<(), UiErr
     }
 
     execute_binary(&binary_path)?;
+    Ok(())
+}
+
+pub fn stop_ui() -> Result<(), UiError> {
+    let pid_path = get_pid_file_path()?;
+
+    if !pid_path.exists() {
+        return Err(UiError::NoRunningServer);
+    }
+
+    let pid_str = fs::read_to_string(&pid_path).map_err(UiError::ProcessIdReadError)?;
+
+    let pid: usize = pid_str
+        .trim()
+        .parse()
+        .map_err(UiError::ProcessIdParseError)?;
+
+    let s = System::new_all();
+    if let Some(process) = s.process(Pid::from(pid)) {
+        println!("Stopping OpsML UI server (PID: {})", pid);
+        process
+            .kill_and_wait()
+            .map_err(|_| UiError::ProcessKillError(format!("{}", pid)))?;
+    }
+
     Ok(())
 }
 
@@ -166,16 +204,16 @@ fn download_binary(
 /// # Errors
 /// * `UiError::BinaryExecutionError` - If the binary execution fails
 fn execute_binary(binary_path: &Path) -> Result<(), UiError> {
-    let mut child_process = Command::new(binary_path)
+    let child_process = Command::new(binary_path)
         .spawn()
         .map_err(UiError::BinarySpawnError)?;
 
-    // Wait for the process to finish
-    let status = child_process.wait().map_err(UiError::BinaryWaitError)?;
+    // Save the process ID
+    save_process_id(&child_process)?;
 
-    if !status.success() {
-        return Err(UiError::BinaryStartError);
-    }
+    let id = child_process.id();
+
+    println!("Started opsml-ui server (PID: {})", id);
 
     Ok(())
 }
