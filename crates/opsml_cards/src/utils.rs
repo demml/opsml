@@ -1,9 +1,9 @@
+use crate::error::CardError;
+use names::Generator;
 use opsml_state::{app_state, StateError};
 use opsml_types::error::TypeError;
 use opsml_types::{CommonKwargs, RegistryType};
 use opsml_utils::{clean_string, validate_name_space_pattern};
-
-use crate::error::CardError;
 
 pub type BaseArgsResult = (String, String, String, String);
 
@@ -51,6 +51,20 @@ impl BaseArgs {
         registry_type: &RegistryType,
     ) -> Result<String, CardError> {
         let config_value = Self::get_config_value(key, registry_type)?;
+
+        // exception for experiment card. If not name provided, default to random name
+        if key == "name"
+            && value.is_none()
+            && config_value.is_none()
+            && registry_type == &RegistryType::Experiment
+        {
+            let name = value.map(String::from).unwrap_or_else(|| {
+                let mut generator = Generator::default();
+                generator.next().unwrap_or_else(|| "experiment".to_string())
+            });
+
+            return Ok(name);
+        }
 
         Ok(value
             .as_ref()
