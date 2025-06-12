@@ -3915,6 +3915,7 @@ dependencies = [
  "reqwest",
  "scouter-client",
  "serde",
+ "sysinfo",
  "tabled",
  "tar",
  "tempfile",
