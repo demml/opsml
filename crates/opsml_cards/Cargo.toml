@@ -9,6 +9,7 @@ doctest = false
 
 [dependencies]
 chrono = { workspace = true }
+names = { workspace = true }
 opsml-colors = { workspace = true }
 opsml-crypt = { workspace = true }
 opsml-interfaces = { workspace = true }

@@ -1,7 +1,7 @@
 use crate::error::ExperimentError;
 use crate::HardwareQueue;
 use chrono::{DateTime, Utc};
-use names::Generator;
+
 use opsml_cards::ExperimentCard;
 use opsml_crypt::{decrypt_directory, encrypt_directory};
 use opsml_registry::base::OpsmlRegistry;
@@ -181,13 +181,8 @@ impl Experiment {
         registries: &mut CardRegistries,
         subexperiment: bool,
     ) -> Result<(Bound<'py, PyAny>, String), ExperimentError> {
-        let name = name.map(String::from).unwrap_or_else(|| {
-            let mut generator = Generator::default();
-            generator.next().unwrap_or_else(|| "experiment".to_string())
-        });
-
         debug!("Initializing experiment");
-        let experiment = Self::initialize_experiment(py, space, Some(&name), subexperiment)?;
+        let experiment = Self::initialize_experiment(py, space, name, subexperiment)?;
 
         debug!("Registering experiment");
         let uid = Self::register_experiment(&experiment, registries)?;
