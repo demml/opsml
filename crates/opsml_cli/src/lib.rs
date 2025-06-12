@@ -5,11 +5,17 @@ pub mod error;
 use crate::actions::{download_card, list_cards};
 use crate::cli::{Cli, Commands, GenerateCommands, GetCommands, InstallCommands, ListCommands};
 use actions::download::download_deck;
-pub use actions::{generate_key, lock::install_app, start_ui, update_drift_profile_status};
+pub use actions::{
+    demo::run_python_code,
+    generate_key,
+    lock::install_app,
+    ui::{start_ui, stop_ui},
+    update_drift_profile_status,
+};
 use anyhow::Context;
 use clap::Parser;
 pub use cli::arg::ScouterArgs;
-use cli::commands::{ScouterCommands, StartCommands};
+use cli::commands::{ScouterCommands, UiCommands};
 use opsml_colors::Colorize;
 use opsml_types::RegistryType;
 
@@ -99,16 +105,26 @@ pub fn run_cli(args: Vec<String>) -> anyhow::Result<()> {
             }
         },
 
-        Some(Commands::Start { command }) => match command {
+        Some(Commands::Ui { command }) => match command {
             // Start commands can be added here
-            StartCommands::Ui(args) => {
+            UiCommands::Start(args) => {
                 println!("Starting opsml-ui...");
                 let default_version = opsml_version::version();
                 let version = args.version.as_deref().unwrap_or_else(|| &default_version);
                 start_ui(version, None).context("Failed to start opsml-ui")?;
                 Ok(())
             }
+            UiCommands::Stop => {
+                println!("Stopping opsml-ui...");
+                stop_ui().context("Failed to stop opsml-ui")?;
+                Ok(())
+            }
         },
+        Some(Commands::Demo) => {
+            println!("Running demo...");
+            run_python_code().context("Failed to run demo")?;
+            Ok(())
+        }
 
         None => {
             println!("No command provided");

@@ -66,6 +66,9 @@ pub enum CliError {
 
     #[error(transparent)]
     CardError(#[from] CardError),
+
+    #[error("Failed to run opsml demo")]
+    FailedToRunDemo,
 }
 
 impl From<CliError> for PyErr {
@@ -131,4 +134,28 @@ pub enum UiError {
 
     #[error("Could not extract UI archive due to unsupported platform")]
     UnsupportedPlatformExtractionError,
+
+    #[error("No running OpsML server found")]
+    NoRunningServer,
+
+    #[error("Failed to read process ID from file")]
+    ProcessIdReadError(#[source] std::io::Error),
+
+    #[error("Failed to parse process ID from file")]
+    ProcessIdParseError(#[source] std::num::ParseIntError),
+
+    #[error("Failed to write process ID to file")]
+    ProcessIdWriteError(#[source] std::io::Error),
+
+    #[error("Failed to kill process: {0}")]
+    ProcessKillError(String),
+
+    #[error("Python executable not found")]
+    PythonNotFound,
+
+    #[error("Failed to execute script")]
+    ScriptExecutionError,
+
+    #[error("Script execution failed with status code: {0:?}")]
+    ScriptFailedWithStatus(Option<i32>),
 }
