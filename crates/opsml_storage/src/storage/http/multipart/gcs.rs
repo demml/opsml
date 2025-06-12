@@ -2,7 +2,6 @@
 
 use crate::storage::http::multipart::error::MultiPartError;
 
-use indicatif::ProgressBar;
 use opsml_client::OpsmlApiClient;
 use opsml_types::contracts::UploadPartArgs;
 use reqwest::header::{CONTENT_LENGTH, CONTENT_RANGE};
@@ -139,7 +138,6 @@ impl GcsMultipartUpload {
         chunk_count: u64,
         size_of_last_chunk: u64,
         chunk_size: u64,
-        progress_bar: &ProgressBar,
     ) -> Result<(), MultiPartError> {
         let mut upload_complete = false;
         for chunk_index in 0..chunk_count {
@@ -162,7 +160,6 @@ impl GcsMultipartUpload {
                 match self.upload_next_chunk(&upload_args) {
                     Ok(is_complete) => {
                         upload_complete = is_complete;
-                        progress_bar.inc(1);
 
                         break;
                     }
@@ -211,8 +208,6 @@ impl GcsMultipartUpload {
                 }
             }
         }
-
-        progress_bar.finish_with_message("Upload complete");
 
         Ok(())
     }

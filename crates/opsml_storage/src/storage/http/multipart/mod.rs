@@ -7,7 +7,6 @@ use crate::storage::http::multipart::error::MultiPartError;
 pub use aws::S3MultipartUpload;
 pub use azure::AzureMultipartUpload;
 pub use gcs::GcsMultipartUpload;
-use indicatif::ProgressBar;
 pub use local::LocalMultipartUpload;
 use opsml_client::OpsmlApiClient;
 use opsml_types::StorageType;
@@ -45,27 +44,21 @@ impl MultiPartUploader {
         }
     }
 
-    pub fn upload_file_in_chunks(
-        &mut self,
-        chunk_parts: ChunkParts,
-        progress_bar: &ProgressBar,
-    ) -> Result<(), MultiPartError> {
+    pub fn upload_file_in_chunks(&mut self, chunk_parts: ChunkParts) -> Result<(), MultiPartError> {
         match self {
             MultiPartUploader::S3(s3) => {
-                Ok(s3.upload_file_in_chunks(chunk_parts.chunk_size as usize, progress_bar)?)
+                Ok(s3.upload_file_in_chunks(chunk_parts.chunk_size as usize)?)
             }
             MultiPartUploader::Gcs(gcs) => Ok(gcs.upload_file_in_chunks(
                 chunk_parts.chunk_count,
                 chunk_parts.size_of_last_chunk,
                 chunk_parts.chunk_size,
-                progress_bar,
             )?),
-            MultiPartUploader::Local(local) => local.upload_file_in_chunks(progress_bar),
+            MultiPartUploader::Local(local) => local.upload_file_in_chunks(),
             MultiPartUploader::Azure(azure) => azure.upload_file_in_chunks(
                 chunk_parts.chunk_count,
                 chunk_parts.size_of_last_chunk,
                 chunk_parts.chunk_size,
-                progress_bar,
             ),
         }
     }
