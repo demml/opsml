@@ -4209,7 +4209,6 @@ dependencies = [
  "futures-util",
  "gcloud-auth",
  "gcloud-storage",
- "indicatif",
  "mockall",
  "mockito",
  "opsml-client",

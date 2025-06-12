@@ -67,7 +67,6 @@ gcloud-auth = { version = "1.*" }
 headers = { version = "0.*" }
 hmac = "0.*"
 hkdf = "0.*"
-indicatif = "0.*"
 jsonwebtoken = "9.*"
 metrics = { version = "0.*", default-features = false }
 metrics-exporter-prometheus = { version = "0.*", default-features = false }

@@ -1,6 +1,5 @@
 use crate::storage::http::multipart::error::MultiPartError;
 use bytes::Bytes;
-use indicatif::ProgressBar;
 use opsml_client::OpsmlApiClient;
 use opsml_types::contracts::{
     CompleteMultipartUpload, CompletedUploadPart, CompletedUploadParts, MultipartCompleteParts,
@@ -72,11 +71,7 @@ impl S3MultipartUpload {
         )?)
     }
 
-    pub fn upload_file_in_chunks(
-        &mut self,
-        chunk_size: usize,
-        progress_bar: &ProgressBar,
-    ) -> Result<(), MultiPartError> {
+    pub fn upload_file_in_chunks(&mut self, chunk_size: usize) -> Result<(), MultiPartError> {
         let mut buffer = vec![0; chunk_size];
         let mut part_number = 1;
         const MAX_RETRIES: u32 = 3;
@@ -94,7 +89,6 @@ impl S3MultipartUpload {
             while retry_count < MAX_RETRIES {
                 match self.upload_part(part_number, chunk.clone()) {
                     Ok(()) => {
-                        progress_bar.inc(1);
                         tracing::debug!("Uploaded part {} successfully", part_number);
                         break; // Exit retry loop on success
                     }
@@ -119,7 +113,6 @@ impl S3MultipartUpload {
             part_number += 1;
         }
 
-        progress_bar.finish_with_message("Upload complete");
         self.complete_upload()?;
 
         Ok(())
