@@ -3870,6 +3870,7 @@ name = "opsml-cards"
 version = "3.0.0-rc.4"
 dependencies = [
  "chrono",
+ "names",
  "opsml-colors",
  "opsml-crypt",
  "opsml-interfaces",
@@ -3993,7 +3994,6 @@ name = "opsml-experiment"
 version = "3.0.0-rc.4"
 dependencies = [
  "chrono",
- "names",
  "opsml-cards",
  "opsml-crypt",
  "opsml-registry",
