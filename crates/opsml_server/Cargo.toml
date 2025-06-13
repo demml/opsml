@@ -29,6 +29,7 @@ headers = { workspace = true }
 metrics = { workspace = true }
 metrics-exporter-prometheus = { workspace = true }
 mime_guess = { workspace = true }
+mimalloc = { workspace = true }
 password-auth = { workspace = true }
 rand = { workspace = true }
 reqwest = { workspace = true }

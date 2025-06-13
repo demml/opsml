@@ -6,6 +6,12 @@ use crate::core::middleware::metrics::metrics_app;
 use crate::core::shutdown::shutdown_metric_signal;
 use anyhow::Context;
 use opsml_server::start_server;
+
+use mimalloc::MiMalloc;
+
+#[global_allocator]
+static GLOBAL: MiMalloc = MiMalloc;
+
 /// Start the metrics server for prometheus
 async fn start_metrics_server() -> Result<(), anyhow::Error> {
     let app = metrics_app().with_context(|| "Failed to setup metrics app")?;
