@@ -3,7 +3,6 @@ use crate::storage::base::PathExt;
 use crate::storage::error::StorageError;
 use crate::storage::http::base::HttpStorageClient;
 use crate::storage::utils::get_chunk_parts;
-use indicatif::{MultiProgress, ProgressBar, ProgressStyle};
 use opsml_client::OpsmlApiClient;
 use opsml_types::contracts::FileInfo;
 use opsml_types::StorageType;
@@ -85,12 +84,6 @@ impl HttpFSStorageClient {
         let lpath_clone = lpath.to_path_buf();
         let rpath_clone = rpath.to_path_buf();
 
-        // Create progress style
-        let style = ProgressStyle::default_bar()
-                .template("{spinner:.green} [{elapsed_precise}] [{bar:40.green/bright_green}] {pos}/{len} chunks ({eta_precise} remaining) {msg}")
-                .unwrap()
-                .progress_chars("█▉▊▋▌▍▎▏  ");
-
         debug!(
             "lpath: {:?}, rpath: {:?} recursive: {:?}",
             lpath_clone, rpath_clone, recursive
@@ -103,21 +96,10 @@ impl HttpFSStorageClient {
 
             let files: Vec<PathBuf> = get_files(lpath)?;
 
-            // Create multi-progress bar
-            let multi_progress = MultiProgress::new();
-
             files.into_par_iter().try_for_each(|file| {
                 let chunk_parts = get_chunk_parts(&file)?;
                 let relative_path = file.relative_path(&lpath_clone)?;
                 let remote_path = rpath_clone.join(relative_path);
-
-                // Create individual progress bar for this file
-                let progress_bar = multi_progress.add(ProgressBar::new(chunk_parts.chunk_count));
-                progress_bar.set_style(style.clone());
-                progress_bar.set_message(format!(
-                    "Uploading {}",
-                    file.file_name().unwrap_or_default().to_string_lossy()
-                ));
 
                 debug!("remote_path: {:?}, stripped_path: {:?}", remote_path, file);
 
@@ -125,25 +107,15 @@ impl HttpFSStorageClient {
                 let mut uploader = self.client.create_multipart_uploader(&remote_path, &file)?;
 
                 debug!("Uploading file: {:?}", file);
-                uploader.upload_file_in_chunks(chunk_parts, &progress_bar)?;
+                uploader.upload_file_in_chunks(chunk_parts)?;
 
-                // Clean up the progress bar
-                progress_bar.finish_and_clear();
                 Ok::<(), StorageError>(())
             })?;
-
-            multi_progress.clear()?;
         } else {
             let chunk_parts = get_chunk_parts(&lpath_clone)?;
-            let progress_bar = ProgressBar::new(chunk_parts.chunk_count);
-            progress_bar.set_style(style.clone());
-            progress_bar.set_message(format!(
-                "Uploading {}",
-                lpath.file_name().unwrap_or_default().to_string_lossy()
-            ));
 
             let mut uploader = self.client.create_multipart_uploader(rpath, lpath)?;
-            uploader.upload_file_in_chunks(chunk_parts, &progress_bar)?;
+            uploader.upload_file_in_chunks(chunk_parts)?;
         }
 
         Ok(())

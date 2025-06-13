@@ -9,7 +9,7 @@ default-members = [
 ]
 
 [workspace.package]
-version = "3.0.0-rc.4"
+version = "3.0.0-rc.5"
 authors = ["Steven Forrester <sjforrester32@gmail.com>"]
 edition = "2021"
 license = "MIT"
@@ -67,7 +67,6 @@ gcloud-auth = { version = "1.*" }
 headers = { version = "0.*" }
 hmac = "0.*"
 hkdf = "0.*"
-indicatif = "0.*"
 jsonwebtoken = "9.*"
 metrics = { version = "0.*", default-features = false }
 metrics-exporter-prometheus = { version = "0.*", default-features = false }
