@@ -71,6 +71,7 @@ jsonwebtoken = "9.*"
 metrics = { version = "0.*", default-features = false }
 metrics-exporter-prometheus = { version = "0.*", default-features = false }
 mime_guess = "2.*"
+mimalloc = { version = "*", features = ["secure"] }
 mockall = "0.*"
 mockito = "1.*"
 names = "0.*"
