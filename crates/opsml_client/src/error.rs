@@ -6,7 +6,7 @@ pub enum ApiClientError {
     #[error("Failed to create headers for opsml client")]
     CreateHeaderError(#[from] reqwest::header::InvalidHeaderValue),
 
-    #[error("Failed to create opsml client")]
+    #[error("Failed to create opsml client: {0}")]
     CreateClientError(#[source] reqwest::Error),
 
     #[error("Request failed: {0}")]
@@ -45,7 +45,7 @@ pub enum RegistryError {
     #[error(transparent)]
     ApiClientError(#[from] ApiClientError),
 
-    #[error("Request failed")]
+    #[error("Request failed: {0}")]
     RequestError(#[from] reqwest::Error),
 
     #[error("Failed to get create card")]

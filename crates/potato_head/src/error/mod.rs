@@ -61,13 +61,13 @@ pub enum AgentError {
     #[error("Failed to create header name for the agent client")]
     CreateHeaderNameError(#[from] reqwest::header::InvalidHeaderName),
 
-    #[error("Failed to create agent client")]
+    #[error("Failed to create agent client: {0}")]
     CreateClientError(#[source] reqwest::Error),
 
-    #[error("Request failed")]
+    #[error("Request failed: {0}")]
     RequestError(#[from] reqwest::Error),
 
-    #[error("Failed to serialize chat request")]
+    #[error("Failed to serialize chat request: {0}")]
     SerializationError(#[from] serde_json::Error),
 
     #[error("Failed to get chat completion response: {0} with status code {1}")]
@@ -79,7 +79,7 @@ pub enum AgentError {
     #[error("Failed to get environment variable: {0}")]
     EnvVarError(#[from] std::env::VarError),
 
-    #[error("Failed to retrieve OPENAI_API_KEY from the environment")]
+    #[error("Failed to retrieve OPENAI_API_KEY from the environment: {0}")]
     MissingOpenAIApiKeyError(#[source] std::env::VarError),
 
     #[error("Failed to extract client: {0}")]
