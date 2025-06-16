@@ -444,6 +444,7 @@ impl CardRegistry {
     /// General method used to upload artifacts to independent services depending on registry type
     /// For example, if registering a modelcard with a drift profile, we will need to register and upload
     /// the drift profile to the scouter service
+    #[instrument(skip_all)]
     fn upload_integration_artifacts(
         registry: &OpsmlRegistry,
         registry_type: &RegistryType,
@@ -481,6 +482,7 @@ impl CardRegistry {
     ///
     /// # Returns
     /// * `Result<(), RegistryError>` - Result
+    #[instrument(skip_all)]
     fn upload_scouter_artifacts(
         registry: &OpsmlRegistry,
         card: &Bound<'_, PyAny>,
