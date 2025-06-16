@@ -17,6 +17,7 @@ use serde_json::Value;
 use std::collections::HashMap;
 use std::path::Path;
 use std::path::PathBuf;
+use tracing::debug;
 use tracing::instrument;
 
 #[pyclass]
@@ -395,6 +396,8 @@ impl DataInterface {
             DataType::Arrow => Some(&scouter_client::DataType::Arrow),
             _ => Err(DataInterfaceError::DataTypeNotSupportedForProfilingError)?,
         };
+
+        debug!("Creating data profile with data type: {:?}", data_type);
 
         let profile = profiler.create_data_profile(
             py,
