@@ -323,6 +323,7 @@ impl OpsmlRegistry {
     ///
     /// # Returns
     /// * `Result<bool, RegistryError>` - Ok if the service is healthy, Err if there was an error
+    #[instrument(skip_all)]
     pub fn check_service_health(&self, service: IntegratedService) -> Result<bool, RegistryError> {
         match self {
             Self::ClientRegistry(client_registry) => {
