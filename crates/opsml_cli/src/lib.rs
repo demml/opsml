@@ -86,7 +86,8 @@ pub fn run_cli(args: Vec<String>) -> anyhow::Result<()> {
             Ok(())
         }
         Some(Commands::Lock) => {
-            println!("opsml-cli lock");
+            println!("Locking project...");
+            lock_project(None, None).context("Failed to lock project")?;
             Ok(())
         }
 
