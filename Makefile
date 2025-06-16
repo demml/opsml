@@ -126,3 +126,10 @@ ui.dev:
 
 populate.cards:
 	cd $(PY_DIR) && uv run python -m dev.populate_cards
+
+
+.PHONY: changelog
+prepend.changelog:
+	# get version from Cargo.toml
+	@VERSION=$(shell grep '^version =' Cargo.toml | cut -d '"' -f 2) && \
+	git cliff --unreleased --tag $$VERSION --prepend CHANGELOG.md
