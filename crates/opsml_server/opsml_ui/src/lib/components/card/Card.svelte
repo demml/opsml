@@ -53,7 +53,7 @@
   
     </div>
   </div>
-  <div class="flex items-center justify-start gap-2 overflow-auto whitespace-nowrap text-xs">
+  <div class="flex items-center justify-start gap-2 whitespace-nowrap text-xs">
     <div class="flex items-center gap-1 ">
       <div class="ml-2">
         <Clock color={iconColor} />
