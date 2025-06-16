@@ -4017,9 +4017,11 @@ dependencies = [
  "serde",
  "serde_json",
  "sysinfo",
+ "tempfile",
  "thiserror 2.0.12",
  "tokio",
  "tracing",
+ "walkdir",
 ]
 
 [[package]]

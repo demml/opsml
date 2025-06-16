@@ -9,7 +9,7 @@ pub enum ApiClientError {
     #[error("Failed to create opsml client")]
     CreateClientError(#[source] reqwest::Error),
 
-    #[error("Request failed")]
+    #[error("Request failed: {0}")]
     RequestError(#[from] reqwest::Error),
 
     #[error("Unauthorized")]
