@@ -37,21 +37,22 @@ pip install pandas scikit-learn
 ```
 
 ???warning Note
-    This is intended for demo purposes only. When you you are ready to use OpsML in a production environment, take a look at the [Server Setup](./setup.md) section to learn how to setup the server and connect to it from your client.
+    This is intended for demo purposes only. When you you are ready to use OpsML in a production environment, take a look at the [Server Setup](./docs/setup/overview.md) section to learn how to setup the server and connect to it from your client.
    
 
 Run the following CLI commands from within your python environment to make sure everything is working as expected.
 
 **Note**: This will create a new SQLite database in the current directory.
 
+This command will create a local cache, pull the latest version of the UI from the OpsML repository and run the server. The server is written entirely in Rust and is exposed as a SvelteKit SPA and does not come prepackaged with OpsML.
+
 ```bash
-opsml run demo
+opsml ui start
 ```
 
 This will create a new SQLite database in the current directory and populate it with a few Cards. You can then visualize the Cards in the UI by running the following command:
 
 ```bash
-opsml start ui
+opsml demo
 ```
 
-This command will create a local cache, pull the latest version of the UI from the OpsML repository and run the server. The server is written entirely in Rust and is exposed as a SvelteKit SPA and does not come prepacked with OpsML.

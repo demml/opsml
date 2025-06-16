@@ -87,6 +87,7 @@ nav:
       - Data: "docs/api/data.md"
       - PotatoHead: "docs/api/potato_head.md"
       - Types: "docs/api/types.md"
+      - Logging: "docs/api/logging.md"
       - Scouter:
           - Alert: "docs/api/scouter/alert.md"
           - Client: "docs/api/scouter/client.md"

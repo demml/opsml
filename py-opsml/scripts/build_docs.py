@@ -1,7 +1,7 @@
 import os
 import shutil
 
-BASE_DIR = os.path.join(os.path.dirname(__file__), "../python/scouter")
+BASE_DIR = os.path.join(os.path.dirname(__file__), "../python/opsml")
 FOLDERS = ["data", "experiment", "logging", "model", "potato_head", "scouter", "types"]
 SCOUTER_SUBFOLDERS = ["alert", "client", "drift", "profile", "queue", "types"]
 
@@ -16,18 +16,14 @@ def copy_pyi(folder_path, name):
         print(f"Skipped {name}: {src} does not exist")
 
 
-def process_folder(folder, subfolders=None):
+def process_folder(folder):
     folder_path = os.path.join(BASE_DIR, folder)
-    if subfolders:
-        for sub in subfolders:
-            process_folder(os.path.join(folder, sub))
-    else:
-        name = os.path.basename(folder)
-        copy_pyi(folder_path, name)
+    copy_pyi(folder_path, os.path.basename(folder))
 
 
 for folder in FOLDERS:
     if folder == "scouter":
-        process_folder(folder, SCOUTER_SUBFOLDERS)
+        for subfolder in SCOUTER_SUBFOLDERS:
+            process_folder(os.path.join(folder, subfolder))
     else:
         process_folder(folder)
