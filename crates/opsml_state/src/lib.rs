@@ -9,7 +9,7 @@ use std::sync::Arc;
 use std::sync::OnceLock;
 use std::sync::RwLock;
 use tokio::runtime::Runtime;
-use tracing::debug;
+use tracing::{debug, warn};
 
 pub struct OpsmlState {
     pub config: RwLock<OpsmlConfig>,
@@ -40,7 +40,7 @@ impl OpsmlState {
         let tools = match PyProjectToml::load(Some(path), None) {
             Ok(toml) => toml.get_tools(),
             Err(e) => {
-                debug!("Failed to load pyproject.toml, defaulting to None: {}", e);
+                warn!("Failed to load pyproject.toml, defaulting to None: {}", e);
                 None
             }
         };
