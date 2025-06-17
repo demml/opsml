@@ -9,7 +9,7 @@ use std::sync::Arc;
 use std::sync::OnceLock;
 use std::sync::RwLock;
 use tokio::runtime::Runtime;
-use tracing::{debug, warn};
+use tracing::debug;
 
 pub struct OpsmlState {
     pub config: RwLock<OpsmlConfig>,
