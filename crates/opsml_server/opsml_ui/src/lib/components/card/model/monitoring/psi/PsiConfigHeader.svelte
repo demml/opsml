@@ -23,7 +23,11 @@
   <div class="flex flex-row gap-2">
     <div class="items-center mr-2 font-bold text-primary-800">Config:</div>
     <Pill key="Schedule" value={alertConfig.schedule} textSize="text-sm"/>
-    <Pill key="Psi Threshold" value={alertConfig.psi_threshold} textSize="text-sm"/>
+
+    {#if alertConfig.threshold}
+      <Pill key="Psi Threshold" value={alertConfig.threshold} textSize="text-sm"/>
+    {/if}
+    
   </div>
 
   <div class="flex flex-row gap-2">

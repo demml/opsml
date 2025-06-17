@@ -20,7 +20,8 @@ export const customConfigSchema = z.object({
 
 export const psiConfigSchema = z.object({
   schedule: z.string().default("0 0 0 * * *"),
-  psi_threshold: z.coerce.number(),
+  psi_threshold_value: z.coerce.number(),
+  psi_threshold_type: z.string(),
   features_to_monitor: z.array(z.string()).default([]),
 });
 
@@ -79,7 +80,8 @@ export type CustomConfigParams = {
 
 export type PsiConfigParams = {
   schedule: string;
-  psi_threshold: number;
+  psi_threshold_value: number;
+  psi_threshold_type: string;
   dispatch_config: AlertDispatchConfig;
   features_to_monitor: string[];
 };
@@ -110,9 +112,27 @@ export function getConfigParams(config: DriftConfigType): ConfigParams {
   }
 
   if (isPsiConfig(config)) {
+    const threshold = config.alert_config.threshold;
+    let psi_threshold_type: string;
+    let psi_threshold_value: number;
+
+    if ("Normal" in threshold) {
+      psi_threshold_type = "Normal";
+      psi_threshold_value = threshold.Normal.alpha;
+    } else if ("ChiSquare" in threshold) {
+      psi_threshold_type = "ChiSquare";
+      psi_threshold_value = threshold.ChiSquare.alpha;
+    } else if ("Fixed" in threshold) {
+      psi_threshold_type = "Fixed";
+      psi_threshold_value = threshold.Fixed.threshold;
+    } else {
+      throw new Error("Unknown PSI threshold type");
+    }
+
     return {
       schedule: config.alert_config.schedule,
-      psi_threshold: config.alert_config.psi_threshold,
+      psi_threshold_value,
+      psi_threshold_type,
       dispatch_config: config.alert_config.dispatch_config,
       features_to_monitor: config.alert_config.features_to_monitor,
     };
@@ -275,13 +295,15 @@ export function validateCustomConfig(
 
 export function validatePsiConfig(
   schedule: string,
-  psi_threshold: number,
+  psi_threshold_value: number,
+  psi_threshold_type: string,
   features_to_monitor: string[]
 ): ValidationResult<PsiConfigSchema> {
   try {
     const validData = psiConfigSchema.parse({
       schedule,
-      psi_threshold,
+      psi_threshold_value,
+      psi_threshold_type,
       features_to_monitor,
     });
     return {

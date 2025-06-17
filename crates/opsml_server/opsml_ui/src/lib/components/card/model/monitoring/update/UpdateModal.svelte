@@ -99,7 +99,8 @@
         const psiParams = configParams as PsiConfigParams;
         const validated = validatePsiConfig(
           psiParams.schedule,
-          psiParams.psi_threshold,
+          psiParams.psi_threshold_value,
+          psiParams.psi_threshold_type,
           psiParams.features_to_monitor
         );
 
