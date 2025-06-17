@@ -34,7 +34,10 @@ tf_onnx = [
     "tf2onnx~=1.16.1; platform_system=='Darwin' and python_version <= '3.11'",
     "opsml[onnx,onnxruntime]",
 ]
-pyarrow = [
+pandas = [
+    "pyarrow>=18.0.0",
+]
+polars = [
     "pyarrow>=18.0.0",
 ]
 
