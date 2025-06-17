@@ -16,3 +16,5 @@ toml_edit = { workspace = true }
 
 [dev-dependencies]
 tempfile = { workspace = true }
+opsml-state = { workspace = true }
+opsml-cards = { workspace = true }
