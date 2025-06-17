@@ -9,10 +9,7 @@ use std::path::PathBuf;
 #[pyo3(signature = (path=None, toml_name=None))]
 pub fn validate_project(path: Option<PathBuf>, toml_name: Option<&str>) -> Result<(), CliError> {
     PyProjectToml::load(path.as_deref(), toml_name)?;
-    println!(
-        "{}",
-        Colorize::green("Opsml Project validated successfully!")
-    );
+    println!("{}", Colorize::green("Opsml Project is valid!"));
 
     Ok(())
 }

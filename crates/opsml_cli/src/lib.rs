@@ -2,7 +2,7 @@ pub mod actions;
 pub mod cli;
 pub mod error;
 
-use crate::actions::{download_card, list_cards, validate::validate_project};
+use crate::actions::{download_card, list_cards};
 use crate::cli::{Cli, Commands, GenerateCommands, GetCommands, InstallCommands, ListCommands};
 use actions::download::download_deck;
 pub use actions::{
@@ -11,6 +11,7 @@ pub use actions::{
     lock::install_app,
     ui::{start_ui, stop_ui},
     update_drift_profile_status,
+    validate::validate_project,
 };
 use anyhow::Context;
 use clap::Parser;
