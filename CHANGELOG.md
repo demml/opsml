@@ -2,7 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
-## [3.0.0-rc.5] - 2025-06-13
+## [3.0.0-rc.7] - 2025-06-17
+
+- Bug/missing lock by @thorrester in #153
+
+## [v3.0.0-rc.6] - 2025-06-16
+
+- Chore/bump deps by @thorrester in #150
+- chore: bump versions by @thorrester in #151
+
+## [v3.0.0-rc.5] - 2025-06-13
 
 - Feature/cli commands by @thorrester in #143
 - Bug/142/tools get no respect by @thorrester in #145
