@@ -4262,8 +4262,6 @@ dependencies = [
 name = "opsml-toml"
 version = "3.0.0-rc.7"
 dependencies = [
- "opsml-cards",
- "opsml-state",
  "opsml-types",
  "opsml-version",
  "serde",
