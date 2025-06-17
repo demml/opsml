@@ -89,10 +89,17 @@ pub async fn insert_drift_profile(
             internal_server_error(e, "Failed to insert drift profile")
         })?;
 
+    let metadata = serde_json::json!({
+        "space": body.space,
+        "drift_type": body.drift_type.to_string(),
+    });
+    let metadata = serde_json::to_string(&metadata)
+        .unwrap_or_else(|e| format!("Failed to serialize ProfileRequest: {}", e));
+
     let audit_context = AuditContext {
         resource_id: "insert_drift".to_string(),
         resource_type: ResourceType::Drift,
-        metadata: body.get_metadata(),
+        metadata,
         registry_type: None,
         operation: Operation::Create,
         access_location: None,
@@ -192,10 +199,17 @@ pub async fn update_drift_profile(
 
     info!("Drift profile updated successfully for uid: {:?}", &req.uid);
 
+    let metadata = serde_json::json!({
+        "space": req.request.space,
+        "drift_type": req.request.drift_type.to_string(),
+    });
+    let metadata = serde_json::to_string(&metadata)
+        .unwrap_or_else(|e| format!("Failed to serialize ProfileRequest: {}", e));
+
     let audit_context = AuditContext {
         resource_id: "update_drift".to_string(),
         resource_type: ResourceType::Drift,
-        metadata: req.get_metadata(),
+        metadata,
         registry_type: None,
         operation: Operation::Update,
         access_location: Some(req.profile_uri.clone()),
@@ -249,10 +263,21 @@ pub async fn update_drift_profile_status(
             internal_server_error(e, "Failed to update drift profile status")
         })?;
 
+    let metadata = serde_json::json!({
+        "name": body.name,
+        "space": body.space,
+        "version": body.version,
+        "active": body.active,
+        "drift_type": body.drift_type.as_ref().map(|dt| dt.to_string()),
+        "deactivate_others": body.deactivate_others,
+    });
+    let metadata = serde_json::to_string(&metadata)
+        .unwrap_or_else(|e| format!("Failed to serialize ProfileStatusRequest: {}", e));
+
     let audit_context = AuditContext {
         resource_id: "update_drift_status".to_string(),
         resource_type: ResourceType::Drift,
-        metadata: body.get_metadata(),
+        metadata,
         registry_type: None,
         operation: Operation::Update,
         access_location: None,
