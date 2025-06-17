@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.0.0-rc.8] - 2025-06-17
+
+### UI Fixes
+
+- Update types for psi thresholds
+
 ## [3.0.0-rc.7] - 2025-06-17
 
 - Bug/missing lock by @thorrester in #153
