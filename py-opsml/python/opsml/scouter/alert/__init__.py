@@ -15,6 +15,9 @@ SpcAlertConfig = scouter.alert.SpcAlertConfig
 SpcAlertRule = scouter.alert.SpcAlertRule
 SpcAlertType = scouter.alert.SpcAlertType
 SlackDispatchConfig = scouter.alert.SlackDispatchConfig
+PsiNormalThreshold = scouter.alert.PsiNormalThreshold
+PsiChiSquareThreshold = scouter.alert.PsiChiSquareThreshold
+PsiFixedThreshold = scouter.alert.PsiFixedThreshold
 
 
 __all__ = [
@@ -31,4 +34,7 @@ __all__ = [
     "OpsGenieDispatchConfig",
     "ConsoleDispatchConfig",
     "AlertDispatchType",
+    "PsiNormalThreshold",
+    "PsiChiSquareThreshold",
+    "PsiFixedThreshold",
 ]

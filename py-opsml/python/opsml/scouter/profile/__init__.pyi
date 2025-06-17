@@ -171,15 +171,19 @@ class DataProfiler:
         data_type: Optional[DataType] = None,
         bin_size: int = 20,
         compute_correlations: bool = False,
-    ) -> None:
+    ) -> DataProfile:
         """Create a data profile from data.
 
         Args:
             data:
                 Data to create a data profile from. Data can be a numpy array,
-                a polars dataframe or pandas dataframe. Data is expected to not contain
-                any missing values, NaNs or infinities. These values must be removed or imputed.
-                If NaNs or infinities are present, the data profile will not be created.
+                a polars dataframe or pandas dataframe.
+
+                **Data is expected to not contain any missing values, NaNs or infinities**
+
+                These types are incompatible with computing
+                quantiles, histograms, and correlations. These values must be removed or imputed.
+
             data_type:
                 Optional data type. Inferred from data if not provided.
             bin_size:
