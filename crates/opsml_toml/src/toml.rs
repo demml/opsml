@@ -246,6 +246,7 @@ impl PyProjectToml {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use opsml_state::app_state;
     use std::fs::File;
     use std::io::Write;
     use tempfile::TempDir;
@@ -279,14 +280,14 @@ mod tests {
             name = "opsml"
             version = "1"
             
-            [[tool.opsml.deck.cards]]
+            [[tool.opsml.deck]]
             alias = "data"
             space = "space"
             name = "name"
             version = "1"
             type = "data"
 
-            [[tool.opsml.deck.cards]]
+            [[tool.opsml.deck]]
             alias = "model"
             space = "space"
             name = "name"
@@ -340,6 +341,15 @@ mod tests {
             [tool.opsml.default]
             name = "name"
             space = "space"
+
+            [[tool.opsml.deck]]
+            alias = "model"
+            space = "space"
+            name = "name"
+            version = "1"
+            type = "model"
+            drift = { active = true, deactivate_others = false, drift_type = ["custom", "psi"] }
+
         "#;
 
         let (_temp_dir, root_dir) = write_toml_to_temp(content).unwrap();
@@ -407,5 +417,33 @@ mod tests {
             registry.get(&RegistryType::Experiment).unwrap().name,
             Some("name".to_string())
         );
+    }
+
+    #[test]
+    fn test_toml_args_load() {
+        let content = r#"
+            [tool.opsml.default]
+            name = "name"
+            space = "space"
+
+            [[tool.opsml.deck]]
+            alias = "model"
+            space = "space"
+            name = "name"
+            version = "1"
+            type = "model"
+            drift = { active = true, deactivate_others = false, drift_type = ["custom", "psi"] }
+
+        "#;
+
+        let (_temp_dir, root_dir) = write_toml_to_temp(content).unwrap();
+
+        // set OPSML_BASE_PATH
+        std::env::set_var("OPSML_BASE_PATH", root_dir.to_str().unwrap());
+
+        let app_state = app_state();
+
+        let tools = app_state.tools().unwrap();
+        println!("{:?}", tools);
     }
 }
