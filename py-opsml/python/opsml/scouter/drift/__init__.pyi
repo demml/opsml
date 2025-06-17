@@ -331,6 +331,7 @@ class PsiDriftConfig:
         version: str = "0.1.0",
         alert_config: PsiAlertConfig = PsiAlertConfig(),
         config_path: Optional[Path] = None,
+        categorical_features: Optional[list[str]] = None,
     ):
         """Initialize monitor config
 
@@ -345,6 +346,8 @@ class PsiDriftConfig:
                 Alert configuration
             config_path:
                 Optional path to load config from.
+            categorical_features:
+                List of features to treat as categorical for PSI calculation.
         """
 
     @property
@@ -386,6 +389,14 @@ class PsiDriftConfig:
     @property
     def drift_type(self) -> DriftType:
         """Drift type"""
+
+    @property
+    def categorical_features(self) -> list[str]:
+        """list of categorical features"""
+
+    @categorical_features.setter
+    def categorical_features(self, categorical_features: list[str]) -> None:
+        """Set list of categorical features"""
 
     @staticmethod
     def load_from_json_file(path: Path) -> "PsiDriftConfig":
@@ -520,7 +531,6 @@ class Bin:
         """Return the proportion of data found in the bin."""
 
 class BinType:
-    Binary: "BinType"
     Numeric: "BinType"
     Category: "BinType"
 
@@ -867,6 +877,9 @@ class Drifter:
             data:
                 Data to create a data profile from. Data can be a numpy array,
                 a polars dataframe or a pandas dataframe.
+
+                **Data is expected to not contain any missing values, NaNs or infinities**
+
             config:
                 SpcDriftConfig
             data_type:
@@ -888,6 +901,9 @@ class Drifter:
             data:
                 Data to create a data profile from. Data can be a numpy array,
                 a polars dataframe or a pandas dataframe.
+
+                **Data is expected to not contain any missing values, NaNs or infinities**
+
             config:
                 SpcDriftConfig
             data_type:
@@ -910,6 +926,9 @@ class Drifter:
             data:
                 Data to create a data profile from. Data can be a numpy array,
                 a polars dataframe or a pandas dataframe.
+
+                **Data is expected to not contain any missing values, NaNs or infinities**
+
             config:
                 PsiDriftConfig
             data_type:
@@ -953,6 +972,9 @@ class Drifter:
                 Data to create a data profile from. Data can be a numpy array,
                 a polars dataframe, pandas dataframe or a list of CustomMetric if creating
                 a custom metric profile.
+
+                **Data is expected to not contain any missing values, NaNs or infinities**
+
             config:
                 Drift config that will be used for monitoring
             data_type:

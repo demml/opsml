@@ -7,6 +7,7 @@ install_app = cli.install_app
 generate_key = cli.generate_key
 update_drift_profile_status = cli.update_drift_profile_status
 ScouterArgs = cli.ScouterArgs
+validate_project = cli.validate_project
 
 __all__ = [
     "lock_project",
@@ -15,4 +16,5 @@ __all__ = [
     "generate_key",
     "update_drift_profile_status",
     "ScouterArgs",
+    "validate_project",
 ]

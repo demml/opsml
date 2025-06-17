@@ -18,19 +18,19 @@ pub enum PyProjectTomlError {
     #[error("Failed to get current directory")]
     CurrentDirError(#[source] std::io::Error),
 
-    #[error("Failed to deserialize `pyproject.toml`")]
+    #[error("Failed to deserialize pyproject.toml: {0}")]
     TomlSchema(#[source] toml_edit::de::Error),
 
-    #[error("Failed to deserialize `opsml.lock`")]
+    #[error("Failed to deserialize opsml.lock: {0}")]
     LockFileSchema(#[source] toml_edit::de::Error),
 
-    #[error("Failed to write opsml.lock file")]
+    #[error("Failed to write opsml.lock file: {0}")]
     FailedToLockFile(#[source] std::io::Error),
 
-    #[error("Failed to read opsml.lock file")]
+    #[error("Failed to read opsml.lock file: {0}")]
     FailedToReadLockFile(#[source] std::io::Error),
 
-    #[error("Failed to parse opsml.lock file")]
+    #[error("Failed to parse opsml.lock file: {0}")]
     FailedToParseLockFile(#[source] toml_edit::TomlError),
 
     #[error("Drift configuration is only valid for model cards")]

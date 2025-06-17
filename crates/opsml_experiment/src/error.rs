@@ -48,6 +48,12 @@ pub enum ExperimentError {
 
     #[error("Path is not a file. Use log_artifacts if you wish to log multiple artifacts")]
     PathNotFileError,
+
+    #[error(transparent)]
+    WalkDirError(#[from] walkdir::Error),
+
+    #[error(transparent)]
+    StripPrefixError(#[from] std::path::StripPrefixError),
 }
 
 impl From<ExperimentError> for PyErr {

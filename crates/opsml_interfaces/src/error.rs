@@ -388,10 +388,10 @@ pub enum AgentError {
     #[error("Failed to create header name for the agent client")]
     CreateHeaderNameError(#[from] reqwest::header::InvalidHeaderName),
 
-    #[error("Failed to create agent client")]
+    #[error("Failed to create agent client: {0}")]
     CreateClientError(#[source] reqwest::Error),
 
-    #[error("Request failed")]
+    #[error("Request failed: {0}")]
     RequestError(#[from] reqwest::Error),
 
     #[error("Failed to serialize chat request")]

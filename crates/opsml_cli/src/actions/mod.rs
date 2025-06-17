@@ -7,6 +7,7 @@ pub mod list;
 pub mod lock;
 pub mod update_profile;
 pub mod utils;
+pub mod validate;
 
 pub use download::download_card;
 pub use generate::generate_key;

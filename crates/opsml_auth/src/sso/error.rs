@@ -17,7 +17,7 @@ pub enum SsoError {
     #[error("Authentication failed: {0}")]
     AuthenticationFailed(String),
 
-    #[error("Request failed")]
+    #[error("Request failed: {0}")]
     ReqwestError(#[from] reqwest::Error),
 
     #[error("Request failed: {0}")]
