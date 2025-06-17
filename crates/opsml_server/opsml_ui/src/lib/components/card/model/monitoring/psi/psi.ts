@@ -1,8 +1,8 @@
 import {
   DriftType,
-  AlertDispatchType,
   type FeatureMap,
   type AlertDispatchConfig,
+  type PsiThreshold,
 } from "../types";
 
 export interface PsiDriftProfile {
@@ -46,21 +46,4 @@ export interface PsiAlertConfig {
   schedule: string;
   features_to_monitor: string[];
   threshold: PsiThreshold;
-}
-
-export type PsiThreshold =
-  | { Normal: PsiNormalThreshold }
-  | { ChiSquare: PsiChiSquareThreshold }
-  | { Fixed: PsiFixedThreshold };
-
-export interface PsiNormalThreshold {
-  alpha: number;
-}
-
-export interface PsiChiSquareThreshold {
-  alpha: number;
-}
-
-export interface PsiFixedThreshold {
-  threshold: number;
 }

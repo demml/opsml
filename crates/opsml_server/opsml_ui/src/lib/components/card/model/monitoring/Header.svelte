@@ -1,6 +1,6 @@
 <script lang="ts">
   import { DriftType } from "./types";
-  import { type DriftConfigType, type DriftProfile, type DriftProfileResponse } from "./util";
+  import { type DriftConfigType, type DriftProfile, type DriftProfileResponse, type UiProfile } from "./util";
   import { Clock } from 'lucide-svelte';
   import { TimeInterval } from '$lib/components/card/model/monitoring/types';
   import Dropdown from '$lib/components/utils/Dropdown.svelte';
@@ -22,6 +22,7 @@
     handleDriftTypeChange,
     handleNameChange,
     handleTimeChange,
+    uid,
   } = $props<{
     availableDriftTypes: DriftType[];
     currentDriftType: DriftType;
@@ -29,10 +30,11 @@
     currentName: string;
     currentNames: string[];
     currentConfig: DriftConfigType;
-    currentProfile: DriftProfile;
+    currentProfile: UiProfile;
     handleDriftTypeChange: (driftType: DriftType) => void;
     handleNameChange: (name: string) => void;
     handleTimeChange: (timeInterval: TimeInterval) => void;
+    uid: string;
   }>();
 
   let timeIntervals = Object.values(TimeInterval);
@@ -56,9 +58,6 @@
     }
   });
 
-
-
-  
 
 </script>
 
@@ -116,6 +115,7 @@
         config={currentConfig} 
         alertConfig={currentConfig.alert_config}
         profile={currentProfile}
+        {uid}
       />
 
     {:else if currentDriftType === DriftType.Psi}
@@ -123,6 +123,7 @@
         config={currentConfig} 
         alertConfig={currentConfig.alert_config}
         profile={currentProfile}
+         {uid}
       />
 
     {:else if currentDriftType === DriftType.Spc}
@@ -130,6 +131,7 @@
         config={currentConfig} 
         alertConfig={currentConfig.alert_config}
         profile={currentProfile}
+         {uid}
       />
     {/if}
   </div>
