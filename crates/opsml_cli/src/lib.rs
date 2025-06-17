@@ -11,6 +11,7 @@ pub use actions::{
     lock::install_app,
     ui::{start_ui, stop_ui},
     update_drift_profile_status,
+    validate::validate_project,
 };
 use anyhow::Context;
 use clap::Parser;
@@ -86,7 +87,8 @@ pub fn run_cli(args: Vec<String>) -> anyhow::Result<()> {
             Ok(())
         }
         Some(Commands::Lock) => {
-            println!("opsml-cli lock");
+            println!("Locking project...");
+            lock_project(None, None).context("Failed to lock project")?;
             Ok(())
         }
 
@@ -123,6 +125,12 @@ pub fn run_cli(args: Vec<String>) -> anyhow::Result<()> {
         Some(Commands::Demo) => {
             println!("Running demo...");
             run_python_code().context("Failed to run demo")?;
+            Ok(())
+        }
+
+        Some(Commands::Validate) => {
+            println!("Validating project...");
+            validate_project(None, None).context("Failed to validate project")?;
             Ok(())
         }
 

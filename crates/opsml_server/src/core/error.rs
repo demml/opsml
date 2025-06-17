@@ -217,7 +217,7 @@ pub fn internal_server_error<E: std::fmt::Display>(
 // don't want this
 #[derive(Error, Debug)]
 pub enum ServerError {
-    #[error("Failed to create client with error")]
+    #[error("Failed to create client with error: {0}")]
     CreateClientError(#[source] reqwest::Error),
 
     #[error(transparent)]

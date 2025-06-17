@@ -399,6 +399,17 @@ class Feature:
                 Value of the feature
         """
 
+    @staticmethod
+    def categorical(name: str, value: str) -> "Feature":
+        """Create a categorical feature
+
+        Args:
+            name:
+                Name of the feature
+            value:
+                Value of the feature
+        """
+
 class Features:
     def __init__(self, features: List[Feature]) -> None:
         """Initialize features

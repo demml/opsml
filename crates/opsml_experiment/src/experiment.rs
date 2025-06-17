@@ -20,8 +20,9 @@ use opsml_types::{
 use pyo3::{prelude::*, IntoPyObjectExt};
 use std::path::PathBuf;
 use std::sync::Arc;
+use tempfile::TempDir;
 use tracing::{debug, error, instrument, warn};
-
+use walkdir::WalkDir;
 /// Get the filename of the python file
 ///
 /// # Arguments
@@ -56,40 +57,69 @@ fn get_py_filename(py: Python) -> Result<PathBuf, ExperimentError> {
 ///
 /// # Errors
 /// * `ExperimentError` - Error extracting the code
+#[instrument(skip_all)]
 fn extract_code(
     py: Python<'_>,
     code_dir: Option<PathBuf>,
     artifact_key: &ArtifactKey,
 ) -> Result<(), ExperimentError> {
     // Attempt to get file
-    let (lpath, recursive) = match code_dir {
-        Some(path) => (path.to_path_buf(), true),
-        None => (get_py_filename(py)?, false),
-    };
-
-    // 2. Set rpath based on file or directory
-    let rpath = if lpath.is_file() {
-        &artifact_key
-            .storage_path()
-            .join(SaveName::Artifacts)
-            .join(SaveName::Code)
-            .join(lpath.file_name().unwrap())
-    } else {
-        &artifact_key
-            .storage_path()
-            .join(SaveName::Artifacts)
-            .join(SaveName::Code)
+    let (lpath, is_directory) = match code_dir {
+        Some(path) => (path.to_path_buf(), path.is_dir()),
+        None => {
+            let py_file = get_py_filename(py)?;
+            (py_file, false)
+        }
     };
 
     let encryption_key = artifact_key.get_decrypt_key()?;
 
-    // 3. Encrypt the file or directory
-    encrypt_directory(&lpath, &encryption_key)?;
+    // Create a temporary directory to copy the code to
+    let temp_dir = TempDir::new()?;
+    let temp_dir_path = temp_dir.path();
 
-    storage_client()?.put(&lpath, rpath, recursive)?;
+    // Set rpath and copy logic based on file or directory
+    if is_directory {
+        debug!(dir = ?lpath, "Copying directory");
 
-    // 5. Decrypt the file or directory (this is done to ensure the file is not encrypted in the code directory)
-    decrypt_directory(&lpath, &encryption_key)?;
+        // For directories, create the directory structure in temp and set rpath to code directory
+        let dest_dir = temp_dir_path.join(lpath.file_name().unwrap());
+
+        for entry in WalkDir::new(&lpath) {
+            let entry = entry?;
+            let relative_path = entry.path().strip_prefix(&lpath)?;
+            let dest_file_path = dest_dir.join(relative_path);
+
+            if entry.file_type().is_file() {
+                if let Some(parent) = dest_file_path.parent() {
+                    std::fs::create_dir_all(parent)?;
+                }
+                std::fs::copy(entry.path(), &dest_file_path)?;
+            }
+        }
+    } else {
+        debug!(file = ?lpath, "Copying file");
+
+        // For files, copy directly to temp directory and set rpath to code directory
+        std::fs::copy(&lpath, temp_dir_path.join(lpath.file_name().unwrap()))?;
+    };
+
+    let rpath = artifact_key
+        .storage_path()
+        .join(SaveName::Artifacts)
+        .join(SaveName::Code);
+
+    // Encrypt the file or directory
+    encrypt_directory(temp_dir_path, &encryption_key)?;
+
+    // Upload the file or directory to the storage
+    storage_client()?.put(temp_dir_path, &rpath, true)?;
+
+    // Decrypt the file or directory (this is done to ensure the file is not encrypted in the code directory)
+    decrypt_directory(temp_dir_path, &encryption_key)?;
+
+    // Clean up the temporary directory
+    temp_dir.close()?;
 
     Ok(())
 }

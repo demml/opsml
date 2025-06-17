@@ -108,13 +108,87 @@ class SpcAlertRule:
     def zones_to_monitor(self, zones_to_monitor: List[AlertZone]) -> None:
         """Set the zones to monitor"""
 
+class PsiNormalThreshold:
+    def __init__(self, alpha: float = 0.05):
+        """Initialize PSI threshold using normal approximation.
+
+        Uses the asymptotic normal distribution of PSI to calculate critical values
+        for population drift detection.
+
+        Args:
+            alpha: Significance level (0.0 to 1.0, exclusive). Common values:
+                   0.05 (95% confidence), 0.01 (99% confidence)
+
+        Raises:
+            ValueError: If alpha not in range (0.0, 1.0)
+        """
+
+    @property
+    def alpha(self) -> float:
+        """Statistical significance level for drift detection."""
+
+    @alpha.setter
+    def alpha(self, alpha: float) -> None:
+        """Set significance level (must be between 0.0 and 1.0, exclusive)."""
+
+class PsiChiSquareThreshold:
+    def __init__(self, alpha: float = 0.05):
+        """Initialize PSI threshold using chi-square approximation.
+
+        Uses the asymptotic chi-square distribution of PSI.
+
+        The chi-square method is generally more statistically rigorous than
+        normal approximation, especially for smaller sample sizes.
+
+        Args:
+            alpha: Significance level (0.0 to 1.0, exclusive). Common values:
+                   0.05 (95% confidence), 0.01 (99% confidence)
+
+        Raises:
+            ValueError: If alpha not in range (0.0, 1.0)
+        """
+
+    @property
+    def alpha(self) -> float:
+        """Statistical significance level for drift detection."""
+
+    @alpha.setter
+    def alpha(self, alpha: float) -> None:
+        """Set significance level (must be between 0.0 and 1.0, exclusive)."""
+
+class PsiFixedThreshold:
+    def __init__(self, threshold: float = 0.25):
+        """Initialize PSI threshold using a fixed value.
+
+        Uses a predetermined PSI threshold value, similar to traditional
+        "rule of thumb" approaches (e.g., 0.10 for moderate drift, 0.25
+        for significant drift).
+
+        Args:
+            threshold: Fixed PSI threshold value (must be positive).
+                      Common industry values: 0.10, 0.25
+
+        Raises:
+            ValueError: If threshold is not positive
+        """
+
+    @property
+    def threshold(self) -> float:
+        """Fixed PSI threshold value for drift detection."""
+
+    @threshold.setter
+    def threshold(self, threshold: float) -> None:
+        """Set threshold value (must be positive)."""
+
+PsiThresholdType = PsiNormalThreshold | PsiChiSquareThreshold | PsiFixedThreshold
+
 class PsiAlertConfig:
     def __init__(
         self,
         dispatch_config: Optional[SlackDispatchConfig | OpsGenieDispatchConfig] = None,
         schedule: Optional[str | CommonCrons] = None,
         features_to_monitor: List[str] = [],
-        psi_threshold: float = 0.25,
+        threshold: Optional[PsiThresholdType] = None,
     ):
         """Initialize alert config
 
@@ -126,9 +200,8 @@ class PsiAlertConfig:
                 Schedule to run monitor. Defaults to daily at midnight
             features_to_monitor:
                 List of features to monitor. Defaults to empty list, which means all features
-            psi_threshold:
-                What threshold must be met before sending alert messages default is 0.25
-
+            threshold:
+                Configuration that helps determine how to calculate PSI critical values
         """
 
     @property
@@ -138,6 +211,10 @@ class PsiAlertConfig:
     @property
     def dispatch_config(self) -> DispatchConfigType:
         """Return the dispatch config"""
+
+    @property
+    def threshold(self) -> PsiThresholdType:
+        """Return the threshold config"""
 
     @property
     def schedule(self) -> str:
@@ -154,14 +231,6 @@ class PsiAlertConfig:
     @features_to_monitor.setter
     def features_to_monitor(self, features_to_monitor: List[str]) -> None:
         """Set the features to monitor"""
-
-    @property
-    def psi_threshold(self) -> float:
-        """Return the schedule"""
-
-    @psi_threshold.setter
-    def psi_threshold(self, threshold: float) -> None:
-        """Set the schedule"""
 
 class SpcAlertConfig:
     def __init__(

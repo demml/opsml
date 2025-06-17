@@ -96,40 +96,40 @@ pub enum UiError {
     #[error("Failed to extract archive")]
     ZipArchiveExtractionError(#[source] zip::result::ZipError),
 
-    #[error("Failed to download binary")]
+    #[error("Failed to download binary: {0}")]
     DownloadBinaryError(#[source] reqwest::Error),
 
-    #[error("Failed to write binary")]
+    #[error("Failed to write binary: {0}")]
     WriteBinaryError(#[source] std::io::Error),
 
-    #[error("Failed to open archive")]
+    #[error("Failed to open archive: {0}")]
     ArchiveOpenError(#[source] std::io::Error),
 
-    #[error("Failed to unzip archive")]
+    #[error("Failed to unzip archive: {0}")]
     ArchiveZipError(#[source] zip::result::ZipError),
 
     #[error("Binary not found")]
     BinaryNotFound,
 
-    #[error("Failed to remove archive")]
+    #[error("Failed to remove archive: {0}")]
     RemoveArchiveError(#[source] std::io::Error),
 
-    #[error("Failed to spawn child process")]
+    #[error("Failed to spawn child process: {0}")]
     BinarySpawnError(#[source] std::io::Error),
 
-    #[error("Failed to wait for child process")]
+    #[error("Failed to wait for child process: {0}")]
     BinaryWaitError(#[source] std::io::Error),
 
     #[error("Failed to start the UI")]
     BinaryStartError,
 
-    #[error("Failed to rename binary")]
+    #[error("Failed to rename binary: {0}")]
     RenameBinaryError(#[source] std::io::Error),
 
-    #[error("Failed to read file")]
+    #[error("Failed to read file: {0}")]
     ReadError(#[source] std::io::Error),
 
-    #[error("Failed to remove file")]
+    #[error("Failed to remove file: {0}")]
     RemoveFileError(#[source] std::io::Error),
 
     #[error("Could not extract UI archive due to unsupported platform")]

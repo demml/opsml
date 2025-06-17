@@ -9,6 +9,7 @@ from opsml.cli import (
     generate_key,
     update_drift_profile_status,
     ScouterArgs,
+    validate_project,
 )  # type: ignore
 
 import pandas as pd
@@ -201,3 +202,8 @@ def test_update_profile_status_key():
             deactivate_others=False,
         )
         update_drift_profile_status(args)
+
+
+@pytest.mark.skipif(WINDOWS_EXCLUDE, reason="skipping")
+def test_pyproject_app_validate_project():
+    validate_project(CURRENT_DIRECTORY)

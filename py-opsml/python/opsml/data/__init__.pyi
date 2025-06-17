@@ -496,7 +496,21 @@ class DataInterface:
         """
 
     @property
-    def data_profile(self) -> Optional[DataProfile]: ...
+    def data_profile(self) -> Optional[DataProfile]:
+        """Return the data profile
+
+        Returns:
+            The data profile
+        """
+
+    @data_profile.setter
+    def data_profile(self, data_profile: Optional[DataProfile]) -> None:
+        """Set the data profile
+
+        Args:
+            data_profile (DataProfile | None):
+                The data profile to set
+        """
 
 class SqlLogic:
     def __init__(self, queries: Dict[str, str]) -> None:

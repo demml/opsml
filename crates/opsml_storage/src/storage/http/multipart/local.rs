@@ -4,6 +4,7 @@ use opsml_types::contracts::UploadResponse;
 use reqwest::blocking::multipart::{Form, Part};
 use std::path::Path;
 use std::sync::Arc;
+use tracing::error;
 
 #[derive(Debug)]
 pub struct LocalMultipartUpload {
@@ -33,9 +34,15 @@ impl LocalMultipartUpload {
 
         let form = Form::new().part("file", part);
 
-        let response = self.client.multipart_upload(form)?;
+        let response = self.client.multipart_upload(form).map_err(|e| {
+            error!("Failed to upload file: {}", e);
+            e
+        })?;
 
-        let response = response.json::<UploadResponse>()?;
+        let response = response.json::<UploadResponse>().map_err(|e| {
+            error!("Failed to parse upload response: {}", e);
+            e
+        })?;
 
         if !response.uploaded {
             return Err(MultiPartError::FileUploadError);

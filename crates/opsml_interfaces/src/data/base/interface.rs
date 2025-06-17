@@ -162,7 +162,7 @@ pub struct DataInterface {
     #[pyo3(get, set)]
     pub sql_logic: SqlLogic,
 
-    #[pyo3(get, set)]
+    #[pyo3(get)]
     pub data_profile: Option<DataProfile>,
 
     #[pyo3(get)]
@@ -217,6 +217,22 @@ impl DataInterface {
             return Ok(());
         } else {
             self.data = Some(data.into_py_any(py)?);
+        };
+
+        Ok(())
+    }
+
+    #[setter]
+    pub fn set_data_profile(
+        &mut self,
+        data_profile: &Bound<'_, PyAny>,
+    ) -> Result<(), DataInterfaceError> {
+        // check if data_profile is None
+        if PyAnyMethods::is_none(data_profile) {
+            self.data_profile = None;
+            return Ok(());
+        } else {
+            self.data_profile = Some(data_profile.extract::<DataProfile>()?);
         };
 
         Ok(())
