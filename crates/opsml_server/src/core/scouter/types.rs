@@ -2,9 +2,15 @@ use anyhow::Result;
 use axum::{http::StatusCode, Json};
 use scouter_client::{DriftProfile, DriftType};
 
-use std::collections::HashMap;
-
 use crate::core::error::OpsmlServerError;
+use serde::Serialize;
+use std::{collections::HashMap, path::PathBuf};
 
 pub type ReturnError = (StatusCode, Json<OpsmlServerError>);
-pub type DriftProfileResult = Result<Json<HashMap<DriftType, DriftProfile>>, ReturnError>;
+pub type DriftProfileResult = Result<Json<HashMap<DriftType, UiProfile>>, ReturnError>;
+
+#[derive(Debug, Clone, Serialize)]
+pub struct UiProfile {
+    pub profile_uri: PathBuf,
+    pub profile: DriftProfile,
+}

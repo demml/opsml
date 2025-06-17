@@ -1,22 +1,34 @@
 <script lang="ts">
-  import { hasConsoleConfig, hasOpsGenieConfig, hasSlackConfig } from "../types";
+  import { getPsiThresholdKeyValue, hasConsoleConfig, hasOpsGenieConfig, hasSlackConfig } from "../types";
   import type { PsiAlertConfig, PsiDriftConfig } from "./psi";
   import Pill from "$lib/components/utils/Pill.svelte";
   import UpdateModal from "../update/UpdateModal.svelte";
-  import type { DriftProfile } from "../util";
+  import type { UiProfile } from "../util";
+  import { onMount } from "svelte";
 
   // props
   let { 
     config,
     alertConfig,
     profile,
+    uid, 
   } = $props<{
     config: PsiDriftConfig;
     alertConfig: PsiAlertConfig;
-    profile: DriftProfile;
+    profile: UiProfile;
+    uid: string;
   }>();
 
-  
+  let thresholdTypeValue = $state<{"type": string, "value":  number}>(
+      getPsiThresholdKeyValue(alertConfig.threshold)
+    );
+
+  onMount(() => {
+      // Ensure the thresholdTypeValue is initialized correctly
+      thresholdTypeValue = getPsiThresholdKeyValue(alertConfig.threshold);
+
+    });
+
   </script>
 
 <div class="grid grid-cols-1 gap-2 w-full h-auto">
@@ -25,9 +37,9 @@
     <Pill key="Schedule" value={alertConfig.schedule} textSize="text-sm"/>
 
     {#if alertConfig.threshold}
-      <Pill key="Psi Threshold" value={alertConfig.threshold} textSize="text-sm"/>
+      <Pill key="Psi Threshold" value={thresholdTypeValue.value.toString()} textSize="text-sm"/>
     {/if}
-    
+
   </div>
 
   <div class="flex flex-row gap-2">
@@ -52,6 +64,7 @@
       config={config} 
       driftType={config.drift_type}
       profile={profile}
+      uid={uid}
       />
   </div>
 </div>

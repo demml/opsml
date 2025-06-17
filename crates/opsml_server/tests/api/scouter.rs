@@ -104,6 +104,7 @@ async fn test_scouter_routes_update_profile() {
     let serialized = profile.model_dump_json();
     let request = UpdateProfileRequest {
         uid: helper.key.uid.clone(),
+        profile_uri: "mocked_uri".to_string(),
         request: ProfileRequest {
             space: helper.space.clone(),
             drift_type: DriftType::Spc,

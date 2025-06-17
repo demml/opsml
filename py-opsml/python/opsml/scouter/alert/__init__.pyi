@@ -55,7 +55,9 @@ class AlertDispatchType:
     def to_string() -> str:
         """Return the string representation of the alert dispatch type"""
 
-DispatchConfigType = ConsoleDispatchConfig | SlackDispatchConfig | OpsGenieDispatchConfig
+DispatchConfigType = (
+    ConsoleDispatchConfig | SlackDispatchConfig | OpsGenieDispatchConfig
+)
 
 class AlertZone:
     Zone1: "AlertZone"
@@ -188,7 +190,7 @@ class PsiAlertConfig:
         dispatch_config: Optional[SlackDispatchConfig | OpsGenieDispatchConfig] = None,
         schedule: Optional[str | CommonCrons] = None,
         features_to_monitor: List[str] = [],
-        threshold: Optional[PsiThresholdType] = None,
+        threshold: Optional[PsiThresholdType] = PsiChiSquareThreshold(),
     ):
         """Initialize alert config
 
@@ -201,7 +203,8 @@ class PsiAlertConfig:
             features_to_monitor:
                 List of features to monitor. Defaults to empty list, which means all features
             threshold:
-                Configuration that helps determine how to calculate PSI critical values
+                Configuration that helps determine how to calculate PSI critical values.
+                Defaults to PsiChiSquareThreshold, which uses the chi-square distribution.
         """
 
     @property
@@ -398,5 +401,7 @@ class CustomMetricAlertConfig:
         """Return the alert_condition that were set during metric definition"""
 
     @alert_conditions.setter
-    def alert_conditions(self, alert_conditions: dict[str, CustomMetricAlertCondition]) -> None:
+    def alert_conditions(
+        self, alert_conditions: dict[str, CustomMetricAlertCondition]
+    ) -> None:
         """Update the alert_condition that were set during metric definition"""

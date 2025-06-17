@@ -1,6 +1,7 @@
 use crate::core::error::internal_server_error;
 use crate::core::error::OpsmlServerError;
 use crate::core::error::ServerError;
+use crate::core::scouter::types::UiProfile;
 use anyhow::Result;
 use axum::{http::StatusCode, Json};
 use opsml_crypt::encrypt_file;
@@ -9,8 +10,7 @@ use opsml_types::DriftProfileUri;
 use scouter_client::{DriftProfile, DriftType};
 use std::collections::HashMap;
 use std::path::Path;
-use tracing::debug;
-use tracing::error;
+use tracing::{debug, error, instrument};
 
 pub fn find_drift_profile(
     files: &[String],
@@ -30,6 +30,7 @@ pub fn find_drift_profile(
         })
 }
 
+#[instrument(skip_all)]
 pub async fn save_encrypted_profile(
     profile: &str,
     filename: &str,
@@ -55,10 +56,8 @@ pub async fn save_encrypted_profile(
         internal_server_error(e, "Failed to encrypt file")
     })?;
 
-    // Save to storage
-    let new_storage_path = storage_path.join(filename);
     storage_client
-        .put(&temp_path, &new_storage_path, false)
+        .put(&temp_path, storage_path, false)
         .await
         .map_err(|e| {
             (
@@ -73,18 +72,27 @@ pub async fn save_encrypted_profile(
 pub fn load_drift_profiles(
     path: &Path,
     drift_profile_uri_map: &HashMap<String, DriftProfileUri>,
-) -> Result<HashMap<DriftType, DriftProfile>, ServerError> {
+) -> Result<HashMap<DriftType, UiProfile>, ServerError> {
     let profiles = drift_profile_uri_map
         .values()
         .map(|uri| {
             let filepath = path.join(&uri.uri);
             let file = std::fs::read_to_string(&filepath)?;
+
             DriftProfile::from_str(uri.drift_type.clone(), file)
                 .map_err(|e| {
                     error!("Failed to load drift profile: {}", e);
                     ServerError::LoadDriftProfileError(e.to_string())
                 })
-                .map(|profile| (uri.drift_type.clone(), profile))
+                .map(|profile| {
+                    (
+                        uri.drift_type.clone(),
+                        UiProfile {
+                            profile_uri: uri.uri.clone(),
+                            profile,
+                        },
+                    )
+                })
         })
         .collect::<Result<HashMap<_, _>, _>>()?;
 
