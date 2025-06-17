@@ -2,7 +2,7 @@ pub mod actions;
 pub mod cli;
 pub mod error;
 
-use crate::actions::{download_card, list_cards};
+use crate::actions::{download_card, list_cards, validate::validate_project};
 use crate::cli::{Cli, Commands, GenerateCommands, GetCommands, InstallCommands, ListCommands};
 use actions::download::download_deck;
 pub use actions::{
@@ -124,6 +124,12 @@ pub fn run_cli(args: Vec<String>) -> anyhow::Result<()> {
         Some(Commands::Demo) => {
             println!("Running demo...");
             run_python_code().context("Failed to run demo")?;
+            Ok(())
+        }
+
+        Some(Commands::Validate) => {
+            println!("Validating project...");
+            validate_project(None, None).context("Failed to validate project")?;
             Ok(())
         }
 

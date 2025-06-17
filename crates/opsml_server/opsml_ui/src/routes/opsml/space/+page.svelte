@@ -49,7 +49,7 @@
 
 
 </script>
-<div class="flex-1 mx-auto w-9/12 pt-20 justify-center px-4 pb-10">
+<div class="flex-1 mx-auto w-10/12 pt-20 justify-center px-4 pb-10">
   <div class="gap-1 p-4 flex flex-col rounded-base border-primary-500 border-2 shadow-primary bg-surface-50  w-full h-auto">
 
     <div class="flex flex-row items-center gap-2 pb-2">
@@ -75,7 +75,7 @@
     </div>
 
     {#if filteredSpaces.length > 0}
-      <div class="pt-4 grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-4 gap-4 justify-items-center">
+      <div class="pt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4 justify-items-center">
         {#each filteredSpaces as record}
           <div class="flex justify-center w-full">
             <SpacePage {record} />
