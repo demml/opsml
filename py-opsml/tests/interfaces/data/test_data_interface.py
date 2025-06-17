@@ -302,3 +302,10 @@ def test_pandas_data_profile(pandas_dataframe_profile: pd.DataFrame):
     interface = PandasData(data=pandas_dataframe_profile)
     data_profile = interface.create_data_profile(compute_correlations=True)
     assert data_profile is not None
+    # set data_profile to None
+    interface.data_profile = None
+    assert interface.data_profile is None
+
+    # test setter
+    interface.data_profile = data_profile
+    assert interface.data_profile is not None
