@@ -279,14 +279,14 @@ mod tests {
             name = "opsml"
             version = "1"
             
-            [[tool.opsml.deck]]
+            [[tool.opsml.deck.cards]]
             alias = "data"
             space = "space"
             name = "name"
             version = "1"
             type = "data"
 
-            [[tool.opsml.deck]]
+            [[tool.opsml.deck.cards]]
             alias = "model"
             space = "space"
             name = "name"
