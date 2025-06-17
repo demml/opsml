@@ -165,7 +165,9 @@ class ServerRecord:
     @property
     def record(
         self,
-    ) -> Union[SpcServerRecord, PsiServerRecord, CustomMetricServerRecord, ObservabilityMetrics]:
+    ) -> Union[
+        SpcServerRecord, PsiServerRecord, CustomMetricServerRecord, ObservabilityMetrics
+    ]:
         """Return the drift server record."""
 
 class ServerRecords:
@@ -391,6 +393,17 @@ class Feature:
     @staticmethod
     def string(name: str, value: str) -> "Feature":
         """Create a string feature
+
+        Args:
+            name:
+                Name of the feature
+            value:
+                Value of the feature
+        """
+
+    @staticmethod
+    def categorical(name: str, value: str) -> "Feature":
+        """Create a categorical feature
 
         Args:
             name:

@@ -5,7 +5,7 @@ use scouter_client::*;
 pub fn queue(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<KafkaConfig>()?;
     m.add_class::<RabbitMQConfig>()?;
-    //m.add_class::<RedisConfig>()?;
+    m.add_class::<RedisConfig>()?;
 
     m.add_class::<SpcServerRecord>()?;
     m.add_class::<PsiServerRecord>()?;

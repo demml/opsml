@@ -9,6 +9,9 @@ pub fn alert(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<SpcAlertRule>()?;
     m.add_class::<SpcAlertConfig>()?;
     m.add_class::<PsiAlertConfig>()?;
+    m.add_class::<PsiNormalThreshold>()?;
+    m.add_class::<PsiChiSquareThreshold>()?;
+    m.add_class::<PsiFixedThreshold>()?;
     m.add_class::<AlertThreshold>()?;
     m.add_class::<CustomMetricAlertCondition>()?;
     m.add_class::<CustomMetricAlertConfig>()?;
