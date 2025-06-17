@@ -45,5 +45,22 @@ export interface PsiAlertConfig {
   dispatch_config: AlertDispatchConfig;
   schedule: string;
   features_to_monitor: string[];
-  psi_threshold: number;
+  threshold: PsiThreshold;
+}
+
+export type PsiThreshold =
+  | { Normal: PsiNormalThreshold }
+  | { ChiSquare: PsiChiSquareThreshold }
+  | { Fixed: PsiFixedThreshold };
+
+export interface PsiNormalThreshold {
+  alpha: number;
+}
+
+export interface PsiChiSquareThreshold {
+  alpha: number;
+}
+
+export interface PsiFixedThreshold {
+  threshold: number;
 }

@@ -11,6 +11,7 @@
   import CustomAlertPill from '$lib/components/card/model/monitoring/custom/CustomAlertPill.svelte';
   import { getCustomAlertCondition, type CustomMetricDriftConfig } from './custom/custom';
   import { type DriftProfile } from './util';
+  import type { PsiThreshold } from './psi/psi';
 
 
   let { 
@@ -63,7 +64,19 @@ function getBaselineValue(): number | undefined {
 
   // get psi threshold
   if (currentDriftType === DriftType.Psi) {
-    return (currentProfile as DriftProfile).Psi.config.alert_config.psi_threshold;
+    const psiProfile = (currentProfile as DriftProfile).Psi;
+    const threshold = psiProfile.config.alert_config.threshold;
+    if (threshold) {
+    
+      if ('Normal' in threshold) {
+        return threshold.Normal.alpha;
+      } else if ('ChiSquare' in threshold) {
+      return threshold.ChiSquare.alpha;
+      } else if ('Fixed' in threshold) {
+        return threshold.Fixed.threshold;
+      }
+    }
+    return undefined;
   }
 
   return undefined;
