@@ -188,7 +188,7 @@ class PsiAlertConfig:
         dispatch_config: Optional[SlackDispatchConfig | OpsGenieDispatchConfig] = None,
         schedule: Optional[str | CommonCrons] = None,
         features_to_monitor: List[str] = [],
-        threshold: Optional[PsiThresholdType] = None,
+        threshold: Optional[PsiThresholdType] = PsiChiSquareThreshold(),
     ):
         """Initialize alert config
 
@@ -201,7 +201,8 @@ class PsiAlertConfig:
             features_to_monitor:
                 List of features to monitor. Defaults to empty list, which means all features
             threshold:
-                Configuration that helps determine how to calculate PSI critical values
+                Configuration that helps determine how to calculate PSI critical values.
+                Defaults to PsiChiSquareThreshold, which uses the chi-square distribution.
         """
 
     @property

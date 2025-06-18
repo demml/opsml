@@ -249,6 +249,7 @@ pub enum ResourceType {
     File,
     Database,
     Card,
+    Drift,
 }
 
 impl Display for ResourceType {
@@ -257,6 +258,7 @@ impl Display for ResourceType {
             ResourceType::File => write!(f, "File"),
             ResourceType::Database => write!(f, "Database"),
             ResourceType::Card => write!(f, "Card"),
+            ResourceType::Drift => write!(f, "Drift"),
         }
     }
 }

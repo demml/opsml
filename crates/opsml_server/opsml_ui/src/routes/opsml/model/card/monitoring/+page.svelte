@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { BinnedDriftMap, MetricData  } from '$lib/components/card/model/monitoring/types';
   import { DriftType } from '$lib/components/card/model/monitoring/types';
-  import type { DriftProfile, DriftProfileResponse } from '$lib/components/card/model/monitoring/util';
+  import type { DriftProfile, DriftProfileResponse, UiProfile } from '$lib/components/card/model/monitoring/util';
   import type { PageProps } from './$types';
   import { TimeInterval } from '$lib/components/card/model/monitoring/types';
   import VizBody from '$lib/components/card/model/monitoring/VizBody.svelte';
@@ -18,17 +18,18 @@
   let { data }: PageProps = $props();
 
   let profiles: DriftProfileResponse = data.profiles;
-
+  
   // Props
   let currentName: string = $state(data.currentName);
   let currentNames: string[] = $state(data.currentNames);
   let currentDriftType: DriftType = $state(data.currentDriftType);
-  let currentProfile: DriftProfile = $state(data.currentProfile);
+  let currentProfile: UiProfile = $state(data.currentProfile);
   let latestMetrics: BinnedDriftMap = $state(data.latestMetrics);
   let currentMetricData: MetricData = $state(data.currentMetricData);
   let currentMaxDataPoints: number = $state(data.maxDataPoints);
   let currentConfig: DriftConfigType = $state(data.currentConfig);
   let currentAlerts: Alert[] = $state(data.currentAlerts);
+  let uid: string = $state(data.metadata.uid);
 
   // Vars
   let drift_types: DriftType[] = data.keys;
@@ -70,12 +71,12 @@
   function handleDriftTypeChange(drift_type: DriftType) {
 
     currentDriftType = drift_type;
-    currentProfile = profiles[drift_type];
+    currentProfile= profiles[drift_type];
 
-    currentNames = getProfileFeatures(currentDriftType, currentProfile);
+    currentNames = getProfileFeatures(currentDriftType, currentProfile.profile);
     currentName = currentNames[0];
 
-    currentConfig = getProfileConfig(currentDriftType, currentProfile);
+    currentConfig = getProfileConfig(currentDriftType, currentProfile.profile);
 
 
     currentMetricData = getCurrentMetricData(
@@ -154,6 +155,7 @@
             {handleDriftTypeChange}
             {handleNameChange}
             {handleTimeChange}
+            {uid}
       /> 
     </div>
 
@@ -168,7 +170,7 @@
             currentName={currentName}
             currentTimeInterval={currentTimeInterval}
             currentConfig={currentConfig}
-            currentProfile={currentProfile}
+            currentProfile={currentProfile.profile}
           />
         {:else}
           <div class="flex items-center justify-center h-full text-gray-500">

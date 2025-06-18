@@ -2,7 +2,9 @@ use crate::core::error::{internal_server_error, OpsmlServerError};
 use crate::core::files::utils::download_artifacts;
 use crate::core::scouter;
 
-use crate::core::scouter::utils::{find_drift_profile, save_encrypted_profile};
+use crate::core::scouter::types::DriftProfileResult;
+use crate::core::scouter::utils::load_drift_profiles;
+use crate::core::scouter::utils::save_encrypted_profile;
 use crate::core::state::AppState;
 use anyhow::{Context, Result};
 use axum::{
@@ -12,14 +14,14 @@ use axum::{
     Extension, Json, Router,
 };
 use opsml_auth::permission::UserPermissions;
+use opsml_events::AuditContext;
 use opsml_sql::base::SqlClient;
 use opsml_types::api::RequestType;
+use opsml_types::contracts::Operation;
+use opsml_types::contracts::ResourceType;
 use opsml_types::contracts::{DriftProfileRequest, UpdateProfileRequest};
-use opsml_types::{Alive, RegistryType, SaveName};
+use opsml_types::{Alive, RegistryType};
 use reqwest::Response;
-
-use crate::core::scouter::types::DriftProfileResult;
-use crate::core::scouter::utils::load_drift_profiles;
 
 use scouter_client::{
     Alerts, BinnedCustomMetrics, BinnedPsiFeatureMetrics, DriftAlertRequest, DriftRequest,
@@ -71,7 +73,7 @@ pub async fn insert_drift_profile(
         internal_server_error(e, "Failed to serialize profile request")
     })?;
 
-    let response = state
+    let mut response = state
         .scouter_client
         .request(
             scouter::Routes::Profile,
@@ -86,6 +88,24 @@ pub async fn insert_drift_profile(
             error!("Failed to insert drift profile: {}", e);
             internal_server_error(e, "Failed to insert drift profile")
         })?;
+
+    let metadata = serde_json::json!({
+        "space": body.space,
+        "drift_type": body.drift_type.to_string(),
+    });
+    let metadata = serde_json::to_string(&metadata)
+        .unwrap_or_else(|e| format!("Failed to serialize ProfileRequest: {}", e));
+
+    let audit_context = AuditContext {
+        resource_id: "insert_drift".to_string(),
+        resource_type: ResourceType::Drift,
+        metadata,
+        registry_type: None,
+        operation: Operation::Create,
+        access_location: None,
+    };
+
+    response.extensions_mut().insert(audit_context);
 
     parse_scouter_response(response).await
 }
@@ -103,8 +123,6 @@ pub async fn update_drift_profile(
         return OpsmlServerError::permission_denied().into_response(StatusCode::FORBIDDEN);
     }
 
-    // 1. Opsml task
-    let drift_type = req.request.drift_type.to_string();
     let artifact_key = state
         .sql_client
         .get_artifact_key(&req.uid, &RegistryType::Model.to_string())
@@ -114,7 +132,7 @@ pub async fn update_drift_profile(
             internal_server_error(e, "Failed to get artifact key")
         })?;
 
-    let drift_path = artifact_key.storage_path().join(SaveName::Drift);
+    let drift_path = artifact_key.storage_path().join(&req.profile_uri);
 
     // list files in the directory
     let files = state.storage_client.find(&drift_path).await.map_err(|e| {
@@ -128,7 +146,18 @@ pub async fn update_drift_profile(
         return OpsmlServerError::no_files_found().into_response(StatusCode::NOT_FOUND);
     }
 
-    let filename = find_drift_profile(&files, drift_type)?;
+    // get first file
+    let filename = drift_path
+        .file_name()
+        .and_then(|f| f.to_str())
+        .ok_or_else(|| {
+            error!("Failed to get filename from path");
+            (
+                StatusCode::NOT_FOUND,
+                Json(OpsmlServerError::no_drift_profile_found()),
+            )
+        })?;
+
     let encryption_key = artifact_key.get_decrypt_key().map_err(|e| {
         error!("Failed to get encryption key: {}", e);
         internal_server_error(e, "Failed to get encryption key")
@@ -136,7 +165,7 @@ pub async fn update_drift_profile(
 
     save_encrypted_profile(
         &req.request.profile,
-        &filename,
+        filename,
         &encryption_key,
         &state.storage_client,
         &drift_path,
@@ -149,7 +178,7 @@ pub async fn update_drift_profile(
         internal_server_error(e, "Failed to exchange token for scouter")
     })?;
 
-    let response = state
+    let mut response = state
         .scouter_client
         .request(
             scouter::Routes::Profile,
@@ -167,6 +196,26 @@ pub async fn update_drift_profile(
             error!("Failed to update drift profile: {}", e);
             internal_server_error(e, "Failed to update drift profile")
         })?;
+
+    info!("Drift profile updated successfully for uid: {:?}", &req.uid);
+
+    let metadata = serde_json::json!({
+        "space": req.request.space,
+        "drift_type": req.request.drift_type.to_string(),
+    });
+    let metadata = serde_json::to_string(&metadata)
+        .unwrap_or_else(|e| format!("Failed to serialize ProfileRequest: {}", e));
+
+    let audit_context = AuditContext {
+        resource_id: "update_drift".to_string(),
+        resource_type: ResourceType::Drift,
+        metadata,
+        registry_type: None,
+        operation: Operation::Update,
+        access_location: Some(req.profile_uri.clone()),
+    };
+
+    response.extensions_mut().insert(audit_context);
 
     parse_scouter_response(response).await
 }
@@ -195,7 +244,7 @@ pub async fn update_drift_profile_status(
         internal_server_error(e, "Failed to exchange token for scouter")
     })?;
 
-    let response = data
+    let mut response = data
         .scouter_client
         .request(
             scouter::Routes::ProfileStatus,
@@ -213,6 +262,28 @@ pub async fn update_drift_profile_status(
             error!("Failed to update drift profile status: {}", e);
             internal_server_error(e, "Failed to update drift profile status")
         })?;
+
+    let metadata = serde_json::json!({
+        "name": body.name,
+        "space": body.space,
+        "version": body.version,
+        "active": body.active,
+        "drift_type": body.drift_type.as_ref().map(|dt| dt.to_string()),
+        "deactivate_others": body.deactivate_others,
+    });
+    let metadata = serde_json::to_string(&metadata)
+        .unwrap_or_else(|e| format!("Failed to serialize ProfileStatusRequest: {}", e));
+
+    let audit_context = AuditContext {
+        resource_id: "update_drift_status".to_string(),
+        resource_type: ResourceType::Drift,
+        metadata,
+        registry_type: None,
+        operation: Operation::Update,
+        access_location: None,
+    };
+
+    response.extensions_mut().insert(audit_context);
 
     parse_scouter_response(response).await
 }

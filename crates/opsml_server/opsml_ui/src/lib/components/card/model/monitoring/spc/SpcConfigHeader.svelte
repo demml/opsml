@@ -3,7 +3,7 @@
   import type { SpcAlertConfig, SpcDriftConfig } from "./spc";
   import Pill from "$lib/components/utils/Pill.svelte";
   import UpdateModal from "../update/UpdateModal.svelte";
-  import type { DriftProfile } from "../util";
+  import type { UiProfile } from "../util";
 ;
 
   // props
@@ -11,10 +11,12 @@
     config,
     alertConfig,
     profile,
+    uid,
   } = $props<{
     config: SpcDriftConfig;
     alertConfig: SpcAlertConfig;
-    profile: DriftProfile;
+    profile: UiProfile;
+    uid: string;
   }>();
 
   
@@ -53,6 +55,7 @@
       config={config} 
       driftType={config.drift_type}
       profile={profile}
+      uid={uid}
       />
   </div>
 </div>

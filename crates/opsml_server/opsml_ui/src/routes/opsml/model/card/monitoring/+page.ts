@@ -6,6 +6,7 @@ import {
   getDriftProfiles,
   getProfileConfig,
   getProfileFeatures,
+  type UiProfile,
 } from "$lib/components/card/model/monitoring/util";
 import {
   DriftType,
@@ -31,13 +32,16 @@ export const load: PageLoad = async ({ parent }) => {
     .sort();
 
   let currentDriftType = keys[0];
-  let currentProfile = profiles[currentDriftType];
+  let currentProfile: UiProfile = profiles[currentDriftType];
   let currentNames: string[] = getProfileFeatures(
     currentDriftType,
-    currentProfile
+    currentProfile.profile
   );
   let currentName: string = currentNames[0];
-  let currentConfig = getProfileConfig(currentDriftType, currentProfile);
+  let currentConfig = getProfileConfig(
+    currentDriftType,
+    currentProfile.profile
+  );
   let maxDataPoints = getMaxDataPoints();
 
   // get latest metrics for all available drift profiles
