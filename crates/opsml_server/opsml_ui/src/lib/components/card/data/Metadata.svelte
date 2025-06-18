@@ -37,7 +37,7 @@ datacard = registry.load_card(uid="${card.uid}")
 </script>
 
 
-<div class="grid grid-cols-1 gap-4 w-full h-auto">
+<div class="grid grid-cols-1 gap-3 w-full h-auto">
 
   <div class="flex flex-row justify-between pb-2 mb-2 items-center border-b-2 border-black">
     
