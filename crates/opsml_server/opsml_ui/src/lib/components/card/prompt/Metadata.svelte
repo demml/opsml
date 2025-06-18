@@ -36,7 +36,7 @@ datacard = registry.load_card(uid="${card.uid}")
 </script>
 
 
-<div class="grid grid-cols-1 gap-4 w-full h-auto">
+<div class="grid grid-cols-1 gap-3 w-full h-auto">
 
   <div class="flex flex-row justify-between pb-2 mb-2 items-center border-b-2 border-black">
     
@@ -63,17 +63,15 @@ datacard = registry.load_card(uid="${card.uid}")
     <Pill key="Name" value={card.name} textSize="text-sm"/>
     <Pill key="Version" value={card.version} textSize="text-sm"/>
     <Pill key="OpsML Version" value={card.opsml_version} textSize="text-sm"/>
-
   </div>
 
   {#if card.metadata.experimentcard_uid ||  card.metadata.auditcard_uid}
-    <div class="flex flex-row items-center mb-1 border-b-2 border-black">
+    <div class="flex flex-row items-center pb-1 border-b-2 border-black">
       <Diamond color="#8059b6" fill="#8059b6"/>
       <header class="pl-2 text-primary-900 text-sm font-bold">Cards</header>
     </div>
 
     <div class="flex flex-wrap space-y-1 gap-1">
-
       {#if card.metadata.experimentcard_uid}
         <LinkPill key="Experiment" value={card.metadata.experimentcard_uid} registryType={RegistryType.Experiment} />
       {/if}
