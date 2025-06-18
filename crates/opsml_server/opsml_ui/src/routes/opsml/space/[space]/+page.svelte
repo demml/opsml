@@ -54,7 +54,7 @@
   <p>Loading...</p>
 {:then cards}
   <!-- Cards loaded successfully -->
-<div class="flex-1 mx-auto w-7/12 justify-center px-4 pb-10 pt-10">
+<div class="flex-1 mx-auto w-9/12 justify-center px-4 pb-10 pt-10">
 
     <div class="grid grid-cols-1 lg:grid-cols-4 gap-4 w-full">
 

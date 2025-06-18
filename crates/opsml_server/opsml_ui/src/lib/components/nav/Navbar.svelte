@@ -27,7 +27,7 @@
 
   let imageLoaded = $state(false);
 
-  const names = ["Spaces", "Models", "Data", "Prompts", "Experiments"];
+  const names = ["Spaces", "Models", "Data", "GenAI", "Experiments"];
 
 
   onMount(() => {
@@ -106,13 +106,7 @@
         >
           <UserDropdown/>
         </div>
-
       </div>
-
-
-
-   
-
   </div>  
 </nav>
 

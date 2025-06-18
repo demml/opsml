@@ -6,7 +6,15 @@ export enum RegistryType {
 }
 
 export function getRegistryTypeLowerCase(type: RegistryType): string {
-  return type.toLowerCase();
+  let name = type.toLowerCase();
+
+  // if registry_name == "prompt" change to genai
+  // this is only temporary until we start having both agent and prompt registries
+  if (name === "prompt") {
+    name = "genai";
+  }
+
+  return name;
 }
 
 export function getRegistryTableName(type: RegistryType): string {
