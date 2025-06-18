@@ -1,6 +1,6 @@
 // Functions and types use in the UpdataConfigModal
 import { z } from "zod";
-import { type AlertDispatchConfig } from "../types";
+import { type AlertDispatchConfig, type PsiThreshold } from "../types";
 import {
   isCustomConfig,
   isPsiConfig,
@@ -20,7 +20,8 @@ export const customConfigSchema = z.object({
 
 export const psiConfigSchema = z.object({
   schedule: z.string().default("0 0 0 * * *"),
-  psi_threshold: z.coerce.number(),
+  psi_threshold_value: z.coerce.number(),
+  psi_threshold_type: z.string(),
   features_to_monitor: z.array(z.string()).default([]),
 });
 
@@ -79,7 +80,7 @@ export type CustomConfigParams = {
 
 export type PsiConfigParams = {
   schedule: string;
-  psi_threshold: number;
+  threshold: PsiThreshold;
   dispatch_config: AlertDispatchConfig;
   features_to_monitor: string[];
 };
@@ -112,7 +113,7 @@ export function getConfigParams(config: DriftConfigType): ConfigParams {
   if (isPsiConfig(config)) {
     return {
       schedule: config.alert_config.schedule,
-      psi_threshold: config.alert_config.psi_threshold,
+      threshold: config.alert_config.threshold,
       dispatch_config: config.alert_config.dispatch_config,
       features_to_monitor: config.alert_config.features_to_monitor,
     };
@@ -275,13 +276,15 @@ export function validateCustomConfig(
 
 export function validatePsiConfig(
   schedule: string,
-  psi_threshold: number,
+  psi_threshold_value: number,
+  psi_threshold_type: string,
   features_to_monitor: string[]
 ): ValidationResult<PsiConfigSchema> {
   try {
     const validData = psiConfigSchema.parse({
       schedule,
-      psi_threshold,
+      psi_threshold_value,
+      psi_threshold_type,
       features_to_monitor,
     });
     return {

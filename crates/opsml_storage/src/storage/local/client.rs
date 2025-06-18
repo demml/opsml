@@ -32,6 +32,7 @@ impl LocalMultiPartUpload {
         })
     }
 
+    #[instrument(skip_all)]
     pub async fn upload_file_in_chunks(&self) -> Result<(), LocalError> {
         // if not client mode, copy the file to rpath
 

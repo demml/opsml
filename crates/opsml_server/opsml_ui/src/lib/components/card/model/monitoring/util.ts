@@ -30,13 +30,18 @@ export type DriftProfile = {
   Custom: CustomDriftProfile;
 };
 
+export interface UiProfile {
+  profile_uri: string;
+  profile: DriftProfile;
+}
+
 export type DriftConfigType =
   | CustomMetricDriftConfig
   | PsiDriftConfig
   | SpcDriftConfig;
 
 export type DriftProfileResponse = {
-  [DriftType: string]: DriftProfile;
+  [DriftType: string]: UiProfile;
 };
 
 export async function getDriftProfiles(
@@ -107,7 +112,7 @@ export async function getLatestMetrics(
   // Create an array of promises
   const requests = Object.entries(profiles).map(
     async ([driftType, profile]) => {
-      const config = getProfileConfig(driftType as DriftType, profile);
+      const config = getProfileConfig(driftType as DriftType, profile.profile);
 
       const request: DriftRequest = {
         name: config.name,

@@ -12,7 +12,6 @@
   import { getCustomAlertCondition, type CustomMetricDriftConfig } from './custom/custom';
   import { type DriftProfile } from './util';
 
-
   let { 
     metricData,
     currentDriftType,
@@ -63,7 +62,19 @@ function getBaselineValue(): number | undefined {
 
   // get psi threshold
   if (currentDriftType === DriftType.Psi) {
-    return (currentProfile as DriftProfile).Psi.config.alert_config.psi_threshold;
+    const psiProfile = (currentProfile as DriftProfile).Psi;
+    const threshold = psiProfile.config.alert_config.threshold;
+    if (threshold) {
+    
+      if (threshold.Normal) {
+        return threshold.Normal.alpha;
+      } else if (threshold.ChiSquare) {
+      return threshold.ChiSquare.alpha;
+      } else if (threshold.Fixed) {
+        return threshold.Fixed.threshold;
+      }
+    }
+    return undefined;
   }
 
   return undefined;

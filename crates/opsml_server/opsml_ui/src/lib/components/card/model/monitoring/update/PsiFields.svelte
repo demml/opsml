@@ -1,16 +1,39 @@
 
 <script lang="ts">
-    import type { PsiConfigParams, PsiConfigSchema } from "./schema";
+  import { onMount } from "svelte";
+  import {  type PsiConfigParams, type PsiConfigSchema } from "./schema";
+  import { getPsiThresholdKeyValue, updatePsiThreshold, type PsiThreshold } from "../types";
+
+    let { 
+      params = $bindable(),
+      errors = $bindable(),
+      updateCallback = $bindable(),
+    } = $props<{
+      params: PsiConfigParams;
+      errors: Partial<Record<keyof PsiConfigSchema, string>>;
+      updateCallback: (field: string, value: string | PsiThreshold) => void;
+    }>();
+
+    // $state
+    let thresholdType = $state<string>("Fixed");
+    let thresholdValue = $state<number>(0.1);
+
+
+    onMount(() => {
+      // Initialize from params only once
+      const initial = getPsiThresholdKeyValue(params.threshold);
+      thresholdType = initial.type;
+      thresholdValue = initial.value;
+    });
+
+    
+    function handleThresholdBlur() {
+      const threshold = updatePsiThreshold(thresholdType, thresholdValue);
+      updateCallback('threshold', threshold);
+    }
+
+
   
-      let { 
-        params = $bindable(),
-        errors = $bindable(),
-        updateCallback = $bindable(),
-      } = $props<{
-        params: PsiConfigParams;
-        errors: Partial<Record<keyof PsiConfigSchema, string>>;
-        updateCallback: (field: string, value: string) => void;
-      }>();
   </script>
   
   <div class="grid grid-cols-1 gap-3 ">
@@ -26,20 +49,36 @@
         <span class="text-red-500 text-sm">{errors.schedule}</span>
       {/if}
     </label>
-  
-    <label class="text-surface-950 text-sm">
-      Psi Threshold
-      <input
+
+     <label class="text-surface-950 text-sm">
+      Psi Threshold Type
+      <select
         class="input w-full text-sm rounded-base bg-surface-50 text-black disabled:opacity-50 placeholder-surface-800 placeholder-text-sm focus-visible:ring-2 focus-visible:ring-primary-800"
-        type="text" 
-        value={params.psi_threshold}
-        oninput={(e) => updateCallback('psi_threshold', e.currentTarget.value)}
-      />
-      {#if errors.psi_threshold}
-        <span class="text-red-500 text-sm">{errors.psi_threshold}</span>
+        bind:value={thresholdType}
+        onchange={handleThresholdBlur}
+      >
+        <option value="Normal">Normal</option>
+        <option value="ChiSquare">ChiSquare</option>
+        <option value="Fixed">Fixed</option>
+      </select>
+      {#if errors.psi_threshold_type}
+        <span class="text-red-500 text-sm">{errors.psi_threshold_type}</span>
       {/if}
     </label>
   
+    <label class="text-surface-950 text-sm">
+      Psi Threshold Value
+      <input
+        class="input w-full text-sm rounded-base bg-surface-50 text-black disabled:opacity-50 placeholder-surface-800 placeholder-text-sm focus-visible:ring-2 focus-visible:ring-primary-800"
+        type="text" 
+        bind:value={thresholdValue}
+        onblur={handleThresholdBlur}
+      />
+      {#if errors.psi_threshold_value}
+        <span class="text-red-500 text-sm">{errors.psi_threshold_value}</span>
+      {/if}
+    </label>
+
     <label class="text-surface-950 text-sm">
       Features to monitor
       <input

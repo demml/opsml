@@ -5,9 +5,9 @@
   import { validateSlack,validateCustomConfig, validateOpsGenie, getConfigParams, validatePsiConfig, validateSpcConfig, validateConsole  } from './schema';
   import type {SpcConfigParams, PsiConfigParams, ConfigParams, CustomConfigParams, ConsoleConfigSchema} from './schema';
   import type {SlackConfigSchema, OpsGenieConfigSchema, CustomConfigSchema, PsiConfigSchema} from './schema';
-  import type { DriftConfigType, DriftProfile } from '../util';
+  import type { DriftConfigType, DriftProfile, UiProfile } from '../util';
   import { isSpcConfig, isCustomConfig, isPsiConfig, updateDriftProfile, extractProfile } from '../util';
-  import { DriftType } from '../types';
+  import { DriftType, getPsiThresholdKeyValue } from '../types';
   import CustomFields from './CustomFields.svelte';
   import SpcFields from './SpcFields.svelte';
   import PsiFields from './PsiFields.svelte';
@@ -37,10 +37,12 @@
       config = $bindable(), 
       driftType= $bindable(),
       profile= $bindable(),
+      uid,
     } = $props<{
-      config: DriftConfigType,
-      driftType: DriftType
-      profile: DriftProfile
+      config: DriftConfigType;
+      driftType: DriftType;
+      profile: UiProfile;
+      uid: string;
     }>();
 
   // props
@@ -97,9 +99,14 @@
         if (!isPsiConfig(config)) return false;
         
         const psiParams = configParams as PsiConfigParams;
+        const threshold = psiParams.threshold;
+
+        let keyValue = getPsiThresholdKeyValue(threshold);
+     
         const validated = validatePsiConfig(
           psiParams.schedule,
-          psiParams.psi_threshold,
+          keyValue.value,
+          keyValue.type,
           psiParams.features_to_monitor
         );
 
@@ -107,6 +114,7 @@
           psiErrors = validated.errors ?? {};
           return false;
         }
+   
         return true;
       }
 
@@ -192,7 +200,8 @@ function validateDispatchForm(): boolean {
     }
 
     // implement post request to update config
-    const matchedProfile = extractProfile(profile, driftType);
+    const matchedProfile = extractProfile(profile.profile, driftType);
+
 
     matchedProfile.config = {
       ...matchedProfile.config,
@@ -200,26 +209,25 @@ function validateDispatchForm(): boolean {
     };
 
     let request: UpdateProfileRequest = {
-      uid: profile.config.uid,
+      uid: uid,
+      profile_uri: profile.profile_uri,
       request: {
         space: matchedProfile.config.space,
         profile: JSON.stringify(matchedProfile),
         drift_type: driftType,
+        
       }
     };
 
- 
-
-    //let response = await updateDriftProfile(request);
-   
-  
+    await updateDriftProfile(request);
 
     modalClose();
 
-    
+  
   }
 
-  function updateParamCallback(field: string, value: string) {
+  function updateParamCallback(field: string, value: any) {
+
       // @ts-ignore
       configParams[field] = value;
 

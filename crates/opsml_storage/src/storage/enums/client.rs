@@ -14,7 +14,7 @@ use opsml_types::contracts::FileInfo;
 use opsml_types::StorageType;
 use opsml_utils::ChunkParts;
 use std::path::Path;
-use tracing::debug;
+use tracing::{debug, instrument};
 
 pub enum MultiPartUploader {
     Google(GoogleMultipartUpload),
@@ -90,6 +90,7 @@ impl StorageClientEnum {
         }
     }
 
+    #[instrument(skip_all)]
     pub async fn new(settings: &OpsmlStorageSettings) -> Result<Self, StorageError> {
         match settings.storage_type {
             StorageType::Google => {
@@ -114,7 +115,7 @@ impl StorageClientEnum {
             }
         }
     }
-
+    #[instrument(skip_all)]
     pub async fn find(&self, path: &Path) -> Result<Vec<String>, StorageError> {
         match self {
             StorageClientEnum::Google(client) => client.find(path).await,
@@ -124,6 +125,7 @@ impl StorageClientEnum {
         }
     }
 
+    #[instrument(skip_all)]
     pub async fn find_info(&self, path: &Path) -> Result<Vec<FileInfo>, StorageError> {
         match self {
             StorageClientEnum::Google(client) => client.find_info(path).await,
@@ -133,6 +135,7 @@ impl StorageClientEnum {
         }
     }
 
+    #[instrument(skip_all)]
     pub async fn get(
         &self,
         lpath: &Path,
@@ -147,6 +150,7 @@ impl StorageClientEnum {
         }
     }
 
+    #[instrument(skip_all)]
     pub async fn put(
         &self,
         lpath: &Path,
@@ -161,6 +165,7 @@ impl StorageClientEnum {
         }
     }
 
+    #[instrument(skip_all)]
     pub async fn copy(&self, src: &Path, dest: &Path, recursive: bool) -> Result<(), StorageError> {
         match self {
             StorageClientEnum::Google(client) => client.copy(src, dest, recursive).await,
@@ -170,6 +175,7 @@ impl StorageClientEnum {
         }
     }
 
+    #[instrument(skip_all)]
     pub async fn rm(&self, path: &Path, recursive: bool) -> Result<(), StorageError> {
         match self {
             StorageClientEnum::Google(client) => client.rm(path, recursive).await,
@@ -179,6 +185,7 @@ impl StorageClientEnum {
         }
     }
 
+    #[instrument(skip_all)]
     pub async fn exists(&self, path: &Path) -> Result<bool, StorageError> {
         match self {
             StorageClientEnum::Google(client) => client.exists(path).await,
@@ -188,6 +195,7 @@ impl StorageClientEnum {
         }
     }
 
+    #[instrument(skip_all)]
     pub async fn generate_presigned_url(
         &self,
         path: &Path,
