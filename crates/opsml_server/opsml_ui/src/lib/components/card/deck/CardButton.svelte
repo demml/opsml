@@ -21,7 +21,6 @@
     badgeColor: string;
   }>();
 
-  // function to navigate to the card page
   function navigateToCardPage() {
 
     let registry_name = registry.toLowerCase();
