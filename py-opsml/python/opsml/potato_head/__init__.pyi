@@ -305,7 +305,9 @@ class DocumentUrl:
         """The format of the document URL."""
 
 class Message:
-    def __init__(self, content: str | ImageUrl | AudioUrl | BinaryContent | DocumentUrl) -> None:
+    def __init__(
+        self, content: str | ImageUrl | AudioUrl | BinaryContent | DocumentUrl
+    ) -> None:
         """Create a Message object.
 
         Args:
@@ -505,7 +507,10 @@ class ModelSettings:
 class Prompt:
     def __init__(
         self,
-        user_message: str | Sequence[str | ImageUrl | AudioUrl | BinaryContent | DocumentUrl] | Message | List[Message],
+        user_message: str
+        | Sequence[str | ImageUrl | AudioUrl | BinaryContent | DocumentUrl]
+        | Message
+        | List[Message],
         model: Optional[str] = None,
         provider: Optional[str] = None,
         system_message: Optional[str | List[str]] = None,
@@ -587,7 +592,7 @@ class Prompt:
         """
 
     @staticmethod
-    def load_from_path(path: Path) -> "Prompt":
+    def from_path(path: Path) -> "Prompt":
         """Load a prompt from a file.
 
         Args:

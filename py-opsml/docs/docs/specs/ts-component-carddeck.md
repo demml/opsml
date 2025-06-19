@@ -204,7 +204,7 @@ loaded_deck.load({"model": ModelLoadKwargs(load_onnx=True)})
 
 
 # Loading from filesystem (assume artifacts are already downloaded to path)
-loaded_deck = CardDeck.load_from_path("my_card_deck")
+loaded_deck = CardDeck.from_path("my_card_deck")
 
 loaded_deck["model"].model # access the model
 loaded_deck["prompt"].prompt # access the prompt

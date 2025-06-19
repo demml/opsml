@@ -319,7 +319,7 @@ def crud_card_deck(model_uid: str, prompt_uid: str):
     load_kwargs = {
         "model": {"load_kwargs": ModelLoadKwargs(load_onnx=True)},
     }
-    CardDeck.load_from_path(load_kwargs=load_kwargs)
+    CardDeck.from_path(load_kwargs=load_kwargs)
 
     # attempt to delete folder
     shutil.rmtree(created_path.as_posix())

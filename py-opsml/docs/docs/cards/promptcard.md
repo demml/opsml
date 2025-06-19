@@ -185,7 +185,7 @@ The same arguments all apply to `system_prompt`
             """
 
         @staticmethod
-        def load_from_path(path: Path) -> "Prompt":
+        def from_path(path: Path) -> "Prompt":
             """Load a prompt from a file.
 
             Args:
