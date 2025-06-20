@@ -14,11 +14,7 @@ use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 use std::path::PathBuf;
-use tabled::settings::{
-    format::Format,
-    object::{Columns, Rows},
-    Alignment, Color, Style, Width,
-};
+use tabled::settings::{format::Format, object::Rows, Alignment, Color, Style};
 use tabled::{Table, Tabled};
 
 use crate::contracts::ResourceType;
