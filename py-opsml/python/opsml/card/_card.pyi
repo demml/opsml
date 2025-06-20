@@ -1154,7 +1154,7 @@ class CardDeck:
         """
 
     @staticmethod
-    def load_from_path(
+    def from_path(
         path: Optional[Path] = None,
         load_kwargs: Optional[Dict[str, Dict[str, Any]]] = None,
     ) -> "CardDeck":
@@ -1188,7 +1188,7 @@ class CardDeck:
                     "load_kwargs": ModelLoadKwargs(load_onnx=True)
                 }
             }
-            deck = CardDeck.load_from_path(load_kwargs=load_kwargs)
+            deck = CardDeck.from_path(load_kwargs=load_kwargs)
             ```
         """
 

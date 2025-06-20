@@ -322,7 +322,7 @@ impl Prompt {
     }
 
     #[staticmethod]
-    pub fn load_from_path(path: PathBuf) -> PyResult<Self> {
+    pub fn from_path(path: PathBuf) -> PyResult<Self> {
         // Load the JSON file from the path
         let file = std::fs::read_to_string(&path)
             .map_err(|e| PotatoHeadError::new_err(format!("Failed to read file: {}", e)))?;
