@@ -68,7 +68,7 @@ deck.load()
   {#if deck.experimentcard_uid }
     <div class="flex flex-row items-center pb-1 border-b-2 border-black">
       <Diamond color="#8059b6" fill="#8059b6"/>
-      <header class="pl-2 text-primary-900 text-sm font-bold">Cards</header>
+      <header class="pl-2 text-primary-900 text-sm font-bold">Extra</header>
     </div>
 
     <div class="flex flex-wrap space-y-1 gap-1">
@@ -77,13 +77,4 @@ deck.load()
       {/if}
     </div>
   {/if}
-
-
-  <div class="flex flex-row items-center pb-1 border-b-2 border-black">
-      <Diamond color="#8059b6" fill="#8059b6"/>
-      <header class="pl-2 text-primary-900 text-sm font-bold">Cards</header>
-    </div>
-
- 
-  
 </div>
