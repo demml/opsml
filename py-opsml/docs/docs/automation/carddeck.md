@@ -34,7 +34,7 @@ registry.register_card(deck)
 async def lifespan(fast_app: FastAPI):
     logger.info("Starting up FastAPI app")
 
-    fast_app.state.deck = deck = CardDeck.load_from_path( # (1)
+    fast_app.state.deck = deck = CardDeck.from_path( # (1)
         path=settings.card_deck_path
         ) 
     yield
@@ -166,7 +166,7 @@ from opsml import CardDeck, ModelLoadKwargs
 load_kwargs = {
         "model": {"load_kwargs": ModelLoadKwargs(load_onnx=True)},
     }
-loaded_deck = CardDeck.load_from_path("path/to/deck", load_kwargs=load_kwargs) # (1)
+loaded_deck = CardDeck.from_path("path/to/deck", load_kwargs=load_kwargs) # (1)
 ```
 
 1. Load the `CardDeck` from a specified path, optionally providing load arguments for specific cards. Unlike registry loading, load_from_path will load all cards and their interfaces and artifacts by default (e.g. models), so there is no need to call `load()` on the deck after loading it from a path. 
@@ -199,7 +199,7 @@ load_kwargs = {
             "interface": MyCustomInterface, # (1)
         },
     }
-loaded_deck = CardDeck.load_from_path("path/to/deck", load_kwargs)
+loaded_deck = CardDeck.from_path("path/to/deck", load_kwargs)
 ```
 
 1. When loading from a path, you can provide the custom interface directly in the `load_kwargs` for the specific card. This allows you to use your custom interface when loading the card from the deck.

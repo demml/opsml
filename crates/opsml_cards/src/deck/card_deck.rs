@@ -497,7 +497,7 @@ impl CardDeck {
     /// - Invalid kwargs are provided
     #[staticmethod]
     #[pyo3(signature = (path=None, load_kwargs=None))]
-    pub fn load_from_path(
+    pub fn from_path(
         py: Python,
         path: Option<PathBuf>,
         load_kwargs: Option<&Bound<'_, PyDict>>,

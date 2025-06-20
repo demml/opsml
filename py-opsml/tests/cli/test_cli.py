@@ -126,7 +126,7 @@ def test_pyproject_app_lock_project(
 
         # try loading each deck
         for app in ["app1", "app2", "app3"]:
-            deck = CardDeck.load_from_path(opsml_app / app)
+            deck = CardDeck.from_path(opsml_app / app)
             assert deck is not None
             assert deck["my_model"].model is not None
             assert deck["my_model"].version == "1.0.0"
@@ -162,7 +162,7 @@ def test_pyproject_app_lock_project(
         assert opsml_app.exists()
 
         for app in ["app1", "app2", "app3"]:
-            deck = CardDeck.load_from_path(opsml_app / app)
+            deck = CardDeck.from_path(opsml_app / app)
             assert deck is not None
             assert deck["my_model"].model is not None
             assert deck["my_model"].version == "1.1.0"
