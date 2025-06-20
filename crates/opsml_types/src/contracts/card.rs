@@ -14,11 +14,7 @@ use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 use std::path::PathBuf;
-use tabled::settings::{
-    format::Format,
-    object::{Columns, Rows},
-    Alignment, Color, Style, Width,
-};
+use tabled::settings::{format::Format, object::Rows, Alignment, Color, Style};
 use tabled::{Table, Tabled};
 
 use crate::contracts::ResourceType;
@@ -892,11 +888,6 @@ impl CardList {
         let mut table = Table::new(entries);
 
         table.with(Style::sharp());
-        table.modify(Columns::one(0), Width::wrap(30).keep_words(true));
-        table.modify(Columns::one(1), Width::wrap(15).keep_words(true));
-        table.modify(Columns::one(2), Width::wrap(15).keep_words(true));
-        table.modify(Columns::one(3), Width::wrap(30).keep_words(true));
-        table.modify(Columns::one(4), Width::wrap(100).keep_words(true));
         table.modify(
             Rows::new(0..1),
             (
