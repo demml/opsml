@@ -17,6 +17,7 @@ repository = "https://github.com/demml/opsml"
 
 
 [workspace.dependencies]
+opsml-app = { path = "crates/opsml_app" }
 opsml-auth = { path = "crates/opsml_auth" }
 opsml-cards = { path = "crates/opsml_cards" }
 opsml-cli = { path = "crates/opsml_cli" }
@@ -87,7 +88,7 @@ reqwest = { version = "0.12.*", features = ["json", "stream", "multipart", "rust
 rust-embed = "8.*"
 reqwest-middleware = "0.*"
 rusty-logging = "0.*"
-scouter-client = { git = "https://github.com/demml/scouter.git", tag = "v0.5.6" }
+scouter-client = { git = "https://github.com/demml/scouter.git", branch = "feature/queue-opsml-compat" }
 sha2 = "0.*"
 semver = "1.*"
 serde = { version = "1.*", features = ["derive"] }

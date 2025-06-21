@@ -510,6 +510,21 @@ impl CardDeck {
     ) -> Result<CardDeck, CardError> {
         let path = path.unwrap_or_else(|| PathBuf::from(SaveName::CardDeck));
 
+        let card_deck = Self::from_path_rs(py, &path, load_kwargs)?;
+        Ok(card_deck)
+    }
+
+    pub fn __str__(&self) -> String {
+        PyHelperFuncs::__str__(self)
+    }
+}
+
+impl CardDeck {
+    pub fn from_path_rs(
+        py: Python,
+        path: &Path,
+        load_kwargs: Option<&Bound<'_, PyDict>>,
+    ) -> Result<CardDeck, CardError> {
         // check path exists
         if !path.exists() {
             error!("Path does not exist: {:?}", path);
@@ -528,12 +543,6 @@ impl CardDeck {
         Ok(card_deck)
     }
 
-    pub fn __str__(&self) -> String {
-        PyHelperFuncs::__str__(self)
-    }
-}
-
-impl CardDeck {
     fn load_card(
         py: Python,
         base_path: &Path,
