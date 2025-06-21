@@ -226,6 +226,12 @@ impl<'a> IntoIterator for &'a CardList {
     }
 }
 
+impl CardList {
+    pub fn iter(&self) -> std::slice::Iter<'_, Card> {
+        self.cards.iter()
+    }
+}
+
 /// CardDeck is a collection of cards that can be used to create a card deck and load in one call
 #[pyclass]
 #[derive(Debug)]

@@ -3,7 +3,7 @@ use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 #[pyclass(eq, eq_int)]
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
@@ -60,12 +60,13 @@ impl CardTable {
     }
 }
 
-pub struct CardDeckMapping<'a> {
-    pub card_paths: HashMap<&'a str, &'static PathBuf>,
-    pub drift_paths: HashMap<&'a str, &'static PathBuf>,
+#[derive(Serialize, Deserialize, Debug, Clone, Default)]
+pub struct CardDeckMapping {
+    pub card_paths: HashMap<String, PathBuf>,
+    pub drift_paths: HashMap<String, PathBuf>,
 }
 
-impl<'a> CardDeckMapping<'a> {
+impl CardDeckMapping {
     pub fn new() -> Self {
         Self {
             // this will be the card alias + path
@@ -76,10 +77,12 @@ impl<'a> CardDeckMapping<'a> {
         }
     }
 
-    pub fn add_card_path(&mut self, alias: &'a str, path: &'static PathBuf) {
-        self.card_paths.insert(alias, path);
+    pub fn add_card_path(&mut self, alias: &str, path: &Path) {
+        self.card_paths
+            .insert(alias.to_string(), path.to_path_buf());
     }
-    pub fn add_drift_path(&mut self, alias: &'a str, path: &'static PathBuf) {
-        self.drift_paths.insert(alias, path);
+    pub fn add_drift_path(&mut self, alias: &str, path: &Path) {
+        self.drift_paths
+            .insert(alias.to_string(), path.to_path_buf());
     }
 }

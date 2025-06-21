@@ -198,7 +198,7 @@ impl CardRegistry {
         }
 
         // Wrap all operations in a single block_on to handle async operations
-        let key = self.registry.get_key(CardQueryArgs {
+        let key = self.registry.get_key(&CardQueryArgs {
             uid,
             name,
             space,
@@ -648,7 +648,7 @@ impl CardRegistry {
         // get key to re-save Card.json
         let uid = registry_card.uid().to_string();
         let key = registry
-            .get_key(CardQueryArgs {
+            .get_key(&CardQueryArgs {
                 uid: Some(uid),
                 registry_type: registry_type.clone(),
                 ..Default::default()
