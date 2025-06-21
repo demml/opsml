@@ -6,9 +6,11 @@ use opsml_colors::Colorize;
 use opsml_crypt::decrypt_directory;
 use opsml_registry::base::OpsmlRegistry;
 use opsml_storage::storage_client;
-use opsml_types::contracts::ArtifactKey;
-use opsml_types::contracts::CardQueryArgs;
-use opsml_types::RegistryType;
+use opsml_types::{
+    cards::CardDeckMapping,
+    contracts::{ArtifactKey, CardQueryArgs},
+    RegistryType,
+};
 use std::path::Path;
 
 /// Download all artifacts of a card
@@ -114,6 +116,8 @@ pub fn download_deck(args: &DownloadCard) -> Result<(), CliError> {
         Colorize::green(&args.write_dir)
     );
 
+    let mut mapping = CardDeckMapping::new();
+
     // Use try_for_each instead of for_each to handle Results
     card_deck.cards.into_iter().try_for_each(|card| {
         let query_args = CardQueryArgs {
@@ -125,8 +129,20 @@ pub fn download_deck(args: &DownloadCard) -> Result<(), CliError> {
             ..Default::default()
         };
 
-        let key = registry.get_key(query_args)?;
+        let key = registry.get_key(&query_args)?;
         let card_path = base_path.join(&card.alias);
+
+        if &query_args.registry_type == &RegistryType::Model {
+            // create directory for card
+            std::fs::create_dir_all(&card_path)?;
+        }
+
+        match &query_args.registry_type {
+            RegistryType::Model => {
+                mapping.add_card_path(&card.alias, &card_path);
+            }
+            _ => {}
+        }
 
         // download card artifacts
         download_card_artifacts(&key, &card_path)

@@ -1,7 +1,9 @@
 use crate::types::RegistryType;
 use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::fmt;
+use std::path::PathBuf;
 
 #[pyclass(eq, eq_int)]
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
@@ -55,5 +57,29 @@ impl CardTable {
             RegistryType::Prompt => CardTable::Prompt,
             RegistryType::Deck => CardTable::Deck,
         }
+    }
+}
+
+pub struct CardDeckMapping<'a> {
+    pub card_paths: HashMap<&'a str, &'static PathBuf>,
+    pub drift_paths: HashMap<&'a str, &'static PathBuf>,
+}
+
+impl<'a> CardDeckMapping<'a> {
+    pub fn new() -> Self {
+        Self {
+            // this will be the card alias + path
+            card_paths: HashMap::new(),
+
+            // this will be the drift alias + path (if it exists)
+            drift_paths: HashMap::new(),
+        }
+    }
+
+    pub fn add_card_path(&mut self, alias: &'a str, path: &'static PathBuf) {
+        self.card_paths.insert(alias, path);
+    }
+    pub fn add_drift_path(&mut self, alias: &'a str, path: &'static PathBuf) {
+        self.drift_paths.insert(alias, path);
     }
 }
