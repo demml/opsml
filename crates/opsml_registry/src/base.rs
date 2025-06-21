@@ -167,7 +167,7 @@ impl OpsmlRegistry {
         }
     }
 
-    pub fn get_key(&self, args: CardQueryArgs) -> Result<ArtifactKey, RegistryError> {
+    pub fn get_key(&self, args: &CardQueryArgs) -> Result<ArtifactKey, RegistryError> {
         match self {
             Self::ClientRegistry(client_registry) => Ok(client_registry.get_key(args)?),
             #[cfg(feature = "server")]

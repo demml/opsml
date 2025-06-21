@@ -219,7 +219,6 @@ pub async fn get_version_page(
     Ok(Json(VersionPageResponse { summaries }))
 }
 
-#[axum::debug_handler]
 pub async fn list_cards(
     State(state): State<Arc<AppState>>,
     Query(params): Query<CardQueryArgs>,

@@ -3969,6 +3969,7 @@ dependencies = [
  "reqwest",
  "scouter-client",
  "serde",
+ "serde_json",
  "sysinfo",
  "tabled",
  "tar",
