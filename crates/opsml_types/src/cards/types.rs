@@ -1,3 +1,4 @@
+use crate::error::TypeError;
 use crate::types::RegistryType;
 use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -84,5 +85,11 @@ impl CardDeckMapping {
     pub fn add_drift_path(&mut self, alias: &str, path: &Path) {
         self.drift_paths
             .insert(alias.to_string(), path.to_path_buf());
+    }
+
+    pub fn from_path(path: &Path) -> Result<Self, TypeError> {
+        let json_string = std::fs::read_to_string(&path)?;
+        let mapping: CardDeckMapping = serde_json::from_str(&json_string)?;
+        Ok(mapping)
     }
 }
