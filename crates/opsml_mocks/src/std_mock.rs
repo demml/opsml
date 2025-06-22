@@ -10,7 +10,6 @@ use std::net::TcpListener as StdTcpListener;
 use std::sync::Arc;
 #[cfg(feature = "server")]
 use std::thread::sleep;
-
 #[cfg(feature = "server")]
 use tokio::{runtime::Runtime, sync::Mutex, task::JoinHandle};
 
@@ -127,6 +126,19 @@ impl ScouterServer {
             .match_query(mockito::Matcher::Any)
             .with_status(200)
             .with_body(serde_json::to_string(&BinnedCustomMetrics::default()).unwrap())
+            .create();
+
+        server
+            .mock("POST", "/scouter/drift")
+            .match_query(mockito::Matcher::Any)
+            .with_status(200)
+            .with_body(
+                serde_json::to_string(&scouter_client::ScouterResponse {
+                    status: "success".to_string(),
+                    message: "Drift records queued for processing".to_string(),
+                })
+                .unwrap(),
+            )
             .create();
 
         Self {
