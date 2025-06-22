@@ -2,6 +2,7 @@
 # pylint: disable=no-name-in-module
 
 from .opsml import (  # noqa: F401
+    app,
     card,
     cli,
     data,
@@ -12,7 +13,6 @@ from .opsml import (  # noqa: F401
     potato_head,
     scouter,
     types,
-    app,
 )
 
 CardRegistry = card.CardRegistry
