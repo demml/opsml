@@ -25,6 +25,25 @@ pub struct AppState {
 
 #[pymethods]
 impl AppState {
+    /// Instantiate a new application state. Typically from_path is used; however, an new/init
+    /// method is provided for consistency with other classes
+    /// # Arguments
+    /// * `deck` - The CardDeck to use for the application state
+    /// * `queue` - An optional ScouterQueue to use for the application state. If not provided,
+    /// no queue will be created.
+    ///
+    /// # Returns
+    /// * `AppState` - The application state containing the CardDeck and optional ScouterQueue  
+    #[new]
+    #[pyo3(signature = (deck, queue=None))]
+    pub fn new(
+        deck: Bound<'_, CardDeck>,
+        queue: Option<Bound<'_, ScouterQueue>>,
+    ) -> Result<Self, AppError> {
+        let deck = deck.unbind();
+        let queue = queue.map(|q| q.unbind());
+        Ok(AppState { deck, queue })
+    }
     /// This method will load an application state from a path
     /// This is primarily used for loading an application during api start where a user
     /// may wish to load an Opsml CardDeck along with the appropriate ScouterQueue for monitoring
