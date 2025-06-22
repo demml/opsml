@@ -1,0 +1,28 @@
+[project]
+name = "opsml-cli-test"
+requires-python = ">=3.10"
+classifiers = [
+    "Programming Language :: Rust",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Programming Language :: Python :: Implementation :: PyPy",
+]
+
+[tool.opsml.default]
+space = "space"
+
+[tool.opsml.registry]
+model = { name = "model" }
+
+[[tool.opsml.deck]]
+space = "space"
+name = "name"
+version = "1"
+write_dir = "opsml_app"
+
+[[tool.opsml.deck.cards]]
+alias = "model"
+space = "space"
+name = "name"
+version = "1"
+type = "model"
+drift = { active = true, deactivate_others = false, drift_type = ["psi"] }
