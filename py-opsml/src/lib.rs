@@ -1,3 +1,4 @@
+pub mod app;
 pub mod card;
 pub mod cli;
 pub mod data;
@@ -22,6 +23,7 @@ fn opsml(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_wrapped(wrap_pymodule!(model::model))?;
     m.add_wrapped(wrap_pymodule!(card::card))?;
     m.add_wrapped(wrap_pymodule!(experiment::experiment))?;
+    m.add_wrapped(wrap_pymodule!(app::app))?;
 
     // types
     m.add_wrapped(wrap_pymodule!(types::types))?;

@@ -6,16 +6,19 @@ use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use scouter_client::ScouterQueue;
 use std::path::{Path, PathBuf};
+use tracing::{debug, error};
+
 /// Load a card map from path
 fn load_card_map(path: &Path) -> Result<CardDeckMapping, AppError> {
     let card_mapping_path = path.join(SaveName::CardMap).with_extension(Suffix::Json);
+    debug!("Loading card mapping from: {:?}", card_mapping_path);
     let mapping = CardDeckMapping::from_path(&card_mapping_path)?;
     Ok(mapping)
 }
 
 #[pyclass]
 #[derive(Debug)]
-struct AppState {
+pub struct AppState {
     deck: Py<CardDeck>,
     queue: Option<Py<ScouterQueue>>,
 }
@@ -43,20 +46,28 @@ impl AppState {
     ) -> Result<Self, AppError> {
         let path = path.unwrap_or_else(|| PathBuf::from(SaveName::CardDeck));
         let deck = Py::new(py, CardDeck::from_path_rs(py, &path, load_kwargs)?)?;
-        let card_map_path = path.join(SaveName::CardMap).with_extension(Suffix::Json);
-        let card_map = load_card_map(&card_map_path)?;
+        let card_map = load_card_map(&path).map_err(|e| {
+            error!("Failed to load card map from: {:?}", e);
+            e
+        })?;
 
-        let queue = match transport_config {
-            Some(config) => {
-                // get the opsml state shared runtime
-                let rt = app_state().runtime.clone();
-
-                Some(Py::new(
-                    py,
-                    ScouterQueue::from_path_rs(py, card_map.drift_paths, config, rt)?,
-                )?)
+        let queue = if !card_map.drift_paths.is_empty() {
+            debug!("Drift paths found in card map, creating ScouterQueue");
+            match transport_config {
+                Some(config) => {
+                    let rt = app_state().runtime.clone();
+                    let scouter_queue =
+                        ScouterQueue::from_path_rs(py, card_map.drift_paths, config, rt)?;
+                    Some(Py::new(py, scouter_queue)?)
+                }
+                None => {
+                    debug!("No transport config found in card map");
+                    None
+                }
             }
-            None => None,
+        } else {
+            debug!("No drift paths or transport config found in card map");
+            None
         };
 
         Ok(AppState { deck, queue })
