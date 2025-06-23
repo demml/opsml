@@ -1,5 +1,3 @@
-use pyo3::create_exception;
-use pyo3::exceptions::PyException;
 use pyo3::exceptions::PyRuntimeError;
 use pyo3::PyErr;
 use reqwest::StatusCode;
@@ -37,11 +35,14 @@ pub enum PotatoError {
 
     #[error("Sanitization error: {0}")]
     SanitizationError(String),
+
+    #[error("Failed to serialize Python object: {0}")]
+    PySerializationError(String),
 }
 
 impl From<PotatoError> for PyErr {
     fn from(err: PotatoError) -> PyErr {
-        PyErr::new::<PotatoHeadError, _>(err.to_string())
+        PyRuntimeError::new_err(err.to_string())
     }
 }
 
@@ -51,10 +52,11 @@ impl From<PyErr> for PotatoError {
     }
 }
 
-create_exception!(potato_head, PotatoHeadError, PyException);
-
 #[derive(Error, Debug)]
 pub enum AgentError {
+    #[error("Error: {0}")]
+    Error(String),
+
     #[error("Failed to create header value for the agent client")]
     CreateHeaderValueError(#[from] reqwest::header::InvalidHeaderValue),
 
@@ -85,9 +87,6 @@ pub enum AgentError {
     #[error("Failed to extract client: {0}")]
     ClientExtractionError(String),
 
-    #[error(transparent)]
-    PyError(#[from] pyo3::PyErr),
-
     #[error("Client did not provide response")]
     ClientNoResponseError,
 
@@ -112,5 +111,11 @@ impl From<AgentError> for PyErr {
         let msg = err.to_string();
         error!("{}", msg);
         PyRuntimeError::new_err(msg)
+    }
+}
+
+impl From<PyErr> for AgentError {
+    fn from(err: PyErr) -> Self {
+        AgentError::Error(err.to_string())
     }
 }

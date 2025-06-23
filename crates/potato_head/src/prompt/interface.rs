@@ -1,6 +1,7 @@
-use crate::error::PotatoHeadError;
+use crate::error::PotatoError;
 use crate::prompt::sanitize::{PromptSanitizer, SanitizationConfig};
-use crate::prompt::types::Message;
+use crate::prompt::types::parse_pydantic_model;
+use crate::prompt::types::{Message, Role};
 use opsml_types::SaveName;
 use opsml_utils::{json_to_pyobject, pyobject_to_json, PyHelperFuncs};
 use pyo3::prelude::*;
@@ -9,8 +10,6 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
 use std::path::PathBuf;
-
-use super::types::Role;
 
 #[pyclass]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
@@ -85,16 +84,17 @@ impl ModelSettings {
         logit_bias: Option<HashMap<String, i32>>,
         stop_sequences: Option<Vec<String>>,
         extra_body: Option<&Bound<'_, PyAny>>,
-    ) -> PyResult<Self> {
+    ) -> Result<Self, PotatoError> {
         // check if extra body is not none.
         // if not none, conver to py any and attempt pyobject_to_json
-        let extra_body = if let Some(extra_body) = extra_body {
-            Some(pyobject_to_json(extra_body).map_err(|e| {
-                PotatoHeadError::new_err(format!("Failed to convert extra body: {}", e))
-            })?)
-        } else {
-            None
-        };
+        let extra_body =
+            if let Some(extra_body) = extra_body {
+                Some(pyobject_to_json(extra_body).map_err(|e| {
+                    PotatoError::Error(format!("Failed to convert extra body: {}", e))
+                })?)
+            } else {
+                None
+            };
 
         Ok(Self {
             model: model.to_string(),
@@ -114,7 +114,10 @@ impl ModelSettings {
     }
 
     #[getter]
-    pub fn extra_body<'py>(&self, py: Python<'py>) -> PyResult<Option<Bound<'py, PyDict>>> {
+    pub fn extra_body<'py>(
+        &self,
+        py: Python<'py>,
+    ) -> Result<Option<Bound<'py, PyDict>>, PotatoError> {
         // error if extra body is None
         self.extra_body
             .as_ref()
@@ -123,10 +126,10 @@ impl ModelSettings {
                 json_to_pyobject(py, v, &pydict)
             })
             .transpose()
-            .map_err(|e| PotatoHeadError::new_err(format!("Failed to get extra body: {}", e)))
+            .map_err(|e| PotatoError::Error(format!("Failed to get extra body: {}", e)))
     }
 
-    pub fn model_dump<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyDict>> {
+    pub fn model_dump<'py>(&self, py: Python<'py>) -> Result<Bound<'py, PyDict>, PotatoError> {
         // iterate over each field in model_settings and add to the dict if it is not None
         let pydict = PyDict::new(py);
 
@@ -189,6 +192,8 @@ pub struct Prompt {
 
     #[pyo3(get)]
     pub model_settings: ModelSettings,
+
+    pub response_format: Option<Value>,
 }
 
 fn parse_prompt(messages: &Bound<'_, PyAny>) -> PyResult<Vec<Message>> {
@@ -229,15 +234,17 @@ fn parse_prompt(messages: &Bound<'_, PyAny>) -> PyResult<Vec<Message>> {
 #[pymethods]
 impl Prompt {
     #[new]
-    #[pyo3(signature = (user_message, model=None, provider=None, system_message=None, sanitization_config=None, model_settings=None))]
+    #[pyo3(signature = (user_message, model=None, provider=None, system_message=None, sanitization_config=None, model_settings=None, output=None))]
     pub fn new(
+        py: Python<'_>,
         user_message: &Bound<'_, PyAny>,
         model: Option<&str>,
         provider: Option<&str>,
         system_message: Option<&Bound<'_, PyAny>>,
         sanitization_config: Option<SanitizationConfig>,
         model_settings: Option<ModelSettings>,
-    ) -> PyResult<Self> {
+        response_format: Option<&Bound<'_, PyAny>>, // can be a pydantic model or one of Opsml's predefined outputs
+    ) -> Result<Self, PotatoError> {
         // extract messages
 
         let system_message = if let Some(system_message) = system_message {
@@ -270,7 +277,7 @@ impl Prompt {
 
         // either model and provider or model_settings must be provided
         if (model.is_none() || provider.is_none()) && model_settings.is_none() {
-            return Err(PotatoHeadError::new_err(
+            return Err(PotatoError::Error(
                 "Either model and provider or model_settings must be provided".to_string(),
             ));
         }
@@ -282,6 +289,15 @@ impl Prompt {
                 provider: provider.unwrap().to_string(),
                 ..Default::default()
             },
+        };
+
+        // validate response_format
+        let response_format = match response_format {
+            Some(response_format) => {
+                parse_pydantic_model(py, response_format)?
+                // we don't store response_format in the prompt, but we validate it
+            }
+            None => None,
         };
 
         Ok(Self {
@@ -314,6 +330,14 @@ impl Prompt {
         )
     }
 
+    #[getter]
+    fn response_format(&self) -> Option<String> {
+        // Return the response format as a JSON string if it exists
+        self.response_format
+            .as_ref()
+            .map(|rf| serde_json::to_string(rf).unwrap_or_default())
+    }
+
     #[pyo3(signature = (path = None))]
     pub fn save_prompt(&self, path: Option<PathBuf>) -> PyResult<PathBuf> {
         let save_path = path.unwrap_or_else(|| PathBuf::from(SaveName::Prompt));
@@ -322,22 +346,22 @@ impl Prompt {
     }
 
     #[staticmethod]
-    pub fn from_path(path: PathBuf) -> PyResult<Self> {
+    pub fn from_path(path: PathBuf) -> Result<Self, PotatoError> {
         // Load the JSON file from the path
         let file = std::fs::read_to_string(&path)
-            .map_err(|e| PotatoHeadError::new_err(format!("Failed to read file: {}", e)))?;
+            .map_err(|e| PotatoError::Error(format!("Failed to read file: {}", e)))?;
 
         // Parse the JSON file into a Prompt
         serde_json::from_str(&file)
-            .map_err(|e| PotatoHeadError::new_err(format!("Failed to parse JSON: {}", e)))
+            .map_err(|e| PotatoError::Error(format!("Failed to parse JSON: {}", e)))
     }
 
     #[staticmethod]
-    pub fn model_validate_json(json_string: String) -> PyResult<Self> {
+    pub fn model_validate_json(json_string: String) -> Result<Self, PotatoError> {
         let json_value: Value = serde_json::from_str(&json_string)
-            .map_err(|e| PotatoHeadError::new_err(format!("Failed to parse JSON string: {}", e)))?;
+            .map_err(|e| PotatoError::Error(format!("Failed to parse JSON string: {}", e)))?;
         let mut model: Self = serde_json::from_value(json_value)
-            .map_err(|e| PotatoHeadError::new_err(format!("Failed to parse JSON value: {}", e)))?;
+            .map_err(|e| PotatoError::Error(format!("Failed to parse JSON value: {}", e)))?;
 
         // if model has sanitization_config, create a sanitizer
         if let Some(config) = &model.sanitization_config {
@@ -356,11 +380,11 @@ impl Prompt {
     }
 
     #[getter]
-    pub fn sanitizer(&self) -> PyResult<PromptSanitizer> {
+    pub fn sanitizer(&self) -> Result<PromptSanitizer, PotatoError> {
         // error if sanitizer is None
         self.sanitizer
             .as_ref()
             .cloned()
-            .ok_or_else(|| PotatoHeadError::new_err("Sanitizer is not available".to_string()))
+            .ok_or_else(|| PotatoError::Error("Sanitizer is not available".to_string()))
     }
 }

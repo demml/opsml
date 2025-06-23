@@ -248,6 +248,17 @@ impl Workflow {
     }
 }
 
+/// Execute the workflow asynchronously
+/// This function will be called to start the workflow execution process and does the following:
+/// 1. Iterates over workflow tasks while the shared workflow is not complete.
+/// 2. Gets all ready tasks
+/// 3. For each ready task:
+/// ///    - Marks the task as running
+/// ///    - Checks previous tasks for injected context
+/// ///    - Gets the agent for the task  
+/// ///    - Spawn a new tokio task and execute task with agent
+/// ///    - Push task to the handles vector
+/// 4. Waits for all spawned tasks to complete
 pub async fn execute_workflow(workflow: Arc<RwLock<Workflow>>) -> Result<(), AgentError> {
     // Writing notes for my own sanity :)
     // (1) Creating a shared workflow instance using Arc and RwLock
