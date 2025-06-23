@@ -217,14 +217,14 @@ impl Workflow {
         Ok(pydict)
     }
 
-    pub fn run(&self, py: Python) {
+    pub fn run(&self) {
         info!("Running workflow: {}", self.name);
         // Here you would implement the logic to run the workflow
         // clone the workflow and pass it to the execute_workflow function
         let workflow = self.clone();
         let workflow = Arc::new(RwLock::new(workflow));
         app_state().runtime.block_on(async {
-            if let Err(e) = execute_workflow(workflow, py).await {
+            if let Err(e) = execute_workflow(workflow).await {
                 warn!("Workflow execution failed: {}", e);
             } else {
                 info!("Workflow execution completed successfully.");
@@ -233,12 +233,24 @@ impl Workflow {
     }
 }
 
-pub async fn execute_workflow<'py>(
-    workflow: Arc<RwLock<Workflow>>,
-    _py: Python<'py>,
-) -> Result<(), AgentError> {
-    // (1) Creating a shared workflow instance using Arc and RwLock
+// Rust-specific
+impl Workflow {
+    pub async fn run_rs(&self) {
+        info!("Running workflow: {}", self.name);
+        let workflow = self.clone();
+        let workflow = Arc::new(RwLock::new(workflow));
 
+        if let Err(e) = execute_workflow(workflow).await {
+            warn!("Workflow execution failed: {}", e);
+        } else {
+            info!("Workflow execution completed successfully.");
+        }
+    }
+}
+
+pub async fn execute_workflow(workflow: Arc<RwLock<Workflow>>) -> Result<(), AgentError> {
+    // Writing notes for my own sanity :)
+    // (1) Creating a shared workflow instance using Arc and RwLock
     info!(
         "Starting workflow execution: {}",
         workflow.read().unwrap().name
