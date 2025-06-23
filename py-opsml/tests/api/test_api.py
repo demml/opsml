@@ -2,8 +2,11 @@ from fastapi.testclient import TestClient
 from tests.api.conftest import PredictRequest, create_app
 import shutil
 import os
+from tests.conftest import WINDOWS_EXCLUDE
+import pytest
 
 
+@pytest.mark.skipif(WINDOWS_EXCLUDE, reason="skipping")
 def test_api(create_artifacts):
     # create the client
     opsml_app, lock_file = create_artifacts
