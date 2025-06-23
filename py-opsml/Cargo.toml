@@ -10,6 +10,7 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 anyhow = { workspace = true }
+opsml-app = { workspace = true }
 opsml-cards = { workspace = true }
 mockito = { workspace = true, optional = true }
 opsml-cli = { workspace = true }

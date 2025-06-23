@@ -1,5 +1,5 @@
 [package]
-name = "opsml-cards"
+name = "opsml-app"
 version = { workspace = true }
 edition = { workspace = true }
 repository = { workspace = true }
@@ -8,18 +8,9 @@ repository = { workspace = true }
 doctest = false
 
 [dependencies]
-chrono = { workspace = true }
-names = { workspace = true }
-opsml-colors = { workspace = true }
-opsml-crypt = { workspace = true }
-opsml-interfaces = { workspace = true }
+opsml-cards = { workspace = true }
 opsml-state = { workspace = true }
-opsml-storage = { workspace = true}
-opsml-toml = { workspace = true }
 opsml-types = { workspace = true }
-opsml-utils = { workspace = true }
-opsml-version = { workspace = true }
-potato-head = { workspace = true }
 pyo3 = { workspace = true }
 scouter-client = { workspace = true }
 serde = { workspace = true }
@@ -31,6 +22,4 @@ tracing = { workspace = true }
 
 [features]
 default = []
-server = ["opsml-storage/server"]
-
 
