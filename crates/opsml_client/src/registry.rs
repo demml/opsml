@@ -207,7 +207,7 @@ impl ClientRegistry {
     }
 
     #[instrument(skip_all)]
-    pub fn get_key(&self, args: CardQueryArgs) -> Result<ArtifactKey, RegistryError> {
+    pub fn get_key(&self, args: &CardQueryArgs) -> Result<ArtifactKey, RegistryError> {
         let query_string = serde_qs::to_string(&args)?;
 
         let response = self

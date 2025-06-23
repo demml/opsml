@@ -21,6 +21,12 @@ pub enum TypeError {
 
     #[error("Key not found")]
     MissingKeyError,
+
+    #[error(transparent)]
+    SerdeError(#[from] serde_json::Error),
+
+    #[error(transparent)]
+    IoError(#[from] std::io::Error),
 }
 
 #[derive(Error, Debug)]

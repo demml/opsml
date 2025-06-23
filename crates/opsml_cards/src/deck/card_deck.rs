@@ -226,6 +226,12 @@ impl<'a> IntoIterator for &'a CardList {
     }
 }
 
+impl CardList {
+    pub fn iter(&self) -> std::slice::Iter<'_, Card> {
+        self.cards.iter()
+    }
+}
+
 /// CardDeck is a collection of cards that can be used to create a card deck and load in one call
 #[pyclass]
 #[derive(Debug)]
@@ -504,21 +510,7 @@ impl CardDeck {
     ) -> Result<CardDeck, CardError> {
         let path = path.unwrap_or_else(|| PathBuf::from(SaveName::CardDeck));
 
-        // check path exists
-        if !path.exists() {
-            error!("Path does not exist: {:?}", path);
-            return Err(CardError::PathDoesNotExistError(
-                path.to_string_lossy().to_string(),
-            ));
-        }
-
-        let mut card_deck = Self::load_card_deck_json(&path)?;
-
-        for card in &card_deck.cards {
-            let card_obj = Self::load_card(py, &path, card, load_kwargs)?;
-            card_deck.card_objs.insert(card.alias.clone(), card_obj);
-        }
-
+        let card_deck = Self::from_path_rs(py, &path, load_kwargs)?;
         Ok(card_deck)
     }
 
@@ -528,6 +520,29 @@ impl CardDeck {
 }
 
 impl CardDeck {
+    pub fn from_path_rs(
+        py: Python,
+        path: &Path,
+        load_kwargs: Option<&Bound<'_, PyDict>>,
+    ) -> Result<CardDeck, CardError> {
+        // check path exists
+        if !path.exists() {
+            error!("Path does not exist: {:?}", path);
+            return Err(CardError::PathDoesNotExistError(
+                path.to_string_lossy().to_string(),
+            ));
+        }
+
+        let mut card_deck = Self::load_card_deck_json(path)?;
+
+        for card in &card_deck.cards {
+            let card_obj = Self::load_card(py, path, card, load_kwargs)?;
+            card_deck.card_objs.insert(card.alias.clone(), card_obj);
+        }
+
+        Ok(card_deck)
+    }
+
     fn load_card(
         py: Python,
         base_path: &Path,

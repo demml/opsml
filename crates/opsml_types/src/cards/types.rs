@@ -1,7 +1,10 @@
+use crate::error::TypeError;
 use crate::types::RegistryType;
 use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::fmt;
+use std::path::{Path, PathBuf};
 
 #[pyclass(eq, eq_int)]
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
@@ -55,5 +58,38 @@ impl CardTable {
             RegistryType::Prompt => CardTable::Prompt,
             RegistryType::Deck => CardTable::Deck,
         }
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, Default)]
+pub struct CardDeckMapping {
+    pub card_paths: HashMap<String, PathBuf>,
+    pub drift_paths: HashMap<String, PathBuf>,
+}
+
+impl CardDeckMapping {
+    pub fn new() -> Self {
+        Self {
+            // this will be the card alias + path
+            card_paths: HashMap::new(),
+
+            // this will be the drift alias + path (if it exists)
+            drift_paths: HashMap::new(),
+        }
+    }
+
+    pub fn add_card_path(&mut self, alias: &str, path: &Path) {
+        self.card_paths
+            .insert(alias.to_string(), path.to_path_buf());
+    }
+    pub fn add_drift_path(&mut self, alias: &str, path: &Path) {
+        self.drift_paths
+            .insert(alias.to_string(), path.to_path_buf());
+    }
+
+    pub fn from_path(path: &Path) -> Result<Self, TypeError> {
+        let json_string = std::fs::read_to_string(path)?;
+        let mapping: CardDeckMapping = serde_json::from_str(&json_string)?;
+        Ok(mapping)
     }
 }
