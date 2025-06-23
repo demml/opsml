@@ -5794,8 +5794,8 @@ checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
 
 [[package]]
 name = "scouter-client"
-version = "0.5.6"
-source = "git+https://github.com/demml/scouter.git?branch=feature%2Fqueue-opsml-compat#8299b3a832a8894b42e4f0c38d0459a4d0a45539"
+version = "0.6.0"
+source = "git+https://github.com/demml/scouter.git?tag=v0.6.0#0ae7e4c6b5af6c5c0ee88e407810795cf6ce1764"
 dependencies = [
  "chrono",
  "ndarray",
@@ -5822,8 +5822,8 @@ dependencies = [
 
 [[package]]
 name = "scouter-dispatch"
-version = "0.5.6"
-source = "git+https://github.com/demml/scouter.git?branch=feature%2Fqueue-opsml-compat#8299b3a832a8894b42e4f0c38d0459a4d0a45539"
+version = "0.6.0"
+source = "git+https://github.com/demml/scouter.git?tag=v0.6.0#0ae7e4c6b5af6c5c0ee88e407810795cf6ce1764"
 dependencies = [
  "futures",
  "pyo3",
@@ -5837,8 +5837,8 @@ dependencies = [
 
 [[package]]
 name = "scouter-drift"
-version = "0.5.6"
-source = "git+https://github.com/demml/scouter.git?branch=feature%2Fqueue-opsml-compat#8299b3a832a8894b42e4f0c38d0459a4d0a45539"
+version = "0.6.0"
+source = "git+https://github.com/demml/scouter.git?tag=v0.6.0#0ae7e4c6b5af6c5c0ee88e407810795cf6ce1764"
 dependencies = [
  "chrono",
  "cron",
@@ -5863,8 +5863,8 @@ dependencies = [
 
 [[package]]
 name = "scouter-events"
-version = "0.5.6"
-source = "git+https://github.com/demml/scouter.git?branch=feature%2Fqueue-opsml-compat#8299b3a832a8894b42e4f0c38d0459a4d0a45539"
+version = "0.6.0"
+source = "git+https://github.com/demml/scouter.git?tag=v0.6.0#0ae7e4c6b5af6c5c0ee88e407810795cf6ce1764"
 dependencies = [
  "async-trait",
  "chrono",
@@ -5895,8 +5895,8 @@ dependencies = [
 
 [[package]]
 name = "scouter-observability"
-version = "0.5.6"
-source = "git+https://github.com/demml/scouter.git?branch=feature%2Fqueue-opsml-compat#8299b3a832a8894b42e4f0c38d0459a4d0a45539"
+version = "0.6.0"
+source = "git+https://github.com/demml/scouter.git?tag=v0.6.0#0ae7e4c6b5af6c5c0ee88e407810795cf6ce1764"
 dependencies = [
  "itertools 0.14.0",
  "ndarray",
@@ -5912,8 +5912,8 @@ dependencies = [
 
 [[package]]
 name = "scouter-profile"
-version = "0.5.6"
-source = "git+https://github.com/demml/scouter.git?branch=feature%2Fqueue-opsml-compat#8299b3a832a8894b42e4f0c38d0459a4d0a45539"
+version = "0.6.0"
+source = "git+https://github.com/demml/scouter.git?tag=v0.6.0#0ae7e4c6b5af6c5c0ee88e407810795cf6ce1764"
 dependencies = [
  "chrono",
  "indicatif",
@@ -5934,8 +5934,8 @@ dependencies = [
 
 [[package]]
 name = "scouter-settings"
-version = "0.5.6"
-source = "git+https://github.com/demml/scouter.git?branch=feature%2Fqueue-opsml-compat#8299b3a832a8894b42e4f0c38d0459a4d0a45539"
+version = "0.6.0"
+source = "git+https://github.com/demml/scouter.git?tag=v0.6.0#0ae7e4c6b5af6c5c0ee88e407810795cf6ce1764"
 dependencies = [
  "base64 0.22.1",
  "pyo3",
@@ -5946,8 +5946,8 @@ dependencies = [
 
 [[package]]
 name = "scouter-types"
-version = "0.5.6"
-source = "git+https://github.com/demml/scouter.git?branch=feature%2Fqueue-opsml-compat#8299b3a832a8894b42e4f0c38d0459a4d0a45539"
+version = "0.6.0"
+source = "git+https://github.com/demml/scouter.git?tag=v0.6.0#0ae7e4c6b5af6c5c0ee88e407810795cf6ce1764"
 dependencies = [
  "chrono",
  "colored_json",
