@@ -38,29 +38,7 @@ impl OpenAIClient {
         base_url: Option<String>,
         headers: Option<HashMap<String, String>>,
     ) -> Result<Self, AgentError> {
-        let client = build_http_client(headers)?;
-
-        //  if optional api_key is None, check the environment variable `OPENAI_API_KEY`
-        let api_key = match api_key {
-            Some(key) => key,
-            None => {
-                std::env::var("OPENAI_API_KEY").map_err(AgentError::MissingOpenAIApiKeyError)?
-            }
-        };
-
-        // if optional base_url is None, use the default OpenAI API URL
-        let env_base_url = std::env::var("OPENAI_API_URL").ok();
-        let base_url = base_url
-            .unwrap_or_else(|| env_base_url.unwrap_or_else(|| Provider::OpenAI.url().to_string()));
-
-        debug!("Creating OpenAIClient with base URL with key: {}", base_url);
-
-        Ok(Self {
-            client,
-            api_key,
-            base_url,
-            provider: Provider::OpenAI,
-        })
+        Self::new_rs(api_key, base_url, headers)
     }
 
     /// Sends a chat completion request to the OpenAI API. This is a blocking method used in python.
@@ -87,6 +65,45 @@ impl OpenAIClient {
 }
 
 impl OpenAIClient {
+    /// Creates a new OpenAIClient instance. This is a shared method that can be used in both Python and Rust.
+    ///
+    /// # Arguments:
+    /// * `api_key`: The API key for authenticating with the OpenAI API.
+    /// * `base_url`: The base URL for the OpenAI API (default is the OpenAI API URL).
+    /// * `headers`: Optional headers to include in the HTTP requests.
+    ///
+    /// # Returns:
+    /// * `Result<OpenAIClient, AgentError>`: Returns an `OpenAIClient` instance on success or an `AgentError` on failure.
+    pub fn new_rs(
+        api_key: Option<String>,
+        base_url: Option<String>,
+        headers: Option<HashMap<String, String>>,
+    ) -> Result<Self, AgentError> {
+        let client = build_http_client(headers)?;
+
+        //  if optional api_key is None, check the environment variable `OPENAI_API_KEY`
+        let api_key = match api_key {
+            Some(key) => key,
+            None => {
+                std::env::var("OPENAI_API_KEY").map_err(AgentError::MissingOpenAIApiKeyError)?
+            }
+        };
+
+        // if optional base_url is None, use the default OpenAI API URL
+        let env_base_url = std::env::var("OPENAI_API_URL").ok();
+        let base_url = base_url
+            .unwrap_or_else(|| env_base_url.unwrap_or_else(|| Provider::OpenAI.url().to_string()));
+
+        debug!("Creating OpenAIClient with base URL with key: {}", base_url);
+
+        Ok(Self {
+            client,
+            api_key,
+            base_url,
+            provider: Provider::OpenAI,
+        })
+    }
+
     /// Sends a chat completion request to the OpenAI API. This is a rust-only method
     /// that allows you to interact with the OpenAI API without needing Python.
     ///
