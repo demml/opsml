@@ -148,6 +148,7 @@ jobs:
         run: |
           make test.unit
           uv run opsml ui start
+          uv run opsml demo
           uv run opsml ui stop
 
       - name: Upload coverage reports to Codecov
