@@ -3,6 +3,7 @@ use crate::{prompt::types::PromptContent, Message};
 use opsml_utils::PyHelperFuncs;
 use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 use std::collections::HashMap;
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
@@ -164,6 +165,9 @@ pub struct OpenAIChatRequest {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub seed: Option<u64>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub response_format: Option<Value>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]

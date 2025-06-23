@@ -138,7 +138,7 @@ impl OpenAIClient {
         );
 
         // Create the OpenAI chat request
-        let prompt = OpenAIChatRequest {
+        let chat_request = OpenAIChatRequest {
             model: settings.model.clone(),
             messages,
             max_completion_tokens: settings.max_tokens,
@@ -149,15 +149,17 @@ impl OpenAIClient {
             parallel_tool_calls: settings.parallel_tool_calls,
             logit_bias: settings.logit_bias.clone(),
             seed: settings.seed,
+            response_format: prompt.response_format.clone(),
         };
 
         // serialize the prompt to JSON
-        let mut prompt = serde_json::to_value(prompt).map_err(AgentError::SerializationError)?;
+        let mut serialized_prompt =
+            serde_json::to_value(chat_request).map_err(AgentError::SerializationError)?;
 
         // if settings.extra_body is provided, merge it with the prompt
         if let Some(extra_body) = &settings.extra_body {
             if let (Some(prompt_obj), Some(extra_obj)) =
-                (prompt.as_object_mut(), extra_body.as_object())
+                (serialized_prompt.as_object_mut(), extra_body.as_object())
             {
                 // Merge the extra_body fields into prompt
                 for (key, value) in extra_obj {

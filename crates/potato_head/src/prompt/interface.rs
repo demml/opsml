@@ -234,7 +234,7 @@ fn parse_prompt(messages: &Bound<'_, PyAny>) -> PyResult<Vec<Message>> {
 #[pymethods]
 impl Prompt {
     #[new]
-    #[pyo3(signature = (user_message, model=None, provider=None, system_message=None, sanitization_config=None, model_settings=None, output=None))]
+    #[pyo3(signature = (user_message, model=None, provider=None, system_message=None, sanitization_config=None, model_settings=None, response_format=None))]
     pub fn new(
         py: Python<'_>,
         user_message: &Bound<'_, PyAny>,
@@ -307,6 +307,7 @@ impl Prompt {
             version,
             system_message,
             model_settings,
+            response_format,
         })
     }
 

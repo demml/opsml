@@ -3,7 +3,6 @@ use mime_guess;
 use opsml_utils::pyobject_to_json;
 use opsml_utils::PyHelperFuncs;
 use pyo3::types::PyAnyMethods;
-use pyo3::types::PyList;
 use pyo3::types::PyString;
 use pyo3::{prelude::*, IntoPyObjectExt};
 use serde::{Deserialize, Serialize};
@@ -523,14 +522,14 @@ pub fn check_pydantic_model<'py>(
     Ok(matched)
 }
 
-fn get_json_schema_from_basemodel(
-    py: Python<'_>,
-    object: &Bound<'_, PyAny>,
-) -> Result<Value, PotatoError> {
+/// Generate a JSON schema from a pydantic BaseModel object.
+/// # Arguments
+/// * `object` - The pydantic BaseModel object to generate the schema from.
+/// # Returns
+/// A JSON schema as a serde_json::Value.
+fn get_json_schema_from_basemodel(object: &Bound<'_, PyAny>) -> Result<Value, PotatoError> {
     // call staticmethod .model_json_schema()
     let name = object.getattr("__name__")?.extract::<String>()?;
-
-    println!("Getting JSON schema for model: {}", name);
     let schema = object.getattr("model_json_schema")?.call1(())?;
 
     let json_schema = serde_json::json!({
@@ -554,7 +553,7 @@ pub fn parse_pydantic_model<'py>(
 ) -> Result<Option<Value>, PotatoError> {
     let is_subclass = check_pydantic_model(py, object)?;
     if is_subclass {
-        Ok(Some(get_json_schema_from_basemodel(py, object)?))
+        Ok(Some(get_json_schema_from_basemodel(object)?))
     } else {
         Ok(None)
     }
