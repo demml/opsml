@@ -7,22 +7,20 @@ classifiers = [
     "Programming Language :: Python :: Implementation :: PyPy",
 ]
 
-[tool.opsml.default]
-space = "space"
 
 [tool.opsml.registry]
-model = { name = "model" }
+model = { space="model-space", name = "model-name" }
 
 [[tool.opsml.deck]]
-space = "space"
-name = "name"
+space = "opsml-space"
+name = "opsml-name"
 version = "1"
 write_dir = "opsml_app"
 
 [[tool.opsml.deck.cards]]
 alias = "model"
-space = "space"
-name = "name"
+space = "model-space"
+name = "model-name"
 version = "1"
 type = "model"
 drift = { active = true, deactivate_others = false, drift_type = ["psi"] }

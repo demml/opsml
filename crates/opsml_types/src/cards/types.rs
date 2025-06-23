@@ -88,7 +88,7 @@ impl CardDeckMapping {
     }
 
     pub fn from_path(path: &Path) -> Result<Self, TypeError> {
-        let json_string = std::fs::read_to_string(&path)?;
+        let json_string = std::fs::read_to_string(path)?;
         let mapping: CardDeckMapping = serde_json::from_str(&json_string)?;
         Ok(mapping)
     }
