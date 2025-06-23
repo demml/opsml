@@ -533,10 +533,10 @@ impl CardDeck {
             ));
         }
 
-        let mut card_deck = Self::load_card_deck_json(&path)?;
+        let mut card_deck = Self::load_card_deck_json(path)?;
 
         for card in &card_deck.cards {
-            let card_obj = Self::load_card(py, &path, card, load_kwargs)?;
+            let card_obj = Self::load_card(py, path, card, load_kwargs)?;
             card_deck.card_objs.insert(card.alias.clone(), card_obj);
         }
 

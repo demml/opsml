@@ -43,7 +43,7 @@ polars = [
 
 [dependency-groups]
 dev = [
-    "fastapi >= 0.115.0, < 1.0.0",
+    "fastapi>=0.115.0,<1.0.0",
     "maturin >= 1.4.0, < 2.0.0",
     "pytest >= 7.0.0, < 8.0.0",
     "pytest-cov >= 5.0.0, < 6.0.0",

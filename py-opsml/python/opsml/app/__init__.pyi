@@ -1,7 +1,12 @@
+# pylint: disable=dangerous-default-value
+# type: ignore
+
+from pathlib import Path
+from typing import Any, Dict, Optional, Union
+
 from ..card import CardDeck
-from ..scouter.queue import ScouterQueue, KafkaConfig, RedisConfig, RabbitMQConfig
 from ..scouter.client import HTTPConfig
-from typing import Optional, Dict, Any, Union
+from ..scouter.queue import KafkaConfig, RabbitMQConfig, RedisConfig, ScouterQueue
 
 class AppState:
     """OpsML application state object. This is typically used in API
@@ -29,7 +34,7 @@ class AppState:
 
     @staticmethod
     def from_path(
-        path: str,
+        path: Path,
         load_kwargs: Optional[Dict[str, Dict[str, Any]]] = None,
         transport_config: Optional[
             Union[
@@ -78,3 +83,11 @@ class AppState:
         Returns:
             AppState: The loaded AppState.
         """
+
+    @property
+    def deck(self) -> CardDeck:
+        """Get the card deck."""
+
+    @property
+    def queue(self) -> ScouterQueue:
+        """Get the Scouter queue."""
