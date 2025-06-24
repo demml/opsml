@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.0.0-rc.10] - 2025-06-24
+
+Bumping version of scouter to fix kafka ssl bug
+
 ## [3.0.0-rc.8] - 2025-06-17
 
 ### UI Fixes
