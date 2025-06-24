@@ -267,30 +267,6 @@ impl Prompt {
             })
             .collect::<Vec<Message>>();
 
-        // get version from crate
-        let version = opsml_version::version();
-
-        // Create a sanitizer if sanitization_config is provided, else create default sanitizer (will be skipped)
-        let sanitizer = sanitization_config
-            .as_ref()
-            .map(|config| PromptSanitizer::new(config.clone()));
-
-        // either model and provider or model_settings must be provided
-        if (model.is_none() || provider.is_none()) && model_settings.is_none() {
-            return Err(PotatoError::Error(
-                "Either model and provider or model_settings must be provided".to_string(),
-            ));
-        }
-
-        let model_settings = match model_settings {
-            Some(settings) => settings,
-            None => ModelSettings {
-                model: model.unwrap().to_string(),
-                provider: provider.unwrap().to_string(),
-                ..Default::default()
-            },
-        };
-
         // validate response_format
         let response_format = match response_format {
             Some(response_format) => {
@@ -300,15 +276,15 @@ impl Prompt {
             None => None,
         };
 
-        Ok(Self {
+        Self::new_rs(
             user_message,
-            sanitization_config,
-            sanitizer,
-            version,
+            model,
+            provider,
             system_message,
             model_settings,
+            sanitization_config,
             response_format,
-        })
+        )
     }
 
     #[getter]
@@ -387,5 +363,51 @@ impl Prompt {
             .as_ref()
             .cloned()
             .ok_or_else(|| PotatoError::Error("Sanitizer is not available".to_string()))
+    }
+}
+
+impl Prompt {
+    pub fn new_rs(
+        user_message: Vec<Message>,
+        model: Option<&str>,
+        provider: Option<&str>,
+        system_message: Vec<Message>,
+        model_settings: Option<ModelSettings>,
+        sanitization_config: Option<SanitizationConfig>,
+        response_format: Option<Value>,
+    ) -> Result<Self, PotatoError> {
+        // get version from crate
+        let version = opsml_version::version();
+
+        // Create a sanitizer if sanitization_config is provided, else create default sanitizer (will be skipped)
+        let sanitizer = sanitization_config
+            .as_ref()
+            .map(|config| PromptSanitizer::new(config.clone()));
+
+        // either model and provider or model_settings must be provided
+        if (model.is_none() || provider.is_none()) && model_settings.is_none() {
+            return Err(PotatoError::Error(
+                "Either model and provider or model_settings must be provided".to_string(),
+            ));
+        }
+
+        let model_settings = match model_settings {
+            Some(settings) => settings,
+            None => ModelSettings {
+                model: model.unwrap().to_string(),
+                provider: provider.unwrap().to_string(),
+                ..Default::default()
+            },
+        };
+
+        Ok(Self {
+            user_message,
+            sanitization_config,
+            sanitizer,
+            version,
+            system_message,
+            model_settings,
+            response_format,
+        })
     }
 }

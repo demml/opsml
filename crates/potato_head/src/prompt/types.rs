@@ -476,6 +476,14 @@ impl Message {
 }
 
 impl Message {
+    pub fn new_rs(content: PromptContent) -> Self {
+        Self {
+            content,
+            next_param: 1,
+            sanitized_output: None,
+            role: Role::User.to_string(),
+        }
+    }
     pub fn from(content: PromptContent, role: Role) -> Self {
         Self {
             content,
