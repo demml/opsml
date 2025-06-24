@@ -2470,10 +2470,11 @@ wheels = [
 
 [[package]]
 name = "opsml"
-version = "3.0.0rc9"
+version = "3.0.0rc10"
 source = { editable = "." }
 dependencies = [
     { name = "joblib" },
+    { name = "pyarrow" },
 ]
 
 [package.optional-dependencies]
@@ -2484,12 +2485,6 @@ onnx = [
 ]
 onnxruntime = [
     { name = "onnxruntime" },
-]
-pandas = [
-    { name = "pyarrow" },
-]
-polars = [
-    { name = "pyarrow" },
 ]
 sklearn-onnx = [
     { name = "onnx", version = "1.16.1", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform == 'win32'" },
@@ -2560,13 +2555,12 @@ requires-dist = [
     { name = "onnxruntime", marker = "extra == 'onnxruntime'", specifier = ">=1.18.0" },
     { name = "opsml", extras = ["onnx", "onnxruntime"], marker = "extra == 'sklearn-onnx'" },
     { name = "opsml", extras = ["onnx", "onnxruntime"], marker = "extra == 'tf-onnx'" },
-    { name = "pyarrow", marker = "extra == 'pandas'", specifier = ">=18.0.0" },
-    { name = "pyarrow", marker = "extra == 'polars'", specifier = ">=18.0.0" },
+    { name = "pyarrow", specifier = ">=18.0.0" },
     { name = "skl2onnx", marker = "extra == 'sklearn-onnx'", specifier = ">=1.16.0,<1.19.0" },
     { name = "tf2onnx", marker = "python_full_version < '3.12' and sys_platform == 'darwin' and extra == 'tf-onnx'", specifier = "~=1.16.1" },
     { name = "tf2onnx", marker = "python_full_version < '3.12' and sys_platform == 'linux' and extra == 'tf-onnx'", specifier = "~=1.16.1" },
 ]
-provides-extras = ["onnx", "onnxruntime", "sklearn-onnx", "tf-onnx", "pandas", "polars"]
+provides-extras = ["onnx", "onnxruntime", "sklearn-onnx", "tf-onnx"]
 
 [package.metadata.requires-dev]
 dev = [
