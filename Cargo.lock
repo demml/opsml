@@ -1289,9 +1289,9 @@ dependencies = [
 
 [[package]]
 name = "bumpalo"
-version = "3.18.1"
+version = "3.19.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "793db76d6187cd04dff33004d8e6c9cc4e05cd330500379d2394209271b4aeee"
+checksum = "46c5e41b57b8bba42a04676d81cb89e9ee8e859a1a66f80a5a72e1cb76b34d43"
 
 [[package]]
 name = "bytecount"
@@ -4204,7 +4204,6 @@ dependencies = [
  "opsml-types",
  "opsml-utils",
  "password-auth",
- "rand 0.7.3",
  "rand 0.9.1",
  "reqwest",
  "rust-embed",
@@ -5796,7 +5795,7 @@ checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
 [[package]]
 name = "scouter-client"
 version = "0.6.1"
-source = "git+https://github.com/demml/scouter.git?tag=v0.6.1#b3e8cea84c72a1cebb6dec06a1c7885c935c2045"
+source = "git+https://github.com/demml/scouter.git?branch=fix%2Fhttp-runtim#21cbe0eb58081f4efd020938fbc77c62cdbf5c43"
 dependencies = [
  "chrono",
  "ndarray",
@@ -5824,7 +5823,7 @@ dependencies = [
 [[package]]
 name = "scouter-dispatch"
 version = "0.6.1"
-source = "git+https://github.com/demml/scouter.git?tag=v0.6.1#b3e8cea84c72a1cebb6dec06a1c7885c935c2045"
+source = "git+https://github.com/demml/scouter.git?branch=fix%2Fhttp-runtim#21cbe0eb58081f4efd020938fbc77c62cdbf5c43"
 dependencies = [
  "futures",
  "pyo3",
@@ -5839,7 +5838,7 @@ dependencies = [
 [[package]]
 name = "scouter-drift"
 version = "0.6.1"
-source = "git+https://github.com/demml/scouter.git?tag=v0.6.1#b3e8cea84c72a1cebb6dec06a1c7885c935c2045"
+source = "git+https://github.com/demml/scouter.git?branch=fix%2Fhttp-runtim#21cbe0eb58081f4efd020938fbc77c62cdbf5c43"
 dependencies = [
  "chrono",
  "cron",
@@ -5865,7 +5864,7 @@ dependencies = [
 [[package]]
 name = "scouter-events"
 version = "0.6.1"
-source = "git+https://github.com/demml/scouter.git?tag=v0.6.1#b3e8cea84c72a1cebb6dec06a1c7885c935c2045"
+source = "git+https://github.com/demml/scouter.git?branch=fix%2Fhttp-runtim#21cbe0eb58081f4efd020938fbc77c62cdbf5c43"
 dependencies = [
  "async-trait",
  "chrono",
@@ -5897,7 +5896,7 @@ dependencies = [
 [[package]]
 name = "scouter-observability"
 version = "0.6.1"
-source = "git+https://github.com/demml/scouter.git?tag=v0.6.1#b3e8cea84c72a1cebb6dec06a1c7885c935c2045"
+source = "git+https://github.com/demml/scouter.git?branch=fix%2Fhttp-runtim#21cbe0eb58081f4efd020938fbc77c62cdbf5c43"
 dependencies = [
  "itertools 0.14.0",
  "ndarray",
@@ -5914,7 +5913,7 @@ dependencies = [
 [[package]]
 name = "scouter-profile"
 version = "0.6.1"
-source = "git+https://github.com/demml/scouter.git?tag=v0.6.1#b3e8cea84c72a1cebb6dec06a1c7885c935c2045"
+source = "git+https://github.com/demml/scouter.git?branch=fix%2Fhttp-runtim#21cbe0eb58081f4efd020938fbc77c62cdbf5c43"
 dependencies = [
  "chrono",
  "indicatif",
@@ -5936,7 +5935,7 @@ dependencies = [
 [[package]]
 name = "scouter-settings"
 version = "0.6.1"
-source = "git+https://github.com/demml/scouter.git?tag=v0.6.1#b3e8cea84c72a1cebb6dec06a1c7885c935c2045"
+source = "git+https://github.com/demml/scouter.git?branch=fix%2Fhttp-runtim#21cbe0eb58081f4efd020938fbc77c62cdbf5c43"
 dependencies = [
  "base64 0.22.1",
  "pyo3",
@@ -5948,7 +5947,7 @@ dependencies = [
 [[package]]
 name = "scouter-types"
 version = "0.6.1"
-source = "git+https://github.com/demml/scouter.git?tag=v0.6.1#b3e8cea84c72a1cebb6dec06a1c7885c935c2045"
+source = "git+https://github.com/demml/scouter.git?branch=fix%2Fhttp-runtim#21cbe0eb58081f4efd020938fbc77c62cdbf5c43"
 dependencies = [
  "chrono",
  "colored_json",
