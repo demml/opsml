@@ -9,7 +9,7 @@ default-members = [
 ]
 
 [workspace.package]
-version = "3.0.0-rc.9"
+version = "3.0.0-rc.11"
 authors = ["Steven Forrester <sjforrester32@gmail.com>"]
 edition = "2021"
 license = "MIT"
@@ -88,7 +88,7 @@ reqwest = { version = "0.12.*", features = ["json", "stream", "multipart", "rust
 rust-embed = "8.*"
 reqwest-middleware = "0.*"
 rusty-logging = "0.*"
-scouter-client = { git = "https://github.com/demml/scouter.git", tag = "v0.6.0" }
+scouter-client = "0.6.2"
 sha2 = "0.*"
 semver = "1.*"
 serde = { version = "1.*", features = ["derive"] }

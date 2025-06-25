@@ -619,9 +619,9 @@ dependencies = [
 
 [[package]]
 name = "aws-sdk-s3"
-version = "1.93.0"
+version = "1.94.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "16b9734dc8145b417a3c22eae8769a2879851690982dba718bdc52bd28ad04ce"
+checksum = "cc24d9d761bd464534d9e477a9f724c118ca2557a95444097cf6ce71f3229a72"
 dependencies = [
  "aws-credential-types",
  "aws-runtime",
@@ -1289,9 +1289,9 @@ dependencies = [
 
 [[package]]
 name = "bumpalo"
-version = "3.18.1"
+version = "3.19.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "793db76d6187cd04dff33004d8e6c9cc4e05cd330500379d2394209271b4aeee"
+checksum = "46c5e41b57b8bba42a04676d81cb89e9ee8e859a1a66f80a5a72e1cb76b34d43"
 
 [[package]]
 name = "bytecount"
@@ -3215,9 +3215,9 @@ dependencies = [
 
 [[package]]
 name = "libredox"
-version = "0.1.3"
+version = "0.1.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c0ff37bd590ca25063e35af745c343cb7a0271906fb7b37e4813e8f79f00268d"
+checksum = "1580801010e535496706ba011c15f8532df6b42297d2e471fec38ceadd8c0638"
 dependencies = [
  "bitflags 2.9.1",
  "libc",
@@ -3910,7 +3910,7 @@ dependencies = [
 
 [[package]]
 name = "opsml-app"
-version = "3.0.0-rc.9"
+version = "3.0.0-rc.11"
 dependencies = [
  "opsml-cards",
  "opsml-state",
@@ -3927,7 +3927,7 @@ dependencies = [
 
 [[package]]
 name = "opsml-auth"
-version = "3.0.0-rc.9"
+version = "3.0.0-rc.11"
 dependencies = [
  "async-trait",
  "base64 0.22.1",
@@ -3947,7 +3947,7 @@ dependencies = [
 
 [[package]]
 name = "opsml-cards"
-version = "3.0.0-rc.9"
+version = "3.0.0-rc.11"
 dependencies = [
  "chrono",
  "names",
@@ -3973,7 +3973,7 @@ dependencies = [
 
 [[package]]
 name = "opsml-cli"
-version = "3.0.0-rc.9"
+version = "3.0.0-rc.11"
 dependencies = [
  "anyhow",
  "base64 0.22.1",
@@ -4009,7 +4009,7 @@ dependencies = [
 
 [[package]]
 name = "opsml-client"
-version = "3.0.0-rc.9"
+version = "3.0.0-rc.11"
 dependencies = [
  "futures",
  "mockito",
@@ -4031,14 +4031,14 @@ dependencies = [
 
 [[package]]
 name = "opsml-colors"
-version = "3.0.0-rc.9"
+version = "3.0.0-rc.11"
 dependencies = [
  "owo-colors",
 ]
 
 [[package]]
 name = "opsml-crypt"
-version = "3.0.0-rc.9"
+version = "3.0.0-rc.11"
 dependencies = [
  "aes-gcm",
  "base64 0.22.1",
@@ -4056,7 +4056,7 @@ dependencies = [
 
 [[package]]
 name = "opsml-events"
-version = "3.0.0-rc.9"
+version = "3.0.0-rc.11"
 dependencies = [
  "axum",
  "chrono",
@@ -4073,7 +4073,7 @@ dependencies = [
 
 [[package]]
 name = "opsml-experiment"
-version = "3.0.0-rc.9"
+version = "3.0.0-rc.11"
 dependencies = [
  "chrono",
  "opsml-cards",
@@ -4098,7 +4098,7 @@ dependencies = [
 
 [[package]]
 name = "opsml-interfaces"
-version = "3.0.0-rc.9"
+version = "3.0.0-rc.11"
 dependencies = [
  "opsml-state",
  "opsml-types",
@@ -4119,7 +4119,7 @@ dependencies = [
 
 [[package]]
 name = "opsml-mocks"
-version = "3.0.0-rc.9"
+version = "3.0.0-rc.11"
 dependencies = [
  "mockito",
  "opsml-registry",
@@ -4139,7 +4139,7 @@ dependencies = [
 
 [[package]]
 name = "opsml-registry"
-version = "3.0.0-rc.9"
+version = "3.0.0-rc.11"
 dependencies = [
  "anyhow",
  "opsml-cards",
@@ -4166,7 +4166,7 @@ dependencies = [
 
 [[package]]
 name = "opsml-semver"
-version = "3.0.0-rc.9"
+version = "3.0.0-rc.11"
 dependencies = [
  "pyo3",
  "semver",
@@ -4176,7 +4176,7 @@ dependencies = [
 
 [[package]]
 name = "opsml-server"
-version = "3.0.0-rc.9"
+version = "3.0.0-rc.11"
 dependencies = [
  "anyhow",
  "axum",
@@ -4204,7 +4204,6 @@ dependencies = [
  "opsml-types",
  "opsml-utils",
  "password-auth",
- "rand 0.7.3",
  "rand 0.9.1",
  "reqwest",
  "rust-embed",
@@ -4228,7 +4227,7 @@ dependencies = [
 
 [[package]]
 name = "opsml-settings"
-version = "3.0.0-rc.9"
+version = "3.0.0-rc.11"
 dependencies = [
  "base64 0.22.1",
  "opsml-types",
@@ -4242,7 +4241,7 @@ dependencies = [
 
 [[package]]
 name = "opsml-sql"
-version = "3.0.0-rc.9"
+version = "3.0.0-rc.11"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -4264,7 +4263,7 @@ dependencies = [
 
 [[package]]
 name = "opsml-state"
-version = "3.0.0-rc.9"
+version = "3.0.0-rc.11"
 dependencies = [
  "futures",
  "opsml-client",
@@ -4279,7 +4278,7 @@ dependencies = [
 
 [[package]]
 name = "opsml-storage"
-version = "3.0.0-rc.9"
+version = "3.0.0-rc.11"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -4321,7 +4320,7 @@ dependencies = [
 
 [[package]]
 name = "opsml-todo"
-version = "3.0.0-rc.9"
+version = "3.0.0-rc.11"
 dependencies = [
  "clap 4.5.40",
  "opsml-colors",
@@ -4332,7 +4331,7 @@ dependencies = [
 
 [[package]]
 name = "opsml-toml"
-version = "3.0.0-rc.9"
+version = "3.0.0-rc.11"
 dependencies = [
  "opsml-types",
  "opsml-version",
@@ -4344,7 +4343,7 @@ dependencies = [
 
 [[package]]
 name = "opsml-types"
-version = "3.0.0-rc.9"
+version = "3.0.0-rc.11"
 dependencies = [
  "chrono",
  "opsml-colors",
@@ -4364,7 +4363,7 @@ dependencies = [
 
 [[package]]
 name = "opsml-utils"
-version = "3.0.0-rc.9"
+version = "3.0.0-rc.11"
 dependencies = [
  "chrono",
  "colored_json",
@@ -4382,7 +4381,7 @@ dependencies = [
 
 [[package]]
 name = "opsml-version"
-version = "3.0.0-rc.9"
+version = "3.0.0-rc.11"
 
 [[package]]
 name = "option-ext"
@@ -4435,9 +4434,9 @@ checksum = "b15813163c1d831bf4a13c3610c05c0d03b39feb07f7e09fa234dac9b15aaf39"
 
 [[package]]
 name = "owo-colors"
-version = "4.2.1"
+version = "4.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "26995317201fa17f3656c36716aed4a7c81743a9634ac4c99c0eeda495db0cec"
+checksum = "48dd4f4a2c8405440fd0462561f0e5806bd0f77e86f51c761481bdd4018b545e"
 
 [[package]]
 name = "p12-keystore"
@@ -4760,7 +4759,7 @@ dependencies = [
 
 [[package]]
 name = "potato-head"
-version = "3.0.0-rc.9"
+version = "3.0.0-rc.11"
 dependencies = [
  "mime_guess",
  "opsml-state",
@@ -4902,7 +4901,7 @@ dependencies = [
 
 [[package]]
 name = "py-opsml"
-version = "3.0.0-rc.9"
+version = "3.0.0-rc.11"
 dependencies = [
  "anyhow",
  "mockito",
@@ -5795,8 +5794,9 @@ checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
 
 [[package]]
 name = "scouter-client"
-version = "0.6.0"
-source = "git+https://github.com/demml/scouter.git?tag=v0.6.0#0ae7e4c6b5af6c5c0ee88e407810795cf6ce1764"
+version = "0.6.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8d5dfc63552fb7c2285fb36766520f1218100229ca9c135e5ccbb7d6462405bb"
 dependencies = [
  "chrono",
  "ndarray",
@@ -5823,8 +5823,9 @@ dependencies = [
 
 [[package]]
 name = "scouter-dispatch"
-version = "0.6.0"
-source = "git+https://github.com/demml/scouter.git?tag=v0.6.0#0ae7e4c6b5af6c5c0ee88e407810795cf6ce1764"
+version = "0.6.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d5d6fcc378bd69981fe6d6ad4f0baecb09f96386d37886526f669d157173c07e"
 dependencies = [
  "futures",
  "pyo3",
@@ -5838,8 +5839,9 @@ dependencies = [
 
 [[package]]
 name = "scouter-drift"
-version = "0.6.0"
-source = "git+https://github.com/demml/scouter.git?tag=v0.6.0#0ae7e4c6b5af6c5c0ee88e407810795cf6ce1764"
+version = "0.6.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "117a0837e0f66847d86fa62147ae3bad5e1414006e1a0a5d1cb0482f2639f0e1"
 dependencies = [
  "chrono",
  "cron",
@@ -5864,8 +5866,9 @@ dependencies = [
 
 [[package]]
 name = "scouter-events"
-version = "0.6.0"
-source = "git+https://github.com/demml/scouter.git?tag=v0.6.0#0ae7e4c6b5af6c5c0ee88e407810795cf6ce1764"
+version = "0.6.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9d7fdb1ec4b0f6bfc74648a014c59b3fffd1818efbe0d0545ef4a503498b780f"
 dependencies = [
  "async-trait",
  "chrono",
@@ -5896,8 +5899,9 @@ dependencies = [
 
 [[package]]
 name = "scouter-observability"
-version = "0.6.0"
-source = "git+https://github.com/demml/scouter.git?tag=v0.6.0#0ae7e4c6b5af6c5c0ee88e407810795cf6ce1764"
+version = "0.6.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "18d2bf26c49b8ee87a21a210617aa9671e2c3989d9327f490dc45ef83984d965"
 dependencies = [
  "itertools 0.14.0",
  "ndarray",
@@ -5913,8 +5917,9 @@ dependencies = [
 
 [[package]]
 name = "scouter-profile"
-version = "0.6.0"
-source = "git+https://github.com/demml/scouter.git?tag=v0.6.0#0ae7e4c6b5af6c5c0ee88e407810795cf6ce1764"
+version = "0.6.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2b73bbf7d055a0ba653fd0eabd0993276713d26ba9d7ee4d4646dc8c0392d98b"
 dependencies = [
  "chrono",
  "indicatif",
@@ -5935,8 +5940,9 @@ dependencies = [
 
 [[package]]
 name = "scouter-settings"
-version = "0.6.0"
-source = "git+https://github.com/demml/scouter.git?tag=v0.6.0#0ae7e4c6b5af6c5c0ee88e407810795cf6ce1764"
+version = "0.6.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "985f1de30f115bcc8b3f16e924d5bbda6ccd925c2c4447be93d68f5521a6a0c6"
 dependencies = [
  "base64 0.22.1",
  "pyo3",
@@ -5947,8 +5953,9 @@ dependencies = [
 
 [[package]]
 name = "scouter-types"
-version = "0.6.0"
-source = "git+https://github.com/demml/scouter.git?tag=v0.6.0#0ae7e4c6b5af6c5c0ee88e407810795cf6ce1764"
+version = "0.6.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "22e68e1be82557d60665ea8b7b938872d1c260d6c5bdbf00ae5389e104472470"
 dependencies = [
  "chrono",
  "colored_json",
@@ -7952,9 +7959,9 @@ dependencies = [
 
 [[package]]
 name = "xattr"
-version = "1.5.0"
+version = "1.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0d65cbf2f12c15564212d48f4e3dfb87923d25d611f2aed18f4cb23f0413d89e"
+checksum = "af3a19837351dc82ba89f8a125e22a3c475f05aba604acc023d62b2739ae2909"
 dependencies = [
  "libc",
  "rustix 1.0.7",
