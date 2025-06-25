@@ -270,6 +270,7 @@ impl Prompt {
         // validate response_format
         let response_format = match response_format {
             Some(response_format) => {
+                // check if response_format is a pydantic model and extract the model json schema
                 parse_pydantic_model(py, response_format)?
                 // we don't store response_format in the prompt, but we validate it
             }
