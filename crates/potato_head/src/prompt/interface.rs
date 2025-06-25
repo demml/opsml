@@ -307,14 +307,6 @@ impl Prompt {
         )
     }
 
-    #[getter]
-    fn response_format(&self) -> Option<String> {
-        // Return the response format as a JSON string if it exists
-        self.response_format
-            .as_ref()
-            .map(|rf| serde_json::to_string(rf).unwrap_or_default())
-    }
-
     #[pyo3(signature = (path = None))]
     pub fn save_prompt(&self, path: Option<PathBuf>) -> PyResult<PathBuf> {
         let save_path = path.unwrap_or_else(|| PathBuf::from(SaveName::Prompt));
@@ -354,6 +346,11 @@ impl Prompt {
 
     pub fn __str__(&self) -> String {
         PyHelperFuncs::__str__(self)
+    }
+
+    #[getter]
+    pub fn response_format(&self) -> Option<String> {
+        Some(PyHelperFuncs::__str__(self.response_format.as_ref()))
     }
 
     #[getter]

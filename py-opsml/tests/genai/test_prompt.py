@@ -3,6 +3,7 @@ from pydantic_ai import (
     BinaryContent as PydanticBinaryContent,
     DocumentUrl as PydanticDocumentUrl,
 )
+from pydantic import BaseModel
 from pydantic_ai.settings import ModelSettings as PydanticModelSettings
 from opsml.potato_head import (
     Prompt,
@@ -12,7 +13,14 @@ from opsml.potato_head import (
     DocumentUrl,
     ModelSettings,
 )
+from typing import List
 import httpx
+
+
+class CityLocation(BaseModel):
+    city: str
+    country: str
+    zip_codes: List[int]
 
 
 def test_string_prompt():
@@ -139,3 +147,15 @@ def test_model_settings_prompt():
     )
 
     settings = PydanticModelSettings(**prompt.model_settings.model_dump())
+
+
+def test_prompt_response_format():
+    prompt = Prompt(
+        model="gpt-4o",
+        provider="openai",
+        user_message="My prompt $1 is $2",
+        system_message="system_prompt",
+        response_format=CityLocation,
+    )
+
+    assert prompt.response_format is not None

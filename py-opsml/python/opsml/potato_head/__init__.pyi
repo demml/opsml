@@ -305,7 +305,9 @@ class DocumentUrl:
         """The format of the document URL."""
 
 class Message:
-    def __init__(self, content: str | ImageUrl | AudioUrl | BinaryContent | DocumentUrl) -> None:
+    def __init__(
+        self, content: str | ImageUrl | AudioUrl | BinaryContent | DocumentUrl
+    ) -> None:
         """Create a Message object.
 
         Args:
@@ -505,12 +507,16 @@ class ModelSettings:
 class Prompt:
     def __init__(
         self,
-        user_message: str | Sequence[str | ImageUrl | AudioUrl | BinaryContent | DocumentUrl] | Message | List[Message],
+        user_message: str
+        | Sequence[str | ImageUrl | AudioUrl | BinaryContent | DocumentUrl]
+        | Message
+        | List[Message],
         model: Optional[str] = None,
         provider: Optional[str] = None,
         system_message: Optional[str | List[str]] = None,
         sanitization_config: Optional[SanitizationConfig] = None,
         model_settings: Optional[ModelSettings] = None,
+        response_format: Optional[Any] = None,
     ) -> None:
         """Prompt for interacting with an LLM API.
 
@@ -529,6 +535,10 @@ class Prompt:
             model_settings (None):
                 The model settings to use for the prompt.
                 Defaults to None which means no model settings will be used
+            response_format (Optional[BaseModel]):
+                The response format to use for the prompt. This is used for Structure Outputs
+                (https://platform.openai.com/docs/guides/structured-outputs?api-mode=chat).
+                Currently, response_format only support Pydantic BaseModel classes.
         """
 
     @property
@@ -619,6 +629,8 @@ class Prompt:
                 The JSON string.
         """
 
+    @property
+    def response_format(self) -> Optional[str]: ...
     def __str__(self): ...
 
 class Provider:
