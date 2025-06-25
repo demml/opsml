@@ -3095,6 +3095,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "itertools"
+version = "0.14.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2b192c782037fadd9cfa75548310488aabdbf3d2da73885b31bd0abd03351285"
+dependencies = [
+ "either",
+]
+
+[[package]]
 name = "itoa"
 version = "1.0.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4195,7 +4204,6 @@ dependencies = [
  "opsml-types",
  "opsml-utils",
  "password-auth",
- "rand 0.7.3",
  "rand 0.9.1",
  "reqwest",
  "rust-embed",
@@ -5807,7 +5815,7 @@ dependencies = [
  "scouter-types",
  "serde",
  "serde_json",
- "serde_qs 0.8.5",
+ "serde_qs 0.15.0",
  "thiserror 2.0.12",
  "tokio",
  "tracing",
@@ -5838,7 +5846,7 @@ dependencies = [
  "chrono",
  "cron",
  "indicatif",
- "itertools 0.12.1",
+ "itertools 0.14.0",
  "ndarray",
  "ndarray-stats",
  "noisy_float",
@@ -5895,7 +5903,7 @@ version = "0.6.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "18d2bf26c49b8ee87a21a210617aa9671e2c3989d9327f490dc45ef83984d965"
 dependencies = [
- "itertools 0.12.1",
+ "itertools 0.14.0",
  "ndarray",
  "ndarray-stats",
  "noisy_float",
@@ -5915,7 +5923,7 @@ checksum = "2b73bbf7d055a0ba653fd0eabd0993276713d26ba9d7ee4d4646dc8c0392d98b"
 dependencies = [
  "chrono",
  "indicatif",
- "itertools 0.12.1",
+ "itertools 0.14.0",
  "ndarray",
  "ndarray-stats",
  "noisy_float",
