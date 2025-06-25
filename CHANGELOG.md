@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.0.0-rc.11] - 2025-06-25
+
+Bumping Scouter that introduces ScouterQueue background task initialization logic and Mocks
+
 ## [3.0.0-rc.10] - 2025-06-24
 
 Bumping version of scouter to fix kafka ssl bug
