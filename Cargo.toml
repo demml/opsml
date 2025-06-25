@@ -88,7 +88,7 @@ reqwest = { version = "0.12.*", features = ["json", "stream", "multipart", "rust
 rust-embed = "8.*"
 reqwest-middleware = "0.*"
 rusty-logging = "0.*"
-scouter-client = { git = "https://github.com/demml/scouter.git", branch = "fix/http-runtim" }
+scouter-client = { git = "https://github.com/demml/scouter.git", tag = "v0.6.2" }
 sha2 = "0.*"
 semver = "1.*"
 serde = { version = "1.*", features = ["derive"] }
