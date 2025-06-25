@@ -119,6 +119,7 @@ pub fn download_deck(args: &DownloadCard) -> Result<(), CliError> {
     );
 
     let mut mapping = CardDeckMapping::new();
+    let current_dir = std::env::current_dir()?;
 
     // Download each card in the deck
     card_deck
@@ -135,7 +136,10 @@ pub fn download_deck(args: &DownloadCard) -> Result<(), CliError> {
             };
 
             let key = registry.get_key(&query_args)?;
-            let card_path = base_path.join(&card.alias);
+            let card_path = base_path
+                .strip_prefix(&current_dir)
+                .unwrap_or(&base_path)
+                .join(&card.alias);
 
             // Download card artifacts
             download_card_artifacts(&key, &card_path)?;
