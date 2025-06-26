@@ -5,6 +5,7 @@ use crate::{
     Message,
 };
 use pyo3::prelude::*;
+use pyo3::IntoPyObjectExt;
 use serde::{Deserialize, Serialize};
 
 #[pyclass]
@@ -32,6 +33,12 @@ impl ChatResponse {
                     PromptContent::Str(first_choice.message.content.clone().unwrap_or_default());
                 Ok(vec![Message::from(message, role)])
             }
+        }
+    }
+
+    pub fn to_python<'py>(&self, py: Python<'py>) -> Result<Bound<'py, PyAny>, AgentError> {
+        match self {
+            ChatResponse::OpenAI(resp) => Ok(resp.clone().into_bound_py_any(py)?),
         }
     }
 }

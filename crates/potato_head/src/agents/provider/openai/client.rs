@@ -8,7 +8,7 @@ use pyo3::IntoPyObjectExt;
 use reqwest::header::AUTHORIZATION;
 use reqwest::Client;
 use std::collections::HashMap;
-use tracing::debug;
+use tracing::{debug, error};
 
 #[derive(Debug, Clone)]
 #[pyclass]
@@ -170,14 +170,14 @@ impl OpenAIClient {
 
         debug!(
             "Sending chat completion request to OpenAI API: {:?}",
-            prompt
+            serialized_prompt
         );
 
         let response = self
             .client
             .post(format!("{}/v1/chat/completions", self.base_url))
             .header(AUTHORIZATION, format!("Bearer {}", self.api_key))
-            .json(&prompt)
+            .json(&serialized_prompt)
             .send()
             .await
             .map_err(AgentError::RequestError)?;
@@ -185,6 +185,7 @@ impl OpenAIClient {
         let status = response.status();
         if !status.is_success() {
             // print the response body for debugging
+            error!("OpenAI API request failed with status: {}", status);
             let body = response
                 .text()
                 .await

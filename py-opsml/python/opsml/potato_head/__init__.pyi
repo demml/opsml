@@ -513,7 +513,7 @@ class Prompt:
         | List[Message],
         model: Optional[str] = None,
         provider: Optional[str] = None,
-        system_message: Optional[str | List[str]] = None,
+        system_message: Optional[str | List[str] | Message | List[Message]] = None,
         sanitization_config: Optional[SanitizationConfig] = None,
         model_settings: Optional[ModelSettings] = None,
         response_format: Optional[Any] = None,
@@ -693,14 +693,35 @@ class TaskList:
         """Create a TaskList object."""
 
 class Agent:
-    def __init__(self, provider: Provider | str) -> None:
+    def __init__(
+        self,
+        provider: Provider | str,
+        system_message: Optional[str | List[str] | Message | List[Message]] = None,
+    ) -> None:
         """Create an Agent object.
 
         Args:
             provider (Provider | str):
                 The provider to use for the agent. This can be a Provider enum or a string
                 representing the provider.
+            system_message (Optional[str | List[str] | Message | List[Message]]):
+                The system message to use for the agent. This can be a string, a list of strings,
+                a Message object, or a list of Message objects. If None, no system message will be used.
+                This is added to all tasks that the agent executes. If a given task contains it's own
+                system message, the agent's system message will be prepended to the task's system message.
+
+        Example:
+        ```python
+            agent = Agent(
+                provider=Provider.OpenAI,
+                system_message="You are a helpful assistant.",
+            )
+        ```
         """
+
+    @property
+    def system_message(self) -> List[Message]:
+        """The system message to use for the agent. This is a list of Message objects."""
 
     def execute_task(
         self,
@@ -757,6 +778,14 @@ class Workflow:
         Args:
             task (Task):
                 The task to add to the workflow.
+        """
+
+    def add_tasks(self, tasks: List[Task]) -> None:
+        """Add multiple tasks to the workflow.
+
+        Args:
+            tasks (List[Task]):
+                The tasks to add to the workflow.
         """
 
     def add_agent(self, agent: Agent) -> None:

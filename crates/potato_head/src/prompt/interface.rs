@@ -196,7 +196,7 @@ pub struct Prompt {
     pub response_format: Option<Value>,
 }
 
-fn parse_prompt(messages: &Bound<'_, PyAny>) -> PyResult<Vec<Message>> {
+pub fn parse_prompt(messages: &Bound<'_, PyAny>) -> PyResult<Vec<Message>> {
     if messages.is_instance_of::<Message>() {
         return Ok(vec![messages.extract::<Message>()?]);
     }

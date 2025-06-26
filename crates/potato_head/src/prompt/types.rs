@@ -540,14 +540,26 @@ fn get_json_schema_from_basemodel(object: &Bound<'_, PyAny>) -> Result<Value, Po
     let name = object.getattr("__name__")?.extract::<String>()?;
     let schema = object.getattr("model_json_schema")?.call1(())?;
 
+    let mut schema = pyobject_to_json(&schema).map_err(|e| {
+        error!("Failed to convert schema to JSON: {}", e);
+        PotatoError::PySerializationError(e.to_string())
+    })?;
+
+    // ensure schema as additionalProperties set to false
+    if let Some(additional_properties) = schema.get_mut("additionalProperties") {
+        *additional_properties = serde_json::json!(false);
+    } else {
+        schema
+            .as_object_mut()
+            .unwrap()
+            .insert("additionalProperties".to_string(), serde_json::json!(false));
+    }
+
     let json_schema = serde_json::json!({
         "type": "json_schema",
         "json_schema": {
              "name": name,
-             "schema": pyobject_to_json(&schema).map_err(|e| {
-                 error!("Failed to convert schema to JSON: {}", e);
-                 PotatoError::PySerializationError(e.to_string())
-             })?,
+             "schema": schema,
              "strict": true
         },
     });

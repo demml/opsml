@@ -381,7 +381,7 @@ impl From<ModelInterfaceError> for PyErr {
 }
 
 #[derive(Error, Debug)]
-pub enum AgentError {
+pub enum WorkflowError {
     #[error("Failed to create header value for the agent client")]
     CreateHeaderValueError(#[from] reqwest::header::InvalidHeaderValue),
 
@@ -420,16 +420,19 @@ pub enum AgentError {
 
     #[error("No ready tasks found but pending tasks remain. Possible circular dependency.")]
     NoTaskFoundError,
+
+    #[error("Max retries exceeded for task: {0}")]
+    MaxRetriesExceeded(String),
 }
 
-impl<'a> From<pyo3::DowncastError<'a, 'a>> for AgentError {
+impl<'a> From<pyo3::DowncastError<'a, 'a>> for WorkflowError {
     fn from(err: pyo3::DowncastError) -> Self {
-        AgentError::DowncastError(err.to_string())
+        WorkflowError::DowncastError(err.to_string())
     }
 }
 
-impl From<AgentError> for PyErr {
-    fn from(err: AgentError) -> PyErr {
+impl From<WorkflowError> for PyErr {
+    fn from(err: WorkflowError) -> PyErr {
         let msg = err.to_string();
         error!("{}", msg);
         PyRuntimeError::new_err(msg)

@@ -1,4 +1,4 @@
-use crate::error::AgentError;
+use crate::error::WorkflowError;
 use opsml_state::app_state;
 use opsml_utils::create_uuid7;
 use opsml_utils::json_to_pyobject;
@@ -12,7 +12,7 @@ use pyo3::{prelude::*, types::PyDict};
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 use std::sync::RwLock;
-use tracing::{info, warn};
+use tracing::{error, info, warn};
 
 #[derive(Debug, Clone, Default)]
 #[pyclass]
@@ -128,6 +128,19 @@ impl TaskList {
             .cloned()
             .collect()
     }
+
+    pub fn reset_failed_tasks(&mut self) -> Result<(), WorkflowError> {
+        for task in self.tasks.values_mut() {
+            if task.status == TaskStatus::Failed {
+                task.status = TaskStatus::Pending;
+                task.increment_retry();
+                if task.retry_count > task.max_retries {
+                    return Err(WorkflowError::MaxRetriesExceeded(task.id.clone()));
+                }
+            }
+        }
+        Ok(())
+    }
 }
 
 #[pyclass]
@@ -163,6 +176,12 @@ impl Workflow {
         self.tasks.add_task(task);
     }
 
+    pub fn add_tasks(&mut self, tasks: Vec<Task>) {
+        for task in tasks {
+            self.tasks.add_task(task);
+        }
+    }
+
     pub fn add_agent(&mut self, agent: Agent) {
         self.agents.insert(agent.id.clone(), agent);
     }
@@ -175,7 +194,10 @@ impl Workflow {
         self.tasks.pending_count()
     }
 
-    pub fn execution_plan<'py>(&self, py: Python<'py>) -> Result<Bound<'py, PyDict>, AgentError> {
+    pub fn execution_plan<'py>(
+        &self,
+        py: Python<'py>,
+    ) -> Result<Bound<'py, PyDict>, WorkflowError> {
         let mut remaining: HashMap<String, HashSet<String>> = self
             .tasks
             .tasks
@@ -217,34 +239,28 @@ impl Workflow {
         Ok(pydict)
     }
 
-    pub fn run(&self) {
+    pub fn run(&self) -> Result<(), WorkflowError> {
         info!("Running workflow: {}", self.name);
         // Here you would implement the logic to run the workflow
         // clone the workflow and pass it to the execute_workflow function
         let workflow = self.clone();
         let workflow = Arc::new(RwLock::new(workflow));
-        app_state().runtime.block_on(async {
-            if let Err(e) = execute_workflow(workflow).await {
-                warn!("Workflow execution failed: {}", e);
-            } else {
-                info!("Workflow execution completed successfully.");
-            }
-        });
+        app_state()
+            .runtime
+            .block_on(async { execute_workflow(workflow).await })?;
+
+        info!("Workflow execution completed successfully.");
+        Ok(())
     }
 }
 
 // Rust-specific
 impl Workflow {
-    pub async fn run_rs(&self) {
+    pub async fn run_rs(&self) -> Result<(), WorkflowError> {
         info!("Running workflow: {}", self.name);
         let workflow = self.clone();
         let workflow = Arc::new(RwLock::new(workflow));
-
-        if let Err(e) = execute_workflow(workflow).await {
-            warn!("Workflow execution failed: {}", e);
-        } else {
-            info!("Workflow execution completed successfully.");
-        }
+        execute_workflow(workflow).await
     }
 }
 
@@ -259,7 +275,7 @@ impl Workflow {
 /// ///    - Spawn a new tokio task and execute task with agent
 /// ///    - Push task to the handles vector
 /// 4. Waits for all spawned tasks to complete
-pub async fn execute_workflow(workflow: Arc<RwLock<Workflow>>) -> Result<(), AgentError> {
+pub async fn execute_workflow(workflow: Arc<RwLock<Workflow>>) -> Result<(), WorkflowError> {
     // Writing notes for my own sanity :)
     // (1) Creating a shared workflow instance using Arc and RwLock
     info!(
@@ -269,7 +285,14 @@ pub async fn execute_workflow(workflow: Arc<RwLock<Workflow>>) -> Result<(), Age
 
     // (2) Check if the workflow is complete
     while !workflow.read().unwrap().is_complete() {
-        // (3) Rebuild the execution order of pending tasks
+        // (3) Rebuild the execution order of pending tasks (excluding completed tasks)
+        // reset the failed tasks
+
+        if let Err(e) = workflow.write().unwrap().tasks.reset_failed_tasks() {
+            warn!("Failed to reset failed tasks: {}", e);
+            return Err(e);
+        }
+
         let ready_tasks = {
             let wf = workflow.read().unwrap();
             wf.tasks.get_ready_tasks()
@@ -278,7 +301,7 @@ pub async fn execute_workflow(workflow: Arc<RwLock<Workflow>>) -> Result<(), Age
         info!("Found {} ready tasks for execution.", ready_tasks.len());
 
         if ready_tasks.is_empty() {
-            // (4) If no tasks are ready, and there are still pending tasks, log a warning
+            // (4) If no tasks are ready, and there's still pending tasks, log a warning
             let pending_count = workflow.read().unwrap().pending_count();
 
             if pending_count > 0 {
@@ -337,7 +360,7 @@ pub async fn execute_workflow(workflow: Arc<RwLock<Workflow>>) -> Result<(), Age
                             );
                         }
                         Err(e) => {
-                            warn!("Task {} failed: {}", task_id, e);
+                            error!("Task {} failed: {}", task_id, e);
                             let mut wf = workflow.write().unwrap();
                             wf.tasks
                                 .update_task_status(&task_id, TaskStatus::Failed, None);
