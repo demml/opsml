@@ -10,7 +10,6 @@ pub use potato_head::agents::{
 use potato_head::prompt::types::Role;
 use pyo3::{prelude::*, types::PyDict};
 use std::collections::{HashMap, HashSet};
-use std::hash::Hash;
 use std::sync::Arc;
 use std::sync::RwLock;
 use tracing::instrument;
@@ -163,25 +162,16 @@ impl TaskList {
 
 #[pyclass]
 #[derive(Debug, Clone)]
-pub struct Workflow {
-    #[pyo3(get)]
+pub struct WorkflowRs {
     pub id: String,
-
-    #[pyo3(get)]
     pub name: String,
-
-    #[pyo3(get)]
     pub tasks: TaskList,
-
-    #[pyo3(get)]
     pub agents: HashMap<String, Agent>,
 }
 
-#[pymethods]
-impl Workflow {
-    #[new]
-    #[pyo3(signature = (name))]
+impl WorkflowRs {
     pub fn new(name: String) -> Self {
+        info!("Creating new workflow: {}", name);
         Self {
             id: create_uuid7(),
             name,
@@ -189,11 +179,53 @@ impl Workflow {
             agents: HashMap::new(),
         }
     }
+}
 
-    pub fn add_task_output_types(&mut self, task_output_types: HashMap<String, PyAny>) {
-        if let Some(task) = self.tasks.get_mut(task_id) {
-            task.output_types.extend(output_types);
+#[pyclass]
+#[derive(Debug, Clone)]
+pub struct Workflow {
+    #[pyo3(get)]
+    pub id: String,
+    #[pyo3(get)]
+    pub name: String,
+    #[pyo3(get)]
+    pub tasks: TaskList,
+    #[pyo3(get)]
+    pub agents: HashMap<String, Agent>,
+    pub output_types: HashMap<String, Arc<PyObject>>,
+}
+
+#[pymethods]
+impl Workflow {
+    #[new]
+    #[pyo3(signature = (name))]
+    pub fn new(name: String) -> Self {
+        info!("Creating new workflow: {}", name);
+        Self {
+            id: create_uuid7(),
+            name,
+            tasks: TaskList::new(),
+            agents: HashMap::new(),
+            output_types: HashMap::new(),
         }
+    }
+
+    #[pyo3(signature = (task_output_types))]
+    pub fn add_task_output_types<'py>(
+        &mut self,
+        task_output_types: Bound<'py, PyDict>,
+    ) -> PyResult<()> {
+        let converted: HashMap<String, Arc<PyObject>> = task_output_types
+            .iter()
+            .map(|(k, v)| -> PyResult<(String, Arc<PyObject>)> {
+                // Explicitly return a Result from the closure
+                let key = k.extract::<String>()?;
+                let value = v.clone().unbind();
+                Ok((key, Arc::new(value)))
+            })
+            .collect::<PyResult<_>>()?;
+        self.output_types.extend(converted);
+        Ok(())
     }
 
     pub fn add_task(&mut self, task: Task) {

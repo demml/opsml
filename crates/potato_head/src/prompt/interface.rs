@@ -6,6 +6,7 @@ use opsml_types::SaveName;
 use opsml_utils::{json_to_pyobject, pyobject_to_json, PyHelperFuncs};
 use pyo3::prelude::*;
 use pyo3::types::{PyDict, PyList, PyString, PyTuple};
+
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
@@ -272,6 +273,7 @@ impl Prompt {
             Some(response_format) => {
                 // check if response_format is a pydantic model and extract the model json schema
                 parse_pydantic_model(py, response_format)?
+
                 // we don't store response_format in the prompt, but we validate it
             }
             None => None,
