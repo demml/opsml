@@ -7,8 +7,11 @@ use pyo3::prelude::*;
 use pyo3::IntoPyObjectExt;
 use reqwest::header::AUTHORIZATION;
 use reqwest::Client;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use tracing::{debug, error};
+
+use serde::{ser::SerializeStruct, Deserializer, Serializer};
 
 #[derive(Debug, Clone)]
 #[pyclass]
@@ -18,6 +21,31 @@ pub struct OpenAIClient {
     base_url: String,
     #[pyo3(get)]
     provider: Provider,
+}
+
+/// Allows for serialization as part of workflow and agent serialization, but does not serialize any state.
+impl Serialize for OpenAIClient {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        // Create an empty struct serialization
+        let state = serializer.serialize_struct("OpenAIClient", 0)?;
+        state.end()
+    }
+}
+
+/// Allows for deserialization of the OpenAIClient from Python.
+impl<'de> Deserialize<'de> for OpenAIClient {
+    fn deserialize<D>(_deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        // Re-initialize the client completely from scratch
+        OpenAIClient::new_rs(None, None, None).map_err(|e| {
+            serde::de::Error::custom(format!("Failed to initialize OpenAIClient: {}", e))
+        })
+    }
 }
 
 #[pymethods]

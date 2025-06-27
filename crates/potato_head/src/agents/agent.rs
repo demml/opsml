@@ -10,10 +10,11 @@ use crate::{
 use opsml_state::app_state;
 use opsml_utils::create_uuid7;
 use pyo3::prelude::*;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use tracing::debug;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[pyclass]
 pub struct Agent {
     #[pyo3(get)]

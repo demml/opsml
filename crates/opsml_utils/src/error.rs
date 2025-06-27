@@ -50,8 +50,8 @@ pub enum UtilError {
 
 #[derive(Error, Debug)]
 pub enum PyUtilError {
-    #[error(transparent)]
-    PyErr(#[from] pyo3::PyErr),
+    #[error("{0}")]
+    PyError(String),
 
     #[error(transparent)]
     UtilError(#[from] UtilError),
@@ -77,5 +77,11 @@ impl From<PyUtilError> for PyErr {
         let msg = err.to_string();
         error!("{}", msg);
         PyRuntimeError::new_err(msg)
+    }
+}
+
+impl From<PyErr> for PyUtilError {
+    fn from(err: PyErr) -> PyUtilError {
+        PyUtilError::PyError(err.to_string())
     }
 }

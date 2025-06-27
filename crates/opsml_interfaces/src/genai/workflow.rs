@@ -2,6 +2,8 @@ use crate::error::WorkflowError;
 use opsml_state::app_state;
 use opsml_utils::create_uuid7;
 use opsml_utils::json_to_pyobject;
+use opsml_utils::PyHelperFuncs;
+use potato_head::agents::task::PyTask;
 pub use potato_head::agents::{
     agent::Agent,
     task::{Task, TaskStatus},
@@ -9,26 +11,54 @@ pub use potato_head::agents::{
 };
 use potato_head::prompt::types::Role;
 use pyo3::{prelude::*, types::PyDict};
+use serde::Deserialize;
+use serde::Serialize;
+use serde_json::json;
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 use std::sync::RwLock;
 use tracing::instrument;
 use tracing::{debug, error, info, warn};
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug)]
 #[pyclass]
 pub struct WorkflowResult {
     #[pyo3(get)]
-    pub tasks: HashMap<String, Task>,
+    pub tasks: HashMap<String, Py<PyTask>>,
 }
 
 impl WorkflowResult {
-    pub fn new(tasks: HashMap<String, Task>) -> Self {
-        Self { tasks }
+    pub fn new(py: Python, tasks: HashMap<String, Task>) -> Self {
+        let py_tasks = tasks
+            .into_iter()
+            .map(|(id, task)| {
+                let py_task = PyTask {
+                    id: task.id.clone(),
+                    prompt: task.prompt,
+                    dependencies: task.dependencies,
+                    status: task.status,
+                    agent_id: task.agent_id,
+                    result: task.result,
+                    max_retries: task.max_retries,
+                    retry_count: task.retry_count,
+                    response_type: None, // Response type is not serialized
+                };
+                (id, Py::new(py, py_task).unwrap())
+            })
+            .collect::<HashMap<_, _>>()
+            .into();
+        Self { tasks: py_tasks }
     }
 }
 
-#[derive(Debug, Clone, Default)]
+#[pymethods]
+impl WorkflowResult {
+    pub fn __str__(&self) -> String {
+        PyHelperFuncs::__str__(&self.tasks)
+    }
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[pyclass]
 pub struct TaskList {
     #[pyo3(get)]
@@ -181,9 +211,44 @@ impl WorkflowRs {
     }
 }
 
+/// Rust-specific implementation of a workflow
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Workflow {
+    pub id: String,
+    pub name: String,
+    pub tasks: TaskList,
+    pub agents: HashMap<String, Agent>,
+}
+
+impl Workflow {
+    pub fn new(name: String) -> Self {
+        info!("Creating new workflow: {}", name);
+        Self {
+            id: create_uuid7(),
+            name,
+            tasks: TaskList::new(),
+            agents: HashMap::new(),
+        }
+    }
+    pub async fn run(&self) -> Result<(), WorkflowError> {
+        info!("Running workflow: {}", self.name);
+        let workflow = self.clone();
+        let workflow = Arc::new(RwLock::new(workflow));
+        execute_workflow(workflow).await
+    }
+
+    pub fn is_complete(&self) -> bool {
+        self.tasks.is_complete()
+    }
+
+    pub fn pending_count(&self) -> usize {
+        self.tasks.pending_count()
+    }
+}
+
 #[pyclass]
 #[derive(Debug, Clone)]
-pub struct Workflow {
+pub struct PyWorkflow {
     #[pyo3(get)]
     pub id: String,
     #[pyo3(get)]
@@ -192,11 +257,15 @@ pub struct Workflow {
     pub tasks: TaskList,
     #[pyo3(get)]
     pub agents: HashMap<String, Agent>,
-    pub output_types: HashMap<String, Arc<PyObject>>,
+
+    // allow adding output types for python tasks (py only)
+    // these are provided at runtime by the user and must match the response
+    // format of the prompt the task is associated with
+    output_types: HashMap<String, Arc<PyObject>>,
 }
 
 #[pymethods]
-impl Workflow {
+impl PyWorkflow {
     #[new]
     #[pyo3(signature = (name))]
     pub fn new(name: String) -> Self {
@@ -295,28 +364,52 @@ impl Workflow {
         Ok(pydict)
     }
 
-    pub fn run(&self) -> Result<(), WorkflowError> {
+    pub fn run(&self, py: Python) -> Result<WorkflowResult, WorkflowError> {
         info!("Running workflow: {}", self.name);
         // Clone the workflow and pass it to the execute_workflow function
-        let workflow = self.clone();
+        // We do this to not modify the original workflow state
+        let workflow = self.create_workflow();
         let workflow = Arc::new(RwLock::new(workflow));
 
         app_state()
             .runtime
-            .block_on(async { execute_workflow(workflow).await })?;
+            .block_on(async { execute_workflow(workflow.clone()).await })?;
+
+        // Try to get exclusive ownership of the workflow by unwrapping the Arc if there's only one reference
+        let workflow_result = match Arc::try_unwrap(workflow) {
+            // If we have exclusive ownership, we can consume the RwLock
+            Ok(rwlock) => {
+                // Unwrap the RwLock to get the Workflow
+                let workflow = rwlock
+                    .into_inner()
+                    .map_err(|_| WorkflowError::LockAcquireError)?;
+                // Move the tasks out of the workflow
+                WorkflowResult::new(py, workflow.tasks.tasks)
+            }
+            // If there are other references, we need to clone
+            Err(arc) => {
+                // Just read the workflow
+                error!("Workflow still has other references, reading instead of consuming.");
+                let workflow = arc
+                    .read()
+                    .map_err(|_| WorkflowError::ReadLockAcquireError)?;
+                WorkflowResult::new(py, workflow.tasks.tasks.clone())
+            }
+        };
 
         info!("Workflow execution completed successfully.");
-        Ok(())
+        Ok(workflow_result)
     }
 }
 
-// Rust-specific
-impl Workflow {
-    pub async fn run_rs(&self) -> Result<WorkflowResult, WorkflowError> {
-        info!("Running workflow: {}", self.name);
-        let workflow = self.clone();
-        let workflow = Arc::new(RwLock::new(workflow));
-        execute_workflow(workflow).await
+impl PyWorkflow {
+    fn create_workflow(&self) -> Workflow {
+        Workflow {
+            id: self.id.clone(),
+            name: self.name.clone(),
+            tasks: self.tasks.clone(),
+            agents: self.agents.clone(),
+        }
     }
 }
 
@@ -331,9 +424,7 @@ impl Workflow {
 /// ///    - Spawn a new tokio task and execute task with agent
 /// ///    - Push task to the handles vector
 /// 4. Waits for all spawned tasks to complete
-pub async fn execute_workflow(
-    workflow: Arc<RwLock<Workflow>>,
-) -> Result<WorkflowResult, WorkflowError> {
+pub async fn execute_workflow(workflow: Arc<RwLock<Workflow>>) -> Result<(), WorkflowError> {
     // Writing notes for my own sanity :)
     // (1) Creating a shared workflow instance using Arc and RwLock
     info!(
@@ -438,26 +529,39 @@ pub async fn execute_workflow(
         }
     }
 
-    // Try to get exclusive ownership of the workflow by unwrapping the Arc if there's only one reference
-    let workflow_result = match Arc::try_unwrap(workflow) {
-        // If we have exclusive ownership, we can consume the RwLock
-        Ok(rwlock) => {
-            // Unwrap the RwLock to get the Workflow
-            let workflow = rwlock
-                .into_inner()
-                .map_err(|_| WorkflowError::LockAcquireError)?;
-            // Move the tasks out of the workflow
-            WorkflowResult::new(workflow.tasks.tasks)
-        }
-        // If there are other references, we need to clone
-        Err(arc) => {
-            // Just read the workflow
-            let workflow = arc
-                .read()
-                .map_err(|_| WorkflowError::ReadLockAcquireError)?;
-            WorkflowResult::new(workflow.tasks.tasks.clone())
-        }
-    };
+    Ok(())
+}
 
-    Ok(workflow_result)
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use potato_head::{prompt::types::PromptContent, Message, Prompt};
+
+    #[test]
+    fn test_workflow_creation() {
+        let workflow = Workflow::new("Test Workflow".to_string());
+        assert_eq!(workflow.name, "Test Workflow");
+        assert_eq!(workflow.id.len(), 36); // UUID7 length
+    }
+
+    #[test]
+    fn test_task_list_add_and_get() {
+        let mut task_list = TaskList::new();
+        let prompt_content = PromptContent::Str("Test prompt".to_string());
+        let prompt = Prompt::new_rs(
+            vec![Message::new_rs(prompt_content)],
+            Some("gpt-4o"),
+            Some("openai"),
+            vec![],
+            None,
+            None,
+            None,
+        )
+        .unwrap();
+
+        let task = Task::new("task1".to_string(), prompt, None, None, None);
+        task_list.add_task(task.clone());
+        assert_eq!(task_list.get_task(&task.id).unwrap().id, task.id);
+        task_list.reset_failed_tasks().unwrap();
+    }
 }

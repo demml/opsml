@@ -3,6 +3,7 @@ use crate::Prompt;
 use opsml_utils::{create_uuid7, PyHelperFuncs};
 use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
+use std::sync::Arc;
 
 #[pyclass]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -11,6 +12,28 @@ pub enum TaskStatus {
     Running,
     Completed,
     Failed,
+}
+
+#[pyclass]
+#[derive(Debug, Serialize)]
+pub struct PyTask {
+    #[pyo3(get)]
+    pub id: String,
+    #[pyo3(get, set)]
+    pub prompt: Prompt,
+    #[pyo3(get, set)]
+    pub dependencies: Vec<String>,
+    #[pyo3(get)]
+    pub status: TaskStatus,
+    #[pyo3(get)]
+    pub agent_id: String,
+    pub result: Option<ChatResponse>,
+    #[pyo3(get)]
+    pub max_retries: u32,
+    pub retry_count: u32,
+
+    #[serde(skip)]
+    pub response_type: Option<Arc<PyObject>>,
 }
 
 #[pyclass]

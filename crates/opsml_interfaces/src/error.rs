@@ -410,9 +410,6 @@ pub enum WorkflowError {
     ClientExtractionError(String),
 
     #[error(transparent)]
-    PyError(#[from] pyo3::PyErr),
-
-    #[error(transparent)]
     UtilError(#[from] PyUtilError),
 
     #[error("Client did not provide response")]
@@ -429,6 +426,9 @@ pub enum WorkflowError {
 
     #[error("Failed to acquire read lock")]
     ReadLockAcquireError,
+
+    #[error("{0}")]
+    PyError(String),
 }
 
 impl<'a> From<pyo3::DowncastError<'a, 'a>> for WorkflowError {
@@ -437,10 +437,19 @@ impl<'a> From<pyo3::DowncastError<'a, 'a>> for WorkflowError {
     }
 }
 
+// PyErrors are implemented outside of ThisError in order to allow structs to be used in rust-only envs
+// If PyErr is transparent, it will require a python runtime for any method that returns the error.
+// By implementing it outside and wrapping it to a generic PyErr(String), we can use our structs in rust-only envs
 impl From<WorkflowError> for PyErr {
     fn from(err: WorkflowError) -> PyErr {
         let msg = err.to_string();
         error!("{}", msg);
         PyRuntimeError::new_err(msg)
+    }
+}
+
+impl From<PyErr> for WorkflowError {
+    fn from(err: PyErr) -> WorkflowError {
+        WorkflowError::PyError(err.to_string())
     }
 }
