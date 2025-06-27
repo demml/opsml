@@ -70,5 +70,5 @@ if __name__ == "__main__":
         ]
     )
     workflow.run()
-    for task in workflow.tasks:
+    for task in workflow.tasks.tasks.values():
         print(f"Task {task.id} result: {task.result}")

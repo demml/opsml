@@ -10,13 +10,29 @@ pub use potato_head::agents::{
 use potato_head::prompt::types::Role;
 use pyo3::{prelude::*, types::PyDict};
 use std::collections::{HashMap, HashSet};
+use std::hash::Hash;
 use std::sync::Arc;
 use std::sync::RwLock;
-use tracing::{error, info, warn};
+use tracing::instrument;
+use tracing::{debug, error, info, warn};
+
+#[derive(Debug, Clone, Default)]
+#[pyclass]
+pub struct WorkflowResult {
+    #[pyo3(get)]
+    pub tasks: HashMap<String, Task>,
+}
+
+impl WorkflowResult {
+    pub fn new(tasks: HashMap<String, Task>) -> Self {
+        Self { tasks }
+    }
+}
 
 #[derive(Debug, Clone, Default)]
 #[pyclass]
 pub struct TaskList {
+    #[pyo3(get)]
     pub tasks: HashMap<String, Task>,
     pub execution_order: Vec<String>,
 }
@@ -55,12 +71,14 @@ impl TaskList {
             .count()
     }
 
+    #[instrument(skip_all)]
     pub fn update_task_status(
         &mut self,
         task_id: &str,
         status: TaskStatus,
         result: Option<ChatResponse>,
     ) {
+        debug!(status=?status, result=?result, "Updating task status");
         if let Some(task) = self.tasks.get_mut(task_id) {
             task.status = status;
             task.result = result;
@@ -172,6 +190,12 @@ impl Workflow {
         }
     }
 
+    pub fn add_task_output_types(&mut self, task_output_types: HashMap<String, PyAny>) {
+        if let Some(task) = self.tasks.get_mut(task_id) {
+            task.output_types.extend(output_types);
+        }
+    }
+
     pub fn add_task(&mut self, task: Task) {
         self.tasks.add_task(task);
     }
@@ -241,10 +265,10 @@ impl Workflow {
 
     pub fn run(&self) -> Result<(), WorkflowError> {
         info!("Running workflow: {}", self.name);
-        // Here you would implement the logic to run the workflow
-        // clone the workflow and pass it to the execute_workflow function
+        // Clone the workflow and pass it to the execute_workflow function
         let workflow = self.clone();
         let workflow = Arc::new(RwLock::new(workflow));
+
         app_state()
             .runtime
             .block_on(async { execute_workflow(workflow).await })?;
@@ -256,7 +280,7 @@ impl Workflow {
 
 // Rust-specific
 impl Workflow {
-    pub async fn run_rs(&self) -> Result<(), WorkflowError> {
+    pub async fn run_rs(&self) -> Result<WorkflowResult, WorkflowError> {
         info!("Running workflow: {}", self.name);
         let workflow = self.clone();
         let workflow = Arc::new(RwLock::new(workflow));
@@ -275,12 +299,14 @@ impl Workflow {
 /// ///    - Spawn a new tokio task and execute task with agent
 /// ///    - Push task to the handles vector
 /// 4. Waits for all spawned tasks to complete
-pub async fn execute_workflow(workflow: Arc<RwLock<Workflow>>) -> Result<(), WorkflowError> {
+pub async fn execute_workflow(
+    workflow: Arc<RwLock<Workflow>>,
+) -> Result<WorkflowResult, WorkflowError> {
     // Writing notes for my own sanity :)
     // (1) Creating a shared workflow instance using Arc and RwLock
     info!(
-        "Starting workflow execution: {}",
-        workflow.read().unwrap().name
+        workflow = %workflow.read().unwrap().name,
+        "Starting workflow execution"
     );
 
     // (2) Check if the workflow is complete
@@ -380,5 +406,26 @@ pub async fn execute_workflow(workflow: Arc<RwLock<Workflow>>) -> Result<(), Wor
         }
     }
 
-    Ok(())
+    // Try to get exclusive ownership of the workflow by unwrapping the Arc if there's only one reference
+    let workflow_result = match Arc::try_unwrap(workflow) {
+        // If we have exclusive ownership, we can consume the RwLock
+        Ok(rwlock) => {
+            // Unwrap the RwLock to get the Workflow
+            let workflow = rwlock
+                .into_inner()
+                .map_err(|_| WorkflowError::LockAcquireError)?;
+            // Move the tasks out of the workflow
+            WorkflowResult::new(workflow.tasks.tasks)
+        }
+        // If there are other references, we need to clone
+        Err(arc) => {
+            // Just read the workflow
+            let workflow = arc
+                .read()
+                .map_err(|_| WorkflowError::ReadLockAcquireError)?;
+            WorkflowResult::new(workflow.tasks.tasks.clone())
+        }
+    };
+
+    Ok(workflow_result)
 }

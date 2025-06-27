@@ -688,9 +688,15 @@ class Task:
     def status(self) -> TaskStatus:
         """The status of the task."""
 
+    def __str__(self) -> str: ...
+
 class TaskList:
     def __init__(self) -> None:
         """Create a TaskList object."""
+
+    @property
+    def tasks(self) -> Dict[str, Task]:
+        """The tasks in the task list."""
 
 class Agent:
     def __init__(
@@ -765,7 +771,7 @@ class Workflow:
         """The name of the workflow."""
 
     @property
-    def tasks(self) -> List[Task]:
+    def tasks(self) -> TaskList:
         """The tasks in the workflow."""
 
     @property
@@ -811,7 +817,6 @@ class Workflow:
             int:
                 The number of pending tasks in the workflow.
         """
-        return sum(1 for task in self.tasks if task.status == TaskStatus.Pending)
 
     def execution_plan(self) -> Dict[str, List[str]]:
         """Get the execution plan for the workflow.

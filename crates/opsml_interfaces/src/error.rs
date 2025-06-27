@@ -423,6 +423,12 @@ pub enum WorkflowError {
 
     #[error("Max retries exceeded for task: {0}")]
     MaxRetriesExceeded(String),
+
+    #[error("Failed to acquire lock for the workflow")]
+    LockAcquireError,
+
+    #[error("Failed to acquire read lock")]
+    ReadLockAcquireError,
 }
 
 impl<'a> From<pyo3::DowncastError<'a, 'a>> for WorkflowError {
