@@ -1,16 +1,16 @@
 use crate::error::PyAgentError;
-use potato_head::agent::agents::provider::types::Provider;
-use potato_head::agent::agents::types::AgentResponse;
-use potato_head::agent::Agent;
-use potato_head::prompt::prompt::{parse_prompt, Message, Role};
+use opsml_state::app_state;
+use potato_head::prompt::{parse_prompt, Message, Role};
 use potato_head::workflow::Task;
+use potato_head::{Agent, AgentResponse, Provider};
 use pyo3::prelude::*;
+use std::sync::Arc;
 use tracing::debug;
 
 #[pyclass]
 #[derive(Debug, Clone)]
 pub struct PyAgent {
-    pub agent: Agent,
+    pub agent: Arc<Agent>,
 }
 
 #[pymethods]
@@ -43,29 +43,22 @@ impl PyAgent {
             None
         };
 
-        let agent = Agent::new(provider, system_message).map_err(|e| PyAgentError::from(e))?;
+        let agent = Agent::new(provider, system_message)?;
 
-        Ok(Self { agent })
+        Ok(Self {
+            agent: Arc::new(agent),
+        })
     }
 
     #[pyo3(signature = (task))]
     pub fn execute_task(&self, task: &Task) -> Result<AgentResponse, PyAgentError> {
         // Extract the prompt from the task
         debug!("Executing task");
-        // we need to clone in order to not modify the original task
-        let mut prompt = task.clone().prompt;
-
-        // Combine system messages, with agent messages taking precedence
-        if !self.agent.system_message.is_empty() {
-            let mut combined_messages = self.agent.system_message.clone();
-            combined_messages.extend(prompt.system_message);
-            prompt.system_message = combined_messages;
-        }
 
         let chat_response = app_state()
             .runtime
-            .block_on(async { self.client.execute(&prompt).await })?;
+            .block_on(async { self.agent.execute_async_task(&task).await })?;
 
-        Ok(AgentResponse::new(task.id.clone(), chat_response))
+        Ok(chat_response)
     }
 }

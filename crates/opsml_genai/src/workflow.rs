@@ -1,7 +1,9 @@
+use crate::{agent::PyAgent, error::PyWorkflowError};
 use opsml_state::app_state;
 
-use potato_head::agent::Agent;
-use potato_head::workflow::{Task, TaskList, Workflow};
+use potato_head::execute_workflow;
+use potato_head::json_to_pyobject;
+use potato_head::workflow::{Task, TaskList, Workflow, WorkflowError, WorkflowResult};
 use pyo3::{prelude::*, types::PyDict};
 use serde::Deserialize;
 use serde::Serialize;
@@ -10,7 +12,6 @@ use std::sync::Arc;
 use std::sync::RwLock;
 use tracing::instrument;
 use tracing::{debug, error, info, warn};
-
 #[pyclass]
 #[derive(Debug, Clone)]
 pub struct PyWorkflow {
@@ -62,7 +63,9 @@ impl PyWorkflow {
         }
     }
 
-    pub fn add_agent(&mut self, agent: &Agent) {
+    pub fn add_agent(&mut self, agent: &Bound<'_, PyAgent>) {
+        // extract the arc rust agent from the python agent
+        let agent = agent.extract::<PyAgent>().unwrap().agent.clone();
         self.workflow.agents.insert(agent.id.clone(), agent);
     }
 
@@ -77,54 +80,27 @@ impl PyWorkflow {
     pub fn execution_plan<'py>(
         &self,
         py: Python<'py>,
-    ) -> Result<Bound<'py, PyDict>, WorkflowError> {
-        let mut remaining: HashMap<String, HashSet<String>> = self
-            .tasks
-            .tasks
-            .iter()
-            .map(|(id, task)| (id.clone(), task.dependencies.iter().cloned().collect()))
-            .collect();
+    ) -> Result<Bound<'py, PyDict>, PyWorkflowError> {
+        let plan = self.workflow.execution_plan()?;
+        debug!("Execution plan: {:?}", plan);
 
-        let mut executed = HashSet::new();
-        let mut plan = serde_json::json!({});
-        let mut step = 1;
-
-        while !remaining.is_empty() {
-            // Find all tasks that can be executed in parallel
-            let ready: Vec<String> = remaining
-                .iter()
-                .filter(|(_, deps)| deps.is_subset(&executed))
-                .map(|(id, _)| id.clone())
-                .collect();
-
-            if ready.is_empty() {
-                // Circular dependency detected
-                break;
-            }
-
-            // Add parallel tasks to the current step
-            plan[format!("step{}", step)] = serde_json::json!(ready);
-
-            // Update tracking sets
-            for task_id in &ready {
-                executed.insert(task_id.clone());
-                remaining.remove(task_id);
-            }
-            step += 1;
-        }
+        // turn hashmap into a to json
+        let json = serde_json::to_value(plan).map_err(|e| {
+            error!("Failed to serialize execution plan to JSON: {}", e);
+            PyWorkflowError::SerializationError(e)
+        })?;
 
         let pydict = PyDict::new(py);
-        json_to_pyobject(py, &plan, &pydict)?;
+        json_to_pyobject(py, &json, &pydict)?;
 
         Ok(pydict)
     }
 
-    pub fn run(&self, py: Python) -> Result<WorkflowResult, WorkflowError> {
-        info!("Running workflow: {}", self.name);
+    pub fn run(&self, py: Python) -> Result<WorkflowResult, PyWorkflowError> {
+        info!("Running workflow: {}", self.workflow.name);
         // Clone the workflow and pass it to the execute_workflow function
         // We do this to not modify the original workflow state
-        let workflow = self.create_workflow();
-        let workflow = Arc::new(RwLock::new(workflow));
+        let workflow = self.create_workflow_arc();
 
         app_state()
             .runtime
@@ -137,7 +113,7 @@ impl PyWorkflow {
                 // Unwrap the RwLock to get the Workflow
                 let workflow = rwlock
                     .into_inner()
-                    .map_err(|_| WorkflowError::LockAcquireError)?;
+                    .map_err(|_| PyWorkflowError::LockAcquireError)?;
                 // Move the tasks out of the workflow
                 WorkflowResult::new(py, workflow.tasks.tasks)
             }
@@ -147,7 +123,7 @@ impl PyWorkflow {
                 error!("Workflow still has other references, reading instead of consuming.");
                 let workflow = arc
                     .read()
-                    .map_err(|_| WorkflowError::ReadLockAcquireError)?;
+                    .map_err(|_| PyWorkflowError::ReadLockAcquireError)?;
                 WorkflowResult::new(py, workflow.tasks.tasks.clone())
             }
         };
@@ -158,12 +134,7 @@ impl PyWorkflow {
 }
 
 impl PyWorkflow {
-    fn create_workflow(&self) -> Workflow {
-        Workflow {
-            id: self.id.clone(),
-            name: self.name.clone(),
-            tasks: self.tasks.clone(),
-            agents: self.agents.clone(),
-        }
+    pub fn create_workflow_arc(&self) -> Arc<RwLock<Workflow>> {
+        Arc::new(RwLock::new(self.workflow.clone()))
     }
 }
