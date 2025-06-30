@@ -40,7 +40,7 @@ opsml-toml = { path = "crates/opsml_toml" }
 opsml-types = { path = "crates/opsml_types" }
 opsml-utils = { path = "crates/opsml_utils" }
 opsml-version = { path = "crates/opsml_version" }
-potato-head = { path = "crates/potato_head" }
+opsml-genai = { path = "crates/opsml_genai" }
 
 aes-gcm = "0.*"
 anyhow = "1.0.93"
@@ -80,6 +80,7 @@ ort = { version = "2.0.0-rc.10" }
 owo-colors = "4.*"
 password-auth = "1.*"
 pbkdf2 = "0.*"
+potato-head = "0.*"
 pyo3 = { version = "0.25.*", features = ["extension-module", "anyhow", "serde", "chrono"] }
 rand = { version = "0.9.1"}
 rayon = "1.*"
