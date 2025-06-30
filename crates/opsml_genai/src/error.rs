@@ -1,4 +1,4 @@
-use potato_head::{AgentError, WorkflowError};
+use potato_head::{AgentError, UtilError, WorkflowError};
 use pyo3::exceptions::PyRuntimeError;
 use pyo3::PyErr;
 use serde_json;
@@ -35,6 +35,9 @@ pub enum PyWorkflowError {
 
     #[error(transparent)]
     WorkflowError(#[from] WorkflowError),
+
+    #[error(transparent)]
+    UtilError(#[from] UtilError),
 
     #[error("Failed to serialize chat request: {0}")]
     SerializationError(#[from] serde_json::Error),

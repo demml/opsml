@@ -3,16 +3,14 @@ use opsml_state::app_state;
 
 use potato_head::execute_workflow;
 use potato_head::json_to_pyobject;
-use potato_head::workflow::{Task, TaskList, Workflow, WorkflowError, WorkflowResult};
+use potato_head::workflow::{Task, Workflow, WorkflowResult};
 use pyo3::{prelude::*, types::PyDict};
-use serde::Deserialize;
-use serde::Serialize;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use std::sync::Arc;
 use std::sync::RwLock;
-use tracing::instrument;
-use tracing::{debug, error, info, warn};
-#[pyclass]
+use tracing::{debug, error, info};
+
+#[pyclass(name = "Workflow")]
 #[derive(Debug, Clone)]
 pub struct PyWorkflow {
     workflow: Workflow,
@@ -53,14 +51,16 @@ impl PyWorkflow {
         Ok(())
     }
 
-    pub fn add_task(&mut self, task: Task) {
-        self.workflow.tasks.add_task(task);
+    pub fn add_task(&mut self, task: Task) -> Result<(), PyWorkflowError> {
+        self.workflow.tasks.add_task(task)?;
+        Ok(())
     }
 
-    pub fn add_tasks(&mut self, tasks: Vec<Task>) {
+    pub fn add_tasks(&mut self, tasks: Vec<Task>) -> Result<(), PyWorkflowError> {
         for task in tasks {
-            self.workflow.tasks.add_task(task);
+            self.workflow.tasks.add_task(task)?;
         }
+        Ok(())
     }
 
     pub fn add_agent(&mut self, agent: &Bound<'_, PyAgent>) {
