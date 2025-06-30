@@ -13,7 +13,6 @@ use potato_head::prompt::types::Role;
 use pyo3::{prelude::*, types::PyDict};
 use serde::Deserialize;
 use serde::Serialize;
-use serde_json::json;
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 use std::sync::RwLock;
