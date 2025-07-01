@@ -1,7 +1,7 @@
 from pydantic_ai import Agent as PydanticAgent, RunContext, models
 
 from pydantic_ai.models.test import TestModel
-from opsml.potato_head import (
+from opsml.genai import (
     Prompt,
     SanitizationConfig,
     PromptSanitizer,

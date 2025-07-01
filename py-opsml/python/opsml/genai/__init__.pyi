@@ -1,6 +1,5 @@
 # pylint: disable=redefined-builtin, invalid-name, dangerous-default-value
 
-from enum import IntEnum
 from pathlib import Path
 from typing import Any, Dict, List, Literal, Optional, Sequence
 
@@ -621,6 +620,7 @@ class Workflow:
 
 class PyTask:
     """Python-specific task interface for Task objects and results"""
+
     @property
     def prompt(self) -> Prompt:
         """The prompt to use for the task."""
@@ -632,7 +632,7 @@ class PyTask:
     @property
     def id(self) -> str:
         """The ID of the task."""
-        
+
     @property
     def agent_id(self) -> str:
         """The ID of the agent that will execute the task."""
@@ -641,12 +641,13 @@ class PyTask:
     def status(self) -> TaskStatus:
         """The status of the task."""
 
+    @property
+    def result(self) -> Optional[Any]:
+        """The result of the task if it has been executed, otherwise None."""
+
     def __str__(self) -> str: ...
-    
 
 class WorkflowResult:
-    
     @property
-    def tasks(self) -> Dict[str, Py]
+    def tasks(self) -> Dict[str, PyTask]:
         """The tasks in the workflow result."""
-    

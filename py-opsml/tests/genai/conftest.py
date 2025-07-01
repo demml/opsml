@@ -1,4 +1,4 @@
-from opsml.potato_head import Prompt
+from opsml.genai import Prompt
 import pytest
 
 

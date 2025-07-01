@@ -7,10 +7,10 @@ from .opsml import (  # noqa: F401
     cli,
     data,
     experiment,
+    genai,
     logging,
     mock,
     model,
-    genai,
     scouter,
     types,
 )

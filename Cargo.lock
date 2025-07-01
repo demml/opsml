@@ -4769,8 +4769,7 @@ dependencies = [
 [[package]]
 name = "potato-agent"
 version = "0.2.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "efe6b2762f2bd5f9756f6a2ecf744f5e0637a89d40033e9c94c37a1f7559b822"
+source = "git+https://github.com/demml/potatohead.git?branch=main#25d24648d9f29d9920d393006fe1565efa60cf8f"
 dependencies = [
  "potato-prompt",
  "potato-type",
@@ -4787,8 +4786,7 @@ dependencies = [
 [[package]]
 name = "potato-head"
 version = "0.2.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bf0e95426fcf00b448576f00a90bd8a8419a43e19103be22650ac0231d1525b6"
+source = "git+https://github.com/demml/potatohead.git?branch=main#25d24648d9f29d9920d393006fe1565efa60cf8f"
 dependencies = [
  "potato-agent",
  "potato-prompt",
@@ -4800,8 +4798,7 @@ dependencies = [
 [[package]]
 name = "potato-prompt"
 version = "0.2.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cbe1ddec20323bba330b2df8ca04e583ccecc72280cbf90834f91816dd42b7cb"
+source = "git+https://github.com/demml/potatohead.git?branch=main#25d24648d9f29d9920d393006fe1565efa60cf8f"
 dependencies = [
  "mime_guess",
  "potato-type",
@@ -4817,8 +4814,7 @@ dependencies = [
 [[package]]
 name = "potato-type"
 version = "0.2.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8fe2616d823289098aa43a416ea1d7150d91a83d4744083ded81db2105bf4d31"
+source = "git+https://github.com/demml/potatohead.git?branch=main#25d24648d9f29d9920d393006fe1565efa60cf8f"
 dependencies = [
  "potato-util",
  "pyo3",
@@ -4827,8 +4823,7 @@ dependencies = [
 [[package]]
 name = "potato-util"
 version = "0.2.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1c202a44a8b3497f49d8079c2be7aa1f7d845a7dd755ba613392563ec3f70ee5"
+source = "git+https://github.com/demml/potatohead.git?branch=main#25d24648d9f29d9920d393006fe1565efa60cf8f"
 dependencies = [
  "colored_json",
  "pyo3",
@@ -4843,8 +4838,7 @@ dependencies = [
 [[package]]
 name = "potato-workflow"
 version = "0.2.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e09047ed087071df946494b0cb24f6556a0bb20b1275bc94924f32b5df417257"
+source = "git+https://github.com/demml/potatohead.git?branch=main#25d24648d9f29d9920d393006fe1565efa60cf8f"
 dependencies = [
  "potato-agent",
  "potato-prompt",

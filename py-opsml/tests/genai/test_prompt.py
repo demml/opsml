@@ -5,7 +5,7 @@ from pydantic_ai import (
 )
 from pydantic import BaseModel
 from pydantic_ai.settings import ModelSettings as PydanticModelSettings
-from opsml.potato_head import (
+from opsml.genai import (
     Prompt,
     ImageUrl,
     BinaryContent,
