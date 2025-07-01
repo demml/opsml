@@ -3,14 +3,14 @@ use opsml_state::app_state;
 use potato_head::prompt::{parse_prompt, Message, Role};
 use potato_head::workflow::Task;
 use potato_head::{Agent, AgentResponse, Provider};
-use pyo3::prelude::*;
-use std::sync::Arc;
+use pyo3::{prelude::*, IntoPyObjectExt};
+use std::sync::{Arc, RwLock};
 use tracing::debug;
 
-#[pyclass]
+#[pyclass(name = "Agent")]
 #[derive(Debug, Clone)]
 pub struct PyAgent {
-    pub agent: Arc<Agent>,
+    pub agent: Arc<RwLock<Agent>>,
 }
 
 #[pymethods]
@@ -46,7 +46,7 @@ impl PyAgent {
         let agent = Agent::new(provider, system_message)?;
 
         Ok(Self {
-            agent: Arc::new(agent),
+            agent: Arc::new(RwLock::new(agent)),
         })
     }
 
@@ -57,8 +57,26 @@ impl PyAgent {
 
         let chat_response = app_state()
             .runtime
-            .block_on(async { self.agent.execute_async_task(&task).await })?;
+            .block_on(async { self.agent.read().unwrap().execute_async_task(&task).await })?;
 
         Ok(chat_response)
+    }
+
+    #[getter]
+    pub fn system_message<'py>(&self, py: Python<'py>) -> Result<Bound<'py, PyAny>, PyAgentError> {
+        Ok(self
+            .agent
+            .read()
+            .unwrap()
+            .system_message
+            .clone()
+            .into_bound_py_any(py)?)
+    }
+
+    #[setter]
+    pub fn set_system_message(&self, system_message: Bound<'_, PyAny>) -> Result<(), PyAgentError> {
+        let mut agent = self.agent.write().unwrap();
+        agent.system_message = parse_prompt(&system_message)?;
+        Ok(())
     }
 }

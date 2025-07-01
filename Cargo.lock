@@ -4992,6 +4992,7 @@ dependencies = [
  "opsml-cards",
  "opsml-cli",
  "opsml-experiment",
+ "opsml-genai",
  "opsml-interfaces",
  "opsml-mocks",
  "opsml-registry",

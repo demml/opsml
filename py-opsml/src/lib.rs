@@ -3,10 +3,10 @@ pub mod card;
 pub mod cli;
 pub mod data;
 pub mod experiment;
+pub mod genai;
 pub mod logging;
 pub mod mocks;
 pub mod model;
-pub mod potato_head;
 pub mod scouter;
 pub mod types;
 
@@ -17,7 +17,7 @@ use pyo3::wrap_pymodule;
 fn opsml(m: &Bound<'_, PyModule>) -> PyResult<()> {
     // integrations
     m.add_wrapped(wrap_pymodule!(scouter::scouter))?;
-    m.add_wrapped(wrap_pymodule!(potato_head::potato_head))?;
+    m.add_wrapped(wrap_pymodule!(genai::genai))?;
 
     m.add_wrapped(wrap_pymodule!(data::data))?;
     m.add_wrapped(wrap_pymodule!(model::model))?;

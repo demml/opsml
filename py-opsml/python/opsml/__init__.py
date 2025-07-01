@@ -10,7 +10,7 @@ from .opsml import (  # noqa: F401
     logging,
     mock,
     model,
-    potato_head,
+    genai,
     scouter,
     types,
 )
@@ -72,11 +72,14 @@ LogLevel = logging.LogLevel
 
 VersionType = types.VersionType
 
-# Potato Head
+# GenAI
 PromptCard = card.PromptCard
-Prompt = potato_head.Prompt
-Message = potato_head.Message
-ModelSettings = potato_head.ModelSettings
+Prompt = genai.Prompt
+Message = genai.Message
+ModelSettings = genai.ModelSettings
+Agent = genai.Agent
+Workflow = genai.Workflow
+Task = genai.Task
 
 # Deck
 CardDeck = card.CardDeck
