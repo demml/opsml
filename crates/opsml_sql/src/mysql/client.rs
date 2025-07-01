@@ -653,7 +653,7 @@ impl SqlClient for MySqlClient {
     ///
     /// * `Vec<String>` - A vector of unique space names
     async fn get_unique_space_names(&self, table: &CardTable) -> Result<Vec<String>, SqlError> {
-        let query = format!("SELECT DISTINCT space FROM {}", table);
+        let query = format!("SELECT DISTINCT space FROM {table}");
         let repos: Vec<String> = sqlx::query_scalar(&query).fetch_all(&self.pool).await?;
 
         Ok(repos)
@@ -1852,7 +1852,7 @@ mod tests {
         for i in 0..10 {
             let param = ParameterRecord {
                 experiment_uid: uid.clone(),
-                name: format!("param{}", i),
+                name: format!("param{i}"),
                 ..Default::default()
             };
 

@@ -44,8 +44,7 @@ impl<'de> Deserialize<'de> for RegistryType {
             "prompt" => Ok(RegistryType::Prompt),
             "deck" => Ok(RegistryType::Deck),
             _ => Err(serde::de::Error::custom(format!(
-                "Invalid registry type: {}",
-                s
+                "Invalid registry type: {s}",
             ))),
         }
     }

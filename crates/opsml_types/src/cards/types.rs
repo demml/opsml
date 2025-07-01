@@ -39,7 +39,7 @@ impl fmt::Display for CardTable {
             CardTable::Prompt => "opsml_prompt_registry",
             CardTable::Deck => "opsml_deck_registry",
         };
-        write!(f, "{}", table_name)
+        write!(f, "{table_name}")
     }
 }
 

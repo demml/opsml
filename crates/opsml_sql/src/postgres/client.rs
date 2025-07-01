@@ -1793,7 +1793,7 @@ mod tests {
         for i in 0..10 {
             let param = ParameterRecord {
                 experiment_uid: uid.clone(),
-                name: format!("param{}", i),
+                name: format!("param{i}"),
                 ..Default::default()
             };
 

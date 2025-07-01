@@ -4768,8 +4768,8 @@ dependencies = [
 
 [[package]]
 name = "potato-agent"
-version = "0.2.2"
-source = "git+https://github.com/demml/potatohead.git?branch=main#53a3bf7d5c49289166dc0f9ffb50865dbe8068b1"
+version = "0.2.3"
+source = "git+https://github.com/demml/potatohead.git?branch=main#0b477cb471b6696165b53fcc2640653e45d4784d"
 dependencies = [
  "potato-prompt",
  "potato-type",
@@ -4785,8 +4785,8 @@ dependencies = [
 
 [[package]]
 name = "potato-head"
-version = "0.2.2"
-source = "git+https://github.com/demml/potatohead.git?branch=main#53a3bf7d5c49289166dc0f9ffb50865dbe8068b1"
+version = "0.2.3"
+source = "git+https://github.com/demml/potatohead.git?branch=main#0b477cb471b6696165b53fcc2640653e45d4784d"
 dependencies = [
  "potato-agent",
  "potato-prompt",
@@ -4797,8 +4797,8 @@ dependencies = [
 
 [[package]]
 name = "potato-prompt"
-version = "0.2.2"
-source = "git+https://github.com/demml/potatohead.git?branch=main#53a3bf7d5c49289166dc0f9ffb50865dbe8068b1"
+version = "0.2.3"
+source = "git+https://github.com/demml/potatohead.git?branch=main#0b477cb471b6696165b53fcc2640653e45d4784d"
 dependencies = [
  "mime_guess",
  "potato-type",
@@ -4813,8 +4813,8 @@ dependencies = [
 
 [[package]]
 name = "potato-type"
-version = "0.2.2"
-source = "git+https://github.com/demml/potatohead.git?branch=main#53a3bf7d5c49289166dc0f9ffb50865dbe8068b1"
+version = "0.2.3"
+source = "git+https://github.com/demml/potatohead.git?branch=main#0b477cb471b6696165b53fcc2640653e45d4784d"
 dependencies = [
  "potato-util",
  "pyo3",
@@ -4822,8 +4822,8 @@ dependencies = [
 
 [[package]]
 name = "potato-util"
-version = "0.2.2"
-source = "git+https://github.com/demml/potatohead.git?branch=main#53a3bf7d5c49289166dc0f9ffb50865dbe8068b1"
+version = "0.2.3"
+source = "git+https://github.com/demml/potatohead.git?branch=main#0b477cb471b6696165b53fcc2640653e45d4784d"
 dependencies = [
  "colored_json",
  "pyo3",
@@ -4837,8 +4837,8 @@ dependencies = [
 
 [[package]]
 name = "potato-workflow"
-version = "0.2.2"
-source = "git+https://github.com/demml/potatohead.git?branch=main#53a3bf7d5c49289166dc0f9ffb50865dbe8068b1"
+version = "0.2.3"
+source = "git+https://github.com/demml/potatohead.git?branch=main#0b477cb471b6696165b53fcc2640653e45d4784d"
 dependencies = [
  "potato-agent",
  "potato-prompt",
@@ -5453,9 +5453,9 @@ checksum = "2b15c43186be67a4fd63bee50d0303afffcef381492ebe2c5d87f324e1b8815c"
 
 [[package]]
 name = "reqwest"
-version = "0.12.21"
+version = "0.12.22"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4c8cea6b35bcceb099f30173754403d2eba0a5dc18cea3630fccd88251909288"
+checksum = "cbc931937e6ca3a06e3b6c0aa7841849b160a90351d6ab467a8b9b9959767531"
 dependencies = [
  "base64 0.22.1",
  "bytes",
