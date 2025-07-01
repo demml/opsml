@@ -616,5 +616,37 @@ class Workflow:
                 that the task depends on.
         """
 
-    def run(self) -> None:
+    def run(self) -> WorkflowResult:
         """Run the workflow. This will execute all tasks in the workflow and return when all tasks are complete."""
+
+class PyTask:
+    """Python-specific task interface for Task objects and results"""
+    @property
+    def prompt(self) -> Prompt:
+        """The prompt to use for the task."""
+
+    @property
+    def dependencies(self) -> List[str]:
+        """The dependencies of the task."""
+
+    @property
+    def id(self) -> str:
+        """The ID of the task."""
+        
+    @property
+    def agent_id(self) -> str:
+        """The ID of the agent that will execute the task."""
+
+    @property
+    def status(self) -> TaskStatus:
+        """The status of the task."""
+
+    def __str__(self) -> str: ...
+    
+
+class WorkflowResult:
+    
+    @property
+    def tasks(self) -> Dict[str, Py]
+        """The tasks in the workflow result."""
+    
