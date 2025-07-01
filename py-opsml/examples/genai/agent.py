@@ -1,4 +1,4 @@
-from opsml.potato_head import (
+from opsml.genai import (
     Prompt,
     Agent,
     Task,
