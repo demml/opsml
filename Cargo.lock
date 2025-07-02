@@ -3055,6 +3055,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "io-uring"
+version = "0.7.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b86e202f00093dcba4275d4636b93ef9dd75d025ae560d2521b45ea28ab49013"
+dependencies = [
+ "bitflags 2.9.1",
+ "cfg-if",
+ "libc",
+]
+
+[[package]]
 name = "ipnet"
 version = "2.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4770,7 +4781,7 @@ dependencies = [
 [[package]]
 name = "potato-agent"
 version = "0.2.3"
-source = "git+https://github.com/demml/potatohead.git?branch=main#12e2916bb3e7770cdf5c52ac6ee4daa3c0d0a9a6"
+source = "git+https://github.com/demml/potatohead.git?branch=main#f9f3e64cb96cf42a40c27ec0225bbbf150f95ca6"
 dependencies = [
  "potato-prompt",
  "potato-type",
@@ -4787,7 +4798,7 @@ dependencies = [
 [[package]]
 name = "potato-head"
 version = "0.2.3"
-source = "git+https://github.com/demml/potatohead.git?branch=main#12e2916bb3e7770cdf5c52ac6ee4daa3c0d0a9a6"
+source = "git+https://github.com/demml/potatohead.git?branch=main#f9f3e64cb96cf42a40c27ec0225bbbf150f95ca6"
 dependencies = [
  "potato-agent",
  "potato-prompt",
@@ -4799,7 +4810,7 @@ dependencies = [
 [[package]]
 name = "potato-prompt"
 version = "0.2.3"
-source = "git+https://github.com/demml/potatohead.git?branch=main#12e2916bb3e7770cdf5c52ac6ee4daa3c0d0a9a6"
+source = "git+https://github.com/demml/potatohead.git?branch=main#f9f3e64cb96cf42a40c27ec0225bbbf150f95ca6"
 dependencies = [
  "mime_guess",
  "potato-type",
@@ -4815,7 +4826,7 @@ dependencies = [
 [[package]]
 name = "potato-type"
 version = "0.2.3"
-source = "git+https://github.com/demml/potatohead.git?branch=main#12e2916bb3e7770cdf5c52ac6ee4daa3c0d0a9a6"
+source = "git+https://github.com/demml/potatohead.git?branch=main#f9f3e64cb96cf42a40c27ec0225bbbf150f95ca6"
 dependencies = [
  "potato-util",
  "pyo3",
@@ -4824,7 +4835,7 @@ dependencies = [
 [[package]]
 name = "potato-util"
 version = "0.2.3"
-source = "git+https://github.com/demml/potatohead.git?branch=main#12e2916bb3e7770cdf5c52ac6ee4daa3c0d0a9a6"
+source = "git+https://github.com/demml/potatohead.git?branch=main#f9f3e64cb96cf42a40c27ec0225bbbf150f95ca6"
 dependencies = [
  "colored_json",
  "pyo3",
@@ -4839,7 +4850,7 @@ dependencies = [
 [[package]]
 name = "potato-workflow"
 version = "0.2.3"
-source = "git+https://github.com/demml/potatohead.git?branch=main#12e2916bb3e7770cdf5c52ac6ee4daa3c0d0a9a6"
+source = "git+https://github.com/demml/potatohead.git?branch=main#f9f3e64cb96cf42a40c27ec0225bbbf150f95ca6"
 dependencies = [
  "potato-agent",
  "potato-prompt",
@@ -6951,17 +6962,19 @@ dependencies = [
 
 [[package]]
 name = "tokio"
-version = "1.45.1"
+version = "1.46.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "75ef51a33ef1da925cea3e4eb122833cb377c61439ca401b770f54902b806779"
+checksum = "1140bb80481756a8cbe10541f37433b459c5aa1e727b4c020fbfebdc25bf3ec4"
 dependencies = [
  "backtrace",
  "bytes",
+ "io-uring",
  "libc",
  "mio",
  "parking_lot",
  "pin-project-lite",
  "signal-hook-registry",
+ "slab",
  "socket2 0.5.10",
  "tokio-macros",
  "windows-sys 0.52.0",

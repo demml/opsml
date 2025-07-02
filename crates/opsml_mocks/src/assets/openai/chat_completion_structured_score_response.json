@@ -1,0 +1,21 @@
+    {
+        "id": "chatcmpl-struct789",
+        "object": "chat.completion",
+        "created": 1717350200,
+        "model": "gpt-4o",
+        "choices": [
+            {
+                "index": 0,
+                "message": {
+                    "role": "assistant",
+                    "content": "{ \"score\": 5, \"reason\": \"The code is correct.\" }"
+                },
+                "finish_reason": "stop"
+            }
+        ],
+        "usage": {
+            "prompt_tokens": 15,
+            "completion_tokens": 17,
+            "total_tokens": 32
+        }
+    }

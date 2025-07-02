@@ -1,4 +1,5 @@
 use ::potato_head::agents::provider::types::Provider;
+use ::potato_head::prompt::types::Score;
 use ::potato_head::{
     AgentResponse, AudioUrl, BinaryContent, DocumentUrl, ImageUrl, Message, ModelSettings, Prompt,
     PyTask, Task, WorkflowResult,
@@ -18,6 +19,7 @@ pub fn genai(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<BinaryContent>()?;
     m.add_class::<ModelSettings>()?;
     m.add_class::<AgentResponse>()?;
+    m.add_class::<Score>()?;
 
     // agentic tools
     m.add_class::<Provider>()?;

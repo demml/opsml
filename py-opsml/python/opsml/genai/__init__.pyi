@@ -651,3 +651,25 @@ class WorkflowResult:
     @property
     def tasks(self) -> Dict[str, PyTask]:
         """The tasks in the workflow result."""
+
+class Score:
+    @property
+    def score(self) -> int:
+        """The score value."""
+
+    @property
+    def reason(self) -> Optional[str]:
+        """The reason for the score."""
+
+    @staticmethod
+    def model_validate_json(json_string: str) -> "Score":
+        """Validate the score JSON.
+
+        Args:
+            json_string (str):
+                The JSON string to validate.
+
+        Returns:
+            Score:
+                The score object.
+        """

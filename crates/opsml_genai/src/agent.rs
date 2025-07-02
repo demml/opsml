@@ -1,6 +1,6 @@
 use crate::error::PyAgentError;
 use opsml_state::app_state;
-use potato_head::prompt::{parse_prompt, parse_pydantic_model, Message, Role};
+use potato_head::prompt::{parse_prompt, parse_response_format, Message, Role};
 use potato_head::workflow::Task;
 use potato_head::{Agent, Provider, PyAgentResponse};
 use pyo3::{prelude::*, IntoPyObjectExt};
@@ -61,7 +61,7 @@ impl PyAgent {
         debug!("Executing task");
         // if output_type is not None,  mutate task prompt
         if let Some(output_type) = &output_type {
-            match parse_pydantic_model(py, &output_type) {
+            match parse_response_format(py, &output_type) {
                 Ok(response_format) => {
                     task.prompt.response_format = response_format;
                 }

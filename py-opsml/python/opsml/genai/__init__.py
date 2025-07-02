@@ -18,6 +18,7 @@ Task = genai.Task
 TaskList = genai.TaskList
 Agent = genai.Agent
 Workflow = genai.Workflow
+Score = genai.Score
 
 
 __all__ = [
@@ -31,4 +32,5 @@ __all__ = [
     "TaskList",
     "Agent",
     "Workflow",
+    "Score",
 ]
