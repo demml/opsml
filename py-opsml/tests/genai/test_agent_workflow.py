@@ -1,7 +1,7 @@
 from pydantic_ai import Agent as PydanticAgent, RunContext, models
 
 from pydantic_ai.models.test import TestModel
-from opsml.genai import Prompt, Agent, Task, Workflow, Provider, TaskStatus
+from opsml.genai import Prompt, Agent, Task, Workflow, Provider, TaskStatus, Score
 from typing import List
 from pydantic import BaseModel
 from dataclasses import dataclass
@@ -239,3 +239,27 @@ def test_opsml_agent_workflow_structured_output():
         assert result.tasks["task2"].status == TaskStatus.Completed
         assert result.tasks["task3"].status == TaskStatus.Completed
         assert result.tasks["task4"].status == TaskStatus.Completed
+
+
+def test_opsml_agent_structured_output_score():
+    with OpenAITestServer():
+        prompt = Prompt(
+            user_message="Hello, how are you?",
+            system_message="You are a helpful assistant.",
+            model="gpt-4o",
+            provider="openai",
+            response_format=Score,
+        )
+
+        agent = Agent(Provider.OpenAI)
+        result = agent.execute_task(
+            Task(prompt=prompt, agent_id=agent.id, id="task1"),
+            output_type=Score,
+        )
+
+        print(result.result)
+        a
+
+
+#
+# assert isinstance(result.result, Score)
