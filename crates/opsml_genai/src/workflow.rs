@@ -1,8 +1,9 @@
+/// Python workflows are a work in progress
 use crate::{agent::PyAgent, error::PyWorkflowError};
 use opsml_state::app_state;
-
 use potato_head::execute_workflow;
 use potato_head::json_to_pyobject;
+use potato_head::prompt::parse_pydantic_model;
 use potato_head::workflow::{Task, Workflow, WorkflowResult};
 use pyo3::{prelude::*, types::PyDict};
 use std::collections::HashMap;
@@ -51,7 +52,26 @@ impl PyWorkflow {
         Ok(())
     }
 
-    pub fn add_task(&mut self, task: Task) -> Result<(), PyWorkflowError> {
+    #[pyo3(signature = (task, output_type = None))]
+    pub fn add_task(
+        &mut self,
+        py: Python<'_>,
+        mut task: Task,
+        output_type: Option<Bound<'_, PyAny>>,
+    ) -> Result<(), PyWorkflowError> {
+        if let Some(output_type) = output_type {
+            // Parse and set the response format
+            task.prompt.response_format = parse_pydantic_model(py, &output_type).map_err(|_| {
+                PyWorkflowError::InvalidOutputType(
+                    "Invalid output type provided for task".to_string(),
+                )
+            })?;
+
+            // Store the output type for later use
+            self.output_types
+                .insert(task.id.clone(), Arc::new(output_type.unbind()));
+        }
+
         self.workflow.tasks.add_task(task)?;
         Ok(())
     }
@@ -115,7 +135,7 @@ impl PyWorkflow {
                     .into_inner()
                     .map_err(|_| PyWorkflowError::LockAcquireError)?;
                 // Move the tasks out of the workflow
-                WorkflowResult::new(py, workflow.tasks.tasks)
+                WorkflowResult::new(py, workflow.tasks.tasks, &self.output_types)
             }
             // If there are other references, we need to clone
             Err(arc) => {
@@ -124,7 +144,7 @@ impl PyWorkflow {
                 let workflow = arc
                     .read()
                     .map_err(|_| PyWorkflowError::ReadLockAcquireError)?;
-                WorkflowResult::new(py, workflow.tasks.tasks.clone())
+                WorkflowResult::new(py, workflow.tasks.tasks.clone(), &self.output_types)
             }
         };
 

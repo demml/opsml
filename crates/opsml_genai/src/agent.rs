@@ -1,8 +1,8 @@
 use crate::error::PyAgentError;
 use opsml_state::app_state;
-use potato_head::prompt::{parse_prompt, Message, Role};
+use potato_head::prompt::{parse_prompt, parse_pydantic_model, Message, Role};
 use potato_head::workflow::Task;
-use potato_head::{Agent, AgentResponse, Provider};
+use potato_head::{Agent, Provider, PyAgentResponse};
 use pyo3::{prelude::*, IntoPyObjectExt};
 use std::sync::Arc;
 use tracing::debug;
@@ -50,20 +50,45 @@ impl PyAgent {
         })
     }
 
-    #[pyo3(signature = (task))]
-    pub fn execute_task(&self, task: &Task) -> Result<AgentResponse, PyAgentError> {
+    #[pyo3(signature = (task, output_type))]
+    pub fn execute_task(
+        &self,
+        py: Python<'_>,
+        task: &mut Task,
+        output_type: Option<Bound<'_, PyAny>>,
+    ) -> Result<PyAgentResponse, PyAgentError> {
         // Extract the prompt from the task
         debug!("Executing task");
+        // if output_type is not None,  mutate task prompt
+        if let Some(output_type) = &output_type {
+            match parse_pydantic_model(py, &output_type) {
+                Ok(response_format) => {
+                    task.prompt.response_format = response_format;
+                }
+                Err(_) => {
+                    return Err(PyAgentError::InvalidOutputType(output_type.to_string()));
+                }
+            }
+        }
 
         let chat_response = app_state()
             .runtime
             .block_on(async { self.agent.execute_async_task(&task).await })?;
 
-        Ok(chat_response)
+        debug!("Task executed successfully");
+        let output = output_type.as_ref().map(|obj| obj.clone().unbind());
+        let response = PyAgentResponse::new(chat_response, output);
+
+        Ok(response)
     }
 
     #[getter]
     pub fn system_message<'py>(&self, py: Python<'py>) -> Result<Bound<'py, PyAny>, PyAgentError> {
         Ok(self.agent.system_message.clone().into_bound_py_any(py)?)
+    }
+
+    #[getter]
+    pub fn id(&self) -> &str {
+        self.agent.id.as_str()
     }
 }

@@ -145,7 +145,7 @@ class Message:
     def content(self) -> str | ImageUrl | AudioUrl | BinaryContent | DocumentUrl:
         """The content of the message"""
 
-    def bind(self, context: str) -> "Message":
+    def bind(self, name: str, context: str) -> "Message":
         """Bind a context in the prompt. This is an immutable operation meaning that it
         will return a new Message object with the context bound.
 
@@ -155,12 +155,12 @@ class Message:
                 prompt = Prompt(
                     model="openai:gpt-4o",
                     user_message=[
-                        "My prompt $1 is $2",
-                        "My prompt $3 is $4",
+                        "My prompt ${1} is ${2}",
+                        "My prompt ${3} is ${4}",
                     ],
                     system_message="system_prompt",
                 )
-                bounded_prompt = prompt.user_message[0].bind("world").unwrap() # we bind "world" to the first message
+                bounded_prompt = prompt.user_message[0].bind("1", "world").unwrap() # we bind "world" to the first message
             ```
 
         Args:

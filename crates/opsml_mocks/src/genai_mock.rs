@@ -13,6 +13,10 @@ const OPENAI_CHAT_COMPLETION_RESPONSE: &str =
     include_str!("assets/openai_chat_completion_response.json");
 
 #[cfg(feature = "server")]
+const OPENAI_CHAT_STRUCTURED_RESPONSE: &str =
+    include_str!("assets/openai/chat_completion_structured_response.json");
+
+#[cfg(feature = "server")]
 pub struct OpenAIMock {
     pub url: String,
     pub server: mockito::ServerGuard,
@@ -25,6 +29,20 @@ impl OpenAIMock {
         // load the OpenAI chat completion response
         let chat_msg_response: OpenAIChatResponse =
             serde_json::from_str(OPENAI_CHAT_COMPLETION_RESPONSE).unwrap();
+        let chat_structured_response: OpenAIChatResponse =
+            serde_json::from_str(OPENAI_CHAT_STRUCTURED_RESPONSE).unwrap();
+
+        server
+            .mock("POST", "/v1/chat/completions")
+            .match_body(mockito::Matcher::PartialJson(serde_json::json!({
+                "response_format": {
+                    "type": "json_schema"
+                }
+            })))
+            .with_status(200)
+            .with_header("content-type", "application/json")
+            .with_body(serde_json::to_string(&chat_structured_response).unwrap())
+            .create();
 
         // Openai chat completion mock
         server

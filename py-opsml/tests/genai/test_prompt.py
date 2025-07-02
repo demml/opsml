@@ -28,49 +28,52 @@ def test_string_prompt():
     prompt = Prompt(
         model="gpt-4o",
         provider="openai",
-        user_message="My prompt $1 is $2",
+        user_message="My prompt ${1} is ${2}",
         system_message="system_prompt",
     )
-    assert prompt.user_message[0].unwrap() == "My prompt $1 is $2"
+    assert prompt.user_message[0].unwrap() == "My prompt ${1} is ${2}"
     assert prompt.system_message[0].unwrap() == "system_prompt"
 
     # test string message
     prompt = Prompt(
         model="gpt-4o",
         provider="openai",
-        user_message=Message(content="My prompt $1 is $2"),
+        user_message=Message(content="My prompt ${1} is ${2}"),
         system_message="system_prompt",
     )
 
-    assert prompt.user_message[0].unwrap() == "My prompt $1 is $2"
+    assert prompt.user_message[0].unwrap() == "My prompt ${1} is ${2}"
 
     # test list of string messages
     prompt = Prompt(
         model="gpt-4o",
         provider="openai",
         user_message=[
-            Message(content="My prompt $1 is $2"),
-            Message(content="My prompt $3 is $4"),
+            Message(content="My prompt ${1} is ${2}"),
+            Message(content="My prompt ${3} is ${4}"),
         ],
         system_message="system_prompt",
     )
 
-    assert prompt.user_message[0].unwrap() == "My prompt $1 is $2"
-    assert prompt.user_message[1].unwrap() == "My prompt $3 is $4"
+    assert prompt.user_message[0].unwrap() == "My prompt ${1} is ${2}"
+    assert prompt.user_message[1].unwrap() == "My prompt ${3} is ${4}"
 
     # test list of strings
     prompt = Prompt(
         model="gpt-4o",
         provider="openai",
         user_message=[
-            "My prompt $1 is $2",
-            "My prompt $3 is $4",
+            "My prompt ${1} is ${2}",
+            "My prompt ${3} is ${4}",
         ],
         system_message="system_prompt",
     )
 
-    assert prompt.user_message[0].unwrap() == "My prompt $1 is $2"
-    assert prompt.user_message[1].unwrap() == "My prompt $3 is $4"
+    assert prompt.user_message[0].unwrap() == "My prompt ${1} is ${2}"
+    assert prompt.user_message[1].unwrap() == "My prompt ${3} is ${4}"
+
+    bounded_message = prompt.user_message[0].bind("1", "world").unwrap()
+    assert bounded_message == "My prompt world is ${2}"
 
 
 def test_image_prompt():
@@ -140,8 +143,8 @@ def test_model_settings_prompt():
 
     prompt = Prompt(
         user_message=[
-            "My prompt $1 is $2",
-            "My prompt $3 is $4",
+            "My prompt ${1} is ${2}",
+            "My prompt ${3} is ${4}",
         ],
         model_settings=settings,
     )
@@ -153,7 +156,7 @@ def test_prompt_response_format():
     prompt = Prompt(
         model="gpt-4o",
         provider="openai",
-        user_message="My prompt $1 is $2",
+        user_message="My prompt ${1} is ${2}",
         system_message="system_prompt",
         response_format=CityLocation,
     )

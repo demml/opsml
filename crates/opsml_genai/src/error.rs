@@ -1,4 +1,4 @@
-use potato_head::{AgentError, UtilError, WorkflowError};
+use potato_head::{AgentError, PromptError, UtilError, WorkflowError};
 use pyo3::exceptions::PyRuntimeError;
 use pyo3::PyErr;
 use serde_json;
@@ -12,6 +12,12 @@ pub enum PyAgentError {
 
     #[error(transparent)]
     AgentError(#[from] AgentError),
+
+    #[error(transparent)]
+    PromptError(#[from] PromptError),
+
+    #[error("Invalid output type: {0}")]
+    InvalidOutputType(String),
 }
 
 impl From<PyAgentError> for PyErr {
@@ -47,6 +53,9 @@ pub enum PyWorkflowError {
 
     #[error("Failed to acquire read lock on workflow")]
     ReadLockAcquireError,
+
+    #[error("Invalid output type: {0}")]
+    InvalidOutputType(String),
 }
 impl From<PyWorkflowError> for PyErr {
     fn from(err: PyWorkflowError) -> PyErr {
