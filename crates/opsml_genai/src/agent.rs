@@ -2,7 +2,7 @@ use crate::error::PyAgentError;
 use opsml_state::app_state;
 use potato_head::prompt::{parse_prompt, parse_response_format, Message, Role};
 use potato_head::workflow::Task;
-use potato_head::{Agent, Provider, PyAgentResponse};
+use potato_head::{Agent, Prompt, Provider, PyAgentResponse};
 use pyo3::{prelude::*, IntoPyObjectExt};
 use std::sync::Arc;
 use tracing::debug;
@@ -73,7 +73,39 @@ impl PyAgent {
 
         let chat_response = app_state()
             .runtime
-            .block_on(async { self.agent.execute_async_task(&task).await })?;
+            .block_on(async { self.agent.execute_task(&task).await })?;
+
+        debug!("Task executed successfully");
+        let output = output_type.as_ref().map(|obj| obj.clone().unbind());
+        let response = PyAgentResponse::new(chat_response, output);
+
+        Ok(response)
+    }
+
+    #[pyo3(signature = (prompt, output_type))]
+    pub fn execute_prompt(
+        &self,
+        py: Python<'_>,
+        prompt: &mut Prompt,
+        output_type: Option<Bound<'_, PyAny>>,
+    ) -> Result<PyAgentResponse, PyAgentError> {
+        // Extract the prompt from the task
+        debug!("Executing task");
+        // if output_type is not None,  mutate task prompt
+        if let Some(output_type) = &output_type {
+            match parse_response_format(py, &output_type) {
+                Ok(response_format) => {
+                    prompt.response_format = response_format;
+                }
+                Err(_) => {
+                    return Err(PyAgentError::InvalidOutputType(output_type.to_string()));
+                }
+            }
+        }
+
+        let chat_response = app_state()
+            .runtime
+            .block_on(async { self.agent.execute_prompt(&prompt).await })?;
 
         debug!("Task executed successfully");
         let output = output_type.as_ref().map(|obj| obj.clone().unbind());

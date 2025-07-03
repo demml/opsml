@@ -669,8 +669,8 @@ impl SqlClient for MySqlClient {
 
         let stats = sqlx::query_as(&query)
             .bind(search_term)
-            .bind(search_term.map(|term| format!("%{}%", term)))
-            .bind(search_term.map(|term| format!("%{}%", term)))
+            .bind(search_term.map(|term| format!("%{term}%")))
+            .bind(search_term.map(|term| format!("%{term}%")))
             .bind(space)
             .bind(space)
             .fetch_one(&self.pool)
@@ -709,13 +709,13 @@ impl SqlClient for MySqlClient {
             .bind(space) // 1st ? in versions_cte
             .bind(space) // 2nd ? in versions_cte
             .bind(search_term) // 3rd ? in versions_cte
-            .bind(search_term.map(|term| format!("%{}%", term))) // 4th ? in versions_cte
-            .bind(search_term.map(|term| format!("%{}%", term))) // 5th ? in versions_cte
+            .bind(search_term.map(|term| format!("%{term}%"))) // 4th ? in versions_cte
+            .bind(search_term.map(|term| format!("%{term}%"))) // 5th ? in versions_cte
             .bind(space) // 1st ? in stats_cte
             .bind(space) // 2nd ? in stats_cte
             .bind(search_term) // 3rd ? in stats_cte
-            .bind(search_term.map(|term| format!("%{}%", term))) // 4th ? in stats_cte
-            .bind(search_term.map(|term| format!("%{}%", term))) // 5th ? in stats_cte
+            .bind(search_term.map(|term| format!("%{term}%"))) // 4th ? in stats_cte
+            .bind(search_term.map(|term| format!("%{term}%"))) // 5th ? in stats_cte
             .bind(lower_bound) // 1st ? in final SELECT
             .bind(upper_bound)
             .fetch_all(&self.pool)
@@ -754,14 +754,14 @@ impl SqlClient for MySqlClient {
         uid: &str,
     ) -> Result<(String, String), SqlError> {
         // First get the space
-        let select_query = format!("SELECT space, name FROM {} WHERE uid = ?", table);
+        let select_query = format!("SELECT space, name FROM {table} WHERE uid = ?");
         let (space, name): (String, String) = sqlx::query_as(&select_query)
             .bind(uid)
             .fetch_one(&self.pool)
             .await?;
 
         // Then delete the record
-        let delete_query = format!("DELETE FROM {} WHERE uid = ?", table);
+        let delete_query = format!("DELETE FROM {table} WHERE uid = ?");
         sqlx::query(&delete_query)
             .bind(uid)
             .execute(&self.pool)

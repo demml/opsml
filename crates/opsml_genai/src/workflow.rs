@@ -136,7 +136,12 @@ impl PyWorkflow {
                     .into_inner()
                     .map_err(|_| PyWorkflowError::LockAcquireError)?;
                 // Move the tasks out of the workflow
-                WorkflowResult::new(py, workflow.tasks.tasks, &self.output_types)
+                WorkflowResult::new(
+                    py,
+                    workflow.tasks.tasks,
+                    &self.output_types,
+                    workflow.event_tracker.events,
+                )
             }
             // If there are other references, we need to clone
             Err(arc) => {
@@ -145,7 +150,12 @@ impl PyWorkflow {
                 let workflow = arc
                     .read()
                     .map_err(|_| PyWorkflowError::ReadLockAcquireError)?;
-                WorkflowResult::new(py, workflow.tasks.tasks.clone(), &self.output_types)
+                WorkflowResult::new(
+                    py,
+                    workflow.tasks.tasks.clone(),
+                    &self.output_types,
+                    workflow.event_tracker.events.clone(),
+                )
             }
         };
 

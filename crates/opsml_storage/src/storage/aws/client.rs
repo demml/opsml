@@ -903,7 +903,7 @@ mod tests {
     #[tokio::test]
     async fn test_aws_storage_server() -> Result<(), StorageError> {
         let rand_name = create_uuid7();
-        let filename = format!("file-{}.txt", rand_name);
+        let filename = format!("file-{rand_name}.txt");
 
         let tmp_dir = TempDir::new().unwrap();
         let tmp_path = tmp_dir.path();
@@ -928,7 +928,7 @@ mod tests {
         storage_client.put(&lpath, &rpath, false).await?;
         assert!(storage_client.exists(&rpath).await?);
 
-        let nested_path = format!("nested/really/deep/file-{}.txt", rand_name);
+        let nested_path = format!("nested/really/deep/file-{rand_name}.txt");
         let rpath_nested = rpath.parent().unwrap().join(nested_path);
 
         storage_client.put(&lpath, &rpath_nested, false).await?;
@@ -986,7 +986,7 @@ mod tests {
         let grand_child = child.join("grandchild");
         for path in &[tmp_path, &child, &grand_child] {
             std::fs::create_dir_all(path).unwrap();
-            let txt_file = format!("file-{}.txt", rand_name);
+            let txt_file = format!("file-{rand_name}.txt");
             let txt_path = path.join(txt_file);
             std::fs::write(&txt_path, "hello, world").unwrap();
         }

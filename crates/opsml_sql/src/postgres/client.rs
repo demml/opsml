@@ -629,7 +629,7 @@ impl SqlClient for PostgresClient {
     ///
     /// * `Vec<String>` - A vector of unique space names
     async fn get_unique_space_names(&self, table: &CardTable) -> Result<Vec<String>, SqlError> {
-        let query = format!("SELECT DISTINCT space FROM {}", table);
+        let query = format!("SELECT DISTINCT space FROM {table}");
         let repos: Vec<String> = sqlx::query_scalar(&query).fetch_all(&self.pool).await?;
 
         Ok(repos)
@@ -645,7 +645,7 @@ impl SqlClient for PostgresClient {
 
         // if search_term is not None, format with %search_term%, else None
         let stats: QueryStats = sqlx::query_as(&query)
-            .bind(search_term.map(|term| format!("%{}%", term)))
+            .bind(search_term.map(|term| format!("%{term}%")))
             .bind(space)
             .fetch_one(&self.pool)
             .await?;
@@ -682,7 +682,7 @@ impl SqlClient for PostgresClient {
         let records: Vec<CardSummary> = sqlx::query_as(&query)
             .bind(space)
             .bind(search_term)
-            .bind(search_term.map(|term| format!("%{}%", term)))
+            .bind(search_term.map(|term| format!("%{term}%")))
             .bind(lower_bound)
             .bind(upper_bound)
             .fetch_all(&self.pool)
@@ -720,7 +720,7 @@ impl SqlClient for PostgresClient {
         uid: &str,
     ) -> Result<(String, String), SqlError> {
         // First get the space
-        let query = format!("DELETE FROM {} WHERE uid = $1 RETURNING space, name", table);
+        let query = format!("DELETE FROM {table} WHERE uid = $1 RETURNING space, name");
         let (space, name): (String, String) = sqlx::query_as(&query)
             .bind(uid)
             .fetch_one(&self.pool)

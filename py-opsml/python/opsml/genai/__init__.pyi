@@ -3,6 +3,63 @@
 from pathlib import Path
 from typing import Any, Dict, List, Literal, Optional, Sequence
 
+class PromptTokenDetails:
+    """Details about the prompt tokens used in a request."""
+
+    @property
+    def audio_tokens(self) -> int:
+        """The number of audio tokens used in the request."""
+
+    @property
+    def cached_tokens(self) -> int:
+        """The number of cached tokens used in the request."""
+
+class CompletionTokenDetails:
+    """Details about the completion tokens used in a model response."""
+
+    @property
+    def accepted_prediction_tokens(self) -> int:
+        """The number of accepted prediction tokens used in the response."""
+
+    @property
+    def audio_tokens(self) -> int:
+        """The number of audio tokens used in the response."""
+
+    @property
+    def reasoning_tokens(self) -> int:
+        """The number of reasoning tokens used in the response."""
+
+    @property
+    def rejected_prediction_tokens(self) -> int:
+        """The number of rejected prediction tokens used in the response."""
+
+class Usage:
+    """Usage statistics for a model response."""
+
+    @property
+    def completion_tokens(self) -> int:
+        """The number of completion tokens used in the response."""
+
+    @property
+    def prompt_tokens(self) -> int:
+        """The number of prompt tokens used in the request."""
+
+    @property
+    def total_tokens(self) -> int:
+        """The total number of tokens used in the request and response."""
+
+    @property
+    def completion_tokens_details(self) -> CompletionTokenDetails:
+        """Details about the completion tokens used in the response."""
+
+    @property
+    def prompt_tokens_details(self) -> "PromptTokenDetails":
+        """Details about the prompt tokens used in the request."""
+
+    @property
+    def finish_reason(self) -> str:
+        """The reason why the model stopped generating tokens"""
+
 class ImageUrl:
     def __init__(
         self,
@@ -436,6 +493,16 @@ class AgentResponse:
     def output(self) -> str:
         """The output of the agent response."""
 
+    @property
+    def result(self) -> Any:
+        """The result of the agent response. This can be a Pydantic BaseModel class or a supported potato_head response type such as `Score`.
+        This will default to the content string of the response if no output type is specified.
+        """
+
+    @property
+    def token_usage(self) -> Usage:
+        """Returns the token usage of the agent response if supported"""
+
 class Task:
     def __init__(
         self,
@@ -520,17 +587,35 @@ class Agent:
     def execute_task(
         self,
         task: Task,
-        context_messages: Dict[str, List[Message]],
+        output_type: Optional[Any] = None,
     ) -> AgentResponse:
         """Execute a task.
 
         Args:
             task (Task):
                 The task to execute.
-            context_messages (Dict[str, List[Message]]):
-                The context messages to use for the task. This is a dictionary where the keys
-                are the task IDs and the values are lists of messages that will be used as context
-                for the task.
+            output_type (Optional[Any]):
+                The output type to use for the task. This can either be a Pydantic `BaseModel` class
+                or a supported potato_head response type such as `Score`.
+
+        Returns:
+            AgentResponse:
+                The response from the agent after executing the task.
+        """
+
+    def execute_prompt(
+        self,
+        prompt: Prompt,
+        output_type: Optional[Any] = None,
+    ) -> AgentResponse:
+        """Execute a prompt.
+
+        Args:
+            prompt (Prompt):
+                The prompt to execute.
+            output_type (Optional[Any]):
+                The output type to use for the task. This can either be a Pydantic `BaseModel` class
+                or a supported potato_head response type such as `Score`.
 
         Returns:
             AgentResponse:
@@ -673,3 +758,5 @@ class Score:
             Score:
                 The score object.
         """
+
+    def __str__(self): ...

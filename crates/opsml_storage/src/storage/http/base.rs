@@ -42,7 +42,7 @@ impl HttpStorageClient {
         let response = client
             .request(Routes::StorageSettings, RequestType::Get, None, None, None)
             .inspect_err(|e| {
-                let error = Colorize::alert(&format!("Failed to get storage settings: {}", e));
+                let error = Colorize::alert(&format!("Failed to get storage settings: {e}"));
                 error!("{}", error);
             })?;
 

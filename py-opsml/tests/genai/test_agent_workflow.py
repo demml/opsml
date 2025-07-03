@@ -257,9 +257,20 @@ def test_opsml_agent_structured_output_score():
             output_type=Score,
         )
 
-        print(result.result)
-        a
+        assert isinstance(result.result, Score)
 
 
-#
-# assert isinstance(result.result, Score)
+def test_opsml_agent_execute_prompt():
+    with OpenAITestServer():
+        prompt = Prompt(
+            user_message="Hello, how are you?",
+            system_message="You are a helpful assistant.",
+            model="gpt-4o",
+            provider="openai",
+            response_format=Score,
+        )
+
+        agent = Agent(Provider.OpenAI)
+        result = agent.execute_prompt(prompt=prompt, output_type=Score)
+
+        assert isinstance(result.result, Score)

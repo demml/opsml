@@ -321,9 +321,9 @@ dependencies = [
 
 [[package]]
 name = "async-channel"
-version = "2.3.1"
+version = "2.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "89b47800b0be77592da0afd425cc03468052844aff33b84e33cc696f64e77b6a"
+checksum = "16c74e56284d2188cabb6ad99603d1ace887a5d7e7b695d01b728155ed9ed427"
 dependencies = [
  "concurrent-queue",
  "event-listener-strategy",
@@ -351,7 +351,7 @@ version = "3.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "13f937e26114b93193065fd44f507aa2e9169ad0cdabbb996920b1fe1ddea7ba"
 dependencies = [
- "async-channel 2.3.1",
+ "async-channel 2.4.0",
  "async-executor",
  "async-io 2.4.1",
  "async-lock 3.4.0",
@@ -435,7 +435,7 @@ version = "2.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cde3f4e40e6021d7acffc90095cbd6dc54cb593903d1de5832f435eb274b85dc"
 dependencies = [
- "async-channel 2.3.1",
+ "async-channel 2.4.0",
  "async-io 2.4.1",
  "async-lock 3.4.0",
  "async-signal",
@@ -619,9 +619,9 @@ dependencies = [
 
 [[package]]
 name = "aws-sdk-s3"
-version = "1.95.0"
+version = "1.96.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a316e3c4c38837084dfbf87c0fc6ea016b3dc3e1f867d9d7f5eddfe47e5cae37"
+checksum = "6e25d24de44b34dcdd5182ac4e4c6f07bcec2661c505acef94c0d293b65505fe"
 dependencies = [
  "aws-credential-types",
  "aws-runtime",
@@ -1280,7 +1280,7 @@ version = "1.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "703f41c54fc768e63e091340b424302bb1c29ef4aa0c7f10fe849dfb114d29ea"
 dependencies = [
- "async-channel 2.3.1",
+ "async-channel 2.4.0",
  "async-task",
  "futures-io",
  "futures-lite 2.6.0",
@@ -1575,15 +1575,15 @@ dependencies = [
 
 [[package]]
 name = "console"
-version = "0.16.0"
+version = "0.15.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2e09ced7ebbccb63b4c65413d821f2e00ce54c5ca4514ddc6b3c892fdbcbc69d"
+checksum = "054ccb5b10f9f2cbf51eb355ca1d05c2d279ce1804688d0db74b4733a5aeafd8"
 dependencies = [
  "encode_unicode",
  "libc",
  "once_cell",
  "unicode-width",
- "windows-sys 0.60.2",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
@@ -3001,14 +3001,14 @@ dependencies = [
 
 [[package]]
 name = "indicatif"
-version = "0.17.12"
+version = "0.17.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4adb2ee6ad319a912210a36e56e3623555817bcc877a7e6e8802d1d69c4d8056"
+checksum = "183b3088984b400f4cfac3620d5e076c84da5364016b4f49473de574b2586235"
 dependencies = [
  "console",
+ "number_prefix",
  "portable-atomic",
  "unicode-width",
- "unit-prefix",
  "web-time",
 ]
 
@@ -3768,6 +3768,12 @@ checksum = "5c7398b9c8b70908f6371f47ed36737907c87c52af34c268fed0bf0ceb92ead9"
 dependencies = [
  "libc",
 ]
+
+[[package]]
+name = "number_prefix"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "830b246a0e5f20af87141b25c173cd1b609bd7779a4617d6ec582abaf90870f3"
 
 [[package]]
 name = "numpy"
@@ -4781,7 +4787,7 @@ dependencies = [
 [[package]]
 name = "potato-agent"
 version = "0.2.3"
-source = "git+https://github.com/demml/potatohead.git?branch=main#f9f3e64cb96cf42a40c27ec0225bbbf150f95ca6"
+source = "git+https://github.com/demml/potatohead.git?branch=main#defa5989bad74a454fe239021d5b7d3c725fe5f1"
 dependencies = [
  "potato-prompt",
  "potato-type",
@@ -4798,7 +4804,7 @@ dependencies = [
 [[package]]
 name = "potato-head"
 version = "0.2.3"
-source = "git+https://github.com/demml/potatohead.git?branch=main#f9f3e64cb96cf42a40c27ec0225bbbf150f95ca6"
+source = "git+https://github.com/demml/potatohead.git?branch=main#defa5989bad74a454fe239021d5b7d3c725fe5f1"
 dependencies = [
  "potato-agent",
  "potato-prompt",
@@ -4810,7 +4816,7 @@ dependencies = [
 [[package]]
 name = "potato-prompt"
 version = "0.2.3"
-source = "git+https://github.com/demml/potatohead.git?branch=main#f9f3e64cb96cf42a40c27ec0225bbbf150f95ca6"
+source = "git+https://github.com/demml/potatohead.git?branch=main#defa5989bad74a454fe239021d5b7d3c725fe5f1"
 dependencies = [
  "mime_guess",
  "potato-type",
@@ -4826,7 +4832,7 @@ dependencies = [
 [[package]]
 name = "potato-type"
 version = "0.2.3"
-source = "git+https://github.com/demml/potatohead.git?branch=main#f9f3e64cb96cf42a40c27ec0225bbbf150f95ca6"
+source = "git+https://github.com/demml/potatohead.git?branch=main#defa5989bad74a454fe239021d5b7d3c725fe5f1"
 dependencies = [
  "potato-util",
  "pyo3",
@@ -4835,7 +4841,7 @@ dependencies = [
 [[package]]
 name = "potato-util"
 version = "0.2.3"
-source = "git+https://github.com/demml/potatohead.git?branch=main#f9f3e64cb96cf42a40c27ec0225bbbf150f95ca6"
+source = "git+https://github.com/demml/potatohead.git?branch=main#defa5989bad74a454fe239021d5b7d3c725fe5f1"
 dependencies = [
  "colored_json",
  "pyo3",
@@ -4850,8 +4856,9 @@ dependencies = [
 [[package]]
 name = "potato-workflow"
 version = "0.2.3"
-source = "git+https://github.com/demml/potatohead.git?branch=main#f9f3e64cb96cf42a40c27ec0225bbbf150f95ca6"
+source = "git+https://github.com/demml/potatohead.git?branch=main#defa5989bad74a454fe239021d5b7d3c725fe5f1"
 dependencies = [
+ "chrono",
  "potato-agent",
  "potato-prompt",
  "potato-type",
@@ -7280,12 +7287,6 @@ name = "unindent"
 version = "0.2.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7264e107f553ccae879d21fbea1d6724ac785e8c3bfc762137959b5802826ef3"
-
-[[package]]
-name = "unit-prefix"
-version = "0.5.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "323402cff2dd658f39ca17c789b502021b3f18707c91cdf22e3838e1b4023817"
 
 [[package]]
 name = "universal-hash"

@@ -61,7 +61,7 @@ pub struct SqliteQueryHelper;
 
 impl SqliteQueryHelper {
     pub fn get_uid_query(table: &CardTable) -> String {
-        format!("SELECT uid FROM {} WHERE uid = ?", table).to_string()
+        format!("SELECT uid FROM {table} WHERE uid = ?")
     }
     pub fn get_user_insert_query() -> String {
         INSERT_USER_SQL.to_string()
@@ -157,11 +157,10 @@ impl SqliteQueryHelper {
                     name, 
                     version, 
                     ROW_NUMBER() OVER (PARTITION BY space, name ORDER BY created_at DESC) AS row_num
-                FROM {}
+                FROM {table}
                 WHERE (?1 IS NULL OR space = ?1)
                 AND (?2 IS NULL OR name LIKE ?3 OR space LIKE ?3)
-            )",
-            table
+            )"
         );
 
         let stats_cte = format!(

@@ -160,7 +160,7 @@ impl OpsmlApiClient {
         let response = match request_type {
             RequestType::Get => {
                 let url = if let Some(query_string) = query_string {
-                    format!("{}?{}", url, query_string)
+                    format!("{url}?{query_string}")
                 } else {
                     url
                 };
@@ -190,7 +190,7 @@ impl OpsmlApiClient {
                 .map_err(ApiClientError::RequestError)?,
             RequestType::Delete => {
                 let url = if let Some(query_string) = query_string {
-                    format!("{}?{}", url, query_string)
+                    format!("{url}?{query_string}")
                 } else {
                     url
                 };
