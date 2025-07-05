@@ -1,6 +1,7 @@
 /// Python workflows are a work in progress
 use crate::{agent::PyAgent, error::PyWorkflowError};
 use opsml_state::app_state;
+use potato_head::flow::TaskList;
 use potato_head::json_to_pyobject;
 use potato_head::prompt::parse_response_format;
 use potato_head::workflow::{Task, Workflow, WorkflowResult};
@@ -31,6 +32,32 @@ impl PyWorkflow {
             workflow: Workflow::new(name),
             output_types: HashMap::new(),
         }
+    }
+
+    #[getter]
+    pub fn name(&self) -> String {
+        self.workflow.name.clone()
+    }
+
+    #[getter]
+    pub fn tasklist(&self) -> TaskList {
+        self.workflow.tasklist.clone()
+    }
+
+    #[getter]
+    pub fn agents(&self) -> HashMap<String, PyAgent> {
+        self.workflow
+            .agents
+            .iter()
+            .map(|(id, agent)| {
+                (
+                    id.clone(),
+                    PyAgent {
+                        agent: agent.clone(),
+                    },
+                )
+            })
+            .collect()
     }
 
     #[pyo3(signature = (task_output_types))]
@@ -169,11 +196,5 @@ impl PyWorkflow {
 
         info!("Workflow execution completed successfully.");
         Ok(workflow_result)
-    }
-}
-
-impl PyWorkflow {
-    pub fn create_workflow_arc(&self) -> Arc<RwLock<Workflow>> {
-        Arc::new(RwLock::new(self.workflow.get_new_workflow()))
     }
 }

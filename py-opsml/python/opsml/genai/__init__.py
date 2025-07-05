@@ -10,6 +10,10 @@ ImageUrl = genai.ImageUrl
 AudioUrl = genai.AudioUrl
 BinaryContent = genai.BinaryContent
 DocumentUrl = genai.DocumentUrl
+AgentResponse = genai.AgentResponse
+TaskEvent = genai.TaskEvent
+EventDetails = genai.EventDetails
+ChatResponse = genai.ChatResponse
 
 # agents
 Provider = genai.Provider
@@ -18,7 +22,9 @@ Task = genai.Task
 TaskList = genai.TaskList
 Agent = genai.Agent
 Workflow = genai.Workflow
+WorkflowResult = genai.WorkflowResult
 Score = genai.Score
+PyTask = genai.PyTask
 
 
 __all__ = [
@@ -33,4 +39,13 @@ __all__ = [
     "Agent",
     "Workflow",
     "Score",
+    "ChatResponse",
+    "EventDetails",
+    "TaskEvent",
+    "AgentResponse",
+    "AudioUrl",
+    "BinaryContent",
+    "DocumentUrl",
+    "PyTask",
+    "WorkflowResult",
 ]

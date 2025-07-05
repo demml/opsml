@@ -1,11 +1,12 @@
 use ::potato_head::agents::provider::types::Provider;
 use ::potato_head::prompt::types::Score;
 use ::potato_head::{
-    AgentResponse, AudioUrl, BinaryContent, DocumentUrl, ImageUrl, Message, ModelSettings, Prompt,
-    PyTask, Task, WorkflowResult,
+    AudioUrl, BinaryContent, ChatResponse, DocumentUrl, EventDetails, ImageUrl, Message,
+    ModelSettings, Prompt, PyAgentResponse, PyTask, Task, TaskEvent, TaskList, TaskStatus,
+    WorkflowResult,
 };
+
 use opsml_genai::{PyAgent, PyWorkflow};
-use potato_head::{TaskList, TaskStatus};
 
 use pyo3::prelude::*;
 
@@ -18,8 +19,12 @@ pub fn genai(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<DocumentUrl>()?;
     m.add_class::<BinaryContent>()?;
     m.add_class::<ModelSettings>()?;
-    m.add_class::<AgentResponse>()?;
+    m.add_class::<PyAgentResponse>()?;
     m.add_class::<Score>()?;
+
+    m.add_class::<TaskEvent>()?;
+    m.add_class::<EventDetails>()?;
+    m.add_class::<ChatResponse>()?;
 
     // agentic tools
     m.add_class::<Provider>()?;
@@ -30,5 +35,6 @@ pub fn genai(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyWorkflow>()?;
     m.add_class::<WorkflowResult>()?;
     m.add_class::<PyTask>()?;
+
     Ok(())
 }

@@ -2,6 +2,7 @@
 
 from pathlib import Path
 from typing import Any, Dict, List, Literal, Optional, Sequence
+import datetime
 
 class PromptTokenDetails:
     """Details about the prompt tokens used in a request."""
@@ -520,11 +521,19 @@ class Task:
             prompt (Prompt):
                 The prompt to use for the task.
             id (str):
-                The ID of the task. If None, a random uuid7 will be generated.
+                The ID of the task.
             dependencies (List[str]):
                 The dependencies of the task.
             max_retries (int):
                 The maximum number of retries for the task. Defaults to 3.
+        """
+
+    def add_dependency(self, dependency: str) -> None:
+        """Add a dependency to the task.
+
+        Args:
+            dependency (str):
+                The ID of the dependency to add.
         """
 
     @property
@@ -542,6 +551,14 @@ class Task:
     @property
     def status(self) -> TaskStatus:
         """The status of the task."""
+
+    @property
+    def agent_id(self) -> str:
+        """The ID of the agent that will execute the task."""
+
+    @property
+    def max_retries(self) -> int:
+        """The maximum number of retries for the task."""
 
     def __str__(self) -> str: ...
 
@@ -636,20 +653,26 @@ class Workflow:
         """
 
     @property
-    def id(self) -> str:
-        """The ID of the workflow. This is a random uuid7 that is generated when the workflow is created."""
-
-    @property
     def name(self) -> str:
         """The name of the workflow."""
 
     @property
-    def tasks(self) -> TaskList:
+    def tasklist(self) -> TaskList:
         """The tasks in the workflow."""
 
     @property
     def agents(self) -> Dict[str, Agent]:
         """The agents in the workflow."""
+
+    def add_task_output_types(self, task_output_types: Dict[str, Any]) -> None:
+        """Add output types for tasks in the workflow. This is primarily used for
+        when loading a workflow as python objects are not serializable.
+
+        Args:
+            task_output_types (Dict[str, Any]):
+                A dictionary mapping task IDs to their output types.
+                This can either be a Pydantic `BaseModel` class or a supported potato_head response type such as `Score`.
+        """
 
     def add_task(self, task: Task) -> None:
         """Add a task to the workflow.
@@ -727,15 +750,80 @@ class PyTask:
         """The status of the task."""
 
     @property
-    def result(self) -> Optional[Any]:
+    def result(self) -> Optional[AgentResponse]:
         """The result of the task if it has been executed, otherwise None."""
 
     def __str__(self) -> str: ...
+
+class ChatResponse:
+    def to_py(self) -> Any:
+        """Convert the ChatResponse to it's Python representation."""
+
+    def __str__(self) -> str:
+        """Return a string representation of the ChatResponse."""
+
+class Details:
+    @property
+    def prompt(self) -> Optional[Prompt]:
+        """The prompt used for the task."""
+    @property
+    def response(self) -> Optional[ChatResponse]:
+        """The response from the agent after executing the task."""
+
+    @property
+    def duration(self) -> Optional[datetime.timedelta]:
+        """The duration of the task execution."""
+
+    @property
+    def start_time(self) -> Optional[datetime.datetime]:
+        """The start time of the task execution."""
+
+    @property
+    def end_time(self) -> Optional[datetime.datetime]:
+        """The end time of the task execution."""
+
+    @property
+    def error(self) -> Optional[str]:
+        """The error message if the task failed, otherwise None."""
+
+class TaskEvent:
+    @property
+    def id(self) -> str:
+        """The ID of the event"""
+
+    @property
+    def workflow_id(self) -> str:
+        """The ID of the workflow that the task is part of."""
+    @property
+    def task_id(self) -> str:
+        """The ID of the task that the event is associated with."""
+
+    @property
+    def status(self) -> TaskStatus:
+        """The status of the task at the time of the event."""
+
+    @property
+    def timestamp(self) -> datetime.datetime:
+        """The timestamp of the event. This is the time when the event occurred."""
+
+    @property
+    def updated_at(self) -> datetime.datetime:
+        """The timestamp of when the event was last updated. This is useful for tracking changes to the event."""
+
+    @property
+    def details(self) -> Optional[Dict[str, Any]]:
+        """Additional details about the event. This can include information such as error messages or other relevant data."""
 
 class WorkflowResult:
     @property
     def tasks(self) -> Dict[str, PyTask]:
         """The tasks in the workflow result."""
+
+    @property
+    def events(self) -> List[TaskEvent]:
+        """The events that occurred during the workflow execution. This is a list of dictionaries
+        where each dictionary contains information about the event such as the task ID, status, and timestamp.
+        """
 
 class Score:
     @property
