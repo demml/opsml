@@ -161,7 +161,7 @@ async fn test_scouter_routes_spc_drift_features() {
 
     let query_string = serde_qs::to_string(&drift_request).unwrap();
     let request = Request::builder()
-        .uri(format!("/opsml/api/scouter/drift/spc?{}", query_string))
+        .uri(format!("/opsml/api/scouter/drift/spc?{query_string}"))
         .method("GET")
         .body(Body::empty())
         .unwrap();
@@ -186,7 +186,7 @@ async fn test_scouter_routes_psi_drift_features() {
 
     let query_string = serde_qs::to_string(&drift_request).unwrap();
     let request = Request::builder()
-        .uri(format!("/opsml/api/scouter/drift/psi?{}", query_string))
+        .uri(format!("/opsml/api/scouter/drift/psi?{query_string}"))
         .method("GET")
         .body(Body::empty())
         .unwrap();
@@ -211,7 +211,7 @@ async fn test_scouter_routes_custom_drift_features() {
 
     let query_string = serde_qs::to_string(&drift_request).unwrap();
     let request = Request::builder()
-        .uri(format!("/opsml/api/scouter/drift/custom?{}", query_string))
+        .uri(format!("/opsml/api/scouter/drift/custom?{query_string}"))
         .method("GET")
         .body(Body::empty())
         .unwrap();

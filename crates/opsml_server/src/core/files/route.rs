@@ -586,28 +586,28 @@ pub async fn get_file_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
     let result = catch_unwind(AssertUnwindSafe(|| {
         Router::new()
             .route(
-                &format!("{}/files/multipart", prefix),
+                &format!("{prefix}/files/multipart"),
                 get(create_multipart_upload),
             )
             .route(
-                &format!("{}/files/multipart", prefix),
+                &format!("{prefix}/files/multipart"),
                 post(upload_multipart).layer(DefaultBodyLimit::max(MAX_FILE_SIZE)),
             )
             .route(
-                &format!("{}/files/multipart/complete", prefix),
+                &format!("{prefix}/files/multipart/complete"),
                 post(complete_multipart_upload),
             )
-            .route(&format!("{}/files", prefix), get(download_file))
+            .route(&format!("{prefix}/files"), get(download_file))
             .route(
-                &format!("{}/files/presigned", prefix),
+                &format!("{prefix}/files/presigned"),
                 get(generate_presigned_url),
             )
-            .route(&format!("{}/files/list", prefix), get(list_files))
-            .route(&format!("{}/files/tree", prefix), get(file_tree))
-            .route(&format!("{}/files/list/info", prefix), get(list_file_info))
-            .route(&format!("{}/files/delete", prefix), delete(delete_file))
-            .route(&format!("{}/files/key", prefix), get(get_artifact_key))
-            .route(&format!("{}/files/content", prefix), post(get_file_for_ui))
+            .route(&format!("{prefix}/files/list"), get(list_files))
+            .route(&format!("{prefix}/files/tree"), get(file_tree))
+            .route(&format!("{prefix}/files/list/info"), get(list_file_info))
+            .route(&format!("{prefix}/files/delete"), delete(delete_file))
+            .route(&format!("{prefix}/files/key"), get(get_artifact_key))
+            .route(&format!("{prefix}/files/content"), post(get_file_for_ui))
     }));
 
     match result {

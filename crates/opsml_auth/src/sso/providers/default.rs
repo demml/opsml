@@ -31,9 +31,9 @@ impl DefaultSsoSettings {
         let scope = std::env::var("OPSML_AUTH_SCOPE")
             .unwrap_or_else(|_| "openid email profile".to_string());
 
-        let token_url = format!("{}/{}", auth_domain, token_endpoint);
-        let authorization_url = format!("{}/{}", auth_domain, authorization_endpoint);
-        let certs_url = format!("{}/{}", auth_domain, certs_endpoint);
+        let token_url = format!("{auth_domain}/{token_endpoint}");
+        let authorization_url = format!("{auth_domain}/{authorization_endpoint}");
+        let certs_url = format!("{auth_domain}/{certs_endpoint}");
 
         let response = client
             .get(&certs_url)

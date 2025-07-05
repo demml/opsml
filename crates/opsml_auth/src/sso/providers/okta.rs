@@ -34,9 +34,9 @@ impl OktaSettings {
 
         let format_okta_url = |endpoint: &str| {
             if let Some(server_id) = &authorization_server_id {
-                format!("{}/oauth2/{}/{}", okta_domain, server_id, endpoint)
+                format!("{okta_domain}/oauth2/{server_id}/{endpoint}")
             } else {
-                format!("{}/oauth2/{}", okta_domain, endpoint)
+                format!("{okta_domain}/oauth2/{endpoint}")
             }
         };
 

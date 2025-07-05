@@ -64,7 +64,7 @@ impl OpsmlServerError {
     }
     pub fn key_header_not_found(key: String) -> Self {
         OpsmlServerError {
-            error: format!("{} header not found", key),
+            error: format!("{key} header not found"),
         }
     }
 
@@ -204,7 +204,7 @@ pub fn internal_server_error<E: std::fmt::Display>(
     error: E,
     message: &str,
 ) -> (StatusCode, Json<OpsmlServerError>) {
-    let msg = format!("{}: {}", message, error);
+    let msg = format!("{message}: {error}");
     (
         StatusCode::INTERNAL_SERVER_ERROR,
         Json(OpsmlServerError::new(msg)),

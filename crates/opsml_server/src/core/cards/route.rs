@@ -704,7 +704,7 @@ pub async fn create_readme(
         Ok(uploaded) => Ok(Json(uploaded)),
         Err(e) => Ok(Json(UploadResponse {
             uploaded: false,
-            message: format!("Failed to upload readme: {}", e),
+            message: format!("Failed to upload readme: {e}"),
         })),
     }
 }
@@ -713,36 +713,33 @@ pub async fn get_card_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
     let result = catch_unwind(AssertUnwindSafe(|| {
         Router::new()
             .route(
-                &format!("{}/card/space/stats", prefix),
+                &format!("{prefix}/card/space/stats"),
                 get(get_all_space_stats),
             )
-            .route(&format!("{}/card/space", prefix), get(get_space_record))
-            .route(&format!("{}/card/space", prefix), post(create_space_record))
-            .route(&format!("{}/card/space", prefix), put(update_space_record))
-            .route(
-                &format!("{}/card/space", prefix),
-                delete(delete_space_record),
-            )
+            .route(&format!("{prefix}/card/space"), get(get_space_record))
+            .route(&format!("{prefix}/card/space"), post(create_space_record))
+            .route(&format!("{prefix}/card/space"), put(update_space_record))
+            .route(&format!("{prefix}/card/space"), delete(delete_space_record))
             // placing spaces here for now as there's not enough routes to justify a separate router
-            .route(&format!("{}/card", prefix), get(check_card_uid))
-            .route(&format!("{}/card/metadata", prefix), get(get_card))
-            .route(&format!("{}/card/readme", prefix), get(get_readme))
-            .route(&format!("{}/card/readme", prefix), post(create_readme))
-            .route(&format!("{}/card/spaces", prefix), get(get_registry_spaces))
+            .route(&format!("{prefix}/card"), get(check_card_uid))
+            .route(&format!("{prefix}/card/metadata"), get(get_card))
+            .route(&format!("{prefix}/card/readme"), get(get_readme))
+            .route(&format!("{prefix}/card/readme"), post(create_readme))
+            .route(&format!("{prefix}/card/spaces"), get(get_registry_spaces))
             .route(
-                &format!("{}/card/registry/stats", prefix),
+                &format!("{prefix}/card/registry/stats"),
                 get(get_registry_stats),
             )
-            .route(&format!("{}/card/registry/page", prefix), get(get_page))
+            .route(&format!("{prefix}/card/registry/page"), get(get_page))
             .route(
-                &format!("{}/card/registry/version/page", prefix),
+                &format!("{prefix}/card/registry/version/page"),
                 get(get_version_page),
             )
-            .route(&format!("{}/card/list", prefix), get(list_cards))
-            .route(&format!("{}/card/create", prefix), post(create_card))
-            .route(&format!("{}/card/load", prefix), get(load_card))
-            .route(&format!("{}/card/update", prefix), post(update_card))
-            .route(&format!("{}/card/delete", prefix), delete(delete_card))
+            .route(&format!("{prefix}/card/list"), get(list_cards))
+            .route(&format!("{prefix}/card/create"), post(create_card))
+            .route(&format!("{prefix}/card/load"), get(load_card))
+            .route(&format!("{prefix}/card/update"), post(update_card))
+            .route(&format!("{prefix}/card/delete"), delete(delete_card))
     }));
 
     match result {

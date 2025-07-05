@@ -354,8 +354,7 @@ impl OpsmlTestServer {
                                 e
                             );
                             return Err(TestServerError::CustomError(format!(
-                                "Failed to remove root directory: {}",
-                                e
+                                "Failed to remove root directory: {e}"
                             ))
                             .into());
                         }

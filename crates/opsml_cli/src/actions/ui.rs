@@ -43,7 +43,7 @@ pub enum Platform {
 pub fn start_ui(version: &str, artifact_url: Option<String>) -> Result<(), UiError> {
     let platform = detect_platform()?;
     let cache_dir = get_cache_dir()?;
-    let binary_path = cache_dir.join(format!("opsml-server-v{}", version));
+    let binary_path = cache_dir.join(format!("opsml-server-v{version}"));
 
     if !binary_path.exists() {
         download_binary(&platform, version, &cache_dir, artifact_url)?;
@@ -70,10 +70,10 @@ pub fn stop_ui() -> Result<(), UiError> {
 
     let s = System::new_all();
     if let Some(process) = s.process(Pid::from(pid)) {
-        println!("Stopping OpsML UI server (PID: {})", pid);
+        println!("Stopping OpsML UI server (PID: {pid})");
         process
             .kill_and_wait()
-            .map_err(|_| UiError::ProcessKillError(format!("{}", pid)))?;
+            .map_err(|_| UiError::ProcessKillError(format!("{pid}")))?;
     }
 
     Ok(())
@@ -124,13 +124,12 @@ fn download_binary(
     // standardize naming
     let archive_name = match platform {
         Platform::Windows => "opsml-server-x86_64-windows.zip".to_string(),
-        Platform::MacOS(arch) => format!("opsml-server-{}-darwin.zip", arch),
-        Platform::Linux(arch) => format!("opsml-server-{}-linux-gnu.tar.gz", arch),
+        Platform::MacOS(arch) => format!("opsml-server-{arch}-darwin.zip"),
+        Platform::Linux(arch) => format!("opsml-server-{arch}-linux-gnu.tar.gz"),
     };
 
     let url = artifact_url.unwrap_or(format!(
-        "https://github.com/{}/releases/download/v{}/{}",
-        GITHUB_REPO, version, archive_name
+        "https://github.com/{GITHUB_REPO}/releases/download/v{version}/{archive_name}"
     ));
 
     let response = reqwest::blocking::get(&url).map_err(UiError::DownloadBinaryError)?;
@@ -213,7 +212,7 @@ fn execute_binary(binary_path: &Path) -> Result<(), UiError> {
 
     let id = child_process.id();
 
-    println!("Started opsml-ui server (PID: {})", id);
+    println!("Started opsml-ui server (PID: {id})");
 
     Ok(())
 }
@@ -236,7 +235,7 @@ fn cleanup_old_binaries(
     };
 
     let prefix = "opsml-server-v";
-    let current_binary = format!("{}{}{}", prefix, current_version, extension);
+    let current_binary = format!("{prefix}{current_version}{extension}");
 
     for entry in fs::read_dir(cache_dir).map_err(UiError::ReadError)? {
         let entry = entry.map_err(UiError::ReadError)?;
@@ -329,9 +328,9 @@ mod tests {
             }
 
             // Construct the path that download_binary will request
-            let archive_name = format!("opsml-server-{}-darwin.zip", arch);
+            let archive_name = format!("opsml-server-{arch}-darwin.zip");
             // Mock the specific path that will be requested
-            let mock_path = format!("/releases/download/v{}/{}", version, archive_name);
+            let mock_path = format!("/releases/download/v{version}/{archive_name}");
 
             self.server
                 .mock("GET", mock_path.as_str()) // Mock the full path
@@ -415,7 +414,7 @@ mod tests {
         let temp_cache_dir = TempDir::new()?;
         let cache_path = temp_cache_dir.path();
 
-        let archive_name = format!("opsml-server-{}-darwin.zip", arch);
+        let archive_name = format!("opsml-server-{arch}-darwin.zip");
         let full_mock_url = format!(
             "{}/releases/download/v{}/{}",
             mock_server.url, // Base URL from mockito
@@ -427,7 +426,7 @@ mod tests {
         download_binary(&platform, version, cache_path, Some(full_mock_url))?;
 
         // Assert that the binary was extracted and renamed correctly
-        let expected_binary_path = cache_path.join(format!("opsml-server-v{}", version));
+        let expected_binary_path = cache_path.join(format!("opsml-server-v{version}"));
         assert!(
             expected_binary_path.exists(),
             "Expected binary file does not exist"
@@ -530,9 +529,9 @@ mod tests {
         let prefix = "opsml-server-v";
 
         // Files to create
-        let current_binary_name = format!("{}{}{}", prefix, current_version, extension);
-        let old_binary_name_1 = format!("{}{}{}", prefix, "1.0.0", extension);
-        let old_binary_name_2 = format!("{}{}{}", prefix, "0.9.0", extension);
+        let current_binary_name = format!("{prefix}{current_version}{extension}");
+        let old_binary_name_1 = format!("{prefix}1.0.0{extension}");
+        let old_binary_name_2 = format!("{prefix}0.9.0{extension}");
         let unrelated_file_name = "some-other-file.txt";
 
         let current_binary_path = cache_path.join(&current_binary_name);
@@ -580,9 +579,9 @@ mod tests {
         let prefix = "opsml-server-v";
 
         // Files to create
-        let current_binary_name = format!("{}{}{}", prefix, current_version, extension);
-        let old_binary_name_1 = format!("{}{}{}", prefix, "1.9.0", extension);
-        let old_binary_name_no_ext = format!("{}{}", prefix, "1.8.0"); // Should not match prefix logic
+        let current_binary_name = format!("{prefix}{current_version}{extension}");
+        let old_binary_name_1 = format!("{prefix}1.9.0{extension}");
+        let old_binary_name_no_ext = format!("{prefix}1.8.0"); // Should not match prefix logic
 
         let current_binary_path = cache_path.join(&current_binary_name);
         let old_binary_path_1 = cache_path.join(&old_binary_name_1);

@@ -25,11 +25,8 @@ pub async fn ui_settings(State(data): State<Arc<AppState>>) -> Json<UiSettings> 
 pub async fn get_settings_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
     let result = catch_unwind(AssertUnwindSafe(|| {
         Router::new()
-            .route(
-                &format!("{}/storage/settings", prefix),
-                get(storage_settings),
-            )
-            .route(&format!("{}/ui/settings", prefix), get(ui_settings))
+            .route(&format!("{prefix}/storage/settings"), get(storage_settings))
+            .route(&format!("{prefix}/ui/settings"), get(ui_settings))
     }));
 
     match result {

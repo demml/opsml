@@ -61,7 +61,7 @@ impl PyAgent {
         debug!("Executing task");
         // if output_type is not None,  mutate task prompt
         if let Some(output_type) = &output_type {
-            match parse_response_format(py, &output_type) {
+            match parse_response_format(py, output_type) {
                 Ok(response_format) => {
                     task.prompt.response_format = response_format;
                 }
@@ -73,7 +73,7 @@ impl PyAgent {
 
         let chat_response = app_state()
             .runtime
-            .block_on(async { self.agent.execute_task(&task).await })?;
+            .block_on(async { self.agent.execute_task(task).await })?;
 
         debug!("Task executed successfully");
         let output = output_type.as_ref().map(|obj| obj.clone().unbind());
@@ -93,7 +93,7 @@ impl PyAgent {
         debug!("Executing task");
         // if output_type is not None,  mutate task prompt
         if let Some(output_type) = &output_type {
-            match parse_response_format(py, &output_type) {
+            match parse_response_format(py, output_type) {
                 Ok(response_format) => {
                     prompt.response_format = response_format;
                 }
@@ -105,7 +105,7 @@ impl PyAgent {
 
         let chat_response = app_state()
             .runtime
-            .block_on(async { self.agent.execute_prompt(&prompt).await })?;
+            .block_on(async { self.agent.execute_prompt(prompt).await })?;
 
         debug!("Task executed successfully");
         let output = output_type.as_ref().map(|obj| obj.clone().unbind());

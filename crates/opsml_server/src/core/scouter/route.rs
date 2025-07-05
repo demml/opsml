@@ -94,7 +94,7 @@ pub async fn insert_drift_profile(
         "drift_type": body.drift_type.to_string(),
     });
     let metadata = serde_json::to_string(&metadata)
-        .unwrap_or_else(|e| format!("Failed to serialize ProfileRequest: {}", e));
+        .unwrap_or_else(|e| format!("Failed to serialize ProfileRequest: {e}"));
 
     let audit_context = AuditContext {
         resource_id: "insert_drift".to_string(),
@@ -204,7 +204,7 @@ pub async fn update_drift_profile(
         "drift_type": req.request.drift_type.to_string(),
     });
     let metadata = serde_json::to_string(&metadata)
-        .unwrap_or_else(|e| format!("Failed to serialize ProfileRequest: {}", e));
+        .unwrap_or_else(|e| format!("Failed to serialize ProfileRequest: {e}"));
 
     let audit_context = AuditContext {
         resource_id: "update_drift".to_string(),
@@ -272,7 +272,7 @@ pub async fn update_drift_profile_status(
         "deactivate_others": body.deactivate_others,
     });
     let metadata = serde_json::to_string(&metadata)
-        .unwrap_or_else(|e| format!("Failed to serialize ProfileStatusRequest: {}", e));
+        .unwrap_or_else(|e| format!("Failed to serialize ProfileStatusRequest: {e}"));
 
     let audit_context = AuditContext {
         resource_id: "update_drift_status".to_string(),
@@ -659,29 +659,29 @@ pub async fn get_scouter_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
     let result = catch_unwind(AssertUnwindSafe(|| {
         Router::new()
             .route(
-                &format!("{}/scouter/profile", prefix),
+                &format!("{prefix}/scouter/profile"),
                 post(insert_drift_profile).put(update_drift_profile),
             )
             .route(
-                &format!("{}/scouter/profile/ui", prefix),
+                &format!("{prefix}/scouter/profile/ui"),
                 post(get_drift_profiles_for_ui),
             )
             .route(
-                &format!("{}/scouter/profile/status", prefix),
+                &format!("{prefix}/scouter/profile/status"),
                 put(update_drift_profile_status),
             )
-            .route(&format!("{}/scouter/drift/spc", prefix), get(get_spc_drift))
-            .route(&format!("{}/scouter/drift/psi", prefix), get(get_psi_drift))
+            .route(&format!("{prefix}/scouter/drift/spc"), get(get_spc_drift))
+            .route(&format!("{prefix}/scouter/drift/psi"), get(get_psi_drift))
             .route(
-                &format!("{}/scouter/drift/custom", prefix),
+                &format!("{prefix}/scouter/drift/custom"),
                 get(get_custom_drift),
             )
             .route(
-                &format!("{}/scouter/alerts", prefix),
+                &format!("{prefix}/scouter/alerts"),
                 get(get_drift_alerts).put(update_alert_status),
             )
             .route(
-                &format!("{}/scouter/healthcheck", prefix),
+                &format!("{prefix}/scouter/healthcheck"),
                 get(check_scouter_health),
             )
     }));

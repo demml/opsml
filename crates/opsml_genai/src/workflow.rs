@@ -1,7 +1,6 @@
 /// Python workflows are a work in progress
 use crate::{agent::PyAgent, error::PyWorkflowError};
 use opsml_state::app_state;
-use potato_head::execute_workflow;
 use potato_head::json_to_pyobject;
 use potato_head::prompt::parse_response_format;
 use potato_head::workflow::{Task, Workflow, WorkflowResult};
@@ -73,13 +72,13 @@ impl PyWorkflow {
                 .insert(task.id.clone(), Arc::new(output_type.unbind()));
         }
 
-        self.workflow.tasks.add_task(task)?;
+        self.workflow.tasklist.add_task(task)?;
         Ok(())
     }
 
     pub fn add_tasks(&mut self, tasks: Vec<Task>) -> Result<(), PyWorkflowError> {
         for task in tasks {
-            self.workflow.tasks.add_task(task)?;
+            self.workflow.tasklist.add_task(task)?;
         }
         Ok(())
     }
@@ -91,11 +90,11 @@ impl PyWorkflow {
     }
 
     pub fn is_complete(&self) -> bool {
-        self.workflow.tasks.is_complete()
+        self.workflow.tasklist.is_complete()
     }
 
     pub fn pending_count(&self) -> usize {
-        self.workflow.tasks.pending_count()
+        self.workflow.tasklist.pending_count()
     }
 
     pub fn execution_plan<'py>(
@@ -119,13 +118,10 @@ impl PyWorkflow {
 
     pub fn run(&self, py: Python) -> Result<WorkflowResult, PyWorkflowError> {
         info!("Running workflow: {}", self.workflow.name);
-        // Clone the workflow and pass it to the execute_workflow function
-        // We do this to not modify the original workflow state
-        let workflow = self.create_workflow_arc();
 
-        app_state()
+        let workflow: Arc<RwLock<Workflow>> = app_state()
             .runtime
-            .block_on(async { execute_workflow(workflow.clone()).await })?;
+            .block_on(async { self.workflow.run().await })?;
 
         // Try to get exclusive ownership of the workflow by unwrapping the Arc if there's only one reference
         let workflow_result = match Arc::try_unwrap(workflow) {
@@ -135,13 +131,19 @@ impl PyWorkflow {
                 let workflow = rwlock
                     .into_inner()
                     .map_err(|_| PyWorkflowError::LockAcquireError)?;
+
+                // Get the events before creating WorkflowResult
+                let events = workflow
+                    .event_tracker
+                    .read()
+                    .unwrap()
+                    .events
+                    .read()
+                    .unwrap()
+                    .clone();
+
                 // Move the tasks out of the workflow
-                WorkflowResult::new(
-                    py,
-                    workflow.tasks.tasks,
-                    &self.output_types,
-                    workflow.event_tracker.events,
-                )
+                WorkflowResult::new(py, workflow.tasklist.tasks(), &self.output_types, events)
             }
             // If there are other references, we need to clone
             Err(arc) => {
@@ -150,12 +152,18 @@ impl PyWorkflow {
                 let workflow = arc
                     .read()
                     .map_err(|_| PyWorkflowError::ReadLockAcquireError)?;
-                WorkflowResult::new(
-                    py,
-                    workflow.tasks.tasks.clone(),
-                    &self.output_types,
-                    workflow.event_tracker.events.clone(),
-                )
+
+                // Get the events before creating WorkflowResult
+                let events = workflow
+                    .event_tracker
+                    .read()
+                    .unwrap()
+                    .events
+                    .read()
+                    .unwrap()
+                    .clone();
+
+                WorkflowResult::new(py, workflow.tasklist.tasks(), &self.output_types, events)
             }
         };
 
@@ -166,6 +174,6 @@ impl PyWorkflow {
 
 impl PyWorkflow {
     pub fn create_workflow_arc(&self) -> Arc<RwLock<Workflow>> {
-        Arc::new(RwLock::new(self.workflow.clone()))
+        Arc::new(RwLock::new(self.workflow.get_new_workflow()))
     }
 }

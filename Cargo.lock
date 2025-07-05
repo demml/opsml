@@ -1357,9 +1357,9 @@ dependencies = [
 
 [[package]]
 name = "cc"
-version = "1.2.27"
+version = "1.2.29"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d487aa071b5f64da6f19a3e848e3578944b726ee5a4854b82172f02aa876bfdc"
+checksum = "5c1599538de2394445747c8cf7935946e3cc27e9625f889d979bfb2aaf569362"
 dependencies = [
  "jobserver",
  "libc",
@@ -1575,15 +1575,15 @@ dependencies = [
 
 [[package]]
 name = "console"
-version = "0.15.11"
+version = "0.16.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "054ccb5b10f9f2cbf51eb355ca1d05c2d279ce1804688d0db74b4733a5aeafd8"
+checksum = "2e09ced7ebbccb63b4c65413d821f2e00ce54c5ca4514ddc6b3c892fdbcbc69d"
 dependencies = [
  "encode_unicode",
  "libc",
  "once_cell",
  "unicode-width",
- "windows-sys 0.59.0",
+ "windows-sys 0.60.2",
 ]
 
 [[package]]
@@ -3001,14 +3001,14 @@ dependencies = [
 
 [[package]]
 name = "indicatif"
-version = "0.17.11"
+version = "0.18.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "183b3088984b400f4cfac3620d5e076c84da5364016b4f49473de574b2586235"
+checksum = "70a646d946d06bedbbc4cac4c218acf4bbf2d87757a784857025f4d447e4e1cd"
 dependencies = [
  "console",
- "number_prefix",
  "portable-atomic",
  "unicode-width",
+ "unit-prefix",
  "web-time",
 ]
 
@@ -3768,12 +3768,6 @@ checksum = "5c7398b9c8b70908f6371f47ed36737907c87c52af34c268fed0bf0ceb92ead9"
 dependencies = [
  "libc",
 ]
-
-[[package]]
-name = "number_prefix"
-version = "0.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "830b246a0e5f20af87141b25c173cd1b609bd7779a4617d6ec582abaf90870f3"
 
 [[package]]
 name = "numpy"
@@ -4787,7 +4781,7 @@ dependencies = [
 [[package]]
 name = "potato-agent"
 version = "0.2.3"
-source = "git+https://github.com/demml/potatohead.git?branch=main#defa5989bad74a454fe239021d5b7d3c725fe5f1"
+source = "git+https://github.com/demml/potatohead.git?branch=main#803bd5738f7620667103f2b420bed3ffe5437d56"
 dependencies = [
  "potato-prompt",
  "potato-type",
@@ -4804,7 +4798,7 @@ dependencies = [
 [[package]]
 name = "potato-head"
 version = "0.2.3"
-source = "git+https://github.com/demml/potatohead.git?branch=main#defa5989bad74a454fe239021d5b7d3c725fe5f1"
+source = "git+https://github.com/demml/potatohead.git?branch=main#803bd5738f7620667103f2b420bed3ffe5437d56"
 dependencies = [
  "potato-agent",
  "potato-prompt",
@@ -4816,7 +4810,7 @@ dependencies = [
 [[package]]
 name = "potato-prompt"
 version = "0.2.3"
-source = "git+https://github.com/demml/potatohead.git?branch=main#defa5989bad74a454fe239021d5b7d3c725fe5f1"
+source = "git+https://github.com/demml/potatohead.git?branch=main#803bd5738f7620667103f2b420bed3ffe5437d56"
 dependencies = [
  "mime_guess",
  "potato-type",
@@ -4832,16 +4826,19 @@ dependencies = [
 [[package]]
 name = "potato-type"
 version = "0.2.3"
-source = "git+https://github.com/demml/potatohead.git?branch=main#defa5989bad74a454fe239021d5b7d3c725fe5f1"
+source = "git+https://github.com/demml/potatohead.git?branch=main#803bd5738f7620667103f2b420bed3ffe5437d56"
 dependencies = [
  "potato-util",
  "pyo3",
+ "schemars",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
 name = "potato-util"
 version = "0.2.3"
-source = "git+https://github.com/demml/potatohead.git?branch=main#defa5989bad74a454fe239021d5b7d3c725fe5f1"
+source = "git+https://github.com/demml/potatohead.git?branch=main#803bd5738f7620667103f2b420bed3ffe5437d56"
 dependencies = [
  "colored_json",
  "pyo3",
@@ -4856,7 +4853,7 @@ dependencies = [
 [[package]]
 name = "potato-workflow"
 version = "0.2.3"
-source = "git+https://github.com/demml/potatohead.git?branch=main#defa5989bad74a454fe239021d5b7d3c725fe5f1"
+source = "git+https://github.com/demml/potatohead.git?branch=main#803bd5738f7620667103f2b420bed3ffe5437d56"
 dependencies = [
  "chrono",
  "potato-agent",
@@ -5352,9 +5349,9 @@ dependencies = [
 
 [[package]]
 name = "rdkafka"
-version = "0.37.0"
+version = "0.38.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "14b52c81ac3cac39c9639b95c20452076e74b8d9a71bc6fc4d83407af2ea6fff"
+checksum = "5f1856d72dbbbea0d2a5b2eaf6af7fb3847ef2746e883b11781446a51dbc85c0"
 dependencies = [
  "futures-channel",
  "futures-util",
@@ -5370,9 +5367,9 @@ dependencies = [
 
 [[package]]
 name = "rdkafka-sys"
-version = "4.8.0+2.3.0"
+version = "4.9.0+2.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ced38182dc436b3d9df0c77976f37a67134df26b050df1f0006688e46fc4c8be"
+checksum = "5230dca48bc354d718269f3e4353280e188b610f7af7e2fcf54b7a79d5802872"
 dependencies = [
  "cmake",
  "libc",
@@ -5433,6 +5430,26 @@ dependencies = [
  "getrandom 0.2.16",
  "libredox",
  "thiserror 2.0.12",
+]
+
+[[package]]
+name = "ref-cast"
+version = "1.0.24"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4a0ae411dbe946a674d89546582cea4ba2bb8defac896622d6496f14c23ba5cf"
+dependencies = [
+ "ref-cast-impl",
+]
+
+[[package]]
+name = "ref-cast-impl"
+version = "1.0.24"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1165225c21bff1f3bbce98f5a1f889949bc902d3575308cc7b0de30b4f6d27c7"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.104",
 ]
 
 [[package]]
@@ -5884,6 +5901,31 @@ dependencies = [
 ]
 
 [[package]]
+name = "schemars"
+version = "1.0.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1375ba8ef45a6f15d83fa8748f1079428295d403d6ea991d09ab100155fbc06d"
+dependencies = [
+ "dyn-clone",
+ "ref-cast",
+ "schemars_derive",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "schemars_derive"
+version = "1.0.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2b13ed22d6d49fe23712e068770b5c4df4a693a2b02eeff8e7ca3135627a24f6"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "serde_derive_internals",
+ "syn 2.0.104",
+]
+
+[[package]]
 name = "scopeguard"
 version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6159,6 +6201,17 @@ name = "serde_derive"
 version = "1.0.219"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5b0276cf7f2c73365f7157c8123c21cd9a50fbbd844757af28ca1f5925fc2a00"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.104",
+]
+
+[[package]]
+name = "serde_derive_internals"
+version = "0.29.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "18d26a20a969b9e3fdf2fc2d9f21eda6c40e2de84c9408bb5d3b05d499aae711"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -6969,9 +7022,9 @@ dependencies = [
 
 [[package]]
 name = "tokio"
-version = "1.46.0"
+version = "1.46.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1140bb80481756a8cbe10541f37433b459c5aa1e727b4c020fbfebdc25bf3ec4"
+checksum = "0cc3a2344dafbe23a245241fe8b09735b521110d30fcefbbd5feb1797ca35d17"
 dependencies = [
  "backtrace",
  "bytes",
@@ -7287,6 +7340,12 @@ name = "unindent"
 version = "0.2.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7264e107f553ccae879d21fbea1d6724ac785e8c3bfc762137959b5802826ef3"
+
+[[package]]
+name = "unit-prefix"
+version = "0.5.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "323402cff2dd658f39ca17c789b502021b3f18707c91cdf22e3838e1b4023817"
 
 [[package]]
 name = "universal-hash"

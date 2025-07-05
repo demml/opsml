@@ -387,22 +387,19 @@ async fn reset_password_with_recovery(
 pub async fn get_user_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
     let result = catch_unwind(AssertUnwindSafe(|| {
         Router::new()
-            .route(&format!("{}/user", prefix), post(create_user))
+            .route(&format!("{prefix}/user"), post(create_user))
             .route(
-                &format!("{}/user/register", prefix),
+                &format!("{prefix}/user/register"),
                 post(register_user_from_ui),
             )
-            .route(&format!("{}/user", prefix), get(list_users))
+            .route(&format!("{prefix}/user"), get(list_users))
             .route(
-                &format!("{}/user/reset-password/recovery", prefix),
+                &format!("{prefix}/user/reset-password/recovery"),
                 post(reset_password_with_recovery),
             )
-            .route(&format!("{}/user/{{username}}", prefix), get(get_user))
-            .route(&format!("{}/user/{{username}}", prefix), put(update_user))
-            .route(
-                &format!("{}/user/{{username}}", prefix),
-                delete(delete_user),
-            )
+            .route(&format!("{prefix}/user/{{username}}"), get(get_user))
+            .route(&format!("{prefix}/user/{{username}}"), put(update_user))
+            .route(&format!("{prefix}/user/{{username}}"), delete(delete_user))
     }));
 
     match result {

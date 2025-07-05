@@ -29,20 +29,12 @@ impl KeycloakSettings {
         let scope = std::env::var("OPSML_AUTH_SCOPE")
             .unwrap_or_else(|_| "openid email profile".to_string());
 
-        let token_url = format!(
-            "{}/realms/{}/protocol/openid-connect/token",
-            auth_domain, auth_realm
-        );
+        let token_url = format!("{auth_domain}/realms/{auth_realm}/protocol/openid-connect/token");
 
-        let authorization_url = format!(
-            "{}/realms/{}/protocol/openid-connect/auth",
-            auth_domain, auth_realm
-        );
+        let authorization_url =
+            format!("{auth_domain}/realms/{auth_realm}/protocol/openid-connect/auth");
 
-        let certs_url = format!(
-            "{}/realms/{}/protocol/openid-connect/certs",
-            auth_domain, auth_realm
-        );
+        let certs_url = format!("{auth_domain}/realms/{auth_realm}/protocol/openid-connect/certs");
 
         let response = client
             .get(&certs_url)

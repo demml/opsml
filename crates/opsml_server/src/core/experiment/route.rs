@@ -279,23 +279,23 @@ pub async fn get_experiment_router(prefix: &str) -> Result<Router<Arc<AppState>>
     let result = catch_unwind(AssertUnwindSafe(|| {
         Router::new()
             .route(
-                &format!("{}/experiment/metrics", prefix),
+                &format!("{prefix}/experiment/metrics"),
                 put(insert_metrics).post(get_metrics),
             )
             .route(
-                &format!("{}/experiment/metrics/grouped", prefix),
+                &format!("{prefix}/experiment/metrics/grouped"),
                 post(get_grouped_metrics),
             )
             .route(
-                &format!("{}/experiment/metrics/names", prefix),
+                &format!("{prefix}/experiment/metrics/names"),
                 get(get_metric_names),
             )
             .route(
-                &format!("{}/experiment/parameters", prefix),
+                &format!("{prefix}/experiment/parameters"),
                 put(insert_parameters).post(get_parameter),
             )
             .route(
-                &format!("{}/experiment/hardware/metrics", prefix),
+                &format!("{prefix}/experiment/hardware/metrics"),
                 put(insert_hardware_metrics).get(get_hardware_metrics),
             )
     }));

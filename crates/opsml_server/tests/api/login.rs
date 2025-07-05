@@ -95,8 +95,7 @@ async fn test_opsml_server_keycloak_sso_ui_login() {
 
     // build the expected URL
     let expected_url = format!(
-        "{}/realms/opsml/protocol/openid-connect/auth?client_id=opsml-client&response_type=code&scope=openid email profile&redirect_uri=http://localhost:8080/callback",
-        mock_url
+        "{mock_url}/realms/opsml/protocol/openid-connect/auth?client_id=opsml-client&response_type=code&scope=openid email profile&redirect_uri=http://localhost:8080/callback"
     );
 
     assert!(sso_auth_url.url.contains(&expected_url));
@@ -112,7 +111,7 @@ async fn test_opsml_server_keycloak_sso_ui_login() {
 
     let query_string = serde_qs::to_string(&parms).unwrap();
     let request = Request::builder()
-        .uri(format!("/opsml/api/auth/sso/callback?{}", query_string))
+        .uri(format!("/opsml/api/auth/sso/callback?{query_string}"))
         .method("GET")
         .body(Body::empty())
         .unwrap();
@@ -148,8 +147,7 @@ async fn test_opsml_server_okta_sso_ui_login() {
 
     // build the expected URL
     let expected_url = format!(
-        "{}/oauth2/v1/authorize?client_id=opsml-client&response_type=code&scope=openid email profile&redirect_uri=http://localhost:8080/callback",
-        mock_url
+        "{mock_url}/oauth2/v1/authorize?client_id=opsml-client&response_type=code&scope=openid email profile&redirect_uri=http://localhost:8080/callback"
     );
 
     assert!(sso_auth_url.url.contains(&expected_url));
@@ -165,7 +163,7 @@ async fn test_opsml_server_okta_sso_ui_login() {
 
     let query_string = serde_qs::to_string(&parms).unwrap();
     let request = Request::builder()
-        .uri(format!("/opsml/api/auth/sso/callback?{}", query_string))
+        .uri(format!("/opsml/api/auth/sso/callback?{query_string}"))
         .method("GET")
         .body(Body::empty())
         .unwrap();
@@ -201,8 +199,7 @@ async fn test_opsml_server_default_sso_ui_login() {
 
     // build the expected URL
     let expected_url = format!(
-        "{}/oauth/authorize?client_id=opsml-client&response_type=code&scope=openid email profile&redirect_uri=http://localhost:8080/callback",
-        mock_url
+        "{mock_url}/oauth/authorize?client_id=opsml-client&response_type=code&scope=openid email profile&redirect_uri=http://localhost:8080/callback"
     );
 
     assert!(sso_auth_url.url.contains(&expected_url));
@@ -218,7 +215,7 @@ async fn test_opsml_server_default_sso_ui_login() {
 
     let query_string = serde_qs::to_string(&parms).unwrap();
     let request = Request::builder()
-        .uri(format!("/opsml/api/auth/sso/callback?{}", query_string))
+        .uri(format!("/opsml/api/auth/sso/callback?{query_string}"))
         .method("GET")
         .body(Body::empty())
         .unwrap();
