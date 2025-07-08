@@ -226,25 +226,25 @@ impl TensorFlowSampleData {
 
             TensorFlowSampleData::List(data) => Ok(Some(
                 save_to_joblib(data.bind(py), path).inspect_err(|e| {
-                    error!("Error saving list data: {}", e);
+                    error!("Error saving list data: {e}");
                 })?,
             )),
 
             TensorFlowSampleData::Tuple(data) => Ok(Some(
                 save_to_joblib(data.bind(py), path).inspect_err(|e| {
-                    error!("Error saving list data: {}", e);
+                    error!("Error saving list data: {e}");
                 })?,
             )),
 
             TensorFlowSampleData::Dict(data) => Ok(Some(
                 save_to_joblib(data.bind(py), path).inspect_err(|e| {
-                    error!("Error saving list data: {}", e);
+                    error!("Error saving list data: {e}");
                 })?,
             )),
 
             TensorFlowSampleData::Tensor(data) => Ok(Some(
                 save_to_joblib(data.bind(py), path).inspect_err(|e| {
-                    error!("Error saving list data: {}", e);
+                    error!("Error saving list data: {e}");
                 })?,
             )),
 

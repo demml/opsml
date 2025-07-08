@@ -41,14 +41,14 @@ async fn parse_scouter_response(
     match status_code.is_success() {
         true => {
             let body = response.json::<ScouterResponse>().await.map_err(|e| {
-                error!("Failed to parse scouter response: {}", e);
+                error!("Failed to parse scouter response: {e}");
                 internal_server_error(e, "Failed to parse scouter response")
             })?;
             Ok(Json(body))
         }
         false => {
             let body = response.json::<ScouterServerError>().await.map_err(|e| {
-                error!("Failed to parse scouter error response: {}", e);
+                error!("Failed to parse scouter error response: {e}");
                 internal_server_error(e, "Failed to parse scouter error response")
             })?;
             Err((status_code, Json(OpsmlServerError::new(body.error))))
@@ -62,14 +62,14 @@ pub async fn insert_drift_profile(
     Json(body): Json<ProfileRequest>,
 ) -> Result<Json<ScouterResponse>, (StatusCode, Json<OpsmlServerError>)> {
     let exchange_token = state.exchange_token_from_perms(&perms).await.map_err(|e| {
-        error!("Failed to exchange token for scouter: {}", e);
+        error!("Failed to exchange token for scouter: {e}");
         internal_server_error(e, "Failed to exchange token for scouter")
     })?;
 
     info!("Inserting drift profile for space: {:?}", &body.space);
 
     let profile = serde_json::to_value(&body).map_err(|e| {
-        error!("Failed to serialize profile request: {}", e);
+        error!("Failed to serialize profile request: {e}");
         internal_server_error(e, "Failed to serialize profile request")
     })?;
 
@@ -85,7 +85,7 @@ pub async fn insert_drift_profile(
         )
         .await
         .map_err(|e| {
-            error!("Failed to insert drift profile: {}", e);
+            error!("Failed to insert drift profile: {e}");
             internal_server_error(e, "Failed to insert drift profile")
         })?;
 
@@ -94,7 +94,7 @@ pub async fn insert_drift_profile(
         "drift_type": body.drift_type.to_string(),
     });
     let metadata = serde_json::to_string(&metadata)
-        .unwrap_or_else(|e| format!("Failed to serialize ProfileRequest: {}", e));
+        .unwrap_or_else(|e| format!("Failed to serialize ProfileRequest: {e}"));
 
     let audit_context = AuditContext {
         resource_id: "insert_drift".to_string(),
@@ -128,7 +128,7 @@ pub async fn update_drift_profile(
         .get_artifact_key(&req.uid, &RegistryType::Model.to_string())
         .await
         .map_err(|e| {
-            error!("Failed to get artifact key: {}", e);
+            error!("Failed to get artifact key: {e}");
             internal_server_error(e, "Failed to get artifact key")
         })?;
 
@@ -136,7 +136,7 @@ pub async fn update_drift_profile(
 
     // list files in the directory
     let files = state.storage_client.find(&drift_path).await.map_err(|e| {
-        error!("Failed to list files in directory: {}", e);
+        error!("Failed to list files in directory: {e}");
         internal_server_error(e, "Failed to list files in directory")
     })?;
 
@@ -159,7 +159,7 @@ pub async fn update_drift_profile(
         })?;
 
     let encryption_key = artifact_key.get_decrypt_key().map_err(|e| {
-        error!("Failed to get encryption key: {}", e);
+        error!("Failed to get encryption key: {e}");
         internal_server_error(e, "Failed to get encryption key")
     })?;
 
@@ -174,7 +174,7 @@ pub async fn update_drift_profile(
 
     // 2. Scouter task
     let exchange_token = state.exchange_token_from_perms(&perms).await.map_err(|e| {
-        error!("Failed to exchange token for scouter: {}", e);
+        error!("Failed to exchange token for scouter: {e}");
         internal_server_error(e, "Failed to exchange token for scouter")
     })?;
 
@@ -184,7 +184,7 @@ pub async fn update_drift_profile(
             scouter::Routes::Profile,
             RequestType::Put,
             Some(serde_json::to_value(&req.request).map_err(|e| {
-                error!("Failed to serialize profile request: {}", e);
+                error!("Failed to serialize profile request: {e}");
                 internal_server_error(e, "Failed to serialize profile request")
             })?),
             None,
@@ -193,7 +193,7 @@ pub async fn update_drift_profile(
         )
         .await
         .map_err(|e| {
-            error!("Failed to update drift profile: {}", e);
+            error!("Failed to update drift profile: {e}");
             internal_server_error(e, "Failed to update drift profile")
         })?;
 
@@ -204,7 +204,7 @@ pub async fn update_drift_profile(
         "drift_type": req.request.drift_type.to_string(),
     });
     let metadata = serde_json::to_string(&metadata)
-        .unwrap_or_else(|e| format!("Failed to serialize ProfileRequest: {}", e));
+        .unwrap_or_else(|e| format!("Failed to serialize ProfileRequest: {e}"));
 
     let audit_context = AuditContext {
         resource_id: "update_drift".to_string(),
@@ -240,7 +240,7 @@ pub async fn update_drift_profile_status(
     info!("Updating drift profile status: {:?}", &body);
 
     let exchange_token = data.exchange_token_from_perms(&perms).await.map_err(|e| {
-        error!("Failed to exchange token for scouter: {}", e);
+        error!("Failed to exchange token for scouter: {e}");
         internal_server_error(e, "Failed to exchange token for scouter")
     })?;
 
@@ -250,7 +250,7 @@ pub async fn update_drift_profile_status(
             scouter::Routes::ProfileStatus,
             RequestType::Put,
             Some(serde_json::to_value(&body).map_err(|e| {
-                error!("Failed to serialize profile status request: {}", e);
+                error!("Failed to serialize profile status request: {e}");
                 internal_server_error(e, "Failed to serialize profile status request")
             })?),
             None,
@@ -259,7 +259,7 @@ pub async fn update_drift_profile_status(
         )
         .await
         .map_err(|e| {
-            error!("Failed to update drift profile status: {}", e);
+            error!("Failed to update drift profile status: {e}");
             internal_server_error(e, "Failed to update drift profile status")
         })?;
 
@@ -272,7 +272,7 @@ pub async fn update_drift_profile_status(
         "deactivate_others": body.deactivate_others,
     });
     let metadata = serde_json::to_string(&metadata)
-        .unwrap_or_else(|e| format!("Failed to serialize ProfileStatusRequest: {}", e));
+        .unwrap_or_else(|e| format!("Failed to serialize ProfileStatusRequest: {e}"));
 
     let audit_context = AuditContext {
         resource_id: "update_drift_status".to_string(),
@@ -297,12 +297,12 @@ pub async fn get_spc_drift(
     // validate time window
 
     let exchange_token = data.exchange_token_from_perms(&perms).await.map_err(|e| {
-        error!("Failed to exchange token for scouter: {}", e);
+        error!("Failed to exchange token for scouter: {e}");
         internal_server_error(e, "Failed to exchange token for scouter")
     })?;
 
     let query_string = serde_qs::to_string(&params).map_err(|e| {
-        error!("Failed to serialize query string: {}", e);
+        error!("Failed to serialize query string: {e}");
         internal_server_error(e, "Failed to serialize query string")
     })?;
 
@@ -318,12 +318,12 @@ pub async fn get_spc_drift(
         )
         .await
         .map_err(|e| {
-            error!("Failed to get drift features: {}", e);
+            error!("Failed to get drift features: {e}");
             internal_server_error(e, "Failed to get drift features")
         })?;
 
     let body = response.json::<SpcDriftFeatures>().await.map_err(|e| {
-        error!("Failed to parse drift features: {}", e);
+        error!("Failed to parse drift features: {e}");
         internal_server_error(e, "Failed to parse drift features")
     })?;
 
@@ -339,12 +339,12 @@ pub async fn get_psi_drift(
     // validate time window
 
     let exchange_token = data.exchange_token_from_perms(&perms).await.map_err(|e| {
-        error!("Failed to exchange token for scouter: {}", e);
+        error!("Failed to exchange token for scouter: {e}");
         internal_server_error(e, "Failed to exchange token for scouter")
     })?;
 
     let query_string = serde_qs::to_string(&params).map_err(|e| {
-        error!("Failed to serialize query string: {}", e);
+        error!("Failed to serialize query string: {e}");
         internal_server_error(e, "Failed to serialize query string")
     })?;
 
@@ -360,7 +360,7 @@ pub async fn get_psi_drift(
         )
         .await
         .map_err(|e| {
-            error!("Failed to get drift features: {}", e);
+            error!("Failed to get drift features: {e}");
             internal_server_error(e, "Failed to get drift features")
         })?;
 
@@ -370,7 +370,7 @@ pub async fn get_psi_drift(
         .json::<BinnedPsiFeatureMetrics>()
         .await
         .map_err(|e| {
-            error!("Failed to parse drift features: {}", e);
+            error!("Failed to parse drift features: {e}");
             internal_server_error(e, "Failed to parse drift features")
         })?;
 
@@ -386,12 +386,12 @@ pub async fn get_custom_drift(
     // validate time window
 
     let exchange_token = data.exchange_token_from_perms(&perms).await.map_err(|e| {
-        error!("Failed to exchange token for scouter: {}", e);
+        error!("Failed to exchange token for scouter: {e}");
         internal_server_error(e, "Failed to exchange token for scouter")
     })?;
 
     let query_string = serde_qs::to_string(&params).map_err(|e| {
-        error!("Failed to serialize query string: {}", e);
+        error!("Failed to serialize query string: {e}");
         internal_server_error(e, "Failed to serialize query string")
     })?;
 
@@ -407,14 +407,14 @@ pub async fn get_custom_drift(
         )
         .await
         .map_err(|e| {
-            error!("Failed to get drift features: {}", e);
+            error!("Failed to get drift features: {e}");
             internal_server_error(e, "Failed to get drift features")
         })?;
 
     // extract body into SpcDriftFeatures
 
     let body = response.json::<BinnedCustomMetrics>().await.map_err(|e| {
-        error!("Failed to parse drift features: {}", e);
+        error!("Failed to parse drift features: {e}");
         internal_server_error(e, "Failed to parse drift features")
     })?;
 
@@ -437,7 +437,7 @@ pub async fn get_drift_profiles_for_ui(
         .get_artifact_key(&req.uid, &RegistryType::Model.to_string())
         .await
         .map_err(|e| {
-            error!("Failed to get artifact key: {}", e);
+            error!("Failed to get artifact key: {e}");
             internal_server_error(e, "Failed to get artifact key")
         })?;
 
@@ -447,7 +447,7 @@ pub async fn get_drift_profiles_for_ui(
 
     // create temp dir
     let tmp_dir = tempdir().map_err(|e| {
-        error!("Failed to create temp dir: {}", e);
+        error!("Failed to create temp dir: {e}");
         internal_server_error(e, "Failed to create temp dir")
     })?;
     let tmp_path = tmp_dir.path();
@@ -468,7 +468,7 @@ pub async fn get_drift_profiles_for_ui(
     let dest_path = tmp_dir.path().join(source_path);
 
     std::fs::create_dir_all(&dest_path).map_err(|e| {
-        error!("Failed to create directory: {}", e);
+        error!("Failed to create directory: {e}");
         internal_server_error(e, "Failed to create directory")
     })?;
 
@@ -482,12 +482,12 @@ pub async fn get_drift_profiles_for_ui(
     )
     .await
     .map_err(|e| {
-        error!("Failed to download artifact: {}", e);
+        error!("Failed to download artifact: {e}");
         internal_server_error(e, "Failed to download artifact")
     })?;
 
     let profiles = load_drift_profiles(tmp_path, &req.drift_profile_uri_map).map_err(|e| {
-        error!("Failed to load drift profile: {}", e);
+        error!("Failed to load drift profile: {e}");
         internal_server_error(e, "Failed to load drift profile")
     })?;
 
@@ -505,12 +505,12 @@ pub async fn get_drift_alerts(
     }
 
     let exchange_token = state.exchange_token_from_perms(&perms).await.map_err(|e| {
-        error!("Failed to exchange token for scouter: {}", e);
+        error!("Failed to exchange token for scouter: {e}");
         internal_server_error(e, "Failed to exchange token for scouter")
     })?;
 
     let query_string = serde_qs::to_string(&params).map_err(|e| {
-        error!("Failed to serialize query string: {}", e);
+        error!("Failed to serialize query string: {e}");
         internal_server_error(e, "Failed to serialize query string")
     })?;
 
@@ -526,7 +526,7 @@ pub async fn get_drift_alerts(
         )
         .await
         .map_err(|e| {
-            error!("Failed to get drift alerts: {}", e);
+            error!("Failed to get drift alerts: {e}");
             internal_server_error(e, "Failed to get drift alerts")
         })?;
 
@@ -535,7 +535,7 @@ pub async fn get_drift_alerts(
     match status_code.is_success() {
         true => {
             let body = response.json::<Alerts>().await.map_err(|e| {
-                error!("Failed to parse scouter response: {}", e);
+                error!("Failed to parse scouter response: {e}");
                 internal_server_error(e, "Failed to parse scouter response")
             })?;
 
@@ -543,7 +543,7 @@ pub async fn get_drift_alerts(
         }
         false => {
             let body = response.json::<ScouterServerError>().await.map_err(|e| {
-                error!("Failed to parse scouter error response: {}", e);
+                error!("Failed to parse scouter error response: {e}");
                 internal_server_error(e, "Failed to parse scouter error response")
             })?;
             Err((status_code, Json(OpsmlServerError::new(body.error))))
@@ -562,7 +562,7 @@ pub async fn update_alert_status(
     }
 
     let exchange_token = state.exchange_token_from_perms(&perms).await.map_err(|e| {
-        error!("Failed to exchange token for scouter: {}", e);
+        error!("Failed to exchange token for scouter: {e}");
         internal_server_error(e, "Failed to exchange token for scouter")
     })?;
 
@@ -572,7 +572,7 @@ pub async fn update_alert_status(
             scouter::Routes::Alerts,
             RequestType::Put,
             Some(serde_json::to_value(&body).map_err(|e| {
-                error!("Failed to serialize alert request: {}", e);
+                error!("Failed to serialize alert request: {e}");
                 internal_server_error(e, "Failed to serialize alert request")
             })?),
             None,
@@ -581,7 +581,7 @@ pub async fn update_alert_status(
         )
         .await
         .map_err(|e| {
-            error!("Failed to acknowledge drift alerts: {}", e);
+            error!("Failed to acknowledge drift alerts: {e}");
             internal_server_error(e, "Failed to acknowledge drift alerts")
         })?;
 
@@ -589,14 +589,14 @@ pub async fn update_alert_status(
     match status_code.is_success() {
         true => {
             let body = response.json::<UpdateAlertResponse>().await.map_err(|e| {
-                error!("Failed to parse scouter response: {}", e);
+                error!("Failed to parse scouter response: {e}");
                 internal_server_error(e, "Failed to parse scouter response")
             })?;
             Ok(Json(body))
         }
         false => {
             let body = response.json::<ScouterServerError>().await.map_err(|e| {
-                error!("Failed to parse scouter error response: {}", e);
+                error!("Failed to parse scouter error response: {e}");
                 internal_server_error(e, "Failed to parse scouter error response")
             })?;
             Err((status_code, Json(OpsmlServerError::new(body.error))))
@@ -615,7 +615,7 @@ pub async fn check_scouter_health(
     }
 
     let exchange_token = state.exchange_token_from_perms(&perms).await.map_err(|e| {
-        error!("Failed to exchange token for scouter: {}", e);
+        error!("Failed to exchange token for scouter: {e}");
         internal_server_error(e, "Failed to exchange token for scouter")
     })?;
 
@@ -631,7 +631,7 @@ pub async fn check_scouter_health(
         )
         .await
         .map_err(|e| {
-            error!("Failed to get scouter healthcheck: {}", e);
+            error!("Failed to get scouter healthcheck: {e}");
             internal_server_error(e, "Failed to get scouter healthcheck")
         })?;
 
@@ -639,14 +639,14 @@ pub async fn check_scouter_health(
     match status_code.is_success() {
         true => {
             let _ = response.json::<Alive>().await.map_err(|e| {
-                error!("Failed to parse scouter response: {}", e);
+                error!("Failed to parse scouter response: {e}");
                 internal_server_error(e, "Failed to parse scouter response")
             })?;
             Ok(Json(Alive { alive: true }))
         }
         false => {
             let body = response.json::<ScouterServerError>().await.map_err(|e| {
-                error!("Failed to parse scouter error response: {}", e);
+                error!("Failed to parse scouter error response: {e}");
                 internal_server_error(e, "Failed to parse scouter error response")
             })?;
             // return error response
@@ -659,29 +659,29 @@ pub async fn get_scouter_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
     let result = catch_unwind(AssertUnwindSafe(|| {
         Router::new()
             .route(
-                &format!("{}/scouter/profile", prefix),
+                &format!("{prefix}/scouter/profile"),
                 post(insert_drift_profile).put(update_drift_profile),
             )
             .route(
-                &format!("{}/scouter/profile/ui", prefix),
+                &format!("{prefix}/scouter/profile/ui"),
                 post(get_drift_profiles_for_ui),
             )
             .route(
-                &format!("{}/scouter/profile/status", prefix),
+                &format!("{prefix}/scouter/profile/status"),
                 put(update_drift_profile_status),
             )
-            .route(&format!("{}/scouter/drift/spc", prefix), get(get_spc_drift))
-            .route(&format!("{}/scouter/drift/psi", prefix), get(get_psi_drift))
+            .route(&format!("{prefix}/scouter/drift/spc"), get(get_spc_drift))
+            .route(&format!("{prefix}/scouter/drift/psi"), get(get_psi_drift))
             .route(
-                &format!("{}/scouter/drift/custom", prefix),
+                &format!("{prefix}/scouter/drift/custom"),
                 get(get_custom_drift),
             )
             .route(
-                &format!("{}/scouter/alerts", prefix),
+                &format!("{prefix}/scouter/alerts"),
                 get(get_drift_alerts).put(update_alert_status),
             )
             .route(
-                &format!("{}/scouter/healthcheck", prefix),
+                &format!("{prefix}/scouter/healthcheck"),
                 get(check_scouter_health),
             )
     }));

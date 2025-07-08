@@ -35,12 +35,12 @@ impl LocalMultipartUpload {
         let form = Form::new().part("file", part);
 
         let response = self.client.multipart_upload(form).map_err(|e| {
-            error!("Failed to upload file: {}", e);
+            error!("Failed to upload file: {e}");
             e
         })?;
 
         let response = response.json::<UploadResponse>().map_err(|e| {
-            error!("Failed to parse upload response: {}", e);
+            error!("Failed to parse upload response: {e}");
             e
         })?;
 

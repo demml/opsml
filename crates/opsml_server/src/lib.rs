@@ -26,7 +26,7 @@ pub async fn start_server() -> Result<(), Box<dyn std::error::Error>> {
 
     // get OPSML_SERVER_PORT from env
     let port = std::env::var("OPSML_SERVER_PORT").unwrap_or_else(|_| "3000".to_string());
-    let addr = format!("0.0.0.0:{}", port);
+    let addr = format!("0.0.0.0:{port}");
 
     // run it
     let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
@@ -52,7 +52,7 @@ pub fn start_server_in_background() -> Arc<Mutex<Option<JoinHandle<()>>>> {
     tokio::spawn(async move {
         let server_handle = tokio::spawn(async {
             if let Err(e) = start_server().await {
-                eprintln!("Server error: {}", e);
+                eprintln!("Server error: {e}");
             }
         });
 

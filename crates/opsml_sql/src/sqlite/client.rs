@@ -653,7 +653,7 @@ impl SqlClient for SqliteClient {
     ///
     /// * `Vec<String>` - A vector of unique space names
     async fn get_unique_space_names(&self, table: &CardTable) -> Result<Vec<String>, SqlError> {
-        let query = format!("SELECT DISTINCT space FROM {}", table);
+        let query = format!("SELECT DISTINCT space FROM {table}");
         let repos: Vec<String> = sqlx::query_scalar(&query).fetch_all(&self.pool).await?;
 
         Ok(repos)
@@ -680,7 +680,7 @@ impl SqlClient for SqliteClient {
 
         // if search_term is not None, format with %search_term%, else None
         let stats: QueryStats = sqlx::query_as(&query)
-            .bind(search_term.map(|term| format!("%{}%", term)))
+            .bind(search_term.map(|term| format!("%{term}%")))
             .bind(space)
             .fetch_one(&self.pool)
             .await?;
@@ -717,7 +717,7 @@ impl SqlClient for SqliteClient {
         let records: Vec<CardSummary> = sqlx::query_as(&query)
             .bind(space)
             .bind(search_term)
-            .bind(search_term.map(|term| format!("%{}%", term)))
+            .bind(search_term.map(|term| format!("%{term}%")))
             .bind(lower_bound)
             .bind(upper_bound)
             .fetch_all(&self.pool)
@@ -755,13 +755,13 @@ impl SqlClient for SqliteClient {
         uid: &str,
     ) -> Result<(String, String), SqlError> {
         // SQLite doesn't support RETURNING clause, so we need to do this in two steps
-        let select_query = format!("SELECT space, name FROM {} WHERE uid = ?", table);
+        let select_query = format!("SELECT space, name FROM {table} WHERE uid = ?");
         let (space, name): (String, String) = sqlx::query_as(&select_query)
             .bind(uid)
             .fetch_one(&self.pool)
             .await?;
 
-        let delete_query = format!("DELETE FROM {} WHERE uid = ?", table);
+        let delete_query = format!("DELETE FROM {table} WHERE uid = ?");
         sqlx::query(&delete_query)
             .bind(uid)
             .execute(&self.pool)
@@ -1812,7 +1812,7 @@ mod tests {
         for i in 0..10 {
             let parameter = ParameterRecord {
                 experiment_uid: uid.clone(),
-                name: format!("param{}", i),
+                name: format!("param{i}"),
                 ..Default::default()
             };
 

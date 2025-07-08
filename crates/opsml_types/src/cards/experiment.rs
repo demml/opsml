@@ -325,8 +325,8 @@ impl NetworkRateLogger {
 
         let (bytes_recv, bytes_sent) = self
             .networks
-            .iter()
-            .map(|(_, network)| (network.received() as i64, network.transmitted() as i64))
+            .values()
+            .map(|network| (network.received() as i64, network.transmitted() as i64))
             .fold((0, 0), |(acc_recv, acc_sent), (recv, sent)| {
                 (acc_recv + recv, acc_sent + sent)
             });

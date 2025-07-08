@@ -107,7 +107,7 @@ pub fn load_service_card<'py>(
     interfaces: Option<HashMap<String, Bound<'py, PyAny>>>,
 ) -> Result<(), RegistryError> {
     let card_registries = CardRegistries::new().inspect_err(|e| {
-        error!("Failed to create card registries: {}", e);
+        error!("Failed to create card registries: {e}");
     })?;
 
     for card in &service.cards {
@@ -122,7 +122,7 @@ pub fn load_service_card<'py>(
 
         let card_obj =
             load_and_extract_card(py, &card_registries, card, interface).map_err(|e| {
-                error!("Failed to load card: {}", e);
+                error!("Failed to load card: {e}");
                 e
             })?;
         service.card_objs.insert(card.alias.clone(), card_obj);
@@ -170,7 +170,7 @@ pub fn card_from_string<'py>(
         RegistryType::Model => {
             let mut card =
                 ModelCard::model_validate_json(py, card_json, interface).inspect_err(|e| {
-                    error!("Failed to validate ModelCard: {}", e);
+                    error!("Failed to validate ModelCard: {e}");
                 })?;
 
             card.set_artifact_key(key);
@@ -180,7 +180,7 @@ pub fn card_from_string<'py>(
         RegistryType::Data => {
             let mut card =
                 DataCard::model_validate_json(py, card_json, interface).inspect_err(|e| {
-                    error!("Failed to validate DataCard: {}", e);
+                    error!("Failed to validate DataCard: {e}");
                 })?;
 
             card.set_artifact_key(key);
@@ -189,7 +189,7 @@ pub fn card_from_string<'py>(
 
         RegistryType::Experiment => {
             let mut card = ExperimentCard::model_validate_json(card_json).inspect_err(|e| {
-                error!("Failed to validate ExperimentCard: {}", e);
+                error!("Failed to validate ExperimentCard: {e}");
             })?;
 
             card.set_artifact_key(key);
@@ -198,7 +198,7 @@ pub fn card_from_string<'py>(
 
         RegistryType::Prompt => {
             let card = PromptCard::model_validate_json(card_json).inspect_err(|e| {
-                error!("Failed to validate PromptCard: {}", e);
+                error!("Failed to validate PromptCard: {e}");
             })?;
 
             CardEnum::PromptCard(card)
@@ -206,7 +206,7 @@ pub fn card_from_string<'py>(
 
         RegistryType::Service => {
             let card = ServiceCard::model_validate_json(card_json).inspect_err(|e| {
-                error!("Failed to validate ServiceCard: {}", e);
+                error!("Failed to validate ServiceCard: {e}");
             })?;
 
             CardEnum::ServiceCard(Box::new(card))
@@ -242,7 +242,7 @@ pub fn download_card<'py>(
     interface: Option<&Bound<'py, PyAny>>,
 ) -> Result<Bound<'py, PyAny>, RegistryError> {
     let decryption_key = key.get_decrypt_key().inspect_err(|e| {
-        error!("Failed to get decryption key: {}", e);
+        error!("Failed to get decryption key: {e}");
     })?;
 
     let tmp_dir = TempDir::new()?;
@@ -259,7 +259,7 @@ pub fn download_card<'py>(
     decrypt_directory(&tmp_path, &decryption_key)?;
 
     let json_string = std::fs::read_to_string(&lpath).inspect_err(|e| {
-        error!("Failed to read card json: {}", e);
+        error!("Failed to read card json: {e}");
     })?;
 
     let mut card = card_from_string(py, json_string, interface, key)?;
@@ -346,7 +346,7 @@ fn validate_and_update_card(card: &mut Card) -> Result<(), RegistryError> {
     };
 
     let cards = reg.list_cards(args).inspect_err(|e| {
-        error!("Failed to list cards: {}", e);
+        error!("Failed to list cards: {e}");
     })?;
 
     if cards.is_empty() {
@@ -438,12 +438,12 @@ pub fn verify_card(
         let mut service = card
             .getattr("cards")
             .map_err(|e| {
-                error!("Failed to get cards from service: {}", e);
+                error!("Failed to get cards from service: {e}");
                 RegistryError::FailedToGetCardsFromService
             })?
             .extract::<Vec<Card>>()
             .map_err(|e| {
-                error!("Failed to extract cards from service: {}", e);
+                error!("Failed to extract cards from service: {e}");
                 RegistryError::FailedToExtractCardsFromService
             })?;
 
@@ -452,7 +452,7 @@ pub fn verify_card(
         // Update the Python service card with the updated cards
         card.setattr("cards", service.into_py_any(card.py()).unwrap())
             .map_err(|e| {
-                error!("Failed to update service card: {}", e);
+                error!("Failed to update service card: {e}");
                 RegistryError::UpdateServiceCardError
             })?;
     }

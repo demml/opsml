@@ -29,7 +29,7 @@ pub async fn get_next_version(
     if versions.is_empty() {
         return match &request.version {
             Some(version_str) => VersionValidator::clean_version(version_str).map_err(|e| {
-                error!("Invalid version format: {}", e);
+                error!("Invalid version format: {e}");
                 e.into()
             }),
             None => Ok(Version::new(0, 1, 0)),
@@ -47,7 +47,7 @@ pub async fn get_next_version(
     };
 
     VersionValidator::bump_version(&args).map_err(|e| {
-        error!("Failed to bump version: {}", e);
+        error!("Failed to bump version: {e}");
         e.into()
     })
 }
@@ -195,21 +195,21 @@ pub async fn cleanup_artifacts(
         )
         .await
         .inspect_err(|e| {
-            error!("Failed to get artifact key: {}", e);
+            error!("Failed to get artifact key: {e}");
         })?;
 
     storage_client
         .rm(&key.storage_path(), true)
         .await
         .inspect_err(|e| {
-            error!("Failed to remove artifact: {}", e);
+            error!("Failed to remove artifact: {e}");
         })?;
 
     sql_client
         .delete_artifact_key(&uid, &registry_type.to_string())
         .await
         .inspect_err(|e| {
-            error!("Failed to delete artifact key: {}", e);
+            error!("Failed to delete artifact key: {e}");
         })?;
 
     Ok(())

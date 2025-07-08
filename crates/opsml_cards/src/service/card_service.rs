@@ -366,7 +366,7 @@ impl ServiceCard {
     #[pyo3(signature = (json_string))]
     pub fn model_validate_json(json_string: String) -> Result<ServiceCard, CardError> {
         Ok(serde_json::from_str(&json_string).inspect_err(|e| {
-            error!("Failed to validate json: {}", e);
+            error!("Failed to validate json: {e}");
         })?)
     }
 
@@ -435,7 +435,7 @@ impl ServiceCard {
         // delete the path if it exists
         if base_path.exists() {
             std::fs::remove_dir_all(&base_path).inspect_err(|e| {
-                error!("Failed to remove directory: {}", e);
+                error!("Failed to remove directory: {e}");
             })?;
         }
 
@@ -554,7 +554,7 @@ impl ServiceCard {
 
         let (interface, load_kwargs) = Self::extract_kwargs(py, load_kwargs, &card.alias)
             .inspect_err(|e| {
-                error!("Failed to extract kwargs: {}", e);
+                error!("Failed to extract kwargs: {e}");
             })?;
 
         let card_json = Self::read_card_json(&card_path)?;
@@ -581,7 +581,7 @@ impl ServiceCard {
     pub fn load_service_json(path: &Path) -> Result<ServiceCard, CardError> {
         let service_path = path.join(SaveName::Card).with_extension(Suffix::Json);
         let json_string = std::fs::read_to_string(service_path).inspect_err(|e| {
-            error!("Failed to read file: {}", e);
+            error!("Failed to read file: {e}");
         })?;
         Self::model_validate_json(json_string)
     }
@@ -640,11 +640,11 @@ impl ServiceCard {
         card_obj
             .load(py, Some(card_path), kwargs)
             .inspect_err(|e| {
-                error!("Failed to load card: {}", e);
+                error!("Failed to load card: {e}");
             })?;
 
         Ok(card_obj.into_py_any(py).inspect_err(|e| {
-            error!("Failed to convert card to PyAny: {}", e);
+            error!("Failed to convert card to PyAny: {e}");
         })?)
     }
 
@@ -662,11 +662,11 @@ impl ServiceCard {
         card_obj
             .load(py, Some(card_path), kwargs)
             .inspect_err(|e| {
-                error!("Failed to load card: {}", e);
+                error!("Failed to load card: {e}");
             })?;
 
         Ok(card_obj.into_py_any(py).inspect_err(|e| {
-            error!("Failed to convert card to PyAny: {}", e);
+            error!("Failed to convert card to PyAny: {e}");
         })?)
     }
 

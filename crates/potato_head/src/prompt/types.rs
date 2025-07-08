@@ -73,8 +73,7 @@ fn image_format(media_type: &str) -> PyResult<String> {
         "image/webp" => "webp",
         _ => {
             return Err(PotatoHeadError::new_err(format!(
-                "Unknown image media type: {}",
-                media_type
+                "Unknown image media type: {media_type}"
             )))
         }
     };
@@ -94,8 +93,7 @@ fn document_format(media_type: &str) -> PyResult<String> {
         "application/vnd.ms-excel" => "xls",
         _ => {
             return Err(PotatoHeadError::new_err(format!(
-                "Unknown document media type: {}",
-                media_type
+                "Unknown document media type: {media_type}"
             )))
         }
     };
@@ -104,9 +102,9 @@ fn document_format(media_type: &str) -> PyResult<String> {
 
 fn guess_type(url: &str) -> PyResult<String> {
     // fail if mime type is not found
-    let mime_type = mime_guess::from_path(url).first().ok_or_else(|| {
-        PotatoHeadError::new_err(format!("Failed to guess mime type for {}", url))
-    })?;
+    let mime_type = mime_guess::from_path(url)
+        .first()
+        .ok_or_else(|| PotatoHeadError::new_err(format!("Failed to guess mime type for {url}")))?;
 
     Ok(mime_type.to_string())
 }
@@ -126,8 +124,7 @@ impl AudioUrl {
     fn new(url: String) -> PyResult<Self> {
         if !url.ends_with(".mp3") && !url.ends_with(".wav") {
             return Err(pyo3::exceptions::PyValueError::new_err(format!(
-                "Unknown audio file extension: {}",
-                url
+                "Unknown audio file extension: {url}"
             )));
         }
         Ok(Self {
@@ -167,8 +164,7 @@ impl ImageUrl {
             && !url.ends_with(".webp")
         {
             return Err(pyo3::exceptions::PyValueError::new_err(format!(
-                "Unknown image file extension: {}",
-                url
+                "Unknown image file extension: {url}"
             )));
         }
         Ok(Self {
@@ -256,7 +252,7 @@ impl BinaryContent {
             || get_image_media_types().contains(media_type)
             || get_document_media_types().contains(media_type)
         {
-            PotatoHeadError::new_err(format!("Unknown media type: {}", media_type));
+            PotatoHeadError::new_err(format!("Unknown media type: {media_type}"));
         }
 
         Ok(Self {
@@ -433,7 +429,7 @@ impl Message {
         let (content, sanitized) = match &self.content {
             PromptContent::Str(content) => {
                 let sanitized_result = sanitizer.sanitize(content).map_err(|e| {
-                    PotatoHeadError::new_err(format!("Failed to sanitize content: {}", e))
+                    PotatoHeadError::new_err(format!("Failed to sanitize content: {e}"))
                 })?;
                 (
                     PromptContent::Str(sanitized_result.sanitized_text.clone()),

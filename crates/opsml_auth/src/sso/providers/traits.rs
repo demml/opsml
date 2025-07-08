@@ -119,7 +119,7 @@ pub trait SsoProviderExt {
         let token_data = decode::<IdTokenClaims>(id_token, self.decoding_key(), &validation)
             .map_err({
                 |e| {
-                    error!("Failed to decode JWT token: {}", e);
+                    error!("Failed to decode JWT token: {e}");
                     SsoError::JwtDecodeError(e)
                 }
             })?;
@@ -140,7 +140,7 @@ pub trait SsoProviderExt {
             .get_token_from_user_pass(username, password)
             .await
             .map_err(|e| {
-                error!("Failed to get token from Okta: {}", e);
+                error!("Failed to get token from Okta: {e}");
                 e
             })?;
 

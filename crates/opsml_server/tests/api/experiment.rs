@@ -50,8 +50,7 @@ async fn test_opsml_server_experiment_routes() {
 
     let request = Request::builder()
         .uri(format!(
-            "/opsml/api/experiment/metrics/names?{}",
-            query_string
+            "/opsml/api/experiment/metrics/names?{query_string}",
         ))
         .method("GET")
         .body(Body::empty())
@@ -190,8 +189,7 @@ async fn test_opsml_server_experiment_routes() {
 
     let request = Request::builder()
         .uri(format!(
-            "/opsml/api/experiment/hardware/metrics?{}",
-            query_string
+            "/opsml/api/experiment/hardware/metrics?{query_string}"
         ))
         .method("GET")
         .body(Body::empty())

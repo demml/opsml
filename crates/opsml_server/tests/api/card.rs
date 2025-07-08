@@ -46,7 +46,7 @@ async fn test_opsml_server_card_uid() {
 
     // check if a card UID exists (get request with UidRequest params)
     let request = Request::builder()
-        .uri(format!("/opsml/api/card?{}", query_string))
+        .uri(format!("/opsml/api/card?{query_string}"))
         .method("GET")
         .body(Body::empty())
         .unwrap();
@@ -70,7 +70,7 @@ async fn test_opsml_server_card_uid() {
 
     // check if a card UID exists (get request with UidRequest params)
     let request = Request::builder()
-        .uri(format!("/opsml/api/card?{}", query_string))
+        .uri(format!("/opsml/api/card?{query_string}"))
         .method("GET")
         .body(Body::empty())
         .unwrap();
@@ -100,7 +100,7 @@ async fn test_opsml_server_card_spaces() {
 
     // check if a card UID exists (get request with UidRequest params)
     let request = Request::builder()
-        .uri(format!("/opsml/api/card/spaces?{}", query_string))
+        .uri(format!("/opsml/api/card/spaces?{query_string}"))
         .method("GET")
         .body(Body::empty())
         .unwrap();
@@ -131,7 +131,7 @@ async fn test_opsml_server_card_stats_and_query() {
 
     let query_string = serde_qs::to_string(&params).unwrap();
     let request = Request::builder()
-        .uri(format!("/opsml/api/card/registry/stats?{}", query_string))
+        .uri(format!("/opsml/api/card/registry/stats?{query_string}"))
         .method("GET")
         .body(Body::empty())
         .unwrap();
@@ -151,7 +151,7 @@ async fn test_opsml_server_card_stats_and_query() {
 
     let query_string = serde_qs::to_string(&params).unwrap();
     let request = Request::builder()
-        .uri(format!("/opsml/api/card/registry/stats?{}", query_string))
+        .uri(format!("/opsml/api/card/registry/stats?{query_string}"))
         .method("GET")
         .body(Body::empty())
         .unwrap();
@@ -176,7 +176,7 @@ async fn test_opsml_server_card_stats_and_query() {
     let query_string = serde_qs::to_string(&args).unwrap();
 
     let request = Request::builder()
-        .uri(format!("/opsml/api/card/registry/page?{}", query_string))
+        .uri(format!("/opsml/api/card/registry/page?{query_string}"))
         .method("GET")
         .body(Body::empty())
         .unwrap();
@@ -200,7 +200,7 @@ async fn test_opsml_server_card_stats_and_query() {
     let query_string = serde_qs::to_string(&args).unwrap();
 
     let request = Request::builder()
-        .uri(format!("/opsml/api/card/registry/page?{}", query_string))
+        .uri(format!("/opsml/api/card/registry/page?{query_string}"))
         .method("GET")
         .body(Body::empty())
         .unwrap();
@@ -224,8 +224,7 @@ async fn test_opsml_server_card_stats_and_query() {
 
     let request = Request::builder()
         .uri(format!(
-            "/opsml/api/card/registry/version/page?{}",
-            query_string
+            "/opsml/api/card/registry/version/page?{query_string}",
         ))
         .method("GET")
         .body(Body::empty())
@@ -260,7 +259,7 @@ async fn test_opsml_server_card_list_cards() {
     let query_string = serde_qs::to_string(&args).unwrap();
 
     let request = Request::builder()
-        .uri(format!("/opsml/api/card/list?{}", query_string))
+        .uri(format!("/opsml/api/card/list?{query_string}"))
         .method("GET")
         .body(Body::empty())
         .unwrap();
@@ -288,7 +287,7 @@ async fn test_opsml_server_card_list_cards() {
     let query_string = serde_qs::to_string(&args).unwrap();
 
     let request = Request::builder()
-        .uri(format!("/opsml/api/card/list?{}", query_string))
+        .uri(format!("/opsml/api/card/list?{query_string}"))
         .method("GET")
         .body(Body::empty())
         .unwrap();
@@ -355,7 +354,7 @@ async fn test_opsml_server_card_datacard_crud() {
     let query_string = serde_qs::to_string(&list_cards).unwrap();
 
     let request = Request::builder()
-        .uri(format!("/opsml/api/card/list?{}", query_string))
+        .uri(format!("/opsml/api/card/list?{query_string}"))
         .method("GET")
         .body(Body::empty())
         .unwrap();
@@ -418,7 +417,7 @@ async fn test_opsml_server_card_datacard_crud() {
     let query_string = serde_qs::to_string(&delete_args).unwrap();
 
     let request = Request::builder()
-        .uri(format!("/opsml/api/card/delete?{}", query_string))
+        .uri(format!("/opsml/api/card/delete?{query_string}"))
         .method("DELETE")
         .body(Body::empty())
         .unwrap();
@@ -485,7 +484,7 @@ async fn test_opsml_server_card_modelcard_crud() {
 
     // get key
     let request = Request::builder()
-        .uri(format!("/opsml/api/card/load?{}", query_string))
+        .uri(format!("/opsml/api/card/load?{query_string}"))
         .method("GET")
         .body(Body::empty())
         .unwrap();
@@ -512,7 +511,7 @@ async fn test_opsml_server_card_modelcard_crud() {
     let query_string = serde_qs::to_string(&list_cards).unwrap();
 
     let request = Request::builder()
-        .uri(format!("/opsml/api/card/list?{}", query_string))
+        .uri(format!("/opsml/api/card/list?{query_string}"))
         .method("GET")
         .body(Body::empty())
         .unwrap();
@@ -578,7 +577,7 @@ async fn test_opsml_server_card_modelcard_crud() {
     let query_string = serde_qs::to_string(&delete_args).unwrap();
 
     let request = Request::builder()
-        .uri(format!("/opsml/api/card/delete?{}", query_string))
+        .uri(format!("/opsml/api/card/delete?{query_string}"))
         .method("DELETE")
         .body(Body::empty())
         .unwrap();
@@ -647,7 +646,7 @@ async fn test_opsml_server_card_experimentcard_crud() {
     let query_string = serde_qs::to_string(&list_cards).unwrap();
 
     let request = Request::builder()
-        .uri(format!("/opsml/api/card/list?{}", query_string))
+        .uri(format!("/opsml/api/card/list?{query_string}"))
         .method("GET")
         .body(Body::empty())
         .unwrap();
@@ -711,7 +710,7 @@ async fn test_opsml_server_card_experimentcard_crud() {
     let query_string = serde_qs::to_string(&delete_args).unwrap();
 
     let request = Request::builder()
-        .uri(format!("/opsml/api/card/delete?{}", query_string))
+        .uri(format!("/opsml/api/card/delete?{query_string}"))
         .method("DELETE")
         .body(Body::empty())
         .unwrap();
@@ -778,7 +777,7 @@ async fn test_opsml_server_card_auditcard_crud() {
     let query_string = serde_qs::to_string(&list_cards).unwrap();
 
     let request = Request::builder()
-        .uri(format!("/opsml/api/card/list?{}", query_string))
+        .uri(format!("/opsml/api/card/list?{query_string}"))
         .method("GET")
         .body(Body::empty())
         .unwrap();
@@ -842,7 +841,7 @@ async fn test_opsml_server_card_auditcard_crud() {
     let query_string = serde_qs::to_string(&delete_args).unwrap();
 
     let request = Request::builder()
-        .uri(format!("/opsml/api/card/delete?{}", query_string))
+        .uri(format!("/opsml/api/card/delete?{query_string}"))
         .method("DELETE")
         .body(Body::empty())
         .unwrap();
@@ -909,7 +908,7 @@ async fn test_opsml_server_card_service_card_crud() {
     let query_string = serde_qs::to_string(&list_cards).unwrap();
 
     let request = Request::builder()
-        .uri(format!("/opsml/api/card/list?{}", query_string))
+        .uri(format!("/opsml/api/card/list?{query_string}"))
         .method("GET")
         .body(Body::empty())
         .unwrap();
@@ -967,7 +966,7 @@ async fn test_opsml_server_card_service_card_crud() {
     let query_string = serde_qs::to_string(&delete_args).unwrap();
 
     let request = Request::builder()
-        .uri(format!("/opsml/api/card/delete?{}", query_string))
+        .uri(format!("/opsml/api/card/delete?{query_string}"))
         .method("DELETE")
         .body(Body::empty())
         .unwrap();
@@ -1034,7 +1033,7 @@ async fn test_opsml_server_card_promptcard_crud() {
     let query_string = serde_qs::to_string(&list_cards).unwrap();
 
     let request = Request::builder()
-        .uri(format!("/opsml/api/card/list?{}", query_string))
+        .uri(format!("/opsml/api/card/list?{query_string}"))
         .method("GET")
         .body(Body::empty())
         .unwrap();
@@ -1094,7 +1093,7 @@ async fn test_opsml_server_card_promptcard_crud() {
     let query_string = serde_qs::to_string(&delete_args).unwrap();
 
     let request = Request::builder()
-        .uri(format!("/opsml/api/card/delete?{}", query_string))
+        .uri(format!("/opsml/api/card/delete?{query_string}"))
         .method("DELETE")
         .body(Body::empty())
         .unwrap();
@@ -1171,7 +1170,7 @@ async fn test_opsml_server_card_get_card() {
     let query_string = serde_qs::to_string(&params).unwrap();
     //
     let request = Request::builder()
-        .uri(format!("/opsml/api/card/metadata?{}", query_string))
+        .uri(format!("/opsml/api/card/metadata?{query_string}"))
         .method("GET")
         .body(Body::empty())
         .unwrap();
@@ -1231,7 +1230,7 @@ async fn test_opsml_server_card_get_readme() {
     let query_string = serde_qs::to_string(&params).unwrap();
     //
     let request = Request::builder()
-        .uri(format!("/opsml/api/card/readme?{}", query_string))
+        .uri(format!("/opsml/api/card/readme?{query_string}"))
         .method("GET")
         .body(Body::empty())
         .unwrap();
@@ -1282,7 +1281,7 @@ async fn test_opsml_server_space_crud() {
 
     let query_string = serde_qs::to_string(&params).unwrap();
     let request = Request::builder()
-        .uri(format!("/opsml/api/card/space?{}", query_string))
+        .uri(format!("/opsml/api/card/space?{query_string}"))
         .method("GET")
         .body(Body::empty())
         .unwrap();
@@ -1343,7 +1342,7 @@ async fn test_opsml_server_space_crud() {
 
     let query_string = serde_qs::to_string(&delete_request).unwrap();
     let request = Request::builder()
-        .uri(format!("/opsml/api/card/space?{}", query_string))
+        .uri(format!("/opsml/api/card/space?{query_string}"))
         .method("DELETE")
         .body(Body::empty())
         .unwrap();
@@ -1423,7 +1422,7 @@ async fn test_opsml_server_space_stats() {
     };
     let query_string = serde_qs::to_string(&delete_args).unwrap();
     let request = Request::builder()
-        .uri(format!("/opsml/api/card/delete?{}", query_string))
+        .uri(format!("/opsml/api/card/delete?{query_string}"))
         .method("DELETE")
         .body(Body::empty())
         .unwrap();

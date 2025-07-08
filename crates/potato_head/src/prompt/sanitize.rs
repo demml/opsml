@@ -699,8 +699,7 @@ impl PromptSanitizer {
         // Handle potential errors based on risk level
         if self.config.error_on_high_risk && highest_risk >= self.config.risk_threshold {
             return Err(PotatoError::SanitizationError(format!(
-                "Potential prompt injection detected with risk level: {}. Issues: {:?}",
-                highest_risk, detected_issues
+                "Potential prompt injection detected with risk level: {highest_risk}. Issues: {detected_issues:?}"
             )));
         }
 
@@ -879,7 +878,7 @@ impl PromptSanitizer {
         if matches.matched_any() {
             for idx in matches.iter() {
                 if let Some(pattern) = self.config.custom_patterns.get(idx) {
-                    issues.push(format!("Found custom pattern: {}", pattern));
+                    issues.push(format!("Found custom pattern: {pattern}"));
                     highest_risk = std::cmp::max(highest_risk, RiskLevel::High);
                 }
             }
@@ -916,7 +915,7 @@ impl PromptSanitizer {
         for (pii_type, patterns) in get_pii_regexes().iter() {
             for regex in patterns {
                 if regex.is_match(text) {
-                    issues.push(format!("Found potential {:?} PII", pii_type));
+                    issues.push(format!("Found potential {pii_type:?} PII"));
                     highest_risk = std::cmp::max(highest_risk, RiskLevel::High);
                 }
             }
@@ -933,7 +932,7 @@ impl PromptSanitizer {
         for (pii_type, patterns) in get_pii_regexes().iter() {
             for regex in patterns {
                 if regex.is_match(&result) {
-                    issues.push(format!("Sanitized {:?} PII ", pii_type));
+                    issues.push(format!("Sanitized {pii_type:?} PII "));
                     highest_risk = std::cmp::max(highest_risk, RiskLevel::High);
                     result = regex.replace_all(&result, "[PII REDACTED]").to_string();
                 }
@@ -970,8 +969,7 @@ mod tests {
             let result = sanitizer.assess_risk(input).unwrap();
             assert_eq!(
                 result.risk_level, expected_risk,
-                "Failed for input: {}",
-                input
+                "Failed for input: {input}"
             );
 
             // only normal text should have no issues
@@ -1054,8 +1052,7 @@ mod tests {
             let result = sanitizer.assess_risk(input).unwrap();
             assert_eq!(
                 result.risk_level, expected_risk,
-                "Failed for input: {}",
-                input
+                "Failed for input: {input}"
             );
         }
     }
@@ -1136,8 +1133,7 @@ mod tests {
             let result = sanitizer.assess_risk(input).unwrap();
             assert_eq!(
                 result.risk_level, expected_risk,
-                "Failed for input: {}",
-                input
+                "Failed for input: {input}"
             );
 
             if expected_risk == RiskLevel::Safe {
@@ -1169,8 +1165,7 @@ mod tests {
             let result = sanitizer.assess_risk(input).unwrap();
             assert_eq!(
                 result.risk_level, expected_risk,
-                "Failed for input: {}",
-                input
+                "Failed for input: {input}",
             );
         }
     }

@@ -160,7 +160,7 @@ impl Experiment {
         // extract code
         match extract_code(py, code_dir, &artifact_key) {
             Ok(_) => debug!("Code extracted successfully"),
-            Err(e) => warn!("Failed to extract code: {}", e),
+            Err(e) => warn!("Failed to extract code: {e}"),
         };
 
         // start hardware queue if log_hardware is true
@@ -598,7 +598,7 @@ impl Experiment {
         // set exerimentcard_uid on card
         match card.setattr("experimentcard_uid", self.uid.clone()) {
             Ok(_) => debug!("Set experimentcard_uid on card"),
-            Err(e) => warn!("Failed to set experimentcard_uid on card: {}", e),
+            Err(e) => warn!("Failed to set experimentcard_uid on card: {e}"),
         };
 
         match registry_type {

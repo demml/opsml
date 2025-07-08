@@ -145,7 +145,7 @@ pub async fn auth_api_middleware(
                     // Add new token to request headers for downstream handlers
                     req.headers_mut().insert(
                         header::AUTHORIZATION,
-                        HeaderValue::from_str(&format!("Bearer {}", new_access_token)).unwrap(),
+                        HeaderValue::from_str(&format!("Bearer {new_access_token}")).unwrap(),
                     );
 
                     // Run the request and modify the response
@@ -155,7 +155,7 @@ pub async fn auth_api_middleware(
                     // Add new token to response headers
                     response.headers_mut().insert(
                         header::AUTHORIZATION,
-                        HeaderValue::from_str(&format!("Bearer {}", new_access_token)).unwrap(),
+                        HeaderValue::from_str(&format!("Bearer {new_access_token}")).unwrap(),
                     );
 
                     return Ok(response);
