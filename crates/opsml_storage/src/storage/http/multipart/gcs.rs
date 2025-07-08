@@ -203,7 +203,7 @@ impl GcsMultipartUpload {
                     tracing::info!("Multipart upload finalized successfully");
                 }
                 Err(e) => {
-                    tracing::warn!("Failed to finalize multipart upload: {}", e);
+                    tracing::warn!("Failed to finalize multipart upload: {e}");
                     // Even if finalization fails, we've uploaded all chunks, so continue
                 }
             }
@@ -224,7 +224,7 @@ impl GcsMultipartUpload {
             // log the error
             // get the response text
             let error_text = response.text().unwrap_or_default();
-            error!("Failed to cancel upload: {}", error_text);
+            error!("Failed to cancel upload: {error_text}");
             Err(MultiPartError::CancelUploadError(error_text))
         } else {
             Ok(())
@@ -247,7 +247,7 @@ impl GcsMultipartUpload {
             };
 
             // trace error and raise
-            error!("Failed to cancel upload: {}", error);
+            error!("Failed to cancel upload: {error}");
             Err(MultiPartError::CancelUploadError(error.to_string()))
         }
     }

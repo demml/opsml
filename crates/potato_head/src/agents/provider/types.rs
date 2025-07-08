@@ -42,12 +42,12 @@ impl Provider {
     pub fn extract_provider(provider: &Bound<'_, PyAny>) -> Result<Provider, AgentError> {
         match provider.is_instance_of::<Provider>() {
             true => Ok(provider.extract::<Provider>().inspect_err(|e| {
-                error!("Failed to extract provider: {}", e);
+                error!("Failed to extract provider: {e}");
             })?),
             false => {
                 let provider = provider.extract::<String>().unwrap();
                 Ok(Provider::from_string(&provider).inspect_err(|e| {
-                    error!("Failed to convert string to provider: {}", e);
+                    error!("Failed to convert string to provider: {e}");
                 })?)
             }
         }

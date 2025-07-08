@@ -103,9 +103,9 @@ impl DownloadCard {
         PathBuf::from(&self.write_dir)
     }
 
-    pub fn deck_path(&self) -> PathBuf {
+    pub fn service_path(&self) -> PathBuf {
         if self.write_dir == *"artifacts" {
-            PathBuf::from("card_deck")
+            PathBuf::from("service")
         } else {
             PathBuf::from(&self.write_dir)
         }

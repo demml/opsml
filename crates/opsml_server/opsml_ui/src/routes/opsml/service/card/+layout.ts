@@ -6,7 +6,7 @@ import { getCardMetadata, getUID } from "$lib/components/card/utils";
 
 // @ts-ignore
 import type { LayoutServerLoad } from "./$types";
-import type { CardDeck } from "$lib/components/card/card_interfaces/carddeck";
+import type { ServiceCard } from "$lib/components/card/card_interfaces/servicecard";
 import { getCardReadMe } from "$lib/components/readme/util";
 
 // @ts-ignore
@@ -16,7 +16,7 @@ export const load: LayoutServerLoad = async ({ url }) => {
   let registry = RegistryType.Deck;
   let uid = await getUID(url, registry);
 
-  let metadata = (await getCardMetadata(uid, registry)) as CardDeck;
+  let metadata = (await getCardMetadata(uid, registry)) as ServiceCard;
 
   let registryPath = getRegistryTypeLowerCase(registry);
 

@@ -13,7 +13,7 @@ pub async fn health_check() -> impl IntoResponse {
 
 pub async fn get_health_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
     let result = catch_unwind(AssertUnwindSafe(|| {
-        Router::new().route(&format!("{}/healthcheck", prefix), get(health_check))
+        Router::new().route(&format!("{prefix}/healthcheck"), get(health_check))
     }));
 
     match result {

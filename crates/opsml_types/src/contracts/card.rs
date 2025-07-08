@@ -32,7 +32,7 @@ impl AuditableRequest for UidRequest {
 
     fn get_metadata(&self) -> String {
         serde_json::to_string(self)
-            .unwrap_or_else(|e| format!("Failed to serialize UidRequest: {}", e))
+            .unwrap_or_else(|e| format!("Failed to serialize UidRequest: {e}"))
     }
 
     fn get_registry_type(&self) -> Option<RegistryType> {
@@ -58,7 +58,7 @@ impl AuditableRequest for DeleteCardRequest {
 
     fn get_metadata(&self) -> String {
         serde_json::to_string(self)
-            .unwrap_or_else(|e| format!("Failed to serialize DeleteCardRequest: {}", e))
+            .unwrap_or_else(|e| format!("Failed to serialize DeleteCardRequest: {e}"))
     }
 
     fn get_registry_type(&self) -> Option<RegistryType> {
@@ -87,7 +87,7 @@ impl AuditableRequest for RegistrySpaceRequest {
 
     fn get_metadata(&self) -> String {
         serde_json::to_string(self)
-            .unwrap_or_else(|e| format!("Failed to serialize RegistrySpaceRequest: {}", e))
+            .unwrap_or_else(|e| format!("Failed to serialize RegistrySpaceRequest: {e}"))
     }
 
     fn get_registry_type(&self) -> Option<RegistryType> {
@@ -161,7 +161,7 @@ impl AuditableRequest for RegistryStatsRequest {
 
     fn get_metadata(&self) -> String {
         serde_json::to_string(self)
-            .unwrap_or_else(|e| format!("Failed to serialize RegistryStatsRequest: {}", e))
+            .unwrap_or_else(|e| format!("Failed to serialize RegistryStatsRequest: {e}"))
     }
 
     fn get_registry_type(&self) -> Option<RegistryType> {
@@ -191,7 +191,7 @@ impl AuditableRequest for QueryPageRequest {
 
     fn get_metadata(&self) -> String {
         serde_json::to_string(self)
-            .unwrap_or_else(|e| format!("Failed to serialize QueryPageRequest: {}", e))
+            .unwrap_or_else(|e| format!("Failed to serialize QueryPageRequest: {e}"))
     }
 
     fn get_registry_type(&self) -> Option<RegistryType> {
@@ -218,7 +218,7 @@ impl AuditableRequest for VersionPageRequest {
 
     fn get_metadata(&self) -> String {
         serde_json::to_string(self)
-            .unwrap_or_else(|e| format!("Failed to serialize VersionPageRequest: {}", e))
+            .unwrap_or_else(|e| format!("Failed to serialize VersionPageRequest: {e}"))
     }
 
     fn get_registry_type(&self) -> Option<RegistryType> {
@@ -276,7 +276,7 @@ impl AuditableRequest for CardQueryArgs {
 
     fn get_metadata(&self) -> String {
         serde_json::to_string(self)
-            .unwrap_or_else(|e| format!("Failed to serialize CardQueryArgs: {}", e))
+            .unwrap_or_else(|e| format!("Failed to serialize CardQueryArgs: {e}"))
     }
 
     fn get_registry_type(&self) -> Option<RegistryType> {
@@ -384,7 +384,7 @@ pub struct ExperimentCardClientRecord {
     pub datacard_uids: Vec<String>,
     pub modelcard_uids: Vec<String>,
     pub promptcard_uids: Vec<String>,
-    pub card_deck_uids: Vec<String>,
+    pub service_card_uids: Vec<String>,
     pub experimentcard_uids: Vec<String>,
     pub opsml_version: String,
     pub username: String,
@@ -403,7 +403,7 @@ impl Default for ExperimentCardClientRecord {
             datacard_uids: Vec::new(),
             modelcard_uids: Vec::new(),
             promptcard_uids: Vec::new(),
-            card_deck_uids: Vec::new(),
+            service_card_uids: Vec::new(),
             experimentcard_uids: Vec::new(),
             opsml_version: opsml_version::version(),
             username: "guest".to_string(),
@@ -485,7 +485,7 @@ impl Default for PromptCardClientRecord {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[pyclass]
-pub struct CardDeckClientRecord {
+pub struct ServiceCardClientRecord {
     pub uid: String,
     pub created_at: DateTime<Utc>,
     pub app_env: String,
@@ -497,7 +497,7 @@ pub struct CardDeckClientRecord {
     pub username: String,
 }
 
-impl Default for CardDeckClientRecord {
+impl Default for ServiceCardClientRecord {
     fn default() -> Self {
         Self {
             uid: "".to_string(),
@@ -522,7 +522,7 @@ pub enum CardRecord {
     Experiment(ExperimentCardClientRecord),
     Audit(AuditCardClientRecord),
     Prompt(PromptCardClientRecord),
-    Deck(CardDeckClientRecord),
+    Service(ServiceCardClientRecord),
 }
 
 #[pymethods]
@@ -539,7 +539,7 @@ impl CardRecord {
             Self::Experiment(card) => &card.uid,
             Self::Audit(card) => &card.uid,
             Self::Prompt(card) => &card.uid,
-            Self::Deck(card) => &card.uid,
+            Self::Service(card) => &card.uid,
         }
     }
 
@@ -551,7 +551,7 @@ impl CardRecord {
             Self::Experiment(card) => card.created_at,
             Self::Audit(card) => card.created_at,
             Self::Prompt(card) => card.created_at,
-            Self::Deck(card) => card.created_at,
+            Self::Service(card) => card.created_at,
         }
     }
 
@@ -563,7 +563,7 @@ impl CardRecord {
             Self::Experiment(card) => card.app_env.as_ref(),
             Self::Audit(card) => card.app_env.as_ref(),
             Self::Prompt(card) => card.app_env.as_ref(),
-            Self::Deck(card) => card.app_env.as_ref(),
+            Self::Service(card) => card.app_env.as_ref(),
         }
     }
 
@@ -575,7 +575,7 @@ impl CardRecord {
             Self::Experiment(card) => card.name.as_ref(),
             Self::Audit(card) => card.name.as_ref(),
             Self::Prompt(card) => card.name.as_ref(),
-            Self::Deck(card) => card.name.as_ref(),
+            Self::Service(card) => card.name.as_ref(),
         }
     }
 
@@ -587,7 +587,7 @@ impl CardRecord {
             Self::Experiment(card) => card.space.as_ref(),
             Self::Audit(card) => card.space.as_ref(),
             Self::Prompt(card) => card.space.as_ref(),
-            Self::Deck(card) => card.space.as_ref(),
+            Self::Service(card) => card.space.as_ref(),
         }
     }
 
@@ -599,7 +599,7 @@ impl CardRecord {
             Self::Experiment(card) => card.version.as_ref(),
             Self::Audit(card) => card.version.as_ref(),
             Self::Prompt(card) => card.version.as_ref(),
-            Self::Deck(card) => card.version.as_ref(),
+            Self::Service(card) => card.version.as_ref(),
         }
     }
 
@@ -612,7 +612,7 @@ impl CardRecord {
             Self::Experiment(card) => &card.tags,
             Self::Audit(card) => &card.tags,
             Self::Prompt(card) => &card.tags,
-            Self::Deck(_card) => &EMPTY_TAGS,
+            Self::Service(_card) => &EMPTY_TAGS,
         }
     }
 
@@ -624,7 +624,7 @@ impl CardRecord {
             Self::Experiment(card) => Some(card.datacard_uids.iter().map(String::as_str).collect()),
             Self::Audit(card) => Some(card.datacard_uids.iter().map(String::as_str).collect()),
             Self::Prompt(_) => None,
-            Self::Deck(_) => None,
+            Self::Service(_) => None,
         }
     }
 
@@ -638,7 +638,7 @@ impl CardRecord {
             }
             Self::Audit(card) => Some(card.modelcard_uids.iter().map(String::as_str).collect()),
             Self::Prompt(_) => None,
-            Self::Deck(_) => None,
+            Self::Service(_) => None,
         }
     }
 
@@ -655,7 +655,7 @@ impl CardRecord {
                     .collect(),
             ),
             Self::Prompt(card) => Some(vec![&card.experimentcard_uid.as_deref().unwrap()]),
-            Self::Deck(_) => None,
+            Self::Service(_) => None,
         }
     }
 
@@ -667,7 +667,7 @@ impl CardRecord {
             Self::Experiment(_) => None,
             Self::Audit(card) => Some(&card.uid),
             Self::Prompt(card) => card.auditcard_uid.as_deref(),
-            Self::Deck(_) => None,
+            Self::Service(_) => None,
         }
     }
 
@@ -679,7 +679,7 @@ impl CardRecord {
             Self::Experiment(_) => None,
             Self::Audit(_) => None,
             Self::Prompt(_) => None,
-            Self::Deck(_) => None,
+            Self::Service(_) => None,
         }
     }
 
@@ -691,7 +691,7 @@ impl CardRecord {
             Self::Experiment(_) => None,
             Self::Audit(_) => None,
             Self::Prompt(_) => None,
-            Self::Deck(_) => None,
+            Self::Service(_) => None,
         }
     }
 
@@ -703,7 +703,7 @@ impl CardRecord {
             Self::Experiment(_) => None,
             Self::Audit(_) => None,
             Self::Prompt(_) => None,
-            Self::Deck(_) => None,
+            Self::Service(_) => None,
         }
     }
 
@@ -715,7 +715,7 @@ impl CardRecord {
             Self::Experiment(_) => None,
             Self::Audit(_) => None,
             Self::Prompt(_) => None,
-            Self::Deck(_) => None,
+            Self::Service(_) => None,
         }
     }
 }
@@ -728,7 +728,7 @@ impl CardRecord {
             Self::Experiment(_) => None,
             Self::Audit(_) => None,
             Self::Prompt(_) => None,
-            Self::Deck(card) => Some(card.cards.clone()),
+            Self::Service(card) => Some(card.cards.clone()),
         }
     }
 
@@ -786,10 +786,10 @@ impl CardRecord {
                 );
                 Ok(Path::new(&uri).to_path_buf())
             }
-            Self::Deck(card) => {
+            Self::Service(card) => {
                 let uri = format!(
                     "{}/{}/{}/v{}",
-                    CardTable::Deck,
+                    CardTable::Service,
                     card.space,
                     card.name,
                     card.version
@@ -806,7 +806,7 @@ impl CardRecord {
             Self::Experiment(_) => RegistryType::Experiment,
             Self::Audit(_) => RegistryType::Audit,
             Self::Prompt(_) => RegistryType::Prompt,
-            Self::Deck(_) => RegistryType::Deck,
+            Self::Service(_) => RegistryType::Service,
         }
     }
 }
@@ -915,7 +915,7 @@ impl AuditableRequest for CreateCardRequest {
 
     fn get_metadata(&self) -> String {
         serde_json::to_string(self)
-            .unwrap_or_else(|e| format!("Failed to serialize CreateCardRequest: {}", e))
+            .unwrap_or_else(|e| format!("Failed to serialize CreateCardRequest: {e}"))
     }
 
     fn get_registry_type(&self) -> Option<RegistryType> {
@@ -952,7 +952,7 @@ impl AuditableRequest for UpdateCardRequest {
 
     fn get_metadata(&self) -> String {
         serde_json::to_string(self)
-            .unwrap_or_else(|e| format!("Failed to serialize UpdateCardRequest: {}", e))
+            .unwrap_or_else(|e| format!("Failed to serialize UpdateCardRequest: {e}"))
     }
 
     fn get_registry_type(&self) -> Option<RegistryType> {

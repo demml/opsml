@@ -1,6 +1,6 @@
 use opsml_cards::{
-    Card, CardDeck, DataCard, DataCardMetadata, ExperimentCard, ModelCard, ModelCardMetadata,
-    PromptCard, UidMetadata,
+    Card, DataCard, DataCardMetadata, ExperimentCard, ModelCard, ModelCardMetadata, PromptCard,
+    ServiceCard, UidMetadata,
 };
 
 use opsml_registry::{CardRegistries, CardRegistry};
@@ -40,8 +40,8 @@ pub fn card(m: &Bound<'_, PyModule>) -> PyResult<()> {
     // promptcard
     m.add_class::<PromptCard>()?;
 
-    // CardDeck
-    m.add_class::<CardDeck>()?;
+    // ServiceCard
+    m.add_class::<ServiceCard>()?;
     m.add_class::<Card>()?;
 
     Ok(())

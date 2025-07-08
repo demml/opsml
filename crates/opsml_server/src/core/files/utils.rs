@@ -57,7 +57,7 @@ pub async fn create_artifact_key(
         .insert_artifact_key(&artifact_key)
         .await
         .inspect_err(|e| {
-            error!("Failed to insert artifact key: {}", e);
+            error!("Failed to insert artifact key: {e}");
         })?;
 
     Ok(artifact_key)
@@ -71,12 +71,12 @@ pub async fn create_and_store_encrypted_file(
     key: &ArtifactKey,
 ) -> Result<UploadResponse, ServerError> {
     let encryption_key = key.get_decrypt_key().inspect_err(|e| {
-        error!("Failed to get decryption key: {}", e);
+        error!("Failed to get decryption key: {e}");
     })?;
 
     // Create temp directory
     let tmp_dir = TempDir::new().inspect_err(|e| {
-        error!("Failed to create temp dir: {}", e);
+        error!("Failed to create temp dir: {e}");
     })?;
 
     // Create local path
@@ -84,12 +84,12 @@ pub async fn create_and_store_encrypted_file(
 
     // Write content to file
     std::fs::write(&local_path, content).inspect_err(|e| {
-        error!("Failed to write content to file: {}", e);
+        error!("Failed to write content to file: {e}");
     })?;
 
     // Encrypt directory
     encrypt_directory(&local_path, &encryption_key).inspect_err(|e| {
-        error!("Failed to encrypt directory: {}", e);
+        error!("Failed to encrypt directory: {e}");
     })?;
 
     let remote_path = PathBuf::from(rpath);
@@ -98,7 +98,7 @@ pub async fn create_and_store_encrypted_file(
         .put(&local_path, &remote_path, false)
         .await
         .inspect_err(|e| {
-            error!("Failed to store file: {}", e);
+            error!("Failed to store file: {e}");
         })?;
 
     Ok(UploadResponse {
@@ -121,7 +121,7 @@ pub async fn download_artifact(
             .get_artifact_key_from_path(rpath, registry_type)
             .await
             .inspect_err(|e| {
-                error!("Failed to get artifact key: {}", e);
+                error!("Failed to get artifact key: {e}");
             })?
     } else {
         Some(
@@ -129,7 +129,7 @@ pub async fn download_artifact(
                 .get_artifact_key(uid.unwrap(), registry_type)
                 .await
                 .inspect_err(|e| {
-                    error!("Failed to get artifact key: {}", e);
+                    error!("Failed to get artifact key: {e}");
                 })?,
         )
     };
@@ -143,7 +143,7 @@ pub async fn download_artifact(
 
     // Check if file exists in storage
     let files = storage_client.find(&rpath).await.inspect_err(|e| {
-        error!("Failed to find artifact: {}", e);
+        error!("Failed to find artifact: {e}");
     })?;
 
     if files.is_empty() {
@@ -158,16 +158,16 @@ pub async fn download_artifact(
         .get(lpath, &remote_file, false)
         .await
         .inspect_err(|e| {
-            error!("Failed to download artifact: {}", e);
+            error!("Failed to download artifact: {e}");
         })?;
 
     // Get decryption key and decrypt
     let decryption_key = key.get_decrypt_key().inspect_err(|e| {
-        error!("Failed to get decryption key: {}", e);
+        error!("Failed to get decryption key: {e}");
     })?;
 
     decrypt_file(lpath, &decryption_key).inspect_err(|e| {
-        error!("Failed to decrypt artifact: {}", e);
+        error!("Failed to decrypt artifact: {e}");
     })?;
 
     Ok(DownloadResponse { exists: true })
@@ -186,14 +186,14 @@ pub async fn download_artifacts(
         .get_artifact_key(uid.unwrap(), registry_type)
         .await
         .inspect_err(|e| {
-            error!("Failed to get artifact key: {}", e);
+            error!("Failed to get artifact key: {e}");
         })?;
 
     let rpath = key.storage_path().join(rpath);
 
     // Check if file exists in storage
     let files = storage_client.find(&rpath).await.inspect_err(|e| {
-        error!("Failed to find artifact: {}", e);
+        error!("Failed to find artifact: {e}");
     })?;
 
     if files.is_empty() {
@@ -205,16 +205,16 @@ pub async fn download_artifacts(
         .get(lpath, &rpath, true)
         .await
         .inspect_err(|e| {
-            error!("Failed to download artifact: {}", e);
+            error!("Failed to download artifact: {e}");
         })?;
 
     // Get decryption key and decrypt
     let decryption_key = key.get_decrypt_key().inspect_err(|e| {
-        error!("Failed to get decryption key: {}", e);
+        error!("Failed to get decryption key: {e}");
     })?;
 
     decrypt_directory(lpath, &decryption_key).inspect_err(|e| {
-        error!("Failed to decrypt artifact: {}", e);
+        error!("Failed to decrypt artifact: {e}");
     })?;
 
     Ok(DownloadResponse { exists: true })
@@ -231,7 +231,7 @@ pub async fn get_artifact_key(
         .get_artifact_key_from_path(storage_key, registry_type)
         .await
         .inspect_err(|e| {
-            error!("Failed to get artifact key: {}", e);
+            error!("Failed to get artifact key: {e}");
         })? {
         Some(key) => Ok(key),
         None => {

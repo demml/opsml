@@ -33,7 +33,7 @@ pub async fn get_user(
         .get_user(username, auth_type)
         .await
         .map_err(|e| {
-            error!("Failed to get user from database: {}", e);
+            error!("Failed to get user from database: {e}");
             internal_server_error(e, "Failed to get user from database")
         })?
         .ok_or_else(|| {

@@ -1,7 +1,7 @@
 use crate::base::OpsmlRegistry;
 use crate::CardRegistries;
 use opsml_cards::{
-    traits::OpsmlCard, Card, CardDeck, DataCard, ExperimentCard, ModelCard, PromptCard,
+    traits::OpsmlCard, Card, DataCard, ExperimentCard, ModelCard, PromptCard, ServiceCard,
 };
 
 use crate::error::RegistryError;
@@ -80,7 +80,7 @@ pub enum CardEnum {
     DataCard(DataCard),
     ExperimentCard(Box<ExperimentCard>),
     PromptCard(PromptCard),
-    CardDeck(Box<CardDeck>),
+    ServiceCard(Box<ServiceCard>),
 }
 
 impl CardEnum {
@@ -94,25 +94,25 @@ impl CardEnum {
             CardEnum::DataCard(card) => card.into_bound_py_any(py),
             CardEnum::ExperimentCard(card) => card.into_bound_py_any(py),
             CardEnum::PromptCard(card) => card.into_bound_py_any(py),
-            CardEnum::CardDeck(card) => card.into_bound_py_any(py),
+            CardEnum::ServiceCard(card) => card.into_bound_py_any(py),
         };
 
         Ok(card?)
     }
 }
 
-pub fn load_card_deck<'py>(
+pub fn load_service_card<'py>(
     py: Python<'py>,
-    deck: &mut CardDeck,
+    service: &mut ServiceCard,
     interfaces: Option<HashMap<String, Bound<'py, PyAny>>>,
 ) -> Result<(), RegistryError> {
     let card_registries = CardRegistries::new().inspect_err(|e| {
-        error!("Failed to create card registries: {}", e);
+        error!("Failed to create card registries: {e}");
     })?;
 
-    for card in &deck.cards {
+    for card in &service.cards {
         // Skip if already loaded
-        if deck.card_objs.contains_key(&card.alias) {
+        if service.card_objs.contains_key(&card.alias) {
             debug!("Card {} already exists in card_objs", card.alias);
             continue;
         }
@@ -122,10 +122,10 @@ pub fn load_card_deck<'py>(
 
         let card_obj =
             load_and_extract_card(py, &card_registries, card, interface).map_err(|e| {
-                error!("Failed to load card: {}", e);
+                error!("Failed to load card: {e}");
                 e
             })?;
-        deck.card_objs.insert(card.alias.clone(), card_obj);
+        service.card_objs.insert(card.alias.clone(), card_obj);
     }
 
     Ok(())
@@ -170,7 +170,7 @@ pub fn card_from_string<'py>(
         RegistryType::Model => {
             let mut card =
                 ModelCard::model_validate_json(py, card_json, interface).inspect_err(|e| {
-                    error!("Failed to validate ModelCard: {}", e);
+                    error!("Failed to validate ModelCard: {e}");
                 })?;
 
             card.set_artifact_key(key);
@@ -180,7 +180,7 @@ pub fn card_from_string<'py>(
         RegistryType::Data => {
             let mut card =
                 DataCard::model_validate_json(py, card_json, interface).inspect_err(|e| {
-                    error!("Failed to validate DataCard: {}", e);
+                    error!("Failed to validate DataCard: {e}");
                 })?;
 
             card.set_artifact_key(key);
@@ -189,7 +189,7 @@ pub fn card_from_string<'py>(
 
         RegistryType::Experiment => {
             let mut card = ExperimentCard::model_validate_json(card_json).inspect_err(|e| {
-                error!("Failed to validate ExperimentCard: {}", e);
+                error!("Failed to validate ExperimentCard: {e}");
             })?;
 
             card.set_artifact_key(key);
@@ -198,18 +198,18 @@ pub fn card_from_string<'py>(
 
         RegistryType::Prompt => {
             let card = PromptCard::model_validate_json(card_json).inspect_err(|e| {
-                error!("Failed to validate PromptCard: {}", e);
+                error!("Failed to validate PromptCard: {e}");
             })?;
 
             CardEnum::PromptCard(card)
         }
 
-        RegistryType::Deck => {
-            let card = CardDeck::model_validate_json(card_json).inspect_err(|e| {
-                error!("Failed to validate CardDeck: {}", e);
+        RegistryType::Service => {
+            let card = ServiceCard::model_validate_json(card_json).inspect_err(|e| {
+                error!("Failed to validate ServiceCard: {e}");
             })?;
 
-            CardEnum::CardDeck(Box::new(card))
+            CardEnum::ServiceCard(Box::new(card))
         }
 
         _ => {
@@ -242,7 +242,7 @@ pub fn download_card<'py>(
     interface: Option<&Bound<'py, PyAny>>,
 ) -> Result<Bound<'py, PyAny>, RegistryError> {
     let decryption_key = key.get_decrypt_key().inspect_err(|e| {
-        error!("Failed to get decryption key: {}", e);
+        error!("Failed to get decryption key: {e}");
     })?;
 
     let tmp_dir = TempDir::new()?;
@@ -259,23 +259,23 @@ pub fn download_card<'py>(
     decrypt_directory(&tmp_path, &decryption_key)?;
 
     let json_string = std::fs::read_to_string(&lpath).inspect_err(|e| {
-        error!("Failed to read card json: {}", e);
+        error!("Failed to read card json: {e}");
     })?;
 
     let mut card = card_from_string(py, json_string, interface, key)?;
 
     match &mut card {
-        // load all cards in the deck
-        CardEnum::CardDeck(deck) => {
-            debug!("Loading card deck: {}", deck.name);
+        // load all cards in the service
+        CardEnum::ServiceCard(service) => {
+            debug!("Loading service card: {}", service.name);
             // need to check if interface is not None, if not None it needs to be
             // HashMap<String, Bound<PyAny>>
             let kwargs =
                 interface.and_then(|i| i.extract::<HashMap<String, Bound<'py, PyAny>>>().ok());
 
-            load_card_deck(py, deck, kwargs)?;
+            load_service_card(py, service, kwargs)?;
         }
-        _ => debug!("Card is not a deck, skipping deck loading"),
+        _ => debug!("Card is not a service, skipping service loading"),
     }
 
     card.into_bound_py_any(py)
@@ -308,7 +308,7 @@ pub fn upload_card_artifacts(path: PathBuf, key: &ArtifactKey) -> Result<(), Reg
     Ok(())
 }
 
-/// Helper for converting card deck attributes to options
+/// Helper for converting service card attributes to options
 fn to_option(value: &str) -> Option<String> {
     match value == CommonKwargs::Undefined.to_string() {
         true => None,
@@ -316,7 +316,7 @@ fn to_option(value: &str) -> Option<String> {
     }
 }
 
-/// Validates a card deck card by checking if it exists in the registry
+/// Validates a service card card by checking if it exists in the registry
 ///
 /// # Process
 /// 1. Check if Card exists in the registry
@@ -346,7 +346,7 @@ fn validate_and_update_card(card: &mut Card) -> Result<(), RegistryError> {
     };
 
     let cards = reg.list_cards(args).inspect_err(|e| {
-        error!("Failed to list cards: {}", e);
+        error!("Failed to list cards: {e}");
     })?;
 
     if cards.is_empty() {
@@ -372,14 +372,14 @@ fn validate_and_update_card(card: &mut Card) -> Result<(), RegistryError> {
     Ok(())
 }
 
-/// Validate a card deck
-/// This function will validate each card in the deck
+/// Validate a service card
+/// This function will validate each card in the service
 /// The registry will be queried based on the card args.
-/// Returned record will be used to update card attributes as part of CardDeck
+/// Returned record will be used to update card attributes as part of ServiceCard
 /// If a card does not exist, it will return an error
 ///
 /// # Arguments
-/// * `deck` - Card deck to validate
+/// * service - Card service to validate
 ///
 /// # Returns
 /// * `Result<(), RegistryError>` - Result
@@ -387,16 +387,16 @@ fn validate_and_update_card(card: &mut Card) -> Result<(), RegistryError> {
 /// # Errors
 /// * `RegistryError` - Error validating card
 #[instrument(skip_all)]
-pub fn validate_card_deck_cards(deck: &mut [Card]) -> Result<(), RegistryError> {
-    // iterate over each card in the deck
-    for card in deck.iter_mut() {
+pub fn validate_service_cards(service: &mut [Card]) -> Result<(), RegistryError> {
+    // iterate over each card in the service
+    for card in service.iter_mut() {
         validate_and_update_card(card)?;
     }
     Ok(())
 }
 
 /// Verify that the card is valid
-/// If a card deck is passed, verify that all cards in the deck are valid
+/// If a service card is passed, verify that all cards in the service are valid
 ///
 /// # Arguments
 /// * `card` - Card to verify
@@ -434,26 +434,26 @@ pub fn verify_card(
         }
     }
 
-    if card.is_instance_of::<CardDeck>() {
-        let mut deck = card
+    if card.is_instance_of::<ServiceCard>() {
+        let mut service = card
             .getattr("cards")
             .map_err(|e| {
-                error!("Failed to get cards from deck: {}", e);
-                RegistryError::FailedToGetCardsFromDeck
+                error!("Failed to get cards from service: {e}");
+                RegistryError::FailedToGetCardsFromService
             })?
             .extract::<Vec<Card>>()
             .map_err(|e| {
-                error!("Failed to extract cards from deck: {}", e);
-                RegistryError::FailedToExtractCardsFromDeck
+                error!("Failed to extract cards from service: {e}");
+                RegistryError::FailedToExtractCardsFromService
             })?;
 
-        validate_card_deck_cards(&mut deck)?;
+        validate_service_cards(&mut service)?;
 
-        // Update the Python card deck with the updated cards
-        card.setattr("cards", deck.into_py_any(card.py()).unwrap())
+        // Update the Python service card with the updated cards
+        card.setattr("cards", service.into_py_any(card.py()).unwrap())
             .map_err(|e| {
-                error!("Failed to update card deck: {}", e);
-                RegistryError::UpdateCardDeckError
+                error!("Failed to update service card: {e}");
+                RegistryError::UpdateServiceCardError
             })?;
     }
 

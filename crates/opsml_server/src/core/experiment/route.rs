@@ -45,7 +45,7 @@ pub async fn insert_metrics(
         .insert_experiment_metrics(&records)
         .await
         .map_err(|e| {
-            error!("Failed to insert metric: {}", e);
+            error!("Failed to insert metric: {e}");
             internal_server_error(e, "Failed to insert metric")
         })?;
 
@@ -62,7 +62,7 @@ pub async fn get_metrics(
         .get_experiment_metric(&req.experiment_uid, &req.names)
         .await
         .map_err(|e| {
-            error!("Failed to get metrics: {}", e);
+            error!("Failed to get metrics: {e}");
             internal_server_error(e, "Failed to get metrics")
         })?;
 
@@ -94,7 +94,7 @@ pub async fn get_grouped_metrics(
             .get_experiment_metric(&experiment.uid, &req.metric_names)
             .await
             .map_err(|e| {
-                error!("Failed to get metrics: {}", e);
+                error!("Failed to get metrics: {e}");
                 internal_server_error(e, "Failed to get metrics")
             })?;
 
@@ -149,7 +149,7 @@ pub async fn get_metric_names(
         .get_experiment_metric_names(&req.experiment_uid)
         .await
         .map_err(|e| {
-            error!("Failed to get metrics: {}", e);
+            error!("Failed to get metrics: {e}");
             internal_server_error(e, "Failed to get metrics")
         })?;
 
@@ -172,7 +172,7 @@ pub async fn insert_parameters(
         .insert_experiment_parameters(&records)
         .await
         .map_err(|e| {
-            error!("Failed to insert parameter: {}", e);
+            error!("Failed to insert parameter: {e}");
             internal_server_error(e, "Failed to insert parameter")
         })?;
 
@@ -188,7 +188,7 @@ pub async fn get_parameter(
         .get_experiment_parameter(&req.experiment_uid, &req.names)
         .await
         .map_err(|e| {
-            error!("Failed to get metrics: {}", e);
+            error!("Failed to get metrics: {e}");
             internal_server_error(e, "Failed to get metrics")
         })?;
 
@@ -229,7 +229,7 @@ pub async fn insert_hardware_metrics(
         .insert_hardware_metrics(&record)
         .await
         .map_err(|e| {
-            error!("Failed to insert hardware metrics: {}", e);
+            error!("Failed to insert hardware metrics: {e}");
             internal_server_error(e, "Failed to insert hardware metrics")
         })?;
 
@@ -245,7 +245,7 @@ pub async fn get_hardware_metrics(
         .get_hardware_metric(&req.experiment_uid)
         .await
         .map_err(|e| {
-            error!("Failed to get metrics: {}", e);
+            error!("Failed to get metrics: {e}");
             internal_server_error(e, "Failed to get metrics")
         })?;
 
@@ -279,23 +279,23 @@ pub async fn get_experiment_router(prefix: &str) -> Result<Router<Arc<AppState>>
     let result = catch_unwind(AssertUnwindSafe(|| {
         Router::new()
             .route(
-                &format!("{}/experiment/metrics", prefix),
+                &format!("{prefix}/experiment/metrics"),
                 put(insert_metrics).post(get_metrics),
             )
             .route(
-                &format!("{}/experiment/metrics/grouped", prefix),
+                &format!("{prefix}/experiment/metrics/grouped"),
                 post(get_grouped_metrics),
             )
             .route(
-                &format!("{}/experiment/metrics/names", prefix),
+                &format!("{prefix}/experiment/metrics/names"),
                 get(get_metric_names),
             )
             .route(
-                &format!("{}/experiment/parameters", prefix),
+                &format!("{prefix}/experiment/parameters"),
                 put(insert_parameters).post(get_parameter),
             )
             .route(
-                &format!("{}/experiment/hardware/metrics", prefix),
+                &format!("{prefix}/experiment/hardware/metrics"),
                 put(insert_hardware_metrics).get(get_hardware_metrics),
             )
     }));

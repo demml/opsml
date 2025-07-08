@@ -39,7 +39,7 @@ pub async fn check_card_uid(
         .check_uid_exists(&params.uid, &table)
         .await
         .map_err(|e| {
-            error!("Failed to check if UID exists: {}", e);
+            error!("Failed to check if UID exists: {e}");
             internal_server_error(e, "Failed to check if UID exists")
         })?;
 
@@ -58,7 +58,7 @@ pub async fn get_registry_spaces(
         .get_unique_space_names(&table)
         .await
         .map_err(|e| {
-            error!("Failed to get unique space names: {}", e);
+            error!("Failed to get unique space names: {e}");
             internal_server_error(e, "Failed to get unique space names")
         })?;
 
@@ -69,7 +69,7 @@ pub async fn get_all_space_stats(
     State(state): State<Arc<AppState>>,
 ) -> Result<Json<SpaceStatsResponse>, (StatusCode, Json<OpsmlServerError>)> {
     let stats = state.sql_client.get_all_space_stats().await.map_err(|e| {
-        error!("Failed to get all space stats: {}", e);
+        error!("Failed to get all space stats: {e}");
         internal_server_error(e, "Failed to get all space stats")
     })?;
 
@@ -86,7 +86,7 @@ pub async fn get_space_record(
         })),
         Ok(None) => Ok(Json(SpaceRecordResponse { spaces: vec![] })),
         Err(e) => {
-            error!("Failed to get space record: {}", e);
+            error!("Failed to get space record: {e}");
             Err(internal_server_error(e, "Failed to get space record"))
         }
     }
@@ -106,7 +106,7 @@ pub async fn create_space_record(
         .insert_space_record(&record)
         .await
         .map_err(|e| {
-            error!("Failed to create space record: {}", e);
+            error!("Failed to create space record: {e}");
             internal_server_error(e, "Failed to create space record")
         })?;
     Ok(Json(CrudSpaceResponse { success: true }))
@@ -126,7 +126,7 @@ pub async fn update_space_record(
         .update_space_record(&record)
         .await
         .map_err(|e| {
-            error!("Failed to update space record: {}", e);
+            error!("Failed to update space record: {e}");
             internal_server_error(e, "Failed to update space record")
         })?;
     Ok(Json(CrudSpaceResponse { success: true }))
@@ -142,7 +142,7 @@ pub async fn delete_space_record(
         .delete_space_record(&space_request.space)
         .await
         .map_err(|e| {
-            error!("Failed to delete space record: {}", e);
+            error!("Failed to delete space record: {e}");
             internal_server_error(e, "Failed to delete space record")
         })?;
     Ok(Json(CrudSpaceResponse { success: true }))
@@ -164,7 +164,7 @@ pub async fn get_registry_stats(
         )
         .await
         .map_err(|e| {
-            error!("Failed to get unique space names: {}", e);
+            error!("Failed to get unique space names: {e}");
             internal_server_error(e, "Failed to get unique space names")
         })?;
 
@@ -190,7 +190,7 @@ pub async fn get_page(
         )
         .await
         .map_err(|e| {
-            error!("Failed to get unique space names: {}", e);
+            error!("Failed to get unique space names: {e}");
             internal_server_error(e, "Failed to get unique space names")
         })?;
     Ok(Json(QueryPageResponse { summaries }))
@@ -212,7 +212,7 @@ pub async fn get_version_page(
         )
         .await
         .map_err(|e| {
-            error!("Failed to get unique space names: {}", e);
+            error!("Failed to get unique space names: {e}");
             internal_server_error(e, "Failed to get unique space names")
         })?;
 
@@ -235,7 +235,7 @@ pub async fn list_cards(
         .query_cards(&table, &params)
         .await
         .map_err(|e| {
-            error!("Failed to get unique space names: {}", e);
+            error!("Failed to get unique space names: {e}");
             internal_server_error(e, "Failed to get unique space names")
         })?;
 
@@ -256,9 +256,11 @@ pub async fn list_cards(
         CardResults::Prompt(data) => {
             Json(data.into_iter().map(convert_promptcard).collect::<Vec<_>>())
         }
-        CardResults::Deck(data) => {
-            Json(data.into_iter().map(convert_card_deck).collect::<Vec<_>>())
-        }
+        CardResults::Service(data) => Json(
+            data.into_iter()
+                .map(convert_servicecard)
+                .collect::<Vec<_>>(),
+        ),
     };
 
     // Create response and add audit context
@@ -306,7 +308,7 @@ pub async fn create_card(
     )
     .await
     .map_err(|e| {
-        error!("Failed to get next version: {}", e);
+        error!("Failed to get next version: {e}");
         internal_server_error(e, "Failed to get next version")
     })?;
     // (2) ------- Insert the card into the database
@@ -318,7 +320,7 @@ pub async fn create_card(
     )
     .await
     .map_err(|e| {
-        error!("Failed to insert card into db: {}", e);
+        error!("Failed to insert card into db: {e}");
         internal_server_error(e, "Failed to insert card into db")
     })?;
 
@@ -333,7 +335,7 @@ pub async fn create_card(
     )
     .await
     .map_err(|e| {
-        error!("Failed to create artifact key: {}", e);
+        error!("Failed to create artifact key: {e}");
         internal_server_error(e, "Failed to create artifact key")
     })?;
 
@@ -392,7 +394,7 @@ pub async fn update_card(
     let table = CardTable::from_registry_type(&card_request.registry_type);
 
     let card = ServerCard::from_card(card_request.clone().card).map_err(|e| {
-        error!("Failed to convert card: {}", e);
+        error!("Failed to convert card: {e}");
         internal_server_error(e, "Failed to convert card")
     })?;
 
@@ -401,7 +403,7 @@ pub async fn update_card(
         .update_card(&table, &card)
         .await
         .map_err(|e| {
-            error!("Failed to update card: {}", e);
+            error!("Failed to update card: {e}");
             internal_server_error(e, "Failed to update card")
         })?;
 
@@ -446,7 +448,7 @@ pub async fn delete_card(
     )
     .await
     .map_err(|e| {
-        error!("Failed to cleanup artifacts: {}", e);
+        error!("Failed to cleanup artifacts: {e}");
         internal_server_error(e, "Failed to cleanup artifacts")
     })?;
 
@@ -456,7 +458,7 @@ pub async fn delete_card(
         .delete_card(&table, &params.uid)
         .await
         .map_err(|e| {
-            error!("Failed to delete card: {}", e);
+            error!("Failed to delete card: {e}");
             internal_server_error(e, "Failed to delete card")
         })?;
 
@@ -486,7 +488,7 @@ pub async fn delete_card(
         .query_cards(&table, &query_params)
         .await
         .map_err(|e| {
-            error!("Failed to get unique space names: {}", e);
+            error!("Failed to get unique space names: {e}");
             internal_server_error(e, "Failed to get unique space names")
         })?;
 
@@ -497,7 +499,7 @@ pub async fn delete_card(
             .delete_space_name_record(&space, &name, &params.registry_type)
             .await
             .map_err(|e| {
-                error!("Failed to delete space name record: {}", e);
+                error!("Failed to delete space name record: {e}");
                 internal_server_error(e, "Failed to delete space name record")
             })?;
     }
@@ -516,7 +518,7 @@ pub async fn load_card(
         .get_card_key_for_loading(&table, &params)
         .await
         .map_err(|e| {
-            error!("Failed to get card key for loading: {}", e);
+            error!("Failed to get card key for loading: {e}");
             internal_server_error(e, "Failed to get card key for loading")
         })?;
 
@@ -536,7 +538,7 @@ pub async fn get_card(
         .get_card_key_for_loading(&table, &params)
         .await
         .map_err(|e| {
-            error!("Failed to get card key for loading: {}", e);
+            error!("Failed to get card key for loading: {e}");
             internal_server_error(e, "Failed to get card key for loading")
         })?;
 
@@ -546,7 +548,7 @@ pub async fn get_card(
 
     // create temp dir
     let tmp_dir = tempdir().map_err(|e| {
-        error!("Failed to create temp dir: {}", e);
+        error!("Failed to create temp dir: {e}");
         internal_server_error(e, "Failed to create temp dir")
     })?;
 
@@ -565,27 +567,27 @@ pub async fn get_card(
         .get(&lpath, &rpath, false)
         .await
         .map_err(|e| {
-            error!("Failed to get card: {}", e);
+            error!("Failed to get card: {e}");
             internal_server_error(e, "Failed to get card")
         })?;
 
     let decryption_key = key.get_decrypt_key().map_err(|e| {
-        error!("Failed to get decryption key: {}", e);
+        error!("Failed to get decryption key: {e}");
         internal_server_error(e, "Failed to get decryption key")
     })?;
 
     decrypt_directory(tmp_path, &decryption_key).map_err(|e| {
-        error!("Failed to decrypt directory: {}", e);
+        error!("Failed to decrypt directory: {e}");
         internal_server_error(e, "Failed to decrypt directory")
     })?;
 
     let card = std::fs::read_to_string(lpath).map_err(|e| {
-        error!("Failed to read card from file: {}", e);
+        error!("Failed to read card from file: {e}");
         internal_server_error(e, "Failed to read card from file")
     })?;
 
     let card = serde_json::from_str(&card).map_err(|e| {
-        error!("Failed to parse card: {}", e);
+        error!("Failed to parse card: {e}");
         internal_server_error(e, "Failed to parse card")
     })?;
 
@@ -613,7 +615,7 @@ pub async fn get_readme(
     }
 
     let tmp_dir = tempdir().map_err(|e| {
-        error!("Failed to create temp dir: {}", e);
+        error!("Failed to create temp dir: {e}");
         internal_server_error(e, "Failed to create temp dir")
     })?;
 
@@ -686,7 +688,7 @@ pub async fn create_readme(
     )
     .await
     .map_err(|e| {
-        error!("Failed to get artifact key: {}", e);
+        error!("Failed to get artifact key: {e}");
         internal_server_error(e, "Failed to get artifact key")
     })?;
 
@@ -704,7 +706,7 @@ pub async fn create_readme(
         Ok(uploaded) => Ok(Json(uploaded)),
         Err(e) => Ok(Json(UploadResponse {
             uploaded: false,
-            message: format!("Failed to upload readme: {}", e),
+            message: format!("Failed to upload readme: {e}"),
         })),
     }
 }
@@ -713,36 +715,33 @@ pub async fn get_card_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
     let result = catch_unwind(AssertUnwindSafe(|| {
         Router::new()
             .route(
-                &format!("{}/card/space/stats", prefix),
+                &format!("{prefix}/card/space/stats"),
                 get(get_all_space_stats),
             )
-            .route(&format!("{}/card/space", prefix), get(get_space_record))
-            .route(&format!("{}/card/space", prefix), post(create_space_record))
-            .route(&format!("{}/card/space", prefix), put(update_space_record))
-            .route(
-                &format!("{}/card/space", prefix),
-                delete(delete_space_record),
-            )
+            .route(&format!("{prefix}/card/space"), get(get_space_record))
+            .route(&format!("{prefix}/card/space"), post(create_space_record))
+            .route(&format!("{prefix}/card/space"), put(update_space_record))
+            .route(&format!("{prefix}/card/space"), delete(delete_space_record))
             // placing spaces here for now as there's not enough routes to justify a separate router
-            .route(&format!("{}/card", prefix), get(check_card_uid))
-            .route(&format!("{}/card/metadata", prefix), get(get_card))
-            .route(&format!("{}/card/readme", prefix), get(get_readme))
-            .route(&format!("{}/card/readme", prefix), post(create_readme))
-            .route(&format!("{}/card/spaces", prefix), get(get_registry_spaces))
+            .route(&format!("{prefix}/card"), get(check_card_uid))
+            .route(&format!("{prefix}/card/metadata"), get(get_card))
+            .route(&format!("{prefix}/card/readme"), get(get_readme))
+            .route(&format!("{prefix}/card/readme"), post(create_readme))
+            .route(&format!("{prefix}/card/spaces"), get(get_registry_spaces))
             .route(
-                &format!("{}/card/registry/stats", prefix),
+                &format!("{prefix}/card/registry/stats"),
                 get(get_registry_stats),
             )
-            .route(&format!("{}/card/registry/page", prefix), get(get_page))
+            .route(&format!("{prefix}/card/registry/page"), get(get_page))
             .route(
-                &format!("{}/card/registry/version/page", prefix),
+                &format!("{prefix}/card/registry/version/page"),
                 get(get_version_page),
             )
-            .route(&format!("{}/card/list", prefix), get(list_cards))
-            .route(&format!("{}/card/create", prefix), post(create_card))
-            .route(&format!("{}/card/load", prefix), get(load_card))
-            .route(&format!("{}/card/update", prefix), post(update_card))
-            .route(&format!("{}/card/delete", prefix), delete(delete_card))
+            .route(&format!("{prefix}/card/list"), get(list_cards))
+            .route(&format!("{prefix}/card/create"), post(create_card))
+            .route(&format!("{prefix}/card/load"), get(load_card))
+            .route(&format!("{prefix}/card/update"), post(update_card))
+            .route(&format!("{prefix}/card/delete"), delete(delete_card))
     }));
 
     match result {

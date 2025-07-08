@@ -56,3 +56,7 @@ class OpsmlServerContext:
     @property
     def server_uri(self) -> str:
         """Returns the server URI."""
+
+class MockConfig:
+    def __init__(self) -> None:
+        """Mock configuration for the ScouterQueue"""

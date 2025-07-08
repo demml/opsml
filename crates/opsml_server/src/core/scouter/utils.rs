@@ -39,7 +39,7 @@ pub async fn save_encrypted_profile(
     storage_path: &Path,
 ) -> Result<(), (StatusCode, Json<OpsmlServerError>)> {
     let tempdir = tempfile::tempdir().map_err(|e| {
-        error!("Failed to create tempdir: {}", e);
+        error!("Failed to create tempdir: {e}");
         internal_server_error(e, "Failed to create tempdir")
     })?;
 
@@ -47,12 +47,12 @@ pub async fn save_encrypted_profile(
 
     // Write and encrypt file
     std::fs::write(&temp_path, profile).map_err(|e| {
-        error!("Failed to write profile: {}", e);
+        error!("Failed to write profile: {e}");
         internal_server_error(e, "Failed to write profile")
     })?;
 
     encrypt_file(&temp_path, encryption_key).map_err(|e| {
-        error!("Failed to encrypt file: {}", e);
+        error!("Failed to encrypt file: {e}");
         internal_server_error(e, "Failed to encrypt file")
     })?;
 
@@ -81,7 +81,7 @@ pub fn load_drift_profiles(
 
             DriftProfile::from_str(uri.drift_type.clone(), file)
                 .map_err(|e| {
-                    error!("Failed to load drift profile: {}", e);
+                    error!("Failed to load drift profile: {e}");
                     ServerError::LoadDriftProfileError(e.to_string())
                 })
                 .map(|profile| {

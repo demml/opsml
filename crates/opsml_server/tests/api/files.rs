@@ -20,7 +20,7 @@ async fn test_opsml_server_render_file() {
 
     // check if a card UID exists (get request with UidRequest params)
     let request = Request::builder()
-        .uri(format!("/opsml/api/files/tree?{}", query_string))
+        .uri(format!("/opsml/api/files/tree?{query_string}"))
         .method("GET")
         .body(Body::empty())
         .unwrap();

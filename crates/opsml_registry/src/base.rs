@@ -65,7 +65,7 @@ impl OpsmlRegistry {
                 {
                     let config = state.config()?;
                     let settings = config.storage_settings().inspect_err(|e| {
-                        error!("Failed to get storage settings: {}", e);
+                        error!("Failed to get storage settings: {e}");
                     })?;
 
                     let db_settings = config.database_settings.clone();
@@ -223,7 +223,7 @@ impl OpsmlRegistry {
                     .spawn_blocking(move || client_registry.insert_hardware_metrics(&metrics))
                     .await
                     .map_err(|e| {
-                        error!("Failed to insert hardware metrics: {}", e);
+                        error!("Failed to insert hardware metrics: {e}");
                         RegistryError::from(e)
                     })?;
                 Ok(())

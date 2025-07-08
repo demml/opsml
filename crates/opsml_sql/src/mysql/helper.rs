@@ -37,13 +37,13 @@ const INSERT_PROMPTCARD_SQL: &str = include_str!("sql/card/insert_promptcard.sql
 const INSERT_MODELCARD_SQL: &str = include_str!("sql/card/insert_modelcard.sql");
 const INSERT_EXPERIMENTCARD_SQL: &str = include_str!("sql/card/insert_experimentcard.sql");
 const INSERT_AUDITCARD_SQL: &str = include_str!("sql/card/insert_auditcard.sql");
-const INSERT_CARDDECK_SQL: &str = include_str!("sql/card/insert_carddeck.sql");
+const INSERT_SERVICECARD_SQL: &str = include_str!("sql/card/insert_servicecard.sql");
 const UPDATE_DATACARD_SQL: &str = include_str!("sql/card/update_datacard.sql");
 const UPDATE_PROMPTCARD_SQL: &str = include_str!("sql/card/update_promptcard.sql");
 const UPDATE_MODELCARD_SQL: &str = include_str!("sql/card/update_modelcard.sql");
 const UPDATE_EXPERIMENTCARD_SQL: &str = include_str!("sql/card/update_experimentcard.sql");
 const UPDATE_AUDITCARD_SQL: &str = include_str!("sql/card/update_auditcard.sql");
-const UPDATE_CARDDECK_SQL: &str = include_str!("sql/card/update_carddeck.sql");
+const UPDATE_SERVICECARD_SQL: &str = include_str!("sql/card/update_servicecard.sql");
 
 // artifact keys
 const INSERT_ARTIFACT_KEY_SQL: &str = include_str!("sql/artifact/insert_artifact_key.sql");
@@ -60,7 +60,7 @@ pub struct MySQLQueryHelper;
 
 impl MySQLQueryHelper {
     pub fn get_uid_query(table: &CardTable) -> String {
-        format!("SELECT uid FROM {} WHERE uid = ?", table)
+        format!("SELECT uid FROM {table} WHERE uid = ?")
     }
 
     pub fn get_user_insert_query() -> String {
@@ -156,12 +156,11 @@ impl MySQLQueryHelper {
                     name, 
                     version, 
                     ROW_NUMBER() OVER (PARTITION BY space, name ORDER BY created_at DESC) AS row_num
-                FROM {}
+                FROM {table}
                 WHERE 1=1
                 AND (? IS NULL OR space = ?)
                 AND (? IS NULL OR name LIKE ? OR space LIKE ?)
-            )",
-            table
+            )"
         );
 
         let stats_cte = format!(
@@ -172,13 +171,12 @@ impl MySQLQueryHelper {
                     COUNT(DISTINCT version) AS versions, 
                     MAX(created_at) AS updated_at, 
                     MIN(created_at) AS created_at 
-                FROM {}
+                FROM {table}
                 WHERE 1=1
                 AND (? IS NULL OR space = ?)
                 AND (? IS NULL OR name LIKE ? OR space LIKE ?)
                 GROUP BY space, name
-            )",
-            table
+            )"
         );
 
         let filtered_versions_cte = ", filtered_versions AS (
@@ -200,17 +198,16 @@ impl MySQLQueryHelper {
                     stats.versions, 
                     stats.updated_at, 
                     stats.created_at, 
-                    ROW_NUMBER() OVER (ORDER BY stats.{}) AS row_num 
+                    ROW_NUMBER() OVER (ORDER BY stats.{sort_by}) AS row_num 
                 FROM stats 
                 JOIN filtered_versions 
                 ON stats.space = filtered_versions.space 
                 AND stats.name = filtered_versions.name
-            )",
-            sort_by
+            )"
         );
 
         let combined_query = format!(
-            "{}{}{}{} 
+            "{versions_cte}{stats_cte}{filtered_versions_cte}{joined_cte} 
             SELECT
             space,
             name,
@@ -221,8 +218,7 @@ impl MySQLQueryHelper {
             CAST(row_num AS SIGNED) AS row_num
             FROM joined 
             WHERE row_num > ? AND row_num <= ?
-            ORDER BY updated_at DESC;",
-            versions_cte, stats_cte, filtered_versions_cte, joined_cte
+            ORDER BY updated_at DESC;"
         );
 
         combined_query
@@ -237,14 +233,14 @@ impl MySQLQueryHelper {
                     version, 
                     created_at,
                     ROW_NUMBER() OVER (PARTITION BY space, name ORDER BY created_at DESC, major DESC, minor DESC, patch DESC) AS row_num
-                FROM {}
+                FROM {table}
                 WHERE space = ?
                 AND name = ?
-            )", table
+            )"
         );
 
         let query = format!(
-            "{}
+            "{versions_cte}
             SELECT
             space,
             name,
@@ -253,8 +249,7 @@ impl MySQLQueryHelper {
             CAST(row_num AS SIGNED) AS row_num
             FROM versions
             WHERE row_num > ? AND row_num <= ?
-            ORDER BY created_at DESC",
-            versions_cte
+            ORDER BY created_at DESC"
         );
 
         query
@@ -266,12 +261,11 @@ impl MySQLQueryHelper {
                     COALESCE(COUNT(DISTINCT name), 0) AS nbr_names, 
                     COALESCE(COUNT(major), 0) AS nbr_versions, 
                     COALESCE(COUNT(DISTINCT space), 0) AS nbr_spaces
-                FROM {}
+                FROM {table}
                 WHERE 1=1
                 AND (? IS NULL OR name LIKE ? OR space LIKE ?)
                 AND (? IS NULL OR space = ?)
-                ",
-            table
+                "
         );
 
         base_query
@@ -291,12 +285,11 @@ impl MySQLQueryHelper {
              pre_tag, 
              build_tag, 
              uid
-             FROM {}
+             FROM {table}
              WHERE 1=1
                 AND name = ?
                 AND space = ?
-            ",
-            table
+            "
         );
 
         if let Some(version) = version {
@@ -314,14 +307,13 @@ impl MySQLQueryHelper {
     ) -> Result<String, SqlError> {
         let mut query = format!(
             "
-        SELECT * FROM {}
+        SELECT * FROM {table}
         WHERE 1=1
         AND (? IS NULL OR uid = ?)
         AND (? IS NULL OR name = ?)
         AND (? IS NULL OR space = ?)
         AND (? IS NULL OR created_at <= STR_TO_DATE(?, '%Y-%m-%d'))
-        ",
-            table
+        "
         );
 
         // check for uid. If uid is present, we only return that card
@@ -338,8 +330,7 @@ impl MySQLQueryHelper {
             if query_args.tags.is_some() {
                 let tags = query_args.tags.as_ref().unwrap();
                 for tag in tags.iter() {
-                    query
-                        .push_str(format!(" AND JSON_CONTAINS(tags, '\"{}\"', '$')", tag).as_str());
+                    query.push_str(format!(" AND JSON_CONTAINS(tags, '\"{tag}\"', '$')").as_str());
                 }
             }
 
@@ -429,12 +420,12 @@ impl MySQLQueryHelper {
         INSERT_AUDITCARD_SQL.to_string()
     }
 
-    pub fn get_carddeck_insert_query() -> String {
-        INSERT_CARDDECK_SQL.to_string()
+    pub fn get_servicecard_insert_query() -> String {
+        INSERT_SERVICECARD_SQL.to_string()
     }
 
-    pub fn get_carddeck_update_query() -> String {
-        UPDATE_CARDDECK_SQL.to_string()
+    pub fn get_servicecard_update_query() -> String {
+        UPDATE_SERVICECARD_SQL.to_string()
     }
 
     pub fn get_promptcard_update_query() -> String {

@@ -102,7 +102,7 @@ test.version:
 	cargo test -p opsml-version -- --nocapture --test-threads=1
 
 .PHONY: test.unit
-test.unit: test.toml test.cli  test.sql test.storage.server test.server test.utils test.version test.cli
+test.unit: test.toml test.cli test.sql test.storage.server test.server test.utils test.version
 
 ###### UI ######
 UI_DIR = crates/opsml_server/opsml_ui

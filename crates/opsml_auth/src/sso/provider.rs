@@ -256,9 +256,8 @@ GrrNOufvPsvmCRO9m4ESRrk=
                 .create();
 
             // mock okta token endpoint
-            let credentials = format!("{}:{}", "opsml-client", "client-secret");
-            let encoded_credentials = BASE64_STANDARD.encode(credentials);
-            let auth_header = format!("Basic {}", encoded_credentials);
+            let encoded_credentials = BASE64_STANDARD.encode("opsml-client:client-secret");
+            let auth_header = format!("Basic {encoded_credentials}");
 
             server
                 .mock("POST", "/oauth2/v1/token")

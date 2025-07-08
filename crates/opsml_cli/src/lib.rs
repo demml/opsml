@@ -4,11 +4,11 @@ pub mod error;
 
 use crate::actions::{download_card, list_cards};
 use crate::cli::{Cli, Commands, GenerateCommands, GetCommands, InstallCommands, ListCommands};
-use actions::download::download_deck;
+use actions::download::download_service;
 pub use actions::{
     demo::run_python_code,
     generate_key,
-    lock::install_app,
+    lock::install_service,
     ui::{start_ui, stop_ui},
     update_drift_profile_status,
     validate::validate_project,
@@ -41,8 +41,8 @@ pub fn run_cli(args: Vec<String>) -> anyhow::Result<()> {
             ListCommands::Model(args) => {
                 list_cards(args, RegistryType::Model).context("Failed to list ModelCards")
             }
-            ListCommands::Deck(args) => {
-                list_cards(args, RegistryType::Deck).context("Failed to list CardDecks")
+            ListCommands::Service(args) => {
+                list_cards(args, RegistryType::Service).context("Failed to list ServiceCards")
             }
             ListCommands::Experiment(args) => {
                 list_cards(args, RegistryType::Experiment).context("Failed to list ExperimentCards")
@@ -58,14 +58,16 @@ pub fn run_cli(args: Vec<String>) -> anyhow::Result<()> {
             GetCommands::Model(args) => {
                 download_card(args, RegistryType::Model).context("Failed to download ModelCard")
             }
-            GetCommands::Deck(args) => download_deck(args).context("Failed to download CardDeck"),
+            GetCommands::Service(args) => {
+                download_service(args).context("Failed to download ServiceCard")
+            }
         },
 
         Some(Commands::Install { command }) => match command {
-            InstallCommands::App => {
+            InstallCommands::Service => {
                 let current_dir =
                     std::env::current_dir().context("Failed to get current directory")?;
-                install_app(current_dir, None).context("Failed to install app")?;
+                install_service(current_dir, None).context("Failed to install service")?;
                 Ok(())
             }
         },

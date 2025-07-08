@@ -70,7 +70,7 @@ Bumping version of scouter to fix kafka ssl bug
 - Audit middleware + EventBus by @thorrester in #88
 - Task refactor card schema by @thorrester in #89
 - Rename repository to space by @thorrester in #90
-- Feature card deck by @thorrester in #91
+- Feature service card by @thorrester in #91
 - Actions/get ready for release by @thorrester in #92
 - Feature/cli updates by @thorrester in #93
 - Scouter routes by @thorrester in #79

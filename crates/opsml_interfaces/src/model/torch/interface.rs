@@ -74,7 +74,7 @@ impl TorchModel {
         let sample_data = match sample_data {
             // attempt to create sample data. If it fails, return default sample data and log a warning
             Some(data) => TorchSampleData::new(data).unwrap_or_else(|e| {
-                warn!("Failed to create sample data. Defaulting to None: {}", e);
+                warn!("Failed to create sample data. Defaulting to None: {e}");
                 TorchSampleData::default()
             }),
             None => TorchSampleData::default(),
@@ -593,7 +593,7 @@ impl TorchModel {
             .sample_data
             .save_data(py, path, kwargs)
             .unwrap_or_else(|e| {
-                warn!("Failed to save sample data. Defaulting to None: {}", e);
+                warn!("Failed to save sample data. Defaulting to None: {e}");
                 None
             });
 

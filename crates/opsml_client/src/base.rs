@@ -82,7 +82,7 @@ impl OpsmlApiClient {
         };
 
         api_client.refresh_token().inspect_err(|e| {
-            error!("Failed to get JWT token: {}", e);
+            error!("Failed to get JWT token: {e}");
         })?;
 
         Ok(api_client)
@@ -130,7 +130,7 @@ impl OpsmlApiClient {
                     *token_guard = new_token.to_string();
                 }
                 Err(e) => {
-                    error!("Failed to acquire write lock for jwt token update: {}", e);
+                    error!("Failed to acquire write lock for jwt token update: {e}");
                 }
             }
         }
@@ -140,7 +140,7 @@ impl OpsmlApiClient {
         match self.auth_token.read() {
             Ok(token_guard) => token_guard.clone(),
             Err(e) => {
-                error!("Failed to acquire read lock for token: {}", e);
+                error!("Failed to acquire read lock for token: {e}");
                 "".to_string()
             }
         }
@@ -160,7 +160,7 @@ impl OpsmlApiClient {
         let response = match request_type {
             RequestType::Get => {
                 let url = if let Some(query_string) = query_string {
-                    format!("{}?{}", url, query_string)
+                    format!("{url}?{query_string}")
                 } else {
                     url
                 };
@@ -190,7 +190,7 @@ impl OpsmlApiClient {
                 .map_err(ApiClientError::RequestError)?,
             RequestType::Delete => {
                 let url = if let Some(query_string) = query_string {
-                    format!("{}?{}", url, query_string)
+                    format!("{url}?{query_string}")
                 } else {
                     url
                 };
@@ -264,7 +264,7 @@ impl OpsmlApiClient {
                 None,
             )
             .inspect_err(|e| {
-                error!("Failed to get presigned url with error: {}", e.to_string());
+                error!("Failed to get presigned url with error: {e}");
             })?;
 
         // move response into PresignedUrl

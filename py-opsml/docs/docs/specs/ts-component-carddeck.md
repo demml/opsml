@@ -1,10 +1,10 @@
-# Technical Component Specification: CardDeck
+# Technical Component Specification: ServiceCard
 
 ## Overview
-The CardDeck is a primary interface for managing collections of `Cards` in `OpsML`. It's primary use-case is at the application-level where a user may want to attach multiple cards to a given service (e.g. an api). For instance, if a user has an api that requires 4 different models or an agentic workflow that requires 5 different prompts, the `CardDeck` can greatly streamline managing and loading these cards within a service. Similar to all cards, a `CardDeck` is versioned and can be registered with the OpsML registry. This allows for easy tracking of changes to the card deck over time.
+The ServiceCard is a primary interface for managing collections of `Cards` in `OpsML`. It's primary use-case is at the application-level where a user may want to attach multiple cards to a given service (e.g. an api). For instance, if a user has an api that requires 4 different models or an agentic workflow that requires 5 different prompts, the `ServiceCard` can greatly streamline managing and loading these cards within a service. Similar to all cards, a `ServiceCard` is versioned and can be registered with the OpsML registry. This allows for easy tracking of changes to the service card over time.
 
 ## Key Changes
-- Introduction of the CardDeck struct and python class for managing collections of different card types
+- Introduction of the ServiceCard struct and python class for managing collections of different card types
 - Support for saving and loading complete card collections with a single operation
 - Card aliasing system for convenient access to individual cards
 - Implementation of Pythonic interfaces for iteration and dictionary-like access
@@ -15,11 +15,11 @@ The CardDeck is a primary interface for managing collections of `Cards` in `OpsM
 
 ### Core Components
 
-#### CardDeck
+#### ServiceCard
 ```rust
 #[pyclass]
 #[derive(Debug)]
-pub struct CardDeck {
+pub struct ServiceCard {
     #[pyo3(get, set)]
     pub space: String,
     #[pyo3(get, set)]
@@ -45,17 +45,17 @@ pub struct CardDeck {
 }
 ```
 
-The `CardDeck` struct contains the following fields:
-- `space`: The space to which the card deck belongs
-- `name`: The name of the card deck
-- `version`: The version of the card deck
-- `uid`: A unique identifier for the card deck
-- `created_at`: The timestamp when the card deck was created
+The `ServiceCard` struct contains the following fields:
+- `space`: The space to which the service card belongs
+- `name`: The name of the service card
+- `version`: The version of the service card
+- `uid`: A unique identifier for the service card
+- `created_at`: The timestamp when the service card was created
 - `cards`: A collection of cards (CardList)
 - `opsml_version`: The version of OpsML used
 - `app_env`: The application environment (e.g., production, development)
-- `is_card`: A boolean indicating if the card deck is a card itself
-- `registry_type`: The type of registry (e.g., Model, Data, Deck)
+- `is_card`: A boolean indicating if the service card is a card itself
+- `registry_type`: The type of registry (e.g., Model, Data, Service)
 - `card_objs`: A HashMap holding the actual card objects (e.g., ModelCard, DataCard)
 
 #### CardList
@@ -68,7 +68,7 @@ pub struct CardList {
 }
 ```
 
-The `CardList` is a holder for Card entries in a `CardDeck` and implements Pythonic dunders for ergonomic access via python:
+The `CardList` is a holder for Card entries in a `ServiceCard` and implements Pythonic dunders for ergonomic access via python:
 - `__iter__` for iteration over cards
 - `__len__` to get collection size
 - `__getitem__` for index-based access
@@ -100,7 +100,7 @@ The Card struct represents references to actual card objects and can be created 
 
 ### How It Works
 
-#### Loading a CardDeck and Cards
+#### Loading a ServiceCard and Cards
 ```rust
 pub fn load<'py>(
     &mut self,
@@ -109,7 +109,7 @@ pub fn load<'py>(
 ) -> PyResult<()>
 ```
 
-As with all cards, the `CardDeck` is loaded lazily. The `load` method takes a dictionary of keyword arguments for each card by their `alias`. The keyword arguments are passed to the respective card's `load` method. Note - this method can only be called after the `CardDeck` has been loaded from the registry.
+As with all cards, the `ServiceCard` is loaded lazily. The `load` method takes a dictionary of keyword arguments for each card by their `alias`. The keyword arguments are passed to the respective card's `load` method. Note - this method can only be called after the `ServiceCard` has been loaded from the registry.
 
 #### Download Artifacts
 ```rust
@@ -117,10 +117,10 @@ As with all cards, the `CardDeck` is loaded lazily. The `load` method takes a di
 pub fn download_artifacts(&mut self, py: Python, path: Option<PathBuf>) -> PyResult<()>
 ```
 
-Downloads all artifacts associated with all cards in the deck to the specified path with the structure:
+Downloads all artifacts associated with all cards in the service to the specified path with the structure:
 ```
 {base_path}/
-├── card.json                # CardDeck metadata
+├── card.json                # ServiceCard metadata
 ├── {alias1}/                # Files for the first card
 │   └── card.json            # First card metadata
 ├── {alias2}/                # Files for the second card
@@ -138,21 +138,21 @@ pub fn __getitem__<'py>(&self, py: Python<'py>, key: &str) -> PyResult<Bound<'py
 Enables Python-side dictionary-style access to cards using their aliases:
 ```python
 # Access a model card with alias "model"
-model = card_deck["model"]
+model = service["model"]
 ```
 
 ### Serialization Support
 
-The CardDeck includes custom serialization/deserialization implementations to handle:
+The ServiceCard includes custom serialization/deserialization implementations to handle:
 - Python object references that can't be directly serialized
 - Restoration of object state when loading from JSON
 - Proper handling of PyObject references in a memory-safe way
 
 ### Integration with OpsML Card System
 
-The CardDeck implements the `OpsmlCard` trait
+The ServiceCard implements the `OpsmlCard` trait
 ```rust
-impl OpsmlCard for CardDeck {
+impl OpsmlCard for ServiceCard {
     fn get_registry_card(&self) -> Result<CardRecord, CardError> {
         self.get_registry_card()
     }
@@ -160,17 +160,17 @@ impl OpsmlCard for CardDeck {
 }
 ```
 
-This enables the CardDeck to be created and registered directly from Rust. This trait is utilized when leveraging the opsml cli.
+This enables the ServiceCard to be created and registered directly from Rust. This trait is utilized when leveraging the opsml cli.
 
 ## Usage Examples
 
 ### Python-side Usage
 
 ```python
-# Creating a new CardDeck
-registry = CardRegistry(RegistryType.Deck)
+# Creating a new ServiceCard
+registry = CardRegistry(RegistryType.Service)
 
-deck = CardDeck(
+service = ServiceCard(
     space="test",
     name="test",
     cards=[
@@ -187,27 +187,27 @@ deck = CardDeck(
 )
 
 # Registration
-registry.register_card(deck)
+registry.register_card(service)
 
 # Accessing cards by alias
-model = deck["model"]
-data = deck["prompt"]
+model = service["model"]
+data = service["prompt"]
 
-# Loading CardDeck from the registry
-loaded_deck = registry.load_card(uid=deck.uid)
+# Loading ServiceCard from the registry
+loaded_service = registry.load_card(uid=service.uid)
 
 # Load card
-loaded_deck.load()
+loaded_service.load()
 
 # Load card example with kwargs (pass modelkwargs to load onnx)
-loaded_deck.load({"model": ModelLoadKwargs(load_onnx=True)})
+loaded_service.load({"model": ModelLoadKwargs(load_onnx=True)})
 
 
 # Loading from filesystem (assume artifacts are already downloaded to path)
-loaded_deck = CardDeck.from_path("my_card_deck")
+loaded_service = ServiceCard.from_path("my_service")
 
-loaded_deck["model"].model # access the model
-loaded_deck["prompt"].prompt # access the prompt
+loaded_service["model"].model # access the model
+loaded_service["prompt"].prompt # access the prompt
 ```
 
 ## Performance Considerations
@@ -218,11 +218,11 @@ loaded_deck["prompt"].prompt # access the prompt
 
 
 2. **Storage Efficiency**
-   - Only references to cards are stored in the CardDeck metadata
+   - Only references to cards are stored in the ServiceCard metadata
    - Actual card objects are loaded/downloaded on demand
    - PyObjects are bound to python objects to avoid unnecessary copies
 
 ---
 *Version: 1.0*  
-*Last Updated: 2025-04-11*  
+*Last Updated: 2025-07-08*  
 *Author: Steven Forrester*

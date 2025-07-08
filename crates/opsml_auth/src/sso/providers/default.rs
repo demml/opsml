@@ -31,9 +31,9 @@ impl DefaultSsoSettings {
         let scope = std::env::var("OPSML_AUTH_SCOPE")
             .unwrap_or_else(|_| "openid email profile".to_string());
 
-        let token_url = format!("{}/{}", auth_domain, token_endpoint);
-        let authorization_url = format!("{}/{}", auth_domain, authorization_endpoint);
-        let certs_url = format!("{}/{}", auth_domain, certs_endpoint);
+        let token_url = format!("{auth_domain}/{token_endpoint}");
+        let authorization_url = format!("{auth_domain}/{authorization_endpoint}");
+        let certs_url = format!("{auth_domain}/{certs_endpoint}");
 
         let response = client
             .get(&certs_url)
@@ -44,10 +44,7 @@ impl DefaultSsoSettings {
         let decoding_key = match response.status() {
             StatusCode::OK => {
                 let jwk_response = response.json::<JwkResponse>().await.map_err(|e| {
-                    error!(
-                        "Failed to parse JWK response from Keycloak at {} error: {}",
-                        certs_url, e
-                    );
+                    error!("Failed to parse JWK response from Keycloak at {certs_url} error: {e}");
                     SsoError::ReqwestError(e)
                 })?;
                 jwk_response.get_decoded_key()?
@@ -55,7 +52,7 @@ impl DefaultSsoSettings {
             _ => {
                 // get response body
                 let body = response.text().await.map_err(SsoError::ReqwestError)?;
-                error!("Failed to fetch public key from Keycloak at {}. Tokens will not be validated when decoding", certs_url);
+                error!("Failed to fetch public key from Keycloak at {certs_url}. Tokens will not be validated when decoding");
                 return Err(SsoError::FailedToFetchJwk(body));
             }
         };

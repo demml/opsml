@@ -29,7 +29,7 @@ pub async fn get_next_version(
     if versions.is_empty() {
         return match &request.version {
             Some(version_str) => VersionValidator::clean_version(version_str).map_err(|e| {
-                error!("Invalid version format: {}", e);
+                error!("Invalid version format: {e}");
                 e.into()
             }),
             None => Ok(Version::new(0, 1, 0)),
@@ -47,7 +47,7 @@ pub async fn get_next_version(
     };
 
     VersionValidator::bump_version(&args).map_err(|e| {
-        error!("Failed to bump version: {}", e);
+        error!("Failed to bump version: {e}");
         e.into()
     })
 }
@@ -114,7 +114,7 @@ pub async fn insert_card_into_db(
                 client_card.datacard_uids,
                 client_card.modelcard_uids,
                 client_card.promptcard_uids,
-                client_card.card_deck_uids,
+                client_card.service_card_uids,
                 client_card.experimentcard_uids,
                 client_card.opsml_version,
                 client_card.username,
@@ -151,8 +151,8 @@ pub async fn insert_card_into_db(
             ServerCard::Prompt(server_card)
         }
 
-        CardRecord::Deck(client_card) => {
-            let server_card = CardDeckRecord::new(
+        CardRecord::Service(client_card) => {
+            let server_card = ServiceCardRecord::new(
                 client_card.name,
                 client_card.space,
                 version,
@@ -160,7 +160,7 @@ pub async fn insert_card_into_db(
                 client_card.opsml_version,
                 client_card.username,
             );
-            ServerCard::Deck(server_card)
+            ServerCard::Service(server_card)
         }
     };
     sql_client.insert_card(table, &card).await?;
@@ -195,21 +195,21 @@ pub async fn cleanup_artifacts(
         )
         .await
         .inspect_err(|e| {
-            error!("Failed to get artifact key: {}", e);
+            error!("Failed to get artifact key: {e}");
         })?;
 
     storage_client
         .rm(&key.storage_path(), true)
         .await
         .inspect_err(|e| {
-            error!("Failed to remove artifact: {}", e);
+            error!("Failed to remove artifact: {e}");
         })?;
 
     sql_client
         .delete_artifact_key(&uid, &registry_type.to_string())
         .await
         .inspect_err(|e| {
-            error!("Failed to delete artifact key: {}", e);
+            error!("Failed to delete artifact key: {e}");
         })?;
 
     Ok(())

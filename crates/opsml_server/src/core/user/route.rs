@@ -78,7 +78,7 @@ async fn create_user(
 
     // Save to database
     if let Err(e) = state.sql_client.insert_user(&user).await {
-        error!("Failed to create user: {}", e);
+        error!("Failed to create user: {e}");
         return Err(internal_server_error(e, "Failed to create user"));
     }
 
@@ -87,7 +87,7 @@ async fn create_user(
     // pass to scouter if enabled
     if state.scouter_client.enabled {
         let exchange_token = state.exchange_token_from_perms(&perms).await.map_err(|e| {
-            error!("Failed to exchange token for scouter: {}", e);
+            error!("Failed to exchange token for scouter: {e}");
             internal_server_error(e, "Failed to exchange token for scouter")
         })?;
 
@@ -103,7 +103,7 @@ async fn create_user(
             )
             .await
             .map_err(|e| {
-                error!("Failed to create user in scouter: {}", e);
+                error!("Failed to create user in scouter: {e}");
                 internal_server_error(e, "Failed to create user in scouter")
             })?;
     }
@@ -189,7 +189,7 @@ async fn list_users(
     let users = match state.sql_client.get_users().await {
         Ok(users) => users,
         Err(e) => {
-            error!("Failed to list users: {}", e);
+            error!("Failed to list users: {e}");
             return Err(internal_server_error(e, "Failed to list users"));
         }
     };
@@ -250,7 +250,7 @@ async fn update_user(
 
     // Save updated user to database
     if let Err(e) = state.sql_client.update_user(&user).await {
-        error!("Failed to update user: {}", e);
+        error!("Failed to update user: {e}");
         return Err(internal_server_error(e, "Failed to update user"));
     }
 
@@ -259,7 +259,7 @@ async fn update_user(
     // pass to scouter if enabled
     if state.scouter_client.enabled {
         let exchange_token = state.exchange_token_from_perms(&perms).await.map_err(|e| {
-            error!("Failed to exchange token for scouter: {}", e);
+            error!("Failed to exchange token for scouter: {e}");
             internal_server_error(e, "Failed to exchange token for scouter")
         })?;
         state
@@ -274,7 +274,7 @@ async fn update_user(
             )
             .await
             .map_err(|e| {
-                error!("Failed to create user in scouter: {}", e);
+                error!("Failed to create user in scouter: {e}");
                 internal_server_error(e, "Failed to create user in scouter")
             })?;
         info!("User {} updated in scouter", user.username);
@@ -302,7 +302,7 @@ async fn delete_user(
     let is_last_admin = match state.sql_client.is_last_admin(&username).await {
         Ok(is_last) => is_last,
         Err(e) => {
-            error!("Failed to check if user is last admin: {}", e);
+            error!("Failed to check if user is last admin: {e}");
             return Err(internal_server_error(
                 e,
                 "Failed to check if user is last admin",
@@ -318,7 +318,7 @@ async fn delete_user(
     // (if we delete in opsml before scouter, we won't be able to get user and token)
     if state.scouter_client.enabled {
         let exchange_token = state.exchange_token_from_perms(&perms).await.map_err(|e| {
-            error!("Failed to exchange token for scouter: {}", e);
+            error!("Failed to exchange token for scouter: {e}");
             internal_server_error(e, "Failed to exchange token for scouter")
         })?;
 
@@ -327,7 +327,7 @@ async fn delete_user(
             .delete_user(&username, &exchange_token)
             .await
             .map_err(|e| {
-                error!("Failed to delete user in scouter: {}", e);
+                error!("Failed to delete user in scouter: {e}");
                 internal_server_error(e, "Failed to delete user in scouter")
             })?;
 
@@ -336,7 +336,7 @@ async fn delete_user(
 
     // Delete the user
     if let Err(e) = state.sql_client.delete_user(&username).await {
-        error!("Failed to delete user: {}", e);
+        error!("Failed to delete user: {e}");
         return Err(internal_server_error(e, "Failed to delete user"));
     }
 
@@ -387,22 +387,19 @@ async fn reset_password_with_recovery(
 pub async fn get_user_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
     let result = catch_unwind(AssertUnwindSafe(|| {
         Router::new()
-            .route(&format!("{}/user", prefix), post(create_user))
+            .route(&format!("{prefix}/user"), post(create_user))
             .route(
-                &format!("{}/user/register", prefix),
+                &format!("{prefix}/user/register"),
                 post(register_user_from_ui),
             )
-            .route(&format!("{}/user", prefix), get(list_users))
+            .route(&format!("{prefix}/user"), get(list_users))
             .route(
-                &format!("{}/user/reset-password/recovery", prefix),
+                &format!("{prefix}/user/reset-password/recovery"),
                 post(reset_password_with_recovery),
             )
-            .route(&format!("{}/user/{{username}}", prefix), get(get_user))
-            .route(&format!("{}/user/{{username}}", prefix), put(update_user))
-            .route(
-                &format!("{}/user/{{username}}", prefix),
-                delete(delete_user),
-            )
+            .route(&format!("{prefix}/user/{{username}}"), get(get_user))
+            .route(&format!("{prefix}/user/{{username}}"), put(update_user))
+            .route(&format!("{prefix}/user/{{username}}"), delete(delete_user))
     }));
 
     match result {

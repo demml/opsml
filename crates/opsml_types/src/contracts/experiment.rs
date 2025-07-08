@@ -31,7 +31,7 @@ impl AuditableRequest for GetMetricRequest {
 
     fn get_metadata(&self) -> String {
         serde_json::to_string(self)
-            .unwrap_or_else(|e| format!("Failed to serialize GetMetricRequest: {}", e))
+            .unwrap_or_else(|e| format!("Failed to serialize GetMetricRequest: {e}"))
     }
 
     fn get_registry_type(&self) -> Option<RegistryType> {

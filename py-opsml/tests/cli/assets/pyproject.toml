@@ -14,8 +14,7 @@ space = "space"
 model = { name = "model" }
 prompt = { name = "prompt" }
 
-[[tool.opsml.deck]]
-type = "deck"
+[[tool.opsml.service]]
 space = "space"
 name = "name1"
 version = "1"
@@ -25,8 +24,7 @@ cards = [
     {alias = "my_model", space="space", name="model", version = "1.*", type = "model"}
 ]
 
-[[tool.opsml.deck]]
-type = "deck"
+[[tool.opsml.service]]
 space = "space"
 name = "name2"
 version = "1"
@@ -36,8 +34,7 @@ cards = [
     {alias = "my_model", space="space", name="model", version = "1.*", type = "model", drift = { active = true, deactivate_others = false, drift_type = ["custom", "psi"] }}
 ]
 
-[[tool.opsml.deck]]
-type = "deck"
+[[tool.opsml.service]]
 space = "space"
 name = "name3"
 version = "1"

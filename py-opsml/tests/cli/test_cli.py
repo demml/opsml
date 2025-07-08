@@ -5,7 +5,7 @@
 
 from opsml.cli import (
     lock_project,
-    install_app,
+    install_service,
     generate_key,
     update_drift_profile_status,
     ScouterArgs,
@@ -27,7 +27,7 @@ from opsml import (  # type: ignore
     SklearnModel,
     Prompt,
     PromptCard,
-    CardDeck,
+    ServiceCard,
     CardRegistry,
 )
 from tests.conftest import WINDOWS_EXCLUDE
@@ -92,7 +92,7 @@ def test_pyproject_app_lock_project(
     1. Create initial experiment and register a model and prompt
     2. Create a lock file via lock_project form pyproject.toml (cli: opsml lock)
     3. Check if the lock file was created
-    4. Install the app via install_app (cli: opsml install app)
+    4. Install the app via install_service (cli: opsml install app)
     5. Check if the opsml_app directory was created and all artifacts were downloaded
     6. Load all artifacts and check if they are not None
     7. Create a new experiment to register a new model and prompt (increment version)
@@ -113,7 +113,7 @@ def test_pyproject_app_lock_project(
         assert lock_file.exists()
 
         # download the assets
-        install_app(CURRENT_DIRECTORY, CURRENT_DIRECTORY)
+        install_service(CURRENT_DIRECTORY, CURRENT_DIRECTORY)
 
         # check if opsml_app was created
         opsml_app = CURRENT_DIRECTORY / "opsml_app"
@@ -124,14 +124,14 @@ def test_pyproject_app_lock_project(
         assert (opsml_app / "app2").exists()
         assert (opsml_app / "app3").exists()
 
-        # try loading each deck
+        # try loading each service
         for app in ["app1", "app2", "app3"]:
-            deck = CardDeck.from_path(opsml_app / app)
-            assert deck is not None
-            assert deck["my_model"].model is not None
-            assert deck["my_model"].version == "1.0.0"
-            assert deck["my_prompt"].prompt is not None
-            assert deck["my_prompt"].version == "1.0.0"
+            service = ServiceCard.from_path(opsml_app / app)
+            assert service is not None
+            assert service["my_model"].model is not None
+            assert service["my_model"].version == "1.0.0"
+            assert service["my_prompt"].prompt is not None
+            assert service["my_prompt"].version == "1.0.0"
 
         ## delete the opsml_app and lock file
         shutil.rmtree(opsml_app)
@@ -155,19 +155,19 @@ def test_pyproject_app_lock_project(
         assert lock_file.exists()
 
         # re-install the app
-        install_app(CURRENT_DIRECTORY, CURRENT_DIRECTORY)
+        install_service(CURRENT_DIRECTORY, CURRENT_DIRECTORY)
 
         ## check if opsml_app was created
         opsml_app = CURRENT_DIRECTORY / "opsml_app"
         assert opsml_app.exists()
 
         for app in ["app1", "app2", "app3"]:
-            deck = CardDeck.from_path(opsml_app / app)
-            assert deck is not None
-            assert deck["my_model"].model is not None
-            assert deck["my_model"].version == "1.1.0"
-            assert deck["my_prompt"].prompt is not None
-            assert deck["my_prompt"].version == "1.1.0"
+            service = ServiceCard.from_path(opsml_app / app)
+            assert service is not None
+            assert service["my_model"].model is not None
+            assert service["my_model"].version == "1.1.0"
+            assert service["my_prompt"].prompt is not None
+            assert service["my_prompt"].version == "1.1.0"
 
         ## delete the opsml_app and lock file
         shutil.rmtree(opsml_app)

@@ -69,19 +69,19 @@ prompt_registry.register_card(card)
 2. The prompt card will automatically use the space "opsml" and name "my-prompt" as defined in the `pyproject.toml` file for the prompt registry.
 
 
-## **Card Decks**
-A Card Deck is a collection of cards that can be used to group related cards together. This allows you to:
+## **Service Cards**
+A Service Card (aka Card Deck) is a collection of cards that can be used to group related cards together. This allows you to:
 
 1. Manage multiple cards as a single entity, making it easier to deploy and maintain.
-2. Access a specific card in the deck by its alias. This allows you to use the card's interface to perform operations, such as making predictions with a model.
-Currently, you can create a card deck through the client API or through a tool configuration in your `pyproject.toml` file.
+2. Access a specific card in the service by its alias. This allows you to use the card's interface to perform operations, such as making predictions with a model.
+Currently, you can create a service card through the client API or through a tool configuration in your `pyproject.toml` file.
 3. Lock and update application ML artifacts in a more declarative way.
 
-More information on card decks can be found in the [Card Decks documentation](../automation/carddeck.md).
+More information on service cards can be found in the [Card Decks documentation](../automation/cardservice.md).
 
 
 ```toml
-[[tool.opsml.deck]]
+[[tool.opsml.service]]
 space = "space"
 name = "name1"
 version = "1"
@@ -92,23 +92,23 @@ cards = [
 ]
 ```
 
-1. The first card in the deck is a prompt card with the alias "my_prompt", which can be accessed using this alias.
-2. The second card in the deck is a model card with the alias "my_model", which can also be accessed using this alias.
+1. The first card in the service is a prompt card with the alias "my_prompt", which can be accessed using this alias.
+2. The second card in the service is a model card with the alias "my_model", which can also be accessed using this alias.
 
-### CardDeck Arguments
+### ServiceCard Arguments
 
 | Argument     | Description                          |
 | ----------- | ------------------------------------ |
-| <span class="text-alert">**space**</span>       | The space to associate the CardDeck with  |
-| <span class="text-alert">**name**</span>  | The name to give the CardDeck |
-| <span class="text-alert">**version**</span> | The version of the CardDeck. This is automatically updated like other card types |
-| <span class="text-alert">**write_dir**</span> | The optional directory where the CardDeck will be written to when `opsml install` is run |
-| <span class="text-alert">**cards**</span> | A list of cards in the deck, each defined as an inline table. More information on accepted arguments is below |
+| <span class="text-alert">**space**</span>       | The space to associate the ServiceCard with  |
+| <span class="text-alert">**name**</span>  | The name to give the ServiceCard |
+| <span class="text-alert">**version**</span> | The version of the ServiceCard. This is automatically updated like other card types |
+| <span class="text-alert">**write_dir**</span> | The optional directory where the ServiceCard will be written to when `opsml install` is run |
+| <span class="text-alert">**cards**</span> | A list of cards in the service, each defined as an inline table. More information on accepted arguments is below |
 
 ### Card Arguments
 | Argument     | Required | Description    |
 | -----------  | -------- | ------------------------------------ |
-| <span class="text-alert">**alias**</span> | Yes | The alias to use for the card in the deck. This is how you will access the card in the deck |
+| <span class="text-alert">**alias**</span> | Yes | The alias to use for the card in the service. This is how you will access the card in the service |
 | <span class="text-alert">**space**</span> | Yes | The space to associate the card with. This is used to identify the card in the registry |
 | <span class="text-alert">**name**</span> | Yes | The name to give the card |
 | <span class="text-alert">**version**</span> | No | An optional version for the card. This works similar to other card types. For example "1.*" will match any 1.x version |
@@ -118,17 +118,16 @@ cards = [
 ### Drift Configuration
 | Argument     | Required | Description |
 | ----------- | -------- | ------------------------------------ |
-| <span class="text-alert">**active**</span> | No | Whether to activate the drift profile when the deck is loaded. Defaults to `false` |
+| <span class="text-alert">**active**</span> | No | Whether to activate the drift profile when the service is loaded. Defaults to `false` |
 | <span class="text-alert">**deactivate_others**</span> | No | Whether to deactivate previous model version profiles when this model is activated. Defaults to `false` |
-| <span class="text-alert">**drift_type**</span> | Yes | A list of drift profile types to load when the deck is loaded |
+| <span class="text-alert">**drift_type**</span> | Yes | A list of drift profile types to load when the service is loaded |
 
 
 ### Example Drift Configuration
 **Note** - TOML does not currently support multi-line inline tables. In the future, this may change to allow for more complex configurations/better formatting.
 
 ```toml
-[[tool.opsml.deck]]
-type = "deck"
+[[tool.opsml.service]]
 space = "space"
 name = "name2"
 version = "1"
@@ -139,17 +138,17 @@ cards = [
 ]
 ```
 
-### Locking a CardDeck
-One of the main benefits of defining a `CardDeck` within your `pyproject.toml` file is the ability to lock the deck, which will do one of the following:
+### Locking a ServiceCard
+One of the main benefits of defining a `ServiceCard` within your `pyproject.toml` file is the ability to lock the service, which will do one of the following:
 
-- If the deck does not exist, it will create the deck and generate an `opsml.lock` file that contains the decks card configuration and dependencies.
-- If the deck already exists, it will update the deck with the latest card configuration and dependencies (based on space, name and version arguments), and update the `opsml.lock` file accordingly.
+- If the service does not exist, it will create the service and generate an `opsml.lock` file that contains the service card configuration and dependencies.
+- If the service already exists, it will update the service with the latest card configuration and dependencies (based on space, name and version arguments), and update the `opsml.lock` file accordingly.
 
-### Installing a CardDeck
-Once you have an `opsml.lock` file, you can install the deck and all of its artifacts by running the following command:
+### Installing a ServiceCard
+Once you have an `opsml.lock` file, you can install the service and all of its artifacts by running the following command:
 
 ```bash
 opsml install
 ```
 
-You can now load the CardDeck directly from this path. More information on loading a CardDeck can be found in the [Card Decks documentation](../automation/carddeck.md#load-from-path).
+You can now load the ServiceCard directly from this path. More information on loading a ServiceCard can be found in the [Service Cards documentation](../automation/service.md#load-from-path).
