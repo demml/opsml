@@ -6,7 +6,7 @@ from opsml.cli import (
     lock_project,
     install_service,
 )  # type: ignore
-
+from opsml.mock import MockConfig
 import pandas as pd
 import os
 from pathlib import Path
@@ -16,8 +16,8 @@ from opsml.scouter import (
     PsiDriftConfig,
     CustomMetricDriftConfig,
     CustomMetric,
-    HTTPConfig,
 )
+import opsml.scouter
 from opsml.scouter.alert import AlertThreshold
 from opsml.app import AppState
 
@@ -79,6 +79,7 @@ def run_experiment(
 
 @pytest.mark.skipif(WINDOWS_EXCLUDE, reason="skipping")
 def test_pyproject_app(
+    mock_environment,
     random_forest_classifier: SklearnModel,
     chat_prompt: Prompt,
     example_dataframe: pd.DataFrame,
@@ -109,9 +110,14 @@ def test_pyproject_app(
         assert (opsml_app / "app1").exists()
 
         # load the service card and the queue
-        app = AppState.from_path(path=opsml_app / "app1", transport_config=HTTPConfig())
+        app = AppState.from_path(
+            path=opsml_app / "app1",
+            transport_config=opsml.scouter.HTTPConfig(),  # this will be mocked
+        )
 
         assert app.queue is not None
+
+        assert isinstance(app.queue.transport_config, MockConfig)
 
         ## delete the opsml_app and lock file
         shutil.rmtree(opsml_app)

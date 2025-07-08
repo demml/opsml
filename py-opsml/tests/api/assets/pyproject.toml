@@ -18,6 +18,7 @@ version = "1"
 write_dir = "opsml_app"
 
 [[tool.opsml.service.cards]]
+alias = "model"
 space = "model-space"
 name = "model-name"
 version = "1"

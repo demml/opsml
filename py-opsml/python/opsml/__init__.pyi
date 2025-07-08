@@ -2,7 +2,6 @@
 # pylint: disable=useless-import-alias
 
 from .card import Card as Card
-from .card import ServiceCard as ServiceCard
 from .card import CardRegistries as CardRegistries
 from .card import CardRegistry as CardRegistry
 from .card import DataCard as DataCard
@@ -12,6 +11,7 @@ from .card import ModelCard as ModelCard
 from .card import ModelCardMetadata as ModelCardMetadata
 from .card import PromptCard as PromptCard
 from .card import RegistryType as RegistryType
+from .card import ServiceCard as ServiceCard
 from .data import ArrowData as ArrowData
 from .data import DataInterface as DataInterface
 from .data import DataLoadKwargs as DataLoadKwargs
