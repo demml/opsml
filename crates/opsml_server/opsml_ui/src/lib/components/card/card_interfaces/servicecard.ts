@@ -13,7 +13,7 @@ export interface CardList {
   cards: Card[];
 }
 
-export interface CardDeck {
+export interface ServiceCard {
   name: string;
   space: string;
   version: string;
@@ -23,6 +23,6 @@ export interface CardDeck {
   opsml_version: string;
   app_env: string;
   is_card: boolean;
-  registry_type: RegistryType.Deck;
+  registry_type: RegistryType.Service;
   experimentcard_uid?: string;
 }

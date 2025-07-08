@@ -83,17 +83,17 @@ pub enum RegistryError {
     #[error("Datacard does not exist in the registry")]
     DataCardNotExistError,
 
-    #[error("Failed to get cards from deck")]
-    FailedToGetCardsFromDeck,
+    #[error("Failed to get cards from service")]
+    FailedToGetCardsFromService,
 
-    #[error("Failed to extract cards from deck")]
-    FailedToExtractCardsFromDeck,
+    #[error("Failed to extract cards from service")]
+    FailedToExtractCardsFromService,
 
     #[error("Card registry type does not match registry type")]
     RegistryTypeMismatchError,
 
-    #[error("Failed to update card deck")]
-    UpdateCardDeckError,
+    #[error("Failed to update service card")]
+    UpdateServiceCardError,
 
     #[error("Card is not a valid card")]
     NotValidCardError,

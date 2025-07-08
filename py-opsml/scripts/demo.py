@@ -7,7 +7,7 @@ from opsml import (
     ModelCard,
     ModelCardMetadata,
     PromptCard,
-    CardDeck,
+    ServiceCard,
     Card,
     RegistryType,
     ModelSaveKwargs,
@@ -184,9 +184,9 @@ for i in range(0, 10):
         exp.log_parameter(name="param2", value=np.random.rand())
         exp.log_parameter(name="param3", value="this is my param")
 
-        deck = CardDeck(
-            space="deck",
-            name="deck",
+        service = ServiceCard(
+            space="service",
+            name="service",
             cards=[
                 Card(
                     alias="model",
@@ -205,4 +205,4 @@ for i in range(0, 10):
                 ),
             ],
         )
-        exp.register_card(deck)
+        exp.register_card(service)

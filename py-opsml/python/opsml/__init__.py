@@ -79,7 +79,7 @@ Message = potato_head.Message
 ModelSettings = potato_head.ModelSettings
 
 # Deck
-CardDeck = card.CardDeck
+ServiceCard = card.ServiceCard
 Card = card.Card
 
 # CLI

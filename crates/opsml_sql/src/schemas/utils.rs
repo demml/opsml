@@ -3,11 +3,11 @@ use crate::schemas::schema::{
 };
 
 use opsml_types::contracts::{
-    AuditCardClientRecord, CardDeckClientRecord, CardRecord, DataCardClientRecord,
-    ExperimentCardClientRecord, ModelCardClientRecord, PromptCardClientRecord,
+    AuditCardClientRecord, CardRecord, DataCardClientRecord, ExperimentCardClientRecord,
+    ModelCardClientRecord, PromptCardClientRecord, ServiceCardClientRecord,
 };
 
-use super::CardDeckRecord;
+use super::ServiceCardRecord;
 
 pub fn convert_datacard(record: DataCardRecord) -> CardRecord {
     let card = DataCardClientRecord {
@@ -64,7 +64,7 @@ pub fn convert_experimentcard(record: ExperimentCardRecord) -> CardRecord {
         datacard_uids: record.datacard_uids.0,
         modelcard_uids: record.modelcard_uids.0,
         promptcard_uids: record.promptcard_uids.0,
-        card_deck_uids: record.card_deck_uids.0,
+        service_card_uids: record.service_card_uids.0,
         experimentcard_uids: record.experimentcard_uids.0,
         username: record.username,
         opsml_version: record.opsml_version,
@@ -111,8 +111,8 @@ pub fn convert_promptcard(record: PromptCardRecord) -> CardRecord {
     CardRecord::Prompt(card)
 }
 
-pub fn convert_card_deck(record: CardDeckRecord) -> CardRecord {
-    let card = CardDeckClientRecord {
+pub fn convert_servicecard(record: ServiceCardRecord) -> CardRecord {
+    let card = ServiceCardClientRecord {
         uid: record.uid,
         created_at: record.created_at,
         app_env: record.app_env,
@@ -124,5 +124,5 @@ pub fn convert_card_deck(record: CardDeckRecord) -> CardRecord {
         opsml_version: record.opsml_version,
     };
 
-    CardRecord::Deck(card)
+    CardRecord::Service(card)
 }

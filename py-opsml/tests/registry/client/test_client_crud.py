@@ -14,7 +14,7 @@ from opsml import (  # type: ignore
     ModelLoadKwargs,
     ModelSaveKwargs,
 )
-from opsml.card import CardDeck, Card  # type: ignore
+from opsml.card import ServiceCard, Card  # type: ignore
 from opsml.card import RegistryMode, CardList  # type: ignore
 from opsml.model import SklearnModel, DriftArgs  # type: ignore
 from opsml.data import PandasData  # type: ignore
@@ -248,10 +248,10 @@ def crud_modelcard(random_forest_classifier: SklearnModel, datacard: DataCard):
     return updated_card, reg
 
 
-def crud_card_deck(model_uid: str, prompt_uid: str):
-    reg = CardRegistry(registry_type=RegistryType.Deck)
+def crud_service_card(model_uid: str, prompt_uid: str):
+    reg = CardRegistry(registry_type=RegistryType.Service)
 
-    assert reg.registry_type == RegistryType.Deck
+    assert reg.registry_type == RegistryType.Service
     assert reg.mode == RegistryMode.Client
 
     cards = reg.list_cards()
@@ -259,7 +259,7 @@ def crud_card_deck(model_uid: str, prompt_uid: str):
     assert isinstance(cards, CardList)
     assert len(cards) == 0
 
-    deck = CardDeck(
+    service = ServiceCard(
         space="test",
         name="test",
         cards=[
@@ -276,19 +276,19 @@ def crud_card_deck(model_uid: str, prompt_uid: str):
         ],
     )
 
-    reg.register_card(deck)
+    reg.register_card(service)
     cards = reg.list_cards()
     cards.as_table()
 
     assert isinstance(cards, CardList)
     assert len(cards) == 1
-    loaded_card: CardDeck = reg.load_card(uid=deck.uid)
+    loaded_card: ServiceCard = reg.load_card(uid=service.uid)
     loaded_card.load()
 
-    assert loaded_card.name == deck.name
-    assert loaded_card.space == deck.space
-    assert loaded_card.uid == deck.uid
-    assert loaded_card.version == deck.version
+    assert loaded_card.name == service.name
+    assert loaded_card.space == service.space
+    assert loaded_card.uid == service.uid
+    assert loaded_card.version == service.version
     assert len(loaded_card.cards) == 2
 
     # check iteration works
@@ -310,7 +310,7 @@ def crud_card_deck(model_uid: str, prompt_uid: str):
     loaded_card.download_artifacts()
 
     # check the loaded_card.name is a directory
-    created_path = Path("card_deck")
+    created_path = Path("service")
     assert created_path.exists()
     assert created_path.is_dir()
     assert len(list(created_path.iterdir())) == 3
@@ -319,20 +319,20 @@ def crud_card_deck(model_uid: str, prompt_uid: str):
     load_kwargs = {
         "model": {"load_kwargs": ModelLoadKwargs(load_onnx=True)},
     }
-    CardDeck.from_path(load_kwargs=load_kwargs)
+    ServiceCard.from_path(load_kwargs=load_kwargs)
 
     # attempt to delete folder
     shutil.rmtree(created_path.as_posix())
     assert not created_path.exists()
 
     # attempt to update the card
-    loaded_card.name = "new_deck_name"
+    loaded_card.name = "new_service_name"
 
     # update the card
     reg.update_card(loaded_card)
 
     # load the updated card
-    updated_card: CardDeck = reg.load_card(uid=loaded_card.uid)
+    updated_card: ServiceCard = reg.load_card(uid=loaded_card.uid)
     updated_card.load()
 
     # make sure datacard_uid is set
@@ -340,7 +340,7 @@ def crud_card_deck(model_uid: str, prompt_uid: str):
     assert updated_card.cards == loaded_card.cards
 
     # assert that the card was updated
-    assert updated_card.name == "new_deck_name"
+    assert updated_card.name == "new_service_name"
 
     return updated_card, reg
 
@@ -366,9 +366,12 @@ def test_crud_artifactcard(
         datacard, data_registry = crud_datacard(pandas_data)
         modelcard, model_registry = crud_modelcard(random_forest_classifier, datacard)
         promptcard, prompt_registry = crud_promptcard(chat_prompt)
-        card_deck, deck_registry = crud_card_deck(modelcard.uid, promptcard.uid)
+        card_service, service_registry = crud_service_card(
+            modelcard.uid,
+            promptcard.uid,
+        )
 
         delete_card(datacard, data_registry)
         delete_card(modelcard, model_registry)
         delete_card(promptcard, prompt_registry)
-        delete_card(card_deck, deck_registry)
+        delete_card(card_service, service_registry)

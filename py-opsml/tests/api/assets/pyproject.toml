@@ -11,14 +11,13 @@ classifiers = [
 [tool.opsml.registry]
 model = { space="model-space", name = "model-name" }
 
-[[tool.opsml.deck]]
+[[tool.opsml.service]]
 space = "opsml-space"
 name = "opsml-name"
 version = "1"
 write_dir = "opsml_app"
 
-[[tool.opsml.deck.cards]]
-alias = "model"
+[[tool.opsml.service.cards]]
 space = "model-space"
 name = "model-name"
 version = "1"
