@@ -34,9 +34,9 @@ impl OktaSettings {
 
         let format_okta_url = |endpoint: &str| {
             if let Some(server_id) = &authorization_server_id {
-                format!("{}/oauth2/{}/{}", okta_domain, server_id, endpoint)
+                format!("{okta_domain}/oauth2/{server_id}/{endpoint}")
             } else {
-                format!("{}/oauth2/{}", okta_domain, endpoint)
+                format!("{okta_domain}/oauth2/{endpoint}")
             }
         };
 
@@ -61,7 +61,7 @@ impl OktaSettings {
             _ => {
                 // get response body
                 let body = response.text().await.map_err(SsoError::ReqwestError)?;
-                error!("Failed to fetch public key from Keycloak at {}. Tokens will not be validated when decoding", certs_url);
+                error!("Failed to fetch public key from Keycloak at {certs_url}. Tokens will not be validated when decoding");
                 return Err(SsoError::FailedToFetchJwk(body));
             }
         };

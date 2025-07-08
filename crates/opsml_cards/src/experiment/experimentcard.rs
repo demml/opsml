@@ -35,7 +35,7 @@ pub struct UidMetadata {
     pub promptcard_uids: Vec<String>,
 
     #[pyo3(get, set)]
-    pub card_deck_uids: Vec<String>,
+    pub service_card_uids: Vec<String>,
 
     #[pyo3(get, set)]
     pub experimentcard_uids: Vec<String>,
@@ -175,8 +175,8 @@ impl ExperimentCard {
         self.uids.modelcard_uids.push(uid.to_string());
     }
 
-    pub fn add_card_deck_uid(&mut self, uid: &str) {
-        self.uids.card_deck_uids.push(uid.to_string());
+    pub fn add_service_card_uid(&mut self, uid: &str) {
+        self.uids.service_card_uids.push(uid.to_string());
     }
 
     pub fn get_registry_card(&self) -> Result<CardRecord, CardError> {
@@ -191,7 +191,7 @@ impl ExperimentCard {
             datacard_uids: self.uids.datacard_uids.clone(),
             modelcard_uids: self.uids.modelcard_uids.clone(),
             promptcard_uids: self.uids.promptcard_uids.clone(),
-            card_deck_uids: self.uids.card_deck_uids.clone(),
+            service_card_uids: self.uids.service_card_uids.clone(),
             experimentcard_uids: self.uids.experimentcard_uids.clone(),
             opsml_version: self.opsml_version.clone(),
             username: std::env::var("OPSML_USERNAME").unwrap_or_else(|_| "guest".to_string()),
@@ -226,7 +226,7 @@ impl ExperimentCard {
         };
 
         let files = storage_client()?.find(&rpath).inspect_err(|e| {
-            error!("Failed to list artifacts: {}", e);
+            error!("Failed to list artifacts: {e}");
         })?;
 
         // iterate through and remove storage_path if it exists
@@ -260,7 +260,7 @@ impl ExperimentCard {
         // assert that lpath exists, if not create it
         if !lpath.exists() {
             std::fs::create_dir_all(&lpath).inspect_err(|e| {
-                error!("Failed to create directory: {}", e);
+                error!("Failed to create directory: {e}");
             })?;
         }
 
@@ -280,7 +280,7 @@ impl ExperimentCard {
         storage_client()?
             .get(&lpath, &rpath, recursive)
             .inspect_err(|e| {
-                error!("Failed to download artifacts: {}", e);
+                error!("Failed to download artifacts: {e}");
             })?;
 
         let decrypt_key = self
@@ -289,7 +289,7 @@ impl ExperimentCard {
             .unwrap()
             .get_decrypt_key()
             .inspect_err(|e| {
-                error!("Failed to get decryption key: {}", e);
+                error!("Failed to get decryption key: {e}");
             })?;
         decrypt_directory(&lpath, &decrypt_key)?;
 

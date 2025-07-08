@@ -18,7 +18,7 @@ pub async fn debug_info(State(data): State<Arc<AppState>>) -> DebugInfo {
 
 pub async fn get_debug_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
     let result = catch_unwind(AssertUnwindSafe(|| {
-        Router::new().route(&format!("{}/debug", prefix), get(debug_info))
+        Router::new().route(&format!("{prefix}/debug"), get(debug_info))
     }));
 
     match result {

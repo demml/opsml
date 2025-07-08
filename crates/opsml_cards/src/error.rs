@@ -54,7 +54,7 @@ pub enum CardError {
     #[error("Data has not been set. Load the data and retry")]
     DataNotSetError,
 
-    #[error("Alias not found in CardDeck")]
+    #[error("Alias not found in ServiceCard")]
     AliasNotFoundInDeckError,
 
     #[error(transparent)]
@@ -85,13 +85,13 @@ pub enum CardError {
     MissingRegistryTypeError,
 
     #[error("Either space/name or uid must be provided")]
-    MissingCardDeckArgsError,
+    MissingServiceCardArgsError,
 
     #[error("Index out of bounds: {0}")]
     IndexOutOfBoundsError(usize),
 
-    #[error("KeyError: key {0} not found in CardDeck")]
-    CardDeckKeyError(String),
+    #[error("KeyError: key {0} not found in ServiceCard")]
+    ServiceCardKeyError(String),
 
     #[error("Path does not exist: {0}")]
     PathDoesNotExistError(String),

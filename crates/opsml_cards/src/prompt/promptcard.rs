@@ -83,7 +83,7 @@ impl PromptCard {
         let base_args = BaseArgs::create_args(name, space, version, uid, &registry_type)?;
 
         let prompt = prompt.extract::<Prompt>().inspect_err(|e| {
-            error!("Failed to extract prompt: {}", e);
+            error!("Failed to extract prompt: {e}");
         })?;
 
         Ok(Self {
@@ -110,7 +110,7 @@ impl PromptCard {
     #[setter]
     pub fn set_prompt(&mut self, prompt: &Bound<'_, PyAny>) -> Result<(), CardError> {
         self.prompt = prompt.extract::<Prompt>().inspect_err(|e| {
-            error!("Failed to extract prompt: {}", e);
+            error!("Failed to extract prompt: {e}");
         })?;
 
         Ok(())
@@ -143,7 +143,7 @@ impl PromptCard {
     #[pyo3(signature = (json_string))]
     pub fn model_validate_json(json_string: String) -> Result<PromptCard, CardError> {
         Ok(serde_json::from_str(&json_string).inspect_err(|e| {
-            error!("Failed to validate json: {}", e);
+            error!("Failed to validate json: {e}");
         })?)
     }
 

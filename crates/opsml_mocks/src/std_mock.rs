@@ -349,13 +349,10 @@ impl OpsmlTestServer {
                     Err(e) => {
                         if attempt == max_attempts - 1 {
                             tracing::error!(
-                                "Failed to remove root directory after {} attempts: {}",
-                                max_attempts,
-                                e
+                                "Failed to remove root directory after {max_attempts} attempts: {e}",
                             );
                             return Err(TestServerError::CustomError(format!(
-                                "Failed to remove root directory: {}",
-                                e
+                                "Failed to remove root directory: {e}",
                             ))
                             .into());
                         }
@@ -428,10 +425,10 @@ impl OpsmlServerContext {
             self.start_mock_scouter()?;
 
             app_state().reset_app_state().map_err(|e| {
-                TestServerError::CustomError(format!("Failed to reset app state: {}", e))
+                TestServerError::CustomError(format!("Failed to reset app state: {e}"))
             })?;
             reset_storage_client().map_err(|e| {
-                TestServerError::CustomError(format!("Failed to reset storage client: {}", e))
+                TestServerError::CustomError(format!("Failed to reset storage client: {e}"))
             })?;
         }
 

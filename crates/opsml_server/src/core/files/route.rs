@@ -85,7 +85,7 @@ pub async fn create_multipart_upload(
     let session_url = match session_url {
         Ok(session_url) => session_url,
         Err(e) => {
-            error!("Failed to create multipart upload: {}", e);
+            error!("Failed to create multipart upload: {e}");
             return Err(internal_server_error(
                 e,
                 "Failed to create multipart upload",
@@ -166,7 +166,7 @@ pub async fn generate_presigned_url(
         let url = match url {
             Ok(url) => url,
             Err(e) => {
-                error!("Failed to generate presigned url: {}", e);
+                error!("Failed to generate presigned url: {e}");
                 return Err(internal_server_error(e, "Failed to generate presigned url"));
             }
         };
@@ -178,7 +178,7 @@ pub async fn generate_presigned_url(
     let url = match url {
         Ok(url) => url,
         Err(e) => {
-            error!("Failed to generate presigned url: {}", e);
+            error!("Failed to generate presigned url: {e}");
             return Err(internal_server_error(e, "Failed to generate presigned url"));
         }
     };
@@ -204,7 +204,7 @@ pub async fn complete_multipart_upload(
         .complete_multipart_upload(req)
         .await
         .map_err(|e| {
-            error!("Failed to complete multipart upload: {}", e);
+            error!("Failed to complete multipart upload: {e}");
             internal_server_error(e, "Failed to complete multipart upload")
         })?;
 
@@ -223,7 +223,7 @@ pub async fn upload_multipart(
     while let Some(field) = multipart.next_field().await.unwrap() {
         let file_name = field.file_name().unwrap().to_string();
         let data = field.bytes().await.map_err(|e| {
-            error!("Failed to read file: {}", e);
+            error!("Failed to read file: {e}");
             internal_server_error(e, "Failed to read file")
         })?;
         let bucket = state.config.opsml_storage_uri.to_owned();
@@ -234,17 +234,17 @@ pub async fn upload_multipart(
         // create the directory if it doesn't exist
         if let Some(parent) = rpath.parent() {
             tokio::fs::create_dir_all(parent).await.map_err(|e| {
-                error!("Failed to create directory: {}", e);
+                error!("Failed to create directory: {e}");
                 internal_server_error(e, "Failed to create directory")
             })?;
         }
 
         let mut file = File::create(&rpath).await.map_err(|e| {
-            error!("Failed to create file: {}", e);
+            error!("Failed to create file: {e}");
             internal_server_error(e, "Failed to create file")
         })?;
         file.write_all(&data).await.map_err(|e| {
-            error!("Failed to write file: {}", e);
+            error!("Failed to write file: {e}");
             internal_server_error(e, "Failed to write file")
         })?;
     }
@@ -267,7 +267,7 @@ pub async fn list_files(
     let files = match files {
         Ok(files) => files,
         Err(e) => {
-            error!("Failed to list files: {}", e);
+            error!("Failed to list files: {e}");
             return Err(internal_server_error(e, "Failed to list files"));
         }
     };
@@ -300,7 +300,7 @@ pub async fn list_file_info(
     let files = match files {
         Ok(files) => files,
         Err(e) => {
-            error!("Failed to list files: {}", e);
+            error!("Failed to list files: {e}");
             return Err(internal_server_error(e, "Failed to list files"));
         }
     };
@@ -331,7 +331,7 @@ pub async fn file_tree(
     let files = match files {
         Ok(files) => files,
         Err(e) => {
-            error!("Failed to list files: {}", e);
+            error!("Failed to list files: {e}");
             return Err(internal_server_error(e, "Failed to list files"));
         }
     };
@@ -411,7 +411,7 @@ pub async fn get_file_for_ui(
     let files = match files {
         Ok(files) => files,
         Err(e) => {
-            error!("Failed to list files: {}", e);
+            error!("Failed to list files: {e}");
             return Err(internal_server_error(e, "Failed to list files"));
         }
     };
@@ -432,7 +432,7 @@ pub async fn get_file_for_ui(
     }
 
     let tmp_dir = tempdir().map_err(|e| {
-        error!("Failed to create temp dir: {}", e);
+        error!("Failed to create temp dir: {e}");
         internal_server_error(e, "Failed to create temp dir")
     })?;
 
@@ -448,7 +448,7 @@ pub async fn get_file_for_ui(
     )
     .await
     .map_err(|e| {
-        error!("Failed to download artifact: {}", e);
+        error!("Failed to download artifact: {e}");
         internal_server_error(e, "Failed to download artifact")
     })?;
 
@@ -458,13 +458,13 @@ pub async fn get_file_for_ui(
 
     let content = if mime_type.type_() == mime::IMAGE {
         let bytes = std::fs::read(&lpath).map_err(|e| {
-            error!("Failed to read file: {}", e);
+            error!("Failed to read file: {e}");
             internal_server_error(e, "Failed to read file")
         })?;
         BASE64_STANDARD.encode(&bytes)
     } else {
         std::fs::read_to_string(&lpath).map_err(|e| {
-            error!("Failed to read file: {}", e);
+            error!("Failed to read file: {e}");
             internal_server_error(e, "Failed to read file")
         })?
     };
@@ -506,7 +506,7 @@ pub async fn delete_file(
     //
     if let Err(e) = files {
         return Err({
-            error!("Failed to delete files: {}", e);
+            error!("Failed to delete files: {e}");
             internal_server_error(e, "Failed to delete files")
         });
     }
@@ -524,7 +524,7 @@ pub async fn delete_file(
             }
         }
         Err(e) => {
-            error!("Failed to check if file exists: {}", e);
+            error!("Failed to check if file exists: {e}");
             Err(internal_server_error(e, "Failed to check if file exists"))
         }
     }
@@ -553,7 +553,7 @@ pub async fn download_file(
     let file = match File::open(&rpath).await {
         Ok(file) => file,
         Err(e) => {
-            error!("Failed to open file: {}", e);
+            error!("Failed to open file: {e}");
             return internal_server_error(e, "Failed to open file").into_response();
         }
     };
@@ -575,7 +575,7 @@ pub async fn get_artifact_key(
         .get_artifact_key(&req.uid, &req.registry_type.to_string())
         .await
         .map_err(|e| {
-            error!("Failed to get artifact key: {}", e);
+            error!("Failed to get artifact key: {e}");
             internal_server_error(e, "Failed to get artifact key")
         })?;
 
@@ -586,28 +586,28 @@ pub async fn get_file_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
     let result = catch_unwind(AssertUnwindSafe(|| {
         Router::new()
             .route(
-                &format!("{}/files/multipart", prefix),
+                &format!("{prefix}/files/multipart"),
                 get(create_multipart_upload),
             )
             .route(
-                &format!("{}/files/multipart", prefix),
+                &format!("{prefix}/files/multipart"),
                 post(upload_multipart).layer(DefaultBodyLimit::max(MAX_FILE_SIZE)),
             )
             .route(
-                &format!("{}/files/multipart/complete", prefix),
+                &format!("{prefix}/files/multipart/complete"),
                 post(complete_multipart_upload),
             )
-            .route(&format!("{}/files", prefix), get(download_file))
+            .route(&format!("{prefix}/files"), get(download_file))
             .route(
-                &format!("{}/files/presigned", prefix),
+                &format!("{prefix}/files/presigned"),
                 get(generate_presigned_url),
             )
-            .route(&format!("{}/files/list", prefix), get(list_files))
-            .route(&format!("{}/files/tree", prefix), get(file_tree))
-            .route(&format!("{}/files/list/info", prefix), get(list_file_info))
-            .route(&format!("{}/files/delete", prefix), delete(delete_file))
-            .route(&format!("{}/files/key", prefix), get(get_artifact_key))
-            .route(&format!("{}/files/content", prefix), post(get_file_for_ui))
+            .route(&format!("{prefix}/files/list"), get(list_files))
+            .route(&format!("{prefix}/files/tree"), get(file_tree))
+            .route(&format!("{prefix}/files/list/info"), get(list_file_info))
+            .route(&format!("{prefix}/files/delete"), delete(delete_file))
+            .route(&format!("{prefix}/files/key"), get(get_artifact_key))
+            .route(&format!("{prefix}/files/content"), post(get_file_for_ui))
     }));
 
     match result {

@@ -160,7 +160,7 @@ impl Experiment {
         // extract code
         match extract_code(py, code_dir, &artifact_key) {
             Ok(_) => debug!("Code extracted successfully"),
-            Err(e) => warn!("Failed to extract code: {}", e),
+            Err(e) => warn!("Failed to extract code: {e}"),
         };
 
         // start hardware queue if log_hardware is true
@@ -598,7 +598,7 @@ impl Experiment {
         // set exerimentcard_uid on card
         match card.setattr("experimentcard_uid", self.uid.clone()) {
             Ok(_) => debug!("Set experimentcard_uid on card"),
-            Err(e) => warn!("Failed to set experimentcard_uid on card: {}", e),
+            Err(e) => warn!("Failed to set experimentcard_uid on card: {e}"),
         };
 
         match registry_type {
@@ -649,8 +649,8 @@ impl Experiment {
                     .call_method1("add_promptcard_uid", (promptcard_uid,))?;
             }
 
-            RegistryType::Deck => {
-                self.registries.deck.register_card(
+            RegistryType::Service => {
+                self.registries.service.register_card(
                     card,
                     version_type,
                     pre_tag,
@@ -659,10 +659,10 @@ impl Experiment {
                 )?;
 
                 // update experimentcard_uids on experiment card
-                let deckcard_uid = &card.getattr("uid")?.extract::<String>()?;
+                let service_card_uid = &card.getattr("uid")?.extract::<String>()?;
                 self.experiment
                     .bind(py)
-                    .call_method1("add_card_deck_uid", (deckcard_uid,))?;
+                    .call_method1("add_service_card_uid", (service_card_uid,))?;
             }
 
             _ => {

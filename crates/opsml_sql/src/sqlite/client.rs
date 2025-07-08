@@ -2,9 +2,9 @@ use crate::base::SqlClient;
 
 use crate::error::SqlError;
 use crate::schemas::schema::{
-    AuditCardRecord, CardDeckRecord, CardResults, CardSummary, DataCardRecord,
-    ExperimentCardRecord, HardwareMetricsRecord, MetricRecord, ModelCardRecord, ParameterRecord,
-    PromptCardRecord, QueryStats, ServerCard, SqlSpaceRecord, User, VersionResult, VersionSummary,
+    AuditCardRecord, CardResults, CardSummary, DataCardRecord, ExperimentCardRecord,
+    HardwareMetricsRecord, MetricRecord, ModelCardRecord, ParameterRecord, PromptCardRecord,
+    QueryStats, ServerCard, ServiceCardRecord, SqlSpaceRecord, User, VersionResult, VersionSummary,
 };
 
 use crate::sqlite::helper::SqliteQueryHelper;
@@ -259,8 +259,8 @@ impl SqlClient for SqliteClient {
                 return Ok(CardResults::Prompt(card));
             }
 
-            CardTable::Deck => {
-                let card: Vec<CardDeckRecord> = sqlx::query_as(&query)
+            CardTable::Service => {
+                let card: Vec<ServiceCardRecord> = sqlx::query_as(&query)
                     .bind(query_args.uid.as_ref())
                     .bind(query_args.name.as_ref())
                     .bind(query_args.space.as_ref())
@@ -269,7 +269,7 @@ impl SqlClient for SqliteClient {
                     .fetch_all(&self.pool)
                     .await?;
 
-                return Ok(CardResults::Deck(card));
+                return Ok(CardResults::Service(card));
             }
 
             _ => {
@@ -357,7 +357,7 @@ impl SqlClient for SqliteClient {
                         .bind(&record.datacard_uids)
                         .bind(&record.modelcard_uids)
                         .bind(&record.promptcard_uids)
-                        .bind(&record.card_deck_uids)
+                        .bind(&record.service_card_uids)
                         .bind(&record.experimentcard_uids)
                         .bind(&record.pre_tag)
                         .bind(&record.build_tag)
@@ -429,9 +429,9 @@ impl SqlClient for SqliteClient {
                     return Err(SqlError::InvalidCardType);
                 }
             },
-            CardTable::Deck => match card {
-                ServerCard::Deck(record) => {
-                    let query = SqliteQueryHelper::get_carddeck_insert_query();
+            CardTable::Service => match card {
+                ServerCard::Service(record) => {
+                    let query = SqliteQueryHelper::get_servicecard_insert_query();
                     sqlx::query(&query)
                         .bind(&record.uid)
                         .bind(&record.app_env)
@@ -539,7 +539,7 @@ impl SqlClient for SqliteClient {
                         .bind(&record.datacard_uids)
                         .bind(&record.modelcard_uids)
                         .bind(&record.promptcard_uids)
-                        .bind(&record.card_deck_uids)
+                        .bind(&record.service_card_uids)
                         .bind(&record.experimentcard_uids)
                         .bind(&record.pre_tag)
                         .bind(&record.build_tag)
@@ -613,9 +613,9 @@ impl SqlClient for SqliteClient {
                 }
             },
 
-            CardTable::Deck => match card {
-                ServerCard::Deck(record) => {
-                    let query = SqliteQueryHelper::get_carddeck_update_query();
+            CardTable::Service => match card {
+                ServerCard::Service(record) => {
+                    let query = SqliteQueryHelper::get_servicecard_update_query();
                     sqlx::query(&query)
                         .bind(&record.app_env)
                         .bind(&record.name)
@@ -653,7 +653,7 @@ impl SqlClient for SqliteClient {
     ///
     /// * `Vec<String>` - A vector of unique space names
     async fn get_unique_space_names(&self, table: &CardTable) -> Result<Vec<String>, SqlError> {
-        let query = format!("SELECT DISTINCT space FROM {}", table);
+        let query = format!("SELECT DISTINCT space FROM {table}");
         let repos: Vec<String> = sqlx::query_scalar(&query).fetch_all(&self.pool).await?;
 
         Ok(repos)
@@ -680,7 +680,7 @@ impl SqlClient for SqliteClient {
 
         // if search_term is not None, format with %search_term%, else None
         let stats: QueryStats = sqlx::query_as(&query)
-            .bind(search_term.map(|term| format!("%{}%", term)))
+            .bind(search_term.map(|term| format!("%{term}%")))
             .bind(space)
             .fetch_one(&self.pool)
             .await?;
@@ -717,7 +717,7 @@ impl SqlClient for SqliteClient {
         let records: Vec<CardSummary> = sqlx::query_as(&query)
             .bind(space)
             .bind(search_term)
-            .bind(search_term.map(|term| format!("%{}%", term)))
+            .bind(search_term.map(|term| format!("%{term}%")))
             .bind(lower_bound)
             .bind(upper_bound)
             .fetch_all(&self.pool)
@@ -755,13 +755,13 @@ impl SqlClient for SqliteClient {
         uid: &str,
     ) -> Result<(String, String), SqlError> {
         // SQLite doesn't support RETURNING clause, so we need to do this in two steps
-        let select_query = format!("SELECT space, name FROM {} WHERE uid = ?", table);
+        let select_query = format!("SELECT space, name FROM {table} WHERE uid = ?");
         let (space, name): (String, String) = sqlx::query_as(&select_query)
             .bind(uid)
             .fetch_one(&self.pool)
             .await?;
 
-        let delete_query = format!("DELETE FROM {} WHERE uid = ?", table);
+        let delete_query = format!("DELETE FROM {table} WHERE uid = ?");
         sqlx::query(&delete_query)
             .bind(uid)
             .execute(&self.pool)
@@ -1243,7 +1243,7 @@ impl SqlClient for SqliteClient {
 #[cfg(test)]
 mod tests {
 
-    use crate::schemas::CardDeckRecord;
+    use crate::schemas::ServiceCardRecord;
 
     use super::*;
 
@@ -1263,7 +1263,7 @@ mod tests {
             CardTable::Experiment => ServerCard::Experiment(ExperimentCardRecord::default()),
             CardTable::Audit => ServerCard::Audit(AuditCardRecord::default()),
             CardTable::Prompt => ServerCard::Prompt(PromptCardRecord::default()),
-            CardTable::Deck => ServerCard::Deck(CardDeckRecord::default()),
+            CardTable::Service => ServerCard::Service(ServiceCardRecord::default()),
             _ => panic!("Invalid card type"),
         };
 
@@ -1274,7 +1274,7 @@ mod tests {
             ServerCard::Experiment(c) => c.uid.clone(),
             ServerCard::Audit(c) => c.uid.clone(),
             ServerCard::Prompt(c) => c.uid.clone(),
-            ServerCard::Deck(c) => c.uid.clone(),
+            ServerCard::Service(c) => c.uid.clone(),
         };
 
         // Test Insert
@@ -1332,13 +1332,13 @@ mod tests {
                 ServerCard::Prompt(c)
             }
 
-            CardTable::Deck => {
-                let c = CardDeckRecord {
+            CardTable::Service => {
+                let c = ServiceCardRecord {
                     uid: uid.clone(),
                     name: updated_name.to_string(),
                     ..Default::default()
                 };
-                ServerCard::Deck(c)
+                ServerCard::Service(c)
             }
             _ => panic!("Invalid card type"),
         };
@@ -1357,7 +1357,7 @@ mod tests {
             CardResults::Experiment(cards) => assert_eq!(cards[0].name, updated_name),
             CardResults::Audit(cards) => assert_eq!(cards[0].name, updated_name),
             CardResults::Prompt(cards) => assert_eq!(cards[0].name, updated_name),
-            CardResults::Deck(cards) => assert_eq!(cards[0].name, updated_name),
+            CardResults::Service(cards) => assert_eq!(cards[0].name, updated_name),
         }
 
         // delete card
@@ -1534,7 +1534,7 @@ mod tests {
         test_card_crud(&client, &CardTable::Prompt, "UpdatedPromptName")
             .await
             .unwrap();
-        test_card_crud(&client, &CardTable::Deck, "UpdatedDeckName")
+        test_card_crud(&client, &CardTable::Service, "UpdatedDeckName")
             .await
             .unwrap();
 
@@ -1812,7 +1812,7 @@ mod tests {
         for i in 0..10 {
             let parameter = ParameterRecord {
                 experiment_uid: uid.clone(),
-                name: format!("param{}", i),
+                name: format!("param{i}"),
                 ..Default::default()
             };
 

@@ -3,7 +3,7 @@ export enum RegistryType {
   Model = "Model",
   Experiment = "Experiment",
   Prompt = "Prompt",
-  Deck = "Deck",
+  Service = "Service",
 }
 
 export function getRegistryTypeLowerCase(type: RegistryType): string {

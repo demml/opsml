@@ -94,8 +94,8 @@ pub mod server_logic {
                     let cards = data.into_iter().map(convert_promptcard).collect();
                     Ok(cards)
                 }
-                CardResults::Deck(data) => {
-                    let cards = data.into_iter().map(convert_card_deck).collect();
+                CardResults::Service(data) => {
+                    let cards = data.into_iter().map(convert_servicecard).collect();
                     Ok(cards)
                 }
             }
@@ -230,7 +230,7 @@ pub mod server_logic {
                         client_card.datacard_uids,
                         client_card.modelcard_uids,
                         client_card.promptcard_uids,
-                        client_card.card_deck_uids,
+                        client_card.service_card_uids,
                         client_card.experimentcard_uids,
                         client_card.opsml_version,
                         client_card.username,
@@ -267,8 +267,8 @@ pub mod server_logic {
                     ServerCard::Prompt(server_card)
                 }
 
-                CardRecord::Deck(client_card) => {
-                    let server_card = CardDeckRecord::new(
+                CardRecord::Service(client_card) => {
+                    let server_card = ServiceCardRecord::new(
                         client_card.name,
                         client_card.space,
                         version,
@@ -276,7 +276,7 @@ pub mod server_logic {
                         client_card.opsml_version,
                         client_card.username,
                     );
-                    ServerCard::Deck(server_card)
+                    ServerCard::Service(server_card)
                 }
             };
 
@@ -389,7 +389,7 @@ pub mod server_logic {
                         datacard_uids: SqlxJson(client_card.datacard_uids),
                         modelcard_uids: SqlxJson(client_card.modelcard_uids),
                         promptcard_uids: SqlxJson(client_card.promptcard_uids),
-                        card_deck_uids: SqlxJson(client_card.card_deck_uids),
+                        service_card_uids: SqlxJson(client_card.service_card_uids),
                         experimentcard_uids: SqlxJson(client_card.experimentcard_uids),
                         username: client_card.username,
                         opsml_version: client_card.opsml_version,
@@ -449,11 +449,11 @@ pub mod server_logic {
                     ServerCard::Prompt(server_card)
                 }
 
-                CardRecord::Deck(client_card) => {
+                CardRecord::Service(client_card) => {
                     let version = Version::parse(&client_card.version)
                         .map_err(VersionError::InvalidVersion)?;
 
-                    let server_card = CardDeckRecord {
+                    let server_card = ServiceCardRecord {
                         uid: client_card.uid,
                         created_at: client_card.created_at,
                         app_env: client_card.app_env,
@@ -469,7 +469,7 @@ pub mod server_logic {
                         username: client_card.username,
                         opsml_version: client_card.opsml_version,
                     };
-                    ServerCard::Deck(server_card)
+                    ServerCard::Service(server_card)
                 }
             };
 

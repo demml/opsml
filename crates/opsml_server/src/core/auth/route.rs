@@ -124,7 +124,7 @@ pub async fn api_login_handler(
 
     // generate JWT token
     let jwt_token = state.auth_manager.generate_jwt(&user).map_err(|e| {
-        error!("Failed to generate JWT token: {}", e);
+        error!("Failed to generate JWT token: {e}");
         internal_server_error(e, "Failed to generate JWT token")
     })?;
 
@@ -141,7 +141,7 @@ pub async fn api_login_handler(
         .auth_manager
         .generate_refresh_token(&user)
         .map_err(|e| {
-            error!("Failed to generate refresh token: {}", e);
+            error!("Failed to generate refresh token: {e}");
             internal_server_error(e, "Failed to generate refresh token")
         })?;
 
@@ -149,7 +149,7 @@ pub async fn api_login_handler(
 
     // set refresh token in db
     state.sql_client.update_user(&user).await.map_err(|e| {
-        error!("Failed to set refresh token in database: {}", e);
+        error!("Failed to set refresh token in database: {e}");
         internal_server_error(e, "Failed to set refresh token in database")
     })?;
 
@@ -259,7 +259,7 @@ async fn ui_login_handler(
 
     // generate JWT token
     let jwt_token = state.auth_manager.generate_jwt(&user).map_err(|e| {
-        error!("Failed to generate JWT token: {}", e);
+        error!("Failed to generate JWT token: {e}");
         internal_server_error(e, "Failed to generate JWT token")
     })?;
 
@@ -377,7 +377,7 @@ pub async fn api_refresh_token_handler(
 
         // set refresh token in db
         state.sql_client.update_user(&user).await.map_err(|e| {
-            error!("Failed to set refresh token in database: {}", e);
+            error!("Failed to set refresh token in database: {e}");
             internal_server_error(e, "Failed to set refresh token in database")
         })?;
 
@@ -448,7 +448,7 @@ async fn get_sso_authorization_url(
     }
 
     let provider = state.auth_manager.get_sso_provider().map_err(|e| {
-        error!("SSO provider not set: {}", e);
+        error!("SSO provider not set: {e}");
         (
             StatusCode::INTERNAL_SERVER_ERROR,
             Json(OpsmlServerError::sso_provider_not_set()),
@@ -483,7 +483,7 @@ async fn exchange_callback_token(
 
     // generate JWT token
     let jwt_token = state.auth_manager.generate_jwt(&user).map_err(|e| {
-        error!("Failed to generate JWT token: {}", e);
+        error!("Failed to generate JWT token: {e}");
         internal_server_error(e, "Failed to generate JWT token")
     })?;
 
@@ -522,26 +522,20 @@ async fn exchange_callback_token(
 pub async fn get_auth_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
     let result = catch_unwind(AssertUnwindSafe(|| {
         Router::new()
-            .route(&format!("{}/auth/login", prefix), get(api_login_handler))
+            .route(&format!("{prefix}/auth/login"), get(api_login_handler))
             .route(
-                &format!("{}/auth/refresh", prefix),
+                &format!("{prefix}/auth/refresh"),
                 get(api_refresh_token_handler),
             )
+            .route(&format!("{prefix}/auth/validate"), get(validate_jwt_token))
+            .route(&format!("{prefix}/auth/ui/login"), post(ui_login_handler))
+            .route(&format!("{prefix}/auth/ui/logout"), get(ui_logout_handler))
             .route(
-                &format!("{}/auth/validate", prefix),
-                get(validate_jwt_token),
-            )
-            .route(&format!("{}/auth/ui/login", prefix), post(ui_login_handler))
-            .route(
-                &format!("{}/auth/ui/logout", prefix),
-                get(ui_logout_handler),
-            )
-            .route(
-                &format!("{}/auth/sso/authorization", prefix),
+                &format!("{prefix}/auth/sso/authorization"),
                 get(get_sso_authorization_url),
             )
             .route(
-                &format!("{}/auth/sso/callback", prefix),
+                &format!("{prefix}/auth/sso/callback"),
                 get(exchange_callback_token),
             )
     }));

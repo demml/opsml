@@ -4,7 +4,7 @@
 from pathlib import Path
 from typing import Any, Dict, Optional, Union
 
-from ..card import CardDeck
+from ..card import ServiceCard
 from ..scouter.client import HTTPConfig
 from ..scouter.queue import KafkaConfig, RabbitMQConfig, RedisConfig, ScouterQueue
 
@@ -12,22 +12,22 @@ class AppState:
     """OpsML application state object. This is typically used in API
     workflows where you wish create a shared state to share among all requests.
     The OpsML app state provides a convenient way to load and store artifacts.
-    Most notably, it provides an integration with Scouter so that you can load a `CardDeck`
+    Most notably, it provides an integration with Scouter so that you can load a `ServiceCard`
     along with a `ScouterQueue` for drift detection. Future iterations of this class may
     include other convenience methods that simplify common API tasks.
     """
 
     def __init__(
         self,
-        deck: CardDeck,
+        service: ServiceCard,
         queue: Optional[ScouterQueue] = None,
     ):
         """
-        Initialize the AppState with a CardDeck and a ScouterQueue.
+        Initialize the AppState with a ServiceCard and a ScouterQueue.
 
         Args:
-            deck (CardDeck):
-                The card deck containing Cards.
+            service (ServiceCard):
+                The service card containing Cards.
             queue (ScouterQueue):
                 The Scouter queue for drift detection.
         """
@@ -51,7 +51,7 @@ class AppState:
         Args:
             path (str):
                 The file path to load the AppState from. This is typically the path
-                pointing to the directory containing the `CardDeck`.
+                pointing to the directory containing the `ServiceCard`.
             load_kwargs (Dict[str, Dict[str, Any]]):
                 Optional kwargs for loading cards. Expected format:
                 {
@@ -71,12 +71,12 @@ class AppState:
             from opsml.scouter import KafkaConfig
 
             app_state = AppState.from_path(
-                "/path/to/card_deck",
+                "/path/to/service",
                 transport_config=KafkaConfig(),
                 )
 
-            # Access the card deck and queue
-            deck = app_state.deck
+            # Access the service card and queue
+            service = app_state.service
             queue = app_state.queue
             ```
 
@@ -85,8 +85,8 @@ class AppState:
         """
 
     @property
-    def deck(self) -> CardDeck:
-        """Get the card deck."""
+    def service(self) -> ServiceCard:
+        """Get the service card."""
 
     @property
     def queue(self) -> ScouterQueue:

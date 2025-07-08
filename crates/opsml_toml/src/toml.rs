@@ -21,7 +21,7 @@ pub struct DriftConfig {
     pub drift_type: Vec<String>,
 }
 
-/// toml equivalent of opsml_cards::CardDeck Card
+/// toml equivalent of opsml_cards::ServiceCard Card
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Card {
     pub alias: String,
@@ -46,7 +46,7 @@ impl Card {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct DeckConfig {
+pub struct ServiceConfig {
     pub name: String,
     pub space: String,
     pub version: Option<String>,
@@ -73,10 +73,10 @@ pub struct OpsmlTools {
     /// experiment = { space = "opsml", name = "opsml" }
     registry: Option<HashMap<RegistryType, CardAttr>>,
 
-    /// CardDeck configuration
+    /// ServiceCard configuration
     ///
     /// # Example
-    /// [tool.opsml.app]
+    /// [tool.opsml.service]
     /// name = "opsml"
     /// space = "opsml"
     /// version = "1"
@@ -84,7 +84,7 @@ pub struct OpsmlTools {
     ///    {alias="data", space = "opsml", name = "opsml", version="1", type="data"},
     ///    {alias="model", space = "opsml", name = "opsml", version="1", type="model"},
     /// ]
-    deck: Option<Vec<DeckConfig>>,
+    service: Option<Vec<ServiceConfig>>,
 }
 
 impl OpsmlTools {
@@ -133,9 +133,9 @@ impl OpsmlTools {
         self.registry.clone()
     }
 
-    /// Get the deck configuration
-    pub fn get_decks(&self) -> Option<&Vec<DeckConfig>> {
-        self.deck.as_ref()
+    /// Get the service configuration
+    pub fn get_service(&self) -> Option<&Vec<ServiceConfig>> {
+        self.service.as_ref()
     }
 }
 
@@ -179,7 +179,7 @@ impl PyProjectToml {
 
         if let Some(tool) = &pyproject.tool {
             if let Some(opsml) = &tool.opsml {
-                if let Some(apps) = &opsml.deck {
+                if let Some(apps) = &opsml.service {
                     for app in apps {
                         if let Some(cards) = &app.cards {
                             for card in cards {
@@ -272,21 +272,21 @@ mod tests {
     }
 
     #[test]
-    fn test_deck_configuration_load() {
+    fn test_service_configuration_load() {
         let content = r#"
-            [[tool.opsml.deck]]
+            [[tool.opsml.service]]
             space = "opsml"
             name = "opsml"
             version = "1"
             
-            [[tool.opsml.deck.cards]]
+            [[tool.opsml.service.cards]]
             alias = "data"
             space = "space"
             name = "name"
             version = "1"
             type = "data"
 
-            [[tool.opsml.deck.cards]]
+            [[tool.opsml.service.cards]]
             alias = "model"
             space = "space"
             name = "name"
@@ -310,11 +310,11 @@ mod tests {
             .opsml
             .as_ref()
             .unwrap()
-            .deck
+            .service
             .is_some());
 
         let tools = pyproject.get_tools().unwrap();
-        let app = tools.deck.as_ref().unwrap()[0].clone();
+        let app = tools.service.as_ref().unwrap()[0].clone();
         let cards = app.cards.clone().unwrap();
         assert_eq!(app.name, "opsml");
         assert_eq!(app.space, "opsml");
@@ -341,7 +341,7 @@ mod tests {
             name = "name"
             space = "space"
 
-            [[tool.opsml.deck]]
+            [[tool.opsml.service]]
             alias = "model"
             space = "space"
             name = "name"
@@ -369,9 +369,9 @@ mod tests {
             .is_some());
 
         let tools = pyproject.get_tools().unwrap();
-        let deck = tools.default.as_ref().unwrap();
-        assert_eq!(deck.name, Some("name".to_string()));
-        assert_eq!(deck.space, Some("space".to_string()));
+        let service = tools.default.as_ref().unwrap();
+        assert_eq!(service.name, Some("name".to_string()));
+        assert_eq!(service.space, Some("space".to_string()));
     }
 
     #[test]

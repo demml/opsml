@@ -11,7 +11,7 @@ INSERT INTO opsml_experiment_registry (
     datacard_uids,
     modelcard_uids, 
     promptcard_uids,
-    card_deck_uids,
+    service_card_uids,
     experimentcard_uids,
     pre_tag, 
     build_tag,

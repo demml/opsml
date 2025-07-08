@@ -68,13 +68,13 @@ nav:
       - "docs/cards/experimentcard.md"
       - "docs/cards/promptcard.md"
   - Automation:
-      - "docs/automation/carddeck.md"
+      - "docs/automation/service.md"
       - "docs/automation/pyproject.md"
   - Tech Specs:
       - Overview: "docs/specs/Readme.md"
       - Components:
           - Auditing: "docs/specs/ts-component-auditing.md"
-          - Card Deck: "docs/specs/ts-component-carddeck.md"
+          - Card Deck: "docs/specs/ts-component-cardservice.md"
           - EventBus: "docs/specs/ts-component-eventbus.md"
           - Experiment: "docs/specs/ts-component-experiment.md"
       - Features:

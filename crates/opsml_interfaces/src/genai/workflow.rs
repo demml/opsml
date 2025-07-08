@@ -201,7 +201,7 @@ impl Workflow {
             }
 
             // Add parallel tasks to the current step
-            plan[format!("step{}", step)] = serde_json::json!(ready);
+            plan[format!("step{step}")] = serde_json::json!(ready);
 
             // Update tracking sets
             for task_id in &ready {
@@ -225,7 +225,7 @@ impl Workflow {
         let workflow = Arc::new(RwLock::new(workflow));
         app_state().runtime.block_on(async {
             if let Err(e) = execute_workflow(workflow, py).await {
-                warn!("Workflow execution failed: {}", e);
+                warn!("Workflow execution failed: {e}");
             } else {
                 info!("Workflow execution completed successfully.");
             }
@@ -329,7 +329,7 @@ pub async fn execute_workflow<'py>(
         // Wait for all tasks to complete
         for handle in handles {
             if let Err(e) = handle.await {
-                warn!("Task execution failed: {}", e);
+                warn!("Task execution failed: {e}");
             }
         }
     }

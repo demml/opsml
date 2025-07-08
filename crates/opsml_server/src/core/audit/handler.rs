@@ -27,14 +27,14 @@ impl AuditEventHandler {
                     Event::Audit(record) => {
                         if let Err(e) = log_audit_event(record, self.state.sql_client.clone()).await
                         {
-                            error!("Failed to log audit event: {}", e);
+                            error!("Failed to log audit event: {e}");
                         }
                     }
                     Event::SpaceName(record) => {
                         if let Err(e) =
                             insert_space_name_record(record, self.state.sql_client.clone()).await
                         {
-                            error!("Failed to log space name event: {}", e);
+                            error!("Failed to log space name event: {e}");
                         }
                     }
                 }

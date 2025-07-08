@@ -268,52 +268,52 @@ impl HuggingFaceSampleData {
             HuggingFaceSampleData::Pandas(data) => Ok(Some(
                 self.save_interface_data(data.bind(py), path, kwargs)
                     .inspect_err(|e| {
-                        error!("Error saving pandas data: {}", e);
+                        error!("Error saving pandas data: {e}");
                     })?,
             )),
             HuggingFaceSampleData::Polars(data) => Ok(Some(
                 self.save_interface_data(data.bind(py), path, kwargs)
                     .inspect_err(|e| {
-                        error!("Error saving polars data: {}", e);
+                        error!("Error saving polars data: {e}");
                     })?,
             )),
             HuggingFaceSampleData::Numpy(data) => Ok(Some(
                 self.save_interface_data(data.bind(py), path, kwargs)
                     .inspect_err(|e| {
-                        error!("Error saving numpy data: {}", e);
+                        error!("Error saving numpy data: {e}");
                     })?,
             )),
             HuggingFaceSampleData::Arrow(data) => Ok(Some(
                 self.save_interface_data(data.bind(py), path, kwargs)
                     .inspect_err(|e| {
-                        error!("Error saving arrow data: {}", e);
+                        error!("Error saving arrow data: {e}");
                     })?,
             )),
             HuggingFaceSampleData::Torch(data) => Ok(Some(
                 self.save_interface_data(data.bind(py), path, kwargs)
                     .inspect_err(|e| {
-                        error!("Error saving torch data: {}", e);
+                        error!("Error saving torch data: {e}");
                     })?,
             )),
             HuggingFaceSampleData::List(data) => Ok(Some(
                 save_to_joblib(data.bind(py), path).inspect_err(|e| {
-                    error!("Error saving list data: {}", e);
+                    error!("Error saving list data: {e}");
                 })?,
             )),
             HuggingFaceSampleData::Tuple(data) => Ok(Some(
                 save_to_joblib(data.bind(py), path).inspect_err(|e| {
-                    error!("Error saving tuple data: {}", e);
+                    error!("Error saving tuple data: {e}");
                 })?,
             )),
             HuggingFaceSampleData::Dict(data) => Ok(Some(
                 save_to_joblib(data.bind(py), path).inspect_err(|e| {
-                    error!("Error saving dict data: {}", e);
+                    error!("Error saving dict data: {e}");
                 })?,
             )),
 
             HuggingFaceSampleData::Str(data) => Ok(Some(
                 save_to_joblib(data.bind(py), path).inspect_err(|e| {
-                    error!("Error saving string data: {}", e);
+                    error!("Error saving string data: {e}");
                 })?,
             )),
 

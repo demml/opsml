@@ -144,16 +144,16 @@ pub enum GetCommands {
     /// opsml get model --name model_name --version 1.0.0
     Model(DownloadCard),
 
-    /// Download card deck artifacts
+    /// Download service card artifacts
     ///
-    Deck(DownloadCard),
+    Service(DownloadCard),
 }
 
 #[derive(Subcommand)]
 #[command(version = None)]
 pub enum ListCommands {
     Model(ListCards),
-    Deck(ListCards),
+    Service(ListCards),
     Data(ListCards),
     Experiment(ListCards),
     Audit(ListCards),
@@ -162,7 +162,7 @@ pub enum ListCommands {
 
 #[derive(Subcommand)]
 pub enum InstallCommands {
-    App,
+    Service,
 }
 
 #[derive(Subcommand)]

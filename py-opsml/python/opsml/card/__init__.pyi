@@ -29,8 +29,8 @@ from ..potato_head import Prompt
 from ..types import VersionType
 
 CardInterfaceType: TypeAlias = Union[DataInterface, ModelInterface]
-CardDeckInterfaceType: TypeAlias = Dict[str, Union[DataInterface, ModelInterface]]
-LoadInterfaceType: TypeAlias = Union[CardDeckInterfaceType, CardDeckInterfaceType]
+ServiceCardInterfaceType: TypeAlias = Dict[str, Union[DataInterface, ModelInterface]]
+LoadInterfaceType: TypeAlias = Union[ServiceCardInterfaceType, ServiceCardInterfaceType]
 
 class RegistryType:
     Data: "RegistryType"
@@ -638,7 +638,7 @@ class UidMetadata:
     datacard_uids: List[str]
     modelcard_uids: List[str]
     promptcard_uids: List[str]
-    card_deck_uids: List[str]
+    service_card_uids: List[str]
     experimentcard_uids: List[str]
 
 class ExperimentCard:
@@ -988,7 +988,7 @@ class PromptCard:
     def __str__(self): ...
 
 class Card:
-    """Represents a card from a given registry that can be used in a card deck"""
+    """Represents a card from a given registry that can be used in a service card"""
 
     def __init__(
         self,
@@ -1000,7 +1000,7 @@ class Card:
         uid: Optional[str],
         card: Optional[CardType],
     ) -> None:
-        """Initialize the card deck. Card accepts either a combination of
+        """Initialize the service card. Card accepts either a combination of
         space and name (with version as optional) or a uid. If only space and name are
         provided with no version, the latest version for a given space and name will be used
         (e.g. {space}/{name}/v*). If a version is provided, it must follow semver rules that
@@ -1008,14 +1008,14 @@ class Card:
         are provided, the uid will take precedence. If neither space/name nor uid are provided,
         an error will be raised.
 
-        Alias is used to identify the card in the card deck and is not necessarily the name of
+        Alias is used to identify the card in the service card and is not necessarily the name of
         the card. It is recommended to use a short and descriptive alias that is easy to remember.
 
         Example:
 
         ```python
-        deck = CardDeck(...)
-        deck["my_alias"]
+        service = ServiceCard(...)
+        service["my_alias"]
         ```
 
 
@@ -1023,25 +1023,25 @@ class Card:
             alias (str):
                 The alias of the card
             registry_type (RegistryType):
-                The type of registry the card deck belongs to. This is
+                The type of registry the service card belongs to. This is
                 required if no card is provided.
             space (str):
-                The space of the card deck
+                The space of the service card
             name (str):
-                The name of the card deck
+                The name of the service card
             version (str):
-                The version of the card deck
+                The version of the service card
             uid (str):
-                The uid of the card deck
+                The uid of the service card
             card (Union[DataCard, ModelCard, PromptCard, ExperimentCard]):
-                Optional card to add to the deck. If provided, arguments will
+                Optional card to add to the service. If provided, arguments will
                 be extracted from the card. This card must be registered in a registry.
 
 
         Example:
 
         ```python
-        from opsml import Card, CardDeck, RegistryType
+        from opsml import Card, ServiceCard, RegistryType
 
         # With arguments
         card = Card(
@@ -1068,8 +1068,8 @@ class Card:
 
         """
 
-class CardDeck:
-    """Creates a CardDeck to hold a collection of cards."""
+class ServiceCard:
+    """Creates a ServiceCard to hold a collection of cards."""
 
     def __init__(
         self,
@@ -1078,35 +1078,35 @@ class CardDeck:
         cards: List[Card],
         version: Optional[str],
     ) -> None:
-        """Initialize the card deck
+        """Initialize the service card
 
         Args:
             space (str):
-                The space of the card deck
+                The space of the service card
             name (str):
-                The name of the card deck
+                The name of the service card
             cards (List[Card]):
-                The cards in the card deck
+                The cards in the service card
             version (str | None):
-                The version of the card deck. If not provided, the latest version
+                The version of the service card. If not provided, the latest version
                 for a given space and name will be used (e.g. {space}/{name}/v*).
         """
 
     @property
     def space(self) -> str:
-        """Return the space of the card deck"""
+        """Return the space of the service card"""
 
     @property
     def name(self) -> str:
-        """Return the name of the card deck"""
+        """Return the name of the service card"""
 
     @property
     def version(self) -> str:
-        """Return the version of the card deck"""
+        """Return the version of the service card"""
 
     @property
     def uid(self) -> str:
-        """Return the uid of the card deck"""
+        """Return the uid of the service card"""
 
     @property
     def created_at(self) -> datetime:
@@ -1114,22 +1114,22 @@ class CardDeck:
 
     @property
     def cards(self) -> List[CardType]:
-        """Return the cards in the card deck"""
+        """Return the cards in the service card"""
 
     @property
     def opsml_version(self) -> str:
         """Return the opsml version"""
 
     def save(self, path: Path) -> None:
-        """Save the card deck to a directory
+        """Save the service card to a directory
 
         Args:
             path (Path):
-                Path to save the card deck.
+                Path to save the service card.
         """
 
-    def model_validate_json(self, json_string: str) -> "CardDeck":
-        """Load card deck from json string
+    def model_validate_json(self, json_string: str) -> "ServiceCard":
+        """Load service card from json string
 
         Args:
             json_string (str):
@@ -1143,7 +1143,7 @@ class CardDeck:
         """Call the load method on each Card that requires additional loading.
         This applies to ModelCards and DataCards. PromptCards and ExperimentCards
         do not require additional loading and are loaded automatically when loading
-        the CardDeck from the registry.
+        the ServiceCard from the registry.
 
         Args:
             load_kwargs (Dict[str, ModelLoadKwargs | DataLoadKwargs]):
@@ -1157,12 +1157,12 @@ class CardDeck:
     def from_path(
         path: Optional[Path] = None,
         load_kwargs: Optional[Dict[str, Dict[str, Any]]] = None,
-    ) -> "CardDeck":
-        """Loads a card deck and its associated cards from a filesystem path.
+    ) -> "ServiceCard":
+        """Loads a service card and its associated cards from a filesystem path.
 
         Args:
             path (Path):
-                Path to load the card deck from. Defaults to "card_deck".
+                Path to load the service card from. Defaults to "service".
             load_kwargs (Dict[str, Dict[str, Any]]):
                 Optional kwargs for loading cards. Expected format:
                 {
@@ -1173,10 +1173,10 @@ class CardDeck:
                 }
 
         Returns:
-            CardDeck: The loaded card deck with all cards instantiated.
+            ServiceCard: The loaded service card with all cards instantiated.
 
         Raises:
-            PyError: If card deck JSON cannot be read
+            PyError: If service card JSON cannot be read
             PyError: If cards cannot be loaded
             PyError: If invalid kwargs are provided
 
@@ -1188,12 +1188,12 @@ class CardDeck:
                     "load_kwargs": ModelLoadKwargs(load_onnx=True)
                 }
             }
-            deck = CardDeck.from_path(load_kwargs=load_kwargs)
+            service = ServiceCard.from_path(load_kwargs=load_kwargs)
             ```
         """
 
     def __getitem__(self, alias: str) -> CardType:
-        """Get a card from the card deck by alias
+        """Get a card from the service card by alias
 
         Args:
             alias (str):
@@ -1205,13 +1205,13 @@ class CardDeck:
         """
 
     def download_artifacts(self, path: Optional[Path] = None) -> None:
-        """Download artifacts associated with each card in the card deck. This method
+        """Download artifacts associated with each card in the service card. This method
         will always overwrite existing artifacts.
 
         If the path is not provided, the artifacts will be saved to a directory.
 
         ```
-        card_deck/
+        service/
         |-- {name}-{version}/
             |-- alias1/
             |-- alias2/
@@ -1222,7 +1222,7 @@ class CardDeck:
         Args:
             path (Path):
                 Top-level Path to download the artifacts to. If not provided, the artifacts will be saved
-                to a directory using the CardDeck name.
+                to a directory using the ServiceCard name.
         """
 
 # Define a TypeVar that can only be one of our card types
@@ -1232,7 +1232,7 @@ CardType = TypeVar(  # pylint: disable=invalid-name
     ModelCard,
     PromptCard,
     ExperimentCard,
-    CardDeck,
+    ServiceCard,
 )
 
 class CardRegistry(Generic[CardType]):
@@ -1245,7 +1245,7 @@ class CardRegistry(Generic[CardType]):
     @overload
     def __init__(self, registry_type: Literal[RegistryType.Experiment]) -> "CardRegistry[ExperimentCard]": ...
     @overload
-    def __init__(self, registry_type: Literal[RegistryType.Deck]) -> "CardRegistry[CardDeck]": ...
+    def __init__(self, registry_type: Literal[RegistryType.Deck]) -> "CardRegistry[ServiceCard]": ...
     @overload
     def __init__(self, registry_type: Literal[RegistryType.Audit]) -> "CardRegistry[Any]": ...
 
@@ -1259,7 +1259,7 @@ class CardRegistry(Generic[CardType]):
     @overload
     def __init__(self, registry_type: Literal["experiment"]) -> "CardRegistry[ExperimentCard]": ...
     @overload
-    def __init__(self, registry_type: Literal["deck"]) -> "CardRegistry[CardDeck]": ...
+    def __init__(self, registry_type: Literal["service"]) -> "CardRegistry[ServiceCard]": ...
     @overload
     def __init__(self, registry_type: Literal["audit"]) -> "CardRegistry[Any]": ...
     def __init__(self, registry_type: Union[RegistryType, str]) -> None:
@@ -1371,13 +1371,13 @@ class CardRegistry(Generic[CardType]):
     ) -> DataCard: ...
     @overload
     def load_card(
-        self: "CardRegistry[CardDeck]",
+        self: "CardRegistry[ServiceCard]",
         uid: Optional[str] = None,
         space: Optional[str] = None,
         name: Optional[str] = None,
         version: Optional[str] = None,
-        interface=Optional[CardDeckInterfaceType],
-    ) -> CardDeck: ...
+        interface=Optional[ServiceCardInterfaceType],
+    ) -> ServiceCard: ...
     @overload
     def load_card(
         self: "CardRegistry[ModelCard]",
@@ -1412,7 +1412,7 @@ class CardRegistry(Generic[CardType]):
         name: Optional[str] = None,
         version: Optional[str] = None,
         interface: Optional[LoadInterfaceType] = None,
-    ) -> Union[DataCard, ModelCard, PromptCard, ExperimentCard, CardDeck]:
+    ) -> Union[DataCard, ModelCard, PromptCard, ExperimentCard, ServiceCard]:
         """Load a Card from the registry
 
         Args:
@@ -1432,11 +1432,11 @@ class CardRegistry(Generic[CardType]):
                 - ModelCard registry: ModelInterface
                 - ExperimentCard registry: Not used
                 - PromptCard registry: Not used
-                - CardDeck registry: Dict[str, Union[DataInterface, ModelInterface]]
-                  Keys should be card aliases within the deck.
+                - ServiceCard registry: Dict[str, Union[DataInterface, ModelInterface]]
+                  Keys should be card aliases within the service.
 
         Returns:
-            Union[DataCard, ModelCard, PromptCard, ExperimentCard, CardDeck]:
+            Union[DataCard, ModelCard, PromptCard, ExperimentCard, ServiceCard]:
                 The loaded card instance from the registry.
         """
 
@@ -1480,4 +1480,4 @@ class CardRegistries:
     @property
     def prompt(self) -> CardRegistry[PromptCard]: ...
     @property
-    def deck(self) -> CardRegistry[CardDeck]: ...
+    def service(self) -> CardRegistry[ServiceCard]: ...

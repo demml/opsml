@@ -38,13 +38,13 @@ const INSERT_PROMPTCARD_SQL: &str = include_str!("sql/card/insert_promptcard.sql
 const INSERT_MODELCARD_SQL: &str = include_str!("sql/card/insert_modelcard.sql");
 const INSERT_EXPERIMENTCARD_SQL: &str = include_str!("sql/card/insert_experimentcard.sql");
 const INSERT_AUDITCARD_SQL: &str = include_str!("sql/card/insert_auditcard.sql");
-const INSERT_CARDDECK_SQL: &str = include_str!("sql/card/insert_carddeck.sql");
+const INSERT_SERVICECARD_SQL: &str = include_str!("sql/card/insert_servicecard.sql");
 const UPDATE_DATACARD_SQL: &str = include_str!("sql/card/update_datacard.sql");
 const UPDATE_PROMPTCARD_SQL: &str = include_str!("sql/card/update_promptcard.sql");
 const UPDATE_MODELCARD_SQL: &str = include_str!("sql/card/update_modelcard.sql");
 const UPDATE_EXPERIMENTCARD_SQL: &str = include_str!("sql/card/update_experimentcard.sql");
 const UPDATE_AUDITCARD_SQL: &str = include_str!("sql/card/update_auditcard.sql");
-const UPDATE_CARDDECK_SQL: &str = include_str!("sql/card/update_carddeck.sql");
+const UPDATE_SERVICECARD_SQL: &str = include_str!("sql/card/update_servicecard.sql");
 
 // artifact keys
 const INSERT_ARTIFACT_KEY_SQL: &str = include_str!("sql/artifact/insert_artifact_key.sql");
@@ -105,7 +105,7 @@ pub struct PostgresQueryHelper;
 
 impl PostgresQueryHelper {
     pub fn get_uid_query(table: &CardTable) -> String {
-        format!("SELECT uid FROM {} WHERE uid = $1", table)
+        format!("SELECT uid FROM {table} WHERE uid = $1")
     }
 
     pub fn get_user_insert_query() -> String {
@@ -183,7 +183,7 @@ impl PostgresQueryHelper {
                 if idx > 0 {
                     query.push_str(" OR ");
                 }
-                query.push_str(&format!("name = ${}", param_index));
+                query.push_str(&format!("name = ${param_index}"));
                 bindings.push(name.to_string());
                 param_index += 1;
             }
@@ -201,10 +201,10 @@ impl PostgresQueryHelper {
                     name, 
                     version, 
                     ROW_NUMBER() OVER (PARTITION BY space, name ORDER BY created_at DESC) AS row_num 
-                FROM {}
+                FROM {table}
                 WHERE ($1 IS NULL OR space = $1)
                 AND ($2 IS NULL OR name LIKE $3 OR space LIKE $3)
-            )", table
+            )"
         );
 
         let stats_cte = format!(
@@ -215,12 +215,11 @@ impl PostgresQueryHelper {
                     COUNT(DISTINCT version) AS versions, 
                     MAX(created_at) AS updated_at, 
                     MIN(created_at) AS created_at 
-                FROM {}
+                FROM {table}
                 WHERE ($1 IS NULL OR space = $1)
                 AND ($2 IS NULL OR name LIKE $3 OR space LIKE $3)
                 GROUP BY space, name
-            )",
-            table
+            )"
         );
 
         let filtered_versions_cte = ", filtered_versions AS (
@@ -242,21 +241,19 @@ impl PostgresQueryHelper {
                     stats.versions, 
                     stats.updated_at, 
                     stats.created_at, 
-                    ROW_NUMBER() OVER (ORDER BY stats.{}) AS row_num 
+                    ROW_NUMBER() OVER (ORDER BY stats.{sort_by}) AS row_num 
                 FROM stats 
                 JOIN filtered_versions 
                 ON stats.space = filtered_versions.space 
                 AND stats.name = filtered_versions.name
-            )",
-            sort_by
+            )"
         );
 
         let combined_query = format!(
-            "{}{}{}{} 
-            SELECT * FROM joined 
+            "{versions_cte}{stats_cte}{filtered_versions_cte}{joined_cte}
+            SELECT * FROM joined
             WHERE row_num > $4 AND row_num <= $5
-            ORDER BY updated_at DESC",
-            versions_cte, stats_cte, filtered_versions_cte, joined_cte
+            ORDER BY updated_at DESC"
         );
 
         combined_query
@@ -271,14 +268,14 @@ impl PostgresQueryHelper {
                     version, 
                     created_at,
                     ROW_NUMBER() OVER (PARTITION BY space, name ORDER BY created_at DESC, major DESC, minor DESC, patch DESC) AS row_num
-                FROM {}
+                FROM {table}
                 WHERE space = $1
                 AND name = $2
-            )", table
+            )"
         );
 
         let query = format!(
-            "{}
+            "{versions_cte}
             SELECT
             space,
             name,
@@ -287,8 +284,7 @@ impl PostgresQueryHelper {
             row_num
             FROM versions
             WHERE row_num > $3 AND row_num <= $4
-            ORDER BY created_at DESC",
-            versions_cte
+            ORDER BY created_at DESC"
         );
 
         query
@@ -300,11 +296,10 @@ impl PostgresQueryHelper {
             COALESCE(CAST(COUNT(DISTINCT name) AS INTEGER), 0) AS nbr_names, 
             COALESCE(CAST(COUNT(major) AS INTEGER), 0) AS nbr_versions, 
             COALESCE(CAST(COUNT(DISTINCT space) AS INTEGER), 0) AS nbr_spaces 
-            FROM {}
+            FROM {table}
             WHERE 1=1
             AND ($1 IS NULL OR name LIKE $1 OR space LIKE $1)
-            AND ($2 IS NULL OR name = $2 OR space = $2)",
-            table
+            AND ($2 IS NULL OR name = $2 OR space = $2)"
         );
 
         base_query
@@ -324,12 +319,11 @@ impl PostgresQueryHelper {
              pre_tag, 
              build_tag, 
              uid
-             FROM {}
+             FROM {table}
              WHERE 1=1
                 AND space = $1
                 AND name = $2
-            ",
-            table
+            "
         );
 
         if let Some(version) = version {
@@ -347,15 +341,14 @@ impl PostgresQueryHelper {
     ) -> Result<String, SqlError> {
         if query_args.uid.is_some() {
             is_valid_uuidv7(query_args.uid.as_ref().unwrap())?;
-            return Ok(format!("SELECT * FROM {} WHERE uid = $1 LIMIT 1", table));
+            return Ok(format!("SELECT * FROM {table} WHERE uid = $1 LIMIT 1"));
         }
 
         let mut query = format!(
             "
-        SELECT * FROM {}
+        SELECT * FROM {table}
         WHERE 1=1
-        ",
-            table
+        "
         );
 
         // Add conditions in order of index columns to maximize index usage
@@ -381,8 +374,7 @@ impl PostgresQueryHelper {
         if let Some(tags) = &query_args.tags {
             for tag in tags {
                 query.push_str(&format!(
-                    " AND tags @> '[\"{}\"]'::jsonb", // Using @> operator is more efficient than EXISTS
-                    tag
+                    " AND tags @> '[\"{tag}\"]'::jsonb" // Using @> operator is more efficient than EXISTS
                 ));
             }
         }
@@ -434,7 +426,7 @@ impl PostgresQueryHelper {
                 if idx > 0 {
                     query.push_str(" OR ");
                 }
-                query.push_str(&format!("name = ${}", param_index));
+                query.push_str(&format!("name = ${param_index}"));
                 bindings.push(name.to_string());
                 param_index += 1;
             }
@@ -467,12 +459,12 @@ impl PostgresQueryHelper {
         INSERT_AUDITCARD_SQL.to_string()
     }
 
-    pub fn get_carddeck_insert_query() -> String {
-        INSERT_CARDDECK_SQL.to_string()
+    pub fn get_servicecard_insert_query() -> String {
+        INSERT_SERVICECARD_SQL.to_string()
     }
 
-    pub fn get_carddeck_update_query() -> String {
-        UPDATE_CARDDECK_SQL.to_string()
+    pub fn get_servicecard_update_query() -> String {
+        UPDATE_SERVICECARD_SQL.to_string()
     }
 
     pub fn get_promptcard_update_query() -> String {

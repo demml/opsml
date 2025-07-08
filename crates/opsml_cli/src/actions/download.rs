@@ -1,14 +1,14 @@
 use crate::cli::arg::DownloadCard;
 use crate::cli::arg::IntoQueryArgs;
 use crate::error::CliError;
-use opsml_cards::CardDeck;
 use opsml_cards::ModelCard;
+use opsml_cards::ServiceCard;
 use opsml_colors::Colorize;
 use opsml_crypt::decrypt_directory;
 use opsml_registry::base::OpsmlRegistry;
 use opsml_storage::storage_client;
 use opsml_types::{
-    cards::CardDeckMapping,
+    cards::ServiceCardMapping,
     contracts::{ArtifactKey, CardQueryArgs},
     RegistryType, SaveName, Suffix,
 };
@@ -59,8 +59,8 @@ pub fn download_card(args: &DownloadCard, registry_type: RegistryType) -> Result
     let registry = OpsmlRegistry::new(query_args.registry_type.clone())?;
 
     // Steps:
-    // 1. Load the CardDeck from the registry
-    // 2. Get all cards in the deck
+    // 1. Load the ServiceCard from the registry
+    // 2. Get all cards in the service
     // 3. For each card, get the ArtifactKey, download the artifacts, and decrypt them
     // 4. Save the artifacts to the specified directory
 
@@ -85,44 +85,41 @@ pub fn download_card(args: &DownloadCard, registry_type: RegistryType) -> Result
     Ok(())
 }
 
-pub fn download_deck(args: &DownloadCard) -> Result<(), CliError> {
+pub fn download_service(args: &DownloadCard) -> Result<(), CliError> {
     // convert to query args
-    let query_args = args.into_query_args(RegistryType::Deck)?;
+    let query_args = args.into_query_args(RegistryType::Service)?;
 
     // get registry
     let registry = OpsmlRegistry::new(query_args.registry_type.clone())?;
 
     let key = registry.get_key(&query_args)?;
-    let base_path = args.deck_path();
+    let base_path = args.service_path();
 
     // delete directory if it exists
     if base_path.exists() {
         std::fs::remove_dir_all(&base_path)?;
     }
 
-    // download card deck card
+    // download service card card
     download_card_artifacts(&key, &base_path)?;
 
     // read Card.json file
-    let card_deck =
-        CardDeck::load_card_deck_json(&base_path).map_err(CliError::LoadCardDeckError)?;
+    let service =
+        ServiceCard::load_service_json(&base_path).map_err(CliError::LoadServiceCardError)?;
 
-    let card_deck_name = format!(
-        "{}/{}/v{}",
-        card_deck.space, card_deck.name, card_deck.version
-    );
+    let service_name = format!("{}/{}/v{}", service.space, service.name, service.version);
 
     println!(
-        "Downloading card deck for card {} to path {}",
-        Colorize::purple(&card_deck_name),
+        "Downloading service card for card {} to path {}",
+        Colorize::purple(&service_name),
         Colorize::green(&args.write_dir)
     );
 
-    let mut mapping = CardDeckMapping::new();
+    let mut mapping = ServiceCardMapping::new();
     let current_dir = std::env::current_dir()?;
 
-    // Download each card in the deck
-    card_deck
+    // Download each card in the service
+    service
         .cards
         .iter()
         .try_for_each(|card| -> Result<(), CliError> {

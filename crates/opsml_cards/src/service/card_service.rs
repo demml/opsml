@@ -7,7 +7,7 @@ use opsml_interfaces::{DataLoadKwargs, ModelLoadKwargs};
 use opsml_types::contracts::CardEntry;
 use opsml_types::CommonKwargs;
 use opsml_types::{
-    contracts::{CardDeckClientRecord, CardRecord},
+    contracts::{CardRecord, ServiceCardClientRecord},
     RegistryType, SaveName, Suffix,
 };
 use opsml_utils::{extract_py_attr, PyHelperFuncs};
@@ -104,7 +104,7 @@ impl Card {
 
         if !has_space_or_name && !has_uid {
             error!("Either space/name or uid must be provided");
-            return Err(CardError::MissingCardDeckArgsError);
+            return Err(CardError::MissingServiceCardArgsError);
         }
 
         Ok(Card {
@@ -160,7 +160,7 @@ impl CardListIter {
         slf.inner.next()
     }
 }
-/// CardList holds a list of cards for the CardDeck
+/// CardList holds a list of cards for the ServiceCard
 ///
 /// # Implementation
 /// * Implements `__iter__`, `__len__`, and `__getitem__` for Python list compatibility
@@ -232,10 +232,11 @@ impl CardList {
     }
 }
 
-/// CardDeck is a collection of cards that can be used to create a card deck and load in one call
+/// ServiceCard is a collection of cards that can be associated and loaded in one call
+/// aka a ServiceCard. We use ServiceCard for consistency with developing "Applications".
 #[pyclass]
 #[derive(Debug)]
-pub struct CardDeck {
+pub struct ServiceCard {
     #[pyo3(get, set)]
     pub space: String,
 
@@ -274,7 +275,7 @@ pub struct CardDeck {
 }
 
 #[pymethods]
-impl CardDeck {
+impl ServiceCard {
     #[new]
     #[pyo3(signature = (space, name,  cards, version=None))]
     pub fn new(
@@ -283,11 +284,11 @@ impl CardDeck {
         cards: Vec<Card>, // can be Vec<Card> or Vec<ModelCard, DataCard, etc.>
         version: Option<&str>,
     ) -> Result<Self, CardError> {
-        let registry_type = RegistryType::Deck;
+        let registry_type = RegistryType::Service;
         let base_args =
             BaseArgs::create_args(Some(name), Some(space), version, None, &registry_type)?;
 
-        Ok(CardDeck {
+        Ok(ServiceCard {
             space: base_args.0,
             name: base_args.1,
             version: base_args.2,
@@ -308,7 +309,7 @@ impl CardDeck {
         self.cards = CardList { cards };
     }
 
-    /// Load the cards in the card deck
+    /// Load the cards in the
     ///
     /// # Arguments
     /// * `py` - Python interpreter state
@@ -321,7 +322,7 @@ impl CardDeck {
         py: Python<'py>,
         load_kwargs: Option<HashMap<String, Bound<'_, PyAny>>>,
     ) -> Result<(), CardError> {
-        debug!("Loading CardDeck: {}", self.name);
+        debug!("Loading ServiceCard: {}", self.name);
 
         // iterate over card_objs and call load (only for datacard and modelcard)
         for (alias, card_obj) in &self.card_objs {
@@ -363,9 +364,9 @@ impl CardDeck {
 
     #[staticmethod]
     #[pyo3(signature = (json_string))]
-    pub fn model_validate_json(json_string: String) -> Result<CardDeck, CardError> {
+    pub fn model_validate_json(json_string: String) -> Result<ServiceCard, CardError> {
         Ok(serde_json::from_str(&json_string).inspect_err(|e| {
-            error!("Failed to validate json: {}", e);
+            error!("Failed to validate json: {e}");
         })?)
     }
 
@@ -380,9 +381,9 @@ impl CardDeck {
         self.card_objs.clear();
     }
 
-    /// Get the registry card for the card deck
+    /// Get the registry card for the service card
     pub fn get_registry_card(&self) -> Result<CardRecord, CardError> {
-        let record = CardDeckClientRecord {
+        let record = ServiceCardClientRecord {
             created_at: self.created_at,
             app_env: self.app_env.clone(),
             space: self.space.clone(),
@@ -394,10 +395,10 @@ impl CardDeck {
             username: std::env::var("OPSML_USERNAME").unwrap_or_else(|_| "guest".to_string()),
         };
 
-        Ok(CardRecord::Deck(record))
+        Ok(CardRecord::Service(record))
     }
 
-    /// enable __getitem__ for CardDeck alias calls
+    /// enable __getitem__ for ServiceCard alias calls
     pub fn __getitem__<'py>(
         &self,
         py: Python<'py>,
@@ -405,16 +406,16 @@ impl CardDeck {
     ) -> Result<Bound<'py, PyAny>, CardError> {
         match self.card_objs.get(key) {
             Some(value) => Ok(value.clone_ref(py).into_bound(py)),
-            None => Err(CardError::CardDeckKeyError(key.to_string())),
+            None => Err(CardError::ServiceCardKeyError(key.to_string())),
         }
     }
 
-    /// Downloads artifacts for all cards in the card deck.
+    /// Downloads artifacts for all cards in the service card.
     ///
     /// # Arguments
     /// * `py` - Python interpreter state
-    /// * `path` - Optional path to save the artifacts. If not provided, defaults to "card_deck".
-    /// Path follows the format: `card_deck/{name}-{version}/{alias}`.
+    /// * `path` - Optional path to save the artifacts. If not provided, defaults to "service".
+    /// Path follows the format: `service/{name}-{version}/{alias}`.
     ///
     /// # Returns
     /// Returns `Result<()>` indicating success or failure.
@@ -429,12 +430,12 @@ impl CardDeck {
         py: Python,
         path: Option<PathBuf>,
     ) -> Result<(), CardError> {
-        let base_path = path.unwrap_or_else(|| PathBuf::from("card_deck"));
+        let base_path = path.unwrap_or_else(|| PathBuf::from("service"));
 
         // delete the path if it exists
         if base_path.exists() {
             std::fs::remove_dir_all(&base_path).inspect_err(|e| {
-                error!("Failed to remove directory: {}", e);
+                error!("Failed to remove directory: {e}");
             })?;
         }
 
@@ -457,29 +458,29 @@ impl CardDeck {
             }
         }
 
-        // save CardDeck to path
+        // save ServiceCard to path
         self.save(base_path)?;
 
         Ok(())
     }
 
-    /// Loads a card deck and its associated cards from a filesystem path.
+    /// Loads a service card and its associated cards from a filesystem path.
     ///
     /// # Process
-    /// 1. Loads the card deck JSON file
-    /// 2. For each card in the deck:
+    /// 1. Loads the service card JSON file
+    /// 2. For each card in the service:
     ///    - Loads the card's JSON file
     ///    - Extracts any provided load kwargs
     ///    - Loads the card object with kwargs if provided
     ///    - Loads artifacts for data/model cards
     ///    - Returns the loaded card object
-    /// 3. Loads all card objects into the deck
-    /// 4. Returns the complete card deck
+    /// 3. Loads all card objects into the service
+    /// 4. Returns the complete service card
     ///
     /// # Arguments
     /// * `py` - Python interpreter state
-    /// * `path` - Path to the card deck files. This should be the top-level directory and will be
-    /// appended with the "{name}-{version} directory containing the card deck files". Defaults to "card_deck".
+    /// * `path` - Path to the service card files. This should be the top-level directory and will be
+    /// appended with the "{name}-{version} directory containing the service card files". Defaults to "service".
     /// * `load_kwargs` - Optional loading arguments for cards
     ///
     /// # Load Kwargs Format
@@ -494,11 +495,11 @@ impl CardDeck {
     /// ```
     ///
     /// # Returns
-    /// Returns `Result<CardDeck>` containing the loaded card deck or an error
+    /// Returns `Result<ServiceCard>` containing the loaded service card or an error
     ///
     /// # Errors
     /// Will return `Result::Err` if:
-    /// - Card deck JSON file cannot be read
+    /// - Card service JSON file cannot be read
     /// - Individual card files cannot be loaded
     /// - Invalid kwargs are provided
     #[staticmethod]
@@ -507,11 +508,11 @@ impl CardDeck {
         py: Python,
         path: Option<PathBuf>,
         load_kwargs: Option<&Bound<'_, PyDict>>,
-    ) -> Result<CardDeck, CardError> {
-        let path = path.unwrap_or_else(|| PathBuf::from(SaveName::CardDeck));
+    ) -> Result<ServiceCard, CardError> {
+        let path = path.unwrap_or_else(|| PathBuf::from(SaveName::ServiceCard));
 
-        let card_deck = Self::from_path_rs(py, &path, load_kwargs)?;
-        Ok(card_deck)
+        let service = Self::from_path_rs(py, &path, load_kwargs)?;
+        Ok(service)
     }
 
     pub fn __str__(&self) -> String {
@@ -519,12 +520,12 @@ impl CardDeck {
     }
 }
 
-impl CardDeck {
+impl ServiceCard {
     pub fn from_path_rs(
         py: Python,
         path: &Path,
         load_kwargs: Option<&Bound<'_, PyDict>>,
-    ) -> Result<CardDeck, CardError> {
+    ) -> Result<ServiceCard, CardError> {
         // check path exists
         if !path.exists() {
             error!("Path does not exist: {:?}", path);
@@ -533,14 +534,14 @@ impl CardDeck {
             ));
         }
 
-        let mut card_deck = Self::load_card_deck_json(path)?;
+        let mut service = Self::load_service_json(path)?;
 
-        for card in &card_deck.cards {
+        for card in &service.cards {
             let card_obj = Self::load_card(py, path, card, load_kwargs)?;
-            card_deck.card_objs.insert(card.alias.clone(), card_obj);
+            service.card_objs.insert(card.alias.clone(), card_obj);
         }
 
-        Ok(card_deck)
+        Ok(service)
     }
 
     fn load_card(
@@ -553,7 +554,7 @@ impl CardDeck {
 
         let (interface, load_kwargs) = Self::extract_kwargs(py, load_kwargs, &card.alias)
             .inspect_err(|e| {
-                error!("Failed to extract kwargs: {}", e);
+                error!("Failed to extract kwargs: {e}");
             })?;
 
         let card_json = Self::read_card_json(&card_path)?;
@@ -577,10 +578,10 @@ impl CardDeck {
 
         Ok(card_obj)
     }
-    pub fn load_card_deck_json(path: &Path) -> Result<CardDeck, CardError> {
-        let card_deck_path = path.join(SaveName::Card).with_extension(Suffix::Json);
-        let json_string = std::fs::read_to_string(card_deck_path).inspect_err(|e| {
-            error!("Failed to read file: {}", e);
+    pub fn load_service_json(path: &Path) -> Result<ServiceCard, CardError> {
+        let service_path = path.join(SaveName::Card).with_extension(Suffix::Json);
+        let json_string = std::fs::read_to_string(service_path).inspect_err(|e| {
+            error!("Failed to read file: {e}");
         })?;
         Self::model_validate_json(json_string)
     }
@@ -639,11 +640,11 @@ impl CardDeck {
         card_obj
             .load(py, Some(card_path), kwargs)
             .inspect_err(|e| {
-                error!("Failed to load card: {}", e);
+                error!("Failed to load card: {e}");
             })?;
 
         Ok(card_obj.into_py_any(py).inspect_err(|e| {
-            error!("Failed to convert card to PyAny: {}", e);
+            error!("Failed to convert card to PyAny: {e}");
         })?)
     }
 
@@ -661,11 +662,11 @@ impl CardDeck {
         card_obj
             .load(py, Some(card_path), kwargs)
             .inspect_err(|e| {
-                error!("Failed to load card: {}", e);
+                error!("Failed to load card: {e}");
             })?;
 
         Ok(card_obj.into_py_any(py).inspect_err(|e| {
-            error!("Failed to convert card to PyAny: {}", e);
+            error!("Failed to convert card to PyAny: {e}");
         })?)
     }
 
@@ -680,19 +681,19 @@ impl CardDeck {
     }
 }
 
-impl CardDeck {
-    /// Helper function for creating CardDeck from within Rust. Used in the CLI lock command.
+impl ServiceCard {
+    /// Helper function for creating ServiceCard from within Rust. Used in the CLI lock command.
     pub fn rust_new(
         space: String,
         name: String,
         cards: Vec<Card>, // can be Vec<Card> or Vec<ModelCard, DataCard, etc.>
         version: Option<&str>,
-    ) -> Result<CardDeck, CardError> {
-        let registry_type = RegistryType::Deck;
+    ) -> Result<ServiceCard, CardError> {
+        let registry_type = RegistryType::Service;
         let base_args =
             BaseArgs::create_args(Some(&name), Some(&space), version, None, &registry_type)?;
 
-        Ok(CardDeck {
+        Ok(ServiceCard {
             space: base_args.0,
             name: base_args.1,
             version: base_args.2,
@@ -726,7 +727,7 @@ impl CardDeck {
 }
 
 // generic trait for compatibility and use in rust-based card functions
-impl OpsmlCard for CardDeck {
+impl OpsmlCard for ServiceCard {
     fn get_registry_card(&self) -> Result<CardRecord, CardError> {
         self.get_registry_card()
     }
@@ -769,12 +770,12 @@ impl OpsmlCard for CardDeck {
     }
 }
 
-impl Serialize for CardDeck {
+impl Serialize for ServiceCard {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
     {
-        let mut state = serializer.serialize_struct("CardDeck", 10)?;
+        let mut state = serializer.serialize_struct("ServiceCard", 10)?;
 
         // set session to none
         state.serialize_field("space", &self.space)?;
@@ -792,7 +793,7 @@ impl Serialize for CardDeck {
     }
 }
 
-impl<'de> Deserialize<'de> for CardDeck {
+impl<'de> Deserialize<'de> for ServiceCard {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: Deserializer<'de>,
@@ -814,16 +815,16 @@ impl<'de> Deserialize<'de> for CardDeck {
             ExperimentcardUid,
         }
 
-        struct CardDeckVisitor;
+        struct ServiceCardVisitor;
 
-        impl<'de> Visitor<'de> for CardDeckVisitor {
-            type Value = CardDeck;
+        impl<'de> Visitor<'de> for ServiceCardVisitor {
+            type Value = ServiceCard;
 
             fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
-                formatter.write_str("struct CardDeck")
+                formatter.write_str("struct ServiceCard")
             }
 
-            fn visit_map<V>(self, mut map: V) -> Result<CardDeck, V::Error>
+            fn visit_map<V>(self, mut map: V) -> Result<ServiceCard, V::Error>
             where
                 V: MapAccess<'de>,
             {
@@ -895,10 +896,10 @@ impl<'de> Deserialize<'de> for CardDeck {
                 let card_objs = card_objs.unwrap_or_else(HashMap::new);
                 let app_env = app_env.ok_or_else(|| de::Error::missing_field("app_env"))?;
                 let is_card = is_card.unwrap_or(true);
-                let registry_type = registry_type.unwrap_or(RegistryType::Deck);
+                let registry_type = registry_type.unwrap_or(RegistryType::Service);
                 let experimentcard_uid = experimentcard_uid.unwrap_or(None);
 
-                Ok(CardDeck {
+                Ok(ServiceCard {
                     space,
                     name,
                     version,
@@ -929,6 +930,6 @@ impl<'de> Deserialize<'de> for CardDeck {
             "registry_type",
             "experimentcard_uid",
         ];
-        deserializer.deserialize_struct("CardDeck", FIELDS, CardDeckVisitor)
+        deserializer.deserialize_struct("ServiceCard", FIELDS, ServiceCardVisitor)
     }
 }

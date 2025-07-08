@@ -278,51 +278,51 @@ impl SampleData {
             SampleData::Pandas(data) => Ok(Some(
                 self.save_interface_data(data.bind(py), path, kwargs)
                     .inspect_err(|e| {
-                        error!("Error saving pandas data: {}", e);
+                        error!("Error saving pandas data: {e}");
                     })?,
             )),
             SampleData::Polars(data) => Ok(Some(
                 self.save_interface_data(data.bind(py), path, kwargs)
                     .inspect_err(|e| {
-                        error!("Error saving polars data: {}", e);
+                        error!("Error saving polars data: {e}");
                     })?,
             )),
             SampleData::Numpy(data) => Ok(Some(
                 self.save_interface_data(data.bind(py), path, kwargs)
                     .inspect_err(|e| {
-                        error!("Error saving numpy data: {}", e);
+                        error!("Error saving numpy data: {e}");
                     })?,
             )),
             SampleData::Arrow(data) => Ok(Some(
                 self.save_interface_data(data.bind(py), path, kwargs)
                     .inspect_err(|e| {
-                        error!("Error saving arrow data: {}", e);
+                        error!("Error saving arrow data: {e}");
                     })?,
             )),
             SampleData::Torch(data) => Ok(Some(
                 self.save_interface_data(data.bind(py), path, kwargs)
                     .inspect_err(|e| {
-                        error!("Error saving torch data: {}", e);
+                        error!("Error saving torch data: {e}");
                     })?,
             )),
             SampleData::List(data) => Ok(Some(save_to_joblib(data.bind(py), path).inspect_err(
                 |e| {
-                    error!("Error saving list data: {}", e);
+                    error!("Error saving list data: {e}");
                 },
             )?)),
             SampleData::Tuple(data) => Ok(Some(save_to_joblib(data.bind(py), path).inspect_err(
                 |e| {
-                    error!("Error saving tuple data: {}", e);
+                    error!("Error saving tuple data: {e}");
                 },
             )?)),
             SampleData::Dict(data) => Ok(Some(save_to_joblib(data.bind(py), path).inspect_err(
                 |e| {
-                    error!("Error saving dict data: {}", e);
+                    error!("Error saving dict data: {e}");
                 },
             )?)),
             SampleData::DMatrix(data) => Ok(Some(
                 self.save_binary(data.bind(py), path).inspect_err(|e| {
-                    error!("Error saving dmatrix data: {}", e);
+                    error!("Error saving dmatrix data: {e}");
                 })?,
             )),
             SampleData::None => Ok(None),
@@ -576,5 +576,5 @@ fn load_dmatrix<'py>(py: Python<'py>, path: &Path) -> Result<Bound<'py, PyAny>, 
 pub fn get_class_full_name(class: &Bound<'_, PyAny>) -> Result<String, SampleDataError> {
     let module = class.getattr("__module__")?.str()?.to_string();
     let name = class.getattr("__name__")?.str()?.to_string();
-    Ok(format!("{}.{}", module, name))
+    Ok(format!("{module}.{name}"))
 }

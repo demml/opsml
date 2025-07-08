@@ -77,7 +77,7 @@ impl Display for TaskType {
             TaskType::Undefined => "Undefined",
         };
 
-        write!(f, "{}", task_type)
+        write!(f, "{task_type}")
     }
 }
 
@@ -115,7 +115,7 @@ impl Display for ModelInterfaceType {
             ModelInterfaceType::Onnx => "Onnx",
         };
 
-        write!(f, "{}", model_interface_type)
+        write!(f, "{model_interface_type}")
     }
 }
 
@@ -145,7 +145,7 @@ impl Display for DataInterfaceType {
             DataInterfaceType::Torch => "Torch",
         };
 
-        write!(f, "{}", data_interface_type)
+        write!(f, "{data_interface_type}")
     }
 }
 
@@ -204,7 +204,7 @@ impl Display for ModelType {
             ModelType::Onnx => "onnx",
         };
 
-        write!(f, "{}", model_type)
+        write!(f, "{model_type}")
     }
 }
 

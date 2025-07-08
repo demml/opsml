@@ -38,13 +38,13 @@ const INSERT_PROMPTCARD_SQL: &str = include_str!("sql/card/insert_promptcard.sql
 const INSERT_MODELCARD_SQL: &str = include_str!("sql/card/insert_modelcard.sql");
 const INSERT_EXPERIMENTCARD_SQL: &str = include_str!("sql/card/insert_experimentcard.sql");
 const INSERT_AUDITCARD_SQL: &str = include_str!("sql/card/insert_auditcard.sql");
-const INSERT_CARDDECK_SQL: &str = include_str!("sql/card/insert_carddeck.sql");
+const INSERT_SERVICECARD_SQL: &str = include_str!("sql/card/insert_servicecard.sql");
 const UPDATE_DATACARD_SQL: &str = include_str!("sql/card/update_datacard.sql");
 const UPDATE_PROMPTCARD_SQL: &str = include_str!("sql/card/update_promptcard.sql");
 const UPDATE_MODELCARD_SQL: &str = include_str!("sql/card/update_modelcard.sql");
 const UPDATE_EXPERIMENTCARD_SQL: &str = include_str!("sql/card/update_experimentcard.sql");
 const UPDATE_AUDITCARD_SQL: &str = include_str!("sql/card/update_auditcard.sql");
-const UPDATE_CARDDECK_SQL: &str = include_str!("sql/card/update_carddeck.sql");
+const UPDATE_SERVICECARD_SQL: &str = include_str!("sql/card/update_servicecard.sql");
 
 // artifact keys
 const INSERT_ARTIFACT_KEY_SQL: &str = include_str!("sql/artifact/insert_artifact_key.sql");
@@ -61,7 +61,7 @@ pub struct SqliteQueryHelper;
 
 impl SqliteQueryHelper {
     pub fn get_uid_query(table: &CardTable) -> String {
-        format!("SELECT uid FROM {} WHERE uid = ?", table).to_string()
+        format!("SELECT uid FROM {table} WHERE uid = ?").to_string()
     }
     pub fn get_user_insert_query() -> String {
         INSERT_USER_SQL.to_string()
@@ -157,11 +157,10 @@ impl SqliteQueryHelper {
                     name, 
                     version, 
                     ROW_NUMBER() OVER (PARTITION BY space, name ORDER BY created_at DESC) AS row_num
-                FROM {}
+                FROM {table}
                 WHERE (?1 IS NULL OR space = ?1)
                 AND (?2 IS NULL OR name LIKE ?3 OR space LIKE ?3)
-            )",
-            table
+            )"
         );
 
         let stats_cte = format!(
@@ -172,12 +171,11 @@ impl SqliteQueryHelper {
                     COUNT(DISTINCT version) AS versions, 
                     MAX(created_at) AS updated_at, 
                     MIN(created_at) AS created_at 
-                FROM {}
+                FROM {table}
                 WHERE (?1 IS NULL OR space = ?1)
                 AND (?2 IS NULL OR name LIKE ?3 OR space LIKE ?3)
                 GROUP BY space, name
-            )",
-            table
+            )"
         );
 
         let filtered_versions_cte = ", filtered_versions AS (
@@ -199,17 +197,16 @@ impl SqliteQueryHelper {
                     stats.versions, 
                     stats.updated_at, 
                     stats.created_at, 
-                    ROW_NUMBER() OVER (ORDER BY stats.{}) AS row_num 
+                    ROW_NUMBER() OVER (ORDER BY stats.{sort_by}) AS row_num 
                 FROM stats 
                 JOIN filtered_versions 
                 ON stats.space = filtered_versions.space 
                 AND stats.name = filtered_versions.name
-            )",
-            sort_by
+            )"
         );
 
         let combined_query = format!(
-            "{}{}{}{} 
+            "{versions_cte}{stats_cte}{filtered_versions_cte}{joined_cte} 
             SELECT
             space,
             name,
@@ -220,8 +217,7 @@ impl SqliteQueryHelper {
             row_num
             FROM joined 
             WHERE row_num > ?4 AND row_num <= ?5
-            ORDER BY updated_at DESC",
-            versions_cte, stats_cte, filtered_versions_cte, joined_cte
+            ORDER BY updated_at DESC"
         );
 
         combined_query
@@ -236,14 +232,14 @@ impl SqliteQueryHelper {
                     version, 
                     created_at,
                     ROW_NUMBER() OVER (PARTITION BY space, name ORDER BY created_at DESC, major DESC, minor DESC, patch DESC) AS row_num
-                FROM {}
+                FROM {table}
                 WHERE space = ?1
                 AND name = ?2
-            )", table
+            )"
         );
 
         let query = format!(
-            "{}
+            "{versions_cte}
             SELECT
             space,
             name,
@@ -252,8 +248,7 @@ impl SqliteQueryHelper {
             row_num
             FROM versions
             WHERE row_num > ?3 AND row_num <= ?4
-            ORDER BY created_at DESC",
-            versions_cte
+            ORDER BY created_at DESC"
         );
 
         query
@@ -265,12 +260,11 @@ impl SqliteQueryHelper {
                     COALESCE(COUNT(DISTINCT name), 0) AS nbr_names, 
                     COALESCE(COUNT(major), 0) AS nbr_versions, 
                     COALESCE(COUNT(DISTINCT space), 0) AS nbr_spaces
-                FROM {}
+                FROM {table}
                 WHERE 1=1
                 AND (?1 IS NULL OR name LIKE ?1 OR space LIKE ?1)
                 AND (?2 IS NULL OR space = ?2) 
-                ",
-            table
+                "
         );
 
         base_query
@@ -290,12 +284,11 @@ impl SqliteQueryHelper {
              pre_tag, 
              build_tag, 
              uid
-             FROM {}
+             FROM {table}
              WHERE 1=1
                 AND name = ?
                 AND space = ?
-            ",
-            table
+            "
         );
 
         if let Some(version) = version {
@@ -313,14 +306,13 @@ impl SqliteQueryHelper {
     ) -> Result<String, SqlError> {
         let mut query = format!(
             "
-        SELECT * FROM {}
+        SELECT * FROM {table}
         WHERE 1==1
         AND (?1 IS NULL OR uid = ?1)
         AND (?2 IS NULL OR name = ?2)
         AND (?3 IS NULL OR space = ?3)
         AND (?4 IS NULL OR created_at <= DATETIME(?4))
-        ",
-            table
+        "
         );
 
         // check for uid. If uid is present, we only return that card
@@ -339,8 +331,7 @@ impl SqliteQueryHelper {
                 for tag in tags.iter() {
                     query.push_str(
                         format!(
-                            " AND EXISTS (SELECT 1 FROM json_each(tags) WHERE value = '{}')",
-                            tag
+                            " AND EXISTS (SELECT 1 FROM json_each(tags) WHERE value = '{tag}')"
                         )
                         .as_str(),
                     );
@@ -433,12 +424,12 @@ impl SqliteQueryHelper {
         INSERT_AUDITCARD_SQL.to_string()
     }
 
-    pub fn get_carddeck_insert_query() -> String {
-        INSERT_CARDDECK_SQL.to_string()
+    pub fn get_servicecard_insert_query() -> String {
+        INSERT_SERVICECARD_SQL.to_string()
     }
 
-    pub fn get_carddeck_update_query() -> String {
-        UPDATE_CARDDECK_SQL.to_string()
+    pub fn get_servicecard_update_query() -> String {
+        UPDATE_SERVICECARD_SQL.to_string()
     }
 
     pub fn get_promptcard_update_query() -> String {
