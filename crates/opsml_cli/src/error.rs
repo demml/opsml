@@ -35,22 +35,22 @@ pub enum CliError {
     #[error(transparent)]
     RegistryError(#[from] RegistryError),
 
-    #[error("Failed to load card deck JSON file")]
-    LoadCardDeckError(#[source] CardError),
+    #[error("Failed to load service card JSON file")]
+    LoadServiceCardError(#[source] CardError),
 
-    #[error("Failed to create card deck")]
-    CreateDeckError(#[source] CardError),
+    #[error("Failed to create service card")]
+    CreateServiceError(#[source] CardError),
 
     #[error(transparent)]
     PyProjectTomlError(#[from] PyProjectTomlError),
 
-    #[error("Missing cards in deck config")]
-    MissingDeckCards,
+    #[error("Missing cards in service config")]
+    MissingServiceCards,
 
     #[error("Card not found when loading latest")]
     MissingCardError,
 
-    #[error("Card deck is missing card entries")]
+    #[error("Card service is missing card entries")]
     MissingCardEntriesError,
 
     #[error("Failed to create write path")]
@@ -59,8 +59,8 @@ pub enum CliError {
     #[error("PyProject missing tools section")]
     MissingToolsError,
 
-    #[error("Opsml tools missing app configuration")]
-    MissingAppError,
+    #[error("Opsml tools missing service configuration")]
+    MissingServiceError,
 
     #[error(transparent)]
     UiError(#[from] UiError),

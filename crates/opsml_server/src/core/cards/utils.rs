@@ -114,7 +114,7 @@ pub async fn insert_card_into_db(
                 client_card.datacard_uids,
                 client_card.modelcard_uids,
                 client_card.promptcard_uids,
-                client_card.card_deck_uids,
+                client_card.service_card_uids,
                 client_card.experimentcard_uids,
                 client_card.opsml_version,
                 client_card.username,
@@ -151,8 +151,8 @@ pub async fn insert_card_into_db(
             ServerCard::Prompt(server_card)
         }
 
-        CardRecord::Deck(client_card) => {
-            let server_card = CardDeckRecord::new(
+        CardRecord::Service(client_card) => {
+            let server_card = ServiceCardRecord::new(
                 client_card.name,
                 client_card.space,
                 version,
@@ -160,7 +160,7 @@ pub async fn insert_card_into_db(
                 client_card.opsml_version,
                 client_card.username,
             );
-            ServerCard::Deck(server_card)
+            ServerCard::Service(server_card)
         }
     };
     sql_client.insert_card(table, &card).await?;

@@ -5,7 +5,7 @@
 
 from opsml.cli import (
     lock_project,
-    install_app,
+    install_service,
 )  # type: ignore
 from pathlib import Path
 from fastapi import FastAPI, Request
@@ -141,7 +141,7 @@ def create_artifacts() -> Generator[Tuple[Path, Path], None, None]:
         assert lock_file.exists()
 
         # download the assets
-        install_app(CURRENT_DIRECTORY, CURRENT_DIRECTORY)
+        install_service(CURRENT_DIRECTORY, CURRENT_DIRECTORY)
 
         opsml_app = CURRENT_DIRECTORY / "opsml_app"
         assert opsml_app.exists()
@@ -173,7 +173,7 @@ def create_app(opsml_app: Path) -> FastAPI:
 
     @app.post("/predict", response_model=TestResponse)
     async def predict(request: Request, payload: PredictRequest) -> TestResponse:
-        modelcard: ModelCard = request.app.state.app_state.deck["model"]
+        modelcard: ModelCard = request.app.state.app_state.service["model"]
         queue: ScouterQueue = request.app.state.app_state.queue
 
         # make prediction

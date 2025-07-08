@@ -4,7 +4,7 @@
 
 from opsml.cli import (
     lock_project,
-    install_app,
+    install_service,
 )  # type: ignore
 
 import pandas as pd
@@ -99,7 +99,7 @@ def test_pyproject_app(
         assert lock_file.exists()
 
         # download the assets
-        install_app(CURRENT_DIRECTORY, CURRENT_DIRECTORY)
+        install_service(CURRENT_DIRECTORY, CURRENT_DIRECTORY)
 
         # check if opsml_app was created
         opsml_app = CURRENT_DIRECTORY / "opsml_app"
@@ -108,7 +108,7 @@ def test_pyproject_app(
         # check if the opsml_app contains the assets
         assert (opsml_app / "app1").exists()
 
-        # load the card deck and the queue
+        # load the service card and the queue
         app = AppState.from_path(path=opsml_app / "app1", transport_config=HTTPConfig())
 
         assert app.queue is not None

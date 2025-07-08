@@ -649,8 +649,8 @@ impl Experiment {
                     .call_method1("add_promptcard_uid", (promptcard_uid,))?;
             }
 
-            RegistryType::Deck => {
-                self.registries.deck.register_card(
+            RegistryType::Service => {
+                self.registries.service.register_card(
                     card,
                     version_type,
                     pre_tag,
@@ -659,10 +659,10 @@ impl Experiment {
                 )?;
 
                 // update experimentcard_uids on experiment card
-                let deckcard_uid = &card.getattr("uid")?.extract::<String>()?;
+                let service_card_uid = &card.getattr("uid")?.extract::<String>()?;
                 self.experiment
                     .bind(py)
-                    .call_method1("add_card_deck_uid", (deckcard_uid,))?;
+                    .call_method1("add_service_card_uid", (service_card_uid,))?;
             }
 
             _ => {

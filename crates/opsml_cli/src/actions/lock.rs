@@ -1,13 +1,13 @@
-use crate::actions::utils::register_card_deck;
+use crate::actions::utils::register_service_card;
 use crate::cli::arg::DownloadCard;
-use crate::download_deck;
+use crate::download_service;
 use crate::error::CliError;
-use opsml_cards::CardDeck;
+use opsml_cards::ServiceCard;
 use opsml_colors::Colorize;
 use opsml_registry::error::RegistryError;
 use opsml_registry::{CardRegistries, CardRegistry};
 use opsml_toml::{
-    toml::{Card, DeckConfig},
+    toml::{Card, ServiceConfig},
     LockArtifact, LockFile, PyProjectToml,
 };
 use opsml_types::IntegratedService;
@@ -22,9 +22,9 @@ use std::str::FromStr;
 use tracing::{debug, error, instrument};
 
 /// Helper function to get cards from registry
-fn get_deck_from_registry(
+fn get_service_from_registry(
     registry: &CardRegistry,
-    config: &DeckConfig,
+    config: &ServiceConfig,
 ) -> Result<Option<CardRecord>, CliError> {
     let cards = registry.list_cards(
         None,
@@ -59,7 +59,7 @@ fn get_latest_card(registries: &CardRegistries, card: &Card) -> Result<CardRecor
         RegistryType::Experiment => &registries.experiment,
         RegistryType::Data => &registries.data,
         RegistryType::Prompt => &registries.prompt,
-        RegistryType::Deck => &registries.deck,
+        RegistryType::Service => &registries.service,
         _ => return Err(RegistryError::RegistryTypeNotSupported(registry_type).into()),
     };
 
@@ -81,12 +81,12 @@ fn get_latest_card(registries: &CardRegistries, card: &Card) -> Result<CardRecor
     })
 }
 
-/// Helper for any postprocessing needed after card deck registration
+/// Helper for any postprocessing needed after service card registration
 /// As an example, modelcards can activate drift profile via a drift_config in the toml
 #[instrument(skip_all)]
-fn postprocess_card_deck(
+fn postprocess_service_card(
     toml_cards: &[Card],
-    deck: &CardDeck,
+    service: &ServiceCard,
     registry: &CardRegistry,
 ) -> Result<(), CliError> {
     if registry
@@ -98,7 +98,7 @@ fn postprocess_card_deck(
             .iter()
             .filter_map(|card| card.drift.as_ref().map(|drift| (card, drift)))
             .try_for_each(|(card, drift_config)| -> Result<(), CliError> {
-                let current_card = deck.get_card(&card.alias)?;
+                let current_card = service.get_card(&card.alias)?;
 
                 drift_config.drift_type.iter().try_for_each(|drift_type| {
                     let drift_type = DriftType::from_str(drift_type)?;
@@ -122,41 +122,41 @@ fn postprocess_card_deck(
     Ok(())
 }
 
-/// Process card deck and check for version updates
+/// Process service card and check for version updates
 /// The goal of this function is to:
 /// 1. For each card defined in the toml file, find the latest card in the registry
-/// 2. Check if the already registered deck has the same card
+/// 2. Check if the already registered service has the same card
 /// 3. If an existing card of same space and name is found, check if the uid is the same
 /// 4. If the uid is different, return true (needs refresh)
 /// 5. If the uid is the same, return false (no refresh needed)
 /// 6. If no existing card is found, return true (needs refresh)
 ///
 /// # Arguments
-/// * `deck_cards` - &[CardEntry] - List of cards associated with the most recent registered deck
+/// * `service_cards` - &[CardEntry] - List of cards associated with the most recent registered service
 /// * `toml_cards` - &[DeckCard] - List of cards found in toml
 /// * `registries` - &RustRegistries - Rust variant of Opsml registries
 ///
 /// # Returns
 /// * `Result<bool, CliError>` - True if a version refresh is needed, false otherwise
 #[instrument(skip_all)]
-fn process_deck_cards(
-    deck_cards: &[CardEntry],
+fn process_service_cards(
+    service_cards: &[CardEntry],
     toml_cards: &[Card],
     registries: &CardRegistries,
 ) -> Result<bool, CliError> {
-    debug!("Processing deck cards");
+    debug!("Processing service cards");
     for toml_card in toml_cards {
         // Find the latest card given the constraints provided in toml file
         let latest_card = get_latest_card(registries, toml_card)?;
 
-        // Find the card in the deck
+        // Find the card in the service
         // If the entry is not found - return true (need to increment version)
         // If the entry is found - check if the uid is different from latest card - if different - return true
         // Otherwise - return false
-        // Find matching entry in existing deck
-        let current_card = deck_cards
+        // Find matching entry in existing service
+        let current_card = service_cards
             .iter()
-            .find(|deck_card| deck_card.alias == toml_card.alias);
+            .find(|service_card| service_card.alias == toml_card.alias);
 
         // Check
         match current_card {
@@ -174,67 +174,67 @@ fn process_deck_cards(
     Ok(false)
 }
 
-/// create lock entry for a deck
+/// create lock entry for a service
 /// # Arguments
-/// * `config` - DeckConfig
-fn lock_deck(config: DeckConfig) -> Result<LockArtifact, CliError> {
-    debug!("Locking deck with config: {:?}", config);
+/// * `config` - ServiceConfig
+fn lock_service_card(config: ServiceConfig) -> Result<LockArtifact, CliError> {
+    debug!("Locking service with config: {:?}", config);
 
-    // Get app cards from deck config
-    let toml_cards = config.cards.as_ref().ok_or(CliError::MissingDeckCards)?;
+    // Get app cards from service config
+    let toml_cards = config.cards.as_ref().ok_or(CliError::MissingServiceCards)?;
 
     let registries = CardRegistries::new()?;
 
-    // Initialize registry and get deck from registry
-    let deck = get_deck_from_registry(&registries.deck, &config)?;
+    // Initialize registry and get service from registry
+    let service = get_service_from_registry(&registries.service, &config)?;
 
-    // Handle deck creation if it doesn't exist
-    if deck.is_none() {
-        let card = register_card_deck(&config, &registries.deck)?;
+    // Handle service creation if it doesn't exist
+    if service.is_none() {
+        let card = register_service_card(&config, &registries.service)?;
 
-        // Postprocess the card deck if needed (e.g., activate drift profiles)
-        postprocess_card_deck(toml_cards, &card, &registries.deck)?;
+        // Postprocess the service card if needed (e.g., activate drift profiles)
+        postprocess_service_card(toml_cards, &card, &registries.service)?;
 
         return Ok(LockArtifact {
             space: card.space.clone(),
             name: card.name.clone(),
             version: card.version.clone(),
             uid: card.uid.clone(),
-            registry_type: RegistryType::Deck,
-            write_dir: config.write_dir.unwrap_or("opsml_deck".to_string()),
+            registry_type: RegistryType::Service,
+            write_dir: config.write_dir.unwrap_or("opsml_service".to_string()),
         });
     }
-    // Process existing deck (need to compare existing deck cards to those defined in toml)
-    let deck = deck.unwrap();
-    // Get card UIDs from deck
-    let deck_cards = deck.cards().ok_or(CliError::MissingCardEntriesError)?;
-    let needs_refresh = process_deck_cards(&deck_cards, toml_cards, &registries)?;
+    // Process existing service (need to compare existing service cards to those defined in toml)
+    let service = service.unwrap();
+    // Get card UIDs from service
+    let service_cards = service.cards().ok_or(CliError::MissingCardEntriesError)?;
+    let needs_refresh = process_service_cards(&service_cards, toml_cards, &registries)?;
 
     let lock_entry = match needs_refresh {
         true => {
-            // If refresh is needed, register the deck again
-            let card = register_card_deck(&config, &registries.deck)?;
+            // If refresh is needed, register the service again
+            let card = register_service_card(&config, &registries.service)?;
 
-            // Postprocess the card deck if needed (e.g., activate drift profiles)
-            postprocess_card_deck(toml_cards, &card, &registries.deck)?;
+            // Postprocess the service card if needed (e.g., activate drift profiles)
+            postprocess_service_card(toml_cards, &card, &registries.service)?;
 
             LockArtifact {
                 space: card.space.clone(),
                 name: card.name.clone(),
                 version: card.version.clone(),
                 uid: card.uid.clone(),
-                registry_type: RegistryType::Deck,
+                registry_type: RegistryType::Service,
                 write_dir: config.write_dir.unwrap_or("opsml_app".to_string()),
             }
         }
         false => {
             // No refresh needed, return existing entry
             LockArtifact {
-                space: deck.space().to_string(),
-                name: deck.name().to_string(),
-                version: deck.version().to_string(),
-                uid: deck.uid().to_string(),
-                registry_type: RegistryType::Deck,
+                space: service.space().to_string(),
+                name: service.name().to_string(),
+                version: service.version().to_string(),
+                uid: service.uid().to_string(),
+                registry_type: RegistryType::Service,
                 write_dir: config.write_dir.unwrap_or("opsml_app".to_string()),
             }
         }
@@ -244,26 +244,29 @@ fn lock_deck(config: DeckConfig) -> Result<LockArtifact, CliError> {
 }
 
 /// Create the the lock file for the app
-fn lock_app(app: DeckConfig) -> Result<LockArtifact, CliError> {
-    // Create a lock file for the app
-    // Only support's  deck currently
-    lock_deck(app)
-}
+///fn lock_service(service: ServiceConfig) -> Result<LockArtifact, CliError> {
+///    // Create a lock file for the app
+///    // Only support's  service currently
+///    lock_service_card(service)
+///}
 
 #[pyfunction]
 #[pyo3(signature = (path, write_path=None))]
-pub fn install_app(path: PathBuf, write_path: Option<PathBuf>) -> Result<(), CliError> {
-    debug!("Installing app from lock file");
+pub fn install_service(path: PathBuf, write_path: Option<PathBuf>) -> Result<(), CliError> {
+    debug!("Installing service from lock file");
 
-    println!("{}", Colorize::green("Downloading app for opsml.lock file"));
+    println!(
+        "{}",
+        Colorize::green("Downloading service for opsml.lock file")
+    );
 
     let lockfile = LockFile::read(&path)?;
 
     for artifact in lockfile.artifact {
         match artifact.registry_type {
-            RegistryType::Deck => {
+            RegistryType::Service => {
                 println!(
-                    "Downloading CardDeck {} to path {}",
+                    "Downloading ServiceCard {} to path {}",
                     Colorize::green(&format!(
                         "{}/{}/v{}",
                         &artifact.name, &artifact.space, &artifact.version
@@ -291,7 +294,7 @@ pub fn install_app(path: PathBuf, write_path: Option<PathBuf>) -> Result<(), Cli
                         .map_err(|_| CliError::WritePathError)?,
                 };
 
-                download_deck(&args)?;
+                download_service(&args)?;
             }
             _ => {
                 return Err(RegistryError::RegistryTypeNotSupported(artifact.registry_type).into());
@@ -309,13 +312,13 @@ pub fn lock_project(path: Option<PathBuf>, toml_name: Option<&str>) -> Result<()
 
     let pyproject = PyProjectToml::load(path.as_deref(), toml_name)?;
     let tools = pyproject.get_tools().ok_or(CliError::MissingToolsError)?;
-    let apps = tools.get_decks().ok_or(CliError::MissingAppError)?;
+    let service = tools.get_service().ok_or(CliError::MissingServiceError)?;
 
     // Create a lock file
     let lock_file = LockFile {
-        artifact: apps
+        artifact: service
             .iter()
-            .map(|app| lock_app(app.clone()))
+            .map(|service| lock_service_card(service.clone()))
             .collect::<Result<Vec<_>, _>>()?,
     };
 

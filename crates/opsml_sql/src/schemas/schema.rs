@@ -3,8 +3,8 @@ use chrono::{DateTime, Utc};
 use opsml_semver::error::VersionError;
 use opsml_types::cards::{CardTable, ParameterValue};
 use opsml_types::contracts::{
-    AuditCardClientRecord, CardDeckClientRecord, CardEntry, CardRecord, DataCardClientRecord,
-    ExperimentCardClientRecord, ModelCardClientRecord, PromptCardClientRecord,
+    AuditCardClientRecord, CardEntry, CardRecord, DataCardClientRecord, ExperimentCardClientRecord,
+    ModelCardClientRecord, PromptCardClientRecord, ServiceCardClientRecord,
 };
 use opsml_types::{CommonKwargs, DataType, ModelType, RegistryType};
 use opsml_utils::create_uuid7;
@@ -429,7 +429,7 @@ pub struct ExperimentCardRecord {
     pub datacard_uids: Json<Vec<String>>,
     pub modelcard_uids: Json<Vec<String>>,
     pub promptcard_uids: Json<Vec<String>>,
-    pub card_deck_uids: Json<Vec<String>>,
+    pub service_card_uids: Json<Vec<String>>,
     pub experimentcard_uids: Json<Vec<String>>,
     pub opsml_version: String,
     pub username: String,
@@ -453,7 +453,7 @@ impl Default for ExperimentCardRecord {
             datacard_uids: Json(Vec::new()),
             modelcard_uids: Json(Vec::new()),
             promptcard_uids: Json(Vec::new()),
-            card_deck_uids: Json(Vec::new()),
+            service_card_uids: Json(Vec::new()),
             experimentcard_uids: Json(Vec::new()),
             opsml_version: opsml_version::version(),
             username: CommonKwargs::Undefined.to_string(),
@@ -471,7 +471,7 @@ impl ExperimentCardRecord {
         datacard_uids: Vec<String>,
         modelcard_uids: Vec<String>,
         promptcard_uids: Vec<String>,
-        card_deck_uids: Vec<String>,
+        service_card_uids: Vec<String>,
         experimentcard_uids: Vec<String>,
         opsml_version: String,
         username: String,
@@ -496,7 +496,7 @@ impl ExperimentCardRecord {
             datacard_uids: Json(datacard_uids),
             modelcard_uids: Json(modelcard_uids),
             promptcard_uids: Json(promptcard_uids),
-            card_deck_uids: Json(card_deck_uids),
+            service_card_uids: Json(service_card_uids),
             experimentcard_uids: Json(experimentcard_uids),
             opsml_version,
             username,
@@ -532,7 +532,7 @@ impl ExperimentCardRecord {
             datacard_uids: Json(client_card.datacard_uids),
             modelcard_uids: Json(client_card.modelcard_uids),
             promptcard_uids: Json(client_card.promptcard_uids),
-            card_deck_uids: Json(client_card.card_deck_uids),
+            service_card_uids: Json(client_card.service_card_uids),
             experimentcard_uids: Json(client_card.experimentcard_uids),
             opsml_version: client_card.opsml_version,
             username: client_card.username,
@@ -776,7 +776,7 @@ impl Default for PromptCardRecord {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
-pub struct CardDeckRecord {
+pub struct ServiceCardRecord {
     pub uid: String,
     pub created_at: DateTime<Utc>,
     pub app_env: String,
@@ -793,7 +793,7 @@ pub struct CardDeckRecord {
     pub username: String,
 }
 
-impl CardDeckRecord {
+impl ServiceCardRecord {
     pub fn new(
         name: String,
         space: String,
@@ -806,7 +806,7 @@ impl CardDeckRecord {
         let app_env = env::var("APP_ENV").unwrap_or_else(|_| "development".to_string());
         let uid = create_uuid7();
 
-        CardDeckRecord {
+        ServiceCardRecord {
             uid,
             created_at,
             app_env,
@@ -827,17 +827,17 @@ impl CardDeckRecord {
     pub fn uri(&self) -> String {
         format!(
             "{}/{}/{}/v{}",
-            CardTable::Deck,
+            CardTable::Service,
             self.space,
             self.name,
             self.version
         )
     }
 
-    pub fn from_client_card(client_card: CardDeckClientRecord) -> Result<Self, SqlError> {
+    pub fn from_client_card(client_card: ServiceCardClientRecord) -> Result<Self, SqlError> {
         let version = Version::parse(&client_card.version).map_err(VersionError::InvalidVersion)?;
 
-        Ok(CardDeckRecord {
+        Ok(ServiceCardRecord {
             uid: client_card.uid,
             created_at: client_card.created_at,
             app_env: client_card.app_env,
@@ -856,9 +856,9 @@ impl CardDeckRecord {
     }
 }
 
-impl Default for CardDeckRecord {
+impl Default for ServiceCardRecord {
     fn default() -> Self {
-        CardDeckRecord {
+        ServiceCardRecord {
             uid: create_uuid7(),
             created_at: get_utc_datetime(),
             app_env: env::var("APP_ENV").unwrap_or_else(|_| "development".to_string()),
@@ -886,7 +886,7 @@ pub enum CardResults {
     Experiment(Vec<ExperimentCardRecord>),
     Audit(Vec<AuditCardRecord>),
     Prompt(Vec<PromptCardRecord>),
-    Deck(Vec<CardDeckRecord>),
+    Service(Vec<ServiceCardRecord>),
 }
 
 impl CardResults {
@@ -897,7 +897,7 @@ impl CardResults {
             CardResults::Experiment(cards) => cards.len(),
             CardResults::Audit(cards) => cards.len(),
             CardResults::Prompt(cards) => cards.len(),
-            CardResults::Deck(cards) => cards.len(),
+            CardResults::Service(cards) => cards.len(),
         }
     }
     pub fn is_empty(&self) -> bool {
@@ -907,7 +907,7 @@ impl CardResults {
             CardResults::Experiment(cards) => cards.is_empty(),
             CardResults::Audit(cards) => cards.is_empty(),
             CardResults::Prompt(cards) => cards.is_empty(),
-            CardResults::Deck(cards) => cards.is_empty(),
+            CardResults::Service(cards) => cards.is_empty(),
         }
     }
     pub fn to_json(&self) -> Vec<String> {
@@ -932,7 +932,7 @@ impl CardResults {
                 .iter()
                 .map(|card| serde_json::to_string_pretty(card).unwrap())
                 .collect(),
-            CardResults::Deck(cards) => cards
+            CardResults::Service(cards) => cards
                 .iter()
                 .map(|card| serde_json::to_string_pretty(card).unwrap())
                 .collect(),
@@ -947,7 +947,7 @@ pub enum ServerCard {
     Experiment(ExperimentCardRecord),
     Audit(AuditCardRecord),
     Prompt(PromptCardRecord),
-    Deck(CardDeckRecord),
+    Service(ServiceCardRecord),
 }
 
 impl ServerCard {
@@ -958,7 +958,7 @@ impl ServerCard {
             ServerCard::Experiment(card) => card.uid.as_str(),
             ServerCard::Audit(card) => card.uid.as_str(),
             ServerCard::Prompt(card) => card.uid.as_str(),
-            ServerCard::Deck(card) => card.uid.as_str(),
+            ServerCard::Service(card) => card.uid.as_str(),
         }
     }
 
@@ -969,7 +969,7 @@ impl ServerCard {
             ServerCard::Experiment(_) => RegistryType::Experiment.to_string(),
             ServerCard::Audit(_) => RegistryType::Audit.to_string(),
             ServerCard::Prompt(_) => RegistryType::Prompt.to_string(),
-            ServerCard::Deck(_) => RegistryType::Deck.to_string(),
+            ServerCard::Service(_) => RegistryType::Service.to_string(),
         }
     }
 
@@ -980,7 +980,7 @@ impl ServerCard {
             ServerCard::Experiment(card) => card.version.clone(),
             ServerCard::Audit(card) => card.version.clone(),
             ServerCard::Prompt(card) => card.version.clone(),
-            ServerCard::Deck(card) => card.version.clone(),
+            ServerCard::Service(card) => card.version.clone(),
         }
     }
 
@@ -991,7 +991,7 @@ impl ServerCard {
             ServerCard::Experiment(card) => card.space.clone(),
             ServerCard::Audit(card) => card.space.clone(),
             ServerCard::Prompt(card) => card.space.clone(),
-            ServerCard::Deck(card) => card.space.clone(),
+            ServerCard::Service(card) => card.space.clone(),
         }
     }
 
@@ -1002,7 +1002,7 @@ impl ServerCard {
             ServerCard::Experiment(card) => card.name.clone(),
             ServerCard::Audit(card) => card.name.clone(),
             ServerCard::Prompt(card) => card.name.clone(),
-            ServerCard::Deck(card) => card.name.clone(),
+            ServerCard::Service(card) => card.name.clone(),
         }
     }
 
@@ -1013,7 +1013,7 @@ impl ServerCard {
             ServerCard::Experiment(card) => card.uri(),
             ServerCard::Audit(card) => card.uri(),
             ServerCard::Prompt(card) => card.uri(),
-            ServerCard::Deck(card) => card.uri(),
+            ServerCard::Service(card) => card.uri(),
         }
     }
 
@@ -1024,7 +1024,7 @@ impl ServerCard {
             ServerCard::Experiment(card) => card.app_env.clone(),
             ServerCard::Audit(card) => card.app_env.clone(),
             ServerCard::Prompt(card) => card.app_env.clone(),
-            ServerCard::Deck(card) => card.app_env.clone(),
+            ServerCard::Service(card) => card.app_env.clone(),
         }
     }
 
@@ -1035,7 +1035,7 @@ impl ServerCard {
             ServerCard::Experiment(card) => card.created_at,
             ServerCard::Audit(card) => card.created_at,
             ServerCard::Prompt(card) => card.created_at,
-            ServerCard::Deck(card) => card.created_at,
+            ServerCard::Service(card) => card.created_at,
         }
     }
 
@@ -1058,7 +1058,9 @@ impl ServerCard {
             CardRecord::Prompt(card) => Ok(ServerCard::Prompt(PromptCardRecord::from_client_card(
                 card,
             )?)),
-            CardRecord::Deck(card) => Ok(ServerCard::Deck(CardDeckRecord::from_client_card(card)?)),
+            CardRecord::Service(card) => Ok(ServerCard::Service(
+                ServiceCardRecord::from_client_card(card)?,
+            )),
         }
     }
 }

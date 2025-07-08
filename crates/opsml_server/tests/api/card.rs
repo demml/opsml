@@ -678,7 +678,7 @@ async fn test_opsml_server_card_experimentcard_crud() {
             datacard_uids: card.datacard_uids,
             modelcard_uids: card.modelcard_uids,
             promptcard_uids: card.promptcard_uids,
-            card_deck_uids: card.card_deck_uids,
+            service_card_uids: card.service_card_uids,
             experimentcard_uids: card.experimentcard_uids,
             tags: card.tags,
             username: std::env::var("OPSML_USERNAME").unwrap_or_else(|_| "guest".to_string()),
@@ -859,11 +859,11 @@ async fn test_opsml_server_card_auditcard_crud() {
 }
 
 #[tokio::test]
-async fn test_opsml_server_card_card_deck_crud() {
+async fn test_opsml_server_card_service_card_crud() {
     let helper = TestHelper::new(None).await;
 
     let card_version_request = CardVersionRequest {
-        name: "deck".to_string(),
+        name: "service".to_string(),
         space: "repo1".to_string(),
         version: Some("1.0.0".to_string()),
         version_type: VersionType::Minor,
@@ -871,15 +871,15 @@ async fn test_opsml_server_card_card_deck_crud() {
         build_tag: None,
     };
 
-    // CardDeck
+    // ServiceCard
     let card_request = CreateCardRequest {
-        card: CardRecord::Deck(CardDeckClientRecord {
-            name: "deck".to_string(),
+        card: CardRecord::Service(ServiceCardClientRecord {
+            name: "service".to_string(),
             space: "repo1".to_string(),
             version: "1.0.0".to_string(),
-            ..CardDeckClientRecord::default()
+            ..ServiceCardClientRecord::default()
         }),
-        registry_type: RegistryType::Deck,
+        registry_type: RegistryType::Service,
         version_request: card_version_request,
     };
 
@@ -902,7 +902,7 @@ async fn test_opsml_server_card_card_deck_crud() {
     // get card by uid
     let list_cards = CardQueryArgs {
         uid: Some(create_response.key.uid),
-        registry_type: RegistryType::Deck,
+        registry_type: RegistryType::Service,
         ..Default::default()
     };
 
@@ -923,14 +923,14 @@ async fn test_opsml_server_card_card_deck_crud() {
     assert_eq!(card_results.len(), 1);
 
     let card = match card_results[0].clone() {
-        CardRecord::Deck(card) => card,
+        CardRecord::Service(card) => card,
         _ => panic!("Card not found"),
     };
 
     let card_request = UpdateCardRequest {
-        registry_type: RegistryType::Deck,
-        card: CardRecord::Deck(CardDeckClientRecord {
-            name: "deck".to_string(),
+        registry_type: RegistryType::Service,
+        card: CardRecord::Service(ServiceCardClientRecord {
+            name: "service".to_string(),
             space: "repo1".to_string(),
             version: "1.0.1".to_string(),
             uid: card.uid.clone(),
@@ -961,7 +961,7 @@ async fn test_opsml_server_card_card_deck_crud() {
     let delete_args = DeleteCardRequest {
         uid: card.uid.clone(),
         space: card.space.clone(),
-        registry_type: RegistryType::Deck,
+        registry_type: RegistryType::Service,
     };
 
     let query_string = serde_qs::to_string(&delete_args).unwrap();
@@ -996,7 +996,7 @@ async fn test_opsml_server_card_promptcard_crud() {
         build_tag: None,
     };
 
-    // CardDeck
+    // ServiceCard
     let card_request = CreateCardRequest {
         card: CardRecord::Prompt(PromptCardClientRecord {
             name: "prompt".to_string(),

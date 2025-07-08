@@ -2,7 +2,7 @@
 # pylint: disable=useless-import-alias
 
 from .card import Card as Card
-from .card import CardDeck as CardDeck
+from .card import ServiceCard as ServiceCard
 from .card import CardRegistries as CardRegistries
 from .card import CardRegistry as CardRegistry
 from .card import DataCard as DataCard

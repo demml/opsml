@@ -20,7 +20,7 @@ pub enum CardTable {
     ArtifactKey,
     AuditEvent,
     Prompt,
-    Deck,
+    Service,
 }
 
 impl fmt::Display for CardTable {
@@ -37,7 +37,7 @@ impl fmt::Display for CardTable {
             CardTable::ArtifactKey => "opsml_artifact_key",
             CardTable::AuditEvent => "opsml_audit_event",
             CardTable::Prompt => "opsml_prompt_registry",
-            CardTable::Deck => "opsml_deck_registry",
+            CardTable::Service => "opsml_service_registry",
         };
         write!(f, "{}", table_name)
     }
@@ -56,18 +56,18 @@ impl CardTable {
             RegistryType::Users => CardTable::Users,
             RegistryType::ArtifactKey => CardTable::ArtifactKey,
             RegistryType::Prompt => CardTable::Prompt,
-            RegistryType::Deck => CardTable::Deck,
+            RegistryType::Service => CardTable::Service,
         }
     }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
-pub struct CardDeckMapping {
+pub struct ServiceCardMapping {
     pub card_paths: HashMap<String, PathBuf>,
     pub drift_paths: HashMap<String, PathBuf>,
 }
 
-impl CardDeckMapping {
+impl ServiceCardMapping {
     pub fn new() -> Self {
         Self {
             // this will be the card alias + path
@@ -89,7 +89,7 @@ impl CardDeckMapping {
 
     pub fn from_path(path: &Path) -> Result<Self, TypeError> {
         let json_string = std::fs::read_to_string(path)?;
-        let mapping: CardDeckMapping = serde_json::from_str(&json_string)?;
+        let mapping: ServiceCardMapping = serde_json::from_str(&json_string)?;
         Ok(mapping)
     }
 }

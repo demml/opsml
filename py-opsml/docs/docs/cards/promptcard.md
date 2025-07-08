@@ -44,7 +44,7 @@ if __name__ == "__main__":
 # This code will run as is
 ```
 
-In a typical development workflow, you would develop and test different prompts depending on your use case. Whenever a prompt is ready for production, you can register it in the `PromptCard` registry and load/use it in your application. This way, you can keep track of all the prompts you have developed and their versions, making it easier to manage and update them as needed. In addition, in workflows that require multiple prompts, you can leverage opsml's `CardDeck` feature to build a deck of prompt cards.
+In a typical development workflow, you would develop and test different prompts depending on your use case. Whenever a prompt is ready for production, you can register it in the `PromptCard` registry and load/use it in your application. This way, you can keep track of all the prompts you have developed and their versions, making it easier to manage and update them as needed. In addition, in workflows that require multiple prompts, you can leverage opsml's `ServiceCard` feature to build a service of prompt cards.
 
 ### How it all works
 

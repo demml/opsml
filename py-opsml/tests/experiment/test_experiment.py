@@ -14,7 +14,7 @@ from opsml import (  # type: ignore
     SklearnModel,
     Prompt,
     PromptCard,
-    CardDeck,
+    ServiceCard,
     Card,
     RegistryType,
     ModelSaveKwargs,
@@ -199,7 +199,7 @@ def _test_experimentcard_register(
             # (this is not recommended, but need to test if it causes a tokio::runtime deadlock)
             reg = CardRegistries()
 
-            deck = CardDeck(
+            service = ServiceCard(
                 space="test",
                 name="test",
                 cards=[
@@ -214,7 +214,7 @@ def _test_experimentcard_register(
                     ),
                 ],
             )
-            exp.register_card(deck)
+            exp.register_card(service)
 
         loaded_card = reg.experiment.load_card(uid=exp.card.uid)
 
@@ -227,4 +227,4 @@ def _test_experimentcard_register(
         loaded_card.uids.datacard_uids = [datacard.uid]
         loaded_card.uids.modelcard_uids = [modelcard.uid]
         loaded_card.uids.promptcard_uids = [prompt_card.uid]
-        loaded_card.uids.card_deck_uids = [deck.uid]
+        loaded_card.uids.service_card_uids = [service.uid]

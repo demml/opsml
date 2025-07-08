@@ -27,11 +27,11 @@ Cards are one of the primary data structures of opsml. All cards store specific 
   - Requires a `Prompt` 
   - Registered in the `PromptRegistry`
 
-<span class="text-secondary">**CardDeck**</span>: 
+<span class="text-secondary">**ServiceCard**</span>: 
 
   - Stores a collection of cards
   - Requires a list of `Card`
-  - Registered in the `CardDeckRegistry`
+  - Registered in the `ServiceCardRegistry`
 
 ### Card Arguments
 

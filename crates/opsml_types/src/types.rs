@@ -22,7 +22,7 @@ pub enum RegistryType {
     Users,
     ArtifactKey,
     Prompt,
-    Deck,
+    Service,
 }
 
 impl<'de> Deserialize<'de> for RegistryType {
@@ -42,7 +42,7 @@ impl<'de> Deserialize<'de> for RegistryType {
             "users" => Ok(RegistryType::Users),
             "artifact_key" => Ok(RegistryType::ArtifactKey),
             "prompt" => Ok(RegistryType::Prompt),
-            "deck" => Ok(RegistryType::Deck),
+            "service" => Ok(RegistryType::Service),
             _ => Err(serde::de::Error::custom(format!(
                 "Invalid registry type: {}",
                 s
@@ -64,7 +64,7 @@ impl Display for RegistryType {
             RegistryType::Users => write!(f, "users"),
             RegistryType::ArtifactKey => write!(f, "artifact_key"),
             RegistryType::Prompt => write!(f, "prompt"),
-            RegistryType::Deck => write!(f, "deck"),
+            RegistryType::Service => write!(f, "service"),
         }
     }
 }
@@ -81,7 +81,7 @@ impl RegistryType {
             "users" => Ok(RegistryType::Users),
             "artifact_key" => Ok(RegistryType::ArtifactKey),
             "prompt" => Ok(RegistryType::Prompt),
-            "deck" => Ok(RegistryType::Deck),
+            "service" => Ok(RegistryType::Service),
 
             _ => Err(TypeError::InvalidRegistryType),
         }
@@ -99,7 +99,7 @@ impl RegistryType {
             RegistryType::Users => b"users",
             RegistryType::ArtifactKey => b"artifact_key",
             RegistryType::Prompt => b"prompt",
-            RegistryType::Deck => b"deck",
+            RegistryType::Service => b"service",
         }
     }
 }
@@ -341,7 +341,7 @@ pub enum SaveName {
     Code,
     Prompt,
     ReadMe,
-    CardDeck,
+    ServiceCard,
     CardMap,
 }
 
@@ -375,7 +375,7 @@ impl SaveName {
             "code" => Some(SaveName::Code),
             "prompt" => Some(SaveName::Prompt),
             "README" => Some(SaveName::ReadMe),
-            "card_deck" => Some(SaveName::CardDeck),
+            "service" => Some(SaveName::ServiceCard),
             "card_map" => Some(SaveName::CardMap),
             _ => None,
         }
@@ -408,7 +408,7 @@ impl SaveName {
             SaveName::Code => "code",
             SaveName::Prompt => "prompt",
             SaveName::ReadMe => "README",
-            SaveName::CardDeck => "card_deck",
+            SaveName::ServiceCard => "service",
             SaveName::CardMap => "card_map",
         }
     }
@@ -452,7 +452,7 @@ impl AsRef<Path> for SaveName {
             SaveName::Code => Path::new("code"),
             SaveName::Prompt => Path::new("prompt"),
             SaveName::ReadMe => Path::new("README"),
-            SaveName::CardDeck => Path::new("card_deck"),
+            SaveName::ServiceCard => Path::new("service"),
             SaveName::CardMap => Path::new("card_map"),
         }
     }
