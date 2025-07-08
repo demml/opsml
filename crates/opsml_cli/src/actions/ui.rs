@@ -506,8 +506,7 @@ mod tests {
         let expected_binary_path = cache_path.join(format!("opsml-server-v{version}"));
         assert!(
             expected_binary_path.exists(),
-            "Expected Linux binary file does not exist: {:?}",
-            expected_binary_path
+            "Expected Linux binary file does not exist: {expected_binary_path:?}",
         );
 
         let archive_path = cache_path.join(archive_name);
