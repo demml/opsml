@@ -364,8 +364,8 @@ mod tests {
             }
 
             // Construct the path that download_binary will request
-            let archive_name = format!("opsml-server-{}-linux-gnu.tar.gz", arch);
-            let mock_path = format!("/releases/download/v{}/{}", version, archive_name);
+            let archive_name = format!("opsml-server-{arch}-linux-gnu.tar.gz");
+            let mock_path = format!("/releases/download/v{version}/{archive_name}");
 
             self.server
                 .mock("GET", mock_path.as_str())
@@ -493,17 +493,17 @@ mod tests {
         let temp_cache_dir = TempDir::new()?;
         let cache_path = temp_cache_dir.path();
 
-        let archive_name = format!("opsml-server-{}-linux-gnu.tar.gz", arch);
+        let archive_name = format!("opsml-server-{arch}-linux-gnu.tar.gz");
         let full_mock_url = format!(
-            "{}/releases/download/v{}/{}",
-            mock_server.url, version, archive_name
+            "{}/releases/download/v{version}/{archive_name}",
+            mock_server.url
         );
 
         // download_binary contains the cfg logic for extraction, so we call it directly
         download_binary(&platform, version, cache_path, Some(full_mock_url))?;
 
         // Linux binaries have no extension in this setup
-        let expected_binary_path = cache_path.join(format!("opsml-server-v{}", version));
+        let expected_binary_path = cache_path.join(format!("opsml-server-v{version}"));
         assert!(
             expected_binary_path.exists(),
             "Expected Linux binary file does not exist: {:?}",
