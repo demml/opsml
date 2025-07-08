@@ -22,7 +22,7 @@ pub async fn log_audit_event(
     debug!("Logging audit event");
 
     sql_client.insert_audit_event(event).await.map_err(|e| {
-        error!("Failed to log audit event: {}", e);
+        error!("Failed to log audit event: {e}");
         EventError::LogEventError(e)
     })?;
 
@@ -40,7 +40,7 @@ pub async fn insert_space_name_record(
         .insert_space_name_record(&event)
         .await
         .map_err(|e| {
-            error!("Failed to log space name event: {}", e);
+            error!("Failed to log space name event: {e}");
             EventError::LogEventError(e)
         })?;
 

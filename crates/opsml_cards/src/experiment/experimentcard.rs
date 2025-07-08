@@ -226,7 +226,7 @@ impl ExperimentCard {
         };
 
         let files = storage_client()?.find(&rpath).inspect_err(|e| {
-            error!("Failed to list artifacts: {}", e);
+            error!("Failed to list artifacts: {e}");
         })?;
 
         // iterate through and remove storage_path if it exists
@@ -260,7 +260,7 @@ impl ExperimentCard {
         // assert that lpath exists, if not create it
         if !lpath.exists() {
             std::fs::create_dir_all(&lpath).inspect_err(|e| {
-                error!("Failed to create directory: {}", e);
+                error!("Failed to create directory: {e}");
             })?;
         }
 
@@ -280,7 +280,7 @@ impl ExperimentCard {
         storage_client()?
             .get(&lpath, &rpath, recursive)
             .inspect_err(|e| {
-                error!("Failed to download artifacts: {}", e);
+                error!("Failed to download artifacts: {e}");
             })?;
 
         let decrypt_key = self
@@ -289,7 +289,7 @@ impl ExperimentCard {
             .unwrap()
             .get_decrypt_key()
             .inspect_err(|e| {
-                error!("Failed to get decryption key: {}", e);
+                error!("Failed to get decryption key: {e}");
             })?;
         decrypt_directory(&lpath, &decrypt_key)?;
 

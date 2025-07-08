@@ -330,7 +330,7 @@ GrrNOufvPsvmCRO9m4ESRrk=
         // mock okta token endpoint
         let credentials = format!("{}:{}", "opsml-client", "client-secret");
         let encoded_credentials = BASE64_STANDARD.encode(credentials);
-        let auth_header = format!("Basic {}", encoded_credentials);
+        let auth_header = format!("Basic {encoded_credentials}");
 
         let okta_token_mock = server
             .mock("POST", "/oauth2/v1/token")
@@ -406,7 +406,7 @@ async fn setup_sso_provider(provider: &str) -> Option<MockSsoServer> {
     std::env::set_var("OPSML_CERT_ENDPOINT", "oauth/keys");
     std::env::set_var("OPSML_AUTHORIZATION_ENDPOINT", "oauth/authorize");
 
-    println!("Setting up SSO provider: {}", provider);
+    println!("Setting up SSO provider: {provider}");
 
     match provider {
         "keycloak" => {

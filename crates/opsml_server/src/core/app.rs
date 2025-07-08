@@ -42,7 +42,7 @@ pub async fn create_app() -> Result<Router> {
     if let Err(e) = initialize_default_user(&app_state.sql_client, &app_state.scouter_client).await
     {
         // Log error but don't fail startup
-        warn!("Failed to initialize default user: {}", e);
+        warn!("Failed to initialize default user: {e}");
     }
 
     info!("✅ Application state created");

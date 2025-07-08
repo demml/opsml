@@ -26,7 +26,7 @@ async fn authenticate_user_with_sso_provider(
 ) -> Result<UserInfo, (StatusCode, Json<OpsmlServerError>)> {
     // get provider
     let provider = state.auth_manager.get_sso_provider().map_err(|e| {
-        error!("SSO provider not set: {}", e);
+        error!("SSO provider not set: {e}");
         (
             StatusCode::INTERNAL_SERVER_ERROR,
             Json(OpsmlServerError::sso_provider_not_set()),
@@ -38,7 +38,7 @@ async fn authenticate_user_with_sso_provider(
         .authenticate_resource_password(username, password)
         .await
         .map_err(|e| {
-            error!("Failed to authenticate with SSO provider: {}", e);
+            error!("Failed to authenticate with SSO provider: {e}");
             (
                 StatusCode::UNAUTHORIZED,
                 Json(OpsmlServerError::user_validation_error()),
@@ -55,7 +55,7 @@ async fn authenticate_user_with_sso_provider_callback(
 ) -> Result<UserInfo, (StatusCode, Json<OpsmlServerError>)> {
     // get provider
     let provider = state.auth_manager.get_sso_provider().map_err(|e| {
-        error!("SSO provider not set: {}", e);
+        error!("SSO provider not set: {e}");
         (
             StatusCode::INTERNAL_SERVER_ERROR,
             Json(OpsmlServerError::sso_provider_not_set()),
@@ -67,7 +67,7 @@ async fn authenticate_user_with_sso_provider_callback(
         .authenticate_auth_flow(code, code_verifier)
         .await
         .map_err(|e| {
-            error!("Failed to authenticate with SSO provider: {}", e);
+            error!("Failed to authenticate with SSO provider: {e}");
             (
                 StatusCode::UNAUTHORIZED,
                 Json(OpsmlServerError::user_validation_error()),
@@ -86,7 +86,7 @@ async fn create_user(
 
     // Save to database
     if let Err(e) = state.sql_client.insert_user(&new_user).await {
-        error!("Failed to create user: {}", e);
+        error!("Failed to create user: {e}");
         return Err(internal_server_error(e, "Failed to create user"));
     }
 
@@ -99,7 +99,7 @@ async fn create_user(
             .exchange_token_for_scouter(&new_user)
             .await
             .map_err(|e| {
-                error!("Failed to exchange token from permissions: {}", e);
+                error!("Failed to exchange token from permissions: {e}");
                 internal_server_error(e, "Failed to exchange token from permissions")
             })?;
 
@@ -115,7 +115,7 @@ async fn create_user(
             )
             .await
             .map_err(|e| {
-                error!("Failed to create user in scouter: {}", e);
+                error!("Failed to create user in scouter: {e}");
                 internal_server_error(e, "Failed to create user in scouter")
             })?;
     }
@@ -142,7 +142,7 @@ async fn validate_user_with_opsml(
         .get_user(&user.username, Some("sso"))
         .await
         .map_err(|e| {
-            error!("Failed to get user from database: {}", e);
+            error!("Failed to get user from database: {e}");
             internal_server_error(e, "Failed to get user from database")
         })? {
         Some(opsml_user) => {

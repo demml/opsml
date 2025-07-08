@@ -41,12 +41,12 @@ struct CardRegistrationParams<'py> {
 fn extract_registry_type(registry_type: &Bound<'_, PyAny>) -> Result<RegistryType, RegistryError> {
     match registry_type.is_instance_of::<RegistryType>() {
         true => Ok(registry_type.extract::<RegistryType>().inspect_err(|e| {
-            error!("Failed to extract registry type: {}", e);
+            error!("Failed to extract registry type: {e}");
         })?),
         false => {
             let registry_type = registry_type.extract::<String>().unwrap();
             Ok(RegistryType::from_string(&registry_type).inspect_err(|e| {
-                error!("Failed to convert string to registry type: {}", e);
+                error!("Failed to convert string to registry type: {e}");
             })?)
         }
     }
@@ -368,28 +368,28 @@ impl CardRegistry {
     ) -> Result<(), RegistryError> {
         // update uid
         card.setattr("uid", response.key.uid.clone()).map_err(|e| {
-            error!("Failed to set uid: {}", e);
+            error!("Failed to set uid: {e}");
             RegistryError::FailedToSetAttributeError("uid")
         })?;
 
         // update version
         card.setattr("version", response.version.clone())
             .map_err(|e| {
-                error!("Failed to set version: {}", e);
+                error!("Failed to set version: {e}");
                 RegistryError::FailedToSetAttributeError("version")
             })?;
 
         // update created_at
         card.setattr("created_at", response.created_at)
             .map_err(|e| {
-                error!("Failed to set created_at: {}", e);
+                error!("Failed to set created_at: {e}");
                 RegistryError::FailedToSetAttributeError("created_at")
             })?;
 
         // update app_env
         card.setattr("app_env", response.app_env.clone())
             .map_err(|e| {
-                error!("Failed to set app_env: {}", e);
+                error!("Failed to set app_env: {e}");
                 RegistryError::FailedToSetAttributeError("app_env")
             })?;
 
@@ -425,7 +425,7 @@ impl CardRegistry {
             RegistryType::Experiment | RegistryType::Prompt | RegistryType::Service => {
                 card.call_method1("save", (tmp_path.to_path_buf(),))
                     .inspect_err(|e| {
-                        error!("Failed to save card: {}", e);
+                        error!("Failed to save card: {e}");
                     })?;
             }
 
@@ -433,7 +433,7 @@ impl CardRegistry {
                 // save model card artifacts
                 card.call_method1("save", (tmp_path.to_path_buf(), save_kwargs))
                     .inspect_err(|e| {
-                        error!("Failed to save card: {}", e);
+                        error!("Failed to save card: {e}");
                     })?;
             }
         }
@@ -546,13 +546,13 @@ impl CardRegistry {
             RegistryType::Experiment | RegistryType::Service => {
                 card.call_method1("save", (tmp_path.to_path_buf(),))
                     .inspect_err(|e| {
-                        error!("Failed to save card: {}", e);
+                        error!("Failed to save card: {e}");
                     })?;
             }
             _ => {
                 card.call_method1("save_card", (tmp_path.to_path_buf(),))
                     .inspect_err(|e| {
-                        error!("Failed to save card: {}", e);
+                        error!("Failed to save card: {e}");
                     })?;
             }
         }
@@ -582,11 +582,11 @@ impl CardRegistry {
         let registry_card = card
             .call_method0("get_registry_card")
             .inspect_err(|e| {
-                error!("Failed to get registry card: {}", e);
+                error!("Failed to get registry card: {e}");
             })?
             .extract::<CardRecord>()
             .inspect_err(|e| {
-                error!("Failed to extract registry card: {}", e);
+                error!("Failed to extract registry card: {e}");
             })?;
 
         let version = unwrap_pystring(card, "version")?;
@@ -654,7 +654,7 @@ impl CardRegistry {
                 ..Default::default()
             })
             .inspect_err(|e| {
-                error!("Failed to load card: {}", e);
+                error!("Failed to load card: {e}");
             })?;
 
         println!(

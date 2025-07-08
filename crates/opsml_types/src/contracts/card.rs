@@ -32,7 +32,7 @@ impl AuditableRequest for UidRequest {
 
     fn get_metadata(&self) -> String {
         serde_json::to_string(self)
-            .unwrap_or_else(|e| format!("Failed to serialize UidRequest: {}", e))
+            .unwrap_or_else(|e| format!("Failed to serialize UidRequest: {e}"))
     }
 
     fn get_registry_type(&self) -> Option<RegistryType> {
@@ -58,7 +58,7 @@ impl AuditableRequest for DeleteCardRequest {
 
     fn get_metadata(&self) -> String {
         serde_json::to_string(self)
-            .unwrap_or_else(|e| format!("Failed to serialize DeleteCardRequest: {}", e))
+            .unwrap_or_else(|e| format!("Failed to serialize DeleteCardRequest: {e}"))
     }
 
     fn get_registry_type(&self) -> Option<RegistryType> {
@@ -87,7 +87,7 @@ impl AuditableRequest for RegistrySpaceRequest {
 
     fn get_metadata(&self) -> String {
         serde_json::to_string(self)
-            .unwrap_or_else(|e| format!("Failed to serialize RegistrySpaceRequest: {}", e))
+            .unwrap_or_else(|e| format!("Failed to serialize RegistrySpaceRequest: {e}"))
     }
 
     fn get_registry_type(&self) -> Option<RegistryType> {
@@ -161,7 +161,7 @@ impl AuditableRequest for RegistryStatsRequest {
 
     fn get_metadata(&self) -> String {
         serde_json::to_string(self)
-            .unwrap_or_else(|e| format!("Failed to serialize RegistryStatsRequest: {}", e))
+            .unwrap_or_else(|e| format!("Failed to serialize RegistryStatsRequest: {e}"))
     }
 
     fn get_registry_type(&self) -> Option<RegistryType> {
@@ -191,7 +191,7 @@ impl AuditableRequest for QueryPageRequest {
 
     fn get_metadata(&self) -> String {
         serde_json::to_string(self)
-            .unwrap_or_else(|e| format!("Failed to serialize QueryPageRequest: {}", e))
+            .unwrap_or_else(|e| format!("Failed to serialize QueryPageRequest: {e}"))
     }
 
     fn get_registry_type(&self) -> Option<RegistryType> {
@@ -218,7 +218,7 @@ impl AuditableRequest for VersionPageRequest {
 
     fn get_metadata(&self) -> String {
         serde_json::to_string(self)
-            .unwrap_or_else(|e| format!("Failed to serialize VersionPageRequest: {}", e))
+            .unwrap_or_else(|e| format!("Failed to serialize VersionPageRequest: {e}"))
     }
 
     fn get_registry_type(&self) -> Option<RegistryType> {
@@ -276,7 +276,7 @@ impl AuditableRequest for CardQueryArgs {
 
     fn get_metadata(&self) -> String {
         serde_json::to_string(self)
-            .unwrap_or_else(|e| format!("Failed to serialize CardQueryArgs: {}", e))
+            .unwrap_or_else(|e| format!("Failed to serialize CardQueryArgs: {e}"))
     }
 
     fn get_registry_type(&self) -> Option<RegistryType> {
@@ -915,7 +915,7 @@ impl AuditableRequest for CreateCardRequest {
 
     fn get_metadata(&self) -> String {
         serde_json::to_string(self)
-            .unwrap_or_else(|e| format!("Failed to serialize CreateCardRequest: {}", e))
+            .unwrap_or_else(|e| format!("Failed to serialize CreateCardRequest: {e}"))
     }
 
     fn get_registry_type(&self) -> Option<RegistryType> {
@@ -952,7 +952,7 @@ impl AuditableRequest for UpdateCardRequest {
 
     fn get_metadata(&self) -> String {
         serde_json::to_string(self)
-            .unwrap_or_else(|e| format!("Failed to serialize UpdateCardRequest: {}", e))
+            .unwrap_or_else(|e| format!("Failed to serialize UpdateCardRequest: {e}"))
     }
 
     fn get_registry_type(&self) -> Option<RegistryType> {

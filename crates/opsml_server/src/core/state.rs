@@ -38,7 +38,7 @@ impl AppState {
             .exchange_token_for_scouter(&user)
             .await
             .map_err(|e| {
-                error!("Failed to exchange token from permissions: {}", e);
+                error!("Failed to exchange token from permissions: {e}");
                 e.into()
             })
     }

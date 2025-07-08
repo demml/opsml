@@ -42,7 +42,7 @@ impl HttpStorageClient {
         let response = client
             .request(Routes::StorageSettings, RequestType::Get, None, None, None)
             .inspect_err(|e| {
-                let error = Colorize::alert(&format!("Failed to get storage settings: {}", e));
+                let error = Colorize::alert(&format!("Failed to get storage settings: {e}"));
                 error!("{}", error);
             })?;
 
@@ -72,7 +72,7 @@ impl HttpStorageClient {
                 None,
             )
             .inspect_err(|e| {
-                error!("Failed to get files: {}", e);
+                error!("Failed to get files: {e}");
             })?;
 
         let response = response.json::<ListFileResponse>()?;
@@ -98,7 +98,7 @@ impl HttpStorageClient {
                 None,
             )
             .inspect_err(|e| {
-                error!("Failed to get files: {}", e);
+                error!("Failed to get files: {e}");
             })?;
 
         let response = response.json::<ListFileInfoResponse>()?;
@@ -143,13 +143,13 @@ impl HttpStorageClient {
                     None,
                 )
                 .inspect_err(|e| {
-                    error!("Failed to get file: {}", e);
+                    error!("Failed to get file: {e}");
                 })?
         } else {
             // if storage clients are gcs, aws and azure, use presigned url to download the object
             // If local storage client, download the object from api route
             let url = reqwest::Url::parse(&presigned_url).map_err(|e| {
-                error!("Invalid presigned URL: {}", e);
+                error!("Invalid presigned URL: {e}");
                 StorageError::ParseUrlError(e.to_string())
             })?;
 
@@ -162,7 +162,7 @@ impl HttpStorageClient {
 
         loop {
             let bytes_read = reader.read(&mut buffer).inspect_err(|e| {
-                error!("Failed to read from response: {}", e);
+                error!("Failed to read from response: {e}");
             })?;
 
             if bytes_read == 0 {
@@ -170,7 +170,7 @@ impl HttpStorageClient {
             }
 
             file.write_all(&buffer[..bytes_read]).inspect_err(|e| {
-                error!("Failed to write chunk: {}", e);
+                error!("Failed to write chunk: {e}");
             })?;
         }
 
@@ -196,11 +196,11 @@ impl HttpStorageClient {
                 None,
             )
             .inspect_err(|e| {
-                error!("Failed to delete file: {}", e);
+                error!("Failed to delete file: {e}");
             })?;
 
         let response = response.json::<DeleteFileResponse>().inspect_err(|e| {
-            error!("Failed to parse delete response: {}", e);
+            error!("Failed to parse delete response: {e}");
         })?;
 
         Ok(response.deleted)
@@ -224,7 +224,7 @@ impl HttpStorageClient {
                 None,
             )
             .inspect_err(|e| {
-                error!("Failed to delete file: {}", e);
+                error!("Failed to delete file: {e}");
             })?;
 
         let response = response.json::<DeleteFileResponse>()?;
@@ -251,7 +251,7 @@ impl HttpStorageClient {
                 None,
             )
             .inspect_err(|e| {
-                error!("Failed to create multipart upload: {}", e);
+                error!("Failed to create multipart upload: {e}");
             })?;
 
         // check if unauthorized
@@ -280,7 +280,7 @@ impl HttpStorageClient {
         let multipart_session = self
             .create_multipart_upload(rpath.to_str().unwrap())
             .inspect_err(|e| {
-                error!("Failed to create multipart upload: {}", e);
+                error!("Failed to create multipart upload: {e}");
             })?;
 
         Ok(MultiPartUploader::new(
@@ -311,7 +311,7 @@ impl HttpStorageClient {
                 None,
             )
             .inspect_err(|e| {
-                error!("Failed to generate presigned url: {}", e);
+                error!("Failed to generate presigned url: {e}");
             })?;
 
         let response = response.json::<PresignedUrl>()?;

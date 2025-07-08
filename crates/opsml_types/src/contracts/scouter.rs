@@ -15,6 +15,6 @@ impl UpdateProfileRequest {
             "drift_type": self.request.drift_type.to_string(),
         });
         serde_json::to_string(&metadata)
-            .unwrap_or_else(|e| format!("Failed to serialize ProfileRequest: {}", e))
+            .unwrap_or_else(|e| format!("Failed to serialize ProfileRequest: {e}"))
     }
 }

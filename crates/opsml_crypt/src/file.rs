@@ -79,8 +79,7 @@ pub fn decrypt_file(input_path: &Path, key_bytes: &[u8]) -> Result<(), CryptErro
         if ct_len > CHUNK_SIZE + 16 {
             // +16 for GCM tag
             return Err(CryptError::DecryptError(format!(
-                "Invalid ciphertext length: {} bytes",
-                ct_len
+                "Invalid ciphertext length: {ct_len} bytes"
             )));
         }
         let mut ct_buf = vec![0u8; ct_len];

@@ -64,7 +64,7 @@ impl OpsmlServerError {
     }
     pub fn key_header_not_found(key: String) -> Self {
         OpsmlServerError {
-            error: format!("{} header not found", key),
+            error: format!("{key} header not found"),
         }
     }
 
@@ -83,7 +83,7 @@ impl OpsmlServerError {
     }
 
     pub fn refresh_token_error<T: Display>(e: T) -> Self {
-        error!("Failed to refresh token: {}", e);
+        error!("Failed to refresh token: {e}");
         OpsmlServerError {
             error: "Failed to refresh token".to_string(),
         }
@@ -97,7 +97,7 @@ impl OpsmlServerError {
     }
 
     pub fn jwt_decode_error<T: Display>(e: T) -> Self {
-        error!("Failed to decode JWT token: {}", e);
+        error!("Failed to decode JWT token: {e}");
         OpsmlServerError {
             error: "Failed to decode JWT token".to_string(),
         }
@@ -129,7 +129,7 @@ impl OpsmlServerError {
     }
 
     pub fn failed_to_save_to_storage<T: Display>(e: T) -> Self {
-        error!("Failed to save to storage: {}", e);
+        error!("Failed to save to storage: {e}");
         OpsmlServerError {
             error: "Failed to save to storage".to_string(),
         }
@@ -204,7 +204,7 @@ pub fn internal_server_error<E: std::fmt::Display>(
     error: E,
     message: &str,
 ) -> (StatusCode, Json<OpsmlServerError>) {
-    let msg = format!("{}: {}", message, error);
+    let msg = format!("{message}: {error}");
     (
         StatusCode::INTERNAL_SERVER_ERROR,
         Json(OpsmlServerError::new(msg)),
