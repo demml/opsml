@@ -2,7 +2,17 @@ import os
 import shutil
 
 BASE_DIR = os.path.join(os.path.dirname(__file__), "../python/opsml")
-FOLDERS = ["data", "experiment", "logging", "model", "potato_head", "scouter", "types"]
+FOLDERS = [
+    "card",
+    "data",
+    "experiment",
+    "logging",
+    "model",
+    "potato_head",
+    "scouter",
+    "types",
+    "mock",
+]
 SCOUTER_SUBFOLDERS = ["alert", "client", "drift", "profile", "queue", "types"]
 
 
