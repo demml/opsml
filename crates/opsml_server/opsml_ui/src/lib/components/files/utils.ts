@@ -61,7 +61,7 @@ export function timeAgo(timestamp: string): string {
 }
 
 function parseRFC3339Variant(timestamp: string): Date {
-  // First try native parsing (handles standard ISO 8601/RFC 3339)
+  // try native parsing (handles standard ISO 8601/RFC 3339)
   let date = new Date(timestamp);
   if (!isNaN(date.getTime())) {
     return date;
@@ -70,7 +70,7 @@ function parseRFC3339Variant(timestamp: string): Date {
   // Normalize RFC 3339 variants to standard format
   let normalized = timestamp.trim();
 
-  // Handle Google's format: "2025-07-09 15:26:44.373 +00:00:00"
+  // Handle Google style format: "2025-07-09 15:26:44.373 +00:00:00"
   // 1. Replace space before date/time separator with 'T'
   normalized = normalized.replace(
     /^(\d{4}-\d{2}-\d{2})\s+(\d{2}:\d{2}:\d{2})/,
