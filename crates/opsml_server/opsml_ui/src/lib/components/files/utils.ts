@@ -23,7 +23,21 @@ export async function getFileTree(path: string): Promise<FileTreeResponse> {
 }
 
 export function timeAgo(timestamp: string): string {
-  const date = new Date(parseInt(timestamp) * 1000); // Convert to milliseconds
+  console.log("timeAgo", timestamp);
+  let date: Date;
+
+  if (/^\d+$/.test(timestamp)) {
+    date = new Date(
+      timestamp.length === 13 ? parseInt(timestamp) : parseInt(timestamp) * 1000
+    );
+  } else {
+    date = parseRFC3339Variant(timestamp);
+  }
+
+  if (isNaN(date.getTime())) {
+    return "invalid date";
+  }
+
   const now = new Date();
   const secondsAgo = Math.floor((now.getTime() - date.getTime()) / 1000);
 
@@ -44,6 +58,48 @@ export function timeAgo(timestamp: string): string {
   }
 
   return "just now";
+}
+
+function parseRFC3339Variant(timestamp: string): Date {
+  // First try native parsing (handles standard ISO 8601/RFC 3339)
+  let date = new Date(timestamp);
+  if (!isNaN(date.getTime())) {
+    return date;
+  }
+
+  // Normalize RFC 3339 variants to standard format
+  let normalized = timestamp.trim();
+
+  // Handle Google's format: "2025-07-09 15:26:44.373 +00:00:00"
+  // 1. Replace space before date/time separator with 'T'
+  normalized = normalized.replace(
+    /^(\d{4}-\d{2}-\d{2})\s+(\d{2}:\d{2}:\d{2})/,
+    "$1T$2"
+  );
+
+  // 2. Remove extra space before timezone offset
+  normalized = normalized.replace(/\s+([+-]\d{2}:\d{2}(?::\d{2})?)$/, "$1");
+
+  // 3. Remove extra seconds from timezone offset (+00:00:00 -> +00:00)
+  normalized = normalized.replace(/([+-]\d{2}:\d{2}):\d{2}$/, "$1");
+
+  // Try parsing the normalized timestamp
+  date = new Date(normalized);
+  if (!isNaN(date.getTime())) {
+    return date;
+  }
+
+  // Fallback: assume UTC if no timezone specified
+  if (!/[+-]\d{2}:?\d{2}$|Z$/.test(normalized)) {
+    const utcTimestamp = normalized + "Z";
+    date = new Date(utcTimestamp);
+    if (!isNaN(date.getTime())) {
+      return date;
+    }
+  }
+
+  // Return invalid date if all parsing attempts fail
+  return new Date(NaN);
 }
 
 export function formatBytes(bytes: number): string {
