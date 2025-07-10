@@ -21,10 +21,11 @@
     }>();
   
     // function to navigate to the card page
-    function navigateToCardPage() {
+    async function navigateToCardPage() {
       // navigate to the card page
       let registry_name = getRegistryTypeLowerCase(registry);
-      goto(`/opsml/${registry_name}/card/home?space=${space}&name=${name}&version=${version}`);
+      await goto(`/opsml/${registry_name}/card/home?space=${space}&name=${name}&version=${version}`);
+  
     }
   
   
