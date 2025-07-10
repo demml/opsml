@@ -6,7 +6,7 @@ classifiers = [
     "Programming Language :: Python :: Implementation :: CPython",
     "Programming Language :: Python :: Implementation :: PyPy",
 ]
-version = "3.0.0-rc.11"
+version = "3.0.0-rc.12"
 description = ""
 authors = [{name = "Thorrester", email = "<support@demmlai.com>"}]
 readme = "README.md"
