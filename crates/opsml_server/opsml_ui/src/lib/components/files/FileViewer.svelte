@@ -26,10 +26,10 @@
   let scrollTop: number = $state(0)
   let containerHeight: number = $state(600)
   
-  const LARGE_FILE_THRESHOLD = 40000; // 50KB threshold
-  const VIRTUAL_SCROLL_THRESHOLD = 50000; // 200KB threshold
+  const LARGE_FILE_THRESHOLD = 50000; // 50KB threshold
+  const VIRTUAL_SCROLL_THRESHOLD = 200000; // 200KB threshold
   const PREVIEW_LINES = 100;
-  const LINE_HEIGHT = 20; // Adjust based on your CSS
+  const LINE_HEIGHT = 20;
   const BUFFER_LINES = 20;
 
   function isImage(mimeType: string): boolean {
