@@ -9,6 +9,11 @@ import type { LayoutServerLoad } from "./$types";
 import type { ModelCard } from "$lib/components/card/card_interfaces/modelcard";
 import { getCardReadMe } from "$lib/components/readme/util";
 
+function getLastPartOfPath(path: string): string {
+  const parts = path.split("/");
+  return parts[parts.length - 1];
+}
+
 // @ts-ignore
 export const load: LayoutServerLoad = async ({ url }) => {
   await validateUserOrRedirect();
@@ -22,5 +27,7 @@ export const load: LayoutServerLoad = async ({ url }) => {
 
   let registryPath = getRegistryTypeLowerCase(registry);
 
-  return { metadata, registry, readme, registryPath };
+  let activeTab = getLastPartOfPath(url.pathname);
+
+  return { metadata, registry, readme, registryPath, activeTab };
 };

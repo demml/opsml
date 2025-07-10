@@ -11,6 +11,6 @@ export const load: PageLoad = async ({ url }) => {
   const name = url.searchParams.get("name") || undefined;
 
   await validateUserOrRedirect();
-  let registryPage = await setupRegistryPage(RegistryType.Deck, space, name);
+  let registryPage = await setupRegistryPage(RegistryType.Service, space, name);
   return { page: registryPage, selectedSpace: space, selectedName: name };
 };

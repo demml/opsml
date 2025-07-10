@@ -7,20 +7,24 @@ import { getCardMetadata, getUID } from "$lib/components/card/utils";
 // @ts-ignore
 import type { LayoutServerLoad } from "./$types";
 import type { ServiceCard } from "$lib/components/card/card_interfaces/servicecard";
-import { getCardReadMe } from "$lib/components/readme/util";
+
+function getLastPartOfPath(path: string): string {
+  const parts = path.split("/");
+  return parts[parts.length - 1];
+}
 
 // @ts-ignore
 export const load: LayoutServerLoad = async ({ url }) => {
   await validateUserOrRedirect();
 
-  let registry = RegistryType.Deck;
+  let registry = RegistryType.Service;
   let uid = await getUID(url, registry);
 
   let metadata = (await getCardMetadata(uid, registry)) as ServiceCard;
 
   let registryPath = getRegistryTypeLowerCase(registry);
 
-  console.log(JSON.stringify(metadata, null, 2));
+  let activeTab = getLastPartOfPath(url.pathname);
 
-  return { metadata, registry, registryPath };
+  return { metadata, registry, registryPath, activeTab };
 };
