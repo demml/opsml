@@ -10,9 +10,10 @@ use opsml_storage::storage::enums::client::{get_storage_system, StorageClientEnu
 use password_auth::generate_hash;
 use reqwest::StatusCode;
 use rusty_logging::setup_logging;
-use tracing::{debug, info};
+use tracing::{debug, info, instrument};
 
 /// Initialize a default admin user if no users exist in the database
+#[instrument(skip_all)]
 pub async fn initialize_default_user(
     sql_client: &SqlClientEnum,
     scouter_client: &ScouterApiClient,

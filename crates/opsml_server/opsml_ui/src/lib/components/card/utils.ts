@@ -154,6 +154,14 @@ export async function getUID(
     | undefined;
   const uid = (url as URL).searchParams.get("uid") as string | undefined;
 
+  console.log("getUID called with:", {
+    name,
+    space,
+    version,
+    uid,
+    registry,
+  });
+
   // If uid is provided, return it
   if (uid) {
     return uid;

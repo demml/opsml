@@ -6,8 +6,9 @@ use std::net::SocketAddr;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use tokio::task::JoinHandle;
-use tracing::info;
+use tracing::{info, instrument};
 
+#[instrument(skip_all)]
 pub async fn start_server() -> Result<(), Box<dyn std::error::Error>> {
     let logo = r#"
          ____             __  _____       _____                          
