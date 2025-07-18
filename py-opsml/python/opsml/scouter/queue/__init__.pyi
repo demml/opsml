@@ -37,6 +37,8 @@ class KafkaConfig:
 
     def __init__(
         self,
+        username: Optional[str] = None,
+        password: Optional[str] = None,
         brokers: Optional[str] = None,
         topic: Optional[str] = None,
         compression_type: Optional[str] = None,
@@ -46,42 +48,91 @@ class KafkaConfig:
         config: Dict[str, str] = {},
         max_retries: int = 3,
     ) -> None:
-        """Kafka configuration to use with the KafkaProducer.
+        """Kafka configuration for connecting to and publishing messages to Kafka brokers.
+
+        This configuration supports both authenticated (SASL) and unauthenticated connections.
+        When credentials are provided, SASL authentication is automatically enabled with
+        secure defaults.
+
+        Authentication Priority (first match wins):
+            1. Direct parameters (username/password)
+            2. Environment variables (KAFKA_USERNAME/KAFKA_PASSWORD)
+            3. Configuration dictionary (sasl.username/sasl.password)
+
+        SASL Security Defaults:
+            - security.protocol: "SASL_SSL" (override via KAFKA_SECURITY_PROTOCOL env var)
+            - sasl.mechanism: "PLAIN" (override via KAFKA_SASL_MECHANISM env var)
 
         Args:
+            username:
+                SASL username for authentication.
+                Fallback: KAFKA_USERNAME environment variable.
+            password:
+                SASL password for authentication.
+                Fallback: KAFKA_PASSWORD environment variable.
             brokers:
-                Comma-separated list of Kafka brokers.
-                If not provided, the value of the KAFKA_BROKERS environment variable is used.
-
+                Comma-separated list of Kafka broker addresses (host:port).
+                Fallback: KAFKA_BROKERS environment variable.
+                Default: "localhost:9092"
             topic:
-                Kafka topic to publish messages to.
-                If not provided, the value of the KAFKA_TOPIC environment variable is used.
-
+                Target Kafka topic for message publishing.
+                Fallback: KAFKA_TOPIC environment variable.
+                Default: "scouter_monitoring"
             compression_type:
-                Compression type to use for messages.
-                Default is "gzip".
-
+                Message compression algorithm.
+                Options: "none", "gzip", "snappy", "lz4", "zstd"
+                Default: "gzip"
             message_timeout_ms:
-                Message timeout in milliseconds.
-                Default is 600_000.
-
+                Maximum time to wait for message delivery (milliseconds).
+                Default: 600000 (10 minutes)
             message_max_bytes:
                 Maximum message size in bytes.
-                Default is 2097164.
-
+                Default: 2097164 (~2MB)
             log_level:
-                Log level for the Kafka producer.
-                Default is LogLevel.Info.
-
+                Logging verbosity for the Kafka producer.
+                Default: LogLevel.Info
             config:
-                Additional Kafka configuration options. These will be passed to the Kafka producer.
-                See https://kafka.apache.org/documentation/#configuration.
-
+                Additional Kafka producer configuration parameters.
+                See: https://kafka.apache.org/documentation/#producerconfigs
+                Note: Direct parameters take precedence over config dictionary values.
             max_retries:
-                Maximum number of retries to attempt when publishing messages.
-                Default is 3.
+                Maximum number of retry attempts for failed message deliveries.
+                Default: 3
 
+        Examples:
+            Basic usage (unauthenticated):
+            ```python
+            config = KafkaConfig(
+                brokers="kafka1:9092,kafka2:9092",
+                topic="my_topic"
+            )
+            ```
+
+            SASL authentication:
+            ```python
+            config = KafkaConfig(
+                username="my_user",
+                password="my_password",
+                brokers="secure-kafka:9093",
+                topic="secure_topic"
+            )
+            ```
+
+            Advanced configuration:
+            ```python
+            config = KafkaConfig(
+                brokers="kafka:9092",
+                compression_type="lz4",
+                config={
+                    "acks": "all",
+                    "batch.size": "32768",
+                    "linger.ms": "10"
+                }
+            )
+            ```
         """
+
+    def __str__(self): ...
 
 class RabbitMQConfig:
     address: str
