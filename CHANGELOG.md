@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.0.0-rc.14] - 2025-07-18
+
+### 🐛 Bug Fixes
+
+- Fix version
+
 ## [3.0.0-rc.11] - 2025-06-25
 
 Bumping Scouter that introduces ScouterQueue background task initialization logic and Mocks
