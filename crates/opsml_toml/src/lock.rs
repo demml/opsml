@@ -73,8 +73,8 @@ impl LockFile {
         let content =
             fs::read_to_string(lock_path).map_err(PyProjectTomlError::FailedToReadLockFile)?;
 
-        let lockfile: toml_edit::Document<_> =
-            toml_edit::Document::from_str(&content).map_err(PyProjectTomlError::ParseError)?;
+        let lockfile: toml_edit::DocumentMut =
+            toml_edit::DocumentMut::from_str(&content).map_err(PyProjectTomlError::ParseError)?;
         //
         let lockfile = LockFile::deserialize(lockfile.into_deserializer())
             .map_err(PyProjectTomlError::TomlSchema)?;

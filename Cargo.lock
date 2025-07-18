@@ -3915,7 +3915,7 @@ dependencies = [
 
 [[package]]
 name = "opsml-app"
-version = "3.0.0-rc.13"
+version = "3.0.0-rc.14"
 dependencies = [
  "opsml-cards",
  "opsml-state",
@@ -3932,7 +3932,7 @@ dependencies = [
 
 [[package]]
 name = "opsml-auth"
-version = "3.0.0-rc.13"
+version = "3.0.0-rc.14"
 dependencies = [
  "async-trait",
  "base64 0.22.1",
@@ -3952,7 +3952,7 @@ dependencies = [
 
 [[package]]
 name = "opsml-cards"
-version = "3.0.0-rc.13"
+version = "3.0.0-rc.14"
 dependencies = [
  "chrono",
  "names",
@@ -3978,7 +3978,7 @@ dependencies = [
 
 [[package]]
 name = "opsml-cli"
-version = "3.0.0-rc.13"
+version = "3.0.0-rc.14"
 dependencies = [
  "anyhow",
  "base64 0.22.1",
@@ -4014,7 +4014,7 @@ dependencies = [
 
 [[package]]
 name = "opsml-client"
-version = "3.0.0-rc.13"
+version = "3.0.0-rc.14"
 dependencies = [
  "futures",
  "mockito",
@@ -4036,14 +4036,14 @@ dependencies = [
 
 [[package]]
 name = "opsml-colors"
-version = "3.0.0-rc.13"
+version = "3.0.0-rc.14"
 dependencies = [
  "owo-colors",
 ]
 
 [[package]]
 name = "opsml-crypt"
-version = "3.0.0-rc.13"
+version = "3.0.0-rc.14"
 dependencies = [
  "aes-gcm",
  "base64 0.22.1",
@@ -4061,7 +4061,7 @@ dependencies = [
 
 [[package]]
 name = "opsml-events"
-version = "3.0.0-rc.13"
+version = "3.0.0-rc.14"
 dependencies = [
  "axum",
  "chrono",
@@ -4078,7 +4078,7 @@ dependencies = [
 
 [[package]]
 name = "opsml-experiment"
-version = "3.0.0-rc.13"
+version = "3.0.0-rc.14"
 dependencies = [
  "chrono",
  "opsml-cards",
@@ -4103,7 +4103,7 @@ dependencies = [
 
 [[package]]
 name = "opsml-interfaces"
-version = "3.0.0-rc.13"
+version = "3.0.0-rc.14"
 dependencies = [
  "opsml-state",
  "opsml-types",
@@ -4124,7 +4124,7 @@ dependencies = [
 
 [[package]]
 name = "opsml-mocks"
-version = "3.0.0-rc.13"
+version = "3.0.0-rc.14"
 dependencies = [
  "mockito",
  "opsml-registry",
@@ -4144,7 +4144,7 @@ dependencies = [
 
 [[package]]
 name = "opsml-registry"
-version = "3.0.0-rc.13"
+version = "3.0.0-rc.14"
 dependencies = [
  "anyhow",
  "opsml-cards",
@@ -4171,7 +4171,7 @@ dependencies = [
 
 [[package]]
 name = "opsml-semver"
-version = "3.0.0-rc.13"
+version = "3.0.0-rc.14"
 dependencies = [
  "pyo3",
  "semver",
@@ -4181,7 +4181,7 @@ dependencies = [
 
 [[package]]
 name = "opsml-server"
-version = "3.0.0-rc.13"
+version = "3.0.0-rc.14"
 dependencies = [
  "anyhow",
  "axum",
@@ -4209,6 +4209,7 @@ dependencies = [
  "opsml-types",
  "opsml-utils",
  "password-auth",
+ "rand 0.7.3",
  "rand 0.9.1",
  "reqwest",
  "rust-embed",
@@ -4232,7 +4233,7 @@ dependencies = [
 
 [[package]]
 name = "opsml-settings"
-version = "3.0.0-rc.13"
+version = "3.0.0-rc.14"
 dependencies = [
  "base64 0.22.1",
  "opsml-types",
@@ -4246,7 +4247,7 @@ dependencies = [
 
 [[package]]
 name = "opsml-sql"
-version = "3.0.0-rc.13"
+version = "3.0.0-rc.14"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -4268,7 +4269,7 @@ dependencies = [
 
 [[package]]
 name = "opsml-state"
-version = "3.0.0-rc.13"
+version = "3.0.0-rc.14"
 dependencies = [
  "futures",
  "opsml-client",
@@ -4283,7 +4284,7 @@ dependencies = [
 
 [[package]]
 name = "opsml-storage"
-version = "3.0.0-rc.13"
+version = "3.0.0-rc.14"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -4325,7 +4326,7 @@ dependencies = [
 
 [[package]]
 name = "opsml-todo"
-version = "3.0.0-rc.13"
+version = "3.0.0-rc.14"
 dependencies = [
  "clap 4.5.41",
  "opsml-colors",
@@ -4336,19 +4337,19 @@ dependencies = [
 
 [[package]]
 name = "opsml-toml"
-version = "3.0.0-rc.13"
+version = "3.0.0-rc.14"
 dependencies = [
  "opsml-types",
  "opsml-version",
  "serde",
  "tempfile",
  "thiserror 2.0.12",
- "toml_edit 0.23.1",
+ "toml_edit",
 ]
 
 [[package]]
 name = "opsml-types"
-version = "3.0.0-rc.13"
+version = "3.0.0-rc.14"
 dependencies = [
  "chrono",
  "opsml-colors",
@@ -4368,7 +4369,7 @@ dependencies = [
 
 [[package]]
 name = "opsml-utils"
-version = "3.0.0-rc.13"
+version = "3.0.0-rc.14"
 dependencies = [
  "chrono",
  "colored_json",
@@ -4386,7 +4387,7 @@ dependencies = [
 
 [[package]]
 name = "opsml-version"
-version = "3.0.0-rc.13"
+version = "3.0.0-rc.14"
 
 [[package]]
 name = "option-ext"
@@ -4764,7 +4765,7 @@ dependencies = [
 
 [[package]]
 name = "potato-head"
-version = "3.0.0-rc.13"
+version = "3.0.0-rc.14"
 dependencies = [
  "mime_guess",
  "opsml-state",
@@ -4846,7 +4847,7 @@ version = "3.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "edce586971a4dfaa28950c6f18ed55e0406c1ab88bbce2c6f6293a7aaba73d35"
 dependencies = [
- "toml_edit 0.22.27",
+ "toml_edit",
 ]
 
 [[package]]
@@ -4906,7 +4907,7 @@ dependencies = [
 
 [[package]]
 name = "py-opsml"
-version = "3.0.0-rc.13"
+version = "3.0.0-rc.14"
 dependencies = [
  "anyhow",
  "mockito",
@@ -6119,9 +6120,9 @@ dependencies = [
 
 [[package]]
 name = "serde_spanned"
-version = "1.0.0"
+version = "0.6.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "40734c41988f7306bb04f0ecf60ec0f3f1caa34290e4e8ea471dcd3346483b83"
+checksum = "bf41e0cfaf7226dca15e8197172c295a782857fcb97fad1808a166870dee75a3"
 dependencies = [
  "serde",
 ]
@@ -6976,12 +6977,6 @@ name = "toml_datetime"
 version = "0.6.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "22cddaf88f4fbc13c51aebbf5f8eceb5c7c5a9da2ac40a13519eb5b0a0e8f11c"
-
-[[package]]
-name = "toml_datetime"
-version = "0.7.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bade1c3e902f58d73d3f294cd7f20391c1cb2fbcb643b73566bc773971df91e3"
 dependencies = [
  "serde",
 ]
@@ -6993,39 +6988,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "41fe8c660ae4257887cf66394862d21dbca4a6ddd26f04a3560410406a2f819a"
 dependencies = [
  "indexmap 2.10.0",
- "toml_datetime 0.6.11",
- "winnow 0.7.12",
-]
-
-[[package]]
-name = "toml_edit"
-version = "0.23.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b1f23a5f4511b296579b6c83e437fe85fa7ece22e3ec44e45ddb975bcf57c3dd"
-dependencies = [
- "indexmap 2.10.0",
  "serde",
  "serde_spanned",
- "toml_datetime 0.7.0",
- "toml_parser",
- "toml_writer",
+ "toml_datetime",
+ "toml_write",
  "winnow 0.7.12",
 ]
 
 [[package]]
-name = "toml_parser"
-version = "1.0.1"
+name = "toml_write"
+version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "97200572db069e74c512a14117b296ba0a80a30123fbbb5aa1f4a348f639ca30"
-dependencies = [
- "winnow 0.7.12",
-]
-
-[[package]]
-name = "toml_writer"
-version = "1.0.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fcc842091f2def52017664b53082ecbbeb5c7731092bad69d2c63050401dfd64"
+checksum = "5d99f8c9a7727884afe522e9bd5edbfc91a3312b36a77b5fb8926e4c31a41801"
 
 [[package]]
 name = "tower"
