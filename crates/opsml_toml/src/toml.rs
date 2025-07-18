@@ -171,8 +171,8 @@ impl PyProjectToml {
 
     /// Load the pyproject.toml file from a string
     pub fn from_string(content: &str) -> Result<Self, PyProjectTomlError> {
-        let pyproject: toml_edit::Document<_> =
-            toml_edit::Document::from_str(content).map_err(PyProjectTomlError::ParseError)?;
+        let pyproject: toml_edit::DocumentMut =
+            toml_edit::DocumentMut::from_str(content).map_err(PyProjectTomlError::ParseError)?;
 
         let pyproject = PyProjectToml::deserialize(pyproject.into_deserializer())
             .map_err(PyProjectTomlError::TomlSchema)?;
