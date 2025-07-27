@@ -1168,6 +1168,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "baked-potato"
+version = "0.2.3"
+source = "git+https://github.com/demml/potatohead.git?branch=main#6c4a6c600fd940b1f97f9c012b905926a9193de7"
+dependencies = [
+ "mockito",
+ "potato-agent",
+ "potato-prompt",
+ "potato-type",
+ "potato-util",
+ "potato-workflow",
+ "pyo3",
+ "schemars",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.12",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
 name = "base16ct"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4782,6 +4802,7 @@ name = "potato-head"
 version = "0.2.3"
 source = "git+https://github.com/demml/potatohead.git?branch=main#6c4a6c600fd940b1f97f9c012b905926a9193de7"
 dependencies = [
+ "baked-potato",
  "potato-agent",
  "potato-prompt",
  "potato-type",
@@ -5918,7 +5939,7 @@ checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
 [[package]]
 name = "scouter-client"
 version = "0.7.0"
-source = "git+https://github.com/demml/scouter.git?branch=main#141a88fa60c77eed6b12bfb18c6c8511be623e8d"
+source = "git+https://github.com/demml/scouter.git?branch=main#366328abb007c1cf32026c729552516ac02d2d38"
 dependencies = [
  "chrono",
  "ndarray",
@@ -5946,7 +5967,7 @@ dependencies = [
 [[package]]
 name = "scouter-dispatch"
 version = "0.7.0"
-source = "git+https://github.com/demml/scouter.git?branch=main#141a88fa60c77eed6b12bfb18c6c8511be623e8d"
+source = "git+https://github.com/demml/scouter.git?branch=main#366328abb007c1cf32026c729552516ac02d2d38"
 dependencies = [
  "futures",
  "pyo3",
@@ -5961,7 +5982,7 @@ dependencies = [
 [[package]]
 name = "scouter-drift"
 version = "0.7.0"
-source = "git+https://github.com/demml/scouter.git?branch=main#141a88fa60c77eed6b12bfb18c6c8511be623e8d"
+source = "git+https://github.com/demml/scouter.git?branch=main#366328abb007c1cf32026c729552516ac02d2d38"
 dependencies = [
  "chrono",
  "cron",
@@ -5989,7 +6010,7 @@ dependencies = [
 [[package]]
 name = "scouter-events"
 version = "0.7.0"
-source = "git+https://github.com/demml/scouter.git?branch=main#141a88fa60c77eed6b12bfb18c6c8511be623e8d"
+source = "git+https://github.com/demml/scouter.git?branch=main#366328abb007c1cf32026c729552516ac02d2d38"
 dependencies = [
  "async-trait",
  "chrono",
@@ -6022,7 +6043,7 @@ dependencies = [
 [[package]]
 name = "scouter-observability"
 version = "0.7.0"
-source = "git+https://github.com/demml/scouter.git?branch=main#141a88fa60c77eed6b12bfb18c6c8511be623e8d"
+source = "git+https://github.com/demml/scouter.git?branch=main#366328abb007c1cf32026c729552516ac02d2d38"
 dependencies = [
  "itertools 0.14.0",
  "ndarray",
@@ -6039,7 +6060,7 @@ dependencies = [
 [[package]]
 name = "scouter-profile"
 version = "0.7.0"
-source = "git+https://github.com/demml/scouter.git?branch=main#141a88fa60c77eed6b12bfb18c6c8511be623e8d"
+source = "git+https://github.com/demml/scouter.git?branch=main#366328abb007c1cf32026c729552516ac02d2d38"
 dependencies = [
  "chrono",
  "indicatif",
@@ -6061,7 +6082,7 @@ dependencies = [
 [[package]]
 name = "scouter-semver"
 version = "0.7.0"
-source = "git+https://github.com/demml/scouter.git?branch=main#141a88fa60c77eed6b12bfb18c6c8511be623e8d"
+source = "git+https://github.com/demml/scouter.git?branch=main#366328abb007c1cf32026c729552516ac02d2d38"
 dependencies = [
  "pyo3",
  "semver",
@@ -6072,7 +6093,7 @@ dependencies = [
 [[package]]
 name = "scouter-settings"
 version = "0.7.0"
-source = "git+https://github.com/demml/scouter.git?branch=main#141a88fa60c77eed6b12bfb18c6c8511be623e8d"
+source = "git+https://github.com/demml/scouter.git?branch=main#366328abb007c1cf32026c729552516ac02d2d38"
 dependencies = [
  "base64 0.22.1",
  "potato-head",
@@ -6085,7 +6106,7 @@ dependencies = [
 [[package]]
 name = "scouter-types"
 version = "0.7.0"
-source = "git+https://github.com/demml/scouter.git?branch=main#141a88fa60c77eed6b12bfb18c6c8511be623e8d"
+source = "git+https://github.com/demml/scouter.git?branch=main#366328abb007c1cf32026c729552516ac02d2d38"
 dependencies = [
  "chrono",
  "colored_json",

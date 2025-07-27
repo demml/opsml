@@ -12,9 +12,9 @@ pub fn client(m: &Bound<'_, PyModule>) -> PyResult<()> {
 
     m.add_class::<TimeInterval>()?;
 
-    m.add_class::<BinnedCustomMetricStats>()?;
-    m.add_class::<BinnedCustomMetric>()?;
-    m.add_class::<BinnedCustomMetrics>()?;
+    m.add_class::<BinnedMetricStats>()?;
+    m.add_class::<BinnedMetric>()?;
+    m.add_class::<BinnedMetrics>()?;
 
     m.add_class::<BinnedPsiFeatureMetrics>()?;
     m.add_class::<BinnedPsiMetric>()?;

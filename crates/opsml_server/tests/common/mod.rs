@@ -171,13 +171,22 @@ impl ScouterServer {
             .await;
 
         // get binned custom metrics mock
-        let binned_custom_metrics = BinnedCustomMetrics::default();
-        let binned_custom_metrics_json = serde_json::to_string(&binned_custom_metrics).unwrap();
+        let binned_metrics = BinnedMetrics::default();
+        let binned_custom_metrics_json = serde_json::to_string(&binned_metrics).unwrap();
         server
             .mock("GET", "/scouter/drift/custom")
             .match_query(mockito::Matcher::Any)
             .with_status(200)
             .with_body(binned_custom_metrics_json)
+            .create_async()
+            .await;
+
+        let binned_metrics_json = serde_json::to_string(&binned_metrics).unwrap();
+        server
+            .mock("GET", "/scouter/drift/llm")
+            .match_query(mockito::Matcher::Any)
+            .with_status(200)
+            .with_body(binned_metrics_json)
             .create_async()
             .await;
 
