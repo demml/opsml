@@ -2,6 +2,7 @@ class DriftType:
     Spc: "DriftType"
     Psi: "DriftType"
     Custom: "DriftType"
+    LLM = "DriftType"
 
     def value(self) -> str: ...
     @staticmethod

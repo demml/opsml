@@ -1,7 +1,7 @@
 from pydantic_ai import Agent as PydanticAgent, RunContext, models
 
 from pydantic_ai.models.test import TestModel
-from opsml.potato_head import (
+from opsml.llm import (
     Prompt,
     SanitizationConfig,
     PromptSanitizer,
@@ -12,7 +12,7 @@ from opsml.potato_head import (
 )
 from dataclasses import dataclass
 import os
-from opsml.mock import OpenAITestServer
+from opsml.mock import LLMTestServer
 
 models.ALLOW_MODEL_REQUESTS = False
 os.environ["OPENAI_API_KEY"] = "mock_api_key"
@@ -64,7 +64,11 @@ def test_binding_workflow(prompt_step1: Prompt, prompt_step2: Prompt):
 
     @agent.tool
     def bind_context(ctx: RunContext[Prompts], search_query: str) -> str:
-        bound = ctx.deps.prompt_step1.user_message[0].bind(search_query).unwrap()
+        bound = (
+            ctx.deps.prompt_step1.user_message[0]
+            .bind(name="query_one", value=search_query)
+            .unwrap()
+        )
         return bound
 
     with agent.override(model=TestModel()):
@@ -113,7 +117,7 @@ def test_sanitization_workflow(prompt_step1: Prompt):
 
 
 def test_opsml_agent_task_execution():
-    with OpenAITestServer():
+    with LLMTestServer():
         prompt = Prompt(
             user_message="Hello, how are you?",
             system_message="You are a helpful assistant.",
@@ -125,7 +129,7 @@ def test_opsml_agent_task_execution():
 
 
 def test_opsml_agent_workflow():
-    with OpenAITestServer():
+    with LLMTestServer():
         prompt = Prompt(
             user_message="Hello, how are you?",
             system_message="You are a helpful assistant.",
