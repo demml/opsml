@@ -11,6 +11,7 @@ use opsml_types::SaveName;
 use opsml_types::Suffix;
 use rand::Rng;
 use reqwest::header;
+use scouter_client::VersionRequest;
 use scouter_client::{
     DriftRequest, DriftType, ProfileRequest, ProfileStatusRequest, SpcDriftProfile, TimeInterval,
 };
@@ -73,6 +74,12 @@ async fn test_scouter_routes_insert_profile() {
         space: helper.space.clone(),
         drift_type: DriftType::Psi,
         profile: "test_profile".to_string(),
+        version_request: VersionRequest {
+            version: (),
+            version_type: (),
+            pre_tag: (),
+            build_tag: (),
+        },
     };
 
     let body = serde_json::to_string(&request).unwrap();
