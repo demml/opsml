@@ -21,7 +21,7 @@ use opsml_sql::base::SqlClient;
 use opsml_sql::enums::client::SqlClientEnum;
 use opsml_types::contracts::*;
 use opsml_types::*;
-use scouter_client::{BinnedCustomMetrics, BinnedPsiFeatureMetrics, SpcDriftFeatures};
+use scouter_client::{BinnedMetrics, BinnedPsiFeatureMetrics, SpcDriftFeatures};
 use std::time::SystemTime;
 use std::time::UNIX_EPOCH;
 use std::{env, net::SocketAddr, vec};

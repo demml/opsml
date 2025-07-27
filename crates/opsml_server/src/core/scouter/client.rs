@@ -16,6 +16,7 @@ const X_BOOTSTRAP_TOKEN: &str = "x-bootstrap-token";
 #[derive(Debug, Clone)]
 #[allow(dead_code)]
 pub enum Routes {
+    DriftLLM,
     DriftCustom,
     DriftPsi,
     DriftSpc,
@@ -33,6 +34,7 @@ impl Routes {
             Routes::DriftCustom => "scouter/drift/custom",
             Routes::DriftPsi => "scouter/drift/psi",
             Routes::DriftSpc => "scouter/drift/spc",
+            Routes::DriftLLM => "scouter/drift/llm",
 
             // Scouter Profile Routes
             Routes::Profile => "scouter/profile",
