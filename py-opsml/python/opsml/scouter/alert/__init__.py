@@ -18,12 +18,15 @@ SlackDispatchConfig = scouter.alert.SlackDispatchConfig
 PsiNormalThreshold = scouter.alert.PsiNormalThreshold
 PsiChiSquareThreshold = scouter.alert.PsiChiSquareThreshold
 PsiFixedThreshold = scouter.alert.PsiFixedThreshold
+LLMMetricAlertCondition = scouter.alert.LLMMetricAlertCondition
+LLMAlertConfig = scouter.alert.LLMAlertConfig
 
 
 __all__ = [
     "AlertZone",
     "SpcAlertType",
     "SpcAlertRule",
+    "PsiAlertConfig",
     "PsiAlertConfig",
     "SpcAlertConfig",
     "SpcAlert",
@@ -37,4 +40,6 @@ __all__ = [
     "PsiNormalThreshold",
     "PsiChiSquareThreshold",
     "PsiFixedThreshold",
+    "LLMMetricAlertCondition",
+    "LLMAlertConfig",
 ]
