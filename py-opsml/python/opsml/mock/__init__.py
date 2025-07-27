@@ -3,7 +3,7 @@ from .. import mock
 
 OpsmlTestServer = mock.OpsmlTestServer
 OpsmlServerContext = mock.OpsmlServerContext
-OpenAITestServer = mock.OpenAITestServer
+LLMTestServer = mock.LLMTestServer
 MockConfig = mock.MockConfig
 
-__all__ = ["OpsmlTestServer", "OpsmlServerContext", "OpenAITestServer", "MockConfig"]
+__all__ = ["OpsmlTestServer", "OpsmlServerContext", "LLMTestServer", "MockConfig"]

@@ -1,8 +1,8 @@
-use opsml_interfaces::llm::workflow::PyWorkflow;
 use potato_head::{
     AudioUrl, BinaryContent, ChatResponse, CompletionTokenDetails, DocumentUrl, EventDetails,
     ImageUrl, Message, ModelSettings, Prompt, PromptTokenDetails, Provider, PyAgent,
-    PyAgentResponse, PyTask, Score, Task, TaskEvent, TaskList, TaskStatus, Usage, WorkflowResult,
+    PyAgentResponse, PyTask, PyWorkflow, Score, Task, TaskEvent, TaskList, TaskStatus, Usage,
+    WorkflowResult,
 };
 use pyo3::prelude::*;
 #[pymodule]

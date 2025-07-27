@@ -1,45 +1,54 @@
 # type: ignore
 # pylint: disable=no-name-in-module
 
-from .. import potato_head  # noqa: F401
+from .. import llm
 
-Prompt = potato_head.Prompt
-Message = potato_head.Message
-ModelSettings = potato_head.ModelSettings
-ImageUrl = potato_head.ImageUrl
-AudioUrl = potato_head.AudioUrl
-BinaryContent = potato_head.BinaryContent
-DocumentUrl = potato_head.DocumentUrl
-
-SanitizationConfig = potato_head.SanitizationConfig
-SanitizedResult = potato_head.SanitizedResult
-PromptSanitizer = potato_head.PromptSanitizer
-RiskLevel = potato_head.RiskLevel
-PIIConfig = potato_head.PIIConfig
-
-# agents
-Provider = potato_head.Provider
-TaskStatus = potato_head.TaskStatus
-Task = potato_head.Task
-TaskList = potato_head.TaskList
-Agent = potato_head.Agent
-Workflow = potato_head.Workflow
-
+Agent = llm.Agent
+AgentResponse = llm.AgentResponse
+AudioUrl = llm.AudioUrl
+BinaryContent = llm.BinaryContent
+ChatResponse = llm.ChatResponse
+CompletionTokenDetails = llm.CompletionTokenDetails
+DocumentUrl = llm.DocumentUrl
+EventDetails = llm.EventDetails
+ImageUrl = llm.ImageUrl
+Message = llm.Message
+ModelSettings = llm.ModelSettings
+Prompt = llm.Prompt
+PromptTokenDetails = llm.PromptTokenDetails
+Provider = llm.Provider
+PyTask = llm.PyTask
+Score = llm.Score
+Task = llm.Task
+TaskEvent = llm.TaskEvent
+TaskList = llm.TaskList
+TaskStatus = llm.TaskStatus
+Usage = llm.Usage
+Workflow = llm.Workflow
+WorkflowResult = llm.WorkflowResult
 
 __all__ = [
-    "Prompt",
-    "Message",
+    "PromptTokenDetails",
+    "CompletionTokenDetails",
+    "Usage",
     "ImageUrl",
-    "SanitizationConfig",
-    "SanitizedResult",
-    "RiskLevel",
-    "PIIConfig",
-    "PromptSanitizer",
+    "AudioUrl",
+    "BinaryContent",
+    "DocumentUrl",
+    "Message",
     "ModelSettings",
+    "Prompt",
     "Provider",
     "TaskStatus",
+    "AgentResponse",
     "Task",
     "TaskList",
     "Agent",
     "Workflow",
+    "PyTask",
+    "ChatResponse",
+    "EventDetails",
+    "TaskEvent",
+    "WorkflowResult",
+    "Score",
 ]
