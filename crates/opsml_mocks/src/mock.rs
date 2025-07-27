@@ -16,7 +16,7 @@ use tokio::{runtime::Runtime, sync::Mutex, task::JoinHandle};
 #[cfg(feature = "server")]
 use mockito;
 #[cfg(feature = "server")]
-use scouter_client::{BinnedCustomMetrics, BinnedPsiFeatureMetrics, SpcDriftFeatures};
+use scouter_client::{BinnedMetrics, BinnedPsiFeatureMetrics, SpcDriftFeatures};
 #[cfg(feature = "server")]
 use serde_json;
 
@@ -125,7 +125,14 @@ impl ScouterServer {
             .mock("GET", "/scouter/drift/custom")
             .match_query(mockito::Matcher::Any)
             .with_status(200)
-            .with_body(serde_json::to_string(&BinnedCustomMetrics::default()).unwrap())
+            .with_body(serde_json::to_string(&BinnedMetrics::default()).unwrap())
+            .create();
+
+        server
+            .mock("GET", "/scouter/drift/llm")
+            .match_query(mockito::Matcher::Any)
+            .with_status(200)
+            .with_body(serde_json::to_string(&BinnedMetrics::default()).unwrap())
             .create();
 
         server

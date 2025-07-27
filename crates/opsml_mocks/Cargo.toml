@@ -10,7 +10,7 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 mockito = { workspace = true, optional = true }
-potato-head = { workspace = true }
+potato-head = { workspace = true , features = ["mock"] }
 opsml-registry = { workspace = true }
 opsml-server = { workspace = true, optional = true }
 opsml-storage = { workspace = true, optional = true }
