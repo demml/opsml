@@ -1,57 +1,5 @@
 import { RegistryType } from "$lib/utils";
-
-enum RiskLevel {
-  Safe = 0,
-  Low = 1,
-  Medium = 2,
-  High = 3,
-  Critical = 4,
-}
-
-// PII Configuration interface
-interface PIIConfig {
-  checkEmail: boolean;
-  checkPhone: boolean;
-  checkCreditCard: boolean;
-  checkSsn: boolean;
-  checkIp: boolean;
-  checkPassword: boolean;
-  checkAddress: boolean;
-  checkName: boolean;
-  checkDob: boolean;
-  customPiiPatterns: string[];
-}
-
-// Main sanitization configuration interface
-interface SanitizationConfig {
-  // Minimum risk level that will cause rejection
-  riskThreshold: RiskLevel;
-
-  // Whether to sanitize delimiters (like ``` or ---)
-  checkDelimiters: boolean;
-
-  // Whether to sanitize common prompt injection keywords
-  checkKeywords: boolean;
-
-  // Whether to sanitize control characters
-  checkControlChars: boolean;
-
-  // Custom regex patterns to detect and sanitize
-  customPatterns: string[];
-
-  // PII detection configuration
-  checkPii: boolean;
-
-  // Whether to sanitize or just detect issues
-  sanitize: boolean;
-
-  // Whether to throw error on high risk or just sanitize
-  errorOnHighRisk: boolean;
-
-  // PII detection configuration
-  piiConfig: PIIConfig;
-}
-
+import type { DriftType } from "../model/monitoring/types";
 type PromptContent =
   | { Str: string }
   | { Audio: AudioUrl }
@@ -105,14 +53,22 @@ export interface ModelSettings {
 export interface Prompt {
   user_message: Message[];
   system_message: Message[];
-  sanitization_config: SanitizationConfig | undefined;
   version: string;
   model_settings: ModelSettings;
+  response_json_schema?: string;
+  parameters: string[];
+}
+
+export interface DriftProfileUri {
+  root_dir: string;
+  uri: string;
+  drift_type: DriftType;
 }
 
 export interface PromptCardMetadata {
   experimentcard_uid?: string;
   auditcard_uid?: string;
+  drift_profile_uri_map?: Record<string, DriftProfileUri>;
 }
 
 export interface PromptCard {

@@ -86,8 +86,12 @@ datacard = registry.load_card(uid="${card.uid}")
     </div>
   </div>
 
-  <div class="flex flex-wrap gap-1">
+  <div class="flex flex-wrap gap-2">
     <PromptModal prompt={card.prompt}/>
+
+    {#if card.prompt.response_json_schema}
+      <PromptModal prompt={card.prompt}/>
+    {/if}
   </div>
 
 
@@ -159,9 +163,23 @@ datacard = registry.load_card(uid="${card.uid}")
       {/each}
     </div>
   {/if}
-
   
+  {#if card.prompt.parameters}
+    <div class="flex flex-col space-y-1 gap-1">
+      <div class="flex flex-row items-center mb-1 border-b-2 border-black">
+        <Tags color="#8059b6" />
+        <header class="pl-2 text-primary-900 text-sm font-bold">Parameters</header>
+      </div>
+    </div>
 
-
+     <div class="flex flex-wrap gap-1">
+      {#each card.prompt.parameters as param}
+        <div class="inline-flex items-center overflow-hidden rounded-lg bg-primary-100 border border-primary-800 text-sm w-fit px-2 text-primary-900">
+          {param}
+        </div>
+      {/each}
+    </div>
+  {/if}
+  
 
 </div>

@@ -25,12 +25,6 @@
 
     let registry_name = registry.toLowerCase();
 
-    // if registry_name == "prompt" change to genai
-    // this is only temporary until we start having both agent and prompt registries
-    if (registry_name === "prompt") {
-      registry_name = "genai";
-    }
-
     // navigate to the card page
     goto(`/opsml/${registry_name}/card/home?space=${space}&name=${name}&version=${version}`);
   }
