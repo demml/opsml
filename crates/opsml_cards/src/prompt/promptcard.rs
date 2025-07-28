@@ -69,7 +69,6 @@ pub struct PromptCard {
     #[pyo3(get)]
     pub opsml_version: String,
 
-    #[pyo3(get)]
     pub drift_profile: DriftProfileMap,
 }
 
@@ -119,6 +118,28 @@ impl PromptCard {
             opsml_version: opsml_version::version(),
             drift_profile: profiles,
         })
+    }
+
+    #[getter]
+    pub fn drift_profile<'py>(
+        &self,
+        py: Python<'py>,
+    ) -> Result<Bound<'py, DriftProfileMap>, CardError> {
+        let pyob = Py::new(py, self.drift_profile.clone())?;
+        let bound = pyob.bind(py).clone();
+        Ok(bound)
+    }
+
+    #[setter]
+    pub fn set_drift_profile(
+        &mut self,
+        drift_profile: Bound<'_, DriftProfileMap>,
+    ) -> Result<(), CardError> {
+        self.drift_profile = drift_profile.extract().inspect_err(|e| {
+            error!("Failed to extract drift profile: {e}");
+        })?;
+
+        Ok(())
     }
 
     #[getter]
@@ -211,7 +232,7 @@ impl PromptCard {
     /// * `workflow` - Optional workflow to associate with the drift profile
     ///
     #[pyo3(signature = (alias, config, metrics, workflow=None))]
-    pub fn create_drift_profile<'py>(
+    pub fn create_drift_profile(
         &mut self,
         py: Python<'_>,
         alias: String,
@@ -286,7 +307,11 @@ impl PromptCard {
             .ok_or(CardError::DriftProfileNotFoundError)?;
 
         for (alias, drift_profile_uri) in map {
+            debug!(filepath = ?drift_profile_uri.uri, tmp_path = ?path, "Loading drift profile for alias: {}", alias);
+
             let filepath = path.join(&drift_profile_uri.uri);
+
+            debug!("Drift profile file path: {:?}", filepath);
 
             // load file to json string
             let file = std::fs::read_to_string(&filepath)?;

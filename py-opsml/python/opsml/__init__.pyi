@@ -24,6 +24,9 @@ from .data import TorchData as TorchData
 from .experiment import get_experiment_metrics as get_experiment_metrics
 from .experiment import get_experiment_parameters as get_experiment_parameters
 from .experiment import start_experiment as start_experiment
+from .llm import Message as Message
+from .llm import ModelSettings as ModelSettings
+from .llm import Prompt as Prompt
 from .logging import LoggingConfig as LoggingConfig
 from .logging import LogLevel as LogLevel
 from .logging import RustyLogger as RustyLogger
@@ -47,7 +50,4 @@ from .model import TaskType as TaskType
 from .model import TensorFlowModel as TensorFlowModel
 from .model import TorchModel as TorchModel
 from .model import XGBoostModel as XGBoostModel
-from .potato_head import Message as Message
-from .potato_head import ModelSettings as ModelSettings
-from .potato_head import Prompt as Prompt
 from .types import VersionType as VersionType

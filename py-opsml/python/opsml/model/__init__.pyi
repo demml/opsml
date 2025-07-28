@@ -15,7 +15,7 @@ from ..scouter.drift import (
 )
 from ..types import DriftProfileUri
 
-DriftProfileType = Dict[str, Union[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile,]]
+DriftProfileType = Dict[str, Union[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile]]
 
 class ProcessorType:
     Preprocessor: "ProcessorType"
@@ -346,6 +346,13 @@ class DriftProfileMap:
 
     def __getitem__(self, key: str) -> Any:
         """Returns the drift profile at the given key"""
+
+    def is_empty(self) -> bool:
+        """Returns whether the drift profile map is empty
+
+        Returns:
+            True if the drift profile map is empty, False otherwise
+        """
 
 # Define interface save and metadata arguments
 class ModelInterfaceSaveMetadata:
