@@ -571,10 +571,7 @@ impl Serialize for DriftProfileMap {
     where
         S: Serializer,
     {
-        let mut state = serializer.serialize_struct("DriftProfileMap", 1)?;
-
-        // set the profiles field to null
-        state.serialize_field("profiles", &Value::Null)?;
+        let state = serializer.serialize_struct("DriftProfileMap", 0)?;
         state.end()
     }
 }

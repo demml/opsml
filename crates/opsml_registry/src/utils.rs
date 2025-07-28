@@ -282,13 +282,12 @@ pub fn download_card<'py>(
             {
                 let rpath = orig_rpath.join(SaveName::Drift);
 
-                // add Card.json to tmp_path and rpath
                 let lpath = tmp_path.join(SaveName::Drift);
                 storage_client()?.get(&lpath, &rpath, true)?;
                 decrypt_directory(&lpath, &decryption_key)?;
 
                 prompt_card
-                    .load_drift_profile(py, &lpath)
+                    .load_drift_profile(py, &tmp_path)
                     .inspect_err(|e| {
                         error!("Failed to load drift profile: {e}");
                     })?;
