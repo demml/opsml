@@ -4,8 +4,11 @@ use opsml_utils::{json_to_pyobject, pyobject_to_json, PyHelperFuncs};
 use pyo3::prelude::*;
 use pyo3::types::{PyDict, PyList};
 use pyo3::IntoPyObjectExt;
-use serde::ser::SerializeStruct;
-use serde::{Deserialize, Serialize};
+use serde::{
+    de::{MapAccess, Visitor},
+    ser::SerializeStruct,
+    Deserialize, Deserializer, Serialize, Serializer,
+};
 use serde_json::json;
 use serde_json::Value;
 use std::collections::HashMap;
@@ -560,6 +563,46 @@ impl Clone for DriftProfileMap {
             }
             Self { profiles }
         })
+    }
+}
+
+impl Serialize for DriftProfileMap {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut state = serializer.serialize_struct("DriftProfileMap", 1)?;
+
+        // set the profiles field to null
+        state.serialize_field("profiles", &Value::Null)?;
+        state.end()
+    }
+}
+
+impl<'de> Deserialize<'de> for DriftProfileMap {
+    fn deserialize<D>(deserializer: D) -> Result<DriftProfileMap, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        struct DriftProfileMapVisitor;
+
+        impl<'de> Visitor<'de> for DriftProfileMapVisitor {
+            type Value = DriftProfileMap;
+
+            fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+                formatter.write_str("struct DriftProfileMap")
+            }
+
+            fn visit_map<A>(self, _map: A) -> Result<DriftProfileMap, A::Error>
+            where
+                A: MapAccess<'de>,
+            {
+                let profile = DriftProfileMap::default();
+                Ok(profile)
+            }
+        }
+
+        deserializer.deserialize_struct("DriftProfileMap", &["profiles"], DriftProfileMapVisitor)
     }
 }
 
