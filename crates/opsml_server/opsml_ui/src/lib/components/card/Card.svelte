@@ -25,7 +25,8 @@
   // function to navigate to the card page
   function navigateToCardPage() {
     // navigate to the card page
-    goto(`/opsml/${registry}/card/home?space=${space}&name=${name}&version=${version}`);
+    let registry_name = registry.toLowerCase();
+    goto(`/opsml/${registry_name}/card/home?space=${space}&name=${name}&version=${version}`);
   }
 
 
