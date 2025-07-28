@@ -248,9 +248,9 @@ pub fn download_card<'py>(
     let tmp_dir = TempDir::new()?;
 
     let tmp_path = tmp_dir.keep();
-    let rpath = PathBuf::from(&key.storage_key);
+    let orig_rpath = PathBuf::from(&key.storage_key);
 
-    let rpath = rpath.join(SaveName::Card).with_extension(Suffix::Json);
+    let rpath = orig_rpath.join(SaveName::Card).with_extension(Suffix::Json);
 
     // add Card.json to tmp_path and rpath
     let lpath = tmp_path.join(SaveName::Card).with_extension(Suffix::Json);
@@ -274,6 +274,25 @@ pub fn download_card<'py>(
                 interface.and_then(|i| i.extract::<HashMap<String, Bound<'py, PyAny>>>().ok());
 
             load_service_card(py, service, kwargs)?;
+        }
+
+        CardEnum::PromptCard(prompt_card) => {
+            // Load drift profile if exists
+            if let Some(_drift_profile_uri_map) = prompt_card.metadata.drift_profile_uri_map.clone()
+            {
+                let rpath = orig_rpath.join(SaveName::Drift);
+
+                // add Card.json to tmp_path and rpath
+                let lpath = tmp_path.join(SaveName::Drift);
+                storage_client()?.get(&lpath, &rpath, true)?;
+                decrypt_directory(&lpath, &decryption_key)?;
+
+                prompt_card
+                    .load_drift_profile(py, &lpath)
+                    .inspect_err(|e| {
+                        error!("Failed to load drift profile: {e}");
+                    })?;
+            }
         }
         _ => debug!("Card is not a service, skipping service loading"),
     }

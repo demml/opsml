@@ -452,7 +452,7 @@ impl ModelInterface {
     /// * `config` - Configuration for drift profile
     /// * `data_type` - Data type for drift profile
     ///
-    #[pyo3(signature = (alias, data, config=None, data_type=None, workflow=None))]
+    #[pyo3(signature = (alias, data, config=None, data_type=None))]
     pub fn create_drift_profile<'py>(
         &mut self,
         py: Python<'py>,
@@ -460,7 +460,6 @@ impl ModelInterface {
         data: &Bound<'py, PyAny>,
         config: Option<&Bound<'py, PyAny>>,
         data_type: Option<&DataType>,
-        workflow: Option<Bound<'py, PyAny>>,
     ) -> Result<Bound<'py, PyAny>, ModelInterfaceError> {
         debug!("Creating drift profile");
         let drifter = PyDrifter::new();
@@ -473,7 +472,7 @@ impl ModelInterface {
             _ => None,
         });
 
-        let profile = drifter.create_drift_profile(py, data, config, data_type, workflow)?;
+        let profile = drifter.create_drift_profile(py, data, config, data_type, None)?;
         self.drift_profile.add_profile(py, alias, profile.clone())?;
 
         Ok(profile)
