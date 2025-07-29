@@ -3,6 +3,7 @@ import { z } from "zod";
 import { type AlertDispatchConfig, type PsiThreshold } from "../types";
 import {
   isCustomConfig,
+  isLlmConfig,
   isPsiConfig,
   isSpcConfig,
   type DriftConfigType,
@@ -16,6 +17,11 @@ export const customConfigSchema = z.object({
   schedule: z.string().default("0 0 0 * * *"),
   sample: z.coerce.boolean().default(true),
   sample_size: z.coerce.number().default(25),
+});
+
+export const llmConfigSchema = z.object({
+  schedule: z.string().default("0 0 0 * * *"),
+  sample_rate: z.coerce.number().default(25),
 });
 
 export const psiConfigSchema = z.object({
@@ -68,6 +74,7 @@ export type SlackConfigSchema = z.infer<typeof slackSchema>;
 export type OpsGenieConfigSchema = z.infer<typeof opsGenieSchema>;
 export type ConsoleConfigSchema = z.infer<typeof consoleSchema>;
 export type CustomConfigSchema = z.infer<typeof customConfigSchema>;
+export type LlmConfigSchema = z.infer<typeof llmConfigSchema>;
 export type PsiConfigSchema = z.infer<typeof psiConfigSchema>;
 export type SpcConfigSchema = z.infer<typeof spcConfigSchema>;
 
@@ -75,6 +82,12 @@ export type CustomConfigParams = {
   schedule: string;
   sample: boolean;
   sample_size: number;
+  dispatch_config: AlertDispatchConfig;
+};
+
+export type LlmConfigParams = {
+  schedule: string;
+  sample_rate: number;
   dispatch_config: AlertDispatchConfig;
 };
 
@@ -97,7 +110,8 @@ export type SpcConfigParams = {
 export type ConfigParams =
   | CustomConfigParams
   | PsiConfigParams
-  | SpcConfigParams;
+  | SpcConfigParams
+  | LlmConfigParams;
 
 // Function to get appropriate params based on config type
 export function getConfigParams(config: DriftConfigType): ConfigParams {
@@ -106,6 +120,14 @@ export function getConfigParams(config: DriftConfigType): ConfigParams {
       schedule: config.alert_config.schedule,
       sample: config.sample,
       sample_size: config.sample_size,
+      dispatch_config: config.alert_config.dispatch_config,
+    };
+  }
+
+  if (isLlmConfig(config)) {
+    return {
+      schedule: config.alert_config.schedule,
+      sample_rate: config.sample_rate,
       dispatch_config: config.alert_config.dispatch_config,
     };
   }
@@ -269,6 +291,51 @@ export function validateCustomConfig(
         schedule: "Unexpected validation error",
         sample: "Unexpected validation error",
         sample_size: "Unexpected validation error",
+      },
+    };
+  }
+}
+
+export function validateLlmConfig(
+  schedule: string,
+  sample_rate: number
+): ValidationResult<LlmConfigSchema> {
+  try {
+    const validData = z
+      .object({
+        schedule: z.string().default("0 0 0 * * *"),
+        sample_rate: z.coerce.number().default(25),
+      })
+      .parse({
+        schedule,
+        sample_rate: Number(sample_rate),
+      });
+
+    return {
+      success: true,
+      data: validData,
+    };
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      const errors = error.errors.reduce<Record<keyof LlmConfigSchema, string>>(
+        (acc, curr) => {
+          const path = curr.path[0] as keyof LlmConfigSchema;
+          acc[path] = curr.message;
+          return acc;
+        },
+        {} as Record<keyof LlmConfigSchema, string>
+      );
+
+      return {
+        success: false,
+        errors,
+      };
+    }
+    return {
+      success: false,
+      errors: {
+        schedule: "Unexpected validation error",
+        sample_rate: "Unexpected validation error",
       },
     };
   }

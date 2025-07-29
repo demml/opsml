@@ -15,13 +15,18 @@ import {
   getCurrentMetricData,
 } from "$lib/components/card/monitoring/util";
 import { getDriftAlerts } from "$lib/components/card/monitoring/alert/utils";
+import { getLLMRecordPage } from "$lib/components/card/monitoring/util";
+import type { ServiceInfo } from "$lib/components/card/monitoring/types";
+import { mockLLMDriftPageResponse } from "$lib/components/card/monitoring/example";
+import { RegistryType } from "$lib/utils";
 
 export const load: PageLoad = async ({ parent }) => {
   const { metadata, registry, registryPath } = await parent();
 
   let profiles = await getDriftProfiles(
     metadata.uid,
-    metadata.metadata.drift_profile_uri_map ?? {}
+    metadata.metadata.drift_profile_uri_map ?? {},
+    registry
   );
 
   // get all keys which should be of DriftType
@@ -66,6 +71,14 @@ export const load: PageLoad = async ({ parent }) => {
     true
   );
 
+  let service_info: ServiceInfo = {
+    space: currentConfig.space,
+    name: currentConfig.name,
+    version: currentConfig.version,
+  };
+  //let currentLLMRecords = getLLMRecordPage(service_info, undefined, undefined);
+  let currentLLMRecordPage = mockLLMDriftPageResponse;
+
   return {
     profiles,
     keys,
@@ -78,5 +91,6 @@ export const load: PageLoad = async ({ parent }) => {
     currentMetricData,
     maxDataPoints,
     currentAlerts,
+    currentLLMRecordPage,
   };
 };

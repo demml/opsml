@@ -1,3 +1,4 @@
+import type { RegistryType } from "$lib/utils";
 import { string } from "zod";
 
 export enum AlertDispatchType {
@@ -185,6 +186,7 @@ export interface UpdateProfileRequest {
   uid: string;
   profile_uri: string;
   request: ProfileRequest;
+  registry_type: RegistryType;
 }
 
 export type UpdateResponse = {
@@ -220,7 +222,19 @@ export interface LLMDriftServerRecord {
   processing_ended_at?: string; // ISO datetime string
 }
 
+export interface ServiceInfo {
+  space: string;
+  name: string;
+  version: string;
+}
+
 export interface LLMPageRequest {
+  service_info: ServiceInfo;
+  status?: Status;
+  pagination: LLMPaginationRequest;
+}
+
+export interface LLMPaginationRequest {
   limit: number;
   cursor?: PaginationCursor;
 }

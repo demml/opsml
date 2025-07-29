@@ -2,9 +2,11 @@ import type {
   BinnedMetrics,
   BinnedPsiFeatureMetrics,
   BinnedSpcFeatureMetrics,
-  Status,
   LLMDriftServerRecord,
+  LLMPageResponse,
+  PaginationCursor,
 } from "./types";
+import { Status } from "./types";
 import type { Alert } from "$lib/components/monitoring/alert/types";
 
 const sampleCustomMetrics: BinnedMetrics = {
@@ -101,8 +103,8 @@ const sampleCustomMetrics: BinnedMetrics = {
 
 const sampleLLMMetrics: BinnedMetrics = {
   metrics: {
-    relevance: {
-      metric: "relevance",
+    reformulation_quality: {
+      metric: "reformulation_quality",
       created_at: [
         "2025-03-25 00:43:59",
         "2025-03-26 10:00:00",
@@ -381,3 +383,12 @@ export const mockLLMDriftServerRecords: LLMDriftServerRecord[] = Array.from(
     processing_ended_at: i % 4 === 0 ? randomDate(29 - i) : undefined,
   })
 );
+
+let paginationCursor: PaginationCursor = {
+  id: mockLLMDriftServerRecords.length,
+};
+export const mockLLMDriftPageResponse: LLMPageResponse = {
+  items: mockLLMDriftServerRecords,
+  next_cursor: paginationCursor,
+  has_more: true,
+};

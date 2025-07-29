@@ -2,11 +2,11 @@
 <script lang="ts">
   import { Modal } from '@skeletonlabs/skeleton-svelte';
   import { z } from 'zod';
-  import { validateSlack,validateCustomConfig, validateOpsGenie, getConfigParams, validatePsiConfig, validateSpcConfig, validateConsole  } from './schema';
-  import type {SpcConfigParams, PsiConfigParams, ConfigParams, CustomConfigParams, ConsoleConfigSchema} from './schema';
+  import { validateSlack,validateCustomConfig, validateOpsGenie, getConfigParams, validatePsiConfig, validateSpcConfig, validateConsole, validateLlmConfig  } from './schema';
+  import type {SpcConfigParams, PsiConfigParams, ConfigParams, CustomConfigParams, ConsoleConfigSchema, LlmConfigParams} from './schema';
   import type {SlackConfigSchema, OpsGenieConfigSchema, CustomConfigSchema, PsiConfigSchema} from './schema';
   import type { DriftConfigType, DriftProfile, UiProfile } from '../util';
-  import { isSpcConfig, isCustomConfig, isPsiConfig, updateDriftProfile, extractProfile } from '../util';
+  import { isSpcConfig, isCustomConfig, isPsiConfig, updateDriftProfile, extractProfile, isLlmConfig } from '../util';
   import { DriftType, getPsiThresholdKeyValue } from '../types';
   import CustomFields from './CustomFields.svelte';
   import SpcFields from './SpcFields.svelte';
@@ -19,6 +19,9 @@
   import type { SlackDispatchConfig,  OpsGenieDispatchConfig, ConsoleDispatchConfig} from '../types';
   import { hasSlackConfig, hasOpsGenieConfig } from '../types';
   import { type UpdateProfileRequest } from '../types';
+  import LLMFields from './LLMFields.svelte';
+  import type { Registry } from 'chart.js';
+  import type { RegistryType } from '$lib/utils';
 
 
   function getDispatchType(): string {
@@ -38,11 +41,13 @@
       driftType= $bindable(),
       profile= $bindable(),
       uid,
+      registry,
     } = $props<{
       config: DriftConfigType;
       driftType: DriftType;
       profile: UiProfile;
       uid: string;
+      registry: RegistryType;
     }>();
 
   // props
@@ -55,6 +60,7 @@
   let customErrors = $state<Partial<Record<keyof CustomConfigSchema, string>>>({});
   let psiErrors = $state<Partial<Record<keyof PsiConfigSchema, string>>>({});
   let spcErrors = $state<Partial<Record<keyof SpcConfigParams, string>>>({});
+  let llmErrors = $state<Partial<Record<keyof LlmConfigParams, string>>>({});
 
   // config state
   let configParams = $state(getConfigParams(config));
@@ -130,6 +136,22 @@
 
       if (!validated.success) {
         customErrors = validated.errors ?? {};
+        return false;
+      }
+      return true;
+    }
+
+    case DriftType.LLM: {
+       if (!isLlmConfig(config)) return false;
+
+        const llmParams = configParams as LlmConfigParams;
+        const validated = validateLlmConfig(
+          llmParams.schedule,
+          llmParams.sample_rate
+        );
+
+      if (!validated.success) {
+        llmErrors = validated.errors ?? {};
         return false;
       }
       return true;
@@ -211,6 +233,7 @@ function validateDispatchForm(): boolean {
     let request: UpdateProfileRequest = {
       uid: uid,
       profile_uri: profile.profile_uri,
+      registry_type: registry,
       request: {
         space: matchedProfile.config.space,
         profile: JSON.stringify(matchedProfile),
@@ -294,6 +317,12 @@ function validateDispatchForm(): boolean {
           <CustomFields 
             params={configParams as CustomConfigParams} 
             errors={customErrors} 
+            updateCallback={updateParamCallback}
+            />
+        {:else if driftType === DriftType.LLM}
+          <LLMFields
+            params={configParams as LlmConfigParams} 
+            errors={llmErrors} 
             updateCallback={updateParamCallback}
             />
         {/if}

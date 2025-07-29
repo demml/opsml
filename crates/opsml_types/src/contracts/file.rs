@@ -303,6 +303,7 @@ pub struct RawFileRequest {
 pub struct DriftProfileRequest {
     pub uid: String,
     pub drift_profile_uri_map: HashMap<String, DriftProfileUri>,
+    pub registry_type: RegistryType,
 }
 
 /// Response to get a file from the registry

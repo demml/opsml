@@ -29,6 +29,8 @@
   let currentMaxDataPoints: number = $state(data.maxDataPoints);
   let currentConfig: DriftConfigType = $state(data.currentConfig);
   let currentAlerts: Alert[] = $state(data.currentAlerts);
+  let currentLLMRecordPage = $state(data.currentLLMRecordPage);
+  let registry = $state(data.registry);
   let uid: string = $state(data.metadata.uid);
 
   // Vars
@@ -61,6 +63,7 @@
   const debouncedCheckScreenSize = debounce(checkScreenSize, 400);
 
   onMount(() => {
+    console.log('Monitoring page mounted');
     window.addEventListener('resize', debouncedCheckScreenSize);
   });
 
@@ -157,6 +160,7 @@
             {handleNameChange}
             {handleTimeChange}
             {uid}
+            {registry}
       /> 
     </div>
 

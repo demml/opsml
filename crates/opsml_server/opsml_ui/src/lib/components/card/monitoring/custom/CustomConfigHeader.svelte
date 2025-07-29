@@ -4,17 +4,21 @@
   import Pill from "$lib/components/utils/Pill.svelte";
   import UpdateModal from "../update/UpdateModal.svelte";
   import type { UiProfile } from "../util";
+  import type { Registry } from "chart.js";
+  import type { RegistryType } from "$lib/utils";
   // props
   let { 
     config,
     alertConfig,
     profile,
     uid, 
+    registry,
   } = $props<{
     config: CustomMetricDriftConfig;
     alertConfig: CustomMetricAlertConfig;
     profile: UiProfile;
     uid: string;
+    registry: RegistryType;
   }>();
 
   
@@ -54,6 +58,7 @@
       driftType={config.drift_type}
       profile={profile}
       uid={uid}
+      registry={registry}
       />
 
   </div>

@@ -1,6 +1,6 @@
 export const ssr = false;
 
-import { getMaxDataPoints } from "$lib/utils";
+import { getMaxDataPoints, RegistryType } from "$lib/utils";
 import type { PageLoad } from "./$types";
 import {
   getDriftProfiles,
@@ -22,7 +22,8 @@ export const load: PageLoad = async ({ parent }) => {
   let profiles = await getDriftProfiles(
     metadata.uid,
     metadata.metadata.interface_metadata.save_metadata.drift_profile_uri_map ??
-      {}
+      {},
+    RegistryType.Model
   );
 
   // get all keys which should be of DriftType
