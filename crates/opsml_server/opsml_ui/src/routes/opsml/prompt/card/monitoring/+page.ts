@@ -24,8 +24,7 @@ export const load: PageLoad = async ({ parent }) => {
 
   let profiles = await getDriftProfiles(
     metadata.uid,
-    metadata.metadata.interface_metadata.save_metadata.drift_profile_uri_map ??
-      {}
+    metadata.metadata.drift_profile_uri_map ?? {}
   );
 
   // get all keys which should be of DriftType

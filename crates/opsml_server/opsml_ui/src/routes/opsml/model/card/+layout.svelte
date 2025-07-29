@@ -55,7 +55,8 @@
           <span>Files</span>
         </button>
 
-        {#if uiSettingsStore.scouterEnabled && data.metadata.metadata.interface_metadata.save_metadata.drift_profile_uri_map}
+        <!--uiSettingsStore.scouterEnabled &&   -->
+        {#if data.metadata.metadata.interface_metadata.save_metadata.drift_profile_uri_map}
           <button class="flex items-center gap-x-2 border-b-3 {data.activeTab === 'monitoring' ? 'border-secondary-500' : 'border-transparent'} hover:border-secondary-500 hover:border-b-3" onclick={() => navigateTab('monitoring')}>
             <Activity color="#8059b6"/>
             <span>Monitoring</span>

@@ -4,7 +4,7 @@
   import 'chartjs-adapter-date-fns';
   import { DriftType } from '$lib/components/card/model/monitoring/types';
   import 'chartjs-adapter-date-fns';
-  import type { MetricData, SpcDriftFeature, BinnedPsiMetric, BinnedCustomMetric, BinnedCustomMetricStats  } from '$lib/components/card/model/monitoring/types';
+  import type { MetricData, SpcDriftFeature, BinnedPsiMetric, BinnedMetric, BinnedMetricStats  } from '$lib/components/card/model/monitoring/types';
   import Pill from '$lib/components/utils/Pill.svelte';
   import { TimeInterval } from '$lib/components/card/model/monitoring/types';
   import { type DriftConfigType } from './util';
@@ -46,8 +46,8 @@
     case DriftType.Psi:
       return [...(metricData as BinnedPsiMetric).psi];
     case DriftType.Custom:
-      return [...(metricData as BinnedCustomMetric).stats.map(
-        (stat: BinnedCustomMetricStats) => stat.avg
+      return [...(metricData as BinnedMetric).stats.map(
+        (stat: BinnedMetricStats) => stat.avg
       )];
     default:
       return [];

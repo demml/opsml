@@ -19,6 +19,7 @@ export async function getDriftAlerts(
   timeInterval: TimeInterval,
   active: boolean
 ): Promise<Alert[]> {
+  return [];
   let alertRequest: DriftAlertRequest = {
     space: space,
     name: name,
