@@ -15,6 +15,12 @@ import {
   type MetricData,
   type UpdateProfileRequest,
   type UpdateResponse,
+  type LLMPageRequest,
+  type LLMPageResponse,
+  type PaginationCursor,
+  type ServiceInfo,
+  type LLMPaginationRequest,
+  Status,
 } from "./types";
 import { RegistryType } from "$lib/utils";
 import {
@@ -22,9 +28,10 @@ import {
   sampleSpcMetrics,
   sampleCustomMetrics,
   sampleLLMMetrics,
+  mockLLMDriftServerRecords,
 } from "./example";
 import { userStore } from "$lib/components/user/user.svelte";
-import type { LLMDriftProfile } from "./llm/llm";
+import type { LLMDriftConfig, LLMDriftProfile } from "./llm/llm";
 import type { DriftProfileUri } from "../card_interfaces/promptcard";
 
 export type DriftProfile = {
@@ -42,7 +49,8 @@ export interface UiProfile {
 export type DriftConfigType =
   | CustomMetricDriftConfig
   | PsiDriftConfig
-  | SpcDriftConfig;
+  | SpcDriftConfig
+  | LLMDriftConfig;
 
 export type DriftProfileResponse = {
   [DriftType: string]: UiProfile;
@@ -50,11 +58,13 @@ export type DriftProfileResponse = {
 
 export async function getDriftProfiles(
   uid: string,
-  driftMap: Record<string, DriftProfileUri>
+  driftMap: Record<string, DriftProfileUri>,
+  registryType: RegistryType
 ): Promise<DriftProfileResponse> {
   const body = {
     uid: uid,
     drift_profile_uri_map: driftMap,
+    registry_type: registryType,
   };
 
   const response = await opsmlClient.post(
@@ -73,7 +83,7 @@ export function getProfileFeatures(
     drift_type === DriftType.Custom
       ? Object.keys(profile.Custom.metrics)
       : drift_type === DriftType.LLM
-      ? Object.keys(profile.LLM.metrics) // Assuming LLM uses Custom metrics
+      ? profile.LLM.metric_names
       : drift_type === DriftType.Psi
       ? profile.Psi.config.alert_config.features_to_monitor
       : profile.Spc.config.alert_config.features_to_monitor;
@@ -99,6 +109,8 @@ export function getProfileConfig(
   const variables =
     drift_type === DriftType.Custom
       ? profile.Custom.config
+      : drift_type === DriftType.LLM
+      ? profile.LLM.config
       : drift_type === DriftType.Psi
       ? profile.Psi.config
       : profile.Spc.config;
@@ -136,6 +148,8 @@ export async function getLatestMetrics(
             return RoutePaths.PSI_DRIFT;
           case DriftType.Spc:
             return RoutePaths.SPC_DRIFT;
+          case DriftType.LLM:
+            return RoutePaths.LLM_DRIFT;
           default:
             throw new Error(`Unsupported drift type: ${driftType}`);
         }
@@ -156,6 +170,30 @@ export async function getLatestMetrics(
   await Promise.all(requests);
 
   return driftMap;
+}
+
+export async function getLLMRecordPage(
+  service_info: ServiceInfo,
+  status?: Status,
+  cursor?: PaginationCursor
+): Promise<LLMPageResponse> {
+  let pagination: LLMPaginationRequest = {
+    cursor,
+    limit: 30,
+  };
+
+  const request: LLMPageRequest = {
+    service_info,
+    status,
+    pagination,
+  };
+
+  const response = await opsmlClient.get(
+    RoutePaths.LLM_RECORD_PAGE,
+    request,
+    userStore.jwt_token
+  );
+  return (await response.json()) as LLMPageResponse;
 }
 
 // this is used for mocking
@@ -202,6 +240,10 @@ export function isCustomConfig(
   config: DriftConfigType
 ): config is CustomMetricDriftConfig {
   return config.drift_type === DriftType.Custom;
+}
+
+export function isLlmConfig(config: DriftConfigType): config is LLMDriftConfig {
+  return config.drift_type === DriftType.LLM;
 }
 
 export function isPsiConfig(config: DriftConfigType): config is PsiDriftConfig {

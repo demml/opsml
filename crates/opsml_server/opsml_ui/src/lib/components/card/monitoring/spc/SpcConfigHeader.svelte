@@ -4,6 +4,7 @@
   import Pill from "$lib/components/utils/Pill.svelte";
   import UpdateModal from "../update/UpdateModal.svelte";
   import type { UiProfile } from "../util";
+  import type { RegistryType } from "$lib/utils";
 ;
 
   // props
@@ -12,11 +13,13 @@
     alertConfig,
     profile,
     uid,
+    registry,
   } = $props<{
     config: SpcDriftConfig;
     alertConfig: SpcAlertConfig;
     profile: UiProfile;
     uid: string;
+    registry: RegistryType;
   }>();
 
   
@@ -52,6 +55,7 @@
   </div>
   <div class="flex flex-row justify-start gap-2">
     <UpdateModal 
+      registry={registry}
       config={config} 
       driftType={config.drift_type}
       profile={profile}

@@ -34,8 +34,8 @@ export interface CustomMetricAlertCondition {
 }
 
 export interface AlertConditionInfo {
-  threshold: AlertThreshold;
-  value?: number;
+  alert_threshold: AlertThreshold;
+  alert_threshold_value?: number;
 }
 export function getCustomAlertCondition(
   config: CustomMetricDriftConfig,
@@ -51,7 +51,7 @@ export function getCustomAlertCondition(
   }
 
   return {
-    threshold: condition.alert_threshold,
-    value: condition.alert_threshold_value,
+    alert_threshold: condition.alert_threshold,
+    alert_threshold_value: condition.alert_threshold_value,
   };
 }

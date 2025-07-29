@@ -16,8 +16,9 @@ use opsml_types::{
     RegistryType,
 };
 use semver::Version;
+use sqlx::ConnectOptions;
 use sqlx::{
-    postgres::{PgPoolOptions, PgRow, Postgres},
+    postgres::{PgConnectOptions, PgPoolOptions, PgRow, Postgres},
     FromRow, Pool, Row,
 };
 use tracing::info;
@@ -74,9 +75,13 @@ pub struct PostgresClient {
 #[async_trait]
 impl SqlClient for PostgresClient {
     async fn new(settings: &DatabaseSettings) -> Result<Self, SqlError> {
+        let mut opts: PgConnectOptions = settings.connection_uri.parse()?;
+
+        opts = opts.log_statements(tracing::log::LevelFilter::Off);
+
         let pool = PgPoolOptions::new()
             .max_connections(settings.max_connections)
-            .connect(&settings.connection_uri)
+            .connect_with(opts)
             .await
             .map_err(SqlError::ConnectionError)?;
 

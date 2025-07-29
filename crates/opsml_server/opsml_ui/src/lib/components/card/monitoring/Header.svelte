@@ -8,6 +8,8 @@
   import CustomConfigHeader from "./custom/CustomConfigHeader.svelte";
   import PsiConfigHeader from "./psi/PsiConfigHeader.svelte";
   import SpcConfigHeader from "./spc/SpcConfigHeader.svelte";
+  import LLMConfigHeader from "./llm/LLMConfigHeader.svelte";
+  import type { RegistryType } from "$lib/utils";
 
 
   // props
@@ -23,6 +25,7 @@
     handleNameChange,
     handleTimeChange,
     uid,
+    registry,
   } = $props<{
     availableDriftTypes: DriftType[];
     currentDriftType: DriftType;
@@ -35,6 +38,7 @@
     handleNameChange: (name: string) => void;
     handleTimeChange: (timeInterval: TimeInterval) => void;
     uid: string;
+    registry: RegistryType;
   }>();
 
   let timeIntervals = Object.values(TimeInterval);
@@ -102,7 +106,7 @@
         <Dropdown 
           bind:selectedValue={currentName}
           bind:values={currentNames}
-          width='w-[9rem]'
+          width='w-[10rem] overflow-x-auto'
           py="py-1"
         />
       </div>
@@ -116,6 +120,16 @@
         alertConfig={currentConfig.alert_config}
         profile={currentProfile}
         {uid}
+        {registry}
+      />
+
+    {:else if currentDriftType === DriftType.LLM}
+      <LLMConfigHeader
+        config={currentConfig} 
+        alertConfig={currentConfig.alert_config}
+        profile={currentProfile}
+        {uid}
+        {registry}
       />
 
     {:else if currentDriftType === DriftType.Psi}
@@ -123,7 +137,8 @@
         config={currentConfig} 
         alertConfig={currentConfig.alert_config}
         profile={currentProfile}
-         {uid}
+        {uid}
+        {registry}
       />
 
     {:else if currentDriftType === DriftType.Spc}
@@ -131,7 +146,8 @@
         config={currentConfig} 
         alertConfig={currentConfig.alert_config}
         profile={currentProfile}
-         {uid}
+        {uid}
+        {registry}
       />
     {/if}
   </div>

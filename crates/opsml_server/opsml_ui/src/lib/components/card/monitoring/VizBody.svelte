@@ -9,7 +9,9 @@
   import { TimeInterval } from '$lib/components/card/monitoring/types';
   import { type DriftConfigType } from './util';
   import CustomAlertPill from '$lib/components/card/monitoring/custom/CustomAlertPill.svelte';
+  import LLMAlertPill from '$lib/components/card/monitoring/llm/LLMAlertPill.svelte';
   import { getCustomAlertCondition, type CustomMetricDriftConfig } from './custom/custom';
+  import { getLLMAlertCondition, type LLMDriftConfig } from './llm/llm';
   import { type DriftProfile } from './util';
 
   let { 
@@ -49,6 +51,10 @@
       return [...(metricData as BinnedMetric).stats.map(
         (stat: BinnedMetricStats) => stat.avg
       )];
+    case DriftType.LLM:
+      return [...(metricData as BinnedMetric).stats.map(
+        (stat: BinnedMetricStats) => stat.avg
+      )];
     default:
       return [];
   }
@@ -58,6 +64,17 @@ function getBaselineValue(): number | undefined {
   // get custom value
   if (currentConfig && currentDriftType === DriftType.Custom) {
       return (currentProfile as DriftProfile).Custom.metrics[currentName];
+  }
+
+  // get llm value
+  if (currentDriftType === DriftType.LLM) {
+    const llmProfile = (currentProfile as DriftProfile).LLM;
+    // search for the metric in the llm profile
+    const metric = llmProfile.metrics.find(m => m.name === currentName);
+    if (metric) {
+      return metric.value;
+    }
+    return undefined;
   }
 
   // get psi threshold
@@ -96,6 +113,15 @@ function getBaselineValue(): number | undefined {
         {@const metricValue = (currentProfile as DriftProfile).Custom.metrics[currentName]}
         {#if alertInfo}
           <CustomAlertPill 
+            value={metricValue}
+            alertInfo={alertInfo}
+           />
+        {/if}
+      {:else if currentDriftType === DriftType.LLM}
+        {@const alertInfo = getLLMAlertCondition(currentConfig as LLMDriftConfig, currentName)}
+        {@const metricValue = (currentProfile as DriftProfile).LLM.metrics.find(m => m.name === currentName)?.value || 0}
+        {#if alertInfo}
+          <LLMAlertPill 
             value={metricValue}
             alertInfo={alertInfo}
            />

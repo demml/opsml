@@ -1,6 +1,6 @@
 
 <script lang="ts">
-    import { type AlertConditionInfo } from './custom';
+    import { type LLMMetricAlertCondition } from './llm';
     import Pill from '$lib/components/utils/Pill.svelte';
   
     let { 
@@ -8,7 +8,7 @@
       alertInfo
     } = $props<{
       value: number,
-      alertInfo: AlertConditionInfo
+      alertInfo: LLMMetricAlertCondition
     }>();
   
   </script>

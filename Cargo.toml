@@ -88,7 +88,7 @@ rust-embed = "8.*"
 reqwest-middleware = "0.*"
 rusty-logging = "0.*"
 potato-head = { git = "https://github.com/demml/potatohead.git", branch = "main" }
-scouter-client = { git = "https://github.com/demml/scouter.git", branch = "main" }
+scouter-client = { git = "https://github.com/demml/scouter.git", branch = "ofeat/opsml-llm-integration" }
 sha2 = "0.*"
 semver = "1.*"
 serde = { version = "1.*", features = ["derive"] }
