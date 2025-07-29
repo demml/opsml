@@ -2,6 +2,7 @@
     import { Modal } from '@skeletonlabs/skeleton-svelte';
     import Highlight, { LineNumbers } from "svelte-highlight";
     import json from "svelte-highlight/languages/json";
+    import "$lib/styles/hljs.css";
   
     let { code } = $props<{code: string; }>();
     let openState = $state(false);
