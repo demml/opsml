@@ -1,0 +1,43 @@
+.hljs {
+  background: #f2f1f6;
+  color: #2e3440;
+  font-family: Menlo, Monaco, "Liberation Mono", "Consolas", monospace;
+  font-size: 1em;
+  line-height: 1.5;
+  padding: 1em;
+  border-radius: 8px;
+  overflow-x: auto;
+}
+
+.hljs-attr,
+.hljs-keyword,
+.hljs-property,
+.hljs-variable {
+  color: #4b3978;
+  font-weight: bold;
+}
+
+.hljs-string,
+.hljs-number,
+.hljs-literal,
+.hljs-bool,
+.hljs-null,
+.hljs-attribute,
+.hljs-title,
+.hljs-symbol {
+  color: #04a27a;
+}
+
+.hljs-comment {
+  color: #888888;
+  font-style: italic;
+}
+
+.hljs-function,
+.hljs-title.function_ {
+  color: #4b3978;
+}
+
+.hljs-punctuation {
+  color: #2e3440;
+}
