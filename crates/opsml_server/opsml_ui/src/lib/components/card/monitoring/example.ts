@@ -2,6 +2,8 @@ import type {
   BinnedMetrics,
   BinnedPsiFeatureMetrics,
   BinnedSpcFeatureMetrics,
+  Status,
+  LLMDriftServerRecord,
 } from "./types";
 import type { Alert } from "$lib/components/monitoring/alert/types";
 
@@ -344,3 +346,38 @@ export const sampleAlerts: Alert[] = [
     status: "active",
   },
 ];
+
+function randomStatus(): Status {
+  const statuses = [
+    Status.Pending,
+    Status.Processing,
+    Status.Processed,
+    Status.Failed,
+  ];
+  return statuses[Math.floor(Math.random() * statuses.length)];
+}
+
+function randomDate(offsetDays: number = 0): string {
+  const date = new Date();
+  date.setDate(date.getDate() - offsetDays);
+  return date.toISOString();
+}
+
+export const mockLLMDriftServerRecords: LLMDriftServerRecord[] = Array.from(
+  { length: 30 },
+  (_, i) => ({
+    created_at: randomDate(30 - i),
+    space: `space_${(i % 5) + 1}`,
+    name: `card_${(i % 10) + 1}`,
+    version: `v${(i % 3) + 1}.0.${i}`,
+    prompt: i % 2 === 0 ? `Prompt for card_${(i % 10) + 1}` : undefined,
+    context: `Context for card_${(i % 10) + 1}`,
+    status: randomStatus(),
+    id: i + 1,
+    uid: `uid_${i + 1}`,
+    score: (Math.random() * 100).toFixed(2),
+    updated_at: randomDate(29 - i),
+    processing_started_at: i % 3 === 0 ? randomDate(30 - i) : undefined,
+    processing_ended_at: i % 4 === 0 ? randomDate(29 - i) : undefined,
+  })
+);

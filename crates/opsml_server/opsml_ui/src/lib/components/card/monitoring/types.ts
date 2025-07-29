@@ -191,3 +191,42 @@ export type UpdateResponse = {
   uid: string;
   status: string;
 };
+
+export interface PaginationCursor {
+  id: number;
+}
+
+export enum Status {
+  All = "All",
+  Pending = "pending",
+  Processing = "processing",
+  Processed = "processed",
+  Failed = "failed",
+}
+
+export interface LLMDriftServerRecord {
+  created_at: string; // ISO datetime string
+  space: string;
+  name: string;
+  version: string;
+  prompt?: string;
+  context: string;
+  status: Status;
+  id: number;
+  uid: string;
+  score: string;
+  updated_at: string; // ISO datetime string
+  processing_started_at?: string; // ISO datetime string
+  processing_ended_at?: string; // ISO datetime string
+}
+
+export interface LLMPageRequest {
+  limit: number;
+  cursor?: PaginationCursor;
+}
+
+export interface LLMPageResponse {
+  items: LLMDriftServerRecord[];
+  next_cursor?: PaginationCursor;
+  has_more: boolean;
+}

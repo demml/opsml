@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { type AlertDispatchConfig } from '$lib/components/card/model/monitoring/types';
+  import { type AlertDispatchConfig } from '$lib/components/card/monitoring/types';
   import { type OpsGenieConfigSchema,  } from '../schema';
   
 
