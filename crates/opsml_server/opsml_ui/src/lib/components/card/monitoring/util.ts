@@ -25,7 +25,7 @@ import {
 } from "./example";
 import { userStore } from "$lib/components/user/user.svelte";
 import type { LLMDriftProfile } from "./llm/llm";
-import type { DriftProfileUri } from "../../card_interfaces/promptcard";
+import type { DriftProfileUri } from "../card_interfaces/promptcard";
 
 export type DriftProfile = {
   Spc: SpcDriftProfile;

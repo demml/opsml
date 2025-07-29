@@ -1,5 +1,5 @@
 import type { RegistryType } from "$lib/utils";
-import type { DriftType } from "../model/monitoring/types";
+import type { DriftType } from "../monitoring/types";
 import type { FeatureSchema } from "./datacard";
 
 // Enums

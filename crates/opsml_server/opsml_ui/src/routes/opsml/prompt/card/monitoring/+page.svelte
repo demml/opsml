@@ -1,18 +1,18 @@
 <script lang="ts">
-  import type { BinnedDriftMap, MetricData  } from '$lib/components/card/model/monitoring/types';
-  import { DriftType } from '$lib/components/card/model/monitoring/types';
-  import type { DriftProfile, DriftProfileResponse, UiProfile } from '$lib/components/card/model/monitoring/util';
+  import type { BinnedDriftMap, MetricData  } from '$lib/components/card/monitoring/types';
+  import { DriftType } from '$lib/components/card/monitoring/types';
+  import type { DriftProfile, DriftProfileResponse, UiProfile } from '$lib/components/card/monitoring/util';
   import type { PageProps } from './$types';
-  import { TimeInterval } from '$lib/components/card/model/monitoring/types';
-  import VizBody from '$lib/components/card/model/monitoring/VizBody.svelte';
-  import Header from '$lib/components/card/model/monitoring/Header.svelte';
+  import { TimeInterval } from '$lib/components/card/monitoring/types';
+  import VizBody from '$lib/components/card/monitoring/VizBody.svelte';
+  import Header from '$lib/components/card/monitoring/Header.svelte';
   import { getMaxDataPoints, debounce } from '$lib/utils';
-  import { getLatestMetrics, getCurrentMetricData } from '$lib/components/card/model/monitoring/util';
+  import { getLatestMetrics, getCurrentMetricData } from '$lib/components/card/monitoring/util';
   import { onMount, onDestroy } from 'svelte';
-  import { getProfileFeatures, getProfileConfig, type DriftConfigType } from '$lib/components/card/model/monitoring/util';
-  import type { Alert } from '$lib/components/card/model/monitoring/alert/types';
-  import { getDriftAlerts, acknowledgeAlert } from '$lib/components/card/model/monitoring/alert/utils';
-  import AlertTable from '$lib/components/card/model/monitoring/alert/AlertTable.svelte';
+  import { getProfileFeatures, getProfileConfig, type DriftConfigType } from '$lib/components/card/monitoring/util';
+  import type { Alert } from '$lib/components/card/monitoring/alert/types';
+  import { getDriftAlerts, acknowledgeAlert } from '$lib/components/card/monitoring/alert/utils';
+  import AlertTable from '$lib/components/card/monitoring/alert/AlertTable.svelte';
 
  
   let { data }: PageProps = $props();

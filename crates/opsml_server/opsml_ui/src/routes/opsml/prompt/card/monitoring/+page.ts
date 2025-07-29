@@ -7,17 +7,14 @@ import {
   getProfileConfig,
   getProfileFeatures,
   type UiProfile,
-} from "$lib/components/card/model/monitoring/util";
-import {
-  DriftType,
-  TimeInterval,
-} from "$lib/components/card/model/monitoring/types";
+} from "$lib/components/card/monitoring/util";
+import { DriftType, TimeInterval } from "$lib/components/card/monitoring/types";
 import {
   getLatestMetricsExample,
   getLatestMetrics,
   getCurrentMetricData,
-} from "$lib/components/card/model/monitoring/util";
-import { getDriftAlerts } from "$lib/components/card/model/monitoring/alert/utils";
+} from "$lib/components/card/monitoring/util";
+import { getDriftAlerts } from "$lib/components/card/monitoring/alert/utils";
 
 export const load: PageLoad = async ({ parent }) => {
   const { metadata, registry, registryPath } = await parent();

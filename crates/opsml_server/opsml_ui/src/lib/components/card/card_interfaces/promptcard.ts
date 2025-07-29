@@ -1,5 +1,5 @@
 import { RegistryType } from "$lib/utils";
-import type { DriftType } from "../model/monitoring/types";
+import type { DriftType } from "../monitoring/types";
 type PromptContent =
   | { Str: string }
   | { Audio: AudioUrl }

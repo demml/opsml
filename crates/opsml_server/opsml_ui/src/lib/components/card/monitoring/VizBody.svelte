@@ -2,13 +2,13 @@
 <script lang="ts">
   import TimeSeries from '$lib/components/viz/TimeSeries.svelte';
   import 'chartjs-adapter-date-fns';
-  import { DriftType } from '$lib/components/card/model/monitoring/types';
+  import { DriftType } from '$lib/components/card/monitoring/types';
   import 'chartjs-adapter-date-fns';
-  import type { MetricData, SpcDriftFeature, BinnedPsiMetric, BinnedMetric, BinnedMetricStats  } from '$lib/components/card/model/monitoring/types';
+  import type { MetricData, SpcDriftFeature, BinnedPsiMetric, BinnedMetric, BinnedMetricStats  } from '$lib/components/card/monitoring/types';
   import Pill from '$lib/components/utils/Pill.svelte';
-  import { TimeInterval } from '$lib/components/card/model/monitoring/types';
+  import { TimeInterval } from '$lib/components/card/monitoring/types';
   import { type DriftConfigType } from './util';
-  import CustomAlertPill from '$lib/components/card/model/monitoring/custom/CustomAlertPill.svelte';
+  import CustomAlertPill from '$lib/components/card/monitoring/custom/CustomAlertPill.svelte';
   import { getCustomAlertCondition, type CustomMetricDriftConfig } from './custom/custom';
   import { type DriftProfile } from './util';
 

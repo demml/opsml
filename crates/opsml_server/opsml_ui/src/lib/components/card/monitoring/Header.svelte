@@ -2,7 +2,7 @@
   import { DriftType } from "./types";
   import { type DriftConfigType, type DriftProfile, type DriftProfileResponse, type UiProfile } from "./util";
   import { Clock } from 'lucide-svelte';
-  import { TimeInterval } from '$lib/components/card/model/monitoring/types';
+  import { TimeInterval } from '$lib/components/card/monitoring/types';
   import Dropdown from '$lib/components/utils/Dropdown.svelte';
   import { KeySquare } from 'lucide-svelte';
   import CustomConfigHeader from "./custom/CustomConfigHeader.svelte";
