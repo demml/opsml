@@ -10,6 +10,7 @@ export enum DriftType {
   Spc = "Spc",
   Psi = "Psi",
   Custom = "Custom",
+  LLM = "LLM",
 }
 
 export interface FeatureMap {
@@ -132,20 +133,20 @@ export interface BinnedPsiFeatureMetrics {
   features: { [key: string]: BinnedPsiMetric }; // Map of feature name to BinnedPsiMetric
 }
 
-export interface BinnedCustomMetricStats {
+export interface BinnedMetricStats {
   avg: number;
   lower_bound: number;
   upper_bound: number;
 }
 
-export interface BinnedCustomMetric {
+export interface BinnedMetric {
   metric: string;
   created_at: string[]; // Array of ISO datetime strings
-  stats: BinnedCustomMetricStats[];
+  stats: BinnedMetricStats[];
 }
 
-export interface BinnedCustomMetrics {
-  metrics: { [key: string]: BinnedCustomMetric };
+export interface BinnedMetrics {
+  metrics: { [key: string]: BinnedMetric };
 }
 
 export interface DriftRequest {
@@ -162,7 +163,8 @@ export interface DriftRequest {
 export type DriftMetrics = {
   [DriftType.Spc]: BinnedSpcFeatureMetrics;
   [DriftType.Psi]: BinnedPsiFeatureMetrics;
-  [DriftType.Custom]: BinnedCustomMetrics;
+  [DriftType.Custom]: BinnedMetrics;
+  [DriftType.LLM]: BinnedMetrics;
 };
 
 export interface BinnedDriftMap extends Partial<DriftMetrics> {}
@@ -170,7 +172,7 @@ export interface BinnedDriftMap extends Partial<DriftMetrics> {}
 export type MetricData =
   | SpcDriftFeature
   | BinnedPsiMetric
-  | BinnedCustomMetric
+  | BinnedMetric
   | null;
 
 export interface ProfileRequest {

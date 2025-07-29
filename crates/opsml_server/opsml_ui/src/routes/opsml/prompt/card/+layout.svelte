@@ -1,7 +1,7 @@
 <script lang="ts">
     import type { LayoutProps } from './$types';
     import { getRegistryTypeLowerCase } from '$lib/utils';
-    import { IdCard, FolderTree, Tag} from 'lucide-svelte';
+    import { IdCard, FolderTree, Tag, Activity} from 'lucide-svelte';
     import { goto } from '$app/navigation';
   
   
@@ -43,6 +43,14 @@
             <IdCard color="#8059b6"/>
             <span>Card</span>
           </button>
+
+          {#if data.metadata.metadata.drift_profile_uri_map}
+            <button class="flex items-center gap-x-2 border-b-3 {data.activeTab === 'monitoring' ? 'border-secondary-500' : 'border-transparent'} hover:border-secondary-500 hover:border-b-3" onclick={() => navigateTab('monitoring')}>
+              <Activity color="#8059b6"/>
+              <span>Monitoring</span>
+            </button>
+          {/if}
+
           <button class="flex items-center gap-x-2 border-b-3 {data.activeTab === 'files' ? 'border-secondary-500' : 'border-transparent'} hover:border-secondary-500 hover:border-b-3" onclick={() => navigateTab('files')}>
             <FolderTree color="#8059b6"/>
             <span>Files</span>

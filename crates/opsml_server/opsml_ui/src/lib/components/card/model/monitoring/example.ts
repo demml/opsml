@@ -1,11 +1,11 @@
 import type {
-  BinnedCustomMetrics,
+  BinnedMetrics,
   BinnedPsiFeatureMetrics,
   BinnedSpcFeatureMetrics,
 } from "./types";
 import type { Alert } from "$lib/components/monitoring/alert/types";
 
-const sampleCustomMetrics: BinnedCustomMetrics = {
+const sampleCustomMetrics: BinnedMetrics = {
   metrics: {
     custom: {
       metric: "custom",
@@ -97,6 +97,73 @@ const sampleCustomMetrics: BinnedCustomMetrics = {
   },
 };
 
+const sampleLLMMetrics: BinnedMetrics = {
+  metrics: {
+    relevance: {
+      metric: "relevance",
+      created_at: [
+        "2025-03-25 00:43:59",
+        "2025-03-26 10:00:00",
+        "2025-03-27 11:00:00",
+        "2025-03-28 12:00:00",
+        "2025-03-29 12:00:00",
+      ],
+      stats: [
+        {
+          avg: 0.95,
+          lower_bound: 0.92,
+          upper_bound: 0.98,
+        },
+        {
+          avg: 0.94,
+          lower_bound: 0.91,
+          upper_bound: 0.97,
+        },
+        {
+          avg: 0.96,
+          lower_bound: 0.93,
+          upper_bound: 0.99,
+        },
+        {
+          avg: 0.9,
+          lower_bound: 0.93,
+          upper_bound: 0.99,
+        },
+        {
+          avg: 0.4,
+          lower_bound: 0.93,
+          upper_bound: 0.99,
+        },
+      ],
+    },
+    coherence: {
+      metric: "coherence",
+      created_at: [
+        "2024-03-26T10:00:00",
+        "2024-03-26T11:00:00",
+        "2024-03-26T12:00:00",
+      ],
+      stats: [
+        {
+          avg: 0.88,
+          lower_bound: 0.85,
+          upper_bound: 0.91,
+        },
+        {
+          avg: 0.87,
+          lower_bound: 0.84,
+          upper_bound: 0.9,
+        },
+        {
+          avg: 0.89,
+          lower_bound: 0.86,
+          upper_bound: 0.92,
+        },
+      ],
+    },
+  },
+};
+
 const sampleSpcMetrics: BinnedSpcFeatureMetrics = {
   features: {
     col_0: {
@@ -168,7 +235,12 @@ const samplePsiMetrics: BinnedPsiFeatureMetrics = {
   },
 };
 
-export { sampleSpcMetrics, samplePsiMetrics, sampleCustomMetrics };
+export {
+  sampleSpcMetrics,
+  samplePsiMetrics,
+  sampleCustomMetrics,
+  sampleLLMMetrics,
+};
 
 export const sampleAlerts: Alert[] = [
   {

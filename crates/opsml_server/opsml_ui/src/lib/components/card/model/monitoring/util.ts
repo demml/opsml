@@ -21,13 +21,17 @@ import {
   samplePsiMetrics,
   sampleSpcMetrics,
   sampleCustomMetrics,
+  sampleLLMMetrics,
 } from "./example";
 import { userStore } from "$lib/components/user/user.svelte";
+import type { LLMDriftProfile } from "./llm/llm";
+import type { DriftProfileUri } from "../../card_interfaces/promptcard";
 
 export type DriftProfile = {
   Spc: SpcDriftProfile;
   Psi: PsiDriftProfile;
   Custom: CustomDriftProfile;
+  LLM: LLMDriftProfile;
 };
 
 export interface UiProfile {
@@ -45,14 +49,12 @@ export type DriftProfileResponse = {
 };
 
 export async function getDriftProfiles(
-  metadata: ModelCard
+  uid: string,
+  driftMap: Record<string, DriftProfileUri>
 ): Promise<DriftProfileResponse> {
-  let driftUriMap =
-    metadata.metadata.interface_metadata.save_metadata.drift_profile_uri_map;
-
   const body = {
-    uid: metadata.uid,
-    drift_profile_uri_map: driftUriMap,
+    uid: uid,
+    drift_profile_uri_map: driftMap,
   };
 
   const response = await opsmlClient.post(
@@ -70,6 +72,8 @@ export function getProfileFeatures(
   const variables: string[] =
     drift_type === DriftType.Custom
       ? Object.keys(profile.Custom.metrics)
+      : drift_type === DriftType.LLM
+      ? Object.keys(profile.LLM.metrics) // Assuming LLM uses Custom metrics
       : drift_type === DriftType.Psi
       ? profile.Psi.config.alert_config.features_to_monitor
       : profile.Spc.config.alert_config.features_to_monitor;
@@ -164,6 +168,7 @@ export async function getLatestMetricsExample(
     [DriftType.Spc]: sampleSpcMetrics,
     [DriftType.Psi]: samplePsiMetrics,
     [DriftType.Custom]: sampleCustomMetrics,
+    [DriftType.LLM]: sampleLLMMetrics,
   };
 }
 
@@ -185,6 +190,8 @@ export function getCurrentMetricData(
       return latestMetrics[DriftType.Custom]?.metrics[
         currentName
       ] as MetricData;
+    case DriftType.LLM:
+      return latestMetrics[DriftType.LLM]?.metrics[currentName] as MetricData;
     default:
       return null;
   }
