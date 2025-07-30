@@ -233,7 +233,7 @@ name = "authlib"
 version = "1.6.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "cryptography", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
+    { name = "cryptography", marker = "python_full_version >= '3.12'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/8e/a1/d8d1c6f8bc922c0b87ae0d933a8ed57be1bef6970894ed79c2852a153cd3/authlib-1.6.1.tar.gz", hash = "sha256:4dffdbb1460ba6ec8c17981a4c67af7d8af131231b5a36a88a1e8c80c111cdfd", size = 159988, upload-time = "2025-07-20T07:38:42.834Z" }
 wheels = [
@@ -380,7 +380,7 @@ name = "cffi"
 version = "1.17.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "pycparser", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
+    { name = "pycparser", marker = "python_full_version >= '3.12'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/fc/97/c783634659c2920c3fc70419e3af40972dbaf758daa229a7d6ea6135c90d/cffi-1.17.1.tar.gz", hash = "sha256:1c39c6016c32bc48dd54561950ebd6836e1670f2ae46128f67cf49e789c52824", size = 516621, upload-time = "2024-09-04T20:45:21.852Z" }
 wheels = [
@@ -697,7 +697,7 @@ name = "cryptography"
 version = "45.0.5"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "cffi", marker = "(python_full_version != '3.11.*' and platform_python_implementation != 'PyPy' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and platform_python_implementation != 'PyPy' and sys_platform == 'linux') or (platform_python_implementation != 'PyPy' and sys_platform != 'darwin' and sys_platform != 'linux')" },
+    { name = "cffi", marker = "python_full_version >= '3.12' and platform_python_implementation != 'PyPy'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/95/1e/49527ac611af559665f71cbb8f92b332b5ec9c6fbc4e88b0f8e92f5e85df/cryptography-45.0.5.tar.gz", hash = "sha256:72e76caa004ab63accdf26023fccd1d087f6d90ec6048ff33ad0445abf7f605a", size = 744903, upload-time = "2025-07-02T13:06:25.941Z" }
 wheels = [
@@ -1095,64 +1095,37 @@ wheels = [
 
 [[package]]
 name = "google-adk"
-version = "0.0.1"
-source = { registry = "https://pypi.org/simple" }
-resolution-markers = [
-    "python_full_version == '3.11.*' and sys_platform == 'linux'",
-    "python_full_version == '3.11.*' and sys_platform == 'darwin'",
-]
-sdist = { url = "https://files.pythonhosted.org/packages/0b/2c/0865745f3c532a9f8cfcfdd8fd7db9288e8ba8f3ca64722938f95b2d26ca/google_adk-0.0.1.tar.gz", hash = "sha256:df43f5d9e91066bf3e8dbee49efb56acca177da3cb170e1f793cb55eaadc56f9", size = 5343, upload-time = "2025-03-17T17:49:29.932Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/15/0d/9b971b144200bc3905abd520249275d2ccca627d63de2001f8a7308ab253/google_adk-0.0.1-py3-none-any.whl", hash = "sha256:3901e48732413d02fdba0a0cd02d965325253fc19166f181049daf93f473f225", size = 5521, upload-time = "2025-03-17T17:49:28.521Z" },
-]
-
-[[package]]
-name = "google-adk"
 version = "1.8.0"
 source = { registry = "https://pypi.org/simple" }
-resolution-markers = [
-    "(python_full_version >= '3.13' and sys_platform == 'darwin') or (python_full_version >= '3.13' and sys_platform == 'linux')",
-    "(python_full_version == '3.12.*' and sys_platform == 'darwin') or (python_full_version == '3.12.*' and sys_platform == 'linux')",
-    "python_full_version < '3.11' and sys_platform == 'linux'",
-    "python_full_version >= '3.13' and sys_platform == 'win32'",
-    "python_full_version == '3.12.*' and sys_platform == 'win32'",
-    "python_full_version == '3.11.*' and sys_platform == 'win32'",
-    "python_full_version < '3.11' and sys_platform == 'win32'",
-    "python_full_version < '3.11' and sys_platform == 'darwin'",
-    "python_full_version >= '3.13' and sys_platform != 'darwin' and sys_platform != 'linux' and sys_platform != 'win32'",
-    "python_full_version == '3.12.*' and sys_platform != 'darwin' and sys_platform != 'linux' and sys_platform != 'win32'",
-    "python_full_version == '3.11.*' and sys_platform != 'darwin' and sys_platform != 'linux' and sys_platform != 'win32'",
-    "python_full_version < '3.11' and sys_platform != 'darwin' and sys_platform != 'linux' and sys_platform != 'win32'",
-]
 dependencies = [
-    { name = "anyio", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "authlib", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "click", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "fastapi", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "google-api-python-client", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "google-cloud-aiplatform", extra = ["agent-engines"], marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "google-cloud-secret-manager", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "google-cloud-speech", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "google-cloud-storage", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "google-genai", version = "1.27.0", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "graphviz", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "mcp", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "opentelemetry-api", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "opentelemetry-exporter-gcp-trace", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "opentelemetry-sdk", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "pydantic", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "python-dateutil", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "python-dotenv", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "pyyaml", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "requests", version = "2.32.4", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "sqlalchemy", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "starlette", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "tenacity", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "typing-extensions", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "tzlocal", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "uvicorn", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "watchdog", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "websockets", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
+    { name = "anyio", marker = "python_full_version >= '3.12'" },
+    { name = "authlib", marker = "python_full_version >= '3.12'" },
+    { name = "click", marker = "python_full_version >= '3.12'" },
+    { name = "fastapi", marker = "python_full_version >= '3.12'" },
+    { name = "google-api-python-client", marker = "python_full_version >= '3.12'" },
+    { name = "google-cloud-aiplatform", extra = ["agent-engines"], marker = "python_full_version >= '3.12'" },
+    { name = "google-cloud-secret-manager", marker = "python_full_version >= '3.12'" },
+    { name = "google-cloud-speech", marker = "python_full_version >= '3.12'" },
+    { name = "google-cloud-storage", marker = "python_full_version >= '3.12'" },
+    { name = "google-genai", version = "1.27.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
+    { name = "graphviz", marker = "python_full_version >= '3.12'" },
+    { name = "mcp", marker = "python_full_version >= '3.12'" },
+    { name = "opentelemetry-api", marker = "python_full_version >= '3.12'" },
+    { name = "opentelemetry-exporter-gcp-trace", marker = "python_full_version >= '3.12'" },
+    { name = "opentelemetry-sdk", marker = "python_full_version >= '3.12'" },
+    { name = "pydantic", marker = "python_full_version >= '3.12'" },
+    { name = "python-dateutil", marker = "python_full_version >= '3.12'" },
+    { name = "python-dotenv", marker = "python_full_version >= '3.12'" },
+    { name = "pyyaml", marker = "python_full_version >= '3.12'" },
+    { name = "requests", version = "2.32.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
+    { name = "sqlalchemy", marker = "python_full_version >= '3.12'" },
+    { name = "starlette", marker = "python_full_version >= '3.12'" },
+    { name = "tenacity", marker = "python_full_version >= '3.12'" },
+    { name = "typing-extensions", marker = "python_full_version >= '3.12'" },
+    { name = "tzlocal", marker = "python_full_version >= '3.12'" },
+    { name = "uvicorn", marker = "python_full_version >= '3.12'" },
+    { name = "watchdog", marker = "python_full_version >= '3.12'" },
+    { name = "websockets", marker = "python_full_version >= '3.12'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/61/38/022e05381b21517b6e14a346bed57e6a24ccdf2a8c2d5a2d911d3769c2fd/google_adk-1.8.0.tar.gz", hash = "sha256:5b214361cf356e807c421f75dcaee00be0c9619e7c7e41444883cc8d21f6aee8", size = 1575436, upload-time = "2025-07-23T22:22:29.477Z" }
 wheels = [
@@ -1164,12 +1137,11 @@ name = "google-api-core"
 version = "2.25.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "google-auth", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "googleapis-common-protos", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "proto-plus", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "protobuf", version = "3.20.3", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version < '3.11' and sys_platform == 'darwin') or (python_full_version < '3.11' and sys_platform == 'linux')" },
-    { name = "protobuf", version = "6.31.1", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.12' and sys_platform == 'darwin') or (python_full_version >= '3.12' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "requests", version = "2.32.4", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
+    { name = "google-auth", marker = "python_full_version >= '3.12'" },
+    { name = "googleapis-common-protos", marker = "python_full_version >= '3.12'" },
+    { name = "proto-plus", marker = "python_full_version >= '3.12'" },
+    { name = "protobuf", version = "6.31.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
+    { name = "requests", version = "2.32.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/dc/21/e9d043e88222317afdbdb567165fdbc3b0aad90064c7e0c9eb0ad9955ad8/google_api_core-2.25.1.tar.gz", hash = "sha256:d2aaa0b13c78c61cb3f4282c464c046e45fbd75755683c9c525e6e8f7ed0a5e8", size = 165443, upload-time = "2025-06-12T20:52:20.439Z" }
 wheels = [
@@ -1178,9 +1150,8 @@ wheels = [
 
 [package.optional-dependencies]
 grpc = [
-    { name = "grpcio", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "grpcio-status", version = "1.48.2", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version < '3.11' and sys_platform == 'darwin') or (python_full_version < '3.11' and sys_platform == 'linux')" },
-    { name = "grpcio-status", version = "1.72.1", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.12' and sys_platform == 'darwin') or (python_full_version >= '3.12' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
+    { name = "grpcio", marker = "python_full_version >= '3.12'" },
+    { name = "grpcio-status", marker = "python_full_version >= '3.12'" },
 ]
 
 [[package]]
@@ -1188,11 +1159,11 @@ name = "google-api-python-client"
 version = "2.177.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "google-api-core", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "google-auth", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "google-auth-httplib2", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "httplib2", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "uritemplate", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
+    { name = "google-api-core", marker = "python_full_version >= '3.12'" },
+    { name = "google-auth", marker = "python_full_version >= '3.12'" },
+    { name = "google-auth-httplib2", marker = "python_full_version >= '3.12'" },
+    { name = "httplib2", marker = "python_full_version >= '3.12'" },
+    { name = "uritemplate", marker = "python_full_version >= '3.12'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/7a/75/a89cad519fa8910132e3b08571d0e682ae1163643da6f963f1930f3dc788/google_api_python_client-2.177.0.tar.gz", hash = "sha256:9ffd2b57d68f5afa7e6ac64e2c440534eaa056cbb394812a62ff94723c31b50e", size = 13184405, upload-time = "2025-07-23T16:22:46.321Z" }
 wheels = [
@@ -1218,8 +1189,8 @@ name = "google-auth-httplib2"
 version = "0.2.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "google-auth", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "httplib2", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
+    { name = "google-auth", marker = "python_full_version >= '3.12'" },
+    { name = "httplib2", marker = "python_full_version >= '3.12'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/56/be/217a598a818567b28e859ff087f347475c807a5649296fb5a817c58dacef/google-auth-httplib2-0.2.0.tar.gz", hash = "sha256:38aa7badf48f974f1eb9861794e9c0cb2a0511a4ec0679b1f886d108f5640e05", size = 10842, upload-time = "2023-12-12T17:40:30.722Z" }
 wheels = [
@@ -1231,20 +1202,19 @@ name = "google-cloud-aiplatform"
 version = "1.105.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "docstring-parser", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "google-api-core", extra = ["grpc"], marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "google-auth", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "google-cloud-bigquery", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "google-cloud-resource-manager", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "google-cloud-storage", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "google-genai", version = "1.27.0", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "packaging", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "proto-plus", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "protobuf", version = "3.20.3", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version < '3.11' and sys_platform == 'darwin') or (python_full_version < '3.11' and sys_platform == 'linux')" },
-    { name = "protobuf", version = "6.31.1", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.12' and sys_platform == 'darwin') or (python_full_version >= '3.12' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "pydantic", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "shapely", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "typing-extensions", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
+    { name = "docstring-parser", marker = "python_full_version >= '3.12'" },
+    { name = "google-api-core", extra = ["grpc"], marker = "python_full_version >= '3.12'" },
+    { name = "google-auth", marker = "python_full_version >= '3.12'" },
+    { name = "google-cloud-bigquery", marker = "python_full_version >= '3.12'" },
+    { name = "google-cloud-resource-manager", marker = "python_full_version >= '3.12'" },
+    { name = "google-cloud-storage", marker = "python_full_version >= '3.12'" },
+    { name = "google-genai", version = "1.27.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
+    { name = "packaging", marker = "python_full_version >= '3.12'" },
+    { name = "proto-plus", marker = "python_full_version >= '3.12'" },
+    { name = "protobuf", version = "6.31.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
+    { name = "pydantic", marker = "python_full_version >= '3.12'" },
+    { name = "shapely", marker = "python_full_version >= '3.12'" },
+    { name = "typing-extensions", marker = "python_full_version >= '3.12'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/02/8f/77b36b40370af26f3cf5a2bfd5eae57d63bcdaba869e796de2dc56549bc0/google_cloud_aiplatform-1.105.0.tar.gz", hash = "sha256:749c1230826198fa55d7c38774391f1fa57b9cd021a0e6ad1c788f8bca279555", size = 9474048, upload-time = "2025-07-23T16:25:56.816Z" }
 wheels = [
@@ -1253,14 +1223,14 @@ wheels = [
 
 [package.optional-dependencies]
 agent-engines = [
-    { name = "cloudpickle", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "google-cloud-logging", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "google-cloud-trace", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "opentelemetry-exporter-gcp-trace", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "opentelemetry-sdk", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "packaging", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "pydantic", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "typing-extensions", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
+    { name = "cloudpickle", marker = "python_full_version >= '3.12'" },
+    { name = "google-cloud-logging", marker = "python_full_version >= '3.12'" },
+    { name = "google-cloud-trace", marker = "python_full_version >= '3.12'" },
+    { name = "opentelemetry-exporter-gcp-trace", marker = "python_full_version >= '3.12'" },
+    { name = "opentelemetry-sdk", marker = "python_full_version >= '3.12'" },
+    { name = "packaging", marker = "python_full_version >= '3.12'" },
+    { name = "pydantic", marker = "python_full_version >= '3.12'" },
+    { name = "typing-extensions", marker = "python_full_version >= '3.12'" },
 ]
 
 [[package]]
@@ -1268,11 +1238,10 @@ name = "google-cloud-appengine-logging"
 version = "1.6.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "google-api-core", extra = ["grpc"], marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "google-auth", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "proto-plus", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "protobuf", version = "3.20.3", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version < '3.11' and sys_platform == 'darwin') or (python_full_version < '3.11' and sys_platform == 'linux')" },
-    { name = "protobuf", version = "6.31.1", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.12' and sys_platform == 'darwin') or (python_full_version >= '3.12' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
+    { name = "google-api-core", extra = ["grpc"], marker = "python_full_version >= '3.12'" },
+    { name = "google-auth", marker = "python_full_version >= '3.12'" },
+    { name = "proto-plus", marker = "python_full_version >= '3.12'" },
+    { name = "protobuf", version = "6.31.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/e7/ea/85da73d4f162b29d24ad591c4ce02688b44094ee5f3d6c0cc533c2b23b23/google_cloud_appengine_logging-1.6.2.tar.gz", hash = "sha256:4890928464c98da9eecc7bf4e0542eba2551512c0265462c10f3a3d2a6424b90", size = 16587, upload-time = "2025-06-11T22:38:53.525Z" }
 wheels = [
@@ -1284,9 +1253,8 @@ name = "google-cloud-audit-log"
 version = "0.3.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "googleapis-common-protos", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "protobuf", version = "3.20.3", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version < '3.11' and sys_platform == 'darwin') or (python_full_version < '3.11' and sys_platform == 'linux')" },
-    { name = "protobuf", version = "6.31.1", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.12' and sys_platform == 'darwin') or (python_full_version >= '3.12' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
+    { name = "googleapis-common-protos", marker = "python_full_version >= '3.12'" },
+    { name = "protobuf", version = "6.31.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/85/af/53b4ef636e492d136b3c217e52a07bee569430dda07b8e515d5f2b701b1e/google_cloud_audit_log-0.3.2.tar.gz", hash = "sha256:2598f1533a7d7cdd6c7bf448c12e5519c1d53162d78784e10bcdd1df67791bc3", size = 33377, upload-time = "2025-03-17T11:27:59.808Z" }
 wheels = [
@@ -1298,13 +1266,13 @@ name = "google-cloud-bigquery"
 version = "3.35.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "google-api-core", extra = ["grpc"], marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "google-auth", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "google-cloud-core", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "google-resumable-media", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "packaging", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "python-dateutil", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "requests", version = "2.32.4", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
+    { name = "google-api-core", extra = ["grpc"], marker = "python_full_version >= '3.12'" },
+    { name = "google-auth", marker = "python_full_version >= '3.12'" },
+    { name = "google-cloud-core", marker = "python_full_version >= '3.12'" },
+    { name = "google-resumable-media", marker = "python_full_version >= '3.12'" },
+    { name = "packaging", marker = "python_full_version >= '3.12'" },
+    { name = "python-dateutil", marker = "python_full_version >= '3.12'" },
+    { name = "requests", version = "2.32.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/44/e4/9cf03fa81fefd1b9811a7cd6e398804ae0de3b6a4edef810e2acd45cabbc/google_cloud_bigquery-3.35.1.tar.gz", hash = "sha256:599f26cacf190acfe88000f6cc5f4bc9e6baac7899e4f406ca054f1906f71960", size = 496433, upload-time = "2025-07-24T15:09:04.108Z" }
 wheels = [
@@ -1316,8 +1284,8 @@ name = "google-cloud-core"
 version = "2.4.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "google-api-core", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "google-auth", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
+    { name = "google-api-core", marker = "python_full_version >= '3.12'" },
+    { name = "google-auth", marker = "python_full_version >= '3.12'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/d6/b8/2b53838d2acd6ec6168fd284a990c76695e84c65deee79c9f3a4276f6b4f/google_cloud_core-2.4.3.tar.gz", hash = "sha256:1fab62d7102844b278fe6dead3af32408b1df3eb06f5c7e8634cbd40edc4da53", size = 35861, upload-time = "2025-03-10T21:05:38.948Z" }
 wheels = [
@@ -1329,16 +1297,15 @@ name = "google-cloud-logging"
 version = "3.12.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "google-api-core", extra = ["grpc"], marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "google-auth", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "google-cloud-appengine-logging", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "google-cloud-audit-log", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "google-cloud-core", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "grpc-google-iam-v1", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "opentelemetry-api", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "proto-plus", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "protobuf", version = "3.20.3", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version < '3.11' and sys_platform == 'darwin') or (python_full_version < '3.11' and sys_platform == 'linux')" },
-    { name = "protobuf", version = "6.31.1", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.12' and sys_platform == 'darwin') or (python_full_version >= '3.12' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
+    { name = "google-api-core", extra = ["grpc"], marker = "python_full_version >= '3.12'" },
+    { name = "google-auth", marker = "python_full_version >= '3.12'" },
+    { name = "google-cloud-appengine-logging", marker = "python_full_version >= '3.12'" },
+    { name = "google-cloud-audit-log", marker = "python_full_version >= '3.12'" },
+    { name = "google-cloud-core", marker = "python_full_version >= '3.12'" },
+    { name = "grpc-google-iam-v1", marker = "python_full_version >= '3.12'" },
+    { name = "opentelemetry-api", marker = "python_full_version >= '3.12'" },
+    { name = "proto-plus", marker = "python_full_version >= '3.12'" },
+    { name = "protobuf", version = "6.31.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/14/9c/d42ecc94f795a6545930e5f846a7ae59ff685ded8bc086648dd2bee31a1a/google_cloud_logging-3.12.1.tar.gz", hash = "sha256:36efc823985055b203904e83e1c8f9f999b3c64270bcda39d57386ca4effd678", size = 289569, upload-time = "2025-04-22T20:50:24.71Z" }
 wheels = [
@@ -1350,12 +1317,11 @@ name = "google-cloud-resource-manager"
 version = "1.14.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "google-api-core", extra = ["grpc"], marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "google-auth", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "grpc-google-iam-v1", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "proto-plus", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "protobuf", version = "3.20.3", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version < '3.11' and sys_platform == 'darwin') or (python_full_version < '3.11' and sys_platform == 'linux')" },
-    { name = "protobuf", version = "6.31.1", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.12' and sys_platform == 'darwin') or (python_full_version >= '3.12' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
+    { name = "google-api-core", extra = ["grpc"], marker = "python_full_version >= '3.12'" },
+    { name = "google-auth", marker = "python_full_version >= '3.12'" },
+    { name = "grpc-google-iam-v1", marker = "python_full_version >= '3.12'" },
+    { name = "proto-plus", marker = "python_full_version >= '3.12'" },
+    { name = "protobuf", version = "6.31.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/6e/ca/a4648f5038cb94af4b3942815942a03aa9398f9fb0bef55b3f1585b9940d/google_cloud_resource_manager-1.14.2.tar.gz", hash = "sha256:962e2d904c550d7bac48372607904ff7bb3277e3bb4a36d80cc9a37e28e6eb74", size = 446370, upload-time = "2025-03-17T11:35:56.343Z" }
 wheels = [
@@ -1367,12 +1333,11 @@ name = "google-cloud-secret-manager"
 version = "2.24.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "google-api-core", extra = ["grpc"], marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "google-auth", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "grpc-google-iam-v1", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "proto-plus", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "protobuf", version = "3.20.3", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version < '3.11' and sys_platform == 'darwin') or (python_full_version < '3.11' and sys_platform == 'linux')" },
-    { name = "protobuf", version = "6.31.1", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.12' and sys_platform == 'darwin') or (python_full_version >= '3.12' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
+    { name = "google-api-core", extra = ["grpc"], marker = "python_full_version >= '3.12'" },
+    { name = "google-auth", marker = "python_full_version >= '3.12'" },
+    { name = "grpc-google-iam-v1", marker = "python_full_version >= '3.12'" },
+    { name = "proto-plus", marker = "python_full_version >= '3.12'" },
+    { name = "protobuf", version = "6.31.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/58/7a/2fa6735ec693d822fe08a76709c4d95d9b5b4c02e83e720497355039d2ee/google_cloud_secret_manager-2.24.0.tar.gz", hash = "sha256:ce573d40ffc2fb7d01719243a94ee17aa243ea642a6ae6c337501e58fbf642b5", size = 269516, upload-time = "2025-06-05T22:22:22.965Z" }
 wheels = [
@@ -1384,11 +1349,10 @@ name = "google-cloud-speech"
 version = "2.33.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "google-api-core", extra = ["grpc"], marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "google-auth", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "proto-plus", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "protobuf", version = "3.20.3", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version < '3.11' and sys_platform == 'darwin') or (python_full_version < '3.11' and sys_platform == 'linux')" },
-    { name = "protobuf", version = "6.31.1", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.12' and sys_platform == 'darwin') or (python_full_version >= '3.12' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
+    { name = "google-api-core", extra = ["grpc"], marker = "python_full_version >= '3.12'" },
+    { name = "google-auth", marker = "python_full_version >= '3.12'" },
+    { name = "proto-plus", marker = "python_full_version >= '3.12'" },
+    { name = "protobuf", version = "6.31.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/9a/74/9c5a556f8af19cab461058aa15e1409e7afa453ca2383473a24a12801ef7/google_cloud_speech-2.33.0.tar.gz", hash = "sha256:fd08511b5124fdaa768d71a4054e84a5d8eb02531cb6f84f311c0387ea1314ed", size = 389072, upload-time = "2025-06-11T23:56:37.231Z" }
 wheels = [
@@ -1400,12 +1364,12 @@ name = "google-cloud-storage"
 version = "2.19.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "google-api-core", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "google-auth", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "google-cloud-core", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "google-crc32c", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "google-resumable-media", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "requests", version = "2.32.4", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
+    { name = "google-api-core", marker = "python_full_version >= '3.12'" },
+    { name = "google-auth", marker = "python_full_version >= '3.12'" },
+    { name = "google-cloud-core", marker = "python_full_version >= '3.12'" },
+    { name = "google-crc32c", marker = "python_full_version >= '3.12'" },
+    { name = "google-resumable-media", marker = "python_full_version >= '3.12'" },
+    { name = "requests", version = "2.32.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/36/76/4d965702e96bb67976e755bed9828fa50306dca003dbee08b67f41dd265e/google_cloud_storage-2.19.0.tar.gz", hash = "sha256:cd05e9e7191ba6cb68934d8eb76054d9be4562aa89dbc4236feee4d7d51342b2", size = 5535488, upload-time = "2024-12-05T01:35:06.49Z" }
 wheels = [
@@ -1417,11 +1381,10 @@ name = "google-cloud-trace"
 version = "1.16.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "google-api-core", extra = ["grpc"], marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "google-auth", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "proto-plus", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "protobuf", version = "3.20.3", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version < '3.11' and sys_platform == 'darwin') or (python_full_version < '3.11' and sys_platform == 'linux')" },
-    { name = "protobuf", version = "6.31.1", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.12' and sys_platform == 'darwin') or (python_full_version >= '3.12' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
+    { name = "google-api-core", extra = ["grpc"], marker = "python_full_version >= '3.12'" },
+    { name = "google-auth", marker = "python_full_version >= '3.12'" },
+    { name = "proto-plus", marker = "python_full_version >= '3.12'" },
+    { name = "protobuf", version = "6.31.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/c5/ea/0e42e2196fb2bc8c7b25f081a0b46b5053d160b34d5322e7eac2d5f7a742/google_cloud_trace-1.16.2.tar.gz", hash = "sha256:89bef223a512465951eb49335be6d60bee0396d576602dbf56368439d303cab4", size = 97826, upload-time = "2025-06-12T00:53:02.12Z" }
 wheels = [
@@ -1535,7 +1498,7 @@ name = "google-resumable-media"
 version = "2.7.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "google-crc32c", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
+    { name = "google-crc32c", marker = "python_full_version >= '3.12'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/58/5a/0efdc02665dca14e0837b62c8a1a93132c264bd02054a15abb2218afe0ae/google_resumable_media-2.7.2.tar.gz", hash = "sha256:5280aed4629f2b60b847b0d42f9857fd4935c11af266744df33d8074cae92fe0", size = 2163099, upload-time = "2024-08-07T22:20:38.555Z" }
 wheels = [
@@ -1547,8 +1510,7 @@ name = "googleapis-common-protos"
 version = "1.70.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "protobuf", version = "3.20.3", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version < '3.11' and sys_platform == 'darwin') or (python_full_version < '3.11' and sys_platform == 'linux')" },
-    { name = "protobuf", version = "6.31.1", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.12' and sys_platform == 'darwin') or (python_full_version >= '3.12' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
+    { name = "protobuf", version = "6.31.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/39/24/33db22342cf4a2ea27c9955e6713140fedd51e8b141b5ce5260897020f1a/googleapis_common_protos-1.70.0.tar.gz", hash = "sha256:0e1b44e0ea153e6594f9f394fef15193a68aaaea2d843f83e2742717ca753257", size = 145903, upload-time = "2025-04-14T10:17:02.924Z" }
 wheels = [
@@ -1557,7 +1519,7 @@ wheels = [
 
 [package.optional-dependencies]
 grpc = [
-    { name = "grpcio", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
+    { name = "grpcio", marker = "python_full_version >= '3.12'" },
 ]
 
 [[package]]
@@ -1654,10 +1616,9 @@ name = "grpc-google-iam-v1"
 version = "0.14.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "googleapis-common-protos", extra = ["grpc"], marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "grpcio", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "protobuf", version = "3.20.3", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version < '3.11' and sys_platform == 'darwin') or (python_full_version < '3.11' and sys_platform == 'linux')" },
-    { name = "protobuf", version = "6.31.1", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.12' and sys_platform == 'darwin') or (python_full_version >= '3.12' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
+    { name = "googleapis-common-protos", extra = ["grpc"], marker = "python_full_version >= '3.12'" },
+    { name = "grpcio", marker = "python_full_version >= '3.12'" },
+    { name = "protobuf", version = "6.31.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/b9/4e/8d0ca3b035e41fe0b3f31ebbb638356af720335e5a11154c330169b40777/grpc_google_iam_v1-0.14.2.tar.gz", hash = "sha256:b3e1fc387a1a329e41672197d0ace9de22c78dd7d215048c4c78712073f7bd20", size = 16259, upload-time = "2025-03-17T11:40:23.586Z" }
 wheels = [
@@ -1714,42 +1675,12 @@ wheels = [
 
 [[package]]
 name = "grpcio-status"
-version = "1.48.2"
-source = { registry = "https://pypi.org/simple" }
-resolution-markers = [
-    "python_full_version < '3.11' and sys_platform == 'linux'",
-    "python_full_version < '3.11' and sys_platform == 'darwin'",
-]
-dependencies = [
-    { name = "googleapis-common-protos", marker = "(python_full_version < '3.11' and sys_platform == 'darwin') or (python_full_version < '3.11' and sys_platform == 'linux')" },
-    { name = "grpcio", marker = "(python_full_version < '3.11' and sys_platform == 'darwin') or (python_full_version < '3.11' and sys_platform == 'linux')" },
-    { name = "protobuf", version = "3.20.3", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version < '3.11' and sys_platform == 'darwin') or (python_full_version < '3.11' and sys_platform == 'linux')" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/22/62/a86443ec8f7bf635fe0b48abe56cd699816bdc0b29d24e0bcb5cada42d4a/grpcio-status-1.48.2.tar.gz", hash = "sha256:53695f45da07437b7c344ee4ef60d370fd2850179f5a28bb26d8e2aa1102ec11", size = 13485, upload-time = "2022-09-22T02:50:32.913Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/14/32/754cd4474790239c7436a7a9490bc0c4a0a2ed604cb9a940151a3b1055b9/grpcio_status-1.48.2-py3-none-any.whl", hash = "sha256:2c33bbdbe20188b2953f46f31af669263b6ee2a9b2d38fa0d36ee091532e21bf", size = 14441, upload-time = "2022-09-22T02:47:51.828Z" },
-]
-
-[[package]]
-name = "grpcio-status"
 version = "1.72.1"
 source = { registry = "https://pypi.org/simple" }
-resolution-markers = [
-    "(python_full_version >= '3.13' and sys_platform == 'darwin') or (python_full_version >= '3.13' and sys_platform == 'linux')",
-    "(python_full_version == '3.12.*' and sys_platform == 'darwin') or (python_full_version == '3.12.*' and sys_platform == 'linux')",
-    "python_full_version >= '3.13' and sys_platform == 'win32'",
-    "python_full_version == '3.12.*' and sys_platform == 'win32'",
-    "python_full_version == '3.11.*' and sys_platform == 'win32'",
-    "python_full_version < '3.11' and sys_platform == 'win32'",
-    "python_full_version >= '3.13' and sys_platform != 'darwin' and sys_platform != 'linux' and sys_platform != 'win32'",
-    "python_full_version == '3.12.*' and sys_platform != 'darwin' and sys_platform != 'linux' and sys_platform != 'win32'",
-    "python_full_version == '3.11.*' and sys_platform != 'darwin' and sys_platform != 'linux' and sys_platform != 'win32'",
-    "python_full_version < '3.11' and sys_platform != 'darwin' and sys_platform != 'linux' and sys_platform != 'win32'",
-]
 dependencies = [
-    { name = "googleapis-common-protos", marker = "(python_full_version >= '3.12' and sys_platform == 'darwin') or (python_full_version >= '3.12' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "grpcio", marker = "(python_full_version >= '3.12' and sys_platform == 'darwin') or (python_full_version >= '3.12' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "protobuf", version = "6.31.1", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.12' and sys_platform == 'darwin') or (python_full_version >= '3.12' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
+    { name = "googleapis-common-protos", marker = "python_full_version >= '3.12'" },
+    { name = "grpcio", marker = "python_full_version >= '3.12'" },
+    { name = "protobuf", version = "6.31.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/50/b8/e563262a30065d3b52b61ca92c427fe2a1b04ba5dfca0415ae0df8ecdac8/grpcio_status-1.72.1.tar.gz", hash = "sha256:627111a87afa920eafb42cc6c50db209d263e07fa51fbb084981ef636566be7b", size = 13646, upload-time = "2025-06-02T10:14:23.666Z" }
 wheels = [
@@ -1825,7 +1756,7 @@ name = "httplib2"
 version = "0.22.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "pyparsing", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
+    { name = "pyparsing", marker = "python_full_version >= '3.12'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/3d/ad/2371116b22d616c194aa25ec410c9c6c37f23599dcd590502b74db197584/httplib2-0.22.0.tar.gz", hash = "sha256:d7a10bc5ef5ab08322488bde8c726eeee5c8618723fdb399597ec58f3d82df81", size = 351116, upload-time = "2023-03-21T22:29:37.214Z" }
 wheels = [
@@ -3178,10 +3109,10 @@ name = "opentelemetry-exporter-gcp-trace"
 version = "1.9.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "google-cloud-trace", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "opentelemetry-api", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "opentelemetry-resourcedetector-gcp", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "opentelemetry-sdk", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
+    { name = "google-cloud-trace", marker = "python_full_version >= '3.12'" },
+    { name = "opentelemetry-api", marker = "python_full_version >= '3.12'" },
+    { name = "opentelemetry-resourcedetector-gcp", marker = "python_full_version >= '3.12'" },
+    { name = "opentelemetry-sdk", marker = "python_full_version >= '3.12'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/c3/15/7556d54b01fb894497f69a98d57faa9caa45ffa59896e0bba6847a7f0d15/opentelemetry_exporter_gcp_trace-1.9.0.tar.gz", hash = "sha256:c3fc090342f6ee32a0cc41a5716a6bb716b4422d19facefcb22dc4c6b683ece8", size = 18568, upload-time = "2025-02-04T19:45:08.185Z" }
 wheels = [
@@ -3193,10 +3124,10 @@ name = "opentelemetry-resourcedetector-gcp"
 version = "1.9.0a0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "opentelemetry-api", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "opentelemetry-sdk", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "requests", version = "2.32.4", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "typing-extensions", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
+    { name = "opentelemetry-api", marker = "python_full_version >= '3.12'" },
+    { name = "opentelemetry-sdk", marker = "python_full_version >= '3.12'" },
+    { name = "requests", version = "2.32.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
+    { name = "typing-extensions", marker = "python_full_version >= '3.12'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/e1/86/f0693998817779802525a5bcc885a3cdb68d05b636bc6faae5c9ade4bee4/opentelemetry_resourcedetector_gcp-1.9.0a0.tar.gz", hash = "sha256:6860a6649d1e3b9b7b7f09f3918cc16b72aa0c0c590d2a72ea6e42b67c9a42e7", size = 20730, upload-time = "2025-02-04T19:45:10.693Z" }
 wheels = [
@@ -3208,9 +3139,9 @@ name = "opentelemetry-sdk"
 version = "1.33.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "opentelemetry-api", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "opentelemetry-semantic-conventions", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "typing-extensions", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
+    { name = "opentelemetry-api", marker = "python_full_version >= '3.12'" },
+    { name = "opentelemetry-semantic-conventions", marker = "python_full_version >= '3.12'" },
+    { name = "typing-extensions", marker = "python_full_version >= '3.12'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/67/12/909b98a7d9b110cce4b28d49b2e311797cffdce180371f35eba13a72dd00/opentelemetry_sdk-1.33.1.tar.gz", hash = "sha256:85b9fcf7c3d23506fbc9692fd210b8b025a1920535feec50bd54ce203d57a531", size = 161885, upload-time = "2025-05-16T18:52:52.832Z" }
 wheels = [
@@ -3222,8 +3153,8 @@ name = "opentelemetry-semantic-conventions"
 version = "0.54b1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "deprecated", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "opentelemetry-api", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
+    { name = "deprecated", marker = "python_full_version >= '3.12'" },
+    { name = "opentelemetry-api", marker = "python_full_version >= '3.12'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/5b/2c/d7990fc1ffc82889d466e7cd680788ace44a26789809924813b164344393/opentelemetry_semantic_conventions-0.54b1.tar.gz", hash = "sha256:d1cecedae15d19bdaafca1e56b29a66aa286f50b5d08f036a145c7f3e9ef9cee", size = 118642, upload-time = "2025-05-16T18:52:53.962Z" }
 wheels = [
@@ -3269,8 +3200,7 @@ dev = [
     { name = "black" },
     { name = "catboost" },
     { name = "fastapi" },
-    { name = "google-adk", version = "0.0.1", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version == '3.11.*' and sys_platform == 'darwin') or (python_full_version == '3.11.*' and sys_platform == 'linux')" },
-    { name = "google-adk", version = "1.8.0", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
+    { name = "google-adk", marker = "python_full_version >= '3.12'" },
     { name = "isort" },
     { name = "lightgbm" },
     { name = "lightning", version = "2.1.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
@@ -3331,7 +3261,7 @@ dev = [
     { name = "black", specifier = ">=24.3.0,<25.0.0" },
     { name = "catboost", specifier = ">=1.2.5" },
     { name = "fastapi", specifier = ">=0.115.0,<1.0.0" },
-    { name = "google-adk", specifier = ">=0.0.1" },
+    { name = "google-adk", marker = "python_full_version >= '3.12'", specifier = ">=1.5.0" },
     { name = "isort", specifier = ">=5.13.2,<6.0.0" },
     { name = "lightgbm", specifier = ">=4.0.0" },
     { name = "lightning", marker = "python_full_version < '3.12'", specifier = "~=2.1.2" },
@@ -3771,8 +3701,7 @@ name = "proto-plus"
 version = "1.26.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "protobuf", version = "3.20.3", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version < '3.11' and sys_platform == 'darwin') or (python_full_version < '3.11' and sys_platform == 'linux')" },
-    { name = "protobuf", version = "6.31.1", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.12' and sys_platform == 'darwin') or (python_full_version >= '3.12' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
+    { name = "protobuf", version = "6.31.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/f4/ac/87285f15f7cce6d4a008f33f1757fb5a13611ea8914eb58c3d0d26243468/proto_plus-1.26.1.tar.gz", hash = "sha256:21a515a4c4c0088a773899e23c7bbade3d18f9c66c73edd4c7ee3816bc96a012", size = 56142, upload-time = "2025-03-10T15:54:38.843Z" }
 wheels = [
@@ -4650,7 +4579,7 @@ name = "shapely"
 version = "2.1.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "numpy", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
+    { name = "numpy", marker = "python_full_version >= '3.12'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/ca/3c/2da625233f4e605155926566c0e7ea8dda361877f48e8b1655e53456f252/shapely-2.1.1.tar.gz", hash = "sha256:500621967f2ffe9642454808009044c21e5b35db89ce69f8a2042c2ffd0e2772", size = 315422, upload-time = "2025-05-19T11:04:41.265Z" }
 wheels = [
@@ -4735,8 +4664,8 @@ name = "sqlalchemy"
 version = "2.0.42"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "greenlet", marker = "(python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine == 'AMD64' and sys_platform == 'darwin') or (python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine == 'WIN32' and sys_platform == 'darwin') or (python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine == 'aarch64' and sys_platform == 'darwin') or (python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine == 'amd64' and sys_platform == 'darwin') or (python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine == 'ppc64le' and sys_platform == 'darwin') or (python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine == 'win32' and sys_platform == 'darwin') or (python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine == 'x86_64' and sys_platform == 'darwin') or (python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine == 'AMD64' and sys_platform == 'linux') or (python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine == 'WIN32' and sys_platform == 'linux') or (python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine == 'aarch64' and sys_platform == 'linux') or (python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine == 'amd64' and sys_platform == 'linux') or (python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine == 'ppc64le' and sys_platform == 'linux') or (python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine == 'win32' and sys_platform == 'linux') or (python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine == 'x86_64' and sys_platform == 'linux') or (python_full_version < '3.11' and platform_machine == 'AMD64' and sys_platform == 'darwin') or (python_full_version < '3.11' and platform_machine == 'WIN32' and sys_platform == 'darwin') or (python_full_version < '3.11' and platform_machine == 'aarch64' and sys_platform == 'darwin') or (python_full_version < '3.11' and platform_machine == 'amd64' and sys_platform == 'darwin') or (python_full_version < '3.11' and platform_machine == 'ppc64le' and sys_platform == 'darwin') or (python_full_version < '3.11' and platform_machine == 'win32' and sys_platform == 'darwin') or (python_full_version < '3.11' and platform_machine == 'x86_64' and sys_platform == 'darwin') or (python_full_version < '3.11' and platform_machine == 'AMD64' and sys_platform == 'linux') or (python_full_version < '3.11' and platform_machine == 'WIN32' and sys_platform == 'linux') or (python_full_version < '3.11' and platform_machine == 'aarch64' and sys_platform == 'linux') or (python_full_version < '3.11' and platform_machine == 'amd64' and sys_platform == 'linux') or (python_full_version < '3.11' and platform_machine == 'ppc64le' and sys_platform == 'linux') or (python_full_version < '3.11' and platform_machine == 'win32' and sys_platform == 'linux') or (python_full_version < '3.11' and platform_machine == 'x86_64' and sys_platform == 'linux') or (python_full_version < '3.14' and platform_machine == 'AMD64' and sys_platform != 'darwin' and sys_platform != 'linux') or (python_full_version < '3.14' and platform_machine == 'WIN32' and sys_platform != 'darwin' and sys_platform != 'linux') or (python_full_version < '3.14' and platform_machine == 'aarch64' and sys_platform != 'darwin' and sys_platform != 'linux') or (python_full_version < '3.14' and platform_machine == 'amd64' and sys_platform != 'darwin' and sys_platform != 'linux') or (python_full_version < '3.14' and platform_machine == 'ppc64le' and sys_platform != 'darwin' and sys_platform != 'linux') or (python_full_version < '3.14' and platform_machine == 'win32' and sys_platform != 'darwin' and sys_platform != 'linux') or (python_full_version < '3.14' and platform_machine == 'x86_64' and sys_platform != 'darwin' and sys_platform != 'linux')" },
-    { name = "typing-extensions", marker = "(python_full_version != '3.11.*' and sys_platform == 'darwin') or (python_full_version != '3.11.*' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
+    { name = "greenlet", marker = "(python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine == 'AMD64') or (python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine == 'WIN32') or (python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine == 'aarch64') or (python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine == 'amd64') or (python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine == 'ppc64le') or (python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine == 'win32') or (python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine == 'x86_64')" },
+    { name = "typing-extensions", marker = "python_full_version >= '3.12'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/5a/03/a0af991e3a43174d6b83fca4fb399745abceddd1171bdabae48ce877ff47/sqlalchemy-2.0.42.tar.gz", hash = "sha256:160bedd8a5c28765bd5be4dec2d881e109e33b34922e50a3b881a7681773ac5f", size = 9749972, upload-time = "2025-07-29T12:48:09.323Z" }
 wheels = [
@@ -5226,7 +5155,7 @@ name = "tzlocal"
 version = "5.3.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "tzdata", marker = "sys_platform == 'win32'" },
+    { name = "tzdata", marker = "python_full_version >= '3.12' and sys_platform == 'win32'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/8b/2e/c14812d3d4d9cd1773c6be938f89e5735a1f11a9f184ac3639b93cef35d5/tzlocal-5.3.1.tar.gz", hash = "sha256:cceffc7edecefea1f595541dbd6e990cb1ea3d19bf01b2809f362a03dd7921fd", size = 30761, upload-time = "2025-03-05T21:17:41.549Z" }
 wheels = [
