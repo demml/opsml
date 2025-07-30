@@ -11,6 +11,7 @@
   import LinkPill from "$lib/components/utils/LinkPill.svelte";
   import { RegistryType } from "$lib/utils";
   import { python } from "svelte-highlight/languages";
+  import ResponseSchemaModal from "./ResponseSchemaModal.svelte";
 
 
   let {
@@ -90,7 +91,9 @@ datacard = registry.load_card(uid="${card.uid}")
     <PromptModal prompt={card.prompt}/>
 
     {#if card.prompt.response_json_schema}
-      <PromptModal prompt={card.prompt}/>
+      <ResponseSchemaModal 
+        prompt={card.prompt}
+      />
     {/if}
   </div>
 

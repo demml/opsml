@@ -106,7 +106,7 @@
         <Dropdown 
           bind:selectedValue={currentName}
           bind:values={currentNames}
-          width='w-[10rem] overflow-x-auto'
+          width='w-[10rem]'
           py="py-1"
         />
       </div>

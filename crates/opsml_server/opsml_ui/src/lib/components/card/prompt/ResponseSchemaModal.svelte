@@ -7,7 +7,7 @@
   import "$lib/styles/hljs.css";
 
 
-  let { prompt} = $props<{prompt: Prompt;}>();
+  let { prompt } = $props<{prompt: Prompt;}>();
   let openState = $state(false);
   let copied = $state(false);
   let response_json_schema: string = $state('');
@@ -46,7 +46,7 @@
   open={openState}
   onOpenChange={(e) => (openState = e.open)}
   triggerBase="btn bg-primary-500 text-black shadow shadow-hover border-black border-2 text-sm"
-  contentBase="card p-4 bg-slate-100 border-2 border-black shadow max-w-screen-xl w-[700px] max-h-[700px] overflow-auto"
+  contentBase="card p-4 bg-slate-100 border-2 border-black shadow w-[700px] max-w-screen-xl max-h-[40rem] overflow-auto"
   backdropClasses="backdrop-blur-sm"
   >
   {#snippet trigger()}Response Schema{/snippet}
@@ -68,7 +68,7 @@
           </button>
         </div>
         <div class="overflow-auto">
-          <div class="rounded-lg border-2 border-black overflow-y-scroll max-h-[200px] text-sm">
+          <div class="rounded-lg border-2 border-black overflow-y-scroll max-h-[30rem] text-sm">
             <Highlight language={json} code={response_json_schema} let:highlighted>
               <LineNumbers {highlighted} hideBorder wrapLines />
             </Highlight>
