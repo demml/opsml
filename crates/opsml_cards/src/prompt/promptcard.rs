@@ -9,6 +9,7 @@ use opsml_types::{RegistryType, SaveName, Suffix};
 use opsml_utils::{get_utc_datetime, PyHelperFuncs};
 use potato_head::Prompt;
 use pyo3::prelude::*;
+use pyo3::types::PyDict;
 use pyo3::types::PyList;
 use pyo3::IntoPyObjectExt;
 use scouter_client::PyDrifter;
@@ -173,6 +174,7 @@ impl PromptCard {
     #[pyo3(signature = (path))]
     pub fn save(&mut self, py: Python, path: PathBuf) -> Result<(), CardError> {
         debug!("Saving PromptCard to path: {:?}", path);
+        self.update_drift_config_args(py)?;
 
         // save drift profile
         let drift_profile_uri_map = if self.drift_profile.is_empty() {
@@ -339,5 +341,22 @@ impl PromptCard {
         }
 
         Ok(())
+    }
+
+    fn update_drift_config_args(&mut self, py: Python) -> Result<(), CardError> {
+        // if drift_profiles is empty, return
+        if self.drift_profile.is_empty() {
+            Ok(())
+        } else {
+            // set new config args from card and update all profiles
+            let config_args = PyDict::new(py);
+            config_args.set_item("name", &self.name)?;
+            config_args.set_item("space", &self.space)?;
+            config_args.set_item("version", &self.version)?;
+
+            self.drift_profile.update_config_args(py, &config_args)?;
+
+            Ok(())
+        }
     }
 }

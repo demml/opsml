@@ -453,7 +453,7 @@ impl CardRegistry {
         response: &CreateCardResponse,
     ) -> Result<(), RegistryError> {
         // If our integration types expand to other services and registry types, consider using a match statement
-        if registry_type == &RegistryType::Model {
+        if registry_type == &RegistryType::Model || registry_type == &RegistryType::Prompt {
             // ensure scouter integration is enabled before uploading artifacts
             if registry.check_service_health(IntegratedService::Scouter)? {
                 let drift_args = save_kwargs
