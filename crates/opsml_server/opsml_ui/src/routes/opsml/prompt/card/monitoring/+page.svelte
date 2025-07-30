@@ -191,7 +191,7 @@
     </div>
 
     <!-- Row 3: 1 column  alerts -->
-    <div class="rounded-lg shadow border-2 border-black bg-white min-h-[6rem] max-h-[30rem]">
+    <div class="bg-white p-2 border-2 border-black rounded-lg shadow min-h-[6rem] max-h-[30rem]">
       <AlertTable
         alerts={currentAlerts}
         updateAlert={updateAlert}

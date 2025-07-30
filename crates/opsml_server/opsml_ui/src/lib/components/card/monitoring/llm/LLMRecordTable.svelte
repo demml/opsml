@@ -2,7 +2,7 @@
   import { PaginationCursor, type LLMDriftServerRecord, type LLMPageResponse, ServiceInfo, Status } from "../types";
   import { getLLMRecordPage } from "../util";
   import { ArrowLeft, ArrowRight } from 'lucide-svelte';
-  import CodeModal from "./CodeModal.svelte";
+  import CodeModal from "../CodeModal.svelte";
 
 
 
@@ -125,7 +125,12 @@ let {
     </div>
 
 
-    <div class="flex justify-center pt-4 gap-2">
+    <div class="flex justify-center pt-4 gap-2 border-t-2 border-black">
+      {#if cursorStack.length > 1}
+        <button class="btn bg-surface-50 border-black border-2 shadow-small shadow-hover-small h-9" onclick={() => changePage(pageNbr - 1)}>
+          <ArrowLeft color="#5948a3"/>
+        </button>
+      {/if}
       {#if pageNbr > 1}
         <button class="btn bg-surface-50 border-black border-2 shadow-small shadow-hover-small h-9" onclick={() => changePage(pageNbr - 1)}>
           <ArrowLeft color="#5948a3"/>

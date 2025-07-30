@@ -30,6 +30,7 @@
   let currentConfig: DriftConfigType = $state(data.currentConfig);
   let currentAlerts: Alert[] = $state(data.currentAlerts);
   let uid: string = $state(data.metadata.uid);
+  let registry = $state(data.registry);
 
   // Vars
   let drift_types: DriftType[] = data.keys;
@@ -157,6 +158,7 @@
             {handleNameChange}
             {handleTimeChange}
             {uid}
+            {registry}
       /> 
     </div>
 
@@ -186,7 +188,7 @@
     </div>
 
     <!-- Row 3: 1 column  alerts -->
-    <div class="rounded-lg shadow border-2 border-black bg-slate-100 min-h-[6rem] max-h-[30rem]">
+    <div class="bg-white p-2 border-2 border-black rounded-lg shadow min-h-[6rem] max-h-[30rem]">
       <AlertTable
         alerts={currentAlerts}
         updateAlert={updateAlert}

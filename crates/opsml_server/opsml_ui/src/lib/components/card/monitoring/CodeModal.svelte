@@ -1,6 +1,6 @@
 <script lang="ts">
     import { Modal } from '@skeletonlabs/skeleton-svelte';
-    import Highlight, { LineNumbers } from "svelte-highlight";
+    import Highlight from "svelte-highlight";
     import json from "svelte-highlight/languages/json";
     import "$lib/styles/hljs.css";
 
@@ -41,7 +41,7 @@
   open={openState}
   onOpenChange={(e) => (openState = e.open)}
   triggerBase="btn bg-primary-500 text-black shadow shadow-hover border-black border-2 text-sm"
-  contentBase="card p-4 bg-slate-100 border-2 border-black shadow max-w-screen-md"
+  contentBase="card p-4 bg-slate-100 border-2 border-black shadow max-w-screen-lg"
   backdropClasses="backdrop-blur-sm"
   >
   {#snippet trigger()}{name}{/snippet}

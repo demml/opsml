@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Alert } from "./types";
-  import AlertModal from "./AlertModal.svelte";
+  import CodeModal from "../CodeModal.svelte";
 
 
 
@@ -17,32 +17,64 @@ let {
 </script>
 
 <div class="flex flex-col h-full">
+    <div class="items-center text-lg mr-2 font-bold text-primary-800">Drift Alerts</div>
   {#if alerts.length === 0}
     <div class="flex items-center justify-center flex-1 text-center text-gray-500 text-lg text-primary-500 font-bold">
       No alerts to display
     </div>
   {:else}
-    <div class="overflow-auto rounded-lg pb-2 border-1 border-black">
-      <table class="w-full text-black text-sm bg-slate-100">
-        <thead class="bg-primary-500 sticky top-0">
+    <div class="overflow-auto w-full">
+      <table class="text-black border-collapse text-sm bg-white w-full">
+        <thead class="sticky top-0 z-10 bg-white" style="box-shadow: 0 2px 0 0 #000;">
           <tr>
-            <th class="text-black text-sm pl-4 py-2 text-left">Created At</th>
-            <th class="text-black text-sm p-2">Id</th>
-            <th class="text-black text-sm p-2">Drift Type</th>
-            <th class="text-black text-sm p-2">Name</th>
-            <th class="text-black text-sm p-2">Details</th>
-            <th class="text-black text-sm pr-4 py-2">Status</th>
+            <th class="p-3 font-heading pl-6 text-left text-black">
+              <span class='px-2 py-1 rounded-full bg-primary-100 text-primary-800'>
+                ID
+              </span>
+            </th>
+            <th class="p-3 font-heading">
+              <span class='px-2 py-1 rounded-full bg-primary-100 text-primary-800'>
+                Drift Type
+              </span>
+            </th>
+            <th class="p-3 font-heading">
+              <span class='px-2 py-1 rounded-full bg-primary-100 text-primary-800'>
+                Name
+              </span>
+            </th>
+            <th class="p-3 font-heading">
+              <span class='px-2 py-1 rounded-full bg-primary-100 text-primary-800'>
+                Details
+              </span>
+            </th>
+            <th class="p-3 font-heading">
+              <span class='px-2 py-1 rounded-full bg-primary-100 text-primary-800'>
+                Status
+              </span>
+            </th>
+            <th class="p-3 font-heading">
+              <span class='px-2 py-1 rounded-full bg-primary-100 text-primary-800'>
+                Created At
+              </span>
+            </th>
           </tr>
         </thead>
         <tbody>
-          {#each alerts as alert}
-          
-          <tr class="border-t hover:bg-primary-300 py-2">
-            <td class="pl-4 text-sm py-2">{alert.created_at}</td>
-            <td class="p-2 text-sm text-center">{alert.id}</td>
-            <td class="p-2 text-sm text-center">{alert.drift_type}</td>
-            <td class="p-2 text-sm text-center">{alert.entity_name}</td>
-            <td class="p-2 text-sm text-center" ><AlertModal code={alert.alert} /></td>
+          {#each alerts as alert, i}
+          <tr class={`border-b-2 border-black hover:bg-primary-300 py-2 ${i % 2 === 0 ? 'bg-gray-100' : 'bg-white'}`}>
+            <td class="p-3 pl-8">{alert.id}</td>
+            <td class="p-3 text-center">
+              <span class={`px-2 py-1 rounded-full border border-black text-xs font-medium ${
+                alert.drift_type === 'spc' ? 'bg-yellow-100 text-yellow-800' :
+                alert.drift_type === 'psi' ? 'bg-blue-100 text-blue-800' :
+                alert.drift_type === 'custom' ? 'bg-green-100 text-green-800' :
+                'bg-primary-100 text-primary-800'
+              }`}>
+                {alert.drift_type}
+              </span>
+            </td>
+            <td class="p-3 text-center">{alert.entity_name}</td>
+            <td class="p-3 text-center"><CodeModal name='Alert' code={alert.alert} /></td>
             <td class="pr-4 py-2 text-black">
               <div class="flex justify-center items-center">
                 <button class="btn text-sm flex flex-row gap-2 bg-error-500 shadow shadow-hover border-black border-2 rounded-lg" onclick={() =>  updateAlert(alert.id, alert.space)}>
@@ -50,6 +82,7 @@ let {
                 </button>
               </div>
             </td>
+            <td class="p-3 text-center">{alert.created_at}</td>
           </tr>
         {/each}
         </tbody>
