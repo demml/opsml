@@ -387,10 +387,22 @@ export const mockLLMDriftServerRecords: LLMDriftServerRecord[] = Array.from(
     status: randomStatus(),
     id: i + 1,
     uid: `uid_${i + 1}`,
-    score: (Math.random() * 100).toFixed(2),
+    score: {
+      relevance: {
+        score: Number(Math.random().toFixed(2)),
+        reason:
+          "The prompt is relevant and you should use it!. AHHHHHHHHHHHHHHHHHHHHHHHHH",
+      },
+      coherence: {
+        score: Number(Math.random().toFixed(2)),
+        reason: "Sample reason",
+      },
+    },
     updated_at: randomDate(29 - i),
     processing_started_at: i % 3 === 0 ? randomDate(30 - i) : undefined,
     processing_ended_at: i % 4 === 0 ? randomDate(29 - i) : undefined,
+    processing_duration:
+      i % 5 === 0 ? Math.floor(Math.random() * 60) : undefined,
   })
 );
 

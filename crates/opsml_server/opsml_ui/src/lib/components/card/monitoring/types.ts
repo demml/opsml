@@ -216,10 +216,11 @@ export interface LLMDriftServerRecord {
   status: Status;
   id: number;
   uid: string;
-  score: string;
+  score: any; // This is an object (serde_json::Value in Rust)
   updated_at: string; // ISO datetime string
   processing_started_at?: string; // ISO datetime string
   processing_ended_at?: string; // ISO datetime string
+  processing_duration?: number; // Duration in seconds
 }
 
 export interface ServiceInfo {
