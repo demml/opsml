@@ -79,6 +79,8 @@ export const load: PageLoad = async ({ parent }) => {
   //let currentLLMRecords = getLLMRecordPage(service_info, undefined, undefined);
   let currentLLMRecordPage = mockLLMDriftPageResponse;
 
+  console.log("names", currentNames);
+
   return {
     profiles,
     keys,

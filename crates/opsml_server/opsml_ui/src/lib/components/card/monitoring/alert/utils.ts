@@ -19,7 +19,7 @@ export async function getDriftAlerts(
   timeInterval: TimeInterval,
   active: boolean
 ): Promise<Alert[]> {
-  return [];
+  return sampleAlerts; // For testing purposes, return sample alerts
   let alertRequest: DriftAlertRequest = {
     space: space,
     name: name,

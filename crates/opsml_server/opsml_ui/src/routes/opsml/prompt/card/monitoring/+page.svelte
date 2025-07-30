@@ -13,6 +13,7 @@
   import type { Alert } from '$lib/components/card/monitoring/alert/types';
   import { getDriftAlerts, acknowledgeAlert } from '$lib/components/card/monitoring/alert/utils';
   import AlertTable from '$lib/components/card/monitoring/alert/AlertTable.svelte';
+  import LLMRecordTable from '$lib/components/card/monitoring/llm/LLMRecordTable.svelte';
 
  
   let { data }: PageProps = $props();
@@ -190,12 +191,24 @@
     </div>
 
     <!-- Row 3: 1 column  alerts -->
-    <div class="rounded-lg shadow border-2 border-black bg-slate-100 min-h-[6rem] max-h-[30rem]">
+    <div class="rounded-lg shadow border-2 border-black bg-white min-h-[6rem] max-h-[30rem]">
       <AlertTable
         alerts={currentAlerts}
         updateAlert={updateAlert}
       />
     </div>
+
+    <div class="bg-white p-2 border-2 border-black rounded-lg shadow min-h-[6rem] max-h-[40rem]">
+      <LLMRecordTable
+        space={currentConfig.space}
+        name={currentConfig.name}
+        version={currentConfig.version}
+        currentPage={currentLLMRecordPage}
+      />
+    </div>
+
+
+    <!-- Row 4: LLMRecord Table -->
 
 
 

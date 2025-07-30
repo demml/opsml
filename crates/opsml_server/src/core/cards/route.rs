@@ -292,14 +292,6 @@ pub async fn create_card(
         return OpsmlServerError::permission_denied().into_response(StatusCode::FORBIDDEN);
     }
 
-    info!(
-        "Creating card: {}/{}/{} - registry: {:?}",
-        &card_request.card.space(),
-        &card_request.card.name(),
-        &card_request.card.version(),
-        &card_request.registry_type
-    );
-
     // (1) ------- Get the next version
     let version = get_next_version(
         state.sql_client.clone(),
@@ -311,6 +303,15 @@ pub async fn create_card(
         error!("Failed to get next version: {e}");
         internal_server_error(e, "Failed to get next version")
     })?;
+
+    info!(
+        "Creating card: {}/{}/{} - registry: {:?}",
+        &card_request.card.space(),
+        &card_request.card.name(),
+        &version,
+        &card_request.registry_type
+    );
+
     // (2) ------- Insert the card into the database
     let (uid, space, registry_type, card_uri, app_env, created_at) = insert_card_into_db(
         state.sql_client.clone(),

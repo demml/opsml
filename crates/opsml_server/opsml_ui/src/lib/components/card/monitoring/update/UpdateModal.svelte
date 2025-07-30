@@ -294,10 +294,11 @@ function validateDispatchForm(): boolean {
   {#snippet trigger()}Update Config{/snippet}
   {#snippet content()}
 
-  <form class="mx-auto rounded-2xl bg-surface-50 p-4 md:px-5" onsubmit={updateConfig}>
-    <div class="grid grid-cols-2 gap-8 min-h-[300px]">
+  <form class="mx-auto rounded-2xl bg-surface-50 p-4 md:px-5 flex flex-col" onsubmit={updateConfig}>
+
+    <div class="grid grid-cols-2 gap-8 flex-grow">
       <!-- Left Column -->
-      <div class="flex flex-col">
+      <div class="flex flex-col min-h-[24rem]">
         <header class="text-lg font-bold text-primary-800 mb-2">Update Config</header> 
         <p class="mb-4 text-left text-surface-950">Update the following config elements</p>
   
@@ -330,7 +331,6 @@ function validateDispatchForm(): boolean {
 
       <!-- Right Column -->
       <div class="border-l-2 border-primary-500 pl-2 h-full overflow-visible">
-
         <div class="flex flex-col overflow-auto min-h-full">
           <div class="flex flex-col pb-2 justify-between">
             <header class="pl-2 text-lg font-bold text-primary-800">Update Dispatch</header> 
@@ -363,15 +363,13 @@ function validateDispatchForm(): boolean {
               />
             {/if}
           </div>
-
         </div>
-        
       </div>
-  
-    <footer class="flex justify-end gap-4 p-2 mt-6">
+    </div>
+    <div class="flex justify-end gap-4 p-2 mt-4 w-full">
       <button type="button" class="btn text-sm bg-primary-500 text-black shadow shadow-hover border-black border-2" onclick={modalClose}>Cancel</button>
       <button type="submit" class="btn text-sm bg-primary-500 text-black shadow shadow-hover border-black border-2">Submit</button>
-    </footer>
+    </div>
   </form>
    
     
