@@ -828,7 +828,7 @@ dependencies = [
  "hyper-util",
  "pin-project-lite",
  "rustls 0.21.12",
- "rustls 0.23.29",
+ "rustls 0.23.31",
  "rustls-native-certs 0.8.1",
  "rustls-pki-types",
  "tokio",
@@ -1460,9 +1460,9 @@ dependencies = [
 
 [[package]]
 name = "clap"
-version = "4.5.41"
+version = "4.5.42"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "be92d32e80243a54711e5d7ce823c35c41c9d929dc4ab58e1276f625841aadf9"
+checksum = "ed87a9d530bb41a67537289bafcac159cb3ee28460e0a4571123d2a778a6a882"
 dependencies = [
  "clap_builder",
  "clap_derive 4.5.41",
@@ -1470,9 +1470,9 @@ dependencies = [
 
 [[package]]
 name = "clap_builder"
-version = "4.5.41"
+version = "4.5.42"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "707eab41e9622f9139419d573eca0900137718000c517d47da73045f54331c3d"
+checksum = "64f4f3f3c77c94aff3c7e9aac9a2ca1974a5adf392a8bb751e827d6d127ab966"
 dependencies = [
  "anstream",
  "anstyle",
@@ -2817,7 +2817,7 @@ dependencies = [
  "http 1.3.1",
  "hyper 1.6.0",
  "hyper-util",
- "rustls 0.23.29",
+ "rustls 0.23.31",
  "rustls-native-certs 0.8.1",
  "rustls-pki-types",
  "tokio",
@@ -4000,7 +4000,7 @@ version = "3.0.0-rc.14"
 dependencies = [
  "anyhow",
  "base64 0.22.1",
- "clap 4.5.41",
+ "clap 4.5.42",
  "dirs",
  "flate2",
  "mockall",
@@ -4345,7 +4345,7 @@ dependencies = [
 name = "opsml-todo"
 version = "3.0.0-rc.14"
 dependencies = [
- "clap 4.5.41",
+ "clap 4.5.42",
  "opsml-colors",
  "rayon",
  "tabled",
@@ -5131,7 +5131,7 @@ dependencies = [
  "quinn-proto",
  "quinn-udp",
  "rustc-hash 2.1.1",
- "rustls 0.23.29",
+ "rustls 0.23.31",
  "socket2 0.5.10",
  "thiserror 2.0.12",
  "tokio",
@@ -5151,7 +5151,7 @@ dependencies = [
  "rand 0.9.2",
  "ring",
  "rustc-hash 2.1.1",
- "rustls 0.23.29",
+ "rustls 0.23.31",
  "rustls-pki-types",
  "slab",
  "thiserror 2.0.12",
@@ -5519,7 +5519,7 @@ dependencies = [
  "percent-encoding",
  "pin-project-lite",
  "quinn",
- "rustls 0.23.29",
+ "rustls 0.23.31",
  "rustls-native-certs 0.8.1",
  "rustls-pki-types",
  "serde",
@@ -5725,9 +5725,9 @@ dependencies = [
 
 [[package]]
 name = "rustls"
-version = "0.23.29"
+version = "0.23.31"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2491382039b29b9b11ff08b76ff6c97cf287671dbb74f0be44bda389fffe9bd1"
+checksum = "c0ebcbd2f03de0fc1122ad9bb24b127a5a6cd51d72604a3f3c50ac459762b6cc"
 dependencies = [
  "aws-lc-rs",
  "once_cell",
@@ -5745,7 +5745,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "70cc376c6ba1823ae229bacf8ad93c136d93524eab0e4e5e0e4f96b9c4e5b212"
 dependencies = [
  "log",
- "rustls 0.23.29",
+ "rustls 0.23.31",
  "rustls-native-certs 0.7.3",
  "rustls-pki-types",
  "rustls-webpki 0.103.4",
@@ -5939,7 +5939,7 @@ checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
 [[package]]
 name = "scouter-client"
 version = "0.7.0"
-source = "git+https://github.com/demml/scouter.git?branch=ofeat%2Fopsml-llm-integration#8ac6a491f8da4c3eaa3c9653bd279841c61ac89f"
+source = "git+https://github.com/demml/scouter.git?branch=ofeat%2Fopsml-llm-integration#5db10879aa353358594451c49ebd0846763f3c39"
 dependencies = [
  "chrono",
  "ndarray",
@@ -5967,7 +5967,7 @@ dependencies = [
 [[package]]
 name = "scouter-dispatch"
 version = "0.7.0"
-source = "git+https://github.com/demml/scouter.git?branch=ofeat%2Fopsml-llm-integration#8ac6a491f8da4c3eaa3c9653bd279841c61ac89f"
+source = "git+https://github.com/demml/scouter.git?branch=ofeat%2Fopsml-llm-integration#5db10879aa353358594451c49ebd0846763f3c39"
 dependencies = [
  "futures",
  "pyo3",
@@ -5982,7 +5982,7 @@ dependencies = [
 [[package]]
 name = "scouter-drift"
 version = "0.7.0"
-source = "git+https://github.com/demml/scouter.git?branch=ofeat%2Fopsml-llm-integration#8ac6a491f8da4c3eaa3c9653bd279841c61ac89f"
+source = "git+https://github.com/demml/scouter.git?branch=ofeat%2Fopsml-llm-integration#5db10879aa353358594451c49ebd0846763f3c39"
 dependencies = [
  "chrono",
  "cron",
@@ -6010,7 +6010,7 @@ dependencies = [
 [[package]]
 name = "scouter-events"
 version = "0.7.0"
-source = "git+https://github.com/demml/scouter.git?branch=ofeat%2Fopsml-llm-integration#8ac6a491f8da4c3eaa3c9653bd279841c61ac89f"
+source = "git+https://github.com/demml/scouter.git?branch=ofeat%2Fopsml-llm-integration#5db10879aa353358594451c49ebd0846763f3c39"
 dependencies = [
  "async-trait",
  "chrono",
@@ -6043,7 +6043,7 @@ dependencies = [
 [[package]]
 name = "scouter-observability"
 version = "0.7.0"
-source = "git+https://github.com/demml/scouter.git?branch=ofeat%2Fopsml-llm-integration#8ac6a491f8da4c3eaa3c9653bd279841c61ac89f"
+source = "git+https://github.com/demml/scouter.git?branch=ofeat%2Fopsml-llm-integration#5db10879aa353358594451c49ebd0846763f3c39"
 dependencies = [
  "itertools 0.14.0",
  "ndarray",
@@ -6060,7 +6060,7 @@ dependencies = [
 [[package]]
 name = "scouter-profile"
 version = "0.7.0"
-source = "git+https://github.com/demml/scouter.git?branch=ofeat%2Fopsml-llm-integration#8ac6a491f8da4c3eaa3c9653bd279841c61ac89f"
+source = "git+https://github.com/demml/scouter.git?branch=ofeat%2Fopsml-llm-integration#5db10879aa353358594451c49ebd0846763f3c39"
 dependencies = [
  "chrono",
  "indicatif",
@@ -6082,7 +6082,7 @@ dependencies = [
 [[package]]
 name = "scouter-semver"
 version = "0.7.0"
-source = "git+https://github.com/demml/scouter.git?branch=ofeat%2Fopsml-llm-integration#8ac6a491f8da4c3eaa3c9653bd279841c61ac89f"
+source = "git+https://github.com/demml/scouter.git?branch=ofeat%2Fopsml-llm-integration#5db10879aa353358594451c49ebd0846763f3c39"
 dependencies = [
  "pyo3",
  "semver",
@@ -6093,7 +6093,7 @@ dependencies = [
 [[package]]
 name = "scouter-settings"
 version = "0.7.0"
-source = "git+https://github.com/demml/scouter.git?branch=ofeat%2Fopsml-llm-integration#8ac6a491f8da4c3eaa3c9653bd279841c61ac89f"
+source = "git+https://github.com/demml/scouter.git?branch=ofeat%2Fopsml-llm-integration#5db10879aa353358594451c49ebd0846763f3c39"
 dependencies = [
  "base64 0.22.1",
  "potato-head",
@@ -6106,7 +6106,7 @@ dependencies = [
 [[package]]
 name = "scouter-types"
 version = "0.7.0"
-source = "git+https://github.com/demml/scouter.git?branch=ofeat%2Fopsml-llm-integration#8ac6a491f8da4c3eaa3c9653bd279841c61ac89f"
+source = "git+https://github.com/demml/scouter.git?branch=ofeat%2Fopsml-llm-integration#5db10879aa353358594451c49ebd0846763f3c39"
 dependencies = [
  "chrono",
  "colored_json",
@@ -7100,7 +7100,7 @@ version = "0.26.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8e727b36a1a0e8b74c376ac2211e40c2c8af09fb4013c60d910495810f008e9b"
 dependencies = [
- "rustls 0.23.29",
+ "rustls 0.23.31",
  "tokio",
 ]
 

@@ -89,6 +89,11 @@ let {
                 Created At
               </span>
             </th>
+            <th class="p-3 font-heading">
+              <span class='px-2 py-1 rounded-full bg-primary-100 text-primary-800'>
+                Processing Duration
+              </span>
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -106,7 +111,7 @@ let {
                   {record.status}
                 </span>
               </td>
-              <td class="p-3 text-center">{record.score}</td>
+              <td class="p-3 text-center"><CodeModal name='Score' code={record.score} /></td>
               {#if record.prompt}
                 <td class="p-3 text-center"><CodeModal name='Prompt' code={record.prompt} /></td>
                 {:else}
@@ -118,6 +123,7 @@ let {
                 <td class="p-3 text-center"></td>
               {/if}
               <td class="p-3 text-center">{record.created_at}</td>
+              <td class="p-3 text-center">{record.processing_duration}</td>
             </tr>
           {/each}
         </tbody>
