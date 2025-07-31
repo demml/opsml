@@ -4120,6 +4120,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "opsml-integrations"
+version = "3.0.0-rc.14"
+dependencies = [
+ "opsml-cards",
+ "opsml-registry",
+ "opsml-sql",
+ "opsml-storage",
+ "opsml-types",
+ "pyo3",
+ "semver",
+ "sqlx",
+ "thiserror 2.0.12",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
 name = "opsml-interfaces"
 version = "3.0.0-rc.14"
 dependencies = [
