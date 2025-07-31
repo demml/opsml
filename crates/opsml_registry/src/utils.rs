@@ -315,6 +315,7 @@ pub fn download_card<'py>(
 #[instrument(skip_all)]
 pub fn upload_card_artifacts(path: PathBuf, key: &ArtifactKey) -> Result<(), RegistryError> {
     // create temp path for saving
+    // TODO: why is this named decrypt key?
     let encryption_key = key.get_decrypt_key()?;
 
     encrypt_directory(&path, &encryption_key)?;

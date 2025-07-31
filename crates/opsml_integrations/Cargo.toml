@@ -1,0 +1,26 @@
+[package]
+name = "opsml-integrations"
+version = { workspace = true }
+edition = { workspace = true }
+repository = { workspace = true }
+
+[lib]
+doctest = false
+
+
+[dependencies]
+opsml-cards = { workspace = true }
+opsml-registry = { workspace = true }
+opsml-storage = { workspace = true }
+opsml-sql = { workspace = true, optional = true }
+opsml-types = { workspace = true }
+pyo3 = { workspace = true }
+semver = { workspace = true, optional = true }
+sqlx = { workspace = true, optional = true }
+thiserror = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }
+
+[features]
+default = []
+server = ["opsml-sql", "sqlx", "semver", "opsml-storage/server"]
