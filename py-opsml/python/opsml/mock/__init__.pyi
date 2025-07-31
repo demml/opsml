@@ -1,6 +1,13 @@
 from pathlib import Path
 from typing import Optional
 
+class RegistryTestHelper:
+    """Helper class for testing the registry"""
+
+    def __init__(self) -> None: ...
+    def setup(self) -> None: ...
+    def cleanup(self) -> None: ...
+
 class OpsmlTestServer:
     def __init__(self, cleanup: bool = True, base_path: Optional[Path] = None) -> None:
         """Instantiates the test server.

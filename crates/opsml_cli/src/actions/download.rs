@@ -2,6 +2,7 @@ use crate::cli::arg::DownloadCard;
 use crate::cli::arg::IntoQueryArgs;
 use crate::error::CliError;
 use opsml_cards::ModelCard;
+use opsml_cards::PromptCard;
 use opsml_cards::ServiceCard;
 use opsml_colors::Colorize;
 use opsml_crypt::decrypt_directory;
@@ -143,16 +144,33 @@ pub fn download_service(args: &DownloadCard) -> Result<(), CliError> {
             mapping.add_card_path(&card.alias, &card_path);
 
             // If model card, load and process drift paths
-            if card.registry_type == RegistryType::Model {
+            if card.registry_type == RegistryType::Model
+                || card.registry_type == RegistryType::Prompt
+            {
                 let card_json_path = card_path.join(SaveName::Card).with_extension(Suffix::Json);
                 let json_string = std::fs::read_to_string(&card_json_path)?;
-                let modelcard: ModelCard = serde_json::from_str(&json_string)?;
 
-                let drift_paths = modelcard
-                    .metadata
-                    .interface_metadata
-                    .save_metadata
-                    .drift_profile_uri_map;
+                let drift_paths = match card.registry_type {
+                    RegistryType::Model => {
+                        let modelcard: ModelCard = serde_json::from_str(&json_string)?;
+                        modelcard
+                            .metadata
+                            .interface_metadata
+                            .save_metadata
+                            .drift_profile_uri_map
+                    }
+                    RegistryType::Prompt => {
+                        let promptcard: PromptCard = serde_json::from_str(&json_string)?;
+                        promptcard.metadata.drift_profile_uri_map
+                    }
+                    _ => {
+                        debug!(
+                            "Card {} is not a ModelCard or PromptCard, skipping drift paths",
+                            card.alias
+                        );
+                        None
+                    }
+                };
 
                 match drift_paths {
                     Some(paths) => {

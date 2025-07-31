@@ -21,7 +21,7 @@ use sqlx::{
     FromRow, Pool, Row,
 };
 
-use tracing::info;
+use tracing::debug;
 
 impl FromRow<'_, MySqlRow> for User {
     fn from_row(row: &MySqlRow) -> Result<Self, sqlx::Error> {
@@ -89,7 +89,7 @@ impl SqlClient for MySqlClient {
         Ok(client)
     }
     async fn run_migrations(&self) -> Result<(), SqlError> {
-        info!("Running migrations");
+        debug!("Running migrations");
         sqlx::migrate!("src/mysql/migrations")
             .run(&self.pool)
             .await

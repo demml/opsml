@@ -21,7 +21,7 @@ use sqlx::{
     postgres::{PgConnectOptions, PgPoolOptions, PgRow, Postgres},
     FromRow, Pool, Row,
 };
-use tracing::info;
+use tracing::debug;
 
 impl FromRow<'_, PgRow> for User {
     fn from_row(row: &PgRow) -> Result<Self, sqlx::Error> {
@@ -94,7 +94,7 @@ impl SqlClient for PostgresClient {
     }
 
     async fn run_migrations(&self) -> Result<(), SqlError> {
-        info!("Running migrations");
+        debug!("Running migrations");
         sqlx::migrate!("src/postgres/migrations")
             .run(&self.pool)
             .await

@@ -17,13 +17,13 @@ use opsml_types::{
 };
 use scouter_client::ScouterClient;
 use scouter_client::{ProfileRequest, ProfileStatusRequest};
-use tracing::{error, info, instrument};
+use tracing::{debug, error, instrument};
 
 pub fn setup_scouter_client(
     settings: &ScouterSettings,
 ) -> Result<Option<ScouterClient>, RegistryError> {
     if settings.server_uri.is_empty() {
-        info!("Scouter client is disabled");
+        debug!("Scouter client is disabled");
         return Ok(None);
     }
 
