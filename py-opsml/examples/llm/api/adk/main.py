@@ -1,23 +1,45 @@
 # pylint: disable=invalid-name
 from contextlib import asynccontextmanager
-from pathlib import Path
 
 from fastapi import FastAPI, Request
-from google.adk.agents import Agent
 from google.adk.runners import Runner
 from google.adk.sessions import InMemorySessionService
 from opsml.logging import RustyLogger, LogLevel, LoggingConfig
 from .models import Answer, Question
+from .agent.sequential import root_agent
+from .agent.utils import get_final_event
 from google.genai import types
+from google.adk.events.event import Event
+import uuid
+from google.adk.cli.fast_api import get_fast_api_app
 
 logger = RustyLogger.get_logger(
     LoggingConfig(log_level=LogLevel.Debug),
 )
 
+# session = await session_service.get_session(
+#        app_name=req.app_name, user_id=req.user_id, session_id=req.session_id
+#    )
+#    if not session:
+#      raise HTTPException(status_code=404, detail="Session not found")
+#    runner = await _get_runner_async(req.app_name)
+#    events = [
+#        event
+#        async for event in runner.run_async(
+#            user_id=req.user_id,
+#            session_id=req.session_id,
+#            new_message=req.new_message,
+#        )
+#    ]
+#    logger.info("Generated %s events in agent run", len(events))
+#    logger.debug("Events generated: %s", events)
+#    return events
+#
+
 
 def get_session_id() -> str:
     """Generates a unique session ID."""
-    return "session-12345"  # Replace with actual session ID generation logic
+    return str(uuid.uuid4().hex)
 
 
 def get_user_id() -> str:
@@ -25,31 +47,72 @@ def get_user_id() -> str:
     return "user-123"
 
 
+class AgentHelper:
+    """Helper class to manage agent-related operations."""
+
+    def __init__(self, runner: Runner, session_service: InMemorySessionService):
+        self.app_name = runner.app_name
+        self.runner = runner
+        self.session_service = session_service
+
+    async def check_session_async(
+        self,
+        user_id: str,
+        session_id: str,
+    ) -> None:
+        """Retrieves the session for the given app, user, and session ID."""
+        session = await self.session_service.get_session(
+            app_name=self.app_name, user_id=user_id, session_id=session_id
+        )
+        if not session:
+            # create a new session if it doesn't exist
+            logger.info(
+                "Session not found for user {} with session ID {}. Creating a new session.",
+                user_id,
+                session_id,
+            )
+            session = await self.session_service.create_session(
+                app_name=self.app_name,
+                user_id=user_id,
+                session_id=session_id,
+            )
+
+    async def call_agent_async(self, query: str, user_id, session_id) -> str:
+        """Sends a query to the agent and returns the response."""
+
+        # Prepare the user's message in ADK format
+        content = types.Content(role="user", parts=[types.Part(text=query)])
+
+        events = [
+            event
+            async for event in self.runner.run_async(
+                user_id=user_id,
+                session_id=session_id,
+                new_message=content,
+            )
+        ]
+
+        return get_final_event(events) or "No response generated."
+
+    async def process_query(self, query: str, user_id: str, session_id: str) -> str:
+        """Processes the query and returns the agent's response."""
+        await self.check_session_async(user_id=user_id, session_id=session_id)
+        return await self.call_agent_async(query, user_id, session_id)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("Starting up FastAPI app")
 
     session_service = InMemorySessionService()
-    session = await session_service.create_session(
+    runner = Runner(
         app_name="my_app",
-        user_id=get_user_id(),
-        session_id=get_session_id(),
-    )
-
-    app.state.session = session
-
-    print(session_service.sessions)
-
-    app.state.runner = Runner(
-        app_name="my_app",
-        agent=Agent(
-            name="echo_agent",
-            model="gemini-2.5-flash",
-            description="Gemini agent",
-            instruction="You are a helpful assistant.",
-        ),
+        agent=root_agent,
         session_service=session_service,
     )
+
+    agent_helper = AgentHelper(runner, session_service)
+    app.state.agent_helper = agent_helper
 
     yield
 
@@ -59,42 +122,16 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 
 
-async def call_agent_async(query: str, runner: Runner, user_id, session_id) -> str:
-    """Sends a query to the agent and returns the response."""
-
-    # Prepare the user's message in ADK format
-    content = types.Content(role="user", parts=[types.Part(text=query)])
-
-    # Execute the agent and find the final response
-    async for event in runner.run_async(
-        user_id=user_id, session_id=session_id, new_message=content
-    ):
-        if event.is_final_response():
-            if event.content and event.content.parts:
-                final_response_text = event.content.parts[0].text
-            break
-
-    if final_response_text is None:
-        logger.error("No final response received from the agent.")
-        final_response_text = "No response from the agent."
-
-    return final_response_text
-
-
 @app.post("/predict", response_model=Answer)
 async def predict(request: Request, payload: Question) -> Answer:
     # Grab the reformulated prompt and response prompt from the app state
-    runner: Runner = request.app.state.runner
+    agent_helper: AgentHelper = request.app.state.agent_helper
 
-    # Generate session and user IDs
-    session_id = get_session_id()
-    user_id = get_user_id()
     # Call the agent asynchronously
-    response = await call_agent_async(
+    response = await agent_helper.process_query(
         query=payload.question,
-        runner=runner,
-        user_id=user_id,
-        session_id=session_id,
+        user_id=payload.user_id,
+        session_id=payload.session_id,
     )
 
     return Answer(message=response)
