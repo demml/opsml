@@ -35,7 +35,6 @@ class AppState:
     @staticmethod
     def from_path(
         path: Path,
-        load_kwargs: Optional[Dict[str, Dict[str, Any]]] = None,
         transport_config: Optional[
             Union[
                 KafkaConfig,
@@ -44,6 +43,7 @@ class AppState:
                 HTTPConfig,
             ]
         ] = None,
+        load_kwargs: Optional[Dict[str, Dict[str, Any]]] = None,
     ) -> "AppState":
         """
         Load the AppState from a file path.
@@ -52,6 +52,12 @@ class AppState:
             path (str):
                 The file path to load the AppState from. This is typically the path
                 pointing to the directory containing the `ServiceCard`.
+
+            transport_config (KafkaConfig | RabbitMQConfig | RedisConfig | HTTPConfig | None):
+                Optional transport configuration for the queue publisher
+                Can be KafkaConfig, RabbitMQConfig RedisConfig, or HTTPConfig. If not provided,
+                the queue will not be initialized.
+
             load_kwargs (Dict[str, Dict[str, Any]]):
                 Optional kwargs for loading cards. Expected format:
                 {
@@ -60,10 +66,6 @@ class AppState:
                         "load_kwargs": DataLoadKwargs | ModelLoadKwargs
                     }
                 }
-            transport_config (Union[KafkaConfig, RabbitMQConfig, RedisConfig, HTTPConfig]) | None:
-                Optional transport configuration for the queue publisher
-                Can be KafkaConfig, RabbitMQConfig RedisConfig, or HTTPConfig. If not provided,
-                the queue will not be initialized.
 
         Example:
             ```python

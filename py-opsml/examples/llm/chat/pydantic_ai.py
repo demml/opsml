@@ -14,12 +14,12 @@ card = PromptCard(
 )
 
 agent = Agent(
-    card.prompt.model,
+    model=card.prompt.model,
     system_message=card.prompt.system_message[0].unwrap(),
 )
 
 result = agent.run_sync('Where does "hello world" come from?')
-print(result.data)
+print(result.output)
 
 registry = CardRegistry(RegistryType.Prompt)
 registry.register_card(card)

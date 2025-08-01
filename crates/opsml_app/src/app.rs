@@ -56,12 +56,12 @@ impl AppState {
     /// * `transport_config` = The transport config to use with the ScouterQueue. If not provided,
     /// no queue will be created.
     #[staticmethod]
-    #[pyo3(signature = (path=None, load_kwargs=None, transport_config=None))]
+    #[pyo3(signature = (path=None, transport_config=None, load_kwargs=None))]
     pub fn from_path(
         py: Python,
         path: Option<PathBuf>,
-        load_kwargs: Option<&Bound<'_, PyDict>>,
         transport_config: Option<&Bound<'_, PyAny>>,
+        load_kwargs: Option<&Bound<'_, PyDict>>,
     ) -> Result<Self, AppError> {
         let path = path.unwrap_or_else(|| PathBuf::from(SaveName::ServiceCard));
         let service = Py::new(py, ServiceCard::from_path_rs(py, &path, load_kwargs)?)?;

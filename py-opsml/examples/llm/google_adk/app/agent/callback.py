@@ -10,11 +10,11 @@ def get_model_event_text(events: list[Event]) -> str | None:
     Extracts the text from the first part of the content of the final response event.
     Returns None if no final response event is found or if it has no content.
     """
-    for event in events:  # Debugging line to print the event
+    print(events)
+    for event in events:
         if event.is_final_response():
             if event.content and event.content.parts:
                 if event.content.role == "model":
-                    # Debugging line to print the event content
                     return event.content.parts[0].text
     return None
 
