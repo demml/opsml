@@ -1,7 +1,12 @@
+#[cfg(feature = "server")]
 use opsml_settings::config::DatabaseSettings;
 
+#[cfg(feature = "server")]
 use opsml_sql::{base::SqlClient, enums::client::SqlClientEnum};
-use opsml_types::{cards::CardTable, contracts::*, *};
+
+#[cfg(feature = "server")]
+use opsml_types::{cards::CardTable, contracts::*, SqlType};
+
 use pyo3::prelude::*;
 
 #[pyclass]
@@ -117,10 +122,5 @@ impl RegistryTestHelper {
 
         std::env::remove_var("OPSML_TRACKING_URI");
         std::env::remove_var("OPSML_STORAGE_URI");
-    }
-
-    #[cfg(not(feature = "server"))]
-    pub fn setup(&self) {
-        panic!("RegistryTestHelper is only available with the 'server' feature enabled.");
     }
 }

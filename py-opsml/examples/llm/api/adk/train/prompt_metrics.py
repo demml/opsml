@@ -17,28 +17,28 @@ def create_shipment_id_extraction_evaluation_prompt() -> Prompt:
         >>> prompt = create_shipment_id_extraction_evaluation_prompt()
     """
     return Prompt(
-        user_message=(
-            "You are an expert evaluator of shipment ID extraction. "
-            "Given the original user query and the LLM's extracted shipment ID (in JSON format), assess how accurately and reliably the LLM identified the shipment ID.\n"
-            "Consider the following criteria:\n"
-            "- Is the extracted shipment ID correct and matches the user's query?\n"
-            "- Is the JSON format correct (e.g., {'id': <shipment_id>} or {'id': null})?\n"
-            "- Is the extraction robust to different query phrasings?\n"
-            "- Is the extraction unambiguous and complete?\n\n"
-            "Provide your evaluation as a JSON object with the following attributes:\n"
-            "- score: An integer from 1 (poor) to 5 (excellent) indicating the quality of the extraction.\n"
-            "- reason: A brief explanation for your score.\n\n"
-            "Format your response as:\n"
-            "{\n"
-            '  "score": <integer 1-5>,\n'
-            '  "reason": "<your explanation>"\n'
-            "}\n\n"
-            "Original Query:\n"
-            "${user_query}\n\n"
-            "Extracted Shipment ID (JSON):\n"
-            "${extracted_shipment_id}\n\n"
-            "Evaluation:"
-        ),
+        user_message="""
+            You are an expert evaluator of shipment ID extraction. "
+            Given the original user query and the LLM's extracted shipment ID (in JSON format), assess how accurately and reliably the LLM identified the shipment ID.
+            Consider the following criteria:
+                - Is the extracted shipment ID correct and matches the user's query?
+                - Is the JSON format correct (e.g., {'id': <shipment_id>} or {'id': null})?
+                - Is the extraction robust to different query phrasings?
+                - Is the extraction unambiguous and complete?
+            Provide your evaluation as a JSON object with the following attributes:
+                - score: An integer from 1 (poor) to 5 (excellent) indicating the quality of the extraction.
+                - reason: A brief explanation for your score.
+            Format your response as:
+            {
+                "score": <integer 1-5>,
+                "reason": "<your explanation>"
+            }
+            Original Query:
+            ${user_query}
+            Extracted Shipment ID (JSON):
+            ${extracted_shipment_id}
+            Evaluation:
+        """,
         model="gemini-2.5-flash-lite-preview-06-17",
         provider="gemini",
         response_format=Score,
@@ -56,28 +56,28 @@ def create_helpful_response_evaluation_prompt() -> Prompt:
         >>> prompt = create_helpful_response_evaluation_prompt()
     """
     return Prompt(
-        user_message=(
-            "You are an expert evaluator of assistant responses for supply chain operations. "
-            "Given the original user query and the LLM's response about shipment delivery, assess how helpful, clear, and informative the response is.\n"
-            "Consider the following criteria:\n"
-            "- Does the response clearly communicate the estimated delivery time?\n"
-            "- Is the response friendly and easy to understand?\n"
-            "- Does it include relevant context (delays, current location, etc.)?\n"
-            "- Is the information accurate and complete?\n\n"
-            "Provide your evaluation as a JSON object with the following attributes:\n"
-            "- score: An integer from 1 (not helpful) to 5 (very helpful) indicating the overall helpfulness of the response.\n"
-            "- reason: A brief explanation for your score.\n\n"
-            "Format your response as:\n"
-            "{\n"
-            '  "score": <integer 1-5>,\n'
-            '  "reason": "<your explanation>"\n'
-            "}\n\n"
-            "Original Query:\n"
-            "${user_query}\n\n"
-            "LLM Response:\n"
-            "${shipment_response}\n\n"
-            "Evaluation:"
-        ),
+        user_message="""
+            You are an expert evaluator of assistant responses for supply chain operations.
+            Given the original user query and the LLM's response about shipment delivery, assess how helpful, clear, and informative the response is.
+            Consider the following criteria:
+                - Does the response clearly communicate the estimated delivery time?
+                - Is the response friendly and easy to understand?
+                - Does it include relevant context (delays, current location, etc.)?
+                - Is the information accurate and complete?
+            Provide your evaluation as a JSON object with the following attributes:
+                - score: An integer from 1 (not helpful) to 5 (very helpful) indicating the overall helpfulness of the response.
+                - reason: A brief explanation for your score.
+            Format your response as:
+            {
+              "score": <integer 1-5>,
+              "reason": "<your explanation>"
+            }
+            Original Query:
+            ${user_query}
+            LLM Response:
+            ${shipment_response}
+            Evaluation:
+        """,
         model="gemini-2.5-flash-lite-preview-06-17",
         provider="gemini",
         response_format=Score,
