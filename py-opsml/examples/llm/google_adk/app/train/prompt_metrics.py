@@ -53,9 +53,57 @@ def create_shipment_eta_task_evaluation_prompt() -> Prompt:
     )
 
 
+def create_shipment_eta_reply_evaluation_prompt() -> Prompt:
+    """
+    Builds a prompt for evaluating how well the LLM generated a user-facing reply
+    from the structured shipment ETA information.
+
+    Returns:
+        Prompt: A prompt that asks for a JSON evaluation of the LLM's reply quality.
+
+    Example:
+        >>> prompt = create_shipment_eta_reply_evaluation_prompt()
+    """
+    return Prompt(
+        user_message="""
+            You are an expert evaluator of supply chain assistant responses.
+            Given the structured shipment ETA information and the LLM's reply to the user, assess how well the LLM communicated the information.
+            Consider the following:
+                - Did the reply include all relevant details (ETA, shipment ID, destination, shipment status)?
+                - Was the reply clear, friendly, and easy to understand?
+                - Did the reply accurately reflect the provided shipment ETA information?
+                - Was the output free of ambiguity or missing information?
+            Provide your evaluation as a JSON object with the following attributes:
+                - score: An integer from 1 (poor) to 5 (excellent) indicating the quality of the reply.
+                - reason: A brief explanation for your score.
+            Format your response as:
+            {
+                "score": <integer 1-5>,
+                "reason": "<your explanation>"
+            }
+            Shipment ETA Information:
+            ${shipment_eta_info}
+            LLM Reply:
+            ${llm_reply}
+            Evaluation:
+        """,
+        model="gemini-2.5-flash-lite-preview-06-17",
+        provider="gemini",
+        response_format=Score,
+    )
+
+
 shipment_eta_task_evaluation = LLMMetric(
     name="shipment_eta_task_evaluation",
     prompt=create_shipment_eta_task_evaluation_prompt(),
+    value=5.0,
+    alert_threshold_value=2.0,
+    alert_threshold=AlertThreshold.Below,
+)
+
+shipment_eta_reply_evaluation = LLMMetric(
+    name="shipment_eta_reply_evaluation",
+    prompt=create_shipment_eta_reply_evaluation_prompt(),
     value=5.0,
     alert_threshold_value=2.0,
     alert_threshold=AlertThreshold.Below,

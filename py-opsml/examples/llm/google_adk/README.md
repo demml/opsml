@@ -25,3 +25,17 @@ uv run python -m app.train
 ```bash
 uv run opsml get service --space opsml --name "shipment_service" --write-dir "app/service_artifacts"
 ```
+
+3. Start the service using the following command:
+   - This will start the service and make it available for the agent to query.
+```bash
+ uv run uvicorn app.main:app --reload --port 8888
+```
+
+4. Make a request to the service to get the latest coordinates of a shipment:
+   - This will return the latest coordinates of the shipment.
+```bash
+curl -X POST "http://127.0.0.1:8888/predict" \
+  -H "Content-Type: application/json" \
+  -d '{"user_id": "user-123", "question": "What'\''s the status on shipment 1"}'  
+```
