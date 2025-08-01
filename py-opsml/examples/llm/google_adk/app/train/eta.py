@@ -35,7 +35,7 @@ def create_modelcard() -> ModelCard:
         interface=SklearnModel(
             model=model,
             sample_data=X,
-            task_type=TaskType.Classification,
+            task_type=TaskType.Regression,
         ),
         space="opsml",
         name="eta",

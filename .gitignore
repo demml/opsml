@@ -129,7 +129,7 @@ target/
 local_test_db.db
 .git.bfg-report*
 /py-opsml/catboost_info
-
+service_artifacts/
 
 
 crates/opsml_server/opsml_ui/site/*

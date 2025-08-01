@@ -8,7 +8,7 @@ card = PromptCard(
     name="my_prompt",
     prompt=Prompt(
         model="gpt-4o",
-        user_message="Provide a brief summary of the programming language $1.",
+        user_message="Provide a brief summary of the programming language ${language}.",
         system_message="Be concise, reply with one sentence.",
     ),
 )
@@ -21,7 +21,7 @@ def chat_app(language: str):
             {"role": "system", "content": card.prompt.system_message[0].unwrap()},
             {
                 "role": "user",
-                "content": card.prompt.user_message[0].bind(language).unwrap(),
+                "content": card.prompt.bind(language=language).user_message[0].unwrap(),
             },
         ],
     )

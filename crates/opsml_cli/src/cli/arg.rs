@@ -94,7 +94,7 @@ pub struct DownloadCard {
     pub uid: Option<String>,
 
     /// Write directory
-    #[arg(long = "write-dir", default_value = "artifacts")]
+    #[arg(long = "write-dir", default_value = "service")]
     pub write_dir: String,
 }
 
@@ -104,11 +104,7 @@ impl DownloadCard {
     }
 
     pub fn service_path(&self) -> PathBuf {
-        if self.write_dir == *"artifacts" {
-            PathBuf::from("service")
-        } else {
-            PathBuf::from(&self.write_dir)
-        }
+        PathBuf::from(&self.write_dir)
     }
 }
 
