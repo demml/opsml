@@ -1,49 +1,62 @@
+version: "3.8"
+
 services:
   postgres:
-    image: postgres:latest
+    image: postgres:16
+    env_file:
+      - .env
     environment:
-      POSTGRES_DB: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_USER: postgres
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
-      - 5432:5432
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      # CMD-SHELL is a docker command which runs a shell (typically /bin/sh) to call your command
-      # It differs from CMD in that all parameters can be passed in a single argument
-      # ["CMD", "curl", "-f", "http://localhost"]
-      # ["CMD-SHELL", "curl -f http://localhost"]
-      test: ["CMD-SHELL", "pg_isready"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
       interval: 10s
       timeout: 5s
       retries: 5
 
   mysql:
     image: mysql:8.2
+    env_file:
+      - .env
     environment:
-      MYSQL_DATABASE: mysql
-      MYSQL_ALLOW_EMPTY_PASSWORD: yes
-      MYSQL_USER: admin
-      MYSQL_PASSWORD: admin
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
     ports:
-      - 3306:3306
-    # Set health checks to wait until postgres has started
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
     healthcheck:
-      test: ["CMD-SHELL", "mysqladmin ping -h localhost"]
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u${MYSQL_USER} -p${MYSQL_PASSWORD}"]
       interval: 10s
       timeout: 5s
       retries: 5
 
   keycloak:
-    image: quay.io/keycloak/keycloak:latest
+    image: quay.io/keycloak/keycloak:24.0.1
+    env_file:
+      - .env
     environment:
-      KC_BOOTSTRAP_ADMIN_USERNAME: admin
-      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
     ports:
-      - 8080:8080
+      - "8080:8080"
     command: start-dev
+    depends_on:
+      postgres:
+        condition: service_healthy
     healthcheck:
-      test:
-        ["CMD-SHELL", "curl -f http://localhost:8080/health/ready || exit 1"]
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/health/ready || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
+
+volumes:
+  postgres_data:
+  mysql_data:
