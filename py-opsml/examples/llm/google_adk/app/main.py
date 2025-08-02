@@ -9,9 +9,10 @@ from .db.commands import startup_db, shutdown_db
 import uuid
 from pydantic import BaseModel, Field
 from opsml.card import PromptCard
+from opsml.scouter import HTTPConfig
 
 logger = RustyLogger.get_logger(
-    LoggingConfig(log_level=LogLevel.Debug),
+    LoggingConfig(log_level=LogLevel.Info),
 )
 
 
@@ -48,6 +49,7 @@ async def lifespan(app: FastAPI):
     startup_db()
     app_state = AppState.from_path(
         path=Path("app/service_artifacts"),
+        transport_config=HTTPConfig(),
     )
 
     agent_helper = AgentHelper("opsml_app", app_state)

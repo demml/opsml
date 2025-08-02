@@ -22,34 +22,34 @@ if __name__ == "__main__":
             ),
         ),
     )
-    # registries.prompt.register_card(
-    #    shipment_prompt_card,
-    #    save_kwargs={
-    #        "drift": DriftArgs(
-    #            active=True,
-    #            deactivate_others=True,
-    #        ),
-    #    },
-    # )
-    # registries.prompt.register_card(
-    #    response_prompt_card,
-    #    save_kwargs={
-    #        "drift": DriftArgs(
-    #            active=True,
-    #            deactivate_others=True,
-    #        ),
-    #    },
-    # )
+    registries.prompt.register_card(
+        shipment_prompt_card,
+        save_kwargs={
+            "drift": DriftArgs(
+                active=True,
+                deactivate_others=True,
+            ),
+        },
+    )
+    registries.prompt.register_card(
+        response_prompt_card,
+        save_kwargs={
+            "drift": DriftArgs(
+                active=True,
+                deactivate_others=True,
+            ),
+        },
+    )
 
     # create service card
-# service_card = ServiceCard(
-#    name="shipment_service",
-#    space="opsml",
-#    cards=[
-#        Card(alias="shipment", card=shipment_prompt_card),
-#        Card(alias="response", card=response_prompt_card),
-#        Card(alias="eta", card=modelcard),
-#    ],
-# )
+    service_card = ServiceCard(
+        name="shipment_service",
+        space="opsml",
+        cards=[
+            Card(alias="shipment", card=shipment_prompt_card),
+            Card(alias="response", card=response_prompt_card),
+            Card(alias="eta", card=modelcard),
+        ],
+    )
 
-# registries.service.register_card(service_card)
+    registries.service.register_card(service_card)

@@ -6,9 +6,10 @@ from opsml.app import AppState
 from opsml.card import PromptCard
 from google.genai import types
 from opsml.logging import RustyLogger, LogLevel, LoggingConfig
+from opsml.scouter.queue import Queue, LLMRecord
 
 logger = RustyLogger.get_logger(
-    LoggingConfig(log_level=LogLevel.Debug),
+    LoggingConfig(log_level=LogLevel.Info),
 )
 
 
@@ -40,6 +41,9 @@ class AgentHelper:
         self.shipment_prompt: PromptCard = app_state.service["shipment"]
         self.response_prompt: PromptCard = app_state.service["response"]
         self.app_name = app_name
+        self.eta_queue: Queue = app_state.queue["eta_metrics"]
+        self.shipment_reply_queue: Queue = app_state.queue["shipment_reply_metrics"]
+        self.shipment_metrics_queue: Queue = app_state.queue["shipment_metrics"]
 
     async def check_session_async(
         self,
@@ -87,8 +91,10 @@ class AgentHelper:
         ]
 
         response = parse_shipment_events(events)
-        # monitor the events for the shipment agent
-        # response
+        response["user_query"] = parameterized_query
+
+        # Insert into the metric queue for evaluation
+        self.shipment_metrics_queue.insert(LLMRecord(context=response))
 
         return response.get("llm_response", "No response from agent")
 
@@ -118,8 +124,10 @@ class AgentHelper:
         ]
 
         response = parse_response_events(events)
-        # monitor the events for the response agent
-        # response
+        response["shipment_eta_info"] = shipment_eta_info
+
+        # Insert into the reply queue for evaluation
+        self.shipment_reply_queue.insert(LLMRecord(context=response))
 
         return response.get("llm_response", "No response from agent")
 
