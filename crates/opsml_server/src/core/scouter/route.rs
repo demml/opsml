@@ -61,7 +61,7 @@ pub async fn insert_drift_profile(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
     Json(body): Json<ProfileRequest>,
-) -> Result<Json<ScouterResponse>, (StatusCode, Json<OpsmlServerError>)> {
+) -> Result<Json<RegisteredProfileResponse>, (StatusCode, Json<OpsmlServerError>)> {
     let exchange_token = state.exchange_token_from_perms(&perms).await.map_err(|e| {
         error!("Failed to exchange token for scouter: {e}");
         internal_server_error(e, "Failed to exchange token for scouter")
@@ -108,7 +108,26 @@ pub async fn insert_drift_profile(
 
     response.extensions_mut().insert(audit_context);
 
-    parse_scouter_response(response).await
+    let status_code = response.status();
+    match status_code.is_success() {
+        true => {
+            let body = response
+                .json::<RegisteredProfileResponse>()
+                .await
+                .map_err(|e| {
+                    error!("Failed to parse scouter response: {e}");
+                    internal_server_error(e, "Failed to parse scouter response")
+                })?;
+            Ok(Json(body))
+        }
+        false => {
+            let body = response.json::<ScouterServerError>().await.map_err(|e| {
+                error!("Failed to parse scouter error response: {e}");
+                internal_server_error(e, "Failed to parse scouter error response")
+            })?;
+            Err((status_code, Json(OpsmlServerError::new(body.error))))
+        }
+    }
 }
 
 /// Update a drift profile. Two tasks are performed:

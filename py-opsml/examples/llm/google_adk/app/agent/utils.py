@@ -1,5 +1,17 @@
 from google.adk.events.event import Event
 from typing import Dict
+from pydantic import BaseModel
+
+
+class ShipmentEvents(BaseModel):
+    """
+    A model to hold the parsed shipment events.
+    """
+
+    tool_call: str
+    tool_response: str
+    llm_response: str
+    user_query: str
 
 
 def parse_shipment_events(events: list[Event]) -> Dict[str, str]:

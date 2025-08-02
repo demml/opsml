@@ -7,7 +7,7 @@ from typing import Optional
 from opsml.logging import RustyLogger, LogLevel, LoggingConfig
 
 logger = RustyLogger.get_logger(
-    LoggingConfig(log_level=LogLevel.Debug),
+    LoggingConfig(log_level=LogLevel.Info),
 )
 
 db_path = Path(__file__).parent / "shipment.db"
