@@ -43,7 +43,7 @@
       })),
       null,
       2
-    );
+    );  
   }
 
   onMount(() => {
@@ -59,7 +59,7 @@
   open={openState}
   onOpenChange={(e) => (openState = e.open)}
   triggerBase="btn bg-primary-500 text-black shadow shadow-hover border-black border-2 text-sm"
-  contentBase="card p-4 bg-slate-100 border-2 border-black shadow max-w-screen-xl w-[700px] max-h-[700px] overflow-auto"
+  contentBase="card p-4 bg-slate-100 border-2 border-black shadow max-w-screen-lg max-h-[42rem] overflow-auto"
   backdropClasses="backdrop-blur-sm"
   >
   {#snippet trigger()}Prompt Messages{/snippet}
@@ -81,7 +81,7 @@
           </button>
         </div>
         <div class="overflow-auto">
-          <div class="rounded-lg border-2 border-black overflow-y-scroll max-h-[200px] text-sm">
+          <div class="rounded-lg border-2 border-black overflow-y-scroll max-h-[20rem] text-sm">
             <Highlight language={json} code={user_messages} let:highlighted>
               <LineNumbers {highlighted} hideBorder wrapLines />
             </Highlight>
@@ -101,7 +101,7 @@
           </button>
         </div>
         <div class="overflow-auto">
-          <div class="rounded-lg border-2 border-black overflow-y-scroll max-h-[200px] text-sm">
+          <div class="rounded-lg border-2 border-black overflow-y-scroll max-h-[20rem] text-sm">
             <Highlight language={json} code={system_messages} let:highlighted>
               <LineNumbers {highlighted} hideBorder wrapLines />
             </Highlight>
