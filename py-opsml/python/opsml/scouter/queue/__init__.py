@@ -7,7 +7,7 @@ ScouterQueue = scouter.queue.ScouterQueue
 Queue = scouter.queue.Queue
 KafkaConfig = scouter.queue.KafkaConfig
 RabbitMQConfig = scouter.queue.RabbitMQConfig
-# RedisConfig = scouter.queue.RedisConfig
+RedisConfig = scouter.queue.RedisConfig
 SpcServerRecord = scouter.queue.SpcServerRecord
 PsiServerRecord = scouter.queue.PsiServerRecord
 CustomMetricServerRecord = scouter.queue.CustomMetricServerRecord
@@ -19,14 +19,14 @@ RecordType = scouter.queue.RecordType
 Metric = scouter.queue.Metric
 Metrics = scouter.queue.Metrics
 EntityType = scouter.queue.EntityType
-
+LLMRecord = scouter.queue.LLMRecord
 
 __all__ = [
     "ScouterQueue",
     "Queue",
     "KafkaConfig",
     "RabbitMQConfig",
-    # "RedisConfig",
+    "RedisConfig",
     "SpcServerRecord",
     "PsiServerRecord",
     "CustomMetricServerRecord",
@@ -37,5 +37,6 @@ __all__ = [
     "RecordType",
     "Metric",
     "Metrics",
+    "LLMRecord",
     "EntityType",
 ]

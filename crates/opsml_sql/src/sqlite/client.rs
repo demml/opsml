@@ -18,7 +18,7 @@ use sqlx::{
     sqlite::{SqlitePoolOptions, SqliteRow},
     FromRow, Pool, Row, Sqlite,
 };
-use tracing::{debug, error, info, instrument};
+use tracing::{debug, error, instrument};
 
 impl FromRow<'_, SqliteRow> for User {
     fn from_row(row: &SqliteRow) -> Result<Self, sqlx::Error> {
@@ -107,7 +107,7 @@ impl SqlClient for SqliteClient {
         Ok(client)
     }
     async fn run_migrations(&self) -> Result<(), SqlError> {
-        info!("Running migrations");
+        debug!("Running migrations");
         sqlx::migrate!("src/sqlite/migrations")
             .run(&self.pool)
             .await

@@ -6,13 +6,17 @@ use axum::{
     http::{Request, StatusCode},
 };
 use opsml_crypt::encrypt_file;
-use opsml_types::contracts::{ArtifactKey, UpdateProfileRequest};
 use opsml_types::SaveName;
 use opsml_types::Suffix;
+use opsml_types::{
+    contracts::{ArtifactKey, UpdateProfileRequest},
+    RegistryType,
+};
 use rand::Rng;
 use reqwest::header;
 use scouter_client::{
     DriftRequest, DriftType, ProfileRequest, ProfileStatusRequest, SpcDriftProfile, TimeInterval,
+    VersionRequest,
 };
 use std::path::PathBuf;
 
@@ -73,6 +77,7 @@ async fn test_scouter_routes_insert_profile() {
         space: helper.space.clone(),
         drift_type: DriftType::Psi,
         profile: "test_profile".to_string(),
+        version_request: VersionRequest::default(),
     };
 
     let body = serde_json::to_string(&request).unwrap();
@@ -109,7 +114,9 @@ async fn test_scouter_routes_update_profile() {
             space: helper.space.clone(),
             drift_type: DriftType::Spc,
             profile: serialized,
+            version_request: VersionRequest::default(),
         },
+        registry_type: RegistryType::Model,
     };
 
     let body = serde_json::to_string(&request).unwrap();

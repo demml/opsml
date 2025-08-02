@@ -1,7 +1,7 @@
 <script lang="ts">
   import { Modal } from '@skeletonlabs/skeleton-svelte';
   import Highlight from "svelte-highlight";
-  import github from "svelte-highlight/styles/github";
+  import "$lib/styles/hljs.css";
 
   let { 
     code,
@@ -43,11 +43,6 @@
 
 
 </script>
-
-
-<svelte:head>
-  {@html github}
-</svelte:head>
 
 
 <Modal

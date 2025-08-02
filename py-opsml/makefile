@@ -25,6 +25,10 @@ setup.project:
 	uv sync --all-extras --group dev --group docs
 	uv run maturin develop --features server
 
+setup.dev:
+	uv sync --group dev --group docs
+	uv run maturin develop --features server
+
 setup.project.numpy1:
 	uv sync --all-extras --group dev --group numpy1
 	uv run maturin develop --features server

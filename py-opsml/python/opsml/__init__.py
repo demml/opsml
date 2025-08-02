@@ -7,10 +7,10 @@ from .opsml import (  # noqa: F401
     cli,
     data,
     experiment,
+    llm,
     logging,
     mock,
     model,
-    potato_head,
     scouter,
     types,
 )
@@ -74,9 +74,9 @@ VersionType = types.VersionType
 
 # Potato Head
 PromptCard = card.PromptCard
-Prompt = potato_head.Prompt
-Message = potato_head.Message
-ModelSettings = potato_head.ModelSettings
+Prompt = llm.Prompt
+Message = llm.Message
+ModelSettings = llm.ModelSettings
 
 # Deck
 ServiceCard = card.ServiceCard

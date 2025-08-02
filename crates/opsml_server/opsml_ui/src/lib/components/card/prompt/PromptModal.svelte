@@ -4,6 +4,7 @@
   import json from "svelte-highlight/languages/json";
   import type { Message, Prompt } from '../card_interfaces/promptcard';
   import { onMount } from 'svelte';
+  import "$lib/styles/hljs.css";
 
 
   let { prompt} = $props<{prompt: Prompt;}>();
@@ -114,4 +115,4 @@
     </footer>
   {/snippet}
   </Modal>
-  
+

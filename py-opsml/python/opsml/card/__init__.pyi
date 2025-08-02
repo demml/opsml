@@ -17,6 +17,7 @@ from typing import (
 
 from ..data import DataInterface, DataLoadKwargs, DataSaveKwargs, DataType
 from ..experiment import Metrics, Parameters
+from ..llm import Prompt, Workflow
 from ..model import (
     DriftProfileMap,
     FeatureSchema,
@@ -25,7 +26,7 @@ from ..model import (
     ModelSaveKwargs,
     OnnxSession,
 )
-from ..potato_head import Prompt
+from ..scouter.drift import LLMDriftConfig, LLMDriftProfile, LLMMetric
 from ..types import VersionType
 
 CardInterfaceType: TypeAlias = Union[DataInterface, ModelInterface]
@@ -289,7 +290,9 @@ class DataCard:
         """Return the model dump as a json string"""
 
     @staticmethod
-    def model_validate_json(json_string: str, interface: Optional[DataInterface] = None) -> "ModelCard":
+    def model_validate_json(
+        json_string: str, interface: Optional[DataInterface] = None
+    ) -> "ModelCard":
         """Validate the model json string
 
         Args:
@@ -313,13 +316,6 @@ class DataCardMetadata:
     @property
     def auditcard_uid(self) -> Optional[str]:
         """Return the experimentcard uid"""
-
-class RegistryTestHelper:
-    """Helper class for testing the registry"""
-
-    def __init__(self) -> None: ...
-    def setup(self) -> None: ...
-    def cleanup(self) -> None: ...
 
 class ModelCardMetadata:
     def __init__(
@@ -583,7 +579,9 @@ class ModelCard:
         """Return the model dump as a json string"""
 
     @staticmethod
-    def model_validate_json(json_string: str, interface: Optional[ModelInterface] = None) -> "ModelCard":
+    def model_validate_json(
+        json_string: str, interface: Optional[ModelInterface] = None
+    ) -> "ModelCard":
         """Validate the model json string
 
         Args:
@@ -848,6 +846,7 @@ class PromptCard:
         version: Optional[str] = None,
         uid: Optional[str] = None,
         tags: List[str] = [],
+        drift_profile: Optional[Dict[str, LLMDriftProfile]] = None,
     ) -> None:
         """Creates a `PromptCard`.
 
@@ -870,7 +869,9 @@ class PromptCard:
             tags (List[str]):
                 Tags to associate with `PromptCard`. Can be a dictionary of strings or
                 a `Tags` object.
-
+            drift_profile:
+                Drift profile(s) to associate with the model. Must be a dictionary of
+                alias and drift profile. Currently supports LLM drift profiles.
         Example:
         ```python
         from opsml import Prompt, PromptCard, CardRegistry, RegistryType
@@ -986,6 +987,83 @@ class PromptCard:
         """
 
     def __str__(self): ...
+    def create_drift_profile(
+        self,
+        alias: str,
+        config: LLMDriftConfig,
+        metrics: List[LLMMetric],
+        workflow: Optional[Workflow] = None,
+    ) -> None:
+        """Create an LLMDriftProfile for LLM evaluation and drift detection.
+
+        LLM evaluations are run asynchronously on the scouter server.
+
+        Logic flow:
+            1. If only metrics are provided, a workflow will be created automatically
+               from the metrics. In this case a prompt is required for each metric.
+            2. If a workflow is provided, it will be parsed and validated for compatibility:
+               - A list of metrics to evaluate workflow output must be provided
+               - Metric names must correspond to the final task names in the workflow
+
+        Baseline metrics and thresholds will be extracted from the LLMMetric objects.
+
+        Args:
+            config (LLMDriftConfig):
+                The configuration for the LLM drift profile containing space, name,
+                version, and alert settings.
+            metrics (list[LLMMetric]):
+                A list of LLMMetric objects representing the metrics to be monitored.
+                Each metric defines evaluation criteria and alert thresholds.
+            workflow (Optional[Workflow]):
+                Optional custom workflow for advanced evaluation scenarios. If provided,
+                the workflow will be validated to ensure proper parameter and response
+                type configuration.
+
+        Returns:
+            LLMDriftProfile: Configured profile ready for LLM drift monitoring.
+
+        Raises:
+            ProfileError: If workflow validation fails, metrics are empty when no
+                workflow is provided, or if workflow tasks don't match metric names.
+
+        Examples:
+            Basic usage with metrics only:
+
+            >>> config = LLMDriftConfig("my_space", "my_model", "1.0")
+            >>> metrics = [
+            ...     LLMMetric("accuracy", 0.95, AlertThreshold.Above, 0.1, prompt),
+            ...     LLMMetric("relevance", 0.85, AlertThreshold.Below, 0.2, prompt2)
+            ... ]
+            >>> profile = Drifter().create_llm_drift_profile(config, metrics)
+
+            Advanced usage with custom workflow:
+
+            >>> workflow = create_custom_workflow()  # Your custom workflow
+            >>> metrics = [LLMMetric("final_task", 0.9, AlertThreshold.Above)]
+            >>> profile = Drifter().create_llm_drift_profile(config, metrics, workflow)
+
+        Note:
+            - When using custom workflows, ensure final tasks have Score response types
+            - Initial workflow tasks must include "input" and/or "response" parameters
+            - All metric names must match corresponding workflow task names
+        """
+
+    @property
+    def drift_profile(self) -> DriftProfileMap:
+        """Return the drift profile map from the model interface.
+
+        Returns:
+            DriftProfileMap
+        """
+
+    @drift_profile.setter
+    def drift_profile(self, drift_profile: DriftProfileMap) -> None:
+        """Set the drift profile map for the prompt card.
+
+        Args:
+            drift_profile (DriftProfileMap):
+                The drift profile map to set.
+        """
 
 class Card:
     """Represents a card from a given registry that can be used in a service card"""
@@ -993,12 +1071,12 @@ class Card:
     def __init__(
         self,
         alias: str,
-        registry_type: Optional[RegistryType],
-        space: Optional[str],
-        name: Optional[str],
-        version: Optional[str],
-        uid: Optional[str],
-        card: Optional[CardType],
+        registry_type: Optional[RegistryType] = None,
+        space: Optional[str] = None,
+        name: Optional[str] = None,
+        version: Optional[str] = None,
+        uid: Optional[str] = None,
+        card: Optional[CardType] = None,
     ) -> None:
         """Initialize the service card. Card accepts either a combination of
         space and name (with version as optional) or a uid. If only space and name are
@@ -1237,29 +1315,49 @@ CardType = TypeVar(  # pylint: disable=invalid-name
 
 class CardRegistry(Generic[CardType]):
     @overload
-    def __init__(self, registry_type: Literal[RegistryType.Data]) -> "CardRegistry[DataCard]": ...
+    def __init__(
+        self, registry_type: Literal[RegistryType.Data]
+    ) -> "CardRegistry[DataCard]": ...
     @overload
-    def __init__(self, registry_type: Literal[RegistryType.Model]) -> "CardRegistry[ModelCard]": ...
+    def __init__(
+        self, registry_type: Literal[RegistryType.Model]
+    ) -> "CardRegistry[ModelCard]": ...
     @overload
-    def __init__(self, registry_type: Literal[RegistryType.Prompt]) -> "CardRegistry[PromptCard]": ...
+    def __init__(
+        self, registry_type: Literal[RegistryType.Prompt]
+    ) -> "CardRegistry[PromptCard]": ...
     @overload
-    def __init__(self, registry_type: Literal[RegistryType.Experiment]) -> "CardRegistry[ExperimentCard]": ...
+    def __init__(
+        self, registry_type: Literal[RegistryType.Experiment]
+    ) -> "CardRegistry[ExperimentCard]": ...
     @overload
-    def __init__(self, registry_type: Literal[RegistryType.Service]) -> "CardRegistry[ServiceCard]": ...
+    def __init__(
+        self, registry_type: Literal[RegistryType.Service]
+    ) -> "CardRegistry[ServiceCard]": ...
     @overload
-    def __init__(self, registry_type: Literal[RegistryType.Audit]) -> "CardRegistry[Any]": ...
+    def __init__(
+        self, registry_type: Literal[RegistryType.Audit]
+    ) -> "CardRegistry[Any]": ...
 
     # String literal overloads
     @overload
     def __init__(self, registry_type: Literal["data"]) -> "CardRegistry[DataCard]": ...
     @overload
-    def __init__(self, registry_type: Literal["model"]) -> "CardRegistry[ModelCard]": ...
+    def __init__(
+        self, registry_type: Literal["model"]
+    ) -> "CardRegistry[ModelCard]": ...
     @overload
-    def __init__(self, registry_type: Literal["prompt"]) -> "CardRegistry[PromptCard]": ...
+    def __init__(
+        self, registry_type: Literal["prompt"]
+    ) -> "CardRegistry[PromptCard]": ...
     @overload
-    def __init__(self, registry_type: Literal["experiment"]) -> "CardRegistry[ExperimentCard]": ...
+    def __init__(
+        self, registry_type: Literal["experiment"]
+    ) -> "CardRegistry[ExperimentCard]": ...
     @overload
-    def __init__(self, registry_type: Literal["service"]) -> "CardRegistry[ServiceCard]": ...
+    def __init__(
+        self, registry_type: Literal["service"]
+    ) -> "CardRegistry[ServiceCard]": ...
     @overload
     def __init__(self, registry_type: Literal["audit"]) -> "CardRegistry[Any]": ...
     def __init__(self, registry_type: Union[RegistryType, str]) -> None:

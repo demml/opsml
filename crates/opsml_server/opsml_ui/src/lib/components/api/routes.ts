@@ -30,6 +30,8 @@ export enum RoutePaths {
   SPC_DRIFT = "/opsml/api/scouter/drift/spc",
   PSI_DRIFT = "/opsml/api/scouter/drift/psi",
   CUSTOM_DRIFT = "/opsml/api/scouter/drift/custom",
+  LLM_DRIFT = "/opsml/api/scouter/drift/llm",
+  LLM_RECORD_PAGE = "/opsml/api/scouter/drift/llm/records",
   DRIFT_PROFILE = "/opsml/api/scouter/profile",
   DRIFT_ALERT = "/opsml/api/scouter/alerts",
 

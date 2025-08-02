@@ -20,11 +20,12 @@ use opsml_types::api::RequestType;
 use opsml_types::contracts::Operation;
 use opsml_types::contracts::ResourceType;
 use opsml_types::contracts::{DriftProfileRequest, UpdateProfileRequest};
-use opsml_types::{Alive, RegistryType};
+use opsml_types::Alive;
 use reqwest::Response;
+use tracing::debug;
 
 use scouter_client::{
-    Alerts, BinnedCustomMetrics, BinnedPsiFeatureMetrics, DriftAlertRequest, DriftRequest,
+    Alerts, BinnedMetrics, BinnedPsiFeatureMetrics, DriftAlertRequest, DriftRequest,
     ProfileRequest, ProfileStatusRequest, ScouterResponse, ScouterServerError, SpcDriftFeatures,
     UpdateAlertResponse, UpdateAlertStatus,
 };
@@ -125,7 +126,7 @@ pub async fn update_drift_profile(
 
     let artifact_key = state
         .sql_client
-        .get_artifact_key(&req.uid, &RegistryType::Model.to_string())
+        .get_artifact_key(&req.uid, &req.registry_type.to_string())
         .await
         .map_err(|e| {
             error!("Failed to get artifact key: {e}");
@@ -377,12 +378,12 @@ pub async fn get_psi_drift(
     Ok(Json(body))
 }
 
-#[instrument(skip(data, params))]
+#[instrument(skip_all)]
 pub async fn get_custom_drift(
     State(data): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
     Query(params): Query<DriftRequest>,
-) -> Result<Json<BinnedCustomMetrics>, (StatusCode, Json<OpsmlServerError>)> {
+) -> Result<Json<BinnedMetrics>, (StatusCode, Json<OpsmlServerError>)> {
     // validate time window
 
     let exchange_token = data.exchange_token_from_perms(&perms).await.map_err(|e| {
@@ -412,8 +413,51 @@ pub async fn get_custom_drift(
         })?;
 
     // extract body into SpcDriftFeatures
+    let body = response.json::<BinnedMetrics>().await.map_err(|e| {
+        error!("Failed to parse drift features: {e}");
+        internal_server_error(e, "Failed to parse drift features")
+    })?;
 
-    let body = response.json::<BinnedCustomMetrics>().await.map_err(|e| {
+    Ok(Json(body))
+}
+
+#[instrument(skip_all)]
+pub async fn get_llm_drift(
+    State(data): State<Arc<AppState>>,
+    Extension(perms): Extension<UserPermissions>,
+    Query(params): Query<DriftRequest>,
+) -> Result<Json<BinnedMetrics>, (StatusCode, Json<OpsmlServerError>)> {
+    // validate time window
+    debug!("Getting LLM drift features with params: {:?}", &params);
+    let exchange_token = data.exchange_token_from_perms(&perms).await.map_err(|e| {
+        error!("Failed to exchange token for scouter: {e}");
+        internal_server_error(e, "Failed to exchange token for scouter")
+    })?;
+
+    let query_string = serde_qs::to_string(&params).map_err(|e| {
+        error!("Failed to serialize query string: {e}");
+        internal_server_error(e, "Failed to serialize query string")
+    })?;
+
+    let response = data
+        .scouter_client
+        .request(
+            scouter::Routes::DriftLLM,
+            RequestType::Get,
+            None,
+            Some(query_string),
+            None,
+            &exchange_token,
+        )
+        .await
+        .map_err(|e| {
+            error!("Failed to get drift features: {e}");
+            internal_server_error(e, "Failed to get drift features")
+        })?;
+
+    // extract body into SpcDriftFeatures
+
+    let body = response.json::<BinnedMetrics>().await.map_err(|e| {
         error!("Failed to parse drift features: {e}");
         internal_server_error(e, "Failed to parse drift features")
     })?;
@@ -432,9 +476,10 @@ pub async fn get_drift_profiles_for_ui(
     Json(req): Json<DriftProfileRequest>,
 ) -> DriftProfileResult {
     // get artifact key for the given uid
+    let registry = req.registry_type.to_string();
     let artifact_key = state
         .sql_client
-        .get_artifact_key(&req.uid, &RegistryType::Model.to_string())
+        .get_artifact_key(&req.uid, &registry)
         .await
         .map_err(|e| {
             error!("Failed to get artifact key: {e}");
@@ -477,7 +522,7 @@ pub async fn get_drift_profiles_for_ui(
         state.sql_client.clone(),
         &dest_path,
         source_path,
-        &RegistryType::Model.to_string(),
+        &registry,
         Some(&req.uid),
     )
     .await

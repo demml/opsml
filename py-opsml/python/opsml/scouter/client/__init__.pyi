@@ -75,7 +75,9 @@ class DriftRequest:
         """
 
 class ProfileStatusRequest:
-    def __init__(self, name: str, space: str, version: str, drift_type: DriftType, active: bool) -> None:
+    def __init__(
+        self, name: str, space: str, version: str, drift_type: DriftType, active: bool
+    ) -> None:
         """Initialize profile status request
 
         Args:
@@ -92,7 +94,9 @@ class ProfileStatusRequest:
         """
 
 class GetProfileRequest:
-    def __init__(self, name: str, space: str, version: str, drift_type: DriftType) -> None:
+    def __init__(
+        self, name: str, space: str, version: str, drift_type: DriftType
+    ) -> None:
         """Initialize get profile request
 
         Args:
@@ -163,7 +167,7 @@ class ScouterClient:
                 DriftRequest object
 
         Returns:
-            Drift map of type BinnedCustomMetrics | BinnedPsiFeatureMetrics | BinnedSpcFeatureMetrics
+            Drift map of type BinnedMetrics | BinnedPsiFeatureMetrics | BinnedSpcFeatureMetrics
         """
 
     def register_profile(self, profile: Any, set_active: bool = False) -> bool:
@@ -214,23 +218,23 @@ class ScouterClient:
             Path to downloaded profile
         """
 
-class BinnedCustomMetricStats:
+class BinnedMetricStats:
     avg: float
     lower_bound: float
     upper_bound: float
 
     def __str__(self) -> str: ...
 
-class BinnedCustomMetric:
+class BinnedMetric:
     metric: str
     created_at: List[datetime.datetime]
-    stats: List[BinnedCustomMetricStats]
+    stats: List[BinnedMetricStats]
 
     def __str__(self) -> str: ...
 
-class BinnedCustomMetrics:
+class BinnedMetrics:
     @property
-    def metrics(self) -> Dict[str, BinnedCustomMetric]: ...
+    def metrics(self) -> Dict[str, BinnedMetric]: ...
     def __str__(self) -> str: ...
 
 class BinnedPsiMetric:
@@ -242,7 +246,7 @@ class BinnedPsiMetric:
     def __str__(self) -> str: ...
 
 class BinnedPsiFeatureMetrics:
-    features: Dict[str, BinnedCustomMetric]
+    features: Dict[str, BinnedMetric]
 
     def __str__(self) -> str: ...
 
