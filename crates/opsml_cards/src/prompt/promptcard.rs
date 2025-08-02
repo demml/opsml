@@ -2,6 +2,7 @@ use crate::error::CardError;
 use crate::utils::BaseArgs;
 use chrono::{DateTime, Utc};
 use opsml_interfaces::base::utils;
+use opsml_interfaces::DriftArgs;
 use opsml_interfaces::DriftProfileMap;
 use opsml_types::contracts::{CardRecord, PromptCardClientRecord};
 use opsml_types::DriftProfileUri;

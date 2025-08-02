@@ -29,7 +29,7 @@ uv run opsml get service --space opsml --name "shipment_service" --write-dir "ap
 3. Start the service using the following command:
    - This will start the service and make it available for the agent to query.
 ```bash
- uv run uvicorn app.main:app --reload --port 8888
+uv run uvicorn app.main:app --reload --port 8888
 ```
 
 4. Make a request to the service to get the latest coordinates of a shipment:

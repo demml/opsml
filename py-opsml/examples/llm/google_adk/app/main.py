@@ -2,15 +2,12 @@
 from contextlib import asynccontextmanager
 from pathlib import Path
 from fastapi import FastAPI, Request
-from google.adk.runners import Runner
-from google.adk.sessions import InMemorySessionService
 from opsml.logging import RustyLogger, LogLevel, LoggingConfig
 from opsml.app import AppState
-from .models import Answer, Question
-from .agent.sequential import create_sequential_agent
 from .agent.helper import AgentHelper
 from .db.commands import startup_db, shutdown_db
 import uuid
+from pydantic import BaseModel, Field
 from opsml.card import PromptCard
 
 logger = RustyLogger.get_logger(
@@ -28,6 +25,22 @@ def get_user_id() -> str:
     return "user-123"
 
 
+class Answer(BaseModel):
+    message: str
+
+
+class Question(BaseModel):
+    user_id: str = Field(
+        default_factory=lambda: "user-123",
+        description="Unique user identifier",
+    )
+    session_id: str = Field(
+        default_factory=lambda: str(uuid.uuid4()),
+        description="Unique session identifier",
+    )
+    question: str
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("Starting up FastAPI app")
@@ -37,14 +50,7 @@ async def lifespan(app: FastAPI):
         path=Path("app/service_artifacts"),
     )
 
-    session_service = InMemorySessionService()
-    runner = Runner(
-        app_name="my_app",
-        agent=create_sequential_agent(app_state),
-        session_service=session_service,
-    )
-
-    agent_helper = AgentHelper(runner, session_service)
+    agent_helper = AgentHelper("opsml_app", app_state)
     app.state.agent_helper = agent_helper
     app.state.app_state = app_state
 

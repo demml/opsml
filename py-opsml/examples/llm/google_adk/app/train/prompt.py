@@ -46,34 +46,6 @@ Reply:
 """
 
 
-def create_shipment_eta_prompt():
-    """
-    Builds a prompt for extracting the shipment ID from a user's query.
-
-    Returns:
-        Prompt: A prompt that extracts the shipment ID in JSON format.
-    """
-    return Prompt(
-        user_message=get_shipment_eta,
-        model="gemini-2.5-flash",
-        provider="gemini",
-    )
-
-
-def create_shipment_eta_reply_prompt():
-    """
-    Builds a prompt for crafting a reply based on the shipment ETA information.
-
-    Returns:
-        Prompt: A prompt that formats the reply with shipment details.
-    """
-    return Prompt(
-        user_message=get_shipment_eta_reply,
-        model="gemini-2.5-flash",
-        provider="gemini",
-    )
-
-
 def create_shipment_prompt_card() -> PromptCard:
     """
     Creates a response prompt card for extracting shipment IDs.
@@ -82,7 +54,11 @@ def create_shipment_prompt_card() -> PromptCard:
         PromptCard: A prompt card for extracting shipment IDs.
     """
     shipment_extraction_card = PromptCard(
-        prompt=create_shipment_eta_prompt(),
+        prompt=Prompt(
+            user_message=get_shipment_eta,
+            model="gemini-2.5-flash",
+            provider="gemini",
+        ),
         space="opsml",
         name="shipment_eta",
     )
@@ -107,7 +83,11 @@ def create_shipment_reply_prompt_card() -> PromptCard:
         PromptCard: A prompt card for crafting shipment replies.
     """
     shipment_reply_card = PromptCard(
-        prompt=create_shipment_eta_reply_prompt(),
+        prompt=Prompt(
+            user_message=get_shipment_eta_reply,
+            model="gemini-2.5-flash",
+            provider="gemini",
+        ),
         space="opsml",
         name="shipment_eta_reply",
     )

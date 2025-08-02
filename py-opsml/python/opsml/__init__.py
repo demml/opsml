@@ -42,7 +42,6 @@ OnnxSession = model.OnnxSession
 TensorFlowModel = model.TensorFlowModel
 ModelLoadKwargs = model.ModelLoadKwargs
 ModelSaveKwargs = model.ModelSaveKwargs
-DriftArgs = model.DriftArgs
 
 # data
 DataCard = card.DataCard

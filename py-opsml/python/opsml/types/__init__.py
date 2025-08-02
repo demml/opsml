@@ -8,6 +8,8 @@ SaverPath = types.SaverPath
 Suffix = types.Suffix
 VersionType = types.VersionType
 DriftProfileUri = types.DriftProfileUri
+DriftArgs = types.DriftArgs
+DriftProfileMap = types.DriftProfileMap
 
 
 __all__ = [
@@ -16,4 +18,6 @@ __all__ = [
     "Suffix",
     "VersionType",
     "DriftProfileUri",
+    "DriftArgs",
+    "DriftProfileMap",
 ]

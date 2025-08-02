@@ -61,6 +61,10 @@ def startup_db() -> None:
     Examples:
         >>> startup_db()
     """
+
+    if db_path.exists():
+        db_path.unlink()
+
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
 
@@ -137,19 +141,16 @@ def get_shipment_by_id(shipment_id: int) -> Optional[ShipmentRecord]:
 
 def shutdown_db() -> None:
     """
-    Deletes the 'shipment' table and all its records from the shipment.db SQLite database.
+    Deletes the shipment.db SQLite database file.
 
     Examples:
         >>> shutdown_db()
     """
-
     try:
-        conn = sqlite3.connect(db_path)
-        cursor = conn.cursor()
-        cursor.execute("DROP TABLE IF EXISTS shipment")
-        conn.commit()
-    except sqlite3.Error as e:
+        if db_path.exists():
+            db_path.unlink()
+            logger.info(f"Database file {db_path} deleted.")
+        else:
+            logger.info("No database file to delete.")
+    except Exception as e:
         logger.error(f"Error during shutdown: {e}")
-    finally:
-        conn.close()
-        logger.info("Database shutdown complete.")
