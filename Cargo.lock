@@ -5939,7 +5939,7 @@ checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
 [[package]]
 name = "scouter-client"
 version = "0.7.0"
-source = "git+https://github.com/demml/scouter.git?branch=ofeat%2Fopsml-llm-integration#e06fb39992935dd0fdbe147474b29d29a71ace4d"
+source = "git+https://github.com/demml/scouter.git?branch=ofeat%2Fopsml-llm-integration#7051add3094b1a1d49c81377a7303edd23ffdbc1"
 dependencies = [
  "chrono",
  "ndarray",
@@ -5967,7 +5967,7 @@ dependencies = [
 [[package]]
 name = "scouter-dispatch"
 version = "0.7.0"
-source = "git+https://github.com/demml/scouter.git?branch=ofeat%2Fopsml-llm-integration#e06fb39992935dd0fdbe147474b29d29a71ace4d"
+source = "git+https://github.com/demml/scouter.git?branch=ofeat%2Fopsml-llm-integration#7051add3094b1a1d49c81377a7303edd23ffdbc1"
 dependencies = [
  "futures",
  "pyo3",
@@ -5982,7 +5982,7 @@ dependencies = [
 [[package]]
 name = "scouter-drift"
 version = "0.7.0"
-source = "git+https://github.com/demml/scouter.git?branch=ofeat%2Fopsml-llm-integration#e06fb39992935dd0fdbe147474b29d29a71ace4d"
+source = "git+https://github.com/demml/scouter.git?branch=ofeat%2Fopsml-llm-integration#7051add3094b1a1d49c81377a7303edd23ffdbc1"
 dependencies = [
  "chrono",
  "cron",
@@ -6010,7 +6010,7 @@ dependencies = [
 [[package]]
 name = "scouter-events"
 version = "0.7.0"
-source = "git+https://github.com/demml/scouter.git?branch=ofeat%2Fopsml-llm-integration#e06fb39992935dd0fdbe147474b29d29a71ace4d"
+source = "git+https://github.com/demml/scouter.git?branch=ofeat%2Fopsml-llm-integration#7051add3094b1a1d49c81377a7303edd23ffdbc1"
 dependencies = [
  "async-trait",
  "chrono",
@@ -6043,7 +6043,7 @@ dependencies = [
 [[package]]
 name = "scouter-observability"
 version = "0.7.0"
-source = "git+https://github.com/demml/scouter.git?branch=ofeat%2Fopsml-llm-integration#e06fb39992935dd0fdbe147474b29d29a71ace4d"
+source = "git+https://github.com/demml/scouter.git?branch=ofeat%2Fopsml-llm-integration#7051add3094b1a1d49c81377a7303edd23ffdbc1"
 dependencies = [
  "itertools 0.14.0",
  "ndarray",
@@ -6060,7 +6060,7 @@ dependencies = [
 [[package]]
 name = "scouter-profile"
 version = "0.7.0"
-source = "git+https://github.com/demml/scouter.git?branch=ofeat%2Fopsml-llm-integration#e06fb39992935dd0fdbe147474b29d29a71ace4d"
+source = "git+https://github.com/demml/scouter.git?branch=ofeat%2Fopsml-llm-integration#7051add3094b1a1d49c81377a7303edd23ffdbc1"
 dependencies = [
  "chrono",
  "indicatif",
@@ -6082,7 +6082,7 @@ dependencies = [
 [[package]]
 name = "scouter-semver"
 version = "0.7.0"
-source = "git+https://github.com/demml/scouter.git?branch=ofeat%2Fopsml-llm-integration#e06fb39992935dd0fdbe147474b29d29a71ace4d"
+source = "git+https://github.com/demml/scouter.git?branch=ofeat%2Fopsml-llm-integration#7051add3094b1a1d49c81377a7303edd23ffdbc1"
 dependencies = [
  "pyo3",
  "semver",
@@ -6093,7 +6093,7 @@ dependencies = [
 [[package]]
 name = "scouter-settings"
 version = "0.7.0"
-source = "git+https://github.com/demml/scouter.git?branch=ofeat%2Fopsml-llm-integration#e06fb39992935dd0fdbe147474b29d29a71ace4d"
+source = "git+https://github.com/demml/scouter.git?branch=ofeat%2Fopsml-llm-integration#7051add3094b1a1d49c81377a7303edd23ffdbc1"
 dependencies = [
  "base64 0.22.1",
  "potato-head",
@@ -6106,7 +6106,7 @@ dependencies = [
 [[package]]
 name = "scouter-types"
 version = "0.7.0"
-source = "git+https://github.com/demml/scouter.git?branch=ofeat%2Fopsml-llm-integration#e06fb39992935dd0fdbe147474b29d29a71ace4d"
+source = "git+https://github.com/demml/scouter.git?branch=ofeat%2Fopsml-llm-integration#7051add3094b1a1d49c81377a7303edd23ffdbc1"
 dependencies = [
  "chrono",
  "colored_json",

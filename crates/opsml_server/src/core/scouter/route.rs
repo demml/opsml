@@ -26,9 +26,9 @@ use tracing::debug;
 
 use scouter_client::{
     Alerts, BinnedMetrics, BinnedPsiFeatureMetrics, DriftAlertRequest, DriftRequest,
-    LLMDriftRecordPaginationRequest, ProfileRequest, ProfileStatusRequest,
-    RegisteredProfileResponse, ScouterResponse, ScouterServerError, SpcDriftFeatures,
-    UpdateAlertResponse, UpdateAlertStatus,
+    LLMDriftRecordPaginationRequest, LLMDriftServerRecord, PaginationResponse, ProfileRequest,
+    ProfileStatusRequest, RegisteredProfileResponse, ScouterResponse, ScouterServerError,
+    SpcDriftFeatures, UpdateAlertResponse, UpdateAlertStatus,
 };
 use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::sync::Arc;
@@ -489,27 +489,26 @@ pub async fn get_llm_drift(
 pub async fn get_llm_drift_records(
     State(data): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
-    Query(params): Query<LLMDriftRecordPaginationRequest>,
-) -> Result<Json<PaginationResponse<LLMDriftServerRecord>>, (StatusCode, Json<ScouterServerError>)>
-{
-    debug!("Getting LLM drift features with params: {:?}", &params);
+    Json(body): Json<LLMDriftRecordPaginationRequest>,
+) -> Result<Json<PaginationResponse<LLMDriftServerRecord>>, (StatusCode, Json<OpsmlServerError>)> {
+    debug!("Getting LLM drift features with params: {:?}", &body);
     let exchange_token = data.exchange_token_from_perms(&perms).await.map_err(|e| {
         error!("Failed to exchange token for scouter: {e}");
         internal_server_error(e, "Failed to exchange token for scouter")
     })?;
 
-    let query_string = serde_qs::to_string(&params).map_err(|e| {
-        error!("Failed to serialize query string: {e}");
-        internal_server_error(e, "Failed to serialize query string")
+    let request = serde_json::to_value(&body).map_err(|e| {
+        error!("Failed to serialize profile request: {e}");
+        internal_server_error(e, "Failed to serialize profile request")
     })?;
 
     let response = data
         .scouter_client
         .request(
-            scouter::Routes::DriftLLM,
-            RequestType::Get,
+            scouter::Routes::DriftLLMRecords,
+            RequestType::Post,
+            Some(request),
             None,
-            Some(query_string),
             None,
             &exchange_token,
         )
@@ -518,6 +517,16 @@ pub async fn get_llm_drift_records(
             error!("Failed to get drift features: {e}");
             internal_server_error(e, "Failed to get drift features")
         })?;
+
+    let body = response
+        .json::<PaginationResponse<LLMDriftServerRecord>>()
+        .await
+        .map_err(|e| {
+            error!("Failed to parse drift features: {e}");
+            internal_server_error(e, "Failed to parse drift features")
+        })?;
+
+    Ok(Json(body))
 }
 
 /// Get drift  profiles for UI
@@ -777,6 +786,10 @@ pub async fn get_scouter_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
                 get(get_custom_drift),
             )
             .route(&format!("{prefix}/scouter/drift/llm"), get(get_llm_drift))
+            .route(
+                &format!("{prefix}/scouter/drift/llm/records"),
+                get(get_llm_drift_records),
+            )
             .route(
                 &format!("{prefix}/scouter/alerts"),
                 get(get_drift_alerts).put(update_alert_status),
