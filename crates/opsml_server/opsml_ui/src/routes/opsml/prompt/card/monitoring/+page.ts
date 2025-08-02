@@ -50,7 +50,13 @@ export const load: PageLoad = async ({ parent }) => {
   let maxDataPoints = getMaxDataPoints();
 
   // get latest metrics for all available drift profiles
-  let latestMetrics = await getLatestMetricsExample(
+  //let latestMetrics = await getLatestMetricsExample(
+  //  profiles,
+  //  TimeInterval.SixHours,
+  //  maxDataPoints
+  //);
+
+  let latestMetrics = await getLatestMetrics(
     profiles,
     TimeInterval.SixHours,
     maxDataPoints
@@ -76,8 +82,12 @@ export const load: PageLoad = async ({ parent }) => {
     name: currentConfig.name,
     version: currentConfig.version,
   };
-  //let currentLLMRecords = getLLMRecordPage(service_info, undefined, undefined);
-  let currentLLMRecordPage = mockLLMDriftPageResponse;
+
+  let currentLLMRecords = await getLLMRecordPage(
+    service_info,
+    undefined,
+    undefined
+  );
 
   return {
     profiles,
@@ -91,6 +101,6 @@ export const load: PageLoad = async ({ parent }) => {
     currentMetricData,
     maxDataPoints,
     currentAlerts,
-    currentLLMRecordPage,
+    currentLLMRecords,
   };
 };

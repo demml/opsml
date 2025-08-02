@@ -22,11 +22,23 @@ export function buildTimeChart(
   const dayInMs = 24 * 60 * 60 * 1000;
   const isMultiDay = timeRange > dayInMs;
 
-  const maxY = Math.max(
-    ...datasets.flatMap((dataset) =>
-      Array.isArray(dataset.data) ? (dataset.data as number[]) : []
-    )
+  const allYValues = datasets.flatMap((dataset) =>
+    Array.isArray(dataset.data) ? (dataset.data as number[]) : []
   );
+
+  const maxY = Math.max(...allYValues);
+  const minY = Math.min(...allYValues);
+
+  let yMin: number;
+  let yMax: number;
+
+  if (maxY === minY) {
+    yMin = minY - 1;
+    yMax = maxY + 1;
+  } else {
+    yMin = minY - Math.abs(minY) * 0.1;
+    yMax = maxY + Math.abs(maxY) * 0.1;
+  }
 
   const annotation =
     typeof baselineValue === "number"
@@ -142,7 +154,8 @@ export function buildTimeChart(
           },
         },
         y: {
-          suggestedMax: maxY * 1.1,
+          min: yMin,
+          max: yMax,
           title: {
             display: true,
             text: y_label,

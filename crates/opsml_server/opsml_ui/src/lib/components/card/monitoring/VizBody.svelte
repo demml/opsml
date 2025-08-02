@@ -63,7 +63,9 @@
 function getBaselineValue(): number | undefined {
   // get custom value
   if (currentConfig && currentDriftType === DriftType.Custom) {
-      return (currentProfile as DriftProfile).Custom.metrics[currentName];
+      // get threshold from the custom config
+    const customConfig = currentConfig as CustomMetricDriftConfig;
+    return (currentProfile as DriftProfile).Custom.metrics[currentName];
   }
 
   // get llm value
