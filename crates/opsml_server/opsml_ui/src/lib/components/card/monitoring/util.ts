@@ -188,6 +188,8 @@ export async function getLLMRecordPage(
     pagination,
   };
 
+  console.log("getLLMRecordPage request", request);
+
   const response = await opsmlClient.get(
     RoutePaths.LLM_RECORD_PAGE,
     request,
