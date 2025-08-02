@@ -26,8 +26,8 @@ use tracing::debug;
 
 use scouter_client::{
     Alerts, BinnedMetrics, BinnedPsiFeatureMetrics, DriftAlertRequest, DriftRequest,
-    ProfileRequest, ProfileStatusRequest, ScouterResponse, ScouterServerError, SpcDriftFeatures,
-    UpdateAlertResponse, UpdateAlertStatus,
+    ProfileRequest, ProfileStatusRequest, RegisteredProfileResponse, ScouterResponse,
+    ScouterServerError, SpcDriftFeatures, UpdateAlertResponse, UpdateAlertStatus,
 };
 use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::sync::Arc;

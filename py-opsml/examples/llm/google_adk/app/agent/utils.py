@@ -1,19 +1,48 @@
 from google.adk.events.event import Event
-from google.genai import types
+from typing import Dict
 
 
-def get_final_event(events: list[Event]) -> str | None:
-    """Returns the last event from the list of events."""
-    for event in events:  # Debugging line to print the event
-        if event.is_final_response():
-            if event.content and event.content.parts:
-                # Return the text of the first part of the content
-                return event.content.parts[0].text
-    return None
+def parse_shipment_events(events: list[Event]) -> Dict[str, str]:
+    """
+    Extracts the text from the first part of the content of the final response event.
+    Returns None if no final response event is found or if it has no content.
+    """
+
+    response_dict: Dict[str, str] = {}
+
+    for event in events:
+        for call in event.get_function_calls() or []:
+            if call.name == "get_shipment_eta_by_id":
+                response_dict["tool_call"] = call.model_dump_json()
+        for response in event.get_function_responses() or []:
+            if response.name == "get_shipment_eta_by_id":
+                response_dict["tool_response"] = response.model_dump_json()
+        if (
+            event.is_final_response()
+            and getattr(event, "content", None)
+            and getattr(event.content, "parts", None)
+            and getattr(event.content, "role", None) == "model"
+        ):
+            response_dict["llm_response"] = event.content.parts[0].text or "No response"  # type: ignore
+
+    return response_dict
 
 
-def get_text_from_content(content: types.Content | None) -> str | None:
-    """Extracts text from the content."""
-    if content and content.parts:
-        return content.parts[0].text if content.parts else ""
-    return ""
+def parse_response_events(events: list[Event]) -> Dict[str, str]:
+    """
+    Extracts the text from the first part of the content of the final response event.
+    Returns None if no final response event is found or if it has no content.
+    """
+
+    response_dict: Dict[str, str] = {}
+
+    for event in events:
+        if (
+            event.is_final_response()
+            and getattr(event, "content", None)
+            and getattr(event.content, "parts", None)
+            and getattr(event.content, "role", None) == "model"
+        ):
+            response_dict["llm_response"] = event.content.parts[0].text or "No response"  # type: ignore
+
+    return response_dict

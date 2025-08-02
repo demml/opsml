@@ -4,6 +4,7 @@ from opsml import (  # type: ignore
     Prompt,
     PromptCard,
 )
+from opsml.types import DriftArgs
 from opsml.scouter.drift import LLMDriftConfig, LLMMetric, LLMDriftProfile
 from opsml.scouter.alert import AlertThreshold
 from opsml.llm import Score, Agent, Task, Workflow
@@ -81,7 +82,15 @@ def test_promptcard_crud() -> None:
 
             assert not card.drift_profile.is_empty()
 
-            reg.register_card(card)
+            reg.register_card(
+                card,
+                save_kwargs={
+                    "drift": DriftArgs(  # we want to set the drift profile to active
+                        active=True,
+                        deactivate_others=True,
+                    ),
+                },
+            )
 
             assert card.uid is not None
 

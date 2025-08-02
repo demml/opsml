@@ -1,9 +1,9 @@
 use opsml_interfaces::{
-    CatBoostModel, DataProcessor, DriftArgs, DriftProfileMap, ExtraMetadata, Feature,
-    FeatureSchema, HuggingFaceModel, HuggingFaceORTModel, HuggingFaceOnnxArgs, HuggingFaceTask,
-    LightGBMModel, LightningModel, ModelInterface, ModelInterfaceMetadata,
-    ModelInterfaceSaveMetadata, ModelLoadKwargs, ModelSaveKwargs, OnnxModel, OnnxSchema,
-    OnnxSession, ProcessorType, SklearnModel, TensorFlowModel, TorchModel, XGBoostModel,
+    CatBoostModel, DataProcessor, ExtraMetadata, Feature, FeatureSchema, HuggingFaceModel,
+    HuggingFaceORTModel, HuggingFaceOnnxArgs, HuggingFaceTask, LightGBMModel, LightningModel,
+    ModelInterface, ModelInterfaceMetadata, ModelInterfaceSaveMetadata, ModelLoadKwargs,
+    ModelSaveKwargs, OnnxModel, OnnxSchema, OnnxSession, ProcessorType, SklearnModel,
+    TensorFlowModel, TorchModel, XGBoostModel,
 };
 use opsml_types::{ModelInterfaceType, ModelType, TaskType};
 
@@ -20,7 +20,6 @@ pub fn model(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<OnnxSession>()?;
     m.add_class::<HuggingFaceTask>()?;
     m.add_class::<ModelSaveKwargs>()?;
-    m.add_class::<DriftArgs>()?;
     m.add_class::<ModelLoadKwargs>()?;
 
     // Model Interface
@@ -49,9 +48,6 @@ pub fn model(m: &Bound<'_, PyModule>) -> PyResult<()> {
 
     // Processor
     m.add_class::<ProcessorType>()?;
-
-    // Drift Profile
-    m.add_class::<DriftProfileMap>()?;
 
     Ok(())
 }

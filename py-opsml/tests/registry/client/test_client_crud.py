@@ -16,8 +16,9 @@ from opsml import (  # type: ignore
 )
 from opsml.card import ServiceCard, Card  # type: ignore
 from opsml.card import RegistryMode, CardList  # type: ignore
-from opsml.model import SklearnModel, DriftArgs  # type: ignore
+from opsml.model import SklearnModel  # type: ignore
 from opsml.data import PandasData  # type: ignore
+from opsml.types import DriftArgs  # type: ignore
 from pathlib import Path
 import shutil
 import pytest
