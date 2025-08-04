@@ -17,13 +17,14 @@ use opsml_types::{
 };
 use scouter_client::ScouterClient;
 use scouter_client::{ProfileRequest, ProfileStatusRequest};
-use tracing::{error, info, instrument};
+use tracing::field::debug;
+use tracing::{debug, error, instrument};
 
 pub fn setup_scouter_client(
     settings: &ScouterSettings,
 ) -> Result<Option<ScouterClient>, RegistryError> {
     if settings.server_uri.is_empty() {
-        info!("Scouter client is disabled");
+        debug!("Scouter client is disabled");
         return Ok(None);
     }
 
@@ -304,13 +305,16 @@ impl OpsmlRegistry {
     ///
     /// # Returns
     /// * `Result<(), RegistryError>` - Ok if the profile was inserted successfully, Err if there was an error
+    #[instrument(skip_all)]
     pub fn insert_scouter_profile(&self, profile: &ProfileRequest) -> Result<(), RegistryError> {
         match self {
             Self::ClientRegistry(client_registry) => {
+                debug("ClientRegistry: Inserting scouter profile");
                 Ok(client_registry.insert_scouter_profile(profile)?)
             }
             #[cfg(feature = "server")]
             Self::ServerRegistry(server_registry) => {
+                debug("ServerRegistry: Inserting scouter profile");
                 server_registry.insert_scouter_profile(profile)
             }
         }

@@ -238,21 +238,21 @@ card = PromptCard(
     prompt=Prompt(
         model="o4-mini",
         provider="openai",
-        user_message="Provide a brief summary of the programming language $1.", # (1)
-        system_message="Be concise, reply with one sentence.",
+        message="Provide a brief summary of the programming language $1.", # (1)
+        system_instruction="Be concise, reply with one sentence.",
     ),
 )
 
 def chat_app(language: str):
 
     # create the prompt and bind the context
-    user_prompt = card.prompt.user_message[0].bind(language).unwrap()
+    user_prompt = card.prompt.message[0].bind(language).unwrap()
 
     response = client.chat.completions.create(
         model=card.prompt.model,
         messages=[
             {"role": "system", "content": user_prompt},
-            {"role": "user", "content": card.prompt.user_message[0].unwrap()},
+            {"role": "user", "content": card.prompt.message[0].unwrap()},
         ],
     )
 
@@ -286,17 +286,17 @@ card = PromptCard(
     prompt=Prompt(
         model="gpt-4o",
         provider="openai",
-        user_message='Where does "hello world" come from?',
-        system_message="Be concise, reply with one sentence.",
+        message='Where does "hello world" come from?',
+        system_instruction="Be concise, reply with one sentence.",
     ),
 )
 
 agent = Agent(
     card.prompt.model_identifier,
-    system_message=card.prompt.system_message[0].unwrap(),
+    system_instruction=card.prompt.system_instruction[0].unwrap(),
 )
 
-result = agent.run_sync(card.prompt.user_message[0].unwrap())
+result = agent.run_sync(card.prompt.message[0].unwrap())
 print(result.output)
 
 registry = CardRegistry(RegistryType.Prompt)

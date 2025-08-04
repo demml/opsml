@@ -8,11 +8,11 @@ from opsml import (  # type: ignore
     ModelLoadKwargs,
     ModelSaveKwargs,
 )
-from opsml.model import DriftArgs
 from opsml.mock import OpsmlServerContext
 from opsml.card import RegistryMode, CardList  # type: ignore
 from opsml.model import SklearnModel  # type: ignore
 from opsml.data import PandasData  # type: ignore
+from opsml.types import DriftArgs  # type: ignore
 from pathlib import Path
 import shutil
 import pytest
@@ -245,6 +245,7 @@ def delete_card(card: DataCard | ModelCard, registry: CardRegistry):
     registry.delete_card(card=card)
 
     cards = registry.list_cards(uid=card.uid)
+
     assert len(cards) == 0
 
 

@@ -24,12 +24,16 @@ export class OpsmlClient {
     return new Response(null, { status: 500, statusText: "Failure" });
   }
 
-  private addQueryParams(url: string, params?: Record<string, string>): string {
+  private addQueryParams(url: string, params?: Record<string, any>): string {
     if (!params) return url;
     const searchParams = new URLSearchParams();
     Object.entries(params).forEach(([key, value]) => {
-      if (value) {
-        searchParams.append(key, value);
+      if (value !== undefined && value !== null) {
+        if (typeof value === "object") {
+          searchParams.append(key, JSON.stringify(value));
+        } else {
+          searchParams.append(key, String(value));
+        }
       }
     });
     const queryString = searchParams.toString();

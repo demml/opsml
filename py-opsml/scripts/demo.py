@@ -101,8 +101,8 @@ def pandas_data() -> PandasData:
 
 def chat_prompt() -> Prompt:
     prompt = Prompt(
-        user_message="what is 2 + 2?",
-        system_message="You are a helpful assistant.",
+        message="what is 2 + 2?",
+        system_instruction="You are a helpful assistant.",
         model_settings=ModelSettings(
             model="gpt-4o",
             provider="openai",

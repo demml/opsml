@@ -26,8 +26,8 @@ onnxruntime = [
     "onnxruntime>=1.18.0",
 ]
 sklearn_onnx = [
-    "skl2onnx>=1.16.0, <1.19.0",
-    "onnxmltools~=1.12",
+    "skl2onnx>=1.16.0, <1.20.0",
+    "onnxmltools~=1.14",
     "opsml[onnx,onnxruntime]",
 ]
 tf_onnx = [
@@ -71,6 +71,7 @@ dev = [
     "pydantic-ai>=0.0.41",
     "tomli>=2.2.1",
     "tomli-w>=1.2.0",
+    "google-adk>=1.5.0; python_version >= '3.12'",
 ]
 
 numpy1 = [

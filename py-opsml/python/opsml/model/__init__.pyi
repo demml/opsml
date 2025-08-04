@@ -13,9 +13,9 @@ from ..scouter.drift import (
     SpcDriftConfig,
     SpcDriftProfile,
 )
-from ..types import DriftProfileUri
+from ..types import DriftArgs, DriftProfileMap, DriftProfileUri
 
-DriftProfileType = Dict[str, Union[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile,]]
+DriftProfileType = Dict[str, Union[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile]]
 
 class ProcessorType:
     Preprocessor: "ProcessorType"
@@ -116,25 +116,6 @@ class OnnxSchema:
     @property
     def feature_names(self) -> List[str]:
         """Return the feature names and order for onnx."""
-
-class DriftArgs:
-    def __init__(self, active: bool = True, deactivate_others: bool = False) -> None:
-        """Define a drift config
-
-        Args:
-            active (bool):
-                Whether to set the drift profile to active
-            deactivate_others (bool):
-                Whether to deactivate all other drift profiles of the same space and name
-        """
-
-    @property
-    def active(self) -> bool:
-        """Return the active status of the drift profile."""
-
-    @property
-    def deactivate_others(self) -> bool:
-        """Return the deactivate_others status of the drift profile."""
 
 class ModelSaveKwargs:
     def __init__(
@@ -329,23 +310,6 @@ class DataProcessor:
         """
 
     def __str__(self): ...
-
-class DriftProfileMap:
-    def __init__(self) -> None:
-        """Creates an empty drift profile map"""
-
-    def add_profile(self, alias: str, profile: Any) -> None:
-        """Add a drift profile to the map
-
-        Args:
-            alias:
-                Alias to use for the drift profile
-            profile:
-                Drift profile to add
-        """
-
-    def __getitem__(self, key: str) -> Any:
-        """Returns the drift profile at the given key"""
 
 # Define interface save and metadata arguments
 class ModelInterfaceSaveMetadata:

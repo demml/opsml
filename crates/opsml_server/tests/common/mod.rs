@@ -21,7 +21,7 @@ use opsml_sql::base::SqlClient;
 use opsml_sql::enums::client::SqlClientEnum;
 use opsml_types::contracts::*;
 use opsml_types::*;
-use scouter_client::{BinnedCustomMetrics, BinnedPsiFeatureMetrics, SpcDriftFeatures};
+use scouter_client::{BinnedMetrics, BinnedPsiFeatureMetrics, SpcDriftFeatures};
 use std::time::SystemTime;
 use std::time::UNIX_EPOCH;
 use std::{env, net::SocketAddr, vec};
@@ -171,13 +171,22 @@ impl ScouterServer {
             .await;
 
         // get binned custom metrics mock
-        let binned_custom_metrics = BinnedCustomMetrics::default();
-        let binned_custom_metrics_json = serde_json::to_string(&binned_custom_metrics).unwrap();
+        let binned_metrics = BinnedMetrics::default();
+        let binned_custom_metrics_json = serde_json::to_string(&binned_metrics).unwrap();
         server
             .mock("GET", "/scouter/drift/custom")
             .match_query(mockito::Matcher::Any)
             .with_status(200)
             .with_body(binned_custom_metrics_json)
+            .create_async()
+            .await;
+
+        let binned_metrics_json = serde_json::to_string(&binned_metrics).unwrap();
+        server
+            .mock("GET", "/scouter/drift/llm")
+            .match_query(mockito::Matcher::Any)
+            .with_status(200)
+            .with_body(binned_metrics_json)
             .create_async()
             .await;
 

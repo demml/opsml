@@ -1,6 +1,13 @@
 from pathlib import Path
 from typing import Optional
 
+class RegistryTestHelper:
+    """Helper class for testing the registry"""
+
+    def __init__(self) -> None: ...
+    def setup(self) -> None: ...
+    def cleanup(self) -> None: ...
+
 class OpsmlTestServer:
     def __init__(self, cleanup: bool = True, base_path: Optional[Path] = None) -> None:
         """Instantiates the test server.
@@ -63,4 +70,21 @@ class MockConfig:
 
         Args:
             **kwargs: Arbitrary keyword arguments to set as attributes.
+        """
+
+class LLMTestServer:
+    """
+    Mock server for OpenAI API.
+    This class is used to simulate the OpenAI API for testing purposes.
+    """
+
+    def __init__(self): ...
+    def __enter__(self):
+        """
+        Start the mock server.
+        """
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        """
+        Stop the mock server.
         """

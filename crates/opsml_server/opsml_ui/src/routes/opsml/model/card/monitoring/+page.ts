@@ -1,28 +1,30 @@
 export const ssr = false;
 
-import { getMaxDataPoints } from "$lib/utils";
+import { getMaxDataPoints, RegistryType } from "$lib/utils";
 import type { PageLoad } from "./$types";
 import {
   getDriftProfiles,
   getProfileConfig,
   getProfileFeatures,
   type UiProfile,
-} from "$lib/components/card/model/monitoring/util";
-import {
-  DriftType,
-  TimeInterval,
-} from "$lib/components/card/model/monitoring/types";
+} from "$lib/components/card/monitoring/util";
+import { DriftType, TimeInterval } from "$lib/components/card/monitoring/types";
 import {
   getLatestMetricsExample,
   getLatestMetrics,
   getCurrentMetricData,
-} from "$lib/components/card/model/monitoring/util";
-import { getDriftAlerts } from "$lib/components/card/model/monitoring/alert/utils";
+} from "$lib/components/card/monitoring/util";
+import { getDriftAlerts } from "$lib/components/card/monitoring/alert/utils";
 
 export const load: PageLoad = async ({ parent }) => {
   const { metadata, registry, registryPath } = await parent();
 
-  let profiles = await getDriftProfiles(metadata);
+  let profiles = await getDriftProfiles(
+    metadata.uid,
+    metadata.metadata.interface_metadata.save_metadata.drift_profile_uri_map ??
+      {},
+    RegistryType.Model
+  );
 
   // get all keys which should be of DriftType
   const keys: DriftType[] = Object.keys(profiles)
@@ -45,7 +47,7 @@ export const load: PageLoad = async ({ parent }) => {
   let maxDataPoints = getMaxDataPoints();
 
   // get latest metrics for all available drift profiles
-  let latestMetrics = await getLatestMetrics(
+  let latestMetrics = await getLatestMetricsExample(
     profiles,
     TimeInterval.SixHours,
     maxDataPoints
