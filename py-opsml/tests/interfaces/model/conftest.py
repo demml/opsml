@@ -42,6 +42,8 @@ from opsml.data import TorchData
 from catboost import CatBoostClassifier, CatBoostRanker, CatBoostRegressor, Pool  # type: ignore
 from opsml.data import ColType, ColumnSplit, DataSplit
 
+device = "cpu"
+
 
 def cleanup() -> None:
     """Removes temp files"""
@@ -51,9 +53,9 @@ def cleanup() -> None:
 
 
 @pytest.fixture(scope="session")
-def example_dataframe() -> (
-    Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]
-):
+def example_dataframe() -> Tuple[
+    pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame
+]:
     X, y = cast(Tuple[pd.DataFrame, pd.DataFrame], create_fake_data(n_samples=1200))
 
     return X, y, X, y
@@ -1061,9 +1063,9 @@ def lightning_classification() -> Generator[Tuple[LightningModel, Any], None, No
 
 
 @pytest.fixture(scope="module")
-def huggingface_text_classification_pipeline() -> (
-    Generator[Tuple[Pipeline, str], None, None]
-):
+def huggingface_text_classification_pipeline() -> Generator[
+    Tuple[Pipeline, str], None, None
+]:
     pipe = pipeline("text-classification")
     data = "This restaurant is awesome"
 
@@ -1071,9 +1073,9 @@ def huggingface_text_classification_pipeline() -> (
 
 
 @pytest.fixture(scope="module")
-def huggingface_bart_model() -> (
-    Generator[Tuple[BartModel, BartTokenizer, torch.Tensor], None, None]
-):
+def huggingface_bart_model() -> Generator[
+    Tuple[BartModel, BartTokenizer, torch.Tensor], None, None
+]:
     tokenizer = BartTokenizer.from_pretrained("facebook/bart-base")
     model = BartModel.from_pretrained("facebook/bart-base")
     inputs = tokenizer(["Hello. How are you"], return_tensors="pt")
@@ -1082,9 +1084,9 @@ def huggingface_bart_model() -> (
 
 
 @pytest.fixture(scope="module")
-def huggingface_tf_bart_model() -> (
-    Generator[Tuple[TFBartModel, BartTokenizer, torch.Tensor], None, None]
-):
+def huggingface_tf_bart_model() -> Generator[
+    Tuple[TFBartModel, BartTokenizer, torch.Tensor], None, None
+]:
     tokenizer = BartTokenizer.from_pretrained("facebook/bart-base")
     model = TFBartModel.from_pretrained("facebook/bart-base")
     inputs = tokenizer(["Hello. How are you"], return_tensors="pt")
@@ -1093,11 +1095,9 @@ def huggingface_tf_bart_model() -> (
 
 
 @pytest.fixture(scope="module")
-def huggingface_vit() -> (
-    Generator[
-        Tuple[ViTForImageClassification, ViTFeatureExtractor, TorchData], None, None
-    ]
-):
+def huggingface_vit() -> Generator[
+    Tuple[ViTForImageClassification, ViTFeatureExtractor, TorchData], None, None
+]:
     image = Image.open("tests/assets/cats.jpg")
 
     feature_extractor = ViTFeatureExtractor.from_pretrained(
