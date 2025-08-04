@@ -18,7 +18,7 @@ use sqlx::{
     sqlite::{SqlitePoolOptions, SqliteRow},
     FromRow, Pool, Row, Sqlite,
 };
-use tracing::{debug, error, info, instrument};
+use tracing::{debug, error, instrument};
 
 impl FromRow<'_, SqliteRow> for User {
     fn from_row(row: &SqliteRow) -> Result<Self, sqlx::Error> {
@@ -107,7 +107,7 @@ impl SqlClient for SqliteClient {
         Ok(client)
     }
     async fn run_migrations(&self) -> Result<(), SqlError> {
-        info!("Running migrations");
+        debug!("Running migrations");
         sqlx::migrate!("src/sqlite/migrations")
             .run(&self.pool)
             .await
@@ -749,12 +749,14 @@ impl SqlClient for SqliteClient {
         Ok(records)
     }
 
+    #[instrument(skip_all)]
     async fn delete_card(
         &self,
         table: &CardTable,
         uid: &str,
     ) -> Result<(String, String), SqlError> {
         // SQLite doesn't support RETURNING clause, so we need to do this in two steps
+        debug!("Deleting card with uid: {uid} from table: {table}");
         let select_query = format!("SELECT space, name FROM {table} WHERE uid = ?");
         let (space, name): (String, String) = sqlx::query_as(&select_query)
             .bind(uid)

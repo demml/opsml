@@ -1,6 +1,5 @@
 <script lang="ts">
-  
-  import atomOneLight from "svelte-highlight/styles/atom-one-light";
+
   import { goto } from '$app/navigation';
   import FileViewer from '$lib/components/files/FileViewer.svelte';
   import type { RawFile } from "./types";
@@ -43,10 +42,7 @@
   
   </script>
   
-  <svelte:head>
-    {@html atomOneLight}
-  </svelte:head>
-  
+ 
 
     <div class="w-full pt-4">
       <div class="rounded-lg border-2 border-black shadow overflow-x-auto bg-primary-500 py-2 mb-2 justify-center">

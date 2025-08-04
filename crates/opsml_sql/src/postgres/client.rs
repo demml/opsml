@@ -16,11 +16,12 @@ use opsml_types::{
     RegistryType,
 };
 use semver::Version;
+use sqlx::ConnectOptions;
 use sqlx::{
-    postgres::{PgPoolOptions, PgRow, Postgres},
+    postgres::{PgConnectOptions, PgPoolOptions, PgRow, Postgres},
     FromRow, Pool, Row,
 };
-use tracing::info;
+use tracing::debug;
 
 impl FromRow<'_, PgRow> for User {
     fn from_row(row: &PgRow) -> Result<Self, sqlx::Error> {
@@ -74,9 +75,13 @@ pub struct PostgresClient {
 #[async_trait]
 impl SqlClient for PostgresClient {
     async fn new(settings: &DatabaseSettings) -> Result<Self, SqlError> {
+        let mut opts: PgConnectOptions = settings.connection_uri.parse()?;
+
+        opts = opts.log_statements(tracing::log::LevelFilter::Off);
+
         let pool = PgPoolOptions::new()
             .max_connections(settings.max_connections)
-            .connect(&settings.connection_uri)
+            .connect_with(opts)
             .await
             .map_err(SqlError::ConnectionError)?;
 
@@ -89,7 +94,7 @@ impl SqlClient for PostgresClient {
     }
 
     async fn run_migrations(&self) -> Result<(), SqlError> {
-        info!("Running migrations");
+        debug!("Running migrations");
         sqlx::migrate!("src/postgres/migrations")
             .run(&self.pool)
             .await

@@ -25,6 +25,10 @@ setup.project:
 	uv sync --all-extras --group dev --group docs
 	uv run maturin develop --features server
 
+setup.dev:
+	uv sync --group dev --group docs
+	uv run maturin develop --features server
+
 setup.project.numpy1:
 	uv sync --all-extras --group dev --group numpy1
 	uv run maturin develop --features server
@@ -105,3 +109,6 @@ serve.docs:
 publish.docs:
 	uv run python scripts/build_docs.py
 	uv run mkdocs gh-deploy --force
+
+upgrade.deps:
+	uv sync --upgrade --all-extras

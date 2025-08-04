@@ -1,5 +1,5 @@
 pub mod error;
-pub mod genai_mock;
-pub mod std_mock;
-pub use genai_mock::OpenAITestServer;
-pub use std_mock::{OpsmlServerContext, OpsmlTestServer};
+pub mod mock;
+pub use mock::{OpsmlServerContext, OpsmlTestServer};
+pub use opsml_registry::RegistryTestHelper;
+pub use potato_head::LLMTestServer;

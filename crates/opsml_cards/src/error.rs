@@ -7,6 +7,7 @@ use opsml_types::RegistryType;
 use opsml_utils::error::{PyUtilError, UtilError};
 use pyo3::exceptions::PyRuntimeError;
 use pyo3::prelude::*;
+use scouter_client::DriftType;
 use thiserror::Error;
 use tracing::error;
 
@@ -32,6 +33,12 @@ pub enum CardError {
 
     #[error(transparent)]
     SerdeError(#[from] serde_json::Error),
+
+    #[error(transparent)]
+    ProfileError(#[from] scouter_client::ProfileError),
+
+    #[error(transparent)]
+    DriftError(#[from] scouter_client::DriftError),
 
     #[error("{0}")]
     CustomError(String),
@@ -101,6 +108,9 @@ pub enum CardError {
 
     #[error("Failed to get drift profile")]
     DriftProfileNotFoundError,
+
+    #[error("Unsupported drift type: {0}")]
+    UnsupportedDriftType(DriftType),
 }
 
 impl<'a> From<pyo3::DowncastError<'a, 'a>> for CardError {

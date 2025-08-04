@@ -1,3 +1,4 @@
+use crate::RegistryType;
 use scouter_client::ProfileRequest;
 use serde::{Deserialize, Serialize};
 
@@ -6,6 +7,7 @@ pub struct UpdateProfileRequest {
     pub uid: String,
     pub profile_uri: String,
     pub request: ProfileRequest,
+    pub registry_type: RegistryType,
 }
 
 impl UpdateProfileRequest {

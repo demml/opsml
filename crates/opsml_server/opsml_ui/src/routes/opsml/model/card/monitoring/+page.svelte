@@ -1,18 +1,18 @@
 <script lang="ts">
-  import type { BinnedDriftMap, MetricData  } from '$lib/components/card/model/monitoring/types';
-  import { DriftType } from '$lib/components/card/model/monitoring/types';
-  import type { DriftProfile, DriftProfileResponse, UiProfile } from '$lib/components/card/model/monitoring/util';
+  import type { BinnedDriftMap, MetricData  } from '$lib/components/card/monitoring/types';
+  import { DriftType } from '$lib/components/card/monitoring/types';
+  import type { DriftProfile, DriftProfileResponse, UiProfile } from '$lib/components/card/monitoring/util';
   import type { PageProps } from './$types';
-  import { TimeInterval } from '$lib/components/card/model/monitoring/types';
-  import VizBody from '$lib/components/card/model/monitoring/VizBody.svelte';
-  import Header from '$lib/components/card/model/monitoring/Header.svelte';
+  import { TimeInterval } from '$lib/components/card/monitoring/types';
+  import VizBody from '$lib/components/card/monitoring/VizBody.svelte';
+  import Header from '$lib/components/card/monitoring/Header.svelte';
   import { getMaxDataPoints, debounce } from '$lib/utils';
-  import { getLatestMetrics, getCurrentMetricData } from '$lib/components/card/model/monitoring/util';
+  import { getLatestMetrics, getCurrentMetricData } from '$lib/components/card/monitoring/util';
   import { onMount, onDestroy } from 'svelte';
-  import { getProfileFeatures, getProfileConfig, type DriftConfigType } from '$lib/components/card/model/monitoring/util';
-  import type { Alert } from '$lib/components/card/model/monitoring/alert/types';
-  import { getDriftAlerts, acknowledgeAlert } from '$lib/components/card/model/monitoring/alert/utils';
-  import AlertTable from '$lib/components/card/model/monitoring/alert/AlertTable.svelte';
+  import { getProfileFeatures, getProfileConfig, type DriftConfigType } from '$lib/components/card/monitoring/util';
+  import type { Alert } from '$lib/components/card/monitoring/alert/types';
+  import { getDriftAlerts, acknowledgeAlert } from '$lib/components/card/monitoring/alert/utils';
+  import AlertTable from '$lib/components/card/monitoring/alert/AlertTable.svelte';
 
  
   let { data }: PageProps = $props();
@@ -30,6 +30,7 @@
   let currentConfig: DriftConfigType = $state(data.currentConfig);
   let currentAlerts: Alert[] = $state(data.currentAlerts);
   let uid: string = $state(data.metadata.uid);
+  let registry = $state(data.registry);
 
   // Vars
   let drift_types: DriftType[] = data.keys;
@@ -157,6 +158,7 @@
             {handleNameChange}
             {handleTimeChange}
             {uid}
+            {registry}
       /> 
     </div>
 
@@ -186,7 +188,7 @@
     </div>
 
     <!-- Row 3: 1 column  alerts -->
-    <div class="rounded-lg shadow border-2 border-black bg-slate-100 min-h-[6rem] max-h-[30rem]">
+    <div class="bg-white p-2 border-2 border-black rounded-lg shadow min-h-[6rem] max-h-[30rem]">
       <AlertTable
         alerts={currentAlerts}
         updateAlert={updateAlert}

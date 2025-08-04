@@ -6,9 +6,9 @@ from .. import scouter  # noqa: F401
 TimeInterval = scouter.client.TimeInterval
 DriftRequest = scouter.client.DriftRequest
 ScouterClient = scouter.client.ScouterClient
-BinnedCustomMetricStats = scouter.client.BinnedCustomMetricStats
-BinnedCustomMetric = scouter.client.BinnedCustomMetric
-BinnedCustomMetrics = scouter.client.BinnedCustomMetrics
+BinnedMetricStats = scouter.client.BinnedMetricStats
+BinnedMetric = scouter.client.BinnedMetric
+BinnedMetrics = scouter.client.BinnedMetrics
 BinnedPsiMetric = scouter.client.BinnedPsiMetric
 BinnedPsiFeatureMetrics = scouter.client.BinnedPsiFeatureMetrics
 SpcDriftFeature = scouter.client.SpcDriftFeature
@@ -23,9 +23,9 @@ __all__ = [
     "TimeInterval",
     "DriftRequest",
     "ScouterClient",
-    "BinnedCustomMetricStats",
-    "BinnedCustomMetric",
-    "BinnedCustomMetrics",
+    "BinnedMetricStats",
+    "BinnedMetric",
+    "BinnedMetrics",
     "BinnedPsiMetric",
     "BinnedPsiFeatureMetrics",
     "SpcDriftFeature",

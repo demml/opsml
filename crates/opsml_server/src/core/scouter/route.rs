@@ -20,13 +20,15 @@ use opsml_types::api::RequestType;
 use opsml_types::contracts::Operation;
 use opsml_types::contracts::ResourceType;
 use opsml_types::contracts::{DriftProfileRequest, UpdateProfileRequest};
-use opsml_types::{Alive, RegistryType};
+use opsml_types::Alive;
 use reqwest::Response;
+use tracing::debug;
 
 use scouter_client::{
-    Alerts, BinnedCustomMetrics, BinnedPsiFeatureMetrics, DriftAlertRequest, DriftRequest,
-    ProfileRequest, ProfileStatusRequest, ScouterResponse, ScouterServerError, SpcDriftFeatures,
-    UpdateAlertResponse, UpdateAlertStatus,
+    Alerts, BinnedMetrics, BinnedPsiFeatureMetrics, DriftAlertRequest, DriftRequest,
+    LLMDriftRecordPaginationRequest, LLMDriftServerRecord, PaginationResponse, ProfileRequest,
+    ProfileStatusRequest, RegisteredProfileResponse, ScouterResponse, ScouterServerError,
+    SpcDriftFeatures, UpdateAlertResponse, UpdateAlertStatus,
 };
 use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::sync::Arc;
@@ -60,7 +62,7 @@ pub async fn insert_drift_profile(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
     Json(body): Json<ProfileRequest>,
-) -> Result<Json<ScouterResponse>, (StatusCode, Json<OpsmlServerError>)> {
+) -> Result<Json<RegisteredProfileResponse>, (StatusCode, Json<OpsmlServerError>)> {
     let exchange_token = state.exchange_token_from_perms(&perms).await.map_err(|e| {
         error!("Failed to exchange token for scouter: {e}");
         internal_server_error(e, "Failed to exchange token for scouter")
@@ -107,7 +109,26 @@ pub async fn insert_drift_profile(
 
     response.extensions_mut().insert(audit_context);
 
-    parse_scouter_response(response).await
+    let status_code = response.status();
+    match status_code.is_success() {
+        true => {
+            let body = response
+                .json::<RegisteredProfileResponse>()
+                .await
+                .map_err(|e| {
+                    error!("Failed to parse scouter response: {e}");
+                    internal_server_error(e, "Failed to parse scouter response")
+                })?;
+            Ok(Json(body))
+        }
+        false => {
+            let body = response.json::<ScouterServerError>().await.map_err(|e| {
+                error!("Failed to parse scouter error response: {e}");
+                internal_server_error(e, "Failed to parse scouter error response")
+            })?;
+            Err((status_code, Json(OpsmlServerError::new(body.error))))
+        }
+    }
 }
 
 /// Update a drift profile. Two tasks are performed:
@@ -125,7 +146,7 @@ pub async fn update_drift_profile(
 
     let artifact_key = state
         .sql_client
-        .get_artifact_key(&req.uid, &RegistryType::Model.to_string())
+        .get_artifact_key(&req.uid, &req.registry_type.to_string())
         .await
         .map_err(|e| {
             error!("Failed to get artifact key: {e}");
@@ -377,12 +398,12 @@ pub async fn get_psi_drift(
     Ok(Json(body))
 }
 
-#[instrument(skip(data, params))]
+#[instrument(skip_all)]
 pub async fn get_custom_drift(
     State(data): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
     Query(params): Query<DriftRequest>,
-) -> Result<Json<BinnedCustomMetrics>, (StatusCode, Json<OpsmlServerError>)> {
+) -> Result<Json<BinnedMetrics>, (StatusCode, Json<OpsmlServerError>)> {
     // validate time window
 
     let exchange_token = data.exchange_token_from_perms(&perms).await.map_err(|e| {
@@ -412,11 +433,98 @@ pub async fn get_custom_drift(
         })?;
 
     // extract body into SpcDriftFeatures
-
-    let body = response.json::<BinnedCustomMetrics>().await.map_err(|e| {
+    let body = response.json::<BinnedMetrics>().await.map_err(|e| {
         error!("Failed to parse drift features: {e}");
         internal_server_error(e, "Failed to parse drift features")
     })?;
+
+    Ok(Json(body))
+}
+
+#[instrument(skip_all)]
+pub async fn get_llm_drift(
+    State(data): State<Arc<AppState>>,
+    Extension(perms): Extension<UserPermissions>,
+    Query(params): Query<DriftRequest>,
+) -> Result<Json<BinnedMetrics>, (StatusCode, Json<OpsmlServerError>)> {
+    // validate time window
+    debug!("Getting LLM drift features with params: {:?}", &params);
+    let exchange_token = data.exchange_token_from_perms(&perms).await.map_err(|e| {
+        error!("Failed to exchange token for scouter: {e}");
+        internal_server_error(e, "Failed to exchange token for scouter")
+    })?;
+
+    let query_string = serde_qs::to_string(&params).map_err(|e| {
+        error!("Failed to serialize query string: {e}");
+        internal_server_error(e, "Failed to serialize query string")
+    })?;
+
+    let response = data
+        .scouter_client
+        .request(
+            scouter::Routes::DriftLLM,
+            RequestType::Get,
+            None,
+            Some(query_string),
+            None,
+            &exchange_token,
+        )
+        .await
+        .map_err(|e| {
+            error!("Failed to get drift features: {e}");
+            internal_server_error(e, "Failed to get drift features")
+        })?;
+
+    // extract body into SpcDriftFeatures
+
+    let body = response.json::<BinnedMetrics>().await.map_err(|e| {
+        error!("Failed to parse drift features: {e}");
+        internal_server_error(e, "Failed to parse drift features")
+    })?;
+
+    Ok(Json(body))
+}
+
+#[instrument(skip_all)]
+pub async fn get_llm_drift_records(
+    State(data): State<Arc<AppState>>,
+    Extension(perms): Extension<UserPermissions>,
+    Json(body): Json<LLMDriftRecordPaginationRequest>,
+) -> Result<Json<PaginationResponse<LLMDriftServerRecord>>, (StatusCode, Json<OpsmlServerError>)> {
+    debug!("Getting LLM drift features with params: {:?}", &body);
+    let exchange_token = data.exchange_token_from_perms(&perms).await.map_err(|e| {
+        error!("Failed to exchange token for scouter: {e}");
+        internal_server_error(e, "Failed to exchange token for scouter")
+    })?;
+
+    let request = serde_json::to_value(&body).map_err(|e| {
+        error!("Failed to serialize profile request: {e}");
+        internal_server_error(e, "Failed to serialize profile request")
+    })?;
+
+    let response = data
+        .scouter_client
+        .request(
+            scouter::Routes::DriftLLMRecords,
+            RequestType::Post,
+            Some(request),
+            None,
+            None,
+            &exchange_token,
+        )
+        .await
+        .map_err(|e| {
+            error!("Failed to get drift features: {e}");
+            internal_server_error(e, "Failed to get drift features")
+        })?;
+
+    let body = response
+        .json::<PaginationResponse<LLMDriftServerRecord>>()
+        .await
+        .map_err(|e| {
+            error!("Failed to parse drift features: {e}");
+            internal_server_error(e, "Failed to parse drift features")
+        })?;
 
     Ok(Json(body))
 }
@@ -432,9 +540,10 @@ pub async fn get_drift_profiles_for_ui(
     Json(req): Json<DriftProfileRequest>,
 ) -> DriftProfileResult {
     // get artifact key for the given uid
+    let registry = req.registry_type.to_string();
     let artifact_key = state
         .sql_client
-        .get_artifact_key(&req.uid, &RegistryType::Model.to_string())
+        .get_artifact_key(&req.uid, &registry)
         .await
         .map_err(|e| {
             error!("Failed to get artifact key: {e}");
@@ -477,7 +586,7 @@ pub async fn get_drift_profiles_for_ui(
         state.sql_client.clone(),
         &dest_path,
         source_path,
-        &RegistryType::Model.to_string(),
+        &registry,
         Some(&req.uid),
     )
     .await
@@ -675,6 +784,11 @@ pub async fn get_scouter_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
             .route(
                 &format!("{prefix}/scouter/drift/custom"),
                 get(get_custom_drift),
+            )
+            .route(&format!("{prefix}/scouter/drift/llm"), get(get_llm_drift))
+            .route(
+                &format!("{prefix}/scouter/drift/llm/records"),
+                post(get_llm_drift_records),
             )
             .route(
                 &format!("{prefix}/scouter/alerts"),

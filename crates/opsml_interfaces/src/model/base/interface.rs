@@ -8,7 +8,9 @@ use crate::model::SampleData;
 use crate::types::{FeatureSchema, ProcessorType};
 use crate::OnnxSession;
 use opsml_utils::PyHelperFuncs;
-use scouter_client::{CustomDriftProfile, DriftType, PsiDriftProfile, SpcDriftProfile};
+use scouter_client::{
+    CustomDriftProfile, DriftType, LLMDriftProfile, PsiDriftProfile, SpcDriftProfile,
+};
 
 use crate::error::ModelInterfaceError;
 use crate::model::base::utils;
@@ -470,7 +472,7 @@ impl ModelInterface {
             _ => None,
         });
 
-        let profile = drifter.create_drift_profile(py, data, config, data_type)?;
+        let profile = drifter.create_drift_profile(py, data, config, data_type, None)?;
         self.drift_profile.add_profile(py, alias, profile.clone())?;
 
         Ok(profile)
@@ -683,6 +685,14 @@ impl ModelInterface {
                 }
                 DriftType::Custom => {
                     let profile = CustomDriftProfile::model_validate_json(file);
+                    self.drift_profile.add_profile(
+                        py,
+                        alias.to_string(),
+                        profile.into_bound_py_any(py)?,
+                    )?;
+                }
+                DriftType::LLM => {
+                    let profile = LLMDriftProfile::model_validate_json(file);
                     self.drift_profile.add_profile(
                         py,
                         alias.to_string(),

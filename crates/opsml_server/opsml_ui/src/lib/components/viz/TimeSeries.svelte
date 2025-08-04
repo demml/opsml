@@ -72,6 +72,6 @@
   });
   </script>
 
-  <div class="w-full h-[28rem]">
+  <div class="w-full h-[24rem]">
     <canvas bind:this={canvas}></canvas>
   </div>

@@ -13,21 +13,21 @@ card = PromptCard(
     prompt=Prompt(
         model="gpt-4o",
         provider="openai",
-        user_message="Provide a brief summary of the programming language $1.",
-        system_message="Be concise, reply with one sentence.",
+        message="Provide a brief summary of the programming language $1.",
+        system_instruction="Be concise, reply with one sentence.",
     ),
 )
 
 def chat_app(language: str):
 
     # create the prompt and bind the context
-    user_prompt = card.prompt.user_message[0].bind(language).unwrap()
+    user_prompt = card.prompt.message[0].bind(language).unwrap()
 
     response = client.chat.completions.create(
         model=card.prompt.model_identifier,
         messages=[
             {"role": "system", "content": user_prompt},
-            {"role": "user", "content": card.prompt.user_message[0].unwrap()},
+            {"role": "user", "content": card.prompt.message[0].unwrap()},
         ],
     )
 
@@ -146,13 +146,13 @@ The same arguments all apply to `system_prompt`
                 ```python
                     prompt = Prompt(
                         model="gpt-4o",
-                        user_message="My prompt $1 is $2",
-                        system_message="system_prompt",
+                        message="My prompt $1 is $2",
+                        system_instruction="system_prompt",
                         provider="openai",
                     )
                     agent = Agent(
                         prompt.model_identifier, # "openai:gpt-4o"
-                        system_message=prompt.system_message[0].unwrap(),
+                        system_instruction=prompt.system_instruction[0].unwrap(),
                     )
                 ```
             """
@@ -166,13 +166,13 @@ The same arguments all apply to `system_prompt`
             """The prompt sanitizer to use for the prompt."""
 
         @property
-        def user_message(
+        def message(
             self,
         ) -> List[Message]:
             """The user prompt to use in the prompt."""
 
         @property
-        def system_message(self) -> List[Message]:
+        def system_instruction(self) -> List[Message]:
             """The system prompt to use in the prompt."""
 
         def save_prompt(self, path: Optional[Path] = None) -> None:
@@ -248,13 +248,13 @@ The same arguments all apply to `system_prompt`
                 ```python
                     prompt = Prompt(
                         model="openai:gpt-4o",
-                        user_message=[
+                        message=[
                             "My prompt $1 is $2",
                             "My prompt $3 is $4",
                         ],
-                        system_message="system_prompt",
+                        system_instruction="system_prompt",
                     )
-                    bounded_prompt = prompt.user_message[0].bind("world").unwrap() # we bind "world" to the first message
+                    bounded_prompt = prompt.message[0].bind("world").unwrap() # we bind "world" to the first message
                 ```
 
             Args:
@@ -274,18 +274,18 @@ The same arguments all apply to `system_prompt`
                 ```python
                     prompt = Prompt(
                         model="openai:gpt-4o",
-                        user_message=[
+                        message=[
                             "My prompt $1 is $2",
                             "My prompt $3 is $4",
                         ],
-                        system_message="system_prompt",
+                        system_instruction="system_prompt",
                     )
 
                     # sanitize the first message
                     # Note: sanitization will fail if no sanitizer is provided (either through prompt.sanitizer or standalone)
 
                     # we bind "world" to the first message
-                    bounded_prompt = prompt.user_message[0].bind("world").sanitize(prompt.sanitizer).unwrap()
+                    bounded_prompt = prompt.message[0].bind("world").sanitize(prompt.sanitizer).unwrap()
                 ```
 
             Args:

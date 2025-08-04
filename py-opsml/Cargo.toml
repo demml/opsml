@@ -25,7 +25,7 @@ opsml-settings = { workspace = true }
 opsml-state = { workspace = true }
 opsml-types = { workspace = true }
 opsml-utils = { workspace = true }
-potato-head = { workspace = true }
+potato-head = { workspace = true, features = ['mock'] }
 pyo3 = { workspace = true }
 reqwest = { workspace = true, optional = true }
 rusty-logging = { workspace = true }

@@ -8,6 +8,7 @@
   import { formatJson } from "./utils";
   import { convertMarkdown } from '$lib/components/readme/util';
   import { onMount } from 'svelte';
+  import "$lib/styles/hljs.css";
 
   let { 
     file,

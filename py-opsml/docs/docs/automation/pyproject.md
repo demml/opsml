@@ -57,8 +57,8 @@ card = PromptCard(
     prompt=Prompt( # (2)
         model="gpt-4o",
         provider="openai",
-        user_message="Provide a brief summary of the programming language $1.",
-        system_message="Be concise, reply with one sentence.",
+        message="Provide a brief summary of the programming language $1.",
+        system_instruction="Be concise, reply with one sentence.",
     ),
 )
 

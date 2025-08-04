@@ -40,7 +40,6 @@ opsml-toml = { path = "crates/opsml_toml" }
 opsml-types = { path = "crates/opsml_types" }
 opsml-utils = { path = "crates/opsml_utils" }
 opsml-version = { path = "crates/opsml_version" }
-potato-head = { path = "crates/potato_head" }
 
 aes-gcm = "0.*"
 anyhow = "1.0.93"
@@ -88,7 +87,8 @@ reqwest = { version = "0.12.*", features = ["json", "stream", "multipart", "rust
 rust-embed = "8.*"
 reqwest-middleware = "0.*"
 rusty-logging = "0.*"
-scouter-client = "0.6.5"
+potato-head = { git = "https://github.com/demml/potatohead.git", branch = "main" }
+scouter-client = { git = "https://github.com/demml/scouter.git", branch = "ofeat/opsml-llm-integration" }
 sha2 = "0.*"
 semver = "1.*"
 serde = { version = "1.*", features = ["derive"] }
