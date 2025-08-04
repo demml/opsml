@@ -245,6 +245,7 @@ def delete_card(card: DataCard | ModelCard, registry: CardRegistry):
     registry.delete_card(card=card)
 
     cards = registry.list_cards(uid=card.uid)
+
     assert len(cards) == 0
 
 

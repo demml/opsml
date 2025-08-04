@@ -15,7 +15,7 @@ card = PromptCard(
 
 agent = Agent(
     model=card.prompt.model,
-    system_message=card.prompt.system_message[0].unwrap(),
+    system_prompt=card.prompt.system_message[0].unwrap(),
 )
 
 result = agent.run_sync('Where does "hello world" come from?')

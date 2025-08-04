@@ -10,7 +10,6 @@ pub fn mock(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<OpsmlServerContext>()?;
     m.add_class::<LLMTestServer>()?;
     m.add_class::<MockConfig>()?;
-    m.add_class::<LLMTestServer>()?;
     m.add_class::<RegistryTestHelper>()?;
 
     Ok(())

@@ -340,7 +340,7 @@ dependencies = [
  "async-task",
  "concurrent-queue",
  "fastrand 2.3.0",
- "futures-lite 2.6.0",
+ "futures-lite 2.6.1",
  "pin-project-lite",
  "slab",
 ]
@@ -354,9 +354,9 @@ dependencies = [
  "async-channel 2.5.0",
  "async-executor",
  "async-io 2.5.0",
- "async-lock 3.4.0",
+ "async-lock 3.4.1",
  "blocking",
- "futures-lite 2.6.0",
+ "futures-lite 2.6.1",
 ]
 
 [[package]]
@@ -396,13 +396,13 @@ version = "2.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "19634d6336019ef220f09fd31168ce5c184b295cbf80345437cc36094ef223ca"
 dependencies = [
- "async-lock 3.4.0",
+ "async-lock 3.4.1",
  "cfg-if",
  "concurrent-queue",
  "futures-io",
- "futures-lite 2.6.0",
+ "futures-lite 2.6.1",
  "parking",
- "polling 3.9.0",
+ "polling 3.10.0",
  "rustix 1.0.8",
  "slab",
  "windows-sys 0.60.2",
@@ -419,11 +419,11 @@ dependencies = [
 
 [[package]]
 name = "async-lock"
-version = "3.4.0"
+version = "3.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ff6e472cdea888a4bd64f342f09b3f50e1886d32afe8df3d663c01140b811b18"
+checksum = "5fd03604047cee9b6ce9de9f70c6cd540a0520c813cbd49bae61f33ab80ed1dc"
 dependencies = [
- "event-listener 5.4.0",
+ "event-listener 5.4.1",
  "event-listener-strategy",
  "pin-project-lite",
 ]
@@ -436,13 +436,13 @@ checksum = "65daa13722ad51e6ab1a1b9c01299142bc75135b337923cfa10e79bbbd669f00"
 dependencies = [
  "async-channel 2.5.0",
  "async-io 2.5.0",
- "async-lock 3.4.0",
+ "async-lock 3.4.1",
  "async-signal",
  "async-task",
  "blocking",
  "cfg-if",
- "event-listener 5.4.0",
- "futures-lite 2.6.0",
+ "event-listener 5.4.1",
+ "futures-lite 2.6.1",
  "rustix 1.0.8",
 ]
 
@@ -465,7 +465,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f567af260ef69e1d52c2b560ce0ea230763e6fbb9214a85d768760a920e3e3c1"
 dependencies = [
  "async-io 2.5.0",
- "async-lock 3.4.0",
+ "async-lock 3.4.1",
  "atomic-waker",
  "cfg-if",
  "futures-core",
@@ -1081,7 +1081,7 @@ version = "0.21.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "88ddd80344317c40c04b603807b63a5cefa532f1b43522e72f480a988141f744"
 dependencies = [
- "async-lock 3.4.0",
+ "async-lock 3.4.1",
  "async-process",
  "async-trait",
  "azure_core",
@@ -1103,7 +1103,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "59f838159f4d29cb400a14d9d757578ba495ae64feb07a7516bf9e4415127126"
 dependencies = [
  "RustyXML",
- "async-lock 3.4.0",
+ "async-lock 3.4.1",
  "async-trait",
  "azure_core",
  "bytes",
@@ -1170,7 +1170,7 @@ dependencies = [
 [[package]]
 name = "baked-potato"
 version = "0.2.3"
-source = "git+https://github.com/demml/potatohead.git?branch=main#6c4a6c600fd940b1f97f9c012b905926a9193de7"
+source = "git+https://github.com/demml/potatohead.git?branch=main#3adbb34da6c7280cf98ab45fe7decfaa6c7c8da5"
 dependencies = [
  "mockito",
  "potato-agent",
@@ -1301,7 +1301,7 @@ dependencies = [
  "async-channel 2.5.0",
  "async-task",
  "futures-io",
- "futures-lite 2.6.0",
+ "futures-lite 2.6.1",
  "piper",
 ]
 
@@ -2085,9 +2085,9 @@ checksum = "0206175f82b8d6bf6652ff7d71a1e27fd2e4efde587fd368662814d6ec1d9ce0"
 
 [[package]]
 name = "event-listener"
-version = "5.4.0"
+version = "5.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3492acde4c3fc54c845eaab3eed8bd00c7a7d881f78bfc801e43a93dec1331ae"
+checksum = "e13b66accf52311f30a0db42147dadea9850cb48cd070028831ae5f5d4b856ab"
 dependencies = [
  "concurrent-queue",
  "parking",
@@ -2100,7 +2100,7 @@ version = "0.5.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8be9f3dfaaffdae2972880079a491a1a8bb7cbed0b8dd7a347f668b4150a3b93"
 dependencies = [
- "event-listener 5.4.0",
+ "event-listener 5.4.1",
  "pin-project-lite",
 ]
 
@@ -2302,9 +2302,9 @@ dependencies = [
 
 [[package]]
 name = "futures-lite"
-version = "2.6.0"
+version = "2.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f5edaec856126859abb19ed65f39e90fea3a9574b9707f13539acf4abf7eb532"
+checksum = "f78e10609fe0e0b3f4157ffab1876319b5b0db102a2c60dc4626306dc46b44ad"
 dependencies = [
  "fastrand 2.3.0",
  "futures-core",
@@ -4740,9 +4740,9 @@ dependencies = [
 
 [[package]]
 name = "polling"
-version = "3.9.0"
+version = "3.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8ee9b2fa7a4517d2c91ff5bc6c297a427a96749d15f98fcdbb22c05571a4d4b7"
+checksum = "b5bd19146350fe804f7cb2669c851c03d69da628803dab0d98018142aaa5d829"
 dependencies = [
  "cfg-if",
  "concurrent-queue",
@@ -4782,7 +4782,7 @@ dependencies = [
 [[package]]
 name = "potato-agent"
 version = "0.2.3"
-source = "git+https://github.com/demml/potatohead.git?branch=main#6c4a6c600fd940b1f97f9c012b905926a9193de7"
+source = "git+https://github.com/demml/potatohead.git?branch=main#3adbb34da6c7280cf98ab45fe7decfaa6c7c8da5"
 dependencies = [
  "base64 0.22.1",
  "potato-prompt",
@@ -4800,7 +4800,7 @@ dependencies = [
 [[package]]
 name = "potato-head"
 version = "0.2.3"
-source = "git+https://github.com/demml/potatohead.git?branch=main#6c4a6c600fd940b1f97f9c012b905926a9193de7"
+source = "git+https://github.com/demml/potatohead.git?branch=main#3adbb34da6c7280cf98ab45fe7decfaa6c7c8da5"
 dependencies = [
  "baked-potato",
  "potato-agent",
@@ -4813,7 +4813,7 @@ dependencies = [
 [[package]]
 name = "potato-prompt"
 version = "0.2.3"
-source = "git+https://github.com/demml/potatohead.git?branch=main#6c4a6c600fd940b1f97f9c012b905926a9193de7"
+source = "git+https://github.com/demml/potatohead.git?branch=main#3adbb34da6c7280cf98ab45fe7decfaa6c7c8da5"
 dependencies = [
  "mime_guess",
  "potato-type",
@@ -4830,7 +4830,7 @@ dependencies = [
 [[package]]
 name = "potato-type"
 version = "0.2.3"
-source = "git+https://github.com/demml/potatohead.git?branch=main#6c4a6c600fd940b1f97f9c012b905926a9193de7"
+source = "git+https://github.com/demml/potatohead.git?branch=main#3adbb34da6c7280cf98ab45fe7decfaa6c7c8da5"
 dependencies = [
  "potato-util",
  "pyo3",
@@ -4844,7 +4844,7 @@ dependencies = [
 [[package]]
 name = "potato-util"
 version = "0.2.3"
-source = "git+https://github.com/demml/potatohead.git?branch=main#6c4a6c600fd940b1f97f9c012b905926a9193de7"
+source = "git+https://github.com/demml/potatohead.git?branch=main#3adbb34da6c7280cf98ab45fe7decfaa6c7c8da5"
 dependencies = [
  "colored_json",
  "pyo3",
@@ -4859,7 +4859,7 @@ dependencies = [
 [[package]]
 name = "potato-workflow"
 version = "0.2.3"
-source = "git+https://github.com/demml/potatohead.git?branch=main#6c4a6c600fd940b1f97f9c012b905926a9193de7"
+source = "git+https://github.com/demml/potatohead.git?branch=main#3adbb34da6c7280cf98ab45fe7decfaa6c7c8da5"
 dependencies = [
  "chrono",
  "potato-agent",
@@ -5939,7 +5939,7 @@ checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
 [[package]]
 name = "scouter-client"
 version = "0.7.0"
-source = "git+https://github.com/demml/scouter.git?branch=ofeat%2Fopsml-llm-integration#7051add3094b1a1d49c81377a7303edd23ffdbc1"
+source = "git+https://github.com/demml/scouter.git?branch=ofeat%2Fopsml-llm-integration#d10e264375ebec279ce788e27605cf8d5a1ce392"
 dependencies = [
  "chrono",
  "ndarray",
@@ -5967,7 +5967,7 @@ dependencies = [
 [[package]]
 name = "scouter-dispatch"
 version = "0.7.0"
-source = "git+https://github.com/demml/scouter.git?branch=ofeat%2Fopsml-llm-integration#7051add3094b1a1d49c81377a7303edd23ffdbc1"
+source = "git+https://github.com/demml/scouter.git?branch=ofeat%2Fopsml-llm-integration#d10e264375ebec279ce788e27605cf8d5a1ce392"
 dependencies = [
  "futures",
  "pyo3",
@@ -5982,7 +5982,7 @@ dependencies = [
 [[package]]
 name = "scouter-drift"
 version = "0.7.0"
-source = "git+https://github.com/demml/scouter.git?branch=ofeat%2Fopsml-llm-integration#7051add3094b1a1d49c81377a7303edd23ffdbc1"
+source = "git+https://github.com/demml/scouter.git?branch=ofeat%2Fopsml-llm-integration#d10e264375ebec279ce788e27605cf8d5a1ce392"
 dependencies = [
  "chrono",
  "cron",
@@ -6010,7 +6010,7 @@ dependencies = [
 [[package]]
 name = "scouter-events"
 version = "0.7.0"
-source = "git+https://github.com/demml/scouter.git?branch=ofeat%2Fopsml-llm-integration#7051add3094b1a1d49c81377a7303edd23ffdbc1"
+source = "git+https://github.com/demml/scouter.git?branch=ofeat%2Fopsml-llm-integration#d10e264375ebec279ce788e27605cf8d5a1ce392"
 dependencies = [
  "async-trait",
  "chrono",
@@ -6043,7 +6043,7 @@ dependencies = [
 [[package]]
 name = "scouter-observability"
 version = "0.7.0"
-source = "git+https://github.com/demml/scouter.git?branch=ofeat%2Fopsml-llm-integration#7051add3094b1a1d49c81377a7303edd23ffdbc1"
+source = "git+https://github.com/demml/scouter.git?branch=ofeat%2Fopsml-llm-integration#d10e264375ebec279ce788e27605cf8d5a1ce392"
 dependencies = [
  "itertools 0.14.0",
  "ndarray",
@@ -6060,7 +6060,7 @@ dependencies = [
 [[package]]
 name = "scouter-profile"
 version = "0.7.0"
-source = "git+https://github.com/demml/scouter.git?branch=ofeat%2Fopsml-llm-integration#7051add3094b1a1d49c81377a7303edd23ffdbc1"
+source = "git+https://github.com/demml/scouter.git?branch=ofeat%2Fopsml-llm-integration#d10e264375ebec279ce788e27605cf8d5a1ce392"
 dependencies = [
  "chrono",
  "indicatif",
@@ -6082,7 +6082,7 @@ dependencies = [
 [[package]]
 name = "scouter-semver"
 version = "0.7.0"
-source = "git+https://github.com/demml/scouter.git?branch=ofeat%2Fopsml-llm-integration#7051add3094b1a1d49c81377a7303edd23ffdbc1"
+source = "git+https://github.com/demml/scouter.git?branch=ofeat%2Fopsml-llm-integration#d10e264375ebec279ce788e27605cf8d5a1ce392"
 dependencies = [
  "pyo3",
  "semver",
@@ -6093,7 +6093,7 @@ dependencies = [
 [[package]]
 name = "scouter-settings"
 version = "0.7.0"
-source = "git+https://github.com/demml/scouter.git?branch=ofeat%2Fopsml-llm-integration#7051add3094b1a1d49c81377a7303edd23ffdbc1"
+source = "git+https://github.com/demml/scouter.git?branch=ofeat%2Fopsml-llm-integration#d10e264375ebec279ce788e27605cf8d5a1ce392"
 dependencies = [
  "base64 0.22.1",
  "potato-head",
@@ -6106,7 +6106,7 @@ dependencies = [
 [[package]]
 name = "scouter-types"
 version = "0.7.0"
-source = "git+https://github.com/demml/scouter.git?branch=ofeat%2Fopsml-llm-integration#7051add3094b1a1d49c81377a7303edd23ffdbc1"
+source = "git+https://github.com/demml/scouter.git?branch=ofeat%2Fopsml-llm-integration#d10e264375ebec279ce788e27605cf8d5a1ce392"
 dependencies = [
  "chrono",
  "colored_json",
@@ -6342,9 +6342,9 @@ checksum = "0fda2ff0d084019ba4d7c6f371c95d8fd75ce3524c3cb8fb653a3023f6323e64"
 
 [[package]]
 name = "signal-hook-registry"
-version = "1.4.5"
+version = "1.4.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9203b8055f63a2a00e2f593bb0510367fe707d7ff1e5c872de2f537b339e5410"
+checksum = "b2a4719bff48cee6b39d12c020eeb490953ad2443b7055bd0b21fca26bd8c28b"
 dependencies = [
  "libc",
 ]
@@ -6528,7 +6528,7 @@ dependencies = [
  "crc",
  "crossbeam-queue",
  "either",
- "event-listener 5.4.0",
+ "event-listener 5.4.1",
  "futures-core",
  "futures-intrusive",
  "futures-io",
@@ -7118,9 +7118,9 @@ dependencies = [
 
 [[package]]
 name = "tokio-util"
-version = "0.7.15"
+version = "0.7.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "66a539a9ad6d5d281510d5bd368c973d636c02dbf8a67300bfb6b950696ad7df"
+checksum = "14307c986784f72ef81c89db7d9e28d6ac26d16213b109ea501696195e6e3ce5"
 dependencies = [
  "bytes",
  "futures-core",
@@ -8295,9 +8295,9 @@ dependencies = [
 
 [[package]]
 name = "zerovec"
-version = "0.11.2"
+version = "0.11.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4a05eb080e015ba39cc9e23bbe5e7fb04d5fb040350f99f34e338d5fdd294428"
+checksum = "bdbb9122ea75b11bf96e7492afb723e8a7fbe12c67417aa95e7e3d18144d37cd"
 dependencies = [
  "yoke",
  "zerofrom",

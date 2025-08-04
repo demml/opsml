@@ -109,3 +109,6 @@ serve.docs:
 publish.docs:
 	uv run python scripts/build_docs.py
 	uv run mkdocs gh-deploy --force
+
+upgrade.deps:
+	uv sync --upgrade --all-extras

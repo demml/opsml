@@ -5,6 +5,9 @@ from opsml.scouter.alert import LLMAlertConfig
 from opsml.scouter.types import CommonCrons
 from .prompt_metrics import shipment_eta_task_evaluation, shipment_eta_reply_evaluation
 
+LLM_MODEL = "gemini-2.5-flash"
+LLM_PROVIDER = "gemini"
+
 get_shipment_eta = """
 You are an expert assistant for supply chain operations.
 
@@ -55,9 +58,9 @@ def create_shipment_prompt_card() -> PromptCard:
     """
     shipment_extraction_card = PromptCard(
         prompt=Prompt(
-            user_message=get_shipment_eta,
-            model="gemini-2.5-flash",
-            provider="gemini",
+            message=get_shipment_eta,
+            model=LLM_MODEL,
+            provider=LLM_PROVIDER,
         ),
         space="opsml",
         name="shipment_eta",
@@ -84,9 +87,9 @@ def create_shipment_reply_prompt_card() -> PromptCard:
     """
     shipment_reply_card = PromptCard(
         prompt=Prompt(
-            user_message=get_shipment_eta_reply,
-            model="gemini-2.5-flash",
-            provider="gemini",
+            message=get_shipment_eta_reply,
+            model=LLM_MODEL,
+            provider=LLM_PROVIDER,
         ),
         space="opsml",
         name="shipment_eta_reply",

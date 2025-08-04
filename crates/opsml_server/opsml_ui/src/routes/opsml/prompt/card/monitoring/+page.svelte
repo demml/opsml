@@ -30,7 +30,7 @@
   let currentMaxDataPoints: number = $state(data.maxDataPoints);
   let currentConfig: DriftConfigType = $state(data.currentConfig);
   let currentAlerts: Alert[] = $state(data.currentAlerts);
-  let currentLLMRecordPage = $state(data.currentLLMRecordPage);
+  let currentLLMRecordPage = $state(data.currentLLMRecords);
   let registry = $state(data.registry);
   let uid: string = $state(data.metadata.uid);
 

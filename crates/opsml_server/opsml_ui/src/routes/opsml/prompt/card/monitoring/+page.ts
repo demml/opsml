@@ -89,8 +89,6 @@ export const load: PageLoad = async ({ parent }) => {
     undefined
   );
 
-  console.log("currentLLMRecords", currentLLMRecords);
-
   return {
     profiles,
     keys,

@@ -72,7 +72,7 @@ async def predict(request: Request, payload: Question) -> Answer:
     # Grab the reformulated prompt and response prompt from the app state
     agent_helper: AgentHelper = request.app.state.agent_helper
 
-    # Prefer to user before_model_callback, but context mutatbility doesn't seem to work for google adk
+    # Prefer to user before_model_callback, but context mutability doesn't seem to work for google adk
     service_prompt: PromptCard = app.state.app_state.service["shipment"]
 
     # Call the agent asynchronously
@@ -80,7 +80,7 @@ async def predict(request: Request, payload: Question) -> Answer:
         query=service_prompt.prompt.bind(
             user_query=payload.question,
         )
-        .user_message[0]
+        .message[0]
         .unwrap(),
         user_id=payload.user_id,
         session_id=payload.session_id,

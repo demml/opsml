@@ -5,6 +5,9 @@ from opsml.scouter.alert import AlertThreshold
 from opsml.scouter.drift import LLMMetric
 from opsml.llm import Prompt, Score
 
+LLM_MODEL = "gemini-2.5-flash-lite"
+LLM_PROVIDER = "gemini"
+
 
 def create_shipment_eta_task_evaluation_prompt() -> Prompt:
     """
@@ -18,7 +21,7 @@ def create_shipment_eta_task_evaluation_prompt() -> Prompt:
         >>> prompt = create_shipment_eta_task_evaluation_prompt()
     """
     return Prompt(
-        user_message="""
+        message="""
             You are an expert evaluator of supply chain assistant performance.
             Given the original user query, the LLM's tool call, and the LLM's final response, assess how well the LLM performed the following:
                 - Correctly extracted the shipment ID from the user's query.
@@ -47,8 +50,8 @@ def create_shipment_eta_task_evaluation_prompt() -> Prompt:
             ${llm_response}
             Evaluation:
         """,
-        model="gemini-2.5-flash-lite-preview-06-17",
-        provider="gemini",
+        model=LLM_MODEL,
+        provider=LLM_PROVIDER,
         response_format=Score,
     )
 
@@ -65,7 +68,7 @@ def create_shipment_eta_reply_evaluation_prompt() -> Prompt:
         >>> prompt = create_shipment_eta_reply_evaluation_prompt()
     """
     return Prompt(
-        user_message="""
+        message="""
             You are an expert evaluator of supply chain assistant responses.
             Given the structured shipment ETA information and the LLM's reply to the user, assess how well the LLM communicated the information.
             Consider the following:
@@ -87,8 +90,8 @@ def create_shipment_eta_reply_evaluation_prompt() -> Prompt:
             ${llm_reply}
             Evaluation:
         """,
-        model="gemini-2.5-flash-lite-preview-06-17",
-        provider="gemini",
+        model=LLM_MODEL,
+        provider=LLM_PROVIDER,
         response_format=Score,
     )
 
