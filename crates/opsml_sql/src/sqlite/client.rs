@@ -749,12 +749,14 @@ impl SqlClient for SqliteClient {
         Ok(records)
     }
 
+    #[instrument(skip_all)]
     async fn delete_card(
         &self,
         table: &CardTable,
         uid: &str,
     ) -> Result<(String, String), SqlError> {
         // SQLite doesn't support RETURNING clause, so we need to do this in two steps
+        debug!("Deleting card with uid: {uid} from table: {table}");
         let select_query = format!("SELECT space, name FROM {table} WHERE uid = ?");
         let (space, name): (String, String) = sqlx::query_as(&select_query)
             .bind(uid)

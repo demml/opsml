@@ -51,7 +51,7 @@ export interface ModelSettings {
 }
 
 export interface Prompt {
-  user_message: Message[];
+  message: Message[];
   system_message: Message[];
   version: string;
   model_settings: ModelSettings;

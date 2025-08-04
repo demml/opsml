@@ -788,7 +788,7 @@ pub async fn get_scouter_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
             .route(&format!("{prefix}/scouter/drift/llm"), get(get_llm_drift))
             .route(
                 &format!("{prefix}/scouter/drift/llm/records"),
-                get(get_llm_drift_records),
+                post(get_llm_drift_records),
             )
             .route(
                 &format!("{prefix}/scouter/alerts"),

@@ -24,7 +24,7 @@ def create_reformulation_evaluation_prompt():
         >>> prompt = create_reformulation_evaluation_prompt()
     """
     return Prompt(
-        user_message=(
+        message=(
             "You are an expert evaluator of search query reformulations. "
             "Given the original user query and its reformulated version, your task is to assess how well the reformulation improves the query. "
             "Consider the following criteria:\n"
@@ -61,8 +61,8 @@ def test_promptcard_crud() -> None:
             prompt = Prompt(
                 model="gpt-4o",
                 provider="openai",
-                user_message="Hello!",
-                system_message="You are a helpful assistant.",
+                message="Hello!",
+                system_instruction="You are a helpful assistant.",
             )
 
             card = PromptCard(prompt=prompt, space="test", name="test")
@@ -125,15 +125,15 @@ def test_promptcard_drift_workflow() -> None:
         with LLMTestServer():
             reg: CardRegistry[PromptCard] = CardRegistry(RegistryType.Prompt)
             start_prompt = Prompt(
-                user_message="${input} + ${response}?",
-                system_message="You are a helpful assistant.",
+                message="${input} + ${response}?",
+                system_instruction="You are a helpful assistant.",
                 model="gpt-4o",
                 provider="openai",
             )
 
             end_prompt = Prompt(
-                user_message="Foo bar",
-                system_message="You are a helpful assistant.",
+                message="Foo bar",
+                system_instruction="You are a helpful assistant.",
                 model="gpt-4o",
                 provider="openai",
                 response_format=Score,
@@ -167,8 +167,8 @@ def test_promptcard_drift_workflow() -> None:
             prompt = Prompt(
                 model="gpt-4o",
                 provider="openai",
-                user_message="Hello!",
-                system_message="You are a helpful assistant.",
+                message="Hello!",
+                system_instruction="You are a helpful assistant.",
             )
 
             card = PromptCard(prompt=prompt, space="test", name="test")

@@ -10,8 +10,8 @@
   let { prompt} = $props<{prompt: Prompt;}>();
   let openState = $state(false);
   let copiedButton = $state<'user' | 'system' | null>(null);
-  let user_messages: string = $state('');
-  let system_messages: string = $state('');
+  let messages: string = $state('');
+  let system_instructions: string = $state('');
   let timeoutId: number = 0;
 
 
@@ -47,8 +47,8 @@
   }
 
   onMount(() => {
-    user_messages = formatMessages(prompt.user_message);
-    system_messages = formatMessages(prompt.system_message);
+    messages = formatMessages(prompt.message);
+    system_instructions = formatMessages(prompt.system_instruction);
   });
   
   
@@ -74,15 +74,15 @@
           <header class="font-bold text-black">User Messages</header> 
           <button 
             class="btn text-sm bg-primary-500 text-black shadow shadow-hover border-black border-2" 
-            onclick={() => copyToClipboard(user_messages, 'user')} 
-            disabled={!user_messages}
+            onclick={() => copyToClipboard(messages, 'user')} 
+            disabled={!messages}
           >
             {copiedButton === 'user' ? 'Copied 👍' : 'Copy'}
           </button>
         </div>
         <div class="overflow-auto">
           <div class="rounded-lg border-2 border-black overflow-y-scroll max-h-[20rem] text-sm">
-            <Highlight language={json} code={user_messages} let:highlighted>
+            <Highlight language={json} code={messages} let:highlighted>
               <LineNumbers {highlighted} hideBorder wrapLines />
             </Highlight>
           </div>
@@ -94,15 +94,15 @@
           <header class="font-bold text-black">System Messages</header> 
           <button 
             class="btn text-sm bg-primary-500 text-black shadow shadow-hover border-black border-2" 
-            onclick={() => copyToClipboard(system_messages, 'system')} 
-            disabled={!system_messages}
+            onclick={() => copyToClipboard(system_instructions, 'system')} 
+            disabled={!system_instructions}
           >
             {copiedButton === 'system' ? 'Copied 👍' : 'Copy'}
           </button>
         </div>
         <div class="overflow-auto">
           <div class="rounded-lg border-2 border-black overflow-y-scroll max-h-[20rem] text-sm">
-            <Highlight language={json} code={system_messages} let:highlighted>
+            <Highlight language={json} code={system_instructions} let:highlighted>
               <LineNumbers {highlighted} hideBorder wrapLines />
             </Highlight>
           </div>

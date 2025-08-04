@@ -23,6 +23,8 @@ def train_model() -> ensemble.RandomForestRegressor:
         task_type="regression",
         n_categorical_features=0,
     )
+    # rename columns to match expected x1, x2, y1, y2
+    X.columns = ["x1", "x2", "y1", "y2"]
 
     reg = ensemble.RandomForestRegressor(n_estimators=5)
     reg.fit(X.to_numpy(), y.to_numpy().ravel())

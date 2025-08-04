@@ -73,7 +73,7 @@ class AgentHelper:
         """Sends a query to the shipment agent and returns the response."""
 
         parameterized_query = (
-            self.shipment_prompt.prompt.bind(user_query=query).user_message[0].unwrap()
+            self.shipment_prompt.prompt.bind(user_query=query).message[0].unwrap()
         )
 
         # Prepare the user's message in ADK format
@@ -105,7 +105,7 @@ class AgentHelper:
 
         parameterized_query = (
             self.response_prompt.prompt.bind(shipment_eta_info=shipment_eta_info)
-            .user_message[0]
+            .message[0]
             .unwrap()
         )
 

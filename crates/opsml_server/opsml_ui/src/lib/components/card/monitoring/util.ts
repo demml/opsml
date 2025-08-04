@@ -179,7 +179,7 @@ export async function getLLMRecordPage(
 ): Promise<LLMPageResponse> {
   let pagination: LLMPaginationRequest = {
     cursor,
-    limit: 30,
+    limit: 20,
   };
 
   const request: LLMPageRequest = {
@@ -188,9 +188,7 @@ export async function getLLMRecordPage(
     pagination,
   };
 
-  console.log("getLLMRecordPage request", request);
-
-  const response = await opsmlClient.get(
+  const response = await opsmlClient.post(
     RoutePaths.LLM_RECORD_PAGE,
     request,
     userStore.jwt_token

@@ -26,7 +26,7 @@ pub mod server_logic {
     use scouter_client::{ProfileRequest, ProfileStatusRequest};
     use semver::Version;
     use sqlx::types::Json as SqlxJson;
-    use tracing::info;
+    use tracing::{error, info, instrument};
 
     #[derive(Debug, Clone)]
     pub struct ServerRegistry {
@@ -477,17 +477,20 @@ pub mod server_logic {
             Ok(())
         }
 
+        #[instrument(skip_all)]
         pub async fn delete_card(
             &self,
             delete_request: DeleteCardRequest,
         ) -> Result<(), RegistryError> {
+            let args = CardQueryArgs {
+                uid: Some(delete_request.uid.to_string()),
+                registry_type: delete_request.registry_type.clone(),
+                ..Default::default()
+            };
             // get key
-            let key = self
-                .get_key(&CardQueryArgs {
-                    uid: Some(delete_request.uid.to_string()),
-                    ..Default::default()
-                })
-                .await?;
+            let key = self.get_key(&args).await.inspect_err(|e| {
+                error!("Error getting key for delete request: {}", e);
+            })?;
 
             // get storage client and delete artifacts
             let storage_client = StorageClientEnum::new(&self.storage_settings).await?;

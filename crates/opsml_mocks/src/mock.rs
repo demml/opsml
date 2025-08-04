@@ -83,7 +83,7 @@ impl ScouterServer {
             .match_body(mockito::Matcher::Any)
             .with_status(200)
             .with_header("content-type", "application/json")
-            .with_body(r#"{"status": "success", "message": "Profile created"}"#)
+            .with_body(r#"{"space": "opsml", "name": "test_profile", "version": "1.0.0", "status": "success", "message": "Profile status updated"}"#)
             .create();
 
         server

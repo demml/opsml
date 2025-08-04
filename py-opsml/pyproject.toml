@@ -26,8 +26,8 @@ onnxruntime = [
     "onnxruntime>=1.18.0",
 ]
 sklearn_onnx = [
-    "skl2onnx>=1.16.0, <1.19.0",
-    "onnxmltools~=1.12",
+    "skl2onnx>=1.16.0, <1.20.0",
+    "onnxmltools~=1.14",
     "opsml[onnx,onnxruntime]",
 ]
 tf_onnx = [
