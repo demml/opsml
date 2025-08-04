@@ -20,7 +20,7 @@ use opsml_types::{
         contracts::{ArtifactKey, CardQueryArgs},
     },
 };
-use tracing::{debug, instrument};
+use tracing::debug;
 
 #[derive(Debug, Clone)]
 pub enum SqlClientEnum {
