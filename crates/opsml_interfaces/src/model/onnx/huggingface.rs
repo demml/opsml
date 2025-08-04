@@ -7,7 +7,7 @@ use pyo3::types::PyDict;
 use std::fs;
 use std::path::Path;
 use std::path::PathBuf;
-use tracing::debug;
+use tracing::{debug, instrument};
 
 pub type HuggingFaceKwargs<'py> = (String, Option<Bound<'py, PyDict>>, bool, Bound<'py, PyDict>);
 
@@ -102,6 +102,7 @@ impl HuggingFaceOnnxConverter {
         Ok(())
     }
 
+    #[instrument(skip_all)]
     pub fn convert_model<'py>(
         &self,
         py: Python<'py>,
