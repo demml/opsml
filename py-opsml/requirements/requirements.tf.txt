@@ -1,0 +1,4 @@
+tensorflow>=2.17.0
+tf-keras>=2.16.0
+tf2onnx>=1.16.1
+numpy>=1.26.4, <2.0.0

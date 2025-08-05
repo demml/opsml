@@ -7,9 +7,9 @@ use pyo3::types::PyDict;
 use std::fs;
 use std::path::Path;
 use std::path::PathBuf;
-use tracing::debug;
+use tracing::{debug, instrument};
 
-pub type HuggingFaceKwargs<'py> = (String, Option<Bound<'py, PyDict>>, bool, Bound<'py, PyDict>);
+pub type HuggingFaceKwargs<'py> = (String, Bound<'py, PyDict>, bool, Bound<'py, PyDict>);
 
 pub struct HuggingFaceOnnxConverter {
     pub model_path: PathBuf,
@@ -77,9 +77,14 @@ impl HuggingFaceOnnxConverter {
         let config = kwargs.get_item("config")?;
         quantize_kwargs.set_item("quantization_config", config)?;
 
+        // get onnx_kwargs or create an empty dict
         let onnx_kwargs = kwargs
             .get_item("extra_kwargs")?
-            .map(|x| x.downcast::<PyDict>().unwrap().clone());
+            .map(|x| x.downcast::<PyDict>().unwrap().clone())
+            .unwrap_or_else(|| PyDict::new(py));
+
+        // add export=True to onnx_kwargs
+        onnx_kwargs.set_item("export", true)?;
 
         Ok((ort_type, onnx_kwargs, quantize, quantize_kwargs))
     }
@@ -102,6 +107,7 @@ impl HuggingFaceOnnxConverter {
         Ok(())
     }
 
+    #[instrument(skip_all)]
     pub fn convert_model<'py>(
         &self,
         py: Python<'py>,
@@ -116,16 +122,14 @@ impl HuggingFaceOnnxConverter {
         // set export to true to convert model to onnx
         let ort_model = opt_rt
             .getattr(&kwargs.0)?
-            .call_method(
-                "from_pretrained",
-                (&self.model_path, true),
-                kwargs.1.as_ref(),
-            )
+            .call_method("from_pretrained", (&self.model_path,), Some(&kwargs.1))
             .map_err(OnnxError::LoadModelError)?;
+
+        println!("ort_model: {:?}", ort_model);
 
         // saves to model.onnx
         ort_model
-            .call_method("save_pretrained", (&self.onnx_path,), kwargs.1.as_ref())
+            .call_method("save_pretrained", (&self.onnx_path,), Some(&kwargs.1))
             .map_err(OnnxError::PyOnnxConversionError)?;
 
         debug!("Step 2: Extracting ONNX schema");
