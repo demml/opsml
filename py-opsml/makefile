@@ -25,25 +25,20 @@ setup.project:
 	uv sync --all-extras --group dev --group docs
 	uv run maturin develop --features server
 
-setup.dev:
+setup.adk:
 	uv sync --group dev --group docs
+	uv pip install -r requirements/requirements.adk.txt
 	uv run maturin develop --features server
 
-setup.project.numpy1:
-	uv sync --all-extras --group dev --group numpy1
-	uv run maturin develop --features server
-
-
-test.unit.numpy1: setup.project.numpy1
+test.unit.tensorflow: setup.project
+	uv pip install -r requirements/requirements.tf.txt
 	uv run pytest \
 		--ignore="tests/interfaces/model/test_tensorflow.py" \
 		-m "numpy" \
 		--cov \
 		--cov-fail-under=0 \
 		--cov-report xml:./coverage.xml \
-		--cov-report term \
-
-test.unit.tensorflow:
+		--cov-report term
 	uv run python tests/interfaces/model/test_tensorflow.py
 
 test.unit:
@@ -71,6 +66,7 @@ test.examples.data:
 	uv run python examples/data/custom_data.py
 
 test.examples.model:
+	uv pip install -r requirements/requirements.examples.txt
 	uv run python examples/model/catboost_model.py && \
 	uv run python examples/model/custom_model.py && \
 	uv run python examples/model/hf_model.py && \
