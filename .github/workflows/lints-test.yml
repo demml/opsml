@@ -159,7 +159,6 @@ jobs:
       - name: Run tests and report coverage
         working-directory: ./py-opsml
         run: |
-          uv run python -m pytest tests/interfaces/model/test_huggingface.py
           make test.unit
 
       - name: Upload coverage reports to Codecov
@@ -169,7 +168,7 @@ jobs:
 
       # if 3.12 and ubuntu, run tensorflow tests
       - name: Run TensorFlow tests
-        if: ${{ matrix.os == 'ubuntu' && matrix.python-version == '3.12' }}
+        if: ${{ matrix.os == 'ubuntu' && matrix.python-version == '3.11' }}
         working-directory: ./py-opsml
         run: make test.unit.tensorflow
 
