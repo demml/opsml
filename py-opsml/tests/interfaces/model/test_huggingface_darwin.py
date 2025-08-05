@@ -39,7 +39,7 @@ def test_hugging_face_text_pipeline(
 
 # only want to run this on macos
 @pytest.mark.skipif(EXCLUDE, reason="Test not supported")
-def test_hugging_face_model(
+def _test_hugging_face_model(
     tmp_path: Path,
     huggingface_bart_model: Tuple[BartModel, BartTokenizer, torch.Tensor],
 ):

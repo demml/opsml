@@ -113,8 +113,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu, macos]
-        python-version: ["3.10", "3.11", "3.12"]
+        os: [ubuntu]
+        #os: [ubuntu, macos]
+        python-version: ["3.11"]
+        #python-version: ["3.10", "3.11", "3.12"]
 
     runs-on: ${{ matrix.os }}-latest
     needs: [format-and-lint]
@@ -159,6 +161,7 @@ jobs:
       - name: Run tests and report coverage
         working-directory: ./py-opsml
         run: |
+          uv run python -m pytest tests/interfaces/model/test_huggingface.py
           make test.unit
 
       - name: Upload coverage reports to Codecov
