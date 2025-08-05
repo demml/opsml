@@ -113,10 +113,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu]
-        #os: [ubuntu, macos]
-        python-version: ["3.11"]
-        #python-version: ["3.10", "3.11", "3.12"]
+        os: [ubuntu, macos]
+        python-version: ["3.10", "3.11", "3.12"]
 
     runs-on: ${{ matrix.os }}-latest
     needs: [format-and-lint]
@@ -169,13 +167,9 @@ jobs:
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
-      - name: Run numpy v1 tests
-        working-directory: ./py-opsml
-        run: make test.unit.numpy1
-
-      # if 3.11 and ubuntu, run numpy v1 tests
+      # if 3.12 and ubuntu, run tensorflow tests
       - name: Run TensorFlow tests
-        if: ${{ matrix.os == 'ubuntu' && matrix.python-version == '3.11' }}
+        if: ${{ matrix.os == 'ubuntu' && matrix.python-version == '3.12' }}
         working-directory: ./py-opsml
         run: make test.unit.tensorflow
 

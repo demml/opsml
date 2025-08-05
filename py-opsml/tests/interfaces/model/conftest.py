@@ -42,8 +42,6 @@ from opsml.data import TorchData
 from catboost import CatBoostClassifier, CatBoostRanker, CatBoostRegressor, Pool  # type: ignore
 from opsml.data import ColType, ColumnSplit, DataSplit
 
-device = "cpu"
-
 
 def cleanup() -> None:
     """Removes temp files"""
