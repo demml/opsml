@@ -1,6 +1,6 @@
 <h1 align="center">
   <br>
-  <img src="https://github.com/demml/opsml/blob/main/images/opsml-logo.png?raw=true"  width="250" height="250" alt="opsml logo"/>
+  <img src="https://github.com/demml/opsml/blob/main/images/opsml-logo.png?raw=true"  width="300" height="300" alt="opsml logo"/>
   <br>
 </h1>
 
@@ -27,7 +27,20 @@ OpsML is an open-source developer-first ML operations platform focused on inject
   <b>Current status:</b> v3.0.0 pre-release (check release tags for latest 3.0.0-rc.* version)
 </div>
 
-## **Why OpsML?**
+
+## Table of Contents
+- [Table of Contents](#table-of-contents)
+- [Why OpsML?](#why-opsml)
+  - [What makes OpsML different](#what-makes-opsml-different)
+- [Installation](#installation)
+- [Demo](#demo)
+- [Example Usage (Traditional ML)](#example-usage-traditional-ml)
+- [Example Usage (LLM)](#example-usage-llm)
+- [Hosting](#hosting)
+- [Us vs Others](#us-vs-others)
+- [Contributing](#contributing)
+
+## Why OpsML?
 
 Building reliable ML systems shouldn't require gluing together dozens of disparate tools, each with their own quirks, gaps, and maintenance overhead. The modern ML stack is fragmented. While opsml can't solve every problem, it aims to provide a **unified foundation** for your machine learning lifecycle.
 
@@ -43,13 +56,13 @@ Building reliable ML systems shouldn't require gluing together dozens of dispara
 - **Developer Happiness** – One dependency, unified API, maximum productivity  
 
 
-## 🚀 Installation (Release Candidate)
+## Installation
 
 ```bash
 pip install "opsml==3.0.0rc15"
 ```
 
-## **Demo**
+## Demo
 Install the following dependencies to run the demo (if you don't have them already):
 
 ```bash
@@ -153,8 +166,10 @@ if __name__ == "__main__":
     registry.register_card(card)
 ```
 
+## Hosting
+OpsML can be hosted on any cloud provider or on-premises. It supports multi-cloud deployments and is compatible with various databases. You can run OpsML in isolated environments to avoid conflicts between staging and production. Check out the [hosting guide](https://docs.demml.io/opsml/docs/setup/overview/#server-mode) for more details.
 
-### Us vs Others
+## Us vs Others
 
 | Feature | OpsML | Others |
 |---------|:-------:|:--------:|
@@ -176,3 +191,5 @@ if __name__ == "__main__":
 If you'd like to contribute, be sure to check out our [contributing guide](./CONTRIBUTING.md)! If you'd like to work on any outstanding items, check out the `roadmap` section in the docs and get started.
 
 Thanks goes to these phenomenal [projects and people](./ATTRIBUTIONS.md) for creating a great foundation to build from!
+
+
