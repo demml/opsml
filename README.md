@@ -166,6 +166,8 @@ if __name__ == "__main__":
     registry.register_card(card)
 ```
 
+For more examples, check out the [examples directory](https://github.com/demml/opsml/tree/main/py-opsml/examples).
+
 ## Hosting
 OpsML can be hosted on any cloud provider or on-premises. It supports multi-cloud deployments and is compatible with various databases. You can run OpsML in isolated environments to avoid conflicts between staging and production. Check out the [hosting guide](https://docs.demml.io/opsml/docs/setup/overview/#server-mode) for more details.
 
