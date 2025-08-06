@@ -167,12 +167,6 @@ def multi_input_dict_model():
         verbose=1,
     )
 
-    # input_signature = [
-    # tf.TensorSpec(shape=(None, 5), dtype=tf.float32, name="categorical_input"),
-    # tf.TensorSpec(shape=(None, 10), dtype=tf.float32, name="numeric_input"),
-    # ]
-    # save_kwargs = ModelSaveKwargs(onnx={"input_signature": input_signature})
-
     return model, train_data, None
 
 

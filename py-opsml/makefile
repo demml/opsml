@@ -34,7 +34,7 @@ test.unit.tensorflow: setup.project
 	uv pip install -r requirements/requirements.tf.txt
 	uv run pytest \
 		--ignore="tests/interfaces/model/test_tensorflow.py" \
-		-m "numpy" \
+		-m "tensorflow" \
 		--cov \
 		--cov-fail-under=0 \
 		--cov-report xml:./coverage.xml \
@@ -45,7 +45,7 @@ test.unit:
 	uv run pytest \
 		--ignore="tests/genai/integration/*" \
 		--ignore="tests/interfaces/model/test_tensorflow.py" \
-		-m "not numpy" \
+		-m "not tensorflow" \
 		--cov \
 		--cov-fail-under=0 \
 		--cov-report xml:./coverage.xml \
