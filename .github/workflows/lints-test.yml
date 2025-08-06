@@ -168,7 +168,7 @@ jobs:
 
       # if 3.12 and ubuntu, run tensorflow tests
       - name: Run TensorFlow tests
-        if: ${{ matrix.os == 'ubuntu' && matrix.python-version == '3.11' }}
+        if: ${{ matrix.os == 'ubuntu' && matrix.python-version == '3.12' }}
         working-directory: ./py-opsml
         run: make test.unit.tensorflow
 

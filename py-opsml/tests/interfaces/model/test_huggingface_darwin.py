@@ -9,9 +9,6 @@ from transformers import Pipeline, BartModel, BartTokenizer  # type: ignore
 import pytest
 import sys
 
-
-IS_312 = sys.version_info >= (3, 12)
-
 LINUX_EXCLUDE = sys.platform.startswith("linux")
 WINDOWS_EXCLUDE = sys.platform == "win32"
 EXCLUDE = bool(LINUX_EXCLUDE or WINDOWS_EXCLUDE)
