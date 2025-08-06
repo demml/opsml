@@ -136,3 +136,17 @@ crates/opsml_server/opsml_ui/site/*
 !crates/opsml_server/opsml_ui/site/.gitkeep
 package.json
 pnpm-lock.yaml
+py-opsml/python/opsml/card/_card.pyi
+py-opsml/python/opsml/data/_data.pyi
+py-opsml/python/opsml/experiment/_experiment.pyi
+py-opsml/python/opsml/llm/_llm.pyi
+py-opsml/python/opsml/logging/_logging.pyi
+py-opsml/python/opsml/mock/_mock.pyi
+py-opsml/python/opsml/model/_model.pyi
+py-opsml/python/opsml/scouter/alert/_alert.pyi
+py-opsml/python/opsml/scouter/client/_client.pyi
+py-opsml/python/opsml/scouter/drift/_drift.pyi
+py-opsml/python/opsml/scouter/profile/_profile.pyi
+py-opsml/python/opsml/scouter/queue/_queue.pyi
+py-opsml/python/opsml/scouter/types/_types.pyi
+py-opsml/python/opsml/types/_types.pyi

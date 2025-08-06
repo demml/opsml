@@ -8,7 +8,7 @@ FOLDERS = [
     "experiment",
     "logging",
     "model",
-    "potato_head",
+    "llm",
     "scouter",
     "types",
     "mock",

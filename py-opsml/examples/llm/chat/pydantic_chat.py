@@ -1,7 +1,6 @@
-from openai import OpenAI
-from opsml import PromptCard, Prompt, CardRegistry
+from pydantic_ai import Agent
+from opsml import PromptCard, Prompt, CardRegistry, RegistryType
 
-client = OpenAI()
 
 card = PromptCard(
     space="opsml",
@@ -20,15 +19,14 @@ def chat_app(language: str):
     user_message = card.prompt.bind(language=language).message[0].unwrap()
     system_instruction = card.prompt.system_instruction[0].unwrap()
 
-    response = client.chat.completions.create(
-        model=card.prompt.model,
-        messages=[
-            {"role": "system", "content": system_instruction},
-            {"role": "user", "content": user_message},
-        ],
+    agent = Agent(
+        model=card.prompt.model_identifier,  # using model identifier that concatenates provider and model
+        system_prompt=system_instruction,
     )
 
-    return response.choices[0].message.content
+    result = agent.run_sync(user_message)
+
+    return result.output
 
 
 if __name__ == "__main__":
@@ -36,5 +34,5 @@ if __name__ == "__main__":
     print(result)
 
     # Register the card in the registry
-    registry = CardRegistry("prompt")
+    registry = CardRegistry(RegistryType.Prompt)
     registry.register_card(card)
