@@ -238,7 +238,7 @@ card = PromptCard(
     prompt=Prompt(
         model="o4-mini",
         provider="openai",
-        message="Provide a brief summary of the programming language $1.", # (1)
+        message="Provide a brief summary of the programming language ${language}.", # (1)
         system_instruction="Be concise, reply with one sentence.",
     ),
 )
@@ -246,13 +246,14 @@ card = PromptCard(
 def chat_app(language: str):
 
     # create the prompt and bind the context
-    user_prompt = card.prompt.message[0].bind(language).unwrap()
+    user_message = card.prompt.bind(language=language).message[0].unwrap()
+    system_instruction = card.prompt.system_instruction[0].unwrap()
 
     response = client.chat.completions.create(
         model=card.prompt.model,
         messages=[
-            {"role": "system", "content": user_prompt},
-            {"role": "user", "content": card.prompt.message[0].unwrap()},
+            {"role": "system", "content": system_instruction},
+            {"role": "user", "content": user_message},
         ],
     )
 

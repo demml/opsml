@@ -67,6 +67,8 @@ nav:
       - "docs/cards/datacard.md"
       - "docs/cards/experimentcard.md"
       - "docs/cards/promptcard.md"
+  - Monitoring:
+      - "docs/monitoring/overview.md"
   - Automation:
       - "docs/automation/service.md"
       - "docs/automation/pyproject.md"
@@ -74,7 +76,7 @@ nav:
       - Overview: "docs/specs/Readme.md"
       - Components:
           - Auditing: "docs/specs/ts-component-auditing.md"
-          - Card Deck: "docs/specs/ts-component-cardservice.md"
+          - Card Service: "docs/specs/ts-component-cardservice.md"
           - EventBus: "docs/specs/ts-component-eventbus.md"
           - Experiment: "docs/specs/ts-component-experiment.md"
       - Features:
@@ -85,7 +87,7 @@ nav:
       - Model: "docs/api/model.md"
       - Experiment: "docs/api/experiment.md"
       - Data: "docs/api/data.md"
-      - PotatoHead: "docs/api/potato_head.md"
+      - LLM: "docs/api/llm.md"
       - Types: "docs/api/types.md"
       - Logging: "docs/api/logging.md"
       - Mock: "docs/api/mock.md"

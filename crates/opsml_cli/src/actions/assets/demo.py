@@ -19,6 +19,7 @@ from opsml.scouter.drift import (
     CustomMetric,
     CustomMetricDriftConfig,
 )
+
 import numpy as np
 from opsml.scouter.alert import AlertThreshold
 from opsml.data import DataType
@@ -55,15 +56,15 @@ def random_forest_classifier():
         data_type=DataType.Pandas,
     )
 
-    # custom
-    metric = CustomMetric(
-        name="custom",
-        value=0.5,
-        alert_threshold=AlertThreshold.Above,
-    )
     model.create_drift_profile(
         alias="custom_metric",
-        data=[metric],
+        data=[
+            CustomMetric(
+                name="custom",
+                value=0.5,
+                alert_threshold=AlertThreshold.Above,
+            )
+        ],
         config=CustomMetricDriftConfig(),
     )
 
