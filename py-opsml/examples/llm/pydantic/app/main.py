@@ -8,7 +8,6 @@ from .agent.helper import AgentHelper
 from .db.commands import startup_db, shutdown_db
 import uuid
 from pydantic import BaseModel, Field
-from opsml.card import PromptCard
 from opsml.scouter import HTTPConfig
 
 logger = RustyLogger.get_logger(
@@ -71,12 +70,6 @@ app = FastAPI(lifespan=lifespan)
 async def predict(request: Request, payload: Question) -> Answer:
     # Grab the reformulated prompt and response prompt from the app state
     agent_helper: AgentHelper = request.app.state.agent_helper
-
-    # Call the agent asynchronously
-    response = await agent_helper.process_query(
-        query=payload.question,
-        user_id=payload.user_id,
-        session_id=payload.session_id,
-    )
+    response = await agent_helper.process_query(query=payload.question)
 
     return Answer(message=response)

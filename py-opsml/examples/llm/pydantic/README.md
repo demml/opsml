@@ -1,6 +1,6 @@
 # Where's my package!?
 
-The following example demonstrates how to leverage Opsml with the google (adk)[https://google.github.io/adk-docs/] in order to create a multi-process agent that:
+The following example demonstrates how to leverage Opsml with the (pydantic ai)[https://ai.pydantic.dev/] framework in order to create a multi-process agent that:
 
 - (1) receives a query from the user who is requesting an update on a specific shipment.
 - (2) The agents parses the query and extracts the shipment ID if provided.
@@ -10,8 +10,8 @@ The following example demonstrates how to leverage Opsml with the google (adk)[h
 
 
 Setup:
-- All steps assume you are running code from the `google_adk` directory.
-  
+- All steps assume you are running code from the `pydantic` directory.
+
 1. Execute the following command to create the model and prompts (we're using uv):
    - This will create 1 ModelCard, 2 PromptCard, and a ServiceCard that combines groups the cards.
    - All cards will be registered in the Opsml Registry and are configured with monitoring.
@@ -19,20 +19,20 @@ Setup:
 uv run python -m app.train
 ```
 
-2. Download the ServiceCard and artifacts from the Opsml Registry to a directory called `app/service_artifacts`:
+1. Download the ServiceCard and artifacts from the Opsml Registry to a directory called `app/service_artifacts`:
    - This will download the service card and all artifacts required to run the service.
    - The service card is configured to use the model and prompts created in step 1.
 ```bash
 uv run opsml get service --space opsml --name "shipment_service" --write-dir "app/service_artifacts"
 ```
 
-3. Start the service using the following command:
+1. Start the service using the following command:
    - This will start the service and make it available for the agent to query.
 ```bash
 uv run uvicorn app.main:app --reload --port 8888
 ```
 
-4. Make a request to the service to get the latest coordinates of a shipment:
+1. Make a request to the service to get the latest coordinates of a shipment:
    - This will return the latest coordinates of the shipment.
 ```bash
 curl -X POST "http://127.0.0.1:8888/predict" \
