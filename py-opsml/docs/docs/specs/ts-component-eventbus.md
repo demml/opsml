@@ -20,22 +20,26 @@ pub enum Event {
 ## Core Responsibilities
 
 1. **Event Distribution**
-   - Asynchronous event broadcasting
-   - Multiple subscriber support
-   - Non-blocking event publishing
-   - Event type management
+
+      - Asynchronous event broadcasting
+      - Multiple subscriber support
+      - Non-blocking event publishing
+      - Event type management
 
 2. **Stream Management**
-   - Stream-based event subscription
-   - Automatic error filtering
-   - Broadcast channel capacity control
-   - Subscriber lifecycle management
+      - Stream-based event subscription
+      - Automatic error filtering
+      - Broadcast channel capacity control
+      - Subscriber lifecycle management
 
 3. **Event Type Handling**
-   - Support for different event types
-   - Type-safe event distribution
-   - Event filtering capabilities
-   - Extensible event system
+      - Support for different event types
+      - Type-safe event distribution
+      - Event filtering capabilities
+      - Extensible event system
+  
+## Use Cases
+- **Audit Logging**: Capture and record system events for auditing purposes.
 
 ## Key Methods
 
@@ -56,22 +60,22 @@ pub fn subscribe(&self) -> impl Stream<Item = Event>
 ## Dependencies
 
 - **External Crates**
-  - `tokio`: Async runtime and broadcast channel
-  - `futures`: Stream trait implementations
-  - `tokio-stream`: Stream wrappers
-  - `tracing`: Logging and instrumentation
+    - `tokio`: Async runtime and broadcast channel
+    - `futures`: Stream trait implementations
+    - `tokio-stream`: Stream wrappers
+    - `tracing`: Logging and instrumentation
 
 - **Internal Components**
-  - `Event`: Event type enum
-  - `AuditEvent`: Audit event structure
-  - `EventError`: Error handling
+    - `Event`: Event type enum
+    - `AuditEvent`: Audit event structure
+    - `EventError`: Error handling
 
 ## Error Handling
 
-- Silent error handling for send operations
-- Stream filtering for failed receives
-- Debug logging for event operations
-- Custom `EventError` type
+  - Silent error handling for send operations
+  - Stream filtering for failed receives
+  - Debug logging for event operations
+  - Custom `EventError` type
 
 ## Thread Safety
 
@@ -83,16 +87,16 @@ pub fn subscribe(&self) -> impl Stream<Item = Event>
 ## Performance Considerations
 
 1. **Channel Capacity**
-   - Configurable buffer size
+      - Configurable buffer size
 
 2. **Concurrency**
-   - Non-blocking operations
-   - Multiple concurrent subscribers
-   - Efficient event distribution
+      - Non-blocking operations
+      - Multiple concurrent subscribers
+      - Efficient event distribution
 
 3. **Resource Management**
-   - Automatic cleanup of dropped subscribers (via Tokio)
-   - Pattern matching for event types
+      - Automatic cleanup of dropped subscribers (via Tokio)
+      - Pattern matching for event types
 
 ## Future Considerations
 
@@ -106,5 +110,5 @@ pub fn subscribe(&self) -> impl Stream<Item = Event>
 ---
 
 *Version: 1.0*  
-*Last Updated: 2025-04-04*  
+*Last Updated: 2025-08-05*  
 *Component Owner: Steven Forrester*

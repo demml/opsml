@@ -20,15 +20,13 @@ def chat_app(language: str):
     user_message = card.prompt.bind(language=language).message[0].unwrap()
     system_instruction = card.prompt.system_instruction[0].unwrap()
 
-    response = client.chat.completions.create(
+    response = client.responses.create(
         model=card.prompt.model,
-        messages=[
-            {"role": "system", "content": system_instruction},
-            {"role": "user", "content": user_message},
-        ],
+        instructions=system_instruction,
+        input=user_message,
     )
 
-    return response.choices[0].message.content
+    return response.output_text
 
 
 if __name__ == "__main__":
