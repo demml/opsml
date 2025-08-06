@@ -1,5 +1,5 @@
 
-Quality control in the context of `OpsML` refers to:
+Quality control in OpsML encompasses the essential processes and best practices that ensure the reliability, integrity, availability, and governance of machine learning artifacts. OpsML streamlines these critical tasks so data scientists can focus on modeling, and engineers get the robust controls they need for production environments.
 
 ### Developer-First Experience
 - **Zero-friction Integration**: Drop into existing ML workflows in minutes
