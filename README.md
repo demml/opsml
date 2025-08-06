@@ -1,59 +1,177 @@
 <h1 align="center">
   <br>
-  <img src="https://github.com/demml/opsml/blob/main/images/opsml-logo.png?raw=true"  width="400" height="400" alt="opsml logo"/>
+  <img src="https://github.com/demml/opsml/blob/main/images/opsml-logo.png?raw=true"  width="300" height="300" alt="opsml logo"/>
   <br>
 </h1>
 
-# OpsML: Quality Control for the Machine Learning Lifecycle
+### Quality Control for the Machine Learning Lifecycle
 
-<h2 align="center">OSS Version 3.0.0 Coming Soon!</h2>
+OpsML is an open-source developer-first ML operations platform focused on injecting quality control into the machine learning lifecycle. Leverage Opsml to **build**, **manage**, **track**, **monitor**, and **govern** your AI applications. Build with confidence, deploy with peace of mind.
 
-## **Note from maintainers**
 
-Version 3.0.0 is under active development. All pre-releases will be released under the `3.0.0-rc.*` tag.
-
-<h1 align="center"><a href="https://demml.github.io/opsml/">OpsML Documentation</h1>
-
-<h2 align="center"><a href="https://github.com/orgs/demml/projects/1">Task Backlog</h2>
-
-[![OpsML Unit Tests](https://github.com/demml/opsml/actions/workflows/lints-test.yml/badge.svg)](https://github.com/demml/opsml/actions/workflows/lints-test.yml)
-![Style](https://img.shields.io/badge/code%20style-black-000000.svg)
-[![Py-Versions](https://img.shields.io/pypi/pyversions/opsml.svg?color=%2334D058)](https://pypi.org/project/opsml)
+[![CI](https://github.com/demml/opsml/actions/workflows/lints-test.yml/badge.svg)](https://github.com/demml/opsml/actions/workflows/lints-test.yml)
+[![Py-Versions](https://img.shields.io/badge/Python-3.9+-color=%2334D058)](https://pypi.org/project/opsml)
 [![gitleaks](https://img.shields.io/badge/protected%20by-gitleaks-purple)](https://github.com/zricethezav/gitleaks-action)
 [![License: MIT](https://img.shields.io/badge/License-MIT-brightgreen.svg)](https://opensource.org/licenses/MIT)
+[![llms.txt](https://img.shields.io/badge/llms.txt-green)](https://github.com/demml/opsml/blob/main/llm.txt)
 
-## **What is it?**
+<div align="center">
+   <div>
+      <a href="https://docs.demml.io/opsml/"><strong>Docs</strong></a> ·
+      <a href="https://github.com/demml/opsml/issues/new/choose"><strong>Feature Request</strong></a>
+   </div>
+</div>
+<br>
 
-`OpsML` is a developer-first ML operations platform focused on injecting quality control into the machine learning lifecycle. Through automation and standardization, `OpsML` provides a unified interface and experience for managing ML artifacts, enabling teams to collaborate more effectively and deploy with confidence, all while reducing engineering overhead and providing piece of mind.
+<div align="left">
+  <b>Current status:</b> v3.0.0 pre-release (check release tags for latest 3.0.0-rc.* version)
+</div>
 
-## **What is Quality Control?**
 
-Quality control in the context of `OpsML` refers to:
+## Table of Contents
+- [Table of Contents](#table-of-contents)
+- [Why OpsML?](#why-opsml)
+  - [What makes OpsML different](#what-makes-opsml-different)
+- [Installation](#installation)
+- [Demo](#demo)
+- [Example Usage (Traditional ML)](#example-usage-traditional-ml)
+- [Example Usage (LLM)](#example-usage-llm)
+- [Hosting](#hosting)
+- [Us vs Others](#us-vs-others)
+- [Contributing](#contributing)
 
-### Developer-First Experience
-- **Zero-friction Integration** - Drop into existing ML workflows in minutes
-- **Type-safe by Design** - Rust in the back, python in the front<sup>*</sup>. Catch errors before they hit production
-- **Unified API** - One consistent interface for all ML frameworks
-- **Environment Parity** - Same experience from laptop to production
-- **Dependency Overhead** - One dependency for all ML artifact management
+## Why OpsML?
 
-### Built to Scale
-- **Trading Cards for ML** - Manage ML artifacts like trading cards - collect, organize, share
-- **Cloud-Ready** - Native support for AWS, GCP, Azure
-- **Modular Design** - Use what you need, leave what you don't
+Building reliable ML systems shouldn't require gluing together dozens of disparate tools, each with their own quirks, gaps, and maintenance overhead. The modern ML stack is fragmented. While opsml can't solve every problem, it aims to provide a **unified foundation** for your machine learning lifecycle.
 
-### Production Ready
-- **High-Performance Server** - Built in Rust for speed, reliability and concurrency
-- **Built-in Security** - Authentication and encryption out of the box
-- **Audit-Ready** - Complete artifact lineage and versioning
-- **Standardized Governance** - Consistent patterns across teams
-- **Built-in Monitoring** - Integrated with Scouter
-  
-<sup>
-OpsML is written in Rust and is exposed via a Python API built with PyO3.
-</sup>
+### What makes OpsML different
 
-### Us vs Others
+- **All-in-One Simplicity** – Models, data, prompts, experiments, services, and monitoring in one unified platform  
+- **Type-Safe & Fast** – Rust-powered backend catches errors before production, not during and provides reliability and speed
+- **Zero-Friction Integration** – Drop into existing workflows in minutes, no migration required  
+- **Cloud & Database Agnostic** – Deploy anywhere, from local dev to multi-cloud production  
+- **Production-Ready Controls** – Authentication, encryption, audit trails, and governance built-in  
+- **Integrated Monitoring** – Real-time drift detection via [Scouter](https://github.com/demml/scouter) 
+- **Standardized Patterns** – Consistent workflows across teams, projects, and environments  
+- **Developer Happiness** – One dependency, unified API, maximum productivity  
+
+
+## Installation
+
+```bash
+pip install "opsml==3.0.0rc15"
+```
+
+## Demo
+Install the following dependencies to run the demo (if you don't have them already):
+
+```bash
+pip install scikit-learn
+```
+
+Then run the demo:
+
+```bash
+opsml demo
+```
+
+Now start the ui and navigate to `localhost:3000` in your browser (use `guest` as username and password):
+
+```bash
+opsml ui start
+```
+
+shutdown the ui when you're done:
+
+```bash
+opsml ui stop
+```
+
+## Example Usage (Traditional ML)
+
+```python
+# create_fake_data requires polars and pandas to be installed 
+from opsml.helpers.data import create_fake_data
+from opsml import SklearnModel, CardRegistry, TaskType, ModelCard, RegistryType
+from sklearn import ensemble
+
+# get model registry
+reg = CardRegistry(RegistryType.Model)
+
+# create data
+X, y = create_fake_data(n_samples=1200)
+
+# Create and train model
+classifier = ensemble.RandomForestClassifier(n_estimators=5)
+classifier.fit(X.to_numpy(), y.to_numpy().ravel())
+
+model_interface = SklearnModel( 
+    model=classifier,
+    sample_data=X[0:10],
+    task_type=TaskType.Classification,
+)
+model_interface.create_drift_profile(alias="drift", X)
+
+modelcard = ModelCard(
+    interface=model_interface,
+    space="opsml",
+    name="my_model",
+)
+
+# register model
+reg.register_card(modelcard)
+```
+
+## Example Usage (LLM)
+
+```python
+from openai import OpenAI
+from opsml import PromptCard, Prompt, CardRegistry
+
+client = OpenAI()
+
+card = PromptCard(
+    space="opsml",
+    name="my_prompt",
+    prompt=Prompt( 
+        model="gpt-4o",
+        provider="openai",
+        message="Provide a brief summary of the programming language ${language}.", 
+        system_instruction="Be concise, reply with one sentence.",
+    ),
+)
+
+def chat_app(language: str):
+
+    # create the prompt and bind the context
+    user_prompt = card.prompt.bind(language=language).message[0].unwrap()
+    system_instruction = card.prompt.system_instruction[0].unwrap()
+
+    response = client.chat.completions.create(
+        model=card.prompt.model_identifier,
+        messages=[
+            {"role": "system", "content": system_instruction},
+            {"role": "user", "content": user_prompt},
+        ],
+    )
+
+    return response.choices[0].message.content
+
+if __name__ == "__main__":
+    result = chat_app("Python")
+    print(result)
+
+    # Register the card in the registry
+    registry = CardRegistry("prompt")
+    registry.register_card(card)
+```
+
+For more examples, check out the [examples directory](https://github.com/demml/opsml/tree/main/py-opsml/examples).
+
+## Hosting
+OpsML can be hosted on any cloud provider or on-premises. It supports multi-cloud deployments and is compatible with various databases. You can run OpsML in isolated environments to avoid conflicts between staging and production. Check out the [hosting guide](https://docs.demml.io/opsml/docs/setup/overview/#server-mode) for more details.
+
+## Us vs Others
 
 | Feature | OpsML | Others |
 |---------|:-------:|:--------:|
@@ -75,3 +193,5 @@ OpsML is written in Rust and is exposed via a Python API built with PyO3.
 If you'd like to contribute, be sure to check out our [contributing guide](./CONTRIBUTING.md)! If you'd like to work on any outstanding items, check out the `roadmap` section in the docs and get started.
 
 Thanks goes to these phenomenal [projects and people](./ATTRIBUTIONS.md) for creating a great foundation to build from!
+
+
