@@ -13,11 +13,8 @@ from transformers import Pipeline, BartModel, BartTokenizer, TFBartModel  # type
 from optimum.onnxruntime.configuration import AutoQuantizationConfig  # type: ignore
 import pytest
 from tests.conftest import EXCLUDE
-import sys
 from transformers import ViTFeatureExtractor, ViTForImageClassification
 from opsml.data import TorchData
-
-IS_312 = sys.version_info >= (3, 12)
 
 
 @pytest.mark.skipif(EXCLUDE, reason="Test not supported")
@@ -102,8 +99,8 @@ def test_hugging_face_model(
     assert interface.tokenizer is not None
 
 
-@pytest.mark.numpy
-@pytest.mark.skipif((EXCLUDE or IS_312), reason="Test not supported")
+@pytest.mark.tensorflow
+@pytest.mark.skipif((EXCLUDE), reason="Test not supported")
 def test_hugging_face_tf_model(
     tmp_path: Path,
     huggingface_tf_bart_model: Tuple[TFBartModel, BartTokenizer, torch.Tensor],
