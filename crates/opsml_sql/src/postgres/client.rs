@@ -444,7 +444,7 @@ impl SqlClient for PostgresClient {
     }
 
     async fn insert_artifact_record(&self, record: &ArtifactRecord) -> Result<(), SqlError> {
-        let query = PostgresQueryHelper::get_artifact_insert_record_query();
+        let query = PostgresQueryHelper::get_artifact_record_insert_query();
         sqlx::query(&query)
             .bind(&record.uid)
             .bind(&record.app_env)
