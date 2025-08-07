@@ -877,6 +877,66 @@ impl Default for ServiceCardRecord {
     }
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+pub struct ArtifactRecord {
+    pub uid: String,
+    pub created_at: DateTime<Utc>,
+    pub app_env: String,
+    pub space: String,
+    pub name: String,
+    pub major: i32,
+    pub minor: i32,
+    pub patch: i32,
+    pub version: String,
+    pub pre_tag: Option<String>,
+    pub build_tag: Option<String>,
+    pub filename: String,
+    pub data_type: String,
+    pub updated_at: DateTime<Utc>,
+}
+
+impl ArtifactRecord {
+    pub fn new(
+        name: String,
+        space: String,
+        version: Version,
+        filename: String,
+        data_type: String,
+    ) -> Self {
+        let created_at = get_utc_datetime();
+        let updated_at = created_at;
+        let app_env = env::var("APP_ENV").unwrap_or_else(|_| "development".to_string());
+        let uid = create_uuid7();
+
+        ArtifactRecord {
+            uid,
+            created_at,
+            app_env,
+            space,
+            name,
+            major: version.major as i32,
+            minor: version.minor as i32,
+            patch: version.patch as i32,
+            pre_tag: version.pre.to_string().parse().ok(),
+            build_tag: version.build.to_string().parse().ok(),
+            version: version.to_string(),
+            filename,
+            data_type,
+            updated_at,
+        }
+    }
+
+    pub fn uri(&self) -> String {
+        format!(
+            "{}/{}/{}/v{}",
+            CardTable::Artifact,
+            self.space,
+            self.name,
+            self.version
+        )
+    }
+}
+
 // create enum that takes vec of cards
 // TODO: There should also be a client side enum that matches this (don't want to install opsml_sql on client)
 #[derive(Debug, Serialize, Deserialize)]
