@@ -29,7 +29,7 @@
   
     
     function navigateToReadMe() {
-        goto(`/opsml/${registryPath}/card/readme?space=${space}&name=${name}&version=${version}`);
+        goto(`/opsml/${registryPath}/card/${space}/${name}/${version}/readme`);
       }
   
   
