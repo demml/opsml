@@ -31,7 +31,7 @@
   let currentConfig: DriftConfigType = $state(data.currentConfig);
   let currentAlerts: Alert[] = $state(data.currentAlerts);
   let currentLLMRecordPage = $state(data.currentLLMRecords);
-  let registry = $state(data.registry);
+  let registry = $state(data.registryType);
   let uid: string = $state(data.metadata.uid);
 
   // Vars
