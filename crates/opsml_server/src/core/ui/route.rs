@@ -20,13 +20,12 @@ async fn get_static_file(path: &str) -> Response {
     }
 
     if let Some(content) = Assets::get(path) {
-        println!("Serving static file: {}", path);
         let mime = mime_guess::from_path(path).first_or_octet_stream();
         return ([(CONTENT_TYPE, mime.as_ref())], content.data).into_response();
     }
 
     if is_dynamic_card_route(path) {
-        let redirect_path = format!("{}/home", path);
+        let redirect_path = format!("{}/card", path);
         return axum::response::Redirect::permanent(&format!("/{}", redirect_path)).into_response();
     }
 

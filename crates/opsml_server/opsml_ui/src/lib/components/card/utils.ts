@@ -160,11 +160,15 @@ export async function getUID(
   return await getCardUid(registry, name, space, version);
 }
 export async function getCardMetadata(
-  uid: string,
+  space: string,
+  name: string,
+  version: string | undefined,
   registry_type: RegistryType
 ): Promise<any> {
   const params: CardQueryArgs = {
-    uid: uid,
+    name: name,
+    space: space,
+    version: version,
     registry_type: registry_type,
   };
 
