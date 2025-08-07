@@ -10,11 +10,6 @@
   let { data }: PageProps = $props();
   let card: DataCard = data.metadata;
 
-  function navigateToReadMe() {
-      // navigate to readme
-      goto(`/opsml/${data.registryPath}/card/${card.space}/${card.name}/${card.version}/readme`);
-    }
-
 </script>
 
 <div class="flex-1 mx-auto w-11/12 flex justify-center px-4 pb-10">

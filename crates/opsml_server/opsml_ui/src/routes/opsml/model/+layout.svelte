@@ -1,6 +1,5 @@
-
 <script lang="ts">
-  let { children } = $props();
+    let { children } = $props();
 </script>
 
 <div class="h-full overflow-auto">

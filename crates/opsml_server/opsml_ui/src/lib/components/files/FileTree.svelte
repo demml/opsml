@@ -30,14 +30,12 @@
 
   function navigateToPath(slug_name: string) {
     let newPath = currentPath + '/' + slug_name;
-    // add params to path
-    newPath = newPath + `?space=${space}&name=${name}&version=${version}`;
     goto(newPath);
   }
 
   function navigateToView(path: string) {
     // add params to path
-    let viewPath = `/opsml/${registryPath}/card/files/view?space=${space}&name=${name}&version=${version}&path=${path}`;
+    let viewPath = `/opsml/${registryPath}/card/${space}/${name}/${version}/files/view?path=${path}`;
     goto(viewPath);
   }
    

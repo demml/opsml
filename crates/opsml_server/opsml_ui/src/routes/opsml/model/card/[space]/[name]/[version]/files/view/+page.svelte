@@ -12,9 +12,10 @@
   <FileViewPage
     file={data.rawFile}
     splitPath={data.splitPath}
-    registry={data.registry.toLocaleLowerCase()}
+    registry={data.registryPath.toLocaleLowerCase()}
     space={data.metadata.space}
     name={data.metadata.name}
     version={data.metadata.version}
     />
 </div>
+
