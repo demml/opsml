@@ -1,7 +1,6 @@
 <script lang="ts">
   // version $props() in +page.svelte
 
-  import { goto } from '$app/navigation';
   import type { ExperimentCard } from '$lib/components/card/card_interfaces/experimentcard';
   import type { PageProps } from './$types';
   import CardReadMe from '$lib/components/card/CardReadMe.svelte';
@@ -12,12 +11,8 @@
   let { data }: PageProps = $props();
   let card: ExperimentCard = data.metadata;
 
-  function navigateToReadMe() {
-      // navigate to readme
-      goto(`/opsml/${data.registryPath}/card/readme?space=${card.space}&name=${card.name}&version=${card.version}`);
-    }
-
 </script>
+
 
 <div class="flex-1 mx-auto w-11/12 flex justify-center px-4 pb-10">
   <div class="flex flex-wrap pt-4 gap-4 w-full justify-center">
@@ -52,7 +47,6 @@
 
   </div>
 </div>
-  
 
 
   

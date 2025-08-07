@@ -1,5 +1,4 @@
 <script lang="ts">
-    import type { UiHardwareMetrics } from '$lib/components/card/experiment/types';
     import TimeSeries from '$lib/components/viz/TimeSeries.svelte';
 
 
@@ -33,6 +32,7 @@
   </div>
 
   <TimeSeries
+    baselineValue={undefined}
     timestamps={xValues}
     values={yValues}
     label={vizLabel}

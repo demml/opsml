@@ -15,7 +15,7 @@
         name={data.metadata.name}
         space={data.metadata.space}
         version={data.metadata.version}
-        registry={data.registry}
+        registry={data.registryType}
         registryPath={data.registryPath}
         readme_content={data.content}
       />

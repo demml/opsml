@@ -4,20 +4,20 @@ import { getRegistryStats, getVersionPage } from "$lib/components/card/utils";
 import type { PageLoad } from "./$types";
 
 export const load: PageLoad = async ({ parent }) => {
-  const { metadata, registry } = await parent();
+  const { metadata, registryType } = await parent();
 
   // get metric names, parameters
   let versionPage = await getVersionPage(
-    registry,
+    registryType,
     metadata.space,
     metadata.name
   );
 
   let versionStats = await getRegistryStats(
-    registry,
+    registryType,
     metadata.name,
     metadata.space
   );
 
-  return { registry, versionPage, versionStats };
+  return { versionPage, versionStats };
 };
