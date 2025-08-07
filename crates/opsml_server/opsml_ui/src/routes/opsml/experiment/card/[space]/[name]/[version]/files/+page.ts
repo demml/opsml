@@ -5,9 +5,9 @@ import { getFileTree } from "$lib/components/files/utils";
 import { getRegistryTableName } from "$lib/utils";
 
 export const load: PageLoad = async ({ parent }) => {
-  const { metadata, registry, registryPath } = await parent();
+  const { metadata, registryPath, registryType } = await parent();
 
-  let tableName = getRegistryTableName(registry);
+  let tableName = getRegistryTableName(registryType);
   let basePath = `${tableName}/${metadata.space}/${metadata.name}/v${metadata.version}`;
 
   let fileTree = await getFileTree(basePath);

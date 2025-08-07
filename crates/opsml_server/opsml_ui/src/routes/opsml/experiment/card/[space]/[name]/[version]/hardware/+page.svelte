@@ -1,6 +1,5 @@
 <script lang="ts">
   import type { UiHardwareMetrics } from '$lib/components/card/experiment/types';
-  import TimeSeries from '$lib/components/viz/TimeSeries.svelte';
   import type { PageProps } from './$types';
   let { data }: PageProps = $props();
   import HardwareViz from '$lib/components/card/experiment/HardwareViz.svelte';
