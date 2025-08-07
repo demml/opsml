@@ -140,10 +140,13 @@ impl OnnxSession {
                 .getattr("InferenceSession")?;
 
             // assert session is an instance of InferenceSession
-            let session = session.unwrap();
-            if session.is_instance(&rt_session).unwrap() {
-                self.session = Some(session.clone().unbind());
-                Ok(())
+            if let Some(session) = session {
+                if session.is_instance(&rt_session)? {
+                    self.session = Some(session.clone().unbind());
+                    Ok(())
+                } else {
+                    Err(OnnxError::MustBeInferenceSession)
+                }
             } else {
                 Err(OnnxError::MustBeInferenceSession)
             }
