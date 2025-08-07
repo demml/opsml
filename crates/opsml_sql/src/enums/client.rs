@@ -3,8 +3,8 @@ use crate::error::SqlError;
 use crate::mysql::client::MySqlClient;
 use crate::postgres::client::PostgresClient;
 use crate::schemas::schema::{
-    CardResults, CardSummary, HardwareMetricsRecord, MetricRecord, ParameterRecord, QueryStats,
-    ServerCard, User,
+    ArtifactRecord, CardResults, CardSummary, HardwareMetricsRecord, MetricRecord, ParameterRecord,
+    QueryStats, ServerCard, User,
 };
 use crate::schemas::VersionSummary;
 use crate::sqlite::client::SqliteClient;
@@ -84,6 +84,14 @@ impl SqlClient for SqlClientEnum {
             SqlClientEnum::Postgres(client) => client.insert_card(table, card).await,
             SqlClientEnum::Sqlite(client) => client.insert_card(table, card).await,
             SqlClientEnum::MySql(client) => client.insert_card(table, card).await,
+        }
+    }
+
+    async fn insert_artifact_record(&self, record: &ArtifactRecord) -> Result<(), SqlError> {
+        match self {
+            SqlClientEnum::Postgres(client) => client.insert_artifact_record(record).await,
+            SqlClientEnum::Sqlite(client) => client.insert_artifact_record(record).await,
+            SqlClientEnum::MySql(client) => client.insert_artifact_record(record).await,
         }
     }
 
