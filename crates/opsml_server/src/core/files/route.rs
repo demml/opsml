@@ -16,7 +16,9 @@ use axum::{
 };
 use headers::HeaderMap;
 use opsml_auth::permission::UserPermissions;
+use opsml_events::AuditContext;
 use opsml_sql::base::SqlClient;
+use opsml_sql::schemas::ArtifactRecord;
 use opsml_types::{cards::CardTable, RegistryType};
 use opsml_types::{contracts::*, StorageType, MAX_FILE_SIZE};
 
@@ -587,33 +589,70 @@ pub async fn get_artifact_key(
 #[instrument(skip_all)]
 pub async fn create_artifact_record(
     State(state): State<Arc<AppState>>,
+    Extension(perms): Extension<UserPermissions>,
     Json(req): Json<CreateArtifactRequest>,
-) -> Result<Json<CreateArtifactResponse>, (StatusCode, Json<OpsmlServerError>)> {
+) -> Result<Response, (StatusCode, Json<OpsmlServerError>)> {
     debug!("Creating artifact record: {:?}", req);
 
     let table = CardTable::from_registry_type(&RegistryType::Artifact);
-    if !perms.has_write_permission(card_request.card.space()) {
+    if !perms.has_write_permission(&req.space) {
         return OpsmlServerError::permission_denied().into_response(StatusCode::FORBIDDEN);
     }
 
-    // (1) ------- Get the next version
-    let version = get_next_version(state.sql_client.clone(), &table, req.version.clone())
+    // version request is always major for artifacts
+    let version_request = CardVersionRequest {
+        space: req.space.clone(),
+        name: req.name.clone(),
+        version: Some(req.version.clone()),
+        pre_tag: None,
+        build_tag: None,
+        version_type: opsml_semver::VersionType::Major,
+    };
+
+    let version = get_next_version(state.sql_client.clone(), &table, version_request)
         .await
         .map_err(|e| {
             error!("Failed to get next version: {e}");
             internal_server_error(e, "Failed to get next version")
         })?;
 
-    let key = state
+    let artifact_record =
+        ArtifactRecord::new(req.space, req.name, version, req.filename, req.data_type);
+
+    state
         .sql_client
-        .create_artifact_record(&req)
+        .insert_artifact_record(&artifact_record)
         .await
         .map_err(|e| {
             error!("Failed to create artifact record: {e}");
             internal_server_error(e, "Failed to create artifact record")
         })?;
 
-    Ok(Json(CreateArtifactResponse { key }))
+    let metadata = artifact_record.get_metadata();
+    let mut response = Json(CreateArtifactResponse {
+        uid: artifact_record.uid.clone(),
+        space: artifact_record.space,
+        name: artifact_record.name,
+        version: artifact_record.version,
+        filename: artifact_record.filename,
+    })
+    .into_response();
+
+    let audit_context = AuditContext {
+        resource_id: artifact_record.uid.clone(),
+        resource_type: ResourceType::Database,
+        metadata,
+        registry_type: Some(RegistryType::Artifact),
+        operation: Operation::Create,
+        access_location: None,
+    };
+
+    {
+        let extensions = response.extensions_mut();
+        extensions.insert(audit_context);
+    }
+
+    Ok(response)
 }
 
 pub async fn get_file_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
@@ -642,6 +681,7 @@ pub async fn get_file_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
             .route(&format!("{prefix}/files/delete"), delete(delete_file))
             .route(&format!("{prefix}/files/key"), get(get_artifact_key))
             .route(&format!("{prefix}/files/content"), post(get_file_for_ui))
+            .route(&format!("{prefix}/artifact"), post(create_artifact_record))
     }));
 
     match result {

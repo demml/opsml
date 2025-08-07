@@ -222,6 +222,15 @@ pub struct CreateArtifactRequest {
     pub data_type: String,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct CreateArtifactResponse {
+    pub uid: String,
+    pub space: String,
+    pub name: String,
+    pub version: String,
+    pub filename: String,
+}
+
 #[derive(Debug, Clone)]
 pub enum Operation {
     Create,
