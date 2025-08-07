@@ -143,7 +143,7 @@ impl PostgresQueryHelper {
     pub fn get_experiment_metric_insert_query() -> String {
         INSERT_EXPERIMENT_METRIC_SQL.to_string()
     }
-    pub fn get_artifact_insert_record_query() -> String {
+    pub fn get_artifact_record_insert_query() -> String {
         INSERT_ARTIFACT_RECORD_SQL.to_string()
     }
 

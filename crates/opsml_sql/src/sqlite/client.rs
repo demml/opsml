@@ -2,9 +2,10 @@ use crate::base::SqlClient;
 
 use crate::error::SqlError;
 use crate::schemas::schema::{
-    AuditCardRecord, CardResults, CardSummary, DataCardRecord, ExperimentCardRecord,
-    HardwareMetricsRecord, MetricRecord, ModelCardRecord, ParameterRecord, PromptCardRecord,
-    QueryStats, ServerCard, ServiceCardRecord, SqlSpaceRecord, User, VersionResult, VersionSummary,
+    ArtifactRecord, AuditCardRecord, CardResults, CardSummary, DataCardRecord,
+    ExperimentCardRecord, HardwareMetricsRecord, MetricRecord, ModelCardRecord, ParameterRecord,
+    PromptCardRecord, QueryStats, ServerCard, ServiceCardRecord, SqlSpaceRecord, User,
+    VersionResult, VersionSummary,
 };
 
 use crate::sqlite::helper::SqliteQueryHelper;
@@ -459,6 +460,26 @@ impl SqlClient for SqliteClient {
                 return Err(SqlError::InvalidTableName);
             }
         }
+    }
+
+    async fn insert_artifact_record(&self, record: &ArtifactRecord) -> Result<(), SqlError> {
+        let query = SqliteQueryHelper::get_artifact_record_insert_query();
+        sqlx::query(&query)
+            .bind(&record.uid)
+            .bind(&record.app_env)
+            .bind(&record.space)
+            .bind(&record.name)
+            .bind(&record.major)
+            .bind(&record.minor)
+            .bind(&record.patch)
+            .bind(&record.pre_tag)
+            .bind(&record.build_tag)
+            .bind(&record.version)
+            .bind(&record.filename)
+            .bind(&record.data_type)
+            .execute(&self.pool)
+            .await?;
+        Ok(())
     }
 
     async fn update_card(&self, table: &CardTable, card: &ServerCard) -> Result<(), SqlError> {
