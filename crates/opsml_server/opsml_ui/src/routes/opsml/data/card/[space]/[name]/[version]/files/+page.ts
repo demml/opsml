@@ -6,6 +6,7 @@ import { getRegistryTableName } from "$lib/utils";
 
 export const load: PageLoad = async ({ parent }) => {
   const { metadata, registry, registryPath } = await parent();
+  console.log("Loading files for metadata:", metadata);
 
   let tableName = getRegistryTableName(registry);
   let basePath = `${tableName}/${metadata.space}/${metadata.name}/v${metadata.version}`;

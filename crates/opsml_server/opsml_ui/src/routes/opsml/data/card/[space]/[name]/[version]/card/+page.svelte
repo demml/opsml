@@ -12,7 +12,7 @@
 
   function navigateToReadMe() {
       // navigate to readme
-      goto(`/opsml/${data.registryPath}/card/readme?space=${card.space}&name=${card.name}&version=${card.version}`);
+      goto(`/opsml/${data.registryPath}/card/${card.space}/${card.name}/${card.version}/readme`);
     }
 
 </script>

@@ -1,9 +1,7 @@
+import { python } from "svelte-highlight/languages";
 import type { PageLoad } from "./$types";
 
-export const load: PageLoad = async ({ parent, url }) => {
-  const name = (url as URL).searchParams.get("name") as string;
-  const space = (url as URL).searchParams.get("space") as string;
-
+export const load: PageLoad = async ({ parent }) => {
   const { metadata, registry, readme } = await parent();
 
   let content: string = "";
@@ -11,39 +9,69 @@ export const load: PageLoad = async ({ parent, url }) => {
   if (readme.exists) {
     content = readme.readme;
   } else {
-    content = `# ModelCard Description for ${name} 
+    content = `# DataCard for ${metadata.space}/${metadata.name}
 
-<!--- Summary of model goes here -->
+<!--- Brief summary of the data card, its purpose, and key highlights. -->
 
-Generic summary for ${space}/${name} goes here.
+**Summary:**  
+Provide a concise summary of the data card, its intended use, and any notable features.
+
+---
 
 ## Model Details
 
+- **Space:** ${metadata.space}
+- **Name:** ${metadata.name}
+- **Version:** ${metadata.version}
+- **Registry:** ${registry}
+
+---
+
 ## Description
 
-This section is used to describe the model in more detail.
+Describe the model or dataset in detail.  
+Include its origin, intended use cases, and any relevant background information.
 
-- ** Contact: ** [Provide contact information here]
-- ** License: ** [Provide license information here]
+---
 
-## Model Development
+## Contact
 
-This section is used to describe the model development process.
+- **Contact Person/Team:** [Add contact information or support email]
+- **License:** [Specify license, e.g., MIT, Apache 2.0, etc.]
+
+---
+
+## Data Development
+
+Explain how the data/model was developed, including sources, methodology, and any preprocessing steps.
+
+---
 
 ## Uses
 
-This section is used to describe the uses of the model.
+List and describe common or recommended uses for this data card.
+
+---
 
 ## Bias, Risk, and Limitations
 
-<!--- This section is used to describe the bias, risk, and limitations of the model. Credit to huggingface template -->
+<!--- Credit: HuggingFace Model Card template -->
 
-Provide a brief description of the bias, risk, and limitations of the model.
+Discuss any known biases, risks, or limitations associated with this data/model.  
+Mention steps taken to mitigate these issues, if any.
+
+---
 
 ## Code Examples
 
-<!--- This section is used to provide code examples for the model -->
-    `;
+<!--- Provide code snippets or usage examples for this data card. -->
+\`\`\`python
+# Example usage in Python
+# import opsml
+# card = opsml.load_card(uid="${metadata.uid}")
+\`\`\`
+
+`;
   }
 
   return {
