@@ -144,28 +144,18 @@ export async function getCardUid(
 }
 
 export async function getUID(
-  url: URL,
+  space: string,
+  name: string,
+  version: string | undefined,
   registry: RegistryType
 ): Promise<string> {
-  const name = (url as URL).searchParams.get("name") as string | undefined;
-  const space = (url as URL).searchParams.get("space") as string | undefined;
-  const version = (url as URL).searchParams.get("version") as
-    | string
-    | undefined;
-  const uid = (url as URL).searchParams.get("uid") as string | undefined;
-
   console.log("getUID called with:", {
     name,
     space,
     version,
-    uid,
+
     registry,
   });
-
-  // If uid is provided, return it
-  if (uid) {
-    return uid;
-  }
 
   return await getCardUid(registry, name, space, version);
 }
