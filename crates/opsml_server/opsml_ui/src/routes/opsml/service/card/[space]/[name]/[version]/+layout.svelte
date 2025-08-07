@@ -1,8 +1,7 @@
 <script lang="ts">
   import type { LayoutProps } from './$types';
-  import { IdCard, FolderTree, Tag, Activity } from 'lucide-svelte';
+  import { IdCard, FolderTree, Tag, Activity, ChartColumnDecreasing } from 'lucide-svelte';
   import { page } from '$app/state';
-  import { uiSettingsStore } from '$lib/components/settings/settings.svelte';
 
   let { data, children }: LayoutProps = $props();
 
@@ -10,7 +9,7 @@
 
   let activeTab = $derived.by(() => {
     const last = page.url.pathname.split('/').pop() ?? '';
-    if (['card', 'files', 'monitoring', 'versions'].includes(last)) return last;
+    if (['card', 'files', 'versions'].includes(last)) return last;
     return 'card';
   });
 
@@ -38,6 +37,7 @@
           <IdCard color="#8059b6"/>
           <span>Card</span>
         </a>
+
         <a
           class="flex items-center gap-x-2 border-b-3 {activeTab === 'files' ? 'border-secondary-500' : 'border-transparent'} hover:border-secondary-500 hover:border-b-3"
           href={`/opsml/${registry}/card/${data.metadata.space}/${data.metadata.name}/${data.metadata.version}/files`}
@@ -46,16 +46,7 @@
           <FolderTree color="#8059b6"/>
           <span>Files</span>
         </a>
-        {#if data.metadata.metadata.interface_metadata.save_metadata.drift_profile_uri_map && uiSettingsStore.scouterEnabled}
-          <a
-            class="flex items-center gap-x-2 border-b-3 {activeTab === 'monitoring' ? 'border-secondary-500' : 'border-transparent'} hover:border-secondary-500 hover:border-b-3"
-            href={`/opsml/${registry}/card/${data.metadata.space}/${data.metadata.name}/${data.metadata.version}/monitoring`}
-            data-sveltekit-preload-data="hover"
-          >
-            <Activity color="#8059b6"/>
-            <span>Monitoring</span>
-          </a>
-        {/if}
+       
         <a
           class="flex items-center gap-x-2 border-b-3 {activeTab === 'versions' ? 'border-secondary-500' : 'border-transparent'} hover:border-secondary-500 hover:border-b-3"
           href={`/opsml/${registry}/card/${data.metadata.space}/${data.metadata.name}/${data.metadata.version}/versions`}

@@ -38,15 +38,8 @@
           <IdCard color="#8059b6"/>
           <span>Card</span>
         </a>
-        <a
-          class="flex items-center gap-x-2 border-b-3 {activeTab === 'files' ? 'border-secondary-500' : 'border-transparent'} hover:border-secondary-500 hover:border-b-3"
-          href={`/opsml/${registry}/card/${data.metadata.space}/${data.metadata.name}/${data.metadata.version}/files`}
-          data-sveltekit-preload-data="hover"
-        >
-          <FolderTree color="#8059b6"/>
-          <span>Files</span>
-        </a>
-        {#if data.metadata.metadata.interface_metadata.save_metadata.drift_profile_uri_map && uiSettingsStore.scouterEnabled}
+
+        {#if data.metadata.metadata.drift_profile_uri_map && uiSettingsStore.scouterEnabled}
           <a
             class="flex items-center gap-x-2 border-b-3 {activeTab === 'monitoring' ? 'border-secondary-500' : 'border-transparent'} hover:border-secondary-500 hover:border-b-3"
             href={`/opsml/${registry}/card/${data.metadata.space}/${data.metadata.name}/${data.metadata.version}/monitoring`}
@@ -56,6 +49,16 @@
             <span>Monitoring</span>
           </a>
         {/if}
+
+        <a
+          class="flex items-center gap-x-2 border-b-3 {activeTab === 'files' ? 'border-secondary-500' : 'border-transparent'} hover:border-secondary-500 hover:border-b-3"
+          href={`/opsml/${registry}/card/${data.metadata.space}/${data.metadata.name}/${data.metadata.version}/files`}
+          data-sveltekit-preload-data="hover"
+        >
+          <FolderTree color="#8059b6"/>
+          <span>Files</span>
+        </a>
+       
         <a
           class="flex items-center gap-x-2 border-b-3 {activeTab === 'versions' ? 'border-secondary-500' : 'border-transparent'} hover:border-secondary-500 hover:border-b-3"
           href={`/opsml/${registry}/card/${data.metadata.space}/${data.metadata.name}/${data.metadata.version}/versions`}
