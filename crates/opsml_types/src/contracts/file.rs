@@ -2,6 +2,7 @@ use crate::error::TypeError;
 use crate::interfaces::DriftProfileUri;
 use crate::RegistryType;
 use crate::StorageType;
+use chrono::{DateTime, Utc};
 use opsml_crypt::decrypt_key;
 use opsml_utils::{uid_to_byte_key, PyHelperFuncs};
 use pyo3::prelude::*;
