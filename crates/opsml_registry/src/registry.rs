@@ -786,6 +786,22 @@ impl CardRegistry {
 
         Ok(response)
     }
+
+    pub fn log_artifact(
+        &self,
+        space: String,
+        name: String,
+        version: String,
+        filename: String,
+        data_type: String,
+    ) -> Result<(), RegistryError> {
+        // Log artifact to the registry
+        self.registry
+            .log_artifact(space, name, version, filename, data_type)
+            .inspect_err(|e| {
+                error!("Failed to log artifact: {e}");
+            })
+    }
 }
 
 #[pyclass]
