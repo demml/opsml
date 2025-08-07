@@ -137,8 +137,7 @@ impl OnnxSession {
             let rt_session = py
                 .import("onnxruntime")
                 .unwrap()
-                .getattr("InferenceSession")
-                .unwrap();
+                .getattr("InferenceSession")?;
 
             // assert session is an instance of InferenceSession
             let session = session.unwrap();
