@@ -42,7 +42,7 @@ pub fn build_http_client(settings: &ApiSettings) -> Result<Client, ApiClientErro
 
     headers.insert(
         reqwest::header::USER_AGENT,
-        HeaderValue::from_static(concat!("opsml-client/",)),
+        HeaderValue::from_static("opsml-client/"),
     );
     let client_builder = Client::builder().timeout(std::time::Duration::from_secs(TIMEOUT_SECS));
 
