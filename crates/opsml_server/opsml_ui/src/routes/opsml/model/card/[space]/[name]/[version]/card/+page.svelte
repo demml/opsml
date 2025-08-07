@@ -1,7 +1,6 @@
 <script lang="ts">
   // version $props() in +page.svelte
 
-  import { goto } from '$app/navigation';
   import type { ModelCard } from '$lib/components/card/card_interfaces/modelcard';
   import type { PageProps } from './$types';
   import CardReadMe from '$lib/components/card/CardReadMe.svelte';
@@ -11,11 +10,6 @@
 
   let { data }: PageProps = $props();
   let card: ModelCard = data.metadata;
-
-  function navigateToReadMe() {
-      // navigate to readme
-      goto(`/opsml/${data.registryPath}/card/readme?space=${card.space}&name=${card.name}&version=${card.version}`);
-    }
 
 </script>
 

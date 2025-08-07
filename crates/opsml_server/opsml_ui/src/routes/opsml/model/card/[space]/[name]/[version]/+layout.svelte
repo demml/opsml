@@ -1,22 +1,17 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
   import type { LayoutProps } from './$types';
-  import { getRegistryTypeLowerCase } from '$lib/utils';
-  import { IdCard, FolderTree, Tag, BookOpenText, Columns2 } from 'lucide-svelte';
+  import { IdCard, FolderTree, Tag, Activity } from 'lucide-svelte';
   import { page } from '$app/state';
-
-
 
   let { data, children }: LayoutProps = $props();
 
+  let registry = $state(data.registryPath);
+
   let activeTab = $derived.by(() => {
     const last = page.url.pathname.split('/').pop() ?? '';
-    if (['card', 'files', 'profile', 'versions'].includes(last)) return last;
+    if (['card', 'files', 'monitoring', 'versions'].includes(last)) return last;
     return 'card';
   });
-
-
-  let registry = $state(getRegistryTypeLowerCase(data.registry));
 
 </script>
 
@@ -50,14 +45,16 @@
           <FolderTree color="#8059b6"/>
           <span>Files</span>
         </a>
-        <a
-          class="flex items-center gap-x-2 border-b-3 {activeTab === 'profile' ? 'border-secondary-500' : 'border-transparent'} hover:border-secondary-500 hover:border-b-3"
-          href={`/opsml/${registry}/card/${data.metadata.space}/${data.metadata.name}/${data.metadata.version}/profile`}
-          data-sveltekit-preload-data="hover"
-        >
-          <BookOpenText color="#8059b6"/>
-          <span>Profile</span>
-        </a>
+        {#if data.metadata.metadata.interface_metadata.save_metadata.drift_profile_uri_map}
+          <a
+            class="flex items-center gap-x-2 border-b-3 {activeTab === 'monitoring' ? 'border-secondary-500' : 'border-transparent'} hover:border-secondary-500 hover:border-b-3"
+            href={`/opsml/${registry}/card/${data.metadata.space}/${data.metadata.name}/${data.metadata.version}/monitoring`}
+            data-sveltekit-preload-data="hover"
+          >
+            <Activity color="#8059b6"/>
+            <span>Monitoring</span>
+          </a>
+        {/if}
         <a
           class="flex items-center gap-x-2 border-b-3 {activeTab === 'versions' ? 'border-secondary-500' : 'border-transparent'} hover:border-secondary-500 hover:border-b-3"
           href={`/opsml/${registry}/card/${data.metadata.space}/${data.metadata.name}/${data.metadata.version}/versions`}

@@ -28,10 +28,9 @@
   
   
     function constructPath(index: number): string {
-      const basePath = `/opsml/${registry}/card/files`;
+      const basePath = `/opsml/${registry}/card/${space}/${name}/${version}/files`;
       const dynamicPath = splitPath.slice(4, index + 1).join('/');
-      const queryParams = `?space=${space}&name=${name}&version=${version}`;
-      return dynamicPath ? `${basePath}/${dynamicPath}${queryParams}` : `${basePath}${queryParams}`;
+      return dynamicPath ? `${basePath}/${dynamicPath}` : `${basePath}`;
     }
   
     function gotoPath(index: number) {

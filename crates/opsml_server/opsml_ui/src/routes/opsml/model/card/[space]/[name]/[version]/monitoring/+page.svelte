@@ -30,7 +30,7 @@
   let currentConfig: DriftConfigType = $state(data.currentConfig);
   let currentAlerts: Alert[] = $state(data.currentAlerts);
   let uid: string = $state(data.metadata.uid);
-  let registry = $state(data.registry);
+  let registry = $state(data.registryType);
 
   // Vars
   let drift_types: DriftType[] = data.keys;
@@ -131,12 +131,8 @@
           currentTimeInterval,
           true
         );
-
-
       }
-     
   }
-
 
  </script>
  
