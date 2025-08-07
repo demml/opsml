@@ -12,6 +12,23 @@ export function getRegistryTypeLowerCase(type: RegistryType): string {
   return name;
 }
 
+export function getRegistryFromString(type: string): RegistryType | undefined {
+  switch (type.toLowerCase()) {
+    case "data":
+      return RegistryType.Data;
+    case "model":
+      return RegistryType.Model;
+    case "experiment":
+      return RegistryType.Experiment;
+    case "prompt":
+      return RegistryType.Prompt;
+    case "service":
+      return RegistryType.Service;
+    default:
+      return undefined;
+  }
+}
+
 export function getRegistryTableName(type: RegistryType): string {
   return "opsml_" + type.toLowerCase() + "_registry";
 }

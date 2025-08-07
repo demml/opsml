@@ -1,11 +1,10 @@
-export const prerender = true;
+export const prerender = false;
 export const ssr = false;
 import { validateUserOrRedirect } from "$lib/components/user/user.svelte";
 import { getRegistryTypeLowerCase, RegistryType } from "$lib/utils";
 import { getCardMetadata, getUID } from "$lib/components/card/utils";
 
-// @ts-ignore
-import type { LayoutServerLoad } from "./$types";
+import type { LayoutLoad } from "./$types";
 import type { DataCard } from "$lib/components/card/card_interfaces/datacard";
 import { getCardReadMe } from "$lib/components/readme/util";
 
@@ -15,11 +14,13 @@ function getLastPartOfPath(path: string): string {
 }
 
 // @ts-ignore
-export const load: LayoutServerLoad = async ({ url }) => {
+export const load: LayoutLoad = async ({ url, params }) => {
+  const { space, name, version } = params;
+
   await validateUserOrRedirect();
 
   let registry = RegistryType.Data;
-  let uid = await getUID(url, registry);
+  let uid = await getUID(space, name, version, registry);
 
   let metadata = (await getCardMetadata(uid, registry)) as DataCard;
 
