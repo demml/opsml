@@ -291,6 +291,57 @@ impl ClientRegistry {
         self.artifact_key(uid, registry_type, Routes::ArtifactKey)
     }
 
+    /// Insert an artifact record into the opsml_artifact_registry
+    /// # Arguments
+    /// * `space` - The space of the artifact
+    /// * `name` - The name of the artifact
+    /// * `version` - The version of the artifact
+    /// * `filename` - The filename of the artifact
+    /// * `data_type` - The data type of the artifact
+    /// # Returns
+    /// * `CreateArtifactResponse` - The response containing the created artifact record
+    #[instrument(skip_all)]
+    pub fn insert_artifact_record(
+        &self,
+        space: String,
+        name: String,
+        version: String,
+        filename: String,
+        data_type: String,
+    ) -> Result<CreateArtifactResponse, RegistryError> {
+        let body = serde_json::to_value(CreateArtifactRequest {
+            space,
+            name,
+            version,
+            filename,
+            data_type,
+        })?;
+
+        let response = self
+            .api_client
+            .request(
+                Routes::ArtifactRecord,
+                RequestType::Post,
+                Some(body),
+                None,
+                None,
+            )
+            .inspect_err(|e| {
+                error!("Failed to insert artifact record {}", e);
+            })?;
+
+        if !response.status().is_success() {
+            let error_text = response.text().map_err(RegistryError::RequestError)?;
+            return Err(ApiClientError::ServerError(error_text).into());
+        }
+
+        let inserted = response
+            .json::<CreateArtifactResponse>()
+            .map_err(RegistryError::RequestError)?;
+
+        return Ok(inserted);
+    }
+
     pub fn insert_hardware_metrics(
         &self,
         metrics: &HardwareMetricRequest,
