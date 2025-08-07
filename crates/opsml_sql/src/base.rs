@@ -3,6 +3,7 @@ use crate::schemas::schema::{
     CardResults, CardSummary, HardwareMetricsRecord, MetricRecord, ParameterRecord, QueryStats,
     ServerCard, User, VersionSummary,
 };
+use crate::schemas::ArtifactRecord;
 use async_trait::async_trait;
 use opsml_semver::VersionParser;
 use opsml_settings::config::DatabaseSettings;
@@ -384,4 +385,7 @@ pub trait SqlClient: Sized {
         name: &str,
         registry_type: &RegistryType,
     ) -> Result<(), SqlError>;
+
+    /// Insert artifact record
+    async fn insert_artifact_record(&self, record: &ArtifactRecord) -> Result<(), SqlError>;
 }

@@ -4,8 +4,8 @@ CREATE TABLE IF NOT EXISTS opsml_artifact_registry (
     uid TEXT PRIMARY KEY,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     app_env TEXT DEFAULT 'development',
-    name TEXT,
     space TEXT,
+    name TEXT,
     major INTEGER NOT NULL,
     minor INTEGER NOT NULL,
     patch INTEGER NOT NULL,
@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS opsml_artifact_registry (
     build_tag TEXT,
     version TEXT,
     filename TEXT,
+    data_type TEXT,
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 

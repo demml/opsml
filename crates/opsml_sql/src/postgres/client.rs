@@ -3,9 +3,10 @@ use crate::base::SqlClient;
 use crate::error::SqlError;
 use crate::postgres::helper::PostgresQueryHelper;
 use crate::schemas::schema::{
-    AuditCardRecord, CardResults, CardSummary, DataCardRecord, ExperimentCardRecord,
-    HardwareMetricsRecord, MetricRecord, ModelCardRecord, ParameterRecord, PromptCardRecord,
-    QueryStats, ServerCard, ServiceCardRecord, SqlSpaceRecord, User, VersionResult, VersionSummary,
+    ArtifactRecord, AuditCardRecord, CardResults, CardSummary, DataCardRecord,
+    ExperimentCardRecord, HardwareMetricsRecord, MetricRecord, ModelCardRecord, ParameterRecord,
+    PromptCardRecord, QueryStats, ServerCard, ServiceCardRecord, SqlSpaceRecord, User,
+    VersionResult, VersionSummary,
 };
 use async_trait::async_trait;
 use opsml_semver::VersionValidator;
@@ -440,6 +441,26 @@ impl SqlClient for PostgresClient {
                 return Err(SqlError::InvalidTableName);
             }
         }
+    }
+
+    async fn insert_artifact_record(&self, record: &ArtifactRecord) -> Result<(), SqlError> {
+        let query = PostgresQueryHelper::get_artifact_insert_record_query();
+        sqlx::query(&query)
+            .bind(&record.uid)
+            .bind(&record.app_env)
+            .bind(&record.space)
+            .bind(&record.name)
+            .bind(&record.version.major)
+            .bind(&record.version.minor)
+            .bind(&record.version.patch)
+            .bind(&record.pre_tag)
+            .bind(&record.build_tag)
+            .bind(&record.version)
+            .bind(&record.filename)
+            .bind(&record.data_type)
+            .execute(&self.pool)
+            .await?;
+        Ok(())
     }
 
     async fn update_card(&self, table: &CardTable, card: &ServerCard) -> Result<(), SqlError> {

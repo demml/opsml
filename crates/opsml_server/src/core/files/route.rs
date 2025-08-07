@@ -1,11 +1,11 @@
+use crate::core::cards::utils::get_next_version;
 use crate::core::error::internal_server_error;
 use crate::core::error::OpsmlServerError;
 use crate::core::files::utils::download_artifact;
 use crate::core::state::AppState;
+use anyhow::{Context, Result};
 use axum::extract::DefaultBodyLimit;
 use axum::extract::Multipart;
-
-use anyhow::{Context, Result};
 use axum::{
     body::Body,
     extract::{Query, State},
@@ -17,6 +17,7 @@ use axum::{
 use headers::HeaderMap;
 use opsml_auth::permission::UserPermissions;
 use opsml_sql::base::SqlClient;
+use opsml_types::{cards::CardTable, RegistryType};
 use opsml_types::{contracts::*, StorageType, MAX_FILE_SIZE};
 
 use tokio::fs::File;
@@ -580,6 +581,39 @@ pub async fn get_artifact_key(
         })?;
 
     Ok(Json(key))
+}
+
+/// Create artifact record
+#[instrument(skip_all)]
+pub async fn create_artifact_record(
+    State(state): State<Arc<AppState>>,
+    Json(req): Json<CreateArtifactRequest>,
+) -> Result<Json<CreateArtifactResponse>, (StatusCode, Json<OpsmlServerError>)> {
+    debug!("Creating artifact record: {:?}", req);
+
+    let table = CardTable::from_registry_type(&RegistryType::Artifact);
+    if !perms.has_write_permission(card_request.card.space()) {
+        return OpsmlServerError::permission_denied().into_response(StatusCode::FORBIDDEN);
+    }
+
+    // (1) ------- Get the next version
+    let version = get_next_version(state.sql_client.clone(), &table, req.version.clone())
+        .await
+        .map_err(|e| {
+            error!("Failed to get next version: {e}");
+            internal_server_error(e, "Failed to get next version")
+        })?;
+
+    let key = state
+        .sql_client
+        .create_artifact_record(&req)
+        .await
+        .map_err(|e| {
+            error!("Failed to create artifact record: {e}");
+            internal_server_error(e, "Failed to create artifact record")
+        })?;
+
+    Ok(Json(CreateArtifactResponse { key }))
 }
 
 pub async fn get_file_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
