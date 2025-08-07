@@ -11,6 +11,7 @@ use opsml_utils::create_uuid7;
 use opsml_utils::utils::get_utc_datetime;
 use semver::{BuildMetadata, Prerelease, Version};
 use serde::{Deserialize, Serialize};
+use serde_json::json;
 use serde_json::Value;
 use sqlx::{prelude::FromRow, types::Json};
 use std::collections::HashMap;
@@ -897,8 +898,8 @@ pub struct ArtifactRecord {
 
 impl ArtifactRecord {
     pub fn new(
-        name: String,
         space: String,
+        name: String,
         version: Version,
         filename: String,
         data_type: String,
@@ -934,6 +935,20 @@ impl ArtifactRecord {
             self.name,
             self.version
         )
+    }
+
+    pub fn get_metadata(&self) -> String {
+        let metadata = json!({
+            "uid": self.uid,
+            "created_at": self.created_at,
+            "app_env": self.app_env,
+            "space": self.space,
+            "name": self.name,
+            "version": self.version,
+            "filename": self.filename,
+            "data_type": self.data_type,
+        });
+        metadata.to_string()
     }
 }
 
