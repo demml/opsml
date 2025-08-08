@@ -22,17 +22,17 @@
     badgeColor: string;
   }>();
 
-  // function to navigate to the card page
-  function navigateToCardPage() {
-    // navigate to the card page
-    let registry_name = registry.toLowerCase();
-    goto(`/opsml/${registry_name}/card/${space}/${name}/${version}`);
-  }
+
+  let cardUrl = $state(`/opsml/${registry.toLowerCase()}/card/${space}/${name}/${version}`);
 
 
 </script>
 
-<button class="text-black rounded-base shadow border-2 border-black bg-surface-300 w-full max-w-[30em] h-[5em] overflow-auto whitespace-nowrap hover:translate-x-[4px] hover:translate-y-[4px] hover:shadow-none" onclick={navigateToCardPage}>
+<a 
+  class="text-black rounded-base shadow border-2 border-black bg-surface-300 w-full max-w-[30em] h-[5em] overflow-auto whitespace-nowrap hover:translate-x-[4px] hover:translate-y-[4px] hover:shadow-none" 
+  href={cardUrl}
+  data-sveltekit-preload-data="hover"
+  >
   <div class="flex items-center justify-between">
     <div class="flex items-center justify-start gap-2 mb-1">
       <div class="ml-2">
@@ -72,5 +72,5 @@
       <div class="text-black">Version: {version}</div>
     </div>
   </div>
-</button>
+</a>
 
