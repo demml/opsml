@@ -1,7 +1,6 @@
 <script lang="ts">
 
     import { calculateTimeBetween, getRegistryTypeLowerCase, RegistryType } from "$lib/utils";
-    import { goto } from "$app/navigation";
     import {CircuitBoard, Clock, Tag } from 'lucide-svelte';
   
     let {
@@ -20,18 +19,18 @@
       bgColor: string;
     }>();
   
-    // function to navigate to the card page
-    async function navigateToCardPage() {
-      // navigate to the card page
-      let registry_name = getRegistryTypeLowerCase(registry);
-      await goto(`/opsml/${registry_name}/card/${space}/${name}/${version}/card`);
-  
-    }
-  
+ 
+
+    let cardUrl = $state(`/opsml/${getRegistryTypeLowerCase(registry)}/card/${space}/${name}/${version}/card`)
+
   
   </script>
   
-  <button class="w-full max-w-96 h-auto p-3 text-black rounded-lg shadow border-2 border-black {bgColor} hover:translate-x-[4px] hover:translate-y-[4px] hover:shadow-none overflow-scroll" onclick={navigateToCardPage}>
+  <a 
+    class="w-full max-w-96 h-auto p-3 text-black rounded-lg shadow border-2 border-black {bgColor} hover:translate-x-[4px] hover:translate-y-[4px] hover:shadow-none overflow-scroll" 
+    href={cardUrl}
+    data-sveltekit-preload-data="hover"
+    >
     <div class="flex items-center justify-start gap-2 text-smd">
       <div class="ml-1">
         <CircuitBoard color="#5948a3" />
@@ -56,6 +55,6 @@
 
     </div>
 
-  </button>
+  </a>
   
   
