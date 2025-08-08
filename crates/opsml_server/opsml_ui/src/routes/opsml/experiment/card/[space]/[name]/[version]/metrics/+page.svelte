@@ -14,6 +14,7 @@
   import Dropdown from "$lib/components/utils/Dropdown.svelte";
   import ParameterTable from "$lib/components/card/experiment/ParameterTable.svelte";
   import { ChartNoAxesColumn } from 'lucide-svelte';
+  import { json } from "@sveltejs/kit";
 
   let { data }: PageProps = $props();
 
@@ -24,8 +25,6 @@
   let groupedMetrics: GroupedMetrics | undefined = $state();
   let plotType: PlotType = $state(PlotType.Line);
   let plot: boolean = $state(false);
-  let parameters = $state(data.parameters);
-  let parameterOpen: boolean = $state(false);
 
   // search setup
   let searchQuery = $state('');
@@ -73,13 +72,12 @@
 
     let experimentsToPlot = [...selectedExperiments, currentExperiment];
     groupedMetrics = await getGroupedMetrics(experimentsToPlot, selectedMetrics);
+
+    console.log('Grouped Metrics:', JSON.stringify(groupedMetrics, null, 2));
+
+
     plot = true;
   }
-
-  function setOpenParameterTable(open: boolean) {
-    parameterOpen = open;
-  }
-
 
 
   </script>
