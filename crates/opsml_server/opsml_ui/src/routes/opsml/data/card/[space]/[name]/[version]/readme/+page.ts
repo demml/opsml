@@ -3,7 +3,7 @@ import { validateUserOrRedirect } from "$lib/components/user/user.svelte";
 
 export const load: PageLoad = async ({ parent }) => {
   await validateUserOrRedirect();
-  const { metadata, registry, readme } = await parent();
+  const { metadata, registryType, readme, registryPath } = await parent();
 
   let content: string = "";
 
@@ -24,7 +24,7 @@ Provide a concise summary of the data card, its intended use, and any notable fe
 - **Space:** ${metadata.space}
 - **Name:** ${metadata.name}
 - **Version:** ${metadata.version}
-- **Registry:** ${registry}
+- **Registry:** ${registryType}
 
 ---
 
@@ -68,8 +68,9 @@ Mention steps taken to mitigate these issues, if any.
 <!--- Provide code snippets or usage examples for this data card. -->
 \`\`\`python
 # Example usage in Python
-# import opsml
-# card = opsml.load_card(uid="${metadata.uid}")
+from opsml import CardRegistry
+registry = CardRegistry("${registryPath}")
+card = registry.load_card(uid="${metadata.uid}")
 \`\`\`
 
 `;
@@ -77,7 +78,6 @@ Mention steps taken to mitigate these issues, if any.
 
   return {
     metadata,
-    registry,
     content,
   };
 };

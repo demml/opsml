@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { goto } from '$app/navigation';
   import type { DataCard } from '$lib/components/card/card_interfaces/datacard';
   import type { PageProps } from './$types';
   import CardReadMe from '$lib/components/card/CardReadMe.svelte';

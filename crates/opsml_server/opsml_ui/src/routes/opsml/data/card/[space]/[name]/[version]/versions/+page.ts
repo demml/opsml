@@ -6,20 +6,20 @@ import { validateUserOrRedirect } from "$lib/components/user/user.svelte";
 
 export const load: PageLoad = async ({ parent }) => {
   await validateUserOrRedirect();
-  const { metadata, registry } = await parent();
+  const { metadata, registryType } = await parent();
 
   // get metric names, parameters
   let versionPage = await getVersionPage(
-    registry,
+    registryType,
     metadata.space,
     metadata.name
   );
 
   let versionStats = await getRegistryStats(
-    registry,
+    registryType,
     metadata.name,
     metadata.space
   );
 
-  return { registry, versionPage, versionStats };
+  return { versionPage, versionStats };
 };

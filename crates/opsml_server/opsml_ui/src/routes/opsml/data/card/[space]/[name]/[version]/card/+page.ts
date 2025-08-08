@@ -5,7 +5,7 @@ import { validateUserOrRedirect } from "$lib/components/user/user.svelte";
 
 export const load: PageLoad = async ({ parent }) => {
   await validateUserOrRedirect();
-  const { metadata, registry, readme, registryPath } = await parent();
+  const { metadata, registryType, readme, registryPath } = await parent();
 
-  return { metadata, registry, readme, registryPath };
+  return { metadata, registryType, readme, registryPath };
 };
