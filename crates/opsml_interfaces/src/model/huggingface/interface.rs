@@ -253,8 +253,8 @@ impl HuggingFaceModel {
         // check if model is a Transformers Pipeline, PreTrainedModel, or TFPPreTrainedModel
         let mut base_args = HFBaseArgs::default();
 
-        if hf_task.is_some() {
-            base_args.hf_task = hf_task.unwrap();
+        if let Some(hf_task) = hf_task {
+            base_args.hf_task = hf_task;
         }
 
         let mut processor_names =
