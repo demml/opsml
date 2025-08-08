@@ -2,7 +2,7 @@ export const prerender = false;
 export const ssr = false;
 import { validateUserOrRedirect } from "$lib/components/user/user.svelte";
 import { getRegistryTypeLowerCase, RegistryType } from "$lib/utils";
-import { getCardMetadata, getUID } from "$lib/components/card/utils";
+import { getCardMetadata } from "$lib/components/card/utils";
 
 import type { LayoutLoad } from "./$types";
 import type { DataCard } from "$lib/components/card/card_interfaces/datacard";
