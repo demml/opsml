@@ -6,8 +6,8 @@ import { validateUserOrRedirect } from "$lib/components/user/user.svelte";
 import type { PageLoad } from "./$types";
 
 export const load: PageLoad = async ({ params, parent }) => {
-  const { registryType } = await parent();
   await validateUserOrRedirect();
+  const { registryType } = await parent();
 
   const space = params.space;
   const name = params.name;
