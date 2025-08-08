@@ -19,11 +19,7 @@ export const load: LayoutLoad = async ({ params }) => {
 
   await validateUserOrRedirect();
 
-  console.log("Loading Data Card Layout");
-
   let registry = RegistryType.Data;
-  //let uid = await getUID(space, name, version, registry);
-
   let metadata = (await getCardMetadata(
     space,
     name,
