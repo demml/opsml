@@ -15,8 +15,10 @@ import {
   getCurrentMetricData,
 } from "$lib/components/card/monitoring/util";
 import { getDriftAlerts } from "$lib/components/card/monitoring/alert/utils";
+import { validateUserOrRedirect } from "$lib/components/user/user.svelte";
 
 export const load: PageLoad = async ({ parent }) => {
+  await validateUserOrRedirect();
   const { metadata, registryType } = await parent();
 
   let profiles = await getDriftProfiles(
