@@ -30,7 +30,7 @@ async fn get_static_file(path: &str) -> Response {
     }
 
     // Check for root opsml path
-    if path.starts_with("opsml/") && !path.split('/').last().unwrap_or("").contains('.') {
+    if path.starts_with("opsml/") && !path.split('/').next_back().unwrap_or("").contains('.') {
         return serve_home_html().await;
     }
 
