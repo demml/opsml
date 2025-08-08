@@ -118,62 +118,17 @@ export function getBgColor(): string {
   return classes[randomIndex];
 }
 
-export async function getCardUid(
-  registry_type: RegistryType,
-  name?: string,
-  space?: string,
-  version?: string
-): Promise<string> {
+export async function getCardMetadata(
+  space: string | undefined,
+  name: string | undefined,
+  version: string | undefined,
+  uid: string | undefined,
+  registry_type: RegistryType
+): Promise<any> {
   const params: CardQueryArgs = {
     name: name,
     space: space,
     version: version,
-    registry_type: registry_type,
-    limit: 1,
-  };
-
-  const response = await opsmlClient.get(
-    RoutePaths.LIST_CARDS,
-    params,
-    userStore.jwt_token
-  );
-  const data = (await response.json()) as Card[];
-
-  // @ts-ignore
-  return data[0].data.uid;
-}
-
-export async function getUID(
-  url: URL,
-  registry: RegistryType
-): Promise<string> {
-  const name = (url as URL).searchParams.get("name") as string | undefined;
-  const space = (url as URL).searchParams.get("space") as string | undefined;
-  const version = (url as URL).searchParams.get("version") as
-    | string
-    | undefined;
-  const uid = (url as URL).searchParams.get("uid") as string | undefined;
-
-  console.log("getUID called with:", {
-    name,
-    space,
-    version,
-    uid,
-    registry,
-  });
-
-  // If uid is provided, return it
-  if (uid) {
-    return uid;
-  }
-
-  return await getCardUid(registry, name, space, version);
-}
-export async function getCardMetadata(
-  uid: string,
-  registry_type: RegistryType
-): Promise<any> {
-  const params: CardQueryArgs = {
     uid: uid,
     registry_type: registry_type,
   };
@@ -225,5 +180,25 @@ export async function listRecentSpaceCards(
   );
   const data = (await response.json()) as Card[];
 
+  return data;
+}
+
+export async function getCardfromUid(
+  registry_type: RegistryType,
+  uid: string
+): Promise<Card[]> {
+  const params: CardQueryArgs = {
+    uid: uid,
+    registry_type: registry_type,
+    sort_by_timestamp: true,
+    limit: 10,
+  };
+
+  const response = await opsmlClient.get(
+    RoutePaths.LIST_CARDS,
+    params,
+    userStore.jwt_token
+  );
+  const data = (await response.json()) as Card[];
   return data;
 }
