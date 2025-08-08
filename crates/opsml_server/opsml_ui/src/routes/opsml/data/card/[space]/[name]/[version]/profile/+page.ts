@@ -5,16 +5,19 @@ import {
   getSortedFeatureNames,
 } from "$lib/components/card/data/utils";
 import type { PageLoad } from "./$types";
+import { validateUserOrRedirect } from "$lib/components/user/user.svelte";
 
 export const load: PageLoad = async ({ parent }) => {
-  const { metadata, registry, readme, registryPath } = await parent();
+  await validateUserOrRedirect();
+
+  const { metadata } = await parent();
 
   let dataProfile = metadata.metadata.interface_metadata.save_metadata
     ?.data_profile_uri
     ? await getDataProfile(metadata)
     : undefined;
 
-  // get sorted feature anmes from dataProfile.features
+  // get sorted feature names from dataProfile.features
   let featureNames: string[] = [];
 
   if (dataProfile) {

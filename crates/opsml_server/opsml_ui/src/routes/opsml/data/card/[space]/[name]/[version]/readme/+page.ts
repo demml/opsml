@@ -1,7 +1,8 @@
-import { python } from "svelte-highlight/languages";
 import type { PageLoad } from "./$types";
+import { validateUserOrRedirect } from "$lib/components/user/user.svelte";
 
 export const load: PageLoad = async ({ parent }) => {
+  await validateUserOrRedirect();
   const { metadata, registry, readme } = await parent();
 
   let content: string = "";
