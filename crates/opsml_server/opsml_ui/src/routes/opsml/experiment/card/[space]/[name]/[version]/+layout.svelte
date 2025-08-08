@@ -47,11 +47,11 @@
         </a>
         <a
           class="flex items-center gap-x-2 border-b-3 {activeTab === 'monitoring' ? 'border-secondary-500' : 'border-transparent'} hover:border-secondary-500 hover:border-b-3"
-          href={`/opsml/${registry}/card/${data.metadata.space}/${data.metadata.name}/${data.metadata.version}/plots`}
+          href={`/opsml/${registry}/card/${data.metadata.space}/${data.metadata.name}/${data.metadata.version}/metrics`}
           data-sveltekit-preload-data="hover"
         >
           <ChartColumnDecreasing color="#8059b6"/>
-        <span>Plots</span>
+        <span>Metrics</span>
         </a>
         <a
           class="flex items-center gap-x-2 border-b-3 {activeTab === 'monitoring' ? 'border-secondary-500' : 'border-transparent'} hover:border-secondary-500 hover:border-b-3"

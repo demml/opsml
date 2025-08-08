@@ -87,9 +87,9 @@
   <div class="grid grid-cols-1 lg:grid-cols-8 gap-4 w-full pt-4 ">
 
     <!-- Left Column-->
-    <div class="col-span-1 lg:col-span-2 bg-surface-50 p-4 flex flex-col rounded-base border-black border-2 shadow h-[calc(100vh-200px)] overflow-y-auto">
+    <div class="col-span-1 lg:col-span-2 bg-surface-50 flex flex-col rounded-base border-black border-2 shadow h-[calc(100vh-200px)] overflow-y-auto">
       <!-- Top Section -->
-      <div class="mb-4 sticky top-0 z-10">
+      <div class="mb-4 sticky top-0 z-10 bg-surface-50 p-4">
         <div class="flex flex-row justify-between pb-2">
           <div class="flex flex-row">
             <div class="self-center" aria-label="Time Interval">
@@ -127,7 +127,7 @@
         </div>
       </div>
       <!-- Metrics and Experiments -->
-      <div class="flex-1">
+      <div class="flex-1 p-4">
         <div class="mb-4">
           <div class="flex flex-row items-center mb-1 border-b-2 border-black">
             <List color="#8059b6"/>
@@ -168,10 +168,10 @@
 
 
     <!-- 2nd column -->
-    <div class="col-span-1 lg:col-span-6 gap-4 w-full">
+    <div class="col-span-1 lg:col-span-6 gap-4 w-full h-[calc(100vh-200px)]">
 
       <!-- Metrics plot -->
-      <div class="bg-white p-4 border-2 border-black rounded-lg shadow h-[600px] mb-4">
+      <div class="bg-white p-4 border-2 border-black rounded-lg shadow mb-4 h-full">
 
         <div class="flex flex-row">
           <div class="self-center" aria-label="Metric Plot">
@@ -194,16 +194,6 @@
           </div>
         {/if}
       </div>
-
- 
-      <div class="bg-white p-2 border-2 border-black rounded-lg shadow w-96 isolate">
-        <ParameterTable
-          parameters={parameters}
-          open={parameterOpen}
-          setOpen={setOpenParameterTable}
-        />
-      </div>
-  
 
     </div>
   </div>

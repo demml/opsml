@@ -16,13 +16,6 @@
     }
   
   
-      function onClickHandler(): void {
-          copied = true;
-          setTimeout(() => {
-              copied = false;
-          }, 1000);
-      }
-  
     async function copyToClipboard() {
       try {
         await navigator.clipboard.writeText(JSON.stringify(schema, null, 2));
