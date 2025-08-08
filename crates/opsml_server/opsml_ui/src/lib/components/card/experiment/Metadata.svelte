@@ -10,11 +10,15 @@
   import { HardDrive } from 'lucide-svelte';
   import { RegistryType } from "$lib/utils";
   import { python } from "svelte-highlight/languages";
+  import { type Parameter } from "$lib/components/card/card_interfaces/experimentcard";
+  import ParameterModal from "./ParameterModal.svelte";
 
 let {
     card,
+    parameters
   } = $props<{
     card: ExperimentCard;
+    parameters: Parameter[]
   }>();
 
 
@@ -71,27 +75,33 @@ experimentcard = registry.load_card(uid="${card.uid}")
     <div class="flex flex-wrap space-y-1 gap-1">
       {#if card.uids.datacard_uids}
         {#each card.uids.datacard_uids as datacard_uid}
-          <LinkPill key="Data" value={datacard_uid} registryType={RegistryType.Data} />
+          <LinkPill key="Data" uid={datacard_uid} registryType={RegistryType.Data} />
         {/each}
       {/if}
 
       {#if card.uids.experimentcard_uids}
         {#each card.uids.experimentcard_uids as experimentcard_uid}
-          <LinkPill key="Experiment" value={experimentcard_uid} registryType={RegistryType.Experiment} />
+          <LinkPill key="Experiment" uid={experimentcard_uid} registryType={RegistryType.Experiment} />
         {/each}
       {/if}
 
       {#if card.uids.modelcard_uids}
         {#each card.uids.modelcard_uids as modelcard_uid}
-          <LinkPill key="Model" value={modelcard_uid} registryType={RegistryType.Model} />
+          <LinkPill key="Model" uid={modelcard_uid} registryType={RegistryType.Model} />
         {/each}
       {/if}
 
       {#if card.uids.promptcard_uids}
         {#each card.uids.promptcard_uids as promptcard_uid}
-          <LinkPill key="Prompt" value={promptcard_uid} registryType={RegistryType.Prompt} />
+          <LinkPill key="Prompt" uid={promptcard_uid} registryType={RegistryType.Prompt} />
         {/each}
       {/if}
+    </div>
+  {/if}
+
+  {#if parameters.length > 0}
+    <div class="flex flex-wrap gap-2">
+      <ParameterModal parameters={parameters} />
     </div>
   {/if}
 

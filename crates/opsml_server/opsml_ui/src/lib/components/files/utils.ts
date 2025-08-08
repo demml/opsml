@@ -23,7 +23,6 @@ export async function getFileTree(path: string): Promise<FileTreeResponse> {
 }
 
 export function timeAgo(timestamp: string): string {
-  console.log("timeAgo", timestamp);
   let date: Date;
 
   if (/^\d+$/.test(timestamp)) {
