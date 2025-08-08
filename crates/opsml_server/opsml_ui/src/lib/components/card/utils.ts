@@ -118,47 +118,6 @@ export function getBgColor(): string {
   return classes[randomIndex];
 }
 
-export async function getCardUid(
-  registry_type: RegistryType,
-  name?: string,
-  space?: string,
-  version?: string
-): Promise<string> {
-  const params: CardQueryArgs = {
-    name: name,
-    space: space,
-    version: version,
-    registry_type: registry_type,
-    limit: 1,
-  };
-
-  const response = await opsmlClient.get(
-    RoutePaths.LIST_CARDS,
-    params,
-    userStore.jwt_token
-  );
-  const data = (await response.json()) as Card[];
-
-  // @ts-ignore
-  return data[0].data.uid;
-}
-
-export async function getUID(
-  space: string,
-  name: string,
-  version: string | undefined,
-  registry: RegistryType
-): Promise<string> {
-  console.log("getUID called with:", {
-    name,
-    space,
-    version,
-
-    registry,
-  });
-
-  return await getCardUid(registry, name, space, version);
-}
 export async function getCardMetadata(
   space: string,
   name: string,
