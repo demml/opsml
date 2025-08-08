@@ -15,6 +15,7 @@
   import ParameterTable from "$lib/components/card/experiment/ParameterTable.svelte";
   import { ChartNoAxesColumn } from 'lucide-svelte';
   import MetricTable from "$lib/components/card/experiment/MetricTable.svelte";
+  import MetricComparisonTable from "$lib/components/card/experiment/MetricComparisonTable.svelte";
 
   let { data }: PageProps = $props();
 
@@ -72,9 +73,6 @@
 
     let experimentsToPlot = [...selectedExperiments, currentExperiment];
     groupedMetrics = await getGroupedMetrics(experimentsToPlot, selectedMetrics);
-
-    console.log('Grouped Metrics:', JSON.stringify(groupedMetrics, null, 2));
-
 
     plot = true;
   }
@@ -202,7 +200,11 @@
             </div>
             <header class="pl-2 text-primary-800 text-lg self-center font-bold">Metric Table</header>
           </div>
+           {#if selectedExperiments.length > 0}
+            <MetricComparisonTable {groupedMetrics} {selectedExperiments} currentVersion={data.metadata.version} />
+          {:else}
             <MetricTable {groupedMetrics} />
+          {/if}
         </div>
       {/if}
 

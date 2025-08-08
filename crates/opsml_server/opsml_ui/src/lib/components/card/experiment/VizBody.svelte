@@ -21,7 +21,6 @@
   
     // state
     let resetZoom: boolean = $state(false);
-    let showTable: boolean = $state(false);
   
     let resetZoomClicked = () => {
       resetZoom = !resetZoom;
@@ -41,18 +40,9 @@
     </div>
 
     <div class="flex flex-row gap-2">
-      {#if showTable}
-        <button class="btn text-sm flex items-center gap-2 bg-primary-500 shadow shadow-hover border-black border-2 rounded-lg self-center" onclick={() => showTable = !showTable}>
-          <div class="text-black">Show Plot</div>
-        </button>
-      {:else}
-        <button class="btn text-sm flex items-center gap-2 bg-primary-500 shadow shadow-hover border-black border-2 rounded-lg self-center" onclick={() => showTable = !showTable}>
-          <div class="text-black">Show Table</div>
-        </button>
-        <button class="btn text-sm flex items-center gap-2 bg-primary-500 shadow shadow-hover border-black border-2 rounded-lg self-center" onclick={() => resetZoomClicked()}>
+      <button class="btn text-sm flex items-center gap-2 bg-primary-500 shadow shadow-hover border-black border-2 rounded-lg self-center" onclick={() => resetZoomClicked()}>
           <div class="text-black">Reset Zoom</div>
-        </button>
-      {/if}
+      </button>
     </div>
 
   </div>
