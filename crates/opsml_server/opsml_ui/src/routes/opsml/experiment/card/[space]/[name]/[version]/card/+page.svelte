@@ -1,7 +1,7 @@
 <script lang="ts">
   // version $props() in +page.svelte
 
-  import type { ExperimentCard } from '$lib/components/card/card_interfaces/experimentcard';
+  import type { ExperimentCard, Parameter } from '$lib/components/card/card_interfaces/experimentcard';
   import type { PageProps } from './$types';
   import CardReadMe from '$lib/components/card/CardReadMe.svelte';
   import NoReadme from '$lib/components/readme/NoReadme.svelte';
@@ -10,6 +10,7 @@
 
   let { data }: PageProps = $props();
   let card: ExperimentCard = data.metadata;
+  let parameters: Parameter[] = data.parameters || [];
 
 </script>
 
@@ -42,7 +43,7 @@
 
     
     <div class="bg-primary-200 p-4 flex-1 flex-col rounded-base bg-surface-50 border-primary-800 border-3 shadow-primary max-h-[800px] overflow-y-auto self-start min-w-0 max-w-[300px] md:min-w-[26rem] md:max-w-[32rem]">
-      <Metadata card={card} />
+      <Metadata card={card} parameters={parameters} />
     </div>
 
   </div>
