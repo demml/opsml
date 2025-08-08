@@ -59,20 +59,12 @@
 
   {#key groupedMetrics}
     <div class="flex-1 overflow-auto mb-4"> <!-- Added wrapper with flex-1 -->
-      {#if showTable}
-        <MetricTable 
-          {groupedMetrics} 
-        />
-
-      {:else}
-        <Chart 
-          {groupedMetrics} 
-            yLabel="Value" 
-            {plotType}
-            bind:resetZoom={resetZoom}
-        />
-      {/if}
-
+      <Chart 
+        {groupedMetrics} 
+          yLabel="Value" 
+          {plotType}
+          bind:resetZoom={resetZoom}
+      />
     </div>
   {/key}
 

@@ -14,7 +14,7 @@
   import Dropdown from "$lib/components/utils/Dropdown.svelte";
   import ParameterTable from "$lib/components/card/experiment/ParameterTable.svelte";
   import { ChartNoAxesColumn } from 'lucide-svelte';
-  import { json } from "@sveltejs/kit";
+  import MetricTable from "$lib/components/card/experiment/MetricTable.svelte";
 
   let { data }: PageProps = $props();
 
@@ -166,10 +166,10 @@
 
 
     <!-- 2nd column -->
-    <div class="col-span-1 lg:col-span-6 gap-4 w-full h-[calc(100vh-200px)]">
+    <div class="col-span-1 lg:col-span-6 gap-4 w-full flex flex-col">
 
       <!-- Metrics plot -->
-      <div class="bg-white p-4 border-2 border-black rounded-lg shadow mb-4 h-full">
+      <div class="bg-white p-4 border-2 border-black rounded-lg shadow mb-4 h-[calc(100vh-200px)] flex-shrink-0">
 
         <div class="flex flex-row">
           <div class="self-center" aria-label="Metric Plot">
@@ -192,6 +192,19 @@
           </div>
         {/if}
       </div>
+
+      <!-- Metrics table-->
+      {#if plot && groupedMetrics}
+        <div class="bg-white p-4 border-2 border-black rounded-lg shadow mb-4 min-h-[6rem] max-h-[40rem] flex flex-col overflow-hidden">
+          <div class="flex flex-row mb-4">
+            <div class="self-center" aria-label="Metric Plot">
+              <ChartNoAxesColumn color="#8059b6"/>
+            </div>
+            <header class="pl-2 text-primary-800 text-lg self-center font-bold">Metric Table</header>
+          </div>
+            <MetricTable {groupedMetrics} />
+        </div>
+      {/if}
 
     </div>
   </div>
