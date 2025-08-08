@@ -65,7 +65,7 @@
             <div class="rounded-full bg-surface-200 border-black border-2 p-1 shadow-small">
               <BrainCircuit color={iconColor} />
             </div>
-            <a class="font-bold text-primary-800 text-xl" href="/opsml/model?space={spaceRecord.space}">Models</a>
+            <a class="font-bold text-primary-800 text-xl" href="/opsml/model/card/{spaceRecord.space}">Models</a>
           </div>
 
           <div class="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-4">
@@ -92,7 +92,7 @@
             <div class="rounded-full bg-surface-200 border-black border-2 p-1 shadow-small">
               <Table color={iconColor} />
             </div>
-            <a class="font-bold text-primary-800 text-xl" href="/opsml/data?space={spaceRecord.space}">Data</a>
+            <a class="font-bold text-primary-800 text-xl" href="/opsml/data/card/{spaceRecord.space}">Data</a>
           </div>
 
           <div class="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-4">
@@ -119,7 +119,7 @@
             <div class="rounded-full bg-surface-200 border-black border-2 p-1 shadow-small">
               <NotebookText color={iconColor} />
             </div>
-            <a class="font-bold text-primary-800 text-xl" href="/opsml/prompt?space={spaceRecord.space}">Prompts</a>
+            <a class="font-bold text-primary-800 text-xl" href="/opsml/prompt/card/{spaceRecord.space}">Prompts</a>
           </div>
 
           <div class="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-4">
@@ -147,7 +147,7 @@
             <div class="rounded-full bg-surface-200 border-black border-2 p-1 shadow-small">
               <FlaskConical color={iconColor} />
             </div>
-            <a class="font-bold text-primary-800 text-xl" href="/opsml/experiment?space={spaceRecord.space}">Experiments</a>
+            <a class="font-bold text-primary-800 text-xl" href="/opsml/experiment/card/{spaceRecord.space}">Experiments</a>
           </div>
 
           <div class="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-4">

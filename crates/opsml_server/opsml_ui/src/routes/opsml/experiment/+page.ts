@@ -5,17 +5,18 @@ import { validateUserOrRedirect } from "$lib/components/user/user.svelte";
 import { RegistryType } from "$lib/utils";
 import type { PageLoad } from "./$types";
 
-export const load: PageLoad = async ({ url }) => {
+export const load: PageLoad = async ({ parent }) => {
   await validateUserOrRedirect();
-
-  // get space for url if exists
-  const space: string | undefined = url.searchParams.get("space") || undefined;
-  const name = url.searchParams.get("name") || undefined;
+  const { registryType } = await parent();
 
   let registryPage = await setupRegistryPage(
-    RegistryType.Experiment,
-    space,
-    name
+    registryType,
+    undefined,
+    undefined
   );
-  return { page: registryPage, selectedSpace: space, selectedName: name };
+  return {
+    page: registryPage,
+    selectedSpace: undefined,
+    selectedName: undefined,
+  };
 };

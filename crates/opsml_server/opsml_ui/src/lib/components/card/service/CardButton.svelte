@@ -26,7 +26,7 @@
     let registry_name = registry.toLowerCase();
 
     // navigate to the card page
-    goto(`/opsml/${registry_name}/card/home?space=${space}&name=${name}&version=${version}`);
+    goto(`/opsml/${registry_name}/card/${space}/${name}/${version}`);
   }
 
 

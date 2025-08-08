@@ -6,14 +6,14 @@
 
 ### Quality Control for the Machine Learning Lifecycle
 
-OpsML is an open-source developer-first ML operations platform focused on injecting quality control into the machine learning lifecycle. Leverage Opsml to **build**, **manage**, **track**, **monitor**, and **govern** your AI applications. Build with confidence, deploy with peace of mind.
+OpsML is an open-source developer-first ML operations platform focused on injecting quality control into the machine learning artifact lifecycle. Leverage Opsml to **build**, **manage**, **track**, **monitor**, and **govern** your AI applications. Build with confidence, deploy with peace of mind.
 
 
 [![CI](https://github.com/demml/opsml/actions/workflows/lints-test.yml/badge.svg)](https://github.com/demml/opsml/actions/workflows/lints-test.yml)
 [![Py-Versions](https://img.shields.io/badge/Python-3.9+-color=%2334D058)](https://pypi.org/project/opsml)
 [![gitleaks](https://img.shields.io/badge/protected%20by-gitleaks-purple)](https://github.com/zricethezav/gitleaks-action)
 [![License: MIT](https://img.shields.io/badge/License-MIT-brightgreen.svg)](https://opensource.org/licenses/MIT)
-[![llms.txt](https://img.shields.io/badge/llms.txt-green)](https://github.com/demml/opsml/blob/main/llm.txt)
+[![llms.txt](https://img.shields.io/badge/llms.txt-green)](https://github.com/demml/opsml/blob/main/py-opsml/docs/docs/llm/llm.txt)
 
 <div align="center">
    <div>
@@ -47,8 +47,9 @@ Building reliable ML systems shouldn't require gluing together dozens of dispara
 ### What makes OpsML different
 
 - **All-in-One Simplicity** – Models, data, prompts, experiments, services, and monitoring in one unified platform  
-- **Type-Safe & Fast** – Rust-powered backend catches errors before production, not during and provides reliability and speed
-- **Zero-Friction Integration** – Drop into existing workflows in minutes, no migration required  
+- **Artifact-First Approach** – Artifacts are the foundation of any ML system. Opsml treats them all as first-class citizens.
+- **Type-Safe & Fast** – OpsML is written entirely in rust with a focus on reliability and performance
+- **Zero-Friction Integration** – Drop into existing workflows in minutes 
 - **Cloud & Database Agnostic** – Deploy anywhere, from local dev to multi-cloud production  
 - **Production-Ready Controls** – Authentication, encryption, audit trails, and governance built-in  
 - **Integrated Monitoring** – Real-time drift detection via [Scouter](https://github.com/demml/scouter) 

@@ -264,14 +264,12 @@ impl ExperimentCard {
             })?;
         }
 
-        let rpath = if path.is_none() {
+        let rpath = if let Some(path) = &path {
+            lpath = lpath.join(path);
+            storage_path.join(SaveName::Artifacts).join(path)
+        } else {
             // download everything to "artifacts" directory
             storage_path.join(SaveName::Artifacts)
-        } else {
-            lpath = lpath.join(path.as_ref().unwrap());
-            storage_path
-                .join(SaveName::Artifacts)
-                .join(path.as_ref().unwrap())
         };
 
         // if rpath has an extension, set recursive to false

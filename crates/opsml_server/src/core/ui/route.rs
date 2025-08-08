@@ -1,7 +1,5 @@
 use crate::core::state::AppState;
-use crate::core::ui::schema::CardsRequest;
 use anyhow::Result;
-use axum::extract::{Path, Query};
 use axum::Router;
 use axum::{
     http::{header::CONTENT_TYPE, StatusCode, Uri},
@@ -9,60 +7,49 @@ use axum::{
     routing::get,
 };
 use rust_embed::Embed;
-use serde::Deserialize;
 use std::sync::Arc;
-use tracing::{debug, error, info};
+use tracing::error;
 
 #[derive(Embed)]
 #[folder = "opsml_ui/site/"]
 struct Assets;
-
-#[derive(Deserialize)]
-struct CardPath {
-    path: String,
-}
-
-#[derive(Deserialize)]
-struct NestedCardPath {
-    path: String,
-    subpath: String,
-}
 
 async fn get_static_file(path: &str) -> Response {
     if path.starts_with("opsml/api/") {
         return not_found().await;
     }
 
+    if let Some(content) = Assets::get(path) {
+        let mime = mime_guess::from_path(path).first_or_octet_stream();
+        return ([(CONTENT_TYPE, mime.as_ref())], content.data).into_response();
+    }
+
+    if is_dynamic_card_route(path) {
+        let redirect_path = format!("{}/card", path);
+        return axum::response::Redirect::permanent(&format!("/{}", redirect_path)).into_response();
+    }
+
     // Check for root opsml path
-    if path == "opsml" || path == "opsml/" {
-        debug!("Matched /opsml path, serving home.html");
+    if path.starts_with("opsml/") && !path.split('/').next_back().unwrap_or("").contains('.') {
         return serve_home_html().await;
     }
 
-    // Handle empty path
-    if path.is_empty() {
-        info!("Empty path, serving home.html");
+    if path == "opsml" || path == "opsml/" || path.is_empty() {
         return serve_home_html().await;
     }
 
-    match Assets::get(path) {
-        Some(content) => {
-            let mime = mime_guess::from_path(path).first_or_octet_stream();
-            ([(CONTENT_TYPE, mime.as_ref())], content.data).into_response()
-        }
-        None => {
-            if path.contains('.') {
-                return not_found().await;
-            }
+    not_found().await
+}
 
-            // SPA routes - serve home.html
-            if path.starts_with("opsml/") && !path.contains('.') {
-                return serve_home_html().await;
-            }
-
-            serve_home_html().await
-        }
-    }
+fn is_dynamic_card_route(path: &str) -> bool {
+    let parts: Vec<&str> = path.split('/').collect();
+    parts.len() == 6
+        && parts[0] == "opsml"
+        && parts[2] == "card"
+        && matches!(
+            parts[1],
+            "data" | "model" | "experiment" | "prompt" | "service"
+        )
 }
 
 async fn static_handler(uri: Uri) -> impl IntoResponse {
@@ -91,33 +78,6 @@ async fn opsml_home() -> impl IntoResponse {
     get_static_file("opsml/home.html").await
 }
 
-async fn opsml_card_page(
-    Path(path_params): Path<CardPath>,
-    Query(_params): Query<CardsRequest>,
-) -> impl IntoResponse {
-    debug!("Card request for path: {}", path_params.path);
-
-    // Now you can use the path parameter
-    let html_path = format!("opsml/{}.html", path_params.path);
-
-    get_static_file(&html_path).await
-}
-
-async fn opsml_card_entity_page(
-    Path(path_params): Path<NestedCardPath>,
-    Query(_params): Query<CardsRequest>,
-) -> impl IntoResponse {
-    debug!("Card request for path: {}", path_params.path);
-
-    // Now you can use the path parameter
-    // Construct the HTML path with both parameters
-    let html_path = format!(
-        "opsml/{}/card/{}.html",
-        path_params.path, path_params.subpath
-    );
-    get_static_file(&html_path).await
-}
-
 async fn root_redirect() -> Response {
     axum::response::Redirect::permanent("/opsml/home").into_response()
 }
@@ -127,7 +87,6 @@ pub async fn get_ui_router() -> Result<Router<Arc<AppState>>> {
         .route("/", get(root_redirect))
         .route("/opsml", get(opsml_home))
         .route("/opsml/home", get(opsml_home))
-        .route("/opsml/{path}", get(opsml_card_page))
-        .route("/opsml/{path}/card/{subpath}", get(opsml_card_entity_page))
+        .route("/opsml/{*path}", get(static_handler))
         .fallback(static_handler))
 }
