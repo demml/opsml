@@ -4,8 +4,10 @@ export const prerender = false;
 import type { PageLoad } from "./$types";
 import { getFileTree } from "$lib/components/files/utils";
 import { getRegistryTableName } from "$lib/utils";
+import { validateUserOrRedirect } from "$lib/components/user/user.svelte";
 
 export const load: PageLoad = async ({ parent, params }) => {
+  await validateUserOrRedirect();
   let slug = params.file as string;
 
   // split slug with '/'
