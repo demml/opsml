@@ -12,12 +12,12 @@ export const load: PageLoad = async ({ parent }) => {
 
   // get metric names, parameters
   let metricNames = await getCardMetricNames(metadata.uid);
-  let parameters = await getCardParameters(metadata.uid);
+
   let recentExperiments = await getRecentExperiments(
     metadata.space,
     metadata.name,
     metadata.version
   );
 
-  return { metadata, metricNames, parameters, recentExperiments };
+  return { metadata, metricNames, recentExperiments };
 };
