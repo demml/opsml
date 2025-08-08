@@ -6,7 +6,6 @@
     import "github-markdown-css/github-markdown-light.css";
     import { onMount } from 'svelte';
     import { goto } from '$app/navigation';
-    import { getRegistryTypeLowerCase, type RegistryType } from '$lib/utils';
     import type { ReadMe } from '../readme/util';
     import { convertMarkdown } from '../readme/util';
   
@@ -29,7 +28,7 @@
   
     
     function navigateToReadMe() {
-        goto(`/opsml/${registryPath}/card/readme?space=${space}&name=${name}&version=${version}`);
+        goto(`/opsml/${registryPath}/card/${space}/${name}/${version}/readme`);
       }
   
   

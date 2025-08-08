@@ -74,7 +74,7 @@ datacard = registry.load_card(uid="${card.uid}")
 
     <div class="flex flex-wrap space-y-1 gap-1">
       {#if card.metadata.experimentcard_uid}
-        <LinkPill key="Experiment" value={card.metadata.experimentcard_uid} registryType={RegistryType.Experiment} />
+        <LinkPill key="Experiment" uid={card.metadata.experimentcard_uid} registryType={RegistryType.Experiment} />
       {/if}
 
     </div>

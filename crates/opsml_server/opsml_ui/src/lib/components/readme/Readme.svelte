@@ -70,7 +70,7 @@
       triggerSuccess();
     }
 
-    goto(`/opsml/${registryPath}/card/home?space=${space}&name=${name}&version=${version}`);
+    goto(`/opsml/${registryPath}/card/${space}/${name}/${version}`);
   }
 
 async function toggle(toggle: string) {

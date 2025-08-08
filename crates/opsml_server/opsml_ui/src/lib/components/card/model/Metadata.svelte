@@ -86,11 +86,11 @@ modelcard.load()
     <div class="flex flex-wrap space-y-1 gap-1">
 
       {#if card.metadata.datacard_uid}
-        <LinkPill key="Data" value={card.metadata.datacard_uid} registryType={RegistryType.Data} />
+        <LinkPill key="Data" uid={card.metadata.datacard_uid} registryType={RegistryType.Data} />
       {/if}
 
       {#if card.metadata.experimentcard_uid}
-        <LinkPill key="Experiment" value={card.metadata.experimentcard_uid} registryType={RegistryType.Experiment} />
+        <LinkPill key="Experiment" uid={card.metadata.experimentcard_uid} registryType={RegistryType.Experiment} />
       {/if}
     </div>
   {/if}
