@@ -1,6 +1,5 @@
 export const prerender = false;
 export const ssr = false;
-import { validateUserOrRedirect } from "$lib/components/user/user.svelte";
 import { getRegistryTypeLowerCase } from "$lib/utils";
 import { getCardMetadata } from "$lib/components/card/utils";
 
@@ -12,8 +11,6 @@ import type { PromptCard } from "$lib/components/card/card_interfaces/promptcard
 export const load: LayoutLoad = async ({ params, parent }) => {
   const { registryType } = await parent();
   const { space, name, version } = params;
-
-  await validateUserOrRedirect();
 
   let metadata = (await getCardMetadata(
     space,
