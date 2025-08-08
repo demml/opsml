@@ -4,16 +4,18 @@ export const prerender = false;
 import type { PageLoad } from "./$types";
 import { getFileTree } from "$lib/components/files/utils";
 import { getRegistryTableName } from "$lib/utils";
+import { validateUserOrRedirect } from "$lib/components/user/user.svelte";
 
 export const load: PageLoad = async ({ parent, params }) => {
+  await validateUserOrRedirect();
   let slug = params.file as string;
 
   // split slug with '/'
   let slugs = slug.split("/");
 
-  const { metadata, registry, registryPath } = await parent();
+  const { metadata, registryPath, registryType } = await parent();
 
-  let tableName = getRegistryTableName(registry);
+  let tableName = getRegistryTableName(registryType);
   let basePath = `${tableName}/${metadata.space}/${metadata.name}/v${metadata.version}`;
 
   // join all but the last element of the slugs to get the previous path without final "/"

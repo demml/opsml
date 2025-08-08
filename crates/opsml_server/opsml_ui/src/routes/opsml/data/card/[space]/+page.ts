@@ -6,12 +6,13 @@ import { validateUserOrRedirect } from "$lib/components/user/user.svelte";
 import { RegistryType } from "$lib/utils";
 import type { PageLoad } from "./$types";
 
-export const load: PageLoad = async ({ params }) => {
+export const load: PageLoad = async ({ params, parent }) => {
   await validateUserOrRedirect();
+  const { registryType } = await parent();
 
   const space = params.space;
   const name = undefined; // No name parameter in this route
 
-  let registryPage = await setupRegistryPage(RegistryType.Data, space, name);
+  let registryPage = await setupRegistryPage(registryType, space, name);
   return { page: registryPage, selectedSpace: space, selectedName: name };
 };

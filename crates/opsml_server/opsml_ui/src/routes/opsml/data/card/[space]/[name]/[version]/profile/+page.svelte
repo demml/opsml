@@ -2,7 +2,6 @@
   import DataProfileViz from "$lib/components/card/data/DataProfileViz.svelte";
   import type {DataProfile} from "$lib/components/card/data/types";
   import type { PageProps } from './$types';
-  import DataProfileVizHeader from "$lib/components/card/data/DataProfileVizHeader.svelte";
 
   let { data }: PageProps = $props();
 

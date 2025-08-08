@@ -5,11 +5,12 @@ import { validateUserOrRedirect } from "$lib/components/user/user.svelte";
 import { RegistryType } from "$lib/utils";
 import type { PageLoad } from "./$types";
 
-export const load: PageLoad = async ({ url }) => {
+export const load: PageLoad = async ({ parent }) => {
   await validateUserOrRedirect();
+  const { registryType } = await parent();
 
   let registryPage = await setupRegistryPage(
-    RegistryType.Data,
+    registryType,
     undefined,
     undefined
   );

@@ -16,6 +16,7 @@ export const load: LayoutLoad = async ({ params, parent }) => {
     space,
     name,
     version,
+    undefined,
     registryType
   )) as PromptCard;
 

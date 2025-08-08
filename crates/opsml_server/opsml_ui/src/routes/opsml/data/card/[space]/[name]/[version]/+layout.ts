@@ -8,21 +8,22 @@ import type { DataCard } from "$lib/components/card/card_interfaces/datacard";
 import { getCardReadMe } from "$lib/components/readme/util";
 
 // @ts-ignore
-export const load: LayoutLoad = async ({ params }) => {
+export const load: LayoutLoad = async ({ params, parent }) => {
+  const { registryType } = await parent();
   const { space, name, version } = params;
 
-  let registry = RegistryType.Data;
   let metadata = (await getCardMetadata(
     space,
     name,
     version,
-    registry
+    undefined,
+    registryType
   )) as DataCard;
 
-  let readme = await getCardReadMe(metadata.name, metadata.space, registry);
+  let readme = await getCardReadMe(metadata.name, metadata.space, registryType);
 
-  let registryPath = getRegistryTypeLowerCase(registry);
+  let registryPath = getRegistryTypeLowerCase(registryType);
   let activeTab = "card"; // Default active tab
 
-  return { metadata, registry, readme, registryPath, activeTab };
+  return { metadata, registryType, readme, registryPath, activeTab };
 };

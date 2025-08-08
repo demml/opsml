@@ -119,15 +119,17 @@ export function getBgColor(): string {
 }
 
 export async function getCardMetadata(
-  space: string,
-  name: string,
+  space: string | undefined,
+  name: string | undefined,
   version: string | undefined,
+  uid: string | undefined,
   registry_type: RegistryType
 ): Promise<any> {
   const params: CardQueryArgs = {
     name: name,
     space: space,
     version: version,
+    uid: uid,
     registry_type: registry_type,
   };
 

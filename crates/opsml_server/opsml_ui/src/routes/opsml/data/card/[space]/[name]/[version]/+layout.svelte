@@ -16,7 +16,7 @@
   });
 
 
-  let registry = $state(getRegistryTypeLowerCase(data.registry));
+  let registry = $state(getRegistryTypeLowerCase(data.registryType));
 
 </script>
 
