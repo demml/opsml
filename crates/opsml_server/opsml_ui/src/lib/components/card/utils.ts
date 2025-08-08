@@ -182,3 +182,23 @@ export async function listRecentSpaceCards(
 
   return data;
 }
+
+export async function getCardfromUid(
+  registry_type: RegistryType,
+  uid: string
+): Promise<Card[]> {
+  const params: CardQueryArgs = {
+    uid: uid,
+    registry_type: registry_type,
+    sort_by_timestamp: true,
+    limit: 10,
+  };
+
+  const response = await opsmlClient.get(
+    RoutePaths.LIST_CARDS,
+    params,
+    userStore.jwt_token
+  );
+  const data = (await response.json()) as Card[];
+  return data;
+}
