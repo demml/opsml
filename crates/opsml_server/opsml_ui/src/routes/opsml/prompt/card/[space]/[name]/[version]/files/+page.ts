@@ -3,8 +3,10 @@ export const ssr = false;
 import type { PageLoad } from "./$types";
 import { getFileTree } from "$lib/components/files/utils";
 import { getRegistryTableName } from "$lib/utils";
+import { validateUserOrRedirect } from "$lib/components/user/user.svelte";
 
 export const load: PageLoad = async ({ parent }) => {
+  await validateUserOrRedirect();
   const { metadata, registryPath, registryType } = await parent();
 
   let tableName = getRegistryTableName(registryType);
