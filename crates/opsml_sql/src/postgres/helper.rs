@@ -434,7 +434,7 @@ impl PostgresQueryHelper {
             query.push_str(" ORDER BY major DESC, minor DESC, patch DESC");
         }
 
-        query.push_str(" LIMIT $5");
+        query.push_str(" LIMIT $4");
 
         Ok(query)
     }

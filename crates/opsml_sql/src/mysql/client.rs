@@ -469,6 +469,7 @@ impl SqlClient for MySqlClient {
         let query = MySQLQueryHelper::get_artifact_record_insert_query();
         sqlx::query(&query)
             .bind(&record.uid)
+            .bind(&record.created_at)
             .bind(&record.app_env)
             .bind(&record.space)
             .bind(&record.name)
@@ -492,9 +493,11 @@ impl SqlClient for MySqlClient {
         let query = MySQLQueryHelper::get_query_artifacts_query(query_args)?;
         let rows: Vec<ArtifactSqlRecord> = sqlx::query_as(&query)
             .bind(query_args.uid.as_ref())
+            .bind(query_args.uid.as_ref())
+            .bind(query_args.space.as_ref())
             .bind(query_args.space.as_ref())
             .bind(query_args.name.as_ref())
-            .bind(query_args.sort_by_timestamp.as_ref())
+            .bind(query_args.name.as_ref())
             .bind(query_args.limit.unwrap_or(50))
             .fetch_all(&self.pool)
             .await?;
@@ -1301,6 +1304,9 @@ mod tests {
     use opsml_utils::utils::get_utc_datetime;
     use std::env;
 
+    const SPACE: &str = "space";
+    const NAME: &str = "name";
+
     pub async fn cleanup(pool: &Pool<MySql>) {
         sqlx::raw_sql(
             r#"
@@ -1339,6 +1345,9 @@ mod tests {
 
             DELETE
             FROM opsml_service_registry;
+
+            DELETE
+            FROM opsml_artifact_registry;
 
             DELETE
             FROM opsml_space;
@@ -2184,5 +2193,47 @@ mod tests {
             .delete_space_name_record(&model_card2.space, &model_card2.name, &RegistryType::Model)
             .await
             .unwrap();
+    }
+
+    #[tokio::test]
+    async fn test_mysql_log_artifact() {
+        let client = db_client().await;
+
+        // create a new artifact record
+        let artifact_record1 = ArtifactSqlRecord::new(
+            SPACE.to_string(),
+            NAME.to_string(),
+            Version::new(0, 0, 0),
+            "my_file.json".to_string(),
+            "png".to_string(),
+        );
+        client
+            .insert_artifact_record(&artifact_record1)
+            .await
+            .unwrap();
+
+        let artifact_record2 = ArtifactSqlRecord::new(
+            SPACE.to_string(),
+            NAME.to_string(),
+            Version::new(0, 0, 0),
+            "my_file.json".to_string(),
+            "png".to_string(),
+        );
+
+        client
+            .insert_artifact_record(&artifact_record2)
+            .await
+            .unwrap();
+
+        // query artifacts
+        let artifacts = client
+            .query_artifacts(&ArtifactQueryArgs {
+                space: Some(SPACE.to_string()),
+                name: Some(NAME.to_string()),
+                ..Default::default()
+            })
+            .await
+            .unwrap();
+        assert_eq!(artifacts.len(), 2);
     }
 }
