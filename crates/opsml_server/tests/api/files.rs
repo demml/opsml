@@ -74,3 +74,53 @@ async fn test_opsml_server_render_file() {
     let file2: RawFile = serde_json::from_slice(&body_bytes).unwrap();
     assert!(file2.mime_type == "image/png");
 }
+
+#[tokio::test]
+async fn test_opsml_server_log_artifact() {
+    let helper = TestHelper::new(None).await;
+
+    let artifact_request = CreateArtifactRequest {
+        space: "space".to_string(),
+        name: "name".to_string(),
+        version: "0.0.0".to_string(),
+        filename: "test.txt".to_string(),
+        data_type: "text/plain".to_string(),
+    };
+
+    let request = Request::builder()
+        .uri("/opsml/api/files/artifact")
+        .method("POST")
+        .header(header::CONTENT_TYPE, "application/json")
+        .body(Body::from(
+            serde_json::to_string(&artifact_request).unwrap(),
+        ))
+        .unwrap();
+
+    let response = helper.send_oneshot(request).await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let query_request = ArtifactQueryArgs {
+        uid: None,
+        name: Some("name".to_string()),
+        space: Some("space".to_string()),
+        version: None,
+        sort_by_timestamp: Some(true),
+        limit: Some(1),
+    };
+
+    let query_string = serde_qs::to_string(&query_request).unwrap();
+
+    // get request
+    let request = Request::builder()
+        .uri(format!("/opsml/api/files/artifact?{query_string}"))
+        .method("GET")
+        .body(Body::empty())
+        .unwrap();
+
+    let response = helper.send_oneshot(request).await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let body_bytes = response.into_body().collect().await.unwrap().to_bytes();
+    let records: Vec<ArtifactRecord> = serde_json::from_slice(&body_bytes).unwrap();
+    assert!(records.len() == 1);
+}

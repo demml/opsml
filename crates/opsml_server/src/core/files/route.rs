@@ -655,6 +655,41 @@ pub async fn create_artifact_record(
     Ok(response)
 }
 
+#[instrument(skip_all)]
+pub async fn query_artifact_records(
+    State(state): State<Arc<AppState>>,
+    Query(params): Query<ArtifactQueryArgs>,
+) -> Result<Response, (StatusCode, Json<OpsmlServerError>)> {
+    debug!("Querying artifact records: {:?}", params);
+
+    let records = state
+        .sql_client
+        .query_artifacts(&params)
+        .await
+        .map_err(|e| {
+            error!("Failed to query artifact records: {e}");
+            internal_server_error(e, "Failed to query artifact records")
+        })?;
+
+    let mut response = Json(records).into_response();
+
+    let audit_context = AuditContext {
+        resource_id: "list_artifacts".to_string(),
+        resource_type: ResourceType::Database,
+        metadata: serde_json::to_string(&params).unwrap_or_default(),
+        registry_type: Some(RegistryType::Artifact),
+        operation: Operation::List,
+        access_location: None,
+    };
+
+    {
+        let extensions = response.extensions_mut();
+        extensions.insert(audit_context);
+    }
+
+    Ok(response)
+}
+
 pub async fn get_file_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
     let result = catch_unwind(AssertUnwindSafe(|| {
         Router::new()
@@ -681,7 +716,10 @@ pub async fn get_file_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
             .route(&format!("{prefix}/files/delete"), delete(delete_file))
             .route(&format!("{prefix}/files/key"), get(get_artifact_key))
             .route(&format!("{prefix}/files/content"), post(get_file_for_ui))
-            .route(&format!("{prefix}/artifact"), post(create_artifact_record))
+            .route(
+                &format!("{prefix}/files/artifact"),
+                post(create_artifact_record).get(query_artifact_records),
+            )
     }));
 
     match result {
