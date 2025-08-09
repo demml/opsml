@@ -359,16 +359,16 @@ impl OpsmlRegistry {
         space: String,
         name: String,
         version: String,
-        data_type: String,
+        media_type: String,
     ) -> Result<CreateArtifactResponse, RegistryError> {
         match self {
             Self::ClientRegistry(client_registry) => {
-                Ok(client_registry.log_artifact(space, name, version, data_type)?)
+                Ok(client_registry.log_artifact(space, name, version, media_type)?)
             }
             #[cfg(feature = "server")]
             Self::ServerRegistry(server_registry) => app_state().block_on(async {
                 server_registry
-                    .log_artifact(space, name, version, data_type)
+                    .log_artifact(space, name, version, media_type)
                     .await
             }),
         }

@@ -64,6 +64,7 @@ def create_fake_directory() -> Path:
 
 
 def cleanup_fake_directory(save_path: Path):
+    print("save_path", save_path)
     shutil.rmtree(save_path)
 
 
@@ -88,12 +89,6 @@ def test_experimentcard():
             # create fake directory
             dir_path = create_fake_directory()
             exp.log_artifacts(dir_path)
-
-        # cleanup fake items
-        cleanup_fake_file(file_path)
-
-        # cleanup fake directory
-        cleanup_fake_directory(dir_path)
 
         card = exp.card
 
@@ -151,11 +146,17 @@ def test_experimentcard():
         for _ in parameters:
             continue
 
+    # cleanup fake items
+    cleanup_fake_file(file_path)
+
+    # cleanup fake directory
+    cleanup_fake_directory(dir_path)
+
     cleanup_manually_created_directories()
 
 
 @pytest.mark.skipif(WINDOWS_EXCLUDE, reason="skipping")
-def _test_experimentcard_register(
+def test_experimentcard_register(
     pandas_data: PandasData,
     random_forest_classifier: SklearnModel,
     chat_prompt: Prompt,

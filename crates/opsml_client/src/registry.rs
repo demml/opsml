@@ -297,7 +297,7 @@ impl ClientRegistry {
     /// * `name` - The name of the artifact
     /// * `version` - The version of the artifact
     /// * `filename` - The filename of the artifact
-    /// * `data_type` - The data type of the artifact
+    /// * `media_type` - The media type of the artifact
     /// # Returns
     /// * `CreateArtifactResponse` - The response containing the created artifact record
     #[instrument(skip_all)]
@@ -306,13 +306,13 @@ impl ClientRegistry {
         space: String,
         name: String,
         version: String,
-        data_type: String,
+        media_type: String,
     ) -> Result<CreateArtifactResponse, RegistryError> {
         let body = serde_json::to_value(CreateArtifactRequest {
             space,
             name,
             version,
-            data_type,
+            media_type,
         })?;
 
         let response = self
@@ -592,15 +592,13 @@ impl ClientRegistry {
         space: String,
         name: String,
         version: String,
-
-        data_type: String,
+        media_type: String,
     ) -> Result<CreateArtifactResponse, RegistryError> {
         let body = serde_json::to_value(CreateArtifactRequest {
             space,
             name,
             version,
-
-            data_type,
+            media_type,
         })?;
 
         let response = self

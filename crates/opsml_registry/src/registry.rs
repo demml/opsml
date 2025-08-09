@@ -792,12 +792,12 @@ impl CardRegistry {
         space: String,
         name: String,
         version: String,
-        data_type: String,
+        media_type: String,
     ) -> Result<CreateArtifactResponse, RegistryError> {
         // Log artifact to the registry
 
         self.registry
-            .log_artifact(space, name, version, data_type)
+            .log_artifact(space, name, version, media_type)
             .inspect_err(|e| {
                 error!("Failed to log artifact: {e}");
             })

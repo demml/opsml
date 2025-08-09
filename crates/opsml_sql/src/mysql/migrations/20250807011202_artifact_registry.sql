@@ -11,6 +11,6 @@ CREATE TABLE IF NOT EXISTS opsml_artifact_registry (
     pre_tag VARCHAR(255),
     build_tag VARCHAR(255),
     version VARCHAR(255),
-    data_type VARCHAR(255),
+    media_type VARCHAR(255),
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );

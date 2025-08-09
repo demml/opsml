@@ -732,7 +732,7 @@ pub mod server_logic {
             space: String,
             name: String,
             version: String,
-            data_type: String,
+            media_type: String,
         ) -> Result<CreateArtifactResponse, RegistryError> {
             let version_request = CardVersionRequest {
                 space: space.clone(),
@@ -750,7 +750,7 @@ pub mod server_logic {
             )
             .await?;
 
-            let artifact_record = ArtifactSqlRecord::new(space, name, version, data_type);
+            let artifact_record = ArtifactSqlRecord::new(space, name, version, media_type);
 
             self.sql_client
                 .insert_artifact_record(&artifact_record)
