@@ -4100,6 +4100,7 @@ name = "opsml-experiment"
 version = "3.0.0-rc.15"
 dependencies = [
  "chrono",
+ "mime_guess",
  "opsml-cards",
  "opsml-crypt",
  "opsml-registry",
