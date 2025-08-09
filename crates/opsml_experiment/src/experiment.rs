@@ -20,7 +20,7 @@ use opsml_types::{
     SaveName,
 };
 use pyo3::{prelude::*, IntoPyObjectExt};
-use std::path::{self, Path, PathBuf};
+use std::path::PathBuf;
 use std::sync::Arc;
 use tempfile::TempDir;
 use tracing::{debug, error, instrument, warn};
@@ -132,8 +132,6 @@ pub struct Experiment {
     pub registries: CardRegistries,
     pub hardware_queue: Option<HardwareQueue>,
     uid: String,
-    space: String,
-    name: String,
     artifact_key: ArtifactKey,
 }
 
@@ -180,17 +178,11 @@ impl Experiment {
             false => None,
         };
 
-        // get space and name before moving experiment into the py lifetime
-        let space = experiment.space.clone();
-        let name = experiment.name.clone();
-
         Ok(Self {
             experiment: experiment.into_py_any(py)?,
             registries,
             hardware_queue,
             uid: experiment_uid,
-            space,
-            name,
             artifact_key,
         })
     }
@@ -584,15 +576,21 @@ impl Experiment {
         Ok(())
     }
 
+    /// Log all artifacts in a given directory
+    /// This will iterate over all artifacts in the given directory
+    /// Create an artifact record for each file before encrypting and logging it
+    /// # Arguments
+    /// * `path` - The path to the directory containing the artifacts
+    ///
     fn log_artifacts(&self, path: PathBuf) -> Result<(), ExperimentError> {
-        let encryption_key = self.artifact_key.get_decrypt_key()?;
-        encrypt_directory(&path, &encryption_key)?;
-
-        let rpath = self.artifact_key.storage_path().join(SaveName::Artifacts);
-
-        storage_client()?.put(&path, &rpath, true)?;
-
-        decrypt_directory(&path, &encryption_key)?;
+        // list all files in path
+        // iterate through all files and log them
+        for entry in WalkDir::new(&path) {
+            let entry = entry?;
+            if entry.file_type().is_file() {
+                self.log_artifact(entry.into_path())?;
+            }
+        }
 
         Ok(())
     }
@@ -794,6 +792,10 @@ pub fn get_experiment_parameters(
     Ok(Parameters { parameters })
 }
 
+/// Download an artifact by name
+/// 1. Query the artifact registry for the artifact by name
+/// 2. Get the filename for the artifacts records
+/// 3. Download the artifact to the specified local path
 #[pyfunction]
 #[pyo3(signature = (experiment_uid, path, lpath=None))]
 pub fn download_artifact(
@@ -803,7 +805,7 @@ pub fn download_artifact(
 ) -> Result<(), ExperimentError> {
     // query card for space, name, version
 
-    let path_name = path.to_string_lossy().to_string();
+    let path_name = path.into_os_string().into_string()?;
     let registry = OpsmlRegistry::new(RegistryType::Experiment)?;
 
     // query just the artifacts for the current experiment id
@@ -815,9 +817,9 @@ pub fn download_artifact(
 
     // iterate over records and check if record.name contains path_name
     let artifact = records
-        .iter()
+        .into_iter()
         .find(|record| record.name.contains(&path_name))
-        .ok_or(ExperimentError::ArtifactNotFoundError(path))?;
+        .ok_or(ExperimentError::ArtifactNotFoundError(path_name))?;
 
     // get artifact key
     let key = registry.get_artifact_key(experiment_uid, &RegistryType::Experiment)?;
@@ -825,11 +827,10 @@ pub fn download_artifact(
     let rpath = key
         .storage_path()
         .join(SaveName::Artifacts)
-        .join(artifact.name.clone());
+        .join(artifact.name);
 
     let recursive = rpath.extension().is_none();
-
-    let mut lpath = lpath.unwrap_or_else(|| PathBuf::from("artifacts"));
+    let lpath = lpath.unwrap_or_else(|| PathBuf::from("artifacts"));
     if !lpath.exists() {
         std::fs::create_dir_all(&lpath).inspect_err(|e| {
             error!("Failed to create directory: {e}");
@@ -842,14 +843,9 @@ pub fn download_artifact(
             error!("Failed to download artifacts: {e}");
         })?;
 
-    let decrypt_key = self
-        .artifact_key
-        .as_ref()
-        .unwrap()
-        .get_decrypt_key()
-        .inspect_err(|e| {
-            error!("Failed to get decryption key: {e}");
-        })?;
+    let decrypt_key = key.get_decrypt_key().inspect_err(|e| {
+        error!("Failed to get decryption key: {e}");
+    })?;
     decrypt_directory(&lpath, &decrypt_key)?;
 
     Ok(())
