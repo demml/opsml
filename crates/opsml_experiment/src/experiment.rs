@@ -576,21 +576,36 @@ impl Experiment {
         Ok(())
     }
 
-    /// Log all artifacts in a given directory
-    /// This will iterate over all artifacts in the given directory
-    /// Create an artifact record for each file before encrypting and logging it
-    /// # Arguments
-    /// * `path` - The path to the directory containing the artifacts
-    ///
     fn log_artifacts(&self, path: PathBuf) -> Result<(), ExperimentError> {
-        // list all files in path
-        // iterate through all files and log them
+        let encryption_key = self.artifact_key.get_decrypt_key()?;
+
         for entry in WalkDir::new(&path) {
             let entry = entry?;
             if entry.file_type().is_file() {
-                self.log_artifact(entry.into_path())?;
+                // get filepath and strip original path from it
+                let relative_path = if entry.path().is_absolute() {
+                    entry.path().strip_prefix(&path).unwrap_or(&entry.path())
+                } else {
+                    entry.path()
+                };
+
+                let mime_type = mime_guess::from_path(&relative_path).first_or_octet_stream();
+
+                // create artifact key record
+                // TODO: Explore batching here
+                self.registries.experiment.log_artifact(
+                    self.uid.clone(),
+                    relative_path.to_string_lossy().to_string(),
+                    CommonKwargs::BaseVersion.to_string(),
+                    mime_type.to_string(),
+                )?;
             }
         }
+
+        encrypt_directory(&path, &encryption_key)?;
+        let rpath = self.artifact_key.storage_path().join(SaveName::Artifacts);
+        storage_client()?.put(&path, &rpath, true)?;
+        decrypt_directory(&path, &encryption_key)?;
 
         Ok(())
     }
