@@ -582,11 +582,22 @@ impl Experiment {
         for entry in WalkDir::new(&path) {
             let entry = entry?;
             if entry.file_type().is_file() {
-                // get filepath and strip original path from it
-                let relative_path = if entry.path().is_absolute() {
-                    entry.path().strip_prefix(&path).unwrap_or(&entry.path())
-                } else {
-                    entry.path()
+                let relative_path = {
+                    let entry_path = entry.path();
+                    let mut result_path = entry_path;
+
+                    // Find where the prefix path appears in the entry path
+                    for ancestor in entry_path.ancestors() {
+                        if ancestor == path {
+                            // Found the prefix, get everything after it
+                            if let Ok(stripped) = entry_path.strip_prefix(ancestor) {
+                                result_path = stripped;
+                                break;
+                            }
+                        }
+                    }
+
+                    result_path
                 };
 
                 let mime_type = mime_guess::from_path(&relative_path).first_or_octet_stream();
@@ -825,7 +836,7 @@ pub fn download_artifact(
 
     // query just the artifacts for the current experiment id
     let query_args = ArtifactQueryArgs {
-        uid: Some(experiment_uid.to_string()),
+        space: Some(experiment_uid.to_string()),
         ..Default::default()
     };
     let records = registry.query_artifacts(&query_args)?;
@@ -842,7 +853,7 @@ pub fn download_artifact(
     let rpath = key
         .storage_path()
         .join(SaveName::Artifacts)
-        .join(artifact.name);
+        .join(artifact.name.clone());
 
     let recursive = rpath.extension().is_none();
     let lpath = lpath.unwrap_or_else(|| PathBuf::from("artifacts"));
@@ -852,6 +863,7 @@ pub fn download_artifact(
         })?;
     }
 
+    let lpath = lpath.join(artifact.name);
     storage_client()?
         .get(&lpath, &rpath, recursive)
         .inspect_err(|e| {

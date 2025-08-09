@@ -214,7 +214,7 @@ pub struct CreateArtifactRequest {
     pub space: String,
     pub name: String,
     pub version: String,
-    pub data_type: String,
+    pub media_type: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
