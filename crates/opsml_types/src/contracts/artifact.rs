@@ -17,7 +17,6 @@ pub struct ArtifactRecord {
     pub name: String,
     pub space: String,
     pub version: String,
-    pub filename: String,
     pub data_type: String,
     pub created_at: DateTime<Utc>,
 }

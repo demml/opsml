@@ -732,7 +732,6 @@ pub mod server_logic {
             space: String,
             name: String,
             version: String,
-            filename: String,
             data_type: String,
         ) -> Result<CreateArtifactResponse, RegistryError> {
             let version_request = CardVersionRequest {
@@ -751,7 +750,7 @@ pub mod server_logic {
             )
             .await?;
 
-            let artifact_record = ArtifactSqlRecord::new(space, name, version, filename, data_type);
+            let artifact_record = ArtifactSqlRecord::new(space, name, version, data_type);
 
             self.sql_client
                 .insert_artifact_record(&artifact_record)
@@ -762,10 +761,17 @@ pub mod server_logic {
                 space: artifact_record.space,
                 name: artifact_record.name,
                 version: artifact_record.version,
-                filename: artifact_record.filename,
             };
 
             Ok(response)
+        }
+
+        pub async fn query_artifacts(
+            &self,
+            query_args: &ArtifactQueryArgs,
+        ) -> Result<Vec<ArtifactRecord>, RegistryError> {
+            let records = self.sql_client.query_artifacts(&query_args).await?;
+            Ok(records)
         }
     }
 }

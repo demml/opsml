@@ -105,12 +105,14 @@ def test_experimentcard():
 
         assert len(files) == 1
 
-        # download all artifacts
-        card.download_artifacts()
-
-        # check that "artifacts" directory was created and contains 5 files
+        card.download_artifact("data_0.pkl")
         created_path = Path("artifacts")
         assert created_path.exists()
+
+        assert len(list(created_path.iterdir())) == 1
+
+        # download all artifacts
+        card.download_artifacts()
 
         assert len(list(created_path.iterdir())) == 6
 

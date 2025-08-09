@@ -892,19 +892,12 @@ pub struct ArtifactSqlRecord {
     pub version: String,
     pub pre_tag: Option<String>,
     pub build_tag: Option<String>,
-    pub filename: String,
     pub data_type: String,
     pub updated_at: DateTime<Utc>,
 }
 
 impl ArtifactSqlRecord {
-    pub fn new(
-        space: String,
-        name: String,
-        version: Version,
-        filename: String,
-        data_type: String,
-    ) -> Self {
+    pub fn new(space: String, name: String, version: Version, data_type: String) -> Self {
         let created_at = get_utc_datetime();
         let updated_at = created_at;
         let app_env = env::var("APP_ENV").unwrap_or_else(|_| "development".to_string());
@@ -922,7 +915,6 @@ impl ArtifactSqlRecord {
             pre_tag: version.pre.to_string().parse().ok(),
             build_tag: version.build.to_string().parse().ok(),
             version: version.to_string(),
-            filename,
             data_type,
             updated_at,
         }
@@ -944,9 +936,8 @@ impl ArtifactSqlRecord {
             "created_at": self.created_at,
             "app_env": self.app_env,
             "space": self.space,
-            "name": self.name,
+            "filename": self.name,
             "version": self.version,
-            "filename": self.filename,
             "data_type": self.data_type,
         });
         metadata.to_string()
@@ -958,7 +949,6 @@ impl ArtifactSqlRecord {
             space: self.space.clone(),
             name: self.name.clone(),
             version: self.version.clone(),
-            filename: self.filename.clone(),
             data_type: self.data_type.clone(),
             created_at: self.created_at,
         }

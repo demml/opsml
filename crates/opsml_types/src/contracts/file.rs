@@ -214,7 +214,6 @@ pub struct CreateArtifactRequest {
     pub space: String,
     pub name: String,
     pub version: String,
-    pub filename: String,
     pub data_type: String,
 }
 
@@ -224,7 +223,6 @@ pub struct CreateArtifactResponse {
     pub space: String,
     pub name: String,
     pub version: String,
-    pub filename: String,
 }
 
 #[derive(Debug, Clone)]
