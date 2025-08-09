@@ -18,7 +18,7 @@ use opsml_auth::permission::UserPermissions;
 use opsml_events::AuditContext;
 use opsml_sql::base::SqlClient;
 use opsml_sql::enums::utils::get_next_version;
-use opsml_sql::schemas::ArtifactRecord;
+use opsml_sql::schemas::ArtifactSqlRecord;
 use opsml_types::{cards::CardTable, RegistryType};
 use opsml_types::{contracts::*, StorageType, MAX_FILE_SIZE};
 
@@ -617,7 +617,7 @@ pub async fn create_artifact_record(
         })?;
 
     let artifact_record =
-        ArtifactRecord::new(req.space, req.name, version, req.filename, req.data_type);
+        ArtifactSqlRecord::new(req.space, req.name, version, req.filename, req.data_type);
 
     state
         .sql_client

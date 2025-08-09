@@ -879,7 +879,7 @@ impl Default for ServiceCardRecord {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
-pub struct ArtifactRecord {
+pub struct ArtifactSqlRecord {
     pub uid: String,
     pub created_at: DateTime<Utc>,
     pub app_env: String,
@@ -896,7 +896,7 @@ pub struct ArtifactRecord {
     pub updated_at: DateTime<Utc>,
 }
 
-impl ArtifactRecord {
+impl ArtifactSqlRecord {
     pub fn new(
         space: String,
         name: String,
@@ -909,7 +909,7 @@ impl ArtifactRecord {
         let app_env = env::var("APP_ENV").unwrap_or_else(|_| "development".to_string());
         let uid = create_uuid7();
 
-        ArtifactRecord {
+        ArtifactSqlRecord {
             uid,
             created_at,
             app_env,
