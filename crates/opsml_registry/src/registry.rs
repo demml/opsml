@@ -794,8 +794,9 @@ impl CardRegistry {
         version: String,
         filename: String,
         data_type: String,
-    ) -> Result<(), RegistryError> {
+    ) -> Result<CreateArtifactResponse, RegistryError> {
         // Log artifact to the registry
+
         self.registry
             .log_artifact(space, name, version, filename, data_type)
             .inspect_err(|e| {

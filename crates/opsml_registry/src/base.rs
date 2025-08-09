@@ -5,7 +5,8 @@ use opsml_settings::config::OpsmlMode;
 use opsml_settings::ScouterSettings;
 use opsml_state::{app_state, get_api_client};
 use opsml_types::contracts::{
-    CardQueryArgs, CardRecord, CreateCardResponse, GetMetricRequest, MetricRequest,
+    CardQueryArgs, CardRecord, CreateArtifactResponse, CreateCardResponse, GetMetricRequest,
+    MetricRequest,
 };
 use opsml_types::*;
 use opsml_types::{
@@ -350,6 +351,27 @@ impl OpsmlRegistry {
             Self::ServerRegistry(server_registry) => {
                 server_registry.update_drift_profile_status(request)
             }
+        }
+    }
+
+    pub fn log_artifact(
+        &self,
+        space: String,
+        name: String,
+        version: String,
+        filename: String,
+        data_type: String,
+    ) -> Result<CreateArtifactResponse, RegistryError> {
+        match self {
+            Self::ClientRegistry(client_registry) => {
+                Ok(client_registry.log_artifact(space, name, version, filename, data_type)?)
+            }
+            #[cfg(feature = "server")]
+            Self::ServerRegistry(server_registry) => app_state().block_on(async {
+                server_registry
+                    .log_artifact(space, name, version, filename, data_type)
+                    .await
+            }),
         }
     }
 }

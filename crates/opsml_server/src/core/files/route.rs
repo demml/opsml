@@ -1,4 +1,3 @@
-use crate::core::cards::utils::get_next_version;
 use crate::core::error::internal_server_error;
 use crate::core::error::OpsmlServerError;
 use crate::core::files::utils::download_artifact;
@@ -18,6 +17,7 @@ use headers::HeaderMap;
 use opsml_auth::permission::UserPermissions;
 use opsml_events::AuditContext;
 use opsml_sql::base::SqlClient;
+use opsml_sql::enums::utils::get_next_version;
 use opsml_sql::schemas::ArtifactRecord;
 use opsml_types::{cards::CardTable, RegistryType};
 use opsml_types::{contracts::*, StorageType, MAX_FILE_SIZE};
