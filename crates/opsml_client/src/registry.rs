@@ -339,7 +339,7 @@ impl ClientRegistry {
             .json::<CreateArtifactResponse>()
             .map_err(RegistryError::RequestError)?;
 
-        return Ok(inserted);
+        Ok(inserted)
     }
 
     pub fn insert_hardware_metrics(

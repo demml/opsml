@@ -960,7 +960,7 @@ impl ArtifactSqlRecord {
             version: self.version.clone(),
             filename: self.filename.clone(),
             data_type: self.data_type.clone(),
-            created_at: self.created_at.clone(),
+            created_at: self.created_at,
         }
     }
 }
