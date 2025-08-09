@@ -1304,7 +1304,6 @@ mod tests {
     use std::env;
 
     const SPACE: &str = "space";
-    const NAME: &str = "name";
 
     pub async fn cleanup(pool: &Pool<MySql>) {
         sqlx::raw_sql(

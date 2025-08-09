@@ -298,57 +298,18 @@ impl ExperimentCard {
     #[pyo3(signature = (path, lpath=None))]
     pub fn download_artifact(
         &self,
+        py: Python<'_>,
         path: PathBuf,
         lpath: Option<PathBuf>,
     ) -> Result<(), CardError> {
-        let storage_path = self.artifact_key.as_ref().unwrap().storage_path();
+        // Same as above, we need to use a registry to get the experiment artifact
+        // In the future we could consider adding a global registry to app_state if needed,
+        // But I prefer not to
+        let func = py
+            .import("opsml.experiment")?
+            .getattr("download_artifact")?;
 
-        // if lpath is None, download to "artifacts" directory
-        let mut lpath = lpath.unwrap_or_else(|| PathBuf::from("artifacts"));
-
-        // assert that lpath exists, if not create it
-        if !lpath.exists() {
-            std::fs::create_dir_all(&lpath).inspect_err(|e| {
-                error!("Failed to create directory: {e}");
-            })?;
-        }
-
-        // list files with path
-        let files = self.list_artifacts(Some(path.clone())).inspect_err(|e| {
-            error!("Failed to list artifacts: {e}");
-        })?;
-
-        // iterate through files and see if path is in files
-        // if so, get file name from files list
-        let path_str = path.to_string_lossy();
-        let file_name = files
-            .iter()
-            .find(|&f| f == &path_str)
-            .cloned()
-            .ok_or_else(|| {
-                error!("Failed to find file: {:?}", path);
-                CardError::FileNotFoundError(path)
-            })?;
-
-        lpath = lpath.join(&file_name);
-        let rpath = storage_path.join(file_name);
-        let recursive = rpath.extension().is_none();
-
-        storage_client()?
-            .get(&lpath, &rpath, recursive)
-            .inspect_err(|e| {
-                error!("Failed to download artifacts: {e}");
-            })?;
-
-        let decrypt_key = self
-            .artifact_key
-            .as_ref()
-            .unwrap()
-            .get_decrypt_key()
-            .inspect_err(|e| {
-                error!("Failed to get decryption key: {e}");
-            })?;
-        decrypt_directory(&lpath, &decrypt_key)?;
+        func.call1((&self.uid, path, lpath))?;
 
         Ok(())
     }
