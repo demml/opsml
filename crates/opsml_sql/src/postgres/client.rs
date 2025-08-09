@@ -476,7 +476,6 @@ impl SqlClient for PostgresClient {
             .bind(query_args.uid.as_ref())
             .bind(query_args.space.as_ref())
             .bind(query_args.name.as_ref())
-            .bind(query_args.sort_by_timestamp.as_ref())
             .bind(query_args.limit.unwrap_or(50))
             .fetch_all(&self.pool)
             .await?;
