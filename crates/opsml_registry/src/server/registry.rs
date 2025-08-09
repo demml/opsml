@@ -7,10 +7,10 @@ pub mod server_logic {
     use opsml_semver::error::VersionError;
     use opsml_semver::{VersionArgs, VersionType, VersionValidator};
     use opsml_settings::config::{DatabaseSettings, OpsmlStorageSettings};
-
     use opsml_sql::{
         base::SqlClient,
         enums::client::{get_sql_client, SqlClientEnum},
+        enums::utils::get_next_version,
         schemas::*,
     };
     use opsml_storage::StorageClientEnum;
@@ -26,11 +26,12 @@ pub mod server_logic {
     use scouter_client::{ProfileRequest, ProfileStatusRequest};
     use semver::Version;
     use sqlx::types::Json as SqlxJson;
+    use std::sync::Arc;
     use tracing::{error, info, instrument};
 
     #[derive(Debug, Clone)]
     pub struct ServerRegistry {
-        sql_client: SqlClientEnum,
+        sql_client: Arc<SqlClientEnum>,
         pub scouter_client: Option<ScouterClient>,
         pub registry_type: RegistryType,
         pub table_name: CardTable,
@@ -44,7 +45,7 @@ pub mod server_logic {
             database_settings: DatabaseSettings,
             scouter_client: Option<ScouterClient>,
         ) -> Result<Self, RegistryError> {
-            let sql_client = get_sql_client(&database_settings).await?;
+            let sql_client = Arc::new(get_sql_client(&database_settings).await?);
             let table_name = CardTable::from_registry_type(&registry_type);
 
             Ok(Self {
@@ -724,6 +725,47 @@ pub mod server_logic {
                 .ok_or(RegistryError::ScouterClientNotFoundError)?;
             client.update_profile_status(request)?;
             Ok(())
+        }
+
+        pub async fn log_artifact(
+            &self,
+            space: String,
+            name: String,
+            version: String,
+            filename: String,
+            data_type: String,
+        ) -> Result<CreateArtifactResponse, RegistryError> {
+            let version_request = CardVersionRequest {
+                space: space.clone(),
+                name: name.clone(),
+                version: Some(version.clone()),
+                pre_tag: None,
+                build_tag: None,
+                version_type: opsml_semver::VersionType::Major,
+            };
+
+            let version = get_next_version(
+                self.sql_client.clone(),
+                &CardTable::Artifact,
+                version_request,
+            )
+            .await?;
+
+            let artifact_record = ArtifactRecord::new(space, name, version, filename, data_type);
+
+            self.sql_client
+                .insert_artifact_record(&artifact_record)
+                .await?;
+
+            let response = CreateArtifactResponse {
+                uid: artifact_record.uid.clone(),
+                space: artifact_record.space,
+                name: artifact_record.name,
+                version: artifact_record.version,
+                filename: artifact_record.filename,
+            };
+
+            Ok(response)
         }
     }
 }

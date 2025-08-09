@@ -588,4 +588,43 @@ impl ClientRegistry {
 
         Ok(())
     }
+
+    pub fn log_artifact(
+        &self,
+        space: String,
+        name: String,
+        version: String,
+        filename: String,
+        data_type: String,
+    ) -> Result<CreateArtifactResponse, RegistryError> {
+        let body = serde_json::to_value(CreateArtifactRequest {
+            space,
+            name,
+            version,
+            filename,
+            data_type,
+        })?;
+
+        let response = self
+            .api_client
+            .request(
+                Routes::ArtifactRecord,
+                RequestType::Post,
+                Some(body),
+                None,
+                None,
+            )
+            .inspect_err(|e| {
+                error!("Failed to log artifact {}", e);
+            })?;
+
+        if response.status() != 200 {
+            let error_text = response.text().map_err(RegistryError::RequestError)?;
+            return Err(ApiClientError::ServerError(error_text).into());
+        }
+
+        response
+            .json::<CreateArtifactResponse>()
+            .map_err(RegistryError::RequestError)
+    }
 }
