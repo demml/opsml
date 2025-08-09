@@ -2,7 +2,10 @@ use crate::error::SqlError;
 
 /// this file contains helper logic for generating sql queries across different databases
 use crate::base::add_version_bounds;
-use opsml_types::{cards::CardTable, contracts::CardQueryArgs};
+use opsml_types::{
+    cards::CardTable,
+    contracts::{ArtifactQueryArgs, CardQueryArgs},
+};
 use opsml_utils::utils::is_valid_uuidv7;
 
 // user
@@ -355,6 +358,44 @@ impl SqliteQueryHelper {
 
         Ok(query)
     }
+
+    pub fn get_query_artifacts_query(query_args: &ArtifactQueryArgs) -> Result<String, SqlError> {
+        let table = &CardTable::Artifact;
+        let mut query = format!(
+            "
+        SELECT * FROM {table}
+        WHERE 1==1
+        AND (?1 IS NULL OR uid = ?1)
+        AND (?2 IS NULL OR name = ?2)
+        AND (?3 IS NULL OR space = ?3)
+        AND (?4 IS NULL OR created_at <= DATETIME(?4))
+        "
+        );
+
+        // check for uid. If uid is present, we only return that card
+        if query_args.uid.is_some() {
+            // validate uid
+            is_valid_uuidv7(query_args.uid.as_ref().unwrap())?;
+        } else {
+            // add where clause due to multiple combinations
+
+            if query_args.version.is_some() {
+                add_version_bounds(&mut query, query_args.version.as_ref().unwrap())?;
+            }
+
+            if query_args.sort_by_timestamp.unwrap_or(false) {
+                query.push_str(" ORDER BY created_at DESC");
+            } else {
+                // sort by major, minor, patch
+                query.push_str(" ORDER BY major DESC, minor DESC, patch DESC");
+            }
+        }
+
+        query.push_str(" LIMIT ?5");
+
+        Ok(query)
+    }
+
     pub fn get_experiment_parameters_insert_query(nbr_records: usize) -> String {
         let mut query = format!(
             "INSERT INTO {} (

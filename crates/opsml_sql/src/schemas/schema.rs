@@ -3,8 +3,9 @@ use chrono::{DateTime, Utc};
 use opsml_semver::error::VersionError;
 use opsml_types::cards::{CardTable, ParameterValue};
 use opsml_types::contracts::{
-    AuditCardClientRecord, CardEntry, CardRecord, DataCardClientRecord, ExperimentCardClientRecord,
-    ModelCardClientRecord, PromptCardClientRecord, ServiceCardClientRecord,
+    ArtifactRecord, AuditCardClientRecord, CardEntry, CardRecord, DataCardClientRecord,
+    ExperimentCardClientRecord, ModelCardClientRecord, PromptCardClientRecord,
+    ServiceCardClientRecord,
 };
 use opsml_types::{CommonKwargs, DataType, ModelType, RegistryType};
 use opsml_utils::create_uuid7;
@@ -949,6 +950,18 @@ impl ArtifactSqlRecord {
             "data_type": self.data_type,
         });
         metadata.to_string()
+    }
+
+    pub fn to_artifact_record(&self) -> ArtifactRecord {
+        ArtifactRecord {
+            uid: self.uid.clone(),
+            space: self.space.clone(),
+            name: self.name.clone(),
+            version: self.version.clone(),
+            filename: self.filename.clone(),
+            data_type: self.data_type.clone(),
+            created_at: self.created_at.clone(),
+        }
     }
 }
 

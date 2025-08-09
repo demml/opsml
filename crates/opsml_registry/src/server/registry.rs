@@ -751,7 +751,7 @@ pub mod server_logic {
             )
             .await?;
 
-            let artifact_record = ArtifactRecord::new(space, name, version, filename, data_type);
+            let artifact_record = ArtifactSqlRecord::new(space, name, version, filename, data_type);
 
             self.sql_client
                 .insert_artifact_record(&artifact_record)
