@@ -12,6 +12,7 @@ use opsml_types::cards::{Metrics, Parameters};
 use opsml_types::contracts::{
     ArtifactKey, GetMetricRequest, GetParameterRequest, MetricRequest, ParameterRequest,
 };
+use opsml_types::CommonKwargs;
 use opsml_types::RegistryType;
 use opsml_types::{
     cards::experiment::{Metric, Parameter},
@@ -130,6 +131,8 @@ pub struct Experiment {
     pub registries: CardRegistries,
     pub hardware_queue: Option<HardwareQueue>,
     uid: String,
+    space: String,
+    name: String,
     artifact_key: ArtifactKey,
 }
 
@@ -176,11 +179,17 @@ impl Experiment {
             false => None,
         };
 
+        // get space and name before moving experiment into the py lifetime
+        let space = experiment.space.clone();
+        let name = experiment.name.clone();
+
         Ok(Self {
             experiment: experiment.into_py_any(py)?,
             registries,
             hardware_queue,
             uid: experiment_uid,
+            space,
+            name,
             artifact_key,
         })
     }
@@ -553,6 +562,17 @@ impl Experiment {
             .storage_path()
             .join(SaveName::Artifacts)
             .join(relative_path);
+
+        let mime_type = mime_guess::from_path(&rpath).first_or_octet_stream();
+
+        // create artifact key record
+        self.registries.experiment.log_artifact(
+            self.space.clone(),
+            self.name.clone(),
+            CommonKwargs::BaseVersion.to_string(),
+            relative_path.to_string_lossy().to_string(),
+            mime_type.to_string(),
+        )?;
 
         let encryption_key = self.artifact_key.get_decrypt_key()?;
         encrypt_directory(&path, &encryption_key)?;
