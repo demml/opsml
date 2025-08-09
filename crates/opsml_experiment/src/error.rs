@@ -5,6 +5,7 @@ use opsml_storage::storage::error::StorageError;
 use opsml_types::error::{PyTypeError, TypeError};
 use pyo3::exceptions::PyRuntimeError;
 use pyo3::PyErr;
+use std::path::PathBuf;
 use thiserror::Error;
 use tracing::error;
 
@@ -42,6 +43,9 @@ pub enum ExperimentError {
 
     #[error("Failed to insert parameter")]
     InsertParameterError(#[source] RegistryError),
+
+    #[error("Failed to find artifact: {0}")]
+    ArtifactNotFoundError(PathBuf),
 
     #[error("Path does not exist")]
     PathNotExistError,

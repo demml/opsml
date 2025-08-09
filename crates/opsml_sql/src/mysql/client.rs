@@ -479,7 +479,6 @@ impl SqlClient for MySqlClient {
             .bind(&record.pre_tag)
             .bind(&record.build_tag)
             .bind(&record.version)
-            .bind(&record.filename)
             .bind(&record.data_type)
             .execute(&self.pool)
             .await?;
@@ -2197,14 +2196,14 @@ mod tests {
 
     #[tokio::test]
     async fn test_mysql_log_artifact() {
+        let name = "my_file.json".to_string();
         let client = db_client().await;
 
         // create a new artifact record
         let artifact_record1 = ArtifactSqlRecord::new(
             SPACE.to_string(),
-            NAME.to_string(),
+            name.clone(),
             Version::new(0, 0, 0),
-            "my_file.json".to_string(),
             "png".to_string(),
         );
         client
@@ -2214,9 +2213,8 @@ mod tests {
 
         let artifact_record2 = ArtifactSqlRecord::new(
             SPACE.to_string(),
-            NAME.to_string(),
+            name.clone(),
             Version::new(0, 0, 0),
-            "my_file.json".to_string(),
             "png".to_string(),
         );
 
@@ -2229,7 +2227,7 @@ mod tests {
         let artifacts = client
             .query_artifacts(&ArtifactQueryArgs {
                 space: Some(SPACE.to_string()),
-                name: Some(NAME.to_string()),
+                name: Some(name.clone()),
                 ..Default::default()
             })
             .await

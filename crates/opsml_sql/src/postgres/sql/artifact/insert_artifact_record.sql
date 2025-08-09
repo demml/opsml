@@ -10,7 +10,6 @@ INSERT INTO opsml_artifact_registry (
     pre_tag,
     build_tag,
     version,
-    filename,
     data_type
 ) VALUES (
     $1, 
@@ -25,5 +24,4 @@ INSERT INTO opsml_artifact_registry (
     $10,
     $11,
     $12,
-    $13
 );

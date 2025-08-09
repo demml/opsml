@@ -479,7 +479,6 @@ impl SqlClient for SqliteClient {
             .bind(&record.pre_tag)
             .bind(&record.build_tag)
             .bind(&record.version)
-            .bind(&record.filename)
             .bind(&record.data_type)
             .execute(&self.pool)
             .await?;
@@ -1298,7 +1297,6 @@ mod tests {
     use std::env;
 
     const SPACE: &str = "space";
-    const NAME: &str = "name";
 
     async fn test_card_crud(
         client: &SqliteClient,
@@ -2165,6 +2163,8 @@ mod tests {
     #[tokio::test]
     async fn test_sqlite_log_artifact() {
         cleanup();
+        let name = "my_file.json".to_string();
+
         let config = DatabaseSettings {
             connection_uri: get_connection_uri(),
             max_connections: 1,
@@ -2176,9 +2176,8 @@ mod tests {
         // create a new artifact record
         let artifact_record1 = ArtifactSqlRecord::new(
             SPACE.to_string(),
-            NAME.to_string(),
+            name.clone(),
             Version::new(0, 0, 0),
-            "my_file.json".to_string(),
             "png".to_string(),
         );
         client
@@ -2188,9 +2187,8 @@ mod tests {
 
         let artifact_record2 = ArtifactSqlRecord::new(
             SPACE.to_string(),
-            NAME.to_string(),
+            name.clone(),
             Version::new(0, 0, 0),
-            "my_file.json".to_string(),
             "png".to_string(),
         );
 
@@ -2203,7 +2201,7 @@ mod tests {
         let artifacts = client
             .query_artifacts(&ArtifactQueryArgs {
                 space: Some(SPACE.to_string()),
-                name: Some(NAME.to_string()),
+                name: Some(name.clone()),
                 ..Default::default()
             })
             .await

@@ -306,14 +306,12 @@ impl ClientRegistry {
         space: String,
         name: String,
         version: String,
-        filename: String,
         data_type: String,
     ) -> Result<CreateArtifactResponse, RegistryError> {
         let body = serde_json::to_value(CreateArtifactRequest {
             space,
             name,
             version,
-            filename,
             data_type,
         })?;
 
@@ -594,14 +592,14 @@ impl ClientRegistry {
         space: String,
         name: String,
         version: String,
-        filename: String,
+
         data_type: String,
     ) -> Result<CreateArtifactResponse, RegistryError> {
         let body = serde_json::to_value(CreateArtifactRequest {
             space,
             name,
             version,
-            filename,
+
             data_type,
         })?;
 
@@ -625,6 +623,36 @@ impl ClientRegistry {
 
         response
             .json::<CreateArtifactResponse>()
+            .map_err(RegistryError::RequestError)
+    }
+
+    pub fn query_artifacts(
+        &self,
+        query_args: &ArtifactQueryArgs,
+    ) -> Result<Vec<ArtifactRecord>, RegistryError> {
+        // Query artifacts from the registry
+        let params = serde_qs::to_string(query_args)?;
+
+        let response = self
+            .api_client
+            .request(
+                Routes::ArtifactRecord,
+                RequestType::Get,
+                None,
+                Some(params),
+                None,
+            )
+            .inspect_err(|e| {
+                error!("Failed to query artifacts: {e}");
+            })?;
+
+        if response.status() != 200 {
+            let error_text = response.text().map_err(RegistryError::RequestError)?;
+            return Err(ApiClientError::ServerError(error_text).into());
+        }
+
+        response
+            .json::<Vec<ArtifactRecord>>()
             .map_err(RegistryError::RequestError)
     }
 }

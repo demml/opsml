@@ -10,7 +10,6 @@ INSERT INTO opsml_artifact_registry (
     pre_tag,
     build_tag,
     version,
-    filename,
     data_type
 ) VALUES (
     ?, 
@@ -21,7 +20,6 @@ INSERT INTO opsml_artifact_registry (
     ?,
     ?,
     ?,         
-    ?,
     ?,
     ?,
     ?,

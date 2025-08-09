@@ -4,15 +4,14 @@ CREATE TABLE IF NOT EXISTS opsml_artifact_registry (
     uid TEXT PRIMARY KEY,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     app_env TEXT DEFAULT 'development',
-    space TEXT,
-    name TEXT,
+    space TEXT NOT NULL, -- the space the file belongs to
+    name TEXT NOT NULL, -- the filename, keeping consistency with other tables
     major INTEGER NOT NULL,
     minor INTEGER NOT NULL,
     patch INTEGER NOT NULL,
     pre_tag TEXT,
     build_tag TEXT,
     version TEXT,
-    filename TEXT,
     data_type TEXT,
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );

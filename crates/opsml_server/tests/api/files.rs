@@ -81,9 +81,8 @@ async fn test_opsml_server_log_artifact() {
 
     let artifact_request = CreateArtifactRequest {
         space: "space".to_string(),
-        name: "name".to_string(),
+        name: "test.txt".to_string(),
         version: "0.0.0".to_string(),
-        filename: "test.txt".to_string(),
         data_type: "text/plain".to_string(),
     };
 
