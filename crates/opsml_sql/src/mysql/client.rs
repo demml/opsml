@@ -13,7 +13,10 @@ use opsml_semver::VersionValidator;
 use opsml_settings::config::DatabaseSettings;
 use opsml_types::{
     cards::CardTable,
-    contracts::{ArtifactKey, AuditEvent, CardQueryArgs, SpaceNameEvent, SpaceRecord, SpaceStats},
+    contracts::{
+        ArtifactKey, ArtifactQueryArgs, ArtifactRecord, AuditEvent, CardQueryArgs, SpaceNameEvent,
+        SpaceRecord, SpaceStats,
+    },
     RegistryType,
 };
 use semver::Version;
@@ -480,6 +483,26 @@ impl SqlClient for MySqlClient {
             .execute(&self.pool)
             .await?;
         Ok(())
+    }
+
+    async fn query_artifacts(
+        &self,
+        query_args: &ArtifactQueryArgs,
+    ) -> Result<Vec<ArtifactRecord>, SqlError> {
+        let query = MySQLQueryHelper::get_query_artifacts_query(query_args)?;
+        let rows: Vec<ArtifactSqlRecord> = sqlx::query_as(&query)
+            .bind(query_args.uid.as_ref())
+            .bind(query_args.space.as_ref())
+            .bind(query_args.name.as_ref())
+            .bind(query_args.sort_by_timestamp.as_ref())
+            .bind(query_args.limit.unwrap_or(50))
+            .fetch_all(&self.pool)
+            .await?;
+
+        Ok(rows
+            .iter()
+            .map(|r| r.to_artifact_record())
+            .collect::<Vec<ArtifactRecord>>())
     }
 
     async fn update_card(&self, table: &CardTable, card: &ServerCard) -> Result<(), SqlError> {

@@ -399,10 +399,8 @@ impl PostgresQueryHelper {
         Ok(query)
     }
 
-    pub fn get_query_artifacts_query(
-        table: &CardTable,
-        query_args: &ArtifactQueryArgs,
-    ) -> Result<String, SqlError> {
+    pub fn get_query_artifacts_query(query_args: &ArtifactQueryArgs) -> Result<String, SqlError> {
+        let table = &CardTable::Artifact;
         if query_args.uid.is_some() {
             is_valid_uuidv7(query_args.uid.as_ref().unwrap())?;
             return Ok(format!("SELECT * FROM {table} WHERE uid = $1 LIMIT 1"));

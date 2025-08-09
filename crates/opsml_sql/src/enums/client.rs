@@ -12,7 +12,9 @@ use anyhow::Context;
 use anyhow::Result as AnyhowResult;
 use async_trait::async_trait;
 use opsml_settings::config::DatabaseSettings;
-use opsml_types::contracts::{AuditEvent, SpaceNameEvent, SpaceRecord, SpaceStats};
+use opsml_types::contracts::{
+    ArtifactQueryArgs, ArtifactRecord, AuditEvent, SpaceNameEvent, SpaceRecord, SpaceStats,
+};
 use opsml_types::{
     RegistryType, SqlType,
     {
@@ -92,6 +94,17 @@ impl SqlClient for SqlClientEnum {
             SqlClientEnum::Postgres(client) => client.insert_artifact_record(record).await,
             SqlClientEnum::Sqlite(client) => client.insert_artifact_record(record).await,
             SqlClientEnum::MySql(client) => client.insert_artifact_record(record).await,
+        }
+    }
+
+    async fn query_artifacts(
+        &self,
+        query_args: &ArtifactQueryArgs,
+    ) -> Result<Vec<ArtifactRecord>, SqlError> {
+        match self {
+            SqlClientEnum::Postgres(client) => client.query_artifacts(query_args).await,
+            SqlClientEnum::Sqlite(client) => client.query_artifacts(query_args).await,
+            SqlClientEnum::MySql(client) => client.query_artifacts(query_args).await,
         }
     }
 

@@ -14,8 +14,8 @@ use opsml_settings::config::DatabaseSettings;
 use opsml_types::{
     cards::CardTable,
     contracts::{
-        ArtifactKey, ArtifactRecord, AuditEvent, CardQueryArgs, SpaceNameEvent, SpaceRecord,
-        SpaceStats,
+        ArtifactKey, ArtifactQueryArgs, ArtifactRecord, AuditEvent, CardQueryArgs, SpaceNameEvent,
+        SpaceRecord, SpaceStats,
     },
     RegistryType,
 };
@@ -470,9 +470,20 @@ impl SqlClient for PostgresClient {
         &self,
         query_args: &ArtifactQueryArgs,
     ) -> Result<Vec<ArtifactRecord>, SqlError> {
-        let query = PostgresQueryHelper::get_query_artifacts_query(query_args);
-        let rows = sqlx::query(&query).fetch_all(&self.pool).await?;
-        Ok(rows)
+        let query = PostgresQueryHelper::get_query_artifacts_query(query_args)?;
+        let rows: Vec<ArtifactSqlRecord> = sqlx::query_as(&query)
+            .bind(query_args.uid.as_ref())
+            .bind(query_args.space.as_ref())
+            .bind(query_args.name.as_ref())
+            .bind(query_args.sort_by_timestamp.as_ref())
+            .bind(query_args.limit.unwrap_or(50))
+            .fetch_all(&self.pool)
+            .await?;
+
+        Ok(rows
+            .iter()
+            .map(|r| r.to_artifact_record())
+            .collect::<Vec<ArtifactRecord>>())
     }
 
     async fn update_card(&self, table: &CardTable, card: &ServerCard) -> Result<(), SqlError> {
@@ -1239,12 +1250,16 @@ impl SqlClient for PostgresClient {
 
 #[cfg(test)]
 mod tests {
+
     use crate::schemas::ServiceCardRecord;
 
     use super::*;
     use opsml_types::{CommonKwargs, RegistryType, SqlType};
     use opsml_utils::utils::get_utc_datetime;
     use std::{env, vec};
+
+    const SPACE: &str = "my_space";
+    const NAME: &str = "my_card";
     pub async fn cleanup(pool: &Pool<Postgres>) {
         sqlx::raw_sql(
             r#"
@@ -1283,6 +1298,9 @@ mod tests {
 
             DELETE
             FROM opsml_service_registry;
+
+            DELETE
+            FROM opsml_artifact_registry;
 
             DELETE
             FROM opsml_space;
@@ -2126,13 +2144,14 @@ mod tests {
             .unwrap();
     }
 
+    #[tokio::test]
     async fn test_postgres_log_artifact() {
         let client = db_client().await;
 
         // create a new artifact record
         let artifact_record = ArtifactSqlRecord::new(
-            "artifact_uid".to_string(),
-            "Artifact Name".to_string(),
+            SPACE.to_string(),
+            NAME.to_string(),
             Version::new(0, 0, 0),
             "my_file.json".to_string(),
             "png".to_string(),
@@ -2141,5 +2160,21 @@ mod tests {
             .insert_artifact_record(&artifact_record)
             .await
             .unwrap();
+
+        client
+            .insert_artifact_record(&artifact_record)
+            .await
+            .unwrap();
+
+        // query artifacts
+        let artifacts = client
+            .query_artifacts(&ArtifactQueryArgs {
+                space: Some(SPACE.to_string()),
+                name: Some(NAME.to_string()),
+                ..Default::default()
+            })
+            .await
+            .unwrap();
+        assert_eq!(artifacts.len(), 2);
     }
 }
