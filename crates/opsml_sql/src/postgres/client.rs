@@ -450,6 +450,7 @@ impl SqlClient for PostgresClient {
         let query = PostgresQueryHelper::get_artifact_record_insert_query();
         sqlx::query(&query)
             .bind(&record.uid)
+            .bind(&record.created_at)
             .bind(&record.app_env)
             .bind(&record.space)
             .bind(&record.name)
@@ -2149,7 +2150,7 @@ mod tests {
         let client = db_client().await;
 
         // create a new artifact record
-        let artifact_record = ArtifactSqlRecord::new(
+        let artifact_record1 = ArtifactSqlRecord::new(
             SPACE.to_string(),
             NAME.to_string(),
             Version::new(0, 0, 0),
@@ -2157,12 +2158,20 @@ mod tests {
             "png".to_string(),
         );
         client
-            .insert_artifact_record(&artifact_record)
+            .insert_artifact_record(&artifact_record1)
             .await
             .unwrap();
 
+        let artifact_record2 = ArtifactSqlRecord::new(
+            SPACE.to_string(),
+            NAME.to_string(),
+            Version::new(0, 0, 0),
+            "my_file.json".to_string(),
+            "png".to_string(),
+        );
+
         client
-            .insert_artifact_record(&artifact_record)
+            .insert_artifact_record(&artifact_record2)
             .await
             .unwrap();
 
