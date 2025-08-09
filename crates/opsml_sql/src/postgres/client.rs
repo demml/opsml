@@ -3,7 +3,7 @@ use crate::base::SqlClient;
 use crate::error::SqlError;
 use crate::postgres::helper::PostgresQueryHelper;
 use crate::schemas::schema::{
-    ArtifactRecord, AuditCardRecord, CardResults, CardSummary, DataCardRecord,
+    ArtifactSqlRecord, AuditCardRecord, CardResults, CardSummary, DataCardRecord,
     ExperimentCardRecord, HardwareMetricsRecord, MetricRecord, ModelCardRecord, ParameterRecord,
     PromptCardRecord, QueryStats, ServerCard, ServiceCardRecord, SqlSpaceRecord, User,
     VersionResult, VersionSummary,
@@ -13,7 +13,10 @@ use opsml_semver::VersionValidator;
 use opsml_settings::config::DatabaseSettings;
 use opsml_types::{
     cards::CardTable,
-    contracts::{ArtifactKey, AuditEvent, CardQueryArgs, SpaceNameEvent, SpaceRecord, SpaceStats},
+    contracts::{
+        ArtifactKey, ArtifactRecord, AuditEvent, CardQueryArgs, SpaceNameEvent, SpaceRecord,
+        SpaceStats,
+    },
     RegistryType,
 };
 use semver::Version;
@@ -443,7 +446,7 @@ impl SqlClient for PostgresClient {
         }
     }
 
-    async fn insert_artifact_record(&self, record: &ArtifactRecord) -> Result<(), SqlError> {
+    async fn insert_artifact_record(&self, record: &ArtifactSqlRecord) -> Result<(), SqlError> {
         let query = PostgresQueryHelper::get_artifact_record_insert_query();
         sqlx::query(&query)
             .bind(&record.uid)
@@ -461,6 +464,15 @@ impl SqlClient for PostgresClient {
             .execute(&self.pool)
             .await?;
         Ok(())
+    }
+
+    async fn query_artifacts(
+        &self,
+        query_args: &ArtifactQueryArgs,
+    ) -> Result<Vec<ArtifactRecord>, SqlError> {
+        let query = PostgresQueryHelper::get_query_artifacts_query(query_args);
+        let rows = sqlx::query(&query).fetch_all(&self.pool).await?;
+        Ok(rows)
     }
 
     async fn update_card(&self, table: &CardTable, card: &ServerCard) -> Result<(), SqlError> {
@@ -2110,6 +2122,23 @@ mod tests {
         // delete space name record
         client
             .delete_space_name_record(&model_card2.space, &model_card2.name, &RegistryType::Model)
+            .await
+            .unwrap();
+    }
+
+    async fn test_postgres_log_artifact() {
+        let client = db_client().await;
+
+        // create a new artifact record
+        let artifact_record = ArtifactSqlRecord::new(
+            "artifact_uid".to_string(),
+            "Artifact Name".to_string(),
+            Version::new(0, 0, 0),
+            "my_file.json".to_string(),
+            "png".to_string(),
+        );
+        client
+            .insert_artifact_record(&artifact_record)
             .await
             .unwrap();
     }

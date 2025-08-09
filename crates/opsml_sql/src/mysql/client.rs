@@ -2,7 +2,7 @@ use crate::base::SqlClient;
 use crate::error::SqlError;
 use crate::mysql::helper::MySQLQueryHelper;
 use crate::schemas::schema::{
-    ArtifactRecord, AuditCardRecord, CardResults, CardSummary, DataCardRecord,
+    ArtifactSqlRecord, AuditCardRecord, CardResults, CardSummary, DataCardRecord,
     ExperimentCardRecord, HardwareMetricsRecord, MetricRecord, ModelCardRecord, ParameterRecord,
     PromptCardRecord, QueryStats, ServerCard, ServiceCardRecord, SqlSpaceRecord, User,
     VersionResult, VersionSummary,
@@ -462,7 +462,7 @@ impl SqlClient for MySqlClient {
         }
     }
 
-    async fn insert_artifact_record(&self, record: &ArtifactRecord) -> Result<(), SqlError> {
+    async fn insert_artifact_record(&self, record: &ArtifactSqlRecord) -> Result<(), SqlError> {
         let query = MySQLQueryHelper::get_artifact_record_insert_query();
         sqlx::query(&query)
             .bind(&record.uid)

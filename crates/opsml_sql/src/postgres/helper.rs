@@ -2,7 +2,11 @@ use crate::error::SqlError;
 
 use opsml_semver::VersionParser;
 /// this file contains helper logic for generating sql queries across different databases
-use opsml_types::{cards::CardTable, contracts::CardQueryArgs};
+use opsml_types::{
+    cards::CardTable,
+    contracts::{ArtifactQueryArgs, CardQueryArgs},
+};
+
 use opsml_utils::utils::is_valid_uuidv7;
 
 // user
@@ -381,6 +385,48 @@ impl PostgresQueryHelper {
                     " AND tags @> '[\"{tag}\"]'::jsonb" // Using @> operator is more efficient than EXISTS
                 ));
             }
+        }
+
+        // Add ordering
+        if query_args.sort_by_timestamp.unwrap_or(false) {
+            query.push_str(" ORDER BY created_at DESC");
+        } else {
+            query.push_str(" ORDER BY major DESC, minor DESC, patch DESC");
+        }
+
+        query.push_str(" LIMIT $5");
+
+        Ok(query)
+    }
+
+    pub fn get_query_artifacts_query(
+        table: &CardTable,
+        query_args: &ArtifactQueryArgs,
+    ) -> Result<String, SqlError> {
+        if query_args.uid.is_some() {
+            is_valid_uuidv7(query_args.uid.as_ref().unwrap())?;
+            return Ok(format!("SELECT * FROM {table} WHERE uid = $1 LIMIT 1"));
+        }
+
+        let mut query = format!(
+            "
+        SELECT * FROM {table}
+        WHERE 1=1
+        "
+        );
+
+        // Add conditions in order of index columns to maximize index usage
+        if query_args.space.is_some() {
+            query.push_str(" AND space = $2"); // space is first column in index
+        }
+
+        if query_args.name.is_some() {
+            query.push_str(" AND name = $3"); // name is second column in index
+        }
+
+        // Add version bounds - will use the version part of the index
+        if query_args.version.is_some() {
+            add_version_bounds(&mut query, query_args.version.as_ref().unwrap())?;
         }
 
         // Add ordering
