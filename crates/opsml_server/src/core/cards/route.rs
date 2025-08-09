@@ -1,7 +1,7 @@
 use crate::core::cards::schema::{
     CreateReadeMe, QueryPageResponse, ReadeMe, RegistryStatsResponse, VersionPageResponse,
 };
-use crate::core::cards::utils::{cleanup_artifacts, get_next_version, insert_card_into_db};
+use crate::core::cards::utils::{cleanup_artifacts, insert_card_into_db};
 use crate::core::error::{internal_server_error, OpsmlServerError};
 use crate::core::files::utils::{
     create_and_store_encrypted_file, create_artifact_key, download_artifact, get_artifact_key,
@@ -19,6 +19,7 @@ use opsml_auth::permission::UserPermissions;
 use opsml_crypt::decrypt_directory;
 use opsml_events::AuditContext;
 use opsml_sql::base::SqlClient;
+use opsml_sql::enums::utils::get_next_version;
 use opsml_sql::schemas::*;
 use opsml_types::{cards::*, contracts::*};
 use opsml_types::{SaveName, Suffix};
