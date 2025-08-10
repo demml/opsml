@@ -600,7 +600,7 @@ impl Experiment {
                     result_path
                 };
 
-                let mime_type = mime_guess::from_path(&relative_path).first_or_octet_stream();
+                let mime_type = mime_guess::from_path(relative_path).first_or_octet_stream();
 
                 // create artifact key record
                 // TODO: Explore batching here
