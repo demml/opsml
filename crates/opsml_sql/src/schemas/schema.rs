@@ -18,6 +18,8 @@ use serde_json::Value;
 use sqlx::{prelude::FromRow, types::Json};
 use std::collections::HashMap;
 use std::env;
+use std::str::FromStr;
+
 pub type SqlSpaceRecord = (String, i64, i64, i64, i64);
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
@@ -893,7 +895,7 @@ pub struct ArtifactSqlRecord {
     pub pre_tag: Option<String>,
     pub build_tag: Option<String>,
     pub media_type: String,
-    pub artifact_type: ArtifactType,
+    pub artifact_type: String,
     pub updated_at: DateTime<Utc>,
 }
 
@@ -903,7 +905,7 @@ impl ArtifactSqlRecord {
         name: String,
         version: Version,
         media_type: String,
-        artifact_type: ArtifactType,
+        artifact_type: String,
     ) -> Self {
         let created_at = get_utc_datetime();
         let updated_at = created_at;
@@ -959,6 +961,7 @@ impl ArtifactSqlRecord {
             version: self.version.clone(),
             media_type: self.media_type.clone(),
             created_at: self.created_at,
+            artifact_type: ArtifactType::from_str(&self.artifact_type).unwrap(),
         }
     }
 }
