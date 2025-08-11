@@ -209,6 +209,22 @@ impl Display for ArtifactKey {
     }
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct CreateArtifactRequest {
+    pub space: String,
+    pub name: String,
+    pub version: String,
+    pub media_type: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct CreateArtifactResponse {
+    pub uid: String,
+    pub space: String,
+    pub name: String,
+    pub version: String,
+}
+
 #[derive(Debug, Clone)]
 pub enum Operation {
     Create,

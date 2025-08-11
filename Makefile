@@ -30,23 +30,23 @@ test.sql.enum:
 
 .PHONY: build.postgres
 build.postgres:
-	docker compose down
+	docker compose down --volumes 
 	docker compose up -d --build postgres --wait
 
 .PHONY: test.sql.postgres
 test.sql.postgres: build.postgres
 	cargo test -p opsml-sql test_postgres -- --nocapture --test-threads=1
-	docker compose down
+	docker compose down --volumes 
 
 .PHONY: build.mysql
 build.mysql:
-	docker compose down
+	docker compose down --volumes 
 	docker compose up -d --build mysql --wait
 
 .PHONY: test.sql.mysql
 test.sql.mysql: build.mysql
 	cargo test -p opsml-sql test_mysql -- --nocapture --test-threads=1
-	docker compose down
+	docker compose down --volumes 
 
 .PHONY: test.sql
 test.sql: test.sql.sqlite test.sql.enum test.sql.postgres test.sql.mysql

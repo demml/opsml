@@ -3,16 +3,20 @@ use crate::base::SqlClient;
 use crate::error::SqlError;
 use crate::postgres::helper::PostgresQueryHelper;
 use crate::schemas::schema::{
-    AuditCardRecord, CardResults, CardSummary, DataCardRecord, ExperimentCardRecord,
-    HardwareMetricsRecord, MetricRecord, ModelCardRecord, ParameterRecord, PromptCardRecord,
-    QueryStats, ServerCard, ServiceCardRecord, SqlSpaceRecord, User, VersionResult, VersionSummary,
+    ArtifactSqlRecord, AuditCardRecord, CardResults, CardSummary, DataCardRecord,
+    ExperimentCardRecord, HardwareMetricsRecord, MetricRecord, ModelCardRecord, ParameterRecord,
+    PromptCardRecord, QueryStats, ServerCard, ServiceCardRecord, SqlSpaceRecord, User,
+    VersionResult, VersionSummary,
 };
 use async_trait::async_trait;
 use opsml_semver::VersionValidator;
 use opsml_settings::config::DatabaseSettings;
 use opsml_types::{
     cards::CardTable,
-    contracts::{ArtifactKey, AuditEvent, CardQueryArgs, SpaceNameEvent, SpaceRecord, SpaceStats},
+    contracts::{
+        ArtifactKey, ArtifactQueryArgs, ArtifactRecord, AuditEvent, CardQueryArgs, SpaceNameEvent,
+        SpaceRecord, SpaceStats,
+    },
     RegistryType,
 };
 use semver::Version;
@@ -440,6 +444,45 @@ impl SqlClient for PostgresClient {
                 return Err(SqlError::InvalidTableName);
             }
         }
+    }
+
+    async fn insert_artifact_record(&self, record: &ArtifactSqlRecord) -> Result<(), SqlError> {
+        let query = PostgresQueryHelper::get_artifact_record_insert_query();
+        sqlx::query(&query)
+            .bind(&record.uid)
+            .bind(record.created_at)
+            .bind(&record.app_env)
+            .bind(&record.space)
+            .bind(&record.name)
+            .bind(record.major)
+            .bind(record.minor)
+            .bind(record.patch)
+            .bind(&record.pre_tag)
+            .bind(&record.build_tag)
+            .bind(&record.version)
+            .bind(&record.media_type)
+            .execute(&self.pool)
+            .await?;
+        Ok(())
+    }
+
+    async fn query_artifacts(
+        &self,
+        query_args: &ArtifactQueryArgs,
+    ) -> Result<Vec<ArtifactRecord>, SqlError> {
+        let query = PostgresQueryHelper::get_query_artifacts_query(query_args)?;
+        let rows: Vec<ArtifactSqlRecord> = sqlx::query_as(&query)
+            .bind(query_args.uid.as_ref())
+            .bind(query_args.space.as_ref())
+            .bind(query_args.name.as_ref())
+            .bind(query_args.limit.unwrap_or(50))
+            .fetch_all(&self.pool)
+            .await?;
+
+        Ok(rows
+            .iter()
+            .map(|r| r.to_artifact_record())
+            .collect::<Vec<ArtifactRecord>>())
     }
 
     async fn update_card(&self, table: &CardTable, card: &ServerCard) -> Result<(), SqlError> {
@@ -1206,12 +1249,15 @@ impl SqlClient for PostgresClient {
 
 #[cfg(test)]
 mod tests {
+
     use crate::schemas::ServiceCardRecord;
 
     use super::*;
     use opsml_types::{CommonKwargs, RegistryType, SqlType};
     use opsml_utils::utils::get_utc_datetime;
     use std::{env, vec};
+
+    const SPACE: &str = "my_space";
     pub async fn cleanup(pool: &Pool<Postgres>) {
         sqlx::raw_sql(
             r#"
@@ -1250,6 +1296,9 @@ mod tests {
 
             DELETE
             FROM opsml_service_registry;
+
+            DELETE
+            FROM opsml_artifact_registry;
 
             DELETE
             FROM opsml_space;
@@ -2091,5 +2140,46 @@ mod tests {
             .delete_space_name_record(&model_card2.space, &model_card2.name, &RegistryType::Model)
             .await
             .unwrap();
+    }
+
+    #[tokio::test]
+    async fn test_postgres_log_artifact() {
+        let client = db_client().await;
+        let name = "my_file.json".to_string();
+
+        // create a new artifact record
+        let artifact_record1 = ArtifactSqlRecord::new(
+            SPACE.to_string(),
+            name.clone(),
+            Version::new(0, 0, 0),
+            "png".to_string(),
+        );
+        client
+            .insert_artifact_record(&artifact_record1)
+            .await
+            .unwrap();
+
+        let artifact_record2 = ArtifactSqlRecord::new(
+            SPACE.to_string(),
+            name.clone(),
+            Version::new(0, 0, 0),
+            "png".to_string(),
+        );
+
+        client
+            .insert_artifact_record(&artifact_record2)
+            .await
+            .unwrap();
+
+        // query artifacts
+        let artifacts = client
+            .query_artifacts(&ArtifactQueryArgs {
+                space: Some(SPACE.to_string()),
+                name: Some(name.clone()),
+                ..Default::default()
+            })
+            .await
+            .unwrap();
+        assert_eq!(artifacts.len(), 2);
     }
 }

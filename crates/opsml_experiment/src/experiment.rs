@@ -10,8 +10,10 @@ use opsml_semver::VersionType;
 use opsml_storage::storage_client;
 use opsml_types::cards::{Metrics, Parameters};
 use opsml_types::contracts::{
-    ArtifactKey, GetMetricRequest, GetParameterRequest, MetricRequest, ParameterRequest,
+    ArtifactKey, ArtifactQueryArgs, GetMetricRequest, GetParameterRequest, MetricRequest,
+    ParameterRequest,
 };
+use opsml_types::CommonKwargs;
 use opsml_types::RegistryType;
 use opsml_types::{
     cards::experiment::{Metric, Parameter},
@@ -554,6 +556,16 @@ impl Experiment {
             .join(SaveName::Artifacts)
             .join(relative_path);
 
+        let mime_type = mime_guess::from_path(&rpath).first_or_octet_stream();
+
+        // create artifact key record
+        self.registries.experiment.log_artifact(
+            self.uid.clone(),
+            relative_path.to_string_lossy().to_string(),
+            CommonKwargs::BaseVersion.to_string(),
+            mime_type.to_string(),
+        )?;
+
         let encryption_key = self.artifact_key.get_decrypt_key()?;
         encrypt_directory(&path, &encryption_key)?;
 
@@ -566,12 +578,44 @@ impl Experiment {
 
     fn log_artifacts(&self, path: PathBuf) -> Result<(), ExperimentError> {
         let encryption_key = self.artifact_key.get_decrypt_key()?;
+
+        for entry in WalkDir::new(&path) {
+            let entry = entry?;
+            if entry.file_type().is_file() {
+                let relative_path = {
+                    let entry_path = entry.path();
+                    let mut result_path = entry_path;
+
+                    // Find where the prefix path appears in the entry path
+                    for ancestor in entry_path.ancestors() {
+                        if ancestor == path {
+                            // Found the prefix, get everything after it
+                            if let Ok(stripped) = entry_path.strip_prefix(ancestor) {
+                                result_path = stripped;
+                                break;
+                            }
+                        }
+                    }
+
+                    result_path
+                };
+
+                let mime_type = mime_guess::from_path(relative_path).first_or_octet_stream();
+
+                // create artifact key record
+                // TODO: Explore batching here
+                self.registries.experiment.log_artifact(
+                    self.uid.clone(),
+                    relative_path.to_string_lossy().to_string(),
+                    CommonKwargs::BaseVersion.to_string(),
+                    mime_type.to_string(),
+                )?;
+            }
+        }
+
         encrypt_directory(&path, &encryption_key)?;
-
         let rpath = self.artifact_key.storage_path().join(SaveName::Artifacts);
-
         storage_client()?.put(&path, &rpath, true)?;
-
         decrypt_directory(&path, &encryption_key)?;
 
         Ok(())
@@ -772,4 +816,64 @@ pub fn get_experiment_parameters(
     let parameters = registry.get_parameters(&param_request)?;
 
     Ok(Parameters { parameters })
+}
+
+/// Download an artifact by name
+/// 1. Query the artifact registry for the artifact by name
+/// 2. Get the filename for the artifacts records
+/// 3. Download the artifact to the specified local path
+#[pyfunction]
+#[pyo3(signature = (experiment_uid, path, lpath=None))]
+pub fn download_artifact(
+    experiment_uid: &str,
+    path: PathBuf,
+    lpath: Option<PathBuf>,
+) -> Result<(), ExperimentError> {
+    // query card for space, name, version
+
+    let path_name = path.into_os_string().into_string()?;
+    let registry = OpsmlRegistry::new(RegistryType::Experiment)?;
+
+    // query just the artifacts for the current experiment id
+    let query_args = ArtifactQueryArgs {
+        space: Some(experiment_uid.to_string()),
+        ..Default::default()
+    };
+    let records = registry.query_artifacts(&query_args)?;
+
+    // iterate over records and check if record.name contains path_name
+    let artifact = records
+        .into_iter()
+        .find(|record| record.name.contains(&path_name))
+        .ok_or(ExperimentError::ArtifactNotFoundError(path_name))?;
+
+    // get artifact key
+    let key = registry.get_artifact_key(experiment_uid, &RegistryType::Experiment)?;
+
+    let rpath = key
+        .storage_path()
+        .join(SaveName::Artifacts)
+        .join(artifact.name.clone());
+
+    let recursive = rpath.extension().is_none();
+    let lpath = lpath.unwrap_or_else(|| PathBuf::from("artifacts"));
+    if !lpath.exists() {
+        std::fs::create_dir_all(&lpath).inspect_err(|e| {
+            error!("Failed to create directory: {e}");
+        })?;
+    }
+
+    let lpath = lpath.join(artifact.name);
+    storage_client()?
+        .get(&lpath, &rpath, recursive)
+        .inspect_err(|e| {
+            error!("Failed to download artifacts: {e}");
+        })?;
+
+    let decrypt_key = key.get_decrypt_key().inspect_err(|e| {
+        error!("Failed to get decryption key: {e}");
+    })?;
+    decrypt_directory(&lpath, &decrypt_key)?;
+
+    Ok(())
 }

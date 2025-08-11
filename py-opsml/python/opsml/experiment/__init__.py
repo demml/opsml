@@ -10,6 +10,7 @@ Parameter = experiment.Parameter
 Parameters = experiment.Parameters
 get_experiment_metrics = experiment.get_experiment_metrics
 get_experiment_parameters = experiment.get_experiment_parameters
+download_artifact = experiment.download_artifact
 
 __all__ = [
     "Experiment",
@@ -18,4 +19,5 @@ __all__ = [
     "Parameter",
     "get_experiment_metrics",
     "get_experiment_parameters",
+    "download_artifact",
 ]

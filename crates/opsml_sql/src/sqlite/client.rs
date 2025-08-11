@@ -2,16 +2,20 @@ use crate::base::SqlClient;
 
 use crate::error::SqlError;
 use crate::schemas::schema::{
-    AuditCardRecord, CardResults, CardSummary, DataCardRecord, ExperimentCardRecord,
-    HardwareMetricsRecord, MetricRecord, ModelCardRecord, ParameterRecord, PromptCardRecord,
-    QueryStats, ServerCard, ServiceCardRecord, SqlSpaceRecord, User, VersionResult, VersionSummary,
+    ArtifactSqlRecord, AuditCardRecord, CardResults, CardSummary, DataCardRecord,
+    ExperimentCardRecord, HardwareMetricsRecord, MetricRecord, ModelCardRecord, ParameterRecord,
+    PromptCardRecord, QueryStats, ServerCard, ServiceCardRecord, SqlSpaceRecord, User,
+    VersionResult, VersionSummary,
 };
 
 use crate::sqlite::helper::SqliteQueryHelper;
 use async_trait::async_trait;
 use opsml_semver::VersionValidator;
 use opsml_settings::config::DatabaseSettings;
-use opsml_types::contracts::{ArtifactKey, AuditEvent, SpaceNameEvent, SpaceRecord, SpaceStats};
+use opsml_types::contracts::{
+    ArtifactKey, ArtifactQueryArgs, ArtifactRecord, AuditEvent, SpaceNameEvent, SpaceRecord,
+    SpaceStats,
+};
 use opsml_types::{cards::CardTable, contracts::CardQueryArgs, RegistryType};
 use semver::Version;
 use sqlx::{
@@ -459,6 +463,45 @@ impl SqlClient for SqliteClient {
                 return Err(SqlError::InvalidTableName);
             }
         }
+    }
+
+    async fn insert_artifact_record(&self, record: &ArtifactSqlRecord) -> Result<(), SqlError> {
+        let query = SqliteQueryHelper::get_artifact_record_insert_query();
+        sqlx::query(&query)
+            .bind(&record.uid)
+            .bind(record.created_at)
+            .bind(&record.app_env)
+            .bind(&record.space)
+            .bind(&record.name)
+            .bind(record.major)
+            .bind(record.minor)
+            .bind(record.patch)
+            .bind(&record.pre_tag)
+            .bind(&record.build_tag)
+            .bind(&record.version)
+            .bind(&record.media_type)
+            .execute(&self.pool)
+            .await?;
+        Ok(())
+    }
+
+    async fn query_artifacts(
+        &self,
+        query_args: &ArtifactQueryArgs,
+    ) -> Result<Vec<ArtifactRecord>, SqlError> {
+        let query = SqliteQueryHelper::get_query_artifacts_query(query_args)?;
+        let rows: Vec<ArtifactSqlRecord> = sqlx::query_as(&query)
+            .bind(query_args.uid.as_ref())
+            .bind(query_args.space.as_ref())
+            .bind(query_args.name.as_ref())
+            .bind(query_args.limit.unwrap_or(50))
+            .fetch_all(&self.pool)
+            .await?;
+
+        Ok(rows
+            .iter()
+            .map(|r| r.to_artifact_record())
+            .collect::<Vec<ArtifactRecord>>())
     }
 
     async fn update_card(&self, table: &CardTable, card: &ServerCard) -> Result<(), SqlError> {
@@ -1252,6 +1295,8 @@ mod tests {
     use opsml_types::{contracts::SpaceNameEvent, RegistryType, SqlType};
     use opsml_utils::utils::get_utc_datetime;
     use std::env;
+
+    const SPACE: &str = "space";
 
     async fn test_card_crud(
         client: &SqliteClient,
@@ -2113,5 +2158,54 @@ mod tests {
             .await
             .unwrap();
         cleanup();
+    }
+
+    #[tokio::test]
+    async fn test_sqlite_log_artifact() {
+        cleanup();
+        let name = "my_file.json".to_string();
+
+        let config = DatabaseSettings {
+            connection_uri: get_connection_uri(),
+            max_connections: 1,
+            sql_type: SqlType::Sqlite,
+        };
+
+        let client = SqliteClient::new(&config).await.unwrap();
+
+        // create a new artifact record
+        let artifact_record1 = ArtifactSqlRecord::new(
+            SPACE.to_string(),
+            name.clone(),
+            Version::new(0, 0, 0),
+            "png".to_string(),
+        );
+        client
+            .insert_artifact_record(&artifact_record1)
+            .await
+            .unwrap();
+
+        let artifact_record2 = ArtifactSqlRecord::new(
+            SPACE.to_string(),
+            name.clone(),
+            Version::new(0, 0, 0),
+            "png".to_string(),
+        );
+
+        client
+            .insert_artifact_record(&artifact_record2)
+            .await
+            .unwrap();
+
+        // query artifacts
+        let artifacts = client
+            .query_artifacts(&ArtifactQueryArgs {
+                space: Some(SPACE.to_string()),
+                name: Some(name.clone()),
+                ..Default::default()
+            })
+            .await
+            .unwrap();
+        assert_eq!(artifacts.len(), 2);
     }
 }

@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use opsml_crypt::error::CryptError;
 use opsml_interfaces::error::{DataInterfaceError, ModelInterfaceError};
 use opsml_state::error::StateError;
@@ -63,6 +65,9 @@ pub enum CardError {
 
     #[error("Alias not found in ServiceCard")]
     AliasNotFoundInDeckError,
+
+    #[error("File not found for file: {0}")]
+    FileNotFoundError(PathBuf),
 
     #[error(transparent)]
     DataInterfaceError(#[from] DataInterfaceError),

@@ -786,6 +786,32 @@ impl CardRegistry {
 
         Ok(response)
     }
+
+    pub fn log_artifact(
+        &self,
+        space: String,
+        name: String,
+        version: String,
+        media_type: String,
+    ) -> Result<CreateArtifactResponse, RegistryError> {
+        // Log artifact to the registry
+
+        self.registry
+            .log_artifact(space, name, version, media_type)
+            .inspect_err(|e| {
+                error!("Failed to log artifact: {e}");
+            })
+    }
+
+    pub fn query_artifacts(
+        &self,
+        query_args: &ArtifactQueryArgs,
+    ) -> Result<Vec<ArtifactRecord>, RegistryError> {
+        // Query artifacts from the registry
+        self.registry.query_artifacts(query_args).inspect_err(|e| {
+            error!("Failed to query artifacts: {e}");
+        })
+    }
 }
 
 #[pyclass]
