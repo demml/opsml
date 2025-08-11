@@ -20,3 +20,10 @@ pub struct ArtifactRecord {
     pub media_type: String,
     pub created_at: DateTime<Utc>,
 }
+
+#[derive(Debug, Serialize, Deserialize, Default, Clone)]
+pub enum ArtifactType {
+    #[default]
+    Generic,
+    Figure,
+}
