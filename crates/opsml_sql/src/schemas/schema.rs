@@ -2,6 +2,7 @@ use crate::error::SqlError;
 use chrono::{DateTime, Utc};
 use opsml_semver::error::VersionError;
 use opsml_types::cards::{CardTable, ParameterValue};
+use opsml_types::contracts::ArtifactType;
 use opsml_types::contracts::{
     ArtifactRecord, AuditCardClientRecord, CardEntry, CardRecord, DataCardClientRecord,
     ExperimentCardClientRecord, ModelCardClientRecord, PromptCardClientRecord,
@@ -17,7 +18,6 @@ use serde_json::Value;
 use sqlx::{prelude::FromRow, types::Json};
 use std::collections::HashMap;
 use std::env;
-
 pub type SqlSpaceRecord = (String, i64, i64, i64, i64);
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
@@ -893,11 +893,18 @@ pub struct ArtifactSqlRecord {
     pub pre_tag: Option<String>,
     pub build_tag: Option<String>,
     pub media_type: String,
+    pub artifact_type: ArtifactType,
     pub updated_at: DateTime<Utc>,
 }
 
 impl ArtifactSqlRecord {
-    pub fn new(space: String, name: String, version: Version, media_type: String) -> Self {
+    pub fn new(
+        space: String,
+        name: String,
+        version: Version,
+        media_type: String,
+        artifact_type: ArtifactType,
+    ) -> Self {
         let created_at = get_utc_datetime();
         let updated_at = created_at;
         let app_env = env::var("APP_ENV").unwrap_or_else(|_| "development".to_string());
@@ -917,6 +924,7 @@ impl ArtifactSqlRecord {
             version: version.to_string(),
             media_type,
             updated_at,
+            artifact_type,
         }
     }
 
