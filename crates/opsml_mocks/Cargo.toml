@@ -3,11 +3,6 @@ name = "opsml-mocks"
 version = { workspace = true }
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-[lib]
-name = "opsml_mocks"
-crate-type = ["cdylib", "rlib"]
-
 [dependencies]
 mockito = { workspace = true, optional = true }
 potato-head = { workspace = true , features = ["mock"] }

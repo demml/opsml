@@ -1169,9 +1169,9 @@ dependencies = [
 
 [[package]]
 name = "baked-potato"
-version = "0.3.2"
+version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a0859422f113c892e03585f24db5a74b7be56a22562406dc7ef4f6b7521c1404"
+checksum = "2630c5bc345f48c5fc25fec0beee8980eeeee0b27b4d7c608ce73a02204618ea"
 dependencies = [
  "mockito",
  "potato-agent",
@@ -4782,9 +4782,9 @@ dependencies = [
 
 [[package]]
 name = "potato-agent"
-version = "0.3.2"
+version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "382d7c099fcb94d53237911ee22acc31452ee5e0db2aca78f90904177fdf8249"
+checksum = "2ab635c8a40d22c44c42c6a34531c92eb669131408dbf13ec1b55680108b4276"
 dependencies = [
  "base64 0.22.1",
  "potato-prompt",
@@ -4801,9 +4801,9 @@ dependencies = [
 
 [[package]]
 name = "potato-head"
-version = "0.3.2"
+version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bc3000fd08b2223f28cd3c7125e2e2833a0001b111e2eda50029415cdfab1fc1"
+checksum = "8693914b77f4cfde29e3e56f49f4d69fbccc6884bf7be56626d24a5bc47d11f8"
 dependencies = [
  "baked-potato",
  "potato-agent",
@@ -4815,9 +4815,9 @@ dependencies = [
 
 [[package]]
 name = "potato-prompt"
-version = "0.3.2"
+version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e574787a2deb7be0ffed0c9ec2a03535666d51f6ec6041d381c8fc1c4407ffbc"
+checksum = "34839b9228e52449fb67b31773ce9eb8b69ebd67407d2e0b0dd0f370b5cf2520"
 dependencies = [
  "mime_guess",
  "potato-type",
@@ -4833,9 +4833,9 @@ dependencies = [
 
 [[package]]
 name = "potato-type"
-version = "0.3.2"
+version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4068cbbef32e7740e45af6ca11a8189ff51dacaf8b4edc63c2a7f8e545177b68"
+checksum = "cf859c8cca6880316b5869f76215d3a5d9a7659071f1c4cb995ea836e20da9eb"
 dependencies = [
  "potato-util",
  "pyo3",
@@ -4848,9 +4848,9 @@ dependencies = [
 
 [[package]]
 name = "potato-util"
-version = "0.3.2"
+version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bc86601a1b6247c9a5c1d5f9b6f0765a23027b1cf901858d9f09dd5090217e36"
+checksum = "f6f1f538e92b92421d50a640b5134cb44c0663886bfcaf395560ef1d2772cdee"
 dependencies = [
  "colored_json",
  "pyo3",
@@ -4864,9 +4864,9 @@ dependencies = [
 
 [[package]]
 name = "potato-workflow"
-version = "0.3.2"
+version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bf7cdf7409cc1449b8e6815986e1a45a1cfb8c8228e06b01c6ea5a505b9e7cdb"
+checksum = "596c35c4ed94ceac056a62d6111c8b8df0a349db035d320d194316b939e58490"
 dependencies = [
  "chrono",
  "potato-agent",
