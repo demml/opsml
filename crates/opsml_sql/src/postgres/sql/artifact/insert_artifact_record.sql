@@ -1,0 +1,27 @@
+INSERT INTO opsml_artifact_registry (
+    uid,
+    created_at,
+    app_env,
+    space,
+    name,
+    major,
+    minor,
+    patch,
+    pre_tag,
+    build_tag,
+    version,
+    media_type
+) VALUES (
+    $1, 
+    $2,
+    $3,
+    $4,
+    $5,
+    $6,
+    $7,
+    $8,         
+    $9,
+    $10,
+    $11,
+    $12
+);

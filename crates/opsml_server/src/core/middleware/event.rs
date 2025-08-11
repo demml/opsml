@@ -35,6 +35,7 @@ pub async fn event_middleware(
     if let Some(ctx) = response.extensions().get::<AuditContext>().cloned() {
         let audit_event =
             create_audit_event(addr, agent.clone(), headers.clone(), path.clone(), ctx);
+
         state.event_bus.publish(Event::Audit(audit_event));
         response.extensions_mut().remove::<AuditContext>();
     }

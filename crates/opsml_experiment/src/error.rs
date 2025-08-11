@@ -43,6 +43,9 @@ pub enum ExperimentError {
     #[error("Failed to insert parameter")]
     InsertParameterError(#[source] RegistryError),
 
+    #[error("Failed to find artifact: {0}")]
+    ArtifactNotFoundError(String),
+
     #[error("Path does not exist")]
     PathNotExistError,
 
@@ -54,6 +57,15 @@ pub enum ExperimentError {
 
     #[error(transparent)]
     StripPrefixError(#[from] std::path::StripPrefixError),
+
+    #[error("Failed to convert OsString to String: {0:?}")]
+    IntoStringError(std::ffi::OsString),
+}
+
+impl From<std::ffi::OsString> for ExperimentError {
+    fn from(err: std::ffi::OsString) -> Self {
+        ExperimentError::IntoStringError(err)
+    }
 }
 
 impl From<ExperimentError> for PyErr {

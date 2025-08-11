@@ -3,14 +3,16 @@ use chrono::{DateTime, Utc};
 use opsml_semver::error::VersionError;
 use opsml_types::cards::{CardTable, ParameterValue};
 use opsml_types::contracts::{
-    AuditCardClientRecord, CardEntry, CardRecord, DataCardClientRecord, ExperimentCardClientRecord,
-    ModelCardClientRecord, PromptCardClientRecord, ServiceCardClientRecord,
+    ArtifactRecord, AuditCardClientRecord, CardEntry, CardRecord, DataCardClientRecord,
+    ExperimentCardClientRecord, ModelCardClientRecord, PromptCardClientRecord,
+    ServiceCardClientRecord,
 };
 use opsml_types::{CommonKwargs, DataType, ModelType, RegistryType};
 use opsml_utils::create_uuid7;
 use opsml_utils::utils::get_utc_datetime;
 use semver::{BuildMetadata, Prerelease, Version};
 use serde::{Deserialize, Serialize};
+use serde_json::json;
 use serde_json::Value;
 use sqlx::{prelude::FromRow, types::Json};
 use std::collections::HashMap;
@@ -873,6 +875,82 @@ impl Default for ServiceCardRecord {
             cards: Json(Vec::new()),
             opsml_version: opsml_version::version(),
             username: CommonKwargs::Undefined.to_string(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+pub struct ArtifactSqlRecord {
+    pub uid: String,
+    pub created_at: DateTime<Utc>,
+    pub app_env: String,
+    pub space: String,
+    pub name: String,
+    pub major: i32,
+    pub minor: i32,
+    pub patch: i32,
+    pub version: String,
+    pub pre_tag: Option<String>,
+    pub build_tag: Option<String>,
+    pub media_type: String,
+    pub updated_at: DateTime<Utc>,
+}
+
+impl ArtifactSqlRecord {
+    pub fn new(space: String, name: String, version: Version, media_type: String) -> Self {
+        let created_at = get_utc_datetime();
+        let updated_at = created_at;
+        let app_env = env::var("APP_ENV").unwrap_or_else(|_| "development".to_string());
+        let uid = create_uuid7();
+
+        ArtifactSqlRecord {
+            uid,
+            created_at,
+            app_env,
+            space,
+            name,
+            major: version.major as i32,
+            minor: version.minor as i32,
+            patch: version.patch as i32,
+            pre_tag: version.pre.to_string().parse().ok(),
+            build_tag: version.build.to_string().parse().ok(),
+            version: version.to_string(),
+            media_type,
+            updated_at,
+        }
+    }
+
+    pub fn uri(&self) -> String {
+        format!(
+            "{}/{}/{}/v{}",
+            CardTable::Artifact,
+            self.space,
+            self.name,
+            self.version
+        )
+    }
+
+    pub fn get_metadata(&self) -> String {
+        let metadata = json!({
+            "uid": self.uid,
+            "created_at": self.created_at,
+            "app_env": self.app_env,
+            "space": self.space,
+            "filename": self.name,
+            "version": self.version,
+            "media_type": self.media_type,
+        });
+        metadata.to_string()
+    }
+
+    pub fn to_artifact_record(&self) -> ArtifactRecord {
+        ArtifactRecord {
+            uid: self.uid.clone(),
+            space: self.space.clone(),
+            name: self.name.clone(),
+            version: self.version.clone(),
+            media_type: self.media_type.clone(),
+            created_at: self.created_at,
         }
     }
 }

@@ -1,7 +1,10 @@
 use crate::base::add_version_bounds;
 
 use crate::error::SqlError;
-use opsml_types::{cards::CardTable, contracts::CardQueryArgs};
+use opsml_types::{
+    cards::CardTable,
+    contracts::{ArtifactQueryArgs, CardQueryArgs},
+};
 use opsml_utils::utils::is_valid_uuidv7;
 
 // user
@@ -47,6 +50,7 @@ const UPDATE_SERVICECARD_SQL: &str = include_str!("sql/card/update_servicecard.s
 
 // artifact keys
 const INSERT_ARTIFACT_KEY_SQL: &str = include_str!("sql/artifact/insert_artifact_key.sql");
+const INSERT_ARTIFACT_RECORD_SQL: &str = include_str!("sql/artifact/insert_artifact_record.sql");
 const GET_ARTIFACT_KEY_SQL: &str = include_str!("sql/artifact/get_artifact_key.sql");
 const UPDATE_ARTIFACT_KEY_SQL: &str = include_str!("sql/artifact/update_artifact_key.sql");
 const GET_ARTIFACT_KEY_FROM_STORAGE_PATH_SQL: &str =
@@ -347,6 +351,42 @@ impl MySQLQueryHelper {
         Ok(query)
     }
 
+    pub fn get_query_artifacts_query(query_args: &ArtifactQueryArgs) -> Result<String, SqlError> {
+        let table = &CardTable::Artifact;
+        let mut query = format!(
+            "
+        SELECT * FROM {table}
+        WHERE 1=1
+        AND (? IS NULL OR uid = ?)
+        AND (? IS NULL OR space = ?)
+        AND (? IS NULL OR name = ?)
+        "
+        );
+
+        // check for uid. If uid is present, we only return that card
+        if query_args.uid.is_some() {
+            // validate uid
+            is_valid_uuidv7(query_args.uid.as_ref().unwrap())?;
+        } else {
+            // add where clause due to multiple combinations
+
+            if query_args.version.is_some() {
+                add_version_bounds(&mut query, query_args.version.as_ref().unwrap())?;
+            }
+
+            if query_args.sort_by_timestamp.unwrap_or(false) {
+                query.push_str(" ORDER BY created_at DESC");
+            } else {
+                // sort by major, minor, patch
+                query.push_str(" ORDER BY major DESC, minor DESC, patch DESC");
+            }
+        }
+
+        query.push_str(" LIMIT ?");
+
+        Ok(query)
+    }
+
     pub fn get_experiment_parameters_insert_query(nbr_records: usize) -> String {
         let mut query = format!(
             "INSERT INTO {} (
@@ -450,6 +490,10 @@ impl MySQLQueryHelper {
 
     pub fn get_artifact_key_insert_query() -> String {
         INSERT_ARTIFACT_KEY_SQL.to_string()
+    }
+
+    pub fn get_artifact_record_insert_query() -> String {
+        INSERT_ARTIFACT_RECORD_SQL.to_string()
     }
 
     pub fn get_artifact_key_select_query() -> String {

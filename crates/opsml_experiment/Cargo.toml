@@ -18,6 +18,7 @@ opsml-storage = { workspace = true }
 opsml-types = { workspace = true }
 opsml-utils = { workspace = true }
 
+mime_guess = { workspace = true }
 chrono = { workspace = true }
 pyo3 = { workspace = true }
 serde = { workspace = true }

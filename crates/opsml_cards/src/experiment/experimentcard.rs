@@ -293,6 +293,26 @@ impl ExperimentCard {
 
         Ok(())
     }
+
+    /// Download a specific artifact
+    #[pyo3(signature = (path, lpath=None))]
+    pub fn download_artifact(
+        &self,
+        py: Python<'_>,
+        path: PathBuf,
+        lpath: Option<PathBuf>,
+    ) -> Result<(), CardError> {
+        // Same as above, we need to use a registry to get the experiment artifact
+        // In the future we could consider adding a global registry to app_state if needed,
+        // But I prefer not to
+        let func = py
+            .import("opsml.experiment")?
+            .getattr("download_artifact")?;
+
+        func.call1((&self.uid, path, lpath))?;
+
+        Ok(())
+    }
 }
 
 impl ExperimentCard {

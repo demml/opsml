@@ -3,12 +3,16 @@ use crate::schemas::schema::{
     CardResults, CardSummary, HardwareMetricsRecord, MetricRecord, ParameterRecord, QueryStats,
     ServerCard, User, VersionSummary,
 };
+use crate::schemas::ArtifactSqlRecord;
 use async_trait::async_trait;
 use opsml_semver::VersionParser;
 use opsml_settings::config::DatabaseSettings;
 use opsml_types::{
     cards::CardTable,
-    contracts::{ArtifactKey, AuditEvent, CardQueryArgs, SpaceNameEvent, SpaceRecord, SpaceStats},
+    contracts::{
+        ArtifactKey, ArtifactQueryArgs, ArtifactRecord, AuditEvent, CardQueryArgs, SpaceNameEvent,
+        SpaceRecord, SpaceStats,
+    },
     RegistryType,
 };
 
@@ -384,4 +388,17 @@ pub trait SqlClient: Sized {
         name: &str,
         registry_type: &RegistryType,
     ) -> Result<(), SqlError>;
+
+    /// Insert artifact record
+    /// # Arguments
+    /// * `record` - `ArtifactSqlRecord` to insert
+    async fn insert_artifact_record(&self, record: &ArtifactSqlRecord) -> Result<(), SqlError>;
+
+    /// Query artifact records
+    /// # Arguments
+    /// * `query_args` - The query arguments
+    async fn query_artifacts(
+        &self,
+        query_args: &ArtifactQueryArgs,
+    ) -> Result<Vec<ArtifactRecord>, SqlError>;
 }

@@ -817,6 +817,29 @@ class ExperimentCard:
                 to a directory called "artifacts"
         """
 
+    def download_artifact(
+        path: Path,
+        lpath: Optional[Path] = None,
+    ) -> None:
+        """Download a specific artifact associated with the ExperimentCard
+
+        Args:
+            path (Path):
+                Path to the artifact to download
+            lpath (Path | None):
+                Local path to save the artifact. If not provided, the artifact will be saved
+                to a directory called "artifacts"
+
+        Examples:
+
+        ```python
+        # artifact logged to artifacts/data.csv
+        download_artifact(Path("artifacts/data.csv"))
+        #or
+        download_artifact(Path("data.csv"))
+        ```
+        """
+
     @staticmethod
     def model_validate_json(json_string: str) -> "ExperimentCard":
         """Load card from json string

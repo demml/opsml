@@ -13,6 +13,7 @@ pub enum RequestType {
 #[derive(Debug, Clone)]
 pub enum Routes {
     ArtifactKey,
+    ArtifactRecord,
     AuthLogin,
     AuthRefresh,
     AuthValidate,
@@ -75,6 +76,7 @@ impl Routes {
             Routes::List => "files/list",
             Routes::ListInfo => "files/list/info",
             Routes::ArtifactKey => "files/key",
+            Routes::ArtifactRecord => "files/artifact",
             Routes::Healthcheck => "healthcheck",
             Routes::StorageSettings => "storage/settings",
             Routes::DeleteFiles => "files/delete",

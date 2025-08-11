@@ -5,7 +5,8 @@ use opsml_settings::config::OpsmlMode;
 use opsml_settings::ScouterSettings;
 use opsml_state::{app_state, get_api_client};
 use opsml_types::contracts::{
-    CardQueryArgs, CardRecord, CreateCardResponse, GetMetricRequest, MetricRequest,
+    ArtifactQueryArgs, ArtifactRecord, CardQueryArgs, CardRecord, CreateArtifactResponse,
+    CreateCardResponse, GetMetricRequest, MetricRequest,
 };
 use opsml_types::*;
 use opsml_types::{
@@ -349,6 +350,41 @@ impl OpsmlRegistry {
             #[cfg(feature = "server")]
             Self::ServerRegistry(server_registry) => {
                 server_registry.update_drift_profile_status(request)
+            }
+        }
+    }
+
+    pub fn log_artifact(
+        &self,
+        space: String,
+        name: String,
+        version: String,
+        media_type: String,
+    ) -> Result<CreateArtifactResponse, RegistryError> {
+        match self {
+            Self::ClientRegistry(client_registry) => {
+                Ok(client_registry.log_artifact(space, name, version, media_type)?)
+            }
+            #[cfg(feature = "server")]
+            Self::ServerRegistry(server_registry) => app_state().block_on(async {
+                server_registry
+                    .log_artifact(space, name, version, media_type)
+                    .await
+            }),
+        }
+    }
+
+    pub fn query_artifacts(
+        &self,
+        query_args: &ArtifactQueryArgs,
+    ) -> Result<Vec<ArtifactRecord>, RegistryError> {
+        match self {
+            Self::ClientRegistry(client_registry) => {
+                Ok(client_registry.query_artifacts(query_args)?)
+            }
+            #[cfg(feature = "server")]
+            Self::ServerRegistry(server_registry) => {
+                app_state().block_on(async { server_registry.query_artifacts(query_args).await })
             }
         }
     }
