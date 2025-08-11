@@ -100,8 +100,8 @@ async fn test_opsml_server_log_artifact() {
 
     let query_request = ArtifactQueryArgs {
         uid: None,
-        name: Some("name".to_string()),
         space: Some("space".to_string()),
+        name: Some("test.txt".to_string()),
         version: None,
         sort_by_timestamp: Some(true),
         limit: Some(1),
