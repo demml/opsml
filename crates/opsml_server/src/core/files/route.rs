@@ -616,7 +616,13 @@ pub async fn create_artifact_record(
             internal_server_error(e, "Failed to get next version")
         })?;
 
-    let artifact_record = ArtifactSqlRecord::new(req.space, req.name, version, req.media_type);
+    let artifact_record = ArtifactSqlRecord::new(
+        req.space,
+        req.name,
+        version,
+        req.media_type,
+        req.artifact_type.to_string(),
+    );
 
     state
         .sql_client
