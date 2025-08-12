@@ -1,3 +1,4 @@
+use crate::contracts::ArtifactType;
 use crate::error::TypeError;
 use crate::interfaces::DriftProfileUri;
 use crate::RegistryType;
@@ -215,6 +216,7 @@ pub struct CreateArtifactRequest {
     pub name: String,
     pub version: String,
     pub media_type: String,
+    pub artifact_type: ArtifactType,
 }
 
 #[derive(Debug, Serialize, Deserialize)]

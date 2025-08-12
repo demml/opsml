@@ -113,6 +113,18 @@ class Experiment:
                 If logging multiple artifacts, use `log_artifacts` instead.
         """
 
+    def log_figure(
+        self,
+        path: Path,
+    ) -> None:
+        """
+        Log a figure
+
+        Args:
+            path (Path):
+                Path to the figure file. Path must be a file.
+        """
+
     def log_artifacts(
         self,
         paths: Path,
