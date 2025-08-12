@@ -35,53 +35,39 @@ use walkdir::WalkDir;
 /// * `encryption_key` - The encryption key
 /// * `artifact_type` - The type of the artifact
 pub fn log_artifact(
-    path: PathBuf,
-    artifact_storage_path: PathBuf,
+    lpath: PathBuf,
+    rpath: PathBuf,
     registry: &CardRegistry,
     uid: String,
     encryption_key: Vec<u8>,
     artifact_type: ArtifactType,
 ) -> Result<(), ExperimentError> {
-    // get current working directory
-    let cwd = std::env::current_dir()?;
-
     // check that path exists
-    if !path.exists() {
+    if !lpath.exists() {
         return Err(ExperimentError::PathNotExistError);
     }
 
     // check that path is a file
-    if !path.is_file() {
+    if !lpath.is_file() {
         return Err(ExperimentError::PathNotFileError);
     }
 
-    // get relative path
-    let relative_path = if path.is_absolute() {
-        path.strip_prefix(&cwd).unwrap_or(&path)
-    } else {
-        path.as_path()
-    };
-
-    let rpath = artifact_storage_path
-        .join(SaveName::Artifacts)
-        .join(relative_path);
-
-    let mime_type = mime_guess::from_path(&rpath).first_or_octet_stream();
+    let mime_type = mime_guess::from_path(&lpath).first_or_octet_stream();
 
     // create artifact key record
     registry.log_artifact(
         uid,
-        relative_path.to_string_lossy().to_string(),
+        rpath.to_string_lossy().to_string(),
         CommonKwargs::BaseVersion.to_string(),
         mime_type.to_string(),
         artifact_type,
     )?;
 
-    encrypt_directory(&path, &encryption_key)?;
+    encrypt_directory(&lpath, &encryption_key)?;
 
-    storage_client()?.put(&path, &rpath, false)?;
+    storage_client()?.put(&lpath, &rpath, false)?;
 
-    decrypt_directory(&path, &encryption_key)?;
+    decrypt_directory(&lpath, &encryption_key)?;
 
     Ok(())
 }
@@ -592,11 +578,27 @@ impl Experiment {
 
     /// Logs an artifact from a path
     /// # Arguments
-    /// * `path` - The path to the artifact file
-    pub fn log_artifact(&self, path: PathBuf) -> Result<(), ExperimentError> {
+    /// * `lpath` - local path to load artifact from
+    /// * `rpath` - path to save the artifact to relative to {experiment}/artifacts. If not provided,
+    /// defaults to artifacts/{filename}
+    #[pyo3(signature = (lpath, rpath = None))]
+    pub fn log_artifact(
+        &self,
+        lpath: PathBuf,
+        rpath: Option<String>,
+    ) -> Result<(), ExperimentError> {
+        let base_storage_path = self.artifact_key.storage_path().join(SaveName::Artifacts);
+
+        let rpath = if let Some(path) = rpath {
+            base_storage_path.join(path)
+        } else {
+            let filename = lpath.file_name().unwrap_or_default();
+            base_storage_path.join(filename)
+        };
+
         log_artifact(
-            path,
-            self.artifact_key.storage_path(),
+            lpath,
+            rpath,
             &self.registries.experiment,
             self.uid.clone(),
             self.artifact_key.get_decrypt_key()?,
@@ -608,19 +610,37 @@ impl Experiment {
 
     /// Logs a figure from a path
     /// # Arguments
-    /// * `path` - The path to the figure file
-    pub fn log_figure(&self, path: PathBuf) -> Result<(), ExperimentError> {
+    /// * `lpath` - The local path to the figure file
+    /// * `path` - Optional path to save figure to in the experiment relative to the {experiment}/artifacts directory.
+    /// If not provided, the filename will be extracted and appended to the path {experiment}/artifacts/figures/{figure}
+    ///
+    #[pyo3(signature = (lpath, rpath = None))]
+    pub fn log_figure(&self, lpath: PathBuf, rpath: Option<String>) -> Result<(), ExperimentError> {
         // check mime_type of path and make sure its an image
-        let mime_type = mime_guess::from_path(&path).first_or_octet_stream();
+        let mime_type = mime_guess::from_path(&lpath).first_or_octet_stream();
 
         if mime_type.type_() != mime::IMAGE {
-            warn!("The provided path is not an image file: {}", path.display());
+            warn!(
+                "The provided path is not an image file: {}",
+                lpath.display()
+            );
             return Err(ExperimentError::FigureIsNotImageError);
         };
 
+        let base_storage_path = self.artifact_key.storage_path().join(SaveName::Artifacts);
+
+        // if path is not None, add it to storage_path
+        // else get the filename from path and join it to figures/
+        let storage_path = if let Some(path) = rpath {
+            base_storage_path.join(path)
+        } else {
+            let filename = lpath.file_name().unwrap_or_default();
+            base_storage_path.join("figures").join(filename)
+        };
+
         log_artifact(
-            path,
-            self.artifact_key.storage_path(),
+            lpath,
+            storage_path,
             &self.registries.experiment,
             self.uid.clone(),
             self.artifact_key.get_decrypt_key()?,
