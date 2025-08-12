@@ -358,6 +358,7 @@ impl MySQLQueryHelper {
         SELECT * FROM {table}
         WHERE 1=1
         AND (? IS NULL OR uid = ?)
+        AND (? IS NULL OR artifact_type = ?)
         AND (? IS NULL OR space = ?)
         AND (? IS NULL OR name = ?)
         "

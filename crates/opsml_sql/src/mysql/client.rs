@@ -493,6 +493,8 @@ impl SqlClient for MySqlClient {
         let rows: Vec<ArtifactSqlRecord> = sqlx::query_as(&query)
             .bind(query_args.uid.as_ref())
             .bind(query_args.uid.as_ref())
+            .bind(query_args.artifact_type.as_ref().map(|a| a.to_string()))
+            .bind(query_args.artifact_type.as_ref().map(|a| a.to_string()))
             .bind(query_args.space.as_ref())
             .bind(query_args.space.as_ref())
             .bind(query_args.name.as_ref())
