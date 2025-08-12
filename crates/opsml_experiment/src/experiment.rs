@@ -1,7 +1,7 @@
 use crate::error::ExperimentError;
 use crate::HardwareQueue;
 use chrono::{DateTime, Utc};
-
+use mime_guess::mime;
 use opsml_cards::ExperimentCard;
 use opsml_crypt::{decrypt_directory, encrypt_directory};
 use opsml_registry::base::OpsmlRegistry;
@@ -610,6 +610,14 @@ impl Experiment {
     /// # Arguments
     /// * `path` - The path to the figure file
     pub fn log_figure(&self, path: PathBuf) -> Result<(), ExperimentError> {
+        // check mime_type of path and make sure its an image
+        let mime_type = mime_guess::from_path(&path).first_or_octet_stream();
+
+        if mime_type.type_() == mime::IMAGE {
+            warn!("The provided path is not an image file: {}", path.display());
+            return Err(ExperimentError::FigureIsNotImageError);
+        };
+
         log_artifact(
             path,
             self.artifact_key.storage_path(),

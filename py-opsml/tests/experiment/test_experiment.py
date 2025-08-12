@@ -89,6 +89,7 @@ def test_experimentcard():
             # create fake directory
             dir_path = create_fake_directory()
             exp.log_artifacts(dir_path)
+            exp.log_figure("tests/assets/cats.jpg")
 
         card = exp.card
 
