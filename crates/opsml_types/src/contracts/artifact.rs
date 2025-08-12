@@ -10,6 +10,7 @@ pub struct ArtifactQueryArgs {
     pub space: Option<String>,
     pub version: Option<String>,
     pub sort_by_timestamp: Option<bool>,
+    pub artifact_type: Option<ArtifactType>,
     pub limit: Option<i32>,
 }
 

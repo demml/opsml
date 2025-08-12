@@ -403,7 +403,15 @@ impl PostgresQueryHelper {
         let table = &CardTable::Artifact;
         if query_args.uid.is_some() {
             is_valid_uuidv7(query_args.uid.as_ref().unwrap())?;
-            return Ok(format!("SELECT * FROM {table} WHERE uid = $1 LIMIT 1"));
+            let mut query = format!("SELECT * FROM {table} WHERE uid = $1");
+
+            if query_args.artifact_type.is_some() {
+                query.push_str(" AND artifact_type = $2");
+            }
+
+            query.push_str(" LIMIT 1");
+
+            return Ok(query);
         }
 
         let mut query = format!(
@@ -413,13 +421,17 @@ impl PostgresQueryHelper {
         "
         );
 
+        if query_args.artifact_type.is_some() {
+            query.push_str(" AND artifact_type = $2"); // artifact_type is first column in index
+        }
+
         // Add conditions in order of index columns to maximize index usage
         if query_args.space.is_some() {
-            query.push_str(" AND space = $2"); // space is first column in index
+            query.push_str(" AND space = $3"); // space is first column in index
         }
 
         if query_args.name.is_some() {
-            query.push_str(" AND name = $3"); // name is second column in index
+            query.push_str(" AND name = $4"); // name is second column in index
         }
 
         // Add version bounds - will use the version part of the index
@@ -434,7 +446,7 @@ impl PostgresQueryHelper {
             query.push_str(" ORDER BY major DESC, minor DESC, patch DESC");
         }
 
-        query.push_str(" LIMIT $4");
+        query.push_str(" LIMIT $5");
 
         Ok(query)
     }
