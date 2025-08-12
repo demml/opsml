@@ -613,7 +613,7 @@ impl Experiment {
         // check mime_type of path and make sure its an image
         let mime_type = mime_guess::from_path(&path).first_or_octet_stream();
 
-        if mime_type.type_() == mime::IMAGE {
+        if mime_type.type_() != mime::IMAGE {
             warn!("The provided path is not an image file: {}", path.display());
             return Err(ExperimentError::FigureIsNotImageError);
         };

@@ -64,7 +64,6 @@ def create_fake_directory() -> Path:
 
 
 def cleanup_fake_directory(save_path: Path):
-    print("save_path", save_path)
     shutil.rmtree(save_path)
 
 
@@ -95,7 +94,7 @@ def test_experimentcard():
 
         files = card.list_artifacts()
 
-        assert len(files) == 6
+        assert len(files) == 7
 
         files = card.list_artifacts("folder_0")
 
@@ -110,7 +109,7 @@ def test_experimentcard():
         # download all artifacts
         card.download_artifacts()
 
-        assert len(list(created_path.iterdir())) == 6
+        assert len(list(created_path.iterdir())) == 7
 
         # attempt to download just one artifact
         card.download_artifacts("folder_0", "my_path")
