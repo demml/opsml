@@ -26,6 +26,14 @@ use tempfile::TempDir;
 use tracing::{debug, error, instrument, warn};
 use walkdir::WalkDir;
 
+/// Helper for logging artifacts
+/// # Arguments
+/// * `path` - The path to the artifact file
+/// * `artifact_storage_path` - The path to the artifact storage
+/// * `registry` - The card registry
+/// * `uid` - The user ID
+/// * `encryption_key` - The encryption key
+/// * `artifact_type` - The type of the artifact
 pub fn log_artifact(
     path: PathBuf,
     artifact_storage_path: PathBuf,
@@ -582,6 +590,9 @@ impl Experiment {
         Ok(())
     }
 
+    /// Logs an artifact from a path
+    /// # Arguments
+    /// * `path` - The path to the artifact file
     pub fn log_artifact(&self, path: PathBuf) -> Result<(), ExperimentError> {
         log_artifact(
             path,
@@ -595,6 +606,9 @@ impl Experiment {
         Ok(())
     }
 
+    /// Logs a figure from a path
+    /// # Arguments
+    /// * `path` - The path to the figure file
     pub fn log_figure(&self, path: PathBuf) -> Result<(), ExperimentError> {
         log_artifact(
             path,
