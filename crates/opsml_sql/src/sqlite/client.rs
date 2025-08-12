@@ -480,6 +480,7 @@ impl SqlClient for SqliteClient {
             .bind(&record.build_tag)
             .bind(&record.version)
             .bind(&record.media_type)
+            .bind(&record.artifact_type)
             .execute(&self.pool)
             .await?;
         Ok(())

@@ -403,15 +403,8 @@ impl PostgresQueryHelper {
         let table = &CardTable::Artifact;
         if query_args.uid.is_some() {
             is_valid_uuidv7(query_args.uid.as_ref().unwrap())?;
-            let mut query = format!("SELECT * FROM {table} WHERE uid = $1");
 
-            if query_args.artifact_type.is_some() {
-                query.push_str(" AND artifact_type = $2");
-            }
-
-            query.push_str(" LIMIT 1");
-
-            return Ok(query);
+            return Ok(format!("SELECT * FROM {table} WHERE uid = $1 LIMIT 1"));
         }
 
         let mut query = format!(

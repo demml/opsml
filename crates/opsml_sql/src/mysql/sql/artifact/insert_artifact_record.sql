@@ -10,7 +10,8 @@ INSERT INTO opsml_artifact_registry (
     pre_tag,
     build_tag,
     version,
-    media_type
+    media_type,
+    artifact_type
 ) VALUES (
     ?, 
     ?,
@@ -20,6 +21,7 @@ INSERT INTO opsml_artifact_registry (
     ?,
     ?,
     ?,         
+    ?,
     ?,
     ?,
     ?,
