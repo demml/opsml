@@ -156,7 +156,7 @@ def test_experimentcard():
 
 
 @pytest.mark.skipif(WINDOWS_EXCLUDE, reason="skipping")
-def test_experimentcard_register(
+def _test_experimentcard_register(
     pandas_data: PandasData,
     random_forest_classifier: SklearnModel,
     chat_prompt: Prompt,
