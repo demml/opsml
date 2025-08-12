@@ -25,7 +25,7 @@ pub struct ArtifactRecord {
     pub created_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Serialize, Deserialize, Default, Clone)]
+#[derive(Debug, Serialize, Deserialize, Default, Clone, PartialEq)]
 pub enum ArtifactType {
     #[default]
     Generic,

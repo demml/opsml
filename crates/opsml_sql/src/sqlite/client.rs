@@ -2182,7 +2182,7 @@ mod tests {
             name.clone(),
             Version::new(0, 0, 0),
             "png".to_string(),
-            ArtifactType::Figure.to_string(),
+            ArtifactType::Generic.to_string(),
         );
         client
             .insert_artifact_record(&artifact_record1)
@@ -2212,5 +2212,9 @@ mod tests {
             .await
             .unwrap();
         assert_eq!(artifacts.len(), 2);
+
+        // assert artifact types
+        assert_eq!(artifacts[0].artifact_type, ArtifactType::Generic);
+        assert_eq!(artifacts[1].artifact_type, ArtifactType::Figure);
     }
 }
