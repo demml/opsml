@@ -460,6 +460,7 @@ impl SqlClient for PostgresClient {
             .bind(&record.pre_tag)
             .bind(&record.build_tag)
             .bind(&record.version)
+            .bind(&record.artifact_type)
             .bind(&record.media_type)
             .execute(&self.pool)
             .await?;
