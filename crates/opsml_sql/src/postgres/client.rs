@@ -1253,7 +1253,7 @@ mod tests {
     use crate::schemas::ServiceCardRecord;
 
     use super::*;
-    use opsml_types::{CommonKwargs, RegistryType, SqlType};
+    use opsml_types::{contracts::ArtifactType, CommonKwargs, RegistryType, SqlType};
     use opsml_utils::utils::get_utc_datetime;
     use std::{env, vec};
 
@@ -2153,6 +2153,7 @@ mod tests {
             name.clone(),
             Version::new(0, 0, 0),
             "png".to_string(),
+            ArtifactType::Figure.to_string(),
         );
         client
             .insert_artifact_record(&artifact_record1)
@@ -2164,6 +2165,7 @@ mod tests {
             name.clone(),
             Version::new(0, 0, 0),
             "png".to_string(),
+            ArtifactType::Figure.to_string(),
         );
 
         client
