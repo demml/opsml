@@ -5,7 +5,7 @@ use opsml_settings::config::OpsmlMode;
 use opsml_settings::ScouterSettings;
 use opsml_state::{app_state, get_api_client};
 use opsml_types::contracts::{
-    ArtifactQueryArgs, ArtifactRecord, CardQueryArgs, CardRecord, CreateArtifactResponse,
+    artifact, ArtifactQueryArgs, ArtifactRecord, CardQueryArgs, CardRecord, CreateArtifactResponse,
     CreateCardResponse, GetMetricRequest, MetricRequest,
 };
 use opsml_types::*;
@@ -360,6 +360,7 @@ impl OpsmlRegistry {
         name: String,
         version: String,
         media_type: String,
+        artifact_type: ArtifactType,
     ) -> Result<CreateArtifactResponse, RegistryError> {
         match self {
             Self::ClientRegistry(client_registry) => {

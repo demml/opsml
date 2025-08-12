@@ -84,6 +84,7 @@ async fn test_opsml_server_log_artifact() {
         name: "test.txt".to_string(),
         version: "0.0.0".to_string(),
         media_type: "text/plain".to_string(),
+        artifact_type: ArtifactType::Generic,
     };
 
     let request = Request::builder()
