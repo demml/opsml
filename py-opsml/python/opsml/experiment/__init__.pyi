@@ -102,27 +102,38 @@ class Experiment:
 
     def log_artifact(
         self,
-        path: Path,
+        lpath: Path,
+        rpath: Optional[str] = None,
     ) -> None:
         """
         Log an artifact
 
         Args:
-            path (Path):
-                Path to the artifact file. Path must be a file.
-                If logging multiple artifacts, use `log_artifacts` instead.
+            lpath (Path):
+                The local path where the artifact has been saved to
+            rpath (Optional[str]):
+                The path to associate with the artifact in the experiment artifact directory
+                {experiment_path}/artifacts. If not provided, defaults to
+                {experiment}/artifacts/{filename}
         """
 
     def log_figure(
         self,
-        path: Path,
+        lpath: Path,
+        rpath: Optional[str] = None,
     ) -> None:
         """
         Log a figure
 
         Args:
-            path (Path):
-                Path to the figure file. Path must be a file.
+            lpath (Path):
+                The local path where the figure has been saved to. Must be an image type
+                (e.g. jpeg, tiff, png, etc.)
+            rpath (Optional[str]):
+                The path to associate with the figure in the experiment artifact directory
+                {experiment_path}/artifacts. If not provided, defaults to
+                {experiment}/artifacts/figures/{filename}
+
         """
 
     def log_artifacts(
