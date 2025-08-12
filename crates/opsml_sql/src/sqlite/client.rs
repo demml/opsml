@@ -492,6 +492,7 @@ impl SqlClient for SqliteClient {
         let query = SqliteQueryHelper::get_query_artifacts_query(query_args)?;
         let rows: Vec<ArtifactSqlRecord> = sqlx::query_as(&query)
             .bind(query_args.uid.as_ref())
+            .bind(query_args.artifact_type.as_ref().map(|a| a.to_string()))
             .bind(query_args.space.as_ref())
             .bind(query_args.name.as_ref())
             .bind(query_args.limit.unwrap_or(50))
