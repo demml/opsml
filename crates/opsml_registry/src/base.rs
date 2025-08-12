@@ -5,9 +5,10 @@ use opsml_settings::config::OpsmlMode;
 use opsml_settings::ScouterSettings;
 use opsml_state::{app_state, get_api_client};
 use opsml_types::contracts::{
-    ArtifactQueryArgs, ArtifactRecord, CardQueryArgs, CardRecord, CreateArtifactResponse,
-    CreateCardResponse, GetMetricRequest, MetricRequest,
+    ArtifactQueryArgs, ArtifactRecord, ArtifactType, CardQueryArgs, CardRecord,
+    CreateArtifactResponse, CreateCardResponse, GetMetricRequest, MetricRequest,
 };
+
 use opsml_types::*;
 use opsml_types::{
     cards::{HardwareMetrics, Metric, Parameter},
@@ -360,15 +361,20 @@ impl OpsmlRegistry {
         name: String,
         version: String,
         media_type: String,
+        artifact_type: ArtifactType,
     ) -> Result<CreateArtifactResponse, RegistryError> {
         match self {
-            Self::ClientRegistry(client_registry) => {
-                Ok(client_registry.log_artifact(space, name, version, media_type)?)
-            }
+            Self::ClientRegistry(client_registry) => Ok(client_registry.log_artifact(
+                space,
+                name,
+                version,
+                media_type,
+                artifact_type,
+            )?),
             #[cfg(feature = "server")]
             Self::ServerRegistry(server_registry) => app_state().block_on(async {
                 server_registry
-                    .log_artifact(space, name, version, media_type)
+                    .log_artifact(space, name, version, media_type, artifact_type)
                     .await
             }),
         }

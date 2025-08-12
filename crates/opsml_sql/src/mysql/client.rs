@@ -480,6 +480,7 @@ impl SqlClient for MySqlClient {
             .bind(&record.build_tag)
             .bind(&record.version)
             .bind(&record.media_type)
+            .bind(&record.artifact_type)
             .execute(&self.pool)
             .await?;
         Ok(())
@@ -493,6 +494,8 @@ impl SqlClient for MySqlClient {
         let rows: Vec<ArtifactSqlRecord> = sqlx::query_as(&query)
             .bind(query_args.uid.as_ref())
             .bind(query_args.uid.as_ref())
+            .bind(query_args.artifact_type.as_ref().map(|a| a.to_string()))
+            .bind(query_args.artifact_type.as_ref().map(|a| a.to_string()))
             .bind(query_args.space.as_ref())
             .bind(query_args.space.as_ref())
             .bind(query_args.name.as_ref())
@@ -1299,7 +1302,7 @@ mod tests {
     use crate::schemas::ServiceCardRecord;
 
     use super::*;
-    use opsml_types::{CommonKwargs, RegistryType, SqlType};
+    use opsml_types::{contracts::ArtifactType, CommonKwargs, RegistryType, SqlType};
     use opsml_utils::utils::get_utc_datetime;
     use std::env;
 
@@ -2204,6 +2207,7 @@ mod tests {
             name.clone(),
             Version::new(0, 0, 0),
             "png".to_string(),
+            ArtifactType::Generic.to_string(),
         );
         client
             .insert_artifact_record(&artifact_record1)
@@ -2215,6 +2219,7 @@ mod tests {
             name.clone(),
             Version::new(0, 0, 0),
             "png".to_string(),
+            ArtifactType::Figure.to_string(),
         );
 
         client
@@ -2232,5 +2237,8 @@ mod tests {
             .await
             .unwrap();
         assert_eq!(artifacts.len(), 2);
+
+        assert_eq!(artifacts[0].artifact_type, ArtifactType::Generic);
+        assert_eq!(artifacts[1].artifact_type, ArtifactType::Figure);
     }
 }

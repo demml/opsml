@@ -366,8 +366,9 @@ impl SqliteQueryHelper {
         SELECT * FROM {table}
         WHERE 1==1
         AND (?1 IS NULL OR uid = ?1)
-        AND (?3 IS NULL OR space = ?2)
-        AND (?3 IS NULL OR name = ?3)
+        AND (?2 IS NULL OR artifact_type = ?2)
+        AND (?3 IS NULL OR space = ?3)
+        AND (?4 IS NULL OR name = ?4)
         "
         );
 
@@ -390,7 +391,7 @@ impl SqliteQueryHelper {
             }
         }
 
-        query.push_str(" LIMIT ?4");
+        query.push_str(" LIMIT ?5");
 
         Ok(query)
     }

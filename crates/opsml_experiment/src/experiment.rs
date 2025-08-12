@@ -1,17 +1,17 @@
 use crate::error::ExperimentError;
 use crate::HardwareQueue;
 use chrono::{DateTime, Utc};
-
+use mime_guess::mime;
 use opsml_cards::ExperimentCard;
 use opsml_crypt::{decrypt_directory, encrypt_directory};
 use opsml_registry::base::OpsmlRegistry;
-use opsml_registry::CardRegistries;
+use opsml_registry::{CardRegistries, CardRegistry};
 use opsml_semver::VersionType;
 use opsml_storage::storage_client;
 use opsml_types::cards::{Metrics, Parameters};
 use opsml_types::contracts::{
-    ArtifactKey, ArtifactQueryArgs, GetMetricRequest, GetParameterRequest, MetricRequest,
-    ParameterRequest,
+    ArtifactKey, ArtifactQueryArgs, ArtifactType, GetMetricRequest, GetParameterRequest,
+    MetricRequest, ParameterRequest,
 };
 use opsml_types::CommonKwargs;
 use opsml_types::RegistryType;
@@ -25,6 +25,67 @@ use std::sync::Arc;
 use tempfile::TempDir;
 use tracing::{debug, error, instrument, warn};
 use walkdir::WalkDir;
+
+/// Helper for logging artifacts
+/// # Arguments
+/// * `path` - The path to the artifact file
+/// * `artifact_storage_path` - The path to the artifact storage
+/// * `registry` - The card registry
+/// * `uid` - The user ID
+/// * `encryption_key` - The encryption key
+/// * `artifact_type` - The type of the artifact
+pub fn log_artifact(
+    path: PathBuf,
+    artifact_storage_path: PathBuf,
+    registry: &CardRegistry,
+    uid: String,
+    encryption_key: Vec<u8>,
+    artifact_type: ArtifactType,
+) -> Result<(), ExperimentError> {
+    // get current working directory
+    let cwd = std::env::current_dir()?;
+
+    // check that path exists
+    if !path.exists() {
+        return Err(ExperimentError::PathNotExistError);
+    }
+
+    // check that path is a file
+    if !path.is_file() {
+        return Err(ExperimentError::PathNotFileError);
+    }
+
+    // get relative path
+    let relative_path = if path.is_absolute() {
+        path.strip_prefix(&cwd).unwrap_or(&path)
+    } else {
+        path.as_path()
+    };
+
+    let rpath = artifact_storage_path
+        .join(SaveName::Artifacts)
+        .join(relative_path);
+
+    let mime_type = mime_guess::from_path(&rpath).first_or_octet_stream();
+
+    // create artifact key record
+    registry.log_artifact(
+        uid,
+        relative_path.to_string_lossy().to_string(),
+        CommonKwargs::BaseVersion.to_string(),
+        mime_type.to_string(),
+        artifact_type,
+    )?;
+
+    encrypt_directory(&path, &encryption_key)?;
+
+    storage_client()?.put(&path, &rpath, false)?;
+
+    decrypt_directory(&path, &encryption_key)?;
+
+    Ok(())
+}
+
 /// Get the filename of the python file
 ///
 /// # Arguments
@@ -529,49 +590,42 @@ impl Experiment {
         Ok(())
     }
 
+    /// Logs an artifact from a path
+    /// # Arguments
+    /// * `path` - The path to the artifact file
     pub fn log_artifact(&self, path: PathBuf) -> Result<(), ExperimentError> {
-        // get current working directory
-        let cwd = std::env::current_dir()?;
-
-        // check that path exists
-        if !path.exists() {
-            return Err(ExperimentError::PathNotExistError);
-        }
-
-        // check that path is a file
-        if !path.is_file() {
-            return Err(ExperimentError::PathNotFileError);
-        }
-
-        // get relative path
-        let relative_path = if path.is_absolute() {
-            path.strip_prefix(&cwd).unwrap_or(&path)
-        } else {
-            path.as_path()
-        };
-
-        let rpath = self
-            .artifact_key
-            .storage_path()
-            .join(SaveName::Artifacts)
-            .join(relative_path);
-
-        let mime_type = mime_guess::from_path(&rpath).first_or_octet_stream();
-
-        // create artifact key record
-        self.registries.experiment.log_artifact(
+        log_artifact(
+            path,
+            self.artifact_key.storage_path(),
+            &self.registries.experiment,
             self.uid.clone(),
-            relative_path.to_string_lossy().to_string(),
-            CommonKwargs::BaseVersion.to_string(),
-            mime_type.to_string(),
+            self.artifact_key.get_decrypt_key()?,
+            ArtifactType::Generic,
         )?;
 
-        let encryption_key = self.artifact_key.get_decrypt_key()?;
-        encrypt_directory(&path, &encryption_key)?;
+        Ok(())
+    }
 
-        storage_client()?.put(&path, &rpath, false)?;
+    /// Logs a figure from a path
+    /// # Arguments
+    /// * `path` - The path to the figure file
+    pub fn log_figure(&self, path: PathBuf) -> Result<(), ExperimentError> {
+        // check mime_type of path and make sure its an image
+        let mime_type = mime_guess::from_path(&path).first_or_octet_stream();
 
-        decrypt_directory(&path, &encryption_key)?;
+        if mime_type.type_() != mime::IMAGE {
+            warn!("The provided path is not an image file: {}", path.display());
+            return Err(ExperimentError::FigureIsNotImageError);
+        };
+
+        log_artifact(
+            path,
+            self.artifact_key.storage_path(),
+            &self.registries.experiment,
+            self.uid.clone(),
+            self.artifact_key.get_decrypt_key()?,
+            ArtifactType::Figure,
+        )?;
 
         Ok(())
     }
@@ -609,6 +663,7 @@ impl Experiment {
                     relative_path.to_string_lossy().to_string(),
                     CommonKwargs::BaseVersion.to_string(),
                     mime_type.to_string(),
+                    ArtifactType::Generic,
                 )?;
             }
         }

@@ -60,6 +60,9 @@ pub enum ExperimentError {
 
     #[error("Failed to convert OsString to String: {0:?}")]
     IntoStringError(std::ffi::OsString),
+
+    #[error("Figure is not an image")]
+    FigureIsNotImageError,
 }
 
 impl From<std::ffi::OsString> for ExperimentError {
