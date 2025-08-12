@@ -949,6 +949,7 @@ impl ArtifactSqlRecord {
             "filename": self.name,
             "version": self.version,
             "media_type": self.media_type,
+            "artifact_type": self.artifact_type
         });
         metadata.to_string()
     }
