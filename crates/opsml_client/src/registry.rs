@@ -538,6 +538,15 @@ impl ClientRegistry {
         Ok(())
     }
 
+    /// Insert an artifact record into the opsml_artifact_registry
+    /// # Arguments
+    /// * `space` - The space of the artifact
+    /// * `name` - The name of the artifact
+    /// * `version` - The version of the artifact
+    /// * `filename` - The filename of the artifact
+    /// * `media_type` - The media type of the artifact
+    /// # Returns
+    /// * `CreateArtifactResponse` - The response containing the created artifact record
     pub fn log_artifact(
         &self,
         space: String,
