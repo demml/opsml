@@ -1,6 +1,7 @@
 use crate::core::error::internal_server_error;
 use crate::core::error::OpsmlServerError;
 use crate::core::files::utils::download_artifact;
+use crate::core::files::utils::get_image_from_file;
 use crate::core::state::AppState;
 use anyhow::{Context, Result};
 use axum::extract::DefaultBodyLimit;
@@ -409,74 +410,20 @@ pub async fn get_file_for_ui(
         return OpsmlServerError::permission_denied().into_response(StatusCode::FORBIDDEN);
     }
 
-    let files = state.storage_client.find_info(&file_path).await;
-
-    let files = match files {
-        Ok(files) => files,
-        Err(e) => {
-            error!("Failed to list files: {e}");
-            return Err(internal_server_error(e, "Failed to list files"));
-        }
-    };
-
-    // check if empty, if not get first
-    let file = match files.first() {
-        Some(file) => file,
-        None => {
-            error!("File not found");
-            return OpsmlServerError::no_files_found().into_response(StatusCode::NOT_FOUND);
-        }
-    };
-
-    // check if size is less than 50 mb
-    if file.size > 50_000_000 {
-        error!("File size too large");
-        return OpsmlServerError::file_too_large().into_response(StatusCode::BAD_REQUEST);
-    }
-
-    let tmp_dir = tempdir().map_err(|e| {
-        error!("Failed to create temp dir: {e}");
-        internal_server_error(e, "Failed to create temp dir")
-    })?;
-
-    let lpath = tmp_dir.path().join(file_path.file_name().unwrap());
-
-    download_artifact(
-        state.storage_client.clone(),
-        state.sql_client.clone(),
-        &lpath,
-        &file.name,
+    let file = get_image_from_file(
+        &state.storage_client,
+        &state.sql_client,
+        &file_path,
+        &req.uid,
         &req.registry_type.to_string(),
-        Some(&req.uid),
     )
     .await
     .map_err(|e| {
-        error!("Failed to download artifact: {e}");
-        internal_server_error(e, "Failed to download artifact")
+        error!("Failed to get image from file: {e}");
+        internal_server_error(e, "Failed to get image from file")
     })?;
 
-    debug!("Downloaded file to: {}", lpath.display());
-
-    let mime_type = mime_guess::from_path(&lpath).first_or_octet_stream();
-
-    let content = if mime_type.type_() == mime::IMAGE {
-        let bytes = std::fs::read(&lpath).map_err(|e| {
-            error!("Failed to read file: {e}");
-            internal_server_error(e, "Failed to read file")
-        })?;
-        BASE64_STANDARD.encode(&bytes)
-    } else {
-        std::fs::read_to_string(&lpath).map_err(|e| {
-            error!("Failed to read file: {e}");
-            internal_server_error(e, "Failed to read file")
-        })?
-    };
-
-    Ok(Json(RawFile {
-        content,
-        suffix: file.suffix.to_string(),
-        mime_type: mime_type.to_string(),
-    }))
+    Ok(Json(file))
 }
 
 pub async fn delete_file(

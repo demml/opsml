@@ -2,9 +2,8 @@ import { opsmlClient } from "$lib/components/api/client.svelte";
 import { RoutePaths } from "$lib/components/api/routes";
 import type { Metric, Parameter } from "../card_interfaces/experimentcard";
 import { type CardQueryArgs } from "$lib/components/api/schema";
-import type { BaseCard, Card } from "$lib/components/home/types";
+import type { Card } from "$lib/components/home/types";
 import { RegistryType } from "$lib/utils";
-import { promise } from "zod";
 import type {
   GetMetricNamesRequest,
   GetMetricRequest,
@@ -15,7 +14,10 @@ import type {
   GetHardwareMetricRequest,
   HardwareMetrics,
   UiHardwareMetrics,
+  ArtifactQueryArgs,
+  ArtifactRecord,
 } from "./types";
+import { ArtifactType } from "./types";
 import { userStore } from "$lib/components/user/user.svelte";
 
 const BYTES_TO_MB = 1024 * 1024;
@@ -164,4 +166,25 @@ export async function getHardwareMetrics(
   let metrics = (await response.json()) as HardwareMetrics[];
 
   return extractAllHardwareMetrics(metrics);
+}
+
+export async function getExperimentFigures(
+  uid: string
+): Promise<ArtifactRecord[]> {
+  const request: ArtifactQueryArgs = {
+    space: uid,
+    artifact_type: ArtifactType.Figure,
+  };
+
+  const response = await opsmlClient.get(
+    RoutePaths.ARTIFACT_RECORD,
+    request,
+    userStore.jwt_token
+  );
+
+  let records = (await response.json()) as ArtifactRecord[];
+
+  // now get raw files
+
+  return (await response.json()) as ArtifactRecord[];
 }

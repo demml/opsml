@@ -24,6 +24,7 @@ export enum RoutePaths {
   FILE_INFO = "/opsml/api/files/list/info",
   FILE_TREE = "/opsml/api/files/tree",
   FILE_CONTENT = "/opsml/api/files/content",
+  ARTIFACT_RECORD = "/opsml/api/files/artifact",
 
   // scouter
   DRIFT_PROFILE_UI = "/opsml/api/scouter/profile/ui",

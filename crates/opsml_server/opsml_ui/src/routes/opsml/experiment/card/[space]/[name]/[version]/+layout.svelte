@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { LayoutProps } from './$types';
-  import { IdCard, FolderTree, Tag, Activity, ChartColumnDecreasing } from 'lucide-svelte';
+  import { IdCard, FolderTree, Tag, Activity, ChartColumnDecreasing, ChartArea } from 'lucide-svelte';
   import { page } from '$app/state';
 
   let { data, children }: LayoutProps = $props();
@@ -46,7 +46,7 @@
           <span>Files</span>
         </a>
         <a
-          class="flex items-center gap-x-2 border-b-3 {activeTab === 'monitoring' ? 'border-secondary-500' : 'border-transparent'} hover:border-secondary-500 hover:border-b-3"
+          class="flex items-center gap-x-2 border-b-3 {activeTab === 'metrics' ? 'border-secondary-500' : 'border-transparent'} hover:border-secondary-500 hover:border-b-3"
           href={`/opsml/${registry}/card/${data.metadata.space}/${data.metadata.name}/${data.metadata.version}/metrics`}
           data-sveltekit-preload-data="hover"
         >
@@ -54,7 +54,15 @@
         <span>Metrics</span>
         </a>
         <a
-          class="flex items-center gap-x-2 border-b-3 {activeTab === 'monitoring' ? 'border-secondary-500' : 'border-transparent'} hover:border-secondary-500 hover:border-b-3"
+          class="flex items-center gap-x-2 border-b-3 {activeTab === 'figures' ? 'border-secondary-500' : 'border-transparent'} hover:border-secondary-500 hover:border-b-3"
+          href={`/opsml/${registry}/card/${data.metadata.space}/${data.metadata.name}/${data.metadata.version}/figures`}
+          data-sveltekit-preload-data="hover"
+        >
+          <ChartArea color="#8059b6"/>
+        <span>Figures</span>
+        </a>
+        <a
+          class="flex items-center gap-x-2 border-b-3 {activeTab === 'hardware' ? 'border-secondary-500' : 'border-transparent'} hover:border-secondary-500 hover:border-b-3"
           href={`/opsml/${registry}/card/${data.metadata.space}/${data.metadata.name}/${data.metadata.version}/hardware`}
           data-sveltekit-preload-data="hover"
         >
