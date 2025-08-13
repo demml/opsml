@@ -4208,6 +4208,7 @@ dependencies = [
  "axum-extra",
  "base64 0.22.1",
  "chrono",
+ "futures",
  "headers",
  "http-body-util",
  "jsonwebtoken",

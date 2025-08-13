@@ -191,6 +191,13 @@ impl OpsmlServerError {
         }
     }
 
+    pub fn vec_pop_error() -> Self {
+        error!("Failed to pop from vector");
+        OpsmlServerError {
+            error: "Failed to pop from vector".to_string(),
+        }
+    }
+
     pub fn into_response<T>(
         self,
         code: StatusCode,
@@ -261,4 +268,7 @@ pub enum ServerError {
 
     #[error("File too large: {0}")]
     FileTooLargeError(String),
+
+    #[error(transparent)]
+    JoinError(#[from] tokio::task::JoinError),
 }

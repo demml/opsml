@@ -1,7 +1,6 @@
 use crate::core::error::internal_server_error;
 use crate::core::error::OpsmlServerError;
-use crate::core::files::utils::download_artifact;
-use crate::core::files::utils::get_image_from_file;
+use crate::core::files::utils::get_content_for_files;
 use crate::core::state::AppState;
 use anyhow::{Context, Result};
 use axum::extract::DefaultBodyLimit;
@@ -30,6 +29,7 @@ use base64::prelude::*;
 use mime_guess::mime;
 /// Route for debugging information
 use serde_json::json;
+use std::collections::VecDeque;
 use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::path::Path;
 use std::path::PathBuf;
@@ -410,7 +410,7 @@ pub async fn get_file_for_ui(
         return OpsmlServerError::permission_denied().into_response(StatusCode::FORBIDDEN);
     }
 
-    let file = get_image_from_file(
+    let mut files = get_content_for_files(
         &state.storage_client,
         &state.sql_client,
         &file_path,
@@ -419,11 +419,54 @@ pub async fn get_file_for_ui(
     )
     .await
     .map_err(|e| {
-        error!("Failed to get image from file: {e}");
-        internal_server_error(e, "Failed to get image from file")
+        error!("Failed to get content from file: {e}");
+        internal_server_error(e, "Failed to get content from file")
+    })?;
+
+    // get first item
+    let file = files.pop_front().ok_or_else(|| {
+        (
+            StatusCode::NOT_FOUND,
+            Json(OpsmlServerError::vec_pop_error()),
+        )
     })?;
 
     Ok(Json(file))
+}
+
+#[instrument(skip_all)]
+pub async fn get_files_for_ui(
+    State(state): State<Arc<AppState>>,
+    Extension(perms): Extension<UserPermissions>,
+    Json(req): Json<RawFileRequest>,
+) -> Result<Json<VecDeque<RawFile>>, (StatusCode, Json<OpsmlServerError>)> {
+    let file_path = PathBuf::from(&req.path);
+
+    let space_id = file_path.iter().next().ok_or_else(|| {
+        (
+            StatusCode::BAD_REQUEST,
+            Json(OpsmlServerError::invalid_path()),
+        )
+    })?;
+
+    if !perms.has_read_permission(space_id.to_str().unwrap()) {
+        return OpsmlServerError::permission_denied().into_response(StatusCode::FORBIDDEN);
+    }
+
+    let files = get_content_for_files(
+        &state.storage_client,
+        &state.sql_client,
+        &file_path,
+        &req.uid,
+        &req.registry_type.to_string(),
+    )
+    .await
+    .map_err(|e| {
+        error!("Failed to get content from file: {e}");
+        internal_server_error(e, "Failed to get content from file")
+    })?;
+
+    Ok(Json(files))
 }
 
 pub async fn delete_file(

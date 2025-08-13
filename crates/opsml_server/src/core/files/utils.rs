@@ -2,6 +2,7 @@ use crate::core::error::internal_server_error;
 use crate::core::error::OpsmlServerError;
 use crate::core::error::ServerError;
 use anyhow::Result;
+use axum::middleware::future;
 use axum::serve::Serve;
 use base64::prelude::*;
 use mime_guess::mime;
@@ -18,11 +19,14 @@ use opsml_types::contracts::RawFile;
 use opsml_types::contracts::{ArtifactKey, DownloadResponse, UploadResponse};
 use opsml_types::RegistryType;
 use opsml_utils::uid_to_byte_key;
+use std::collections::VecDeque;
 use std::path::{Path, PathBuf};
+use std::result;
 /// Route for debugging information
 use std::sync::Arc;
 use tempfile::tempdir;
 use tempfile::TempDir;
+use tokio::task::JoinSet;
 use tracing::debug;
 use tracing::{error, instrument};
 use uuid::Uuid;
@@ -256,7 +260,7 @@ pub async fn get_artifact_key(
     }
 }
 
-async fn process_image_file(file: &FileInfo, lpath: &Path) -> Result<RawFile, ServerError> {
+async fn get_file_content(file: &FileInfo, lpath: &Path) -> Result<RawFile, ServerError> {
     let mime_type = mime_guess::from_path(lpath).first_or_octet_stream();
 
     let content = if mime_type.type_() == mime::IMAGE {
@@ -277,60 +281,59 @@ async fn process_image_file(file: &FileInfo, lpath: &Path) -> Result<RawFile, Se
     })
 }
 
-pub async fn get_image_from_file(
+pub async fn get_content_for_files(
     storage_client: &Arc<StorageClientEnum>,
     sql_client: &Arc<SqlClientEnum>,
     file_path: &Path,
     uid: &str,
     registry_type: &str,
-) -> Result<RawFile, ServerError> {
-    let files = storage_client.find_info(&file_path).await;
-
-    let files = match files {
-        Ok(files) => files,
-        Err(e) => {
-            error!("Failed to list files: {e}");
-            return Err(ServerError::StorageError(StorageError::FileNotFoundError(
-                e.to_string(),
-            )));
-        }
-    };
+) -> Result<VecDeque<RawFile>, ServerError> {
+    let mut files = storage_client.find_info(&file_path).await?;
 
     // check if empty, if not get first
-    let file = match files.first() {
-        Some(file) => file,
-        None => {
-            error!("File not found");
-            return Err(ServerError::StorageError(StorageError::NoFilesFoundError));
-        }
-    };
-
-    // check if size is less than 50 mb
-    if file.size > 50_000_000 {
-        error!("File size too large");
-        return Err(ServerError::FileTooLargeError(file.name.clone()));
+    if files.is_empty() {
+        error!("File not found");
+        return Err(ServerError::StorageError(StorageError::NoFilesFoundError));
     }
+
+    files.retain(|file| file.size < 50_000_000);
 
     let tmp_dir = tempdir().inspect_err(|e| {
         error!("Failed to create temp dir: {e}");
     })?;
 
-    let lpath = tmp_dir.path().join(file_path.file_name().unwrap());
+    let tmp_path = tmp_dir.path();
 
-    download_artifact(
-        storage_client.clone(),
-        sql_client.clone(),
-        &lpath,
-        &file.name,
-        registry_type,
-        Some(&uid),
-    )
-    .await
-    .inspect_err(|e| {
-        error!("Failed to download artifact: {e}");
-    })?;
+    let mut set: JoinSet<result::Result<RawFile, ServerError>> = JoinSet::new();
 
-    debug!("Downloaded file to: {}", lpath.display());
+    for file in files {
+        // Spawn a new asynchronous task for each item
+        let task_storage_client = storage_client.clone();
+        let task_sql_client = sql_client.clone();
+        let task_uid = uid.to_string();
+        let task_registry_type = registry_type.to_string();
+        let lpath = tmp_path.join(file.name.clone());
 
-    process_image_file(file, &lpath).await
+        set.spawn(async move {
+            download_artifact(
+                task_storage_client,
+                task_sql_client,
+                &lpath,
+                &file.name,
+                &task_registry_type,
+                Some(&task_uid),
+            )
+            .await?;
+            Ok(get_file_content(&file, &lpath).await?)
+        });
+    }
+
+    let mut results = std::collections::VecDeque::new();
+
+    while let Some(res) = set.join_next().await {
+        let raw_file = res??;
+        results.push_back(raw_file);
+    }
+
+    Ok(results)
 }
