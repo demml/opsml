@@ -1,20 +1,27 @@
+use crate::core::error::internal_server_error;
+use crate::core::error::OpsmlServerError;
 use crate::core::error::ServerError;
 use anyhow::Result;
+use axum::serve::Serve;
+use base64::prelude::*;
+use mime_guess::mime;
 use opsml_crypt::{
     decrypt_directory, decrypt_file, encrypt_directory,
     key::{derive_encryption_key, encrypted_key, generate_salt},
 };
 use opsml_sql::base::SqlClient;
 use opsml_sql::enums::client::SqlClientEnum;
-
+use opsml_storage::storage::error::StorageError;
 use opsml_storage::StorageClientEnum;
+use opsml_types::contracts::FileInfo;
+use opsml_types::contracts::RawFile;
 use opsml_types::contracts::{ArtifactKey, DownloadResponse, UploadResponse};
 use opsml_types::RegistryType;
 use opsml_utils::uid_to_byte_key;
-
 use std::path::{Path, PathBuf};
 /// Route for debugging information
 use std::sync::Arc;
+use tempfile::tempdir;
 use tempfile::TempDir;
 use tracing::debug;
 use tracing::{error, instrument};
@@ -247,4 +254,83 @@ pub async fn get_artifact_key(
             .await
         }
     }
+}
+
+async fn process_image_file(file: &FileInfo, lpath: &Path) -> Result<RawFile, ServerError> {
+    let mime_type = mime_guess::from_path(lpath).first_or_octet_stream();
+
+    let content = if mime_type.type_() == mime::IMAGE {
+        let bytes = std::fs::read(lpath).inspect_err(|e| {
+            error!("Failed to read file: {e}");
+        })?;
+        BASE64_STANDARD.encode(&bytes)
+    } else {
+        std::fs::read_to_string(lpath).inspect_err(|e| {
+            error!("Failed to read file: {e}");
+        })?
+    };
+
+    Ok(RawFile {
+        content,
+        suffix: file.suffix.to_string(),
+        mime_type: mime_type.to_string(),
+    })
+}
+
+pub async fn get_image_from_file(
+    storage_client: &Arc<StorageClientEnum>,
+    sql_client: &Arc<SqlClientEnum>,
+    file_path: &Path,
+    uid: &str,
+    registry_type: &str,
+) -> Result<RawFile, ServerError> {
+    let files = storage_client.find_info(&file_path).await;
+
+    let files = match files {
+        Ok(files) => files,
+        Err(e) => {
+            error!("Failed to list files: {e}");
+            return Err(ServerError::StorageError(StorageError::FileNotFoundError(
+                e.to_string(),
+            )));
+        }
+    };
+
+    // check if empty, if not get first
+    let file = match files.first() {
+        Some(file) => file,
+        None => {
+            error!("File not found");
+            return Err(ServerError::StorageError(StorageError::NoFilesFoundError));
+        }
+    };
+
+    // check if size is less than 50 mb
+    if file.size > 50_000_000 {
+        error!("File size too large");
+        return Err(ServerError::FileTooLargeError(file.name.clone()));
+    }
+
+    let tmp_dir = tempdir().inspect_err(|e| {
+        error!("Failed to create temp dir: {e}");
+    })?;
+
+    let lpath = tmp_dir.path().join(file_path.file_name().unwrap());
+
+    download_artifact(
+        storage_client.clone(),
+        sql_client.clone(),
+        &lpath,
+        &file.name,
+        registry_type,
+        Some(&uid),
+    )
+    .await
+    .inspect_err(|e| {
+        error!("Failed to download artifact: {e}");
+    })?;
+
+    debug!("Downloaded file to: {}", lpath.display());
+
+    process_image_file(file, &lpath).await
 }

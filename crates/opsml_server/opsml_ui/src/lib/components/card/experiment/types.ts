@@ -75,3 +75,28 @@ export interface UiHardwareMetrics {
   networkMbRecv: number[];
   networkMbSent: number[];
 }
+
+export enum ArtifactType {
+  Generic = "Generic",
+  Figure = "Figure",
+}
+
+export interface ArtifactQueryArgs {
+  uid?: string;
+  name?: string;
+  space?: string;
+  version?: string;
+  sort_by_timestamp?: boolean;
+  artifact_type?: ArtifactType;
+  limit?: number;
+}
+
+export interface ArtifactRecord {
+  uid: string;
+  name: string;
+  space: string;
+  version: string;
+  media_type: string;
+  artifact_type: ArtifactType;
+  created_at: string;
+}

@@ -258,4 +258,7 @@ pub enum ServerError {
 
     #[error(transparent)]
     StripPrefixError(#[from] std::path::StripPrefixError),
+
+    #[error("File too large: {0}")]
+    FileTooLargeError(String),
 }
