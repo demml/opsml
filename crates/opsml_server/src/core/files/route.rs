@@ -25,8 +25,6 @@ use opsml_types::{contracts::*, StorageType, MAX_FILE_SIZE};
 use tokio::fs::File;
 use tokio::io::AsyncWriteExt;
 
-use base64::prelude::*;
-use mime_guess::mime;
 /// Route for debugging information
 use serde_json::json;
 use std::collections::VecDeque;
@@ -34,7 +32,6 @@ use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::path::Path;
 use std::path::PathBuf;
 use std::sync::Arc;
-use tempfile::tempdir;
 use tokio_util::io::ReaderStream;
 use tracing::debug;
 use tracing::{error, info, instrument};
@@ -710,6 +707,10 @@ pub async fn get_file_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
             .route(&format!("{prefix}/files/delete"), delete(delete_file))
             .route(&format!("{prefix}/files/key"), get(get_artifact_key))
             .route(&format!("{prefix}/files/content"), post(get_file_for_ui))
+            .route(
+                &format!("{prefix}/files/content/batch"),
+                post(get_files_for_ui),
+            )
             .route(
                 &format!("{prefix}/files/artifact"),
                 post(create_artifact_record).get(query_artifact_records),

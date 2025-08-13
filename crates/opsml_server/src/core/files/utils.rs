@@ -1,9 +1,5 @@
-use crate::core::error::internal_server_error;
-use crate::core::error::OpsmlServerError;
 use crate::core::error::ServerError;
 use anyhow::Result;
-use axum::middleware::future;
-use axum::serve::Serve;
 use base64::prelude::*;
 use mime_guess::mime;
 use opsml_crypt::{
@@ -260,6 +256,10 @@ pub async fn get_artifact_key(
     }
 }
 
+/// Get the content of a file
+/// # Arguments
+/// * `file` - The file information
+/// * `lpath` - The local path to the file
 async fn get_file_content(file: &FileInfo, lpath: &Path) -> Result<RawFile, ServerError> {
     let mime_type = mime_guess::from_path(lpath).first_or_octet_stream();
 
@@ -281,6 +281,13 @@ async fn get_file_content(file: &FileInfo, lpath: &Path) -> Result<RawFile, Serv
     })
 }
 
+/// Downloads and loads content for multiple files
+/// # Arguments
+/// * `storage_client` - Storage client for download objects
+/// * `sql_client` - SQL client used to retrieve artifact keys
+/// * `file_path` - File path that points to directory containing files to download
+/// * `uid` - UID associated with the files (experiment uid, model uid, etc.)
+/// * `registry_type` - Registry type for the files
 pub async fn get_content_for_files(
     storage_client: &Arc<StorageClientEnum>,
     sql_client: &Arc<SqlClientEnum>,
