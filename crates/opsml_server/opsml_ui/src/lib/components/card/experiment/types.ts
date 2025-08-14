@@ -3,6 +3,11 @@ export enum PlotType {
   Bar = "bar",
 }
 
+export enum CommonPaths {
+  Artifacts = "artifacts",
+  Figures = "figures",
+}
+
 export interface GetMetricRequest {
   experiment_uid: string;
   names: string[];
