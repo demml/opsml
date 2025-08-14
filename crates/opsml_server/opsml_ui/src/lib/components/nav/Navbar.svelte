@@ -63,7 +63,7 @@
       <div class="flex items-center justify-start gap-4">
         <a href="/opsml/home" class="items-center">
           <div class="w-[120px] h-10">
-            <img 
+            <enhanced:img 
               src={logo} 
               class="h-10 w-[120px] object-contain"
               alt="Opsml Logo"
@@ -144,7 +144,7 @@
           }}
         >
           <div class="w-[120px] h-10">
-            <img 
+            <enhanced:img 
               src={logo} 
               class="h-10 w-[120px] object-contain"
               alt="Opsml Logo"
