@@ -295,7 +295,7 @@ pub async fn get_content_for_files(
     uid: &str,
     registry_type: &str,
 ) -> Result<VecDeque<RawFile>, ServerError> {
-    let mut files = storage_client.find_info(&file_path).await?;
+    let mut files = storage_client.find_info(file_path).await?;
 
     // check if empty, if not get first
     if files.is_empty() {
@@ -331,7 +331,7 @@ pub async fn get_content_for_files(
                 Some(&task_uid),
             )
             .await?;
-            Ok(get_file_content(&file, &lpath).await?)
+            get_file_content(&file, &lpath).await
         });
     }
 

@@ -131,7 +131,7 @@ class Experiment:
                 (e.g. jpeg, tiff, png, etc.)
             rpath (Optional[str]):
                 The path to associate with the figure in the experiment artifact directory
-                {experiment_path}/artifacts. If not provided, defaults to
+                {experiment_path}/artifacts/figures. If not provided, defaults to
                 {experiment}/artifacts/figures/{filename}
 
         """

@@ -4,7 +4,7 @@
   import { page } from "$app/state";
   import { goto } from "$app/navigation";
   import IconX from 'lucide-svelte/icons/x';
-  import { KeySquare, User } from 'lucide-svelte';
+  import { KeySquare } from 'lucide-svelte';
   import UserDropdown from "../user/UserDropdown.svelte";
 
 

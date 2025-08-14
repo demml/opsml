@@ -4,7 +4,6 @@ export const prerender = false;
 import type { PageLoad } from "./$types";
 import { getRawFile } from "$lib/components/files/utils";
 import { validateUserOrRedirect } from "$lib/components/user/user.svelte";
-import { registry } from "chart.js";
 import { RegistryType } from "$lib/utils";
 
 export const load: PageLoad = async ({ parent, url }) => {
