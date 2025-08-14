@@ -9,7 +9,7 @@
 
   let activeTab = $derived.by(() => {
     const last = page.url.pathname.split('/').pop() ?? '';
-    if (['card', 'files', 'metrics', 'hardware', 'versions', 'figures'].includes(last)) return last;
+    if (['card', 'files', 'metrics', 'hardware', 'versions', 'figures', 'view'].includes(last)) return last;
     return 'card';
   });
 
@@ -38,7 +38,7 @@
           <span>Card</span>
         </a>
         <a
-          class="flex items-center gap-x-2 border-b-3 {activeTab === 'files' ? 'border-secondary-500' : 'border-transparent'} hover:border-secondary-500 hover:border-b-3"
+          class="flex items-center gap-x-2 border-b-3 {activeTab === 'files' || activeTab === 'view' ? 'border-secondary-500' : 'border-transparent'} hover:border-secondary-500 hover:border-b-3"
           href={`/opsml/${registry}/card/${data.metadata.space}/${data.metadata.name}/${data.metadata.version}/files`}
           data-sveltekit-preload-data="hover"
         >
