@@ -12,9 +12,12 @@ export const load: PageLoad = async ({ parent }) => {
   const { metadata } = await parent();
 
   // get metric names, parameters
-  let experimentFigures = await getExperimentFigures(metadata.uid);
+  let experimentFigures = await getExperimentFigures(
+    metadata.uid,
+    metadata.space,
+    metadata.name,
+    metadata.version
+  );
 
-  console.log(experimentFigures);
-
-  return { experimentFigures };
+  return { figures: experimentFigures };
 };

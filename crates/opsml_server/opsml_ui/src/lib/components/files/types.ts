@@ -1,3 +1,5 @@
+import type { RegistryType } from "$lib/utils";
+
 export interface FileTreeNode {
   name: string;
   created_at: string;
@@ -30,4 +32,10 @@ export interface RawFile {
   content: string;
   suffix: string;
   mime_type: string;
+}
+
+export interface RawFileRequest {
+  uid: string;
+  path: string;
+  registry_type: RegistryType;
 }
