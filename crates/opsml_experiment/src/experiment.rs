@@ -611,7 +611,7 @@ impl Experiment {
     /// Logs a figure from a path
     /// # Arguments
     /// * `lpath` - The local path to the figure file
-    /// * `path` - Optional path to save figure to in the experiment relative to the {experiment}/artifacts directory.
+    /// * `path` - Optional path to save figure to in the experiment relative to the {experiment}/artifacts/figures directory.
     /// If not provided, the filename will be extracted and appended to the path {experiment}/artifacts/figures/{figure}
     ///
     #[pyo3(signature = (lpath, rpath = None))]
@@ -627,7 +627,11 @@ impl Experiment {
             return Err(ExperimentError::FigureIsNotImageError);
         };
 
-        let base_storage_path = self.artifact_key.storage_path().join(SaveName::Artifacts);
+        let base_storage_path = self
+            .artifact_key
+            .storage_path()
+            .join(SaveName::Artifacts)
+            .join(SaveName::Figures);
 
         // if path is not None, add it to storage_path
         // else get the filename from path and join it to figures/
@@ -635,7 +639,7 @@ impl Experiment {
             base_storage_path.join(path)
         } else {
             let filename = lpath.file_name().unwrap_or_default();
-            base_storage_path.join("figures").join(filename)
+            base_storage_path.join(filename)
         };
 
         log_artifact(
