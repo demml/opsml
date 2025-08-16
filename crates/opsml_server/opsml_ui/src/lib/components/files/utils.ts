@@ -1,6 +1,6 @@
 import { opsmlClient } from "$lib/components/api/client.svelte";
 import { RoutePaths } from "$lib/components/api/routes";
-import type { FileTreeResponse, RawFile } from "./types";
+import type { FileTreeResponse, RawFile, RawFileRequest } from "./types";
 import { AcceptableSuffix } from "./types";
 import Highlight, { LineNumbers } from "svelte-highlight";
 import json from "svelte-highlight/languages/json";
@@ -8,6 +8,7 @@ import python from "svelte-highlight/languages/python";
 import yaml from "svelte-highlight/languages/yaml";
 import sql from "svelte-highlight/languages/sql";
 import { userStore } from "../user/user.svelte";
+import type { RegistryType } from "$lib/utils";
 
 export async function getFileTree(path: string): Promise<FileTreeResponse> {
   const params = {
@@ -122,9 +123,9 @@ export function isAcceptableSuffix(suffix: string): boolean {
 export async function getRawFile(
   path: string,
   uid: string,
-  registry_type: string
+  registry_type: RegistryType
 ): Promise<RawFile> {
-  const body = {
+  const body: RawFileRequest = {
     path: path,
     uid: uid,
     registry_type: registry_type,

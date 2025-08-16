@@ -4,7 +4,6 @@
   import Pill from "$lib/components/utils/Pill.svelte";
   import UpdateModal from "../update/UpdateModal.svelte";
   import type { UiProfile } from "../util";
-  import type { Registry } from "chart.js";
   import type { RegistryType } from "$lib/utils";
   // props
   let { 

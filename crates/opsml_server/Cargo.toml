@@ -25,6 +25,7 @@ scouter-client = { workspace = true }
 
 base64 = { workspace = true }
 chrono = { workspace = true }
+futures = { workspace = true }
 headers = { workspace = true }
 metrics = { workspace = true }
 metrics-exporter-prometheus = { workspace = true }

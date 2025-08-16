@@ -3,7 +3,6 @@
     import "github-markdown-css/github-markdown-light.css";
     import favicon from "$lib/images/opsml-green.ico";
     import Navbar from "$lib/components/nav/Navbar.svelte";
-    import lightningBolt from "$lib/images/lightningbolt.webp";
     import { onMount } from 'svelte';
     import { ToastProvider } from '@skeletonlabs/skeleton-svelte';
 

@@ -71,6 +71,9 @@ pub enum StorageError {
     #[error("No files found")]
     NoFilesFoundError,
 
+    #[error("File not found: {0}")]
+    FileNotFoundError(String),
+
     #[error("Local path must be a directory for recursive put")]
     PathMustBeDirectoryError,
 
