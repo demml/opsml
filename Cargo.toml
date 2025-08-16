@@ -56,6 +56,7 @@ aws-types = "1.*"
 base64 = "0.22.*"
 bytes = "1.*"
 clap = { version = "4.*", features = ["derive", "string", "wrap_help"] }
+cron = "0.*"
 chrono = { version = "0.*", features = ["serde"] }
 colored_json = "5.*"
 dirs = "6.*"

@@ -3936,7 +3936,11 @@ dependencies = [
 name = "opsml-app"
 version = "3.0.0-rc.15"
 dependencies = [
+ "chrono",
+ "cron",
  "opsml-cards",
+ "opsml-cli",
+ "opsml-registry",
  "opsml-state",
  "opsml-types",
  "pyo3",
@@ -4182,6 +4186,7 @@ dependencies = [
  "pyo3",
  "scouter-client",
  "semver",
+ "serde_json",
  "sqlx",
  "tempfile",
  "thiserror 2.0.12",
