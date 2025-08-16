@@ -1,6 +1,6 @@
 use crate::core::error::internal_server_error;
 use crate::core::error::OpsmlServerError;
-use crate::core::files::utils::download_artifact;
+use crate::core::files::utils::get_content_for_files;
 use crate::core::state::AppState;
 use anyhow::{Context, Result};
 use axum::extract::DefaultBodyLimit;
@@ -25,15 +25,13 @@ use opsml_types::{contracts::*, StorageType, MAX_FILE_SIZE};
 use tokio::fs::File;
 use tokio::io::AsyncWriteExt;
 
-use base64::prelude::*;
-use mime_guess::mime;
 /// Route for debugging information
 use serde_json::json;
+use std::collections::VecDeque;
 use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::path::Path;
 use std::path::PathBuf;
 use std::sync::Arc;
-use tempfile::tempdir;
 use tokio_util::io::ReaderStream;
 use tracing::debug;
 use tracing::{error, info, instrument};
@@ -409,74 +407,63 @@ pub async fn get_file_for_ui(
         return OpsmlServerError::permission_denied().into_response(StatusCode::FORBIDDEN);
     }
 
-    let files = state.storage_client.find_info(&file_path).await;
-
-    let files = match files {
-        Ok(files) => files,
-        Err(e) => {
-            error!("Failed to list files: {e}");
-            return Err(internal_server_error(e, "Failed to list files"));
-        }
-    };
-
-    // check if empty, if not get first
-    let file = match files.first() {
-        Some(file) => file,
-        None => {
-            error!("File not found");
-            return OpsmlServerError::no_files_found().into_response(StatusCode::NOT_FOUND);
-        }
-    };
-
-    // check if size is less than 50 mb
-    if file.size > 50_000_000 {
-        error!("File size too large");
-        return OpsmlServerError::file_too_large().into_response(StatusCode::BAD_REQUEST);
-    }
-
-    let tmp_dir = tempdir().map_err(|e| {
-        error!("Failed to create temp dir: {e}");
-        internal_server_error(e, "Failed to create temp dir")
-    })?;
-
-    let lpath = tmp_dir.path().join(file_path.file_name().unwrap());
-
-    download_artifact(
-        state.storage_client.clone(),
-        state.sql_client.clone(),
-        &lpath,
-        &file.name,
+    let mut files = get_content_for_files(
+        &state.storage_client,
+        &state.sql_client,
+        &file_path,
+        &req.uid,
         &req.registry_type.to_string(),
-        Some(&req.uid),
     )
     .await
     .map_err(|e| {
-        error!("Failed to download artifact: {e}");
-        internal_server_error(e, "Failed to download artifact")
+        error!("Failed to get content from file: {e}");
+        internal_server_error(e, "Failed to get content from file")
     })?;
 
-    debug!("Downloaded file to: {}", lpath.display());
+    // get first item
+    let file = files.pop_front().ok_or_else(|| {
+        (
+            StatusCode::NOT_FOUND,
+            Json(OpsmlServerError::vec_pop_error()),
+        )
+    })?;
 
-    let mime_type = mime_guess::from_path(&lpath).first_or_octet_stream();
+    Ok(Json(file))
+}
 
-    let content = if mime_type.type_() == mime::IMAGE {
-        let bytes = std::fs::read(&lpath).map_err(|e| {
-            error!("Failed to read file: {e}");
-            internal_server_error(e, "Failed to read file")
-        })?;
-        BASE64_STANDARD.encode(&bytes)
-    } else {
-        std::fs::read_to_string(&lpath).map_err(|e| {
-            error!("Failed to read file: {e}");
-            internal_server_error(e, "Failed to read file")
-        })?
-    };
+#[instrument(skip_all)]
+pub async fn get_files_for_ui(
+    State(state): State<Arc<AppState>>,
+    Extension(perms): Extension<UserPermissions>,
+    Json(req): Json<RawFileRequest>,
+) -> Result<Json<VecDeque<RawFile>>, (StatusCode, Json<OpsmlServerError>)> {
+    let file_path = PathBuf::from(&req.path);
 
-    Ok(Json(RawFile {
-        content,
-        suffix: file.suffix.to_string(),
-        mime_type: mime_type.to_string(),
-    }))
+    let space_id = file_path.iter().next().ok_or_else(|| {
+        (
+            StatusCode::BAD_REQUEST,
+            Json(OpsmlServerError::invalid_path()),
+        )
+    })?;
+
+    if !perms.has_read_permission(space_id.to_str().unwrap()) {
+        return OpsmlServerError::permission_denied().into_response(StatusCode::FORBIDDEN);
+    }
+
+    let files = get_content_for_files(
+        &state.storage_client,
+        &state.sql_client,
+        &file_path,
+        &req.uid,
+        &req.registry_type.to_string(),
+    )
+    .await
+    .map_err(|e| {
+        error!("Failed to get content from file: {e}");
+        internal_server_error(e, "Failed to get content from file")
+    })?;
+
+    Ok(Json(files))
 }
 
 pub async fn delete_file(
@@ -720,6 +707,10 @@ pub async fn get_file_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
             .route(&format!("{prefix}/files/delete"), delete(delete_file))
             .route(&format!("{prefix}/files/key"), get(get_artifact_key))
             .route(&format!("{prefix}/files/content"), post(get_file_for_ui))
+            .route(
+                &format!("{prefix}/files/content/batch"),
+                post(get_files_for_ui),
+            )
             .route(
                 &format!("{prefix}/files/artifact"),
                 post(create_artifact_record).get(query_artifact_records),

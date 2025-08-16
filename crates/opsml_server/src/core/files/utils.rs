@@ -1,21 +1,28 @@
 use crate::core::error::ServerError;
 use anyhow::Result;
+use base64::prelude::*;
+use mime_guess::mime;
 use opsml_crypt::{
     decrypt_directory, decrypt_file, encrypt_directory,
     key::{derive_encryption_key, encrypted_key, generate_salt},
 };
 use opsml_sql::base::SqlClient;
 use opsml_sql::enums::client::SqlClientEnum;
-
+use opsml_storage::storage::error::StorageError;
 use opsml_storage::StorageClientEnum;
+use opsml_types::contracts::FileInfo;
+use opsml_types::contracts::RawFile;
 use opsml_types::contracts::{ArtifactKey, DownloadResponse, UploadResponse};
 use opsml_types::RegistryType;
 use opsml_utils::uid_to_byte_key;
-
+use std::collections::VecDeque;
 use std::path::{Path, PathBuf};
+use std::result;
 /// Route for debugging information
 use std::sync::Arc;
+use tempfile::tempdir;
 use tempfile::TempDir;
+use tokio::task::JoinSet;
 use tracing::debug;
 use tracing::{error, instrument};
 use uuid::Uuid;
@@ -247,4 +254,93 @@ pub async fn get_artifact_key(
             .await
         }
     }
+}
+
+/// Get the content of a file
+/// # Arguments
+/// * `file` - The file information
+/// * `lpath` - The local path to the file
+async fn get_file_content(file: &FileInfo, lpath: &Path) -> Result<RawFile, ServerError> {
+    let mime_type = mime_guess::from_path(lpath).first_or_octet_stream();
+
+    let content = if mime_type.type_() == mime::IMAGE {
+        let bytes = std::fs::read(lpath).inspect_err(|e| {
+            error!("Failed to read file: {e}");
+        })?;
+        BASE64_STANDARD.encode(&bytes)
+    } else {
+        std::fs::read_to_string(lpath).inspect_err(|e| {
+            error!("Failed to read file: {e}");
+        })?
+    };
+
+    Ok(RawFile {
+        content,
+        suffix: file.suffix.to_string(),
+        mime_type: mime_type.to_string(),
+    })
+}
+
+/// Downloads and loads content for multiple files
+/// # Arguments
+/// * `storage_client` - Storage client for download objects
+/// * `sql_client` - SQL client used to retrieve artifact keys
+/// * `file_path` - File path that points to directory containing files to download
+/// * `uid` - UID associated with the files (experiment uid, model uid, etc.)
+/// * `registry_type` - Registry type for the files
+pub async fn get_content_for_files(
+    storage_client: &Arc<StorageClientEnum>,
+    sql_client: &Arc<SqlClientEnum>,
+    file_path: &Path,
+    uid: &str,
+    registry_type: &str,
+) -> Result<VecDeque<RawFile>, ServerError> {
+    let mut files = storage_client.find_info(file_path).await?;
+
+    // check if empty, if not get first
+    if files.is_empty() {
+        error!("File not found");
+        return Err(ServerError::StorageError(StorageError::NoFilesFoundError));
+    }
+
+    files.retain(|file| file.size < 50_000_000);
+
+    let tmp_dir = tempdir().inspect_err(|e| {
+        error!("Failed to create temp dir: {e}");
+    })?;
+
+    let tmp_path = tmp_dir.path();
+
+    let mut set: JoinSet<result::Result<RawFile, ServerError>> = JoinSet::new();
+
+    for file in files {
+        // Spawn a new asynchronous task for each item
+        let task_storage_client = storage_client.clone();
+        let task_sql_client = sql_client.clone();
+        let task_uid = uid.to_string();
+        let task_registry_type = registry_type.to_string();
+        let lpath = tmp_path.join(file.name.clone());
+
+        set.spawn(async move {
+            download_artifact(
+                task_storage_client,
+                task_sql_client,
+                &lpath,
+                &file.name,
+                &task_registry_type,
+                Some(&task_uid),
+            )
+            .await?;
+            get_file_content(&file, &lpath).await
+        });
+    }
+
+    let mut results = std::collections::VecDeque::new();
+
+    while let Some(res) = set.join_next().await {
+        let raw_file = res??;
+        results.push_back(raw_file);
+    }
+
+    Ok(results)
 }

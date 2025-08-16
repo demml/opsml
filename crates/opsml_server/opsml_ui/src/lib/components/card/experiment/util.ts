@@ -2,9 +2,8 @@ import { opsmlClient } from "$lib/components/api/client.svelte";
 import { RoutePaths } from "$lib/components/api/routes";
 import type { Metric, Parameter } from "../card_interfaces/experimentcard";
 import { type CardQueryArgs } from "$lib/components/api/schema";
-import type { BaseCard, Card } from "$lib/components/home/types";
-import { RegistryType } from "$lib/utils";
-import { promise } from "zod";
+import type { Card } from "$lib/components/home/types";
+import { RegistryType, getRegistryTableName } from "$lib/utils";
 import type {
   GetMetricNamesRequest,
   GetMetricRequest,
@@ -15,8 +14,12 @@ import type {
   GetHardwareMetricRequest,
   HardwareMetrics,
   UiHardwareMetrics,
+  ArtifactQueryArgs,
+  ArtifactRecord,
 } from "./types";
+import { ArtifactType, CommonPaths } from "./types";
 import { userStore } from "$lib/components/user/user.svelte";
+import type { RawFile, RawFileRequest } from "$lib/components/files/types";
 
 const BYTES_TO_MB = 1024 * 1024;
 
@@ -164,4 +167,28 @@ export async function getHardwareMetrics(
   let metrics = (await response.json()) as HardwareMetrics[];
 
   return extractAllHardwareMetrics(metrics);
+}
+
+export async function getExperimentFigures(
+  uid: string,
+  space: string,
+  name: string,
+  version: string
+): Promise<RawFile[]> {
+  const tableName = getRegistryTableName(RegistryType.Experiment);
+  const path = `${tableName}/${space}/${name}/v${version}/${CommonPaths.Artifacts}/${CommonPaths.Figures}`;
+
+  const request: RawFileRequest = {
+    uid,
+    path,
+    registry_type: RegistryType.Experiment,
+  };
+
+  const response = await opsmlClient.post(
+    RoutePaths.FILE_CONTENT_BATCH,
+    request,
+    userStore.jwt_token
+  );
+
+  return (await response.json()) as RawFile[];
 }
