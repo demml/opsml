@@ -113,6 +113,9 @@ pub enum RegistryError {
 
     #[error("ScouterClient not found")]
     ScouterClientNotFoundError,
+
+    #[error(transparent)]
+    SerdeJsonError(#[from] serde_json::Error),
 }
 
 impl From<RegistryError> for PyErr {
