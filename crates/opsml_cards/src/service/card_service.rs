@@ -518,6 +518,23 @@ impl ServiceCard {
     pub fn __str__(&self) -> String {
         PyHelperFuncs::__str__(self)
     }
+
+    /// Allows mutating a ServiceCard in place by loading a new card from a path.
+    /// This is used to reload the service card with updated attributes as part of AppState
+    /// # Arguments
+    /// * `py` - Python interpreter state
+    /// * `path` - Path to the new service card files
+    /// * `load_kwargs` - Optional loading arguments for cards
+    pub fn mut_from_path(
+        &mut self,
+        py: Python,
+        path: PathBuf,
+        load_kwargs: Option<&Bound<'_, PyDict>>,
+    ) -> Result<(), CardError> {
+        let new_service = Self::from_path_rs(py, &path, load_kwargs)?;
+        *self = new_service;
+        Ok(())
+    }
 }
 
 impl ServiceCard {

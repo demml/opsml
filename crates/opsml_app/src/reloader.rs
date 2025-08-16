@@ -1,15 +1,16 @@
 use crate::error::AppError;
+use crate::utils::load_card_map;
 use chrono::DateTime;
 use chrono::Utc;
-use opsml_cards::service;
-/// This module contains the logic for reloading a ServiceCard
 use opsml_cards::ServiceCard;
 use opsml_registry::base::OpsmlRegistry;
 use opsml_registry::download::download_service_from_registry;
 use opsml_types::contracts::CardQueryArgs;
 use opsml_types::{contracts::CardRecord, RegistryType};
 use pyo3::prelude::*;
-use scouter_client::QueueBus;
+use pyo3::types::PyDict;
+use scouter_client::ScouterQueue;
+use std::path::Path;
 use std::str::FromStr;
 use std::sync::Arc;
 use std::sync::RwLock;
@@ -35,6 +36,39 @@ pub fn is_latest(current_version: &str, latest_version: &str) -> bool {
     current_version == latest_version
 }
 
+fn load_from_path(
+    transport_config: Option<&Bound<'_, PyAny>>,
+    runtime: Arc<Runtime>,
+    py: Python<'_>,
+    path: &Path,
+    load_kwargs: Option<&Bound<'_, PyDict>>,
+) -> Result<(Py<ServiceCard>, Option<Py<ScouterQueue>>), AppError> {
+    let service_card = ServiceCard::from_path_rs(py, &path, load_kwargs)?;
+    let card_map = load_card_map(&path).map_err(|e| {
+        error!("Failed to load card map from: {:?}", e);
+        e
+    })?;
+
+    let queue = if !card_map.drift_paths.is_empty() {
+        debug!("Drift paths found in card map, creating ScouterQueue");
+        match transport_config {
+            Some(config) => {
+                let rt = runtime.clone();
+                let scouter_queue =
+                    ScouterQueue::from_path_rs(py, card_map.drift_paths, config, rt)?;
+                Some(Py::new(py, scouter_queue)?)
+            }
+            None => {
+                debug!("No transport config found in card map");
+                None
+            }
+        }
+    } else {
+        debug!("No drift paths or transport config found in card map");
+        None
+    };
+}
+
 #[pyclass]
 #[derive(Clone, Debug)]
 pub struct ReloadConfig {
@@ -55,7 +89,7 @@ fn reload_task(space: &str, name: &str, version: &str) -> Result<(), AppError> {
     // 1. Download new artifacts (including drift profile, to a new directory)
     // 2. Reload ServiceCard
 
-    let query_args = CardQueryArgs {
+    let mut query_args = CardQueryArgs {
         space: Some(space.to_string()),
         name: Some(name.to_string()),
         version: None,
@@ -72,11 +106,18 @@ fn reload_task(space: &str, name: &str, version: &str) -> Result<(), AppError> {
 
     if !is_latest(version, latest_card.version()) {
         // If the latest card is not the same as the current version, we need to reload
-        debug!("Reloading service card {}:{}:{}", space, name, version);
-        reload_task(space, name, version)?;
-    }
+        info!(
+            "Detected new version, reloading service {}:{}:{}",
+            space, name, version
+        );
+        query_args.version = Some(latest_card.version().to_string());
 
-    let write_path = std::env::current_dir()?.as_path().to_path_buf();
+        let write_path = std::env::current_dir()?.as_path().to_path_buf();
+
+        download_service_from_registry(&query_args, write_path)?;
+
+        return Ok(());
+    }
 
     Ok(())
 }
