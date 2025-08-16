@@ -1,171 +1,189 @@
 use crate::error::AppError;
 use chrono::DateTime;
 use chrono::Utc;
-use opsml_cards::Card;
+use opsml_cards::service;
 /// This module contains the logic for reloading a ServiceCard
 use opsml_cards::ServiceCard;
-use opsml_cli::actions::download::download_service;
-use opsml_cli::cli::arg::DownloadCard;
-use opsml_registry::CardRegistry;
-use opsml_types::RegistryType;
+use opsml_registry::base::OpsmlRegistry;
+use opsml_registry::download::download_service_from_registry;
+use opsml_types::contracts::CardQueryArgs;
+use opsml_types::{contracts::CardRecord, RegistryType};
 use pyo3::prelude::*;
+use scouter_client::QueueBus;
 use std::str::FromStr;
 use std::sync::Arc;
 use std::sync::RwLock;
 use tokio::runtime::Runtime;
+use tokio::sync::mpsc::UnboundedReceiver;
+use tokio::sync::oneshot;
 use tokio::sync::watch;
 use tokio::time::{sleep, Duration};
-use tracing::{debug, info, info_span, Instrument};
+use tracing::{debug, error, info, info_span, Instrument};
 
-fn get_latest_card(
-    space: &str,
-    name: &str,
-    registry: Arc<CardRegistry>,
-) -> Result<ServiceCard, AppError> {
-    // This function should query the registry for the latest version of the ServiceCard
-    // For now, we will return a dummy ServiceCard
-    Ok(ServiceCard {
-        space: space.to_string(),
-        name: name.to_string(),
-        version: "1.0.0".to_string(),
-        uid: "dummy-uid".to_string(),
-        write_dir: "dummy_write_dir".to_string(),
-    })
+type ServiceArgs = (String, String, String);
+
+/// Helper for listing cards
+pub fn list_cards(args: &CardQueryArgs) -> Result<Vec<CardRecord>, AppError> {
+    // get registry
+    let registry = OpsmlRegistry::new(args.registry_type.clone())?;
+    let cards = registry.list_cards(args)?;
+    Ok(cards)
 }
 
+pub fn is_latest(current_version: &str, latest_version: &str) -> bool {
+    // Compare versions, assuming they are in a format that can be compared lexicographically
+    current_version == latest_version
+}
+
+#[pyclass]
+#[derive(Clone, Debug)]
 pub struct ReloadConfig {
+    #[pyo3(get, set)]
     pub cron: String,
 }
 
-fn reload_task(
-    space: &str,
-    name: &str,
-    version: &str,
-    registry: Arc<CardRegistry>,
-) -> Result<(), AppError> {
+#[pymethods]
+impl ReloadConfig {
+    #[new]
+    pub fn new(cron: String) -> Self {
+        ReloadConfig { cron }
+    }
+}
+
+fn reload_task(space: &str, name: &str, version: &str) -> Result<(), AppError> {
     // list latest service card. If different version:
     // 1. Download new artifacts (including drift profile, to a new directory)
     // 2. Reload ServiceCard
 
-    let write_path = std::env::current_dir()?.as_path().to_path_buf();
-
-    let card = registry
-        .list_cards(
-            None,
-            Some(space.to_string()),
-            Some(name.to_string()),
-            None,
-            None,
-            None,
-            None,
-            1,
-        )?
-        .cards
-        .get(0)
-        .unwrap();
-    // if latest version matches current version, skip
-
-    let args = DownloadCard {
-        space: Some(card.space().to_string()),
-        name: Some(card.name().to_string()),
-        version: Some(card.version().to_string()),
-        uid: Some(card.uid().to_string()),
-        write_dir: write_path
-            .join("temp")
-            .into_os_string()
-            .into_string()
-            .map_err(|_| CliError::WritePathError)?,
+    let query_args = CardQueryArgs {
+        space: Some(space.to_string()),
+        name: Some(name.to_string()),
+        version: None,
+        registry_type: RegistryType::Service,
+        sort_by_timestamp: Some(true),
+        limit: Some(1),
+        ..Default::default()
     };
 
-    download_service(&args)?;
+    let latest_card = list_cards(&query_args)?
+        .into_iter()
+        .next()
+        .ok_or(AppError::CardNotFound)?;
+
+    if !is_latest(version, latest_card.version()) {
+        // If the latest card is not the same as the current version, we need to reload
+        debug!("Reloading service card {}:{}:{}", space, name, version);
+        reload_task(space, name, version)?;
+    }
+
+    let write_path = std::env::current_dir()?.as_path().to_path_buf();
 
     Ok(())
 }
 
+async fn start_background_reload_process(
+    args: ServiceArgs,
+    service: Py<ServiceCard>,
+    mut shutdown_rx: oneshot::Receiver<()>,
+    runtime: Arc<Runtime>,
+    last_check: Arc<RwLock<DateTime<Utc>>>,
+    config: ReloadConfig,
+    completion_tx: oneshot::Sender<()>,
+) -> Result<(), AppError> {
+    let cron = config.cron;
+    let args = args.clone();
+    let future = async move {
+        loop {
+            tokio::select! {
+                _ = sleep(Duration::from_secs(2)) => {
+                    let schedule = match cron::Schedule::from_str(&cron) {
+                        Ok(s) => s,
+                        Err(_) => return Err(AppError::InvalidCronSchedule),
+                    };
+
+                    let next_run = match schedule.upcoming(Utc).take(1).next() {
+                        Some(next_run) => next_run,
+                        None => return Err(AppError::InvalidCronSchedule),
+                    };
+
+                    let current_time = Utc::now();
+
+                    let should_process = {
+                        let last = last_check.read().unwrap();
+                        current_time > next_run && &*last < &next_run
+                    };
+
+                    if should_process {
+                        debug!("Processing queued data");
+                        // Acquire the GIL and bind the service for Python interaction
+                        Python::with_gil(|py| {
+                            let _bound_service = service.bind(py);
+                            // Optionally: Call reload_task or interact with the bound_service here
+                        });
+                        let mut last = last_check.write().unwrap();
+                        *last = next_run;
+                    }
+                },
+                _ = &mut shutdown_rx => {
+                    info!("Stopping background task");
+                    completion_tx.send(()).map_err(|_| AppError::SignalCompletionError)?;
+                    break;
+                }
+            }
+        }
+        Ok(())
+    };
+
+    runtime.spawn(async move {
+        if let Err(e) = future.await {
+            debug!("Background queue exited with error: {:?}", e);
+        }
+    });
+
+    Ok(())
+}
+
+#[derive(Debug)]
 pub struct ServiceReloader {
     pub space: String,
     pub name: String,
     pub version: String,
-    config: ReloadConfig,
-    registry: Arc<CardRegistry>,
 }
 
 impl ServiceReloader {
-    pub fn new(
+    pub fn start_reloader(
+        py: Python<'_>,
+        shared_runtime: Arc<tokio::runtime::Runtime>,
+        service: Py<ServiceCard>,
+        config: ReloadConfig,
         space: String,
         name: String,
         version: String,
-        config: ReloadConfig,
-    ) -> Result<Self, AppError> {
-        let registry = Arc::new(CardRegistry::rust_new(&RegistryType::Service)?);
-        Ok(ServiceReloader {
-            space,
-            name,
-            version,
-            config,
-            registry,
-        })
-    }
-
-    pub fn start_background_queue(
-        &self,
-        py: Python,
-        mut stop_rx: watch::Receiver<()>,
-        runtime: Arc<Runtime>,
-        last_check: Arc<RwLock<DateTime<Utc>>>,
     ) -> Result<(), AppError> {
-        //let service = self.service.clone_ref(py);
-        let cron = self.config.cron.clone();
+        let (completion_tx, _completion_rx) = oneshot::channel();
+        let (_shutdown_tx, shutdown_rx) = oneshot::channel();
+        let reloader_runtime = shared_runtime.clone();
+        let service = service.clone_ref(py);
+        let args = (space, name, version);
 
-        let future = async move {
-            loop {
-                tokio::select! {
-                    _ = sleep(Duration::from_secs(2)) => {
-                        let schedule = match cron::Schedule::from_str(&cron) {
-                            Ok(s) => s,
-                            Err(_) => return Err(AppError::InvalidCronSchedule),
-                        };
-
-                        let next_run = match schedule.upcoming(Utc).take(1).next() {
-                            Some(next_run) => next_run,
-                            None => return Err(AppError::InvalidCronSchedule),
-                        };
-
-                        let current_time = Utc::now();
-
-                        let should_process = {
-                            let last = last_check.read().unwrap();
-                            current_time > next_run && &*last < &next_run
-                        };
-
-                        if should_process {
-                            debug!("Processing queued data");
-                            // Optionally: Call reload_task(service.clone()) here
-                            // reload_task(service.clone()).map_err(|e| {
-                            //     debug!("Failed to reload service card: {:?}", e);
-                            //     e
-                            // })?;
-                            let mut last = last_check.write().unwrap();
-                            *last = next_run;
-                        }
-                    },
-                    _ = stop_rx.changed() => {
-                        info!("Stopping background task");
-                        break;
-                    }
-                }
-            }
-            Ok(())
-        };
-
-        runtime.spawn(async move {
-            if let Err(e) = future.await {
-                debug!("Background queue exited with error: {:?}", e);
+        shared_runtime.spawn(async move {
+            match start_background_reload_process(
+                args,
+                service,
+                shutdown_rx,
+                reloader_runtime,
+                Arc::new(RwLock::new(Utc::now())),
+                config.clone(),
+                completion_tx,
+            )
+            .await
+            {
+                Ok(_) => debug!("Queue handler started successfully"),
+                Err(e) => error!("Queue handler exited with error: {}", e),
             }
         });
 
         Ok(())
     }
-
     // create function that spawns a task and reloads the service card
 }

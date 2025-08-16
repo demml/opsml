@@ -36,6 +36,12 @@ pub enum AppError {
 
     #[error("Invalid cron schedule")]
     InvalidCronSchedule,
+
+    #[error("Failed to signal shutdown")]
+    SignalCompletionError,
+
+    #[error("Service card not found")]
+    CardNotFound,
 }
 
 impl From<AppError> for PyErr {

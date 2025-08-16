@@ -145,7 +145,7 @@ impl CardRegistry {
             registry_type: self.registry_type.clone(),
         };
 
-        let cards = self.registry.list_cards(query_args)?;
+        let cards = self.registry.list_cards(&query_args)?;
 
         Ok(CardList { cards })
     }

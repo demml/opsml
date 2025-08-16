@@ -29,7 +29,7 @@ pub fn list_cards(args: &ListCards, registry_type: RegistryType) -> Result<(), C
     let registry = OpsmlRegistry::new(query_args.registry_type.clone())?;
 
     // list cards
-    let cards = registry.list_cards(query_args)?;
+    let cards = registry.list_cards(&query_args)?;
 
     // print cards
     CardList { cards }.as_table();

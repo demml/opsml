@@ -114,7 +114,7 @@ impl OpsmlRegistry {
         }
     }
 
-    pub fn list_cards(&self, args: CardQueryArgs) -> Result<Vec<CardRecord>, RegistryError> {
+    pub fn list_cards(&self, args: &CardQueryArgs) -> Result<Vec<CardRecord>, RegistryError> {
         match self {
             Self::ClientRegistry(client_registry) => Ok(client_registry.list_cards(args)?),
             #[cfg(feature = "server")]
