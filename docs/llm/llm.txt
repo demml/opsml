@@ -1,0 +1,60 @@
+Project: OpsML
+
+Description:
+OpsML is an open-source, developer-first MLOps platform focused on quality control for the machine learning lifecycle. It provides a unified, type-safe API for managing ML artifacts, enabling teams to collaborate, standardize workflows, and deploy with confidence. OpsML is built in Rust for performance and safety, and exposed via a Python API using PyO3.
+
+Key Features:
+- Unified API for all ML frameworks (Python front, Rust backend)
+- Artifact-first approach: manage, version, and track ML models and data as "trading cards"
+- Native support for AWS, GCP, Azure, and multiple databases (SQLite, MySQL, Postgres)
+- Built-in authentication, encryption, and artifact lineage
+- Integrated model monitoring and data profiling (via Scouter)
+- Modular, cloud-ready, and production-grade server
+- Single dependency for all ML artifact management
+
+Installation:
+pip install opsml
+
+Quickstart Example:
+from opsml.helpers.data import create_fake_data
+from opsml import SklearnModel, CardRegistry, TaskType, ModelCard, RegistryType
+from sklearn import ensemble
+
+reg = CardRegistry(RegistryType.Model)
+X, y = create_fake_data(n_samples=1200)
+classifier = ensemble.RandomForestClassifier(n_estimators=5)
+classifier.fit(X.to_numpy(), y.to_numpy().ravel())
+model_interface = SklearnModel(model=classifier, sample_data=X[0:10], task_type=TaskType.Classification)
+modelcard = ModelCard(interface=model_interface, space="opsml", name="my_model")
+reg.register_card(modelcard)
+
+Documentation:
+https://docs.demml.io/opsml/
+
+Model Interface and Card Documentation:
+https://docs.demml.io/opsml/docs/cards/modelcard/
+
+Data Interface and Card Documentation:
+https://docs.demml.io/opsml/docs/cards/datacard/
+
+Experiment Card Documentation:
+https://docs.demml.io/opsml/docs/cards/experimentcard/
+
+Prompt Card Documentation:
+https://docs.demml.io/opsml/docs/cards/promptcard/
+
+Setup and Configuration:
+https://docs.demml.io/opsml/setup/
+
+Source Code:
+https://github.com/demml/opsml
+
+Contact:
+support@demmlai.com
+
+License:
+MIT
+
+Notes:
+- OpsML is under active development.
+- For contributing, see CONTRIBUTING.md in the repository.
