@@ -1,4 +1,7 @@
-use crate::error::AppError;
+use crate::{
+    error::AppError,
+    reloader::{self, ReloadConfig, ServiceReloader},
+};
 use opsml_cards::ServiceCard;
 use opsml_state::app_state;
 use opsml_types::{cards::ServiceCardMapping, SaveName, Suffix};
@@ -21,6 +24,7 @@ fn load_card_map(path: &Path) -> Result<ServiceCardMapping, AppError> {
 pub struct AppState {
     service: Py<ServiceCard>,
     queue: Option<Py<ScouterQueue>>,
+    reloader: Option<ServiceReloader>,
 }
 
 #[pymethods]
@@ -42,7 +46,11 @@ impl AppState {
     ) -> Result<Self, AppError> {
         let service = service.unbind();
         let queue = queue.map(|q| q.unbind());
-        Ok(AppState { service, queue })
+        Ok(AppState {
+            service,
+            queue,
+            reloader: None,
+        })
     }
     /// This method will load an application state from a path
     /// This is primarily used for loading an application during api start where a user
@@ -56,15 +64,16 @@ impl AppState {
     /// * `transport_config` = The transport config to use with the ScouterQueue. If not provided,
     /// no queue will be created.
     #[staticmethod]
-    #[pyo3(signature = (path=None, transport_config=None, load_kwargs=None))]
+    #[pyo3(signature = (path=None, transport_config=None, reload_config=None, load_kwargs=None))]
     pub fn from_path(
         py: Python,
         path: Option<PathBuf>,
         transport_config: Option<&Bound<'_, PyAny>>,
+        reload_config: Option<ReloadConfig>,
         load_kwargs: Option<&Bound<'_, PyDict>>,
     ) -> Result<Self, AppError> {
         let path = path.unwrap_or_else(|| PathBuf::from(SaveName::ServiceCard));
-        let service = Py::new(py, ServiceCard::from_path_rs(py, &path, load_kwargs)?)?;
+        let service_card = ServiceCard::from_path_rs(py, &path, load_kwargs)?;
         let card_map = load_card_map(&path).map_err(|e| {
             error!("Failed to load card map from: {:?}", e);
             e
@@ -89,7 +98,30 @@ impl AppState {
             None
         };
 
-        Ok(AppState { service, queue })
+        //let reloader = if reload_config.is_some() {
+        //    let config = reload_config.unwrap();
+        //    let reloader = ServiceReloader::new(
+        //        service_card.space.clone(),
+        //        service_card.name.clone(),
+        //        service_card.version.clone(),
+        //        config,
+        //    )?;
+        //    reloader.start_background_queue(
+        //        py,
+        //        app_state().stop_rx.clone(),
+        //        app_state().runtime.clone(),
+        //        app_state().last_check.clone(),
+        //    )?;
+        //    Some(reloader)
+        //} else {
+        //    None
+        //};
+
+        Ok(AppState {
+            service: Py::new(py, service_card)?,
+            queue,
+            reloader: None,
+        })
     }
 
     #[getter]

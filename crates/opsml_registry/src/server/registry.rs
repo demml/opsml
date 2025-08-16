@@ -67,9 +67,9 @@ pub mod server_logic {
 
         pub async fn list_cards(
             &self,
-            args: CardQueryArgs,
+            args: &CardQueryArgs,
         ) -> Result<Vec<CardRecord>, RegistryError> {
-            let cards = self.sql_client.query_cards(&self.table_name, &args).await?;
+            let cards = self.sql_client.query_cards(&self.table_name, args).await?;
 
             match cards {
                 CardResults::Data(data) => {
