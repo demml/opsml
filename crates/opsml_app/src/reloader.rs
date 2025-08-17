@@ -158,7 +158,6 @@ async fn start_background_reload_process(
                 _ = sleep(Duration::from_secs(2)) => {
 
                     if is_past_scheduled_reload(&scheduled_reload.read().unwrap()) {
-                        debug!("Processing queued data");
                         // Acquire the GIL and bind the service for Python interaction
                         Python::with_gil(|py| {
                             let _reloaded = reload_task(py, service.clone_ref(py));
@@ -266,8 +265,8 @@ impl ServiceReloader {
             )
             .await
             {
-                Ok(_) => debug!("Queue handler started successfully"),
-                Err(e) => error!("Queue handler exited with error: {}", e),
+                Ok(_) => debug!("Service Reloader started successfully"),
+                Err(e) => error!("Service Reloader exited with error: {}", e),
             }
         });
 

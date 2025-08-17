@@ -1,6 +1,6 @@
 use crate::{
     error::AppError,
-    reloader::{self, ReloadConfig, ServiceReloader},
+    reloader::{ReloadConfig, ServiceReloader},
 };
 use opsml_cards::ServiceCard;
 use opsml_state::app_state;
@@ -138,6 +138,16 @@ impl AppState {
             Ok(queue.bind(py))
         } else {
             Err(AppError::QueueNotFoundError)
+        }
+    }
+
+    #[getter]
+    pub fn has_reloader<'py>(&self) -> bool {
+        // return initialized if reloader is present
+        if let Some(reloader) = &self.reloader {
+            *reloader.initialized.read().unwrap()
+        } else {
+            false
         }
     }
 }

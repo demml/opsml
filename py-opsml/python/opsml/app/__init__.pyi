@@ -104,3 +104,7 @@ class AppState:
     @property
     def queue(self) -> ScouterQueue:
         """Get the Scouter queue."""
+
+    @property
+    def has_reloader(self) -> bool:
+        """Check if the AppState has a reloader initialized."""
