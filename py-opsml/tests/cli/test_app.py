@@ -18,8 +18,9 @@ from opsml.scouter import (
     CustomMetric,
 )
 import opsml.scouter
+from opsml.scouter.types import CommonCrons
 from opsml.scouter.alert import AlertThreshold
-from opsml.app import AppState
+from opsml.app import AppState, ReloadConfig
 
 
 from opsml import (  # type: ignore
@@ -113,11 +114,14 @@ def test_pyproject_app(
         app = AppState.from_path(
             path=opsml_app / "app1",
             transport_config=opsml.scouter.HTTPConfig(),  # this will be mocked
+            reload_config=ReloadConfig(cron=CommonCrons.Every1Minute.cron),
         )
 
         assert app.queue is not None
 
         assert isinstance(app.queue.transport_config, MockConfig)
+
+        assert app.has_reloader is True
 
         ## delete the opsml_app and lock file
         shutil.rmtree(opsml_app)
