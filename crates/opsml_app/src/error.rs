@@ -1,3 +1,4 @@
+use crate::reloader::ReloadEvent;
 use opsml_cards::error::CardError;
 use opsml_registry::error::RegistryError;
 use opsml_types::error::TypeError;
@@ -25,6 +26,9 @@ pub enum AppError {
     #[error(transparent)]
     RegistryError(#[from] RegistryError),
 
+    #[error(transparent)]
+    SendError(#[from] tokio::sync::mpsc::error::SendError<ReloadEvent>),
+
     #[error("No queue set for application")]
     QueueNotFoundError,
 
@@ -34,14 +38,20 @@ pub enum AppError {
     #[error("Failed to parse cron schedule for the next run")]
     GetNextRunError,
 
-    #[error("Invalid cron schedule")]
-    InvalidCronSchedule,
+    #[error("No upcoming schedule found")]
+    NoUpcomingSchedule,
 
     #[error("Failed to signal shutdown")]
     SignalCompletionError,
 
     #[error("Service card not found")]
     CardNotFound,
+
+    #[error(transparent)]
+    InvalidCron(#[from] cron::error::Error),
+
+    #[error("Failed to initialize reloader")]
+    FailedToInitializeReloader,
 }
 
 impl From<AppError> for PyErr {

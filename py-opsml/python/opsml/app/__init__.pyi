@@ -8,6 +8,16 @@ from ..card import ServiceCard
 from ..scouter.client import HTTPConfig
 from ..scouter.queue import KafkaConfig, RabbitMQConfig, RedisConfig, ScouterQueue
 
+class ReloadConfig:
+    def __init__(self, cron: str): ...
+    @property
+    def cron(self) -> str:
+        """Get the cron expression for the reload schedule."""
+
+    @cron.setter
+    def cron(self, value: str):
+        """Set the cron expression for the reload schedule."""
+
 class AppState:
     """OpsML application state object. This is typically used in API
     workflows where you wish create a shared state to share among all requests.
@@ -43,6 +53,7 @@ class AppState:
                 HTTPConfig,
             ]
         ] = None,
+        reload_config: Optional[ReloadConfig] = None,
         load_kwargs: Optional[Dict[str, Dict[str, Any]]] = None,
     ) -> "AppState":
         """

@@ -37,7 +37,7 @@ pub fn download_service(args: &DownloadCard) -> Result<(), CliError> {
     // convert to query args
     let query_args = args.into_query_args(RegistryType::Service)?;
 
-    download_service_from_registry(&query_args, args.write_path())?;
+    download_service_from_registry(&query_args, &args.write_path())?;
 
     Ok(())
 }

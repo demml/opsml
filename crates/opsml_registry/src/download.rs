@@ -87,7 +87,7 @@ pub fn download_card_from_registry(
 
 pub fn download_service_from_registry(
     args: &CardQueryArgs,
-    write_path: PathBuf,
+    write_path: &Path,
 ) -> Result<(), RegistryError> {
     // get registry
     let registry = OpsmlRegistry::new(args.registry_type.clone())?;
@@ -96,21 +96,21 @@ pub fn download_service_from_registry(
 
     // delete directory if it exists
     if write_path.exists() {
-        std::fs::remove_dir_all(&write_path)?;
+        std::fs::remove_dir_all(write_path)?;
     }
 
     // download service card card
-    download_card_artifacts(&key, &write_path)?;
+    download_card_artifacts(&key, write_path)?;
 
     // read Card.json file
-    let service = ServiceCard::load_service_json(&write_path).map_err(RegistryError::CardError)?;
+    let service = ServiceCard::load_service_json(write_path).map_err(RegistryError::CardError)?;
 
     let service_name = format!("{}/{}/v{}", service.space, service.name, service.version);
 
     println!(
         "Downloading service card for card {} to path {}",
         Colorize::purple(&service_name),
-        Colorize::green(&write_path.to_str().unwrap())
+        Colorize::green(write_path.to_str().unwrap())
     );
 
     let mut mapping = ServiceCardMapping::new();
@@ -133,7 +133,7 @@ pub fn download_service_from_registry(
             let key = registry.get_key(&query_args)?;
             let card_path = write_path
                 .strip_prefix(&current_dir)
-                .unwrap_or(&write_path)
+                .unwrap_or(write_path)
                 .join(&card.alias);
 
             // Download card artifacts
