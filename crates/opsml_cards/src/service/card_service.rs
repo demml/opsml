@@ -535,6 +535,10 @@ impl ServiceCard {
         *self = new_service;
         Ok(())
     }
+
+    pub fn get_space_name_version(&self) -> (String, String, String) {
+        (self.space.clone(), self.name.clone(), self.version.clone())
+    }
 }
 
 impl ServiceCard {

@@ -73,7 +73,7 @@ impl AppState {
         load_kwargs: Option<&Bound<'_, PyDict>>,
     ) -> Result<Self, AppError> {
         let path = path.unwrap_or_else(|| PathBuf::from(SaveName::ServiceCard));
-        let service_card = ServiceCard::from_path_rs(py, &path, load_kwargs)?;
+        let service = Py::new(py, ServiceCard::from_path_rs(py, &path, load_kwargs)?)?;
         let card_map = load_card_map(&path).map_err(|e| {
             error!("Failed to load card map from: {:?}", e);
             e
@@ -98,29 +98,32 @@ impl AppState {
             None
         };
 
-        //let reloader = if reload_config.is_some() {
-        //    let config = reload_config.unwrap();
-        //    let reloader = ServiceReloader::new(
-        //        service_card.space.clone(),
-        //        service_card.name.clone(),
-        //        service_card.version.clone(),
-        //        config,
-        //    )?;
-        //    reloader.start_background_queue(
-        //        py,
-        //        app_state().stop_rx.clone(),
-        //        app_state().runtime.clone(),
-        //        app_state().last_check.clone(),
-        //    )?;
-        //    Some(reloader)
-        //} else {
-        //    None
-        //};
+        // Create the service reloader if reload config is provided
+        let reloader = match reload_config {
+            Some(config) => {
+                let (reloader, event_rx, shutdown_rx) = ServiceReloader::new();
+                let initialized = reloader.initialized.clone();
+                let _start = ServiceReloader::start_reloader(
+                    app_state().runtime.clone(),
+                    service.clone_ref(py),
+                    config,
+                    event_rx,
+                    shutdown_rx,
+                    initialized,
+                )?;
+
+                // check for background initialization
+                reloader.init()?;
+
+                Some(reloader)
+            }
+            None => None,
+        };
 
         Ok(AppState {
-            service: Py::new(py, service_card)?,
+            service,
             queue,
-            reloader: None,
+            reloader,
         })
     }
 
