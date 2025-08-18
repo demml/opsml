@@ -348,6 +348,7 @@ pub enum SaveName {
     ServiceCard,
     CardMap,
     Figures,
+    ServiceReload,
 }
 
 #[pymethods]
@@ -383,6 +384,7 @@ impl SaveName {
             "service" => Some(SaveName::ServiceCard),
             "card_map" => Some(SaveName::CardMap),
             "figures" => Some(SaveName::Figures),
+            "service_reload" => Some(SaveName::ServiceReload),
             _ => None,
         }
     }
@@ -417,6 +419,7 @@ impl SaveName {
             SaveName::ServiceCard => "service",
             SaveName::CardMap => "card_map",
             SaveName::Figures => "figures",
+            SaveName::ServiceReload => "service_reload",
         }
     }
 
@@ -462,6 +465,7 @@ impl AsRef<Path> for SaveName {
             SaveName::ServiceCard => Path::new("service"),
             SaveName::CardMap => Path::new("card_map"),
             SaveName::Figures => Path::new("figures"),
+            SaveName::ServiceReload => Path::new("service_reload"),
         }
     }
 }

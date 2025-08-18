@@ -2,13 +2,14 @@ use crate::{
     error::AppError,
     reloader::{ReloadConfig, ServiceReloader},
 };
-use opsml_cards::ServiceCard;
+use opsml_cards::{card_service::ServiceInfo, ServiceCard};
 use opsml_state::app_state;
 use opsml_types::{cards::ServiceCardMapping, SaveName, Suffix};
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use scouter_client::ScouterQueue;
 use std::path::{Path, PathBuf};
+use std::sync::{Arc, RwLock};
 use tracing::{debug, error};
 
 /// Load a card map from path
@@ -73,10 +74,13 @@ impl AppState {
         load_kwargs: Option<&Bound<'_, PyDict>>,
     ) -> Result<Self, AppError> {
         let path = path.unwrap_or_else(|| PathBuf::from(SaveName::ServiceCard));
+
+        // Load the service card from path
         let service = Py::new(py, ServiceCard::from_path_rs(py, &path, load_kwargs)?)?;
-        let card_map = load_card_map(&path).map_err(|e| {
+
+        // Get the drift map in cap of drift profiles
+        let card_map = load_card_map(&path).inspect_err(|e| {
             error!("Failed to load card map from: {:?}", e);
-            e
         })?;
 
         let queue = if !card_map.drift_paths.is_empty() {
@@ -101,7 +105,13 @@ impl AppState {
         // Create the service reloader if reload config is provided
         let reloader = match reload_config {
             Some(config) => {
-                let (reloader, event_rx, shutdown_rx) = ServiceReloader::new();
+                let service_info = Arc::new(RwLock::new(
+                    service
+                        .bind(py)
+                        .call_method0("service_info")?
+                        .extract::<ServiceInfo>()?,
+                ));
+                let (reloader, event_rx, shutdown_rx) = ServiceReloader::new(service_info.clone());
                 let initialized = reloader.initialized.clone();
                 let _start = ServiceReloader::start_reloader(
                     app_state().runtime.clone(),
@@ -110,6 +120,7 @@ impl AppState {
                     event_rx,
                     shutdown_rx,
                     initialized,
+                    service_info,
                 )?;
 
                 // check for background initialization
@@ -148,6 +159,14 @@ impl AppState {
             *reloader.initialized.read().unwrap()
         } else {
             false
+        }
+    }
+
+    pub fn reload(&self) -> Result<(), AppError> {
+        if let Some(reloader) = &self.reloader {
+            reloader.reload()
+        } else {
+            Err(AppError::ReloaderNotFound)
         }
     }
 }
