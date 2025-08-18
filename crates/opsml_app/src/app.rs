@@ -20,6 +20,86 @@ fn load_card_map(path: &Path) -> Result<ServiceCardMapping, AppError> {
     Ok(mapping)
 }
 
+/// Helper for loading a scouter queue
+/// This function will create a ScouterQueue from the card map and transport config if they exist
+/// # Arguments
+/// * `py` - The Python interpreter instance
+/// * `card_map` - The service card mapping
+/// * `transport_config` - The transport config for the scouter queue
+/// # Returns
+/// * `Some(Py<ScouterQueue>)` if the scouter queue was created successfully
+/// * `None` if the scouter queue could not be created
+pub fn create_scouter_queue(
+    py: Python<'_>,
+    card_map: ServiceCardMapping,
+    transport_config: Option<&Bound<'_, PyAny>>,
+) -> Result<Option<Py<ScouterQueue>>, AppError> {
+    let queue = if card_map.drift_paths.is_empty() {
+        debug!("No drift paths or transport config found in card map");
+        None
+    } else if let Some(config) = transport_config {
+        debug!("Drift paths found in card map, creating ScouterQueue");
+        let rt = app_state().runtime.clone();
+        let scouter_queue = ScouterQueue::from_path_rs(py, card_map.drift_paths, config, rt)?;
+        Some(Py::new(py, scouter_queue)?)
+    } else {
+        debug!("No transport config found in card map");
+        None
+    };
+
+    Ok(queue)
+}
+
+/// Creates a  ServiceReloader from a ServiceCard and optional ReloadConfig.
+/// # Arguments
+/// * `py` - The Python interpreter instance
+/// * `service` - The ServiceCard to use for the reloader
+/// * `reload_config` - The optional reload config to use for the reloader
+/// # Returns
+/// * `Some(ServiceReloader)` if the reloader was created successfully
+/// * `None` if the reloader could not be created
+pub fn create_service_reloader(
+    py: Python<'_>,
+    service: Py<ServiceCard>,
+    reload_config: Option<ReloadConfig>,
+) -> Result<Option<ServiceReloader>, AppError> {
+    match reload_config {
+        Some(config) => {
+            let service_info = Arc::new(RwLock::new(
+                service
+                    .bind(py)
+                    .call_method0("service_info")?
+                    .extract::<ServiceInfo>()?,
+            ));
+            let (reloader, event_rx, shutdown_rx) = ServiceReloader::new(service_info.clone());
+            let initialized = reloader.initialized.clone();
+            ServiceReloader::start_reloader(
+                app_state().runtime.clone(),
+                service.clone_ref(py),
+                config,
+                event_rx,
+                shutdown_rx,
+                initialized,
+                service_info,
+            )?;
+
+            // check for background initialization
+            reloader.init()?;
+
+            Ok(Some(reloader))
+        }
+        None => Ok(None),
+    }
+}
+
+/// Helper for managing application state. Intended to be used with api frameworks like FastAPI
+/// where an api app can be created with a lifespan and internal application state that is available
+/// to all request handlers. The OpsML application state contains:
+/// - A ServiceCard that contains one or more models or prompts
+/// - An optional ScouterQueue for real-time model monitoring. This is loaded from
+/// the card map that is created when the ServiceCard is loaded
+/// - An optional reloader that is responsible for reloading the ServiceCard and its associated
+/// resources when changes are detected
 #[pyclass]
 #[derive(Debug)]
 pub struct AppState {
@@ -61,9 +141,11 @@ impl AppState {
     /// # Arguments
     /// * `py` - Python interpreter state
     /// * `path` - The root path to the application directory containing files
-    /// * `load_kwargs` - Load kwargs to pass to the ServiceCard loader
-    /// * `transport_config` = The transport config to use with the ScouterQueue. If not provided,
+    /// * `transport_config` - The transport config to use with the ScouterQueue. If not provided,
     /// no queue will be created.
+    /// * `reload_config` - The reload config to use with the ServiceReloader. If not provided,
+    /// no reloader will be created.
+    /// * `load_kwargs` - Load kwargs to pass to the ServiceCard loader
     #[staticmethod]
     #[pyo3(signature = (path=None, transport_config=None, reload_config=None, load_kwargs=None))]
     pub fn from_path(
@@ -83,53 +165,10 @@ impl AppState {
             error!("Failed to load card map from: {:?}", e);
         })?;
 
-        let queue = if !card_map.drift_paths.is_empty() {
-            debug!("Drift paths found in card map, creating ScouterQueue");
-            match transport_config {
-                Some(config) => {
-                    let rt = app_state().runtime.clone();
-                    let scouter_queue =
-                        ScouterQueue::from_path_rs(py, card_map.drift_paths, config, rt)?;
-                    Some(Py::new(py, scouter_queue)?)
-                }
-                None => {
-                    debug!("No transport config found in card map");
-                    None
-                }
-            }
-        } else {
-            debug!("No drift paths or transport config found in card map");
-            None
-        };
+        let queue = create_scouter_queue(py, card_map, transport_config)?;
 
         // Create the service reloader if reload config is provided
-        let reloader = match reload_config {
-            Some(config) => {
-                let service_info = Arc::new(RwLock::new(
-                    service
-                        .bind(py)
-                        .call_method0("service_info")?
-                        .extract::<ServiceInfo>()?,
-                ));
-                let (reloader, event_rx, shutdown_rx) = ServiceReloader::new(service_info.clone());
-                let initialized = reloader.initialized.clone();
-                ServiceReloader::start_reloader(
-                    app_state().runtime.clone(),
-                    service.clone_ref(py),
-                    config,
-                    event_rx,
-                    shutdown_rx,
-                    initialized,
-                    service_info,
-                )?;
-
-                // check for background initialization
-                reloader.init()?;
-
-                Some(reloader)
-            }
-            None => None,
-        };
+        let reloader = create_service_reloader(py, service.clone_ref(py), reload_config)?;
 
         Ok(AppState {
             service,
