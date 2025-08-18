@@ -16,7 +16,6 @@ use std::path::Path;
 use std::path::PathBuf;
 use std::sync::Arc;
 use std::sync::RwLock;
-use std::sync::RwLockReadGuard;
 use tokio::runtime::Runtime;
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
@@ -25,10 +24,10 @@ use tokio::time::{sleep, Duration};
 use tracing::{debug, error, info, instrument};
 
 /// Helper for listing cards
-pub fn list_cards(args: &CardQueryArgs) -> Result<Vec<CardRecord>, AppError> {
+pub async fn list_cards(args: &CardQueryArgs) -> Result<Vec<CardRecord>, AppError> {
     // get registry
     let registry = OpsmlRegistry::new(args.registry_type.clone())?;
-    let cards = registry.list_cards(args)?;
+    let cards = registry.list_cards_async(args).await?;
     println!("Found {} cards for query: {:?}", cards.len(), args);
     Ok(cards)
 }
@@ -100,7 +99,7 @@ impl ReloadConfig {
     }
 }
 
-fn reload_task(service_info: RwLockReadGuard<ServiceInfo>) -> Result<Option<PathBuf>, AppError> {
+async fn reload_task(service_info: ServiceInfo) -> Result<Option<PathBuf>, AppError> {
     // list latest service card. If different version:
     // 1. Download new artifacts (including drift profile, to a new directory)
     // 2. Reload ServiceCard
@@ -116,7 +115,8 @@ fn reload_task(service_info: RwLockReadGuard<ServiceInfo>) -> Result<Option<Path
     };
 
     println!("calling list_cards");
-    let latest_card = list_cards(&query_args)?
+    let latest_card = list_cards(&query_args)
+        .await?
         .into_iter()
         .next()
         .ok_or(AppError::CardNotFound)?;
@@ -194,8 +194,11 @@ async fn start_background_reload_process(
                         Some(ReloadEvent::ForceReload) => {
                             info!("Force reload requested");
 
-                            let service_info_read = service_info.read().unwrap();
-                            let reload_result = reload_task(service_info_read);
+                            let service_info_cloned = {
+                                let guard = service_info.read().unwrap();
+                                guard.clone()
+                            };
+                            let reload_result = reload_task(service_info_cloned).await;
 
                             match reload_result {
                                 Ok(Some(write_path)) => {
