@@ -4,8 +4,9 @@ use chrono::DateTime;
 use chrono::Utc;
 use opsml_cards::card_service::ServiceInfo;
 use opsml_cards::ServiceCard;
-use opsml_registry::base::OpsmlRegistry;
+use opsml_registry::async_base::AsyncOpsmlRegistry;
 use opsml_registry::download::download_service_from_registry;
+use opsml_registry::registry;
 use opsml_types::contracts::CardQueryArgs;
 use opsml_types::SaveName;
 use opsml_types::{contracts::CardRecord, RegistryType};
@@ -24,12 +25,19 @@ use tokio::time::{sleep, Duration};
 use tracing::{debug, error, info, instrument};
 
 /// Helper for listing cards
-pub async fn list_cards(args: &CardQueryArgs) -> Result<Vec<CardRecord>, AppError> {
+pub async fn get_recent_card(
+    args: &CardQueryArgs,
+    registry: &AsyncOpsmlRegistry,
+) -> Result<CardRecord, AppError> {
     // get registry
-    let registry = OpsmlRegistry::new(args.registry_type.clone())?;
-    let cards = registry.list_cards_async(args).await?;
-    println!("Found {} cards for query: {:?}", cards.len(), args);
-    Ok(cards)
+
+    let card = registry
+        .list_cards(args)
+        .await?
+        .into_iter()
+        .next()
+        .ok_or(AppError::CardNotFound)?;
+    Ok(card)
 }
 
 /// Checks if the current version is the latest version
@@ -114,12 +122,8 @@ async fn reload_task(service_info: ServiceInfo) -> Result<Option<PathBuf>, AppEr
         ..Default::default()
     };
 
-    println!("calling list_cards");
-    let latest_card = list_cards(&query_args)
-        .await?
-        .into_iter()
-        .next()
-        .ok_or(AppError::CardNotFound)?;
+    let registry = AsyncOpsmlRegistry::new(query_args.registry_type.clone()).await?;
+    let latest_card = get_recent_card(&query_args, &registry).await?;
 
     println!(
         "Latest service card found: {}:{}:{}",
@@ -143,7 +147,7 @@ async fn reload_task(service_info: ServiceInfo) -> Result<Option<PathBuf>, AppEr
             .as_path()
             .join(SaveName::ServiceReload);
 
-        download_service_from_registry(&query_args, &write_path)?;
+        download_service_from_registry(&query_args, &write_path, &registry)?;
 
         return Ok(Some(write_path));
     }

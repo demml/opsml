@@ -43,10 +43,7 @@ impl AsyncOpsmlRegistry {
     }
 
     #[instrument(skip_all)]
-    pub async fn list_cards_async(
-        &self,
-        args: &CardQueryArgs,
-    ) -> Result<Vec<CardRecord>, RegistryError> {
+    pub async fn list_cards(&self, args: &CardQueryArgs) -> Result<Vec<CardRecord>, RegistryError> {
         let query_string = serde_qs::to_string(&args)?;
 
         let response = self
