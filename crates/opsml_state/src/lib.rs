@@ -11,7 +11,6 @@ use std::sync::Arc;
 use std::sync::OnceLock;
 use std::sync::RwLock;
 use tokio::runtime::Runtime;
-use tokio::sync::OnceCell;
 use tracing::debug;
 
 pub struct OpsmlState {
@@ -160,7 +159,7 @@ fn build_async_client() -> Arc<OpsmlApiAsyncClient> {
         .storage_settings()
         .expect("Failed to get storage settings");
 
-    // Initialize API client
+    // Initialize async API client - need an async block here
     let api_client = state
         .block_on(async { build_async_api_client(&settings).await })
         .expect("Failed to create asyc api client");
