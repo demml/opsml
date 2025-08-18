@@ -52,6 +52,9 @@ pub enum AppError {
 
     #[error("Failed to initialize reloader")]
     FailedToInitializeReloader,
+
+    #[error("Reloader not found")]
+    ReloaderNotFound,
 }
 
 impl From<AppError> for PyErr {

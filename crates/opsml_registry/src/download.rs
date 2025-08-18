@@ -64,7 +64,7 @@ pub fn download_card_from_registry(
     // 3. For each card, get the ArtifactKey, download the artifacts, and decrypt them
     // 4. Save the artifacts to the specified directory
 
-    let key = registry.get_key(&args)?;
+    let key = registry.get_key(args)?;
 
     let names: Vec<&str> = key
         .storage_key
@@ -77,7 +77,7 @@ pub fn download_card_from_registry(
     println!(
         "Downloading card artifacts for card {} to path {:?}",
         Colorize::purple(&card_name),
-        Colorize::green(&write_path.to_str().unwrap())
+        Colorize::green(write_path.to_str().unwrap())
     );
 
     download_card_artifacts(&key, &write_path)?;
@@ -92,7 +92,7 @@ pub fn download_service_from_registry(
     // get registry
     let registry = OpsmlRegistry::new(args.registry_type.clone())?;
 
-    let key = registry.get_key(&args)?;
+    let key = registry.get_key(args)?;
 
     // delete directory if it exists
     if write_path.exists() {

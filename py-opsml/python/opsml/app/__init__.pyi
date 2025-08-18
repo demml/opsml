@@ -108,3 +108,6 @@ class AppState:
     @property
     def has_reloader(self) -> bool:
         """Check if the AppState has a reloader initialized."""
+
+    def reload(self) -> None:
+        """Forces the `ServiceReloader` to reload the service."""

@@ -2,10 +2,12 @@ use crate::error::AppError;
 use crate::utils::get_next_cron_timestamp;
 use chrono::DateTime;
 use chrono::Utc;
+use opsml_cards::card_service::ServiceInfo;
 use opsml_cards::ServiceCard;
 use opsml_registry::base::OpsmlRegistry;
 use opsml_registry::download::download_service_from_registry;
 use opsml_types::contracts::CardQueryArgs;
+use opsml_types::SaveName;
 use opsml_types::{contracts::CardRecord, RegistryType};
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
@@ -13,6 +15,7 @@ use pyo3::types::PyDict;
 use std::path::Path;
 use std::sync::Arc;
 use std::sync::RwLock;
+use std::sync::RwLockReadGuard;
 use tokio::runtime::Runtime;
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
@@ -95,20 +98,19 @@ impl ReloadConfig {
     }
 }
 
-fn reload_task(py: Python<'_>, service: Py<ServiceCard>) -> Result<(), AppError> {
+fn reload_task(
+    py: Python<'_>,
+    service: Py<ServiceCard>,
+    service_info: RwLockReadGuard<ServiceInfo>,
+) -> Result<Option<String>, AppError> {
     // list latest service card. If different version:
     // 1. Download new artifacts (including drift profile, to a new directory)
     // 2. Reload ServiceCard
     let bound_service = service.bind(py);
 
-    // get base kwargs from service cards
-    let args = bound_service
-        .call_method0("get_space_name_version")?
-        .extract::<(String, String, String)>()?;
-
     let mut query_args = CardQueryArgs {
-        space: Some(args.0.to_string()),
-        name: Some(args.1.to_string()),
+        space: Some(service_info.space.clone()),
+        name: Some(service_info.name.clone()),
         version: None,
         registry_type: RegistryType::Service,
         sort_by_timestamp: Some(true),
@@ -121,26 +123,32 @@ fn reload_task(py: Python<'_>, service: Py<ServiceCard>) -> Result<(), AppError>
         .next()
         .ok_or(AppError::CardNotFound)?;
 
-    if !is_latest(&args.2, latest_card.version()) {
+    if !is_latest(&service_info.version, latest_card.version()) {
         // If the latest card is not the same as the current version, we need to reload
         info!(
             "Detected new version, reloading service {}:{}:{}",
-            args.0, args.1, args.2
+            service_info.space,
+            service_info.name,
+            latest_card.version()
         );
-        query_args.version = Some(latest_card.version().to_string());
+        let latest_version = latest_card.version().to_string();
+        query_args.version = Some(latest_version.clone());
 
-        let write_path = std::env::current_dir()?.as_path().to_path_buf();
+        let write_path = std::env::current_dir()?
+            .as_path()
+            .join(SaveName::ServiceReload);
 
         download_service_from_registry(&query_args, &write_path)?;
 
         load_from_path(bound_service, &write_path, None)?;
 
-        return Ok(());
+        return Ok(Some(latest_version));
     }
 
-    Ok(())
+    Ok(None)
 }
 
+#[allow(clippy::too_many_arguments)]
 async fn start_background_reload_process(
     service: Py<ServiceCard>,
     mut event_rx: mpsc::UnboundedReceiver<ReloadEvent>,
@@ -149,6 +157,7 @@ async fn start_background_reload_process(
     scheduled_reload: Arc<RwLock<DateTime<Utc>>>,
     config: ReloadConfig,
     initialized: Arc<RwLock<bool>>,
+    service_info: Arc<RwLock<ServiceInfo>>,
 ) -> Result<(), AppError> {
     let cron = config.cron;
 
@@ -157,12 +166,17 @@ async fn start_background_reload_process(
             tokio::select! {
                 _ = sleep(Duration::from_secs(2)) => {
 
+
                     if is_past_scheduled_reload(&scheduled_reload.read().unwrap()) {
-                        // Acquire the GIL and bind the service for Python interaction
+
                         Python::with_gil(|py| {
-                            let _reloaded = reload_task(py, service.clone_ref(py));
-                            // Optionally: Call reload_task or interact with the bound_service here
+                            let service_info_read = service_info.read().unwrap();
+                            if let Ok(Some(latest_version)) = reload_task(py, service.clone_ref(py), service_info_read) {
+                                let mut service_info_write = service_info.write().unwrap();
+                                service_info_write.version = latest_version;
+                            }
                         });
+
                         let mut reload_timestamp = scheduled_reload.write().unwrap();
                         *reload_timestamp = get_next_cron_timestamp(&cron)?;
                     }
@@ -177,24 +191,27 @@ async fn start_background_reload_process(
                                 debug!("Reloader initialized successfully");
                             }
                             Err(e) => {
-                                error!("Failed to write to initialized lock for reloader: {}", e);
+                                    error!("Failed to write to initialized lock for reloader: {}", e);
+                                }
                             }
-                        }
                         },
                         Some(ReloadEvent::ForceReload) => {
                             info!("Force reload requested");
+                            println!("Force reload requested");
                             Python::with_gil(|py| {
-                                if let Err(e) = reload_task(py, service.clone_ref(py)) {
-                                    error!("Force reload failed: {:?}", e);
+                                let service_info_read = service_info.read().unwrap();
+                                if let Ok(Some(latest_version)) = reload_task(py, service.clone_ref(py), service_info_read) {
+                                    let mut service_info_write = service_info.write().unwrap();
+                                    service_info_write.version = latest_version;
                                 }
                             });
-                            // Update next scheduled time after force reload
+
                             let mut reload_timestamp = scheduled_reload.write().unwrap();
                             *reload_timestamp = get_next_cron_timestamp(&cron)?;
-                        },
+                            },
                         None => {
-                            debug!("Event channel closed");
-                            break;
+                                debug!("Event channel closed");
+                                break;
                         }
                     }
                 },
@@ -221,11 +238,14 @@ pub struct ServiceReloader {
     tx: UnboundedSender<ReloadEvent>,
     shutdown_tx: Option<oneshot::Sender<()>>,
     pub initialized: Arc<RwLock<bool>>,
+    pub service_info: Arc<RwLock<ServiceInfo>>,
 }
 
 impl ServiceReloader {
     #[instrument(skip_all)]
-    pub fn new() -> (Self, UnboundedReceiver<ReloadEvent>, oneshot::Receiver<()>) {
+    pub fn new(
+        service_info: Arc<RwLock<ServiceInfo>>,
+    ) -> (Self, UnboundedReceiver<ReloadEvent>, oneshot::Receiver<()>) {
         debug!("Creating unbounded QueueBus");
         let (tx, rx) = mpsc::unbounded_channel();
         let (shutdown_tx, shutdown_rx) = oneshot::channel();
@@ -236,6 +256,7 @@ impl ServiceReloader {
                 tx,
                 shutdown_tx: Some(shutdown_tx),
                 initialized,
+                service_info,
             },
             rx,
             shutdown_rx,
@@ -249,6 +270,7 @@ impl ServiceReloader {
         event_rx: mpsc::UnboundedReceiver<ReloadEvent>,
         shutdown_rx: oneshot::Receiver<()>,
         initialized: Arc<RwLock<bool>>,
+        service_info: Arc<RwLock<ServiceInfo>>,
     ) -> Result<(), AppError> {
         let reloader_runtime = shared_runtime.clone();
         let scheduled_reload = Arc::new(RwLock::new(get_next_cron_timestamp(&config.cron)?));
@@ -262,6 +284,7 @@ impl ServiceReloader {
                 scheduled_reload,
                 config.clone(),
                 initialized,
+                service_info,
             )
             .await
             {
@@ -310,6 +333,16 @@ impl ServiceReloader {
             debug!("Initializing Reloader");
             self.publish(event)?;
         }
+        Ok(())
+    }
+
+    pub fn reload(&self) -> Result<(), AppError> {
+        if !self.is_initialized() {
+            return Err(AppError::ReloaderNotFound);
+        }
+
+        debug!("Reloading service via reloader");
+        self.publish(ReloadEvent::ForceReload)?;
         Ok(())
     }
     // create function that spawns a task and reloads the service card

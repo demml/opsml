@@ -123,6 +123,12 @@ def test_pyproject_app(
 
         assert app.has_reloader is True
 
+        # test reload function
+        app.reload()
+
+        ## Add logic to create a new service card to trigger reload
+
         ## delete the opsml_app and lock file
         shutil.rmtree(opsml_app)
         os.remove(lock_file)
+        a

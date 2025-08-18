@@ -28,6 +28,28 @@ type PyBoundAny<'py> = Bound<'py, PyAny>;
 type OptionalPyBound<'py> = Option<PyBoundAny<'py>>;
 type ExtractedKwargs<'py> = (OptionalPyBound<'py>, OptionalPyBound<'py>);
 
+#[derive(PartialEq, Debug, Clone)]
+#[pyclass(eq)]
+pub struct ServiceInfo {
+    pub space: String,
+    pub name: String,
+    pub version: String,
+}
+
+impl ServiceInfo {
+    pub fn update(
+        &mut self,
+        space: String,
+        name: String,
+        version: String,
+    ) -> Result<(), CardError> {
+        self.space = space;
+        self.name = name;
+        self.version = version;
+        Ok(())
+    }
+}
+
 #[pyclass(eq)]
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
 pub struct Card {
@@ -536,8 +558,14 @@ impl ServiceCard {
         Ok(())
     }
 
-    pub fn get_space_name_version(&self) -> (String, String, String) {
-        (self.space.clone(), self.name.clone(), self.version.clone())
+    /// Helper for getting space, name and version
+    /// associated with the service
+    pub fn service_info(&self) -> ServiceInfo {
+        ServiceInfo {
+            space: self.space.clone(),
+            name: self.name.clone(),
+            version: self.version.clone(),
+        }
     }
 }
 
