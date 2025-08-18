@@ -598,16 +598,16 @@ pub fn build_api_client(settings: &OpsmlStorageSettings) -> Result<OpsmlApiClien
     OpsmlApiClient::new(url, &client)
 }
 
-pub fn build_async_api_client(
+pub async fn build_async_api_client(
     settings: &OpsmlStorageSettings,
-) -> Result<OpsmlApiClient, ApiClientError> {
-    let client = build_http_client(&settings.api_settings)?;
+) -> Result<OpsmlApiAsyncClient, ApiClientError> {
+    let client = build_async_http_client(&settings.api_settings)?;
 
     let url = format!(
         "{}/{}",
         settings.api_settings.base_url, settings.api_settings.opsml_dir
     );
-    OpsmlApiClient::new(url, &client)
+    OpsmlApiAsyncClient::new(url, &client).await
 }
 
 #[cfg(test)]
