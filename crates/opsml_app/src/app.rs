@@ -113,7 +113,7 @@ impl AppState {
                 ));
                 let (reloader, event_rx, shutdown_rx) = ServiceReloader::new(service_info.clone());
                 let initialized = reloader.initialized.clone();
-                let _start = ServiceReloader::start_reloader(
+                ServiceReloader::start_reloader(
                     app_state().runtime.clone(),
                     service.clone_ref(py),
                     config,
@@ -153,7 +153,7 @@ impl AppState {
     }
 
     #[getter]
-    pub fn has_reloader<'py>(&self) -> bool {
+    pub fn has_reloader(&self) -> bool {
         // return initialized if reloader is present
         if let Some(reloader) = &self.reloader {
             *reloader.initialized.read().unwrap()
