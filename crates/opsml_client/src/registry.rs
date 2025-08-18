@@ -19,24 +19,20 @@ pub struct ErrorResponse {
     error: String,
 }
 
-// TODO: Add trait for client and server registry
 #[derive(Debug, Clone)]
 pub struct ClientRegistry {
     registry_type: RegistryType,
     pub api_client: Arc<OpsmlApiClient>,
-    pub async_api_client: Arc<OpsmlApiAsyncClient>,
 }
 
 impl ClientRegistry {
     pub fn new(
         registry_type: RegistryType,
         api_client: Arc<OpsmlApiClient>,
-        async_api_client: Arc<OpsmlApiAsyncClient>,
     ) -> Result<Self, RegistryError> {
         Ok(Self {
             registry_type,
             api_client,
-            async_api_client,
         })
     }
 
@@ -67,33 +63,6 @@ impl ClientRegistry {
 
         response
             .json::<Vec<CardRecord>>()
-            .map_err(RegistryError::RequestError)
-    }
-
-    #[instrument(skip_all)]
-    pub async fn list_cards_async(
-        &self,
-        args: &CardQueryArgs,
-    ) -> Result<Vec<CardRecord>, RegistryError> {
-        let query_string = serde_qs::to_string(&args)?;
-
-        let response = self
-            .async_api_client
-            .request(
-                Routes::CardList,
-                RequestType::Get,
-                None,
-                Some(query_string),
-                None,
-            )
-            .await
-            .inspect_err(|e| {
-                error!("Failed to list cards {}", e);
-            })?;
-
-        response
-            .json::<Vec<CardRecord>>()
-            .await
             .map_err(RegistryError::RequestError)
     }
 
