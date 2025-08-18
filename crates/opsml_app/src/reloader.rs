@@ -13,6 +13,7 @@ use pyo3::prelude::*;
 use pyo3::types::PyDict;
 
 use std::path::Path;
+use std::path::PathBuf;
 use std::sync::Arc;
 use std::sync::RwLock;
 use std::sync::RwLockReadGuard;
@@ -28,6 +29,7 @@ pub fn list_cards(args: &CardQueryArgs) -> Result<Vec<CardRecord>, AppError> {
     // get registry
     let registry = OpsmlRegistry::new(args.registry_type.clone())?;
     let cards = registry.list_cards(args)?;
+    println!("Found {} cards for query: {:?}", cards.len(), args);
     Ok(cards)
 }
 
@@ -98,15 +100,10 @@ impl ReloadConfig {
     }
 }
 
-fn reload_task(
-    py: Python<'_>,
-    service: Py<ServiceCard>,
-    service_info: RwLockReadGuard<ServiceInfo>,
-) -> Result<Option<String>, AppError> {
+fn reload_task(service_info: RwLockReadGuard<ServiceInfo>) -> Result<Option<PathBuf>, AppError> {
     // list latest service card. If different version:
     // 1. Download new artifacts (including drift profile, to a new directory)
     // 2. Reload ServiceCard
-    let bound_service = service.bind(py);
 
     let mut query_args = CardQueryArgs {
         space: Some(service_info.space.clone()),
@@ -118,10 +115,18 @@ fn reload_task(
         ..Default::default()
     };
 
+    println!("calling list_cards");
     let latest_card = list_cards(&query_args)?
         .into_iter()
         .next()
         .ok_or(AppError::CardNotFound)?;
+
+    println!(
+        "Latest service card found: {}:{}:{}",
+        service_info.space,
+        service_info.name,
+        latest_card.version()
+    );
 
     if !is_latest(&service_info.version, latest_card.version()) {
         // If the latest card is not the same as the current version, we need to reload
@@ -140,9 +145,7 @@ fn reload_task(
 
         download_service_from_registry(&query_args, &write_path)?;
 
-        load_from_path(bound_service, &write_path, None)?;
-
-        return Ok(Some(latest_version));
+        return Ok(Some(write_path));
     }
 
     Ok(None)
@@ -169,13 +172,6 @@ async fn start_background_reload_process(
 
                     if is_past_scheduled_reload(&scheduled_reload.read().unwrap()) {
 
-                        Python::with_gil(|py| {
-                            let service_info_read = service_info.read().unwrap();
-                            if let Ok(Some(latest_version)) = reload_task(py, service.clone_ref(py), service_info_read) {
-                                let mut service_info_write = service_info.write().unwrap();
-                                service_info_write.version = latest_version;
-                            }
-                        });
 
                         let mut reload_timestamp = scheduled_reload.write().unwrap();
                         *reload_timestamp = get_next_cron_timestamp(&cron)?;
@@ -197,18 +193,33 @@ async fn start_background_reload_process(
                         },
                         Some(ReloadEvent::ForceReload) => {
                             info!("Force reload requested");
-                            println!("Force reload requested");
-                            Python::with_gil(|py| {
-                                let service_info_read = service_info.read().unwrap();
-                                if let Ok(Some(latest_version)) = reload_task(py, service.clone_ref(py), service_info_read) {
-                                    let mut service_info_write = service_info.write().unwrap();
-                                    service_info_write.version = latest_version;
+
+                            let service_info_read = service_info.read().unwrap();
+                            let reload_result = reload_task(service_info_read);
+
+                            match reload_result {
+                                Ok(Some(write_path)) => {
+                                    let loaded: Result<(), AppError> = Python::with_gil(|py| {
+                                        let bound_service = service.bind(py);
+                                        load_from_path(bound_service, &write_path, None)
+                                    });
+
+                                    match loaded {
+                                        Ok(_) => info!("Service reloaded successfully"),
+                                        Err(e) => error!("Failed to reload service: {}", e),
+                                    }
                                 }
-                            });
+                                Ok(None) => {
+                                    info!("No new version detected, skipping reload");
+                                }
+                                Err(e) => {
+                                    error!("Error during reload task: {}", e);
+                                }
+                            }
 
                             let mut reload_timestamp = scheduled_reload.write().unwrap();
                             *reload_timestamp = get_next_cron_timestamp(&cron)?;
-                            },
+                        },
                         None => {
                                 debug!("Event channel closed");
                                 break;

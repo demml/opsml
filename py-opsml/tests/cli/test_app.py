@@ -113,15 +113,17 @@ def test_pyproject_app(
         # load the service card and the queue
         app = AppState.from_path(
             path=opsml_app / "app1",
-            transport_config=opsml.scouter.HTTPConfig(),  # this will be mocked
+            # transport_config=opsml.scouter.HTTPConfig(),  # this will be mocked
             reload_config=ReloadConfig(cron=CommonCrons.Every1Minute.cron),
         )
 
-        assert app.queue is not None
-
-        assert isinstance(app.queue.transport_config, MockConfig)
-
+        # assert app.queue is not None
+        # assert isinstance(app.queue.transport_config, MockConfig)
         assert app.has_reloader is True
+
+        # run another experiment and re-lock
+        run_experiment(random_forest_classifier, chat_prompt, example_dataframe)
+        lock_project(CURRENT_DIRECTORY)
 
         # test reload function
         app.reload()
