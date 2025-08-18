@@ -3,7 +3,7 @@ use opsml_client::ClientRegistry;
 use opsml_semver::VersionType;
 use opsml_settings::config::OpsmlMode;
 use opsml_settings::ScouterSettings;
-use opsml_state::{app_state, get_api_client, get_async_api_client};
+use opsml_state::{app_state, get_api_client};
 use opsml_types::contracts::{
     ArtifactQueryArgs, ArtifactRecord, ArtifactType, CardQueryArgs, CardRecord,
     CreateArtifactResponse, CreateCardResponse, GetMetricRequest, MetricRequest,
@@ -60,9 +60,8 @@ impl OpsmlRegistry {
         match mode {
             OpsmlMode::Client => {
                 let api_client = get_api_client().clone();
-                let async_api_client = get_async_api_client().clone();
-                let client_registry =
-                    ClientRegistry::new(registry_type, api_client, async_api_client)?;
+
+                let client_registry = ClientRegistry::new(registry_type, api_client)?;
                 Ok(Self::ClientRegistry(client_registry))
             }
             OpsmlMode::Server => {
@@ -394,19 +393,6 @@ impl OpsmlRegistry {
             Self::ServerRegistry(server_registry) => {
                 app_state().block_on(async { server_registry.query_artifacts(query_args).await })
             }
-        }
-    }
-
-    pub async fn list_cards_async(
-        &self,
-        args: &CardQueryArgs,
-    ) -> Result<Vec<CardRecord>, RegistryError> {
-        match self {
-            Self::ClientRegistry(client_registry) => {
-                Ok(client_registry.list_cards_async(args).await?)
-            }
-            #[cfg(feature = "server")]
-            Self::ServerRegistry(server_registry) => server_registry.list_cards(args).await,
         }
     }
 }
