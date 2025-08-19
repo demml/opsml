@@ -263,6 +263,7 @@ async fn download_card(
     Ok(())
 }
 
+/// Checks a card for drift paths and adds to mapping if they exist
 fn process_drift_paths(
     card: &Card,
     card_path: &Path,

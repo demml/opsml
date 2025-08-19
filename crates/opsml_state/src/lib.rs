@@ -154,11 +154,15 @@ pub fn get_api_client() -> &'static Arc<OpsmlApiClient> {
 
 async fn build_async_client() -> Arc<OpsmlApiAsyncClient> {
     let state = app_state();
-    let config = state.config().unwrap();
 
-    let settings = config
-        .storage_settings()
-        .expect("Failed to get storage settings");
+    // need to clone here so it is Send safe across threads
+    let settings = {
+        let config = state.config().unwrap();
+        config
+            .storage_settings()
+            .expect("Failed to get storage settings")
+            .clone() // Clone the settings to avoid holding the guard
+    };
 
     // Initialize async API client - need an async block here
     let api_client = build_async_api_client(&settings)

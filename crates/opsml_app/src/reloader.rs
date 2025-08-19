@@ -5,8 +5,7 @@ use chrono::Utc;
 use opsml_cards::card_service::ServiceInfo;
 use opsml_cards::ServiceCard;
 use opsml_registry::async_base::AsyncOpsmlRegistry;
-use opsml_registry::download::download_service_from_registry;
-use opsml_registry::registry;
+use opsml_registry::download::async_download_service_from_registry;
 use opsml_types::contracts::CardQueryArgs;
 use opsml_types::SaveName;
 use opsml_types::{contracts::CardRecord, RegistryType};
@@ -122,10 +121,10 @@ async fn reload_task(service_info: ServiceInfo) -> Result<Option<PathBuf>, AppEr
         ..Default::default()
     };
 
-    let registry = AsyncOpsmlRegistry::new(query_args.registry_type.clone()).await?;
+    let registry = AsyncOpsmlRegistry::new().await?;
     let latest_card = get_recent_card(&query_args, &registry).await?;
 
-    println!(
+    debug!(
         "Latest service card found: {}:{}:{}",
         service_info.space,
         service_info.name,
@@ -147,7 +146,7 @@ async fn reload_task(service_info: ServiceInfo) -> Result<Option<PathBuf>, AppEr
             .as_path()
             .join(SaveName::ServiceReload);
 
-        download_service_from_registry(&query_args, &write_path, &registry)?;
+        async_download_service_from_registry(&query_args, &write_path, &registry).await?;
 
         return Ok(Some(write_path));
     }
@@ -175,7 +174,6 @@ async fn start_background_reload_process(
 
 
                     if is_past_scheduled_reload(&scheduled_reload.read().unwrap()) {
-
 
                         let mut reload_timestamp = scheduled_reload.write().unwrap();
                         *reload_timestamp = get_next_cron_timestamp(&cron)?;

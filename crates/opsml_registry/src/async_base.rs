@@ -9,18 +9,17 @@ use opsml_client::OpsmlApiAsyncClient;
 use opsml_settings::OpsmlMode;
 use opsml_state::{app_state, get_async_api_client};
 use opsml_types::contracts::{ArtifactKey, CardQueryArgs, CardRecord};
-use opsml_types::{RegistryType, RequestType, Routes};
+use opsml_types::{RequestType, Routes};
 use std::sync::Arc;
-use tracing::{debug, error, info, instrument};
+use tracing::{debug, error, instrument};
 
 #[derive(Debug, Clone)]
 pub struct AsyncOpsmlRegistry {
-    registry_type: RegistryType,
     api_client: Arc<OpsmlApiAsyncClient>,
 }
 
 impl AsyncOpsmlRegistry {
-    pub async fn new(registry_type: RegistryType) -> Result<Self, RegistryError> {
+    pub async fn new() -> Result<Self, RegistryError> {
         let state = &app_state();
         let api_client = get_async_api_client().await.clone();
         let mode = &*state.mode()?;
@@ -36,10 +35,7 @@ impl AsyncOpsmlRegistry {
             }
         }
 
-        Ok(Self {
-            api_client,
-            registry_type,
-        })
+        Ok(Self { api_client })
     }
 
     #[instrument(skip_all)]
