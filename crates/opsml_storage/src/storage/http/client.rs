@@ -130,7 +130,7 @@ impl HttpFSStorageClient {
 }
 
 pub struct AsyncHttpFSStorageClient {
-    pub client: AsyncHttpStorageClient,
+    pub client: Arc<AsyncHttpStorageClient>,
 }
 
 impl AsyncHttpFSStorageClient {
@@ -143,7 +143,7 @@ impl AsyncHttpFSStorageClient {
 
     pub async fn new(api_client: Arc<OpsmlApiAsyncClient>) -> Result<Self, StorageError> {
         Ok(AsyncHttpFSStorageClient {
-            client: AsyncHttpStorageClient::new(api_client).await?,
+            client: Arc::new(AsyncHttpStorageClient::new(api_client).await?),
         })
     }
 
