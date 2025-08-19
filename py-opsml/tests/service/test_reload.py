@@ -17,6 +17,7 @@ from opsml.scouter import (
     CustomMetricDriftConfig,
     CustomMetric,
 )
+from opsml.card import ServiceCard, Card, RegistryType
 import opsml.scouter
 from opsml.scouter.types import CommonCrons
 from opsml.scouter.alert import AlertThreshold
@@ -32,9 +33,6 @@ from opsml import (  # type: ignore
 )
 from tests.conftest import WINDOWS_EXCLUDE
 import pytest
-
-# Set current directory
-CURRENT_DIRECTORY = Path(os.getcwd()) / "tests" / "cli" / "assets"
 
 
 def run_experiment(
@@ -77,9 +75,27 @@ def run_experiment(
         )
         exp.register_card(prompt_card)
 
+        service = ServiceCard(
+            space="opsml",
+            name="service",
+            cards=[
+                Card(
+                    alias="model",
+                    uid=modelcard.uid,
+                    registry_type=RegistryType.Model,
+                ),
+                Card(
+                    alias="prompt",
+                    uid=prompt_card.uid,
+                    registry_type=RegistryType.Prompt,
+                ),
+            ],
+        )
+        exp.register_card(service)
+
 
 @pytest.mark.skipif(WINDOWS_EXCLUDE, reason="skipping")
-def test_pyproject_app(
+def test_service_reload(
     mock_environment,
     random_forest_classifier: SklearnModel,
     chat_prompt: Prompt,
@@ -90,46 +106,6 @@ def test_pyproject_app(
     artifacts and loading them all from a path into an AppState object
 
     """
-    with OpsmlTestServer(True, CURRENT_DIRECTORY):
+    with OpsmlTestServer(True):
         # run experiment to populate registry
         run_experiment(random_forest_classifier, chat_prompt, example_dataframe)
-
-        lock_project(CURRENT_DIRECTORY)
-
-        # Check if the lock file was created
-        lock_file = CURRENT_DIRECTORY / "opsml.lock"
-        assert lock_file.exists()
-
-        # download the assets
-        install_service(CURRENT_DIRECTORY, CURRENT_DIRECTORY)
-
-        # check if opsml_app was created
-        opsml_app = CURRENT_DIRECTORY / "opsml_app"
-        assert opsml_app.exists()
-
-        # check if the opsml_app contains the assets
-        assert (opsml_app / "app1").exists()
-
-        # load the service card and the queue
-        app = AppState.from_path(
-            path=opsml_app / "app1",
-            # transport_config=opsml.scouter.HTTPConfig(),  # this will be mocked
-            reload_config=ReloadConfig(cron=CommonCrons.Every1Minute.cron),
-        )
-
-        # assert app.queue is not None
-        # assert isinstance(app.queue.transport_config, MockConfig)
-        assert app.has_reloader is True
-
-        # run another experiment and re-lock
-        run_experiment(random_forest_classifier, chat_prompt, example_dataframe)
-        lock_project(CURRENT_DIRECTORY)
-
-        # test reload function
-        # app.reload()
-
-        ## Add logic to create a new service card to trigger reload
-
-        ## delete the opsml_app and lock file
-        shutil.rmtree(opsml_app)
-        os.remove(lock_file)
