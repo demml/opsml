@@ -100,6 +100,9 @@ pub enum StorageError {
 
     #[error(transparent)]
     MultipartError(#[from] MultiPartError),
+
+    #[error(transparent)]
+    JoinError(#[from] tokio::task::JoinError),
 }
 
 #[cfg(feature = "server")]

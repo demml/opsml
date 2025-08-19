@@ -27,6 +27,33 @@ impl AsyncHttpStorageClient {
         })
     }
 
+    #[instrument(skip_all)]
+    pub async fn find_info(&self, path: &str) -> Result<Vec<FileInfo>, StorageError> {
+        let query = ListFileQuery {
+            path: path.to_string(),
+        };
+
+        let query_string = serde_qs::to_string(&query)?;
+
+        let response = self
+            .api_client
+            .request(
+                Routes::ListInfo,
+                RequestType::Get,
+                None,
+                Some(query_string),
+                None,
+            )
+            .await
+            .inspect_err(|e| {
+                error!("Failed to get files: {e}");
+            })?;
+
+        let response = response.json::<ListFileInfoResponse>().await?;
+
+        Ok(response.files)
+    }
+
     /// Function used to get the storage type from the server.
     /// A storage client is needed for when uploading and downloading files via presigned urls.
     ///
