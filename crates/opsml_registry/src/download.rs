@@ -14,6 +14,7 @@ use opsml_types::{
     RegistryType, SaveName, Suffix,
 };
 use opsml_utils::PyHelperFuncs;
+use pyo3::prelude::*;
 use std::path::Path;
 use std::path::PathBuf;
 use tracing::debug;
@@ -195,6 +196,38 @@ pub fn download_service_from_registry(
         .with_extension(Suffix::Json);
 
     PyHelperFuncs::save_to_json(mapping, &mapping_path)?;
+
+    Ok(())
+}
+
+#[pyfunction]
+#[pyo3(signature = (write_dir, space=None, name=None, version=None, uid=None))]
+/// Helper function for downloading a service from the registry
+/// # Arguments
+/// * `write_dir` - The directory to write the downloaded service to
+/// * `space` - The space the service belongs to
+/// * `name` - The name of the service
+/// * `version` - The version of the service
+/// * `uid` - The unique identifier of the service
+pub fn download_service(
+    write_dir: PathBuf,
+    space: Option<String>,
+    name: Option<String>,
+    version: Option<String>,
+    uid: Option<String>,
+) -> Result<(), RegistryError> {
+    // convert to query args
+    let query_args = CardQueryArgs {
+        registry_type: RegistryType::Service,
+        space,
+        name,
+        version,
+        uid,
+        ..Default::default()
+    };
+
+    // download service from registry
+    download_service_from_registry(&query_args, &write_dir)?;
 
     Ok(())
 }
