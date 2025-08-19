@@ -7,7 +7,7 @@ use opsml_cards::PromptCard;
 use opsml_cards::ServiceCard;
 use opsml_colors::Colorize;
 use opsml_crypt::decrypt_directory;
-use opsml_storage::storage_client;
+use opsml_storage::{async_storage_client, storage_client};
 use opsml_types::{
     cards::ServiceCardMapping,
     contracts::{ArtifactKey, CardQueryArgs},
@@ -17,7 +17,7 @@ use opsml_utils::PyHelperFuncs;
 use pyo3::prelude::*;
 use std::path::Path;
 use std::path::PathBuf;
-use tracing::debug;
+use tracing::{debug, instrument};
 /// Download all artifacts of a card
 ///
 /// # Arguments
@@ -262,7 +262,7 @@ async fn get_service_card(
 }
 
 /// Downloads a card to path
-async fn download_card(
+async fn async_download_card(
     card: &Card,
     write_path: &Path,
     registry: &AsyncOpsmlRegistry,
@@ -285,13 +285,35 @@ async fn download_card(
         .join(&card.alias);
 
     // Download card artifacts
-    download_card_artifacts(&key, &card_path)?;
+    async_download_card_artifacts(&key, &card_path).await?;
     mapping.add_card_path(&card.alias, &card_path);
 
     // check if card has drift profiles and add them to map
     if card.registry_type == RegistryType::Model || card.registry_type == RegistryType::Prompt {
         process_drift_paths(card, &card_path, mapping)?;
     }
+
+    Ok(())
+}
+
+async fn async_download_card_artifacts(
+    key: &ArtifactKey,
+    lpath: &Path,
+) -> Result<(), RegistryError> {
+    // get registry
+    let decryption_key = key.get_decrypt_key()?;
+    let rpath = key.storage_path();
+
+    if !lpath.exists() {
+        std::fs::create_dir_all(lpath)?;
+    }
+    // download card artifacts
+    async_storage_client()
+        .await
+        .get(lpath, &rpath, true)
+        .await?;
+
+    decrypt_directory(lpath, &decryption_key)?;
 
     Ok(())
 }
@@ -346,24 +368,29 @@ fn process_drift_paths(
 /// * `args` - The arguments for the card query
 /// * `write_path` - The path to write the downloaded service
 /// * `registry` - The async opsml registry
+#[instrument(skip_all)]
 pub async fn async_download_service_from_registry(
     args: &CardQueryArgs,
     write_path: &Path,
     registry: &AsyncOpsmlRegistry,
 ) -> Result<(), RegistryError> {
     // 1. Get the ServiceCard
+    debug!("Downloading ServiceCard");
     let service = get_service_card(args, write_path, registry).await?;
 
     // 2. Create a mapping for the service card
+    debug!("Creating mapping for ServiceCard");
     let mut mapping = ServiceCardMapping::new();
     let current_dir = std::env::current_dir()?;
 
     // 3. Download card
+    debug!("Downloading cards");
     for card in &service.cards {
-        download_card(card, write_path, registry, &current_dir, &mut mapping).await?;
+        async_download_card(card, write_path, registry, &current_dir, &mut mapping).await?;
     }
 
     // 4. Save mapping to card root dir
+    debug!("Saving mapping to card root dir");
     let mapping_path = write_path
         .join(SaveName::CardMap)
         .with_extension(Suffix::Json);

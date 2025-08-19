@@ -6,10 +6,10 @@ use opsml_cards::card_service::ServiceInfo;
 use opsml_cards::ServiceCard;
 use opsml_registry::async_base::AsyncOpsmlRegistry;
 use opsml_registry::download::async_download_service_from_registry;
-use opsml_semver::VersionValidator;
+use opsml_types::contracts::sort_cards_by_version;
 use opsml_types::contracts::CardQueryArgs;
+use opsml_types::RegistryType;
 use opsml_types::SaveName;
-use opsml_types::{contracts::CardRecord, RegistryType};
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 
@@ -25,28 +25,27 @@ use tokio::time::{sleep, Duration};
 use tracing::{debug, error, info, instrument};
 
 /// Helper for listing cards
-pub async fn get_recent_card(
+pub async fn get_latest_version(
     args: &CardQueryArgs,
     registry: &AsyncOpsmlRegistry,
-) -> Result<CardRecord, AppError> {
+) -> Result<String, AppError> {
     // get registry
     debug!("Listing cards with args: {:?}", args);
 
-    let cards = registry.list_cards(args).await?;
+    let mut cards = registry.list_cards(args).await?;
 
-    // iterate over cards and create vec of versions and vec of index.
-    let mut versions = Vec::new();
-    let mut indices = Vec::new();
+    debug!("Cards found: {:?}", cards);
 
-    let versions: Vec<String> = cards
-        .iter()
-        .map(|card| card.version().to_string())
-        .collect();
+    sort_cards_by_version(&mut cards, true);
 
-    VersionValidator::sort_string_versions(versions)?;
+    let latest_version = cards
+        .first()
+        .ok_or(AppError::CardNotFound)?
+        .version()
+        .to_string();
 
-    debug!("Most recent version found: {:?}", card.version());
-    Ok(card)
+    debug!("Most recent version found: {:?}", &latest_version);
+    Ok(latest_version)
 }
 
 /// Checks if the current version is the latest version
@@ -126,24 +125,22 @@ async fn reload_task(service_info: ServiceInfo) -> Result<Option<PathBuf>, AppEr
         name: Some(service_info.name.clone()),
         version: None,
         registry_type: RegistryType::Service,
-        sort_by_timestamp: Some(false),
-        limit: Some(1),
+        sort_by_timestamp: Some(true),
+        limit: Some(10),
         ..Default::default()
     };
 
     let registry = AsyncOpsmlRegistry::new().await?;
-    let latest_card = get_recent_card(&query_args, &registry).await?;
+    let latest_version = get_latest_version(&query_args, &registry).await?;
 
-    if !is_latest(&service_info.version, latest_card.version()) {
+    if !is_latest(&service_info.version, &latest_version) {
         // If the latest card is not the same as the current version, we need to reload
         info!(
             "Detected new version, reloading service {}:{}:{}",
-            service_info.space,
-            service_info.name,
-            latest_card.version()
+            service_info.space, service_info.name, &latest_version
         );
-        let latest_version = latest_card.version().to_string();
-        query_args.version = Some(latest_version.clone());
+
+        query_args.version = Some(latest_version);
 
         let write_path = std::env::current_dir()?
             .as_path()

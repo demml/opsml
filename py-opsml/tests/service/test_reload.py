@@ -138,7 +138,8 @@ def test_service_reload(
         # create next service version
         create_service(random_forest_classifier, chat_prompt, example_dataframe)
 
-        time.sleep(5)
+        # create 3rd
+        create_service(random_forest_classifier, chat_prompt, example_dataframe)
 
         app.reload()
 
