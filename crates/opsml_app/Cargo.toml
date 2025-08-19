@@ -11,6 +11,7 @@ doctest = false
 opsml-cards = { workspace = true }
 opsml-cli = { workspace = true }
 opsml-registry = { workspace = true }
+opsml-semver = { workspace = true }
 opsml-state = { workspace = true }
 opsml-types = { workspace = true }
 chrono = { workspace = true }

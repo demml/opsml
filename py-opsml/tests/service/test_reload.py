@@ -6,6 +6,7 @@ from opsml.cli import (
     lock_project,
     install_service,
 )  # type: ignore
+import time
 from opsml.mock import MockConfig
 import pandas as pd
 import os
@@ -22,6 +23,7 @@ import opsml.scouter
 from opsml.scouter.types import CommonCrons
 from opsml.scouter.alert import AlertThreshold
 from opsml.app import AppState, ReloadConfig
+from opsml.card import download_service
 
 
 from opsml import (  # type: ignore
@@ -34,8 +36,12 @@ from opsml import (  # type: ignore
 from tests.conftest import WINDOWS_EXCLUDE
 import pytest
 
+CURRENT_DIRECTORY = Path(os.getcwd()) / "tests" / "service" / "assets"
+SERVICE_SPACE = "opsml"
+SERVICE_NAME = "service"
 
-def run_experiment(
+
+def create_service(
     random_forest_classifier: SklearnModel,
     chat_prompt: Prompt,
     example_dataframe: pd.DataFrame,
@@ -63,6 +69,8 @@ def run_experiment(
         )
 
         modelcard = ModelCard(
+            space="opsml",
+            name="model",
             interface=random_forest_classifier,
             tags=["foo:bar", "baz:qux"],
             version="1.0.0",
@@ -70,14 +78,16 @@ def run_experiment(
         exp.register_card(modelcard)
 
         prompt_card = PromptCard(
+            space="opsml",
+            name="prompt",
             prompt=chat_prompt,
             version="1.0.0",
         )
         exp.register_card(prompt_card)
 
         service = ServiceCard(
-            space="opsml",
-            name="service",
+            space=SERVICE_SPACE,
+            name=SERVICE_NAME,
             cards=[
                 Card(
                     alias="model",
@@ -106,6 +116,31 @@ def test_service_reload(
     artifacts and loading them all from a path into an AppState object
 
     """
-    with OpsmlTestServer(True):
+    with OpsmlTestServer(False, CURRENT_DIRECTORY):
         # run experiment to populate registry
-        run_experiment(random_forest_classifier, chat_prompt, example_dataframe)
+        create_service(random_forest_classifier, chat_prompt, example_dataframe)
+
+        opsml_app = CURRENT_DIRECTORY / "opsml_app"
+
+        # download service
+        download_service(
+            write_dir=opsml_app,
+            space=SERVICE_SPACE,
+            name=SERVICE_NAME,
+        )
+
+        app = AppState.from_path(
+            path=opsml_app,
+            # transport_config=opsml.scouter.HTTPConfig(),  # this will be mocked
+            reload_config=ReloadConfig(cron=CommonCrons.Every1Minute.cron),
+        )
+
+        # create next service version
+        create_service(random_forest_classifier, chat_prompt, example_dataframe)
+
+        time.sleep(5)
+
+        app.reload()
+
+        shutil.rmtree(opsml_app)
+        a

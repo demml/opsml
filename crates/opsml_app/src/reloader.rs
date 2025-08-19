@@ -6,6 +6,7 @@ use opsml_cards::card_service::ServiceInfo;
 use opsml_cards::ServiceCard;
 use opsml_registry::async_base::AsyncOpsmlRegistry;
 use opsml_registry::download::async_download_service_from_registry;
+use opsml_semver::VersionValidator;
 use opsml_types::contracts::CardQueryArgs;
 use opsml_types::SaveName;
 use opsml_types::{contracts::CardRecord, RegistryType};
@@ -29,13 +30,22 @@ pub async fn get_recent_card(
     registry: &AsyncOpsmlRegistry,
 ) -> Result<CardRecord, AppError> {
     // get registry
+    debug!("Listing cards with args: {:?}", args);
 
-    let card = registry
-        .list_cards(args)
-        .await?
-        .into_iter()
-        .next()
-        .ok_or(AppError::CardNotFound)?;
+    let cards = registry.list_cards(args).await?;
+
+    // iterate over cards and create vec of versions and vec of index.
+    let mut versions = Vec::new();
+    let mut indices = Vec::new();
+
+    let versions: Vec<String> = cards
+        .iter()
+        .map(|card| card.version().to_string())
+        .collect();
+
+    VersionValidator::sort_string_versions(versions)?;
+
+    debug!("Most recent version found: {:?}", card.version());
     Ok(card)
 }
 
@@ -116,20 +126,13 @@ async fn reload_task(service_info: ServiceInfo) -> Result<Option<PathBuf>, AppEr
         name: Some(service_info.name.clone()),
         version: None,
         registry_type: RegistryType::Service,
-        sort_by_timestamp: Some(true),
+        sort_by_timestamp: Some(false),
         limit: Some(1),
         ..Default::default()
     };
 
     let registry = AsyncOpsmlRegistry::new().await?;
     let latest_card = get_recent_card(&query_args, &registry).await?;
-
-    debug!(
-        "Latest service card found: {}:{}:{}",
-        service_info.space,
-        service_info.name,
-        latest_card.version()
-    );
 
     if !is_latest(&service_info.version, latest_card.version()) {
         // If the latest card is not the same as the current version, we need to reload
