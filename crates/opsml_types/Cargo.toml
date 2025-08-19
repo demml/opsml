@@ -16,6 +16,7 @@ opsml-semver = { workspace = true }
 opsml-utils = { workspace = true }
 opsml-version = { workspace = true }
 scouter-client = { workspace = true }
+semver = { workspace = true }
 pyo3 = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }

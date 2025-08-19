@@ -11,6 +11,7 @@ use opsml_colors::Colorize;
 use opsml_semver::VersionType;
 use opsml_utils::{get_utc_datetime, PyHelperFuncs};
 use pyo3::prelude::*;
+use semver::Version;
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 use std::path::PathBuf;
@@ -808,6 +809,22 @@ impl CardRecord {
             Self::Prompt(_) => RegistryType::Prompt,
             Self::Service(_) => RegistryType::Service,
         }
+    }
+}
+
+/// Sort cards by their semver
+/// # Arguments
+/// * `cards` - A mutable reference to a vector of CardRecord
+/// * `reverse` - A boolean indicating whether to sort in reverse order
+pub fn sort_cards_by_version(cards: &mut Vec<CardRecord>, reverse: bool) {
+    cards.sort_by(|a, b| {
+        let a_version = Version::parse(a.version()).unwrap();
+        let b_version = Version::parse(b.version()).unwrap();
+        a_version.cmp(&b_version)
+    });
+
+    if reverse {
+        cards.reverse();
     }
 }
 
