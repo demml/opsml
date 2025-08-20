@@ -82,7 +82,7 @@ pub fn create_service_reloader(
 #[derive(Debug)]
 pub struct AppState {
     service: Arc<RwLock<Py<ServiceCard>>>,
-    queue: Option<Py<ScouterQueue>>,
+    queue: Option<Arc<RwLock<Py<ScouterQueue>>>>,
     reloader: ServiceReloader,
     reload_handle: Option<tokio::task::JoinHandle<()>>,
     load_kwargs: Arc<RwLock<Option<Py<PyDict>>>>,
@@ -109,7 +109,7 @@ impl AppState {
         path: Option<PathBuf>,
     ) -> Result<Self, AppError> {
         let service = service.unbind();
-        let queue = queue.map(|q| q.unbind());
+        let queue = queue.map(|q| Arc::new(RwLock::new(q.unbind())));
 
         let service_info = service
             .bind(py)
@@ -166,7 +166,8 @@ impl AppState {
             error!("Failed to load card map from: {:?}", e);
         })?;
 
-        let queue = create_scouter_queue(py, card_map, transport_config)?;
+        let queue =
+            create_scouter_queue(py, card_map, transport_config)?.map(|q| Arc::new(RwLock::new(q)));
 
         // Create the service reloader
         let reloader = create_service_reloader(service_info, reload_config, service_path)?;
@@ -188,9 +189,9 @@ impl AppState {
     }
 
     #[getter]
-    pub fn queue<'py>(&self, py: Python<'py>) -> Result<&Bound<'py, ScouterQueue>, AppError> {
+    pub fn queue<'py>(&self, py: Python<'py>) -> Result<Bound<'py, ScouterQueue>, AppError> {
         if let Some(queue) = &self.queue {
-            Ok(queue.bind(py))
+            Ok(queue.read().unwrap().bind(py).clone())
         } else {
             Err(AppError::QueueNotFoundError)
         }
