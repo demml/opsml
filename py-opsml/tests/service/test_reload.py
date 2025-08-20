@@ -2,12 +2,8 @@
 # This file contains test cases for testing an OpsML App workflow
 ###################################################################################################
 
-from opsml.cli import (
-    lock_project,
-    install_service,
-)  # type: ignore
+
 import time
-from opsml.mock import MockConfig
 import pandas as pd
 import os
 from pathlib import Path
@@ -133,7 +129,7 @@ def test_service_reload(
 
         app = AppState.from_path(
             path=opsml_app,
-            # transport_config=opsml.scouter.HTTPConfig(),  # this will be mocked
+            transport_config=opsml.scouter.HTTPConfig(),  # type: ignore
             reload_config=ReloadConfig(
                 cron=CommonCrons.Every1Minute.cron,
                 write_path=service_reload,
@@ -153,3 +149,4 @@ def test_service_reload(
         assert app.service.version == "0.2.0"
 
         shutil.rmtree(opsml_app)
+        a
