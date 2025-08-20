@@ -223,19 +223,7 @@ impl StorageClient for LocalStorageClient {
             return Err(LocalError::PathNotExistError(src_path.display().to_string()).into());
         }
 
-        for entry in WalkDir::new(&src_path) {
-            let entry = entry?;
-            let relative_path = entry.path().strip_prefix(&src_path)?;
-            let dest_file_path = dest_path.join(relative_path);
-
-            if entry.file_type().is_file() {
-                if let Some(parent) = dest_file_path.parent() {
-                    fs::create_dir_all(parent)?;
-                }
-
-                fs::copy(entry.path(), &dest_file_path)?;
-            }
-        }
+        copy_objects(&src_path, &dest_path)?;
 
         Ok(true)
     }
@@ -269,6 +257,27 @@ impl StorageClient for LocalStorageClient {
 
         Ok(true)
     }
+}
+
+/// helper for copying objects from one directory to another
+/// # Arguments
+/// * `src_path` - The source directory path
+/// * `dest_path` - The destination directory path
+pub fn copy_objects(src_path: &Path, dest_path: &Path) -> Result<(), StorageError> {
+    for entry in WalkDir::new(src_path) {
+        let entry = entry?;
+        let relative_path = entry.path().strip_prefix(src_path)?;
+        let dest_file_path = dest_path.join(relative_path);
+
+        if entry.file_type().is_file() {
+            if let Some(parent) = dest_file_path.parent() {
+                fs::create_dir_all(parent)?;
+            }
+
+            fs::copy(entry.path(), &dest_file_path)?;
+        }
+    }
+    Ok(())
 }
 
 impl LocalStorageClient {
