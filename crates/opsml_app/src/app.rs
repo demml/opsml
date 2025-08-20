@@ -4,6 +4,7 @@ use crate::{
 };
 use opsml_cards::{card_service::ServiceInfo, ServiceCard};
 use opsml_state::app_state;
+use opsml_storage::{copy_objects, StorageError};
 use opsml_types::{cards::ServiceCardMapping, SaveName, Suffix};
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
@@ -61,10 +62,11 @@ pub fn create_scouter_queue(
 pub fn create_service_reloader(
     service_info: ServiceInfo,
     reload_config: Option<ReloadConfig>,
+    service_path: PathBuf,
 ) -> Result<ServiceReloader, AppError> {
     let reload_config = reload_config.unwrap_or_else(|| ReloadConfig::default());
     let service_info = Arc::new(RwLock::new(service_info));
-    let reloader = ServiceReloader::new(service_info, reload_config);
+    let reloader = ServiceReloader::new(service_info, reload_config, service_path);
     Ok(reloader)
 }
 
@@ -98,12 +100,13 @@ impl AppState {
     /// # Returns
     /// * `AppState` - The application state containing the ServiceCard and optional ScouterQueue  
     #[new]
-    #[pyo3(signature = (service, queue=None, reload_config=None))]
+    #[pyo3(signature = (service, queue=None, reload_config=None, path=None))]
     pub fn new(
         py: Python<'_>,
         service: Bound<'_, ServiceCard>,
         queue: Option<Bound<'_, ScouterQueue>>,
         reload_config: Option<ReloadConfig>,
+        path: Option<PathBuf>,
     ) -> Result<Self, AppError> {
         let service = service.unbind();
         let queue = queue.map(|q| q.unbind());
@@ -113,7 +116,8 @@ impl AppState {
             .call_method0("service_info")?
             .extract::<ServiceInfo>()?;
 
-        let reloader = create_service_reloader(service_info, reload_config)?;
+        let service_path = path.unwrap_or_else(|| PathBuf::from(SaveName::ServiceCard));
+        let reloader = create_service_reloader(service_info, reload_config, service_path)?;
 
         Ok(AppState {
             service: Arc::new(RwLock::new(service)),
@@ -145,24 +149,27 @@ impl AppState {
         reload_config: Option<ReloadConfig>,
         load_kwargs: Option<&Bound<'_, PyDict>>,
     ) -> Result<Self, AppError> {
-        let path = path.unwrap_or_else(|| PathBuf::from(SaveName::ServiceCard));
+        let service_path = path.unwrap_or_else(|| PathBuf::from(SaveName::ServiceCard));
 
         // Load the service card from path
-        let service = Py::new(py, ServiceCard::from_path_rs(py, &path, load_kwargs)?)?;
+        let service = Py::new(
+            py,
+            ServiceCard::from_path_rs(py, &service_path, load_kwargs)?,
+        )?;
         let service_info = service
             .bind(py)
             .call_method0("service_info")?
             .extract::<ServiceInfo>()?;
 
         // Get the drift map in cap of drift profiles
-        let card_map = load_card_map(&path).inspect_err(|e| {
+        let card_map = load_card_map(&service_path).inspect_err(|e| {
             error!("Failed to load card map from: {:?}", e);
         })?;
 
         let queue = create_scouter_queue(py, card_map, transport_config)?;
 
         // Create the service reloader
-        let reloader = create_service_reloader(service_info, reload_config)?;
+        let reloader = create_service_reloader(service_info, reload_config, service_path)?;
 
         let kwargs = load_kwargs.map(|kw| kw.clone().unbind());
 
@@ -209,14 +216,15 @@ impl AppState {
         self.start_background_reloader()?;
         let running = self.reloader.running.clone();
         let reload_ready = self.reloader.reload_ready.clone();
-        let write_path = self.reloader.config.write_path.clone();
+        let reload_path = self.reloader.config.write_path.clone();
+        let service_path = self.reloader.service_path.clone();
         let load_kwargs = self.load_kwargs.clone();
         let service_arc = self.service.clone();
         let max_retries = self.reloader.config.max_retries;
 
         debug!(
-            "Starting reload loop with arguments running: {:?}, reload_ready: {:?}, write_path: {:?}",
-            running, reload_ready, write_path
+            "Starting reload loop with arguments running: {:?}, reload_ready: {:?}, reload_path: {:?}",
+            running, reload_ready, reload_path
         );
 
         let handle = app_state().runtime.spawn(async move {
@@ -229,10 +237,15 @@ impl AppState {
                     retry_count += 1;
                     while retry_count < max_retries {
                         // Perform the reload operation
-                        match Self::perform_service_reload(&service_arc, &write_path, &load_kwargs)
+                        match Self::perform_service_reload(&service_arc, &reload_path, &load_kwargs)
                         {
                             Ok(()) => {
                                 info!("Service reloaded successfully");
+
+                                // if successful, move object from reload directory to base directory for service
+                                if let Err(e) = Self::cleanup(&reload_path, &service_path) {
+                                    error!("Failed to clean up after reload: {:?}", e);
+                                }
                                 break;
                             }
                             Err(e) => {
@@ -347,6 +360,19 @@ impl AppState {
                 Err(AppError::ReloadServiceError(e.to_string()))
             }
         }
+    }
+
+    fn cleanup(reload_path: &PathBuf, service_path: &PathBuf) -> Result<(), AppError> {
+        // Move contents of reload_path to service_path
+        copy_objects(reload_path, service_path)?;
+
+        // delete contents of reload_path
+        std::fs::remove_dir_all(reload_path).map_err(|e| {
+            error!("Failed to delete service path contents: {:?}", e);
+            StorageError::IoError(e)
+        })?;
+
+        Ok(())
     }
 
     /// Helper to get the internal service reloader

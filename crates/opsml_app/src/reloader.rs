@@ -224,6 +224,7 @@ async fn start_background_reload_process(
                             let mut reload_timestamp = scheduled_reload.write().unwrap();
                             *reload_timestamp = get_next_cron_timestamp(&cron)?;
                         },
+
                         None => {
                                 debug!("Event channel closed");
                                 break;
@@ -256,16 +257,22 @@ pub struct ServiceReloader {
     pub service_info: Arc<RwLock<ServiceInfo>>,
     pub reload_ready: Arc<RwLock<bool>>,
     pub config: ReloadConfig,
+    pub service_path: Arc<PathBuf>,
 }
 
 impl ServiceReloader {
     #[instrument(skip_all)]
-    pub fn new(service_info: Arc<RwLock<ServiceInfo>>, config: ReloadConfig) -> Self {
+    pub fn new(
+        service_info: Arc<RwLock<ServiceInfo>>,
+        config: ReloadConfig,
+        service_path: PathBuf,
+    ) -> Self {
         debug!("Creating unbounded QueueBus");
         //let (tx, rx) = mpsc::unbounded_channel();
         //let (shutdown_tx, shutdown_rx) = oneshot::channel();
         let running = Arc::new(RwLock::new(false));
         let reload_ready = Arc::new(RwLock::new(false));
+        let service_path = Arc::new(service_path);
 
         Self {
             tx: None,
@@ -274,6 +281,7 @@ impl ServiceReloader {
             service_info,
             reload_ready,
             config,
+            service_path,
         }
     }
 
@@ -386,5 +394,6 @@ impl ServiceReloader {
         self.publish(ReloadEvent::ForceReload)?;
         Ok(())
     }
+
     // create function that spawns a task and reloads the service card
 }

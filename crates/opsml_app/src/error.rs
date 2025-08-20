@@ -67,6 +67,9 @@ pub enum AppError {
 
     #[error("Failed to reload service")]
     ReloadServiceError(String),
+
+    #[error(transparent)]
+    StorageError(#[from] opsml_storage::StorageError),
 }
 
 impl From<AppError> for PyErr {

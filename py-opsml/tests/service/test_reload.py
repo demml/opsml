@@ -153,4 +153,3 @@ def test_service_reload(
         assert app.service.version == "0.2.0"
 
         shutil.rmtree(opsml_app)
-        shutil.rmtree(service_reload)
