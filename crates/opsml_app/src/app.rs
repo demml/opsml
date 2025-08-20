@@ -46,7 +46,7 @@ pub fn create_scouter_queue(
         let scouter_queue = ScouterQueue::from_path_rs(py, card_map.drift_paths, config, rt)?;
         Some(Py::new(py, scouter_queue)?)
     } else {
-        debug!("No transport config found in card map");
+        debug!("No transport config provided");
         None
     };
 
@@ -78,6 +78,7 @@ pub fn create_service_reloader(
 /// the card map that is created when the ServiceCard is loaded
 /// - An optional reloader that is responsible for reloading the ServiceCard and its associated
 /// resources when changes are detected
+/// The service and queue are put behind Arc RWLocks to ensure thread safety when updating using the reloader
 #[pyclass]
 #[derive(Debug)]
 pub struct AppState {
@@ -86,47 +87,11 @@ pub struct AppState {
     reloader: ServiceReloader,
     reload_handle: Option<tokio::task::JoinHandle<()>>,
     load_kwargs: Arc<RwLock<Option<Py<PyDict>>>>,
+    transport_config: Option<Arc<RwLock<Py<PyAny>>>>,
 }
 
 #[pymethods]
 impl AppState {
-    /// Instantiate a new application state. Typically from_path is used; however, an new/init
-    /// method is provided for consistency with other classes
-    /// # Arguments
-    /// * `service` - The ServiceCard to use for the application state
-    /// * `queue` - An optional ScouterQueue to use for the application state. If not provided,
-    /// no queue will be created.
-    ///
-    /// # Returns
-    /// * `AppState` - The application state containing the ServiceCard and optional ScouterQueue  
-    #[new]
-    #[pyo3(signature = (service, queue=None, reload_config=None, path=None))]
-    pub fn new(
-        py: Python<'_>,
-        service: Bound<'_, ServiceCard>,
-        queue: Option<Bound<'_, ScouterQueue>>,
-        reload_config: Option<ReloadConfig>,
-        path: Option<PathBuf>,
-    ) -> Result<Self, AppError> {
-        let service = service.unbind();
-        let queue = queue.map(|q| Arc::new(RwLock::new(q.unbind())));
-
-        let service_info = service
-            .bind(py)
-            .call_method0("service_info")?
-            .extract::<ServiceInfo>()?;
-
-        let service_path = path.unwrap_or_else(|| PathBuf::from(SaveName::ServiceCard));
-        let reloader = create_service_reloader(service_info, reload_config, service_path)?;
-
-        Ok(AppState {
-            service: Arc::new(RwLock::new(service)),
-            queue,
-            reloader,
-            reload_handle: None,
-            load_kwargs: Arc::new(RwLock::new(None)),
-        })
-    }
     /// This method will load an application state from a path
     /// This is primarily used for loading an application during api start where a user
     /// may wish to load an Opsml ServiceCard along with the appropriate ScouterQueue for monitoring
@@ -180,6 +145,7 @@ impl AppState {
             reloader,
             reload_handle: None,
             load_kwargs: Arc::new(RwLock::new(kwargs)),
+            transport_config: transport_config.map(|tc| Arc::new(RwLock::new(tc.clone().unbind()))),
         })
     }
 
@@ -214,13 +180,19 @@ impl AppState {
             return Ok(());
         }
 
+        // This will continually poll based on the config schedule and download
+        // any new service to the reload_path
         self.start_background_reloader()?;
+
+        // Setup state for the background thread
         let running = self.reloader.running.clone();
         let reload_ready = self.reloader.reload_ready.clone();
         let reload_path = self.reloader.config.write_path.clone();
         let service_path = self.reloader.service_path.clone();
         let load_kwargs = self.load_kwargs.clone();
+        let transport_config = self.transport_config.clone();
         let service_arc = self.service.clone();
+        let queue_arc = self.queue.clone();
         let max_retries = self.reloader.config.max_retries;
 
         debug!(
@@ -238,8 +210,13 @@ impl AppState {
                     retry_count += 1;
                     while retry_count < max_retries {
                         // Perform the reload operation
-                        match Self::perform_service_reload(&service_arc, &reload_path, &load_kwargs)
-                        {
+                        match Self::reload_service(
+                            &service_arc,
+                            &queue_arc,
+                            &reload_path,
+                            &load_kwargs,
+                            &transport_config,
+                        ) {
                             Ok(()) => {
                                 info!("Service reloaded successfully");
 
@@ -326,11 +303,33 @@ impl AppState {
         }
     }
 
-    fn perform_service_reload(
-        service_arc: &Arc<RwLock<Py<ServiceCard>>>,
+    fn reload_queue(
+        queue_arc: &Arc<RwLock<Py<ScouterQueue>>>,
+        transport_config: &Option<Arc<RwLock<Py<PyAny>>>>,
+        write_path: &PathBuf,
+    ) -> Result<Option<Py<ScouterQueue>>, AppError> {
+        let card_map = load_card_map(&write_path).inspect_err(|e| {
+            error!("Failed to load card map from: {:?}", e);
+        })?;
+
+        // Acquire the GIL and load the scouter queue
+        let queue = Python::with_gil(|py| -> Result<Option<Py<ScouterQueue>>, AppError> {
+            let transport_config = transport_config
+                .as_ref()
+                .map(|tc| tc.read().unwrap().bind(py).clone());
+
+            let queue = create_scouter_queue(py, card_map, transport_config.as_ref())?;
+
+            Ok(queue)
+        })?;
+
+        Ok(queue)
+    }
+
+    fn reload_service_card(
         write_path: &PathBuf,
         load_kwargs: &Arc<RwLock<Option<Py<PyDict>>>>,
-    ) -> Result<(), AppError> {
+    ) -> Result<Py<ServiceCard>, AppError> {
         // Acquire the GIL and load the new service
         let reload_result = Python::with_gil(|py| -> Result<Py<ServiceCard>, AppError> {
             // Read load_kwargs first, in a separate scope to minimize lock duration
@@ -338,27 +337,60 @@ impl AppState {
             let kwargs = lock.as_ref().map(|kw| kw.bind(py));
             // Load the new service card
             let new_service = ServiceCard::from_path_rs(py, write_path, kwargs)?;
-            Ok(Py::new(py, new_service)?)
-        });
 
-        match reload_result {
-            Ok(new_service) => {
-                // Now update the service with minimal lock time
-                match service_arc.write() {
-                    Ok(mut service_guard) => {
-                        *service_guard = new_service;
-                        info!("Py service updated successfully");
-                        Ok(())
-                    }
-                    Err(e) => {
-                        error!("Failed to acquire write lock for service update: {:?}", e);
-                        Err(AppError::UpdateServiceError(e.to_string()))
-                    }
-                }
+            Ok(Py::new(py, new_service)?)
+        })?;
+
+        Ok(reload_result)
+    }
+
+    /// Top method for reloading a service. This will attempt to reload the actual service card and
+    /// it's artifacts as well as reload the ScouterQueue, if it exists.
+    /// # Arguments
+    /// * `service_arc` - The service card to reload
+    /// * `queue_arc` - The optional queue to reload
+    /// * `write_path` - The path to the write directory
+    /// * `load_kwargs` - The keyword arguments for loading the service artifacts
+    /// * `transport_config` - The optional transport configuration
+    fn reload_service(
+        service_arc: &Arc<RwLock<Py<ServiceCard>>>,
+        queue_arc: &Option<Arc<RwLock<Py<ScouterQueue>>>>,
+        write_path: &PathBuf,
+        load_kwargs: &Arc<RwLock<Option<Py<PyDict>>>>,
+        transport_config: &Option<Arc<RwLock<Py<PyAny>>>>,
+    ) -> Result<(), AppError> {
+        // Reload the service card
+        let reloaded_service = Self::reload_service_card(write_path, load_kwargs)?;
+
+        // Reload the queue if it exists
+        let _reloaded_queue = if let Some(queue_arc) = queue_arc {
+            Self::reload_queue(queue_arc, transport_config, write_path)?
+        } else {
+            None
+        };
+
+        //if let Some(new_queue) = queue {
+        //    match queue_arc.write() {
+        //        Ok(mut queue_guard) => {
+        //            *queue_guard = new_queue;
+        //            info!("Queue updated successfully");
+        //        }
+        //        Err(e) => {
+        //            error!("Failed to acquire write lock for queue update: {:?}", e);
+        //            return Err(AppError::UpdateServiceError(e.to_string()));
+        //        }
+        //    }
+        //}
+
+        match service_arc.write() {
+            Ok(mut service_guard) => {
+                *service_guard = reloaded_service;
+                info!("Py service updated successfully");
+                Ok(())
             }
             Err(e) => {
-                error!("Failed to reload service: {:?}", e);
-                Err(AppError::ReloadServiceError(e.to_string()))
+                error!("Failed to acquire write lock for service update: {:?}", e);
+                Err(AppError::UpdateServiceError(e.to_string()))
             }
         }
     }
