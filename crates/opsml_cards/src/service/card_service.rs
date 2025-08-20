@@ -22,6 +22,7 @@ use serde::{
 };
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
+use tracing::field::debug;
 use tracing::{debug, error, instrument};
 
 type PyBoundAny<'py> = Bound<'py, PyAny>;
@@ -547,14 +548,21 @@ impl ServiceCard {
     /// * `py` - Python interpreter state
     /// * `path` - Path to the new service card files
     /// * `load_kwargs` - Optional loading arguments for cards
+    #[pyo3(signature = (path, load_kwargs=None))]
+    #[instrument(skip_all)]
     pub fn mut_from_path(
         &mut self,
         py: Python,
         path: PathBuf,
         load_kwargs: Option<&Bound<'_, PyDict>>,
     ) -> Result<(), CardError> {
-        let new_service = Self::from_path_rs(py, &path, load_kwargs)?;
-        *self = new_service;
+        debug!("Mutating ServiceCard from path: {:?}", path);
+        //let new_service = Self::from_path_rs(py, &path, load_kwargs).inspect_err(|e| {
+        //    error!("Failed to load service card from path: {e}");
+        //})?;
+        //*self = new_service;
+
+        debug!("version: {}", self.version);
         Ok(())
     }
 
@@ -570,11 +578,13 @@ impl ServiceCard {
 }
 
 impl ServiceCard {
+    #[instrument(skip_all)]
     pub fn from_path_rs(
         py: Python,
         path: &Path,
         load_kwargs: Option<&Bound<'_, PyDict>>,
     ) -> Result<ServiceCard, CardError> {
+        debug!("Loading from path: {:?}", path);
         // check path exists
         if !path.exists() {
             error!("Path does not exist: {:?}", path);
@@ -583,8 +593,10 @@ impl ServiceCard {
             ));
         }
 
+        debug!("Loading service JSON from path: {:?}", path);
         let mut service = Self::load_service_json(path)?;
 
+        debug!("Loading cards");
         for card in &service.cards {
             let card_obj = Self::load_card(py, path, card, load_kwargs)?;
             service.card_objs.insert(card.alias.clone(), card_obj);
@@ -593,6 +605,7 @@ impl ServiceCard {
         Ok(service)
     }
 
+    #[instrument(skip_all)]
     fn load_card(
         py: Python,
         base_path: &Path,
@@ -697,6 +710,7 @@ impl ServiceCard {
         })?)
     }
 
+    #[instrument(skip_all)]
     fn load_model_card(
         py: Python,
         card_json: &str,
@@ -724,7 +738,9 @@ impl ServiceCard {
         Python::with_gil(|py| Ok(card_obj.into_py_any(py)?))
     }
 
+    #[instrument(skip_all)]
     fn load_prompt_card(card_json: &str) -> Result<PyObject, CardError> {
+        debug!("Loading prompt card from JSON");
         let card_obj = PromptCard::model_validate_json(card_json.to_string())?;
         Python::with_gil(|py| Ok(card_obj.into_py_any(py)?))
     }

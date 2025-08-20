@@ -28,7 +28,7 @@ use serde::{
 };
 use std::fmt;
 use std::path::{Path, PathBuf};
-use tracing::error;
+use tracing::{debug, error, instrument};
 
 fn interface_from_metadata<'py>(
     py: Python<'py>,
@@ -314,12 +314,14 @@ impl ModelCard {
 
     #[pyo3(signature = (path=None, load_kwargs=None))]
     #[allow(clippy::too_many_arguments)]
+    #[instrument(skip_all)]
     pub fn load(
         &mut self,
         py: Python,
         path: Option<PathBuf>,
         load_kwargs: Option<ModelLoadKwargs>,
     ) -> Result<(), CardError> {
+        debug!("Loading model: {:?}", path);
         let path = if let Some(p) = path {
             p
         } else {
@@ -337,11 +339,10 @@ impl ModelCard {
             .into_bound_py_any(py)?;
 
         // load model interface
-        self.interface.as_ref().unwrap().bind(py).call_method(
-            "load",
-            (path, save_metadata, load_kwargs),
-            None,
-        )?;
+
+        let interface = self.interface.as_ref().unwrap().bind(py);
+
+        interface.call_method("load", (path, save_metadata, load_kwargs), None)?;
 
         Ok(())
     }

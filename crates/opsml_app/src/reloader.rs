@@ -3,17 +3,13 @@ use crate::utils::get_next_cron_timestamp;
 use chrono::DateTime;
 use chrono::Utc;
 use opsml_cards::card_service::ServiceInfo;
-use opsml_cards::ServiceCard;
 use opsml_registry::async_base::AsyncOpsmlRegistry;
 use opsml_registry::download::async_download_service_from_registry;
 use opsml_types::contracts::sort_cards_by_version;
 use opsml_types::contracts::CardQueryArgs;
-use opsml_types::RegistryType;
-use opsml_types::SaveName;
+use opsml_types::{RegistryType, SaveName};
 use pyo3::prelude::*;
-use pyo3::types::PyDict;
 
-use std::path::Path;
 use std::path::PathBuf;
 use std::sync::Arc;
 use std::sync::RwLock;
@@ -59,41 +55,6 @@ pub fn is_past_scheduled_reload(scheduled_reload: &DateTime<Utc>) -> bool {
     *scheduled_reload <= now
 }
 
-fn load_from_path(
-    service: &Bound<'_, ServiceCard>,
-    path: &Path,
-    load_kwargs: Option<&Bound<'_, PyDict>>,
-) -> Result<(), AppError> {
-    //let service_card = ServiceCard::from_path_rs(py, &path, load_kwargs)?;
-    //let card_map = load_card_map(&path).map_err(|e| {
-    //    error!("Failed to load card map from: {:?}", e);
-    //    e
-    //})?;
-
-    let _ = service.call_method("mut_from_path", (path,), load_kwargs);
-
-    //let queue = if !card_map.drift_paths.is_empty() {
-    //    debug!("Drift paths found in card map, creating ScouterQueue");
-    //    match transport_config {
-    //        Some(config) => {
-    //            let rt = runtime.clone();
-    //            let scouter_queue =
-    //                ScouterQueue::from_path_rs(py, card_map.drift_paths, config, rt)?;
-    //            Some(Py::new(py, scouter_queue)?)
-    //        }
-    //        None => {
-    //            debug!("No transport config found in card map");
-    //            None
-    //        }
-    //    }
-    //} else {
-    //    debug!("No drift paths or transport config found in card map");
-    //    None
-    //};
-
-    Ok(())
-}
-
 #[derive(Debug, Clone)]
 pub enum ReloadEvent {
     Initialize,
@@ -105,17 +66,62 @@ pub enum ReloadEvent {
 pub struct ReloadConfig {
     #[pyo3(get, set)]
     pub cron: String,
+
+    #[pyo3(get, set)]
+    pub max_retries: u32,
+
+    pub write_path: Arc<PathBuf>,
 }
 
 #[pymethods]
 impl ReloadConfig {
     #[new]
-    pub fn new(cron: String) -> Self {
-        ReloadConfig { cron }
+    #[pyo3(signature = (cron, max_retries=None, write_path=None))]
+    pub fn new(
+        cron: String,
+        max_retries: Option<u32>,
+        write_path: Option<PathBuf>,
+    ) -> Result<Self, AppError> {
+        let resolved_write_path = match write_path {
+            Some(path) => path,
+            None => std::env::current_dir()?.join(SaveName::ServiceReload),
+        };
+        Ok(ReloadConfig {
+            cron,
+            max_retries: max_retries.unwrap_or(3),
+            write_path: Arc::new(resolved_write_path),
+        })
+    }
+
+    #[getter]
+    pub fn write_path(&self) -> PathBuf {
+        self.write_path.as_ref().clone()
+    }
+
+    #[setter]
+    pub fn set_write_path(&mut self, path: PathBuf) {
+        self.write_path = Arc::new(path);
     }
 }
 
-async fn reload_task(service_info: ServiceInfo) -> Result<Option<PathBuf>, AppError> {
+impl Default for ReloadConfig {
+    fn default() -> Self {
+        ReloadConfig {
+            cron: "0 0 0 * * *".to_string(), // Default to daily at midnight
+            max_retries: 3,
+            write_path: Arc::new(
+                std::env::current_dir()
+                    .unwrap_or_else(|_| PathBuf::from("."))
+                    .join(SaveName::ServiceReload),
+            ),
+        }
+    }
+}
+
+async fn reload_task(
+    service_info: ServiceInfo,
+    write_path: &Arc<PathBuf>,
+) -> Result<bool, AppError> {
     // list latest service card. If different version:
     // 1. Download new artifacts (including drift profile, to a new directory)
     // 2. Reload ServiceCard
@@ -142,28 +148,25 @@ async fn reload_task(service_info: ServiceInfo) -> Result<Option<PathBuf>, AppEr
 
         query_args.version = Some(latest_version);
 
-        let write_path = std::env::current_dir()?
-            .as_path()
-            .join(SaveName::ServiceReload);
+        async_download_service_from_registry(&query_args, write_path, &registry).await?;
 
-        async_download_service_from_registry(&query_args, &write_path, &registry).await?;
-
-        return Ok(Some(write_path));
+        return Ok(true);
     }
 
-    Ok(None)
+    Ok(false)
 }
 
 #[allow(clippy::too_many_arguments)]
 async fn start_background_reload_process(
-    service: Py<ServiceCard>,
     mut event_rx: mpsc::UnboundedReceiver<ReloadEvent>,
     mut shutdown_rx: oneshot::Receiver<()>,
     runtime: Arc<Runtime>,
     scheduled_reload: Arc<RwLock<DateTime<Utc>>>,
     config: ReloadConfig,
-    initialized: Arc<RwLock<bool>>,
+    running: Arc<RwLock<bool>>,
     service_info: Arc<RwLock<ServiceInfo>>,
+    reload_ready: Arc<RwLock<bool>>,
+    write_path: Arc<PathBuf>,
 ) -> Result<(), AppError> {
     let cron = config.cron;
 
@@ -183,13 +186,13 @@ async fn start_background_reload_process(
                     match event {
                         Some(ReloadEvent::Initialize) => {
                             info!("Reloader initialized and ready");
-                            match initialized.write() {
-                            Ok(mut init) => {
-                                *init = true;
+                            match running.write() {
+                            Ok(mut run) => {
+                                *run = true;
                                 debug!("Reloader initialized successfully");
                             }
                             Err(e) => {
-                                    error!("Failed to write to initialized lock for reloader: {}", e);
+                                    error!("Failed to write to running lock for reloader: {}", e);
                                 }
                             }
                         },
@@ -200,21 +203,17 @@ async fn start_background_reload_process(
                                 let guard = service_info.read().unwrap();
                                 guard.clone()
                             };
-                            let reload_result = reload_task(service_info_cloned).await;
 
-                            match reload_result {
-                                Ok(Some(write_path)) => {
-                                    let loaded: Result<(), AppError> = Python::with_gil(|py| {
-                                        let bound_service = service.bind(py);
-                                        load_from_path(bound_service, &write_path, None)
-                                    });
-
-                                    match loaded {
-                                        Ok(_) => info!("Service reloaded successfully"),
-                                        Err(e) => error!("Failed to reload service: {}", e),
+                            match reload_task(service_info_cloned, &write_path).await {
+                                Ok(true) => {
+                                    // Set reload ready flag
+                                    if let Err(e) = reload_ready.write().map(|mut ready| *ready = true) {
+                                        error!("Failed to write to reload_ready lock: {}", e);
+                                    } else {
+                                        debug!("New version detected. Starting reload");
                                     }
                                 }
-                                Ok(None) => {
+                                Ok(false) => {
                                     info!("No new version detected, skipping reload");
                                 }
                                 Err(e) => {
@@ -251,56 +250,78 @@ async fn start_background_reload_process(
 
 #[derive(Debug)]
 pub struct ServiceReloader {
-    tx: UnboundedSender<ReloadEvent>,
+    tx: Option<UnboundedSender<ReloadEvent>>,
     shutdown_tx: Option<oneshot::Sender<()>>,
-    pub initialized: Arc<RwLock<bool>>,
+    pub running: Arc<RwLock<bool>>,
     pub service_info: Arc<RwLock<ServiceInfo>>,
+    pub reload_ready: Arc<RwLock<bool>>,
+    pub config: ReloadConfig,
 }
 
 impl ServiceReloader {
     #[instrument(skip_all)]
-    pub fn new(
-        service_info: Arc<RwLock<ServiceInfo>>,
-    ) -> (Self, UnboundedReceiver<ReloadEvent>, oneshot::Receiver<()>) {
+    pub fn new(service_info: Arc<RwLock<ServiceInfo>>, config: ReloadConfig) -> Self {
         debug!("Creating unbounded QueueBus");
+        //let (tx, rx) = mpsc::unbounded_channel();
+        //let (shutdown_tx, shutdown_rx) = oneshot::channel();
+        let running = Arc::new(RwLock::new(false));
+        let reload_ready = Arc::new(RwLock::new(false));
+
+        Self {
+            tx: None,
+            shutdown_tx: None,
+            running,
+            service_info,
+            reload_ready,
+            config,
+        }
+    }
+
+    /// Creates event channels for the reloader. This will create
+    /// an mpsc channel for sending events and a shutdown channel used for shutting down
+    /// the reloader background task
+    pub fn create_channels(
+        &mut self,
+    ) -> Result<
+        (
+            UnboundedReceiver<ReloadEvent>,
+            tokio::sync::oneshot::Receiver<()>,
+        ),
+        AppError,
+    > {
         let (tx, rx) = mpsc::unbounded_channel();
         let (shutdown_tx, shutdown_rx) = oneshot::channel();
-        let initialized = Arc::new(RwLock::new(false));
 
-        (
-            Self {
-                tx,
-                shutdown_tx: Some(shutdown_tx),
-                initialized,
-                service_info,
-            },
-            rx,
-            shutdown_rx,
-        )
+        self.tx = Some(tx);
+        self.shutdown_tx = Some(shutdown_tx);
+
+        Ok((rx, shutdown_rx))
     }
 
     pub fn start_reloader(
         shared_runtime: Arc<tokio::runtime::Runtime>,
-        service: Py<ServiceCard>,
         config: ReloadConfig,
         event_rx: mpsc::UnboundedReceiver<ReloadEvent>,
         shutdown_rx: oneshot::Receiver<()>,
-        initialized: Arc<RwLock<bool>>,
+        running: Arc<RwLock<bool>>,
         service_info: Arc<RwLock<ServiceInfo>>,
+        reload_ready: Arc<RwLock<bool>>,
+        write_path: Arc<PathBuf>,
     ) -> Result<(), AppError> {
         let reloader_runtime = shared_runtime.clone();
         let scheduled_reload = Arc::new(RwLock::new(get_next_cron_timestamp(&config.cron)?));
 
         shared_runtime.spawn(async move {
             match start_background_reload_process(
-                service,
                 event_rx,
                 shutdown_rx,
                 reloader_runtime,
                 scheduled_reload,
                 config.clone(),
-                initialized,
+                running,
                 service_info,
+                reload_ready,
+                write_path,
             )
             .await
             {
@@ -314,13 +335,17 @@ impl ServiceReloader {
 
     #[instrument(skip_all)]
     pub fn publish(&self, event: ReloadEvent) -> Result<(), AppError> {
-        Ok(self.tx.send(event)?)
+        if let Some(tx) = &self.tx {
+            Ok(tx.send(event)?)
+        } else {
+            Err(AppError::ReloaderNotRunning)
+        }
     }
 
-    pub fn is_initialized(&self) -> bool {
-        // Check if the bus is initialized
-        if let Ok(initialized) = self.initialized.read() {
-            *initialized
+    pub fn is_running(&self) -> bool {
+        // Check if the bus is running
+        if let Ok(running) = self.running.read() {
+            *running
         } else {
             false
         }
@@ -334,11 +359,11 @@ impl ServiceReloader {
         }
     }
 
-    pub fn init(&self) -> Result<(), AppError> {
+    pub fn start(&self) -> Result<(), AppError> {
         std::thread::sleep(std::time::Duration::from_millis(20));
         let mut attempts = 0;
-        while !self.is_initialized() {
-            debug!("Reloader is not initialized, waiting...");
+        while !self.is_running() {
+            debug!("Reloader is not running, waiting...");
             if attempts >= 100 {
                 return Err(AppError::FailedToInitializeReloader);
             }
@@ -353,7 +378,7 @@ impl ServiceReloader {
     }
 
     pub fn reload(&self) -> Result<(), AppError> {
-        if !self.is_initialized() {
+        if !self.is_running() {
             return Err(AppError::ReloaderNotFound);
         }
 

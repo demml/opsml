@@ -55,6 +55,18 @@ pub enum AppError {
 
     #[error("Reloader not found")]
     ReloaderNotFound,
+
+    #[error("Reloader is not running")]
+    ReloaderNotRunning,
+
+    #[error("Failed to update lock")]
+    UpdateLockError,
+
+    #[error("Failed to update service")]
+    UpdateServiceError(String),
+
+    #[error("Failed to reload service")]
+    ReloadServiceError(String),
 }
 
 impl From<AppError> for PyErr {

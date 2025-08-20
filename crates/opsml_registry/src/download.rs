@@ -143,7 +143,7 @@ pub fn download_service_from_registry(
             download_card_artifacts(&key, &card_path)?;
             mapping.add_card_path(&card.alias, &card_path);
 
-            // If model card, load and process drift paths
+            // If modelcard or promptcard, load and process drift paths
             if card.registry_type == RegistryType::Model
                 || card.registry_type == RegistryType::Prompt
             {
@@ -182,7 +182,7 @@ pub fn download_service_from_registry(
                         }
                     }
                     None => {
-                        debug!("ModelCard {} has no drift paths", card.alias);
+                        debug!("{} has no drift paths", card.alias);
                     }
                 }
                 // Optionally: do something with drift_paths
@@ -233,7 +233,7 @@ pub fn download_service(
 }
 
 /// Downloads a service card
-async fn get_service_card(
+async fn load_service_card(
     args: &CardQueryArgs,
     write_path: &Path,
     registry: &AsyncOpsmlRegistry,
@@ -246,7 +246,7 @@ async fn get_service_card(
     }
 
     // download service card card
-    download_card_artifacts(&key, write_path)?;
+    async_download_card_artifacts(&key, write_path).await?;
 
     // read Card.json file
     let service = ServiceCard::load_service_json(write_path).map_err(RegistryError::CardError)?;
@@ -357,7 +357,7 @@ fn process_drift_paths(
             mapping.add_drift_path(&alias, &drift_path);
         }
     } else {
-        debug!("ModelCard {} has no drift paths", card.alias);
+        debug!("{} has no drift paths", card.alias);
     }
 
     Ok(())
@@ -376,7 +376,7 @@ pub async fn async_download_service_from_registry(
 ) -> Result<(), RegistryError> {
     // 1. Get the ServiceCard
     debug!("Downloading ServiceCard");
-    let service = get_service_card(args, write_path, registry).await?;
+    let service = load_service_card(args, write_path, registry).await?;
 
     // 2. Create a mapping for the service card
     debug!("Creating mapping for ServiceCard");

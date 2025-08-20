@@ -31,7 +31,7 @@ use std::path::{Path, PathBuf};
 use pyo3::gc::PyVisit;
 use pyo3::PyTraverseError;
 use serde_json::Value;
-use tracing::{debug, instrument, warn};
+use tracing::{debug, error, instrument, warn};
 
 #[pyclass]
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -861,9 +861,17 @@ impl ModelInterface {
         path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> Result<(), ModelInterfaceError> {
+        debug!("Loading model from path: {:?}", path);
         let joblib = py.import("joblib")?;
 
+        joblib.call_method("load", (path,), kwargs).inspect_err({
+            |err| {
+                error!("Failed to load model: {}", err);
+            }
+        })?;
+
         // Load the data using joblib
+        debug!("Calling load");
         self.model = Some(joblib.call_method("load", (path,), kwargs)?.unbind());
 
         debug!("Model loaded");

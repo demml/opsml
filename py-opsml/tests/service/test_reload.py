@@ -36,7 +36,8 @@ from opsml import (  # type: ignore
 from tests.conftest import WINDOWS_EXCLUDE
 import pytest
 
-CURRENT_DIRECTORY = Path(os.getcwd()) / "tests" / "service" / "assets"
+CURRENT_DIRECTORY = Path(os.getcwd())
+ASSETS_DIRECTORY = CURRENT_DIRECTORY / "tests" / "service" / "assets"
 SERVICE_SPACE = "opsml"
 SERVICE_NAME = "service"
 
@@ -116,11 +117,12 @@ def test_service_reload(
     artifacts and loading them all from a path into an AppState object
 
     """
-    with OpsmlTestServer(False, CURRENT_DIRECTORY):
+    with OpsmlTestServer(True, ASSETS_DIRECTORY):
         # run experiment to populate registry
         create_service(random_forest_classifier, chat_prompt, example_dataframe)
 
-        opsml_app = CURRENT_DIRECTORY / "opsml_app"
+        opsml_app = ASSETS_DIRECTORY / "opsml_app"
+        service_reload = ASSETS_DIRECTORY / "service_reload"
 
         # download service
         download_service(
@@ -132,16 +134,23 @@ def test_service_reload(
         app = AppState.from_path(
             path=opsml_app,
             # transport_config=opsml.scouter.HTTPConfig(),  # this will be mocked
-            reload_config=ReloadConfig(cron=CommonCrons.Every1Minute.cron),
+            reload_config=ReloadConfig(
+                cron=CommonCrons.Every1Minute.cron,
+                write_path=service_reload,
+            ),
         )
+
+        app.start_reloader()
+
+        assert app.service.version == "0.1.0"
 
         # create next service version
         create_service(random_forest_classifier, chat_prompt, example_dataframe)
 
-        # create 3rd
-        create_service(random_forest_classifier, chat_prompt, example_dataframe)
-
         app.reload()
 
+        time.sleep(5)
+        assert app.service.version == "0.2.0"
+
         shutil.rmtree(opsml_app)
-        a
+        shutil.rmtree(service_reload)

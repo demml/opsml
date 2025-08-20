@@ -17,6 +17,7 @@ use pyo3::IntoPyObjectExt;
 use pyo3::{PyTraverseError, PyVisit};
 use std::path::{Path, PathBuf};
 use tracing::debug;
+use tracing::field::debug;
 use tracing::instrument;
 
 #[pyclass(extends=ModelInterface, subclass)]
@@ -193,6 +194,7 @@ impl SklearnModel {
     /// * `Result<DataInterfaceMetadata>` - DataInterfaceMetadata
     #[pyo3(signature = (path, metadata, load_kwargs=None))]
     #[allow(clippy::too_many_arguments)]
+    #[instrument(skip_all, name = "load_sklearn")]
     pub fn load(
         mut self_: PyRefMut<'_, Self>,
         py: Python,
@@ -207,8 +209,11 @@ impl SklearnModel {
         {
             let parent = self_.as_super();
             let model_path = path.join(&metadata.model_uri);
+
+            debug!("loading model");
             parent.load_model(py, &model_path, load_kwargs.model_kwargs(py))?;
 
+            debug!("loading onnx model");
             if load_kwargs.load_onnx {
                 let onnx_path = path.join(
                     &metadata
@@ -218,10 +223,12 @@ impl SklearnModel {
                 parent.load_onnx_model(py, &onnx_path, load_kwargs.onnx_kwargs(py))?;
             }
 
+            debug!("loading drift map");
             if let Some(ref drift_map) = metadata.drift_profile_uri_map {
                 parent.load_drift_profile(py, &path, drift_map)?;
             }
 
+            debug!("loading sample data");
             if metadata.sample_data_uri.is_some() {
                 let sample_data_path = path.join(
                     &metadata
@@ -233,7 +240,8 @@ impl SklearnModel {
         }
 
         if !metadata.data_processor_map.is_empty() {
-            // get first key from metadata.save_metadata.data_processor_map.keys() or default to unknow
+            // get first key from metadata.save_metadata.data_processor_map.keys() or default to unknown
+            debug!("loading preprocessor");
             let processor = metadata
                 .data_processor_map
                 .values()
