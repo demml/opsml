@@ -10,7 +10,9 @@ use pyo3::types::PyDict;
 use scouter_client::ScouterQueue;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, RwLock};
-use tracing::{debug, error};
+use std::time::Duration;
+use tokio::time::sleep;
+use tracing::{debug, error, info};
 
 /// Load a card map from path
 fn load_card_map(path: &Path) -> Result<ServiceCardMapping, AppError> {
@@ -52,44 +54,18 @@ pub fn create_scouter_queue(
 
 /// Creates a  ServiceReloader from a ServiceCard and optional ReloadConfig.
 /// # Arguments
-/// * `py` - The Python interpreter instance
-/// * `service` - The ServiceCard to use for the reloader
-/// * `reload_config` - The optional reload config to use for the reloader
+/// * `service_info` - The ServiceCard to use for the reloader
+/// * `reload_config` - The optional reload configuration. Defaults to every day
 /// # Returns
-/// * `Some(ServiceReloader)` if the reloader was created successfully
-/// * `None` if the reloader could not be created
+/// * `ServiceReloader` - The created service reloader
 pub fn create_service_reloader(
-    py: Python<'_>,
-    service: Py<ServiceCard>,
+    service_info: ServiceInfo,
     reload_config: Option<ReloadConfig>,
-) -> Result<Option<ServiceReloader>, AppError> {
-    match reload_config {
-        Some(config) => {
-            let service_info = Arc::new(RwLock::new(
-                service
-                    .bind(py)
-                    .call_method0("service_info")?
-                    .extract::<ServiceInfo>()?,
-            ));
-            let (reloader, event_rx, shutdown_rx) = ServiceReloader::new(service_info.clone());
-            let initialized = reloader.initialized.clone();
-            ServiceReloader::start_reloader(
-                app_state().runtime.clone(),
-                service.clone_ref(py),
-                config,
-                event_rx,
-                shutdown_rx,
-                initialized,
-                service_info,
-            )?;
-
-            // check for background initialization
-            reloader.init()?;
-
-            Ok(Some(reloader))
-        }
-        None => Ok(None),
-    }
+) -> Result<ServiceReloader, AppError> {
+    let reload_config = reload_config.unwrap_or_else(|| ReloadConfig::default());
+    let service_info = Arc::new(RwLock::new(service_info));
+    let reloader = ServiceReloader::new(service_info, reload_config);
+    Ok(reloader)
 }
 
 /// Helper for managing application state. Intended to be used with api frameworks like FastAPI
@@ -103,9 +79,11 @@ pub fn create_service_reloader(
 #[pyclass]
 #[derive(Debug)]
 pub struct AppState {
-    service: Py<ServiceCard>,
+    service: Arc<RwLock<Py<ServiceCard>>>,
     queue: Option<Py<ScouterQueue>>,
-    reloader: Option<ServiceReloader>,
+    reloader: ServiceReloader,
+    reload_handle: Option<tokio::task::JoinHandle<()>>,
+    load_kwargs: Arc<RwLock<Option<Py<PyDict>>>>,
 }
 
 #[pymethods]
@@ -120,17 +98,29 @@ impl AppState {
     /// # Returns
     /// * `AppState` - The application state containing the ServiceCard and optional ScouterQueue  
     #[new]
-    #[pyo3(signature = (service, queue=None))]
+    #[pyo3(signature = (service, queue=None, reload_config=None))]
     pub fn new(
+        py: Python<'_>,
         service: Bound<'_, ServiceCard>,
         queue: Option<Bound<'_, ScouterQueue>>,
+        reload_config: Option<ReloadConfig>,
     ) -> Result<Self, AppError> {
         let service = service.unbind();
         let queue = queue.map(|q| q.unbind());
+
+        let service_info = service
+            .bind(py)
+            .call_method0("service_info")?
+            .extract::<ServiceInfo>()?;
+
+        let reloader = create_service_reloader(service_info, reload_config)?;
+
         Ok(AppState {
-            service,
+            service: Arc::new(RwLock::new(service)),
             queue,
-            reloader: None,
+            reloader,
+            reload_handle: None,
+            load_kwargs: Arc::new(RwLock::new(None)),
         })
     }
     /// This method will load an application state from a path
@@ -159,6 +149,10 @@ impl AppState {
 
         // Load the service card from path
         let service = Py::new(py, ServiceCard::from_path_rs(py, &path, load_kwargs)?)?;
+        let service_info = service
+            .bind(py)
+            .call_method0("service_info")?
+            .extract::<ServiceInfo>()?;
 
         // Get the drift map in cap of drift profiles
         let card_map = load_card_map(&path).inspect_err(|e| {
@@ -167,19 +161,23 @@ impl AppState {
 
         let queue = create_scouter_queue(py, card_map, transport_config)?;
 
-        // Create the service reloader if reload config is provided
-        let reloader = create_service_reloader(py, service.clone_ref(py), reload_config)?;
+        // Create the service reloader
+        let reloader = create_service_reloader(service_info, reload_config)?;
+
+        let kwargs = load_kwargs.map(|kw| kw.clone().unbind());
 
         Ok(AppState {
-            service,
+            service: Arc::new(RwLock::new(service)),
             queue,
             reloader,
+            reload_handle: None,
+            load_kwargs: Arc::new(RwLock::new(kwargs)),
         })
     }
 
     #[getter]
-    pub fn service<'py>(&self, py: Python<'py>) -> Result<&Bound<'py, ServiceCard>, AppError> {
-        Ok(self.service.bind(py))
+    pub fn service<'py>(&self, py: Python<'py>) -> Result<Bound<'py, ServiceCard>, AppError> {
+        Ok(self.service.read().unwrap().bind(py).clone())
     }
 
     #[getter]
@@ -192,20 +190,184 @@ impl AppState {
     }
 
     #[getter]
-    pub fn has_reloader(&self) -> bool {
+    pub fn reloader_running(&self) -> bool {
         // return initialized if reloader is present
-        if let Some(reloader) = &self.reloader {
-            *reloader.initialized.read().unwrap()
-        } else {
-            false
-        }
+        *self.reloader.running.read().unwrap()
     }
 
     pub fn reload(&self) -> Result<(), AppError> {
-        if let Some(reloader) = &self.reloader {
-            reloader.reload()
-        } else {
-            Err(AppError::ReloaderNotFound)
+        self.reloader.reload()
+    }
+
+    /// Start the reloader functionality
+    pub fn start_reloader(&mut self) -> Result<(), AppError> {
+        debug!("Starting reloader");
+        if self.reloader_running() {
+            return Ok(());
         }
+
+        self.start_background_reloader()?;
+        let running = self.reloader.running.clone();
+        let reload_ready = self.reloader.reload_ready.clone();
+        let write_path = self.reloader.config.write_path.clone();
+        let load_kwargs = self.load_kwargs.clone();
+        let service_arc = self.service.clone();
+        let max_retries = self.reloader.config.max_retries;
+
+        debug!(
+            "Starting reload loop with arguments running: {:?}, reload_ready: {:?}, write_path: {:?}",
+            running, reload_ready, write_path
+        );
+
+        let handle = app_state().runtime.spawn(async move {
+            while Self::check_running_state(&running) {
+                if Self::check_reload_ready(&reload_ready) {
+                    info!("Ready for a reload");
+
+                    let mut retry_count = 0;
+
+                    retry_count += 1;
+                    while retry_count < max_retries {
+                        // Perform the reload operation
+                        match Self::perform_service_reload(&service_arc, &write_path, &load_kwargs)
+                        {
+                            Ok(()) => {
+                                info!("Service reloaded successfully");
+                                break;
+                            }
+                            Err(e) => {
+                                error!(
+                                    "Failed to reload service: {:?}, retry attempt: {}",
+                                    e, retry_count
+                                );
+                                sleep(Duration::from_millis(100 * 2_u64.pow(retry_count))).await;
+                                retry_count += 1;
+                            }
+                        }
+                    }
+
+                    // If we exhausted all retries, we should notify the user
+                    if retry_count == max_retries {
+                        error!("Max retries reached, giving up");
+                    }
+
+                    // We don't want infinite retry loops
+                    Self::reset_reload_ready_state(&reload_ready);
+                }
+
+                tokio::time::sleep(std::time::Duration::from_millis(500)).await;
+            }
+
+            debug!("Reload loop terminated");
+        });
+
+        self.reload_handle = Some(handle);
+
+        Ok(())
+    }
+
+    pub fn stop_reloader(&mut self) -> Result<(), AppError> {
+        if !self.reloader_running() {
+            return Ok(());
+        }
+
+        // Shutdown thread first
+        if let Some(handle) = self.reload_handle.take() {
+            handle.abort();
+            info!("Reload task aborted");
+        }
+
+        // shutdown background reloader
+        self.reloader.shutdown();
+
+        Ok(())
+    }
+}
+
+impl AppState {
+    /// Check if the reloader is still running
+    fn check_running_state(running: &Arc<RwLock<bool>>) -> bool {
+        running.read().map(|guard| *guard).unwrap_or_else(|e| {
+            error!("Failed to read running state: {:?}", e);
+            false
+        })
+    }
+
+    fn check_reload_ready(reload_ready: &Arc<RwLock<bool>>) -> bool {
+        reload_ready.read().map(|guard| *guard).unwrap_or_else(|e| {
+            debug!("Failed to read reload_ready state: {:?}", e);
+            false
+        })
+    }
+
+    fn reset_reload_ready_state(reload_ready: &Arc<RwLock<bool>>) {
+        match reload_ready.write() {
+            Ok(mut guard) => {
+                *guard = false;
+                info!("Reload ready state reset");
+            }
+            Err(e) => {
+                error!("Failed to reset reload ready state: {:?}", e);
+            }
+        }
+    }
+
+    fn perform_service_reload(
+        service_arc: &Arc<RwLock<Py<ServiceCard>>>,
+        write_path: &PathBuf,
+        load_kwargs: &Arc<RwLock<Option<Py<PyDict>>>>,
+    ) -> Result<(), AppError> {
+        // Acquire the GIL and load the new service
+        let reload_result = Python::with_gil(|py| -> Result<Py<ServiceCard>, AppError> {
+            // Read load_kwargs first, in a separate scope to minimize lock duration
+            let lock = load_kwargs.read().unwrap();
+            let kwargs = lock.as_ref().map(|kw| kw.bind(py));
+            // Load the new service card
+            let new_service = ServiceCard::from_path_rs(py, write_path, kwargs)?;
+            Ok(Py::new(py, new_service)?)
+        });
+
+        match reload_result {
+            Ok(new_service) => {
+                // Now update the service with minimal lock time
+                match service_arc.write() {
+                    Ok(mut service_guard) => {
+                        *service_guard = new_service;
+                        info!("Py service updated successfully");
+                        Ok(())
+                    }
+                    Err(e) => {
+                        error!("Failed to acquire write lock for service update: {:?}", e);
+                        Err(AppError::UpdateServiceError(e.to_string()))
+                    }
+                }
+            }
+            Err(e) => {
+                error!("Failed to reload service: {:?}", e);
+                Err(AppError::ReloadServiceError(e.to_string()))
+            }
+        }
+    }
+
+    /// Helper to get the internal service reloader
+    pub fn start_background_reloader(&mut self) -> Result<(), AppError> {
+        let (event_rx, shutdown_rx) = self.reloader.create_channels()?;
+        let running = self.reloader.running.clone();
+        let reload_ready = self.reloader.reload_ready.clone();
+
+        ServiceReloader::start_reloader(
+            app_state().runtime.clone(),
+            self.reloader.config.clone(),
+            event_rx,
+            shutdown_rx,
+            running,
+            self.reloader.service_info.clone(),
+            reload_ready,
+            self.reloader.config.write_path.clone(),
+        )?;
+
+        self.reloader.start()?;
+
+        Ok(())
     }
 }
