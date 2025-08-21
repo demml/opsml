@@ -70,11 +70,20 @@ pub enum AppError {
 
     #[error(transparent)]
     StorageError(#[from] opsml_storage::StorageError),
+
+    #[error("Failed to downcast")]
+    DowncastError(String),
 }
 
 impl From<AppError> for PyErr {
     fn from(err: AppError) -> PyErr {
         let msg = err.to_string();
         pyo3::exceptions::PyRuntimeError::new_err(msg)
+    }
+}
+
+impl<'a> From<pyo3::DowncastError<'a, 'a>> for AppError {
+    fn from(err: pyo3::DowncastError) -> Self {
+        AppError::DowncastError(err.to_string())
     }
 }

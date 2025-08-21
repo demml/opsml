@@ -16,8 +16,6 @@ use std::sync::RwLock;
 use tokio::runtime::Runtime;
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
-use tokio::sync::oneshot;
-use tokio::time::{sleep, Duration};
 use tracing::{debug, error, info, instrument};
 
 /// Helper for listing cards
@@ -57,7 +55,8 @@ pub fn is_past_scheduled_reload(scheduled_reload: &DateTime<Utc>) -> bool {
 
 #[derive(Debug, Clone)]
 pub enum ReloadEvent {
-    Initialize,
+    Start,
+    Stop,
     ForceReload,
 }
 
@@ -159,42 +158,32 @@ async fn reload_task(
 #[allow(clippy::too_many_arguments)]
 async fn start_background_reload_process(
     mut event_rx: mpsc::UnboundedReceiver<ReloadEvent>,
-    mut shutdown_rx: oneshot::Receiver<()>,
     runtime: Arc<Runtime>,
     scheduled_reload: Arc<RwLock<DateTime<Utc>>>,
     config: ReloadConfig,
-    running: Arc<RwLock<bool>>,
     service_info: Arc<RwLock<ServiceInfo>>,
     reload_ready: Arc<RwLock<bool>>,
     write_path: Arc<PathBuf>,
+    running: Arc<RwLock<bool>>,
 ) -> Result<(), AppError> {
     let cron = config.cron;
-
     let future = async move {
         loop {
             tokio::select! {
-                _ = sleep(Duration::from_secs(2)) => {
 
-
-                    if is_past_scheduled_reload(&scheduled_reload.read().unwrap()) {
-
-                        let mut reload_timestamp = scheduled_reload.write().unwrap();
-                        *reload_timestamp = get_next_cron_timestamp(&cron)?;
-                    }
-                },
                 event = event_rx.recv() => {
                     match event {
-                        Some(ReloadEvent::Initialize) => {
-                            info!("Reloader initialized and ready");
-                            match running.write() {
-                            Ok(mut run) => {
-                                *run = true;
-                                debug!("Reloader initialized successfully");
-                            }
-                            Err(e) => {
-                                    error!("Failed to write to running lock for reloader: {}", e);
-                                }
-                            }
+                        Some(ReloadEvent::Stop) => {
+                            info!("Stopping Reloader");
+                            let mut running = running.write().unwrap();
+                            *running = false;
+                            break;
+
+                        },
+                        Some(ReloadEvent::Start) => {
+                            info!("Reloader started");
+                            let mut running = running.write().unwrap();
+                            *running = true;
                         },
                         Some(ReloadEvent::ForceReload) => {
                             info!("Force reload requested");
@@ -231,8 +220,8 @@ async fn start_background_reload_process(
                         }
                     }
                 },
-                _ = &mut shutdown_rx => {
-                    info!("Stopping background task");
+                else => {
+                    debug!("Event channel closed");
                     break;
                 }
             }
@@ -252,12 +241,11 @@ async fn start_background_reload_process(
 #[derive(Debug)]
 pub struct ServiceReloader {
     tx: Option<UnboundedSender<ReloadEvent>>,
-    shutdown_tx: Option<oneshot::Sender<()>>,
-    pub running: Arc<RwLock<bool>>,
     pub service_info: Arc<RwLock<ServiceInfo>>,
     pub reload_ready: Arc<RwLock<bool>>,
     pub config: ReloadConfig,
     pub service_path: Arc<PathBuf>,
+    pub running: Arc<RwLock<bool>>,
 }
 
 impl ServiceReloader {
@@ -268,53 +256,37 @@ impl ServiceReloader {
         service_path: PathBuf,
     ) -> Self {
         debug!("Creating unbounded QueueBus");
-        //let (tx, rx) = mpsc::unbounded_channel();
-        //let (shutdown_tx, shutdown_rx) = oneshot::channel();
-        let running = Arc::new(RwLock::new(false));
         let reload_ready = Arc::new(RwLock::new(false));
         let service_path = Arc::new(service_path);
+        let running = Arc::new(RwLock::new(false));
 
         Self {
             tx: None,
-            shutdown_tx: None,
-            running,
             service_info,
             reload_ready,
             config,
             service_path,
+            running,
         }
     }
 
     /// Creates event channels for the reloader. This will create
     /// an mpsc channel for sending events and a shutdown channel used for shutting down
     /// the reloader background task
-    pub fn create_channels(
-        &mut self,
-    ) -> Result<
-        (
-            UnboundedReceiver<ReloadEvent>,
-            tokio::sync::oneshot::Receiver<()>,
-        ),
-        AppError,
-    > {
+    pub fn create_trx_channel(&mut self) -> Result<UnboundedReceiver<ReloadEvent>, AppError> {
         let (tx, rx) = mpsc::unbounded_channel();
-        let (shutdown_tx, shutdown_rx) = oneshot::channel();
-
         self.tx = Some(tx);
-        self.shutdown_tx = Some(shutdown_tx);
-
-        Ok((rx, shutdown_rx))
+        Ok(rx)
     }
 
     pub fn start_reloader(
         shared_runtime: Arc<tokio::runtime::Runtime>,
         config: ReloadConfig,
         event_rx: mpsc::UnboundedReceiver<ReloadEvent>,
-        shutdown_rx: oneshot::Receiver<()>,
-        running: Arc<RwLock<bool>>,
         service_info: Arc<RwLock<ServiceInfo>>,
         reload_ready: Arc<RwLock<bool>>,
         write_path: Arc<PathBuf>,
+        running: Arc<RwLock<bool>>,
     ) -> Result<(), AppError> {
         let reloader_runtime = shared_runtime.clone();
         let scheduled_reload = Arc::new(RwLock::new(get_next_cron_timestamp(&config.cron)?));
@@ -322,14 +294,13 @@ impl ServiceReloader {
         shared_runtime.spawn(async move {
             match start_background_reload_process(
                 event_rx,
-                shutdown_rx,
                 reloader_runtime,
                 scheduled_reload,
                 config.clone(),
-                running,
                 service_info,
                 reload_ready,
                 write_path,
+                running,
             )
             .await
             {
@@ -338,6 +309,26 @@ impl ServiceReloader {
             }
         });
 
+        Ok(())
+    }
+
+    pub fn start(&self) -> Result<(), AppError> {
+        std::thread::sleep(std::time::Duration::from_millis(20));
+        let mut attempts = 0;
+        debug!("Initializing reloader");
+        while !self.is_running() {
+            if attempts >= 100 {
+                error!("Failed to start reloader after 100 attempts");
+                return Err(AppError::FailedToInitializeReloader);
+            }
+            attempts += 1;
+            std::thread::sleep(std::time::Duration::from_millis(10));
+
+            let event = ReloadEvent::Start;
+            self.publish(event)?;
+        }
+
+        debug!("Reloader started successfully");
         Ok(())
     }
 
@@ -350,38 +341,13 @@ impl ServiceReloader {
         }
     }
 
-    pub fn is_running(&self) -> bool {
-        // Check if the bus is running
-        if let Ok(running) = self.running.read() {
-            *running
-        } else {
-            false
-        }
-    }
-
     #[instrument(skip_all)]
-    pub fn shutdown(&mut self) {
-        // Signal shutdown
-        if let Some(shutdown_tx) = self.shutdown_tx.take() {
-            let _ = shutdown_tx.send(());
+    pub fn shutdown(&mut self) -> Result<(), AppError> {
+        if !self.is_running() {
+            return Err(AppError::ReloaderNotFound);
         }
-    }
-
-    pub fn start(&self) -> Result<(), AppError> {
-        std::thread::sleep(std::time::Duration::from_millis(20));
-        let mut attempts = 0;
-        while !self.is_running() {
-            debug!("Reloader is not running, waiting...");
-            if attempts >= 100 {
-                return Err(AppError::FailedToInitializeReloader);
-            }
-            attempts += 1;
-            std::thread::sleep(std::time::Duration::from_millis(10));
-
-            let event = ReloadEvent::Initialize;
-            debug!("Initializing Reloader");
-            self.publish(event)?;
-        }
+        debug!("Stopping service reloader");
+        self.publish(ReloadEvent::Stop)?;
         Ok(())
     }
 
@@ -389,10 +355,18 @@ impl ServiceReloader {
         if !self.is_running() {
             return Err(AppError::ReloaderNotFound);
         }
-
         debug!("Reloading service via reloader");
         self.publish(ReloadEvent::ForceReload)?;
         Ok(())
+    }
+
+    pub fn is_running(&self) -> bool {
+        // Check if the bus is running
+        if let Ok(running) = self.running.read() {
+            *running
+        } else {
+            false
+        }
     }
 
     // create function that spawns a task and reloads the service card

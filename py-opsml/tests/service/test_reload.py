@@ -20,7 +20,7 @@ from opsml.scouter.types import CommonCrons
 from opsml.scouter.alert import AlertThreshold
 from opsml.app import AppState, ReloadConfig
 from opsml.card import download_service
-
+from opsml.scouter import Metrics, Metric
 
 from opsml import (  # type: ignore
     start_experiment,
@@ -140,13 +140,17 @@ def test_service_reload(
 
         assert app.service.version == "0.1.0"
 
+        # insert metric
+        metrics = Metrics(metrics=[Metric("custom", 2.0)])
+        app.queue["custom"].insert(metrics)
+
         # create next service version
         create_service(random_forest_classifier, chat_prompt, example_dataframe)
 
         app.reload()
 
         time.sleep(5)
-        assert app.service.version == "0.2.0"
+        assert app.service.version == "0.1.0"
 
         shutil.rmtree(opsml_app)
         a
