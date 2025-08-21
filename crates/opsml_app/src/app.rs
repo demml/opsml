@@ -33,13 +33,13 @@ fn load_card_map(path: &Path) -> Result<ServiceCardMapping, AppError> {
 /// * `card_map` - The service card mapping
 /// * `transport_config` - The transport config for the scouter queue
 /// # Returns
-/// * `Some(Py<ScouterQueue>)` if the scouter queue was created successfully
+/// * `Some(Arc<QueueState>)` if the scouter queue was created successfully
 /// * `None` if the scouter queue could not be created
 pub fn create_scouter_queue(
     py: Python<'_>,
     card_map: ServiceCardMapping,
     transport_config: Option<&Bound<'_, PyAny>>,
-) -> Result<Option<ScouterQueue>, AppError> {
+) -> Result<Option<Arc<QueueState>>, AppError> {
     let queue = if card_map.drift_paths.is_empty() {
         debug!("No drift paths or transport config found in card map");
         None
@@ -47,7 +47,12 @@ pub fn create_scouter_queue(
         debug!("Drift paths found in card map, creating ScouterQueue");
         let rt = app_state().runtime.clone();
         let scouter_queue = ScouterQueue::from_path_rs(py, card_map.drift_paths, config, rt)?;
-        Some(scouter_queue)
+        let event_loops = scouter_queue.queue_event_loops.clone();
+
+        Some(Arc::new(QueueState {
+            queue: Arc::new(RwLock::new(Py::new(py, scouter_queue)?)),
+            queue_event_loops: event_loops,
+        }))
     } else {
         debug!("No transport config provided");
         None
@@ -78,8 +83,8 @@ pub fn create_service_reloader(
 /// access to the python GIL - usually we would need to call queue.bind(py).call_method("shutdown")?
 #[derive(Debug)]
 struct QueueState {
-    queue: Arc<RwLock<Py<ScouterQueue>>>,
-    queue_event_loops: HashMap<String, Arc<EventLoops>>,
+    pub queue: Arc<RwLock<Py<ScouterQueue>>>,
+    pub queue_event_loops: HashMap<String, Arc<EventLoops>>,
 }
 
 /// Helper for managing application state. Intended to be used with api frameworks like FastAPI
@@ -160,15 +165,31 @@ impl AppState {
 
     #[getter]
     pub fn service<'py>(&self, py: Python<'py>) -> Result<Bound<'py, ServiceCard>, AppError> {
-        Ok(self.service.read().unwrap().bind(py).clone())
+        Ok(self
+            .service
+            .read()
+            .map_err(|e| {
+                error!("Failed to read service: {:?}", e);
+                AppError::PoisonError(e.to_string())
+            })?
+            .bind(py)
+            .clone())
     }
 
     #[getter]
     pub fn queue<'py>(&self, py: Python<'py>) -> Result<Bound<'py, ScouterQueue>, AppError> {
-        match self.queue.read().unwrap().as_ref() {
-            Some(queue) => Ok(queue.bind(py).clone()),
-            None => Err(AppError::QueueNotFoundError),
-        }
+        Ok(self
+            .queue
+            .as_ref()
+            .ok_or(AppError::QueueNotFoundError)?
+            .queue
+            .read()
+            .map_err(|e| {
+                error!("Failed to read queue: {:?}", e);
+                AppError::PoisonError(e.to_string())
+            })?
+            .bind(py)
+            .clone())
     }
 
     #[getter]
