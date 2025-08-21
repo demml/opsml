@@ -76,6 +76,9 @@ pub enum AppError {
 
     #[error("Failed to downcast")]
     DowncastError(String),
+
+    #[error(transparent)]
+    EventError(#[from] scouter_client::EventError),
 }
 
 impl From<AppError> for PyErr {

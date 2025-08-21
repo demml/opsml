@@ -87,6 +87,24 @@ struct QueueState {
     pub queue_event_loops: HashMap<String, Arc<EventLoops>>,
 }
 
+impl QueueState {
+    /// Shutdown the ScouterQueue and its associated event loops
+    pub fn shutdown(&self) -> Result<(), AppError> {
+        for (alias, event_loop) in &self.queue_event_loops {
+            debug!("Shutting down queue: {}", alias);
+            // shutdown the queue
+            event_loop.shutdown()?;
+
+            // wait for event and background cleanup
+            while event_loop.running() {
+                std::thread::sleep(std::time::Duration::from_millis(100));
+            }
+        }
+
+        Ok(())
+    }
+}
+
 /// Helper for managing application state. Intended to be used with api frameworks like FastAPI
 /// where an api app can be created with a lifespan and internal application state that is available
 /// to all request handlers. The OpsML application state contains:
@@ -102,8 +120,20 @@ pub struct AppState {
     service: Arc<RwLock<Py<ServiceCard>>>,
     queue: Option<Arc<QueueState>>,
     reloader: ServiceReloader,
-    load_kwargs: Arc<RwLock<Option<Py<PyDict>>>>,
+    load_kwargs: Option<Arc<RwLock<Py<PyDict>>>>,
     transport_config: Option<Arc<RwLock<Py<PyAny>>>>,
+}
+
+pub struct ReloaderState {
+    running: Arc<RwLock<bool>>,
+    reload_ready: Arc<RwLock<bool>>,
+    reload_path: Arc<PathBuf>,
+    service_path: Arc<PathBuf>,
+    load_kwargs: Option<Arc<RwLock<Py<PyDict>>>>,
+    transport_config: Option<Arc<RwLock<Py<PyAny>>>>,
+    service: Arc<RwLock<Py<ServiceCard>>>,
+    queue: Option<Arc<QueueState>>,
+    max_retries: u32,
 }
 
 #[pymethods]
@@ -158,7 +188,7 @@ impl AppState {
             service: Arc::new(RwLock::new(service)),
             queue,
             reloader,
-            load_kwargs: Arc::new(RwLock::new(kwargs)),
+            load_kwargs: kwargs.map(|kw| Arc::new(RwLock::new(kw))),
             transport_config: transport_config.map(|tc| Arc::new(RwLock::new(tc.clone().unbind()))),
         })
     }
@@ -214,34 +244,36 @@ impl AppState {
         self.start_background_reloader()?;
 
         // Setup state for the background thread
-        let running = self.reloader.running.clone();
-        let reload_ready = self.reloader.reload_ready.clone();
-        let reload_path = self.reloader.config.write_path.clone();
-        let service_path = self.reloader.service_path.clone();
-        let load_kwargs = self.load_kwargs.clone();
-        let transport_config = self.transport_config.clone();
-        let service_arc = self.service.clone();
-        let queue_arc = self.queue.clone();
-        let max_retries = self.reloader.config.max_retries;
+        let reload_state = ReloaderState {
+            running: self.reloader.running.clone(),
+            reload_ready: self.reloader.reload_ready.clone(),
+            reload_path: self.reloader.config.write_path.clone(),
+            service_path: self.reloader.service_path.clone(),
+            load_kwargs: self.load_kwargs.clone(),
+            transport_config: self.transport_config.clone(),
+            service: self.service.clone(),
+            queue: self.queue.clone(),
+            max_retries: self.reloader.config.max_retries,
+        };
 
         debug!(
             "Starting reload loop with arguments running: {:?}, reload_ready: {:?}, reload_path: {:?}",
-            running, reload_ready, reload_path
+            reload_state.running, reload_state.reload_ready, reload_state.reload_path
         );
 
         app_state().runtime.spawn(async move {
-            while Self::check_running_state(&running) {
-                if Self::check_reload_ready(&reload_ready) {
+            while Self::check_running_state(&reload_state.running) {
+                if Self::check_reload_ready(&reload_state.reload_ready) {
                     info!("Ready for a reload");
 
                     let mut retry_count = 0;
 
                     retry_count += 1;
-                    while retry_count < max_retries {
+                    while retry_count < reload_state.max_retries {
                         // Perform the reload operation
                         match Self::reload_service(
                             &service_arc,
-                            &queue_arc,
+                            &queue_state,
                             &reload_path,
                             &load_kwargs,
                             &transport_config,
@@ -299,8 +331,13 @@ impl AppState {
         let service = self.service.read().unwrap();
         visit.call(&*service)?;
 
-        let queue = self.queue.read().unwrap();
-        visit.call(&*queue)?;
+        match self.queue {
+            Some(ref queue_state) => {
+                let queue_guard = queue_state.queue.read().unwrap();
+                visit.call(&*queue_guard)?
+            }
+            None => return Ok(()),
+        };
 
         let transport_config = self.transport_config.as_ref();
         if let Some(ref config) = transport_config {
@@ -311,14 +348,20 @@ impl AppState {
         Ok(())
     }
 
-    fn __clear__(&self) {
-        if let Ok(mut queue_guard) = self.queue.write() {
-            *queue_guard = None;
-        }
+    fn __clear__(&mut self) {
+        self.queue = None; // Clear the queue
     }
 }
 
 impl AppState {
+    fn shutdown_event_loops(&mut self) -> Result<(), AppError> {
+        if let Some(ref queue_state) = self.queue {
+            return queue_state.shutdown();
+        }
+
+        Ok(())
+    }
+
     /// Check if the reloader is still running
     fn check_running_state(running: &Arc<RwLock<bool>>) -> bool {
         running.read().map(|guard| *guard).unwrap_or_else(|e| {
@@ -399,15 +442,16 @@ impl AppState {
 
     fn reload_service_card(
         write_path: &PathBuf,
-        load_kwargs: &Arc<RwLock<Option<Py<PyDict>>>>,
+        load_kwargs: &Option<Arc<RwLock<Py<PyDict>>>>,
     ) -> Result<Py<ServiceCard>, AppError> {
         // Acquire the GIL and load the new service
         let reload_result = Python::with_gil(|py| -> Result<Py<ServiceCard>, AppError> {
             // Read load_kwargs first, in a separate scope to minimize lock duration
-            let lock = load_kwargs.read().unwrap();
-            let kwargs = lock.as_ref().map(|kw| kw.bind(py));
+            let kwargs = load_kwargs
+                .as_ref()
+                .map(|kw| kw.read().unwrap().bind(py).clone());
             // Load the new service card
-            let new_service = ServiceCard::from_path_rs(py, write_path, kwargs)?;
+            let new_service = ServiceCard::from_path_rs(py, write_path, kwargs.as_ref())?;
 
             Ok(Py::new(py, new_service)?)
         })?;
@@ -423,15 +467,10 @@ impl AppState {
     /// * `write_path` - The path to the write directory
     /// * `load_kwargs` - The keyword arguments for loading the service artifacts
     /// * `transport_config` - The optional transport configuration
-    fn reload_service(
-        service_arc: &Arc<RwLock<Py<ServiceCard>>>,
-        queue_arc: &Arc<RwLock<Option<Py<ScouterQueue>>>>,
-        write_path: &PathBuf,
-        load_kwargs: &Arc<RwLock<Option<Py<PyDict>>>>,
-        transport_config: &Option<Arc<RwLock<Py<PyAny>>>>,
-    ) -> Result<(), AppError> {
+    fn reload_service(reload_state: &ReloaderState) -> Result<(), AppError> {
         // Reload the service card
-        let _reloaded_service = Self::reload_service_card(write_path, load_kwargs)?;
+        let _reloaded_service =
+            Self::reload_service_card(reload_state.reload_path, reload_state.load_kwargs)?;
 
         // Reload the queue if it exists
         let _reloaded_queue = Self::reload_queue(queue_arc, transport_config, write_path)?;
