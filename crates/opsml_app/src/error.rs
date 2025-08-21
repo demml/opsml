@@ -32,6 +32,9 @@ pub enum AppError {
     #[error("No queue set for application")]
     QueueNotFoundError,
 
+    #[error("Poison error occurred")]
+    PoisonError(String),
+
     #[error(transparent)]
     CardError(#[from] CardError),
 
