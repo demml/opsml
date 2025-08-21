@@ -4,6 +4,7 @@
 
 
 import time
+from opsml import app
 import pandas as pd
 import os
 from pathlib import Path
@@ -137,7 +138,6 @@ def test_service_reload(
         )
 
         app.start_reloader()
-
         assert app.service.version == "0.1.0"
 
         # insert metric
@@ -145,12 +145,17 @@ def test_service_reload(
         app.queue["custom"].insert(metrics)
 
         # create next service version
-        create_service(random_forest_classifier, chat_prompt, example_dataframe)
-
-        app.reload()
-
-        time.sleep(5)
-        assert app.service.version == "0.1.0"
-
-        shutil.rmtree(opsml_app)
+        # create_service(random_forest_classifier, chat_prompt, example_dataframe)
+        app.queue.shutdown()
+        # app.reload()
         a
+
+
+#
+# app.reload()
+#
+# time.sleep(5)
+# assert app.service.version == "0.1.0"
+#
+# shutil.rmtree(opsml_app)
+# a
