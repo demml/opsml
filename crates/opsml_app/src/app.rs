@@ -7,11 +7,11 @@ use opsml_state::app_state;
 use opsml_storage::{copy_objects, StorageError};
 use opsml_types::{cards::ServiceCardMapping, SaveName, Suffix};
 use pyo3::prelude::*;
-use pyo3::types::PyBool;
 use pyo3::types::PyDict;
 use pyo3::PyTraverseError;
 use pyo3::PyVisit;
-use scouter_client::ScouterQueue;
+use scouter_client::{EventLoops, ScouterQueue};
+use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, RwLock};
 use std::time::Duration;
@@ -39,7 +39,7 @@ pub fn create_scouter_queue(
     py: Python<'_>,
     card_map: ServiceCardMapping,
     transport_config: Option<&Bound<'_, PyAny>>,
-) -> Result<Option<Py<ScouterQueue>>, AppError> {
+) -> Result<Option<ScouterQueue>, AppError> {
     let queue = if card_map.drift_paths.is_empty() {
         debug!("No drift paths or transport config found in card map");
         None
@@ -47,7 +47,7 @@ pub fn create_scouter_queue(
         debug!("Drift paths found in card map, creating ScouterQueue");
         let rt = app_state().runtime.clone();
         let scouter_queue = ScouterQueue::from_path_rs(py, card_map.drift_paths, config, rt)?;
-        Some(Py::new(py, scouter_queue)?)
+        Some(scouter_queue)
     } else {
         debug!("No transport config provided");
         None
@@ -73,6 +73,15 @@ pub fn create_service_reloader(
     Ok(reloader)
 }
 
+/// QueueState consists of the ScouterQueue and its associated event loops
+/// The event loops are pulled out into a separate field so that we can close the loops without needing
+/// access to the python GIL - usually we would need to call queue.bind(py).call_method("shutdown")?
+#[derive(Debug)]
+struct QueueState {
+    queue: Arc<RwLock<Py<ScouterQueue>>>,
+    queue_event_loops: HashMap<String, Arc<EventLoops>>,
+}
+
 /// Helper for managing application state. Intended to be used with api frameworks like FastAPI
 /// where an api app can be created with a lifespan and internal application state that is available
 /// to all request handlers. The OpsML application state contains:
@@ -86,7 +95,7 @@ pub fn create_service_reloader(
 #[derive(Debug)]
 pub struct AppState {
     service: Arc<RwLock<Py<ServiceCard>>>,
-    queue: Arc<RwLock<Option<Py<ScouterQueue>>>>,
+    queue: Option<Arc<QueueState>>,
     reloader: ServiceReloader,
     load_kwargs: Arc<RwLock<Option<Py<PyDict>>>>,
     transport_config: Option<Arc<RwLock<Py<PyAny>>>>,
@@ -133,11 +142,7 @@ impl AppState {
             error!("Failed to load card map from: {:?}", e);
         })?;
 
-        let queue = Arc::new(RwLock::new(create_scouter_queue(
-            py,
-            card_map,
-            transport_config,
-        )?));
+        let queue = create_scouter_queue(py, card_map, transport_config)?;
 
         // Create the service reloader
         let reloader = create_service_reloader(service_info, reload_config, service_path)?;
@@ -358,18 +363,15 @@ impl AppState {
             Ok(())
         })?;
 
-        // Wait a bit longer for proper shutdown
-        std::thread::sleep(std::time::Duration::from_millis(500));
-
         // Create new queue
         //debug!("Creating new ScouterQueue");
-        let _new_queue = Python::with_gil(|py| -> Result<Option<Py<ScouterQueue>>, AppError> {
-            let transport_config = transport_config
-                .as_ref()
-                .map(|tc| tc.read().unwrap().bind(py).clone());
-
-            create_scouter_queue(py, card_map, transport_config.as_ref())
-        })?;
+        //let _new_queue = Python::with_gil(|py| -> Result<Option<Py<ScouterQueue>>, AppError> {
+        //    let transport_config = transport_config
+        //        .as_ref()
+        //        .map(|tc| tc.read().unwrap().bind(py).clone());
+        //
+        //    create_scouter_queue(py, card_map, transport_config.as_ref())
+        //})?;
 
         Ok(None)
     }
