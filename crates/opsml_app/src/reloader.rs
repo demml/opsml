@@ -16,7 +16,7 @@ use std::sync::RwLock;
 use std::time::Duration;
 use tokio::runtime::Runtime;
 use tokio::sync::mpsc;
-use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
+use tokio::sync::mpsc::UnboundedReceiver;
 use tokio::task::JoinHandle;
 use tracing::{debug, error, info, info_span, instrument, Instrument};
 
@@ -184,7 +184,7 @@ fn start_background_download_loop(
                             match reload_task(service_info_cloned, &write_path).await {
                                 Ok(true) => {
                                     // Send ReloadEvent to inform AppState to Reload
-                                    if let Some(reload_tx) = &reload_loops.reload_tx {
+                                    if let Some(reload_tx) = reload_loops.reload_tx.as_ref().as_ref() {
                                         match reload_tx.send(ReloadEvent::Ready) {
                                             Ok(_) => debug!("Sent reload event"),
                                             Err(e) => error!("Failed to send reload event: {}", e),
@@ -237,7 +237,6 @@ fn start_background_download_loop(
 
 #[derive(Debug)]
 pub struct ServiceReloader {
-    tx: Option<UnboundedSender<DownloadEvent>>,
     pub service_info: Arc<RwLock<ServiceInfo>>,
     pub config: ReloadConfig,
     pub service_path: Arc<PathBuf>,
@@ -256,7 +255,6 @@ impl ServiceReloader {
         let service_path = Arc::new(service_path);
 
         Self {
-            tx: None,
             service_info,
             config,
             service_path,
@@ -305,10 +303,10 @@ impl ServiceReloader {
 
     #[instrument(skip_all)]
     pub fn publish(&self, event: DownloadEvent) -> Result<(), AppError> {
-        if let Some(tx) = &self.tx {
+        if let Some(tx) = &self.event_loops.download_tx.as_ref() {
             Ok(tx.send(event)?)
         } else {
-            Err(AppError::ReloaderNotRunning)
+            Err(AppError::NoDownloadTxError)
         }
     }
 

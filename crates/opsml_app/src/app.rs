@@ -40,7 +40,7 @@ pub fn create_scouter_queue(
     py: Python<'_>,
     card_map: ServiceCardMapping,
     transport_config: Option<&Bound<'_, PyAny>>,
-) -> Result<Option<Arc<QueueState>>, AppError> {
+) -> Result<Option<Arc<RwLock<QueueState>>>, AppError> {
     let queue = if card_map.drift_paths.is_empty() {
         debug!("No drift paths or transport config found in card map");
         None
@@ -50,11 +50,11 @@ pub fn create_scouter_queue(
         let scouter_queue = ScouterQueue::from_path_rs(py, card_map.drift_paths, config, rt)?;
         let event_loops = scouter_queue.queue_event_loops.clone();
 
-        Some(Arc::new(QueueState {
-            queue: Arc::new(RwLock::new(Py::new(py, scouter_queue)?)),
+        Some(Arc::new(RwLock::new(QueueState {
+            queue: Py::new(py, scouter_queue)?,
             queue_event_loops: event_loops,
-            transport_config: Arc::new(RwLock::new(config.clone().unbind())),
-        }))
+            transport_config: config.clone().unbind(),
+        })))
     } else {
         debug!("No transport config provided");
         None
@@ -94,7 +94,7 @@ pub fn create_service_reloader(
 #[derive(Debug)]
 pub struct AppState {
     pub service: Arc<RwLock<Py<ServiceCard>>>,
-    pub queue: Option<Arc<QueueState>>,
+    pub queue: Option<Arc<RwLock<QueueState>>>,
     pub reloader: ServiceReloader,
     pub load_kwargs: Option<Arc<RwLock<Py<PyDict>>>>,
     pub reload_loops: ReloadEventLoops,
@@ -183,12 +183,12 @@ impl AppState {
             .queue
             .as_ref()
             .ok_or(AppError::QueueNotFoundError)?
-            .queue
             .read()
             .map_err(|e| {
                 error!("Failed to read queue: {:?}", e);
                 AppError::PoisonError(e.to_string())
             })?
+            .queue
             .bind(py)
             .clone())
     }
@@ -213,8 +213,9 @@ impl AppState {
         let (download_tx, download_rx) = mpsc::unbounded_channel();
         let (reload_tx, mut reload_rx) = mpsc::unbounded_channel();
 
-        self.reload_loops.reload_tx = Some(reload_tx);
-        self.reload_loops.download_tx = Some(download_tx);
+        //self.reload_loops.reload_tx = Some(reload_tx);
+        //self.reload_loops.download_tx = Some(download_tx);
+
         let mut loops = self.reload_loops.clone();
 
         // This will continually poll based on the config schedule and download
@@ -327,15 +328,15 @@ impl AppState {
 
         match self.queue {
             Some(ref queue_state) => {
-                let queue_guard = queue_state.queue.read().unwrap();
-                visit.call(&*queue_guard)?
+                let queue_guard = &queue_state.read().unwrap().queue;
+                visit.call(queue_guard)?
             }
             None => return Ok(()),
         };
 
         if let Some(queue) = &self.queue {
-            let config_guard = queue.transport_config.read().unwrap();
-            visit.call(&*config_guard)?;
+            let config_guard = &queue.read().unwrap().transport_config;
+            visit.call(config_guard)?;
         }
 
         Ok(())
@@ -354,7 +355,7 @@ impl AppState {
     pub fn shutdown(&mut self) -> Result<(), AppError> {
         // shutdown ScouterQueues
         if let Some(queue) = &self.queue {
-            queue.shutdown()?;
+            queue.write().unwrap().shutdown()?;
         }
 
         // shutdown reloader
@@ -387,7 +388,7 @@ impl AppState {
     }
 
     fn reload_queue(
-        queue_state: &Arc<QueueState>,
+        queue_state: &Arc<RwLock<QueueState>>,
         reload_path: &Path,
     ) -> Result<Option<Py<ScouterQueue>>, AppError> {
         let card_map = load_card_map(reload_path)?;
@@ -471,7 +472,7 @@ impl AppState {
         // Reload the queue if it exists
 
         if let Some(queue) = &reload_state.queue {
-            let _reloaded_queue = Self::reload_queue(queue, &reload_state.reload_path)?;
+            let _reloaded_queue = Self::reload_queue(&queue, &reload_state.reload_path)?;
         }
 
         //if let Some(new_queue) = queue {
@@ -511,6 +512,8 @@ impl AppState {
         reload_loops: &mut ReloadEventLoops,
         download_rx: UnboundedReceiver<DownloadEvent>,
     ) -> Result<(), AppError> {
+        debug!("Starting download task with loops: {:?}", reload_loops);
+
         self.reloader.start_download_task(
             app_state().runtime.clone(),
             self.reloader.config.clone(),
