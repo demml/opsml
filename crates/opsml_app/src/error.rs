@@ -1,4 +1,4 @@
-use crate::reloader::ReloadEvent;
+use crate::types::{DownloadEvent, ReloadEvent};
 use opsml_cards::error::CardError;
 use opsml_registry::error::RegistryError;
 use opsml_types::error::TypeError;
@@ -79,6 +79,15 @@ pub enum AppError {
 
     #[error(transparent)]
     EventError(#[from] scouter_client::EventError),
+
+    #[error(transparent)]
+    DownloadEventError(#[from] tokio::sync::mpsc::error::SendError<DownloadEvent>),
+
+    #[error("Failed to acquire lock")]
+    LockError,
+
+    #[error("Failed to start download loop")]
+    DownloadLoopFailedToStartError,
 }
 
 impl From<AppError> for PyErr {
