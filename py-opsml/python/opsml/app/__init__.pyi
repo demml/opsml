@@ -27,21 +27,6 @@ class AppState:
     include other convenience methods that simplify common API tasks.
     """
 
-    def __init__(
-        self,
-        service: ServiceCard,
-        queue: Optional[ScouterQueue] = None,
-    ):
-        """
-        Initialize the AppState with a ServiceCard and a ScouterQueue.
-
-        Args:
-            service (ServiceCard):
-                The service card containing Cards.
-            queue (ScouterQueue):
-                The Scouter queue for drift detection.
-        """
-
     @staticmethod
     def from_path(
         path: Path,
@@ -106,8 +91,21 @@ class AppState:
         """Get the Scouter queue."""
 
     @property
-    def has_reloader(self) -> bool:
-        """Check if the AppState has a reloader initialized."""
+    def reloader_running(self) -> bool:
+        """Check if the ServiceReloader is currently running."""
 
     def reload(self) -> None:
-        """Forces the `ServiceReloader` to reload the service."""
+        """Forces `AppState` to check for new `ServiceCards` and reload if necessary."""
+
+    def start_reloader(self) -> None:
+        """Starts the `AppState` reloader."""
+
+    def stop_reloader(self) -> None:
+        """Stops the `AppState` reloader."""
+
+    def shutdown(self) -> None:
+        """Shuts down the `AppState` `ScouterQueue` and reloader if running.
+        This is a destructive operation and will attempt to close all background threads
+        associated with the `ScouterQueue` and reloader. Only use this method with graceful
+        shutdown procedures in mind.
+        """

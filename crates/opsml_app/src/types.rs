@@ -44,6 +44,7 @@ impl QueueState {
 pub enum ReloadEvent {
     Start,
     Ready,
+    Stop,
 }
 
 #[derive(Debug, Clone)]
@@ -65,12 +66,12 @@ pub struct ReloaderState {
 #[derive(Debug, Clone)]
 pub struct ReloadEventLoops {
     // track the loop that receives events
-    pub download_loop: Option<Arc<RwLock<JoinHandle<()>>>>,
+    pub download_loop: Arc<RwLock<Option<JoinHandle<()>>>>,
     pub download_loop_running: Arc<RwLock<bool>>,
     pub download_tx: Option<UnboundedSender<DownloadEvent>>,
 
     // track the loop that processes background tasks (only applies to psi and custom)
-    pub reload_loop: Option<Arc<RwLock<JoinHandle<()>>>>,
+    pub reload_loop: Arc<RwLock<Option<JoinHandle<()>>>>,
     pub reload_loop_running: Arc<RwLock<bool>>,
     pub reload_tx: Option<UnboundedSender<ReloadEvent>>,
 }
@@ -78,10 +79,10 @@ pub struct ReloadEventLoops {
 impl ReloadEventLoops {
     pub fn new() -> Self {
         ReloadEventLoops {
-            download_loop: None,
+            download_loop: Arc::new(RwLock::new(None)),
             download_loop_running: Arc::new(RwLock::new(false)),
             download_tx: None,
-            reload_loop: None,
+            reload_loop: Arc::new(RwLock::new(None)),
             reload_loop_running: Arc::new(RwLock::new(false)),
             reload_tx: None,
         }
@@ -121,16 +122,68 @@ impl ReloadEventLoops {
 
     pub fn trigger_download_event(&self) -> Result<(), AppError> {
         if let Some(tx) = &self.download_tx {
-            let _ = tx.send(DownloadEvent::Force)?;
+            tx.send(DownloadEvent::Force)?;
         }
         Ok(())
     }
 
+    pub fn send_reload_start(&self) -> Result<(), AppError> {
+        if let Some(tx) = &self.reload_tx {
+            tx.send(ReloadEvent::Start)?;
+        }
+        Ok(())
+    }
+
+    /// Shutdown the download loop. This is used in the reload async task
+    pub async fn shutdown_download_loop(&mut self) -> Result<(), AppError> {
+        // this sends a stop event to the download loop
+        if let Some(tx) = &self.download_tx {
+            tx.send(DownloadEvent::Stop)?;
+        }
+
+        let download_handle = {
+            let mut guard = self.download_loop.write().unwrap();
+            guard.take()
+        };
+
+        if let Some(handle) = download_handle {
+            handle.await?;
+        }
+
+        Ok(())
+    }
+
+    pub fn shutdown_reload_loop(&mut self) -> Result<(), AppError> {
+        // this sends a stop event to the reload loop
+        if let Some(tx) = &self.reload_tx {
+            tx.send(ReloadEvent::Stop)?;
+        }
+
+        let reload_handle = {
+            let mut guard = self.reload_loop.write().unwrap();
+            guard.take()
+        };
+
+        // aborting here instead of awaiting to allow for use within sync block
+        // There is no data saving here anyway
+        if let Some(handle) = reload_handle {
+            handle.abort();
+        }
+
+        Ok(())
+    }
+
     pub fn add_download_handle(&mut self, handle: JoinHandle<()>) {
-        self.download_loop = Some(Arc::new(RwLock::new(handle)));
+        self.download_loop.write().unwrap().replace(handle);
     }
 
     pub fn add_reload_handle(&mut self, handle: JoinHandle<()>) {
-        self.reload_loop = Some(Arc::new(RwLock::new(handle)));
+        self.reload_loop.write().unwrap().replace(handle);
+    }
+}
+
+impl Default for ReloadEventLoops {
+    fn default() -> Self {
+        Self::new()
     }
 }

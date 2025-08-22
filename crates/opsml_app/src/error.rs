@@ -88,6 +88,12 @@ pub enum AppError {
 
     #[error("Failed to start download loop")]
     DownloadLoopFailedToStartError,
+
+    #[error("Failed to start reload loop")]
+    ReloadLoopFailedToStartError,
+
+    #[error(transparent)]
+    JoinError(#[from] tokio::task::JoinError),
 }
 
 impl From<AppError> for PyErr {
