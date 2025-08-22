@@ -94,6 +94,9 @@ pub enum AppError {
 
     #[error(transparent)]
     JoinError(#[from] tokio::task::JoinError),
+
+    #[error("No download channel found")]
+    NoDownloadTxError,
 }
 
 impl From<AppError> for PyErr {

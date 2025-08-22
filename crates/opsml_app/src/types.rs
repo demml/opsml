@@ -17,9 +17,9 @@ use tracing::{debug, error};
 /// access to the python GIL - usually we would need to call queue.bind(py).call_method("shutdown")?
 #[derive(Debug)]
 pub struct QueueState {
-    pub queue: Arc<RwLock<Py<ScouterQueue>>>,
+    pub queue: Py<ScouterQueue>,
     pub queue_event_loops: HashMap<String, Arc<EventLoops>>,
-    pub transport_config: Arc<RwLock<Py<PyAny>>>,
+    pub transport_config: Py<PyAny>,
 }
 
 impl QueueState {
@@ -59,50 +59,78 @@ pub struct ReloaderState {
     pub service_path: Arc<PathBuf>,
     pub load_kwargs: Option<Arc<RwLock<Py<PyDict>>>>,
     pub service: Arc<RwLock<Py<ServiceCard>>>,
-    pub queue: Option<Arc<QueueState>>,
+    pub queue: Option<Arc<RwLock<QueueState>>>,
     pub max_retries: u32,
 }
 
-#[derive(Debug, Clone)]
-pub struct ReloadEventLoops {
+#[derive(Debug)]
+pub struct DownloadEventLoops {
     // track the loop that receives events
-    pub download_loop: Arc<RwLock<Option<JoinHandle<()>>>>,
-    pub download_loop_running: Arc<RwLock<bool>>,
+    pub download_loop: Option<JoinHandle<()>>,
+    pub download_loop_running: bool,
     pub download_tx: Option<UnboundedSender<DownloadEvent>>,
+}
 
-    // track the loop that processes background tasks (only applies to psi and custom)
-    pub reload_loop: Arc<RwLock<Option<JoinHandle<()>>>>,
-    pub reload_loop_running: Arc<RwLock<bool>>,
+impl DownloadEventLoops {
+    pub fn new() -> Self {
+        DownloadEventLoops {
+            download_loop: None,
+            download_loop_running: false,
+            download_tx: None,
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct ReloadEventLoops {
+    pub reload_loop: Option<JoinHandle<()>>,
+    pub reload_loop_running: bool,
     pub reload_tx: Option<UnboundedSender<ReloadEvent>>,
 }
 
 impl ReloadEventLoops {
     pub fn new() -> Self {
         ReloadEventLoops {
-            download_loop: Arc::new(RwLock::new(None)),
-            download_loop_running: Arc::new(RwLock::new(false)),
-            download_tx: None,
-            reload_loop: Arc::new(RwLock::new(None)),
-            reload_loop_running: Arc::new(RwLock::new(false)),
+            reload_loop: None,
+            reload_loop_running: false,
             reload_tx: None,
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct StateEventLoops {
+    // track the loop that downloads service artifacts
+    pub download_events: Arc<RwLock<DownloadEventLoops>>,
+
+    // track the loop that reloads the service cards
+    pub reload_events: Arc<RwLock<ReloadEventLoops>>,
+}
+
+impl StateEventLoops {
+    pub fn new() -> Self {
+        StateEventLoops {
+            download_events: Arc::new(RwLock::new(DownloadEventLoops::new())),
+            reload_events: Arc::new(RwLock::new(ReloadEventLoops::new())),
         }
     }
 
     pub fn running(&self) -> bool {
-        *self.download_loop_running.read().unwrap() || *self.reload_loop_running.read().unwrap()
+        self.download_events.read().unwrap().download_loop_running
+            || self.reload_events.read().unwrap().reload_loop_running
     }
 
     pub fn download_loop_running(&self) -> bool {
-        *self.download_loop_running.read().unwrap()
+        self.download_events.read().unwrap().download_loop_running
     }
 
     pub fn reload_loop_running(&self) -> bool {
-        *self.reload_loop_running.read().unwrap()
+        self.reload_events.read().unwrap().reload_loop_running
     }
 
     pub fn set_download_loop_running(&self, running: bool) -> Result<(), AppError> {
-        if let Ok(mut guard) = self.download_loop_running.write() {
-            *guard = running;
+        if let Ok(mut guard) = self.download_events.write() {
+            guard.download_loop_running = running;
             Ok(())
         } else {
             error!("Failed to set download loop running state");
@@ -111,8 +139,8 @@ impl ReloadEventLoops {
     }
 
     pub fn set_reload_loop_running(&self, running: bool) -> Result<(), AppError> {
-        if let Ok(mut guard) = self.reload_loop_running.write() {
-            *guard = running;
+        if let Ok(mut guard) = self.reload_events.write() {
+            guard.reload_loop_running = running;
             Ok(())
         } else {
             error!("Failed to set reload loop running state");
@@ -121,14 +149,14 @@ impl ReloadEventLoops {
     }
 
     pub fn trigger_download_event(&self) -> Result<(), AppError> {
-        if let Some(tx) = &self.download_tx {
+        if let Some(tx) = &self.download_events.read().unwrap().download_tx {
             tx.send(DownloadEvent::Force)?;
         }
         Ok(())
     }
 
     pub fn send_reload_start(&self) -> Result<(), AppError> {
-        if let Some(tx) = &self.reload_tx {
+        if let Some(tx) = &self.reload_tx.as_ref() {
             tx.send(ReloadEvent::Start)?;
         }
         Ok(())
@@ -137,7 +165,7 @@ impl ReloadEventLoops {
     /// Shutdown the download loop. This is used in the reload async task
     pub async fn shutdown_download_loop(&mut self) -> Result<(), AppError> {
         // this sends a stop event to the download loop
-        if let Some(tx) = &self.download_tx {
+        if let Some(tx) = &self.download_tx.as_ref() {
             tx.send(DownloadEvent::Stop)?;
         }
 
@@ -155,7 +183,7 @@ impl ReloadEventLoops {
 
     pub fn shutdown_reload_loop(&mut self) -> Result<(), AppError> {
         // this sends a stop event to the reload loop
-        if let Some(tx) = &self.reload_tx {
+        if let Some(tx) = &self.reload_tx.as_ref() {
             tx.send(ReloadEvent::Stop)?;
         }
 
