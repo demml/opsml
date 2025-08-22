@@ -97,6 +97,9 @@ pub enum AppError {
 
     #[error("No download channel found")]
     NoDownloadTxError,
+
+    #[error("No reload channel found")]
+    NoReloadTxError,
 }
 
 impl From<AppError> for PyErr {
