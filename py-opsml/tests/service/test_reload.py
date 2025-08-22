@@ -146,8 +146,11 @@ def test_service_reload(
 
         # create next service version
         # create_service(random_forest_classifier, chat_prompt, example_dataframe)
-        app.queue.shutdown()
+        # app.queue.shutdown()
         # app.reload()
+        app.stop_reloader()
+        time.sleep(5)
+        shutil.rmtree(opsml_app)
         a
 
 

@@ -1,5 +1,5 @@
 use crate::error::AppError;
-use crate::types::{DownloadEvent, ReloadEvent, ReloadEventLoops};
+use crate::types::{DownloadEvent, ReloadEvent, StateEventLoops};
 use crate::utils::get_next_cron_timestamp;
 use chrono::DateTime;
 use chrono::Utc;
@@ -158,20 +158,19 @@ fn start_background_download_loop(
     config: ReloadConfig,
     service_info: Arc<RwLock<ServiceInfo>>,
     write_path: Arc<PathBuf>,
-    reload_loops: ReloadEventLoops,
+    event_loops: StateEventLoops,
 ) -> Result<JoinHandle<()>, AppError> {
     let cron = config.cron;
 
     let future = async move {
         loop {
             tokio::select! {
-
                 event = download_rx.recv() => {
                     match event {
 
                         Some(DownloadEvent::Start) => {
-                            info!("Reloader started");
-                            reload_loops.set_download_loop_running(true)?;
+                            info!("Download task started");
+                            event_loops.set_download_loop_running(true)?;
                         },
                         Some(DownloadEvent::Force) => {
                             info!("Force reload requested");
@@ -184,7 +183,7 @@ fn start_background_download_loop(
                             match reload_task(service_info_cloned, &write_path).await {
                                 Ok(true) => {
                                     // Send ReloadEvent to inform AppState to Reload
-                                    if let Some(reload_tx) = reload_loops.reload_tx.as_ref().as_ref() {
+                                    if let Some(reload_tx) = event_loops.reload_events.read().unwrap().reload_tx.as_ref() {
                                         match reload_tx.send(ReloadEvent::Ready) {
                                             Ok(_) => debug!("Sent reload event"),
                                             Err(e) => error!("Failed to send reload event: {}", e),
@@ -203,21 +202,21 @@ fn start_background_download_loop(
                             *reload_timestamp = get_next_cron_timestamp(&cron)?;
                         },
                         Some(DownloadEvent::Stop) => {
-                            info!("Stopping Reloader");
-                            reload_loops.set_download_loop_running(false)?;
+                            info!("Stopping Download loop");
+                            event_loops.set_download_loop_running(false)?;
                             break;
 
                         },
                         None => {
-                                debug!("Event channel closed");
-                                reload_loops.set_download_loop_running(false)?;
+                                debug!("Download channel closed");
+                                event_loops.set_download_loop_running(false)?;
                                 break;
                         }
                     }
                 },
                 else => {
-                    debug!("Event channel closed");
-                    reload_loops.set_download_loop_running(false)?;
+                    debug!("Download channel closed");
+                    event_loops.set_download_loop_running(false)?;
                     break;
                 }
             }
@@ -225,10 +224,10 @@ fn start_background_download_loop(
         Ok(()) as Result<(), AppError>
     };
 
-    let span = info_span!("background_task");
+    let span = info_span!("download_task");
     let handle = runtime.spawn(async move {
         if let Err(e) = future.instrument(span).await {
-            error!("Failed to run background task: {}", e);
+            error!("Failed to run download task: {}", e);
         }
     });
 
@@ -240,7 +239,7 @@ pub struct ServiceReloader {
     pub service_info: Arc<RwLock<ServiceInfo>>,
     pub config: ReloadConfig,
     pub service_path: Arc<PathBuf>,
-    pub event_loops: ReloadEventLoops,
+    pub event_loops: StateEventLoops,
 }
 
 impl ServiceReloader {
@@ -249,7 +248,7 @@ impl ServiceReloader {
         service_info: Arc<RwLock<ServiceInfo>>,
         config: ReloadConfig,
         service_path: PathBuf,
-        event_loops: ReloadEventLoops,
+        event_loops: StateEventLoops,
     ) -> Self {
         debug!("Creating unbounded QueueBus");
         let service_path = Arc::new(service_path);
@@ -278,7 +277,7 @@ impl ServiceReloader {
         download_rx: mpsc::UnboundedReceiver<DownloadEvent>,
         service_info: Arc<RwLock<ServiceInfo>>,
         write_path: Arc<PathBuf>,
-        reload_loops: &mut ReloadEventLoops,
+        event_loops: &mut StateEventLoops,
     ) -> Result<(), AppError> {
         let scheduled_reload = Arc::new(RwLock::new(get_next_cron_timestamp(&config.cron)?));
 
@@ -289,10 +288,10 @@ impl ServiceReloader {
             config,
             service_info,
             write_path,
-            reload_loops.clone(),
+            event_loops.clone(),
         )?;
 
-        reload_loops.add_download_handle(handle);
+        event_loops.add_download_handle(handle);
 
         self.start()?;
 
@@ -303,7 +302,14 @@ impl ServiceReloader {
 
     #[instrument(skip_all)]
     pub fn publish(&self, event: DownloadEvent) -> Result<(), AppError> {
-        if let Some(tx) = &self.event_loops.download_tx.as_ref() {
+        if let Some(tx) = &self
+            .event_loops
+            .download_events
+            .read()
+            .unwrap()
+            .download_tx
+            .as_ref()
+        {
             Ok(tx.send(event)?)
         } else {
             Err(AppError::NoDownloadTxError)
