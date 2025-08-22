@@ -27,10 +27,6 @@ fn load_card_map(path: &Path) -> Result<ServiceCardMapping, AppError> {
     Ok(mapping)
 }
 
-pub enum AppEvent {
-    Reload,
-}
-
 /// Helper for loading a scouter queue
 /// This function will create a ScouterQueue from the card map and transport config if they exist
 /// # Arguments
@@ -79,7 +75,7 @@ pub fn create_service_reloader(
     service_path: PathBuf,
     event_loops: ReloadEventLoops,
 ) -> Result<ServiceReloader, AppError> {
-    let reload_config = reload_config.unwrap_or_else(|| ReloadConfig::default());
+    let reload_config = reload_config.unwrap_or_else(ReloadConfig::default);
     let service_info = Arc::new(RwLock::new(service_info));
     let reloader = ServiceReloader::new(service_info, reload_config, service_path, event_loops);
     Ok(reloader)
@@ -249,7 +245,18 @@ impl AppState {
                                     Err(e) => error!("Failed to set reload loop running: {:?}", e),
                                 }
                             },
-
+                            ReloadEvent::Stop => {
+                                info!("Reloader stopped");
+                                match loops.set_reload_loop_running(false) {
+                                    Ok(()) => info!("Reload loop is now stopped"),
+                                    Err(e) => error!("Failed to set reload loop stopped: {:?}", e),
+                                }
+                                // send stop event to download loop
+                                match loops.shutdown_download_loop().await {
+                                    Ok(()) => info!("Download loop stopped"),
+                                    Err(e) => error!("Failed to stop download loop: {:?}", e),
+                                }
+                            },
                             ReloadEvent::Ready => {
                                 info!("Received reload event");
                                 // Set reload ready to true
@@ -260,7 +267,6 @@ impl AppState {
                                     match Self::reload_service(&reload_state) {
                                         Ok(()) => {
                                             info!("Service reloaded successfully");
-
                                             // if successful, move object from reload directory to base directory for service
                                             if let Err(e) = Self::cleanup(
                                                 &reload_state.reload_path,
@@ -285,6 +291,15 @@ impl AppState {
                     }
                     else => {
                         debug!("Reload channel closed, exiting reload loop");
+                        match loops.set_reload_loop_running(false) {
+                            Ok(()) => info!("Reload loop is now stopped"),
+                            Err(e) => error!("Failed to set reload loop stopped: {:?}", e),
+                        }
+                        // send stop event to download loop
+                        match loops.shutdown_download_loop().await {
+                            Ok(()) => info!("Download loop stopped"),
+                            Err(e) => error!("Failed to stop download loop: {:?}", e),
+                        }
                         break;
                     }
                 }
@@ -297,16 +312,11 @@ impl AppState {
 
         self.reload_loops.add_reload_handle(handle);
 
-        Ok(())
-    }
+        // Send start event
+        self.start_reload_loop()?;
 
-    pub fn stop_reloader(&mut self) -> Result<(), AppError> {
-        if !self.reloader_running() {
-            return Ok(());
-        }
-
-        // shutdown background reloader
-        self.reloader.shutdown()?;
+        // Wait for start event to trigger loop is running
+        self.confirm_reload_start()?;
 
         Ok(())
     }
@@ -334,47 +344,51 @@ impl AppState {
     fn __clear__(&mut self) {
         self.queue = None; // Clear the queue
     }
-}
 
-impl AppState {
-    fn shutdown_event_loops(&mut self) -> Result<(), AppError> {
-        if let Some(ref queue_state) = self.queue {
-            return queue_state.shutdown();
-        }
-
+    pub fn stop_reloader(&mut self) -> Result<(), AppError> {
+        // stop the background reloader
+        self.reload_loops.shutdown_reload_loop()?;
         Ok(())
     }
 
-    /// Check if the reloader is still running
-    fn check_running_state(running: &Arc<RwLock<bool>>) -> bool {
-        running.read().map(|guard| *guard).unwrap_or_else(|e| {
-            error!("Failed to read running state: {:?}", e);
-            false
-        })
-    }
-
-    fn check_reload_ready(reload_ready: &Arc<RwLock<bool>>) -> bool {
-        reload_ready.read().map(|guard| *guard).unwrap_or_else(|e| {
-            debug!("Failed to read reload_ready state: {:?}", e);
-            false
-        })
-    }
-
-    fn reset_reload_ready_state(reload_ready: &Arc<RwLock<bool>>) {
-        match reload_ready.write() {
-            Ok(mut guard) => {
-                *guard = false;
-                info!("Reload ready state reset");
-            }
-            Err(e) => {
-                error!("Failed to reset reload ready state: {:?}", e);
-            }
+    pub fn shutdown(&mut self) -> Result<(), AppError> {
+        // shutdown ScouterQueues
+        if let Some(queue) = &self.queue {
+            queue.shutdown()?;
         }
+
+        // shutdown reloader
+        self.stop_reloader()?;
+
+        Ok(())
+    }
+}
+
+impl AppState {
+    fn start_reload_loop(&mut self) -> Result<(), AppError> {
+        // start the background reloader
+        self.reload_loops.send_reload_start()?;
+        Ok(())
+    }
+
+    fn confirm_reload_start(&self) -> Result<(), AppError> {
+        // Signal confirm start
+        let mut max_retries = 20;
+        while max_retries > 0 {
+            if self.reload_loops.reload_loop_running() {
+                debug!("Reload loop started successfully");
+                return Ok(());
+            }
+            max_retries -= 1;
+            std::thread::sleep(Duration::from_millis(100));
+        }
+        error!("Reload loop failed to start");
+        Err(AppError::ReloadLoopFailedToStartError)
     }
 
     fn reload_queue(
         queue_state: &Arc<QueueState>,
-        reload_path: &PathBuf,
+        reload_path: &Path,
     ) -> Result<Option<Py<ScouterQueue>>, AppError> {
         let card_map = load_card_map(reload_path)?;
 
@@ -423,7 +437,7 @@ impl AppState {
     }
 
     fn reload_service_card(
-        reload_path: &PathBuf,
+        reload_path: &Path,
         load_kwargs: &Option<Arc<RwLock<Py<PyDict>>>>,
     ) -> Result<Py<ServiceCard>, AppError> {
         // Acquire the GIL and load the new service
@@ -457,7 +471,7 @@ impl AppState {
         // Reload the queue if it exists
 
         if let Some(queue) = &reload_state.queue {
-            let _reloaded_queue = Self::reload_queue(&queue, &reload_state.reload_path)?;
+            let _reloaded_queue = Self::reload_queue(queue, &reload_state.reload_path)?;
         }
 
         //if let Some(new_queue) = queue {
@@ -475,7 +489,7 @@ impl AppState {
         Ok(())
     }
 
-    fn cleanup(reload_path: &PathBuf, service_path: &PathBuf) -> Result<(), AppError> {
+    fn cleanup(reload_path: &Path, service_path: &Path) -> Result<(), AppError> {
         // Move contents of reload_path to service_path
         copy_objects(reload_path, service_path)?;
 

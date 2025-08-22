@@ -18,7 +18,7 @@ use tokio::runtime::Runtime;
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
 use tokio::task::JoinHandle;
-use tracing::{debug, error, info, instrument};
+use tracing::{debug, error, info, info_span, instrument, Instrument};
 
 /// Helper for listing cards
 pub async fn get_latest_version(
@@ -202,7 +202,7 @@ fn start_background_download_loop(
                             let mut reload_timestamp = scheduled_reload.write().unwrap();
                             *reload_timestamp = get_next_cron_timestamp(&cron)?;
                         },
-                          Some(DownloadEvent::Stop) => {
+                        Some(DownloadEvent::Stop) => {
                             info!("Stopping Reloader");
                             reload_loops.set_download_loop_running(false)?;
                             break;
@@ -217,6 +217,7 @@ fn start_background_download_loop(
                 },
                 else => {
                     debug!("Event channel closed");
+                    reload_loops.set_download_loop_running(false)?;
                     break;
                 }
             }
@@ -224,9 +225,10 @@ fn start_background_download_loop(
         Ok(()) as Result<(), AppError>
     };
 
+    let span = info_span!("background_task");
     let handle = runtime.spawn(async move {
-        if let Err(e) = future.await {
-            debug!("Background queue exited with error: {:?}", e);
+        if let Err(e) = future.instrument(span).await {
+            error!("Failed to run background task: {}", e);
         }
     });
 
@@ -262,6 +264,15 @@ impl ServiceReloader {
         }
     }
 
+    /// Starts the background download task by creating a background download loop to continually check for and download
+    /// new ServiceCards. This logic also adds the download task handle to the app state event loops and confirms
+    /// that the download loop is running.
+    /// # Arguments
+    /// * `shared_runtime` - The shared Tokio runtime
+    /// * `config` - The reload configuration
+    /// * `download_rx` - The download event receiver
+    /// * `write_path` - The path to write the downloaded ServiceCard
+    /// * `reload_loops` - The reload event loops
     pub fn start_download_task(
         &self,
         shared_runtime: Arc<tokio::runtime::Runtime>,

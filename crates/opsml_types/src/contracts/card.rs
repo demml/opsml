@@ -816,7 +816,7 @@ impl CardRecord {
 /// # Arguments
 /// * `cards` - A mutable reference to a vector of CardRecord
 /// * `reverse` - A boolean indicating whether to sort in reverse order
-pub fn sort_cards_by_version(cards: &mut Vec<CardRecord>, reverse: bool) {
+pub fn sort_cards_by_version(cards: &mut [CardRecord], reverse: bool) {
     cards.sort_by(|a, b| {
         let a_version = Version::parse(a.version()).unwrap();
         let b_version = Version::parse(b.version()).unwrap();
