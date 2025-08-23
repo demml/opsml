@@ -8,11 +8,10 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::Arc;
 use std::sync::RwLock;
-use std::time::Duration;
 use tokio::sync::mpsc::UnboundedSender;
 use tokio::task::{AbortHandle, JoinHandle};
 use tokio_util::sync::CancellationToken;
-use tracing::{debug, error, instrument};
+use tracing::{debug, error};
 /// QueueState consists of the ScouterQueue and its associated event loops
 /// The event loops are pulled out into a separate field so that we can close the loops without needing
 /// access to the python GIL - usually we would need to call queue.bind(py).call_method("shutdown")?
@@ -29,12 +28,7 @@ impl QueueState {
         for (alias, event_loop) in &self.queue_event_loops {
             debug!("Shutting down queue: {}", alias);
             // shutdown the queue
-            event_loop.shutdown()?;
-
-            // wait for event and background cleanup
-            while event_loop.running() {
-                std::thread::sleep(std::time::Duration::from_millis(100));
-            }
+            event_loop.shutdown_tasks()?;
         }
 
         Ok(())
