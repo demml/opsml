@@ -145,12 +145,16 @@ def test_service_reload(
         app.queue["custom"].insert(metrics)
 
         # create next service version
-        # create_service(random_forest_classifier, chat_prompt, example_dataframe)
+        create_service(random_forest_classifier, chat_prompt, example_dataframe)
         # app.queue.shutdown()
-        # app.reload()
-        app.stop_reloader()
+        app.reload()
         time.sleep(5)
+
+        assert app.service.version == "0.2.0"
+
+        app.stop_reloader()
         shutil.rmtree(opsml_app)
+
         a
 
 

@@ -63,6 +63,17 @@ pub struct ReloaderState {
     pub max_retries: u32,
 }
 
+impl ReloaderState {
+    pub fn update_service(&self, service: Py<ServiceCard>) -> Result<(), AppError> {
+        let mut guard = self
+            .service
+            .write()
+            .map_err(|_| AppError::PoisonError("Failed to write service".to_string()))?;
+        *guard = service;
+        Ok(())
+    }
+}
+
 #[derive(Debug)]
 pub struct DownloadEventLoops {
     // track the loop that receives events
