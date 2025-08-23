@@ -413,6 +413,8 @@ impl AppState {
     ) -> Result<Option<Py<ScouterQueue>>, AppError> {
         let card_map = load_card_map(reload_path)?;
 
+        queue_state.write().unwrap().shutdown()?;
+
         // First shutdown the existing queue properly
         //Python::with_gil(|py| -> Result<(), AppError> {
         //    match queue_arc.write() {
@@ -486,10 +488,11 @@ impl AppState {
     /// * `transport_config` - The optional transport configuration
     fn reload_service(reload_state: &ReloaderState) -> Result<(), AppError> {
         // Reload the service card
-        let _reloaded_service =
+        let reloaded_service =
             Self::reload_service_card(&reload_state.reload_path, &reload_state.load_kwargs)?;
 
-        // Reload the queue if it exists
+        // attempt to write to service card
+        reload_state.update_service(reloaded_service)?;
 
         if let Some(queue) = &reload_state.queue {
             let _reloaded_queue = Self::reload_queue(&queue, &reload_state.reload_path)?;
