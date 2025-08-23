@@ -1,5 +1,5 @@
 use crate::error::AppError;
-use crate::types::{DownloadEvent, ReloadEvent, StateEventLoops};
+use crate::types::{DownloadEvent, ReloadEvent, ReloadEventState};
 use crate::utils::get_next_cron_timestamp;
 use chrono::DateTime;
 use chrono::Utc;
@@ -13,11 +13,11 @@ use pyo3::prelude::*;
 use std::path::PathBuf;
 use std::sync::Arc;
 use std::sync::RwLock;
-use std::time::Duration;
 use tokio::runtime::Runtime;
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::UnboundedReceiver;
 use tokio::task::JoinHandle;
+use tokio_util::sync::CancellationToken;
 use tracing::{debug, error, info, info_span, instrument, Instrument};
 
 /// Helper for listing cards
@@ -158,21 +158,18 @@ fn start_background_download_loop(
     config: ReloadConfig,
     service_info: Arc<RwLock<ServiceInfo>>,
     write_path: Arc<PathBuf>,
-    event_loops: StateEventLoops,
+    state: ReloadEventState,
+    cancellation_token: CancellationToken,
 ) -> Result<JoinHandle<()>, AppError> {
     let cron = config.cron;
 
     let future = async move {
         loop {
             tokio::select! {
-                event = download_rx.recv() => {
+                Some(event) = download_rx.recv() => {
                     match event {
 
-                        Some(DownloadEvent::Start) => {
-                            info!("Download task started");
-                            event_loops.set_download_loop_running(true)?;
-                        },
-                        Some(DownloadEvent::Force) => {
+                        DownloadEvent::Force => {
                             info!("Force reload requested");
 
                             let service_info_cloned = {
@@ -182,12 +179,9 @@ fn start_background_download_loop(
 
                             match reload_task(service_info_cloned, &write_path).await {
                                 Ok(true) => {
-                                    // Send ReloadEvent to inform AppState to Reload
-                                    if let Some(reload_tx) = event_loops.reload_events.read().unwrap().reload_tx.as_ref() {
-                                        match reload_tx.send(ReloadEvent::Ready) {
-                                            Ok(_) => debug!("Sent reload event"),
-                                            Err(e) => error!("Failed to send reload event: {}", e),
-                                        }
+                                    match state.trigger_reload_event() {
+                                        Ok(_) => debug!("Sent reload event"),
+                                        Err(e) => error!("Failed to send reload event: {}", e),
                                     }
                                 }
                                 Ok(false) => {
@@ -201,22 +195,17 @@ fn start_background_download_loop(
                             let mut reload_timestamp = scheduled_reload.write().unwrap();
                             *reload_timestamp = get_next_cron_timestamp(&cron)?;
                         },
-                        Some(DownloadEvent::Stop) => {
-                            info!("Stopping Download loop");
-                            event_loops.set_download_loop_running(false)?;
-                            break;
 
-                        },
-                        None => {
-                                debug!("Download channel closed");
-                                event_loops.set_download_loop_running(false)?;
-                                break;
-                        }
+
                     }
                 },
+                _ = cancellation_token.cancelled() => {
+                    state.set_download_loop_running(false)?;
+                    break;
+                }
                 else => {
                     debug!("Download channel closed");
-                    event_loops.set_download_loop_running(false)?;
+                    state.set_download_loop_running(false)?;
                     break;
                 }
             }
@@ -239,7 +228,7 @@ pub struct ServiceReloader {
     pub service_info: Arc<RwLock<ServiceInfo>>,
     pub config: ReloadConfig,
     pub service_path: Arc<PathBuf>,
-    pub event_loops: StateEventLoops,
+    pub state: ReloadEventState,
 }
 
 impl ServiceReloader {
@@ -248,7 +237,7 @@ impl ServiceReloader {
         service_info: Arc<RwLock<ServiceInfo>>,
         config: ReloadConfig,
         service_path: PathBuf,
-        event_loops: StateEventLoops,
+        state: ReloadEventState,
     ) -> Self {
         debug!("Creating unbounded QueueBus");
         let service_path = Arc::new(service_path);
@@ -257,7 +246,7 @@ impl ServiceReloader {
             service_info,
             config,
             service_path,
-            event_loops,
+            state,
         }
     }
 
@@ -277,7 +266,8 @@ impl ServiceReloader {
         download_rx: mpsc::UnboundedReceiver<DownloadEvent>,
         service_info: Arc<RwLock<ServiceInfo>>,
         write_path: Arc<PathBuf>,
-        event_loops: &mut StateEventLoops,
+        state: &mut ReloadEventState,
+        cancellation_token: CancellationToken,
     ) -> Result<(), AppError> {
         let scheduled_reload = Arc::new(RwLock::new(get_next_cron_timestamp(&config.cron)?));
 
@@ -288,62 +278,13 @@ impl ServiceReloader {
             config,
             service_info,
             write_path,
-            event_loops.clone(),
+            state.clone(),
+            cancellation_token,
         )?;
 
-        event_loops.add_download_handle(handle);
-
-        self.start()?;
-
-        self.confirm_start()?;
+        state.add_download_abort_handle(handle);
 
         Ok(())
-    }
-
-    #[instrument(skip_all)]
-    pub fn publish(&self, event: DownloadEvent) -> Result<(), AppError> {
-        if let Some(tx) = &self
-            .event_loops
-            .download_events
-            .read()
-            .unwrap()
-            .download_tx
-            .as_ref()
-        {
-            Ok(tx.send(event)?)
-        } else {
-            Err(AppError::NoDownloadTxError)
-        }
-    }
-
-    #[instrument(skip_all)]
-    pub fn shutdown(&self) -> Result<(), AppError> {
-        debug!("Stopping service reloader");
-        self.publish(DownloadEvent::Stop)?;
-        Ok(())
-    }
-
-    #[instrument(skip_all)]
-    pub fn start(&self) -> Result<(), AppError> {
-        debug!("Starting service reloader");
-        self.publish(DownloadEvent::Start)?;
-        Ok(())
-    }
-
-    #[instrument(skip_all)]
-    pub fn confirm_start(&self) -> Result<(), AppError> {
-        // Signal confirm start
-        let mut max_retries = 20;
-        while max_retries > 0 {
-            if self.event_loops.download_loop_running() {
-                debug!("Download loop started successfully");
-                return Ok(());
-            }
-            max_retries -= 1;
-            std::thread::sleep(Duration::from_millis(100));
-        }
-        error!("Download loop failed to start");
-        Err(AppError::DownloadLoopFailedToStartError)
     }
 
     // create function that spawns a task and reloads the service card

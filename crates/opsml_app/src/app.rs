@@ -1,6 +1,4 @@
-use crate::types::{
-    DownloadEvent, QueueState, ReloadEvent, ReloadEventLoops, ReloaderState, StateEventLoops,
-};
+use crate::types::{DownloadEvent, QueueState, ReloadEvent, ReloadEventState, ReloaderState};
 use crate::{
     error::AppError,
     reloader::{ReloadConfig, ServiceReloader},
@@ -19,6 +17,7 @@ use std::sync::{Arc, RwLock};
 use std::time::Duration;
 use tokio::sync::mpsc::{self, UnboundedReceiver};
 use tokio::time::sleep;
+use tokio_util::sync::CancellationToken;
 use tracing::{debug, error, info, info_span, Instrument};
 
 /// Load a card map from path
@@ -50,11 +49,11 @@ pub fn create_scouter_queue(
         debug!("Drift paths found in card map, creating ScouterQueue");
         let rt = app_state().runtime.clone();
         let scouter_queue = ScouterQueue::from_path_rs(py, card_map.drift_paths, config, rt)?;
-        let event_loops = scouter_queue.queue_event_loops.clone();
+        let event_state = scouter_queue.queue_state.clone();
 
         Some(Arc::new(RwLock::new(QueueState {
             queue: Py::new(py, scouter_queue)?,
-            queue_event_loops: event_loops,
+            queue_event_state: event_state,
             transport_config: config.clone().unbind(),
         })))
     } else {
@@ -75,7 +74,7 @@ pub fn create_service_reloader(
     service_info: ServiceInfo,
     reload_config: Option<ReloadConfig>,
     service_path: PathBuf,
-    event_loops: StateEventLoops,
+    event_loops: ReloadEventState,
 ) -> Result<ServiceReloader, AppError> {
     let reload_config = reload_config.unwrap_or_else(ReloadConfig::default);
     let service_info = Arc::new(RwLock::new(service_info));
@@ -105,7 +104,7 @@ pub struct AppState {
     pub load_kwargs: Option<Arc<RwLock<Py<PyDict>>>>,
 
     // Event loops to handle download and reload tasks
-    pub event_loops: StateEventLoops,
+    pub event_state: ReloadEventState,
 }
 
 #[pymethods]
@@ -221,7 +220,7 @@ impl AppState {
         let (download_tx, download_rx) = mpsc::unbounded_channel();
         let (reload_tx, mut reload_rx) = mpsc::unbounded_channel();
 
-        self.event_loops.set_download_tx(download_tx)?;
+        self.event_loops.se
         self.event_loops.set_reload_tx(reload_tx)?;
 
         let mut loops = self.event_loops.clone();
@@ -532,10 +531,13 @@ impl AppState {
     /// * `download_rx` - The receiver for download events
     pub fn start_download_task(
         &self,
-        event_loops: &mut StateEventLoops,
+        state: &mut ReloadEventState,
         download_rx: UnboundedReceiver<DownloadEvent>,
     ) -> Result<(), AppError> {
-        debug!("Starting download task with loops: {:?}", event_loops);
+        debug!("Starting download task with state: {:?}", state);
+
+        let cancellation_token = CancellationToken::new();
+        state.add_download_cancellation_token(cancellation_token.clone());
 
         self.reloader.start_download_task(
             app_state().runtime.clone(),
@@ -543,7 +545,8 @@ impl AppState {
             download_rx,
             self.reloader.service_info.clone(),
             self.reloader.config.write_path.clone(),
-            event_loops,
+            state,
+            cancellation_token,
         )?;
 
         Ok(())
