@@ -180,6 +180,22 @@ impl ReloadEventState {
             .abort_handle
             .replace(handle.abort_handle());
     }
+
+    pub fn cancel_download_task(&self) {
+        let cancel_token = &self.download_events.read().unwrap().cancel_token;
+        if let Some(cancel_token) = cancel_token {
+            debug!("Cancelling download task");
+            cancel_token.cancel();
+        }
+    }
+
+    pub fn cancel_reload_task(&self) {
+        let cancel_token = &self.reload_events.read().unwrap().cancel_token;
+        if let Some(cancel_token) = cancel_token {
+            debug!("Cancelling reload task");
+            cancel_token.cancel();
+        }
+    }
 }
 
 impl Default for ReloadEventState {
