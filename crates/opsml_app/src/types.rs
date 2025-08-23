@@ -18,7 +18,7 @@ use tracing::{debug, error};
 #[derive(Debug)]
 pub struct QueueState {
     pub queue: Py<ScouterQueue>,
-    pub queue_event_loops: HashMap<String, Arc<EventState>>,
+    pub queue_event_state: HashMap<String, Arc<EventState>>,
     pub transport_config: Py<PyAny>,
 }
 
@@ -113,11 +113,11 @@ impl ReloadEventState {
         self.download_events.read().unwrap().running || self.reload_events.read().unwrap().running
     }
 
-    pub fn download_loop_running(&self) -> bool {
+    pub fn is_download_loop_running(&self) -> bool {
         self.download_events.read().unwrap().running
     }
 
-    pub fn reload_loop_running(&self) -> bool {
+    pub fn is_reload_loop_running(&self) -> bool {
         self.reload_events.read().unwrap().running
     }
 
@@ -181,6 +181,14 @@ impl ReloadEventState {
             .replace(handle.abort_handle());
     }
 
+    pub fn add_download_cancellation_token(&mut self, token: CancellationToken) {
+        self.download_events.write().unwrap().cancel_token = Some(token);
+    }
+
+    pub fn add_reload_cancellation_token(&mut self, token: CancellationToken) {
+        self.reload_events.write().unwrap().cancel_token = Some(token);
+    }
+
     pub fn cancel_download_task(&self) {
         let cancel_token = &self.download_events.read().unwrap().cancel_token;
         if let Some(cancel_token) = cancel_token {
@@ -195,6 +203,46 @@ impl ReloadEventState {
             debug!("Cancelling reload task");
             cancel_token.cancel();
         }
+    }
+
+    fn shutdown_download_task(&self) -> Result<(), AppError> {
+        self.cancel_download_task();
+
+        // abort the download loop
+        let download_handle = {
+            let guard = self.download_events.write().unwrap().abort_handle.take();
+            guard
+        };
+
+        if let Some(handle) = download_handle {
+            handle.abort();
+            debug!("Download loop handle shut down");
+        }
+
+        Ok(())
+    }
+
+    fn shutdown_reload_task(&self) -> Result<(), AppError> {
+        self.cancel_reload_task();
+
+        // abort the reload loop
+        let reload_handle = {
+            let guard = self.reload_events.write().unwrap().abort_handle.take();
+            guard
+        };
+
+        if let Some(handle) = reload_handle {
+            handle.abort();
+            debug!("Reload loop handle shut down");
+        }
+
+        Ok(())
+    }
+
+    pub fn shutdown_tasks(&self) -> Result<(), AppError> {
+        self.shutdown_download_task()?;
+        self.shutdown_reload_task()?;
+        Ok(())
     }
 }
 
