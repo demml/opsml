@@ -3,14 +3,15 @@ use crate::error::AppError;
 use opsml_cards::ServiceCard;
 use pyo3::prelude::*;
 use pyo3::types::{PyAny, PyDict};
-use scouter_client::{EventLoops, ScouterQueue};
+use scouter_client::{EventState, ScouterQueue};
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::Arc;
 use std::sync::RwLock;
 use std::time::Duration;
 use tokio::sync::mpsc::UnboundedSender;
-use tokio::task::JoinHandle;
+use tokio::task::{AbortHandle, JoinHandle};
+use tokio_util::sync::CancellationToken;
 use tracing::{debug, error, instrument};
 /// QueueState consists of the ScouterQueue and its associated event loops
 /// The event loops are pulled out into a separate field so that we can close the loops without needing
@@ -18,7 +19,7 @@ use tracing::{debug, error, instrument};
 #[derive(Debug)]
 pub struct QueueState {
     pub queue: Py<ScouterQueue>,
-    pub queue_event_loops: HashMap<String, Arc<EventLoops>>,
+    pub queue_event_loops: HashMap<String, Arc<EventState>>,
     pub transport_config: Py<PyAny>,
 }
 
@@ -42,15 +43,11 @@ impl QueueState {
 
 #[derive(Debug, Clone)]
 pub enum ReloadEvent {
-    Start,
     Ready,
-    Stop,
 }
 
 #[derive(Debug, Clone)]
 pub enum DownloadEvent {
-    Start,
-    Stop,
     Force,
 }
 
@@ -75,73 +72,64 @@ impl ReloaderState {
 }
 
 #[derive(Debug)]
-pub struct DownloadEventLoops {
-    // track the loop that receives events
-    pub download_loop: Option<JoinHandle<()>>,
-    pub download_loop_running: bool,
-    pub download_tx: Option<UnboundedSender<DownloadEvent>>,
+pub struct Loop {
+    pub abort_handle: Option<AbortHandle>,
+    pub running: bool,
+    pub cancel_token: Option<CancellationToken>,
 }
 
-impl DownloadEventLoops {
+impl Loop {
     pub fn new() -> Self {
-        DownloadEventLoops {
-            download_loop: None,
-            download_loop_running: false,
-            download_tx: None,
+        Loop {
+            abort_handle: None,
+            running: false,
+            cancel_token: None,
         }
     }
 }
 
-#[derive(Debug)]
-pub struct ReloadEventLoops {
-    pub reload_loop: Option<JoinHandle<()>>,
-    pub reload_loop_running: bool,
-    pub reload_tx: Option<UnboundedSender<ReloadEvent>>,
-}
-
-impl ReloadEventLoops {
-    pub fn new() -> Self {
-        ReloadEventLoops {
-            reload_loop: None,
-            reload_loop_running: false,
-            reload_tx: None,
-        }
+impl Default for Loop {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
 #[derive(Debug, Clone)]
-pub struct StateEventLoops {
+pub struct ReloadEventState {
     // track the loop that downloads service artifacts
-    pub download_events: Arc<RwLock<DownloadEventLoops>>,
-
+    pub download_events: Arc<RwLock<Loop>>,
     // track the loop that reloads the service cards
-    pub reload_events: Arc<RwLock<ReloadEventLoops>>,
+    pub reload_events: Arc<RwLock<Loop>>,
+
+    pub download_event: Option<UnboundedSender<DownloadEvent>>,
+    pub reload_event: Option<UnboundedSender<ReloadEvent>>,
 }
 
-impl StateEventLoops {
+impl ReloadEventState {
     pub fn new() -> Self {
-        StateEventLoops {
-            download_events: Arc::new(RwLock::new(DownloadEventLoops::new())),
-            reload_events: Arc::new(RwLock::new(ReloadEventLoops::new())),
+        ReloadEventState {
+            download_events: Arc::new(RwLock::new(Loop::new())),
+            reload_events: Arc::new(RwLock::new(Loop::new())),
+            download_event: None,
+            reload_event: None,
         }
     }
 
     pub fn running(&self) -> bool {
-        self.download_events.read().unwrap().download_loop_running
-            || self.reload_events.read().unwrap().reload_loop_running
+        self.download_events.read().unwrap().running || self.reload_events.read().unwrap().running
     }
 
     pub fn download_loop_running(&self) -> bool {
-        self.download_events.read().unwrap().download_loop_running
+        self.download_events.read().unwrap().running
     }
 
     pub fn reload_loop_running(&self) -> bool {
-        self.reload_events.read().unwrap().reload_loop_running
+        self.reload_events.read().unwrap().running
     }
 
     pub fn set_download_loop_running(&self, running: bool) -> Result<(), AppError> {
         if let Ok(mut guard) = self.download_events.write() {
-            guard.download_loop_running = running;
+            guard.running = running;
             Ok(())
         } else {
             error!("Failed to set download loop running state");
@@ -151,7 +139,7 @@ impl StateEventLoops {
 
     pub fn set_reload_loop_running(&self, running: bool) -> Result<(), AppError> {
         if let Ok(mut guard) = self.reload_events.write() {
-            guard.reload_loop_running = running;
+            guard.running = running;
             Ok(())
         } else {
             error!("Failed to set reload loop running state");
@@ -159,165 +147,48 @@ impl StateEventLoops {
         }
     }
 
+    pub fn set_reload_tx(&mut self, tx: UnboundedSender<ReloadEvent>) -> Result<(), AppError> {
+        self.reload_event = Some(tx);
+        Ok(())
+    }
+
+    pub fn set_download_tx(&mut self, tx: UnboundedSender<DownloadEvent>) -> Result<(), AppError> {
+        self.download_event = Some(tx);
+        Ok(())
+    }
+
     pub fn trigger_download_event(&self) -> Result<(), AppError> {
-        if let Some(tx) = &self.download_events.read().unwrap().download_tx {
+        if let Some(tx) = &self.download_event {
             tx.send(DownloadEvent::Force)?;
         }
         Ok(())
     }
 
-    pub fn send_reload_start(&self) -> Result<(), AppError> {
-        if let Some(tx) = &self.reload_events.read().unwrap().reload_tx {
-            tx.send(ReloadEvent::Start)?;
-            Ok(())
-        } else {
-            error!("No reload_tx found - channel not set up");
-            Err(AppError::NoReloadTxError)
-        }
-    }
-
-    /// Shutdown the download loop. This is used in the reload async task
-    pub async fn shutdown_download_loop(&mut self) -> Result<(), AppError> {
-        // this sends a stop event to the download loop
-        debug!("Sending stop event to download loop");
-        if let Some(tx) = &self.download_events.read().unwrap().download_tx {
-            tx.send(DownloadEvent::Stop)?;
-        }
-
-        let download_handle = {
-            let guard = self.download_events.write().unwrap().download_loop.take();
-            guard
-        };
-
-        if let Some(handle) = download_handle {
-            handle.await?;
-        }
-
-        Ok(())
-    }
-
-    fn abort_download_loop(&self) -> Result<(), AppError> {
-        let download_handle = {
-            let guard = self.download_events.write().unwrap().download_loop.take();
-            guard
-        };
-
-        if let Some(handle) = download_handle {
-            handle.abort();
-            debug!("Download loop handle aborted");
-        }
-
-        // set to false
-        self.download_events.write().unwrap().download_loop_running = false;
-
-        Ok(())
-    }
-
-    fn abort_reload_loop(&self) -> Result<(), AppError> {
-        let reload_handle = {
-            let guard = self.reload_events.write().unwrap().reload_loop.take();
-            guard
-        };
-
-        if let Some(handle) = reload_handle {
-            handle.abort();
-            debug!("Reload loop handle aborted");
-        }
-
-        Ok(())
-    }
-
-    fn wait_for_download_loop_to_stop(&self) -> Result<(), AppError> {
-        let mut max_retries = 50;
-        while self.download_events.read().unwrap().download_loop_running {
-            std::thread::sleep(Duration::from_millis(100));
-            max_retries -= 1;
-            if max_retries == 0 {
-                error!("Timed out waiting for download loop to stop. Aborting the thread");
-                self.abort_download_loop()?;
-                break;
-            }
+    pub fn trigger_reload_event(&self) -> Result<(), AppError> {
+        if let Some(tx) = &self.reload_event {
+            tx.send(ReloadEvent::Ready)?;
         }
         Ok(())
     }
 
-    #[instrument(skip_all)]
-    pub fn shutdown_reload_loop(&mut self) -> Result<(), AppError> {
-        // this sends a stop event to the reload loop
-        debug!("Sending stop event to reload loop");
-        if let Some(tx) = &self.reload_events.read().unwrap().reload_tx {
-            tx.send(ReloadEvent::Stop)?;
-        } else {
-            error!("No reload_tx found - channel not set up");
-            return Err(AppError::NoReloadTxError);
-        }
-
-        self.wait_for_download_loop_to_stop()?;
-        self.abort_reload_loop()?;
-
-        Ok(())
-    }
-
-    pub fn add_download_handle(&mut self, handle: JoinHandle<()>) {
+    pub fn add_download_abort_handle(&mut self, handle: JoinHandle<()>) {
         self.download_events
             .write()
             .unwrap()
-            .download_loop
-            .replace(handle);
+            .abort_handle
+            .replace(handle.abort_handle());
     }
 
-    pub fn add_reload_handle(&mut self, handle: JoinHandle<()>) {
+    pub fn add_reload_abort_handle(&mut self, handle: JoinHandle<()>) {
         self.reload_events
             .write()
             .unwrap()
-            .reload_loop
-            .replace(handle);
-    }
-
-    pub fn set_reload_tx(&self, tx: UnboundedSender<ReloadEvent>) -> Result<(), AppError> {
-        if let Ok(mut guard) = self.reload_events.write() {
-            guard.reload_tx = Some(tx);
-            Ok(())
-        } else {
-            error!("Failed to set reload tx");
-            Err(AppError::LockError)
-        }
-    }
-
-    /// Set the download event sender  
-    pub fn set_download_tx(&self, tx: UnboundedSender<DownloadEvent>) -> Result<(), AppError> {
-        if let Ok(mut guard) = self.download_events.write() {
-            guard.download_tx = Some(tx);
-            Ok(())
-        } else {
-            error!("Failed to set download tx");
-            Err(AppError::LockError)
-        }
-    }
-
-    pub fn debug_state(&self) {
-        let download_guard = self.download_events.read().unwrap();
-        let reload_guard = self.reload_events.read().unwrap();
-
-        debug!(
-            r#"AppEventState:
-                Download loop running: {}
-                Download tx exists: {}
-                Download handle exists: {}
-                Reload loop running: {}
-                Reload tx exists: {}
-                Reload handle exists: {}"#,
-            download_guard.download_loop_running,
-            download_guard.download_tx.is_some(),
-            download_guard.download_loop.is_some(),
-            reload_guard.reload_loop_running,
-            reload_guard.reload_tx.is_some(),
-            reload_guard.reload_loop.is_some()
-        );
+            .abort_handle
+            .replace(handle.abort_handle());
     }
 }
 
-impl Default for ReloadEventLoops {
+impl Default for ReloadEventState {
     fn default() -> Self {
         Self::new()
     }
