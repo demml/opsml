@@ -1,7 +1,8 @@
-use crate::types::{DownloadEvent, QueueState, ReloadEvent, ReloadEventState, ReloaderState};
+use crate::types::{DownloadEvent, QueueState, ReloadEvent, ReloadTaskState, ReloaderState};
+use crate::utils::{wait_for_download_task, wait_for_reload_task};
 use crate::{
     error::AppError,
-    reloader::{ReloadConfig, ServiceReloader},
+    reloader::{start_background_download_task, ReloadConfig, ServiceReloader},
 };
 use opsml_cards::{card_service::ServiceInfo, ServiceCard};
 use opsml_state::app_state;
@@ -53,7 +54,7 @@ pub fn create_scouter_queue(
 
         Some(Arc::new(RwLock::new(QueueState {
             queue: Py::new(py, scouter_queue)?,
-            queue_event_state: event_state,
+            task_state: event_state,
             transport_config: config.clone().unbind(),
         })))
     } else {
@@ -74,11 +75,11 @@ pub fn create_service_reloader(
     service_info: ServiceInfo,
     reload_config: Option<ReloadConfig>,
     service_path: PathBuf,
-    event_loops: ReloadEventState,
+    reload_state: ReloadTaskState,
 ) -> Result<ServiceReloader, AppError> {
     let reload_config = reload_config.unwrap_or_else(ReloadConfig::default);
     let service_info = Arc::new(RwLock::new(service_info));
-    let reloader = ServiceReloader::new(service_info, reload_config, service_path, event_loops);
+    let reloader = ServiceReloader::new(service_info, reload_config, service_path, reload_state);
     Ok(reloader)
 }
 
@@ -103,8 +104,8 @@ pub struct AppState {
 
     pub load_kwargs: Option<Arc<RwLock<Py<PyDict>>>>,
 
-    // Event loops to handle download and reload tasks
-    pub event_state: ReloadEventState,
+    // State for managing reload tasks
+    pub reload_state: ReloadTaskState,
 }
 
 #[pymethods]
@@ -149,7 +150,7 @@ impl AppState {
             error!("Failed to load card map from: {:?}", e);
         })?;
 
-        let event_loops = StateEventLoops::new();
+        let reload_state = ReloadTaskState::new();
         let queue = create_scouter_queue(py, card_map, transport_config)?;
 
         // Create the service reloader
@@ -157,7 +158,7 @@ impl AppState {
             service_info,
             reload_config,
             service_path,
-            event_loops.clone(),
+            reload_state.clone()
         )?;
 
         let kwargs = load_kwargs.map(|kw| kw.clone().unbind());
@@ -167,7 +168,7 @@ impl AppState {
             queue,
             reloader,
             load_kwargs: kwargs.map(|kw| Arc::new(RwLock::new(kw))),
-            event_loops,
+            reload_state,
         })
     }
 
@@ -203,11 +204,11 @@ impl AppState {
     #[getter]
     pub fn reloader_running(&self) -> bool {
         // return initialized if reloader is present
-        self.event_loops.running()
+        self.reload_state.running()
     }
 
     pub fn reload(&self) -> Result<(), AppError> {
-        self.event_loops.trigger_download_event()
+        self.reload_state.trigger_download_event()
     }
 
     /// Start the reloader functionality
@@ -220,16 +221,23 @@ impl AppState {
         let (download_tx, download_rx) = mpsc::unbounded_channel();
         let (reload_tx, mut reload_rx) = mpsc::unbounded_channel();
 
-        self.event_loops.se
-        self.event_loops.set_reload_tx(reload_tx)?;
+        self.reload_state.set_reload_tx(reload_tx)?;
+        self.reload_state.set_download_tx(download_tx)?;
 
-        let mut loops = self.event_loops.clone();
 
-        // This will continually poll based on the config schedule and download
-        // any new service to the reload_path
-        self.start_download_task(&mut loops, download_rx)?;
 
-        // Setup state for the background thread
+        // This will continually poll based on the config schedule and download any new service to the reload_path
+        // This is separated out from model and queue reloading because we want to isolate
+        // any GIL interaction as much as possible
+        self.start_download_task(&mut self.reload_state.clone(), download_rx)?;
+
+       
+
+        debug!("Starting reload loop with arguments running");
+        let cancellation_token = CancellationToken::new();
+        self.reload_state.add_reload_cancellation_token(cancellation_token.clone());
+
+         // Setup state for the background thread
         let reload_state = ReloaderState {
             reload_path: self.reloader.config.write_path.clone(),
             service_path: self.reloader.service_path.clone(),
@@ -237,33 +245,21 @@ impl AppState {
             service: self.service.clone(),
             queue: self.queue.clone(),
             max_retries: self.reloader.config.max_retries,
+            task_state: self.reload_state.clone(),
         };
 
-        debug!("Starting reload loop with arguments running");
-        let span = info_span!("reload_task");
         let handle = app_state().runtime.spawn(async move {
+
+            match reload_state.task_state.set_reload_task_running(true) {
+                Ok(()) => info!("Reload loop is now running"),
+                Err(e) => error!("Failed to set reload loop running: {:?}", e),
+            }
+
             loop {
                 tokio::select! {
                     Some(event) = reload_rx.recv() => {
                         match event {
-                            ReloadEvent::Start => {
-                                info!("Reload task started");
-                                match loops.set_reload_loop_running(true) {
-                                    Ok(()) => info!("Reload loop is now running"),
-                                    Err(e) => error!("Failed to set reload loop running: {:?}", e),
-                                }
-                            },
-                            ReloadEvent::Stop => {
-                                match loops.set_reload_loop_running(false) {
-                                    Ok(()) => info!("Reload loop is now stopped"),
-                                    Err(e) => error!("Failed to set reload loop stopped: {:?}", e),
-                                }
-                                // send stop event to download loop
-                                match loops.shutdown_download_loop().await {
-                                    Ok(()) => info!("Download loop stopped"),
-                                    Err(e) => error!("Failed to stop download loop: {:?}", e),
-                                }
-                            },
+                           
                             ReloadEvent::Ready => {
                                 info!("Received reload event");
                                 // Set reload ready to true
@@ -296,17 +292,21 @@ impl AppState {
                             }
                         }
                     }
-                    else => {
-                        debug!("Reload channel closed, exiting reload loop");
-                        match loops.set_reload_loop_running(false) {
+                    _ = cancellation_token.cancelled() => {
+                        debug!("Reload cancellation requested, exiting reload loop");
+                        match reload_state.task_state.set_reload_task_running(false) {
                             Ok(()) => info!("Reload loop is now stopped"),
                             Err(e) => error!("Failed to set reload loop stopped: {:?}", e),
                         }
-                        // send stop event to download loop
-                        match loops.shutdown_download_loop().await {
-                            Ok(()) => info!("Download loop stopped"),
-                            Err(e) => error!("Failed to stop download loop: {:?}", e),
+                       break;
+                    }
+                    else => {
+                        debug!("Reload channel closed, exiting reload loop");
+                        match reload_state.task_state.set_reload_task_running(false) {
+                            Ok(()) => info!("Reload loop is now stopped"),
+                            Err(e) => error!("Failed to set reload loop stopped: {:?}", e),
                         }
+                       
                         break;
                     }
                 }
@@ -315,15 +315,15 @@ impl AppState {
             }
 
             debug!("Reload loop terminated");
-        }.instrument(span));
+        }.instrument(info_span!("reload_task")));
 
-        self.event_loops.add_reload_handle(handle);
+        self.reload_state.add_reload_abort_handle(handle);
 
         // Send start event
-        self.start_reload_loop()?;
+        wait_for_download_task(&self.reload_state)?;
 
         // Wait for start event to trigger loop is running
-        self.confirm_reload_start()?;
+        wait_for_reload_task(&self.reload_state)?;
 
         Ok(())
     }
@@ -352,10 +352,10 @@ impl AppState {
         self.queue = None; // Clear the queue
     }
 
-    pub fn stop_reloader(&mut self) -> Result<(), AppError> {
+    pub fn stop_reloader(&self) -> Result<(), AppError> {
         debug!("Triggered stop reloader");
-        self.event_loops.debug_state();
-        self.event_loops.shutdown_reload_loop()?;
+        // shutdown tasks
+        self.reload_state.shutdown_tasks()?;
 
         // cleanup any remaining resources (soft failure)
         // if No such file or directory, ignore the error
@@ -374,7 +374,7 @@ impl AppState {
     pub fn shutdown(&mut self) -> Result<(), AppError> {
         // shutdown ScouterQueues
         if let Some(queue) = &self.queue {
-            queue.write().unwrap().shutdown()?;
+            queue.write().map_err(|e|AppError::ScouterQueueLockError(e.to_string()))?.shutdown()?;
         }
 
         // shutdown reloader
@@ -385,27 +385,7 @@ impl AppState {
 }
 
 impl AppState {
-    fn start_reload_loop(&mut self) -> Result<(), AppError> {
-        // start the background reloader
-        self.event_loops.send_reload_start()?;
-        Ok(())
-    }
-
-    fn confirm_reload_start(&self) -> Result<(), AppError> {
-        // Signal confirm start
-        let mut max_retries = 20;
-        while max_retries > 0 {
-            if self.event_loops.reload_loop_running() {
-                debug!("Reload loop started successfully");
-                return Ok(());
-            }
-            max_retries -= 1;
-            std::thread::sleep(Duration::from_millis(100));
-        }
-        error!("Reload loop failed to start");
-        Err(AppError::ReloadLoopFailedToStartError)
-    }
-
+    
     fn reload_queue(
         queue_state: &Arc<RwLock<QueueState>>,
         reload_path: &Path,
@@ -531,7 +511,7 @@ impl AppState {
     /// * `download_rx` - The receiver for download events
     pub fn start_download_task(
         &self,
-        state: &mut ReloadEventState,
+        state: &mut ReloadTaskState,
         download_rx: UnboundedReceiver<DownloadEvent>,
     ) -> Result<(), AppError> {
         debug!("Starting download task with state: {:?}", state);
@@ -539,15 +519,17 @@ impl AppState {
         let cancellation_token = CancellationToken::new();
         state.add_download_cancellation_token(cancellation_token.clone());
 
-        self.reloader.start_download_task(
+        let handle = start_background_download_task(
+            download_rx,
             app_state().runtime.clone(),
             self.reloader.config.clone(),
-            download_rx,
             self.reloader.service_info.clone(),
             self.reloader.config.write_path.clone(),
-            state,
+            state.clone(),
             cancellation_token,
         )?;
+
+        state.add_download_abort_handle(handle);
 
         Ok(())
     }
