@@ -100,6 +100,15 @@ pub enum AppError {
 
     #[error("No reload channel found")]
     NoReloadTxError,
+
+    #[error("Failed to acquire lock on ScouterQueue")]
+    ScouterQueueLockError(String),
+
+    #[error("Failed to start download task")]
+    DownloadTaskFailedToStartError,
+
+    #[error("Failed to start reload task")]
+    ReloadTaskFailedToStartError,
 }
 
 impl From<AppError> for PyErr {

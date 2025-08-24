@@ -1,5 +1,5 @@
 use crate::error::AppError;
-use crate::types::{DownloadEvent, ReloadEvent, ReloadEventState};
+use crate::types::{DownloadEvent, ReloadTaskState};
 use crate::utils::get_next_cron_timestamp;
 use chrono::DateTime;
 use chrono::Utc;
@@ -14,9 +14,9 @@ use std::path::PathBuf;
 use std::sync::Arc;
 use std::sync::RwLock;
 use tokio::runtime::Runtime;
-use tokio::sync::mpsc;
 use tokio::sync::mpsc::UnboundedReceiver;
 use tokio::task::JoinHandle;
+use tokio::time::{sleep, Duration};
 use tokio_util::sync::CancellationToken;
 use tracing::{debug, error, info, info_span, instrument, Instrument};
 
@@ -150,62 +150,113 @@ async fn reload_task(
     Ok(false)
 }
 
+/// Attempts to download the latest service artifacts
+/// # Arguments
+/// * `service_info` - The service information
+/// * `write_path` - The path to write the downloaded artifacts
+/// * `state` - The current state of the reload task
+/// * `scheduled_reload` - The scheduled reload time
+/// * `cron` - The cron expression for the reload schedule
+async fn download(
+    service_info: &Arc<RwLock<ServiceInfo>>,
+    write_path: &Arc<PathBuf>,
+    state: &ReloadTaskState,
+    scheduled_reload: &mut DateTime<Utc>,
+    cron: &str,
+) -> Result<(), AppError> {
+    let service_info_cloned = {
+        let guard = service_info.read().unwrap();
+        guard.clone()
+    };
+
+    match reload_task(service_info_cloned, write_path).await {
+        Ok(true) => match state.trigger_reload_event() {
+            Ok(_) => debug!("Sent reload event"),
+            Err(e) => error!("Failed to send reload event: {}", e),
+        },
+        Ok(false) => {
+            info!("No new version detected, skipping reload");
+        }
+        Err(e) => {
+            error!("Error during reload task: {}", e);
+        }
+    }
+
+    *scheduled_reload = get_next_cron_timestamp(&cron)?;
+    Ok(())
+}
+
+/// Starts the background download task by creating a background download loop to continually check for and download
+/// new ServiceCards. This logic also adds the download task handle to the app state event loops and confirms
+/// that the download loop is running.
+/// # Arguments
+/// * `download_rx` - The download event receiver
+/// * `runtime` - The shared Tokio runtime
+/// * `config` - The reload configuration
+/// * `write_path` - The path to write the downloaded ServiceCard
+/// * `state` - The current state of the reload task
+/// * `cancellation_token` - The cancellation token for the task
 #[allow(clippy::too_many_arguments)]
-fn start_background_download_loop(
+pub fn start_background_download_task(
     mut download_rx: UnboundedReceiver<DownloadEvent>,
     runtime: Arc<Runtime>,
-    scheduled_reload: Arc<RwLock<DateTime<Utc>>>,
     config: ReloadConfig,
     service_info: Arc<RwLock<ServiceInfo>>,
     write_path: Arc<PathBuf>,
-    state: ReloadEventState,
+    state: ReloadTaskState,
     cancellation_token: CancellationToken,
 ) -> Result<JoinHandle<()>, AppError> {
     let cron = config.cron;
 
     let future = async move {
+        let mut scheduled_reload = get_next_cron_timestamp(&cron)?;
+        state.set_download_task_running(true)?;
+
         loop {
             tokio::select! {
+
+                // branch that checks every 10 seconds if it's time to reload
+                _ = sleep(Duration::from_secs(10)) => {
+                    // check if it's time to reload
+                    if scheduled_reload <= Utc::now() {
+                        info!("Triggering scheduled reload");
+
+                        match download(&service_info, &write_path, &state, &mut scheduled_reload, &cron).await {
+                            Ok(_) => {
+                                info!("Scheduled reload completed");
+                            }
+                            Err(e) => {
+                                error!("Error during scheduled reload: {}", e);
+                            }
+                        }
+                    }
+                }
                 Some(event) = download_rx.recv() => {
                     match event {
 
                         DownloadEvent::Force => {
                             info!("Force reload requested");
 
-                            let service_info_cloned = {
-                                let guard = service_info.read().unwrap();
-                                guard.clone()
-                            };
-
-                            match reload_task(service_info_cloned, &write_path).await {
-                                Ok(true) => {
-                                    match state.trigger_reload_event() {
-                                        Ok(_) => debug!("Sent reload event"),
-                                        Err(e) => error!("Failed to send reload event: {}", e),
-                                    }
-                                }
-                                Ok(false) => {
-                                    info!("No new version detected, skipping reload");
+                            match download(&service_info, &write_path, &state, &mut scheduled_reload, &cron).await {
+                                Ok(_) => {
+                                    info!("Force reload completed");
                                 }
                                 Err(e) => {
-                                    error!("Error during reload task: {}", e);
+                                    error!("Error during force reload: {}", e);
                                 }
                             }
-
-                            let mut reload_timestamp = scheduled_reload.write().unwrap();
-                            *reload_timestamp = get_next_cron_timestamp(&cron)?;
                         },
 
 
                     }
                 },
                 _ = cancellation_token.cancelled() => {
-                    state.set_download_loop_running(false)?;
+                    state.set_download_task_running(false)?;
                     break;
                 }
                 else => {
                     debug!("Download channel closed");
-                    state.set_download_loop_running(false)?;
+                    state.set_download_task_running(false)?;
                     break;
                 }
             }
@@ -228,7 +279,7 @@ pub struct ServiceReloader {
     pub service_info: Arc<RwLock<ServiceInfo>>,
     pub config: ReloadConfig,
     pub service_path: Arc<PathBuf>,
-    pub state: ReloadEventState,
+    pub state: ReloadTaskState,
 }
 
 impl ServiceReloader {
@@ -237,7 +288,7 @@ impl ServiceReloader {
         service_info: Arc<RwLock<ServiceInfo>>,
         config: ReloadConfig,
         service_path: PathBuf,
-        state: ReloadEventState,
+        state: ReloadTaskState,
     ) -> Self {
         debug!("Creating unbounded QueueBus");
         let service_path = Arc::new(service_path);
@@ -248,43 +299,6 @@ impl ServiceReloader {
             service_path,
             state,
         }
-    }
-
-    /// Starts the background download task by creating a background download loop to continually check for and download
-    /// new ServiceCards. This logic also adds the download task handle to the app state event loops and confirms
-    /// that the download loop is running.
-    /// # Arguments
-    /// * `shared_runtime` - The shared Tokio runtime
-    /// * `config` - The reload configuration
-    /// * `download_rx` - The download event receiver
-    /// * `write_path` - The path to write the downloaded ServiceCard
-    /// * `reload_loops` - The reload event loops
-    pub fn start_download_task(
-        &self,
-        shared_runtime: Arc<tokio::runtime::Runtime>,
-        config: ReloadConfig,
-        download_rx: mpsc::UnboundedReceiver<DownloadEvent>,
-        service_info: Arc<RwLock<ServiceInfo>>,
-        write_path: Arc<PathBuf>,
-        state: &mut ReloadEventState,
-        cancellation_token: CancellationToken,
-    ) -> Result<(), AppError> {
-        let scheduled_reload = Arc::new(RwLock::new(get_next_cron_timestamp(&config.cron)?));
-
-        let handle = start_background_download_loop(
-            download_rx,
-            shared_runtime,
-            scheduled_reload,
-            config,
-            service_info,
-            write_path,
-            state.clone(),
-            cancellation_token,
-        )?;
-
-        state.add_download_abort_handle(handle);
-
-        Ok(())
     }
 
     // create function that spawns a task and reloads the service card

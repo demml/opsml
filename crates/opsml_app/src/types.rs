@@ -3,7 +3,7 @@ use crate::error::AppError;
 use opsml_cards::ServiceCard;
 use pyo3::prelude::*;
 use pyo3::types::{PyAny, PyDict};
-use scouter_client::{EventState, ScouterQueue};
+use scouter_client::{ScouterQueue, TaskState};
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -18,17 +18,17 @@ use tracing::{debug, error};
 #[derive(Debug)]
 pub struct QueueState {
     pub queue: Py<ScouterQueue>,
-    pub queue_event_state: HashMap<String, Arc<EventState>>,
+    pub task_state: Arc<HashMap<String, TaskState>>,
     pub transport_config: Py<PyAny>,
 }
 
 impl QueueState {
     /// Shutdown the ScouterQueue and its associated event loops
     pub fn shutdown(&self) -> Result<(), AppError> {
-        for (alias, event_loop) in &self.queue_event_loops {
+        for (alias, task_state) in self.task_state.iter() {
             debug!("Shutting down queue: {}", alias);
             // shutdown the queue
-            event_loop.shutdown_tasks()?;
+            task_state.shutdown_tasks()?;
         }
 
         Ok(())
@@ -52,6 +52,7 @@ pub struct ReloaderState {
     pub service: Arc<RwLock<Py<ServiceCard>>>,
     pub queue: Option<Arc<RwLock<QueueState>>>,
     pub max_retries: u32,
+    pub task_state: ReloadTaskState,
 }
 
 impl ReloaderState {
@@ -66,15 +67,15 @@ impl ReloaderState {
 }
 
 #[derive(Debug)]
-pub struct Loop {
+pub struct Task {
     pub abort_handle: Option<AbortHandle>,
     pub running: bool,
     pub cancel_token: Option<CancellationToken>,
 }
 
-impl Loop {
+impl Task {
     pub fn new() -> Self {
-        Loop {
+        Task {
             abort_handle: None,
             running: false,
             cancel_token: None,
@@ -82,57 +83,57 @@ impl Loop {
     }
 }
 
-impl Default for Loop {
+impl Default for Task {
     fn default() -> Self {
         Self::new()
     }
 }
 
 #[derive(Debug, Clone)]
-pub struct ReloadEventState {
+pub struct ReloadTaskState {
     // track the loop that downloads service artifacts
-    pub download_events: Arc<RwLock<Loop>>,
+    pub download_task: Arc<RwLock<Task>>,
     // track the loop that reloads the service cards
-    pub reload_events: Arc<RwLock<Loop>>,
+    pub reload_task: Arc<RwLock<Task>>,
 
     pub download_event: Option<UnboundedSender<DownloadEvent>>,
     pub reload_event: Option<UnboundedSender<ReloadEvent>>,
 }
 
-impl ReloadEventState {
+impl ReloadTaskState {
     pub fn new() -> Self {
-        ReloadEventState {
-            download_events: Arc::new(RwLock::new(Loop::new())),
-            reload_events: Arc::new(RwLock::new(Loop::new())),
+        ReloadTaskState {
+            download_task: Arc::new(RwLock::new(Task::new())),
+            reload_task: Arc::new(RwLock::new(Task::new())),
             download_event: None,
             reload_event: None,
         }
     }
 
     pub fn running(&self) -> bool {
-        self.download_events.read().unwrap().running || self.reload_events.read().unwrap().running
+        self.download_task.read().unwrap().running || self.reload_task.read().unwrap().running
     }
 
-    pub fn is_download_loop_running(&self) -> bool {
-        self.download_events.read().unwrap().running
+    pub fn is_download_task_running(&self) -> bool {
+        self.download_task.read().unwrap().running
     }
 
-    pub fn is_reload_loop_running(&self) -> bool {
-        self.reload_events.read().unwrap().running
+    pub fn is_reload_task_running(&self) -> bool {
+        self.reload_task.read().unwrap().running
     }
 
-    pub fn set_download_loop_running(&self, running: bool) -> Result<(), AppError> {
-        if let Ok(mut guard) = self.download_events.write() {
+    pub fn set_download_task_running(&self, running: bool) -> Result<(), AppError> {
+        if let Ok(mut guard) = self.download_task.write() {
             guard.running = running;
             Ok(())
         } else {
-            error!("Failed to set download loop running state");
+            error!("Failed to set download task running state");
             Err(AppError::LockError)
         }
     }
 
-    pub fn set_reload_loop_running(&self, running: bool) -> Result<(), AppError> {
-        if let Ok(mut guard) = self.reload_events.write() {
+    pub fn set_reload_task_running(&self, running: bool) -> Result<(), AppError> {
+        if let Ok(mut guard) = self.reload_task.write() {
             guard.running = running;
             Ok(())
         } else {
@@ -166,7 +167,7 @@ impl ReloadEventState {
     }
 
     pub fn add_download_abort_handle(&mut self, handle: JoinHandle<()>) {
-        self.download_events
+        self.download_task
             .write()
             .unwrap()
             .abort_handle
@@ -174,7 +175,7 @@ impl ReloadEventState {
     }
 
     pub fn add_reload_abort_handle(&mut self, handle: JoinHandle<()>) {
-        self.reload_events
+        self.reload_task
             .write()
             .unwrap()
             .abort_handle
@@ -182,15 +183,15 @@ impl ReloadEventState {
     }
 
     pub fn add_download_cancellation_token(&mut self, token: CancellationToken) {
-        self.download_events.write().unwrap().cancel_token = Some(token);
+        self.download_task.write().unwrap().cancel_token = Some(token);
     }
 
     pub fn add_reload_cancellation_token(&mut self, token: CancellationToken) {
-        self.reload_events.write().unwrap().cancel_token = Some(token);
+        self.reload_task.write().unwrap().cancel_token = Some(token);
     }
 
     pub fn cancel_download_task(&self) {
-        let cancel_token = &self.download_events.read().unwrap().cancel_token;
+        let cancel_token = &self.download_task.read().unwrap().cancel_token;
         if let Some(cancel_token) = cancel_token {
             debug!("Cancelling download task");
             cancel_token.cancel();
@@ -198,7 +199,7 @@ impl ReloadEventState {
     }
 
     pub fn cancel_reload_task(&self) {
-        let cancel_token = &self.reload_events.read().unwrap().cancel_token;
+        let cancel_token = &self.reload_task.read().unwrap().cancel_token;
         if let Some(cancel_token) = cancel_token {
             debug!("Cancelling reload task");
             cancel_token.cancel();
@@ -210,7 +211,7 @@ impl ReloadEventState {
 
         // abort the download loop
         let download_handle = {
-            let guard = self.download_events.write().unwrap().abort_handle.take();
+            let guard = self.download_task.write().unwrap().abort_handle.take();
             guard
         };
 
@@ -227,7 +228,7 @@ impl ReloadEventState {
 
         // abort the reload loop
         let reload_handle = {
-            let guard = self.reload_events.write().unwrap().abort_handle.take();
+            let guard = self.reload_task.write().unwrap().abort_handle.take();
             guard
         };
 
@@ -246,7 +247,7 @@ impl ReloadEventState {
     }
 }
 
-impl Default for ReloadEventState {
+impl Default for ReloadTaskState {
     fn default() -> Self {
         Self::new()
     }

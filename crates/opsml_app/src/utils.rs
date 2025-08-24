@@ -1,10 +1,12 @@
 use crate::error::AppError;
+use crate::types::ReloadTaskState;
 use chrono::{DateTime, Utc};
 use opsml_types::{cards::ServiceCardMapping, SaveName, Suffix};
 use std::path::Path;
 use std::str::FromStr;
 use std::sync::Arc;
 use std::sync::RwLock;
+use tokio::time::Duration;
 use tracing::{debug, error};
 /// Load a card map from path
 pub fn load_card_map(path: &Path) -> Result<ServiceCardMapping, AppError> {
@@ -60,4 +62,38 @@ pub fn update_bool_lock(lock: &Arc<RwLock<bool>>, value: bool) -> Result<(), App
             Err(AppError::UpdateLockError)
         }
     }
+}
+
+/// Waits for the download task to start
+pub fn wait_for_download_task(task_state: &ReloadTaskState) -> Result<(), AppError> {
+    // Signal confirm start
+
+    let mut max_retries = 20;
+    while max_retries > 0 {
+        if task_state.is_download_task_running() {
+            debug!("Download task started successfully");
+            return Ok(());
+        }
+        max_retries -= 1;
+        std::thread::sleep(Duration::from_millis(200));
+    }
+    error!("Download task failed to start");
+    Err(AppError::DownloadTaskFailedToStartError)
+}
+
+/// Waits for the reload task to start
+pub fn wait_for_reload_task(task_state: &ReloadTaskState) -> Result<(), AppError> {
+    // Signal confirm start
+
+    let mut max_retries = 20;
+    while max_retries > 0 {
+        if task_state.is_reload_task_running() {
+            debug!("Reload task started successfully");
+            return Ok(());
+        }
+        max_retries -= 1;
+        std::thread::sleep(Duration::from_millis(200));
+    }
+    error!("Event task failed to start");
+    Err(AppError::ReloadTaskFailedToStartError)
 }
