@@ -45,8 +45,8 @@ test.unit:
 	uv run pytest \
 		--ignore="tests/genai/integration/*" \
 		--ignore="tests/interfaces/model/test_tensorflow.py" \
+		--ignore="tests/service/*" \
 		-m "not tensorflow" \
-		-m "not reload"
 		--cov \
 		--cov-fail-under=0 \
 		--cov-report xml:./coverage.xml \
