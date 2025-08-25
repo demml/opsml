@@ -156,13 +156,13 @@ def test_service_reload(
 
         # create next service version and wait 2 sec before triggering a reload
         create_service(random_forest_classifier, chat_prompt, example_dataframe)
-        time.sleep(2)
+        time.sleep(5)
         #
         # This is just to force a reload
         app.reload()
         #
         ## allow time to load before assertions
-        time.sleep(2)
+        time.sleep(5)
         assert app.service.version == "0.2.0"
         assert app.queue["custom"].identifier == "opsml/model/v1.1.0/custom"
         assert app.queue["psi"].identifier == "opsml/model/v1.1.0/psi"
