@@ -35,9 +35,6 @@ pub enum CliError {
     #[error(transparent)]
     RegistryError(#[from] RegistryError),
 
-    #[error("Failed to load service card JSON file")]
-    LoadServiceCardError(#[source] CardError),
-
     #[error("Failed to create service card")]
     CreateServiceError(#[source] CardError),
 
