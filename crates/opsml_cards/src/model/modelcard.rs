@@ -355,12 +355,14 @@ impl ModelCard {
     /// * `py` - The Python interpreter instance.
     /// * `path` - The path to the model card directory.
     /// * `load_kwargs` - Optional keyword arguments for loading the model.
+    /// * `interface` - Optional interface for the model. Used with Custom interfaces
     #[staticmethod]
-    #[pyo3(signature = (path, load_kwargs=None))]
-    pub fn load_from_path(
-        py: Python,
+    #[pyo3(signature = (path, load_kwargs=None, interface=None))]
+    pub fn load_from_path<'py>(
+        py: Python<'py>,
         path: PathBuf,
         load_kwargs: Option<ModelLoadKwargs>,
+        interface: Option<&Bound<'py, PyAny>>,
     ) -> Result<Self, CardError> {
         // Load the Card json first in order to get it's metadata
         let card_path = path.join(SaveName::Card).with_extension(Suffix::Json);
@@ -368,9 +370,10 @@ impl ModelCard {
             error!("Failed to read card json: {e}");
         })?;
 
-        let mut card = ModelCard::model_validate_json(py, json_string, None).inspect_err(|e| {
-            error!("Failed to validate ModelCard: {e}");
-        })?;
+        let mut card =
+            ModelCard::model_validate_json(py, json_string, interface).inspect_err(|e| {
+                error!("Failed to validate ModelCard: {e}");
+            })?;
 
         card.load(py, Some(path), load_kwargs)?;
 
