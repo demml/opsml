@@ -69,9 +69,13 @@ nav:
       - "docs/cards/promptcard.md"
   - Monitoring:
       - "docs/monitoring/overview.md"
+  - Deployment:
+      - "docs/deployment/best_practices.md"
   - Automation:
       - "docs/automation/service.md"
       - "docs/automation/pyproject.md"
+  - CLI:
+      - Overview: "docs/cli/overview.md"
   - Tech Specs:
       - Overview: "docs/specs/Readme.md"
       - Components:
