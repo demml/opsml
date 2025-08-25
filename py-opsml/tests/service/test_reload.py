@@ -22,6 +22,7 @@ from opsml.scouter.queue import Features
 from opsml.app import AppState, ReloadConfig
 from opsml.card import download_service
 from opsml.scouter import Metrics, Metric
+import numpy as np
 
 from opsml import (  # type: ignore
     start_experiment,
@@ -35,8 +36,9 @@ import pytest
 
 CURRENT_DIRECTORY = Path(os.getcwd())
 ASSETS_DIRECTORY = CURRENT_DIRECTORY / "tests" / "service" / "assets"
-SERVICE_SPACE = "opsml"
-SERVICE_NAME = "service"
+RAND_INT = np.random.randint(0, 100)
+SERVICE_SPACE = f"opsml_{RAND_INT}"
+SERVICE_NAME = f"service_{RAND_INT}"
 
 
 def create_service(
