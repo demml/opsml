@@ -18,10 +18,8 @@ from opsml.scouter import (
     CustomMetric,
 )
 import opsml.scouter
-from opsml.scouter.types import CommonCrons
 from opsml.scouter.alert import AlertThreshold
-from opsml.app import AppState, ReloadConfig
-
+from opsml.app import AppState
 
 from opsml import (  # type: ignore
     start_experiment,
@@ -113,22 +111,12 @@ def test_pyproject_app(
         # load the service card and the queue
         app = AppState.from_path(
             path=opsml_app / "app1",
-            # transport_config=opsml.scouter.HTTPConfig(),  # this will be mocked
-            reload_config=ReloadConfig(cron=CommonCrons.Every1Minute.cron),
+            transport_config=opsml.scouter.HTTPConfig(),  # this will be mocked
         )
 
-        # assert app.queue is not None
-        # assert isinstance(app.queue.transport_config, MockConfig)
-        assert app.has_reloader is True
+        assert app.queue is not None
 
-        # run another experiment and re-lock
-        run_experiment(random_forest_classifier, chat_prompt, example_dataframe)
-        lock_project(CURRENT_DIRECTORY)
-
-        # test reload function
-        # app.reload()
-
-        ## Add logic to create a new service card to trigger reload
+        assert isinstance(app.queue.transport_config, MockConfig)
 
         ## delete the opsml_app and lock file
         shutil.rmtree(opsml_app)
