@@ -79,7 +79,7 @@ pub fn create_service_reloader(
     service_path: PathBuf,
     reload_state: ReloadTaskState,
 ) -> Result<ServiceReloader, AppError> {
-    let reload_config = reload_config.unwrap_or_else(ReloadConfig::default);
+    let reload_config = reload_config.unwrap_or_default();
     let service_info = Arc::new(RwLock::new(service_info));
     let reloader = ServiceReloader::new(service_info, reload_config, service_path, reload_state);
     Ok(reloader)
@@ -410,7 +410,7 @@ impl AppState {
         let new_queue_state = Python::with_gil(|py| -> Result<Option<QueueState>, AppError> {
             // Get transport config from existing queue state
             let transport_config = queue_guard.transport_config.bind(py);
-            create_scouter_queue(py, card_map, Some(&transport_config), false)
+            create_scouter_queue(py, card_map, Some(transport_config), false)
         })?;
 
         // set queue to None to drop
@@ -456,7 +456,7 @@ impl AppState {
         reload_state.update_service(reloaded_service)?;
 
         if let Some(queue) = &reload_state.queue {
-            Self::reload_queue(&queue, &reload_state.reload_path)?;
+            Self::reload_queue(queue, &reload_state.reload_path)?;
         }
 
         Ok(())
