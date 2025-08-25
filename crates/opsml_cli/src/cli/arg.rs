@@ -76,6 +76,7 @@ impl IntoQueryArgs for ListCards {
 }
 
 #[derive(Args, Clone)]
+#[pyclass]
 pub struct DownloadCard {
     /// Card space
     #[arg(long = "space")]
@@ -96,6 +97,29 @@ pub struct DownloadCard {
     /// Write directory
     #[arg(long = "write-dir", default_value = "artifacts")]
     pub write_dir: String,
+}
+
+#[pymethods]
+impl DownloadCard {
+    /// Create a new DownloadCard
+    #[new]
+    #[pyo3(signature = (space=None, name=None, version=None, uid=None, write_dir=None))]
+    pub fn new(
+        space: Option<String>,
+        name: Option<String>,
+        version: Option<String>,
+        uid: Option<String>,
+        write_dir: Option<String>,
+    ) -> Self {
+        let write_dir = write_dir.unwrap_or_else(|| "artifacts".into());
+        Self {
+            space,
+            name,
+            version,
+            uid,
+            write_dir,
+        }
+    }
 }
 
 impl DownloadCard {

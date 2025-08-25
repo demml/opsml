@@ -3,6 +3,7 @@ use crate::cli::arg::IntoQueryArgs;
 use crate::error::CliError;
 use opsml_registry::download::{download_card_from_registry, download_service_from_registry};
 use opsml_types::RegistryType;
+use pyo3::pyfunction;
 
 /// Download all artifacts of a card
 ///
@@ -15,6 +16,7 @@ use opsml_types::RegistryType;
 ///
 /// # Errors
 /// CliError
+#[pyfunction]
 pub fn download_card(args: &DownloadCard, registry_type: RegistryType) -> Result<(), CliError> {
     // convert to query args
     let query_args = args.into_query_args(registry_type)?;
