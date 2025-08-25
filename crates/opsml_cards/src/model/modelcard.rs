@@ -347,6 +347,36 @@ impl ModelCard {
         Ok(())
     }
 
+    /// Staticmethod for loading a ModelCard from a path.
+    /// This is typically used within the context of APIs, where a
+    /// use may download a model's artifacts before starting the API.
+    /// This helper allows a user to load the ModelCard from a path during API startup.
+    /// # Arguments
+    /// * `py` - The Python interpreter instance.
+    /// * `path` - The path to the model card directory.
+    /// * `load_kwargs` - Optional keyword arguments for loading the model.
+    #[staticmethod]
+    #[pyo3(signature = (path, load_kwargs=None))]
+    pub fn load_from_path(
+        py: Python,
+        path: PathBuf,
+        load_kwargs: Option<ModelLoadKwargs>,
+    ) -> Result<Self, CardError> {
+        // Load the Card json first in order to get it's metadata
+        let card_path = path.join(SaveName::Card).with_extension(Suffix::Json);
+        let json_string = std::fs::read_to_string(&card_path).inspect_err(|e| {
+            error!("Failed to read card json: {e}");
+        })?;
+
+        let mut card = ModelCard::model_validate_json(py, json_string, None).inspect_err(|e| {
+            error!("Failed to validate ModelCard: {e}");
+        })?;
+
+        card.load(py, Some(path), load_kwargs)?;
+
+        Ok(card)
+    }
+
     #[allow(clippy::too_many_arguments)]
     #[pyo3(signature = (path=None))]
     pub fn download_artifacts(&mut self, path: Option<PathBuf>) -> Result<(), CardError> {

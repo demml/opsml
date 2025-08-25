@@ -94,7 +94,7 @@ pub struct DownloadCard {
     pub uid: Option<String>,
 
     /// Write directory
-    #[arg(long = "write-dir", default_value = "service")]
+    #[arg(long = "write-dir", default_value = "artifacts")]
     pub write_dir: String,
 }
 
