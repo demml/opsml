@@ -46,6 +46,7 @@ test.unit:
 		--ignore="tests/genai/integration/*" \
 		--ignore="tests/interfaces/model/test_tensorflow.py" \
 		-m "not tensorflow" \
+		-m "not reload"
 		--cov \
 		--cov-fail-under=0 \
 		--cov-report xml:./coverage.xml \
@@ -57,6 +58,9 @@ setup.integration:
 
 test.integration:
 	uv run pytest -s tests/integration
+
+test.service:
+	uv run pytest -s tests/service
 
 test.examples.data:
 	uv run python examples/data/arrow_data.py && \

@@ -92,7 +92,6 @@ pub fn download_service_from_registry(
     args: &CardQueryArgs,
     write_path: &Path,
 ) -> Result<(), RegistryError> {
-    // get registry
     let registry = OpsmlRegistry::new(args.registry_type.clone())?;
 
     let key = registry.get_key(args)?;
