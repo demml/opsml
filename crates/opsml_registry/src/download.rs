@@ -296,6 +296,7 @@ async fn async_download_card(
     Ok(())
 }
 
+#[instrument(skip_all)]
 async fn async_download_card_artifacts(
     key: &ArtifactKey,
     lpath: &Path,
@@ -308,6 +309,7 @@ async fn async_download_card_artifacts(
         std::fs::create_dir_all(lpath)?;
     }
     // download card artifacts
+    debug!("Downloading card artifacts from storage");
     async_storage_client()
         .await
         .get(lpath, &rpath, true)

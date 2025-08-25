@@ -256,6 +256,7 @@ pub async fn upload_multipart(
     }))
 }
 
+#[instrument(skip_all)]
 pub async fn list_files(
     State(state): State<Arc<AppState>>,
     Query(params): Query<ListFileQuery>,
@@ -276,6 +277,7 @@ pub async fn list_files(
     Ok(Json(ListFileResponse { files }))
 }
 
+#[instrument(skip_all)]
 pub async fn list_file_info(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
