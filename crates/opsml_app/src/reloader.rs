@@ -143,6 +143,7 @@ async fn reload_task(
         query_args.version = Some(latest_version);
 
         async_download_service_from_registry(&query_args, write_path, &registry).await?;
+        debug!("Download complete");
 
         return Ok(true);
     }

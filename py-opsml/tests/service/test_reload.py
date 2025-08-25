@@ -136,7 +136,6 @@ def test_service_reload(
                 write_path=service_reload,
             ),
         )
-
         app.start_reloader()
         assert app.service.version == "0.1.0"
         assert app.queue["custom"].identifier == "opsml/model/v1.0.0/custom"
