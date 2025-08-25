@@ -182,7 +182,7 @@ async fn download(
         }
     }
 
-    *scheduled_reload = get_next_cron_timestamp(&cron)?;
+    *scheduled_reload = get_next_cron_timestamp(cron)?;
     Ok(())
 }
 
