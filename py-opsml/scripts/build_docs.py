@@ -12,6 +12,7 @@ FOLDERS = [
     "scouter",
     "types",
     "mock",
+    "app",
 ]
 SCOUTER_SUBFOLDERS = ["alert", "client", "drift", "profile", "queue", "types"]
 

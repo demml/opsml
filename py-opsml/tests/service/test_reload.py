@@ -4,7 +4,6 @@
 
 
 import time
-from opsml import app
 import pandas as pd
 import os
 from pathlib import Path
@@ -181,14 +180,3 @@ def test_service_reload(
 
         app.shutdown()
         shutil.rmtree(opsml_app, ignore_errors=True)
-        a
-
-
-#
-# app.reload()
-#
-# time.sleep(5)
-# assert app.service.version == "0.1.0"
-#
-# shutil.rmtree(opsml_app)
-# a
