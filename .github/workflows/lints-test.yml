@@ -217,9 +217,9 @@ jobs:
         working-directory: ./py-opsml
         run: make test.unit
 
+  # need to run as a separate job to prevent port errors from conflicting jobs
   test-service:
     name: test service
-
     strategy:
       fail-fast: false
       matrix:
@@ -227,6 +227,7 @@ jobs:
         python-version: ["3.12"]
 
     runs-on: ${{ matrix.os }}-latest
+    needs: [format-and-lint]
     steps:
       - uses: actions/checkout@v4
 
