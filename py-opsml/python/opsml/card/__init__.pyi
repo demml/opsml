@@ -290,7 +290,9 @@ class DataCard:
         """Return the model dump as a json string"""
 
     @staticmethod
-    def model_validate_json(json_string: str, interface: Optional[DataInterface] = None) -> "ModelCard":
+    def model_validate_json(
+        json_string: str, interface: Optional[DataInterface] = None
+    ) -> "ModelCard":
         """Validate the model json string
 
         Args:
@@ -564,6 +566,41 @@ class ModelCard:
                 Optional kwargs to pass to `ModelInterface` load method.
         """
 
+    @staticmethod
+    def load_from_path(
+        path: Path,
+        load_kwargs: None | ModelLoadKwargs = None,
+        interface: Optional[ModelInterface] = None,
+    ) -> "ModelCard":
+        """Staticmethod to load a ModelCard from a path. Typically used when
+        a `ModelCard`s artifacts have already been downloaded to a path.
+
+        This is commonly used in API workflows where a user may download artifacts to
+        a directory and load the contents during API/Application startup.
+
+        Args:
+            path (Path):
+                The path to load the ModelCard from.
+            load_kwargs (ModelLoadKwargs):
+                Optional kwargs to pass to `ModelInterface` load method.
+            interface (ModelInterface):
+                Optional interface for the model. Used with Custom interfaces.
+
+        Returns:
+            ModelCard:
+                The loaded ModelCard.
+
+        Example:
+
+            ```python
+            # shell command
+            opsml run get model --space <space_name> --name <model_name> --write-dir <path>
+
+            # Within python application
+            model_card = ModelCard.load_from_path(<path>)
+            ```
+        """
+
     def download_artifacts(self, path: Optional[Path] = None) -> None:
         """Download artifacts associated with the ModelCard
 
@@ -577,7 +614,9 @@ class ModelCard:
         """Return the model dump as a json string"""
 
     @staticmethod
-    def model_validate_json(json_string: str, interface: Optional[ModelInterface] = None) -> "ModelCard":
+    def model_validate_json(
+        json_string: str, interface: Optional[ModelInterface] = None
+    ) -> "ModelCard":
         """Validate the model json string
 
         Args:
@@ -1334,29 +1373,49 @@ CardType = TypeVar(  # pylint: disable=invalid-name
 
 class CardRegistry(Generic[CardType]):
     @overload
-    def __init__(self, registry_type: Literal[RegistryType.Data]) -> "CardRegistry[DataCard]": ...
+    def __init__(
+        self, registry_type: Literal[RegistryType.Data]
+    ) -> "CardRegistry[DataCard]": ...
     @overload
-    def __init__(self, registry_type: Literal[RegistryType.Model]) -> "CardRegistry[ModelCard]": ...
+    def __init__(
+        self, registry_type: Literal[RegistryType.Model]
+    ) -> "CardRegistry[ModelCard]": ...
     @overload
-    def __init__(self, registry_type: Literal[RegistryType.Prompt]) -> "CardRegistry[PromptCard]": ...
+    def __init__(
+        self, registry_type: Literal[RegistryType.Prompt]
+    ) -> "CardRegistry[PromptCard]": ...
     @overload
-    def __init__(self, registry_type: Literal[RegistryType.Experiment]) -> "CardRegistry[ExperimentCard]": ...
+    def __init__(
+        self, registry_type: Literal[RegistryType.Experiment]
+    ) -> "CardRegistry[ExperimentCard]": ...
     @overload
-    def __init__(self, registry_type: Literal[RegistryType.Service]) -> "CardRegistry[ServiceCard]": ...
+    def __init__(
+        self, registry_type: Literal[RegistryType.Service]
+    ) -> "CardRegistry[ServiceCard]": ...
     @overload
-    def __init__(self, registry_type: Literal[RegistryType.Audit]) -> "CardRegistry[Any]": ...
+    def __init__(
+        self, registry_type: Literal[RegistryType.Audit]
+    ) -> "CardRegistry[Any]": ...
 
     # String literal overloads
     @overload
     def __init__(self, registry_type: Literal["data"]) -> "CardRegistry[DataCard]": ...
     @overload
-    def __init__(self, registry_type: Literal["model"]) -> "CardRegistry[ModelCard]": ...
+    def __init__(
+        self, registry_type: Literal["model"]
+    ) -> "CardRegistry[ModelCard]": ...
     @overload
-    def __init__(self, registry_type: Literal["prompt"]) -> "CardRegistry[PromptCard]": ...
+    def __init__(
+        self, registry_type: Literal["prompt"]
+    ) -> "CardRegistry[PromptCard]": ...
     @overload
-    def __init__(self, registry_type: Literal["experiment"]) -> "CardRegistry[ExperimentCard]": ...
+    def __init__(
+        self, registry_type: Literal["experiment"]
+    ) -> "CardRegistry[ExperimentCard]": ...
     @overload
-    def __init__(self, registry_type: Literal["service"]) -> "CardRegistry[ServiceCard]": ...
+    def __init__(
+        self, registry_type: Literal["service"]
+    ) -> "CardRegistry[ServiceCard]": ...
     @overload
     def __init__(self, registry_type: Literal["audit"]) -> "CardRegistry[Any]": ...
     def __init__(self, registry_type: Union[RegistryType, str]) -> None:
