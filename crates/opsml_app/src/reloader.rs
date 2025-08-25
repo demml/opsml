@@ -251,6 +251,7 @@ pub fn start_background_download_task(
                     }
                 },
                 _ = cancellation_token.cancelled() => {
+                    debug!("Cancellation token triggered for download task");
                     state.set_download_task_running(false)?;
                     break;
                 }

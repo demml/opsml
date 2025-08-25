@@ -109,6 +109,9 @@ pub enum AppError {
 
     #[error("Failed to start reload task")]
     ReloadTaskFailedToStartError,
+
+    #[error("{0}")]
+    ScouterQueueRuntimeError(String),
 }
 
 impl From<AppError> for PyErr {
