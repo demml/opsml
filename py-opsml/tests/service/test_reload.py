@@ -31,14 +31,14 @@ from opsml import (  # type: ignore
     PromptCard,
     Prompt,
 )
-from tests.conftest import WINDOWS_EXCLUDE
+
 import pytest
 
 CURRENT_DIRECTORY = Path(os.getcwd())
 ASSETS_DIRECTORY = CURRENT_DIRECTORY / "tests" / "service" / "assets"
 RAND_INT = np.random.randint(0, 100)
-SERVICE_SPACE = f"opsml_{RAND_INT}"
-SERVICE_NAME = f"service_{RAND_INT}"
+SERVICE_SPACE = "opsml"
+SERVICE_NAME = "service"
 
 
 def create_service(
@@ -104,7 +104,7 @@ def create_service(
         exp.register_card(service)
 
 
-@pytest.mark.skipif(WINDOWS_EXCLUDE, reason="skipping")
+@pytest.mark.reload
 def test_service_reload(
     mock_environment,
     random_forest_classifier: SklearnModel,
@@ -129,6 +129,10 @@ def test_service_reload(
             space=SERVICE_SPACE,
             name=SERVICE_NAME,
         )
+
+        # assert path is not empty
+        assert opsml_app.exists()
+        assert any(opsml_app.iterdir())
 
         app = AppState.from_path(
             path=opsml_app,
