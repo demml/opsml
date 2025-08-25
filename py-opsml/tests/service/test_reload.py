@@ -19,6 +19,7 @@ from opsml.card import ServiceCard, Card, RegistryType
 import opsml.scouter
 from opsml.scouter.types import CommonCrons
 from opsml.scouter.alert import AlertThreshold
+from opsml.scouter.queue import Features
 from opsml.app import AppState, ReloadConfig
 from opsml.card import download_service
 from opsml.scouter import Metrics, Metric
@@ -139,22 +140,47 @@ def test_service_reload(
 
         app.start_reloader()
         assert app.service.version == "0.1.0"
-
+        assert app.queue["custom"].identifier == "opsml/model/v1.0.0/custom"
+        assert app.queue["psi"].identifier == "opsml/model/v1.0.0/psi"
+        #
         # insert metric
         metrics = Metrics(metrics=[Metric("custom", 2.0)])
         app.queue["custom"].insert(metrics)
+        app.queue["psi"].insert(
+            Features(
+                {
+                    "col_0": 10.0,
+                    "col_1": 10.0,
+                }
+            )
+        )
 
-        # create next service version
+        # create next service version and wait 2 sec before triggering a reload
         create_service(random_forest_classifier, chat_prompt, example_dataframe)
-        # app.queue.shutdown()
+        time.sleep(2)
+        #
+        # This is just to force a reload
         app.reload()
-        time.sleep(5)
-
+        #
+        ## allow time to load before assertions
+        time.sleep(2)
         assert app.service.version == "0.2.0"
+        assert app.queue["custom"].identifier == "opsml/model/v1.1.0/custom"
+        assert app.queue["psi"].identifier == "opsml/model/v1.1.0/psi"
+        #
+        metrics = Metrics(metrics=[Metric("custom", 2.0)])
+        app.queue["custom"].insert(metrics)
+        app.queue["psi"].insert(
+            Features(
+                {
+                    "col_0": 10.0,
+                    "col_1": 10.0,
+                }
+            )
+        )
 
-        app.stop_reloader()
-        shutil.rmtree(opsml_app)
-
+        app.shutdown()
+        shutil.rmtree(opsml_app, ignore_errors=True)
         a
 
 

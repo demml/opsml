@@ -42,21 +42,23 @@ pub fn create_scouter_queue(
     py: Python<'_>,
     card_map: ServiceCardMapping,
     transport_config: Option<&Bound<'_, PyAny>>,
-) -> Result<Option<Arc<RwLock<QueueState>>>, AppError> {
+    wait_for_startup: bool,
+) -> Result<Option<QueueState>, AppError> {
     let queue = if card_map.drift_paths.is_empty() {
         debug!("No drift paths or transport config found in card map");
         None
     } else if let Some(config) = transport_config {
         debug!("Drift paths found in card map, creating ScouterQueue");
         let rt = app_state().runtime.clone();
-        let scouter_queue = ScouterQueue::from_path_rs(py, card_map.drift_paths, config, rt)?;
+        let scouter_queue =
+            ScouterQueue::from_path_rs(py, card_map.drift_paths, config, rt, wait_for_startup)?;
         let event_state = scouter_queue.queue_state.clone();
 
-        Some(Arc::new(RwLock::new(QueueState {
-            queue: Py::new(py, scouter_queue)?,
+        Some(QueueState {
+            queue: Some(Py::new(py, scouter_queue)?),
             task_state: event_state,
             transport_config: config.clone().unbind(),
-        })))
+        })
     } else {
         debug!("No transport config provided");
         None
@@ -151,14 +153,15 @@ impl AppState {
         })?;
 
         let reload_state = ReloadTaskState::new();
-        let queue = create_scouter_queue(py, card_map, transport_config)?;
+        let queue = create_scouter_queue(py, card_map, transport_config, true)?
+            .map(|q| Arc::new(RwLock::new(q)));
 
         // Create the service reloader
         let reloader = create_service_reloader(
             service_info,
             reload_config,
             service_path,
-            reload_state.clone()
+            reload_state.clone(),
         )?;
 
         let kwargs = load_kwargs.map(|kw| kw.clone().unbind());
@@ -196,9 +199,7 @@ impl AppState {
                 error!("Failed to read queue: {:?}", e);
                 AppError::PoisonError(e.to_string())
             })?
-            .queue
-            .bind(py)
-            .clone())
+            .get_queue(py))
     }
 
     #[getter]
@@ -224,20 +225,17 @@ impl AppState {
         self.reload_state.set_reload_tx(reload_tx)?;
         self.reload_state.set_download_tx(download_tx)?;
 
-
-
         // This will continually poll based on the config schedule and download any new service to the reload_path
         // This is separated out from model and queue reloading because we want to isolate
         // any GIL interaction as much as possible
         self.start_download_task(&mut self.reload_state.clone(), download_rx)?;
 
-       
-
         debug!("Starting reload loop with arguments running");
         let cancellation_token = CancellationToken::new();
-        self.reload_state.add_reload_cancellation_token(cancellation_token.clone());
+        self.reload_state
+            .add_reload_cancellation_token(cancellation_token.clone());
 
-         // Setup state for the background thread
+        // Setup state for the background thread
         let reload_state = ReloaderState {
             reload_path: self.reloader.config.write_path.clone(),
             service_path: self.reloader.service_path.clone(),
@@ -259,7 +257,6 @@ impl AppState {
                 tokio::select! {
                     Some(event) = reload_rx.recv() => {
                         match event {
-                           
                             ReloadEvent::Ready => {
                                 info!("Received reload event");
                                 // Set reload ready to true
@@ -306,7 +303,6 @@ impl AppState {
                             Ok(()) => info!("Reload loop is now stopped"),
                             Err(e) => error!("Failed to set reload loop stopped: {:?}", e),
                         }
-                       
                         break;
                     }
                 }
@@ -373,8 +369,24 @@ impl AppState {
 
     pub fn shutdown(&mut self) -> Result<(), AppError> {
         // shutdown ScouterQueues
+        std::thread::sleep(Duration::from_secs(1));
         if let Some(queue) = &self.queue {
-            queue.write().map_err(|e|AppError::ScouterQueueLockError(e.to_string()))?.shutdown()?;
+            match queue
+                .write()
+                .map_err(|e| AppError::ScouterQueueLockError(e.to_string()))?
+                .shutdown()
+            {
+                Ok(()) => info!("Successfully shutdown ScouterQueue"),
+                // match on channel closed (RuntimeError)
+                Err(e) => match e {
+                    AppError::ScouterQueueRuntimeError(msg) if msg.contains("channel closed") => {
+                        info!("ScouterQueue already shutdown (channel closed)")
+                    }
+                    _ => {
+                        error!("Failed to shutdown ScouterQueue: {:?}", e);
+                    }
+                },
+            }
         }
 
         // shutdown reloader
@@ -385,57 +397,27 @@ impl AppState {
 }
 
 impl AppState {
-    
     fn reload_queue(
         queue_state: &Arc<RwLock<QueueState>>,
         reload_path: &Path,
-    ) -> Result<Option<Py<ScouterQueue>>, AppError> {
+    ) -> Result<(), AppError> {
         let card_map = load_card_map(reload_path)?;
 
-        queue_state.write().unwrap().shutdown()?;
+        let mut queue_guard = queue_state.as_ref().write().unwrap();
+        queue_guard.shutdown()?;
 
-        // First shutdown the existing queue properly
-        //Python::with_gil(|py| -> Result<(), AppError> {
-        //    match queue_arc.write() {
-        //        Ok(mut queue_guard) => {
-        //            if let Some(queue) = queue_guard.as_ref() {
-        //                // Shutdown the existing queue
-        //                info!("Shutting down existing ScouterQueue");
-        //                if let Err(e) = queue.bind(py).call_method0("shutdown") {
-        //                    error!("Failed to shutdown queue: {:?}", e);
-        //                } else {
-        //                    info!("Successfully shutdown existing queue");
-        //                }
-        //            } else {
-        //                debug!("No existing ScouterQueue to shutdown");
-        //            }
-        //
-        //            // Set queue to None using the existing guard
-        //            *queue_guard = None;
-        //            debug!("Queue set to None after shutdown");
-        //        }
-        //        Err(e) => {
-        //            error!("Failed to acquire write lock for queue shutdown: {:?}", e);
-        //            return Err(AppError::UpdateServiceError(format!(
-        //                "Failed to acquire queue lock: {}",
-        //                e
-        //            )));
-        //        }
-        //    }
-        //    Ok(())
-        //})?;
+        debug!("Reloading queue with new card map");
+        let new_queue_state = Python::with_gil(|py| -> Result<Option<QueueState>, AppError> {
+            // Get transport config from existing queue state
+            let transport_config = queue_guard.transport_config.bind(py);
+            create_scouter_queue(py, card_map, Some(&transport_config), false)
+        })?;
 
-        // Create new queue
-        //debug!("Creating new ScouterQueue");
-        //let _new_queue = Python::with_gil(|py| -> Result<Option<Py<ScouterQueue>>, AppError> {
-        //    let transport_config = transport_config
-        //        .as_ref()
-        //        .map(|tc| tc.read().unwrap().bind(py).clone());
-        //
-        //    create_scouter_queue(py, card_map, transport_config.as_ref())
-        //})?;
+        // set queue to None to drop
+        queue_guard.queue = new_queue_state.and_then(|q| q.queue);
+        debug!("New queue state created");
 
-        Ok(None)
+        Ok(())
     }
 
     fn reload_service_card(
@@ -474,21 +456,9 @@ impl AppState {
         reload_state.update_service(reloaded_service)?;
 
         if let Some(queue) = &reload_state.queue {
-            let _reloaded_queue = Self::reload_queue(&queue, &reload_state.reload_path)?;
+            Self::reload_queue(&queue, &reload_state.reload_path)?;
         }
 
-        //if let Some(new_queue) = queue {
-        //    match queue_arc.write() {
-        //        Ok(mut queue_guard) => {
-        //            *queue_guard = new_queue;
-        //            info!("Queue updated successfully");
-        //        }
-        //        Err(e) => {
-        //            error!("Failed to acquire write lock for queue update: {:?}", e);
-        //            return Err(AppError::UpdateServiceError(e.to_string()));
-        //        }
-        //    }
-        //}
         Ok(())
     }
 

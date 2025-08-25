@@ -5483,9 +5483,9 @@ dependencies = [
 
 [[package]]
 name = "regex"
-version = "1.11.1"
+version = "1.11.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b544ef1b4eac5dc2db33ea63606ae9ffcfac26c1416a2806ae0bf5f56b201191"
+checksum = "23d7fd106d8c02486a8d64e778353d1cffe08ce79ac2e82f540c86d0facf6912"
 dependencies = [
  "aho-corasick",
  "memchr",
@@ -5495,9 +5495,9 @@ dependencies = [
 
 [[package]]
 name = "regex-automata"
-version = "0.4.9"
+version = "0.4.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "809e8dc61f6de73b46c85f4c96486310fe304c434cfa43669d7b40f711150908"
+checksum = "6b9458fa0bfeeac22b5ca447c63aaf45f28439a709ccd244698632f9aa6394d6"
 dependencies = [
  "aho-corasick",
  "memchr",
@@ -5506,15 +5506,15 @@ dependencies = [
 
 [[package]]
 name = "regex-lite"
-version = "0.1.6"
+version = "0.1.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "53a49587ad06b26609c52e423de037e7f57f20d53535d66e08c695f347df952a"
+checksum = "943f41321c63ef1c92fd763bfe054d2668f7f225a5c29f0105903dc2fc04ba30"
 
 [[package]]
 name = "regex-syntax"
-version = "0.8.5"
+version = "0.8.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2b15c43186be67a4fd63bee50d0303afffcef381492ebe2c5d87f324e1b8815c"
+checksum = "caf4aa5b0f434c91fe5c7f1ecb6a5ece2130b02ad2a590589dda5146df959001"
 
 [[package]]
 name = "reqwest"
@@ -5963,7 +5963,7 @@ checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
 [[package]]
 name = "scouter-client"
 version = "0.8.0"
-source = "git+https://github.com/demml/scouter.git?branch=fix%2Fqueue-shutdown#fc5aea19ea119d6989d42d5a57348ab11225210b"
+source = "git+https://github.com/demml/scouter.git?branch=fix%2Fqueue-shutdown#6b11190d1bee3410d893cd8cbb225fcead25420a"
 dependencies = [
  "chrono",
  "ndarray",
@@ -5991,7 +5991,7 @@ dependencies = [
 [[package]]
 name = "scouter-dispatch"
 version = "0.8.0"
-source = "git+https://github.com/demml/scouter.git?branch=fix%2Fqueue-shutdown#fc5aea19ea119d6989d42d5a57348ab11225210b"
+source = "git+https://github.com/demml/scouter.git?branch=fix%2Fqueue-shutdown#6b11190d1bee3410d893cd8cbb225fcead25420a"
 dependencies = [
  "futures",
  "pyo3",
@@ -6006,7 +6006,7 @@ dependencies = [
 [[package]]
 name = "scouter-drift"
 version = "0.8.0"
-source = "git+https://github.com/demml/scouter.git?branch=fix%2Fqueue-shutdown#fc5aea19ea119d6989d42d5a57348ab11225210b"
+source = "git+https://github.com/demml/scouter.git?branch=fix%2Fqueue-shutdown#6b11190d1bee3410d893cd8cbb225fcead25420a"
 dependencies = [
  "chrono",
  "cron",
@@ -6034,7 +6034,7 @@ dependencies = [
 [[package]]
 name = "scouter-events"
 version = "0.8.0"
-source = "git+https://github.com/demml/scouter.git?branch=fix%2Fqueue-shutdown#fc5aea19ea119d6989d42d5a57348ab11225210b"
+source = "git+https://github.com/demml/scouter.git?branch=fix%2Fqueue-shutdown#6b11190d1bee3410d893cd8cbb225fcead25420a"
 dependencies = [
  "async-trait",
  "chrono",
@@ -6068,7 +6068,7 @@ dependencies = [
 [[package]]
 name = "scouter-observability"
 version = "0.8.0"
-source = "git+https://github.com/demml/scouter.git?branch=fix%2Fqueue-shutdown#fc5aea19ea119d6989d42d5a57348ab11225210b"
+source = "git+https://github.com/demml/scouter.git?branch=fix%2Fqueue-shutdown#6b11190d1bee3410d893cd8cbb225fcead25420a"
 dependencies = [
  "itertools 0.14.0",
  "ndarray",
@@ -6085,7 +6085,7 @@ dependencies = [
 [[package]]
 name = "scouter-profile"
 version = "0.8.0"
-source = "git+https://github.com/demml/scouter.git?branch=fix%2Fqueue-shutdown#fc5aea19ea119d6989d42d5a57348ab11225210b"
+source = "git+https://github.com/demml/scouter.git?branch=fix%2Fqueue-shutdown#6b11190d1bee3410d893cd8cbb225fcead25420a"
 dependencies = [
  "chrono",
  "indicatif",
@@ -6107,7 +6107,7 @@ dependencies = [
 [[package]]
 name = "scouter-semver"
 version = "0.8.0"
-source = "git+https://github.com/demml/scouter.git?branch=fix%2Fqueue-shutdown#fc5aea19ea119d6989d42d5a57348ab11225210b"
+source = "git+https://github.com/demml/scouter.git?branch=fix%2Fqueue-shutdown#6b11190d1bee3410d893cd8cbb225fcead25420a"
 dependencies = [
  "pyo3",
  "semver",
@@ -6118,7 +6118,7 @@ dependencies = [
 [[package]]
 name = "scouter-settings"
 version = "0.8.0"
-source = "git+https://github.com/demml/scouter.git?branch=fix%2Fqueue-shutdown#fc5aea19ea119d6989d42d5a57348ab11225210b"
+source = "git+https://github.com/demml/scouter.git?branch=fix%2Fqueue-shutdown#6b11190d1bee3410d893cd8cbb225fcead25420a"
 dependencies = [
  "base64 0.22.1",
  "potato-head",
@@ -6131,7 +6131,7 @@ dependencies = [
 [[package]]
 name = "scouter-types"
 version = "0.8.0"
-source = "git+https://github.com/demml/scouter.git?branch=fix%2Fqueue-shutdown#fc5aea19ea119d6989d42d5a57348ab11225210b"
+source = "git+https://github.com/demml/scouter.git?branch=fix%2Fqueue-shutdown#6b11190d1bee3410d893cd8cbb225fcead25420a"
 dependencies = [
  "chrono",
  "colored_json",

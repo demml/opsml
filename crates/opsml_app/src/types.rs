@@ -17,7 +17,7 @@ use tracing::{debug, error};
 /// access to the python GIL - usually we would need to call queue.bind(py).call_method("shutdown")?
 #[derive(Debug)]
 pub struct QueueState {
-    pub queue: Py<ScouterQueue>,
+    pub queue: Option<Py<ScouterQueue>>,
     pub task_state: Arc<HashMap<String, TaskState>>,
     pub transport_config: Py<PyAny>,
 }
@@ -25,6 +25,7 @@ pub struct QueueState {
 impl QueueState {
     /// Shutdown the ScouterQueue and its associated event loops
     pub fn shutdown(&self) -> Result<(), AppError> {
+        // add delay to allow for any insertions to finish
         for (alias, task_state) in self.task_state.iter() {
             debug!("Shutting down queue: {}", alias);
             // shutdown the queue
@@ -32,6 +33,10 @@ impl QueueState {
         }
 
         Ok(())
+    }
+
+    pub fn get_queue<'py>(&self, py: Python<'py>) -> Bound<'py, ScouterQueue> {
+        self.queue.as_ref().unwrap().bind(py).clone()
     }
 }
 
