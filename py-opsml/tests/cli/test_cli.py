@@ -10,6 +10,8 @@ from opsml.cli import (
     update_drift_profile_status,
     ScouterArgs,
     validate_project,
+    download_card,
+    DownloadCard,
 )  # type: ignore
 
 import pandas as pd
@@ -29,6 +31,7 @@ from opsml import (  # type: ignore
     PromptCard,
     ServiceCard,
     CardRegistry,
+    RegistryType,
 )
 from tests.conftest import WINDOWS_EXCLUDE
 import pytest
@@ -207,3 +210,25 @@ def test_update_profile_status_key():
 @pytest.mark.skipif(WINDOWS_EXCLUDE, reason="skipping")
 def test_pyproject_app_validate_project():
     validate_project(CURRENT_DIRECTORY)
+
+
+@pytest.mark.skipif(WINDOWS_EXCLUDE, reason="skipping")
+def test_load_model_card(
+    random_forest_classifier: SklearnModel,
+    chat_prompt: Prompt,
+    example_dataframe: pd.DataFrame,
+    tmp_path: Path,
+):
+    with OpsmlTestServer(True, CURRENT_DIRECTORY):
+        # run experiment to populate registry
+        run_experiment(random_forest_classifier, chat_prompt, example_dataframe)
+
+        artifacts = tmp_path / "artifacts"
+        download_args = DownloadCard(
+            space="space", name="model", write_dir=artifacts.as_posix()
+        )
+        download_card(download_args, RegistryType.Model)
+
+        card = ModelCard.load_from_path(artifacts)
+        assert card.model is not None
+        assert card.version == "1.0.0"
