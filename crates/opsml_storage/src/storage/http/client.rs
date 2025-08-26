@@ -1,14 +1,17 @@
 use crate::storage::base::get_files;
 use crate::storage::base::PathExt;
 use crate::storage::error::StorageError;
+use crate::storage::http::async_base::AsyncHttpStorageClient;
 use crate::storage::http::base::HttpStorageClient;
 use crate::storage::utils::get_chunk_parts;
+use opsml_client::OpsmlApiAsyncClient;
 use opsml_client::OpsmlApiClient;
 use opsml_types::contracts::FileInfo;
 use opsml_types::StorageType;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
+use tokio::task::JoinSet;
 use tracing::debug;
 pub struct HttpFSStorageClient {
     pub client: HttpStorageClient,
@@ -123,5 +126,62 @@ impl HttpFSStorageClient {
 
     pub fn generate_presigned_url(&self, path: &Path) -> Result<String, StorageError> {
         self.client.generate_presigned_url(path.to_str().unwrap())
+    }
+}
+
+pub struct AsyncHttpFSStorageClient {
+    pub client: Arc<AsyncHttpStorageClient>,
+}
+
+impl AsyncHttpFSStorageClient {
+    pub fn storage_type(&self) -> StorageType {
+        self.client.storage_type.clone()
+    }
+    pub fn name(&self) -> &str {
+        "HttpFSStorageClient"
+    }
+
+    pub async fn new(api_client: Arc<OpsmlApiAsyncClient>) -> Result<Self, StorageError> {
+        Ok(AsyncHttpFSStorageClient {
+            client: Arc::new(AsyncHttpStorageClient::new(api_client).await?),
+        })
+    }
+
+    pub async fn get(
+        &self,
+        lpath: &Path,
+        rpath: &Path,
+        recursive: bool,
+    ) -> Result<(), StorageError> {
+        // list all objects in the path
+        let objects = self.client.find_info(rpath.to_str().unwrap()).await?;
+
+        if recursive {
+            // iterate over each file and spawn a task to download
+            let mut set = JoinSet::new();
+            let client = self.client.clone();
+            for file_info in objects {
+                let client = client.clone();
+                let name = file_info.name;
+                let file_path = PathBuf::from(name);
+                let relative_path = file_path.relative_path(rpath)?;
+                let local_path = lpath.join(relative_path);
+
+                set.spawn(async move {
+                    client
+                        .get_object(local_path.to_str().unwrap(), file_path.to_str().unwrap())
+                        .await
+                });
+            }
+            while let Some(res) = set.join_next().await {
+                res??;
+            }
+        } else {
+            self.client
+                .get_object(lpath.to_str().unwrap(), rpath.to_str().unwrap())
+                .await?;
+        }
+
+        Ok(())
     }
 }

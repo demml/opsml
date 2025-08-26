@@ -19,7 +19,6 @@ pub struct ErrorResponse {
     error: String,
 }
 
-// TODO: Add trait for client and server registry
 #[derive(Debug, Clone)]
 pub struct ClientRegistry {
     registry_type: RegistryType,
@@ -46,7 +45,7 @@ impl ClientRegistry {
     }
 
     #[instrument(skip_all)]
-    pub fn list_cards(&self, args: CardQueryArgs) -> Result<Vec<CardRecord>, RegistryError> {
+    pub fn list_cards(&self, args: &CardQueryArgs) -> Result<Vec<CardRecord>, RegistryError> {
         let query_string = serde_qs::to_string(&args)?;
 
         let response = self

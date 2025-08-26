@@ -7,6 +7,7 @@ use opsml_types::{
 
 use reqwest::blocking::{multipart::Form, Client, Response};
 use reqwest::header::{HeaderMap, HeaderValue, AUTHORIZATION};
+use reqwest::{multipart::Form as AsyncForm, Client as AsyncClient, Response as AsyncResponse};
 use serde_json::Value;
 use std::sync::Arc;
 use std::sync::RwLock;
@@ -45,6 +46,46 @@ pub fn build_http_client(settings: &ApiSettings) -> Result<Client, ApiClientErro
         HeaderValue::from_static("opsml-client/"),
     );
     let client_builder = Client::builder().timeout(std::time::Duration::from_secs(TIMEOUT_SECS));
+
+    let client = client_builder
+        .default_headers(headers)
+        .build()
+        .map_err(ApiClientError::CreateClientError)?;
+
+    Ok(client)
+}
+
+pub fn build_async_http_client(settings: &ApiSettings) -> Result<AsyncClient, ApiClientError> {
+    let mut headers = HeaderMap::new();
+
+    headers.insert(
+        "X-Prod-Token",
+        HeaderValue::from_str(settings.prod_token.as_deref().unwrap_or(""))
+            .map_err(ApiClientError::CreateHeaderError)?,
+    );
+
+    headers.insert(
+        "Username",
+        HeaderValue::from_str(&settings.username).map_err(ApiClientError::CreateHeaderError)?,
+    );
+
+    headers.insert(
+        "Password",
+        HeaderValue::from_str(&settings.password).map_err(ApiClientError::CreateHeaderError)?,
+    );
+
+    headers.insert(
+        "Use-SSO",
+        HeaderValue::from_str(&settings.use_sso.to_string())
+            .map_err(ApiClientError::CreateHeaderError)?,
+    );
+
+    headers.insert(
+        reqwest::header::USER_AGENT,
+        HeaderValue::from_static("opsml-client/"),
+    );
+    let client_builder =
+        AsyncClient::builder().timeout(std::time::Duration::from_secs(TIMEOUT_SECS));
 
     let client = client_builder
         .default_headers(headers)
@@ -297,6 +338,256 @@ impl OpsmlApiClient {
     }
 }
 
+/// Async version of OpsmlApiClient
+///
+///  Arguments:
+///
+/// - `client`: reqwest client to use for requests
+/// - `url`: base url for the API
+///
+#[derive(Debug, Clone)]
+pub struct OpsmlApiAsyncClient {
+    pub client: AsyncClient,
+    base_path: String,
+    auth_token: Arc<RwLock<String>>,
+}
+
+impl OpsmlApiAsyncClient {
+    pub async fn new(url: String, client: &AsyncClient) -> Result<Self, ApiClientError> {
+        // setup headers
+        let api_client = Self {
+            client: client.clone(),
+            base_path: url,
+            auth_token: Arc::new(RwLock::new(String::new())),
+        };
+
+        api_client.refresh_token().await.inspect_err(|e| {
+            error!("Failed to get JWT token: {e}");
+        })?;
+
+        Ok(api_client)
+    }
+
+    #[instrument(skip_all)]
+    async fn refresh_token(&self) -> Result<(), ApiClientError> {
+        let url = format!("{}/{}", self.base_path, Routes::AuthLogin.as_str());
+        debug!("Getting JWT token from {}", url);
+
+        let response = self
+            .client
+            .get(url)
+            .send()
+            .await
+            .map_err(ApiClientError::RequestError)?;
+
+        // check if unauthorized
+        if response.status().is_client_error() {
+            return Err(ApiClientError::Unauthorized);
+        }
+
+        let token = response
+            .json::<JwtToken>()
+            .await
+            .map_err(ApiClientError::RequestError)?;
+
+        if let Ok(mut token_guard) = self.auth_token.write() {
+            *token_guard = token.token;
+        } else {
+            error!("Failed to acquire write lock for token update");
+            return Err(ApiClientError::UpdateAuthError);
+        }
+
+        Ok(())
+    }
+
+    fn update_token_from_response(&self, response: &AsyncResponse) {
+        if let Some(new_token) = response
+            .headers()
+            .get(AUTHORIZATION)
+            .and_then(|h| h.to_str().ok())
+            .and_then(|h| h.strip_prefix("Bearer "))
+        {
+            match self.auth_token.write() {
+                Ok(mut token_guard) => {
+                    *token_guard = new_token.to_string();
+                }
+                Err(e) => {
+                    error!("Failed to acquire write lock for jwt token update: {e}");
+                }
+            }
+        }
+    }
+
+    fn get_current_token(&self) -> String {
+        match self.auth_token.read() {
+            Ok(token_guard) => token_guard.clone(),
+            Err(e) => {
+                error!("Failed to acquire read lock for token: {e}");
+                "".to_string()
+            }
+        }
+    }
+
+    async fn _request(
+        &self,
+        route: Routes,
+        request_type: RequestType,
+        body_params: Option<Value>,
+        query_string: Option<String>,
+        headers: Option<HeaderMap>,
+    ) -> Result<AsyncResponse, ApiClientError> {
+        let headers = headers.unwrap_or_default();
+
+        let url = format!("{}/{}", self.base_path, route.as_str());
+        let response = match request_type {
+            RequestType::Get => {
+                let url = if let Some(query_string) = query_string {
+                    format!("{url}?{query_string}")
+                } else {
+                    url
+                };
+
+                self.client
+                    .get(url)
+                    .headers(headers)
+                    .bearer_auth(self.get_current_token())
+                    .send()
+                    .await
+                    .map_err(ApiClientError::RequestError)?
+            }
+            RequestType::Post => self
+                .client
+                .post(url)
+                .headers(headers)
+                .json(&body_params)
+                .bearer_auth(self.get_current_token())
+                .send()
+                .await
+                .map_err(ApiClientError::RequestError)?,
+            RequestType::Put => self
+                .client
+                .put(url)
+                .headers(headers)
+                .json(&body_params)
+                .bearer_auth(self.get_current_token())
+                .send()
+                .await
+                .map_err(ApiClientError::RequestError)?,
+            RequestType::Delete => {
+                let url = if let Some(query_string) = query_string {
+                    format!("{url}?{query_string}")
+                } else {
+                    url
+                };
+                self.client
+                    .delete(url)
+                    .headers(headers)
+                    .bearer_auth(self.get_current_token())
+                    .send()
+                    .await
+                    .map_err(ApiClientError::RequestError)?
+            }
+        };
+
+        Ok(response)
+    }
+
+    pub async fn request(
+        &self,
+        route: Routes,
+        request_type: RequestType,
+        body_params: Option<Value>,
+        query_params: Option<String>,
+        headers: Option<HeaderMap>,
+    ) -> Result<AsyncResponse, ApiClientError> {
+        let response = self
+            ._request(
+                route.clone(),
+                request_type,
+                body_params,
+                query_params,
+                headers,
+            )
+            .await?;
+
+        // Check and update token if a new one was provided
+        self.update_token_from_response(&response);
+
+        Ok(response)
+    }
+
+    // specific method for multipart uploads (mainly used for localstorageclient)
+    pub async fn multipart_upload(&self, form: AsyncForm) -> Result<AsyncResponse, ApiClientError> {
+        let response = self
+            .client
+            .post(format!("{}/files/multipart", self.base_path))
+            .multipart(form)
+            .bearer_auth(self.get_current_token())
+            .send()
+            .await
+            .map_err(ApiClientError::RequestError)?;
+        Ok(response)
+    }
+
+    // specific method for multipart uploads (mainly used for aws)
+    pub async fn generate_presigned_url_for_part(
+        &self,
+        path: &str,
+        session_url: &str,
+        part_number: i32,
+    ) -> Result<String, ApiClientError> {
+        let args = PresignedQuery {
+            path: path.to_string(),
+            session_url: Some(session_url.to_string()),
+            part_number: Some(part_number),
+            for_multi_part: Some(true),
+        };
+        let query_string = serde_qs::to_string(&args)?;
+
+        let response = self
+            .request(
+                Routes::Presigned,
+                RequestType::Get,
+                None,
+                Some(query_string),
+                None,
+            )
+            .await
+            .inspect_err(|e| {
+                error!("Failed to get presigned url with error: {e}");
+            })?;
+
+        // move response into PresignedUrl
+        let response = response.json::<PresignedUrl>().await?;
+
+        Ok(response.url)
+    }
+
+    // specific method for completing multipart uploads (used for aws)
+    pub async fn complete_multipart_upload(
+        &self,
+        complete_request: CompleteMultipartUpload,
+    ) -> Result<AsyncResponse, ApiClientError> {
+        let body = serde_json::to_value(complete_request).inspect_err(|e| {
+            error!(
+                "Failed to serialize completed upload parts with error: {}",
+                e
+            );
+        })?;
+
+        let url = format!("{}/{}", self.base_path, Routes::CompleteMultipart);
+        let response = self
+            .client
+            .post(url)
+            .json(&body)
+            .bearer_auth(self.get_current_token())
+            .send()
+            .await
+            .map_err(ApiClientError::RequestError)?;
+        Ok(response)
+    }
+}
+
 pub fn build_api_client(settings: &OpsmlStorageSettings) -> Result<OpsmlApiClient, ApiClientError> {
     let client = build_http_client(&settings.api_settings)?;
 
@@ -305,6 +596,18 @@ pub fn build_api_client(settings: &OpsmlStorageSettings) -> Result<OpsmlApiClien
         settings.api_settings.base_url, settings.api_settings.opsml_dir
     );
     OpsmlApiClient::new(url, &client)
+}
+
+pub async fn build_async_api_client(
+    settings: &OpsmlStorageSettings,
+) -> Result<OpsmlApiAsyncClient, ApiClientError> {
+    let client = build_async_http_client(&settings.api_settings)?;
+
+    let url = format!(
+        "{}/{}",
+        settings.api_settings.base_url, settings.api_settings.opsml_dir
+    );
+    OpsmlApiAsyncClient::new(url, &client).await
 }
 
 #[cfg(test)]

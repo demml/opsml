@@ -364,7 +364,7 @@ fn validate_and_update_card(card: &mut Card) -> Result<(), RegistryError> {
         ..Default::default()
     };
 
-    let cards = reg.list_cards(args).inspect_err(|e| {
+    let cards = reg.list_cards(&args).inspect_err(|e| {
         error!("Failed to list cards: {e}");
     })?;
 

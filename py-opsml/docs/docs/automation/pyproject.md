@@ -144,6 +144,10 @@ One of the main benefits of defining a `ServiceCard` within your `pyproject.toml
 - If the service does not exist, it will create the service and generate an `opsml.lock` file that contains the service card configuration and dependencies.
 - If the service already exists, it will update the service with the latest card configuration and dependencies (based on space, name and version arguments), and update the `opsml.lock` file accordingly.
 
+```bash
+opsml lock
+```
+
 ### Installing a ServiceCard
 Once you have an `opsml.lock` file, you can install the service and all of its artifacts by running the following command:
 

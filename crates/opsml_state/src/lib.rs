@@ -1,6 +1,8 @@
 pub mod error;
 pub use error::StateError;
-use opsml_client::base::{build_api_client, OpsmlApiClient};
+use opsml_client::base::{
+    build_api_client, build_async_api_client, OpsmlApiAsyncClient, OpsmlApiClient,
+};
 use opsml_settings::OpsmlConfig;
 use opsml_settings::OpsmlMode;
 use opsml_toml::{OpsmlTools, PyProjectToml};
@@ -9,6 +11,7 @@ use std::sync::Arc;
 use std::sync::OnceLock;
 use std::sync::RwLock;
 use tokio::runtime::Runtime;
+use tokio::sync::OnceCell;
 use tracing::debug;
 
 pub struct OpsmlState {
@@ -131,6 +134,7 @@ pub fn app_state() -> &'static OpsmlState {
 }
 
 static API_CLIENT: OnceLock<Arc<OpsmlApiClient>> = OnceLock::new();
+static ASYNC_API_CLIENT: OnceCell<Arc<OpsmlApiAsyncClient>> = OnceCell::const_new();
 
 pub fn get_api_client() -> &'static Arc<OpsmlApiClient> {
     API_CLIENT.get_or_init(|| {
@@ -146,4 +150,28 @@ pub fn get_api_client() -> &'static Arc<OpsmlApiClient> {
 
         Arc::new(api_client)
     })
+}
+
+async fn build_async_client() -> Arc<OpsmlApiAsyncClient> {
+    let state = app_state();
+
+    // need to clone here so it is Send safe across threads
+    let settings = {
+        let config = state.config().unwrap();
+        config
+            .storage_settings()
+            .expect("Failed to get storage settings")
+            .clone() // Clone the settings to avoid holding the guard
+    };
+
+    // Initialize async API client - need an async block here
+    let api_client = build_async_api_client(&settings)
+        .await
+        .expect("Failed to create asyc api client");
+
+    Arc::new(api_client)
+}
+
+pub async fn get_async_api_client() -> &'static Arc<OpsmlApiAsyncClient> {
+    ASYNC_API_CLIENT.get_or_init(build_async_client).await
 }

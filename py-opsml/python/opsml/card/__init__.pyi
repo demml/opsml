@@ -1578,3 +1578,25 @@ class CardRegistries:
     def prompt(self) -> CardRegistry[PromptCard]: ...
     @property
     def service(self) -> CardRegistry[ServiceCard]: ...
+
+def download_service(
+    write_dir: Path,
+    space: Optional[str] = None,
+    name: Optional[str] = None,
+    version: Optional[str] = None,
+    uid: Optional[str] = None,
+) -> None:
+    """Download a service from the registry.
+
+    Args:
+        space (str):
+            Space associated with the service.
+        name (str):
+            Name of the service.
+        version (str):
+            Version number of the service.
+        uid (str):
+            Unique identifier for the service.
+        write_dir (str):
+            Directory to write the downloaded service to.
+    """
