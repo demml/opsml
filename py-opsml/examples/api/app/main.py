@@ -4,10 +4,9 @@ from pathlib import Path
 from fastapi import FastAPI, Request
 from opsml.logging import RustyLogger, LogLevel, LoggingConfig
 from opsml.app import AppState, ReloadConfig
-import uuid
 from pydantic import BaseModel, Field
 
-# from opsml.scouter import HTTPConfig # uncomment if Scouter is enabled
+# from opsml.scouter import HTTPConfig # uncomment for model monitoring
 from opsml.card import ModelCard
 from opsml.model import ModelLoadKwargs
 import numpy as np
@@ -66,7 +65,7 @@ async def lifespan(app: FastAPI):
             "lgb": {"load_kwargs": ModelLoadKwargs(load_onnx=True)},
         },
         reload_config=ReloadConfig(cron="0 0 0 * * *"),
-        # transport_config=HTTPConfig(), # uncomment this line if you have Scouter enabled
+        # transport_config=HTTPConfig(), # uncomment for model monitoring
     )
     app_state.start_reloader()
     app.state.app_state = app_state
