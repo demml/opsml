@@ -2,6 +2,7 @@ from opsml.helpers.data import create_fake_data
 from opsml.experiment import start_experiment, Experiment
 from opsml import SklearnModel, TaskType, ModelCard, ServiceCard, Card
 from opsml.model import ModelSaveKwargs
+from opsml.scouter import PsiDriftConfig
 from lightgbm import LGBMClassifier
 from sklearn import ensemble  # type: ignore
 import pandas as pd
@@ -22,7 +23,11 @@ def create_random_forest_classifier(
         task_type=TaskType.Classification,
     )
 
-    model_interface.create_drift_profile(alias="drift", data=X)
+    model_interface.create_drift_profile(
+        alias="rf_psi",
+        config=PsiDriftConfig(),
+        data=X,
+    )
 
     modelcard = ModelCard(
         interface=model_interface,
@@ -54,7 +59,12 @@ def create_lgb_classifier(
         task_type=TaskType.Classification,
     )
 
-    model_interface.create_drift_profile(alias="drift", data=X)
+    model_interface.create_drift_profile(
+        alias="lgb_psi",
+        config=PsiDriftConfig(),
+        data=X,
+    )
+
     modelcard = ModelCard(
         interface=model_interface,
         space="opsml",

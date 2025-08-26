@@ -8,6 +8,8 @@ generate_key = cli.generate_key
 update_drift_profile_status = cli.update_drift_profile_status
 ScouterArgs = cli.ScouterArgs
 validate_project = cli.validate_project
+DownloadCard = cli.DownloadCard
+download_card = cli.download_card
 
 __all__ = [
     "lock_project",
@@ -17,4 +19,6 @@ __all__ = [
     "update_drift_profile_status",
     "ScouterArgs",
     "validate_project",
+    "DownloadCard",
+    "download_card",
 ]
