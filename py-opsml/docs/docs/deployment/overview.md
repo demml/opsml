@@ -8,7 +8,7 @@ OpsML is intentionally designed not to focus on building 'auto-APIs,' as experie
 
 <h1 align="center">
   <br>
-  <img src="../../images/card_deployment.png"  width="800"alt="card deployment"/>
+  <img src="../../images/card_deployment.png"  width="900"alt="card deployment"/>
   <br>
 </h1>
 
@@ -250,8 +250,35 @@ async def predict(request: Request, payload: PredictRequest) -> ModelResponse:
 
 ## AppState
 
-AppState (short for Application State) is the core interface for managing the opsml state within an application. It's built to be able to load `ServiceCard` for model access and `ScouterQueue`s for real-time monitoring. It also provides the ability to configure a reload
+AppState (short for Application State) is the core interface for managing the opsml state within an application. It's built to be able to load a `ServiceCard` for model access and `ScouterQueue`s for real-time monitoring. It also provides the ability to configure a reload
 task that will reload the entire AppState whenever a new version of the Service is detected on the server.
+
+### Basic Structure
+
+```python
+from opsml.app import AppState, ReloadConfig
+from opsml.scouter import HTTPConfig
+
+app_state = AppState.from_path(
+    path=Path("app/service_artifacts"),
+    transport_config=HTTPConfig(),
+    reload_config=ReloadConfig(cron="0 0 0 * * *"),
+)
+```
+
+### Arguments table
+
+| Argument         | Type (Required)               | Description                                         |
+|------------------|--------------------|--------------------------------------------------------------|
+| path             | `Pathlib.Path` (yes) | The file path to the service artifacts directory.            |
+| transport_config | `HTTPConfig` (no)         | Configuration for transporting `ScouterQueue` events.   |
+| reload_config    | `ReloadConfig` (no)       | Configuration for the reload behavior of the AppState.      |
+| load_kwargs      | `dict` (no)    | Dictionary of keyword arguments to pass to when loading - [docs](../api/app.md#opsml.app._app.AppState.from_path).|
+
+
+### Dynamic Reloading
+
+The `AppState` interface enables dynamic reloading of services, addressing the common challenge of decoupled API deployment and training processes. This decoupling often results in APIs running outdated service or model versions. Traditionally, updating to the latest version would require either rebuilding the container or scheduling a cron job within the API to fetch the updated model. With `AppState`, you can configure a reload mechanism that continuously polls for service updates based on a specified cron schedule. When updates are detected, the `AppState` automatically reloads the `ServiceCard` and, if present, the `ScouterQueue`. More information can be found [here](../api/app.md#opsml.app._app.ReloadConfig).
 
 ### Usage
 

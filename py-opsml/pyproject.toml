@@ -129,7 +129,7 @@ plugins = [
     "numpy.typing.mypy_plugin",
     "pydantic.mypy",
 ]
-exclude = []
+exclude = ['.*\/_.*\.pyi$']
 
 [build-system]
 requires = ["maturin>=1.4,<2.0"]
