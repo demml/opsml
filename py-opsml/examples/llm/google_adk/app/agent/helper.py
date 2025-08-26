@@ -1,12 +1,13 @@
 from google.adk.runners import Runner
 from google.adk.sessions import InMemorySessionService
-from .utils import parse_shipment_events, parse_response_events
-from .agents import get_agents
+from google.genai import types
 from opsml.app import AppState
 from opsml.card import PromptCard
-from google.genai import types
-from opsml.logging import RustyLogger, LogLevel, LoggingConfig
-from opsml.scouter.queue import Queue, LLMRecord
+from opsml.logging import LoggingConfig, LogLevel, RustyLogger
+from opsml.scouter.queue import LLMRecord, Queue
+
+from .agents import get_agents
+from .utils import parse_response_events, parse_shipment_events
 
 logger = RustyLogger.get_logger(
     LoggingConfig(log_level=LogLevel.Info),
@@ -72,14 +73,10 @@ class AgentHelper:
     async def call_shipment_agent_async(self, query: str, user_id, session_id) -> str:
         """Sends a query to the shipment agent and returns the response."""
 
-        parameterized_query = (
-            self.shipment_prompt.prompt.bind(user_query=query).message[0].unwrap()
-        )
+        parameterized_query = self.shipment_prompt.prompt.bind(user_query=query).message[0].unwrap()
 
         # Prepare the user's message in ADK format
-        content = types.Content(
-            role="user", parts=[types.Part(text=parameterized_query)]
-        )
+        content = types.Content(role="user", parts=[types.Part(text=parameterized_query)])
 
         events = [
             event
@@ -98,21 +95,13 @@ class AgentHelper:
 
         return response.get("llm_response", "No response from agent")
 
-    async def call_response_agent_async(
-        self, shipment_eta_info: str, user_id, session_id
-    ) -> str:
+    async def call_response_agent_async(self, shipment_eta_info: str, user_id, session_id) -> str:
         """Sends a query to the response agent and returns the response."""
 
-        parameterized_query = (
-            self.response_prompt.prompt.bind(shipment_eta_info=shipment_eta_info)
-            .message[0]
-            .unwrap()
-        )
+        parameterized_query = self.response_prompt.prompt.bind(shipment_eta_info=shipment_eta_info).message[0].unwrap()
 
         # Prepare the user's message in ADK format
-        content = types.Content(
-            role="user", parts=[types.Part(text=parameterized_query)]
-        )
+        content = types.Content(role="user", parts=[types.Part(text=parameterized_query)])
 
         events = [
             event

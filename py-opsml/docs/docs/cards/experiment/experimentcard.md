@@ -4,7 +4,7 @@
 ### Creating an Experiment
 Experiments are unique context-managed executions that record all created cards and their associated metrics, params, and artifacts to a single card called a `Experimentcard`.
 
-If you're familiar with how other libraries do it, then nothing is really going to seem new.
+If you're familiar with how other libraries do it, then nothing is really going to seem new. Refer to [usage](../experiment/usage.md) for more detailed information.
 
 ### Traditional Example
 

@@ -1,13 +1,6 @@
-from opsml.data import (
-    DataSplit,
-    DataSplits,
-    DependentVars,
-    PandasData,
-    ColumnSplit,
-)
-from opsml import DataCard, CardRegistry, RegistryType
+from opsml import CardRegistry, DataCard, RegistryType
+from opsml.data import ColumnSplit, DataSplit, DataSplits, DependentVars, PandasData
 from opsml.helpers.data import create_fake_data
-
 
 """This example demonstrates how to save a pandas dataframe to a PandasData interface with data splits
 """

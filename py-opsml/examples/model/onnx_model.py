@@ -1,24 +1,17 @@
-import pandas as pd
-from opsml import (
-    CardRegistry,
-    RegistryType,
-    TaskType,
-    ModelCard,
-    OnnxModel,
-)
-import numpy as np
-from opsml.helpers.data import create_fake_data
 from typing import Tuple, cast
-from sklearn.ensemble import RandomForestClassifier  # type: ignore
+
+import numpy as np
+import pandas as pd
+from opsml import CardRegistry, ModelCard, OnnxModel, RegistryType, TaskType
+from opsml.helpers.data import create_fake_data
 from skl2onnx import to_onnx  # type: ignore
+from sklearn.ensemble import RandomForestClassifier  # type: ignore
 
 model_registry = CardRegistry(registry_type=RegistryType.Model)
 
 
 # create data
-X_train, y_train = cast(
-    Tuple[pd.DataFrame, pd.DataFrame], create_fake_data(n_samples=1200)
-)
+X_train, y_train = cast(Tuple[pd.DataFrame, pd.DataFrame], create_fake_data(n_samples=1200))
 
 clr = RandomForestClassifier()
 clr.fit(X_train.to_numpy(), y_train.to_numpy().ravel())

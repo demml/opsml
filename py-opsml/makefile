@@ -1,6 +1,6 @@
 PROJECT=opml-core
 PYTHON_VERSION=3.12.8
-SOURCE_OBJECTS=python/opsml
+SOURCE_OBJECTS=python/opsml examples
 
 format.isort:
 	uv run isort ${SOURCE_OBJECTS}

@@ -65,7 +65,9 @@ nav:
       - "docs/cards/versioning.md"
       - "docs/cards/modelcard.md"
       - "docs/cards/datacard.md"
-      - "docs/cards/experimentcard.md"
+      - Experiment:
+          - Card: "docs/cards/experiment/experimentcard.md"
+          - Usage: "docs/cards/experiment/usage.md"
       - "docs/cards/promptcard.md"
   - Monitoring:
       - "docs/monitoring/overview.md"

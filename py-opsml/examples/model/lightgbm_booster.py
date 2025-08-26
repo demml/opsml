@@ -1,10 +1,10 @@
+from typing import Tuple, cast
+
 import lightgbm as lgb
 import pandas as pd
-from opsml import CardRegistry, RegistryType, LightGBMModel, TaskType, ModelCard
+from opsml import CardRegistry, LightGBMModel, ModelCard, RegistryType, TaskType
 from opsml.helpers.data import create_fake_data
-from typing import Tuple, cast
-from opsml.logging import RustyLogger, LoggingConfig, LogLevel
-
+from opsml.logging import LoggingConfig, LogLevel, RustyLogger
 
 logger = RustyLogger.get_logger(
     config=LoggingConfig(log_level=LogLevel.Info),
@@ -15,9 +15,7 @@ model_registry = CardRegistry(registry_type=RegistryType.Model)
 
 
 # create data
-X_train, y_train = cast(
-    Tuple[pd.DataFrame, pd.DataFrame], create_fake_data(n_samples=1200)
-)
+X_train, y_train = cast(Tuple[pd.DataFrame, pd.DataFrame], create_fake_data(n_samples=1200))
 
 
 # create dataset for lightgbm

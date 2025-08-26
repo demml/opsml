@@ -1,11 +1,11 @@
 import torch
 from opsml import (
-    TorchModel,
     CardRegistry,
-    RegistryType,
     ModelCard,
     ModelLoadKwargs,
     ModelSaveKwargs,
+    RegistryType,
+    TorchModel,
 )
 
 registry = CardRegistry(RegistryType.Model)

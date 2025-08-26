@@ -1,9 +1,10 @@
-from .utils import parse_shipment_events, parse_response_events
-from .agents import get_agents
 from opsml.app import AppState
 from opsml.card import PromptCard
-from opsml.logging import RustyLogger, LogLevel, LoggingConfig
-from opsml.scouter.queue import Queue, LLMRecord
+from opsml.logging import LoggingConfig, LogLevel, RustyLogger
+from opsml.scouter.queue import LLMRecord, Queue
+
+from .agents import get_agents
+from .utils import parse_response_events, parse_shipment_events
 
 logger = RustyLogger.get_logger(
     LoggingConfig(log_level=LogLevel.Info),
@@ -32,9 +33,7 @@ class AgentHelper:
     async def call_shipment_agent(self, query: str) -> str:
         """Sends a query to the shipment agent and returns the response."""
 
-        parameterized_query = (
-            self.shipment_prompt.prompt.bind(user_query=query).message[0].unwrap()
-        )
+        parameterized_query = self.shipment_prompt.prompt.bind(user_query=query).message[0].unwrap()
 
         # Prepare the user's message
         agent_response = await self.shipment_agent.run(user_prompt=parameterized_query)
@@ -48,11 +47,7 @@ class AgentHelper:
     async def call_response_agent(self, shipment_eta_info: str) -> str:
         """Sends a query to the response agent and returns the response."""
 
-        parameterized_query = (
-            self.response_prompt.prompt.bind(shipment_eta_info=shipment_eta_info)
-            .message[0]
-            .unwrap()
-        )
+        parameterized_query = self.response_prompt.prompt.bind(shipment_eta_info=shipment_eta_info).message[0].unwrap()
 
         agent_response = await self.response_agent.run(user_prompt=parameterized_query)
 

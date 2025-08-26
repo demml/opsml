@@ -1,13 +1,6 @@
-from opsml.data import (
-    DataSplit,
-    DataSplits,
-    DependentVars,
-    PolarsData,
-    ColumnSplit,
-)
-from opsml import DataCard, CardRegistry, RegistryType
+from opsml import CardRegistry, DataCard, RegistryType
+from opsml.data import ColumnSplit, DataSplit, DataSplits, DependentVars, PolarsData
 from opsml.helpers.data import create_fake_data
-
 
 """This example demonstrates how to save a polars dataframe to a PolarsData interface with data splits
 """

@@ -1,20 +1,19 @@
-from opsml.helpers.data import create_fake_data
 from typing import Tuple, cast
+
 import pandas as pd
 from opsml import (  # type: ignore
-    SklearnModel,
-    PandasData,
     CardRegistries,
-    TaskType,
     DataCard,
     ModelCard,
     ModelLoadKwargs,
     ModelSaveKwargs,
+    PandasData,
+    SklearnModel,
+    TaskType,
 )
-
 from opsml.data import DataSplit, StartStopSplit
+from opsml.helpers.data import create_fake_data
 from sklearn import ensemble  # type: ignore
-
 
 # start registries
 reg = CardRegistries()
