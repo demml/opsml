@@ -1,5 +1,6 @@
-from google.adk.events.event import Event
 from typing import Dict
+
+from google.adk.events.event import Event
 from pydantic import BaseModel
 
 

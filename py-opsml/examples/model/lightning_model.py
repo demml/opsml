@@ -1,21 +1,20 @@
+from typing import Any
+
+import lightning as L  # type: ignore
+import numpy as np
 import torch
+from opsml import (
+    CardRegistry,
+    LightningModel,
+    ModelCard,
+    ModelLoadKwargs,
+    ModelSaveKwargs,
+    RegistryType,
+)
 from torch import nn
 from torch.nn import MSELoss
 from torch.optim import Adam
 from torch.utils.data import DataLoader, Dataset
-import lightning as L  # type: ignore
-import numpy as np
-
-from typing import Any
-
-from opsml import (
-    LightningModel,
-    CardRegistry,
-    RegistryType,
-    ModelCard,
-    ModelLoadKwargs,
-    ModelSaveKwargs,
-)
 
 registry = CardRegistry(RegistryType.Model)
 

@@ -1,17 +1,17 @@
 # type: ignore
 
-import tensorflow as tf
 import numpy as np
-from tensorflow.keras import Input, Model
-from tensorflow.keras.layers import Dense, Concatenate
+import tensorflow as tf
 from opsml import (
-    TensorFlowModel,
     CardRegistry,
-    RegistryType,
     ModelCard,
     ModelLoadKwargs,
     ModelSaveKwargs,
+    RegistryType,
+    TensorFlowModel,
 )
+from tensorflow.keras import Input, Model
+from tensorflow.keras.layers import Concatenate, Dense
 
 registry = CardRegistry(RegistryType.Model)
 
@@ -32,12 +32,8 @@ def multi_input_model():
     numeric_branch = Dense(4, activation="relu", name="numeric_dense2")(numeric_branch)
 
     # Process categorical branch
-    categorical_branch = Dense(4, activation="relu", name="categorical_dense1")(
-        categorical_input
-    )
-    categorical_branch = Dense(4, activation="relu", name="categorical_dense2")(
-        categorical_branch
-    )
+    categorical_branch = Dense(4, activation="relu", name="categorical_dense1")(categorical_input)
+    categorical_branch = Dense(4, activation="relu", name="categorical_dense2")(categorical_branch)
 
     # Combine branches
     combined = Concatenate(name="concat")([numeric_branch, categorical_branch])

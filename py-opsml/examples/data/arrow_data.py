@@ -1,5 +1,5 @@
 import pyarrow as pa  # type: ignore
-from opsml import DataCard, CardRegistry, RegistryType, ArrowData
+from opsml import ArrowData, CardRegistry, DataCard, RegistryType
 
 registry = CardRegistry(RegistryType.Data)
 

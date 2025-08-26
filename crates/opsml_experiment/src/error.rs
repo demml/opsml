@@ -63,6 +63,12 @@ pub enum ExperimentError {
 
     #[error("Figure is not an image")]
     FigureIsNotImageError,
+
+    #[error("Failed to downcast Python object: {0}")]
+    DowncastError(String),
+
+    #[error("Invalid parameter argument. Log_parameters accepts either a dictionary of parameters or a list of parameters. Received: {0}")]
+    InvalidParametersArgument(String),
 }
 
 impl From<std::ffi::OsString> for ExperimentError {
@@ -76,5 +82,11 @@ impl From<ExperimentError> for PyErr {
         let msg = err.to_string();
         error!("{}", msg);
         PyRuntimeError::new_err(msg)
+    }
+}
+
+impl<'a> From<pyo3::DowncastError<'a, 'a>> for ExperimentError {
+    fn from(err: pyo3::DowncastError) -> Self {
+        ExperimentError::DowncastError(err.to_string())
     }
 }
