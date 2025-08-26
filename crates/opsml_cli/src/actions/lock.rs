@@ -305,6 +305,7 @@ pub fn install_service(path: PathBuf, write_path: Option<PathBuf>) -> Result<(),
     Ok(())
 }
 
+/// Will create an `opsml.lock` file based on the service configuration specified within the pyproject.toml file.
 #[pyfunction]
 #[pyo3(signature = (path=None, toml_name=None))]
 pub fn lock_project(path: Option<PathBuf>, toml_name: Option<&str>) -> Result<(), CliError> {

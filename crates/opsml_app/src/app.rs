@@ -321,6 +321,8 @@ impl AppState {
         // Wait for start event to trigger loop is running
         wait_for_reload_task(&self.reload_state)?;
 
+        std::thread::sleep(Duration::from_secs(1));
+
         Ok(())
     }
 

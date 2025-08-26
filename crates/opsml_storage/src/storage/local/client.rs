@@ -311,6 +311,7 @@ impl FileSystem for LocalFSStorageClient {
         StorageType::Local
     }
 
+    #[instrument(skip_all)]
     async fn find(&self, path: &Path) -> Result<Vec<String>, StorageError> {
         let stripped_path = path.strip_path(self.client.bucket().await);
         self.client.find(stripped_path.to_str().unwrap()).await

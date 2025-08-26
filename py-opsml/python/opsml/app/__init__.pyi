@@ -9,7 +9,30 @@ from ..scouter.client import HTTPConfig
 from ..scouter.queue import KafkaConfig, RabbitMQConfig, RedisConfig, ScouterQueue
 
 class ReloadConfig:
-    def __init__(self, cron: str): ...
+    """Reload configuation to use with an Opsml AppState object. Defines the reload logic
+    for checking, downloading and reloading ServiceCards and ScouterQueues associated with
+    an AppState
+    """
+
+    def __init__(
+        self,
+        cron: str,
+        max_retries: int = 3,
+        write_path: Optional[Path] = None,
+    ):
+        """Initialize the reload configuration.
+
+        Args:
+            cron (str):
+                The cron expression for the reload schedule.
+            max_retries (int):
+                The maximum number of retries for loading the service card.
+                Defaults to 3.
+            write_path (Optional[Path]):
+                The optional path to write the service card. Defaults to Path({current directory})/ service_reload
+        """
+        ...
+
     @property
     def cron(self) -> str:
         """Get the cron expression for the reload schedule."""
