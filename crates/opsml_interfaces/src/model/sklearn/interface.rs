@@ -212,8 +212,8 @@ impl SklearnModel {
             debug!("loading model");
             parent.load_model(py, &model_path, load_kwargs.model_kwargs(py))?;
 
-            debug!("loading onnx model");
             if load_kwargs.load_onnx {
+                debug!("loading onnx model");
                 let onnx_path = path.join(
                     &metadata
                         .onnx_model_uri
