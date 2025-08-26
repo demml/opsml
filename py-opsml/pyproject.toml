@@ -80,6 +80,7 @@ include = '\.pyi?$'
 
 [tool.pylint.MASTER]
 load-plugins = ["pylint.extensions.docparams"]
+ignore-patterns = ".*_app\\.pyi$,.*_llm\\.pyi$,.*_card\\.pyi$"
 
 [tool.pylint.messages_control]
 max-line-length = 130

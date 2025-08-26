@@ -2,7 +2,7 @@
 
 from datetime import datetime
 from pathlib import Path
-from typing import Optional, Union, Dict
+from typing import Dict, Optional, Union
 
 from ..card import DataCard, ExperimentCard, ModelCard, PromptCard
 from ..data import DataSaveKwargs
@@ -91,9 +91,7 @@ class Experiment:
                 Value of the parameter
         """
 
-    def log_parameters(
-        self, parameters: list[Parameter] | Dict[str, Union[int, float, str]]
-    ) -> None:
+    def log_parameters(self, parameters: list[Parameter] | Dict[str, Union[int, float, str]]) -> None:
         """
         Log multiple parameters
 

@@ -1,3 +1,5 @@
+# type: ignore
+
 from typing import Any, List, Type, Union, get_type_hints
 
 from opsml.scouter.queue import Feature, Features
