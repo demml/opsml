@@ -24,7 +24,7 @@ use tempfile::tempdir;
 use tempfile::TempDir;
 use tokio::task::JoinSet;
 use tracing::debug;
-use tracing::{error, instrument};
+use tracing::{error, instrument, warn};
 use uuid::Uuid;
 
 #[instrument(skip_all)]
@@ -299,8 +299,8 @@ pub async fn get_content_for_files(
 
     // check if empty, if not get first
     if files.is_empty() {
-        error!("File not found");
-        return Err(ServerError::StorageError(StorageError::NoFilesFoundError));
+        warn!("No files found. returning empty VecDeque");
+        return Ok(VecDeque::new());
     }
 
     files.retain(|file| file.size < 50_000_000);
