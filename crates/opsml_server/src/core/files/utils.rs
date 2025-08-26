@@ -8,7 +8,6 @@ use opsml_crypt::{
 };
 use opsml_sql::base::SqlClient;
 use opsml_sql::enums::client::SqlClientEnum;
-use opsml_storage::storage::error::StorageError;
 use opsml_storage::StorageClientEnum;
 use opsml_types::contracts::FileInfo;
 use opsml_types::contracts::RawFile;
