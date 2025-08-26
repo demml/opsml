@@ -1,4 +1,4 @@
-# Deployment
+# Overview
 
 ## Creation/Consumption
 
@@ -6,7 +6,7 @@ As stated before, the core goal of `OpsML` is to provide quality control to AI a
 
 With this in mind, `OpsML` provides a variety of helpers that enable you to use your model(s)/service(s) in any API framework.
 
-The following code examples utilize `FastAPI` to demonstrate how to create API endpoints for your models/services.
+The following code examples utilize `FastAPI` to demonstrate how to create API endpoints for your models/services. In fact
 
 <h1 align="center">
   <br>
@@ -15,10 +15,6 @@ The following code examples utilize `FastAPI` to demonstrate how to create API e
 </h1>
 
 
-## Downloading a Card
+## Downloading a Model
 
-**Note**: When it comes to deployment and cards, our focus is primarily on how to download and load **models** and **services**.
-
-### Command Line
-
-Opsml comes with 
+Before loading an model into an api, we first need a model. The following code will create 2 models and bundle them into a `ServiceCard`.

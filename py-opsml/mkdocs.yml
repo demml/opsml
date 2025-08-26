@@ -70,7 +70,7 @@ nav:
   - Monitoring:
       - "docs/monitoring/overview.md"
   - Deployment:
-      - "docs/deployment/best_practices.md"
+      - "docs/deployment/overview.md"
   - Automation:
       - "docs/automation/service.md"
       - "docs/automation/pyproject.md"
