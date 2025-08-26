@@ -2,9 +2,8 @@ pub mod actions;
 pub mod cli;
 pub mod error;
 
-use crate::actions::{download_card, list_cards};
+pub use crate::actions::{download_card, download_service, list_cards};
 use crate::cli::{Cli, Commands, GenerateCommands, GetCommands, InstallCommands, ListCommands};
-use actions::download::download_service;
 pub use actions::{
     demo::run_python_code,
     generate_key,
@@ -15,7 +14,7 @@ pub use actions::{
 };
 use anyhow::Context;
 use clap::Parser;
-pub use cli::arg::ScouterArgs;
+pub use cli::arg::{DownloadCard, ScouterArgs};
 use cli::commands::{ScouterCommands, UiCommands};
 use opsml_colors::Colorize;
 use opsml_types::RegistryType;

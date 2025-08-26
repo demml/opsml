@@ -1462,9 +1462,9 @@ dependencies = [
 
 [[package]]
 name = "clap"
-version = "4.5.45"
+version = "4.5.46"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1fc0e74a703892159f5ae7d3aac52c8e6c392f5ae5f359c70b5881d60aaac318"
+checksum = "2c5e4fcf9c21d2e544ca1ee9d8552de13019a42aa7dbf32747fa7aaf1df76e57"
 dependencies = [
  "clap_builder",
  "clap_derive 4.5.45",
@@ -1472,9 +1472,9 @@ dependencies = [
 
 [[package]]
 name = "clap_builder"
-version = "4.5.44"
+version = "4.5.46"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b3e7f4214277f3c7aa526a59dd3fbe306a370daee1f8b7b8c987069cd8e888a8"
+checksum = "fecb53a0e6fcfb055f686001bc2e2592fa527efaf38dbe81a6a9563562e57d41"
 dependencies = [
  "anstream",
  "anstyle",
@@ -3238,9 +3238,9 @@ checksum = "f9fbbcab51052fe104eb5e5d351cf728d30a5be1fe14d9be8a3b097481fb97de"
 
 [[package]]
 name = "libmimalloc-sys"
-version = "0.1.43"
+version = "0.1.44"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bf88cd67e9de251c1781dbe2f641a1a3ad66eaae831b8a2c38fbdc5ddae16d4d"
+checksum = "667f4fec20f29dfc6bc7357c582d91796c169ad7e2fce709468aefeb2c099870"
 dependencies = [
  "cc",
  "libc",
@@ -3439,9 +3439,9 @@ dependencies = [
 
 [[package]]
 name = "mimalloc"
-version = "0.1.47"
+version = "0.1.48"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b1791cbe101e95af5764f06f20f6760521f7158f69dbf9d6baf941ee1bf6bc40"
+checksum = "e1ee66a4b64c74f4ef288bcbb9192ad9c3feaad75193129ac8509af543894fd8"
 dependencies = [
  "libmimalloc-sys",
 ]
@@ -4011,7 +4011,7 @@ version = "3.0.0-rc.15"
 dependencies = [
  "anyhow",
  "base64 0.22.1",
- "clap 4.5.45",
+ "clap 4.5.46",
  "dirs",
  "flate2",
  "mockall",
@@ -4362,7 +4362,7 @@ dependencies = [
 name = "opsml-todo"
 version = "3.0.0-rc.15"
 dependencies = [
- "clap 4.5.45",
+ "clap 4.5.46",
  "opsml-colors",
  "rayon",
  "tabled",
@@ -5962,8 +5962,9 @@ checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
 
 [[package]]
 name = "scouter-client"
-version = "0.8.0"
-source = "git+https://github.com/demml/scouter.git?branch=fix%2Fqueue-shutdown#6b11190d1bee3410d893cd8cbb225fcead25420a"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a4604e0fc9b86334f289bfdaf6ea69ee7f2c8a04e8c9d381a05fab222d91ee8b"
 dependencies = [
  "chrono",
  "ndarray",
@@ -5990,8 +5991,9 @@ dependencies = [
 
 [[package]]
 name = "scouter-dispatch"
-version = "0.8.0"
-source = "git+https://github.com/demml/scouter.git?branch=fix%2Fqueue-shutdown#6b11190d1bee3410d893cd8cbb225fcead25420a"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0b33e118caa8ed6fef16166a24f8ec270c68cc747dc74dbb3aa5c81fbc4ee66a"
 dependencies = [
  "futures",
  "pyo3",
@@ -6005,8 +6007,9 @@ dependencies = [
 
 [[package]]
 name = "scouter-drift"
-version = "0.8.0"
-source = "git+https://github.com/demml/scouter.git?branch=fix%2Fqueue-shutdown#6b11190d1bee3410d893cd8cbb225fcead25420a"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1c011a69dc28e4794a824c15d275646fa33307b4ed0ccd39147ae7c198c5c6a3"
 dependencies = [
  "chrono",
  "cron",
@@ -6033,8 +6036,9 @@ dependencies = [
 
 [[package]]
 name = "scouter-events"
-version = "0.8.0"
-source = "git+https://github.com/demml/scouter.git?branch=fix%2Fqueue-shutdown#6b11190d1bee3410d893cd8cbb225fcead25420a"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8eb49720954b68c64627c99e4fccd6f2963ce708aad69ce213b4912b4f979a41"
 dependencies = [
  "async-trait",
  "chrono",
@@ -6067,8 +6071,9 @@ dependencies = [
 
 [[package]]
 name = "scouter-observability"
-version = "0.8.0"
-source = "git+https://github.com/demml/scouter.git?branch=fix%2Fqueue-shutdown#6b11190d1bee3410d893cd8cbb225fcead25420a"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c005d0075facfa3bb60a10e10966f52db194d338951c503cc13743dcda4f103c"
 dependencies = [
  "itertools 0.14.0",
  "ndarray",
@@ -6084,8 +6089,9 @@ dependencies = [
 
 [[package]]
 name = "scouter-profile"
-version = "0.8.0"
-source = "git+https://github.com/demml/scouter.git?branch=fix%2Fqueue-shutdown#6b11190d1bee3410d893cd8cbb225fcead25420a"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "14f6dafd5229a29be5136e27d8215ff953de181f1b4c99bfed94f3fa8166c365"
 dependencies = [
  "chrono",
  "indicatif",
@@ -6106,8 +6112,9 @@ dependencies = [
 
 [[package]]
 name = "scouter-semver"
-version = "0.8.0"
-source = "git+https://github.com/demml/scouter.git?branch=fix%2Fqueue-shutdown#6b11190d1bee3410d893cd8cbb225fcead25420a"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a644b3123eceb355e77c68bd537fe45f65d31fc9aed0518d9764ed30338df1d3"
 dependencies = [
  "pyo3",
  "semver",
@@ -6117,8 +6124,9 @@ dependencies = [
 
 [[package]]
 name = "scouter-settings"
-version = "0.8.0"
-source = "git+https://github.com/demml/scouter.git?branch=fix%2Fqueue-shutdown#6b11190d1bee3410d893cd8cbb225fcead25420a"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fc758e01eafe5097b520e3b57a8e829ba206875a6eadf6c7adb13b2cd9a3656a"
 dependencies = [
  "base64 0.22.1",
  "potato-head",
@@ -6130,8 +6138,9 @@ dependencies = [
 
 [[package]]
 name = "scouter-types"
-version = "0.8.0"
-source = "git+https://github.com/demml/scouter.git?branch=fix%2Fqueue-shutdown#6b11190d1bee3410d893cd8cbb225fcead25420a"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "21dd3db875a6223f6467557ea188c296df9ecfd5a79cb2a1f3c484f9531aa3e8"
 dependencies = [
  "chrono",
  "colored_json",

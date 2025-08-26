@@ -564,6 +564,41 @@ class ModelCard:
                 Optional kwargs to pass to `ModelInterface` load method.
         """
 
+    @staticmethod
+    def load_from_path(
+        path: Path,
+        load_kwargs: None | ModelLoadKwargs = None,
+        interface: Optional[ModelInterface] = None,
+    ) -> "ModelCard":
+        """Staticmethod to load a ModelCard from a path. Typically used when
+        a `ModelCard`s artifacts have already been downloaded to a path.
+
+        This is commonly used in API workflows where a user may download artifacts to
+        a directory and load the contents during API/Application startup.
+
+        Args:
+            path (Path):
+                The path to load the ModelCard from.
+            load_kwargs (ModelLoadKwargs):
+                Optional kwargs to pass to `ModelInterface` load method.
+            interface (ModelInterface):
+                Optional interface for the model. Used with Custom interfaces.
+
+        Returns:
+            ModelCard:
+                The loaded ModelCard.
+
+        Example:
+
+            ```python
+            # shell command
+            opsml run get model --space <space_name> --name <model_name> --write-dir <path>
+
+            # Within python application
+            model_card = ModelCard.load_from_path(<path>)
+            ```
+        """
+
     def download_artifacts(self, path: Optional[Path] = None) -> None:
         """Download artifacts associated with the ModelCard
 
