@@ -92,7 +92,6 @@ pub fn download_service_from_registry(
     args: &CardQueryArgs,
     write_path: &Path,
 ) -> Result<(), RegistryError> {
-    // get registry
     let registry = OpsmlRegistry::new(args.registry_type.clone())?;
 
     let key = registry.get_key(args)?;
@@ -296,6 +295,7 @@ async fn async_download_card(
     Ok(())
 }
 
+#[instrument(skip_all)]
 async fn async_download_card_artifacts(
     key: &ArtifactKey,
     lpath: &Path,
@@ -308,6 +308,7 @@ async fn async_download_card_artifacts(
         std::fs::create_dir_all(lpath)?;
     }
     // download card artifacts
+    debug!("Downloading card artifacts from storage");
     async_storage_client()
         .await
         .get(lpath, &rpath, true)

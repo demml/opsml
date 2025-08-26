@@ -22,6 +22,7 @@ from opsml.scouter.queue import Features
 from opsml.app import AppState, ReloadConfig
 from opsml.card import download_service
 from opsml.scouter import Metrics, Metric
+import numpy as np
 
 from opsml import (  # type: ignore
     start_experiment,
@@ -30,11 +31,12 @@ from opsml import (  # type: ignore
     PromptCard,
     Prompt,
 )
-from tests.conftest import WINDOWS_EXCLUDE
+
 import pytest
 
 CURRENT_DIRECTORY = Path(os.getcwd())
 ASSETS_DIRECTORY = CURRENT_DIRECTORY / "tests" / "service" / "assets"
+RAND_INT = np.random.randint(0, 100)
 SERVICE_SPACE = "opsml"
 SERVICE_NAME = "service"
 
@@ -102,7 +104,7 @@ def create_service(
         exp.register_card(service)
 
 
-@pytest.mark.skipif(WINDOWS_EXCLUDE, reason="skipping")
+@pytest.mark.reload
 def test_service_reload(
     mock_environment,
     random_forest_classifier: SklearnModel,
@@ -128,6 +130,10 @@ def test_service_reload(
             name=SERVICE_NAME,
         )
 
+        # assert path is not empty
+        assert opsml_app.exists()
+        assert any(opsml_app.iterdir())
+
         app = AppState.from_path(
             path=opsml_app,
             transport_config=opsml.scouter.HTTPConfig(),  # type: ignore
@@ -136,7 +142,6 @@ def test_service_reload(
                 write_path=service_reload,
             ),
         )
-
         app.start_reloader()
         assert app.service.version == "0.1.0"
         assert app.queue["custom"].identifier == "opsml/model/v1.0.0/custom"
@@ -156,13 +161,13 @@ def test_service_reload(
 
         # create next service version and wait 2 sec before triggering a reload
         create_service(random_forest_classifier, chat_prompt, example_dataframe)
-        time.sleep(2)
+        time.sleep(5)
         #
         # This is just to force a reload
         app.reload()
         #
         ## allow time to load before assertions
-        time.sleep(2)
+        time.sleep(5)
         assert app.service.version == "0.2.0"
         assert app.queue["custom"].identifier == "opsml/model/v1.1.0/custom"
         assert app.queue["psi"].identifier == "opsml/model/v1.1.0/psi"

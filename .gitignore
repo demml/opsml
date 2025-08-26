@@ -150,3 +150,4 @@ py-opsml/python/opsml/scouter/profile/_profile.pyi
 py-opsml/python/opsml/scouter/queue/_queue.pyi
 py-opsml/python/opsml/scouter/types/_types.pyi
 py-opsml/python/opsml/types/_types.pyi
+py-opsml/python/opsml/app/_app.pyi

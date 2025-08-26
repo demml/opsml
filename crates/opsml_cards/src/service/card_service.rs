@@ -628,6 +628,8 @@ impl ServiceCard {
         kwargs: Option<&Bound<'py, PyDict>>,
         alias: &str,
     ) -> Result<ExtractedKwargs<'py>, CardError> {
+        debug!("Extracting kwargs for alias: {}", alias);
+        debug!("Provided kwargs: {:?}", kwargs);
         let card_kwargs = kwargs
             .and_then(|kwargs| kwargs.get_item(alias).ok())
             .and_then(|bound| match bound {

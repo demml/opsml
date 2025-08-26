@@ -143,6 +143,7 @@ async fn reload_task(
         query_args.version = Some(latest_version);
 
         async_download_service_from_registry(&query_args, write_path, &registry).await?;
+        debug!("Download complete");
 
         return Ok(true);
     }
@@ -215,9 +216,10 @@ pub fn start_background_download_task(
         loop {
             tokio::select! {
 
-                // branch that checks every 10 seconds if it's time to reload
-                _ = sleep(Duration::from_secs(10)) => {
+                // branch that checks every 60 seconds if it's time to reload
+                _ = sleep(Duration::from_secs(60)) => {
                     // check if it's time to reload
+                    debug!("Checking if it's time to reload. Scheduled reload at: {}", scheduled_reload);
                     if scheduled_reload <= Utc::now() {
                         info!("Triggering scheduled reload");
 
@@ -291,7 +293,6 @@ impl ServiceReloader {
         service_path: PathBuf,
         state: ReloadTaskState,
     ) -> Self {
-        debug!("Creating unbounded QueueBus");
         let service_path = Arc::new(service_path);
 
         Self {
