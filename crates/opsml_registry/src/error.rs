@@ -36,6 +36,9 @@ pub enum RegistryError {
     ApiRegistryError(#[from] ApiRegistryError),
 
     #[error(transparent)]
+    SerdeQsError(#[from] serde_qs::Error),
+
+    #[error(transparent)]
     JoinError(#[from] tokio::task::JoinError),
 
     #[error(transparent)]
@@ -113,6 +116,18 @@ pub enum RegistryError {
 
     #[error("ScouterClient not found")]
     ScouterClientNotFoundError,
+
+    #[error(transparent)]
+    SerdeJsonError(#[from] serde_json::Error),
+
+    #[error("Request failed: {0}")]
+    RequestError(#[from] reqwest::Error),
+
+    #[error(transparent)]
+    OpsmlApiClientError(#[from] opsml_client::error::ApiClientError),
+
+    #[error("AsyncOpsmlRegistry only supports client mode")]
+    AsyncOpsmlRegistryOnlySupportsClientMode,
 }
 
 impl From<RegistryError> for PyErr {

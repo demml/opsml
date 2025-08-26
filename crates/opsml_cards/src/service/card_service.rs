@@ -28,6 +28,28 @@ type PyBoundAny<'py> = Bound<'py, PyAny>;
 type OptionalPyBound<'py> = Option<PyBoundAny<'py>>;
 type ExtractedKwargs<'py> = (OptionalPyBound<'py>, OptionalPyBound<'py>);
 
+#[derive(PartialEq, Debug, Clone)]
+#[pyclass(eq)]
+pub struct ServiceInfo {
+    pub space: String,
+    pub name: String,
+    pub version: String,
+}
+
+impl ServiceInfo {
+    pub fn update(
+        &mut self,
+        space: String,
+        name: String,
+        version: String,
+    ) -> Result<(), CardError> {
+        self.space = space;
+        self.name = name;
+        self.version = version;
+        Ok(())
+    }
+}
+
 #[pyclass(eq)]
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
 pub struct Card {
@@ -518,14 +540,26 @@ impl ServiceCard {
     pub fn __str__(&self) -> String {
         PyHelperFuncs::__str__(self)
     }
+
+    /// Helper for getting space, name and version
+    /// associated with the service
+    pub fn service_info(&self) -> ServiceInfo {
+        ServiceInfo {
+            space: self.space.clone(),
+            name: self.name.clone(),
+            version: self.version.clone(),
+        }
+    }
 }
 
 impl ServiceCard {
+    #[instrument(skip_all)]
     pub fn from_path_rs(
         py: Python,
         path: &Path,
         load_kwargs: Option<&Bound<'_, PyDict>>,
     ) -> Result<ServiceCard, CardError> {
+        debug!("Loading from path: {:?}", path);
         // check path exists
         if !path.exists() {
             error!("Path does not exist: {:?}", path);
@@ -534,8 +568,10 @@ impl ServiceCard {
             ));
         }
 
+        debug!("Loading service JSON from path: {:?}", path);
         let mut service = Self::load_service_json(path)?;
 
+        debug!("Loading cards");
         for card in &service.cards {
             let card_obj = Self::load_card(py, path, card, load_kwargs)?;
             service.card_objs.insert(card.alias.clone(), card_obj);
@@ -544,6 +580,7 @@ impl ServiceCard {
         Ok(service)
     }
 
+    #[instrument(skip_all)]
     fn load_card(
         py: Python,
         base_path: &Path,
@@ -591,6 +628,8 @@ impl ServiceCard {
         kwargs: Option<&Bound<'py, PyDict>>,
         alias: &str,
     ) -> Result<ExtractedKwargs<'py>, CardError> {
+        debug!("Extracting kwargs for alias: {}", alias);
+        debug!("Provided kwargs: {:?}", kwargs);
         let card_kwargs = kwargs
             .and_then(|kwargs| kwargs.get_item(alias).ok())
             .and_then(|bound| match bound {
@@ -648,6 +687,7 @@ impl ServiceCard {
         })?)
     }
 
+    #[instrument(skip_all)]
     fn load_model_card(
         py: Python,
         card_json: &str,
@@ -675,7 +715,9 @@ impl ServiceCard {
         Python::with_gil(|py| Ok(card_obj.into_py_any(py)?))
     }
 
+    #[instrument(skip_all)]
     fn load_prompt_card(card_json: &str) -> Result<PyObject, CardError> {
+        debug!("Loading prompt card from JSON");
         let card_obj = PromptCard::model_validate_json(card_json.to_string())?;
         Python::with_gil(|py| Ok(card_obj.into_py_any(py)?))
     }

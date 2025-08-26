@@ -3,7 +3,7 @@ use opsml_cards::{
     ServiceCard, UidMetadata,
 };
 
-use opsml_registry::{CardRegistries, CardRegistry};
+use opsml_registry::{download::download_service, CardRegistries, CardRegistry};
 use opsml_types::contracts::{CardList, CardRecord};
 use opsml_types::{cards::ComputeEnvironment, RegistryMode, RegistryType};
 
@@ -21,6 +21,7 @@ pub fn card(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<CardRegistries>()?;
     m.add_class::<RegistryType>()?;
     m.add_class::<RegistryMode>()?;
+    m.add_function(wrap_pyfunction!(download_service, m)?)?;
 
     // ModelCard
     m.add_class::<ModelCard>()?;

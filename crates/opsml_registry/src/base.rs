@@ -60,6 +60,7 @@ impl OpsmlRegistry {
         match mode {
             OpsmlMode::Client => {
                 let api_client = get_api_client().clone();
+
                 let client_registry = ClientRegistry::new(registry_type, api_client)?;
                 Ok(Self::ClientRegistry(client_registry))
             }
@@ -114,7 +115,7 @@ impl OpsmlRegistry {
         }
     }
 
-    pub fn list_cards(&self, args: CardQueryArgs) -> Result<Vec<CardRecord>, RegistryError> {
+    pub fn list_cards(&self, args: &CardQueryArgs) -> Result<Vec<CardRecord>, RegistryError> {
         match self {
             Self::ClientRegistry(client_registry) => Ok(client_registry.list_cards(args)?),
             #[cfg(feature = "server")]

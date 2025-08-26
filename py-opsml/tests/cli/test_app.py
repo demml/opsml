@@ -21,7 +21,6 @@ import opsml.scouter
 from opsml.scouter.alert import AlertThreshold
 from opsml.app import AppState
 
-
 from opsml import (  # type: ignore
     start_experiment,
     ModelCard,

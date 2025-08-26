@@ -625,6 +625,10 @@ class Queue:
             ```
         """
 
+    @property
+    def identifier(self) -> str:
+        """Return the identifier of the queue"""
+
 class ScouterQueue:
     """Main queue class for Scouter. Publishes drift records to the configured transport"""
 

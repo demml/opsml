@@ -8,6 +8,39 @@ from ..card import ServiceCard
 from ..scouter.client import HTTPConfig
 from ..scouter.queue import KafkaConfig, RabbitMQConfig, RedisConfig, ScouterQueue
 
+class ReloadConfig:
+    """Reload configuation to use with an Opsml AppState object. Defines the reload logic
+    for checking, downloading and reloading ServiceCards and ScouterQueues associated with
+    an AppState
+    """
+
+    def __init__(
+        self,
+        cron: str,
+        max_retries: int = 3,
+        write_path: Optional[Path] = None,
+    ):
+        """Initialize the reload configuration.
+
+        Args:
+            cron (str):
+                The cron expression for the reload schedule.
+            max_retries (int):
+                The maximum number of retries for loading the service card.
+                Defaults to 3.
+            write_path (Optional[Path]):
+                The optional path to write the service card. Defaults to Path({current directory})/ service_reload
+        """
+        ...
+
+    @property
+    def cron(self) -> str:
+        """Get the cron expression for the reload schedule."""
+
+    @cron.setter
+    def cron(self, value: str):
+        """Set the cron expression for the reload schedule."""
+
 class AppState:
     """OpsML application state object. This is typically used in API
     workflows where you wish create a shared state to share among all requests.
@@ -16,21 +49,6 @@ class AppState:
     along with a `ScouterQueue` for drift detection. Future iterations of this class may
     include other convenience methods that simplify common API tasks.
     """
-
-    def __init__(
-        self,
-        service: ServiceCard,
-        queue: Optional[ScouterQueue] = None,
-    ):
-        """
-        Initialize the AppState with a ServiceCard and a ScouterQueue.
-
-        Args:
-            service (ServiceCard):
-                The service card containing Cards.
-            queue (ScouterQueue):
-                The Scouter queue for drift detection.
-        """
 
     @staticmethod
     def from_path(
@@ -43,6 +61,7 @@ class AppState:
                 HTTPConfig,
             ]
         ] = None,
+        reload_config: Optional[ReloadConfig] = None,
         load_kwargs: Optional[Dict[str, Dict[str, Any]]] = None,
     ) -> "AppState":
         """
@@ -93,3 +112,23 @@ class AppState:
     @property
     def queue(self) -> ScouterQueue:
         """Get the Scouter queue."""
+
+    @property
+    def reloader_running(self) -> bool:
+        """Check if the ServiceReloader is currently running."""
+
+    def reload(self) -> None:
+        """Forces `AppState` to check for new `ServiceCards` and reload if necessary."""
+
+    def start_reloader(self) -> None:
+        """Starts the `AppState` reloader."""
+
+    def stop_reloader(self) -> None:
+        """Stops the `AppState` reloader."""
+
+    def shutdown(self) -> None:
+        """Shuts down the `AppState` `ScouterQueue` and reloader if running.
+        This is a destructive operation and will attempt to close all background threads
+        associated with the `ScouterQueue` and reloader. Only use this method with graceful
+        shutdown procedures in mind.
+        """

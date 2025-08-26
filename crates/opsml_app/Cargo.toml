@@ -9,8 +9,14 @@ doctest = false
 
 [dependencies]
 opsml-cards = { workspace = true }
+opsml-cli = { workspace = true }
+opsml-registry = { workspace = true }
+opsml-semver = { workspace = true }
 opsml-state = { workspace = true }
+opsml-storage = { workspace = true }
 opsml-types = { workspace = true }
+chrono = { workspace = true }
+cron = { workspace = true }
 pyo3 = { workspace = true }
 scouter-client = { workspace = true }
 serde = { workspace = true }
@@ -18,6 +24,7 @@ serde_json = { workspace = true }
 sysinfo = { workspace = true }
 thiserror = { workspace = true }
 tokio = { workspace = true }
+tokio-util = { workspace = true }
 tracing = { workspace = true }
 
 [features]

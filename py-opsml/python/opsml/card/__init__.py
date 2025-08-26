@@ -17,6 +17,7 @@ ExperimentCard = card.ExperimentCard
 ComputeEnvironment = card.ComputeEnvironment
 PromptCard = card.PromptCard
 ServiceCard = card.ServiceCard
+download_service = card.download_service
 
 
 __all__ = [
@@ -36,4 +37,5 @@ __all__ = [
     "PromptCard",
     "CardRegistries",
     "ServiceCard",
+    "download_service",
 ]

@@ -2,15 +2,16 @@
 use crate::storage::enums::client::StorageClientEnum;
 
 use crate::storage::error::StorageError;
-use crate::storage::http::client::HttpFSStorageClient;
+use crate::storage::http::client::{AsyncHttpFSStorageClient, HttpFSStorageClient};
 use async_trait::async_trait;
 use opsml_settings::config::{OpsmlMode, OpsmlStorageSettings};
-use opsml_state::{app_state, get_api_client};
+use opsml_state::{app_state, get_api_client, get_async_api_client};
 use opsml_types::contracts::CompleteMultipartUpload;
 use opsml_types::contracts::FileInfo;
 use opsml_types::StorageType;
 use std::path::Path;
 use std::sync::{Arc, RwLock};
+use tokio::sync::OnceCell;
 use tracing::instrument;
 
 #[async_trait]
@@ -242,6 +243,8 @@ impl StorageClientManager {
 // Global static instance
 static STORAGE_MANAGER: StorageClientManager = StorageClientManager::new();
 
+static ASYNC_STORAGE_CLIENT: OnceCell<Arc<AsyncHttpFSStorageClient>> = OnceCell::const_new();
+
 // Public interface
 pub fn storage_client() -> Result<Arc<FileSystemStorage>, StorageError> {
     STORAGE_MANAGER.get_client()
@@ -251,6 +254,24 @@ pub fn storage_client() -> Result<Arc<FileSystemStorage>, StorageError> {
 pub fn reset_storage_client() -> Result<(), StorageError> {
     STORAGE_MANAGER.reset();
     Ok(())
+}
+
+async fn build_async_storage_client() -> Arc<AsyncHttpFSStorageClient> {
+    // need to clone here so it is Send safe across threads
+    let async_api_client = get_async_api_client().await.clone();
+
+    // Initialize async API client - need an async block here
+    let api_client = AsyncHttpFSStorageClient::new(async_api_client)
+        .await
+        .expect("Failed to create async api client");
+
+    Arc::new(api_client)
+}
+
+pub async fn async_storage_client() -> &'static Arc<AsyncHttpFSStorageClient> {
+    ASYNC_STORAGE_CLIENT
+        .get_or_init(build_async_storage_client)
+        .await
 }
 
 #[cfg(test)]
