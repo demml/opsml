@@ -4,8 +4,8 @@ The following example demonstrates how to leverage Opsml with FastAPI to create 
 
 Setup:
 - All steps assume you are running code from the `api` directory.
-- This API has model monitoring turned off by default. To enable it, make sure you have a Scouter server running and set the environment variable in your Opsml server. Uncomment the transport config line in app/main.py and run all commands.
-- Sklearn, Lightgbm, FastAPI and pandas must be installed
+- This API has model monitoring turned off by default. To enable it, make sure you have a Scouter server running and set the environment variable in your Opsml server. Uncomment all lines marked with "uncomment for model monitoring".
+- Sklearn, Lightgbm, FastAPI, pandas and onnx must be installed (see associated requirement.txt)
   
 1. Execute the following command to create 2 classification models packaged into a ServiceCard
    - 1 Random Forest Classifier
@@ -28,8 +28,9 @@ uv run opsml get service --space opsml --name "classification_service" --write-d
 uv run uvicorn app.main:app --reload --port 8888
 ```
 
-1. Make a request to the service to get the latest coordinates of a shipment:
-   - This will return the latest coordinates of the shipment.
+1. Make a request to the service:
+   - This will return a response with both model predictions
+   - 
 ```bash
 curl -X POST "http://127.0.0.1:8888/predict" \
   -H "Content-Type: application/json" \

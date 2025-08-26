@@ -15,7 +15,9 @@ from ..scouter.drift import (
 )
 from ..types import DriftArgs, DriftProfileMap, DriftProfileUri
 
-DriftProfileType = Dict[str, Union[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile]]
+DriftProfileType = Dict[
+    str, Union[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile]
+]
 
 class ProcessorType:
     Preprocessor: "ProcessorType"
@@ -132,7 +134,10 @@ class ModelSaveKwargs:
             onnx (Dict or HuggingFaceOnnxArgs):
                 Optional onnx arguments to use when saving model to onnx format
             model (Dict):
-                Optional model arguments to use when saving
+                Optional model arguments to use when saving. This is a pass-through that will
+                be directly injected as kwargs to the underlying library's save method. For instance,
+                pytorch models are saved with `torch.save` so any kwargs that torch.save supports can be
+                used here.
             preprocessor (Dict):
                 Optional preprocessor arguments to use when saving
             save_onnx (bool):
