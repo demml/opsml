@@ -21,7 +21,7 @@
     <div class="flex flex-col mx-auto w-11/12 justify-start">
       <h1 class="flex flex-row flex-wrap items-center">
         <div class="group flex flex-none items-center">
-          <a class="font-semibold text-black hover:text-secondary-500" href="/opsml/{registry}/card/{data.metadata.space}/{data.metadata.name}/{data.metadata.version}/card">{data.metadata.space}</a>
+          <a class="font-semibold text-black hover:text-secondary-500" href="/opsml/space/{data.metadata.space}">{data.metadata.space}</a>
           <div class="mx-0.5 text-gray-800">/</div>
         </div>
         <div class="font-bold text-primary-800">{data.metadata.name}</div>
