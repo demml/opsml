@@ -338,3 +338,5 @@ if __name__ == "__main__":
             cards=[Card(alias="pytorch_regression", card=pytorch_model)],
         )
         exp.register_card(service_card)
+
+    print(exp.card.list_artifacts())
