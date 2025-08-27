@@ -1,13 +1,14 @@
 PROJECT=opml-core
 PYTHON_VERSION=3.12.8
-SOURCE_OBJECTS=python/opsml examples
+SOURCE_OBJECTS=python/opsml
+FORMAT_OBJECT=python/opsml examples
 
 format.isort:
 	uv run isort ${SOURCE_OBJECTS}
 format.black:
-	uv run black ${SOURCE_OBJECTS}
+	uv run black ${FORMAT_OBJECT}
 format.ruff:
-	uv run ruff check --silent --exit-zero ${SOURCE_OBJECTS}
+	uv run ruff check --silent --exit-zero ${FORMAT_OBJECT}
 format: format.isort format.ruff format.black
 
 lints.format_check:

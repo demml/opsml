@@ -5,7 +5,6 @@ from pathlib import Path
 
 from fastapi import FastAPI, Request
 from opsml.app import AppState
-from opsml.card import PromptCard
 from opsml.logging import LoggingConfig, LogLevel, RustyLogger
 from opsml.scouter import HTTPConfig
 from pydantic import BaseModel, Field

@@ -4,9 +4,9 @@ from opsml.experiment import Experiment, start_experiment
 from opsml.helpers.data import create_fake_data
 from opsml.model import ModelSaveKwargs
 from opsml.scouter import PsiDriftConfig
+from pydantic import BaseModel
 from sklearn import ensemble  # type: ignore
 from sklearn.metrics import log_loss  # type: ignore
-from pydantic import BaseModel
 
 
 class ModelParameters(BaseModel):
