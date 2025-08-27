@@ -34,7 +34,6 @@ use std::path::PathBuf;
 use std::sync::Arc;
 use tokio_util::io::ReaderStream;
 use tracing::debug;
-use tracing::warn;
 use tracing::{error, info, instrument};
 
 /// Create a multipart upload session (write)
