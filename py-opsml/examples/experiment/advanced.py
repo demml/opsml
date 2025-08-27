@@ -199,7 +199,7 @@ class RegressionNet(nn.Module):
 def generate_plots(
     model: RegressionNet,
     x_test: torch.FloatTensor,
-    y_test: torch.FloatTensor,
+    y_test: torch.Tensor,
 ):
     model.eval()
     with torch.no_grad():
