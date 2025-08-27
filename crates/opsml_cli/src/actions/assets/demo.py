@@ -36,7 +36,7 @@ from sklearn.metrics import make_scorer, precision_score, recall_score
 RustyLogger.setup_logging(LoggingConfig(log_level=LogLevel.Info))
 X, y = create_fake_data(n_samples=2000)
 
-pos_label, neg_label = "bad", "good"
+pos_label, neg_label = 1, 0
 
 
 # taken from sklearn docs (https://scikit-learn.org/stable/auto_examples/model_selection/plot_cost_sensitive_learning.html#sphx-glr-auto-examples-model-selection-plot-cost-sensitive-learning-py)
