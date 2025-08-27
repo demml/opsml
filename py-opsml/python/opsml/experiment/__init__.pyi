@@ -2,7 +2,7 @@
 
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, Optional, Union
+from typing import Any, Dict, Optional, Union
 
 from ..card import DataCard, ExperimentCard, ModelCard, PromptCard
 from ..data import DataSaveKwargs
@@ -117,7 +117,7 @@ class Experiment:
                 {experiment}/artifacts/{filename}
         """
 
-    def log_figure(
+    def log_figure_from_path(
         self,
         lpath: Path,
         rpath: Optional[str] = None,
@@ -134,6 +134,19 @@ class Experiment:
                 {experiment_path}/artifacts/figures. If not provided, defaults to
                 {experiment}/artifacts/figures/{filename}
 
+        """
+
+    def log_figure(self, name: str, figure: Any, kwargs: Optional[Dict[str, Any]] = None) -> None:
+        """
+        Log a figure. This method will log a matplotlib Figure object to the experiment artifacts.
+
+        Args:
+            name (str):
+                Name of the figure including its file extension
+            figure (Any):
+                Figure to log
+            kwargs (Optional[Dict[str, Any]]):
+                Additional keyword arguments
         """
 
     def log_artifacts(
