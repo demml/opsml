@@ -1,14 +1,10 @@
-from opsml import (
-    SklearnModel,
-    ModelCard,
-    TaskType,
-)
-from opsml.helpers.data import create_fake_data
-from sklearn import ensemble  # type: ignore
-from opsml.scouter.drift import PsiDriftConfig
-from opsml.scouter.alert import PsiAlertConfig
-from opsml.scouter.types import CommonCrons
+from opsml import ModelCard, SklearnModel, TaskType
 from opsml.data import DataType
+from opsml.helpers.data import create_fake_data
+from opsml.scouter.alert import PsiAlertConfig
+from opsml.scouter.drift import PsiDriftConfig
+from opsml.scouter.types import CommonCrons
+from sklearn import ensemble  # type: ignore
 
 
 def train_model() -> ensemble.RandomForestRegressor:

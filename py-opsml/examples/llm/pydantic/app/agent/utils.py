@@ -1,11 +1,8 @@
 from typing import Dict
+
 from pydantic import BaseModel
 from pydantic_ai.agent import AgentRunResult
-from pydantic_ai.messages import (
-    ToolCallPart,
-    ToolReturnPart,
-    UserPromptPart,
-)
+from pydantic_ai.messages import ToolCallPart, ToolReturnPart, UserPromptPart
 
 
 class ShipmentEvents(BaseModel):

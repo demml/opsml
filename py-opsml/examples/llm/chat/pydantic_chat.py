@@ -1,6 +1,5 @@
+from opsml import CardRegistry, Prompt, PromptCard, RegistryType
 from pydantic_ai import Agent
-from opsml import PromptCard, Prompt, CardRegistry, RegistryType
-
 
 card = PromptCard(
     space="opsml",

@@ -1,16 +1,15 @@
-import xgboost as xgb
-import pandas as pd
-from opsml import CardRegistry, RegistryType, XGBoostModel, TaskType, ModelCard
-from opsml.helpers.data import create_fake_data
 from typing import Tuple, cast
+
+import pandas as pd
+import xgboost as xgb
+from opsml import CardRegistry, ModelCard, RegistryType, TaskType, XGBoostModel
+from opsml.helpers.data import create_fake_data
 
 model_registry = CardRegistry(registry_type=RegistryType.Model)
 
 
 # create data
-X_train, y_train = cast(
-    Tuple[pd.DataFrame, pd.DataFrame], create_fake_data(n_samples=1200)
-)
+X_train, y_train = cast(Tuple[pd.DataFrame, pd.DataFrame], create_fake_data(n_samples=1200))
 
 dtrain = xgb.DMatrix(X_train.to_numpy(), y_train.to_numpy())
 dtest = xgb.DMatrix(X_train[0:10].to_numpy(), y_train[0:10].to_numpy())

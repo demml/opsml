@@ -1,7 +1,9 @@
+from typing import Tuple
+
 from google.adk.agents import LlmAgent
 from opsml.app import AppState
+
 from .tools import build_tools
-from typing import Tuple
 
 
 def get_agents(app_state: AppState) -> Tuple[LlmAgent, LlmAgent]:

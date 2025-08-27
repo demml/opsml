@@ -1,22 +1,15 @@
-from opsml.helpers.data import create_fake_data
 from typing import Tuple, cast
-import pandas as pd
-from opsml import (  # type: ignore
-    CatBoostModel,
-    CardRegistries,
-    TaskType,
-    ModelCard,
-)
-from catboost import CatBoostRegressor  # type: ignore
 
+import pandas as pd
+from catboost import CatBoostRegressor  # type: ignore
+from opsml import CardRegistries, CatBoostModel, ModelCard, TaskType  # type: ignore
+from opsml.helpers.data import create_fake_data
 
 # start registries
 registry = CardRegistries()
 
 # create data
-X_train, y_train = cast(
-    Tuple[pd.DataFrame, pd.DataFrame], create_fake_data(n_samples=1200)
-)
+X_train, y_train = cast(Tuple[pd.DataFrame, pd.DataFrame], create_fake_data(n_samples=1200))
 
 model = CatBoostRegressor(n_estimators=5, max_depth=3)
 model.fit(X_train.to_numpy(), y_train)

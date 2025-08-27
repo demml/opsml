@@ -1,10 +1,11 @@
-import sqlite3
 import random
+import sqlite3
 from pathlib import Path
-from pydantic import BaseModel
-import numpy as np
 from typing import Optional
-from opsml.logging import RustyLogger, LogLevel, LoggingConfig
+
+import numpy as np
+from opsml.logging import LoggingConfig, LogLevel, RustyLogger
+from pydantic import BaseModel
 
 logger = RustyLogger.get_logger(
     LoggingConfig(log_level=LogLevel.Info),
@@ -68,7 +69,8 @@ def startup_db() -> None:
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
 
-    cursor.execute("""
+    cursor.execute(
+        """
         CREATE TABLE IF NOT EXISTS shipment (
             id INTEGER PRIMARY KEY,
             x1 REAL NOT NULL,
@@ -78,7 +80,8 @@ def startup_db() -> None:
             status TEXT NOT NULL,
             destination TEXT NOT NULL
         )
-    """)
+    """
+    )
 
     # Clear existing records for idempotency
     cursor.execute("DELETE FROM shipment")

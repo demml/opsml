@@ -1,15 +1,16 @@
 # pylint: disable=invalid-name
+import uuid
 from contextlib import asynccontextmanager
 from pathlib import Path
+
 from fastapi import FastAPI, Request
-from opsml.logging import RustyLogger, LogLevel, LoggingConfig
 from opsml.app import AppState
-from .agent.helper import AgentHelper
-from .db.commands import startup_db, shutdown_db
-import uuid
-from pydantic import BaseModel, Field
-from opsml.card import PromptCard
+from opsml.logging import LoggingConfig, LogLevel, RustyLogger
 from opsml.scouter import HTTPConfig
+from pydantic import BaseModel, Field
+
+from .agent.helper import AgentHelper
+from .db.commands import shutdown_db, startup_db
 
 logger = RustyLogger.get_logger(
     LoggingConfig(log_level=LogLevel.Info),

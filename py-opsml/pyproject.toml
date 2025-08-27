@@ -80,6 +80,7 @@ include = '\.pyi?$'
 
 [tool.pylint.MASTER]
 load-plugins = ["pylint.extensions.docparams"]
+ignore-patterns = ".*_app\\.pyi$,.*_llm\\.pyi$,.*_card\\.pyi$"
 
 [tool.pylint.messages_control]
 max-line-length = 130
@@ -129,7 +130,7 @@ plugins = [
     "numpy.typing.mypy_plugin",
     "pydantic.mypy",
 ]
-exclude = []
+exclude = ['.*\/_.*\.pyi$']
 
 [build-system]
 requires = ["maturin>=1.4,<2.0"]

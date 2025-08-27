@@ -1,5 +1,5 @@
 from openai import OpenAI
-from opsml import PromptCard, Prompt, CardRegistry
+from opsml import CardRegistry, Prompt, PromptCard
 
 client = OpenAI()
 
