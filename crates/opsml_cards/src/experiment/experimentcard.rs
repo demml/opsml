@@ -229,8 +229,6 @@ impl ExperimentCard {
             error!("Failed to list artifacts: {e}");
         })?;
 
-        debug!("Found artifacts for rpath: {:?}, {:?}", rpath, files);
-
         // iterate through and remove storage_path if it exists
         let storage_path_str = storage_path.into_os_string().into_string().map_err(|_| {
             error!("Failed to convert storage path to string");
