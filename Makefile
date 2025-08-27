@@ -68,6 +68,10 @@ start.server: stop.server build.ui
 	cargo build -p opsml-server
 	./target/debug/opsml-server
 
+start.server.background: stop.server build.ui
+	cargo build -p opsml-server
+	./target/debug/opsml-server &
+
 .PHONY: stop.server
 stop.server:
 	-lsof -ti:3000 | xargs kill -9 2>/dev/null || true
