@@ -452,6 +452,17 @@ pub async fn get_files_for_ui(
         return OpsmlServerError::permission_denied().into_response(StatusCode::FORBIDDEN);
     }
 
+    // check if path exists
+    let exists = state.storage_client.exists(&file_path).await.map_err(|e| {
+        error!("Failed to check if file exists: {e}");
+        internal_server_error(e, "Failed to check if file exists")
+    })?;
+
+    // return empty if not exists
+    if !exists {
+        return Ok(Json(VecDeque::new()));
+    }
+
     let files = get_content_for_files(
         &state.storage_client,
         &state.sql_client,
