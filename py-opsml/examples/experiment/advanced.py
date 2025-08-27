@@ -196,18 +196,22 @@ class RegressionNet(nn.Module):
         return self.network(x)
 
 
-def generate_plots(model: RegressionNet, test_data: torch.FloatTensor):
+def generate_plots(
+    model: RegressionNet,
+    x_test: torch.FloatTensor,
+    y_test: torch.FloatTensor,
+):
     model.eval()
     with torch.no_grad():
-        final_predictions = model(test_data)
+        final_predictions = model(x_test)
 
-    residual_fig = plot_residuals_torch(test_data, final_predictions)
+    residual_fig = plot_residuals_torch(y_test, final_predictions)
     exp.log_figure(name="residual_plot.png", figure=residual_fig)
 
-    qq_fig = plot_qq_torch(test_data, final_predictions)
+    qq_fig = plot_qq_torch(y_test, final_predictions)
     exp.log_figure(name="qq_plot.png", figure=qq_fig)
 
-    preds_vs_actual_fig = plot_predictions_vs_actual_torch(test_data, final_predictions)
+    preds_vs_actual_fig = plot_predictions_vs_actual_torch(y_test, final_predictions)
     exp.log_figure(name="predictions_vs_actual.png", figure=preds_vs_actual_fig)
 
 
@@ -293,6 +297,8 @@ def create_pytorch_regression_model(
             print(f"  Train Loss: {avg_train_loss:.4f}")
             print(f"  Test Loss: {test_loss:.4f}")
             print(f"  Test R²: {r2:.4f}")
+
+    generate_plots(model, X_test_tensor, y_test_tensor)
 
     # Create model interface
     sample_data = torch.FloatTensor(X_train_scaled[:10])
