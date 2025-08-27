@@ -33,9 +33,12 @@ OpsML is an open-source developer-first ML operations platform focused on inject
 - [Why OpsML?](#why-opsml)
   - [What makes OpsML different](#what-makes-opsml-different)
 - [Installation](#installation)
+  - [Includes client and server components](#includes-client-and-server-components)
+  - [For when you only need the client](#for-when-you-only-need-the-client)
 - [Demo](#demo)
 - [Example Usage (Traditional ML)](#example-usage-traditional-ml)
 - [Example Usage (LLM)](#example-usage-llm)
+- [The Docs](#the-docs)
 - [Hosting](#hosting)
 - [Us vs Others](#us-vs-others)
 - [Contributing](#contributing)
@@ -59,8 +62,14 @@ Building reliable ML systems shouldn't require gluing together dozens of dispara
 
 ## Installation
 
+### Includes client and server components
 ```bash
 pip install "opsml==3.0.0rc15"
+```
+
+### For when you only need the client
+```bash
+pip install "opsml-client==3.0.0rc15"
 ```
 
 ## Demo
@@ -111,7 +120,7 @@ model_interface = SklearnModel(
     sample_data=X[0:10],
     task_type=TaskType.Classification,
 )
-model_interface.create_drift_profile(alias="drift", X)
+model_interface.create_drift_profile(alias="drift", data=X)
 
 modelcard = ModelCard(
     interface=model_interface,
@@ -167,6 +176,8 @@ if __name__ == "__main__":
     registry.register_card(card)
 ```
 
+## The Docs
+Now checkout the [docs](https://docs.demml.io/opsml) for more information on how and why you should use OpsML.
 For more examples, check out the [examples directory](https://github.com/demml/opsml/tree/main/py-opsml/examples).
 
 ## Hosting

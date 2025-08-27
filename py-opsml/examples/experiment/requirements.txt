@@ -1,0 +1,6 @@
+opsml[sklearn_onnx]==3.0.0-rc.15
+fastapi>=0.115.0,<1.0.0
+lightgbm>=4.0.0
+pandas>=2.2, <3
+torch>=2.4.0,<2.7.0
+seaborn>=0.13.2

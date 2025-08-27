@@ -1,7 +1,10 @@
 # Installation
 
-Install OpsML with your preferred package manager. OpsML is built and distributed through PyPi.
+Install OpsML with your preferred package manager. OpsML is built and distributed through PyPi and comes in 2 flavors: **client** and **server**.
 
+## Server and client installation
+
+If you want to work in a development environment and don't want to setup an independent server (we recommend that you do!), you can install both the client and server components with the following command:
 
 === "uv"
 
@@ -13,6 +16,22 @@ Install OpsML with your preferred package manager. OpsML is built and distribute
 
     ```console
     $ pip install opsml
+    ```
+
+## Client installation
+
+If you already have a server up and running, as you would in an enterprise environment, you can install the client components with the following command:
+
+=== "uv"
+
+    ```console
+    $ uv add opsml-client
+    ```
+
+=== "pip"
+
+    ```console
+    $ pip install opsml-client
     ```
 
 ## Basic Usage
