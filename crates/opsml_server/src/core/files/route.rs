@@ -34,6 +34,7 @@ use std::path::PathBuf;
 use std::sync::Arc;
 use tokio_util::io::ReaderStream;
 use tracing::debug;
+use tracing::warn;
 use tracing::{error, info, instrument};
 
 /// Create a multipart upload session (write)
@@ -450,6 +451,17 @@ pub async fn get_files_for_ui(
 
     if !perms.has_read_permission(space_id.to_str().unwrap()) {
         return OpsmlServerError::permission_denied().into_response(StatusCode::FORBIDDEN);
+    }
+
+    // check if path exists
+    let exists = state.storage_client.exists(&file_path).await.map_err(|e| {
+        error!("Failed to check if file exists: {e}");
+        internal_server_error(e, "Failed to check if file exists")
+    })?;
+
+    // return empty if not exists
+    if !exists {
+        return Ok(Json(VecDeque::new()));
     }
 
     let files = get_content_for_files(

@@ -19,8 +19,8 @@
       {/each}
     </div>
   {:else}
-    <div class="text-center py-4">
-      <p>No figures available for this experiment.</p>
+    <div class="text-center py-4 text-primary-800">
+      <p>No figures available for this experiment</p>
     </div>
   {/if}
 </div>
