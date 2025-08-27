@@ -9,7 +9,7 @@ on:
 
 jobs:
   Unit-Lint-Release-Candidate:
-    environment: pypi
+    environment: release
     runs-on: ubuntu-latest
     strategy:
       matrix:
