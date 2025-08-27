@@ -14,7 +14,7 @@ use pyo3::prelude::*;
 use pyo3::types::PyList;
 use serde_json;
 use std::path::PathBuf;
-use tracing::error;
+use tracing::{debug, error};
 
 use serde::{
     de::{self, MapAccess, Visitor},
@@ -228,6 +228,8 @@ impl ExperimentCard {
         let files = storage_client()?.find(&rpath).inspect_err(|e| {
             error!("Failed to list artifacts: {e}");
         })?;
+
+        debug!("Found artifacts for rpath: {:?}, {:?}", rpath, files);
 
         // iterate through and remove storage_path if it exists
         let storage_path_str = storage_path.into_os_string().into_string().map_err(|_| {

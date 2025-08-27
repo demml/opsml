@@ -64,11 +64,17 @@ pub enum ExperimentError {
     #[error("Figure is not an image")]
     FigureIsNotImageError,
 
+    #[error("Figure is not a matplotlib figure")]
+    FigureIsNotMatplotlibError,
+
     #[error("Failed to downcast Python object: {0}")]
     DowncastError(String),
 
     #[error("Invalid parameter argument. Log_parameters accepts either a dictionary of parameters or a list of parameters. Received: {0}")]
     InvalidParametersArgument(String),
+
+    #[error("{0}")]
+    MissingImportError(String),
 }
 
 impl From<std::ffi::OsString> for ExperimentError {

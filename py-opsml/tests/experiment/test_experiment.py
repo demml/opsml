@@ -3,6 +3,8 @@ from opsml.experiment import (
     Metric,
     Parameter,
 )
+import matplotlib.pyplot as plt
+import seaborn as sns  # type: ignore
 from opsml import (  # type: ignore
     start_experiment,
     get_experiment_metrics,
@@ -19,6 +21,7 @@ from opsml import (  # type: ignore
     RegistryType,
     ModelSaveKwargs,
 )
+import numpy as np
 from opsml.card import CardRegistries
 import joblib  # type: ignore
 from pathlib import Path
@@ -67,9 +70,58 @@ def cleanup_fake_directory(save_path: Path):
     shutil.rmtree(save_path)
 
 
+def plot_residuals(
+    y_test: np.ndarray,
+    y_pred: np.ndarray,
+    style: str = "seaborn-v0_8",
+    plot_size: tuple = (10, 8),
+) -> plt.Figure:
+    """
+    Plot residuals for PyTorch model predictions.
+
+    Args:
+        y_test: True values as tensor or numpy array
+        y_pred: Predicted values as tensor or numpy array
+        style: Matplotlib style to use
+        plot_size: Figure size as (width, height)
+
+    Returns:
+        matplotlib Figure object
+    """
+    # Convert tensors to numpy arrays if needed
+
+    # Flatten arrays if needed
+    y_test = y_test.flatten()
+    y_pred = y_pred.flatten()
+
+    residuals = y_test - y_pred
+
+    with plt.style.context(style=style):
+        fig, ax = plt.subplots(figsize=plot_size)
+        sns.residplot(
+            x=y_pred,
+            y=residuals,
+            ax=ax,
+            line_kws={"color": "red", "lw": 1},
+        )
+
+        ax.axhline(y=0, color="black", linestyle="--")
+        ax.set_title("Residual Plot", fontsize=14)
+        ax.set_xlabel("Predicted values", fontsize=12)
+        ax.set_ylabel("Residuals", fontsize=12)
+
+        for label in ax.get_xticklabels() + ax.get_yticklabels():
+            label.set_fontsize(10)
+
+        plt.tight_layout()
+
+    plt.close(fig)
+    return fig
+
+
 @pytest.mark.skipif(WINDOWS_EXCLUDE, reason="skipping")
 def test_experimentcard():
-    with OpsmlTestServer():
+    with OpsmlTestServer(cleanup=True):
         cleanup_manually_created_directories()
         with start_experiment(space="test", log_hardware=True) as exp:
             metric1 = Metric(name="test", value=1.0)
@@ -88,13 +140,16 @@ def test_experimentcard():
             # create fake directory
             dir_path = create_fake_directory()
             exp.log_artifacts(dir_path)
-            exp.log_figure("tests/assets/cats.jpg")
+            exp.log_figure_from_path("tests/assets/cats.jpg")
+
+            fig = plot_residuals(np.random.rand(100), np.random.rand(100))
+            exp.log_figure("residuals.png", fig)
 
         card = exp.card
 
         files = card.list_artifacts()
 
-        assert len(files) == 7
+        assert len(files) == 8
 
         files = card.list_artifacts("folder_0")
 
@@ -108,7 +163,6 @@ def test_experimentcard():
 
         # download all artifacts
         card.download_artifacts()
-
         assert len(list(created_path.iterdir())) == 7
 
         # attempt to download just one artifact
