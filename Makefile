@@ -66,8 +66,7 @@ test.storage.local.server:
 .PHONY: start.server
 start.server: stop.server build.ui
 	cargo build -p opsml-server
-	./target/debug/opsml-server &
-
+	./target/debug/opsml-server
 
 .PHONY: stop.server
 stop.server:
