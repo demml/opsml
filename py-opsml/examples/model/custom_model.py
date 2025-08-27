@@ -1,17 +1,18 @@
+from pathlib import Path
+from typing import Dict, Optional, Tuple, cast
+
+import joblib  # type: ignore
+import polars as pl  # type: ignore
+from opsml import CardRegistry, ModelCard, ModelInterface, RegistryType, TaskType
+from opsml.helpers.data import create_fake_data
 from opsml.model import (
+    DataProcessor,
     ModelInterfaceMetadata,
     ModelInterfaceSaveMetadata,
-    DataProcessor,
     ProcessorType,
 )
-from opsml.helpers.data import create_fake_data
-from opsml import ModelCard, ModelInterface, TaskType, CardRegistry, RegistryType
 from sklearn.linear_model import LinearRegression  # type: ignore
 from sklearn.preprocessing import Binarizer  # type: ignore
-from typing import cast, Dict, Optional, Tuple
-import joblib  # type: ignore
-from pathlib import Path
-import polars as pl  # type: ignore
 
 
 class ConstantOffsetRegressor(LinearRegression):
@@ -150,9 +151,7 @@ class CustomSklearnInterface(ModelInterface):
 registry = CardRegistry(registry_type=RegistryType.Model)
 
 
-X_train, y_train = cast(
-    Tuple[pl.DataFrame, pl.DataFrame], create_fake_data(n_samples=1200, to_polars=True)
-)
+X_train, y_train = cast(Tuple[pl.DataFrame, pl.DataFrame], create_fake_data(n_samples=1200, to_polars=True))
 
 model = ConstantOffsetRegressor(offset=2.0)
 binarizer = Binarizer()

@@ -1,9 +1,9 @@
 # The following code defines the prompt metrics that will run in opsml and scouter
 
 
+from opsml.llm import Prompt, Score
 from opsml.scouter.alert import AlertThreshold
 from opsml.scouter.drift import LLMMetric
-from opsml.llm import Prompt, Score
 
 LLM_MODEL = "gemini-2.5-flash-lite"
 LLM_PROVIDER = "gemini"

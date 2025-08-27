@@ -1,9 +1,10 @@
-from transformers import DistilBertForSequenceClassification, DistilBertTokenizerFast  # type: ignore
-
-from opsml.model import HuggingFaceTask, HuggingFaceModel, TaskType
-from opsml.card import CardRegistry, RegistryType, ModelCard
-from opsml.logging import RustyLogger, LoggingConfig, LogLevel
-
+from opsml.card import CardRegistry, ModelCard, RegistryType
+from opsml.logging import LoggingConfig, LogLevel, RustyLogger
+from opsml.model import HuggingFaceModel, HuggingFaceTask, TaskType
+from transformers import (  # type: ignore
+    DistilBertForSequenceClassification,
+    DistilBertTokenizerFast,
+)
 
 logger = RustyLogger.get_logger(
     config=LoggingConfig(log_level=LogLevel.Info),

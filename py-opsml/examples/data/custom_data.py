@@ -1,17 +1,16 @@
 from pathlib import Path
 from typing import Optional, cast
-import pandas as pd
 
+import pandas as pd
+from opsml import CardRegistry, DataCard, RegistryType
 from opsml.data import (
     DataInterface,
-    DataSaveKwargs,
     DataInterfaceMetadata,
     DataInterfaceSaveMetadata,
     DataLoadKwargs,
+    DataSaveKwargs,
 )
-from opsml import DataCard, CardRegistry, RegistryType
 from opsml.helpers.data import create_fake_data
-
 
 """This example demonstrates how to save a pandas dataframe with a custom save method
 """

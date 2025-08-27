@@ -19,7 +19,11 @@ use opsml_types::{
     cards::experiment::{Metric, Parameter},
     SaveName,
 };
-use pyo3::{prelude::*, IntoPyObjectExt};
+use pyo3::{
+    prelude::*,
+    types::{PyDict, PyList},
+    IntoPyObjectExt,
+};
 use std::path::PathBuf;
 use std::sync::Arc;
 use tempfile::TempDir;
@@ -561,7 +565,29 @@ impl Experiment {
         Ok(())
     }
 
-    pub fn log_parameters(&self, parameters: Vec<Parameter>) -> Result<(), ExperimentError> {
+    /// Logs multiple parameters
+    /// Accepts either a dictionary of parameters or a list of parameters.
+    /// # Arguments
+    /// * `parameters` - The parameters to log
+    pub fn log_parameters(&self, parameters: &Bound<'_, PyAny>) -> Result<(), ExperimentError> {
+        // accepts either a dictionary or a list of Parameters
+        let parameters = if parameters.is_instance_of::<PyDict>() {
+            // extract to pydict
+            let dict = parameters.downcast::<PyDict>()?;
+            dict.iter()
+                .map(|(k, v)| Parameter::new(k.to_string(), v))
+                .collect::<Result<Vec<_>, _>>()?
+        } else if parameters.is_instance_of::<PyList>() {
+            // extract to pylist
+            let list = parameters.downcast::<PyList>()?;
+            list.extract::<Vec<Parameter>>()?
+        } else {
+            let received_type = parameters.get_type().name()?;
+            return Err(ExperimentError::InvalidParametersArgument(
+                received_type.to_string(),
+            ));
+        };
+
         let registry = &self.registries.experiment.registry;
 
         let param_request = ParameterRequest {

@@ -1,8 +1,6 @@
 import numpy as np
-
-from opsml.data import DataSplit, DataSplits, DependentVars, StartStopSplit, NumpyData
-from opsml import DataCard, CardRegistry, RegistryType
-
+from opsml import CardRegistry, DataCard, RegistryType
+from opsml.data import DataSplit, DataSplits, DependentVars, NumpyData, StartStopSplit
 
 """This example demonstrates how to save a numpy array to a NumpyData interface with data splits
 """

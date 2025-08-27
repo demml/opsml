@@ -1,7 +1,9 @@
-from pydantic_ai import Agent
-from opsml.app import AppState
-from .tools import build_tools
 from typing import Tuple
+
+from opsml.app import AppState
+from pydantic_ai import Agent
+
+from .tools import build_tools
 
 
 def get_agents(app_state: AppState) -> Tuple[Agent, Agent]:
