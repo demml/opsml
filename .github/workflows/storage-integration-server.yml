@@ -12,6 +12,7 @@ env:
 
 jobs:
   aws-lints-client-test:
+    environment: aws-production
     permissions:
       id-token: write
       contents: read
@@ -53,6 +54,7 @@ jobs:
           RUST_BACKTRACE: 1
 
   gcs-client-test:
+    environment: gcs-production
     permissions:
       id-token: write
       contents: read
@@ -84,6 +86,7 @@ jobs:
 
   azure-client-test:
     needs: gcs-client-test
+    environment: azure-production
     permissions:
       id-token: write
       contents: read
