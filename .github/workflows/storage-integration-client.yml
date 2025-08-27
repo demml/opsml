@@ -13,6 +13,7 @@ env:
 
 jobs:
   aws-lints-client-test:
+    environment: aws-production
     permissions:
       id-token: write
       contents: read
@@ -75,6 +76,7 @@ jobs:
           lsof -ti tcp:3000 | xargs kill -9
 
   gcs-client-test:
+    environment: gcs-production
     permissions:
       id-token: write
       contents: read
@@ -126,6 +128,7 @@ jobs:
 
   azure-client-test:
     needs: gcs-client-test
+    environment: azure-production
     permissions:
       id-token: write
       contents: read
