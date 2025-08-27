@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - master
+      - workflow-perms
 
 env:
   RUSTFLAGS: -C debuginfo=0 # Do not produce debug symbols to keep memory usage down
