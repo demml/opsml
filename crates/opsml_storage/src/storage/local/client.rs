@@ -115,6 +115,7 @@ impl StorageClient for LocalStorageClient {
     async fn find(&self, path: &str) -> Result<Vec<String>, StorageError> {
         let mut files = Vec::new();
         let full_path = self.bucket.join(path);
+
         if !full_path.exists() {
             return Ok(files);
         }
@@ -395,6 +396,7 @@ impl FileSystem for LocalFSStorageClient {
 
         Ok(())
     }
+
     async fn exists(&self, path: &Path) -> Result<bool, StorageError> {
         let stripped_path = path.strip_path(self.client.bucket().await);
         let objects = self.client.find(stripped_path.to_str().unwrap()).await?;
