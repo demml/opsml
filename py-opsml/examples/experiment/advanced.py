@@ -3,13 +3,15 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader, TensorDataset
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import mean_squared_error, r2_score
+from sklearn.model_selection import train_test_split  # type: ignore
+from sklearn.preprocessing import StandardScaler  # type: ignore
+from sklearn.metrics import mean_squared_error, r2_score  # type: ignore
 from pydantic import BaseModel
 import matplotlib.pyplot as plt
-import seaborn as sns
-from scipy import stats
+import seaborn as sns  # type: ignore
+from typing import Union
+import numpy as np
+from scipy import stats  # type: ignore
 from opsml import Card, ModelCard, ServiceCard, TaskType
 from opsml.experiment import Experiment, start_experiment
 from opsml.helpers.data import create_fake_data
@@ -51,7 +53,6 @@ def plot_residuals_torch(
         sns.residplot(
             x=y_pred,
             y=residuals,
-            lowess=True,
             ax=ax,
             line_kws={"color": "red", "lw": 1},
         )
@@ -63,6 +64,102 @@ def plot_residuals_torch(
 
         for label in ax.get_xticklabels() + ax.get_yticklabels():
             label.set_fontsize(10)
+
+        plt.tight_layout()
+
+    plt.close(fig)
+    return fig
+
+
+def plot_qq_torch(
+    y_test: Union[torch.Tensor, np.ndarray],
+    y_pred: Union[torch.Tensor, np.ndarray],
+    style: str = "seaborn-v0_8",
+    plot_size: tuple = (10, 8),
+) -> plt.Figure:
+    """
+    Plot Q-Q plot for PyTorch model prediction residuals.
+
+    Args:
+        y_test: True values as tensor or numpy array
+        y_pred: Predicted values as tensor or numpy array
+        style: Matplotlib style to use
+        plot_size: Figure size as (width, height)
+
+    Returns:
+        matplotlib Figure object
+    """
+    # Convert tensors to numpy arrays if needed
+    if isinstance(y_test, torch.Tensor):
+        y_test = y_test.detach().cpu().numpy()
+    if isinstance(y_pred, torch.Tensor):
+        y_pred = y_pred.detach().cpu().numpy()
+
+    # Flatten arrays if needed
+    y_test = y_test.flatten()
+    y_pred = y_pred.flatten()
+
+    residuals = y_test - y_pred
+
+    with plt.style.context(style=style):
+        fig, ax = plt.subplots(figsize=plot_size)
+        stats.probplot(residuals, dist="norm", plot=ax)
+        ax.set_title("QQ Plot", fontsize=14)
+        plt.tight_layout()
+
+    plt.close(fig)
+    return fig
+
+
+def plot_predictions_vs_actual_torch(
+    y_test: Union[torch.Tensor, np.ndarray],
+    y_pred: Union[torch.Tensor, np.ndarray],
+    style: str = "seaborn-v0_8",
+    plot_size: tuple = (10, 8),
+) -> plt.Figure:
+    """
+    Plot predicted vs actual values for PyTorch model.
+
+    Args:
+        y_test: True values as tensor or numpy array
+        y_pred: Predicted values as tensor or numpy array
+        style: Matplotlib style to use
+        plot_size: Figure size as (width, height)
+
+    Returns:
+        matplotlib Figure object
+    """
+    # Convert tensors to numpy arrays if needed
+    if isinstance(y_test, torch.Tensor):
+        y_test = y_test.detach().cpu().numpy()
+    if isinstance(y_pred, torch.Tensor):
+        y_pred = y_pred.detach().cpu().numpy()
+
+    # Flatten arrays if needed
+    y_test = y_test.flatten()
+    y_pred = y_pred.flatten()
+
+    with plt.style.context(style=style):
+        fig, ax = plt.subplots(figsize=plot_size)
+
+        # Scatter plot
+        ax.scatter(y_test, y_pred, alpha=0.6)
+
+        # Perfect prediction line
+        min_val = min(y_test.min(), y_pred.min())
+        max_val = max(y_test.max(), y_pred.max())
+        ax.plot(
+            [min_val, max_val],
+            [min_val, max_val],
+            "r--",
+            lw=2,
+            label="Perfect Prediction",
+        )
+
+        ax.set_xlabel("Actual Values", fontsize=12)
+        ax.set_ylabel("Predicted Values", fontsize=12)
+        ax.set_title("Predicted vs Actual Values", fontsize=14)
+        ax.legend()
 
         plt.tight_layout()
 
@@ -105,7 +202,13 @@ def generate_plots(model: RegressionNet, test_data: torch.FloatTensor):
         final_predictions = model(test_data)
 
     residual_fig = plot_residuals_torch(test_data, final_predictions)
-    exp.log_figure(name="residual_plot", figure=residual_fig)
+    exp.log_figure(name="residual_plot.png", figure=residual_fig)
+
+    qq_fig = plot_qq_torch(test_data, final_predictions)
+    exp.log_figure(name="qq_plot.png", figure=qq_fig)
+
+    preds_vs_actual_fig = plot_predictions_vs_actual_torch(test_data, final_predictions)
+    exp.log_figure(name="predictions_vs_actual.png", figure=preds_vs_actual_fig)
 
 
 def create_pytorch_regression_model(

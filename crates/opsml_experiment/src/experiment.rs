@@ -26,6 +26,7 @@ use pyo3::{
 };
 use std::path::PathBuf;
 use std::sync::Arc;
+use tempfile::tempdir;
 use tempfile::TempDir;
 use tracing::{debug, error, instrument, warn};
 use walkdir::WalkDir;
@@ -641,7 +642,11 @@ impl Experiment {
     /// If not provided, the filename will be extracted and appended to the path {experiment}/artifacts/figures/{figure}
     ///
     #[pyo3(signature = (lpath, rpath = None))]
-    pub fn log_figure(&self, lpath: PathBuf, rpath: Option<String>) -> Result<(), ExperimentError> {
+    pub fn log_figure_from_path(
+        &self,
+        lpath: PathBuf,
+        rpath: Option<String>,
+    ) -> Result<(), ExperimentError> {
         // check mime_type of path and make sure its an image
         let mime_type = mime_guess::from_path(&lpath).first_or_octet_stream();
 
@@ -677,6 +682,57 @@ impl Experiment {
             ArtifactType::Figure,
         )?;
 
+        Ok(())
+    }
+
+    #[pyo3(signature = (name, figure, kwargs = None))]
+    pub fn log_figure(
+        &self,
+        py: Python<'_>,
+        name: String,
+        figure: &Bound<'_, PyAny>,
+        kwargs: Option<&Bound<'_, PyDict>>,
+    ) -> Result<(), ExperimentError> {
+        // check if figure is a matplotlib figure
+        // isinstance(figure, matplotlib.figure.Figure)
+        let matplot_figure = py
+            .import("matplotlib")
+            .map_err(|e| {
+                ExperimentError::MissingImportError(format!(
+                    "matplotlib is required for logging figures: {}",
+                    e
+                ))
+            })?
+            .getattr("figure")?
+            .getattr("Figure")?;
+
+        let is_matplotlib_figure = figure.is_instance(&matplot_figure)?;
+
+        if !is_matplotlib_figure {
+            return Err(ExperimentError::FigureIsNotMatplotlibError);
+        }
+
+        let tmp_dir = tempdir()?;
+        let tmp_path = tmp_dir.path().join(&name);
+        figure.call_method("savefig", (&tmp_path,), kwargs)?;
+
+        let storage_path = self
+            .artifact_key
+            .storage_path()
+            .join(SaveName::Artifacts)
+            .join(SaveName::Figures)
+            .join(name);
+
+        log_artifact(
+            tmp_path,
+            storage_path,
+            &self.registries.experiment,
+            self.uid.clone(),
+            self.artifact_key.get_decrypt_key()?,
+            ArtifactType::Figure,
+        )?;
+
+        tmp_dir.close()?;
         Ok(())
     }
 
