@@ -1,5 +1,4 @@
 name: OpsML Unit Tests
-
 permissions:
   contents: read
 
