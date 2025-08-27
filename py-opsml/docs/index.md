@@ -59,7 +59,7 @@ model_interface = SklearnModel(  # (2)
     sample_data=X[0:10],
     task_type=TaskType.Classification,
 )
-model_interface.create_drift_profile(alias="drift", X) # (3)
+model_interface.create_drift_profile(alias="drift", data=X) # (3)
 
 modelcard = ModelCard( # (4)
     interface=model_interface,
