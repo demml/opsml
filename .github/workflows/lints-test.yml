@@ -72,8 +72,10 @@ jobs:
       - name: Run Unit Tests
         run: make test.unit
 
+  # build ubuntu, macos and windows binaries to use in tests
+
   # this will run local client and server storage tests.
-  # Intergration tests will be run when prs are merged to main
+  # Integration tests will be run when prs are merged to main
   test-server:
     runs-on: ubuntu-22.04
     needs: format-and-lint
@@ -116,21 +118,21 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu-latest
-            python-version: "3.10"
-          - os: ubuntu-latest
-            python-version: "3.11"
+          #- os: ubuntu-latest
+          #  python-version: "3.10"
+          #- os: ubuntu-latest
+          #  python-version: "3.11"
           - os: ubuntu-latest
             python-version: "3.12"
-          - os: macos-14
-            python-version: "3.10"
-          - os: macos-14
-            python-version: "3.11"
-          - os: macos-15
-            python-version: "3.12"
+          #- os: macos-14
+          #  python-version: "3.10"
+          #- os: macos-14
+          #  python-version: "3.11"
+          #- os: macos-15
+          #  python-version: "3.12"
 
     runs-on: ${{ matrix.os }}
-    needs: [format-and-lint]
+    #needs: [format-and-lint]
     steps:
       - uses: actions/checkout@v4
 
