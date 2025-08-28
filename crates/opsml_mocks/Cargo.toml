@@ -3,6 +3,10 @@ name = "opsml-mocks"
 version = { workspace = true }
 edition = "2021"
 
+[lib]
+name = "opsml_mocks"
+crate-type = ["cdylib", "rlib"]
+
 [dependencies]
 mockito = { workspace = true, optional = true }
 potato-head = { workspace = true , features = ["mock"] }
