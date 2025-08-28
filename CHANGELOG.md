@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.0.0-rc.15] - 2025-08-28
+
+### 🐛 Bug Fixes
+
+- Fix ui bugs for pathing and figure loading
+  
+### New Features
+
+- AppState reloader for dynamically reloading service and Scouter queues
+
+### 📚 Documentation
+
+- Updated documentation for experiments
+- Update examples to include experiments and api examples with FastAPI
+
 ## [3.0.0-rc.14] - 2025-07-18
 
 ### 🐛 Bug Fixes

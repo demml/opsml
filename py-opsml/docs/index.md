@@ -4,7 +4,7 @@
   <br>
 </h1>
 
-<h3 align="center">Quality Control for the Machine Learning Artifacts</h3>
+<h3 align="center">Quality Control for the Machine Learning Lifecycle</h3>
 ---
 
 [![Unit Tests](https://github.com/demml/opsml/actions/workflows/lints-test.yml/badge.svg)](https://github.com/demml/opsml/actions/workflows/lints-test.yml)
