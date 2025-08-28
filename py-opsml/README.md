@@ -24,7 +24,7 @@ Version 3.0.0 is under active development. All pre-releases will be released und
 
 ## **What is it?**
 
-`OpsML` is a developer-first ML operations platform focused on injecting quality control into the machine learning lifecycle. Through automation and standardization, `OpsML` provides a unified interface and experience for managing ML artifacts, enabling teams to collaborate more effectively and deploy with confidence, all while reducing engineering overhead and providing piece of mind.
+`OpsML` is a developer-first ML operations platform focused on injecting quality control into the machine learning lifecycle. Through automation and standardization, `OpsML` provides a unified interface and experience for managing ML artifacts, enabling teams to collaborate more effectively and deploy with confidence, all while reducing engineering overhead and providing peace of mind.
 
 ## **What is Quality Control?**
 
@@ -43,7 +43,7 @@ Quality control in the context of `OpsML` refers to:
 - **Modular Design** - Use what you need, leave what you don't
 
 ### Production Ready
-- **High-Performance Server** - Built in Rust for speed, reliability and concurrency
+- **High-Performance Server** - Built in Rust for speed, reliability, and concurrency
 - **Built-in Security** - Authentication and encryption out of the box
 - **Audit-Ready** - Complete artifact lineage and versioning
 - **Standardized Governance** - Consistent patterns across teams

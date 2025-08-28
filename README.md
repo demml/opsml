@@ -51,7 +51,7 @@ Building reliable ML systems shouldn't require gluing together dozens of dispara
 
 - **All-in-One Simplicity** – Models, data, prompts, experiments, services, and monitoring in one unified platform  
 - **Artifact-First Approach** – Artifacts are the foundation of any ML system. Opsml treats them all as first-class citizens.
-- **Type-Safe & Fast** – OpsML is written entirely in rust with a focus on reliability and performance
+- **Type-Safe & Fast** – OpsML is written entirely in Rust with a focus on reliability and performance
 - **Zero-Friction Integration** – Drop into existing workflows in minutes 
 - **Cloud & Database Agnostic** – Deploy anywhere, from local dev to multi-cloud production  
 - **Production-Ready Controls** – Authentication, encryption, audit trails, and governance built-in  
@@ -177,7 +177,7 @@ if __name__ == "__main__":
 ```
 
 ## The Docs
-Now checkout the [docs](https://docs.demml.io/opsml) for more information on how and why you should use OpsML.
+Now check out the [docs](https://docs.demml.io/opsml) for more information on how and why you should use OpsML.
 For more examples, check out the [examples directory](https://github.com/demml/opsml/tree/main/py-opsml/examples).
 
 ## Hosting
