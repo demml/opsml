@@ -3,7 +3,7 @@ pub mod core;
 use tracing::info;
 
 use crate::core::middleware::metrics::metrics_app;
-use crate::core::shutdown::shutdown_metric_signal;
+use crate::core::shutdown::shutdown_service_signal;
 use anyhow::Context;
 use mimalloc::MiMalloc;
 use opsml_server::start_server;
@@ -30,7 +30,7 @@ async fn start_metrics_server() -> Result<(), anyhow::Error> {
         .with_context(|| "Failed to bind to port 3001 for metrics server")?;
 
     axum::serve(listener, app)
-        .with_graceful_shutdown(shutdown_metric_signal())
+        .with_graceful_shutdown(shutdown_service_signal("prometheus_metrics_server"))
         .await
         .with_context(|| "Failed to start metrics server")?;
 

@@ -1,6 +1,6 @@
 pub mod core;
 
-use crate::core::app::create_app;
+use crate::core::{app::create_app, shutdown::shutdown_service_signal};
 use opsml_colors::Colorize;
 use std::net::SocketAddr;
 use std::sync::Arc;
@@ -40,6 +40,7 @@ pub async fn start_server() -> Result<(), Box<dyn std::error::Error>> {
         listener,
         app.into_make_service_with_connect_info::<SocketAddr>(),
     )
+    .with_graceful_shutdown(shutdown_service_signal("opsml_server"))
     .await
     .unwrap();
 
