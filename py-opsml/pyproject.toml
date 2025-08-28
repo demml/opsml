@@ -141,7 +141,7 @@ build-backend = "maturin"
 python-source = "python"
 module-name = "opsml.opsml"
 bindings = 'pyo3'
-features = ["pyo3/extension-module"]
+features = ["pyo3/extension-module", "pyo3/abi3-py310"]
 
 [project.scripts]
 opsml = "opsml.cli:run_opsml_cli"

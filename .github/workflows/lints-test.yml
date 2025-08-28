@@ -10,7 +10,11 @@ on:
   pull_request:
 
 env:
+  PYTHON_VERSION: "3.9"
   RUSTFLAGS: -C debuginfo=0
+  CARGO_INCREMENTAL: 0
+  CARGO_NET_RETRY: 10
+  CARGO_TERM_COLOR: always
 
 jobs:
   format-and-lint:
@@ -93,28 +97,25 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup cmake
-        uses: jwlawson/actions-setup-cmake@v2
-        with:
-          cmake-version: "3.x"
-
-      - name: Install libomp on macOS
-        if: runner.os == 'macOS'
-        run: brew install libomp
-
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
 
       - name: Cache Rust
         uses: Swatinem/rust-cache@v2
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
       - name: Build abi3 wheel (macos and windows)
         if: runner.os == 'macOS' || runner.os == 'Windows'
         uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.target }}
-          args: --out dist --features server
+          args: --release --out dist --features server
           rust-toolchain: stable
+          docker-options: -e CI
           working-directory: ./py-opsml
 
       - name: Build abi3 wheel (linux)
@@ -123,8 +124,9 @@ jobs:
         with:
           target: ${{ matrix.target }}
           manylinux: ${{ matrix.manylinux }}
-          args: --out dist --features server
+          args: --release --out dist --features server
           rust-toolchain: stable
+          docker-options: -e CI
           working-directory: ./py-opsml
           # See: https://github.com/sfackler/rust-openssl/issues/2036#issuecomment-1724324145
           before-script-linux: |
@@ -171,6 +173,10 @@ jobs:
             fi
 
             cmake --version
+
+      - name: Check dist
+        working-directory: ./py-opsml
+        run: ls -lh dist/
 
       - name: Upload wheel artifact
         uses: actions/upload-artifact@v4
