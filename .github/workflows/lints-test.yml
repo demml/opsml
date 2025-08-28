@@ -113,7 +113,7 @@ jobs:
         uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.target }}
-          args: --release --out dist --features server
+          args: --out dist --features server
           rust-toolchain: stable
           docker-options: -e CI
           working-directory: ./py-opsml
@@ -124,7 +124,7 @@ jobs:
         with:
           target: ${{ matrix.target }}
           manylinux: ${{ matrix.manylinux }}
-          args: --release --out dist --features server
+          args: --out dist --features server
           rust-toolchain: stable
           docker-options: -e CI
           working-directory: ./py-opsml
