@@ -113,7 +113,7 @@ jobs:
         uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.target }}
-          args: --out dist --features server
+          args: --out dist
           rust-toolchain: stable
           docker-options: -e CI
           working-directory: ./py-opsml
@@ -124,7 +124,7 @@ jobs:
         with:
           target: ${{ matrix.target }}
           manylinux: ${{ matrix.manylinux }}
-          args: --out dist --features server
+          args: --out dist
           rust-toolchain: stable
           docker-options: -e CI
           working-directory: ./py-opsml
@@ -175,6 +175,8 @@ jobs:
             cmake --version
 
       - name: Check dist
+        # only run for macOS and Windows
+        if: runner.os == 'macOS' || runner.os == 'Linux'
         working-directory: ./py-opsml
         run: ls -lh dist/
 
