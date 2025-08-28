@@ -5,9 +5,9 @@ permissions:
 on:
   push:
     branches:
-      #- main
+      - main
       - master
-  pull_request:
+  #pull_request:
 
 env:
   RUSTFLAGS: -C debuginfo=0

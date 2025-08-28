@@ -73,66 +73,23 @@ jobs:
         run: make test.unit
 
   # build ubuntu, macos and windows binaries to use in tests
-
-  # this will run local client and server storage tests.
-  # Integration tests will be run when prs are merged to main
-  test-server:
-    runs-on: ubuntu-22.04
-    needs: format-and-lint
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup cmake
-        uses: jwlawson/actions-setup-cmake@v2
-        with:
-          cmake-version: "3.x"
-
-      - name: Set up Rust
-        run: rustup override set stable && rustup update
-
-      - name: Cache Rust
-        uses: Swatinem/rust-cache@v2
-
-      - uses: pnpm/action-setup@v4
-        name: Install pnpm
-        with:
-          version: 10
-          run_install: false
-
-      - name: Install UI dependencies
-        run: make install.ui.deps
-
-      - name: Setup Server
-        run: make start.server.background
-
-      - name: Run storage client tests
-        run: make test.storage.client
-
-      - name: Shutdown Server
-        run: make stop.server
-
-  test-python:
-    name: test ${{ matrix.os }}-${{ matrix.python-version }}
-
+  build-wheels:
+    name: build wheels - ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         include:
-          #- os: ubuntu-latest
-          #  python-version: "3.10"
-          #- os: ubuntu-latest
-          #  python-version: "3.11"
-          #- os: ubuntu-latest
-          #python-version: "3.12"
-          #- os: macos-14
-          #  python-version: "3.10"
-          #- os: macos-14
-          #  python-version: "3.11"
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            manylinux: auto
+          - os: macos-13
+            target: x86_64-apple-darwin
           - os: macos-15
-            python-version: "3.12"
+            target: aarch64-apple-darwin
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
 
     runs-on: ${{ matrix.os }}
-    #needs: [format-and-lint]
     steps:
       - uses: actions/checkout@v4
 
@@ -142,30 +99,98 @@ jobs:
           cmake-version: "3.x"
 
       - name: Install libomp on macOS
-        if: matrix.os == 'macos-14' || matrix.os == 'macos-15'
+        if: runner.os == 'macOS'
         run: brew install libomp
 
-      - name: install rust stable
+      - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
 
-      - name: cache rust
+      - name: Cache Rust
         uses: Swatinem/rust-cache@v2
+
+      - name: Build abi3 wheel
+        uses: PyO3/maturin-action@v1
         with:
-          key: ${{ matrix.os }}-${{ matrix.python-version }}-v1
+          target: ${{ matrix.target }}
+          manylinux: ${{ matrix.manylinux }}
+          args: --out dist --features server
+          rust-toolchain: stable
+          working-directory: ./py-opsml
+
+      - name: Upload wheel artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheel-${{ matrix.os }}-${{ matrix.target }}
+          path: ./py-opsml/dist/*.whl
+          retention-days: 1
+
+  test-python:
+    name: test ${{ matrix.os }}-${{ matrix.python-version }}
+    needs: [format-and-lint, build-wheels]
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            python-version: "3.10"
+            wheel-os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+          - os: ubuntu-latest
+            python-version: "3.11"
+            wheel-os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+          - os: ubuntu-latest
+            python-version: "3.12"
+            wheel-os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+          - os: macos-14
+            python-version: "3.10"
+            wheel-os: macos-15
+            target: aarch64-apple-darwin
+          - os: macos-14
+            python-version: "3.11"
+            wheel-os: macos-15
+            target: aarch64-apple-darwin
+          - os: macos-15
+            python-version: "3.12"
+            wheel-os: macos-15
+            target: aarch64-apple-darwin
+
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: "3.x"
+
+      - name: Install libomp on macOS
+        if: runner.os == 'macOS'
+        run: brew install libomp
 
       - name: Install uv
         uses: astral-sh/setup-uv@v4
         with:
           enable-cache: true
 
-      - name: set up python
+      - name: Set up python
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Create virtual environment
+      - name: Download wheel artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: wheel-${{ matrix.wheel-os }}-${{ matrix.target }}
+          path: ./py-opsml/dist
+
+      - name: Create virtual environment and install wheel
         working-directory: ./py-opsml
-        run: make setup.project
+        run: |
+          uv sync --all-extras --group dev --group docs
+          uv pip install opsml --no-deps --no-index --force-reinstall --find-links dist
 
       - name: Lints
         working-directory: ./py-opsml
@@ -173,111 +198,9 @@ jobs:
 
       - name: Run tests and report coverage
         working-directory: ./py-opsml
-        run: |
-          make test.unit
+        run: make test.unit
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v4
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-
-      # if 3.12 and ubuntu, run tensorflow tests
-      - name: Run TensorFlow tests
-        if: ${{ matrix.os == 'ubuntu' && matrix.python-version == '3.12' }}
-        working-directory: ./py-opsml
-        run: make test.unit.tensorflow
-
-  test-python-windows:
-    name: test ${{ matrix.os }}-${{ matrix.python-version }}
-
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [windows]
-        python-version: ["3.10", "3.11", "3.12"]
-
-    runs-on: ${{ matrix.os }}-latest
-    needs: [format-and-lint]
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup cmake
-        uses: jwlawson/actions-setup-cmake@v2
-        with:
-          cmake-version: "3.x"
-
-      - name: install rust stable
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: cache rust
-        uses: Swatinem/rust-cache@v2
-        with:
-          key: ${{ matrix.os }}-${{ matrix.python-version }}-v1
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v4
-        with:
-          enable-cache: true
-
-      - name: set up python
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-
-      - name: Create virtual environment
-        working-directory: ./py-opsml
-        run: make setup.project
-
-      - name: Run tests and report coverage
-        working-directory: ./py-opsml
-        run: make test.unit
-
-  # need to run as a separate job to prevent port errors from conflicting jobs
-  test-service:
-    name: test service
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu]
-        python-version: ["3.12"]
-
-    runs-on: ${{ matrix.os }}-latest
-    needs: [format-and-lint]
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup cmake
-        uses: jwlawson/actions-setup-cmake@v2
-        with:
-          cmake-version: "3.x"
-
-      - name: Install libomp on macOS
-        if: matrix.os == 'macos'
-        run: brew install libomp
-
-      - name: install rust stable
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: cache rust
-        uses: Swatinem/rust-cache@v2
-        with:
-          key: ${{ matrix.os }}-${{ matrix.python-version }}-v1
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v4
-        with:
-          enable-cache: true
-
-      - name: set up python
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-
-      - name: Create virtual environment
-        working-directory: ./py-opsml
-        run: make setup.project
-
-      - name: Run service tests
-        working-directory: ./py-opsml
-        run: |
-          make test.service
