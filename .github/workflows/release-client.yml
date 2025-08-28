@@ -6,7 +6,6 @@ on:
       - main
   release:
     types: [published]
-  pull_request: # using for test
 
 permissions:
   contents: read
