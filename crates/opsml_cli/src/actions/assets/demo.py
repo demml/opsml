@@ -19,7 +19,7 @@ from opsml.scouter.drift import (
     CustomMetric,
     CustomMetricDriftConfig,
 )
-
+from opsml.experiment import Experiment
 import numpy as np
 from opsml.scouter.alert import AlertThreshold
 from opsml.data import DataType
@@ -28,15 +28,98 @@ from opsml.model import TaskType
 from sklearn.preprocessing import StandardScaler  # type: ignore
 from sklearn import ensemble  # type: ignore
 from opsml.data import ColType, ColumnSplit, DataSplit
-
+import matplotlib.pyplot as plt  # type: ignore
+from sklearn.metrics import confusion_matrix  # type: ignore
+from sklearn.metrics import PrecisionRecallDisplay, RocCurveDisplay
+from sklearn.metrics import make_scorer, precision_score, recall_score
 
 RustyLogger.setup_logging(LoggingConfig(log_level=LogLevel.Info))
 X, y = create_fake_data(n_samples=2000)
 
+pos_label, neg_label = 1, 0
 
-def random_forest_classifier():
+
+# taken from sklearn docs (https://scikit-learn.org/stable/auto_examples/model_selection/plot_cost_sensitive_learning.html#sphx-glr-auto-examples-model-selection-plot-cost-sensitive-learning-py)
+def fpr_score(y, y_pred, neg_label, pos_label):
+    cm = confusion_matrix(y, y_pred, labels=[neg_label, pos_label])
+    tn, fp, _, _ = cm.ravel()
+    tnr = tn / (tn + fp)
+    return 1 - tnr
+
+
+def plot_confusion_matrix(
+    model: ensemble.RandomForestClassifier,
+    X_test: np.ndarray,
+    y_test: np.ndarray,
+) -> plt.Figure:
+    """
+    Plot residuals for PyTorch model predictions.
+
+    Args:
+        y_test: True values as tensor or numpy array
+        y_pred: Predicted values as tensor or numpy array
+        style: Matplotlib style to use
+        plot_size: Figure size as (width, height)
+
+    Returns:
+        matplotlib Figure object
+    """
+
+    tpr_score = recall_score  # TPR and recall are the same metric
+    scoring = {
+        "precision": make_scorer(precision_score, pos_label=pos_label),
+        "recall": make_scorer(recall_score, pos_label=pos_label),
+        "fpr": make_scorer(fpr_score, neg_label=neg_label, pos_label=pos_label),
+        "tpr": make_scorer(tpr_score, pos_label=pos_label),
+    }
+
+    fig, axs = plt.subplots(nrows=1, ncols=2, figsize=(14, 6))
+
+    PrecisionRecallDisplay.from_estimator(
+        model, X_test, y_test, pos_label=pos_label, ax=axs[0], name="GBDT"
+    )
+
+    axs[0].plot(
+        scoring["recall"](model, X_test, y_test),
+        scoring["precision"](model, X_test, y_test),
+        marker="o",
+        markersize=10,
+        color="tab:blue",
+        label="Default cut-off point at a probability of 0.5",
+    )
+    axs[0].set_title("Precision-Recall curve")
+    axs[0].legend()
+
+    RocCurveDisplay.from_estimator(
+        model,
+        X_test,
+        y_test,
+        pos_label=pos_label,
+        ax=axs[1],
+        name="GBDT",
+        plot_chance_level=True,
+    )
+    axs[1].plot(
+        scoring["fpr"](model, X_test, y_test),
+        scoring["tpr"](model, X_test, y_test),
+        marker="o",
+        markersize=10,
+        color="tab:blue",
+        label="Default cut-off point at a probability of 0.5",
+    )
+    axs[1].set_title("ROC curve")
+    axs[1].legend()
+    _ = fig.suptitle("Evaluation of the vanilla GBDT model")
+
+    return fig
+
+
+def random_forest_classifier(exp: Experiment):
     reg = ensemble.RandomForestClassifier(n_estimators=5)
     reg.fit(X.to_numpy(), y.to_numpy().ravel())
+
+    fig = plot_confusion_matrix(reg, X, y)
+    exp.log_figure(name="confusion_matrix.png", figure=fig)
 
     model = SklearnModel(
         model=reg,
@@ -149,8 +232,10 @@ if __name__ == "__main__":
 
             assert datacard.experimentcard_uid == exp.card.uid
 
+            classifier = random_forest_classifier(exp)
+
             modelcard = ModelCard(
-                interface=random_forest_classifier(),
+                interface=classifier,
                 space=f"{SPACE}_{i}",
                 name=f"{NAME}_{i}",
                 tags=["foo:bar", "baz:qux"],
