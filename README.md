@@ -76,7 +76,7 @@ pip install "opsml-client==3.0.0rc15"
 Install the following dependencies to run the demo (if you don't have them already):
 
 ```bash
-pip install scikit-learn
+pip install scikit-learn matplotlib
 ```
 
 Then run the demo:
