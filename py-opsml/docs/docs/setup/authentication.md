@@ -27,7 +27,7 @@ export OPSML_PASSWORD="your_password"
 5. **Token Expiry**: Similar to programmatic access, if the access token expires, the server checks the validity of the refresh token. If valid, a new access token is generated; otherwise, the user must log in again.
 
 ## Single Sign-On (SSO) Authentication
-Opsml also supports support for Single Sign-On (SSO) authentication using the OAuth2 and OIDC (OpenID Connect) protocols. This allows users to authenticate using their existing credentials from identity providers such as Okta and Keycloak.
+Opsml also supports Single Sign-On (SSO) authentication using the OAuth2 and OIDC (OpenID Connect) protocols. This allows users to authenticate using their existing credentials from identity providers such as Okta and Keycloak.
 
 ### Setup (Server)
 To configure Opsml for SSO authentication, there are a few additional environment variables that need to be set when starting the Opsml server:

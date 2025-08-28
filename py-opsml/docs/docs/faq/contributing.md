@@ -4,7 +4,7 @@
 Hello! We're glad and grateful that you're interested in contributing to `OpsML` :tada:! Below you will find the general guidelines for setting up your environment and creating/submitting `pull requests`.
 
 ## Very Important
-To contribute to `OpsML` you will need to sign a Contributor License Agreement (CLA) via HelloSign when you create your first `pull_request` (this is an automated process). For a `pull_request` to be valid, your Github email address must match the email address used to sign the CLA. Github has [documentation](https://help.github.com/articles/setting-your-commit-email-address-on-github/) on setting email addresses. Your git email must also match this email address
+To contribute to `OpsML` you will need to sign a Contributor License Agreement (CLA) via HelloSign when you create your first `pull_request` (this is an automated process). For a `pull_request` to be valid, your Github email address must match the email address used to sign the CLA. Github has [documentation](https://help.github.com/articles/setting-your-commit-email-address-on-github/) on setting email addresses. Your git email must also match this email address.
 
 
 ## Table of contents
