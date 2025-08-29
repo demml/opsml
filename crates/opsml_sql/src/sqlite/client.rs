@@ -826,6 +826,7 @@ impl SqlClient for SqliteClient {
             .bind(record.value)
             .bind(record.step)
             .bind(record.timestamp)
+            .bind(&record.is_eval)
             .execute(&self.pool)
             .await?;
 
@@ -846,7 +847,8 @@ impl SqlClient for SqliteClient {
                 .bind(&r.name)
                 .bind(r.value)
                 .bind(r.step)
-                .bind(r.timestamp);
+                .bind(r.timestamp)
+                .bind(&r.is_eval);
         }
 
         query_builder.execute(&self.pool).await?;
@@ -858,8 +860,9 @@ impl SqlClient for SqliteClient {
         &self,
         uid: &str,
         names: &'life2 [String],
+        is_eval: Option<bool>,
     ) -> Result<Vec<MetricRecord>, SqlError> {
-        let (query, bindings) = SqliteQueryHelper::get_experiment_metric_query(names);
+        let (query, bindings) = SqliteQueryHelper::get_experiment_metric_query(names, is_eval);
         let mut query_builder = sqlx::query_as::<sqlx::Sqlite, MetricRecord>(&query).bind(uid);
 
         for binding in bindings {
