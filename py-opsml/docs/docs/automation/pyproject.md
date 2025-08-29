@@ -124,7 +124,7 @@ cards = [
 
 
 ### Example Drift Configuration
-**Note** - TOML does not currently support multi-line inline tables. In the future, this may change to allow for more complex configurations/better formatting.
+**Note** - TOML does not currently support multi-line inline tables. In the future, this may change to allow for more complex configurations and better formatting.
 
 ```toml
 [[tool.opsml.service]]
