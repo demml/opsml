@@ -36,6 +36,7 @@ pub async fn insert_metrics(
                 m.value,
                 m.step,
                 m.timestamp,
+                m.is_eval,
             )
         })
         .collect::<Vec<_>>();
