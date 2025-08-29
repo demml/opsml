@@ -7,6 +7,7 @@ from .opsml import (  # noqa: F401
     cli,
     data,
     experiment,
+    get_opsml_version,
     llm,
     logging,
     mock,
@@ -83,3 +84,5 @@ Card = card.Card
 
 # CLI
 run_opsml_cli = cli.run_opsml_cli
+
+__version__ = get_opsml_version()

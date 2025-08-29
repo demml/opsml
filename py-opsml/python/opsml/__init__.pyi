@@ -51,3 +51,5 @@ from .model import TensorFlowModel as TensorFlowModel
 from .model import TorchModel as TorchModel
 from .model import XGBoostModel as XGBoostModel
 from .types import VersionType as VersionType
+
+__version__: str
