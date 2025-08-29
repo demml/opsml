@@ -42,10 +42,10 @@ All cards require a set of arguments in order to be registered. This is to ensur
   
 ### Naming
 
-All cards follow a standardized naming conventions of `{space}/{name}/v{version"}`. This is to ensure that cards are easily tracked and managed.
+All cards follow standardized naming conventions of `{space}/{name}/v{version}`. This is to ensure that cards are easily tracked and managed.
 
 !!!note
-    These arguments can also be be supplied through a pyproject.toml tool configuration. See the [tools](../tools.md) section for more information.
+    These arguments can also be supplied through a pyproject.toml tool configuration. See the [tools](../tools.md) section for more information.
 
 ## Registries
 

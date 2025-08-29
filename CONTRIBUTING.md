@@ -26,7 +26,7 @@ There's always something to improve in opsml, and we want to make it as easy as 
 
 ### Environment Setup
 
-Depending on what area you're interested in contributing to, you may need to set up your environment differently. Opsml primarily uses a Rust backend and exposes a Python API via PyO3. For python environment management, OpsML leverages [uv](https://docs.astral.sh/uv/) For the frontend, opsml exposes a static SPA built with [Svelte](https://svelte.dev/) and [SvelteKit](https://svelte.dev/docs/kit/introduction).
+Depending on what area you're interested in contributing to, you may need to set up your environment differently. Opsml primarily uses a Rust backend and exposes a Python API via PyO3. For python environment management, OpsML leverages [uv](https://docs.astral.sh/uv/). For the frontend, opsml exposes a static SPA built with [Svelte](https://svelte.dev/) and [SvelteKit](https://svelte.dev/docs/kit/introduction).
 
 1. Install Rust and Cargo by following the instructions [here](https://www.rust-lang.org/tools/install).
 2. Install uv by following the instructions [here](https://docs.astral.sh/uv/getting-started/installation/).
