@@ -3,12 +3,6 @@ name = "opsml-mocks"
 version = { workspace = true }
 edition = "2021"
 
-[lib]
-name = "opsml_mocks"
-# for future work: removing this causes ort compilation to fail for some reason
-# Causes a "can't find native onnxruntime crate" even though onnxruntime is installed prior
-crate-type = ["cdylib", "rlib"] 
-
 [dependencies]
 mockito = { workspace = true, optional = true }
 potato-head = { workspace = true , features = ["mock"] }
@@ -32,7 +26,7 @@ server = [
     "opsml-server",
     "tokio",
     "reqwest",
-    "opsml-storage",
+    "opsml-storage/server",
     "mockito",
     "serde_json"
 ]
