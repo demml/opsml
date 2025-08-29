@@ -25,8 +25,9 @@ opsml-settings = { workspace = true }
 opsml-state = { workspace = true }
 opsml-types = { workspace = true }
 opsml-utils = { workspace = true }
+opsml-version = { workspace = true }
 potato-head = { workspace = true, features = ['mock'] }
-pyo3 = { workspace = true }
+pyo3 = { workspace = true, features = ["extension-module", "abi3-py310"] }
 reqwest = { workspace = true, optional = true }
 rusty-logging = { workspace = true }
 scouter-client = { workspace = true }
@@ -40,7 +41,7 @@ default = []
 server = [
     "opsml-registry/server", 
     "opsml-server", 
-    "opsml-storage", 
+    "opsml-storage/server", 
     "opsml-mocks/server"
 ]
 
