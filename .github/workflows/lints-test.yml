@@ -249,11 +249,61 @@ jobs:
           name: wheel-${{ matrix.wheel-os }}-${{ matrix.target }}
           path: ./py-opsml/dist
 
-      - name: Create virtual environment and install wheel
+      - name: Debug wheel contents
+        working-directory: ./py-opsml
+        run: |
+          echo "Downloaded wheel artifacts:"
+          ls -la dist/
+          echo "Wheel details:"
+          file dist/*.whl || echo "No .whl files found"
+
+      - name: Create virtual environment and install dependencies
         working-directory: ./py-opsml
         run: |
           uv sync --all-extras --group dev --group docs
-          uv pip install opsml --no-deps --no-index --force-reinstall --find-links dist
+
+      - name: Install server-enabled wheel directly
+        working-directory: ./py-opsml
+        run: |
+          # Remove any existing opsml installation
+          uv pip uninstall opsml -y || true
+
+          # Install the wheel directly by path
+          WHEEL_FILE=$(ls dist/opsml-*.whl | head -1)
+          if [ -z "$WHEEL_FILE" ]; then
+            echo "❌ No wheel file found in dist/"
+            exit 1
+          fi
+
+          echo "Installing wheel: $WHEEL_FILE"
+          uv pip install "$WHEEL_FILE" --force-reinstall --no-deps
+
+      - name: Verify server features are available
+        working-directory: ./py-opsml
+        run: |
+          uv run python -c "
+          import opsml
+          import sys
+
+          print(f'OpsML version: {opsml.__version__}')
+          print('Testing server feature availability...')
+
+          try:
+              # Test actual server functionality that requires server features
+              from opsml.registry import CardRegistry
+              registry = CardRegistry('data')
+              print('✅ CardRegistry creation successful - server features working')
+          except RuntimeError as e:
+              if 'server feature not enabled' in str(e):
+                  print(f'❌ Server feature runtime error: {e}')
+                  sys.exit(1)
+              else:
+                  print(f'⚠️  Other runtime error (may be expected): {e}')
+          except Exception as e:
+              print(f'⚠️  Unexpected error during registry creation: {e}')
+
+          print('✅ Server feature verification completed')
+          "
 
       - name: Lints
         working-directory: ./py-opsml
