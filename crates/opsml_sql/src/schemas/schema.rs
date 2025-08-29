@@ -31,6 +31,7 @@ pub struct MetricRecord {
     pub timestamp: Option<i64>,
     pub created_at: Option<DateTime<Utc>>,
     pub idx: Option<i32>,
+    pub is_eval: bool,
 }
 
 impl MetricRecord {
@@ -40,6 +41,7 @@ impl MetricRecord {
         value: f64,
         step: Option<i32>,
         timestamp: Option<i64>,
+        is_eval: bool,
     ) -> Self {
         MetricRecord {
             experiment_uid,
@@ -49,6 +51,7 @@ impl MetricRecord {
             timestamp,
             created_at: None,
             idx: None,
+            is_eval,
         }
     }
 }
@@ -63,6 +66,7 @@ impl Default for MetricRecord {
             timestamp: None,
             created_at: None,
             idx: None,
+            is_eval: false,
         }
     }
 }
