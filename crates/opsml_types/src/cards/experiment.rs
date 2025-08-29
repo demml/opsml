@@ -63,6 +63,7 @@ impl Default for Metric {
             step: None,
             timestamp: None,
             created_at: None,
+            is_eval: false,
         }
     }
 }
