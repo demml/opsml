@@ -179,7 +179,10 @@ impl PostgresQueryHelper {
 
         query
     }
-    pub fn get_experiment_metric_query(names: &[String]) -> (String, Vec<String>) {
+    pub fn get_experiment_metric_query(
+        names: &[String],
+        is_eval: Option<bool>,
+    ) -> (String, Vec<String>) {
         let mut query = GET_EXPERIMENT_METRIC_SQL.to_string();
 
         let mut bindings: Vec<String> = Vec::new();
@@ -196,6 +199,14 @@ impl PostgresQueryHelper {
                 param_index += 1;
             }
             query.push(')');
+        }
+
+        if let Some(is_eval) = is_eval {
+            if is_eval {
+                query.push_str(" AND is_eval = TRUE");
+            } else {
+                query.push_str(" AND is_eval = FALSE");
+            }
         }
 
         (query, bindings)
