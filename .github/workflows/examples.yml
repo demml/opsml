@@ -7,7 +7,7 @@ on:
     branches:
       - main
       - master
-  #pull_request:
+  pull_request:
 
 env:
   RUSTFLAGS: -C debuginfo=0
@@ -19,10 +19,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu]
+        os: [ubuntu-latest]
         python-version: ["3.12"]
 
-    runs-on: ${{ matrix.os }}-latest
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
 
