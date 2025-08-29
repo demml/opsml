@@ -1,6 +1,6 @@
 # Technical Specifications
 
-This directory contains various technical specifications for OpsML. It is an on-going effort to document the architecture, design decisions, changes, and other important aspects of the project. It is **NOT** feature complete and is subject to change as the project evolves.
+This directory contains various technical specifications for OpsML. It is an ongoing effort to document the architecture, design decisions, changes, and other important aspects of the project. It is **NOT** feature complete and is subject to change as the project evolves.
 
 **Note**: Specifications are written in markdown format and should be easy to read and understand. And while they are recommended for big changes, they are not mandatory.
 

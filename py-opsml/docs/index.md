@@ -12,14 +12,14 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-brightgreen.svg)](https://opensource.org/licenses/MIT)
 
 
-`OpsML` is a developer-first ML operations platform focused on injecting quality control into machine learning artifact management. `OpsML` provides a unified and ergonomic interface and experience for managing ML artifacts, enabling teams to collaborate more effectively and deploy with confidence, all while reducing engineering overhead and providing piece of mind.
+`OpsML` is a developer-first ML operations platform focused on injecting quality control into machine learning artifact management. `OpsML` provides a unified and ergonomic interface and experience for managing ML artifacts, enabling teams to collaborate more effectively and deploy with confidence, all while reducing engineering overhead and providing peace of mind.
 
 ## Highlights
 
 - <span class="text-alert">**Consistency**</span>: OpsML provides a **foundation layer** for managing ML artifacts across the entire lifecycle.
 - <span class="text-alert">**Built from Insanity**</span>: Built by those who've been there before and have experienced the pain of managing ML artifacts in enterprise environments. We're also obsessed with quality control and providing a developer-first experience.
 - <span class="text-alert">**Performance**</span>: OpsML is built in Rust and is designed to be fast, reliable, and efficient, giving you peace of mind that your ML artifacts are in good hands.
-- <span class="text-alert">**Integrations**</span>: OpsML is designed to be easy to integrate into your existing workflows and tech stack. In addition, we're continually adding intergrations to third-party libraries, providing developers with a hollistic and singular experience.
+- <span class="text-alert">**Integrations**</span>: OpsML is designed to be easy to integrate into your existing workflows and tech stack. In addition, we're continually adding integrations to third-party libraries, providing developers with a holistic and singular experience.
 - <span class="text-alert">**No Auto Magic**</span>: OpsML is designed to be easy to use and understand, with no hidden magic or black boxes. Sure, we abstract things to make the experience consistent, but these abstractions are thin and transparent with accompanying documentation and code, so you know what's going on under the hood. 
 
 ### <span class="text-secondary">**Do any of the following apply to you?**</span>
