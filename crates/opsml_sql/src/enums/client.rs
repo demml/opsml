@@ -248,11 +248,16 @@ impl SqlClient for SqlClientEnum {
         &self,
         uid: &str,
         names: &'life2 [String],
+        is_eval: Option<bool>,
     ) -> Result<Vec<MetricRecord>, SqlError> {
         match self {
-            SqlClientEnum::Postgres(client) => client.get_experiment_metric(uid, names).await,
-            SqlClientEnum::Sqlite(client) => client.get_experiment_metric(uid, names).await,
-            SqlClientEnum::MySql(client) => client.get_experiment_metric(uid, names).await,
+            SqlClientEnum::Postgres(client) => {
+                client.get_experiment_metric(uid, names, is_eval).await
+            }
+            SqlClientEnum::Sqlite(client) => {
+                client.get_experiment_metric(uid, names, is_eval).await
+            }
+            SqlClientEnum::MySql(client) => client.get_experiment_metric(uid, names, is_eval).await,
         }
     }
 
