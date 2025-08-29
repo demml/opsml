@@ -15,7 +15,7 @@ Quality control in OpsML encompasses the essential processes and best practices 
 - **Modular Design**: Use what you need, leave what you don't
 
 ### Production Ready
-- **High-Performance Server**: Built in Rust for speed, reliability and concurrency
+- **High-Performance Server**: Built in Rust for speed, reliability, and concurrency
 - **Built-in Security**: Authentication and encryption out of the box
 - **Audit-Ready**: Complete artifact lineage and versioning
 - **Standardized Governance Workflows**: Consistent patterns to use across teams

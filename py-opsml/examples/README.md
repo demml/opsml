@@ -32,8 +32,8 @@ The Opsml examples directory contains various examples demonstrating how to use 
   - `google_adk/`: FastAPI app that shows how to use Opsml with the Google ADK framework to create a multi-step agent.
   - `pydantic/`: FastAPI app that shows how to use Opsml with the Pydantic AI framework to create a multi-step agent.
 
-- `experiment/`: Contains examples of how to use Opsml for experiment tracking and management.
-  - `basic.py`: Example of using Opsml for basic experiment tracking with Sklearn
+  - `experiment/`: Contains examples of how to use Opsml for experiment tracking and management.
+  - `basic.py`: Example of using Opsml for basic experiment tracking with Scikit-learn
   - `advanced.py`: Example of using Opsml for advanced experiment tracking with PyTorch and logging parameters, metrics and artifacts.
   
 - `api/`: Contains examples of how to use Opsml with FastAPI to create APIs.

@@ -1,7 +1,7 @@
 # Technical Component Specification: Audit Events
 
 ## Overview
-The Audit Events system provides comprehensive tracking and logging of system operations and is integrated with tje OpsML server EventBus. The goal of Audit logging is to capture relevant information about how the OpsML server is being used and operational details. Audit events are currently opt-in and will expand as the server evolves.
+The Audit Events system provides comprehensive tracking and logging of system operations and is integrated with the OpsML server EventBus. The goal of Audit logging is to capture relevant information about how the OpsML server is being used and operational details. Audit events are currently opt-in and will expand as the server evolves.
 
 Audit event capture is integrated via an audit middleware that parses response extensions for `AuditContext`. If `AuditContext` is present, it is extracted and used to create an `AuditEvent`. The event is then sent to the `EventBus` for asynchronous processing and storage in the connected SQL database. Thus for a server route to become `auditable`, it must return an `AuditContext` in the response extensions. **Note** that the `AuditContext` is a custom response extension and is removed after it is processed and is not exposed to the client.
 

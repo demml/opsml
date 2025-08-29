@@ -125,7 +125,7 @@ The encryption key (aka jwt_key) is one of the most important pieces to opsml's 
   
 #### Scouter Environment Variables
 
-If you are configuring opsml to user Scouter for model monitoring, you will need to set the following environment variables as well:
+If you are configuring opsml to use Scouter for model monitoring, you will need to set the following environment variables as well:
 
 - `SCOUTER_SERVER_URI`: The host of the Scouter server.
 - `SCOUTER_AUTH_TOKEN`: The secret token used to authenticate with the Scouter server and exchange refresh tokens. This is used to verify the integrity of the Scouter tokens. If not set, opsml will use a default **deterministic** key. In keeping with the other opsml secret keys, the `SCOUTER_AUTH_TOKEN` is a pbdkdf2::HmacSha256 key with a length of 32 bytes. You can generate a key similar to the `OPSML_ENCRYPT_KEY` key if you haven't already done so.
