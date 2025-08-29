@@ -34,6 +34,7 @@ const INSERT_EXPERIMENT_METRIC_SQL: &str =
     include_str!("sql/experiment/insert_experiment_metric.sql");
 const GET_EXPERIMENT_METRIC_SQL: &str = include_str!("sql/experiment/get_experiment_metric.sql");
 const INSERT_HARDWARE_METRIC_SQL: &str = include_str!("sql/experiment/insert_hardware_metric.sql");
+const GET_EVAL_METRIC_SQL: &str = include_str!("sql/experiment/get_eval_metric.sql");
 
 // cards
 const INSERT_DATACARD_SQL: &str = include_str!("sql/card/insert_datacard.sql");
