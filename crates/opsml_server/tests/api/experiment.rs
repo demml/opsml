@@ -65,7 +65,7 @@ async fn test_opsml_server_experiment_routes() {
     assert_eq!(metric_names.len(), 2);
 
     // get metric by experiment_uid
-    let body = GetMetricRequest::new(experiment_uid.clone(), None);
+    let body = GetMetricRequest::new(experiment_uid.clone(), None, None);
 
     let request = Request::builder()
         .uri("/opsml/api/experiment/metrics") // should be post
@@ -83,7 +83,11 @@ async fn test_opsml_server_experiment_routes() {
     assert_eq!(metrics.len(), 2);
 
     // get metric by experiment_uid
-    let body = GetMetricRequest::new(experiment_uid.clone(), Some(vec!["metric1".to_string()]));
+    let body = GetMetricRequest::new(
+        experiment_uid.clone(),
+        Some(vec!["metric1".to_string()]),
+        None,
+    );
 
     let request = Request::builder()
         .uri("/opsml/api/experiment/metrics") // should be post
@@ -323,6 +327,7 @@ async fn test_opsml_server_grouped_experiment_metrics() {
             },
         ],
         metric_names: vec!["metric1".to_string(), "metric2".to_string()],
+        is_eval: None,
     };
 
     let request = Request::builder()
