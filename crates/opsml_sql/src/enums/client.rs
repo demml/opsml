@@ -1133,6 +1133,7 @@ mod tests {
 
         let uid = "550e8400-e29b-41d4-a716-446655440000".to_string();
         let metric_names = vec!["metric1", "metric2", "metric3"];
+        let eval_metric_names = vec!["eval_metric1", "eval_metric2"];
 
         for name in metric_names {
             let metric = MetricRecord {
@@ -1143,22 +1144,44 @@ mod tests {
                 timestamp: None,
                 created_at: None,
                 idx: None,
+                is_eval: false,
+            };
+
+            client.insert_experiment_metric(&metric).await.unwrap();
+        }
+
+        for name in eval_metric_names {
+            let metric = MetricRecord {
+                experiment_uid: uid.clone(),
+                name: name.to_string(),
+                value: 1.0,
+                step: None,
+                timestamp: None,
+                created_at: None,
+                idx: None,
+                is_eval: true,
             };
 
             client.insert_experiment_metric(&metric).await.unwrap();
         }
 
         let records = client
-            .get_experiment_metric(&uid, &Vec::new())
+            .get_experiment_metric(&uid, &Vec::new(), None)
             .await
             .unwrap();
 
         let names = client.get_experiment_metric_names(&uid).await.unwrap();
 
-        assert_eq!(records.len(), 3);
+        assert_eq!(records.len(), 5);
 
-        // assert names = "metric1"
-        assert_eq!(names.len(), 3);
+        assert_eq!(names.len(), 5);
+
+        let eval_records = client
+            .get_experiment_metric(&uid, &Vec::new(), Some(true))
+            .await
+            .unwrap();
+
+        assert_eq!(eval_records.len(), 2);
 
         cleanup();
     }
