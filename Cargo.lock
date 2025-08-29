@@ -333,9 +333,9 @@ dependencies = [
 
 [[package]]
 name = "async-executor"
-version = "1.13.2"
+version = "1.13.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bb812ffb58524bdd10860d7d974e2f01cc0950c2438a74ee5ec2e2280c6c4ffa"
+checksum = "497c00e0fd83a72a79a39fcbd8e3e2f055d6f6c7e025f3b3d91f4f8e76527fb8"
 dependencies = [
  "async-task",
  "concurrent-queue",
@@ -651,9 +651,9 @@ dependencies = [
 
 [[package]]
 name = "aws-sdk-sso"
-version = "1.81.0"
+version = "1.82.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "79ede098271e3471036c46957cba2ba30888f53bda2515bf04b560614a30a36e"
+checksum = "b069e4973dc25875bbd54e4c6658bdb4086a846ee9ed50f328d4d4c33ebf9857"
 dependencies = [
  "aws-credential-types",
  "aws-runtime",
@@ -673,9 +673,9 @@ dependencies = [
 
 [[package]]
 name = "aws-sdk-ssooidc"
-version = "1.82.0"
+version = "1.83.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "43326f724ba2cc957e6f3deac0ca1621a3e5d4146f5970c24c8a108dac33070f"
+checksum = "0b49e8fe57ff100a2f717abfa65bdd94e39702fa5ab3f60cddc6ac7784010c68"
 dependencies = [
  "aws-credential-types",
  "aws-runtime",
@@ -757,9 +757,9 @@ dependencies = [
 
 [[package]]
 name = "aws-smithy-checksums"
-version = "0.63.7"
+version = "0.63.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4dbef71cd3cf607deb5c407df52f7e589e6849b296874ee448977efbb6d0832b"
+checksum = "56d2df0314b8e307995a3b86d44565dfe9de41f876901a7d71886c756a25979f"
 dependencies = [
  "aws-smithy-http",
  "aws-smithy-types",
@@ -809,9 +809,9 @@ dependencies = [
 
 [[package]]
 name = "aws-smithy-http-client"
-version = "1.1.0"
+version = "1.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4fdbad9bd9dbcc6c5e68c311a841b54b70def3ca3b674c42fbebb265980539f8"
+checksum = "147e8eea63a40315d704b97bf9bc9b8c1402ae94f89d5ad6f7550d963309da1b"
 dependencies = [
  "aws-smithy-async",
  "aws-smithy-runtime-api",
@@ -839,9 +839,9 @@ dependencies = [
 
 [[package]]
 name = "aws-smithy-json"
-version = "0.61.4"
+version = "0.61.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a16e040799d29c17412943bdbf488fd75db04112d0c0d4b9290bacf5ae0014b9"
+checksum = "eaa31b350998e703e9826b2104dd6f63be0508666e1aba88137af060e8944047"
 dependencies = [
  "aws-smithy-types",
 ]
@@ -867,9 +867,9 @@ dependencies = [
 
 [[package]]
 name = "aws-smithy-runtime"
-version = "1.9.0"
+version = "1.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a3d57c8b53a72d15c8e190475743acf34e4996685e346a3448dd54ef696fc6e0"
+checksum = "d3946acbe1ead1301ba6862e712c7903ca9bb230bdf1fbd1b5ac54158ef2ab1f"
 dependencies = [
  "aws-smithy-async",
  "aws-smithy-http",
@@ -2464,7 +2464,7 @@ dependencies = [
  "js-sys",
  "libc",
  "r-efi",
- "wasi 0.14.2+wasi-0.2.4",
+ "wasi 0.14.3+wasi-0.2.4",
  "wasm-bindgen",
 ]
 
@@ -3123,6 +3123,15 @@ name = "itertools"
 version = "0.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "413ee7dfc52ee1a4949ceeb7dbc8a33f2d6c088194d9f922fb8318faf1f01186"
+dependencies = [
+ "either",
+]
+
+[[package]]
+name = "itertools"
+version = "0.14.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2b192c782037fadd9cfa75548310488aabdbf3d2da73885b31bd0abd03351285"
 dependencies = [
  "either",
 ]
@@ -4891,9 +4900,9 @@ dependencies = [
 
 [[package]]
 name = "potential_utf"
-version = "0.1.2"
+version = "0.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e5a7c30837279ca13e7c867e9e40053bc68740f988cb07f7ca6df43cc734b585"
+checksum = "84df19adbe5b5a0782edcab45899906947ab039ccf4573713735ee7de1e6b08a"
 dependencies = [
  "zerovec",
 ]
@@ -5137,9 +5146,9 @@ dependencies = [
 
 [[package]]
 name = "quinn"
-version = "0.11.8"
+version = "0.11.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "626214629cda6781b6dc1d316ba307189c85ba657213ce642d9c77670f8202c8"
+checksum = "b9e20a958963c291dc322d98411f541009df2ced7b5a4f2bd52337638cfccf20"
 dependencies = [
  "bytes",
  "cfg_aliases",
@@ -5148,7 +5157,7 @@ dependencies = [
  "quinn-udp",
  "rustc-hash 2.1.1",
  "rustls 0.23.31",
- "socket2 0.5.10",
+ "socket2 0.6.0",
  "thiserror 2.0.16",
  "tokio",
  "tracing",
@@ -5157,9 +5166,9 @@ dependencies = [
 
 [[package]]
 name = "quinn-proto"
-version = "0.11.12"
+version = "0.11.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "49df843a9161c85bb8aae55f101bc0bac8bcafd637a620d9122fd7e0b2f7422e"
+checksum = "f1906b49b0c3bc04b5fe5d86a77925ae6524a19b816ae38ce1e426255f1d8a31"
 dependencies = [
  "bytes",
  "getrandom 0.3.3",
@@ -5178,16 +5187,16 @@ dependencies = [
 
 [[package]]
 name = "quinn-udp"
-version = "0.5.13"
+version = "0.5.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fcebb1209ee276352ef14ff8732e24cc2b02bbac986cd74a4c81bcb2f9881970"
+checksum = "addec6a0dcad8a8d96a771f815f0eaf55f9d1805756410b39f5fa81332574cbd"
 dependencies = [
  "cfg_aliases",
  "libc",
  "once_cell",
- "socket2 0.5.10",
+ "socket2 0.6.0",
  "tracing",
- "windows-sys 0.59.0",
+ "windows-sys 0.60.2",
 ]
 
 [[package]]
@@ -5955,7 +5964,8 @@ checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
 [[package]]
 name = "scouter-client"
 version = "0.10.0"
-source = "git+https://github.com/demml/scouter.git?branch=fest%2Fabi3-extension#64d54b2e750308b1c47fd9bd4b154592ad6b2044"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d7eff9beb1f64ed0ad8f533c6e719be1b2d67edacfa4db0ad229bd0c41c8d38f"
 dependencies = [
  "chrono",
  "ndarray",
@@ -5974,7 +5984,7 @@ dependencies = [
  "scouter-types",
  "serde",
  "serde_json",
- "serde_qs 0.8.5",
+ "serde_qs 0.15.0",
  "thiserror 2.0.16",
  "tokio",
  "tracing",
@@ -5983,7 +5993,8 @@ dependencies = [
 [[package]]
 name = "scouter-dispatch"
 version = "0.10.0"
-source = "git+https://github.com/demml/scouter.git?branch=fest%2Fabi3-extension#64d54b2e750308b1c47fd9bd4b154592ad6b2044"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "dc59ec62bad6ab43698ca11d28491e0de3e31fe8b78049b45aef153724e7335c"
 dependencies = [
  "futures",
  "pyo3",
@@ -5998,13 +6009,14 @@ dependencies = [
 [[package]]
 name = "scouter-drift"
 version = "0.10.0"
-source = "git+https://github.com/demml/scouter.git?branch=fest%2Fabi3-extension#64d54b2e750308b1c47fd9bd4b154592ad6b2044"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "282298074a7f6f9e443fcc19ad7cba6b87c6252931cdd6297642f7eaf91c22fe"
 dependencies = [
  "chrono",
  "cron",
  "futures",
  "indicatif",
- "itertools 0.12.1",
+ "itertools 0.14.0",
  "ndarray",
  "ndarray-stats",
  "noisy_float",
@@ -6026,7 +6038,8 @@ dependencies = [
 [[package]]
 name = "scouter-events"
 version = "0.10.0"
-source = "git+https://github.com/demml/scouter.git?branch=fest%2Fabi3-extension#64d54b2e750308b1c47fd9bd4b154592ad6b2044"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "32f2a21d8ba1ad6a9cb861acbee703ce477a3cd3869ce007ba41b788c7cc6173"
 dependencies = [
  "async-trait",
  "chrono",
@@ -6060,9 +6073,10 @@ dependencies = [
 [[package]]
 name = "scouter-observability"
 version = "0.10.0"
-source = "git+https://github.com/demml/scouter.git?branch=fest%2Fabi3-extension#64d54b2e750308b1c47fd9bd4b154592ad6b2044"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f9d4f5fc1c49d19eb14886ecb606192f3310c2e36a8ba363f2319033f87606d7"
 dependencies = [
- "itertools 0.12.1",
+ "itertools 0.14.0",
  "ndarray",
  "ndarray-stats",
  "noisy_float",
@@ -6077,11 +6091,12 @@ dependencies = [
 [[package]]
 name = "scouter-profile"
 version = "0.10.0"
-source = "git+https://github.com/demml/scouter.git?branch=fest%2Fabi3-extension#64d54b2e750308b1c47fd9bd4b154592ad6b2044"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2b01e93cd21fce471da4f7d99bd5943bd327bbe431dafa3b5e808b95698c36ab"
 dependencies = [
  "chrono",
  "indicatif",
- "itertools 0.12.1",
+ "itertools 0.14.0",
  "ndarray",
  "ndarray-stats",
  "noisy_float",
@@ -6099,7 +6114,8 @@ dependencies = [
 [[package]]
 name = "scouter-semver"
 version = "0.10.0"
-source = "git+https://github.com/demml/scouter.git?branch=fest%2Fabi3-extension#64d54b2e750308b1c47fd9bd4b154592ad6b2044"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4c9e3d5052a82d2cf85b1ef513bf05704b5ae4cac8a0b38eb64e672db77e2b5f"
 dependencies = [
  "pyo3",
  "semver",
@@ -6110,7 +6126,8 @@ dependencies = [
 [[package]]
 name = "scouter-settings"
 version = "0.10.0"
-source = "git+https://github.com/demml/scouter.git?branch=fest%2Fabi3-extension#64d54b2e750308b1c47fd9bd4b154592ad6b2044"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "36f9ccb53b013bd9da8ab57663035797ffd37570e54d353d67fe0c3ee8ad2c9c"
 dependencies = [
  "base64 0.22.1",
  "potato-head",
@@ -6123,7 +6140,8 @@ dependencies = [
 [[package]]
 name = "scouter-types"
 version = "0.10.0"
-source = "git+https://github.com/demml/scouter.git?branch=fest%2Fabi3-extension#64d54b2e750308b1c47fd9bd4b154592ad6b2044"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "764401147aa6f8ec21b14d540678171ddbee05b2f98d890d2ce25d64d5489693"
 dependencies = [
  "chrono",
  "colored_json",
@@ -7582,11 +7600,11 @@ checksum = "ccf3ec651a847eb01de73ccad15eb7d99f80485de043efb2f370cd654f4ea44b"
 
 [[package]]
 name = "wasi"
-version = "0.14.2+wasi-0.2.4"
+version = "0.14.3+wasi-0.2.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9683f9a5a998d873c0d21fcbe3c083009670149a8fab228644b8bd36b2c48cb3"
+checksum = "6a51ae83037bdd272a9e28ce236db8c07016dd0d50c27038b3f407533c030c95"
 dependencies = [
- "wit-bindgen-rt",
+ "wit-bindgen",
 ]
 
 [[package]]
@@ -8132,13 +8150,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "wit-bindgen-rt"
-version = "0.39.0"
+name = "wit-bindgen"
+version = "0.45.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6f42320e61fe2cfd34354ecb597f86f413484a798ba44a8ca1165c58d42da6c1"
-dependencies = [
- "bitflags 2.9.3",
-]
+checksum = "052283831dbae3d879dc7f51f3d92703a316ca49f91540417d38591826127814"
 
 [[package]]
 name = "writeable"
