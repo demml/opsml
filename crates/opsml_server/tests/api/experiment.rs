@@ -26,6 +26,7 @@ async fn test_opsml_server_experiment_routes() {
             Metric {
                 name: "metric2".to_string(),
                 value: 1.0,
+                is_eval: true,
                 ..Default::default()
             },
         ],
@@ -103,6 +104,24 @@ async fn test_opsml_server_experiment_routes() {
     let metrics: Vec<Metric> = serde_json::from_slice(&body).unwrap();
 
     assert_eq!(metrics.len(), 1);
+
+    // get eval metric
+    let body = GetMetricRequest::new(experiment_uid.clone(), None, Some(true));
+    let request = Request::builder()
+        .uri("/opsml/api/experiment/metrics") // should be post
+        .method("POST")
+        .header(header::CONTENT_TYPE, "application/json")
+        .body(Body::from(serde_json::to_string(&body).unwrap()))
+        .unwrap();
+
+    let response = helper.send_oneshot(request).await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let body = response.into_body().collect().await.unwrap().to_bytes();
+    let metrics: Vec<Metric> = serde_json::from_slice(&body).unwrap();
+
+    assert_eq!(metrics.len(), 1);
+    assert!(metrics[0].is_eval);
 
     // insert parameter
 
@@ -270,6 +289,7 @@ async fn test_opsml_server_grouped_experiment_metrics() {
             Metric {
                 name: "metric2".to_string(),
                 value: 1.0,
+                is_eval: true,
                 ..Default::default()
             },
         ],
