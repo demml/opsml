@@ -158,12 +158,11 @@ impl SqliteQueryHelper {
         }
 
         if let Some(is_eval) = is_eval {
-            query.push_str(" AND is_eval = ?");
-            bindings.push(if is_eval {
-                "1".to_string()
+            if is_eval {
+                query.push_str(" AND is_eval = TRUE");
             } else {
-                "0".to_string()
-            });
+                query.push_str(" AND is_eval = FALSE");
+            }
         }
 
         (query, bindings)
