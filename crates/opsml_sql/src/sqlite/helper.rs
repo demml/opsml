@@ -34,7 +34,6 @@ const INSERT_EXPERIMENT_METRIC_SQL: &str =
     include_str!("sql/experiment/insert_experiment_metric.sql");
 const GET_EXPERIMENT_METRIC_SQL: &str = include_str!("sql/experiment/get_experiment_metric.sql");
 const INSERT_HARDWARE_METRIC_SQL: &str = include_str!("sql/experiment/insert_hardware_metric.sql");
-const GET_EVAL_METRIC_SQL: &str = include_str!("sql/experiment/get_eval_metric.sql");
 
 // cards
 const INSERT_DATACARD_SQL: &str = include_str!("sql/card/insert_datacard.sql");
@@ -137,12 +136,15 @@ impl SqliteQueryHelper {
 
         // remove last co
     }
-    pub fn get_experiment_metric_query(names: &[String]) -> (String, Vec<String>) {
+    pub fn get_experiment_metric_query(
+        names: &[String],
+        is_eval: Option<bool>,
+    ) -> (String, Vec<String>) {
         let mut query = GET_EXPERIMENT_METRIC_SQL.to_string();
 
         let mut bindings: Vec<String> = Vec::new();
 
-        // loop through names and bind them. First name = and and others are or
+        // loop through names and bind them
         if !names.is_empty() {
             query.push_str(" AND (");
             for (idx, name) in names.iter().enumerate() {
@@ -153,6 +155,15 @@ impl SqliteQueryHelper {
                 bindings.push(name.to_string());
             }
             query.push(')');
+        }
+
+        if let Some(is_eval) = is_eval {
+            query.push_str(" AND is_eval = ?");
+            bindings.push(if is_eval {
+                "1".to_string()
+            } else {
+                "0".to_string()
+            });
         }
 
         (query, bindings)
@@ -517,10 +528,6 @@ impl SqliteQueryHelper {
 
     pub fn get_audit_event_insert_query() -> String {
         INSERT_AUDIT_EVENT_SQL.to_string()
-    }
-
-    pub fn get_eval_metric_query() -> String {
-        GET_EVAL_METRIC_SQL.to_string()
     }
 
     pub fn get_load_card_query(
