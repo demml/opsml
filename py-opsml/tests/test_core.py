@@ -6,6 +6,7 @@ from opsml.model import (
     FeatureSchema,
 )
 
+
 from optimum.onnxruntime.configuration import AutoQuantizationConfig  # type: ignore
 import pytest
 
