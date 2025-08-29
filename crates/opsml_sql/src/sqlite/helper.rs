@@ -519,6 +519,10 @@ impl SqliteQueryHelper {
         INSERT_AUDIT_EVENT_SQL.to_string()
     }
 
+    pub fn get_eval_metric_query() -> String {
+        GET_EVAL_METRIC_SQL.to_string()
+    }
+
     pub fn get_load_card_query(
         table: &CardTable,
         query_args: &CardQueryArgs,
