@@ -25,6 +25,7 @@ opsml-settings = { workspace = true }
 opsml-state = { workspace = true }
 opsml-types = { workspace = true }
 opsml-utils = { workspace = true }
+opsml-version = { workspace = true }
 potato-head = { workspace = true, features = ['mock'] }
 pyo3 = { workspace = true, features = ["extension-module", "abi3-py310"] }
 reqwest = { workspace = true, optional = true }
