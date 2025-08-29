@@ -276,7 +276,7 @@ jobs:
           fi
 
           echo "Installing wheel: $WHEEL_FILE"
-          uv pip install "$WHEEL_FILE" --force-reinstall --no-deps
+          uv pip install --force-reinstall --verbose "$WHEEL_FILE"
 
       - name: Verify server features are available
         working-directory: ./py-opsml
