@@ -115,14 +115,15 @@ impl SqliteQueryHelper {
                 name, 
                 value,
                 step,
-                timestamp
+                timestamp,
+                is_eval
             ) VALUES ",
             CardTable::Metrics
         )
         .to_string();
 
         for i in 0..nbr_records {
-            query.push_str("(?, ?, ?, ?, ?)");
+            query.push_str("(?, ?, ?, ?, ?, ?)");
 
             // add comma if not last record
             if i < nbr_records - 1 {
@@ -441,8 +442,7 @@ impl SqliteQueryHelper {
 
         let mut bindings: Vec<String> = Vec::new();
 
-        // loop through names and bind them. First name = and and others are or
-
+        // loop through names and bind them
         if !names.is_empty() {
             query.push_str(" AND (");
             for (idx, name) in names.iter().enumerate() {
