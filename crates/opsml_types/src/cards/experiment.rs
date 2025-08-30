@@ -4,6 +4,7 @@ use opsml_utils::PyHelperFuncs;
 use pyo3::prelude::*;
 use pyo3::IntoPyObjectExt;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use sysinfo::{Networks, System};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -65,6 +66,53 @@ impl Default for Metric {
             created_at: None,
             is_eval: false,
         }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[pyclass]
+pub struct EvalMetrics {
+    #[pyo3(get)]
+    pub metrics: HashMap<String, Metric>,
+}
+
+impl EvalMetrics {
+    pub fn new(metrics: HashMap<String, f64>) -> Self {
+        let metrics = metrics
+            .into_iter()
+            .map(|(name, value)| {
+                (
+                    name.clone(),
+                    Metric {
+                        name,
+                        value,
+                        step: None,
+                        timestamp: None,
+                        created_at: Some(Utc::now()),
+                        is_eval: true,
+                    },
+                )
+            })
+            .collect();
+        Self { metrics }
+    }
+}
+
+#[pymethods]
+impl EvalMetrics {
+    pub fn __str__(&self) -> String {
+        PyHelperFuncs::__str__(self)
+    }
+    // make it iterable and indexable
+    pub fn __getitem__(&self, key: &str) -> Result<f64, PyTypeError> {
+        match self.metrics.get(key) {
+            Some(metric) => Ok(metric.value),
+            None => Err(TypeError::NotMetricFoundError(key.to_string()).into()),
+        }
+    }
+
+    pub fn __len__(&self) -> usize {
+        self.metrics.len()
     }
 }
 

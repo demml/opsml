@@ -27,6 +27,9 @@ pub enum TypeError {
 
     #[error(transparent)]
     IoError(#[from] std::io::Error),
+
+    #[error("Metric not found: {0}")]
+    NotMetricFoundError(String),
 }
 
 #[derive(Error, Debug)]
