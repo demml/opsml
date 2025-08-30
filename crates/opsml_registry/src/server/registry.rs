@@ -622,11 +622,10 @@ pub mod server_logic {
         pub async fn get_metrics(
             &self,
             metrics: &GetMetricRequest,
-            is_eval: Option<bool>,
         ) -> Result<Vec<Metric>, RegistryError> {
             let records = self
                 .sql_client
-                .get_experiment_metric(&metrics.experiment_uid, &metrics.names, is_eval)
+                .get_experiment_metric(&metrics.experiment_uid, &metrics.names, metrics.is_eval)
                 .await?;
 
             let metrics = records
