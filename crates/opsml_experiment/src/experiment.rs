@@ -521,6 +521,7 @@ impl Experiment {
                 step,
                 timestamp,
                 created_at,
+                is_eval: false,
             }],
         };
 
@@ -944,6 +945,7 @@ pub fn start_experiment<'py>(
     Ok(Py::new(py, active_experiment)?.bind(py).clone())
 }
 
+/// This method gets all metrics for an experiment
 #[pyfunction]
 #[pyo3(signature = (experiment_uid, names = None))]
 pub fn get_experiment_metrics(
@@ -953,6 +955,7 @@ pub fn get_experiment_metrics(
     let metric_request = GetMetricRequest {
         experiment_uid: experiment_uid.to_string(),
         names: names.unwrap_or_default(),
+        is_eval: None,
     };
 
     let registry = OpsmlRegistry::new(RegistryType::Experiment)?;

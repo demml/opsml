@@ -3,5 +3,6 @@ INSERT INTO opsml_experiment_metric (
     name, 
     value,
     step,
-    timestamp
-) VALUES ($1, $2, $3, $4, $5)
+    timestamp,
+    is_eval
+) VALUES ($1, $2, $3, $4, $5, $6)

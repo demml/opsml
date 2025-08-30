@@ -611,6 +611,7 @@ pub mod server_logic {
                         m.value,
                         m.step,
                         m.timestamp,
+                        m.is_eval,
                     )
                 })
                 .collect::<Vec<_>>();
@@ -624,7 +625,7 @@ pub mod server_logic {
         ) -> Result<Vec<Metric>, RegistryError> {
             let records = self
                 .sql_client
-                .get_experiment_metric(&metrics.experiment_uid, &metrics.names)
+                .get_experiment_metric(&metrics.experiment_uid, &metrics.names, metrics.is_eval)
                 .await?;
 
             let metrics = records
@@ -635,6 +636,7 @@ pub mod server_logic {
                     value: m.value,
                     step: m.step,
                     timestamp: m.timestamp,
+                    is_eval: m.is_eval,
                 })
                 .collect::<Vec<_>>();
 

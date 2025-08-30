@@ -13,13 +13,16 @@ pub struct MetricRequest {
 pub struct GetMetricRequest {
     pub experiment_uid: String,
     pub names: Vec<String>,
+    #[serde(default)]
+    pub is_eval: Option<bool>,
 }
 
 impl GetMetricRequest {
-    pub fn new(experiment_uid: String, names: Option<Vec<String>>) -> Self {
+    pub fn new(experiment_uid: String, names: Option<Vec<String>>, is_eval: Option<bool>) -> Self {
         Self {
             experiment_uid,
             names: names.unwrap_or_default(),
+            is_eval,
         }
     }
 }
@@ -53,6 +56,8 @@ pub struct Experiment {
 pub struct UiMetricRequest {
     pub experiments: Vec<Experiment>,
     pub metric_names: Vec<String>,
+    #[serde(default)]
+    pub is_eval: Option<bool>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]

@@ -828,6 +828,7 @@ impl SqlClient for MySqlClient {
             .bind(record.value)
             .bind(record.step)
             .bind(record.timestamp)
+            .bind(record.is_eval)
             .execute(&self.pool)
             .await?;
 
@@ -848,7 +849,8 @@ impl SqlClient for MySqlClient {
                 .bind(&r.name)
                 .bind(r.value)
                 .bind(r.step)
-                .bind(r.timestamp);
+                .bind(r.timestamp)
+                .bind(r.is_eval);
         }
 
         query_builder.execute(&self.pool).await?;
@@ -860,8 +862,9 @@ impl SqlClient for MySqlClient {
         &self,
         uid: &str,
         names: &'life2 [String],
+        is_eval: Option<bool>,
     ) -> Result<Vec<MetricRecord>, SqlError> {
-        let (query, bindings) = MySQLQueryHelper::get_experiment_metric_query(names);
+        let (query, bindings) = MySQLQueryHelper::get_experiment_metric_query(names, is_eval);
 
         let mut query_builder = sqlx::query_as::<_, MetricRecord>(&query).bind(uid);
 
@@ -1818,6 +1821,7 @@ mod tests {
 
         let uid = "550e8400-e29b-41d4-a716-446655440000".to_string();
         let metric_names = vec!["metric1", "metric2", "metric3"];
+        let eval_metric_names = vec!["eval_metric1", "eval_metric2"];
 
         for name in metric_names {
             let metric = MetricRecord {
@@ -1830,16 +1834,35 @@ mod tests {
             client.insert_experiment_metric(&metric).await.unwrap();
         }
 
+        for name in eval_metric_names {
+            let metric = MetricRecord {
+                experiment_uid: uid.clone(),
+                name: name.to_string(),
+                value: 1.0,
+                is_eval: true,
+                ..Default::default()
+            };
+
+            client.insert_experiment_metric(&metric).await.unwrap();
+        }
+
         let records = client
-            .get_experiment_metric(&uid, &Vec::new())
+            .get_experiment_metric(&uid, &Vec::new(), None)
             .await
             .unwrap();
         let names = client.get_experiment_metric_names(&uid).await.unwrap();
 
-        assert_eq!(records.len(), 3);
+        assert_eq!(records.len(), 5);
 
         // assert names = "metric1"
-        assert_eq!(names.len(), 3);
+        assert_eq!(names.len(), 5);
+
+        let eval_records = client
+            .get_experiment_metric(&uid, &Vec::new(), Some(true))
+            .await
+            .unwrap();
+
+        assert_eq!(eval_records.len(), 2);
 
         // insert vec
         let records = vec![
@@ -1860,11 +1883,11 @@ mod tests {
         client.insert_experiment_metrics(&records).await.unwrap();
 
         let records = client
-            .get_experiment_metric(&uid, &Vec::new())
+            .get_experiment_metric(&uid, &Vec::new(), None)
             .await
             .unwrap();
 
-        assert_eq!(records.len(), 5);
+        assert_eq!(records.len(), 7);
     }
 
     #[tokio::test]

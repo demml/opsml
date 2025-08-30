@@ -145,6 +145,7 @@ pub trait SqlClient: Sized {
         &self,
         uid: &str,
         names: &'life2 [String],
+        is_eval: Option<bool>,
     ) -> Result<Vec<MetricRecord>, SqlError>;
 
     /// Get run metric names
