@@ -100,9 +100,7 @@ class Experiment:
                 Value of the parameter
         """
 
-    def log_parameters(
-        self, parameters: list[Parameter] | Dict[str, Union[int, float, str]]
-    ) -> None:
+    def log_parameters(self, parameters: list[Parameter] | Dict[str, Union[int, float, str]]) -> None:
         """
         Log multiple parameters
 
@@ -147,9 +145,7 @@ class Experiment:
 
         """
 
-    def log_figure(
-        self, name: str, figure: Any, kwargs: Optional[Dict[str, Any]] = None
-    ) -> None:
+    def log_figure(self, name: str, figure: Any, kwargs: Optional[Dict[str, Any]] = None) -> None:
         """
         Log a figure. This method will log a matplotlib Figure object to the experiment artifacts.
 
