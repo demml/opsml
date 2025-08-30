@@ -848,7 +848,8 @@ impl SqlClient for MySqlClient {
                 .bind(&r.name)
                 .bind(r.value)
                 .bind(r.step)
-                .bind(r.timestamp);
+                .bind(r.timestamp)
+                .bind(r.is_eval);
         }
 
         query_builder.execute(&self.pool).await?;
