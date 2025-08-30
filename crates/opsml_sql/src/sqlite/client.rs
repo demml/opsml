@@ -826,7 +826,7 @@ impl SqlClient for SqliteClient {
             .bind(record.value)
             .bind(record.step)
             .bind(record.timestamp)
-            .bind(&record.is_eval)
+            .bind(record.is_eval)
             .execute(&self.pool)
             .await?;
 
@@ -848,7 +848,7 @@ impl SqlClient for SqliteClient {
                 .bind(r.value)
                 .bind(r.step)
                 .bind(r.timestamp)
-                .bind(&r.is_eval);
+                .bind(r.is_eval);
         }
 
         query_builder.execute(&self.pool).await?;
