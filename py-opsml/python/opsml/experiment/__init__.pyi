@@ -76,6 +76,15 @@ class Experiment:
                 List of metrics to log
         """
 
+    def log_eval_metrics(self, metrics: "EvalMetrics") -> None:
+        """
+        Log evaluation metrics
+
+        Args:
+            metrics (EvalMetrics):
+                Evaluation metrics to log
+        """
+
     def log_parameter(
         self,
         name: str,
