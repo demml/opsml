@@ -548,7 +548,11 @@ impl Experiment {
     }
 
     /// Logs evaluation metrics
-    pub fn log_eval_metrics(&self, metrics: EvalMetrics) -> Result<(), ExperimentError> {
+    pub fn log_eval_metrics(
+        &self,
+        py: Python<'_>,
+        metrics: EvalMetrics,
+    ) -> Result<(), ExperimentError> {
         let registry = &self.registries.experiment.registry;
 
         let metric_request = MetricRequest {
@@ -559,6 +563,12 @@ impl Experiment {
         registry
             .insert_metrics(&metric_request)
             .map_err(ExperimentError::InsertMetricError)?;
+
+        let experiment = self.experiment.clone_ref(py);
+        let exp = experiment.bind(py);
+
+        // update eval_metrics
+        exp.setattr("eval_metrics", metrics)?;
 
         Ok(())
     }

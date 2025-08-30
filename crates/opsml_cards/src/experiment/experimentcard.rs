@@ -3,6 +3,7 @@ use crate::utils::BaseArgs;
 use chrono::{DateTime, Utc};
 use opsml_crypt::decrypt_directory;
 use opsml_storage::storage_client;
+use opsml_types::cards::EvalMetrics;
 use opsml_types::contracts::{CardRecord, ExperimentCardClientRecord};
 use opsml_types::{
     cards::{ComputeEnvironment, Metrics, Parameters},
@@ -82,6 +83,9 @@ pub struct ExperimentCard {
     #[pyo3(get)]
     pub is_card: bool,
 
+    #[pyo3(get, set)]
+    eval_metrics: EvalMetrics,
+
     artifact_key: Option<ArtifactKey>,
 }
 
@@ -121,6 +125,7 @@ impl ExperimentCard {
             subexperiment: false,
             is_card: true,
             opsml_version: opsml_version::version(),
+            eval_metrics: EvalMetrics::default(),
         })
     }
 
@@ -367,6 +372,7 @@ impl<'de> Deserialize<'de> for ExperimentCard {
             Subexperiment,
             IsCard,
             OpsmlVersion,
+            EvalMetrics,
         }
 
         struct ExperimentCardVisitor;
@@ -395,6 +401,7 @@ impl<'de> Deserialize<'de> for ExperimentCard {
                 let mut subexperiment = None;
                 let mut is_card = None;
                 let mut opsml_version = None;
+                let mut eval_metrics = None;
 
                 while let Some(key) = map.next_key()? {
                     match key {
@@ -440,6 +447,9 @@ impl<'de> Deserialize<'de> for ExperimentCard {
                         Field::OpsmlVersion => {
                             opsml_version = Some(map.next_value()?);
                         }
+                        Field::EvalMetrics => {
+                            eval_metrics = Some(map.next_value()?);
+                        }
                     }
                 }
 
@@ -462,6 +472,8 @@ impl<'de> Deserialize<'de> for ExperimentCard {
                 let is_card = is_card.ok_or_else(|| de::Error::missing_field("is_card"))?;
                 let opsml_version =
                     opsml_version.ok_or_else(|| de::Error::missing_field("opsml_version"))?;
+                let eval_metrics =
+                    eval_metrics.ok_or_else(|| de::Error::missing_field("eval_metrics"))?;
 
                 Ok(ExperimentCard {
                     name,
@@ -478,6 +490,7 @@ impl<'de> Deserialize<'de> for ExperimentCard {
                     subexperiment,
                     is_card,
                     opsml_version,
+                    eval_metrics,
                 })
             }
         }
@@ -497,6 +510,7 @@ impl<'de> Deserialize<'de> for ExperimentCard {
             "subexperiment",
             "is_card",
             "opsml_version",
+            "eval_metrics",
         ];
         deserializer.deserialize_struct("ExperimentCard", FIELDS, ExperimentCardVisitor)
     }
@@ -517,6 +531,7 @@ impl FromPyObject<'_> for ExperimentCard {
         let subexperiment = ob.getattr("subexperiment")?.extract()?;
         let artifact_key = None;
         let opsml_version = ob.getattr("opsml_version")?.extract()?;
+        let eval_metrics = ob.getattr("eval_metrics")?.extract()?;
 
         Ok(ExperimentCard {
             space,
@@ -533,6 +548,7 @@ impl FromPyObject<'_> for ExperimentCard {
             artifact_key,
             is_card: true,
             opsml_version,
+            eval_metrics,
         })
     }
 }

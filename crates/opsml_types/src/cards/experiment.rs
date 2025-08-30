@@ -82,6 +82,14 @@ impl EvalMetrics {
     }
 }
 
+impl Default for EvalMetrics {
+    fn default() -> Self {
+        Self {
+            metrics: HashMap::new(),
+        }
+    }
+}
+
 #[pymethods]
 impl EvalMetrics {
     #[new]
