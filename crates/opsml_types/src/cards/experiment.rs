@@ -23,6 +23,9 @@ pub struct Metric {
 
     #[pyo3(get)]
     pub created_at: Option<DateTime<Utc>>,
+
+    #[pyo3(get)]
+    pub is_eval: bool,
 }
 
 #[pymethods]
@@ -36,12 +39,14 @@ impl Metric {
         timestamp: Option<i64>,
         created_at: Option<DateTime<Utc>>,
     ) -> Self {
+        let is_eval = false;
         Self {
             name,
             value,
             step,
             timestamp,
             created_at,
+            is_eval,
         }
     }
 
@@ -58,6 +63,7 @@ impl Default for Metric {
             step: None,
             timestamp: None,
             created_at: None,
+            is_eval: false,
         }
     }
 }

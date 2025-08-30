@@ -36,6 +36,7 @@ pub async fn insert_metrics(
                 m.value,
                 m.step,
                 m.timestamp,
+                m.is_eval,
             )
         })
         .collect::<Vec<_>>();
@@ -59,7 +60,7 @@ pub async fn get_metrics(
 ) -> Result<Json<Vec<Metric>>, (StatusCode, Json<OpsmlServerError>)> {
     let metrics = state
         .sql_client
-        .get_experiment_metric(&req.experiment_uid, &req.names)
+        .get_experiment_metric(&req.experiment_uid, &req.names, req.is_eval)
         .await
         .map_err(|e| {
             error!("Failed to get metrics: {e}");
@@ -75,6 +76,7 @@ pub async fn get_metrics(
             step: m.step,
             timestamp: m.timestamp,
             created_at: m.created_at,
+            is_eval: m.is_eval,
         })
         .collect::<Vec<_>>();
 
@@ -91,7 +93,7 @@ pub async fn get_grouped_metrics(
     for experiment in req.experiments {
         let metrics = state
             .sql_client
-            .get_experiment_metric(&experiment.uid, &req.metric_names)
+            .get_experiment_metric(&experiment.uid, &req.metric_names, req.is_eval)
             .await
             .map_err(|e| {
                 error!("Failed to get metrics: {e}");
