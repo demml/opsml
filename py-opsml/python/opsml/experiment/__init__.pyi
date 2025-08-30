@@ -76,6 +76,15 @@ class Experiment:
                 List of metrics to log
         """
 
+    def log_eval_metrics(self, metrics: "EvalMetrics") -> None:
+        """
+        Log evaluation metrics
+
+        Args:
+            metrics (EvalMetrics):
+                Evaluation metrics to log
+        """
+
     def log_parameter(
         self,
         name: str,
@@ -273,6 +282,25 @@ class Metric:
         """
         Created at of the metric
         """
+
+class EvalMetrics:
+    """
+    Map of metrics used that can be used to evaluate a model.
+    The metrics are also used when comparing a model with other models
+    """
+
+    def __init__(self, metrics: Dict[str, float]) -> None:
+        """
+        Initialize EvalMetrics
+
+        Args:
+            metrics (Dict[str, float]):
+                Dictionary of metrics containing the name of the metric as the key and its value as the value.
+        """
+
+    def __getitem__(self, key: str) -> float:
+        """Get the value of a metric by name. A RuntimeError will be raised if the metric does not exist."""
+        ...
 
 class Metrics:
     def __str__(self): ...

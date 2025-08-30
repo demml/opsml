@@ -8,7 +8,7 @@ use opsml_registry::base::OpsmlRegistry;
 use opsml_registry::{CardRegistries, CardRegistry};
 use opsml_semver::VersionType;
 use opsml_storage::storage_client;
-use opsml_types::cards::{Metrics, Parameters};
+use opsml_types::cards::{EvalMetrics, Metrics, Parameters};
 use opsml_types::contracts::{
     ArtifactKey, ArtifactQueryArgs, ArtifactType, GetMetricRequest, GetParameterRequest,
     MetricRequest, ParameterRequest,
@@ -543,6 +543,32 @@ impl Experiment {
         registry
             .insert_metrics(&metric_request)
             .map_err(ExperimentError::InsertMetricError)?;
+
+        Ok(())
+    }
+
+    /// Logs evaluation metrics
+    pub fn log_eval_metrics(
+        &self,
+        py: Python<'_>,
+        metrics: EvalMetrics,
+    ) -> Result<(), ExperimentError> {
+        let registry = &self.registries.experiment.registry;
+
+        let metric_request = MetricRequest {
+            experiment_uid: self.uid.clone(),
+            metrics: metrics.to_vec(),
+        };
+
+        registry
+            .insert_metrics(&metric_request)
+            .map_err(ExperimentError::InsertMetricError)?;
+
+        let experiment = self.experiment.clone_ref(py);
+        let exp = experiment.bind(py);
+
+        // update eval_metrics
+        exp.setattr("eval_metrics", metrics)?;
 
         Ok(())
     }
