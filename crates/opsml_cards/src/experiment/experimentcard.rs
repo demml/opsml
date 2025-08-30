@@ -331,7 +331,7 @@ impl Serialize for ExperimentCard {
     where
         S: Serializer,
     {
-        let mut state = serializer.serialize_struct("ExperimentCard", 12)?;
+        let mut state = serializer.serialize_struct("ExperimentCard", 13)?;
 
         // set session to none
         state.serialize_field("name", &self.name)?;
@@ -347,6 +347,7 @@ impl Serialize for ExperimentCard {
         state.serialize_field("subexperiment", &self.subexperiment)?;
         state.serialize_field("is_card", &self.is_card)?;
         state.serialize_field("opsml_version", &self.opsml_version)?;
+        state.serialize_field("eval_metrics", &self.eval_metrics)?;
         state.end()
     }
 }
