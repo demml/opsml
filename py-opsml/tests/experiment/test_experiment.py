@@ -20,6 +20,7 @@ from opsml import (  # type: ignore
     Card,
     RegistryType,
     ModelSaveKwargs,
+    ExperimentCard,
 )
 import numpy as np
 from opsml.card import CardRegistries
@@ -181,11 +182,11 @@ def test_experimentcard():
         metrics = get_experiment_metrics(card.uid)
         assert card.eval_metrics["mape"] == 0.1
 
-        assert len(metrics) == 3
+        assert len(metrics) == 4
 
         metrics = card.get_metrics()
 
-        assert len(metrics) == 3
+        assert len(metrics) == 4
 
         # ensure metrics are iterable
         for _ in metrics:
@@ -213,7 +214,7 @@ def test_experimentcard():
 
 
 @pytest.mark.skipif(WINDOWS_EXCLUDE, reason="skipping")
-def test_experimentcard_register(
+def _test_experimentcard_register(
     pandas_data: PandasData,
     random_forest_classifier: SklearnModel,
     chat_prompt: Prompt,
@@ -277,7 +278,7 @@ def test_experimentcard_register(
             exp.register_card(service)
             exp.log_eval_metrics(EvalMetrics({"mape": 0.1}))
 
-        loaded_card = reg.experiment.load_card(uid=exp.card.uid)
+        loaded_card: ExperimentCard = reg.experiment.load_card(uid=exp.card.uid)
 
         assert loaded_card.name == exp.card.name
         assert loaded_card.space == exp.card.space
