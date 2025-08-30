@@ -16,7 +16,7 @@ from typing import (
 )
 
 from ..data import DataInterface, DataLoadKwargs, DataSaveKwargs, DataType
-from ..experiment import Metrics, Parameters
+from ..experiment import EvalMetrics, Metrics, Parameters
 from ..llm import Prompt, Workflow
 from ..model import (
     DriftProfileMap,
@@ -776,6 +776,19 @@ class ExperimentCard:
         Args:
             version (str):
                 The version of the `experimentcard`
+        """
+
+    @property
+    def eval_metrics(self) -> EvalMetrics:
+        """Returns the eval metrics of the `experimentcard`"""
+
+    @eval_metrics.setter
+    def eval_metrics(self, metrics: EvalMetrics) -> None:
+        """Set the eval metrics of the `experimentcard`
+
+        Args:
+            metrics (EvalMetrics):
+                The eval metrics of the `experimentcard`
         """
 
     @property

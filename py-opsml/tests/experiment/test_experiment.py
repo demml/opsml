@@ -20,6 +20,7 @@ from opsml import (  # type: ignore
     Card,
     RegistryType,
     ModelSaveKwargs,
+    ExperimentCard,
 )
 import numpy as np
 from opsml.card import CardRegistries
@@ -29,6 +30,7 @@ import uuid
 import shutil
 from tests.conftest import WINDOWS_EXCLUDE
 import pytest
+from opsml.experiment import EvalMetrics
 
 
 def cleanup_manually_created_directories():
@@ -130,6 +132,8 @@ def test_experimentcard():
             exp.log_metric(name="test", value=1.0)
             exp.log_metrics([metric1, metric2])
 
+            exp.log_eval_metrics(EvalMetrics({"mape": 0.1}))
+
             exp.log_parameter(name="test", value=1.0)
             exp.log_parameters([Parameter(name="test1", value=1.0)])
 
@@ -175,14 +179,14 @@ def test_experimentcard():
         assert len(list(created_path.iterdir())) == 1
 
         # get metrics
-
         metrics = get_experiment_metrics(card.uid)
+        assert card.eval_metrics["mape"] == 0.1
 
-        assert len(metrics) == 3
+        assert len(metrics) == 4
 
         metrics = card.get_metrics()
 
-        assert len(metrics) == 3
+        assert len(metrics) == 4
 
         # ensure metrics are iterable
         for _ in metrics:
@@ -272,14 +276,17 @@ def test_experimentcard_register(
                 ],
             )
             exp.register_card(service)
+            exp.log_eval_metrics(EvalMetrics({"mape": 0.1}))
 
-        loaded_card = reg.experiment.load_card(uid=exp.card.uid)
+        loaded_card: ExperimentCard = reg.experiment.load_card(uid=exp.card.uid)
 
         assert loaded_card.name == exp.card.name
         assert loaded_card.space == exp.card.space
         assert loaded_card.tags == exp.card.tags
         assert loaded_card.uid == exp.card.uid
         assert loaded_card.version == exp.card.version
+
+        assert loaded_card.eval_metrics["mape"] == exp.card.eval_metrics["mape"]
 
         loaded_card.uids.datacard_uids = [datacard.uid]
         loaded_card.uids.modelcard_uids = [modelcard.uid]
