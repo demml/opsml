@@ -110,13 +110,14 @@ impl MySQLQueryHelper {
                 name, 
                 value,
                 step,
-                timestamp
+                timestamp,
+                is_eval
             ) VALUES ",
             CardTable::Metrics
         );
 
         for i in 0..nbr_records {
-            query.push_str("(?, ?, ?, ?, ?) ");
+            query.push_str("(?, ?, ?, ?, ?, ?) ");
 
             // add comma if not last record
             if i < nbr_records - 1 {
