@@ -91,7 +91,9 @@ class Experiment:
                 Value of the parameter
         """
 
-    def log_parameters(self, parameters: list[Parameter] | Dict[str, Union[int, float, str]]) -> None:
+    def log_parameters(
+        self, parameters: list[Parameter] | Dict[str, Union[int, float, str]]
+    ) -> None:
         """
         Log multiple parameters
 
@@ -136,7 +138,9 @@ class Experiment:
 
         """
 
-    def log_figure(self, name: str, figure: Any, kwargs: Optional[Dict[str, Any]] = None) -> None:
+    def log_figure(
+        self, name: str, figure: Any, kwargs: Optional[Dict[str, Any]] = None
+    ) -> None:
         """
         Log a figure. This method will log a matplotlib Figure object to the experiment artifacts.
 
@@ -273,6 +277,25 @@ class Metric:
         """
         Created at of the metric
         """
+
+class EvalMetrics:
+    """
+    Map of metrics used that can be used to evaluate a model.
+    The metrics are also used when comparing a model with other models
+    """
+
+    def __init__(self, metrics: Dict[str, float]) -> None:
+        """
+        Initialize EvalMetrics
+
+        Args:
+            metrics (Dict[str, float]):
+                Dictionary of metrics containing the name of the metric as the key and its value as the value.
+        """
+
+    def __getitem__(self, key: str) -> float:
+        """Get the value of a metric by name. A RuntimeError will be raised if the metric does not exist."""
+        ...
 
 class Metrics:
     def __str__(self): ...
