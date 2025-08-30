@@ -787,6 +787,7 @@ impl SqlClient for PostgresClient {
             .bind(record.value)
             .bind(record.step)
             .bind(record.timestamp)
+            .bind(record.is_eval)
             .execute(&self.pool)
             .await?;
 

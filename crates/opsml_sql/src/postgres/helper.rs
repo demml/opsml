@@ -158,7 +158,8 @@ impl PostgresQueryHelper {
                 name, 
                 value,
                 step,
-                timestamp
+                timestamp,
+                is_eval
             ) VALUES ",
             CardTable::Metrics
         );
@@ -168,12 +169,13 @@ impl PostgresQueryHelper {
                 query.push_str(", ");
             }
             query.push_str(&format!(
-                "(${}, ${}, ${}, ${}, ${})",
+                "(${}, ${}, ${}, ${}, ${}, ${})",
                 5 * i + 1,
                 5 * i + 2,
                 5 * i + 3,
                 5 * i + 4,
-                5 * i + 5
+                5 * i + 5,
+                5 * i + 6
             ));
         }
 

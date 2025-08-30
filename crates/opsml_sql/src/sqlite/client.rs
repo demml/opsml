@@ -1787,8 +1787,6 @@ mod tests {
         let names = client.get_experiment_metric_names(&uid).await.unwrap();
 
         assert_eq!(records.len(), 5);
-
-        // assert names = "metric1"
         assert_eq!(names.len(), 5);
 
         let eval_records = client
