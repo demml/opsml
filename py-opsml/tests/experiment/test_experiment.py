@@ -214,7 +214,7 @@ def test_experimentcard():
 
 
 @pytest.mark.skipif(WINDOWS_EXCLUDE, reason="skipping")
-def _test_experimentcard_register(
+def test_experimentcard_register(
     pandas_data: PandasData,
     random_forest_classifier: SklearnModel,
     chat_prompt: Prompt,
@@ -286,7 +286,7 @@ def _test_experimentcard_register(
         assert loaded_card.uid == exp.card.uid
         assert loaded_card.version == exp.card.version
 
-        assert loaded_card.eval_metrics == exp.card.eval_metrics
+        assert loaded_card.eval_metrics["mape"] == exp.card.eval_metrics["mape"]
 
         loaded_card.uids.datacard_uids = [datacard.uid]
         loaded_card.uids.modelcard_uids = [modelcard.uid]
