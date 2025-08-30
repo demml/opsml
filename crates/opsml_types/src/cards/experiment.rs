@@ -69,7 +69,7 @@ impl Default for Metric {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[pyclass]
 pub struct EvalMetrics {
     #[pyo3(get)]
@@ -79,14 +79,6 @@ pub struct EvalMetrics {
 impl EvalMetrics {
     pub fn to_vec(&self) -> Vec<Metric> {
         self.metrics.values().cloned().collect()
-    }
-}
-
-impl Default for EvalMetrics {
-    fn default() -> Self {
-        Self {
-            metrics: HashMap::new(),
-        }
     }
 }
 
