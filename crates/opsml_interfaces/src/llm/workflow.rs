@@ -262,3 +262,44 @@ impl PyWorkflow {
         Ok(py_workflow)
     }
 }
+
+impl PyWorkflow {
+    pub fn from_eval_metrics(eval_metrics: Vec<LLMEvalMetric>, name: &str) -> Self {
+        // Build a workflow from metrics
+        let mut workflow = Workflow::new(name);
+        let mut agents = HashMap::new();
+        let mut metric_names = Vec::new();
+
+        // Create agents. We don't want to duplicate, so we check if the agent already exists.
+        // if it doesn't, we create it.
+        for metric in &metrics {
+            // get prompt (if providing a list of metrics, prompt must be present)
+            let prompt = metric
+                .prompt
+                .as_ref()
+                .ok_or_else(|| ProfileError::MissingPromptError(metric.name.clone()))?;
+
+            let provider = Provider::from_string(&prompt.model_settings.provider)?;
+
+            let agent = match agents.entry(provider) {
+                Entry::Occupied(entry) => entry.into_mut(),
+                Entry::Vacant(entry) => {
+                    let agent = Agent::from_model_settings(&prompt.model_settings)?;
+                    workflow.add_agent(&agent);
+                    entry.insert(agent)
+                }
+            };
+
+            let task = Task::new(&agent.id, prompt.clone(), &metric.name, None, None);
+            validate_prompt_parameters(prompt, &metric.name)?;
+            workflow.add_task(task)?;
+            metric_names.push(metric.name.clone());
+        }
+
+        Self {
+            workflow,
+            output_types,
+            runtime,
+        }
+    }
+}

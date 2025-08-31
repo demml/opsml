@@ -15,6 +15,7 @@ opsml-crypt = { workspace = true }
 opsml-semver = { workspace = true }
 opsml-utils = { workspace = true }
 opsml-version = { workspace = true }
+potato-head = { workspace = true }
 scouter-client = { workspace = true }
 semver = { workspace = true }
 pyo3 = { workspace = true }
