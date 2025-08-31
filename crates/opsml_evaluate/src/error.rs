@@ -7,6 +7,9 @@ use tracing::error;
 pub enum EvaluationError {
     #[error("Invalid response type. Expected Score")]
     InvalidResponseError,
+
+    #[error(transparent)]
+    WorkflowError(#[from] potato_head::WorkflowError),
 }
 
 impl From<EvaluationError> for PyErr {

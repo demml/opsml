@@ -1,11 +1,14 @@
 use opsml_state::app_state;
+use opsml_types::cards::experiment::LLMEvalMetric;
 use potato_head::{
     json_to_pydict, parse_response_to_json, pyobject_to_json, PyAgent, Task, TaskList, Workflow,
     WorkflowError, WorkflowResult,
 };
+use potato_head::{Agent, Provider};
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use pyo3::IntoPyObjectExt;
+use std::collections::hash_map::Entry;
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
 use tracing::{debug, error, info};
@@ -264,42 +267,47 @@ impl PyWorkflow {
 }
 
 impl PyWorkflow {
-    pub fn from_eval_metrics(eval_metrics: Vec<LLMEvalMetric>, name: &str) -> Self {
+    /// Create a pyworkflow from evaluation metrics
+    /// # Arguments
+    /// * `eval_metrics`: A vector of evaluation metrics to create the workflow from.
+    /// * `name`: The name of the workflow.
+    pub fn from_eval_metrics(
+        eval_metrics: Vec<LLMEvalMetric>,
+        name: &str,
+    ) -> Result<Self, WorkflowError> {
         // Build a workflow from metrics
         let mut workflow = Workflow::new(name);
-        let mut agents = HashMap::new();
+        let mut agents: HashMap<Provider, Agent> = HashMap::new();
         let mut metric_names = Vec::new();
 
         // Create agents. We don't want to duplicate, so we check if the agent already exists.
         // if it doesn't, we create it.
-        for metric in &metrics {
-            // get prompt (if providing a list of metrics, prompt must be present)
-            let prompt = metric
-                .prompt
-                .as_ref()
-                .ok_or_else(|| ProfileError::MissingPromptError(metric.name.clone()))?;
-
-            let provider = Provider::from_string(&prompt.model_settings.provider)?;
+        for metric in &eval_metrics {
+            let provider = Provider::from_string(&metric.prompt.model_settings.provider)
+                .map_err(|e| WorkflowError::Error(format!("Failed to parse provider: {}", e)))?;
 
             let agent = match agents.entry(provider) {
                 Entry::Occupied(entry) => entry.into_mut(),
                 Entry::Vacant(entry) => {
-                    let agent = Agent::from_model_settings(&prompt.model_settings)?;
+                    let agent =
+                        Agent::from_model_settings(&metric.prompt.model_settings).map_err(|e| {
+                            WorkflowError::Error(format!("Failed to create agent: {}", e))
+                        })?;
                     workflow.add_agent(&agent);
                     entry.insert(agent)
                 }
             };
 
-            let task = Task::new(&agent.id, prompt.clone(), &metric.name, None, None);
-            validate_prompt_parameters(prompt, &metric.name)?;
+            let task = Task::new(&agent.id, metric.prompt.clone(), &metric.name, None, None);
             workflow.add_task(task)?;
             metric_names.push(metric.name.clone());
         }
 
-        Self {
+        let runtime = app_state().runtime.clone();
+        Ok(Self {
             workflow,
-            output_types,
+            output_types: HashMap::new(),
             runtime,
-        }
+        })
     }
 }
