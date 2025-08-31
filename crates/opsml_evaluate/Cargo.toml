@@ -14,4 +14,6 @@ potato-head = { workspace = true }
 serde = { workspace = true}
 thiserror = { workspace = true }
 tracing = { workspace = true }
+opsml-interfaces = { workspace = true }
+opsml-types = { workspace = true }
 opsml-utils = { workspace = true }
