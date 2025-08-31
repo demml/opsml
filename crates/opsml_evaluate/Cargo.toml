@@ -9,11 +9,14 @@ description = "Evaluation logic for opsml"
 doctest = false
 
 [dependencies]
-pyo3 = { workspace = true }
-potato-head = { workspace = true }
-serde = { workspace = true}
-thiserror = { workspace = true }
-tracing = { workspace = true }
 opsml-interfaces = { workspace = true }
 opsml-types = { workspace = true }
 opsml-utils = { workspace = true }
+
+pyo3 = { workspace = true }
+potato-head = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }

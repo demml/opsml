@@ -16,7 +16,7 @@ use tracing::{debug, error, info};
 #[pyclass(name = "Workflow")]
 #[derive(Debug, Clone)]
 pub struct PyWorkflow {
-    workflow: Workflow,
+    pub workflow: Workflow,
 
     // allow adding output types for python tasks (py only)
     // these are provided at runtime by the user and must match the response
@@ -24,7 +24,7 @@ pub struct PyWorkflow {
     output_types: HashMap<String, Arc<PyObject>>,
 
     // potatohead version holds a reference to the runtime
-    runtime: Arc<tokio::runtime::Runtime>,
+    pub runtime: Arc<tokio::runtime::Runtime>,
 }
 
 #[pymethods]
