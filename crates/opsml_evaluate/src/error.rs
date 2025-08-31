@@ -10,6 +10,18 @@ pub enum EvaluationError {
 
     #[error(transparent)]
     WorkflowError(#[from] potato_head::WorkflowError),
+
+    #[error(transparent)]
+    PyUtilError(#[from] opsml_utils::error::PyUtilError),
+
+    #[error(transparent)]
+    PyErr(#[from] pyo3::PyErr),
+
+    #[error("{0}")]
+    DowncastError(String),
+
+    #[error(transparent)]
+    JoinError(#[from] tokio::task::JoinError),
 }
 
 impl From<EvaluationError> for PyErr {
@@ -17,5 +29,11 @@ impl From<EvaluationError> for PyErr {
         let msg = err.to_string();
         error!("{}", msg);
         PyRuntimeError::new_err(msg)
+    }
+}
+
+impl<'a> From<pyo3::DowncastError<'a, 'a>> for EvaluationError {
+    fn from(err: pyo3::DowncastError) -> Self {
+        EvaluationError::DowncastError(err.to_string())
     }
 }

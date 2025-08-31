@@ -4098,7 +4098,9 @@ dependencies = [
  "potato-head",
  "pyo3",
  "serde",
+ "serde_json",
  "thiserror 2.0.16",
+ "tokio",
  "tracing",
 ]
 
