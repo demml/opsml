@@ -4089,6 +4089,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "opsml-evaluate"
+version = "3.0.0-rc.15"
+dependencies = [
+ "opsml-utils",
+ "potato-head",
+ "pyo3",
+ "serde",
+ "thiserror 2.0.16",
+ "tracing",
+]
+
+[[package]]
 name = "opsml-events"
 version = "3.0.0-rc.15"
 dependencies = [

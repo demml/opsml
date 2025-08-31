@@ -1,0 +1,17 @@
+[package]
+name = "opsml-evaluate"
+version = { workspace = true }
+edition = { workspace = true }
+repository = { workspace = true }
+description = "Evaluation logic for opsml"
+
+[lib]
+doctest = false
+
+[dependencies]
+pyo3 = { workspace = true }
+potato-head = { workspace = true }
+serde = { workspace = true}
+thiserror = { workspace = true }
+tracing = { workspace = true }
+opsml-utils = { workspace = true }

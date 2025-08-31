@@ -24,6 +24,7 @@ opsml-cli = { path = "crates/opsml_cli" }
 opsml-crypt = { path = "crates/opsml_crypt" }
 opsml-client = { path = "crates/opsml_client" }
 opsml-colors = { path = "crates/opsml_colors" }
+opsml-evaluate = { path = "crates/opsml_evaluate" }
 opsml-events = { path = "crates/opsml_events" }
 opsml-interfaces = { path = "crates/opsml_interfaces" }
 opsml-registry = { path = "crates/opsml_registry" }
