@@ -147,7 +147,7 @@ impl EvalMetrics {
     pub fn __getitem__(&self, key: &str) -> Result<f64, TypeError> {
         match self.metrics.get(key) {
             Some(metric) => Ok(metric.value),
-            None => Err(TypeError::NotMetricFoundError(key.to_string()).into()),
+            None => Err(TypeError::NotMetricFoundError(key.to_string())),
         }
     }
 
@@ -217,7 +217,7 @@ impl ParameterValue {
         } else if let Ok(value) = value.extract::<String>() {
             Ok(ParameterValue::Str(value))
         } else {
-            Err(TypeError::InvalidType.into())
+            Err(TypeError::InvalidType)
         }
     }
 }
