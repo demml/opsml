@@ -37,11 +37,11 @@ struct EvalResultIter {
 
 #[pymethods]
 impl EvalResultIter {
-    fn __iter__(slf: PyRef<'_, Self>) -> PyRef<'_, Self> {
+    pub fn __iter__(slf: PyRef<'_, Self>) -> PyRef<'_, Self> {
         slf
     }
 
-    fn __next__(mut slf: PyRefMut<'_, Self>) -> Option<EvalResult> {
+    pub fn __next__(mut slf: PyRefMut<'_, Self>) -> Option<EvalResult> {
         slf.inner.next()
     }
 }
@@ -60,7 +60,7 @@ impl LLMEvalResults {
         }
     }
 
-    fn __iter__(slf: PyRef<'_, Self>) -> Result<Py<EvalResultIter>, EvaluationError> {
+    pub fn __iter__(slf: PyRef<'_, Self>) -> Result<Py<EvalResultIter>, EvaluationError> {
         let iter = EvalResultIter {
             inner: slf
                 .results

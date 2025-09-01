@@ -2,13 +2,13 @@
 
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, Optional, Union, Iterator
 
 from ..card import DataCard, ExperimentCard, ModelCard, PromptCard
 from ..data import DataSaveKwargs
 from ..model import ModelSaveKwargs
 from ..types import VersionType
-from ..llm import Prompt
+from ..llm import Prompt, Score
 
 class Experiment:
     def start_experiment(
@@ -253,6 +253,26 @@ class LLMEvalMetric:
         """
         String representation of the LLMEvalMetric
         """
+
+class EvalResult:
+    """Eval Result for a specific evaluation"""
+    @property
+    def error(self) -> Optional[str]: ...
+    @property
+    def tasks(self) -> Dict[str, Score]: ...
+    @property
+    def id(self) -> str: ...
+
+class LLMEvalResults:
+    """Defines the results of an LLM eval metric"""
+
+    def __getitem__(self, key: str) -> float:
+        """Get the value` of the metric by name. A RuntimeError will be raised if the metric does not exist."""
+        ...
+
+    def __iter__(self) -> Iterator[EvalResult]:
+        """Get an iterator over the metric names and values."""
+        ...
 
 class Metric:
     def __init__(

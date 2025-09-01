@@ -1,4 +1,4 @@
-use opsml_evaluate::llm::{evaluate_llm, LLMEvalResults};
+use opsml_evaluate::llm::{evaluate_llm, EvalResult, LLMEvalResults};
 use opsml_experiment::{
     download_artifact, get_experiment_metrics, get_experiment_parameters, start_experiment,
     Experiment,
@@ -14,6 +14,7 @@ pub fn experiment(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<Metric>()?;
     m.add_class::<LLMEvalMetric>()?;
     m.add_class::<LLMEvalResults>()?;
+    m.add_class::<EvalResult>()?;
     m.add_class::<Parameter>()?;
     m.add_class::<Parameters>()?;
     m.add_class::<Metrics>()?;
