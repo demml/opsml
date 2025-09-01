@@ -8,6 +8,7 @@ from ..card import DataCard, ExperimentCard, ModelCard, PromptCard
 from ..data import DataSaveKwargs
 from ..model import ModelSaveKwargs
 from ..types import VersionType
+from ..llm import Prompt
 
 class Experiment:
     def start_experiment(
@@ -100,7 +101,9 @@ class Experiment:
                 Value of the parameter
         """
 
-    def log_parameters(self, parameters: list[Parameter] | Dict[str, Union[int, float, str]]) -> None:
+    def log_parameters(
+        self, parameters: list[Parameter] | Dict[str, Union[int, float, str]]
+    ) -> None:
         """
         Log multiple parameters
 
@@ -145,7 +148,9 @@ class Experiment:
 
         """
 
-    def log_figure(self, name: str, figure: Any, kwargs: Optional[Dict[str, Any]] = None) -> None:
+    def log_figure(
+        self, name: str, figure: Any, kwargs: Optional[Dict[str, Any]] = None
+    ) -> None:
         """
         Log a figure. This method will log a matplotlib Figure object to the experiment artifacts.
 
@@ -227,6 +232,27 @@ def start_experiment(
     Returns:
         Experiment
     """
+
+class LLMEvalMetric:
+    """Defines an LLM eval metric to use when evaluating LLMs"""
+    def __init__(self, name: str, prompt: Prompt):
+        """
+        Initialize an LLMEvalMetric to use for evaluating LLMs. This is
+        most commonly used in conjunction with `evaluate_llm` where LLM inputs
+        and responses can be evaluated against a variety of user-defined metrics.
+
+        Args:
+            name (str):
+                Name of the metric
+            prompt (Prompt):
+                Prompt to use for the metric. For example, a user may create
+                an accuracy analysis prompt or a query reformulation analysis prompt.
+        """
+
+    def __str__(self) -> str:
+        """
+        String representation of the LLMEvalMetric
+        """
 
 class Metric:
     def __init__(
