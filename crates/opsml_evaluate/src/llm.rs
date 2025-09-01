@@ -33,6 +33,16 @@ pub struct EvalResult {
     pub id: String,
 }
 
+#[pymethods]
+impl EvalResult {
+    pub fn __getitem__(&self, key: &str) -> Result<Score, EvaluationError> {
+        match self.tasks.get(key) {
+            Some(value) => Ok(value.clone()),
+            None => Err(EvaluationError::MissingKeyError(key.to_string())),
+        }
+    }
+}
+
 #[pyclass]
 #[derive(Clone, Debug)]
 pub struct LLMEvalRecord {

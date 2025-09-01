@@ -40,3 +40,40 @@ def reformulation_evaluation_prompt():
         provider="gemini",
         response_format=Score,
     )
+
+
+@pytest.fixture
+def relevancy_evaluation_prompt():
+    """
+    Builds a prompt for evaluating the relevance of a search query.
+
+    Returns:
+        Prompt: A prompt that asks for a JSON evaluation of the query's relevance.
+
+    Example:
+        >>> prompt = create_relevancy_evaluation_prompt()
+    """
+    return Prompt(
+        message=(
+            "You are an expert evaluator of search query relevance. "
+            "Given a user query, your task is to assess its relevance to the information needs of the user. "
+            "Consider the following criteria:\n"
+            "- Does the query contain relevant keywords and concepts?\n"
+            "- Is the query clear and unambiguous?\n"
+            "- Does the query adequately express the user's intent?\n\n"
+            "Provide your evaluation as a JSON object with the following attributes:\n"
+            "- score: An integer from 1 (poor) to 5 (excellent) indicating the overall relevance of the query.\n"
+            "- reason: A brief explanation for your score.\n\n"
+            "Format your response as:\n"
+            "{\n"
+            '  "score": <integer 1-5>,\n'
+            '  "reason": "<your explanation>"\n'
+            "}\n\n"
+            "User Query:\n"
+            "${user_query}\n\n"
+            "Evaluation:"
+        ),
+        model="gemini-2.5-flash-lite-preview-06-17",
+        provider="gemini",
+        response_format=Score,
+    )

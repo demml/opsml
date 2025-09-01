@@ -101,7 +101,9 @@ class Experiment:
                 Value of the parameter
         """
 
-    def log_parameters(self, parameters: list[Parameter] | Dict[str, Union[int, float, str]]) -> None:
+    def log_parameters(
+        self, parameters: list[Parameter] | Dict[str, Union[int, float, str]]
+    ) -> None:
         """
         Log multiple parameters
 
@@ -146,7 +148,9 @@ class Experiment:
 
         """
 
-    def log_figure(self, name: str, figure: Any, kwargs: Optional[Dict[str, Any]] = None) -> None:
+    def log_figure(
+        self, name: str, figure: Any, kwargs: Optional[Dict[str, Any]] = None
+    ) -> None:
         """
         Log a figure. This method will log a matplotlib Figure object to the experiment artifacts.
 
@@ -260,6 +264,11 @@ class EvalResult:
     def tasks(self) -> Dict[str, Score]: ...
     @property
     def id(self) -> str: ...
+    def __getitem__(self, key: str) -> Score:
+        """
+        Get the score for a specific task
+        """
+        ...
 
 class LLMEvalResults:
     """Defines the results of an LLM eval metric"""
@@ -494,17 +503,16 @@ class LLMEvalRecord:
         ...
 
 def evaluate_llm(
-    data: List[LLMEvalRecord],
-    eval_metrics: List[LLMEvalMetric],
+    records: List[LLMEvalRecord],
+    metrics: List[LLMEvalMetric],
 ) -> LLMEvalResults:
     """
     Evaluate LLM responses using the provided evaluation metrics.
 
     Args:
-        data (List[Dict[str, Any]]):
-            List of dictionaries containing the data to evaluate. Each dictionary should contain
-            the necessary fields required by the evaluation metrics.
-        eval_metrics (List[LLMEvalMetric]):
+        records (List[LLMEvalRecord]):
+            List of LLM evaluation records to evaluate.
+        metrics (List[LLMEvalMetric]):
             List of LLMEvalMetric instances to use for evaluation.
 
     Returns:
