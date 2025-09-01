@@ -13,13 +13,14 @@ use potato_head::WorkflowError;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use pyo3::IntoPyObjectExt;
+use serde::Serialize;
 use serde_json::Value;
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
 use tokio::task::JoinSet;
 use tracing::{debug, error, instrument};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 #[pyclass]
 pub struct EvalResult {
     #[pyo3(get)]
@@ -99,6 +100,7 @@ impl EvalResultIter {
     }
 }
 
+#[derive(Debug, Serialize)]
 #[pyclass]
 pub struct LLMEvalResults {
     pub results: HashMap<String, EvalResult>,
