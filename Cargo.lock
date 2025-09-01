@@ -5048,6 +5048,7 @@ dependencies = [
  "opsml-app",
  "opsml-cards",
  "opsml-cli",
+ "opsml-evaluate",
  "opsml-experiment",
  "opsml-interfaces",
  "opsml-mocks",
