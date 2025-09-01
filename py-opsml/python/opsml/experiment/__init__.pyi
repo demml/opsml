@@ -2,7 +2,7 @@
 
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, Optional, Union, Iterator
+from typing import Any, Dict, Optional, Union, Iterator, Protocol, TypeAlias, List
 
 from ..card import DataCard, ExperimentCard, ModelCard, PromptCard
 from ..data import DataSaveKwargs
@@ -420,4 +420,91 @@ def get_experiment_parameters(
 
     Returns:
         Parameters
+    """
+
+class BaseModel(Protocol):
+    """Protocol for pydantic BaseModel to ensure compatibility with context"""
+
+    def model_dump(self) -> Dict[str, Any]:
+        """Dump the model as a dictionary"""
+        ...
+
+    def model_dump_json(self) -> str:
+        """Dump the model as a JSON string"""
+        ...
+
+    def __str__(self) -> str:
+        """String representation of the model"""
+        ...
+
+SerializedType: TypeAlias = Union[str, int, float, dict, list]
+Context: TypeAlias = Union[Dict[str, Any], BaseModel]
+
+class LLMEvalRecord:
+    """LLM record containing context tied to a Large Language Model interaction
+    that is used to evaluate LLM responses.
+
+
+    Examples:
+        >>> record = LLMEvalRecord(
+                id="123",
+                context={
+                    "input": "What is the capital of France?",
+                    "response": "Paris is the capital of France."
+                },
+        ... )
+        >>> print(record.context["input"])
+        "What is the capital of France?"
+    """
+
+    def __init__(self, id:Optional[str]=None, context: Context) -> None:
+        """Creates a new LLM record to associate with an `LLMDriftProfile`.
+        The record is sent to the `Scouter` server via the `ScouterQueue` and is
+        then used to inject context into the evaluation prompts.
+
+        Args:
+            context:
+                Additional context information as a dictionary or a pydantic BaseModel. During evaluation,
+                this will be merged with the input and response data and passed to the assigned
+                evaluation prompts. So if you're evaluation prompts expect additional context via
+                bound variables (e.g., `${foo}`), you can pass that here as key value pairs.
+                {"foo": "bar"}
+            prompt:
+                Optional prompt configuration associated with this record. Can be a Potatohead Prompt or
+                a JSON-serializable type.
+
+        Raises:
+            TypeError: If context is not a dict or a pydantic BaseModel.
+
+        """
+        ...
+
+    @property
+    def context(self) -> Dict[str, Any]:
+        """Get the contextual information.
+
+        Returns:
+            The context data as a Python object (deserialized from JSON).
+
+        Raises:
+            TypeError: If the stored JSON cannot be converted to a Python object.
+        """
+        ...
+
+def evaluate_llm(
+    data: List[LLMRecord],
+    eval_metrics: List[LLMEvalMetric],
+) -> LLMEvalResults:
+    """
+    Evaluate LLM responses using the provided evaluation metrics.
+
+    Args:
+        data (List[Dict[str, Any]]):
+            List of dictionaries containing the data to evaluate. Each dictionary should contain
+            the necessary fields required by the evaluation metrics.
+        eval_metrics (List[LLMEvalMetric]):
+            List of LLMEvalMetric instances to use for evaluation.
+
+    Returns:
+        LLMEvalResults
     """
