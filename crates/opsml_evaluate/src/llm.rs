@@ -187,7 +187,7 @@ async fn async_evaluate_llm(
     workflow: Workflow,
     data: Vec<serde_json::Value>,
 ) -> Result<LLMEvalResults, EvaluationError> {
-    debug!("Starting LLM evaluation for {} data items", data.len());
+    debug!("Starting LLM evaluation for {} items", data.len());
 
     let join_set = spawn_evaluation_tasks(workflow, data).await;
     let results = collect_evaluation_results(join_set).await?;
@@ -199,8 +199,18 @@ async fn async_evaluate_llm(
     Ok(results)
 }
 
+#[pyfunction]
+/// Function for evaluating LLM response and generating metrics.
+/// The primary use case for evaluate_llm is to take a list of data samples, which often contain inputs and outputs
+/// from LLM systems and evaluate them against user-defined metrics in a LLM as a judge pipeline. The user is expected provide
+/// a list of dict objects and a list of LLMEval metrics. These eval metrics will be used to create a workflow, which is then
+/// executed in an async context. All eval scores are extracted and returned to the user.
+/// # Arguments
+/// * `py`: The Python interpreter instance.
+/// * `data`: A list of data samples to evaluate.
+/// * `metrics`: A list of evaluation metrics to use.
 pub fn evaluate_llm(
-    py: Python,
+    py: Python<'_>,
     data: Bound<'_, PyList>,
     metrics: Vec<LLMEvalMetric>,
 ) -> Result<LLMEvalResults, EvaluationError> {
