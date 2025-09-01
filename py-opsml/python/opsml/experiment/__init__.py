@@ -6,12 +6,15 @@ Experiment = experiment.Experiment
 start_experiment = experiment.start_experiment
 Metric = experiment.Metric
 Metrics = experiment.Metrics
+LLMEvalMetric = experiment.LLMEvalMetric
+LLMEvalResults = experiment.LLMEvalResults
 EvalMetrics = experiment.EvalMetrics
 Parameter = experiment.Parameter
 Parameters = experiment.Parameters
 get_experiment_metrics = experiment.get_experiment_metrics
 get_experiment_parameters = experiment.get_experiment_parameters
 download_artifact = experiment.download_artifact
+evaluate_llm = experiment.evaluate_llm
 
 __all__ = [
     "Experiment",
@@ -22,4 +25,7 @@ __all__ = [
     "get_experiment_parameters",
     "download_artifact",
     "EvalMetrics",
+    "LLMEvalMetric",
+    "LLMEvalResults",
+    "evaluate_llm",
 ]
