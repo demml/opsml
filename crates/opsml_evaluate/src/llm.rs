@@ -2,7 +2,9 @@ use crate::error::EvaluationError;
 use core::fmt::Debug;
 use opsml_interfaces::llm::workflow::PyWorkflow;
 use opsml_types::cards::LLMEvalMetric;
-use opsml_utils::{create_uuid7, is_pydantic_model, json_to_pyobject_value, pyobject_to_json};
+use opsml_utils::{
+    create_uuid7, is_pydantic_model, json_to_pyobject_value, pyobject_to_json, PyHelperFuncs,
+};
 use potato_head::Score;
 use potato_head::StructuredOutput;
 use potato_head::TaskStatus;
@@ -121,6 +123,10 @@ impl LLMEvalResults {
                 .into_iter(),
         };
         Ok(Py::new(slf.py(), iter)?)
+    }
+
+    pub fn __str__(&self) -> String {
+        PyHelperFuncs::__str__(self)
     }
 }
 

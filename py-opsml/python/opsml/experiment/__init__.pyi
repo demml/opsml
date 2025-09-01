@@ -2,13 +2,13 @@
 
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, Optional, Union, Iterator, Protocol, TypeAlias, List
+from typing import Any, Dict, Iterator, List, Optional, Protocol, TypeAlias, Union
 
 from ..card import DataCard, ExperimentCard, ModelCard, PromptCard
 from ..data import DataSaveKwargs
+from ..llm import Prompt, Score
 from ..model import ModelSaveKwargs
 from ..types import VersionType
-from ..llm import Prompt, Score
 
 class Experiment:
     def start_experiment(
@@ -101,9 +101,7 @@ class Experiment:
                 Value of the parameter
         """
 
-    def log_parameters(
-        self, parameters: list[Parameter] | Dict[str, Union[int, float, str]]
-    ) -> None:
+    def log_parameters(self, parameters: list[Parameter] | Dict[str, Union[int, float, str]]) -> None:
         """
         Log multiple parameters
 
@@ -148,9 +146,7 @@ class Experiment:
 
         """
 
-    def log_figure(
-        self, name: str, figure: Any, kwargs: Optional[Dict[str, Any]] = None
-    ) -> None:
+    def log_figure(self, name: str, figure: Any, kwargs: Optional[Dict[str, Any]] = None) -> None:
         """
         Log a figure. This method will log a matplotlib Figure object to the experiment artifacts.
 
@@ -235,6 +231,7 @@ def start_experiment(
 
 class LLMEvalMetric:
     """Defines an LLM eval metric to use when evaluating LLMs"""
+
     def __init__(self, name: str, prompt: Prompt):
         """
         Initialize an LLMEvalMetric to use for evaluating LLMs. This is
@@ -256,6 +253,7 @@ class LLMEvalMetric:
 
 class EvalResult:
     """Eval Result for a specific evaluation"""
+
     @property
     def error(self) -> Optional[str]: ...
     @property
