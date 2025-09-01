@@ -2,7 +2,7 @@ from opsml.mock import OpsmlTestServer, LLMTestServer
 from opsml.experiment import LLMEvalRecord, LLMEvalMetric, evaluate_llm
 
 
-def test_llm_eval(reformulation_evaluation_prompt) -> None:
+def test_llm_eval(reformulation_evaluation_prompt, relevancy_evaluation_prompt) -> None:
     with OpsmlTestServer():
         with LLMTestServer():
             records = []
@@ -14,10 +14,19 @@ def test_llm_eval(reformulation_evaluation_prompt) -> None:
                 )
                 records.append(record)
 
-            metric = LLMEvalMetric(
-                name="test_metric",
+            reformulation_metric = LLMEvalMetric(
+                name="reformulation",
                 prompt=reformulation_evaluation_prompt,
             )
-            result = evaluate_llm(records, [metric])
+            relevancy_metric = LLMEvalMetric(
+                name="relevancy",
+                prompt=relevancy_evaluation_prompt,
+            )
+            results = evaluate_llm(
+                records=records,
+                metrics=[reformulation_metric, relevancy_metric],
+            )
 
-            print(result)
+            for result in results:
+                assert result["reformulation"].score > 0
+                assert result["relevancy"].score > 0
