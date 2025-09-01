@@ -2,16 +2,16 @@ use crate::error::EvaluationError;
 use core::fmt::Debug;
 use opsml_interfaces::llm::workflow::PyWorkflow;
 use opsml_types::cards::LLMEvalMetric;
-use opsml_utils::create_uuid7;
-use opsml_utils::pyobject_to_json;
+use opsml_utils::{create_uuid7, is_pydantic_model, json_to_pyobject_value, pyobject_to_json};
 use potato_head::Score;
 use potato_head::StructuredOutput;
 use potato_head::TaskStatus;
 use potato_head::Workflow;
 use potato_head::WorkflowError;
 use pyo3::prelude::*;
-use pyo3::types::{PyDict, PyList};
+use pyo3::types::PyDict;
 use pyo3::IntoPyObjectExt;
+use serde_json::Value;
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
 use tokio::task::JoinSet;
@@ -31,7 +31,58 @@ pub struct EvalResult {
 }
 
 #[pyclass]
-struct EvalResultIter {
+#[derive(Clone, Debug)]
+pub struct LLMEvalRecord {
+    pub id: String,
+    pub context: Value,
+}
+
+#[pymethods]
+impl LLMEvalRecord {
+    #[new]
+    #[pyo3(signature = (
+        context,
+        id=None
+    ))]
+
+    /// Creates a new LLMRecord instance.
+    /// The context is either a python dictionary or a pydantic basemodel.
+    pub fn new(
+        py: Python<'_>,
+        context: Bound<'_, PyAny>,
+        id: Option<String>,
+    ) -> Result<Self, EvaluationError> {
+        // check if context is a PyDict or PyObject(Pydantic model)
+        let context_val = if context.is_instance_of::<PyDict>() {
+            pyobject_to_json(&context)?
+        } else if is_pydantic_model(py, &context)? {
+            // Dump pydantic model to dictionary
+            let model = context.call_method0("model_dump")?;
+
+            // Serialize the dictionary to JSON
+            pyobject_to_json(&model)?
+        } else {
+            Err(EvaluationError::MustBeDictOrBaseModel)?
+        };
+
+        let id = id.unwrap_or_else(|| create_uuid7());
+
+        Ok(LLMEvalRecord {
+            id,
+            context: context_val,
+        })
+    }
+
+    #[getter]
+    pub fn context<'py>(&self, py: Python<'py>) -> Result<Bound<'py, PyAny>, EvaluationError> {
+        Ok(json_to_pyobject_value(py, &self.context)?
+            .into_bound_py_any(py)?
+            .clone())
+    }
+}
+
+#[pyclass]
+pub struct EvalResultIter {
     inner: std::vec::IntoIter<EvalResult>,
 }
 
@@ -83,13 +134,6 @@ impl LLMEvalResults {
     fn add_result(&mut self, data_id: String, result: EvalResult) {
         self.results.insert(data_id, result);
     }
-}
-/// extracts the eval_id from a JSON item, or generates a new UUID if not present
-fn extract_data_id(item: &serde_json::Value) -> String {
-    item.get("eval_id")
-        .and_then(|v| v.as_str())
-        .unwrap_or(&create_uuid7())
-        .to_string()
 }
 
 /// Process a workflow result and extract scores from completed tasks
@@ -150,17 +194,16 @@ fn handle_workflow_result(
 
 async fn spawn_evaluation_tasks(
     workflow: Workflow,
-    data: Vec<serde_json::Value>,
+    records: Vec<LLMEvalRecord>,
 ) -> JoinSet<(Result<Arc<RwLock<Workflow>>, WorkflowError>, String)> {
     let mut join_set = JoinSet::new();
 
-    for item in data {
+    for item in records {
         let inner_workflow = workflow.clone();
-        let data_id = extract_data_id(&item);
 
         join_set.spawn(async move {
-            let result = inner_workflow.run(Some(item)).await;
-            (result, data_id)
+            let result = inner_workflow.run(Some(item.context)).await;
+            (result, item.id)
         });
     }
 
@@ -185,11 +228,11 @@ async fn collect_evaluation_results(
 #[instrument(skip_all)]
 async fn async_evaluate_llm(
     workflow: Workflow,
-    data: Vec<serde_json::Value>,
+    records: Vec<LLMEvalRecord>,
 ) -> Result<LLMEvalResults, EvaluationError> {
-    debug!("Starting LLM evaluation for {} items", data.len());
+    debug!("Starting LLM evaluation for {} items", records.len());
 
-    let join_set = spawn_evaluation_tasks(workflow, data).await;
+    let join_set = spawn_evaluation_tasks(workflow, records).await;
     let results = collect_evaluation_results(join_set).await?;
 
     debug!(
@@ -210,24 +253,15 @@ async fn async_evaluate_llm(
 /// * `data`: A list of data samples to evaluate.
 /// * `metrics`: A list of evaluation metrics to use.
 pub fn evaluate_llm(
-    py: Python<'_>,
-    data: Bound<'_, PyList>,
+    records: Vec<LLMEvalRecord>,
     metrics: Vec<LLMEvalMetric>,
 ) -> Result<LLMEvalResults, EvaluationError> {
     let workflow = PyWorkflow::from_eval_metrics(metrics, "LLM Evaluation")?;
 
-    // Convert PyList of PyDicts to Vec<serde_json::Value>
-    let mut data_samples = Vec::new();
-    for item in data.iter() {
-        let dict = item.downcast::<PyDict>()?;
-        let json_value = pyobject_to_json(&dict.into_bound_py_any(py)?)?;
-        data_samples.push(json_value);
-    }
-
     // Use the workflow's runtime to execute the async function
     let results = workflow
         .runtime
-        .block_on(async { async_evaluate_llm(workflow.workflow, data_samples).await })?;
+        .block_on(async { async_evaluate_llm(workflow.workflow, records).await })?;
 
     Ok(results)
 }

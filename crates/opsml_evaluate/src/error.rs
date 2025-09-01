@@ -25,6 +25,9 @@ pub enum EvaluationError {
 
     #[error("Missing key: {0}")]
     MissingKeyError(String),
+
+    #[error("Invalid context type. Context must be a PyDict or a Pydantic BaseModel")]
+    MustBeDictOrBaseModel,
 }
 
 impl From<EvaluationError> for PyErr {

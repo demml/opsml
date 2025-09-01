@@ -457,7 +457,11 @@ class LLMEvalRecord:
         "What is the capital of France?"
     """
 
-    def __init__(self, id:Optional[str]=None, context: Context) -> None:
+    def __init__(
+        self,
+        context: Context,
+        id: Optional[str] = None,
+    ) -> None:
         """Creates a new LLM record to associate with an `LLMDriftProfile`.
         The record is sent to the `Scouter` server via the `ScouterQueue` and is
         then used to inject context into the evaluation prompts.
@@ -469,9 +473,9 @@ class LLMEvalRecord:
                 evaluation prompts. So if you're evaluation prompts expect additional context via
                 bound variables (e.g., `${foo}`), you can pass that here as key value pairs.
                 {"foo": "bar"}
-            prompt:
-                Optional prompt configuration associated with this record. Can be a Potatohead Prompt or
-                a JSON-serializable type.
+            id:
+                Unique identifier for the record. If not provided, a new UUID will be generated.
+                This is helpful for when joining evaluation results back to the original request.
 
         Raises:
             TypeError: If context is not a dict or a pydantic BaseModel.
@@ -492,7 +496,7 @@ class LLMEvalRecord:
         ...
 
 def evaluate_llm(
-    data: List[LLMRecord],
+    data: List[LLMEvalRecord],
     eval_metrics: List[LLMEvalMetric],
 ) -> LLMEvalResults:
     """
