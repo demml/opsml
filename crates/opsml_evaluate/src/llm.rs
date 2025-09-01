@@ -65,7 +65,7 @@ impl LLMEvalRecord {
             Err(EvaluationError::MustBeDictOrBaseModel)?
         };
 
-        let id = id.unwrap_or_else(|| create_uuid7());
+        let id = id.unwrap_or_else(create_uuid7);
 
         Ok(LLMEvalRecord {
             id,
@@ -195,7 +195,7 @@ fn handle_workflow_result(
 async fn spawn_evaluation_tasks(
     workflow: Workflow,
     records: Vec<LLMEvalRecord>,
-) -> JoinSet<(Result<Arc<RwLock<Workflow>>, WorkflowError>, String)> {
+) -> JoinSet<LLMEvalTaskResult> {
     let mut join_set = JoinSet::new();
 
     for item in records {
@@ -210,9 +210,11 @@ async fn spawn_evaluation_tasks(
     join_set
 }
 
+type LLMEvalTaskResult = (Result<Arc<RwLock<Workflow>>, WorkflowError>, String);
+
 /// Wait for all evaluation tasks to complete and collect results
 async fn collect_evaluation_results(
-    mut join_set: JoinSet<(Result<Arc<RwLock<Workflow>>, WorkflowError>, String)>,
+    mut join_set: JoinSet<LLMEvalTaskResult>,
 ) -> Result<LLMEvalResults, EvaluationError> {
     let mut eval_results = LLMEvalResults::new();
 
