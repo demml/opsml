@@ -22,6 +22,9 @@ pub enum EvaluationError {
 
     #[error(transparent)]
     JoinError(#[from] tokio::task::JoinError),
+
+    #[error("Missing key: {0}")]
+    MissingKeyError(String),
 }
 
 impl From<EvaluationError> for PyErr {
