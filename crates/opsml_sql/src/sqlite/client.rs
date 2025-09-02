@@ -1150,8 +1150,8 @@ impl SqlClient for SqliteClient {
 
         let key: (String, String, String, Vec<u8>, String) = sqlx::query_as(&query)
             .bind(query_args.uid.as_ref())
-            .bind(query_args.name.as_ref())
             .bind(query_args.space.as_ref())
+            .bind(query_args.name.as_ref())
             .bind(query_args.max_date.as_ref())
             .bind(query_args.limit.unwrap_or(1))
             .fetch_one(&self.pool)
