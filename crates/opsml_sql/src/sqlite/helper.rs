@@ -329,8 +329,8 @@ impl SqliteQueryHelper {
         SELECT * FROM {table}
         WHERE 1==1
         AND (?1 IS NULL OR uid = ?1)
-        AND (?2 IS NULL OR name = ?2)
-        AND (?3 IS NULL OR space = ?3)
+        AND (?2 IS NULL OR space = ?2)
+        AND (?3 IS NULL OR name = ?3)
         AND (?4 IS NULL OR created_at <= DATETIME(?4))
         "
         );
