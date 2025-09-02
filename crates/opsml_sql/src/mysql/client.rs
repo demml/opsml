@@ -179,10 +179,10 @@ impl SqlClient for MySqlClient {
                 let card: Vec<DataCardRecord> = sqlx::query_as(&query)
                     .bind(query_args.uid.as_ref())
                     .bind(query_args.uid.as_ref())
-                    .bind(query_args.name.as_ref())
-                    .bind(query_args.name.as_ref())
                     .bind(query_args.space.as_ref())
                     .bind(query_args.space.as_ref())
+                    .bind(query_args.name.as_ref())
+                    .bind(query_args.name.as_ref())
                     .bind(query_args.max_date.as_ref())
                     .bind(query_args.max_date.as_ref())
                     .bind(query_args.limit.unwrap_or(50))
@@ -195,10 +195,10 @@ impl SqlClient for MySqlClient {
                 let card: Vec<ModelCardRecord> = sqlx::query_as(&query)
                     .bind(query_args.uid.as_ref())
                     .bind(query_args.uid.as_ref())
-                    .bind(query_args.name.as_ref())
-                    .bind(query_args.name.as_ref())
                     .bind(query_args.space.as_ref())
                     .bind(query_args.space.as_ref())
+                    .bind(query_args.name.as_ref())
+                    .bind(query_args.name.as_ref())
                     .bind(query_args.max_date.as_ref())
                     .bind(query_args.max_date.as_ref())
                     .bind(query_args.limit.unwrap_or(50))
@@ -211,10 +211,10 @@ impl SqlClient for MySqlClient {
                 let card: Vec<ExperimentCardRecord> = sqlx::query_as(&query)
                     .bind(query_args.uid.as_ref())
                     .bind(query_args.uid.as_ref())
-                    .bind(query_args.name.as_ref())
-                    .bind(query_args.name.as_ref())
                     .bind(query_args.space.as_ref())
                     .bind(query_args.space.as_ref())
+                    .bind(query_args.name.as_ref())
+                    .bind(query_args.name.as_ref())
                     .bind(query_args.max_date.as_ref())
                     .bind(query_args.max_date.as_ref())
                     .bind(query_args.limit.unwrap_or(50))
@@ -228,10 +228,10 @@ impl SqlClient for MySqlClient {
                 let card: Vec<AuditCardRecord> = sqlx::query_as(&query)
                     .bind(query_args.uid.as_ref())
                     .bind(query_args.uid.as_ref())
-                    .bind(query_args.name.as_ref())
-                    .bind(query_args.name.as_ref())
                     .bind(query_args.space.as_ref())
                     .bind(query_args.space.as_ref())
+                    .bind(query_args.name.as_ref())
+                    .bind(query_args.name.as_ref())
                     .bind(query_args.max_date.as_ref())
                     .bind(query_args.max_date.as_ref())
                     .bind(query_args.limit.unwrap_or(50))
@@ -245,10 +245,10 @@ impl SqlClient for MySqlClient {
                 let card: Vec<PromptCardRecord> = sqlx::query_as(&query)
                     .bind(query_args.uid.as_ref())
                     .bind(query_args.uid.as_ref())
-                    .bind(query_args.name.as_ref())
-                    .bind(query_args.name.as_ref())
                     .bind(query_args.space.as_ref())
                     .bind(query_args.space.as_ref())
+                    .bind(query_args.name.as_ref())
+                    .bind(query_args.name.as_ref())
                     .bind(query_args.max_date.as_ref())
                     .bind(query_args.max_date.as_ref())
                     .bind(query_args.limit.unwrap_or(50))
@@ -262,10 +262,10 @@ impl SqlClient for MySqlClient {
                 let card: Vec<ServiceCardRecord> = sqlx::query_as(&query)
                     .bind(query_args.uid.as_ref())
                     .bind(query_args.uid.as_ref())
-                    .bind(query_args.name.as_ref())
-                    .bind(query_args.name.as_ref())
                     .bind(query_args.space.as_ref())
                     .bind(query_args.space.as_ref())
+                    .bind(query_args.name.as_ref())
+                    .bind(query_args.name.as_ref())
                     .bind(query_args.max_date.as_ref())
                     .bind(query_args.max_date.as_ref())
                     .bind(query_args.limit.unwrap_or(50))
@@ -1181,10 +1181,10 @@ impl SqlClient for MySqlClient {
         let key: (String, String, String, Vec<u8>, String) = sqlx::query_as(&query)
             .bind(query_args.uid.as_ref())
             .bind(query_args.uid.as_ref())
-            .bind(query_args.name.as_ref())
-            .bind(query_args.name.as_ref())
             .bind(query_args.space.as_ref())
             .bind(query_args.space.as_ref())
+            .bind(query_args.name.as_ref())
+            .bind(query_args.name.as_ref())
             .bind(query_args.max_date.as_ref())
             .bind(query_args.max_date.as_ref())
             .bind(query_args.limit.unwrap_or(1))
@@ -2089,14 +2089,30 @@ mod tests {
 
         client.insert_artifact_key(&key).await.unwrap();
 
-        let query_args = CardQueryArgs {
-            uid: Some(data_card.uid.clone()),
-            limit: Some(1),
-            ..Default::default()
-        };
+        // test uid (testing to ensure it doesnt fail)
+        let _key = client
+            .get_card_key_for_loading(
+                &CardTable::Data,
+                &CardQueryArgs {
+                    uid: Some(data_card.uid.clone()),
+                    limit: Some(1),
+                    ..Default::default()
+                },
+            )
+            .await
+            .unwrap();
 
+        // test args
         let key = client
-            .get_card_key_for_loading(&CardTable::Data, &query_args)
+            .get_card_key_for_loading(
+                &CardTable::Data,
+                &CardQueryArgs {
+                    space: Some(data_card.space.clone()),
+                    name: Some(data_card.name.clone()),
+                    version: Some(data_card.version.to_string()),
+                    ..Default::default()
+                },
+            )
             .await
             .unwrap();
 
