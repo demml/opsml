@@ -203,8 +203,8 @@ impl SqlClient for SqliteClient {
             CardTable::Data => {
                 let card: Vec<DataCardRecord> = sqlx::query_as(&query)
                     .bind(query_args.uid.as_ref())
-                    .bind(query_args.name.as_ref())
                     .bind(query_args.space.as_ref())
+                    .bind(query_args.name.as_ref())
                     .bind(query_args.max_date.as_ref())
                     .bind(query_args.limit.unwrap_or(50))
                     .fetch_all(&self.pool)
@@ -215,8 +215,8 @@ impl SqlClient for SqliteClient {
             CardTable::Model => {
                 let card: Vec<ModelCardRecord> = sqlx::query_as(&query)
                     .bind(query_args.uid.as_ref())
-                    .bind(query_args.name.as_ref())
                     .bind(query_args.space.as_ref())
+                    .bind(query_args.name.as_ref())
                     .bind(query_args.max_date.as_ref())
                     .bind(query_args.limit.unwrap_or(50))
                     .fetch_all(&self.pool)
@@ -227,8 +227,8 @@ impl SqlClient for SqliteClient {
             CardTable::Experiment => {
                 let card: Vec<ExperimentCardRecord> = sqlx::query_as(&query)
                     .bind(query_args.uid.as_ref())
-                    .bind(query_args.name.as_ref())
                     .bind(query_args.space.as_ref())
+                    .bind(query_args.name.as_ref())
                     .bind(query_args.max_date.as_ref())
                     .bind(query_args.limit.unwrap_or(50))
                     .fetch_all(&self.pool)
@@ -240,8 +240,8 @@ impl SqlClient for SqliteClient {
             CardTable::Audit => {
                 let card: Vec<AuditCardRecord> = sqlx::query_as(&query)
                     .bind(query_args.uid.as_ref())
-                    .bind(query_args.name.as_ref())
                     .bind(query_args.space.as_ref())
+                    .bind(query_args.name.as_ref())
                     .bind(query_args.max_date.as_ref())
                     .bind(query_args.limit.unwrap_or(50))
                     .fetch_all(&self.pool)
@@ -253,8 +253,8 @@ impl SqlClient for SqliteClient {
             CardTable::Prompt => {
                 let card: Vec<PromptCardRecord> = sqlx::query_as(&query)
                     .bind(query_args.uid.as_ref())
-                    .bind(query_args.name.as_ref())
                     .bind(query_args.space.as_ref())
+                    .bind(query_args.name.as_ref())
                     .bind(query_args.max_date.as_ref())
                     .bind(query_args.limit.unwrap_or(50))
                     .fetch_all(&self.pool)
@@ -266,8 +266,8 @@ impl SqlClient for SqliteClient {
             CardTable::Service => {
                 let card: Vec<ServiceCardRecord> = sqlx::query_as(&query)
                     .bind(query_args.uid.as_ref())
-                    .bind(query_args.name.as_ref())
                     .bind(query_args.space.as_ref())
+                    .bind(query_args.name.as_ref())
                     .bind(query_args.max_date.as_ref())
                     .bind(query_args.limit.unwrap_or(50))
                     .fetch_all(&self.pool)
