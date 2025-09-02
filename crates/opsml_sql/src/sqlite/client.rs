@@ -2084,14 +2084,30 @@ mod tests {
 
         client.insert_artifact_key(&key).await.unwrap();
 
-        let query_args = CardQueryArgs {
-            uid: Some(data_card.uid.clone()),
-            limit: Some(1),
-            ..Default::default()
-        };
+        // test uid (testing to ensure it doesnt fail)
+        let _key = client
+            .get_card_key_for_loading(
+                &CardTable::Data,
+                &CardQueryArgs {
+                    uid: Some(data_card.uid.clone()),
+                    limit: Some(1),
+                    ..Default::default()
+                },
+            )
+            .await
+            .unwrap();
 
+        // test args
         let key = client
-            .get_card_key_for_loading(&CardTable::Data, &query_args)
+            .get_card_key_for_loading(
+                &CardTable::Data,
+                &CardQueryArgs {
+                    space: Some(data_card.space.clone()),
+                    name: Some(data_card.name.clone()),
+                    version: Some(data_card.version.to_string()),
+                    ..Default::default()
+                },
+            )
             .await
             .unwrap();
 
