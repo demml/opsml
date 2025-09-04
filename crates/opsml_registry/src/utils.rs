@@ -79,7 +79,7 @@ pub enum CardEnum {
     ModelCard(ModelCard),
     DataCard(DataCard),
     ExperimentCard(Box<ExperimentCard>),
-    PromptCard(PromptCard),
+    PromptCard(Box<PromptCard>),
     ServiceCard(Box<ServiceCard>),
 }
 
@@ -201,7 +201,7 @@ pub fn card_from_string<'py>(
                 error!("Failed to validate PromptCard: {e}");
             })?;
 
-            CardEnum::PromptCard(card)
+            CardEnum::PromptCard(Box::new(card))
         }
 
         RegistryType::Service => {

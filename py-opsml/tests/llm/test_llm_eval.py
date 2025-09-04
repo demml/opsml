@@ -1,5 +1,7 @@
 from opsml.mock import OpsmlTestServer, LLMTestServer
 from opsml.experiment import LLMEvalRecord, LLMEvalMetric, evaluate_llm
+import pandas as pd
+import polars as pl
 
 
 def test_llm_eval(reformulation_evaluation_prompt, relevancy_evaluation_prompt) -> None:
@@ -30,3 +32,11 @@ def test_llm_eval(reformulation_evaluation_prompt, relevancy_evaluation_prompt) 
             for result in results:
                 assert result["reformulation"].score > 0
                 assert result["relevancy"].score > 0
+
+            result_df: pd.DataFrame = results.to_dataframe()
+
+            assert isinstance(result_df, pd.DataFrame)
+
+            result_polars_df: pl.DataFrame = results.to_dataframe(polars=True)
+
+            assert isinstance(result_polars_df, pl.DataFrame)
