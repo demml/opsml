@@ -283,8 +283,7 @@ impl PyWorkflow {
         // Create agents. We don't want to duplicate, so we check if the agent already exists.
         // if it doesn't, we create it.
         for metric in &eval_metrics {
-            let provider = Provider::from_string(&metric.prompt.model_settings.provider)
-                .map_err(|e| WorkflowError::Error(format!("Failed to parse provider: {}", e)))?;
+            let provider = metric.prompt.model_settings.provider();
 
             let agent = match agents.entry(provider) {
                 Entry::Occupied(entry) => entry.into_mut(),
