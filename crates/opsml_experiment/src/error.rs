@@ -72,6 +72,9 @@ pub enum ExperimentError {
 
     #[error("{0}")]
     MissingImportError(String),
+
+    #[error(transparent)]
+    EvaluationError(#[from] opsml_evaluate::error::EvaluationError),
 }
 
 impl From<std::ffi::OsString> for ExperimentError {

@@ -10,6 +10,7 @@ doctest = false
 [dependencies]
 opsml-cards = { workspace = true }
 opsml-crypt = { workspace = true }
+opsml-evaluate = { workspace = true }
 opsml-registry = { workspace = true }
 opsml-semver = { workspace = true }
 opsml-settings = { workspace = true }
