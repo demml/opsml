@@ -1,7 +1,9 @@
 # type: ignore
 # pylint: disable=no-name-in-module
 
-from .. import llm
+from .. import llm  # noqa: F401
+from . import google  # noqa: F401
+from . import openai  # noqa: F401
 
 Agent = llm.Agent
 AgentResponse = llm.AgentResponse
@@ -27,6 +29,7 @@ Usage = llm.Usage
 Workflow = llm.Workflow
 WorkflowResult = llm.WorkflowResult
 
+
 __all__ = [
     "PromptTokenDetails",
     "CompletionTokenDetails",
@@ -51,4 +54,6 @@ __all__ = [
     "TaskEvent",
     "WorkflowResult",
     "Score",
+    "google",
+    "openai",
 ]
