@@ -4129,6 +4129,7 @@ dependencies = [
  "mime_guess",
  "opsml-cards",
  "opsml-crypt",
+ "opsml-evaluate",
  "opsml-registry",
  "opsml-semver",
  "opsml-settings",
