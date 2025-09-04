@@ -270,6 +270,14 @@ class EvalResult:
         """
         ...
 
+    def to_dataframe(self, polars: bool = False) -> Any:
+        """Converts the evaluation results to a pandas DataFrame
+
+        Args:
+            polars (bool):
+                Whether to convert to a Polars DataFrame.
+        """
+
 class LLMEvalResults:
     """Defines the results of an LLM eval metric"""
 
