@@ -1,7 +1,7 @@
 use opsml_evaluate::llm::{evaluate_llm, EvalResult, LLMEvalRecord, LLMEvalResults};
 use opsml_experiment::{
-    download_artifact, get_experiment_metrics, get_experiment_parameters, start_experiment,
-    Experiment,
+    download_artifact, get_experiment_metrics, get_experiment_parameters, llm::LLMEvaluator,
+    start_experiment, Experiment,
 };
 use opsml_types::cards::experiment::{
     EvalMetrics, LLMEvalMetric, Metric, Metrics, Parameter, Parameters,
@@ -20,6 +20,7 @@ pub fn experiment(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<Parameters>()?;
     m.add_class::<Metrics>()?;
     m.add_class::<EvalMetrics>()?;
+    m.add_class::<LLMEvaluator>()?;
     m.add_function(wrap_pyfunction!(get_experiment_metrics, m)?)?;
     m.add_function(wrap_pyfunction!(get_experiment_parameters, m)?)?;
     m.add_function(wrap_pyfunction!(download_artifact, m)?)?;
