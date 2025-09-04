@@ -90,7 +90,7 @@ rust-embed = "8.*"
 reqwest-middleware = "0.*"
 rusty-logging = "0.*"
 potato-head = "0.4.0"
-scouter-client = "0.10.0"
+scouter-client = {"git" =  "https://github.com/demml/scouter", branch = "deps"}
 sha2 = "0.*"
 semver = "1.*"
 serde = { version = "1.*", features = ["derive"] }
