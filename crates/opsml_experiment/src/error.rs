@@ -2,7 +2,7 @@ use opsml_cards::error::CardError;
 use opsml_crypt::error::CryptError;
 use opsml_registry::error::RegistryError;
 use opsml_storage::storage::error::StorageError;
-use opsml_types::error::{PyTypeError, TypeError};
+use opsml_types::error::TypeError;
 use pyo3::exceptions::PyRuntimeError;
 use pyo3::PyErr;
 use thiserror::Error;
@@ -21,9 +21,6 @@ pub enum ExperimentError {
 
     #[error(transparent)]
     TypeError(#[from] TypeError),
-
-    #[error(transparent)]
-    PyTypeError(#[from] PyTypeError),
 
     #[error(transparent)]
     RegistryError(#[from] RegistryError),
@@ -75,6 +72,9 @@ pub enum ExperimentError {
 
     #[error("{0}")]
     MissingImportError(String),
+
+    #[error(transparent)]
+    EvaluationError(#[from] opsml_evaluate::error::EvaluationError),
 }
 
 impl From<std::ffi::OsString> for ExperimentError {
