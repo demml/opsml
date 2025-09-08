@@ -1,6 +1,6 @@
 # Tools
 
-Out of the box, Opsml allows you to create tool configurations within you pyproject.toml file to help simplify some workflows. Currently, tool configuration support:
+Out of the box, Opsml allows you to create tool configurations within your pyproject.toml file to help simplify some workflows. Currently, tool configuration support:
 
 ## **Global Default Variables**
 
