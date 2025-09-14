@@ -873,7 +873,7 @@ class Prompt(Protocol):
 class Workflow(Protocol):
     """Potato Head Workflow Protocol"""
 
-class LLMMetric:
+class LLMDriftMetric:
     """Metric for monitoring LLM performance."""
 
     def __init__(
@@ -1053,7 +1053,7 @@ class LLMDriftProfile:
     def __init__(
         self,
         config: LLMDriftConfig,
-        metrics: list[LLMMetric],
+        metrics: list[LLMDriftMetric],
         workflow: Optional[Workflow] = None,
     ):
         """Initialize a LLMDriftProfile for LLM evaluation and drift detection.
@@ -1067,14 +1067,14 @@ class LLMDriftProfile:
                - A list of metrics to evaluate workflow output must be provided
                - Metric names must correspond to the final task names in the workflow
 
-        Baseline metrics and thresholds will be extracted from the LLMMetric objects.
+        Baseline metrics and thresholds will be extracted from the LLMDriftMetric objects.
 
         Args:
             config (LLMDriftConfig):
                 The configuration for the LLM drift profile containing space, name,
                 version, and alert settings.
-            metrics (list[LLMMetric]):
-                A list of LLMMetric objects representing the metrics to be monitored.
+            metrics (list[LLMDriftMetric]):
+                A list of LLMDriftMetric objects representing the metrics to be monitored.
                 Each metric defines evaluation criteria and alert thresholds.
             workflow (Optional[Workflow]):
                 Optional custom workflow for advanced evaluation scenarios. If provided,
@@ -1093,15 +1093,15 @@ class LLMDriftProfile:
 
             >>> config = LLMDriftConfig("my_space", "my_model", "1.0")
             >>> metrics = [
-            ...     LLMMetric("accuracy", 0.95, AlertThreshold.Above, 0.1, prompt),
-            ...     LLMMetric("relevance", 0.85, AlertThreshold.Below, 0.2, prompt2)
+            ...     LLMDriftMetric("accuracy", 0.95, AlertThreshold.Above, 0.1, prompt),
+            ...     LLMDriftMetric("relevance", 0.85, AlertThreshold.Below, 0.2, prompt2)
             ... ]
             >>> profile = LLMDriftProfile(config, metrics)
 
             Advanced usage with custom workflow:
 
             >>> workflow = create_custom_workflow()  # Your custom workflow
-            >>> metrics = [LLMMetric("final_task", 0.9, AlertThreshold.Above)]
+            >>> metrics = [LLMDriftMetric("final_task", 0.9, AlertThreshold.Above)]
             >>> profile = LLMDriftProfile(config, metrics, workflow)
 
         Note:
@@ -1115,7 +1115,7 @@ class LLMDriftProfile:
         """Return the drift config"""
 
     @property
-    def metrics(self) -> List[LLMMetric]:
+    def metrics(self) -> List[LLMDriftMetric]:
         """Return LLM metrics and their corresponding values"""
 
     @property
@@ -1297,7 +1297,9 @@ class Drifter:
     def create_drift_profile(  # type: ignore
         self,
         data: Any,
-        config: Optional[Union[SpcDriftConfig, PsiDriftConfig, CustomMetricDriftConfig]] = None,
+        config: Optional[
+            Union[SpcDriftConfig, PsiDriftConfig, CustomMetricDriftConfig]
+        ] = None,
         data_type: Optional[DataType] = None,
     ) -> Union[SpcDriftProfile, PsiDriftProfile, CustomDriftProfile]:
         """Create a drift profile from data.
@@ -1322,7 +1324,7 @@ class Drifter:
     def create_llm_drift_profile(
         self,
         config: LLMDriftConfig,
-        metrics: List[LLMMetric],
+        metrics: List[LLMDriftMetric],
         workflow: Optional[Workflow] = None,
     ) -> LLMDriftProfile:
         """Initialize a LLMDriftProfile for LLM evaluation and drift detection.
@@ -1336,14 +1338,14 @@ class Drifter:
                - A list of metrics to evaluate workflow output must be provided
                - Metric names must correspond to the final task names in the workflow
 
-        Baseline metrics and thresholds will be extracted from the LLMMetric objects.
+        Baseline metrics and thresholds will be extracted from the LLMDriftMetric objects.
 
         Args:
             config (LLMDriftConfig):
                 The configuration for the LLM drift profile containing space, name,
                 version, and alert settings.
-            metrics (list[LLMMetric]):
-                A list of LLMMetric objects representing the metrics to be monitored.
+            metrics (list[LLMDriftMetric]):
+                A list of LLMDriftMetric objects representing the metrics to be monitored.
                 Each metric defines evaluation criteria and alert thresholds.
             workflow (Optional[Workflow]):
                 Optional custom workflow for advanced evaluation scenarios. If provided,
@@ -1362,15 +1364,15 @@ class Drifter:
 
             >>> config = LLMDriftConfig("my_space", "my_model", "1.0")
             >>> metrics = [
-            ...     LLMMetric("accuracy", 0.95, AlertThreshold.Above, 0.1, prompt),
-            ...     LLMMetric("relevance", 0.85, AlertThreshold.Below, 0.2, prompt2)
+            ...     LLMDriftMetric("accuracy", 0.95, AlertThreshold.Above, 0.1, prompt),
+            ...     LLMDriftMetric("relevance", 0.85, AlertThreshold.Below, 0.2, prompt2)
             ... ]
             >>> profile = Drifter().create_llm_drift_profile(config, metrics)
 
             Advanced usage with custom workflow:
 
             >>> workflow = create_custom_workflow()  # Your custom workflow
-            >>> metrics = [LLMMetric("final_task", 0.9, AlertThreshold.Above)]
+            >>> metrics = [LLMDriftMetric("final_task", 0.9, AlertThreshold.Above)]
             >>> profile = Drifter().create_llm_drift_profile(config, metrics, workflow)
 
         Note:

@@ -15,7 +15,7 @@ PsiDriftMap = scouter.drift.PsiDriftMap
 CustomMetricDriftConfig = scouter.drift.CustomMetricDriftConfig
 CustomMetric = scouter.drift.CustomMetric
 CustomDriftProfile = scouter.drift.CustomDriftProfile
-LLMMetric = scouter.drift.LLMMetric
+LLMDriftMetric = scouter.drift.LLMDriftMetric
 LLMDriftConfig = scouter.drift.LLMDriftConfig
 LLMDriftProfile = scouter.drift.LLMDriftProfile
 Drifter = scouter.drift.Drifter
@@ -33,7 +33,7 @@ __all__ = [
     "CustomMetricDriftConfig",
     "CustomMetric",
     "CustomDriftProfile",
-    "LLMMetric",
+    "LLMDriftMetric",
     "LLMDriftConfig",
     "LLMDriftProfile",
     "Drifter",
