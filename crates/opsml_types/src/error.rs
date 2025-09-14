@@ -34,8 +34,8 @@ pub enum TypeError {
     #[error("Invalid response type")]
     InvalidResponseError,
 
-    #[error(transparent)]
-    PyErr(#[from] pyo3::PyErr),
+    #[error("{0}")]
+    PyError(String),
 }
 
 impl From<TypeError> for PyErr {
@@ -43,5 +43,11 @@ impl From<TypeError> for PyErr {
         let msg = err.to_string();
         error!("{}", msg);
         PyRuntimeError::new_err(msg)
+    }
+}
+
+impl From<PyErr> for TypeError {
+    fn from(err: PyErr) -> TypeError {
+        TypeError::PyError(err.to_string())
     }
 }
