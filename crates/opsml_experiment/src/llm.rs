@@ -1,7 +1,6 @@
 use opsml_evaluate::llm::evaluate_llm;
-use opsml_evaluate::llm::{LLMEvalRecord, LLMEvalResults};
-use opsml_types::cards::LLMEvalMetric;
 use pyo3::prelude::*;
+use scouter_client::{EvaluationConfig, LLMEvalMetric, LLMEvalRecord, LLMEvalResults};
 
 use crate::error::ExperimentError;
 
@@ -15,7 +14,8 @@ impl LLMEvaluator {
     pub fn evaluate(
         records: Vec<LLMEvalRecord>,
         metrics: Vec<LLMEvalMetric>,
+        config: Option<EvaluationConfig>,
     ) -> Result<LLMEvalResults, ExperimentError> {
-        Ok(evaluate_llm(records, metrics)?)
+        Ok(evaluate_llm(records, metrics, config)?)
     }
 }

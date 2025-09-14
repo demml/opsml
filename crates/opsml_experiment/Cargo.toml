@@ -18,6 +18,7 @@ opsml-state = { workspace = true }
 opsml-storage = { workspace = true }
 opsml-types = { workspace = true }
 opsml-utils = { workspace = true }
+scouter-client = { workspace = true }
 
 mime_guess = { workspace = true }
 chrono = { workspace = true }

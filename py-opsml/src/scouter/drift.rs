@@ -23,7 +23,7 @@ pub fn drift(m: &Bound<'_, PyModule>) -> PyResult<()> {
     // LLM Drift
     m.add_class::<LLMDriftConfig>()?;
     m.add_class::<LLMDriftProfile>()?;
-    m.add_class::<LLMMetric>()?;
+    m.add_class::<LLMDriftMetric>()?;
     m.add_class::<LLMDriftMap>()?;
     m.add_class::<LLMMetricRecord>()?;
     Ok(())

@@ -4266,6 +4266,7 @@ dependencies = [
  "opsml-types",
  "opsml-utils",
  "pyo3",
+ "scouter-client",
  "serde",
  "serde_json",
  "sysinfo",
