@@ -5,8 +5,8 @@ use tracing::error;
 
 #[derive(Error, Debug)]
 pub enum EvaluationError {
-    #[error(transparent)]
-    PyErr(#[from] pyo3::PyErr),
+    #[error("{0}")]
+    PyError(String),
 
     #[error("{0}")]
     DowncastError(String),
@@ -20,6 +20,12 @@ impl From<EvaluationError> for PyErr {
         let msg = err.to_string();
         error!("{}", msg);
         PyRuntimeError::new_err(msg)
+    }
+}
+
+impl From<PyErr> for EvaluationError {
+    fn from(err: PyErr) -> EvaluationError {
+        EvaluationError::PyError(err.to_string())
     }
 }
 
