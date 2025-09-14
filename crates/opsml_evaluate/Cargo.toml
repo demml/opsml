@@ -10,8 +10,10 @@ doctest = false
 
 [dependencies]
 opsml-interfaces = { workspace = true }
+opsml-state = { workspace = true }
 opsml-types = { workspace = true }
 opsml-utils = { workspace = true }
+scouter-client = { workspace = true }
 
 pyo3 = { workspace = true }
 potato-head = { workspace = true }

@@ -1,313 +1,11 @@
 use crate::error::EvaluationError;
-use core::fmt::Debug;
-use opsml_interfaces::llm::workflow::PyWorkflow;
-use opsml_types::cards::LLMEvalMetric;
-use opsml_utils::{
-    create_uuid7, is_pydantic_model, json_to_pyobject_value, pyobject_to_json, PyHelperFuncs,
-};
-use potato_head::Score;
-use potato_head::StructuredOutput;
-use potato_head::TaskStatus;
-use potato_head::Workflow;
-use potato_head::WorkflowError;
+use opsml_state::app_state;
 use pyo3::prelude::*;
-use pyo3::types::PyDict;
-use pyo3::IntoPyObjectExt;
-use serde::Serialize;
-use serde_json::Value;
-use std::collections::HashMap;
-use std::sync::{Arc, RwLock};
-use tokio::task::JoinSet;
-use tracing::{debug, error, instrument};
-
-#[derive(Debug, Clone, Serialize)]
-#[pyclass]
-pub struct EvalResult {
-    #[pyo3(get)]
-    pub error: Option<String>,
-
-    #[pyo3(get)]
-    pub tasks: HashMap<String, Score>,
-
-    #[pyo3(get)]
-    pub id: String,
-}
-
-#[pymethods]
-impl EvalResult {
-    pub fn __getitem__(&self, key: &str) -> Result<Score, EvaluationError> {
-        match self.tasks.get(key) {
-            Some(value) => Ok(value.clone()),
-            None => Err(EvaluationError::MissingKeyError(key.to_string())),
-        }
-    }
-}
-
-impl EvalResult {
-    // Flattens the tasks hashmap into a list of dictionaries
-    pub fn to_list<'py>(
-        &self,
-        py: Python<'py>,
-    ) -> Result<Vec<Bound<'py, PyDict>>, EvaluationError> {
-        let mut list = Vec::new();
-        for (task_name, score) in &self.tasks {
-            let dict = PyDict::new(py);
-            dict.set_item("id", self.id.clone())?;
-            dict.set_item("task_name", task_name.clone())?;
-            dict.set_item("score", score.score)?;
-            dict.set_item("reason", score.reason.clone())?;
-            dict.set_item("error", self.error.clone())?;
-            list.push(dict);
-        }
-        Ok(list)
-    }
-}
-
-#[pyclass]
-#[derive(Clone, Debug)]
-pub struct LLMEvalRecord {
-    pub id: String,
-    pub context: Value,
-}
-
-#[pymethods]
-impl LLMEvalRecord {
-    #[new]
-    #[pyo3(signature = (
-        context,
-        id=None
-    ))]
-
-    /// Creates a new LLMRecord instance.
-    /// The context is either a python dictionary or a pydantic basemodel.
-    pub fn new(
-        py: Python<'_>,
-        context: Bound<'_, PyAny>,
-        id: Option<String>,
-    ) -> Result<Self, EvaluationError> {
-        // check if context is a PyDict or PyObject(Pydantic model)
-        let context_val = if context.is_instance_of::<PyDict>() {
-            pyobject_to_json(&context)?
-        } else if is_pydantic_model(py, &context)? {
-            // Dump pydantic model to dictionary
-            let model = context.call_method0("model_dump")?;
-
-            // Serialize the dictionary to JSON
-            pyobject_to_json(&model)?
-        } else {
-            Err(EvaluationError::MustBeDictOrBaseModel)?
-        };
-
-        let id = id.unwrap_or_else(create_uuid7);
-
-        Ok(LLMEvalRecord {
-            id,
-            context: context_val,
-        })
-    }
-
-    #[getter]
-    pub fn context<'py>(&self, py: Python<'py>) -> Result<Bound<'py, PyAny>, EvaluationError> {
-        Ok(json_to_pyobject_value(py, &self.context)?
-            .into_bound_py_any(py)?
-            .clone())
-    }
-}
-
-#[pyclass]
-pub struct EvalResultIter {
-    inner: std::vec::IntoIter<EvalResult>,
-}
-
-#[pymethods]
-impl EvalResultIter {
-    pub fn __iter__(slf: PyRef<'_, Self>) -> PyRef<'_, Self> {
-        slf
-    }
-
-    pub fn __next__(mut slf: PyRefMut<'_, Self>) -> Option<EvalResult> {
-        slf.inner.next()
-    }
-}
-
-#[derive(Debug, Serialize)]
-#[pyclass]
-pub struct LLMEvalResults {
-    pub results: HashMap<String, EvalResult>,
-}
-
-#[pymethods]
-impl LLMEvalResults {
-    pub fn __getitem__(&self, key: &str) -> Result<EvalResult, EvaluationError> {
-        match self.results.get(key) {
-            Some(value) => Ok(value.clone()),
-            None => Err(EvaluationError::MissingKeyError(key.to_string())),
-        }
-    }
-
-    pub fn __iter__(slf: PyRef<'_, Self>) -> Result<Py<EvalResultIter>, EvaluationError> {
-        let iter = EvalResultIter {
-            inner: slf
-                .results
-                .values()
-                .cloned()
-                .collect::<Vec<_>>()
-                .into_iter(),
-        };
-        Ok(Py::new(slf.py(), iter)?)
-    }
-
-    pub fn __str__(&self) -> String {
-        PyHelperFuncs::__str__(self)
-    }
-
-    #[pyo3(signature = (polars=false))]
-    pub fn to_dataframe<'py>(
-        &self,
-        py: Python<'py>,
-        polars: bool,
-    ) -> Result<Bound<'py, PyAny>, EvaluationError> {
-        let mut records = Vec::new();
-        // columns: id, task name, score, reason, error
-
-        for value in self.results.values() {
-            let eval_list = value.to_list(py)?;
-            // Flatten the list of dictionaries into a single vector
-            records.extend(eval_list);
-        }
-
-        if polars {
-            let polars = py.import("polars")?.getattr("DataFrame")?;
-            let df = polars.call1((records,))?;
-            Ok(df)
-        } else {
-            let pandas = py.import("pandas")?.getattr("DataFrame")?;
-            let df = pandas.call_method1("from_records", (records,))?;
-
-            Ok(df)
-        }
-    }
-}
-
-impl LLMEvalResults {
-    fn new() -> Self {
-        Self {
-            results: HashMap::new(),
-        }
-    }
-
-    fn add_result(&mut self, data_id: String, result: EvalResult) {
-        self.results.insert(data_id, result);
-    }
-}
-
-/// Process a workflow result and extract scores from completed tasks
-fn process_workflow_result(
-    workflow_result: Arc<RwLock<Workflow>>,
-    data_id: String,
-) -> Result<EvalResult, EvaluationError> {
-    let mut eval_result = EvalResult {
-        error: None,
-        tasks: HashMap::new(),
-        id: data_id.clone(),
-    };
-
-    let workflow = workflow_result
-        .read()
-        .map_err(|_| WorkflowError::LockAcquireError)?;
-
-    let tasks = workflow.task_list.tasks();
-    for task in tasks.values() {
-        if let (TaskStatus::Completed, Some(result)) = (&task.status, &task.result) {
-            if let Some(content) = result.content() {
-                match Score::model_validate_json_str(&content) {
-                    Ok(score) => {
-                        eval_result.tasks.insert(task.id.clone(), score);
-                    }
-                    Err(e) => {
-                        error!("Failed to validate score for task {}: {:?}", task.id, e);
-                        // Continue processing other tasks instead of failing completely
-                    }
-                }
-            }
-        }
-    }
-
-    Ok(eval_result)
-}
-
-fn handle_workflow_result(
-    result: Result<Arc<RwLock<Workflow>>, WorkflowError>,
-    data_id: String,
-) -> EvalResult {
-    match result {
-        Ok(workflow_result) => match process_workflow_result(workflow_result, data_id.clone()) {
-            Ok(eval_result) => eval_result,
-            Err(e) => EvalResult {
-                error: Some(e.to_string()),
-                tasks: HashMap::new(),
-                id: data_id,
-            },
-        },
-        Err(e) => EvalResult {
-            error: Some(e.to_string()),
-            tasks: HashMap::new(),
-            id: data_id,
-        },
-    }
-}
-
-async fn spawn_evaluation_tasks(
-    workflow: Workflow,
-    records: Vec<LLMEvalRecord>,
-) -> JoinSet<LLMEvalTaskResult> {
-    let mut join_set = JoinSet::new();
-
-    for item in records {
-        let inner_workflow = workflow.clone();
-
-        join_set.spawn(async move {
-            let result = inner_workflow.run(Some(item.context)).await;
-            (result, item.id)
-        });
-    }
-
-    join_set
-}
-
-type LLMEvalTaskResult = (Result<Arc<RwLock<Workflow>>, WorkflowError>, String);
-
-/// Wait for all evaluation tasks to complete and collect results
-async fn collect_evaluation_results(
-    mut join_set: JoinSet<LLMEvalTaskResult>,
-) -> Result<LLMEvalResults, EvaluationError> {
-    let mut eval_results = LLMEvalResults::new();
-
-    while let Some(join_result) = join_set.join_next().await {
-        let (workflow_result, data_id) = join_result?;
-        let eval_result = handle_workflow_result(workflow_result, data_id.clone());
-        eval_results.add_result(data_id, eval_result);
-    }
-
-    Ok(eval_results)
-}
-
-#[instrument(skip_all)]
-async fn async_evaluate_llm(
-    workflow: Workflow,
-    records: Vec<LLMEvalRecord>,
-) -> Result<LLMEvalResults, EvaluationError> {
-    debug!("Starting LLM evaluation for {} items", records.len());
-
-    let join_set = spawn_evaluation_tasks(workflow, records).await;
-    let results = collect_evaluation_results(join_set).await?;
-
-    debug!(
-        "Completed LLM evaluation with {} results",
-        results.results.len()
-    );
-    Ok(results)
-}
+use scouter_client::{
+    async_evaluate_llm, workflow_from_eval_metrics, EvaluationConfig, LLMEvalMetric, LLMEvalRecord,
+    LLMEvalResults,
+};
+use std::sync::Arc;
 
 #[pyfunction]
 /// Function for evaluating LLM response and generating metrics.
@@ -319,16 +17,27 @@ async fn async_evaluate_llm(
 /// * `py`: The Python interpreter instance.
 /// * `data`: A list of data samples to evaluate.
 /// * `metrics`: A list of evaluation metrics to use.
+/// * `config`: Optional evaluation configuration settings.
+#[pyo3(signature = (records, metrics, config=None))]
 pub fn evaluate_llm(
     records: Vec<LLMEvalRecord>,
     metrics: Vec<LLMEvalMetric>,
+    config: Option<EvaluationConfig>,
 ) -> Result<LLMEvalResults, EvaluationError> {
-    let workflow = PyWorkflow::from_eval_metrics(metrics, "LLM Evaluation")?;
+    let runtime = app_state().start_runtime();
+    let config = Arc::new(config.unwrap_or_default());
 
-    // Use the workflow's runtime to execute the async function
-    let results = workflow
-        .runtime
-        .block_on(async { async_evaluate_llm(workflow.workflow, records).await })?;
+    // Create runtime and execute evaluation pipeline
+    let mut results = runtime.block_on(async {
+        let workflow = workflow_from_eval_metrics(metrics, "LLM Evaluation").await?;
+        async_evaluate_llm(workflow, records, &config).await
+    })?;
+
+    // Only run post-processing if needed
+    // Post processing includes calculating embedding means, similarities, clustering, and histograms
+    if config.needs_post_processing() {
+        results.finalize(&config)?;
+    }
 
     Ok(results)
 }
