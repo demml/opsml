@@ -91,7 +91,7 @@ reqwest-middleware = "0.*"
 rusty-logging = "0.*"
 potato-head = "0.*"
 # we cant use crates.io because scouter relies on a fork of linfa at the moment
-scouter-client = {"git" =  "https://github.com/demml/scouter", tag="v0.12.0"} 
+scouter-client = {"git" =  "https://github.com/demml/scouter", branch = "main" } 
 sha2 = "0.*"
 semver = "1.*"
 serde = { version = "1.*", features = ["derive"] }
