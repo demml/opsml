@@ -2,11 +2,11 @@
 
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, Optional, Protocol, TypeAlias, Union, List
+from typing import Any, Dict, List, Optional, Protocol, TypeAlias, Union
 
 from ..card import DataCard, ExperimentCard, ModelCard, PromptCard
-from ..evaluate import LLMEvalMetric, LLMEvalRecord, EvaluationConfig, LLMEvalResults
 from ..data import DataSaveKwargs
+from ..evaluate import EvaluationConfig, LLMEvalMetric, LLMEvalRecord, LLMEvalResults
 from ..model import ModelSaveKwargs
 from ..types import VersionType
 
@@ -130,9 +130,7 @@ class Experiment:
                 Value of the parameter
         """
 
-    def log_parameters(
-        self, parameters: list[Parameter] | Dict[str, Union[int, float, str]]
-    ) -> None:
+    def log_parameters(self, parameters: list[Parameter] | Dict[str, Union[int, float, str]]) -> None:
         """
         Log multiple parameters
 
@@ -177,9 +175,7 @@ class Experiment:
 
         """
 
-    def log_figure(
-        self, name: str, figure: Any, kwargs: Optional[Dict[str, Any]] = None
-    ) -> None:
+    def log_figure(self, name: str, figure: Any, kwargs: Optional[Dict[str, Any]] = None) -> None:
         """
         Log a figure. This method will log a matplotlib Figure object to the experiment artifacts.
 

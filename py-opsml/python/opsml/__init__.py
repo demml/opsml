@@ -1,5 +1,5 @@
 # type: ignore
-# pylint: disable=no-name-in-module
+# pylint: disable=no-name-in-module,import-error
 
 from .opsml import (  # noqa: F401
     app,
@@ -14,6 +14,7 @@ from .opsml import (  # noqa: F401
     model,
     scouter,
     types,
+    evaluate,
 )
 
 CardRegistry = card.CardRegistry

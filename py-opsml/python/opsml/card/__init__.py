@@ -1,6 +1,6 @@
 # type: ignore
 
-from .. import card
+from ..opsml import card
 
 Card = card.Card
 CardRecord = card.CardRecord

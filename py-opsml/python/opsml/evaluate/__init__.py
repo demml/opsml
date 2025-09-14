@@ -1,5 +1,7 @@
 # type: ignore
-from .. import evaluate
+# pylint: disable=no-member
+
+from ..opsml import evaluate
 
 LLMEvalTaskResult = evaluate.LLMEvalTaskResult
 LLMEvalMetric = evaluate.LLMEvalMetric

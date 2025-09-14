@@ -1,6 +1,6 @@
 # type: ignore
 # pylint: disable=no-name-in-module
-from ...opsml import llm
+from .. import llm
 
 Modality = llm.google.Modality
 ThinkingConfig = llm.google.ThinkingConfig
@@ -21,6 +21,11 @@ LatLng = llm.google.LatLng
 ModelArmorConfig = llm.google.ModelArmorConfig
 Mode = llm.google.Mode
 GeminiSettings = llm.google.GeminiSettings
+GeminiEmbeddingConfig = llm.google.GeminiEmbeddingConfig
+GeminiEmbeddingResponse = llm.google.GeminiEmbeddingResponse
+PredictRequest = llm.google.PredictRequest
+PredictResponse = llm.google.PredictResponse
+EmbeddingTaskType = llm.google.EmbeddingTaskType
 
 __all__ = [
     "Modality",
@@ -42,4 +47,9 @@ __all__ = [
     "HarmBlockThreshold",
     "HarmBlockMethod",
     "SafetySetting",
+    "GeminiEmbeddingConfig",
+    "GeminiEmbeddingResponse",
+    "PredictRequest",
+    "PredictResponse",
+    "EmbeddingTaskType",
 ]
