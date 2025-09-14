@@ -13,7 +13,7 @@ use pyo3::types::PyDict;
 use pyo3::types::PyList;
 use pyo3::IntoPyObjectExt;
 use scouter_client::PyDrifter;
-use scouter_client::{DriftType, LLMDriftConfig, LLMDriftProfile, LLMMetric};
+use scouter_client::{DriftType, LLMDriftConfig, LLMDriftMetric, LLMDriftProfile};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
@@ -239,7 +239,7 @@ impl PromptCard {
         py: Python<'_>,
         alias: String,
         config: LLMDriftConfig,
-        metrics: Vec<LLMMetric>,
+        metrics: Vec<LLMDriftMetric>,
         workflow: Option<Bound<'_, PyAny>>,
     ) -> Result<(), CardError> {
         debug!("Creating drift profile");
