@@ -44,7 +44,6 @@ fn opsml(m: &Bound<'_, PyModule>) -> PyResult<()> {
 
     // cli
     m.add_wrapped(wrap_pymodule!(cli::cli))?;
-    //m.add_function(wrap_pyfunction!(cli::run_opsml_cli, m)?)?;
 
     m.add_function(wrap_pyfunction!(get_opsml_version, m)?)?;
     Ok(())

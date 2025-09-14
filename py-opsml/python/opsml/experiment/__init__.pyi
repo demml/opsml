@@ -2,15 +2,38 @@
 
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, Optional, Protocol, TypeAlias, Union
+from typing import Any, Dict, Optional, Protocol, TypeAlias, Union, List
 
 from ..card import DataCard, ExperimentCard, ModelCard, PromptCard
+from ..evaluate import LLMEvalMetric, LLMEvalRecord, EvaluationConfig, LLMEvalResults
 from ..data import DataSaveKwargs
 from ..model import ModelSaveKwargs
 from ..types import VersionType
 
 SerializedType: TypeAlias = Union[str, int, float, dict, list]
 Context: TypeAlias = Union[Dict[str, Any], BaseModel]
+
+class LLMEvaluator:
+    @staticmethod
+    def evaluate(
+        records: List[LLMEvalRecord],
+        metrics: List[LLMEvalMetric],
+        config: Optional[EvaluationConfig] = None,
+    ) -> LLMEvalResults:
+        """
+            Evaluate LLM responses using the provided evaluation metrics.
+
+        Args:
+            records (List[LLMEvalRecord]):
+                List of LLM evaluation records to evaluate.
+            metrics (List[LLMEvalMetric]):
+                List of LLMEvalMetric instances to use for evaluation.
+            config (Optional[EvaluationConfig]):
+                Optional EvaluationConfig instance to configure evaluation options.
+
+        Returns:
+            LLMEvalResults
+        """
 
 class Experiment:
     def start_experiment(
