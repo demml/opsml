@@ -1,5 +1,5 @@
 from .utils import get_reformulation_dataframe, reformulation_evaluation_prompt
-from opsml.experiment import evaluate_llm, LLMEvalMetric, LLMEvalRecord
+from opsml.evaluate import evaluate_llm, LLMEvalMetric, LLMEvalRecord
 
 if __name__ == "__main__":
     df = get_reformulation_dataframe()
