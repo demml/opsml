@@ -1,6 +1,6 @@
 import pandas as pd
 import polars as pl
-from scouter.evaluate import (  # type: ignore
+from opsml.evaluate import (  # type: ignore
     EvaluationConfig,
     LLMEvalMetric,
     LLMEvalRecord,

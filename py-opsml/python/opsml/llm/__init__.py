@@ -1,7 +1,7 @@
 # type: ignore
 # pylint: disable=no-name-in-module
 
-from .. import llm  # noqa: F401
+from ..opsml import llm  # noqa: F401
 from . import google  # noqa: F401
 from . import openai  # noqa: F401
 
@@ -28,6 +28,7 @@ TaskStatus = llm.TaskStatus
 Usage = llm.Usage
 Workflow = llm.Workflow
 WorkflowResult = llm.WorkflowResult
+Embedder = llm.Embedder
 
 
 __all__ = [
@@ -56,4 +57,5 @@ __all__ = [
     "Score",
     "google",
     "openai",
+    "Embedder",
 ]
