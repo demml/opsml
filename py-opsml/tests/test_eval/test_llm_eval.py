@@ -7,6 +7,8 @@ from opsml.evaluate import (  # type: ignore
     LLMEvalResults,
     evaluate_llm,
 )
+from opsml.experiment import start_experiment
+from opsml.mock import OpsmlTestServer
 from opsml.llm import Embedder, Provider  # type: ignore
 from opsml.llm.openai import OpenAIEmbeddingConfig  # type: ignore
 from opsml.mock import LLMTestServer
@@ -116,3 +118,60 @@ def test_llm_eval_embedding(
         assert histograms is not None
         for field, histogram in histograms.items():
             print(f"Histogram for {field}: {histogram}")
+
+
+def test_experimentcard_evaluate_llm(
+    reformulation_evaluation_prompt, relevancy_evaluation_prompt
+):
+    with OpsmlTestServer():
+        with LLMTestServer():
+            with start_experiment(space="test", log_hardware=True) as exp:
+                records = []
+
+                embedder = Embedder(
+                    Provider.OpenAI,
+                    config=OpenAIEmbeddingConfig(
+                        model="text-embedding-3-small",
+                        dimensions=512,
+                    ),
+                )
+                for i in range(100):
+                    record = LLMEvalRecord(
+                        context={"user_query": "my query", "response": "my response"},
+                        id=f"test_id_{i}",
+                    )
+                    records.append(record)
+
+                reformulation_metric = LLMEvalMetric(
+                    name="reformulation",
+                    prompt=reformulation_evaluation_prompt,
+                )
+                relevancy_metric = LLMEvalMetric(
+                    name="relevancy",
+                    prompt=relevancy_evaluation_prompt,
+                )
+
+                results = exp.llm.evaluate(
+                    records=records,
+                    metrics=[reformulation_metric, relevancy_metric],
+                    config=EvaluationConfig(
+                        embedder=embedder,
+                        embedding_targets=["user_query", "response"],
+                        compute_similarity=True,
+                        cluster=True,
+                        compute_histograms=True,
+                    ),
+                )
+
+                metrics = results["test_id_1"].metrics
+
+                assert metrics["reformulation"].score > 0
+                assert metrics["relevancy"].score > 0
+
+                result_df: pd.DataFrame = results.to_dataframe()
+
+                assert isinstance(result_df, pd.DataFrame)
+
+                result_polars_df: pl.DataFrame = results.to_dataframe(polars=True)
+
+                assert isinstance(result_polars_df, pl.DataFrame)
