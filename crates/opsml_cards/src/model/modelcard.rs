@@ -19,7 +19,7 @@ use opsml_types::{
 use opsml_utils::{create_tmp_path, extract_py_attr, get_utc_datetime, PyHelperFuncs};
 use pyo3::prelude::*;
 use pyo3::types::{PyDict, PyList};
-use pyo3::{IntoPyObjectExt, PyObject};
+use pyo3::IntoPyObjectExt;
 use pyo3::{PyTraverseError, PyVisit};
 use serde::{
     de::{self, MapAccess, Visitor},
@@ -88,7 +88,7 @@ impl ModelCardMetadata {
 #[pyclass]
 pub struct ModelCard {
     #[pyo3(get, set)]
-    pub interface: Option<PyObject>,
+    pub interface: Option<Py<PyAny>>,
 
     #[pyo3(get, set)]
     pub space: String,
@@ -655,7 +655,7 @@ impl<'de> Deserialize<'de> for ModelCard {
                     match key {
                         Field::Interface => {
                             let _interface: Option<serde_json::Value> = map.next_value()?;
-                            interface = None; // Default to None always (pyobject)
+                            interface = None; // Default to None always (Py<PyAny>)
                         }
                         Field::Name => {
                             name = Some(map.next_value()?);

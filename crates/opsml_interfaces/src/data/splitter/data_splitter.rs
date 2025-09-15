@@ -48,7 +48,7 @@ pub enum ColValType {
 }
 
 impl ColValType {
-    pub fn to_py_object(&self, py: Python) -> PyObject {
+    pub fn to_py_object(&self, py: Python) -> Py<PyAny> {
         match self {
             ColValType::String(val) => val.into_py_any(py).unwrap(),
             ColValType::Float(val) => val.into_py_any(py).unwrap(),
@@ -279,10 +279,10 @@ impl DataSplits {
 #[derive(Debug)]
 pub struct Data {
     #[pyo3(get)]
-    x: PyObject,
+    x: Py<PyAny>,
 
     #[pyo3(get)]
-    y: PyObject,
+    y: Py<PyAny>,
 }
 
 fn remove_diff<T: PartialEq + Clone>(a: &[T], b: &[T]) -> Vec<T> {

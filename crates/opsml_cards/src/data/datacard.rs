@@ -60,7 +60,7 @@ pub struct DataCardMetadata {
 #[pyclass]
 pub struct DataCard {
     #[pyo3(get, set)]
-    pub interface: Option<PyObject>,
+    pub interface: Option<Py<PyAny>>,
 
     #[pyo3(get, set)]
     pub space: String,
@@ -447,7 +447,7 @@ impl<'de> Deserialize<'de> for DataCard {
                     match key {
                         Field::Interface => {
                             let _interface: Option<serde_json::Value> = map.next_value()?;
-                            interface = None; // Default to None always (pyobject)
+                            interface = None; // Default to None always (Py<PyAny>)
                         }
                         Field::Name => {
                             name = Some(map.next_value()?);

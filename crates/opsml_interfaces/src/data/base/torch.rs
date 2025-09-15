@@ -15,7 +15,7 @@ use std::path::{Path, PathBuf};
 #[pyclass(extends=DataInterface, subclass)]
 pub struct TorchData {
     #[pyo3(get)]
-    pub data: Option<PyObject>,
+    pub data: Option<Py<PyAny>>,
 
     #[pyo3(get)]
     pub data_type: DataType,
@@ -280,7 +280,7 @@ impl TorchData {
         py: Python,
         path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
-    ) -> Result<PyObject, DataInterfaceError> {
+    ) -> Result<Py<PyAny>, DataInterfaceError> {
         let numpy = PyModule::import(py, "torch")?;
 
         // Load the data using numpy

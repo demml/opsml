@@ -73,7 +73,7 @@ pub struct OnnxSession {
     pub schema: OnnxSchema,
 
     #[pyo3(get, set)]
-    pub session: Option<PyObject>,
+    pub session: Option<Py<PyAny>>,
 
     pub quantized: bool,
 }
@@ -154,7 +154,7 @@ impl OnnxSession {
     }
 
     #[getter]
-    pub fn get_session(&self, py: Python) -> Option<PyObject> {
+    pub fn get_session(&self, py: Python) -> Option<Py<PyAny>> {
         self.session.as_ref().map(|session| session.clone_ref(py))
     }
 
@@ -165,7 +165,7 @@ impl OnnxSession {
         input_feed: &Bound<'py, PyDict>,
         output_names: Option<&Bound<'py, PyList>>,
         run_options: Option<&Bound<'py, PyDict>>,
-    ) -> Result<PyObject, OnnxError> {
+    ) -> Result<Py<PyAny>, OnnxError> {
         // get session
         let sess = self
             .session
@@ -231,13 +231,13 @@ impl OnnxSession {
     /// * `kwargs` - Additional keyword arguments for the session
     ///
     /// # Returns
-    /// * `PyResult<PyObject>` - The loaded ONNX session
+    /// * `PyResult<Py<PyAny>>` - The loaded ONNX session
     ///
     pub fn get_py_session_from_bytes(
         py: Python,
         bytes: &[u8],
         kwargs: Option<&Bound<'_, PyDict>>,
-    ) -> Result<PyObject, OnnxError> {
+    ) -> Result<Py<PyAny>, OnnxError> {
         let rt = py.import("onnxruntime").map_err(OnnxError::ImportError)?;
 
         let providers = rt
@@ -408,7 +408,7 @@ impl<'de> Deserialize<'de> for OnnxSession {
 
 impl Clone for OnnxSession {
     fn clone(&self) -> Self {
-        Python::with_gil(|py| {
+        Python::attach(|py| {
             let new_session = self.session.as_ref().map(|session| session.clone_ref(py));
             OnnxSession {
                 session: new_session,

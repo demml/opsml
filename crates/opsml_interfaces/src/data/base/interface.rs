@@ -148,7 +148,7 @@ pub fn check_dependent_vars(
 #[pyclass(subclass)]
 pub struct DataInterface {
     #[pyo3(get)]
-    pub data: Option<PyObject>,
+    pub data: Option<Py<PyAny>>,
 
     #[pyo3(get)]
     pub data_splits: DataSplits,

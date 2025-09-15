@@ -290,7 +290,7 @@ pub struct ServiceCard {
     pub registry_type: RegistryType,
 
     // this is the holder for the card objects (ModelCard, DataCard, etc.)
-    pub card_objs: HashMap<String, PyObject>,
+    pub card_objs: HashMap<String, Py<PyAny>>,
 
     #[pyo3(get, set)]
     pub experimentcard_uid: Option<String>,
@@ -586,7 +586,7 @@ impl ServiceCard {
         base_path: &Path,
         card: &Card,
         load_kwargs: Option<&Bound<'_, PyDict>>,
-    ) -> Result<PyObject, CardError> {
+    ) -> Result<Py<PyAny>, CardError> {
         let card_path = base_path.join(&card.alias);
 
         let (interface, load_kwargs) = Self::extract_kwargs(py, load_kwargs, &card.alias)
@@ -671,7 +671,7 @@ impl ServiceCard {
         card_path: PathBuf,
         interface: Option<Bound<'_, PyAny>>,
         load_kwargs: Option<Bound<'_, PyAny>>,
-    ) -> Result<PyObject, CardError> {
+    ) -> Result<Py<PyAny>, CardError> {
         let mut card_obj =
             DataCard::model_validate_json(py, card_json.to_string(), interface.as_ref())?;
         let kwargs = load_kwargs.and_then(|kwargs| kwargs.extract::<DataLoadKwargs>().ok());
@@ -694,7 +694,7 @@ impl ServiceCard {
         card_path: PathBuf,
         interface: Option<Bound<'_, PyAny>>,
         load_kwargs: Option<Bound<'_, PyAny>>,
-    ) -> Result<PyObject, CardError> {
+    ) -> Result<Py<PyAny>, CardError> {
         let mut card_obj =
             ModelCard::model_validate_json(py, card_json.to_string(), interface.as_ref())?;
         let kwargs = load_kwargs.and_then(|kwargs| kwargs.extract::<ModelLoadKwargs>().ok());
@@ -710,16 +710,16 @@ impl ServiceCard {
         })?)
     }
 
-    fn load_experiment_card(card_json: &str) -> Result<PyObject, CardError> {
+    fn load_experiment_card(card_json: &str) -> Result<Py<PyAny>, CardError> {
         let card_obj = ExperimentCard::model_validate_json(card_json.to_string())?;
-        Python::with_gil(|py| Ok(card_obj.into_py_any(py)?))
+        Python::attach(|py| Ok(card_obj.into_py_any(py)?))
     }
 
     #[instrument(skip_all)]
-    fn load_prompt_card(card_json: &str) -> Result<PyObject, CardError> {
+    fn load_prompt_card(card_json: &str) -> Result<Py<PyAny>, CardError> {
         debug!("Loading prompt card from JSON");
         let card_obj = PromptCard::model_validate_json(card_json.to_string())?;
-        Python::with_gil(|py| Ok(card_obj.into_py_any(py)?))
+        Python::attach(|py| Ok(card_obj.into_py_any(py)?))
     }
 }
 

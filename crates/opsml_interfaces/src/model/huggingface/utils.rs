@@ -17,11 +17,11 @@ use tracing::{error, instrument};
 
 #[derive(Default, Debug)]
 pub enum HuggingFaceSampleData {
-    Pandas(PyObject),
-    Polars(PyObject),
-    Numpy(PyObject),
-    Arrow(PyObject),
-    Torch(PyObject),
+    Pandas(Py<PyAny>),
+    Polars(Py<PyAny>),
+    Numpy(Py<PyAny>),
+    Arrow(Py<PyAny>),
+    Torch(Py<PyAny>),
     List(Py<PyList>),
     Tuple(Py<PyTuple>),
     Dict(Py<PyDict>),
@@ -143,7 +143,7 @@ impl HuggingFaceSampleData {
 
     fn slice_and_return<F>(data: &Bound<'_, PyAny>, constructor: F) -> Result<Self, SampleDataError>
     where
-        F: FnOnce(PyObject) -> HuggingFaceSampleData,
+        F: FnOnce(Py<PyAny>) -> HuggingFaceSampleData,
     {
         let py = data.py();
         let slice = PySlice::new(py, 0, 1, 1);
@@ -225,7 +225,7 @@ impl HuggingFaceSampleData {
         }
     }
 
-    pub fn get_data(&self, py: Python) -> Result<PyObject, SampleDataError> {
+    pub fn get_data(&self, py: Python) -> Result<Py<PyAny>, SampleDataError> {
         match self {
             HuggingFaceSampleData::Pandas(data) => Ok(data.clone_ref(py)),
             HuggingFaceSampleData::Polars(data) => Ok(data.clone_ref(py)),

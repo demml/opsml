@@ -234,7 +234,7 @@ pub fn json_to_pyobject<'py>(
     Ok(dict.clone())
 }
 
-pub fn json_to_pyobject_value(py: Python, value: &Value) -> Result<PyObject, PyUtilError> {
+pub fn json_to_pyobject_value(py: Python, value: &Value) -> Result<Py<PyAny>, PyUtilError> {
     Ok(match value {
         Value::Null => py.None(),
         Value::Bool(b) => b.into_py_any(py)?,

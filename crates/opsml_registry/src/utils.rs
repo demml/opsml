@@ -31,7 +31,7 @@ fn load_and_extract_card(
     card_registries: &CardRegistries,
     card: &Card,
     interface: Option<&Bound<'_, PyAny>>,
-) -> Result<PyObject, RegistryError> {
+) -> Result<Py<PyAny>, RegistryError> {
     let card_obj = match card.registry_type {
         RegistryType::Model => card_registries.model.load_card(
             py,

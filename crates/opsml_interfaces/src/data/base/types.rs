@@ -250,7 +250,7 @@ impl DataSaveKwargs {
 
 impl DataSaveKwargs {
     pub fn data_kwargs<'py>(&self, py: Python<'py>) -> Option<&Bound<'py, PyDict>> {
-        // convert Option<PyObject> into Option<Bound<_, PyDict>>
+        // convert Option<Py<PyAny>> into Option<Bound<_, PyDict>>
         self.data.as_ref().map(|data| data.bind(py))
     }
 }
@@ -260,7 +260,7 @@ impl Serialize for DataSaveKwargs {
     where
         S: serde::Serializer,
     {
-        Python::with_gil(|py| {
+        Python::attach(|py| {
             let mut state = serializer.serialize_struct("DataSaveKwargs", 1)?;
             let data = self
                 .data
@@ -291,7 +291,7 @@ impl<'de> Deserialize<'de> for DataSaveKwargs {
             where
                 A: serde::de::MapAccess<'de>,
             {
-                Python::with_gil(|py| {
+                Python::attach(|py| {
                     let mut data = None;
 
                     while let Some(key) = map.next_key::<String>()? {
@@ -330,7 +330,7 @@ impl<'de> Deserialize<'de> for DataSaveKwargs {
 
 impl Clone for DataSaveKwargs {
     fn clone(&self) -> Self {
-        Python::with_gil(|py| {
+        Python::attach(|py| {
             let data = self.data.as_ref().map(|data| data.clone_ref(py));
 
             DataSaveKwargs { data }
@@ -358,14 +358,14 @@ impl DataLoadKwargs {
 
 impl DataLoadKwargs {
     pub fn data_kwargs<'py>(&self, py: Python<'py>) -> Option<&Bound<'py, PyDict>> {
-        // convert Option<PyObject> into Option<Bound<_, PyDict>>
+        // convert Option<Py<PyAny>> into Option<Bound<_, PyDict>>
         self.data.as_ref().map(|data| data.bind(py))
     }
 }
 
 impl Clone for DataLoadKwargs {
     fn clone(&self) -> Self {
-        Python::with_gil(|py| {
+        Python::attach(|py| {
             let data = self.data.as_ref().map(|data| data.clone_ref(py));
 
             DataLoadKwargs { data }
