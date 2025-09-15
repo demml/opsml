@@ -10,7 +10,7 @@ on:
   pull_request:
 
 env:
-  PYTHON_VERSION: "3.9"
+  PYTHON_VERSION: "3.12"
   RUSTFLAGS: -C debuginfo=0
   CARGO_INCREMENTAL: 0
   CARGO_NET_RETRY: 10
@@ -76,116 +76,114 @@ jobs:
       - name: Run Unit Tests
         run: make test.unit
 
-  # build ubuntu, macos and windows binaries to use in tests
-  #build-wheels:
-  #  name: build wheels - ${{ matrix.os }}
-  #  strategy:
-  #    fail-fast: false
-  #    matrix:
-  #      include:
-  #        - os: ubuntu-latest
-  #          target: x86_64-unknown-linux-gnu
-  #          manylinux: auto
-  #        - os: macos-13
-  #          target: x86_64-apple-darwin
-  #        - os: macos-15
-  #          target: aarch64-apple-darwin
-  #        - os: windows-latest
-  #          target: x86_64-pc-windows-msvc
-  #
-  #  runs-on: ${{ matrix.os }}
-  #  steps:
-  #    - uses: actions/checkout@v4
-  #
-  #    - name: Install Rust stable
-  #      uses: dtolnay/rust-toolchain@stable
-  #
-  #    - name: Cache Rust
-  #      uses: Swatinem/rust-cache@v2
-  #
-  #    - name: Set up Python
-  #      uses: actions/setup-python@v5
-  #      with:
-  #        python-version: ${{ env.PYTHON_VERSION }}
-  #
-  #    - name: Build abi3 wheel (macos and windows)
-  #      if: runner.os == 'macOS' || runner.os == 'Windows'
-  #      uses: PyO3/maturin-action@v1
-  #      with:
-  #        target: ${{ matrix.target }}
-  #        args: --out dist --features="server"
-  #        rust-toolchain: stable
-  #        docker-options: -e CI
-  #        working-directory: ./py-opsml
-  #
-  #    - name: Build abi3 wheel (linux)
-  #      if: runner.os == 'Linux'
-  #      uses: PyO3/maturin-action@v1
-  #      with:
-  #        target: ${{ matrix.target }}
-  #        manylinux: ${{ matrix.manylinux }}
-  #        args: --out dist --features server
-  #        rust-toolchain: stable
-  #        docker-options: -e CI
-  #        working-directory: ./py-opsml
-  #        # See: https://github.com/sfackler/rust-openssl/issues/2036#issuecomment-1724324145
-  #        before-script-linux: |
-  #          # If we're running on rhel centos, install needed packages.
-  #          if command -v yum &> /dev/null; then
-  #              yum update -y && yum install -y perl-core openssl openssl-devel pkgconfig libatomic
-  #
-  #              # If we're running on i686 we need to symlink libatomic
-  #              # in order to build openssl with -latomic flag.
-  #              if [[ ! -d "/usr/lib64" ]]; then
-  #                  ln -s /usr/lib/libatomic.so.1 /usr/lib/libatomic.so
-  #              fi
-  #          else
-  #              # If we're running on debian-based system.
-  #              apt update -y && apt-get install -y libssl-dev openssl pkg-config
-  #          fi
-  #
-  #          # Install bindgen CLI
-  #          cargo install --force --locked bindgen-cli
-  #
-  #          # Determine architecture (x86_64 or x86)
-  #          ARCH=$(uname -m)
-  #
-  #          echo "Detected architecture: $ARCH"
-  #
-  #          # Download the correct CMake version based on the architecture
-  #          if [[ "$ARCH" == "x86_64" ]]; then
-  #              echo "Downloading CMake for x86_64 architecture"
-  #              curl -L https://github.com/Kitware/CMake/releases/download/v3.26.4/cmake-3.26.4-linux-x86_64.sh -o cmake.sh
-  #              chmod +x cmake.sh
-  #              ./cmake.sh --skip-license --prefix=/usr/local
-  #          elif [[ "$ARCH" == "i686" ]]; then
-  #              echo "Downloading CMake for x86 architecture"
-  #              curl -L https://github.com/Kitware/CMake/releases/download/v3.26.4/cmake-3.26.4.tar.gz -o cmake.tar.gz
-  #              tar -xzf cmake.tar.gz
-  #              cd cmake-3.26.4
-  #              ./bootstrap --prefix=/usr/local
-  #              make -j$(nproc)
-  #              make install
-  #              cd ..
-  #          else
-  #              echo "Unsupported architecture: $ARCH"
-  #              exit 1
-  #          fi
-  #
-  #          cmake --version
-  #
-  #    - name: Check dist
-  #      # only run for macOS and Windows
-  #      if: runner.os == 'macOS' || runner.os == 'Linux'
-  #      working-directory: ./py-opsml
-  #      run: ls -lh dist/
-  #
-  #    - name: Upload wheel artifact
-  #      uses: actions/upload-artifact@v4
-  #      with:
-  #        name: wheel-${{ matrix.os }}-${{ matrix.target }}
-  #        path: ./py-opsml/dist/*.whl
-  #        retention-days: 1
+  test-py-build-linux:
+    name: build - ${{ matrix.runner-type }} - ${{ matrix.manylinux }} - ${{ matrix.target }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: x86_64-unknown-linux-gnu
+            manylinux: auto
+            runner-type: ubuntu-latest
+            runner: ubuntu-latest
+            docker-options: "-e CI"
+          - target: aarch64-unknown-linux-gnu
+            manylinux: "2_28"
+            runner-type: ubuntu-24.04-arm
+            runner: ubuntu-24.04-arm
+            docker-options: "-e CI -e SIMSIMD_DISABLE_SVE=1 -e SIMSIMD_TARGET_SVE=0 -e SIMSIMD_TARGET_SVE2=0"
+
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - run: pip install -U twine
+
+      - name: Set OPENSSL_DIR environment variable
+        run: echo "OPENSSL_DIR=/usr" >> $GITHUB_ENV
+
+      - name: Build wheel
+        uses: PyO3/maturin-action@v1
+        with:
+          target: ${{ matrix.target }}
+          manylinux: ${{ matrix.manylinux }}
+          args: --release --out dist
+          rust-toolchain: stable
+          docker-options: ${{ matrix.docker-options }}
+          working-directory: ./py-opsml
+          before-script-linux: |
+            # Install required packages
+            if command -v yum &> /dev/null; then
+                yum update -y && yum install -y perl-core openssl openssl-devel pkgconfig libatomic
+
+                # If we're running on i686 we need to symlink libatomic
+                # in order to build openssl with -latomic flag.
+                if [[ ! -d "/usr/lib64" ]]; then
+                    ln -s /usr/lib/libatomic.so.1 /usr/lib/libatomic.so
+                fi
+            else
+                # If we're running on debian-based system.
+                apt update -y && apt-get install -y libssl-dev openssl pkg-config
+            fi
+
+            # Install bindgen CLI
+            cargo install --force --locked bindgen-cli
+
+            # Determine architecture and install CMake
+            ARCH=$(uname -m)
+            echo "Detected architecture: $ARCH"
+
+            if [[ "$ARCH" == "x86_64" ]]; then
+                echo "Downloading CMake for x86_64 architecture"
+                curl -L https://github.com/Kitware/CMake/releases/download/v3.26.4/cmake-3.26.4-linux-x86_64.sh -o cmake.sh
+                chmod +x cmake.sh
+                ./cmake.sh --skip-license --prefix=/usr/local
+            elif [[ "$ARCH" == "aarch64" ]]; then
+                echo "Downloading CMake for aarch64 architecture"
+                curl -L https://github.com/Kitware/CMake/releases/download/v3.26.4/cmake-3.26.4-linux-aarch64.sh -o cmake.sh
+                chmod +x cmake.sh
+                ./cmake.sh --skip-license --prefix=/usr/local
+            elif [[ "$ARCH" == "i686" ]]; then
+                echo "Downloading CMake for x86 architecture"
+                curl -L https://github.com/Kitware/CMake/releases/download/v3.26.4/cmake-3.26.4.tar.gz -o cmake.tar.gz
+                tar -xzf cmake.tar.gz
+                cd cmake-3.26.4
+                ./bootstrap --prefix=/usr/local
+                make -j$(nproc)
+                make install
+                cd ..
+            else
+                echo "Unsupported architecture: $ARCH"
+                exit 1
+            fi
+
+            cmake --version
+
+            # Set ARM64-specific environment variables for simsimd
+            if [[ "$ARCH" == "aarch64" ]]; then
+                echo "Setting up ARM64 build environment"
+                export SIMSIMD_DISABLE_SVE=1
+                export SIMSIMD_TARGET_SVE=0
+                export SIMSIMD_TARGET_SVE2=0
+                export SIMSIMD_TARGET_SVE_F16=0
+                export SIMSIMD_TARGET_SVE_BF16=0
+                export SIMSIMD_TARGET_SVE_I8=0
+                export CFLAGS="-march=armv8-a"
+                export CXXFLAGS="-march=armv8-a"
+            fi
+
+      - name: Check dist
+        working-directory: ./py-opsml
+        run: ls -lh dist/
+
+      - name: Check wheel
+        working-directory: ./py-opsml
+        run: twine check --strict dist/*
 
   test-python:
     name: test ${{ matrix.os }}-${{ matrix.python-version }}
