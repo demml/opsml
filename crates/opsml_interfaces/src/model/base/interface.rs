@@ -208,7 +208,7 @@ impl ModelInterfaceMetadata {
 #[derive(Debug)]
 pub struct ModelInterface {
     #[pyo3(get)]
-    pub model: Option<PyObject>,
+    pub model: Option<Py<PyAny>>,
 
     #[pyo3(get, set)]
     pub data_type: DataType,
@@ -328,7 +328,7 @@ impl ModelInterface {
     }
 
     #[getter]
-    pub fn get_sample_data(&self, py: Python<'_>) -> Result<PyObject, ModelInterfaceError> {
+    pub fn get_sample_data(&self, py: Python<'_>) -> Result<Py<PyAny>, ModelInterfaceError> {
         Ok(self.sample_data.get_data(py)?)
     }
 

@@ -13,11 +13,11 @@ use std::path::PathBuf;
 
 #[derive(Default, Debug)]
 pub enum TorchSampleData {
-    Torch(PyObject),
+    Torch(Py<PyAny>),
     List(Py<PyList>),
     Tuple(Py<PyTuple>),
     Dict(Py<PyDict>),
-    DataSet(PyObject),
+    DataSet(Py<PyAny>),
 
     #[default]
     None,
@@ -156,7 +156,7 @@ impl TorchSampleData {
 
     fn slice_and_return<F>(data: &Bound<'_, PyAny>, constructor: F) -> Result<Self, SampleDataError>
     where
-        F: FnOnce(PyObject) -> TorchSampleData,
+        F: FnOnce(Py<PyAny>) -> TorchSampleData,
     {
         let py = data.py();
         let slice = PySlice::new(py, 0, 1, 1);
@@ -279,7 +279,7 @@ impl TorchSampleData {
         }
     }
 
-    pub fn get_data(&self, py: Python) -> Result<PyObject, SampleDataError> {
+    pub fn get_data(&self, py: Python) -> Result<Py<PyAny>, SampleDataError> {
         match self {
             TorchSampleData::Torch(data) => Ok(data.into_py_any(py).unwrap()),
             TorchSampleData::List(data) => Ok(data.into_py_any(py).unwrap()),

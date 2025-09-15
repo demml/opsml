@@ -1,4 +1,4 @@
-use crate::error::{PyTypeError, TypeError};
+use crate::error::TypeError;
 use chrono::{DateTime, Utc};
 use opsml_utils::PyHelperFuncs;
 use pyo3::prelude::*;
@@ -6,6 +6,8 @@ use pyo3::IntoPyObjectExt;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use sysinfo::{Networks, System};
+
+use core::fmt::Debug;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[pyclass]
@@ -109,10 +111,10 @@ impl EvalMetrics {
         PyHelperFuncs::__str__(self)
     }
     // make it iterable and indexable
-    pub fn __getitem__(&self, key: &str) -> Result<f64, PyTypeError> {
+    pub fn __getitem__(&self, key: &str) -> Result<f64, TypeError> {
         match self.metrics.get(key) {
             Some(metric) => Ok(metric.value),
-            None => Err(TypeError::NotMetricFoundError(key.to_string()).into()),
+            None => Err(TypeError::NotMetricFoundError(key.to_string())),
         }
     }
 
@@ -174,7 +176,7 @@ pub enum ParameterValue {
 }
 
 impl ParameterValue {
-    pub fn from_any(value: Bound<'_, PyAny>) -> Result<Self, PyTypeError> {
+    pub fn from_any(value: Bound<'_, PyAny>) -> Result<Self, TypeError> {
         if let Ok(value) = value.extract::<i64>() {
             Ok(ParameterValue::Int(value))
         } else if let Ok(value) = value.extract::<f64>() {
@@ -182,7 +184,7 @@ impl ParameterValue {
         } else if let Ok(value) = value.extract::<String>() {
             Ok(ParameterValue::Str(value))
         } else {
-            Err(TypeError::InvalidType.into())
+            Err(TypeError::InvalidType)
         }
     }
 }
@@ -199,7 +201,7 @@ pub struct Parameter {
 impl Parameter {
     #[new]
     #[pyo3(signature = (name, value))]
-    pub fn new(name: String, value: Bound<'_, PyAny>) -> Result<Self, PyTypeError> {
+    pub fn new(name: String, value: Bound<'_, PyAny>) -> Result<Self, TypeError> {
         let value = ParameterValue::from_any(value)?;
 
         Ok(Self { name, value })
@@ -457,7 +459,7 @@ pub struct ComputeEnvironment {
 #[pymethods]
 impl ComputeEnvironment {
     #[new]
-    pub fn new(py: Python) -> Result<Self, PyTypeError> {
+    pub fn new(py: Python) -> Result<Self, TypeError> {
         let sys = System::new_all();
 
         Ok(Self {

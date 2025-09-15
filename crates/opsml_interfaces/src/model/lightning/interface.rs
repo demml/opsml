@@ -25,13 +25,13 @@ use tracing::{debug, instrument, warn};
 #[derive(Debug)]
 pub struct LightningModel {
     #[pyo3(get)]
-    pub trainer: Option<PyObject>,
+    pub trainer: Option<Py<PyAny>>,
 
     #[pyo3(get)]
-    pub model: Option<PyObject>,
+    pub model: Option<Py<PyAny>>,
 
     #[pyo3(get)]
-    pub preprocessor: Option<PyObject>,
+    pub preprocessor: Option<Py<PyAny>>,
 
     #[pyo3(get, set)]
     preprocessor_name: String,

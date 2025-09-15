@@ -2,6 +2,7 @@ pub mod app;
 pub mod card;
 pub mod cli;
 pub mod data;
+pub mod evaluate;
 pub mod experiment;
 pub mod llm;
 pub mod logging;
@@ -23,11 +24,13 @@ fn opsml(m: &Bound<'_, PyModule>) -> PyResult<()> {
     // integrations
     m.add_wrapped(wrap_pymodule!(scouter::scouter))?;
     m.add_wrapped(wrap_pymodule!(llm::llm))?;
+    m.add_wrapped(wrap_pymodule!(llm::llm))?;
 
     m.add_wrapped(wrap_pymodule!(data::data))?;
     m.add_wrapped(wrap_pymodule!(model::model))?;
     m.add_wrapped(wrap_pymodule!(card::card))?;
     m.add_wrapped(wrap_pymodule!(experiment::experiment))?;
+    m.add_wrapped(wrap_pymodule!(evaluate::evaluate))?;
     m.add_wrapped(wrap_pymodule!(app::app))?;
 
     // types
@@ -41,7 +44,6 @@ fn opsml(m: &Bound<'_, PyModule>) -> PyResult<()> {
 
     // cli
     m.add_wrapped(wrap_pymodule!(cli::cli))?;
-    //m.add_function(wrap_pyfunction!(cli::run_opsml_cli, m)?)?;
 
     m.add_function(wrap_pyfunction!(get_opsml_version, m)?)?;
     Ok(())

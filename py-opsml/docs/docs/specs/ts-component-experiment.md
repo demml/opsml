@@ -8,7 +8,7 @@ The `Experiment` struct serves as a core component for managing machine learning
 ```rust
 #[pyclass]
 pub struct Experiment {
-    pub experiment: PyObject,
+    pub experiment: Py<PyAny>,
     pub registries: CardRegistries,
     pub hardware_queue: Option<HardwareQueue>,
     uid: String,
@@ -47,7 +47,7 @@ pub struct Experiment {
 ```rust
 pub fn new(
     py: Python,
-    experiment: PyObject,
+    experiment: Py<PyAny>,
     registries: CardRegistries,
     log_hardware: bool,
     code_dir: Option<PathBuf>,

@@ -5,7 +5,7 @@ from opsml import (  # type: ignore
     PromptCard,
 )
 from opsml.types import DriftArgs
-from opsml.scouter.drift import LLMDriftConfig, LLMMetric, LLMDriftProfile
+from opsml.scouter.drift import LLMDriftConfig, LLMDriftMetric, LLMDriftProfile
 from opsml.scouter.alert import AlertThreshold
 from opsml.llm import Score, Agent, Task, Workflow
 from opsml.mock import OpsmlTestServer, LLMTestServer
@@ -13,47 +13,8 @@ import pytest
 from tests.conftest import WINDOWS_EXCLUDE
 
 
-def create_reformulation_evaluation_prompt():
-    """
-    Builds a prompt for evaluating the quality of a reformulated query.
-
-    Returns:
-        Prompt: A prompt that asks for a JSON evaluation of the reformulation.
-
-    Example:
-        >>> prompt = create_reformulation_evaluation_prompt()
-    """
-    return Prompt(
-        message=(
-            "You are an expert evaluator of search query reformulations. "
-            "Given the original user query and its reformulated version, your task is to assess how well the reformulation improves the query. "
-            "Consider the following criteria:\n"
-            "- Does the reformulation make the query more explicit and comprehensive?\n"
-            "- Are relevant synonyms, related concepts, or specific features added?\n"
-            "- Is the original intent preserved without changing the meaning?\n"
-            "- Is the reformulation clear and unambiguous?\n\n"
-            "Provide your evaluation as a JSON object with the following attributes:\n"
-            "- score: An integer from 1 (poor) to 5 (excellent) indicating the overall quality of the reformulation.\n"
-            "- reason: A brief explanation for your score.\n\n"
-            "Format your response as:\n"
-            "{\n"
-            '  "score": <integer 1-5>,\n'
-            '  "reason": "<your explanation>"\n'
-            "}\n\n"
-            "Original Query:\n"
-            "${user_query}\n\n"
-            "Reformulated Query:\n"
-            "${response}\n\n"
-            "Evaluation:"
-        ),
-        model="gemini-2.5-flash-lite-preview-06-17",
-        provider="gemini",
-        response_format=Score,
-    )
-
-
 @pytest.mark.skipif(WINDOWS_EXCLUDE, reason="skipping")
-def test_promptcard_crud() -> None:
+def test_promptcard_crud(reformulation_evaluation_prompt: Prompt) -> None:
     with OpsmlTestServer():
         with LLMTestServer():
             reg: CardRegistry[PromptCard] = CardRegistry(RegistryType.Prompt)
@@ -71,9 +32,9 @@ def test_promptcard_crud() -> None:
                 alias="llm_drift",
                 config=LLMDriftConfig(),
                 metrics=[
-                    LLMMetric(
+                    LLMDriftMetric(
                         name="reformulation_quality",
-                        prompt=create_reformulation_evaluation_prompt(),
+                        prompt=reformulation_evaluation_prompt,
                         value=3.0,
                         alert_threshold=AlertThreshold.Below,
                     )
@@ -158,7 +119,7 @@ def test_promptcard_drift_workflow() -> None:
                 ]
             )
 
-            metric = LLMMetric(
+            metric = LLMDriftMetric(
                 name="relevance",
                 value=5.0,
                 alert_threshold=AlertThreshold.Below,

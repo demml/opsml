@@ -207,16 +207,16 @@ impl HFBaseArgs {
 #[derive(Debug)]
 pub struct HuggingFaceModel {
     #[pyo3(get)]
-    pub model: Option<PyObject>,
+    pub model: Option<Py<PyAny>>,
 
     #[pyo3(get)]
-    pub tokenizer: Option<PyObject>,
+    pub tokenizer: Option<Py<PyAny>>,
 
     #[pyo3(get)]
-    pub feature_extractor: Option<PyObject>,
+    pub feature_extractor: Option<Py<PyAny>>,
 
     #[pyo3(get)]
-    pub image_processor: Option<PyObject>,
+    pub image_processor: Option<Py<PyAny>>,
 
     pub onnx_session: Option<Py<OnnxSession>>,
 

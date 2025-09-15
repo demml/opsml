@@ -234,7 +234,7 @@ pub fn json_to_pyobject<'py>(
     Ok(dict.clone())
 }
 
-pub fn json_to_pyobject_value(py: Python, value: &Value) -> Result<PyObject, PyUtilError> {
+pub fn json_to_pyobject_value(py: Python, value: &Value) -> Result<Py<PyAny>, PyUtilError> {
     Ok(match value {
         Value::Null => py.None(),
         Value::Bool(b) => b.into_py_any(py)?,
@@ -363,6 +363,28 @@ pub fn create_tmp_path() -> Result<PathBuf, UtilError> {
 /// - The attribute cannot be extracted as a string.
 pub fn unwrap_pystring(obj: &Bound<'_, PyAny>, field: &str) -> Result<String, PyUtilError> {
     Ok(obj.getattr(field)?.extract::<String>()?)
+}
+
+/// Checks if python object is an instance of a Pydantic BaseModel
+/// # Arguments
+/// * `py` - Python interpreter instance
+/// * `obj` - Python object to check
+/// # Returns
+/// * `Ok(bool)` - `true` if the object is a Pydantic model
+/// * `Err(TypeError)` - if there was an error importing Pydantic or checking
+pub fn is_pydantic_model(py: Python, obj: &Bound<'_, PyAny>) -> Result<bool, PyUtilError> {
+    let pydantic = match py.import("pydantic") {
+        Ok(module) => module,
+        Err(e) => return Err(PyUtilError::FailedToImportPydantic(e.to_string())),
+    };
+    let basemodel = pydantic.getattr("BaseModel")?;
+
+    // check if context is a pydantic model
+    let is_basemodel = obj
+        .is_instance(&basemodel)
+        .map_err(|e| PyUtilError::FailedToCheckPydanticModel(e.to_string()))?;
+
+    Ok(is_basemodel)
 }
 
 #[cfg(test)]

@@ -41,7 +41,7 @@ pub struct ServiceCard {
     #[pyo3(get)]
     pub registry_type: RegistryType,
     // Holds the actual card objects (ModelCard, DataCard, etc.)
-    pub card_objs: HashMap<String, PyObject>,
+    pub card_objs: HashMap<String, Py<PyAny>>,
 }
 ```
 

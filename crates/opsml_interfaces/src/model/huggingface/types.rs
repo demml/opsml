@@ -20,7 +20,7 @@ pub struct HuggingFaceOnnxArgs {
     pub quantize: bool,
 
     #[pyo3(get)]
-    pub config: Option<PyObject>,
+    pub config: Option<Py<PyAny>>,
 
     #[pyo3(get)]
     pub extra_kwargs: Py<PyDict>,
@@ -68,7 +68,7 @@ impl HuggingFaceOnnxArgs {
     fn check_optimum_config(
         py: Python,
         config: Option<&Bound<'_, PyAny>>,
-    ) -> Result<Option<PyObject>, ModelInterfaceError> {
+    ) -> Result<Option<Py<PyAny>>, ModelInterfaceError> {
         if config.is_none() {
             return Ok(None);
         }
