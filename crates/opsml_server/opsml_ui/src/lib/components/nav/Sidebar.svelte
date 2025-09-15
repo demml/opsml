@@ -140,7 +140,7 @@
     onmouseleave={handleMouseLeave}
   >
 
-    <nav class="flex flex-col p-2 space-y-1 overflow-y-auto">
+    <nav class="flex flex-col p-2 space-y-1 overflow-y-scroll h-full">
       {#each navItems as item}
         {@const isActive = isItemActive(item)}
         {@const IconComponent = item.icon}
@@ -205,7 +205,7 @@
       {/each}
     </nav>
 
-    <div class="absolute bottom-4 start-2 end-2">
+    <div class="absolute bottom-0 start-0 end-0 p-2 bg-white border-t border-gray-100">
       <button
         type="button"
         onclick={togglePin}
@@ -234,7 +234,6 @@
     </div>
   </aside>
 
-  <!-- Main content area -->
   <main class="flex-1 transition-all duration-300 {isExpanded ? 'ms-64' : 'ms-16'}">
     {@render children()}
   </main>
