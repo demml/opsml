@@ -6,13 +6,29 @@
     Home, 
     Database, 
     Brain, 
-    MessageSquare, 
+    Sparkles,
+    MessageSquare,
+    Bot,
+    Puzzle,
     FlaskConical, 
     Server,
     ChevronRight,
+    ChevronDown,
     Pin,
     PinOff
   } from 'lucide-svelte';
+
+  interface NavSubItem {
+    name: string;
+    path: string;
+  }
+
+  interface NavItem {
+    name: string;
+    path: string;
+    icon: any;
+    subItems?: NavSubItem[];
+  }
 
   interface Props {
     children: import('svelte').Snippet;
@@ -23,13 +39,23 @@
   let isExpanded = $state(false);
   let isPinned = $state(false);
   let hoverTimeout: number | null = null;
+  let expandedItems = $state<Set<string>>(new Set());
 
-  const navItems = [
+  const navItems: NavItem[] = [
     { name: "Home", path: "/opsml/home", icon: Home },
     { name: "Spaces", path: "/opsml/space", icon: Database },
     { name: "Models", path: "/opsml/model", icon: Brain },
     { name: "Data", path: "/opsml/data", icon: Database },
-    { name: "Prompts", path: "/opsml/prompt", icon: MessageSquare },
+    { 
+      name: "GenAI", 
+      path: "/opsml/genai", 
+      icon: Sparkles,
+      subItems: [
+        { name: "Prompts", path: "/opsml/genai/prompt" },
+        { name: "Agents", path: "/opsml/genai/agent" },
+        { name: "MCPs", path: "/opsml/genai/mcp" }
+      ]
+    },
     { name: "Experiments", path: "/opsml/experiment", icon: FlaskConical },
     { name: "Services", path: "/opsml/service", icon: Server }
   ];
@@ -65,6 +91,29 @@
     goto(path);
   }
 
+  function toggleSubMenu(itemName: string) {
+    const newExpanded = new Set(expandedItems);
+    if (newExpanded.has(itemName)) {
+      newExpanded.delete(itemName);
+    } else {
+      newExpanded.add(itemName);
+    }
+    expandedItems = newExpanded;
+  }
+
+  function isItemActive(item: NavItem): boolean {
+    if (page.url.pathname === item.path) return true;
+    if (item.path !== '/opsml/home' && page.url.pathname.includes(item.path)) return true;
+    if (item.subItems) {
+      return item.subItems.some(subItem => page.url.pathname === subItem.path || page.url.pathname.includes(subItem.path));
+    }
+    return false;
+  }
+
+  function isSubItemActive(subItem: NavSubItem): boolean {
+    return page.url.pathname === subItem.path || page.url.pathname.includes(subItem.path);
+  }
+
   function handleClickOutside(event: MouseEvent) {
     if (!isPinned) {
       const sidebar = document.querySelector('[data-sidebar]');
@@ -84,7 +133,7 @@
 </script>
 
 <div class="flex h-full">
-  <!-- Sidebar -->
+
   <aside 
     class="fixed start-0 top-[3.5rem] z-10 h-[calc(100dvh-3.5rem)] bg-white border-e-2 border-gray-200 shadow-lg transition-all duration-300 ease-in-out data-[expanded=true]:w-64 data-[expanded=false]:w-16"
     data-sidebar
@@ -92,45 +141,77 @@
     onmouseenter={handleMouseEnter}
     onmouseleave={handleMouseLeave}
   >
-    <!-- Navigation Items -->
-    <nav class="flex flex-col p-2 space-y-1">
+
+    <nav class="flex flex-col p-2 space-y-1 overflow-y-auto">
       {#each navItems as item}
-        {@const isActive = page.url.pathname === item.path || (item.path !== '/opsml/home' && page.url.pathname.includes(item.path))}
-        <button
-          type="button"
-          onclick={() => handleNavClick(item.path)}
-          class="flex items-center w-full p-3 rounded-lg transition-all duration-200 group relative {isActive 
-            ? 'bg-purple-50 text-purple-700 border border-purple-200' 
-            : 'text-gray-600 hover:bg-gray-50 hover:text-purple-600'}"
-          aria-label={item.name}
-          title={!isExpanded ? item.name : ''}
-        >
-          <div class="shrink-0 w-6 h-6 flex items-center justify-center">
-            <svelte:component 
-              this={item.icon} 
-              size={20} 
-              class="transition-colors duration-200 {isActive ? 'text-purple-700' : 'text-current'}"
-            />
-          </div>
-          
-          <span class="ms-3 text-sm font-medium whitespace-nowrap transition-opacity duration-300 {isExpanded ? 'opacity-100' : 'opacity-0'}">
-            {item.name}
-          </span>
-          
-          <!-- Active indicator -->
-          {#if isActive}
-            <div class="absolute start-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-purple-700 rounded-e-full"></div>
+        {@const isActive = isItemActive(item)}
+        {@const IconComponent = item.icon}
+        {@const hasSubItems = item.subItems && item.subItems.length > 0}
+        {@const isSubMenuExpanded = expandedItems.has(item.name)}
+        
+        <div>
+          <button
+            type="button"
+            onclick={() => hasSubItems ? toggleSubMenu(item.name) : handleNavClick(item.path)}
+            class="flex items-center w-full p-3 rounded-lg transition-all duration-200 group relative {isActive 
+              ? 'bg-primary-50 text-primary-800 border border-primary-200' 
+              : 'text-gray-600 hover:bg-gray-50 hover:text-primary-700'}"
+            aria-label={item.name}
+            title={!isExpanded ? item.name : ''}
+          >
+            <div class="shrink-0 w-6 h-6 flex items-center justify-center">
+              <IconComponent 
+                size={20} 
+                class="transition-colors duration-200 {isActive ? 'text-primary-800' : 'text-current'}"
+              />
+            </div>
+            
+            <span class="ms-3 text-sm font-medium whitespace-nowrap transition-opacity duration-300 {isExpanded ? 'opacity-100' : 'opacity-0'}">
+              {item.name}
+            </span>
+            
+            <!-- Expand/collapse chevron for items with submenus -->
+            {#if hasSubItems && isExpanded}
+              <div class="ms-auto">
+                <ChevronRight 
+                  size={16} 
+                  class="text-gray-400 transition-transform duration-200 {isSubMenuExpanded ? 'rotate-90' : ''}" 
+                />
+              </div>
+            {/if}
+            
+            {#if isActive}
+              <div class="absolute start-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-primary-700 rounded-e-full"></div>
+            {/if}
+          </button>
+
+          {#if hasSubItems && isSubMenuExpanded && isExpanded}
+            <div class="ms-6 mt-1 space-y-1">
+              {#each item.subItems ?? [] as subItem}
+                {@const isSubActive = isSubItemActive(subItem)}
+                <button
+                  type="button"
+                  onclick={() => handleNavClick(subItem.path)}
+                  class="flex items-center w-full py-2 px-3 rounded-md text-sm transition-all duration-200 {isSubActive
+                    ? 'bg-primary-100 text-primary-700 font-medium'
+                    : 'text-gray-500 hover:bg-gray-50 hover:text-primary-600'}"
+                  aria-label={subItem.name}
+                >
+                  <div class="w-2 h-2 rounded-full me-3 {isSubActive ? 'bg-primary-600' : 'bg-gray-300'}"></div>
+                  {subItem.name}
+                </button>
+              {/each}
+            </div>
           {/if}
-        </button>
+        </div>
       {/each}
     </nav>
 
-    <!-- Pin/Unpin Button -->
     <div class="absolute bottom-4 start-2 end-2">
       <button
         type="button"
         onclick={togglePin}
-        class="flex items-center w-full p-3 rounded-lg transition-all duration-200 text-gray-600 hover:bg-gray-50 hover:text-purple-600"
+        class="flex items-center w-full p-3 rounded-lg transition-all duration-200 text-gray-600 hover:bg-gray-50 hover:text-primary-700"
         aria-label={isPinned ? 'Unpin sidebar' : 'Pin sidebar'}
         title={!isExpanded ? (isPinned ? 'Unpin sidebar' : 'Pin sidebar') : ''}
       >
@@ -162,12 +243,11 @@
 </div>
 
 <style>
-  /* Ensure smooth transitions */
+ 
   aside {
     will-change: width;
   }
   
-  /* Custom scrollbar for the sidebar */
   aside::-webkit-scrollbar {
     width: 4px;
   }
