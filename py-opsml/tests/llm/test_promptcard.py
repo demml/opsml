@@ -5,7 +5,7 @@ from opsml import (  # type: ignore
     PromptCard,
 )
 from opsml.types import DriftArgs
-from opsml.scouter.drift import LLMDriftConfig, LMDriftMetric, LLMDriftProfile
+from opsml.scouter.drift import LLMDriftConfig, LLMDriftMetric, LLMDriftProfile
 from opsml.scouter.alert import AlertThreshold
 from opsml.llm import Score, Agent, Task, Workflow
 from opsml.mock import OpsmlTestServer, LLMTestServer
@@ -32,7 +32,7 @@ def test_promptcard_crud(reformulation_evaluation_prompt: Prompt) -> None:
                 alias="llm_drift",
                 config=LLMDriftConfig(),
                 metrics=[
-                    LMDriftMetric(
+                    LLMDriftMetric(
                         name="reformulation_quality",
                         prompt=reformulation_evaluation_prompt,
                         value=3.0,
@@ -119,7 +119,7 @@ def test_promptcard_drift_workflow() -> None:
                 ]
             )
 
-            metric = LMDriftMetric(
+            metric = LLMDriftMetric(
                 name="relevance",
                 value=5.0,
                 alert_threshold=AlertThreshold.Below,

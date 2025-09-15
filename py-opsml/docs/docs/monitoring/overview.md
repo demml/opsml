@@ -108,7 +108,7 @@ For more information on LLM Monitoring, refer to [LLM Monitoring documentation](
 ### Example (LLM as a Judge Drift Profile)
 
 ```python
-from opsml.scouter.drift import LLMDriftConfig, LMDriftMetric, LLMDriftProfile
+from opsml.scouter.drift import LLMDriftConfig, LLMDriftMetric, LLMDriftProfile
 from opsml.scouter.alert import AlertThreshold
 from opsml.llm import Score, Agent, Task, Workflow, Prompt
 
@@ -164,7 +164,7 @@ card.create_drift_profile(
     alias="llm_drift",
     config=LLMDriftConfig(),
     metrics=[
-        LMDriftMetric(
+        LLMDriftMetric(
             name="reformulation_quality",
             prompt=create_reformulation_evaluation_prompt(), # (2)
             value=3.0,
@@ -175,7 +175,7 @@ card.create_drift_profile(
 ```
 
 1. The `create_reformulation_evaluation_prompt` function builds an evaluation prompt that we can use to assess the quality of query reformulations.
-2. We feed the reformulation evaluation prompt to the `LMDriftMetric` to evaluate the quality of the reformulation.
+2. We feed the reformulation evaluation prompt to the `LLMDriftMetric` to evaluate the quality of the reformulation.
 3. The `alert_threshold` is set to `Below`, meaning that if the score is below the threshold, an alert will be triggered. Given the value of 3.0, this means that if the score is below 3.0, an alert will be triggered.
 
 ### Things to know
