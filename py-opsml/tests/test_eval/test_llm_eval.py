@@ -12,6 +12,8 @@ from opsml.mock import OpsmlTestServer
 from opsml.llm import Embedder, Provider  # type: ignore
 from opsml.llm.openai import OpenAIEmbeddingConfig  # type: ignore
 from opsml.mock import LLMTestServer
+from tests.conftest import WINDOWS_EXCLUDE
+import pytest
 
 
 def test_llm_eval_no_embedding(
@@ -120,6 +122,7 @@ def test_llm_eval_embedding(
             print(f"Histogram for {field}: {histogram}")
 
 
+@pytest.mark.skipif(WINDOWS_EXCLUDE, reason="skipping")
 def test_experimentcard_evaluate_llm(
     reformulation_evaluation_prompt, relevancy_evaluation_prompt
 ):
