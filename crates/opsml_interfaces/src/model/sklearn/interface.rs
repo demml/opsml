@@ -23,7 +23,7 @@ use tracing::instrument;
 #[derive(Debug)]
 pub struct SklearnModel {
     #[pyo3(get)]
-    pub preprocessor: Option<PyObject>,
+    pub preprocessor: Option<Py<PyAny>>,
 
     #[pyo3(get, set)]
     preprocessor_name: String,

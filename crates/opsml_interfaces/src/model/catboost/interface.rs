@@ -18,7 +18,7 @@ use tracing::{debug, instrument};
 #[derive(Debug)]
 pub struct CatBoostModel {
     #[pyo3(get)]
-    pub preprocessor: Option<PyObject>,
+    pub preprocessor: Option<Py<PyAny>>,
 
     #[pyo3(get, set)]
     preprocessor_name: String,
@@ -466,7 +466,7 @@ impl CatBoostModel {
         py: Python<'py>,
         path: &Path,
         kwargs: Option<&Bound<'py, PyDict>>,
-    ) -> Result<PyObject, ModelInterfaceError> {
+    ) -> Result<Py<PyAny>, ModelInterfaceError> {
         let booster = py.import("catboost")?;
         let catboost = booster.getattr("CatBoost")?;
 

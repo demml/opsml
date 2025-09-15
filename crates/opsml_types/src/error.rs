@@ -30,18 +30,24 @@ pub enum TypeError {
 
     #[error("Metric not found: {0}")]
     NotMetricFoundError(String),
+
+    #[error("Invalid response type")]
+    InvalidResponseError,
+
+    #[error("{0}")]
+    PyError(String),
 }
 
-#[derive(Error, Debug)]
-pub enum PyTypeError {
-    #[error(transparent)]
-    TypeError(#[from] TypeError),
-}
-
-impl From<PyTypeError> for PyErr {
-    fn from(err: PyTypeError) -> PyErr {
+impl From<TypeError> for PyErr {
+    fn from(err: TypeError) -> PyErr {
         let msg = err.to_string();
         error!("{}", msg);
         PyRuntimeError::new_err(msg)
+    }
+}
+
+impl From<PyErr> for TypeError {
+    fn from(err: PyErr) -> TypeError {
+        TypeError::PyError(err.to_string())
     }
 }

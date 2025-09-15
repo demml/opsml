@@ -12,14 +12,19 @@ Parameters = experiment.Parameters
 get_experiment_metrics = experiment.get_experiment_metrics
 get_experiment_parameters = experiment.get_experiment_parameters
 download_artifact = experiment.download_artifact
+LLMEvaluator = experiment.LLMEvaluator
+
 
 __all__ = [
     "Experiment",
     "start_experiment",
     "Metric",
+    "Metrics",
+    "EvalMetrics",
     "Parameter",
+    "Parameters",
     "get_experiment_metrics",
     "get_experiment_parameters",
     "download_artifact",
-    "EvalMetrics",
+    "LLMEvaluator",
 ]

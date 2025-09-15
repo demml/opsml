@@ -2,12 +2,38 @@
 
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, List, Optional, Protocol, TypeAlias, Union
 
 from ..card import DataCard, ExperimentCard, ModelCard, PromptCard
 from ..data import DataSaveKwargs
+from ..evaluate import EvaluationConfig, LLMEvalMetric, LLMEvalRecord, LLMEvalResults
 from ..model import ModelSaveKwargs
 from ..types import VersionType
+
+SerializedType: TypeAlias = Union[str, int, float, dict, list]
+Context: TypeAlias = Union[Dict[str, Any], BaseModel]
+
+class LLMEvaluator:
+    @staticmethod
+    def evaluate(
+        records: List[LLMEvalRecord],
+        metrics: List[LLMEvalMetric],
+        config: Optional[EvaluationConfig] = None,
+    ) -> LLMEvalResults:
+        """
+            Evaluate LLM responses using the provided evaluation metrics.
+
+        Args:
+            records (List[LLMEvalRecord]):
+                List of LLM evaluation records to evaluate.
+            metrics (List[LLMEvalMetric]):
+                List of LLMEvalMetric instances to use for evaluation.
+            config (Optional[EvaluationConfig]):
+                Optional EvaluationConfig instance to configure evaluation options.
+
+        Returns:
+            LLMEvalResults
+        """
 
 class Experiment:
     def start_experiment(
@@ -42,6 +68,10 @@ class Experiment:
 
     def __exit__(self, exc_type, exc_value, traceback) -> None:
         pass
+
+    @property
+    def llm(self) -> LLMEvaluator:
+        """Access to LLM evaluation methods."""
 
     def log_metric(
         self,
@@ -283,6 +313,12 @@ class Metric:
         Created at of the metric
         """
 
+class Metrics:
+    def __str__(self): ...
+    def __getitem__(self, index: int) -> Metric: ...
+    def __iter__(self): ...
+    def __len__(self) -> int: ...
+
 class EvalMetrics:
     """
     Map of metrics used that can be used to evaluate a model.
@@ -301,18 +337,6 @@ class EvalMetrics:
     def __getitem__(self, key: str) -> float:
         """Get the value of a metric by name. A RuntimeError will be raised if the metric does not exist."""
         ...
-
-class Metrics:
-    def __str__(self): ...
-    def __getitem__(self, index: int) -> Metric: ...
-    def __iter__(self): ...
-    def __len__(self) -> int: ...
-
-class Parameters:
-    def __str__(self): ...
-    def __getitem__(self, index: int) -> Parameter: ...
-    def __iter__(self): ...
-    def __len__(self) -> int: ...
 
 class Parameter:
     def __init__(
@@ -341,6 +365,12 @@ class Parameter:
         """
         Value of the parameter
         """
+
+class Parameters:
+    def __str__(self): ...
+    def __getitem__(self, index: int) -> Parameter: ...
+    def __iter__(self): ...
+    def __len__(self) -> int: ...
 
 def get_experiment_metrics(
     experiment_uid: str,
@@ -375,3 +405,18 @@ def get_experiment_parameters(
     Returns:
         Parameters
     """
+
+class BaseModel(Protocol):
+    """Protocol for pydantic BaseModel to ensure compatibility with context"""
+
+    def model_dump(self) -> Dict[str, Any]:
+        """Dump the model as a dictionary"""
+        ...
+
+    def model_dump_json(self) -> str:
+        """Dump the model as a JSON string"""
+        ...
+
+    def __str__(self) -> str:
+        """String representation of the model"""
+        ...

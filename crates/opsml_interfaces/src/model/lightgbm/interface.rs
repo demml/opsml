@@ -19,7 +19,7 @@ use tracing::{debug, instrument};
 #[derive(Debug)]
 pub struct LightGBMModel {
     #[pyo3(get)]
-    pub preprocessor: Option<PyObject>,
+    pub preprocessor: Option<Py<PyAny>>,
 
     #[pyo3(get, set)]
     preprocessor_name: String,
@@ -445,7 +445,7 @@ impl LightGBMModel {
         py: Python<'py>,
         path: &Path,
         kwargs: Option<&Bound<'py, PyDict>>,
-    ) -> Result<PyObject, ModelInterfaceError> {
+    ) -> Result<Py<PyAny>, ModelInterfaceError> {
         let booster = py.import("lightgbm")?.getattr("Booster")?;
 
         let kwargs = kwargs.map_or(PyDict::new(py), |kwargs| kwargs.clone());

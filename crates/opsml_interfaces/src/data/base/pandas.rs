@@ -19,7 +19,7 @@ use tracing::instrument;
 #[derive(Debug)]
 pub struct PandasData {
     #[pyo3(get)]
-    pub data: Option<PyObject>,
+    pub data: Option<Py<PyAny>>,
 
     #[pyo3(get)]
     pub data_splits: DataSplits,
@@ -348,7 +348,7 @@ impl PandasData {
         py: Python,
         path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
-    ) -> Result<PyObject, DataInterfaceError> {
+    ) -> Result<Py<PyAny>, DataInterfaceError> {
         let pandas = PyModule::import(py, "pandas")?;
 
         // Load the data using polars

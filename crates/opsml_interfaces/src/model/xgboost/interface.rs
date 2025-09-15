@@ -68,7 +68,7 @@ impl XGBoostModelInterfaceMetadata {
 #[derive(Debug)]
 pub struct XGBoostModel {
     #[pyo3(get)]
-    pub preprocessor: Option<PyObject>,
+    pub preprocessor: Option<Py<PyAny>>,
 
     #[pyo3(get, set)]
     preprocessor_name: String,
@@ -429,7 +429,7 @@ impl XGBoostModel {
         py: Python<'py>,
         path: &Path,
         kwargs: Option<&Bound<'py, PyDict>>,
-    ) -> Result<PyObject, ModelInterfaceError> {
+    ) -> Result<Py<PyAny>, ModelInterfaceError> {
         let booster = py.import("xgboost")?.getattr("Booster")?;
         let kwargs = kwargs.map_or(PyDict::new(py), |kwargs| kwargs.clone());
         kwargs.set_item("model_file", path)?;

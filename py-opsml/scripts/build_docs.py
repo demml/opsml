@@ -13,8 +13,10 @@ FOLDERS = [
     "types",
     "mock",
     "app",
+    "evaluate",
 ]
 SCOUTER_SUBFOLDERS = ["alert", "client", "drift", "profile", "queue", "types"]
+LLM_SUBFOLDERS = ["google", "openai"]
 
 
 def copy_pyi(folder_path, name):
@@ -36,5 +38,10 @@ for folder in FOLDERS:
     if folder == "scouter":
         for subfolder in SCOUTER_SUBFOLDERS:
             process_folder(os.path.join(folder, subfolder))
+    elif folder == "llm":
+        for subfolder in LLM_SUBFOLDERS:
+            process_folder(os.path.join(folder, subfolder))
+        # process main folder for llm
+        process_folder(folder)
     else:
         process_folder(folder)

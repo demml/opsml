@@ -14,8 +14,8 @@ use tracing::error;
 
 #[derive(Default, Debug)]
 pub enum TensorFlowSampleData {
-    Tensor(PyObject),
-    Numpy(PyObject),
+    Tensor(Py<PyAny>),
+    Numpy(Py<PyAny>),
     List(Py<PyList>),
     Tuple(Py<PyTuple>),
     Dict(Py<PyDict>),
@@ -160,7 +160,7 @@ impl TensorFlowSampleData {
 
     fn slice_and_return<F>(data: &Bound<'_, PyAny>, constructor: F) -> Result<Self, SampleDataError>
     where
-        F: FnOnce(PyObject) -> TensorFlowSampleData,
+        F: FnOnce(Py<PyAny>) -> TensorFlowSampleData,
     {
         let py = data.py();
         let slice = PySlice::new(py, 0, 1, 1);
@@ -303,7 +303,7 @@ impl TensorFlowSampleData {
         }
     }
 
-    pub fn get_data(&self, py: Python) -> PyResult<PyObject> {
+    pub fn get_data(&self, py: Python) -> PyResult<Py<PyAny>> {
         match self {
             TensorFlowSampleData::Tensor(data) => Ok(data.into_py_any(py).unwrap()),
             TensorFlowSampleData::List(data) => Ok(data.into_py_any(py).unwrap()),

@@ -17,7 +17,7 @@ use std::path::{Path, PathBuf};
 #[derive(Debug)]
 pub struct NumpyData {
     #[pyo3(get)]
-    pub data: Option<PyObject>,
+    pub data: Option<Py<PyAny>>,
 
     #[pyo3(get)]
     pub data_splits: DataSplits,
@@ -341,7 +341,7 @@ impl NumpyData {
         py: Python,
         path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
-    ) -> Result<PyObject, DataInterfaceError> {
+    ) -> Result<Py<PyAny>, DataInterfaceError> {
         let numpy = PyModule::import(py, "numpy")?;
 
         // Load the data using numpy

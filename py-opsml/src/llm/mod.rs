@@ -1,10 +1,14 @@
-use potato_head::{
-    AudioUrl, BinaryContent, ChatResponse, CompletionTokenDetails, DocumentUrl, EventDetails,
-    ImageUrl, Message, ModelSettings, Prompt, PromptTokenDetails, Provider, PyAgent,
-    PyAgentResponse, PyTask, PyWorkflow, Score, Task, TaskEvent, TaskList, TaskStatus, Usage,
-    WorkflowResult,
+use ::potato_head::{
+    prompt::settings::ModelSettings, AudioUrl, BinaryContent, ChatResponse, CompletionTokenDetails,
+    DocumentUrl, EventDetails, ImageUrl, Message, Prompt, PromptTokenDetails, Provider, PyAgent,
+    PyAgentResponse, PyEmbedder, PyTask, PyWorkflow, Score, Task, TaskEvent, TaskList, TaskStatus,
+    Usage, WorkflowResult,
 };
+pub mod google;
+pub mod openai;
 use pyo3::prelude::*;
+use pyo3::wrap_pymodule;
+
 #[pymodule]
 pub fn llm(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<Provider>()?;
@@ -30,6 +34,8 @@ pub fn llm(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<TaskList>()?;
     m.add_class::<TaskStatus>()?;
     m.add_class::<PyAgentResponse>()?;
-
+    m.add_class::<PyEmbedder>()?;
+    m.add_wrapped(wrap_pymodule!(google::google))?;
+    m.add_wrapped(wrap_pymodule!(openai::openai))?;
     Ok(())
 }

@@ -1,4 +1,5 @@
 use crate::error::ExperimentError;
+use crate::llm::LLMEvaluator;
 use crate::HardwareQueue;
 use chrono::{DateTime, Utc};
 use mime_guess::mime;
@@ -180,7 +181,7 @@ fn extract_code(
 
 #[pyclass]
 pub struct Experiment {
-    pub experiment: PyObject,
+    pub experiment: Py<PyAny>,
     pub registries: CardRegistries,
     pub hardware_queue: Option<HardwareQueue>,
     uid: String,
@@ -192,7 +193,7 @@ impl Experiment {
     #[instrument(skip_all)]
     pub fn new(
         py: Python,
-        experiment: PyObject,
+        experiment: Py<PyAny>,
         registries: CardRegistries,
         log_hardware: bool,
         code_dir: Option<PathBuf>,
@@ -472,9 +473,9 @@ impl Experiment {
     fn __exit__(
         mut slf: PyRefMut<'_, Self>,
         py: Python<'_>,
-        exc_type: Option<PyObject>,
-        exc_value: Option<PyObject>,
-        traceback: Option<PyObject>,
+        exc_type: Option<Py<PyAny>>,
+        exc_value: Option<Py<PyAny>>,
+        traceback: Option<Py<PyAny>>,
     ) -> Result<bool, ExperimentError> {
         if let (Some(exc_type), Some(exc_value), Some(traceback)) = (exc_type, exc_value, traceback)
         {
@@ -530,6 +531,11 @@ impl Experiment {
             .map_err(ExperimentError::InsertMetricError)?;
 
         Ok(())
+    }
+
+    #[getter]
+    pub fn llm(&self) -> Result<LLMEvaluator, ExperimentError> {
+        Ok(LLMEvaluator {})
     }
 
     pub fn log_metrics(&self, metrics: Vec<Metric>) -> Result<(), ExperimentError> {

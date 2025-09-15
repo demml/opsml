@@ -4,7 +4,7 @@ use opsml_crypt::error::CryptError;
 use opsml_interfaces::error::{DataInterfaceError, ModelInterfaceError};
 use opsml_state::error::StateError;
 use opsml_storage::storage::error::StorageError;
-use opsml_types::error::{PyTypeError, TypeError};
+use opsml_types::error::TypeError;
 use opsml_types::RegistryType;
 use opsml_utils::error::{PyUtilError, UtilError};
 use pyo3::exceptions::PyRuntimeError;
@@ -17,9 +17,6 @@ use tracing::error;
 pub enum CardError {
     #[error(transparent)]
     TypeError(#[from] TypeError),
-
-    #[error(transparent)]
-    PyTypeError(#[from] PyTypeError),
 
     #[error(transparent)]
     StateError(#[from] StateError),

@@ -12,6 +12,7 @@ The Opsml examples directory contains various examples demonstrating how to use 
   - `pandas_data.py`: Example of creating a DataCard with a Pandas dataframe.
   - `polars_data.py`: Example of creating a DataCard with a Polars dataframe.
   
+### Model
 - `model/`: Contains examples of how to use Opsml to create ModelCards for various machine learning models.
   - `catboost_model.py`: Example of creating a ModelCard for a CatBoost model.
   - `custom_model.py`: Example of creating a custom ModelCard.
@@ -24,6 +25,7 @@ The Opsml examples directory contains various examples demonstrating how to use 
   - `torch_model.py`: Example of creating a ModelCard for a PyTorch model.
   - `xgb_booster.py`: Example of creating a ModelCard for an XGBoost model.
 
+### LLM
 - `llm/`: Contains examples of how to use Opsml with various LLM frameworks.
   - `chat/`: Directory containing examples for making chat completion calls with various sdks.
     - `openai_chat.py`: Example of using Opsml with the OpenAI SDK for chat completions.
@@ -31,7 +33,10 @@ The Opsml examples directory contains various examples demonstrating how to use 
     - `pydantic_chat.py`: Example of using Opsml with the Pydantic AI framework for chat completions.
   - `google_adk/`: FastAPI app that shows how to use Opsml with the Google ADK framework to create a multi-step agent.
   - `pydantic/`: FastAPI app that shows how to use Opsml with the Pydantic AI framework to create a multi-step agent.
+  - `evaluation/`: Examples for evaluating LLM services.
+    - `evaluate.py`: Example showing how to use Opsml to evaluate the inputs and responses of LLM systems.
 
+### Experiment
   - `experiment/`: Contains examples of how to use Opsml for experiment tracking and management.
   - `basic.py`: Example of using Opsml for basic experiment tracking with Scikit-learn
   - `advanced.py`: Example of using Opsml for advanced experiment tracking with PyTorch and logging parameters, metrics and artifacts.

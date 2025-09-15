@@ -13,15 +13,15 @@ use tracing::{debug, error, info};
 #[pyclass(name = "Workflow")]
 #[derive(Debug, Clone)]
 pub struct PyWorkflow {
-    workflow: Workflow,
+    pub workflow: Workflow,
 
     // allow adding output types for python tasks (py only)
     // these are provided at runtime by the user and must match the response
     // format of the prompt the task is associated with
-    output_types: HashMap<String, Arc<PyObject>>,
+    output_types: HashMap<String, Arc<Py<PyAny>>>,
 
     // potatohead version holds a reference to the runtime
-    runtime: Arc<tokio::runtime::Runtime>,
+    pub runtime: Arc<tokio::runtime::Runtime>,
 }
 
 #[pymethods]
@@ -54,7 +54,7 @@ impl PyWorkflow {
     }
 
     #[getter]
-    pub fn __workflow__(&self) -> String {
+    pub fn __workflow__(&self) -> Result<String, WorkflowError> {
         self.model_dump_json()
     }
 
@@ -80,9 +80,9 @@ impl PyWorkflow {
         &mut self,
         task_output_types: Bound<'py, PyDict>,
     ) -> PyResult<()> {
-        let converted: HashMap<String, Arc<PyObject>> = task_output_types
+        let converted: HashMap<String, Arc<Py<PyAny>>> = task_output_types
             .iter()
-            .map(|(k, v)| -> PyResult<(String, Arc<PyObject>)> {
+            .map(|(k, v)| -> PyResult<(String, Arc<Py<PyAny>>)> {
                 // Explicitly return a Result from the closure
                 let key = k.extract::<String>()?;
                 let value = v.clone().unbind();
@@ -224,8 +224,8 @@ impl PyWorkflow {
         Ok(workflow_result)
     }
 
-    pub fn model_dump_json(&self) -> String {
-        serde_json::to_string(&self.workflow).unwrap()
+    pub fn model_dump_json(&self) -> Result<String, WorkflowError> {
+        Ok(self.workflow.serialize()?)
     }
 
     #[staticmethod]
@@ -235,20 +235,16 @@ impl PyWorkflow {
         output_types: Option<Bound<'_, PyDict>>,
     ) -> Result<Self, WorkflowError> {
         let workflow: Workflow = serde_json::from_str(&json_string)?;
-        let runtime = Arc::new(
-            tokio::runtime::Runtime::new()
-                .map_err(|e| WorkflowError::RuntimeError(e.to_string()))?,
-        );
 
         let output_types = if let Some(output_types) = output_types {
             output_types
                 .iter()
-                .map(|(k, v)| -> PyResult<(String, Arc<PyObject>)> {
+                .map(|(k, v)| -> PyResult<(String, Arc<Py<PyAny>>)> {
                     let key = k.extract::<String>()?;
                     let value = v.clone().unbind();
                     Ok((key, Arc::new(value)))
                 })
-                .collect::<PyResult<HashMap<String, Arc<PyObject>>>>()?
+                .collect::<PyResult<HashMap<String, Arc<Py<PyAny>>>>>()?
         } else {
             HashMap::new()
         };
@@ -256,7 +252,7 @@ impl PyWorkflow {
         let py_workflow = PyWorkflow {
             workflow,
             output_types,
-            runtime,
+            runtime: app_state().runtime.clone(),
         };
 
         Ok(py_workflow)

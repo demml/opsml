@@ -9,7 +9,7 @@ default-members = [
 ]
 
 [workspace.package]
-version = "3.0.0-rc.16"
+version = "3.0.0-rc.17"
 authors = ["Steven Forrester <sjforrester32@gmail.com>"]
 edition = "2021"
 license = "MIT"
@@ -24,6 +24,7 @@ opsml-cli = { path = "crates/opsml_cli" }
 opsml-crypt = { path = "crates/opsml_crypt" }
 opsml-client = { path = "crates/opsml_client" }
 opsml-colors = { path = "crates/opsml_colors" }
+opsml-evaluate = { path = "crates/opsml_evaluate" }
 opsml-events = { path = "crates/opsml_events" }
 opsml-interfaces = { path = "crates/opsml_interfaces" }
 opsml-registry = { path = "crates/opsml_registry" }
@@ -80,7 +81,8 @@ ort = { version = "2.0.0-rc.10" }
 owo-colors = "4.*"
 password-auth = "1.*"
 pbkdf2 = "0.*"
-pyo3 = { version = "0.25.*", features = ["abi3-py310", "extension-module", "anyhow", "serde", "chrono"] }
+potato-head = "0.*"
+pyo3 = { version = "0.*", features = ["abi3-py310", "extension-module", "anyhow", "serde", "chrono"] }
 rand = { version = "0.9.1"}
 rayon = "1.*"
 regex = "1.*"
@@ -88,8 +90,8 @@ reqwest = { version = "0.12.*", features = ["json", "stream", "multipart", "rust
 rust-embed = "8.*"
 reqwest-middleware = "0.*"
 rusty-logging = "0.*"
-potato-head = "0.3.2"
-scouter-client = "0.10.0"
+# we cant use crates.io because scouter relies on a fork of linfa at the moment
+scouter-client = {"git" =  "https://github.com/demml/scouter", branch = "main" } 
 sha2 = "0.*"
 semver = "1.*"
 serde = { version = "1.*", features = ["derive"] }

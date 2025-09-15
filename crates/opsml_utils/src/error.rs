@@ -64,6 +64,12 @@ pub enum PyUtilError {
 
     #[error("Root must be an object")]
     RootMustBeObjectError,
+
+    #[error("Failed to check if the context is a Pydantic BaseModel. Error: {0}")]
+    FailedToCheckPydanticModel(String),
+
+    #[error("Failed to import pydantic module. Error: {0}")]
+    FailedToImportPydantic(String),
 }
 
 impl<'a> From<pyo3::DowncastError<'a, 'a>> for PyUtilError {

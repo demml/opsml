@@ -30,7 +30,7 @@ impl LightGBMRegistryUpdater {
         }
     }
 
-    fn get_options(py: Python, model_type: &ModelType) -> PyResult<PyObject> {
+    fn get_options(py: Python, model_type: &ModelType) -> PyResult<Py<PyAny>> {
         // make new pydict {"nocl": [True, False], "zipmap": [True, False, "columns"]}
 
         match model_type {
@@ -118,7 +118,7 @@ impl XGBoostRegistryUpdater {
         }
     }
 
-    fn get_options(py: Python, model_type: &ModelType) -> PyResult<PyObject> {
+    fn get_options(py: Python, model_type: &ModelType) -> PyResult<Py<PyAny>> {
         // make new pydict {"nocl": [True, False], "zipmap": [True, False, "columns"]}
 
         match model_type {

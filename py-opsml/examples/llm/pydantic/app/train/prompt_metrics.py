@@ -3,7 +3,7 @@
 
 from opsml.llm import Prompt, Score
 from opsml.scouter.alert import AlertThreshold
-from opsml.scouter.drift import LLMMetric
+from opsml.scouter.drift import LLMDriftMetric
 
 LLM_MODEL = "o4-mini"
 LLM_PROVIDER = "openai"
@@ -96,7 +96,7 @@ def create_shipment_eta_reply_evaluation_prompt() -> Prompt:
     )
 
 
-shipment_eta_task_evaluation = LLMMetric(
+shipment_eta_task_evaluation = LLMDriftMetric(
     name="shipment_eta_task_evaluation",
     prompt=create_shipment_eta_task_evaluation_prompt(),
     value=5.0,
@@ -104,7 +104,7 @@ shipment_eta_task_evaluation = LLMMetric(
     alert_threshold=AlertThreshold.Below,
 )
 
-shipment_eta_reply_evaluation = LLMMetric(
+shipment_eta_reply_evaluation = LLMDriftMetric(
     name="shipment_eta_reply_evaluation",
     prompt=create_shipment_eta_reply_evaluation_prompt(),
     value=5.0,

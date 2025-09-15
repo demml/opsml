@@ -117,7 +117,7 @@ export interface OnnxSchema {
 
 export interface OnnxSession {
   schema: OnnxSchema;
-  session?: any; // Optional since it's Option<PyObject> in Rust
+  session?: any; // Optional since it's Option<Py<PyAny>> in Rust
   quantized: boolean;
 }
 
