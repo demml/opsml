@@ -13,6 +13,7 @@ FOLDERS = [
     "types",
     "mock",
     "app",
+    "evaluate",
 ]
 SCOUTER_SUBFOLDERS = ["alert", "client", "drift", "profile", "queue", "types"]
 LLM_SUBFOLDERS = ["google", "openai"]
