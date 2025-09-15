@@ -7,9 +7,7 @@
     Database, 
     Brain, 
     Sparkles,
-    MessageSquare,
-    Bot,
-    Puzzle,
+    NotebookTabs,
     FlaskConical, 
     Server,
     ChevronRight,
@@ -43,7 +41,7 @@
 
   const navItems: NavItem[] = [
     { name: "Home", path: "/opsml/home", icon: Home },
-    { name: "Spaces", path: "/opsml/space", icon: Database },
+    { name: "Spaces", path: "/opsml/space", icon: NotebookTabs },
     { name: "Models", path: "/opsml/model", icon: Brain },
     { name: "Data", path: "/opsml/data", icon: Database },
     { 
