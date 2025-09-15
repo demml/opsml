@@ -70,7 +70,6 @@ docs = [
     "mkdocstrings[python]>=0.29.1",
 ]
 
-
 [tool.isort]
 profile = "black"
 
@@ -141,7 +140,7 @@ build-backend = "maturin"
 python-source = "python"
 module-name = "opsml.opsml"
 bindings = 'pyo3'
-features = ["pyo3/extension-module", "pyo3/abi3-py310"]
+features = ["pyo3/extension-module", "pyo3/abi3-py39"]
 
 [project.scripts]
 opsml = "opsml.cli:run_opsml_cli"

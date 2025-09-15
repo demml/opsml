@@ -81,7 +81,7 @@ ort = { version = "2.0.0-rc.10" }
 owo-colors = "4.*"
 password-auth = "1.*"
 pbkdf2 = "0.*"
-pyo3 = { version = "0.25.*", features = ["abi3-py310", "extension-module", "anyhow", "serde", "chrono"] }
+pyo3 = { version = ">=0.*, <1.0.0", features = ["abi3-py39", "extension-module", "anyhow", "serde", "chrono"] }
 rand = { version = "0.9.1"}
 rayon = "1.*"
 regex = "1.*"
