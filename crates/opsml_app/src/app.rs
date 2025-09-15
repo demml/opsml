@@ -409,7 +409,7 @@ impl AppState {
         queue_guard.shutdown()?;
 
         debug!("Reloading queue with new card map");
-        let new_queue_state = Python::with_gil(|py| -> Result<Option<QueueState>, AppError> {
+        let new_queue_state = Python::attach(|py| -> Result<Option<QueueState>, AppError> {
             // Get transport config from existing queue state
             let transport_config = queue_guard.transport_config.bind(py);
             create_scouter_queue(py, card_map, Some(transport_config), false)
@@ -427,7 +427,7 @@ impl AppState {
         load_kwargs: &Option<Arc<RwLock<Py<PyDict>>>>,
     ) -> Result<Py<ServiceCard>, AppError> {
         // Acquire the GIL and load the new service
-        let reload_result = Python::with_gil(|py| -> Result<Py<ServiceCard>, AppError> {
+        let reload_result = Python::attach(|py| -> Result<Py<ServiceCard>, AppError> {
             // Read load_kwargs first, in a separate scope to minimize lock duration
             let kwargs = load_kwargs
                 .as_ref()

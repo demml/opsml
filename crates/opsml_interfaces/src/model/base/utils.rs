@@ -21,15 +21,15 @@ pub struct SaveKwargsResult<'py> {
 
 #[derive(Default, Debug)]
 pub enum SampleData {
-    Pandas(PyObject),
-    Polars(PyObject),
-    Numpy(PyObject),
-    Arrow(PyObject),
-    Torch(PyObject),
+    Pandas(Py<PyAny>),
+    Polars(Py<PyAny>),
+    Numpy(Py<PyAny>),
+    Arrow(Py<PyAny>),
+    Torch(Py<PyAny>),
     List(Py<PyList>),
     Tuple(Py<PyTuple>),
     Dict(Py<PyDict>),
-    DMatrix(PyObject),
+    DMatrix(Py<PyAny>),
 
     #[default]
     None,
@@ -155,7 +155,7 @@ impl SampleData {
 
     fn slice_and_return<F>(data: &Bound<'_, PyAny>, constructor: F) -> Result<Self, SampleDataError>
     where
-        F: FnOnce(PyObject) -> SampleData,
+        F: FnOnce(Py<PyAny>) -> SampleData,
     {
         let py = data.py();
         let slice = PySlice::new(py, 0, 1, 1);
@@ -222,7 +222,7 @@ impl SampleData {
         }
     }
 
-    pub fn get_data(&self, py: Python) -> Result<PyObject, SampleDataError> {
+    pub fn get_data(&self, py: Python) -> Result<Py<PyAny>, SampleDataError> {
         match self {
             SampleData::Pandas(data) => Ok(data.clone_ref(py)),
             SampleData::Polars(data) => Ok(data.clone_ref(py)),

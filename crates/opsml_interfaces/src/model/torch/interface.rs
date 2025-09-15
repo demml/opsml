@@ -24,10 +24,10 @@ use tracing::{debug, error, instrument, warn};
 #[derive(Debug)]
 pub struct TorchModel {
     #[pyo3(get)]
-    pub model: Option<PyObject>,
+    pub model: Option<Py<PyAny>>,
 
     #[pyo3(get)]
-    pub preprocessor: Option<PyObject>,
+    pub preprocessor: Option<Py<PyAny>>,
 
     #[pyo3(get, set)]
     preprocessor_name: String,

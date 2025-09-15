@@ -158,17 +158,17 @@ impl ModelSaveKwargs {
 
 impl ModelSaveKwargs {
     pub fn onnx_kwargs<'py>(&self, py: Python<'py>) -> Option<&Bound<'py, PyDict>> {
-        // convert Option<PyObject> into Option<Bound<_, PyDict>>
+        // convert Option<Py<PyAny>> into Option<Bound<_, PyDict>>
         self.onnx.as_ref().map(|onnx| onnx.bind(py))
     }
 
     pub fn model_kwargs<'py>(&self, py: Python<'py>) -> Option<&Bound<'py, PyDict>> {
-        // convert Option<PyObject> into Option<Bound<_, PyDict>>
+        // convert Option<Py<PyAny>> into Option<Bound<_, PyDict>>
         self.model.as_ref().map(|model| model.bind(py))
     }
 
     pub fn preprocessor_kwargs<'py>(&self, py: Python<'py>) -> Option<&Bound<'py, PyDict>> {
-        // convert Option<PyObject> into Option<Bound<_, PyDict>>
+        // convert Option<Py<PyAny>> into Option<Bound<_, PyDict>>
         self.preprocessor
             .as_ref()
             .map(|preprocessor| preprocessor.bind(py))
@@ -184,7 +184,7 @@ impl Serialize for ModelSaveKwargs {
     where
         S: serde::Serializer,
     {
-        Python::with_gil(|py| {
+        Python::attach(|py| {
             let mut state = serializer.serialize_struct("ModelSaveKwargs", 4)?;
             let onnx = self
                 .onnx
@@ -228,7 +228,7 @@ impl<'de> Deserialize<'de> for ModelSaveKwargs {
             where
                 A: serde::de::MapAccess<'de>,
             {
-                Python::with_gil(|py| {
+                Python::attach(|py| {
                     let mut onnx = None;
                     let mut model = None;
                     let mut preprocessor = None;
@@ -313,7 +313,7 @@ impl<'de> Deserialize<'de> for ModelSaveKwargs {
 
 impl Clone for ModelSaveKwargs {
     fn clone(&self) -> Self {
-        Python::with_gil(|py| {
+        Python::attach(|py| {
             let onnx = self.onnx.as_ref().map(|onnx| onnx.clone_ref(py));
             let model = self.model.as_ref().map(|model| model.clone_ref(py));
             let preprocessor = self
@@ -400,17 +400,17 @@ impl ModelLoadKwargs {
 
 impl ModelLoadKwargs {
     pub fn onnx_kwargs<'py>(&self, py: Python<'py>) -> Option<&Bound<'py, PyDict>> {
-        // convert Option<PyObject> into Option<Bound<_, PyDict>>
+        // convert Option<Py<PyAny>> into Option<Bound<_, PyDict>>
         self.onnx.as_ref().map(|onnx| onnx.bind(py))
     }
 
     pub fn model_kwargs<'py>(&self, py: Python<'py>) -> Option<&Bound<'py, PyDict>> {
-        // convert Option<PyObject> into Option<Bound<_, PyDict>>
+        // convert Option<Py<PyAny>> into Option<Bound<_, PyDict>>
         self.model.as_ref().map(|model| model.bind(py))
     }
 
     pub fn preprocessor_kwargs<'py>(&self, py: Python<'py>) -> Option<&Bound<'py, PyDict>> {
-        // convert Option<PyObject> into Option<Bound<_, PyDict>>
+        // convert Option<Py<PyAny>> into Option<Bound<_, PyDict>>
         self.preprocessor
             .as_ref()
             .map(|preprocessor| preprocessor.bind(py))
@@ -419,7 +419,7 @@ impl ModelLoadKwargs {
 
 impl Clone for ModelLoadKwargs {
     fn clone(&self) -> Self {
-        Python::with_gil(|py| {
+        Python::attach(|py| {
             let onnx = self.onnx.as_ref().map(|onnx| onnx.clone_ref(py));
             let model = self.model.as_ref().map(|model| model.clone_ref(py));
             let preprocessor = self
@@ -474,7 +474,7 @@ impl Serialize for ExtraMetadata {
     where
         S: serde::Serializer,
     {
-        Python::with_gil(|py| {
+        Python::attach(|py| {
             let mut state = serializer.serialize_struct("ExtraMetadata", 1)?;
             let metadata = pyobject_to_json(self.metadata.bind(py)).unwrap();
 
@@ -502,7 +502,7 @@ impl<'de> Deserialize<'de> for ExtraMetadata {
             where
                 A: serde::de::MapAccess<'de>,
             {
-                Python::with_gil(|py| {
+                Python::attach(|py| {
                     let mut metadata = None;
 
                     while let Some(key) = map.next_key::<String>()? {
@@ -540,7 +540,7 @@ impl<'de> Deserialize<'de> for ExtraMetadata {
 
 impl Clone for ExtraMetadata {
     fn clone(&self) -> Self {
-        Python::with_gil(|py| {
+        Python::attach(|py| {
             let metadata = self.metadata.clone_ref(py);
 
             ExtraMetadata { metadata }
@@ -551,12 +551,12 @@ impl Clone for ExtraMetadata {
 #[pyclass]
 #[derive(Debug)]
 pub struct DriftProfileMap {
-    pub profiles: HashMap<String, PyObject>,
+    pub profiles: HashMap<String, Py<PyAny>>,
 }
 
 impl Clone for DriftProfileMap {
     fn clone(&self) -> Self {
-        Python::with_gil(|py| {
+        Python::attach(|py| {
             let mut profiles = HashMap::new();
             for (k, v) in &self.profiles {
                 profiles.insert(k.clone(), v.clone_ref(py));
