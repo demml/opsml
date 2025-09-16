@@ -18,7 +18,7 @@
         name={data.metadata.name}
         version={data.metadata.version}
         isRoot={data.isRoot}
-        registryPath={data.registryPath}
+        registryType={data.registryType}
         />
     </div>  
   </div>

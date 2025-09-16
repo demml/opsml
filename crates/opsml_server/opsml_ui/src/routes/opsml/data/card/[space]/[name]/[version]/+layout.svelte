@@ -1,8 +1,7 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
   import type { LayoutProps } from './$types';
-  import { getRegistryTypeLowerCase } from '$lib/utils';
-  import { IdCard, FolderTree, Tag, BookOpenText, Columns2 } from 'lucide-svelte';
+  import { getRegistryPath, getRegistryTypeLowerCase } from '$lib/utils';
+  import { IdCard, FolderTree, Tag, BookOpenText } from 'lucide-svelte';
   import { page } from '$app/state';
 
 
@@ -14,9 +13,6 @@
     if (['card', 'files', 'profile', 'versions', 'view'].includes(last)) return last;
     return 'card';
   });
-
-
-  let registry = $state(getRegistryTypeLowerCase(data.registryType));
 
 </script>
 
@@ -30,7 +26,7 @@
           <div class="mx-0.5 text-gray-800">/</div>
         </div>
         <div class="font-bold text-primary-800">
-          <a href={`/opsml/${registry}/card/${data.metadata.space}/${data.metadata.name}`}>
+          <a href={`/opsml/${getRegistryPath(data.registryType)}/card/${data.metadata.space}/${data.metadata.name}`}>
           {data.metadata.name}
           </a>
         </div>
@@ -41,7 +37,7 @@
       <div class="flex flex-row gap-x-4 text-black pl-4 h-8 mb-1 text-smd">
         <a
           class="flex items-center gap-x-2 border-b-3 {activeTab === 'card' ? 'border-secondary-500' : 'border-transparent'} hover:border-secondary-500 hover:border-b-3"
-          href={`/opsml/${registry}/card/${data.metadata.space}/${data.metadata.name}/${data.metadata.version}/card`}
+          href={`/opsml/${getRegistryPath(data.registryType)}/card/${data.metadata.space}/${data.metadata.name}/${data.metadata.version}/card`}
           data-sveltekit-preload-data="hover"
         >
           <IdCard color="#8059b6"/>
@@ -49,7 +45,7 @@
         </a>
         <a
           class="flex items-center gap-x-2 border-b-3 {activeTab === 'files' || activeTab === 'view' ? 'border-secondary-500' : 'border-transparent'} hover:border-secondary-500 hover:border-b-3"
-          href={`/opsml/${registry}/card/${data.metadata.space}/${data.metadata.name}/${data.metadata.version}/files`}
+          href={`/opsml/${getRegistryPath(data.registryType)}/card/${data.metadata.space}/${data.metadata.name}/${data.metadata.version}/files`}
           data-sveltekit-preload-data="hover"
         >
           <FolderTree color="#8059b6"/>
@@ -57,7 +53,7 @@
         </a>
         <a
           class="flex items-center gap-x-2 border-b-3 {activeTab === 'profile' ? 'border-secondary-500' : 'border-transparent'} hover:border-secondary-500 hover:border-b-3"
-          href={`/opsml/${registry}/card/${data.metadata.space}/${data.metadata.name}/${data.metadata.version}/profile`}
+          href={`/opsml/${getRegistryPath(data.registryType)}/card/${data.metadata.space}/${data.metadata.name}/${data.metadata.version}/profile`}
           data-sveltekit-preload-data="hover"
         >
           <BookOpenText color="#8059b6"/>
@@ -65,7 +61,7 @@
         </a>
         <a
           class="flex items-center gap-x-2 border-b-3 {activeTab === 'versions' ? 'border-secondary-500' : 'border-transparent'} hover:border-secondary-500 hover:border-b-3"
-          href={`/opsml/${registry}/card/${data.metadata.space}/${data.metadata.name}/${data.metadata.version}/versions`}
+          href={`/opsml/${getRegistryPath(data.registryType)}/card/${data.metadata.space}/${data.metadata.name}/${data.metadata.version}/versions`}
           data-sveltekit-preload-data="hover"
         >
           <Tag color="#8059b6" fill="#8059b6"/>
