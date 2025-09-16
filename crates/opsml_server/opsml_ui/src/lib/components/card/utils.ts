@@ -211,3 +211,15 @@ export function resolveCardPath(card: Card): string {
   }
   return `/opsml/${registry}/card/${card.space}/${card.name}/${card.version}/card`;
 }
+
+export function resolveCardPathFromArgs(
+  registry: string,
+  space: string,
+  name: string,
+  version: string
+): string {
+  if (registry === "prompt" || registry === "mcp" || registry === "agent") {
+    return `/opsml/genai/${registry}/card/${space}/${name}/${version}/card`;
+  }
+  return `/opsml/${registry}/card/${space}/${name}/${version}/card`;
+}
