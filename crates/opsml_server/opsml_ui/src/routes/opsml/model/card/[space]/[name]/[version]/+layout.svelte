@@ -24,7 +24,11 @@
           <a class="font-semibold text-black hover:text-secondary-500" href="/opsml/space/{data.metadata.space}">{data.metadata.space}</a>
           <div class="mx-0.5 text-gray-800">/</div>
         </div>
-        <div class="font-bold text-primary-800">{data.metadata.name}</div>
+        <div class="font-bold text-primary-800">
+          <a href={`/opsml/${registry}/card/${data.metadata.space}/${data.metadata.name}`}>
+          {data.metadata.name}
+          </a>
+        </div>
         <div class="mx-0.5 text-gray-800">/</div>
         <div class="font-semibold text-primary-800">{data.metadata.version}</div>
       </h1>
