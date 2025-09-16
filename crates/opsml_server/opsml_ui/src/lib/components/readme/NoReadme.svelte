@@ -1,22 +1,23 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
+  import { getRegistryPath, type RegistryType } from '$lib/utils';
 
 let {
       name,
       space,
       version,
-      registryPath,
+      registryType,
     } = $props<{
       name: string;
       space: string;
       version: string;
-      registryPath: string;
+      registryType: RegistryType;
     }>();
 
 
   function navigateToReadMe() {
-      // navigate to readme
-      goto(`/opsml/${registryPath}/card/${space}/${name}/${version}/readme`);
+
+      goto(`/opsml/${getRegistryPath(registryType)}/card/${space}/${name}/${version}/readme`);
     }
 
 </script>

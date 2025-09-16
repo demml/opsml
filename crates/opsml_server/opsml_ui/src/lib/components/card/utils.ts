@@ -1,6 +1,6 @@
 import { opsmlClient } from "$lib/components/api/client.svelte";
 import { RoutePaths } from "$lib/components/api/routes";
-import { RegistryType } from "$lib/utils";
+import { getRegistryPath, RegistryType } from "$lib/utils";
 import type {
   QueryPageResponse,
   CardSpaceResponse,
@@ -213,13 +213,12 @@ export function resolveCardPath(card: Card): string {
 }
 
 export function resolveCardPathFromArgs(
-  registry: string,
+  registry: RegistryType,
   space: string,
   name: string,
   version: string
 ): string {
-  if (registry === "prompt" || registry === "mcp" || registry === "agent") {
-    return `/opsml/genai/${registry}/card/${space}/${name}/${version}/card`;
-  }
-  return `/opsml/${registry}/card/${space}/${name}/${version}/card`;
+  return `/opsml/${getRegistryPath(
+    registry
+  )}/card/${space}/${name}/${version}/card`;
 }

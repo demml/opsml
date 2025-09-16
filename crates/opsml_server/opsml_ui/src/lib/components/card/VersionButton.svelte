@@ -21,7 +21,7 @@
     }>();
 
     function resolveUrl(): string{
-      let path = resolveCardPathFromArgs(registry.toLowerCase(), space, name, version);
+      let path = resolveCardPathFromArgs(registry, space, name, version);
       return path;
     }
 

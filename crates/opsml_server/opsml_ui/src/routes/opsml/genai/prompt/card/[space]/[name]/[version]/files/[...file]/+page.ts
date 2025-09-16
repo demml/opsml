@@ -3,7 +3,7 @@ export const prerender = false;
 
 import type { PageLoad } from "./$types";
 import { getFileTree } from "$lib/components/files/utils";
-import { getRegistryTableName } from "$lib/utils";
+import { getRegistryPath, getRegistryTableName } from "$lib/utils";
 import { validateUserOrRedirect } from "$lib/components/user/user.svelte";
 
 export const load: PageLoad = async ({ parent, params }) => {
@@ -13,15 +13,15 @@ export const load: PageLoad = async ({ parent, params }) => {
   // split slug with '/'
   let slugs = slug.split("/");
 
-  const { metadata, registryPath, registryType } = await parent();
+  const { metadata, registryType } = await parent();
 
   let tableName = getRegistryTableName(registryType);
   let basePath = `${tableName}/${metadata.space}/${metadata.name}/v${metadata.version}`;
 
   // join all but the last element of the slugs to get the previous path without final "/"
-  let previousPath = `/opsml/${registryPath}/card/${metadata.space}/${
-    metadata.name
-  }/${metadata.version}/files/${slugs
+  let previousPath = `/opsml/${getRegistryPath(registryType)}/card/${
+    metadata.space
+  }/${metadata.name}/${metadata.version}/files/${slugs
     .slice(0, slugs.length - 1)
     .join("/")}`.replace(/\/$/, "");
 
@@ -30,5 +30,5 @@ export const load: PageLoad = async ({ parent, params }) => {
 
   let fileTree = await getFileTree(basePath);
 
-  return { fileTree, previousPath, isRoot: false, registryPath };
+  return { fileTree, previousPath, isRoot: false, registryType };
 };

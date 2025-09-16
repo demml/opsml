@@ -2,6 +2,7 @@
 
   import { goto } from '$app/navigation';
   import FileViewer from '$lib/components/files/FileViewer.svelte';
+  import { getRegistryPath, type RegistryType } from '$lib/utils';
   import type { RawFile } from "./types";
   
   
@@ -15,7 +16,7 @@
     } = $props<{
       file: RawFile;
       splitPath: string[];
-      registry: string;
+      registry: RegistryType;
       space: string;
       name: string;
       version: string;
@@ -28,7 +29,7 @@
   
   
     function constructPath(index: number): string {
-      const basePath = `/opsml/${registry}/card/${space}/${name}/${version}/files`;
+      const basePath = `/opsml/${getRegistryPath(registry)}/card/${space}/${name}/${version}/files`;
       const dynamicPath = splitPath.slice(4, index + 1).join('/');
       return dynamicPath ? `${basePath}/${dynamicPath}` : `${basePath}`;
     }
@@ -43,7 +44,7 @@
   
  
 
-    <div class="w-full pt-4">
+    <div class="w-full max-w-none pt-4">
       <div class="rounded-lg border-2 border-black shadow overflow-x-auto bg-primary-500 py-2 mb-2 justify-center">
         <h1 class="ml-4 flex flex-row flex-wrap items-center">
           {#each splitPath as path, index}
@@ -69,7 +70,7 @@
         </h1>
   
       </div>
-      <div class="rounded-lg border-2 border-black shadow overflow-x-auto bg-slate-100 overflow-y-auto">
+      <div class="rounded-lg border-2 border-black shadow bg-slate-100 overflow-hidden">
         <FileViewer {file} />
       </div>
     </div>
@@ -85,7 +86,7 @@
     }
   
     :global(.markdown-body pre) {
-      overflow-x: auto;
+       overflow-x: auto;
       white-space: nowrap;
     }
   

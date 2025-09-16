@@ -8,19 +8,21 @@
     import { goto } from '$app/navigation';
     import type { ReadMe } from '../readme/util';
     import { convertMarkdown } from '../readme/util';
+  import { getRegistryPath, type RegistryType } from '$lib/utils';
+  import { resolveCardPathFromArgs } from './utils';
   
     let html = $state('');
   
     let {
         name,
         space,
-        registryPath,
+        registryType,
         version,
         readMe,
       } = $props<{
         name: string;
         space: string;
-        registryPath: string;
+        registryType: RegistryType;
         version: string;
         readMe: ReadMe;
       }>();
@@ -28,7 +30,7 @@
   
     
     function navigateToReadMe() {
-        goto(`/opsml/${registryPath}/card/${space}/${name}/${version}/readme`);
+        goto(`/opsml/${getRegistryPath(registryType)}/card/${space}/${name}/${version}/readme`);
       }
   
   
