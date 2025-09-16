@@ -64,7 +64,6 @@
   const debouncedCheckScreenSize = debounce(checkScreenSize, 400);
 
   onMount(() => {
-    console.log('Monitoring page mounted');
     window.addEventListener('resize', debouncedCheckScreenSize);
   });
 
