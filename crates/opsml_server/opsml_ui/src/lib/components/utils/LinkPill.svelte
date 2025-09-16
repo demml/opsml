@@ -7,7 +7,7 @@
   let {
     key,
     uid,
-     registryType,
+    registryType,
    } = $props<{
       key: string;
       uid: string;

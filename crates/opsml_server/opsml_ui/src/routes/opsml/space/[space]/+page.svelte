@@ -75,11 +75,7 @@
                 <Card 
                   iconColor={iconColor} 
                   badgeColor={badgeColor}
-                  name={card.data.name}
-                  space={card.data.space}
-                  version={card.data.version}
-                  registry={card.type.toLowerCase()}
-                  created_at={card.data.created_at}
+                  card={card}
                 />
                 </div>
               {/each}
@@ -102,11 +98,7 @@
                 <Card 
                   iconColor={iconColor} 
                   badgeColor={badgeColor}
-                  name={card.data.name}
-                  space={card.data.space}
-                  version={card.data.version}
-                  registry={card.type.toLowerCase()}
-                  created_at={card.data.created_at}
+                  card={card}
                 />
                 </div>
               {/each}
@@ -129,11 +121,7 @@
                 <Card 
                   iconColor={iconColor} 
                   badgeColor={badgeColor}
-                  name={card.data.name}
-                  space={card.data.space}
-                  version={card.data.version}
-                  registry={card.type.toLowerCase()}
-                  created_at={card.data.created_at}
+                  card={card}
                 />
                 </div>
               {/each}
@@ -157,11 +145,7 @@
                 <Card 
                   iconColor={iconColor} 
                   badgeColor={badgeColor}
-                  name={card.data.name}
-                  space={card.data.space}
-                  version={card.data.version}
-                  registry={card.type.toLowerCase()}
-                  created_at={card.data.created_at}
+                  card={card}
                 />
                 </div>
               {/each}
