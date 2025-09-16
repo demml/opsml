@@ -3,7 +3,7 @@
     import Sidebar from "$lib/components/nav/Sidebar.svelte";
 </script>
 
-<div class="h-full overflow-auto">
+<div class="h-full">
   <Sidebar>
       {@render children()}
   </Sidebar>
