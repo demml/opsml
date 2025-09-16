@@ -56,7 +56,7 @@
     <!-- Table Container -->
     <div class="overflow-auto max-h-[550px]">
       <div class="rounded-lg border-2 border-black overflow-hidden">
-        <table class="w-full text-black text-sm bg-slate-100">
+        <table class="w-full text-black text-sm bg-surface-100">
           <thead class="bg-primary-500">
             <tr>
               <th class="text-black text-sm pl-4 py-2 text-left whitespace-nowrap font-semibold">Name</th>

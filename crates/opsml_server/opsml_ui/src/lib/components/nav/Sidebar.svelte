@@ -133,7 +133,7 @@
 <div class="flex h-full">
 
   <aside 
-    class="fixed start-0 top-[3.5rem] z-10 h-[calc(100dvh-3.5rem)] bg-white border-e-2 border-gray-200 shadow-lg transition-all duration-300 ease-in-out data-[expanded=true]:w-64 data-[expanded=false]:w-16"
+    class="fixed start-0 top-[3.5rem] z-10 h-[calc(100dvh-3.5rem)] bg-surface-100 border-e-2 border-black shadow-lg transition-all duration-300 ease-in-out data-[expanded=true]:w-64 data-[expanded=false]:w-16"
     data-sidebar
     data-expanded={isExpanded}
     onmouseenter={handleMouseEnter}
@@ -167,8 +167,7 @@
             <span class="ms-3 text-sm font-medium whitespace-nowrap transition-opacity duration-300 {isExpanded ? 'opacity-100' : 'opacity-0'}">
               {item.name}
             </span>
-            
-            <!-- Expand/collapse chevron for items with submenus -->
+
             {#if hasSubItems && isExpanded}
               <div class="ms-auto">
                 <ChevronRight 
@@ -192,7 +191,7 @@
                   onclick={() => handleNavClick(subItem.path)}
                   class="flex items-center w-full py-2 px-3 rounded-md text-sm transition-all duration-200 {isSubActive
                     ? 'bg-primary-100 text-primary-700 font-medium'
-                    : 'text-gray-500 hover:bg-gray-50 hover:text-primary-600'}"
+                    : 'text-black hover:bg-gray-50 hover:text-primary-600'}"
                   aria-label={subItem.name}
                 >
                   <div class="w-2 h-2 rounded-full me-3 {isSubActive ? 'bg-primary-600' : 'bg-gray-300'}"></div>

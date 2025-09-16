@@ -32,7 +32,7 @@
 
 </script>
 
-<div class="flex-none pt-20 border-b-2 border-black bg-slate-100 pb-2">
+<div class="flex-none pt-20 border-b-2 border-black bg-surface-100 pb-2">
   <div class="flex justify-center items-center w-11/12 mx-auto gap-4">
     <h1 class="text-lg">
       <div class="font-bold text-primary-800">{spaceRecord.space}</div>
