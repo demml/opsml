@@ -26,7 +26,7 @@
 
 </script>
 
-<section class="pt-18 border-gray-100 col-span-full flex-1 pb-16 md:pb-0 items-center">
+<section class="pt-4 border-gray-100 col-span-full flex-1 pb-16 md:pb-0 items-center">
   
 
   <form class="z-10 mx-auto rounded-2xl bg-surface-50 border-black border-2 shadow p-4 md:w-96 md:px-5" onsubmit={handleLogout}>
