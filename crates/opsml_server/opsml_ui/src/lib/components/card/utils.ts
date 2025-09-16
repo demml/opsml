@@ -202,3 +202,12 @@ export async function getCardfromUid(
   const data = (await response.json()) as Card[];
   return data;
 }
+
+export function resolveCardPath(card: Card): string {
+  let registry = card.type.toLowerCase();
+
+  if (registry === "prompt" || registry === "mcp" || registry === "agent") {
+    return `/opsml/genai/${registry}/card/${card.space}/${card.name}/${card.version}/card`;
+  }
+  return `/opsml/${registry}/card/${card.space}/${card.name}/${card.version}/card`;
+}
