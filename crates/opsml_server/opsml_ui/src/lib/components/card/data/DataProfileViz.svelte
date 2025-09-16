@@ -15,7 +15,6 @@
   }>();
   let selectedFeature = $state('choose feature');
 
-
   function scrollToFeature(feature: string) {
     if (feature === 'choose feature') return;
     
@@ -31,34 +30,30 @@
   $effect(() => {
     scrollToFeature(selectedFeature);
   });
-
-  
 </script>
 
 <div class="relative">
-  <!--Fixed div-->
-  <div class="flex flex-row flex-wrap gap-2 items-center justify-center fixed left-1/2 transform -translate-x-1/2 z-10 bg-surface-50 py-2 w-full border-b-2 border-black">
-    <div class="items-center text-lg mr-2 font-bold text-primary-800">Data Profile:</div>
-    <div class="flex items-center gap-2 pr-2">
-      <div class="self-center" aria-label="Time Interval">
-        <KeySquare color="#5948a3" />
+  <div class="fixed top-[120px] z-[5] bg-surface-50 py-2 border-b-2 border-black w-full">
+    <div class="flex flex-row flex-wrap gap-2 items-center justify-center px-4">
+      <div class="items-center text-lg mr-2 font-bold text-primary-800">Data Profile:</div>
+      <div class="flex items-center gap-2 pr-2">
+        <div class="self-center" aria-label="Time Interval">
+          <KeySquare color="#5948a3" />
+        </div>
+    
+        <Dropdown 
+          bind:selectedValue={selectedFeature}
+          bind:values={features}
+          width='w-48'
+          py="py-2"
+        />
       </div>
-  
-      <Dropdown 
-        bind:selectedValue={selectedFeature}
-        bind:values={features}
-        width='w-48'
-        py="py-2"
-      />
     </div>
   </div>
-
-
-  <div class="grid grid-cols-1 gap-4 w-full pt-18 px-4">
-
+  <div class="grid grid-cols-1 gap-4 w-full py-4 px-4 mt-20 place-items-center">
     {#each features as feature}
       {@const featureProfile: FeatureProfile = profile.features[feature]}
-        <div id="feature-{feature}" class="bg-white p-4 border-2 border-black rounded-lg shadow overflow-x-auto scroll-mt-16">
+        <div id="feature-{feature}" class="bg-white p-4 border-2 border-black rounded-lg shadow overflow-x-auto scroll-mt-[140px] w-5/6">
           <div class="flex flex-row flex-wrap gap-2 items-center">
             <Pill key="Name" value={featureProfile.id} textSize="text-sm"/>
             <Pill key="Created At" value={featureProfile.timestamp} textSize="text-sm"/>
@@ -76,7 +71,6 @@
           {/if}
         </div>
     {/each}
-
-  </div>
+    </div>
+  <div>03</div>
 </div>
-
