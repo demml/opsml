@@ -1,4 +1,6 @@
 <script lang="ts">
+
+  import { goto } from "$app/navigation";
   import { RegistryType } from "$lib/utils";
   import {CircuitBoard, KeyIcon, Tag, FlaskConical, Table, BrainCircuit, NotebookText } from 'lucide-svelte';
   import { resolveCardPathFromArgs } from "../utils";
@@ -42,13 +44,13 @@
     </div>
     <div class="mr-2">
 
-      {#if registry === "model"}
+      {#if registry === RegistryType.Model}
         <BrainCircuit color={badgeColor} />
-      {:else if registry === "data"}
+      {:else if registry === RegistryType.Data}
         <Table color={badgeColor} />
-      {:else if registry === "prompt"}
+      {:else if registry === RegistryType.Prompt}
         <NotebookText color={badgeColor} />
-      {:else if registry === "experiment"}
+      {:else if registry === RegistryType.Experiment}
         <FlaskConical color={badgeColor} />
       {/if}
   
