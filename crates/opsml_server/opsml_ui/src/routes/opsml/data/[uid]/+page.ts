@@ -5,7 +5,7 @@ import { validateUserOrRedirect } from "$lib/components/user/user.svelte";
 import type { PageLoad } from "./$types";
 import type { DataCard } from "$lib/components/card/card_interfaces/datacard";
 import { getCardMetadata } from "$lib/components/card/utils";
-import { getRegistryTypeLowerCase } from "$lib/utils";
+import { getRegistryPath } from "$lib/utils";
 
 export const load: PageLoad = async ({ params, parent }) => {
   await validateUserOrRedirect();
@@ -21,7 +21,7 @@ export const load: PageLoad = async ({ params, parent }) => {
 
   redirect(
     301,
-    `/opsml/${getRegistryTypeLowerCase(registryType)}/card/${metadata.space}/${
+    `/opsml/${getRegistryPath(registryType)}/card/${metadata.space}/${
       metadata.name
     }/${metadata.version}`
   );
