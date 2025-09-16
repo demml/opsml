@@ -30,5 +30,5 @@ export const load: PageLoad = async ({ parent, params }) => {
 
   let fileTree = await getFileTree(basePath);
 
-  return { fileTree, previousPath, isRoot: false, registryPath };
+  return { fileTree, previousPath, isRoot: false };
 };
