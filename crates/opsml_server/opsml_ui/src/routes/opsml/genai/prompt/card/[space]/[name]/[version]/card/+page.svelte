@@ -1,6 +1,4 @@
 <script lang="ts">
-  // version $props() in +page.svelte
-
   import type { PromptCard } from '$lib/components/card/card_interfaces/promptcard';
   import type { PageProps } from './$types';
   import CardReadMe from '$lib/components/card/CardReadMe.svelte';
@@ -22,7 +20,7 @@
         <CardReadMe
           name={card.name}
           space={card.space}
-          registryPath={data.registryPath}
+          registryType={data.registryType}
           version={card.version}
           readMe={data.readme}
         />
@@ -34,7 +32,7 @@
         <NoReadme
           name={card.name}
           space={card.space}
-          registryPath={data.registryPath}
+          registryType={data.registryType}
           version={card.version}
         />
       </div>

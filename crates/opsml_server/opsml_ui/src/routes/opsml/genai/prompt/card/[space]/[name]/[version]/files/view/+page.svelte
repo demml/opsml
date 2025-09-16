@@ -8,11 +8,11 @@
 
 </script>
 
-<div class="flex-1 mx-auto w-9/12 pb-10 flex justify-center overflow-auto px-4">
+<div class="flex-1 mx-auto max-w-6xl pb-10 px-4">
   <FileViewPage
     file={data.rawFile}
     splitPath={data.splitPath}
-    registry={data.registryPath.toLocaleLowerCase()}
+    registry={data.registryType}
     space={data.metadata.space}
     name={data.metadata.name}
     version={data.metadata.version}

@@ -25,7 +25,7 @@
   
     // function to navigate to the card page
     function navigateToCardPage() {
-      let path = resolveCardPathFromArgs(registry.toLowerCase(), space, name, version);
+      let path = resolveCardPathFromArgs(registry, space, name, version);
       goto(path);
     }
   

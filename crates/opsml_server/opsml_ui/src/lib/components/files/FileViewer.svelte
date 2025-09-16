@@ -111,7 +111,7 @@
 
 </script>
 
-<div class="w-full text-sm">
+<div class="w-full text-sm overflow-hidden">
   {#if isImage(file.mime_type)}
     <div class="flex justify-center p-4">
       <img 
