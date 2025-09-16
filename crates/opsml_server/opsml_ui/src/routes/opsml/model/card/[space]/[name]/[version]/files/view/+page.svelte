@@ -12,7 +12,7 @@
   <FileViewPage
     file={data.rawFile}
     splitPath={data.splitPath}
-    registry={data.registryPath.toLocaleLowerCase()}
+    registry={data.registryType}
     space={data.metadata.space}
     name={data.metadata.name}
     version={data.metadata.version}

@@ -5,6 +5,7 @@
   import ServiceMetadata from '$lib/components/card/service/ServiceMetadata.svelte';
   import { Table } from 'lucide-svelte';
   import CardButton from '$lib/components/card/service/CardButton.svelte';
+  import { getRegistryFromString, getRegistryPath, RegistryType } from '$lib/utils';
   let badgeColor = "#40328b";
   let iconColor = "#40328b";
 
@@ -38,7 +39,7 @@
               name={card.name}
               space={card.space}
               version={card.version}
-              registry={card.registry_type.toLowerCase()}
+              registry={getRegistryFromString(card.registry_type) || RegistryType.Model}
               alias={card.alias}
             />
           {/each}

@@ -1,11 +1,9 @@
-import type { RegistryType } from "$lib/utils";
-
 export interface Card {
   name: string;
   space: string;
   version: string;
   uid: string;
-  registry_type: RegistryType;
+  registry_type: string;
   alias: string;
 }
 
@@ -23,6 +21,6 @@ export interface ServiceCard {
   opsml_version: string;
   app_env: string;
   is_card: boolean;
-  registry_type: RegistryType.Service;
+  registry_type: string;
   experimentcard_uid?: string;
 }

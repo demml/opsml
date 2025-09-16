@@ -1,3 +1,6 @@
+import type CardList from "../card/service/CardList.svelte";
+import type { RegistryType } from "$lib/utils";
+
 export type BaseCard = {
   uid: string;
   created_at: string;
@@ -60,9 +63,21 @@ interface PromptCard extends BaseCard {
   };
 }
 
+interface ServiceCard extends BaseCard {
+  type: "Service";
+  data: BaseCard & {
+    cards: CardList;
+    opsml_version: string;
+    is_card: boolean;
+    registry_type: RegistryType.Service;
+    experimentcard_uid?: string;
+  };
+}
+
 export type Card =
   | DataCard
   | ModelCard
   | ExperimentCard
   | AuditCard
-  | PromptCard;
+  | PromptCard
+  | ServiceCard;

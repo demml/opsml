@@ -61,7 +61,7 @@ async function redirectToSsoUrl() {
 
 </script>
 
-<section class="pt-24 border-gray-100 col-span-full flex-1 pb-16 md:pb-0 items-center">
+<section class="pt-10 border-gray-100 col-span-full items-center">
   
 
   <div class="z-10 mx-auto rounded-2xl bg-surface-50 border-black border-2 shadow p-4 md:w-80 md:px-4">

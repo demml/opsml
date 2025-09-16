@@ -1,7 +1,8 @@
 <script lang="ts">
 
-    import { calculateTimeBetween, getRegistryTypeLowerCase, RegistryType } from "$lib/utils";
+    import { calculateTimeBetween, RegistryType } from "$lib/utils";
     import {CircuitBoard, Clock, Tag } from 'lucide-svelte';
+  import { resolveCardPathFromArgs } from "./utils";
   
     let {
       name,
@@ -18,12 +19,14 @@
       updated_at: string;
       bgColor: string;
     }>();
-  
- 
 
-    let cardUrl = $state(`/opsml/${getRegistryTypeLowerCase(registry)}/card/${space}/${name}/${version}/card`)
+    function resolveUrl(): string{
+      let path = resolveCardPathFromArgs(registry, space, name, version);
+      return path;
+    }
 
-  
+    let cardUrl = resolveUrl();
+
   </script>
   
   <a 

@@ -8,7 +8,7 @@ import { RegistryType } from "$lib/utils";
 
 export const load: PageLoad = async ({ parent, url }) => {
   await validateUserOrRedirect();
-  const { metadata, registryPath } = await parent();
+  const { metadata } = await parent();
   const viewPath = (url as URL).searchParams.get("path") as string;
 
   let rawFile = await getRawFile(viewPath, metadata.uid, RegistryType.Model);

@@ -19,7 +19,7 @@
         <CardReadMe
           name={card.name}
           space={card.space}
-          registryPath={data.registryPath}
+          registryType={data.registryType}
           version={card.version}
           readMe={data.readme}
         />
@@ -31,7 +31,7 @@
         <NoReadme
           name={card.name}
           space={card.space}
-          registryPath={data.registryPath}
+          registryType={data.registryType}
           version={card.version}
         />
       </div>

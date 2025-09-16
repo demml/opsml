@@ -19,7 +19,7 @@
       modelSettings,
     } = $props<{
       card: PromptCard;
-      modelSettings: ModelSettings;
+      modelSettings: Record<string, any>;
     }>();
 
 
@@ -107,48 +107,12 @@ datacard = registry.load_card(uid="${card.uid}")
 
   <div class="flex flex-wrap gap-1">
 
-    <Pill key="Model" value={modelSettings.model} textSize="text-sm"/>
-    <Pill key="Provider" value={modelSettings.provider} textSize="text-sm"/>
-
-    {#if modelSettings.max_tokens}
-      <Pill key="Max Tokens" value={modelSettings.max_tokens} textSize="text-sm"/>
-    {/if}
-
-    {#if modelSettings.temperature}
-      <Pill key="Temperature" value={modelSettings.temperature} textSize="text-sm"/>
-    {/if}
-
-    {#if modelSettings.top_p}
-      <Pill key="Top P" value={modelSettings.top_p} textSize="text-sm"/>
-    {/if}
-
-    {#if modelSettings.frequency_penalty}
-      <Pill key="Frequency Penalty" value={modelSettings.frequency_penalty} textSize="text-sm"/>
-    {/if}
-
-    {#if modelSettings.presence_penalty}
-      <Pill key="Presence Penalty" value={modelSettings.presence_penalty} textSize="text-sm"/>
-    {/if}
-
-    {#if modelSettings.timeout}
-      <Pill key="Timeout" value={modelSettings.timeout} textSize="text-sm"/>
-    {/if}
-
-    {#if modelSettings.parallel_tool_calls}
-      <Pill key="Parallel Tool Calls" value={modelSettings.parallel_tool_calls} textSize="text-sm"/>
-    {/if}
-
-    {#if modelSettings.seed}
-      <Pill key="Seed" value={modelSettings.seed} textSize="text-sm"/>
-    {/if}
-
+    <Pill key="Model" value={card.prompt.model} textSize="text-sm"/>
+    <Pill key="Provider" value={card.prompt.provider} textSize="text-sm"/>
+    
   </div>
 
-  {#if modelSettings.logit_bias || 
-    modelSettings.stop_sequences?.length > 0 || 
-    modelSettings.extra_body }
-    <ExtraModelSettings settings={modelSettings}/>
-  {/if}
+  <ExtraModelSettings settings={modelSettings}/>
 
   {#if card.tags.length > 0}
     <div class="flex flex-col space-y-1 gap-1">

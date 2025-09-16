@@ -12,6 +12,28 @@ export function getRegistryTypeLowerCase(type: RegistryType): string {
   return name;
 }
 
+export function getRegistryTypeUpperCase(type: RegistryType): string {
+  let name = type.charAt(0).toUpperCase() + type.slice(1).toLowerCase();
+  return name;
+}
+
+export function getRegistryPath(type: RegistryType): string {
+  switch (type) {
+    case RegistryType.Data:
+      return "data";
+    case RegistryType.Model:
+      return "model";
+    case RegistryType.Experiment:
+      return "experiment";
+    case RegistryType.Prompt:
+      return "genai/prompt";
+    case RegistryType.Service:
+      return "service";
+    default:
+      return "";
+  }
+}
+
 export function getRegistryFromString(type: string): RegistryType | undefined {
   switch (type.toLowerCase()) {
     case "data":

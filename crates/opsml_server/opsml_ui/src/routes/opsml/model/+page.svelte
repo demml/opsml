@@ -11,11 +11,11 @@
 
 </script>
 
-<div class="flex-1 mx-auto w-11/12 pt-20 justify-center px-4 pb-10">
+<div class="flex-1 mx-auto w-11/12 pt-6 justify-center px-4 pb-10">
   <CardsSearch 
     selectedSpace={selectedSpace}
     selectedName={selectedName}
     page={page}
-    title={page.registry_type}
+    title={data.registryType}
   />
 </div>
