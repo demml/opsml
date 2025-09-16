@@ -32,7 +32,7 @@
 
 </script>
 
-<div class="flex-none pt-20 border-b-2 border-black bg-slate-100 pb-2">
+<div class="flex-none pt-20 border-b-2 border-black bg-surface-100 pb-2">
   <div class="flex justify-center items-center w-11/12 mx-auto gap-4">
     <h1 class="text-lg">
       <div class="font-bold text-primary-800">{spaceRecord.space}</div>
@@ -75,11 +75,7 @@
                 <Card 
                   iconColor={iconColor} 
                   badgeColor={badgeColor}
-                  name={card.data.name}
-                  space={card.data.space}
-                  version={card.data.version}
-                  registry={card.type.toLowerCase()}
-                  created_at={card.data.created_at}
+                  card={card}
                 />
                 </div>
               {/each}
@@ -102,11 +98,7 @@
                 <Card 
                   iconColor={iconColor} 
                   badgeColor={badgeColor}
-                  name={card.data.name}
-                  space={card.data.space}
-                  version={card.data.version}
-                  registry={card.type.toLowerCase()}
-                  created_at={card.data.created_at}
+                  card={card}
                 />
                 </div>
               {/each}
@@ -129,11 +121,7 @@
                 <Card 
                   iconColor={iconColor} 
                   badgeColor={badgeColor}
-                  name={card.data.name}
-                  space={card.data.space}
-                  version={card.data.version}
-                  registry={card.type.toLowerCase()}
-                  created_at={card.data.created_at}
+                  card={card}
                 />
                 </div>
               {/each}
@@ -157,11 +145,7 @@
                 <Card 
                   iconColor={iconColor} 
                   badgeColor={badgeColor}
-                  name={card.data.name}
-                  space={card.data.space}
-                  version={card.data.version}
-                  registry={card.type.toLowerCase()}
-                  created_at={card.data.created_at}
+                  card={card}
                 />
                 </div>
               {/each}

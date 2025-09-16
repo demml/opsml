@@ -1,7 +1,7 @@
 <script lang="ts">
 
   import  CardButton from "./CardButton.svelte";
-  import { type CardList } from "../card_interfaces/carddeck";
+  import { type CardList } from "../card_interfaces/servicecard";
 
   let badgeColor = "#40328b";
   let iconColor = "#40328b";

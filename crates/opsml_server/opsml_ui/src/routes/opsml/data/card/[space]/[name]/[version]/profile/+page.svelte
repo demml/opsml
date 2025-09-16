@@ -12,9 +12,9 @@
 </script>
 
 
-<div class="flex-1 mx-auto w-8/12 flex flex-col">
+<div class="flex-1 mx-auto flex flex-col">
   {#if dataProfile}
-    <div class="flex-1 overflow-y-auto pb-10"> <!-- Add scrollable container here -->
+    <div class="flex-1 pb-10"> 
       <DataProfileViz
         features={featureNames}
         profile={dataProfile}

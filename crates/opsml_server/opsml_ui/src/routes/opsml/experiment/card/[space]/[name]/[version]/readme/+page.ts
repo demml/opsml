@@ -3,7 +3,7 @@ import { validateUserOrRedirect } from "$lib/components/user/user.svelte";
 
 export const load: PageLoad = async ({ parent }) => {
   await validateUserOrRedirect();
-  const { metadata, registryType, readme, registryPath } = await parent();
+  const { metadata, registryType, readme } = await parent();
 
   let content: string = "";
 
@@ -47,7 +47,7 @@ Explain how the experiment was developed, including sources, methodology, and an
 \`\`\`python
 # Example usage in Python
 from opsml import CardRegistry
-registry = CardRegistry("${registryPath}")
+registry = CardRegistry("${registryType.toLowerCase()}")
 card = registry.load_card(uid="${metadata.uid}")
 \`\`\`
 

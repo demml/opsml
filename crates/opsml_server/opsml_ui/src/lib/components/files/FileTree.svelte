@@ -6,6 +6,7 @@
   import { formatBytes, timeAgo } from "./utils";
   import { goto } from "$app/navigation";
   import { isAcceptableSuffix } from "./utils";
+  import { getRegistryPath, type RegistryType } from "$lib/utils";
   // Use runes for reactive state
   let { files, 
         currentPath, 
@@ -14,7 +15,7 @@
         name, 
         version, 
         isRoot ,
-        registryPath
+        registryType
       } = $props<{ 
         files: FileTreeNode[], 
         currentPath:string, 
@@ -23,7 +24,7 @@
         name:string, 
         version: string, 
         isRoot: boolean ,
-        registryPath: string
+        registryType: RegistryType
       }>();
 
 
@@ -35,7 +36,7 @@
 
   function navigateToView(path: string) {
     // add params to path
-    let viewPath = `/opsml/${registryPath}/card/${space}/${name}/${version}/files/view?path=${path}`;
+    let viewPath = `/opsml/${getRegistryPath(registryType)}/card/${space}/${name}/${version}/files/view?path=${path}`;
     goto(viewPath);
   }
    
@@ -67,7 +68,7 @@
         </tr>
       {/if}
       {#each files as file}
-      <tr class="border-t hover:bg-primary-300 py-2">
+      <tr class="border-t hover:bg-primary-300 py-2 bg-white">
         <td class="pl-4 py-2">
           {#if file.object_type === 'directory'}
             <button class="btn text-sm flex flex-row gap-2 bg-primary-500 shadow shadow-hover border-black border-2 rounded-lg" onclick={() => navigateToPath(file.name)}>

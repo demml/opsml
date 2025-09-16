@@ -7,7 +7,7 @@
   import { Compartment } from '@codemirror/state';
   import { editorTheme } from './editor-theme';
   import {  onMount } from 'svelte';
-  import { type RegistryType } from "$lib/utils";
+  import { getRegistryPath, type RegistryType } from "$lib/utils";
   import { convertMarkdown, createReadMe } from "./util";
   import { goto } from "$app/navigation";
   import { getContext } from 'svelte';
@@ -37,14 +37,12 @@
       space,
       version,
       registry,
-      registryPath,
       readme_content,
     } = $props<{
       name: string;
       space: string;
       version: string;
       registry: RegistryType;
-      registryPath: string;
       readme_content: string;
     }>();
 
@@ -70,7 +68,7 @@
       triggerSuccess();
     }
 
-    goto(`/opsml/${registryPath}/card/${space}/${name}/${version}`);
+    goto(`/opsml/${getRegistryPath(registry)}/card/${space}/${name}/${version}`);
   }
 
 async function toggle(toggle: string) {

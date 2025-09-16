@@ -1,27 +1,31 @@
 <script lang="ts">
-  import { type RegistryType, getRegistryTypeLowerCase } from "$lib/utils";
+  import { type RegistryType, getRegistryPath} from "$lib/utils";
   import { onMount } from "svelte";
-  import { getCardfromUid } from "../card/utils";
-  import { type BaseCard, type Card } from "../home/types";
+  import { getCardfromUid} from "../card/utils";
+  import { type Card } from "../home/types";
 
   let {
     key,
     uid,
-     registryType,
+    registryType,
    } = $props<{
       key: string;
       uid: string;
       registryType: RegistryType;
    }>();
 
-   let cardUrl = $state<string>(`/opsml/${getRegistryTypeLowerCase(registryType)}/${uid}`);
+    function resolveUrl(): string{
+      return `/opsml/${getRegistryPath(registryType)}/${uid}`;
+    }
+
+   let cardUrl = $state<string>(resolveUrl());
 
    onMount(async () => {
      let cards: Card[] = await getCardfromUid(registryType, uid);
      // Get the first card's details
      if (cards.length > 0) {
        let card = cards[0].data;
-       cardUrl = `/opsml/${getRegistryTypeLowerCase(registryType)}/card/${card.space}/${card.name}/${card.version}/card`;
+       cardUrl = `/opsml/${getRegistryPath(registryType)}/card/${card.space}/${card.name}/${card.version}/card`;
      }
    });
 

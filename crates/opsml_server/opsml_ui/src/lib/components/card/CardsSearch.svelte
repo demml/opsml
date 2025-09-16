@@ -4,7 +4,7 @@
   import { getRegistryPage, getRegistryStats, getBgColor } from "./utils";
   import type { RegistryPageReturn, RegistryStatsResponse, QueryPageResponse} from "$lib/components/card/types";
   import  CardPage  from "$lib/components/card/CardPage.svelte";
-  import  { RegistryType, delay } from "$lib/utils";
+  import  { RegistryType, delay, getRegistryTypeUpperCase } from "$lib/utils";
   import { ArrowLeft, ArrowRight, Search, Settings } from 'lucide-svelte';
   
   let { selectedSpace, page, selectedName, title } = $props<{
@@ -27,6 +27,7 @@
   let registryType = $state<RegistryType>(page.registry_type);
   let registryPage = $state<QueryPageResponse>(page.registryPage);
   let registryStats = $state<RegistryStatsResponse>(page.registryStats);
+  let artifactTitle = $state<string>(`${getRegistryTypeUpperCase(title)} Artifacts`);
 
 
   onMount(() => {
@@ -76,7 +77,7 @@
 
 <div class="grid grid-cols-1 lg:grid-cols-6 gap-4 w-full">
   <!-- Left column -->
-  <div class="col-span-1 lg:col-span-2 bg-slate-100 p-4 flex flex-col rounded-base border-black border-2 shadow min-h-[400px] h-fit">
+  <div class="col-span-1 lg:col-span-2 p-4 flex flex-col rounded-base border-primary-500 border-2 shadow-primary bg-surface-50 min-h-[400px] h-fit">
     <!-- Top Section -->
     <div class="mb-2">
       <h2 class="font-bold text-primary-800 text-lg pb-3">Search Spaces</h2>
@@ -99,7 +100,7 @@
       {#if searchQuery && filteredSpaces.length == 0}
         <p class="text-black">No spaces found</p>
       {:else if filteredSpaces.length > 0}
-        <div class="flex flex-wrap gap-2 my-2">
+        <div class="flex flex-wrap gap-2 my-2 mx-1">
           {#each filteredSpaces as space}
             {#if activeSpace === space}
               <button class="chip text-sm text-black bg-primary-300 border-black border-1 reverse-shadow-small reverse-shadow-hover-small" 
@@ -116,12 +117,12 @@
 
   <!-- Right column -->
   <div class="col-span-1 lg:col-span-4 gap-1 p-4 flex-1 flex-col rounded-base border-primary-500 border-2 shadow-primary bg-surface-50 h-auto">
-    <!-- Add your items here -->
+
     <div class="flex flex-row items-center gap-2 pb-2">
       <div class="rounded-full bg-surface-200 border-black border-2 p-1 shadow-small">
         <Settings color="#40328b" />
       </div>
-      <h2 class="font-bold text-primary-800 text-lg">{title} Artifacts</h2>
+      <h2 class="font-bold text-primary-800 text-lg">{artifactTitle}</h2>
     </div>
 
     <div class="flex flex-row flex-wrap gap-1 items-center ml-1">
