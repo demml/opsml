@@ -203,3 +203,110 @@
 	--color-surface-contrast-900: var(--color-surface-contrast-dark);
 	--color-surface-contrast-950: var(--color-surface-contrast-light);
 }
+
+[data-theme='opsml'] {
+  /* You can fine‑tune these without touching classes */
+  --retro-primary-from: oklch(88% 0.18 302deg); /* soft neon magenta */
+  --retro-primary-mid:  oklch(84% 0.22 295deg);
+  --retro-primary-to:   oklch(79% 0.20 288deg);
+
+  --retro-secondary-from: oklch(90% 0.14 190deg); /* cyan / aqua */
+  --retro-secondary-mid:  oklch(86% 0.18 182deg);
+  --retro-secondary-to:   oklch(82% 0.20 174deg);
+
+  --retro-tertiary-from: oklch(89% 0.16 265deg); /* violet */
+  --retro-tertiary-mid:  oklch(85% 0.19 258deg);
+  --retro-tertiary-to:   oklch(80% 0.21 252deg);
+
+  --retro-success-from: oklch(90% 0.18 125deg); /* lime / acid */
+  --retro-success-mid:  oklch(86% 0.22 112deg);
+  --retro-success-to:   oklch(81% 0.24 100deg);
+
+  --retro-warning-from: oklch(92% 0.14 80deg);  /* peach / apricot */
+  --retro-warning-mid:  oklch(88% 0.18 70deg);
+  --retro-warning-to:   oklch(83% 0.20 60deg);
+
+  --retro-error-from: oklch(88% 0.18 25deg);    /* hot coral */
+  --retro-error-mid:  oklch(83% 0.22 18deg);
+  --retro-error-to:   oklch(78% 0.24 12deg);
+}
+
+/* Replace originals (or keep both; this fully overrides existing gradient-* if order is last) */
+[data-theme='opsml'] .gradient-primary {
+  background:
+    linear-gradient(135deg,
+      var(--retro-primary-from) 0%,
+      var(--retro-primary-mid) 48%,
+      var(--retro-primary-to) 100%);
+}
+[data-theme='opsml'] .gradient-secondary {
+  background:
+    linear-gradient(135deg,
+      var(--retro-secondary-from) 0%,
+      var(--retro-secondary-mid) 52%,
+      var(--retro-secondary-to) 100%);
+}
+[data-theme='opsml'] .gradient-tertiary {
+  background:
+    linear-gradient(135deg,
+      var(--retro-tertiary-from) 0%,
+      var(--retro-tertiary-mid) 50%,
+      var(--retro-tertiary-to) 100%);
+}
+[data-theme='opsml'] .gradient-success {
+  background:
+    linear-gradient(135deg,
+      var(--retro-success-from) 0%,
+      var(--retro-success-mid) 50%,
+      var(--retro-success-to) 100%);
+}
+[data-theme='opsml'] .gradient-warning {
+  background:
+    linear-gradient(135deg,
+      var(--retro-warning-from) 0%,
+      var(--retro-warning-mid) 52%,
+      var(--retro-warning-to) 100%);
+}
+[data-theme='opsml'] .gradient-error {
+  background:
+    linear-gradient(135deg,
+      var(--retro-error-from) 0%,
+      var(--retro-error-mid) 50%,
+      var(--retro-error-to) 100%);
+}
+
+/* Optional neon glow + crisp brutalist edge */
+[data-theme='opsml'] .neo-glow {
+  position: relative;
+  box-shadow:
+    0 0 0 2px #000,
+    3px 3px 0 0 #000,
+    0 0 12px 2px oklch(82% 0.20 295deg / 0.55);
+}
+[data-theme='opsml'] .neo-glow::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border: 2px solid rgba(255 255 255 / 0.25);
+  mix-blend-mode: overlay;
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+/* Utility for grainy texture (optional) */
+[data-theme='opsml'] .grain {
+  position: relative;
+}
+[data-theme='opsml'] .grain::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+     repeating-radial-gradient(circle at 30% 30%, rgba(0 0 0 / 0.08) 0 1px, transparent 1px 3px),
+     repeating-linear-gradient(45deg, rgba(255 255 255 / 0.07) 0 2px, transparent 2px 4px);
+  mix-blend-mode: soft-light;
+  opacity: .55;
+  border-radius: inherit;
+  filter: contrast(120%) brightness(105%);
+}
