@@ -54,9 +54,11 @@ export interface Prompt {
   message: Message[];
   system_message: Message[];
   version: string;
-  model_settings: ModelSettings;
+  model_settings: Record<string, any>;
   response_json_schema?: string;
   parameters: string[];
+  provider: string;
+  model: string;
 }
 
 export interface DriftProfileUri {
