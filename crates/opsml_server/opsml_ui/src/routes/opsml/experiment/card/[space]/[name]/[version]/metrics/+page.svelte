@@ -85,7 +85,7 @@
     <!-- Left Column-->
     <div class="col-span-1 lg:col-span-2 bg-surface-50 flex flex-col rounded-base border-black border-2 shadow h-[calc(100vh-200px)] overflow-y-auto">
       <!-- Top Section -->
-      <div class="mb-4 sticky top-0 z-10 bg-surface-50 p-4">
+      <div class="mb-4 sticky top-0 z-15 bg-surface-50 p-4">
         <div class="flex flex-row justify-between pb-2">
           <div class="flex flex-row">
             <div class="self-center" aria-label="Time Interval">
