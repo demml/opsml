@@ -6,7 +6,7 @@ import { getRegistryTableName } from "$lib/utils";
 import { validateUserOrRedirect } from "$lib/components/user/user.svelte";
 
 export const load: PageLoad = async ({ parent }) => {
-  const { metadata, registryType, registryPath } = await parent();
+  const { metadata, registryType } = await parent();
   await validateUserOrRedirect();
 
   let tableName = getRegistryTableName(registryType);
@@ -14,5 +14,5 @@ export const load: PageLoad = async ({ parent }) => {
 
   let fileTree = await getFileTree(basePath);
 
-  return { fileTree, previousPath: basePath, isRoot: true, registryPath };
+  return { fileTree, previousPath: basePath, isRoot: true };
 };
