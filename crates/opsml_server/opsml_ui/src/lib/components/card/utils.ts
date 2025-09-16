@@ -207,9 +207,9 @@ export function resolveCardPath(card: Card): string {
   let registry = card.type.toLowerCase();
 
   if (registry === "prompt" || registry === "mcp" || registry === "agent") {
-    return `/opsml/genai/${registry}/card/${card.space}/${card.name}/${card.version}/card`;
+    return `/opsml/genai/${registry}/card/${card.data.space}/${card.data.name}/${card.data.version}/card`;
   }
-  return `/opsml/${registry}/card/${card.space}/${card.name}/${card.version}/card`;
+  return `/opsml/${registry}/card/${card.data.space}/${card.data.name}/${card.data.version}/card`;
 }
 
 export function resolveCardPathFromArgs(

@@ -1,7 +1,6 @@
 <script lang="ts">
 
   import { calculateTimeBetween } from "$lib/utils";
-  import { goto } from "$app/navigation";
   import {CircuitBoard, Clock, Tag, FlaskConical, Table, BrainCircuit, NotebookText } from 'lucide-svelte';
   import type { Card } from "../home/types";
   import { resolveCardPath } from "./utils";
@@ -32,7 +31,7 @@
       <div class="ml-2">
         <CircuitBoard color={iconColor} />
       </div>
-      <div><h4 class="truncate font-bold text-smd">{card.space}/{card.name}</h4></div>
+      <div><h4 class="truncate font-bold text-smd">{card.data.space}/{card.data.name}</h4></div>
     </div>
     <div class="mr-2">
 
@@ -55,7 +54,7 @@
       </div>
       <div>
         <time datetime={ Date() } >
-          Updated { calculateTimeBetween(card.created_at) }
+          Updated { calculateTimeBetween(card.data.created_at) }
         </time>
       </div>
     </div>
@@ -63,7 +62,7 @@
       <div class="ml-2">
         <Tag color={iconColor} />
       </div>
-      <div class="text-black">Version: {card.version}</div>
+      <div class="text-black">Version: {card.data.version}</div>
     </div>
   </div>
 </a>

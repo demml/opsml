@@ -70,25 +70,25 @@
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
       <div class="bg-surface-50 border-2 border-primary-700 rounded-xl p-4 text-center">
         <div class="text-2xl font-bold text-primary-700 mb-1">
-          {#await stats then stats}{stats.nbrModels || 0}{/await}
+          {stats.nbrModels || 0}
         </div>
         <div class="text-sm text-gray-600">Recent Models</div>
       </div>
       <div class="bg-surface-50 border-2 border-primary-700 rounded-xl p-4 text-center">
         <div class="text-2xl font-bold text-primary-700 mb-1">
-          {#await stats then stats}{stats.nbrData || 0}{/await}
+          {stats.nbrData || 0}
         </div>
         <div class="text-sm text-gray-600">Data Assets</div>
       </div>
       <div class="bg-surface-50 border-2 border-primary-700 rounded-xl p-4 text-center">
         <div class="text-2xl font-bold text-primary-700 mb-1">
-          {#await stats then stats}{stats.nbrPrompts || 0}{/await}
+          {stats.nbrPrompts || 0}
         </div>
         <div class="text-sm text-gray-600">Prompts</div>
       </div>
       <div class="bg-surface-50 border-2 border-primary-700 rounded-xl p-4 text-center">
         <div class="text-2xl font-bold text-primary-700 mb-1">
-          {#await stats then stats}{stats.nbrExperiments || 0}{/await}
+          {stats.nbrExperiments || 0}
         </div>
         <div class="text-sm text-gray-600">Experiments</div>
       </div>
@@ -114,47 +114,42 @@
       </h2>
     </div>
     
-    {#await cards}
-      <div class="flex justify-center items-center h-32">
-        <div class="animate-spin h-8 w-8 border-4 border-primary-500 rounded-full border-t-transparent"></div>
-      </div>
-    {:then cards}
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mx-4 md:mx-8">
-        <HomeCard 
-          header="Models" 
-          cards={cards.modelcards}
-          headerColor="bg-primary-500" 
-          headerTextColor="text-black" 
-          iconColor="#8059b6"
-          badgeColor="#8059b6"
-        />
-        <HomeCard 
-          header="Data"
-          cards={cards.datacards}
-          headerColor="bg-primary-500"
-          headerTextColor="text-black" 
-          iconColor="#8059b6"
-          badgeColor="#8059b6"
-        />
-        
-        <HomeCard 
-          header="Prompts" 
-          cards={cards.promptcards}
-          headerColor="bg-primary-500" 
-          headerTextColor="text-black" 
-          iconColor="#8059b6"
-          badgeColor="#8059b6"
-        />
-        <HomeCard 
-          header="Experiments"
-          cards={cards.experimentcards}
-          headerColor="bg-primary-500" 
-          headerTextColor="text-black"
-          iconColor="#8059b6"
-          badgeColor="#8059b6"
-        />
-      </div>
-    {/await}
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mx-4 md:mx-8">
+      <HomeCard 
+        header="Models" 
+        cards={cards.modelcards}
+        headerColor="bg-primary-500" 
+        headerTextColor="text-black" 
+        iconColor="#8059b6"
+        badgeColor="#8059b6"
+      />
+      <HomeCard 
+        header="Data"
+        cards={cards.datacards}
+        headerColor="bg-primary-500"
+        headerTextColor="text-black" 
+        iconColor="#8059b6"
+        badgeColor="#8059b6"
+      />
+      
+      <HomeCard 
+        header="Prompts" 
+        cards={cards.promptcards}
+        headerColor="bg-primary-500" 
+        headerTextColor="text-black" 
+        iconColor="#8059b6"
+        badgeColor="#8059b6"
+      />
+      <HomeCard 
+        header="Experiments"
+        cards={cards.experimentcards}
+        headerColor="bg-primary-500" 
+        headerTextColor="text-black"
+        iconColor="#8059b6"
+        badgeColor="#8059b6"
+      />
+    </div>
+
   </div>
 
   <div class="max-w-6xl mx-auto mb-16">
