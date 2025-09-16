@@ -2,10 +2,9 @@
   import type { LayoutProps } from './$types';
   import { IdCard, FolderTree, Tag, Activity, ChartColumnDecreasing } from 'lucide-svelte';
   import { page } from '$app/state';
+  import { getRegistryPath } from '$lib/utils';
 
   let { data, children }: LayoutProps = $props();
-
-  let registry = $state(data.registryPath);
 
   let activeTab = $derived.by(() => {
     const last = page.url.pathname.split('/').pop() ?? '';
@@ -24,7 +23,7 @@
           <div class="mx-0.5 text-gray-800">/</div>
         </div>
         <div class="font-bold text-primary-800">
-          <a href={`/opsml/${registry}/card/${data.metadata.space}/${data.metadata.name}`}>
+          <a href={`/opsml/${getRegistryPath(data.registryType)}/card/${data.metadata.space}/${data.metadata.name}`}>
           {data.metadata.name}
           </a>
         </div>
@@ -35,7 +34,7 @@
       <div class="flex flex-row gap-x-4 text-black pl-4 h-8 mb-1 text-smd">
         <a
           class="flex items-center gap-x-2 border-b-3 {activeTab === 'card' ? 'border-secondary-500' : 'border-transparent'} hover:border-secondary-500 hover:border-b-3"
-          href={`/opsml/${registry}/card/${data.metadata.space}/${data.metadata.name}/${data.metadata.version}/card`}
+          href={`/opsml/${getRegistryPath(data.registryType)}/card/${data.metadata.space}/${data.metadata.name}/${data.metadata.version}/card`}
           data-sveltekit-preload-data="hover"
         >
           <IdCard color="#8059b6"/>
@@ -44,7 +43,7 @@
 
         <a
           class="flex items-center gap-x-2 border-b-3 {activeTab === 'files' ? 'border-secondary-500' : 'border-transparent'} hover:border-secondary-500 hover:border-b-3"
-          href={`/opsml/${registry}/card/${data.metadata.space}/${data.metadata.name}/${data.metadata.version}/files`}
+          href={`/opsml/${getRegistryPath(data.registryType)}/card/${data.metadata.space}/${data.metadata.name}/${data.metadata.version}/files`}
           data-sveltekit-preload-data="hover"
         >
           <FolderTree color="#8059b6"/>
@@ -53,7 +52,7 @@
        
         <a
           class="flex items-center gap-x-2 border-b-3 {activeTab === 'versions' ? 'border-secondary-500' : 'border-transparent'} hover:border-secondary-500 hover:border-b-3"
-          href={`/opsml/${registry}/card/${data.metadata.space}/${data.metadata.name}/${data.metadata.version}/versions`}
+          href={`/opsml/${getRegistryPath(data.registryType)}/card/${data.metadata.space}/${data.metadata.name}/${data.metadata.version}/versions`}
           data-sveltekit-preload-data="hover"
         >
           <Tag color="#8059b6" fill="#8059b6"/>

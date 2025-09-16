@@ -25,5 +25,5 @@ export const load: LayoutLoad = async ({ params, parent }) => {
   let registryPath = getRegistryTypeLowerCase(registryType);
   let activeTab = "card"; // Default active tab
 
-  return { metadata, registryType, readme, registryPath, activeTab };
+  return { metadata, registryType, readme, activeTab };
 };

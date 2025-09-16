@@ -2,6 +2,7 @@
   
   import type { PageProps } from './$types';
   import FileViewPage from '$lib/components/files/FileViewPage.svelte';
+  import { RegistryType } from '$lib/utils';
 
 
   let { data }: PageProps = $props();
@@ -12,7 +13,7 @@
   <FileViewPage
     file={data.rawFile}
     splitPath={data.splitPath}
-    registry={data.registryPath.toLocaleLowerCase()}
+    registry={data.registryType}
     space={data.metadata.space}
     name={data.metadata.name}
     version={data.metadata.version}

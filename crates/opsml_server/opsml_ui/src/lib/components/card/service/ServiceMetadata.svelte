@@ -73,7 +73,7 @@ service.load()
 
     <div class="flex flex-wrap space-y-1 gap-1">
       {#if service.experimentcard_uid}
-        <LinkPill key="Experiment" value={service.experimentcard_uid} registryType={RegistryType.Experiment} />
+        <LinkPill key="Experiment" uid={service.experimentcard_uid} registryType={RegistryType.Experiment} />
       {/if}
     </div>
   {/if}
