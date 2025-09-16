@@ -11,6 +11,13 @@ interface RecentCards {
   promptcards: Card[];
 }
 
+interface HomePageStats {
+  nbrModels: number;
+  nbrData: number;
+  nbrPrompts: number;
+  nbrExperiments: number;
+}
+
 async function getCards(registry: string, space?: string): Promise<Card[]> {
   const response = await opsmlClient.get(
     RoutePaths.LIST_CARDS,
@@ -44,4 +51,4 @@ async function getRecentCards(space?: string): Promise<RecentCards> {
 }
 
 export { getRecentCards, getCards };
-export type { RecentCards };
+export type { RecentCards, HomePageStats };

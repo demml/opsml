@@ -1,11 +1,12 @@
 <script lang="ts">
-  import type { RecentCards } from "$lib/components/home/utils";
+  import type { HomePageStats, RecentCards } from "$lib/components/home/utils";
   import HomeCard from "$lib/components/home/HomeCard.svelte";
   import { FlaskConical, Table, BrainCircuit, NotebookText, ExternalLink, BookOpen, Sparkles, Activity, TrendingUp } from 'lucide-svelte';
   import { goto } from "$app/navigation";
 
-  let { cards } = $props<{
+  let { cards, stats } = $props<{
      cards: RecentCards;
+     stats: HomePageStats;
   }>();
 
   // Registry metadata with descriptions and navigation
@@ -67,27 +68,27 @@
     </div>
 
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-      <div class="bg-surface-50 border-2 border-primary-300 rounded-xl p-4 text-center">
+      <div class="bg-surface-50 border-2 border-primary-700 rounded-xl p-4 text-center">
         <div class="text-2xl font-bold text-primary-700 mb-1">
-          {#await cards then cards}{cards.modelcards?.length || 0}{/await}
+          {#await stats then stats}{stats.nbrModels || 0}{/await}
         </div>
         <div class="text-sm text-gray-600">Recent Models</div>
       </div>
-      <div class="bg-surface-50 border-2 border-secondary-300 rounded-xl p-4 text-center">
-        <div class="text-2xl font-bold text-secondary-700 mb-1">
-          {#await cards then cards}{cards.datacards?.length || 0}{/await}
+      <div class="bg-surface-50 border-2 border-primary-700 rounded-xl p-4 text-center">
+        <div class="text-2xl font-bold text-primary-700 mb-1">
+          {#await stats then stats}{stats.nbrData || 0}{/await}
         </div>
         <div class="text-sm text-gray-600">Data Assets</div>
       </div>
-      <div class="bg-surface-50 border-2 border-success-300 rounded-xl p-4 text-center">
-        <div class="text-2xl font-bold text-success-700 mb-1">
-          {#await cards then cards}{cards.promptcards?.length || 0}{/await}
+      <div class="bg-surface-50 border-2 border-primary-700 rounded-xl p-4 text-center">
+        <div class="text-2xl font-bold text-primary-700 mb-1">
+          {#await stats then stats}{stats.nbrPrompts || 0}{/await}
         </div>
-        <div class="text-sm text-gray-600">AI Prompts</div>
+        <div class="text-sm text-gray-600">Prompts</div>
       </div>
-      <div class="bg-surface-50 border-2 border-warning-300 rounded-xl p-4 text-center">
-        <div class="text-2xl font-bold text-warning-700 mb-1">
-          {#await cards then cards}{cards.experimentcards?.length || 0}{/await}
+      <div class="bg-surface-50 border-2 border-primary-700 rounded-xl p-4 text-center">
+        <div class="text-2xl font-bold text-primary-700 mb-1">
+          {#await stats then stats}{stats.nbrExperiments || 0}{/await}
         </div>
         <div class="text-sm text-gray-600">Experiments</div>
       </div>
@@ -101,22 +102,6 @@
       >
         <BookOpen size={16} />
         Documentation
-      </button>
-      <button
-        type="button"
-        onclick={() => goto("/opsml/model")}
-        class="btn bg-secondary-500 text-black shadow shadow-hover border-black border-2 px-4 py-2 gap-2"
-      >
-        <BrainCircuit size={16} />
-        New Model
-      </button>
-      <button
-        type="button"
-        onclick={() => goto("/opsml/experiment")}
-        class="btn bg-warning-500 text-black shadow shadow-hover border-black border-2 px-4 py-2 gap-2"
-      >
-        <FlaskConical size={16} />
-        Start Experiment
       </button>
     </div>
   </div>
@@ -146,33 +131,32 @@
         <HomeCard 
           header="Data"
           cards={cards.datacards}
-          headerColor="bg-secondary-500"
+          headerColor="bg-primary-500"
           headerTextColor="text-black" 
-          iconColor="#5fd68d"
-          badgeColor="#5fd68d"
+          iconColor="#8059b6"
+          badgeColor="#8059b6"
         />
         
         <HomeCard 
           header="Prompts" 
           cards={cards.promptcards}
-          headerColor="bg-success-500" 
+          headerColor="bg-primary-500" 
           headerTextColor="text-black" 
-          iconColor="#f9b25e"
-          badgeColor="#f9b25e"
+          iconColor="#8059b6"
+          badgeColor="#8059b6"
         />
         <HomeCard 
           header="Experiments"
           cards={cards.experimentcards}
-          headerColor="bg-warning-500" 
+          headerColor="bg-primary-500" 
           headerTextColor="text-black"
-          iconColor="#f54c54"
-          badgeColor="#f54c54"
+          iconColor="#8059b6"
+          badgeColor="#8059b6"
         />
       </div>
     {/await}
   </div>
 
-  <!-- Registry Explorer Section -->
   <div class="max-w-6xl mx-auto mb-16">
     <h2 class="text-2xl font-bold text-gray-900 mb-8 text-center">
       Explore Registries
@@ -181,7 +165,7 @@
     <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
       {#each registryInfo as registry}
         {@const IconComponent = registry.icon}
-        <div class="flex flex-col items-start bg-surface-50 border-primary-800 border-3 shadow-primary rounded-2xl p-8 hover:transform hover:scale-105 transition-all duration-200">
+        <div class="flex flex-col items-start bg-surface-50 border-primary-800 border-3 shadow-primary rounded-2xl p-8">
           
           <div class="flex items-center justify-center self-center w-12 h-12 {registry.color} rounded-xl mb-6 neo-glow grain">
             <IconComponent size={24} class="text-white" />
