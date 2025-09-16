@@ -3,7 +3,7 @@
     import { calculateTimeBetween, RegistryType } from "$lib/utils";
     import { goto } from "$app/navigation";
     import {CircuitBoard, Clock, Tag } from 'lucide-svelte';
-  import { resolveCardPath, resolveCardPathFromArgs } from "./utils";
+  import { resolveCardPathFromArgs } from "./utils";
   
     let {
       name,
