@@ -153,7 +153,7 @@
             onclick={() => hasSubItems ? toggleSubMenu(item.name) : handleNavClick(item.path)}
             class="flex items-center w-full p-3 rounded-lg transition-all duration-200 group relative {isActive 
               ? 'bg-primary-50 text-primary-800 border border-primary-200' 
-              : 'text-gray-600 hover:bg-gray-50 hover:text-primary-700'}"
+              : 'text-black hover:bg-gray-50 hover:text-primary-700'}"
             aria-label={item.name}
             title={!isExpanded ? item.name : ''}
           >
@@ -173,7 +173,7 @@
               <div class="ms-auto">
                 <ChevronRight 
                   size={16} 
-                  class="text-gray-400 transition-transform duration-200 {isSubMenuExpanded ? 'rotate-90' : ''}" 
+                  class="text-black transition-transform duration-200 {isSubMenuExpanded ? 'rotate-90' : ''}" 
                 />
               </div>
             {/if}
