@@ -2,6 +2,6 @@
     let { children } = $props();
 </script>
 
-<div class="h-full overflow-auto">
+<div>
   {@render children()}
 </div>
