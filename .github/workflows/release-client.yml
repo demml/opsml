@@ -75,7 +75,10 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
-      - run: pip install -U twine
+      - name: Update package name to opsml-client
+        run: |
+          pip install -U twine tomli tomli-w
+          python ./py-opsml/scripts/update_package_name.py ./py-opsml/pyproject.toml "opsml-client"
 
       - name: Set OPENSSL_DIR environment variable
         run: echo "OPENSSL_DIR=/usr" >> $GITHUB_ENV
@@ -233,7 +236,10 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
-      - run: pip install -U twine
+      - name: Update package name to opsml-client
+        run: |
+          pip install -U twine tomli tomli-w
+          python ./py-opsml/scripts/update_package_name.py ./py-opsml/pyproject.toml "opsml-client"
 
       - name: Build wheel
         uses: PyO3/maturin-action@v1
