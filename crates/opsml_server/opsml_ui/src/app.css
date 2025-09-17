@@ -12,7 +12,12 @@
 
 @layer base {
   html {
-    font-size: 15px; /* Adjust this value to your preferred base font size */
+    font-size: 15px;
+    overscroll-behavior: none;
+  }
+
+  body {
+    overscroll-behavior: none;
   }
 }
 
