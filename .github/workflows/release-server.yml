@@ -11,8 +11,7 @@ permissions:
   contents: read
 
 env:
-  PYTHON_VERSION: "3.9"
-  PYTHON_VERSION_WIN_ARM64: "3.11"
+  PYTHON_VERSION: "3.12"
   RUSTFLAGS: -C debuginfo=0
   CARGO_INCREMENTAL: 0
   CARGO_NET_RETRY: 10
@@ -41,17 +40,23 @@ jobs:
           retention-days: 1
 
   build-ubuntu:
-    name: build - ubuntu - ${{ matrix.target }}
+    name: build - ${{ matrix.runner-type }} - ${{ matrix.manylinux }} - ${{ matrix.target }}
     strategy:
       fail-fast: false
       matrix:
         include:
           - target: x86_64-unknown-linux-gnu
             manylinux: auto
+            runner-type: ubuntu-latest
+            runner: ubuntu-latest
+            docker-options: "-e CI"
           - target: aarch64-unknown-linux-gnu
             manylinux: "2_28"
+            runner-type: ubuntu-24.04-arm
+            runner: ubuntu-24.04-arm
+            docker-options: "-e CI -e SIMSIMD_DISABLE_SVE=1 -e SIMSIMD_TARGET_SVE=0 -e SIMSIMD_TARGET_SVE2=0"
 
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v4
 
@@ -65,19 +70,17 @@ jobs:
       - name: Set OPENSSL_DIR environment variable
         run: echo "OPENSSL_DIR=/usr" >> $GITHUB_ENV
 
-      - name: build wheels
+      - name: Build wheel
         uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.target }}
           manylinux: ${{ matrix.manylinux }}
-          args: --release --out dist --features server
+          args: --release --out dist
           rust-toolchain: stable
-          docker-options: -e CI
+          docker-options: ${{ matrix.docker-options }}
           working-directory: ./py-opsml
-
-          # See: https://github.com/sfackler/rust-openssl/issues/2036#issuecomment-1724324145
           before-script-linux: |
-            # If we're running on rhel centos, install needed packages.
+            # Install required packages
             if command -v yum &> /dev/null; then
                 yum update -y && yum install -y perl-core openssl openssl-devel pkgconfig libatomic
 
@@ -94,15 +97,18 @@ jobs:
             # Install bindgen CLI
             cargo install --force --locked bindgen-cli
 
-            # Determine architecture (x86_64 or x86)
+            # Determine architecture and install CMake
             ARCH=$(uname -m)
-
             echo "Detected architecture: $ARCH"
 
-            # Download the correct CMake version based on the architecture
             if [[ "$ARCH" == "x86_64" ]]; then
                 echo "Downloading CMake for x86_64 architecture"
                 curl -L https://github.com/Kitware/CMake/releases/download/v3.26.4/cmake-3.26.4-linux-x86_64.sh -o cmake.sh
+                chmod +x cmake.sh
+                ./cmake.sh --skip-license --prefix=/usr/local
+            elif [[ "$ARCH" == "aarch64" ]]; then
+                echo "Downloading CMake for aarch64 architecture"
+                curl -L https://github.com/Kitware/CMake/releases/download/v3.26.4/cmake-3.26.4-linux-aarch64.sh -o cmake.sh
                 chmod +x cmake.sh
                 ./cmake.sh --skip-license --prefix=/usr/local
             elif [[ "$ARCH" == "i686" ]]; then
@@ -120,6 +126,19 @@ jobs:
             fi
 
             cmake --version
+
+            # Set ARM64-specific environment variables for simsimd
+            if [[ "$ARCH" == "aarch64" ]]; then
+                echo "Setting up ARM64 build environment"
+                export SIMSIMD_DISABLE_SVE=1
+                export SIMSIMD_TARGET_SVE=0
+                export SIMSIMD_TARGET_SVE2=0
+                export SIMSIMD_TARGET_SVE_F16=0
+                export SIMSIMD_TARGET_SVE_BF16=0
+                export SIMSIMD_TARGET_SVE_I8=0
+                export CFLAGS="-march=armv8-a"
+                export CXXFLAGS="-march=armv8-a"
+            fi
 
       - name: Check dist
         working-directory: ./py-opsml
@@ -191,25 +210,15 @@ jobs:
           - os: windows-latest
             architecture: x86-64
             target: x86_64-pc-windows-msvc
-          #- os: windows-11-arm
-          # architecture: aarch64
-          #target: aarch64-pc-windows-msvc
 
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
 
       - name: Set up Python
-        if: matrix.os != 'windows-11-arm'
         uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
-
-      - name: Set up Python (ARM64 Windows)
-        if: matrix.os == 'windows-11-arm'
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ env.PYTHON_VERSION_WIN_ARM64 }}
 
       - run: pip install -U twine
 
