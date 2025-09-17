@@ -43,7 +43,7 @@
   </script>
   
 
-<div class="rounded-lg border-2 border-black shadow overflow-x-auto bg-slate-100">
+<div class="rounded-lg border-2 border-black shadow bg-slate-100">
   <table class="table-auto w-full text-black rounded-lg overflow-hidden text-sm bg-slate-100">
     <thead class="bg-primary-500">
       <tr>
