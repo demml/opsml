@@ -14,8 +14,8 @@
 
 </script>
 
-<div class="h-screen flex flex-col">
-  <div class="sticky top-0 z-10 flex-none pt-2 pb-1 border-b-2 border-black bg-surface-100">
+<div>
+  <div class="sticky top-14 z-10 flex-none pt-2 pb-1 border-b-2 border-black bg-surface-100">
     <div class="flex flex-col mx-auto justify-start px-4">
       <h1 class="flex flex-row flex-wrap items-center">
         <div class="group flex flex-none items-center">
@@ -85,7 +85,7 @@
   </div>
 
   <!-- Child Content -->
-  <div class="flex-1 overflow-auto">
+  <div>
     {@render children()}
   </div>
 </div>

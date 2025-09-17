@@ -79,92 +79,95 @@
 
 
   </script>
-<div class="flex-1 mx-auto w-10/12 pb-10 flex justify-center overflow-auto px-4">
+<div class="mx-auto w-10/12 pb-8 px-4">
   <div class="grid grid-cols-1 lg:grid-cols-8 gap-4 w-full pt-4 ">
 
     <!-- Left Column-->
-    <div class="col-span-1 lg:col-span-2 bg-surface-50 flex flex-col rounded-base border-black border-2 shadow h-[calc(100vh-200px)] overflow-y-auto">
-      <!-- Top Section -->
-      <div class="mb-4 sticky top-0 z-10 bg-surface-50 p-4">
-        <div class="flex flex-row justify-between pb-2">
-          <div class="flex flex-row">
-            <div class="self-center" aria-label="Time Interval">
-              <CircleDot color="#8059b6"/>
-            </div>
-            <header class="pl-2 text-primary-800 self-center font-bold">Search Metrics</header>
-          </div>
-          <div class="flex flex-row">
-            <button type="button" class="btn text-sm bg-primary-500 text-black shadow shadow-hover border-black border-2 self-center" onclick={plotMetrics}>Plot</button>
-          </div>
-        </div>
+    <div class="col-span-1 lg:col-span-2 flex flex-col">
 
-        <div class="flex flex-row pb-4">
-          <div class="text-primary-800 self-center">Plot Type:</div>
-          <div class="ml-2 self-center">
-            <Dropdown  
-              bind:selectedValue={plotType} 
-              values={[PlotType.Bar, PlotType.Line]}
-              width='w-32'
-              py="py-1"
+      <div class="bg-white rounded-base border-black border-2 shadow h-[calc(100dvh-200px)]">
+      <!-- Top Section -->
+        <div class="mb-2 p-4">
+          <div class="flex flex-row justify-between pb-2">
+            <div class="flex flex-row">
+              <div class="self-center" aria-label="Time Interval">
+                <CircleDot color="#8059b6"/>
+              </div>
+              <header class="pl-2 text-primary-800 self-center font-bold">Search Metrics</header>
+            </div>
+            <div class="flex flex-row">
+              <button type="button" class="btn text-sm bg-primary-500 text-black shadow shadow-hover border-black border-2 self-center" onclick={plotMetrics}>Plot</button>
+            </div>
+          </div>
+
+          <div class="flex flex-row pb-4">
+            <div class="text-primary-800 self-center">Plot Type:</div>
+            <div class="ml-2 self-center">
+              <Dropdown  
+                bind:selectedValue={plotType} 
+                values={[PlotType.Bar, PlotType.Line]}
+                width='w-32'
+                py="py-1"
+              />
+            </div>
+          </div>
+
+          <div class="flex flex-row gap-1 items-center">
+            <div class="mr-1">
+              <Search color="#5948a3" />
+            </div>  
+            <input
+              class="input text-sm rounded-base bg-surface-50 text-black disabled:opacity-50 placeholder-surface-800 placeholder-text-sm focus-visible:ring-1 border-black border-2 h-1/3"
+              type="text"
+              bind:value={searchQuery}
+              placeholder="Search..."
             />
           </div>
         </div>
-
-        <div class="flex flex-row gap-1 items-center">
-          <div class="mr-1">
-            <Search color="#5948a3" />
-          </div>  
-          <input
-            class="input text-sm rounded-base bg-surface-50 text-black disabled:opacity-50 placeholder-surface-800 placeholder-text-sm focus-visible:ring-1 border-black border-2 h-1/3"
-            type="text"
-            bind:value={searchQuery}
-            placeholder="Search..."
-          />
-        </div>
-      </div>
       <!-- Metrics and Experiments -->
-      <div class="flex-1 p-4">
-        <div class="mb-4">
-          <div class="flex flex-row items-center mb-1 border-b-2 border-black">
-            <List color="#8059b6"/>
-            <header class="pl-2 text-primary-900 font-bold">Items</header>
-          </div>
-          <div class="space-y-2 flex flex-wrap pl-2 pt-4 pb-4 gap-1 overflow-y-scroll">
-            <!-- Iterate of available entities -->
-            {#each filteredEntities as entity}
+        <div class="flex-1 p-4 overflow-y-auto">
+          <div class="mb-2">
+            <div class="flex flex-row items-center mb-1 border-b-2 border-black">
+              <List color="#8059b6"/>
+              <header class="pl-2 text-primary-900 font-bold">Items</header>
+            </div>
+            <div class="space-y-2 flex flex-wrap pl-2 pt-2 pb-4 gap-1 overflow-y-scroll">
+              <!-- Iterate of available entities -->
+              {#each filteredEntities as entity}
+            
+                {#if selectedMetrics.includes(entity)}
+                  <button class="chip text-black bg-primary-500 border-black border-1 text-sm" onclick={() => selectMetric(entity)}>{entity}</button>
+                {:else}
+                  <button class="chip bg-slate-100 border-primary-800 shadow-small shadow-hover-small border-2 text-primary-800 border-1 text-sm" onclick={() => selectMetric(entity)}>{entity}</button>
+                {/if}
           
-              {#if selectedMetrics.includes(entity)}
-                <button class="chip text-black bg-primary-500 border-black border-1 text-sm" onclick={() => selectMetric(entity)}>{entity}</button>
-              {:else}
-                <button class="chip bg-slate-100 border-primary-800 shadow-small shadow-hover-small border-2 text-primary-800 border-1 text-sm" onclick={() => selectMetric(entity)}>{entity}</button>
-              {/if}
-        
-            {/each}
+              {/each}
+            </div>
           </div>
-        </div>
 
-        <div class="mb-4">
-          <div class="flex flex-row items-center mb-1 border-b-2 border-black">
-            <List color="#8059b6"/>
-            <header class="pl-2 text-primary-900 font-bold">Previous Versions</header>
-          </div>
-          <p class="pl-2 text-black text-sm">Select previous version to compare metrics</p>
-          <div class="grid grid-cols-3 gap-2 pl-2 pt-4 pb-4 overflow-auto">
-            {#each recentExperiments as experiment}
-              {#if selectedExperiments.includes(experiment)}
-                <ExperimentPill {experiment} active={true} setActive={selectExperiment}/>
-              {:else}
-                <ExperimentPill {experiment} active={false} setActive={selectExperiment}/>
-              {/if}
-            {/each}
+          <div class="mb-4">
+            <div class="flex flex-row items-center mb-1 border-b-2 border-black">
+              <List color="#8059b6"/>
+              <header class="pl-2 text-primary-900 font-bold">Previous Versions</header>
+            </div>
+            <p class="pl-2 text-black text-sm">Select previous version to compare metrics</p>
+            <div class="grid grid-cols-3 gap-2 pl-2 pt-4 pb-4 overflow-auto">
+              {#each recentExperiments as experiment}
+                {#if selectedExperiments.includes(experiment)}
+                  <ExperimentPill {experiment} active={true} setActive={selectExperiment}/>
+                {:else}
+                  <ExperimentPill {experiment} active={false} setActive={selectExperiment}/>
+                {/if}
+              {/each}
+            </div>
           </div>
         </div>
-      </div>
+      </div>  
     </div>
 
 
     <!-- 2nd column -->
-    <div class="col-span-1 lg:col-span-6 gap-4 w-full flex flex-col">
+    <div class="col-span-1 lg:col-span-6 flex flex-col gap-4">
 
       <!-- Metrics plot -->
       <div class="bg-white p-4 border-2 border-black rounded-lg shadow mb-4 h-[calc(100vh-200px)] flex-shrink-0">
