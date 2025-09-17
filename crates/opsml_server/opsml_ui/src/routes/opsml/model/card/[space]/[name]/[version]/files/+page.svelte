@@ -8,9 +8,9 @@
  
   </script>
   
-  <div class="flex-1 mx-auto w-9/12 pb-10 flex justify-center overflow-auto px-4">
-    <div class="w-full pt-4">
-       <FileTree 
+  <div class="mx-auto w-9/12 px-4 py-4 max-h-[calc(100vh-140px)] overflow-y-auto">
+    <div class="w-full">
+      <FileTree 
         files={data.fileTree.files} 
         currentPath={page.url.pathname} 
         previousPath={data.previousPath} 
@@ -19,6 +19,6 @@
         version={data.metadata.version}
         isRoot={data.isRoot}
         registryType={data.registryType}
-        />
+      />
     </div>  
   </div>
