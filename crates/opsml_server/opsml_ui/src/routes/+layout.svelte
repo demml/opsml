@@ -25,14 +25,14 @@
   </svelte:head>
 
 {#if show}
-  <div class="layout flex flex-col h-screen font-sans overflow-hidden" id="page">
+  <div class="layout flex flex-col font-sans" id="page">
     <Navbar/>
       <ToastProvider 
         messageBase="text-base" 
         placement="top-end" 
         stateError="bg-error-500 justify-center text-black border-2 border-black" 
         stateSuccess="bg-secondary-500 text-black border-2 border-black">
-        <div class="flex-1 grid-background overflow-auto pt-14">
+        <div class="grid-background pt-14 min-h-screen">
           {@render children()}
         </div>
       </ToastProvider>
