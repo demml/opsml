@@ -54,12 +54,9 @@
   <p>Loading...</p>
 {:then cards}
   <!-- Cards loaded successfully -->
-<div class="flex-1 mx-auto w-9/12 justify-center px-4 pb-10 pt-10">
-
+<div class="mx-auto w-9/12 justify-center px-4 overflow-y-auto">
     <div class="grid grid-cols-1 lg:grid-cols-4 gap-4 w-full">
-
       <div class="col-span-1 lg:col-span-4 flex flex-col h-auto gap-y-4">
-
         <div class="rounded-base border-primary-500 border-2 shadow-primary bg-surface-50 pb-4 px-4">
           <div class="flex flex-row items-center gap-2 py-4">
             <div class="rounded-full bg-surface-200 border-black border-2 p-1 shadow-small">
