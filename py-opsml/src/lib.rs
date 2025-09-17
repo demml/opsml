@@ -24,7 +24,6 @@ fn opsml(m: &Bound<'_, PyModule>) -> PyResult<()> {
     // integrations
     m.add_wrapped(wrap_pymodule!(scouter::scouter))?;
     m.add_wrapped(wrap_pymodule!(llm::llm))?;
-    m.add_wrapped(wrap_pymodule!(llm::llm))?;
 
     m.add_wrapped(wrap_pymodule!(data::data))?;
     m.add_wrapped(wrap_pymodule!(model::model))?;
