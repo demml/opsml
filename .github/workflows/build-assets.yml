@@ -10,6 +10,7 @@ on:
       - main
   release:
     types: [published]
+  pull_request:
 
 env:
   INTERPRETER: "3.12"
@@ -72,6 +73,11 @@ jobs:
         with:
           version: 10
           run_install: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.INTERPRETER }}
 
       - name: Install UI dependencies
         run: |
