@@ -12,7 +12,10 @@ use crate::schemas::schema::{
 use crate::traits::CardLogicTrait;
 use async_trait::async_trait;
 use opsml_semver::VersionValidator;
-use opsml_types::contracts::CardQueryArgs;
+use opsml_types::{
+    contracts::{ArtifactKey, CardQueryArgs},
+    RegistryType,
+};
 use semver::Version;
 use sqlx::{Pool, Sqlite};
 use tracing::{debug, error};
@@ -683,5 +686,30 @@ impl CardLogicTrait for CardLogicSqliteClient {
         let repos: Vec<String> = sqlx::query_scalar(&query).fetch_all(&self.pool).await?;
 
         Ok(repos)
+    }
+
+    async fn get_card_key_for_loading(
+        &self,
+        table: &CardTable,
+        query_args: &CardQueryArgs,
+    ) -> Result<ArtifactKey, SqlError> {
+        let query = SqliteQueryHelper::get_load_card_query(table, query_args)?;
+
+        let key: (String, String, String, Vec<u8>, String) = sqlx::query_as(&query)
+            .bind(query_args.uid.as_ref())
+            .bind(query_args.space.as_ref())
+            .bind(query_args.name.as_ref())
+            .bind(query_args.max_date.as_ref())
+            .bind(query_args.limit.unwrap_or(1))
+            .fetch_one(&self.pool)
+            .await?;
+
+        Ok(ArtifactKey {
+            uid: key.0,
+            space: key.1,
+            registry_type: RegistryType::from_string(&key.2)?,
+            encrypted_key: key.3,
+            storage_key: key.4,
+        })
     }
 }
