@@ -1,36 +1,17 @@
-use crate::base::SqlClient;
-
 use crate::error::SqlError;
-use crate::postgres::helper::PostgresQueryHelper;
 use crate::postgres::sql::{
     artifact::ArtifactLogicPostgresClient, audit::AuditLogicPostgresClient,
     card::CardLogicPostgresClient, experiment::ExperimentLogicPostgresClient,
     space::SpaceLogicPostgresClient, user::UserLogicPostgresClient,
 };
-use crate::schemas::schema::{
-    ArtifactSqlRecord, AuditCardRecord, CardResults, CardSummary, DataCardRecord,
-    ExperimentCardRecord, HardwareMetricsRecord, MetricRecord, ModelCardRecord, ParameterRecord,
-    PromptCardRecord, QueryStats, ServerCard, ServiceCardRecord, SqlSpaceRecord, User,
-    VersionResult, VersionSummary,
-};
-use async_trait::async_trait;
-use opsml_semver::VersionValidator;
+
 use opsml_settings::config::DatabaseSettings;
-use opsml_types::{
-    cards::CardTable,
-    contracts::{
-        ArtifactKey, ArtifactQueryArgs, ArtifactRecord, AuditEvent, CardQueryArgs, SpaceNameEvent,
-        SpaceRecord, SpaceStats,
-    },
-    RegistryType,
-};
-use semver::Version;
 use sqlx::ConnectOptions;
 use sqlx::{
-    postgres::{PgConnectOptions, PgPoolOptions, PgRow, Postgres},
-    FromRow, Pool, Row,
+    postgres::{PgConnectOptions, PgPoolOptions, Postgres},
+    Pool,
 };
-use tracing::{debug, instrument};
+use tracing::debug;
 
 #[derive(Debug, Clone)]
 pub struct PostgresClient {
@@ -102,7 +83,7 @@ mod tests {
     use opsml_types::SqlType;
     use opsml_types::{
         cards::CardTable,
-        contracts::{ArtifactType, CardQueryArgs},
+        contracts::{ArtifactType, CardQueryArgs, SpaceRecord},
         RegistryType,
     };
     use opsml_utils::utils::get_utc_datetime;
