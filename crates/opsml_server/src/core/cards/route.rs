@@ -18,9 +18,9 @@ use axum::{
 use opsml_auth::permission::UserPermissions;
 use opsml_crypt::decrypt_directory;
 use opsml_events::AuditContext;
-use opsml_sql::base::SqlClient;
 use opsml_sql::enums::utils::get_next_version;
 use opsml_sql::schemas::*;
+use opsml_sql::traits::*;
 use opsml_types::{cards::*, contracts::*};
 use opsml_types::{SaveName, Suffix};
 

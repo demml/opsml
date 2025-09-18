@@ -1,12 +1,12 @@
 use futures::Stream;
+use opsml_sql::traits::{AuditLogicTrait, SpaceLogicTrait};
+use opsml_types::contracts::{AuditEvent, SpaceNameEvent};
 use tokio::sync::broadcast;
 use tokio_stream::wrappers::BroadcastStream;
 use tokio_stream::StreamExt;
 
-use opsml_types::contracts::{AuditEvent, SpaceNameEvent};
-
 use crate::error::EventError;
-use opsml_sql::{base::SqlClient, enums::client::SqlClientEnum};
+use opsml_sql::enums::client::SqlClientEnum;
 
 use tracing::{debug, instrument};
 

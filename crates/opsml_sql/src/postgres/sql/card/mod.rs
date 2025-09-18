@@ -28,10 +28,6 @@ impl CardLogicPostgresClient {
     pub fn new(pool: &Pool<Postgres>) -> Self {
         Self { pool: pool.clone() }
     }
-
-    fn pool(&self) -> &sqlx::Pool<Postgres> {
-        &self.pool
-    }
 }
 
 #[async_trait]

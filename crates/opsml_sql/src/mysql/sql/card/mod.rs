@@ -26,10 +26,6 @@ impl CardLogicMySqlClient {
     pub fn new(pool: &Pool<MySql>) -> Self {
         Self { pool: pool.clone() }
     }
-
-    fn pool(&self) -> &sqlx::Pool<MySql> {
-        &self.pool
-    }
 }
 
 #[async_trait]

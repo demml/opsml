@@ -6,8 +6,8 @@ use opsml_crypt::{
     decrypt_directory, decrypt_file, encrypt_directory,
     key::{derive_encryption_key, encrypted_key, generate_salt},
 };
-use opsml_sql::base::SqlClient;
 use opsml_sql::enums::client::SqlClientEnum;
+use opsml_sql::traits::ArtifactLogicTrait;
 use opsml_storage::StorageClientEnum;
 use opsml_types::contracts::FileInfo;
 use opsml_types::contracts::RawFile;

@@ -1,17 +1,17 @@
 #[cfg(feature = "server")]
 pub mod server_logic {
     // We implement 2 versions of the registry, one for rust compatibility and one for python compatibility
-
     use crate::error::RegistryError;
     use opsml_crypt::{derive_encryption_key, encrypted_key, generate_salt};
     use opsml_semver::error::VersionError;
     use opsml_semver::{VersionArgs, VersionType, VersionValidator};
     use opsml_settings::config::{DatabaseSettings, OpsmlStorageSettings};
+
     use opsml_sql::{
-        base::SqlClient,
         enums::client::{get_sql_client, SqlClientEnum},
         enums::utils::get_next_version,
         schemas::*,
+        traits::*,
     };
     use opsml_storage::StorageClientEnum;
     use opsml_types::{

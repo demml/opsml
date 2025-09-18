@@ -1,4 +1,4 @@
-use crate::base::add_version_bounds;
+use crate::utils::add_version_bounds;
 
 use crate::error::SqlError;
 use opsml_types::{

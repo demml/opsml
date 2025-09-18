@@ -28,10 +28,6 @@ impl CardLogicSqliteClient {
     pub fn new(pool: &Pool<Sqlite>) -> Self {
         Self { pool: pool.clone() }
     }
-
-    fn pool(&self) -> &sqlx::Pool<Sqlite> {
-        &self.pool
-    }
 }
 
 #[async_trait]
@@ -45,7 +41,7 @@ impl CardLogicTrait for CardLogicSqliteClient {
         let query = SqliteQueryHelper::get_uid_query(table);
         let exists: Option<String> = sqlx::query_scalar(&query)
             .bind(uid)
-            .fetch_optional(self.pool())
+            .fetch_optional(&self.pool)
             .await?;
 
         Ok(exists.is_some())
@@ -78,7 +74,7 @@ impl CardLogicTrait for CardLogicSqliteClient {
         let cards: Vec<VersionResult> = sqlx::query_as(&query)
             .bind(name)
             .bind(space)
-            .fetch_all(self.pool())
+            .fetch_all(&self.pool)
             .await?;
 
         let versions = cards
@@ -119,7 +115,7 @@ impl CardLogicTrait for CardLogicSqliteClient {
                     .bind(query_args.name.as_ref())
                     .bind(query_args.max_date.as_ref())
                     .bind(query_args.limit.unwrap_or(50))
-                    .fetch_all(self.pool())
+                    .fetch_all(&self.pool)
                     .await?;
 
                 return Ok(CardResults::Data(card));
@@ -131,7 +127,7 @@ impl CardLogicTrait for CardLogicSqliteClient {
                     .bind(query_args.name.as_ref())
                     .bind(query_args.max_date.as_ref())
                     .bind(query_args.limit.unwrap_or(50))
-                    .fetch_all(self.pool())
+                    .fetch_all(&self.pool)
                     .await?;
 
                 return Ok(CardResults::Model(card));
@@ -143,7 +139,7 @@ impl CardLogicTrait for CardLogicSqliteClient {
                     .bind(query_args.name.as_ref())
                     .bind(query_args.max_date.as_ref())
                     .bind(query_args.limit.unwrap_or(50))
-                    .fetch_all(self.pool())
+                    .fetch_all(&self.pool)
                     .await?;
 
                 return Ok(CardResults::Experiment(card));
@@ -156,7 +152,7 @@ impl CardLogicTrait for CardLogicSqliteClient {
                     .bind(query_args.name.as_ref())
                     .bind(query_args.max_date.as_ref())
                     .bind(query_args.limit.unwrap_or(50))
-                    .fetch_all(self.pool())
+                    .fetch_all(&self.pool)
                     .await?;
 
                 return Ok(CardResults::Audit(card));
@@ -169,7 +165,7 @@ impl CardLogicTrait for CardLogicSqliteClient {
                     .bind(query_args.name.as_ref())
                     .bind(query_args.max_date.as_ref())
                     .bind(query_args.limit.unwrap_or(50))
-                    .fetch_all(self.pool())
+                    .fetch_all(&self.pool)
                     .await?;
 
                 return Ok(CardResults::Prompt(card));
@@ -182,7 +178,7 @@ impl CardLogicTrait for CardLogicSqliteClient {
                     .bind(query_args.name.as_ref())
                     .bind(query_args.max_date.as_ref())
                     .bind(query_args.limit.unwrap_or(50))
-                    .fetch_all(self.pool())
+                    .fetch_all(&self.pool)
                     .await?;
 
                 return Ok(CardResults::Service(card));
@@ -217,7 +213,7 @@ impl CardLogicTrait for CardLogicSqliteClient {
                         .bind(&record.build_tag)
                         .bind(&record.username)
                         .bind(&record.opsml_version)
-                        .execute(self.pool())
+                        .execute(&self.pool)
                         .await?;
                     Ok(())
                 }
@@ -249,7 +245,7 @@ impl CardLogicTrait for CardLogicSqliteClient {
                         .bind(&record.build_tag)
                         .bind(&record.username)
                         .bind(&record.opsml_version)
-                        .execute(self.pool())
+                        .execute(&self.pool)
                         .await?;
                     Ok(())
                 }
@@ -279,7 +275,7 @@ impl CardLogicTrait for CardLogicSqliteClient {
                         .bind(&record.build_tag)
                         .bind(&record.username)
                         .bind(&record.opsml_version)
-                        .execute(self.pool())
+                        .execute(&self.pool)
                         .await?;
                     Ok(())
                 }
@@ -308,7 +304,7 @@ impl CardLogicTrait for CardLogicSqliteClient {
                         .bind(&record.build_tag)
                         .bind(&record.username)
                         .bind(&record.opsml_version)
-                        .execute(self.pool())
+                        .execute(&self.pool)
                         .await?;
                     Ok(())
                 }
@@ -336,7 +332,7 @@ impl CardLogicTrait for CardLogicSqliteClient {
                         .bind(&record.build_tag)
                         .bind(&record.username)
                         .bind(&record.opsml_version)
-                        .execute(self.pool())
+                        .execute(&self.pool)
                         .await?;
                     Ok(())
                 }
@@ -362,7 +358,7 @@ impl CardLogicTrait for CardLogicSqliteClient {
                         .bind(&record.cards)
                         .bind(&record.username)
                         .bind(&record.opsml_version)
-                        .execute(self.pool())
+                        .execute(&self.pool)
                         .await?;
                     Ok(())
                 }
@@ -400,7 +396,7 @@ impl CardLogicTrait for CardLogicSqliteClient {
                         .bind(&record.username)
                         .bind(&record.opsml_version)
                         .bind(&record.uid)
-                        .execute(self.pool())
+                        .execute(&self.pool)
                         .await?;
                     Ok(())
                 }
@@ -432,7 +428,7 @@ impl CardLogicTrait for CardLogicSqliteClient {
                         .bind(&record.username)
                         .bind(&record.opsml_version)
                         .bind(&record.uid)
-                        .execute(self.pool())
+                        .execute(&self.pool)
                         .await?;
                     Ok(())
                 }
@@ -462,7 +458,7 @@ impl CardLogicTrait for CardLogicSqliteClient {
                         .bind(&record.username)
                         .bind(&record.opsml_version)
                         .bind(&record.uid)
-                        .execute(self.pool())
+                        .execute(&self.pool)
                         .await?;
                     Ok(())
                 }
@@ -491,7 +487,7 @@ impl CardLogicTrait for CardLogicSqliteClient {
                         .bind(&record.username)
                         .bind(&record.opsml_version)
                         .bind(&record.uid)
-                        .execute(self.pool())
+                        .execute(&self.pool)
                         .await?;
                     Ok(())
                 }
@@ -519,7 +515,7 @@ impl CardLogicTrait for CardLogicSqliteClient {
                         .bind(&record.username)
                         .bind(&record.opsml_version)
                         .bind(&record.uid)
-                        .execute(self.pool())
+                        .execute(&self.pool)
                         .await?;
                     Ok(())
                 }
@@ -544,7 +540,7 @@ impl CardLogicTrait for CardLogicSqliteClient {
                         .bind(&record.username)
                         .bind(&record.opsml_version)
                         .bind(&record.uid)
-                        .execute(self.pool())
+                        .execute(&self.pool)
                         .await?;
                     Ok(())
                 }
@@ -582,7 +578,7 @@ impl CardLogicTrait for CardLogicSqliteClient {
         let stats: QueryStats = sqlx::query_as(&query)
             .bind(search_term.map(|term| format!("%{term}%")))
             .bind(space)
-            .fetch_one(self.pool())
+            .fetch_one(&self.pool)
             .await?;
 
         Ok(stats)
@@ -620,7 +616,7 @@ impl CardLogicTrait for CardLogicSqliteClient {
             .bind(search_term.map(|term| format!("%{term}%")))
             .bind(lower_bound)
             .bind(upper_bound)
-            .fetch_all(self.pool())
+            .fetch_all(&self.pool)
             .await?;
 
         Ok(records)
@@ -643,7 +639,7 @@ impl CardLogicTrait for CardLogicSqliteClient {
             .bind(name)
             .bind(lower_bound)
             .bind(upper_bound)
-            .fetch_all(self.pool())
+            .fetch_all(&self.pool)
             .await?;
 
         Ok(records)
@@ -660,13 +656,13 @@ impl CardLogicTrait for CardLogicSqliteClient {
         let select_query = format!("SELECT space, name FROM {table} WHERE uid = ?");
         let (space, name): (String, String) = sqlx::query_as(&select_query)
             .bind(uid)
-            .fetch_one(self.pool())
+            .fetch_one(&self.pool)
             .await?;
 
         let delete_query = format!("DELETE FROM {table} WHERE uid = ?");
         sqlx::query(&delete_query)
             .bind(uid)
-            .execute(self.pool())
+            .execute(&self.pool)
             .await?;
 
         Ok((space, name))

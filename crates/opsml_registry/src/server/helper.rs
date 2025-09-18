@@ -2,7 +2,7 @@
 use opsml_settings::config::DatabaseSettings;
 
 #[cfg(feature = "server")]
-use opsml_sql::{base::SqlClient, enums::client::SqlClientEnum};
+use opsml_sql::{enums::client::SqlClientEnum, traits::CardLogicTrait};
 
 #[cfg(feature = "server")]
 use opsml_types::{cards::CardTable, contracts::*, SqlType};

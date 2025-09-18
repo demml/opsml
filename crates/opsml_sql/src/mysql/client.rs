@@ -27,7 +27,7 @@ pub struct MySqlClient {
 }
 
 impl MySqlClient {
-    async fn new(settings: &DatabaseSettings) -> Result<Self, SqlError> {
+    pub async fn new(settings: &DatabaseSettings) -> Result<Self, SqlError> {
         let pool = MySqlPoolOptions::new()
             .max_connections(settings.max_connections)
             .connect(&settings.connection_uri)
