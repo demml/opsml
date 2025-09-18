@@ -40,7 +40,7 @@ pub enum OpsmlRegistry {
     ClientRegistry(opsml_client::ClientRegistry),
 
     #[cfg(feature = "server")]
-    ServerRegistry(crate::server::registry::server_logic::ServerRegistry),
+    ServerRegistry(crate::registries::server::registry::server_logic::ServerRegistry),
 }
 
 /// OpsmlRegistry implementation that is called from the client by a user (either in client or server mode)
@@ -79,7 +79,7 @@ impl OpsmlRegistry {
 
                     // TODO (steven): Why clone config when we could use app state directly in server registry?
                     let server_registry = state.block_on(async {
-                        crate::server::registry::server_logic::ServerRegistry::new(
+                        crate::registries::server::registry::server_logic::ServerRegistry::new(
                             registry_type,
                             settings,
                             db_settings,
