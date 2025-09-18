@@ -17,8 +17,8 @@ use axum::{
 
 use opsml_auth::permission::UserPermissions;
 use opsml_auth::util::generate_recovery_codes_with_hashes;
-use opsml_sql::base::SqlClient;
 use opsml_sql::schemas::schema::User;
+use opsml_sql::traits::UserLogicTrait;
 use opsml_types::RequestType;
 use password_auth::generate_hash;
 use std::panic::{catch_unwind, AssertUnwindSafe};
