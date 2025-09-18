@@ -24,6 +24,7 @@ pub enum RegistryType {
     Prompt,
     Service,
     Artifact,
+    Evaluation,
 }
 
 impl<'de> Deserialize<'de> for RegistryType {
@@ -45,6 +46,7 @@ impl<'de> Deserialize<'de> for RegistryType {
             "prompt" => Ok(RegistryType::Prompt),
             "service" => Ok(RegistryType::Service),
             "artifact" => Ok(RegistryType::Artifact),
+            "evaluation" => Ok(RegistryType::Evaluation),
             _ => Err(serde::de::Error::custom(format!(
                 "Invalid registry type: {s}"
             ))),
@@ -67,6 +69,7 @@ impl Display for RegistryType {
             RegistryType::Prompt => write!(f, "prompt"),
             RegistryType::Service => write!(f, "service"),
             RegistryType::Artifact => write!(f, "artifact"),
+            RegistryType::Evaluation => write!(f, "evaluation"),
         }
     }
 }
@@ -85,7 +88,7 @@ impl RegistryType {
             "prompt" => Ok(RegistryType::Prompt),
             "service" => Ok(RegistryType::Service),
             "artifact" => Ok(RegistryType::Artifact),
-
+            "evaluation" => Ok(RegistryType::Evaluation),
             _ => Err(TypeError::InvalidRegistryType),
         }
     }
@@ -104,6 +107,7 @@ impl RegistryType {
             RegistryType::Prompt => b"prompt",
             RegistryType::Service => b"service",
             RegistryType::Artifact => b"artifact",
+            RegistryType::Evaluation => b"evaluation",
         }
     }
 }
