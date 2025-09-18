@@ -17,10 +17,7 @@ use opsml_types::contracts::{
 };
 use opsml_types::{cards::CardTable, contracts::CardQueryArgs, RegistryType};
 use semver::Version;
-use sqlx::{
-    sqlite::{SqlitePoolOptions, SqliteRow},
-    FromRow, Pool, Row, Sqlite,
-};
+use sqlx::{sqlite::SqlitePoolOptions, Pool, Sqlite};
 use tracing::{debug, error, instrument};
 
 #[derive(Debug, Clone)]
