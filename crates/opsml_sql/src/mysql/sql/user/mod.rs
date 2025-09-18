@@ -1,14 +1,14 @@
-use crate::sqlite::helper::SqliteQueryHelper;
+use crate::mysql::helper::MySqlQueryHelper;
 
 use crate::error::SqlError;
 use crate::schemas::schema::User;
 
 use crate::traits::UserLogicTrait;
 use async_trait::async_trait;
-use sqlx::{sqlite::SqliteRow, FromRow, Pool, Row, Sqlite};
+use sqlx::{mysql::MySqlRow, FromRow, MySql, Pool, Row};
 
-impl FromRow<'_, SqliteRow> for User {
-    fn from_row(row: &SqliteRow) -> Result<Self, sqlx::Error> {
+impl FromRow<'_, MySqlRow> for User {
+    fn from_row(row: &MySqlRow) -> Result<Self, sqlx::Error> {
         let id = row.try_get("id")?;
         let created_at = row.try_get("created_at")?;
         let updated_at = row.try_get("updated_at")?;
@@ -52,24 +52,24 @@ impl FromRow<'_, SqliteRow> for User {
 }
 
 #[derive(Debug, Clone)]
-pub struct UserLogicSqliteClient {
-    pool: sqlx::Pool<Sqlite>,
+pub struct UserLogicMySqlClient {
+    pool: sqlx::Pool<MySql>,
 }
-impl UserLogicSqliteClient {
-    pub fn new(pool: &Pool<Sqlite>) -> Self {
+impl UserLogicMySqlClient {
+    pub fn new(pool: &Pool<MySql>) -> Self {
         Self { pool: pool.clone() }
     }
 }
 
 #[async_trait]
-impl UserLogicTrait for UserLogicSqliteClient {
+impl UserLogicTrait for UserLogicMySqlClient {
     async fn insert_user(&self, user: &User) -> Result<(), SqlError> {
-        let query = SqliteQueryHelper::get_user_insert_query();
+        let query = MySqlQueryHelper::get_user_insert_query();
 
-        let hashed_recovery_codes = serde_json::to_string(&user.hashed_recovery_codes)?;
-        let group_permissions = serde_json::to_string(&user.group_permissions)?;
-        let permissions = serde_json::to_string(&user.permissions)?;
-        let favorite_spaces = serde_json::to_string(&user.favorite_spaces)?;
+        let hashed_recovery_codes = serde_json::to_value(&user.hashed_recovery_codes)?;
+        let group_permissions = serde_json::to_value(&user.group_permissions)?;
+        let permissions = serde_json::to_value(&user.permissions)?;
+        let favorite_spaces = serde_json::to_value(&user.favorite_spaces)?;
 
         sqlx::query(&query)
             .bind(&user.username)
@@ -87,14 +87,15 @@ impl UserLogicTrait for UserLogicSqliteClient {
 
         Ok(())
     }
+
     async fn get_user(
         &self,
         username: &str,
         auth_type: Option<&str>,
     ) -> Result<Option<User>, SqlError> {
         let query = match auth_type {
-            Some(_) => SqliteQueryHelper::get_user_query_by_auth_type(),
-            None => SqliteQueryHelper::get_user_query(),
+            Some(_) => MySqlQueryHelper::get_user_query_by_auth_type(),
+            None => MySqlQueryHelper::get_user_query(),
         };
 
         let mut query_builder = sqlx::query_as(&query).bind(username);
@@ -108,8 +109,34 @@ impl UserLogicTrait for UserLogicSqliteClient {
         Ok(user)
     }
 
+    async fn update_user(&self, user: &User) -> Result<(), SqlError> {
+        let query = MySqlQueryHelper::get_user_update_query();
+
+        let hashed_recovery_codes = serde_json::to_value(&user.hashed_recovery_codes)?;
+        let group_permissions = serde_json::to_value(&user.group_permissions)?;
+        let permissions = serde_json::to_value(&user.permissions)?;
+        let favorite_spaces = serde_json::to_value(&user.favorite_spaces)?;
+
+        sqlx::query(&query)
+            .bind(user.active)
+            .bind(&user.password_hash)
+            .bind(&hashed_recovery_codes)
+            .bind(&permissions)
+            .bind(&group_permissions)
+            .bind(&favorite_spaces)
+            .bind(&user.refresh_token)
+            .bind(&user.email)
+            .bind(&user.authentication_type)
+            .bind(&user.username)
+            .bind(&user.authentication_type)
+            .execute(&self.pool)
+            .await?;
+
+        Ok(())
+    }
+
     async fn get_users(&self) -> Result<Vec<User>, SqlError> {
-        let query = SqliteQueryHelper::get_users_query();
+        let query = MySqlQueryHelper::get_users_query();
 
         let users = sqlx::query_as::<_, User>(&query)
             .fetch_all(&self.pool)
@@ -120,7 +147,7 @@ impl UserLogicTrait for UserLogicSqliteClient {
 
     async fn is_last_admin(&self, username: &str) -> Result<bool, SqlError> {
         // Count admins in the system
-        let query = SqliteQueryHelper::get_last_admin_query();
+        let query = MySqlQueryHelper::get_last_admin_query();
 
         let admins: Vec<String> = sqlx::query_scalar(&query).fetch_all(&self.pool).await?;
 
@@ -139,36 +166,10 @@ impl UserLogicTrait for UserLogicSqliteClient {
     }
 
     async fn delete_user(&self, username: &str) -> Result<(), SqlError> {
-        let query = SqliteQueryHelper::get_user_delete_query();
+        let query = MySqlQueryHelper::get_user_delete_query();
 
         sqlx::query(&query)
             .bind(username)
-            .execute(&self.pool)
-            .await?;
-
-        Ok(())
-    }
-
-    async fn update_user(&self, user: &User) -> Result<(), SqlError> {
-        let query = SqliteQueryHelper::get_user_update_query();
-
-        let hashed_recovery_codes = serde_json::to_string(&user.hashed_recovery_codes)?;
-        let group_permissions = serde_json::to_string(&user.group_permissions)?;
-        let permissions = serde_json::to_string(&user.permissions)?;
-        let favorite_spaces = serde_json::to_string(&user.favorite_spaces)?;
-
-        sqlx::query(&query)
-            .bind(user.active)
-            .bind(&user.password_hash)
-            .bind(&hashed_recovery_codes)
-            .bind(&permissions)
-            .bind(&group_permissions)
-            .bind(&favorite_spaces)
-            .bind(&user.refresh_token)
-            .bind(&user.email)
-            .bind(&user.authentication_type)
-            .bind(&user.username)
-            .bind(&user.authentication_type)
             .execute(&self.pool)
             .await?;
 

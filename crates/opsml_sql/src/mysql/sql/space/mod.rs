@@ -1,4 +1,4 @@
-use crate::{sqlite::helper::SqliteQueryHelper, traits::SpaceLogicTrait};
+use crate::{mysql::helper::MySqlQueryHelper, traits::SpaceLogicTrait};
 
 use crate::error::SqlError;
 
@@ -8,22 +8,22 @@ use opsml_types::{
     contracts::{SpaceNameEvent, SpaceRecord, SpaceStats},
     RegistryType,
 };
-use sqlx::{Pool, Sqlite};
+use sqlx::{MySql, Pool};
 
 #[derive(Debug, Clone)]
-pub struct SpaceLogicSqliteClient {
-    pool: sqlx::Pool<Sqlite>,
+pub struct SpaceLogicMySqlClient {
+    pool: sqlx::Pool<MySql>,
 }
-impl SpaceLogicSqliteClient {
-    pub fn new(pool: &Pool<Sqlite>) -> Self {
+impl SpaceLogicMySqlClient {
+    pub fn new(pool: &Pool<MySql>) -> Self {
         Self { pool: pool.clone() }
     }
 }
 
 #[async_trait]
-impl SpaceLogicTrait for SpaceLogicSqliteClient {
+impl SpaceLogicTrait for SpaceLogicMySqlClient {
     async fn insert_space_record(&self, space: &SpaceRecord) -> Result<(), SqlError> {
-        let query = SqliteQueryHelper::get_insert_space_record_query();
+        let query = MySqlQueryHelper::get_insert_space_record_query();
         sqlx::query(&query)
             .bind(&space.space)
             .bind(&space.description)
@@ -32,8 +32,9 @@ impl SpaceLogicTrait for SpaceLogicSqliteClient {
 
         Ok(())
     }
+
     async fn insert_space_name_record(&self, event: &SpaceNameEvent) -> Result<(), SqlError> {
-        let query = SqliteQueryHelper::get_insert_space_name_record_query();
+        let query = MySqlQueryHelper::get_insert_space_name_record_query();
         sqlx::query(&query)
             .bind(&event.space)
             .bind(&event.name)
@@ -45,7 +46,7 @@ impl SpaceLogicTrait for SpaceLogicSqliteClient {
     }
 
     async fn get_all_space_stats(&self) -> Result<Vec<SpaceStats>, SqlError> {
-        let query = SqliteQueryHelper::get_all_space_stats_query();
+        let query = MySqlQueryHelper::get_all_space_stats_query();
         let spaces: Vec<SqlSpaceRecord> = sqlx::query_as(&query).fetch_all(&self.pool).await?;
 
         Ok(spaces
@@ -61,7 +62,7 @@ impl SpaceLogicTrait for SpaceLogicSqliteClient {
     }
 
     async fn get_space_record(&self, space: &str) -> Result<Option<SpaceRecord>, SqlError> {
-        let query = SqliteQueryHelper::get_space_record_query();
+        let query = MySqlQueryHelper::get_space_record_query();
         let record: Option<(String, String)> = sqlx::query_as(&query)
             .bind(space)
             .fetch_optional(&self.pool)
@@ -74,7 +75,7 @@ impl SpaceLogicTrait for SpaceLogicSqliteClient {
     }
 
     async fn update_space_record(&self, space: &SpaceRecord) -> Result<(), SqlError> {
-        let query = SqliteQueryHelper::get_update_space_record_query();
+        let query = MySqlQueryHelper::get_update_space_record_query();
         sqlx::query(&query)
             .bind(&space.description)
             .bind(&space.space)
@@ -85,7 +86,7 @@ impl SpaceLogicTrait for SpaceLogicSqliteClient {
     }
 
     async fn delete_space_record(&self, space: &str) -> Result<(), SqlError> {
-        let query = SqliteQueryHelper::get_delete_space_record_query();
+        let query = MySqlQueryHelper::get_delete_space_record_query();
         sqlx::query(&query).bind(space).execute(&self.pool).await?;
 
         Ok(())
@@ -97,7 +98,7 @@ impl SpaceLogicTrait for SpaceLogicSqliteClient {
         name: &str,
         registry_type: &RegistryType,
     ) -> Result<(), SqlError> {
-        let query = SqliteQueryHelper::get_delete_space_name_record_query();
+        let query = MySqlQueryHelper::get_delete_space_name_record_query();
         sqlx::query(&query)
             .bind(space)
             .bind(name)

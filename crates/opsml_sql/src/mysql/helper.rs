@@ -531,7 +531,7 @@ impl MySqlQueryHelper {
     ) -> Result<String, SqlError> {
         // subquery 1 - query_cards_query
 
-        let query_cards_query = MySQLQueryHelper::get_query_cards_query(table, query_args)?;
+        let query_cards_query = MySqlQueryHelper::get_query_cards_query(table, query_args)?;
 
         let query = format!(
             "WITH query_cards AS (
