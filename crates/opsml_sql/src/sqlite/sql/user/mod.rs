@@ -15,10 +15,6 @@ impl UserLogicSqliteClient {
     pub fn new(pool: &Pool<Sqlite>) -> Self {
         Self { pool: pool.clone() }
     }
-
-    fn pool(&self) -> &sqlx::Pool<Sqlite> {
-        &self.pool
-    }
 }
 
 #[async_trait]
