@@ -1,15 +1,14 @@
 use crate::core::cards::schema::InsertCardResponse;
 use crate::core::error::ServerError;
-use opsml_sql::base::SqlClient;
 use opsml_sql::enums::client::SqlClientEnum;
 use opsml_sql::schemas::*;
+use opsml_sql::traits::*;
 use opsml_storage::StorageClientEnum;
 use opsml_types::cards::CardTable;
 use opsml_types::{contracts::*, RegistryType};
 use semver::Version;
 use std::sync::Arc;
 use tracing::{error, instrument};
-
 /// Insert a card into the database
 ///
 /// # Arguments

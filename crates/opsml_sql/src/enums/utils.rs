@@ -1,6 +1,6 @@
-use crate::base::SqlClient;
 use crate::enums::client::SqlClientEnum;
 use crate::error::SqlError;
+use crate::traits::CardLogicTrait;
 use opsml_semver::{VersionArgs, VersionValidator};
 use opsml_types::cards::CardTable;
 use opsml_types::contracts::*;

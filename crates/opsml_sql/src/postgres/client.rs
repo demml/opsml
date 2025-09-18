@@ -25,7 +25,7 @@ pub struct PostgresClient {
 }
 
 impl PostgresClient {
-    async fn new(settings: &DatabaseSettings) -> Result<Self, SqlError> {
+    pub async fn new(settings: &DatabaseSettings) -> Result<Self, SqlError> {
         let mut opts: PgConnectOptions = settings.connection_uri.parse()?;
 
         opts = opts.log_statements(tracing::log::LevelFilter::Off);

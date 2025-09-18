@@ -11,7 +11,7 @@ use axum::{
 };
 use axum_extra::extract::cookie::CookieJar;
 use opsml_auth::permission::UserPermissions;
-use opsml_sql::base::SqlClient;
+use opsml_sql::traits::UserLogicTrait;
 use serde::Serialize;
 use std::sync::Arc;
 use tracing::{error, info};

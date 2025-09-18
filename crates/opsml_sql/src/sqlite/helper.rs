@@ -1,7 +1,7 @@
 use crate::error::SqlError;
 
 /// this file contains helper logic for generating sql queries across different databases
-use crate::base::add_version_bounds;
+use crate::utils::add_version_bounds;
 use opsml_types::{
     cards::CardTable,
     contracts::{ArtifactQueryArgs, CardQueryArgs},

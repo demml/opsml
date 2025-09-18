@@ -1,4 +1,3 @@
-use crate::base::SqlClient;
 use crate::error::SqlError;
 use crate::mysql::client::MySqlClient;
 use crate::postgres::client::PostgresClient;
@@ -26,7 +25,6 @@ use opsml_types::{
         contracts::{ArtifactKey, CardQueryArgs},
     },
 };
-use tracing::debug;
 
 #[derive(Debug, Clone)]
 pub enum SqlClientEnum {
@@ -35,32 +33,529 @@ pub enum SqlClientEnum {
     MySql(MySqlClient),
 }
 
-impl SqlClientEnum {
-    pub fn name(&self) -> String {
+#[async_trait]
+impl CardLogicTrait for SqlClientEnum {
+    async fn check_uid_exists(&self, uid: &str, table: &CardTable) -> Result<bool, SqlError> {
         match self {
-            SqlClientEnum::Postgres(_) => "Postgres".to_string(),
-            SqlClientEnum::Sqlite(_) => "Sqlite".to_string(),
-            SqlClientEnum::MySql(_) => "MySql".to_string(),
+            SqlClientEnum::Postgres(client) => client.card.check_uid_exists(uid, table).await,
+            SqlClientEnum::Sqlite(client) => client.card.check_uid_exists(uid, table).await,
+            SqlClientEnum::MySql(client) => client.card.check_uid_exists(uid, table).await,
         }
     }
-    pub async fn query(&self, sql: &str) {
+
+    async fn get_versions(
+        &self,
+        table: &CardTable,
+        space: &str,
+        name: &str,
+        version: Option<String>,
+    ) -> Result<Vec<String>, SqlError> {
         match self {
             SqlClientEnum::Postgres(client) => {
-                sqlx::query(sql).execute(&client.pool).await.unwrap();
+                client.card.get_versions(table, space, name, version).await
             }
             SqlClientEnum::Sqlite(client) => {
-                sqlx::query(sql).execute(&client.pool).await.unwrap();
+                client.card.get_versions(table, space, name, version).await
             }
             SqlClientEnum::MySql(client) => {
-                sqlx::query(sql).execute(&client.pool).await.unwrap();
+                client.card.get_versions(table, space, name, version).await
+            }
+        }
+    }
+
+    async fn query_cards(
+        &self,
+        table: &CardTable,
+        query_args: &CardQueryArgs,
+    ) -> Result<CardResults, SqlError> {
+        match self {
+            SqlClientEnum::Postgres(client) => client.card.query_cards(table, query_args).await,
+            SqlClientEnum::Sqlite(client) => client.card.query_cards(table, query_args).await,
+            SqlClientEnum::MySql(client) => client.card.query_cards(table, query_args).await,
+        }
+    }
+
+    async fn insert_card(&self, table: &CardTable, card: &ServerCard) -> Result<(), SqlError> {
+        match self {
+            SqlClientEnum::Postgres(client) => client.card.insert_card(table, card).await,
+            SqlClientEnum::Sqlite(client) => client.card.insert_card(table, card).await,
+            SqlClientEnum::MySql(client) => client.card.insert_card(table, card).await,
+        }
+    }
+
+    async fn update_card(&self, table: &CardTable, card: &ServerCard) -> Result<(), SqlError> {
+        match self {
+            SqlClientEnum::Postgres(client) => client.card.update_card(table, card).await,
+            SqlClientEnum::Sqlite(client) => client.card.update_card(table, card).await,
+            SqlClientEnum::MySql(client) => client.card.update_card(table, card).await,
+        }
+    }
+
+    async fn query_stats(
+        &self,
+        table: &CardTable,
+        search_term: Option<&str>,
+        space: Option<&str>,
+    ) -> Result<QueryStats, SqlError> {
+        match self {
+            SqlClientEnum::Postgres(client) => {
+                client.card.query_stats(table, search_term, space).await
+            }
+            SqlClientEnum::Sqlite(client) => {
+                client.card.query_stats(table, search_term, space).await
+            }
+            SqlClientEnum::MySql(client) => {
+                client.card.query_stats(table, search_term, space).await
+            }
+        }
+    }
+
+    async fn query_page(
+        &self,
+        sort_by: &str,
+        page: i32,
+        search_term: Option<&str>,
+        space: Option<&str>,
+        table: &CardTable,
+    ) -> Result<Vec<CardSummary>, SqlError> {
+        match self {
+            SqlClientEnum::Postgres(client) => {
+                client
+                    .card
+                    .query_page(sort_by, page, search_term, space, table)
+                    .await
+            }
+            SqlClientEnum::Sqlite(client) => {
+                client
+                    .card
+                    .query_page(sort_by, page, search_term, space, table)
+                    .await
+            }
+            SqlClientEnum::MySql(client) => {
+                client
+                    .card
+                    .query_page(sort_by, page, search_term, space, table)
+                    .await
+            }
+        }
+    }
+
+    async fn version_page(
+        &self,
+        page: i32,
+        space: Option<&str>,
+        name: Option<&str>,
+        table: &CardTable,
+    ) -> Result<Vec<VersionSummary>, SqlError> {
+        match self {
+            SqlClientEnum::Postgres(client) => {
+                client.card.version_page(page, space, name, table).await
+            }
+            SqlClientEnum::Sqlite(client) => {
+                client.card.version_page(page, space, name, table).await
+            }
+            SqlClientEnum::MySql(client) => {
+                client.card.version_page(page, space, name, table).await
+            }
+        }
+    }
+
+    async fn delete_card(
+        &self,
+        table: &CardTable,
+        uid: &str,
+    ) -> Result<(String, String), SqlError> {
+        match self {
+            SqlClientEnum::Postgres(client) => client.card.delete_card(table, uid).await,
+            SqlClientEnum::Sqlite(client) => client.card.delete_card(table, uid).await,
+            SqlClientEnum::MySql(client) => client.card.delete_card(table, uid).await,
+        }
+    }
+
+    async fn get_unique_space_names(&self, table: &CardTable) -> Result<Vec<String>, SqlError> {
+        match self {
+            SqlClientEnum::Postgres(client) => client.card.get_unique_space_names(table).await,
+            SqlClientEnum::Sqlite(client) => client.card.get_unique_space_names(table).await,
+            SqlClientEnum::MySql(client) => client.card.get_unique_space_names(table).await,
+        }
+    }
+
+    async fn get_card_key_for_loading(
+        &self,
+        table: &CardTable,
+        query_args: &CardQueryArgs,
+    ) -> Result<ArtifactKey, SqlError> {
+        match self {
+            SqlClientEnum::Postgres(client) => {
+                client
+                    .card
+                    .get_card_key_for_loading(table, query_args)
+                    .await
+            }
+            SqlClientEnum::Sqlite(client) => {
+                client
+                    .card
+                    .get_card_key_for_loading(table, query_args)
+                    .await
+            }
+            SqlClientEnum::MySql(client) => {
+                client
+                    .card
+                    .get_card_key_for_loading(table, query_args)
+                    .await
             }
         }
     }
 }
 
 #[async_trait]
-impl SqlClient for SqlClientEnum {
-    async fn new(settings: &DatabaseSettings) -> Result<Self, SqlError> {
+impl ArtifactLogicTrait for SqlClientEnum {
+    async fn insert_artifact_record(&self, record: &ArtifactSqlRecord) -> Result<(), SqlError> {
+        match self {
+            SqlClientEnum::Postgres(client) => client.artifact.insert_artifact_record(record).await,
+            SqlClientEnum::Sqlite(client) => client.artifact.insert_artifact_record(record).await,
+            SqlClientEnum::MySql(client) => client.artifact.insert_artifact_record(record).await,
+        }
+    }
+
+    async fn insert_artifact_key(&self, key: &ArtifactKey) -> Result<(), SqlError> {
+        match self {
+            SqlClientEnum::Postgres(client) => client.artifact.insert_artifact_key(key).await,
+            SqlClientEnum::Sqlite(client) => client.artifact.insert_artifact_key(key).await,
+            SqlClientEnum::MySql(client) => client.artifact.insert_artifact_key(key).await,
+        }
+    }
+
+    async fn get_artifact_key(
+        &self,
+        uid: &str,
+        registry_type: &str,
+    ) -> Result<ArtifactKey, SqlError> {
+        match self {
+            SqlClientEnum::Postgres(client) => {
+                client.artifact.get_artifact_key(uid, registry_type).await
+            }
+            SqlClientEnum::Sqlite(client) => {
+                client.artifact.get_artifact_key(uid, registry_type).await
+            }
+            SqlClientEnum::MySql(client) => {
+                client.artifact.get_artifact_key(uid, registry_type).await
+            }
+        }
+    }
+
+    async fn update_artifact_key(&self, key: &ArtifactKey) -> Result<(), SqlError> {
+        match self {
+            SqlClientEnum::Postgres(client) => client.artifact.update_artifact_key(key).await,
+            SqlClientEnum::Sqlite(client) => client.artifact.update_artifact_key(key).await,
+            SqlClientEnum::MySql(client) => client.artifact.update_artifact_key(key).await,
+        }
+    }
+
+    async fn get_artifact_key_from_path(
+        &self,
+        storage_path: &str,
+        registry_type: &str,
+    ) -> Result<Option<ArtifactKey>, SqlError> {
+        match self {
+            SqlClientEnum::Postgres(client) => {
+                client
+                    .artifact
+                    .get_artifact_key_from_path(storage_path, registry_type)
+                    .await
+            }
+            SqlClientEnum::Sqlite(client) => {
+                client
+                    .artifact
+                    .get_artifact_key_from_path(storage_path, registry_type)
+                    .await
+            }
+            SqlClientEnum::MySql(client) => {
+                client
+                    .artifact
+                    .get_artifact_key_from_path(storage_path, registry_type)
+                    .await
+            }
+        }
+    }
+
+    async fn delete_artifact_key(&self, uid: &str, registry_type: &str) -> Result<(), SqlError> {
+        match self {
+            SqlClientEnum::Postgres(client) => {
+                client
+                    .artifact
+                    .delete_artifact_key(uid, registry_type)
+                    .await
+            }
+            SqlClientEnum::Sqlite(client) => {
+                client
+                    .artifact
+                    .delete_artifact_key(uid, registry_type)
+                    .await
+            }
+            SqlClientEnum::MySql(client) => {
+                client
+                    .artifact
+                    .delete_artifact_key(uid, registry_type)
+                    .await
+            }
+        }
+    }
+
+    async fn query_artifacts(
+        &self,
+        query_args: &ArtifactQueryArgs,
+    ) -> Result<Vec<ArtifactRecord>, SqlError> {
+        match self {
+            SqlClientEnum::Postgres(client) => client.artifact.query_artifacts(query_args).await,
+            SqlClientEnum::Sqlite(client) => client.artifact.query_artifacts(query_args).await,
+            SqlClientEnum::MySql(client) => client.artifact.query_artifacts(query_args).await,
+        }
+    }
+}
+
+#[async_trait]
+impl ExperimentLogicTrait for SqlClientEnum {
+    async fn insert_experiment_metric(&self, record: &MetricRecord) -> Result<(), SqlError> {
+        match self {
+            SqlClientEnum::Postgres(client) => client.exp.insert_experiment_metric(record).await,
+            SqlClientEnum::Sqlite(client) => client.exp.insert_experiment_metric(record).await,
+            SqlClientEnum::MySql(client) => client.exp.insert_experiment_metric(record).await,
+        }
+    }
+
+    async fn insert_experiment_metrics<'life1>(
+        &self,
+        records: &'life1 [MetricRecord],
+    ) -> Result<(), SqlError> {
+        match self {
+            SqlClientEnum::Postgres(client) => client.exp.insert_experiment_metrics(records).await,
+            SqlClientEnum::Sqlite(client) => client.exp.insert_experiment_metrics(records).await,
+            SqlClientEnum::MySql(client) => client.exp.insert_experiment_metrics(records).await,
+        }
+    }
+
+    async fn get_experiment_metric<'life2>(
+        &self,
+        uid: &str,
+        names: &'life2 [String],
+        is_eval: Option<bool>,
+    ) -> Result<Vec<MetricRecord>, SqlError> {
+        match self {
+            SqlClientEnum::Postgres(client) => {
+                client.exp.get_experiment_metric(uid, names, is_eval).await
+            }
+            SqlClientEnum::Sqlite(client) => {
+                client.exp.get_experiment_metric(uid, names, is_eval).await
+            }
+            SqlClientEnum::MySql(client) => {
+                client.exp.get_experiment_metric(uid, names, is_eval).await
+            }
+        }
+    }
+
+    async fn get_experiment_metric_names(&self, uid: &str) -> Result<Vec<String>, SqlError> {
+        match self {
+            SqlClientEnum::Postgres(client) => client.exp.get_experiment_metric_names(uid).await,
+            SqlClientEnum::Sqlite(client) => client.exp.get_experiment_metric_names(uid).await,
+            SqlClientEnum::MySql(client) => client.exp.get_experiment_metric_names(uid).await,
+        }
+    }
+
+    async fn insert_hardware_metrics(
+        &self,
+        record: &HardwareMetricsRecord,
+    ) -> Result<(), SqlError> {
+        match self {
+            SqlClientEnum::Postgres(client) => client.exp.insert_hardware_metrics(record).await,
+            SqlClientEnum::Sqlite(client) => client.exp.insert_hardware_metrics(record).await,
+            SqlClientEnum::MySql(client) => client.exp.insert_hardware_metrics(record).await,
+        }
+    }
+
+    async fn get_hardware_metric(&self, uid: &str) -> Result<Vec<HardwareMetricsRecord>, SqlError> {
+        match self {
+            SqlClientEnum::Postgres(client) => client.exp.get_hardware_metric(uid).await,
+            SqlClientEnum::Sqlite(client) => client.exp.get_hardware_metric(uid).await,
+            SqlClientEnum::MySql(client) => client.exp.get_hardware_metric(uid).await,
+        }
+    }
+
+    async fn insert_experiment_parameters<'life1>(
+        &self,
+        records: &'life1 [ParameterRecord],
+    ) -> Result<(), SqlError> {
+        match self {
+            SqlClientEnum::Postgres(client) => {
+                client.exp.insert_experiment_parameters(records).await
+            }
+            SqlClientEnum::Sqlite(client) => client.exp.insert_experiment_parameters(records).await,
+            SqlClientEnum::MySql(client) => client.exp.insert_experiment_parameters(records).await,
+        }
+    }
+
+    async fn get_experiment_parameter<'life2>(
+        &self,
+        uid: &str,
+        names: &'life2 [String],
+    ) -> Result<Vec<ParameterRecord>, SqlError> {
+        match self {
+            SqlClientEnum::Postgres(client) => {
+                client.exp.get_experiment_parameter(uid, names).await
+            }
+            SqlClientEnum::Sqlite(client) => client.exp.get_experiment_parameter(uid, names).await,
+            SqlClientEnum::MySql(client) => client.exp.get_experiment_parameter(uid, names).await,
+        }
+    }
+}
+
+#[async_trait]
+impl UserLogicTrait for SqlClientEnum {
+    async fn insert_user(&self, user: &User) -> Result<(), SqlError> {
+        match self {
+            SqlClientEnum::Postgres(client) => client.user.insert_user(user).await,
+            SqlClientEnum::Sqlite(client) => client.user.insert_user(user).await,
+            SqlClientEnum::MySql(client) => client.user.insert_user(user).await,
+        }
+    }
+
+    async fn get_user(
+        &self,
+        username: &str,
+        auth_type: Option<&str>,
+    ) -> Result<Option<User>, SqlError> {
+        match self {
+            SqlClientEnum::Postgres(client) => client.user.get_user(username, auth_type).await,
+            SqlClientEnum::Sqlite(client) => client.user.get_user(username, auth_type).await,
+            SqlClientEnum::MySql(client) => client.user.get_user(username, auth_type).await,
+        }
+    }
+
+    async fn get_users(&self) -> Result<Vec<User>, SqlError> {
+        match self {
+            SqlClientEnum::Postgres(client) => client.user.get_users().await,
+            SqlClientEnum::Sqlite(client) => client.user.get_users().await,
+            SqlClientEnum::MySql(client) => client.user.get_users().await,
+        }
+    }
+
+    async fn is_last_admin(&self, username: &str) -> Result<bool, SqlError> {
+        match self {
+            SqlClientEnum::Postgres(client) => client.user.is_last_admin(username).await,
+            SqlClientEnum::Sqlite(client) => client.user.is_last_admin(username).await,
+            SqlClientEnum::MySql(client) => client.user.is_last_admin(username).await,
+        }
+    }
+
+    async fn delete_user(&self, username: &str) -> Result<(), SqlError> {
+        match self {
+            SqlClientEnum::Postgres(client) => client.user.delete_user(username).await,
+            SqlClientEnum::Sqlite(client) => client.user.delete_user(username).await,
+            SqlClientEnum::MySql(client) => client.user.delete_user(username).await,
+        }
+    }
+
+    async fn update_user(&self, user: &User) -> Result<(), SqlError> {
+        match self {
+            SqlClientEnum::Postgres(client) => client.user.update_user(user).await,
+            SqlClientEnum::Sqlite(client) => client.user.update_user(user).await,
+            SqlClientEnum::MySql(client) => client.user.update_user(user).await,
+        }
+    }
+}
+
+#[async_trait]
+impl SpaceLogicTrait for SqlClientEnum {
+    async fn insert_space_record(&self, space: &SpaceRecord) -> Result<(), SqlError> {
+        match self {
+            SqlClientEnum::Postgres(client) => client.space.insert_space_record(space).await,
+            SqlClientEnum::Sqlite(client) => client.space.insert_space_record(space).await,
+            SqlClientEnum::MySql(client) => client.space.insert_space_record(space).await,
+        }
+    }
+
+    async fn insert_space_name_record(&self, event: &SpaceNameEvent) -> Result<(), SqlError> {
+        match self {
+            SqlClientEnum::Postgres(client) => client.space.insert_space_name_record(event).await,
+            SqlClientEnum::Sqlite(client) => client.space.insert_space_name_record(event).await,
+            SqlClientEnum::MySql(client) => client.space.insert_space_name_record(event).await,
+        }
+    }
+
+    async fn get_all_space_stats(&self) -> Result<Vec<SpaceStats>, SqlError> {
+        match self {
+            SqlClientEnum::Postgres(client) => client.space.get_all_space_stats().await,
+            SqlClientEnum::Sqlite(client) => client.space.get_all_space_stats().await,
+            SqlClientEnum::MySql(client) => client.space.get_all_space_stats().await,
+        }
+    }
+
+    async fn get_space_record(&self, space: &str) -> Result<Option<SpaceRecord>, SqlError> {
+        match self {
+            SqlClientEnum::Postgres(client) => client.space.get_space_record(space).await,
+            SqlClientEnum::Sqlite(client) => client.space.get_space_record(space).await,
+            SqlClientEnum::MySql(client) => client.space.get_space_record(space).await,
+        }
+    }
+
+    async fn update_space_record(&self, space: &SpaceRecord) -> Result<(), SqlError> {
+        match self {
+            SqlClientEnum::Postgres(client) => client.space.update_space_record(space).await,
+            SqlClientEnum::Sqlite(client) => client.space.update_space_record(space).await,
+            SqlClientEnum::MySql(client) => client.space.update_space_record(space).await,
+        }
+    }
+
+    async fn delete_space_record(&self, space: &str) -> Result<(), SqlError> {
+        match self {
+            SqlClientEnum::Postgres(client) => client.space.delete_space_record(space).await,
+            SqlClientEnum::Sqlite(client) => client.space.delete_space_record(space).await,
+            SqlClientEnum::MySql(client) => client.space.delete_space_record(space).await,
+        }
+    }
+
+    async fn delete_space_name_record(
+        &self,
+        space: &str,
+        name: &str,
+        registry_type: &RegistryType,
+    ) -> Result<(), SqlError> {
+        match self {
+            SqlClientEnum::Postgres(client) => {
+                client
+                    .space
+                    .delete_space_name_record(space, name, registry_type)
+                    .await
+            }
+            SqlClientEnum::Sqlite(client) => {
+                client
+                    .space
+                    .delete_space_name_record(space, name, registry_type)
+                    .await
+            }
+            SqlClientEnum::MySql(client) => {
+                client
+                    .space
+                    .delete_space_name_record(space, name, registry_type)
+                    .await
+            }
+        }
+    }
+}
+
+#[async_trait]
+impl AuditLogicTrait for SqlClientEnum {
+    async fn insert_audit_event(&self, event: AuditEvent) -> Result<(), SqlError> {
+        match self {
+            SqlClientEnum::Postgres(client) => client.audit.insert_audit_event(event).await,
+            SqlClientEnum::Sqlite(client) => client.audit.insert_audit_event(event).await,
+            SqlClientEnum::MySql(client) => client.audit.insert_audit_event(event).await,
+        }
+    }
+}
+
+impl SqlClientEnum {
+    pub async fn new(settings: &DatabaseSettings) -> Result<Self, SqlError> {
         match settings.sql_type {
             SqlType::Postgres => {
                 let client = PostgresClient::new(settings).await?;
@@ -77,472 +572,25 @@ impl SqlClient for SqlClientEnum {
         }
     }
 
-    async fn check_uid_exists(&self, uid: &str, table: &CardTable) -> Result<bool, SqlError> {
-        match self {
-            SqlClientEnum::Postgres(client) => client.check_uid_exists(uid, table).await,
-            SqlClientEnum::Sqlite(client) => client.card.check_uid_exists(uid, table).await,
-            SqlClientEnum::MySql(client) => client.check_uid_exists(uid, table).await,
-        }
-    }
-
-    async fn insert_card(&self, table: &CardTable, card: &ServerCard) -> Result<(), SqlError> {
-        match self {
-            SqlClientEnum::Postgres(client) => client.insert_card(table, card).await,
-            SqlClientEnum::Sqlite(client) => client.card.insert_card(table, card).await,
-            SqlClientEnum::MySql(client) => client.insert_card(table, card).await,
-        }
-    }
-
-    async fn insert_artifact_record(&self, record: &ArtifactSqlRecord) -> Result<(), SqlError> {
-        match self {
-            SqlClientEnum::Postgres(client) => client.insert_artifact_record(record).await,
-            SqlClientEnum::Sqlite(client) => client.artifact.insert_artifact_record(record).await,
-            SqlClientEnum::MySql(client) => client.insert_artifact_record(record).await,
-        }
-    }
-
-    async fn query_artifacts(
-        &self,
-        query_args: &ArtifactQueryArgs,
-    ) -> Result<Vec<ArtifactRecord>, SqlError> {
-        match self {
-            SqlClientEnum::Postgres(client) => client.query_artifacts(query_args).await,
-            SqlClientEnum::Sqlite(client) => client.artifact.query_artifacts(query_args).await,
-            SqlClientEnum::MySql(client) => client.query_artifacts(query_args).await,
-        }
-    }
-
-    async fn update_card(&self, table: &CardTable, card: &ServerCard) -> Result<(), SqlError> {
-        match self {
-            SqlClientEnum::Postgres(client) => client.update_card(table, card).await,
-            SqlClientEnum::Sqlite(client) => client.card.update_card(table, card).await,
-            SqlClientEnum::MySql(client) => client.update_card(table, card).await,
-        }
-    }
-
-    async fn query_stats(
-        &self,
-        table: &CardTable,
-        search_term: Option<&str>,
-        space: Option<&str>,
-    ) -> Result<QueryStats, SqlError> {
-        match self {
-            SqlClientEnum::Postgres(client) => client.query_stats(table, search_term, space).await,
-            SqlClientEnum::Sqlite(client) => {
-                client.card.query_stats(table, search_term, space).await
-            }
-            SqlClientEnum::MySql(client) => client.query_stats(table, search_term, space).await,
-        }
-    }
-
-    async fn query_page(
-        &self,
-        sort_by: &str,
-        page: i32,
-        search_term: Option<&str>,
-        space: Option<&str>,
-        table: &CardTable,
-    ) -> Result<Vec<CardSummary>, SqlError> {
+    pub async fn query(&self, sql: &str) {
         match self {
             SqlClientEnum::Postgres(client) => {
-                client
-                    .query_page(sort_by, page, search_term, space, table)
-                    .await
+                sqlx::query(sql).execute(&client.pool).await.unwrap();
             }
             SqlClientEnum::Sqlite(client) => {
-                client
-                    .card
-                    .query_page(sort_by, page, search_term, space, table)
-                    .await
+                sqlx::query(sql).execute(&client.pool).await.unwrap();
             }
             SqlClientEnum::MySql(client) => {
-                client
-                    .query_page(sort_by, page, search_term, space, table)
-                    .await
+                sqlx::query(sql).execute(&client.pool).await.unwrap();
             }
         }
     }
 
-    async fn version_page(
-        &self,
-        page: i32,
-        space: Option<&str>,
-        name: Option<&str>,
-        table: &CardTable,
-    ) -> Result<Vec<VersionSummary>, SqlError> {
+    pub fn name(&self) -> String {
         match self {
-            SqlClientEnum::Postgres(client) => client.version_page(page, space, name, table).await,
-            SqlClientEnum::Sqlite(client) => {
-                client.card.version_page(page, space, name, table).await
-            }
-            SqlClientEnum::MySql(client) => client.version_page(page, space, name, table).await,
-        }
-    }
-
-    async fn delete_card(
-        &self,
-        table: &CardTable,
-        uid: &str,
-    ) -> Result<(String, String), SqlError> {
-        match self {
-            SqlClientEnum::Postgres(client) => client.delete_card(table, uid).await,
-            SqlClientEnum::Sqlite(client) => client.card.delete_card(table, uid).await,
-            SqlClientEnum::MySql(client) => client.delete_card(table, uid).await,
-        }
-    }
-
-    async fn query_cards(
-        &self,
-        table: &CardTable,
-        query_args: &CardQueryArgs,
-    ) -> Result<CardResults, SqlError> {
-        match self {
-            SqlClientEnum::Postgres(client) => client.query_cards(table, query_args).await,
-            SqlClientEnum::Sqlite(client) => client.card.query_cards(table, query_args).await,
-            SqlClientEnum::MySql(client) => client.query_cards(table, query_args).await,
-        }
-    }
-    async fn run_migrations(&self) -> Result<(), SqlError> {
-        match self {
-            SqlClientEnum::Postgres(client) => client.run_migrations().await,
-            SqlClientEnum::Sqlite(client) => client.run_migrations().await,
-            SqlClientEnum::MySql(client) => client.run_migrations().await,
-        }
-    }
-
-    async fn get_unique_space_names(&self, table: &CardTable) -> Result<Vec<String>, SqlError> {
-        match self {
-            SqlClientEnum::Postgres(client) => client.get_unique_space_names(table).await,
-            SqlClientEnum::Sqlite(client) => client.card.get_unique_space_names(table).await,
-            SqlClientEnum::MySql(client) => client.get_unique_space_names(table).await,
-        }
-    }
-
-    async fn get_versions(
-        &self,
-        table: &CardTable,
-        space: &str,
-        name: &str,
-        version: Option<String>,
-    ) -> Result<Vec<String>, SqlError> {
-        match self {
-            SqlClientEnum::Postgres(client) => {
-                client.get_versions(table, space, name, version).await
-            }
-            SqlClientEnum::Sqlite(client) => {
-                client.card.get_versions(table, space, name, version).await
-            }
-            SqlClientEnum::MySql(client) => client.get_versions(table, space, name, version).await,
-        }
-    }
-
-    async fn insert_experiment_metric(&self, record: &MetricRecord) -> Result<(), SqlError> {
-        match self {
-            SqlClientEnum::Postgres(client) => client.insert_experiment_metric(record).await,
-            SqlClientEnum::Sqlite(client) => client.exp.insert_experiment_metric(record).await,
-            SqlClientEnum::MySql(client) => client.insert_experiment_metric(record).await,
-        }
-    }
-
-    async fn insert_experiment_metrics<'life1>(
-        &self,
-        records: &'life1 [MetricRecord],
-    ) -> Result<(), SqlError> {
-        match self {
-            SqlClientEnum::Postgres(client) => client.insert_experiment_metrics(records).await,
-            SqlClientEnum::Sqlite(client) => client.exp.insert_experiment_metrics(records).await,
-            SqlClientEnum::MySql(client) => client.insert_experiment_metrics(records).await,
-        }
-    }
-
-    async fn get_experiment_metric<'life2>(
-        &self,
-        uid: &str,
-        names: &'life2 [String],
-        is_eval: Option<bool>,
-    ) -> Result<Vec<MetricRecord>, SqlError> {
-        match self {
-            SqlClientEnum::Postgres(client) => {
-                client.get_experiment_metric(uid, names, is_eval).await
-            }
-            SqlClientEnum::Sqlite(client) => {
-                client.exp.get_experiment_metric(uid, names, is_eval).await
-            }
-            SqlClientEnum::MySql(client) => client.get_experiment_metric(uid, names, is_eval).await,
-        }
-    }
-
-    async fn get_experiment_metric_names(&self, uid: &str) -> Result<Vec<String>, SqlError> {
-        match self {
-            SqlClientEnum::Postgres(client) => client.get_experiment_metric_names(uid).await,
-            SqlClientEnum::Sqlite(client) => client.exp.get_experiment_metric_names(uid).await,
-            SqlClientEnum::MySql(client) => client.get_experiment_metric_names(uid).await,
-        }
-    }
-
-    async fn insert_hardware_metrics(
-        &self,
-        record: &HardwareMetricsRecord,
-    ) -> Result<(), SqlError> {
-        match self {
-            SqlClientEnum::Postgres(client) => client.insert_hardware_metrics(record).await,
-            SqlClientEnum::Sqlite(client) => client.exp.insert_hardware_metrics(record).await,
-            SqlClientEnum::MySql(client) => client.insert_hardware_metrics(record).await,
-        }
-    }
-
-    async fn get_hardware_metric(&self, uid: &str) -> Result<Vec<HardwareMetricsRecord>, SqlError> {
-        match self {
-            SqlClientEnum::Postgres(client) => client.get_hardware_metric(uid).await,
-            SqlClientEnum::Sqlite(client) => client.exp.get_hardware_metric(uid).await,
-            SqlClientEnum::MySql(client) => client.get_hardware_metric(uid).await,
-        }
-    }
-
-    async fn insert_experiment_parameters<'life1>(
-        &self,
-        record: &'life1 [ParameterRecord],
-    ) -> Result<(), SqlError> {
-        match self {
-            SqlClientEnum::Postgres(client) => client.insert_experiment_parameters(record).await,
-            SqlClientEnum::Sqlite(client) => client.exp.insert_experiment_parameters(record).await,
-            SqlClientEnum::MySql(client) => client.insert_experiment_parameters(record).await,
-        }
-    }
-
-    async fn get_experiment_parameter<'life2>(
-        &self,
-        uid: &str,
-        names: &'life2 [String],
-    ) -> Result<Vec<ParameterRecord>, SqlError> {
-        match self {
-            SqlClientEnum::Postgres(client) => client.get_experiment_parameter(uid, names).await,
-            SqlClientEnum::Sqlite(client) => client.exp.get_experiment_parameter(uid, names).await,
-            SqlClientEnum::MySql(client) => client.get_experiment_parameter(uid, names).await,
-        }
-    }
-
-    async fn insert_user(&self, user: &User) -> Result<(), SqlError> {
-        match self {
-            SqlClientEnum::Postgres(client) => client.insert_user(user).await,
-            SqlClientEnum::Sqlite(client) => client.user.insert_user(user).await,
-            SqlClientEnum::MySql(client) => client.insert_user(user).await,
-        }
-    }
-
-    async fn get_user(
-        &self,
-        username: &str,
-        auth_type: Option<&str>,
-    ) -> Result<Option<User>, SqlError> {
-        match self {
-            SqlClientEnum::Postgres(client) => client.get_user(username, auth_type).await,
-            SqlClientEnum::Sqlite(client) => client.user.get_user(username, auth_type).await,
-            SqlClientEnum::MySql(client) => client.get_user(username, auth_type).await,
-        }
-    }
-
-    async fn update_user(&self, user: &User) -> Result<(), SqlError> {
-        match self {
-            SqlClientEnum::Postgres(client) => client.update_user(user).await,
-            SqlClientEnum::Sqlite(client) => client.user.update_user(user).await,
-            SqlClientEnum::MySql(client) => client.update_user(user).await,
-        }
-    }
-
-    async fn get_users(&self) -> Result<Vec<User>, SqlError> {
-        match self {
-            SqlClientEnum::Postgres(client) => client.get_users().await,
-            SqlClientEnum::Sqlite(client) => client.user.get_users().await,
-            SqlClientEnum::MySql(client) => client.get_users().await,
-        }
-    }
-
-    async fn delete_user(&self, username: &str) -> Result<(), SqlError> {
-        match self {
-            SqlClientEnum::Postgres(client) => client.delete_user(username).await,
-            SqlClientEnum::Sqlite(client) => client.user.delete_user(username).await,
-            SqlClientEnum::MySql(client) => client.delete_user(username).await,
-        }
-    }
-
-    async fn is_last_admin(&self, username: &str) -> Result<bool, SqlError> {
-        match self {
-            SqlClientEnum::Postgres(client) => client.is_last_admin(username).await,
-            SqlClientEnum::Sqlite(client) => client.user.is_last_admin(username).await,
-            SqlClientEnum::MySql(client) => client.is_last_admin(username).await,
-        }
-    }
-
-    async fn insert_artifact_key(&self, key: &ArtifactKey) -> Result<(), SqlError> {
-        debug!("Inserting artifact key");
-        match self {
-            SqlClientEnum::Postgres(client) => client.insert_artifact_key(key).await,
-            SqlClientEnum::Sqlite(client) => client.artifact.insert_artifact_key(key).await,
-            SqlClientEnum::MySql(client) => client.insert_artifact_key(key).await,
-        }
-    }
-
-    async fn get_artifact_key(
-        &self,
-        uid: &str,
-        registry_type: &str,
-    ) -> Result<ArtifactKey, SqlError> {
-        match self {
-            SqlClientEnum::Postgres(client) => client.get_artifact_key(uid, registry_type).await,
-            SqlClientEnum::Sqlite(client) => {
-                client.artifact.get_artifact_key(uid, registry_type).await
-            }
-            SqlClientEnum::MySql(client) => client.get_artifact_key(uid, registry_type).await,
-        }
-    }
-
-    async fn get_artifact_key_from_path(
-        &self,
-        storage_path: &str,
-        registry_type: &str,
-    ) -> Result<Option<ArtifactKey>, SqlError> {
-        match self {
-            SqlClientEnum::Postgres(client) => {
-                client
-                    .get_artifact_key_from_path(storage_path, registry_type)
-                    .await
-            }
-            SqlClientEnum::Sqlite(client) => {
-                client
-                    .artifact
-                    .get_artifact_key_from_path(storage_path, registry_type)
-                    .await
-            }
-            SqlClientEnum::MySql(client) => {
-                client
-                    .get_artifact_key_from_path(storage_path, registry_type)
-                    .await
-            }
-        }
-    }
-
-    async fn update_artifact_key(&self, key: &ArtifactKey) -> Result<(), SqlError> {
-        match self {
-            SqlClientEnum::Postgres(client) => client.update_artifact_key(key).await,
-            SqlClientEnum::Sqlite(client) => client.artifact.update_artifact_key(key).await,
-            SqlClientEnum::MySql(client) => client.update_artifact_key(key).await,
-        }
-    }
-
-    async fn insert_audit_event(&self, event: AuditEvent) -> Result<(), SqlError> {
-        match self {
-            SqlClientEnum::Postgres(client) => client.insert_audit_event(event).await,
-            SqlClientEnum::Sqlite(client) => client.audit.insert_audit_event(event).await,
-            SqlClientEnum::MySql(client) => client.insert_audit_event(event).await,
-        }
-    }
-
-    async fn get_card_key_for_loading(
-        &self,
-        table: &CardTable,
-        query_args: &CardQueryArgs,
-    ) -> Result<ArtifactKey, SqlError> {
-        match self {
-            SqlClientEnum::Postgres(client) => {
-                client.get_card_key_for_loading(table, query_args).await
-            }
-            SqlClientEnum::Sqlite(client) => {
-                client
-                    .card
-                    .get_card_key_for_loading(table, query_args)
-                    .await
-            }
-            SqlClientEnum::MySql(client) => {
-                client.get_card_key_for_loading(table, query_args).await
-            }
-        }
-    }
-
-    async fn delete_artifact_key(&self, uid: &str, registry_type: &str) -> Result<(), SqlError> {
-        match self {
-            SqlClientEnum::Postgres(client) => client.delete_artifact_key(uid, registry_type).await,
-            SqlClientEnum::Sqlite(client) => {
-                client
-                    .artifact
-                    .delete_artifact_key(uid, registry_type)
-                    .await
-            }
-            SqlClientEnum::MySql(client) => client.delete_artifact_key(uid, registry_type).await,
-        }
-    }
-
-    async fn insert_space_record(&self, record: &SpaceRecord) -> Result<(), SqlError> {
-        match self {
-            SqlClientEnum::Postgres(client) => client.insert_space_record(record).await,
-            SqlClientEnum::Sqlite(client) => client.space.insert_space_record(record).await,
-            SqlClientEnum::MySql(client) => client.insert_space_record(record).await,
-        }
-    }
-
-    async fn insert_space_name_record(&self, event: &SpaceNameEvent) -> Result<(), SqlError> {
-        match self {
-            SqlClientEnum::Postgres(client) => client.insert_space_name_record(event).await,
-            SqlClientEnum::Sqlite(client) => client.space.insert_space_name_record(event).await,
-            SqlClientEnum::MySql(client) => client.insert_space_name_record(event).await,
-        }
-    }
-
-    async fn get_all_space_stats(&self) -> Result<Vec<SpaceStats>, SqlError> {
-        match self {
-            SqlClientEnum::Postgres(client) => client.get_all_space_stats().await,
-            SqlClientEnum::Sqlite(client) => client.space.get_all_space_stats().await,
-            SqlClientEnum::MySql(client) => client.get_all_space_stats().await,
-        }
-    }
-
-    async fn get_space_record(&self, space: &str) -> Result<Option<SpaceRecord>, SqlError> {
-        match self {
-            SqlClientEnum::Postgres(client) => client.get_space_record(space).await,
-            SqlClientEnum::Sqlite(client) => client.space.get_space_record(space).await,
-            SqlClientEnum::MySql(client) => client.get_space_record(space).await,
-        }
-    }
-
-    async fn update_space_record(&self, record: &SpaceRecord) -> Result<(), SqlError> {
-        match self {
-            SqlClientEnum::Postgres(client) => client.update_space_record(record).await,
-            SqlClientEnum::Sqlite(client) => client.space.update_space_record(record).await,
-            SqlClientEnum::MySql(client) => client.update_space_record(record).await,
-        }
-    }
-
-    async fn delete_space_record(&self, space: &str) -> Result<(), SqlError> {
-        match self {
-            SqlClientEnum::Postgres(client) => client.delete_space_record(space).await,
-            SqlClientEnum::Sqlite(client) => client.space.delete_space_record(space).await,
-            SqlClientEnum::MySql(client) => client.delete_space_record(space).await,
-        }
-    }
-
-    async fn delete_space_name_record(
-        &self,
-        space: &str,
-        name: &str,
-        registry_type: &RegistryType,
-    ) -> Result<(), SqlError> {
-        match self {
-            SqlClientEnum::Postgres(client) => {
-                client
-                    .delete_space_name_record(space, name, registry_type)
-                    .await
-            }
-            SqlClientEnum::Sqlite(client) => {
-                client
-                    .space
-                    .delete_space_name_record(space, name, registry_type)
-                    .await
-            }
-            SqlClientEnum::MySql(client) => {
-                client
-                    .delete_space_name_record(space, name, registry_type)
-                    .await
-            }
+            SqlClientEnum::Postgres(_) => "Postgres".to_string(),
+            SqlClientEnum::Sqlite(_) => "Sqlite".to_string(),
+            SqlClientEnum::MySql(_) => "MySql".to_string(),
         }
     }
 }
