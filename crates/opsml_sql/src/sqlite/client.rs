@@ -7,8 +7,9 @@ use crate::schemas::schema::{
     PromptCardRecord, QueryStats, ServerCard, ServiceCardRecord, SqlSpaceRecord, User,
     VersionResult, VersionSummary,
 };
-
 use crate::sqlite::helper::SqliteQueryHelper;
+use crate::sqlite::traits::base::BaseSqlClient;
+use crate::sqlite::traits::evaluation::EvaluationExt;
 use async_trait::async_trait;
 use opsml_semver::VersionValidator;
 use opsml_settings::config::DatabaseSettings;
@@ -74,7 +75,7 @@ pub struct SqliteClient {
 }
 
 #[async_trait]
-impl SqlClient for SqliteClient {
+impl BaseSqlClient for SqliteClient {
     async fn new(settings: &DatabaseSettings) -> Result<Self, SqlError> {
         // if the connection uri is not in memory, create the file
         if !settings.connection_uri.contains(":memory:") {
@@ -110,15 +111,17 @@ impl SqlClient for SqliteClient {
 
         Ok(client)
     }
-    async fn run_migrations(&self) -> Result<(), SqlError> {
-        debug!("Running migrations");
-        sqlx::migrate!("src/sqlite/migrations")
-            .run(&self.pool)
-            .await
-            .map_err(SqlError::MigrationError)?;
-        Ok(())
-    }
 
+    fn pool(&self) -> &sqlx::SqlitePool {
+        &self.pool
+    }
+}
+
+#[async_trait]
+impl EvaluationExt for SqliteClient {}
+
+#[async_trait]
+impl SqlClient for SqliteClient {
     /// Check if uid exists in the database for a table
     ///
     /// # Arguments
