@@ -2,8 +2,12 @@ use crate::{sqlite::helper::SqliteQueryHelper, traits::ArtifactLogicTrait};
 
 use crate::error::SqlError;
 
+use crate::schemas::ArtifactSqlRecord;
 use async_trait::async_trait;
-use opsml_types::{contracts::ArtifactKey, RegistryType};
+use opsml_types::{
+    contracts::{ArtifactKey, ArtifactQueryArgs, ArtifactRecord},
+    RegistryType,
+};
 use sqlx::{Pool, Sqlite};
 
 #[derive(Debug)]
@@ -18,6 +22,47 @@ impl ArtifactLogicSqliteClient {
 
 #[async_trait]
 impl ArtifactLogicTrait for ArtifactLogicSqliteClient {
+    async fn query_artifacts(
+        &self,
+        query_args: &ArtifactQueryArgs,
+    ) -> Result<Vec<ArtifactRecord>, SqlError> {
+        let query = SqliteQueryHelper::get_query_artifacts_query(query_args)?;
+        let rows: Vec<ArtifactSqlRecord> = sqlx::query_as(&query)
+            .bind(query_args.uid.as_ref())
+            .bind(query_args.artifact_type.as_ref().map(|a| a.to_string()))
+            .bind(query_args.space.as_ref())
+            .bind(query_args.name.as_ref())
+            .bind(query_args.limit.unwrap_or(50))
+            .fetch_all(&self.pool)
+            .await?;
+
+        Ok(rows
+            .iter()
+            .map(|r| r.to_artifact_record())
+            .collect::<Vec<ArtifactRecord>>())
+    }
+
+    async fn insert_artifact_record(&self, record: &ArtifactSqlRecord) -> Result<(), SqlError> {
+        let query = SqliteQueryHelper::get_artifact_record_insert_query();
+        sqlx::query(&query)
+            .bind(&record.uid)
+            .bind(record.created_at)
+            .bind(&record.app_env)
+            .bind(&record.space)
+            .bind(&record.name)
+            .bind(record.major)
+            .bind(record.minor)
+            .bind(record.patch)
+            .bind(&record.pre_tag)
+            .bind(&record.build_tag)
+            .bind(&record.version)
+            .bind(&record.media_type)
+            .bind(&record.artifact_type)
+            .execute(&self.pool)
+            .await?;
+        Ok(())
+    }
+
     async fn insert_artifact_key(&self, key: &ArtifactKey) -> Result<(), SqlError> {
         let query = SqliteQueryHelper::get_artifact_key_insert_query();
         sqlx::query(&query)

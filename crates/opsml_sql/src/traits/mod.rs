@@ -1,9 +1,7 @@
 use crate::error::SqlError;
 use crate::schemas::schema::{
-    ArtifactSqlRecord, AuditCardRecord, CardResults, CardSummary, DataCardRecord,
-    ExperimentCardRecord, HardwareMetricsRecord, MetricRecord, ModelCardRecord, ParameterRecord,
-    PromptCardRecord, QueryStats, ServerCard, ServiceCardRecord, SqlSpaceRecord, User,
-    VersionResult, VersionSummary,
+    ArtifactSqlRecord, CardResults, CardSummary, HardwareMetricsRecord, MetricRecord,
+    ParameterRecord, QueryStats, ServerCard, User, VersionSummary,
 };
 use async_trait::async_trait;
 use opsml_types::cards::CardTable;
@@ -16,7 +14,6 @@ use opsml_types::{
 };
 
 use opsml_types::contracts::CardQueryArgs;
-use sqlx::{Database, Pool};
 
 #[async_trait]
 pub trait CardLogicTrait {
@@ -110,6 +107,7 @@ pub trait UserLogicTrait {
 
 #[async_trait]
 pub trait ArtifactLogicTrait {
+    async fn insert_artifact_record(&self, record: &ArtifactSqlRecord) -> Result<(), SqlError>;
     async fn insert_artifact_key(&self, key: &ArtifactKey) -> Result<(), SqlError>;
     async fn get_artifact_key(
         &self,
@@ -123,6 +121,10 @@ pub trait ArtifactLogicTrait {
         registry_type: &str,
     ) -> Result<Option<ArtifactKey>, SqlError>;
     async fn delete_artifact_key(&self, uid: &str, registry_type: &str) -> Result<(), SqlError>;
+    async fn query_artifacts(
+        &self,
+        query_args: &ArtifactQueryArgs,
+    ) -> Result<Vec<ArtifactRecord>, SqlError>;
 }
 
 #[async_trait]
