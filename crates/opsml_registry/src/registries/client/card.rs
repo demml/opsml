@@ -10,7 +10,7 @@ use scouter_client::{ProfileRequest, ProfileStatusRequest, ScouterServerError};
 use std::sync::Arc;
 use tracing::{error, instrument};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ClientCardRegistry {
     registry_type: RegistryType,
     pub api_client: Arc<OpsmlApiClient>,
