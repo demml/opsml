@@ -9,9 +9,10 @@ use opsml_sql::schemas::*;
 use opsml_sql::traits::ArtifactLogicTrait;
 use opsml_sql::traits::CardLogicTrait;
 use opsml_storage::StorageClientEnum;
+use opsml_types::IntegratedService;
 use opsml_types::{cards::CardTable, contracts::*, RegistryType};
 use opsml_utils::uid_to_byte_key;
-use scouter_client::ScouterClient;
+use scouter_client::{ProfileRequest, ProfileStatusRequest, ScouterClient};
 use semver::Version;
 use sqlx::types::Json as SqlxJson;
 use std::sync::Arc;
@@ -518,5 +519,43 @@ impl ServerCardRegistry {
         self.sql_client.insert_artifact_key(&artifact_key).await?;
 
         Ok(artifact_key)
+    }
+
+    pub fn check_service_health(&self, service: IntegratedService) -> Result<bool, RegistryError> {
+        match service {
+            IntegratedService::Scouter => {
+                // check if scouter client is initialized. If not, return false
+                if self.scouter_client.is_none() {
+                    return Ok(false);
+                }
+                // if scouter client is initialized, check service health
+                let client = self
+                    .scouter_client
+                    .as_ref()
+                    .ok_or(RegistryError::ScouterClientNotFoundError)?;
+                Ok(client.check_service_health()?)
+            }
+        }
+    }
+
+    pub fn insert_scouter_profile(&self, request: &ProfileRequest) -> Result<(), RegistryError> {
+        let client = self
+            .scouter_client
+            .as_ref()
+            .ok_or(RegistryError::ScouterClientNotFoundError)?;
+        client.insert_profile(request)?;
+        Ok(())
+    }
+
+    pub fn update_drift_profile_status(
+        &self,
+        request: &ProfileStatusRequest,
+    ) -> Result<(), RegistryError> {
+        let client = self
+            .scouter_client
+            .as_ref()
+            .ok_or(RegistryError::ScouterClientNotFoundError)?;
+        client.update_profile_status(request)?;
+        Ok(())
     }
 }

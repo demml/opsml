@@ -4,6 +4,8 @@ pub mod helper;
 pub mod registry;
 
 #[cfg(feature = "server")]
+pub mod artifact;
+#[cfg(feature = "server")]
 pub mod card;
 
 #[cfg(feature = "server")]
