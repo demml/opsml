@@ -60,9 +60,9 @@ const DELETE_ARTIFACT_KEY_SQL: &str = include_str!("sql/artifact/delete_artifact
 // audit events
 const INSERT_AUDIT_EVENT_SQL: &str = include_str!("sql/audit/insert_audit_event.sql");
 
-pub struct MySQLQueryHelper;
+pub struct MySqlQueryHelper;
 
-impl MySQLQueryHelper {
+impl MySqlQueryHelper {
     pub fn get_uid_query(table: &CardTable) -> String {
         format!("SELECT uid FROM {table} WHERE uid = ?")
     }

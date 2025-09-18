@@ -1,6 +1,6 @@
-use crate::mysql::helper::MySQLQueryHelper;
-use crate::mysql::sql::client::BaseMySqlClient;
+use crate::sqlite::helper::SqliteQueryHelper;
 use opsml_types::cards::CardTable;
+use tracing::instrument;
 
 use crate::error::SqlError;
 use crate::schemas::schema::{
@@ -8,26 +8,41 @@ use crate::schemas::schema::{
     ModelCardRecord, PromptCardRecord, QueryStats, ServerCard, ServiceCardRecord, VersionResult,
     VersionSummary,
 };
+
+use crate::traits::CardLogicTrait;
 use async_trait::async_trait;
 use opsml_semver::VersionValidator;
-
-use opsml_types::contracts::CardQueryArgs;
+use opsml_types::{
+    contracts::{ArtifactKey, CardQueryArgs},
+    RegistryType,
+};
 use semver::Version;
+use sqlx::{Pool, Sqlite};
+use tracing::{debug, error};
+
+#[derive(Debug, Clone)]
+pub struct CardLogicSqliteClient {
+    pool: sqlx::Pool<Sqlite>,
+}
+impl CardLogicSqliteClient {
+    pub fn new(pool: &Pool<Sqlite>) -> Self {
+        Self { pool: pool.clone() }
+    }
+
+    fn pool(&self) -> &sqlx::Pool<Sqlite> {
+        &self.pool
+    }
+}
 
 #[async_trait]
-pub trait CardLogicTrait: BaseMySqlClient {
+impl CardLogicTrait for CardLogicSqliteClient {
     /// Check if uid exists in the database for a table
-    ///
-    /// # Arguments
-    ///
-    /// * `table` - The table to query
-    /// * `uid` - The uid to check
     ///
     /// # Returns
     ///
     /// * `bool` - True if the uid exists, false otherwise
     async fn check_uid_exists(&self, uid: &str, table: &CardTable) -> Result<bool, SqlError> {
-        let query = MySQLQueryHelper::get_uid_query(table);
+        let query = SqliteQueryHelper::get_uid_query(table);
         let exists: Option<String> = sqlx::query_scalar(&query)
             .bind(uid)
             .fetch_optional(self.pool())
@@ -48,6 +63,7 @@ pub trait CardLogicTrait: BaseMySqlClient {
     /// # Returns
     ///
     /// * `Vec<String>` - A vector of strings representing the sorted (desc) versions of the card
+    #[instrument(skip_all)]
     async fn get_versions(
         &self,
         table: &CardTable,
@@ -55,7 +71,10 @@ pub trait CardLogicTrait: BaseMySqlClient {
         name: &str,
         version: Option<String>,
     ) -> Result<Vec<String>, SqlError> {
-        let query = MySQLQueryHelper::get_versions_query(table, version)?;
+        // if version is None, get the latest version
+
+        let query = SqliteQueryHelper::get_versions_query(table, version)?;
+
         let cards: Vec<VersionResult> = sqlx::query_as(&query)
             .bind(name)
             .bind(space)
@@ -68,7 +87,11 @@ pub trait CardLogicTrait: BaseMySqlClient {
             .collect::<Result<Vec<Version>, SqlError>>()?;
 
         // sort semvers
-        Ok(VersionValidator::sort_semver_versions(versions, true)?)
+        Ok(
+            VersionValidator::sort_semver_versions(versions, true).inspect_err(|e| {
+                error!("{}", e);
+            })?,
+        )
     }
 
     /// Query cards based on the query arguments
@@ -86,18 +109,14 @@ pub trait CardLogicTrait: BaseMySqlClient {
         table: &CardTable,
         query_args: &CardQueryArgs,
     ) -> Result<CardResults, SqlError> {
-        let query = MySQLQueryHelper::get_query_cards_query(table, query_args)?;
+        let query = SqliteQueryHelper::get_query_cards_query(table, query_args)?;
 
         match table {
             CardTable::Data => {
                 let card: Vec<DataCardRecord> = sqlx::query_as(&query)
                     .bind(query_args.uid.as_ref())
-                    .bind(query_args.uid.as_ref())
-                    .bind(query_args.space.as_ref())
                     .bind(query_args.space.as_ref())
                     .bind(query_args.name.as_ref())
-                    .bind(query_args.name.as_ref())
-                    .bind(query_args.max_date.as_ref())
                     .bind(query_args.max_date.as_ref())
                     .bind(query_args.limit.unwrap_or(50))
                     .fetch_all(self.pool())
@@ -108,12 +127,8 @@ pub trait CardLogicTrait: BaseMySqlClient {
             CardTable::Model => {
                 let card: Vec<ModelCardRecord> = sqlx::query_as(&query)
                     .bind(query_args.uid.as_ref())
-                    .bind(query_args.uid.as_ref())
-                    .bind(query_args.space.as_ref())
                     .bind(query_args.space.as_ref())
                     .bind(query_args.name.as_ref())
-                    .bind(query_args.name.as_ref())
-                    .bind(query_args.max_date.as_ref())
                     .bind(query_args.max_date.as_ref())
                     .bind(query_args.limit.unwrap_or(50))
                     .fetch_all(self.pool())
@@ -124,12 +139,8 @@ pub trait CardLogicTrait: BaseMySqlClient {
             CardTable::Experiment => {
                 let card: Vec<ExperimentCardRecord> = sqlx::query_as(&query)
                     .bind(query_args.uid.as_ref())
-                    .bind(query_args.uid.as_ref())
-                    .bind(query_args.space.as_ref())
                     .bind(query_args.space.as_ref())
                     .bind(query_args.name.as_ref())
-                    .bind(query_args.name.as_ref())
-                    .bind(query_args.max_date.as_ref())
                     .bind(query_args.max_date.as_ref())
                     .bind(query_args.limit.unwrap_or(50))
                     .fetch_all(self.pool())
@@ -141,12 +152,8 @@ pub trait CardLogicTrait: BaseMySqlClient {
             CardTable::Audit => {
                 let card: Vec<AuditCardRecord> = sqlx::query_as(&query)
                     .bind(query_args.uid.as_ref())
-                    .bind(query_args.uid.as_ref())
-                    .bind(query_args.space.as_ref())
                     .bind(query_args.space.as_ref())
                     .bind(query_args.name.as_ref())
-                    .bind(query_args.name.as_ref())
-                    .bind(query_args.max_date.as_ref())
                     .bind(query_args.max_date.as_ref())
                     .bind(query_args.limit.unwrap_or(50))
                     .fetch_all(self.pool())
@@ -158,12 +165,8 @@ pub trait CardLogicTrait: BaseMySqlClient {
             CardTable::Prompt => {
                 let card: Vec<PromptCardRecord> = sqlx::query_as(&query)
                     .bind(query_args.uid.as_ref())
-                    .bind(query_args.uid.as_ref())
-                    .bind(query_args.space.as_ref())
                     .bind(query_args.space.as_ref())
                     .bind(query_args.name.as_ref())
-                    .bind(query_args.name.as_ref())
-                    .bind(query_args.max_date.as_ref())
                     .bind(query_args.max_date.as_ref())
                     .bind(query_args.limit.unwrap_or(50))
                     .fetch_all(self.pool())
@@ -175,12 +178,8 @@ pub trait CardLogicTrait: BaseMySqlClient {
             CardTable::Service => {
                 let card: Vec<ServiceCardRecord> = sqlx::query_as(&query)
                     .bind(query_args.uid.as_ref())
-                    .bind(query_args.uid.as_ref())
-                    .bind(query_args.space.as_ref())
                     .bind(query_args.space.as_ref())
                     .bind(query_args.name.as_ref())
-                    .bind(query_args.name.as_ref())
-                    .bind(query_args.max_date.as_ref())
                     .bind(query_args.max_date.as_ref())
                     .bind(query_args.limit.unwrap_or(50))
                     .fetch_all(self.pool())
@@ -199,7 +198,7 @@ pub trait CardLogicTrait: BaseMySqlClient {
         match table {
             CardTable::Data => match card {
                 ServerCard::Data(record) => {
-                    let query = MySQLQueryHelper::get_datacard_insert_query();
+                    let query = SqliteQueryHelper::get_datacard_insert_query();
                     sqlx::query(&query)
                         .bind(&record.uid)
                         .bind(&record.app_env)
@@ -228,7 +227,7 @@ pub trait CardLogicTrait: BaseMySqlClient {
             },
             CardTable::Model => match card {
                 ServerCard::Model(record) => {
-                    let query = MySQLQueryHelper::get_modelcard_insert_query();
+                    let query = SqliteQueryHelper::get_modelcard_insert_query();
                     sqlx::query(&query)
                         .bind(&record.uid)
                         .bind(&record.app_env)
@@ -260,7 +259,7 @@ pub trait CardLogicTrait: BaseMySqlClient {
             },
             CardTable::Experiment => match card {
                 ServerCard::Experiment(record) => {
-                    let query = MySQLQueryHelper::get_experimentcard_insert_query();
+                    let query = SqliteQueryHelper::get_experimentcard_insert_query();
                     sqlx::query(&query)
                         .bind(&record.uid)
                         .bind(&record.app_env)
@@ -290,7 +289,7 @@ pub trait CardLogicTrait: BaseMySqlClient {
             },
             CardTable::Audit => match card {
                 ServerCard::Audit(record) => {
-                    let query = MySQLQueryHelper::get_auditcard_insert_query();
+                    let query = SqliteQueryHelper::get_auditcard_insert_query();
                     sqlx::query(&query)
                         .bind(&record.uid)
                         .bind(&record.app_env)
@@ -320,7 +319,7 @@ pub trait CardLogicTrait: BaseMySqlClient {
 
             CardTable::Prompt => match card {
                 ServerCard::Prompt(record) => {
-                    let query = MySQLQueryHelper::get_promptcard_insert_query();
+                    let query = SqliteQueryHelper::get_promptcard_insert_query();
                     sqlx::query(&query)
                         .bind(&record.uid)
                         .bind(&record.app_env)
@@ -346,10 +345,9 @@ pub trait CardLogicTrait: BaseMySqlClient {
                     return Err(SqlError::InvalidCardType);
                 }
             },
-
             CardTable::Service => match card {
                 ServerCard::Service(record) => {
-                    let query = MySQLQueryHelper::get_servicecard_insert_query();
+                    let query = SqliteQueryHelper::get_servicecard_insert_query();
                     sqlx::query(&query)
                         .bind(&record.uid)
                         .bind(&record.app_env)
@@ -383,7 +381,7 @@ pub trait CardLogicTrait: BaseMySqlClient {
         match table {
             CardTable::Data => match card {
                 ServerCard::Data(record) => {
-                    let query = MySQLQueryHelper::get_datacard_update_query();
+                    let query = SqliteQueryHelper::get_datacard_update_query();
                     sqlx::query(&query)
                         .bind(&record.app_env)
                         .bind(&record.name)
@@ -412,7 +410,7 @@ pub trait CardLogicTrait: BaseMySqlClient {
             },
             CardTable::Model => match card {
                 ServerCard::Model(record) => {
-                    let query = MySQLQueryHelper::get_modelcard_update_query();
+                    let query = SqliteQueryHelper::get_modelcard_update_query();
                     sqlx::query(&query)
                         .bind(&record.app_env)
                         .bind(&record.name)
@@ -444,7 +442,7 @@ pub trait CardLogicTrait: BaseMySqlClient {
             },
             CardTable::Experiment => match card {
                 ServerCard::Experiment(record) => {
-                    let query = MySQLQueryHelper::get_experimentcard_update_query();
+                    let query = SqliteQueryHelper::get_experimentcard_update_query();
                     sqlx::query(&query)
                         .bind(&record.app_env)
                         .bind(&record.name)
@@ -474,7 +472,7 @@ pub trait CardLogicTrait: BaseMySqlClient {
             },
             CardTable::Audit => match card {
                 ServerCard::Audit(record) => {
-                    let query = MySQLQueryHelper::get_auditcard_update_query();
+                    let query = SqliteQueryHelper::get_auditcard_update_query();
                     sqlx::query(&query)
                         .bind(&record.app_env)
                         .bind(&record.name)
@@ -504,7 +502,7 @@ pub trait CardLogicTrait: BaseMySqlClient {
 
             CardTable::Prompt => match card {
                 ServerCard::Prompt(record) => {
-                    let query = MySQLQueryHelper::get_promptcard_update_query();
+                    let query = SqliteQueryHelper::get_promptcard_update_query();
                     sqlx::query(&query)
                         .bind(&record.app_env)
                         .bind(&record.name)
@@ -533,7 +531,7 @@ pub trait CardLogicTrait: BaseMySqlClient {
 
             CardTable::Service => match card {
                 ServerCard::Service(record) => {
-                    let query = MySQLQueryHelper::get_servicecard_update_query();
+                    let query = SqliteQueryHelper::get_servicecard_update_query();
                     sqlx::query(&query)
                         .bind(&record.app_env)
                         .bind(&record.name)
@@ -578,13 +576,11 @@ pub trait CardLogicTrait: BaseMySqlClient {
         search_term: Option<&str>,
         space: Option<&str>,
     ) -> Result<QueryStats, SqlError> {
-        let query = MySQLQueryHelper::get_query_stats_query(table);
+        let query = SqliteQueryHelper::get_query_stats_query(table);
 
-        let stats = sqlx::query_as(&query)
-            .bind(search_term)
+        // if search_term is not None, format with %search_term%, else None
+        let stats: QueryStats = sqlx::query_as(&query)
             .bind(search_term.map(|term| format!("%{term}%")))
-            .bind(search_term.map(|term| format!("%{term}%")))
-            .bind(space)
             .bind(space)
             .fetch_one(self.pool())
             .await?;
@@ -613,27 +609,19 @@ pub trait CardLogicTrait: BaseMySqlClient {
         space: Option<&str>,
         table: &CardTable,
     ) -> Result<Vec<CardSummary>, SqlError> {
-        let query = MySQLQueryHelper::get_query_page_query(table, sort_by);
+        let query = SqliteQueryHelper::get_query_page_query(table, sort_by);
 
         let lower_bound = (page * 30) - 30;
         let upper_bound = page * 30;
 
         let records: Vec<CardSummary> = sqlx::query_as(&query)
-            .bind(space) // 1st ? in versions_cte
-            .bind(space) // 2nd ? in versions_cte
-            .bind(search_term) // 3rd ? in versions_cte
-            .bind(search_term.map(|term| format!("%{term}%"))) // 4th ? in versions_cte
-            .bind(search_term.map(|term| format!("%{term}%"))) // 5th ? in versions_cte
-            .bind(space) // 1st ? in stats_cte
-            .bind(space) // 2nd ? in stats_cte
-            .bind(search_term) // 3rd ? in stats_cte
-            .bind(search_term.map(|term| format!("%{term}%"))) // 4th ? in stats_cte
-            .bind(search_term.map(|term| format!("%{term}%"))) // 5th ? in stats_cte
-            .bind(lower_bound) // 1st ? in final SELECT
+            .bind(space)
+            .bind(search_term)
+            .bind(search_term.map(|term| format!("%{term}%")))
+            .bind(lower_bound)
             .bind(upper_bound)
             .fetch_all(self.pool())
-            .await
-            .unwrap();
+            .await?;
 
         Ok(records)
     }
@@ -645,7 +633,7 @@ pub trait CardLogicTrait: BaseMySqlClient {
         name: Option<&str>,
         table: &CardTable,
     ) -> Result<Vec<VersionSummary>, SqlError> {
-        let query = MySQLQueryHelper::get_version_page_query(table);
+        let query = SqliteQueryHelper::get_version_page_query(table);
 
         let lower_bound = (page * 30) - 30;
         let upper_bound = page * 30;
@@ -661,19 +649,20 @@ pub trait CardLogicTrait: BaseMySqlClient {
         Ok(records)
     }
 
+    #[instrument(skip_all)]
     async fn delete_card(
         &self,
         table: &CardTable,
         uid: &str,
     ) -> Result<(String, String), SqlError> {
-        // First get the space
+        // SQLite doesn't support RETURNING clause, so we need to do this in two steps
+        debug!("Deleting card with uid: {uid} from table: {table}");
         let select_query = format!("SELECT space, name FROM {table} WHERE uid = ?");
         let (space, name): (String, String) = sqlx::query_as(&select_query)
             .bind(uid)
             .fetch_one(self.pool())
             .await?;
 
-        // Then delete the record
         let delete_query = format!("DELETE FROM {table} WHERE uid = ?");
         sqlx::query(&delete_query)
             .bind(uid)
@@ -681,5 +670,46 @@ pub trait CardLogicTrait: BaseMySqlClient {
             .await?;
 
         Ok((space, name))
+    }
+
+    /// Get unique space names
+    ///
+    /// # Arguments
+    ///
+    /// * `table` - The table to query
+    ///
+    /// # Returns
+    ///
+    /// * `Vec<String>` - A vector of unique space names
+    async fn get_unique_space_names(&self, table: &CardTable) -> Result<Vec<String>, SqlError> {
+        let query = format!("SELECT DISTINCT space FROM {table}");
+        let repos: Vec<String> = sqlx::query_scalar(&query).fetch_all(&self.pool).await?;
+
+        Ok(repos)
+    }
+
+    async fn get_card_key_for_loading(
+        &self,
+        table: &CardTable,
+        query_args: &CardQueryArgs,
+    ) -> Result<ArtifactKey, SqlError> {
+        let query = SqliteQueryHelper::get_load_card_query(table, query_args)?;
+
+        let key: (String, String, String, Vec<u8>, String) = sqlx::query_as(&query)
+            .bind(query_args.uid.as_ref())
+            .bind(query_args.space.as_ref())
+            .bind(query_args.name.as_ref())
+            .bind(query_args.max_date.as_ref())
+            .bind(query_args.limit.unwrap_or(1))
+            .fetch_one(&self.pool)
+            .await?;
+
+        Ok(ArtifactKey {
+            uid: key.0,
+            space: key.1,
+            registry_type: RegistryType::from_string(&key.2)?,
+            encrypted_key: key.3,
+            storage_key: key.4,
+        })
     }
 }
