@@ -6,4 +6,3 @@ CREATE TABLE IF NOT EXISTS opsml_evaluation (
     name TEXT,
     evaluation_type TEXT,
 );
-
