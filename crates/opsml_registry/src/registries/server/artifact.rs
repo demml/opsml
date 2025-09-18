@@ -1,14 +1,12 @@
 use crate::error::RegistryError;
 use opsml_settings::config::OpsmlStorageSettings;
-
-use opsml_sql::{
-    enums::client::SqlClientEnum, enums::utils::get_next_version, schemas::*, traits::*,
-};
-
+use opsml_settings::DatabaseSettings;
+use opsml_sql::enums::client::get_sql_client;
+use opsml_sql::enums::utils::get_next_version;
+use opsml_sql::{enums::client::SqlClientEnum, schemas::*, traits::*};
 use opsml_types::{cards::CardTable, contracts::*, *};
-
 use std::sync::Arc;
-
+#[derive(Debug)]
 pub struct ServerArtifactRegistry {
     sql_client: Arc<SqlClientEnum>,
     pub registry_type: RegistryType,
@@ -17,19 +15,27 @@ pub struct ServerArtifactRegistry {
 }
 
 impl ServerArtifactRegistry {
-    pub async fn new(
-        sql_client: Arc<SqlClientEnum>,
-        registry_type: RegistryType,
-        table_name: CardTable,
-        storage_settings: OpsmlStorageSettings,
-    ) -> Self {
-        Self {
-            sql_client,
+    pub fn mode(&self) -> RegistryMode {
+        RegistryMode::Server
+    }
 
+    pub fn table_name(&self) -> String {
+        CardTable::from_registry_type(&self.registry_type).to_string()
+    }
+    pub async fn new(
+        registry_type: RegistryType,
+        storage_settings: OpsmlStorageSettings,
+        database_settings: DatabaseSettings,
+    ) -> Result<Self, RegistryError> {
+        let sql_client = Arc::new(get_sql_client(&database_settings).await?);
+        let table_name = CardTable::from_registry_type(&registry_type);
+
+        Ok(Self {
+            sql_client,
             registry_type,
             table_name,
             storage_settings,
-        }
+        })
     }
 
     pub async fn log_artifact(
