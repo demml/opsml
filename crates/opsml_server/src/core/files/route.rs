@@ -16,7 +16,6 @@ use axum::{
 use headers::HeaderMap;
 use opsml_auth::permission::UserPermissions;
 use opsml_events::AuditContext;
-use opsml_sql::base::SqlClient;
 use opsml_sql::enums::utils::get_next_version;
 use opsml_sql::schemas::ArtifactSqlRecord;
 use opsml_sql::traits::ArtifactLogicTrait;

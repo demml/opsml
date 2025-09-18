@@ -17,7 +17,6 @@ use opsml_crypt::encrypt_file;
 use opsml_semver::VersionType;
 use opsml_server::core::app::create_app;
 use opsml_settings::config::DatabaseSettings;
-use opsml_sql::base::SqlClient;
 use opsml_sql::enums::client::SqlClientEnum;
 use opsml_types::contracts::*;
 use opsml_types::*;
