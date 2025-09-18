@@ -7,6 +7,13 @@ use crate::schemas::schema::{
 };
 use async_trait::async_trait;
 use opsml_types::cards::CardTable;
+use opsml_types::{
+    contracts::{
+        ArtifactKey, ArtifactQueryArgs, ArtifactRecord, AuditEvent, SpaceNameEvent, SpaceRecord,
+        SpaceStats,
+    },
+    RegistryType,
+};
 
 use opsml_types::contracts::CardQueryArgs;
 use sqlx::{Database, Pool};
@@ -52,6 +59,11 @@ pub trait CardLogicTrait {
     async fn delete_card(&self, table: &CardTable, uid: &str)
         -> Result<(String, String), SqlError>;
     async fn get_unique_space_names(&self, table: &CardTable) -> Result<Vec<String>, SqlError>;
+    async fn get_card_key_for_loading(
+        &self,
+        table: &CardTable,
+        query_args: &CardQueryArgs,
+    ) -> Result<ArtifactKey, SqlError>;
 }
 
 #[async_trait]
@@ -80,4 +92,56 @@ pub trait ExperimentLogicTrait {
         uid: &str,
         names: &'life2 [String],
     ) -> Result<Vec<ParameterRecord>, SqlError>;
+}
+
+#[async_trait]
+pub trait UserLogicTrait {
+    async fn insert_user(&self, user: &User) -> Result<(), SqlError>;
+    async fn get_user(
+        &self,
+        username: &str,
+        auth_type: Option<&str>,
+    ) -> Result<Option<User>, SqlError>;
+    async fn get_users(&self) -> Result<Vec<User>, SqlError>;
+    async fn is_last_admin(&self, username: &str) -> Result<bool, SqlError>;
+    async fn delete_user(&self, username: &str) -> Result<(), SqlError>;
+    async fn update_user(&self, user: &User) -> Result<(), SqlError>;
+}
+
+#[async_trait]
+pub trait ArtifactLogicTrait {
+    async fn insert_artifact_key(&self, key: &ArtifactKey) -> Result<(), SqlError>;
+    async fn get_artifact_key(
+        &self,
+        uid: &str,
+        registry_type: &str,
+    ) -> Result<ArtifactKey, SqlError>;
+    async fn update_artifact_key(&self, key: &ArtifactKey) -> Result<(), SqlError>;
+    async fn get_artifact_key_from_path(
+        &self,
+        storage_path: &str,
+        registry_type: &str,
+    ) -> Result<Option<ArtifactKey>, SqlError>;
+    async fn delete_artifact_key(&self, uid: &str, registry_type: &str) -> Result<(), SqlError>;
+}
+
+#[async_trait]
+pub trait SpaceLogicTrait {
+    async fn insert_space_record(&self, space: &SpaceRecord) -> Result<(), SqlError>;
+    async fn insert_space_name_record(&self, event: &SpaceNameEvent) -> Result<(), SqlError>;
+    async fn get_all_space_stats(&self) -> Result<Vec<SpaceStats>, SqlError>;
+    async fn get_space_record(&self, space: &str) -> Result<Option<SpaceRecord>, SqlError>;
+    async fn update_space_record(&self, space: &SpaceRecord) -> Result<(), SqlError>;
+    async fn delete_space_record(&self, space: &str) -> Result<(), SqlError>;
+    async fn delete_space_name_record(
+        &self,
+        space: &str,
+        name: &str,
+        registry_type: &RegistryType,
+    ) -> Result<(), SqlError>;
+}
+
+#[async_trait]
+pub trait AuditLogicTrait {
+    async fn insert_audit_event(&self, event: AuditEvent) -> Result<(), SqlError>;
 }
