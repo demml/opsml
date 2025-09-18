@@ -151,3 +151,6 @@ pub trait ArtifactExt: Registry {
         Ok(key)
     }
 }
+
+impl ArtifactExt for ClientArtifactRegistry {}
+impl ArtifactRegistry for ClientArtifactRegistry {}
