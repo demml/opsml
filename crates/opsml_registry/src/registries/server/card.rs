@@ -10,6 +10,7 @@ use opsml_sql::traits::ArtifactLogicTrait;
 use opsml_sql::traits::CardLogicTrait;
 use opsml_storage::StorageClientEnum;
 use opsml_types::IntegratedService;
+use opsml_types::RegistryMode;
 use opsml_types::{cards::CardTable, contracts::*, RegistryType};
 use opsml_utils::uid_to_byte_key;
 use scouter_client::{ProfileRequest, ProfileStatusRequest, ScouterClient};
@@ -18,6 +19,7 @@ use sqlx::types::Json as SqlxJson;
 use std::sync::Arc;
 use tracing::{error, info, instrument};
 
+#[derive(Debug)]
 pub struct ServerCardRegistry {
     sql_client: Arc<SqlClientEnum>,
     pub scouter_client: Option<ScouterClient>,
@@ -27,6 +29,13 @@ pub struct ServerCardRegistry {
 }
 
 impl ServerCardRegistry {
+    pub fn mode(&self) -> RegistryMode {
+        RegistryMode::Server
+    }
+
+    pub fn table_name(&self) -> String {
+        CardTable::from_registry_type(&self.registry_type).to_string()
+    }
     pub async fn new(
         registry_type: RegistryType,
         storage_settings: OpsmlStorageSettings,
@@ -46,7 +55,7 @@ impl ServerCardRegistry {
     }
 
     /// List cards from the registry
-    async fn list_cards(&self, args: &CardQueryArgs) -> Result<Vec<CardRecord>, RegistryError> {
+    pub async fn list_cards(&self, args: &CardQueryArgs) -> Result<Vec<CardRecord>, RegistryError> {
         let cards = self.sql_client.query_cards(&self.table_name, args).await?;
 
         match cards {

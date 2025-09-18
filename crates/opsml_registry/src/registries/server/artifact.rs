@@ -72,4 +72,12 @@ impl ServerArtifactRegistry {
 
         Ok(response)
     }
+
+    pub async fn query_artifacts(
+        &self,
+        query_args: &ArtifactQueryArgs,
+    ) -> Result<Vec<ArtifactRecord>, RegistryError> {
+        let records = self.sql_client.query_artifacts(&query_args).await?;
+        Ok(records)
+    }
 }

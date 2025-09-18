@@ -116,3 +116,38 @@ pub trait ArtifactRegistry: Registry {
             .map_err(RegistryError::RequestError)
     }
 }
+
+// this is used in a few place
+pub trait ArtifactExt: Registry {
+    fn get_artifact_key(
+        &self,
+        uid: &str,
+        registry_type: &RegistryType,
+    ) -> Result<ArtifactKey, RegistryError> {
+        let key_request = ArtifactKeyRequest {
+            uid: uid.to_string(),
+            registry_type: registry_type.clone(),
+        };
+
+        let query_string = serde_qs::to_string(&key_request)?;
+
+        let response = self
+            .client()
+            .request(
+                Routes::ArtifactKey,
+                RequestType::Get,
+                None,
+                Some(query_string),
+                None,
+            )
+            .inspect_err(|e| {
+                error!("Failed to get artifact key {}", e);
+            })?;
+
+        let key = response
+            .json::<ArtifactKey>()
+            .map_err(RegistryError::RequestError)?;
+
+        Ok(key)
+    }
+}
