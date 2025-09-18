@@ -1,4 +1,4 @@
-use crate::sqlite::helper::SqliteQueryHelper;
+use crate::mysql::helper::MySqlQueryHelper;
 use opsml_types::cards::CardTable;
 
 use crate::error::SqlError;
@@ -6,22 +6,22 @@ use crate::schemas::schema::{HardwareMetricsRecord, MetricRecord, ParameterRecor
 
 use crate::traits::ExperimentLogicTrait;
 use async_trait::async_trait;
-use sqlx::{Pool, Sqlite};
+use sqlx::{MySql, Pool};
 
 #[derive(Debug, Clone)]
-pub struct ExperimentLogicSqliteClient {
-    pool: sqlx::Pool<Sqlite>,
+pub struct ExperimentLogicMySqlClient {
+    pool: sqlx::Pool<MySql>,
 }
-impl ExperimentLogicSqliteClient {
-    pub fn new(pool: &Pool<Sqlite>) -> Self {
+impl ExperimentLogicMySqlClient {
+    pub fn new(pool: &Pool<MySql>) -> Self {
         Self { pool: pool.clone() }
     }
 }
 
 #[async_trait]
-impl ExperimentLogicTrait for ExperimentLogicSqliteClient {
+impl ExperimentLogicTrait for ExperimentLogicMySqlClient {
     async fn insert_experiment_metric(&self, record: &MetricRecord) -> Result<(), SqlError> {
-        let query = SqliteQueryHelper::get_experiment_metric_insert_query();
+        let query = MySqlQueryHelper::get_experiment_metric_insert_query();
 
         sqlx::query(&query)
             .bind(&record.experiment_uid)
@@ -35,11 +35,12 @@ impl ExperimentLogicTrait for ExperimentLogicSqliteClient {
 
         Ok(())
     }
+
     async fn insert_experiment_metrics<'life1>(
         &self,
         records: &'life1 [MetricRecord],
     ) -> Result<(), SqlError> {
-        let query = SqliteQueryHelper::get_experiment_metrics_insert_query(records.len());
+        let query = MySqlQueryHelper::get_experiment_metrics_insert_query(records.len());
 
         let mut query_builder = sqlx::query(&query);
 
@@ -57,14 +58,16 @@ impl ExperimentLogicTrait for ExperimentLogicSqliteClient {
 
         Ok(())
     }
+
     async fn get_experiment_metric<'life2>(
         &self,
         uid: &str,
         names: &'life2 [String],
         is_eval: Option<bool>,
     ) -> Result<Vec<MetricRecord>, SqlError> {
-        let (query, bindings) = SqliteQueryHelper::get_experiment_metric_query(names, is_eval);
-        let mut query_builder = sqlx::query_as::<sqlx::Sqlite, MetricRecord>(&query).bind(uid);
+        let (query, bindings) = MySqlQueryHelper::get_experiment_metric_query(names, is_eval);
+
+        let mut query_builder = sqlx::query_as::<_, MetricRecord>(&query).bind(uid);
 
         for binding in bindings {
             query_builder = query_builder.bind(binding);
@@ -77,7 +80,7 @@ impl ExperimentLogicTrait for ExperimentLogicSqliteClient {
 
     async fn get_experiment_metric_names(&self, uid: &str) -> Result<Vec<String>, SqlError> {
         let query = format!(
-            "SELECT DISTINCT name FROM {} WHERE experiment_uid = ?1",
+            "SELECT DISTINCT name FROM {} WHERE experiment_uid = ?",
             CardTable::Metrics
         );
 
@@ -88,12 +91,11 @@ impl ExperimentLogicTrait for ExperimentLogicSqliteClient {
 
         Ok(records)
     }
-
     async fn insert_hardware_metrics(
         &self,
         record: &HardwareMetricsRecord,
     ) -> Result<(), SqlError> {
-        let query = SqliteQueryHelper::get_hardware_metrics_insert_query();
+        let query = MySqlQueryHelper::get_hardware_metrics_insert_query();
         sqlx::query(&query)
             .bind(&record.experiment_uid)
             .bind(record.created_at)
@@ -113,7 +115,10 @@ impl ExperimentLogicTrait for ExperimentLogicSqliteClient {
     }
 
     async fn get_hardware_metric(&self, uid: &str) -> Result<Vec<HardwareMetricsRecord>, SqlError> {
-        let query = SqliteQueryHelper::get_hardware_metric_query();
+        let query = format!(
+            "SELECT * FROM {} WHERE experiment_uid = ?",
+            CardTable::HardwareMetrics
+        );
 
         let records: Vec<HardwareMetricsRecord> = sqlx::query_as(&query)
             .bind(uid)
@@ -127,7 +132,7 @@ impl ExperimentLogicTrait for ExperimentLogicSqliteClient {
         &self,
         records: &'life1 [ParameterRecord],
     ) -> Result<(), SqlError> {
-        let query = SqliteQueryHelper::get_experiment_parameters_insert_query(records.len());
+        let query = MySqlQueryHelper::get_experiment_parameters_insert_query(records.len());
 
         let mut query_builder = sqlx::query(&query);
 
@@ -148,7 +153,7 @@ impl ExperimentLogicTrait for ExperimentLogicSqliteClient {
         uid: &str,
         names: &'life2 [String],
     ) -> Result<Vec<ParameterRecord>, SqlError> {
-        let (query, bindings) = SqliteQueryHelper::get_experiment_parameter_query(names);
+        let (query, bindings) = MySqlQueryHelper::get_experiment_parameter_query(names);
         let mut query_builder = sqlx::query_as::<_, ParameterRecord>(&query).bind(uid);
 
         for binding in bindings {
