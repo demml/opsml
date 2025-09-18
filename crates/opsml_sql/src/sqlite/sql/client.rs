@@ -1,37 +1,21 @@
-use crate::base::SqlClient;
-
-use crate::error::SqlError;
-use crate::schemas::schema::{
-    ArtifactSqlRecord, AuditCardRecord, CardResults, CardSummary, DataCardRecord,
-    ExperimentCardRecord, HardwareMetricsRecord, MetricRecord, ModelCardRecord, ParameterRecord,
-    PromptCardRecord, QueryStats, ServerCard, ServiceCardRecord, SqlSpaceRecord, User,
-    VersionResult, VersionSummary,
+use crate::{
+    error::SqlError,
+    sqlite::sql::{card::CardLogicSqliteClient, experiment::ExperimentLogicSqliteClient},
 };
-
-use crate::sqlite::helper::SqliteQueryHelper;
-use async_trait::async_trait;
-use opsml_semver::VersionValidator;
 use opsml_settings::config::DatabaseSettings;
-use opsml_types::contracts::{
-    ArtifactKey, ArtifactQueryArgs, ArtifactRecord, AuditEvent, SpaceNameEvent, SpaceRecord,
-    SpaceStats,
-};
-use opsml_types::{cards::CardTable, contracts::CardQueryArgs, RegistryType};
-use semver::Version;
-use sqlx::{
-    sqlite::{SqlitePoolOptions, SqliteRow},
-    FromRow, Pool, Row, Sqlite,
-};
+use sqlx::{sqlite::SqlitePoolOptions, Pool, Sqlite};
 use std::path::Path;
-use tracing::{debug, error, instrument};
+use tracing::{debug, instrument};
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct SqliteClient {
     pub pool: Pool<Sqlite>,
+    pub card: CardLogicSqliteClient,
+    pub exp: ExperimentLogicSqliteClient,
 }
 
 impl SqliteClient {
-    async fn new(settings: &DatabaseSettings) -> Result<SqliteClient, SqlError> {
+    pub async fn new(settings: &DatabaseSettings) -> Result<SqliteClient, SqlError> {
         // Create SQLite file if it doesn't exist and not in-memory
         if !settings.connection_uri.contains(":memory:") {
             let uri = settings.connection_uri.replace("sqlite://", "");
@@ -60,7 +44,11 @@ impl SqliteClient {
             .await
             .map_err(SqlError::ConnectionError)?;
 
-        let client = SqliteClient { pool };
+        let client = SqliteClient {
+            card: CardLogicSqliteClient::new(&pool),
+            exp: ExperimentLogicSqliteClient::new(&pool),
+            pool,
+        };
 
         // Run migrations
         client.run_migrations().await?;

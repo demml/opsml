@@ -1,6 +1,6 @@
-use crate::sqlite::helper::SqliteQueryHelper;
+use crate::mysql::helper::MySQLQueryHelper;
+use crate::mysql::sql::client::BaseMySqlClient;
 use opsml_types::cards::CardTable;
-use tracing::instrument;
 
 use crate::error::SqlError;
 use crate::schemas::schema::{
@@ -8,38 +8,26 @@ use crate::schemas::schema::{
     ModelCardRecord, PromptCardRecord, QueryStats, ServerCard, ServiceCardRecord, VersionResult,
     VersionSummary,
 };
-
-use crate::traits::CardLogicTrait;
 use async_trait::async_trait;
 use opsml_semver::VersionValidator;
+
 use opsml_types::contracts::CardQueryArgs;
 use semver::Version;
-use sqlx::{Pool, Sqlite};
-use tracing::{debug, error};
-
-#[derive(Debug)]
-pub struct CardLogicSqliteClient {
-    pool: sqlx::Pool<Sqlite>,
-}
-impl CardLogicSqliteClient {
-    pub fn new(pool: &Pool<Sqlite>) -> Self {
-        Self { pool: pool.clone() }
-    }
-
-    fn pool(&self) -> &sqlx::Pool<Sqlite> {
-        &self.pool
-    }
-}
 
 #[async_trait]
-impl CardLogicTrait for CardLogicSqliteClient {
+pub trait CardLogicTrait: BaseMySqlClient {
     /// Check if uid exists in the database for a table
+    ///
+    /// # Arguments
+    ///
+    /// * `table` - The table to query
+    /// * `uid` - The uid to check
     ///
     /// # Returns
     ///
     /// * `bool` - True if the uid exists, false otherwise
     async fn check_uid_exists(&self, uid: &str, table: &CardTable) -> Result<bool, SqlError> {
-        let query = SqliteQueryHelper::get_uid_query(table);
+        let query = MySQLQueryHelper::get_uid_query(table);
         let exists: Option<String> = sqlx::query_scalar(&query)
             .bind(uid)
             .fetch_optional(self.pool())
@@ -60,7 +48,6 @@ impl CardLogicTrait for CardLogicSqliteClient {
     /// # Returns
     ///
     /// * `Vec<String>` - A vector of strings representing the sorted (desc) versions of the card
-    #[instrument(skip_all)]
     async fn get_versions(
         &self,
         table: &CardTable,
@@ -68,10 +55,7 @@ impl CardLogicTrait for CardLogicSqliteClient {
         name: &str,
         version: Option<String>,
     ) -> Result<Vec<String>, SqlError> {
-        // if version is None, get the latest version
-
-        let query = SqliteQueryHelper::get_versions_query(table, version)?;
-
+        let query = MySQLQueryHelper::get_versions_query(table, version)?;
         let cards: Vec<VersionResult> = sqlx::query_as(&query)
             .bind(name)
             .bind(space)
@@ -84,11 +68,7 @@ impl CardLogicTrait for CardLogicSqliteClient {
             .collect::<Result<Vec<Version>, SqlError>>()?;
 
         // sort semvers
-        Ok(
-            VersionValidator::sort_semver_versions(versions, true).inspect_err(|e| {
-                error!("{}", e);
-            })?,
-        )
+        Ok(VersionValidator::sort_semver_versions(versions, true)?)
     }
 
     /// Query cards based on the query arguments
@@ -106,14 +86,18 @@ impl CardLogicTrait for CardLogicSqliteClient {
         table: &CardTable,
         query_args: &CardQueryArgs,
     ) -> Result<CardResults, SqlError> {
-        let query = SqliteQueryHelper::get_query_cards_query(table, query_args)?;
+        let query = MySQLQueryHelper::get_query_cards_query(table, query_args)?;
 
         match table {
             CardTable::Data => {
                 let card: Vec<DataCardRecord> = sqlx::query_as(&query)
                     .bind(query_args.uid.as_ref())
+                    .bind(query_args.uid.as_ref())
+                    .bind(query_args.space.as_ref())
                     .bind(query_args.space.as_ref())
                     .bind(query_args.name.as_ref())
+                    .bind(query_args.name.as_ref())
+                    .bind(query_args.max_date.as_ref())
                     .bind(query_args.max_date.as_ref())
                     .bind(query_args.limit.unwrap_or(50))
                     .fetch_all(self.pool())
@@ -124,8 +108,12 @@ impl CardLogicTrait for CardLogicSqliteClient {
             CardTable::Model => {
                 let card: Vec<ModelCardRecord> = sqlx::query_as(&query)
                     .bind(query_args.uid.as_ref())
+                    .bind(query_args.uid.as_ref())
+                    .bind(query_args.space.as_ref())
                     .bind(query_args.space.as_ref())
                     .bind(query_args.name.as_ref())
+                    .bind(query_args.name.as_ref())
+                    .bind(query_args.max_date.as_ref())
                     .bind(query_args.max_date.as_ref())
                     .bind(query_args.limit.unwrap_or(50))
                     .fetch_all(self.pool())
@@ -136,8 +124,12 @@ impl CardLogicTrait for CardLogicSqliteClient {
             CardTable::Experiment => {
                 let card: Vec<ExperimentCardRecord> = sqlx::query_as(&query)
                     .bind(query_args.uid.as_ref())
+                    .bind(query_args.uid.as_ref())
+                    .bind(query_args.space.as_ref())
                     .bind(query_args.space.as_ref())
                     .bind(query_args.name.as_ref())
+                    .bind(query_args.name.as_ref())
+                    .bind(query_args.max_date.as_ref())
                     .bind(query_args.max_date.as_ref())
                     .bind(query_args.limit.unwrap_or(50))
                     .fetch_all(self.pool())
@@ -149,8 +141,12 @@ impl CardLogicTrait for CardLogicSqliteClient {
             CardTable::Audit => {
                 let card: Vec<AuditCardRecord> = sqlx::query_as(&query)
                     .bind(query_args.uid.as_ref())
+                    .bind(query_args.uid.as_ref())
+                    .bind(query_args.space.as_ref())
                     .bind(query_args.space.as_ref())
                     .bind(query_args.name.as_ref())
+                    .bind(query_args.name.as_ref())
+                    .bind(query_args.max_date.as_ref())
                     .bind(query_args.max_date.as_ref())
                     .bind(query_args.limit.unwrap_or(50))
                     .fetch_all(self.pool())
@@ -162,8 +158,12 @@ impl CardLogicTrait for CardLogicSqliteClient {
             CardTable::Prompt => {
                 let card: Vec<PromptCardRecord> = sqlx::query_as(&query)
                     .bind(query_args.uid.as_ref())
+                    .bind(query_args.uid.as_ref())
+                    .bind(query_args.space.as_ref())
                     .bind(query_args.space.as_ref())
                     .bind(query_args.name.as_ref())
+                    .bind(query_args.name.as_ref())
+                    .bind(query_args.max_date.as_ref())
                     .bind(query_args.max_date.as_ref())
                     .bind(query_args.limit.unwrap_or(50))
                     .fetch_all(self.pool())
@@ -175,8 +175,12 @@ impl CardLogicTrait for CardLogicSqliteClient {
             CardTable::Service => {
                 let card: Vec<ServiceCardRecord> = sqlx::query_as(&query)
                     .bind(query_args.uid.as_ref())
+                    .bind(query_args.uid.as_ref())
+                    .bind(query_args.space.as_ref())
                     .bind(query_args.space.as_ref())
                     .bind(query_args.name.as_ref())
+                    .bind(query_args.name.as_ref())
+                    .bind(query_args.max_date.as_ref())
                     .bind(query_args.max_date.as_ref())
                     .bind(query_args.limit.unwrap_or(50))
                     .fetch_all(self.pool())
@@ -195,7 +199,7 @@ impl CardLogicTrait for CardLogicSqliteClient {
         match table {
             CardTable::Data => match card {
                 ServerCard::Data(record) => {
-                    let query = SqliteQueryHelper::get_datacard_insert_query();
+                    let query = MySQLQueryHelper::get_datacard_insert_query();
                     sqlx::query(&query)
                         .bind(&record.uid)
                         .bind(&record.app_env)
@@ -224,7 +228,7 @@ impl CardLogicTrait for CardLogicSqliteClient {
             },
             CardTable::Model => match card {
                 ServerCard::Model(record) => {
-                    let query = SqliteQueryHelper::get_modelcard_insert_query();
+                    let query = MySQLQueryHelper::get_modelcard_insert_query();
                     sqlx::query(&query)
                         .bind(&record.uid)
                         .bind(&record.app_env)
@@ -256,7 +260,7 @@ impl CardLogicTrait for CardLogicSqliteClient {
             },
             CardTable::Experiment => match card {
                 ServerCard::Experiment(record) => {
-                    let query = SqliteQueryHelper::get_experimentcard_insert_query();
+                    let query = MySQLQueryHelper::get_experimentcard_insert_query();
                     sqlx::query(&query)
                         .bind(&record.uid)
                         .bind(&record.app_env)
@@ -286,7 +290,7 @@ impl CardLogicTrait for CardLogicSqliteClient {
             },
             CardTable::Audit => match card {
                 ServerCard::Audit(record) => {
-                    let query = SqliteQueryHelper::get_auditcard_insert_query();
+                    let query = MySQLQueryHelper::get_auditcard_insert_query();
                     sqlx::query(&query)
                         .bind(&record.uid)
                         .bind(&record.app_env)
@@ -316,7 +320,7 @@ impl CardLogicTrait for CardLogicSqliteClient {
 
             CardTable::Prompt => match card {
                 ServerCard::Prompt(record) => {
-                    let query = SqliteQueryHelper::get_promptcard_insert_query();
+                    let query = MySQLQueryHelper::get_promptcard_insert_query();
                     sqlx::query(&query)
                         .bind(&record.uid)
                         .bind(&record.app_env)
@@ -342,9 +346,10 @@ impl CardLogicTrait for CardLogicSqliteClient {
                     return Err(SqlError::InvalidCardType);
                 }
             },
+
             CardTable::Service => match card {
                 ServerCard::Service(record) => {
-                    let query = SqliteQueryHelper::get_servicecard_insert_query();
+                    let query = MySQLQueryHelper::get_servicecard_insert_query();
                     sqlx::query(&query)
                         .bind(&record.uid)
                         .bind(&record.app_env)
@@ -378,7 +383,7 @@ impl CardLogicTrait for CardLogicSqliteClient {
         match table {
             CardTable::Data => match card {
                 ServerCard::Data(record) => {
-                    let query = SqliteQueryHelper::get_datacard_update_query();
+                    let query = MySQLQueryHelper::get_datacard_update_query();
                     sqlx::query(&query)
                         .bind(&record.app_env)
                         .bind(&record.name)
@@ -407,7 +412,7 @@ impl CardLogicTrait for CardLogicSqliteClient {
             },
             CardTable::Model => match card {
                 ServerCard::Model(record) => {
-                    let query = SqliteQueryHelper::get_modelcard_update_query();
+                    let query = MySQLQueryHelper::get_modelcard_update_query();
                     sqlx::query(&query)
                         .bind(&record.app_env)
                         .bind(&record.name)
@@ -439,7 +444,7 @@ impl CardLogicTrait for CardLogicSqliteClient {
             },
             CardTable::Experiment => match card {
                 ServerCard::Experiment(record) => {
-                    let query = SqliteQueryHelper::get_experimentcard_update_query();
+                    let query = MySQLQueryHelper::get_experimentcard_update_query();
                     sqlx::query(&query)
                         .bind(&record.app_env)
                         .bind(&record.name)
@@ -469,7 +474,7 @@ impl CardLogicTrait for CardLogicSqliteClient {
             },
             CardTable::Audit => match card {
                 ServerCard::Audit(record) => {
-                    let query = SqliteQueryHelper::get_auditcard_update_query();
+                    let query = MySQLQueryHelper::get_auditcard_update_query();
                     sqlx::query(&query)
                         .bind(&record.app_env)
                         .bind(&record.name)
@@ -499,7 +504,7 @@ impl CardLogicTrait for CardLogicSqliteClient {
 
             CardTable::Prompt => match card {
                 ServerCard::Prompt(record) => {
-                    let query = SqliteQueryHelper::get_promptcard_update_query();
+                    let query = MySQLQueryHelper::get_promptcard_update_query();
                     sqlx::query(&query)
                         .bind(&record.app_env)
                         .bind(&record.name)
@@ -528,7 +533,7 @@ impl CardLogicTrait for CardLogicSqliteClient {
 
             CardTable::Service => match card {
                 ServerCard::Service(record) => {
-                    let query = SqliteQueryHelper::get_servicecard_update_query();
+                    let query = MySQLQueryHelper::get_servicecard_update_query();
                     sqlx::query(&query)
                         .bind(&record.app_env)
                         .bind(&record.name)
@@ -573,11 +578,13 @@ impl CardLogicTrait for CardLogicSqliteClient {
         search_term: Option<&str>,
         space: Option<&str>,
     ) -> Result<QueryStats, SqlError> {
-        let query = SqliteQueryHelper::get_query_stats_query(table);
+        let query = MySQLQueryHelper::get_query_stats_query(table);
 
-        // if search_term is not None, format with %search_term%, else None
-        let stats: QueryStats = sqlx::query_as(&query)
+        let stats = sqlx::query_as(&query)
+            .bind(search_term)
             .bind(search_term.map(|term| format!("%{term}%")))
+            .bind(search_term.map(|term| format!("%{term}%")))
+            .bind(space)
             .bind(space)
             .fetch_one(self.pool())
             .await?;
@@ -606,19 +613,27 @@ impl CardLogicTrait for CardLogicSqliteClient {
         space: Option<&str>,
         table: &CardTable,
     ) -> Result<Vec<CardSummary>, SqlError> {
-        let query = SqliteQueryHelper::get_query_page_query(table, sort_by);
+        let query = MySQLQueryHelper::get_query_page_query(table, sort_by);
 
         let lower_bound = (page * 30) - 30;
         let upper_bound = page * 30;
 
         let records: Vec<CardSummary> = sqlx::query_as(&query)
-            .bind(space)
-            .bind(search_term)
-            .bind(search_term.map(|term| format!("%{term}%")))
-            .bind(lower_bound)
+            .bind(space) // 1st ? in versions_cte
+            .bind(space) // 2nd ? in versions_cte
+            .bind(search_term) // 3rd ? in versions_cte
+            .bind(search_term.map(|term| format!("%{term}%"))) // 4th ? in versions_cte
+            .bind(search_term.map(|term| format!("%{term}%"))) // 5th ? in versions_cte
+            .bind(space) // 1st ? in stats_cte
+            .bind(space) // 2nd ? in stats_cte
+            .bind(search_term) // 3rd ? in stats_cte
+            .bind(search_term.map(|term| format!("%{term}%"))) // 4th ? in stats_cte
+            .bind(search_term.map(|term| format!("%{term}%"))) // 5th ? in stats_cte
+            .bind(lower_bound) // 1st ? in final SELECT
             .bind(upper_bound)
             .fetch_all(self.pool())
-            .await?;
+            .await
+            .unwrap();
 
         Ok(records)
     }
@@ -630,7 +645,7 @@ impl CardLogicTrait for CardLogicSqliteClient {
         name: Option<&str>,
         table: &CardTable,
     ) -> Result<Vec<VersionSummary>, SqlError> {
-        let query = SqliteQueryHelper::get_version_page_query(table);
+        let query = MySQLQueryHelper::get_version_page_query(table);
 
         let lower_bound = (page * 30) - 30;
         let upper_bound = page * 30;
@@ -646,20 +661,19 @@ impl CardLogicTrait for CardLogicSqliteClient {
         Ok(records)
     }
 
-    #[instrument(skip_all)]
     async fn delete_card(
         &self,
         table: &CardTable,
         uid: &str,
     ) -> Result<(String, String), SqlError> {
-        // SQLite doesn't support RETURNING clause, so we need to do this in two steps
-        debug!("Deleting card with uid: {uid} from table: {table}");
+        // First get the space
         let select_query = format!("SELECT space, name FROM {table} WHERE uid = ?");
         let (space, name): (String, String) = sqlx::query_as(&select_query)
             .bind(uid)
             .fetch_one(self.pool())
             .await?;
 
+        // Then delete the record
         let delete_query = format!("DELETE FROM {table} WHERE uid = ?");
         sqlx::query(&delete_query)
             .bind(uid)
@@ -667,21 +681,5 @@ impl CardLogicTrait for CardLogicSqliteClient {
             .await?;
 
         Ok((space, name))
-    }
-
-    /// Get unique space names
-    ///
-    /// # Arguments
-    ///
-    /// * `table` - The table to query
-    ///
-    /// # Returns
-    ///
-    /// * `Vec<String>` - A vector of unique space names
-    async fn get_unique_space_names(&self, table: &CardTable) -> Result<Vec<String>, SqlError> {
-        let query = format!("SELECT DISTINCT space FROM {table}");
-        let repos: Vec<String> = sqlx::query_scalar(&query).fetch_all(&self.pool).await?;
-
-        Ok(repos)
     }
 }
