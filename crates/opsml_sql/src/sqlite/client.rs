@@ -7,7 +7,6 @@ use crate::schemas::schema::{
     PromptCardRecord, QueryStats, ServerCard, ServiceCardRecord, SqlSpaceRecord, User,
     VersionResult, VersionSummary,
 };
-
 use crate::sqlite::helper::SqliteQueryHelper;
 use async_trait::async_trait;
 use opsml_semver::VersionValidator;

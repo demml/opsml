@@ -7,7 +7,6 @@ use opsml_types::{
     contracts::{ArtifactQueryArgs, CardQueryArgs},
 };
 use opsml_utils::utils::is_valid_uuidv7;
-
 // user
 const INSERT_USER_SQL: &str = include_str!("sql/user/insert_user.sql");
 const GET_USER_SQL: &str = include_str!("sql/user/get_user.sql");
