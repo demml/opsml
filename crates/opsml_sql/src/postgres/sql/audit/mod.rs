@@ -1,24 +1,24 @@
-use crate::{sqlite::helper::SqliteQueryHelper, traits::AuditLogicTrait};
+use crate::{postgres::helper::PostgresQueryHelper, traits::AuditLogicTrait};
 
 use crate::error::SqlError;
 use async_trait::async_trait;
 use opsml_types::contracts::AuditEvent;
-use sqlx::{Pool, Sqlite};
+use sqlx::{Pool, Postgres};
 
 #[derive(Debug, Clone)]
-pub struct AuditLogicSqliteClient {
-    pool: sqlx::Pool<Sqlite>,
+pub struct AuditLogicPostgresClient {
+    pool: sqlx::Pool<Postgres>,
 }
-impl AuditLogicSqliteClient {
-    pub fn new(pool: &Pool<Sqlite>) -> Self {
+impl AuditLogicPostgresClient {
+    pub fn new(pool: &Pool<Postgres>) -> Self {
         Self { pool: pool.clone() }
     }
 }
 
 #[async_trait]
-impl AuditLogicTrait for AuditLogicSqliteClient {
+impl AuditLogicTrait for AuditLogicPostgresClient {
     async fn insert_audit_event(&self, event: AuditEvent) -> Result<(), SqlError> {
-        let query = SqliteQueryHelper::get_audit_event_insert_query();
+        let query = PostgresQueryHelper::get_audit_event_insert_query();
         sqlx::query(&query)
             .bind(event.username)
             .bind(event.client_ip)
