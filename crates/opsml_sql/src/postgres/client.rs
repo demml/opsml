@@ -27,50 +27,6 @@ use sqlx::{
 };
 use tracing::{debug, instrument};
 
-impl FromRow<'_, PgRow> for User {
-    fn from_row(row: &PgRow) -> Result<Self, sqlx::Error> {
-        let id = row.try_get("id")?;
-        let created_at = row.try_get("created_at")?;
-        let updated_at = row.try_get("updated_at")?;
-        let active = row.try_get("active")?;
-        let username = row.try_get("username")?;
-        let password_hash = row.try_get("password_hash")?;
-        let email = row.try_get("email")?;
-        let role = row.try_get("role")?;
-        let refresh_token = row.try_get("refresh_token")?;
-        let authentication_type: String = row.try_get("authentication_type")?;
-
-        let group_permissions: Vec<String> =
-            serde_json::from_value(row.try_get("group_permissions")?).unwrap_or_default();
-
-        let permissions: Vec<String> =
-            serde_json::from_value(row.try_get("permissions")?).unwrap_or_default();
-
-        let hashed_recovery_codes: Vec<String> =
-            serde_json::from_value(row.try_get("hashed_recovery_codes")?).unwrap_or_default();
-
-        let favorite_spaces: Vec<String> =
-            serde_json::from_value(row.try_get("favorite_spaces")?).unwrap_or_default();
-
-        Ok(User {
-            id,
-            created_at,
-            updated_at,
-            active,
-            username,
-            password_hash,
-            email,
-            role,
-            refresh_token,
-            hashed_recovery_codes,
-            permissions,
-            group_permissions,
-            favorite_spaces,
-            authentication_type,
-        })
-    }
-}
-
 #[derive(Debug, Clone)]
 pub struct PostgresClient {
     pub pool: Pool<Postgres>,
