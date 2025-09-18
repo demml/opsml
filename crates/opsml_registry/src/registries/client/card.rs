@@ -1,4 +1,5 @@
 use crate::error::RegistryError;
+use crate::registries::client::artifact::ArtifactExt;
 use crate::registries::client::base::ErrorResponse;
 use crate::registries::client::base::Registry;
 use opsml_client::error::ApiClientError;
@@ -9,7 +10,7 @@ use scouter_client::{ProfileRequest, ProfileStatusRequest, ScouterServerError};
 use std::sync::Arc;
 use tracing::{error, instrument};
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct ClientCardRegistry {
     registry_type: RegistryType,
     pub api_client: Arc<OpsmlApiClient>,
@@ -229,6 +230,28 @@ pub trait CardRegistry: Registry {
 
         Ok(exists.exists)
     }
+
+    #[instrument(skip_all)]
+    fn get_key(&self, args: &CardQueryArgs) -> Result<ArtifactKey, RegistryError> {
+        let query_string = serde_qs::to_string(&args)?;
+
+        let response = self
+            .client()
+            .request(
+                Routes::CardLoad,
+                RequestType::Get,
+                None,
+                Some(query_string),
+                None,
+            )
+            .inspect_err(|e| {
+                error!("Failed to get artifact key {}", e);
+            })?;
+
+        response
+            .json::<ArtifactKey>()
+            .map_err(RegistryError::RequestError)
+    }
 }
 
 pub trait ScouterRegistry: Registry {
@@ -331,3 +354,4 @@ pub trait ScouterRegistry: Registry {
 
 impl CardRegistry for ClientCardRegistry {}
 impl ScouterRegistry for ClientCardRegistry {}
+impl ArtifactExt for ClientCardRegistry {}

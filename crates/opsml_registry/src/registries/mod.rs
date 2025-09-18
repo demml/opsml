@@ -1,5 +1,6 @@
+pub mod card;
 pub mod client;
-pub mod traits;
+pub mod experiment;
 
 #[cfg(feature = "server")]
 pub mod server;
