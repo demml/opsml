@@ -9,8 +9,7 @@ use opsml_state::{app_state, get_api_client};
 use opsml_types::contracts::{ArtifactKey, DeleteCardRequest};
 use opsml_types::contracts::{CardQueryArgs, CardRecord, CreateCardResponse};
 use opsml_types::*;
-use scouter_client::ProfileStatusRequest;
-use scouter_client::ScouterClient;
+use scouter_client::{ProfileRequest, ProfileStatusRequest, ScouterClient};
 use tracing::{debug, error, instrument};
 
 #[cfg(feature = "server")]
@@ -30,7 +29,7 @@ pub fn setup_scouter_client(
 }
 
 /// Parent enum for handling Card client/server logic
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum OpsmlCardRegistry {
     Client(ClientCardRegistry),
 
@@ -225,6 +224,28 @@ impl OpsmlCardRegistry {
             }
             #[cfg(feature = "server")]
             Self::Server(server_registry) => server_registry.update_drift_profile_status(request),
+        }
+    }
+
+    /// Inserts a scouter profile into the registry when opsml is integrated with scouter
+    ///
+    /// # Arguments
+    /// * `profile` - The profile to be inserted
+    ///
+    /// # Returns
+    /// * `Result<(), RegistryError>` - Ok if the profile was inserted successfully, Err if there was an error
+    #[instrument(skip_all)]
+    pub fn insert_scouter_profile(&self, profile: &ProfileRequest) -> Result<(), RegistryError> {
+        match self {
+            Self::Client(client_registry) => {
+                debug!("ClientRegistry: Inserting scouter profile");
+                Ok(client_registry.insert_scouter_profile(profile)?)
+            }
+            #[cfg(feature = "server")]
+            Self::Server(server_registry) => {
+                debug!("ServerRegistry: Inserting scouter profile");
+                server_registry.insert_scouter_profile(profile)
+            }
         }
     }
 }

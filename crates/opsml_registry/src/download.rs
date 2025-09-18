@@ -1,6 +1,6 @@
-use crate::async_base::AsyncOpsmlRegistry;
 use crate::base::OpsmlRegistry;
 use crate::error::RegistryError;
+use crate::registries::async_registry::AsyncOpsmlRegistry;
 use opsml_cards::Card;
 use opsml_cards::ModelCard;
 use opsml_cards::PromptCard;

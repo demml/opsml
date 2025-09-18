@@ -19,7 +19,7 @@ use sqlx::types::Json as SqlxJson;
 use std::sync::Arc;
 use tracing::{error, info, instrument};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ServerCardRegistry {
     sql_client: Arc<SqlClientEnum>,
     pub scouter_client: Option<ScouterClient>,

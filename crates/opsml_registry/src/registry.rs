@@ -1,5 +1,5 @@
-use crate::base::OpsmlRegistry;
 use crate::error::RegistryError;
+use crate::registries::card::OpsmlCardRegistry;
 use crate::utils::verify_card_rs;
 use crate::utils::{check_if_card, download_card, upload_card_artifacts, verify_card};
 use opsml_cards::traits::OpsmlCard;
@@ -20,7 +20,7 @@ use tracing::{debug, error, instrument};
 #[derive(Debug)]
 struct CardRegistrationParams<'py> {
     card: &'py Bound<'py, PyAny>,
-    registry: &'py OpsmlRegistry,
+    registry: &'py OpsmlCardRegistry,
     version_type: VersionType,
     pre_tag: Option<String>,
     build_tag: Option<String>,
@@ -65,7 +65,7 @@ pub struct CardArgs {
 pub struct CardRegistry {
     registry_type: RegistryType,
     table_name: String,
-    pub registry: OpsmlRegistry,
+    pub registry: OpsmlCardRegistry,
 }
 
 #[pymethods]
@@ -86,7 +86,7 @@ impl CardRegistry {
         let registry_type = extract_registry_type(registry_type)?;
 
         // Create a new tokio runtime for the registry (needed for async calls)
-        let registry = OpsmlRegistry::new(registry_type.clone())?;
+        let registry = OpsmlCardRegistry::new(registry_type.clone())?;
 
         Ok(Self {
             registry_type: registry_type.clone(),
@@ -245,11 +245,11 @@ impl CardRegistry {
     ///
     /// # Arguments
     ///
-    /// * `registry` - OpsmlRegistry
+    /// * `registry` - OpsmlCardRegistry
     /// * `card` - CreateCardResponse
     ///
     fn rollback_card(
-        registry: &OpsmlRegistry,
+        registry: &OpsmlCardRegistry,
         card: &CreateCardResponse,
     ) -> Result<(), RegistryError> {
         let request = DeleteCardRequest {
@@ -322,7 +322,7 @@ impl CardRegistry {
     /// * `registry_type` - RegistryType
     ///
     fn update_card_and_save(
-        registry: &OpsmlRegistry,
+        registry: &OpsmlCardRegistry,
         card: &Bound<'_, PyAny>,
         response: &CreateCardResponse,
         save_kwargs: Option<&Bound<'_, PyAny>>,
@@ -446,7 +446,7 @@ impl CardRegistry {
     /// the drift profile to the scouter service
     #[instrument(skip_all)]
     fn upload_integration_artifacts(
-        registry: &OpsmlRegistry,
+        registry: &OpsmlCardRegistry,
         registry_type: &RegistryType,
         card: &Bound<'_, PyAny>,
         save_kwargs: Option<&Bound<'_, PyAny>>,
@@ -476,7 +476,7 @@ impl CardRegistry {
     /// (5) If drift_args is Some, update the drift profile status (allows users to immediately activate a drift profile)
     ///
     /// # Arguments
-    /// * `registry` - OpsmlRegistry
+    /// * `registry` - OpsmlCardRegistry
     /// * `card` - Card to upload (ModelCard)
     /// * `drift_args` - DriftArgs
     /// * `response` - CreateCardResponse
@@ -485,7 +485,7 @@ impl CardRegistry {
     /// * `Result<(), RegistryError>` - Result
     #[instrument(skip_all)]
     fn upload_scouter_artifacts(
-        registry: &OpsmlRegistry,
+        registry: &OpsmlCardRegistry,
         card: &Bound<'_, PyAny>,
         drift_args: Option<DriftArgs>,
         response: &CreateCardResponse,
@@ -573,7 +573,7 @@ impl CardRegistry {
     /// * `Result<(), RegistryError>` - Result
     #[instrument(skip_all)]
     fn _register_card(
-        registry: &OpsmlRegistry,
+        registry: &OpsmlCardRegistry,
         card: &Bound<'_, PyAny>,
         registry_type: &RegistryType,
         version_type: VersionType,
@@ -612,7 +612,7 @@ impl CardRegistry {
 
     #[instrument(skip_all)]
     fn _delete_card(
-        registry: &mut OpsmlRegistry,
+        registry: &mut OpsmlCardRegistry,
         card: &Bound<'_, PyAny>,
         registry_type: &RegistryType,
     ) -> Result<(), RegistryError> {
@@ -635,7 +635,7 @@ impl CardRegistry {
 
     #[instrument(skip_all)]
     fn _update_card(
-        registry: &mut OpsmlRegistry,
+        registry: &mut OpsmlCardRegistry,
         card: &Bound<'_, PyAny>,
         registry_type: &RegistryType,
     ) -> Result<ArtifactKey, RegistryError> {
@@ -677,7 +677,7 @@ impl CardRegistry {
 /// There are some areas where we can register cards via rust (CLI) and so we do not need to interact with python, nor return python errors
 impl CardRegistry {
     pub fn rust_new(registry_type: &RegistryType) -> Result<Self, RegistryError> {
-        let registry = OpsmlRegistry::new(registry_type.clone())?;
+        let registry = OpsmlCardRegistry::new(registry_type.clone())?;
         Ok(Self {
             registry_type: registry_type.clone(),
             table_name: CardTable::from_registry_type(registry_type).to_string(),
@@ -785,33 +785,6 @@ impl CardRegistry {
         );
 
         Ok(response)
-    }
-
-    pub fn log_artifact(
-        &self,
-        space: String,
-        name: String,
-        version: String,
-        media_type: String,
-        artifact_type: ArtifactType,
-    ) -> Result<CreateArtifactResponse, RegistryError> {
-        // Log artifact to the registry
-
-        self.registry
-            .log_artifact(space, name, version, media_type, artifact_type)
-            .inspect_err(|e| {
-                error!("Failed to log artifact: {e}");
-            })
-    }
-
-    pub fn query_artifacts(
-        &self,
-        query_args: &ArtifactQueryArgs,
-    ) -> Result<Vec<ArtifactRecord>, RegistryError> {
-        // Query artifacts from the registry
-        self.registry.query_artifacts(query_args).inspect_err(|e| {
-            error!("Failed to query artifacts: {e}");
-        })
     }
 }
 
