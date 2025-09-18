@@ -1,9 +1,9 @@
 use crate::{
     error::SqlError,
     sqlite::sql::{
-        artifact::ArtifactLogicSqliteClient, audit::SpaceLogicSqliteClient,
+        artifact::ArtifactLogicSqliteClient, audit::AuditLogicSqliteClient,
         card::CardLogicSqliteClient, experiment::ExperimentLogicSqliteClient,
-        space::AuditLogicSqliteClient, user::UserLogicSqliteClient,
+        space::SpaceLogicSqliteClient, user::UserLogicSqliteClient,
     },
 };
 use opsml_settings::config::DatabaseSettings;
@@ -55,6 +55,7 @@ impl SqliteClient {
             .await
             .map_err(SqlError::ConnectionError)?;
 
+        // sqlx pools are wrapped in Arc, so cloning is cheap
         let client = SqliteClient {
             card: CardLogicSqliteClient::new(&pool),
             exp: ExperimentLogicSqliteClient::new(&pool),

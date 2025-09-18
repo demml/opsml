@@ -1,6 +1,6 @@
 use crate::postgres::helper::PostgresQueryHelper;
-use crate::postgres::sql::client::BasePostgresClient;
 use opsml_types::cards::CardTable;
+use tracing::instrument;
 
 use crate::error::SqlError;
 use crate::schemas::schema::{
@@ -8,14 +8,34 @@ use crate::schemas::schema::{
     ModelCardRecord, PromptCardRecord, QueryStats, ServerCard, ServiceCardRecord, VersionResult,
     VersionSummary,
 };
+
+use crate::traits::CardLogicTrait;
 use async_trait::async_trait;
 use opsml_semver::VersionValidator;
-
-use opsml_types::contracts::CardQueryArgs;
+use opsml_types::{
+    contracts::{ArtifactKey, CardQueryArgs},
+    RegistryType,
+};
 use semver::Version;
+use sqlx::{Pool, Postgres};
+use tracing::debug;
+
+#[derive(Debug, Clone)]
+pub struct CardLogicPostgresClient {
+    pool: sqlx::Pool<Postgres>,
+}
+impl CardLogicPostgresClient {
+    pub fn new(pool: &Pool<Postgres>) -> Self {
+        Self { pool: pool.clone() }
+    }
+
+    fn pool(&self) -> &sqlx::Pool<Postgres> {
+        &self.pool
+    }
+}
 
 #[async_trait]
-pub trait CardLogicTrait: BasePostgresClient {
+impl CardLogicTrait for CardLogicPostgresClient {
     /// Check if uid exists in the database for a table
     ///
     /// # Arguments
@@ -30,7 +50,7 @@ pub trait CardLogicTrait: BasePostgresClient {
         let query = PostgresQueryHelper::get_uid_query(table);
         let exists: Option<String> = sqlx::query_scalar(&query)
             .bind(uid)
-            .fetch_optional(self.pool())
+            .fetch_optional(&self.pool)
             .await?;
 
         Ok(exists.is_some())
@@ -61,7 +81,7 @@ pub trait CardLogicTrait: BasePostgresClient {
         let cards: Vec<VersionResult> = sqlx::query_as(&query)
             .bind(space)
             .bind(name)
-            .fetch_all(self.pool())
+            .fetch_all(&self.pool)
             .await?;
 
         let versions = cards
@@ -98,7 +118,7 @@ pub trait CardLogicTrait: BasePostgresClient {
                     .bind(query_args.name.as_ref())
                     .bind(query_args.max_date.as_ref())
                     .bind(query_args.limit.unwrap_or(50))
-                    .fetch_all(self.pool())
+                    .fetch_all(&self.pool)
                     .await?;
 
                 return Ok(CardResults::Data(card));
@@ -110,7 +130,7 @@ pub trait CardLogicTrait: BasePostgresClient {
                     .bind(query_args.name.as_ref())
                     .bind(query_args.max_date.as_ref())
                     .bind(query_args.limit.unwrap_or(50))
-                    .fetch_all(self.pool())
+                    .fetch_all(&self.pool)
                     .await?;
 
                 return Ok(CardResults::Model(card));
@@ -122,7 +142,7 @@ pub trait CardLogicTrait: BasePostgresClient {
                     .bind(query_args.name.as_ref())
                     .bind(query_args.max_date.as_ref())
                     .bind(query_args.limit.unwrap_or(50))
-                    .fetch_all(self.pool())
+                    .fetch_all(&self.pool)
                     .await?;
 
                 return Ok(CardResults::Experiment(card));
@@ -135,7 +155,7 @@ pub trait CardLogicTrait: BasePostgresClient {
                     .bind(query_args.name.as_ref())
                     .bind(query_args.max_date.as_ref())
                     .bind(query_args.limit.unwrap_or(50))
-                    .fetch_all(self.pool())
+                    .fetch_all(&self.pool)
                     .await?;
 
                 return Ok(CardResults::Audit(card));
@@ -148,7 +168,7 @@ pub trait CardLogicTrait: BasePostgresClient {
                     .bind(query_args.name.as_ref())
                     .bind(query_args.max_date.as_ref())
                     .bind(query_args.limit.unwrap_or(50))
-                    .fetch_all(self.pool())
+                    .fetch_all(&self.pool)
                     .await?;
 
                 return Ok(CardResults::Prompt(card));
@@ -161,7 +181,7 @@ pub trait CardLogicTrait: BasePostgresClient {
                     .bind(query_args.name.as_ref())
                     .bind(query_args.max_date.as_ref())
                     .bind(query_args.limit.unwrap_or(50))
-                    .fetch_all(self.pool())
+                    .fetch_all(&self.pool)
                     .await?;
 
                 return Ok(CardResults::Service(card));
@@ -194,7 +214,7 @@ pub trait CardLogicTrait: BasePostgresClient {
                         .bind(&record.build_tag)
                         .bind(&record.username)
                         .bind(&record.opsml_version)
-                        .execute(self.pool())
+                        .execute(&self.pool)
                         .await?;
                     Ok(())
                 }
@@ -226,7 +246,7 @@ pub trait CardLogicTrait: BasePostgresClient {
                         .bind(&record.build_tag)
                         .bind(&record.username)
                         .bind(&record.opsml_version)
-                        .execute(self.pool())
+                        .execute(&self.pool)
                         .await?;
                     Ok(())
                 }
@@ -256,7 +276,7 @@ pub trait CardLogicTrait: BasePostgresClient {
                         .bind(&record.build_tag)
                         .bind(&record.username)
                         .bind(&record.opsml_version)
-                        .execute(self.pool())
+                        .execute(&self.pool)
                         .await?;
                     Ok(())
                 }
@@ -285,7 +305,7 @@ pub trait CardLogicTrait: BasePostgresClient {
                         .bind(&record.build_tag)
                         .bind(&record.username)
                         .bind(&record.opsml_version)
-                        .execute(self.pool())
+                        .execute(&self.pool)
                         .await?;
                     Ok(())
                 }
@@ -314,7 +334,7 @@ pub trait CardLogicTrait: BasePostgresClient {
                         .bind(&record.build_tag)
                         .bind(&record.username)
                         .bind(&record.opsml_version)
-                        .execute(self.pool())
+                        .execute(&self.pool)
                         .await?;
                     Ok(())
                 }
@@ -340,7 +360,7 @@ pub trait CardLogicTrait: BasePostgresClient {
                         .bind(&record.cards)
                         .bind(&record.username)
                         .bind(&record.opsml_version)
-                        .execute(self.pool())
+                        .execute(&self.pool)
                         .await?;
                     Ok(())
                 }
@@ -378,7 +398,7 @@ pub trait CardLogicTrait: BasePostgresClient {
                         .bind(&record.username)
                         .bind(&record.opsml_version)
                         .bind(&record.uid)
-                        .execute(self.pool())
+                        .execute(&self.pool)
                         .await?;
                     Ok(())
                 }
@@ -410,7 +430,7 @@ pub trait CardLogicTrait: BasePostgresClient {
                         .bind(&record.username)
                         .bind(&record.opsml_version)
                         .bind(&record.uid)
-                        .execute(self.pool())
+                        .execute(&self.pool)
                         .await?;
                     Ok(())
                 }
@@ -440,7 +460,7 @@ pub trait CardLogicTrait: BasePostgresClient {
                         .bind(&record.username)
                         .bind(&record.opsml_version)
                         .bind(&record.uid)
-                        .execute(self.pool())
+                        .execute(&self.pool)
                         .await?;
                     Ok(())
                 }
@@ -469,7 +489,7 @@ pub trait CardLogicTrait: BasePostgresClient {
                         .bind(&record.username)
                         .bind(&record.opsml_version)
                         .bind(&record.uid)
-                        .execute(self.pool())
+                        .execute(&self.pool)
                         .await?;
                     Ok(())
                 }
@@ -497,7 +517,7 @@ pub trait CardLogicTrait: BasePostgresClient {
                         .bind(&record.username)
                         .bind(&record.opsml_version)
                         .bind(&record.uid)
-                        .execute(self.pool())
+                        .execute(&self.pool)
                         .await?;
                     Ok(())
                 }
@@ -522,7 +542,7 @@ pub trait CardLogicTrait: BasePostgresClient {
                         .bind(&record.username)
                         .bind(&record.opsml_version)
                         .bind(&record.uid)
-                        .execute(self.pool())
+                        .execute(&self.pool)
                         .await?;
                     Ok(())
                 }
@@ -537,17 +557,22 @@ pub trait CardLogicTrait: BasePostgresClient {
         }
     }
 
-    /// Query stats for a table
+    /// Get unique space names
     ///
     /// # Arguments
     ///
     /// * `table` - The table to query
-    /// * `search_term` - The search term to query
     ///
     /// # Returns
     ///
-    /// * `HashMap<String, i32>` - A hashmap of the stats
-    ///
+    /// * `Vec<String>` - A vector of unique space names
+    async fn get_unique_space_names(&self, table: &CardTable) -> Result<Vec<String>, SqlError> {
+        let query = format!("SELECT DISTINCT space FROM {table}");
+        let repos: Vec<String> = sqlx::query_scalar(&query).fetch_all(&self.pool).await?;
+
+        Ok(repos)
+    }
+
     async fn query_stats(
         &self,
         table: &CardTable,
@@ -560,7 +585,7 @@ pub trait CardLogicTrait: BasePostgresClient {
         let stats: QueryStats = sqlx::query_as(&query)
             .bind(search_term.map(|term| format!("%{term}%")))
             .bind(space)
-            .fetch_one(self.pool())
+            .fetch_one(&self.pool)
             .await?;
 
         Ok(stats)
@@ -598,7 +623,7 @@ pub trait CardLogicTrait: BasePostgresClient {
             .bind(search_term.map(|term| format!("%{term}%")))
             .bind(lower_bound)
             .bind(upper_bound)
-            .fetch_all(self.pool())
+            .fetch_all(&self.pool)
             .await?;
 
         Ok(records)
@@ -621,7 +646,7 @@ pub trait CardLogicTrait: BasePostgresClient {
             .bind(name)
             .bind(lower_bound)
             .bind(upper_bound)
-            .fetch_all(self.pool())
+            .fetch_all(&self.pool)
             .await?;
 
         Ok(records)
@@ -636,9 +661,35 @@ pub trait CardLogicTrait: BasePostgresClient {
         let query = format!("DELETE FROM {table} WHERE uid = $1 RETURNING space, name");
         let (space, name): (String, String) = sqlx::query_as(&query)
             .bind(uid)
-            .fetch_one(self.pool())
+            .fetch_one(&self.pool)
             .await?;
 
         Ok((space, name))
+    }
+    #[instrument(skip_all)]
+    async fn get_card_key_for_loading(
+        &self,
+        table: &CardTable,
+        query_args: &CardQueryArgs,
+    ) -> Result<ArtifactKey, SqlError> {
+        let query = PostgresQueryHelper::get_load_card_query(table, query_args)?;
+        debug!("Executing query: {}", query);
+
+        let key: (String, String, String, Vec<u8>, String) = sqlx::query_as(&query)
+            .bind(query_args.uid.as_ref())
+            .bind(query_args.space.as_ref())
+            .bind(query_args.name.as_ref())
+            .bind(query_args.max_date.as_ref())
+            .bind(query_args.limit.unwrap_or(1))
+            .fetch_one(&self.pool)
+            .await?;
+
+        Ok(ArtifactKey {
+            uid: key.0,
+            space: key.1,
+            registry_type: RegistryType::from_string(&key.2)?,
+            encrypted_key: key.3,
+            storage_key: key.4,
+        })
     }
 }
