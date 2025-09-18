@@ -5,7 +5,7 @@ use async_trait::async_trait;
 use opsml_types::contracts::AuditEvent;
 use sqlx::{Pool, Sqlite};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct AuditLogicSqliteClient {
     pool: sqlx::Pool<Sqlite>,
 }

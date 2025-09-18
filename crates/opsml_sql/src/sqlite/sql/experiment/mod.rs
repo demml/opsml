@@ -8,7 +8,7 @@ use crate::traits::ExperimentLogicTrait;
 use async_trait::async_trait;
 use sqlx::{Pool, Sqlite};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ExperimentLogicSqliteClient {
     pool: sqlx::Pool<Sqlite>,
 }

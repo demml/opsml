@@ -20,7 +20,7 @@ use semver::Version;
 use sqlx::{Pool, Sqlite};
 use tracing::{debug, error};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct CardLogicSqliteClient {
     pool: sqlx::Pool<Sqlite>,
 }

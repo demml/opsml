@@ -10,7 +10,7 @@ use opsml_types::{
 };
 use sqlx::{Pool, Sqlite};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ArtifactLogicSqliteClient {
     pool: sqlx::Pool<Sqlite>,
 }

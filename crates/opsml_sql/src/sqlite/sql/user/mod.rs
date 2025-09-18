@@ -51,7 +51,7 @@ impl FromRow<'_, SqliteRow> for User {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct UserLogicSqliteClient {
     pool: sqlx::Pool<Sqlite>,
 }
