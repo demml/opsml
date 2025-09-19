@@ -2,10 +2,11 @@ use crate::error::RegistryError;
 use crate::registries::client::artifact::{ArtifactRegistry, ClientArtifactRegistry};
 use crate::registries::client::base::Registry;
 
+use crate::registries::client::artifact::ArtifactExt;
 use opsml_settings::config::OpsmlMode;
 use opsml_state::{app_state, get_api_client};
 use opsml_types::contracts::{
-    ArtifactQueryArgs, ArtifactRecord, ArtifactType, CreateArtifactResponse,
+    ArtifactKey, ArtifactQueryArgs, ArtifactRecord, ArtifactType, CreateArtifactResponse,
 };
 use opsml_types::*;
 use tracing::{error, instrument};
@@ -109,6 +110,21 @@ impl OpsmlArtifactRegistry {
             Self::Server(server_registry) => {
                 app_state().block_on(async { server_registry.query_artifacts(query_args).await })
             }
+        }
+    }
+
+    pub fn get_artifact_key(
+        &self,
+        uid: &str,
+        registry_type: &RegistryType,
+    ) -> Result<ArtifactKey, RegistryError> {
+        match self {
+            Self::Client(client_registry) => {
+                Ok(client_registry.get_artifact_key(uid, registry_type)?)
+            }
+            #[cfg(feature = "server")]
+            Self::Server(server_registry) => app_state()
+                .block_on(async { server_registry.get_artifact_key(uid, registry_type).await }),
         }
     }
 }

@@ -5,7 +5,7 @@ use chrono::{DateTime, Utc};
 use mime_guess::mime;
 use opsml_cards::ExperimentCard;
 use opsml_crypt::{decrypt_directory, encrypt_directory};
-use opsml_registry::base::OpsmlRegistry;
+use opsml_registry::registries::artifact::OpsmlArtifactRegistry;
 use opsml_registry::registries::experiment::OpsmlExperiment;
 use opsml_registry::CardRegistries;
 use opsml_semver::VersionType;
@@ -988,8 +988,8 @@ pub fn get_experiment_metrics(
         is_eval: None,
     };
 
-    let registry = OpsmlRegistry::new(RegistryType::Experiment)?;
-    let metrics = registry.get_metrics(&metric_request)?;
+    let exp = OpsmlExperiment::new()?;
+    let metrics = exp.get_metrics(&metric_request)?;
 
     Ok(Metrics { metrics })
 }
@@ -1005,9 +1005,9 @@ pub fn get_experiment_parameters(
         names: names.unwrap_or_default(),
     };
 
-    let registry = OpsmlRegistry::new(RegistryType::Experiment)?;
+    let exp = OpsmlExperiment::new()?;
 
-    let parameters = registry.get_parameters(&param_request)?;
+    let parameters = exp.get_parameters(&param_request)?;
 
     Ok(Parameters { parameters })
 }
@@ -1026,7 +1026,7 @@ pub fn download_artifact(
     // query card for space, name, version
 
     let path_name = path.into_os_string().into_string()?;
-    let registry = OpsmlRegistry::new(RegistryType::Experiment)?;
+    let registry = OpsmlArtifactRegistry::new()?;
 
     // query just the artifacts for the current experiment id
     let query_args = ArtifactQueryArgs {
