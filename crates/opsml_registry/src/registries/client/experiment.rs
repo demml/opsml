@@ -1,4 +1,5 @@
 use crate::error::RegistryError;
+use crate::registries::client::artifact::ArtifactRegistry;
 use crate::registries::client::base::Registry;
 use opsml_client::OpsmlApiClient;
 use opsml_types::{
@@ -11,33 +12,26 @@ use std::sync::Arc;
 use tracing::error;
 
 #[derive(Debug, Clone)]
-pub struct ClientExperimentRegistry {
-    registry_type: RegistryType,
+pub struct ClientExperiment {
     pub api_client: Arc<OpsmlApiClient>,
 }
 
-impl ClientExperimentRegistry {
-    pub fn new(
-        registry_type: RegistryType,
-        api_client: Arc<OpsmlApiClient>,
-    ) -> Result<Self, RegistryError> {
-        Ok(Self {
-            registry_type,
-            api_client,
-        })
+impl ClientExperiment {
+    pub fn new(api_client: Arc<OpsmlApiClient>) -> Result<Self, RegistryError> {
+        Ok(Self { api_client })
     }
 }
 
-impl Registry for ClientExperimentRegistry {
+impl Registry for ClientExperiment {
     fn client(&self) -> &Arc<OpsmlApiClient> {
         &self.api_client
     }
     fn table_name(&self) -> String {
-        CardTable::from_registry_type(&self.registry_type).to_string()
+        CardTable::from_registry_type(&RegistryType::Experiment).to_string()
     }
 
     fn registry_type(&self) -> &RegistryType {
-        &self.registry_type
+        &RegistryType::Experiment
     }
 }
 
@@ -194,4 +188,5 @@ pub trait ExperimentRegistry: Registry {
     }
 }
 
-impl ExperimentRegistry for ClientExperimentRegistry {}
+impl ExperimentRegistry for ClientExperiment {}
+impl ArtifactRegistry for ClientExperiment {}
