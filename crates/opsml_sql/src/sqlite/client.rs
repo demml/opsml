@@ -85,10 +85,6 @@ impl SqliteClient {
     }
 }
 
-pub trait BaseSqliteClient {
-    fn pool(&self) -> &Pool<Sqlite>;
-}
-
 #[cfg(test)]
 mod tests {
 

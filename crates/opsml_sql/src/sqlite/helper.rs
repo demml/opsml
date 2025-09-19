@@ -48,6 +48,9 @@ const UPDATE_EXPERIMENTCARD_SQL: &str = include_str!("sql/card/update_experiment
 const UPDATE_AUDITCARD_SQL: &str = include_str!("sql/card/update_auditcard.sql");
 const UPDATE_SERVICECARD_SQL: &str = include_str!("sql/card/update_servicecard.sql");
 
+// evaluation
+const INSERT_EVALUATION_SQL: &str = include_str!("sql/evaluation/insert_evaluation.sql");
+
 // artifact keys
 const INSERT_ARTIFACT_KEY_SQL: &str = include_str!("sql/artifact/insert_artifact_key.sql");
 const INSERT_ARTIFACT_RECORD_SQL: &str = include_str!("sql/artifact/insert_artifact_record.sql");
@@ -581,5 +584,9 @@ impl SqliteQueryHelper {
 
     pub fn get_delete_space_name_record_query() -> String {
         DELETE_SPACE_NAME_RECORD_SQL.to_string()
+    }
+
+    pub fn get_evaluation_record_insert_query() -> String {
+        INSERT_EVALUATION_SQL.to_string()
     }
 }
