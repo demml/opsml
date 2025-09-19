@@ -9,7 +9,6 @@ use std::sync::Arc;
 #[derive(Debug)]
 pub struct ServerArtifactRegistry {
     sql_client: Arc<SqlClientEnum>,
-    pub registry_type: RegistryType,
     pub table_name: CardTable,
     pub storage_settings: OpsmlStorageSettings,
 }
@@ -20,19 +19,18 @@ impl ServerArtifactRegistry {
     }
 
     pub fn table_name(&self) -> String {
-        CardTable::from_registry_type(&self.registry_type).to_string()
+        self.table_name.to_string()
     }
     pub async fn new(
-        registry_type: RegistryType,
         storage_settings: OpsmlStorageSettings,
         database_settings: DatabaseSettings,
     ) -> Result<Self, RegistryError> {
         let sql_client = Arc::new(get_sql_client(&database_settings).await?);
-        let table_name = CardTable::from_registry_type(&registry_type);
+        let table_name = CardTable::from_registry_type(&RegistryType::Artifact);
 
         Ok(Self {
             sql_client,
-            registry_type,
+
             table_name,
             storage_settings,
         })

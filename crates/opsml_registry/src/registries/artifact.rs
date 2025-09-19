@@ -22,14 +22,14 @@ pub enum OpsmlArtifactRegistry {
 }
 impl OpsmlArtifactRegistry {
     #[instrument(skip_all)]
-    pub fn new(registry_type: RegistryType) -> Result<Self, RegistryError> {
+    pub fn new() -> Result<Self, RegistryError> {
         let state = &app_state();
         let mode = &*state.mode()?;
 
         match mode {
             OpsmlMode::Client => {
                 let api_client = get_api_client().clone();
-                let client_registry = ClientArtifactRegistry::new(registry_type, api_client)?;
+                let client_registry = ClientArtifactRegistry::new(api_client)?;
                 Ok(Self::Client(client_registry))
             }
             OpsmlMode::Server => {
@@ -44,7 +44,7 @@ impl OpsmlArtifactRegistry {
 
                     // TODO (steven): Why clone config when we could use app state directly in server registry?
                     let server_registry = state.block_on(async {
-                        ServerArtifactRegistry::new(registry_type, settings, db_settings).await
+                        ServerArtifactRegistry::new(settings, db_settings).await
                     })?;
 
                     Ok(Self::Server(server_registry))
