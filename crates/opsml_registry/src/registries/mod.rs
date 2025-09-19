@@ -3,6 +3,4 @@ pub mod async_registry;
 pub mod card;
 pub mod client;
 pub mod experiment;
-
-#[cfg(feature = "server")]
 pub mod server;
