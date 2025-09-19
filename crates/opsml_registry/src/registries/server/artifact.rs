@@ -36,6 +36,19 @@ impl ServerArtifactRegistry {
         })
     }
 
+    pub async fn get_artifact_key(
+        &self,
+        uid: &str,
+        registry_type: &RegistryType,
+    ) -> Result<ArtifactKey, RegistryError> {
+        let key = self
+            .sql_client
+            .get_artifact_key(uid, &registry_type.to_string())
+            .await?;
+
+        Ok(key)
+    }
+
     pub async fn log_artifact(
         &self,
         space: String,
