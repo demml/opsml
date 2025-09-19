@@ -68,7 +68,7 @@ impl RegistryTestHelper {
         };
 
         tokio::runtime::Runtime::new().unwrap().block_on(async {
-            let script = include_str!("../../tests/populate_db.sql");
+            let script = include_str!("../../../tests/populate_db.sql");
 
             let client = SqlClientEnum::new(&config).await.unwrap();
 

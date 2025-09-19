@@ -1,6 +1,6 @@
 use crate::error::ExperimentError;
 use chrono::Utc;
-use opsml_registry::base::OpsmlRegistry;
+use opsml_registry::registries::experiment::OpsmlExperiment;
 use opsml_state::app_state;
 use opsml_types::{cards::HardwareMetricLogger, contracts::HardwareMetricRequest};
 use std::sync::Arc;
@@ -10,7 +10,7 @@ use tracing::Instrument;
 use tracing::{debug, error, info_span};
 
 async fn insert_metrics(
-    registry: Arc<OpsmlRegistry>,
+    registry: Arc<OpsmlExperiment>,
     hw_logger: &mut HardwareMetricLogger,
     experiment_uid: &str,
 ) -> Result<(), ExperimentError> {
@@ -27,7 +27,7 @@ async fn insert_metrics(
 }
 
 fn start_background_task(
-    registry: Arc<OpsmlRegistry>,
+    registry: Arc<OpsmlExperiment>,
     mut stop_rx: watch::Receiver<()>,
     experiment_uid: String,
 ) -> Result<(), ExperimentError> {
@@ -78,7 +78,7 @@ pub struct HardwareQueue {
 
 impl HardwareQueue {
     pub fn start(
-        registry: Arc<OpsmlRegistry>,
+        registry: Arc<OpsmlExperiment>,
         experiment_uid: String,
     ) -> Result<Self, ExperimentError> {
         let (stop_tx, stop_rx) = watch::channel(());

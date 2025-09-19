@@ -1,10 +1,9 @@
-use crate::base::OpsmlRegistry;
+use crate::error::RegistryError;
+use crate::registries::card::OpsmlCardRegistry;
 use crate::CardRegistries;
 use opsml_cards::{
     traits::OpsmlCard, Card, DataCard, ExperimentCard, ModelCard, PromptCard, ServiceCard,
 };
-
-use crate::error::RegistryError;
 use opsml_crypt::{decrypt_directory, encrypt_directory};
 use opsml_storage::storage_client;
 use opsml_types::contracts::*;
@@ -352,7 +351,7 @@ fn to_option(value: &str) -> Option<String> {
 /// * `RegistryError` - Error validating card
 ///   Will return an error if the card does not exist in the registry
 fn validate_and_update_card(card: &mut Card) -> Result<(), RegistryError> {
-    let reg = OpsmlRegistry::new(card.registry_type.clone())?;
+    let reg = OpsmlCardRegistry::new(card.registry_type.clone())?;
 
     let args = CardQueryArgs {
         uid: to_option(&card.uid),
@@ -443,7 +442,7 @@ pub fn verify_card(
             .unwrap();
 
         if let Some(datacard_uid) = datacard_uid {
-            let data_registry = OpsmlRegistry::new(RegistryType::Data)?;
+            let data_registry = OpsmlCardRegistry::new(RegistryType::Data)?;
             // check if datacard exists in the registry
             let exists = data_registry.check_card_uid(&datacard_uid)?;
 

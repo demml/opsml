@@ -5,8 +5,9 @@ use chrono::{DateTime, Utc};
 use mime_guess::mime;
 use opsml_cards::ExperimentCard;
 use opsml_crypt::{decrypt_directory, encrypt_directory};
-use opsml_registry::base::OpsmlRegistry;
-use opsml_registry::{CardRegistries, CardRegistry};
+use opsml_registry::registries::artifact::OpsmlArtifactRegistry;
+use opsml_registry::registries::experiment::OpsmlExperiment;
+use opsml_registry::CardRegistries;
 use opsml_semver::VersionType;
 use opsml_storage::storage_client;
 use opsml_types::cards::{EvalMetrics, Metrics, Parameters};
@@ -43,7 +44,7 @@ use walkdir::WalkDir;
 pub fn log_artifact(
     lpath: PathBuf,
     rpath: PathBuf,
-    registry: &CardRegistry,
+    registry: &OpsmlExperiment,
     uid: String,
     encryption_key: Vec<u8>,
     artifact_type: ArtifactType,
@@ -183,6 +184,7 @@ fn extract_code(
 pub struct Experiment {
     pub experiment: Py<PyAny>,
     pub registries: CardRegistries,
+    pub experiment_helper: OpsmlExperiment,
     pub hardware_queue: Option<HardwareQueue>,
     uid: String,
     artifact_key: ArtifactKey,
@@ -195,6 +197,7 @@ impl Experiment {
         py: Python,
         experiment: Py<PyAny>,
         registries: CardRegistries,
+        experiment_helper: OpsmlExperiment,
         log_hardware: bool,
         code_dir: Option<PathBuf>,
         experiment_uid: String,
@@ -221,9 +224,9 @@ impl Experiment {
         // start hardware queue if log_hardware is true
         let hardware_queue = match log_hardware {
             true => {
-                // clone the experiment registry
-                let registry = registries.experiment.registry.clone();
-                let arc_reg = Arc::new(registry);
+                // clone the experiment helper
+                let exp_helper = experiment_helper.clone();
+                let arc_reg = Arc::new(exp_helper);
                 let hardware_queue = HardwareQueue::start(arc_reg, experiment_uid.clone())?;
                 Some(hardware_queue)
             }
@@ -237,6 +240,7 @@ impl Experiment {
             hardware_queue,
             uid: experiment_uid,
             artifact_key,
+            experiment_helper,
         })
     }
 
@@ -428,6 +432,7 @@ impl Experiment {
         experiment_uid: Option<&str>,
     ) -> Result<Bound<'py, Experiment>, ExperimentError> {
         debug!("Starting experiment");
+        let helper = slf.experiment_helper.clone();
         let registries = &mut slf.registries;
         let experiment = match experiment_uid {
             Some(uid) => {
@@ -436,6 +441,7 @@ impl Experiment {
                     py,
                     card.unbind(),
                     slf.registries.clone(),
+                    helper.clone(),
                     false,
                     code_dir, // we can always revisit, but it doesn't make sense to log hardware for a completed experiment
                     uid.to_string(),
@@ -448,6 +454,7 @@ impl Experiment {
                     py,
                     card.unbind(),
                     slf.registries.clone(),
+                    helper.clone(),
                     log_hardware,
                     code_dir,
                     uid,
@@ -512,8 +519,6 @@ impl Experiment {
         timestamp: Option<i64>,
         created_at: Option<DateTime<Utc>>,
     ) -> Result<(), ExperimentError> {
-        let registry = &self.registries.experiment.registry;
-
         let metric_request = MetricRequest {
             experiment_uid: self.uid.clone(),
             metrics: vec![Metric {
@@ -526,7 +531,7 @@ impl Experiment {
             }],
         };
 
-        registry
+        self.experiment_helper
             .insert_metrics(&metric_request)
             .map_err(ExperimentError::InsertMetricError)?;
 
@@ -539,14 +544,12 @@ impl Experiment {
     }
 
     pub fn log_metrics(&self, metrics: Vec<Metric>) -> Result<(), ExperimentError> {
-        let registry = &self.registries.experiment.registry;
-
         let metric_request = MetricRequest {
             experiment_uid: self.uid.clone(),
             metrics,
         };
 
-        registry
+        self.experiment_helper
             .insert_metrics(&metric_request)
             .map_err(ExperimentError::InsertMetricError)?;
 
@@ -559,14 +562,12 @@ impl Experiment {
         py: Python<'_>,
         metrics: EvalMetrics,
     ) -> Result<(), ExperimentError> {
-        let registry = &self.registries.experiment.registry;
-
         let metric_request = MetricRequest {
             experiment_uid: self.uid.clone(),
             metrics: metrics.to_vec(),
         };
 
-        registry
+        self.experiment_helper
             .insert_metrics(&metric_request)
             .map_err(ExperimentError::InsertMetricError)?;
 
@@ -585,14 +586,12 @@ impl Experiment {
         name: String,
         value: Bound<'_, PyAny>,
     ) -> Result<(), ExperimentError> {
-        let registry = &self.registries.experiment.registry;
-
         let param_request = ParameterRequest {
             experiment_uid: self.uid.clone(),
             parameters: vec![Parameter::new(name, value)?],
         };
 
-        registry
+        self.experiment_helper
             .insert_parameters(&param_request)
             .map_err(ExperimentError::InsertParameterError)?;
 
@@ -622,14 +621,12 @@ impl Experiment {
             ));
         };
 
-        let registry = &self.registries.experiment.registry;
-
         let param_request = ParameterRequest {
             experiment_uid: self.uid.clone(),
             parameters,
         };
 
-        registry
+        self.experiment_helper
             .insert_parameters(&param_request)
             .map_err(ExperimentError::InsertParameterError)?;
 
@@ -659,7 +656,7 @@ impl Experiment {
         log_artifact(
             lpath,
             rpath,
-            &self.registries.experiment,
+            &self.experiment_helper,
             self.uid.clone(),
             self.artifact_key.get_decrypt_key()?,
             ArtifactType::Generic,
@@ -709,7 +706,7 @@ impl Experiment {
         log_artifact(
             lpath,
             storage_path,
-            &self.registries.experiment,
+            &self.experiment_helper,
             self.uid.clone(),
             self.artifact_key.get_decrypt_key()?,
             ArtifactType::Figure,
@@ -759,7 +756,7 @@ impl Experiment {
         log_artifact(
             tmp_path,
             storage_path,
-            &self.registries.experiment,
+            &self.experiment_helper,
             self.uid.clone(),
             self.artifact_key.get_decrypt_key()?,
             ArtifactType::Figure,
@@ -795,9 +792,7 @@ impl Experiment {
 
                 let mime_type = mime_guess::from_path(relative_path).first_or_octet_stream();
 
-                // create artifact key record
-                // TODO: Explore batching here
-                self.registries.experiment.log_artifact(
+                self.experiment_helper.log_artifact(
                     self.uid.clone(),
                     relative_path.to_string_lossy().to_string(),
                     CommonKwargs::BaseVersion.to_string(),
@@ -945,6 +940,7 @@ pub fn start_experiment<'py>(
     // runtime should be shared across all registries and all child experiments to prevent deadlocks
 
     let mut registries = CardRegistries::new()?;
+    let experiment_helper = OpsmlExperiment::new()?;
     debug!("Experiment environment initialized");
 
     let active_experiment = match experiment_uid {
@@ -954,6 +950,7 @@ pub fn start_experiment<'py>(
                 py,
                 experiment.unbind(),
                 registries,
+                experiment_helper,
                 false,
                 None,
                 uid.to_string(),
@@ -967,6 +964,7 @@ pub fn start_experiment<'py>(
                 py,
                 experiment.unbind(),
                 registries,
+                experiment_helper,
                 log_hardware,
                 code_dir,
                 uid,
@@ -990,8 +988,8 @@ pub fn get_experiment_metrics(
         is_eval: None,
     };
 
-    let registry = OpsmlRegistry::new(RegistryType::Experiment)?;
-    let metrics = registry.get_metrics(&metric_request)?;
+    let exp = OpsmlExperiment::new()?;
+    let metrics = exp.get_metrics(&metric_request)?;
 
     Ok(Metrics { metrics })
 }
@@ -1007,9 +1005,9 @@ pub fn get_experiment_parameters(
         names: names.unwrap_or_default(),
     };
 
-    let registry = OpsmlRegistry::new(RegistryType::Experiment)?;
+    let exp = OpsmlExperiment::new()?;
 
-    let parameters = registry.get_parameters(&param_request)?;
+    let parameters = exp.get_parameters(&param_request)?;
 
     Ok(Parameters { parameters })
 }
@@ -1028,7 +1026,7 @@ pub fn download_artifact(
     // query card for space, name, version
 
     let path_name = path.into_os_string().into_string()?;
-    let registry = OpsmlRegistry::new(RegistryType::Experiment)?;
+    let registry = OpsmlArtifactRegistry::new()?;
 
     // query just the artifacts for the current experiment id
     let query_args = ArtifactQueryArgs {

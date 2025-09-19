@@ -1,6 +1,6 @@
-use crate::async_base::AsyncOpsmlRegistry;
-use crate::base::OpsmlRegistry;
 use crate::error::RegistryError;
+use crate::registries::async_registry::AsyncOpsmlRegistry;
+use crate::registries::card::OpsmlCardRegistry;
 use opsml_cards::Card;
 use opsml_cards::ModelCard;
 use opsml_cards::PromptCard;
@@ -59,7 +59,7 @@ pub fn download_card_from_registry(
     write_path: PathBuf,
 ) -> Result<(), RegistryError> {
     // get registry
-    let registry = OpsmlRegistry::new(args.registry_type.clone())?;
+    let registry = OpsmlCardRegistry::new(args.registry_type.clone())?;
 
     // Steps:
     // 1. Load the ServiceCard from the registry
@@ -92,7 +92,7 @@ pub fn download_service_from_registry(
     args: &CardQueryArgs,
     write_path: &Path,
 ) -> Result<(), RegistryError> {
-    let registry = OpsmlRegistry::new(args.registry_type.clone())?;
+    let registry = OpsmlCardRegistry::new(args.registry_type.clone())?;
 
     let key = registry.get_key(args)?;
 

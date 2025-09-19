@@ -11,7 +11,6 @@ use pyo3::exceptions::PyRuntimeError;
 use pyo3::prelude::*;
 use thiserror::Error;
 use tracing::error;
-
 #[derive(Error, Debug)]
 pub enum RegistryError {
     #[error(transparent)]
@@ -128,6 +127,24 @@ pub enum RegistryError {
 
     #[error("AsyncOpsmlRegistry only supports client mode")]
     AsyncOpsmlRegistryOnlySupportsClientMode,
+
+    #[error("Failed to get create card")]
+    CreateCardError,
+
+    #[error("Failed to get update card")]
+    UpdateCardError,
+
+    #[error("Failed to get delete card")]
+    DeleteCardError,
+
+    #[error("Failed to insert hardware metrics")]
+    InsertHardwareMetricError,
+
+    #[error("Failed to insert metrics")]
+    InsertMetricError,
+
+    #[error("Failed to insert parameters")]
+    InsertParameterError,
 }
 
 impl From<RegistryError> for PyErr {
