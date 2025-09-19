@@ -40,3 +40,31 @@ impl std::str::FromStr for EvaluationType {
         }
     }
 }
+
+#[derive(Debug, Serialize, Deserialize)]
+#[cfg_attr(feature = "server", derive(sqlx::Type))]
+pub enum EvaluationProvider {
+    Opsml,
+    Pydantic,
+}
+
+impl Display for EvaluationProvider {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            EvaluationProvider::Opsml => write!(f, "Opsml"),
+            EvaluationProvider::Pydantic => write!(f, "Pydantic"),
+        }
+    }
+}
+
+impl std::str::FromStr for EvaluationProvider {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "Opsml" => Ok(EvaluationProvider::Opsml),
+            "Pydantic" => Ok(EvaluationProvider::Pydantic),
+            _ => Err(format!("Unknown EvaluationProvider: {}", s)),
+        }
+    }
+}

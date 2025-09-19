@@ -1,8 +1,9 @@
 use crate::error::SqlError;
 use crate::postgres::sql::{
     artifact::ArtifactLogicPostgresClient, audit::AuditLogicPostgresClient,
-    card::CardLogicPostgresClient, experiment::ExperimentLogicPostgresClient,
-    space::SpaceLogicPostgresClient, user::UserLogicPostgresClient,
+    card::CardLogicPostgresClient, evaluation::EvaluationLogicPostgresClient,
+    experiment::ExperimentLogicPostgresClient, space::SpaceLogicPostgresClient,
+    user::UserLogicPostgresClient,
 };
 
 use opsml_settings::config::DatabaseSettings;
@@ -22,6 +23,7 @@ pub struct PostgresClient {
     pub user: UserLogicPostgresClient,
     pub space: SpaceLogicPostgresClient,
     pub audit: AuditLogicPostgresClient,
+    pub eval: EvaluationLogicPostgresClient,
 }
 
 impl PostgresClient {
@@ -43,6 +45,7 @@ impl PostgresClient {
             user: UserLogicPostgresClient::new(&pool),
             space: SpaceLogicPostgresClient::new(&pool),
             audit: AuditLogicPostgresClient::new(&pool),
+            eval: EvaluationLogicPostgresClient::new(&pool),
             pool,
         };
 
@@ -67,18 +70,22 @@ impl PostgresClient {
 mod tests {
 
     use super::*;
-
     use crate::schemas::schema::{
         ArtifactSqlRecord, AuditCardRecord, CardResults, DataCardRecord, ExperimentCardRecord,
         HardwareMetricsRecord, MetricRecord, ModelCardRecord, ParameterRecord, PromptCardRecord,
         ServerCard, ServiceCardRecord, User,
     };
+    use crate::schemas::EvaluationSqlRecord;
+    use crate::traits::EvaluationLogicTrait;
     use crate::traits::{
         ArtifactLogicTrait, AuditLogicTrait, CardLogicTrait, ExperimentLogicTrait, SpaceLogicTrait,
         UserLogicTrait,
     };
     use opsml_settings::config::DatabaseSettings;
-    use opsml_types::contracts::{ArtifactKey, ArtifactQueryArgs, AuditEvent, SpaceNameEvent};
+    use opsml_types::contracts::{
+        evaluation::{EvaluationProvider, EvaluationType},
+        ArtifactKey, ArtifactQueryArgs, AuditEvent, SpaceNameEvent,
+    };
     use opsml_types::CommonKwargs;
     use opsml_types::SqlType;
     use opsml_types::{
@@ -1142,5 +1149,25 @@ mod tests {
 
         assert_eq!(artifacts[0].artifact_type, ArtifactType::Generic);
         assert_eq!(artifacts[1].artifact_type, ArtifactType::Figure);
+    }
+
+    #[tokio::test]
+    async fn test_postgres_insert_eval() {
+        let client = db_client().await;
+        let eval_record = EvaluationSqlRecord::new(
+            "test".to_string(),
+            EvaluationType::LLM,
+            EvaluationProvider::Opsml,
+        );
+        let uid = eval_record.uid.clone();
+        client
+            .eval
+            .insert_evaluation_record(eval_record)
+            .await
+            .unwrap();
+
+        let record = client.eval.get_evaluation_record(&uid).await.unwrap();
+
+        assert_eq!(record.name, "test");
     }
 }

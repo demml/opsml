@@ -24,6 +24,7 @@ impl EvaluationLogicTrait for EvaluationLogicSqliteClient {
             .bind(&event.app_env)
             .bind(&event.name)
             .bind(event.evaluation_type.to_string())
+            .bind(event.evaluation_provider.to_string())
             .execute(&self.pool)
             .await?;
 

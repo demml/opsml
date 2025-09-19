@@ -104,7 +104,7 @@ mod tests {
         ExperimentLogicTrait, SpaceLogicTrait, UserLogicTrait,
     };
     use opsml_settings::config::DatabaseSettings;
-    use opsml_types::contracts::evaluation::EvaluationType;
+    use opsml_types::contracts::evaluation::{EvaluationProvider, EvaluationType};
     use opsml_types::contracts::{ArtifactKey, ArtifactQueryArgs, AuditEvent, SpaceNameEvent};
     use opsml_types::SqlType;
     use opsml_types::{
@@ -1149,7 +1149,11 @@ mod tests {
         };
 
         let client = SqliteClient::new(&config).await.unwrap();
-        let eval_record = EvaluationSqlRecord::new("test".to_string(), EvaluationType::LLM);
+        let eval_record = EvaluationSqlRecord::new(
+            "test".to_string(),
+            EvaluationType::LLM,
+            EvaluationProvider::Opsml,
+        );
         let uid = eval_record.uid.clone();
         client
             .eval

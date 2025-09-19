@@ -2,7 +2,7 @@ use crate::error::SqlError;
 use chrono::{DateTime, Utc};
 use opsml_semver::error::VersionError;
 use opsml_types::cards::{CardTable, ParameterValue};
-use opsml_types::contracts::evaluation::EvaluationType;
+use opsml_types::contracts::evaluation::{EvaluationProvider, EvaluationType};
 use opsml_types::contracts::ArtifactType;
 use opsml_types::contracts::{
     ArtifactRecord, AuditCardClientRecord, CardEntry, CardRecord, DataCardClientRecord,
@@ -979,10 +979,15 @@ pub struct EvaluationSqlRecord {
     pub app_env: String,
     pub name: String,
     pub evaluation_type: EvaluationType,
+    pub evaluation_provider: EvaluationProvider,
 }
 
 impl EvaluationSqlRecord {
-    pub fn new(name: String, evaluation_type: EvaluationType) -> Self {
+    pub fn new(
+        name: String,
+        evaluation_type: EvaluationType,
+        evaluation_provider: EvaluationProvider,
+    ) -> Self {
         let created_at = get_utc_datetime();
         let app_env = env::var("APP_ENV").unwrap_or_else(|_| "development".to_string());
         let uid = create_uuid7();
@@ -993,6 +998,7 @@ impl EvaluationSqlRecord {
             app_env,
             name,
             evaluation_type,
+            evaluation_provider,
         }
     }
 }
