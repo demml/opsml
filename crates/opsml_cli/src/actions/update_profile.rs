@@ -1,6 +1,6 @@
 use crate::cli::arg::ScouterArgs;
 use crate::error::CliError;
-use opsml_registry::base::OpsmlRegistry;
+use opsml_registry::registries::card::OpsmlCardRegistry;
 use opsml_types::RegistryType;
 use pyo3::prelude::*;
 use scouter_client::ProfileStatusRequest;
@@ -22,7 +22,7 @@ pub fn update_drift_profile_status(args: &ScouterArgs) -> Result<(), CliError> {
         deactivate_others: args.deactivate_others,
     };
 
-    let client = OpsmlRegistry::new(RegistryType::Model)?;
+    let client = OpsmlCardRegistry::new(RegistryType::Model)?;
 
     client.update_drift_profile_status(&request)?;
     Ok(())
