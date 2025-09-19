@@ -6,5 +6,3 @@ pub mod artifact;
 pub mod card;
 #[cfg(feature = "server")]
 pub mod experiment;
-#[cfg(feature = "server")]
-pub mod registry;
