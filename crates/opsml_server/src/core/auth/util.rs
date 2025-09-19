@@ -5,10 +5,9 @@ use anyhow::Result;
 /// Route for debugging information
 use axum::{http::StatusCode, Json};
 use opsml_auth::sso::types::UserInfo;
-use opsml_sql::base::SqlClient;
 use opsml_sql::schemas::User;
+use opsml_sql::traits::*;
 use opsml_types::RequestType;
-
 use std::sync::Arc;
 use tracing::{error, info};
 

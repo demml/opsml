@@ -2,9 +2,9 @@ use crate::core::error::{internal_server_error, OpsmlServerError};
 use anyhow::Result;
 /// Route for debugging information
 use axum::{http::StatusCode, Json};
-use opsml_sql::base::SqlClient;
 use opsml_sql::enums::client::SqlClientEnum;
 use opsml_sql::schemas::User;
+use opsml_sql::traits::UserLogicTrait;
 use tracing::error;
 
 /// Resuable function to get a user from the database

@@ -1,4 +1,4 @@
-use crate::base::add_version_bounds;
+use crate::utils::add_version_bounds;
 
 use crate::error::SqlError;
 use opsml_types::{
@@ -60,9 +60,9 @@ const DELETE_ARTIFACT_KEY_SQL: &str = include_str!("sql/artifact/delete_artifact
 // audit events
 const INSERT_AUDIT_EVENT_SQL: &str = include_str!("sql/audit/insert_audit_event.sql");
 
-pub struct MySQLQueryHelper;
+pub struct MySqlQueryHelper;
 
-impl MySQLQueryHelper {
+impl MySqlQueryHelper {
     pub fn get_uid_query(table: &CardTable) -> String {
         format!("SELECT uid FROM {table} WHERE uid = ?")
     }
@@ -531,7 +531,7 @@ impl MySQLQueryHelper {
     ) -> Result<String, SqlError> {
         // subquery 1 - query_cards_query
 
-        let query_cards_query = MySQLQueryHelper::get_query_cards_query(table, query_args)?;
+        let query_cards_query = MySqlQueryHelper::get_query_cards_query(table, query_args)?;
 
         let query = format!(
             "WITH query_cards AS (
