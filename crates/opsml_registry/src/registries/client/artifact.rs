@@ -8,19 +8,12 @@ use tracing::error;
 
 #[derive(Debug, Clone)]
 pub struct ClientArtifactRegistry {
-    registry_type: RegistryType,
     pub api_client: Arc<OpsmlApiClient>,
 }
 
 impl ClientArtifactRegistry {
-    pub fn new(
-        registry_type: RegistryType,
-        api_client: Arc<OpsmlApiClient>,
-    ) -> Result<Self, RegistryError> {
-        Ok(Self {
-            registry_type,
-            api_client,
-        })
+    pub fn new(api_client: Arc<OpsmlApiClient>) -> Result<Self, RegistryError> {
+        Ok(Self { api_client })
     }
 }
 
@@ -29,11 +22,11 @@ impl Registry for ClientArtifactRegistry {
         &self.api_client
     }
     fn table_name(&self) -> String {
-        CardTable::from_registry_type(&self.registry_type).to_string()
+        CardTable::from_registry_type(&RegistryType::Artifact).to_string()
     }
 
     fn registry_type(&self) -> &RegistryType {
-        &self.registry_type
+        &RegistryType::Artifact
     }
 }
 
