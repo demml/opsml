@@ -13,10 +13,11 @@ pub struct CreateEvaluationResponse {
     pub key: ArtifactKey,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Default)]
 #[cfg_attr(feature = "server", derive(sqlx::Type))]
 pub enum EvaluationType {
     LLM,
+    #[default]
     Other,
 }
 
@@ -41,9 +42,10 @@ impl std::str::FromStr for EvaluationType {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Default)]
 #[cfg_attr(feature = "server", derive(sqlx::Type))]
 pub enum EvaluationProvider {
+    #[default]
     Opsml,
     Pydantic,
 }

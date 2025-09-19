@@ -3,9 +3,9 @@ CREATE TABLE IF NOT EXISTS opsml_evaluation_registry (
     uid TEXT PRIMARY KEY,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     app_env TEXT DEFAULT 'development',
-    name TEXT NOT NULL,
-    evaluation_type TEXT NOT NULL,
-    evaluation_provider TEXT NOT NULL
+    name TEXT,
+    evaluation_type TEXT,
+    evaluation_provider TEXT
 );
 
 CREATE INDEX idx_opsml_evaluation_registry_name ON opsml_evaluation_registry (name);
