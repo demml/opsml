@@ -57,6 +57,10 @@ const GET_ARTIFACT_KEY_FROM_STORAGE_PATH_SQL: &str =
     include_str!("sql/artifact/get_artifact_key_from_storage_path.sql");
 const DELETE_ARTIFACT_KEY_SQL: &str = include_str!("sql/artifact/delete_artifact_key.sql");
 
+// evaluation
+const INSERT_EVALUATION_RECORD_SQL: &str = include_str!("sql/evaluation/insert_evaluation.sql");
+const GET_EVALUATION_RECORD_SQL: &str = include_str!("sql/evaluation/get_evaluation.sql");
+
 // audit events
 const INSERT_AUDIT_EVENT_SQL: &str = include_str!("sql/audit/insert_audit_event.sql");
 
@@ -578,5 +582,13 @@ impl MySqlQueryHelper {
 
     pub fn get_delete_space_name_record_query() -> String {
         DELETE_SPACE_NAME_RECORD_SQL.to_string()
+    }
+
+    pub fn get_evaluation_record_insert_query() -> String {
+        INSERT_EVALUATION_RECORD_SQL.to_string()
+    }
+
+    pub fn get_evaluation_record_query() -> String {
+        GET_EVALUATION_RECORD_SQL.to_string()
     }
 }
