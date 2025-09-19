@@ -50,6 +50,7 @@ const UPDATE_SERVICECARD_SQL: &str = include_str!("sql/card/update_servicecard.s
 
 // evaluation
 const INSERT_EVALUATION_SQL: &str = include_str!("sql/evaluation/insert_evaluation.sql");
+const GET_EVALUATION_RECORD_SQL: &str = include_str!("sql/evaluation/get_evaluation.sql");
 
 // artifact keys
 const INSERT_ARTIFACT_KEY_SQL: &str = include_str!("sql/artifact/insert_artifact_key.sql");
@@ -588,5 +589,9 @@ impl SqliteQueryHelper {
 
     pub fn get_evaluation_record_insert_query() -> String {
         INSERT_EVALUATION_SQL.to_string()
+    }
+
+    pub fn get_evaluation_record_query() -> String {
+        GET_EVALUATION_RECORD_SQL.to_string()
     }
 }
