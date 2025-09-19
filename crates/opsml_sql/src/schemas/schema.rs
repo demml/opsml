@@ -972,7 +972,7 @@ impl ArtifactSqlRecord {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct EvaluationSqlRecord {
     pub uid: String,
     pub created_at: DateTime<Utc>,
@@ -980,6 +980,33 @@ pub struct EvaluationSqlRecord {
     pub name: String,
     pub evaluation_type: EvaluationType,
     pub evaluation_provider: EvaluationProvider,
+}
+
+/// Implementing custom FromRow because Postgres isn't handling the enums properly when
+/// using sqlx::FromRow derive macro
+impl<'r, R> FromRow<'r, R> for EvaluationSqlRecord
+where
+    R: sqlx::Row,
+    String: sqlx::Decode<'r, R::Database> + sqlx::Type<R::Database>,
+    DateTime<Utc>: sqlx::Decode<'r, R::Database> + sqlx::Type<R::Database>,
+    usize: sqlx::ColumnIndex<R>,
+    &'r str: sqlx::ColumnIndex<R>,
+{
+    fn from_row(row: &'r R) -> Result<Self, sqlx::Error> {
+        let evaluation_type_str: String = row.try_get("evaluation_type")?;
+        let evaluation_type = EvaluationType::from_str(&evaluation_type_str).unwrap_or_default();
+        let evaluation_provider_str: String = row.try_get("evaluation_provider")?;
+        let evaluation_provider =
+            EvaluationProvider::from_str(&evaluation_provider_str).unwrap_or_default();
+        Ok(EvaluationSqlRecord {
+            uid: row.try_get("uid")?,
+            created_at: row.try_get("created_at")?,
+            app_env: row.try_get("app_env")?,
+            name: row.try_get("name")?,
+            evaluation_type,
+            evaluation_provider,
+        })
+    }
 }
 
 impl EvaluationSqlRecord {
