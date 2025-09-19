@@ -972,7 +972,7 @@ impl ArtifactSqlRecord {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Serialize, Deserialize, FromRow)]
 pub struct EvaluationSqlRecord {
     pub uid: String,
     pub created_at: DateTime<Utc>,
