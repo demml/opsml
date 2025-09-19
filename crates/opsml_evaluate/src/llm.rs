@@ -18,11 +18,12 @@ use std::sync::Arc;
 /// * `data`: A list of data samples to evaluate.
 /// * `metrics`: A list of evaluation metrics to use.
 /// * `config`: Optional evaluation configuration settings.
-#[pyo3(signature = (records, metrics, config=None))]
+#[pyo3(signature = (records, metrics, config=None, log=false))]
 pub fn evaluate_llm(
     records: Vec<LLMEvalRecord>,
     metrics: Vec<LLMEvalMetric>,
     config: Option<EvaluationConfig>,
+    log: bool,
 ) -> Result<LLMEvalResults, EvaluationError> {
     let runtime = app_state().start_runtime();
     let config = Arc::new(config.unwrap_or_default());
@@ -37,6 +38,13 @@ pub fn evaluate_llm(
     // Post processing includes calculating embedding means, similarities, clustering, and histograms
     if config.needs_post_processing() {
         results.finalize(&config)?;
+    }
+
+    if log {
+        // create evaluation record
+        // should return the artifact key
+        // encrypt
+        // upload
     }
 
     Ok(results)
