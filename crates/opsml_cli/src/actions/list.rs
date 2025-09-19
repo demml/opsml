@@ -2,7 +2,7 @@ use crate::cli::arg::IntoQueryArgs;
 use crate::cli::arg::ListCards;
 use crate::error::CliError;
 use opsml_colors::Colorize;
-use opsml_registry::base::OpsmlRegistry;
+use opsml_registry::registries::card::OpsmlCardRegistry;
 use opsml_types::contracts::CardList;
 use opsml_types::RegistryType;
 
@@ -26,7 +26,7 @@ pub fn list_cards(args: &ListCards, registry_type: RegistryType) -> Result<(), C
     let query_args = args.into_query_args(registry_type)?;
 
     // get registry
-    let registry = OpsmlRegistry::new(query_args.registry_type.clone())?;
+    let registry = OpsmlCardRegistry::new(query_args.registry_type.clone())?;
 
     // list cards
     let cards = registry.list_cards(&query_args)?;
