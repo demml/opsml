@@ -34,6 +34,8 @@ pub enum Routes {
     CardRegistryPage,
     CardRegistryVersionPage,
 
+    Evaluation,
+
     DeleteFiles,
     Files,
     FileContent,
@@ -103,6 +105,9 @@ impl Routes {
             Routes::ExperimentMetricNames => "experiment/metrics/names",
             Routes::ExperimentHardwareMetrics => "experiment/hardware/metrics",
             Routes::ExperimentParameters => "experiment/parameters",
+
+            // Evaluation Routes
+            Routes::Evaluation => "evaluation",
 
             // Scouter Auth Routes
             Routes::ScouterAuthLogin => "scouter/auth/login",

@@ -971,6 +971,31 @@ impl ArtifactSqlRecord {
     }
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+pub struct EvaluationSqlRecord {
+    pub uid: String,
+    pub created_at: DateTime<Utc>,
+    pub app_env: String,
+    pub name: String,
+    pub evaluation_type: String,
+}
+
+impl EvaluationSqlRecord {
+    pub fn new(name: String, evaluation_type: String) -> Self {
+        let created_at = get_utc_datetime();
+        let app_env = env::var("APP_ENV").unwrap_or_else(|_| "development".to_string());
+        let uid = create_uuid7();
+
+        EvaluationSqlRecord {
+            uid,
+            created_at,
+            app_env,
+            name,
+            evaluation_type,
+        }
+    }
+}
+
 // create enum that takes vec of cards
 // TODO: There should also be a client side enum that matches this (don't want to install opsml_sql on client)
 #[derive(Debug, Serialize, Deserialize)]
