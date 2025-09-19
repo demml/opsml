@@ -142,6 +142,9 @@ mod tests {
 
             DELETE
             FROM opsml_space;
+
+            DELETE
+            FROM opsml_evaluation_registry;
             "#,
         )
         .fetch_all(pool)

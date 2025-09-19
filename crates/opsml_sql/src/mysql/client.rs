@@ -2,8 +2,9 @@ use crate::{
     error::SqlError,
     mysql::sql::{
         artifact::ArtifactLogicMySqlClient, audit::AuditLogicMySqlClient,
-        card::CardLogicMySqlClient, experiment::ExperimentLogicMySqlClient,
-        space::SpaceLogicMySqlClient, user::UserLogicMySqlClient,
+        card::CardLogicMySqlClient, evaluation::EvaluationLogicMySqlClient,
+        experiment::ExperimentLogicMySqlClient, space::SpaceLogicMySqlClient,
+        user::UserLogicMySqlClient,
     },
 };
 use opsml_settings::config::DatabaseSettings;
@@ -24,6 +25,7 @@ pub struct MySqlClient {
     pub user: UserLogicMySqlClient,
     pub space: SpaceLogicMySqlClient,
     pub audit: AuditLogicMySqlClient,
+    pub eval: EvaluationLogicMySqlClient,
 }
 
 impl MySqlClient {
@@ -41,6 +43,7 @@ impl MySqlClient {
             user: UserLogicMySqlClient::new(&pool),
             space: SpaceLogicMySqlClient::new(&pool),
             audit: AuditLogicMySqlClient::new(&pool),
+            eval: EvaluationLogicMySqlClient::new(&pool),
             pool,
         };
 
@@ -70,12 +73,17 @@ mod tests {
         HardwareMetricsRecord, MetricRecord, ModelCardRecord, ParameterRecord, PromptCardRecord,
         ServerCard, ServiceCardRecord, User,
     };
+    use crate::schemas::EvaluationSqlRecord;
+    use crate::traits::EvaluationLogicTrait;
     use crate::traits::{
         ArtifactLogicTrait, AuditLogicTrait, CardLogicTrait, ExperimentLogicTrait, SpaceLogicTrait,
         UserLogicTrait,
     };
     use opsml_settings::config::DatabaseSettings;
-    use opsml_types::contracts::{ArtifactKey, ArtifactQueryArgs, AuditEvent, SpaceNameEvent};
+    use opsml_types::contracts::{
+        evaluation::{EvaluationProvider, EvaluationType},
+        ArtifactKey, ArtifactQueryArgs, AuditEvent, SpaceNameEvent,
+    };
     use opsml_types::CommonKwargs;
     use opsml_types::SqlType;
     use opsml_types::{
@@ -133,6 +141,9 @@ mod tests {
 
             DELETE
             FROM opsml_space;
+
+            DELETE
+            FROM opsml_evaluation_registry;
             "#,
         )
         .fetch_all(pool)
@@ -1145,5 +1156,25 @@ mod tests {
 
         assert_eq!(artifacts[0].artifact_type, ArtifactType::Generic);
         assert_eq!(artifacts[1].artifact_type, ArtifactType::Figure);
+    }
+
+    #[tokio::test]
+    async fn test_mysql_insert_eval() {
+        let client = db_client().await;
+        let eval_record = EvaluationSqlRecord::new(
+            "test".to_string(),
+            EvaluationType::LLM,
+            EvaluationProvider::Opsml,
+        );
+        let uid = eval_record.uid.clone();
+        client
+            .eval
+            .insert_evaluation_record(eval_record)
+            .await
+            .unwrap();
+
+        let record = client.eval.get_evaluation_record(&uid).await.unwrap();
+
+        assert_eq!(record.name, "test");
     }
 }
