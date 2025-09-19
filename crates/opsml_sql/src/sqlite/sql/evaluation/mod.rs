@@ -29,4 +29,14 @@ impl EvaluationLogicTrait for EvaluationLogicSqliteClient {
 
         Ok(())
     }
+
+    async fn get_evaluation_record(&self, uid: &str) -> Result<EvaluationSqlRecord, SqlError> {
+        let query = SqliteQueryHelper::get_evaluation_record_query();
+        let record: EvaluationSqlRecord = sqlx::query_as(&query)
+            .bind(uid)
+            .fetch_one(&self.pool)
+            .await?;
+
+        Ok(record)
+    }
 }

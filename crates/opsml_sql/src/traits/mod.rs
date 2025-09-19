@@ -152,4 +152,6 @@ pub trait AuditLogicTrait {
 #[async_trait]
 pub trait EvaluationLogicTrait {
     async fn insert_evaluation_record(&self, event: EvaluationSqlRecord) -> Result<(), SqlError>;
+
+    async fn get_evaluation_record(&self, uid: &str) -> Result<EvaluationSqlRecord, SqlError>;
 }

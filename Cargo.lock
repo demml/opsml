@@ -4543,6 +4543,7 @@ dependencies = [
  "semver",
  "serde",
  "serde_json",
+ "sqlx",
  "sysinfo",
  "tabled",
  "thiserror 2.0.16",

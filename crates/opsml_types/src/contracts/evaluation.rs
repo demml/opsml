@@ -14,6 +14,7 @@ pub struct CreateEvaluationResponse {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[cfg_attr(feature = "server", derive(sqlx::Type))]
 pub enum EvaluationType {
     LLM,
     Other,
@@ -24,6 +25,18 @@ impl Display for EvaluationType {
         match self {
             EvaluationType::LLM => write!(f, "LLM"),
             EvaluationType::Other => write!(f, "Other"),
+        }
+    }
+}
+
+impl std::str::FromStr for EvaluationType {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "LLM" => Ok(EvaluationType::LLM),
+            "Other" => Ok(EvaluationType::Other),
+            _ => Err(format!("Unknown EvaluationType: {}", s)),
         }
     }
 }
