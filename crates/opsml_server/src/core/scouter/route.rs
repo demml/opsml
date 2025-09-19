@@ -15,7 +15,7 @@ use axum::{
 };
 use opsml_auth::permission::UserPermissions;
 use opsml_events::AuditContext;
-use opsml_sql::base::SqlClient;
+use opsml_sql::traits::ArtifactLogicTrait;
 use opsml_types::api::RequestType;
 use opsml_types::contracts::Operation;
 use opsml_types::contracts::ResourceType;

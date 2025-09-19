@@ -1,13 +1,12 @@
 use crate::error::SqlError;
 
 /// this file contains helper logic for generating sql queries across different databases
-use crate::base::add_version_bounds;
+use crate::utils::add_version_bounds;
 use opsml_types::{
     cards::CardTable,
     contracts::{ArtifactQueryArgs, CardQueryArgs},
 };
 use opsml_utils::utils::is_valid_uuidv7;
-
 // user
 const INSERT_USER_SQL: &str = include_str!("sql/user/insert_user.sql");
 const GET_USER_SQL: &str = include_str!("sql/user/get_user.sql");

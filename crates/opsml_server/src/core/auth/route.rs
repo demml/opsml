@@ -19,7 +19,7 @@ use axum::{
     Json, Router,
 };
 use opsml_crypt::{generate_code_challenge, generate_code_verifier};
-use opsml_sql::base::SqlClient;
+use opsml_sql::traits::*;
 use opsml_types::JwtToken;
 use opsml_utils::create_uuid7;
 use password_auth::verify_password;
