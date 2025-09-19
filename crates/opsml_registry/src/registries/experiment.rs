@@ -1,38 +1,39 @@
 use crate::error::RegistryError;
+use crate::registries::client::artifact::ArtifactRegistry;
 use crate::registries::client::base::Registry;
-use crate::registries::client::experiment::ClientExperimentRegistry;
+use crate::registries::client::experiment::ClientExperiment;
 use crate::registries::client::experiment::ExperimentRegistry;
 use opsml_settings::config::OpsmlMode;
 use opsml_state::{app_state, get_api_client};
 use opsml_types::cards::{HardwareMetrics, Metric, Parameter};
 use opsml_types::contracts::{
-    GetHardwareMetricRequest, GetMetricRequest, GetParameterRequest, HardwareMetricRequest,
-    MetricRequest, ParameterRequest,
+    ArtifactType, CreateArtifactResponse, GetHardwareMetricRequest, GetMetricRequest,
+    GetParameterRequest, HardwareMetricRequest, MetricRequest, ParameterRequest,
 };
 use opsml_types::*;
 use tracing::{error, instrument};
 
 #[cfg(feature = "server")]
-use crate::registries::server::experiment::ServerExperimentRegistry;
+use crate::registries::server::experiment::ServerExperiment;
 
-#[derive(Debug)]
-pub enum OpsmlExperimentRegistry {
-    Client(ClientExperimentRegistry),
+#[derive(Debug, Clone)]
+pub enum OpsmlExperiment {
+    Client(ClientExperiment),
 
     #[cfg(feature = "server")]
-    Server(ServerExperimentRegistry),
+    Server(ServerExperiment),
 }
 
-impl OpsmlExperimentRegistry {
+impl OpsmlExperiment {
     #[instrument(skip_all)]
-    pub fn new(registry_type: RegistryType) -> Result<Self, RegistryError> {
+    pub fn new() -> Result<Self, RegistryError> {
         let state = &app_state();
         let mode = &*state.mode()?;
 
         match mode {
             OpsmlMode::Client => {
                 let api_client = get_api_client().clone();
-                let client_registry = ClientExperimentRegistry::new(registry_type, api_client)?;
+                let client_registry = ClientExperiment::new(api_client)?;
                 Ok(Self::Client(client_registry))
             }
             OpsmlMode::Server => {
@@ -46,9 +47,8 @@ impl OpsmlExperimentRegistry {
                     let db_settings = config.database_settings.clone();
 
                     // TODO (steven): Why clone config when we could use app state directly in server registry?
-                    let server_registry = state.block_on(async {
-                        ServerExperimentRegistry::new(registry_type, settings, db_settings).await
-                    })?;
+                    let server_registry = state
+                        .block_on(async { ServerExperiment::new(settings, db_settings).await })?;
 
                     Ok(Self::Server(server_registry))
                 }
@@ -82,19 +82,7 @@ impl OpsmlExperimentRegistry {
         metrics: HardwareMetricRequest,
     ) -> Result<(), RegistryError> {
         match self {
-            Self::Client(client_registry) => {
-                // Clone the client_registry to avoid lifetime issues
-                let client_registry = client_registry.clone();
-                let _ = app_state()
-                    .runtime
-                    .spawn_blocking(move || client_registry.insert_hardware_metrics(&metrics))
-                    .await
-                    .map_err(|e| {
-                        error!("Failed to insert hardware metrics: {e}");
-                        RegistryError::from(e)
-                    })?;
-                Ok(())
-            }
+            Self::Client(client_registry) => client_registry.insert_hardware_metrics(&metrics),
             #[cfg(feature = "server")]
             Self::Server(server_registry) => {
                 server_registry.insert_hardware_metrics(&metrics).await
@@ -155,6 +143,31 @@ impl OpsmlExperimentRegistry {
             Self::Server(server_registry) => {
                 app_state().block_on(async { server_registry.get_parameters(parameters).await })
             }
+        }
+    }
+
+    pub fn log_artifact(
+        &self,
+        space: String,
+        name: String,
+        version: String,
+        media_type: String,
+        artifact_type: ArtifactType,
+    ) -> Result<CreateArtifactResponse, RegistryError> {
+        match self {
+            Self::Client(client_registry) => Ok(client_registry.log_artifact(
+                space,
+                name,
+                version,
+                media_type,
+                artifact_type,
+            )?),
+            #[cfg(feature = "server")]
+            Self::Server(server_registry) => app_state().block_on(async {
+                server_registry
+                    .log_artifact(space, name, version, media_type, artifact_type)
+                    .await
+            }),
         }
     }
 }

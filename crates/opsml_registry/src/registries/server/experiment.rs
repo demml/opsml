@@ -2,6 +2,7 @@ use crate::error::RegistryError;
 use opsml_settings::config::OpsmlStorageSettings;
 use opsml_settings::DatabaseSettings;
 use opsml_sql::enums::client::get_sql_client;
+use opsml_sql::enums::utils::get_next_version;
 use opsml_sql::{enums::client::SqlClientEnum, schemas::*, traits::*};
 use opsml_types::{
     cards::{
@@ -15,32 +16,29 @@ use sqlx::types::Json as SqlxJson;
 use std::sync::Arc;
 
 #[derive(Debug, Clone)]
-pub struct ServerExperimentRegistry {
+pub struct ServerExperiment {
     sql_client: Arc<SqlClientEnum>,
-    pub registry_type: RegistryType,
     pub table_name: CardTable,
     pub storage_settings: OpsmlStorageSettings,
 }
 
-impl ServerExperimentRegistry {
+impl ServerExperiment {
     pub fn mode(&self) -> RegistryMode {
         RegistryMode::Server
     }
 
     pub fn table_name(&self) -> String {
-        CardTable::from_registry_type(&self.registry_type).to_string()
+        self.table_name.to_string()
     }
     pub async fn new(
-        registry_type: RegistryType,
         storage_settings: OpsmlStorageSettings,
         database_settings: DatabaseSettings,
     ) -> Result<Self, RegistryError> {
         let sql_client = Arc::new(get_sql_client(&database_settings).await?);
-        let table_name = CardTable::from_registry_type(&registry_type);
+        let table_name = CardTable::from_registry_type(&RegistryType::Experiment);
 
         Ok(Self {
             sql_client,
-            registry_type,
             table_name,
             storage_settings,
         })
@@ -66,6 +64,47 @@ impl ServerExperimentRegistry {
             bytes_sent: metrics.metrics.network.bytes_sent,
         };
         Ok(self.sql_client.insert_hardware_metrics(&record).await?)
+    }
+
+    pub async fn log_artifact(
+        &self,
+        space: String,
+        name: String,
+        version: String,
+        media_type: String,
+        artifact_type: ArtifactType,
+    ) -> Result<CreateArtifactResponse, RegistryError> {
+        let version_request = CardVersionRequest {
+            space: space.clone(),
+            name: name.clone(),
+            version: Some(version.clone()),
+            pre_tag: None,
+            build_tag: None,
+            version_type: opsml_semver::VersionType::Major,
+        };
+
+        let version = get_next_version(
+            self.sql_client.clone(),
+            &CardTable::Artifact,
+            version_request,
+        )
+        .await?;
+
+        let artifact_record =
+            ArtifactSqlRecord::new(space, name, version, media_type, artifact_type.to_string());
+
+        self.sql_client
+            .insert_artifact_record(&artifact_record)
+            .await?;
+
+        let response = CreateArtifactResponse {
+            uid: artifact_record.uid.clone(),
+            space: artifact_record.space,
+            name: artifact_record.name,
+            version: artifact_record.version,
+        };
+
+        Ok(response)
     }
 
     pub async fn get_hardware_metrics(
