@@ -45,7 +45,7 @@ pub fn evaluate_llm(
     if log {
         // create evaluation record
         // should return the artifact key
-        // encrypt
+        // encrypt (serialize all data)
         // upload
     }
 
