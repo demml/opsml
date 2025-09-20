@@ -1,5 +1,7 @@
 use crate::error::EvaluationError;
 use opsml_state::app_state;
+use opsml_types::contracts::evaluation::LLMEvalTaskResultRecord;
+use opsml_utils::get_utc_datetime;
 use pyo3::prelude::*;
 use scouter_client::{
     async_evaluate_llm, workflow_from_eval_metrics, EvaluationConfig, LLMEvalMetric, LLMEvalRecord,
@@ -48,4 +50,39 @@ pub fn evaluate_llm(
     }
 
     Ok(results)
+}
+
+/// Helper function for creating LLM evaluation records from results
+/// # Arguments
+/// * `evaluation_uid` - The UID of the evaluation
+/// * `evaluation_name` - The name of the evaluation
+/// * `results` - The results of the evaluation
+/// # Returns
+/// * `Vec<LLMEvalTaskResultRecord>` - A vector of LLM evaluation
+fn create_llm_evaluation_records(
+    evaluation_uid: String,
+    evaluation_name: String,
+    results: &LLMEvalResults,
+) -> Result<Vec<LLMEvalTaskResultRecord>, EvaluationError> {
+    let mut records = vec![];
+    for (i, task) in results.results.values().enumerate() {
+        let metrics = serde_json::to_string(&task.metrics)?;
+        let mean_embeddings = serde_json::to_string(&task.mean_embeddings)?;
+        let similarity_scores = serde_json::to_string(&task.similarity_scores)?;
+        let cluster_id = results
+            .array_dataset
+            .as_ref()
+            .and_then(|arr| arr.clusters.get(i).cloned());
+        records.push(LLMEvalTaskResultRecord {
+            evaluation_uid: evaluation_uid.clone(),
+            id: task.id.clone(),
+            evaluation_name: evaluation_name.clone(),
+            created_at: get_utc_datetime(),
+            metrics,
+            mean_embeddings,
+            similarity_scores,
+            cluster_id,
+        });
+    }
+    Ok(records)
 }
