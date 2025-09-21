@@ -127,8 +127,6 @@ impl ServiceConfig {
 pub struct Metadata {
     pub description: String,
     pub language: String,
-    #[serde(rename = "type")]
-    pub service_type: String,
     pub tags: Vec<String>,
 }
 
@@ -153,6 +151,8 @@ pub struct ServiceSpec {
     pub name: String,
     #[serde(flatten)]
     pub space_config: SpaceConfig,
+    #[serde(rename = "type")]
+    pub service_type: ServiceType,
     pub metadata: Metadata,
     pub service: ServiceConfig,
     pub deploy: Vec<DeploymentConfig>,
@@ -204,10 +204,10 @@ mod tests {
         let yaml_content = r#"
 name: test-service
 team: my-team
+type: API
 metadata:
   description: Test service
   language: python
-  type: ml-service
   tags: [ml, test]
 
 service:
