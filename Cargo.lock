@@ -4412,6 +4412,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "opsml-service"
+version = "3.0.0-rc.17"
+dependencies = [
+ "opsml-types",
+ "opsml-version",
+ "serde",
+ "tempfile",
+ "thiserror 2.0.16",
+]
+
+[[package]]
 name = "opsml-settings"
 version = "3.0.0-rc.17"
 dependencies = [

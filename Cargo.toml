@@ -32,6 +32,7 @@ opsml-experiment = { path = "crates/opsml_experiment" }
 opsml-mocks = { path = "crates/opsml_mocks" }
 opsml-server = { path = "crates/opsml_server" }
 opsml-semver = { path = "crates/opsml_semver" }
+opsml-service = { path = "crates/opsml_service" }
 opsml-settings = { path = "crates/opsml_settings" }
 opsml-sql = { path = "crates/opsml_sql" }
 opsml-state = { path = "crates/opsml_state" }
