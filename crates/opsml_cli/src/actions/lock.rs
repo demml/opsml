@@ -313,11 +313,10 @@ pub fn install_service(path: PathBuf, write_path: Option<PathBuf>) -> Result<(),
 
 /// Will create an `opsml.lock` file based on the service configuration specified within the opsmlspec.yml file.
 #[pyfunction]
-#[pyo3(signature = (path=None))]
-pub fn lock_service(path: Option<PathBuf>) -> Result<(), CliError> {
+pub fn lock_service(path: PathBuf) -> Result<(), CliError> {
     debug!("Locking service with path: {:?}", path);
 
-    let service = ServiceSpec::from_path(path.as_deref(), filename)?;
+    let service = ServiceSpec::from_path(&path)?;
 
     // Create a lock file
     let lock_file = LockFile {

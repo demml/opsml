@@ -4,7 +4,7 @@
 ###################################################################################################
 
 from opsml.cli import (
-    lock_project,
+    lock_service,
     install_service,
     generate_key,
     update_drift_profile_status,
@@ -82,7 +82,7 @@ def run_experiment(
 
 
 @pytest.mark.skipif(WINDOWS_EXCLUDE, reason="skipping")
-def test_pyproject_app_lock_project(
+def test_pyproject_app_lock_service(
     random_forest_classifier: SklearnModel,
     chat_prompt: Prompt,
     example_dataframe: pd.DataFrame,
@@ -93,7 +93,7 @@ def test_pyproject_app_lock_project(
 
     # The test will:
     1. Create initial experiment and register a model and prompt
-    2. Create a lock file via lock_project form pyproject.toml (cli: opsml lock)
+    2. Create a lock file via lock_service form pyproject.toml (cli: opsml lock)
     3. Check if the lock file was created
     4. Install the app via install_service (cli: opsml install app)
     5. Check if the opsml_app directory was created and all artifacts were downloaded
@@ -109,7 +109,7 @@ def test_pyproject_app_lock_project(
         # run experiment to populate registry
         run_experiment(random_forest_classifier, chat_prompt, example_dataframe)
 
-        lock_project(CURRENT_DIRECTORY)
+        lock_service(CURRENT_DIRECTORY)
 
         # Check if the lock file was created
         lock_file = CURRENT_DIRECTORY / "opsml.lock"
@@ -149,8 +149,8 @@ def test_pyproject_app_lock_project(
 
         assert len(cards) == 2
 
-        # lock the project again
-        lock_project(CURRENT_DIRECTORY)
+        # lock the service
+        lock_service(CURRENT_DIRECTORY)
 
         # Check if the lock file was created
         lock_file = CURRENT_DIRECTORY / "opsml.lock"

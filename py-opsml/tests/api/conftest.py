@@ -4,7 +4,7 @@
 ###################################################################################################
 
 from opsml.cli import (
-    lock_project,
+    lock_service,
     install_service,
 )  # type: ignore
 from pathlib import Path
@@ -135,7 +135,7 @@ def run_experiment() -> None:
 def create_artifacts() -> Generator[Tuple[Path, Path], None, None]:
     with OpsmlTestServer(True, CURRENT_DIRECTORY):
         run_experiment()
-        lock_project(CURRENT_DIRECTORY)
+        lock_service(CURRENT_DIRECTORY)
 
         lock_file = CURRENT_DIRECTORY / "opsml.lock"
         assert lock_file.exists()
