@@ -43,8 +43,8 @@ pub struct DriftConfig {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Card {
     pub alias: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub space: Option<String>,
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub space: String,
     pub name: String,
     pub version: Option<String>,
     #[serde(rename = "type")]
@@ -64,11 +64,10 @@ impl Card {
     }
 
     /// Get the effective space for this card, falling back to the provided default space
-    pub fn get_effective_space(&self, default_space: &str) -> String {
-        self.space
-            .as_ref()
-            .unwrap_or(&default_space.to_string())
-            .clone()
+    pub fn set_space(&mut self, service_space: &str) {
+        if self.space.is_empty() {
+            self.space = service_space.to_string();
+        }
     }
 }
 
@@ -80,40 +79,21 @@ pub struct ServiceConfig {
 }
 
 impl ServiceConfig {
-    pub fn validate(&self, default_space: &str) -> Result<(), ServiceError> {
-        if let Some(cards) = &self.cards {
+    pub fn validate(&mut self, service_space: &str) -> Result<(), ServiceError> {
+        if let Some(cards) = &mut self.cards {
             for card in cards {
                 card.validate()?;
-                // Ensure the card has an effective space
-                let _ = card.get_effective_space(default_space);
+                // need to set the space to overall service space if not set
+                card.set_space(service_space);
             }
         }
         Ok(())
-    }
-
-    pub fn get_cards(&self, default_space: &str) -> Vec<Card> {
-        if let Some(cards) = &self.cards {
-            cards
-                .iter()
-                .map(|card| {
-                    let mut card_clone = card.clone();
-                    if card_clone.space.is_none() {
-                        card_clone.space = Some(default_space.to_string());
-                    }
-                    card_clone
-                })
-                .collect()
-        } else {
-            vec![]
-        }
     }
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Metadata {
     pub description: String,
-    #[serde(flatten)]
-    pub space_config: SpaceConfig,
     pub language: String,
     #[serde(rename = "type")]
     pub service_type: String,
@@ -139,12 +119,17 @@ impl SpaceConfig {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ServiceSpec {
     pub name: String,
+    #[serde(flatten)]
+    pub space_config: SpaceConfig,
     pub metadata: Metadata,
     pub service: ServiceConfig,
     pub deploy: Vec<DeploymentConfig>,
 }
 
 impl ServiceSpec {
+    fn validate(&mut self) -> Result<(), ServiceError> {
+        self.service.validate(self.space_config.get_space())
+    }
     /// Load a ServiceSpec from a YAML file at the given path
     /// # Arguments
     /// * `path` - Path to the YAML file
@@ -160,7 +145,8 @@ impl ServiceSpec {
     /// # Returns
     /// * `ServiceSpec` - The loaded service specification
     pub fn from_yaml(yaml_str: &str) -> Result<Self, ServiceError> {
-        let spec: ServiceSpec = serde_yaml::from_str(yaml_str)?;
+        let mut spec: ServiceSpec = serde_yaml::from_str(yaml_str)?;
+        spec.validate()?;
         Ok(spec)
     }
 
@@ -185,9 +171,9 @@ mod tests {
     fn test_service_spec_with_team() {
         let yaml_content = r#"
 name: test-service
+team: my-team
 metadata:
   description: Test service
-  team: my-team
   language: python
   type: ml-service
   tags: [ml, test]
@@ -228,9 +214,9 @@ deploy:
         assert_eq!(spec.space(), "my-team");
 
         let model_card = spec.get_card("test_model").unwrap();
-        assert_eq!(model_card.space.as_ref().unwrap(), "my-team");
+        assert_eq!(model_card.space, "my-team");
 
         let prompt_card = spec.get_card("test_prompt").unwrap();
-        assert_eq!(prompt_card.space.as_ref().unwrap(), "custom-space");
+        assert_eq!(prompt_card.space, "custom-space");
     }
 }
