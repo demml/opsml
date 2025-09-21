@@ -59,7 +59,7 @@ pub fn evaluate_llm(
 /// * `results` - The results of the evaluation
 /// # Returns
 /// * `Vec<LLMEvalTaskResultRecord>` - A vector of LLM evaluation
-fn create_llm_evaluation_records(
+fn _create_llm_evaluation_records(
     evaluation_uid: String,
     evaluation_name: String,
     results: &LLMEvalResults,
