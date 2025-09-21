@@ -219,46 +219,23 @@ impl ServiceSpec {
     ///           - If the path is a directory, searches for `opsmlspec.yml`.
     /// # Returns
     /// * `ServiceSpec` - The loaded service specification
-    pub fn from_path(path: Option<&Path>) -> Result<Self, ServiceError> {
+    pub fn from_path(path: &Path) -> Result<Self, ServiceError> {
         // We are returning both the service spec and the root path where the spec was found
         // This is useful for (1) loading the spec file and (2) determine which root path a spec belongs to
         // This is import for the CLI where we create a lock file in the root path
-        let (service_path, root_path) = match path {
-            Some(p) => {
-                if p.is_file() {
-                    // (1) If user provides a file path, just return that file
-                    let root_path = p
-                        .parent()
-                        .ok_or_else(|| {
-                            ServiceError::MissingServiceFile("Invalid file path".to_string())
-                        })?
-                        .to_path_buf();
-                    (p.to_path_buf(), root_path)
-                } else if p.is_dir() {
-                    // (2) If user provides a directory, search for our the opsmlspec.yml file in that directory or its parents
-                    let root_path = p
-                        .ancestors()
-                        .find(|dir| dir.join(DEFAULT_SERVICE_FILENAME).is_file())
-                        .ok_or_else(|| {
-                            ServiceError::MissingServiceFile(DEFAULT_SERVICE_FILENAME.to_string())
-                        })?
-                        .to_path_buf();
-
-                    let service_path = root_path.join(DEFAULT_SERVICE_FILENAME);
-                    (service_path, root_path)
-                } else {
-                    // (3) If user provides an invalid path, treat as potential file path and let the error bubble up
-                    Err(ServiceError::MissingServiceFile(format!(
-                        "Invalid file path: {}",
-                        p.display()
-                    )))?
-                }
-            }
-            None => {
-                // (4) If no path is provided, start from current directory and search upwards for opsmlspec.yml
-                let current_dir = std::env::current_dir().map_err(ServiceError::CurrentDirError)?;
-
-                let root_path = current_dir
+        let (service_path, root_path) = {
+            if path.is_file() {
+                // (1) If user provides a file path, just return that file
+                let root_path = path
+                    .parent()
+                    .ok_or_else(|| {
+                        ServiceError::MissingServiceFile("Invalid file path".to_string())
+                    })?
+                    .to_path_buf();
+                (path.to_path_buf(), root_path)
+            } else if path.is_dir() {
+                // (2) If user provides a directory, search for our the opsmlspec.yml file in that directory or its parents
+                let root_path = path
                     .ancestors()
                     .find(|dir| dir.join(DEFAULT_SERVICE_FILENAME).is_file())
                     .ok_or_else(|| {
@@ -268,6 +245,12 @@ impl ServiceSpec {
 
                 let service_path = root_path.join(DEFAULT_SERVICE_FILENAME);
                 (service_path, root_path)
+            } else {
+                // (3) If user provides an invalid path, treat as potential file path and let the error bubble up
+                Err(ServiceError::MissingServiceFile(format!(
+                    "Invalid file path: {}",
+                    path.display()
+                )))?
             }
         };
 
@@ -319,7 +302,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_service_spec_with_team() {
+    fn test_service_spec_with_api() {
         let yaml_content = r#"
 name: test-service
 team: my-team
@@ -372,7 +355,7 @@ deploy:
     }
 
     #[test]
-    fn test_service_spec_with_space() {
+    fn test_service_spec_with_mcp() {
         let yaml_content = r#"
 name: test-service
 team: my-team

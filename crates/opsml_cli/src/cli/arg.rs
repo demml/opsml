@@ -7,6 +7,12 @@ use opsml_utils::clean_string;
 use pyo3::{pyclass, pymethods};
 use scouter_client::DriftType;
 
+fn default_spec_path() -> String {
+    let path = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
+    let joined = path.join("opsmlspec.yml");
+    joined.to_string_lossy().to_string()
+}
+
 #[allow(clippy::wrong_self_convention)]
 pub trait IntoQueryArgs {
     fn into_query_args(&self, registry_type: RegistryType) -> Result<CardQueryArgs, CliError>;
@@ -14,9 +20,9 @@ pub trait IntoQueryArgs {
 
 #[derive(Args)]
 pub struct LockArgs {
-    /// Path to the spec file. Defaults to opsmlspec.yml
-    #[arg(long = "path", default_value = "opsmlspec.yml")]
-    pub path: String,
+    /// Path to the spec file. Defaults to `{current_dir}/opsmlspec.yml`
+    #[arg(long = "path", default_value = default_spec_path())]
+    pub path: PathBuf,
 }
 
 #[derive(Args)]

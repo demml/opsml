@@ -3,7 +3,7 @@
 ###################################################################################################
 
 from opsml.cli import (
-    lock_project,
+    lock_service,
     install_service,
 )  # type: ignore
 from opsml.mock import MockConfig
@@ -92,7 +92,7 @@ def test_pyproject_app(
         # run experiment to populate registry
         run_experiment(random_forest_classifier, chat_prompt, example_dataframe)
 
-        lock_project(CURRENT_DIRECTORY)
+        lock_service(CURRENT_DIRECTORY)
 
         # Check if the lock file was created
         lock_file = CURRENT_DIRECTORY / "opsml.lock"
