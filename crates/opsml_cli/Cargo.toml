@@ -3,6 +3,7 @@ name = "opsml-cli"
 version = { workspace = true }
 edition = { workspace = true }
 repository = { workspace = true }
+description = "OpsML CLI - Command line interface for OpsML"
 
 [dependencies]
 opsml-cards = { workspace = true }
