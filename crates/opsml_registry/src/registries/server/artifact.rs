@@ -30,7 +30,6 @@ impl ServerArtifactRegistry {
 
         Ok(Self {
             sql_client,
-
             table_name,
             storage_settings,
         })
