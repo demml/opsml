@@ -75,7 +75,7 @@ pub enum CliError {
     SerdeJsonError(#[from] serde_json::Error),
 
     #[error(transparent)]
-    ServiceError(#[from] ServiceError),
+    ServiceError(#[from] opsml_service::error::ServiceError),
 }
 
 impl From<CliError> for PyErr {

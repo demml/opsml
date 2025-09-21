@@ -13,6 +13,13 @@ pub trait IntoQueryArgs {
 }
 
 #[derive(Args)]
+pub struct LockArgs {
+    /// Path to the spec file. Defaults to opsmlspec.yml
+    #[arg(long = "path", default_value = "opsmlspec.yml")]
+    pub path: String,
+}
+
+#[derive(Args)]
 pub struct ListCards {
     /// space name
     #[arg(long = "space")]

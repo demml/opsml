@@ -19,7 +19,7 @@ use cli::commands::{ScouterCommands, UiCommands};
 use opsml_colors::Colorize;
 use opsml_types::RegistryType;
 
-pub use actions::lock::lock_project;
+pub use actions::lock::lock_service;
 
 pub const LOGO_TEXT: &str = "
  ██████  ██████  ███████ ███    ███ ██             ██████ ██      ██ 
@@ -87,9 +87,9 @@ pub fn run_cli(args: Vec<String>) -> anyhow::Result<()> {
 
             Ok(())
         }
-        Some(Commands::Lock) => {
+        Some(Commands::Lock(args)) => {
             println!("Locking project...");
-            lock_project(None, None).context("Failed to lock project")?;
+            lock_service(Some(args.path), None).context("Failed to lock project")?;
             Ok(())
         }
 
