@@ -1,0 +1,19 @@
+[package]
+name = "opsml-service"
+version = { workspace = true }
+edition = { workspace = true }
+repository = { workspace = true }
+description = "OpsML Service - Functionality for creating and managing OpsML services"
+
+
+[lib]
+doctest = false
+
+[dependencies]
+opsml-types = { workspace = true }
+opsml-version = { workspace = true }
+serde = { workspace = true }
+thiserror = { workspace = true }
+
+[dev-dependencies]
+tempfile = { workspace = true }
