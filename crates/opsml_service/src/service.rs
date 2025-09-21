@@ -3,7 +3,9 @@ use opsml_types::RegistryType;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt::Display;
-use std::path::Path;
+use std::path::{Path, PathBuf};
+
+const DEFAULT_SERVICE_FILENAME: &str = "opsmlspec.yml";
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Hash)]
 pub enum McpTransport {
@@ -144,7 +146,7 @@ pub struct ServiceConfig {
 }
 
 impl ServiceConfig {
-    pub fn validate(
+    fn validate(
         &mut self,
         service_space: &str,
         service_type: &ServiceType,
@@ -203,9 +205,42 @@ pub struct ServiceSpec {
     pub metadata: Metadata,
     pub service: ServiceConfig,
     pub deploy: Vec<DeploymentConfig>,
+
+    #[serde(skip)]
+    pub root_path: PathBuf,
 }
 
 impl ServiceSpec {
+    /// Load a ServiceSpec from a file path, searching parent directories if necessary.
+    /// This method is used within the CLI to locate the service specification file.
+    /// # Arguments
+    /// * `path` - Optional path to start searching from. If None, uses current
+    /// directory.
+    /// * `filename` - Optional filename to look for. Defaults to "opsmlspec.yml".
+    /// # Returns
+    /// * `ServiceSpec` - The loaded service specification  
+    pub fn from_path(path: Option<&Path>, filename: Option<&str>) -> Result<Self, ServiceError> {
+        let service_name = filename.unwrap_or(DEFAULT_SERVICE_FILENAME);
+
+        let path = match path {
+            Some(p) => p,
+            None => &std::env::current_dir().map_err(ServiceError::CurrentDirError)?,
+        };
+
+        let root_path = path
+            .ancestors()
+            .find(|p| p.join(service_name).is_file())
+            .ok_or(ServiceError::MissingServiceFile(service_name.to_string()))?
+            .to_path_buf();
+
+        let service_path = root_path.join(service_name);
+
+        let mut spec = ServiceSpec::from_yaml_file(&service_path)?;
+        spec.root_path = root_path;
+
+        Ok(spec)
+    }
+
     fn validate(&mut self) -> Result<(), ServiceError> {
         self.service
             .validate(self.space_config.get_space(), &self.service_type)

@@ -4153,6 +4153,7 @@ dependencies = [
  "opsml-crypt",
  "opsml-registry",
  "opsml-semver",
+ "opsml-service",
  "opsml-state",
  "opsml-storage",
  "opsml-toml",
