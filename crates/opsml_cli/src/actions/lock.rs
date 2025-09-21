@@ -196,7 +196,7 @@ fn lock_service_card(
 
     // Handle service creation if it doesn't exist
     if service.is_none() {
-        let service_card = register_service_card(&config, &registries.service)?;
+        let service_card = register_service_card(&config, &registries.service, space, name)?;
 
         // Postprocess the service card if needed (e.g., activate drift profiles)
         postprocess_service_card(spec_cards, &service_card, &registries.service)?;
@@ -219,7 +219,7 @@ fn lock_service_card(
     let lock_entry = match needs_refresh {
         true => {
             // If refresh is needed, register the service again
-            let service_card = register_service_card(&config, &registries.service)?;
+            let service_card = register_service_card(&config, &registries.service, space, name)?;
 
             // Postprocess the service card if needed (e.g., activate drift profiles)
             postprocess_service_card(spec_cards, &service_card, &registries.service)?;

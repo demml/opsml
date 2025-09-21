@@ -4,7 +4,7 @@ use opsml_cards::{Card, ServiceCard};
 pub use opsml_registry::utils::validate_service_cards;
 use opsml_registry::CardRegistry;
 use opsml_semver::VersionType;
-use opsml_toml::toml::ServiceConfig;
+use opsml_service::ServiceConfig;
 
 /// Create a new service card from an app configuration
 ///
@@ -19,7 +19,11 @@ use opsml_toml::toml::ServiceConfig;
 /// * The app configuration is invalid
 /// * The cards in the app configuration are invalid
 /// * The service card cannot be created
-pub fn create_service_card(app: &ServiceConfig) -> Result<ServiceCard, CliError> {
+pub fn create_service_card(
+    app: &ServiceConfig,
+    space: &str,
+    name: &str,
+) -> Result<ServiceCard, CliError> {
     // extract cards into Vec<Card>
 
     let mut cards = app
@@ -44,8 +48,8 @@ pub fn create_service_card(app: &ServiceConfig) -> Result<ServiceCard, CliError>
 
     // Create a new service card
     ServiceCard::rust_new(
-        app.space.clone(),
-        app.name.clone(),
+        space.to_string(),
+        name.to_string(),
         cards,
         app.version.as_deref(),
     )
@@ -55,9 +59,11 @@ pub fn create_service_card(app: &ServiceConfig) -> Result<ServiceCard, CliError>
 pub fn register_service_card(
     config: &ServiceConfig,
     registry: &CardRegistry,
+    space: &str,
+    name: &str,
 ) -> Result<ServiceCard, CliError> {
     // Validate the app configuration
-    let mut service = create_service_card(config)?;
+    let mut service = create_service_card(config, space, name)?;
     registry.register_card_rs(&mut service, VersionType::Minor)?;
 
     Ok(service)
