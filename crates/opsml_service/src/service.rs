@@ -2,7 +2,39 @@ use crate::error::ServiceError;
 use opsml_types::RegistryType;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::fmt::Display;
 use std::path::Path;
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "UPPERCASE")]
+pub enum ServiceType {
+    Api,
+    Mcp,
+    Agent,
+}
+
+impl Display for ServiceType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ServiceType::Api => write!(f, "API"),
+            ServiceType::Mcp => write!(f, "MCP"),
+            ServiceType::Agent => write!(f, "AGENT"),
+        }
+    }
+}
+
+impl std::str::FromStr for ServiceType {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.to_uppercase().as_str() {
+            "API" => Ok(ServiceType::Api),
+            "MCP" => Ok(ServiceType::Mcp),
+            "AGENT" => Ok(ServiceType::Agent),
+            _ => Err(format!("Unknown ServiceType: {}", s)),
+        }
+    }
+}
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct GpuConfig {
@@ -151,7 +183,7 @@ impl ServiceSpec {
     }
 
     pub fn space(&self) -> &str {
-        self.metadata.space_config.get_space()
+        self.space_config.get_space()
     }
 
     pub fn get_card(&self, alias: &str) -> Option<&Card> {
