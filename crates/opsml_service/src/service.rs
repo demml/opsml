@@ -214,28 +214,64 @@ impl ServiceSpec {
     /// Load a ServiceSpec from a file path, searching parent directories if necessary.
     /// This method is used within the CLI to locate the service specification file.
     /// # Arguments
-    /// * `path` - Optional path to start searching from. If None, uses current
-    /// directory.
-    /// * `filename` - Optional filename to look for. Defaults to "opsmlspec.yml".
+    /// * `path` - Optional path to the spec file or directory. If None, uses current directory.
+    ///           - If the path is a file, loads that file directly.
+    ///           - If the path is a directory, searches for `opsmlspec.yml`.
     /// # Returns
-    /// * `ServiceSpec` - The loaded service specification  
-    pub fn from_path(path: Option<&Path>, filename: Option<&str>) -> Result<Self, ServiceError> {
-        let service_name = filename.unwrap_or(DEFAULT_SERVICE_FILENAME);
+    /// * `ServiceSpec` - The loaded service specification
+    pub fn from_path(path: Option<&Path>) -> Result<Self, ServiceError> {
+        // We are returning both the service spec and the root path where the spec was found
+        // This is useful for (1) loading the spec file and (2) determine which root path a spec belongs to
+        // This is import for the CLI where we create a lock file in the root path
+        let (service_path, root_path) = match path {
+            Some(p) => {
+                if p.is_file() {
+                    // (1) If user provides a file path, just return that file
+                    let root_path = p
+                        .parent()
+                        .ok_or_else(|| {
+                            ServiceError::MissingServiceFile("Invalid file path".to_string())
+                        })?
+                        .to_path_buf();
+                    (p.to_path_buf(), root_path)
+                } else if p.is_dir() {
+                    // (2) If user provides a directory, search for our the opsmlspec.yml file in that directory or its parents
+                    let root_path = p
+                        .ancestors()
+                        .find(|dir| dir.join(DEFAULT_SERVICE_FILENAME).is_file())
+                        .ok_or_else(|| {
+                            ServiceError::MissingServiceFile(DEFAULT_SERVICE_FILENAME.to_string())
+                        })?
+                        .to_path_buf();
 
-        let path = match path {
-            Some(p) => p,
-            None => &std::env::current_dir().map_err(ServiceError::CurrentDirError)?,
+                    let service_path = root_path.join(DEFAULT_SERVICE_FILENAME);
+                    (service_path, root_path)
+                } else {
+                    // (3) If user provides an invalid path, treat as potential file path and let the error bubble up
+                    Err(ServiceError::MissingServiceFile(format!(
+                        "Invalid file path: {}",
+                        p.display()
+                    )))?
+                }
+            }
+            None => {
+                // (4) If no path is provided, start from current directory and search upwards for opsmlspec.yml
+                let current_dir = std::env::current_dir().map_err(ServiceError::CurrentDirError)?;
+
+                let root_path = current_dir
+                    .ancestors()
+                    .find(|dir| dir.join(DEFAULT_SERVICE_FILENAME).is_file())
+                    .ok_or_else(|| {
+                        ServiceError::MissingServiceFile(DEFAULT_SERVICE_FILENAME.to_string())
+                    })?
+                    .to_path_buf();
+
+                let service_path = root_path.join(DEFAULT_SERVICE_FILENAME);
+                (service_path, root_path)
+            }
         };
 
-        let root_path = path
-            .ancestors()
-            .find(|p| p.join(service_name).is_file())
-            .ok_or(ServiceError::MissingServiceFile(service_name.to_string()))?
-            .to_path_buf();
-
-        let service_path = root_path.join(service_name);
-
-        let mut spec = ServiceSpec::from_yaml_file(&service_path)?;
+        let mut spec = Self::from_yaml_file(&service_path)?;
         spec.root_path = root_path;
 
         Ok(spec)
