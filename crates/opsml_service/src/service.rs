@@ -5,33 +5,59 @@ use std::collections::HashMap;
 use std::fmt::Display;
 use std::path::Path;
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
-#[serde(rename_all = "UPPERCASE")]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Hash)]
+pub enum McpTransport {
+    #[serde(alias = "HTTP", alias = "http")]
+    Http,
+    #[serde(alias = "STDIO", alias = "stdio")]
+    Stdio,
+}
+
+impl Display for McpTransport {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            McpTransport::Http => write!(f, "Http"),
+            McpTransport::Stdio => write!(f, "Stdio"),
+        }
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Hash)]
+pub enum McpCapability {
+    #[serde(alias = "RESOURCES", alias = "resources")]
+    Resources,
+    #[serde(alias = "TOOLS", alias = "tools")]
+    Tools,
+    #[serde(alias = "PROMPTS", alias = "prompts")]
+    Prompts,
+}
+
+impl Display for McpCapability {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            McpCapability::Resources => write!(f, "Resources"),
+            McpCapability::Tools => write!(f, "Tools"),
+            McpCapability::Prompts => write!(f, "Prompts"),
+        }
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Hash)]
 pub enum ServiceType {
+    #[serde(alias = "API", alias = "api")]
     Api,
+    #[serde(alias = "MCP", alias = "mcp")]
     Mcp,
+    #[serde(alias = "AGENT", alias = "agent")]
     Agent,
 }
 
 impl Display for ServiceType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            ServiceType::Api => write!(f, "API"),
-            ServiceType::Mcp => write!(f, "MCP"),
-            ServiceType::Agent => write!(f, "AGENT"),
-        }
-    }
-}
-
-impl std::str::FromStr for ServiceType {
-    type Err = String;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s.to_uppercase().as_str() {
-            "API" => Ok(ServiceType::Api),
-            "MCP" => Ok(ServiceType::Mcp),
-            "AGENT" => Ok(ServiceType::Agent),
-            _ => Err(format!("Unknown ServiceType: {}", s)),
+            ServiceType::Api => write!(f, "Api"),
+            ServiceType::Mcp => write!(f, "Mcp"),
+            ServiceType::Agent => write!(f, "Agent"),
         }
     }
 }
@@ -104,20 +130,41 @@ impl Card {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct McpConfig {
+    pub capabilities: Vec<McpCapability>,
+    pub transport: McpTransport,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ServiceConfig {
     pub version: Option<String>,
     pub cards: Option<Vec<Card>>,
     pub write_dir: Option<String>,
+    pub mcp: Option<McpConfig>,
 }
 
 impl ServiceConfig {
-    pub fn validate(&mut self, service_space: &str) -> Result<(), ServiceError> {
+    pub fn validate(
+        &mut self,
+        service_space: &str,
+        service_type: &ServiceType,
+    ) -> Result<(), ServiceError> {
         if let Some(cards) = &mut self.cards {
             for card in cards {
                 card.validate()?;
                 // need to set the space to overall service space if not set
                 card.set_space(service_space);
             }
+        }
+
+        // if service type is MCP, ensure MCP config is provided
+        match service_type {
+            ServiceType::Mcp => {
+                if self.mcp.is_none() {
+                    return Err(ServiceError::MissingMCPConfig);
+                }
+            }
+            _ => {}
         }
         Ok(())
     }
@@ -160,7 +207,8 @@ pub struct ServiceSpec {
 
 impl ServiceSpec {
     fn validate(&mut self) -> Result<(), ServiceError> {
-        self.service.validate(self.space_config.get_space())
+        self.service
+            .validate(self.space_config.get_space(), &self.service_type)
     }
     /// Load a ServiceSpec from a YAML file at the given path
     /// # Arguments
@@ -204,7 +252,7 @@ mod tests {
         let yaml_content = r#"
 name: test-service
 team: my-team
-type: API
+type: Api
 metadata:
   description: Test service
   language: python
@@ -250,5 +298,50 @@ deploy:
 
         let prompt_card = spec.get_card("test_prompt").unwrap();
         assert_eq!(prompt_card.space, "custom-space");
+    }
+
+    #[test]
+    fn test_service_spec_with_space() {
+        let yaml_content = r#"
+name: test-service
+team: my-team
+type: Mcp
+metadata:
+  description: Test service
+  language: python
+  tags: [ml, test]
+
+service:
+  version: "1.0.0"
+  write_dir: "opsml_app/test_service"
+  mcp:
+    capabilities: [Resources, Tools]
+    transport: Http
+
+deploy:
+  - environment: production
+    provider: gcp
+    location: [us-central1]
+    endpoints: [https://test.example.com]
+    resources:
+      cpu: 4
+      memory: 16Gi
+      storage: 100Gi
+    links:
+      logging: https://logging.example.com
+"#;
+
+        let spec = ServiceSpec::from_yaml(yaml_content).unwrap();
+        assert_eq!(spec.name, "test-service");
+        assert_eq!(spec.space(), "my-team");
+        //assert mcp type
+        assert_eq!(spec.service_type, ServiceType::Mcp);
+
+        let mcp_config = spec.service.mcp.as_ref().unwrap();
+        assert_eq!(mcp_config.transport, McpTransport::Http);
+
+        // check capabilities
+        assert!(mcp_config.capabilities.contains(&McpCapability::Resources));
+        assert!(mcp_config.capabilities.contains(&McpCapability::Tools));
     }
 }

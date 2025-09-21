@@ -5,6 +5,9 @@ pub enum ServiceError {
     #[error("Drift configuration is only valid for model cards")]
     InvalidConfiguration,
 
+    #[error("Missing MCP configuration for MCP service type")]
+    MissingMCPConfig,
+
     #[error(transparent)]
     IoError(#[from] std::io::Error),
 
