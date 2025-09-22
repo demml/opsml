@@ -5235,6 +5235,7 @@ dependencies = [
  "opsml-registry",
  "opsml-semver",
  "opsml-server",
+ "opsml-service",
  "opsml-settings",
  "opsml-state",
  "opsml-storage",
