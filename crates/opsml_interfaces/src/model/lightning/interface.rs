@@ -5,8 +5,8 @@ use crate::error::{ModelInterfaceError, OnnxError};
 use crate::model::torch::TorchSampleData;
 use crate::model::ModelInterface;
 use crate::types::{FeatureSchema, ProcessorType};
+use crate::OnnxConverter;
 use crate::OnnxSession;
-use crate::{lightning, OnnxConverter};
 use crate::{DataProcessor, ModelLoadKwargs, ModelSaveKwargs};
 use opsml_types::{
     CommonKwargs, DataType, ModelInterfaceType, ModelType, SaveName, Suffix, TaskType,
@@ -16,7 +16,6 @@ use pyo3::types::PyDict;
 use pyo3::IntoPyObjectExt;
 use pyo3::PyTraverseError;
 use pyo3::PyVisit;
-use serde::de;
 use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
