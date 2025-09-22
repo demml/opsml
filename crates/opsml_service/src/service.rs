@@ -1,10 +1,10 @@
 use crate::error::ServiceError;
 use opsml_types::RegistryType;
+use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt::Display;
 use std::path::{Path, PathBuf};
-
 const DEFAULT_SERVICE_FILENAME: &str = "opsmlspec.yml";
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Hash)]
@@ -45,6 +45,7 @@ impl Display for McpCapability {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Hash)]
+#[pyclass]
 pub enum ServiceType {
     #[serde(alias = "API", alias = "api")]
     Api,
@@ -202,9 +203,9 @@ pub struct ServiceSpec {
     pub space_config: SpaceConfig,
     #[serde(rename = "type")]
     pub service_type: ServiceType,
-    pub metadata: Metadata,
+    pub metadata: Option<Metadata>,
     pub service: ServiceConfig,
-    pub deploy: Vec<DeploymentConfig>,
+    pub deploy: Option<Vec<DeploymentConfig>>,
 
     #[serde(skip)]
     pub root_path: PathBuf,

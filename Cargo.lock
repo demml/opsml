@@ -4120,6 +4120,7 @@ dependencies = [
  "opsml-colors",
  "opsml-crypt",
  "opsml-interfaces",
+ "opsml-service",
  "opsml-state",
  "opsml-storage",
  "opsml-toml",
@@ -4424,6 +4425,7 @@ version = "3.0.0-rc.17"
 dependencies = [
  "opsml-types",
  "opsml-version",
+ "pyo3",
  "serde",
  "serde_yaml",
  "tempfile",
