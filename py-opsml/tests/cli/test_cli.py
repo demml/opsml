@@ -118,26 +118,23 @@ def test_pyproject_app_lock_service(
         # download the assets
         install_service(CURRENT_DIRECTORY, CURRENT_DIRECTORY)
 
-        # check if opsml_app was created
-        opsml_app = CURRENT_DIRECTORY / "opsml_app"
-        assert opsml_app.exists()
+        # check if opsml_service was created
+        opsml_service = CURRENT_DIRECTORY / "opsml_service"
+        assert opsml_service.exists()
 
-        # check if the opsml_app contains the assets
-        assert (opsml_app / "app1").exists()
-        assert (opsml_app / "app2").exists()
-        assert (opsml_app / "app3").exists()
+        # check if the opsml_service contains the assets
+        assert (opsml_service).exists()
 
-        # try loading each service
-        for app in ["app1", "app2", "app3"]:
-            service = ServiceCard.from_path(opsml_app / app)
-            assert service is not None
-            assert service["my_model"].model is not None
-            assert service["my_model"].version == "1.0.0"
-            assert service["my_prompt"].prompt is not None
-            assert service["my_prompt"].version == "1.0.0"
+        # try loading service
+        service = ServiceCard.from_path(opsml_service)
+        assert service is not None
+        assert service["my_model"].model is not None
+        assert service["my_model"].version == "1.0.0"
+        assert service["my_prompt"].prompt is not None
+        assert service["my_prompt"].version == "1.0.0"
 
-        ## delete the opsml_app and lock file
-        shutil.rmtree(opsml_app)
+        ## delete the opsml_service and lock file
+        shutil.rmtree(opsml_service)
         os.remove(lock_file)
 
         # write new experiment to the registry
@@ -160,20 +157,19 @@ def test_pyproject_app_lock_service(
         # re-install the app
         install_service(CURRENT_DIRECTORY, CURRENT_DIRECTORY)
 
-        ## check if opsml_app was created
-        opsml_app = CURRENT_DIRECTORY / "opsml_app"
-        assert opsml_app.exists()
+        ## check if opsml_service was created
+        opsml_service = CURRENT_DIRECTORY / "opsml_service"
+        assert opsml_service.exists()
 
-        for app in ["app1", "app2", "app3"]:
-            service = ServiceCard.from_path(opsml_app / app)
-            assert service is not None
-            assert service["my_model"].model is not None
-            assert service["my_model"].version == "1.1.0"
-            assert service["my_prompt"].prompt is not None
-            assert service["my_prompt"].version == "1.1.0"
+        service = ServiceCard.from_path(opsml_service)
+        assert service is not None
+        assert service["my_model"].model is not None
+        assert service["my_model"].version == "1.1.0"
+        assert service["my_prompt"].prompt is not None
+        assert service["my_prompt"].version == "1.1.0"
 
-        ## delete the opsml_app and lock file
-        shutil.rmtree(opsml_app)
+        ## delete the opsml_service and lock file
+        shutil.rmtree(opsml_service)
         os.remove(lock_file)
 
 

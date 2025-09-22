@@ -143,23 +143,23 @@ def create_artifacts() -> Generator[Tuple[Path, Path], None, None]:
         # download the assets
         install_service(CURRENT_DIRECTORY, CURRENT_DIRECTORY)
 
-        opsml_app = CURRENT_DIRECTORY / "opsml_app"
-        assert opsml_app.exists()
+        opsml_service = CURRENT_DIRECTORY / "opsml_service"
+        assert opsml_service.exists()
 
         # Check if the lock file was created
         lock_file = CURRENT_DIRECTORY / "opsml.lock"
         assert lock_file.exists()
 
-        yield opsml_app, lock_file
+        yield opsml_service, lock_file
 
 
-def create_app(opsml_app: Path) -> FastAPI:
+def create_app(opsml_service: Path) -> FastAPI:
     config = HTTPConfig()
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):
         app_state = AppState.from_path(
-            path=opsml_app,
+            path=opsml_service,
             transport_config=config,
         )
         app.state.app_state = app_state
