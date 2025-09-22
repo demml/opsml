@@ -312,7 +312,9 @@ fn handle_existing_service_lock(
     }
 }
 
-/// Creates a lock entry for a service
+/// Creates a lock entry for a service. This is the main function that handles locking logic.
+/// If the service does not exist, it creates a new one. If it does exist, it checks if a refresh is needed.
+/// As refresh is needed if any of the cards in the spec have a newer version than those in the existing service.
 /// # Arguments
 /// * `spec` - Service specification containing configuration
 /// * `space` - Service space/namespace
