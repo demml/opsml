@@ -41,8 +41,9 @@ impl CatBoostModel {
     ) -> Result<(Self, ModelInterface), ModelInterfaceError> {
         let mut model_name = CommonKwargs::Undefined.to_string();
         // check if model is base estimator for sklearn validation
+        let catboost = py.import("catboost")?;
         if let Some(model) = model {
-            let boost = py.import("catboost")?.getattr("CatBoost")?;
+            let boost = catboost.getattr("CatBoost")?;
 
             if model.is_instance(&boost).unwrap() {
                 model_name = model.getattr("__class__")?.getattr("__name__")?.to_string();
@@ -51,8 +52,12 @@ impl CatBoostModel {
             }
         }
 
+        let version = match catboost.getattr("__version__")?.extract::<String>() {
+            Ok(version) => Some(version),
+            Err(_) => None,
+        };
         let mut model_interface =
-            ModelInterface::new(py, model, sample_data, task_type, drift_profile)?;
+            ModelInterface::new(py, model, sample_data, task_type, drift_profile, version)?;
 
         model_interface.interface_type = ModelInterfaceType::CatBoost;
         let mut preprocessor_name = CommonKwargs::Undefined.to_string();
@@ -220,6 +225,7 @@ impl CatBoostModel {
             self_.as_super().interface_type.clone(),
             onnx_session,
             extra,
+            self_.as_super().version.clone(),
         );
 
         // save model
@@ -348,8 +354,14 @@ impl CatBoostModel {
             model_name,
         };
 
-        let mut interface =
-            ModelInterface::new(py, None, None, Some(metadata.task_type.clone()), None)?;
+        let mut interface = ModelInterface::new(
+            py,
+            None,
+            None,
+            Some(metadata.task_type.clone()),
+            None,
+            Some(metadata.version.clone()),
+        )?;
 
         interface.schema = metadata.schema.clone();
         interface.data_type = metadata.data_type.clone();
