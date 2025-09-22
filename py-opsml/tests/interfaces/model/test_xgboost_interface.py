@@ -19,6 +19,7 @@ def test_xgboost_model_interface(
     assert interface.model_type == ModelType.XgbBooster
 
     metadata = interface.save(save_path, ModelSaveKwargs(save_onnx=True))
+    assert metadata.version != "undefined"
 
     interface.model = None
     assert interface.model is None

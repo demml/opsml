@@ -24,6 +24,7 @@ def test_lightgbm_model_interface(
     assert interface.model_type == ModelType.LgbmBooster
 
     metadata = interface.save(save_path, ModelSaveKwargs(save_onnx=True))
+    assert metadata.version != "undefined"
 
     interface.model = None
     assert interface.model is None
