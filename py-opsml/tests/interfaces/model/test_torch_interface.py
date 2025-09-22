@@ -21,6 +21,7 @@ def test_pytorch_simple(tmp_path: Path, pytorch_simple: Tuple[torch.nn.Module, d
     assert interface.data_type == DataType.Dict
 
     metadata = interface.save(save_path, ModelSaveKwargs(save_onnx=True))
+    assert metadata.version != "undefined"
 
     assert interface.onnx_session is not None
     interface.onnx_session.session = None

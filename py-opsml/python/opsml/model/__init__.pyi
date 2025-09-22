@@ -15,7 +15,9 @@ from ..scouter.drift import (
 )
 from ..types import DriftArgs, DriftProfileMap, DriftProfileUri
 
-DriftProfileType = Dict[str, Union[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile]]
+DriftProfileType = Dict[
+    str, Union[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile]
+]
 
 class ProcessorType:
     Preprocessor: "ProcessorType"
@@ -451,6 +453,7 @@ class ModelInterfaceMetadata:
     schema: FeatureSchema
     save_metadata: ModelInterfaceSaveMetadata
     extra_metadata: dict[str, str]
+    version: str
 
     def __init__(
         self,
@@ -461,6 +464,7 @@ class ModelInterfaceMetadata:
         schema: FeatureSchema = FeatureSchema(),
         onnx_session: Optional[OnnxSession] = None,
         extra_metadata: dict[str, str] = {},  # type: ignore
+        version: str = "undefined",
     ) -> None:
         """Define a model interface
 
@@ -481,6 +485,8 @@ class ModelInterfaceMetadata:
                 Save metadata
             extra_metadata:
                 Extra metadata. Must be a dictionary of strings
+            version:
+                Package version of the model being used (sklearn.__version__, torch.__version__, etc)
         """
 
     def __str__(self) -> str:

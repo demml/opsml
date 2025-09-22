@@ -152,6 +152,7 @@ pub struct ModelInterfaceMetadata {
 
     pub model_specific_metadata: Value,
 
+    #[pyo3(get)]
     pub version: String,
 }
 
