@@ -11,7 +11,7 @@ use pyo3::prelude::*;
 use pyo3::IntoPyObjectExt;
 use std::collections::HashMap;
 use std::path::PathBuf;
-use tracing::{debug, instrument};
+use tracing::{debug, instrument, warn};
 
 use crate::OnnxModelConverter;
 
@@ -31,6 +31,7 @@ impl OnnxModel {
         task_type: Option<TaskType>,
         drift_profile: Option<&Bound<'py, PyAny>>,
     ) -> Result<(Self, ModelInterface), ModelInterfaceError> {
+        let onnx = py.import("onnx")?;
         if let Some(model) = model {
             let has_serialize = model.hasattr("SerializeToString")?;
             if !has_serialize {
@@ -38,8 +39,16 @@ impl OnnxModel {
             }
         }
 
+        let version = match onnx.getattr("__version__")?.extract::<String>() {
+            Ok(version) => Some(version),
+            Err(_) => {
+                debug!("Failed to get ONNX version");
+                None
+            }
+        };
+
         let mut model_interface =
-            ModelInterface::new(py, None, sample_data, task_type, drift_profile)?;
+            ModelInterface::new(py, None, sample_data, task_type, drift_profile, version)?;
 
         model_interface.interface_type = ModelInterfaceType::Onnx;
         model_interface.model_type = ModelType::Onnx;
@@ -136,6 +145,7 @@ impl OnnxModel {
             parent.interface_type.clone(),
             onnx_session,
             HashMap::new(),
+            parent.version.clone(),
         );
 
         Ok(metadata)
@@ -196,8 +206,14 @@ impl OnnxModel {
     ) -> Result<Bound<'py, PyAny>, ModelInterfaceError> {
         let onnx_interface = OnnxModel {};
 
-        let mut interface =
-            ModelInterface::new(py, None, None, Some(metadata.task_type.clone()), None)?;
+        let mut interface = ModelInterface::new(
+            py,
+            None,
+            None,
+            Some(metadata.task_type.clone()),
+            None,
+            Some(metadata.version.clone()),
+        )?;
 
         interface.schema = metadata.schema.clone();
         interface.data_type = metadata.data_type.clone();
