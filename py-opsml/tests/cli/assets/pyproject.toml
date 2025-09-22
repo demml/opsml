@@ -13,33 +13,3 @@ space = "space"
 [tool.opsml.registry]
 model = { name = "model" }
 prompt = { name = "prompt" }
-
-[[tool.opsml.service]]
-space = "space"
-name = "name1"
-version = "1"
-write_dir = "opsml_app/app1"
-cards = [
-    {alias = "my_prompt", space="space", name="prompt", version = "1.*", type = "prompt"},
-    {alias = "my_model", space="space", name="model", version = "1.*", type = "model"}
-]
-
-[[tool.opsml.service]]
-space = "space"
-name = "name2"
-version = "1"
-write_dir =  "opsml_app/app2"
-cards = [
-    {alias = "my_prompt", space="space", name="prompt", version = "1.*", type = "prompt"},
-    {alias = "my_model", space="space", name="model", version = "1.*", type = "model", drift = { active = true, deactivate_others = false, drift_type = ["custom", "psi"] }}
-]
-
-[[tool.opsml.service]]
-space = "space"
-name = "name3"
-version = "1"
-write_dir =  "opsml_app/app3"
-cards = [
-    {alias = "my_prompt", space="space", name="prompt", version = "1.*", type = "prompt"},
-    {alias = "my_model", space="space", name="model", version = "1.*", type = "model"}
-]
