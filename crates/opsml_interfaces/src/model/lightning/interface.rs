@@ -5,8 +5,8 @@ use crate::error::{ModelInterfaceError, OnnxError};
 use crate::model::torch::TorchSampleData;
 use crate::model::ModelInterface;
 use crate::types::{FeatureSchema, ProcessorType};
-use crate::OnnxConverter;
 use crate::OnnxSession;
+use crate::{lightning, OnnxConverter};
 use crate::{DataProcessor, ModelLoadKwargs, ModelSaveKwargs};
 use opsml_types::{
     CommonKwargs, DataType, ModelInterfaceType, ModelType, SaveName, Suffix, TaskType,
@@ -16,6 +16,7 @@ use pyo3::types::PyDict;
 use pyo3::IntoPyObjectExt;
 use pyo3::PyTraverseError;
 use pyo3::PyVisit;
+use serde::de;
 use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -61,9 +62,10 @@ impl LightningModel {
         drift_profile: Option<&Bound<'py, PyAny>>,
     ) -> Result<(Self, ModelInterface), ModelInterfaceError> {
         // check if model is a lightning Trainer
+        let lightning = py.import("lightning")?;
         // Trainer is needed to save model checkpoints
         let trainer = if let Some(trainer) = trainer {
-            let trainer_module = py.import("lightning")?.getattr("Trainer")?;
+            let trainer_module = lightning.getattr("Trainer")?;
             if trainer.is_instance(&trainer_module).unwrap() {
                 Some(trainer.into_py_any(py)?)
             } else {
@@ -73,7 +75,16 @@ impl LightningModel {
             None
         };
 
-        let mut model_interface = ModelInterface::new(py, None, None, task_type, drift_profile)?;
+        let version = match lightning.getattr("__version__")?.extract::<String>() {
+            Ok(version) => Some(version),
+            Err(_) => {
+                warn!("Failed to get Lightning version");
+                None
+            }
+        };
+
+        let mut model_interface =
+            ModelInterface::new(py, None, None, task_type, drift_profile, version)?;
 
         // override ModelInterface SampleData with TorchSampleData
         let sample_data = match sample_data {
@@ -303,6 +314,7 @@ impl LightningModel {
             self_.interface_type.clone(),
             onnx_session,
             HashMap::new(),
+            self_.as_super().version.clone(),
         );
 
         Ok(metadata)
@@ -442,8 +454,14 @@ impl LightningModel {
             sample_data: TorchSampleData::default(),
         };
 
-        let mut interface =
-            ModelInterface::new(py, None, None, Some(metadata.task_type.clone()), None)?;
+        let mut interface = ModelInterface::new(
+            py,
+            None,
+            None,
+            Some(metadata.task_type.clone()),
+            None,
+            Some(metadata.version.clone()),
+        )?;
 
         interface.schema = metadata.schema.clone();
         interface.data_type = metadata.data_type.clone();
