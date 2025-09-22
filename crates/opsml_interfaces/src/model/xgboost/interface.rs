@@ -87,9 +87,10 @@ impl XGBoostModel {
         task_type: Option<TaskType>,
         drift_profile: Option<&Bound<'py, PyAny>>,
     ) -> Result<(Self, ModelInterface), ModelInterfaceError> {
+        let xgb = py.import("xgboost")?;
         // check if model is base estimator for sklearn validation
         if let Some(model) = model {
-            let booster = py.import("xgboost")?.getattr("Booster")?;
+            let booster = xgb.getattr("Booster")?;
 
             if model.is_instance(&booster).unwrap() {
                 //
@@ -98,8 +99,16 @@ impl XGBoostModel {
             }
         }
 
+        let version = match xgb.getattr("__version__")?.extract::<String>() {
+            Ok(version) => Some(version),
+            Err(_) => {
+                debug!("Failed to get XGBoost version");
+                None
+            }
+        };
+
         let mut model_interface =
-            ModelInterface::new(py, model, sample_data, task_type, drift_profile)?;
+            ModelInterface::new(py, model, sample_data, task_type, drift_profile, version)?;
 
         model_interface.interface_type = ModelInterfaceType::XGBoost;
         let mut preprocessor_name = CommonKwargs::Undefined.to_string();
@@ -257,6 +266,7 @@ impl XGBoostModel {
             self_.as_super().interface_type.clone(),
             onnx_session,
             HashMap::new(),
+            self_.as_super().version.clone(),
         );
 
         let model_uri = XGBoostModel::save_model(self_, py, &path)?;
@@ -371,8 +381,14 @@ impl XGBoostModel {
             preprocessor_name,
         };
 
-        let mut interface =
-            ModelInterface::new(py, None, None, Some(metadata.task_type.clone()), None)?;
+        let mut interface = ModelInterface::new(
+            py,
+            None,
+            None,
+            Some(metadata.task_type.clone()),
+            None,
+            Some(metadata.version.clone()),
+        )?;
 
         interface.schema = metadata.schema.clone();
         interface.data_type = metadata.data_type.clone();
