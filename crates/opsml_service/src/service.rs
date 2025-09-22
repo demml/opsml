@@ -1,8 +1,5 @@
 use crate::error::ServiceError;
-use opsml_types::{
-    contracts::mcp::{McpCapability, McpConfig, McpTransport},
-    RegistryType,
-};
+use opsml_types::{contracts::mcp::McpConfig, RegistryType};
 use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -280,6 +277,7 @@ impl ServiceSpec {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use opsml_types::contracts::mcp::{McpCapability, McpTransport};
 
     #[test]
     fn test_service_spec_with_api() {
