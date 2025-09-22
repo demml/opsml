@@ -69,13 +69,7 @@ impl TorchModel {
             None
         };
 
-        let version = match torch.getattr("__version__")?.extract::<String>() {
-            Ok(version) => Some(version),
-            Err(_) => {
-                debug!("Failed to get PyTorch version");
-                None
-            }
-        };
+        let version = torch.getattr("__version__")?.extract::<String>().ok();
 
         let mut model_interface =
             ModelInterface::new(py, None, None, task_type, drift_profile, version)?;

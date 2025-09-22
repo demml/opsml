@@ -74,13 +74,7 @@ impl LightningModel {
             None
         };
 
-        let version = match lightning.getattr("__version__")?.extract::<String>() {
-            Ok(version) => Some(version),
-            Err(_) => {
-                warn!("Failed to get Lightning version");
-                None
-            }
-        };
+        let version = lightning.getattr("__version__")?.extract::<String>().ok();
 
         let mut model_interface =
             ModelInterface::new(py, None, None, task_type, drift_profile, version)?;

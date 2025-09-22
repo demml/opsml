@@ -315,14 +315,11 @@ impl HuggingFaceModel {
             None
         };
 
-        let version = match py
+        let version = py
             .import("transformers")?
             .getattr("__version__")?
             .extract::<String>()
-        {
-            Ok(version) => Some(version),
-            Err(_) => None,
-        };
+            .ok();
 
         // process preprocessor
 
