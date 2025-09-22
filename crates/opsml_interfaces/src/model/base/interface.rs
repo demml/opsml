@@ -231,6 +231,8 @@ pub struct ModelInterface {
     pub drift_profile: DriftProfileMap,
 
     pub sample_data: SampleData,
+
+    pub version: String,
 }
 
 #[pymethods]
