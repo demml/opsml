@@ -315,9 +315,19 @@ impl HuggingFaceModel {
             None
         };
 
+        let version = match py
+            .import("transformers")?
+            .getattr("__version__")?
+            .extract::<String>()
+        {
+            Ok(version) => Some(version),
+            Err(_) => None,
+        };
+
         // process preprocessor
 
-        let mut model_interface = ModelInterface::new(py, None, None, task_type, drift_profile)?;
+        let mut model_interface =
+            ModelInterface::new(py, None, None, task_type, drift_profile, version)?;
 
         // override ModelInterface SampleData with TorchSampleData
         let sample_data = match sample_data {
@@ -556,6 +566,7 @@ impl HuggingFaceModel {
             self_.interface_type.clone(),
             onnx_session,
             HashMap::new(),
+            self_.as_super().version.clone(),
         );
 
         metadata.model_specific_metadata = self_.base_args.model_dump_json();
@@ -688,8 +699,14 @@ impl HuggingFaceModel {
             base_args,
         };
 
-        let mut interface =
-            ModelInterface::new(py, None, None, Some(metadata.task_type.clone()), None)?;
+        let mut interface = ModelInterface::new(
+            py,
+            None,
+            None,
+            Some(metadata.task_type.clone()),
+            None,
+            Some(metadata.version.clone()),
+        )?;
 
         interface.schema = metadata.schema.clone();
         interface.data_type = metadata.data_type.clone();
