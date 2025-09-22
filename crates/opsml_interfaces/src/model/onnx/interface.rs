@@ -39,13 +39,7 @@ impl OnnxModel {
             }
         }
 
-        let version = match onnx.getattr("__version__")?.extract::<String>() {
-            Ok(version) => Some(version),
-            Err(_) => {
-                debug!("Failed to get ONNX version");
-                None
-            }
-        };
+        let version = onnx.getattr("__version__")?.extract::<String>().ok();
 
         let mut model_interface =
             ModelInterface::new(py, None, sample_data, task_type, drift_profile, version)?;

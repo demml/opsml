@@ -70,13 +70,7 @@ impl TensorFlowModel {
             None
         };
 
-        let version = match tf.getattr("__version__")?.extract::<String>() {
-            Ok(version) => Some(version),
-            Err(_) => {
-                debug!("Failed to get TensorFlow version");
-                None
-            }
-        };
+        let version = tf.getattr("__version__")?.extract::<String>().ok();
 
         let mut model_interface =
             ModelInterface::new(py, None, None, task_type, drift_profile, version)?;

@@ -51,10 +51,7 @@ impl LightGBMModel {
             }
         }
 
-        let version = match lgb.getattr("__version__")?.extract::<String>() {
-            Ok(version) => Some(version),
-            Err(_) => None,
-        };
+        let version = lgb.getattr("__version__")?.extract::<String>().ok();
 
         let mut model_interface =
             ModelInterface::new(py, model, sample_data, task_type, drift_profile, version)?;

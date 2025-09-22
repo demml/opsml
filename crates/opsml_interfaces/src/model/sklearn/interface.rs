@@ -53,10 +53,7 @@ impl SklearnModel {
             }
         }
 
-        let sklearn_version = match sklearn.getattr("__version__")?.extract::<String>() {
-            Ok(version) => Some(version),
-            Err(_) => None,
-        };
+        let sklearn_version = sklearn.getattr("__version__")?.extract::<String>().ok();
 
         let mut model_interface = ModelInterface::new(
             py,
