@@ -4,7 +4,7 @@ use opsml_cards::{Card, ServiceCard};
 pub use opsml_registry::utils::validate_service_cards;
 use opsml_registry::CardRegistry;
 use opsml_semver::VersionType;
-use opsml_service::ServiceConfig;
+use opsml_service::ServiceSpec;
 
 /// Create a new service card from an app configuration
 ///
@@ -20,11 +20,12 @@ use opsml_service::ServiceConfig;
 /// * The cards in the app configuration are invalid
 /// * The service card cannot be created
 pub fn create_service_card(
-    app: &ServiceConfig,
+    spec: &ServiceSpec,
     space: &str,
     name: &str,
 ) -> Result<ServiceCard, CliError> {
-    let mut cards = app
+    let mut cards = spec
+        .service
         .cards
         .as_ref()
         .ok_or(CliError::MissingServiceCards)?
@@ -45,23 +46,18 @@ pub fn create_service_card(
     validate_service_cards(&mut cards)?;
 
     // Create a new service card
-    ServiceCard::rust_new(
-        space.to_string(),
-        name.to_string(),
-        cards,
-        app.version.as_deref(),
-    )
-    .map_err(CliError::CreateServiceError)
+    ServiceCard::rust_new(space.to_string(), name.to_string(), cards, spec)
+        .map_err(CliError::CreateServiceError)
 }
 
 pub fn register_service_card(
-    config: &ServiceConfig,
+    spec: &ServiceSpec,
     registry: &CardRegistry,
     space: &str,
     name: &str,
 ) -> Result<ServiceCard, CliError> {
     // Validate the app configuration
-    let mut service = create_service_card(config, space, name)?;
+    let mut service = create_service_card(spec, space, name)?;
     registry.register_card_rs(&mut service, VersionType::Minor)?;
 
     Ok(service)

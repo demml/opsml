@@ -4,7 +4,7 @@ use crate::utils::BaseArgs;
 use crate::{DataCard, ExperimentCard, ModelCard, PromptCard};
 use chrono::{DateTime, Utc};
 use opsml_interfaces::{DataLoadKwargs, ModelLoadKwargs};
-use opsml_service::{DeploymentConfig, Metadata, ServiceType};
+use opsml_service::{DeploymentConfig, Metadata, ServiceSpec, ServiceType};
 use opsml_types::contracts::CardEntry;
 use opsml_types::CommonKwargs;
 use opsml_types::{
@@ -739,14 +739,17 @@ impl ServiceCard {
         space: String,
         name: String,
         cards: Vec<Card>, // can be Vec<Card> or Vec<ModelCard, DataCard, etc.>
-        version: Option<&str>,
-        service_type: ServiceType,
-        metadata: Option<Metadata>,
-        deploy: Option<Vec<DeploymentConfig>>,
+
+        spec: &ServiceSpec,
     ) -> Result<ServiceCard, CardError> {
         let registry_type = RegistryType::Service;
-        let base_args =
-            BaseArgs::create_args(Some(&name), Some(&space), version, None, &registry_type)?;
+        let base_args = BaseArgs::create_args(
+            Some(&name),
+            Some(&space),
+            spec.service.version.as_deref(),
+            None,
+            &registry_type,
+        )?;
 
         Ok(ServiceCard {
             space: base_args.0,
@@ -761,9 +764,9 @@ impl ServiceCard {
             is_card: true,
             registry_type,
             experimentcard_uid: None,
-            service_type,
-            metadata,
-            deploy,
+            service_type: spec.service_type.clone(),
+            metadata: spec.metadata.clone(),
+            deploy: spec.deploy.clone(),
         })
     }
 

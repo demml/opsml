@@ -178,21 +178,25 @@ fn process_service_cards(
 /// create lock entry for a service
 /// # Arguments
 /// * `config` - ServiceConfig
-fn lock_service_card(
-    config: ServiceConfig,
-    space: &str,
-    name: &str,
-) -> Result<LockArtifact, CliError> {
-    debug!("Locking service with config: {:?}", config);
+fn lock_service_card(spec: ServiceSpec, space: &str, name: &str) -> Result<LockArtifact, CliError> {
+    debug!("Locking service with config: {:?}", spec);
 
     // Get app cards from service config
-    let spec_cards = config.cards.as_ref().ok_or(CliError::MissingServiceCards)?;
+    let spec_cards = spec
+        .service
+        .cards
+        .as_ref()
+        .ok_or(CliError::MissingServiceCards)?;
 
     let registries = CardRegistries::new()?;
 
     // Initialize registry and get service from registry
-    let service =
-        get_service_from_registry(&registries.service, space, name, config.version.as_ref())?;
+    let service = get_service_from_registry(
+        &registries.service,
+        space,
+        name,
+        spec.service.version.as_ref(),
+    )?;
 
     // Handle service creation if it doesn't exist
     if service.is_none() {
@@ -320,11 +324,7 @@ pub fn lock_service(path: PathBuf) -> Result<(), CliError> {
 
     // Create a lock file
     let lock_file = LockFile {
-        artifact: vec![lock_service_card(
-            service.service.clone(),
-            service.space(),
-            &service.name,
-        )?],
+        artifact: vec![lock_service_card(service, service.space(), &service.name)?],
     };
 
     lock_file.write(&service.root_path)?;
