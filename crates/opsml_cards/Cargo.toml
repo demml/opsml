@@ -13,6 +13,7 @@ names = { workspace = true }
 opsml-colors = { workspace = true }
 opsml-crypt = { workspace = true }
 opsml-interfaces = { workspace = true }
+opsml-service = { workspace = true }
 opsml-state = { workspace = true }
 opsml-storage = { workspace = true}
 opsml-toml = { workspace = true }

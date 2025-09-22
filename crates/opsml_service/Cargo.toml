@@ -12,6 +12,7 @@ doctest = false
 [dependencies]
 opsml-types = { workspace = true }
 opsml-version = { workspace = true }
+pyo3 = { workspace = true }
 serde = { workspace = true }
 serde_yaml = { workspace = true }
 thiserror = { workspace = true }

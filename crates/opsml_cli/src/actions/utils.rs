@@ -24,8 +24,6 @@ pub fn create_service_card(
     space: &str,
     name: &str,
 ) -> Result<ServiceCard, CliError> {
-    // extract cards into Vec<Card>
-
     let mut cards = app
         .cards
         .as_ref()
