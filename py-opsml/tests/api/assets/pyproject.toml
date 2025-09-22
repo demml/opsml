@@ -10,17 +10,3 @@ classifiers = [
 
 [tool.opsml.registry]
 model = { space="model-space", name = "model-name" }
-
-[[tool.opsml.service]]
-space = "opsml-space"
-name = "opsml-name"
-version = "1"
-write_dir = "opsml_app"
-
-[[tool.opsml.service.cards]]
-alias = "model"
-space = "model-space"
-name = "model-name"
-version = "1"
-type = "model"
-drift = { active = true, deactivate_others = false, drift_type = ["psi"] }

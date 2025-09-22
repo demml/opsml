@@ -3,6 +3,7 @@ use crate::schemas::schema::{
     ArtifactSqlRecord, CardResults, CardSummary, HardwareMetricsRecord, MetricRecord,
     ParameterRecord, QueryStats, ServerCard, User, VersionSummary,
 };
+use crate::schemas::EvaluationSqlRecord;
 use async_trait::async_trait;
 use opsml_types::cards::CardTable;
 use opsml_types::{
@@ -146,4 +147,11 @@ pub trait SpaceLogicTrait {
 #[async_trait]
 pub trait AuditLogicTrait {
     async fn insert_audit_event(&self, event: AuditEvent) -> Result<(), SqlError>;
+}
+
+#[async_trait]
+pub trait EvaluationLogicTrait {
+    async fn insert_evaluation_record(&self, event: EvaluationSqlRecord) -> Result<(), SqlError>;
+
+    async fn get_evaluation_record(&self, uid: &str) -> Result<EvaluationSqlRecord, SqlError>;
 }

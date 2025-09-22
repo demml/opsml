@@ -22,6 +22,7 @@ pub enum CardTable {
     Prompt,
     Service,
     Artifact,
+    Evaluation,
 }
 
 impl fmt::Display for CardTable {
@@ -40,6 +41,7 @@ impl fmt::Display for CardTable {
             CardTable::Prompt => "opsml_prompt_registry",
             CardTable::Service => "opsml_service_registry",
             CardTable::Artifact => "opsml_artifact_registry",
+            CardTable::Evaluation => "opsml_evaluation_registry",
         };
         write!(f, "{table_name}")
     }
@@ -60,6 +62,7 @@ impl CardTable {
             RegistryType::Prompt => CardTable::Prompt,
             RegistryType::Service => CardTable::Service,
             RegistryType::Artifact => CardTable::Artifact,
+            RegistryType::Evaluation => CardTable::Evaluation,
         }
     }
 }

@@ -12,6 +12,9 @@ pub enum EvaluationError {
     DowncastError(String),
 
     #[error(transparent)]
+    SerdeJsonError(#[from] serde_json::Error),
+
+    #[error(transparent)]
     EvalError(#[from] scouter_client::EvaluationError),
 }
 

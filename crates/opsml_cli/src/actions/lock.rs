@@ -6,10 +6,8 @@ use opsml_cards::ServiceCard;
 use opsml_colors::Colorize;
 use opsml_registry::error::RegistryError;
 use opsml_registry::{CardRegistries, CardRegistry};
-use opsml_toml::{
-    toml::{Card, ServiceConfig},
-    LockArtifact, LockFile, PyProjectToml,
-};
+use opsml_service::{Card, ServiceSpec};
+use opsml_toml::{LockArtifact, LockFile};
 use opsml_types::IntegratedService;
 use opsml_types::{
     contracts::{CardEntry, CardRecord},
@@ -19,18 +17,21 @@ use pyo3::prelude::*;
 use scouter_client::{DriftType, ProfileStatusRequest};
 use std::path::PathBuf;
 use std::str::FromStr;
+use std::vec;
 use tracing::{debug, error, instrument};
 
 /// Helper function to get cards from registry
 fn get_service_from_registry(
     registry: &CardRegistry,
-    config: &ServiceConfig,
+    space: &str,
+    name: &str,
+    version: Option<&String>,
 ) -> Result<Option<CardRecord>, CliError> {
     let cards = registry.list_cards(
         None,
-        Some(config.space.clone()),
-        Some(config.name.clone()),
-        config.version.clone(),
+        Some(space.to_string()),
+        Some(name.to_string()),
+        version.cloned(),
         None,
         None,
         Some(true),
@@ -82,10 +83,10 @@ fn get_latest_card(registries: &CardRegistries, card: &Card) -> Result<CardRecor
 }
 
 /// Helper for any postprocessing needed after service card registration
-/// As an example, modelcards can activate drift profile via a drift_config in the toml
+/// As an example, modelcards can activate drift profile via a drift_config in spec
 #[instrument(skip_all)]
 fn postprocess_service_card(
-    toml_cards: &[Card],
+    spec_cards: &[Card],
     service: &ServiceCard,
     registry: &CardRegistry,
 ) -> Result<(), CliError> {
@@ -94,7 +95,7 @@ fn postprocess_service_card(
         .check_service_health(IntegratedService::Scouter)?
     {
         // check if scouter is enabled and running first
-        toml_cards
+        spec_cards
             .iter()
             .filter_map(|card| card.drift.as_ref().map(|drift| (card, drift)))
             .try_for_each(|(card, drift_config)| -> Result<(), CliError> {
@@ -124,7 +125,7 @@ fn postprocess_service_card(
 
 /// Process service card and check for version updates
 /// The goal of this function is to:
-/// 1. For each card defined in the toml file, find the latest card in the registry
+/// 1. For each card in service spec, find the latest card in the registry
 /// 2. Check if the already registered service has the same card
 /// 3. If an existing card of same space and name is found, check if the uid is the same
 /// 4. If the uid is different, return true (needs refresh)
@@ -133,7 +134,7 @@ fn postprocess_service_card(
 ///
 /// # Arguments
 /// * `service_cards` - &[CardEntry] - List of cards associated with the most recent registered service
-/// * `toml_cards` - &[DeckCard] - List of cards found in toml
+/// * `spec_cards` - &[DeckCard] - List of cards found in spec
 /// * `registries` - &RustRegistries - Rust variant of Opsml registries
 ///
 /// # Returns
@@ -141,13 +142,13 @@ fn postprocess_service_card(
 #[instrument(skip_all)]
 fn process_service_cards(
     service_cards: &[CardEntry],
-    toml_cards: &[Card],
+    cards: &[Card],
     registries: &CardRegistries,
 ) -> Result<bool, CliError> {
     debug!("Processing service cards");
-    for toml_card in toml_cards {
+    for card in cards {
         // Find the latest card given the constraints provided in toml file
-        let latest_card = get_latest_card(registries, toml_card)?;
+        let latest_card = get_latest_card(registries, card)?;
 
         // Find the card in the service
         // If the entry is not found - return true (need to increment version)
@@ -156,7 +157,7 @@ fn process_service_cards(
         // Find matching entry in existing service
         let current_card = service_cards
             .iter()
-            .find(|service_card| service_card.alias == toml_card.alias);
+            .find(|service_card| service_card.alias == card.alias);
 
         // Check
         match current_card {
@@ -174,82 +175,188 @@ fn process_service_cards(
     Ok(false)
 }
 
-/// create lock entry for a service
+/// Creates a LockArtifact from a ServiceCard
 /// # Arguments
-/// * `config` - ServiceConfig
-fn lock_service_card(config: ServiceConfig) -> Result<LockArtifact, CliError> {
-    debug!("Locking service with config: {:?}", config);
-
-    // Get app cards from service config
-    let toml_cards = config.cards.as_ref().ok_or(CliError::MissingServiceCards)?;
-
-    let registries = CardRegistries::new()?;
-
-    // Initialize registry and get service from registry
-    let service = get_service_from_registry(&registries.service, &config)?;
-
-    // Handle service creation if it doesn't exist
-    if service.is_none() {
-        let card = register_service_card(&config, &registries.service)?;
-
-        // Postprocess the service card if needed (e.g., activate drift profiles)
-        postprocess_service_card(toml_cards, &card, &registries.service)?;
-
-        return Ok(LockArtifact {
-            space: card.space.clone(),
-            name: card.name.clone(),
-            version: card.version.clone(),
-            uid: card.uid.clone(),
-            registry_type: RegistryType::Service,
-            write_dir: config.write_dir.unwrap_or("opsml_service".to_string()),
-        });
+/// * `service_card` - &ServiceCard
+/// * `write_dir` - &str
+/// # Returns
+/// * `LockArtifact`
+fn create_lock_artifact_from_service_card(
+    service_card: &ServiceCard,
+    write_dir: &str,
+) -> LockArtifact {
+    LockArtifact {
+        space: service_card.space.clone(),
+        name: service_card.name.clone(),
+        version: service_card.version.clone(),
+        uid: service_card.uid.clone(),
+        registry_type: RegistryType::Service,
+        write_dir: write_dir.to_string(),
     }
-    // Process existing service (need to compare existing service cards to those defined in toml)
-    let service = service.unwrap();
-    // Get card UIDs from service
-    let service_cards = service.cards().ok_or(CliError::MissingCardEntriesError)?;
-    let needs_refresh = process_service_cards(&service_cards, toml_cards, &registries)?;
-
-    let lock_entry = match needs_refresh {
-        true => {
-            // If refresh is needed, register the service again
-            let card = register_service_card(&config, &registries.service)?;
-
-            // Postprocess the service card if needed (e.g., activate drift profiles)
-            postprocess_service_card(toml_cards, &card, &registries.service)?;
-
-            LockArtifact {
-                space: card.space.clone(),
-                name: card.name.clone(),
-                version: card.version.clone(),
-                uid: card.uid.clone(),
-                registry_type: RegistryType::Service,
-                write_dir: config.write_dir.unwrap_or("opsml_app".to_string()),
-            }
-        }
-        false => {
-            // No refresh needed, return existing entry
-            LockArtifact {
-                space: service.space().to_string(),
-                name: service.name().to_string(),
-                version: service.version().to_string(),
-                uid: service.uid().to_string(),
-                registry_type: RegistryType::Service,
-                write_dir: config.write_dir.unwrap_or("opsml_app".to_string()),
-            }
-        }
-    };
-
-    Ok(lock_entry)
 }
 
-/// Create the the lock file for the app
-///fn lock_service(service: ServiceConfig) -> Result<LockArtifact, CliError> {
-///    // Create a lock file for the app
-///    // Only support's  service currently
-///    lock_service_card(service)
-///}
+/// Creates a LockArtifact from an existing service record
+/// # Arguments
+/// * `service` - &CardRecord
+/// * `write_dir` - &str
+/// # Returns
+/// * `LockArtifact`
+fn create_lock_artifact_from_existing_service(
+    service: &CardRecord,
+    write_dir: &str,
+) -> LockArtifact {
+    LockArtifact {
+        space: service.space().to_string(),
+        name: service.name().to_string(),
+        version: service.version().to_string(),
+        uid: service.uid().to_string(),
+        registry_type: RegistryType::Service,
+        write_dir: write_dir.to_string(),
+    }
+}
 
+/// Gets the write directory with a fallback default
+fn get_write_dir(spec: &ServiceSpec, default: &str) -> String {
+    spec.service
+        .write_dir
+        .clone()
+        .unwrap_or_else(|| default.to_string())
+}
+
+/// Check if a refresh is needed based on the service and spec cards
+/// # Arguments
+/// * `service` - &CardRecord
+/// * `spec_cards` - Option<&Vec<DeckCard>>
+/// * `registries` - &RustRegistries
+/// # Returns
+/// * `Result<bool, CliError>`
+fn check_for_refresh(
+    service: &CardRecord,
+    spec_cards: Option<&Vec<Card>>,
+    registries: &CardRegistries,
+) -> Result<bool, CliError> {
+    match spec_cards {
+        None => Ok(true), // No spec cards means refresh needed
+        Some(cards) => {
+            let service_cards = service.cards().ok_or(CliError::MissingCardEntriesError)?;
+            process_service_cards(&service_cards, cards, registries)
+        }
+    }
+}
+
+/// Create a new lock artifact for a service that does not yet exist in the registry
+/// # Arguments
+/// * `spec` - &ServiceSpec
+/// * `registries` - &RustRegistries
+/// * `spec_cards` - Option<&Vec<DeckCard>>
+/// * `space` - &str
+/// * `name` - &str
+/// # Returns
+/// * `Result<LockArtifact, CliError>`
+fn create_new_service_lock(
+    spec: &ServiceSpec,
+    registries: &CardRegistries,
+    spec_cards: Option<&Vec<Card>>,
+    space: &str,
+    name: &str,
+) -> Result<LockArtifact, CliError> {
+    let service_card = register_service_card(spec, &registries.service, space, name)?;
+
+    // Apply postprocessing if spec cards exist
+    // some service types may not have cards
+    if let Some(cards) = spec_cards {
+        postprocess_service_card(cards, &service_card, &registries.service)?;
+    }
+
+    Ok(create_lock_artifact_from_service_card(
+        &service_card,
+        &get_write_dir(spec, "opsml_service"),
+    ))
+}
+
+/// Handles lock creation for an existing service
+/// # Arguments
+/// * `spec` - &ServiceSpec
+/// * `registries` - &RustRegistries
+/// * `spec_cards` - Option<&Vec<DeckCard>>
+/// * `service` - CardRecord
+/// # Returns
+/// * `Result<LockArtifact, CliError>`
+fn handle_existing_service_lock(
+    spec: &ServiceSpec,
+    registries: &CardRegistries,
+    spec_cards: Option<&Vec<Card>>,
+    service: CardRecord,
+) -> Result<LockArtifact, CliError> {
+    let needs_refresh = check_for_refresh(&service, spec_cards, registries)?;
+
+    if needs_refresh {
+        debug!("Service refresh needed, re-registering");
+        let service_card =
+            register_service_card(spec, &registries.service, service.space(), service.name())?;
+
+        if let Some(cards) = spec_cards {
+            postprocess_service_card(cards, &service_card, &registries.service)?;
+        }
+
+        Ok(create_lock_artifact_from_service_card(
+            &service_card,
+            &get_write_dir(spec, "opsml_service"),
+        ))
+    } else {
+        debug!("No refresh needed, using existing service");
+        Ok(create_lock_artifact_from_existing_service(
+            &service,
+            &get_write_dir(spec, "opsml_service"),
+        ))
+    }
+}
+
+/// Creates a lock entry for a service. This is the main function that handles locking logic.
+/// If the service does not exist, it creates a new one. If it does exist, it checks if a refresh is needed.
+/// As refresh is needed if any of the cards in the spec have a newer version than those in the existing service.
+/// # Arguments
+/// * `spec` - Service specification containing configuration
+/// * `space` - Service space/namespace
+/// * `name` - Service name
+/// # Returns
+/// * `Result<LockArtifact, CliError>` - Lock artifact or error
+#[instrument(skip_all)]
+fn lock_service_card(
+    spec: &ServiceSpec,
+    space: &str,
+    name: &str,
+) -> Result<LockArtifact, CliError> {
+    debug!("Locking service {}/{}", space, name);
+
+    let registries = CardRegistries::new()?;
+    let spec_cards = spec.service.cards.as_ref();
+
+    let existing_service = get_service_from_registry(
+        &registries.service,
+        space,
+        name,
+        spec.service.version.as_ref(),
+    )?;
+
+    match existing_service {
+        None => {
+            debug!("No existing service found, creating new service");
+            create_new_service_lock(spec, &registries, spec_cards, space, name)
+        }
+        Some(service) => {
+            debug!("Existing service found, checking if refresh needed");
+            handle_existing_service_lock(spec, &registries, spec_cards, service)
+        }
+    }
+}
+
+/// Install services specified in an opsml.lock file
+/// # Arguments
+/// * `path` - PathBuf to the opsml.lock file
+/// * `write_path` - Optional PathBuf to override write directory
+/// # Returns
+/// * `Result<(), CliError>`
 #[pyfunction]
 #[pyo3(signature = (path, write_path=None))]
 pub fn install_service(path: PathBuf, write_path: Option<PathBuf>) -> Result<(), CliError> {
@@ -305,25 +412,19 @@ pub fn install_service(path: PathBuf, write_path: Option<PathBuf>) -> Result<(),
     Ok(())
 }
 
-/// Will create an `opsml.lock` file based on the service configuration specified within the pyproject.toml file.
+/// Will create an `opsml.lock` file based on the service configuration specified within the opsmlspec.yml file.
 #[pyfunction]
-#[pyo3(signature = (path=None, toml_name=None))]
-pub fn lock_project(path: Option<PathBuf>, toml_name: Option<&str>) -> Result<(), CliError> {
-    debug!("Locking project with path: {:?}", path);
-
-    let pyproject = PyProjectToml::load(path.as_deref(), toml_name)?;
-    let tools = pyproject.get_tools().ok_or(CliError::MissingToolsError)?;
-    let service = tools.get_service().ok_or(CliError::MissingServiceError)?;
+pub fn lock_service(path: PathBuf) -> Result<(), CliError> {
+    debug!("Locking service with path: {:?}", path);
+    // handle case of no cards
+    let spec = ServiceSpec::from_path(&path)?;
 
     // Create a lock file
     let lock_file = LockFile {
-        artifact: service
-            .iter()
-            .map(|service| lock_service_card(service.clone()))
-            .collect::<Result<Vec<_>, _>>()?,
+        artifact: vec![lock_service_card(&spec, spec.space(), &spec.name)?],
     };
 
-    lock_file.write(&pyproject.root_path)?;
+    lock_file.write(&spec.root_path)?;
 
     Ok(())
 }
