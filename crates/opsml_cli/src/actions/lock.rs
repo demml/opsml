@@ -293,7 +293,7 @@ fn handle_existing_service_lock(
     if needs_refresh {
         debug!("Service refresh needed, re-registering");
         let service_card =
-            register_service_card(spec, &registries.service, &service.space(), &service.name())?;
+            register_service_card(spec, &registries.service, service.space(), service.name())?;
 
         if let Some(cards) = spec_cards {
             postprocess_service_card(cards, &service_card, &registries.service)?;
