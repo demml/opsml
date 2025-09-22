@@ -33,6 +33,11 @@ CardInterfaceType: TypeAlias = Union[DataInterface, ModelInterface]
 ServiceCardInterfaceType: TypeAlias = Dict[str, Union[DataInterface, ModelInterface]]
 LoadInterfaceType: TypeAlias = Union[ServiceCardInterfaceType, ServiceCardInterfaceType]
 
+class ServiceType:
+    Api: "ServiceType"
+    Mcp: "ServiceType"
+    Agent: "ServiceType"
+
 class RegistryType:
     Data: "RegistryType"
     Model: "RegistryType"

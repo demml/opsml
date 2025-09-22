@@ -21,6 +21,7 @@ opsml-experiment = { workspace = true }
 opsml-mocks = { workspace = true }
 opsml-semver = { workspace = true }
 opsml-server = { workspace = true, optional = true }
+opsml-service = { workspace = true }
 opsml-storage = { workspace = true, optional = true }
 opsml-settings = { workspace = true }
 opsml-state = { workspace = true }
