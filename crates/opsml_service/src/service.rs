@@ -266,7 +266,7 @@ impl ServiceSpec {
                 let service_path = root_path.join(DEFAULT_SERVICE_FILENAME);
                 (service_path, root_path)
             } else {
-                // (3) If user provides an invalid path, treat as potential file path and let the error bubble up
+                // (3) If user provides an invalid path let the error bubble up
                 Err(ServiceError::MissingServiceFile(format!(
                     "Invalid file path: {}",
                     path.display()
