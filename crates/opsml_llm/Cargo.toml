@@ -1,0 +1,20 @@
+[package]
+name = "opsml-llm"
+version = { workspace = true }
+edition = { workspace = true }
+repository = { workspace = true }
+description = "OpsML LLM - Functionality for working with LLM and GenAI technologies"
+
+
+[lib]
+doctest = false
+
+[dependencies]
+opsml-registry = { workspace = true }
+opsml-types = { workspace = true }
+opsml-version = { workspace = true }
+pyo3 = { workspace = true }
+thiserror = { workspace = true }
+
+[dev-dependencies]
+tempfile = { workspace = true }
