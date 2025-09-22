@@ -12,48 +12,6 @@ pub struct CardAttr {
     pub version: Option<String>,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, Default)]
-pub struct DriftConfig {
-    #[serde(default)]
-    pub active: bool,
-    #[serde(default)]
-    pub deactivate_others: bool,
-    pub drift_type: Vec<String>,
-}
-
-/// toml equivalent of opsml_cards::ServiceCard Card
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct Card {
-    pub alias: String,
-    pub space: String,
-    pub name: String,
-    pub version: Option<String>,
-    #[serde(rename = "type")]
-    pub registry_type: RegistryType,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub drift: Option<DriftConfig>,
-}
-
-impl Card {
-    /// Validate the card configuration to ensure drift is only used for model cards
-    pub fn validate(&self) -> Result<(), PyProjectTomlError> {
-        // Only allow drift configuration for model cards
-        if self.drift.is_some() && self.registry_type != RegistryType::Model {
-            return Err(PyProjectTomlError::InvalidConfiguration);
-        }
-        Ok(())
-    }
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct ServiceConfig {
-    pub name: String,
-    pub space: String,
-    pub version: Option<String>,
-    pub cards: Option<Vec<Card>>,
-    pub write_dir: Option<String>,
-}
-
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct OpsmlTools {
     /// Default argument that will apply to all cards
@@ -72,19 +30,6 @@ pub struct OpsmlTools {
     /// model = { space = "opsml", name = "opsml" }
     /// experiment = { space = "opsml", name = "opsml" }
     registry: Option<HashMap<RegistryType, CardAttr>>,
-
-    /// ServiceCard configuration
-    ///
-    /// # Example
-    /// [tool.opsml.service]
-    /// name = "opsml"
-    /// space = "opsml"
-    /// version = "1"
-    /// cards = [
-    ///    {alias="data", space = "opsml", name = "opsml", version="1", type="data"},
-    ///    {alias="model", space = "opsml", name = "opsml", version="1", type="model"},
-    /// ]
-    service: Option<Vec<ServiceConfig>>,
 }
 
 impl OpsmlTools {
@@ -132,11 +77,6 @@ impl OpsmlTools {
     pub fn get_registry(&self) -> Option<HashMap<RegistryType, CardAttr>> {
         self.registry.clone()
     }
-
-    /// Get the service configuration
-    pub fn get_service(&self) -> Option<&Vec<ServiceConfig>> {
-        self.service.as_ref()
-    }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -150,7 +90,6 @@ pub struct OpsmlTool {
 pub struct PyProjectToml {
     pub tool: Option<OpsmlTool>,
 
-    // skip when deserializing
     #[serde(skip)]
     pub root_path: PathBuf,
 }
@@ -176,20 +115,6 @@ impl PyProjectToml {
 
         let pyproject = PyProjectToml::deserialize(pyproject.into_deserializer())
             .map_err(PyProjectTomlError::TomlSchema)?;
-
-        if let Some(tool) = &pyproject.tool {
-            if let Some(opsml) = &tool.opsml {
-                if let Some(apps) = &opsml.service {
-                    for app in apps {
-                        if let Some(cards) = &app.cards {
-                            for card in cards {
-                                card.validate()?;
-                            }
-                        }
-                    }
-                }
-            }
-        }
 
         Ok(pyproject)
     }
@@ -272,83 +197,12 @@ mod tests {
     }
 
     #[test]
-    fn test_service_configuration_load() {
-        let content = r#"
-            [[tool.opsml.service]]
-            space = "opsml"
-            name = "opsml"
-            version = "1"
-            
-            [[tool.opsml.service.cards]]
-            alias = "data"
-            space = "space"
-            name = "name"
-            version = "1"
-            type = "data"
-
-            [[tool.opsml.service.cards]]
-            alias = "model"
-            space = "space"
-            name = "name"
-            version = "1"
-            type = "model"
-            drift = { active = true, deactivate_others = false, drift_type = ["custom", "psi"] }
-
-        "#;
-
-        let (_temp_dir, root_dir) = write_toml_to_temp(content).unwrap();
-
-        let pyproject = PyProjectToml::load(Some(&root_dir), None).unwrap();
-
-        // assert tool.opsml is not None
-        assert!(pyproject.tool.is_some());
-        assert!(pyproject.tool.as_ref().unwrap().opsml.is_some());
-        assert!(pyproject
-            .tool
-            .as_ref()
-            .unwrap()
-            .opsml
-            .as_ref()
-            .unwrap()
-            .service
-            .is_some());
-
-        let tools = pyproject.get_tools().unwrap();
-        let app = tools.service.as_ref().unwrap()[0].clone();
-        let cards = app.cards.clone().unwrap();
-        assert_eq!(app.name, "opsml");
-        assert_eq!(app.space, "opsml");
-        assert_eq!(app.version, Some("1".to_string()));
-        assert_eq!(cards.len(), 2);
-        assert_eq!(cards[0].alias, "data");
-        assert_eq!(cards[0].space, "space".to_string());
-        assert_eq!(cards[0].name, "name".to_string());
-        assert_eq!(cards[0].version, Some("1".to_string()));
-        assert_eq!(cards[0].registry_type, RegistryType::Data);
-        assert_eq!(cards[1].alias, "model");
-        assert_eq!(cards[1].space, "space".to_string());
-        assert_eq!(cards[1].name, "name".to_string());
-        assert_eq!(cards[1].version, Some("1".to_string()));
-        assert_eq!(cards[1].registry_type, RegistryType::Model);
-        assert!(cards[1].drift.as_ref().unwrap().active);
-        assert!(!cards[1].drift.as_ref().unwrap().deactivate_others);
-    }
-
-    #[test]
     fn test_default_load() {
         let content = r#"
             [tool.opsml.default]
             name = "name"
             space = "space"
 
-            [[tool.opsml.service]]
-            alias = "model"
-            space = "space"
-            name = "name"
-            version = "1"
-            type = "model"
-            drift = { active = true, deactivate_others = false, drift_type = ["custom", "psi"] }
-
         "#;
 
         let (_temp_dir, root_dir) = write_toml_to_temp(content).unwrap();
@@ -358,15 +212,6 @@ mod tests {
         // assert tool.opsml is not None
         assert!(pyproject.tool.is_some());
         assert!(pyproject.tool.as_ref().unwrap().opsml.is_some());
-        assert!(pyproject
-            .tool
-            .as_ref()
-            .unwrap()
-            .opsml
-            .as_ref()
-            .unwrap()
-            .default
-            .is_some());
 
         let tools = pyproject.get_tools().unwrap();
         let service = tools.default.as_ref().unwrap();

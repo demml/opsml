@@ -4,9 +4,9 @@ use opsml_cards::{
 };
 
 use opsml_registry::{download::download_service, CardRegistries, CardRegistry};
+use opsml_service::ServiceType;
 use opsml_types::contracts::{CardList, CardRecord};
 use opsml_types::{cards::ComputeEnvironment, RegistryMode, RegistryType};
-
 use pyo3::prelude::*;
 
 #[pymodule]
@@ -38,6 +38,7 @@ pub fn card(m: &Bound<'_, PyModule>) -> PyResult<()> {
     // ServiceCard
     m.add_class::<ServiceCard>()?;
     m.add_class::<Card>()?;
+    m.add_class::<ServiceType>()?;
 
     Ok(())
 }

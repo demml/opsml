@@ -2,8 +2,9 @@ use crate::{
     error::SqlError,
     sqlite::sql::{
         artifact::ArtifactLogicSqliteClient, audit::AuditLogicSqliteClient,
-        card::CardLogicSqliteClient, experiment::ExperimentLogicSqliteClient,
-        space::SpaceLogicSqliteClient, user::UserLogicSqliteClient,
+        card::CardLogicSqliteClient, evaluation::EvaluationLogicSqliteClient,
+        experiment::ExperimentLogicSqliteClient, space::SpaceLogicSqliteClient,
+        user::UserLogicSqliteClient,
     },
 };
 use opsml_settings::config::DatabaseSettings;
@@ -23,6 +24,7 @@ pub struct SqliteClient {
     pub user: UserLogicSqliteClient,
     pub space: SpaceLogicSqliteClient,
     pub audit: AuditLogicSqliteClient,
+    pub eval: EvaluationLogicSqliteClient,
 }
 
 impl SqliteClient {
@@ -63,6 +65,7 @@ impl SqliteClient {
             user: UserLogicSqliteClient::new(&pool),
             space: SpaceLogicSqliteClient::new(&pool),
             audit: AuditLogicSqliteClient::new(&pool),
+            eval: EvaluationLogicSqliteClient::new(&pool),
             pool,
         };
 
@@ -85,10 +88,6 @@ impl SqliteClient {
     }
 }
 
-pub trait BaseSqliteClient {
-    fn pool(&self) -> &Pool<Sqlite>;
-}
-
 #[cfg(test)]
 mod tests {
 
@@ -99,11 +98,13 @@ mod tests {
         HardwareMetricsRecord, MetricRecord, ModelCardRecord, ParameterRecord, PromptCardRecord,
         ServerCard, ServiceCardRecord, User,
     };
+    use crate::schemas::EvaluationSqlRecord;
     use crate::traits::{
-        ArtifactLogicTrait, AuditLogicTrait, CardLogicTrait, ExperimentLogicTrait, SpaceLogicTrait,
-        UserLogicTrait,
+        ArtifactLogicTrait, AuditLogicTrait, CardLogicTrait, EvaluationLogicTrait,
+        ExperimentLogicTrait, SpaceLogicTrait, UserLogicTrait,
     };
     use opsml_settings::config::DatabaseSettings;
+    use opsml_types::contracts::evaluation::{EvaluationProvider, EvaluationType};
     use opsml_types::contracts::{ArtifactKey, ArtifactQueryArgs, AuditEvent, SpaceNameEvent};
     use opsml_types::SqlType;
     use opsml_types::{
@@ -1137,5 +1138,31 @@ mod tests {
         // assert artifact types
         assert_eq!(artifacts[0].artifact_type, ArtifactType::Generic);
         assert_eq!(artifacts[1].artifact_type, ArtifactType::Figure);
+    }
+
+    #[tokio::test]
+    async fn test_sqlite_insert_eval() {
+        let config = DatabaseSettings {
+            connection_uri: get_connection_uri(),
+            max_connections: 1,
+            sql_type: SqlType::Sqlite,
+        };
+
+        let client = SqliteClient::new(&config).await.unwrap();
+        let eval_record = EvaluationSqlRecord::new(
+            "test".to_string(),
+            EvaluationType::LLM,
+            EvaluationProvider::Opsml,
+        );
+        let uid = eval_record.uid.clone();
+        client
+            .eval
+            .insert_evaluation_record(eval_record)
+            .await
+            .unwrap();
+
+        let record = client.eval.get_evaluation_record(&uid).await.unwrap();
+
+        assert_eq!(record.name, "test");
     }
 }

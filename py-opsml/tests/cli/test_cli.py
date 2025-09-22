@@ -4,7 +4,7 @@
 ###################################################################################################
 
 from opsml.cli import (
-    lock_project,
+    lock_service,
     install_service,
     generate_key,
     update_drift_profile_status,
@@ -82,7 +82,7 @@ def run_experiment(
 
 
 @pytest.mark.skipif(WINDOWS_EXCLUDE, reason="skipping")
-def test_pyproject_app_lock_project(
+def test_pyproject_app_lock_service(
     random_forest_classifier: SklearnModel,
     chat_prompt: Prompt,
     example_dataframe: pd.DataFrame,
@@ -93,7 +93,7 @@ def test_pyproject_app_lock_project(
 
     # The test will:
     1. Create initial experiment and register a model and prompt
-    2. Create a lock file via lock_project form pyproject.toml (cli: opsml lock)
+    2. Create a lock file via lock_service form pyproject.toml (cli: opsml lock)
     3. Check if the lock file was created
     4. Install the app via install_service (cli: opsml install app)
     5. Check if the opsml_app directory was created and all artifacts were downloaded
@@ -109,7 +109,7 @@ def test_pyproject_app_lock_project(
         # run experiment to populate registry
         run_experiment(random_forest_classifier, chat_prompt, example_dataframe)
 
-        lock_project(CURRENT_DIRECTORY)
+        lock_service(CURRENT_DIRECTORY)
 
         # Check if the lock file was created
         lock_file = CURRENT_DIRECTORY / "opsml.lock"
@@ -118,26 +118,23 @@ def test_pyproject_app_lock_project(
         # download the assets
         install_service(CURRENT_DIRECTORY, CURRENT_DIRECTORY)
 
-        # check if opsml_app was created
-        opsml_app = CURRENT_DIRECTORY / "opsml_app"
-        assert opsml_app.exists()
+        # check if opsml_service was created
+        opsml_service = CURRENT_DIRECTORY / "opsml_service"
+        assert opsml_service.exists()
 
-        # check if the opsml_app contains the assets
-        assert (opsml_app / "app1").exists()
-        assert (opsml_app / "app2").exists()
-        assert (opsml_app / "app3").exists()
+        # check if the opsml_service contains the assets
+        assert (opsml_service).exists()
 
-        # try loading each service
-        for app in ["app1", "app2", "app3"]:
-            service = ServiceCard.from_path(opsml_app / app)
-            assert service is not None
-            assert service["my_model"].model is not None
-            assert service["my_model"].version == "1.0.0"
-            assert service["my_prompt"].prompt is not None
-            assert service["my_prompt"].version == "1.0.0"
+        # try loading service
+        service = ServiceCard.from_path(opsml_service)
+        assert service is not None
+        assert service["my_model"].model is not None
+        assert service["my_model"].version == "1.0.0"
+        assert service["my_prompt"].prompt is not None
+        assert service["my_prompt"].version == "1.0.0"
 
-        ## delete the opsml_app and lock file
-        shutil.rmtree(opsml_app)
+        ## delete the opsml_service and lock file
+        shutil.rmtree(opsml_service)
         os.remove(lock_file)
 
         # write new experiment to the registry
@@ -149,8 +146,8 @@ def test_pyproject_app_lock_project(
 
         assert len(cards) == 2
 
-        # lock the project again
-        lock_project(CURRENT_DIRECTORY)
+        # lock the service
+        lock_service(CURRENT_DIRECTORY)
 
         # Check if the lock file was created
         lock_file = CURRENT_DIRECTORY / "opsml.lock"
@@ -160,20 +157,19 @@ def test_pyproject_app_lock_project(
         # re-install the app
         install_service(CURRENT_DIRECTORY, CURRENT_DIRECTORY)
 
-        ## check if opsml_app was created
-        opsml_app = CURRENT_DIRECTORY / "opsml_app"
-        assert opsml_app.exists()
+        ## check if opsml_service was created
+        opsml_service = CURRENT_DIRECTORY / "opsml_service"
+        assert opsml_service.exists()
 
-        for app in ["app1", "app2", "app3"]:
-            service = ServiceCard.from_path(opsml_app / app)
-            assert service is not None
-            assert service["my_model"].model is not None
-            assert service["my_model"].version == "1.1.0"
-            assert service["my_prompt"].prompt is not None
-            assert service["my_prompt"].version == "1.1.0"
+        service = ServiceCard.from_path(opsml_service)
+        assert service is not None
+        assert service["my_model"].model is not None
+        assert service["my_model"].version == "1.1.0"
+        assert service["my_prompt"].prompt is not None
+        assert service["my_prompt"].version == "1.1.0"
 
-        ## delete the opsml_app and lock file
-        shutil.rmtree(opsml_app)
+        ## delete the opsml_service and lock file
+        shutil.rmtree(opsml_service)
         os.remove(lock_file)
 
 

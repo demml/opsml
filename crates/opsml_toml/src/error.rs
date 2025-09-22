@@ -12,11 +12,11 @@ pub enum PyProjectTomlError {
     #[error("Failed to read `pyproject.toml`")]
     ReadError(#[source] std::io::Error),
 
-    #[error("Failed to parse `pyproject.toml`")]
-    ParseError(#[from] toml_edit::TomlError),
-
     #[error("Failed to get current directory")]
     CurrentDirError(#[source] std::io::Error),
+
+    #[error("Failed to parse `pyproject.toml`")]
+    ParseError(#[from] toml_edit::TomlError),
 
     #[error("Failed to deserialize pyproject.toml: {0}")]
     TomlSchema(#[source] toml_edit::de::Error),

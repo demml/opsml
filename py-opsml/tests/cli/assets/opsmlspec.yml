@@ -1,0 +1,19 @@
+name: name
+space: space
+type: Api
+
+service:
+  version: 1.0.0
+  write_dir: opsml_service
+  cards:
+    - alias: my_prompt
+      space: space
+      name: prompt
+      version: 1.*
+      type: prompt
+
+    - alias: my_model
+      space: space
+      name: model
+      version: 1.*
+      type: model

@@ -32,6 +32,7 @@ opsml-experiment = { path = "crates/opsml_experiment" }
 opsml-mocks = { path = "crates/opsml_mocks" }
 opsml-server = { path = "crates/opsml_server" }
 opsml-semver = { path = "crates/opsml_semver" }
+opsml-service = { path = "crates/opsml_service" }
 opsml-settings = { path = "crates/opsml_settings" }
 opsml-sql = { path = "crates/opsml_sql" }
 opsml-state = { path = "crates/opsml_state" }
@@ -97,6 +98,7 @@ semver = "1.*"
 serde = { version = "1.*", features = ["derive"] }
 serde_json = "1.*"
 serde_qs = ">=0.14"
+serde_yaml = "0.9.34-deprecated" # serde_yaml is no longer maintained, but it still contains all we need for now
 sqlx = { version = "0.*", features = [ "runtime-tokio", "tls-native-tls", "postgres", "mysql", "sqlite", "chrono", "json"] }
 sysinfo = "0.*"
 tabled = { version = "0.*", features = ["ansi"] }

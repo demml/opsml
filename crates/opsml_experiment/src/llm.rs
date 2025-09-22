@@ -16,6 +16,6 @@ impl LLMEvaluator {
         metrics: Vec<LLMEvalMetric>,
         config: Option<EvaluationConfig>,
     ) -> Result<LLMEvalResults, ExperimentError> {
-        Ok(evaluate_llm(records, metrics, config)?)
+        Ok(evaluate_llm(records, metrics, config, false)?)
     }
 }
