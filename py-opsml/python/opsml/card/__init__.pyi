@@ -33,6 +33,11 @@ CardInterfaceType: TypeAlias = Union[DataInterface, ModelInterface]
 ServiceCardInterfaceType: TypeAlias = Dict[str, Union[DataInterface, ModelInterface]]
 LoadInterfaceType: TypeAlias = Union[ServiceCardInterfaceType, ServiceCardInterfaceType]
 
+class ServiceType:
+    Api: "ServiceType"
+    Mcp: "ServiceType"
+    Agent: "ServiceType"
+
 class RegistryType:
     Data: "RegistryType"
     Model: "RegistryType"
@@ -1221,7 +1226,9 @@ class ServiceCard:
         space: str,
         name: str,
         cards: List[Card],
-        version: Optional[str],
+        version: Optional[str] = None,
+        service_type: Optional[ServiceType] = None,
+        load_spec: bool = False,
     ) -> None:
         """Initialize the service card
 
@@ -1235,6 +1242,12 @@ class ServiceCard:
             version (str | None):
                 The version of the service card. If not provided, the latest version
                 for a given space and name will be used (e.g. {space}/{name}/v*).
+            service_type (ServiceType | None):
+                The type of service (Api, Mcp, Agent). If not provided, defaults to Api.
+            load_spec (bool):
+                Whether to load the opsmlspec.yml file if it exists in the service card directory.
+                This is useful when you have additional metadata in the opsmlspec.yml file that you want
+                to include in the service card. Defaults to False.
         """
 
     @property

@@ -12,7 +12,7 @@ async-trait = { workspace = true }
 chrono = { workspace = true }
 opsml-semver = { workspace = true }
 opsml-settings = { workspace = true }
-opsml-types = { workspace = true }
+opsml-types = { workspace = true, features = ["server"] }
 opsml-utils = { workspace = true }
 opsml-version = { workspace = true }
 semver = { workspace = true }

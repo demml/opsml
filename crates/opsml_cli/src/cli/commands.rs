@@ -1,4 +1,4 @@
-use crate::cli::arg::{DownloadCard, KeyArgs, ListCards, ScouterArgs, UiArgs};
+use crate::cli::arg::{DownloadCard, KeyArgs, ListCards, LockArgs, ScouterArgs, UiArgs};
 use clap::builder::styling::{AnsiColor, Effects};
 use clap::builder::Styles;
 use clap::command;
@@ -76,11 +76,11 @@ pub enum Commands {
         command: GetCommands,
     },
 
-    /// Loads a pyproject.toml file and creates a lock file for an app
+    /// Creates and locks an opsml service from an opsmlspec.yml file
     ///
     /// # Example
     /// opsml lock
-    Lock,
+    Lock(LockArgs),
 
     ///  Show opsml version
     ///

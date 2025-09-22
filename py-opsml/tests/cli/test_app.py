@@ -3,7 +3,7 @@
 ###################################################################################################
 
 from opsml.cli import (
-    lock_project,
+    lock_service,
     install_service,
 )  # type: ignore
 from opsml.mock import MockConfig
@@ -92,7 +92,7 @@ def test_pyproject_app(
         # run experiment to populate registry
         run_experiment(random_forest_classifier, chat_prompt, example_dataframe)
 
-        lock_project(CURRENT_DIRECTORY)
+        lock_service(CURRENT_DIRECTORY)
 
         # Check if the lock file was created
         lock_file = CURRENT_DIRECTORY / "opsml.lock"
@@ -101,16 +101,13 @@ def test_pyproject_app(
         # download the assets
         install_service(CURRENT_DIRECTORY, CURRENT_DIRECTORY)
 
-        # check if opsml_app was created
-        opsml_app = CURRENT_DIRECTORY / "opsml_app"
-        assert opsml_app.exists()
-
-        # check if the opsml_app contains the assets
-        assert (opsml_app / "app1").exists()
+        # check if opsml_service was created
+        opsml_service = CURRENT_DIRECTORY / "opsml_service"
+        assert opsml_service.exists()
 
         # load the service card and the queue
         app = AppState.from_path(
-            path=opsml_app / "app1",
+            path=opsml_service,
             transport_config=opsml.scouter.HTTPConfig(),  # this will be mocked
         )
 
@@ -118,6 +115,6 @@ def test_pyproject_app(
 
         assert isinstance(app.queue.transport_config, MockConfig)
 
-        ## delete the opsml_app and lock file
-        shutil.rmtree(opsml_app)
+        ## delete the opsml_service and lock file
+        shutil.rmtree(opsml_service)
         os.remove(lock_file)

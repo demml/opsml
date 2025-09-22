@@ -4,6 +4,7 @@ use crate::utils::BaseArgs;
 use crate::{DataCard, ExperimentCard, ModelCard, PromptCard};
 use chrono::{DateTime, Utc};
 use opsml_interfaces::{DataLoadKwargs, ModelLoadKwargs};
+use opsml_service::{DeploymentConfig, Metadata, ServiceSpec, ServiceType};
 use opsml_types::contracts::CardEntry;
 use opsml_types::CommonKwargs;
 use opsml_types::{
@@ -294,21 +295,45 @@ pub struct ServiceCard {
 
     #[pyo3(get, set)]
     pub experimentcard_uid: Option<String>,
+
+    #[pyo3(get)]
+    pub service_type: ServiceType,
+
+    pub metadata: Option<Metadata>,
+    pub deploy: Option<Vec<DeploymentConfig>>,
 }
 
 #[pymethods]
 impl ServiceCard {
+    /// Create a new ServiceCard from the provided arguments
+    /// # Arguments
+    /// * `space` - The space of the service
+    /// * `name` - The name of the service
+    /// * `cards` - A list of cards to include in the service
+    /// * `version` - The version of the service (optional)
     #[new]
-    #[pyo3(signature = (space, name,  cards, version=None))]
+    #[pyo3(signature = (space, name,  cards, version=None, service_type=None, load_spec=false))]
     pub fn new(
         space: &str,
         name: &str,
         cards: Vec<Card>, // can be Vec<Card> or Vec<ModelCard, DataCard, etc.>
         version: Option<&str>,
+        service_type: Option<ServiceType>,
+        load_spec: bool, // whether to load the spec from the service card
     ) -> Result<Self, CardError> {
         let registry_type = RegistryType::Service;
         let base_args =
             BaseArgs::create_args(Some(name), Some(space), version, None, &registry_type)?;
+
+        let spec = if load_spec {
+            ServiceSpec::from_env()?
+        } else {
+            ServiceSpec::new_empty(
+                &base_args.0,
+                &base_args.1,
+                service_type.unwrap_or(ServiceType::Api),
+            )?
+        };
 
         Ok(ServiceCard {
             space: base_args.0,
@@ -323,6 +348,9 @@ impl ServiceCard {
             is_card: true,
             registry_type,
             experimentcard_uid: None,
+            service_type: spec.service_type,
+            metadata: spec.metadata,
+            deploy: spec.deploy,
         })
     }
 
@@ -729,11 +757,17 @@ impl ServiceCard {
         space: String,
         name: String,
         cards: Vec<Card>, // can be Vec<Card> or Vec<ModelCard, DataCard, etc.>
-        version: Option<&str>,
+
+        spec: &ServiceSpec,
     ) -> Result<ServiceCard, CardError> {
         let registry_type = RegistryType::Service;
-        let base_args =
-            BaseArgs::create_args(Some(&name), Some(&space), version, None, &registry_type)?;
+        let base_args = BaseArgs::create_args(
+            Some(&name),
+            Some(&space),
+            spec.service.version.as_deref(),
+            None,
+            &registry_type,
+        )?;
 
         Ok(ServiceCard {
             space: base_args.0,
@@ -748,6 +782,9 @@ impl ServiceCard {
             is_card: true,
             registry_type,
             experimentcard_uid: None,
+            service_type: spec.service_type.clone(),
+            metadata: spec.metadata.clone(),
+            deploy: spec.deploy.clone(),
         })
     }
 
@@ -831,6 +868,9 @@ impl Serialize for ServiceCard {
         state.serialize_field("is_card", &self.is_card)?;
         state.serialize_field("registry_type", &self.registry_type)?;
         state.serialize_field("experimentcard_uid", &self.experimentcard_uid)?;
+        state.serialize_field("service_type", &self.service_type)?;
+        state.serialize_field("metadata", &self.metadata)?;
+        state.serialize_field("deploy", &self.deploy)?;
         state.end()
     }
 }
@@ -855,6 +895,9 @@ impl<'de> Deserialize<'de> for ServiceCard {
             IsCard,
             RegistryType,
             ExperimentcardUid,
+            ServiceType,
+            Metadata,
+            Deploy,
         }
 
         struct ServiceCardVisitor;
@@ -882,6 +925,9 @@ impl<'de> Deserialize<'de> for ServiceCard {
                 let mut is_card = None;
                 let mut registry_type = None;
                 let mut experimentcard_uid = None;
+                let mut service_type = None;
+                let mut metadata = None;
+                let mut deploy = None;
 
                 while let Some(key) = map.next_key()? {
                     match key {
@@ -923,6 +969,15 @@ impl<'de> Deserialize<'de> for ServiceCard {
                         Field::ExperimentcardUid => {
                             experimentcard_uid = Some(map.next_value()?);
                         }
+                        Field::ServiceType => {
+                            service_type = Some(map.next_value()?);
+                        }
+                        Field::Metadata => {
+                            metadata = Some(map.next_value()?);
+                        }
+                        Field::Deploy => {
+                            deploy = Some(map.next_value()?);
+                        }
                     }
                 }
 
@@ -940,6 +995,9 @@ impl<'de> Deserialize<'de> for ServiceCard {
                 let is_card = is_card.unwrap_or(true);
                 let registry_type = registry_type.unwrap_or(RegistryType::Service);
                 let experimentcard_uid = experimentcard_uid.unwrap_or(None);
+                let service_type = service_type.unwrap_or(ServiceType::Api);
+                let metadata = metadata.unwrap_or(None);
+                let deploy = deploy.unwrap_or(None);
 
                 Ok(ServiceCard {
                     space,
@@ -954,6 +1012,9 @@ impl<'de> Deserialize<'de> for ServiceCard {
                     app_env,
                     registry_type,
                     experimentcard_uid,
+                    service_type,
+                    metadata,
+                    deploy,
                 })
             }
         }
@@ -971,6 +1032,9 @@ impl<'de> Deserialize<'de> for ServiceCard {
             "is_card",
             "registry_type",
             "experimentcard_uid",
+            "service_type",
+            "metadata",
+            "deploy",
         ];
         deserializer.deserialize_struct("ServiceCard", FIELDS, ServiceCardVisitor)
     }
