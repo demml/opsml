@@ -42,12 +42,10 @@ impl SklearnModel {
         task_type: Option<TaskType>,
         drift_profile: Option<&Bound<'py, PyAny>>,
     ) -> Result<(Self, ModelInterface), ModelInterfaceError> {
+        let sklearn = py.import("sklearn")?;
         // check if model is base estimator for sklearn validation
         if let Some(model) = model {
-            let base_estimator = py
-                .import("sklearn")?
-                .getattr("base")?
-                .getattr("BaseEstimator")?;
+            let base_estimator = sklearn.getattr("base")?.getattr("BaseEstimator")?;
             if model.is_instance(&base_estimator).unwrap() {
                 //
             } else {
@@ -55,8 +53,19 @@ impl SklearnModel {
             }
         }
 
-        let mut model_interface =
-            ModelInterface::new(py, model, sample_data, task_type, drift_profile)?;
+        let sklearn_version = match sklearn.getattr("__version__")?.extract::<String>() {
+            Ok(version) => Some(version),
+            Err(_) => None,
+        };
+
+        let mut model_interface = ModelInterface::new(
+            py,
+            model,
+            sample_data,
+            task_type,
+            drift_profile,
+            sklearn_version,
+        )?;
         model_interface.interface_type = ModelInterfaceType::Sklearn;
 
         let mut preprocessor_name = CommonKwargs::Undefined.to_string();
@@ -309,8 +318,14 @@ impl SklearnModel {
             preprocessor_name,
         };
 
-        let mut interface =
-            ModelInterface::new(py, None, None, Some(metadata.task_type.clone()), None)?;
+        let mut interface = ModelInterface::new(
+            py,
+            None,
+            None,
+            Some(metadata.task_type.clone()),
+            None,
+            Some(metadata.version.clone()),
+        )?;
 
         interface.schema = metadata.schema.clone();
         interface.data_type = metadata.data_type.clone();

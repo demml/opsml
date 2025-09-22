@@ -7,6 +7,7 @@ use crate::model::onnx::OnnxConverter;
 use crate::model::SampleData;
 use crate::types::{FeatureSchema, ProcessorType};
 use crate::OnnxSession;
+use opsml_types::CommonKwargs;
 use opsml_utils::PyHelperFuncs;
 use scouter_client::{
     CustomDriftProfile, DriftType, LLMDriftProfile, PsiDriftProfile, SpcDriftProfile,
@@ -150,6 +151,8 @@ pub struct ModelInterfaceMetadata {
     pub interface_type: ModelInterfaceType,
 
     pub model_specific_metadata: Value,
+
+    pub version: String,
 }
 
 #[pymethods]
@@ -164,6 +167,8 @@ impl ModelInterfaceMetadata {
         interface_type=ModelInterfaceType::Base,
         onnx_session=None,
         extra_metadata=HashMap::new(),
+        version=CommonKwargs::Undefined.to_string()
+      
      )
     )]
     #[allow(clippy::too_many_arguments)]
@@ -176,6 +181,7 @@ impl ModelInterfaceMetadata {
         interface_type: ModelInterfaceType,
         onnx_session: Option<OnnxSession>,
         extra_metadata: HashMap<String, String>,
+        version: String,
     ) -> Self {
         ModelInterfaceMetadata {
             task_type,
@@ -187,6 +193,7 @@ impl ModelInterfaceMetadata {
             save_metadata,
             extra_metadata,
             model_specific_metadata: Value::Null,
+            version,
         }
     }
     pub fn __str__(&self) -> String {
@@ -239,13 +246,14 @@ pub struct ModelInterface {
 impl ModelInterface {
     #[new]
     #[allow(clippy::too_many_arguments)]
-    #[pyo3(signature = (model=None, sample_data=None, task_type=None, drift_profile=None))]
+    #[pyo3(signature = (model=None, sample_data=None, task_type=None, drift_profile=None, version=None))]
     pub fn new<'py>(
         py: Python,
         model: Option<&Bound<'py, PyAny>>,
         sample_data: Option<&Bound<'py, PyAny>>,
         task_type: Option<TaskType>,
         drift_profile: Option<&Bound<'py, PyAny>>,
+        version: Option<String>,
     ) -> Result<Self, ModelInterfaceError> {
         // Extract the sample data
         let sample_data = match sample_data {
@@ -285,6 +293,7 @@ impl ModelInterface {
             interface_type: ModelInterfaceType::Base,
             onnx_session: None,
             drift_profile: profiles,
+            version: version.unwrap_or(CommonKwargs::Undefined.to_string()),
         })
     }
 
@@ -441,6 +450,7 @@ impl ModelInterface {
             self.interface_type.clone(),
             onnx_session,
             HashMap::new(),
+            self.version.clone(),
         );
 
         Ok(metadata)
@@ -550,6 +560,7 @@ impl ModelInterface {
                 .map(|session| Py::new(py, session.clone()).unwrap()),
             drift_profile: DriftProfileMap::new(),
             sample_data: SampleData::default(),
+            version: metadata.version.clone(),
         };
 
         Ok(interface)
