@@ -169,7 +169,6 @@ impl ModelInterfaceMetadata {
         onnx_session=None,
         extra_metadata=HashMap::new(),
         version=CommonKwargs::Undefined.to_string()
-      
      )
     )]
     #[allow(clippy::too_many_arguments)]
