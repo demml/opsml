@@ -138,7 +138,7 @@ pub struct McpConfig {
     pub transport: McpTransport,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct ServiceConfig {
     pub version: Option<String>,
     pub cards: Option<Vec<Card>>,
@@ -212,6 +212,25 @@ pub struct ServiceSpec {
 }
 
 impl ServiceSpec {
+    pub fn new_empty(
+        name: &str,
+        space: &str,
+        service_type: ServiceType,
+    ) -> Result<Self, ServiceError> {
+        let mut spec = ServiceSpec {
+            name: name.to_string(),
+            space_config: SpaceConfig::Space {
+                space: space.to_string(),
+            },
+            service_type,
+            metadata: None,
+            service: ServiceConfig::default(),
+            deploy: None,
+            root_path: PathBuf::new(),
+        };
+        spec.validate()?;
+        Ok(spec)
+    }
     /// Load a ServiceSpec from a file path, searching parent directories if necessary.
     /// This method is used within the CLI to locate the service specification file.
     /// # Arguments
@@ -259,6 +278,11 @@ impl ServiceSpec {
         spec.root_path = root_path;
 
         Ok(spec)
+    }
+
+    pub fn from_env() -> Result<Self, ServiceError> {
+        let current_dir = std::env::current_dir()?;
+        Self::from_path(&current_dir)
     }
 
     fn validate(&mut self) -> Result<(), ServiceError> {

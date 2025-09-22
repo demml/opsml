@@ -305,17 +305,35 @@ pub struct ServiceCard {
 
 #[pymethods]
 impl ServiceCard {
+    /// Create a new ServiceCard from the provided arguments
+    /// # Arguments
+    /// * `space` - The space of the service
+    /// * `name` - The name of the service
+    /// * `cards` - A list of cards to include in the service
+    /// * `version` - The version of the service (optional)
     #[new]
-    #[pyo3(signature = (space, name,  cards, version=None))]
+    #[pyo3(signature = (space, name,  cards, version=None, service_type=None, load_spec=false))]
     pub fn new(
         space: &str,
         name: &str,
         cards: Vec<Card>, // can be Vec<Card> or Vec<ModelCard, DataCard, etc.>
         version: Option<&str>,
+        service_type: Option<ServiceType>,
+        load_spec: bool, // whether to load the spec from the service card
     ) -> Result<Self, CardError> {
         let registry_type = RegistryType::Service;
         let base_args =
             BaseArgs::create_args(Some(name), Some(space), version, None, &registry_type)?;
+
+        let spec = if load_spec {
+            ServiceSpec::from_env()?
+        } else {
+            ServiceSpec::new_empty(
+                &base_args.0,
+                &base_args.1,
+                service_type.unwrap_or(ServiceType::Api),
+            )?
+        };
 
         Ok(ServiceCard {
             space: base_args.0,
@@ -330,9 +348,9 @@ impl ServiceCard {
             is_card: true,
             registry_type,
             experimentcard_uid: None,
-            service_type: ServiceType::Api,
-            metadata: None,
-            deploy: None,
+            service_type: spec.service_type,
+            metadata: spec.metadata,
+            deploy: spec.deploy,
         })
     }
 

@@ -290,7 +290,9 @@ class DataCard:
         """Return the model dump as a json string"""
 
     @staticmethod
-    def model_validate_json(json_string: str, interface: Optional[DataInterface] = None) -> "ModelCard":
+    def model_validate_json(
+        json_string: str, interface: Optional[DataInterface] = None
+    ) -> "ModelCard":
         """Validate the model json string
 
         Args:
@@ -612,7 +614,9 @@ class ModelCard:
         """Return the model dump as a json string"""
 
     @staticmethod
-    def model_validate_json(json_string: str, interface: Optional[ModelInterface] = None) -> "ModelCard":
+    def model_validate_json(
+        json_string: str, interface: Optional[ModelInterface] = None
+    ) -> "ModelCard":
         """Validate the model json string
 
         Args:
@@ -1221,7 +1225,9 @@ class ServiceCard:
         space: str,
         name: str,
         cards: List[Card],
-        version: Optional[str],
+        version: Optional[str] = None,
+        service_type: Optional[ServiceType] = None,
+        load_spec: bool = False,
     ) -> None:
         """Initialize the service card
 
@@ -1235,6 +1241,12 @@ class ServiceCard:
             version (str | None):
                 The version of the service card. If not provided, the latest version
                 for a given space and name will be used (e.g. {space}/{name}/v*).
+            service_type (ServiceType | None):
+                The type of service (Api, Mcp, Agent). If not provided, defaults to Api.
+            load_spec (bool):
+                Whether to load the opsmlspec.yml file if it exists in the service card directory.
+                This is useful when you have additional metadata in the opsmlspec.yml file that you want
+                to include in the service card. Defaults to False.
         """
 
     @property
@@ -1382,29 +1394,49 @@ CardType = TypeVar(  # pylint: disable=invalid-name
 
 class CardRegistry(Generic[CardType]):
     @overload
-    def __init__(self, registry_type: Literal[RegistryType.Data]) -> "CardRegistry[DataCard]": ...
+    def __init__(
+        self, registry_type: Literal[RegistryType.Data]
+    ) -> "CardRegistry[DataCard]": ...
     @overload
-    def __init__(self, registry_type: Literal[RegistryType.Model]) -> "CardRegistry[ModelCard]": ...
+    def __init__(
+        self, registry_type: Literal[RegistryType.Model]
+    ) -> "CardRegistry[ModelCard]": ...
     @overload
-    def __init__(self, registry_type: Literal[RegistryType.Prompt]) -> "CardRegistry[PromptCard]": ...
+    def __init__(
+        self, registry_type: Literal[RegistryType.Prompt]
+    ) -> "CardRegistry[PromptCard]": ...
     @overload
-    def __init__(self, registry_type: Literal[RegistryType.Experiment]) -> "CardRegistry[ExperimentCard]": ...
+    def __init__(
+        self, registry_type: Literal[RegistryType.Experiment]
+    ) -> "CardRegistry[ExperimentCard]": ...
     @overload
-    def __init__(self, registry_type: Literal[RegistryType.Service]) -> "CardRegistry[ServiceCard]": ...
+    def __init__(
+        self, registry_type: Literal[RegistryType.Service]
+    ) -> "CardRegistry[ServiceCard]": ...
     @overload
-    def __init__(self, registry_type: Literal[RegistryType.Audit]) -> "CardRegistry[Any]": ...
+    def __init__(
+        self, registry_type: Literal[RegistryType.Audit]
+    ) -> "CardRegistry[Any]": ...
 
     # String literal overloads
     @overload
     def __init__(self, registry_type: Literal["data"]) -> "CardRegistry[DataCard]": ...
     @overload
-    def __init__(self, registry_type: Literal["model"]) -> "CardRegistry[ModelCard]": ...
+    def __init__(
+        self, registry_type: Literal["model"]
+    ) -> "CardRegistry[ModelCard]": ...
     @overload
-    def __init__(self, registry_type: Literal["prompt"]) -> "CardRegistry[PromptCard]": ...
+    def __init__(
+        self, registry_type: Literal["prompt"]
+    ) -> "CardRegistry[PromptCard]": ...
     @overload
-    def __init__(self, registry_type: Literal["experiment"]) -> "CardRegistry[ExperimentCard]": ...
+    def __init__(
+        self, registry_type: Literal["experiment"]
+    ) -> "CardRegistry[ExperimentCard]": ...
     @overload
-    def __init__(self, registry_type: Literal["service"]) -> "CardRegistry[ServiceCard]": ...
+    def __init__(
+        self, registry_type: Literal["service"]
+    ) -> "CardRegistry[ServiceCard]": ...
     @overload
     def __init__(self, registry_type: Literal["audit"]) -> "CardRegistry[Any]": ...
     def __init__(self, registry_type: Union[RegistryType, str]) -> None:
