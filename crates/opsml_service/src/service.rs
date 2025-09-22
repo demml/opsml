@@ -1,48 +1,14 @@
 use crate::error::ServiceError;
-use opsml_types::RegistryType;
+use opsml_types::{
+    contracts::mcp::{McpCapability, McpConfig, McpTransport},
+    RegistryType,
+};
 use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt::Display;
 use std::path::{Path, PathBuf};
 const DEFAULT_SERVICE_FILENAME: &str = "opsmlspec.yml";
-
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Hash)]
-pub enum McpTransport {
-    #[serde(alias = "HTTP", alias = "http")]
-    Http,
-    #[serde(alias = "STDIO", alias = "stdio")]
-    Stdio,
-}
-
-impl Display for McpTransport {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            McpTransport::Http => write!(f, "Http"),
-            McpTransport::Stdio => write!(f, "Stdio"),
-        }
-    }
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Hash)]
-pub enum McpCapability {
-    #[serde(alias = "RESOURCES", alias = "resources")]
-    Resources,
-    #[serde(alias = "TOOLS", alias = "tools")]
-    Tools,
-    #[serde(alias = "PROMPTS", alias = "prompts")]
-    Prompts,
-}
-
-impl Display for McpCapability {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            McpCapability::Resources => write!(f, "Resources"),
-            McpCapability::Tools => write!(f, "Tools"),
-            McpCapability::Prompts => write!(f, "Prompts"),
-        }
-    }
-}
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Hash)]
 #[pyclass]
@@ -130,12 +96,6 @@ impl Card {
             self.space = service_space.to_string();
         }
     }
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct McpConfig {
-    pub capabilities: Vec<McpCapability>,
-    pub transport: McpTransport,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
