@@ -4,7 +4,7 @@ type: Api
 
 service:
   version: 1.0.0
-  write_dir: opsml_app/test_service
+  write_dir: opsml_service
   cards:
     - alias: model
       space: model-space
