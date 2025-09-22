@@ -1,0 +1,1 @@
+SELECT * FROM opsml_evaluation_registry WHERE uid = $1;

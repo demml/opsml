@@ -113,6 +113,9 @@ pub enum CardError {
 
     #[error("Unsupported drift type: {0}")]
     UnsupportedDriftType(DriftType),
+
+    #[error(transparent)]
+    ServiceError(#[from] opsml_service::error::ServiceError),
 }
 
 impl<'a> From<pyo3::DowncastError<'a, 'a>> for CardError {

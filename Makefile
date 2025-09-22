@@ -51,6 +51,9 @@ test.sql.mysql: build.mysql
 .PHONY: test.sql
 test.sql: test.sql.sqlite test.sql.enum test.sql.postgres test.sql.mysql
 
+test.service:
+	cargo test -p opsml-service -- --nocapture --test-threads=1
+
 ######## Storage tests
 
 .PHONY: test.storage.local.server

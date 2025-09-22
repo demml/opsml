@@ -25,4 +25,9 @@ sysinfo = { workspace = true }
 tabled = { workspace = true, features = ["ansi"] }
 thiserror = { workspace = true }
 tracing = { workspace = true }
+sqlx = { workspace = true, optional = true }
 
+
+[features]
+default = []
+server = ["sqlx"]
