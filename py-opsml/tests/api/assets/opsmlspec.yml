@@ -1,5 +1,6 @@
 name: opsml-name
 space: opsml-space
+type: Api
 
 service:
   version: 1.0.0

@@ -1,5 +1,6 @@
 name: name
 space: space
+type: Api
 
 service:
   version: 1.0.0
