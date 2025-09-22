@@ -36,6 +36,9 @@ pub enum TypeError {
 
     #[error("{0}")]
     PyError(String),
+
+    #[error("MCP server not found")]
+    McpServerNotFound(String),
 }
 
 impl From<TypeError> for PyErr {
