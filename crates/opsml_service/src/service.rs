@@ -161,13 +161,10 @@ impl ServiceConfig {
         }
 
         // if service type is MCP, ensure MCP config is provided
-        match service_type {
-            ServiceType::Mcp => {
-                if self.mcp.is_none() {
-                    return Err(ServiceError::MissingMCPConfig);
-                }
+        if service_type == &ServiceType::Mcp {
+            if self.mcp.is_none() {
+                return Err(ServiceError::MissingMCPConfig);
             }
-            _ => {}
         }
         Ok(())
     }
@@ -235,8 +232,8 @@ impl ServiceSpec {
     /// This method is used within the CLI to locate the service specification file.
     /// # Arguments
     /// * `path` - Optional path to the spec file or directory. If None, uses current directory.
-    ///           - If the path is a file, loads that file directly.
-    ///           - If the path is a directory, searches for `opsmlspec.yml`.
+    ///   - If the path is a file, loads that file directly.
+    ///   - If the path is a directory, searches for `opsmlspec.yml`.
     /// # Returns
     /// * `ServiceSpec` - The loaded service specification
     pub fn from_path(path: &Path) -> Result<Self, ServiceError> {
