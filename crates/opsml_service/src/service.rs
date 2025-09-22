@@ -161,10 +161,8 @@ impl ServiceConfig {
         }
 
         // if service type is MCP, ensure MCP config is provided
-        if service_type == &ServiceType::Mcp {
-            if self.mcp.is_none() {
-                return Err(ServiceError::MissingMCPConfig);
-            }
+        if service_type == &ServiceType::Mcp && self.mcp.is_none() {
+            return Err(ServiceError::MissingMCPConfig);
         }
         Ok(())
     }
