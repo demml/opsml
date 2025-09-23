@@ -1,12 +1,11 @@
 use crate::error::ServiceError;
 use opsml_state::app_state;
 use opsml_types::{
-    contracts::card::{ServiceMetadata, ServiceType},
+    contracts::card::{DeploymentConfig, ServiceMetadata, ServiceType},
     contracts::mcp::McpConfig,
     RegistryType,
 };
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 const DEFAULT_SERVICE_FILENAME: &str = "opsmlspec.yml";
 
