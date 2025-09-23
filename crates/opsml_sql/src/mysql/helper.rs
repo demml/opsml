@@ -333,6 +333,7 @@ impl MySqlQueryHelper {
         AND (? IS NULL OR space = ?)
         AND (? IS NULL OR name = ?)
         AND (? IS NULL OR created_at <= STR_TO_DATE(?, '%Y-%m-%d'))
+        AND (? IS NULL OR service_type = ?)
         "
         );
 
