@@ -3,12 +3,12 @@ use chrono::{DateTime, Utc};
 use opsml_semver::error::VersionError;
 use opsml_types::cards::{CardTable, ParameterValue};
 use opsml_types::contracts::evaluation::{EvaluationProvider, EvaluationType};
-use opsml_types::contracts::ArtifactType;
 use opsml_types::contracts::{
     ArtifactRecord, AuditCardClientRecord, CardEntry, CardRecord, DataCardClientRecord,
     ExperimentCardClientRecord, ModelCardClientRecord, PromptCardClientRecord,
     ServiceCardClientRecord,
 };
+use opsml_types::contracts::{ArtifactType, ServiceType};
 use opsml_types::{CommonKwargs, DataType, ModelType, RegistryType};
 use opsml_utils::create_uuid7;
 use opsml_utils::utils::get_utc_datetime;
@@ -864,6 +864,7 @@ impl ServiceCardRecord {
             cards: Json(client_card.cards),
             opsml_version: client_card.opsml_version,
             username: client_card.username,
+            service_type: client_card.service_type,
         })
     }
 }
@@ -885,6 +886,7 @@ impl Default for ServiceCardRecord {
             cards: Json(Vec::new()),
             opsml_version: opsml_version::version(),
             username: CommonKwargs::Undefined.to_string(),
+            service_type: ServiceType::Api.to_string(),
         }
     }
 }
