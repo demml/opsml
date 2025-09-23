@@ -4316,6 +4316,7 @@ dependencies = [
  "pyo3",
  "tempfile",
  "thiserror 2.0.16",
+ "tracing",
 ]
 
 [[package]]
@@ -4435,6 +4436,7 @@ dependencies = [
 name = "opsml-service"
 version = "3.0.0-rc.17"
 dependencies = [
+ "opsml-state",
  "opsml-types",
  "opsml-version",
  "pyo3",

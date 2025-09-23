@@ -1,4 +1,5 @@
 use crate::error::ServiceError;
+use opsml_state::app_state;
 use opsml_types::{contracts::card::ServiceType, contracts::mcp::McpConfig, RegistryType};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -209,12 +210,43 @@ impl ServiceSpec {
         Ok(spec)
     }
 
+    /// Filter the deployment configurations to only include those matching the current application environment
+    /// This is important when dealing with multiple deployment environments in a single service spec
+    /// We don't want to record the prod deployment config in staging or dev environments
+    fn filter_deploy_by_environment(&mut self) -> Result<(), ServiceError> {
+        let app_env = app_state().config()?.app_env.clone();
+        if let Some(deployments) = &self.deploy {
+            self.deploy = Some(
+                deployments
+                    .iter()
+                    .filter(|d| d.environment == app_env)
+                    .cloned()
+                    .collect(),
+            );
+        }
+        Ok(())
+    }
+
+    fn validate_service_type(&self) -> Result<(), ServiceError> {
+        match &self.service_type {
+            ServiceType::Mcp => {
+                // assert that a deployment config exists
+                if self.deploy.is_none() || self.deploy.as_ref().unwrap().is_empty() {
+                    return Err(ServiceError::MissingDeploymentConfigForMCPService);
+                }
+                Ok(())
+            }
+            _ => Ok(()),
+        }
+    }
+
     pub fn from_env() -> Result<Self, ServiceError> {
         let current_dir = std::env::current_dir()?;
         Self::from_path(&current_dir)
     }
 
     fn validate(&mut self) -> Result<(), ServiceError> {
+        self.validate_service_type()?;
         self.service
             .validate(self.space_config.get_space(), &self.service_type)
     }
@@ -234,6 +266,7 @@ impl ServiceSpec {
     /// * `ServiceSpec` - The loaded service specification
     pub fn from_yaml(yaml_str: &str) -> Result<Self, ServiceError> {
         let mut spec: ServiceSpec = serde_yaml::from_str(yaml_str)?;
+        spec.filter_deploy_by_environment()?;
         spec.validate()?;
         Ok(spec)
     }
