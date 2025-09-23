@@ -5,7 +5,7 @@ use crate::{DataCard, ExperimentCard, ModelCard, PromptCard};
 use chrono::{DateTime, Utc};
 use opsml_interfaces::{DataLoadKwargs, ModelLoadKwargs};
 use opsml_service::ServiceSpec;
-use opsml_types::contracts::CardEntry;
+use opsml_types::contracts::{CardEntry, ServiceConfig};
 use opsml_types::CommonKwargs;
 use opsml_types::{
     contracts::{
@@ -304,6 +304,8 @@ pub struct ServiceCard {
     pub metadata: Option<ServiceMetadata>,
 
     pub deploy: Option<Vec<DeploymentConfig>>,
+
+    pub service_config: Option<ServiceConfig>,
 }
 
 #[pymethods]
@@ -354,6 +356,7 @@ impl ServiceCard {
             service_type: spec.service_type,
             metadata: spec.metadata,
             deploy: spec.deploy,
+            service_config: spec.service,
         })
     }
 
@@ -449,6 +452,7 @@ impl ServiceCard {
             service_type: self.service_type.to_string(),
             metadata: self.metadata.clone(),
             deployment: self.deploy.clone(),
+            service_config: self.service_config.clone(),
         };
 
         Ok(CardRecord::Service(record))
@@ -763,7 +767,6 @@ impl ServiceCard {
         space: String,
         name: String,
         cards: Vec<Card>, // can be Vec<Card> or Vec<ModelCard, DataCard, etc.>
-
         spec: &ServiceSpec,
     ) -> Result<ServiceCard, CardError> {
         let registry_type = RegistryType::Service;
@@ -791,6 +794,7 @@ impl ServiceCard {
             service_type: spec.service_type.clone(),
             metadata: spec.metadata.clone(),
             deploy: spec.deploy.clone(),
+            service_config: spec.service.clone(),
         })
     }
 
