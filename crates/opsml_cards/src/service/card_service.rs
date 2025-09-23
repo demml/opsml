@@ -305,7 +305,7 @@ pub struct ServiceCard {
 
     pub deploy: Option<Vec<DeploymentConfig>>,
 
-    pub service_config: Option<ServiceConfig>,
+    pub service_config: ServiceConfig,
 }
 
 #[pymethods]
@@ -881,6 +881,7 @@ impl Serialize for ServiceCard {
         state.serialize_field("service_type", &self.service_type)?;
         state.serialize_field("metadata", &self.metadata)?;
         state.serialize_field("deploy", &self.deploy)?;
+        state.serialize_field("service_config", &self.service_config)?;
         state.end()
     }
 }
@@ -908,6 +909,7 @@ impl<'de> Deserialize<'de> for ServiceCard {
             ServiceType,
             Metadata,
             Deploy,
+            ServiceConfig,
         }
 
         struct ServiceCardVisitor;
@@ -938,6 +940,7 @@ impl<'de> Deserialize<'de> for ServiceCard {
                 let mut service_type = None;
                 let mut metadata = None;
                 let mut deploy = None;
+                let mut service_config = None;
 
                 while let Some(key) = map.next_key()? {
                     match key {
@@ -988,6 +991,9 @@ impl<'de> Deserialize<'de> for ServiceCard {
                         Field::Deploy => {
                             deploy = Some(map.next_value()?);
                         }
+                        Field::ServiceConfig => {
+                            service_config = Some(map.next_value()?);
+                        }
                     }
                 }
 
@@ -1008,6 +1014,7 @@ impl<'de> Deserialize<'de> for ServiceCard {
                 let service_type = service_type.unwrap_or(ServiceType::Api);
                 let metadata = metadata.unwrap_or(None);
                 let deploy = deploy.unwrap_or(None);
+                let service_config = service_config.unwrap_or(ServiceConfig::default());
 
                 Ok(ServiceCard {
                     space,
@@ -1025,6 +1032,7 @@ impl<'de> Deserialize<'de> for ServiceCard {
                     service_type,
                     metadata,
                     deploy,
+                    service_config,
                 })
             }
         }
@@ -1045,6 +1053,7 @@ impl<'de> Deserialize<'de> for ServiceCard {
             "service_type",
             "metadata",
             "deploy",
+            "service_config",
         ];
         deserializer.deserialize_struct("ServiceCard", FIELDS, ServiceCardVisitor)
     }
