@@ -176,6 +176,7 @@ impl CardLogicTrait for CardLogicPostgresClient {
                     .bind(query_args.space.as_ref())
                     .bind(query_args.name.as_ref())
                     .bind(query_args.max_date.as_ref())
+                    .bind(query_args.service_type.as_ref())
                     .bind(query_args.limit.unwrap_or(50))
                     .fetch_all(&self.pool)
                     .await?;
@@ -356,6 +357,7 @@ impl CardLogicTrait for CardLogicPostgresClient {
                         .bind(&record.cards)
                         .bind(&record.username)
                         .bind(&record.opsml_version)
+                        .bind(&record.service_type)
                         .execute(&self.pool)
                         .await?;
                     Ok(())
