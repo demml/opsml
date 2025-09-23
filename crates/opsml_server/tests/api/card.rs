@@ -253,6 +253,7 @@ async fn test_opsml_server_card_list_cards() {
         tags: None,
         limit: None,
         sort_by_timestamp: None,
+        service_type: None,
         registry_type: RegistryType::Data,
     };
 
@@ -937,6 +938,7 @@ async fn test_opsml_server_card_service_card_crud() {
             created_at: card.created_at,
             cards: card.cards,
             username: std::env::var("OPSML_USERNAME").unwrap_or_else(|_| "guest".to_string()),
+            service_type: card.service_type,
             opsml_version: card.opsml_version,
         }),
     };
@@ -1164,6 +1166,7 @@ async fn test_opsml_server_card_get_card() {
         tags: None,
         limit: None,
         sort_by_timestamp: None,
+        service_type: None,
         registry_type: RegistryType::Model,
     };
     //
@@ -1224,6 +1227,7 @@ async fn test_opsml_server_card_get_readme() {
         tags: None,
         limit: None,
         sort_by_timestamp: None,
+        service_type: None,
         registry_type: RegistryType::Model,
     };
     //

@@ -4,11 +4,11 @@ use crate::utils::BaseArgs;
 use crate::{DataCard, ExperimentCard, ModelCard, PromptCard};
 use chrono::{DateTime, Utc};
 use opsml_interfaces::{DataLoadKwargs, ModelLoadKwargs};
-use opsml_service::{DeploymentConfig, Metadata, ServiceSpec, ServiceType};
+use opsml_service::{DeploymentConfig, Metadata, ServiceSpec};
 use opsml_types::contracts::CardEntry;
 use opsml_types::CommonKwargs;
 use opsml_types::{
-    contracts::{CardRecord, ServiceCardClientRecord},
+    contracts::{CardRecord, ServiceCardClientRecord, ServiceType},
     RegistryType, SaveName, Suffix,
 };
 use opsml_utils::{extract_py_attr, PyHelperFuncs};
@@ -443,6 +443,7 @@ impl ServiceCard {
             cards: self.cards.to_card_entries(),
             opsml_version: self.opsml_version.clone(),
             username: std::env::var("OPSML_USERNAME").unwrap_or_else(|_| "guest".to_string()),
+            service_type: self.service_type.to_string(),
         };
 
         Ok(CardRecord::Service(record))
