@@ -300,6 +300,7 @@ pub struct ServiceCard {
     pub service_type: ServiceType,
 
     pub metadata: Option<Metadata>,
+
     pub deploy: Option<Vec<DeploymentConfig>>,
 }
 
@@ -444,6 +445,8 @@ impl ServiceCard {
             opsml_version: self.opsml_version.clone(),
             username: std::env::var("OPSML_USERNAME").unwrap_or_else(|_| "guest".to_string()),
             service_type: self.service_type.to_string(),
+            metadata: self.metadata.clone(),
+            deployment: self.deploy.clone(),
         };
 
         Ok(CardRecord::Service(record))

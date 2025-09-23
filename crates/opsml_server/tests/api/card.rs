@@ -940,6 +940,8 @@ async fn test_opsml_server_card_service_card_crud() {
             cards: card.cards,
             username: std::env::var("OPSML_USERNAME").unwrap_or_else(|_| "guest".to_string()),
             service_type: card.service_type,
+            metadata: card.metadata,
+            deployment: card.deployment,
             opsml_version: card.opsml_version,
         }),
     };
