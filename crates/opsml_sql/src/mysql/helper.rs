@@ -3,7 +3,7 @@ use crate::utils::add_version_bounds;
 use crate::error::SqlError;
 use opsml_types::{
     cards::CardTable,
-    contracts::{ArtifactQueryArgs, CardQueryArgs},
+    contracts::{ArtifactQueryArgs, CardQueryArgs, ServiceQueryArgs},
 };
 use opsml_utils::utils::is_valid_uuidv7;
 

@@ -381,6 +381,8 @@ impl CardLogicTrait for CardLogicMySqlClient {
                         .bind(&record.username)
                         .bind(&record.opsml_version)
                         .bind(&record.service_type)
+                        .bind(&record.metadata)
+                        .bind(&record.deployment)
                         .execute(&self.pool)
                         .await?;
                     Ok(())
@@ -562,6 +564,9 @@ impl CardLogicTrait for CardLogicMySqlClient {
                         .bind(&record.cards)
                         .bind(&record.username)
                         .bind(&record.opsml_version)
+                        .bind(&record.service_type)
+                        .bind(&record.metadata)
+                        .bind(&record.deployment)
                         .bind(&record.uid)
                         .execute(&self.pool)
                         .await?;
