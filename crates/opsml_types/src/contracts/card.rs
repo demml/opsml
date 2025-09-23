@@ -524,7 +524,7 @@ impl Default for ServiceCardClientRecord {
             service_type: ServiceType::Api.to_string(),
             metadata: None,
             deployment: None,
-            service_config: None,
+            service_config: ServiceConfig::default(),
             cards: Vec::new(),
         }
     }
