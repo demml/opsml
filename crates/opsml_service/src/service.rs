@@ -319,7 +319,7 @@ service:
       type: prompt
 
 deploy:
-  - environment: production
+  - environment: development
     provider: gcp
     location: [us-central1]
     endpoints: [https://test.example.com]
@@ -361,7 +361,7 @@ service:
     transport: Http
 
 deploy:
-  - environment: production
+  - environment: development
     provider: gcp
     location: [us-central1]
     endpoints: [https://test.example.com]
