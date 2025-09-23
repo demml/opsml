@@ -4,8 +4,8 @@ use crate::core::cards::route::get_card_router;
 use crate::core::debug::route::get_debug_router;
 use crate::core::experiment::route::get_experiment_router;
 use crate::core::files::route::get_file_router;
+use crate::core::genai::route::get_genai_router;
 use crate::core::health::route::get_health_router;
-use crate::core::llm::route::get_llm_router;
 use crate::core::middleware::event::event_middleware;
 use crate::core::middleware::metrics::track_metrics;
 use crate::core::scouter::route::get_scouter_router;
@@ -45,7 +45,7 @@ pub async fn create_router(app_state: Arc<AppState>) -> Result<Router> {
     let auth_routes = get_auth_router(ROUTE_PREFIX).await?;
     let user_routes = get_user_router(ROUTE_PREFIX).await?;
     let scouter_routes = get_scouter_router(ROUTE_PREFIX).await?;
-    let llm_routes = get_llm_router(ROUTE_PREFIX).await?;
+    let genai_routes = get_genai_router(ROUTE_PREFIX).await?;
     let ui_routes = get_ui_router().await?;
 
     // merge all the routes except the auth routes
@@ -57,7 +57,7 @@ pub async fn create_router(app_state: Arc<AppState>) -> Result<Router> {
         .merge(run_routes)
         .merge(user_routes)
         .merge(scouter_routes)
-        .merge(llm_routes)
+        .merge(genai_routes)
         .route_layer(middleware::from_fn_with_state(
             // Audit middleware occurs last.
             //Audit middleware passes the request to the request handler

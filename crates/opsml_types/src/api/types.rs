@@ -62,7 +62,7 @@ pub enum Routes {
     ScouterUsers,
     ScouterProfileUi,
     ScouterHealthcheck,
-
+    GenAiMcpServers,
     User,
 }
 
@@ -127,6 +127,9 @@ impl Routes {
 
             // Scouter Healthcheck
             Routes::ScouterHealthcheck => "scouter/healthcheck",
+
+            // GenAI Routes
+            Routes::GenAiMcpServers => "genai/mcp/servers",
 
             Routes::User => "user",
         }
