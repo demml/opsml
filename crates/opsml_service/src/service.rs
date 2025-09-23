@@ -7,27 +7,6 @@ use std::fmt::Display;
 use std::path::{Path, PathBuf};
 const DEFAULT_SERVICE_FILENAME: &str = "opsmlspec.yml";
 
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Hash)]
-#[pyclass]
-pub enum ServiceType {
-    #[serde(alias = "API", alias = "api")]
-    Api,
-    #[serde(alias = "MCP", alias = "mcp")]
-    Mcp,
-    #[serde(alias = "AGENT", alias = "agent")]
-    Agent,
-}
-
-impl Display for ServiceType {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            ServiceType::Api => write!(f, "Api"),
-            ServiceType::Mcp => write!(f, "Mcp"),
-            ServiceType::Agent => write!(f, "Agent"),
-        }
-    }
-}
-
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct GpuConfig {
     #[serde(rename = "type")]
