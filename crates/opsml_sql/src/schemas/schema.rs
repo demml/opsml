@@ -5,7 +5,7 @@ use opsml_types::cards::{CardTable, ParameterValue};
 use opsml_types::contracts::evaluation::{EvaluationProvider, EvaluationType};
 use opsml_types::contracts::{
     ArtifactRecord, AuditCardClientRecord, CardEntry, CardRecord, DataCardClientRecord,
-    ExperimentCardClientRecord, ModelCardClientRecord, PromptCardClientRecord,
+    ExperimentCardClientRecord, McpServer, ModelCardClientRecord, PromptCardClientRecord,
     ServiceCardClientRecord, ServiceConfig,
 };
 use opsml_types::contracts::{ArtifactType, DeploymentConfig, ServiceMetadata, ServiceType};
@@ -908,6 +908,45 @@ impl Default for ServiceCardRecord {
             service_config: Json(ServiceConfig::default()),
             tags: Json(Vec::new()),
         }
+    }
+}
+
+impl ServiceCardRecord {
+    /// Utility helper to convert a ServiceCardRecord to McpServer
+    pub fn to_mcp_server(&self) -> Result<McpServer, SqlError> {
+        if ServiceType::from(self.service_type.as_str()) != ServiceType::Mcp {
+            return Err(SqlError::InvalidServiceType(self.service_type.clone()));
+        }
+
+        let deployment = self
+            .deployment
+            .as_ref()
+            .and_then(|d| d.0.get(0))
+            .ok_or_else(|| SqlError::MissingField("deployment".to_string()))?;
+
+        let config = self
+            .service_config
+            .0
+            .mcp
+            .clone()
+            .ok_or_else(|| SqlError::MissingField("service_config.mcp".to_string()))?;
+
+        let environment = deployment.environment.clone();
+        let endpoints = deployment.endpoints.clone();
+        let description = self
+            .metadata
+            .as_ref()
+            .and_then(|m| Some(m.0.description.clone()));
+
+        Ok(McpServer {
+            space: self.space.clone(),
+            name: self.name.clone(),
+            version: self.version.clone(),
+            environment,
+            endpoints,
+            config,
+            description,
+        })
     }
 }
 

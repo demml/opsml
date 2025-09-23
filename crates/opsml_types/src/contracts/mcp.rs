@@ -1,8 +1,7 @@
-use crate::error::TypeError;
 use opsml_utils::PyHelperFuncs;
 use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+
 use std::fmt::Display;
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Hash)]
@@ -65,7 +64,7 @@ pub struct McpServer {
     #[pyo3(get)]
     pub environment: String,
     #[pyo3(get)]
-    pub endpoint: String,
+    pub endpoints: Vec<String>,
     #[pyo3(get)]
     pub config: McpConfig,
     #[pyo3(get)]
@@ -79,18 +78,38 @@ impl McpServer {
     }
 }
 
+#[pyclass]
+struct McpIter {
+    inner: std::vec::IntoIter<McpServer>,
+}
+
+#[pymethods]
+impl McpIter {
+    fn __iter__(slf: PyRef<'_, Self>) -> PyRef<'_, Self> {
+        slf
+    }
+
+    fn __next__(mut slf: PyRefMut<'_, Self>) -> Option<McpServer> {
+        slf.inner.next()
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[pyclass]
 pub struct McpServers {
-    servers: HashMap<String, McpServer>,
+    pub servers: Vec<McpServer>,
 }
 #[pymethods]
 impl McpServers {
-    pub fn __getitem__(&self, key: &str) -> Result<McpServer, TypeError> {
-        match self.servers.get(key) {
-            Some(server) => Ok(server.clone()),
-            None => Err(TypeError::McpServerNotFound(key.to_string())),
-        }
+    pub fn __getitem__(&self, index: usize) -> Option<McpServer> {
+        self.servers.get(index).cloned()
+    }
+
+    fn __iter__(slf: PyRef<'_, Self>) -> PyResult<Py<McpIter>> {
+        let iter = McpIter {
+            inner: slf.servers.clone().into_iter(),
+        };
+        Py::new(slf.py(), iter)
     }
 
     pub fn __len__(&self) -> usize {

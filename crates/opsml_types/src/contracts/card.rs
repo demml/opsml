@@ -250,6 +250,13 @@ pub struct ServiceQueryArgs {
     pub service_type: Option<String>,
 }
 
+impl ServiceQueryArgs {
+    pub fn get_metadata(&self) -> String {
+        serde_json::to_string(self)
+            .unwrap_or_else(|e| format!("Failed to serialize ServiceQueryArgs: {e}"))
+    }
+}
+
 /// Arguments for querying cards
 ///
 /// # Fields

@@ -27,6 +27,17 @@ impl Display for ServiceType {
     }
 }
 
+impl From<&str> for ServiceType {
+    fn from(s: &str) -> Self {
+        match s.to_lowercase().as_str() {
+            "api" => ServiceType::Api,
+            "mcp" => ServiceType::Mcp,
+            "agent" => ServiceType::Agent,
+            _ => ServiceType::Api, // default to Api if unknown
+        }
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ServiceMetadata {
     pub description: String,

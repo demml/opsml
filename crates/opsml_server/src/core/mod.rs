@@ -7,6 +7,7 @@ pub mod error;
 pub mod experiment;
 pub mod files;
 pub mod health;
+pub mod llm;
 pub mod middleware;
 pub mod router;
 pub mod scouter;
