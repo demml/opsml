@@ -594,7 +594,23 @@ impl MySqlQueryHelper {
     }
 
     pub fn get_recent_services_query(query_args: &ServiceQueryArgs) -> String {
-        let mut query = format!(
+        let mut where_clause = String::from(
+            "
+        WHERE 1=1
+        AND (? IS NULL OR space = ?)
+        AND (? IS NULL OR name = ?)
+        AND (? IS NULL OR service_type = ?)
+    ",
+        );
+
+        if let Some(tags) = &query_args.tags {
+            for tag in tags {
+                where_clause
+                    .push_str(format!(" AND JSON_CONTAINS(tags, '\"{tag}\"', '$')").as_str());
+            }
+        }
+
+        let query = format!(
             "
         SELECT *
         FROM (
@@ -604,23 +620,11 @@ impl MySqlQueryHelper {
                     ORDER BY created_at DESC
                 ) AS rn
             FROM opsml_service_registry
-            WHERE 1=1
-            AND (? IS NULL OR space = ?)
-            AND (? IS NULL OR name = ?)
-            AND (? IS NULL OR service_type = ?)
-        )
+            {where_clause}
+        ) recent_services
         WHERE rn = 1;
         "
         );
-
-        if query_args.tags.is_some() {
-            let tags = query_args.tags.as_ref().unwrap();
-            for tag in tags.iter() {
-                query.push_str(format!(" AND JSON_CONTAINS(tags, '\"{tag}\"', '$')").as_str());
-            }
-        }
-
-        query.push_str(";");
 
         query
     }

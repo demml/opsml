@@ -343,6 +343,12 @@ impl ServiceCard {
             )?
         };
 
+        let tags = if let Some(metadata) = &spec.metadata {
+            metadata.tags.clone()
+        } else {
+            vec![]
+        };
+
         Ok(ServiceCard {
             space: base_args.0,
             name: base_args.1,
@@ -360,7 +366,7 @@ impl ServiceCard {
             metadata: spec.metadata,
             deploy: spec.deploy,
             service_config: spec.service,
-            tags: spec.tags.unwrap_or_default(),
+            tags,
         })
     }
 
