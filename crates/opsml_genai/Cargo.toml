@@ -1,9 +1,9 @@
 [package]
-name = "opsml-llm"
+name = "opsml-genai"
 version = { workspace = true }
 edition = { workspace = true }
 repository = { workspace = true }
-description = "OpsML LLM - Functionality for working with LLM and GenAI technologies"
+description = "OpsML GenAI - Functionality for working with GenAI technologies"
 
 
 [lib]

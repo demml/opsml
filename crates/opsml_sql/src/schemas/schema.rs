@@ -808,6 +808,7 @@ pub struct ServiceCardRecord {
 }
 
 impl ServiceCardRecord {
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         name: String,
         space: String,
@@ -921,7 +922,7 @@ impl ServiceCardRecord {
         let deployment = self
             .deployment
             .as_ref()
-            .and_then(|d| d.0.get(0))
+            .and_then(|d| d.0.first())
             .ok_or_else(|| SqlError::MissingField("deployment".to_string()))?;
 
         let config = self
@@ -933,10 +934,7 @@ impl ServiceCardRecord {
 
         let environment = deployment.environment.clone();
         let endpoints = deployment.endpoints.clone();
-        let description = self
-            .metadata
-            .as_ref()
-            .and_then(|m| Some(m.0.description.clone()));
+        let description = self.metadata.as_ref().map(|m| m.0.description.clone());
 
         Ok(McpServer {
             space: self.space.clone(),

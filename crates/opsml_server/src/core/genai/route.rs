@@ -68,9 +68,12 @@ pub async fn list_mcp_servers(
     }
 }
 
-pub async fn get_llm_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
+pub async fn get_genai_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
     let result = catch_unwind(AssertUnwindSafe(|| {
-        Router::new().route(&format!("{prefix}/llm/mcp/servers"), get(list_mcp_servers))
+        Router::new().route(
+            &format!("{prefix}/genai/mcp/servers"),
+            get(list_mcp_servers),
+        )
     }));
 
     match result {

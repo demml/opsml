@@ -4286,6 +4286,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "opsml-genai"
+version = "3.0.0-rc.17"
+dependencies = [
+ "opsml-registry",
+ "opsml-types",
+ "opsml-version",
+ "pyo3",
+ "tempfile",
+ "thiserror 2.0.16",
+ "tracing",
+]
+
+[[package]]
 name = "opsml-interfaces"
 version = "3.0.0-rc.17"
 dependencies = [
@@ -4303,19 +4316,6 @@ dependencies = [
  "tempfile",
  "thiserror 2.0.16",
  "tokio",
- "tracing",
-]
-
-[[package]]
-name = "opsml-llm"
-version = "3.0.0-rc.17"
-dependencies = [
- "opsml-registry",
- "opsml-types",
- "opsml-version",
- "pyo3",
- "tempfile",
- "thiserror 2.0.16",
  "tracing",
 ]
 
@@ -5244,8 +5244,8 @@ dependencies = [
  "opsml-cli",
  "opsml-evaluate",
  "opsml-experiment",
+ "opsml-genai",
  "opsml-interfaces",
- "opsml-llm",
  "opsml-mocks",
  "opsml-registry",
  "opsml-semver",
