@@ -1,37 +1,14 @@
 use crate::error::ServiceError;
 use opsml_state::app_state;
-use opsml_types::{contracts::card::ServiceType, contracts::mcp::McpConfig, RegistryType};
+use opsml_types::{
+    contracts::card::{ServiceMetadata, ServiceType},
+    contracts::mcp::McpConfig,
+    RegistryType,
+};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 const DEFAULT_SERVICE_FILENAME: &str = "opsmlspec.yml";
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct GpuConfig {
-    #[serde(rename = "type")]
-    pub gpu_type: String,
-    pub count: u32,
-    pub memory: String,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct Resources {
-    pub cpu: u32,
-    pub memory: String,
-    pub storage: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub gpu: Option<GpuConfig>,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct DeploymentConfig {
-    pub environment: String,
-    pub provider: String,
-    pub location: Vec<String>,
-    pub endpoints: Vec<String>,
-    pub resources: Resources,
-    pub links: HashMap<String, String>,
-}
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct DriftConfig {
@@ -104,13 +81,6 @@ impl ServiceConfig {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct Metadata {
-    pub description: String,
-    pub language: String,
-    pub tags: Vec<String>,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(untagged)]
 pub enum SpaceConfig {
     Team { team: String },
@@ -133,7 +103,7 @@ pub struct ServiceSpec {
     pub space_config: SpaceConfig,
     #[serde(rename = "type")]
     pub service_type: ServiceType,
-    pub metadata: Option<Metadata>,
+    pub metadata: Option<ServiceMetadata>,
     pub service: ServiceConfig,
     pub deploy: Option<Vec<DeploymentConfig>>,
 
