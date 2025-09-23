@@ -3,7 +3,7 @@ use crate::mysql::client::MySqlClient;
 use crate::postgres::client::PostgresClient;
 use crate::schemas::schema::{
     ArtifactSqlRecord, CardResults, CardSummary, HardwareMetricsRecord, MetricRecord,
-    ParameterRecord, QueryStats, ServerCard, User,
+    ParameterRecord, QueryStats, ServerCard, ServiceCardRecord, User,
 };
 use crate::schemas::VersionSummary;
 use crate::sqlite::client::SqliteClient;
@@ -19,11 +19,9 @@ use opsml_types::contracts::{
     ArtifactQueryArgs, ArtifactRecord, AuditEvent, SpaceNameEvent, SpaceRecord, SpaceStats,
 };
 use opsml_types::{
+    cards::CardTable,
+    contracts::{ArtifactKey, CardQueryArgs, ServiceQueryArgs},
     RegistryType, SqlType,
-    {
-        cards::CardTable,
-        contracts::{ArtifactKey, CardQueryArgs},
-    },
 };
 
 #[derive(Debug, Clone)]
@@ -204,6 +202,17 @@ impl CardLogicTrait for SqlClientEnum {
                     .get_card_key_for_loading(table, query_args)
                     .await
             }
+        }
+    }
+
+    async fn get_recent_services(
+        &self,
+        query_args: &ServiceQueryArgs,
+    ) -> Result<Vec<ServiceCardRecord>, SqlError> {
+        match self {
+            SqlClientEnum::Postgres(client) => client.card.get_recent_services(query_args).await,
+            SqlClientEnum::Sqlite(client) => client.card.get_recent_services(query_args).await,
+            SqlClientEnum::MySql(client) => client.card.get_recent_services(query_args).await,
         }
     }
 }
