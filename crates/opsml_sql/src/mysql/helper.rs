@@ -592,4 +592,36 @@ impl MySqlQueryHelper {
     pub fn get_evaluation_record_query() -> String {
         GET_EVALUATION_RECORD_SQL.to_string()
     }
+
+    pub fn get_recent_services_query(query_args: &ServiceQueryArgs) -> String {
+        let mut query = format!(
+            "
+        SELECT *
+        FROM (
+            SELECT *,
+                ROW_NUMBER() OVER (
+                    PARTITION BY space, name
+                    ORDER BY created_at DESC
+                ) AS rn
+            FROM opsml_service_registry
+            WHERE 1=1
+            AND (? IS NULL OR space = ?)
+            AND (? IS NULL OR name = ?)
+            AND (? IS NULL OR service_type = ?)
+        )
+        WHERE rn = 1;
+        "
+        );
+
+        if query_args.tags.is_some() {
+            let tags = query_args.tags.as_ref().unwrap();
+            for tag in tags.iter() {
+                query.push_str(format!(" AND JSON_CONTAINS(tags, '\"{tag}\"', '$')").as_str());
+            }
+        }
+
+        query.push_str(";");
+
+        query
+    }
 }
