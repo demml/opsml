@@ -4,11 +4,13 @@ use crate::utils::BaseArgs;
 use crate::{DataCard, ExperimentCard, ModelCard, PromptCard};
 use chrono::{DateTime, Utc};
 use opsml_interfaces::{DataLoadKwargs, ModelLoadKwargs};
-use opsml_service::{DeploymentConfig, Metadata, ServiceSpec};
+use opsml_service::ServiceSpec;
 use opsml_types::contracts::CardEntry;
 use opsml_types::CommonKwargs;
 use opsml_types::{
-    contracts::{CardRecord, ServiceCardClientRecord, ServiceType},
+    contracts::{
+        CardRecord, DeploymentConfig, ServiceCardClientRecord, ServiceMetadata, ServiceType,
+    },
     RegistryType, SaveName, Suffix,
 };
 use opsml_utils::{extract_py_attr, PyHelperFuncs};
@@ -299,7 +301,7 @@ pub struct ServiceCard {
     #[pyo3(get)]
     pub service_type: ServiceType,
 
-    pub metadata: Option<Metadata>,
+    pub metadata: Option<ServiceMetadata>,
 
     pub deploy: Option<Vec<DeploymentConfig>>,
 }

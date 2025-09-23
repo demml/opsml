@@ -801,7 +801,7 @@ pub struct ServiceCardRecord {
     pub opsml_version: String,
     pub service_type: String,
     pub metadata: Option<Json<ServiceMetadata>>,
-    pub deployment: Option<Json<DeploymentConfig>>,
+    pub deployment: Option<Json<Vec<DeploymentConfig>>>,
     pub username: String,
 }
 
@@ -814,7 +814,7 @@ impl ServiceCardRecord {
         opsml_version: String,
         service_type: String,
         metadata: Option<ServiceMetadata>,
-        deployment: Option<DeploymentConfig>,
+        deployment: Option<Vec<DeploymentConfig>>,
         username: String,
     ) -> Self {
         let created_at = get_utc_datetime();
