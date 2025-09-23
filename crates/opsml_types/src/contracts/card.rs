@@ -14,9 +14,9 @@ use opsml_utils::{get_utc_datetime, PyHelperFuncs};
 use pyo3::prelude::*;
 use semver::Version;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::fmt::Display;
-use std::path::Path;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use tabled::settings::{format::Format, object::Rows, Alignment, Color, Style};
 use tabled::{Table, Tabled};
 
@@ -39,6 +39,40 @@ impl Display for ServiceType {
             ServiceType::Agent => write!(f, "Agent"),
         }
     }
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct ServiceMetadata {
+    pub description: String,
+    pub language: String,
+    pub tags: Vec<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct GpuConfig {
+    #[serde(rename = "type")]
+    pub gpu_type: String,
+    pub count: u32,
+    pub memory: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct Resources {
+    pub cpu: u32,
+    pub memory: String,
+    pub storage: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub gpu: Option<GpuConfig>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct DeploymentConfig {
+    pub environment: String,
+    pub provider: String,
+    pub location: Vec<String>,
+    pub endpoints: Vec<String>,
+    pub resources: Resources,
+    pub links: HashMap<String, String>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -262,6 +296,14 @@ pub struct CardVersionRequest {
     pub version_type: VersionType,
     pub pre_tag: Option<String>,
     pub build_tag: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Default, Clone)]
+pub struct ServiceQueryArgs {
+    pub space: Option<String>,
+    pub name: Option<String>,
+    pub tags: Option<Vec<String>>,
+    pub service_type: Option<String>,
 }
 
 /// Arguments for querying cards
@@ -518,6 +560,8 @@ pub struct ServiceCardClientRecord {
     pub cards: Vec<CardEntry>,
     pub opsml_version: String,
     pub service_type: String,
+    pub metadata: Option<ServiceMetadata>,
+    pub deployment: Option<DeploymentConfig>,
     pub username: String,
 }
 
@@ -533,6 +577,8 @@ impl Default for ServiceCardClientRecord {
             opsml_version: opsml_version::version(),
             username: "guest".to_string(),
             service_type: ServiceType::Api.to_string(),
+            metadata: None,
+            deployment: None,
             cards: Vec::new(),
         }
     }
