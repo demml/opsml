@@ -394,7 +394,7 @@ impl ServerCardRegistry {
                     service_type: client_card.service_type,
                     metadata: client_card.metadata.map(SqlxJson),
                     deployment: client_card.deployment.map(SqlxJson),
-                    service_config: client_card.service_config.map(SqlxJson),
+                    service_config: SqlxJson(client_card.service_config),
                     opsml_version: client_card.opsml_version,
                 };
                 ServerCard::Service(server_card)
