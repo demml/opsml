@@ -360,6 +360,8 @@ impl CardLogicTrait for CardLogicSqliteClient {
                         .bind(&record.username)
                         .bind(&record.opsml_version)
                         .bind(&record.service_type)
+                        .bind(&record.metadata)
+                        .bind(&record.deployment)
                         .execute(&self.pool)
                         .await?;
                     Ok(())
@@ -541,6 +543,9 @@ impl CardLogicTrait for CardLogicSqliteClient {
                         .bind(&record.cards)
                         .bind(&record.username)
                         .bind(&record.opsml_version)
+                        .bind(&record.service_type)
+                        .bind(&record.metadata)
+                        .bind(&record.deployment)
                         .bind(&record.uid)
                         .execute(&self.pool)
                         .await?;

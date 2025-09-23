@@ -12,6 +12,8 @@ INSERT INTO opsml_service_registry (
     cards, 
     username, 
     opsml_version,
-    service_type
+    service_type,
+    metadata,
+    deployment
     ) 
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14);
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16);
