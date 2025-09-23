@@ -13,7 +13,7 @@ use crate::traits::CardLogicTrait;
 use async_trait::async_trait;
 use opsml_semver::VersionValidator;
 use opsml_types::{
-    contracts::{ArtifactKey, CardQueryArgs},
+    contracts::{ArtifactKey, CardQueryArgs, ServiceQueryArgs},
     RegistryType,
 };
 use semver::Version;
@@ -358,6 +358,8 @@ impl CardLogicTrait for CardLogicPostgresClient {
                         .bind(&record.username)
                         .bind(&record.opsml_version)
                         .bind(&record.service_type)
+                        .bind(&record.metadata)
+                        .bind(&record.deployment)
                         .execute(&self.pool)
                         .await?;
                     Ok(())
@@ -539,6 +541,9 @@ impl CardLogicTrait for CardLogicPostgresClient {
                         .bind(&record.cards)
                         .bind(&record.username)
                         .bind(&record.opsml_version)
+                        .bind(&record.service_type)
+                        .bind(&record.metadata)
+                        .bind(&record.deployment)
                         .bind(&record.uid)
                         .execute(&self.pool)
                         .await?;
@@ -695,7 +700,7 @@ impl CardLogicTrait for CardLogicPostgresClient {
         &self,
         query_args: &ServiceQueryArgs,
     ) -> Result<Vec<ServiceCardRecord>, SqlError> {
-        let query = SqliteQueryHelper::get_recent_services_query(query_args);
+        let query = PostgresQueryHelper::get_recent_services_query(query_args);
 
         let records: Vec<ServiceCardRecord> = sqlx::query_as(&query)
             .bind(query_args.space.as_ref())

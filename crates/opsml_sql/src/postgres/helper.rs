@@ -4,7 +4,7 @@ use opsml_semver::VersionParser;
 /// this file contains helper logic for generating sql queries across different databases
 use opsml_types::{
     cards::CardTable,
-    contracts::{ArtifactQueryArgs, CardQueryArgs},
+    contracts::{ArtifactQueryArgs, CardQueryArgs, ServiceQueryArgs},
 };
 
 use opsml_utils::utils::is_valid_uuidv7;
@@ -641,5 +641,40 @@ impl PostgresQueryHelper {
     }
     pub fn get_evaluation_record_insert_query() -> String {
         INSERT_EVALUATION_RECORD_SQL.to_string()
+    }
+
+    pub fn get_recent_services_query(query_args: &ServiceQueryArgs) -> String {
+        let mut query = format!(
+            "
+        SELECT *
+        FROM (
+            SELECT *,
+                ROW_NUMBER() OVER (
+                    PARTITION BY space, name
+                    ORDER BY created_at DESC
+                ) AS rn
+            FROM opsml_service_registry
+            WHERE 1=1
+            AND ($1 IS NULL OR space = $1)
+            AND ($2 IS NULL OR name = $2)
+            AND ($3 IS NULL OR service_type = $3)
+        )
+        WHERE rn = 1;
+        "
+        );
+
+        if query_args.tags.is_some() {
+            let tags = query_args.tags.as_ref().unwrap();
+            for tag in tags.iter() {
+                query.push_str(
+                    format!(" AND EXISTS (SELECT 1 FROM json_each(tags) WHERE value = '{tag}')")
+                        .as_str(),
+                );
+            }
+        }
+
+        query.push_str(";");
+
+        query
     }
 }
