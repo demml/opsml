@@ -39,6 +39,12 @@ pub enum TypeError {
 
     #[error("MCP server not found")]
     McpServerNotFound(String),
+
+    #[error("Drift configuration is only valid for model cards")]
+    InvalidConfiguration,
+
+    #[error("Missing MCP configuration for MCP service type")]
+    MissingMCPConfig,
 }
 
 impl From<TypeError> for PyErr {

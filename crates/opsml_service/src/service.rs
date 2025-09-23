@@ -1,83 +1,9 @@
 use crate::error::ServiceError;
 use opsml_state::app_state;
-use opsml_types::{
-    contracts::card::{DeploymentConfig, ServiceMetadata, ServiceType},
-    contracts::mcp::McpConfig,
-    RegistryType,
-};
+use opsml_types::contracts::{Card, DeploymentConfig, ServiceConfig, ServiceMetadata, ServiceType};
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 const DEFAULT_SERVICE_FILENAME: &str = "opsmlspec.yml";
-
-#[derive(Debug, Serialize, Deserialize, Clone, Default)]
-pub struct DriftConfig {
-    #[serde(default)]
-    pub active: bool,
-    #[serde(default)]
-    pub deactivate_others: bool,
-    pub drift_type: Vec<String>,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct Card {
-    pub alias: String,
-    #[serde(default, skip_serializing_if = "String::is_empty")]
-    pub space: String,
-    pub name: String,
-    pub version: Option<String>,
-    #[serde(rename = "type")]
-    pub registry_type: RegistryType,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub drift: Option<DriftConfig>,
-}
-
-impl Card {
-    /// Validate the card configuration to ensure drift is only used for model cards
-    pub fn validate(&self) -> Result<(), ServiceError> {
-        // Only allow drift configuration for model cards
-        if self.drift.is_some() && self.registry_type != RegistryType::Model {
-            return Err(ServiceError::InvalidConfiguration);
-        }
-        Ok(())
-    }
-
-    /// Get the effective space for this card, falling back to the provided default space
-    pub fn set_space(&mut self, service_space: &str) {
-        if self.space.is_empty() {
-            self.space = service_space.to_string();
-        }
-    }
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone, Default)]
-pub struct ServiceConfig {
-    pub version: Option<String>,
-    pub cards: Option<Vec<Card>>,
-    pub write_dir: Option<String>,
-    pub mcp: Option<McpConfig>,
-}
-
-impl ServiceConfig {
-    fn validate(
-        &mut self,
-        service_space: &str,
-        service_type: &ServiceType,
-    ) -> Result<(), ServiceError> {
-        if let Some(cards) = &mut self.cards {
-            for card in cards {
-                card.validate()?;
-                // need to set the space to overall service space if not set
-                card.set_space(service_space);
-            }
-        }
-
-        // if service type is MCP, ensure MCP config is provided
-        if service_type == &ServiceType::Mcp && self.mcp.is_none() {
-            return Err(ServiceError::MissingMCPConfig);
-        }
-        Ok(())
-    }
-}
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(untagged)]
@@ -217,7 +143,8 @@ impl ServiceSpec {
     fn validate(&mut self) -> Result<(), ServiceError> {
         self.validate_service_type()?;
         self.service
-            .validate(self.space_config.get_space(), &self.service_type)
+            .validate(self.space_config.get_space(), &self.service_type)?;
+        Ok(())
     }
     /// Load a ServiceSpec from a YAML file at the given path
     /// # Arguments

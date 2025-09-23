@@ -1,6 +1,7 @@
-use crate::contracts::ArtifactKey;
-use crate::contracts::AuditableRequest;
-use crate::contracts::ResourceType;
+use crate::contracts::{
+    ArtifactKey, AuditableRequest, DeploymentConfig, ResourceType, ServiceConfig, ServiceMetadata,
+    ServiceType,
+};
 use crate::error::TypeError;
 use crate::{
     cards::CardTable,
@@ -14,66 +15,9 @@ use opsml_utils::{get_utc_datetime, PyHelperFuncs};
 use pyo3::prelude::*;
 use semver::Version;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use std::fmt::Display;
 use std::path::{Path, PathBuf};
 use tabled::settings::{format::Format, object::Rows, Alignment, Color, Style};
 use tabled::{Table, Tabled};
-
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Hash)]
-#[pyclass]
-pub enum ServiceType {
-    #[serde(alias = "API", alias = "api")]
-    Api,
-    #[serde(alias = "MCP", alias = "mcp")]
-    Mcp,
-    #[serde(alias = "AGENT", alias = "agent")]
-    Agent,
-}
-
-impl Display for ServiceType {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            ServiceType::Api => write!(f, "Api"),
-            ServiceType::Mcp => write!(f, "Mcp"),
-            ServiceType::Agent => write!(f, "Agent"),
-        }
-    }
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct ServiceMetadata {
-    pub description: String,
-    pub language: String,
-    pub tags: Vec<String>,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct GpuConfig {
-    #[serde(rename = "type")]
-    pub gpu_type: String,
-    pub count: u32,
-    pub memory: String,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct Resources {
-    pub cpu: u32,
-    pub memory: String,
-    pub storage: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub gpu: Option<GpuConfig>,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct DeploymentConfig {
-    pub environment: String,
-    pub provider: String,
-    pub location: Vec<String>,
-    pub endpoints: Vec<String>,
-    pub resources: Resources,
-    pub links: HashMap<String, String>,
-}
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct UidRequest {
@@ -562,6 +506,7 @@ pub struct ServiceCardClientRecord {
     pub service_type: String,
     pub metadata: Option<ServiceMetadata>,
     pub deployment: Option<Vec<DeploymentConfig>>,
+    pub service_config: Option<ServiceConfig>,
     pub username: String,
 }
 
@@ -579,6 +524,7 @@ impl Default for ServiceCardClientRecord {
             service_type: ServiceType::Api.to_string(),
             metadata: None,
             deployment: None,
+            service_config: None,
             cards: Vec::new(),
         }
     }
