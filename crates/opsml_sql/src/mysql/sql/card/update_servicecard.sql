@@ -8,5 +8,6 @@ UPDATE opsml_service_registry SET
     version = ?, 
     cards = ?,
     username = ?,
-    opsml_version = ?
+    opsml_version = ?,
+    service_type = ?
 WHERE uid = ?;
