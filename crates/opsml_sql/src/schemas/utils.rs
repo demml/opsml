@@ -122,6 +122,7 @@ pub fn convert_servicecard(record: ServiceCardRecord) -> CardRecord {
         username: record.username,
         cards: record.cards.0,
         opsml_version: record.opsml_version,
+        service_type: record.service_type,
     };
 
     CardRecord::Service(card)

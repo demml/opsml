@@ -1,9 +1,7 @@
 use crate::error::ServiceError;
-use opsml_types::{contracts::mcp::McpConfig, RegistryType};
-use pyo3::prelude::*;
+use opsml_types::{contracts::card::ServiceType, contracts::mcp::McpConfig, RegistryType};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::fmt::Display;
 use std::path::{Path, PathBuf};
 const DEFAULT_SERVICE_FILENAME: &str = "opsmlspec.yml";
 
