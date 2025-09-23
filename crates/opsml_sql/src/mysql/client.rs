@@ -88,11 +88,16 @@ mod tests {
     use opsml_types::SqlType;
     use opsml_types::{
         cards::CardTable,
-        contracts::{ArtifactType, CardQueryArgs, SpaceRecord},
+        contracts::{
+            ArtifactType, CardQueryArgs, DeploymentConfig, McpCapability, McpConfig, McpTransport,
+            Resources, ServiceConfig, ServiceQueryArgs, ServiceType, SpaceRecord,
+        },
         RegistryType,
     };
     use opsml_utils::utils::get_utc_datetime;
     use semver::Version;
+    use sqlx::types::Json;
+    use std::collections::HashMap;
     use std::env;
 
     const SPACE: &str = "space";
@@ -1176,5 +1181,120 @@ mod tests {
         let record = client.eval.get_evaluation_record(&uid).await.unwrap();
 
         assert_eq!(record.name, "test");
+    }
+
+    #[tokio::test]
+    async fn test_mysql_recent_services() {
+        let client = db_client().await;
+
+        // create 1st service card
+        let card1 = ServiceCardRecord {
+            name: "Service0".to_string(),
+            space: SPACE.to_string(),
+            service_type: ServiceType::Mcp.to_string(),
+            tags: Json(vec!["tag1".to_string()]),
+            ..Default::default()
+        };
+        client
+            .card
+            .insert_card(&CardTable::Service, &ServerCard::Service(card1))
+            .await
+            .unwrap();
+
+        // create 2nd card
+        let card2 = ServiceCardRecord {
+            name: "Service1".to_string(),
+            space: SPACE.to_string(),
+            service_type: ServiceType::Api.to_string(),
+            ..Default::default()
+        };
+        client
+            .card
+            .insert_card(&CardTable::Service, &ServerCard::Service(card2))
+            .await
+            .unwrap();
+
+        // Create 3rd card, but new version
+        let mcp_config = McpConfig {
+            capabilities: vec![McpCapability::Tools],
+            transport: McpTransport::Http,
+        };
+        let deploy = DeploymentConfig {
+            environment: "dev".to_string(),
+            provider: "development".to_string(),
+            location: vec!["local".to_string()],
+            endpoints: vec!["http://localhost:8000".to_string()],
+            resources: Resources {
+                cpu: 2,
+                memory: "4GB".to_string(),
+                storage: "10GB".to_string(),
+                gpu: None,
+            },
+            links: HashMap::new(),
+        };
+        let card3 = ServiceCardRecord {
+            name: "Service0".to_string(),
+            space: SPACE.to_string(),
+            service_type: ServiceType::Mcp.to_string(),
+            tags: Json(vec!["tag1".to_string()]),
+            service_config: Json(ServiceConfig {
+                mcp: Some(mcp_config),
+                ..Default::default()
+            }),
+            deployment: Some(Json(vec![deploy])),
+            ..Default::default()
+        };
+        // wait 1 second to ensure different created_at timestamp
+        tokio::time::sleep(std::time::Duration::from_secs(1)).await;
+        client
+            .card
+            .insert_card(&CardTable::Service, &ServerCard::Service(card3))
+            .await
+            .unwrap();
+
+        let services = client
+            .card
+            .get_recent_services(&ServiceQueryArgs {
+                space: None,
+                name: None,
+                tags: None,
+                service_type: None,
+            })
+            .await
+            .unwrap();
+        assert_eq!(services.len(), 2);
+
+        // search by tag
+        let services = client
+            .card
+            .get_recent_services(&ServiceQueryArgs {
+                space: None,
+                name: None,
+                tags: Some(vec!["tag1".to_string()]),
+                service_type: None,
+            })
+            .await
+            .unwrap();
+        assert_eq!(services.len(), 1);
+
+        let services = client
+            .card
+            .get_recent_services(&ServiceQueryArgs {
+                space: None,
+                name: None,
+                tags: None,
+                service_type: Some(ServiceType::Mcp.to_string()),
+            })
+            .await
+            .unwrap();
+        assert_eq!(services.len(), 1);
+
+        // check that endpoint is populated
+        assert!(services[0].deployment.is_some());
+        let deployment = services[0].deployment.as_ref().unwrap();
+        assert_eq!(deployment.len(), 1);
+        assert_eq!(deployment[0].environment, "dev");
+        assert_eq!(deployment[0].endpoints.len(), 1);
+        assert_eq!(deployment[0].endpoints[0], "http://localhost:8000");
     }
 }
