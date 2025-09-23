@@ -506,7 +506,7 @@ pub struct ServiceCardClientRecord {
     pub service_type: String,
     pub metadata: Option<ServiceMetadata>,
     pub deployment: Option<Vec<DeploymentConfig>>,
-    pub service_config: Option<ServiceConfig>,
+    pub service_config: ServiceConfig,
     pub username: String,
 }
 

@@ -816,7 +816,7 @@ impl ServiceCardRecord {
         service_type: String,
         metadata: Option<ServiceMetadata>,
         deployment: Option<Vec<DeploymentConfig>>,
-        service_config: Option<ServiceConfig>,
+        service_config: ServiceConfig,
         username: String,
     ) -> Self {
         let created_at = get_utc_datetime();
