@@ -112,14 +112,14 @@ impl CardRegistry {
 
     #[allow(clippy::too_many_arguments)]
     #[pyo3(signature = (
-        uid=None, 
-        space=None, 
-        name=None,  
-        version=None, 
-        max_date=None, 
-        tags=None,  
-        sort_by_timestamp=None, 
-        service_type=None, 
+        uid=None,
+        space=None,
+        name=None,
+        version=None,
+        max_date=None,
+        tags=None,
+        sort_by_timestamp=None,
+        service_type=None,
         limit=100
     ))]
     #[instrument(skip_all)]

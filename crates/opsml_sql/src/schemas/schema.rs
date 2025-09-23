@@ -804,6 +804,7 @@ pub struct ServiceCardRecord {
     pub deployment: Option<Json<Vec<DeploymentConfig>>>,
     pub service_config: Json<ServiceConfig>,
     pub username: String,
+    pub tags: Json<Vec<String>>,
 }
 
 impl ServiceCardRecord {
@@ -818,6 +819,7 @@ impl ServiceCardRecord {
         deployment: Option<Vec<DeploymentConfig>>,
         service_config: ServiceConfig,
         username: String,
+        tags: Vec<String>,
     ) -> Self {
         let created_at = get_utc_datetime();
         let app_env = env::var("APP_ENV").unwrap_or_else(|_| "development".to_string());
@@ -842,6 +844,7 @@ impl ServiceCardRecord {
             deployment: deployment.map(Json),
             service_config: Json(service_config),
             username,
+            tags: Json(tags),
         }
     }
 
@@ -877,6 +880,7 @@ impl ServiceCardRecord {
             metadata: client_card.metadata.map(Json),
             deployment: client_card.deployment.map(Json),
             service_config: Json(client_card.service_config),
+            tags: Json(client_card.tags),
         })
     }
 }
@@ -902,6 +906,7 @@ impl Default for ServiceCardRecord {
             metadata: None,
             deployment: None,
             service_config: Json(ServiceConfig::default()),
+            tags: Json(Vec::new()),
         }
     }
 }

@@ -12,5 +12,6 @@ UPDATE opsml_service_registry SET
     service_type = ?,
     metadata = ?,
     deployment = ?,
-    service_config = ?
+    service_config = ?,
+    tags = ?
 WHERE uid = ?;

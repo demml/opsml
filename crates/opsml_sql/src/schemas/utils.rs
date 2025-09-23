@@ -126,6 +126,7 @@ pub fn convert_servicecard(record: ServiceCardRecord) -> CardRecord {
         metadata: record.metadata.map(|m| m.0),
         deployment: record.deployment.map(|d| d.0),
         service_config: record.service_config.0,
+        tags: record.tags.0,
     };
 
     CardRecord::Service(card)

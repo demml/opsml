@@ -120,6 +120,7 @@ pub async fn insert_card_into_db(
                 client_card.deployment,
                 client_card.service_config,
                 client_card.username,
+                client_card.tags,
             );
             ServerCard::Service(server_card)
         }
