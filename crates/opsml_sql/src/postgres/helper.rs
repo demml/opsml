@@ -390,6 +390,10 @@ impl PostgresQueryHelper {
             query.push_str(" AND created_at <= TO_DATE($4, 'YYYY-MM-DD')");
         }
 
+        if query_args.service_type.is_some() {
+            query.push_str(" AND service_type = $5");
+        }
+
         // Add version bounds - will use the version part of the index
         if query_args.version.is_some() {
             add_version_bounds(&mut query, query_args.version.as_ref().unwrap())?;
@@ -411,7 +415,7 @@ impl PostgresQueryHelper {
             query.push_str(" ORDER BY major DESC, minor DESC, patch DESC");
         }
 
-        query.push_str(" LIMIT $5");
+        query.push_str(" LIMIT $6");
 
         Ok(query)
     }
