@@ -6,11 +6,11 @@ use opsml_cards::ServiceCard;
 use opsml_colors::Colorize;
 use opsml_registry::error::RegistryError;
 use opsml_registry::{CardRegistries, CardRegistry};
-use opsml_service::{Card, ServiceSpec};
+use opsml_service::ServiceSpec;
 use opsml_toml::{LockArtifact, LockFile};
 use opsml_types::IntegratedService;
 use opsml_types::{
-    contracts::{CardEntry, CardRecord},
+    contracts::{Card, CardEntry, CardRecord},
     RegistryType,
 };
 use pyo3::prelude::*;
