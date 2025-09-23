@@ -58,3 +58,5 @@ pub trait GenAIRegistry: Registry {
             .map_err(RegistryError::RequestError)
     }
 }
+
+impl GenAIRegistry for ClientGenAIRegistry {}
