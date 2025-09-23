@@ -282,6 +282,7 @@ async fn test_opsml_server_card_list_cards() {
         tags: None,
         limit: None,
         sort_by_timestamp: None,
+        service_type: None,
         registry_type: RegistryType::Model,
     };
 
