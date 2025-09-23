@@ -644,7 +644,24 @@ impl PostgresQueryHelper {
     }
 
     pub fn get_recent_services_query(query_args: &ServiceQueryArgs) -> String {
-        let mut query = format!(
+        let mut where_clause = String::from(
+            "
+        WHERE 1=1
+        AND ($1 IS NULL OR space = $1)
+        AND ($2 IS NULL OR name = $2)
+        AND ($3 IS NULL OR service_type = $3)
+    ",
+        );
+
+        if let Some(tags) = &query_args.tags {
+            for tag in tags {
+                where_clause.push_str(
+                format!(" AND EXISTS (SELECT 1 FROM jsonb_array_elements_text(tags) AS t WHERE t = '{tag}')").as_str(),
+            );
+            }
+        }
+
+        let query = format!(
             "
         SELECT *
         FROM (
@@ -654,26 +671,11 @@ impl PostgresQueryHelper {
                     ORDER BY created_at DESC
                 ) AS rn
             FROM opsml_service_registry
-            WHERE 1=1
-            AND ($1 IS NULL OR space = $1)
-            AND ($2 IS NULL OR name = $2)
-            AND ($3 IS NULL OR service_type = $3)
+            {where_clause}
         )
         WHERE rn = 1;
         "
         );
-
-        if query_args.tags.is_some() {
-            let tags = query_args.tags.as_ref().unwrap();
-            for tag in tags.iter() {
-                query.push_str(
-                    format!(" AND EXISTS (SELECT 1 FROM json_each(tags) WHERE value = '{tag}')")
-                        .as_str(),
-                );
-            }
-        }
-
-        query.push_str(";");
 
         query
     }
