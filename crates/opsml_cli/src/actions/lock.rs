@@ -35,6 +35,7 @@ fn get_service_from_registry(
         None,
         None,
         Some(true),
+        None,
         1,
     )?;
     Ok(cards.cards.first().cloned())
@@ -72,6 +73,7 @@ fn get_latest_card(registries: &CardRegistries, card: &Card) -> Result<CardRecor
         None,
         None,
         Some(false),
+        None,
         1,
     )?;
 
