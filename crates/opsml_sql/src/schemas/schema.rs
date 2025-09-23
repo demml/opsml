@@ -802,7 +802,7 @@ pub struct ServiceCardRecord {
     pub service_type: String,
     pub metadata: Option<Json<ServiceMetadata>>,
     pub deployment: Option<Json<Vec<DeploymentConfig>>>,
-    pub service_config: Option<Json<ServiceConfig>>,
+    pub service_config: Json<ServiceConfig>,
     pub username: String,
 }
 
@@ -840,7 +840,7 @@ impl ServiceCardRecord {
             service_type,
             metadata: metadata.map(Json),
             deployment: deployment.map(Json),
-            service_config: service_config.map(Json),
+            service_config: Json(service_config),
             username,
         }
     }
@@ -876,7 +876,7 @@ impl ServiceCardRecord {
             service_type: client_card.service_type,
             metadata: client_card.metadata.map(Json),
             deployment: client_card.deployment.map(Json),
-            service_config: client_card.service_config.map(Json),
+            service_config: Json(client_card.service_config),
         })
     }
 }
@@ -901,7 +901,7 @@ impl Default for ServiceCardRecord {
             service_type: ServiceType::Api.to_string(),
             metadata: None,
             deployment: None,
-            service_config: None,
+            service_config: Json(ServiceConfig::default()),
         }
     }
 }
