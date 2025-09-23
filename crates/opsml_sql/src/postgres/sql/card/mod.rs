@@ -361,6 +361,7 @@ impl CardLogicTrait for CardLogicPostgresClient {
                         .bind(&record.metadata)
                         .bind(&record.deployment)
                         .bind(&record.service_config)
+                        .bind(&record.tags)
                         .execute(&self.pool)
                         .await?;
                     Ok(())
@@ -546,6 +547,7 @@ impl CardLogicTrait for CardLogicPostgresClient {
                         .bind(&record.metadata)
                         .bind(&record.deployment)
                         .bind(&record.service_config)
+                        .bind(&record.tags)
                         .bind(&record.uid)
                         .execute(&self.pool)
                         .await?;

@@ -508,6 +508,7 @@ pub struct ServiceCardClientRecord {
     pub deployment: Option<Vec<DeploymentConfig>>,
     pub service_config: ServiceConfig,
     pub username: String,
+    pub tags: Vec<String>,
 }
 
 impl Default for ServiceCardClientRecord {
@@ -526,6 +527,7 @@ impl Default for ServiceCardClientRecord {
             deployment: None,
             service_config: ServiceConfig::default(),
             cards: Vec::new(),
+            tags: Vec::new(),
         }
     }
 }

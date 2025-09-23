@@ -22,7 +22,7 @@ test.cli:
 ####### SQL tests
 .PHONY: test.sql.sqlite
 test.sql.sqlite:
-	cargo test -p opsml-sql test_sqlite -- --nocapture --test-threads=1
+	cargo test -p opsml-sql test_sqlite_recent_services -- --nocapture --test-threads=1
 
 .PHONY: test.sql.enum
 test.sql.enum:

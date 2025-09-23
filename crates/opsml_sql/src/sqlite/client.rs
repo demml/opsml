@@ -105,7 +105,9 @@ mod tests {
     };
     use opsml_settings::config::DatabaseSettings;
     use opsml_types::contracts::evaluation::{EvaluationProvider, EvaluationType};
-    use opsml_types::contracts::{ArtifactKey, ArtifactQueryArgs, AuditEvent, SpaceNameEvent};
+    use opsml_types::contracts::{
+        ArtifactKey, ArtifactQueryArgs, AuditEvent, ServiceQueryArgs, ServiceType, SpaceNameEvent,
+    };
     use opsml_types::SqlType;
     use opsml_types::{
         cards::CardTable,
@@ -114,6 +116,7 @@ mod tests {
     };
     use opsml_utils::utils::get_utc_datetime;
     use semver::Version;
+    use sqlx::types::Json;
     use std::env;
 
     const SPACE: &str = "space";
@@ -1164,5 +1167,73 @@ mod tests {
         let record = client.eval.get_evaluation_record(&uid).await.unwrap();
 
         assert_eq!(record.name, "test");
+    }
+
+    #[tokio::test]
+    async fn test_sqlite_recent_services() {
+        cleanup();
+
+        let config = DatabaseSettings {
+            connection_uri: get_connection_uri(),
+            max_connections: 1,
+            sql_type: SqlType::Sqlite,
+        };
+
+        let client = SqliteClient::new(&config).await.unwrap();
+
+        // create 1st service card
+        let card1 = ServiceCardRecord {
+            name: "Service0".to_string(),
+            space: SPACE.to_string(),
+            service_type: ServiceType::Mcp.to_string(),
+            tags: Json(vec!["tag1".to_string()]),
+            ..Default::default()
+        };
+        client
+            .card
+            .insert_card(&CardTable::Service, &ServerCard::Service(card1))
+            .await
+            .unwrap();
+
+        // create 2nd card
+        let card2 = ServiceCardRecord {
+            name: "Service1".to_string(),
+            space: SPACE.to_string(),
+            service_type: ServiceType::Mcp.to_string(),
+            ..Default::default()
+        };
+        client
+            .card
+            .insert_card(&CardTable::Service, &ServerCard::Service(card2))
+            .await
+            .unwrap();
+
+        // Create 3rd card, but new version
+        let card3 = ServiceCardRecord {
+            name: "Service0".to_string(),
+            space: SPACE.to_string(),
+            service_type: ServiceType::Mcp.to_string(),
+            tags: Json(vec!["tag1".to_string()]),
+            ..Default::default()
+        };
+        client
+            .card
+            .insert_card(&CardTable::Service, &ServerCard::Service(card3))
+            .await
+            .unwrap();
+
+        let services = client
+            .card
+            .get_recent_services(&ServiceQueryArgs {
+                space: None,
+                name: None,
+                tags: None,
+                service_type: None,
+            })
+            .await
+            .unwrap();
+        assert_eq!(services.len(), 2);
+
+        cleanup();
     }
 }

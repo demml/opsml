@@ -125,3 +125,7 @@ lto = "fat"
 codegen-units = 1
 strip = true
 debug = false
+
+[profile.dev]
+incremental = true
+codegen-units = 256

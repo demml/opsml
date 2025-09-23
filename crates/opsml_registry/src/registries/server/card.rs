@@ -199,6 +199,7 @@ impl ServerCardRegistry {
                     client_card.deployment,
                     client_card.service_config,
                     client_card.username,
+                    client_card.tags,
                 );
                 ServerCard::Service(server_card)
             }
@@ -395,6 +396,7 @@ impl ServerCardRegistry {
                     metadata: client_card.metadata.map(SqlxJson),
                     deployment: client_card.deployment.map(SqlxJson),
                     service_config: SqlxJson(client_card.service_config),
+                    tags: SqlxJson(client_card.tags),
                     opsml_version: client_card.opsml_version,
                 };
                 ServerCard::Service(server_card)
