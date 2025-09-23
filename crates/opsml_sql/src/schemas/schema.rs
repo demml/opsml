@@ -799,6 +799,7 @@ pub struct ServiceCardRecord {
     pub build_tag: Option<String>,
     pub cards: Json<Vec<CardEntry>>,
     pub opsml_version: String,
+    pub service_type: String,
     pub username: String,
 }
 
@@ -809,6 +810,7 @@ impl ServiceCardRecord {
         version: Version,
         cards: Vec<CardEntry>,
         opsml_version: String,
+        service_type: String,
         username: String,
     ) -> Self {
         let created_at = get_utc_datetime();
@@ -829,6 +831,7 @@ impl ServiceCardRecord {
             version: version.to_string(),
             cards: Json(cards),
             opsml_version,
+            service_type,
             username,
         }
     }
