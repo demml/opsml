@@ -942,6 +942,7 @@ async fn test_opsml_server_card_service_card_crud() {
             service_type: card.service_type,
             metadata: card.metadata,
             deployment: card.deployment,
+            service_config: card.service_config,
             opsml_version: card.opsml_version,
         }),
     };

@@ -2,3 +2,4 @@
 ALTER TABLE opsml_service_registry ADD COLUMN service_type TEXT NOT NULL DEFAULT 'api';
 ALTER TABLE opsml_service_registry ADD COLUMN metadata TEXT;
 ALTER TABLE opsml_service_registry ADD COLUMN deployment TEXT;
+ALTER TABLE opsml_service_registry ADD COLUMN service_config TEXT;

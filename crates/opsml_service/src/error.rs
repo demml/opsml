@@ -2,17 +2,14 @@ use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum ServiceError {
-    #[error("Drift configuration is only valid for model cards")]
-    InvalidConfiguration,
-
-    #[error("Missing MCP configuration for MCP service type")]
-    MissingMCPConfig,
-
     #[error("Missing deployment configuration for MCP service type")]
     MissingDeploymentConfigForMCPService,
 
     #[error(transparent)]
     IoError(#[from] std::io::Error),
+
+    #[error(transparent)]
+    TypeError(#[from] opsml_types::error::TypeError),
 
     #[error(transparent)]
     YamlError(#[from] serde_yaml::Error),

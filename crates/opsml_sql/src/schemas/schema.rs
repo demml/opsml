@@ -6,7 +6,7 @@ use opsml_types::contracts::evaluation::{EvaluationProvider, EvaluationType};
 use opsml_types::contracts::{
     ArtifactRecord, AuditCardClientRecord, CardEntry, CardRecord, DataCardClientRecord,
     ExperimentCardClientRecord, ModelCardClientRecord, PromptCardClientRecord,
-    ServiceCardClientRecord,
+    ServiceCardClientRecord, ServiceConfig,
 };
 use opsml_types::contracts::{ArtifactType, DeploymentConfig, ServiceMetadata, ServiceType};
 use opsml_types::{CommonKwargs, DataType, ModelType, RegistryType};
@@ -802,6 +802,7 @@ pub struct ServiceCardRecord {
     pub service_type: String,
     pub metadata: Option<Json<ServiceMetadata>>,
     pub deployment: Option<Json<Vec<DeploymentConfig>>>,
+    pub service_config: Option<Json<ServiceConfig>>,
     pub username: String,
 }
 
@@ -815,6 +816,7 @@ impl ServiceCardRecord {
         service_type: String,
         metadata: Option<ServiceMetadata>,
         deployment: Option<Vec<DeploymentConfig>>,
+        service_config: Option<ServiceConfig>,
         username: String,
     ) -> Self {
         let created_at = get_utc_datetime();
@@ -838,6 +840,7 @@ impl ServiceCardRecord {
             service_type,
             metadata: metadata.map(Json),
             deployment: deployment.map(Json),
+            service_config: service_config.map(Json),
             username,
         }
     }
@@ -870,9 +873,10 @@ impl ServiceCardRecord {
             cards: Json(client_card.cards),
             opsml_version: client_card.opsml_version,
             username: client_card.username,
+            service_type: client_card.service_type,
             metadata: client_card.metadata.map(Json),
             deployment: client_card.deployment.map(Json),
-            service_type: client_card.service_type,
+            service_config: client_card.service_config.map(Json),
         })
     }
 }
@@ -897,6 +901,7 @@ impl Default for ServiceCardRecord {
             service_type: ServiceType::Api.to_string(),
             metadata: None,
             deployment: None,
+            service_config: None,
         }
     }
 }

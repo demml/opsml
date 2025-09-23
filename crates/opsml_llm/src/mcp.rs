@@ -12,7 +12,7 @@ pub fn list_mcp_servers(
     tags: Option<Vec<String>>,
 ) -> Result<Vec<String>, LLMError> {
     // need to a separate method to get the latest MCP services
-    let registry = OpsmlCardRegistry::new(RegistryType::Service)?;
+    let registry = OpsmlCardRegistry::new(RegistryType::Service).unwrap();
 
     registry
         .list_cards(&CardQueryArgs {
