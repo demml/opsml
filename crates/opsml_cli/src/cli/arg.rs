@@ -58,6 +58,10 @@ pub struct ListCards {
     /// ignore release candidate
     #[arg(long = "sort_by_timestamp", default_value = "true")]
     pub sort_by_timestamp: bool,
+
+    /// Service type
+    #[arg(long = "service_type")]
+    pub service_type: Option<String>,
 }
 
 impl IntoQueryArgs for ListCards {
@@ -84,6 +88,7 @@ impl IntoQueryArgs for ListCards {
             tags: self.tags.clone(),
             max_date: self.max_date.clone(),
             sort_by_timestamp: Some(self.sort_by_timestamp),
+            service_type: self.service_type.clone(),
         })
     }
 }
