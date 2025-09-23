@@ -15,6 +15,7 @@ opsml-types = { workspace = true }
 opsml-version = { workspace = true }
 pyo3 = { workspace = true }
 thiserror = { workspace = true }
+tracing = { workspace = true }
 
 [dev-dependencies]
 tempfile = { workspace = true }

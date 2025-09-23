@@ -8,6 +8,9 @@ pub enum ServiceError {
     #[error("Missing MCP configuration for MCP service type")]
     MissingMCPConfig,
 
+    #[error("Missing deployment configuration for MCP service type")]
+    MissingDeploymentConfigForMCPService,
+
     #[error(transparent)]
     IoError(#[from] std::io::Error),
 
@@ -22,4 +25,7 @@ pub enum ServiceError {
 
     #[error("No file name {0} in current directory or any parent directory")]
     MissingServiceFile(String),
+
+    #[error(transparent)]
+    StateError(#[from] opsml_state::error::StateError),
 }
