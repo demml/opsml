@@ -12,7 +12,7 @@ use crate::traits::CardLogicTrait;
 use async_trait::async_trait;
 use opsml_semver::VersionValidator;
 use opsml_types::{
-    contracts::{ArtifactKey, CardQueryArgs},
+    contracts::{ArtifactKey, CardQueryArgs, ServiceQueryArgs},
     RegistryType,
 };
 use semver::Version;
@@ -732,5 +732,24 @@ impl CardLogicTrait for CardLogicMySqlClient {
             encrypted_key: key.3,
             storage_key: key.4,
         })
+    }
+
+    async fn get_recent_services(
+        &self,
+        query_args: &ServiceQueryArgs,
+    ) -> Result<Vec<ServiceCardRecord>, SqlError> {
+        let query = MySqlQueryHelper::get_recent_services_query(query_args);
+
+        let records: Vec<ServiceCardRecord> = sqlx::query_as(&query)
+            .bind(query_args.space.as_ref())
+            .bind(query_args.space.as_ref())
+            .bind(query_args.name.as_ref())
+            .bind(query_args.name.as_ref())
+            .bind(query_args.service_type.as_ref())
+            .bind(query_args.service_type.as_ref())
+            .fetch_all(&self.pool)
+            .await?;
+
+        Ok(records)
     }
 }

@@ -9,5 +9,7 @@ UPDATE opsml_service_registry SET
     cards = ?,
     username = ?,
     opsml_version = ?,
-    service_type = ?
+    service_type = ?,
+    metadata = ?,
+    deployment = ?
 WHERE uid = ?;
