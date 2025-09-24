@@ -110,7 +110,7 @@ For more information on LLM Monitoring, refer to [LLM Monitoring documentation](
 ```python
 from opsml.scouter.drift import LLMDriftConfig, LLMDriftMetric, LLMDriftProfile
 from opsml.scouter.alert import AlertThreshold
-from opsml.llm import Score, Agent, Task, Workflow, Prompt
+from opsml.genai import Score, Agent, Task, Workflow, Prompt
 
 
 def create_reformulation_evaluation_prompt(): # (1)

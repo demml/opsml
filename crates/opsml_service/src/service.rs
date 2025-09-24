@@ -1,179 +1,9 @@
 use crate::error::ServiceError;
-use opsml_types::RegistryType;
-use pyo3::prelude::*;
+use opsml_state::app_state;
+use opsml_types::contracts::{Card, DeploymentConfig, ServiceConfig, ServiceMetadata, ServiceType};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use std::fmt::Display;
 use std::path::{Path, PathBuf};
 const DEFAULT_SERVICE_FILENAME: &str = "opsmlspec.yml";
-
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Hash)]
-pub enum McpTransport {
-    #[serde(alias = "HTTP", alias = "http")]
-    Http,
-    #[serde(alias = "STDIO", alias = "stdio")]
-    Stdio,
-}
-
-impl Display for McpTransport {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            McpTransport::Http => write!(f, "Http"),
-            McpTransport::Stdio => write!(f, "Stdio"),
-        }
-    }
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Hash)]
-pub enum McpCapability {
-    #[serde(alias = "RESOURCES", alias = "resources")]
-    Resources,
-    #[serde(alias = "TOOLS", alias = "tools")]
-    Tools,
-    #[serde(alias = "PROMPTS", alias = "prompts")]
-    Prompts,
-}
-
-impl Display for McpCapability {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            McpCapability::Resources => write!(f, "Resources"),
-            McpCapability::Tools => write!(f, "Tools"),
-            McpCapability::Prompts => write!(f, "Prompts"),
-        }
-    }
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Hash)]
-#[pyclass]
-pub enum ServiceType {
-    #[serde(alias = "API", alias = "api")]
-    Api,
-    #[serde(alias = "MCP", alias = "mcp")]
-    Mcp,
-    #[serde(alias = "AGENT", alias = "agent")]
-    Agent,
-}
-
-impl Display for ServiceType {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            ServiceType::Api => write!(f, "Api"),
-            ServiceType::Mcp => write!(f, "Mcp"),
-            ServiceType::Agent => write!(f, "Agent"),
-        }
-    }
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct GpuConfig {
-    #[serde(rename = "type")]
-    pub gpu_type: String,
-    pub count: u32,
-    pub memory: String,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct Resources {
-    pub cpu: u32,
-    pub memory: String,
-    pub storage: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub gpu: Option<GpuConfig>,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct DeploymentConfig {
-    pub environment: String,
-    pub provider: String,
-    pub location: Vec<String>,
-    pub endpoints: Vec<String>,
-    pub resources: Resources,
-    pub links: HashMap<String, String>,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone, Default)]
-pub struct DriftConfig {
-    #[serde(default)]
-    pub active: bool,
-    #[serde(default)]
-    pub deactivate_others: bool,
-    pub drift_type: Vec<String>,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct Card {
-    pub alias: String,
-    #[serde(default, skip_serializing_if = "String::is_empty")]
-    pub space: String,
-    pub name: String,
-    pub version: Option<String>,
-    #[serde(rename = "type")]
-    pub registry_type: RegistryType,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub drift: Option<DriftConfig>,
-}
-
-impl Card {
-    /// Validate the card configuration to ensure drift is only used for model cards
-    pub fn validate(&self) -> Result<(), ServiceError> {
-        // Only allow drift configuration for model cards
-        if self.drift.is_some() && self.registry_type != RegistryType::Model {
-            return Err(ServiceError::InvalidConfiguration);
-        }
-        Ok(())
-    }
-
-    /// Get the effective space for this card, falling back to the provided default space
-    pub fn set_space(&mut self, service_space: &str) {
-        if self.space.is_empty() {
-            self.space = service_space.to_string();
-        }
-    }
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct McpConfig {
-    pub capabilities: Vec<McpCapability>,
-    pub transport: McpTransport,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone, Default)]
-pub struct ServiceConfig {
-    pub version: Option<String>,
-    pub cards: Option<Vec<Card>>,
-    pub write_dir: Option<String>,
-    pub mcp: Option<McpConfig>,
-}
-
-impl ServiceConfig {
-    fn validate(
-        &mut self,
-        service_space: &str,
-        service_type: &ServiceType,
-    ) -> Result<(), ServiceError> {
-        if let Some(cards) = &mut self.cards {
-            for card in cards {
-                card.validate()?;
-                // need to set the space to overall service space if not set
-                card.set_space(service_space);
-            }
-        }
-
-        // if service type is MCP, ensure MCP config is provided
-        if service_type == &ServiceType::Mcp && self.mcp.is_none() {
-            return Err(ServiceError::MissingMCPConfig);
-        }
-        Ok(())
-    }
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct Metadata {
-    pub description: String,
-    pub language: String,
-    pub tags: Vec<String>,
-}
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(untagged)]
@@ -198,7 +28,7 @@ pub struct ServiceSpec {
     pub space_config: SpaceConfig,
     #[serde(rename = "type")]
     pub service_type: ServiceType,
-    pub metadata: Option<Metadata>,
+    pub metadata: Option<ServiceMetadata>,
     pub service: ServiceConfig,
     pub deploy: Option<Vec<DeploymentConfig>>,
 
@@ -275,14 +105,46 @@ impl ServiceSpec {
         Ok(spec)
     }
 
+    /// Filter the deployment configurations to only include those matching the current application environment
+    /// This is important when dealing with multiple deployment environments in a single service spec
+    /// We don't want to record the prod deployment config in staging or dev environments
+    fn filter_deploy_by_environment(&mut self) -> Result<(), ServiceError> {
+        let app_env = app_state().config()?.app_env.clone();
+        if let Some(deployments) = &self.deploy {
+            self.deploy = Some(
+                deployments
+                    .iter()
+                    .filter(|d| d.environment == app_env)
+                    .cloned()
+                    .collect(),
+            );
+        }
+        Ok(())
+    }
+
+    fn validate_service_type(&self) -> Result<(), ServiceError> {
+        match &self.service_type {
+            ServiceType::Mcp => {
+                // assert that a deployment config exists
+                if self.deploy.is_none() || self.deploy.as_ref().unwrap().is_empty() {
+                    return Err(ServiceError::MissingDeploymentConfigForMCPService);
+                }
+                Ok(())
+            }
+            _ => Ok(()),
+        }
+    }
+
     pub fn from_env() -> Result<Self, ServiceError> {
         let current_dir = std::env::current_dir()?;
         Self::from_path(&current_dir)
     }
 
     fn validate(&mut self) -> Result<(), ServiceError> {
+        self.validate_service_type()?;
         self.service
-            .validate(self.space_config.get_space(), &self.service_type)
+            .validate(self.space_config.get_space(), &self.service_type)?;
+        Ok(())
     }
     /// Load a ServiceSpec from a YAML file at the given path
     /// # Arguments
@@ -300,6 +162,8 @@ impl ServiceSpec {
     /// * `ServiceSpec` - The loaded service specification
     pub fn from_yaml(yaml_str: &str) -> Result<Self, ServiceError> {
         let mut spec: ServiceSpec = serde_yaml::from_str(yaml_str)?;
+
+        spec.filter_deploy_by_environment()?;
         spec.validate()?;
         Ok(spec)
     }
@@ -320,6 +184,7 @@ impl ServiceSpec {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use opsml_types::contracts::mcp::{McpCapability, McpTransport};
 
     #[test]
     fn test_service_spec_with_api() {
@@ -351,7 +216,7 @@ service:
       type: prompt
 
 deploy:
-  - environment: production
+  - environment: development
     provider: gcp
     location: [us-central1]
     endpoints: [https://test.example.com]
@@ -393,7 +258,7 @@ service:
     transport: Http
 
 deploy:
-  - environment: production
+  - environment: development
     provider: gcp
     location: [us-central1]
     endpoints: [https://test.example.com]
@@ -403,6 +268,41 @@ deploy:
       storage: 100Gi
     links:
       logging: https://logging.example.com
+"#;
+
+        let spec = ServiceSpec::from_yaml(yaml_content).unwrap();
+        assert_eq!(spec.name, "test-service");
+        assert_eq!(spec.space(), "my-team");
+        //assert mcp type
+        assert_eq!(spec.service_type, ServiceType::Mcp);
+
+        let mcp_config = spec.service.mcp.as_ref().unwrap();
+        assert_eq!(mcp_config.transport, McpTransport::Http);
+
+        // check capabilities
+        assert!(mcp_config.capabilities.contains(&McpCapability::Resources));
+        assert!(mcp_config.capabilities.contains(&McpCapability::Tools));
+    }
+
+    #[test]
+    fn test_service_spec_with_mcp_no_resources() {
+        let yaml_content = r#"
+name: test-service
+team: my-team
+type: Mcp
+metadata:
+  description: Test service
+  language: python
+  tags: [ml, test]
+
+service:
+  mcp:
+    capabilities: [Resources, Tools]
+    transport: Http
+
+deploy:
+  - environment: development
+    endpoints: [https://test.example.com]
 "#;
 
         let spec = ServiceSpec::from_yaml(yaml_content).unwrap();

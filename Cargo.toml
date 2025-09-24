@@ -27,6 +27,7 @@ opsml-colors = { path = "crates/opsml_colors" }
 opsml-evaluate = { path = "crates/opsml_evaluate" }
 opsml-events = { path = "crates/opsml_events" }
 opsml-interfaces = { path = "crates/opsml_interfaces" }
+opsml-genai = { path = "crates/opsml_genai" }
 opsml-registry = { path = "crates/opsml_registry" }
 opsml-experiment = { path = "crates/opsml_experiment" }
 opsml-mocks = { path = "crates/opsml_mocks" }
@@ -124,3 +125,7 @@ lto = "fat"
 codegen-units = 1
 strip = true
 debug = false
+
+[profile.dev]
+incremental = true
+codegen-units = 256

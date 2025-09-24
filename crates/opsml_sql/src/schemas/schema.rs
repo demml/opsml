@@ -3,12 +3,12 @@ use chrono::{DateTime, Utc};
 use opsml_semver::error::VersionError;
 use opsml_types::cards::{CardTable, ParameterValue};
 use opsml_types::contracts::evaluation::{EvaluationProvider, EvaluationType};
-use opsml_types::contracts::ArtifactType;
 use opsml_types::contracts::{
     ArtifactRecord, AuditCardClientRecord, CardEntry, CardRecord, DataCardClientRecord,
-    ExperimentCardClientRecord, ModelCardClientRecord, PromptCardClientRecord,
-    ServiceCardClientRecord,
+    ExperimentCardClientRecord, McpServer, ModelCardClientRecord, PromptCardClientRecord,
+    ServiceCardClientRecord, ServiceConfig,
 };
+use opsml_types::contracts::{ArtifactType, DeploymentConfig, ServiceMetadata, ServiceType};
 use opsml_types::{CommonKwargs, DataType, ModelType, RegistryType};
 use opsml_utils::create_uuid7;
 use opsml_utils::utils::get_utc_datetime;
@@ -799,17 +799,28 @@ pub struct ServiceCardRecord {
     pub build_tag: Option<String>,
     pub cards: Json<Vec<CardEntry>>,
     pub opsml_version: String,
+    pub service_type: String,
+    pub metadata: Option<Json<ServiceMetadata>>,
+    pub deployment: Option<Json<Vec<DeploymentConfig>>>,
+    pub service_config: Json<ServiceConfig>,
     pub username: String,
+    pub tags: Json<Vec<String>>,
 }
 
 impl ServiceCardRecord {
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         name: String,
         space: String,
         version: Version,
         cards: Vec<CardEntry>,
         opsml_version: String,
+        service_type: String,
+        metadata: Option<ServiceMetadata>,
+        deployment: Option<Vec<DeploymentConfig>>,
+        service_config: ServiceConfig,
         username: String,
+        tags: Vec<String>,
     ) -> Self {
         let created_at = get_utc_datetime();
         let app_env = env::var("APP_ENV").unwrap_or_else(|_| "development".to_string());
@@ -829,7 +840,12 @@ impl ServiceCardRecord {
             version: version.to_string(),
             cards: Json(cards),
             opsml_version,
+            service_type,
+            metadata: metadata.map(Json),
+            deployment: deployment.map(Json),
+            service_config: Json(service_config),
             username,
+            tags: Json(tags),
         }
     }
 
@@ -861,6 +877,11 @@ impl ServiceCardRecord {
             cards: Json(client_card.cards),
             opsml_version: client_card.opsml_version,
             username: client_card.username,
+            service_type: client_card.service_type,
+            metadata: client_card.metadata.map(Json),
+            deployment: client_card.deployment.map(Json),
+            service_config: Json(client_card.service_config),
+            tags: Json(client_card.tags),
         })
     }
 }
@@ -882,7 +903,49 @@ impl Default for ServiceCardRecord {
             cards: Json(Vec::new()),
             opsml_version: opsml_version::version(),
             username: CommonKwargs::Undefined.to_string(),
+            service_type: ServiceType::Api.to_string(),
+            metadata: None,
+            deployment: None,
+            service_config: Json(ServiceConfig::default()),
+            tags: Json(Vec::new()),
         }
+    }
+}
+
+impl ServiceCardRecord {
+    /// Utility helper to convert a ServiceCardRecord to McpServer
+    pub fn to_mcp_server(&self) -> Result<McpServer, SqlError> {
+        if ServiceType::from(self.service_type.as_str()) != ServiceType::Mcp {
+            return Err(SqlError::InvalidServiceType(self.service_type.clone()));
+        }
+
+        let deployment = self
+            .deployment
+            .as_ref()
+            .and_then(|d| d.0.first())
+            .ok_or_else(|| SqlError::MissingField("deployment".to_string()))?;
+
+        let config = self
+            .service_config
+            .0
+            .mcp
+            .clone()
+            .ok_or_else(|| SqlError::MissingField("service_config.mcp".to_string()))?;
+
+        let environment = deployment.environment.clone();
+        let endpoints = deployment.endpoints.clone();
+        let description = self.metadata.as_ref().map(|m| m.0.description.clone());
+
+        Ok(McpServer {
+            space: self.space.clone(),
+            name: self.name.clone(),
+            version: self.version.clone(),
+            tags: self.tags.0.clone(),
+            environment,
+            endpoints,
+            config,
+            description,
+        })
     }
 }
 

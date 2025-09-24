@@ -6,11 +6,11 @@ use opsml_cards::ServiceCard;
 use opsml_colors::Colorize;
 use opsml_registry::error::RegistryError;
 use opsml_registry::{CardRegistries, CardRegistry};
-use opsml_service::{Card, ServiceSpec};
+use opsml_service::ServiceSpec;
 use opsml_toml::{LockArtifact, LockFile};
 use opsml_types::IntegratedService;
 use opsml_types::{
-    contracts::{CardEntry, CardRecord},
+    contracts::{Card, CardEntry, CardRecord},
     RegistryType,
 };
 use pyo3::prelude::*;
@@ -35,6 +35,7 @@ fn get_service_from_registry(
         None,
         None,
         Some(true),
+        None,
         1,
     )?;
     Ok(cards.cards.first().cloned())
@@ -72,6 +73,7 @@ fn get_latest_card(registries: &CardRegistries, card: &Card) -> Result<CardRecor
         None,
         None,
         Some(false),
+        None,
         1,
     )?;
 
@@ -322,7 +324,7 @@ fn handle_existing_service_lock(
 /// # Returns
 /// * `Result<LockArtifact, CliError>` - Lock artifact or error
 #[instrument(skip_all)]
-fn lock_service_card(
+pub fn lock_service_card(
     spec: &ServiceSpec,
     space: &str,
     name: &str,

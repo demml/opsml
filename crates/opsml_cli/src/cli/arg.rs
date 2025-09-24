@@ -19,6 +19,13 @@ pub trait IntoQueryArgs {
 }
 
 #[derive(Args)]
+pub struct RegisterArgs {
+    /// Path to the spec file. Defaults to `{current_dir}/opsmlspec.yml`
+    #[arg(long = "path", default_value = default_spec_path())]
+    pub path: PathBuf,
+}
+
+#[derive(Args)]
 pub struct LockArgs {
     /// Path to the spec file. Defaults to `{current_dir}/opsmlspec.yml`
     #[arg(long = "path", default_value = default_spec_path())]
@@ -58,6 +65,10 @@ pub struct ListCards {
     /// ignore release candidate
     #[arg(long = "sort_by_timestamp", default_value = "true")]
     pub sort_by_timestamp: bool,
+
+    /// Service type
+    #[arg(long = "service_type")]
+    pub service_type: Option<String>,
 }
 
 impl IntoQueryArgs for ListCards {
@@ -84,6 +95,7 @@ impl IntoQueryArgs for ListCards {
             tags: self.tags.clone(),
             max_date: self.max_date.clone(),
             sort_by_timestamp: Some(self.sort_by_timestamp),
+            service_type: self.service_type.clone(),
         })
     }
 }

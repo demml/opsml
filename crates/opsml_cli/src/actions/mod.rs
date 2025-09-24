@@ -5,6 +5,7 @@ pub mod ui;
 
 pub mod list;
 pub mod lock;
+pub mod register;
 pub mod update_profile;
 pub mod utils;
 pub mod validate;

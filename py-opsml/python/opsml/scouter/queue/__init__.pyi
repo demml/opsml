@@ -6,7 +6,7 @@ from typing import Any, Dict, List, Optional, Union
 
 from typing_extensions import Protocol, TypeAlias
 
-from ...llm import Prompt
+from ...genai import Prompt
 from ...logging import LogLevel
 from ...mock import MockConfig
 from ..client import HTTPConfig

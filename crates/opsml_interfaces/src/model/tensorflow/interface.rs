@@ -57,12 +57,10 @@ impl TensorFlowModel {
         task_type: Option<TaskType>,
         drift_profile: Option<&Bound<'py, PyAny>>,
     ) -> Result<(Self, ModelInterface), ModelInterfaceError> {
+        let tf = py.import("tensorflow")?;
         // check if model is base estimator for sklearn validation
         let model = if let Some(model) = model {
-            let tf_model = py
-                .import("tensorflow")?
-                .getattr("keras")?
-                .getattr("Model")?;
+            let tf_model = tf.getattr("keras")?.getattr("Model")?;
             if model.is_instance(&tf_model).unwrap() {
                 Some(model.into_py_any(py)?)
             } else {
@@ -72,7 +70,10 @@ impl TensorFlowModel {
             None
         };
 
-        let mut model_interface = ModelInterface::new(py, None, None, task_type, drift_profile)?;
+        let version = tf.getattr("__version__")?.extract::<String>().ok();
+
+        let mut model_interface =
+            ModelInterface::new(py, None, None, task_type, drift_profile, version)?;
 
         // override ModelInterface SampleData with TensorFlowSampleData
         let sample_data = match sample_data {
@@ -303,6 +304,7 @@ impl TensorFlowModel {
             self_.interface_type.clone(),
             onnx_session,
             HashMap::new(),
+            self_.as_super().version.clone(),
         );
 
         Ok(metadata)
@@ -425,8 +427,14 @@ impl TensorFlowModel {
             sample_data: TensorFlowSampleData::default(),
         };
 
-        let mut interface =
-            ModelInterface::new(py, None, None, Some(metadata.task_type.clone()), None)?;
+        let mut interface = ModelInterface::new(
+            py,
+            None,
+            None,
+            Some(metadata.task_type.clone()),
+            None,
+            Some(metadata.version.clone()),
+        )?;
 
         interface.schema = metadata.schema.clone();
         interface.data_type = metadata.data_type.clone();

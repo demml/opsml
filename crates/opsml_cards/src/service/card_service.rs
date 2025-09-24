@@ -4,11 +4,13 @@ use crate::utils::BaseArgs;
 use crate::{DataCard, ExperimentCard, ModelCard, PromptCard};
 use chrono::{DateTime, Utc};
 use opsml_interfaces::{DataLoadKwargs, ModelLoadKwargs};
-use opsml_service::{DeploymentConfig, Metadata, ServiceSpec, ServiceType};
-use opsml_types::contracts::CardEntry;
+use opsml_service::ServiceSpec;
+use opsml_types::contracts::{CardEntry, ServiceConfig};
 use opsml_types::CommonKwargs;
 use opsml_types::{
-    contracts::{CardRecord, ServiceCardClientRecord},
+    contracts::{
+        CardRecord, DeploymentConfig, ServiceCardClientRecord, ServiceMetadata, ServiceType,
+    },
     RegistryType, SaveName, Suffix,
 };
 use opsml_utils::{extract_py_attr, PyHelperFuncs};
@@ -299,8 +301,14 @@ pub struct ServiceCard {
     #[pyo3(get)]
     pub service_type: ServiceType,
 
-    pub metadata: Option<Metadata>,
+    pub metadata: Option<ServiceMetadata>,
+
     pub deploy: Option<Vec<DeploymentConfig>>,
+
+    pub service_config: ServiceConfig,
+
+    #[pyo3(get)]
+    pub tags: Vec<String>,
 }
 
 #[pymethods]
@@ -335,6 +343,12 @@ impl ServiceCard {
             )?
         };
 
+        let tags = if let Some(metadata) = &spec.metadata {
+            metadata.tags.clone()
+        } else {
+            vec![]
+        };
+
         Ok(ServiceCard {
             space: base_args.0,
             name: base_args.1,
@@ -351,6 +365,8 @@ impl ServiceCard {
             service_type: spec.service_type,
             metadata: spec.metadata,
             deploy: spec.deploy,
+            service_config: spec.service,
+            tags,
         })
     }
 
@@ -443,6 +459,11 @@ impl ServiceCard {
             cards: self.cards.to_card_entries(),
             opsml_version: self.opsml_version.clone(),
             username: std::env::var("OPSML_USERNAME").unwrap_or_else(|_| "guest".to_string()),
+            service_type: self.service_type.to_string(),
+            metadata: self.metadata.clone(),
+            deployment: self.deploy.clone(),
+            service_config: self.service_config.clone(),
+            tags: self.tags.clone(),
         };
 
         Ok(CardRecord::Service(record))
@@ -757,7 +778,6 @@ impl ServiceCard {
         space: String,
         name: String,
         cards: Vec<Card>, // can be Vec<Card> or Vec<ModelCard, DataCard, etc.>
-
         spec: &ServiceSpec,
     ) -> Result<ServiceCard, CardError> {
         let registry_type = RegistryType::Service;
@@ -768,6 +788,12 @@ impl ServiceCard {
             None,
             &registry_type,
         )?;
+
+        let tags = if let Some(metadata) = &spec.metadata {
+            metadata.tags.clone()
+        } else {
+            vec![]
+        };
 
         Ok(ServiceCard {
             space: base_args.0,
@@ -785,6 +811,8 @@ impl ServiceCard {
             service_type: spec.service_type.clone(),
             metadata: spec.metadata.clone(),
             deploy: spec.deploy.clone(),
+            service_config: spec.service.clone(),
+            tags,
         })
     }
 
@@ -871,6 +899,8 @@ impl Serialize for ServiceCard {
         state.serialize_field("service_type", &self.service_type)?;
         state.serialize_field("metadata", &self.metadata)?;
         state.serialize_field("deploy", &self.deploy)?;
+        state.serialize_field("service_config", &self.service_config)?;
+        state.serialize_field("tags", &self.tags)?;
         state.end()
     }
 }
@@ -898,6 +928,8 @@ impl<'de> Deserialize<'de> for ServiceCard {
             ServiceType,
             Metadata,
             Deploy,
+            ServiceConfig,
+            Tags,
         }
 
         struct ServiceCardVisitor;
@@ -928,6 +960,8 @@ impl<'de> Deserialize<'de> for ServiceCard {
                 let mut service_type = None;
                 let mut metadata = None;
                 let mut deploy = None;
+                let mut service_config = None;
+                let mut tags = None;
 
                 while let Some(key) = map.next_key()? {
                     match key {
@@ -978,6 +1012,12 @@ impl<'de> Deserialize<'de> for ServiceCard {
                         Field::Deploy => {
                             deploy = Some(map.next_value()?);
                         }
+                        Field::ServiceConfig => {
+                            service_config = Some(map.next_value()?);
+                        }
+                        Field::Tags => {
+                            tags = Some(map.next_value()?);
+                        }
                     }
                 }
 
@@ -998,6 +1038,8 @@ impl<'de> Deserialize<'de> for ServiceCard {
                 let service_type = service_type.unwrap_or(ServiceType::Api);
                 let metadata = metadata.unwrap_or(None);
                 let deploy = deploy.unwrap_or(None);
+                let service_config = service_config.unwrap_or(ServiceConfig::default());
+                let tags = tags.unwrap_or_default();
 
                 Ok(ServiceCard {
                     space,
@@ -1015,6 +1057,8 @@ impl<'de> Deserialize<'de> for ServiceCard {
                     service_type,
                     metadata,
                     deploy,
+                    service_config,
+                    tags,
                 })
             }
         }
@@ -1035,6 +1079,8 @@ impl<'de> Deserialize<'de> for ServiceCard {
             "service_type",
             "metadata",
             "deploy",
+            "service_config",
+            "tags",
         ];
         deserializer.deserialize_struct("ServiceCard", FIELDS, ServiceCardVisitor)
     }

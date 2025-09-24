@@ -182,6 +182,7 @@ def tf_test_model(tf_model, onnx: bool = False, data_type: DataType = DataType.N
         interface = TensorFlowModel(model=model, sample_data=data)
 
         metadata = interface.save(temp_path, save_kwargs)
+        assert metadata.version != "undefined"
 
         assert interface.model_type == ModelType.TensorFlow
         assert interface.data_type == data_type

@@ -4,8 +4,7 @@ use opsml_cards::{
 };
 
 use opsml_registry::{download::download_service, CardRegistries, CardRegistry};
-use opsml_service::ServiceType;
-use opsml_types::contracts::{CardList, CardRecord};
+use opsml_types::contracts::{CardList, CardRecord, ServiceType};
 use opsml_types::{cards::ComputeEnvironment, RegistryMode, RegistryType};
 use pyo3::prelude::*;
 

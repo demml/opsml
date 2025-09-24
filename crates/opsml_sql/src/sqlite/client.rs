@@ -105,7 +105,10 @@ mod tests {
     };
     use opsml_settings::config::DatabaseSettings;
     use opsml_types::contracts::evaluation::{EvaluationProvider, EvaluationType};
-    use opsml_types::contracts::{ArtifactKey, ArtifactQueryArgs, AuditEvent, SpaceNameEvent};
+    use opsml_types::contracts::{
+        ArtifactKey, ArtifactQueryArgs, AuditEvent, DeploymentConfig, McpCapability, McpConfig,
+        McpTransport, Resources, ServiceConfig, ServiceQueryArgs, ServiceType, SpaceNameEvent,
+    };
     use opsml_types::SqlType;
     use opsml_types::{
         cards::CardTable,
@@ -114,7 +117,8 @@ mod tests {
     };
     use opsml_utils::utils::get_utc_datetime;
     use semver::Version;
-    use std::env;
+    use sqlx::types::Json;
+    use std::{env, vec};
 
     const SPACE: &str = "space";
 
@@ -985,6 +989,83 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn test_sqlite_get_load_card_key_service() {
+        cleanup();
+
+        let config = DatabaseSettings {
+            connection_uri: get_connection_uri(),
+            max_connections: 1,
+            sql_type: SqlType::Sqlite,
+        };
+
+        let client = SqliteClient::new(&config).await.unwrap();
+        let service_card = ServiceCardRecord::default();
+        let card = ServerCard::Service(service_card.clone());
+
+        client
+            .card
+            .insert_card(&CardTable::Service, &card)
+            .await
+            .unwrap();
+        let encrypted_key: Vec<u8> = (0..32).collect();
+        let key = ArtifactKey {
+            uid: service_card.uid.clone(),
+            space: service_card.space.clone(),
+            registry_type: RegistryType::Service,
+            encrypted_key: encrypted_key.clone(),
+            storage_key: "opsml_registry".to_string(),
+        };
+
+        client.artifact.insert_artifact_key(&key).await.unwrap();
+
+        // test uid (testing to ensure it doesnt fail)
+        let _key = client
+            .card
+            .get_card_key_for_loading(
+                &CardTable::Service,
+                &CardQueryArgs {
+                    uid: Some(service_card.uid.clone()),
+                    limit: Some(1),
+                    ..Default::default()
+                },
+            )
+            .await
+            .unwrap();
+
+        // test args
+        let key = client
+            .card
+            .get_card_key_for_loading(
+                &CardTable::Service,
+                &CardQueryArgs {
+                    space: Some(service_card.space.clone()),
+                    name: Some(service_card.name.clone()),
+                    version: Some(service_card.version.to_string()),
+                    ..Default::default()
+                },
+            )
+            .await
+            .unwrap();
+
+        assert_eq!(key.uid, service_card.uid);
+        assert_eq!(key.encrypted_key, encrypted_key);
+
+        let _ = client
+            .artifact
+            .get_artifact_key_from_path(&key.storage_key, &RegistryType::Service.to_string())
+            .await
+            .unwrap()
+            .unwrap();
+
+        // delete
+        client
+            .artifact
+            .delete_artifact_key(&service_card.uid, &RegistryType::Service.to_string())
+            .await
+            .unwrap();
+    }
+
+    #[tokio::test]
     async fn test_sqlite_crud_space_record() {
         cleanup();
 
@@ -1164,5 +1245,130 @@ mod tests {
         let record = client.eval.get_evaluation_record(&uid).await.unwrap();
 
         assert_eq!(record.name, "test");
+    }
+
+    #[tokio::test]
+    async fn test_sqlite_recent_services() {
+        cleanup();
+
+        let config = DatabaseSettings {
+            connection_uri: get_connection_uri(),
+            max_connections: 1,
+            sql_type: SqlType::Sqlite,
+        };
+
+        let client = SqliteClient::new(&config).await.unwrap();
+
+        // create 1st service card
+        let card1 = ServiceCardRecord {
+            name: "Service0".to_string(),
+            space: SPACE.to_string(),
+            service_type: ServiceType::Mcp.to_string(),
+            tags: Json(vec!["tag1".to_string()]),
+            ..Default::default()
+        };
+        client
+            .card
+            .insert_card(&CardTable::Service, &ServerCard::Service(card1))
+            .await
+            .unwrap();
+
+        // create 2nd card
+        let card2 = ServiceCardRecord {
+            name: "Service1".to_string(),
+            space: SPACE.to_string(),
+            service_type: ServiceType::Api.to_string(),
+            ..Default::default()
+        };
+        client
+            .card
+            .insert_card(&CardTable::Service, &ServerCard::Service(card2))
+            .await
+            .unwrap();
+
+        // Create 3rd card, but new version
+        let mcp_config = McpConfig {
+            capabilities: vec![McpCapability::Tools],
+            transport: McpTransport::Http,
+        };
+        let deploy = DeploymentConfig {
+            environment: "dev".to_string(),
+            provider: Some("development".to_string()),
+            location: Some(vec!["local".to_string()]),
+            endpoints: vec!["http://localhost:8000".to_string()],
+            resources: Some(Resources {
+                cpu: 2,
+                memory: "4GB".to_string(),
+                storage: "10GB".to_string(),
+                gpu: None,
+            }),
+            links: None,
+        };
+        let card3 = ServiceCardRecord {
+            name: "Service0".to_string(),
+            space: SPACE.to_string(),
+            service_type: ServiceType::Mcp.to_string(),
+            tags: Json(vec!["tag1".to_string()]),
+            service_config: Json(ServiceConfig {
+                mcp: Some(mcp_config),
+                ..Default::default()
+            }),
+            deployment: Some(Json(vec![deploy])),
+            ..Default::default()
+        };
+        // wait 1 second to ensure different created_at timestamp
+        tokio::time::sleep(std::time::Duration::from_secs(1)).await;
+        client
+            .card
+            .insert_card(&CardTable::Service, &ServerCard::Service(card3))
+            .await
+            .unwrap();
+
+        let services = client
+            .card
+            .get_recent_services(&ServiceQueryArgs {
+                space: None,
+                name: None,
+                tags: None,
+                service_type: None,
+            })
+            .await
+            .unwrap();
+        assert_eq!(services.len(), 2);
+
+        // search by tag
+        let services = client
+            .card
+            .get_recent_services(&ServiceQueryArgs {
+                space: None,
+                name: None,
+                tags: Some(vec!["tag1".to_string()]),
+                service_type: None,
+            })
+            .await
+            .unwrap();
+        assert_eq!(services.len(), 1);
+
+        let services = client
+            .card
+            .get_recent_services(&ServiceQueryArgs {
+                space: None,
+                name: None,
+                tags: None,
+                service_type: Some(ServiceType::Mcp.to_string()),
+            })
+            .await
+            .unwrap();
+        assert_eq!(services.len(), 1);
+
+        // check that endpoint is populated
+        assert!(services[0].deployment.is_some());
+        let deployment = services[0].deployment.as_ref().unwrap();
+        assert_eq!(deployment.len(), 1);
+        assert_eq!(deployment[0].environment, "dev");
+        assert_eq!(deployment[0].endpoints.len(), 1);
+        assert_eq!(deployment[0].endpoints[0], "http://localhost:8000");
+
+        cleanup();
     }
 }

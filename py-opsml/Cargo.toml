@@ -18,6 +18,7 @@ opsml-interfaces = { workspace = true }
 opsml-registry = { workspace = true }
 opsml-evaluate = { workspace = true }
 opsml-experiment = { workspace = true }
+opsml-genai = { workspace = true }
 opsml-mocks = { workspace = true }
 opsml-semver = { workspace = true }
 opsml-server = { workspace = true, optional = true }

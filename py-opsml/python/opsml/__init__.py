@@ -8,8 +8,8 @@ from .opsml import (  # noqa: F401
     data,
     evaluate,
     experiment,
+    genai,
     get_opsml_version,
-    llm,
     logging,
     mock,
     model,
@@ -75,9 +75,9 @@ VersionType = types.VersionType
 
 # Potato Head
 PromptCard = card.PromptCard
-Prompt = llm.Prompt
-Message = llm.Message
-ModelSettings = llm.ModelSettings
+Prompt = genai.Prompt
+Message = genai.Message
+ModelSettings = genai.ModelSettings
 
 # Deck
 ServiceCard = card.ServiceCard

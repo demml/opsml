@@ -18,6 +18,7 @@ def test_catboost_regressor(
 
     assert interface.model_type == ModelType.Catboost
     metadata = interface.save(save_path, ModelSaveKwargs(save_onnx=True))
+    assert metadata.version != "undefined"
 
     interface.model = None
     assert interface.model is None

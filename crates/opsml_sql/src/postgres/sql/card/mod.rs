@@ -13,7 +13,7 @@ use crate::traits::CardLogicTrait;
 use async_trait::async_trait;
 use opsml_semver::VersionValidator;
 use opsml_types::{
-    contracts::{ArtifactKey, CardQueryArgs},
+    contracts::{ArtifactKey, CardQueryArgs, ServiceQueryArgs},
     RegistryType,
 };
 use semver::Version;
@@ -176,6 +176,7 @@ impl CardLogicTrait for CardLogicPostgresClient {
                     .bind(query_args.space.as_ref())
                     .bind(query_args.name.as_ref())
                     .bind(query_args.max_date.as_ref())
+                    .bind(query_args.service_type.as_ref())
                     .bind(query_args.limit.unwrap_or(50))
                     .fetch_all(&self.pool)
                     .await?;
@@ -356,6 +357,11 @@ impl CardLogicTrait for CardLogicPostgresClient {
                         .bind(&record.cards)
                         .bind(&record.username)
                         .bind(&record.opsml_version)
+                        .bind(&record.service_type)
+                        .bind(&record.metadata)
+                        .bind(&record.deployment)
+                        .bind(&record.service_config)
+                        .bind(&record.tags)
                         .execute(&self.pool)
                         .await?;
                     Ok(())
@@ -537,6 +543,11 @@ impl CardLogicTrait for CardLogicPostgresClient {
                         .bind(&record.cards)
                         .bind(&record.username)
                         .bind(&record.opsml_version)
+                        .bind(&record.service_type)
+                        .bind(&record.metadata)
+                        .bind(&record.deployment)
+                        .bind(&record.service_config)
+                        .bind(&record.tags)
                         .bind(&record.uid)
                         .execute(&self.pool)
                         .await?;
@@ -671,11 +682,17 @@ impl CardLogicTrait for CardLogicPostgresClient {
         let query = PostgresQueryHelper::get_load_card_query(table, query_args)?;
         debug!("Executing query: {}", query);
 
-        let key: (String, String, String, Vec<u8>, String) = sqlx::query_as(&query)
+        let mut bound = sqlx::query_as(&query)
             .bind(query_args.uid.as_ref())
             .bind(query_args.space.as_ref())
             .bind(query_args.name.as_ref())
-            .bind(query_args.max_date.as_ref())
+            .bind(query_args.max_date.as_ref());
+
+        if let Some(service_type) = &query_args.service_type {
+            bound = bound.bind(service_type);
+        }
+
+        let key: (String, String, String, Vec<u8>, String) = bound
             .bind(query_args.limit.unwrap_or(1))
             .fetch_one(&self.pool)
             .await?;
@@ -687,5 +704,21 @@ impl CardLogicTrait for CardLogicPostgresClient {
             encrypted_key: key.3,
             storage_key: key.4,
         })
+    }
+
+    async fn get_recent_services(
+        &self,
+        query_args: &ServiceQueryArgs,
+    ) -> Result<Vec<ServiceCardRecord>, SqlError> {
+        let query = PostgresQueryHelper::get_recent_services_query(query_args);
+
+        let records: Vec<ServiceCardRecord> = sqlx::query_as(&query)
+            .bind(query_args.space.as_ref())
+            .bind(query_args.name.as_ref())
+            .bind(query_args.service_type.as_ref())
+            .fetch_all(&self.pool)
+            .await?;
+
+        Ok(records)
     }
 }

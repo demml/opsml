@@ -115,7 +115,12 @@ pub async fn insert_card_into_db(
                 version,
                 client_card.cards,
                 client_card.opsml_version,
+                client_card.service_type,
+                client_card.metadata,
+                client_card.deployment,
+                client_card.service_config,
                 client_card.username,
+                client_card.tags,
             );
             ServerCard::Service(server_card)
         }

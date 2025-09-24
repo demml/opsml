@@ -8,6 +8,7 @@ use crate::core::files::utils::{
 };
 use crate::core::state::AppState;
 use anyhow::{Context, Result};
+use axum::extract::OriginalUri;
 use axum::{
     extract::{Query, State},
     http::StatusCode,
@@ -23,6 +24,7 @@ use opsml_sql::schemas::*;
 use opsml_sql::traits::*;
 use opsml_types::{cards::*, contracts::*};
 use opsml_types::{SaveName, Suffix};
+use serde_qs;
 
 use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::sync::Arc;
@@ -59,8 +61,8 @@ pub async fn get_registry_spaces(
         .get_unique_space_names(&table)
         .await
         .map_err(|e| {
-            error!("Failed to get unique space names: {e}");
-            internal_server_error(e, "Failed to get unique space names")
+            error!("Failed to get registry spaces: {e}");
+            internal_server_error(e, "Failed to get registry spaces")
         })?;
 
     Ok(Json(CardSpaceResponse { spaces }))
@@ -165,8 +167,8 @@ pub async fn get_registry_stats(
         )
         .await
         .map_err(|e| {
-            error!("Failed to get unique space names: {e}");
-            internal_server_error(e, "Failed to get unique space names")
+            error!("Failed to get registry stats: {e}");
+            internal_server_error(e, "Failed to get registry stats")
         })?;
 
     Ok(Json(RegistryStatsResponse { stats }))
@@ -191,8 +193,8 @@ pub async fn get_page(
         )
         .await
         .map_err(|e| {
-            error!("Failed to get unique space names: {e}");
-            internal_server_error(e, "Failed to get unique space names")
+            error!("Failed to get page: {e}");
+            internal_server_error(e, "Failed to get page")
         })?;
     Ok(Json(QueryPageResponse { summaries }))
 }
@@ -213,8 +215,8 @@ pub async fn get_version_page(
         )
         .await
         .map_err(|e| {
-            error!("Failed to get unique space names: {e}");
-            internal_server_error(e, "Failed to get unique space names")
+            error!("Failed to get version page: {e}");
+            internal_server_error(e, "Failed to get version page")
         })?;
 
     Ok(Json(VersionPageResponse { summaries }))
@@ -222,8 +224,22 @@ pub async fn get_version_page(
 
 pub async fn list_cards(
     State(state): State<Arc<AppState>>,
-    Query(params): Query<CardQueryArgs>,
+    // CardQueryArgs contains Vec<String> for tags, which serde_qs can parse correctly
+    OriginalUri(uri): OriginalUri,
 ) -> Result<Response, (StatusCode, Json<OpsmlServerError>)> {
+    let params: CardQueryArgs = match uri.query() {
+        Some(query) => serde_qs::from_str(query).map_err(|e| {
+            error!("Failed to parse query string: {e}");
+            internal_server_error(e, "Failed to parse query string")
+        })?,
+        None => {
+            return Err(internal_server_error(
+                "No query string found",
+                "No query string found",
+            ));
+        }
+    };
+
     debug!(
         "Listing cards for registry: {:?} with params: {:?}",
         &params.registry_type, &params
@@ -236,8 +252,8 @@ pub async fn list_cards(
         .query_cards(&table, &params)
         .await
         .map_err(|e| {
-            error!("Failed to get unique space names: {e}");
-            internal_server_error(e, "Failed to get unique space names")
+            error!("Failed to list cards: {e}");
+            internal_server_error(e, "Failed to list cards")
         })?;
 
     // convert to Cards struct
@@ -490,8 +506,8 @@ pub async fn delete_card(
         .query_cards(&table, &query_params)
         .await
         .map_err(|e| {
-            error!("Failed to get unique space names: {e}");
-            internal_server_error(e, "Failed to get unique space names")
+            error!("Failed to delete cards: {e}");
+            internal_server_error(e, "Failed to delete cards")
         })?;
 
     // If no cards remain in the space, delete the space name record

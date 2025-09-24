@@ -3,7 +3,7 @@ use crate::utils::add_version_bounds;
 use crate::error::SqlError;
 use opsml_types::{
     cards::CardTable,
-    contracts::{ArtifactQueryArgs, CardQueryArgs},
+    contracts::{ArtifactQueryArgs, CardQueryArgs, ServiceQueryArgs},
 };
 use opsml_utils::utils::is_valid_uuidv7;
 
@@ -336,6 +336,10 @@ impl MySqlQueryHelper {
         "
         );
 
+        if table == &CardTable::Service {
+            query.push_str(" AND (? IS NULL OR service_type = ?)");
+        }
+
         // check for uid. If uid is present, we only return that card
         if query_args.uid.is_some() {
             // validate uid
@@ -590,5 +594,41 @@ impl MySqlQueryHelper {
 
     pub fn get_evaluation_record_query() -> String {
         GET_EVALUATION_RECORD_SQL.to_string()
+    }
+
+    pub fn get_recent_services_query(query_args: &ServiceQueryArgs) -> String {
+        let mut where_clause = String::from(
+            "
+        WHERE 1=1
+        AND (? IS NULL OR space = ?)
+        AND (? IS NULL OR name = ?)
+        AND (? IS NULL OR service_type = ?)
+    ",
+        );
+
+        if let Some(tags) = &query_args.tags {
+            for tag in tags {
+                where_clause
+                    .push_str(format!(" AND JSON_CONTAINS(tags, '\"{tag}\"', '$')").as_str());
+            }
+        }
+
+        let query = format!(
+            "
+        SELECT *
+        FROM (
+            SELECT *,
+                ROW_NUMBER() OVER (
+                    PARTITION BY space, name
+                    ORDER BY created_at DESC
+                ) AS rn
+            FROM opsml_service_registry
+            {where_clause}
+        ) recent_services
+        WHERE rn = 1;
+        "
+        );
+
+        query
     }
 }

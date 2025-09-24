@@ -17,7 +17,7 @@ from typing import (
 
 from ..data import DataInterface, DataLoadKwargs, DataSaveKwargs, DataType
 from ..experiment import EvalMetrics, Metrics, Parameters
-from ..llm import Prompt, Workflow
+from ..genai import Prompt, Workflow
 from ..model import (
     DriftProfileMap,
     FeatureSchema,
