@@ -7,6 +7,7 @@ use pyo3::prelude::*;
 use tracing::error;
 
 #[pyfunction]
+#[pyo3(signature = (space=None, name=None, tags=None))]
 pub fn list_mcp_servers(
     space: Option<String>,
     name: Option<String>,
