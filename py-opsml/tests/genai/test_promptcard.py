@@ -7,7 +7,7 @@ from opsml import (  # type: ignore
 from opsml.types import DriftArgs
 from opsml.scouter.drift import LLMDriftConfig, LLMDriftMetric, LLMDriftProfile
 from opsml.scouter.alert import AlertThreshold
-from opsml.llm import Score, Agent, Task, Workflow
+from opsml.genai import Score, Agent, Task, Workflow
 from opsml.mock import OpsmlTestServer, LLMTestServer
 import pytest
 from tests.conftest import WINDOWS_EXCLUDE

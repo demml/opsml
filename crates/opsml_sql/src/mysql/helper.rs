@@ -333,9 +333,12 @@ impl MySqlQueryHelper {
         AND (? IS NULL OR space = ?)
         AND (? IS NULL OR name = ?)
         AND (? IS NULL OR created_at <= STR_TO_DATE(?, '%Y-%m-%d'))
-        AND (? IS NULL OR service_type = ?)
         "
         );
+
+        if table == &CardTable::Service {
+            query.push_str(" AND (? IS NULL OR service_type = ?)");
+        }
 
         // check for uid. If uid is present, we only return that card
         if query_args.uid.is_some() {

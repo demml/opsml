@@ -7,6 +7,86 @@ from typing import Any, Dict, List, Literal, Optional, Sequence
 from .google import GeminiSettings
 from .openai import OpenAIChatSettings
 
+class McpCapability:
+    Resources: "McpCapability"
+    Tools: "McpCapability"
+    Prompts: "McpCapability"
+
+class McpTransport:
+    Http: "McpTransport"
+    Stdio: "McpTransport"
+
+class McpConfig:
+    @property
+    def transport(self) -> McpTransport:
+        """The transport method used by the MCP server."""
+
+    @property
+    def capabilities(self) -> List[McpCapability]:
+        """The capabilities of the MCP server."""
+
+class McpServer:
+    @property
+    def name(self) -> str:
+        """The name of the MCP server."""
+
+    @property
+    def space(self) -> str:
+        """The space of the MCP server."""
+
+    @property
+    def version(self) -> str:
+        """The version of the MCP server."""
+
+    @property
+    def environment(self) -> str:
+        """The environment of the MCP server."""
+
+    @property
+    def endpoints(self) -> List[str]:
+        """The endpoints of the MCP server."""
+
+    @property
+    def config(self) -> McpConfig:
+        """The configuration of the MCP server."""
+
+    @property
+    def description(self) -> Optional[str]:
+        """The description of the MCP server."""
+
+    def __str__(self) -> str:
+        """String representation of the MCP server."""
+
+class McpServers:
+    def __getitem__(self, index: int) -> McpServer:
+        """Get the MCP server at the specified index."""
+
+    def __iter__(self):
+        """Iterator for the MCP servers."""
+
+    def __len__(self) -> int:
+        """Get the number of MCP servers."""
+
+def list_mcp_servers(
+    space: Optional[str] = None,
+    name: Optional[str] = None,
+    tags: Optional[List[str]] = None,
+) -> McpServers:
+    """List all available MCP servers.
+
+    Args:
+        space (Optional[str]):
+            The space to filter the MCP servers by.
+        name (Optional[str]):
+            The name to filter the MCP servers by.
+        tags (Optional[List[str]]):
+            The tags to filter the MCP servers by.
+
+    Returns:
+        McpServers:
+            A list of MCP servers.
+    """
+
 class PromptTokenDetails:
     """Details about the prompt tokens used in a request."""
 

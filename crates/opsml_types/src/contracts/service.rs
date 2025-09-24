@@ -65,11 +65,11 @@ pub struct Resources {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct DeploymentConfig {
     pub environment: String,
-    pub provider: String,
-    pub location: Vec<String>,
+    pub provider: Option<String>,
+    pub location: Option<Vec<String>>,
     pub endpoints: Vec<String>,
-    pub resources: Resources,
-    pub links: HashMap<String, String>,
+    pub resources: Option<Resources>,
+    pub links: Option<HashMap<String, String>>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]

@@ -34,8 +34,8 @@ pub async fn list_mcp_servers(
         .get_recent_services(&params)
         .await
         .map_err(|e| {
-            error!("Failed to get unique space names: {e}");
-            internal_server_error(e, "Failed to get unique space names")
+            error!("Failed to list mcp servers: {e}");
+            internal_server_error(e, "Failed to list mcp servers")
         })?;
 
     let audit_context = AuditContext {

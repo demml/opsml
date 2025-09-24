@@ -118,7 +118,6 @@ mod tests {
     use opsml_utils::utils::get_utc_datetime;
     use semver::Version;
     use sqlx::types::Json;
-    use std::collections::HashMap;
     use std::{env, vec};
 
     const SPACE: &str = "space";
@@ -1217,16 +1216,16 @@ mod tests {
         };
         let deploy = DeploymentConfig {
             environment: "dev".to_string(),
-            provider: "development".to_string(),
-            location: vec!["local".to_string()],
+            provider: Some("development".to_string()),
+            location: Some(vec!["local".to_string()]),
             endpoints: vec!["http://localhost:8000".to_string()],
-            resources: Resources {
+            resources: Some(Resources {
                 cpu: 2,
                 memory: "4GB".to_string(),
                 storage: "10GB".to_string(),
                 gpu: None,
-            },
-            links: HashMap::new(),
+            }),
+            links: None,
         };
         let card3 = ServiceCardRecord {
             name: "Service0".to_string(),

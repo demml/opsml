@@ -1,0 +1,18 @@
+# Service identifier - unique name for this service
+name: "mcp-service1"
+space: "opsml"
+type: Mcp
+
+metadata:
+  description: "A recommendation service using MCP"
+  language: "python"
+  tags: ["service"]
+
+service:
+  mcp:
+    capabilities: ["Resources", "Tools", "Prompts"]
+    transport: "Http"
+
+deploy:
+  - environment: "dev_client"
+    endpoints: ["https://api.example.com"]

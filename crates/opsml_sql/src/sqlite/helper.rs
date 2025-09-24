@@ -2,6 +2,7 @@ use crate::error::SqlError;
 
 /// this file contains helper logic for generating sql queries across different databases
 use crate::utils::add_version_bounds;
+
 use opsml_types::{
     cards::CardTable,
     contracts::{ArtifactQueryArgs, CardQueryArgs, ServiceQueryArgs},
@@ -327,6 +328,8 @@ impl SqliteQueryHelper {
         table: &CardTable,
         query_args: &CardQueryArgs,
     ) -> Result<String, SqlError> {
+        let mut binding_index = 5;
+
         let mut query = format!(
             "
         SELECT * FROM {table}
@@ -335,9 +338,14 @@ impl SqliteQueryHelper {
         AND (?2 IS NULL OR space = ?2)
         AND (?3 IS NULL OR name = ?3)
         AND (?4 IS NULL OR created_at <= DATETIME(?4))
-        AND (?5 IS NULL OR service_type = ?5)
         "
         );
+
+        // if card table is Service, we can filter by service_type
+        if let CardTable::Service = table {
+            query.push_str(" AND (?5 IS NULL OR service_type = ?5) ");
+            binding_index += 1;
+        }
 
         // check for uid. If uid is present, we only return that card
         if query_args.uid.is_some() {
@@ -370,7 +378,7 @@ impl SqliteQueryHelper {
             }
         }
 
-        query.push_str(" LIMIT ?5");
+        query.push_str(format!(" LIMIT ?{binding_index}").as_str());
 
         Ok(query)
     }

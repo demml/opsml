@@ -15,9 +15,7 @@ from ..scouter.drift import (
 )
 from ..types import DriftArgs, DriftProfileMap, DriftProfileUri
 
-DriftProfileType = Dict[
-    str, Union[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile]
-]
+DriftProfileType = Dict[str, Union[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile]]
 
 class ProcessorType:
     Preprocessor: "ProcessorType"

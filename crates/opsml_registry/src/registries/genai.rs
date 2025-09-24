@@ -74,10 +74,7 @@ impl OpsmlGenAIRegistry {
         }
     }
 
-    pub async fn list_mcp_servers(
-        &self,
-        args: &ServiceQueryArgs,
-    ) -> Result<McpServers, RegistryError> {
+    pub fn list_mcp_servers(&self, args: &ServiceQueryArgs) -> Result<McpServers, RegistryError> {
         match self {
             Self::Client(client_registry) => client_registry.list_mcp_servers(args),
             #[cfg(feature = "server")]

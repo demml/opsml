@@ -24,9 +24,9 @@ from .data import TorchData as TorchData
 from .experiment import get_experiment_metrics as get_experiment_metrics
 from .experiment import get_experiment_parameters as get_experiment_parameters
 from .experiment import start_experiment as start_experiment
-from .llm import Message as Message
-from .llm import ModelSettings as ModelSettings
-from .llm import Prompt as Prompt
+from .genai import Message as Message
+from .genai import ModelSettings as ModelSettings
+from .genai import Prompt as Prompt
 from .logging import LoggingConfig as LoggingConfig
 from .logging import LogLevel as LogLevel
 from .logging import RustyLogger as RustyLogger

@@ -4,7 +4,7 @@ pub mod cli;
 pub mod data;
 pub mod evaluate;
 pub mod experiment;
-pub mod llm;
+pub mod genai;
 pub mod logging;
 pub mod mocks;
 pub mod model;
@@ -23,7 +23,7 @@ pub fn get_opsml_version() -> PyResult<String> {
 fn opsml(m: &Bound<'_, PyModule>) -> PyResult<()> {
     // integrations
     m.add_wrapped(wrap_pymodule!(scouter::scouter))?;
-    m.add_wrapped(wrap_pymodule!(llm::llm))?;
+    m.add_wrapped(wrap_pymodule!(genai::genai))?;
 
     m.add_wrapped(wrap_pymodule!(data::data))?;
     m.add_wrapped(wrap_pymodule!(model::model))?;
