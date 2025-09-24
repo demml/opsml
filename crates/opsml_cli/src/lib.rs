@@ -8,6 +8,7 @@ pub use actions::{
     demo::run_python_code,
     generate_key,
     lock::install_service,
+    register::register_service,
     ui::{start_ui, stop_ui},
     update_drift_profile_status,
     validate::validate_project,
@@ -88,9 +89,9 @@ pub fn run_cli(args: Vec<String>) -> anyhow::Result<()> {
             Ok(())
         }
         Some(Commands::Lock(args)) => {
-            println!("Locking project...");
+            println!("Locking service...");
             // need to clone because lock_service is a pyo3-decorated function that takes ownership of the path
-            lock_service(args.path.clone()).context("Failed to lock project")?;
+            lock_service(args.path.clone()).context("Failed to lock service")?;
             Ok(())
         }
 
@@ -133,6 +134,12 @@ pub fn run_cli(args: Vec<String>) -> anyhow::Result<()> {
         Some(Commands::Validate) => {
             println!("Validating project...");
             validate_project(None, None).context("Failed to validate project")?;
+            Ok(())
+        }
+        Some(Commands::Register(args)) => {
+            println!("Registering service...");
+            // need to clone because register_service is a pyo3-decorated function that takes ownership of the path
+            register_service(args.path.clone()).context("Failed to register service")?;
             Ok(())
         }
 

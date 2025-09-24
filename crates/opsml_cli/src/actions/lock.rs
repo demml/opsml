@@ -324,7 +324,7 @@ fn handle_existing_service_lock(
 /// # Returns
 /// * `Result<LockArtifact, CliError>` - Lock artifact or error
 #[instrument(skip_all)]
-fn lock_service_card(
+pub fn lock_service_card(
     spec: &ServiceSpec,
     space: &str,
     name: &str,
