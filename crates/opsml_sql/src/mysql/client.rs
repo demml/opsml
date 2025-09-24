@@ -975,6 +975,75 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn test_mysql_get_load_card_key_service() {
+        let client = db_client().await;
+        let service_card = ServiceCardRecord::default();
+        let card = ServerCard::Service(service_card.clone());
+
+        client
+            .card
+            .insert_card(&CardTable::Service, &card)
+            .await
+            .unwrap();
+        let encrypted_key: Vec<u8> = (0..32).collect();
+        let key = ArtifactKey {
+            uid: service_card.uid.clone(),
+            space: "repo1".to_string(),
+            registry_type: RegistryType::Service,
+            encrypted_key: encrypted_key.clone(),
+            storage_key: "opsml_registry".to_string(),
+        };
+
+        client.artifact.insert_artifact_key(&key).await.unwrap();
+
+        // test uid (testing to ensure it doesnt fail)
+        let _key = client
+            .card
+            .get_card_key_for_loading(
+                &CardTable::Service,
+                &CardQueryArgs {
+                    uid: Some(service_card.uid.clone()),
+                    limit: Some(1),
+                    ..Default::default()
+                },
+            )
+            .await
+            .unwrap();
+
+        // test args
+        let key = client
+            .card
+            .get_card_key_for_loading(
+                &CardTable::Service,
+                &CardQueryArgs {
+                    space: Some(service_card.space.clone()),
+                    name: Some(service_card.name.clone()),
+                    version: Some(service_card.version.to_string()),
+                    ..Default::default()
+                },
+            )
+            .await
+            .unwrap();
+
+        let _ = client
+            .artifact
+            .get_artifact_key_from_path(&key.storage_key, &RegistryType::Service.to_string())
+            .await
+            .unwrap()
+            .unwrap();
+
+        assert_eq!(key.uid, service_card.uid);
+        assert_eq!(key.encrypted_key, encrypted_key);
+
+        // delete
+        client
+            .artifact
+            .delete_artifact_key(&service_card.uid, &RegistryType::Service.to_string())
+            .await
+            .unwrap();
+    }
+
+    #[tokio::test]
     async fn test_mysql_crud_space_record() {
         let client = db_client().await;
 

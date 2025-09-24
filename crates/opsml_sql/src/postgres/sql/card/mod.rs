@@ -682,11 +682,17 @@ impl CardLogicTrait for CardLogicPostgresClient {
         let query = PostgresQueryHelper::get_load_card_query(table, query_args)?;
         debug!("Executing query: {}", query);
 
-        let key: (String, String, String, Vec<u8>, String) = sqlx::query_as(&query)
+        let mut bound = sqlx::query_as(&query)
             .bind(query_args.uid.as_ref())
             .bind(query_args.space.as_ref())
             .bind(query_args.name.as_ref())
-            .bind(query_args.max_date.as_ref())
+            .bind(query_args.max_date.as_ref());
+
+        if let Some(service_type) = &query_args.service_type {
+            bound = bound.bind(service_type);
+        }
+
+        let key: (String, String, String, Vec<u8>, String) = bound
             .bind(query_args.limit.unwrap_or(1))
             .fetch_one(&self.pool)
             .await?;
