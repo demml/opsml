@@ -281,7 +281,6 @@ pub struct CardQueryArgs {
     pub tags: Option<Vec<String>>,
     pub limit: Option<i32>,
     pub sort_by_timestamp: Option<bool>,
-    pub service_type: Option<String>,
     pub registry_type: RegistryType,
 }
 
