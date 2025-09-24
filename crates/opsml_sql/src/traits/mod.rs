@@ -14,7 +14,7 @@ use opsml_types::{
     RegistryType,
 };
 
-use opsml_types::contracts::CardQueryArgs;
+use opsml_types::contracts::{CardQueryArgs, ServiceType};
 
 #[async_trait]
 pub trait CardLogicTrait {
@@ -39,6 +39,13 @@ pub trait CardLogicTrait {
         search_term: Option<&str>,
         space: Option<&str>,
     ) -> Result<QueryStats, SqlError>;
+    async fn query_service_stats(
+        &self,
+        table: &CardTable,
+        search_term: Option<&str>,
+        space: Option<&str>,
+        service_type: ServiceType,
+    ) -> Result<QueryStats, SqlError>;
     async fn query_page(
         &self,
         sort_by: &str,
@@ -47,6 +54,17 @@ pub trait CardLogicTrait {
         space: Option<&str>,
         table: &CardTable,
     ) -> Result<Vec<CardSummary>, SqlError>;
+
+    async fn query_service_page(
+        &self,
+        sort_by: &str,
+        page: i32,
+        search_term: Option<&str>,
+        space: Option<&str>,
+        table: &CardTable,
+        service_type: ServiceType,
+    ) -> Result<Vec<CardSummary>, SqlError>;
+
     async fn version_page(
         &self,
         page: i32,
