@@ -42,12 +42,14 @@ const INSERT_MODELCARD_SQL: &str = include_str!("sql/card/insert_modelcard.sql")
 const INSERT_EXPERIMENTCARD_SQL: &str = include_str!("sql/card/insert_experimentcard.sql");
 const INSERT_AUDITCARD_SQL: &str = include_str!("sql/card/insert_auditcard.sql");
 const INSERT_SERVICECARD_SQL: &str = include_str!("sql/card/insert_servicecard.sql");
+const INSERT_MCP_SERVICECARD_SQL: &str = include_str!("sql/card/insert_mcp_servicecard.sql");
 const UPDATE_DATACARD_SQL: &str = include_str!("sql/card/update_datacard.sql");
 const UPDATE_PROMPTCARD_SQL: &str = include_str!("sql/card/update_promptcard.sql");
 const UPDATE_MODELCARD_SQL: &str = include_str!("sql/card/update_modelcard.sql");
 const UPDATE_EXPERIMENTCARD_SQL: &str = include_str!("sql/card/update_experimentcard.sql");
 const UPDATE_AUDITCARD_SQL: &str = include_str!("sql/card/update_auditcard.sql");
 const UPDATE_SERVICECARD_SQL: &str = include_str!("sql/card/update_servicecard.sql");
+const UPDATE_MCP_SERVICECARD_SQL: &str = include_str!("sql/card/update_mcp_servicecard.sql");
 
 // evaluation
 const INSERT_EVALUATION_SQL: &str = include_str!("sql/evaluation/insert_evaluation.sql");
@@ -328,8 +330,6 @@ impl SqliteQueryHelper {
         table: &CardTable,
         query_args: &CardQueryArgs,
     ) -> Result<String, SqlError> {
-        let mut binding_index = 5;
-
         let mut query = format!(
             "
         SELECT * FROM {table}
@@ -340,12 +340,6 @@ impl SqliteQueryHelper {
         AND (?4 IS NULL OR created_at <= DATETIME(?4))
         "
         );
-
-        // if card table is Service, we can filter by service_type
-        if let CardTable::Service = table {
-            query.push_str(" AND (?5 IS NULL OR service_type = ?5) ");
-            binding_index += 1;
-        }
 
         // check for uid. If uid is present, we only return that card
         if query_args.uid.is_some() {
@@ -378,7 +372,7 @@ impl SqliteQueryHelper {
             }
         }
 
-        query.push_str(format!(" LIMIT ?{binding_index}").as_str());
+        query.push_str(format!(" LIMIT ?5").as_str());
 
         Ok(query)
     }
@@ -493,12 +487,20 @@ impl SqliteQueryHelper {
         INSERT_AUDITCARD_SQL.to_string()
     }
 
-    pub fn get_servicecard_insert_query() -> String {
-        INSERT_SERVICECARD_SQL.to_string()
+    pub fn get_servicecard_insert_query(table: &CardTable) -> String {
+        match table {
+            CardTable::Service => INSERT_SERVICECARD_SQL.to_string(),
+            CardTable::Mcp => INSERT_MCP_SERVICECARD_SQL.to_string(),
+            _ => INSERT_SERVICECARD_SQL.to_string(),
+        }
     }
 
-    pub fn get_servicecard_update_query() -> String {
-        UPDATE_SERVICECARD_SQL.to_string()
+    pub fn get_servicecard_update_query(table: &CardTable) -> String {
+        match table {
+            CardTable::Service => UPDATE_SERVICECARD_SQL.to_string(),
+            CardTable::Mcp => UPDATE_MCP_SERVICECARD_SQL.to_string(),
+            _ => UPDATE_SERVICECARD_SQL.to_string(),
+        }
     }
 
     pub fn get_promptcard_update_query() -> String {
