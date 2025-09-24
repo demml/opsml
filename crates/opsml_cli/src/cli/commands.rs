@@ -1,4 +1,6 @@
-use crate::cli::arg::{DownloadCard, KeyArgs, ListCards, LockArgs, ScouterArgs, UiArgs};
+use crate::cli::arg::{
+    DownloadCard, KeyArgs, ListCards, LockArgs, RegisterArgs, ScouterArgs, UiArgs,
+};
 use clap::builder::styling::{AnsiColor, Effects};
 use clap::builder::Styles;
 use clap::command;
@@ -132,6 +134,11 @@ pub enum Commands {
 
     /// Validate the pyproject.toml file opsml tool configuration
     Validate,
+
+    /// Register a service card from an opsmlspec.yml file without generating a lock file.
+    /// This is useful for when you want to register a service without the need to download
+    /// any service artifacts in a subsequent step.
+    Register(RegisterArgs),
 }
 
 #[derive(Subcommand)]

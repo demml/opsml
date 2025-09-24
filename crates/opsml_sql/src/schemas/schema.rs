@@ -940,6 +940,7 @@ impl ServiceCardRecord {
             space: self.space.clone(),
             name: self.name.clone(),
             version: self.version.clone(),
+            tags: self.tags.0.clone(),
             environment,
             endpoints,
             config,

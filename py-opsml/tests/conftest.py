@@ -33,7 +33,7 @@ EXCLUDE = bool(DARWIN_EXCLUDE or WINDOWS_EXCLUDE)
 
 
 # Sets up logging for tests
-RustyLogger.setup_logging(LoggingConfig(log_level=LogLevel.Info))
+RustyLogger.setup_logging(LoggingConfig(log_level=LogLevel.Debug))
 
 
 class MockInterface(BaseModel):

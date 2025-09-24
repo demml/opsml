@@ -8,6 +8,7 @@ use crate::core::files::utils::{
 };
 use crate::core::state::AppState;
 use anyhow::{Context, Result};
+use axum::extract::OriginalUri;
 use axum::{
     extract::{Query, State},
     http::StatusCode,
@@ -23,6 +24,7 @@ use opsml_sql::schemas::*;
 use opsml_sql::traits::*;
 use opsml_types::{cards::*, contracts::*};
 use opsml_types::{SaveName, Suffix};
+use serde_qs;
 
 use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::sync::Arc;
@@ -222,8 +224,22 @@ pub async fn get_version_page(
 
 pub async fn list_cards(
     State(state): State<Arc<AppState>>,
-    Query(params): Query<CardQueryArgs>,
+    // CardQueryArgs contains Vec<String> for tags, which serde_qs can parse correctly
+    OriginalUri(uri): OriginalUri,
 ) -> Result<Response, (StatusCode, Json<OpsmlServerError>)> {
+    let params: CardQueryArgs = match uri.query() {
+        Some(query) => serde_qs::from_str(query).map_err(|e| {
+            error!("Failed to parse query string: {e}");
+            internal_server_error(e, "Failed to parse query string")
+        })?,
+        None => {
+            return Err(internal_server_error(
+                "No query string found",
+                "No query string found",
+            ));
+        }
+    };
+
     debug!(
         "Listing cards for registry: {:?} with params: {:?}",
         &params.registry_type, &params

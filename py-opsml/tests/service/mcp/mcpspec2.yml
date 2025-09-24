@@ -6,7 +6,7 @@ type: Mcp
 metadata:
   description: "A recommendation service using MCP"
   language: "python"
-  tags: ["service"]
+  tags: ["blah"]
 
 service:
   mcp:

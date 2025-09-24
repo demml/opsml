@@ -19,6 +19,13 @@ pub trait IntoQueryArgs {
 }
 
 #[derive(Args)]
+pub struct RegisterArgs {
+    /// Path to the spec file. Defaults to `{current_dir}/opsmlspec.yml`
+    #[arg(long = "path", default_value = default_spec_path())]
+    pub path: PathBuf,
+}
+
+#[derive(Args)]
 pub struct LockArgs {
     /// Path to the spec file. Defaults to `{current_dir}/opsmlspec.yml`
     #[arg(long = "path", default_value = default_spec_path())]

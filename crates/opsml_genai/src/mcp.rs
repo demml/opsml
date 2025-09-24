@@ -15,14 +15,15 @@ pub fn list_mcp_servers(
 ) -> Result<McpServers, LLMError> {
     // need to a separate method to get the latest MCP services
     let registry = OpsmlGenAIRegistry::new()?;
+    let args = ServiceQueryArgs {
+        space: space.clone(),
+        name: name.clone(),
+        tags: tags.clone(),
+        service_type: Some(ServiceType::Mcp.to_string()),
+    };
 
     let servers = registry
-        .list_mcp_servers(&ServiceQueryArgs {
-            space,
-            name,
-            tags,
-            service_type: Some(ServiceType::Mcp.to_string()),
-        })
+        .list_mcp_servers(&args)
         .inspect_err(|e| error!("Failed to list MCP servers: {e}"))?;
 
     Ok(servers)
