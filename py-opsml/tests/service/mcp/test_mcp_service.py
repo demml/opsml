@@ -18,13 +18,11 @@ def test_mcp_registration():
         time.sleep(1)  # ensure timestamp difference
         register_service(ASSETS_DIRECTORY / "mcpspec1.yml")
 
-        # servers = list_mcp_servers()
-        # assert len(servers) == 2
-        #
-        # print(servers)
-        #
-        # servers = list_mcp_servers(name="mcp-service1")
-        # assert servers[0].version == "0.2.0"
+        servers = list_mcp_servers()
+        assert len(servers) == 2
+
+        servers = list_mcp_servers(name="mcp-service1")
+        assert servers[0].version == "0.2.0"
 
         # list servers by tag
         servers = list_mcp_servers(tags=["blah"])
