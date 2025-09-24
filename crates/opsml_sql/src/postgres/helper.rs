@@ -364,6 +364,7 @@ impl PostgresQueryHelper {
         table: &CardTable,
         query_args: &CardQueryArgs,
     ) -> Result<String, SqlError> {
+        let mut binding_index = 5; // Start from 2 because $1 is used for space
         if query_args.uid.is_some() {
             is_valid_uuidv7(query_args.uid.as_ref().unwrap())?;
             return Ok(format!("SELECT * FROM {table} WHERE uid = $1 LIMIT 1"));
@@ -392,6 +393,7 @@ impl PostgresQueryHelper {
 
         if query_args.service_type.is_some() {
             query.push_str(" AND service_type = $5");
+            binding_index += 1;
         }
 
         // Add version bounds - will use the version part of the index
@@ -415,7 +417,7 @@ impl PostgresQueryHelper {
             query.push_str(" ORDER BY major DESC, minor DESC, patch DESC");
         }
 
-        query.push_str(" LIMIT $6");
+        query.push_str(&format!(" LIMIT ${binding_index}"));
 
         Ok(query)
     }

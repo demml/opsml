@@ -4,13 +4,15 @@ use ::potato_head::{
     PyAgentResponse, PyEmbedder, PyTask, PyWorkflow, Score, Task, TaskEvent, TaskList, TaskStatus,
     Usage, WorkflowResult,
 };
+pub use opsml_genai::mcp::list_mcp_servers;
+use opsml_types::contracts::{McpCapability, McpConfig, McpServer, McpServers, McpTransport};
 pub mod google;
 pub mod openai;
 use pyo3::prelude::*;
 use pyo3::wrap_pymodule;
 
 #[pymodule]
-pub fn llm(m: &Bound<'_, PyModule>) -> PyResult<()> {
+pub fn genai(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<Provider>()?;
     m.add_class::<PyAgent>()?;
     m.add_class::<PyWorkflow>()?;
@@ -37,5 +39,13 @@ pub fn llm(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyEmbedder>()?;
     m.add_wrapped(wrap_pymodule!(google::google))?;
     m.add_wrapped(wrap_pymodule!(openai::openai))?;
+
+    // opsml specific
+    m.add_function(wrap_pyfunction!(list_mcp_servers, m)?)?;
+    m.add_class::<McpCapability>()?;
+    m.add_class::<McpTransport>()?;
+    m.add_class::<McpConfig>()?;
+    m.add_class::<McpServers>()?;
+    m.add_class::<McpServer>()?;
     Ok(())
 }

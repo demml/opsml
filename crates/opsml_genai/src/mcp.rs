@@ -1,37 +1,28 @@
-use opsml_registry::registries::card::OpsmlCardRegistry;
-use opsml_types::contracts::CardQueryArgs;
-use opsml_types::RegistryType;
-use pyo3::prelude::*;
+use opsml_registry::registries::genai::OpsmlGenAIRegistry;
 
 use crate::error::LLMError;
+use opsml_types::contracts::McpServers;
+use opsml_types::contracts::{ServiceQueryArgs, ServiceType};
+use pyo3::prelude::*;
+use tracing::error;
+
 #[pyfunction]
 pub fn list_mcp_servers(
     space: Option<String>,
     name: Option<String>,
-    version: Option<String>,
     tags: Option<Vec<String>>,
-) -> Result<Vec<String>, LLMError> {
+) -> Result<McpServers, LLMError> {
     // need to a separate method to get the latest MCP services
-    let registry = OpsmlCardRegistry::new(RegistryType::Service).unwrap();
+    let registry = OpsmlGenAIRegistry::new()?;
 
-    registry
-        .list_cards(&CardQueryArgs {
+    let servers = registry
+        .list_mcp_servers(&ServiceQueryArgs {
             space,
             name,
-            version,
-            uid: None,
-            limit: None,
             tags,
-            max_date: None,
-            sort_by_timestamp: Some(true),
-            service_type: None,
-            registry_type: RegistryType::Service,
+            service_type: Some(ServiceType::Mcp.to_string()),
         })
-        .map_err(|e| pyo3::exceptions::PyRuntimeError::new_err(e.to_string()))?;
-    // Placeholder implementation
-    Ok(vec![
-        "MCP Service 1".to_string(),
-        "MCP Service 2".to_string(),
-        "MCP Service 3".to_string(),
-    ])
+        .inspect_err(|e| error!("Failed to list MCP servers: {e}"))?;
+
+    Ok(servers)
 }

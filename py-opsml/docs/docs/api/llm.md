@@ -1,1 +1,1 @@
-::: opsml.llm._llm
+::: opsml.genai._llm

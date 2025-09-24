@@ -162,6 +162,7 @@ impl ServiceSpec {
     /// * `ServiceSpec` - The loaded service specification
     pub fn from_yaml(yaml_str: &str) -> Result<Self, ServiceError> {
         let mut spec: ServiceSpec = serde_yaml::from_str(yaml_str)?;
+
         spec.filter_deploy_by_environment()?;
         spec.validate()?;
         Ok(spec)
@@ -267,6 +268,41 @@ deploy:
       storage: 100Gi
     links:
       logging: https://logging.example.com
+"#;
+
+        let spec = ServiceSpec::from_yaml(yaml_content).unwrap();
+        assert_eq!(spec.name, "test-service");
+        assert_eq!(spec.space(), "my-team");
+        //assert mcp type
+        assert_eq!(spec.service_type, ServiceType::Mcp);
+
+        let mcp_config = spec.service.mcp.as_ref().unwrap();
+        assert_eq!(mcp_config.transport, McpTransport::Http);
+
+        // check capabilities
+        assert!(mcp_config.capabilities.contains(&McpCapability::Resources));
+        assert!(mcp_config.capabilities.contains(&McpCapability::Tools));
+    }
+
+    #[test]
+    fn test_service_spec_with_mcp_no_resources() {
+        let yaml_content = r#"
+name: test-service
+team: my-team
+type: Mcp
+metadata:
+  description: Test service
+  language: python
+  tags: [ml, test]
+
+service:
+  mcp:
+    capabilities: [Resources, Tools]
+    transport: Http
+
+deploy:
+  - environment: development
+    endpoints: [https://test.example.com]
 "#;
 
         let spec = ServiceSpec::from_yaml(yaml_content).unwrap();

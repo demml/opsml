@@ -1,5 +1,5 @@
 import pytest
-from opsml.llm import Prompt, Score
+from opsml.genai import Prompt, Score
 
 
 @pytest.fixture

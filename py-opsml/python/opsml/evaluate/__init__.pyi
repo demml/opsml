@@ -2,7 +2,7 @@
 # pylint: disable=redefined-builtin
 from typing import Any, Dict, List, Optional, Protocol, TypeAlias, Union
 
-from ..llm import Embedder, Prompt, Score
+from ..genai import Embedder, Prompt, Score
 from ..profile import Histogram
 
 class BaseModel(Protocol):

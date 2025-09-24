@@ -1,5 +1,5 @@
 import pandas as pd
-from opsml.llm import Prompt, Score
+from opsml.genai import Prompt, Score
 
 user_queries = [
     "What makes Drug Church's sound unique in modern post hardcore?",
