@@ -134,7 +134,6 @@ service_artifacts/
 
 crates/opsml_server/opsml_ui/site/*
 !crates/opsml_server/opsml_ui/site/.gitkeep
-package.json
 pnpm-lock.yaml
 py-opsml/python/opsml/card/_card.pyi
 py-opsml/python/opsml/data/_data.pyi
