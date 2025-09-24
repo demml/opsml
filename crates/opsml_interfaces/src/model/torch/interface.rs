@@ -56,9 +56,10 @@ impl TorchModel {
         task_type: Option<TaskType>,
         drift_profile: Option<&Bound<'py, PyAny>>,
     ) -> Result<(Self, ModelInterface), ModelInterfaceError> {
+        let torch = py.import("torch")?;
         // check if model is base estimator for sklearn validation
         let model = if let Some(model) = model {
-            let torch_module = py.import("torch")?.getattr("nn")?.getattr("Module")?;
+            let torch_module = torch.getattr("nn")?.getattr("Module")?;
             if model.is_instance(&torch_module).unwrap() {
                 Some(model.into_py_any(py)?)
             } else {
@@ -68,7 +69,10 @@ impl TorchModel {
             None
         };
 
-        let mut model_interface = ModelInterface::new(py, None, None, task_type, drift_profile)?;
+        let version = torch.getattr("__version__")?.extract::<String>().ok();
+
+        let mut model_interface =
+            ModelInterface::new(py, None, None, task_type, drift_profile, version)?;
 
         // override ModelInterface SampleData with TorchSampleData
         let sample_data = match sample_data {
@@ -296,6 +300,7 @@ impl TorchModel {
             self_.interface_type.clone(),
             onnx_session,
             HashMap::new(),
+            self_.as_super().version.clone(),
         );
 
         Ok(metadata)
@@ -420,8 +425,14 @@ impl TorchModel {
             sample_data: TorchSampleData::default(),
         };
 
-        let mut interface =
-            ModelInterface::new(py, None, None, Some(metadata.task_type.clone()), None)?;
+        let mut interface = ModelInterface::new(
+            py,
+            None,
+            None,
+            Some(metadata.task_type.clone()),
+            None,
+            Some(metadata.version.clone()),
+        )?;
 
         interface.schema = metadata.schema.clone();
         interface.data_type = metadata.data_type.clone();

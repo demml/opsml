@@ -41,6 +41,7 @@ def test_lightning_regression(
     assert interface.trainer is not None
 
     metadata = interface.save(save_path, ModelSaveKwargs(save_onnx=True))
+    assert metadata.version != "undefined"
 
     interface.load(
         save_path,

@@ -10,6 +10,7 @@ def test_save_model_interface(tmp_path: Path, random_forest_classifier: SklearnM
 
     metadata = interface.save(save_path, ModelSaveKwargs(save_onnx=True))
     metadata.save_metadata.save_kwargs is not None
+    assert metadata.version != "undefined"
 
     interface.model = None
 

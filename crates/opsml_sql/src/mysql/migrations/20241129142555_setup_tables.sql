@@ -135,7 +135,7 @@ CREATE TABLE IF NOT EXISTS opsml_experiment_hardware_metric (
     experiment_uid VARCHAR(64) NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     cpu_percent_utilization FLOAT,
-    cpu_percent_per_core JSON, -- JSONB is not supported in SQLite, use TEXT to store JSON strings
+    cpu_percent_per_core JSON, 
     free_memory BIGINT,
     total_memory BIGINT,
     used_memory BIGINT,

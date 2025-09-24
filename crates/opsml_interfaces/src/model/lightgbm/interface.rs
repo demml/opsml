@@ -40,8 +40,9 @@ impl LightGBMModel {
         drift_profile: Option<&Bound<'py, PyAny>>,
     ) -> Result<(Self, ModelInterface), ModelInterfaceError> {
         // check if model is base estimator for sklearn validation
+        let lgb = py.import("lightgbm")?;
         if let Some(model) = model {
-            let booster = py.import("lightgbm")?.getattr("Booster")?;
+            let booster = lgb.getattr("Booster")?;
 
             if model.is_instance(&booster).unwrap() {
                 //
@@ -50,8 +51,10 @@ impl LightGBMModel {
             }
         }
 
+        let version = lgb.getattr("__version__")?.extract::<String>().ok();
+
         let mut model_interface =
-            ModelInterface::new(py, model, sample_data, task_type, drift_profile)?;
+            ModelInterface::new(py, model, sample_data, task_type, drift_profile, version)?;
 
         model_interface.interface_type = ModelInterfaceType::LightGBM;
         let mut preprocessor_name = CommonKwargs::Undefined.to_string();
@@ -209,6 +212,7 @@ impl LightGBMModel {
             self_.as_super().interface_type.clone(),
             onnx_session,
             HashMap::new(),
+            self_.as_super().version.clone(),
         );
 
         // save model (needs to be last because we pass self_ to save_model, which takes ownership)
@@ -323,8 +327,14 @@ impl LightGBMModel {
             preprocessor_name,
         };
 
-        let mut interface =
-            ModelInterface::new(py, None, None, Some(metadata.task_type.clone()), None)?;
+        let mut interface = ModelInterface::new(
+            py,
+            None,
+            None,
+            Some(metadata.task_type.clone()),
+            None,
+            Some(metadata.version.clone()),
+        )?;
 
         interface.schema = metadata.schema.clone();
         interface.data_type = metadata.data_type.clone();

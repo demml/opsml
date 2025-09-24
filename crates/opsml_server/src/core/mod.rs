@@ -6,6 +6,7 @@ pub mod debug;
 pub mod error;
 pub mod experiment;
 pub mod files;
+pub mod genai;
 pub mod health;
 pub mod middleware;
 pub mod router;

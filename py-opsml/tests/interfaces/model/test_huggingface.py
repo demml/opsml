@@ -42,6 +42,7 @@ def test_hugging_face_text_pipeline(
     kwargs = ModelSaveKwargs(onnx=onnx_args)
 
     metadata = interface.save(save_path, save_kwargs=kwargs)
+    assert metadata.version != "undefined"
 
     assert interface.onnx_session is not None
 

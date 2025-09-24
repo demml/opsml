@@ -34,4 +34,10 @@ pub enum SqlError {
 
     #[error(transparent)]
     SerdeError(#[from] serde_json::Error),
+
+    #[error("Service type is not MCP: {0}")]
+    InvalidServiceType(String),
+
+    #[error("Missing required field: {0}")]
+    MissingField(String),
 }

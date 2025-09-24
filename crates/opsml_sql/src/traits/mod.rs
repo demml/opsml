@@ -3,13 +3,13 @@ use crate::schemas::schema::{
     ArtifactSqlRecord, CardResults, CardSummary, HardwareMetricsRecord, MetricRecord,
     ParameterRecord, QueryStats, ServerCard, User, VersionSummary,
 };
-use crate::schemas::EvaluationSqlRecord;
+use crate::schemas::{EvaluationSqlRecord, ServiceCardRecord};
 use async_trait::async_trait;
 use opsml_types::cards::CardTable;
 use opsml_types::{
     contracts::{
-        ArtifactKey, ArtifactQueryArgs, ArtifactRecord, AuditEvent, SpaceNameEvent, SpaceRecord,
-        SpaceStats,
+        ArtifactKey, ArtifactQueryArgs, ArtifactRecord, AuditEvent, ServiceQueryArgs,
+        SpaceNameEvent, SpaceRecord, SpaceStats,
     },
     RegistryType,
 };
@@ -62,6 +62,11 @@ pub trait CardLogicTrait {
         table: &CardTable,
         query_args: &CardQueryArgs,
     ) -> Result<ArtifactKey, SqlError>;
+
+    async fn get_recent_services(
+        &self,
+        query_args: &ServiceQueryArgs,
+    ) -> Result<Vec<ServiceCardRecord>, SqlError>;
 }
 
 #[async_trait]

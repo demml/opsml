@@ -1,5 +1,7 @@
-use crate::contracts::ArtifactKey;
-use crate::contracts::AuditableRequest;
+use crate::contracts::{
+    ArtifactKey, AuditableRequest, DeploymentConfig, ResourceType, ServiceConfig, ServiceMetadata,
+    ServiceType,
+};
 use crate::error::TypeError;
 use crate::{
     cards::CardTable,
@@ -13,12 +15,9 @@ use opsml_utils::{get_utc_datetime, PyHelperFuncs};
 use pyo3::prelude::*;
 use semver::Version;
 use serde::{Deserialize, Serialize};
-use std::path::Path;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use tabled::settings::{format::Format, object::Rows, Alignment, Color, Style};
 use tabled::{Table, Tabled};
-
-use crate::contracts::ResourceType;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct UidRequest {
@@ -243,6 +242,21 @@ pub struct CardVersionRequest {
     pub build_tag: Option<String>,
 }
 
+#[derive(Debug, Serialize, Deserialize, Default, Clone)]
+pub struct ServiceQueryArgs {
+    pub space: Option<String>,
+    pub name: Option<String>,
+    pub tags: Option<Vec<String>>,
+    pub service_type: Option<String>,
+}
+
+impl ServiceQueryArgs {
+    pub fn get_metadata(&self) -> String {
+        serde_json::to_string(self)
+            .unwrap_or_else(|e| format!("Failed to serialize ServiceQueryArgs: {e}"))
+    }
+}
+
 /// Arguments for querying cards
 ///
 /// # Fields
@@ -254,8 +268,8 @@ pub struct CardVersionRequest {
 /// * `max_date` - The maximum date of the card
 /// * `tags` - The tags of the card
 /// * `limit` - The maximum number of cards to return
-/// * `query_terms` - The query terms to search for
 /// * `sort_by_timestamp` - Whether to sort by timestamp
+/// * `service_type` - The service type of the card (only for ServiceCards)
 
 #[derive(Debug, Serialize, Deserialize, Default, Clone)]
 pub struct CardQueryArgs {
@@ -267,6 +281,7 @@ pub struct CardQueryArgs {
     pub tags: Option<Vec<String>>,
     pub limit: Option<i32>,
     pub sort_by_timestamp: Option<bool>,
+    pub service_type: Option<String>,
     pub registry_type: RegistryType,
 }
 
@@ -495,7 +510,12 @@ pub struct ServiceCardClientRecord {
     pub version: String,
     pub cards: Vec<CardEntry>,
     pub opsml_version: String,
+    pub service_type: String,
+    pub metadata: Option<ServiceMetadata>,
+    pub deployment: Option<Vec<DeploymentConfig>>,
+    pub service_config: ServiceConfig,
     pub username: String,
+    pub tags: Vec<String>,
 }
 
 impl Default for ServiceCardClientRecord {
@@ -509,7 +529,12 @@ impl Default for ServiceCardClientRecord {
             version: "".to_string(),
             opsml_version: opsml_version::version(),
             username: "guest".to_string(),
+            service_type: ServiceType::Api.to_string(),
+            metadata: None,
+            deployment: None,
+            service_config: ServiceConfig::default(),
             cards: Vec::new(),
+            tags: Vec::new(),
         }
     }
 }

@@ -111,7 +111,17 @@ impl CardRegistry {
     }
 
     #[allow(clippy::too_many_arguments)]
-    #[pyo3(signature = (uid=None, space=None, name=None,  version=None, max_date=None, tags=None,  sort_by_timestamp=None, limit=25))]
+    #[pyo3(signature = (
+        uid=None,
+        space=None,
+        name=None,
+        version=None,
+        max_date=None,
+        tags=None,
+        sort_by_timestamp=None,
+        service_type=None,
+        limit=100
+    ))]
     #[instrument(skip_all)]
     pub fn list_cards(
         &self,
@@ -122,6 +132,7 @@ impl CardRegistry {
         max_date: Option<String>,
         tags: Option<Vec<String>>,
         sort_by_timestamp: Option<bool>,
+        service_type: Option<ServiceType>,
         limit: i32,
     ) -> Result<CardList, RegistryError> {
         debug!(
@@ -142,6 +153,7 @@ impl CardRegistry {
             tags,
             limit: Some(limit),
             sort_by_timestamp,
+            service_type: service_type.map(|s| s.to_string()),
             registry_type: self.registry_type.clone(),
         };
 

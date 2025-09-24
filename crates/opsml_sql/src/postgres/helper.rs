@@ -4,7 +4,7 @@ use opsml_semver::VersionParser;
 /// this file contains helper logic for generating sql queries across different databases
 use opsml_types::{
     cards::CardTable,
-    contracts::{ArtifactQueryArgs, CardQueryArgs},
+    contracts::{ArtifactQueryArgs, CardQueryArgs, ServiceQueryArgs},
 };
 
 use opsml_utils::utils::is_valid_uuidv7;
@@ -364,6 +364,7 @@ impl PostgresQueryHelper {
         table: &CardTable,
         query_args: &CardQueryArgs,
     ) -> Result<String, SqlError> {
+        let mut binding_index = 5; // Start from 2 because $1 is used for space
         if query_args.uid.is_some() {
             is_valid_uuidv7(query_args.uid.as_ref().unwrap())?;
             return Ok(format!("SELECT * FROM {table} WHERE uid = $1 LIMIT 1"));
@@ -390,6 +391,11 @@ impl PostgresQueryHelper {
             query.push_str(" AND created_at <= TO_DATE($4, 'YYYY-MM-DD')");
         }
 
+        if query_args.service_type.is_some() {
+            query.push_str(" AND service_type = $5");
+            binding_index += 1;
+        }
+
         // Add version bounds - will use the version part of the index
         if query_args.version.is_some() {
             add_version_bounds(&mut query, query_args.version.as_ref().unwrap())?;
@@ -411,7 +417,7 @@ impl PostgresQueryHelper {
             query.push_str(" ORDER BY major DESC, minor DESC, patch DESC");
         }
 
-        query.push_str(" LIMIT $5");
+        query.push_str(&format!(" LIMIT ${binding_index}"));
 
         Ok(query)
     }
@@ -637,5 +643,42 @@ impl PostgresQueryHelper {
     }
     pub fn get_evaluation_record_insert_query() -> String {
         INSERT_EVALUATION_RECORD_SQL.to_string()
+    }
+
+    pub fn get_recent_services_query(query_args: &ServiceQueryArgs) -> String {
+        let mut where_clause = String::from(
+            "
+        WHERE 1=1
+        AND ($1 IS NULL OR space = $1)
+        AND ($2 IS NULL OR name = $2)
+        AND ($3 IS NULL OR service_type = $3)
+    ",
+        );
+
+        if let Some(tags) = &query_args.tags {
+            for tag in tags {
+                where_clause.push_str(
+                format!(" AND EXISTS (SELECT 1 FROM jsonb_array_elements_text(tags) AS t WHERE t = '{tag}')").as_str(),
+            );
+            }
+        }
+
+        let query = format!(
+            "
+        SELECT *
+        FROM (
+            SELECT *,
+                ROW_NUMBER() OVER (
+                    PARTITION BY space, name
+                    ORDER BY created_at DESC
+                ) AS rn
+            FROM opsml_service_registry
+            {where_clause}
+        )
+        WHERE rn = 1;
+        "
+        );
+
+        query
     }
 }

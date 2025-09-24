@@ -125,8 +125,6 @@ impl HuggingFaceOnnxConverter {
             .call_method("from_pretrained", (&self.model_path,), Some(&kwargs.1))
             .map_err(OnnxError::LoadModelError)?;
 
-        println!("ort_model: {:?}", ort_model);
-
         // saves to model.onnx
         ort_model
             .call_method("save_pretrained", (&self.onnx_path,), Some(&kwargs.1))

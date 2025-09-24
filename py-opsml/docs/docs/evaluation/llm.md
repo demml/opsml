@@ -72,7 +72,7 @@ end
 Now say you want to (1) evaluate how well the prompt reformulates user queries into better-structured queries and (2) how relevant the provided answer is to the user input. In this scenario, imagine you already have a dataset of user queries, their reformulated queries and the returned answers (this could be from an experiment you ran in production). Now, to evaluate the prompts and Agent, you would create a list of `LLMEvalRecords` containing the `user_query`, `reformulated_query` and `answer` context as well as an `LLMEvalMetric` that defines how you want to evaluate the prompt using an `LLM as a judge` workflow.
 
 ```python
-from opsml.llm import Prompt, Score
+from opsml.genai import Prompt, Score
 from opsml.evaluate import LLMEvalMetric, LLMEvalRecord, evaluate_llm
 
 reformulation_eval_prompt = Prompt(
@@ -210,8 +210,8 @@ EvaluationConfig allows you to customize the evaluation process in several ways:
 
 ```python
 from opsml.evaluate import EvaluationConfig
-from opsml.llm.openai import OpenAIEmbeddingConfig
-from opsml.llm import Embedder, Provider
+from opsml.genai.openai import OpenAIEmbeddingConfig
+from opsml.genai import Embedder, Provider
 
 #(previous code)...
 
