@@ -115,4 +115,8 @@ impl McpServers {
     pub fn __len__(&self) -> usize {
         self.servers.len()
     }
+
+    pub fn __str__(&self) -> String {
+        PyHelperFuncs::__str__(self)
+    }
 }
