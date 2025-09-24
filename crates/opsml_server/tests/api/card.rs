@@ -12,6 +12,7 @@ use opsml_crypt::encrypt_file;
 use opsml_server::core::cards::schema::{
     CreateReadeMe, QueryPageResponse, ReadeMe, RegistryStatsResponse, VersionPageResponse,
 };
+use opsml_types::contracts::DeploymentConfig;
 use std::path::PathBuf;
 
 // create json
@@ -985,6 +986,90 @@ async fn test_opsml_server_card_service_card_crud() {
     let delete_response: UidResponse = serde_json::from_slice(&body).unwrap();
 
     assert!(!delete_response.exists);
+
+    helper.cleanup();
+}
+
+#[tokio::test]
+async fn test_opsml_server_card_service_card_mcps() {
+    let helper = TestHelper::new(None).await;
+
+    let card_version_request = CardVersionRequest {
+        name: "service".to_string(),
+        space: "repo1".to_string(),
+        version: Some("1.0.0".to_string()),
+        version_type: VersionType::Minor,
+        pre_tag: None,
+        build_tag: None,
+    };
+
+    let deploy = DeploymentConfig {
+        environment: "dev".to_string(),
+        provider: None,
+        location: None,
+        endpoints: vec!["http://localhost:8080".to_string()],
+        resources: None,
+        links: None,
+    };
+
+    // ServiceCard
+    let card_request = CreateCardRequest {
+        card: CardRecord::Service(ServiceCardClientRecord {
+            name: "service".to_string(),
+            space: "repo1".to_string(),
+            version: "1.0.0".to_string(),
+            service_type: ServiceType::Mcp.to_string(),
+            service_config: ServiceConfig {
+                mcp: Some(McpConfig {
+                    capabilities: vec![McpCapability::Resources, McpCapability::Tools],
+                    transport: McpTransport::Http,
+                }),
+                ..Default::default()
+            },
+            deployment: Some(vec![deploy]),
+            ..ServiceCardClientRecord::default()
+        }),
+        registry_type: RegistryType::Service,
+        version_request: card_version_request,
+    };
+
+    let body = serde_json::to_string(&card_request).unwrap();
+
+    let request = Request::builder()
+        .uri("/opsml/api/card/create")
+        .method("POST")
+        .header(header::CONTENT_TYPE, "application/json")
+        .body(Body::from(body))
+        .unwrap();
+
+    let response = helper.send_oneshot(request).await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let body = response.into_body().collect().await.unwrap().to_bytes();
+    let create_response: CreateCardResponse = serde_json::from_slice(&body).unwrap();
+    assert!(create_response.registered);
+
+    // list mcp services
+    let list_mcps = ServiceQueryArgs {
+        service_type: Some(ServiceType::Mcp.to_string()),
+        ..Default::default()
+    };
+
+    let query_string = serde_qs::to_string(&list_mcps).unwrap();
+
+    let request = Request::builder()
+        .uri(format!("/opsml/api/genai/mcp/servers?{query_string}"))
+        .method("GET")
+        .body(Body::empty())
+        .unwrap();
+
+    let response = helper.send_oneshot(request).await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let body = response.into_body().collect().await.unwrap().to_bytes();
+    let mcp_results: McpServers = serde_json::from_slice(&body).unwrap();
+
+    assert_eq!(mcp_results.servers.len(), 1);
 
     helper.cleanup();
 }
