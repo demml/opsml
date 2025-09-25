@@ -10,9 +10,10 @@ use opsml_service::ServiceSpec;
 use opsml_toml::{LockArtifact, LockFile};
 use opsml_types::IntegratedService;
 use opsml_types::{
-    contracts::{Card, CardEntry, CardRecord},
+    contracts::{Card, CardEntry, CardRecord, ServiceType},
     RegistryType,
 };
+
 use pyo3::prelude::*;
 use scouter_client::{DriftType, ProfileStatusRequest};
 use std::path::PathBuf;
@@ -35,7 +36,6 @@ fn get_service_from_registry(
         None,
         None,
         Some(true),
-        None,
         1,
     )?;
     Ok(cards.cards.first().cloned())
@@ -73,7 +73,6 @@ fn get_latest_card(registries: &CardRegistries, card: &Card) -> Result<CardRecor
         None,
         None,
         Some(false),
-        None,
         1,
     )?;
 
@@ -257,17 +256,17 @@ fn check_for_refresh(
 /// * `Result<LockArtifact, CliError>`
 fn create_new_service_lock(
     spec: &ServiceSpec,
-    registries: &CardRegistries,
+    registry: &CardRegistry,
     spec_cards: Option<&Vec<Card>>,
     space: &str,
     name: &str,
 ) -> Result<LockArtifact, CliError> {
-    let service_card = register_service_card(spec, &registries.service, space, name)?;
+    let service_card = register_service_card(spec, registry, space, name)?;
 
     // Apply postprocessing if spec cards exist
     // some service types may not have cards
     if let Some(cards) = spec_cards {
-        postprocess_service_card(cards, &service_card, &registries.service)?;
+        postprocess_service_card(cards, &service_card, registry)?;
     }
 
     Ok(create_lock_artifact_from_service_card(
@@ -286,6 +285,7 @@ fn create_new_service_lock(
 /// * `Result<LockArtifact, CliError>`
 fn handle_existing_service_lock(
     spec: &ServiceSpec,
+    service_registry: &CardRegistry,
     registries: &CardRegistries,
     spec_cards: Option<&Vec<Card>>,
     service: CardRecord,
@@ -295,10 +295,10 @@ fn handle_existing_service_lock(
     if needs_refresh {
         debug!("Service refresh needed, re-registering");
         let service_card =
-            register_service_card(spec, &registries.service, service.space(), service.name())?;
+            register_service_card(spec, service_registry, service.space(), service.name())?;
 
         if let Some(cards) = spec_cards {
-            postprocess_service_card(cards, &service_card, &registries.service)?;
+            postprocess_service_card(cards, &service_card, service_registry)?;
         }
 
         Ok(create_lock_artifact_from_service_card(
@@ -334,21 +334,25 @@ pub fn lock_service_card(
     let registries = CardRegistries::new()?;
     let spec_cards = spec.service.cards.as_ref();
 
-    let existing_service = get_service_from_registry(
-        &registries.service,
-        space,
-        name,
-        spec.service.version.as_ref(),
-    )?;
+    let reg = match spec.service_type {
+        ServiceType::Api => &registries.service,
+        ServiceType::Mcp => &registries.mcp,
+        _ => {
+            return Err(CliError::UnsupportedServiceType(spec.service_type.clone()));
+        }
+    };
+
+    let existing_service =
+        get_service_from_registry(reg, space, name, spec.service.version.as_ref())?;
 
     match existing_service {
         None => {
             debug!("No existing service found, creating new service");
-            create_new_service_lock(spec, &registries, spec_cards, space, name)
+            create_new_service_lock(spec, reg, spec_cards, space, name)
         }
         Some(service) => {
             debug!("Existing service found, checking if refresh needed");
-            handle_existing_service_lock(spec, &registries, spec_cards, service)
+            handle_existing_service_lock(spec, reg, &registries, spec_cards, service)
         }
     }
 }
@@ -373,7 +377,7 @@ pub fn install_service(path: PathBuf, write_path: Option<PathBuf>) -> Result<(),
 
     for artifact in lockfile.artifact {
         match artifact.registry_type {
-            RegistryType::Service => {
+            RegistryType::Service | RegistryType::Mcp => {
                 println!(
                     "Downloading ServiceCard {} to path {}",
                     Colorize::green(&format!(

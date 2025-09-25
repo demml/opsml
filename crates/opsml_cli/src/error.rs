@@ -3,6 +3,7 @@ use opsml_crypt::error::CryptError;
 use opsml_registry::error::RegistryError;
 use opsml_storage::storage::error::StorageError;
 use opsml_toml::error::PyProjectTomlError;
+use opsml_types::contracts::ServiceType;
 use opsml_types::error::TypeError;
 use opsml_utils::error::PyUtilError;
 use opsml_utils::error::UtilError;
@@ -76,6 +77,9 @@ pub enum CliError {
 
     #[error(transparent)]
     ServiceError(#[from] opsml_service::error::ServiceError),
+
+    #[error("Unsupported service type: {0:?}")]
+    UnsupportedServiceType(ServiceType),
 }
 
 impl From<CliError> for PyErr {
