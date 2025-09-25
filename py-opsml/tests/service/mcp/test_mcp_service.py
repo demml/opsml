@@ -10,13 +10,13 @@ ASSETS_DIRECTORY = CURRENT_DIRECTORY / "tests" / "service" / "mcp"
 
 
 def test_mcp_registration():
-    with OpsmlTestServer(True, CURRENT_DIRECTORY):
-        register_service(ASSETS_DIRECTORY / "mcpspec1.yml")
-        register_service(ASSETS_DIRECTORY / "mcpspec2.yml")
+    with OpsmlTestServer(True, ASSETS_DIRECTORY):
+        register_service(ASSETS_DIRECTORY / "mcpspec1.yaml")
+        register_service(ASSETS_DIRECTORY / "mcpspec2.yaml")
 
         # register mcpspec1 again to verify new version handling
         time.sleep(1)  # ensure timestamp difference
-        register_service(ASSETS_DIRECTORY / "mcpspec1.yml")
+        register_service(ASSETS_DIRECTORY / "mcpspec1.yaml")
 
         servers = list_mcp_servers()
         assert len(servers) == 2
