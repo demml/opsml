@@ -247,7 +247,7 @@ pub struct ServiceQueryArgs {
     pub space: Option<String>,
     pub name: Option<String>,
     pub tags: Option<Vec<String>>,
-    pub service_type: Option<String>,
+    pub service_type: ServiceType,
 }
 
 impl ServiceQueryArgs {

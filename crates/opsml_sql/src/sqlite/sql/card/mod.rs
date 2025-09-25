@@ -728,7 +728,6 @@ impl CardLogicTrait for CardLogicSqliteClient {
         let records: Vec<ServiceCardRecord> = sqlx::query_as(&query)
             .bind(query_args.space.as_ref())
             .bind(query_args.name.as_ref())
-            .bind(query_args.service_type.as_ref())
             .fetch_all(&self.pool)
             .await?;
 
