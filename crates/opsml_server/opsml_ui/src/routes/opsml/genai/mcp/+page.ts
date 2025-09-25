@@ -4,6 +4,7 @@ import { setupRegistryPage } from "$lib/components/card/utils";
 import { validateUserOrRedirect } from "$lib/components/user/user.svelte";
 import type { PageLoad } from "./$types";
 
+// @ts-ignore
 export const load: PageLoad = async ({ parent }) => {
   await validateUserOrRedirect();
   const { registryType } = await parent();
