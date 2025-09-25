@@ -31,6 +31,7 @@ jobs:
         run: |
           rustup override set stable && rustup update
           rustup component add clippy
+          rustup component add rustfmt
 
       - name: Cache Rust
         uses: Swatinem/rust-cache@v2
