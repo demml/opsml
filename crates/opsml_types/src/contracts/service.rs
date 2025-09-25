@@ -39,10 +39,11 @@ impl From<&str> for ServiceType {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct ServiceMetadata {
     pub description: String,
-    pub language: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub language: Option<String>,
     pub tags: Vec<String>,
 }
 

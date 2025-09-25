@@ -934,7 +934,7 @@ impl ServiceCardRecord {
 
         let environment = deployment.environment.clone();
         let endpoints = deployment.endpoints.clone();
-        let description = self.metadata.as_ref().map(|m| m.0.description.clone());
+        let description = self.metadata.as_ref().map(|m| m.description.clone());
 
         Ok(McpServer {
             space: self.space.clone(),

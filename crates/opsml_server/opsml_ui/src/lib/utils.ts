@@ -31,7 +31,7 @@ export function getRegistryPath(type: RegistryType): string {
     case RegistryType.Service:
       return "service";
     case RegistryType.Mcp:
-      return "service";
+      return "genai/mcp";
     default:
       return "";
   }

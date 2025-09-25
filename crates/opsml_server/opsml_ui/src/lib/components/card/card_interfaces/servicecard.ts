@@ -59,7 +59,7 @@ export interface DeploymentConfig {
 
 export interface ServiceMetadata {
   description: string;
-  language: string;
+  language?: string;
   tags: string[];
 }
 
