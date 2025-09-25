@@ -1269,7 +1269,7 @@ mod tests {
         };
         client
             .card
-            .insert_card(&CardTable::Mcp, &ServerCard::Service(card1))
+            .insert_card(&CardTable::Service, &ServerCard::Service(card1))
             .await
             .unwrap();
 
