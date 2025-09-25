@@ -28,7 +28,10 @@ jobs:
           cmake-version: "3.x"
 
       - name: Set up Rust
-        run: rustup override set stable && rustup update
+        run: |
+          rustup override set stable && rustup update
+          rustup component add clippy
+          rustup component add rustfmt
 
       - name: Cache Rust
         uses: Swatinem/rust-cache@v2

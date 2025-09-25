@@ -95,7 +95,6 @@ impl IntoQueryArgs for ListCards {
             tags: self.tags.clone(),
             max_date: self.max_date.clone(),
             sort_by_timestamp: Some(self.sort_by_timestamp),
-            service_type: self.service_type.clone(),
         })
     }
 }

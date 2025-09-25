@@ -247,7 +247,7 @@ pub struct ServiceQueryArgs {
     pub space: Option<String>,
     pub name: Option<String>,
     pub tags: Option<Vec<String>>,
-    pub service_type: Option<String>,
+    pub service_type: ServiceType,
 }
 
 impl ServiceQueryArgs {
@@ -281,7 +281,6 @@ pub struct CardQueryArgs {
     pub tags: Option<Vec<String>>,
     pub limit: Option<i32>,
     pub sort_by_timestamp: Option<bool>,
-    pub service_type: Option<String>,
     pub registry_type: RegistryType,
 }
 
