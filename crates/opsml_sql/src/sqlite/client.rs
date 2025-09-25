@@ -1261,9 +1261,9 @@ mod tests {
 
         // create 1st service card
         let card1 = ServiceCardRecord {
-            name: "Service0".to_string(),
+            name: "ApiService1".to_string(),
             space: SPACE.to_string(),
-            service_type: ServiceType::Mcp.to_string(),
+            service_type: ServiceType::Api.to_string(),
             tags: Json(vec!["tag1".to_string()]),
             ..Default::default()
         };
@@ -1275,7 +1275,7 @@ mod tests {
 
         // create 2nd card
         let card2 = ServiceCardRecord {
-            name: "Service1".to_string(),
+            name: "ApiService2".to_string(),
             space: SPACE.to_string(),
             service_type: ServiceType::Api.to_string(),
             ..Default::default()
@@ -1285,6 +1285,46 @@ mod tests {
             .insert_card(&CardTable::Service, &ServerCard::Service(card2))
             .await
             .unwrap();
+
+        let services = client
+            .card
+            .get_recent_services(&ServiceQueryArgs {
+                space: None,
+                name: None,
+                tags: None,
+                service_type: ServiceType::Api,
+            })
+            .await
+            .unwrap();
+        assert_eq!(services.len(), 2);
+
+        // search by tag
+        let services = client
+            .card
+            .get_recent_services(&ServiceQueryArgs {
+                space: None,
+                name: None,
+                tags: Some(vec!["tag1".to_string()]),
+                service_type: ServiceType::Api,
+            })
+            .await
+            .unwrap();
+        assert_eq!(services.len(), 1);
+
+        cleanup();
+    }
+
+    #[tokio::test]
+    async fn test_sqlite_recent_mcp_services() {
+        cleanup();
+
+        let config = DatabaseSettings {
+            connection_uri: get_connection_uri(),
+            max_connections: 1,
+            sql_type: SqlType::Sqlite,
+        };
+
+        let client = SqliteClient::new(&config).await.unwrap();
 
         // Create 3rd card, but new version
         let mcp_config = McpConfig {
@@ -1304,8 +1344,30 @@ mod tests {
             }),
             links: None,
         };
-        let card3 = ServiceCardRecord {
-            name: "Service0".to_string(),
+        let mcp_card1 = ServiceCardRecord {
+            name: "mcp1".to_string(),
+            space: SPACE.to_string(),
+            service_type: ServiceType::Mcp.to_string(),
+            tags: Json(vec!["tag1".to_string()]),
+            service_config: Json(ServiceConfig {
+                mcp: Some(mcp_config.clone()),
+                ..Default::default()
+            }),
+            deployment: Some(Json(vec![deploy.clone()])),
+            ..Default::default()
+        };
+
+        client
+            .card
+            .insert_card(&CardTable::Mcp, &ServerCard::Service(mcp_card1))
+            .await
+            .unwrap();
+
+        tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+
+        // create new version
+        let mcp_card2 = ServiceCardRecord {
+            name: "mcp1".to_string(),
             space: SPACE.to_string(),
             service_type: ServiceType::Mcp.to_string(),
             tags: Json(vec!["tag1".to_string()]),
@@ -1316,11 +1378,10 @@ mod tests {
             deployment: Some(Json(vec![deploy])),
             ..Default::default()
         };
-        // wait 1 second to ensure different created_at timestamp
-        tokio::time::sleep(std::time::Duration::from_secs(1)).await;
+
         client
             .card
-            .insert_card(&CardTable::Service, &ServerCard::Service(card3))
+            .insert_card(&CardTable::Mcp, &ServerCard::Service(mcp_card2))
             .await
             .unwrap();
 
@@ -1330,32 +1391,7 @@ mod tests {
                 space: None,
                 name: None,
                 tags: None,
-                service_type: None,
-            })
-            .await
-            .unwrap();
-        assert_eq!(services.len(), 2);
-
-        // search by tag
-        let services = client
-            .card
-            .get_recent_services(&ServiceQueryArgs {
-                space: None,
-                name: None,
-                tags: Some(vec!["tag1".to_string()]),
-                service_type: None,
-            })
-            .await
-            .unwrap();
-        assert_eq!(services.len(), 1);
-
-        let services = client
-            .card
-            .get_recent_services(&ServiceQueryArgs {
-                space: None,
-                name: None,
-                tags: None,
-                service_type: Some(ServiceType::Mcp.to_string()),
+                service_type: ServiceType::Mcp,
             })
             .await
             .unwrap();
