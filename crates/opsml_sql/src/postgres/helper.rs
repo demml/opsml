@@ -43,12 +43,14 @@ const INSERT_MODELCARD_SQL: &str = include_str!("sql/card/insert_modelcard.sql")
 const INSERT_EXPERIMENTCARD_SQL: &str = include_str!("sql/card/insert_experimentcard.sql");
 const INSERT_AUDITCARD_SQL: &str = include_str!("sql/card/insert_auditcard.sql");
 const INSERT_SERVICECARD_SQL: &str = include_str!("sql/card/insert_servicecard.sql");
+const INSERT_MCP_SERVICECARD_SQL: &str = include_str!("sql/card/insert_mcp_servicecard.sql");
 const UPDATE_DATACARD_SQL: &str = include_str!("sql/card/update_datacard.sql");
 const UPDATE_PROMPTCARD_SQL: &str = include_str!("sql/card/update_promptcard.sql");
 const UPDATE_MODELCARD_SQL: &str = include_str!("sql/card/update_modelcard.sql");
 const UPDATE_EXPERIMENTCARD_SQL: &str = include_str!("sql/card/update_experimentcard.sql");
 const UPDATE_AUDITCARD_SQL: &str = include_str!("sql/card/update_auditcard.sql");
 const UPDATE_SERVICECARD_SQL: &str = include_str!("sql/card/update_servicecard.sql");
+const UPDATE_MCP_SERVICECARD_SQL: &str = include_str!("sql/card/update_mcp_servicecard.sql");
 
 // artifact keys
 const INSERT_ARTIFACT_KEY_SQL: &str = include_str!("sql/artifact/insert_artifact_key.sql");
@@ -364,7 +366,6 @@ impl PostgresQueryHelper {
         table: &CardTable,
         query_args: &CardQueryArgs,
     ) -> Result<String, SqlError> {
-        let mut binding_index = 5; // Start from 2 because $1 is used for space
         if query_args.uid.is_some() {
             is_valid_uuidv7(query_args.uid.as_ref().unwrap())?;
             return Ok(format!("SELECT * FROM {table} WHERE uid = $1 LIMIT 1"));
@@ -391,11 +392,6 @@ impl PostgresQueryHelper {
             query.push_str(" AND created_at <= TO_DATE($4, 'YYYY-MM-DD')");
         }
 
-        if query_args.service_type.is_some() {
-            query.push_str(" AND service_type = $5");
-            binding_index += 1;
-        }
-
         // Add version bounds - will use the version part of the index
         if query_args.version.is_some() {
             add_version_bounds(&mut query, query_args.version.as_ref().unwrap())?;
@@ -417,7 +413,7 @@ impl PostgresQueryHelper {
             query.push_str(" ORDER BY major DESC, minor DESC, patch DESC");
         }
 
-        query.push_str(&format!(" LIMIT ${binding_index}"));
+        query.push_str(" LIMIT $5");
 
         Ok(query)
     }
@@ -535,12 +531,20 @@ impl PostgresQueryHelper {
         INSERT_AUDITCARD_SQL.to_string()
     }
 
-    pub fn get_servicecard_insert_query() -> String {
-        INSERT_SERVICECARD_SQL.to_string()
+    pub fn get_servicecard_insert_query(table: &CardTable) -> String {
+        match table {
+            CardTable::Service => INSERT_SERVICECARD_SQL.to_string(),
+            CardTable::Mcp => INSERT_MCP_SERVICECARD_SQL.to_string(),
+            _ => INSERT_SERVICECARD_SQL.to_string(),
+        }
     }
 
-    pub fn get_servicecard_update_query() -> String {
-        UPDATE_SERVICECARD_SQL.to_string()
+    pub fn get_servicecard_update_query(table: &CardTable) -> String {
+        match table {
+            CardTable::Service => UPDATE_SERVICECARD_SQL.to_string(),
+            CardTable::Mcp => UPDATE_MCP_SERVICECARD_SQL.to_string(),
+            _ => UPDATE_SERVICECARD_SQL.to_string(),
+        }
     }
 
     pub fn get_promptcard_update_query() -> String {
@@ -646,12 +650,12 @@ impl PostgresQueryHelper {
     }
 
     pub fn get_recent_services_query(query_args: &ServiceQueryArgs) -> String {
+        let card_table = CardTable::from_service_type(&query_args.service_type);
         let mut where_clause = String::from(
             "
         WHERE 1=1
         AND ($1 IS NULL OR space = $1)
         AND ($2 IS NULL OR name = $2)
-        AND ($3 IS NULL OR service_type = $3)
     ",
         );
 
@@ -672,7 +676,7 @@ impl PostgresQueryHelper {
                     PARTITION BY space, name
                     ORDER BY created_at DESC
                 ) AS rn
-            FROM opsml_service_registry
+            FROM {card_table}
             {where_clause}
         )
         WHERE rn = 1;

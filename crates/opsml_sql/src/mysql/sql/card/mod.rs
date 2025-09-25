@@ -186,7 +186,7 @@ impl CardLogicTrait for CardLogicMySqlClient {
                 return Ok(CardResults::Prompt(card));
             }
 
-            CardTable::Service => {
+            CardTable::Service | CardTable::Mcp => {
                 let card: Vec<ServiceCardRecord> = sqlx::query_as(&query)
                     .bind(query_args.uid.as_ref())
                     .bind(query_args.uid.as_ref())
@@ -196,8 +196,6 @@ impl CardLogicTrait for CardLogicMySqlClient {
                     .bind(query_args.name.as_ref())
                     .bind(query_args.max_date.as_ref())
                     .bind(query_args.max_date.as_ref())
-                    .bind(query_args.service_type.as_ref())
-                    .bind(query_args.service_type.as_ref())
                     .bind(query_args.limit.unwrap_or(1000))
                     .fetch_all(&self.pool)
                     .await?;
@@ -363,9 +361,9 @@ impl CardLogicTrait for CardLogicMySqlClient {
                 }
             },
 
-            CardTable::Service => match card {
+            CardTable::Service | CardTable::Mcp => match card {
                 ServerCard::Service(record) => {
-                    let query = MySqlQueryHelper::get_servicecard_insert_query();
+                    let query = MySqlQueryHelper::get_servicecard_insert_query(table);
                     sqlx::query(&query)
                         .bind(&record.uid)
                         .bind(&record.app_env)
@@ -552,9 +550,9 @@ impl CardLogicTrait for CardLogicMySqlClient {
                 }
             },
 
-            CardTable::Service => match card {
+            CardTable::Service | CardTable::Mcp => match card {
                 ServerCard::Service(record) => {
-                    let query = MySqlQueryHelper::get_servicecard_update_query();
+                    let query = MySqlQueryHelper::get_servicecard_update_query(table);
                     sqlx::query(&query)
                         .bind(&record.app_env)
                         .bind(&record.name)
@@ -721,7 +719,7 @@ impl CardLogicTrait for CardLogicMySqlClient {
     ) -> Result<ArtifactKey, SqlError> {
         let query = MySqlQueryHelper::get_load_card_query(table, query_args)?;
 
-        let mut bound = sqlx::query_as(&query)
+        let key: (String, String, String, Vec<u8>, String) = sqlx::query_as(&query)
             .bind(query_args.uid.as_ref())
             .bind(query_args.uid.as_ref())
             .bind(query_args.space.as_ref())
@@ -729,15 +727,7 @@ impl CardLogicTrait for CardLogicMySqlClient {
             .bind(query_args.name.as_ref())
             .bind(query_args.name.as_ref())
             .bind(query_args.max_date.as_ref())
-            .bind(query_args.max_date.as_ref());
-
-        if table == &CardTable::Service {
-            bound = bound
-                .bind(query_args.service_type.as_ref())
-                .bind(query_args.service_type.as_ref());
-        }
-
-        let key: (String, String, String, Vec<u8>, String) = bound
+            .bind(query_args.max_date.as_ref())
             .bind(query_args.limit.unwrap_or(1))
             .fetch_one(&self.pool)
             .await?;
@@ -762,8 +752,6 @@ impl CardLogicTrait for CardLogicMySqlClient {
             .bind(query_args.space.as_ref())
             .bind(query_args.name.as_ref())
             .bind(query_args.name.as_ref())
-            .bind(query_args.service_type.as_ref())
-            .bind(query_args.service_type.as_ref())
             .fetch_all(&self.pool)
             .await?;
 

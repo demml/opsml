@@ -119,7 +119,6 @@ impl CardRegistry {
         max_date=None,
         tags=None,
         sort_by_timestamp=None,
-        service_type=None,
         limit=100
     ))]
     #[instrument(skip_all)]
@@ -132,7 +131,6 @@ impl CardRegistry {
         max_date: Option<String>,
         tags: Option<Vec<String>>,
         sort_by_timestamp: Option<bool>,
-        service_type: Option<ServiceType>,
         limit: i32,
     ) -> Result<CardList, RegistryError> {
         debug!(
@@ -153,7 +151,6 @@ impl CardRegistry {
             tags,
             limit: Some(limit),
             sort_by_timestamp,
-            service_type: service_type.map(|s| s.to_string()),
             registry_type: self.registry_type.clone(),
         };
 
@@ -817,6 +814,9 @@ pub struct CardRegistries {
 
     #[pyo3(get)]
     pub service: CardRegistry,
+
+    #[pyo3(get)]
+    pub mcp: CardRegistry,
 }
 
 #[pymethods]
@@ -835,6 +835,7 @@ impl CardRegistries {
         let data = CardRegistry::rust_new(&RegistryType::Data)?;
         let prompt = CardRegistry::rust_new(&RegistryType::Prompt)?;
         let service = CardRegistry::rust_new(&RegistryType::Service)?;
+        let mcp = CardRegistry::rust_new(&RegistryType::Mcp)?;
 
         Ok(Self {
             experiment,
@@ -842,6 +843,7 @@ impl CardRegistries {
             data,
             prompt,
             service,
+            mcp,
         })
     }
 }

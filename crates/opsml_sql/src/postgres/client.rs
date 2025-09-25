@@ -1250,10 +1250,66 @@ mod tests {
     #[tokio::test]
     async fn test_postgres_recent_services() {
         let client = db_client().await;
+        // create 1st service card
+        let service1 = ServiceCardRecord {
+            name: "Service1".to_string(),
+            space: SPACE.to_string(),
+            service_type: ServiceType::Api.to_string(),
+            tags: Json(vec!["tag1".to_string()]),
+            ..Default::default()
+        };
+        client
+            .card
+            .insert_card(&CardTable::Service, &ServerCard::Service(service1))
+            .await
+            .unwrap();
+
+        // create 2nd card
+        let service2 = ServiceCardRecord {
+            name: "Service2".to_string(),
+            space: SPACE.to_string(),
+            service_type: ServiceType::Api.to_string(),
+            ..Default::default()
+        };
+        client
+            .card
+            .insert_card(&CardTable::Service, &ServerCard::Service(service2))
+            .await
+            .unwrap();
+
+        let services = client
+            .card
+            .get_recent_services(&ServiceQueryArgs {
+                space: None,
+                name: None,
+                tags: None,
+                service_type: ServiceType::Api,
+            })
+            .await
+            .unwrap();
+        assert_eq!(services.len(), 2);
+
+        // search by tag
+        let services = client
+            .card
+            .get_recent_services(&ServiceQueryArgs {
+                space: None,
+                name: None,
+                tags: Some(vec!["tag1".to_string()]),
+                service_type: ServiceType::Api,
+            })
+            .await
+            .unwrap();
+        assert_eq!(services.len(), 1);
+    }
+
+    #[tokio::test]
+    async fn test_postgres_recent_mcp_services() {
+        let client = db_client().await;
 
         // create 1st service card
-        let card1 = ServiceCardRecord {
-            name: "Service0".to_string(),
+        let mcp1 = ServiceCardRecord {
+            name: "mcp1".to_string(),
             space: SPACE.to_string(),
             service_type: ServiceType::Mcp.to_string(),
             tags: Json(vec!["tag1".to_string()]),
@@ -1261,20 +1317,20 @@ mod tests {
         };
         client
             .card
-            .insert_card(&CardTable::Service, &ServerCard::Service(card1))
+            .insert_card(&CardTable::Mcp, &ServerCard::Service(mcp1))
             .await
             .unwrap();
 
         // create 2nd card
-        let card2 = ServiceCardRecord {
-            name: "Service1".to_string(),
+        let mcp2 = ServiceCardRecord {
+            name: "mcp2".to_string(),
             space: SPACE.to_string(),
-            service_type: ServiceType::Api.to_string(),
+            service_type: ServiceType::Mcp.to_string(),
             ..Default::default()
         };
         client
             .card
-            .insert_card(&CardTable::Service, &ServerCard::Service(card2))
+            .insert_card(&CardTable::Mcp, &ServerCard::Service(mcp2))
             .await
             .unwrap();
 
@@ -1296,8 +1352,8 @@ mod tests {
             }),
             links: None,
         };
-        let card3 = ServiceCardRecord {
-            name: "Service0".to_string(),
+        let mcp3 = ServiceCardRecord {
+            name: "mcp1".to_string(),
             space: SPACE.to_string(),
             service_type: ServiceType::Mcp.to_string(),
             tags: Json(vec!["tag1".to_string()]),
@@ -1313,7 +1369,7 @@ mod tests {
         tokio::time::sleep(std::time::Duration::from_secs(1)).await;
         client
             .card
-            .insert_card(&CardTable::Service, &ServerCard::Service(card3))
+            .insert_card(&CardTable::Mcp, &ServerCard::Service(mcp3))
             .await
             .unwrap();
 
@@ -1323,7 +1379,7 @@ mod tests {
                 space: None,
                 name: None,
                 tags: None,
-                service_type: None,
+                service_type: ServiceType::Mcp,
             })
             .await
             .unwrap();
@@ -1336,19 +1392,7 @@ mod tests {
                 space: None,
                 name: None,
                 tags: Some(vec!["tag1".to_string()]),
-                service_type: None,
-            })
-            .await
-            .unwrap();
-        assert_eq!(services.len(), 1);
-
-        let services = client
-            .card
-            .get_recent_services(&ServiceQueryArgs {
-                space: None,
-                name: None,
-                tags: None,
-                service_type: Some(ServiceType::Mcp.to_string()),
+                service_type: ServiceType::Mcp,
             })
             .await
             .unwrap();
