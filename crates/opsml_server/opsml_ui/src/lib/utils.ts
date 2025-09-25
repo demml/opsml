@@ -30,6 +30,8 @@ export function getRegistryPath(type: RegistryType): string {
       return "genai/prompt";
     case RegistryType.Service:
       return "service";
+    case RegistryType.Mcp:
+      return "service";
     default:
       return "";
   }
