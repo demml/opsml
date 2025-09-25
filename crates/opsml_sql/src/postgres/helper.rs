@@ -650,12 +650,12 @@ impl PostgresQueryHelper {
     }
 
     pub fn get_recent_services_query(query_args: &ServiceQueryArgs) -> String {
+        let card_table = CardTable::from_service_type(&query_args.service_type);
         let mut where_clause = String::from(
             "
         WHERE 1=1
         AND ($1 IS NULL OR space = $1)
         AND ($2 IS NULL OR name = $2)
-        AND ($3 IS NULL OR service_type = $3)
     ",
         );
 
@@ -676,7 +676,7 @@ impl PostgresQueryHelper {
                     PARTITION BY space, name
                     ORDER BY created_at DESC
                 ) AS rn
-            FROM opsml_service_registry
+            FROM {card_table}
             {where_clause}
         )
         WHERE rn = 1;
