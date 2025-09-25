@@ -372,7 +372,7 @@ impl SqliteQueryHelper {
             }
         }
 
-        query.push_str(format!(" LIMIT ?5").as_str());
+        query.push_str(" LIMIT ?5");
 
         Ok(query)
     }
