@@ -512,7 +512,7 @@ pub struct ServiceCardClientRecord {
     pub service_type: String,
     pub metadata: Option<ServiceMetadata>,
     pub deployment: Option<Vec<DeploymentConfig>>,
-    pub service_config: ServiceConfig,
+    pub service_config: Option<ServiceConfig>,
     pub username: String,
     pub tags: Vec<String>,
 }
@@ -531,7 +531,7 @@ impl Default for ServiceCardClientRecord {
             service_type: ServiceType::Api.to_string(),
             metadata: None,
             deployment: None,
-            service_config: ServiceConfig::default(),
+            service_config: None,
             cards: Vec::new(),
             tags: Vec::new(),
         }

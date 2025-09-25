@@ -92,20 +92,5 @@ service.load()
       {/each}
     </div>
   {/if}
-
-  {#if deploymentConfig}
-    <div class="flex flex-row items-center pb-1 border-b-2 border-black">
-      <Rocket color="#8059b6" />
-      <header class="pl-2 text-primary-900 text-sm font-bold">Deployment Configuration</header>
-    </div>
-
-    <div class="flex flex-col space-y-1 text-sm">
-    <Pill key="Environment" value={deploymentConfig.environment} textSize="text-sm" />
-    {#if deploymentConfig.location}
-      <Pill key="Location" value={deploymentConfig.location} textSize="text-sm" />
-    {/if}
-    
-  </div>
-  {/if}
   
 </div>

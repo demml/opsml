@@ -1349,10 +1349,10 @@ mod tests {
             space: SPACE.to_string(),
             service_type: ServiceType::Mcp.to_string(),
             tags: Json(vec!["tag1".to_string()]),
-            service_config: Json(ServiceConfig {
+            service_config: Some(Json(ServiceConfig {
                 mcp: Some(mcp_config.clone()),
                 ..Default::default()
-            }),
+            })),
             deployment: Some(Json(vec![deploy.clone()])),
             ..Default::default()
         };
@@ -1371,10 +1371,10 @@ mod tests {
             space: SPACE.to_string(),
             service_type: ServiceType::Mcp.to_string(),
             tags: Json(vec!["tag1".to_string()]),
-            service_config: Json(ServiceConfig {
+            service_config: Some(Json(ServiceConfig {
                 mcp: Some(mcp_config),
                 ..Default::default()
-            }),
+            })),
             deployment: Some(Json(vec![deploy])),
             ..Default::default()
         };

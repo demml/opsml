@@ -1017,13 +1017,13 @@ async fn test_opsml_server_card_service_card_mcps() {
             space: "repo1".to_string(),
             version: "1.0.0".to_string(),
             service_type: ServiceType::Mcp.to_string(),
-            service_config: ServiceConfig {
+            service_config: Some(ServiceConfig {
                 mcp: Some(McpConfig {
                     capabilities: vec![McpCapability::Resources, McpCapability::Tools],
                     transport: McpTransport::Http,
                 }),
                 ..Default::default()
-            },
+            }),
             deployment: Some(vec![deploy]),
             ..ServiceCardClientRecord::default()
         }),

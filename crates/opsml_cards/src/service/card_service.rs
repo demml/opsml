@@ -305,7 +305,7 @@ pub struct ServiceCard {
 
     pub deploy: Option<Vec<DeploymentConfig>>,
 
-    pub service_config: ServiceConfig,
+    pub service_config: Option<ServiceConfig>,
 
     #[pyo3(get)]
     pub tags: Vec<String>,
@@ -784,7 +784,7 @@ impl ServiceCard {
         let base_args = BaseArgs::create_args(
             Some(&name),
             Some(&space),
-            spec.service.version.as_deref(),
+            spec.service.as_ref().and_then(|s| s.version.as_deref()),
             None,
             &registry_type,
         )?;
@@ -1038,7 +1038,7 @@ impl<'de> Deserialize<'de> for ServiceCard {
                 let service_type = service_type.unwrap_or(ServiceType::Api);
                 let metadata = metadata.unwrap_or(None);
                 let deploy = deploy.unwrap_or(None);
-                let service_config = service_config.unwrap_or(ServiceConfig::default());
+                let service_config = service_config.unwrap_or(None);
                 let tags = tags.unwrap_or_default();
 
                 Ok(ServiceCard {
