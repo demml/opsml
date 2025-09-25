@@ -6,6 +6,7 @@ use crate::schemas::schema::{
 use crate::schemas::{EvaluationSqlRecord, ServiceCardRecord};
 use async_trait::async_trait;
 use opsml_types::cards::CardTable;
+use opsml_types::contracts::CardQueryArgs;
 use opsml_types::{
     contracts::{
         ArtifactKey, ArtifactQueryArgs, ArtifactRecord, AuditEvent, ServiceQueryArgs,
@@ -13,8 +14,6 @@ use opsml_types::{
     },
     RegistryType,
 };
-
-use opsml_types::contracts::CardQueryArgs;
 
 #[async_trait]
 pub trait CardLogicTrait {
