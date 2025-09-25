@@ -19,7 +19,7 @@ pub fn list_mcp_servers(
         space: space.clone(),
         name: name.clone(),
         tags: tags.clone(),
-        service_type: Some(ServiceType::Mcp.to_string()),
+        service_type: ServiceType::Mcp,
     };
 
     let servers = registry
