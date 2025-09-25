@@ -254,7 +254,6 @@ async fn test_opsml_server_card_list_cards() {
         tags: None,
         limit: None,
         sort_by_timestamp: None,
-        service_type: None,
         registry_type: RegistryType::Data,
     };
 
@@ -283,7 +282,6 @@ async fn test_opsml_server_card_list_cards() {
         tags: None,
         limit: None,
         sort_by_timestamp: None,
-        service_type: None,
         registry_type: RegistryType::Model,
     };
 
@@ -1029,7 +1027,7 @@ async fn test_opsml_server_card_service_card_mcps() {
             deployment: Some(vec![deploy]),
             ..ServiceCardClientRecord::default()
         }),
-        registry_type: RegistryType::Service,
+        registry_type: RegistryType::Mcp,
         version_request: card_version_request,
     };
 
@@ -1051,7 +1049,7 @@ async fn test_opsml_server_card_service_card_mcps() {
 
     // list mcp services
     let list_mcps = ServiceQueryArgs {
-        service_type: Some(ServiceType::Mcp.to_string()),
+        service_type: ServiceType::Mcp,
         ..Default::default()
     };
 
@@ -1256,7 +1254,6 @@ async fn test_opsml_server_card_get_card() {
         tags: None,
         limit: None,
         sort_by_timestamp: None,
-        service_type: None,
         registry_type: RegistryType::Model,
     };
     //
@@ -1317,7 +1314,6 @@ async fn test_opsml_server_card_get_readme() {
         tags: None,
         limit: None,
         sort_by_timestamp: None,
-        service_type: None,
         registry_type: RegistryType::Model,
     };
     //
