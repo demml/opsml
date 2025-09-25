@@ -14,5 +14,5 @@ service:
     transport: "Http"
 
 deploy:
-  - environment: "dev_client"
+  - environment: "dev"
     endpoints: ["https://api.example.com"]
