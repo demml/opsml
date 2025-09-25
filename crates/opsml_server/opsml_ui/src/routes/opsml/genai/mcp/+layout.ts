@@ -5,6 +5,6 @@ import type { LayoutLoad } from "./$types";
 
 export const load: LayoutLoad = async ({}) => {
   return {
-    registryType: RegistryType.Service,
+    registryType: RegistryType.Mcp,
   };
 };
