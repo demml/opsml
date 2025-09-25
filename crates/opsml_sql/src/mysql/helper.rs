@@ -41,12 +41,14 @@ const INSERT_MODELCARD_SQL: &str = include_str!("sql/card/insert_modelcard.sql")
 const INSERT_EXPERIMENTCARD_SQL: &str = include_str!("sql/card/insert_experimentcard.sql");
 const INSERT_AUDITCARD_SQL: &str = include_str!("sql/card/insert_auditcard.sql");
 const INSERT_SERVICECARD_SQL: &str = include_str!("sql/card/insert_servicecard.sql");
+const INSERT_MCP_SERVICECARD_SQL: &str = include_str!("sql/card/insert_mcp_servicecard.sql");
 const UPDATE_DATACARD_SQL: &str = include_str!("sql/card/update_datacard.sql");
 const UPDATE_PROMPTCARD_SQL: &str = include_str!("sql/card/update_promptcard.sql");
 const UPDATE_MODELCARD_SQL: &str = include_str!("sql/card/update_modelcard.sql");
 const UPDATE_EXPERIMENTCARD_SQL: &str = include_str!("sql/card/update_experimentcard.sql");
 const UPDATE_AUDITCARD_SQL: &str = include_str!("sql/card/update_auditcard.sql");
 const UPDATE_SERVICECARD_SQL: &str = include_str!("sql/card/update_servicecard.sql");
+const UPDATE_MCP_SERVICECARD_SQL: &str = include_str!("sql/card/update_mcp_servicecard.sql");
 
 // artifact keys
 const INSERT_ARTIFACT_KEY_SQL: &str = include_str!("sql/artifact/insert_artifact_key.sql");
@@ -336,10 +338,6 @@ impl MySqlQueryHelper {
         "
         );
 
-        if table == &CardTable::Service {
-            query.push_str(" AND (? IS NULL OR service_type = ?)");
-        }
-
         // check for uid. If uid is present, we only return that card
         if query_args.uid.is_some() {
             // validate uid
@@ -481,12 +479,20 @@ impl MySqlQueryHelper {
         INSERT_AUDITCARD_SQL.to_string()
     }
 
-    pub fn get_servicecard_insert_query() -> String {
-        INSERT_SERVICECARD_SQL.to_string()
+    pub fn get_servicecard_insert_query(table: &CardTable) -> String {
+        match table {
+            CardTable::Service => INSERT_SERVICECARD_SQL.to_string(),
+            CardTable::Mcp => INSERT_MCP_SERVICECARD_SQL.to_string(),
+            _ => INSERT_SERVICECARD_SQL.to_string(),
+        }
     }
 
-    pub fn get_servicecard_update_query() -> String {
-        UPDATE_SERVICECARD_SQL.to_string()
+    pub fn get_servicecard_update_query(table: &CardTable) -> String {
+        match table {
+            CardTable::Service => UPDATE_SERVICECARD_SQL.to_string(),
+            CardTable::Mcp => UPDATE_MCP_SERVICECARD_SQL.to_string(),
+            _ => UPDATE_SERVICECARD_SQL.to_string(),
+        }
     }
 
     pub fn get_promptcard_update_query() -> String {
@@ -597,12 +603,12 @@ impl MySqlQueryHelper {
     }
 
     pub fn get_recent_services_query(query_args: &ServiceQueryArgs) -> String {
+        let card_table = CardTable::from_service_type(&query_args.service_type);
         let mut where_clause = String::from(
             "
         WHERE 1=1
         AND (? IS NULL OR space = ?)
         AND (? IS NULL OR name = ?)
-        AND (? IS NULL OR service_type = ?)
     ",
         );
 
@@ -622,7 +628,7 @@ impl MySqlQueryHelper {
                     PARTITION BY space, name
                     ORDER BY created_at DESC
                 ) AS rn
-            FROM opsml_service_registry
+            FROM {card_table}
             {where_clause}
         ) recent_services
         WHERE rn = 1;
