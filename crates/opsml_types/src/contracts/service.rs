@@ -6,9 +6,10 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt::Display;
 
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Hash, Default)]
 #[pyclass]
 pub enum ServiceType {
+    #[default]
     #[serde(alias = "API", alias = "api")]
     Api,
     #[serde(alias = "MCP", alias = "mcp")]

@@ -170,13 +170,12 @@ impl CardLogicTrait for CardLogicPostgresClient {
                 return Ok(CardResults::Prompt(card));
             }
 
-            CardTable::Service => {
+            CardTable::Service | CardTable::Mcp => {
                 let card: Vec<ServiceCardRecord> = sqlx::query_as(&query)
                     .bind(query_args.uid.as_ref())
                     .bind(query_args.space.as_ref())
                     .bind(query_args.name.as_ref())
                     .bind(query_args.max_date.as_ref())
-                    .bind(query_args.service_type.as_ref())
                     .bind(query_args.limit.unwrap_or(50))
                     .fetch_all(&self.pool)
                     .await?;
@@ -340,9 +339,9 @@ impl CardLogicTrait for CardLogicPostgresClient {
                     return Err(SqlError::InvalidCardType);
                 }
             },
-            CardTable::Service => match card {
+            CardTable::Service | CardTable::Mcp => match card {
                 ServerCard::Service(record) => {
-                    let query = PostgresQueryHelper::get_servicecard_insert_query();
+                    let query = PostgresQueryHelper::get_servicecard_insert_query(table);
                     sqlx::query(&query)
                         .bind(&record.uid)
                         .bind(&record.app_env)
@@ -529,9 +528,9 @@ impl CardLogicTrait for CardLogicPostgresClient {
                 }
             },
 
-            CardTable::Service => match card {
+            CardTable::Service | CardTable::Mcp => match card {
                 ServerCard::Service(record) => {
-                    let query = PostgresQueryHelper::get_servicecard_update_query();
+                    let query = PostgresQueryHelper::get_servicecard_update_query(table);
                     sqlx::query(&query)
                         .bind(&record.app_env)
                         .bind(&record.name)
@@ -682,17 +681,11 @@ impl CardLogicTrait for CardLogicPostgresClient {
         let query = PostgresQueryHelper::get_load_card_query(table, query_args)?;
         debug!("Executing query: {}", query);
 
-        let mut bound = sqlx::query_as(&query)
+        let key: (String, String, String, Vec<u8>, String) = sqlx::query_as(&query)
             .bind(query_args.uid.as_ref())
             .bind(query_args.space.as_ref())
             .bind(query_args.name.as_ref())
-            .bind(query_args.max_date.as_ref());
-
-        if let Some(service_type) = &query_args.service_type {
-            bound = bound.bind(service_type);
-        }
-
-        let key: (String, String, String, Vec<u8>, String) = bound
+            .bind(query_args.max_date.as_ref())
             .bind(query_args.limit.unwrap_or(1))
             .fetch_one(&self.pool)
             .await?;

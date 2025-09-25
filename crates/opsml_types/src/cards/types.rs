@@ -1,3 +1,4 @@
+use crate::contracts::ServiceType;
 use crate::error::TypeError;
 use crate::types::RegistryType;
 use pyo3::prelude::*;
@@ -66,6 +67,14 @@ impl CardTable {
             RegistryType::Artifact => CardTable::Artifact,
             RegistryType::Evaluation => CardTable::Evaluation,
             RegistryType::Mcp => CardTable::Mcp,
+        }
+    }
+
+    pub fn from_service_type(service_type: &ServiceType) -> Self {
+        match service_type {
+            ServiceType::Mcp => CardTable::Mcp,
+            ServiceType::Api => CardTable::Service,
+            _ => CardTable::Service,
         }
     }
 }
