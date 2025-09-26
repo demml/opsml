@@ -588,6 +588,7 @@ impl CardLogicTrait for CardLogicSqliteClient {
         let stats: QueryStats = sqlx::query_as(&query)
             .bind(search_term.map(|term| format!("%{term}%")))
             .bind(space)
+            .bind(search_term)
             .fetch_one(&self.pool)
             .await?;
 
