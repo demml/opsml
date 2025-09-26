@@ -104,6 +104,11 @@ pub struct CardSpaceResponse {
     pub spaces: Vec<String>,
 }
 
+#[derive(Serialize, Deserialize)]
+pub struct CardTagsResponse {
+    pub tags: Vec<String>,
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct CrudSpaceRequest {
     pub space: String,
@@ -147,11 +152,12 @@ pub struct SpaceStatsResponse {
     pub stats: Vec<SpaceStats>,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct RegistryStatsRequest {
     pub registry_type: RegistryType,
     pub search_term: Option<String>,
     pub space: Option<String>,
+    pub tag: Option<String>,
 }
 
 impl AuditableRequest for RegistryStatsRequest {
@@ -175,12 +181,13 @@ impl AuditableRequest for RegistryStatsRequest {
 
 // RegistryStatsResponse is sourced from sql schema
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct QueryPageRequest {
     pub registry_type: RegistryType,
     pub sort_by: Option<String>,
     pub space: Option<String>,
     pub search_term: Option<String>,
+    pub tag: Option<String>,
     pub page: Option<i32>,
 }
 

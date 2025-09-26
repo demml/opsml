@@ -9,6 +9,8 @@ import type {
   RegistryStatsRequest,
   VersionPageResponse,
   VersionPageRequest,
+  QueryPageRequest,
+  CardTagsResponse,
 } from "$lib/components/card/types";
 import type { CardQueryArgs } from "../api/schema";
 import { type Card } from "$lib/components/home/types";
@@ -26,15 +28,31 @@ export async function getSpaces(
   return await response.json();
 }
 
+export async function getTags(
+  registry_type: RegistryType
+): Promise<CardTagsResponse> {
+  let params = { registry_type: registry_type };
+
+  const response = await opsmlClient.get(
+    RoutePaths.LIST_CARD_TAGS,
+    params,
+    userStore.jwt_token
+  );
+
+  return await response.json();
+}
+
 export async function getRegistryStats(
   registry_type: RegistryType,
   searchTerm?: string,
-  space?: string
+  space?: string,
+  tag?: string
 ): Promise<RegistryStatsResponse> {
   let request: RegistryStatsRequest = {
     registry_type: registry_type,
     search_term: searchTerm,
     space: space,
+    tag: tag,
   };
 
   const response = await opsmlClient.get(
@@ -50,33 +68,17 @@ export async function getRegistryPage(
   sort_by?: string,
   space?: string,
   searchTerm?: string,
+  tag?: string,
   page?: number
 ): Promise<QueryPageResponse> {
-  let params: {
-    registry_type: RegistryType;
-    sort_by?: string;
-    space?: string;
-    search_term?: string;
-    page?: number;
-  } = {
+  let params: QueryPageRequest = {
     registry_type: registry_type,
+    sort_by: sort_by,
+    space: space,
+    search_term: searchTerm,
+    tag: tag,
+    page: page,
   };
-
-  if (sort_by) {
-    params["sort_by"] = sort_by;
-  }
-
-  if (space) {
-    params["space"] = space;
-  }
-
-  if (searchTerm) {
-    params["search_term"] = searchTerm;
-  }
-
-  if (page) {
-    params["page"] = page;
-  }
 
   const response = await opsmlClient.get(
     RoutePaths.GET_REGISTRY_PAGE,

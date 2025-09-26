@@ -123,11 +123,11 @@ async fn test_opsml_server_card_stats_and_query() {
     let helper = TestHelper::new(None).await;
 
     /////////////////////// Test registry stats ///////////////////////
-
     let params = RegistryStatsRequest {
         registry_type: RegistryType::Model,
         search_term: None,
         space: None,
+        tag: None,
     };
 
     let query_string = serde_qs::to_string(&params).unwrap();
@@ -148,6 +148,7 @@ async fn test_opsml_server_card_stats_and_query() {
         registry_type: RegistryType::Model,
         search_term: Some("Model1".to_string()),
         space: None,
+        tag: None,
     };
 
     let query_string = serde_qs::to_string(&params).unwrap();
@@ -171,6 +172,7 @@ async fn test_opsml_server_card_stats_and_query() {
         sort_by: None,
         space: None,
         search_term: None,
+        tag: None,
         page: None,
     };
 
@@ -195,6 +197,7 @@ async fn test_opsml_server_card_stats_and_query() {
         sort_by: None,
         space: None,
         search_term: Some("Model2".to_string()),
+        tag: None,
         page: None,
     };
 
@@ -237,6 +240,53 @@ async fn test_opsml_server_card_stats_and_query() {
     let version_page_response: VersionPageResponse = serde_json::from_slice(&body).unwrap();
 
     assert_eq!(version_page_response.summaries.len(), 1);
+
+    // Query by tag
+    let params = RegistryStatsRequest {
+        registry_type: RegistryType::Model,
+        search_term: None,
+        space: None,
+        tag: Some("hello".to_string()),
+    };
+
+    let query_string = serde_qs::to_string(&params).unwrap();
+    let request = Request::builder()
+        .uri(format!("/opsml/api/card/registry/stats?{query_string}"))
+        .method("GET")
+        .body(Body::empty())
+        .unwrap();
+
+    let response = helper.send_oneshot(request).await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let body = response.into_body().collect().await.unwrap().to_bytes();
+    let stats_response: RegistryStatsResponse = serde_json::from_slice(&body).unwrap();
+    assert_eq!(stats_response.stats.nbr_names, 2);
+
+    let args = QueryPageRequest {
+        registry_type: RegistryType::Model,
+        sort_by: None,
+        space: None,
+        search_term: None,
+        tag: Some("hello".to_string()),
+        page: None,
+    };
+
+    let query_string = serde_qs::to_string(&args).unwrap();
+
+    let request = Request::builder()
+        .uri(format!("/opsml/api/card/registry/page?{query_string}"))
+        .method("GET")
+        .body(Body::empty())
+        .unwrap();
+
+    let response = helper.send_oneshot(request).await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let body = response.into_body().collect().await.unwrap().to_bytes();
+    let page_response: QueryPageResponse = serde_json::from_slice(&body).unwrap();
+
+    assert_eq!(page_response.summaries.len(), 2);
 
     helper.cleanup();
 }

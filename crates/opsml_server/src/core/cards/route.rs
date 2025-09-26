@@ -68,6 +68,24 @@ pub async fn get_registry_spaces(
     Ok(Json(CardSpaceResponse { spaces }))
 }
 
+pub async fn get_registry_tags(
+    State(state): State<Arc<AppState>>,
+    Query(params): Query<RegistrySpaceRequest>,
+) -> Result<Json<CardTagsResponse>, (StatusCode, Json<OpsmlServerError>)> {
+    let table = CardTable::from_registry_type(&params.registry_type);
+
+    let tags = state
+        .sql_client
+        .get_unique_tags(&table)
+        .await
+        .map_err(|e| {
+            error!("Failed to get registry tags: {e}");
+            internal_server_error(e, "Failed to get registry tags")
+        })?;
+
+    Ok(Json(CardTagsResponse { tags }))
+}
+
 pub async fn get_all_space_stats(
     State(state): State<Arc<AppState>>,
 ) -> Result<Json<SpaceStatsResponse>, (StatusCode, Json<OpsmlServerError>)> {
@@ -164,6 +182,7 @@ pub async fn get_registry_stats(
             &table,
             params.search_term.as_deref(),
             params.space.as_deref(),
+            params.tag.as_deref(),
         )
         .await
         .map_err(|e| {
@@ -189,6 +208,7 @@ pub async fn get_page(
             page,
             params.search_term.as_deref(),
             params.space.as_deref(),
+            params.tag.as_deref(),
             &table,
         )
         .await
@@ -746,6 +766,7 @@ pub async fn get_card_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
             .route(&format!("{prefix}/card/readme"), get(get_readme))
             .route(&format!("{prefix}/card/readme"), post(create_readme))
             .route(&format!("{prefix}/card/spaces"), get(get_registry_spaces))
+            .route(&format!("{prefix}/card/tags"), get(get_registry_tags))
             .route(
                 &format!("{prefix}/card/registry/stats"),
                 get(get_registry_stats),

@@ -35,6 +35,7 @@
 
   const filteredSpaces = $derived.by(() => {
     if (!spacesCombobox.touched) return availableSpaces;
+      //@ts-ignore
     return availableSpaces.filter((o) =>
       o.toLowerCase().includes(spacesCombobox.inputValue.trim().toLowerCase()),
     );
@@ -42,6 +43,7 @@
 
   const filteredTags = $derived.by(() => {
     if (!tagsCombobox.touched) return availableSpaces;
+    //@ts-ignore
     return availableSpaces.filter((o) =>
       o.toLowerCase().includes(tagsCombobox.inputValue.trim().toLowerCase()),
     );
