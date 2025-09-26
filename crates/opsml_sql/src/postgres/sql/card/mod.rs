@@ -606,6 +606,7 @@ impl CardLogicTrait for CardLogicPostgresClient {
         let stats: QueryStats = sqlx::query_as(&query)
             .bind(search_term.map(|term| format!("%{term}%")))
             .bind(space)
+            .bind(search_term.map(|t| format!(r#"["{}"]"#, t)))
             .fetch_one(&self.pool)
             .await?;
 
@@ -642,6 +643,7 @@ impl CardLogicTrait for CardLogicPostgresClient {
             .bind(space)
             .bind(search_term)
             .bind(search_term.map(|term| format!("%{term}%")))
+            .bind(search_term.map(|t| format!(r#"["{}"]"#, t)))
             .bind(lower_bound)
             .bind(upper_bound)
             .fetch_all(&self.pool)

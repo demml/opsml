@@ -178,6 +178,14 @@ impl CardLogicTrait for SqlClientEnum {
         }
     }
 
+    async fn get_unique_tags(&self, table: &CardTable) -> Result<Vec<String>, SqlError> {
+        match self {
+            SqlClientEnum::Postgres(client) => client.card.get_unique_tags(table).await,
+            SqlClientEnum::Sqlite(client) => client.card.get_unique_tags(table).await,
+            SqlClientEnum::MySql(client) => client.card.get_unique_tags(table).await,
+        }
+    }
+
     async fn get_card_key_for_loading(
         &self,
         table: &CardTable,

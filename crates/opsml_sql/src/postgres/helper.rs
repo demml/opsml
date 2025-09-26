@@ -231,6 +231,8 @@ impl PostgresQueryHelper {
                 FROM {table}
                 WHERE ($1 IS NULL OR space = $1)
                 AND ($2 IS NULL OR name LIKE $3 OR space LIKE $3)
+                AND ($4 IS NULL OR tags @> $4::jsonb)
+
             )"
         );
 
@@ -245,6 +247,7 @@ impl PostgresQueryHelper {
                 FROM {table}
                 WHERE ($1 IS NULL OR space = $1)
                 AND ($2 IS NULL OR name LIKE $3 OR space LIKE $3)
+                AND ($4 IS NULL OR tags @> $4::jsonb)
                 GROUP BY space, name
             )"
         );
@@ -279,7 +282,7 @@ impl PostgresQueryHelper {
         let combined_query = format!(
             "{versions_cte}{stats_cte}{filtered_versions_cte}{joined_cte}
             SELECT * FROM joined
-            WHERE row_num > $4 AND row_num <= $5
+            WHERE row_num > $5 AND row_num <= $6
             ORDER BY updated_at DESC"
         );
 
@@ -326,7 +329,8 @@ impl PostgresQueryHelper {
             FROM {table}
             WHERE 1=1
             AND ($1 IS NULL OR name LIKE $1 OR space LIKE $1)
-            AND ($2 IS NULL OR name = $2 OR space = $2)"
+            AND ($2 IS NULL OR name = $2 OR space = $2)
+            AND ($3 IS NULL OR tags @> $3::jsonb)"
         );
 
         base_query
