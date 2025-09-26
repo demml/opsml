@@ -1,11 +1,12 @@
 
 <script lang="ts">
   import { onMount } from "svelte";
-  import { getRegistryPage, getRegistryStats, getBgColor } from "./utils";
+  import { getRegistryPage, getRegistryStats, getBgColor, resolveCardPathFromArgs } from "./utils";
   import type { RegistryPageReturn, RegistryStatsResponse, QueryPageResponse} from "$lib/components/card/types";
   import  { RegistryType, delay, getRegistryTypeUpperCase } from "$lib/utils";
   import { ArrowLeft, ArrowRight, Search, Settings } from 'lucide-svelte';
   import { Combobox } from "melt/builders";
+  import { goto } from "$app/navigation";
   
   let { selectedSpace, page, selectedName, title } = $props<{
     selectedSpace: string | undefined;
@@ -82,19 +83,45 @@
     currentPage = page;
   }
 
+  function navigateToCardPage(registry: RegistryType, space: string, name: string, version: string) {
+      let path = resolveCardPathFromArgs(registry, space, name, version);
+      goto(path);
+    }
+
 </script>
+
+<style>
+  .space-input {
+    height: 2.0rem;
+  }
+
+  .space-input:focus {
+    height: 2.0rem;
+    box-shadow: 0 0 0 3px oklch(69.32% 0.15 294.6deg);
+  }
+
+  .tag-input {
+    height: 2.0rem;
+  }
+
+  .tag-input:focus {
+    height: 2.0rem;
+    box-shadow: 0 0 0 3px oklch(69.32% 0.15 294.6deg);
+  }
+
+</style>
 
 
 <div class="grid grid-cols-1 lg:grid-cols-5 gap-4">
   <!-- Left column -->
-  <div class="col-span-1 lg:col-span-1 p-2 flex flex-col rounded-base border-primary-500 border-2 shadow-primary bg-surface-50">
+  <div class="col-span-1 lg:col-span-1 p-2 flex flex-col rounded-base border-primary-500 border-2 shadow-primary bg-surface-50 self-start">
     <!-- Top Section -->
     <div class="mb-4 text-black flex flex-col items-center max-w-xs">
       <div class="flex flex-col items-start">
         <label {...spacesCombobox.label} class="text-primary-800 mb-1">Search Spaces</label>
-        <input {...spacesCombobox.input} class="bg-primary-500 text-black border-black border-2 rounded-lg"/>
+        <input {...spacesCombobox.input} class="space-input bg-primary-100 text-black border-black border-2 rounded-lg"/>
       </div>
-      <div {...spacesCombobox.content} class="bg-primary-500 text-black border-black border-2 rounded-lg max-h-60 overflow-auto px-1 py-1">
+      <div {...spacesCombobox.content} class="bg-primary-100 text-black border-black border-2 rounded-lg max-h-60 overflow-auto px-1 py-1">
         {#each filteredSpaces as option (option)}
           <div {...spacesCombobox.getOption(option)} class="px-2 text-left border-2 border-transparent hover:border-black rounded-lg transition-colors text-black">
             {option}
@@ -110,12 +137,12 @@
 
     <hr class="hr" />
 
-    <div class="mt-2 text-black flex flex-col items-center max-w-xs">
+    <div class="my-2 text-black flex flex-col items-center max-w-xs">
       <div class="flex flex-col items-start">
         <label {...tagsCombobox.label} class="text-primary-800 mb-1">Search Tags</label>
-        <input {...tagsCombobox.input} class="bg-primary-500 text-black border-black border-2 rounded-lg"/>
+        <input {...tagsCombobox.input} class="tag-input bg-primary-100 text-black border-black border-2 rounded-lg"/>
       </div>
-      <div {...tagsCombobox.content} class="bg-primary-500 text-black border-black border-2 rounded-lg max-h-60 overflow-auto px-1 py-1">
+      <div {...tagsCombobox.content} class="bg-primary-100 text-black border-black border-2 rounded-lg max-h-60 overflow-auto px-1 py-1">
         {#each filteredTags as option (option)}
           <div {...tagsCombobox.getOption(option)} class="px-2 text-left border-2 border-transparent hover:border-black rounded-lg transition-colors text-black">
             {option}
@@ -164,37 +191,58 @@
     </div>
 
     <div class="pt-4">
-        <div class="overflow-auto w-full">
+        <div class="overflow-auto w-full border-2 border-black rounded-lg">
           <table class="text-black border-collapse text-sm bg-white w-full">
             <thead class="sticky top-0 z-10 bg-white" style="box-shadow: 0 2px 0 0 #000;">
               <tr>
-                <th class="p-3 font-heading pl-6 text-left text-black">
+                <th class="p-2 font-heading pl-6 text-left text-black">
                   <span class='px-2 py-1 rounded-full bg-primary-100 text-primary-800'>
                     Space
                   </span>
                 </th>
-                <th class="p-3 font-heading">
+                <th class="p-2 font-heading">
                   <span class='px-2 py-1 rounded-full bg-primary-100 text-primary-800'>
                     Name
                   </span>
                 </th>
-                <th class="p-3 font-heading">
+                <th class="p-2 font-heading">
                   <span class='px-2 py-1 rounded-full bg-primary-100 text-primary-800'>
                     Last Updated
                   </span>
                 </th>
-                <th class="p-3 font-heading">
+                <th class="p-2 font-heading">
+                  <span class='px-2 py-1 rounded-full bg-primary-100 text-primary-800'>
+                    Current Version
+                  </span>
+                </th>
+                <th class="p-2 font-heading">
                   <span class='px-2 py-1 rounded-full bg-primary-100 text-primary-800'>
                     Versions
                   </span>
                 </th>
-                <th class="p-3 font-heading">
+                <th class="p-2 font-heading">
                   <span class='px-2 py-1 rounded-full bg-primary-100 text-primary-800'>
                     Link
                   </span>
                 </th>
               </tr>
             </thead>
+            <tbody>
+          {#each registryPage.summaries as summary, i}
+            <tr class={`border-b-2 border-black hover:bg-primary-300 ${i % 2 === 0 ? 'bg-gray-100' : 'bg-white'}`}>
+              <td class="p-2 pl-8">{summary.space}</td>
+              <td class="p-2 text-center">{summary.name}</td>
+              <td class="p-2 text-center">{summary.updated_at}</td>
+              <td class="p-2 text-center">{summary.version}</td>
+              <td class="p-2 text-center">{summary.versions}</td>
+              <td class="p-2">
+                <button class="btn text-sm flex flex-row gap-1 bg-primary-500 shadow shadow-hover border-black border-2 rounded-lg" onclick={() => navigateToCardPage(registryType, summary.space, summary.name, summary.version)}>
+                  <div class="text-black">Link</div>
+                </button>
+              </td>
+            </tr>
+          {/each}
+        </tbody>
           </table>
         </div>
     </div>
