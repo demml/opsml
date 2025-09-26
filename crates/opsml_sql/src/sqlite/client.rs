@@ -469,7 +469,7 @@ mod tests {
         // query stats
         let stats = client
             .card
-            .query_stats(&CardTable::Model, None, None)
+            .query_stats(&CardTable::Model, None, None, None)
             .await
             .unwrap();
 
@@ -480,7 +480,7 @@ mod tests {
         // query stats with search term
         let stats = client
             .card
-            .query_stats(&CardTable::Model, Some("Model1"), None)
+            .query_stats(&CardTable::Model, Some("Model1"), None, None)
             .await
             .unwrap();
 
@@ -488,11 +488,20 @@ mod tests {
 
         let stats = client
             .card
-            .query_stats(&CardTable::Model, Some("Model1"), Some("repo1"))
+            .query_stats(&CardTable::Model, Some("Model1"), Some("repo1"), None)
             .await
             .unwrap();
 
         assert_eq!(stats.nbr_names, 1); // for Model1
+
+        // query tags
+        let stats = client
+            .card
+            .query_stats(&CardTable::Model, None, None, Some("hello"))
+            .await
+            .unwrap();
+
+        assert_eq!(stats.nbr_names, 2); // for Model1
 
         cleanup();
     }
@@ -516,7 +525,7 @@ mod tests {
         // query page
         let results = client
             .card
-            .query_page("name", 1, None, None, &CardTable::Data)
+            .query_page("name", 1, None, None, None, &CardTable::Data)
             .await
             .unwrap();
 
@@ -525,7 +534,7 @@ mod tests {
         // query page
         let results = client
             .card
-            .query_page("name", 1, None, None, &CardTable::Model)
+            .query_page("name", 1, None, None, None, &CardTable::Model)
             .await
             .unwrap();
 
@@ -534,7 +543,7 @@ mod tests {
         // query page
         let results = client
             .card
-            .query_page("name", 1, None, Some("repo3"), &CardTable::Model)
+            .query_page("name", 1, None, Some("repo3"), None, &CardTable::Model)
             .await
             .unwrap();
 

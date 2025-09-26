@@ -599,14 +599,14 @@ impl CardLogicTrait for CardLogicPostgresClient {
         table: &CardTable,
         search_term: Option<&str>,
         space: Option<&str>,
+        tag: Option<&str>,
     ) -> Result<QueryStats, SqlError> {
-        let query = PostgresQueryHelper::get_query_stats_query(table);
+        let query = PostgresQueryHelper::get_query_stats_query(table, tag);
 
         // if search_term is not None, format with %search_term%, else None
         let stats: QueryStats = sqlx::query_as(&query)
             .bind(search_term.map(|term| format!("%{term}%")))
             .bind(space)
-            .bind(search_term.map(|t| format!(r#"["{}"]"#, t)))
             .fetch_one(&self.pool)
             .await?;
 
@@ -621,6 +621,7 @@ impl CardLogicTrait for CardLogicPostgresClient {
     /// * `page` - The page number
     /// * `search_term` - The search term to query
     /// * `space` - The space to query
+    /// * `tag` - The tag to filter by
     /// * `table` - The table to query
     ///
     /// # Returns
@@ -632,9 +633,10 @@ impl CardLogicTrait for CardLogicPostgresClient {
         page: i32,
         search_term: Option<&str>,
         space: Option<&str>,
+        tag: Option<&str>,
         table: &CardTable,
     ) -> Result<Vec<CardSummary>, SqlError> {
-        let query = PostgresQueryHelper::get_query_page_query(table, sort_by);
+        let query = PostgresQueryHelper::get_query_page_query(table, sort_by, tag);
 
         let lower_bound = (page * 30) - 30;
         let upper_bound = page * 30;
@@ -643,7 +645,6 @@ impl CardLogicTrait for CardLogicPostgresClient {
             .bind(space)
             .bind(search_term)
             .bind(search_term.map(|term| format!("%{term}%")))
-            .bind(search_term.map(|t| format!(r#"["{}"]"#, t)))
             .bind(lower_bound)
             .bind(upper_bound)
             .fetch_all(&self.pool)

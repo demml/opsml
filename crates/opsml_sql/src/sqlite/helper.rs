@@ -186,9 +186,9 @@ impl SqliteQueryHelper {
                 FROM {table}
                 WHERE (?1 IS NULL OR space = ?1)
                 AND (?2 IS NULL OR name LIKE ?3 OR space LIKE ?3)
-                AND (?2 IS NULL OR EXISTS (
+                AND (?4 IS NULL OR EXISTS (
                     SELECT 1 FROM json_each({table}.tags)
-                    WHERE json_each.value = ?2
+                    WHERE json_each.value = ?4
                 ))
             )"
         );
@@ -204,9 +204,9 @@ impl SqliteQueryHelper {
                 FROM {table}
                 WHERE (?1 IS NULL OR space = ?1)
                 AND (?2 IS NULL OR name LIKE ?3 OR space LIKE ?3)
-                AND (?2 IS NULL OR EXISTS (
+                AND (?4 IS NULL OR EXISTS (
                         SELECT 1 FROM json_each({table}.tags)
-                        WHERE json_each.value = ?2
+                        WHERE json_each.value = ?4
                 ))
                 GROUP BY space, name
             )"
@@ -250,7 +250,7 @@ impl SqliteQueryHelper {
             created_at,
             row_num
             FROM joined 
-            WHERE row_num > ?4 AND row_num <= ?5
+            WHERE row_num > ?5 AND row_num <= ?6
             ORDER BY updated_at DESC"
         );
 

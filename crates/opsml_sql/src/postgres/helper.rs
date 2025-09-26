@@ -220,7 +220,11 @@ impl PostgresQueryHelper {
         (query, bindings)
     }
 
-    pub fn get_query_page_query(table: &CardTable, sort_by: &str) -> String {
+    pub fn get_query_page_query(table: &CardTable, sort_by: &str, tag: Option<&str>) -> String {
+        let tag_filter = tag
+            .map(|t| format!(" AND ( tags @> '[\"{t}\"]'::jsonb )"))
+            .unwrap_or_default();
+
         let versions_cte = format!(
             "WITH versions AS (
                 SELECT 
@@ -231,8 +235,7 @@ impl PostgresQueryHelper {
                 FROM {table}
                 WHERE ($1 IS NULL OR space = $1)
                 AND ($2 IS NULL OR name LIKE $3 OR space LIKE $3)
-                AND ($4 IS NULL OR tags @> $4::jsonb)
-
+                {tag_filter}
             )"
         );
 
@@ -247,9 +250,9 @@ impl PostgresQueryHelper {
                 FROM {table}
                 WHERE ($1 IS NULL OR space = $1)
                 AND ($2 IS NULL OR name LIKE $3 OR space LIKE $3)
-                AND ($4 IS NULL OR tags @> $4::jsonb)
+                {tag_filter}
                 GROUP BY space, name
-            )"
+        )"
         );
 
         let filtered_versions_cte = ", filtered_versions AS (
@@ -282,7 +285,7 @@ impl PostgresQueryHelper {
         let combined_query = format!(
             "{versions_cte}{stats_cte}{filtered_versions_cte}{joined_cte}
             SELECT * FROM joined
-            WHERE row_num > $5 AND row_num <= $6
+            WHERE row_num > $4 AND row_num <= $5
             ORDER BY updated_at DESC"
         );
 
@@ -320,8 +323,8 @@ impl PostgresQueryHelper {
         query
     }
 
-    pub fn get_query_stats_query(table: &CardTable) -> String {
-        let base_query = format!(
+    pub fn get_query_stats_query(table: &CardTable, tag: Option<&str>) -> String {
+        let mut base_query = format!(
             "SELECT
             COALESCE(CAST(COUNT(DISTINCT name) AS INTEGER), 0) AS nbr_names, 
             COALESCE(CAST(COUNT(major) AS INTEGER), 0) AS nbr_versions, 
@@ -330,8 +333,13 @@ impl PostgresQueryHelper {
             WHERE 1=1
             AND ($1 IS NULL OR name LIKE $1 OR space LIKE $1)
             AND ($2 IS NULL OR name = $2 OR space = $2)
-            AND ($3 IS NULL OR tags @> $3::jsonb)"
+         "
         );
+        if let Some(tag) = tag {
+            base_query.push_str(&format!(
+                " AND tags @> '[\"{tag}\"]'::jsonb" // Using @> operator is more efficient than EXISTS
+            ));
+        }
 
         base_query
     }

@@ -624,6 +624,7 @@ impl CardLogicTrait for CardLogicMySqlClient {
         table: &CardTable,
         search_term: Option<&str>,
         space: Option<&str>,
+        tag: Option<&str>,
     ) -> Result<QueryStats, SqlError> {
         let query = MySqlQueryHelper::get_query_stats_query(table);
 
@@ -633,8 +634,8 @@ impl CardLogicTrait for CardLogicMySqlClient {
             .bind(search_term.map(|term| format!("%{term}%")))
             .bind(space)
             .bind(space)
-            .bind(search_term)
-            .bind(search_term)
+            .bind(tag)
+            .bind(tag)
             .fetch_one(&self.pool)
             .await?;
 
@@ -660,6 +661,7 @@ impl CardLogicTrait for CardLogicMySqlClient {
         page: i32,
         search_term: Option<&str>,
         space: Option<&str>,
+        tag: Option<&str>,
         table: &CardTable,
     ) -> Result<Vec<CardSummary>, SqlError> {
         let query = MySqlQueryHelper::get_query_page_query(table, sort_by);
@@ -673,15 +675,15 @@ impl CardLogicTrait for CardLogicMySqlClient {
             .bind(search_term) // 3rd ? in versions_cte
             .bind(search_term.map(|term| format!("%{term}%"))) // 4th ? in versions_cte
             .bind(search_term.map(|term| format!("%{term}%"))) // 5th ? in versions_cte
-            .bind(search_term) // 6th ? in versions_cte (tag)
-            .bind(search_term) // 7th ? in versions_cte (tag)
+            .bind(tag) // 6th ? in versions_cte (tag)
+            .bind(tag) // 7th ? in versions_cte (tag)
             .bind(space) // 1st ? in stats_cte
             .bind(space) // 2nd ? in stats_cte
             .bind(search_term) // 3rd ? in stats_cte
             .bind(search_term.map(|term| format!("%{term}%"))) // 4th ? in stats_cte
             .bind(search_term.map(|term| format!("%{term}%"))) // 5th ? in stats_cte
-            .bind(search_term) // 6th ? in stats_cte (tag)
-            .bind(search_term) // 7th ? in stats_cte (tag)
+            .bind(tag) // 6th ? in stats_cte (tag)
+            .bind(tag) // 7th ? in stats_cte (tag)
             .bind(lower_bound) // 1st ? in final SELECT
             .bind(upper_bound)
             .fetch_all(&self.pool)

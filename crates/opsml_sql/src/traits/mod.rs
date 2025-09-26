@@ -37,6 +37,7 @@ pub trait CardLogicTrait {
         table: &CardTable,
         search_term: Option<&str>,
         space: Option<&str>,
+        tag: Option<&str>,
     ) -> Result<QueryStats, SqlError>;
     async fn query_page(
         &self,
@@ -44,6 +45,7 @@ pub trait CardLogicTrait {
         page: i32,
         search_term: Option<&str>,
         space: Option<&str>,
+        tag: Option<&str>,
         table: &CardTable,
     ) -> Result<Vec<CardSummary>, SqlError>;
     async fn version_page(

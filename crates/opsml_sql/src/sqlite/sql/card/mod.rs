@@ -581,6 +581,7 @@ impl CardLogicTrait for CardLogicSqliteClient {
         table: &CardTable,
         search_term: Option<&str>,
         space: Option<&str>,
+        tag: Option<&str>,
     ) -> Result<QueryStats, SqlError> {
         let query = SqliteQueryHelper::get_query_stats_query(table);
 
@@ -588,7 +589,7 @@ impl CardLogicTrait for CardLogicSqliteClient {
         let stats: QueryStats = sqlx::query_as(&query)
             .bind(search_term.map(|term| format!("%{term}%")))
             .bind(space)
-            .bind(search_term)
+            .bind(tag)
             .fetch_one(&self.pool)
             .await?;
 
@@ -614,6 +615,7 @@ impl CardLogicTrait for CardLogicSqliteClient {
         page: i32,
         search_term: Option<&str>,
         space: Option<&str>,
+        tag: Option<&str>,
         table: &CardTable,
     ) -> Result<Vec<CardSummary>, SqlError> {
         let query = SqliteQueryHelper::get_query_page_query(table, sort_by);
@@ -625,6 +627,7 @@ impl CardLogicTrait for CardLogicSqliteClient {
             .bind(space)
             .bind(search_term)
             .bind(search_term.map(|term| format!("%{term}%")))
+            .bind(tag)
             .bind(lower_bound)
             .bind(upper_bound)
             .fetch_all(&self.pool)
