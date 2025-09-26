@@ -182,6 +182,7 @@ impl MySqlQueryHelper {
                 WHERE 1=1
                 AND (? IS NULL OR space = ?)
                 AND (? IS NULL OR name LIKE ? OR space LIKE ?)
+                AND (? IS NULL OR JSON_CONTAINS(tags, ?, '$'))
             )"
         );
 
@@ -197,6 +198,7 @@ impl MySqlQueryHelper {
                 WHERE 1=1
                 AND (? IS NULL OR space = ?)
                 AND (? IS NULL OR name LIKE ? OR space LIKE ?)
+                AND (? IS NULL OR JSON_CONTAINS(tags, ?, '$'))
                 GROUP BY space, name
             )"
         );
@@ -287,6 +289,7 @@ impl MySqlQueryHelper {
                 WHERE 1=1
                 AND (? IS NULL OR name LIKE ? OR space LIKE ?)
                 AND (? IS NULL OR space = ?)
+                AND (? IS NULL OR JSON_CONTAINS(tags, ?, '$'))
                 "
         );
 
