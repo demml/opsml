@@ -60,6 +60,7 @@ export interface QueryPageResponse {
 
 export interface RegistryPageReturn {
   spaces: string[];
+  tags: string[];
   registry_type: RegistryType;
   registryStats: RegistryStatsResponse;
   registryPage: QueryPageResponse;

@@ -93,14 +93,16 @@ export async function setupRegistryPage(
   space: string | undefined = undefined,
   name: string | undefined = undefined
 ): Promise<RegistryPageReturn> {
-  const [spaces, registryStats, registryPage] = await Promise.all([
+  const [spaces, tags, registryStats, registryPage] = await Promise.all([
     getSpaces(registry_type),
+    getTags(registry_type),
     getRegistryStats(registry_type, name, space),
     getRegistryPage(registry_type, undefined, space, name),
   ]);
 
   return {
     spaces: spaces.spaces,
+    tags: tags.tags,
     registry_type: registry_type,
     registryStats: registryStats,
     registryPage: registryPage,

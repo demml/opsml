@@ -65,7 +65,7 @@
       activeSpace = space;
     }
 
-    registryPage = await getRegistryPage(registryType, undefined, activeSpace, undefined, 1);
+    registryPage = await getRegistryPage(registryType, undefined, activeSpace, undefined, undefined, 1);
     registryStats = await getRegistryStats(registryType, activeSpace);
     currentPage = 1;
     totalPages = Math.ceil(registryStats.stats.nbr_names / 30);
@@ -73,14 +73,14 @@
 
 
   const searchPage = async function () {
-  registryPage = await getRegistryPage(registryType, undefined, activeSpace, artifactSearchQuery, 1);
+  registryPage = await getRegistryPage(registryType, undefined, activeSpace, artifactSearchQuery, undefined, 1);
   registryStats = await getRegistryStats(registryType, artifactSearchQuery, activeSpace);
   currentPage = 1;
   totalPages = Math.ceil(registryStats.stats.nbr_names / 30);
   }
 
   const changePage = async function (page: number) {
-    registryPage = await getRegistryPage(registryType, undefined, activeSpace, artifactSearchQuery, page);
+    registryPage = await getRegistryPage(registryType, undefined, activeSpace, artifactSearchQuery, undefined, page);
     registryStats = await getRegistryStats(registryType, artifactSearchQuery, activeSpace);
     currentPage = page;
   }
