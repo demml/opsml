@@ -447,6 +447,15 @@ mod tests {
 
         assert_eq!(repos.len(), 10);
 
+        // query tags
+        let repos = client
+            .card
+            .get_unique_tags(&CardTable::Model)
+            .await
+            .unwrap();
+
+        assert_eq!(repos.len(), 3);
+
         cleanup();
     }
 
@@ -503,6 +512,14 @@ mod tests {
 
         assert_eq!(stats.nbr_names, 2); // for Model1
 
+        let stats = client
+            .card
+            .query_stats(&CardTable::Model, None, None, Some("v3"))
+            .await
+            .unwrap();
+
+        assert_eq!(stats.nbr_names, 1);
+
         cleanup();
     }
 
@@ -548,6 +565,14 @@ mod tests {
             .unwrap();
 
         assert_eq!(results.len(), 1);
+
+        let results = client
+            .card
+            .query_page("name", 1, None, None, Some("hello"), &CardTable::Model)
+            .await
+            .unwrap();
+
+        assert_eq!(results.len(), 2);
 
         cleanup();
     }
