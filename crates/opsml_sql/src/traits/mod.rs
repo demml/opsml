@@ -66,6 +66,14 @@ pub trait CardLogicTrait {
         &self,
         query_args: &ServiceQueryArgs,
     ) -> Result<Vec<ServiceCardRecord>, SqlError>;
+
+    async fn get_unique_tags(&self, table: &CardTable) -> Result<Vec<String>, SqlError> {
+        match self {
+            SqlClientEnum::Postgres(client) => client.card.get_unique_tags(table).await,
+            SqlClientEnum::Sqlite(client) => client.card.get_unique_tags(table).await,
+            SqlClientEnum::MySql(client) => client.card.get_unique_tags(table).await,
+        }
+    }
 }
 
 #[async_trait]
