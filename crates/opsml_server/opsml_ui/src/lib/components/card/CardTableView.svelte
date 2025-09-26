@@ -3,9 +3,9 @@
   import { onMount } from "svelte";
   import { getRegistryPage, getRegistryStats, getBgColor } from "./utils";
   import type { RegistryPageReturn, RegistryStatsResponse, QueryPageResponse} from "$lib/components/card/types";
-  import  CardPage  from "$lib/components/card/CardPage.svelte";
   import  { RegistryType, delay, getRegistryTypeUpperCase } from "$lib/utils";
   import { ArrowLeft, ArrowRight, Search, Settings } from 'lucide-svelte';
+  import { Combobox } from "melt/builders";
   
   let { selectedSpace, page, selectedName, title } = $props<{
     selectedSpace: string | undefined;
@@ -20,7 +20,6 @@
   let searchQuery = $state('');
   let artifactSearchQuery = $state(selectedName || '');
   let activeSpace = $state<string | undefined>(selectedSpace);
-  let filteredSpaces = $state<string[]>([]);
   let availableSpaces = page.spaces;
 
   // registry-specific state
@@ -29,12 +28,27 @@
   let registryStats = $state<RegistryStatsResponse>(page.registryStats);
   let artifactTitle = $state<string>(`${getRegistryTypeUpperCase(title)} Artifacts`);
 
-  let viewToggle = $state<'grid' | 'table'>('grid');
+  type Option = (typeof availableSpaces)[string];
+  const spacesCombobox = new Combobox<Option>();
+  const tagsCombobox = new Combobox<Option>();
+
+  const filteredSpaces = $derived.by(() => {
+    if (!spacesCombobox.touched) return availableSpaces;
+    return availableSpaces.filter((o) =>
+      o.toLowerCase().includes(spacesCombobox.inputValue.trim().toLowerCase()),
+    );
+  });
+
+  const filteredTags = $derived.by(() => {
+    if (!tagsCombobox.touched) return availableSpaces;
+    return availableSpaces.filter((o) =>
+      o.toLowerCase().includes(tagsCombobox.inputValue.trim().toLowerCase()),
+    );
+  });
 
 
   onMount(() => {
   
-    filteredSpaces = page.spaces;
     totalPages = Math.ceil(registryStats.stats.nbr_names / 30);
 
   });
@@ -54,12 +68,6 @@
     totalPages = Math.ceil(registryStats.stats.nbr_names / 30);
   }
 
-  const searchSpaces = () => {	
-		return filteredSpaces = availableSpaces.filter((item: string) => {
-			let itemName = item.toLowerCase();
-			return itemName.includes(searchQuery!.toLowerCase())
-		})
-	}
 
   const searchPage = async function () {
   registryPage = await getRegistryPage(registryType, undefined, activeSpace, artifactSearchQuery, 1);
@@ -77,44 +85,51 @@
 </script>
 
 
-<div class="grid grid-cols-1 lg:grid-cols-6 gap-4 w-full">
+<div class="grid grid-cols-1 lg:grid-cols-5 gap-4">
   <!-- Left column -->
-  <div class="col-span-1 lg:col-span-2 p-4 flex flex-col rounded-base border-primary-500 border-2 shadow-primary bg-surface-50 min-h-[400px] h-fit">
+  <div class="col-span-1 lg:col-span-1 p-2 flex flex-col rounded-base border-primary-500 border-2 shadow-primary bg-surface-50">
     <!-- Top Section -->
-    <div class="mb-2">
-      <h2 class="font-bold text-primary-800 text-lg pb-3">Search Spaces</h2>
-      <div class="flex flex-row gap-1 items-center">
-        <div class="mr-1">
-          <Search color="#5948a3" />
-        </div>  
-        <input
-          class="input text-sm rounded-base bg-surface-50 text-black disabled:opacity-50 placeholder-surface-800 placeholder-text-sm focus-visible:ring-1 border-black border-2 h-1/3"
-          type="text"
-          bind:value={searchQuery}
-          placeholder="Search..."
-          oninput={searchSpaces}
-        />
+    <div class="mb-4 text-black flex flex-col items-center max-w-xs">
+      <div class="flex flex-col items-start">
+        <label {...spacesCombobox.label} class="text-primary-800 mb-1">Search Spaces</label>
+        <input {...spacesCombobox.input} class="bg-primary-500 text-black border-black border-2 rounded-lg"/>
+      </div>
+      <div {...spacesCombobox.content} class="bg-primary-500 text-black border-black border-2 rounded-lg max-h-60 overflow-auto px-1 py-1">
+        {#each filteredSpaces as option (option)}
+          <div {...spacesCombobox.getOption(option)} class="px-2 text-left border-2 border-transparent hover:border-black rounded-lg transition-colors text-black">
+            {option}
+            {#if spacesCombobox.isSelected(option)}
+              ✓
+            {/if}
+          </div>
+        {:else}
+          <span>No results found</span>
+        {/each}
       </div>
     </div>
 
-    <!-- Bottom Section -->
-    <div class="overflow-y-auto pt-2">
-      {#if searchQuery && filteredSpaces.length == 0}
-        <p class="text-black">No spaces found</p>
-      {:else if filteredSpaces.length > 0}
-        <div class="flex flex-wrap gap-2 my-2 mx-1">
-          {#each filteredSpaces as space}
-            {#if activeSpace === space}
-              <button class="chip text-sm text-black bg-primary-300 border-black border-1 reverse-shadow-small reverse-shadow-hover-small" 
-                onclick={() => setActiveRepo(space)}>{space}</button>
-            {:else}
-              <button class="chip text-sm text-black border-black border-1 shadow-small shadow-hover-small bg-surface-50" 
-                onclick={() => setActiveRepo(space)}>{space}</button>
+    <hr class="hr" />
+
+    <div class="mt-2 text-black flex flex-col items-center max-w-xs">
+      <div class="flex flex-col items-start">
+        <label {...tagsCombobox.label} class="text-primary-800 mb-1">Search Tags</label>
+        <input {...tagsCombobox.input} class="bg-primary-500 text-black border-black border-2 rounded-lg"/>
+      </div>
+      <div {...tagsCombobox.content} class="bg-primary-500 text-black border-black border-2 rounded-lg max-h-60 overflow-auto px-1 py-1">
+        {#each filteredTags as option (option)}
+          <div {...tagsCombobox.getOption(option)} class="px-2 text-left border-2 border-transparent hover:border-black rounded-lg transition-colors text-black">
+            {option}
+            {#if tagsCombobox.isSelected(option)}
+              ✓
             {/if}
-          {/each}
-        </div>
-      {/if}
+          </div>
+        {:else}
+          <span>No results found</span>
+        {/each}
+      </div>
     </div>
+
+
   </div>
 
   <!-- Right column -->
@@ -147,18 +162,41 @@
         />
       </div>
     </div>
-    <div class="pt-4 grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-2 justify-items-center">
-      {#each registryPage.summaries as summary}
-          <CardPage
-            space={summary.space}
-            name={summary.name}
-            version={summary.version}
-            nbr_versions={summary.versions}
-            updated_at={summary.updated_at}
-            registry={registryType}
-            bgColor={"bg-primary-400"}
-          />
-      {/each}
+
+    <div class="pt-4">
+        <div class="overflow-auto w-full">
+          <table class="text-black border-collapse text-sm bg-white w-full">
+            <thead class="sticky top-0 z-10 bg-white" style="box-shadow: 0 2px 0 0 #000;">
+              <tr>
+                <th class="p-3 font-heading pl-6 text-left text-black">
+                  <span class='px-2 py-1 rounded-full bg-primary-100 text-primary-800'>
+                    Space
+                  </span>
+                </th>
+                <th class="p-3 font-heading">
+                  <span class='px-2 py-1 rounded-full bg-primary-100 text-primary-800'>
+                    Name
+                  </span>
+                </th>
+                <th class="p-3 font-heading">
+                  <span class='px-2 py-1 rounded-full bg-primary-100 text-primary-800'>
+                    Last Updated
+                  </span>
+                </th>
+                <th class="p-3 font-heading">
+                  <span class='px-2 py-1 rounded-full bg-primary-100 text-primary-800'>
+                    Versions
+                  </span>
+                </th>
+                <th class="p-3 font-heading">
+                  <span class='px-2 py-1 rounded-full bg-primary-100 text-primary-800'>
+                    Link
+                  </span>
+                </th>
+              </tr>
+            </thead>
+          </table>
+        </div>
     </div>
 
     <div class="flex justify-center pt-4 gap-2">
