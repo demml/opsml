@@ -7,7 +7,6 @@ use crate::schemas::schema::{
     ModelCardRecord, PromptCardRecord, QueryStats, ServerCard, ServiceCardRecord, VersionResult,
     VersionSummary,
 };
-
 use crate::traits::CardLogicTrait;
 use async_trait::async_trait;
 use opsml_semver::VersionValidator;
@@ -17,6 +16,7 @@ use opsml_types::{
 };
 use semver::Version;
 use sqlx::{MySql, Pool};
+use std::collections::HashSet;
 
 #[derive(Debug, Clone)]
 pub struct CardLogicMySqlClient {
@@ -599,6 +599,24 @@ impl CardLogicTrait for CardLogicMySqlClient {
         let repos: Vec<String> = sqlx::query_scalar(&query).fetch_all(&self.pool).await?;
 
         Ok(repos)
+    }
+
+    async fn get_unique_tags(&self, table: &CardTable) -> Result<Vec<String>, SqlError> {
+        let query = format!(
+            r#"
+            SELECT DISTINCT jt.tag AS tag
+            FROM {table}
+            JOIN JSON_TABLE(
+                {table}.tags,
+                '$[*]' COLUMNS(tag VARCHAR(255) PATH '$')
+            ) AS jt
+            WHERE {table}.tags IS NOT NULL
+            "#
+        );
+        let rows: Vec<(String,)> = sqlx::query_as(&query).fetch_all(&self.pool).await?;
+
+        let unique_tags: HashSet<String> = rows.into_iter().map(|(tag,)| tag).collect();
+        Ok(unique_tags.into_iter().collect())
     }
 
     async fn query_stats(
