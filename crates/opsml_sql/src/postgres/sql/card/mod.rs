@@ -8,7 +8,6 @@ use crate::schemas::schema::{
     ModelCardRecord, PromptCardRecord, QueryStats, ServerCard, ServiceCardRecord, VersionResult,
     VersionSummary,
 };
-
 use crate::traits::CardLogicTrait;
 use async_trait::async_trait;
 use opsml_semver::VersionValidator;
@@ -18,6 +17,7 @@ use opsml_types::{
 };
 use semver::Version;
 use sqlx::{Pool, Postgres};
+use std::collections::HashSet;
 use tracing::debug;
 
 #[derive(Debug, Clone)]
@@ -577,6 +577,21 @@ impl CardLogicTrait for CardLogicPostgresClient {
         let repos: Vec<String> = sqlx::query_scalar(&query).fetch_all(&self.pool).await?;
 
         Ok(repos)
+    }
+
+    /// Helper for extracting the unique tags from a table
+    /// # Arguments
+    /// * `table` - The table to query
+    async fn get_unique_tags(&self, table: &CardTable) -> Result<Vec<String>, SqlError> {
+        // tags is stored and a nullable json<vec<string>>
+        let query = format!(
+            "SELECT DISTINCT jsonb_array_elements_text(tags::jsonb) AS tag FROM {table} WHERE tags IS NOT NULL"
+        );
+        let rows: Vec<(String,)> = sqlx::query_as(&query).fetch_all(&self.pool).await?;
+
+        let unique_tags: HashSet<String> = rows.into_iter().map(|(tag,)| tag).collect();
+
+        Ok(unique_tags.into_iter().collect())
     }
 
     async fn query_stats(

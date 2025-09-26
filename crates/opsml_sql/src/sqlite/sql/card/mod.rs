@@ -694,6 +694,9 @@ impl CardLogicTrait for CardLogicSqliteClient {
         Ok(repos)
     }
 
+    /// Helper for extracting the unique tags from a table
+    /// # Arguments
+    /// * `table` - The table to query
     async fn get_unique_tags(&self, table: &CardTable) -> Result<Vec<String>, SqlError> {
         // tags is stored and a nullable json<vec<string>>
         let rows: Vec<(String,)> = sqlx::query_as(&format!(
