@@ -626,7 +626,7 @@ impl CardLogicTrait for CardLogicMySqlClient {
         space: Option<&str>,
         tag: Option<&str>,
     ) -> Result<QueryStats, SqlError> {
-        let query = MySqlQueryHelper::get_query_stats_query(table);
+        let query = MySqlQueryHelper::get_query_stats_query(table, tag);
 
         let stats = sqlx::query_as(&query)
             .bind(search_term)
@@ -634,8 +634,6 @@ impl CardLogicTrait for CardLogicMySqlClient {
             .bind(search_term.map(|term| format!("%{term}%")))
             .bind(space)
             .bind(space)
-            .bind(tag)
-            .bind(tag)
             .fetch_one(&self.pool)
             .await?;
 
@@ -664,7 +662,7 @@ impl CardLogicTrait for CardLogicMySqlClient {
         tag: Option<&str>,
         table: &CardTable,
     ) -> Result<Vec<CardSummary>, SqlError> {
-        let query = MySqlQueryHelper::get_query_page_query(table, sort_by);
+        let query = MySqlQueryHelper::get_query_page_query(table, sort_by, tag);
 
         let lower_bound = (page * 30) - 30;
         let upper_bound = page * 30;
@@ -675,15 +673,11 @@ impl CardLogicTrait for CardLogicMySqlClient {
             .bind(search_term) // 3rd ? in versions_cte
             .bind(search_term.map(|term| format!("%{term}%"))) // 4th ? in versions_cte
             .bind(search_term.map(|term| format!("%{term}%"))) // 5th ? in versions_cte
-            .bind(tag) // 6th ? in versions_cte (tag)
-            .bind(tag) // 7th ? in versions_cte (tag)
             .bind(space) // 1st ? in stats_cte
             .bind(space) // 2nd ? in stats_cte
             .bind(search_term) // 3rd ? in stats_cte
             .bind(search_term.map(|term| format!("%{term}%"))) // 4th ? in stats_cte
             .bind(search_term.map(|term| format!("%{term}%"))) // 5th ? in stats_cte
-            .bind(tag) // 6th ? in stats_cte (tag)
-            .bind(tag) // 7th ? in stats_cte (tag)
             .bind(lower_bound) // 1st ? in final SELECT
             .bind(upper_bound)
             .fetch_all(&self.pool)

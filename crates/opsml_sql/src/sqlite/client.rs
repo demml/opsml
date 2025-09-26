@@ -501,7 +501,7 @@ mod tests {
             .await
             .unwrap();
 
-        assert_eq!(stats.nbr_names, 1); // for Model1
+        assert_eq!(stats.nbr_names, 1);
 
         // query tags
         let stats = client

@@ -170,7 +170,10 @@ impl MySqlQueryHelper {
         (query, bindings)
     }
 
-    pub fn get_query_page_query(table: &CardTable, sort_by: &str) -> String {
+    pub fn get_query_page_query(table: &CardTable, sort_by: &str, tag: Option<&str>) -> String {
+        let tag_filter = tag
+            .map(|t| format!("AND JSON_CONTAINS(tags, '\"{t}\"', '$')"))
+            .unwrap_or_default();
         let versions_cte = format!(
             "WITH versions AS (
                 SELECT 
@@ -182,7 +185,7 @@ impl MySqlQueryHelper {
                 WHERE 1=1
                 AND (? IS NULL OR space = ?)
                 AND (? IS NULL OR name LIKE ? OR space LIKE ?)
-                AND (? IS NULL OR JSON_CONTAINS(tags, ?, '$'))
+                {tag_filter}
             )"
         );
 
@@ -198,7 +201,7 @@ impl MySqlQueryHelper {
                 WHERE 1=1
                 AND (? IS NULL OR space = ?)
                 AND (? IS NULL OR name LIKE ? OR space LIKE ?)
-                AND (? IS NULL OR JSON_CONTAINS(tags, ?, '$'))
+                {tag_filter}
                 GROUP BY space, name
             )"
         );
@@ -279,7 +282,10 @@ impl MySqlQueryHelper {
         query
     }
 
-    pub fn get_query_stats_query(table: &CardTable) -> String {
+    pub fn get_query_stats_query(table: &CardTable, tag: Option<&str>) -> String {
+        let tag_filter = tag
+            .map(|t| format!("AND JSON_CONTAINS(tags, '\"{t}\"', '$')"))
+            .unwrap_or_default();
         let base_query = format!(
             "SELECT 
                     COALESCE(COUNT(DISTINCT name), 0) AS nbr_names, 
@@ -289,7 +295,7 @@ impl MySqlQueryHelper {
                 WHERE 1=1
                 AND (? IS NULL OR name LIKE ? OR space LIKE ?)
                 AND (? IS NULL OR space = ?)
-                AND (? IS NULL OR JSON_CONTAINS(tags, ?, '$'))
+                {tag_filter}
                 "
         );
 
