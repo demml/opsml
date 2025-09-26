@@ -694,6 +694,27 @@ impl CardLogicTrait for CardLogicSqliteClient {
         Ok(repos)
     }
 
+    async fn get_unique_tags(&self, table: &CardTable) -> Result<Vec<String>, SqlError> {
+        // tags is stored and a nullable json<vec<string>>
+        let rows: Vec<(String,)> = sqlx::query_as(&format!(
+            "SELECT DISTINCT tags FROM {table} WHERE tags IS NOT NULL"
+        ))
+        .fetch_all(&self.pool)
+        .await?;
+
+        // Convert each JSON string to Vec<String>
+        let tags_vec: Vec<Vec<String>> = rows
+            .into_iter()
+            .filter_map(|(json_str,)| serde_json::from_str(&json_str).ok())
+            .collect();
+
+        // Flatten the Vec<Vec<String>> into Vec<String> and collect unique tags
+        let unique_tags: std::collections::HashSet<String> =
+            tags_vec.into_iter().flatten().collect();
+
+        Ok(unique_tags.into_iter().collect())
+    }
+
     async fn get_card_key_for_loading(
         &self,
         table: &CardTable,
