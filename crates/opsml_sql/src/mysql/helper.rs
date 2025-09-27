@@ -170,7 +170,7 @@ impl MySqlQueryHelper {
         (query, bindings)
     }
 
-    pub fn get_query_page_query(table: &CardTable, sort_by: &str, tags: &[&str]) -> String {
+    pub fn get_query_page_query(table: &CardTable, sort_by: &str, tags: &Vec<String>) -> String {
         let tags_filter = if tags.is_empty() {
             "".to_string()
         } else {
@@ -289,7 +289,7 @@ impl MySqlQueryHelper {
         query
     }
 
-    pub fn get_query_stats_query(table: &CardTable, tags: &[&str]) -> String {
+    pub fn get_query_stats_query(table: &CardTable, tags: &Vec<String>) -> String {
         // search_term and space are the first two parameters
         let tags_filter = if tags.is_empty() {
             "".to_string()

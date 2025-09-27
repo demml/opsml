@@ -583,7 +583,7 @@ mod tests {
 
         let stats = client
             .card
-            .query_stats(&CardTable::Model, None, None, &vec!["hello"])
+            .query_stats(&CardTable::Model, None, None, &vec!["hello".to_string()])
             .await
             .unwrap();
 
@@ -591,7 +591,7 @@ mod tests {
 
         let stats = client
             .card
-            .query_stats(&CardTable::Model, None, None, &vec!["v3"])
+            .query_stats(&CardTable::Model, None, None, &vec!["v3".to_string()])
             .await
             .unwrap();
 
@@ -599,7 +599,12 @@ mod tests {
 
         let stats = client
             .card
-            .query_stats(&CardTable::Model, None, None, &vec!["v3", "hello"])
+            .query_stats(
+                &CardTable::Model,
+                None,
+                None,
+                &vec!["v3".to_string(), "hello".to_string()],
+            )
             .await
             .unwrap();
 
@@ -634,7 +639,14 @@ mod tests {
 
         let results = client
             .card
-            .query_page("name", 1, None, None, &vec!["hello"], &CardTable::Model)
+            .query_page(
+                "name",
+                1,
+                None,
+                None,
+                &vec!["hello".to_string()],
+                &CardTable::Model,
+            )
             .await
             .unwrap();
 
@@ -696,7 +708,14 @@ mod tests {
 
         let results = client
             .card
-            .query_page("name", 1, None, None, &vec!["hello"], &CardTable::Model)
+            .query_page(
+                "name",
+                1,
+                None,
+                None,
+                &vec!["hello".to_string()],
+                &CardTable::Model,
+            )
             .await
             .unwrap();
 

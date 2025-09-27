@@ -157,7 +157,7 @@ pub struct RegistryStatsRequest {
     pub registry_type: RegistryType,
     pub search_term: Option<String>,
     pub space: Option<String>,
-    pub tag: Option<String>,
+    pub tags: Vec<String>,
 }
 
 impl AuditableRequest for RegistryStatsRequest {
@@ -187,7 +187,7 @@ pub struct QueryPageRequest {
     pub sort_by: Option<String>,
     pub space: Option<String>,
     pub search_term: Option<String>,
-    pub tag: Option<String>,
+    pub tags: Vec<String>,
     pub page: Option<i32>,
 }
 

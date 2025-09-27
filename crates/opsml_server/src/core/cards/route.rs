@@ -182,7 +182,7 @@ pub async fn get_registry_stats(
             &table,
             params.search_term.as_deref(),
             params.space.as_deref(),
-            params.tag.as_deref(),
+            &params.tags,
         )
         .await
         .map_err(|e| {
@@ -208,7 +208,7 @@ pub async fn get_page(
             page,
             params.search_term.as_deref(),
             params.space.as_deref(),
-            params.tag.as_deref(),
+            &params.tags,
             &table,
         )
         .await

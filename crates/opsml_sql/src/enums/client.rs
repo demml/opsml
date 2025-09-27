@@ -94,25 +94,25 @@ impl CardLogicTrait for SqlClientEnum {
         table: &CardTable,
         search_term: Option<&str>,
         space: Option<&str>,
-        tag: Option<&str>,
+        tags: &Vec<String>,
     ) -> Result<QueryStats, SqlError> {
         match self {
             SqlClientEnum::Postgres(client) => {
                 client
                     .card
-                    .query_stats(table, search_term, space, tag)
+                    .query_stats(table, search_term, space, tags)
                     .await
             }
             SqlClientEnum::Sqlite(client) => {
                 client
                     .card
-                    .query_stats(table, search_term, space, tag)
+                    .query_stats(table, search_term, space, tags)
                     .await
             }
             SqlClientEnum::MySql(client) => {
                 client
                     .card
-                    .query_stats(table, search_term, space, tag)
+                    .query_stats(table, search_term, space, tags)
                     .await
             }
         }
@@ -124,26 +124,26 @@ impl CardLogicTrait for SqlClientEnum {
         page: i32,
         search_term: Option<&str>,
         space: Option<&str>,
-        tag: Option<&str>,
+        tags: &Vec<String>,
         table: &CardTable,
     ) -> Result<Vec<CardSummary>, SqlError> {
         match self {
             SqlClientEnum::Postgres(client) => {
                 client
                     .card
-                    .query_page(sort_by, page, search_term, space, tag, table)
+                    .query_page(sort_by, page, search_term, space, tags, table)
                     .await
             }
             SqlClientEnum::Sqlite(client) => {
                 client
                     .card
-                    .query_page(sort_by, page, search_term, space, tag, table)
+                    .query_page(sort_by, page, search_term, space, tags, table)
                     .await
             }
             SqlClientEnum::MySql(client) => {
                 client
                     .card
-                    .query_page(sort_by, page, search_term, space, tag, table)
+                    .query_page(sort_by, page, search_term, space, tags, table)
                     .await
             }
         }
@@ -1132,7 +1132,7 @@ mod tests {
         let client = get_client().await;
         // query stats
         let stats = client
-            .query_stats(&CardTable::Model, None, None, None)
+            .query_stats(&CardTable::Model, None, None, &vec![])
             .await
             .unwrap();
 
@@ -1142,7 +1142,7 @@ mod tests {
 
         // query stats with search term
         let stats = client
-            .query_stats(&CardTable::Model, Some("Model1"), None, None)
+            .query_stats(&CardTable::Model, Some("Model1"), None, &vec![])
             .await
             .unwrap();
 
@@ -1157,7 +1157,7 @@ mod tests {
 
         // query page
         let results = client
-            .query_page("name", 1, None, None, None, &CardTable::Data)
+            .query_page("name", 1, None, None, &vec![], &CardTable::Data)
             .await
             .unwrap();
 
@@ -1165,7 +1165,7 @@ mod tests {
 
         // query page
         let results = client
-            .query_page("name", 1, None, None, None, &CardTable::Model)
+            .query_page("name", 1, None, None, &vec![], &CardTable::Model)
             .await
             .unwrap();
 
@@ -1173,7 +1173,7 @@ mod tests {
 
         // query page
         let results = client
-            .query_page("name", 1, None, Some("repo3"), None, &CardTable::Model)
+            .query_page("name", 1, None, Some("repo3"), &vec![], &CardTable::Model)
             .await
             .unwrap();
 

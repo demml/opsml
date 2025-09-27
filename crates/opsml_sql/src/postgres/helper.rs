@@ -220,7 +220,7 @@ impl PostgresQueryHelper {
         (query, bindings)
     }
 
-    pub fn get_query_page_query(table: &CardTable, sort_by: &str, tags: &[&str]) -> String {
+    pub fn get_query_page_query(table: &CardTable, sort_by: &str, tags: &Vec<String>) -> String {
         let mut binding_index = 4; // Start from 4 because $1, $2, $3 are used for space, name, search
 
         let tag_filter = if !tags.is_empty() {
@@ -330,7 +330,7 @@ impl PostgresQueryHelper {
         query
     }
 
-    pub fn get_query_stats_query(table: &CardTable, tags: &[&str]) -> String {
+    pub fn get_query_stats_query(table: &CardTable, tags: &Vec<String>) -> String {
         let mut base_query = format!(
             "SELECT
         COALESCE(CAST(COUNT(DISTINCT name) AS INTEGER), 0) AS nbr_names, 

@@ -175,7 +175,7 @@ impl SqliteQueryHelper {
         (query, bindings)
     }
 
-    pub fn get_query_page_query(table: &CardTable, sort_by: &str, tags: &[&str]) -> String {
+    pub fn get_query_page_query(table: &CardTable, sort_by: &str, tags: &Vec<String>) -> String {
         let mut bindings_number = 4; // ?1 and ?2 are used for search_term and space
         let tags_filter = if tags.is_empty() {
             "".to_string()
@@ -297,7 +297,7 @@ impl SqliteQueryHelper {
         query
     }
 
-    pub fn get_query_stats_query(table: &CardTable, tags: &[&str]) -> String {
+    pub fn get_query_stats_query(table: &CardTable, tags: &Vec<String>) -> String {
         // if tags are provided, we need a OR condition for each tag
         let mut bindings_number = 3; // ?1 and ?2 are used for search_term and space
         let tags_filter = if tags.is_empty() {
@@ -394,12 +394,9 @@ impl SqliteQueryHelper {
                 }
                 let or_clause = or_conditions.join(" OR ");
 
-                query.push_str(
-                    format!(
-                        " AND EXISTS (SELECT 1 FROM json_each({table}.tags) WHERE {or_clause})"
-                    )
-                    .as_str(),
-                );
+                query.push_str(&format!(
+                    " AND EXISTS (SELECT 1 FROM json_each({table}.tags) WHERE {or_clause})"
+                ));
             }
 
             if query_args.sort_by_timestamp.unwrap_or(false) {
@@ -410,7 +407,7 @@ impl SqliteQueryHelper {
             }
         }
 
-        query.push_str(" LIMIT ?{bindings_number}");
+        query.push_str(&format!(" LIMIT ?{}", bindings_number));
 
         Ok(query)
     }

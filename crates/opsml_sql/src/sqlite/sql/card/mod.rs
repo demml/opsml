@@ -565,7 +565,7 @@ impl CardLogicTrait for CardLogicSqliteClient {
         table: &CardTable,
         search_term: Option<&str>,
         space: Option<&str>,
-        tags: &[&str],
+        tags: &Vec<String>,
     ) -> Result<QueryStats, SqlError> {
         let query = SqliteQueryHelper::get_query_stats_query(table, tags);
 
@@ -600,7 +600,7 @@ impl CardLogicTrait for CardLogicSqliteClient {
         page: i32,
         search_term: Option<&str>,
         space: Option<&str>,
-        tags: &[&str],
+        tags: &Vec<String>,
         table: &CardTable,
     ) -> Result<Vec<CardSummary>, SqlError> {
         let query = SqliteQueryHelper::get_query_page_query(table, sort_by, tags);

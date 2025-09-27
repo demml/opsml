@@ -581,7 +581,7 @@ impl CardLogicTrait for CardLogicPostgresClient {
         table: &CardTable,
         search_term: Option<&str>,
         space: Option<&str>,
-        tags: &[&str],
+        tags: &Vec<String>,
     ) -> Result<QueryStats, SqlError> {
         let query = PostgresQueryHelper::get_query_stats_query(table, tags);
 
@@ -616,7 +616,7 @@ impl CardLogicTrait for CardLogicPostgresClient {
         page: i32,
         search_term: Option<&str>,
         space: Option<&str>,
-        tags: &[&str],
+        tags: &Vec<String>,
         table: &CardTable,
     ) -> Result<Vec<CardSummary>, SqlError> {
         let query = PostgresQueryHelper::get_query_page_query(table, sort_by, tags);

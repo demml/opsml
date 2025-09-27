@@ -125,9 +125,7 @@ async fn test_opsml_server_card_stats_and_query() {
     /////////////////////// Test registry stats ///////////////////////
     let params = RegistryStatsRequest {
         registry_type: RegistryType::Model,
-        search_term: None,
-        space: None,
-        tag: None,
+        ..Default::default()
     };
 
     let query_string = serde_qs::to_string(&params).unwrap();
@@ -147,8 +145,7 @@ async fn test_opsml_server_card_stats_and_query() {
     let params = RegistryStatsRequest {
         registry_type: RegistryType::Model,
         search_term: Some("Model1".to_string()),
-        space: None,
-        tag: None,
+        ..Default::default()
     };
 
     let query_string = serde_qs::to_string(&params).unwrap();
@@ -169,11 +166,7 @@ async fn test_opsml_server_card_stats_and_query() {
 
     let args = QueryPageRequest {
         registry_type: RegistryType::Model,
-        sort_by: None,
-        space: None,
-        search_term: None,
-        tag: None,
-        page: None,
+        ..Default::default()
     };
 
     let query_string = serde_qs::to_string(&args).unwrap();
@@ -194,11 +187,8 @@ async fn test_opsml_server_card_stats_and_query() {
 
     let args = QueryPageRequest {
         registry_type: RegistryType::Model,
-        sort_by: None,
-        space: None,
         search_term: Some("Model2".to_string()),
-        tag: None,
-        page: None,
+        ..Default::default()
     };
 
     let query_string = serde_qs::to_string(&args).unwrap();
@@ -244,9 +234,8 @@ async fn test_opsml_server_card_stats_and_query() {
     // Query by tag
     let params = RegistryStatsRequest {
         registry_type: RegistryType::Model,
-        search_term: None,
-        space: None,
-        tag: Some("hello".to_string()),
+        tags: vec!["hello".to_string()],
+        ..Default::default()
     };
 
     let query_string = serde_qs::to_string(&params).unwrap();
@@ -265,11 +254,8 @@ async fn test_opsml_server_card_stats_and_query() {
 
     let args = QueryPageRequest {
         registry_type: RegistryType::Model,
-        sort_by: None,
-        space: None,
-        search_term: None,
-        tag: Some("hello".to_string()),
-        page: None,
+        tags: vec!["hello".to_string()],
+        ..Default::default()
     };
 
     let query_string = serde_qs::to_string(&args).unwrap();
