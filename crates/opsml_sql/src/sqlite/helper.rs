@@ -175,7 +175,18 @@ impl SqliteQueryHelper {
         (query, bindings)
     }
 
-    pub fn get_query_page_query(table: &CardTable, sort_by: &str) -> String {
+    pub fn get_query_page_query(table: &CardTable, sort_by: &str, tags: &[&str]) -> String {
+        let tags_filter = if tags.is_empty() {
+            "".to_string()
+        } else {
+            let or_conditions = tags
+                .iter()
+                .map(|tag| format!("value = '{}'", tag))
+                .collect::<Vec<_>>()
+                .join(" OR ");
+            format!(" AND EXISTS (SELECT 1 FROM json_each({table}.tags) WHERE {or_conditions})")
+        };
+
         let versions_cte = format!(
             "WITH versions AS (
                 SELECT 
@@ -186,10 +197,7 @@ impl SqliteQueryHelper {
                 FROM {table}
                 WHERE (?1 IS NULL OR space = ?1)
                 AND (?2 IS NULL OR name LIKE ?3 OR space LIKE ?3)
-                AND (?4 IS NULL OR EXISTS (
-                    SELECT 1 FROM json_each({table}.tags)
-                    WHERE json_each.value = ?4
-                ))
+                {tags_filter}
             )"
         );
 
@@ -204,10 +212,7 @@ impl SqliteQueryHelper {
                 FROM {table}
                 WHERE (?1 IS NULL OR space = ?1)
                 AND (?2 IS NULL OR name LIKE ?3 OR space LIKE ?3)
-                AND (?4 IS NULL OR EXISTS (
-                        SELECT 1 FROM json_each({table}.tags)
-                        WHERE json_each.value = ?4
-                ))
+                {tags_filter}
                 GROUP BY space, name
             )"
         );
@@ -250,7 +255,7 @@ impl SqliteQueryHelper {
             created_at,
             row_num
             FROM joined 
-            WHERE row_num > ?5 AND row_num <= ?6
+            WHERE row_num > ?5 AND row_num <= ?5
             ORDER BY updated_at DESC"
         );
 
@@ -288,7 +293,18 @@ impl SqliteQueryHelper {
         query
     }
 
-    pub fn get_query_stats_query(table: &CardTable) -> String {
+    pub fn get_query_stats_query(table: &CardTable, tags: &[&str]) -> String {
+        // if tags are provided, we need a OR condition for each tag
+        let tags_filter = if tags.is_empty() {
+            "".to_string()
+        } else {
+            let or_conditions = tags
+                .iter()
+                .map(|tag| format!("value = '{}'", tag))
+                .collect::<Vec<_>>()
+                .join(" OR ");
+            format!(" AND EXISTS (SELECT 1 FROM json_each({table}.tags) WHERE {or_conditions})")
+        };
         let base_query = format!(
             "SELECT 
                     COALESCE(COUNT(DISTINCT name), 0) AS nbr_names, 
@@ -298,10 +314,7 @@ impl SqliteQueryHelper {
                 WHERE 1=1
                 AND (?1 IS NULL OR name LIKE ?1 OR space LIKE ?1)
                 AND (?2 IS NULL OR space = ?2) 
-                AND (?3 IS NULL OR EXISTS (
-                        SELECT 1 FROM json_each({table}.tags)
-                        WHERE json_each.value = ?3
-                    ))
+                {tags_filter}
             "
         );
 
@@ -366,14 +379,19 @@ impl SqliteQueryHelper {
 
             if query_args.tags.is_some() {
                 let tags = query_args.tags.as_ref().unwrap();
-                for tag in tags.iter() {
-                    query.push_str(
-                        format!(
-                            " AND EXISTS (SELECT 1 FROM json_each(tags) WHERE value = '{tag}')"
-                        )
-                        .as_str(),
-                    );
-                }
+
+                let or_conditions = tags
+                    .iter()
+                    .map(|tag| format!("value = '{}'", tag))
+                    .collect::<Vec<_>>()
+                    .join(" OR ");
+
+                query.push_str(
+                    format!(
+                        " AND EXISTS (SELECT 1 FROM json_each({table}.tags) WHERE {or_conditions})"
+                    )
+                    .as_str(),
+                );
             }
 
             if query_args.sort_by_timestamp.unwrap_or(false) {
