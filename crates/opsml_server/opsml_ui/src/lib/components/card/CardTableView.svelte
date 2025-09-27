@@ -18,10 +18,17 @@
   let currentPage = $state(1);
   let totalPages = $state(1);
 
-  let searchQuery = $state('');
+
   let artifactSearchQuery = $state(selectedName || '');
   let activeSpace = $state<string | undefined>(selectedSpace);
+
+
   let availableSpaces = page.spaces;
+  let availableTags = page.tags;
+
+  let filteredSpaces: string[] | undefined = $state(undefined);
+  let filteredTags: string[] | undefined = $state(undefined);
+
 
   // registry-specific state
   let registryType = $state<RegistryType>(page.registry_type);
@@ -30,24 +37,14 @@
   let artifactTitle = $state<string>(`${getRegistryTypeUpperCase(title)} Artifacts`);
 
   type Option = (typeof availableSpaces)[string];
-  const spacesCombobox = new Combobox<Option>();
-  const tagsCombobox = new Combobox<Option>();
 
-  const filteredSpaces = $derived.by(() => {
-    if (!spacesCombobox.touched) return availableSpaces;
-      //@ts-ignore
-    return availableSpaces.filter((o) =>
-      o.toLowerCase().includes(spacesCombobox.inputValue.trim().toLowerCase()),
-    );
-  });
+  //@ts-ignore
+  const spacesCombobox = new Combobox<string>({ multiple: true });
 
-  const filteredTags = $derived.by(() => {
-    if (!tagsCombobox.touched) return availableSpaces;
-    //@ts-ignore
-    return availableSpaces.filter((o) =>
-      o.toLowerCase().includes(tagsCombobox.inputValue.trim().toLowerCase()),
-    );
-  });
+  //@ts-ignore
+  const tagsCombobox = new Combobox<string>({ multiple: true, onValueChange: onTagsChange });
+
+
 
 
   onMount(() => {
@@ -72,9 +69,28 @@
   }
 
 
+  let tagSearchTimeout: ReturnType<typeof setTimeout> | null = null;
+
+  
+  function onTagsChange() {
+    if (tagSearchTimeout) clearTimeout(tagSearchTimeout);
+    tagSearchTimeout = setTimeout(async () => {
+      // set filteredTags based on tagsCombobox.value
+      //@ts-ignore
+      // tagsCombobox.value is an object. Need to convert to array of strings
+      filteredTags = [...tagsCombobox.value] as string[];
+
+
+
+      // Call your searchPage function, passing selectedTags if needed
+      //await searchPage(selectedTags);
+    }, 100);
+  }
+
+
   const searchPage = async function () {
-  registryPage = await getRegistryPage(registryType, undefined, activeSpace, artifactSearchQuery, undefined, 1);
-  registryStats = await getRegistryStats(registryType, artifactSearchQuery, activeSpace);
+  registryPage = await getRegistryPage(registryType, undefined, activeSpace, artifactSearchQuery, filteredTags, 1);
+  registryStats = await getRegistryStats(registryType, artifactSearchQuery, activeSpace, filteredTags);
   currentPage = 1;
   totalPages = Math.ceil(registryStats.stats.nbr_names / 30);
   }
@@ -124,7 +140,7 @@
         <input {...spacesCombobox.input} class="space-input bg-primary-100 text-black border-black border-2 rounded-lg"/>
       </div>
       <div {...spacesCombobox.content} class="bg-primary-100 text-black border-black border-2 rounded-lg max-h-60 overflow-auto px-1 py-1">
-        {#each filteredSpaces as option (option)}
+        {#each availableSpaces as option (option)}
           <div {...spacesCombobox.getOption(option)} class="px-2 text-left border-2 border-transparent hover:border-black rounded-lg transition-colors text-black">
             {option}
             {#if spacesCombobox.isSelected(option)}
@@ -142,10 +158,13 @@
     <div class="my-2 text-black flex flex-col items-center max-w-xs">
       <div class="flex flex-col items-start">
         <label {...tagsCombobox.label} class="text-primary-800 mb-1">Search Tags</label>
-        <input {...tagsCombobox.input} class="tag-input bg-primary-100 text-black border-black border-2 rounded-lg"/>
+        <input 
+          {...tagsCombobox.input} 
+          class="tag-input bg-primary-100 text-black border-black border-2 rounded-lg"
+        />
       </div>
       <div {...tagsCombobox.content} class="bg-primary-100 text-black border-black border-2 rounded-lg max-h-60 overflow-auto px-1 py-1">
-        {#each filteredTags as option (option)}
+        {#each availableTags as option (option)}
           <div {...tagsCombobox.getOption(option)} class="px-2 text-left border-2 border-transparent hover:border-black rounded-lg transition-colors text-black">
             {option}
             {#if tagsCombobox.isSelected(option)}
@@ -154,6 +173,12 @@
           </div>
         {:else}
           <span>No results found</span>
+        {/each}
+      </div>
+      <!--Show filtered tags as pills-->
+      <div class="mt-2 flex flex-wrap gap-1 items-start">
+        {#each tagsCombobox.value as tag (tag)}
+          <span class="badge bg-primary-100 text-primary-800">{tag}</span>
         {/each}
       </div>
     </div>

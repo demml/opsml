@@ -46,13 +46,13 @@ export async function getRegistryStats(
   registry_type: RegistryType,
   searchTerm?: string,
   space?: string,
-  tag?: string
+  tags?: string[]
 ): Promise<RegistryStatsResponse> {
   let request: RegistryStatsRequest = {
     registry_type: registry_type,
     search_term: searchTerm,
     space: space,
-    tag: tag,
+    tags: tags,
   };
 
   const response = await opsmlClient.get(
@@ -68,7 +68,7 @@ export async function getRegistryPage(
   sort_by?: string,
   space?: string,
   searchTerm?: string,
-  tag?: string,
+  tags?: string[],
   page?: number
 ): Promise<QueryPageResponse> {
   let params: QueryPageRequest = {
@@ -76,7 +76,7 @@ export async function getRegistryPage(
     sort_by: sort_by,
     space: space,
     search_term: searchTerm,
-    tag: tag,
+    tags: tag,
     page: page,
   };
 
