@@ -170,10 +170,17 @@ impl MySqlQueryHelper {
         (query, bindings)
     }
 
-    pub fn get_query_page_query(table: &CardTable, sort_by: &str, tag: Option<&str>) -> String {
-        let tag_filter = tag
-            .map(|t| format!("AND JSON_CONTAINS(tags, '\"{t}\"', '$')"))
-            .unwrap_or_default();
+    pub fn get_query_page_query(table: &CardTable, sort_by: &str, tags: &[&str]) -> String {
+        let tags_filter = if tags.is_empty() {
+            "".to_string()
+        } else {
+            let or_conditions = tags
+                .iter()
+                .map(|_| "JSON_CONTAINS(tags, ?, '$')".to_string())
+                .collect::<Vec<_>>()
+                .join(" OR ");
+            format!(" AND ({or_conditions})")
+        };
         let versions_cte = format!(
             "WITH versions AS (
                 SELECT 
@@ -185,7 +192,7 @@ impl MySqlQueryHelper {
                 WHERE 1=1
                 AND (? IS NULL OR space = ?)
                 AND (? IS NULL OR name LIKE ? OR space LIKE ?)
-                {tag_filter}
+                {tags_filter}
             )"
         );
 
@@ -201,7 +208,7 @@ impl MySqlQueryHelper {
                 WHERE 1=1
                 AND (? IS NULL OR space = ?)
                 AND (? IS NULL OR name LIKE ? OR space LIKE ?)
-                {tag_filter}
+                {tags_filter}
                 GROUP BY space, name
             )"
         );
@@ -282,21 +289,29 @@ impl MySqlQueryHelper {
         query
     }
 
-    pub fn get_query_stats_query(table: &CardTable, tag: Option<&str>) -> String {
-        let tag_filter = tag
-            .map(|t| format!("AND JSON_CONTAINS(tags, '\"{t}\"', '$')"))
-            .unwrap_or_default();
+    pub fn get_query_stats_query(table: &CardTable, tags: &[&str]) -> String {
+        // search_term and space are the first two parameters
+        let tags_filter = if tags.is_empty() {
+            "".to_string()
+        } else {
+            let or_conditions = tags
+                .iter()
+                .map(|_| "JSON_CONTAINS(tags, ?, '$')".to_string())
+                .collect::<Vec<_>>()
+                .join(" OR ");
+            format!(" AND ({or_conditions})")
+        };
         let base_query = format!(
             "SELECT 
-                    COALESCE(COUNT(DISTINCT name), 0) AS nbr_names, 
-                    COALESCE(COUNT(major), 0) AS nbr_versions, 
-                    COALESCE(COUNT(DISTINCT space), 0) AS nbr_spaces
-                FROM {table}
-                WHERE 1=1
-                AND (? IS NULL OR name LIKE ? OR space LIKE ?)
-                AND (? IS NULL OR space = ?)
-                {tag_filter}
-                "
+            COALESCE(COUNT(DISTINCT name), 0) AS nbr_names, 
+            COALESCE(COUNT(major), 0) AS nbr_versions, 
+            COALESCE(COUNT(DISTINCT space), 0) AS nbr_spaces
+        FROM {table}
+        WHERE 1=1
+        AND (? IS NULL OR name LIKE ? OR space LIKE ?)
+        AND (? IS NULL OR space = ?)
+        {tags_filter}
+        "
         );
 
         base_query
@@ -358,11 +373,14 @@ impl MySqlQueryHelper {
                 add_version_bounds(&mut query, query_args.version.as_ref().unwrap())?;
             }
 
-            if query_args.tags.is_some() {
-                let tags = query_args.tags.as_ref().unwrap();
-                for tag in tags.iter() {
-                    query.push_str(format!(" AND JSON_CONTAINS(tags, '\"{tag}\"', '$')").as_str());
-                }
+            if let Some(tags) = &query_args.tags {
+                let or_conditions = tags
+                    .iter()
+                    .map(|_| "JSON_CONTAINS(tags, ?, '$')".to_string())
+                    .collect::<Vec<_>>()
+                    .join(" OR ");
+                let tags_filter = format!(" AND ({or_conditions})");
+                query.push_str(&tags_filter);
             }
 
             if query_args.sort_by_timestamp.unwrap_or(false) {

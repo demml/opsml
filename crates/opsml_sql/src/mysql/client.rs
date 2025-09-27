@@ -550,24 +550,24 @@ mod tests {
         let client = db_client().await;
 
         // Run the SQL script to populate the database
-        let script = std::fs::read_to_string("tests/populate_mysql_test.sql").unwrap();
+        let script = std::fs::read_to_string("tests/populate_postgres_test.sql").unwrap();
         sqlx::raw_sql(&script).execute(&client.pool).await.unwrap();
 
         // query stats
         let stats = client
             .card
-            .query_stats(&CardTable::Model, None, None, None)
+            .query_stats(&CardTable::Model, None, None, &vec![])
             .await
             .unwrap();
 
-        assert_eq!(stats.nbr_names, 10);
-        assert_eq!(stats.nbr_versions, 10);
-        assert_eq!(stats.nbr_spaces, 10);
+        assert_eq!(stats.nbr_names, 9);
+        assert_eq!(stats.nbr_versions, 9);
+        assert_eq!(stats.nbr_spaces, 9);
 
         // query stats with search term
         let stats = client
             .card
-            .query_stats(&CardTable::Model, Some("Model1"), None, None)
+            .query_stats(&CardTable::Model, Some("Model1"), None, &vec![])
             .await
             .unwrap();
 
@@ -575,7 +575,7 @@ mod tests {
 
         let stats = client
             .card
-            .query_stats(&CardTable::Model, Some("Model1"), Some("repo1"), None)
+            .query_stats(&CardTable::Model, Some("Model1"), Some("repo1"), &vec![])
             .await
             .unwrap();
 
@@ -583,7 +583,7 @@ mod tests {
 
         let stats = client
             .card
-            .query_stats(&CardTable::Model, None, None, Some("hello"))
+            .query_stats(&CardTable::Model, None, None, &vec!["hello"])
             .await
             .unwrap();
 
@@ -591,11 +591,54 @@ mod tests {
 
         let stats = client
             .card
-            .query_stats(&CardTable::Model, None, None, Some("v3"))
+            .query_stats(&CardTable::Model, None, None, &vec!["v3"])
             .await
             .unwrap();
 
         assert_eq!(stats.nbr_names, 1);
+
+        let stats = client
+            .card
+            .query_stats(&CardTable::Model, None, None, &vec!["v3", "hello"])
+            .await
+            .unwrap();
+
+        assert_eq!(stats.nbr_names, 3);
+
+        // query page
+        let results = client
+            .card
+            .query_page("name", 1, None, None, &vec![], &CardTable::Data)
+            .await
+            .unwrap();
+
+        assert_eq!(results.len(), 1);
+
+        // query page
+        let results = client
+            .card
+            .query_page("name", 1, None, None, &vec![], &CardTable::Model)
+            .await
+            .unwrap();
+
+        assert_eq!(results.len(), 9);
+
+        // query page
+        let results = client
+            .card
+            .query_page("name", 1, None, Some("repo4"), &vec![], &CardTable::Model)
+            .await
+            .unwrap();
+
+        assert_eq!(results.len(), 1);
+
+        let results = client
+            .card
+            .query_page("name", 1, None, None, &vec!["hello"], &CardTable::Model)
+            .await
+            .unwrap();
+
+        assert_eq!(results.len(), 2);
     }
 
     #[tokio::test]
@@ -627,7 +670,7 @@ mod tests {
         // query page
         let results = client
             .card
-            .query_page("name", 1, None, None, None, &CardTable::Data)
+            .query_page("name", 1, None, None, &vec![], &CardTable::Data)
             .await
             .unwrap();
 
@@ -636,7 +679,7 @@ mod tests {
         // query page
         let results = client
             .card
-            .query_page("name", 1, None, None, None, &CardTable::Model)
+            .query_page("name", 1, None, None, &vec![], &CardTable::Model)
             .await
             .unwrap();
 
@@ -645,7 +688,7 @@ mod tests {
         // query page
         let results = client
             .card
-            .query_page("name", 1, None, Some("repo4"), None, &CardTable::Model)
+            .query_page("name", 1, None, Some("repo4"), &vec![], &CardTable::Model)
             .await
             .unwrap();
 
@@ -653,7 +696,7 @@ mod tests {
 
         let results = client
             .card
-            .query_page("name", 1, None, None, Some("hello"), &CardTable::Model)
+            .query_page("name", 1, None, None, &vec!["hello"], &CardTable::Model)
             .await
             .unwrap();
 
