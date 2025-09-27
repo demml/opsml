@@ -176,15 +176,17 @@ impl SqliteQueryHelper {
     }
 
     pub fn get_query_page_query(table: &CardTable, sort_by: &str, tags: &[&str]) -> String {
+        let mut bindings_number = 4; // ?1 and ?2 are used for search_term and space
         let tags_filter = if tags.is_empty() {
             "".to_string()
         } else {
-            let or_conditions = tags
-                .iter()
-                .map(|tag| format!("value = '{}'", tag))
-                .collect::<Vec<_>>()
-                .join(" OR ");
-            format!(" AND EXISTS (SELECT 1 FROM json_each({table}.tags) WHERE {or_conditions})")
+            let mut or_conditions = Vec::new();
+            for _ in tags {
+                or_conditions.push(format!("value = ?{}", bindings_number));
+                bindings_number += 1;
+            }
+            let or_clause = or_conditions.join(" OR ");
+            format!(" AND EXISTS (SELECT 1 FROM json_each({table}.tags) WHERE {or_clause})")
         };
 
         let versions_cte = format!(
@@ -245,7 +247,7 @@ impl SqliteQueryHelper {
         );
 
         let combined_query = format!(
-            "{versions_cte}{stats_cte}{filtered_versions_cte}{joined_cte} 
+            "{versions_cte}{stats_cte}{filtered_versions_cte}{joined_cte}
             SELECT
             space,
             name,
@@ -255,8 +257,10 @@ impl SqliteQueryHelper {
             created_at,
             row_num
             FROM joined 
-            WHERE row_num > ?5 AND row_num <= ?5
-            ORDER BY updated_at DESC"
+            WHERE row_num > ?{bindings_number} AND row_num <= ?{bindings_number_plus_1}
+            ORDER BY updated_at DESC",
+            bindings_number = bindings_number,
+            bindings_number_plus_1 = bindings_number + 1
         );
 
         combined_query
@@ -295,15 +299,17 @@ impl SqliteQueryHelper {
 
     pub fn get_query_stats_query(table: &CardTable, tags: &[&str]) -> String {
         // if tags are provided, we need a OR condition for each tag
+        let mut bindings_number = 3; // ?1 and ?2 are used for search_term and space
         let tags_filter = if tags.is_empty() {
             "".to_string()
         } else {
-            let or_conditions = tags
-                .iter()
-                .map(|tag| format!("value = '{}'", tag))
-                .collect::<Vec<_>>()
-                .join(" OR ");
-            format!(" AND EXISTS (SELECT 1 FROM json_each({table}.tags) WHERE {or_conditions})")
+            let mut or_conditions = Vec::new();
+            for _ in tags {
+                or_conditions.push(format!("value = ?{}", bindings_number));
+                bindings_number += 1;
+            }
+            let or_clause = or_conditions.join(" OR ");
+            format!(" AND EXISTS (SELECT 1 FROM json_each({table}.tags) WHERE {or_clause})")
         };
         let base_query = format!(
             "SELECT 
@@ -355,6 +361,7 @@ impl SqliteQueryHelper {
         table: &CardTable,
         query_args: &CardQueryArgs,
     ) -> Result<String, SqlError> {
+        let mut bindings_number = 5;
         let mut query = format!(
             "
         SELECT * FROM {table}
@@ -380,15 +387,16 @@ impl SqliteQueryHelper {
             if query_args.tags.is_some() {
                 let tags = query_args.tags.as_ref().unwrap();
 
-                let or_conditions = tags
-                    .iter()
-                    .map(|tag| format!("value = '{}'", tag))
-                    .collect::<Vec<_>>()
-                    .join(" OR ");
+                let mut or_conditions = Vec::new();
+                for _ in tags {
+                    or_conditions.push(format!("value = ?{}", bindings_number));
+                    bindings_number += 1;
+                }
+                let or_clause = or_conditions.join(" OR ");
 
                 query.push_str(
                     format!(
-                        " AND EXISTS (SELECT 1 FROM json_each({table}.tags) WHERE {or_conditions})"
+                        " AND EXISTS (SELECT 1 FROM json_each({table}.tags) WHERE {or_clause})"
                     )
                     .as_str(),
                 );
@@ -402,7 +410,7 @@ impl SqliteQueryHelper {
             }
         }
 
-        query.push_str(" LIMIT ?5");
+        query.push_str(" LIMIT ?{bindings_number}");
 
         Ok(query)
     }

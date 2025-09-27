@@ -20,6 +20,32 @@ use semver::Version;
 use sqlx::{Pool, Sqlite};
 use tracing::{debug, error};
 
+/// Generic function to query cards from the database
+async fn query_cards_generic<T>(
+    pool: &sqlx::Pool<Sqlite>,
+    query: &str,
+    query_args: &CardQueryArgs,
+    default_limit: i32,
+) -> Result<Vec<T>, SqlError>
+where
+    T: for<'r> sqlx::FromRow<'r, sqlx::sqlite::SqliteRow> + Send + Unpin,
+{
+    let mut query_builder = sqlx::query_as::<_, T>(query)
+        .bind(query_args.uid.as_ref())
+        .bind(query_args.space.as_ref())
+        .bind(query_args.name.as_ref())
+        .bind(query_args.max_date.as_ref());
+
+    if let Some(tags) = &query_args.tags {
+        for tag in tags {
+            query_builder = query_builder.bind(tag);
+        }
+    }
+    query_builder = query_builder.bind(query_args.limit.unwrap_or(default_limit));
+    let records = query_builder.fetch_all(pool).await?;
+    Ok(records)
+}
+
 #[derive(Debug, Clone)]
 pub struct CardLogicSqliteClient {
     pool: sqlx::Pool<Sqlite>,
@@ -109,84 +135,42 @@ impl CardLogicTrait for CardLogicSqliteClient {
 
         match table {
             CardTable::Data => {
-                let card: Vec<DataCardRecord> = sqlx::query_as(&query)
-                    .bind(query_args.uid.as_ref())
-                    .bind(query_args.space.as_ref())
-                    .bind(query_args.name.as_ref())
-                    .bind(query_args.max_date.as_ref())
-                    .bind(query_args.limit.unwrap_or(50))
-                    .fetch_all(&self.pool)
-                    .await?;
-
-                return Ok(CardResults::Data(card));
+                let cards =
+                    query_cards_generic::<DataCardRecord>(&self.pool, &query, query_args, 50)
+                        .await?;
+                Ok(CardResults::Data(cards))
             }
             CardTable::Model => {
-                let card: Vec<ModelCardRecord> = sqlx::query_as(&query)
-                    .bind(query_args.uid.as_ref())
-                    .bind(query_args.space.as_ref())
-                    .bind(query_args.name.as_ref())
-                    .bind(query_args.max_date.as_ref())
-                    .bind(query_args.limit.unwrap_or(50))
-                    .fetch_all(&self.pool)
-                    .await?;
-
-                return Ok(CardResults::Model(card));
+                let cards =
+                    query_cards_generic::<ModelCardRecord>(&self.pool, &query, query_args, 50)
+                        .await?;
+                Ok(CardResults::Model(cards))
             }
             CardTable::Experiment => {
-                let card: Vec<ExperimentCardRecord> = sqlx::query_as(&query)
-                    .bind(query_args.uid.as_ref())
-                    .bind(query_args.space.as_ref())
-                    .bind(query_args.name.as_ref())
-                    .bind(query_args.max_date.as_ref())
-                    .bind(query_args.limit.unwrap_or(50))
-                    .fetch_all(&self.pool)
-                    .await?;
-
-                return Ok(CardResults::Experiment(card));
+                let cards =
+                    query_cards_generic::<ExperimentCardRecord>(&self.pool, &query, query_args, 50)
+                        .await?;
+                Ok(CardResults::Experiment(cards))
             }
-
             CardTable::Audit => {
-                let card: Vec<AuditCardRecord> = sqlx::query_as(&query)
-                    .bind(query_args.uid.as_ref())
-                    .bind(query_args.space.as_ref())
-                    .bind(query_args.name.as_ref())
-                    .bind(query_args.max_date.as_ref())
-                    .bind(query_args.limit.unwrap_or(50))
-                    .fetch_all(&self.pool)
-                    .await?;
-
-                return Ok(CardResults::Audit(card));
+                let cards =
+                    query_cards_generic::<AuditCardRecord>(&self.pool, &query, query_args, 50)
+                        .await?;
+                Ok(CardResults::Audit(cards))
             }
-
             CardTable::Prompt => {
-                let card: Vec<PromptCardRecord> = sqlx::query_as(&query)
-                    .bind(query_args.uid.as_ref())
-                    .bind(query_args.space.as_ref())
-                    .bind(query_args.name.as_ref())
-                    .bind(query_args.max_date.as_ref())
-                    .bind(query_args.limit.unwrap_or(50))
-                    .fetch_all(&self.pool)
-                    .await?;
-
-                return Ok(CardResults::Prompt(card));
+                let cards =
+                    query_cards_generic::<PromptCardRecord>(&self.pool, &query, query_args, 50)
+                        .await?;
+                Ok(CardResults::Prompt(cards))
             }
-
             CardTable::Service | CardTable::Mcp => {
-                let card: Vec<ServiceCardRecord> = sqlx::query_as(&query)
-                    .bind(query_args.uid.as_ref())
-                    .bind(query_args.space.as_ref())
-                    .bind(query_args.name.as_ref())
-                    .bind(query_args.max_date.as_ref())
-                    .bind(query_args.limit.unwrap_or(1000))
-                    .fetch_all(&self.pool)
-                    .await?;
-
-                return Ok(CardResults::Service(card));
+                let cards =
+                    query_cards_generic::<ServiceCardRecord>(&self.pool, &query, query_args, 1000)
+                        .await?;
+                Ok(CardResults::Service(cards))
             }
-
-            _ => {
-                return Err(SqlError::InvalidTableName);
-            }
+            _ => Err(SqlError::InvalidTableName),
         }
     }
 
@@ -585,13 +569,15 @@ impl CardLogicTrait for CardLogicSqliteClient {
     ) -> Result<QueryStats, SqlError> {
         let query = SqliteQueryHelper::get_query_stats_query(table, tags);
 
-        // if search_term is not None, format with %search_term%, else None
-        let stats: QueryStats = sqlx::query_as(&query)
+        let mut query_builder = sqlx::query_as::<_, QueryStats>(&query)
             .bind(search_term.map(|term| format!("%{term}%")))
-            .bind(space)
-            .fetch_one(&self.pool)
-            .await?;
+            .bind(space);
 
+        for tag in tags {
+            query_builder = query_builder.bind(tag);
+        }
+
+        let stats = query_builder.fetch_one(&self.pool).await?;
         Ok(stats)
     }
 
@@ -622,15 +608,19 @@ impl CardLogicTrait for CardLogicSqliteClient {
         let lower_bound = (page * 30) - 30;
         let upper_bound = page * 30;
 
-        let records: Vec<CardSummary> = sqlx::query_as(&query)
+        let mut query_builder = sqlx::query_as::<_, CardSummary>(&query)
             .bind(space)
             .bind(search_term)
-            .bind(search_term.map(|term| format!("%{term}%")))
-            .bind(lower_bound)
-            .bind(upper_bound)
-            .fetch_all(&self.pool)
-            .await?;
+            .bind(search_term.map(|term| format!("%{term}%")));
 
+        // need to bind tags here
+        for tag in tags {
+            query_builder = query_builder.bind(tag);
+        }
+
+        query_builder = query_builder.bind(lower_bound).bind(upper_bound);
+
+        let records = query_builder.fetch_all(&self.pool).await?;
         Ok(records)
     }
 
