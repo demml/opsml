@@ -615,6 +615,23 @@ mod tests {
 
         assert_eq!(stats.nbr_names, 3);
 
+        let stats = client
+            .card
+            .query_stats(
+                &CardTable::Model,
+                None,
+                &vec![
+                    "repo1".to_string(),
+                    "repo2".to_string(),
+                    "repo3".to_string(),
+                ],
+                &vec![],
+            )
+            .await
+            .unwrap();
+
+        assert_eq!(stats.nbr_names, 3);
+
         // query page
         let results = client
             .card
@@ -663,6 +680,25 @@ mod tests {
             .unwrap();
 
         assert_eq!(results.len(), 2);
+
+        let results = client
+            .card
+            .query_page(
+                "name",
+                1,
+                None,
+                &vec![
+                    "repo1".to_string(),
+                    "repo2".to_string(),
+                    "repo3".to_string(),
+                ],
+                &vec![],
+                &CardTable::Model,
+            )
+            .await
+            .unwrap();
+
+        assert_eq!(results.len(), 3)
     }
 
     #[tokio::test]
