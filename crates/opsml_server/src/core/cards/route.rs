@@ -181,7 +181,7 @@ pub async fn retrieve_registry_stats(
         .query_stats(
             &table,
             params.search_term.as_deref(),
-            params.space.as_deref(),
+            &params.spaces,
             &params.tags,
         )
         .await
@@ -207,7 +207,7 @@ pub async fn retrieve_page(
             sort_by,
             page,
             params.search_term.as_deref(),
-            params.space.as_deref(),
+            &params.spaces,
             &params.tags,
             &table,
         )
