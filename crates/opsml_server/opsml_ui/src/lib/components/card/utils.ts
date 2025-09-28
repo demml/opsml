@@ -66,7 +66,7 @@ export async function getRegistryStats(
 export async function getRegistryPage(
   registry_type: RegistryType,
   sort_by?: string,
-  space?: string,
+  spaces?: string[],
   searchTerm?: string,
   tags?: string[],
   page?: number
@@ -74,7 +74,7 @@ export async function getRegistryPage(
   let request: QueryPageRequest = {
     registry_type: registry_type,
     sort_by: sort_by,
-    space: space,
+    space: spaces,
     search_term: searchTerm,
     tags: tags,
     page: page,

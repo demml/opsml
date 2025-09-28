@@ -3,13 +3,13 @@ import type { RegistryType } from "$lib/utils";
 export interface RegistryStatsRequest {
   registry_type: RegistryType;
   search_term?: string;
-  space?: string;
+  spaces?: string[];
   tags?: string[];
 }
 export interface QueryPageRequest {
   registry_type: RegistryType;
   sort_by?: string;
-  space?: string;
+  spaces?: string[];
   search_term?: string;
   tags?: string[];
   page?: number;
