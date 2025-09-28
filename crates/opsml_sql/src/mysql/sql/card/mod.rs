@@ -587,21 +587,24 @@ impl CardLogicTrait for CardLogicMySqlClient {
         &self,
         table: &CardTable,
         search_term: Option<&str>,
-        space: Option<&str>,
-        tags: &Vec<String>,
+        spaces: &[String],
+        tags: &[String],
     ) -> Result<QueryStats, SqlError> {
-        let query = MySqlQueryHelper::get_query_stats_query(table, tags);
+        let query = MySqlQueryHelper::get_query_stats_query(table, spaces, tags);
 
         let mut stats_query = sqlx::query_as(&query)
             .bind(search_term)
             .bind(search_term.map(|term| format!("%{term}%")))
-            .bind(search_term.map(|term| format!("%{term}%")))
-            .bind(space)
-            .bind(space);
+            .bind(search_term.map(|term| format!("%{term}%")));
+
+        for space in spaces {
+            stats_query = stats_query.bind(space);
+        }
 
         for tag in tags {
             stats_query = stats_query.bind(format!("\"{}\"", tag));
         }
+
         let stats = stats_query.fetch_one(&self.pool).await?;
         Ok(stats)
     }
@@ -624,22 +627,24 @@ impl CardLogicTrait for CardLogicMySqlClient {
         sort_by: &str,
         page: i32,
         search_term: Option<&str>,
-        space: Option<&str>,
-        tags: &Vec<String>,
+        spaces: &[String],
+        tags: &[String],
         table: &CardTable,
     ) -> Result<Vec<CardSummary>, SqlError> {
-        let query = MySqlQueryHelper::get_query_page_query(table, sort_by, tags);
+        let query = MySqlQueryHelper::get_query_page_query(table, sort_by, spaces, tags);
 
         let lower_bound = (page * 30) - 30;
         let upper_bound = page * 30;
 
         // start query for first cte
         let mut records = sqlx::query_as(&query)
-            .bind(space) // 1st ? in versions_cte
-            .bind(space) // 2nd ? in versions_cte
             .bind(search_term) // 3rd ? in versions_cte
             .bind(search_term.map(|term| format!("%{term}%"))) // 4th ? in versions_cte
             .bind(search_term.map(|term| format!("%{term}%"))); // 5th ? in versions_cte
+
+        for space in spaces {
+            records = records.bind(space);
+        }
 
         // bind tags for first cte
         for tag in tags {
@@ -648,11 +653,13 @@ impl CardLogicTrait for CardLogicMySqlClient {
 
         // 2nd cte
         records = records
-            .bind(space) // 1st ? in stats_cte
-            .bind(space) // 2nd ? in stats_cte
             .bind(search_term) // 3rd ? in stats_cte
             .bind(search_term.map(|term| format!("%{term}%"))) // 4th ? in stats_cte
             .bind(search_term.map(|term| format!("%{term}%"))); // 5th ? in stats_cte
+
+        for space in spaces {
+            records = records.bind(space);
+        }
 
         // bind tags for 2nd cte
         for tag in tags {

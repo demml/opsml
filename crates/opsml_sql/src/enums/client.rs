@@ -93,26 +93,26 @@ impl CardLogicTrait for SqlClientEnum {
         &self,
         table: &CardTable,
         search_term: Option<&str>,
-        space: Option<&str>,
-        tags: &Vec<String>,
+        space: &[String],
+        tags: &[String],
     ) -> Result<QueryStats, SqlError> {
         match self {
             SqlClientEnum::Postgres(client) => {
                 client
                     .card
-                    .query_stats(table, search_term, space, tags)
+                    .query_stats(table, search_term, spaces, tags)
                     .await
             }
             SqlClientEnum::Sqlite(client) => {
                 client
                     .card
-                    .query_stats(table, search_term, space, tags)
+                    .query_stats(table, search_term, spaces, tags)
                     .await
             }
             SqlClientEnum::MySql(client) => {
                 client
                     .card
-                    .query_stats(table, search_term, space, tags)
+                    .query_stats(table, search_term, spaces, tags)
                     .await
             }
         }
@@ -1132,7 +1132,7 @@ mod tests {
         let client = get_client().await;
         // query stats
         let stats = client
-            .query_stats(&CardTable::Model, None, None, &vec![])
+            .query_stats(&CardTable::Model, None, &vec![], &vec![])
             .await
             .unwrap();
 
@@ -1142,7 +1142,7 @@ mod tests {
 
         // query stats with search term
         let stats = client
-            .query_stats(&CardTable::Model, Some("Model1"), None, &vec![])
+            .query_stats(&CardTable::Model, Some("Model1"), &vec![], &vec![])
             .await
             .unwrap();
 
@@ -1157,7 +1157,7 @@ mod tests {
 
         // query page
         let results = client
-            .query_page("name", 1, None, None, &vec![], &CardTable::Data)
+            .query_page("name", 1, None, &vec![], &vec![], &CardTable::Data)
             .await
             .unwrap();
 
@@ -1165,7 +1165,7 @@ mod tests {
 
         // query page
         let results = client
-            .query_page("name", 1, None, None, &vec![], &CardTable::Model)
+            .query_page("name", 1, None, &vec![], &vec![], &CardTable::Model)
             .await
             .unwrap();
 
@@ -1173,7 +1173,14 @@ mod tests {
 
         // query page
         let results = client
-            .query_page("name", 1, None, Some("repo3"), &vec![], &CardTable::Model)
+            .query_page(
+                "name",
+                1,
+                None,
+                &vec!["repo3".to_string()],
+                &vec![],
+                &CardTable::Model,
+            )
             .await
             .unwrap();
 

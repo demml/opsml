@@ -170,7 +170,23 @@ impl MySqlQueryHelper {
         (query, bindings)
     }
 
-    pub fn get_query_page_query(table: &CardTable, sort_by: &str, tags: &Vec<String>) -> String {
+    pub fn get_query_page_query(
+        table: &CardTable,
+        sort_by: &str,
+        spaces: &[String],
+        tags: &[String],
+    ) -> String {
+        let space_filter = if spaces.is_empty() {
+            "".to_string()
+        } else {
+            let or_conditions = spaces
+                .iter()
+                .map(|_| "space = ?".to_string())
+                .collect::<Vec<_>>()
+                .join(" OR ");
+            format!(" AND ({or_conditions})")
+        };
+
         let tags_filter = if tags.is_empty() {
             "".to_string()
         } else {
@@ -190,8 +206,8 @@ impl MySqlQueryHelper {
                     ROW_NUMBER() OVER (PARTITION BY space, name ORDER BY created_at DESC) AS row_num
                 FROM {table}
                 WHERE 1=1
-                AND (? IS NULL OR space = ?)
                 AND (? IS NULL OR name LIKE ? OR space LIKE ?)
+                {space_filter}
                 {tags_filter}
             )"
         );
@@ -206,8 +222,8 @@ impl MySqlQueryHelper {
                     MIN(created_at) AS created_at 
                 FROM {table}
                 WHERE 1=1
-                AND (? IS NULL OR space = ?)
                 AND (? IS NULL OR name LIKE ? OR space LIKE ?)
+                {space_filter}
                 {tags_filter}
                 GROUP BY space, name
             )"
@@ -289,8 +305,18 @@ impl MySqlQueryHelper {
         query
     }
 
-    pub fn get_query_stats_query(table: &CardTable, tags: &Vec<String>) -> String {
-        // search_term and space are the first two parameters
+    pub fn get_query_stats_query(table: &CardTable, spaces: &[String], tags: &[String]) -> String {
+        let space_filter = if spaces.is_empty() {
+            "".to_string()
+        } else {
+            let or_conditions = spaces
+                .iter()
+                .map(|_| "space = ?".to_string())
+                .collect::<Vec<_>>()
+                .join(" OR ");
+            format!(" AND ({or_conditions})")
+        };
+
         let tags_filter = if tags.is_empty() {
             "".to_string()
         } else {
@@ -309,7 +335,7 @@ impl MySqlQueryHelper {
         FROM {table}
         WHERE 1=1
         AND (? IS NULL OR name LIKE ? OR space LIKE ?)
-        AND (? IS NULL OR space = ?)
+        {space_filter}
         {tags_filter}
         "
         );
