@@ -36,16 +36,16 @@ pub trait CardLogicTrait {
         &self,
         table: &CardTable,
         search_term: Option<&str>,
-        space: Option<&str>,
-        tags: &Vec<String>,
+        spaces: &[String],
+        tags: &[String],
     ) -> Result<QueryStats, SqlError>;
     async fn query_page(
         &self,
         sort_by: &str,
         page: i32,
         search_term: Option<&str>,
-        space: Option<&str>,
-        tags: &Vec<String>,
+        spaces: &[String],
+        tags: &[String],
         table: &CardTable,
     ) -> Result<Vec<CardSummary>, SqlError>;
     async fn version_page(

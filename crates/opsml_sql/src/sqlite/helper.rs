@@ -175,8 +175,26 @@ impl SqliteQueryHelper {
         (query, bindings)
     }
 
-    pub fn get_query_page_query(table: &CardTable, sort_by: &str, tags: &Vec<String>) -> String {
-        let mut bindings_number = 4; // ?1 and ?2 are used for search_term and space
+    pub fn get_query_page_query(
+        table: &CardTable,
+        sort_by: &str,
+        spaces: &[String],
+        tags: &[String],
+    ) -> String {
+        let mut bindings_number = 2; // ?1 and ?2 are used for search_term and space
+
+        let spaces_filter = if spaces.is_empty() {
+            "".to_string()
+        } else {
+            let mut or_conditions = Vec::new();
+            for _ in spaces {
+                or_conditions.push(format!("space = ?{}", bindings_number));
+                bindings_number += 1;
+            }
+            let or_clause = or_conditions.join(" OR ");
+            format!(" AND ({or_clause})")
+        };
+
         let tags_filter = if tags.is_empty() {
             "".to_string()
         } else {
@@ -197,8 +215,9 @@ impl SqliteQueryHelper {
                     version, 
                     ROW_NUMBER() OVER (PARTITION BY space, name ORDER BY created_at DESC) AS row_num
                 FROM {table}
-                WHERE (?1 IS NULL OR space = ?1)
-                AND (?2 IS NULL OR name LIKE ?3 OR space LIKE ?3)
+                WHERE 1=1
+                AND (?1 IS NULL OR name LIKE ?1 OR space LIKE ?1)
+                {spaces_filter}
                 {tags_filter}
             )"
         );
@@ -212,8 +231,9 @@ impl SqliteQueryHelper {
                     MAX(created_at) AS updated_at, 
                     MIN(created_at) AS created_at 
                 FROM {table}
-                WHERE (?1 IS NULL OR space = ?1)
-                AND (?2 IS NULL OR name LIKE ?3 OR space LIKE ?3)
+                WHERE 1=1
+                AND (?1 IS NULL OR name LIKE ?1 OR space LIKE ?1)
+                {spaces_filter}
                 {tags_filter}
                 GROUP BY space, name
             )"
@@ -297,9 +317,22 @@ impl SqliteQueryHelper {
         query
     }
 
-    pub fn get_query_stats_query(table: &CardTable, tags: &Vec<String>) -> String {
+    pub fn get_query_stats_query(table: &CardTable, spaces: &[String], tags: &[String]) -> String {
         // if tags are provided, we need a OR condition for each tag
-        let mut bindings_number = 3; // ?1 and ?2 are used for search_term and space
+        let mut bindings_number = 2;
+
+        let spaces_filter = if spaces.is_empty() {
+            "".to_string()
+        } else {
+            let mut or_conditions = Vec::new();
+            for _ in spaces {
+                or_conditions.push(format!("space = ?{}", bindings_number));
+                bindings_number += 1;
+            }
+            let or_clause = or_conditions.join(" OR ");
+            format!(" AND ({or_clause})")
+        };
+
         let tags_filter = if tags.is_empty() {
             "".to_string()
         } else {
@@ -319,7 +352,7 @@ impl SqliteQueryHelper {
                 FROM {table}
                 WHERE 1=1
                 AND (?1 IS NULL OR name LIKE ?1 OR space LIKE ?1)
-                AND (?2 IS NULL OR space = ?2) 
+                {spaces_filter}
                 {tags_filter}
             "
         );

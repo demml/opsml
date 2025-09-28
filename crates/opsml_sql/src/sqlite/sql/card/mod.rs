@@ -564,14 +564,18 @@ impl CardLogicTrait for CardLogicSqliteClient {
         &self,
         table: &CardTable,
         search_term: Option<&str>,
-        space: Option<&str>,
-        tags: &Vec<String>,
+        spaces: &[String],
+        tags: &[String],
     ) -> Result<QueryStats, SqlError> {
-        let query = SqliteQueryHelper::get_query_stats_query(table, tags);
+        let query = SqliteQueryHelper::get_query_stats_query(table, spaces, tags);
 
         let mut query_builder = sqlx::query_as::<_, QueryStats>(&query)
-            .bind(search_term.map(|term| format!("%{term}%")))
-            .bind(space);
+            .bind(search_term.map(|term| format!("%{term}%")));
+
+        // need to bind spaces here
+        for space in spaces {
+            query_builder = query_builder.bind(space);
+        }
 
         for tag in tags {
             query_builder = query_builder.bind(tag);
@@ -599,24 +603,26 @@ impl CardLogicTrait for CardLogicSqliteClient {
         sort_by: &str,
         page: i32,
         search_term: Option<&str>,
-        space: Option<&str>,
-        tags: &Vec<String>,
+        spaces: &[String],
+        tags: &[String],
         table: &CardTable,
     ) -> Result<Vec<CardSummary>, SqlError> {
-        let query = SqliteQueryHelper::get_query_page_query(table, sort_by, tags);
+        let query = SqliteQueryHelper::get_query_page_query(table, sort_by, spaces, tags);
 
         let lower_bound = (page * 30) - 30;
         let upper_bound = page * 30;
 
         let mut query_builder = sqlx::query_as::<_, CardSummary>(&query)
-            .bind(space)
-            .bind(search_term)
             .bind(search_term.map(|term| format!("%{term}%")));
 
-        // need to bind tags here
+        for space in spaces {
+            query_builder = query_builder.bind(space);
+        }
+
         for tag in tags {
             query_builder = query_builder.bind(tag);
         }
+
         query_builder = query_builder.bind(lower_bound).bind(upper_bound);
         let records = query_builder.fetch_all(&self.pool).await?;
         Ok(records)
