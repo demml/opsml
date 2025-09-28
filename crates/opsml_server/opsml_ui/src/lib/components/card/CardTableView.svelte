@@ -63,16 +63,15 @@
   function onSpaceChange() {
     if (searchTimeout) clearTimeout(searchTimeout);
     searchTimeout = setTimeout(async () => {
-      // set filteredTags based on tagsCombobox.value
+      // set filteredSpaces based on spacesCombobox.value
       //@ts-ignore
-      filteredTags = [...tagsCombobox.value] as string[];
+      filteredSpaces = [...spacesCombobox.value] as string[];
       await searchPage();
     }, 100);
   }
 
 
   const searchPage = async function () {
-
   registryPage = await getRegistryPage(registryType, undefined, activeSpace, artifactSearchQuery, filteredTags, 1);
   registryStats = await getRegistryStats(registryType, artifactSearchQuery, activeSpace, filteredTags);
   currentPage = 1;
