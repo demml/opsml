@@ -45,13 +45,13 @@ export async function getTags(
 export async function getRegistryStats(
   registry_type: RegistryType,
   searchTerm?: string,
-  space?: string,
+  spaces?: string[],
   tags?: string[]
 ): Promise<RegistryStatsResponse> {
   let request: RegistryStatsRequest = {
     registry_type: registry_type,
     search_term: searchTerm,
-    space: space,
+    spaces: spaces,
     tags: tags,
   };
 
@@ -74,13 +74,11 @@ export async function getRegistryPage(
   let request: QueryPageRequest = {
     registry_type: registry_type,
     sort_by: sort_by,
-    space: spaces,
+    spaces: spaces,
     search_term: searchTerm,
     tags: tags,
     page: page,
   };
-
-  console.log("Registry Page Request:", JSON.stringify(request));
 
   const response = await opsmlClient.post(
     RoutePaths.GET_REGISTRY_PAGE,
@@ -95,18 +93,19 @@ export async function getRegistryPage(
 
 export async function setupRegistryPage(
   registry_type: RegistryType,
-  space: string | undefined = undefined,
+  spaces: string[] | undefined = undefined,
   name: string | undefined = undefined
 ): Promise<RegistryPageReturn> {
-  const [spaces, tags, registryStats, registryPage] = await Promise.all([
-    getSpaces(registry_type),
-    getTags(registry_type),
-    getRegistryStats(registry_type, name, space),
-    getRegistryPage(registry_type, undefined, space, name),
-  ]);
+  const [registry_spaces, tags, registryStats, registryPage] =
+    await Promise.all([
+      getSpaces(registry_type),
+      getTags(registry_type),
+      getRegistryStats(registry_type, name, spaces),
+      getRegistryPage(registry_type, undefined, spaces, name),
+    ]);
 
   return {
-    spaces: spaces.spaces,
+    spaces: registry_spaces.spaces,
     tags: tags.tags,
     registry_type: registry_type,
     registryStats: registryStats,
