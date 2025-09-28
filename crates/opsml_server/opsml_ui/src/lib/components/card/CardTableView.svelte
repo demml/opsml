@@ -27,7 +27,7 @@
   let availableTags = page.tags;
 
   let filteredSpaces: string[] | undefined = $state(undefined);
-  let filteredTags: string[] | undefined = $state(undefined);
+  let filteredTags: string[] = $state([]);
 
 
   // registry-specific state
@@ -77,18 +77,14 @@
     tagSearchTimeout = setTimeout(async () => {
       // set filteredTags based on tagsCombobox.value
       //@ts-ignore
-      // tagsCombobox.value is an object. Need to convert to array of strings
       filteredTags = [...tagsCombobox.value] as string[];
-
-
-
-      // Call your searchPage function, passing selectedTags if needed
-      //await searchPage(selectedTags);
+      await searchPage();
     }, 100);
   }
 
 
   const searchPage = async function () {
+
   registryPage = await getRegistryPage(registryType, undefined, activeSpace, artifactSearchQuery, filteredTags, 1);
   registryStats = await getRegistryStats(registryType, artifactSearchQuery, activeSpace, filteredTags);
   currentPage = 1;
@@ -132,14 +128,14 @@
 
 <div class="grid grid-cols-1 lg:grid-cols-5 gap-4">
   <!-- Left column -->
-  <div class="col-span-1 lg:col-span-1 p-2 flex flex-col rounded-base border-primary-500 border-2 shadow-primary bg-surface-50 self-start">
+  <div class="col-span-1 lg:col-span-1 p-2 flex flex-col rounded-base border-primary-500 border-2 shadow-primary bg-surface-50 self-start overflow-hidden">
     <!-- Top Section -->
-    <div class="mb-4 text-black flex flex-col items-center max-w-xs">
-      <div class="flex flex-col items-start">
+    <div class="mb-4 text-black flex flex-col items-center w-full relative">
+      <div class="flex flex-col items-start w-full">
         <label {...spacesCombobox.label} class="text-primary-800 mb-1">Search Spaces</label>
-        <input {...spacesCombobox.input} class="space-input bg-primary-100 text-black border-black border-2 rounded-lg"/>
+        <input {...spacesCombobox.input} class="space-input bg-primary-100 text-black border-black border-2 rounded-lg w-full"/>
       </div>
-      <div {...spacesCombobox.content} class="bg-primary-100 text-black border-black border-2 rounded-lg max-h-60 overflow-auto px-1 py-1">
+      <div {...spacesCombobox.content} class="bg-primary-100 text-black border-black border-2 rounded-lg max-h-60 overflow-auto px-1 py-1 w-full">
         {#each availableSpaces as option (option)}
           <div {...spacesCombobox.getOption(option)} class="px-2 text-left border-2 border-transparent hover:border-black rounded-lg transition-colors text-black">
             {option}
@@ -155,15 +151,15 @@
 
     <hr class="hr" />
 
-    <div class="my-2 text-black flex flex-col items-center max-w-xs">
-      <div class="flex flex-col items-start">
+    <div class="my-2 text-black flex flex-col items-center w-full relative">
+      <div class="flex flex-col items-start w-full">
         <label {...tagsCombobox.label} class="text-primary-800 mb-1">Search Tags</label>
         <input 
           {...tagsCombobox.input} 
-          class="tag-input bg-primary-100 text-black border-black border-2 rounded-lg"
+          class="tag-input bg-primary-100 text-black border-black border-2 rounded-lg w-full"
         />
       </div>
-      <div {...tagsCombobox.content} class="bg-primary-100 text-black border-black border-2 rounded-lg max-h-60 overflow-auto px-1 py-1">
+      <div {...tagsCombobox.content} class="bg-primary-100 text-black border-black border-2 rounded-lg max-h-60 overflow-auto px-1 py-1 w-full">
         {#each availableTags as option (option)}
           <div {...tagsCombobox.getOption(option)} class="px-2 text-left border-2 border-transparent hover:border-black rounded-lg transition-colors text-black">
             {option}
@@ -177,7 +173,7 @@
       </div>
       <!--Show filtered tags as pills-->
       <div class="mt-2 flex flex-wrap gap-1 items-start">
-        {#each tagsCombobox.value as tag (tag)}
+        {#each filteredTags as tag (tag)}
           <span class="badge bg-primary-100 text-primary-800">{tag}</span>
         {/each}
       </div>

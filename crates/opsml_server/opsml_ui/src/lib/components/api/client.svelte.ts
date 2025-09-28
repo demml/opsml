@@ -1,6 +1,7 @@
 import { goto } from "$app/navigation";
 import { UiPaths } from "$lib/components/api/routes";
 import { browser } from "$app/environment";
+import Console from "../card/monitoring/update/dispatch/Console.svelte";
 
 export class OpsmlClient {
   // UserStore functionality as class properties with runes
@@ -29,7 +30,14 @@ export class OpsmlClient {
     const searchParams = new URLSearchParams();
     Object.entries(params).forEach(([key, value]) => {
       if (value !== undefined && value !== null) {
-        if (typeof value === "object") {
+        if (
+          Array.isArray(value) ||
+          (typeof value === "object" && typeof value.length === "number")
+        ) {
+          for (let i = 0; i < value.length; i++) {
+            searchParams.append(`${key}[${i}]`, String(value[i]));
+          }
+        } else if (typeof value === "object") {
           searchParams.append(key, JSON.stringify(value));
         } else {
           searchParams.append(key, String(value));

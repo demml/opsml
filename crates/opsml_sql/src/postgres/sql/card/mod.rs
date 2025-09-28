@@ -587,7 +587,7 @@ impl CardLogicTrait for CardLogicPostgresClient {
 
         // if search_term is not None, format with %search_term%, else None
         let stats: QueryStats = sqlx::query_as(&query)
-            .bind(search_term)
+            .bind(search_term.map(|term| format!("%{term}%")))
             .bind(space)
             .bind(&tags)
             .fetch_one(&self.pool)

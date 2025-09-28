@@ -617,9 +617,7 @@ impl CardLogicTrait for CardLogicSqliteClient {
         for tag in tags {
             query_builder = query_builder.bind(tag);
         }
-
         query_builder = query_builder.bind(lower_bound).bind(upper_bound);
-
         let records = query_builder.fetch_all(&self.pool).await?;
         Ok(records)
     }

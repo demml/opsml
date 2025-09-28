@@ -4,14 +4,14 @@ export interface RegistryStatsRequest {
   registry_type: RegistryType;
   search_term?: string;
   space?: string;
-  tag?: string[];
+  tags?: string[];
 }
 export interface QueryPageRequest {
   registry_type: RegistryType;
   sort_by?: string;
   space?: string;
   search_term?: string;
-  tag?: string[];
+  tags?: string[];
   page?: number;
 }
 export interface CardSpaceResponse {

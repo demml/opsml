@@ -157,6 +157,8 @@ pub struct RegistryStatsRequest {
     pub registry_type: RegistryType,
     pub search_term: Option<String>,
     pub space: Option<String>,
+
+    #[serde(default)]
     pub tags: Vec<String>,
 }
 
@@ -187,6 +189,8 @@ pub struct QueryPageRequest {
     pub sort_by: Option<String>,
     pub space: Option<String>,
     pub search_term: Option<String>,
+
+    #[serde(default)]
     pub tags: Vec<String>,
     pub page: Option<i32>,
 }

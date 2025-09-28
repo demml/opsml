@@ -170,9 +170,9 @@ pub async fn delete_space_record(
 }
 
 /// query stats page
-pub async fn get_registry_stats(
+pub async fn retrieve_registry_stats(
     State(state): State<Arc<AppState>>,
-    Query(params): Query<RegistryStatsRequest>,
+    Json(params): Json<RegistryStatsRequest>,
 ) -> Result<Json<RegistryStatsResponse>, (StatusCode, Json<OpsmlServerError>)> {
     let table = CardTable::from_registry_type(&params.registry_type);
 
@@ -194,9 +194,9 @@ pub async fn get_registry_stats(
 }
 
 // query page
-pub async fn get_page(
+pub async fn retrieve_page(
     State(state): State<Arc<AppState>>,
-    Query(params): Query<QueryPageRequest>,
+    Json(params): Json<QueryPageRequest>,
 ) -> Result<Json<QueryPageResponse>, (StatusCode, Json<OpsmlServerError>)> {
     let table = CardTable::from_registry_type(&params.registry_type);
     let sort_by = params.sort_by.as_deref().unwrap_or("updated_at");
@@ -769,9 +769,9 @@ pub async fn get_card_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
             .route(&format!("{prefix}/card/tags"), get(get_registry_tags))
             .route(
                 &format!("{prefix}/card/registry/stats"),
-                get(get_registry_stats),
+                post(retrieve_registry_stats),
             )
-            .route(&format!("{prefix}/card/registry/page"), get(get_page))
+            .route(&format!("{prefix}/card/registry/page"), post(retrieve_page))
             .route(
                 &format!("{prefix}/card/registry/version/page"),
                 get(get_version_page),

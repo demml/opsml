@@ -55,7 +55,7 @@ export async function getRegistryStats(
     tags: tags,
   };
 
-  const response = await opsmlClient.get(
+  const response = await opsmlClient.post(
     RoutePaths.GET_STATS,
     request,
     userStore.jwt_token
@@ -71,20 +71,25 @@ export async function getRegistryPage(
   tags?: string[],
   page?: number
 ): Promise<QueryPageResponse> {
-  let params: QueryPageRequest = {
+  let request: QueryPageRequest = {
     registry_type: registry_type,
     sort_by: sort_by,
     space: space,
     search_term: searchTerm,
-    tags: tag,
+    tags: tags,
     page: page,
   };
 
-  const response = await opsmlClient.get(
+  console.log("Registry Page Request:", JSON.stringify(request));
+
+  const response = await opsmlClient.post(
     RoutePaths.GET_REGISTRY_PAGE,
-    params,
+    request,
     userStore.jwt_token
   );
+
+  console.log("Registry Page Response:", JSON.stringify(response));
+
   return await response.json();
 }
 

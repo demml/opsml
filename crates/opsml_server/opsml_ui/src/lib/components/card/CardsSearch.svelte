@@ -48,7 +48,7 @@
       activeSpace = space;
     }
 
-    registryPage = await getRegistryPage(registryType, undefined, activeSpace, undefined, undefined, 1);
+    registryPage = await getRegistryPage(registryType, undefined, activeSpace, undefined, undefined);
     registryStats = await getRegistryStats(registryType, activeSpace);
     currentPage = 1;
     totalPages = Math.ceil(registryStats.stats.nbr_names / 30);

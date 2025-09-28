@@ -600,7 +600,7 @@ impl CardLogicTrait for CardLogicMySqlClient {
             .bind(space);
 
         for tag in tags {
-            stats_query = stats_query.bind(tag);
+            stats_query = stats_query.bind(format!("\"{}\"", tag));
         }
         let stats = stats_query.fetch_one(&self.pool).await?;
         Ok(stats)
@@ -643,7 +643,7 @@ impl CardLogicTrait for CardLogicMySqlClient {
 
         // bind tags for first cte
         for tag in tags {
-            records = records.bind(tag);
+            records = records.bind(format!("\"{}\"", tag));
         }
 
         // 2nd cte

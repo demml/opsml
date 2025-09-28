@@ -128,11 +128,12 @@ async fn test_opsml_server_card_stats_and_query() {
         ..Default::default()
     };
 
-    let query_string = serde_qs::to_string(&params).unwrap();
+    let body = serde_json::to_string(&params).unwrap();
     let request = Request::builder()
-        .uri(format!("/opsml/api/card/registry/stats?{query_string}"))
-        .method("GET")
-        .body(Body::empty())
+        .uri(format!("/opsml/api/card/registry/stats"))
+        .method("POST")
+        .header(header::CONTENT_TYPE, "application/json")
+        .body(Body::from(body))
         .unwrap();
 
     let response = helper.send_oneshot(request).await;
@@ -148,11 +149,12 @@ async fn test_opsml_server_card_stats_and_query() {
         ..Default::default()
     };
 
-    let query_string = serde_qs::to_string(&params).unwrap();
+    let body = serde_json::to_string(&params).unwrap();
     let request = Request::builder()
-        .uri(format!("/opsml/api/card/registry/stats?{query_string}"))
-        .method("GET")
-        .body(Body::empty())
+        .uri(format!("/opsml/api/card/registry/stats"))
+        .method("POST")
+        .header(header::CONTENT_TYPE, "application/json")
+        .body(Body::from(body))
         .unwrap();
 
     let response = helper.send_oneshot(request).await;
@@ -169,12 +171,12 @@ async fn test_opsml_server_card_stats_and_query() {
         ..Default::default()
     };
 
-    let query_string = serde_qs::to_string(&args).unwrap();
-
+    let body = serde_json::to_string(&args).unwrap();
     let request = Request::builder()
-        .uri(format!("/opsml/api/card/registry/page?{query_string}"))
-        .method("GET")
-        .body(Body::empty())
+        .uri(format!("/opsml/api/card/registry/page"))
+        .method("POST")
+        .header(header::CONTENT_TYPE, "application/json")
+        .body(Body::from(body))
         .unwrap();
 
     let response = helper.send_oneshot(request).await;
@@ -191,12 +193,12 @@ async fn test_opsml_server_card_stats_and_query() {
         ..Default::default()
     };
 
-    let query_string = serde_qs::to_string(&args).unwrap();
-
+    let body = serde_json::to_string(&args).unwrap();
     let request = Request::builder()
-        .uri(format!("/opsml/api/card/registry/page?{query_string}"))
-        .method("GET")
-        .body(Body::empty())
+        .uri(format!("/opsml/api/card/registry/page"))
+        .method("POST")
+        .header(header::CONTENT_TYPE, "application/json")
+        .body(Body::from(body))
         .unwrap();
 
     let response = helper.send_oneshot(request).await;
@@ -237,12 +239,12 @@ async fn test_opsml_server_card_stats_and_query() {
         tags: vec!["hello".to_string()],
         ..Default::default()
     };
-
-    let query_string = serde_qs::to_string(&params).unwrap();
+    let body = serde_json::to_string(&params).unwrap();
     let request = Request::builder()
-        .uri(format!("/opsml/api/card/registry/stats?{query_string}"))
-        .method("GET")
-        .body(Body::empty())
+        .uri(format!("/opsml/api/card/registry/stats"))
+        .method("POST")
+        .header(header::CONTENT_TYPE, "application/json")
+        .body(Body::from(body))
         .unwrap();
 
     let response = helper.send_oneshot(request).await;
@@ -258,12 +260,12 @@ async fn test_opsml_server_card_stats_and_query() {
         ..Default::default()
     };
 
-    let query_string = serde_qs::to_string(&args).unwrap();
-
+    let body = serde_json::to_string(&args).unwrap();
     let request = Request::builder()
-        .uri(format!("/opsml/api/card/registry/page?{query_string}"))
-        .method("GET")
-        .body(Body::empty())
+        .uri(format!("/opsml/api/card/registry/page"))
+        .method("POST")
+        .header(header::CONTENT_TYPE, "application/json")
+        .body(Body::from(body))
         .unwrap();
 
     let response = helper.send_oneshot(request).await;
