@@ -93,7 +93,7 @@ impl CardLogicTrait for SqlClientEnum {
         &self,
         table: &CardTable,
         search_term: Option<&str>,
-        space: &[String],
+        spaces: &[String],
         tags: &[String],
     ) -> Result<QueryStats, SqlError> {
         match self {
@@ -123,27 +123,27 @@ impl CardLogicTrait for SqlClientEnum {
         sort_by: &str,
         page: i32,
         search_term: Option<&str>,
-        space: Option<&str>,
-        tags: &Vec<String>,
+        spaces: &[String],
+        tags: &[String],
         table: &CardTable,
     ) -> Result<Vec<CardSummary>, SqlError> {
         match self {
             SqlClientEnum::Postgres(client) => {
                 client
                     .card
-                    .query_page(sort_by, page, search_term, space, tags, table)
+                    .query_page(sort_by, page, search_term, spaces, tags, table)
                     .await
             }
             SqlClientEnum::Sqlite(client) => {
                 client
                     .card
-                    .query_page(sort_by, page, search_term, space, tags, table)
+                    .query_page(sort_by, page, search_term, spaces, tags, table)
                     .await
             }
             SqlClientEnum::MySql(client) => {
                 client
                     .card
-                    .query_page(sort_by, page, search_term, space, tags, table)
+                    .query_page(sort_by, page, search_term, spaces, tags, table)
                     .await
             }
         }
