@@ -580,15 +580,15 @@ impl CardLogicTrait for CardLogicPostgresClient {
         &self,
         table: &CardTable,
         search_term: Option<&str>,
-        space: Option<&str>,
-        tags: &Vec<String>,
+        spaces: &[String],
+        tags: &[String],
     ) -> Result<QueryStats, SqlError> {
-        let query = PostgresQueryHelper::get_query_stats_query(table, tags);
+        let query = PostgresQueryHelper::get_query_stats_query(table, spaces, tags);
 
         // if search_term is not None, format with %search_term%, else None
         let stats: QueryStats = sqlx::query_as(&query)
             .bind(search_term.map(|term| format!("%{term}%")))
-            .bind(space)
+            .bind(spaces)
             .bind(&tags)
             .fetch_one(&self.pool)
             .await?;
@@ -615,19 +615,21 @@ impl CardLogicTrait for CardLogicPostgresClient {
         sort_by: &str,
         page: i32,
         search_term: Option<&str>,
-        space: Option<&str>,
-        tags: &Vec<String>,
+        spaces: &[String],
+        tags: &[String],
         table: &CardTable,
     ) -> Result<Vec<CardSummary>, SqlError> {
-        let query = PostgresQueryHelper::get_query_page_query(table, sort_by, tags);
+        let query = PostgresQueryHelper::get_query_page_query(table, sort_by, spaces, tags);
 
         let lower_bound = (page * 30) - 30;
         let upper_bound = page * 30;
 
         let mut query_builder = sqlx::query_as::<_, CardSummary>(&query)
-            .bind(space)
-            .bind(search_term)
             .bind(search_term.map(|term| format!("%{term}%")));
+
+        if !spaces.is_empty() {
+            query_builder = query_builder.bind(spaces);
+        }
 
         // need to bind tags here
         if !tags.is_empty() {

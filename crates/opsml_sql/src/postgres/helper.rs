@@ -220,8 +220,21 @@ impl PostgresQueryHelper {
         (query, bindings)
     }
 
-    pub fn get_query_page_query(table: &CardTable, sort_by: &str, tags: &Vec<String>) -> String {
-        let mut binding_index = 4; // Start from 4 because $1, $2, $3 are used for space, name, search
+    pub fn get_query_page_query(
+        table: &CardTable,
+        sort_by: &str,
+        spaces: &[String],
+        tags: &[String],
+    ) -> String {
+        let mut binding_index = 2; // Start from 4 because $1, $2, $3 are used for space, name, search
+
+        let space_filter = if !spaces.is_empty() {
+            let condition = format!(" AND space = ANY(${binding_index})");
+            binding_index += 1;
+            condition
+        } else {
+            "".to_string()
+        };
 
         let tag_filter = if !tags.is_empty() {
             let condition = format!(" AND tags ?| ${binding_index}");
@@ -239,8 +252,9 @@ impl PostgresQueryHelper {
                     version, 
                     ROW_NUMBER() OVER (PARTITION BY space, name ORDER BY created_at DESC) AS row_num 
                 FROM {table}
-                WHERE ($1 IS NULL OR space = $1)
-                AND ($2 IS NULL OR name LIKE $3 OR space LIKE $3)
+                WHERE 1=1
+                AND ($1 IS NULL OR name LIKE $1 OR space LIKE $1)
+                {space_filter}
                 {tag_filter}
             )"
         );
@@ -254,8 +268,9 @@ impl PostgresQueryHelper {
                     MAX(created_at) AS updated_at, 
                     MIN(created_at) AS created_at 
                 FROM {table}
-                WHERE ($1 IS NULL OR space = $1)
-                AND ($2 IS NULL OR name LIKE $3 OR space LIKE $3)
+                WHERE 1=1
+                AND ($1 IS NULL OR name LIKE $1 OR space LIKE $1)
+               
                 {tag_filter}
                 GROUP BY space, name
         )"
@@ -330,7 +345,14 @@ impl PostgresQueryHelper {
         query
     }
 
-    pub fn get_query_stats_query(table: &CardTable, tags: &Vec<String>) -> String {
+    pub fn get_query_stats_query(table: &CardTable, spaces: &[String], tags: &[String]) -> String {
+        let space_filter = if !spaces.is_empty() {
+            let condition = format!(" AND space = ANY($2)");
+            condition
+        } else {
+            "".to_string()
+        };
+
         let mut base_query = format!(
             "SELECT
         COALESCE(CAST(COUNT(DISTINCT name) AS INTEGER), 0) AS nbr_names, 
@@ -339,7 +361,8 @@ impl PostgresQueryHelper {
         FROM {table}
         WHERE 1=1
         AND ($1 IS NULL OR name LIKE $1 OR space LIKE $1)
-        AND ($2 IS NULL OR name = $2 OR space = $2)"
+        {space_filter}
+        "
         );
 
         if !tags.is_empty() {
