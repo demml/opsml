@@ -164,6 +164,33 @@ async fn test_opsml_server_card_stats_and_query() {
     let stats_response: RegistryStatsResponse = serde_json::from_slice(&body).unwrap();
     assert_eq!(stats_response.stats.nbr_names, 2);
 
+    //////// Test registry stats request with multiple spaces //////
+
+    let params = RegistryStatsRequest {
+        registry_type: RegistryType::Model,
+        spaces: vec![
+            "repo1".to_string(),
+            "repo2".to_string(),
+            "repo3".to_string(),
+        ],
+        ..Default::default()
+    };
+
+    let body = serde_json::to_string(&params).unwrap();
+    let request = Request::builder()
+        .uri(format!("/opsml/api/card/registry/stats"))
+        .method("POST")
+        .header(header::CONTENT_TYPE, "application/json")
+        .body(Body::from(body))
+        .unwrap();
+
+    let response = helper.send_oneshot(request).await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let body = response.into_body().collect().await.unwrap().to_bytes();
+    let stats_response: RegistryStatsResponse = serde_json::from_slice(&body).unwrap();
+    assert_eq!(stats_response.stats.nbr_names, 3);
+
     /////////////////////// Test query page ///////////////////////
 
     let args = QueryPageRequest {
@@ -208,6 +235,34 @@ async fn test_opsml_server_card_stats_and_query() {
     let page_response: QueryPageResponse = serde_json::from_slice(&body).unwrap();
 
     assert_eq!(page_response.summaries.len(), 1);
+
+    //////// Test Query page request with multiple spaces //////
+
+    let args = QueryPageRequest {
+        registry_type: RegistryType::Model,
+        spaces: vec![
+            "repo1".to_string(),
+            "repo2".to_string(),
+            "repo3".to_string(),
+        ],
+        ..Default::default()
+    };
+
+    let body = serde_json::to_string(&args).unwrap();
+    let request = Request::builder()
+        .uri(format!("/opsml/api/card/registry/page"))
+        .method("POST")
+        .header(header::CONTENT_TYPE, "application/json")
+        .body(Body::from(body))
+        .unwrap();
+
+    let response = helper.send_oneshot(request).await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let body = response.into_body().collect().await.unwrap().to_bytes();
+    let page_response: QueryPageResponse = serde_json::from_slice(&body).unwrap();
+
+    assert_eq!(page_response.summaries.len(), 3);
 
     // test getting version page
     let args = VersionPageRequest {

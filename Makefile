@@ -97,7 +97,7 @@ test.utils:
 
 .PHONY: test.opsml.server
 test.server:
-	cargo test -p opsml-server test_opsml_server_card_stats_and_query -- --nocapture --test-threads=1
+	cargo test -p opsml-server test_opsml_server -- --nocapture --test-threads=1
 
 .PHONY: test.opsml.registry.client
 test.opsml.registry.client:
