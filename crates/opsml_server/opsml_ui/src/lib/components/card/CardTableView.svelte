@@ -26,7 +26,7 @@
   let availableSpaces = page.spaces;
   let availableTags = page.tags;
 
-  let filteredSpaces: string[] | undefined = $state(undefined);
+  let filteredSpaces: string[] = $state([]);
   let filteredTags: string[] = $state([]);
 
 
@@ -40,41 +40,29 @@
 
   //@ts-ignore
   const spacesCombobox = new Combobox<string>({ multiple: true });
-
   //@ts-ignore
   const tagsCombobox = new Combobox<string>({ multiple: true, onValueChange: onTagsChange });
 
-
-
-
   onMount(() => {
-  
     totalPages = Math.ceil(registryStats.stats.nbr_names / 30);
-
   });
 
-  async function setActiveRepo(space: string) {
 
-    // handle click and declick
-    if (activeSpace === space) {
-      activeSpace = undefined;
-    } else {
-      activeSpace = space;
-    }
+  let searchTimeout: ReturnType<typeof setTimeout> | null = null;
 
-    registryPage = await getRegistryPage(registryType, undefined, activeSpace, undefined, undefined, 1);
-    registryStats = await getRegistryStats(registryType, activeSpace);
-    currentPage = 1;
-    totalPages = Math.ceil(registryStats.stats.nbr_names / 30);
+  function onTagsChange() {
+    if (searchTimeout) clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(async () => {
+      // set filteredTags based on tagsCombobox.value
+      //@ts-ignore
+      filteredTags = [...tagsCombobox.value] as string[];
+      await searchPage();
+    }, 100);
   }
 
-
-  let tagSearchTimeout: ReturnType<typeof setTimeout> | null = null;
-
-  
-  function onTagsChange() {
-    if (tagSearchTimeout) clearTimeout(tagSearchTimeout);
-    tagSearchTimeout = setTimeout(async () => {
+  function onSpaceChange() {
+    if (searchTimeout) clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(async () => {
       // set filteredTags based on tagsCombobox.value
       //@ts-ignore
       filteredTags = [...tagsCombobox.value] as string[];
