@@ -1,8 +1,8 @@
 <script lang="ts">
-  import type { ServiceCard, DeploymentConfig, ServiceConfig, ServiceMetadata, Resources, GpuConfig } from "$lib/components/card/card_interfaces/servicecard";
+  import type { ServiceCard, DeploymentConfig,  Resources, GpuConfig } from "$lib/components/card/card_interfaces/servicecard";
 
   let {config} = $props<{config: DeploymentConfig}>();
-  import { Rocket, Earth, EthernetPort } from 'lucide-svelte';
+  import { Rocket, Earth, EthernetPort, Link, Cpu } from 'lucide-svelte';
   import Pill from "$lib/components/utils/Pill.svelte";
   import ExternalLinkPill from "$lib/components/utils/ExternalLinkPill.svelte";
   let resources: Resources | undefined = $state(config.resources);
@@ -13,7 +13,7 @@
 
   <div class="flex flex-row justify-between pb-2 mb-2 items-center border-b-2 border-black">
     <div class="flex flex-row items-center pt-2">
-      <Rocket color="#8059b6"/>
+      <Rocket color="#e55455"/>
       <header class="pl-2 text-primary-950 text-base font-bold">Deployment Configuration</header>
     </div>
   </div>
@@ -28,7 +28,7 @@
   {#if config.location}
     <div class="flex flex-col space-y-1 gap-1">
       <div class="flex flex-row items-center pb-1 border-b-2 border-black">
-        <Earth color="#8059b6" />
+        <Earth color="#60d68d" />
         <header class="pl-2 text-primary-900 text-sm font-bold">Location</header>
       </div>
     </div>
@@ -62,41 +62,47 @@
   {#if resources }
     <div class="flex flex-col space-y-1 gap-1">
       <div class="flex flex-row items-center pb-1 border-b-2 border-black">
-        <EthernetPort color="#8059b6" />
+        <Cpu color="#40c1ff" />
         <header class="pl-2 text-primary-900 text-sm font-bold">Resources</header>
       </div>
     </div>
 
-    <div class="flex flex-col space-y-1 text-sm">
-      <Pill key="CPU" value={resources.cpu.toString()} textSize="text-sm" />
-      <Pill key="Memory" value={resources.memory} textSize="text-sm" />
-      <Pill key="Storage" value={resources.storage} textSize="text-sm" />
-    </div>
-
-    {#if resources.gpu}
-      <div class="flex flex-col space-y-1 gap-1">
-        <div class="flex flex-row items-center pb-1 border-b-2 border-black">
-          <EthernetPort color="#8059b6" />
-          <header class="pl-2 text-primary-900 text-sm font-bold">GPU</header>
+    <div class="flex flex-wrap gap-1">
+      <div class="flex flex-col space-y-1 gap-1 border-2 border-primary-800 rounded-lg p-2">
+        <div class="flex flex-row items-center">
+            <header class="pl-2 text-primary-900 text-sm font-bold">CPU</header>
+        </div>
+        <div class="flex flex-col space-y-1 text-sm">
+          <Pill key="CPU" value={resources.cpu.toString()} textSize="text-sm" />
+          <Pill key="Memory" value={resources.memory} textSize="text-sm" />
+          <Pill key="Storage" value={resources.storage} textSize="text-sm" />
         </div>
       </div>
-      <div class="flex flex-col space-y-1 text-sm">
-        <Pill key="Type" value={resources.gpu.type} textSize="text-sm" />
-        <Pill key="Count" value={resources.gpu.count.toString()} textSize="text-sm" />
-        <Pill key="Memory" value={resources.gpu.memory} textSize="text-sm" />
-      </div>
-    {/if}
+
+      {#if resources.gpu}
+        <div class="flex flex-col space-y-1 gap-1 border-2 border-primary-800 rounded-lg p-2">
+          <div class="flex flex-row items-center">
+              <header class="pl-2 text-primary-900 text-sm font-bold">GPU</header>
+          </div>
+          <div class="flex flex-col space-y-1 text-sm">
+            <Pill key="Type" value={resources.gpu.type} textSize="text-sm" />
+            <Pill key="Count" value={resources.gpu.count.toString()} textSize="text-sm" />
+            <Pill key="Memory" value={resources.gpu.memory} textSize="text-sm" />
+          </div>
+        </div>
+      {/if}
+    </div>
   {/if}
 
   {#if links && Object.keys(links).length > 0}
     <div class="flex flex-col space-y-1 gap-1">
       <div class="flex flex-row items-center pb-1 border-b-2 border-black">
-        <EthernetPort color="#8059b6" />
+        <Link color="#fddc5a" />
         <header class="pl-2 text-primary-900 text-sm font-bold">Links</header>
       </div>
     </div>
 
-    <div class="flex flex-col space-y-1 text-sm">
+    <div class="flex flex-wrap gap-1 text-sm">
       {#each Object.entries(links) as [key, value]}
         <ExternalLinkPill key={key} link={value} />
       {/each}
