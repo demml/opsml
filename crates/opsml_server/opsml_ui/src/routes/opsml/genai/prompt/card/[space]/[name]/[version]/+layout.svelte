@@ -6,7 +6,7 @@
 
   let { data, children }: LayoutProps = $props();
 
-  let registry = $state(data.registryPath);
+  let registry = $state(data.registryType.toLowerCase());
 
   let activeTab = $derived.by(() => {
     const last = page.url.pathname.split('/').pop() ?? '';

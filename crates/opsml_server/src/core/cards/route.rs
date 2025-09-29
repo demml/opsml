@@ -68,6 +68,24 @@ pub async fn get_registry_spaces(
     Ok(Json(CardSpaceResponse { spaces }))
 }
 
+pub async fn get_registry_tags(
+    State(state): State<Arc<AppState>>,
+    Query(params): Query<RegistrySpaceRequest>,
+) -> Result<Json<CardTagsResponse>, (StatusCode, Json<OpsmlServerError>)> {
+    let table = CardTable::from_registry_type(&params.registry_type);
+
+    let tags = state
+        .sql_client
+        .get_unique_tags(&table)
+        .await
+        .map_err(|e| {
+            error!("Failed to get registry tags: {e}");
+            internal_server_error(e, "Failed to get registry tags")
+        })?;
+
+    Ok(Json(CardTagsResponse { tags }))
+}
+
 pub async fn get_all_space_stats(
     State(state): State<Arc<AppState>>,
 ) -> Result<Json<SpaceStatsResponse>, (StatusCode, Json<OpsmlServerError>)> {
@@ -152,9 +170,9 @@ pub async fn delete_space_record(
 }
 
 /// query stats page
-pub async fn get_registry_stats(
+pub async fn retrieve_registry_stats(
     State(state): State<Arc<AppState>>,
-    Query(params): Query<RegistryStatsRequest>,
+    Json(params): Json<RegistryStatsRequest>,
 ) -> Result<Json<RegistryStatsResponse>, (StatusCode, Json<OpsmlServerError>)> {
     let table = CardTable::from_registry_type(&params.registry_type);
 
@@ -163,7 +181,8 @@ pub async fn get_registry_stats(
         .query_stats(
             &table,
             params.search_term.as_deref(),
-            params.space.as_deref(),
+            &params.spaces,
+            &params.tags,
         )
         .await
         .map_err(|e| {
@@ -175,9 +194,9 @@ pub async fn get_registry_stats(
 }
 
 // query page
-pub async fn get_page(
+pub async fn retrieve_page(
     State(state): State<Arc<AppState>>,
-    Query(params): Query<QueryPageRequest>,
+    Json(params): Json<QueryPageRequest>,
 ) -> Result<Json<QueryPageResponse>, (StatusCode, Json<OpsmlServerError>)> {
     let table = CardTable::from_registry_type(&params.registry_type);
     let sort_by = params.sort_by.as_deref().unwrap_or("updated_at");
@@ -188,7 +207,8 @@ pub async fn get_page(
             sort_by,
             page,
             params.search_term.as_deref(),
-            params.space.as_deref(),
+            &params.spaces,
+            &params.tags,
             &table,
         )
         .await
@@ -746,11 +766,12 @@ pub async fn get_card_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
             .route(&format!("{prefix}/card/readme"), get(get_readme))
             .route(&format!("{prefix}/card/readme"), post(create_readme))
             .route(&format!("{prefix}/card/spaces"), get(get_registry_spaces))
+            .route(&format!("{prefix}/card/tags"), get(get_registry_tags))
             .route(
                 &format!("{prefix}/card/registry/stats"),
-                get(get_registry_stats),
+                post(retrieve_registry_stats),
             )
-            .route(&format!("{prefix}/card/registry/page"), get(get_page))
+            .route(&format!("{prefix}/card/registry/page"), post(retrieve_page))
             .route(
                 &format!("{prefix}/card/registry/version/page"),
                 get(get_version_page),

@@ -12,9 +12,9 @@ INSERT INTO opsml_data_registry (uid, app_env, name, space, major, minor, patch,
 
 -- Populate opsml_model_registry
 INSERT INTO opsml_model_registry (uid, app_env, name, space, major, minor, patch, pre_tag, build_tag, version,  tags, datacard_uid, data_type, model_type, experimentcard_uid,  auditcard_uid, interface_type, task_type) VALUES 
-('550e8400-e29b-41d4-a716-446655440000', 'development', 'Model1', 'repo1', 1, 0, 0, 'alpha', 'build1',  '1.0.0', '[]', 'datacard1', 'sample1', 'type1', 'experimentcard1',  'auditcard1', 'typeA', 'task1'),
-('550e8400-e29b-41d4-a716-446655440001', 'development', 'Model2', 'repo2', 1, 0, 1, 'beta', 'build2',   '1.0.1', '[]', 'datacard2', 'sample2', 'type2', 'experimentcard2',  'auditcard2', 'typeB', 'task2'),
-('550e8400-e29b-41d4-a716-446655440002', 'development', 'Model3', 'repo3', 1, 1, 0, 'gamma', 'build3',  '1.1.0', '[]', 'datacard3', 'sample3', 'type3', 'experimentcard3',  'auditcard3', 'typeC', 'task3'),
+('550e8400-e29b-41d4-a716-446655440000', 'development', 'Model1', 'repo1', 1, 0, 0, 'alpha', 'build1',  '1.0.0', '["hello", "world"]', 'datacard1', 'sample1', 'type1', 'experimentcard1',  'auditcard1', 'typeA', 'task1'),
+('550e8400-e29b-41d4-a716-446655440001', 'development', 'Model2', 'repo2', 1, 0, 1, 'beta', 'build2',   '1.0.1', '["hello", "world"]', 'datacard2', 'sample2', 'type2', 'experimentcard2',  'auditcard2', 'typeB', 'task2'),
+('550e8400-e29b-41d4-a716-446655440002', 'development', 'Model3', 'repo3', 1, 1, 0, 'gamma', 'build3',  '1.1.0', '["v3"]', 'datacard3', 'sample3', 'type3', 'experimentcard3',  'auditcard3', 'typeC', 'task3'),
 ('550e8400-e29b-41d4-a716-446655440003', 'development', 'Model4', 'repo4', 1, 1, 1, 'delta', 'build4',  '1.1.1', '[]', 'datacard4', 'sample4', 'type4', 'experimentcard4',  'auditcard4', 'typeD', 'task4'),
 ('550e8400-e29b-41d4-a716-446655440004', 'development', 'Model5', 'repo5', 2, 0, 0, 'epsilon', 'build5','2.0.0',  '[]', 'datacard5', 'sample5', 'type5', 'experimentcard5',  'auditcard5', 'typeE', 'task5'),
 ('550e8400-e29b-41d4-a716-446655440005', 'development', 'Model6', 'repo6', 2, 0, 1, 'zeta', 'build6',   '2.0.1', '[]', 'datacard6', 'sample6', 'type6', 'experimentcard6',  'auditcard6', 'typeF', 'task6'),

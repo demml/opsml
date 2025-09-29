@@ -24,30 +24,34 @@ pub fn create_service_card(
     space: &str,
     name: &str,
 ) -> Result<ServiceCard, CliError> {
-    // if service_type is MCP and no cards are defined, create default MCP cards
-    let cards = match spec.service_type {
-        opsml_types::contracts::ServiceType::Mcp if spec.service.cards.is_none() => Vec::new(),
-        _ => {
-            let mut cards = spec
-                .service
-                .cards
-                .as_ref()
-                .ok_or(CliError::MissingServiceCards)?
-                .iter()
-                .map(|card| {
-                    Card::rust_new(
-                        card.alias.clone(),
-                        card.registry_type.clone(),
-                        card.space.clone(),
-                        card.name.clone(),
-                        card.version.clone(),
-                    )
-                })
-                .collect::<Vec<_>>();
+    let cards = if spec.service.is_none()
+        || spec
+            .service
+            .as_ref()
+            .and_then(|s| s.cards.as_ref())
+            .is_none()
+    {
+        Vec::new()
+    } else {
+        let mut cards = spec
+            .service
+            .as_ref()
+            .and_then(|s| s.cards.as_ref())
+            .ok_or(CliError::MissingServiceCards)?
+            .iter()
+            .map(|card| {
+                Card::rust_new(
+                    card.alias.clone(),
+                    card.registry_type.clone(),
+                    card.space.clone(),
+                    card.name.clone(),
+                    card.version.clone(),
+                )
+            })
+            .collect::<Vec<_>>();
 
-            validate_service_cards(&mut cards)?;
-            cards
-        }
+        validate_service_cards(&mut cards)?;
+        cards
     };
 
     // Create a new service card

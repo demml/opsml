@@ -219,7 +219,8 @@ fn create_lock_artifact_from_existing_service(
 /// Gets the write directory with a fallback default
 fn get_write_dir(spec: &ServiceSpec, default: &str) -> String {
     spec.service
-        .write_dir
+        .as_ref()
+        .and_then(|s| s.write_dir.clone())
         .clone()
         .unwrap_or_else(|| default.to_string())
 }
@@ -332,7 +333,7 @@ pub fn lock_service_card(
     debug!("Locking service {}/{}", space, name);
 
     let registries = CardRegistries::new()?;
-    let spec_cards = spec.service.cards.as_ref();
+    let spec_cards = spec.service.as_ref().and_then(|s| s.cards.as_ref());
 
     let reg = match spec.service_type {
         ServiceType::Api => &registries.service,
@@ -342,8 +343,12 @@ pub fn lock_service_card(
         }
     };
 
-    let existing_service =
-        get_service_from_registry(reg, space, name, spec.service.version.as_ref())?;
+    let existing_service = get_service_from_registry(
+        reg,
+        space,
+        name,
+        spec.service.as_ref().and_then(|s| s.version.as_ref()),
+    )?;
 
     match existing_service {
         None => {

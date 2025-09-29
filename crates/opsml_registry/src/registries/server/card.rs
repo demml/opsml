@@ -395,7 +395,7 @@ impl ServerCardRegistry {
                     service_type: client_card.service_type,
                     metadata: client_card.metadata.map(SqlxJson),
                     deployment: client_card.deployment.map(SqlxJson),
-                    service_config: SqlxJson(client_card.service_config),
+                    service_config: client_card.service_config.map(SqlxJson),
                     tags: SqlxJson(client_card.tags),
                     opsml_version: client_card.opsml_version,
                 };

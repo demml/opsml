@@ -1,15 +1,11 @@
 <script lang="ts">
-    import { Marked } from 'marked';
-    import { markedHighlight } from 'marked-highlight';
-    import hljs from 'highlight.js';
-    import 'highlight.js/styles/github.css';
-    import "github-markdown-css/github-markdown-light.css";
-    import { onMount } from 'svelte';
-    import { goto } from '$app/navigation';
-    import type { ReadMe } from '../readme/util';
-    import { convertMarkdown } from '../readme/util';
+  import 'highlight.js/styles/github.css';
+  import "github-markdown-css/github-markdown-light.css";
+  import { onMount } from 'svelte';
+  import { goto } from '$app/navigation';
+  import type { ReadMe } from '../readme/util';
+  import { convertMarkdown } from '../readme/util';
   import { getRegistryPath, type RegistryType } from '$lib/utils';
-  import { resolveCardPathFromArgs } from './utils';
   
     let html = $state('');
   

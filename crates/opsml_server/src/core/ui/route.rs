@@ -14,6 +14,16 @@ use tracing::error;
 #[folder = "opsml_ui/site/"]
 struct Assets;
 
+async fn serve_sveltekit_app() -> Response {
+    match Assets::get("index.html") {
+        Some(content) => {
+            let mime = mime_guess::from_path("index.html").first_or_octet_stream();
+            ([(CONTENT_TYPE, mime.as_ref())], content.data).into_response()
+        }
+        None => not_found().await,
+    }
+}
+
 async fn get_static_file(path: &str) -> Response {
     if path.starts_with("opsml/api/") {
         return not_found().await;
@@ -24,9 +34,8 @@ async fn get_static_file(path: &str) -> Response {
         return ([(CONTENT_TYPE, mime.as_ref())], content.data).into_response();
     }
 
-    if is_dynamic_card_route(path) {
-        let redirect_path = format!("{}/card", path);
-        return axum::response::Redirect::permanent(&format!("/{}", redirect_path)).into_response();
+    if is_dynamic_card_route(path) || is_dynamic_genai_card_route(path) {
+        return serve_sveltekit_app().await;
     }
 
     // Check for root opsml path
@@ -43,13 +52,19 @@ async fn get_static_file(path: &str) -> Response {
 
 fn is_dynamic_card_route(path: &str) -> bool {
     let parts: Vec<&str> = path.split('/').collect();
+
+    // /opsml/{registry}/card/{space}/{name}/{version}
     parts.len() == 6
         && parts[0] == "opsml"
         && parts[2] == "card"
-        && matches!(
-            parts[1],
-            "data" | "model" | "experiment" | "prompt" | "service"
-        )
+        && matches!(parts[1], "data" | "model" | "experiment" | "service")
+}
+
+fn is_dynamic_genai_card_route(path: &str) -> bool {
+    let parts: Vec<&str> = path.split('/').collect();
+
+    // /opsml/genai/{subregistry}/card/{space}/{name}/{version}
+    parts.len() == 7 && parts[0] == "opsml" && parts[1] == "genai" && parts[3] == "card"
 }
 
 async fn static_handler(uri: Uri) -> impl IntoResponse {

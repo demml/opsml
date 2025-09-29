@@ -24,7 +24,6 @@ export const load: LayoutLoad = async ({ params, parent }) => {
 
   let readme = await getCardReadMe(metadata.name, metadata.space, registryType);
 
-  let registryPath = getRegistryTypeLowerCase(registryType);
   let activeTab = "card"; // Default active tab
 
   return { metadata, registryType, readme, activeTab };

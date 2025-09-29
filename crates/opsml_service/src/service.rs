@@ -29,7 +29,7 @@ pub struct ServiceSpec {
     #[serde(rename = "type")]
     pub service_type: ServiceType,
     pub metadata: Option<ServiceMetadata>,
-    pub service: ServiceConfig,
+    pub service: Option<ServiceConfig>,
     pub deploy: Option<Vec<DeploymentConfig>>,
 
     #[serde(skip)]
@@ -49,7 +49,7 @@ impl ServiceSpec {
             },
             service_type,
             metadata: None,
-            service: ServiceConfig::default(),
+            service: None,
             deploy: None,
             root_path: PathBuf::new(),
         };
@@ -141,7 +141,9 @@ impl ServiceSpec {
     fn validate(&mut self) -> Result<(), ServiceError> {
         self.validate_service_type()?;
         self.service
-            .validate(self.space_config.get_space(), &self.service_type)?;
+            .as_mut()
+            .map(|service| service.validate(self.space_config.get_space(), &self.service_type))
+            .transpose()?;
         Ok(())
     }
     /// Load a ServiceSpec from a YAML file at the given path
@@ -171,8 +173,12 @@ impl ServiceSpec {
     }
 
     pub fn get_card(&self, alias: &str) -> Option<&Card> {
-        if let Some(cards) = &self.service.cards {
-            cards.iter().find(|card| card.alias == alias)
+        if let Some(service) = &self.service {
+            if let Some(cards) = &service.cards {
+                cards.iter().find(|card| card.alias == alias)
+            } else {
+                None
+            }
         } else {
             None
         }
@@ -274,7 +280,8 @@ deploy:
         //assert mcp type
         assert_eq!(spec.service_type, ServiceType::Mcp);
 
-        let mcp_config = spec.service.mcp.as_ref().unwrap();
+        let service = spec.service.unwrap();
+        let mcp_config = service.mcp.as_ref().unwrap();
         assert_eq!(mcp_config.transport, McpTransport::Http);
 
         // check capabilities
@@ -309,7 +316,8 @@ deploy:
         //assert mcp type
         assert_eq!(spec.service_type, ServiceType::Mcp);
 
-        let mcp_config = spec.service.mcp.as_ref().unwrap();
+        let service = spec.service.unwrap();
+        let mcp_config = service.mcp.as_ref().unwrap();
         assert_eq!(mcp_config.transport, McpTransport::Http);
 
         // check capabilities

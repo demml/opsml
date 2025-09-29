@@ -1,22 +1,20 @@
 
 <script lang="ts">
   import { onMount } from "svelte";
-  import type { ServiceCard } from "$lib/components/card/card_interfaces/servicecard";
-  import { Info, Diamond } from 'lucide-svelte';
+  import type { ServiceCard, DeploymentConfig, ServiceConfig, ServiceMetadata } from "$lib/components/card/card_interfaces/servicecard";
+  import { Info, Diamond, Tags, Rocket } from 'lucide-svelte';
   import CodeModal from "../CodeModal.svelte";
   import Pill from "$lib/components/utils/Pill.svelte";
   import LinkPill from "$lib/components/utils/LinkPill.svelte";
   import { RegistryType } from "$lib/utils";
   import { python } from "svelte-highlight/languages";
 
-let {
-    service,
-  } = $props<{
-    service: ServiceCard;
-  }>();
-
+let {service} = $props<{service: ServiceCard;}>();
 
   let useCardContent = $state('');
+  let deploymentConfig: DeploymentConfig | undefined = $state(service.deploy);
+  let serviceConfig: ServiceConfig = $state(service.service_config);
+  let metadata: ServiceMetadata | undefined = $state(service.metadata);
 
 
   onMount(() => {
@@ -68,7 +66,7 @@ service.load()
   {#if service.experimentcard_uid }
     <div class="flex flex-row items-center pb-1 border-b-2 border-black">
       <Diamond color="#8059b6" fill="#8059b6"/>
-      <header class="pl-2 text-primary-900 text-sm font-bold">Extra</header>
+      <header class="pl-2 text-primary-900 text-sm font-bold">Cards</header>
     </div>
 
     <div class="flex flex-wrap space-y-1 gap-1">
@@ -77,4 +75,22 @@ service.load()
       {/if}
     </div>
   {/if}
+
+  {#if metadata && metadata.tags.length > 0}
+    <div class="flex flex-col space-y-1 gap-1">
+      <div class="flex flex-row items-center pb-1 border-b-2 border-black">
+        <Tags color="#8059b6" />
+        <header class="pl-2 text-primary-900 text-sm font-bold">Tags</header>
+      </div>
+    </div>
+
+    <div class="flex flex-wrap gap-1">
+      {#each metadata.tags as tag}
+        <div class="inline-flex items-center overflow-hidden rounded-lg bg-primary-100 border border-primary-800 text-sm w-fit px-2 text-primary-900">
+          {tag}
+        </div>
+      {/each}
+    </div>
+  {/if}
+  
 </div>

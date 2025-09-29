@@ -220,7 +220,30 @@ impl PostgresQueryHelper {
         (query, bindings)
     }
 
-    pub fn get_query_page_query(table: &CardTable, sort_by: &str) -> String {
+    pub fn get_query_page_query(
+        table: &CardTable,
+        sort_by: &str,
+        spaces: &[String],
+        tags: &[String],
+    ) -> String {
+        let mut binding_index = 2; // Start from 4 because $1, $2, $3 are used for space, name, search
+
+        let space_filter = if !spaces.is_empty() {
+            let condition = format!(" AND space = ANY(${binding_index})");
+            binding_index += 1;
+            condition
+        } else {
+            "".to_string()
+        };
+
+        let tag_filter = if !tags.is_empty() {
+            let condition = format!(" AND tags ?| ${binding_index}");
+            binding_index += 1;
+            condition
+        } else {
+            "".to_string()
+        };
+
         let versions_cte = format!(
             "WITH versions AS (
                 SELECT 
@@ -229,8 +252,10 @@ impl PostgresQueryHelper {
                     version, 
                     ROW_NUMBER() OVER (PARTITION BY space, name ORDER BY created_at DESC) AS row_num 
                 FROM {table}
-                WHERE ($1 IS NULL OR space = $1)
-                AND ($2 IS NULL OR name LIKE $3 OR space LIKE $3)
+                WHERE 1=1
+                AND ($1 IS NULL OR name LIKE $1 OR space LIKE $1)
+                {space_filter}
+                {tag_filter}
             )"
         );
 
@@ -243,10 +268,12 @@ impl PostgresQueryHelper {
                     MAX(created_at) AS updated_at, 
                     MIN(created_at) AS created_at 
                 FROM {table}
-                WHERE ($1 IS NULL OR space = $1)
-                AND ($2 IS NULL OR name LIKE $3 OR space LIKE $3)
+                WHERE 1=1
+                AND ($1 IS NULL OR name LIKE $1 OR space LIKE $1)
+               
+                {tag_filter}
                 GROUP BY space, name
-            )"
+        )"
         );
 
         let filtered_versions_cte = ", filtered_versions AS (
@@ -279,8 +306,9 @@ impl PostgresQueryHelper {
         let combined_query = format!(
             "{versions_cte}{stats_cte}{filtered_versions_cte}{joined_cte}
             SELECT * FROM joined
-            WHERE row_num > $4 AND row_num <= $5
-            ORDER BY updated_at DESC"
+            WHERE row_num > ${binding_index} AND row_num <= ${binding_index_plus_1}
+            ORDER BY updated_at DESC",
+            binding_index_plus_1 = binding_index + 1
         );
 
         combined_query
@@ -317,17 +345,28 @@ impl PostgresQueryHelper {
         query
     }
 
-    pub fn get_query_stats_query(table: &CardTable) -> String {
-        let base_query = format!(
+    pub fn get_query_stats_query(table: &CardTable, spaces: &[String], tags: &[String]) -> String {
+        let space_filter = if !spaces.is_empty() {
+            " AND space = ANY($2)".to_string()
+        } else {
+            "".to_string()
+        };
+
+        let mut base_query = format!(
             "SELECT
-            COALESCE(CAST(COUNT(DISTINCT name) AS INTEGER), 0) AS nbr_names, 
-            COALESCE(CAST(COUNT(major) AS INTEGER), 0) AS nbr_versions, 
-            COALESCE(CAST(COUNT(DISTINCT space) AS INTEGER), 0) AS nbr_spaces 
-            FROM {table}
-            WHERE 1=1
-            AND ($1 IS NULL OR name LIKE $1 OR space LIKE $1)
-            AND ($2 IS NULL OR name = $2 OR space = $2)"
+        COALESCE(CAST(COUNT(DISTINCT name) AS INTEGER), 0) AS nbr_names, 
+        COALESCE(CAST(COUNT(major) AS INTEGER), 0) AS nbr_versions, 
+        COALESCE(CAST(COUNT(DISTINCT space) AS INTEGER), 0) AS nbr_spaces 
+        FROM {table}
+        WHERE 1=1
+        AND ($1 IS NULL OR name LIKE $1 OR space LIKE $1)
+        {space_filter}
+        "
         );
+
+        if !tags.is_empty() {
+            base_query.push_str(" AND tags ?| $3");
+        }
 
         base_query
     }
@@ -366,6 +405,7 @@ impl PostgresQueryHelper {
         table: &CardTable,
         query_args: &CardQueryArgs,
     ) -> Result<String, SqlError> {
+        let mut binding_index = 5; // Start from 6 because $1 to $5 are used for uid, space, name, max_date, version
         if query_args.uid.is_some() {
             is_valid_uuidv7(query_args.uid.as_ref().unwrap())?;
             return Ok(format!("SELECT * FROM {table} WHERE uid = $1 LIMIT 1"));
@@ -398,12 +438,9 @@ impl PostgresQueryHelper {
         }
 
         // Tags query using jsonb operator
-        if let Some(tags) = &query_args.tags {
-            for tag in tags {
-                query.push_str(&format!(
-                    " AND tags @> '[\"{tag}\"]'::jsonb" // Using @> operator is more efficient than EXISTS
-                ));
-            }
+        if let Some(_expect) = &query_args.tags {
+            query.push_str(&format!(" AND tags ?| ${binding_index}"));
+            binding_index += 1;
         }
 
         // Add ordering
@@ -413,7 +450,7 @@ impl PostgresQueryHelper {
             query.push_str(" ORDER BY major DESC, minor DESC, patch DESC");
         }
 
-        query.push_str(" LIMIT $5");
+        query.push_str(&format!(" LIMIT ${binding_index}"));
 
         Ok(query)
     }

@@ -68,7 +68,7 @@
       triggerSuccess();
     }
 
-    goto(`/opsml/${getRegistryPath(registry)}/card/${space}/${name}/${version}`);
+    goto(`/opsml/${getRegistryPath(registry)}/card/${space}/${name}/${version}/card`);
   }
 
 async function toggle(toggle: string) {
