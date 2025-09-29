@@ -550,7 +550,7 @@ mod tests {
         let client = db_client().await;
 
         // Run the SQL script to populate the database
-        let script = std::fs::read_to_string("tests/populate_postgres_test.sql").unwrap();
+        let script = std::fs::read_to_string("tests/populate_mysql_test.sql").unwrap();
         sqlx::raw_sql(&script).execute(&client.pool).await.unwrap();
 
         // query stats
@@ -560,9 +560,9 @@ mod tests {
             .await
             .unwrap();
 
-        assert_eq!(stats.nbr_names, 9);
-        assert_eq!(stats.nbr_versions, 9);
-        assert_eq!(stats.nbr_spaces, 9);
+        assert_eq!(stats.nbr_names, 10);
+        assert_eq!(stats.nbr_versions, 10);
+        assert_eq!(stats.nbr_spaces, 10);
 
         // query stats with search term
         let stats = client
@@ -648,7 +648,7 @@ mod tests {
             .await
             .unwrap();
 
-        assert_eq!(results.len(), 9);
+        assert_eq!(results.len(), 10);
 
         // query page
         let results = client

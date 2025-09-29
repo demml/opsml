@@ -663,7 +663,7 @@ impl CardLogicTrait for CardLogicMySqlClient {
 
         // bind tags for 2nd cte
         for tag in tags {
-            records = records.bind(tag);
+            records = records.bind(format!("\"{}\"", tag));
         }
 
         // final select
