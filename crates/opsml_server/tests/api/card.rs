@@ -123,18 +123,17 @@ async fn test_opsml_server_card_stats_and_query() {
     let helper = TestHelper::new(None).await;
 
     /////////////////////// Test registry stats ///////////////////////
-
     let params = RegistryStatsRequest {
         registry_type: RegistryType::Model,
-        search_term: None,
-        space: None,
+        ..Default::default()
     };
 
-    let query_string = serde_qs::to_string(&params).unwrap();
+    let body = serde_json::to_string(&params).unwrap();
     let request = Request::builder()
-        .uri(format!("/opsml/api/card/registry/stats?{query_string}"))
-        .method("GET")
-        .body(Body::empty())
+        .uri("/opsml/api/card/registry/stats".to_string())
+        .method("POST")
+        .header(header::CONTENT_TYPE, "application/json")
+        .body(Body::from(body))
         .unwrap();
 
     let response = helper.send_oneshot(request).await;
@@ -147,14 +146,15 @@ async fn test_opsml_server_card_stats_and_query() {
     let params = RegistryStatsRequest {
         registry_type: RegistryType::Model,
         search_term: Some("Model1".to_string()),
-        space: None,
+        ..Default::default()
     };
 
-    let query_string = serde_qs::to_string(&params).unwrap();
+    let body = serde_json::to_string(&params).unwrap();
     let request = Request::builder()
-        .uri(format!("/opsml/api/card/registry/stats?{query_string}"))
-        .method("GET")
-        .body(Body::empty())
+        .uri("/opsml/api/card/registry/stats".to_string())
+        .method("POST")
+        .header(header::CONTENT_TYPE, "application/json")
+        .body(Body::from(body))
         .unwrap();
 
     let response = helper.send_oneshot(request).await;
@@ -164,22 +164,46 @@ async fn test_opsml_server_card_stats_and_query() {
     let stats_response: RegistryStatsResponse = serde_json::from_slice(&body).unwrap();
     assert_eq!(stats_response.stats.nbr_names, 2);
 
+    //////// Test registry stats request with multiple spaces //////
+
+    let params = RegistryStatsRequest {
+        registry_type: RegistryType::Model,
+        spaces: vec![
+            "repo1".to_string(),
+            "repo2".to_string(),
+            "repo3".to_string(),
+        ],
+        ..Default::default()
+    };
+
+    let body = serde_json::to_string(&params).unwrap();
+    let request = Request::builder()
+        .uri("/opsml/api/card/registry/stats".to_string())
+        .method("POST")
+        .header(header::CONTENT_TYPE, "application/json")
+        .body(Body::from(body))
+        .unwrap();
+
+    let response = helper.send_oneshot(request).await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let body = response.into_body().collect().await.unwrap().to_bytes();
+    let stats_response: RegistryStatsResponse = serde_json::from_slice(&body).unwrap();
+    assert_eq!(stats_response.stats.nbr_names, 3);
+
     /////////////////////// Test query page ///////////////////////
 
     let args = QueryPageRequest {
         registry_type: RegistryType::Model,
-        sort_by: None,
-        space: None,
-        search_term: None,
-        page: None,
+        ..Default::default()
     };
 
-    let query_string = serde_qs::to_string(&args).unwrap();
-
+    let body = serde_json::to_string(&args).unwrap();
     let request = Request::builder()
-        .uri(format!("/opsml/api/card/registry/page?{query_string}"))
-        .method("GET")
-        .body(Body::empty())
+        .uri("/opsml/api/card/registry/page".to_string())
+        .method("POST")
+        .header(header::CONTENT_TYPE, "application/json")
+        .body(Body::from(body))
         .unwrap();
 
     let response = helper.send_oneshot(request).await;
@@ -192,18 +216,16 @@ async fn test_opsml_server_card_stats_and_query() {
 
     let args = QueryPageRequest {
         registry_type: RegistryType::Model,
-        sort_by: None,
-        space: None,
         search_term: Some("Model2".to_string()),
-        page: None,
+        ..Default::default()
     };
 
-    let query_string = serde_qs::to_string(&args).unwrap();
-
+    let body = serde_json::to_string(&args).unwrap();
     let request = Request::builder()
-        .uri(format!("/opsml/api/card/registry/page?{query_string}"))
-        .method("GET")
-        .body(Body::empty())
+        .uri("/opsml/api/card/registry/page".to_string())
+        .method("POST")
+        .header(header::CONTENT_TYPE, "application/json")
+        .body(Body::from(body))
         .unwrap();
 
     let response = helper.send_oneshot(request).await;
@@ -213,6 +235,34 @@ async fn test_opsml_server_card_stats_and_query() {
     let page_response: QueryPageResponse = serde_json::from_slice(&body).unwrap();
 
     assert_eq!(page_response.summaries.len(), 1);
+
+    //////// Test Query page request with multiple spaces //////
+
+    let args = QueryPageRequest {
+        registry_type: RegistryType::Model,
+        spaces: vec![
+            "repo1".to_string(),
+            "repo2".to_string(),
+            "repo3".to_string(),
+        ],
+        ..Default::default()
+    };
+
+    let body = serde_json::to_string(&args).unwrap();
+    let request = Request::builder()
+        .uri("/opsml/api/card/registry/page".to_string())
+        .method("POST")
+        .header(header::CONTENT_TYPE, "application/json")
+        .body(Body::from(body))
+        .unwrap();
+
+    let response = helper.send_oneshot(request).await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let body = response.into_body().collect().await.unwrap().to_bytes();
+    let page_response: QueryPageResponse = serde_json::from_slice(&body).unwrap();
+
+    assert_eq!(page_response.summaries.len(), 3);
 
     // test getting version page
     let args = VersionPageRequest {
@@ -237,6 +287,49 @@ async fn test_opsml_server_card_stats_and_query() {
     let version_page_response: VersionPageResponse = serde_json::from_slice(&body).unwrap();
 
     assert_eq!(version_page_response.summaries.len(), 1);
+
+    // Query by tag
+    let params = RegistryStatsRequest {
+        registry_type: RegistryType::Model,
+        tags: vec!["hello".to_string()],
+        ..Default::default()
+    };
+    let body = serde_json::to_string(&params).unwrap();
+    let request = Request::builder()
+        .uri("/opsml/api/card/registry/stats".to_string())
+        .method("POST")
+        .header(header::CONTENT_TYPE, "application/json")
+        .body(Body::from(body))
+        .unwrap();
+
+    let response = helper.send_oneshot(request).await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let body = response.into_body().collect().await.unwrap().to_bytes();
+    let stats_response: RegistryStatsResponse = serde_json::from_slice(&body).unwrap();
+    assert_eq!(stats_response.stats.nbr_names, 2);
+
+    let args = QueryPageRequest {
+        registry_type: RegistryType::Model,
+        tags: vec!["hello".to_string()],
+        ..Default::default()
+    };
+
+    let body = serde_json::to_string(&args).unwrap();
+    let request = Request::builder()
+        .uri("/opsml/api/card/registry/page".to_string())
+        .method("POST")
+        .header(header::CONTENT_TYPE, "application/json")
+        .body(Body::from(body))
+        .unwrap();
+
+    let response = helper.send_oneshot(request).await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let body = response.into_body().collect().await.unwrap().to_bytes();
+    let page_response: QueryPageResponse = serde_json::from_slice(&body).unwrap();
+
+    assert_eq!(page_response.summaries.len(), 2);
 
     helper.cleanup();
 }
@@ -1017,13 +1110,13 @@ async fn test_opsml_server_card_service_card_mcps() {
             space: "repo1".to_string(),
             version: "1.0.0".to_string(),
             service_type: ServiceType::Mcp.to_string(),
-            service_config: ServiceConfig {
+            service_config: Some(ServiceConfig {
                 mcp: Some(McpConfig {
                     capabilities: vec![McpCapability::Resources, McpCapability::Tools],
                     transport: McpTransport::Http,
                 }),
                 ..Default::default()
-            },
+            }),
             deployment: Some(vec![deploy]),
             ..ServiceCardClientRecord::default()
         }),

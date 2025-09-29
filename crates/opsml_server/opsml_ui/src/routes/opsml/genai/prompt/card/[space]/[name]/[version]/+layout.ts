@@ -1,6 +1,5 @@
 export const prerender = false;
 export const ssr = false;
-import { getRegistryTypeLowerCase } from "$lib/utils";
 import { getCardMetadata } from "$lib/components/card/utils";
 
 import type { LayoutLoad } from "./$types";
@@ -22,10 +21,11 @@ export const load: LayoutLoad = async ({ params, parent }) => {
     registryType
   )) as PromptCard;
 
+  console.log("Prompt Card Metadata:", metadata);
+
   let readme = await getCardReadMe(metadata.name, metadata.space, registryType);
 
-  let registryPath = getRegistryTypeLowerCase(registryType);
   let activeTab = "card"; // Default active tab
 
-  return { metadata, registryType, readme, registryPath, activeTab };
+  return { metadata, registryType, readme, activeTab };
 };

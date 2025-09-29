@@ -3,10 +3,23 @@ import type { RegistryType } from "$lib/utils";
 export interface RegistryStatsRequest {
   registry_type: RegistryType;
   search_term?: string;
-  space?: string;
+  spaces?: string[];
+  tags?: string[];
+}
+export interface QueryPageRequest {
+  registry_type: RegistryType;
+  sort_by?: string;
+  spaces?: string[];
+  search_term?: string;
+  tags?: string[];
+  page?: number;
 }
 export interface CardSpaceResponse {
   spaces: string[];
+}
+
+export interface CardTagsResponse {
+  tags: string[];
 }
 
 export interface QueryStats {
@@ -47,6 +60,7 @@ export interface QueryPageResponse {
 
 export interface RegistryPageReturn {
   spaces: string[];
+  tags: string[];
   registry_type: RegistryType;
   registryStats: RegistryStatsResponse;
   registryPage: QueryPageResponse;

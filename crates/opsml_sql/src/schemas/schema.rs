@@ -802,7 +802,7 @@ pub struct ServiceCardRecord {
     pub service_type: String,
     pub metadata: Option<Json<ServiceMetadata>>,
     pub deployment: Option<Json<Vec<DeploymentConfig>>>,
-    pub service_config: Json<ServiceConfig>,
+    pub service_config: Option<Json<ServiceConfig>>,
     pub username: String,
     pub tags: Json<Vec<String>>,
 }
@@ -818,7 +818,7 @@ impl ServiceCardRecord {
         service_type: String,
         metadata: Option<ServiceMetadata>,
         deployment: Option<Vec<DeploymentConfig>>,
-        service_config: ServiceConfig,
+        service_config: Option<ServiceConfig>,
         username: String,
         tags: Vec<String>,
     ) -> Self {
@@ -843,7 +843,7 @@ impl ServiceCardRecord {
             service_type,
             metadata: metadata.map(Json),
             deployment: deployment.map(Json),
-            service_config: Json(service_config),
+            service_config: service_config.map(Json),
             username,
             tags: Json(tags),
         }
@@ -880,7 +880,7 @@ impl ServiceCardRecord {
             service_type: client_card.service_type,
             metadata: client_card.metadata.map(Json),
             deployment: client_card.deployment.map(Json),
-            service_config: Json(client_card.service_config),
+            service_config: client_card.service_config.map(Json),
             tags: Json(client_card.tags),
         })
     }
@@ -906,7 +906,7 @@ impl Default for ServiceCardRecord {
             service_type: ServiceType::Api.to_string(),
             metadata: None,
             deployment: None,
-            service_config: Json(ServiceConfig::default()),
+            service_config: None,
             tags: Json(Vec::new()),
         }
     }
@@ -927,14 +927,14 @@ impl ServiceCardRecord {
 
         let config = self
             .service_config
-            .0
-            .mcp
-            .clone()
+            .as_ref()
+            .and_then(|c| c.0.mcp.as_ref())
+            .cloned()
             .ok_or_else(|| SqlError::MissingField("service_config.mcp".to_string()))?;
 
         let environment = deployment.environment.clone();
         let endpoints = deployment.endpoints.clone();
-        let description = self.metadata.as_ref().map(|m| m.0.description.clone());
+        let description = self.metadata.as_ref().map(|m| m.description.clone());
 
         Ok(McpServer {
             space: self.space.clone(),

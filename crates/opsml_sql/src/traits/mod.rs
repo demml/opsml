@@ -36,14 +36,16 @@ pub trait CardLogicTrait {
         &self,
         table: &CardTable,
         search_term: Option<&str>,
-        space: Option<&str>,
+        spaces: &[String],
+        tags: &[String],
     ) -> Result<QueryStats, SqlError>;
     async fn query_page(
         &self,
         sort_by: &str,
         page: i32,
         search_term: Option<&str>,
-        space: Option<&str>,
+        spaces: &[String],
+        tags: &[String],
         table: &CardTable,
     ) -> Result<Vec<CardSummary>, SqlError>;
     async fn version_page(
@@ -66,6 +68,8 @@ pub trait CardLogicTrait {
         &self,
         query_args: &ServiceQueryArgs,
     ) -> Result<Vec<ServiceCardRecord>, SqlError>;
+
+    async fn get_unique_tags(&self, table: &CardTable) -> Result<Vec<String>, SqlError>;
 }
 
 #[async_trait]

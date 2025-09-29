@@ -8,18 +8,10 @@ export const load: PageLoad = async ({ parent }) => {
   await validateUserOrRedirect();
   const { metadata, registryType } = await parent();
 
-  // get metric names, parameters
-  let versionPage = await getVersionPage(
-    registryType,
-    metadata.space,
-    metadata.name
-  );
-
-  let versionStats = await getRegistryStats(
-    registryType,
-    metadata.name,
-    metadata.space
-  );
+  let [versionPage, versionStats] = await Promise.all([
+    getVersionPage(registryType, metadata.space, metadata.name),
+    getRegistryStats(registryType, metadata.name, [metadata.space]),
+  ]);
 
   return { versionPage, versionStats };
 };

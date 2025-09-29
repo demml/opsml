@@ -104,6 +104,11 @@ pub struct CardSpaceResponse {
     pub spaces: Vec<String>,
 }
 
+#[derive(Serialize, Deserialize)]
+pub struct CardTagsResponse {
+    pub tags: Vec<String>,
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct CrudSpaceRequest {
     pub space: String,
@@ -147,11 +152,16 @@ pub struct SpaceStatsResponse {
     pub stats: Vec<SpaceStats>,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct RegistryStatsRequest {
     pub registry_type: RegistryType,
     pub search_term: Option<String>,
-    pub space: Option<String>,
+
+    #[serde(default)]
+    pub spaces: Vec<String>,
+
+    #[serde(default)]
+    pub tags: Vec<String>,
 }
 
 impl AuditableRequest for RegistryStatsRequest {
@@ -175,12 +185,15 @@ impl AuditableRequest for RegistryStatsRequest {
 
 // RegistryStatsResponse is sourced from sql schema
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct QueryPageRequest {
     pub registry_type: RegistryType,
     pub sort_by: Option<String>,
-    pub space: Option<String>,
     pub search_term: Option<String>,
+    #[serde(default)]
+    pub spaces: Vec<String>,
+    #[serde(default)]
+    pub tags: Vec<String>,
     pub page: Option<i32>,
 }
 
@@ -512,7 +525,7 @@ pub struct ServiceCardClientRecord {
     pub service_type: String,
     pub metadata: Option<ServiceMetadata>,
     pub deployment: Option<Vec<DeploymentConfig>>,
-    pub service_config: ServiceConfig,
+    pub service_config: Option<ServiceConfig>,
     pub username: String,
     pub tags: Vec<String>,
 }
@@ -531,7 +544,7 @@ impl Default for ServiceCardClientRecord {
             service_type: ServiceType::Api.to_string(),
             metadata: None,
             deployment: None,
-            service_config: ServiceConfig::default(),
+            service_config: None,
             cards: Vec::new(),
             tags: Vec::new(),
         }

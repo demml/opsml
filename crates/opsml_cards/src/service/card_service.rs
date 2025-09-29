@@ -305,10 +305,7 @@ pub struct ServiceCard {
 
     pub deploy: Option<Vec<DeploymentConfig>>,
 
-    pub service_config: ServiceConfig,
-
-    #[pyo3(get)]
-    pub tags: Vec<String>,
+    pub service_config: Option<ServiceConfig>,
 }
 
 #[pymethods]
@@ -343,12 +340,6 @@ impl ServiceCard {
             )?
         };
 
-        let tags = if let Some(metadata) = &spec.metadata {
-            metadata.tags.clone()
-        } else {
-            vec![]
-        };
-
         Ok(ServiceCard {
             space: base_args.0,
             name: base_args.1,
@@ -366,8 +357,16 @@ impl ServiceCard {
             metadata: spec.metadata,
             deploy: spec.deploy,
             service_config: spec.service,
-            tags,
         })
+    }
+
+    #[getter]
+    pub fn tags(&self) -> Vec<String> {
+        if let Some(metadata) = &self.metadata {
+            metadata.tags.clone()
+        } else {
+            vec![]
+        }
     }
 
     #[setter]
@@ -463,7 +462,7 @@ impl ServiceCard {
             metadata: self.metadata.clone(),
             deployment: self.deploy.clone(),
             service_config: self.service_config.clone(),
-            tags: self.tags.clone(),
+            tags: self.metadata.as_ref().map_or(vec![], |m| m.tags.clone()),
         };
 
         Ok(CardRecord::Service(record))
@@ -784,16 +783,10 @@ impl ServiceCard {
         let base_args = BaseArgs::create_args(
             Some(&name),
             Some(&space),
-            spec.service.version.as_deref(),
+            spec.service.as_ref().and_then(|s| s.version.as_deref()),
             None,
             &registry_type,
         )?;
-
-        let tags = if let Some(metadata) = &spec.metadata {
-            metadata.tags.clone()
-        } else {
-            vec![]
-        };
 
         Ok(ServiceCard {
             space: base_args.0,
@@ -812,7 +805,6 @@ impl ServiceCard {
             metadata: spec.metadata.clone(),
             deploy: spec.deploy.clone(),
             service_config: spec.service.clone(),
-            tags,
         })
     }
 
@@ -900,7 +892,6 @@ impl Serialize for ServiceCard {
         state.serialize_field("metadata", &self.metadata)?;
         state.serialize_field("deploy", &self.deploy)?;
         state.serialize_field("service_config", &self.service_config)?;
-        state.serialize_field("tags", &self.tags)?;
         state.end()
     }
 }
@@ -929,7 +920,6 @@ impl<'de> Deserialize<'de> for ServiceCard {
             Metadata,
             Deploy,
             ServiceConfig,
-            Tags,
         }
 
         struct ServiceCardVisitor;
@@ -961,7 +951,6 @@ impl<'de> Deserialize<'de> for ServiceCard {
                 let mut metadata = None;
                 let mut deploy = None;
                 let mut service_config = None;
-                let mut tags = None;
 
                 while let Some(key) = map.next_key()? {
                     match key {
@@ -1015,9 +1004,6 @@ impl<'de> Deserialize<'de> for ServiceCard {
                         Field::ServiceConfig => {
                             service_config = Some(map.next_value()?);
                         }
-                        Field::Tags => {
-                            tags = Some(map.next_value()?);
-                        }
                     }
                 }
 
@@ -1038,8 +1024,7 @@ impl<'de> Deserialize<'de> for ServiceCard {
                 let service_type = service_type.unwrap_or(ServiceType::Api);
                 let metadata = metadata.unwrap_or(None);
                 let deploy = deploy.unwrap_or(None);
-                let service_config = service_config.unwrap_or(ServiceConfig::default());
-                let tags = tags.unwrap_or_default();
+                let service_config = service_config.unwrap_or(None);
 
                 Ok(ServiceCard {
                     space,
@@ -1058,7 +1043,6 @@ impl<'de> Deserialize<'de> for ServiceCard {
                     metadata,
                     deploy,
                     service_config,
-                    tags,
                 })
             }
         }
@@ -1080,7 +1064,6 @@ impl<'de> Deserialize<'de> for ServiceCard {
             "metadata",
             "deploy",
             "service_config",
-            "tags",
         ];
         deserializer.deserialize_struct("ServiceCard", FIELDS, ServiceCardVisitor)
     }

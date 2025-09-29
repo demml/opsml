@@ -447,6 +447,15 @@ mod tests {
 
         assert_eq!(repos.len(), 10);
 
+        // query tags
+        let repos = client
+            .card
+            .get_unique_tags(&CardTable::Model)
+            .await
+            .unwrap();
+
+        assert_eq!(repos.len(), 3);
+
         cleanup();
     }
 
@@ -469,7 +478,7 @@ mod tests {
         // query stats
         let stats = client
             .card
-            .query_stats(&CardTable::Model, None, None)
+            .query_stats(&CardTable::Model, None, &[], &[])
             .await
             .unwrap();
 
@@ -480,7 +489,12 @@ mod tests {
         // query stats with search term
         let stats = client
             .card
-            .query_stats(&CardTable::Model, Some("Model1"), None)
+            .query_stats(
+                &CardTable::Model,
+                Some("Model1"),
+                &[],
+                &Vec::<String>::new(),
+            )
             .await
             .unwrap();
 
@@ -488,11 +502,63 @@ mod tests {
 
         let stats = client
             .card
-            .query_stats(&CardTable::Model, Some("Model1"), Some("repo1"))
+            .query_stats(
+                &CardTable::Model,
+                Some("Model1"),
+                &["repo1".to_string()],
+                &Vec::<String>::new(),
+            )
             .await
             .unwrap();
 
-        assert_eq!(stats.nbr_names, 1); // for Model1
+        assert_eq!(stats.nbr_names, 1);
+
+        // query tags
+        let stats = client
+            .card
+            .query_stats(&CardTable::Model, None, &[], &["hello".to_string()])
+            .await
+            .unwrap();
+
+        assert_eq!(stats.nbr_names, 2); // for Model1
+
+        let stats = client
+            .card
+            .query_stats(&CardTable::Model, None, &[], &["v3".to_string()])
+            .await
+            .unwrap();
+
+        assert_eq!(stats.nbr_names, 1);
+
+        let stats = client
+            .card
+            .query_stats(
+                &CardTable::Model,
+                None,
+                &[],
+                &["v3".to_string(), "hello".to_string()],
+            )
+            .await
+            .unwrap();
+
+        assert_eq!(stats.nbr_names, 3);
+
+        let stats = client
+            .card
+            .query_stats(
+                &CardTable::Model,
+                None,
+                &[
+                    "repo1".to_string(),
+                    "repo2".to_string(),
+                    "repo3".to_string(),
+                ],
+                &[],
+            )
+            .await
+            .unwrap();
+
+        assert_eq!(stats.nbr_names, 3);
 
         cleanup();
     }
@@ -516,7 +582,7 @@ mod tests {
         // query page
         let results = client
             .card
-            .query_page("name", 1, None, None, &CardTable::Data)
+            .query_page("name", 1, None, &[], &[], &CardTable::Data)
             .await
             .unwrap();
 
@@ -525,7 +591,7 @@ mod tests {
         // query page
         let results = client
             .card
-            .query_page("name", 1, None, None, &CardTable::Model)
+            .query_page("name", 1, None, &[], &[], &CardTable::Model)
             .await
             .unwrap();
 
@@ -534,11 +600,52 @@ mod tests {
         // query page
         let results = client
             .card
-            .query_page("name", 1, None, Some("repo3"), &CardTable::Model)
+            .query_page(
+                "name",
+                1,
+                None,
+                &["repo3".to_string()],
+                &[],
+                &CardTable::Model,
+            )
             .await
             .unwrap();
 
         assert_eq!(results.len(), 1);
+
+        let results = client
+            .card
+            .query_page(
+                "name",
+                1,
+                None,
+                &[],
+                &["hello".to_string()],
+                &CardTable::Model,
+            )
+            .await
+            .unwrap();
+
+        assert_eq!(results.len(), 2);
+
+        let results = client
+            .card
+            .query_page(
+                "name",
+                1,
+                None,
+                &[
+                    "repo1".to_string(),
+                    "repo2".to_string(),
+                    "repo3".to_string(),
+                ],
+                &[],
+                &CardTable::Model,
+            )
+            .await
+            .unwrap();
+
+        assert_eq!(results.len(), 3);
 
         cleanup();
     }
@@ -1349,10 +1456,10 @@ mod tests {
             space: SPACE.to_string(),
             service_type: ServiceType::Mcp.to_string(),
             tags: Json(vec!["tag1".to_string()]),
-            service_config: Json(ServiceConfig {
+            service_config: Some(Json(ServiceConfig {
                 mcp: Some(mcp_config.clone()),
                 ..Default::default()
-            }),
+            })),
             deployment: Some(Json(vec![deploy.clone()])),
             ..Default::default()
         };
@@ -1371,10 +1478,10 @@ mod tests {
             space: SPACE.to_string(),
             service_type: ServiceType::Mcp.to_string(),
             tags: Json(vec!["tag1".to_string()]),
-            service_config: Json(ServiceConfig {
+            service_config: Some(Json(ServiceConfig {
                 mcp: Some(mcp_config),
                 ..Default::default()
-            }),
+            })),
             deployment: Some(Json(vec![deploy])),
             ..Default::default()
         };

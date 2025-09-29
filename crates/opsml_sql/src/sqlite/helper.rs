@@ -175,7 +175,38 @@ impl SqliteQueryHelper {
         (query, bindings)
     }
 
-    pub fn get_query_page_query(table: &CardTable, sort_by: &str) -> String {
+    pub fn get_query_page_query(
+        table: &CardTable,
+        sort_by: &str,
+        spaces: &[String],
+        tags: &[String],
+    ) -> String {
+        let mut bindings_number = 2; // ?1 and ?2 are used for search_term and space
+
+        let spaces_filter = if spaces.is_empty() {
+            "".to_string()
+        } else {
+            let mut or_conditions = Vec::new();
+            for _ in spaces {
+                or_conditions.push(format!("space = ?{}", bindings_number));
+                bindings_number += 1;
+            }
+            let or_clause = or_conditions.join(" OR ");
+            format!(" AND ({or_clause})")
+        };
+
+        let tags_filter = if tags.is_empty() {
+            "".to_string()
+        } else {
+            let mut or_conditions = Vec::new();
+            for _ in tags {
+                or_conditions.push(format!("value = ?{}", bindings_number));
+                bindings_number += 1;
+            }
+            let or_clause = or_conditions.join(" OR ");
+            format!(" AND EXISTS (SELECT 1 FROM json_each({table}.tags) WHERE {or_clause})")
+        };
+
         let versions_cte = format!(
             "WITH versions AS (
                 SELECT 
@@ -184,8 +215,10 @@ impl SqliteQueryHelper {
                     version, 
                     ROW_NUMBER() OVER (PARTITION BY space, name ORDER BY created_at DESC) AS row_num
                 FROM {table}
-                WHERE (?1 IS NULL OR space = ?1)
-                AND (?2 IS NULL OR name LIKE ?3 OR space LIKE ?3)
+                WHERE 1=1
+                AND (?1 IS NULL OR name LIKE ?1 OR space LIKE ?1)
+                {spaces_filter}
+                {tags_filter}
             )"
         );
 
@@ -198,8 +231,10 @@ impl SqliteQueryHelper {
                     MAX(created_at) AS updated_at, 
                     MIN(created_at) AS created_at 
                 FROM {table}
-                WHERE (?1 IS NULL OR space = ?1)
-                AND (?2 IS NULL OR name LIKE ?3 OR space LIKE ?3)
+                WHERE 1=1
+                AND (?1 IS NULL OR name LIKE ?1 OR space LIKE ?1)
+                {spaces_filter}
+                {tags_filter}
                 GROUP BY space, name
             )"
         );
@@ -232,7 +267,7 @@ impl SqliteQueryHelper {
         );
 
         let combined_query = format!(
-            "{versions_cte}{stats_cte}{filtered_versions_cte}{joined_cte} 
+            "{versions_cte}{stats_cte}{filtered_versions_cte}{joined_cte}
             SELECT
             space,
             name,
@@ -242,8 +277,10 @@ impl SqliteQueryHelper {
             created_at,
             row_num
             FROM joined 
-            WHERE row_num > ?4 AND row_num <= ?5
-            ORDER BY updated_at DESC"
+            WHERE row_num > ?{bindings_number} AND row_num <= ?{bindings_number_plus_1}
+            ORDER BY updated_at DESC",
+            bindings_number = bindings_number,
+            bindings_number_plus_1 = bindings_number + 1
         );
 
         combined_query
@@ -280,7 +317,33 @@ impl SqliteQueryHelper {
         query
     }
 
-    pub fn get_query_stats_query(table: &CardTable) -> String {
+    pub fn get_query_stats_query(table: &CardTable, spaces: &[String], tags: &[String]) -> String {
+        // if tags are provided, we need a OR condition for each tag
+        let mut bindings_number = 2;
+
+        let spaces_filter = if spaces.is_empty() {
+            "".to_string()
+        } else {
+            let mut or_conditions = Vec::new();
+            for _ in spaces {
+                or_conditions.push(format!("space = ?{}", bindings_number));
+                bindings_number += 1;
+            }
+            let or_clause = or_conditions.join(" OR ");
+            format!(" AND ({or_clause})")
+        };
+
+        let tags_filter = if tags.is_empty() {
+            "".to_string()
+        } else {
+            let mut or_conditions = Vec::new();
+            for _ in tags {
+                or_conditions.push(format!("value = ?{}", bindings_number));
+                bindings_number += 1;
+            }
+            let or_clause = or_conditions.join(" OR ");
+            format!(" AND EXISTS (SELECT 1 FROM json_each({table}.tags) WHERE {or_clause})")
+        };
         let base_query = format!(
             "SELECT 
                     COALESCE(COUNT(DISTINCT name), 0) AS nbr_names, 
@@ -289,8 +352,9 @@ impl SqliteQueryHelper {
                 FROM {table}
                 WHERE 1=1
                 AND (?1 IS NULL OR name LIKE ?1 OR space LIKE ?1)
-                AND (?2 IS NULL OR space = ?2) 
-                "
+                {spaces_filter}
+                {tags_filter}
+            "
         );
 
         base_query
@@ -330,6 +394,7 @@ impl SqliteQueryHelper {
         table: &CardTable,
         query_args: &CardQueryArgs,
     ) -> Result<String, SqlError> {
+        let mut bindings_number = 5;
         let mut query = format!(
             "
         SELECT * FROM {table}
@@ -354,14 +419,17 @@ impl SqliteQueryHelper {
 
             if query_args.tags.is_some() {
                 let tags = query_args.tags.as_ref().unwrap();
-                for tag in tags.iter() {
-                    query.push_str(
-                        format!(
-                            " AND EXISTS (SELECT 1 FROM json_each(tags) WHERE value = '{tag}')"
-                        )
-                        .as_str(),
-                    );
+
+                let mut or_conditions = Vec::new();
+                for _ in tags {
+                    or_conditions.push(format!("value = ?{}", bindings_number));
+                    bindings_number += 1;
                 }
+                let or_clause = or_conditions.join(" OR ");
+
+                query.push_str(&format!(
+                    " AND EXISTS (SELECT 1 FROM json_each({table}.tags) WHERE {or_clause})"
+                ));
             }
 
             if query_args.sort_by_timestamp.unwrap_or(false) {
@@ -372,7 +440,7 @@ impl SqliteQueryHelper {
             }
         }
 
-        query.push_str(" LIMIT ?5");
+        query.push_str(&format!(" LIMIT ?{}", bindings_number));
 
         Ok(query)
     }
