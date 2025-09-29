@@ -93,9 +93,10 @@ export async function getRegistryPage(
 
 export async function setupRegistryPage(
   registry_type: RegistryType,
-  spaces: string[] | undefined = undefined,
+  space: undefined | string = undefined,
   name: string | undefined = undefined
 ): Promise<RegistryPageReturn> {
+  const spaces = space ? [space] : undefined;
   const [registry_spaces, tags, registryStats, registryPage] =
     await Promise.all([
       getSpaces(registry_type),
