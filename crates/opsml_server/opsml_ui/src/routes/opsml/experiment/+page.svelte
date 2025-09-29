@@ -7,13 +7,14 @@
   import { getRegistryPage, getRegistryStats} from "$lib/components/card/utils";
   import type { RegistryPageReturn, RegistryStatsResponse, QueryPageResponse} from "$lib/components/card/types";
   import  { RegistryType, delay, getRegistryTypeUpperCase } from "$lib/utils";
-  import { ArrowLeft, ArrowRight, Settings } from 'lucide-svelte';
+  import { ArrowLeft, ArrowRight, Search, Settings } from 'lucide-svelte';
   import { Combobox } from "melt/builders";
   import CardPage from '$lib/components/card/CardPage.svelte';
 
   let { data }: PageProps = $props();
   let page:  RegistryPageReturn  = data.page;
   let selectedName: string | undefined = data.selectedName;
+  let selectedSpace: string | undefined = data.selectedSpace;
   let viewState = $state(true);
 
   let currentPage = $state(1);
@@ -38,6 +39,13 @@
 
   onMount(() => {
     totalPages = Math.ceil(registryStats.stats.nbr_names / 30);
+
+    // if selectedSpace is defined, add it to filteredSpaces and spacesCombobox
+    if (selectedSpace && !filteredSpaces.includes(selectedSpace)) {
+      filteredSpaces = [...filteredSpaces, selectedSpace];
+      spacesCombobox.select(selectedSpace);
+    }
+    
   });
 
 
