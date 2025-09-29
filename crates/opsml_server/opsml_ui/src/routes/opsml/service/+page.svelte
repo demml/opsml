@@ -14,6 +14,7 @@
   let { data }: PageProps = $props();
   let page:  RegistryPageReturn  = data.page;
   let selectedName: string | undefined = data.selectedName;
+  let selectedSpace: string | undefined = data.selectedSpace;
   let viewState = $state(true);
 
   let currentPage = $state(1);
@@ -38,6 +39,13 @@
 
   onMount(() => {
     totalPages = Math.ceil(registryStats.stats.nbr_names / 30);
+
+    // if selectedSpace is defined, add it to filteredSpaces and spacesCombobox
+    if (selectedSpace && !filteredSpaces.includes(selectedSpace)) {
+      filteredSpaces = [...filteredSpaces, selectedSpace];
+      spacesCombobox.select(selectedSpace);
+    }
+    
   });
 
 
