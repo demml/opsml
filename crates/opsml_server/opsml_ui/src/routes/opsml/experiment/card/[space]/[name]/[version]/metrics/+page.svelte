@@ -9,7 +9,6 @@
   import VizBody from "$lib/components/card/experiment/VizBody.svelte";
   import { getGroupedMetrics } from "$lib/components/card/experiment/util";
   import Dropdown from "$lib/components/utils/Dropdown.svelte";
-  import ParameterTable from "$lib/components/card/experiment/ParameterTable.svelte";
   import { ChartNoAxesColumn } from 'lucide-svelte';
   import MetricTable from "$lib/components/card/experiment/MetricTable.svelte";
   import MetricComparisonTable from "$lib/components/card/experiment/MetricComparisonTable.svelte";

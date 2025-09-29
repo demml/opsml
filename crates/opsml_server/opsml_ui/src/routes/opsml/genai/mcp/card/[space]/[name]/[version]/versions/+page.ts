@@ -16,11 +16,8 @@ export const load: PageLoad = async ({ parent }) => {
     metadata.name
   );
 
-  let versionStats = await getRegistryStats(
-    registryType,
-    metadata.name,
-    metadata.space
-  );
+  let space = [metadata.space];
+  let versionStats = await getRegistryStats(registryType, metadata.name, space);
 
   return { versionPage, versionStats };
 };
