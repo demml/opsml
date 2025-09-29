@@ -110,24 +110,22 @@ impl ServiceSpec {
     /// We don't want to record the prod deployment config in staging or dev environments
     fn filter_deploy_by_environment(&mut self) -> Result<(), ServiceError> {
         let app_env = app_state().config()?.app_env.clone();
-        if let Some(deployments) = &self.deploy {
-            self.deploy = Some(
-                deployments
-                    .iter()
-                    .filter(|d| d.environment == app_env)
-                    .cloned()
-                    .collect(),
-            );
+        if let Some(deployments) = &mut self.deploy {
+            deployments.retain(|d| d.environment == app_env);
+            if deployments.is_empty() {
+                self.deploy = None;
+            }
         }
         Ok(())
     }
-
     fn validate_service_type(&self) -> Result<(), ServiceError> {
         match &self.service_type {
             ServiceType::Mcp => {
                 // assert that a deployment config exists
                 if self.deploy.is_none() || self.deploy.as_ref().unwrap().is_empty() {
-                    return Err(ServiceError::MissingDeploymentConfigForMCPService);
+                    return Err(ServiceError::MissingDeploymentConfigForMCPService(
+                        self.name.clone(),
+                    ));
                 }
                 Ok(())
             }
