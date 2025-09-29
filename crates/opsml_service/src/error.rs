@@ -2,8 +2,14 @@ use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum ServiceError {
-    #[error("Missing deployment configuration for MCP service type")]
-    MissingDeploymentConfigForMCPService,
+    #[error(
+        r#"
+Missing deployment configuration for MCP service {0}. 
+Check the 'deploy' section of the spec and ensure at least one deployment 
+configuration environment matches the current environment set in APP_ENV.
+"#
+    )]
+    MissingDeploymentConfigForMCPService(String),
 
     #[error(transparent)]
     IoError(#[from] std::io::Error),
