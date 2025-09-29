@@ -16,7 +16,6 @@
 
 
 <div class="flex-1 mx-auto w-11/12 flex justify-center px-4 pb-10">
-
   <div class="flex flex-wrap pt-4 gap-4 w-full justify-center">
 
     <div class="bg-primary-200 p-4 flex-1 flex-col rounded-base bg-surface-50 border-primary-800 border-3 shadow-primary max-h-[800px] overflow-y-auto self-start min-w-[26rem] max-w-[300px] md:min-w-[26rem] md:max-w-[32rem]">

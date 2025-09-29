@@ -23,6 +23,6 @@ export const load: PageLoad = async ({ params, parent }) => {
     301,
     `/opsml/${getRegistryPath(registryType)}/card/${metadata.space}/${
       metadata.name
-    }/${metadata.version}`
+    }/${metadata.version}/card`
   );
 };
