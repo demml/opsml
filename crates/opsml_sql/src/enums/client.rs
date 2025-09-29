@@ -1132,7 +1132,7 @@ mod tests {
         let client = get_client().await;
         // query stats
         let stats = client
-            .query_stats(&CardTable::Model, None, &vec![], &vec![])
+            .query_stats(&CardTable::Model, None, &[], &[])
             .await
             .unwrap();
 
@@ -1142,7 +1142,7 @@ mod tests {
 
         // query stats with search term
         let stats = client
-            .query_stats(&CardTable::Model, Some("Model1"), &vec![], &vec![])
+            .query_stats(&CardTable::Model, Some("Model1"), &[], &[])
             .await
             .unwrap();
 
@@ -1157,7 +1157,7 @@ mod tests {
 
         // query page
         let results = client
-            .query_page("name", 1, None, &vec![], &vec![], &CardTable::Data)
+            .query_page("name", 1, None, &[], &[], &CardTable::Data)
             .await
             .unwrap();
 
@@ -1165,7 +1165,7 @@ mod tests {
 
         // query page
         let results = client
-            .query_page("name", 1, None, &vec![], &vec![], &CardTable::Model)
+            .query_page("name", 1, None, &[], &[], &CardTable::Model)
             .await
             .unwrap();
 
@@ -1177,8 +1177,8 @@ mod tests {
                 "name",
                 1,
                 None,
-                &vec!["repo3".to_string()],
-                &vec![],
+                &["repo3".to_string()],
+                &[],
                 &CardTable::Model,
             )
             .await

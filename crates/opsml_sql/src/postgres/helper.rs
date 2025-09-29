@@ -347,8 +347,7 @@ impl PostgresQueryHelper {
 
     pub fn get_query_stats_query(table: &CardTable, spaces: &[String], tags: &[String]) -> String {
         let space_filter = if !spaces.is_empty() {
-            let condition = format!(" AND space = ANY($2)");
-            condition
+            " AND space = ANY($2)".to_string()
         } else {
             "".to_string()
         };
