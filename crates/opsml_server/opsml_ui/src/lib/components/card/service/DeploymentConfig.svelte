@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { ServiceCard, DeploymentConfig,  Resources, GpuConfig } from "$lib/components/card/card_interfaces/servicecard";
+  import type { DeploymentConfig,  Resources } from "$lib/components/card/card_interfaces/servicecard";
 
   let {config} = $props<{config: DeploymentConfig}>();
   import { Rocket, Earth, EthernetPort, Link, Cpu } from 'lucide-svelte';

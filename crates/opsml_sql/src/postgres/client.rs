@@ -626,7 +626,7 @@ mod tests {
                 &[
                     "repo1".to_string(),
                     "repo2".to_string(),
-                    "repo3".to_string(),
+                    "repo4".to_string(),
                 ],
                 &[],
             )
@@ -693,7 +693,7 @@ mod tests {
                 &[
                     "repo1".to_string(),
                     "repo2".to_string(),
-                    "repo3".to_string(),
+                    "repo4".to_string(),
                 ],
                 &[],
                 &CardTable::Model,
