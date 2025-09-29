@@ -40,7 +40,7 @@ where
 
     if let Some(tags) = &query_args.tags {
         for tag in tags {
-            query_builder = query_builder.bind(tag);
+            query_builder = query_builder.bind(format!("\"{}\"", tag));
         }
     }
     query_builder = query_builder.bind(query_args.limit.unwrap_or(default_limit));
