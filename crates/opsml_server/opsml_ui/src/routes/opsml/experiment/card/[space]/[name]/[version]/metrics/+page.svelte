@@ -1,9 +1,6 @@
 <script lang="ts">
-  
-  import CardsSearch from "$lib/components/card/CardsSearch.svelte";
+
   import type { PageProps } from './$types';
-  import type { RegistryPageReturn } from "$lib/components/card/types";
-  import type { BaseCard } from "$lib/components/home/types";
   import { Search } from "lucide-svelte";
   import { CircleDot } from 'lucide-svelte';
   import { List } from 'lucide-svelte';
