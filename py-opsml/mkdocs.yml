@@ -94,7 +94,10 @@ nav:
       - Model: "docs/api/model.md"
       - Experiment: "docs/api/experiment.md"
       - Data: "docs/api/data.md"
-      - LLM: "docs/api/llm.md"
+      - GenAI:
+          - Overview: "docs/api/genai/genai.md"
+          - Google: "docs/api/genai/google/google.md"
+          - OpenAI: "docs/api/genai/openai/openai.md"
       - Types: "docs/api/types.md"
       - Logging: "docs/api/logging.md"
       - Mock: "docs/api/mock.md"
