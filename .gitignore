@@ -138,7 +138,9 @@ pnpm-lock.yaml
 py-opsml/python/opsml/card/_card.pyi
 py-opsml/python/opsml/data/_data.pyi
 py-opsml/python/opsml/experiment/_experiment.pyi
-py-opsml/python/opsml/llm/_llm.pyi
+py-opsml/python/opsml/genai/_genai.pyi
+py-opsml/python/opsml/genai/google/_google.pyi
+py-opsml/python/opsml/genai/openai/_openai.pyi
 py-opsml/python/opsml/logging/_logging.pyi
 py-opsml/python/opsml/mock/_mock.pyi
 py-opsml/python/opsml/model/_model.pyi
@@ -150,3 +152,4 @@ py-opsml/python/opsml/scouter/queue/_queue.pyi
 py-opsml/python/opsml/scouter/types/_types.pyi
 py-opsml/python/opsml/types/_types.pyi
 py-opsml/python/opsml/app/_app.pyi
+py-opsml/python/opsml/evaluate/_evaluate.pyi
