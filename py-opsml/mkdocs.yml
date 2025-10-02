@@ -69,6 +69,8 @@ nav:
           - Card: "docs/cards/experiment/experimentcard.md"
           - Usage: "docs/cards/experiment/usage.md"
       - "docs/cards/promptcard.md"
+  - Evaluation:
+      - "docs/evaluation/llm.md"
   - Monitoring:
       - "docs/monitoring/overview.md"
   - Deployment:
