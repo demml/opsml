@@ -1245,8 +1245,8 @@ class ServiceCard:
             service_type (ServiceType | None):
                 The type of service (Api, Mcp, Agent). If not provided, defaults to Api.
             load_spec (bool):
-                Whether to load the opsmlspec.yml file if it exists in the service card directory.
-                This is useful when you have additional metadata in the opsmlspec.yml file that you want
+                Whether to load the opsmlspec.yaml file if it exists in the service card directory.
+                This is useful when you have additional metadata in the opsmlspec.yaml file that you want
                 to include in the service card. Defaults to False.
         """
 

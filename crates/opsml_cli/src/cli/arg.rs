@@ -9,7 +9,7 @@ use scouter_client::DriftType;
 
 fn default_spec_path() -> String {
     let path = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
-    let joined = path.join("opsmlspec.yml");
+    let joined = path.join("opsmlspec.yaml");
     joined.to_string_lossy().to_string()
 }
 
@@ -20,14 +20,14 @@ pub trait IntoQueryArgs {
 
 #[derive(Args)]
 pub struct RegisterArgs {
-    /// Path to the spec file. Defaults to `{current_dir}/opsmlspec.yml`
+    /// Path to the spec file. Defaults to `{current_dir}/opsmlspec.yaml`
     #[arg(long = "path", default_value = default_spec_path())]
     pub path: PathBuf,
 }
 
 #[derive(Args)]
 pub struct LockArgs {
-    /// Path to the spec file. Defaults to `{current_dir}/opsmlspec.yml`
+    /// Path to the spec file. Defaults to `{current_dir}/opsmlspec.yaml`
     #[arg(long = "path", default_value = default_spec_path())]
     pub path: PathBuf,
 }
