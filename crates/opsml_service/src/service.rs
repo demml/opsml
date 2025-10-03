@@ -3,7 +3,7 @@ use opsml_state::app_state;
 use opsml_types::contracts::{Card, DeploymentConfig, ServiceConfig, ServiceMetadata, ServiceType};
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
-const DEFAULT_SERVICE_FILENAME: &str = "opsmlspec.yml";
+const DEFAULT_SERVICE_FILENAME: &str = "opsmlspec.yaml";
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(untagged)]
@@ -61,7 +61,7 @@ impl ServiceSpec {
     /// # Arguments
     /// * `path` - Optional path to the spec file or directory. If None, uses current directory.
     ///   - If the path is a file, loads that file directly.
-    ///   - If the path is a directory, searches for `opsmlspec.yml`.
+    ///   - If the path is a directory, searches for `opsmlspec.yaml`.
     /// # Returns
     /// * `ServiceSpec` - The loaded service specification
     pub fn from_path(path: &Path) -> Result<Self, ServiceError> {
@@ -79,7 +79,7 @@ impl ServiceSpec {
                     .to_path_buf();
                 (path.to_path_buf(), root_path)
             } else if path.is_dir() {
-                // (2) If user provides a directory, search for our the opsmlspec.yml file in that directory or its parents
+                // (2) If user provides a directory, search for our the opsmlspec.yaml file in that directory or its parents
                 let root_path = path
                     .ancestors()
                     .find(|dir| dir.join(DEFAULT_SERVICE_FILENAME).is_file())

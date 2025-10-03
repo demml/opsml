@@ -71,13 +71,12 @@ nav:
       - "docs/cards/promptcard.md"
       - "docs/cards/servicecard.md"
   - Evaluation:
-      - "docs/evaluation/llm.md"
+      LLM: "docs/evaluation/llm.md"
   - Monitoring:
       - "docs/monitoring/overview.md"
   - Deployment:
       - "docs/deployment/overview.md"
   - Automation:
-      - "docs/automation/service.md"
       - "docs/automation/pyproject.md"
   - CLI:
       - Overview: "docs/cli/overview.md"
