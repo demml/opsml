@@ -4,7 +4,7 @@
   <br>
 </h1>
 
-### Quality Control for the Machine Learning Lifecycle
+### Quality Control for the AI Lifecycle
 
 OpsML is an open-source developer-first ML operations platform focused on injecting quality control into the machine learning artifact lifecycle. Leverage Opsml to **build**, **manage**, **track**, **monitor**, and **govern** your AI applications. Build with confidence, deploy with peace of mind.
 
