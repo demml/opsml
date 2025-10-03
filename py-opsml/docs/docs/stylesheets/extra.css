@@ -150,3 +150,12 @@
 .md-nav__link--active {
 font-weight: bold;
 }
+
+.md-typeset pre {
+      border-radius: 12px;
+  }
+
+
+.md-typeset pre > code {
+    border-radius: 12px; 
+}
