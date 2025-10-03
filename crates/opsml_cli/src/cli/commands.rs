@@ -78,7 +78,7 @@ pub enum Commands {
         command: GetCommands,
     },
 
-    /// Creates and locks an opsml service from an opsmlspec.yml file
+    /// Creates and locks an opsml service from an opsmlspec.yaml file
     ///
     /// # Example
     /// opsml lock
@@ -99,7 +99,7 @@ pub enum Commands {
     /// Install/download an opsml app
     ///
     /// # Example
-    /// opsml install app
+    /// opsml install service
     Install {
         #[command(subcommand)]
         command: InstallCommands,
@@ -135,7 +135,7 @@ pub enum Commands {
     /// Validate the pyproject.toml file opsml tool configuration
     Validate,
 
-    /// Register a service card from an opsmlspec.yml file without generating a lock file.
+    /// Register a service card from an opsmlspec.yaml file without generating a lock file.
     /// This is useful for when you want to register a service without the need to download
     /// any service artifacts in a subsequent step.
     Register(RegisterArgs),

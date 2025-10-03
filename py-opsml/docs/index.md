@@ -1,10 +1,10 @@
 <h1 align="center">
   <br>
-  <img src="https://github.com/demml/opsml/blob/main/images/opsml-logo.png?raw=true"  width="300" height="400" alt="opsml logo"/>
+  <img src="docs/images/opsml-logo.webp" width="400" alt="opsml logo"/>
   <br>
 </h1>
 
-<h3 align="center">Quality Control for the Machine Learning Lifecycle</h3>
+<h3 align="center">Quality Control for the AI Lifecycle</h3>
 ---
 
 [![Unit Tests](https://github.com/demml/opsml/actions/workflows/lints-test.yml/badge.svg)](https://github.com/demml/opsml/actions/workflows/lints-test.yml)

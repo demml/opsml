@@ -69,12 +69,14 @@ nav:
           - Card: "docs/cards/experiment/experimentcard.md"
           - Usage: "docs/cards/experiment/usage.md"
       - "docs/cards/promptcard.md"
+      - "docs/cards/servicecard.md"
+  - Evaluation:
+      LLM: "docs/evaluation/llm.md"
   - Monitoring:
       - "docs/monitoring/overview.md"
   - Deployment:
       - "docs/deployment/overview.md"
   - Automation:
-      - "docs/automation/service.md"
       - "docs/automation/pyproject.md"
   - CLI:
       - Overview: "docs/cli/overview.md"

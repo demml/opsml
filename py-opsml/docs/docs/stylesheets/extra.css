@@ -119,9 +119,25 @@
 }
 
 
-@media screen and (min-width: 76.25em) {
-  .md-nav__title {
-    display: none;
+
+.md-sidebar--primary,
+.md-sidebar--secondary {
+  width: 8rem !important;
+}
+
+/* Large screens: 10rem */
+@media screen and (min-width: 100em) {
+  .md-sidebar--primary,
+  .md-sidebar--secondary {
+    width: 10rem !important;
+  }
+}
+
+/* Medium screens: 8rem (override if needed) */
+@media screen and (min-width: 76.25em) and (max-width: 99.99em) {
+  .md-sidebar--primary,
+  .md-sidebar--secondary {
+    width: 8rem !important;
   }
 }
 
@@ -149,4 +165,13 @@
 
 .md-nav__link--active {
 font-weight: bold;
+}
+
+.md-typeset pre {
+      border-radius: 12px;
+  }
+
+
+.md-typeset pre > code {
+    border-radius: 12px; 
 }
