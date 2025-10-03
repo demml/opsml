@@ -106,10 +106,10 @@ One core area of focus for OpsML `v3` is tighter integration into the workflows 
 
 #### See it in action
 
-Create an `opsmlspec.yml` file that defines your service and its cards. These could be cards that are produced from your training pipeline or cards that are already in the registry.
+Create an `opsmlspec.yaml` file that defines your service and its cards. These could be cards that are produced from your training pipeline or cards that are already in the registry.
 
 ```yaml
-name: recommendation-api
+name: recommendation-api # (1)
 space: data-science
 type: Api
 
@@ -117,19 +117,19 @@ service:
   version: 1.0.0
   write_dir: opsml_service
   cards:
-    - alias: prompt
+    - alias: prompt # (2)
       space: data-science
       name: recommendation-prompt
       version: 1.*
       type: prompt
 
-    - alias: recommender
+    - alias: recommender # (3)
       space: data-science
       name: recommender-model
       version: 1.*
       type: model
 
-    - alias: ranker
+    - alias: ranker # (4)
       space: data-science
       name: recommender-ranker
       version: 1.*
@@ -142,14 +142,19 @@ service:
           - psi
 ```
 
-After you define your `ServiceCard` in the `opsmlspec.yml`, you can run `opsml lock` that will create an `opsml.lock` file that will contain the resolved versions of the cards in the service. You can then run `opsml install` to install the service and its cards into your application.
+1. Our service is going to be a hybrid system that involves traditional machine learning models and an agentic piece that requires the use of a prompt.
+2. The prompt card that will be used by the agentic component of the service.
+3. The main recommender model that will provide recommendations based on user input.
+4. A ranking model that will be used to rank the recommendations provided by the recommender model. This model also has drift detection enabled to monitor for changes in data distribution over time.
+
+After you define your `ServiceCard` in the `opsmlspec.yaml`, you can run `opsml lock`, which will create an `opsml.lock` file that will contain the resolved versions of the cards in the service. You can then run `opsml install service` to install the service and its cards into your application.
    
 ???tip "Naming"
-    `opsmlspec.yml` is just a standard convention for naming the spec file. You can name it whatever you want so long as its either a `yml` or `yaml` file and you provide the file path when running the CLI commands. See `opsml lock --help` for more details.
+    `opsmlspec.yaml` is just a standard convention for naming the spec file. You can name it whatever you want so long as its either a `yml` or `yaml` file and you provide the file path when running the CLI commands. See `opsml lock --help` for more details.
 
 ### Full Specification
 
-Here is the full specification for the `opsmlspec.yml` file:
+Here is the full specification for the `opsmlspec.yaml` file:
 
 | Field         | Type                       | Required | Description                                                                                   |
 |---------------|----------------------------|----------|-----------------------------------------------------------------------------------------------|
@@ -196,12 +201,12 @@ Here is the full specification for the `opsmlspec.yml` file:
 | `type`        | `Model` \| `Prompt` \| `Service` \| `Mcp` | Yes | Registry type of the card.                                         |
 | `drift`       | object              | No       | Drift detection config (only for model cards). See below.          |
 
-**Drift fields** (only for model cards):
+**Drift fields** (only for model and prompt cards):
 
 | Field             | Type           | Required | Description                                  |
 |-------------------|----------------|----------|----------------------------------------------|
 | `active`          | `bool`         | No       | Whether drift detection is active.            |
-| `deactivate_others` | `bool`       | No       | Deactivate other drift configs if true.       |
+| `deactivate_others` | `bool`       | No       | Deactivate previous drift config versions if true.       |
 | `drift_type`      | list[string]   | No       | Types of drift detection (e.g., `psi`, `custom`). |
 
 #### Deployment fields
@@ -236,7 +241,7 @@ Here is the full specification for the `opsmlspec.yml` file:
 
 ???tip "Yaml Spec"
     The following is the full specification in yaml
-    Here is the full specification for the `opsmlspec.yml` file:
+    Here is the full specification for the `opsmlspec.yaml` file:
 
     ```yaml
     name: my-service                # (string, required) Name of the service
@@ -292,7 +297,17 @@ Here is the full specification for the `opsmlspec.yml` file:
 ## Using a ServiceCard
 Once you have created a `ServiceCard`, you can use it in your application. To load a `ServiceCard` you can either load it directly from the registry or load if from a path where it was downloaded to.
 
-### Doa
+### Downloading with the CLI
+
+In most cases, when deploying your application, you'll want to leverage the Opsml CLI to download the service and its associated cards to a local path. This is a common pattern for containerized applications where you'll want to copy the service into the container image during the build process.
+
+Assuming you already have a service registered and an `opsml.lock` file created, you can use the following command to download the service and its cards:
+
+```bash
+opsml install service
+```
+
+This will download the service and its cards to a local directory (by default, `./opsml_service` unless otherwise specified in the `opsmlspec.yaml` file). You can then load the service in your application using the path to the downloaded service. While Opsml gives you the flexibility to load the service as you see fit, we recommend using `AppState` in applications to manage the lifecycle of the service ([link](../deployment/overview.md#appstate)).
 
 ### Load from Registry
 You can load a `ServiceCard` from the registry using the `CardRegistry`:
