@@ -10,10 +10,6 @@
     registry: RegistryType;
   }>();
 
-  function navigateToCardPage(registry: RegistryType, space: string, name: string, version: string) {
-      let path = resolveCardPathFromArgs(registry, space, name, version);
-      goto(path);
-    }
 
 </script>
 
@@ -71,9 +67,13 @@
           </td>
           <td class="p-1 text-center">{summary.versions}</td>
           <td class="p-2">
-            <button class="justify-self-center btn text-sm flex flex-row gap-1 bg-primary-500 shadow shadow-hover border-black border-2 rounded-lg" onclick={() => navigateToCardPage(registry, summary.space, summary.name, summary.version)}>
+            <a 
+              class="justify-self-center btn text-sm flex flex-row gap-1 bg-primary-500 shadow shadow-hover border-black border-2 rounded-lg"
+              href={resolveCardPathFromArgs(registry, summary.space, summary.name, summary.version)}
+              data-sveltekit-preload-data="hover"
+              >
               <div class="text-black">Link</div>
-            </button>
+            </a>
           </td>
         </tr>
       {/each}
