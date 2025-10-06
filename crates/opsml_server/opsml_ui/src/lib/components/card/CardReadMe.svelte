@@ -25,9 +25,9 @@
    
   
     
-    function navigateToReadMe() {
-        goto(`/opsml/${getRegistryPath(registryType)}/card/${space}/${name}/${version}/readme`);
-      }
+   
+
+    let readMeUrl = $state(`/opsml/${getRegistryPath(registryType)}/card/${space}/${name}/${version}/readme`);
   
   
   
@@ -45,12 +45,13 @@
   
   <div class="grid justify-items-end py-4 px-4">
     <div>
-      <button 
+      <a 
         class="mb-2 text-sm text-black bg-primary-500 rounded-lg shadow shadow-hover border-black border-2 justify-start w-34 h-10"
-        onclick={navigateToReadMe}
+        href={readMeUrl}
+        data-sveltekit-preload-data="hover"
       >
         Edit ReadMe
-      </button>
+      </a>
     </div>
   </div>
   <div class="markdown-body rounded-base px-4 pb-4 md:px-11 md:pb-11 w-full text-sm">
