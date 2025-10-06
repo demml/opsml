@@ -54,12 +54,9 @@
 
   <div class="mb-12">
     <div class="flex items-center gap-4 mb-6">
-      <div class="flex items-center justify-center w-12 h-12 gradient-primary rounded-xl neo-glow grain">
-        <TrendingUp size={24} class="text-white" />
-      </div>
       <div>
-        <h1 class="text-3xl font-bold text-gray-900 mb-1">
-          OpsML Dashboard
+        <h1 class="text-3xl font-bold mb-3">
+          <span class="bg-primary-500 inline-block px-3 py-1 py-2 text-white border-4 border-black shadow text-3xl sm:text-4xl md:text-5xl">OpsML Dashboard</span>
         </h1>
         <p class="text-gray-600">
           Monitor your ML workflows and explore your registries
@@ -193,8 +190,7 @@
         Ready to Get Started?
       </h3>
       <p class="text-gray-600 mb-6 leading-relaxed">
-        OpsML provides everything you need for production ML workflows. 
-        From data ingestion to model deployment, manage your entire ML lifecycle in one place.
+        Refers to the following links to start exploring and managing your machine learning assets.
       </p>
       <div class="flex flex-wrap justify-center gap-4">
         <button
