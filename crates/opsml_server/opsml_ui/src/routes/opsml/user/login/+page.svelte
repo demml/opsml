@@ -1,7 +1,7 @@
 
 <script lang="ts">
   import { goto } from "$app/navigation";
-  import logo from '$lib/images/opsml-logo.png'
+  import logo from '$lib/images/opsml-logo-small.webp'
   import LoginWarning from "$lib/components/user/LoginWarning.svelte";
   import {  UiPaths } from "$lib/components/api/routes";
   import { goTop } from "$lib/utils";
