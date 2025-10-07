@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { HomePageStats, RecentCards } from "$lib/components/home/utils";
   import HomeCard from "$lib/components/home/HomeCard.svelte";
-  import { FlaskConical, Table, BrainCircuit, NotebookText, ExternalLink, BookOpen, Sparkles, Activity, TrendingUp } from 'lucide-svelte';
+  import { FlaskConical, Table, BrainCircuit, NotebookText, ExternalLink, BookOpen, Menu, Activity} from 'lucide-svelte';
   import { goto } from "$app/navigation";
 
   let { cards, stats } = $props<{
@@ -158,7 +158,7 @@
   <div class="mx-auto w-11/12 px-4">
 
     <div class="flex items-center gap-3 mb-8">
-      <Activity size={24} class="text-primary-600" />
+      <Menu size={24} class="text-primary-600" />
       <h2 class="text-2xl font-bold text-gray-900">
         Explore Registries
       </h2>
