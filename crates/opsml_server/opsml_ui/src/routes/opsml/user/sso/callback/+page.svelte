@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { PageProps } from './$types';
-  import logo from "$lib/images/opsml-logo.png";
+  import logo from "$lib/images/opsml-logo-medium.webp";
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
   import { UiPaths } from "$lib/components/api/routes";

@@ -2,7 +2,7 @@
 
   import { goto } from '$app/navigation';
   import { UiPaths } from '$lib/components/api/routes';
-  import logo from '$lib/images/opsml-logo.png';
+  import logo from '$lib/images/opsml-logo-medium.webp';
   import type { PageProps } from './$types';
 
   let { data }: PageProps = $props();

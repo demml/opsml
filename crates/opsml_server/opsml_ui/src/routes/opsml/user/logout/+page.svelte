@@ -1,6 +1,6 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
-  import logo from "$lib/images/opsml-logo.png";
+  import logo from "$lib/images/opsml-logo-medium.webp";
   import {  UiPaths } from "$lib/components/api/routes";
   import { logout } from "$lib/components/user/utils";
   import { userStore } from "$lib/components/user/user.svelte";
