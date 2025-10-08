@@ -16,9 +16,9 @@ pub fn list_mcp_servers(
     // need to a separate method to get the latest MCP services
     let registry = OpsmlGenAIRegistry::new()?;
     let args = ServiceQueryArgs {
-        space: space.clone(),
-        name: name.clone(),
-        tags: tags.clone(),
+        space: space,
+        name: name,
+        tags: tags,
         service_type: ServiceType::Mcp,
     };
 
