@@ -223,7 +223,7 @@
         <button
           type="button"
           onclick={() => goto("/opsml/data")}
-          class="btn bg-success-500 text-black shadow shadow-hover border-black border-2 gap-2"
+          class="btn bg-success-300 text-black shadow shadow-hover border-black border-2 gap-2"
         >
           <Table size={16} />
           Manage Data

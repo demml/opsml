@@ -5,7 +5,7 @@ export enum RoutePaths {
   LOGOUT = "/opsml/api/auth/ui/logout",
   REFRESH_TOKEN = "/opsml/api/auth/refresh",
   RESET_PASSWORD = "/opsml/api/user/reset-password/recovery",
-  REGISTER = "/opsml/api/user/register",
+  REGISTER = "/opsml/api/auth/register",
   USER = "/opsml/api/user",
   SSO_AUTH = "/opsml/api/auth/sso/authorization",
   SSO_CALLBACK = "/opsml/api/auth/sso/callback",

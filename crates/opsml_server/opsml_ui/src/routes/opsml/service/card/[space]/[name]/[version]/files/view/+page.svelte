@@ -9,7 +9,7 @@
 
 </script>
 
-<div class="flex-1 mx-auto w-9/12 pb-10 flex justify-center overflow-auto px-4">
+<div class="flex-1 mx-auto w-9/12 pb-10 flex justify-center px-4">
   <FileViewPage
     file={data.rawFile}
     splitPath={data.splitPath}
@@ -19,4 +19,3 @@
     version={data.metadata.version}
     />
 </div>
-

@@ -34,6 +34,7 @@
 		"globals": "^16.0.0",
 		"jsdom": "^26.1.0",
 		"mdsvex": "^0.12.5",
+		"shiki": "^3.13.0",
 		"svelte": "^5.28.2",
 		"svelte-check": "^4.1.6",
 		"svelte-fa": "^4.0.4",
