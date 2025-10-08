@@ -12,7 +12,7 @@
 </script>
 
 
-<div class="mx-auto w-full max-w-10/12 px-4 py-6 sm:px-6 lg:px-8">
+<div class="mx-auto w-full max-w-8xl px-4 py-6 sm:px-6 lg:px-8">
 
   <div class="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:gap-8">
     
@@ -40,7 +40,7 @@
     </div>
 
       <div class="lg:col-span-1">
-        <div class="sticky top-6 rounded-base bg-surface-50 border-primary-800 border-3 shadow-primary p-4 max-h-[calc(100vh-8rem)] overflow-y-auto">
+        <div class="rounded-base bg-surface-50 border-primary-800 border-3 shadow-primary p-4">
         <Metadata 
           card={card} 
           modelSettings={card.prompt.model_settings} 

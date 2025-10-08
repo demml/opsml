@@ -56,19 +56,33 @@
   <div class="markdown-body rounded-base px-4 pb-4 md:px-11 md:pb-11 w-full text-sm">
     {@html html}
   </div>
+
   <style>
-  
-  
+    
     :global(.markdown-body) {
       box-sizing: border-box;
       margin: 0 auto;
       width: 100%;
-      font-size: medium;
+      max-width: 100%;
+      font-size: 16px;
+      overflow-wrap: break-word;
+      word-wrap: break-word;
     }
-  
+
     :global(.markdown-body pre) {
       overflow-x: auto;
-      white-space: nowrap;
+      white-space: pre;
+      max-width: 100%;
     }
+
+    :global(.markdown-body code) {
+      overflow-wrap: break-word;
+      word-break: break-all;
+      max-width: 100%;
+    }
+
+    :global(.markdown-body *) {
+      max-width: 100%;
+    }
+</style>
   
-  </style>
