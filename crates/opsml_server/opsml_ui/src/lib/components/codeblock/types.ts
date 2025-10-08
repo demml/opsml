@@ -1,6 +1,17 @@
 export interface CodeBlockProps {
   code?: string;
-  lang?: "console" | "html" | "css" | "js";
+  lang?:
+    | "console"
+    | "html"
+    | "css"
+    | "js"
+    | "json"
+    | "python"
+    | "rust"
+    | "sql"
+    | "toml"
+    | "typescript"
+    | "yaml";
   theme?: "custom-light";
   // Base Style Props
   base?: string;

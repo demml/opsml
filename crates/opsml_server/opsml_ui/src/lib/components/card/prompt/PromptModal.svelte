@@ -1,10 +1,9 @@
 <script lang="ts">
   import { Modal } from '@skeletonlabs/skeleton-svelte';
-  import Highlight, { LineNumbers } from "svelte-highlight";
-  import json from "svelte-highlight/languages/json";
   import type { Message, Prompt } from '../card_interfaces/promptcard';
   import { onMount } from 'svelte';
   import "$lib/styles/hljs.css";
+  import CodeBlock from '$lib/components/codeblock/CodeBlock.svelte';
 
 
   let { prompt} = $props<{prompt: Prompt;}>();
@@ -82,9 +81,7 @@
         </div>
         <div class="overflow-auto">
           <div class="rounded-lg border-2 border-black overflow-y-scroll max-h-[20rem] text-sm">
-            <Highlight language={json} code={messages} let:highlighted>
-              <LineNumbers {highlighted} hideBorder wrapLines />
-            </Highlight>
+            <CodeBlock lang="json" code={messages} showLineNumbers={false} />
           </div>
         </div>
       </div>
@@ -102,9 +99,7 @@
         </div>
         <div class="overflow-auto">
           <div class="rounded-lg border-2 border-black overflow-y-scroll max-h-[20rem] text-sm">
-            <Highlight language={json} code={system_instructions} let:highlighted>
-              <LineNumbers {highlighted} hideBorder wrapLines />
-            </Highlight>
+            <CodeBlock lang="json" code={system_instructions} showLineNumbers={false} />
           </div>
         </div>
       </div>

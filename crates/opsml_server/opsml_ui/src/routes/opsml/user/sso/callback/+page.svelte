@@ -4,7 +4,6 @@
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
   import { UiPaths } from "$lib/components/api/routes";
-  import { go } from "svelte-highlight/languages";
   import type { LoginResponse } from '$lib/components/user/types';
 
 

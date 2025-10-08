@@ -11,12 +11,14 @@
   import rust from 'shiki/langs/rust.mjs';
   import json from 'shiki/langs/json.mjs';
   import md from 'shiki/langs/markdown.mjs';
+  import bash from 'shiki/langs/bash.mjs';
+  import sql from 'shiki/langs/sql.mjs';
 
 
   const shiki = createHighlighterCoreSync({
     engine: createJavaScriptRegexEngine(),
     themes: [customTheme],
-    langs: [console, html, css, js, python, rust, json, md]
+    langs: [console, html, css, js, python, rust, json, md, bash],
   });
 </script>
 
@@ -47,7 +49,6 @@
 </div>
 
 <style>
-
   :global(.shiki) {
     width: 100% !important;
     max-width: 100%;
@@ -55,32 +56,37 @@
   }
   
   :global(.shiki pre) {
-  width: 100% !important;
-  max-width: 100%;
-  margin: 0;
-  white-space: pre !important;
-  overflow-x: auto !important;
-  line-height: 0.8 !important;
-  font-family: Menlo, Monaco, "Liberation Mono", "Consolas", monospace;
-}
+    width: 100% !important;
+    max-width: 100%;
+    margin: 0;
+    white-space: pre !important;
+    overflow-x: auto !important;
+    line-height: 1.0 !important;
+    font-family: Menlo, Monaco, "Liberation Mono", "Consolas", monospace;
+  }
   
   :global(.shiki code) {
     width: max-content;
     min-width: 100%;
     display: block;
     white-space: pre !important;
-    line-height: 0.8 !important;
+    line-height: 1.0 !important;
+  }
+
+  .show-line-numbers :global(.shiki pre) {
+    line-height: 0.7 !important;
   }
 
   .show-line-numbers :global(.shiki code) {
     counter-reset: step;
     counter-increment: step 0;
+    line-height: 0.7 !important;
   }
 
   .show-line-numbers :global(.shiki .line) {
     display: block;
     position: relative;
-    line-height: 0.8 !important;
+    line-height: 0.7 !important;
     margin: 0 !important;
     padding: 0 !important;
   }
@@ -97,6 +103,6 @@
     user-select: none;
     border-right: 1px solid rgba(115, 138, 148, 0.2);
     padding-right: 0.125rem;
-    line-height: 0.8 !important;
+    line-height: 0.7 !important;
   }
 </style>

@@ -1,9 +1,6 @@
 <script lang="ts">
   import { Modal } from '@skeletonlabs/skeleton-svelte';
-  import Highlight, { LineNumbers } from "svelte-highlight";
-  import json from "svelte-highlight/languages/json";
   import type { Parameter } from '../card_interfaces/experimentcard';
-  import { onMount } from 'svelte';
   import type { ParameterValue } from '../card_interfaces/experimentcard';
   import "$lib/styles/hljs.css";
 
