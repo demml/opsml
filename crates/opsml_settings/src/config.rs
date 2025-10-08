@@ -109,6 +109,7 @@ pub struct OpsmlConfig {
     pub logging_config: LoggingConfig,
     pub mode: OpsmlMode,
     pub base_path: PathBuf,
+    pub track_connections: bool,
 }
 
 impl Default for OpsmlConfig {
@@ -214,6 +215,11 @@ impl Default for OpsmlConfig {
             Err(_) => std::env::current_dir().expect("Failed to get current directory"),
         };
 
+        let track_connections = env::var("OPSML_TRACK_CONNECTIONS")
+            .unwrap_or_else(|_| "false".to_string())
+            .parse()
+            .unwrap_or(false);
+
         OpsmlConfig {
             app_name: "opsml".to_string(),
             app_env: env::var("APP_ENV").unwrap_or_else(|_| "development".to_string()),
@@ -231,6 +237,7 @@ impl Default for OpsmlConfig {
             mode,
             logging_config,
             base_path,
+            track_connections,
         }
     }
 }

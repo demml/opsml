@@ -6,6 +6,7 @@ use crate::core::experiment::route::get_experiment_router;
 use crate::core::files::route::get_file_router;
 use crate::core::genai::route::get_genai_router;
 use crate::core::health::route::get_health_router;
+use crate::core::middleware::connection::connection_tracking_middleware;
 use crate::core::middleware::event::event_middleware;
 use crate::core::middleware::metrics::track_metrics;
 use crate::core::scouter::route::get_scouter_router;
@@ -50,7 +51,7 @@ pub async fn create_router(app_state: Arc<AppState>) -> Result<Router> {
 
     // merge all the routes except the auth routes
     // All routes except the auth, healthcheck, ui and ui settings routes are protect by the auth middleware
-    let merged_routes = Router::new()
+    let base_routes = Router::new()
         .merge(debug_routes)
         .merge(file_routes)
         .merge(card_routes)
@@ -70,12 +71,23 @@ pub async fn create_router(app_state: Arc<AppState>) -> Result<Router> {
             auth_api_middleware,
         ));
 
-    Ok(Router::new()
-        .merge(merged_routes)
+    let mut merged_routes = Router::new()
+        .merge(base_routes)
         .merge(health_routes)
         .merge(settings_routes)
         .merge(auth_routes)
-        .merge(ui_routes)
+        .merge(ui_routes);
+
+    // Add connection tracking middleware if enabled
+    // mainly for debugging purposes
+    if let Some(tracker) = &app_state.connection_tracker {
+        merged_routes = merged_routes.route_layer(middleware::from_fn_with_state(
+            tracker.clone(),
+            connection_tracking_middleware,
+        ));
+    }
+
+    Ok(merged_routes
         .route_layer(middleware::from_fn(track_metrics))
         .layer(cors)
         .with_state(app_state))

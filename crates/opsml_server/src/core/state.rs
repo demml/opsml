@@ -1,4 +1,5 @@
 use crate::core::error::ServerError;
+use crate::core::middleware::connection::ConnectionTracker;
 use crate::core::scouter::client::ScouterApiClient;
 use opsml_auth::auth::AuthManager;
 use opsml_auth::permission::UserPermissions;
@@ -18,6 +19,7 @@ pub struct AppState {
     pub storage_settings: OpsmlStorageSettings,
     pub scouter_client: ScouterApiClient,
     pub event_bus: EventBus,
+    pub connection_tracker: Option<Arc<ConnectionTracker>>,
 }
 
 impl AppState {
