@@ -131,7 +131,12 @@ export function validateUserRegisterSchema(
     email = username;
   }
 
-  let parsed = userRegisterSchema.safeParse({ username, password, email });
+  let parsed = userRegisterSchema.safeParse({
+    email,
+    username,
+    password,
+    reEnterPassword,
+  });
 
   if (parsed.success) {
     return {

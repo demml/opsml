@@ -2,11 +2,25 @@
   background: #f2f1f6;
   color: #2e3440;
   font-family: Menlo, Monaco, "Liberation Mono", "Consolas", monospace;
-  font-size: 1em;
+  font-size: 0.85em; /* base font size for mobile */
   line-height: 1.5;
   padding: 1em;
-  border-radius: 8px;
-  overflow-x: auto;
+}
+
+@media (min-width: 640px) {
+  .hljs {
+    font-size: 0.95em;
+  }
+}
+@media (min-width: 768px) {
+  .hljs {
+    font-size: 1em;
+  }
+}
+@media (min-width: 1024px) {
+  .hljs {
+    font-size: 1em;
+  }
 }
 
 .hljs-attr,

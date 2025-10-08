@@ -11,39 +11,42 @@
 
 </script>
 
-<div class="flex-1 mx-auto w-11/12 flex justify-center px-4 pb-10">
-  <div class="flex flex-wrap pt-4 gap-4 w-full justify-center">
+<div class="mx-auto w-full max-w-10/12 px-4 py-6 sm:px-6 lg:px-8">
 
-    {#if data.readme.exists}
-      <div class="gap-1 flex flex-col rounded-base border-black border-3 shadow bg-surface-50 w-[800px]">
-        <CardReadMe
-          name={card.name}
-          space={card.space}
-          registryType={data.registryType}
-          version={card.version}
-          readMe={data.readme}
-        />
-      </div>
-
-     
-    {:else}
-      <div class="gap-1 flex flex-col rounded-base border-black border-3 shadow bg-primary-100 w-[500px] h-[200px]">
-        <NoReadme
-          name={card.name}
-          space={card.space}
-          registryType={data.registryType}
-          version={card.version}
-        />
-      </div>
-    {/if}
+  <div class="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:gap-8">
+    
+    <div class="lg:col-span-2">
+      {#if data.readme.exists}
+        <div class="rounded-base border-black border-3 shadow bg-surface-50 w-full">
+          <CardReadMe
+            name={card.name}
+            space={card.space}
+            registryType={data.registryType}
+            version={card.version}
+            readMe={data.readme}
+          />
+        </div>
+      {:else}
+        <div class="rounded-base border-black border-3 shadow bg-primary-100 w-full min-h-[200px] flex items-center justify-center">
+          <NoReadme
+            name={card.name}
+            space={card.space}
+            registryType={data.registryType}
+            version={card.version}
+          />
+        </div>
+      {/if}
+    </div>
 
     
-    <div class="bg-primary-200 p-4 flex-1 flex-col rounded-base bg-surface-50 border-primary-800 border-3 shadow-primary max-h-[800px] overflow-y-auto self-start min-w-0 max-w-[300px] md:min-w-[26rem] md:max-w-[32rem]">
+    <div class="lg:col-span-1">
+      <div class="sticky top-6 rounded-base bg-surface-50 border-primary-800 border-3 shadow-primary p-4 max-h-[calc(100vh-8rem)] overflow-y-auto">
       <Metadata 
         card={card} 
         interfaceMetadata={card.metadata.interface_metadata}
         saveMetadata={card.metadata.interface_metadata.save_metadata}
         />
+      </div>
     </div>
   </div>
 </div>

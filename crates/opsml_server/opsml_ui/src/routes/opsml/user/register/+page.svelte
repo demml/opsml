@@ -48,6 +48,7 @@
 
       } else {
         showLoginError = true;
+        console.error("Registration error:", response.error);
         errorMessage = response.error ?? "Error encountered during registration";
       }
       goTop();
@@ -55,6 +56,8 @@
 
     } else {
       showLoginError = true;
+      errorMessage = "Please correct the errors below.";
+      console.error("Validation errors:", argsValid.errors);
       registerErrors = argsValid.errors ?? {};
       goTop();
     }
@@ -63,8 +66,9 @@
 
 </script>
 
-<section class="pt-20 border-gray-100 col-span-full flex-1 pb-16 md:pb-0 items-center">
-  
+<div class="flex col-span-full items-center justify-center pb-16 md:pb-0">
+
+<section class="border-gray-100">
 
   <form class="z-10 mx-auto rounded-2xl bg-surface-50 border-black border-2 shadow p-4 md:w-96 md:px-5 min-h-fit" onsubmit={handleRegister}>
 
@@ -189,3 +193,4 @@
     </div>
   </form>
 </section>
+</div>

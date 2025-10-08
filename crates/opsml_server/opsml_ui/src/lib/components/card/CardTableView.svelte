@@ -56,12 +56,12 @@
           <td class="p-1 pl-8">{summary.space}</td>
           <td class="p-1 text-center">{summary.name}</td>
           <td class="p-1 text-center ">
-            <div class="badge bg-secondary-100 text-black items-center gap-1 px-2 py-1">
+            <div class="badge bg-secondary-300 text-black items-center gap-1 px-2 py-1">
               {summary.updated_at}
             </div>
           </td>
           <td class="p-1 text-center">
-            <div class="badge bg-error-100 text-black items-center gap-1 px-2 py-1">
+            <div class="badge bg-tertiary-300 text-black items-center gap-1 px-2 py-1">
               {summary.version}
             </div>
           </td>

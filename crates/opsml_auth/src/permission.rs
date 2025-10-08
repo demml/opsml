@@ -28,3 +28,14 @@ impl UserPermissions {
             || self.permissions.contains(&"delete:all".to_string())
     }
 }
+
+impl UserPermissions {
+    /// New users have read and write permissions
+    pub fn new_with_default(username: String) -> Self {
+        Self {
+            username,
+            permissions: vec!["read:all".to_string(), "write:all".to_string()],
+            group_permissions: Vec::new(),
+        }
+    }
+}

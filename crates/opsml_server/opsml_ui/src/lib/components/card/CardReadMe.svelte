@@ -2,7 +2,6 @@
   import 'highlight.js/styles/github.css';
   import "github-markdown-css/github-markdown-light.css";
   import { onMount } from 'svelte';
-  import { goto } from '$app/navigation';
   import type { ReadMe } from '../readme/util';
   import { convertMarkdown } from '../readme/util';
   import { getRegistryPath, type RegistryType } from '$lib/utils';
@@ -46,7 +45,7 @@
   <div class="grid justify-items-end py-4 px-4">
     <div>
       <a 
-        class="mb-2 text-sm text-black bg-primary-500 rounded-lg shadow shadow-hover border-black border-2 justify-start w-34 h-10"
+        class="btn mb-2 text-sm text-black bg-primary-500 rounded-lg shadow shadow-hover border-black border-2 p-4"
         href={readMeUrl}
         data-sveltekit-preload-data="hover"
       >
