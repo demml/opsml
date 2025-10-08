@@ -3,9 +3,9 @@ use crate::core::auth::schema::{
 };
 use crate::core::auth::util::{authenticate_user_with_sso, authenticate_user_with_sso_callback};
 use crate::core::error::{internal_server_error, OpsmlServerError};
-
 use crate::core::state::AppState;
-use crate::core::user::schema::UserResponse;
+use crate::core::user::route::create_user;
+use crate::core::user::schema::{CreateUserRequest, CreateUserUiResponse, UserResponse};
 use crate::core::user::utils::get_user;
 use anyhow::{Context, Result};
 use axum::extract::Query;
@@ -18,6 +18,7 @@ use axum::{
     routing::{get, post},
     Json, Router,
 };
+use opsml_auth::permission::UserPermissions;
 use opsml_crypt::{generate_code_challenge, generate_code_verifier};
 use opsml_sql::traits::*;
 use opsml_types::JwtToken;
@@ -519,6 +520,38 @@ async fn exchange_callback_token(
     }))
 }
 
+/// Create a new user via UI. This will always return a response so that
+/// errors will be handled in the UI.
+#[instrument(skip_all)]
+async fn register_user_from_ui(
+    State(state): State<Arc<AppState>>,
+    Json(create_req): Json<CreateUserRequest>,
+) -> Result<Json<CreateUserUiResponse>, (StatusCode, Json<OpsmlServerError>)> {
+    let perms = UserPermissions::new_with_default(create_req.username.clone());
+    let response = create_user(
+        axum::extract::State(state),
+        axum::extract::Extension(perms),
+        axum::extract::Json(create_req),
+    )
+    .await;
+
+    match response {
+        Ok(res) => Ok(Json(CreateUserUiResponse {
+            registered: true,
+            response: Some(res.0),
+            error: None,
+        })),
+        Err((_, err)) => {
+            error!("Failed to create user: {:?}", err.0.error);
+            Ok(Json(CreateUserUiResponse {
+                registered: false,
+                response: None,
+                error: Some(err.0.error),
+            }))
+        }
+    }
+}
+
 pub async fn get_auth_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
     let result = catch_unwind(AssertUnwindSafe(|| {
         Router::new()
@@ -537,6 +570,10 @@ pub async fn get_auth_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
             .route(
                 &format!("{prefix}/auth/sso/callback"),
                 get(exchange_callback_token),
+            )
+            .route(
+                &format!("{prefix}/auth/register"),
+                post(register_user_from_ui),
             )
     }));
 

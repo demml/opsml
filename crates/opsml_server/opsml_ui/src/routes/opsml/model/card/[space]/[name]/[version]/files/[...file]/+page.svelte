@@ -8,8 +8,8 @@
  
   </script>
   
-<div class="mx-auto w-9/12 px-4 py-4 max-h-[calc(100vh-140px)] overflow-y-auto">
-  <div class="w-full">
+  <div class="mx-auto w-9/12 px-4 py-4 max-h-[calc(100vh-140px)]">
+    <div class="w-full">
       <FileTree 
         files={data.fileTree.files} 
         currentPath={page.url.pathname} 

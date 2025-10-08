@@ -9,7 +9,6 @@
   import { Braces, CheckCheck } from 'lucide-svelte';
   import FeatureTable from "../FeatureTable.svelte";
   import { RegistryType } from "$lib/utils";
-  import { python } from "svelte-highlight/languages";
 
   let {
       card,
@@ -49,7 +48,7 @@ datacard = registry.load_card(uid="${card.uid}")
     <div>
         <CodeModal 
           code={useCardContent} 
-          language={python} 
+          language="python" 
           message="Paste the following code into your Python script to load the card"
           display="Use this card"
         />

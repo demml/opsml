@@ -1,10 +1,8 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
-  import logo from "$lib/images/opsml-logo.png";
+  import logo from "$lib/images/opsml-logo-medium.webp";
   import { UiPaths } from "$lib/components/api/routes";
   import { userStore } from "$lib/components/user/user.svelte";
-  import Highlight, { LineNumbers } from "svelte-highlight";
-  import { bash } from "svelte-highlight/languages";
   import CodeModal from "$lib/components/card/CodeModal.svelte";
 
   
@@ -61,7 +59,7 @@ export OPSML_PASSWORD={{password}}
           <h2 class="text-lg font-bold text-black my-auto">Usage</h2>
             <CodeModal 
             code={usageCode} 
-            language={bash} 
+            language="bash" 
             message="Set the following environment variables to use your profile"
             display="SDK Usage"
           />

@@ -2,7 +2,6 @@
   import 'highlight.js/styles/github.css';
   import "github-markdown-css/github-markdown-light.css";
   import { onMount } from 'svelte';
-  import { goto } from '$app/navigation';
   import type { ReadMe } from '../readme/util';
   import { convertMarkdown } from '../readme/util';
   import { getRegistryPath, type RegistryType } from '$lib/utils';
@@ -25,9 +24,9 @@
    
   
     
-    function navigateToReadMe() {
-        goto(`/opsml/${getRegistryPath(registryType)}/card/${space}/${name}/${version}/readme`);
-      }
+   
+
+    let readMeUrl = $state(`/opsml/${getRegistryPath(registryType)}/card/${space}/${name}/${version}/readme`);
   
   
   
@@ -45,30 +44,45 @@
   
   <div class="grid justify-items-end py-4 px-4">
     <div>
-      <button 
-        class="mb-2 text-sm text-black bg-primary-500 rounded-lg shadow shadow-hover border-black border-2 justify-start w-34 h-10"
-        onclick={navigateToReadMe}
+      <a 
+        class="btn mb-2 text-sm text-black bg-primary-500 rounded-lg shadow shadow-hover border-black border-2 p-4"
+        href={readMeUrl}
+        data-sveltekit-preload-data="hover"
       >
         Edit ReadMe
-      </button>
+      </a>
     </div>
   </div>
   <div class="markdown-body rounded-base px-4 pb-4 md:px-11 md:pb-11 w-full text-sm">
     {@html html}
   </div>
+
   <style>
-  
-  
+    
     :global(.markdown-body) {
       box-sizing: border-box;
       margin: 0 auto;
       width: 100%;
-      font-size: medium;
+      max-width: 100%;
+      font-size: 16px;
+      overflow-wrap: break-word;
+      word-wrap: break-word;
     }
-  
+
     :global(.markdown-body pre) {
       overflow-x: auto;
-      white-space: nowrap;
+      white-space: pre;
+      max-width: 100%;
     }
+
+    :global(.markdown-body code) {
+      overflow-wrap: break-word;
+      word-break: break-all;
+      max-width: 100%;
+    }
+
+    :global(.markdown-body *) {
+      max-width: 100%;
+    }
+</style>
   
-  </style>

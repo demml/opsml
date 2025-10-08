@@ -1,8 +1,7 @@
 <script lang="ts">
     import { Modal } from '@skeletonlabs/skeleton-svelte';
-    import Highlight, { LineNumbers } from "svelte-highlight";
-    import json from "svelte-highlight/languages/json";
     import "$lib/styles/hljs.css";
+    import CodeBlock from '$lib/components/codeblock/CodeBlock.svelte';
   
     let { code } = $props<{code: string; }>();
     let openState = $state(false);
@@ -55,9 +54,7 @@
       <div class="flex flex-col gap-2">
         <div>
           <div class="rounded-lg border-2 border-black overflow-y-scroll max-h-[32rem] text-sm">
-            <Highlight language={json} code={formatExtraBody(code)} let:highlighted>
-              <LineNumbers {highlighted} hideBorder wrapLines />
-            </Highlight>
+            <CodeBlock lang="json" code={formatExtraBody(code)} showLineNumbers={false} />
           </div>
         </div>
       </div>
