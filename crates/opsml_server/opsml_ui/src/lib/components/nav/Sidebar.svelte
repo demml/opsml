@@ -133,7 +133,7 @@
 <div class="flex h-full">
 
   <aside 
-    class="fixed start-0 top-[3.5rem] z-10 h-[calc(100dvh-3.5rem)] bg-surface-100 border-e-2 border-black shadow-lg transition-all duration-300 ease-in-out data-[expanded=true]:w-64 data-[expanded=false]:w-16"
+    class="fixed start-0 top-[3.5rem] z-30 h-[calc(100dvh-3.5rem)] bg-surface-100 border-e-2 border-black shadow-lg transition-all duration-300 ease-in-out data-[expanded=true]:w-64 data-[expanded=false]:w-16"
     data-sidebar
     data-expanded={isExpanded}
     onmouseenter={handleMouseEnter}

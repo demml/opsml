@@ -1,8 +1,7 @@
 <script lang="ts">
     import { Modal } from '@skeletonlabs/skeleton-svelte';
-    import Highlight, { LineNumbers } from "svelte-highlight";
-    import json from "svelte-highlight/languages/json";
     import { onMount } from 'svelte';
+    import CodeBlock from '$lib/components/codeblock/CodeBlock.svelte';
 
 
     let { settings } = $props<{settings: Record<string, any>; }>();
@@ -39,12 +38,8 @@
         console.error('Failed to copy text:', err);
       }
     }
-
-   
-    
     
     </script>
-    
    
     <Modal
     open={openState}
@@ -66,9 +61,7 @@
         <div class="flex flex-col gap-2">
           <div class="overflow-auto">
             <div class="rounded-lg border-2 border-black overflow-y-scroll max-h-[600px] text-sm">
-              <Highlight language={json} code={formattedSettings} let:highlighted>
-                <LineNumbers {highlighted} hideBorder wrapLines />
-              </Highlight>
+              <CodeBlock lang="json" code={formattedSettings} showLineNumbers={false} />
             </div>
           </div>
         </div>

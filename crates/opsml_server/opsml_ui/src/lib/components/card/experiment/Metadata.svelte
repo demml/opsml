@@ -9,7 +9,6 @@
   import { formatBytes } from "$lib/components/files/utils";
   import { HardDrive } from 'lucide-svelte';
   import { RegistryType } from "$lib/utils";
-  import { python } from "svelte-highlight/languages";
   import { type Parameter } from "$lib/components/card/card_interfaces/experimentcard";
   import ParameterModal from "./ParameterModal.svelte";
 
@@ -48,7 +47,7 @@ experimentcard = registry.load_card(uid="${card.uid}")
     <div>
         <CodeModal 
           code={useCardContent} 
-          language={python} 
+          language="python"
           message="Paste the following code into your Python script to load the card"
           display="Use this card"
         />

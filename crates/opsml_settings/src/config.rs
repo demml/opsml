@@ -182,9 +182,9 @@ impl Default for OpsmlConfig {
         let database_settings = DatabaseSettings {
             connection_uri: opsml_tracking_uri.clone(),
             max_connections: env::var("OPSML_MAX_POOL_CONNECTIONS")
-                .unwrap_or_else(|_| "10".to_string())
+                .unwrap_or_else(|_| "30".to_string())
                 .parse()
-                .unwrap_or(10),
+                .unwrap_or(30),
             sql_type: OpsmlConfig::get_sql_type(&opsml_tracking_uri),
         };
 

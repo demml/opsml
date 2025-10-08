@@ -2,11 +2,6 @@ import { opsmlClient } from "$lib/components/api/client.svelte";
 import { RoutePaths } from "$lib/components/api/routes";
 import type { FileTreeResponse, RawFile, RawFileRequest } from "./types";
 import { AcceptableSuffix } from "./types";
-import Highlight, { LineNumbers } from "svelte-highlight";
-import json from "svelte-highlight/languages/json";
-import python from "svelte-highlight/languages/python";
-import yaml from "svelte-highlight/languages/yaml";
-import sql from "svelte-highlight/languages/sql";
 import { userStore } from "../user/user.svelte";
 import type { RegistryType } from "$lib/utils";
 
@@ -147,4 +142,51 @@ function splitViewPath(path: string): string[] {
 export function formatJson(jsonString: string): string {
   let newJson = JSON.stringify(JSON.parse(jsonString), null, 2);
   return newJson;
+}
+
+export type FileType = "image" | "markdown" | "code" | "text";
+
+export interface FileTypeInfo {
+  type: FileType;
+  language?: any;
+  requiresProcessing?: boolean;
+}
+
+/**
+ * Determines file type and associated syntax highlighting language
+ */
+export function getFileTypeInfo(
+  suffix: string,
+  mimeType: string
+): FileTypeInfo {
+  if (mimeType.startsWith("image/")) {
+    return { type: "image" };
+  }
+  if (suffix === "md") {
+    return { type: "markdown" };
+  }
+  const codeLanguages: Record<string, string> = {
+    json: "json",
+    jsonl: "json",
+    yaml: "yaml",
+    yml: "yaml",
+    py: "python",
+    sql: "sql",
+    js: "javascript",
+    ts: "typescript",
+    rs: "rust",
+    toml: "toml",
+    css: "css",
+  };
+
+  if (suffix in codeLanguages) {
+    return {
+      type: "code",
+      language: codeLanguages[suffix],
+      requiresProcessing: suffix === "json" || suffix === "jsonl",
+    };
+  }
+
+  // Default to text
+  return { type: "text" };
 }

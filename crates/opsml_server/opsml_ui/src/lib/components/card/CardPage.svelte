@@ -23,16 +23,17 @@
       bgColor: string;
     }>();
   
-    // function to navigate to the card page
-    function navigateToCardPage() {
-      let path = resolveCardPathFromArgs(registry, space, name, version);
-      goto(path);
-    }
+   
+
+    let cardUrl = $state(resolveCardPathFromArgs(registry, space, name, version));
   
   
   </script>
-  
-  <button class="w-full mx-1 max-w-96 h-auto p-2 text-black rounded-lg shadow border-2 border-black {bgColor} hover:translate-x-[4px] hover:translate-y-[4px] hover:shadow-none overflow-scroll" onclick={navigateToCardPage}>
+
+  <a class="w-full mx-1 max-w-96 h-auto p-2 text-black rounded-lg shadow border-2 border-black {bgColor} hover:translate-x-[4px] hover:translate-y-[4px] hover:shadow-none overflow-scroll" 
+      href={cardUrl}
+      data-sveltekit-preload-data="hover"
+    >
     <div class="flex items-center justify-start gap-2 text-smd">
       <div class="ml-1">
         <CircuitBoard color="#5948a3" />
@@ -60,6 +61,6 @@
     </div>
 
    
-  </button>
+  </a>
   
   

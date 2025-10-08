@@ -8,14 +8,15 @@
 
 </script>
 
-<div class="flex-1 mx-auto max-w-6xl pb-10 px-4">
-  <FileViewPage
-    file={data.rawFile}
-    splitPath={data.splitPath}
-    registry={data.registryType}
-    space={data.metadata.space}
-    name={data.metadata.name}
-    version={data.metadata.version}
+<div class="flex w-full px-2 pb-10">
+  <div class="w-full">
+    <FileViewPage
+      file={data.rawFile}
+      splitPath={data.splitPath}
+      registry={data.registryType}
+      space={data.metadata.space}
+      name={data.metadata.name}
+      version={data.metadata.version}
     />
+  </div>
 </div>
-

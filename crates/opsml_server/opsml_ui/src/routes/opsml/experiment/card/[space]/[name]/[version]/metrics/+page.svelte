@@ -81,7 +81,7 @@
     <!-- Left Column-->
     <div class="col-span-1 lg:col-span-2 flex flex-col">
 
-      <div class="bg-white rounded-base border-black border-2 shadow h-[calc(100dvh-200px)]">
+      <div class="bg-white rounded-base border-black border-2 shadow h-[calc(100dvh-200px)] overflow-y-auto">
       <!-- Top Section -->
         <div class="mb-2 p-4">
           <div class="flex flex-row justify-between pb-2">
