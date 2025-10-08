@@ -2,13 +2,12 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import type { DataProcessor, ModelCard, ModelInterfaceSaveMetadata } from "$lib/components/card/card_interfaces/modelcard";
-  import { Info, Diamond, Tags, CheckCheck, Link} from 'lucide-svelte';
+  import { Info, Diamond, Tags, CheckCheck} from 'lucide-svelte';
   import CodeModal from "../CodeModal.svelte";
   import Pill from "$lib/components/utils/Pill.svelte";
   import LinkPill from "$lib/components/utils/LinkPill.svelte";
   import ExtraModelMetadata from "./ExtraModelMetadata.svelte";
   import { RegistryType } from "$lib/utils";
-  import { python } from "svelte-highlight/languages";
 
 let {
     card,
@@ -52,7 +51,7 @@ modelcard.load()
     <div>
         <CodeModal 
           code={useCardContent} 
-          language={python} 
+          language="python"
           message="Paste the following code into your Python script to load the card"
           display="Use this card"
         />

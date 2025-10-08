@@ -1,8 +1,5 @@
 <script lang="ts">
     import { Modal } from '@skeletonlabs/skeleton-svelte';
-    import { onMount } from 'svelte';
-    import Highlight, { LineNumbers } from "svelte-highlight";
-    import python from "svelte-highlight/languages/python";
   import type { Feature, FeatureSchema } from './card_interfaces/datacard';
   
     let { schema } = $props<{schema: FeatureSchema}>();

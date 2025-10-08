@@ -1,14 +1,14 @@
 <script lang="ts">
   import { Modal } from '@skeletonlabs/skeleton-svelte';
-  import Highlight from "svelte-highlight";
   import "$lib/styles/hljs.css";
+  import CodeBlock from '../codeblock/CodeBlock.svelte';
 
   let { 
     code,
     language,
     message,
     display
-  } = $props<{code: string; language: any; message: string; display: string}>();
+  } = $props<{code: string; language: string; message: string; display: string}>();
   let openState = $state(false);
   let copied = $state(false);
   let timeoutId: number = 0;
@@ -62,10 +62,7 @@ backdropClasses="backdrop-blur-sm"
   </div>
   <article class="pl-2 max-h-[200px] overflow-hidden text-black py-1">{message}</article>
   <div class="rounded-lg border-2 border-black overflow-y-scroll max-h-[600px] text-sm">
-    <Highlight language={language}  
-        code={code} 
-        let:highlighted>
-    </Highlight>
+    <CodeBlock {code} lang={language} showLineNumbers={false} />
   </div>
   <footer class="flex justify-end gap-4 p-2">
     <button type="button" class="btn text-sm bg-primary-500 text-black shadow shadow-hover border-black border-2" onclick={modalClose}>Cancel</button>
