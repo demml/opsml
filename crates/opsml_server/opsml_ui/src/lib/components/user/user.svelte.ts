@@ -2,7 +2,7 @@ import { browser } from "$app/environment";
 import { RoutePaths, UiPaths } from "../api/routes";
 import { opsmlClient } from "../api/client.svelte";
 import type { AuthenticatedResponse, JwtToken, LoginResponse } from "./types";
-import { redirect } from "@sveltejs/kit";
+import { redirect, type Cookies } from "@sveltejs/kit";
 
 export class UserStore {
   username = $state("");
@@ -17,30 +17,31 @@ export class UserStore {
 
   constructor() {}
 
-  public async validateSession(): Promise<boolean> {
+  public async validateSession(cookies: Cookies): Promise<boolean> {
     try {
       // Step 1: Check if user is already logged in with valid token
       if (this.logged_in && this.jwt_token) {
-        const isValid = await this.validateAuth();
+        const isValid = await this.validateAuth(cookies);
         if (isValid) {
           return true;
         }
       }
 
       // Step 2: Attempt to restore session from cookie
-      const cookieToken = this.getTokenFromCookie();
+      const cookieToken = this.getTokenFromCookie(cookies);
       if (!cookieToken) {
         console.warn("No JWT token found in cookies");
-        this.resetUser();
+        this.resetUser(cookies);
         return false;
       }
 
       // Check if cookie token is expired
       if (this.isTokenExpired(cookieToken)) {
         console.warn("Cookie token is expired, attempting refresh");
-        const refreshed = await this.refreshToken(cookieToken);
+
+        const refreshed = await this.refreshToken(cookieToken, cookies);
         if (!refreshed) {
-          this.resetUser();
+          this.resetUser(cookies);
           return false;
         }
       } else {
@@ -49,15 +50,18 @@ export class UserStore {
       }
 
       // Step 3: Validate authentication with current token
-      return await this.validateAuth();
+      return await this.validateAuth(cookies);
     } catch (error) {
       console.error("Session validation failed:", error);
-      this.resetUser();
+      this.resetUser(cookies);
       return false;
     }
   }
 
-  private async refreshToken(token: string): Promise<boolean> {
+  private async refreshToken(
+    token: string,
+    cookies: Cookies
+  ): Promise<boolean> {
     try {
       const response = await opsmlClient.get(
         RoutePaths.REFRESH_TOKEN,
@@ -69,7 +73,7 @@ export class UserStore {
 
       const jwtToken = (await response.json()) as JwtToken;
       this.jwt_token = jwtToken.token;
-      this.setTokenCookie(jwtToken.token);
+      this.setTokenCookie(jwtToken.token, cookies);
       return true;
     } catch {
       return false;
@@ -78,7 +82,7 @@ export class UserStore {
 
   // Attempts to validate the current jwt token
   // If the token is valid, updates the user information
-  public async validateAuth(): Promise<boolean> {
+  public async validateAuth(cookies: Cookies): Promise<boolean> {
     try {
       const response = await opsmlClient.get(
         RoutePaths.VALIDATE_AUTH,
@@ -93,7 +97,7 @@ export class UserStore {
 
       const authenticated = (await response.json()) as AuthenticatedResponse;
       if (!authenticated.is_authenticated) {
-        this.resetUser();
+        this.resetUser(cookies);
         return false;
       }
       // Update user information if authenticated
@@ -102,38 +106,33 @@ export class UserStore {
         this.jwt_token,
         authenticated.user_response.permissions,
         authenticated.user_response.group_permissions,
-        authenticated.user_response.favorite_spaces
+        authenticated.user_response.favorite_spaces,
+        cookies
       );
 
       return true;
     } catch (error) {
-      this.resetUser();
+      this.resetUser(cookies);
       return false;
     }
   }
 
-  public getTokenFromCookie(): string | null {
-    if (!browser) return null;
-
-    const cookies = document.cookie.split(";");
-    const tokenCookie = cookies.find((cookie) =>
-      cookie.trim().startsWith("jwt_token=")
-    );
+  public getTokenFromCookie(cookies: Cookies): string | null {
+    const tokenCookie = cookies.get("jwt_token");
 
     if (tokenCookie) {
-      return tokenCookie.split("=")[1].trim();
+      return tokenCookie;
     }
 
     return null;
   }
 
-  private removeTokenCookies() {
+  private removeTokenCookies(cookies: Cookies) {
     // Remove JWT token
-    document.cookie =
-      "jwt_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Strict; Secure";
+    cookies.delete("jwt_token", { path: "/" });
   }
 
-  public resetUser() {
+  public resetUser(cookies: Cookies) {
     this.username = "";
     this.jwt_token = "";
     this.logged_in = false;
@@ -143,17 +142,19 @@ export class UserStore {
     this.group_permissions = [];
     this.favorite_spaces = [];
 
-    if (browser) {
-      this.removeTokenCookies();
-    }
+    this.removeTokenCookies(cookies);
   }
 
-  private setTokenCookie(token: string) {
+  private setTokenCookie(token: string, cookies: Cookies) {
     const expirationDate = new Date();
     expirationDate.setTime(expirationDate.getTime() + 1 * 60 * 60 * 1000); // 1 hour
-    document.cookie = `jwt_token=${token}; expires=${expirationDate.toUTCString()}; domain=${
-      window.location.hostname
-    }; path=/; SameSite=Strict; Secure`;
+    cookies.set("jwt_token", token, {
+      sameSite: "strict",
+      secure: true,
+      domain: browser ? window.location.hostname : "localhost",
+      expires: expirationDate,
+      path: "/",
+    });
   }
 
   public updateUser(
@@ -161,7 +162,8 @@ export class UserStore {
     jwt_token: string,
     permissions: string[],
     group_permissions: string[],
-    favorite_spaces: string[] = []
+    favorite_spaces: string[] = [],
+    cookies: Cookies
   ) {
     this.username = username;
     this.jwt_token = jwt_token;
@@ -170,9 +172,7 @@ export class UserStore {
     this.group_permissions = group_permissions;
     this.favorite_spaces = favorite_spaces;
 
-    if (browser) {
-      this.setTokenCookie(jwt_token);
-    }
+    this.setTokenCookie(jwt_token, cookies);
   }
 
   private isTokenExpired(token: string): boolean {
@@ -230,7 +230,8 @@ export class UserStore {
 
   public async login(
     username: string,
-    password: string
+    password: string,
+    cookies: Cookies
   ): Promise<LoginResponse> {
     const response = await opsmlClient.post(
       RoutePaths.LOGIN,
@@ -249,7 +250,8 @@ export class UserStore {
         data.jwt_token,
         data.permissions,
         data.group_permissions,
-        data.favorite_spaces
+        data.favorite_spaces,
+        cookies
       );
 
       return data;
@@ -261,11 +263,11 @@ export class UserStore {
 
 export const userStore = new UserStore();
 
-export async function validateUserOrRedirect(): Promise<void> {
+export async function validateUserOrRedirect(cookies: Cookies): Promise<void> {
   const redirectPath = UiPaths.LOGIN;
 
   try {
-    const isValid = await userStore.validateSession();
+    const isValid = await userStore.validateSession(cookies);
 
     if (!isValid) {
       throw redirect(303, redirectPath);
