@@ -1,9 +1,6 @@
 import { json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
-import {
-  loginUser,
-  setTokenInCookies,
-} from "$lib/components/auth/validateToken";
+import { loginUser, setTokenInCookies } from "$lib/server/auth/validateToken";
 /**
  * Handles login requests and sets JWT cookie.
  * Only authentication and cookie logic here; UI navigation is handled client-side.

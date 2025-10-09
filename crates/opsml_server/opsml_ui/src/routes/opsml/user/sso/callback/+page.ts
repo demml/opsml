@@ -1,6 +1,6 @@
 export const ssr = false;
 
-import { RoutePaths, UiPaths } from "$lib/components/api/routes";
+import { RoutePaths, UiPaths } from "$lib/utils/api/routes";
 import type { PageLoad } from "./$types";
 import { userStore } from "$lib/components/user/user.svelte";
 import { exchangeSsoCallbackCode } from "$lib/components/user/utils";

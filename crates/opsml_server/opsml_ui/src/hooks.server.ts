@@ -1,7 +1,6 @@
-import { validateTokenOrRedirect } from "$lib/components/auth/validateToken";
+import { validateTokenOrRedirect } from "$lib/server/auth/validateToken";
 import type { Handle } from "@sveltejs/kit";
 import { logger } from "$lib/server/logger";
-import { log } from "console";
 
 // These routes do not require authentication
 const PUBLIC_ROUTES = [

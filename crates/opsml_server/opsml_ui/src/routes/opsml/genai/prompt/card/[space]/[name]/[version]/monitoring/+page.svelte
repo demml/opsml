@@ -1,17 +1,17 @@
 <script lang="ts">
   import type { BinnedDriftMap, MetricData  } from '$lib/components/card/monitoring/types';
   import { DriftType } from '$lib/components/card/monitoring/types';
-  import type { DriftProfile, DriftProfileResponse, UiProfile } from '$lib/components/card/monitoring/util';
+  import type { DriftProfile, DriftProfileResponse, UiProfile } from '$lib/components/card/monitoring/utils';
   import type { PageProps } from './$types';
   import { TimeInterval } from '$lib/components/card/monitoring/types';
   import VizBody from '$lib/components/card/monitoring/VizBody.svelte';
   import Header from '$lib/components/card/monitoring/Header.svelte';
   import { getMaxDataPoints, debounce } from '$lib/utils';
-  import { getLatestMetrics, getCurrentMetricData } from '$lib/components/card/monitoring/util';
+  import { getLatestMetrics } from '$lib/server/card/monitoring/utils';
   import { onMount, onDestroy } from 'svelte';
-  import { getProfileFeatures, getProfileConfig, type DriftConfigType } from '$lib/components/card/monitoring/util';
+  import { getProfileFeatures, getProfileConfig, type DriftConfigType, getCurrentMetricData } from '$lib/components/card/monitoring/utils';
   import type { Alert } from '$lib/components/card/monitoring/alert/types';
-  import { getDriftAlerts, acknowledgeAlert } from '$lib/components/card/monitoring/alert/utils';
+  import { getDriftAlerts, acknowledgeAlert } from '$lib/server/card/monitoring/utils';
   import AlertTable from '$lib/components/card/monitoring/alert/AlertTable.svelte';
   import LLMRecordTable from '$lib/components/card/monitoring/llm/LLMRecordTable.svelte';
 

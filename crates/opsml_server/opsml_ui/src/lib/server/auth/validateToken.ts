@@ -24,10 +24,11 @@ export async function validateTokenOrRedirect(
   cookies: Cookies,
   redirectPath: string = UiPaths.LOGIN
 ): Promise<void> {
-  const jwtToken = cookies.get("jwt_token") || "";
+  const jwtToken = cookies.get("jwt_token");
+  opsmlClient.setToken(jwtToken);
 
   // Validate the JWT token
-  const validationResult = await validateJWTToken(jwtToken);
+  const validationResult = await validateJWTToken();
 
   if (validationResult.isValid) return; // Authenticated
 
@@ -37,11 +38,11 @@ export async function validateTokenOrRedirect(
     if (refreshedToken) {
       // Set new token in cookies and validate again
       await setTokenInCookies(cookies, refreshedToken);
-      const refreshedValidation = await validateJWTToken(refreshedToken);
+
+      const refreshedValidation = await validateJWTToken();
       if (refreshedValidation.isValid) return;
     }
   }
-
   // If all else fails, clear cookie and redirect
   cookies.delete("jwt_token", { path: "/" });
   throw redirect(303, redirectPath);
@@ -74,19 +75,9 @@ interface AuthValidationResult {
  * @param jwtToken - The JWT token to validate
  * @returns Promise with validation result
  */
-async function validateJWTToken(
-  jwtToken: string
-): Promise<AuthValidationResult> {
-  if (!jwtToken.trim()) {
-    return { isValid: false, shouldRedirect: true, error: "No token provided" };
-  }
-
+async function validateJWTToken(): Promise<AuthValidationResult> {
   try {
-    const response = await opsmlClient.get(
-      RoutePaths.VALIDATE_AUTH,
-      undefined,
-      jwtToken
-    );
+    const response = await opsmlClient.get(RoutePaths.VALIDATE_AUTH, undefined);
 
     if (!response.ok) {
       const error = `Authentication failed: ${response.status} ${response.statusText}`;
@@ -169,6 +160,8 @@ export async function setTokenInCookies(
     expires: expirationDate,
     path: options?.path ?? "/",
   });
+
+  opsmlClient.setToken(token);
 }
 
 interface JwtPayload {

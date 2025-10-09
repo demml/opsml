@@ -1,6 +1,3 @@
-import { opsmlClient } from "$lib/components/api/client.svelte";
-import { RoutePaths } from "$lib/components/api/routes";
-import type { ModelCard } from "$lib/components/card/card_interfaces/modelcard";
 import type { SpcDriftConfig, SpcDriftProfile } from "./spc/spc";
 import type { PsiDriftConfig, PsiDriftProfile } from "./psi/psi";
 import type {
@@ -11,18 +8,8 @@ import {
   DriftType,
   TimeInterval,
   type BinnedDriftMap,
-  type DriftRequest,
   type MetricData,
-  type UpdateProfileRequest,
-  type UpdateResponse,
-  type LLMPageRequest,
-  type LLMPageResponse,
-  type PaginationCursor,
-  type ServiceInfo,
-  type LLMPaginationRequest,
-  Status,
 } from "./types";
-import { RegistryType } from "$lib/utils";
 import {
   samplePsiMetrics,
   sampleSpcMetrics,
@@ -30,9 +17,7 @@ import {
   sampleLLMMetrics,
   mockLLMDriftServerRecords,
 } from "./example";
-import { userStore } from "$lib/components/user/user.svelte";
 import type { LLMDriftConfig, LLMDriftProfile } from "./llm/llm";
-import type { DriftProfileUri } from "../card_interfaces/promptcard";
 
 export type DriftProfile = {
   Spc: SpcDriftProfile;
@@ -55,25 +40,6 @@ export type DriftConfigType =
 export type DriftProfileResponse = {
   [DriftType: string]: UiProfile;
 };
-
-export async function getDriftProfiles(
-  uid: string,
-  driftMap: Record<string, DriftProfileUri>,
-  registryType: RegistryType
-): Promise<DriftProfileResponse> {
-  const body = {
-    uid: uid,
-    drift_profile_uri_map: driftMap,
-    registry_type: registryType,
-  };
-
-  const response = await opsmlClient.post(
-    RoutePaths.DRIFT_PROFILE_UI,
-    body,
-    userStore.jwt_token
-  );
-  return (await response.json()) as DriftProfileResponse;
-}
 
 export function getProfileFeatures(
   drift_type: DriftType,
@@ -116,84 +82,6 @@ export function getProfileConfig(
       : profile.Spc.config;
 
   return variables;
-}
-
-export async function getLatestMetrics(
-  profiles: DriftProfileResponse,
-  time_interval: TimeInterval,
-  max_data_points: number
-): Promise<BinnedDriftMap> {
-  const driftMap: BinnedDriftMap = {};
-
-  // Create an array of promises
-  const requests = Object.entries(profiles).map(
-    async ([driftType, profile]) => {
-      const config = getProfileConfig(driftType as DriftType, profile.profile);
-
-      const request: DriftRequest = {
-        name: config.name,
-        space: config.space,
-        version: config.version,
-        time_interval: time_interval,
-        max_data_points: max_data_points,
-        drift_type: driftType as DriftType,
-      };
-
-      // Determine route based on drift type
-      const route = (() => {
-        switch (driftType) {
-          case DriftType.Custom:
-            return RoutePaths.CUSTOM_DRIFT;
-          case DriftType.Psi:
-            return RoutePaths.PSI_DRIFT;
-          case DriftType.Spc:
-            return RoutePaths.SPC_DRIFT;
-          case DriftType.LLM:
-            return RoutePaths.LLM_DRIFT;
-          default:
-            throw new Error(`Unsupported drift type: ${driftType}`);
-        }
-      })();
-
-      // Make the request and store result in driftMap
-      const response = await opsmlClient.get(
-        route,
-        request,
-        userStore.jwt_token
-      );
-      const data = await response.json();
-      driftMap[driftType as DriftType] = data;
-    }
-  );
-
-  // Wait for all requests to complete
-  await Promise.all(requests);
-
-  return driftMap;
-}
-
-export async function getLLMRecordPage(
-  service_info: ServiceInfo,
-  status?: Status,
-  cursor?: PaginationCursor
-): Promise<LLMPageResponse> {
-  let pagination: LLMPaginationRequest = {
-    cursor,
-    limit: 20,
-  };
-
-  const request: LLMPageRequest = {
-    service_info,
-    status,
-    pagination,
-  };
-
-  const response = await opsmlClient.post(
-    RoutePaths.LLM_RECORD_PAGE,
-    request,
-    userStore.jwt_token
-  );
-  return (await response.json()) as LLMPageResponse;
 }
 
 // this is used for mocking
@@ -252,17 +140,6 @@ export function isPsiConfig(config: DriftConfigType): config is PsiDriftConfig {
 
 export function isSpcConfig(config: DriftConfigType): config is SpcDriftConfig {
   return config.drift_type === DriftType.Spc;
-}
-
-export async function updateDriftProfile(
-  updateRequest: UpdateProfileRequest
-): Promise<UpdateResponse> {
-  const response = await opsmlClient.put(
-    RoutePaths.DRIFT_PROFILE,
-    updateRequest,
-    userStore.jwt_token
-  );
-  return (await response.json()) as UpdateResponse;
 }
 
 export function timeIntervalToDateTime(interval: TimeInterval): string {
