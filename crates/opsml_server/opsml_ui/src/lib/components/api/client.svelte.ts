@@ -1,5 +1,4 @@
 import { goto } from "$app/navigation";
-import { UiPaths } from "$lib/components/api/routes";
 import { browser } from "$app/environment";
 import { redirect } from "@sveltejs/kit";
 
@@ -9,6 +8,18 @@ import { redirect } from "@sveltejs/kit";
  * error handling and token management.
  */
 export class OpsmlClient {
+  private jwt_token: string;
+
+  constructor(jwt_token?: string) {
+    // set initial token if provided
+    this.jwt_token = jwt_token || "";
+  }
+
+  // token can only be set on server endpoints
+  setToken(token?: string) {
+    this.jwt_token = token || "";
+  }
+
   private getBaseUrl(): string {
     // Always point to your Rust backend
     return "http://localhost:8080";
@@ -39,7 +50,6 @@ export class OpsmlClient {
    */
   private addQueryParams(url: URL, params?: Record<string, any>): URL {
     if (!params) return url;
-    const searchParams = new URLSearchParams();
     Object.entries(params).forEach(([key, value]) => {
       if (value !== undefined && value !== null) {
         if (
@@ -89,23 +99,19 @@ export class OpsmlClient {
   /**
    * GET request with optional query params and bearer token.
    */
-  async get(
-    path: string,
-    params?: Record<string, any>,
-    token?: string
-  ): Promise<Response> {
+  async get(path: string, params?: Record<string, any>): Promise<Response> {
     const url = this.addQueryParams(new URL(path, this.getBaseUrl()), params);
     const headers: Record<string, string> = {};
-    if (token) headers.Authorization = `Bearer ${token}`;
+    if (this.jwt_token) headers.Authorization = `Bearer ${this.jwt_token}`;
     return this.request(url.pathname + url.search, { method: "GET", headers });
   }
 
   /**
    * DELETE request with optional body and bearer token.
    */
-  async delete(path: string, body?: any, token?: string): Promise<Response> {
+  async delete(path: string, body?: any): Promise<Response> {
     const headers: Record<string, string> = {};
-    if (token) headers.Authorization = `Bearer ${token}`;
+    if (this.jwt_token) headers.Authorization = `Bearer ${this.jwt_token}`;
     return this.request(path, {
       method: "DELETE",
       headers: { "Content-Type": "application/json", ...headers },
@@ -116,9 +122,9 @@ export class OpsmlClient {
   /**
    * PUT request with body and optional bearer token.
    */
-  async put(path: string, body: any, token?: string): Promise<Response> {
+  async put(path: string, body: any): Promise<Response> {
     const headers: Record<string, string> = {};
-    if (token) headers.Authorization = `Bearer ${token}`;
+    if (this.jwt_token) headers.Authorization = `Bearer ${this.jwt_token}`;
     return this.request(path, {
       method: "PUT",
       headers: { "Content-Type": "application/json", ...headers },
@@ -129,9 +135,9 @@ export class OpsmlClient {
   /**
    * PATCH request with body and optional bearer token.
    */
-  async patch(path: string, body: any, token?: string): Promise<Response> {
+  async patch(path: string, body: any): Promise<Response> {
     const headers: Record<string, string> = {};
-    if (token) headers.Authorization = `Bearer ${token}`;
+    if (this.jwt_token) headers.Authorization = `Bearer ${this.jwt_token}`;
     return this.request(path, {
       method: "PATCH",
       headers: { "Content-Type": "application/json", ...headers },
@@ -142,11 +148,10 @@ export class OpsmlClient {
   async post(
     path: string,
     body: any,
-    token: string = "",
     additionalHeaders: Record<string, string> = {}
   ): Promise<Response> {
-    if (token) {
-      additionalHeaders.Authorization = `Bearer ${token}`;
+    if (this.jwt_token) {
+      additionalHeaders.Authorization = `Bearer ${this.jwt_token}`;
     }
 
     return this.request(path, {

@@ -1,5 +1,7 @@
 import { validateTokenOrRedirect } from "$lib/components/auth/validateToken";
 import type { Handle } from "@sveltejs/kit";
+import { logger } from "$lib/server/logger";
+import { log } from "console";
 
 // These routes do not require authentication
 const PUBLIC_ROUTES = [
@@ -7,12 +9,11 @@ const PUBLIC_ROUTES = [
   "/api/login",
   "/opsml/user/register",
   "/opsml/user/reset",
-  "/", // Add root route
-  "/opsml/home", // Add home route temporarily for testing
+  "/",
 ];
 
 export const handle: Handle = async ({ event, resolve }) => {
-  console.log("Handling request for:", event.url.pathname);
+  logger.debug(`Handling request for: ${event.url.pathname}`);
   if (!PUBLIC_ROUTES.includes(event.url.pathname)) {
     try {
       await validateTokenOrRedirect(event.cookies);
@@ -21,5 +22,8 @@ export const handle: Handle = async ({ event, resolve }) => {
       throw err;
     }
   }
+  logger.debug(
+    `Request for ${event.url.pathname} passed authentication check.`
+  );
   return await resolve(event);
 };

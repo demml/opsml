@@ -1,5 +1,9 @@
+import { opsmlClient } from "$lib/components/api/client.svelte";
 import { getRegistryStats } from "$lib/components/card/utils";
-import { getRecentCards, type HomePageStats } from "$lib/components/home/utils";
+import {
+  getRecentCards,
+  type HomePageStats,
+} from "$lib/components/home/utils.server";
 import { RegistryType } from "$lib/utils";
 import type { PageServerLoad } from "./$types";
 
@@ -20,8 +24,11 @@ async function get_registry_stats(): Promise<HomePageStats> {
   };
 }
 
-export const load: PageServerLoad = async ({}) => {
+export const load: PageServerLoad = async ({ cookies }) => {
+  opsmlClient.setToken(cookies.get("jwt_token"));
+
   let cards = await getRecentCards();
   let stats = await get_registry_stats();
+
   return { cards, stats };
 };
