@@ -19,6 +19,7 @@ use axum::http::{
     Method,
 };
 use axum::{middleware, Router};
+use reqwest::header::HeaderValue;
 use std::sync::Arc;
 use tower_http::cors::CorsLayer;
 
@@ -26,6 +27,7 @@ const ROUTE_PREFIX: &str = "/opsml/api";
 
 pub async fn create_router(app_state: Arc<AppState>) -> Result<Router> {
     let cors = CorsLayer::new()
+        .allow_origin("http://localhost:3000".parse::<HeaderValue>()?)
         .allow_methods([
             Method::GET,
             Method::PUT,

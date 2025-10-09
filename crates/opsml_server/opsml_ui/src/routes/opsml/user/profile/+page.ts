@@ -5,7 +5,6 @@ import { validateUserOrRedirect } from "$lib/components/user/user.svelte";
 import type { PageLoad } from "./$types";
 
 export const load: PageLoad = async ({ parent }) => {
-  await validateUserOrRedirect();
   await parent();
 
   let userInfo = await getUser(userStore.username);

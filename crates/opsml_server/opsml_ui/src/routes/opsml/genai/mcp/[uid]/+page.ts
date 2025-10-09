@@ -8,7 +8,6 @@ import { getRegistryTypeLowerCase } from "$lib/utils";
 import type { ServiceCard } from "$lib/components/card/card_interfaces/servicecard";
 
 export const load: PageLoad = async ({ params, parent }) => {
-  await validateUserOrRedirect();
   const { registryType } = await parent();
 
   let metadata = (await getCardMetadata(

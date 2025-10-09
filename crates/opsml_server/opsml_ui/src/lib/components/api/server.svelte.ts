@@ -1,45 +1,28 @@
-import { goto } from "$app/navigation";
-import { UiPaths } from "$lib/components/api/routes";
-import { browser } from "$app/environment";
 import { redirect } from "@sveltejs/kit";
 
 /**
- * OpsmlClient is a wrapper around the Fetch API to interact with the OpsML axum backend.
- * It provides methods for GET, POST, PUT, DELETE, and PATCH requests with built-in
- * error handling and token management.
+ * HTTP client for SvelteKit server endpoints.
+ * Uses relative paths and idiomatic error handling.
  */
-export class OpsmlClient {
-  private getBaseUrl(): string {
-    // Always point to your Rust backend
-    return "http://localhost:8080";
-  }
-
+export class ServerClient {
   /**
    * Handles API errors and redirects on 401.
    * @param error - Error object or message
    * @param status - Optional HTTP status code
    */
-  private handleError(error: any, status?: number) {
-    console.error("API Error:", error);
-
-    // Only use goto() on the client side
-    if (browser && status === 401) {
-      goto("/opsml/user/login");
-    } else if (!browser && status === 401) {
-      // Use redirect for server-side
+  private handleError(error: unknown, status?: number): void {
+    console.error("Server API Error:", error);
+    if (status === 401) {
       throw redirect(303, "/opsml/user/login");
     }
   }
 
   /**
-   * Adds query parameters to a URL. This is a special param handler to ensure
-   * compatibility with how the axum backend expects arrays and objects.
-   * @param url - URL object
-   * @param params - Query params as key-value pairs
+   * Adds query parameters to a URL object.
+   * Supports arrays and objects for compatibility.
    */
   private addQueryParams(url: URL, params?: Record<string, any>): URL {
     if (!params) return url;
-    const searchParams = new URLSearchParams();
     Object.entries(params).forEach(([key, value]) => {
       if (value !== undefined && value !== null) {
         if (
@@ -61,15 +44,13 @@ export class OpsmlClient {
 
   /**
    * Generic request handler for all HTTP methods.
-   * @param path - API path (relative)
+   * @param path - Relative API path
    * @param options - Fetch options
    */
   async request(path: string, options: RequestInit = {}): Promise<Response> {
-    const baseUrl = this.getBaseUrl();
-    const url = new URL(path, baseUrl);
-
+    const url = new URL(path, "http://localhost"); // base is ignored for relative paths
     try {
-      const response = await fetch(url.toString(), {
+      const response = await fetch(url.pathname + url.search, {
         ...options,
         headers: options.headers,
       });
@@ -87,14 +68,14 @@ export class OpsmlClient {
   }
 
   /**
-   * GET request with optional query params and bearer token.
+   * GET request with optional query params.
    */
   async get(
     path: string,
     params?: Record<string, any>,
     token?: string
   ): Promise<Response> {
-    const url = this.addQueryParams(new URL(path, this.getBaseUrl()), params);
+    const url = this.addQueryParams(new URL(path, "http://localhost"), params);
     const headers: Record<string, string> = {};
     if (token) headers.Authorization = `Bearer ${token}`;
     return this.request(url.pathname + url.search, { method: "GET", headers });
@@ -139,6 +120,9 @@ export class OpsmlClient {
     });
   }
 
+  /**
+   * POST request with body and optional bearer token.
+   */
   async post(
     path: string,
     body: any,
@@ -160,5 +144,5 @@ export class OpsmlClient {
   }
 }
 
-// Create and export a singleton instance
-export const opsmlClient = new OpsmlClient();
+/** Singleton instance for idiomatic usage in SvelteKit server code */
+export const serverClient = new ServerClient();

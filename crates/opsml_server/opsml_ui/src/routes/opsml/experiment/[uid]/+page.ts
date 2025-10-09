@@ -8,7 +8,6 @@ import { getCardMetadata } from "$lib/components/card/utils";
 import { getRegistryPath } from "$lib/utils";
 
 export const load: PageLoad = async ({ params, parent }) => {
-  await validateUserOrRedirect();
   const { registryType } = await parent();
 
   let metadata = (await getCardMetadata(

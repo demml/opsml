@@ -7,7 +7,6 @@ import type { PageLoad } from "./$types";
 
 // @ts-ignore
 export const load: PageLoad = async ({ params, parent }) => {
-  await validateUserOrRedirect();
   const { registryType } = await parent();
 
   const space = params.space;

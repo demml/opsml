@@ -4,14 +4,11 @@
 	"version": "0.0.1",
 	"type": "module",
 	"scripts": {
-		"dev": "vite dev",
+		"dev": "vite dev --host 0.0.0.0 --port 3000",
 		"build": "vite build",
-		"preview": "vite preview",
-		"prepare": "svelte-kit sync || echo ''",
-		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
-		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
-		"lint": "eslint .",
-		"test": "vitest"
+		"preview": "vite preview --port 3000",
+		"start": "PORT=3000 node build/index.js",
+		"start:prod": "NODE_ENV=production PORT=3000 node build/index.js"
 	},
 	"devDependencies": {
 		"@eslint/compat": "^1.4.0",
@@ -29,6 +26,7 @@
 		"@tailwindcss/vite": "^4.1.14",
 		"@testing-library/jest-dom": "^6.9.1",
 		"@testing-library/svelte": "^5.2.8",
+		"@types/node": "^24.7.0",
 		"eslint": "^9.37.0",
 		"eslint-plugin-svelte": "^3.12.4",
 		"globals": "^16.4.0",
@@ -70,6 +68,7 @@
 		"markdown-it": "^14.1.0",
 		"marked": "^15.0.12",
 		"marked-highlight": "^2.2.2",
-		"melt": "^0.40.2"
+		"melt": "^0.40.2",
+		"pino": "^10.0.0"
 	}
 }

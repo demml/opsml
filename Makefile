@@ -139,3 +139,46 @@ prepend.changelog:
 	# get version from Cargo.toml
 	@VERSION=$(shell grep '^version =' Cargo.toml | cut -d '"' -f 2) && \
 	git cliff --unreleased --tag $$VERSION --prepend CHANGELOG.md
+
+
+###### Development & Production - Separate Servers ######
+
+.PHONY: dev.backend
+dev.backend:
+	cargo build -p opsml-server
+	OPSML_SERVER_PORT=8080 ./target/debug/opsml-server
+
+.PHONY: dev.frontend
+dev.frontend:
+	cd $(UI_DIR) && pnpm run dev
+
+.PHONY: build.backend
+build.backend:
+	cargo build --release -p opsml-server
+
+.PHONY: start.backend
+start.backend: build.backend
+	OPSML_SERVER_PORT=8080 ./target/release/opsml-server
+
+.PHONY: start.frontend
+start.frontend: build.ui
+	cd $(UI_DIR) && node build/index.js
+
+.PHONY: dev.both
+dev.both:
+	@echo "Starting both servers in development mode..."
+	@echo "Backend API: http://localhost:8080"
+	@echo "Frontend SSR: http://localhost:3000"
+	@make -j2 dev.backend dev.frontend
+
+.PHONY: start.both
+start.both:
+	@echo "Starting both servers in production mode..."
+	@echo "Backend API: http://localhost:8080" 
+	@echo "Frontend SSR: http://localhost:3000"
+	@make -j2 start.backend start.frontend
+
+.PHONY: stop.both
+stop.both:
+	-lsof -ti:3000 | xargs kill -9 2>/dev/null || true
+	-lsof -ti:8080 | xargs kill -9 2>/dev/null || true
