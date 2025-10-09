@@ -60,12 +60,12 @@ impl ConnectionType {
 
 #[derive(Clone)]
 pub struct ConnectionTracker {
-    connections: Arc<Mutex<HashMap<String, ConnectionInfo>>>,
-    total_connections: Arc<AtomicUsize>,
-    peak_connections: Arc<AtomicUsize>,
-    api_connections: Arc<AtomicUsize>,
-    spa_connections: Arc<AtomicUsize>,
-    request_counter: Arc<AtomicUsize>, // Add a request counter for unique IDs
+    pub connections: Arc<Mutex<HashMap<String, ConnectionInfo>>>,
+    pub total_connections: Arc<AtomicUsize>,
+    pub peak_connections: Arc<AtomicUsize>,
+    pub api_connections: Arc<AtomicUsize>,
+    pub spa_connections: Arc<AtomicUsize>,
+    pub request_counter: Arc<AtomicUsize>, // Add a request counter for unique IDs
 }
 
 impl ConnectionTracker {
