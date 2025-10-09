@@ -5,7 +5,6 @@ import { getCardParameters } from "$lib/components/card/experiment/util";
 import { validateUserOrRedirect } from "$lib/components/user/user.svelte";
 
 export const load: PageLoad = async ({ parent }) => {
-  await validateUserOrRedirect();
   const { metadata, registryType, readme, registryPath } = await parent();
 
   let parameters = await getCardParameters(metadata.uid);

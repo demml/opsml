@@ -65,3 +65,7 @@ export enum UiPaths {
   EXPERIMENT = "/opsml/experiment",
   ERROR = "/opsml/error",
 }
+
+export enum ServerPaths {
+  LOGIN = "/api/login",
+}

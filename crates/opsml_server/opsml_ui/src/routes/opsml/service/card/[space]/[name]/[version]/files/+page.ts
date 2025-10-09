@@ -6,7 +6,6 @@ import { getRegistryTableName } from "$lib/utils";
 import { validateUserOrRedirect } from "$lib/components/user/user.svelte";
 
 export const load: PageLoad = async ({ parent }) => {
-  await validateUserOrRedirect();
   const { metadata, registryType } = await parent();
 
   let tableName = getRegistryTableName(registryType);

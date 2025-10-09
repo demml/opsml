@@ -5,12 +5,16 @@
     import Navbar from "$lib/components/nav/Navbar.svelte";
     import { onMount } from 'svelte';
     import { ToastProvider } from '@skeletonlabs/skeleton-svelte';
+    import { uiSettingsStore } from "$lib/components/settings/settings.svelte";
 
 
-    let { children } = $props();
+    let { data, children} = $props();
   
-    let show = $state(false);
+    // initialize settings store with data from server
+    uiSettingsStore.initialize(data.settings);
     
+    let show = $state(false);
+
     onMount(() => {
         setTimeout(() => {
           show = true;

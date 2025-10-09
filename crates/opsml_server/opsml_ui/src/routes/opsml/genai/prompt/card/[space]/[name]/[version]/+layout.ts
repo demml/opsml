@@ -9,7 +9,6 @@ import { validateUserOrRedirect } from "$lib/components/user/user.svelte";
 
 // @ts-ignore
 export const load: LayoutLoad = async ({ params, parent }) => {
-  await validateUserOrRedirect();
   const { registryType } = await parent();
   const { space, name, version } = params;
 

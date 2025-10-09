@@ -7,7 +7,6 @@ import { validateUserOrRedirect } from "$lib/components/user/user.svelte";
 import { RegistryType } from "$lib/utils";
 
 export const load: PageLoad = async ({ parent, url }) => {
-  await validateUserOrRedirect();
   const { metadata } = await parent();
   const viewPath = (url as URL).searchParams.get("path") as string;
 

@@ -6,7 +6,6 @@ import type { PageLoad } from "./$types";
 
 // @ts-ignore
 export const load: PageLoad = async ({ parent }) => {
-  await validateUserOrRedirect();
   const { registryType } = await parent();
 
   let registryPage = await setupRegistryPage(

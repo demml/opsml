@@ -3,12 +3,15 @@
   import { goto } from "$app/navigation";
   import logo from '$lib/images/opsml-logo-small.webp'
   import LoginWarning from "$lib/components/user/LoginWarning.svelte";
-  import {  UiPaths } from "$lib/components/api/routes";
+  import {  UiPaths, ServerPaths } from "$lib/components/api/routes";
   import { goTop } from "$lib/utils";
   import type { PageProps } from './$types';
   import { validateLoginSchema, type UseLoginSchema } from "$lib/components/user/schema";
   import { getSsoAuthURL } from "$lib/components/user/utils";
-import { uiSettingsStore } from "$lib/components/settings/settings.svelte";
+  import { uiSettingsStore } from "$lib/components/settings/settings.svelte";
+  import { serverClient } from "$lib/components/api/server.svelte";
+  import { userStore } from "$lib/components/user/user.svelte";
+  import type { LoginResponse } from "$lib/components/user/types";
 
   let username: string = $state('');
   let password: string = $state('');
@@ -25,40 +28,34 @@ async function handleLogin() {
   // Validate input fields
   const argsValid = validateLoginSchema(username, password);
 
-  if (argsValid.success) {
-    try {
-      // Send login request to server endpoint
-      const res = await fetch('/api/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password })
-      });
-
-      const result = await res.json();
-
-      if (res.ok && result.success) {
-        // On success, redirect to previousPath or home
-        if (previousPath) {
-          goto(previousPath);
-        } else {
-          goto(UiPaths.HOME);
-        }
-      } else {
-        // Show error from server response
-        showLoginError = true;
-        errorMessage = result.error ?? "Invalid username or password";
-      }
-      goTop();
-    } catch (err) {
-      // Handle network or unexpected errors
-      showLoginError = true;
-      errorMessage = "Login failed. Please try again.";
-      goTop();
-    }
-  } else {
-    // Show validation errors
+  if (!argsValid.success) {
     showLoginError = true;
     loginErrors = argsValid.errors ?? {};
+    goTop();
+    return;
+  }
+
+  try {
+    // Send login request to server endpoint
+    const res = await serverClient.post(ServerPaths.LOGIN, { username, password });
+    const result = await res.json();
+
+    if (res.ok && result.success) {
+      // On success, update userStore, redirect to previousPath or home
+      const loginResponse = result.response as LoginResponse;
+      userStore.fromLoginResponse(loginResponse);
+
+      goto(previousPath ?? UiPaths.HOME);
+    } else {
+      showLoginError = true;
+      errorMessage = result.error ?? "Invalid username or password";
+      goTop();
+    }
+  } catch (err) {
+    // Handle network or unexpected errors
+    showLoginError = true;
+    errorMessage = "Login failed. Please try again.";
+    console.error("Login error:", err);
     goTop();
   }
 }

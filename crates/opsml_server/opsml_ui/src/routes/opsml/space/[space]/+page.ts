@@ -6,8 +6,6 @@ import type { PageLoad } from "./$types";
 import { getRecentCards } from "$lib/components/home/utils";
 
 export const load: PageLoad = async ({ params }) => {
-  await validateUserOrRedirect();
-
   // get space for url if exists
   let spaceRecord = await getSpace(params.space);
   let recentCards = await getRecentCards(params.space);

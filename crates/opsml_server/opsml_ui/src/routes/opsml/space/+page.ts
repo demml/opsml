@@ -5,8 +5,6 @@ import { validateUserOrRedirect } from "$lib/components/user/user.svelte";
 import type { PageLoad } from "./$types";
 
 export const load: PageLoad = async ({}) => {
-  await validateUserOrRedirect();
-
   // get space for url if exists
   let spaces = await getAllSpaceStats();
 
