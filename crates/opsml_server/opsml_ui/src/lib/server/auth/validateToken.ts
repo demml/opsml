@@ -1,4 +1,4 @@
-import { opsmlClient } from "$lib/components/api/client.svelte";
+import { opsmlClient } from "../api/opsmlClient";
 import { RoutePaths, UiPaths } from "$lib/components/api/routes";
 import { redirect, type Cookies } from "@sveltejs/kit";
 import type {
