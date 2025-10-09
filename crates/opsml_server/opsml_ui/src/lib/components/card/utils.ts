@@ -20,11 +20,7 @@ export async function getSpaces(
   registry_type: RegistryType
 ): Promise<CardSpaceResponse> {
   let params = { registry_type: registry_type };
-  const response = await opsmlClient.get(
-    RoutePaths.LIST_CARD_SPACES,
-    params,
-    userStore.jwt_token
-  );
+  const response = await opsmlClient.get(RoutePaths.LIST_CARD_SPACES, params);
   return await response.json();
 }
 
@@ -33,11 +29,7 @@ export async function getTags(
 ): Promise<CardTagsResponse> {
   let params = { registry_type: registry_type };
 
-  const response = await opsmlClient.get(
-    RoutePaths.LIST_CARD_TAGS,
-    params,
-    userStore.jwt_token
-  );
+  const response = await opsmlClient.get(RoutePaths.LIST_CARD_TAGS, params);
 
   return await response.json();
 }
@@ -55,11 +47,7 @@ export async function getRegistryStats(
     tags: tags,
   };
 
-  const response = await opsmlClient.post(
-    RoutePaths.GET_STATS,
-    request,
-    userStore.jwt_token
-  );
+  const response = await opsmlClient.post(RoutePaths.GET_STATS, request);
   return await response.json();
 }
 
