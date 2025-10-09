@@ -1,11 +1,11 @@
-import { opsmlClient } from "../api/client.svelte";
-import { RoutePaths, UiPaths } from "../api/routes";
+import { opsmlClient } from "$lib/components/api/client.svelte";
+import { RoutePaths, UiPaths } from "$lib/components/api/routes";
 import { redirect, type Cookies } from "@sveltejs/kit";
 import type {
   AuthenticatedResponse,
   JwtToken,
   LoginResponse,
-} from "../user/types";
+} from "../../components/user/types";
 
 /**
  * Validates JWT token from cookies, attempts refresh if expired,
