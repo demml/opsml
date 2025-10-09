@@ -5,7 +5,6 @@
   import LoginWarning from "$lib/components/user/LoginWarning.svelte";
   import {  UiPaths } from "$lib/components/api/routes";
   import { goTop } from "$lib/utils";
-  import { userStore } from "$lib/components/user/user.svelte";
   import type { PageProps } from './$types';
   import { validateLoginSchema, type UseLoginSchema } from "$lib/components/user/schema";
   import { getSsoAuthURL } from "$lib/components/user/utils";
@@ -22,32 +21,46 @@ import { uiSettingsStore } from "$lib/components/settings/settings.svelte";
   let { data }: PageProps = $props();
   let previousPath = data.previousPath;
 
-  async function handleLogin() {
-    // Handle login logic here
+async function handleLogin() {
+  // Validate input fields
+  const argsValid = validateLoginSchema(username, password);
 
-    let argsValid = validateLoginSchema(username, password);
+  if (argsValid.success) {
+    try {
+      // Send login request to server endpoint
+      const res = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
 
-    if (argsValid.success) {
-  
-      let loginResponse = await userStore.login(username, password);
+      const result = await res.json();
 
-      if (loginResponse.authenticated === true) {
-        // need to reload the page to update the nav bar
+      if (res.ok && result.success) {
+        // On success, redirect to previousPath or home
         if (previousPath) {
           goto(previousPath);
         } else {
           goto(UiPaths.HOME);
         }
       } else {
+        // Show error from server response
         showLoginError = true;
-        errorMessage = loginResponse.message;
+        errorMessage = result.error ?? "Invalid username or password";
       }
       goTop();
-    } else {
+    } catch (err) {
+      // Handle network or unexpected errors
       showLoginError = true;
-      loginErrors = argsValid.errors ?? {};
+      errorMessage = "Login failed. Please try again.";
       goTop();
     }
+  } else {
+    // Show validation errors
+    showLoginError = true;
+    loginErrors = argsValid.errors ?? {};
+    goTop();
+  }
 }
 
 async function redirectToSsoUrl() {
