@@ -1,6 +1,6 @@
 export const ssr = false;
 
-import { UiPaths } from "$lib/components/api/routes";
+import { UiPaths } from "$lib/utils/api/routes";
 import type { PageLoad } from "./$types";
 
 export const load: PageLoad = ({ url }) => {

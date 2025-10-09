@@ -7,7 +7,7 @@ import {
   isPsiConfig,
   isSpcConfig,
   type DriftConfigType,
-} from "../util";
+} from "../utils";
 
 function stringToBoolean(str: string): boolean {
   return str.toLowerCase() === "true";

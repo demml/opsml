@@ -7,14 +7,14 @@ import {
   getProfileConfig,
   getProfileFeatures,
   type UiProfile,
-} from "$lib/components/card/monitoring/util";
+} from "$lib/components/card/monitoring/utils";
 import { DriftType, TimeInterval } from "$lib/components/card/monitoring/types";
 import {
   getLatestMetrics,
   getCurrentMetricData,
-} from "$lib/components/card/monitoring/util";
+} from "$lib/components/card/monitoring/utils";
 import { getDriftAlerts } from "$lib/components/card/monitoring/alert/utils";
-import { getLLMRecordPage } from "$lib/components/card/monitoring/util";
+import { getLLMRecordPage } from "$lib/components/card/monitoring/utils";
 import type { ServiceInfo } from "$lib/components/card/monitoring/types";
 import { validateUserOrRedirect } from "$lib/components/user/user.svelte";
 
