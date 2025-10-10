@@ -1,4 +1,3 @@
-import { opsmlClient } from "$lib/components/api/client.svelte";
 import { RoutePaths } from "$lib/components/api/routes";
 import { RegistryType } from "$lib/utils";
 import type {
@@ -14,26 +13,32 @@ import type {
 } from "$lib/server/card/types";
 import type { CardQueryArgs } from "$lib/components/api/schema";
 import { type Card } from "$lib/components/home/types";
+import { createOpsmlClient } from "../api/opsmlClient";
 
 export async function getSpaces(
-  registry_type: RegistryType
+  registry_type: RegistryType,
+  jwt_token: string | undefined,
+  fetch: typeof globalThis.fetch
 ): Promise<CardSpaceResponse> {
   let params = { registry_type: registry_type };
+  const opsmlClient = createOpsmlClient(fetch, jwt_token);
   const response = await opsmlClient.get(RoutePaths.LIST_CARD_SPACES, params);
   return await response.json();
 }
 
 export async function getTags(
-  registry_type: RegistryType
+  registry_type: RegistryType,
+  jwt_token: string | undefined,
+  fetch: typeof globalThis.fetch
 ): Promise<CardTagsResponse> {
   let params = { registry_type: registry_type };
-
+  const opsmlClient = createOpsmlClient(fetch, jwt_token);
   const response = await opsmlClient.get(RoutePaths.LIST_CARD_TAGS, params);
-
   return await response.json();
 }
 
 export async function getRegistryStats(
+  opsmlClient: ReturnType<typeof createOpsmlClient>,
   registry_type: RegistryType,
   searchTerm?: string,
   spaces?: string[],
@@ -51,6 +56,7 @@ export async function getRegistryStats(
 }
 
 export async function getRegistryPage(
+  opsmlClient: ReturnType<typeof createOpsmlClient>,
   registry_type: RegistryType,
   sort_by?: string,
   spaces?: string[],
@@ -80,15 +86,18 @@ export async function getRegistryPage(
 export async function setupRegistryPage(
   registry_type: RegistryType,
   space: undefined | string = undefined,
-  name: string | undefined = undefined
+  name: string | undefined = undefined,
+  jwt_token: string | undefined,
+  fetch: typeof globalThis.fetch
 ): Promise<RegistryPageReturn> {
+  let opsmlClient = createOpsmlClient(fetch, jwt_token);
   const spaces = space ? [space] : undefined;
   const [registry_spaces, tags, registryStats, registryPage] =
     await Promise.all([
-      getSpaces(registry_type),
-      getTags(registry_type),
-      getRegistryStats(registry_type, name, spaces),
-      getRegistryPage(registry_type, undefined, spaces, name),
+      getSpaces(opsmlClient, registry_type),
+      getTags(opsmlClient, registry_type),
+      getRegistryStats(opsmlClient, registry_type, name, spaces),
+      getRegistryPage(opsmlClient, registry_type, undefined, spaces, name),
     ]);
 
   return {

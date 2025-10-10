@@ -6,7 +6,9 @@
   import { goTop } from "$lib/utils";
   import {  validatePasswordResetSchema, type PasswordResetSchema } from "$lib/components/user/schema";
   import { HelpCircle } from 'lucide-svelte';
-  import { serverClient } from "$lib/api/svelteServerClient";
+  import { createServerClient } from "$lib/api/svelteServerClient";
+
+  let { fetch }: PageProps = $props();
 
   let username: string = $state('');
   let recoveryCode: string = $state('');
@@ -36,7 +38,7 @@ async function handleReset(event: Event) {
   }
 
   try {
-    const res = await serverClient.post(ServerPaths.RESET_PASSWORD, {
+    const res = await createServerClient(fetch).post(ServerPaths.RESET_PASSWORD, {
       username,
       recovery_code: recoveryCode,
       new_password: newPassword

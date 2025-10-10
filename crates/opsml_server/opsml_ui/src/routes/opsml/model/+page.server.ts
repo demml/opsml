@@ -1,10 +1,8 @@
 export const ssr = false;
 
-import { setupRegistryPage } from "$lib/components/card/utils";
-import { validateUserOrRedirect } from "$lib/components/user/user.svelte";
-import type { PageLoad } from "./$types";
+import { setupRegistryPage } from "$lib/server/card/utils";
 
-export const load: PageLoad = async ({ parent }) => {
+export const load: PageServerLoad = async ({ parent }) => {
   const { registryType } = await parent();
 
   let registryPage = await setupRegistryPage(
@@ -12,6 +10,7 @@ export const load: PageLoad = async ({ parent }) => {
     undefined,
     undefined
   );
+
   return {
     page: registryPage,
     selectedSpace: undefined,

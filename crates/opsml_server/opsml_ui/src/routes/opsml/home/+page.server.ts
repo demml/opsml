@@ -1,4 +1,3 @@
-import { opsmlClient } from "$lib/components/api/client.svelte";
 import { getRegistryStats } from "$lib/server/card/utils";
 import {
   getRecentCards,
@@ -6,14 +5,19 @@ import {
 } from "$lib/components/home/utils.server";
 import { RegistryType } from "$lib/utils";
 import type { PageServerLoad } from "./$types";
+import { createOpsmlClient } from "$lib/server/api/opsmlClient";
 
-async function get_registry_stats(): Promise<HomePageStats> {
+async function get_registry_stats(
+  fetch: typeof globalThis.fetch,
+  jwt_token: string | undefined
+): Promise<HomePageStats> {
+  const opsmlClient = createOpsmlClient(fetch, jwt_token);
   const [modelStats, dataStats, promptStats, experimentStats] =
     await Promise.all([
-      getRegistryStats(RegistryType.Model),
-      getRegistryStats(RegistryType.Data),
-      getRegistryStats(RegistryType.Prompt),
-      getRegistryStats(RegistryType.Experiment),
+      getRegistryStats(opsmlClient, RegistryType.Model),
+      getRegistryStats(opsmlClient, RegistryType.Data),
+      getRegistryStats(opsmlClient, RegistryType.Prompt),
+      getRegistryStats(opsmlClient, RegistryType.Experiment),
     ]);
 
   return {
@@ -24,11 +28,8 @@ async function get_registry_stats(): Promise<HomePageStats> {
   };
 }
 
-export const load: PageServerLoad = async ({ cookies }) => {
-  opsmlClient.setToken(cookies.get("jwt_token"));
-
-  let cards = await getRecentCards();
-  let stats = await get_registry_stats();
-
+export const load: PageServerLoad = async ({ cookies, fetch }) => {
+  let cards = await getRecentCards(fetch, cookies.get("jwt_token"));
+  let stats = await get_registry_stats(fetch, cookies.get("jwt_token"));
   return { cards, stats };
 };

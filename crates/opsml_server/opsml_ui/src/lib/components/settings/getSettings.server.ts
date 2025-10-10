@@ -1,15 +1,19 @@
 import { RoutePaths } from "../api/routes";
-import { opsmlClient } from "../api/client.svelte";
 import type { UiSettings } from "./types";
 import { logger } from "$lib/server/logger";
+import { createOpsmlClient } from "$lib/server/api/opsmlClient";
 
 /**
  * Fetch UI settings from the server (this is server-side only).
  * @returns UI settings from the server
  */
-export async function getUISettings(): Promise<UiSettings> {
+export async function getUISettings(
+  fetch: typeof globalThis.fetch,
+  jwt_token: string | undefined
+): Promise<UiSettings> {
   try {
     logger.debug("Fetching UI settings...");
+    const opsmlClient = createOpsmlClient(fetch, jwt_token);
     const response = await opsmlClient.get(RoutePaths.SETTINGS);
 
     if (!response.ok) {

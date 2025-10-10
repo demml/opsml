@@ -8,13 +8,20 @@ const PUBLIC_ROUTES = [
   UiPaths.LOGIN,
   UiPaths.REGISTER,
   UiPaths.RESET,
+  UiPaths.FORGOT,
+  UiPaths.SSO_AUTH,
+  UiPaths.SSO_CALLBACK,
   ServerPaths.LOGIN,
   ServerPaths.REGISTER_USER,
+  ServerPaths.RESET_PASSWORD,
+  ServerPaths.SSO_AUTH,
+  ServerPaths.SSO_CALLBACK,
   "/",
 ];
 
 export const handle: Handle = async ({ event, resolve }) => {
   logger.debug(`Handling request for: ${event.url.pathname}`);
+
   if (!PUBLIC_ROUTES.includes(event.url.pathname)) {
     try {
       await validateTokenOrRedirect(event.cookies);
@@ -27,5 +34,6 @@ export const handle: Handle = async ({ event, resolve }) => {
   logger.debug(
     `Request for ${event.url.pathname} passed authentication check.`
   );
+
   return await resolve(event);
 };

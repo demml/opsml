@@ -1,6 +1,6 @@
-import { opsmlClient } from "$lib/components/api/client.svelte";
 import { RoutePaths } from "$lib/components/api/routes";
 import { type Card } from "$lib/components/home/types";
+import { createOpsmlClient } from "$lib/server/api/opsmlClient";
 import { RegistryType } from "$lib/utils";
 
 interface RecentCards {
@@ -17,7 +17,11 @@ interface HomePageStats {
   nbrExperiments: number;
 }
 
-async function getCards(registry: string, space?: string): Promise<Card[]> {
+async function getCards(
+  opsmlClient: ReturnType<typeof createOpsmlClient>,
+  registry: string,
+  space?: string
+): Promise<Card[]> {
   const response = await opsmlClient.get(RoutePaths.LIST_CARDS, {
     registry_type: registry,
     limit: "10",
@@ -28,13 +32,18 @@ async function getCards(registry: string, space?: string): Promise<Card[]> {
   return data;
 }
 
-async function getRecentCards(space?: string): Promise<RecentCards> {
+async function getRecentCards(
+  fetch: typeof globalThis.fetch,
+  jwt_token: string | undefined,
+  space?: string
+): Promise<RecentCards> {
+  const opsmlClient = createOpsmlClient(fetch, jwt_token);
   const [modelcards, datacards, experimentcards, promptcards] =
     await Promise.all([
-      getCards(RegistryType.Model, space),
-      getCards(RegistryType.Data, space),
-      getCards(RegistryType.Experiment, space),
-      getCards(RegistryType.Prompt, space),
+      getCards(opsmlClient, RegistryType.Model, space),
+      getCards(opsmlClient, RegistryType.Data, space),
+      getCards(opsmlClient, RegistryType.Experiment, space),
+      getCards(opsmlClient, RegistryType.Prompt, space),
     ]);
 
   return {

@@ -9,15 +9,24 @@ import { redirect } from "@sveltejs/kit";
  */
 export class OpsmlClient {
   private jwt_token: string;
+  private fetchFn: typeof globalThis.fetch;
 
-  constructor(jwt_token?: string) {
+  constructor(jwt_token?: string, fetchFn: typeof globalThis.fetch = fetch) {
     // set initial token if provided
     this.jwt_token = jwt_token || "";
+    this.fetchFn = fetchFn;
   }
 
-  // token can only be set on server endpoints
-  setToken(token?: string) {
-    this.jwt_token = token || "";
+  setToken(token: string) {
+    this.jwt_token = token;
+  }
+
+  getToken(): string {
+    return this.jwt_token;
+  }
+
+  clearToken() {
+    this.jwt_token = "";
   }
 
   private getBaseUrl(): string {
@@ -79,7 +88,7 @@ export class OpsmlClient {
     const url = new URL(path, baseUrl);
 
     try {
-      const response = await fetch(url.toString(), {
+      const response = await this.fetchFn(url.toString(), {
         ...options,
         headers: options.headers,
       });
@@ -165,5 +174,10 @@ export class OpsmlClient {
   }
 }
 
-// Create and export a singleton instance
-export const opsmlClient = new OpsmlClient();
+export function createOpsmlClient(
+  fetch: typeof globalThis.fetch,
+  jwt_token?: string
+) {
+  const client = new OpsmlClient(jwt_token, fetch);
+  return client;
+}
