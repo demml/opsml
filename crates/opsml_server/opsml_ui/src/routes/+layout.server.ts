@@ -1,4 +1,4 @@
-import { getUISettings } from "$lib/components/settings/getSettings.server";
+import { getUISettings } from "$lib/server/settings";
 import { logger } from "$lib/server/logger";
 import type { LayoutServerLoad } from "./$types";
 

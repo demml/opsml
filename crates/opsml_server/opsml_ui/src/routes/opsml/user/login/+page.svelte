@@ -8,7 +8,7 @@
   import type { PageProps } from './$types';
   import { validateLoginSchema, type UseLoginSchema } from "$lib/components/user/schema";
   import { uiSettingsStore } from "$lib/components/settings/settings.svelte";
-  import { createServerClient } from "$lib/api/svelteServerClient";
+  import { createInternalApiClient } from "$lib/api/internalClient";
   import { userStore } from "$lib/components/user/user.svelte";
   import type { LoginResponse, SsoAuthUrl } from "$lib/components/user/types";
 
@@ -35,7 +35,7 @@
 
     try {
       // Send login request to server endpoint
-      const res = await createServerClient(fetch).post(ServerPaths.LOGIN, { username, password });
+      const res = await createInternalApiClient(fetch).post(ServerPaths.LOGIN, { username, password });
       const result = await res.json();
 
       if (res.ok && result.success) {
@@ -59,7 +59,7 @@
 
   async function redirectToSsoUrl() {
 
-    const resp = await createServerClient(fetch).get(ServerPaths.SSO_AUTH);
+    const resp = await createInternalApiClient(fetch).get(ServerPaths.SSO_AUTH);
     const ssoAuthUrl = (await resp.json() as SsoAuthUrl);
 
     console.log("SSO Auth URL:", ssoAuthUrl);

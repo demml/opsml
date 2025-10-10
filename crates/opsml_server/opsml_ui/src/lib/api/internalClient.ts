@@ -4,7 +4,7 @@ import { redirect } from "@sveltejs/kit";
  * HTTP client for SvelteKit server endpoints.
  * Uses relative paths and idiomatic error handling.
  */
-export class ServerClient {
+export class InternalApiClient {
   private fetchFn: typeof fetch;
 
   constructor(fetchFn: typeof fetch = fetch) {
@@ -135,8 +135,9 @@ export class ServerClient {
 }
 
 /** Singleton instance for usage in SvelteKit server code */
-export const serverClient = new ServerClient();
-
-export function createServerClient(fetchFn: typeof fetch) {
-  return new ServerClient(fetchFn);
+export const internalApiClient = new InternalApiClient();
+export function createInternalApiClient(
+  fetchFn: typeof fetch = fetch
+): InternalApiClient {
+  return new InternalApiClient(fetchFn);
 }

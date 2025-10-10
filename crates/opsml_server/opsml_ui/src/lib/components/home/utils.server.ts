@@ -34,10 +34,9 @@ async function getCards(
 
 async function getRecentCards(
   fetch: typeof globalThis.fetch,
-  jwt_token: string | undefined,
   space?: string
 ): Promise<RecentCards> {
-  const opsmlClient = createOpsmlClient(fetch, jwt_token);
+  const opsmlClient = createOpsmlClient(fetch);
   const [modelcards, datacards, experimentcards, promptcards] =
     await Promise.all([
       getCards(opsmlClient, RegistryType.Model, space),

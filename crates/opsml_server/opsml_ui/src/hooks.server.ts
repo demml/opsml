@@ -2,7 +2,7 @@ import { validateTokenOrRedirect } from "$lib/server/auth/validateToken";
 import type { Handle } from "@sveltejs/kit";
 import { logger } from "$lib/server/logger";
 import { ServerPaths, UiPaths } from "$lib/components/api/routes";
-import { Server } from "lucide-svelte";
+import type { HandleFetch } from "@sveltejs/kit";
 
 // These routes do not require authentication
 const PUBLIC_ROUTES = [
@@ -38,4 +38,16 @@ export const handle: Handle = async ({ event, resolve }) => {
   );
 
   return await resolve(event);
+};
+
+export const handleFetch: HandleFetch = async ({ request, event, fetch }) => {
+  const token = event.cookies.get("jwt_token");
+
+  if (token) {
+    // add the auth token to all outgoing requests:
+    // - Requests are either being routed to the server endpoints or backend api
+    request.headers.set("Authorization", `Bearer ${token}`);
+  }
+
+  return fetch(request);
 };

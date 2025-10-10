@@ -1,7 +1,7 @@
 import { UiPaths } from "$lib/components/api/routes";
 import type { PageLoad } from "./$types";
 
-export const load: PageLoad = ({ url, fetch }) => {
+export const load: PageLoad = ({ url }) => {
   let previousPath = (url as URL).searchParams.get("redirect") as
     | string
     | undefined;
@@ -12,6 +12,5 @@ export const load: PageLoad = ({ url, fetch }) => {
 
   return {
     previousPath,
-    fetch,
   };
 };

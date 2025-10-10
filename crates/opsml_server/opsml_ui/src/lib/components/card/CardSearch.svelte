@@ -3,17 +3,18 @@
   import { Switch } from '@skeletonlabs/skeleton-svelte';
   import CardTableView from "$lib/components/card/CardTableView.svelte";
   import { onMount } from "svelte";
-  import { getRegistryPage, getRegistryStats} from "$lib/components/card/utils";
   import type { RegistryPageReturn, RegistryStatsResponse, QueryPageResponse} from "$lib/components/card/types";
   import  { RegistryType, delay, getRegistryTypeUpperCase } from "$lib/utils";
-  import { ArrowLeft, ArrowRight, Search, Settings } from 'lucide-svelte';
+  import { ArrowLeft, ArrowRight, Settings } from 'lucide-svelte';
+  import { getRegistryPage, getRegistryStats } from '$lib/components/api/internal';
   import { Combobox } from "melt/builders";
   import CardPage from '$lib/components/card/CardPage.svelte';
 
-  let { page, selectedName, selectedSpace} = $props<{
+  let { page, selectedName, selectedSpace, fetch } = $props<{
     page: RegistryPageReturn;
     selectedName: string | undefined;
     selectedSpace: string | undefined;
+    fetch: typeof globalThis.fetch;
   }>();
  
   let viewState = $state(true);
@@ -48,7 +49,6 @@
     
   });
 
-
   let searchTimeout: ReturnType<typeof setTimeout> | null = null;
   function onTagsChange() {
     if (searchTimeout) clearTimeout(searchTimeout);
@@ -72,15 +72,15 @@
 
   const searchPage = async function () {
   [registryPage, registryStats] = await Promise.all([ 
-    getRegistryPage(registryType, undefined, filteredSpaces, artifactSearchQuery, filteredTags, 1), 
-    getRegistryStats(registryType, artifactSearchQuery, filteredSpaces, filteredTags)
+    getRegistryPage(fetch, registryType, undefined, filteredSpaces, artifactSearchQuery, filteredTags, 1), 
+    getRegistryStats(fetch, registryType, artifactSearchQuery, filteredSpaces, filteredTags)
   ]);
   currentPage = 1;
   totalPages = Math.ceil(registryStats.stats.nbr_names / 30);
   }
 
   const changePage = async function (page: number) {
-    registryPage = await getRegistryPage(registryType, undefined, filteredSpaces, artifactSearchQuery, filteredTags, page);
+    registryPage = await getRegistryPage(fetch, registryType, undefined, filteredSpaces, artifactSearchQuery, filteredTags, page);
     currentPage = page;
   }
 

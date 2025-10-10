@@ -3,7 +3,7 @@ export const ssr = false;
 
 import type { PageLoad } from "./$types";
 import { userStore } from "$lib/components/user/user.svelte";
-import { createServerClient } from "$lib/api/svelteServerClient";
+import { createInternalApiClient } from "$lib/api/internalClient";
 import type { LoginResponse } from "$lib/components/user/types";
 import { ServerPaths } from "$lib/components/api/routes";
 
@@ -21,10 +21,13 @@ export const load: PageLoad = async ({ url, fetch }) => {
   let codeVerifier = localStorage.getItem("ssoCodeVerifier") || "";
 
   // send to server to exchange code for tokens
-  let resp = await createServerClient(fetch).post(ServerPaths.SSO_CALLBACK, {
-    code,
-    code_verifier: codeVerifier,
-  });
+  let resp = await createInternalApiClient(fetch).post(
+    ServerPaths.SSO_CALLBACK,
+    {
+      code,
+      code_verifier: codeVerifier,
+    }
+  );
 
   const loginResponse = (await resp.json()) as LoginResponse;
 

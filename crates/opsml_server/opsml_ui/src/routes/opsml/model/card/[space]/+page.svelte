@@ -4,10 +4,7 @@
   import type { RegistryPageReturn } from "$lib/components/card/types";
   import CardSearch from '$lib/components/card/CardSearch.svelte';
 
-  let { data }: PageProps = $props();
-  let page:  RegistryPageReturn  = data.page;
-  let selectedName: string | undefined = data.selectedName;
-  let selectedSpace: string | undefined = data.selectedSpace;
+  let { page, selectedName, selectedSpace, fetch }: PageProps = $props();
   
 
 </script>
@@ -16,6 +13,7 @@
   {page} 
   {selectedName} 
   {selectedSpace} 
+  {fetch}
 />
 
 
