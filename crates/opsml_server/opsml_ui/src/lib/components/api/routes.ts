@@ -77,4 +77,7 @@ export enum ServerPaths {
   SSO_AUTH = "/api/user/sso",
   SSO_CALLBACK = "/api/user/sso/callback",
   USER = "/api/user/info",
+  REGISTRY_PAGE = "/api/card/registry/page",
+  REGISTRY_STATS = "/api/card/registry/stats",
+  METADATA = "/api/card/metadata",
 }

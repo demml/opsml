@@ -1,4 +1,4 @@
-import { opsmlClient } from "$lib/components/api/client.svelte";
+import { OpsmlClient } from "$lib/server/api/opsmlClient";
 import { RoutePaths } from "$lib/components/api/routes";
 import {
   type UpdateProfileRequest,

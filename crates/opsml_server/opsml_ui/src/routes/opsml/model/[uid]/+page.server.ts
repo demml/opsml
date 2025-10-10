@@ -1,13 +1,15 @@
-export const ssr = false;
-export const prerender = false;
 import { redirect } from "@sveltejs/kit";
-import { validateUserOrRedirect } from "$lib/components/user/user.svelte";
-import type { PageLoad } from "./$types";
+import type { PageServerLoad } from "./$types";
 import type { ModelCard } from "$lib/components/card/card_interfaces/modelcard";
-import { getCardMetadata } from "$lib/components/card/utils";
+import { getCardMetadata } from "$lib/server/card/utils";
 import { getRegistryPath } from "$lib/utils";
 
-export const load: PageLoad = async ({ params, parent }) => {
+export const load: PageServerLoad = async ({
+  params,
+  parent,
+  cookies,
+  fetch,
+}) => {
   const { registryType } = await parent();
 
   let metadata = (await getCardMetadata(
@@ -15,7 +17,9 @@ export const load: PageLoad = async ({ params, parent }) => {
     undefined,
     undefined,
     params.uid,
-    registryType
+    registryType,
+    fetch,
+    cookies.get("jwt_token")
   )) as ModelCard;
 
   redirect(

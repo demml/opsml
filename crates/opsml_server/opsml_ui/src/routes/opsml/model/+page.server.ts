@@ -1,14 +1,14 @@
-export const ssr = false;
-
 import { setupRegistryPage } from "$lib/server/card/utils";
 
-export const load: PageServerLoad = async ({ parent }) => {
+export const load: PageServerLoad = async ({ parent, cookies, fetch }) => {
   const { registryType } = await parent();
 
   let registryPage = await setupRegistryPage(
     registryType,
     undefined,
-    undefined
+    undefined,
+    fetch,
+    cookies.get("jwt_token")
   );
 
   return {

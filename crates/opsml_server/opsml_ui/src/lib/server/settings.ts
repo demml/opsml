@@ -1,5 +1,5 @@
-import { RoutePaths } from "../api/routes";
-import type { UiSettings } from "./types";
+import { RoutePaths } from "$lib/components/api/routes";
+import type { UiSettings } from "$lib/components/settings/types";
 import { logger } from "$lib/server/logger";
 import { createOpsmlClient } from "$lib/server/api/opsmlClient";
 
@@ -8,12 +8,11 @@ import { createOpsmlClient } from "$lib/server/api/opsmlClient";
  * @returns UI settings from the server
  */
 export async function getUISettings(
-  fetch: typeof globalThis.fetch,
-  jwt_token: string | undefined
+  fetch: typeof globalThis.fetch
 ): Promise<UiSettings> {
   try {
     logger.debug("Fetching UI settings...");
-    const opsmlClient = createOpsmlClient(fetch, jwt_token);
+    const opsmlClient = createOpsmlClient(fetch);
     const response = await opsmlClient.get(RoutePaths.SETTINGS);
 
     if (!response.ok) {

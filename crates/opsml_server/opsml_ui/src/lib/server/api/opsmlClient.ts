@@ -8,25 +8,10 @@ import { redirect } from "@sveltejs/kit";
  * error handling and token management.
  */
 export class OpsmlClient {
-  private jwt_token: string;
   private fetchFn: typeof globalThis.fetch;
 
-  constructor(jwt_token?: string, fetchFn: typeof globalThis.fetch = fetch) {
-    // set initial token if provided
-    this.jwt_token = jwt_token || "";
+  constructor(fetchFn: typeof globalThis.fetch = fetch) {
     this.fetchFn = fetchFn;
-  }
-
-  setToken(token: string) {
-    this.jwt_token = token;
-  }
-
-  getToken(): string {
-    return this.jwt_token;
-  }
-
-  clearToken() {
-    this.jwt_token = "";
   }
 
   private getBaseUrl(): string {
@@ -111,8 +96,21 @@ export class OpsmlClient {
   async get(path: string, params?: Record<string, any>): Promise<Response> {
     const url = this.addQueryParams(new URL(path, this.getBaseUrl()), params);
     const headers: Record<string, string> = {};
-    if (this.jwt_token) headers.Authorization = `Bearer ${this.jwt_token}`;
     return this.request(url.pathname + url.search, { method: "GET", headers });
+  }
+
+  async validateToken(path: string, token: string): Promise<Response> {
+    const headers: Record<string, string> = {
+      Authorization: `Bearer ${token}`,
+    };
+    return this.request(path, { method: "GET", headers });
+  }
+
+  async refreshToken(path: string, token: string): Promise<Response> {
+    const headers: Record<string, string> = {
+      Authorization: `Bearer ${token}`,
+    };
+    return this.request(path, { method: "POST", headers });
   }
 
   /**
@@ -120,7 +118,6 @@ export class OpsmlClient {
    */
   async delete(path: string, body?: any): Promise<Response> {
     const headers: Record<string, string> = {};
-    if (this.jwt_token) headers.Authorization = `Bearer ${this.jwt_token}`;
     return this.request(path, {
       method: "DELETE",
       headers: { "Content-Type": "application/json", ...headers },
@@ -133,7 +130,6 @@ export class OpsmlClient {
    */
   async put(path: string, body: any): Promise<Response> {
     const headers: Record<string, string> = {};
-    if (this.jwt_token) headers.Authorization = `Bearer ${this.jwt_token}`;
     return this.request(path, {
       method: "PUT",
       headers: { "Content-Type": "application/json", ...headers },
@@ -146,7 +142,6 @@ export class OpsmlClient {
    */
   async patch(path: string, body: any): Promise<Response> {
     const headers: Record<string, string> = {};
-    if (this.jwt_token) headers.Authorization = `Bearer ${this.jwt_token}`;
     return this.request(path, {
       method: "PATCH",
       headers: { "Content-Type": "application/json", ...headers },
@@ -159,10 +154,6 @@ export class OpsmlClient {
     body: any,
     additionalHeaders: Record<string, string> = {}
   ): Promise<Response> {
-    if (this.jwt_token) {
-      additionalHeaders.Authorization = `Bearer ${this.jwt_token}`;
-    }
-
     return this.request(path, {
       method: "POST",
       headers: {
@@ -174,10 +165,7 @@ export class OpsmlClient {
   }
 }
 
-export function createOpsmlClient(
-  fetch: typeof globalThis.fetch,
-  jwt_token?: string
-) {
-  const client = new OpsmlClient(jwt_token, fetch);
+export function createOpsmlClient(fetch: typeof globalThis.fetch) {
+  const client = new OpsmlClient(fetch);
   return client;
 }

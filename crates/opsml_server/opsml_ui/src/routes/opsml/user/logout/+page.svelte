@@ -2,7 +2,7 @@
   import { goto } from "$app/navigation";
   import logo from "$lib/images/opsml-logo-medium.webp";
   import {  ServerPaths, UiPaths } from "$lib/components/api/routes";
-  import { createServerClient } from "$lib/api/svelteServerClient";
+  import { createInternalApiClient } from "$lib/api/internalClient";
   import { userStore } from "$lib/components/user/user.svelte";
   import Warning from "$lib/components/utils/Warning.svelte";
   import type { LogOutResponse } from "$lib/components/user/types";
@@ -14,7 +14,8 @@
   let errorMessage: string = $state("Failed to logout");
 
   async function handleLogout() {
-    let res = await createServerClient(fetch).get(ServerPaths.LOGOUT);
+    
+    let res = await createInternalApiClient(fetch).get(ServerPaths.LOGOUT);
     let loggedOut = (await res.json() as LogOutResponse);
 
     if (loggedOut) {
