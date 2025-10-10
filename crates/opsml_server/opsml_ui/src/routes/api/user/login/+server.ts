@@ -1,6 +1,10 @@
 import { json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
-import { loginUser, setTokenInCookies } from "$lib/server/auth/validateToken";
+import {
+  loginUser,
+  setTokenInCookies,
+  setUsernameInCookies,
+} from "$lib/server/auth/validateToken";
 import { logger } from "$lib/server/logger";
 
 /**
@@ -16,6 +20,7 @@ export const POST: RequestHandler = async ({ request, cookies, fetch }) => {
   if (loginResponse.authenticated) {
     // Return success response with JWT token
     setTokenInCookies(cookies, loginResponse.jwt_token);
+    setUsernameInCookies(cookies, username);
 
     // mask the token in the response after setting the cookie
     loginResponse.jwt_token = "*****";

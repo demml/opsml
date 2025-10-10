@@ -169,6 +169,19 @@ export async function setTokenInCookies(
   });
 }
 
+export async function setUsernameInCookies(
+  cookies: Cookies,
+  username: string
+): Promise<void> {
+  cookies.set("username", username, {
+    httpOnly: false,
+    secure: true,
+    sameSite: "lax",
+    domain: "localhost",
+    path: "/",
+  });
+}
+
 interface JwtPayload {
   exp: number;
   [key: string]: unknown;
