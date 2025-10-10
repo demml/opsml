@@ -3,8 +3,7 @@ import { setTokenInCookies } from "$lib/server/auth/validateToken";
 import type { LogOutResponse } from "$lib/components/user/types";
 import { RoutePaths } from "$lib/components/api/routes";
 import { opsmlClient } from "$lib/components/api/client.svelte";
-import { redirect } from "@sveltejs/kit";
-import { UiPaths } from "$lib/components/api
+
 /**
  * Helper function for logging out a user via the api client
  * @param jwt_token - JWT token of the user to log out
