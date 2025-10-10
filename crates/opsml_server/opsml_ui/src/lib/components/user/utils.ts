@@ -53,21 +53,9 @@ export async function resetUserPassword(
     new_password: newPassword,
   };
 
-  const response = await opsmlClient.post(
-    RoutePaths.RESET_PASSWORD,
-    request,
-    userStore.jwt_token
-  );
+  const response = await opsmlClient.post(RoutePaths.RESET_PASSWORD, request);
 
   return (await response.json()) as ResetPasswordResponse;
-}
-
-export async function logout(): Promise<LogOutResponse> {
-  let path = `${RoutePaths.LOGOUT}`;
-
-  const response = await opsmlClient.get(path, undefined, userStore.jwt_token);
-
-  return (await response.json()) as LogOutResponse;
 }
 
 interface UpdateUserOptions {

@@ -16,13 +16,15 @@ import type {
 export async function registerUser(
   username: string,
   password: string,
-  email: string
+  email: string,
+  jwt_token: string | undefined
 ): Promise<CreateUserUiResponse> {
   const request: CreateUserRequest = {
     username: username,
     password: password,
     email: email,
   };
+  opsmlClient.setToken(jwt_token);
   const response = await opsmlClient.post(RoutePaths.REGISTER, request);
   return (await response.json()) as CreateUserUiResponse;
 }
@@ -41,7 +43,8 @@ export async function getUser(
 export async function resetUserPassword(
   username: string,
   recovery_code: string,
-  newPassword: string
+  newPassword: string,
+  jwt_token: string | undefined
 ): Promise<ResetPasswordResponse> {
   const request: RecoveryResetRequest = {
     username: username,
@@ -49,8 +52,8 @@ export async function resetUserPassword(
     new_password: newPassword,
   };
 
+  opsmlClient.setToken(jwt_token);
   const response = await opsmlClient.post(RoutePaths.RESET_PASSWORD, request);
-
   return (await response.json()) as ResetPasswordResponse;
 }
 
