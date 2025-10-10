@@ -3,7 +3,7 @@ import { RegistryType } from "$lib/utils";
 
 export const load: PageServerLoad = async ({ fetch }) => {
   let registryPage = await setupRegistryPage(
-    RegistryType.Model,
+    RegistryType.Data,
     undefined,
     undefined,
     fetch
