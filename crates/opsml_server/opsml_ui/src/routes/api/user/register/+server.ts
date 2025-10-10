@@ -8,16 +8,8 @@ import { logger } from "$lib/server/logger";
  * Only authentication and cookie logic here; UI navigation is handled client-side.
  */
 export const POST: RequestHandler = async ({ request, cookies, fetch }) => {
-  logger.debug(`Handling user registration request...`);
   const { username, password, email } = await request.json();
-  const jwt_token = cookies.get("jwt_token");
-  const response = await registerUser(
-    username,
-    password,
-    email,
-    fetch,
-    jwt_token
-  );
+  const response = await registerUser(username, password, email, fetch);
   logger.debug(`User registration response: ${JSON.stringify(response)}`);
   return json(response);
 };

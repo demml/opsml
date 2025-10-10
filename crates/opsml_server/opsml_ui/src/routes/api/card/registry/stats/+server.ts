@@ -5,13 +5,10 @@ import { logger } from "$lib/server/logger";
 
 /** Get Registry stats data
  */
-export const POST: RequestHandler = async ({ request, cookies, fetch }) => {
-  logger.debug(`Handling user registration request...`);
+export const POST: RequestHandler = async ({ request, fetch }) => {
   const { registry_type, searchTerm, spaces, tags } = await request.json();
-  const jwt_token = cookies.get("jwt_token");
   const response = await getRegistryStats(
     fetch,
-    jwt_token,
     registry_type,
     searchTerm,
     spaces,

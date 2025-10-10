@@ -1,4 +1,4 @@
-import { internalApiClient } from "$lib/api/internalClient";
+import { createInternalApiClient } from "$lib/api/internalClient";
 import type {
   RegistryStatsResponse,
   QueryPageResponse,
@@ -16,14 +16,17 @@ export async function getRegistryPage(
   tags: string[] | undefined,
   page: number
 ): Promise<QueryPageResponse> {
-  let resp = await internalApiClient.post(ServerPaths.REGISTRY_PAGE, {
-    registry_type,
-    sort_by,
-    spaces,
-    searchTerm,
-    tags,
-    page,
-  });
+  let resp = await createInternalApiClient(fetch).post(
+    ServerPaths.REGISTRY_PAGE,
+    {
+      registry_type,
+      sort_by,
+      spaces,
+      searchTerm,
+      tags,
+      page,
+    }
+  );
   return (await resp.json()) as QueryPageResponse;
 }
 
@@ -35,11 +38,14 @@ export async function getRegistryStats(
   spaces: string[] | undefined,
   tags: string[] | undefined
 ): Promise<RegistryStatsResponse> {
-  let resp = await internalApiClient.post(ServerPaths.REGISTRY_STATS, {
-    registry_type,
-    searchTerm,
-    spaces,
-    tags,
-  });
+  let resp = await createInternalApiClient(fetch).post(
+    ServerPaths.REGISTRY_STATS,
+    {
+      registry_type,
+      searchTerm,
+      spaces,
+      tags,
+    }
+  );
   return (await resp.json()) as RegistryStatsResponse;
 }

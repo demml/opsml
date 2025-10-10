@@ -6,15 +6,14 @@
   import type { RegistryPageReturn, RegistryStatsResponse, QueryPageResponse} from "$lib/components/card/types";
   import  { RegistryType, delay, getRegistryTypeUpperCase } from "$lib/utils";
   import { ArrowLeft, ArrowRight, Settings } from 'lucide-svelte';
-  import { getRegistryPage, getRegistryStats } from '$lib/components/api/internal';
+  import { getRegistryPage, getRegistryStats } from '$lib/components/api/registry';
   import { Combobox } from "melt/builders";
   import CardPage from '$lib/components/card/CardPage.svelte';
 
-  let { page, selectedName, selectedSpace, fetch } = $props<{
+  let { page, selectedName, selectedSpace } = $props<{
     page: RegistryPageReturn;
     selectedName: string | undefined;
     selectedSpace: string | undefined;
-    fetch: typeof globalThis.fetch;
   }>();
  
   let viewState = $state(true);

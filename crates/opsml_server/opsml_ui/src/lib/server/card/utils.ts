@@ -103,12 +103,6 @@ export async function setupRegistryPage(
       getRegistryPage(fetch, registry_type, undefined, spaces, name),
     ]);
 
-  // log each one by one
-  logger.info(`Registry Spaces: ${JSON.stringify(registry_spaces)}`);
-  logger.info(`Tags: ${JSON.stringify(tags)}`);
-  logger.info(`Registry Stats: ${JSON.stringify(registryStats)}`);
-  logger.info(`Registry Page: ${JSON.stringify(registryPage)}`);
-
   return {
     spaces: registry_spaces.spaces,
     tags: tags.tags,
@@ -165,8 +159,7 @@ export async function getVersionPage(
 export async function listRecentSpaceCards(
   registry_type: RegistryType,
   space: string,
-  fetch: typeof globalThis.fetch,
-  jwt_token: string | undefined
+  fetch: typeof globalThis.fetch
 ): Promise<Card[]> {
   const params: CardQueryArgs = {
     space: space,
