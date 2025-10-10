@@ -67,5 +67,6 @@ export enum UiPaths {
 }
 
 export enum ServerPaths {
-  LOGIN = "/api/login",
+  LOGIN = "/api/user/login",
+  LOGOUT = "/api/user/logout",
 }

@@ -5,7 +5,7 @@ import { logger } from "$lib/server/logger";
 // These routes do not require authentication
 const PUBLIC_ROUTES = [
   "/opsml/user/login",
-  "/api/login",
+  "/api/user/login",
   "/opsml/user/register",
   "/opsml/user/reset",
   "/",
@@ -16,6 +16,7 @@ export const handle: Handle = async ({ event, resolve }) => {
   if (!PUBLIC_ROUTES.includes(event.url.pathname)) {
     try {
       await validateTokenOrRedirect(event.cookies);
+      logger.debug(`User authenticated successfully.`);
     } catch (err) {
       if (err instanceof Response) return err;
       throw err;

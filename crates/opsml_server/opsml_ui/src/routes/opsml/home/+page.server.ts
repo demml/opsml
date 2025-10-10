@@ -1,5 +1,5 @@
 import { opsmlClient } from "$lib/components/api/client.svelte";
-import { getRegistryStats } from "$lib/components/card/utils";
+import { getRegistryStats } from "$lib/server/card/utils";
 import {
   getRecentCards,
   type HomePageStats,

@@ -1,8 +1,8 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
   import logo from "$lib/images/opsml-logo-medium.webp";
-  import {  UiPaths } from "$lib/components/api/routes";
-  import { logout } from "$lib/components/user/utils";
+  import {  ServerPaths, UiPaths } from "$lib/components/api/routes";
+  import { serverClient } from "$lib/server/api/svelteServerClient";
   import { userStore } from "$lib/components/user/user.svelte";
   import Warning from "$lib/components/utils/Warning.svelte";
 
@@ -10,7 +10,7 @@
   let errorMessage: string = $state("Failed to logout");
 
   async function handleLogout() {
-    let loggedOut = await logout();
+    let loggedOut = await serverClient.get(ServerPaths.LOGOUT);
 
     if (loggedOut) {
       // update the user store

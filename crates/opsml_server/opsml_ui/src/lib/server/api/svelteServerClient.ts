@@ -70,14 +70,9 @@ export class ServerClient {
   /**
    * GET request with optional query params.
    */
-  async get(
-    path: string,
-    params?: Record<string, any>,
-    token?: string
-  ): Promise<Response> {
+  async get(path: string, params?: Record<string, any>): Promise<Response> {
     const url = this.addQueryParams(new URL(path, "http://localhost"), params);
     const headers: Record<string, string> = {};
-    if (token) headers.Authorization = `Bearer ${token}`;
     return this.request(url.pathname + url.search, { method: "GET", headers });
   }
 
@@ -86,7 +81,6 @@ export class ServerClient {
    */
   async delete(path: string, body?: any, token?: string): Promise<Response> {
     const headers: Record<string, string> = {};
-    if (token) headers.Authorization = `Bearer ${token}`;
     return this.request(path, {
       method: "DELETE",
       headers: { "Content-Type": "application/json", ...headers },
@@ -94,12 +88,8 @@ export class ServerClient {
     });
   }
 
-  /**
-   * PUT request with body and optional bearer token.
-   */
-  async put(path: string, body: any, token?: string): Promise<Response> {
+  async put(path: string, body: any): Promise<Response> {
     const headers: Record<string, string> = {};
-    if (token) headers.Authorization = `Bearer ${token}`;
     return this.request(path, {
       method: "PUT",
       headers: { "Content-Type": "application/json", ...headers },
@@ -110,9 +100,8 @@ export class ServerClient {
   /**
    * PATCH request with body and optional bearer token.
    */
-  async patch(path: string, body: any, token?: string): Promise<Response> {
+  async patch(path: string, body: any): Promise<Response> {
     const headers: Record<string, string> = {};
-    if (token) headers.Authorization = `Bearer ${token}`;
     return this.request(path, {
       method: "PATCH",
       headers: { "Content-Type": "application/json", ...headers },
@@ -126,13 +115,8 @@ export class ServerClient {
   async post(
     path: string,
     body: any,
-    token: string = "",
     additionalHeaders: Record<string, string> = {}
   ): Promise<Response> {
-    if (token) {
-      additionalHeaders.Authorization = `Bearer ${token}`;
-    }
-
     return this.request(path, {
       method: "POST",
       headers: {
