@@ -1,4 +1,3 @@
-import { opsmlClient } from "$lib/components/api/client.svelte";
 import { RoutePaths } from "$lib/components/api/routes";
 import type {
   CreateUserRequest,
@@ -10,6 +9,7 @@ import type {
   SsoAuthUrl,
   LoginResponse,
 } from "$lib/components/user/types";
+import { createOpsmlClient } from "../api/opsmlClient";
 
 // Helper function for registering a user via the api client
 // It is assumed that all arguments have been validated prior to calling this function
@@ -17,6 +17,7 @@ export async function registerUser(
   username: string,
   password: string,
   email: string,
+  fetch: typeof globalThis.fetch,
   jwt_token: string | undefined
 ): Promise<CreateUserUiResponse> {
   const request: CreateUserRequest = {
@@ -24,7 +25,7 @@ export async function registerUser(
     password: password,
     email: email,
   };
-  opsmlClient.setToken(jwt_token);
+  let opsmlClient = createOpsmlClient(fetch, jwt_token);
   const response = await opsmlClient.post(RoutePaths.REGISTER, request);
   return (await response.json()) as CreateUserUiResponse;
 }
@@ -32,9 +33,10 @@ export async function registerUser(
 // Helper for getting user information for user section
 export async function getUser(
   username: string,
+  fetch: typeof globalThis.fetch,
   jwt_token: string | undefined
 ): Promise<UserResponse> {
-  opsmlClient.setToken(jwt_token);
+  let opsmlClient = createOpsmlClient(fetch, jwt_token);
   let path = `${RoutePaths.USER}/${username}`;
   const response = await opsmlClient.get(path, undefined);
   return (await response.json()) as UserResponse;
@@ -44,6 +46,7 @@ export async function resetUserPassword(
   username: string,
   recovery_code: string,
   newPassword: string,
+  fetch: typeof globalThis.fetch,
   jwt_token: string | undefined
 ): Promise<ResetPasswordResponse> {
   const request: RecoveryResetRequest = {
@@ -52,7 +55,7 @@ export async function resetUserPassword(
     new_password: newPassword,
   };
 
-  opsmlClient.setToken(jwt_token);
+  let opsmlClient = createOpsmlClient(fetch, jwt_token);
   const response = await opsmlClient.post(RoutePaths.RESET_PASSWORD, request);
   return (await response.json()) as ResetPasswordResponse;
 }
@@ -65,7 +68,9 @@ interface UpdateUserOptions {
 
 export async function updateUser(
   options: UpdateUserOptions,
-  username: string
+  username: string,
+  fetch: typeof globalThis.fetch,
+  jwt_token: string | undefined
 ): Promise<UserResponse> {
   const request: UpdateUserRequest = {
     permissions: options.permissions,
@@ -75,11 +80,16 @@ export async function updateUser(
 
   let path = `${RoutePaths.USER}/${username}`;
 
+  let opsmlClient = createOpsmlClient(fetch, jwt_token);
   const response = await opsmlClient.put(path, request);
   return (await response.json()) as UserResponse;
 }
 
-export async function getSsoAuthURL(): Promise<SsoAuthUrl> {
+export async function getSsoAuthURL(
+  fetch: typeof globalThis.fetch,
+  jwt_token: string | undefined
+): Promise<SsoAuthUrl> {
+  let opsmlClient = createOpsmlClient(fetch, jwt_token);
   const path = `${RoutePaths.SSO_AUTH}`;
   const response = await opsmlClient.get(path);
 
@@ -89,9 +99,12 @@ export async function getSsoAuthURL(): Promise<SsoAuthUrl> {
 
 export async function exchangeSsoCallbackCode(
   code: string,
-  codeVerifier: string
+  codeVerifier: string,
+  fetch: typeof globalThis.fetch,
+  jwt_token: string | undefined
 ): Promise<LoginResponse> {
   const path = `${RoutePaths.SSO_CALLBACK}`;
+  let opsmlClient = createOpsmlClient(fetch, jwt_token);
   const response = await opsmlClient.get(path, {
     code,
     code_verifier: codeVerifier,

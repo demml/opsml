@@ -5,6 +5,12 @@ import { redirect } from "@sveltejs/kit";
  * Uses relative paths and idiomatic error handling.
  */
 export class ServerClient {
+  private fetchFn: typeof fetch;
+
+  constructor(fetchFn: typeof fetch = fetch) {
+    this.fetchFn = fetchFn;
+  }
+
   /**
    * Handles API errors and redirects on 401.
    * @param error - Error object or message
@@ -50,7 +56,7 @@ export class ServerClient {
   async request(path: string, options: RequestInit = {}): Promise<Response> {
     const url = new URL(path, "http://localhost"); // base is ignored for relative paths
     try {
-      const response = await fetch(url.pathname + url.search, {
+      const response = await this.fetchFn(url.pathname + url.search, {
         ...options,
         headers: options.headers,
       });
@@ -130,3 +136,7 @@ export class ServerClient {
 
 /** Singleton instance for usage in SvelteKit server code */
 export const serverClient = new ServerClient();
+
+export function createServerClient(fetchFn: typeof fetch) {
+  return new ServerClient(fetchFn);
+}

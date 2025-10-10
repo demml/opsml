@@ -1,35 +1,38 @@
+// we are accessing localStorage, so this page cannot be server-side rendered
 export const ssr = false;
 
-import { RoutePaths, UiPaths } from "$lib/utils/api/routes";
 import type { PageLoad } from "./$types";
 import { userStore } from "$lib/components/user/user.svelte";
-import { exchangeSsoCallbackCode } from "$lib/components/user/utils";
+import { createServerClient } from "$lib/api/svelteServerClient";
+import type { LoginResponse } from "$lib/components/user/types";
+import { ServerPaths } from "$lib/components/api/routes";
 
-export const load: PageLoad = async ({ url }) => {
+export const load: PageLoad = async ({ url, fetch }) => {
   const code = (url as URL).searchParams.get("code") as string;
   const state = (url as URL).searchParams.get("state") as string;
-  //const storedState = userStore.getSsoState();
-  // get local storage state
+
   const storedState = localStorage.getItem("ssoState") || "";
 
+  // validate state and code
   if (!code || !state || state !== storedState) {
     throw new Error("Invalid state or missing authorization code");
   }
 
   let codeVerifier = localStorage.getItem("ssoCodeVerifier") || "";
-  let loginResponse = await exchangeSsoCallbackCode(code, codeVerifier);
+
+  // send to server to exchange code for tokens
+  let resp = await createServerClient(fetch).post(ServerPaths.SSO_CALLBACK, {
+    code,
+    code_verifier: codeVerifier,
+  });
+
+  const loginResponse = (await resp.json()) as LoginResponse;
 
   if (loginResponse.authenticated) {
-    localStorage.removeItem("ssoState"); // Clear the stored state after successful login
-    localStorage.removeItem("ssoCodeVerifier"); // Clear the code verifier after successful login
-
-    userStore.updateUser(
-      loginResponse.username,
-      loginResponse.jwt_token,
-      loginResponse.permissions,
-      loginResponse.group_permissions,
-      loginResponse.favorite_spaces
-    );
+    // Clear the stored vars after successful login
+    localStorage.removeItem("ssoState");
+    localStorage.removeItem("ssoCodeVerifier");
+    userStore.fromLoginResponse(loginResponse);
   }
 
   return { response: loginResponse };

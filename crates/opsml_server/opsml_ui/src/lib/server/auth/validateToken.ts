@@ -1,4 +1,4 @@
-import { opsmlClient } from "../api/opsmlClient";
+import { createOpsmlClient, OpsmlClient } from "../api/opsmlClient";
 import { RoutePaths, UiPaths } from "$lib/components/api/routes";
 import { redirect, type Cookies } from "@sveltejs/kit";
 import type {
@@ -25,21 +25,22 @@ export async function validateTokenOrRedirect(
   redirectPath: string = UiPaths.LOGIN
 ): Promise<void> {
   const jwtToken = cookies.get("jwt_token");
-  opsmlClient.setToken(jwtToken);
+  const opsmlClient = createOpsmlClient(fetch, jwtToken);
 
   // Validate the JWT token
-  const validationResult = await validateJWTToken();
+  const validationResult = await validateJWTToken(opsmlClient);
 
   if (validationResult.isValid) return; // Authenticated
 
   // If token is present and expired, attempt to refresh
   if (jwtToken && isTokenExpired(jwtToken)) {
-    const refreshedToken = await attemptRefreshToken(jwtToken);
+    const refreshedToken = await attemptRefreshToken(opsmlClient);
     if (refreshedToken) {
       // Set new token in cookies and validate again
       await setTokenInCookies(cookies, refreshedToken);
+      opsmlClient.setToken(refreshedToken);
 
-      const refreshedValidation = await validateJWTToken();
+      const refreshedValidation = await validateJWTToken(opsmlClient);
       if (refreshedValidation.isValid) return;
     }
   }
@@ -51,10 +52,12 @@ export async function validateTokenOrRedirect(
 /**
  * Attempts to refresh the JWT token via backend.
  */
-async function attemptRefreshToken(token: string): Promise<string | null> {
+async function attemptRefreshToken(
+  opsmlClient: OpsmlClient
+): Promise<string | null> {
   try {
     const response = await opsmlClient.post(RoutePaths.REFRESH_TOKEN, {
-      token,
+      token: opsmlClient.getToken(),
     });
     if (!response.ok) return null;
     const jwtToken = (await response.json()) as JwtToken;
@@ -75,7 +78,9 @@ interface AuthValidationResult {
  * @param jwtToken - The JWT token to validate
  * @returns Promise with validation result
  */
-async function validateJWTToken(): Promise<AuthValidationResult> {
+async function validateJWTToken(
+  opsmlClient: OpsmlClient
+): Promise<AuthValidationResult> {
   try {
     const response = await opsmlClient.get(RoutePaths.VALIDATE_AUTH, undefined);
 
@@ -118,9 +123,11 @@ async function validateJWTToken(): Promise<AuthValidationResult> {
  * @returns Promise with login response
  */
 export async function loginUser(
+  fetch: typeof globalThis.fetch,
   username: string,
   password: string
 ): Promise<LoginResponse> {
+  const opsmlClient = createOpsmlClient(fetch);
   const response = await opsmlClient.post(RoutePaths.LOGIN, {
     username,
     password,
@@ -160,8 +167,6 @@ export async function setTokenInCookies(
     expires: expirationDate,
     path: options?.path ?? "/",
   });
-
-  opsmlClient.setToken(token);
 }
 
 interface JwtPayload {

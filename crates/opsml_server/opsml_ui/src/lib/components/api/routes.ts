@@ -59,6 +59,8 @@ export enum UiPaths {
   REGISTER_SUCCESS = "/opsml/user/register/success",
   RESET = "/opsml/user/reset",
   FORGOT = "/opsml/user/forgot",
+  SSO_AUTH = "/opsml/user/sso",
+  SSO_CALLBACK = "/opsml/user/sso/callback",
   USER = "/opsml/user",
   HOME = "/opsml/home",
   METRICS = "/opsml/metrics",
@@ -72,4 +74,6 @@ export enum ServerPaths {
   LOGOUT = "/api/user/logout",
   RESET_PASSWORD = "/api/user/reset",
   REGISTER_USER = "/api/user/register",
+  SSO_AUTH = "/api/user/sso",
+  SSO_CALLBACK = "/api/user/sso/callback",
 }
