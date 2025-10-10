@@ -2,16 +2,11 @@
   import { goto } from "$app/navigation";
   import logo from "$lib/images/opsml-logo-medium.webp";
   import PasswordMessage from "$lib/components/user/PasswordMessage.svelte";
-  import { RoutePaths, UiPaths } from "$lib/components/api/routes";
+  import { ServerPaths, UiPaths } from "$lib/components/api/routes";
   import { goTop } from "$lib/utils";
-  import { opsmlClient } from "$lib/components/api/client.svelte";
-  import type { PageProps } from './$types';
   import {  validatePasswordResetSchema, type PasswordResetSchema } from "$lib/components/user/schema";
-  import { registerUser, resetUserPassword } from "$lib/components/user/utils";
   import { HelpCircle } from 'lucide-svelte';
-  import { userStore } from "$lib/components/user/user.svelte";
-  
-
+  import { serverClient } from "$lib/api/svelteServerClient";
 
   let username: string = $state('');
   let recoveryCode: string = $state('');
@@ -23,37 +18,57 @@
   let showPasswordHelp: boolean = $state(false);
   let passwordErrors = $state<Partial<Record<keyof PasswordResetSchema, string>>>({});
 
-  async function handleReset() {
-    // Handle password reset logic here
+  /**
+ * Handles password reset form submission.
+ * Validates input, sends reset request, and manages UI feedback.
+ * @param event Form submit event
+ */
+async function handleReset(event: Event) {
+  event.preventDefault();
 
-    let argsValid = validatePasswordResetSchema(username, recoveryCode, newPassword);
+  const argsValid = validatePasswordResetSchema(username, recoveryCode, newPassword);
 
-    if (argsValid.success) {
-        // assert
+  if (!argsValid.success) {
+    showPasswordHelp = true;
+    passwordErrors = argsValid.errors ?? {};
+    goTop();
+    return;
+  }
 
-        let response = await resetUserPassword(username, recoveryCode, newPassword);
+  try {
+    const res = await serverClient.post(ServerPaths.RESET_PASSWORD, {
+      username,
+      recovery_code: recoveryCode,
+      new_password: newPassword
+    });
 
-        showResetMessage = true;
-        // sleep for 2 seconds to show the message
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        
-        await goto(UiPaths.LOGIN);
-        
+    if (res.ok) {
+
+      showResetMessage = true;
+      resetMessage = "Password reset successful! You can now log in with your new password.";
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      await goto(UiPaths.LOGIN);
+
     } else {
-      showPasswordHelp = true;
-      passwordErrors = argsValid.errors ?? {};
+
+      const result = await res.json();
+      showResetMessage = true;
+      resetMessage = result.error ?? "Password reset failed. Please try again.";
       goTop();
     }
+
+  } catch (error) {
+    showResetMessage = true;
+    resetMessage = "An unexpected error occurred. Please try again later.";
+    goTop();
+  }
 }
 
 
 </script>
 
 <section class="pt-20 border-gray-100 col-span-full flex-1 pb-16 md:pb-0 items-center">
-  
-
   <form class="z-10 mx-auto rounded-2xl bg-surface-50 border-black border-2 shadow p-4 md:w-96 md:px-5" onsubmit={handleReset}>
-
     <img alt="OpsML logo" class="mx-auto -mt-12 mb-3 w-20" src={logo}>
     <h1 class="pt-1 text-center text-lg font-bold text-primary-800">Reset your password</h1>
 

@@ -9,7 +9,7 @@
   import { validateLoginSchema, type UseLoginSchema } from "$lib/components/user/schema";
   import { getSsoAuthURL } from "$lib/components/user/utils";
   import { uiSettingsStore } from "$lib/components/settings/settings.svelte";
-  import { serverClient } from "$lib/components/api/server.svelte";
+  import { serverClient } from "$lib/api/svelteServerClient";
   import { userStore } from "$lib/components/user/user.svelte";
   import type { LoginResponse } from "$lib/components/user/types";
 

@@ -2,7 +2,7 @@
   import { goto } from "$app/navigation";
   import logo from "$lib/images/opsml-logo-medium.webp";
   import {  ServerPaths, UiPaths } from "$lib/components/api/routes";
-  import { serverClient } from "$lib/components/api/server.svelte";
+  import { serverClient } from "$lib/api/svelteServerClient";
   import { userStore } from "$lib/components/user/user.svelte";
   import Warning from "$lib/components/utils/Warning.svelte";
   import type { LogOutResponse } from "$lib/components/user/types";
