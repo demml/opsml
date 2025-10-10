@@ -1,7 +1,7 @@
 <script lang="ts">
 
   import type { PageProps } from './$types';
-  import type { RegistryPageReturn } from "$lib/components/card/types";
+  import type { RegistryPageReturn } from '$lib/components/card/types';
   import CardSearch from '$lib/components/card/CardSearch.svelte';
 
   let { data }: PageProps = $props();
@@ -15,8 +15,7 @@
 <CardSearch 
   {page} 
   {selectedName} 
-  {selectedSpace} 
+  {selectedSpace}
 />
-
 
 
