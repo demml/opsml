@@ -4,10 +4,9 @@ import { RegistryType } from "$lib/utils";
 
 export const load: PageServerLoad = async ({ params, fetch }) => {
   const space = params.space;
-  const name = params.name;
-
+  const name = undefined; // No name parameter in this route
   let registryPage = await setupRegistryPage(
-    RegistryType.Prompt,
+    RegistryType.Mcp,
     space,
     name,
     fetch
