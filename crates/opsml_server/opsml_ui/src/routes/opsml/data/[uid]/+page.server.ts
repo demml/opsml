@@ -5,7 +5,7 @@ import type { ServiceCard } from "$lib/components/card/card_interfaces/serviceca
 import { getCardMetadata } from "$lib/server/card/utils";
 
 export const load: PageLoad = async ({ params, fetch }) => {
-  let registryType = RegistryType.Model;
+  let registryType = RegistryType.Data;
 
   let resp = await getCardMetadata(
     undefined,
