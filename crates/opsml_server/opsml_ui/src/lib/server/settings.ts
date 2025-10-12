@@ -24,7 +24,7 @@ export async function getUISettings(
     return data;
   } catch (error) {
     logger.error(`Failed to fetch UI settings: ${error}`);
-    // Return default settings on error
+
     return {
       scouter_enabled: false,
       sso_enabled: false,

@@ -4,8 +4,8 @@ import { getRegistryTypeLowerCase, RegistryType } from "$lib/utils";
 import type { ServiceCard } from "$lib/components/card/card_interfaces/servicecard";
 import { getCardMetadata } from "$lib/server/card/utils";
 
-export const load: PageLoad = async ({ params, fetch }) => {
-  let registryType = RegistryType.Model;
+export const load: PageLoad = async ({ parent, params, fetch }) => {
+  let { registryType } = await parent();
 
   let resp = await getCardMetadata(
     undefined,
