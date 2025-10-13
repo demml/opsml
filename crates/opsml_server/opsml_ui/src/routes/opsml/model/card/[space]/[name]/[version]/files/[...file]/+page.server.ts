@@ -1,12 +1,8 @@
-export const ssr = false;
-export const prerender = false;
-
-import type { PageLoad } from "./$types";
-import { getFileTree } from "$lib/components/files/utils";
+import type { PageServerLoad } from "./$types";
+import { getFileTree } from "$lib/server/card/files/utils";
 import { getRegistryPath, getRegistryTableName } from "$lib/utils";
-import { validateUserOrRedirect } from "$lib/components/user/user.svelte";
 
-export const load: PageLoad = async ({ parent, params }) => {
+export const load: PageServerLoad = async ({ parent, params, fetch }) => {
   let slug = params.file as string;
 
   // split slug with '/'
@@ -27,7 +23,7 @@ export const load: PageLoad = async ({ parent, params }) => {
   // add the rest of the slugs to the basePath
   basePath = `${basePath}/${slugs.join("/")}`;
 
-  let fileTree = await getFileTree(basePath);
+  let fileTree = await getFileTree(basePath, fetch);
 
   return { fileTree, previousPath, isRoot: false };
 };
