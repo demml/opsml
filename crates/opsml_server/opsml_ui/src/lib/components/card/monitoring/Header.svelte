@@ -103,33 +103,39 @@
         {/each}
     </div>
 
-    <div class="flex flex-row gap-1">
+    <div class="flex flex-row gap-3">
 
-      <div class="flex flex-row gap-1">
-        <div class="self-center" aria-label="Monitor Name">
-          <Clock color="#5948a3" />
+      <div class="flex flex-col gap-2 text-primary-800 self-center">
+        <div class="font-bold">Time Interval:</div>
+        <div class="flex flex-row gap-1">
+          <div class="self-center" aria-label="Monitor Name">
+            <Clock color="#5948a3" />
+          </div>
+          
+          <ComboBoxDropDown
+            boxId="interval-combobox-input"
+            box={intervalCombobox}
+            inputPlaceholder={currentTimeInterval ?? "Select Interval"}
+            boxOptions={timeIntervals}
+          />
         </div>
-        
-        <ComboBoxDropDown
-          boxId="interval-combobox-input"
-          box={intervalCombobox}
-          inputPlaceholder={currentTimeInterval ?? "Select Interval"}
-          boxOptions={timeIntervals}
-        />
       </div>
       
       
-      <div class="flex flex-row gap-1">
-        <div class="self-center" aria-label="Monitor Name">
-          <KeySquare color="#5948a3" />
+      <div class="flex flex-col gap-2 text-primary-800 self-center">
+        <div class="font-bold">Name:</div>
+        <div class="flex flex-row gap-1">
+          <div class="self-center" aria-label="Monitor Name">
+            <KeySquare color="#5948a3" />
+          </div>
+          
+          <ComboBoxDropDown
+            boxId="name-combobox-input"
+            box={nameCombobox}
+            inputPlaceholder={currentName ?? "Select Name"}
+            boxOptions={currentNames}
+          />
         </div>
-        
-        <ComboBoxDropDown
-          boxId="name-combobox-input"
-          box={nameCombobox}
-          inputPlaceholder={currentName ?? "Select Name"}
-          boxOptions={currentNames}
-        />
       </div>
 
     </div>
