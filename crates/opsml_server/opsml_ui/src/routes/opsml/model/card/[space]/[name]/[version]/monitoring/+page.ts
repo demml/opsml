@@ -1,5 +1,7 @@
 // Base data for monitoring page.
 // This needs to be client-side because we need to calculate max data points from window size
+export const ssr = false;
+
 import { getMaxDataPoints } from "$lib/utils";
 import type { PageLoad } from "./$types";
 import {

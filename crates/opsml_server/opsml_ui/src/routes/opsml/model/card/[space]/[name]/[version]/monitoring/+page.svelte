@@ -144,7 +144,7 @@
 
  </script>
  
- <div class="flex-1 mx-auto w-9/12 pb-10 flex justify-center overflow-auto px-4">
+ <div class="flex-1 mx-auto w-11/12 pb-10 flex justify-center overflow-auto px-4">
   <div class="grid grid-cols-1 gap-4 w-full pt-4">
 
     <!-- For my memory :) -->

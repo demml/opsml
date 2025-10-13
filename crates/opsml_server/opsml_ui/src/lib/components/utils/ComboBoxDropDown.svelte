@@ -5,7 +5,7 @@
   const options = [  /* ... */  ] as const;
   // @ts-ignore
   type Option = (typeof options)[string];
-  let { box, inputPlaceholder, boxOptions } = $props<{box:Combobox<Option>, inputPlaceholder:string, boxOptions:string[] }>();
+  let {boxId,  box, inputPlaceholder, boxOptions } = $props<{boxId:String, box:Combobox<Option>, inputPlaceholder:string, boxOptions:string[] }>();
 
 
   const filtered = $derived.by(() => {
@@ -13,6 +13,15 @@
     return boxOptions.filter((o) =>
       o.toLowerCase().includes(box.inputValue.trim().toLowerCase()),
     );
+  });
+
+  function handleClose() {
+    // When dropdown closes, move focus to input
+    document.getElementById(boxId)?.focus();
+  }
+
+  $effect(() => {
+    if (!box.open) handleClose();
   });
 
 </script>
@@ -23,7 +32,7 @@
 
     <input
       {...box.input}
-      id="interval-combobox-input"
+      id={boxId}
       class="w-full rounded-lg border-2 border-black bg-primary-500 py-1 px-2 text-black placeholder-black focus:outline-none focus:ring-2 focus:ring-primary-500"
       placeholder={inputPlaceholder}
       aria-label="Select time interval"
