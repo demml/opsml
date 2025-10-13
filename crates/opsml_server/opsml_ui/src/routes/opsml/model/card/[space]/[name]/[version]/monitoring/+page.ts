@@ -1,5 +1,7 @@
+// Base data for monitoring page.
+// This needs to be client-side because we need to calculate max data points from window size
 import { getMaxDataPoints } from "$lib/utils";
-import type { PageServerLoad } from "./$types";
+import type { PageLoad } from "./$types";
 import {
   getLatestMonitoringMetrics,
   getMonitoringAlerts,
@@ -11,7 +13,7 @@ import {
 import { DriftType, TimeInterval } from "$lib/components/card/monitoring/types";
 import { getCurrentMetricData } from "$lib/components/card/monitoring/utils";
 
-export const load: PageServerLoad = async ({ parent, fetch }) => {
+export const load: PageLoad = async ({ parent, fetch }) => {
   const { metadata, registryType } = await parent();
 
   let profiles = await getMonitoringDriftProfiles(
