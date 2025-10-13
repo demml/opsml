@@ -5,7 +5,7 @@
   import { onMount } from "svelte";
   import { Settings } from 'lucide-svelte';
   import { ArrowLeft, ArrowRight } from 'lucide-svelte';
-  import type { AnyCard, CardMetadata } from "./card_interfaces/enum";
+  import type { AnyCard } from "./card_interfaces/enum";
   import VersionButton from "./VersionButton.svelte";
   import { ServerPaths } from "$lib/components/api/routes";
 
