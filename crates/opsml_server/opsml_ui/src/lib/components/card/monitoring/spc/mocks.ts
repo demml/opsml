@@ -1,5 +1,5 @@
 import { DriftType } from "$lib/components/card/monitoring/types";
-
+import type { BinnedSpcFeatureMetrics } from "../types";
 import { type SpcDriftProfile } from "./spc";
 import { AlertZone } from "./spc";
 
@@ -61,4 +61,29 @@ export const mockSpcDriftProfile: SpcDriftProfile = {
     },
   },
   scouter_version: "1.2.0",
+};
+
+export const mockSpcMetrics: BinnedSpcFeatureMetrics = {
+  features: {
+    feature_a: {
+      created_at: [
+        "2025-03-25 00:43:59",
+        "2025-03-26 10:00:00",
+        "2025-03-27 11:00:00",
+        "2025-03-28 12:00:00",
+        "2025-03-29 12:00:00",
+      ],
+      values: [52, 48, 47, 49, 51],
+    },
+    feature_b: {
+      created_at: [
+        "2025-03-25 00:43:59",
+        "2025-03-26 10:00:00",
+        "2025-03-27 11:00:00",
+        "2025-03-28 12:00:00",
+        "2025-03-29 12:00:00",
+      ],
+      values: [100, 105, 200, 300, 101],
+    },
+  },
 };

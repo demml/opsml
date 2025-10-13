@@ -111,6 +111,7 @@
         </div>
         
         <ComboBoxDropDown
+          boxId="interval-combobox-input"
           box={intervalCombobox}
           inputPlaceholder={currentTimeInterval ?? "Select Interval"}
           boxOptions={timeIntervals}
@@ -124,6 +125,7 @@
         </div>
         
         <ComboBoxDropDown
+          boxId="name-combobox-input"
           box={nameCombobox}
           inputPlaceholder={currentName ?? "Select Name"}
           boxOptions={currentNames}
