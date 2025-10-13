@@ -1,5 +1,4 @@
-import type { RequestHandler } from "../$types";
-import { json } from "@sveltejs/kit";
+import { type RequestHandler, json } from "@sveltejs/kit";
 import { getLatestMetrics } from "$lib/server/card/monitoring/utils";
 
 /** Get a page of latest metrics for drift profiles

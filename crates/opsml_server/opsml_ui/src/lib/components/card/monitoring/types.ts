@@ -13,6 +13,12 @@ export enum DriftType {
   LLM = "LLM",
 }
 
+export interface DriftProfileUri {
+  root_dir: string;
+  uri: string;
+  drift_type: DriftType;
+}
+
 export interface FeatureMap {
   features: Record<string, Record<string, number>>;
 }

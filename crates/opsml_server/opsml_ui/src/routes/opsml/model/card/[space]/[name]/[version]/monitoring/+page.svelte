@@ -1,19 +1,22 @@
 <script lang="ts">
   import type { BinnedDriftMap, MetricData  } from '$lib/components/card/monitoring/types';
   import { DriftType } from '$lib/components/card/monitoring/types';
-  import type { DriftProfile, DriftProfileResponse, UiProfile } from '$lib/components/card/monitoring/utils';
+  import type { DriftProfileResponse, UiProfile } from '$lib/components/card/monitoring/utils';
   import type { PageProps } from './$types';
   import { TimeInterval } from '$lib/components/card/monitoring/types';
   import VizBody from '$lib/components/card/monitoring/VizBody.svelte';
   import Header from '$lib/components/card/monitoring/Header.svelte';
   import { getMaxDataPoints, debounce } from '$lib/utils';
-  import { getLatestMetrics, getCurrentMetricData } from '$lib/components/card/monitoring/utils';
+  import {  getCurrentMetricData } from '$lib/components/card/monitoring/utils';
   import { onMount, onDestroy } from 'svelte';
   import { getProfileFeatures, getProfileConfig, type DriftConfigType } from '$lib/components/card/monitoring/utils';
   import type { Alert } from '$lib/components/card/monitoring/alert/types';
-  import { getDriftAlerts, acknowledgeAlert } from '$lib/server/card/monitoring/utils';
-  import getLatestMe
+  import {
+  getLatestMonitoringMetrics,
+  getMonitoringAlerts,
+} from "$lib/components/card/monitoring/utils";
   import AlertTable from '$lib/components/card/monitoring/alert/AlertTable.svelte';
+  import { acknowledgeMonitoringAlert } from '$lib/components/card/monitoring/alert/utils';
 
  
   let { data }: PageProps = $props();
@@ -46,7 +49,8 @@
     const newMaxDataPoints = getMaxDataPoints();
       if (newMaxDataPoints !== currentMaxDataPoints) {
         currentMaxDataPoints = newMaxDataPoints;
-        latestMetrics = await getLatestMetrics(
+        latestMetrics = await getLatestMonitoringMetrics(
+          fetch,
           profiles,
           currentTimeInterval,
           currentMaxDataPoints  
@@ -99,7 +103,8 @@
 
   async function handleTimeChange(timeInterval: TimeInterval) {
     currentTimeInterval = timeInterval;
-    latestMetrics = await getLatestMetrics(
+    latestMetrics = await getLatestMonitoringMetrics(
+          fetch,
           profiles,
           currentTimeInterval,
           currentMaxDataPoints  
@@ -111,7 +116,8 @@
         currentName
       );
 
-    currentAlerts = await getDriftAlerts(
+    currentAlerts = await getMonitoringAlerts(
+      fetch,
       currentConfig.space,
       currentConfig.name,
       currentConfig.version,
@@ -122,10 +128,11 @@
 
   async function updateAlert(id: number, space: string) {
     // Call API to acknowledge alert
-    let updated = await acknowledgeAlert(id, space);
+    let updated = await acknowledgeMonitoringAlert(fetch, id, space);
 
     if (updated) {
-      currentAlerts = await getDriftAlerts(
+      currentAlerts = await getMonitoringAlerts(
+          fetch,
           currentConfig.space,
           currentConfig.name,
           currentConfig.version,

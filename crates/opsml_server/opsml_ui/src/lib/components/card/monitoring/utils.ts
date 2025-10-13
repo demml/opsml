@@ -17,8 +17,13 @@ import {
   sampleCustomMetrics,
   sampleLLMMetrics,
   samplePsiMetrics,
+  mockAlerts,
 } from "./mocks";
 import { ServerPaths } from "$lib/components/api/routes";
+import { mockDriftProfileResponse } from "./mocks";
+import type { DriftProfileUri } from "../monitoring/types";
+import { RegistryType } from "$lib/utils";
+import { type Alert } from "./alert/types";
 
 export type DriftProfile = {
   Spc: SpcDriftProfile;
@@ -151,11 +156,18 @@ export function timeIntervalToDateTime(interval: TimeInterval): string {
   return past.toISOString();
 }
 
+/** Helper for getting latest monitoring metrics
+ * @param profiles - drift profiles to get metrics for
+ * @param time_interval - time interval for the metrics
+ * @param max_data_points - maximum data points to retrieve
+ * @param fetch - fetch function
+ * @returns binned drift map with latest metrics
+ */
 export async function getLatestMonitoringMetrics(
+  fetch: typeof globalThis.fetch,
   profiles: DriftProfileResponse,
   time_interval: TimeInterval,
-  max_data_points: number,
-  fetch: typeof globalThis.fetch
+  max_data_points: number
 ): Promise<BinnedDriftMap> {
   // for dev, return example data
   if (import.meta.env.DEV) {
@@ -178,4 +190,70 @@ export async function getLatestMonitoringMetrics(
 
   let binnedMap = (await resp.json()) as BinnedDriftMap;
   return binnedMap;
+}
+
+/** Helper for getting monitoring drift profiles
+ * @param fetch - fetch function
+ * @param uid - unique identifier for the card
+ * @param driftMap - map of drift profiles to fetch
+ * @param registryType - type of registry (Model, Data, etc.)
+ * @returns drift profiles
+ */
+export async function getMonitoringDriftProfiles(
+  fetch: typeof globalThis.fetch,
+  uid: string,
+  driftMap: Record<string, DriftProfileUri>,
+  registryType: RegistryType
+): Promise<DriftProfileResponse> {
+  if (import.meta.env.DEV) {
+    return mockDriftProfileResponse;
+  }
+
+  let resp = createInternalApiClient(fetch).post(
+    ServerPaths.MONITORING_PROFILES,
+    {
+      uid,
+      driftMap,
+      registryType,
+    }
+  );
+
+  let profiles = (await (await resp).json()) as DriftProfileResponse;
+  return profiles;
+}
+
+/** Helper for getting monitoring alerts
+ * @param fetch - fetch function
+ * @param space - space of the model card
+ * @param name - name of the model card
+ * @param version - version of the model card
+ * @param timeInterval - time interval for the alerts
+ * @param active - whether to fetch only active alerts
+ * @returns list of alerts
+ */
+export async function getMonitoringAlerts(
+  fetch: typeof globalThis.fetch,
+  space: string,
+  name: string,
+  version: string,
+  timeInterval: TimeInterval,
+  active: boolean
+): Promise<Alert[]> {
+  if (import.meta.env.DEV) {
+    return mockAlerts;
+  }
+
+  let resp = await createInternalApiClient(fetch).post(
+    ServerPaths.MONITORING_ALERTS,
+    {
+      space,
+      name,
+      version,
+      timeInterval,
+      active,
+    }
+  );
+
+  let alerts = (await resp.json()) as Alert[];
+  return alerts;
 }
