@@ -81,4 +81,5 @@ export enum ServerPaths {
   REGISTRY_STATS = "/api/card/registry/stats",
   METADATA = "/api/card/metadata",
   CARD_FROM_UID = "/api/card/uid",
+  VERSION_PAGE = "/api/card/registry/version/page",
 }
