@@ -1,6 +1,6 @@
 <script lang="ts">
   import { DriftType } from "./types";
-  import { type DriftConfigType, type DriftProfile, type DriftProfileResponse, type UiProfile } from "./util";
+  import { type DriftConfigType, type UiProfile } from "./utils";
   import { Clock } from 'lucide-svelte';
   import { TimeInterval } from '$lib/components/card/monitoring/types';
   import Dropdown from '$lib/components/utils/Dropdown.svelte';
