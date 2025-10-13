@@ -151,24 +151,23 @@
     <!--Create 3 row grid. First row contains 2 columns, 2nd row contains 1 column, 3rd row contains 1 col-->
     <div class="h-fit">
       <Header
-            availableDriftTypes={drift_types}
-            currentDriftType={currentDriftType}
-            bind:currentTimeInterval={currentTimeInterval}
-            bind:currentName={currentName}
-            currentNames={currentNames}
-            currentConfig={currentConfig}
-            currentProfile={currentProfile}
-            {handleDriftTypeChange}
-            {handleNameChange}
-            {handleTimeChange}
-            {uid}
-            {registry}
+        availableDriftTypes={drift_types}
+        currentDriftType={currentDriftType}
+        bind:currentTimeInterval={currentTimeInterval}
+        bind:currentName={currentName}
+        currentNames={currentNames}
+        currentConfig={currentConfig}
+        currentProfile={currentProfile}
+        {handleDriftTypeChange}
+        {handleNameChange}
+        {handleTimeChange}
+        {uid}
+        {registry}
       /> 
     </div>
 
     <!-- Row 2: 1 column -->
     <div class="bg-white p-2 border-2 border-black rounded-lg shadow min-h-[30rem]">
-      
       {#if currentName && latestMetrics}
         {#if currentMetricData}
           <VizBody

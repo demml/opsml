@@ -3,7 +3,7 @@
   import type { PsiAlertConfig, PsiDriftConfig } from "./psi";
   import Pill from "$lib/components/utils/Pill.svelte";
   import UpdateModal from "../update/UpdateModal.svelte";
-  import type { UiProfile } from "../util";
+  import type { UiProfile } from "../utils";
   import { onMount } from "svelte";
   import type { RegistryType } from "$lib/utils";
 
