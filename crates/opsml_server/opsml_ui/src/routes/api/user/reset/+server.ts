@@ -8,13 +8,11 @@ import { json } from "@sveltejs/kit";
  */
 export const POST: RequestHandler = async ({ request, cookies, fetch }) => {
   const { username, recovery_code, new_password } = await request.json();
-  const jwt_token = cookies.get("jwt_token");
   const response = await resetUserPassword(
     username,
     recovery_code,
     new_password,
-    fetch,
-    jwt_token
+    fetch
   );
   return json(response);
 };

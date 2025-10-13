@@ -1,5 +1,4 @@
 import type { PageLoad } from "./$types";
-import { validateUserOrRedirect } from "$lib/components/user/user.svelte";
 
 export const load: PageLoad = async ({ parent }) => {
   const { metadata, registryType, readme } = await parent();
