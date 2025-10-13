@@ -2,7 +2,7 @@ import { getUISettings } from "$lib/server/settings";
 import { logger } from "$lib/server/logger";
 import type { LayoutServerLoad } from "./$types";
 
-export const load: LayoutServerLoad = async ({ cookies, fetch }) => {
+export const load: LayoutServerLoad = async ({ fetch }) => {
   try {
     logger.debug("Loading layout server data...");
 

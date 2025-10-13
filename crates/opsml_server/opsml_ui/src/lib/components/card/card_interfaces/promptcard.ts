@@ -1,65 +1,6 @@
 import { RegistryType } from "$lib/utils";
 import type { DriftType } from "../monitoring/types";
-type PromptContent =
-  | { Str: string }
-  | { Audio: AudioUrl }
-  | { Image: ImageUrl }
-  | { Document: DocumentUrl }
-  | { Binary: BinaryContent };
-
-export interface AudioUrl {
-  url: string;
-  kind: string;
-}
-
-export interface ImageUrl {
-  url: string;
-  kind: string;
-}
-
-export interface DocumentUrl {
-  url: string;
-  kind: string;
-}
-
-export interface BinaryContent {
-  data: Uint8Array;
-  media_type: string;
-  kind: string;
-}
-
-export interface Message {
-  content: PromptContent;
-  next_param: number;
-  role: string;
-}
-
-export interface ModelSettings {
-  model: string;
-  provider: string;
-  max_token?: number;
-  temperature?: number;
-  top_p?: number;
-  frequency_penalty?: number;
-  presence_penalty?: number;
-  timeout?: number;
-  parallel_tool_calls?: boolean;
-  seed?: number;
-  logit_bias?: Record<string, number>;
-  stop_sequences?: string[];
-  extra_body?: any;
-}
-
-export interface Prompt {
-  message: Message[];
-  system_message: Message[];
-  version: string;
-  model_settings: Record<string, any>;
-  response_json_schema?: string;
-  parameters: string[];
-  provider: string;
-  model: string;
-}
+import type { Prompt } from "$lib/components/genai/types";
 
 export interface DriftProfileUri {
   root_dir: string;

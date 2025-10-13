@@ -1,3 +1,9 @@
+import { DriftType } from "./types";
+import { mockPsiDriftProfile } from "./psi/mocks";
+import { mockCustomDriftProfile } from "./custom/mocks";
+import { mockSpcDriftProfile } from "./spc/mocks";
+import { mockLLMDriftProfile } from "./llm/mocks";
+import type { UiProfile } from "./utils";
 import type {
   BinnedMetrics,
   BinnedPsiFeatureMetrics,
@@ -8,6 +14,52 @@ import type {
 } from "./types";
 import { Status } from "./types";
 import type { Alert } from "./alert/types";
+import { type DriftProfileResponse } from "./utils";
+import { TimeInterval } from "./types";
+import { type BinnedDriftMap } from "./types";
+
+/**
+ * Mock DriftProfileResponse for testing and UI development.
+ * Each profile uses a realistic mock and a sample URI.
+ */
+export const mockDriftProfileResponse: Record<DriftType, UiProfile> = {
+  [DriftType.Spc]: {
+    profile_uri: "/profiles/spc/mock.json",
+    profile: {
+      Spc: mockSpcDriftProfile,
+      Psi: mockPsiDriftProfile,
+      Custom: mockCustomDriftProfile,
+      LLM: mockLLMDriftProfile,
+    },
+  },
+  [DriftType.Psi]: {
+    profile_uri: "/profiles/psi/mock.json",
+    profile: {
+      Spc: mockSpcDriftProfile,
+      Psi: mockPsiDriftProfile,
+      Custom: mockCustomDriftProfile,
+      LLM: mockLLMDriftProfile,
+    },
+  },
+  [DriftType.Custom]: {
+    profile_uri: "/profiles/custom/mock.json",
+    profile: {
+      Spc: mockSpcDriftProfile,
+      Psi: mockPsiDriftProfile,
+      Custom: mockCustomDriftProfile,
+      LLM: mockLLMDriftProfile,
+    },
+  },
+  [DriftType.LLM]: {
+    profile_uri: "/profiles/llm/mock.json",
+    profile: {
+      Spc: mockSpcDriftProfile,
+      Psi: mockPsiDriftProfile,
+      Custom: mockCustomDriftProfile,
+      LLM: mockLLMDriftProfile,
+    },
+  },
+};
 
 const sampleCustomMetrics: BinnedMetrics = {
   metrics: {

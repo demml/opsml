@@ -1,5 +1,6 @@
 import type { SpcDriftConfig, SpcDriftProfile } from "./spc/spc";
 import type { PsiDriftConfig, PsiDriftProfile } from "./psi/psi";
+import { createInternalApiClient } from "$lib/api/internalClient";
 import type {
   CustomDriftProfile,
   CustomMetricDriftConfig,
@@ -10,14 +11,14 @@ import {
   type BinnedDriftMap,
   type MetricData,
 } from "./types";
+import type { LLMDriftConfig, LLMDriftProfile } from "./llm/llm";
 import {
-  samplePsiMetrics,
   sampleSpcMetrics,
   sampleCustomMetrics,
   sampleLLMMetrics,
-  mockLLMDriftServerRecords,
-} from "./example";
-import type { LLMDriftConfig, LLMDriftProfile } from "./llm/llm";
+  samplePsiMetrics,
+} from "./mocks";
+import { ServerPaths } from "$lib/components/api/routes";
 
 export type DriftProfile = {
   Spc: SpcDriftProfile;
@@ -84,20 +85,6 @@ export function getProfileConfig(
   return variables;
 }
 
-// this is used for mocking
-export async function getLatestMetricsExample(
-  profiles: DriftProfileResponse,
-  time_interval: TimeInterval,
-  max_data_points: number
-): Promise<BinnedDriftMap> {
-  return {
-    [DriftType.Spc]: sampleSpcMetrics,
-    [DriftType.Psi]: samplePsiMetrics,
-    [DriftType.Custom]: sampleCustomMetrics,
-    [DriftType.LLM]: sampleLLMMetrics,
-  };
-}
-
 // Funcs
 // Helper function to get current metric data
 export function getCurrentMetricData(
@@ -162,4 +149,33 @@ export function timeIntervalToDateTime(interval: TimeInterval): string {
 
   // Format to YYYY-MM-DD HH:MM:SS
   return past.toISOString();
+}
+
+export async function getLatestMonitoringMetrics(
+  profiles: DriftProfileResponse,
+  time_interval: TimeInterval,
+  max_data_points: number,
+  fetch: typeof globalThis.fetch
+): Promise<BinnedDriftMap> {
+  // for dev, return example data
+  if (import.meta.env.DEV) {
+    return {
+      [DriftType.Spc]: sampleSpcMetrics,
+      [DriftType.Psi]: samplePsiMetrics,
+      [DriftType.Custom]: sampleCustomMetrics,
+      [DriftType.LLM]: sampleLLMMetrics,
+    };
+  }
+
+  let resp = await createInternalApiClient(fetch).post(
+    ServerPaths.MONITORING_METRICS,
+    {
+      profiles,
+      time_interval,
+      max_data_points,
+    }
+  );
+
+  let binnedMap = (await resp.json()) as BinnedDriftMap;
+  return binnedMap;
 }
