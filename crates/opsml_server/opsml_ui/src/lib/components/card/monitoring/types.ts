@@ -1,5 +1,4 @@
 import type { RegistryType } from "$lib/utils";
-import { string } from "zod";
 
 export enum AlertDispatchType {
   Slack = "Slack",

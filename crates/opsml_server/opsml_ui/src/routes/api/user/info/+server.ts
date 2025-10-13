@@ -8,10 +8,11 @@ import { logger } from "$lib/server/logger";
  * Only calls getUser if both are present; otherwise returns success: false.
  */
 export const GET: RequestHandler = async ({ cookies, fetch }) => {
+  const jwt_token = cookies.get("jwt_token");
   const username = cookies.get("username");
   let response = { success: false, user: null };
 
-  if (username) {
+  if (jwt_token && username) {
     try {
       const user = await getUser(username, fetch);
       return json({ success: true, user });
