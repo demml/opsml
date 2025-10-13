@@ -31,7 +31,8 @@
         <div class="font-semibold text-primary-800">{data.metadata.version}</div>
       </h1>
 
-      <div class="flex flex-row gap-x-4 text-black pl-4 h-8 mb-1 text-smd">
+      <!--Nav items-->
+      <div class="flex flex-row gap-x-4 text-black pl-4 py-2 text-smd flex-wrap">
         <a
           class="flex items-center gap-x-2 border-b-3 {activeTab === 'card' ? 'border-secondary-500' : 'border-transparent'} hover:border-secondary-500 hover:border-b-3"
           href={`/opsml/${getRegistryPath(data.registryType)}/card/${data.metadata.space}/${data.metadata.name}/${data.metadata.version}/card`}

@@ -144,8 +144,8 @@
 
  </script>
  
- <div class="flex-1 mx-auto w-11/12 pb-10 flex justify-center overflow-auto px-4">
-  <div class="grid grid-cols-1 gap-4 w-full pt-4">
+ <div class="mx-auto w-full max-w-8xl px-4 py-6 sm:px-6 lg:px-8">
+  <div class="grid grid-cols-1 gap-4 pt-4">
 
     <!-- For my memory :) -->
     <!--Create 3 row grid. First row contains 2 columns, 2nd row contains 1 column, 3rd row contains 1 col-->
