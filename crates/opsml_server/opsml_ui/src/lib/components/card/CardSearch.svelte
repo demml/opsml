@@ -153,7 +153,7 @@
             type="button"
           >
             <span>{space}</span>
-            <span class="ml-1 text-lg font-bold" aria-hidden="true">&times;</span>
+            <span class="ml-1 text-lg font-bold">&times;</span>
           </button>
           {/each}
         </div>
@@ -190,7 +190,7 @@
             type="button"
           >
             <span>{tag}</span>
-            <span class="ml-1 text-lg font-bold" aria-hidden="true">&times;</span>
+            <span class="ml-1 text-lg font-bold">&times;</span>
           </button>
           {/each}
         </div>
