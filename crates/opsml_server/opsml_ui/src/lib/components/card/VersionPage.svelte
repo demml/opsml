@@ -1,12 +1,13 @@
 <script lang="ts">
   import type { VersionPageResponse, RegistryStatsResponse } from "$lib/components/card/types";
-  import {  getVersionPage } from "$lib/components/card/utils";
+  import { createInternalApiClient } from "$lib/api/internalClient";
   import type { RegistryType } from "$lib/utils";
   import { onMount } from "svelte";
   import { Settings } from 'lucide-svelte';
   import { ArrowLeft, ArrowRight } from 'lucide-svelte';
   import type { AnyCard, CardMetadata } from "./card_interfaces/enum";
   import VersionButton from "./VersionButton.svelte";
+  import { ServerPaths } from "$lib/components/api/routes";
 
 
   let {  metadata, registry, versionPage, cardRegistryStats } = $props<{ 
@@ -24,7 +25,7 @@
   let registryStats = $state<RegistryStatsResponse>(cardRegistryStats);
 
   const changePage = async function (page: number) {
-    registryPage = await getVersionPage(registry, metadata.space, metadata.name, page);
+    registryPage = await createInternalApiClient(fetch).post(ServerPaths.VERSION_PAGE, { registry, space: metadata.space, name: metadata.name, page });
     currentPage = page;
   }
 

@@ -14,7 +14,6 @@ import type {
 import type { CardQueryArgs } from "$lib/components/api/schema";
 import { type Card } from "$lib/components/home/types";
 import { createOpsmlClient } from "../api/opsmlClient";
-import { logger } from "../logger";
 
 export async function getSpaces(
   fetch: typeof globalThis.fetch,
