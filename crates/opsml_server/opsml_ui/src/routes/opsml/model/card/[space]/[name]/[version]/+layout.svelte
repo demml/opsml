@@ -4,6 +4,7 @@
   import { page } from '$app/state';
   import { uiSettingsStore } from '$lib/components/settings/settings.svelte';
   import { getRegistryPath } from '$lib/utils';
+  import { dev } from '$app/environment';
 
   let { data, children }: LayoutProps = $props();
 
@@ -50,7 +51,7 @@
           <FolderTree color="#8059b6"/>
           <span>Files</span>
         </a>
-        {#if data.metadata.metadata.interface_metadata.save_metadata.drift_profile_uri_map && uiSettingsStore.scouterEnabled}
+        {#if (data.metadata.metadata.interface_metadata.save_metadata.drift_profile_uri_map && uiSettingsStore.scouterEnabled) || dev }
           <a
             class="flex items-center gap-x-2 border-b-3 {activeTab === 'monitoring' ? 'border-secondary-500' : 'border-transparent'} hover:border-secondary-500 hover:border-b-3"
             href={`/opsml/${getRegistryPath(data.registryType)}/card/${data.metadata.space}/${data.metadata.name}/${data.metadata.version}/monitoring`}

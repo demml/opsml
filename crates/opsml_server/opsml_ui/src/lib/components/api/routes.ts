@@ -86,4 +86,5 @@ export enum ServerPaths {
   MONITORING_PROFILES = "/api/card/monitoring/profiles",
   MONITORING_ALERTS = "/api/card/monitoring/alerts",
   ACKNOWLEDGE_ALERT = "/api/card/monitoring/alerts/acknowledge",
+  UPDATE_MONITORING_PROFILE = "/api/card/monitoring/profile/update",
 }
