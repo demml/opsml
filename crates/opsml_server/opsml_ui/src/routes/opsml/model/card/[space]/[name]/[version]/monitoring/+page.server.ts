@@ -2,22 +2,19 @@ import { getMaxDataPoints } from "$lib/utils";
 import type { PageServerLoad } from "./$types";
 import {
   getLatestMonitoringMetrics,
+  getMonitoringAlerts,
+  getMonitoringDriftProfiles,
   getProfileConfig,
   getProfileFeatures,
   type UiProfile,
 } from "$lib/components/card/monitoring/utils";
 import { DriftType, TimeInterval } from "$lib/components/card/monitoring/types";
-import {
-  getDriftProfiles,
-  getLatestMetrics,
-  getDriftAlerts,
-} from "$lib/server/card/monitoring/utils";
 import { getCurrentMetricData } from "$lib/components/card/monitoring/utils";
 
 export const load: PageServerLoad = async ({ parent, fetch }) => {
   const { metadata, registryType } = await parent();
 
-  let profiles = await getDriftProfiles(
+  let profiles = await getMonitoringDriftProfiles(
     fetch,
     metadata.uid,
     metadata.metadata.interface_metadata.save_metadata.drift_profile_uri_map ??
@@ -47,10 +44,10 @@ export const load: PageServerLoad = async ({ parent, fetch }) => {
 
   // get latest metrics for all available drift profiles
   let latestMetrics = await getLatestMonitoringMetrics(
+    fetch,
     profiles,
     TimeInterval.SixHours,
-    maxDataPoints,
-    fetch
+    maxDataPoints
   );
 
   // Filter latest metrics to the current drift type
@@ -60,7 +57,7 @@ export const load: PageServerLoad = async ({ parent, fetch }) => {
     currentName
   );
 
-  let currentAlerts = await getDriftAlerts(
+  let currentAlerts = await getMonitoringAlerts(
     fetch,
     currentConfig.space,
     currentConfig.name,

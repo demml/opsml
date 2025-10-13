@@ -1,12 +1,6 @@
 import { RegistryType } from "$lib/utils";
-import type { DriftType } from "../monitoring/types";
 import type { Prompt } from "$lib/components/genai/types";
-
-export interface DriftProfileUri {
-  root_dir: string;
-  uri: string;
-  drift_type: DriftType;
-}
+import type { DriftProfileUri } from "../monitoring/types";
 
 export interface PromptCardMetadata {
   experimentcard_uid?: string;

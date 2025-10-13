@@ -15,7 +15,7 @@ import {
   type BinnedDriftMap,
 } from "$lib/components/card/monitoring/types";
 import { RegistryType } from "$lib/utils";
-import type { DriftProfileUri } from "$lib/components/card/card_interfaces/promptcard";
+import type { DriftProfileUri } from "$lib/components/card/monitoring/types";
 import type { DriftProfileResponse } from "$lib/components/card/monitoring/utils";
 import type {
   AlertResponse,

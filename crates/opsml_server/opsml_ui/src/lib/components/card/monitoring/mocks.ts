@@ -14,9 +14,6 @@ import type {
 } from "./types";
 import { Status } from "./types";
 import type { Alert } from "./alert/types";
-import { type DriftProfileResponse } from "./utils";
-import { TimeInterval } from "./types";
-import { type BinnedDriftMap } from "./types";
 
 /**
  * Mock DriftProfileResponse for testing and UI development.
@@ -298,7 +295,7 @@ export {
   sampleLLMMetrics,
 };
 
-export const sampleAlerts: Alert[] = [
+export const mockAlerts: Alert[] = [
   {
     created_at: "2024-03-28 10:30:00",
     name: "credit_model",

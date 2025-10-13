@@ -83,4 +83,7 @@ export enum ServerPaths {
   CARD_FROM_UID = "/api/card/uid",
   VERSION_PAGE = "/api/card/registry/version/page",
   MONITORING_METRICS = "/api/card/monitoring/metrics",
+  MONITORING_PROFILES = "/api/card/monitoring/profiles",
+  MONITORING_ALERTS = "/api/card/monitoring/alerts",
+  ACKNOWLEDGE_ALERT = "/api/card/monitoring/alerts/acknowledge",
 }
