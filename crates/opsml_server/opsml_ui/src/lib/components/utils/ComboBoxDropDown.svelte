@@ -29,18 +29,17 @@
 <div class="flex flex-col gap-1">
 
   <div class="relative">
-
     <input
       {...box.input}
       id={boxId}
-      class="w-full rounded-lg border-2 border-black bg-primary-500 py-1 px-2 text-black placeholder-black focus:outline-none focus:ring-2 focus:ring-primary-500"
+      class="w-full rounded-lg border-2 border-black bg-primary-500 py-1 px-2 text-black placeholder-black focus:outline-none focus:ring-0 focus:ring-primary-500"
       placeholder={inputPlaceholder}
       aria-label="Select time interval"
     />
     <!-- Trigger button (right side) -->
     <button
       {...box.trigger}
-      class="absolute right-3 top-1/2 -translate-y-1/2 grid place-items-center rounded-md bg-primary-500 hover:bg-primary-200 active:bg-primary-300 border-2 border-black"
+      class="absolute right-3 top-1/2 -translate-y-1/2 grid place-items-center rounded-md bg-primary-500 hover:bg-primary-200 active:bg-primary-300"
       tabindex="-1"
     >
       <svg class="w-5 h-5 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
