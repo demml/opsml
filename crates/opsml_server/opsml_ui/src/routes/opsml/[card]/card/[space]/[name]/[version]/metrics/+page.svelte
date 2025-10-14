@@ -1,15 +1,13 @@
 <script lang="ts">
 
   import type { PageProps } from './$types';
-  import { Search } from "lucide-svelte";
-  import { CircleDot } from 'lucide-svelte';
-  import { List } from 'lucide-svelte';
+  import { Search, CircleDot, List, ChartNoAxesColumn } from "lucide-svelte";
+  import { ServerPaths } from "$lib/components/api/routes";
   import ExperimentPill from "$lib/components/card/experiment/ExperimentPill.svelte";
   import { PlotType, type Experiment, type GroupedMetrics } from "$lib/components/card/experiment/types";
   import VizBody from "$lib/components/card/experiment/VizBody.svelte";
-  import { getGroupedMetrics } from "$lib/components/card/experiment/util";
+  import { createInternalApiClient} from "$lib/api/internalClient";
   import Dropdown from "$lib/components/utils/Dropdown.svelte";
-  import { ChartNoAxesColumn } from 'lucide-svelte';
   import MetricTable from "$lib/components/card/experiment/MetricTable.svelte";
   import MetricComparisonTable from "$lib/components/card/experiment/MetricComparisonTable.svelte";
 
@@ -68,7 +66,12 @@
     };
 
     let experimentsToPlot = [...selectedExperiments, currentExperiment];
-    groupedMetrics = await getGroupedMetrics(experimentsToPlot, selectedMetrics);
+    let resp = await createInternalApiClient(fetch).post(ServerPaths.EXPERIMENT_GROUPED_METRICS, {
+      experiments: experimentsToPlot,
+      selectedMetrics
+    });
+
+    groupedMetrics = (await resp.json() as GroupedMetrics);
 
     plot = true;
   }

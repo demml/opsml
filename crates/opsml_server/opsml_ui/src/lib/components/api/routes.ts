@@ -88,4 +88,5 @@ export enum ServerPaths {
   ACKNOWLEDGE_ALERT = "/api/card/monitoring/alerts/acknowledge",
   UPDATE_MONITORING_PROFILE = "/api/card/monitoring/profile/update",
   LLM_MONITORING_RECORDS = "/api/card/monitoring/llm/records",
+  EXPERIMENT_GROUPED_METRICS = "/api/card/experiment/metrics/grouped",
 }
