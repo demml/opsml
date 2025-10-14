@@ -8,7 +8,7 @@ import type {
 import { mockPsiMetrics } from "./psi/mocks";
 import { mockCustomMetrics } from "./custom/mocks";
 import { mockSpcMetrics } from "./spc/mocks";
-import { mockLLMMetrics } from "./llm/mocks";
+import { mockLLMDriftPageResponse, mockLLMMetrics } from "./llm/mocks";
 import {
   DriftType,
   TimeInterval,
@@ -19,7 +19,13 @@ import type { LLMDriftConfig, LLMDriftProfile } from "./llm/llm";
 import { mockAlerts } from "./mocks";
 import { ServerPaths } from "$lib/components/api/routes";
 import { mockDriftProfileResponse } from "./mocks";
-import type { DriftProfileUri } from "../monitoring/types";
+import type {
+  DriftProfileUri,
+  LLMPageResponse,
+  PaginationCursor,
+  ServiceInfo,
+  Status,
+} from "../monitoring/types";
 import { RegistryType } from "$lib/utils";
 import { type Alert } from "./alert/types";
 
@@ -254,4 +260,27 @@ export async function getMonitoringAlerts(
 
   let alerts = (await resp.json()) as Alert[];
   return alerts;
+}
+
+export async function getLLMMonitoringRecordPage(
+  fetch: typeof globalThis.fetch,
+  service_info: ServiceInfo,
+  status?: Status,
+  cursor?: PaginationCursor
+): Promise<LLMPageResponse> {
+  if (import.meta.env.DEV) {
+    return mockLLMDriftPageResponse;
+  }
+
+  let resp = await createInternalApiClient(fetch).post(
+    ServerPaths.LLM_MONITORING_RECORDS,
+    {
+      service_info,
+      status,
+      cursor,
+    }
+  );
+
+  let response = (await resp.json()) as LLMPageResponse;
+  return response;
 }

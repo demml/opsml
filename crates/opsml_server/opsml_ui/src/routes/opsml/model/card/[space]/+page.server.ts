@@ -1,6 +1,5 @@
 import { setupRegistryPage } from "$lib/server/card/utils";
 import type { PageServerLoad } from "./$types";
-import { RegistryType } from "$lib/utils";
 
 export const load: PageServerLoad = async ({ parent, params, fetch }) => {
   const space = params.space;

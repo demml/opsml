@@ -1,9 +1,7 @@
 <script lang="ts">
   import type { PageProps } from './$types';
   import VersionPage from "$lib/components/card/VersionPage.svelte";
-
   let { data }: PageProps = $props();
- 
 
   </script>
 

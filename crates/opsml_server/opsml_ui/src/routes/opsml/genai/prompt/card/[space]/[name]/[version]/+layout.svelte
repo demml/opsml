@@ -3,6 +3,7 @@
   import { IdCard, FolderTree, Tag, Activity } from 'lucide-svelte';
   import { page } from '$app/state';
   import { uiSettingsStore } from '$lib/components/settings/settings.svelte';
+  import { dev } from '$app/environment';
 
   let { data, children }: LayoutProps = $props();
 
@@ -44,7 +45,7 @@
           <span>Card</span>
         </a>
 
-        {#if data.metadata.metadata.drift_profile_uri_map && uiSettingsStore.scouterEnabled}
+        {#if data.metadata.metadata.drift_profile_uri_map && uiSettingsStore.scouterEnabled || dev }
           <a
             class="flex items-center gap-x-2 border-b-3 {activeTab === 'monitoring' ? 'border-secondary-500' : 'border-transparent'} hover:border-secondary-500 hover:border-b-3"
             href={`/opsml/genai/${registry}/card/${data.metadata.space}/${data.metadata.name}/${data.metadata.version}/monitoring`}

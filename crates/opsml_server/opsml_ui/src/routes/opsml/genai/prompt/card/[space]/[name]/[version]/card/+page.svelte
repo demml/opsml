@@ -5,7 +5,6 @@
   import NoReadme from '$lib/components/readme/NoReadme.svelte';
   import Metadata from '$lib/components/card/prompt/Metadata.svelte';
 
-
   let { data }: PageProps = $props();
   let card: PromptCard = data.metadata;
 

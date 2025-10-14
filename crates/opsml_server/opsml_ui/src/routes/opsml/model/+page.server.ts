@@ -1,5 +1,5 @@
 import { setupRegistryPage } from "$lib/server/card/utils";
-import { RegistryType } from "$lib/utils";
+import type { PageServerLoad } from "./$types";
 
 export const load: PageServerLoad = async ({ parent, fetch }) => {
   let { registryType } = await parent();
