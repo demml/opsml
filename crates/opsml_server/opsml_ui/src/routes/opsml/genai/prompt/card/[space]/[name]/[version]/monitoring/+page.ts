@@ -1,29 +1,30 @@
+// Base data for monitoring page.
+// This needs to be client-side because we need to calculate max data points from window size
 export const ssr = false;
 
 import { getMaxDataPoints } from "$lib/utils";
 import type { PageLoad } from "./$types";
 import {
-  getDriftProfiles,
+  getLatestMonitoringMetrics,
+  getLLMMonitoringRecordPage,
+  getMonitoringAlerts,
+  getMonitoringDriftProfiles,
   getProfileConfig,
   getProfileFeatures,
   type UiProfile,
 } from "$lib/components/card/monitoring/utils";
 import { DriftType, TimeInterval } from "$lib/components/card/monitoring/types";
-import {
-  getLatestMetrics,
-  getCurrentMetricData,
-} from "$lib/components/card/monitoring/utils";
-import { getDriftAlerts } from "$lib/components/card/monitoring/alert/utils";
-import { getLLMRecordPage } from "$lib/components/card/monitoring/utils";
+import { getCurrentMetricData } from "$lib/components/card/monitoring/utils";
 import type { ServiceInfo } from "$lib/components/card/monitoring/types";
-import { validateUserOrRedirect } from "$lib/components/user/user.svelte";
 
-export const load: PageLoad = async ({ parent }) => {
+export const load: PageLoad = async ({ parent, fetch }) => {
   const { metadata, registryType } = await parent();
 
-  let profiles = await getDriftProfiles(
+  let profiles = await getMonitoringDriftProfiles(
+    fetch,
     metadata.uid,
-    metadata.metadata.drift_profile_uri_map ?? {},
+    metadata.metadata.interface_metadata.save_metadata.drift_profile_uri_map ??
+      {},
     registryType
   );
 
@@ -47,7 +48,8 @@ export const load: PageLoad = async ({ parent }) => {
   );
   let maxDataPoints = getMaxDataPoints();
 
-  let latestMetrics = await getLatestMetrics(
+  let latestMetrics = await getLatestMonitoringMetrics(
+    fetch,
     profiles,
     TimeInterval.SixHours,
     maxDataPoints
@@ -60,7 +62,8 @@ export const load: PageLoad = async ({ parent }) => {
     currentName
   );
 
-  let currentAlerts = await getDriftAlerts(
+  let currentAlerts = await getMonitoringAlerts(
+    fetch,
     currentConfig.space,
     currentConfig.name,
     currentConfig.version,
@@ -74,7 +77,8 @@ export const load: PageLoad = async ({ parent }) => {
     version: currentConfig.version,
   };
 
-  let currentLLMRecords = await getLLMRecordPage(
+  let currentLLMRecords = await getLLMMonitoringRecordPage(
+    fetch,
     service_info,
     undefined,
     undefined
