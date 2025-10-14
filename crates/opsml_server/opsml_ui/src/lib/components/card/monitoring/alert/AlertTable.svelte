@@ -2,8 +2,6 @@
   import type { Alert } from "./types";
   import CodeModal from "../CodeModal.svelte";
 
-
-
 let { 
     alerts, // need to make an effect that updates this when the alerts change
     updateAlert

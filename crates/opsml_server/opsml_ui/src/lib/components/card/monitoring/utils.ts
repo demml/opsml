@@ -8,6 +8,7 @@ import type {
 import { mockPsiMetrics } from "./psi/mocks";
 import { mockCustomMetrics } from "./custom/mocks";
 import { mockSpcMetrics } from "./spc/mocks";
+import { mockLLMMetrics } from "./llm/mocks";
 import {
   DriftType,
   TimeInterval,
@@ -15,7 +16,7 @@ import {
   type MetricData,
 } from "./types";
 import type { LLMDriftConfig, LLMDriftProfile } from "./llm/llm";
-import { sampleLLMMetrics, mockAlerts } from "./mocks";
+import { mockAlerts } from "./mocks";
 import { ServerPaths } from "$lib/components/api/routes";
 import { mockDriftProfileResponse } from "./mocks";
 import type { DriftProfileUri } from "../monitoring/types";
@@ -172,7 +173,7 @@ export async function getLatestMonitoringMetrics(
       [DriftType.Spc]: mockSpcMetrics,
       [DriftType.Psi]: mockPsiMetrics,
       [DriftType.Custom]: mockCustomMetrics,
-      [DriftType.LLM]: sampleLLMMetrics,
+      [DriftType.LLM]: mockLLMMetrics,
     };
   }
 

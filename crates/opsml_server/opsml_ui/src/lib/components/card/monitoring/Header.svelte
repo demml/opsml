@@ -3,7 +3,6 @@
   import { type DriftConfigType, type UiProfile } from "./utils";
   import { Clock } from 'lucide-svelte';
   import { TimeInterval } from '$lib/components/card/monitoring/types';
-  import Dropdown from '$lib/components/utils/Dropdown.svelte';
   import { KeySquare } from 'lucide-svelte';
   import CustomConfigHeader from "./custom/CustomConfigHeader.svelte";
   import PsiConfigHeader from "./psi/PsiConfigHeader.svelte";
@@ -85,7 +84,6 @@
 </script>
 
 <div class="flex flex-row flex-wrap gap-4">
-
   <div class="flex flex-col justify-center p-2 bg-white md:col-span-2 rounded-lg border-2 border-black shadow min-h-[4rem] px-4">
     <div class="flex flex-row flex-wrap gap-2 items-center justify-start mb-4">
       <div class="items-start mr-1 font-bold text-primary-800">Drift Type:</div>
@@ -137,12 +135,7 @@
           />
         </div>
       </div>
-
     </div>
-
-
-    
-    
   </div>
 
   <div class="bg-white p-4 rounded-lg shadow md:col-span-4 border-2 border-primary-800">

@@ -4,15 +4,6 @@ import { mockCustomDriftProfile } from "./custom/mocks";
 import { mockSpcDriftProfile } from "./spc/mocks";
 import { mockLLMDriftProfile } from "./llm/mocks";
 import type { UiProfile } from "./utils";
-import type {
-  BinnedMetrics,
-  BinnedPsiFeatureMetrics,
-  BinnedSpcFeatureMetrics,
-  LLMDriftServerRecord,
-  LLMPageResponse,
-  PaginationCursor,
-} from "./types";
-import { Status } from "./types";
 import type { Alert } from "./alert/types";
 
 /**
@@ -57,75 +48,6 @@ export const mockDriftProfileResponse: Record<DriftType, UiProfile> = {
     },
   },
 };
-
-const sampleLLMMetrics: BinnedMetrics = {
-  metrics: {
-    reformulation_quality: {
-      metric: "reformulation_quality",
-      created_at: [
-        "2025-03-25 00:43:59",
-        "2025-03-26 10:00:00",
-        "2025-03-27 11:00:00",
-        "2025-03-28 12:00:00",
-        "2025-03-29 12:00:00",
-      ],
-      stats: [
-        {
-          avg: 0.95,
-          lower_bound: 0.92,
-          upper_bound: 0.98,
-        },
-        {
-          avg: 0.94,
-          lower_bound: 0.91,
-          upper_bound: 0.97,
-        },
-        {
-          avg: 0.96,
-          lower_bound: 0.93,
-          upper_bound: 0.99,
-        },
-        {
-          avg: 0.9,
-          lower_bound: 0.93,
-          upper_bound: 0.99,
-        },
-        {
-          avg: 0.4,
-          lower_bound: 0.93,
-          upper_bound: 0.99,
-        },
-      ],
-    },
-    coherence: {
-      metric: "coherence",
-      created_at: [
-        "2024-03-26T10:00:00",
-        "2024-03-26T11:00:00",
-        "2024-03-26T12:00:00",
-      ],
-      stats: [
-        {
-          avg: 0.88,
-          lower_bound: 0.85,
-          upper_bound: 0.91,
-        },
-        {
-          avg: 0.87,
-          lower_bound: 0.84,
-          upper_bound: 0.9,
-        },
-        {
-          avg: 0.89,
-          lower_bound: 0.86,
-          upper_bound: 0.92,
-        },
-      ],
-    },
-  },
-};
-
-export { sampleLLMMetrics };
 
 export const mockAlerts: Alert[] = [
   {
@@ -239,59 +161,3 @@ export const mockAlerts: Alert[] = [
     active: true,
   },
 ];
-
-function randomStatus(): Status {
-  const statuses = [
-    Status.Pending,
-    Status.Processing,
-    Status.Processed,
-    Status.Failed,
-  ];
-  return statuses[Math.floor(Math.random() * statuses.length)];
-}
-
-function randomDate(offsetDays: number = 0): string {
-  const date = new Date();
-  date.setDate(date.getDate() - offsetDays);
-  return date.toISOString();
-}
-
-export const mockLLMDriftServerRecords: LLMDriftServerRecord[] = Array.from(
-  { length: 30 },
-  (_, i) => ({
-    created_at: randomDate(30 - i),
-    space: `space_${(i % 5) + 1}`,
-    name: `card_${(i % 10) + 1}`,
-    version: `v${(i % 3) + 1}.0.${i}`,
-    prompt: i % 2 === 0 ? `Prompt for card_${(i % 10) + 1}` : undefined,
-    context: `Context for card_${(i % 10) + 1}`,
-    status: randomStatus(),
-    id: i + 1,
-    uid: `uid_${i + 1}`,
-    score: {
-      relevance: {
-        score: Number(Math.random().toFixed(2)),
-        reason:
-          "The prompt is relevant and you should use it!. AHHHHHHHHHHHHHHHHHHHHHHHHH",
-      },
-      coherence: {
-        score: Number(Math.random().toFixed(2)),
-        reason: "Sample reason",
-      },
-    },
-    updated_at: randomDate(29 - i),
-    processing_started_at: i % 3 === 0 ? randomDate(30 - i) : undefined,
-    processing_ended_at: i % 4 === 0 ? randomDate(29 - i) : undefined,
-    processing_duration:
-      i % 5 === 0 ? Math.floor(Math.random() * 60) : undefined,
-  })
-);
-
-let paginationCursor: PaginationCursor = {
-  id: mockLLMDriftServerRecords.length,
-};
-export const mockLLMDriftPageResponse: LLMPageResponse = {
-  items: mockLLMDriftServerRecords,
-  next_cursor: paginationCursor,
-  has_more: true,
-};

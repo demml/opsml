@@ -7,8 +7,6 @@ import type {
   SpaceRecord,
 } from "./types";
 import { userStore } from "../user/user.svelte";
-import { listRecentSpaceCards } from "../card/utils";
-import { RegistryType } from "$lib/utils";
 
 export async function createSpace(
   space: string,

@@ -2,16 +2,11 @@
 <script lang="ts">
   import { opsmlClient } from '../api/client.svelte';
   import { goto } from '$app/navigation';
-  import type { SvelteComponent } from 'svelte';
 
-
-
- 
 	function logOutHandler(): void {
     opsmlClient.logout();
     goto('/opsml/user/login');
 	}
-
 
 </script>
 
