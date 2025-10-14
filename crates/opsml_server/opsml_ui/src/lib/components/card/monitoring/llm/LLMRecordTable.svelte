@@ -1,7 +1,7 @@
 <script lang="ts">
   import { tick } from "svelte";
   import { type PaginationCursor, type LLMDriftServerRecord, type LLMPageResponse, type ServiceInfo, Status } from "../types";
-  import { getLLMRecordPage } from "../util";
+  import { getLLMMonitoringRecordPage } from '$lib/components/card/monitoring/utils';
   import { ArrowLeft, ArrowRight } from 'lucide-svelte';
   import CodeModal from "../CodeModal.svelte";
 
@@ -26,7 +26,6 @@ let {
     currentPage: LLMPageResponse;
   }>();
 
-    let paginationCursor = $state<PaginationCursor | undefined>(undefined);
     let cursorStack: (PaginationCursor | undefined)[] =$state([currentPage.next_cursor]);
     let pageItems: LLMDriftServerRecord[] = $state(currentPage.items);
     let has_more: boolean = $state(currentPage.has_more);
@@ -38,7 +37,7 @@ let {
    async function changePage(newPage: number) {
   if (newPage > pageNbr) {
     // Going forward
-    let next_page = await getLLMRecordPage(serviceInfo, status, cursorStack[pageNbr - 1]);
+    let next_page = await getLLMMonitoringRecordPage(fetch,serviceInfo, status, cursorStack[pageNbr - 1]);
     pageItems = next_page.items;
     has_more = next_page.has_more;
     cursorStack.push(next_page.next_cursor);
@@ -49,10 +48,10 @@ let {
     let prev_page;
     if (newPage === 1) {
       // First page: fetch with no cursor
-      prev_page = await getLLMRecordPage(serviceInfo, status, undefined);
+      prev_page = await getLLMMonitoringRecordPage(fetch, serviceInfo, status, undefined);
     } else {
       let prevCursor = cursorStack[newPage - 1];
-      prev_page = await getLLMRecordPage(serviceInfo, status, prevCursor);
+      prev_page = await getLLMMonitoringRecordPage(fetch, serviceInfo, status, prevCursor);
     }
     pageItems = prev_page.items;
     has_more = prev_page.has_more;
