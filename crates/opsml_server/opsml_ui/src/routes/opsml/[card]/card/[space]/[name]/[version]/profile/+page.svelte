@@ -13,17 +13,14 @@
 
 
 {#if dataProfile}
-  <div class="grid grid-cols-12 gap-4 px-4 pt-4">
-    <div class="flex-1 pb-10"> 
+  <div class="w-full max-w-sm sm:max-w-lg md:max-w-3xl lg:max-w-5xl xl:max-w-7xl mx-auto gap-4 border-t border-gray-200 pt-4">
       <DataProfileViz
         features={featureNames}
         profile={dataProfile}
       />
-    </div>
   </div>
-
 {:else}
-  <div class="col-span-12 flex items-center justify-center px-4">
+  <div class="w-full max-w-lg flex items-center justify-center px-4">
     <section class="pt-4 border-gray-100 col-span-full flex-1 pb-16 md:pb-0 items-center">
       <div class="z-10 mx-auto rounded-2xl bg-surface-50 border-black border-2 shadow p-4 md:w-96 md:px-5">
         <h1 class="pt-1 text-center text-lg font-bold text-primary-800">Data Profile</h1>

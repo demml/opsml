@@ -36,7 +36,7 @@ export async function loadFileTree({
 
   basePath = `${basePath}/${slugs.join("/")}`;
 
-  const fileTree = await getFileTree(basePath, fetch);
+  const fileTree = await getFileTree(fetch, basePath);
 
   return { fileTree, previousPath, isRoot: false };
 }

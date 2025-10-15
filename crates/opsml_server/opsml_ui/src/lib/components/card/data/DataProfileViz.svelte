@@ -1,10 +1,10 @@
 <script lang="ts">
-  import { KeySquare, ArrowUp } from "lucide-svelte";
-  import Dropdown from "$lib/components/utils/Dropdown.svelte";
+  import { KeySquare } from "lucide-svelte";
   import type { DataProfile, FeatureProfile } from "./types";
   import Pill from "$lib/components/utils/Pill.svelte";
   import NumericStats from "./NumericStats.svelte";
   import StringStats from "./StringStats.svelte";
+  import ComboBoxDropDown from "$lib/components/utils/ComboBoxDropDown.svelte";
 
   let { 
     features,
@@ -13,64 +13,69 @@
     features: string[];
     profile: DataProfile;
   }>();
-  let selectedFeature = $state('choose feature');
+  
+  let dropdownInput = $state('');
+  let selectedFeature = $state('');
+  
+  const filteredFeatures = $derived.by(() =>
+    dropdownInput.trim()
+      // @ts-ignore
+      ? features.filter(f =>
+          f.toLowerCase().includes(dropdownInput.trim().toLowerCase())
+        )
+      : features
+  );
 
-  function scrollToFeature(feature: string) {
-    if (feature === 'choose feature') return;
-    
-    const element = document.getElementById(`feature-${feature}`);
-    if (element) {
-      element.scrollIntoView({ 
-        behavior: 'smooth',
-        block: 'start'
-      });
-    }
-  }
-
-  $effect(() => {
-    scrollToFeature(selectedFeature);
-  });
 </script>
 
-<div class="relative">
-  <div class="fixed top-[120px] z-[5] bg-surface-50 py-2 border-b-2 border-black w-full">
-    <div class="flex flex-row flex-wrap gap-2 items-center justify-center px-4">
-      <div class="items-center text-lg mr-2 font-bold text-primary-800">Data Profile:</div>
-      <div class="flex items-center gap-2 pr-2">
-        <div class="self-center" aria-label="Time Interval">
-          <KeySquare color="#5948a3" />
+<div class="relative w-full">
+  <!-- Fixed header instead of sticky to prevent movement -->
+  <div class="fixed top-[120px] left-0 right-0 z-2 pt-4 bg-surface-50 border-b-2 border-black shadow-lg">
+    <div class="max-w-full mx-auto">
+      <div class="flex flex-row flex-wrap gap-2 items-center justify-center px-4 py-3">
+        <div class="flex items-center gap-2 text-lg font-bold text-primary-800">
+          <KeySquare color="#5948a3" size={20} aria-hidden="true" />
+          <span>Data Profile:</span>
         </div>
-    
-        <Dropdown 
-          bind:selectedValue={selectedFeature}
-          bind:values={features}
-          width='w-48'
-          py="py-2"
+
+        <ComboBoxDropDown
+          boxId="feature-combobox-input"
+          bind:defaultValue={selectedFeature}
+          boxOptions={features}
+          optionWidth="w-48"
+          bind:inputValue={dropdownInput} 
         />
+     
       </div>
     </div>
   </div>
-  <div class="grid grid-cols-1 gap-4 w-full py-4 px-4 mt-20 place-items-center">
-    {#each features as feature}
-      {@const featureProfile: FeatureProfile = profile.features[feature]}
-        <div id="feature-{feature}" class="bg-white p-4 border-2 border-black rounded-lg shadow overflow-x-auto scroll-mt-[140px] w-5/6">
-          <div class="flex flex-row flex-wrap gap-2 items-center">
-            <Pill key="Name" value={featureProfile.id} textSize="text-sm"/>
-            <Pill key="Created At" value={featureProfile.timestamp} textSize="text-sm"/>
-            {#if !featureProfile.numeric_stats}
-              <Pill key="Type" value="Categorical" textSize="text-sm"/>
-            {:else}
-              <Pill key="Type" value="Numeric" textSize="text-sm"/>
-            {/if}
-          </div>
 
-          {#if featureProfile.numeric_stats}
-            <NumericStats numericData={featureProfile.numeric_stats} />
-          {:else if featureProfile.string_stats}
-            <StringStats stringData={featureProfile.string_stats} />
-          {/if}
+  <!-- Content with proper top margin to account for fixed header -->
+  <div class="mt-[80px] space-y-6 p-4">
+    {#each filteredFeatures as feature}
+      {@const featureProfile: FeatureProfile = profile.features[feature]}
+      <div 
+        id="feature-{feature}" 
+        class="bg-white border-2 border-black rounded-lg shadow-md p-6 transition-shadow hover:shadow-lg w-full"
+      >
+        <!-- Feature metadata pills -->
+        <div class="flex flex-row flex-wrap gap-2 items-center mb-4">
+          <Pill key="Name" value={featureProfile.id} textSize="text-sm" />
+          <Pill key="Created At" value={featureProfile.timestamp} textSize="text-sm" />
+          <Pill 
+            key="Type" 
+            value={featureProfile.numeric_stats ? "Numeric" : "Categorical"} 
+            textSize="text-sm" 
+          />
         </div>
+
+        <!-- Feature statistics -->
+        {#if featureProfile.numeric_stats}
+          <NumericStats numericData={featureProfile.numeric_stats} />
+        {:else if featureProfile.string_stats}
+          <StringStats stringData={featureProfile.string_stats} />
+        {/if}
+      </div>
     {/each}
-    </div>
-  <div>03</div>
+  </div>
 </div>

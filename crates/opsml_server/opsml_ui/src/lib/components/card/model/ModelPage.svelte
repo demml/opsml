@@ -1,20 +1,16 @@
 <script lang="ts">
-  import type { DataCard } from '$lib/components/card/card_interfaces/datacard';
-  import type { PageProps } from './$types';
   import CardReadMe from '$lib/components/card/CardReadMe.svelte';
   import NoReadme from '$lib/components/readme/NoReadme.svelte';
-  import Metadata from '$lib/components/card/data/Metadata.svelte';
+  import Metadata from '$lib/components/card/model/Metadata.svelte';
+  import type { ModelCard } from '../card_interfaces/modelcard';
 
-
-  let { data }: PageProps = $props();
-  let card: DataCard = data.metadata;
+  let { data } = $props();
+  let card: ModelCard = $state(data.metadata);
 
 </script>
 
 <div class="mx-auto w-full max-w-8xl px-4 py-6 sm:px-6 lg:px-8">
-
   <div class="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:gap-8">
-    
     <div class="lg:col-span-2">
       {#if data.readme.exists}
         <div class="rounded-base border-black border-3 shadow bg-surface-50 w-full">
@@ -37,20 +33,13 @@
         </div>
       {/if}
     </div>
-
-    
     <div class="lg:col-span-1">
       <div class="rounded-base bg-surface-50 border-primary-800 border-3 shadow-primary p-4">
-      <Metadata 
-        card={card} 
-        interfaceMetadata={card.metadata.interface_metadata}
-        saveMetadata={card.metadata.interface_metadata.save_metadata}
+        <Metadata 
+          card={card} 
+          savedata={card.metadata.interface_metadata.save_metadata} 
         />
       </div>
     </div>
   </div>
 </div>
-  
-
-
-  

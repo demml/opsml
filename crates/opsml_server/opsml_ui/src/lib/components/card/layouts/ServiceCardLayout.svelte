@@ -45,7 +45,6 @@
       key: 'card',
       label: 'Card',
       icon: IdCard,
-      path: `${basePath}/card`,
       isActive: (tab: string) => tab === 'card',
       description: 'Service details and configuration'
     },
@@ -53,7 +52,6 @@
       key: 'files',
       label: 'Files',
       icon: FolderTree,
-      path: `${basePath}/files`,
       isActive: (tab: string) => tab === 'files',
       description: 'Service artifacts and deployment files'
     },
@@ -61,16 +59,12 @@
       key: 'versions',
       label: 'Versions',
       icon: Tag,
-      path: `${basePath}/versions`,
       isActive: (tab: string) => tab === 'versions',
       iconProps: { fill: '#8059b6' },
       description: 'Service version history and releases'
     }
   ];
 
-  /**
-   * Primary color for consistent icon styling across service interface
-   */
   const iconColor = '#8059b6';
 </script>
 
@@ -106,25 +100,17 @@
     <nav 
       class="flex flex-row gap-x-4 text-black pl-4 py-2 text-smd flex-wrap" 
       aria-label="Service navigation"
-      role="tablist"
     >
       {#each navItems as item}
         {@const isActive = item.isActive(activeTab)}
         <a
+          href={`${basePath}/${item.key}`}
           class="flex items-center gap-x-2 border-b-3 {isActive ? 'border-secondary-500' : 'border-transparent'} hover:border-secondary-500 hover:border-b-3 transition-colors focus:outline-none focus:ring-2 focus:ring-secondary-500 focus:ring-offset-2 rounded-t"
-          href={item.path}
           data-sveltekit-preload-data="hover"
           aria-current={isActive ? 'page' : undefined}
-          role="tab"
-          aria-selected={isActive}
           title={item.description}
         >
-          <svelte:component 
-            this={item.icon} 
-            color={iconColor} 
-            size={16} 
-            {...(item.iconProps || {})}
-          />
+          <item.icon color={iconColor} size={16} {...(item.iconProps || {})} />
           <span>{item.label}</span>
         </a>
       {/each}
@@ -132,6 +118,6 @@
   </div>
 </div>
 
-<main role="main" aria-label="Service content">
+<main aria-label="Service content">
   {@render children()}
 </main>

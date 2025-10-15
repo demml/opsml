@@ -7,6 +7,7 @@
   import Header from '$lib/components/card/monitoring/Header.svelte';
   import AlertTable from '$lib/components/card/monitoring/alert/AlertTable.svelte';
   import { getMaxDataPoints, debounce } from '$lib/utils';
+  import type { RegistryType } from '$lib/utils';
   import {
     getCurrentMetricData,
     getLatestMonitoringMetrics,
@@ -38,7 +39,7 @@
     initialAlerts: Alert[];
     /** Metadata */
     uid: string;
-    registryType: string;
+    registryType: RegistryType;
     /** Initial time interval, defaults to 6 hours */
     initialTimeInterval?: TimeInterval;
     currentLLMRecords?: LLMPageResponse;
@@ -106,11 +107,16 @@
     currentDriftType = driftType;
     currentProfile = profiles[driftType];
 
+    // Update available names for the new drift type
     currentNames = getProfileFeatures(currentDriftType, currentProfile.profile);
+    
+    // Set the first available name as default
     currentName = currentNames[0];
 
+    // Update configuration for the new drift type
     currentConfig = getProfileConfig(currentDriftType, currentProfile.profile);
 
+    // Update metric data with new drift type and name
     currentMetricData = getCurrentMetricData(
       latestMetrics,
       currentDriftType,
@@ -243,7 +249,7 @@
     </div>
 
     <!-- If LLM records are available -->
-    {#if currentLLMRecords}
+    {#if currentLLMRecordPage}
       <div class="bg-white p-2 border-2 border-black rounded-lg shadow min-h-[6rem] max-h-[40rem]">
         <LLMRecordTable
           space={currentConfig.space}

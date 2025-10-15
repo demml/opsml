@@ -44,7 +44,6 @@
       key: 'card',
       label: 'Card',
       icon: IdCard,
-      path: `${basePath}/card`,
       isActive: (tab: string) => tab === 'card',
       description: 'Experiment overview and details'
     },
@@ -52,7 +51,6 @@
       key: 'files',
       label: 'Files',
       icon: FolderTree,
-      path: `${basePath}/files`,
       isActive: (tab: string) => tab === 'files' || tab === 'view',
       description: 'Experiment artifacts and outputs'
     },
@@ -60,7 +58,6 @@
       key: 'metrics',
       label: 'Metrics',
       icon: ChartColumnDecreasing,
-      path: `${basePath}/metrics`,
       isActive: (tab: string) => tab === 'metrics',
       description: 'Performance metrics and KPIs'
     },
@@ -68,7 +65,6 @@
       key: 'figures',
       label: 'Figures',
       icon: ChartArea,
-      path: `${basePath}/figures`,
       isActive: (tab: string) => tab === 'figures',
       description: 'Charts, plots, and visualizations'
     },
@@ -76,7 +72,6 @@
       key: 'hardware',
       label: 'Hardware',
       icon: Activity,
-      path: `${basePath}/hardware`,
       isActive: (tab: string) => tab === 'hardware',
       description: 'System resource usage and monitoring'
     },
@@ -84,7 +79,6 @@
       key: 'versions',
       label: 'Versions',
       icon: Tag,
-      path: `${basePath}/versions`,
       isActive: (tab: string) => tab === 'versions',
       iconProps: { fill: '#8059b6' },
       description: 'Version history and comparisons'
@@ -126,25 +120,17 @@
     <nav 
       class="flex flex-row gap-x-4 text-black pl-4 py-2 text-smd flex-wrap" 
       aria-label="Experiment navigation"
-      role="tablist"
     >
       {#each navItems as item}
         {@const isActive = item.isActive(activeTab)}
         <a
+          href={`${basePath}/${item.key}`}
           class="flex items-center gap-x-2 border-b-3 {isActive ? 'border-secondary-500' : 'border-transparent'} hover:border-secondary-500 hover:border-b-3 transition-colors focus:outline-none focus:ring-2 focus:ring-secondary-500 focus:ring-offset-2 rounded-t"
-          href={item.path}
           data-sveltekit-preload-data="hover"
           aria-current={isActive ? 'page' : undefined}
-          role="tab"
-          aria-selected={isActive}
           title={item.description}
         >
-          <svelte:component 
-            this={item.icon} 
-            color={iconColor} 
-            size={16} 
-            {...(item.iconProps || {})}
-          />
+          <item.icon color={iconColor} size={16} {...(item.iconProps || {})} />
           <span>{item.label}</span>
         </a>
       {/each}
@@ -152,6 +138,6 @@
   </div>
 </div>
 
-<main role="main" aria-label="Experiment content">
+<main aria-label="Experiment content">
   {@render children()}
 </main>

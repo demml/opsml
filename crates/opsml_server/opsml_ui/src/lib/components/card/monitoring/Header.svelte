@@ -46,24 +46,6 @@
   let previousName = $state(currentName);
   let previousTimeInterval = $state(currentTimeInterval);
 
-  const options = [  /* ... */  ] as const;
-  type Option = (typeof options)[string];
-
-  //@ts-ignore
-  const intervalCombobox = new Combobox<Option>({ onValueChange: onIntervalChange });
-  //@ts-ignore
-  const nameCombobox = new Combobox<Option>({ onValueChange: onNameChange });
-
-
-  function onIntervalChange() {
-    currentTimeInterval = intervalCombobox.value;
-  }
-
-  function onNameChange() {
-    currentName = nameCombobox.value;
-  }
-
-
   // Effect for handling a name change from the dropdown
   $effect(() => {
     if (currentName && currentName !== previousName) {
@@ -112,8 +94,7 @@
           
           <ComboBoxDropDown
             boxId="interval-combobox-input"
-            box={intervalCombobox}
-            inputPlaceholder={currentTimeInterval ?? "Select Interval"}
+            defaultValue={currentTimeInterval}
             boxOptions={timeIntervals}
           />
         </div>
@@ -129,8 +110,7 @@
           
           <ComboBoxDropDown
             boxId="name-combobox-input"
-            box={nameCombobox}
-            inputPlaceholder={currentName ?? "Select Name"}
+            defaultValue={currentName ?? "Select Name"}
             boxOptions={currentNames}
           />
         </div>
@@ -177,26 +157,3 @@
     {/if}
   </div>
 </div>
-
-
-
-<style>
-  .interval-input {
-    height: 2.0rem;
-  }
-
-  .interval-input:focus {
-    height: 2.0rem;
-    box-shadow: 0 0 0 3px oklch(69.32% 0.15 294.6deg);
-  }
-
-  .tag-input {
-    height: 2.0rem;
-  }
-
-  .tag-input:focus {
-    height: 2.0rem;
-    box-shadow: 0 0 0 3px oklch(69.32% 0.15 294.6deg);
-  }
-
-</style>

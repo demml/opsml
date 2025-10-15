@@ -1,12 +1,12 @@
-import { redirect } from "@sveltejs/kit";
-import {
-  getDataProfile,
-  getSortedFeatureNames,
-} from "$lib/components/card/data/utils";
-import { getRegistryPath, RegistryType } from "$lib/utils";
-import type { PageServerLoad } from "./$types";
+export const ssr = false;
 
-export const load: PageServerLoad = async ({ parent }) => {
+import { redirect } from "@sveltejs/kit";
+import { getSortedFeatureNames } from "$lib/components/card/data/utils";
+import { getRegistryPath, RegistryType } from "$lib/utils";
+import type { PageLoad } from "./$types";
+import { getDataProfile } from "$lib/components/card/data/getDataProfile";
+
+export const load: PageLoad = async ({ parent, fetch }) => {
   const { registryType, metadata } = await parent();
 
   if (registryType !== RegistryType.Data) {
@@ -20,7 +20,7 @@ export const load: PageServerLoad = async ({ parent }) => {
 
   let dataProfile = metadata.metadata.interface_metadata.save_metadata
     ?.data_profile_uri
-    ? await getDataProfile(metadata)
+    ? await getDataProfile(fetch, metadata)
     : undefined;
 
   // get sorted feature names from dataProfile.features
