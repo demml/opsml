@@ -1,3 +1,5 @@
+export const ssr = false;
+
 import { getRegistryPath, RegistryType } from "$lib/utils";
 import { goto } from "$app/navigation";
 import type { PageLoad } from "./$types";
