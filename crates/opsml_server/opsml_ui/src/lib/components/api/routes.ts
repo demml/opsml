@@ -92,4 +92,5 @@ export enum ServerPaths {
   DATA_PROFILE = "/api/card/data/profile",
   EXPERIMENT_METRIC_NAMES = "/api/card/experiment/metrics/names",
   EXPERIMENT_RECENT = "/api/card/experiment/recent",
+  EXPERIMENT_HARDWARE = "/api/card/experiment/hardware",
 }
