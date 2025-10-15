@@ -29,6 +29,7 @@
  
   const filtered = $derived.by(() => {
     if (!combobox.touched) return boxOptions;
+    // @ts-ignore
     return boxOptions.filter((o) =>
       o.toLowerCase().includes(combobox.inputValue.trim().toLowerCase()),
     );
@@ -58,14 +59,14 @@
     <input
       {...combobox.input}
       id={boxId}
-      class="w-full rounded-lg border-2 border-black bg-primary-500 py-1 px-2 text-black placeholder-black focus:outline-none focus:ring-0 focus:ring-primary-500"
+      class="w-full rounded-lg border-2 border-black bg-primary-400 py-1 px-2 text-black placeholder-black focus:outline-none focus:ring-0 focus:ring-primary-500"
       aria-label="Select time interval"
       value={defaultValue}
     />
     <!-- Trigger button (right side) -->
     <button
       {...combobox.trigger}
-      class="absolute right-3 top-1/2 -translate-y-1/2 grid place-items-center rounded-md bg-primary-500 hover:bg-primary-200 active:bg-primary-300"
+      class="absolute right-3 top-1/2 -translate-y-1/2 grid place-items-center rounded-md bg-primary-400 hover:bg-primary-200 active:bg-primary-300"
       tabindex="-1"
     >
       <svg class="w-5 h-5 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -76,7 +77,7 @@
   <!-- Dropdown content -->
   <div
     {...combobox.content}
-    class="bg-primary-500 text-black border-black border-2 rounded-lg max-h-60 overflow-auto px-1 py-1 {optionWidth}"
+    class="bg-primary-400 text-black border-black border-2 rounded-lg max-h-60 overflow-auto px-1 py-1 {optionWidth}"
   >
     {#each filtered as option (option)}
       <div
