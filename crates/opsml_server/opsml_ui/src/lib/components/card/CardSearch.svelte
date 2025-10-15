@@ -9,6 +9,7 @@
   import { getRegistryPage, getRegistryStats } from '$lib/components/api/registry';
   import { Combobox } from "melt/builders";
   import CardPage from '$lib/components/card/CardPage.svelte';
+  import MultiComboBoxDropDown from '$lib/components/utils/MultiComboBoxDropDown.svelte';
 
   let { page, selectedName, selectedSpace } = $props<{
     page: RegistryPageReturn;
@@ -20,6 +21,7 @@
   let currentPage = $state(1);
   let totalPages = $state(1);
   let artifactSearchQuery = $state(selectedName || '');
+
   let filteredSpaces: string[] = $state([]);
   let filteredTags: string[] = $state([]);
 
@@ -32,10 +34,6 @@
   let availableSpaces = page.spaces;
   let availableTags = page.tags;
 
-  //@ts-ignore
-  const spacesCombobox = new Combobox<string>({ multiple: true, onValueChange: onSpaceChange });
-  //@ts-ignore
-  const tagsCombobox = new Combobox<string>({ multiple: true, onValueChange: onTagsChange });
 
   onMount(() => {
     totalPages = Math.ceil(registryStats.stats.nbr_names / 30);
@@ -43,31 +41,25 @@
     // if selectedSpace is defined, add it to filteredSpaces and spacesCombobox
     if (selectedSpace && !filteredSpaces.includes(selectedSpace)) {
       filteredSpaces = [...filteredSpaces, selectedSpace];
-      spacesCombobox.select(selectedSpace);
     }
     
   });
 
   let searchTimeout: ReturnType<typeof setTimeout> | null = null;
-  function onTagsChange() {
+  
+  function onInputChange() {
     if (searchTimeout) clearTimeout(searchTimeout);
     searchTimeout = setTimeout(async () => {
-      // set filteredTags based on tagsCombobox.value
-      //@ts-ignore
-      filteredTags = [...tagsCombobox.value] as string[];
       await searchPage();
     }, 100);
   }
 
-  function onSpaceChange() {
-    if (searchTimeout) clearTimeout(searchTimeout);
-    searchTimeout = setTimeout(async () => {
-      // set filteredSpaces based on spacesCombobox.value
-      //@ts-ignore
-      filteredSpaces = [...spacesCombobox.value] as string[];
-      await searchPage();
-    }, 100);
-  }
+  // effect to run SearchPage when filteredSpaces changes
+  $effect(() => {
+    if (filteredSpaces.length > 0 ||  filteredTags.length > 0) {
+      onInputChange();
+    }
+  });
 
   const searchPage = async function () {
   [registryPage, registryStats] = await Promise.all([ 
@@ -85,26 +77,6 @@
 
 </script>
 
-<style>
-  .space-input {
-    height: 2.0rem;
-  }
-
-  .space-input:focus {
-    height: 2.0rem;
-    box-shadow: 0 0 0 3px oklch(69.32% 0.15 294.6deg);
-  }
-
-  .tag-input {
-    height: 2.0rem;
-  }
-
-  .tag-input:focus {
-    height: 2.0rem;
-    box-shadow: 0 0 0 3px oklch(69.32% 0.15 294.6deg);
-  }
-
-</style>
 
 
 
@@ -125,77 +97,24 @@
   <div class="grid grid-cols-1 lg:grid-cols-5 gap-4">
     <div class="col-span-1 lg:col-span-1 p-2 flex flex-col rounded-base border-primary-500 border-2 shadow-primary bg-surface-50 self-start overflow-hidden">
     <!-- Top Section -->
-      <div class="mb-4 text-black flex flex-col items-center w-full relative">
-        <div class="flex flex-col items-start w-full">
-          <label {...spacesCombobox.label} class="text-primary-800 mb-1">Search Spaces</label>
-          <input {...spacesCombobox.input} class="space-input bg-primary-100 text-black border-black border-2 rounded-lg w-full"/>
-        </div>
-        <div {...spacesCombobox.content} class="bg-primary-100 text-black border-black border-2 rounded-lg max-h-60 overflow-auto px-1 py-1 w-full">
-          {#each availableSpaces as option (option)}
-            <div {...spacesCombobox.getOption(option)} class="px-2 text-left border-2 border-transparent hover:border-black rounded-lg transition-colors text-black">
-              {option}
-              {#if spacesCombobox.isSelected(option)}
-                ✓
-              {/if}
-            </div>
-          {:else}
-            <span>No results found</span>
-          {/each}
-        </div>
+      <MultiComboBoxDropDown
+        boxId="space-search-input"
+        label="Search Spaces"
+        bind:filteredItems={filteredSpaces}
+        availableOptions={availableSpaces}
+        defaultSelected={selectedSpace ? [selectedSpace] : []}
+      />
 
-        <!--Show filtered spaces as pills-->
-        <div class="mt-2 flex flex-wrap gap-1 items-start">
-          {#each filteredSpaces as space}
-          <button
-            class="badge bg-primary-100 text-primary-800 flex items-center gap-1 px-2 py-1"
-            onclick={() => spacesCombobox.select(space)}
-            aria-label={`Deselect space ${space}`}
-            type="button"
-          >
-            <span>{space}</span>
-            <span class="ml-1 text-lg font-bold">&times;</span>
-          </button>
-          {/each}
-        </div>
-
-      </div>
       <hr class="hr" />
-      <div class="my-2 text-black flex flex-col items-center w-full relative">
-        <div class="flex flex-col items-start w-full">
-            <label {...tagsCombobox.label} class="text-primary-800 mb-1">Search Tags</label>
-            <input 
-            {...tagsCombobox.input} 
-            class="tag-input bg-primary-100 text-black border-black border-2 rounded-lg w-full"
-            />
-        </div>
-        <div {...tagsCombobox.content} class="bg-primary-100 text-black border-black border-2 rounded-lg max-h-60 overflow-auto px-1 py-1 w-full">
-            {#each availableTags as option (option)}
-            <div {...tagsCombobox.getOption(option)} class="px-2 text-left border-2 border-transparent hover:border-black rounded-lg transition-colors text-black">
-                {option}
-                {#if tagsCombobox.isSelected(option)}
-                ✓
-                {/if}
-            </div>
-            {:else}
-            <span>No results found</span>
-            {/each}
-        </div>
-        <!--Show filtered tags as pills-->
-        <div class="mt-2 flex flex-wrap gap-1 items-start">
-          {#each filteredTags as tag}
-          <button
-            class="badge bg-primary-100 text-primary-800 flex items-center gap-1 px-2 py-1"
-            onclick={() => tagsCombobox.select(tag)}
-            aria-label={`Deselect tag ${tag}`}
-            type="button"
-          >
-            <span>{tag}</span>
-            <span class="ml-1 text-lg font-bold">&times;</span>
-          </button>
-          {/each}
-        </div>
-      </div>
+      
+      <MultiComboBoxDropDown
+        boxId="tag-search-input"
+        label="Search Tags"
+        bind:filteredItems={filteredTags}
+        availableOptions={availableTags}
+      />
     </div>
+  
     <div class="col-span-1 lg:col-span-4 gap-1 p-4 flex-1 flex-col rounded-base border-primary-500 border-2 shadow-primary bg-surface-50 h-auto">
       <div class="flex flex-row items-center gap-2 pb-2">
         <div class="rounded-full bg-surface-200 border-black border-2 p-1 shadow-small">
