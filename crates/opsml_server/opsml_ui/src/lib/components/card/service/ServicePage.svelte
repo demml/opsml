@@ -4,7 +4,7 @@
   import ServiceMetadata from '$lib/components/card/service/ServiceMetadata.svelte';
   import { Table } from 'lucide-svelte';
   import CardButton from '$lib/components/card/service/CardButton.svelte';
-  import { getRegistryFromString, getRegistryPath, RegistryType } from '$lib/utils';
+  import { getRegistryFromString, RegistryType } from '$lib/utils';
   import DeploymentConfig from '$lib/components/card/service/DeploymentConfig.svelte';
   let badgeColor = "#40328b";
   let iconColor = "#40328b";

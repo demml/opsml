@@ -78,7 +78,7 @@
 
 
   </script>
-<div class="mx-auto w-10/12 pb-8 px-4">
+<div class="mx-auto max-w-8xl pb-8 px-4">
   <div class="grid grid-cols-1 lg:grid-cols-8 gap-4 w-full pt-4 ">
 
     <!-- Left Column-->
