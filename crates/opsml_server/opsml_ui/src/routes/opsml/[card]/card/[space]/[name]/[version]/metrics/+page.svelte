@@ -10,46 +10,33 @@
   import Dropdown from "$lib/components/utils/Dropdown.svelte";
   import MetricTable from "$lib/components/card/experiment/MetricTable.svelte";
   import MetricComparisonTable from "$lib/components/card/experiment/MetricComparisonTable.svelte";
+  import MultiComboBoxDropDown from '$lib/components/utils/MultiComboBoxDropDown.svelte';
 
   let { data }: PageProps = $props();
 
   // base props
   let selectedMetrics: string[] = $state([]);
+  let groupedMetrics: GroupedMetrics | undefined = $state();
+
+
   let selectedExperiments: Experiment[]  = $state([]);
   let recentExperiments: Experiment[] = $state(data.recentExperiments);
-  let groupedMetrics: GroupedMetrics | undefined = $state();
+
+  let selectedExperimentVersions: string[] = $state([]);
+  let recentExperimentVersions: string[] = $derived.by(() => {
+    return recentExperiments.map((experiment: Experiment) => experiment.version);
+  });
+ 
   let plotType: PlotType = $state(PlotType.Line);
   let plot: boolean = $state(false);
 
-  // search setup
-  let searchQuery = $state('');
   let availableEntities: string[] = $state(data.metricNames);
-  let filteredEntities: string[] = $derived.by(() => {
-    return availableEntities.filter((entity: string) => {
-      return entity.toLowerCase().includes(searchQuery.toLowerCase());
-    });
+
+
+  // effect to update selectedExperiments when selectedExperimentVersions changes
+  $effect(() => {
+    selectedExperiments = recentExperiments.filter((experiment: Experiment) => selectedExperimentVersions.includes(experiment.version));
   });
-  
-
-  async function selectMetric(metricName: string) {
-    // if the metric is already selected, remove it
-    if (selectedMetrics.includes(metricName)) {
-      selectedMetrics = selectedMetrics.filter((metric: string) => metric !== metricName);
-    } else {
-      // otherwise, add it to the selected metrics
-      selectedMetrics = [...selectedMetrics, metricName];
-    }
-  }
-
-  async function selectExperiment(selectedExperiment: Experiment) {
-    // if the card version is already selected, remove it
-    if (selectedExperiments.includes(selectedExperiment)) {
-      selectedExperiments = selectedExperiments.filter((experiment: Experiment) => experiment !== selectedExperiment);
-    } else {
-      // otherwise, add it to the selected card versions
-      selectedExperiments = [...selectedExperiments, selectedExperiment];
-    }
-  }
 
   async function plotMetrics() {
   
@@ -79,27 +66,27 @@
 
   </script>
 <div class="mx-auto max-w-8xl pb-8 px-4">
-  <div class="grid grid-cols-1 lg:grid-cols-8 gap-4 w-full pt-4 ">
+  <div class="grid grid-cols-1 lg:grid-cols-6 gap-4 w-full pt-4 ">
 
     <!-- Left Column-->
-    <div class="col-span-1 lg:col-span-2 flex flex-col">
+    <div class="col-span-1 flex-1 lg:col-span-1 mb-4 text-black flex flex-col w-full relative">
 
-      <div class="bg-white rounded-base border-black border-2 shadow h-[calc(100dvh-200px)] overflow-y-auto">
+      <div class="bg-white rounded-base border-black border-2 shadow overflow-y-auto w-full">
       <!-- Top Section -->
         <div class="mb-2 p-4">
-          <div class="flex flex-row justify-between pb-2">
+          <div class="flex flex-row justify-between pb-4">
             <div class="flex flex-row">
               <div class="self-center" aria-label="Time Interval">
                 <CircleDot color="#8059b6"/>
               </div>
-              <header class="pl-2 text-primary-800 self-center font-bold">Search Metrics</header>
+              <header class="pl-2 text-primary-800 self-center font-bold text-lg">Search Metrics</header>
             </div>
             <div class="flex flex-row">
               <button type="button" class="btn text-sm bg-primary-500 text-black shadow shadow-hover border-black border-2 self-center" onclick={plotMetrics}>Plot</button>
             </div>
           </div>
 
-          <div class="flex flex-row pb-4">
+          <div class="flex flex-row pb-5">
             <div class="text-primary-800 self-center">Plot Type:</div>
             <div class="ml-2 self-center">
               <Dropdown  
@@ -111,54 +98,21 @@
             </div>
           </div>
 
-          <div class="flex flex-row gap-1 items-center">
-            <div class="mr-1">
-              <Search color="#5948a3" />
-            </div>  
-            <input
-              class="input text-sm rounded-base bg-surface-50 text-black disabled:opacity-50 placeholder-surface-800 placeholder-text-sm focus-visible:ring-1 border-black border-2 h-1/3"
-              type="text"
-              bind:value={searchQuery}
-              placeholder="Search..."
+          <div class="flex justify-self-start gap-1 w-full">
+            <MultiComboBoxDropDown
+              boxId="metric-search-input"
+              label="Metrics"
+              bind:filteredItems={selectedMetrics}
+              availableOptions={availableEntities}
             />
           </div>
-        </div>
-      <!-- Metrics and Experiments -->
-        <div class="flex-1 p-4 overflow-y-auto">
-          <div class="mb-2">
-            <div class="flex flex-row items-center mb-1 border-b-2 border-black">
-              <List color="#8059b6"/>
-              <header class="pl-2 text-primary-900 font-bold">Items</header>
-            </div>
-            <div class="space-y-2 flex flex-wrap pl-2 pt-2 pb-4 gap-1 overflow-y-scroll">
-              <!-- Iterate of available entities -->
-              {#each filteredEntities as entity}
-            
-                {#if selectedMetrics.includes(entity)}
-                  <button class="chip text-black bg-primary-500 border-black border-1 text-sm" onclick={() => selectMetric(entity)}>{entity}</button>
-                {:else}
-                  <button class="chip bg-slate-100 border-primary-800 shadow-small shadow-hover-small border-2 text-primary-800 border-1 text-sm" onclick={() => selectMetric(entity)}>{entity}</button>
-                {/if}
-          
-              {/each}
-            </div>
-          </div>
-
-          <div class="mb-4">
-            <div class="flex flex-row items-center mb-1 border-b-2 border-black">
-              <List color="#8059b6"/>
-              <header class="pl-2 text-primary-900 font-bold">Previous Versions</header>
-            </div>
-            <p class="pl-2 text-black text-sm">Select previous version to compare metrics</p>
-            <div class="grid grid-cols-3 gap-2 pl-2 pt-4 pb-4 overflow-auto">
-              {#each recentExperiments as experiment}
-                {#if selectedExperiments.includes(experiment)}
-                  <ExperimentPill {experiment} active={true} setActive={selectExperiment}/>
-                {:else}
-                  <ExperimentPill {experiment} active={false} setActive={selectExperiment}/>
-                {/if}
-              {/each}
-            </div>
+          <div class="flex justify-self-start gap-1 w-full">
+            <MultiComboBoxDropDown
+              boxId="experiment-search-input"
+              label="Experiments"
+              bind:filteredItems={selectedExperimentVersions}
+              availableOptions={recentExperimentVersions}
+            />
           </div>
         </div>
       </div>  
@@ -166,7 +120,7 @@
 
 
     <!-- 2nd column -->
-    <div class="col-span-1 lg:col-span-6 flex flex-col gap-4">
+    <div class="col-span-1 lg:col-span-5 flex flex-col gap-4">
 
       <!-- Metrics plot -->
       <div class="bg-white p-4 border-2 border-black rounded-lg shadow mb-4 h-[calc(100vh-200px)] flex-shrink-0">
