@@ -5,10 +5,10 @@ import type { PageServerLoad, EntryGenerator } from "./$types";
 
 export const entries: EntryGenerator = () => {
   return [
-    { card: "model" },
-    { card: "data" },
-    { card: "experiment" },
-    { card: "service" },
+    { registry: "model" },
+    { registry: "data" },
+    { registry: "experiment" },
+    { registry: "service" },
   ];
 };
 
