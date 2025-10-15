@@ -25,7 +25,7 @@
    */
   let activeTab = $derived.by(() => {
     const last = page.url.pathname.split('/').pop() ?? '';
-    if (['card', 'files', 'versions'].includes(last)) return last;
+    if (['card', 'files', 'versions', 'view'].includes(last)) return last;
     return 'card';
   });
 
@@ -52,7 +52,7 @@
       key: 'files',
       label: 'Files',
       icon: FolderTree,
-      isActive: (tab: string) => tab === 'files',
+      isActive: (tab: string) => tab === 'files' || tab === 'view',
       description: 'Service artifacts and deployment files'
     },
     {
@@ -105,7 +105,7 @@
         {@const isActive = item.isActive(activeTab)}
         <a
           href={`${basePath}/${item.key}`}
-          class="flex items-center gap-x-2 border-b-3 {isActive ? 'border-secondary-500' : 'border-transparent'} hover:border-secondary-500 hover:border-b-3 transition-colors focus:outline-none focus:ring-2 focus:ring-secondary-500 focus:ring-offset-2 rounded-t"
+          class="flex items-center gap-x-2 border-b-3 {isActive ? 'border-secondary-500' : 'border-transparent'} hover:border-secondary-500 hover:border-b-3 transition-colors rounded-t"
           data-sveltekit-preload-data="hover"
           aria-current={isActive ? 'page' : undefined}
           title={item.description}

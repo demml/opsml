@@ -11,7 +11,6 @@
     FlaskConical, 
     Server,
     ChevronRight,
-    ChevronDown,
     Pin,
     PinOff
   } from 'lucide-svelte';
@@ -151,23 +150,25 @@
           <button
             type="button"
             onclick={() => hasSubItems ? toggleSubMenu(item.name) : handleNavClick(item.path)}
-            class="flex items-center w-full p-3 rounded-lg transition-all duration-200 group relative {isActive 
-              ? 'bg-primary-50 text-primary-800 border border-primary-200' 
-              : 'text-black hover:bg-gray-50 hover:text-primary-700'}"
+            class="flex items-center w-full h-12 p-3 rounded-lg transition-all duration-200 group relative box-border pl-3
+              border
+              {isActive
+                ? 'bg-primary-50 text-primary-800 border-primary-200'
+                : 'text-black hover:bg-gray-50 hover:text-primary-700 border-transparent'}
+            "
             aria-label={item.name}
             title={!isExpanded ? item.name : ''}
           >
+            <div class="absolute left-0 top-1/2 -translate-y-1/2 h-8 w-1 {isActive ? 'bg-primary-700' : 'bg-transparent'} rounded-e-full"></div>
             <div class="shrink-0 w-6 h-6 flex items-center justify-center">
               <IconComponent 
                 size={20} 
                 class="transition-colors duration-200 {isActive ? 'text-primary-800' : 'text-current'}"
               />
             </div>
-            
             <span class="ms-3 text-sm font-medium whitespace-nowrap transition-opacity duration-300 {isExpanded ? 'opacity-100' : 'opacity-0'}">
               {item.name}
             </span>
-
             {#if hasSubItems && isExpanded}
               <div class="ms-auto">
                 <ChevronRight 
@@ -175,10 +176,6 @@
                   class="text-black transition-transform duration-200 {isSubMenuExpanded ? 'rotate-90' : ''}" 
                 />
               </div>
-            {/if}
-            
-            {#if isActive}
-              <div class="absolute start-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-primary-700 rounded-e-full"></div>
             {/if}
           </button>
 
