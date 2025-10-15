@@ -35,7 +35,7 @@
 
   let isExpanded = $state(false);
   let isPinned = $state(false);
-  let hoverTimeout: number | null = null;
+  let hoverTimeout: ReturnType<typeof setTimeout> | null = null;
   let expandedItems = $state<Set<string>>(new Set());
 
   const navItems: NavItem[] = [

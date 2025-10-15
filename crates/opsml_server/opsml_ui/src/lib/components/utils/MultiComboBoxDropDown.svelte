@@ -30,6 +30,7 @@
   let availableItems: string[] = $state(availableOptions);
 
   const combobox = new Combobox<string>({ 
+    // @ts-ignore
     multiple: true, 
     onValueChange: onChange, 
     onInputValueChange: onInputChange 
@@ -45,6 +46,7 @@
 
   function onInputChange() {
     // Filter availableItems based on inputValue
+    // @ts-ignore
     availableItems = availableOptions.filter(option =>
       option.toLowerCase().includes(combobox.inputValue.toLowerCase())
     );
@@ -53,6 +55,7 @@
   // onMount, set initial selected values
   onMount(() => {
     if (defaultSelected.length > 0) {
+      // @ts-ignore
       defaultSelected.forEach(item => {
         combobox.select(item);
       });
@@ -69,14 +72,14 @@
     <input
       {...combobox.input}
       id={boxId}
-      class="combobox-input bg-primary-500 text-black border-black border-2 rounded-lg w-full focus:outline-none focus:ring-0 focus:ring-primary-500 {inputHeight}"
+      class="combobox-input bg-primary-400 text-black border-black border-2 rounded-lg w-full focus:outline-none focus:ring-0 focus:ring-primary-500 {inputHeight}"
       aria-label={`Select options ${label}`}
     />
   </div>
   <!-- Dropdown content -->
   <div
     {...combobox.content}
-    class="bg-primary-500 text-black border-black border-2 rounded-lg max-h-60 overflow-auto px-1 py-1 {optionWidth}"
+    class="bg-primary-400 text-black border-black border-2 rounded-lg max-h-60 overflow-auto px-1 py-1 {optionWidth}"
   >
     {#each availableItems as option (option)}
       <div

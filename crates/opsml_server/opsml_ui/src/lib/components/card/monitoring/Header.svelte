@@ -9,7 +9,6 @@
   import SpcConfigHeader from "./spc/SpcConfigHeader.svelte";
   import LLMConfigHeader from "./llm/LLMConfigHeader.svelte";
   import type { RegistryType } from "$lib/utils";
-  import { Combobox } from "melt/builders";
   import ComboBoxDropDown from "$lib/components/utils/ComboBoxDropDown.svelte";
 
 
