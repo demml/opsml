@@ -1,49 +1,30 @@
 <script lang="ts">
-  import type { ModelCard } from '$lib/components/card/card_interfaces/modelcard';
+  
   import type { PageProps } from './$types';
-  import CardReadMe from '$lib/components/card/CardReadMe.svelte';
-  import NoReadme from '$lib/components/readme/NoReadme.svelte';
-  import Metadata from '$lib/components/card/model/Metadata.svelte';
+  import DataPage from '$lib/components/card/data/DataPage.svelte';
+  import ModelPage from '$lib/components/card/model/ModelPage.svelte';
+  import ExperimentPage from '$lib/components/card/experiment/ExperimentPage.svelte';
+  import ServicePage from '$lib/components/card/service/ServicePage.svelte';
+  import { RegistryType } from '$lib/utils';
 
   let { data }: PageProps = $props();
-  let card: ModelCard = data.metadata;
+  let registryType = data.registryType;
+
 </script>
 
-
-<div class="mx-auto w-full max-w-8xl px-4 py-6 sm:px-6 lg:px-8">
-
-  <div class="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:gap-8">
-    
-    <div class="lg:col-span-2">
-      {#if data.readme.exists}
-        <div class="rounded-base border-black border-3 shadow bg-surface-50 w-full">
-          <CardReadMe
-            name={card.name}
-            space={card.space}
-            registryType={data.registryType}
-            version={card.version}
-            readMe={data.readme}
-          />
-        </div>
-      {:else}
-        <div class="rounded-base border-black border-3 shadow bg-primary-100 w-full min-h-[200px] flex items-center justify-center">
-          <NoReadme
-            name={card.name}
-            space={card.space}
-            registryType={data.registryType}
-            version={card.version}
-          />
-        </div>
-      {/if}
-    </div>
-
-    <div class="lg:col-span-1">
-      <div class="rounded-base bg-surface-50 border-primary-800 border-3 shadow-primary p-4">
-        <Metadata 
-          card={card} 
-          savedata={card.metadata.interface_metadata.save_metadata} 
-        />
-      </div>
+{#if registryType === RegistryType.Data}
+  <DataPage {data} />
+{:else if registryType === RegistryType.Model}
+  <ModelPage {data} />
+{:else if registryType === RegistryType.Experiment}
+  <ExperimentPage {data} />
+{:else if registryType === RegistryType.Service}
+  <ServicePage {data} />
+{:else}
+  <div class="mx-auto w-full max-w-8xl px-4 py-6 sm:px-6 lg:px-8">
+    <div class="rounded-base border-black border-3 shadow bg-primary-100 w-full min-h-[200px] flex items-center justify-center">
+      <p class="text-primary-800">Unknown registry type: {registryType}</p>
     </div>
   </div>
-</div>
+{/if}
+

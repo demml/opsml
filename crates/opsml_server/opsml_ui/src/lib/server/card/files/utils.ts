@@ -8,8 +8,8 @@ import type {
 import type { RegistryType } from "$lib/utils";
 
 export async function getFileTree(
-  path: string,
-  fetch: typeof globalThis.fetch
+  fetch: typeof globalThis.fetch,
+  path: string
 ): Promise<FileTreeResponse> {
   const params = {
     path: path,
@@ -22,10 +22,10 @@ export async function getFileTree(
   return (await response.json()) as FileTreeResponse;
 }
 export async function getRawFile(
+  fetch: typeof globalThis.fetch,
   path: string,
   uid: string,
-  registry_type: RegistryType,
-  fetch: typeof globalThis.fetch
+  registry_type: RegistryType
 ): Promise<RawFile> {
   const body: RawFileRequest = {
     path: path,

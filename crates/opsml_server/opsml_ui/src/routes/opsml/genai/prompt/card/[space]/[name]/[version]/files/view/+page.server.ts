@@ -6,12 +6,7 @@ export const load: PageServerLoad = async ({ parent, url, fetch }) => {
   const { metadata } = await parent();
   const viewPath = (url as URL).searchParams.get("path") as string;
 
-  let rawFile = await getRawFile(
-    viewPath,
-    metadata.uid,
-    RegistryType.Model,
-    fetch
-  );
+  let rawFile = await getRawFile(fetch, metadata.uid, RegistryType.Model);
   let splitPath = viewPath.split("/");
 
   return { rawFile, viewPath, splitPath };

@@ -44,32 +44,29 @@
       key: 'card',
       label: 'Card',
       icon: IdCard,
-      path: `${basePath}/card`,
       isActive: (tab: string) => tab === 'card'
     },
     {
       key: 'files',
       label: 'Files',
       icon: FolderTree,
-      path: `${basePath}/files`,
       isActive: (tab: string) => tab === 'files' || tab === 'view'
     },
     {
       key: 'profile',
       label: 'Profile',
       icon: BookOpenText,
-      path: `${basePath}/profile`,
       isActive: (tab: string) => tab === 'profile'
     },
     {
       key: 'versions',
       label: 'Versions',
       icon: Tag,
-      path: `${basePath}/versions`,
       isActive: (tab: string) => tab === 'versions',
       iconProps: { fill: '#8059b6' }
     }
   ];
+  const iconColor = '#8059b6';
 </script>
 
 
@@ -98,20 +95,16 @@
     <nav class="flex flex-row gap-x-4 text-black pl-4 py-2 text-smd flex-wrap" aria-label="Data navigation">
       {#each navItems as item}
         {@const isActive = item.isActive(activeTab)}
-        <a
-          class="flex items-center gap-x-2 border-b-3 {isActive ? 'border-secondary-500' : 'border-transparent'} hover:border-secondary-500 hover:border-b-3 transition-colors"
-          href={item.path}
-          data-sveltekit-preload-data="hover"
-          aria-current={isActive ? 'page' : undefined}
-        >
-          <svelte:component 
-            this={item.icon} 
-            color="#8059b6" 
-            size={16} 
-            {...(item.iconProps || {})}
-          />
-          <span>{item.label}</span>
-        </a>
+          <a
+            href={`${basePath}/${item.key}`}
+            class="flex items-center gap-x-2 border-b-3 {isActive ? 'border-secondary-500' : 'border-transparent'} hover:border-secondary-500 hover:border-b-3 transition-colors focus:outline-none focus:ring-2 focus:ring-secondary-500 focus:ring-offset-2 rounded-t"
+            data-sveltekit-preload-data="hover"
+            aria-current={isActive ? 'page' : undefined}
+            title={item.description}
+          >
+            <item.icon color={iconColor} size={16} {...(item.iconProps || {})} />
+            <span>{item.label}</span>
+          </a>
       {/each}
     </nav>
   </div>
