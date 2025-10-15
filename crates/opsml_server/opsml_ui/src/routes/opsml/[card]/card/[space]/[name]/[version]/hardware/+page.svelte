@@ -14,10 +14,10 @@
 
 </script>
 
-<div class="flex-1 mx-auto w-10/12 pb-10 flex justify-center px-4">
+<div class="mx-auto max-w-8xl pb-8 px-4">
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 w-full p-4 overflow-auto">
 
-    <div class="bg-white p-4 border-2 border-black rounded-lg shadow h-[500px]">
+    <div class="bg-white p-4 border-2 border-black rounded-lg shadow h-full">
       <HardwareViz
         xValues={metrics.createdAt}
         yValues={metrics.cpuUtilization}
@@ -26,7 +26,7 @@
       />
     </div>
 
-    <div class="bg-white p-4 border-2 border-black rounded-lg shadow h-[500px]">
+    <div class="bg-white p-4 border-2 border-black rounded-lg shadow h-full">
       <HardwareViz
         xValues={metrics.createdAt}
         yValues={metrics.usedPercentMemory}
@@ -35,7 +35,7 @@
       />
     </div>
 
-    <div class="bg-white p-4 border-2 border-black rounded-lg shadow h-[500px]">
+    <div class="bg-white p-4 border-2 border-black rounded-lg shadow h-full">
       <HardwareViz
         xValues={metrics.createdAt}
         yValues={metrics.networkMbRecv}
@@ -45,7 +45,7 @@
     </div>
 
 
-    <div class="bg-white p-4 border-2 border-black rounded-lg shadow h-[500px]">
+    <div class="bg-white p-4 border-2 border-black rounded-lg shadow h-full">
       <HardwareViz
         xValues={metrics.createdAt}
         yValues={metrics.networkMbSent}
