@@ -5,7 +5,7 @@ import { getRegistryPath, RegistryType } from "$lib/utils";
 import { goto } from "$app/navigation";
 import { ServerPaths } from "$lib/components/api/routes";
 import { createInternalApiClient } from "$lib/api/internalClient";
-import type { HardwareMetrics } from "$lib/components/card/experiment/types";
+import type { UiHardwareMetrics } from "$lib/components/card/experiment/types";
 
 export const load: PageLoad = async ({ parent, fetch }) => {
   const { registryType, metadata } = await parent();
@@ -25,7 +25,7 @@ export const load: PageLoad = async ({ parent, fetch }) => {
       uid: metadata.uid,
     }
   );
-  const hardwareMetrics = (await resp.json()) as HardwareMetrics;
+  const hardwareMetrics = (await resp.json()) as UiHardwareMetrics;
 
   return { hardwareMetrics };
 };
