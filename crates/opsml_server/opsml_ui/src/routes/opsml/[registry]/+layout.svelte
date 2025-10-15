@@ -1,13 +1,13 @@
 <script lang="ts">
     let { children } = $props();
     import Sidebar from "$lib/components/nav/Sidebar.svelte";
-    import { page } from '$app/stores';
+    import { page } from '$app/state';
 </script>
 
 <div>
   <Sidebar>
-      {#key $page.params.card}
-          {@render children()}
-      {/key}
+    {#key page.params.registry}
+      {@render children()}
+    {/key}
   </Sidebar>
 </div>
