@@ -90,4 +90,6 @@ export enum ServerPaths {
   LLM_MONITORING_RECORDS = "/api/card/monitoring/llm/records",
   EXPERIMENT_GROUPED_METRICS = "/api/card/experiment/metrics/grouped",
   DATA_PROFILE = "/api/card/data/profile",
+  EXPERIMENT_METRIC_NAMES = "/api/card/experiment/metrics/names",
+  EXPERIMENT_RECENT = "/api/card/experiment/recent",
 }
