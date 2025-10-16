@@ -1,7 +1,7 @@
 
 <script lang="ts">
   import { onMount } from "svelte";
-  import type { PromptCard, ModelSettings } from "$lib/components/card/card_interfaces/promptcard";
+  import type { PromptCard  } from "$lib/components/card/card_interfaces/promptcard";
   import { Info, Diamond, Tags } from 'lucide-svelte';
   import CodeModal from "../CodeModal.svelte";
   import Pill from "$lib/components/utils/Pill.svelte";
