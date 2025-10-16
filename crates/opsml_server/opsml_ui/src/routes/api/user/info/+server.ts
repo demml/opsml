@@ -1,6 +1,6 @@
 import type { RequestHandler } from "./$types";
 import { json } from "@sveltejs/kit";
-import { getUser } from "$lib/server/user/util";
+import { getUser } from "$lib/server/user/utils";
 import { logger } from "$lib/server/logger";
 
 /**

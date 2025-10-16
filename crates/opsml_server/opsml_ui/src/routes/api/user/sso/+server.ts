@@ -1,6 +1,6 @@
 import { json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
-import { getSsoAuthURL } from "$lib/server/user/util";
+import { getSsoAuthURL } from "$lib/server/user/utils";
 import { logger } from "$lib/server/logger";
 
 /**

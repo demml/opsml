@@ -77,6 +77,7 @@ export enum ServerPaths {
   SSO_AUTH = "/api/user/sso",
   SSO_CALLBACK = "/api/user/sso/callback",
   USER = "/api/user/info",
+  UPDATE_USER = "/api/user/update",
   REGISTRY_PAGE = "/api/card/registry/page",
   REGISTRY_STATS = "/api/card/registry/stats",
   METADATA = "/api/card/metadata",
@@ -93,4 +94,5 @@ export enum ServerPaths {
   EXPERIMENT_METRIC_NAMES = "/api/card/experiment/metrics/names",
   EXPERIMENT_RECENT = "/api/card/experiment/recent",
   EXPERIMENT_HARDWARE = "/api/card/experiment/hardware",
+  CREATE_SPACE = "/api/space/create",
 }
