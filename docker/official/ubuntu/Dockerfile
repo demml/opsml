@@ -23,9 +23,8 @@ COPY ${OPSML_SERVER_BINARY} /usr/local/bin/opsml-server
 RUN chmod +x /usr/local/bin/opsml-server
 
 # Copy UI build (ui and node_modules)
-ARG OPSML_UI_BUILD
-COPY ${OPSML_UI_BUILD}/build /app/ui
-COPY ${OPSML_UI_BUILD}/node_modules /app/ui/node_modules
+COPY ${OPSML_SERVER_BINARY}/ui/build /app/ui
+COPY ${OPSML_SERVER_BINARY}/ui/node_modules /app/ui/node_modules
 
 
 # Copy nginx configuration
