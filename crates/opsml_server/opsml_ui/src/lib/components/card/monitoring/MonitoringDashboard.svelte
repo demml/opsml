@@ -250,7 +250,7 @@
 
     <!-- If LLM records are available -->
     {#if currentLLMRecordPage}
-      <div class="bg-white p-2 border-2 border-black rounded-lg shadow min-h-[6rem] max-h-[40rem]">
+      <div class="bg-white p-2 border-2 border-black rounded-lg shadow min-h-[6rem]">
         <LLMRecordTable
           space={currentConfig.space}
           name={currentConfig.name}

@@ -5,6 +5,7 @@
   import ExperimentCardLayout from '$lib/components/card/layouts/ExperimentCardLayout.svelte';
   import ServiceCardLayout from '$lib/components/card/layouts/ServiceCardLayout.svelte';
   import type { RegistryType } from '$lib/utils';
+  import PromptCardLayout from '$lib/components/card/layouts/PromptCardLayout.svelte';
 
   let { data, children }: LayoutProps = $props();
 
@@ -17,9 +18,8 @@
     data: DataCardLayout,
     experiment: ExperimentCardLayout,
     service: ServiceCardLayout,
-    mcp: ModelCardLayout, // Fallback for unknown types
-    prompt: ModelCardLayout // Fallback for unknown types
-
+    mcp: ServiceCardLayout,
+    prompt: PromptCardLayout,
     // @ts-ignore
   } as const satisfies Record<RegistryType, any>;
 

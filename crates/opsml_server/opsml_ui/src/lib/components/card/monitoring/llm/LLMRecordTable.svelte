@@ -66,47 +66,47 @@ let {
 </script>
 
 <div class="flex flex-col h-full" bind:this={parentContainer}>
-  <div class="items-center text-lg mr-2 font-bold text-primary-800">LLM Records</div>
+  <div class="items-center mr-2 font-bold text-primary-800">LLM Records</div>
   {#if pageItems.length === 0}
     <div class="flex items-center justify-center flex-1 text-center text-gray-500 text-lg text-primary-500 font-bold">
       No LLM Drift Records Found
     </div>
   {:else}
     <div class="overflow-auto w-full">
-      <table class="text-black border-collapse text-sm bg-white w-full">
-        <thead class="sticky top-0 z-10 bg-white" style="box-shadow: 0 2px 0 0 #000;">
+      <table class="text-black border-collapse text-xs bg-white w-full">
+        <thead class="sticky top-0 z-5 bg-white" style="box-shadow: 0 2px 0 0 #000;">
           <tr>
-            <th class="p-3 font-heading pl-6 text-left text-black">
+            <th class="p-2 font-heading pl-6 text-left text-black">
               <span class='px-2 py-1 rounded-full bg-primary-100 text-primary-800'>
                 ID
               </span>
             </th>
-            <th class="p-3 font-heading">
+            <th class="p-2 font-heading">
               <span class='px-2 py-1 rounded-full bg-primary-100 text-primary-800'>
                 Status
               </span>
             </th>
-            <th class="p-3 font-heading">
+            <th class="p-2 font-heading">
               <span class='px-2 py-1 rounded-full bg-primary-100 text-primary-800'>
                 Score
               </span>
             </th>
-            <th class="p-3 font-heading">
+            <th class="p-2 font-heading">
               <span class='px-2 py-1 rounded-full bg-primary-100 text-primary-800'>
                 Prompt
               </span>
             </th>
-            <th class="p-3 font-heading">
+            <th class="p-2 font-heading">
               <span class='px-2 py-1 rounded-full bg-primary-100 text-primary-800'>
                 Context
               </span>
             </th>
-            <th class="p-3 font-heading">
+            <th class="p-2 font-heading">
               <span class='px-2 py-1 rounded-full bg-primary-100 text-primary-800'>
                 Created At
               </span>
             </th>
-            <th class="p-3 font-heading">
+            <th class="p-2 font-heading">
               <span class='px-2 py-1 rounded-full bg-primary-100 text-primary-800'>
                 Processing Duration
               </span>
@@ -115,10 +115,10 @@ let {
         </thead>
         <tbody>
           {#each pageItems as record, i}
-            <tr class={`border-b-2 border-black hover:bg-primary-300 py-2 ${i % 2 === 0 ? 'bg-gray-100' : 'bg-white'}`}>
-              <td class="p-3 pl-8">{record.id}</td>
-              <td class="p-3 text-center">
-                <span class={`px-2 py-1 rounded-full border border-black text-xs font-medium ${
+            <tr class={`border-b-2 border-black hover:bg-primary-300 ${i % 2 === 0 ? 'bg-gray-100' : 'bg-white'}`}>
+              <td class="p-1 pl-8">{record.id}</td>
+              <td class="p-1 text-center">
+                <span class={`px-2 py-1 rounded-full border border-black text-xs ${
                   record.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
                   record.status === 'processing' ? 'bg-blue-100 text-blue-800' :
                   record.status === 'processed' ? 'bg-green-100 text-green-800' :
@@ -128,19 +128,19 @@ let {
                   {record.status}
                 </span>
               </td>
-              <td class="p-3 text-center"><CodeModal name='Score' code={record.score} /></td>
+              <td class="p-2 text-center"><CodeModal name='Score' code={record.score} /></td>
               {#if record.prompt}
-                <td class="p-3 text-center"><CodeModal name='Prompt' code={record.prompt} /></td>
+                <td class="p-2 text-center"><CodeModal name='Prompt' code={record.prompt} /></td>
                 {:else}
-                <td class="p-3 text-center"></td>
+                <td class="p-2 text-center"></td>
               {/if}
               {#if record.context}
-                <td class="p-3 text-center"><CodeModal name='Context' code={record.context} /></td>
+                <td class="p-2 text-center"><CodeModal name='Context' code={record.context} /></td>
                 {:else}
-                <td class="p-3 text-center"></td>
+                <td class="p-2 text-center"></td>
               {/if}
-              <td class="p-3 text-center">{record.created_at}</td>
-              <td class="p-3 text-center">
+              <td class="p-1 text-center">{record.created_at}</td>
+              <td class="p-1 text-center">
                 <span class="px-2 py-1 rounded-full border border-black text-xs font-medium">
                   {record.processing_duration !== undefined ? `${record.processing_duration / 1000} seconds` : 'N/A'}
                 </span>
