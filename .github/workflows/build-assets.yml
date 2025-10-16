@@ -92,16 +92,16 @@ jobs:
 
       - name: Build Binaries
         run: |
-          cargo build -p opsml-server --target-dir release --target ${{ matrix.target }} # TODO: change back to release
+          cargo build -p opsml-server --target ${{ matrix.target }} # TODO: change back to release
 
       - name: Prepare binary directory
         shell: bash
         run: |
           mkdir -p release-bin
           if [ "${{ contains(matrix.os, 'windows') }}" == "true" ]; then
-            cp target/${{ matrix.target }}/release/${{ matrix.binary_name }} release-bin/
+            cp target/${{ matrix.target }}/debug/${{ matrix.binary_name }} release-bin/
           else
-            cp target/${{ matrix.target }}/release/${{ matrix.binary_name }} release-bin/
+            cp target/${{ matrix.target }}/debug/${{ matrix.binary_name }} release-bin/
             chmod +x release-bin/${{ matrix.binary_name }}
           fi
           # Copy UI build for Docker builds
