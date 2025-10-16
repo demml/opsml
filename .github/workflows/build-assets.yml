@@ -106,7 +106,8 @@ jobs:
           fi
           # Copy UI build for Docker builds
           if [ "${{ matrix.target }}" == "x86_64-unknown-linux-gnu" ] || [ "${{ matrix.target }}" == "aarch64-unknown-linux-gnu" ]; then
-            cp -r crates/opsml_server/opsml_ui/build release-bin/ui || true
+            cp -r crates/opsml_server/opsml_ui/build release-bin/ui/build || true
+            cp -r crates/opsml_server/opsml_ui/node_modules release-bin/ui/node_modules || true
           fi
 
       - name: Create zip archive (Windows/macOS)
