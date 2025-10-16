@@ -1,5 +1,5 @@
 import type { RequestHandler } from "./$types";
-import { resetUserPassword } from "$lib/server/user/util";
+import { resetUserPassword } from "$lib/server/user/utils";
 import { json } from "@sveltejs/kit";
 
 /**

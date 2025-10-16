@@ -1,6 +1,6 @@
 import { json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
-import { exchangeSsoCallbackCode } from "$lib/server/user/util";
+import { exchangeSsoCallbackCode } from "$lib/server/user/utils";
 import {
   setTokenInCookies,
   setUsernameInCookies,

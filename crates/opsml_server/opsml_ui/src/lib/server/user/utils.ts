@@ -64,9 +64,9 @@ interface UpdateUserOptions {
 }
 
 export async function updateUser(
+  fetch: typeof globalThis.fetch,
   options: UpdateUserOptions,
-  username: string,
-  fetch: typeof globalThis.fetch
+  username: string
 ): Promise<UserResponse> {
   const request: UpdateUserRequest = {
     permissions: options.permissions,
