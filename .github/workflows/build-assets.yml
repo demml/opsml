@@ -211,7 +211,7 @@ jobs:
     needs: build
     name: Publish ARM64 Docker images
     runs-on: ubuntu-22.04
-    environment: release
+    #environment: release
     strategy:
       fail-fast: false
       matrix:
