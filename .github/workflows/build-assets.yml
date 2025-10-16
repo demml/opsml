@@ -92,7 +92,7 @@ jobs:
 
       - name: Build Binaries
         run: |
-          cargo build -p opsml-server --release --target ${{ matrix.target }}
+          cargo build -p opsml-server --target ${{ matrix.target }}
 
       - name: Prepare binary directory
         shell: bash
