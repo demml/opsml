@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { goto } from "$app/navigation";
   import { MessageSquare, Bot, Puzzle, ExternalLink, BookOpen } from 'lucide-svelte';
   
   interface RegistryCard {
