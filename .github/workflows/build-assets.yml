@@ -8,6 +8,9 @@ on:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - docker-dev # remove this later
   release:
     types: [published]
 
@@ -22,11 +25,11 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu-22.04
-            target: x86_64-unknown-linux-gnu
-            archive: tar.gz
-            binary_name: opsml-server
-            archive_name: opsml-server-x86_64-linux-gnu
+          #- os: ubuntu-22.04
+          #  target: x86_64-unknown-linux-gnu
+          #  archive: tar.gz
+          #  binary_name: opsml-server
+          #  archive_name: opsml-server-x86_64-linux-gnu
 
           - os: ubuntu-22.04-arm
             target: aarch64-unknown-linux-gnu
@@ -34,23 +37,23 @@ jobs:
             binary_name: opsml-server
             archive_name: opsml-server-aarch64-linux-gnu
 
-          - os: macos-latest
-            target: aarch64-apple-darwin
-            archive: zip
-            binary_name: opsml-server
-            archive_name: opsml-server-aarch64-darwin
-
-          - os: macos-13
-            target: x86_64-apple-darwin
-            archive: zip
-            binary_name: opsml-server
-            archive_name: opsml-server-x86_64-darwin
-
-          - os: windows-latest
-            target: x86_64-pc-windows-msvc
-            archive: zip
-            binary_name: opsml-server.exe
-            archive_name: opsml-server-x86_64-windows
+          #- os: macos-latest
+          #  target: aarch64-apple-darwin
+          #  archive: zip
+          #  binary_name: opsml-server
+          #  archive_name: opsml-server-aarch64-darwin
+    #
+    #- os: macos-13
+    #  target: x86_64-apple-darwin
+    #  archive: zip
+    #  binary_name: opsml-server
+    #  archive_name: opsml-server-x86_64-darwin
+    #
+    #- os: windows-latest
+    #  target: x86_64-pc-windows-msvc
+    #  archive: zip
+    #  binary_name: opsml-server.exe
+    #  archive_name: opsml-server-x86_64-windows
 
     runs-on: ${{ matrix.os }}
 
@@ -78,19 +81,20 @@ jobs:
         with:
           python-version: ${{ env.INTERPRETER }}
 
-      - name: Install UI dependencies
-        run: |
-          make install.ui.deps
-          make build.ui
-
       - name: Update apt repositories (Linux)
         if: contains(matrix.os, 'ubuntu')
         run: |
           sudo apt-get update -y
           sudo apt-get install -y build-essential
 
+      - name: Install UI dependencies
+        run: |
+          make install.ui.deps
+          make build.ui
+
       - name: Build Binaries
-        run: cargo build -p opsml-server --release --target ${{ matrix.target }}
+        run: |
+          cargo build -p opsml-server --release --target ${{ matrix.target }}
 
       - name: Prepare binary directory
         shell: bash
@@ -101,6 +105,10 @@ jobs:
           else
             cp target/${{ matrix.target }}/release/${{ matrix.binary_name }} release-bin/
             chmod +x release-bin/${{ matrix.binary_name }}
+          fi
+          # Copy UI build for Docker builds
+          if [ "${{ matrix.target }}" == "x86_64-unknown-linux-gnu" ] || [ "${{ matrix.target }}" == "aarch64-unknown-linux-gnu" ]; then
+            cp -r crates/opsml_server/opsml_ui/build release-bin/ui || true
           fi
 
       - name: Create zip archive (Windows/macOS)
@@ -201,7 +209,7 @@ jobs:
           cache-to: type=gha,mode=max
 
   publish-docker-images-arm64:
-    if: github.event_name == 'release'
+    #if: github.event_name == 'release'
     needs: build
     name: Publish ARM64 Docker images
     runs-on: ubuntu-22.04
@@ -212,14 +220,14 @@ jobs:
         include:
           - image: "ubuntu"
             tag_suffix: "ubuntu"
-          - image: "alpine"
-            tag_suffix: "alpine"
-          - image: "scratch"
-            tag_suffix: "scratch"
-          - image: "debian"
-            tag_suffix: "debian"
-          - image: "distroless"
-            tag_suffix: "distroless"
+          #- image: "alpine"
+          #  tag_suffix: "alpine"
+          #- image: "scratch"
+          #  tag_suffix: "scratch"
+          #- image: "debian"
+          #  tag_suffix: "debian"
+          #- image: "distroless"
+          #  tag_suffix: "distroless"
 
     steps:
       - name: Checkout Code
@@ -255,7 +263,7 @@ jobs:
           if [[ "${{ github.event_name }}" == "release" ]]; then
             echo "VERSION=${{ github.event.release.tag_name }}" >> $GITHUB_OUTPUT
           else
-            echo "VERSION=latest" >> $GITHUB_OUTPUT
+            echo "VERSION=dev" >> $GITHUB_OUTPUT # use 'dev' to avoid confusion with latest
           fi
 
       - name: Login to DockerHub

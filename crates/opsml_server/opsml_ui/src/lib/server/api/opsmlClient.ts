@@ -15,8 +15,9 @@ export class OpsmlClient {
   }
 
   private getBaseUrl(): string {
-    // Always point to your Rust backend
-    return "http://localhost:8080";
+    // Use OPSML_SERVER_PORT from process.env or fallback to 8080
+    const port = process.env.OPSML_SERVER_PORT ?? "8080";
+    return `http://localhost:${port}`;
   }
 
   /**

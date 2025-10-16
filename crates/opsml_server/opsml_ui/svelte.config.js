@@ -9,11 +9,7 @@ const config = {
     adapter: adapter({
       out: "build",
       precompress: false,
-      envPrefix: "OPSML_",
     }),
-    env: {
-      privatePrefix: "OPSML_",
-    },
   },
   extensions: [".svelte"],
 };

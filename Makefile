@@ -153,7 +153,7 @@ dev.frontend:
 
 .PHONY: build.backend
 build.backend:
-	cargo build --release -p opsml-server
+	cargo build -p opsml-server --target
 
 .PHONY: start.backend
 start.backend: build.backend
@@ -181,3 +181,21 @@ start.both:
 stop.both:
 	-lsof -ti:3000 | xargs kill -9 2>/dev/null || true
 	-lsof -ti:8080 | xargs kill -9 2>/dev/null || true
+
+
+###### Docker Build Tests ######
+.PHONY: docker.build.local
+docker.build.local: build.ui
+	docker build --no-cache -t opsml:local \
+		--platform linux/arm64 \
+		--build-arg OPSML_SERVER_BINARY=./target/release/opsml-server \
+		--build-arg OPSML_UI_BUILD=./crates/opsml_server/opsml_ui \
+		-f docker/official/ubuntu/Dockerfile .
+
+.PHONY: docker.run.local
+docker.run.local:
+	docker run --rm -p 8080:80 opsml:local
+
+.PHONY: docker.run.local.background
+docker.run.local.background:
+	docker run -d --name opsml-local -p 8080:80 opsml:local
