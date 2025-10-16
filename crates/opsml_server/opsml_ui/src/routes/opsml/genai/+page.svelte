@@ -34,10 +34,6 @@
     }
   ];
 
-  function handleCardClick(path: string) {
-    goto(path);
-  }
-
   function handleTutorialClick() {
     // Replace with your actual tutorial URL
     window.open("https://github.com/demml/opsml/tree/main/py-opsml/examples/genai", "_blank");
