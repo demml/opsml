@@ -92,7 +92,7 @@ jobs:
 
       - name: Build Binaries
         run: |
-          cargo build -p opsml-server --target ${{ matrix.target }}
+          cargo build -p opsml-server --target ${{ matrix.target }} # TODO: change back to release
 
       - name: Prepare binary directory
         shell: bash
@@ -207,7 +207,7 @@ jobs:
           cache-to: type=gha,mode=max
 
   publish-docker-images-arm64:
-    #if: github.event_name == 'release'
+    #if: github.event_name == 'release' # TODO: change back to release only
     needs: build
     name: Publish ARM64 Docker images
     runs-on: ubuntu-22.04
@@ -218,7 +218,7 @@ jobs:
         include:
           - image: "ubuntu"
             tag_suffix: "ubuntu"
-          #- image: "alpine"
+          #- image: "alpine" # TODO: change back
           #  tag_suffix: "alpine"
           #- image: "scratch"
           #  tag_suffix: "scratch"
@@ -261,7 +261,7 @@ jobs:
           if [[ "${{ github.event_name }}" == "release" ]]; then
             echo "VERSION=${{ github.event.release.tag_name }}" >> $GITHUB_OUTPUT
           else
-            echo "VERSION=dev" >> $GITHUB_OUTPUT # use 'dev' to avoid confusion with latest
+            echo "VERSION=dev" >> $GITHUB_OUTPUT # TODO: change back to latest
           fi
 
       - name: Login to DockerHub
