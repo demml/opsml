@@ -11,7 +11,6 @@ use crate::core::middleware::metrics::track_metrics;
 use crate::core::scouter::route::get_scouter_router;
 use crate::core::settings::route::get_settings_router;
 use crate::core::state::AppState;
-use crate::core::ui::get_ui_router;
 use crate::core::user::route::get_user_router;
 use anyhow::Result;
 use axum::http::{
@@ -48,7 +47,6 @@ pub async fn create_router(app_state: Arc<AppState>) -> Result<Router> {
     let user_routes = get_user_router(ROUTE_PREFIX).await?;
     let scouter_routes = get_scouter_router(ROUTE_PREFIX).await?;
     let genai_routes = get_genai_router(ROUTE_PREFIX).await?;
-    let ui_routes = get_ui_router().await?;
 
     // merge all the routes except the auth routes
     // All routes except the auth, healthcheck, ui and ui settings routes are protect by the auth middleware
@@ -77,7 +75,6 @@ pub async fn create_router(app_state: Arc<AppState>) -> Result<Router> {
         .merge(health_routes)
         .merge(settings_routes)
         .merge(auth_routes)
-        .merge(ui_routes)
         .route_layer(middleware::from_fn(track_metrics))
         .layer(cors)
         .with_state(app_state))
