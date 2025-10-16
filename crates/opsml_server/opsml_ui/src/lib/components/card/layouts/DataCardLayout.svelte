@@ -97,7 +97,7 @@
         {@const isActive = item.isActive(activeTab)}
           <a
             href={`${basePath}/${item.key}`}
-            class="flex items-center gap-x-2 border-b-3 {isActive ? 'border-secondary-500' : 'border-transparent'} hover:border-secondary-500 hover:border-b-3 transition-colors focus:outline-none focus:ring-2 focus:ring-secondary-500 focus:ring-offset-2 rounded-t"
+            class="flex items-center gap-x-2 border-b-3 {isActive ? 'border-secondary-500' : 'border-transparent'} hover:border-secondary-500 hover:border-b-3 transition-colors"
             data-sveltekit-preload-data="hover"
             aria-current={isActive ? 'page' : undefined}
           >

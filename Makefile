@@ -125,7 +125,6 @@ install.ui.deps:
 build.ui:
 	cd $(UI_DIR) && pnpm install
 	cd $(UI_DIR) && pnpm build
-	touch $(UI_DIR)/site/.gitkeep # to make sure the site folder is not ignored by git
 
 ui.dev:
 	cd $(UI_DIR) && pnpm run dev
@@ -176,7 +175,7 @@ start.both:
 	@echo "Starting both servers in production mode..."
 	@echo "Backend API: http://localhost:8080" 
 	@echo "Frontend SSR: http://localhost:3000"
-	@make -j2 start.backend start.frontend
+	@make -j2 dev.backend start.frontend
 
 .PHONY: stop.both
 stop.both:
