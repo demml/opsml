@@ -95,4 +95,5 @@ export enum ServerPaths {
   EXPERIMENT_RECENT = "/api/card/experiment/recent",
   EXPERIMENT_HARDWARE = "/api/card/experiment/hardware",
   CREATE_SPACE = "/api/space/create",
+  HEALTHCHECK = "/api/health",
 }
