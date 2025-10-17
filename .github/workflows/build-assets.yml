@@ -8,7 +8,6 @@ on:
   push:
     branches:
       - main
-  pull_request:
   release:
     types: [published]
 
@@ -34,18 +33,6 @@ jobs:
             archive: tar.gz
             binary_name: opsml-server
             archive_name: opsml-server-aarch64-linux-gnu
-
-    #- os: macos-13
-    #  target: x86_64-apple-darwin
-    #  archive: zip
-    #  binary_name: opsml-server
-    #  archive_name: opsml-server-x86_64-darwin
-    #
-    #- os: windows-latest
-    #  target: x86_64-pc-windows-msvc
-    #  archive: zip
-    #  binary_name: opsml-server.exe
-    #  archive_name: opsml-server-x86_64-windows
 
     runs-on: ${{ matrix.os }}
 
@@ -89,16 +76,16 @@ jobs:
 
       - name: Build Binaries
         run: |
-          cargo build -p opsml-server --target ${{ matrix.target }}
+          cargo build -p opsml-server --release --target ${{ matrix.target }}
 
       - name: Prepare binary directory
         shell: bash
         run: |
           mkdir -p release-bin
           if [ "${{ contains(matrix.os, 'windows') }}" == "true" ]; then
-            cp target/${{ matrix.target }}/debug/${{ matrix.binary_name }} release-bin/
+            cp target/${{ matrix.target }}/release/${{ matrix.binary_name }} release-bin/
           else
-            cp target/${{ matrix.target }}/debug/${{ matrix.binary_name }} release-bin/
+            cp target/${{ matrix.target }}/release/${{ matrix.binary_name }} release-bin/
             chmod +x release-bin/${{ matrix.binary_name }}
           fi
           # Copy UI build for Docker builds
@@ -106,17 +93,6 @@ jobs:
             mkdir -p release-bin/ui
             cp -r crates/opsml_server/opsml_ui/build release-bin/ui/build || true
             cp -r crates/opsml_server/opsml_ui/node_modules release-bin/ui/node_modules || true
-          fi
-
-      - name: Create zip archive (Windows/macOS)
-        if: contains(matrix.archive, 'zip')
-        shell: bash
-        run: |
-          cd release-bin
-          if [ "${{ contains(matrix.os, 'windows') }}" == "true" ]; then
-            7z a -tzip ../${{ matrix.archive_name }}.zip ./*
-          else
-            zip -r ../${{ matrix.archive_name }}.zip ./*
           fi
 
       - name: Create tar.gz archive (Linux)
@@ -145,8 +121,13 @@ jobs:
         include:
           - image: "ubuntu"
             tag_suffix: "ubuntu"
+            artifact: "opsml-server-x86_64-linux-gnu"
           - image: "debian"
             tag_suffix: "debian"
+            artifact: "opsml-server-x86_64-linux-gnu"
+          - image: "rocky"
+            tag_suffix: "rocky-minimal"
+            artifact: "opsml-server-x86_64-linux-gnu"
 
     steps:
       - name: Checkout Code
@@ -163,12 +144,15 @@ jobs:
 
       - name: Extract binary
         run: |
-          mkdir -p binary
-          tar -xzf ./artifacts/opsml-server-x86_64-linux-gnu.tar.gz -C ./binary
-
-      - name: Set up binary permissions
-        run: |
-          chmod +x ./binary/opsml-server
+          archive="./artifacts/${{ matrix.artifact }}.tar.gz"
+          if [ -f "$archive" ]; then
+            mkdir -p binary
+            tar -xzf "$archive" -C ./binary
+            chmod +x ./binary/opsml-server
+          else
+            echo "x86_64 binary $archive not found, skipping this build"
+            exit 1
+          fi
 
       - name: Set version tag
         id: set-version
@@ -192,7 +176,7 @@ jobs:
           file: docker/official/${{ matrix.image }}/Dockerfile
           push: true
           build-args: |
-            OPSML_SERVER_BINARY=./binary/opsml-server
+            OPSML_SERVER_BINARY=./binary
           tags: |
             demml/opsml:${{ matrix.tag_suffix }}-amd64-${{ steps.set-version.outputs.VERSION }}
             ${{ github.event_name == 'release' && format('demml/opsml:{0}-amd64-latest', matrix.tag_suffix) || '' }}
@@ -200,11 +184,11 @@ jobs:
           cache-to: type=gha,mode=max
 
   publish-docker-images-arm64:
-    #if: github.event_name == 'release' # TODO: change back to release only
+    if: github.event_name == 'release'
     needs: build
     name: Publish ARM64 Docker images
     runs-on: ubuntu-22.04
-    #environment: release
+    environment: release
     strategy:
       fail-fast: false
       matrix:
@@ -253,7 +237,7 @@ jobs:
           if [[ "${{ github.event_name }}" == "release" ]]; then
             echo "VERSION=${{ github.event.release.tag_name }}" >> $GITHUB_OUTPUT
           else
-            echo "VERSION=dev" >> $GITHUB_OUTPUT # TODO: change back to latest
+            echo "VERSION=latest" >> $GITHUB_OUTPUT
           fi
 
       - name: Login to DockerHub
