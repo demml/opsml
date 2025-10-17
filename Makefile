@@ -122,7 +122,7 @@ install.ui.deps:
 	cd $(UI_DIR) && pnpm install
 
 .PHONY: ui.install.deps.prod
-install.ui.deps:
+install.ui.deps.prod:
 	cd $(UI_DIR) && pnpm install --prod
 
 .PHONY: ui.build
