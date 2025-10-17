@@ -1,4 +1,4 @@
-FROM rockylinux:9.3-minimal
+FROM rockylinux:9-minimal
 
 ENV LANG=en_US.UTF-8
 ENV LANGUAGE=en_US.UTF-8
