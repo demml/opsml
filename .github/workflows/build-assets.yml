@@ -23,11 +23,11 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          #- os: ubuntu-22.04
-          #  target: x86_64-unknown-linux-gnu
-          #  archive: tar.gz
-          #  binary_name: opsml-server
-          #  archive_name: opsml-server-x86_64-linux-gnu
+          - os: ubuntu-22.04
+            target: x86_64-unknown-linux-gnu
+            archive: tar.gz
+            binary_name: opsml-server
+            archive_name: opsml-server-x86_64-linux-gnu
 
           - os: ubuntu-22.04-arm
             target: aarch64-unknown-linux-gnu
@@ -35,11 +35,17 @@ jobs:
             binary_name: opsml-server
             archive_name: opsml-server-aarch64-linux-gnu
 
-          #- os: macos-latest
-          #  target: aarch64-apple-darwin
-          #  archive: zip
-          #  binary_name: opsml-server
-          #  archive_name: opsml-server-aarch64-darwin
+          - os: ubuntu-22.04
+            target: x86_64-unknown-linux-musl
+            archive: tar.gz
+            binary_name: opsml-server
+            archive_name: opsml-server-x86_64-musl
+
+          - os: ubuntu-22.04-arm
+            target: aarch64-unknown-linux-musl
+            archive: tar.gz
+            binary_name: opsml-server
+            archive_name: opsml-server-aarch64-musl
     #
     #- os: macos-13
     #  target: x86_64-apple-darwin
@@ -67,6 +73,12 @@ jobs:
           rustup update
           rustup target add ${{ matrix.target }}
           rustup component add rust-src
+
+      - name: Install musl cross-compilation dependencies
+        if: contains(matrix.target, 'musl')
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y musl-tools gcc-aarch64-linux-gnu
 
       - uses: pnpm/action-setup@v4
         name: Build UI
@@ -220,10 +232,13 @@ jobs:
         include:
           - image: "ubuntu"
             tag_suffix: "ubuntu"
+            artifact: "opsml-server-aarch64-linux-gnu"
           - image: "alpine"
             tag_suffix: "alpine"
+            artifact: "opsml-server-aarch64-musl"
           - image: "debian"
             tag_suffix: "debian"
+            artifact: "opsml-server-aarch64-linux-gnu"
 
     steps:
       - name: Checkout Code
@@ -243,26 +258,15 @@ jobs:
 
       - name: Extract binary
         run: |
-          if [ -f "./artifacts/opsml-server-aarch64-linux-gnu.tar.gz" ]; then
+          archive="./artifacts/${{ matrix.artifact }}.tar.gz"
+          if [ -f "$archive" ]; then
             mkdir -p binary
-            tar -xzf ./artifacts/opsml-server-aarch64-linux-gnu.tar.gz -C ./binary
+            tar -xzf "$archive" -C ./binary
             chmod +x ./binary/opsml-server
           else
-            echo "ARM64 binary not found, skipping this build"
+            echo "ARM64 binary $archive not found, skipping this build"
             exit 1
           fi
-        continue-on-error: true
-
-      - name: Debug binary directory structure
-        run: |
-          echo "=== Binary directory structure ==="
-          find ./binary -type f -o -type d | sort
-          echo "=== UI assets check ==="
-          ls -la ./binary/ui/ 2>/dev/null || echo "No ui directory found"
-          ls -la ./binary/ui/build/ 2>/dev/null || echo "No ui/build directory found"
-          ls -la ./binary/ui/node_modules/ 2>/dev/null || echo "No ui/node_modules directory found"
-          echo "=== Total files in binary directory ==="
-          find ./binary -type f | wc -l
 
       - name: Set version tag
         id: set-version
