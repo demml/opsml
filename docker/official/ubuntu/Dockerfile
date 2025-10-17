@@ -19,9 +19,9 @@ RUN apt-get update --no-install-recommends \
 ARG OPSML_SERVER_PORT=8080
 ARG OPSML_SERVER_BINARY
 
-COPY ${OPSML_SERVER_BINARY}/opsml-server /usr/local/bin/opsml-server
-COPY ${OPSML_SERVER_BINARY}/ui/build /app/ui/build/
-COPY ${OPSML_SERVER_BINARY}/ui/node_modules /app/ui/node_modules/
+COPY --chown=opsml:opsml ${OPSML_SERVER_BINARY}/ui/node_modules /app/ui/node_modules/
+COPY --chown=opsml:opsml ${OPSML_SERVER_BINARY}/ui/build /app/ui/build/
+COPY --chown=opsml:opsml ${OPSML_SERVER_BINARY}/opsml-server /usr/local/bin/opsml-server
 COPY docker/official/ubuntu/nginx/nginx.conf /etc/nginx/nginx.conf
 COPY docker/official/ubuntu/entrypoint.sh /entrypoint.sh
 
@@ -30,13 +30,12 @@ RUN mkdir -p /var/log/nginx /var/run \
   && rm -f /etc/nginx/sites-enabled/default \
   && chmod +x /entrypoint.sh \
   && chmod +x /usr/local/bin/opsml-server \
-  && chown -R opsml:opsml /app \
-  && chown -R opsml:opsml /var/log/nginx /var/run \
-  && chown opsml:opsml /usr/local/bin/opsml-server
+  && chown -R opsml:opsml /var/log/nginx /var/run
 
 ENV OPSML_SERVER_PORT=${OPSML_SERVER_PORT}
 
-# Switch to non-root user
+WORKDIR /app
+
 USER opsml
 
 EXPOSE 8000
