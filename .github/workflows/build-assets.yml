@@ -257,6 +257,17 @@ jobs:
           fi
         continue-on-error: true
 
+      - name: Debug binary directory structure
+        run: |
+          echo "=== Binary directory structure ==="
+          find ./binary -type f -o -type d | sort
+          echo "=== UI assets check ==="
+          ls -la ./binary/ui/ 2>/dev/null || echo "No ui directory found"
+          ls -la ./binary/ui/build/ 2>/dev/null || echo "No ui/build directory found"
+          ls -la ./binary/ui/node_modules/ 2>/dev/null || echo "No ui/node_modules directory found"
+          echo "=== Total files in binary directory ==="
+          find ./binary -type f | wc -l
+
       - name: Set version tag
         id: set-version
         run: |
@@ -280,7 +291,7 @@ jobs:
           push: true
           platforms: linux/arm64
           build-args: |
-            OPSML_SERVER_BINARY=./binary/opsml-server
+            OPSML_SERVER_BINARY=./binary
           tags: |
             demml/opsml:${{ matrix.tag_suffix }}-arm64-${{ steps.set-version.outputs.VERSION }}
             ${{ github.event_name == 'release' && format('demml/opsml:{0}-arm64-latest', matrix.tag_suffix) || '' }}
