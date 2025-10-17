@@ -1,4 +1,4 @@
-FROM ubuntu:latest
+FROM ubuntu:24.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV LANG=en_US.UTF-8
@@ -22,8 +22,8 @@ ARG OPSML_SERVER_BINARY
 COPY --chown=opsml:opsml ${OPSML_SERVER_BINARY}/ui/node_modules /app/ui/node_modules/
 COPY --chown=opsml:opsml ${OPSML_SERVER_BINARY}/ui/build /app/ui/build/
 COPY --chown=opsml:opsml ${OPSML_SERVER_BINARY}/opsml-server /usr/local/bin/opsml-server
-COPY docker/official/ubuntu/nginx/nginx.conf /etc/nginx/nginx.conf
-COPY docker/official/ubuntu/entrypoint.sh /entrypoint.sh
+COPY docker/extras/nginx/nginx.conf /etc/nginx/nginx.conf
+COPY docker/extras/entrypoint.sh /entrypoint.sh
 
 # Set permissions and create directories
 RUN mkdir -p /var/log/nginx /var/run \

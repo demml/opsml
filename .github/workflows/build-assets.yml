@@ -220,14 +220,10 @@ jobs:
         include:
           - image: "ubuntu"
             tag_suffix: "ubuntu"
-          #- image: "alpine" # TODO: change back
-          #  tag_suffix: "alpine"
-          #- image: "scratch"
-          #  tag_suffix: "scratch"
-          #- image: "debian"
-          #  tag_suffix: "debian"
-          #- image: "distroless"
-          #  tag_suffix: "distroless"
+          - image: "alpine"
+            tag_suffix: "alpine"
+          - image: "debian"
+            tag_suffix: "debian"
 
     steps:
       - name: Checkout Code
