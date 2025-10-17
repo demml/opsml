@@ -78,7 +78,18 @@ jobs:
         if: contains(matrix.target, 'musl')
         run: |
           sudo apt-get update -y
-          sudo apt-get install -y musl-tools gcc-aarch64-linux-gnu
+          # Install musl tools and both GNU and musl cross-compilers
+          sudo apt-get install -y musl-tools
+          # For x86_64 musl targets
+          if [[ "${{ matrix.target }}" == "x86_64-unknown-linux-musl" ]]; then
+            sudo apt-get install -y musl-dev gcc-x86-64-linux-gnu g++-x86-64-linux-gnu
+          fi
+          # For aarch64 musl targets  
+          if [[ "${{ matrix.target }}" == "aarch64-unknown-linux-musl" ]]; then
+            sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
+            # Also install musl cross-compilers if available
+            sudo apt-get install -y gcc-aarch64-linux-musl g++-aarch64-linux-musl || true
+          fi
 
       - uses: pnpm/action-setup@v4
         name: Build UI
@@ -91,20 +102,28 @@ jobs:
         with:
           python-version: ${{ env.INTERPRETER }}
 
-      - name: Update apt repositories (Linux)
-        if: contains(matrix.os, 'ubuntu')
-        run: |
-          sudo apt-get update -y
-          sudo apt-get install -y build-essential
-
       - name: Install UI dependencies
         run: |
-          make install.ui.deps.prod
-          make build.ui
+          make build.ui.prod
 
       - name: Build Binaries
+        if: matrix.target == 'aarch64-unknown-linux-musl'
         run: |
-          cargo build -p opsml-server --target ${{ matrix.target }} # TODO: change back to release
+          # Set up cross-compilation environment
+          export CC=aarch64-linux-musl-gcc
+          export CXX=aarch64-linux-musl-g++
+          export CMAKE_C_COMPILER=/usr/bin/aarch64-linux-musl-gcc
+          export CMAKE_CXX_COMPILER=/usr/bin/aarch64-linux-musl-g++
+          export CARGO_TARGET_AARCH64_UNKNOWN_LINUX_MUSL_LINKER=aarch64-linux-musl-gcc
+          # Verify compilers exist
+          which aarch64-linux-musl-gcc || echo "C compiler not found"
+          which aarch64-linux-musl-g++ || echo "C++ compiler not found"
+          cargo build -p opsml-server --target ${{ matrix.target }}
+
+      - name: Build Binaries
+        if: matrix.target != 'aarch64-unknown-linux-musl'
+        run: |
+          cargo build -p opsml-server --target ${{ matrix.target }}
 
       - name: Prepare binary directory
         shell: bash

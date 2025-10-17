@@ -130,6 +130,11 @@ build.ui:
 	cd $(UI_DIR) && pnpm install
 	cd $(UI_DIR) && pnpm build
 
+.PHONY: ui.build.prod
+build.ui.prod:
+	cd $(UI_DIR) && pnpm install --prod
+	cd $(UI_DIR) && pnpm build
+
 ui.dev:
 	cd $(UI_DIR) && pnpm run dev
 
