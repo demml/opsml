@@ -16,28 +16,38 @@ RUN apt-get update --no-install-recommends \
 
 
 ARG OPSML_SERVER_PORT=8080
-
-# Copy rust binary
 ARG OPSML_SERVER_BINARY
-COPY ${OPSML_SERVER_BINARY} /usr/local/bin/opsml-server
-RUN chmod +x /usr/local/bin/opsml-server
 
-# Copy UI build (ui and node_modules)
-COPY ${OPSML_SERVER_BINARY}/ui/build /app/ui
-COPY ${OPSML_SERVER_BINARY}/ui/node_modules /app/ui/node_modules
+# Debug: List contents of the source directory
+RUN echo "=== Debugging source directory ===" && \
+    find ${OPSML_SERVER_BINARY} -type f -o -type d | sort || echo "Source directory not found"
 
+# Copy rust binary with validation
+COPY ${OPSML_SERVER_BINARY}/opsml-server /usr/local/bin/opsml-server
+RUN chmod +x /usr/local/bin/opsml-server && \
+    /usr/local/bin/opsml-server --version || echo "Binary validation failed"
 
-# Copy nginx configuration
+# Create app directory structure
+RUN mkdir -p /app/ui/build /app/ui/node_modules
+
+# Copy UI build assets with proper error handling and fallbacks
+COPY ${OPSML_SERVER_BINARY}/ui/build /app/ui/build/
+RUN echo "UI build files copied:" && \
+    find /app/ui/build -type f | head -10 || echo "No UI build files found"
+
+# Copy node_modules (optional for production, mainly for development)
+COPY ${OPSML_SERVER_BINARY}/ui/node_modules /app/ui/node_modules/
+RUN echo "Node modules copied:" && \
+    ls -la /app/ui/node_modules/ | head -10 || echo "No node_modules found"
+
+# Copy configuration
 COPY docker/official/ubuntu/nginx/nginx.conf /etc/nginx/nginx.conf
-
-# Copy supervisor configuration
 COPY docker/official/ubuntu/supervisor/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 # Create necessary directories and enable nginx site
 RUN mkdir -p /var/log/supervisor /var/log/nginx /var/run \
   && ln -sf /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default \
   && rm -f /etc/nginx/sites-enabled/default
-
 
 ENV OPSML_SERVER_PORT=${OPSML_SERVER_PORT}
 
