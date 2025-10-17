@@ -119,7 +119,7 @@ ui.update.deps:
 
 .PHONY: ui.install.deps
 install.ui.deps:
-	cd $(UI_DIR) && pnpm install
+	cd $(UI_DIR) && pnpm install --filter-prod
 
 .PHONY: ui.build
 build.ui:
