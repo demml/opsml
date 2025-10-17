@@ -76,66 +76,65 @@ jobs:
 
       - name: Install required packages
         run: |
-          |
-            # Install required packages
-            if command -v yum &> /dev/null; then
-                yum update -y && yum install -y perl-core openssl openssl-devel pkgconfig libatomic
+          # Install required packages
+          if command -v yum &> /dev/null; then
+              yum update -y && yum install -y perl-core openssl openssl-devel pkgconfig libatomic
 
-                # If we're running on i686 we need to symlink libatomic
-                # in order to build openssl with -latomic flag.
-                if [[ ! -d "/usr/lib64" ]]; then
-                    ln -s /usr/lib/libatomic.so.1 /usr/lib/libatomic.so
-                fi
-            else
-                # If we're running on debian-based system.
-                apt update -y && apt-get install -y libssl-dev openssl pkg-config
-            fi
+              # If we're running on i686 we need to symlink libatomic
+              # in order to build openssl with -latomic flag.
+              if [[ ! -d "/usr/lib64" ]]; then
+                  ln -s /usr/lib/libatomic.so.1 /usr/lib/libatomic.so
+              fi
+          else
+              # If we're running on debian-based system.
+              apt update -y && apt-get install -y libssl-dev openssl pkg-config
+          fi
 
-            # Install bindgen CLI
-            cargo install --force --locked bindgen-cli
+          # Install bindgen CLI
+          cargo install --force --locked bindgen-cli
 
-            # Determine architecture and install CMake
-            ARCH=$(uname -m)
-            echo "Detected architecture: $ARCH"
+          # Determine architecture and install CMake
+          ARCH=$(uname -m)
+          echo "Detected architecture: $ARCH"
 
-            if [[ "$ARCH" == "x86_64" ]]; then
-                echo "Downloading CMake for x86_64 architecture"
-                curl -L https://github.com/Kitware/CMake/releases/download/v3.26.4/cmake-3.26.4-linux-x86_64.sh -o cmake.sh
-                chmod +x cmake.sh
-                ./cmake.sh --skip-license --prefix=/usr/local
-            elif [[ "$ARCH" == "aarch64" ]]; then
-                echo "Downloading CMake for aarch64 architecture"
-                curl -L https://github.com/Kitware/CMake/releases/download/v3.26.4/cmake-3.26.4-linux-aarch64.sh -o cmake.sh
-                chmod +x cmake.sh
-                ./cmake.sh --skip-license --prefix=/usr/local
-            elif [[ "$ARCH" == "i686" ]]; then
-                echo "Downloading CMake for x86 architecture"
-                curl -L https://github.com/Kitware/CMake/releases/download/v3.26.4/cmake-3.26.4.tar.gz -o cmake.tar.gz
-                tar -xzf cmake.tar.gz
-                cd cmake-3.26.4
-                ./bootstrap --prefix=/usr/local
-                make -j$(nproc)
-                make install
-                cd ..
-            else
-                echo "Unsupported architecture: $ARCH"
-                exit 1
-            fi
+          if [[ "$ARCH" == "x86_64" ]]; then
+              echo "Downloading CMake for x86_64 architecture"
+              curl -L https://github.com/Kitware/CMake/releases/download/v3.26.4/cmake-3.26.4-linux-x86_64.sh -o cmake.sh
+              chmod +x cmake.sh
+              ./cmake.sh --skip-license --prefix=/usr/local
+          elif [[ "$ARCH" == "aarch64" ]]; then
+              echo "Downloading CMake for aarch64 architecture"
+              curl -L https://github.com/Kitware/CMake/releases/download/v3.26.4/cmake-3.26.4-linux-aarch64.sh -o cmake.sh
+              chmod +x cmake.sh
+              ./cmake.sh --skip-license --prefix=/usr/local
+          elif [[ "$ARCH" == "i686" ]]; then
+              echo "Downloading CMake for x86 architecture"
+              curl -L https://github.com/Kitware/CMake/releases/download/v3.26.4/cmake-3.26.4.tar.gz -o cmake.tar.gz
+              tar -xzf cmake.tar.gz
+              cd cmake-3.26.4
+              ./bootstrap --prefix=/usr/local
+              make -j$(nproc)
+              make install
+              cd ..
+          else
+              echo "Unsupported architecture: $ARCH"
+              exit 1
+          fi
 
-            cmake --version
+          cmake --version
 
-            # Set ARM64-specific environment variables for simsimd
-            if [[ "$ARCH" == "aarch64" ]]; then
-                echo "Setting up ARM64 build environment"
-                export SIMSIMD_DISABLE_SVE=1
-                export SIMSIMD_TARGET_SVE=0
-                export SIMSIMD_TARGET_SVE2=0
-                export SIMSIMD_TARGET_SVE_F16=0
-                export SIMSIMD_TARGET_SVE_BF16=0
-                export SIMSIMD_TARGET_SVE_I8=0
-                export CFLAGS="-march=armv8-a"
-                export CXXFLAGS="-march=armv8-a"
-            fi
+          # Set ARM64-specific environment variables for simsimd
+          if [[ "$ARCH" == "aarch64" ]]; then
+              echo "Setting up ARM64 build environment"
+              export SIMSIMD_DISABLE_SVE=1
+              export SIMSIMD_TARGET_SVE=0
+              export SIMSIMD_TARGET_SVE2=0
+              export SIMSIMD_TARGET_SVE_F16=0
+              export SIMSIMD_TARGET_SVE_BF16=0
+              export SIMSIMD_TARGET_SVE_I8=0
+              export CFLAGS="-march=armv8-a"
+              export CXXFLAGS="-march=armv8-a"
+          fi
 
       - name: Install musl cross-compilation dependencies
         if: contains(matrix.target, 'musl')
