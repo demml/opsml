@@ -18,6 +18,7 @@ const PUBLIC_ROUTES = [
   ServerPaths.SSO_AUTH,
   ServerPaths.SSO_CALLBACK,
   ServerPaths.USER,
+  ServerPaths.HEALTHCHECK,
   "/",
 ];
 
