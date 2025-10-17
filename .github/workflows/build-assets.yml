@@ -136,78 +136,6 @@ jobs:
           path: ${{ matrix.archive_name }}.${{ matrix.archive }}
           retention-days: 1
 
-  publish-docker-images:
-    if: github.event_name == 'release'
-    needs: build
-    name: Publish Docker images to Dockerhub
-    runs-on: ubuntu-22.04
-    environment: release
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - image: "ubuntu"
-            tag_suffix: "ubuntu"
-          - image: "alpine"
-            tag_suffix: "alpine"
-          - image: "scratch"
-            tag_suffix: "scratch"
-          - image: "debian"
-            tag_suffix: "debian"
-          - image: "distroless"
-            tag_suffix: "distroless"
-
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Download Linux binary artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: opsml-server-x86_64-linux-gnu
-          path: ./artifacts
-
-      - name: Extract binary
-        run: |
-          mkdir -p binary
-          tar -xzf ./artifacts/opsml-server-x86_64-linux-gnu.tar.gz -C ./binary
-
-      - name: Set up binary permissions
-        run: |
-          chmod +x ./binary/opsml-server
-
-      - name: Set version tag
-        id: set-version
-        run: |
-          if [[ "${{ github.event_name }}" == "release" ]]; then
-            echo "VERSION=${{ github.event.release.tag_name }}" >> $GITHUB_OUTPUT
-          else
-            echo "VERSION=latest" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Login to DockerHub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-
-      - name: Build and push image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: docker/official/${{ matrix.image }}/Dockerfile
-          push: true
-          build-args: |
-            OPSML_SERVER_BINARY=./binary/opsml-server
-          tags: |
-            demml/opsml:${{ matrix.tag_suffix }}-amd64-${{ steps.set-version.outputs.VERSION }}
-            ${{ github.event_name == 'release' && format('demml/opsml:{0}-amd64-latest', matrix.tag_suffix) || '' }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
   publish-docker-images-arm64:
     #if: github.event_name == 'release' # TODO: change back to release only
     needs: build
@@ -297,30 +225,3 @@ jobs:
             ${{ github.event_name == 'release' && format('demml/opsml:{0}-arm64-latest', matrix.tag_suffix) || '' }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-
-  release-binary-assets:
-    if: github.event_name == 'release'
-    needs: build
-    runs-on: ubuntu-latest
-    environment: release
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Download artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: dist
-
-      - name: List artifacts
-        run: |
-          ls -lhR dist
-          echo "`find dist -type f | wc -l` files"
-
-      - name: Upload files to GitHub release
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          for file in $(find dist -type f -not -path "*/\.*"); do
-            echo "Uploading $file to release"
-            gh release upload ${{ github.event.release.tag_name }} "$file" --clobber
-          done
