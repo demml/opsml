@@ -23,30 +23,18 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu-22.04 # ubuntu, debian-based linux
+          - os: ubuntu-22.04 #
             target: x86_64-unknown-linux-gnu
             archive: tar.gz
             binary_name: opsml-server
             archive_name: opsml-server-x86_64-linux-gnu
 
-          - os: ubuntu-22.04-arm # ubuntu arm64, debian-based linux
+          - os: ubuntu-22.04-arm
             target: aarch64-unknown-linux-gnu
             archive: tar.gz
             binary_name: opsml-server
             archive_name: opsml-server-aarch64-linux-gnu
 
-          - os: ubuntu-22.04 # alpine linux
-            target: x86_64-unknown-linux-musl
-            archive: tar.gz
-            binary_name: opsml-server
-            archive_name: opsml-server-x86_64-musl
-
-          - os: ubuntu-22.04-arm # alpine linux arm64
-            target: aarch64-unknown-linux-musl
-            archive: tar.gz
-            binary_name: opsml-server
-            archive_name: opsml-server-aarch64-musl
-    #
     #- os: macos-13
     #  target: x86_64-apple-darwin
     #  archive: zip
@@ -74,88 +62,6 @@ jobs:
           rustup target add ${{ matrix.target }}
           rustup component add rust-src
 
-      - name: Install required packages
-        run: |
-          # Install required packages
-          if command -v yum &> /dev/null; then
-              yum update -y && yum install -y perl-core openssl openssl-devel pkgconfig libatomic
-
-              # If we're running on i686 we need to symlink libatomic
-              # in order to build openssl with -latomic flag.
-              if [[ ! -d "/usr/lib64" ]]; then
-                  ln -s /usr/lib/libatomic.so.1 /usr/lib/libatomic.so
-              fi
-          else
-              # If we're running on debian-based system.
-              apt update -y && apt-get install -y libssl-dev openssl pkg-config
-          fi
-
-          # Install bindgen CLI
-          cargo install --force --locked bindgen-cli
-
-          # Determine architecture and install CMake
-          ARCH=$(uname -m)
-          echo "Detected architecture: $ARCH"
-
-          if [[ "$ARCH" == "x86_64" ]]; then
-              echo "Downloading CMake for x86_64 architecture"
-              curl -L https://github.com/Kitware/CMake/releases/download/v3.26.4/cmake-3.26.4-linux-x86_64.sh -o cmake.sh
-              chmod +x cmake.sh
-              ./cmake.sh --skip-license --prefix=/usr/local
-          elif [[ "$ARCH" == "aarch64" ]]; then
-              echo "Downloading CMake for aarch64 architecture"
-              curl -L https://github.com/Kitware/CMake/releases/download/v3.26.4/cmake-3.26.4-linux-aarch64.sh -o cmake.sh
-              chmod +x cmake.sh
-              ./cmake.sh --skip-license --prefix=/usr/local
-          elif [[ "$ARCH" == "i686" ]]; then
-              echo "Downloading CMake for x86 architecture"
-              curl -L https://github.com/Kitware/CMake/releases/download/v3.26.4/cmake-3.26.4.tar.gz -o cmake.tar.gz
-              tar -xzf cmake.tar.gz
-              cd cmake-3.26.4
-              ./bootstrap --prefix=/usr/local
-              make -j$(nproc)
-              make install
-              cd ..
-          else
-              echo "Unsupported architecture: $ARCH"
-              exit 1
-          fi
-
-          cmake --version
-
-          # Set ARM64-specific environment variables for simsimd
-          if [[ "$ARCH" == "aarch64" ]]; then
-              echo "Setting up ARM64 build environment"
-              export SIMSIMD_DISABLE_SVE=1
-              export SIMSIMD_TARGET_SVE=0
-              export SIMSIMD_TARGET_SVE2=0
-              export SIMSIMD_TARGET_SVE_F16=0
-              export SIMSIMD_TARGET_SVE_BF16=0
-              export SIMSIMD_TARGET_SVE_I8=0
-              export CFLAGS="-march=armv8-a"
-              export CXXFLAGS="-march=armv8-a"
-          fi
-
-      - name: Install musl cross-compilation dependencies
-        if: contains(matrix.target, 'musl')
-        run: |
-          sudo apt-get update -y
-
-          # Install musl tools and both GNU and musl cross-compilers
-          sudo apt-get install -y musl-tools
-
-          # For x86_64 musl targets
-          if [[ "${{ matrix.target }}" == "x86_64-unknown-linux-musl" ]]; then
-            sudo apt-get install -y musl-dev gcc-x86-64-linux-gnu g++-x86-64-linux-gnu
-          fi
-
-          # For aarch64 musl targets  
-          if [[ "${{ matrix.target }}" == "aarch64-unknown-linux-musl" ]]; then
-            sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
-            # Also install musl cross-compilers if available
-            sudo apt-get install -y gcc-aarch64-linux-musl g++-aarch64-linux-musl || true
-          fi
-
       - uses: pnpm/action-setup@v4
         name: Build UI
         with:
@@ -182,21 +88,6 @@ jobs:
           make install.ui.deps.prod
 
       - name: Build Binaries
-        if: matrix.target == 'aarch64-unknown-linux-musl'
-        run: |
-          # Set up cross-compilation environment
-          export CC=aarch64-linux-musl-gcc
-          export CXX=aarch64-linux-musl-g++
-          export CMAKE_C_COMPILER=/usr/bin/aarch64-linux-musl-gcc
-          export CMAKE_CXX_COMPILER=/usr/bin/aarch64-linux-musl-g++
-          export CARGO_TARGET_AARCH64_UNKNOWN_LINUX_MUSL_LINKER=aarch64-linux-musl-gcc
-          # Verify compilers exist
-          which aarch64-linux-musl-gcc || echo "C compiler not found"
-          which aarch64-linux-musl-g++ || echo "C++ compiler not found"
-          cargo build -p opsml-server --target ${{ matrix.target }}
-
-      - name: Build Binaries
-        if: matrix.target != 'aarch64-unknown-linux-musl'
         run: |
           cargo build -p opsml-server --target ${{ matrix.target }}
 
@@ -254,14 +145,8 @@ jobs:
         include:
           - image: "ubuntu"
             tag_suffix: "ubuntu"
-          - image: "alpine"
-            tag_suffix: "alpine"
-          - image: "scratch"
-            tag_suffix: "scratch"
           - image: "debian"
             tag_suffix: "debian"
-          - image: "distroless"
-            tag_suffix: "distroless"
 
     steps:
       - name: Checkout Code
@@ -327,11 +212,11 @@ jobs:
           - image: "ubuntu"
             tag_suffix: "ubuntu"
             artifact: "opsml-server-aarch64-linux-gnu"
-          - image: "alpine"
-            tag_suffix: "alpine"
-            artifact: "opsml-server-aarch64-musl"
           - image: "debian"
             tag_suffix: "debian"
+            artifact: "opsml-server-aarch64-linux-gnu"
+          - image: "rocky"
+            tag_suffix: "rocky-minimal"
             artifact: "opsml-server-aarch64-linux-gnu"
 
     steps:

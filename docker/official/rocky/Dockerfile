@@ -1,39 +1,33 @@
-FROM alpine:latest
+FROM rockylinux:9.3-minimal
 
 ENV LANG=en_US.UTF-8
 ENV LANGUAGE=en_US.UTF-8
 ENV PROJECT_HOME=opsml
 
-# Create non-root user and group
-RUN addgroup -S opsml && adduser -S -G opsml -h /app opsml
+RUN groupadd -r opsml && useradd -r -g opsml -s /bin/bash -d /app opsml
 
-# Install required packages
-RUN apk add --no-cache \
-    bash \
-    nginx \
-    nodejs \
-    npm \
-    curl \
-    tzdata \
-    netcat-openbsd \
-    ca-certificates \
-  && rm -rf /var/cache/apk/*
+RUN microdnf update -y \
+  && microdnf install -y \
+    ca-certificates tzdata curl nginx nmap-ncat \
+    glibc-langpack-en \
+  && microdnf clean all \
+  && rm -rf /var/cache/dnf/*
 
 ARG OPSML_SERVER_PORT=8080
 ARG OPSML_SERVER_BINARY
 
-# Copy built UI, server binary, NGINX config, and entrypoint script
+# Copy application files
 COPY --chown=opsml:opsml ${OPSML_SERVER_BINARY}/ui/node_modules /app/ui/node_modules/
 COPY --chown=opsml:opsml ${OPSML_SERVER_BINARY}/ui/build /app/ui/build/
 COPY --chown=opsml:opsml ${OPSML_SERVER_BINARY}/opsml-server /usr/local/bin/opsml-server
 COPY docker/official/extras/nginx/nginx.conf /etc/nginx/nginx.conf
 COPY docker/official/extras/entrypoint.sh /entrypoint.sh
 
-# Set permissions and create directories
-RUN mkdir -p /var/log/nginx /var/run \
+RUN mkdir -p /var/log/nginx /var/run /var/lib/nginx \
+  && rm -f /etc/nginx/conf.d/default.conf \
   && chmod +x /entrypoint.sh \
   && chmod +x /usr/local/bin/opsml-server \
-  && chown -R opsml:opsml /var/log/nginx /var/run
+  && chown -R opsml:opsml /var/log/nginx /var/run /var/lib/nginx
 
 ENV OPSML_SERVER_PORT=${OPSML_SERVER_PORT}
 
