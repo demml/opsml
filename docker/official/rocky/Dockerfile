@@ -10,6 +10,8 @@ RUN microdnf update -y \
   && microdnf install -y \
     ca-certificates tzdata curl nginx nmap-ncat \
     glibc-langpack-en \
+  && curl -fsSL https://rpm.nodesource.com/setup_22.x | bash - \
+  && microdnf install -y nodejs \
   && microdnf clean all \
   && rm -rf /var/cache/dnf/*
 
