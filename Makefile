@@ -123,16 +123,14 @@ install.ui.deps:
 
 .PHONY: ui.install.deps.prod
 install.ui.deps.prod:
+	# remove existing node_modules
+	rm -rf $(UI_DIR)/node_modules
+	# install only production dependencies
 	cd $(UI_DIR) && pnpm install --prod
 
 .PHONY: build.ui
 build.ui:
 	cd $(UI_DIR) && pnpm install
-	cd $(UI_DIR) && pnpm build
-
-.PHONY: build.ui.prod
-build.ui.prod:
-	cd $(UI_DIR) && pnpm install --prod
 	cd $(UI_DIR) && pnpm build
 
 ui.dev:

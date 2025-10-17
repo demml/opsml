@@ -110,7 +110,11 @@ jobs:
 
       - name: Install UI dependencies
         run: |
-          make build.ui.prod
+          # install all deps and build UI
+          make build.ui
+
+          # remove node_modules and rebuild prod version to reduce size
+          make install.ui.deps.prod
 
       - name: Build Binaries
         if: matrix.target == 'aarch64-unknown-linux-musl'
