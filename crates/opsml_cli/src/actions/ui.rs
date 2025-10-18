@@ -53,16 +53,41 @@ pub enum Platform {
 /// * `version` - The version of the OpsML UI to start. If not provided, the latest version will be used.
 pub fn start_ui(
     version: &str,
-    artifact_url: &Option<String>,
+    server_artifact_url: &Option<String>,
     ui_artifact_url: &Option<String>,
+    dev_mode: &bool,
 ) -> Result<(), UiError> {
+    // if dev mode, just start the UI from the local directory
+    // this assumes the user is running the command from opsml/py-opsml directory
+    if *dev_mode {
+        // start the backend server from the local opsml_server director
+        // always at ./target/debug/opsml-server of the current directory
+
+        // navigate to parent directory (should be opsml root)
+        let parent_dir = env::current_dir()
+            .map_err(UiError::CurrentDirError)?
+            .parent()
+            .unwrap()
+            .to_path_buf();
+        let server_path = parent_dir.join("target").join("debug").join("opsml-server");
+        execute_binary(&server_path)?;
+
+        // start the ui from the local opsml_ui directory
+        let ui_path = parent_dir
+            .join("crates")
+            .join("opsml_server")
+            .join("opsml_ui");
+        execute_ui(&ui_path)?;
+        return Ok(());
+    }
+
     let platform = detect_platform()?;
     let cache_dir = get_cache_dir()?;
     let binary_path = cache_dir.join(format!("opsml-server-v{version}"));
     let ui_path = cache_dir.join(format!("opsml-ui-v{version}"));
 
     if !binary_path.exists() {
-        download_binary(&platform, version, &cache_dir, artifact_url)?;
+        download_binary(&platform, version, &cache_dir, server_artifact_url)?;
         cleanup_old_binaries(&cache_dir, version, &platform)?;
     }
 
@@ -119,11 +144,8 @@ pub fn stop_ui() -> Result<(), UiError> {
                 .kill_and_wait()
                 .map_err(|_| UiError::ProcessKillError(format!("{pid}")))?;
         }
-        fs::remove_file(&ui_pid_path).ok(); // Clean up PID file
-    }
 
-    if !backend_pid_path.exists() && !ui_pid_path.exists() {
-        return Err(UiError::NoRunningServer);
+        fs::remove_file(&ui_pid_path).ok(); // Clean up PID file
     }
 
     Ok(())

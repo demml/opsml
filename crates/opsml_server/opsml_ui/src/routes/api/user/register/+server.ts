@@ -10,6 +10,5 @@ import { logger } from "$lib/server/logger";
 export const POST: RequestHandler = async ({ request, cookies, fetch }) => {
   const { username, password, email } = await request.json();
   const response = await registerUser(username, password, email, fetch);
-  logger.debug(`User registration response: ${JSON.stringify(response)}`);
   return json(response);
 };
