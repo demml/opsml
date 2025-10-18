@@ -169,4 +169,16 @@ pub enum UiError {
 
     #[error("Script execution failed with status code: {0:?}")]
     ScriptFailedWithStatus(Option<i32>),
+
+    #[error("Failed to start UI server")]
+    UiStartError,
+
+    #[error("Failed to spawn UI process")]
+    UiSpawnError(#[source] std::io::Error),
+
+    #[error("Node.js executable not found. Node is required to run the OpsML UI.")]
+    NodeNotFound,
+
+    #[error("Package JSON not found")]
+    PackageJsonNotFound,
 }

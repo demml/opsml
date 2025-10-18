@@ -10,16 +10,27 @@ use std::{
 use sysinfo::{Pid, System};
 
 const GITHUB_REPO: &str = "demml/opsml";
+
+// Cache directory
 const CACHE_DIR: &str = ".opsml-cache";
 const PID_FILE: &str = "opsml-server.pid";
 
-pub fn save_process_id(process: &Child) -> Result<(), UiError> {
-    let pid_path = get_pid_file_path()?;
+// UI archive
+const UI_ARCHIVE_NAME: &str = "opsml-ui-node.zip";
+const UI_PID_FILE: &str = "opsml-ui.pid";
+
+pub fn save_process_id(process: &Child, is_ui: bool) -> Result<(), UiError> {
+    let pid_path = get_pid_file_path(is_ui)?;
     fs::write(&pid_path, process.id().to_string()).map_err(UiError::ProcessIdWriteError)
 }
 
-fn get_pid_file_path() -> Result<PathBuf, UiError> {
+fn get_pid_file_path(is_ui: bool) -> Result<PathBuf, UiError> {
     let cache_dir = get_cache_dir()?;
+
+    if is_ui {
+        return Ok(cache_dir.join(UI_PID_FILE));
+    }
+
     Ok(cache_dir.join(PID_FILE))
 }
 
@@ -40,40 +51,79 @@ pub enum Platform {
 ///
 /// # Arguments
 /// * `version` - The version of the OpsML UI to start. If not provided, the latest version will be used.
-pub fn start_ui(version: &str, artifact_url: Option<String>) -> Result<(), UiError> {
+pub fn start_ui(
+    version: &str,
+    artifact_url: &Option<String>,
+    ui_artifact_url: &Option<String>,
+) -> Result<(), UiError> {
     let platform = detect_platform()?;
     let cache_dir = get_cache_dir()?;
     let binary_path = cache_dir.join(format!("opsml-server-v{version}"));
+    let ui_path = cache_dir.join(format!("opsml-ui-v{version}"));
 
     if !binary_path.exists() {
         download_binary(&platform, version, &cache_dir, artifact_url)?;
         cleanup_old_binaries(&cache_dir, version, &platform)?;
     }
 
+    if !ui_path.exists() {
+        download_ui_package(version, &cache_dir, ui_artifact_url)?;
+        cleanup_old_ui_packages(&cache_dir, version)?;
+    }
+
+    // this will start the binary in a new process
     execute_binary(&binary_path)?;
+
+    // execute the UI package
+    execute_ui(&ui_path)?;
+
     Ok(())
 }
 
+/// Stop both the backend server and UI
 pub fn stop_ui() -> Result<(), UiError> {
-    let pid_path = get_pid_file_path()?;
+    let cache_dir = get_cache_dir()?;
 
-    if !pid_path.exists() {
-        return Err(UiError::NoRunningServer);
+    // Stop backend server
+    let backend_pid_path = cache_dir.join(PID_FILE);
+    if backend_pid_path.exists() {
+        let pid_str = fs::read_to_string(&backend_pid_path).map_err(UiError::ProcessIdReadError)?;
+        let pid: usize = pid_str
+            .trim()
+            .parse()
+            .map_err(UiError::ProcessIdParseError)?;
+
+        let s = System::new_all();
+        if let Some(process) = s.process(Pid::from(pid)) {
+            println!("Stopping OpsML backend server (PID: {pid})");
+            process
+                .kill_and_wait()
+                .map_err(|_| UiError::ProcessKillError(format!("{pid}")))?;
+        }
+        fs::remove_file(&backend_pid_path).ok(); // Clean up PID file
     }
 
-    let pid_str = fs::read_to_string(&pid_path).map_err(UiError::ProcessIdReadError)?;
+    // Stop UI server - TODO: combine with above loop later
+    let ui_pid_path = cache_dir.join(UI_PID_FILE);
+    if ui_pid_path.exists() {
+        let pid_str = fs::read_to_string(&ui_pid_path).map_err(UiError::ProcessIdReadError)?;
+        let pid: usize = pid_str
+            .trim()
+            .parse()
+            .map_err(UiError::ProcessIdParseError)?;
 
-    let pid: usize = pid_str
-        .trim()
-        .parse()
-        .map_err(UiError::ProcessIdParseError)?;
+        let s = System::new_all();
+        if let Some(process) = s.process(Pid::from(pid)) {
+            println!("Stopping OpsML UI server (PID: {pid})");
+            process
+                .kill_and_wait()
+                .map_err(|_| UiError::ProcessKillError(format!("{pid}")))?;
+        }
+        fs::remove_file(&ui_pid_path).ok(); // Clean up PID file
+    }
 
-    let s = System::new_all();
-    if let Some(process) = s.process(Pid::from(pid)) {
-        println!("Stopping OpsML UI server (PID: {pid})");
-        process
-            .kill_and_wait()
-            .map_err(|_| UiError::ProcessKillError(format!("{pid}")))?;
+    if !backend_pid_path.exists() && !ui_pid_path.exists() {
+        return Err(UiError::NoRunningServer);
     }
 
     Ok(())
@@ -112,6 +162,7 @@ fn get_cache_dir() -> Result<PathBuf, UiError> {
 /// * `platform` - The platform to download the binary for
 /// * `version` - The version of the binary to download
 /// * `cache_dir` - The directory to cache the downloaded binary
+/// * `artifact_url` - Optional URL to download the binary from
 ///
 /// # Returns
 /// A Result indicating success or failure
@@ -119,7 +170,7 @@ fn download_binary(
     platform: &Platform,
     version: &str,
     cache_dir: &Path,
-    artifact_url: Option<String>,
+    artifact_url: &Option<String>,
 ) -> Result<(), UiError> {
     // standardize naming
     let archive_name = match platform {
@@ -128,9 +179,12 @@ fn download_binary(
         Platform::Linux(arch) => format!("opsml-server-{arch}-linux-gnu.tar.gz"),
     };
 
-    let url = artifact_url.unwrap_or(format!(
-        "https://github.com/{GITHUB_REPO}/releases/download/v{version}/{archive_name}",
-    ));
+    let url = match artifact_url {
+        Some(url) => url.clone(),
+        None => {
+            format!("https://github.com/{GITHUB_REPO}/releases/download/v{version}/{archive_name}")
+        }
+    };
 
     let response = reqwest::blocking::get(&url).map_err(UiError::DownloadBinaryError)?;
     let archive_path = cache_dir.join(&archive_name);
@@ -192,6 +246,115 @@ fn download_binary(
     Ok(())
 }
 
+/// DOwnload and extract the OpsML UI package
+///
+/// # Arguments
+/// * `version` - The version of the UI package to download
+/// * `cache_dir` - The cache directory to store the UI package
+/// * `ui_artifact_url` - Optional URL to download the UI package from
+/// # Returns
+/// A Result indicating success or failure
+fn download_ui_package(
+    version: &str,
+    cache_dir: &Path,
+    ui_artifact_url: &Option<String>,
+) -> Result<(), UiError> {
+    let url = match ui_artifact_url {
+        Some(url) => url.clone(),
+        None => format!(
+            "https://github.com/{GITHUB_REPO}/releases/download/v{version}/{UI_ARCHIVE_NAME}"
+        ),
+    };
+
+    println!("Downloading UI package for version {version}...");
+
+    let response = reqwest::blocking::get(&url).map_err(UiError::DownloadBinaryError)?;
+    let archive_path = cache_dir.join(UI_ARCHIVE_NAME);
+
+    let bytes = response.bytes().map_err(UiError::DownloadBinaryError)?;
+    fs::write(&archive_path, bytes).map_err(UiError::WriteBinaryError)?;
+
+    // Create versioned UI directory
+    let ui_dir = cache_dir.join(format!("opsml-ui-v{version}"));
+    fs::create_dir_all(&ui_dir).map_err(UiError::CreateCacheDirError)?;
+
+    // Extract UI package (always zip format)
+    let reader = fs::File::open(&archive_path).map_err(UiError::ArchiveOpenError)?;
+    let mut archive = zip::ZipArchive::new(reader).map_err(UiError::ArchiveZipError)?;
+
+    archive
+        .extract(&ui_dir)
+        .map_err(UiError::ZipArchiveExtractionError)?;
+
+    // Clean up archive
+    fs::remove_file(archive_path).map_err(UiError::RemoveArchiveError)?;
+
+    println!("UI package extracted to: {}", ui_dir.display());
+    Ok(())
+}
+
+/// Execute the UI package with Node.js. Sveltekit SSR apps typically require Node.js
+/// We also run the server on port 3000
+///
+/// # Arguments
+/// * `ui_dir` - The directory containing the extracted UI package
+fn execute_ui(ui_dir: &Path) -> Result<(), UiError> {
+    // Check if Node.js is available
+    let node_check = Command::new("node").arg("--version").output();
+
+    if node_check.is_err() {
+        return Err(UiError::NodeNotFound);
+    }
+
+    // Look for package.json to determine how to start the UI
+    let package_json_path = ui_dir.join("package.json");
+    if !package_json_path.exists() {
+        return Err(UiError::PackageJsonNotFound);
+    }
+
+    println!("Starting UI server with Node.js on port 3000...");
+
+    // Start the UI server process
+    // Assuming the UI can be started with "node build/server.js"
+    let ui_process = Command::new("node")
+        .current_dir(ui_dir)
+        .arg("build/index.js")
+        .spawn()
+        .or_else(|_| {
+            // Fallback: try npm start
+            Command::new("npm").current_dir(ui_dir).arg("start").spawn()
+        })
+        .map_err(UiError::UiSpawnError)?;
+
+    // Save the UI process ID
+    save_process_id(&ui_process, true)?;
+
+    let ui_id = ui_process.id();
+    println!("Started OpsML UI server (PID: {ui_id}) on http://localhost:3000");
+
+    Ok(())
+}
+
+/// Cleans up old UI packages from the cache directory
+fn cleanup_old_ui_packages(cache_dir: &Path, current_version: &str) -> Result<(), UiError> {
+    let prefix = "opsml-ui-v";
+    let current_ui_dir = format!("{prefix}{current_version}");
+
+    for entry in fs::read_dir(cache_dir).map_err(UiError::ReadError)? {
+        let entry = entry.map_err(UiError::ReadError)?;
+        let path = entry.path();
+
+        if let Some(dir_name) = path.file_name().and_then(|f| f.to_str()) {
+            // Check if it's a UI directory and not the current version
+            if path.is_dir() && dir_name.starts_with(prefix) && dir_name != current_ui_dir {
+                fs::remove_dir_all(&path).map_err(UiError::RemoveFileError)?;
+            }
+        }
+    }
+
+    Ok(())
+}
+
 ///// Execute the OpsML UI binary
 ///
 /// # Arguments
@@ -208,7 +371,7 @@ fn execute_binary(binary_path: &Path) -> Result<(), UiError> {
         .map_err(UiError::BinarySpawnError)?;
 
     // Save the process ID
-    save_process_id(&child_process)?;
+    save_process_id(&child_process, false)?;
 
     let id = child_process.id();
 
@@ -423,7 +586,7 @@ mod tests {
         );
 
         // Call download_binary directly for more focused testing
-        download_binary(&platform, version, cache_path, Some(full_mock_url))?;
+        download_binary(&platform, version, cache_path, &Some(full_mock_url))?;
 
         // Assert that the binary was extracted and renamed correctly
         let expected_binary_path = cache_path.join(format!("opsml-server-v{version}"));
