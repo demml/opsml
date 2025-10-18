@@ -133,6 +133,24 @@ jobs:
           path: ${{ matrix.archive_name }}.${{ matrix.archive }}
           retention-days: 1
 
+      - name: Package UI for Node.js distribution
+        shell: bash
+        run: |
+          mkdir -p packaged-ui
+          cp -r crates/opsml_server/opsml_ui/build packaged-ui/build
+          cp -r crates/opsml_server/opsml_ui/node_modules packaged-ui/node_modules
+          cp crates/opsml_server/opsml_ui/package.json packaged-ui/
+          cp crates/opsml_server/opsml_ui/package-lock.json packaged-ui/ || true
+          cd packaged-ui
+          zip -r ../opsml-ui-node.zip ./*
+
+      - name: Upload UI Node.js package artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: opsml-ui-node
+          path: opsml-ui-node.zip
+          retention-days: 1
+
   publish-docker-images:
     if: github.event_name == 'release'
     needs: build

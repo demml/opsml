@@ -254,4 +254,14 @@ pub struct UiArgs {
     /// Version
     #[arg(long = "version")]
     pub version: Option<String>,
+
+    /// Server binary url
+    /// Optional URL to download the opsml-server binary from. This is typically used for testing purposes.
+    #[arg(long = "server-url")]
+    pub server_url: Option<String>,
+
+    /// UI binary url
+    /// Optional URL to download the opsml-ui binary from. This is typically used for testing purposes.
+    #[arg(long = "ui-url")]
+    pub ui_url: Option<String>,
 }
