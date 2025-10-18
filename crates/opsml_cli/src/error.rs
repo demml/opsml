@@ -98,6 +98,9 @@ pub enum UiError {
     #[error("Failed to get create cache directory")]
     CreateCacheDirError(#[source] std::io::Error),
 
+    #[error("Failed to get current directory")]
+    CurrentDirError(#[source] std::io::Error),
+
     #[error("Unsupported platform - os: {0}, arch: {1}")]
     UnsupportedPlatformError(&'static str, &'static str),
 

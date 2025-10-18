@@ -264,4 +264,19 @@ pub struct UiArgs {
     /// Optional URL to download the opsml-ui binary from. This is typically used for testing purposes.
     #[arg(long = "ui-url")]
     pub ui_url: Option<String>,
+
+    /// Development mode
+    /// If set, the UI will execute the local debug server build and the ui build located in crates/opsml_server/opsml_ui
+    /// This is only intended for development purposes.
+    #[arg(long = "dev-mode", default_value = "false")]
+    pub dev_mode: bool,
+}
+
+#[derive(Args, Clone)]
+pub struct StopUiArgs {
+    /// Development mode
+    /// If set, the UI will execute the local debug server build and the ui build located in crates/opsml_server/opsml_ui
+    /// This is only intended for development purposes.
+    #[arg(long = "dev-mode", default_value = "false")]
+    pub dev_mode: bool,
 }
