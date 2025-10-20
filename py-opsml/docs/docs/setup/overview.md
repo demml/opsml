@@ -35,7 +35,7 @@ $ docker run -p 8080:8000 demml/opsml:ubuntu-armd64-{version}
 
 ### What's in the container?
 
-The server container image is home to both the UI [sveltekit nodejs app](https://svelte.dev/docs/kit/introduction) and the opsml server backend [Axum](https://github.com/tokio-rs/axum). The UI is always exposed on port `3000` and the server port is exposed on `8080`. NGINX is used as a reverse proxy to route requests to the appropriate service (see `docker/extras` folder for the NGINX configuration) and exposes everything on port `8000` (configurable through `OPSML_PORT`).
+The server container image is home to both the UI ([sveltekit nodejs app](https://svelte.dev/docs/kit/introduction)) and the opsml server backend ([Axum](https://github.com/tokio-rs/axum)). The UI is always exposed on port `3000` and the server port is exposed on `8080`. NGINX is used as a reverse proxy to route requests to the appropriate service (see `docker/extras` folder for the NGINX configuration) and exposes everything on port `8000` (configurable through `OPSML_PORT`).
 
 **Note:** The container images are run through an entrypoint script that starts the UI, server, and NGINX services and ensures that they are all running properly. See `docker/official/extras/entrypoint.sh` for more details. The entrypoint does not make use of any process managers like `supervisord` or `systemd` as we prefer the container orchestration system (e.g., Kubernetes etc.) to handle process management.
 
