@@ -34,7 +34,6 @@ mimalloc = { workspace = true }
 password-auth = { workspace = true }
 rand = { workspace = true }
 reqwest = { workspace = true }
-rust-embed = { workspace = true }
 rusty-logging = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }

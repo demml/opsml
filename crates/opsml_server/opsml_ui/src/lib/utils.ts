@@ -5,6 +5,7 @@ export enum RegistryType {
   Prompt = "prompt",
   Service = "service",
   Mcp = "mcp",
+  Agent = "agent",
 }
 
 export function getRegistryTypeLowerCase(type: RegistryType): string {
@@ -32,6 +33,8 @@ export function getRegistryPath(type: RegistryType): string {
       return "service";
     case RegistryType.Mcp:
       return "genai/mcp";
+    case RegistryType.Agent:
+      return "genai/agent";
     default:
       return "";
   }
@@ -49,6 +52,8 @@ export function getRegistryFromString(type: string): RegistryType | undefined {
       return RegistryType.Prompt;
     case "service":
       return RegistryType.Service;
+    case "mcp":
+      return RegistryType.Mcp;
     default:
       return undefined;
   }

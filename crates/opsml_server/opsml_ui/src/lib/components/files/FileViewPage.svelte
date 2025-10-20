@@ -37,9 +37,9 @@
 </script>
 
 <!-- Main container with strict width constraints -->
-<div class="pt-4 min-w-0 max-w-full flex flex-col items-center max-h-full">
+<div class="pt-4 min-w-0 flex flex-col items-stretch max-h-full mx-auto w-sm sm:w-xl md:w-3xl lg:w-5xl xl:w-6xl">
   <!-- Breadcrumb navigation -->
-  <div class="w-full max-w-sm sm:max-w-xl md:max-w-3xl lg:max-w-5xl xl:max-w-6xl rounded-lg border-2 border-black shadow bg-primary-500 py-2 mb-4 px-4">
+  <div class="w-full rounded-lg border-2 border-black shadow bg-primary-500 py-2 mb-4 px-4">
     <div class="flex items-center flex-wrap">
       {#each splitPath as path, index}
         {#if index < 3}
@@ -68,7 +68,7 @@
     </div>
   </div>
 
-  <div class="text-xs w-full max-w-sm sm:max-w-xl md:max-w-3xl lg:max-w-5xl xl:max-w-6xl rounded-lg border-2 border-black shadow bg-white overflow-auto">
+  <div class="w-full rounded-lg border-2 border-black shadow bg-white overflow-auto">
     <FileViewer {file} />
   </div>
 
