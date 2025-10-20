@@ -16,13 +16,13 @@ RUN apt-get update --no-install-recommends \
   && apt-get autoremove \
   && apt-get clean
 
-ARG OPSML_SERVER_PORT=8080
+ARG OPSML_PORT=8000
 ARG OPSML_SERVER_BINARY
 
 COPY --chown=opsml:opsml ${OPSML_SERVER_BINARY}/ui/node_modules /app/ui/node_modules/
 COPY --chown=opsml:opsml ${OPSML_SERVER_BINARY}/ui/build /app/ui/build/
 COPY --chown=opsml:opsml ${OPSML_SERVER_BINARY}/opsml-server /usr/local/bin/opsml-server
-COPY docker/official/extras/nginx/nginx.conf /etc/nginx/nginx.conf
+COPY docker/official/extras/nginx/nginx.conf.template /etc/nginx/nginx.conf.template
 COPY docker/official/extras/entrypoint.sh /entrypoint.sh
 
 # Set permissions and create directories
@@ -32,12 +32,10 @@ RUN mkdir -p /var/log/nginx /var/run \
   && chmod +x /usr/local/bin/opsml-server \
   && chown -R opsml:opsml /var/log/nginx /var/run
 
-ENV OPSML_SERVER_PORT=${OPSML_SERVER_PORT}
-
 WORKDIR /app
 
 USER opsml
 
-EXPOSE 8000
+EXPOSE ${OPSML_PORT}
 
 CMD ["/entrypoint.sh"]

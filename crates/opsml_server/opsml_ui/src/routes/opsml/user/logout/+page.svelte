@@ -7,9 +7,6 @@
   import Warning from "$lib/components/utils/Warning.svelte";
   import type { LogOutResponse } from "$lib/components/user/types";
 
-
-  let { fetch }: PageProps = $props();
-
   let showLogoutError: boolean = $state(false);
   let errorMessage: string = $state("Failed to logout");
 

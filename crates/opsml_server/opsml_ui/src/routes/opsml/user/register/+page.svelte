@@ -10,7 +10,6 @@
   import { userStore } from "$lib/components/user/user.svelte";
   import type { CreateUserUiResponse } from "$lib/components/user/types";
   
-  let { fetch }: PageProps = $props();
 
   let username: string = $state('');
   let password: string = $state('');
