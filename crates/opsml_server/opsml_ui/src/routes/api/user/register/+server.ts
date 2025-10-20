@@ -1,5 +1,5 @@
 import type { RequestHandler } from "./$types";
-import { registerUser } from "$lib/server/user/util";
+import { registerUser } from "$lib/server/user/utils";
 import { json } from "@sveltejs/kit";
 import { logger } from "$lib/server/logger";
 
@@ -10,6 +10,5 @@ import { logger } from "$lib/server/logger";
 export const POST: RequestHandler = async ({ request, cookies, fetch }) => {
   const { username, password, email } = await request.json();
   const response = await registerUser(username, password, email, fetch);
-  logger.debug(`User registration response: ${JSON.stringify(response)}`);
   return json(response);
 };

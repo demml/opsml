@@ -1,6 +1,6 @@
 import type { RequestHandler } from "./$types";
 import { json } from "@sveltejs/kit";
-import { getUser } from "$lib/server/user/util";
+import { getUser } from "$lib/server/user/utils";
 import { logger } from "$lib/server/logger";
 
 /**
@@ -14,7 +14,7 @@ export const GET: RequestHandler = async ({ cookies, fetch }) => {
 
   if (jwt_token && username) {
     try {
-      const user = await getUser(username, fetch, jwt_token);
+      const user = await getUser(username, fetch);
       return json({ success: true, user });
     } catch (error) {
       logger.error(`Error fetching user info: ${error}`);

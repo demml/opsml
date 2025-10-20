@@ -2,11 +2,11 @@ import { getUISettings } from "$lib/server/settings";
 import { logger } from "$lib/server/logger";
 import type { LayoutServerLoad } from "./$types";
 
-export const load: LayoutServerLoad = async ({ cookies, fetch }) => {
+export const load: LayoutServerLoad = async ({ fetch }) => {
   try {
     logger.debug("Loading layout server data...");
 
-    const settings = await getUISettings(fetch, cookies.get("jwt_token"));
+    const settings = await getUISettings(fetch);
 
     return {
       settings: {
