@@ -642,7 +642,7 @@ mod tests {
             mock_server.url, version, archive_name
         );
 
-        download_binary(&platform, version, cache_path, Some(full_mock_url))?;
+        download_binary(&platform, version, cache_path, &Some(full_mock_url))?;
 
         // Windows binaries have .exe extension
         let expected_binary_path = cache_path.join(format!("opsml-server-v{}.exe", version));
@@ -685,7 +685,7 @@ mod tests {
         );
 
         // download_binary contains the cfg logic for extraction, so we call it directly
-        download_binary(&platform, version, cache_path, Some(full_mock_url))?;
+        download_binary(&platform, version, cache_path, &Some(full_mock_url))?;
 
         // Linux binaries have no extension in this setup
         let expected_binary_path = cache_path.join(format!("opsml-server-v{version}"));
