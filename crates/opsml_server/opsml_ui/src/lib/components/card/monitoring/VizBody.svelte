@@ -7,12 +7,12 @@
   import type { MetricData, SpcDriftFeature, BinnedPsiMetric, BinnedMetric, BinnedMetricStats  } from '$lib/components/card/monitoring/types';
   import Pill from '$lib/components/utils/Pill.svelte';
   import { TimeInterval } from '$lib/components/card/monitoring/types';
-  import { type DriftConfigType } from './util';
+  import { type DriftConfigType } from './utils';
   import CustomAlertPill from '$lib/components/card/monitoring/custom/CustomAlertPill.svelte';
   import LLMAlertPill from '$lib/components/card/monitoring/llm/LLMAlertPill.svelte';
   import { getCustomAlertCondition, type CustomMetricDriftConfig } from './custom/custom';
   import { getLLMAlertCondition, type LLMDriftConfig } from './llm/llm';
-  import { type DriftProfile } from './util';
+  import { type DriftProfile } from './utils';
 
   let { 
     metricData,

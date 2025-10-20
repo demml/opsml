@@ -178,6 +178,7 @@ pub enum GenerateCommands {
 }
 
 #[derive(Subcommand)]
+#[command(version = None)]
 pub enum ScouterCommands {
     /// Update Scouter Drift Profile Status
     ///
@@ -187,6 +188,7 @@ pub enum ScouterCommands {
 }
 
 #[derive(Subcommand)]
+#[command(version = None)]
 pub enum UiCommands {
     /// Start a local OpsML UI
     ///

@@ -25,22 +25,23 @@ export async function validateTokenOrRedirect(
   redirectPath: string = UiPaths.LOGIN
 ): Promise<void> {
   const jwtToken = cookies.get("jwt_token");
-  const opsmlClient = createOpsmlClient(fetch, jwtToken);
+  const opsmlClient = createOpsmlClient(fetch);
 
   // Validate the JWT token
-  const validationResult = await validateJWTToken(opsmlClient);
+  const validationResult = await validateJWTToken(opsmlClient, jwtToken ?? "");
 
   if (validationResult.isValid) return; // Authenticated
 
   // If token is present and expired, attempt to refresh
   if (jwtToken && isTokenExpired(jwtToken)) {
-    const refreshedToken = await attemptRefreshToken(opsmlClient);
+    const refreshedToken = await attemptRefreshToken(opsmlClient, jwtToken);
     if (refreshedToken) {
       // Set new token in cookies and validate again
       await setTokenInCookies(cookies, refreshedToken);
-      opsmlClient.setToken(refreshedToken);
-
-      const refreshedValidation = await validateJWTToken(opsmlClient);
+      const refreshedValidation = await validateJWTToken(
+        opsmlClient,
+        refreshedToken
+      );
       if (refreshedValidation.isValid) return;
     }
   }
@@ -53,12 +54,14 @@ export async function validateTokenOrRedirect(
  * Attempts to refresh the JWT token via backend.
  */
 async function attemptRefreshToken(
-  opsmlClient: OpsmlClient
+  opsmlClient: OpsmlClient,
+  jwt_Token: string
 ): Promise<string | null> {
   try {
-    const response = await opsmlClient.post(RoutePaths.REFRESH_TOKEN, {
-      token: opsmlClient.getToken(),
-    });
+    const response = await opsmlClient.refreshToken(
+      RoutePaths.REFRESH_TOKEN,
+      jwt_Token
+    );
     if (!response.ok) return null;
     const jwtToken = (await response.json()) as JwtToken;
     return jwtToken.token ?? null;
@@ -79,10 +82,14 @@ interface AuthValidationResult {
  * @returns Promise with validation result
  */
 async function validateJWTToken(
-  opsmlClient: OpsmlClient
+  opsmlClient: OpsmlClient,
+  jwt_token: string
 ): Promise<AuthValidationResult> {
   try {
-    const response = await opsmlClient.get(RoutePaths.VALIDATE_AUTH, undefined);
+    const response = await opsmlClient.validateToken(
+      RoutePaths.VALIDATE_AUTH,
+      jwt_token
+    );
 
     if (!response.ok) {
       const error = `Authentication failed: ${response.status} ${response.statusText}`;

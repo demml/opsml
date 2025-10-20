@@ -5,19 +5,16 @@ import {
 } from "$lib/components/home/utils.server";
 import { RegistryType } from "$lib/utils";
 import type { PageServerLoad } from "./$types";
-import { createOpsmlClient } from "$lib/server/api/opsmlClient";
 
 async function get_registry_stats(
-  fetch: typeof globalThis.fetch,
-  jwt_token: string | undefined
+  fetch: typeof globalThis.fetch
 ): Promise<HomePageStats> {
-  const opsmlClient = createOpsmlClient(fetch, jwt_token);
   const [modelStats, dataStats, promptStats, experimentStats] =
     await Promise.all([
-      getRegistryStats(opsmlClient, RegistryType.Model),
-      getRegistryStats(opsmlClient, RegistryType.Data),
-      getRegistryStats(opsmlClient, RegistryType.Prompt),
-      getRegistryStats(opsmlClient, RegistryType.Experiment),
+      getRegistryStats(fetch, RegistryType.Model),
+      getRegistryStats(fetch, RegistryType.Data),
+      getRegistryStats(fetch, RegistryType.Prompt),
+      getRegistryStats(fetch, RegistryType.Experiment),
     ]);
 
   return {
@@ -28,8 +25,8 @@ async function get_registry_stats(
   };
 }
 
-export const load: PageServerLoad = async ({ cookies, fetch }) => {
-  let cards = await getRecentCards(fetch, cookies.get("jwt_token"));
-  let stats = await get_registry_stats(fetch, cookies.get("jwt_token"));
+export const load: PageServerLoad = async ({ fetch }) => {
+  let cards = await getRecentCards(fetch);
+  let stats = await get_registry_stats(fetch);
   return { cards, stats };
 };

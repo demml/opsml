@@ -3,7 +3,7 @@
   import type { SpcAlertConfig, SpcDriftConfig } from "./spc";
   import Pill from "$lib/components/utils/Pill.svelte";
   import UpdateModal from "../update/UpdateModal.svelte";
-  import type { UiProfile } from "../util";
+  import type { UiProfile } from "../utils";
   import type { RegistryType } from "$lib/utils";
 ;
 
@@ -37,9 +37,8 @@
   </div>
 
   <div class="flex flex-row gap-2">
-
-    <div class="items-center text-lg mr-2 font-bold text-primary-800">Dispatch:</div>
-    
+    <div class="items-center mr-2 font-bold text-primary-800">Dispatch:</div>
+  
     {#if hasSlackConfig(alertConfig.dispatch_config)}
       <Pill key="Slack Channel" value={alertConfig.dispatch_config.Slack.channel} textSize="text-sm"/>
     {/if}

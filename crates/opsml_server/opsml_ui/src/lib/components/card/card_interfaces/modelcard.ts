@@ -1,6 +1,6 @@
 import type { RegistryType } from "$lib/utils";
-import type { DriftType } from "../monitoring/types";
 import type { FeatureSchema } from "./datacard";
+import type { DriftProfileUri } from "../monitoring/types";
 
 // Enums
 export enum DataType {
@@ -125,12 +125,6 @@ export interface DataProcessor {
   name: string;
   uri: string;
   type: ProcessorType;
-}
-
-export interface DriftProfileUri {
-  root_dir: string;
-  uri: string;
-  drift_type: DriftType;
 }
 
 export interface ModelSaveKwargs {
