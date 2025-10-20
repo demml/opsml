@@ -134,13 +134,14 @@ jobs:
           retention-days: 1
 
       - name: Package UI for Node.js distribution
+        if: matrix.target == 'x86_64-unknown-linux-gnu'
         shell: bash
         run: |
           mkdir -p packaged-ui
           cp -r crates/opsml_server/opsml_ui/build packaged-ui/build
           cp -r crates/opsml_server/opsml_ui/node_modules packaged-ui/node_modules
           cp crates/opsml_server/opsml_ui/package.json packaged-ui/
-          cp crates/opsml_server/opsml_ui/package-lock.json packaged-ui/ || true
+          cp crates/opsml_server/opsml_ui/pnpm-lock.yaml packaged-ui/ || true
           cd packaged-ui
           zip -r ../opsml-ui-node.zip ./*
 
