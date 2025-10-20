@@ -15,14 +15,14 @@ RUN microdnf update -y \
   && microdnf clean all \
   && rm -rf /var/cache/dnf/*
 
-ARG OPSML_SERVER_PORT=8080
+ARG OPSML_PORT=8000
 ARG OPSML_SERVER_BINARY
 
 # Copy application files
 COPY --chown=opsml:opsml ${OPSML_SERVER_BINARY}/ui/node_modules /app/ui/node_modules/
 COPY --chown=opsml:opsml ${OPSML_SERVER_BINARY}/ui/build /app/ui/build/
 COPY --chown=opsml:opsml ${OPSML_SERVER_BINARY}/opsml-server /usr/local/bin/opsml-server
-COPY docker/official/extras/nginx/nginx.conf /etc/nginx/nginx.conf
+COPY docker/official/extras/nginx/nginx.conf.template /etc/nginx/nginx.conf.template
 COPY docker/official/extras/entrypoint.sh /entrypoint.sh
 
 RUN mkdir -p /var/log/nginx /var/run /var/lib/nginx \
@@ -31,12 +31,10 @@ RUN mkdir -p /var/log/nginx /var/run /var/lib/nginx \
   && chmod +x /usr/local/bin/opsml-server \
   && chown -R opsml:opsml /var/log/nginx /var/run /var/lib/nginx
 
-ENV OPSML_SERVER_PORT=${OPSML_SERVER_PORT}
-
 WORKDIR /app
 
 USER opsml
 
-EXPOSE 8000
+EXPOSE ${OPSML_PORT}
 
 CMD ["/entrypoint.sh"]

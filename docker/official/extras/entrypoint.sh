@@ -74,6 +74,9 @@ wait_for_service() {
     return 1
 }
 
+# update nginx template
+envsubst '${OPSML_PORT}' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf
+
 # Start Rust API server
 echo "$(date): Starting Rust API server on port ${OPSML_SERVER_PORT:-8080}..."
 /usr/local/bin/opsml-server &
@@ -106,13 +109,13 @@ if ! nginx -t; then
     exit 1
 fi
 
-echo "$(date): Starting NGINX on port 8000..."
+echo "$(date): Starting NGINX on port ${OPSML_PORT:-8000}..."
 nginx -g "daemon off;" &
 NGINX_PID=$!
 echo "$(date): NGINX PID: $NGINX_PID"
 
 # Wait for NGINX
-if ! wait_for_service 8000 "NGINX"; then
+if ! wait_for_service "${OPSML_PORT:-8000}" "NGINX"; then
     echo "$(date): Failed to start NGINX, exiting..."
     exit 1
 fi

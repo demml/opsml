@@ -8,8 +8,6 @@
   import { HelpCircle, Eye, EyeOff } from 'lucide-svelte';
   import { createInternalApiClient } from "$lib/api/internalClient";
 
-  let { fetch }: PageProps = $props();
-
   let username: string = $state('');
   let recoveryCode: string = $state('');
   let newPassword: string = $state('');
