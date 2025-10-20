@@ -10,35 +10,39 @@ import type {
   VersionPageRequest,
   QueryPageRequest,
   CardTagsResponse,
-} from "$lib/server/card/types";
+} from "$lib/components/card/types";
 import type { CardQueryArgs } from "$lib/components/api/schema";
 import { type Card } from "$lib/components/home/types";
 import { createOpsmlClient } from "../api/opsmlClient";
 
 export async function getSpaces(
-  registry_type: RegistryType,
-  jwt_token: string | undefined,
-  fetch: typeof globalThis.fetch
+  fetch: typeof globalThis.fetch,
+  registry_type: RegistryType
 ): Promise<CardSpaceResponse> {
   let params = { registry_type: registry_type };
-  const opsmlClient = createOpsmlClient(fetch, jwt_token);
-  const response = await opsmlClient.get(RoutePaths.LIST_CARD_SPACES, params);
+
+  const response = await createOpsmlClient(fetch).get(
+    RoutePaths.LIST_CARD_SPACES,
+    params
+  );
   return await response.json();
 }
 
 export async function getTags(
-  registry_type: RegistryType,
-  jwt_token: string | undefined,
-  fetch: typeof globalThis.fetch
+  fetch: typeof globalThis.fetch,
+  registry_type: RegistryType
 ): Promise<CardTagsResponse> {
   let params = { registry_type: registry_type };
-  const opsmlClient = createOpsmlClient(fetch, jwt_token);
-  const response = await opsmlClient.get(RoutePaths.LIST_CARD_TAGS, params);
+
+  const response = await createOpsmlClient(fetch).get(
+    RoutePaths.LIST_CARD_TAGS,
+    params
+  );
   return await response.json();
 }
 
 export async function getRegistryStats(
-  opsmlClient: ReturnType<typeof createOpsmlClient>,
+  fetch: typeof globalThis.fetch,
   registry_type: RegistryType,
   searchTerm?: string,
   spaces?: string[],
@@ -51,12 +55,15 @@ export async function getRegistryStats(
     tags: tags,
   };
 
-  const response = await opsmlClient.post(RoutePaths.GET_STATS, request);
+  const response = await createOpsmlClient(fetch).post(
+    RoutePaths.GET_STATS,
+    request
+  );
   return await response.json();
 }
 
 export async function getRegistryPage(
-  opsmlClient: ReturnType<typeof createOpsmlClient>,
+  fetch: typeof globalThis.fetch,
   registry_type: RegistryType,
   sort_by?: string,
   spaces?: string[],
@@ -73,13 +80,10 @@ export async function getRegistryPage(
     page: page,
   };
 
-  const response = await opsmlClient.post(
+  const response = await createOpsmlClient(fetch).post(
     RoutePaths.GET_REGISTRY_PAGE,
     request
   );
-
-  console.log("Registry Page Response:", JSON.stringify(response));
-
   return await response.json();
 }
 
@@ -87,17 +91,15 @@ export async function setupRegistryPage(
   registry_type: RegistryType,
   space: undefined | string = undefined,
   name: string | undefined = undefined,
-  jwt_token: string | undefined,
   fetch: typeof globalThis.fetch
 ): Promise<RegistryPageReturn> {
-  let opsmlClient = createOpsmlClient(fetch, jwt_token);
   const spaces = space ? [space] : undefined;
   const [registry_spaces, tags, registryStats, registryPage] =
     await Promise.all([
-      getSpaces(opsmlClient, registry_type),
-      getTags(opsmlClient, registry_type),
-      getRegistryStats(opsmlClient, registry_type, name, spaces),
-      getRegistryPage(opsmlClient, registry_type, undefined, spaces, name),
+      getSpaces(fetch, registry_type),
+      getTags(fetch, registry_type),
+      getRegistryStats(fetch, registry_type, name, spaces),
+      getRegistryPage(fetch, registry_type, undefined, spaces, name),
     ]);
 
   return {
@@ -114,7 +116,8 @@ export async function getCardMetadata(
   name: string | undefined,
   version: string | undefined,
   uid: string | undefined,
-  registry_type: RegistryType
+  registry_type: RegistryType,
+  fetch: typeof globalThis.fetch
 ): Promise<any> {
   const params: CardQueryArgs = {
     name: name,
@@ -124,11 +127,15 @@ export async function getCardMetadata(
     registry_type: registry_type,
   };
 
-  const response = await opsmlClient.get(RoutePaths.METADATA, params);
+  const response = await createOpsmlClient(fetch).get(
+    RoutePaths.METADATA,
+    params
+  );
   return await response.json();
 }
 
 export async function getVersionPage(
+  fetch: typeof globalThis.fetch,
   registry_type: RegistryType,
   space?: string,
   name?: string,
@@ -141,13 +148,17 @@ export async function getVersionPage(
     page: page,
   };
 
-  const response = await opsmlClient.get(RoutePaths.GET_VERSION_PAGE, params);
+  const response = await createOpsmlClient(fetch).get(
+    RoutePaths.GET_VERSION_PAGE,
+    params
+  );
   return await response.json();
 }
 
 export async function listRecentSpaceCards(
   registry_type: RegistryType,
-  space: string
+  space: string,
+  fetch: typeof globalThis.fetch
 ): Promise<Card[]> {
   const params: CardQueryArgs = {
     space: space,
@@ -156,7 +167,10 @@ export async function listRecentSpaceCards(
     limit: 10,
   };
 
-  const response = await opsmlClient.get(RoutePaths.LIST_CARDS, params);
+  const response = await createOpsmlClient(fetch).get(
+    RoutePaths.LIST_CARDS,
+    params
+  );
   const data = (await response.json()) as Card[];
 
   return data;
@@ -164,7 +178,8 @@ export async function listRecentSpaceCards(
 
 export async function getCardfromUid(
   registry_type: RegistryType,
-  uid: string
+  uid: string,
+  fetch: typeof globalThis.fetch
 ): Promise<Card[]> {
   const params: CardQueryArgs = {
     uid: uid,
@@ -173,7 +188,10 @@ export async function getCardfromUid(
     limit: 10,
   };
 
-  const response = await opsmlClient.get(RoutePaths.LIST_CARDS, params);
+  const response = await createOpsmlClient(fetch).get(
+    RoutePaths.LIST_CARDS,
+    params
+  );
   const data = (await response.json()) as Card[];
   return data;
 }

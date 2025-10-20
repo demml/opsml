@@ -1,12 +1,11 @@
 
 <script lang="ts">
   import { Modal } from '@skeletonlabs/skeleton-svelte';
-  import { z } from 'zod';
   import { validateSlack,validateCustomConfig, validateOpsGenie, getConfigParams, validatePsiConfig, validateSpcConfig, validateConsole, validateLlmConfig  } from './schema';
-  import type {SpcConfigParams, PsiConfigParams, ConfigParams, CustomConfigParams, ConsoleConfigSchema, LlmConfigParams} from './schema';
+  import type {SpcConfigParams, PsiConfigParams, CustomConfigParams, ConsoleConfigSchema, LlmConfigParams} from './schema';
   import type {SlackConfigSchema, OpsGenieConfigSchema, CustomConfigSchema, PsiConfigSchema} from './schema';
-  import type { DriftConfigType, DriftProfile, UiProfile } from '../util';
-  import { isSpcConfig, isCustomConfig, isPsiConfig, updateDriftProfile, extractProfile, isLlmConfig } from '../util';
+  import type { DriftConfigType,  UiProfile } from '../utils';
+  import { isSpcConfig, isCustomConfig, isPsiConfig, extractProfile, isLlmConfig } from '../utils';
   import { DriftType, getPsiThresholdKeyValue } from '../types';
   import CustomFields from './CustomFields.svelte';
   import SpcFields from './SpcFields.svelte';
@@ -16,11 +15,11 @@
   import Slack from './dispatch/Slack.svelte';
   import OpsGenie from './dispatch/OpsGenie.svelte';
   import Console from './dispatch/Console.svelte';
+  import { updateMonitoringDriftProfile } from './utils';
   import type { SlackDispatchConfig,  OpsGenieDispatchConfig, ConsoleDispatchConfig} from '../types';
   import { hasSlackConfig, hasOpsGenieConfig } from '../types';
   import { type UpdateProfileRequest } from '../types';
   import LLMFields from './LLMFields.svelte';
-  import type { Registry } from 'chart.js';
   import type { RegistryType } from '$lib/utils';
 
 
@@ -242,7 +241,7 @@ function validateDispatchForm(): boolean {
       }
     };
 
-    await updateDriftProfile(request);
+    await updateMonitoringDriftProfile(fetch, request);
 
     modalClose();
 

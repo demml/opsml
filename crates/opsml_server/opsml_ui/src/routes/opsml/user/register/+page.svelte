@@ -4,13 +4,12 @@
   import LoginWarning from "$lib/components/user/LoginWarning.svelte";
   import {  ServerPaths, UiPaths } from "$lib/components/api/routes";
   import { goTop } from "$lib/utils";
-  import { createServerClient } from "$lib/api/svelteServerClient";
+  import { createInternalApiClient } from "$lib/api/internalClient";
   import {  validateUserRegisterSchema, type UserRegisterSchema } from "$lib/components/user/schema";
   import { HelpCircle, Eye, EyeOff } from 'lucide-svelte';
   import { userStore } from "$lib/components/user/user.svelte";
   import type { CreateUserUiResponse } from "$lib/components/user/types";
   
-  let { fetch }: PageProps = $props();
 
   let username: string = $state('');
   let password: string = $state('');
@@ -39,7 +38,7 @@
 
     if (argsValid.success) {
 
-      let res = await createServerClient(fetch).post(ServerPaths.REGISTER_USER, {
+      let res = await createInternalApiClient(fetch).post(ServerPaths.REGISTER_USER, {
         username,
         password,
         email

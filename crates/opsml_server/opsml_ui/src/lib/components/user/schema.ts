@@ -167,13 +167,15 @@ export function validateUserRegisterSchema(
  */
 export function validatePasswordResetSchema(
   username: string,
-  recovery_code: string,
-  new_password: string
+  recoveryCode: string,
+  newPassword: string,
+  confirmPassword: string
 ): ValidationResult<PasswordResetSchema> {
   let parsed = passwordResetSchema.safeParse({
     username,
-    recovery_code,
-    new_password,
+    recoveryCode,
+    newPassword,
+    confirmPassword,
   });
 
   if (parsed.success) {

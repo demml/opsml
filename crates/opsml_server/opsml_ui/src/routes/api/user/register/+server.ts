@@ -1,5 +1,5 @@
 import type { RequestHandler } from "./$types";
-import { registerUser } from "$lib/server/user/util";
+import { registerUser } from "$lib/server/user/utils";
 import { json } from "@sveltejs/kit";
 import { logger } from "$lib/server/logger";
 
@@ -8,16 +8,7 @@ import { logger } from "$lib/server/logger";
  * Only authentication and cookie logic here; UI navigation is handled client-side.
  */
 export const POST: RequestHandler = async ({ request, cookies, fetch }) => {
-  logger.debug(`Handling user registration request...`);
   const { username, password, email } = await request.json();
-  const jwt_token = cookies.get("jwt_token");
-  const response = await registerUser(
-    username,
-    password,
-    email,
-    fetch,
-    jwt_token
-  );
-  logger.debug(`User registration response: ${JSON.stringify(response)}`);
+  const response = await registerUser(username, password, email, fetch);
   return json(response);
 };
