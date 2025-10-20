@@ -245,7 +245,7 @@ impl OpsmlTestServer {
             let handle = self.handle.clone();
             let runtime = self.runtime.clone();
 
-            let port = match (3000..3010)
+            let port = match (8000..8010)
                 .find(|port| StdTcpListener::bind(("127.0.0.1", *port)).is_ok())
             {
                 Some(p) => p,
