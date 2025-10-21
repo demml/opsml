@@ -1,0 +1,16 @@
+[project]
+name = "opsml-benchmark"
+requires-python = ">=3.10"
+classifiers = [
+    "Programming Language :: Rust",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Programming Language :: Python :: Implementation :: PyPy",
+]
+license = "MIT"
+version = "0.1.0"
+description = ""
+authors = [{name = "Thorrester", email = "<support@demmlai.com>"}]
+dependencies = [
+    "opsml==3.0.0rc16",
+    "scikit-learn>=1.7.2",
+]
