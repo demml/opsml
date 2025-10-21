@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { goto } from "$app/navigation";
   import { MessageSquare, Bot, Puzzle, ExternalLink, BookOpen } from 'lucide-svelte';
   
   interface RegistryCard {
@@ -34,13 +33,9 @@
     }
   ];
 
-  function handleCardClick(path: string) {
-    goto(path);
-  }
-
   function handleTutorialClick() {
     // Replace with your actual tutorial URL
-    window.open("https://github.com/demml/opsml/tree/main/py-opsml/examples/llm", "_blank");
+    window.open("https://github.com/demml/opsml/tree/main/py-opsml/examples/genai", "_blank");
   }
 </script>
 

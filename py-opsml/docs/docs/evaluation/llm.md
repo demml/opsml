@@ -191,7 +191,7 @@ As you can see from the above example, the overall flow for evaluating an LLM us
 
 <h1 align="center">
   <br>
-  <img src="../images/llm-metric-flow.png"  width="700"alt="llm metric flow"/>
+  <img src="../../images/llm-metric-flow.png" width="700"alt="llm metric flow"/>
   <br>
 </h1>
 

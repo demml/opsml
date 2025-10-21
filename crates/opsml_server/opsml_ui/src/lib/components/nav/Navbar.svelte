@@ -42,22 +42,6 @@
 
 <nav class="fixed left-0 top-0 z-20 mx-auto flex w-full items-center border-b-4 border-border bg-primary-700 border-b-2 border-black px-5 h-14">
   <div class="mx-auto flex w-full items-center justify-between px-8 lg:px-10">
-  
-    <div class="md:hidden" aria-label="hamburger">
-      <button 
-        type="button" 
-        onclick={toggleSidebar}
-        aria-label="Toggle menu" 
-        aria-expanded={isSidebarOpen} 
-        class="m800:hidden flex items-center justify-center rounded-base border-2 border-border shadow transition-all hover:translate-x-[4px] hover:translate-y-[4px] hover:shadow-none bg-surface-50 w-7 h-7"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-menu h-6 w-6 m500:h-4 m500:w-4">
-          <line x1="4" x2="20" y1="12" y2="12"></line>
-          <line x1="4" x2="20" y1="6" y2="6"></line>
-          <line x1="4" x2="20" y1="18" y2="18"></line>
-        </svg>
-      </button>
-    </div>
 
     <div class="hidden md:block">
       <div class="flex items-center justify-start gap-4">
@@ -109,78 +93,6 @@
       </div>
   </div>  
 </nav>
-
-
-<!-- Add this sidebar component after your nav element -->
-{#if isSidebarOpen}
-  <div 
-    class="fixed inset-0 z-30 md:hidden pointer-events-none"
-    role="dialog"
-    tabindex="-1"
-    aria-modal="true"
-    aria-label="Navigation menu"
-    onclick={toggleSidebar}
-    onkeydown={e => {
-      if (e.key === 'Escape' || e.key === 'Enter') {
-        toggleSidebar();
-      }
-    }}
-  >
-    <div 
-      class="fixed left-0 top-0 h-full w-64 bg-primary-700 shadow-lg z-40 pointer-events-auto"
-      role="menu"
-      tabindex="0"
-      onclick={e => e.stopPropagation()}
-      onkeydown={e => e.stopPropagation()}
-    >
-      <!-- Sidebar header -->
-      <div class="flex items-center justify-between p-4  border-b-2 border-border">
-        <button 
-          type="button"
-          class="items-center" 
-          onclick={() => {
-            isSidebarOpen = false;
-            goto('/opsml/home');
-          }}
-        >
-          <div class="w-[120px] h-10">
-            <img 
-              src={logo} 
-              class="h-10 w-[120px] object-contain"
-              alt="Opsml Logo"
-            />
-          </div>
-        </button>
-        <button 
-          type="button"
-          onclick={toggleSidebar}
-          class="p-2"
-          aria-label="Close menu"
-        >
-          <IconX class="h-6 w-6 hover:text-secondary-500 transition-colors duration-200" />
-        </button>
-      </div>
-
-      <!-- Sidebar links -->
-      <div class="flex flex-col py-4" role="menubar">
-        {#each names as name}
-          {@const path = '/opsml/' + name.replace(/s$/, '').toLowerCase()}
-          <button 
-            type="button"
-            role="menuitem"
-            onclick={() => handleLinkClick(path)}
-            class="px-6 py-3 text-left hover:bg-surface-50 transition-colors duration-200"
-            class:active={page.url.pathname.includes(path)}
-            aria-current={page.url.pathname.includes(path) ? 'page' : undefined}
-          >
-            {name}
-          </button>
-        {/each}
-      </div>
-    </div>
-  </div>
-{/if}
-
 
 
 

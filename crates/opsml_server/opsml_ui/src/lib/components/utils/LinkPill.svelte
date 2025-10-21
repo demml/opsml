@@ -1,8 +1,9 @@
 <script lang="ts">
   import { type RegistryType, getRegistryPath} from "$lib/utils";
   import { onMount } from "svelte";
-  import { getCardfromUid} from "../card/utils";
+  import { createInternalApiClient } from "$lib/api/internalClient";
   import { type Card } from "../home/types";
+  import { ServerPaths } from "$lib/components/api/routes";
 
   let {
     key,
@@ -21,7 +22,11 @@
    let cardUrl = $state<string>(resolveUrl());
 
    onMount(async () => {
-     let cards: Card[] = await getCardfromUid(registryType, uid);
+     let cards: Card[] = await createInternalApiClient().get(ServerPaths.CARD_FROM_UID, {
+       registry_type: registryType,
+       uid: uid,
+     }).then(res => res.json()).then(data => data.cards ?? []);
+
      // Get the first card's details
      if (cards.length > 0) {
        let card = cards[0].data;

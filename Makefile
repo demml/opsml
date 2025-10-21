@@ -121,11 +121,17 @@ ui.update.deps:
 install.ui.deps:
 	cd $(UI_DIR) && pnpm install
 
-.PHONY: ui.build
+.PHONY: ui.install.deps.prod
+install.ui.deps.prod:
+	# remove existing node_modules
+	rm -rf $(UI_DIR)/node_modules
+	# install only production dependencies
+	cd $(UI_DIR) && pnpm install --prod
+
+.PHONY: build.ui
 build.ui:
 	cd $(UI_DIR) && pnpm install
 	cd $(UI_DIR) && pnpm build
-	touch $(UI_DIR)/site/.gitkeep # to make sure the site folder is not ignored by git
 
 ui.dev:
 	cd $(UI_DIR) && pnpm run dev
@@ -139,3 +145,46 @@ prepend.changelog:
 	# get version from Cargo.toml
 	@VERSION=$(shell grep '^version =' Cargo.toml | cut -d '"' -f 2) && \
 	git cliff --unreleased --tag $$VERSION --prepend CHANGELOG.md
+
+
+###### Development & Production - Separate Servers ######
+
+.PHONY: dev.backend
+dev.backend:
+	cargo build -p opsml-server
+	OPSML_SERVER_PORT=8080 ./target/debug/opsml-server
+
+.PHONY: dev.frontend
+dev.frontend:
+	cd $(UI_DIR) && pnpm run dev
+
+.PHONY: build.backend
+build.backend:
+	cargo build -p opsml-server --target
+
+.PHONY: start.backend
+start.backend: build.backend
+	OPSML_SERVER_PORT=8080 ./target/release/opsml-server
+
+.PHONY: start.frontend
+start.frontend: build.ui
+	cd $(UI_DIR) && node build/index.js
+
+.PHONY: dev.both
+dev.both:
+	@echo "Starting both servers in development mode..."
+	@echo "Backend API: http://localhost:8080"
+	@echo "Frontend SSR: http://localhost:3000"
+	@make -j2 dev.backend dev.frontend
+
+.PHONY: start.both
+start.both:
+	@echo "Starting both servers in production mode..."
+	@echo "Backend API: http://localhost:8080" 
+	@echo "Frontend SSR: http://localhost:3000"
+	@make -j2 dev.backend start.frontend
+
+.PHONY: stop.both
+stop.both:
+	-lsof -ti:3000 | xargs kill -9 2>/dev/null || true
+	-lsof -ti:8080 | xargs kill -9 2>/dev/null || true

@@ -5,8 +5,6 @@
   import { userStore } from "$lib/components/user/user.svelte";
   import CodeModal from "$lib/components/card/CodeModal.svelte";
 
-  
-  
 
   async function gotoLogin() {
     goto(UiPaths.LOGIN);

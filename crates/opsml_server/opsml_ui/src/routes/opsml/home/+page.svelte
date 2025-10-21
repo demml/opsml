@@ -1,7 +1,7 @@
 <script lang="ts">
 
   import Homepage from "$lib/components/home/Homepage.svelte";
-  import type { HomePageStats, RecentCards } from "$lib/components/home/utils";
+  import type { HomePageStats, RecentCards } from "$lib/components/home/utils.server";
   import type { PageProps } from './$types';
 
   let { data }: PageProps = $props();
