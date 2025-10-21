@@ -1,11 +1,13 @@
 <script lang="ts">
   import Card from '$lib/components/card/Card.svelte';
-  import type { RecentCards } from '$lib/components/home/utils';
+  import type { RecentCards } from '$lib/components/home/utils.server';
   import type { SpaceRecord} from '$lib/components/space/types';
   import { BrainCircuit, Table, NotebookText, FlaskConical } from 'lucide-svelte';
   import type { PageProps } from './$types';
-  import { updateUser } from '$lib/components/user/utils';
+  import { createInternalApiClient } from '$lib/api/internalClient';
   import { userStore } from '$lib/components/user/user.svelte';
+  import { ServerPaths } from '$lib/components/api/routes';
+  import type { UserResponse } from '$lib/components/user/types';
 
   let { data }: PageProps = $props();
   let spaceRecord: SpaceRecord= data.spaceRecord;
@@ -17,16 +19,26 @@
     let userFavoriteSpaces = userStore.favorite_spaces;
     userFavoriteSpaces.push(spaceRecord.space);
 
-    let updatedUser = await updateUser({ favorite_spaces: userFavoriteSpaces });
-    userStore.setFavoriteSpaces(updatedUser.favorite_spaces);
+    let resp = await createInternalApiClient(fetch).put(ServerPaths.UPDATE_USER, {
+      options: { favorite_spaces: userFavoriteSpaces },
+      username: userStore.username
+    });
+
+    let userResponse =  await resp.json() as UserResponse;
+    userStore.setFavoriteSpaces(userResponse.favorite_spaces);
   }
 
   async function unfavoriteSpace() {
     let userFavoriteSpaces = userStore.favorite_spaces;
     userFavoriteSpaces = userFavoriteSpaces.filter(space => space !== spaceRecord.space);
 
-    let updatedUser = await updateUser({ favorite_spaces: userFavoriteSpaces });
-    userStore.setFavoriteSpaces(updatedUser.favorite_spaces);
+    let resp = await createInternalApiClient(fetch).put(ServerPaths.UPDATE_USER, {
+      options: { favorite_spaces: userFavoriteSpaces },
+      username: userStore.username
+    });
+
+    let userResponse =  await resp.json() as UserResponse;
+    userStore.setFavoriteSpaces(userResponse.favorite_spaces);
   }
 </script>
 

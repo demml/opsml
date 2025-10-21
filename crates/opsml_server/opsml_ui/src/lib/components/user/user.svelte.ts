@@ -1,4 +1,4 @@
-import type { LoginResponse } from "./types";
+import type { LoginResponse, UserResponse } from "./types";
 
 export class UserStore {
   username = $state("");
@@ -13,6 +13,15 @@ export class UserStore {
   constructor() {}
 
   public fromLoginResponse(response: LoginResponse) {
+    this.updateUser(
+      response.username,
+      response.permissions,
+      response.group_permissions,
+      response.favorite_spaces
+    );
+  }
+
+  public fromUserResponse(response: UserResponse) {
     this.updateUser(
       response.username,
       response.permissions,

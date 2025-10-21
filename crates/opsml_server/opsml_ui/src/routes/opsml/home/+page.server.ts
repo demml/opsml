@@ -1,5 +1,4 @@
-import { opsmlClient } from "$lib/components/api/client.svelte";
-import { getRegistryStats } from "$lib/components/card/utils";
+import { getRegistryStats } from "$lib/server/card/utils";
 import {
   getRecentCards,
   type HomePageStats,
@@ -7,13 +6,15 @@ import {
 import { RegistryType } from "$lib/utils";
 import type { PageServerLoad } from "./$types";
 
-async function get_registry_stats(): Promise<HomePageStats> {
+async function get_registry_stats(
+  fetch: typeof globalThis.fetch
+): Promise<HomePageStats> {
   const [modelStats, dataStats, promptStats, experimentStats] =
     await Promise.all([
-      getRegistryStats(RegistryType.Model),
-      getRegistryStats(RegistryType.Data),
-      getRegistryStats(RegistryType.Prompt),
-      getRegistryStats(RegistryType.Experiment),
+      getRegistryStats(fetch, RegistryType.Model),
+      getRegistryStats(fetch, RegistryType.Data),
+      getRegistryStats(fetch, RegistryType.Prompt),
+      getRegistryStats(fetch, RegistryType.Experiment),
     ]);
 
   return {
@@ -24,11 +25,8 @@ async function get_registry_stats(): Promise<HomePageStats> {
   };
 }
 
-export const load: PageServerLoad = async ({ cookies }) => {
-  opsmlClient.setToken(cookies.get("jwt_token"));
-
-  let cards = await getRecentCards();
-  let stats = await get_registry_stats();
-
+export const load: PageServerLoad = async ({ fetch }) => {
+  let cards = await getRecentCards(fetch);
+  let stats = await get_registry_stats(fetch);
   return { cards, stats };
 };
