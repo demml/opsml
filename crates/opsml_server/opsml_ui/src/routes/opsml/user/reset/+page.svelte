@@ -5,8 +5,8 @@
   import { ServerPaths, UiPaths } from "$lib/components/api/routes";
   import { goTop } from "$lib/utils";
   import {  validatePasswordResetSchema, type PasswordResetSchema } from "$lib/components/user/schema";
-  import { HelpCircle } from 'lucide-svelte';
-  import { serverClient } from "$lib/api/svelteServerClient";
+  import { HelpCircle, Eye, EyeOff } from 'lucide-svelte';
+  import { createInternalApiClient } from "$lib/api/internalClient";
 
   let username: string = $state('');
   let recoveryCode: string = $state('');
@@ -17,6 +17,16 @@
   let resetMessage: string = $state("Password reset successful! You can now log in with your new password.");
   let showPasswordHelp: boolean = $state(false);
   let passwordErrors = $state<Partial<Record<keyof PasswordResetSchema, string>>>({});
+  let passwordVisible: boolean = $state(false);
+
+  function togglePasswordHelp() {
+    showPasswordHelp = !showPasswordHelp;
+  }
+
+  function togglePasswordVisibility() {
+    passwordVisible = !passwordVisible;
+
+  }
 
   /**
  * Handles password reset form submission.
@@ -24,9 +34,11 @@
  * @param event Form submit event
  */
 async function handleReset(event: Event) {
+
   event.preventDefault();
 
-  const argsValid = validatePasswordResetSchema(username, recoveryCode, newPassword);
+   
+  const argsValid = validatePasswordResetSchema(username, recoveryCode, newPassword, confirmPassword);
 
   if (!argsValid.success) {
     showPasswordHelp = true;
@@ -36,7 +48,7 @@ async function handleReset(event: Event) {
   }
 
   try {
-    const res = await serverClient.post(ServerPaths.RESET_PASSWORD, {
+    const res = await createInternalApiClient(fetch).post(ServerPaths.RESET_PASSWORD, {
       username,
       recovery_code: recoveryCode,
       new_password: newPassword
@@ -67,88 +79,117 @@ async function handleReset(event: Event) {
 
 </script>
 
-<section class="pt-20 border-gray-100 col-span-full flex-1 pb-16 md:pb-0 items-center">
+<section class="col-span-12 flex items-center justify-center px-4">
   <form class="z-10 mx-auto rounded-2xl bg-surface-50 border-black border-2 shadow p-4 md:w-96 md:px-5" onsubmit={handleReset}>
+    <!-- Logo and Header -->
     <img alt="OpsML logo" class="mx-auto -mt-12 mb-3 w-20" src={logo}>
-    <h1 class="pt-1 text-center text-lg font-bold text-primary-800">Reset your password</h1>
+    <h1 class="pt-1 mb-4 text-center text-lg font-bold text-primary-800">Reset your password</h1>
 
+    <!-- Reset Message -->
     {#if showResetMessage}                  
-      <PasswordMessage
-      message={resetMessage}
-      />
+      <div class="mb-4">
+        <PasswordMessage message={resetMessage} />
+      </div>
     {/if}
 
-    <div class="mb-8 grid grid-cols-1 gap-3">
-      <label class="text-surface-950 text-sm">Username
+    <!-- Form Fields -->
+    <div class="mb-6 space-y-4">
+      <!-- Username Field -->
+      <div class="space-y-1">
+        <div class="text-surface-950 text-sm">Username</div>
         <input
-          class="input text-sm rounded-base bg-surface-50 text-black disabled:opacity-50 placeholder-surface-800 placeholder-text-sm focus-visible:ring-2 focus-visible:ring-primary-800"
+          class="input w-full text-sm rounded-base bg-surface-50 text-black disabled:opacity-50 placeholder-surface-800 placeholder-text-sm focus-visible:ring-2 focus-visible:ring-primary-800"
           type="text" 
           placeholder="Username"
           bind:value={username}
         />
-
         {#if passwordErrors.username}
           <span class="text-red-500 text-sm">{passwordErrors.username}</span>
         {/if}
-      </label>
+      </div>
 
+      <!-- New Password Field -->
+      <div class="space-y-1">
+        <div class="flex items-center justify-between relative">
+          <div class="flex items-center gap-1">
+            <span class="text-surface-950 text-sm">New Password</span>
+            <button
+              type="button"
+              class="text-surface-600 hover:text-surface-900"
+              onclick={togglePasswordHelp}
+            >
+              <HelpCircle size={16} />
+            </button>
+          </div>
+          {#if showPasswordHelp}
+            <div class="absolute z-50 top-8 left-0 p-2 bg-surface-100 border border-surface-300 rounded-md shadow-lg text-sm w-64 text-surface-900">
+              Password must:
+              <ul class="list-disc ml-4 mt-1">
+                <li>Be 8-32 characters long</li>
+                <li>Include at least one uppercase letter</li>
+                <li>Include at least one number</li>
+                <li>Include at least one special character</li>
+              </ul>
+            </div>
+          {/if}
+        </div>
 
-      <label class="text-surface-950 relative">
-        <div class="flex items-center gap-2 text-sm">
-          New Password
+        <div class="relative">
+          <input
+            class="input w-full text-sm pr-10 rounded-base bg-surface-50 text-black focus-visible:ring-2 focus-visible:ring-primary-800"
+            type={passwordVisible ? 'text' : 'password'}
+            bind:value={newPassword}
+            placeholder="Password"
+          />
           <button
             type="button"
-            class="text-surface-600 hover:text-surface-900"
-            onmouseenter={() => showPasswordHelp = true}
-            onmouseleave={() => showPasswordHelp = false}
-            onfocus={() => showPasswordHelp = true}
-            onblur={() => showPasswordHelp = false}
+            class="absolute inset-y-0 right-0 flex items-center px-2 text-surface-600"
+            onclick={togglePasswordVisibility}
           >
-            <HelpCircle size={16} />
+            {#if passwordVisible}
+              <Eye size={16} color="#5948a3"/>
+            {:else}
+              <EyeOff size={16} color="#5948a3" />
+            {/if}
           </button>
         </div>
-        
-        {#if showPasswordHelp}
-          <div class="absolute z-50 mt-1 p-2 bg-surface-100 border border-surface-300 rounded-md shadow-lg text-sm w-64">
-            Password must:
-            <ul class="list-disc ml-4 mt-1">
-              <li>Be 8-32 characters long</li>
-              <li>Include at least one uppercase letter</li>
-              <li>Include at least one number</li>
-              <li>Include at least one special character</li>
-            </ul>
-          </div>
-        {/if}
-
-        <input
-          class="input text-sm rounded-base bg-surface-50 text-black disabled:opacity-50 placeholder-surface-800 placeholder-text-sm focus-visible:ring-2 focus-visible:ring-primary-800"
-          type="password"
-          placeholder="New Password"
-          bind:value={newPassword}
-        />
-
         {#if passwordErrors.newPassword}
           <span class="text-red-500 text-sm">{passwordErrors.newPassword}</span>
         {/if}
-      </label>
+      </div>
 
-      <label class="text-surface-950 text-sm">Confirm Password
-        <input
-          class="input text-sm rounded-base bg-surface-50 text-black disabled:opacity-50 placeholder-surface-800 placeholder-text-sm focus-visible:ring-2 focus-visible:ring-primary-800"
-          type="password"
-          placeholder="Confirm Password"
-          bind:value={confirmPassword}
-        />
-
+      <!-- Confirm Password Field -->
+      <div class="space-y-1">
+        <div class="text-surface-950 text-sm">Confirm Password</div>
+        <div class="relative">
+          <input
+            class="input w-full text-sm pr-10 rounded-base bg-surface-50 text-black focus-visible:ring-2 focus-visible:ring-primary-800"
+            type={passwordVisible ? 'text' : 'password'}
+            bind:value={confirmPassword}
+            placeholder="Confirm Password"
+          />
+          <button
+            type="button"
+            class="absolute inset-y-0 right-0 flex items-center px-2 text-surface-600"
+            onclick={togglePasswordVisibility}
+          >
+            {#if passwordVisible}
+              <Eye size={16} color="#5948a3"/>
+            {:else}
+              <EyeOff size={16} color="#5948a3" />
+            {/if}
+          </button>
+        </div>
         {#if passwordErrors.confirmPassword}
           <span class="text-red-500 text-sm">{passwordErrors.confirmPassword}</span>
         {/if}
-      </label>
+      </div>
 
-
-      <label class="text-surface-950 text-sm">Recovery Code
+      <!-- Recovery Code Field -->
+      <div class="space-y-1">
+        <div class="text-surface-950 text-sm">Recovery Code</div>
         <input
-          class="input text-sm rounded-base bg-surface-50 text-black disabled:opacity-50 placeholder-surface-800 placeholder-text-sm focus-visible:ring-2 focus-visible:ring-primary-800"
+          class="input w-full text-sm rounded-base bg-surface-50 text-black disabled:opacity-50 placeholder-surface-800 placeholder-text-sm focus-visible:ring-2 focus-visible:ring-primary-800"
           type="text" 
           placeholder="Recovery Code"
           bind:value={recoveryCode}
@@ -156,14 +197,17 @@ async function handleReset(event: Event) {
         {#if passwordErrors.recoveryCode}
           <span class="text-red-500 text-sm">{passwordErrors.recoveryCode}</span>
         {/if}
-      </label>
+      </div>
     </div>
 
-    <div class="grid justify-items-center">
-      <button type="submit" class="btn text-sm bg-primary-500 rounded-lg md:w-72 justify-self-center text-black mb-2 ring-offset-white  focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 border-black border-2 border-border shadow transition-all hover:translate-x-[4px] hover:translate-y-[4px] hover:shadow-none">
+    <!-- Submit Button -->
+    <div class="flex justify-center">
+      <button 
+        type="submit" 
+        class="btn w-full md:w-72 text-sm bg-primary-500 rounded-lg text-black ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 border-black border-2 shadow transition-all hover:translate-x-[4px] hover:translate-y-[4px] hover:shadow-none"
+      >
         Reset
       </button>
-
     </div>
   </form>
 </section>

@@ -116,7 +116,8 @@ pub fn run_cli(args: Vec<String>) -> anyhow::Result<()> {
                 println!("Starting opsml-ui...");
                 let default_version = opsml_version::version();
                 let version = args.version.as_deref().unwrap_or_else(|| &default_version);
-                start_ui(version, None).context("Failed to start opsml-ui")?;
+                start_ui(version, &args.server_url, &args.ui_url, &args.dev_mode)
+                    .context("Failed to start opsml-ui")?;
                 Ok(())
             }
             UiCommands::Stop => {

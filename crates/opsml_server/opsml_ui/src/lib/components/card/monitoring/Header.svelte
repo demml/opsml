@@ -1,15 +1,15 @@
 <script lang="ts">
   import { DriftType } from "./types";
-  import { type DriftConfigType, type DriftProfile, type DriftProfileResponse, type UiProfile } from "./util";
+  import { type DriftConfigType, type UiProfile } from "./utils";
   import { Clock } from 'lucide-svelte';
   import { TimeInterval } from '$lib/components/card/monitoring/types';
-  import Dropdown from '$lib/components/utils/Dropdown.svelte';
   import { KeySquare } from 'lucide-svelte';
   import CustomConfigHeader from "./custom/CustomConfigHeader.svelte";
   import PsiConfigHeader from "./psi/PsiConfigHeader.svelte";
   import SpcConfigHeader from "./spc/SpcConfigHeader.svelte";
   import LLMConfigHeader from "./llm/LLMConfigHeader.svelte";
   import type { RegistryType } from "$lib/utils";
+  import ComboBoxDropDown from "$lib/components/utils/ComboBoxDropDown.svelte";
 
 
   // props
@@ -45,7 +45,6 @@
   let previousName = $state(currentName);
   let previousTimeInterval = $state(currentTimeInterval);
 
-
   // Effect for handling a name change from the dropdown
   $effect(() => {
     if (currentName && currentName !== previousName) {
@@ -66,9 +65,8 @@
 </script>
 
 <div class="flex flex-row flex-wrap gap-4">
-
-  <div class="flex flex-col justify-center p-2 bg-white md:col-span-2 rounded-lg border-2 border-black shadow min-h-[4rem]">
-    <div class="flex flex-row flex-wrap gap-2 items-center justify-start">
+  <div class="flex flex-col justify-center p-2 bg-white md:col-span-2 rounded-lg border-2 border-black shadow min-h-[4rem] px-4">
+    <div class="flex flex-row flex-wrap gap-2 items-center justify-start mb-4">
       <div class="items-start mr-1 font-bold text-primary-800">Drift Type:</div>
         {#each availableDriftTypes as drift_type}
           {#if drift_type === currentDriftType}
@@ -84,31 +82,37 @@
         {/each}
     </div>
 
-    <div class="flex flex-row flex-wrap gap-2 mt-4 items-center justify-center">
-      <div class="flex gap-2 pr-2 border-primary-800">
-        <div class="self-center" aria-label="Time Interval">
-          <Clock color="#5948a3" />
-        </div>
+    <div class="flex flex-row gap-3">
 
-        <Dropdown 
-          bind:selectedValue={currentTimeInterval}
-          values={timeIntervals}
-          width='w-[9rem]'
-          py="py-1"
-        />
+      <div class="flex flex-col gap-2 text-primary-800 self-center">
+        <div class="font-bold">Time Interval:</div>
+        <div class="flex flex-row gap-1">
+          <div class="self-center" aria-label="Monitor Name">
+            <Clock color="#5948a3" />
+          </div>
+          
+          <ComboBoxDropDown
+            boxId="interval-combobox-input"
+            defaultValue={currentTimeInterval}
+            boxOptions={timeIntervals}
+          />
+        </div>
       </div>
-
-      <div class="flex items-center gap-2 pr-2">
-        <div class="self-center" aria-label="Time Interval">
-          <KeySquare color="#5948a3" />
+      
+      
+      <div class="flex flex-col gap-2 text-primary-800 self-center">
+        <div class="font-bold">Name:</div>
+        <div class="flex flex-row gap-1">
+          <div class="self-center" aria-label="Monitor Name">
+            <KeySquare color="#5948a3" />
+          </div>
+          
+          <ComboBoxDropDown
+            boxId="name-combobox-input"
+            defaultValue={currentName ?? "Select Name"}
+            boxOptions={currentNames}
+          />
         </div>
-
-        <Dropdown 
-          bind:selectedValue={currentName}
-          bind:values={currentNames}
-          width='w-[10rem]'
-          py="py-1"
-        />
       </div>
     </div>
   </div>
@@ -152,6 +156,3 @@
     {/if}
   </div>
 </div>
-
-
-

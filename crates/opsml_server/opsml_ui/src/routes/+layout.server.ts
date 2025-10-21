@@ -1,13 +1,12 @@
-import { opsmlClient } from "$lib/components/api/client.svelte";
-import { getUISettings } from "$lib/components/settings/getSettings.server";
+import { getUISettings } from "$lib/server/settings";
 import { logger } from "$lib/server/logger";
 import type { LayoutServerLoad } from "./$types";
 
-export const load: LayoutServerLoad = async ({ cookies }) => {
+export const load: LayoutServerLoad = async ({ fetch }) => {
   try {
     logger.debug("Loading layout server data...");
-    opsmlClient.setToken(cookies.get("jwt_token"));
-    const settings = await getUISettings();
+
+    const settings = await getUISettings(fetch);
 
     return {
       settings: {

@@ -121,11 +121,17 @@ ui.update.deps:
 install.ui.deps:
 	cd $(UI_DIR) && pnpm install
 
-.PHONY: ui.build
+.PHONY: ui.install.deps.prod
+install.ui.deps.prod:
+	# remove existing node_modules
+	rm -rf $(UI_DIR)/node_modules
+	# install only production dependencies
+	cd $(UI_DIR) && pnpm install --prod
+
+.PHONY: build.ui
 build.ui:
 	cd $(UI_DIR) && pnpm install
 	cd $(UI_DIR) && pnpm build
-	touch $(UI_DIR)/site/.gitkeep # to make sure the site folder is not ignored by git
 
 ui.dev:
 	cd $(UI_DIR) && pnpm run dev
@@ -154,7 +160,7 @@ dev.frontend:
 
 .PHONY: build.backend
 build.backend:
-	cargo build --release -p opsml-server
+	cargo build -p opsml-server --target
 
 .PHONY: start.backend
 start.backend: build.backend
@@ -176,7 +182,7 @@ start.both:
 	@echo "Starting both servers in production mode..."
 	@echo "Backend API: http://localhost:8080" 
 	@echo "Frontend SSR: http://localhost:3000"
-	@make -j2 start.backend start.frontend
+	@make -j2 dev.backend start.frontend
 
 .PHONY: stop.both
 stop.both:
