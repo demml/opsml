@@ -35,8 +35,6 @@ RUN mkdir -p /var/log/nginx /var/run \
   && chmod +x /usr/local/bin/opsml-server \
   && chown -R opsml:opsml /var/log/nginx /var/run
 
-ENV OPSML_SERVER_PORT=${OPSML_SERVER_PORT}
-
 WORKDIR /app
 
 USER opsml

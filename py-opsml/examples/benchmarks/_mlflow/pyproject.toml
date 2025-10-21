@@ -1,0 +1,16 @@
+[project]
+name = "mlflow-benchmark"
+requires-python = ">=3.10"
+classifiers = [
+    "Programming Language :: Rust",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Programming Language :: Python :: Implementation :: PyPy",
+]
+license = "MIT"
+version = "0.1.0"
+description = ""
+authors = [{name = "Thorrester", email = "<support@demmlai.com>"}]
+dependencies = [
+    "mlflow>=3.5.0",
+    "scikit-learn>=1.7.2",
+]
