@@ -1,8 +1,10 @@
 <script lang="ts">
   import { Modal } from '@skeletonlabs/skeleton-svelte';
   import { z } from "zod";
-  import { createSpace } from './utils';
   import Warning from '../utils/Warning.svelte';
+  import { createInternalApiClient } from '$lib/api/internalClient';
+  import { ServerPaths } from '../api/routes';
+  import type { CreateSpaceResponse } from './types';
 
   // Validation schema for space
   const spaceSchema = z.object({
@@ -63,7 +65,12 @@
 
     if (argsValid.success) {
 
-      let response = await createSpace(space, description);
+      let resp = await createInternalApiClient(fetch).post(ServerPaths.CREATE_SPACE, {
+        space,
+        description
+      });
+
+      let response = (await resp.json() as CreateSpaceResponse);
 
       if (!response.created) {
         showError = true;

@@ -1,23 +1,33 @@
 import type { SpcDriftConfig, SpcDriftProfile } from "./spc/spc";
 import type { PsiDriftConfig, PsiDriftProfile } from "./psi/psi";
+import { createInternalApiClient } from "$lib/api/internalClient";
 import type {
   CustomDriftProfile,
   CustomMetricDriftConfig,
 } from "./custom/custom";
+import { mockPsiMetrics } from "./psi/mocks";
+import { mockCustomMetrics } from "./custom/mocks";
+import { mockSpcMetrics } from "./spc/mocks";
+import { mockLLMDriftPageResponse, mockLLMMetrics } from "./llm/mocks";
 import {
   DriftType,
   TimeInterval,
   type BinnedDriftMap,
   type MetricData,
 } from "./types";
-import {
-  samplePsiMetrics,
-  sampleSpcMetrics,
-  sampleCustomMetrics,
-  sampleLLMMetrics,
-  mockLLMDriftServerRecords,
-} from "./example";
 import type { LLMDriftConfig, LLMDriftProfile } from "./llm/llm";
+import { mockAlerts } from "./mocks";
+import { ServerPaths } from "$lib/components/api/routes";
+import { mockDriftProfileResponse } from "./mocks";
+import type {
+  DriftProfileUri,
+  LLMPageResponse,
+  PaginationCursor,
+  ServiceInfo,
+  Status,
+} from "../monitoring/types";
+import { RegistryType } from "$lib/utils";
+import { type Alert } from "./alert/types";
 
 export type DriftProfile = {
   Spc: SpcDriftProfile;
@@ -84,20 +94,6 @@ export function getProfileConfig(
   return variables;
 }
 
-// this is used for mocking
-export async function getLatestMetricsExample(
-  profiles: DriftProfileResponse,
-  time_interval: TimeInterval,
-  max_data_points: number
-): Promise<BinnedDriftMap> {
-  return {
-    [DriftType.Spc]: sampleSpcMetrics,
-    [DriftType.Psi]: samplePsiMetrics,
-    [DriftType.Custom]: sampleCustomMetrics,
-    [DriftType.LLM]: sampleLLMMetrics,
-  };
-}
-
 // Funcs
 // Helper function to get current metric data
 export function getCurrentMetricData(
@@ -162,4 +158,129 @@ export function timeIntervalToDateTime(interval: TimeInterval): string {
 
   // Format to YYYY-MM-DD HH:MM:SS
   return past.toISOString();
+}
+
+/** Helper for getting latest monitoring metrics
+ * @param profiles - drift profiles to get metrics for
+ * @param time_interval - time interval for the metrics
+ * @param max_data_points - maximum data points to retrieve
+ * @param fetch - fetch function
+ * @returns binned drift map with latest metrics
+ */
+export async function getLatestMonitoringMetrics(
+  fetch: typeof globalThis.fetch,
+  profiles: DriftProfileResponse,
+  time_interval: TimeInterval,
+  max_data_points: number
+): Promise<BinnedDriftMap> {
+  // for dev, return example data
+  if (import.meta.env.DEV) {
+    return {
+      [DriftType.Spc]: mockSpcMetrics,
+      [DriftType.Psi]: mockPsiMetrics,
+      [DriftType.Custom]: mockCustomMetrics,
+      [DriftType.LLM]: mockLLMMetrics,
+    };
+  }
+
+  let resp = await createInternalApiClient(fetch).post(
+    ServerPaths.MONITORING_METRICS,
+    {
+      profiles,
+      time_interval,
+      max_data_points,
+    }
+  );
+
+  let binnedMap = (await resp.json()) as BinnedDriftMap;
+  return binnedMap;
+}
+
+/** Helper for getting monitoring drift profiles
+ * @param fetch - fetch function
+ * @param uid - unique identifier for the card
+ * @param driftMap - map of drift profiles to fetch
+ * @param registryType - type of registry (Model, Data, etc.)
+ * @returns drift profiles
+ */
+export async function getMonitoringDriftProfiles(
+  fetch: typeof globalThis.fetch,
+  uid: string,
+  driftMap: Record<string, DriftProfileUri>,
+  registryType: RegistryType
+): Promise<DriftProfileResponse> {
+  if (import.meta.env.DEV) {
+    return mockDriftProfileResponse;
+  }
+
+  let resp = createInternalApiClient(fetch).post(
+    ServerPaths.MONITORING_PROFILES,
+    {
+      uid,
+      driftMap,
+      registryType,
+    }
+  );
+
+  let profiles = (await (await resp).json()) as DriftProfileResponse;
+  return profiles;
+}
+
+/** Helper for getting monitoring alerts
+ * @param fetch - fetch function
+ * @param space - space of the model card
+ * @param name - name of the model card
+ * @param version - version of the model card
+ * @param timeInterval - time interval for the alerts
+ * @param active - whether to fetch only active alerts
+ * @returns list of alerts
+ */
+export async function getMonitoringAlerts(
+  fetch: typeof globalThis.fetch,
+  space: string,
+  name: string,
+  version: string,
+  timeInterval: TimeInterval,
+  active: boolean
+): Promise<Alert[]> {
+  if (import.meta.env.DEV) {
+    return mockAlerts;
+  }
+
+  let resp = await createInternalApiClient(fetch).post(
+    ServerPaths.MONITORING_ALERTS,
+    {
+      space,
+      name,
+      version,
+      timeInterval,
+      active,
+    }
+  );
+
+  let alerts = (await resp.json()) as Alert[];
+  return alerts;
+}
+
+export async function getLLMMonitoringRecordPage(
+  fetch: typeof globalThis.fetch,
+  service_info: ServiceInfo,
+  status?: Status,
+  cursor?: PaginationCursor
+): Promise<LLMPageResponse> {
+  if (import.meta.env.DEV) {
+    return mockLLMDriftPageResponse;
+  }
+
+  let resp = await createInternalApiClient(fetch).post(
+    ServerPaths.LLM_MONITORING_RECORDS,
+    {
+      service_info,
+      status,
+      cursor,
+    }
+  );
+
+  let response = (await resp.json()) as LLMPageResponse;
+  return response;
 }

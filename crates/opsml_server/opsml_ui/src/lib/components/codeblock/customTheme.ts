@@ -4,7 +4,7 @@ export const customTheme: ThemeRegistration = {
   name: "custom-light",
   type: "light",
   colors: {
-    "editor.background": "#f2f1f6",
+    "editor.background": "#ffffffff",
     "editor.foreground": "#2e3440",
   },
   tokenColors: [
