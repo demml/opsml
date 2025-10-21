@@ -1,7 +1,6 @@
 <script lang="ts">
   import Card from "$lib/components/card/Card.svelte";
   import { type Card as Cards } from "$lib/components/home/types";
-  import type { RegistryType } from "$lib/utils";
   let { 
     header, 
     cards, 

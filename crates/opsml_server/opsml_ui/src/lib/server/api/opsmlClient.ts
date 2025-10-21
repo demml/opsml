@@ -8,21 +8,16 @@ import { redirect } from "@sveltejs/kit";
  * error handling and token management.
  */
 export class OpsmlClient {
-  private jwt_token: string;
+  private fetchFn: typeof globalThis.fetch;
 
-  constructor(jwt_token?: string) {
-    // set initial token if provided
-    this.jwt_token = jwt_token || "";
-  }
-
-  // token can only be set on server endpoints
-  setToken(token?: string) {
-    this.jwt_token = token || "";
+  constructor(fetchFn: typeof globalThis.fetch = fetch) {
+    this.fetchFn = fetchFn;
   }
 
   private getBaseUrl(): string {
-    // Always point to your Rust backend
-    return "http://localhost:8080";
+    // Use OPSML_SERVER_PORT from process.env or fallback to 8080
+    const port = process.env.OPSML_SERVER_PORT ?? "8080";
+    return `http://localhost:${port}`;
   }
 
   /**
@@ -79,7 +74,7 @@ export class OpsmlClient {
     const url = new URL(path, baseUrl);
 
     try {
-      const response = await fetch(url.toString(), {
+      const response = await this.fetchFn(url.toString(), {
         ...options,
         headers: options.headers,
       });
@@ -102,8 +97,21 @@ export class OpsmlClient {
   async get(path: string, params?: Record<string, any>): Promise<Response> {
     const url = this.addQueryParams(new URL(path, this.getBaseUrl()), params);
     const headers: Record<string, string> = {};
-    if (this.jwt_token) headers.Authorization = `Bearer ${this.jwt_token}`;
     return this.request(url.pathname + url.search, { method: "GET", headers });
+  }
+
+  async validateToken(path: string, token: string): Promise<Response> {
+    const headers: Record<string, string> = {
+      Authorization: `Bearer ${token}`,
+    };
+    return this.request(path, { method: "GET", headers });
+  }
+
+  async refreshToken(path: string, token: string): Promise<Response> {
+    const headers: Record<string, string> = {
+      Authorization: `Bearer ${token}`,
+    };
+    return this.request(path, { method: "POST", headers });
   }
 
   /**
@@ -111,7 +119,6 @@ export class OpsmlClient {
    */
   async delete(path: string, body?: any): Promise<Response> {
     const headers: Record<string, string> = {};
-    if (this.jwt_token) headers.Authorization = `Bearer ${this.jwt_token}`;
     return this.request(path, {
       method: "DELETE",
       headers: { "Content-Type": "application/json", ...headers },
@@ -124,7 +131,6 @@ export class OpsmlClient {
    */
   async put(path: string, body: any): Promise<Response> {
     const headers: Record<string, string> = {};
-    if (this.jwt_token) headers.Authorization = `Bearer ${this.jwt_token}`;
     return this.request(path, {
       method: "PUT",
       headers: { "Content-Type": "application/json", ...headers },
@@ -137,7 +143,6 @@ export class OpsmlClient {
    */
   async patch(path: string, body: any): Promise<Response> {
     const headers: Record<string, string> = {};
-    if (this.jwt_token) headers.Authorization = `Bearer ${this.jwt_token}`;
     return this.request(path, {
       method: "PATCH",
       headers: { "Content-Type": "application/json", ...headers },
@@ -150,10 +155,6 @@ export class OpsmlClient {
     body: any,
     additionalHeaders: Record<string, string> = {}
   ): Promise<Response> {
-    if (this.jwt_token) {
-      additionalHeaders.Authorization = `Bearer ${this.jwt_token}`;
-    }
-
     return this.request(path, {
       method: "POST",
       headers: {
@@ -165,5 +166,7 @@ export class OpsmlClient {
   }
 }
 
-// Create and export a singleton instance
-export const opsmlClient = new OpsmlClient();
+export function createOpsmlClient(fetch: typeof globalThis.fetch) {
+  const client = new OpsmlClient(fetch);
+  return client;
+}

@@ -4,8 +4,6 @@
   import ImageViewer from './ImageViewer.svelte';
   import MarkdownViewer from './MarkdownViewer.svelte';
   import CodeViewer from './CodeViewer.svelte';
-  import CodeBlock from "$lib/components/codeblock/CodeBlock.svelte";
-  import { Code } from "lucide-svelte";
 
   /**
    * Main file viewer component that routes to appropriate specialized viewers

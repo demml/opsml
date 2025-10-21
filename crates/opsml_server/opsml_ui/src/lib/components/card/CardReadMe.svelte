@@ -22,20 +22,12 @@
         readMe: ReadMe;
       }>();
    
-  
-    
-   
-
     let readMeUrl = $state(`/opsml/${getRegistryPath(registryType)}/card/${space}/${name}/${version}/readme`);
   
-  
-  
     onMount(async () => {
-  
       if (readMe.exists) {
         html = await convertMarkdown(readMe.readme);
       }
-      
     });
   
   

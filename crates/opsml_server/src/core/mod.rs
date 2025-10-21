@@ -15,5 +15,4 @@ pub mod settings;
 pub mod setup;
 pub mod shutdown;
 pub mod state;
-pub mod ui;
 pub mod user;

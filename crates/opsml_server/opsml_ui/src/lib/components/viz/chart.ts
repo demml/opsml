@@ -149,25 +149,36 @@ export function createLineChart(
 ): ChartConfiguration {
   const datasets: ChartjsLineDataset[] = [];
 
+  const metricNames = Object.keys(metricData);
   const uniqueVersions = new Set(
     Object.values(metricData)
       .flat()
       .map((metric) => metric.version)
   );
 
-  // Generate colors based on number of unique experiments
-  const colors = generateColors(uniqueVersions.size, 1.0);
+  let colors: string[];
+  let getColorIndex: (metricName: string, version: string) => number;
 
-  // Create version to color index mapping
-  const versionColorMap = new Map(
-    Array.from(uniqueVersions).map((version, index) => [version, index])
-  );
+  if (uniqueVersions.size === 1) {
+    // Only one version: color by metric name
+    colors = generateColors(metricNames.length, 1.0);
+    const metricColorMap = new Map(metricNames.map((name, idx) => [name, idx]));
+    getColorIndex = (metricName) => metricColorMap.get(metricName) ?? 0;
+  } else {
+    // Multiple versions: color by version
+    colors = generateColors(uniqueVersions.size, 1.0);
+    const versionColorMap = new Map(
+      Array.from(uniqueVersions).map((version, idx) => [version, idx])
+    );
+    getColorIndex = (_metricName, version) => versionColorMap.get(version) ?? 0;
+  }
 
-  // For each metric name
   Object.entries(metricData).forEach(([metricName, groupedMetrics]) => {
-    // For each experiment's grouped metrics
     groupedMetrics.forEach((metric) => {
-      const colorIndex = versionColorMap.get(metric.version) ?? 0;
+      const colorIndex =
+        uniqueVersions.size === 1
+          ? getColorIndex(metricName, metric.version)
+          : getColorIndex(metricName, metric.version);
 
       datasets.push({
         label: `${metricName} - ${metric.version}`,
@@ -182,24 +193,18 @@ export function createLineChart(
     });
   });
 
-  // Get first non-empty metric data for x-axis values
   const firstMetric = Object.values(metricData)[0]?.[0];
-
-  // Try steps first, then timestamp, then fallback to array indices
   const xValues = Array.from(
     firstMetric?.step ??
       firstMetric?.timestamp ??
       Array.from({ length: firstMetric?.value.length ?? 0 }, (_, i) => i)
   );
-
-  // Adjust x-axis label based on what we're using
   const effectiveXLabel = firstMetric?.step
     ? "Step"
     : firstMetric?.timestamp
     ? "Time"
     : "Index";
 
-  // Build the line chart configuration if effectiveXLabel is Time
   if (effectiveXLabel === "Time") {
     const xAsDate = xValues.map((x) => new Date(x));
     return buildTimeChart(
@@ -227,36 +232,66 @@ export function createGroupedBarChart(
       .map((metric) => metric.version)
   );
 
-  const borderColors = generateColors(uniqueVersions.size, 1.0);
-  const backgroundColors = generateColors(uniqueVersions.size, 0.5);
+  if (uniqueVersions.size === 1) {
+    // Only one version: color each metric differently
+    const borderColors = generateColors(metricNames.length, 1.0);
+    const backgroundColors = generateColors(metricNames.length, 0.5);
+    const version = Array.from(uniqueVersions)[0];
 
-  const versionColorMap = new Map(
-    Array.from(uniqueVersions).map((version, index) => [version, index])
-  );
-
-  // For each metric name
-  Array.from(uniqueVersions).forEach((version) => {
-    const values: number[] = [];
-
-    // For each metric, find the value for this version
-    metricNames.forEach((metricName) => {
-      const metric = metricData[metricName].find((m) => m.version === version);
+    metricNames.forEach((metricName, idx) => {
+      const metric = metricData[metricName][0];
       const value = metric ? Array.from(metric.value).pop() ?? 0 : 0;
-      values.push(value);
+
+      datasets.push({
+        label: metricName,
+        data: [value],
+        backgroundColor: backgroundColors[idx],
+        borderColor: borderColors[idx],
+        borderWidth: 2,
+      });
     });
 
-    const colorIndex = versionColorMap.get(version) ?? 0;
+    return buildChart([version], datasets, "Version", y_label, true, "bar");
+  } else {
+    // Multiple versions: create one dataset per version, color by version
+    const borderColors = generateColors(uniqueVersions.size, 1.0);
+    const backgroundColors = generateColors(uniqueVersions.size, 0.5);
 
-    datasets.push({
-      label: version,
-      data: values,
-      backgroundColor: backgroundColors[colorIndex],
-      borderColor: borderColors[colorIndex],
-      borderWidth: 2,
+    const versionColorMap = new Map(
+      Array.from(uniqueVersions).map((version, index) => [version, index])
+    );
+
+    Array.from(uniqueVersions).forEach((version) => {
+      const values: number[] = [];
+
+      metricNames.forEach((metricName) => {
+        const metric = metricData[metricName].find(
+          (m) => m.version === version
+        );
+        const value = metric ? Array.from(metric.value).pop() ?? 0 : 0;
+        values.push(value);
+      });
+
+      const colorIndex = versionColorMap.get(version) ?? 0;
+
+      datasets.push({
+        label: version,
+        data: values,
+        backgroundColor: backgroundColors[colorIndex],
+        borderColor: borderColors[colorIndex],
+        borderWidth: 2,
+      });
     });
-  });
 
-  return buildChart(metricNames, datasets, "Experiments", y_label, true, "bar");
+    return buildChart(
+      metricNames,
+      datasets,
+      "Experiments",
+      y_label,
+      true,
+      "bar"
+    );
+  }
 }
 
 export function createBarChart(

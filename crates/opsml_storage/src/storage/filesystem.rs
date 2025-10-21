@@ -350,7 +350,7 @@ mod tests {
     }
 
     pub fn set_env_vars() {
-        std::env::set_var("OPSML_TRACKING_URI", "http://0.0.0.0:3000");
+        std::env::set_var("OPSML_TRACKING_URI", "http://0.0.0.0:8080");
     }
 
     pub fn unset_env_vars() {
