@@ -1,4 +1,4 @@
-import { opsmlClient } from "$lib/components/api/client.svelte";
+import { createOpsmlClient } from "$lib/server/api/opsmlClient";
 import { RoutePaths } from "$lib/components/api/routes";
 import {
   type UpdateProfileRequest,
@@ -15,7 +15,7 @@ import {
   type BinnedDriftMap,
 } from "$lib/components/card/monitoring/types";
 import { RegistryType } from "$lib/utils";
-import type { DriftProfileUri } from "$lib/components/card/card_interfaces/promptcard";
+import type { DriftProfileUri } from "$lib/components/card/monitoring/types";
 import type { DriftProfileResponse } from "$lib/components/card/monitoring/utils";
 import type {
   AlertResponse,
@@ -30,6 +30,7 @@ import {
 } from "$lib/components/card/monitoring/utils";
 
 export async function getDriftProfiles(
+  fetch: typeof globalThis.fetch,
   uid: string,
   driftMap: Record<string, DriftProfileUri>,
   registryType: RegistryType
@@ -40,11 +41,15 @@ export async function getDriftProfiles(
     registry_type: registryType,
   };
 
-  const response = await opsmlClient.post(RoutePaths.DRIFT_PROFILE_UI, body);
+  const response = await createOpsmlClient(fetch).post(
+    RoutePaths.DRIFT_PROFILE_UI,
+    body
+  );
   return (await response.json()) as DriftProfileResponse;
 }
 
 export async function getLLMRecordPage(
+  fetch: typeof globalThis.fetch,
   service_info: ServiceInfo,
   status?: Status,
   cursor?: PaginationCursor
@@ -60,14 +65,18 @@ export async function getLLMRecordPage(
     pagination,
   };
 
-  const response = await opsmlClient.post(RoutePaths.LLM_RECORD_PAGE, request);
+  const response = await createOpsmlClient(fetch).post(
+    RoutePaths.LLM_RECORD_PAGE,
+    request
+  );
   return (await response.json()) as LLMPageResponse;
 }
 
 export async function updateDriftProfile(
+  fetch: typeof globalThis.fetch,
   updateRequest: UpdateProfileRequest
 ): Promise<UpdateResponse> {
-  const response = await opsmlClient.put(
+  const response = await createOpsmlClient(fetch).put(
     RoutePaths.DRIFT_PROFILE,
     updateRequest
   );
@@ -75,6 +84,7 @@ export async function updateDriftProfile(
 }
 
 export async function getDriftAlerts(
+  fetch: typeof globalThis.fetch,
   space: string,
   name: string,
   version: string,
@@ -90,7 +100,10 @@ export async function getDriftAlerts(
     active: active,
   };
 
-  const response = await opsmlClient.get(RoutePaths.DRIFT_ALERT, alertRequest);
+  const response = await createOpsmlClient(fetch).get(
+    RoutePaths.DRIFT_ALERT,
+    alertRequest
+  );
   if (!response.ok) {
     throw new Error(`Failed to fetch drift alerts: ${response.status}`);
   }
@@ -101,6 +114,7 @@ export async function getDriftAlerts(
 
 //// Acknowledge an alert by its ID
 export async function acknowledgeAlert(
+  fetch: typeof globalThis.fetch,
   id: number,
   space: string
 ): Promise<boolean> {
@@ -110,7 +124,10 @@ export async function acknowledgeAlert(
     space: space,
   };
 
-  const response = await opsmlClient.put(RoutePaths.DRIFT_ALERT, request);
+  const response = await createOpsmlClient(fetch).put(
+    RoutePaths.DRIFT_ALERT,
+    request
+  );
 
   if (!response.ok) {
     throw new Error(`Failed to acknowledge alert: ${response.status}`);
@@ -125,6 +142,7 @@ export async function acknowledgeAlert(
 }
 
 export async function getLatestMetrics(
+  fetch: typeof globalThis.fetch,
   profiles: DriftProfileResponse,
   time_interval: TimeInterval,
   max_data_points: number
@@ -162,7 +180,7 @@ export async function getLatestMetrics(
       })();
 
       // Make the request and store result in driftMap
-      const response = await opsmlClient.get(route, request);
+      const response = await createOpsmlClient(fetch).get(route, request);
       const data = await response.json();
       driftMap[driftType as DriftType] = data;
     }

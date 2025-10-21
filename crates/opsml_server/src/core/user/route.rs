@@ -47,7 +47,7 @@ pub async fn create_user(
     }
 
     // Check if user already exists
-    // This route is only use from creating non-sso users, so auth_type is None
+    // This route is only used for creating non-sso users, so auth_type is None
     if let Ok(Some(_)) = state.sql_client.get_user(&create_req.username, None).await {
         return OpsmlServerError::user_already_exists().into_response(StatusCode::CONFLICT);
     }

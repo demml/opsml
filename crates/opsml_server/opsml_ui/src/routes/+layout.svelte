@@ -55,5 +55,6 @@
       linear-gradient(to right, #CECBDB 1px, transparent 1px),
       linear-gradient(to bottom, #CECBDB 1px, transparent 1px);
     background-size: 60px 60px;
+    background-attachment: fixed;
   }
 </style>

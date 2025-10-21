@@ -2,16 +2,14 @@
   import { goto } from "$app/navigation";
   import logo from "$lib/images/opsml-logo-medium.webp";
   import LoginWarning from "$lib/components/user/LoginWarning.svelte";
-  import { RoutePaths, UiPaths } from "$lib/components/api/routes";
+  import {  ServerPaths, UiPaths } from "$lib/components/api/routes";
   import { goTop } from "$lib/utils";
-  import { opsmlClient } from "$lib/components/api/client.svelte";
-  import type { PageProps } from './$types';
+  import { createInternalApiClient } from "$lib/api/internalClient";
   import {  validateUserRegisterSchema, type UserRegisterSchema } from "$lib/components/user/schema";
-  import { registerUser } from "$lib/components/user/utils";
   import { HelpCircle, Eye, EyeOff } from 'lucide-svelte';
   import { userStore } from "$lib/components/user/user.svelte";
+  import type { CreateUserUiResponse } from "$lib/components/user/types";
   
-
 
   let username: string = $state('');
   let password: string = $state('');
@@ -39,17 +37,33 @@
     let argsValid = validateUserRegisterSchema(username, password, reEnterPassword, email);
 
     if (argsValid.success) {
-        let response = await registerUser(username, password, email);
 
+      let res = await createInternalApiClient(fetch).post(ServerPaths.REGISTER_USER, {
+        username,
+        password,
+        email
+      });
+      console.log("Registration response status:", res.status);
+
+      let response = (await res.json() as CreateUserUiResponse);
       if (response.registered) {
+
         // need to goto the register success page to give user recovery codes
         userStore.setRecoveryCodes(response.response?.recovery_codes ?? []);
         goto(UiPaths.REGISTER_SUCCESS);
 
       } else {
+
         showLoginError = true;
+        // check if there's a specific error message from the server
+        // check for unique constraint violation
         console.error("Registration error:", response.error);
-        errorMessage = response.error ?? "Error encountered during registration";
+        // if Failed to create user: error returned from database" default to generic message and ask to check with administrator
+        if (response.error?.includes("Failed to create user: error returned from database")) {
+          errorMessage = "Registration failed. Username or email may already be in use. Please try again with different credentials or contact the administrator.";
+        } else {
+          errorMessage = response.error ?? "Error encountered during registration";
+        }
       }
       goTop();
 
@@ -67,11 +81,8 @@
 </script>
 
 <div class="flex col-span-full items-center justify-center pb-16 md:pb-0">
-
 <section class="border-gray-100">
-
   <form class="z-10 mx-auto rounded-2xl bg-surface-50 border-black border-2 shadow p-4 md:w-96 md:px-5 min-h-fit" onsubmit={handleRegister}>
-
     <img alt="OpsML logo" class="mx-auto -mt-12 mb-3 w-20" src={logo}>
     <h1 class="pt-1 text-center text-lg font-bold text-primary-800">Register a new profile</h1>
 

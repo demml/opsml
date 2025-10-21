@@ -29,17 +29,6 @@ export function buildTimeChart(
   const maxY = Math.max(...allYValues);
   const minY = Math.min(...allYValues);
 
-  let yMin: number;
-  let yMax: number;
-
-  if (maxY === minY) {
-    yMin = minY - 1;
-    yMax = maxY + 1;
-  } else {
-    yMin = minY - Math.abs(minY) * 0.1;
-    yMax = maxY + Math.abs(maxY) * 0.1;
-  }
-
   const annotation =
     typeof baselineValue === "number"
       ? {
@@ -154,8 +143,8 @@ export function buildTimeChart(
           },
         },
         y: {
-          min: yMin,
-          max: yMax,
+          suggestedMin: minY - Math.abs(minY) * 0.1,
+          suggestedMax: maxY + Math.abs(maxY) * 0.1,
           title: {
             display: true,
             text: y_label,

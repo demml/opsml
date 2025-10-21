@@ -8,6 +8,7 @@ on:
   push:
     branches:
       - main
+  pull_request:
   release:
     types: [published]
 
@@ -22,7 +23,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu-22.04
+          - os: ubuntu-22.04 #
             target: x86_64-unknown-linux-gnu
             archive: tar.gz
             binary_name: opsml-server
@@ -33,12 +34,6 @@ jobs:
             archive: tar.gz
             binary_name: opsml-server
             archive_name: opsml-server-aarch64-linux-gnu
-
-          - os: macos-latest
-            target: aarch64-apple-darwin
-            archive: zip
-            binary_name: opsml-server
-            archive_name: opsml-server-aarch64-darwin
 
           - os: macos-13
             target: x86_64-apple-darwin
@@ -78,19 +73,23 @@ jobs:
         with:
           python-version: ${{ env.INTERPRETER }}
 
-      - name: Install UI dependencies
-        run: |
-          make install.ui.deps
-          make build.ui
-
       - name: Update apt repositories (Linux)
         if: contains(matrix.os, 'ubuntu')
         run: |
           sudo apt-get update -y
           sudo apt-get install -y build-essential
 
+      - name: Install UI dependencies
+        run: |
+          # install all deps and build UI
+          make build.ui
+
+          # remove node_modules and rebuild prod version to reduce size
+          make install.ui.deps.prod
+
       - name: Build Binaries
-        run: cargo build -p opsml-server --release --target ${{ matrix.target }}
+        run: |
+          cargo build -p opsml-server --release --target ${{ matrix.target }}
 
       - name: Prepare binary directory
         shell: bash
@@ -101,6 +100,12 @@ jobs:
           else
             cp target/${{ matrix.target }}/release/${{ matrix.binary_name }} release-bin/
             chmod +x release-bin/${{ matrix.binary_name }}
+          fi
+          # Copy UI build for Docker builds
+          if [ "${{ matrix.target }}" == "x86_64-unknown-linux-gnu" ] || [ "${{ matrix.target }}" == "aarch64-unknown-linux-gnu" ]; then
+            mkdir -p release-bin/ui
+            cp -r crates/opsml_server/opsml_ui/build release-bin/ui/build || true
+            cp -r crates/opsml_server/opsml_ui/node_modules release-bin/ui/node_modules || true
           fi
 
       - name: Create zip archive (Windows/macOS)
@@ -128,6 +133,28 @@ jobs:
           path: ${{ matrix.archive_name }}.${{ matrix.archive }}
           retention-days: 1
 
+      - name: Package UI for Node.js distribution
+        if: matrix.target == 'x86_64-unknown-linux-gnu'
+        shell: bash
+        run: |
+          mkdir -p packaged-ui
+          cp -r crates/opsml_server/opsml_ui/build packaged-ui/build
+          cp -r crates/opsml_server/opsml_ui/node_modules packaged-ui/node_modules
+          cp crates/opsml_server/opsml_ui/package.json packaged-ui/
+          cp crates/opsml_server/opsml_ui/pnpm-lock.yaml packaged-ui/ || true
+          cd packaged-ui
+          zip -r ../opsml-ui-node.zip ./*
+
+      # only want to run this once, so only on the first matrix item
+      # The artifact will be the same on all builds regardless of target
+      - name: Upload UI Node.js package artifact
+        if: matrix.target == 'x86_64-unknown-linux-gnu'
+        uses: actions/upload-artifact@v4
+        with:
+          name: opsml-ui-node
+          path: opsml-ui-node.zip
+          retention-days: 1
+
   publish-docker-images:
     if: github.event_name == 'release'
     needs: build
@@ -140,14 +167,13 @@ jobs:
         include:
           - image: "ubuntu"
             tag_suffix: "ubuntu"
-          - image: "alpine"
-            tag_suffix: "alpine"
-          - image: "scratch"
-            tag_suffix: "scratch"
+            artifact: "opsml-server-x86_64-linux-gnu"
           - image: "debian"
             tag_suffix: "debian"
-          - image: "distroless"
-            tag_suffix: "distroless"
+            artifact: "opsml-server-x86_64-linux-gnu"
+          - image: "rocky"
+            tag_suffix: "rocky-minimal"
+            artifact: "opsml-server-x86_64-linux-gnu"
 
     steps:
       - name: Checkout Code
@@ -164,12 +190,15 @@ jobs:
 
       - name: Extract binary
         run: |
-          mkdir -p binary
-          tar -xzf ./artifacts/opsml-server-x86_64-linux-gnu.tar.gz -C ./binary
-
-      - name: Set up binary permissions
-        run: |
-          chmod +x ./binary/opsml-server
+          archive="./artifacts/${{ matrix.artifact }}.tar.gz"
+          if [ -f "$archive" ]; then
+            mkdir -p binary
+            tar -xzf "$archive" -C ./binary
+            chmod +x ./binary/opsml-server
+          else
+            echo "x86_64 binary $archive not found, skipping this build"
+            exit 1
+          fi
 
       - name: Set version tag
         id: set-version
@@ -193,7 +222,7 @@ jobs:
           file: docker/official/${{ matrix.image }}/Dockerfile
           push: true
           build-args: |
-            OPSML_SERVER_BINARY=./binary/opsml-server
+            OPSML_SERVER_BINARY=./binary
           tags: |
             demml/opsml:${{ matrix.tag_suffix }}-amd64-${{ steps.set-version.outputs.VERSION }}
             ${{ github.event_name == 'release' && format('demml/opsml:{0}-amd64-latest', matrix.tag_suffix) || '' }}
@@ -212,14 +241,13 @@ jobs:
         include:
           - image: "ubuntu"
             tag_suffix: "ubuntu"
-          - image: "alpine"
-            tag_suffix: "alpine"
-          - image: "scratch"
-            tag_suffix: "scratch"
+            artifact: "opsml-server-aarch64-linux-gnu"
           - image: "debian"
             tag_suffix: "debian"
-          - image: "distroless"
-            tag_suffix: "distroless"
+            artifact: "opsml-server-aarch64-linux-gnu"
+          - image: "rocky"
+            tag_suffix: "rocky-minimal"
+            artifact: "opsml-server-aarch64-linux-gnu"
 
     steps:
       - name: Checkout Code
@@ -239,15 +267,15 @@ jobs:
 
       - name: Extract binary
         run: |
-          if [ -f "./artifacts/opsml-server-aarch64-linux-gnu.tar.gz" ]; then
+          archive="./artifacts/${{ matrix.artifact }}.tar.gz"
+          if [ -f "$archive" ]; then
             mkdir -p binary
-            tar -xzf ./artifacts/opsml-server-aarch64-linux-gnu.tar.gz -C ./binary
+            tar -xzf "$archive" -C ./binary
             chmod +x ./binary/opsml-server
           else
-            echo "ARM64 binary not found, skipping this build"
+            echo "ARM64 binary $archive not found, skipping this build"
             exit 1
           fi
-        continue-on-error: true
 
       - name: Set version tag
         id: set-version
@@ -272,7 +300,7 @@ jobs:
           push: true
           platforms: linux/arm64
           build-args: |
-            OPSML_SERVER_BINARY=./binary/opsml-server
+            OPSML_SERVER_BINARY=./binary
           tags: |
             demml/opsml:${{ matrix.tag_suffix }}-arm64-${{ steps.set-version.outputs.VERSION }}
             ${{ github.event_name == 'release' && format('demml/opsml:{0}-arm64-latest', matrix.tag_suffix) || '' }}
