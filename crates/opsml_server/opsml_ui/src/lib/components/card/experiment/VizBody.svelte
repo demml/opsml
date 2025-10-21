@@ -1,13 +1,9 @@
 
 <script lang="ts">
-  import type { BaseCard } from "$lib/components/home/types";
-  import { onMount } from "svelte";
-  import { getCardMetrics, getGroupedMetrics } from "./util";
-  import type { Experiment, PlotType } from "./types";
+  import type { PlotType } from "./types";
   import Pill from "$lib/components/utils/Pill.svelte";
   import { type GroupedMetrics } from "./types";
   import Chart from "$lib/components/viz/Chart.svelte";
-  import MetricTable from "./MetricTable.svelte";
 
     let { 
       groupedMetrics,

@@ -4,14 +4,11 @@
 	"version": "0.0.1",
 	"type": "module",
 	"scripts": {
-		"dev": "vite dev",
+		"dev": "vite dev --host 0.0.0.0 --port 3000",
 		"build": "vite build",
-		"preview": "vite preview",
-		"prepare": "svelte-kit sync || echo ''",
-		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
-		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
-		"lint": "eslint .",
-		"test": "vitest"
+		"preview": "vite preview --port 3000",
+		"start": "PORT=3000 node build/index.js",
+		"start:prod": "NODE_ENV=production PORT=3000 node build/index.js"
 	},
 	"devDependencies": {
 		"@eslint/compat": "^1.4.0",
@@ -21,22 +18,23 @@
 		"@fortawesome/free-solid-svg-icons": "^6.7.2",
 		"@skeletonlabs/skeleton": "3.0.0-next.12",
 		"@skeletonlabs/skeleton-svelte": "1.0.0-next.21",
-		"@sveltejs/adapter-static": "^3.0.10",
-		"@sveltejs/kit": "^2.46.2",
+		"@sveltejs/adapter-node": "^5.3.3",
+		"@sveltejs/kit": "^2.46.4",
 		"@sveltejs/vite-plugin-svelte": "^5.1.1",
 		"@tailwindcss/forms": "^0.5.10",
 		"@tailwindcss/typography": "^0.5.19",
 		"@tailwindcss/vite": "^4.1.14",
 		"@testing-library/jest-dom": "^6.9.1",
 		"@testing-library/svelte": "^5.2.8",
+		"@types/node": "^24.7.0",
 		"eslint": "^9.37.0",
 		"eslint-plugin-svelte": "^3.12.4",
 		"globals": "^16.4.0",
 		"jsdom": "^26.1.0",
 		"mdsvex": "^0.12.6",
 		"shiki": "^3.13.0",
-		"svelte": "^5.39.10",
-		"svelte-check": "^4.3.2",
+		"svelte": "^5.39.11",
+		"svelte-check": "^4.3.3",
 		"svelte-fa": "^4.0.4",
 		"tailwindcss": "^4.1.14",
 		"typescript": "^5.9.3",
@@ -70,6 +68,7 @@
 		"markdown-it": "^14.1.0",
 		"marked": "^15.0.12",
 		"marked-highlight": "^2.2.2",
-		"melt": "^0.40.2"
+		"melt": "^0.40.2",
+		"pino": "^10.0.0"
 	}
 }

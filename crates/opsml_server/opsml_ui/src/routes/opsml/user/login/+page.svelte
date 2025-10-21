@@ -3,13 +3,17 @@
   import { goto } from "$app/navigation";
   import logo from '$lib/images/opsml-logo-small.webp'
   import LoginWarning from "$lib/components/user/LoginWarning.svelte";
-  import {  UiPaths } from "$lib/components/api/routes";
+  import {  UiPaths, ServerPaths } from "$lib/components/api/routes";
   import { goTop } from "$lib/utils";
-  import { userStore } from "$lib/components/user/user.svelte";
   import type { PageProps } from './$types';
   import { validateLoginSchema, type UseLoginSchema } from "$lib/components/user/schema";
-  import { getSsoAuthURL } from "$lib/components/user/utils";
-import { uiSettingsStore } from "$lib/components/settings/settings.svelte";
+  import { uiSettingsStore } from "$lib/components/settings/settings.svelte";
+  import { createInternalApiClient } from "$lib/api/internalClient";
+  import { userStore } from "$lib/components/user/user.svelte";
+  import type { LoginResponse, SsoAuthUrl } from "$lib/components/user/types";
+
+
+  let { previousPath, fetch }: PageProps = $props();
 
   let username: string = $state('');
   let password: string = $state('');
@@ -18,46 +22,53 @@ import { uiSettingsStore } from "$lib/components/settings/settings.svelte";
 
   let loginErrors = $state<Partial<Record<keyof UseLoginSchema, string>>>({});
 
- 
-  let { data }: PageProps = $props();
-  let previousPath = data.previousPath;
-
   async function handleLogin() {
-    // Handle login logic here
+    // Validate input fields
+    const argsValid = validateLoginSchema(username, password);
 
-    let argsValid = validateLoginSchema(username, password);
-
-    if (argsValid.success) {
-  
-      let loginResponse = await userStore.login(username, password);
-
-      if (loginResponse.authenticated === true) {
-        // need to reload the page to update the nav bar
-        if (previousPath) {
-          goto(previousPath);
-        } else {
-          goto(UiPaths.HOME);
-        }
-      } else {
-        showLoginError = true;
-        errorMessage = loginResponse.message;
-      }
-      goTop();
-    } else {
+    if (!argsValid.success) {
       showLoginError = true;
       loginErrors = argsValid.errors ?? {};
       goTop();
+      return;
     }
-}
 
-async function redirectToSsoUrl() {
-  
-  const ssoAuthUrl = await getSsoAuthURL();
-  localStorage.setItem("ssoState", ssoAuthUrl.state);
-  localStorage.setItem("ssoCodeVerifier", ssoAuthUrl.code_verifier);
+    try {
+      // Send login request to server endpoint
+      const res = await createInternalApiClient(fetch).post(ServerPaths.LOGIN, { username, password });
+      const result = await res.json();
 
-  window.location.href = ssoAuthUrl.url;
-}
+      if (res.ok && result.success) {
+        // On success, update userStore, redirect to previousPath or home
+        const loginResponse = result.response as LoginResponse;
+        userStore.fromLoginResponse(loginResponse);
+        goto(previousPath ?? UiPaths.HOME);
+      } else {
+        showLoginError = true;
+        errorMessage = result.error ?? "Invalid username or password";
+        goTop();
+      }
+    } catch (err) {
+      // Handle network or unexpected errors
+      showLoginError = true;
+      errorMessage = "Login failed. Please try again.";
+      console.error("Login error:", err);
+      goTop();
+    }
+  }
+
+  async function redirectToSsoUrl() {
+
+    const resp = await createInternalApiClient(fetch).get(ServerPaths.SSO_AUTH);
+    const ssoAuthUrl = (await resp.json() as SsoAuthUrl);
+
+    console.log("SSO Auth URL:", ssoAuthUrl);
+
+    localStorage.setItem("ssoState", ssoAuthUrl.state);
+    localStorage.setItem("ssoCodeVerifier", ssoAuthUrl.code_verifier);
+
+    window.location.href = ssoAuthUrl.url;
+  }
 
 </script>
 

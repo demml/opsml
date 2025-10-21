@@ -98,6 +98,9 @@ pub enum UiError {
     #[error("Failed to get create cache directory")]
     CreateCacheDirError(#[source] std::io::Error),
 
+    #[error("Failed to get current directory")]
+    CurrentDirError(#[source] std::io::Error),
+
     #[error("Unsupported platform - os: {0}, arch: {1}")]
     UnsupportedPlatformError(&'static str, &'static str),
 
@@ -169,4 +172,16 @@ pub enum UiError {
 
     #[error("Script execution failed with status code: {0:?}")]
     ScriptFailedWithStatus(Option<i32>),
+
+    #[error("Failed to start UI server")]
+    UiStartError,
+
+    #[error("Failed to spawn UI process")]
+    UiSpawnError(#[source] std::io::Error),
+
+    #[error("Node.js executable not found. Node is required to run the OpsML UI.")]
+    NodeNotFound,
+
+    #[error("Package JSON not found")]
+    PackageJsonNotFound,
 }

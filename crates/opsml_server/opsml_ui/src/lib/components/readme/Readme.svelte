@@ -8,10 +8,12 @@
   import { editorTheme } from './editor-theme';
   import {  onMount } from 'svelte';
   import { getRegistryPath, type RegistryType } from "$lib/utils";
-  import { convertMarkdown, createReadMe } from "./util";
+  import { convertMarkdown } from "./util";
+  import { createInternalApiClient } from "$lib/api/internalClient";
   import { goto } from "$app/navigation";
   import { getContext } from 'svelte';
   import { type ToastContext } from '@skeletonlabs/skeleton-svelte';
+  import type { UploadResponse } from "./util";
 
   let error = $state('Failed to save ReadMe');
   export const toast: ToastContext = getContext('toast');
@@ -59,10 +61,19 @@
 
   async function saveReadme() {
     content = editor.state.doc.toString();
-    let response = await createReadMe(name, space, registry, content);
+  
+    let response = await createInternalApiClient(fetch).post("api/card/readme", {
+      space,
+      name,
+      registry_type: registry,
+      content
+    });
 
-    if (!response.uploaded) {
-      error = response.message;
+    let uploadResponse = (await response.json() as UploadResponse);
+
+
+    if (!uploadResponse.uploaded) {
+      error = uploadResponse.message;
       triggerError();
     } else {
       triggerSuccess();
