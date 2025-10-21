@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { HomePageStats, RecentCards } from "$lib/components/home/utils";
+  import type { HomePageStats, RecentCards } from "$lib/components/home/utils.server";
   import HomeCard from "$lib/components/home/HomeCard.svelte";
   import { FlaskConical, Table, BrainCircuit, NotebookText, ExternalLink, BookOpen, Menu, Activity} from 'lucide-svelte';
   import { goto } from "$app/navigation";
@@ -41,9 +41,6 @@
     }
   ];
 
-  function handleRegistryClick(path: string) {
-    goto(path);
-  }
 
   function handleDocumentationClick() {
     window.open("https://docs.demml.io/opsml/", "_blank");

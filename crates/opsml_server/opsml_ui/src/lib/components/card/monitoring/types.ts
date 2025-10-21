@@ -1,5 +1,4 @@
 import type { RegistryType } from "$lib/utils";
-import { string } from "zod";
 
 export enum AlertDispatchType {
   Slack = "Slack",
@@ -12,6 +11,12 @@ export enum DriftType {
   Psi = "Psi",
   Custom = "Custom",
   LLM = "LLM",
+}
+
+export interface DriftProfileUri {
+  root_dir: string;
+  uri: string;
+  drift_type: DriftType;
 }
 
 export interface FeatureMap {

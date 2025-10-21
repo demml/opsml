@@ -212,10 +212,10 @@ impl OpsmlTestServer {
         println!("Mock Scouter Server stopped");
     }
 
-    pub fn set_env_vars_for_client(&self) -> PyResult<()> {
+    pub fn set_env_vars_for_client(&self, _port: u16) -> PyResult<()> {
         #[cfg(feature = "server")]
         {
-            std::env::set_var("OPSML_TRACKING_URI", "http://localhost:3000");
+            std::env::set_var("OPSML_TRACKING_URI", format!("http://localhost:{}", _port));
             std::env::set_var("APP_ENV", "dev_client");
             Ok(())
         }
@@ -245,7 +245,7 @@ impl OpsmlTestServer {
             let handle = self.handle.clone();
             let runtime = self.runtime.clone();
 
-            let port = match (3000..3010)
+            let port = match (8000..8010)
                 .find(|port| StdTcpListener::bind(("127.0.0.1", *port)).is_ok())
             {
                 Some(p) => p,
@@ -280,7 +280,7 @@ impl OpsmlTestServer {
                     .send();
                 if let Ok(response) = res {
                     if response.status() == 200 {
-                        self.set_env_vars_for_client()?;
+                        self.set_env_vars_for_client(port)?;
                         println!("Opsml Server started successfully");
                         app_state().reset_app_state().map_err(|e| {
                             TestServerError::CustomError(format!(
