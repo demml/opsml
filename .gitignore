@@ -153,3 +153,5 @@ py-opsml/python/opsml/scouter/types/_types.pyi
 py-opsml/python/opsml/types/_types.pyi
 py-opsml/python/opsml/app/_app.pyi
 py-opsml/python/opsml/evaluate/_evaluate.pyi
+py-opsml/examples/benchmarks/_mlflow/uv.lock
+py-opsml/examples/benchmarks/_opmsl/uv.lock
