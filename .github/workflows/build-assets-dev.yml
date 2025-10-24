@@ -45,8 +45,14 @@ jobs:
         if: matrix.container_image == 'rockylinux:9'
         run: |
           dnf install -y --allowerasing gcc make curl pkgconf openssl-devel wget perl pkg-config
+
           # Install Rust via rustup
           curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+
+          # Add Rust to PATH for subsequent steps
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+          # Source for this step
           source $HOME/.cargo/env
 
           echo "Installing CMake 3.26.4..."
