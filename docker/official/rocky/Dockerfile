@@ -18,6 +18,9 @@ RUN microdnf update -y \
 ARG OPSML_PORT=8000
 ARG OPSML_SERVER_BINARY
 
+# Set environment variables
+ENV OPSML_PORT=${OPSML_PORT}
+
 # Copy built UI, server binary, NGINX config, and entrypoint script
 COPY --chown=opsml:opsml ${OPSML_SERVER_BINARY}/ui/node_modules /app/ui/node_modules/
 COPY --chown=opsml:opsml ${OPSML_SERVER_BINARY}/ui/build /app/ui/build/
