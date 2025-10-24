@@ -25,15 +25,16 @@ ARG OPSML_SERVER_BINARY
 COPY --chown=opsml:opsml ${OPSML_SERVER_BINARY}/ui/node_modules /app/ui/node_modules/
 COPY --chown=opsml:opsml ${OPSML_SERVER_BINARY}/ui/build /app/ui/build/
 COPY --chown=opsml:opsml ${OPSML_SERVER_BINARY}/opsml-server /usr/local/bin/opsml-server
-COPY docker/official/extras/nginx/nginx.conf.template /etc/nginx/nginx.conf.template
-COPY docker/official/extras/entrypoint.sh /entrypoint.sh
+COPY --chown=opsml:opsml docker/official/extras/nginx/nginx.conf.template /etc/nginx/nginx.conf.template
+COPY --chown=opsml:opsml docker/official/extras/entrypoint.sh /entrypoint.sh
 
 # Set permissions and create directories
-RUN mkdir -p /var/log/nginx /var/run \
-  && rm -f /etc/nginx/sites-enabled/default \
+RUN chown -R opsml:opsml /etc/nginx \
+  && mkdir -p /var/log/nginx /var/run /var/lib/nginx \
+  && rm -f /etc/nginx/conf.d/default.conf \
   && chmod +x /entrypoint.sh \
   && chmod +x /usr/local/bin/opsml-server \
-  && chown -R opsml:opsml /var/log/nginx /var/run
+  && chown -R opsml:opsml /var/log/nginx /var/run /var/lib/nginx
 
 WORKDIR /app
 
