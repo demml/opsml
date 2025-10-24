@@ -9,7 +9,7 @@ RUN groupadd -r opsml && useradd -r -g opsml -s /bin/bash -d /app opsml
 
 RUN apt-get update --no-install-recommends \
   && apt-get install --no-install-recommends --yes \
-  ca-certificates tzdata curl nginx supervisor netcat-openbsd \
+  ca-certificates tzdata curl nginx supervisor netcat-openbsd gettext-base \
   && curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
   && apt-get install --no-install-recommends --yes nodejs \
   && rm -rf /var/lib/apt/lists/* \

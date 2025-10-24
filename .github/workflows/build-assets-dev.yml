@@ -13,7 +13,7 @@ env:
 
 jobs:
   build:
-    name: build - ${{ matrix.target }}
+    name: build - ${{ matrix.target }} - ${{ matrix.tag }}
     strategy:
       fail-fast: false
       matrix:
@@ -24,6 +24,7 @@ jobs:
             binary_name: opsml-server
             archive_name: opsml-server-aarch64-linux-gnu
             container_image: rockylinux:9
+            tag: ubuntu
 
           - os: ubuntu-22.04-arm
             target: aarch64-unknown-linux-gnu
@@ -31,6 +32,7 @@ jobs:
             binary_name: opsml-server
             archive_name: opsml-server-aarch64-linux-gnu-rocky
             container_image: null
+            tag: rocky
 
     runs-on: ${{ matrix.os }}
     container: ${{ matrix.container_image != null && matrix.container_image || null }}
