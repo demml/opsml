@@ -29,7 +29,7 @@ jobs:
             target: aarch64-unknown-linux-gnu
             archive: tar.gz
             binary_name: opsml-server
-            archive_name: opsml-server-aarch64-linux-gnu
+            archive_name: opsml-server-aarch64-linux-gnu-rocky
             container_image: null
 
     runs-on: ${{ matrix.os }}
@@ -165,9 +165,17 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          - image: "ubuntu"
+            tag_suffix: "ubuntu"
+            artifact: "opsml-server-x86_64-linux-gnu"
+
+          - image: "debian"
+            tag_suffix: "debian"
+            artifact: "opsml-server-x86_64-linux-gnu"
+
           - image: "rocky"
             tag_suffix: "rocky-minimal"
-            artifact: "opsml-server-aarch64-linux-gnu"
+            artifact: "opsml-server-aarch64-linux-gnu-rocky"
 
     steps:
       - name: Checkout Code
