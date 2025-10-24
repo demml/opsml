@@ -74,16 +74,22 @@ jobs:
           rustup target add ${{ matrix.target }}
           rustup component add rust-src
 
+      - name: Install Node.js and pnpm (Rocky Linux)
+        if: matrix.container_image == 'rockylinux:9'
+        run: |
+          # Install Node.js 22
+          curl -fsSL https://rpm.nodesource.com/setup_22.x | bash -
+          dnf install -y nodejs
+
+          # Install pnpm
+          npm install -g pnpm@10
+
       - uses: pnpm/action-setup@v4
-        name: Build UI
+        name: Setup pnpm (Ubuntu)
+        if: matrix.container_image == null
         with:
           version: 10
           run_install: false
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ env.INTERPRETER }}
 
       - name: Install UI dependencies
         run: |
