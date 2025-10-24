@@ -11,7 +11,7 @@ RUN groupadd -r opsml && useradd -r -g opsml -s /bin/bash -d /app opsml
 # Install required packages: nginx, nodejs, netcat, curl, etc.
 RUN apt-get update --no-install-recommends \
   && apt-get install --no-install-recommends --yes \
-     ca-certificates tzdata curl nginx netcat-openbsd \
+     ca-certificates tzdata curl nginx netcat-openbsd gettext-base \
   && curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
   && apt-get install --no-install-recommends --yes nodejs \
   && rm -rf /var/lib/apt/lists/* \

@@ -9,7 +9,7 @@ RUN groupadd -r opsml && useradd -r -g opsml -s /bin/bash -d /app opsml
 RUN microdnf update -y \
   && microdnf install -y \
     ca-certificates tzdata curl nginx nmap-ncat \
-    glibc-langpack-en \
+    glibc-langpack-en gettext \
   && curl -fsSL https://rpm.nodesource.com/setup_22.x | bash - \
   && microdnf install -y nodejs \
   && microdnf clean all \
