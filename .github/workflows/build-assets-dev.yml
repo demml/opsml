@@ -166,11 +166,11 @@ jobs:
         include:
           - image: "ubuntu"
             tag_suffix: "ubuntu"
-            artifact: "opsml-server-x86_64-linux-gnu"
+            artifact: "opsml-server-aarch64-linux-gnu"
 
           - image: "debian"
             tag_suffix: "debian"
-            artifact: "opsml-server-x86_64-linux-gnu"
+            artifact: "opsml-server-aarch64-linux-gnu"
 
           - image: "rocky"
             tag_suffix: "rocky-minimal"
@@ -189,8 +189,11 @@ jobs:
       - name: Download ARM64 Linux binary artifact
         uses: actions/download-artifact@v4
         with:
-          name: opsml-server-aarch64-linux-gnu
+          name: ${{ matrix.artifact }}
           path: ./artifacts
+
+      - name: List downloaded files
+        run: ls -la ./artifacts
 
       - name: Extract binary
         run: |
