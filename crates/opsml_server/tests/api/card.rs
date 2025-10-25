@@ -1555,7 +1555,7 @@ async fn test_opsml_server_space_stats() {
     helper.create_modelcard().await;
 
     // wait 200 ms
-    tokio::time::sleep(tokio::time::Duration::from_millis(200)).await;
+    tokio::time::sleep(tokio::time::Duration::from_millis(500)).await;
 
     let request = Request::builder()
         .uri("/opsml/api/card/space/stats")
@@ -1579,7 +1579,7 @@ async fn test_opsml_server_space_stats() {
     helper.create_datacard().await;
 
     // wait 200 ms
-    tokio::time::sleep(tokio::time::Duration::from_millis(200)).await;
+    tokio::time::sleep(tokio::time::Duration::from_millis(500)).await;
 
     let request = Request::builder()
         .uri("/opsml/api/card/space/stats")
@@ -1613,8 +1613,8 @@ async fn test_opsml_server_space_stats() {
     let response = helper.send_oneshot(request).await;
     assert_eq!(response.status(), StatusCode::OK);
 
-    // wait 200 ms
-    tokio::time::sleep(tokio::time::Duration::from_millis(200)).await;
+    // wait 500 ms
+    tokio::time::sleep(tokio::time::Duration::from_millis(500)).await;
 
     let request = Request::builder()
         .uri("/opsml/api/card/space/stats")
