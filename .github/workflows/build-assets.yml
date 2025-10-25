@@ -81,8 +81,8 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Install Rocky Deps
-        if: matrix.container_image == 'rockylinux:9'
+      - name: Install Rocky Deps Arm
+        if: matrix.container_image == 'rockylinux:9' && contains(matrix.os, 'ubuntu-22.04-arm')
         run: |
           dnf install -y --allowerasing gcc make curl pkgconf openssl-devel wget perl pkg-config
 
@@ -108,6 +108,33 @@ jobs:
           # Install pnpm
           npm install -g pnpm@10
 
+      - name: Install Rocky Deps
+        if: matrix.container_image == 'rockylinux:9' && !contains(matrix.os, 'ubuntu-22.04-arm')
+        run: |
+          dnf install -y --allowerasing gcc make curl pkgconf openssl-devel wget perl pkg-config
+
+          # Install Rust via rustup
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+
+          # Add Rust to PATH for subsequent steps
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+          # Source for this step
+          source $HOME/.cargo/env
+
+          echo "Installing CMake 3.26.4..."
+          curl -L https://github.com/Kitware/CMake/releases/download/v3.26.4/cmake-3.26.4-linux-x86_64.sh -o cmake.sh
+          chmod +x cmake.sh
+          ./cmake.sh --skip-license --prefix=/usr/local
+          cmake --version
+
+          # Install Node.js 22
+          curl -fsSL https://rpm.nodesource.com/setup_22.x | bash -
+          dnf install -y nodejs
+
+          # Install pnpm
+          npm install -g pnpm@10
+
       - name: Update apt repositories (Linux)
         if: contains(matrix.os, 'ubuntu') && matrix.container_image == null
         run: |
@@ -120,6 +147,12 @@ jobs:
           rustup update
           rustup target add ${{ matrix.target }}
           rustup component add rust-src
+
+      - name: Set up Python
+        if: matrix.container_image == null
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.INTERPRETER }}
 
       - uses: pnpm/action-setup@v4
         name: Setup pnpm (Ubuntu)
