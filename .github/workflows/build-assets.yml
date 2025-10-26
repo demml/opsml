@@ -216,7 +216,7 @@ jobs:
           retention-days: 1
 
       - name: Package UI for Node.js distribution
-        if: matrix.target == 'x86_64-unknown-linux-gnu'
+        if: matrix.target == 'x86_64-unknown-linux-gnu' && matrix.tag == 'ubuntu'
         shell: bash
         run: |
           mkdir -p packaged-ui
@@ -230,7 +230,7 @@ jobs:
       # only want to run this once, so only on the first matrix item
       # The artifact will be the same on all builds regardless of target
       - name: Upload UI Node.js package artifact
-        if: matrix.target == 'x86_64-unknown-linux-gnu'
+        if: matrix.target == 'x86_64-unknown-linux-gnu' && matrix.tag == 'ubuntu'
         uses: actions/upload-artifact@v4
         with:
           name: opsml-ui-node
