@@ -1,0 +1,237 @@
+name: Build Dev Assets
+
+permissions:
+  pull-requests: write
+  contents: write
+
+on:
+  pull_request:
+    branches:
+      - docker-dev
+env:
+  INTERPRETER: "3.12"
+  RUSTFLAGS: "-C debuginfo=0"
+
+jobs:
+  build:
+    name: build - ${{ matrix.target }} - ${{ matrix.tag }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-22.04-arm
+            target: aarch64-unknown-linux-gnu
+            archive: tar.gz
+            binary_name: opsml-server
+            archive_name: opsml-server-aarch64-linux-gnu
+            container_image: rockylinux:9
+            tag: rocky
+
+          - os: ubuntu-22.04-arm
+            target: aarch64-unknown-linux-gnu
+            archive: tar.gz
+            binary_name: opsml-server
+            archive_name: opsml-server-aarch64-linux-gnu-rocky
+            container_image: null
+            tag: ubuntu
+
+    runs-on: ${{ matrix.os }}
+    container: ${{ matrix.container_image != null && matrix.container_image || null }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Rocky Deps
+        if: matrix.container_image == 'rockylinux:9'
+        run: |
+          dnf install -y --allowerasing gcc make curl pkgconf openssl-devel wget perl pkg-config
+
+          # Install Rust via rustup
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+
+          # Add Rust to PATH for subsequent steps
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+          # Source for this step
+          source $HOME/.cargo/env
+
+          echo "Installing CMake 3.26.4..."
+          curl -L https://github.com/Kitware/CMake/releases/download/v3.26.4/cmake-3.26.4-linux-aarch64.sh -o cmake.sh
+          chmod +x cmake.sh
+          ./cmake.sh --skip-license --prefix=/usr/local
+          cmake --version
+
+      - name: Update apt repositories (Linux)
+        if: contains(matrix.os, 'ubuntu') && matrix.container_image == null
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y build-essential
+
+      - name: Set up Rust
+        run: |
+          rustup override set stable
+          rustup update
+          rustup target add ${{ matrix.target }}
+          rustup component add rust-src
+
+      - name: Install Node.js and pnpm (Rocky Linux)
+        if: matrix.container_image == 'rockylinux:9'
+        run: |
+          # Install Node.js 22
+          curl -fsSL https://rpm.nodesource.com/setup_22.x | bash -
+          dnf install -y nodejs
+
+          # Install pnpm
+          npm install -g pnpm@10
+
+      - uses: pnpm/action-setup@v4
+        name: Setup pnpm (Ubuntu)
+        if: matrix.container_image == null
+        with:
+          version: 10
+          run_install: false
+
+      - name: Install UI dependencies
+        run: |
+          # install all deps and build UI
+          make build.ui
+
+          # remove node_modules and rebuild prod version to reduce size
+          make install.ui.deps.prod
+
+      - name: Build Binaries
+        run: |
+          cargo build -p opsml-server --target ${{ matrix.target }}
+
+      - name: Prepare binary directory
+        shell: bash
+        run: |
+          mkdir -p release-bin
+          if [ "${{ contains(matrix.os, 'windows') }}" == "true" ]; then
+            cp target/${{ matrix.target }}/debug/${{ matrix.binary_name }} release-bin/
+          else
+            cp target/${{ matrix.target }}/debug/${{ matrix.binary_name }} release-bin/
+            chmod +x release-bin/${{ matrix.binary_name }}
+          fi
+          # Copy UI build for Docker builds
+          if [ "${{ matrix.target }}" == "x86_64-unknown-linux-gnu" ] || [ "${{ matrix.target }}" == "aarch64-unknown-linux-gnu" ]; then
+            mkdir -p release-bin/ui
+            cp -r crates/opsml_server/opsml_ui/build release-bin/ui/build || true
+            cp -r crates/opsml_server/opsml_ui/node_modules release-bin/ui/node_modules || true
+          fi
+
+      - name: Create tar.gz archive (Linux)
+        if: contains(matrix.archive, 'tar.gz')
+        shell: bash
+        run: |
+          cd release-bin
+          tar -czf ../${{ matrix.archive_name }}.tar.gz ./*
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.archive_name }}
+          path: ${{ matrix.archive_name }}.${{ matrix.archive }}
+          retention-days: 1
+
+      - name: Package UI for Node.js distribution
+        if: matrix.target == 'x86_64-unknown-linux-gnu'
+        shell: bash
+        run: |
+          mkdir -p packaged-ui
+          cp -r crates/opsml_server/opsml_ui/build packaged-ui/build
+          cp -r crates/opsml_server/opsml_ui/node_modules packaged-ui/node_modules
+          cp crates/opsml_server/opsml_ui/package.json packaged-ui/
+          cp crates/opsml_server/opsml_ui/pnpm-lock.yaml packaged-ui/ || true
+          cd packaged-ui
+          zip -r ../opsml-ui-node.zip ./*
+
+      # only want to run this once, so only on the first matrix item
+      # The artifact will be the same on all builds regardless of target
+      - name: Upload UI Node.js package artifact
+        if: matrix.target == 'x86_64-unknown-linux-gnu'
+        uses: actions/upload-artifact@v4
+        with:
+          name: opsml-ui-node
+          path: opsml-ui-node.zip
+          retention-days: 1
+
+  publish-docker-images-arm64:
+    needs: build
+    name: Publish ARM64 Docker images
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - image: "ubuntu"
+            tag_suffix: "ubuntu"
+            artifact: "opsml-server-aarch64-linux-gnu"
+
+          - image: "debian"
+            tag_suffix: "debian"
+            artifact: "opsml-server-aarch64-linux-gnu"
+
+          - image: "rocky"
+            tag_suffix: "rocky-minimal"
+            artifact: "opsml-server-aarch64-linux-gnu-rocky"
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Download ARM64 Linux binary artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: ./artifacts
+
+      - name: List downloaded files
+        run: ls -la ./artifacts
+
+      - name: Extract binary
+        run: |
+          archive="./artifacts/${{ matrix.artifact }}.tar.gz"
+          if [ -f "$archive" ]; then
+            mkdir -p binary
+            tar -xzf "$archive" -C ./binary
+            chmod +x ./binary/opsml-server
+          else
+            echo "ARM64 binary $archive not found, skipping this build"
+            exit 1
+          fi
+
+      - name: Set version tag
+        id: set-version
+        run: |
+          echo "VERSION=dev" >> $GITHUB_OUTPUT
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and push ARM64 image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: docker/official/${{ matrix.image }}/Dockerfile
+          push: true
+          platforms: linux/arm64
+          build-args: |
+            OPSML_SERVER_BINARY=./binary
+          tags: |
+            demml/opsml:${{ matrix.tag_suffix }}-arm64-${{ steps.set-version.outputs.VERSION }}
+            ${{ github.event_name == 'release' && format('demml/opsml:{0}-arm64-dev', matrix.tag_suffix) || '' }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
