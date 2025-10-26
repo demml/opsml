@@ -1470,7 +1470,7 @@ mod tests {
             .await
             .unwrap();
 
-        tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+        tokio::time::sleep(std::time::Duration::from_millis(300)).await;
 
         // create new version
         let mcp_card2 = ServiceCardRecord {

@@ -4,6 +4,14 @@ set -e
 # All output goes to stdout/stderr for Kubernetes logging
 exec 2>&1
 
+export OPSML_PORT=${OPSML_PORT:-8000}
+export OPSML_SERVER_PORT=${OPSML_SERVER_PORT:-8080}
+
+if ! [[ "$OPSML_PORT" =~ ^[0-9]+$ ]]; then
+    echo "$(date): ERROR: OPSML_PORT must be numeric, got: $OPSML_PORT"
+    exit 1
+fi
+
 # PID tracking
 RUST_API_PID=""
 SVELTEKIT_PID=""
@@ -75,16 +83,20 @@ wait_for_service() {
 }
 
 # update nginx template
-envsubst '${OPSML_PORT}' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf
+echo "$(date): Configuring NGINX..."
+if ! envsubst '${OPSML_PORT}' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf; then
+    echo "$(date): ERROR: Failed to process NGINX template"
+    exit 1
+fi
 
 # Start Rust API server
-echo "$(date): Starting Rust API server on port ${OPSML_SERVER_PORT:-8080}..."
+echo "$(date): Starting Rust API server on port ${OPSML_SERVER_PORT}..."
 /usr/local/bin/opsml-server &
 RUST_API_PID=$!
 echo "$(date): Rust API PID: $RUST_API_PID"
 
 # Wait for Rust API
-if ! wait_for_service ${OPSML_SERVER_PORT:-8080} "Rust API"; then
+if ! wait_for_service ${OPSML_SERVER_PORT} "Rust API"; then
     echo "$(date): Failed to start Rust API, exiting..."
     exit 1
 fi
@@ -109,13 +121,13 @@ if ! nginx -t; then
     exit 1
 fi
 
-echo "$(date): Starting NGINX on port ${OPSML_PORT:-8000}..."
+echo "$(date): Starting NGINX on port ${OPSML_PORT}..."
 nginx -g "daemon off;" &
 NGINX_PID=$!
 echo "$(date): NGINX PID: $NGINX_PID"
 
 # Wait for NGINX
-if ! wait_for_service "${OPSML_PORT:-8000}" "NGINX"; then
+if ! wait_for_service "${OPSML_PORT}" "NGINX"; then
     echo "$(date): Failed to start NGINX, exiting..."
     exit 1
 fi
