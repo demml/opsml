@@ -2,23 +2,20 @@
   import { goto } from "$app/navigation";
   import logo from "$lib/images/opsml-logo-medium.webp";
   import LoginWarning from "$lib/components/user/LoginWarning.svelte";
-  import {  ServerPaths, UiPaths } from "$lib/components/api/routes";
+  import { UiPaths } from "$lib/components/api/routes";
   import { goTop } from "$lib/utils";
-  import { createInternalApiClient } from "$lib/api/internalClient";
-  import {  validateUserRegisterSchema, type UserRegisterSchema } from "$lib/components/user/schema";
+  import { type UserRegisterSchema } from "$lib/components/user/schema";
   import { HelpCircle, Eye, EyeOff } from 'lucide-svelte';
   import { userStore } from "$lib/components/user/user.svelte";
-  import type { CreateUserUiResponse } from "$lib/components/user/types";
-  
+  import type { CreateUserResponse, CreateUserUiResponse } from "$lib/components/user/types";
+   import {  deserialize } from '$app/forms';
+  import type { ActionResult } from '@sveltejs/kit';
 
-  let username: string = $state('');
-  let password: string = $state('');
-  let email: string = $state('');
-  let reEnterPassword: string = $state('');
   let showLoginError: boolean = $state(false);
   let errorMessage: string = $state("Error encountered during registration");
   let showPasswordHelp: boolean = $state(false);
   let passwordVisible: boolean = $state(false);
+  let isSubmitting: boolean = $state(false);
 
   let registerErrors = $state<Partial<Record<keyof UserRegisterSchema, string>>>({});
 
@@ -31,49 +28,53 @@
 
   }
 
-  async function handleRegister() {
-    // Handle registration logic here
+  function parseSuccessResult(data: Record<string, any>) {
+    let createUserResponse = data.response as CreateUserResponse;
+    userStore.setUsername(createUserResponse.user.username);
+    userStore.setRecoveryCodes(createUserResponse.recovery_codes ?? []);
+    goto(UiPaths.REGISTER_SUCCESS);
+  }
 
-    let argsValid = validateUserRegisterSchema(username, password, reEnterPassword, email);
+  function parseFailureResult(data: Record<string, any>) {
+    showLoginError = true;
 
-    if (argsValid.success) {
-
-      let res = await createInternalApiClient(fetch).post(ServerPaths.REGISTER_USER, {
-        username,
-        password,
-        email
-      });
-      console.log("Registration response status:", res.status);
-
-      let response = (await res.json() as CreateUserUiResponse);
-      if (response.registered) {
-
-        // need to goto the register success page to give user recovery codes
-        userStore.setRecoveryCodes(response.response?.recovery_codes ?? []);
-        goto(UiPaths.REGISTER_SUCCESS);
-
-      } else {
-
-        showLoginError = true;
-        // check if there's a specific error message from the server
-        // check for unique constraint violation
-        console.error("Registration error:", response.error);
-        // if Failed to create user: error returned from database" default to generic message and ask to check with administrator
-        if (response.error?.includes("Failed to create user: error returned from database")) {
-          errorMessage = "Registration failed. Username or email may already be in use. Please try again with different credentials or contact the administrator.";
-        } else {
-          errorMessage = response.error ?? "Error encountered during registration";
-        }
-      }
-      goTop();
-
-
-    } else {
-      showLoginError = true;
+    if (data.validationErrors) {
       errorMessage = "Please correct the errors below.";
-      console.error("Validation errors:", argsValid.errors);
-      registerErrors = argsValid.errors ?? {};
-      goTop();
+      registerErrors = data.validationErrors as Partial<Record<keyof UserRegisterSchema, string>>;
+    } else {
+      errorMessage = data.error ?? "Error encountered during registration";
+    }
+    goTop();
+  }
+
+  async function handleRegister(event: SubmitEvent & { currentTarget: EventTarget & HTMLFormElement}) {
+    event.preventDefault();
+
+    showLoginError = false;
+    registerErrors = {};
+    isSubmitting = true;
+
+    try {
+        const data = new FormData(event.currentTarget, event.submitter);
+
+        const response = await fetch(event.currentTarget.action, {
+            method: 'POST',
+            body: data
+        });
+
+        const result: ActionResult = deserialize(await response.text());
+
+        if (result.type === 'success') {
+          parseSuccessResult(result.data as Record<string, any>);
+        } else if (result.type === 'failure') {
+          parseFailureResult(result.data as Record<string, any>);
+        }
+    } catch (error) {
+      showLoginError = true;
+      errorMessage = "Error. Please try again.";
+      registerErrors = {};
+    } finally {
+      isSubmitting = false;
     }
 }
 
@@ -100,7 +101,7 @@
           class="input w-full text-sm rounded-base bg-surface-50 text-black disabled:opacity-50 placeholder-surface-800 placeholder-text-sm focus-visible:ring-2 focus-visible:ring-primary-800"
           type="text" 
           placeholder="Username"
-          bind:value={username}
+          name="username"
         />
         {#if registerErrors.username}
           <span class="text-red-500 text-sm">{registerErrors.username}</span>
@@ -136,7 +137,7 @@
           <input
             class="input w-full text-sm pr-10 rounded-base bg-surface-50 text-black focus-visible:ring-2 focus-visible:ring-primary-800"
             type={passwordVisible ? 'text' : 'password'}
-            bind:value={password}
+            name="password"
             placeholder="Password"
           />
           <button
@@ -162,7 +163,7 @@
           <input
             class="input w-full text-sm pr-10 rounded-base bg-surface-50 text-black focus-visible:ring-2 focus-visible:ring-primary-800"
             type={passwordVisible ? 'text' : 'password'}
-            bind:value={reEnterPassword}
+            name="reEnterPassword"
             placeholder="Re-enter Password"
           />
           <button
@@ -188,7 +189,7 @@
           class="input w-full text-sm rounded-base bg-surface-50 text-black disabled:opacity-50 placeholder-surface-800 placeholder-text-sm focus-visible:ring-2 focus-visible:ring-primary-800"
           type="email" 
           placeholder="Email"
-          bind:value={email}
+          name="email"
         />
         {#if registerErrors.email}
           <span class="text-red-500 text-sm">{registerErrors.email}</span>
@@ -197,8 +198,11 @@
     </div>
 
     <div class="grid justify-items-center mt-4">
-      <button type="submit" class="btn text-smd bg-primary-500 rounded-lg md:w-72 justify-self-center text-black mb-2 ring-offset-white  focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 border-black border-2 border-border shadow transition-all hover:translate-x-[4px] hover:translate-y-[4px] hover:shadow-none">
-        Register
+      <button 
+        disabled={isSubmitting}
+        type="submit" 
+        class="btn text-smd bg-primary-500 rounded-lg md:w-72 justify-self-center text-black mb-2 ring-offset-white  focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 border-black border-2 border-border shadow transition-all hover:translate-x-[4px] hover:translate-y-[4px] hover:shadow-none">
+        {isSubmitting ? 'Registering...' : 'Register'}
       </button>
 
     </div>
