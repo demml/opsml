@@ -8,8 +8,6 @@ import type { BaseCard } from "$lib/components/home/types";
 export const load: PageServerLoad = async ({ parent, params, fetch }) => {
   let { registryType } = await parent();
 
-  console.log("uid param:", params.uid);
-
   if (!registryType) {
     throw redirect(307, "/opsml/home");
   }
