@@ -6,12 +6,12 @@
   import {  UiPaths, ServerPaths } from "$lib/components/api/routes";
   import { goTop } from "$lib/utils";
   import type { PageProps } from './$types';
-  import { validateLoginSchema, type UseLoginSchema } from "$lib/components/user/schema";
+  import { type UseLoginSchema } from "$lib/components/user/schema";
   import { uiSettingsStore } from "$lib/components/settings/settings.svelte";
   import { createInternalApiClient } from "$lib/api/internalClient";
   import { userStore } from "$lib/components/user/user.svelte";
   import type { LoginResponse, SsoAuthUrl } from "$lib/components/user/types";
-  import { applyAction, deserialize } from '$app/forms';
+  import { deserialize } from '$app/forms';
   import type { ActionResult } from '@sveltejs/kit';
 
   let { previousPath }: PageProps = $props();
@@ -72,8 +72,6 @@
 
     const resp = await createInternalApiClient(fetch).get(ServerPaths.SSO_AUTH);
     const ssoAuthUrl = (await resp.json() as SsoAuthUrl);
-
-    console.log("SSO Auth URL:", ssoAuthUrl);
 
     localStorage.setItem("ssoState", ssoAuthUrl.state);
     localStorage.setItem("ssoCodeVerifier", ssoAuthUrl.code_verifier);
