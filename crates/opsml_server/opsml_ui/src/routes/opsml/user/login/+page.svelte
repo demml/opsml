@@ -31,9 +31,9 @@
   function parseFailureResult(data: Record<string, any>) {
       showLoginError = true;
 
-      if (data.get('validationErrors')) {
+      if (data.validationErrors) {
         // @ts-ignore
-        loginErrors = data.get('validationErrors') as Partial<Record<keyof UseLoginSchema, string>>;
+        loginErrors = data.validationErrors as Partial<Record<keyof UseLoginSchema, string>>;
       } else {
         errorMessage = data.error ?? "Invalid username or password";
       }
