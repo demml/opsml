@@ -1,6 +1,5 @@
 <script lang="ts">
   import { UserRound } from "lucide-svelte";
-  import { userStore } from "./user.svelte";
 
 
   let isOpen = $state(false);
