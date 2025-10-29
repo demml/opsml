@@ -8,7 +8,6 @@ on:
 
 env:
   RUSTFLAGS: -C debuginfo=0 # Do not produce debug symbols to keep memory usage down
-  OPSML_SERVER_PORT: 3000
   PYTHON_VERSION: "3.11"
 
 jobs:
@@ -61,7 +60,6 @@ jobs:
         run: ./target/debug/opsml-server &
         env:
           OPSML_STORAGE_URI: ${{ env.OPSML_STORAGE_URI }}
-          OPSML_SERVER_PORT: ${{ env.OPSML_SERVER_PORT }}
 
       - name: Tests
         working-directory: ./crates
@@ -112,7 +110,6 @@ jobs:
         run: target/debug/opsml-server &
         env:
           OPSML_STORAGE_URI: ${{ env.OPSML_STORAGE_URI }}
-          OPSML_SERVER_PORT: ${{ env.OPSML_SERVER_PORT }}
 
       - name: Tests
         working-directory: ./crates
@@ -170,7 +167,6 @@ jobs:
         run: target/debug/opsml-server &
         env:
           OPSML_STORAGE_URI: ${{ env.OPSML_STORAGE_URI }}
-          OPSML_SERVER_PORT: ${{ env.OPSML_SERVER_PORT }}
 
       - name: Tests
         working-directory: ./crates
@@ -214,9 +210,7 @@ jobs:
         run: chmod +x target/debug/opsml-server
 
       - name: Run opsml_server in the background
-        run: target/debug/opsml-server &
-        env:
-          OPSML_SERVER_PORT: ${{ env.OPSML_SERVER_PORT }}
+        run: target/debug/opsml-server
 
       - name: Tests
         working-directory: ./crates
