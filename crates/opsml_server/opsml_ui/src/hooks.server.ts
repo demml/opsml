@@ -3,7 +3,6 @@ import type { Handle } from "@sveltejs/kit";
 import { logger } from "$lib/server/logger";
 import { ServerPaths, UiPaths } from "$lib/components/api/routes";
 import type { HandleFetch } from "@sveltejs/kit";
-import { log } from "console";
 
 // These routes do not require authentication
 const PUBLIC_ROUTES = [
