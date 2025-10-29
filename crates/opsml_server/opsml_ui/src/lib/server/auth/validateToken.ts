@@ -167,7 +167,7 @@ export async function setTokenInCookies(
   );
 
   cookies.set("jwt_token", token, {
-    httpOnly: false,
+    httpOnly: true,
     secure:
       process.env.APP_ENV === "production" ||
       process.env.FORCE_HTTPS === "true",
