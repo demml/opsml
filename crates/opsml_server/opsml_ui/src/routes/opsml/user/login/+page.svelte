@@ -6,47 +6,62 @@
   import {  UiPaths, ServerPaths } from "$lib/components/api/routes";
   import { goTop } from "$lib/utils";
   import type { PageProps } from './$types';
-  import { validateLoginSchema, type UseLoginSchema } from "$lib/components/user/schema";
+  import { type UseLoginSchema } from "$lib/components/user/schema";
   import { uiSettingsStore } from "$lib/components/settings/settings.svelte";
   import { createInternalApiClient } from "$lib/api/internalClient";
   import { userStore } from "$lib/components/user/user.svelte";
   import type { LoginResponse, SsoAuthUrl } from "$lib/components/user/types";
+  import { deserialize } from '$app/forms';
+  import type { ActionResult } from '@sveltejs/kit';
 
+  let { previousPath }: PageProps = $props();
 
-  let { previousPath, fetch }: PageProps = $props();
-
-  let username: string = $state('');
-  let password: string = $state('');
   let showLoginError: boolean = $state(false);
   let errorMessage: string = $state("Invalid username or password");
 
   let loginErrors = $state<Partial<Record<keyof UseLoginSchema, string>>>({});
 
-  async function handleLogin() {
-    // Validate input fields
-    const argsValid = validateLoginSchema(username, password);
 
-    if (!argsValid.success) {
+  function parseSuccessResult(data: Record<string, any>) {
+      const loginResponse = data as LoginResponse;
+      userStore.fromLoginResponse(loginResponse);
+      goto(previousPath ?? UiPaths.HOME);
+  }
+
+  function parseFailureResult(data: Record<string, any>) {
       showLoginError = true;
-      loginErrors = argsValid.errors ?? {};
+
+      if (data.validationErrors) {
+        // @ts-ignore
+        loginErrors = data.validationErrors as Partial<Record<keyof UseLoginSchema, string>>;
+      } else {
+        errorMessage = data.error ?? "Invalid username or password";
+      }
       goTop();
-      return;
-    }
+  }
+
+  async function handleLogin(event: SubmitEvent & { currentTarget: EventTarget & HTMLFormElement}) {
+   
+    event.preventDefault();
+    const data = new FormData(event.currentTarget, event.submitter);
 
     try {
       // Send login request to server endpoint
-      const res = await createInternalApiClient(fetch).post(ServerPaths.LOGIN, { username, password });
-      const result = await res.json();
+      const response = await fetch(event.currentTarget.action, {
+        method: 'POST',
+        body: data,
+        headers: {
+          'x-sveltekit-action': 'true'
+        }
+      });
 
-      if (res.ok && result.success) {
+      const result: ActionResult = deserialize(await response.text());
+      
+      if (result.type === 'success') {
         // On success, update userStore, redirect to previousPath or home
-        const loginResponse = result.response as LoginResponse;
-        userStore.fromLoginResponse(loginResponse);
-        goto(previousPath ?? UiPaths.HOME);
-      } else {
-        showLoginError = true;
-        errorMessage = result.error ?? "Invalid username or password";
-        goTop();
+        parseSuccessResult(result.data as Record<string, any>);
+      } else if (result.type === 'failure') {
+        parseFailureResult(result.data as Record<string, any>);
       }
     } catch (err) {
       // Handle network or unexpected errors
@@ -62,8 +77,6 @@
     const resp = await createInternalApiClient(fetch).get(ServerPaths.SSO_AUTH);
     const ssoAuthUrl = (await resp.json() as SsoAuthUrl);
 
-    console.log("SSO Auth URL:", ssoAuthUrl);
-
     localStorage.setItem("ssoState", ssoAuthUrl.state);
     localStorage.setItem("ssoCodeVerifier", ssoAuthUrl.code_verifier);
 
@@ -76,7 +89,7 @@
   
 <section class="border-gray-100">
   <div class="z-10 mx-auto rounded-2xl bg-surface-50 border-black border-2 shadow p-4 md:w-80 md:px-4">
-    <form onsubmit={handleLogin}>
+    <form method="POST" onsubmit={handleLogin}>
 
       <img alt="OpsML logo" class="mx-auto -mt-12 mb-2 w-20" src={logo}>
       <h1 class="pt-1 text-center text-lg font-bold text-primary-800">Log In</h1>
@@ -96,7 +109,7 @@
             class="input text-sm rounded-base bg-surface-50 text-black disabled:opacity-50 placeholder-surface-800 placeholder-text-sm focus-visible:ring-2 focus-visible:ring-primary-800"
             type="text" 
             placeholder="Username"
-            bind:value={username}
+            name="username"
           />
 
           {#if loginErrors.username}
@@ -108,9 +121,9 @@
         <label class="text-surface-950 text-sm">Password
           <input
             class="input text-sm rounded-base bg-surface-50 text-black disabled:opacity-50 placeholder-surface-800 placeholder-text-sm focus-visible:ring-2 focus-visible:ring-primary-800"
-            type="text" 
+            type="password" 
             placeholder="Password"
-            bind:value={password}
+            name="password"
           />
           {#if loginErrors.password}
             <span class="text-red-500 text-sm">{loginErrors.password}</span>
@@ -123,7 +136,7 @@
           Login
         </button>
 
-        <a class="text-primary-700 hover:text-primary-700" href={UiPaths.FORGOT}>Forgot password?</a>
+        <a class="text-primary-700 hover:text-primary-700" href={UiPaths.RESET}>Forgot password?</a>
       </div>
     </form>
 

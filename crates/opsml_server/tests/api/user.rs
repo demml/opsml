@@ -143,7 +143,7 @@ async fn test_opsml_server_user_crud() {
     .unwrap();
 
     let request = Request::builder()
-        .uri("/opsml/api/user/reset-password/recovery")
+        .uri("/opsml/api/auth/reset-password/recovery")
         .method("POST")
         .header(header::CONTENT_TYPE, "application/json")
         .body(Body::from(body))

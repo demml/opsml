@@ -3,7 +3,7 @@
   import type { PageProps } from './$types';
   import Pill from "$lib/components/utils/Pill.svelte";
   import { Cog, ShieldEllipsis, Star } from 'lucide-svelte';
-  import { userStore } from "$lib/components/user/user.svelte";
+  import { getPermissions, getGroupPermissions } from "$lib/components/user/user.svelte";
   
 
   let { data }: PageProps = $props();
@@ -33,7 +33,7 @@
     </div>
 
     <div class="flex flex-wrap gap-2">
-      {#each userStore.getPermissions() as perm}
+      {#each getPermissions(userInfo.permissions) as perm}
         <Pill key={perm[0]} value={perm[1]} textSize="text-sm"/>
       {/each}
     </div>
@@ -44,7 +44,7 @@
     </div>
 
     <div class="flex flex-wrap gap-2">
-      {#each userStore.group_permissions as perm}
+      {#each getGroupPermissions(userInfo.group_permissions) as perm}
         <div class="inline-flex items-center overflow-hidden rounded-lg bg-primary-100 border-2 border-primary-800 text-sm w-fit px-2 text-primary-900">
           {perm}
         </div>
@@ -57,9 +57,9 @@
       <header class="pl-2 text-primary-900 text-smd font-bold">Spaces</header>
     </div>
     
-    {#if userStore.favorite_spaces.length >= 0}
+    {#if userInfo.favorite_spaces.length >= 0}
       <div class="flex flex-wrap gap-2">
-        {#each userStore.favorite_spaces as space}
+        {#each userInfo.favorite_spaces as space}
           <a type="button" class="btn text-sm bg-primary-500 text-black shadow shadow-hover border-black border-2" href={`/opsml/space/${space}`}>{space}</a>
         {/each}
       </div>

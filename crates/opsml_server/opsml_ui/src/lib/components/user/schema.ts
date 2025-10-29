@@ -32,6 +32,7 @@ export const userRegisterSchema = z
       ctx.addIssue({
         code: "custom",
         message: "The passwords did not match",
+        path: ["reEnterPassword"],
       });
     }
   });
