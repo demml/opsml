@@ -14,6 +14,7 @@
   import { deserialize } from '$app/forms';
   import type { ActionResult } from '@sveltejs/kit';
 
+  // @ts-ignore
   let { previousPath }: PageProps = $props();
 
   let showLoginError: boolean = $state(false);
