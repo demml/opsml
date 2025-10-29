@@ -167,25 +167,25 @@ export async function setTokenInCookies(
   );
 
   cookies.set("jwt_token", token, {
-    httpOnly: true,
-    secure: true,
+    httpOnly: false,
+    secure:
+      process.env.APP_ENV === "production" ||
+      process.env.FORCE_HTTPS === "true",
     sameSite: "lax",
-    domain: options?.domain ?? "localhost",
-    expires: expirationDate,
     path: options?.path ?? "/",
+    maxAge: 7 * 24 * 60 * 60,
   });
 }
 
-export async function setUsernameInCookies(
-  cookies: Cookies,
-  username: string
-): Promise<void> {
+export function setUsernameInCookies(cookies: Cookies, username: string): void {
   cookies.set("username", username, {
-    httpOnly: false,
-    secure: true,
+    httpOnly: false, // Client needs to read this for UI state
+    secure:
+      process.env.APP_ENV === "production" ||
+      process.env.FORCE_HTTPS === "true",
     sameSite: "lax",
-    domain: "localhost",
     path: "/",
+    maxAge: 7 * 24 * 60 * 60, // 7 days in seconds
   });
 }
 
