@@ -2,7 +2,7 @@
   import { goto } from "$app/navigation";
   import logo from "$lib/images/opsml-logo-medium.webp";
   import PasswordMessage from "$lib/components/user/PasswordMessage.svelte";
-  import { ServerPaths, UiPaths } from "$lib/components/api/routes";
+  import { UiPaths } from "$lib/components/api/routes";
   import { goTop } from "$lib/utils";
   import { type PasswordResetSchema } from "$lib/components/user/schema";
   import { HelpCircle, Eye, EyeOff } from 'lucide-svelte';
@@ -86,7 +86,7 @@ async function handleReset(event: SubmitEvent & { currentTarget: EventTarget & H
 </script>
 
 <section class="col-span-12 flex items-center justify-center px-4">
-  <form class="z-10 mx-auto rounded-2xl bg-surface-50 border-black border-2 shadow p-4 md:w-96 md:px-5" onsubmit={handleReset}>
+  <form class="z-10 mx-auto rounded-2xl bg-surface-50 border-black border-2 shadow p-4 md:w-96 md:px-5" method="POST" onsubmit={handleReset}>
     <!-- Logo and Header -->
     <img alt="OpsML logo" class="mx-auto -mt-12 mb-3 w-20" src={logo}>
     <h1 class="pt-1 mb-4 text-center text-lg font-bold text-primary-800">Reset your password</h1>

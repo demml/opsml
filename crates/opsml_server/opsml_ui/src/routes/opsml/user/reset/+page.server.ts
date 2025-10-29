@@ -1,17 +1,7 @@
 import type { Actions } from "./$types";
 import { fail } from "@sveltejs/kit";
-import {
-  loginUser,
-  setTokenInCookies,
-  setUsernameInCookies,
-} from "$lib/server/auth/validateToken";
-import { validateLoginSchema } from "$lib/components/user/schema";
 import { resetUserPassword } from "$lib/server/user/utils";
-import { type ResetPasswordResponse } from "$lib/components/user/types";
-import {
-  validatePasswordResetSchema,
-  type PasswordResetSchema,
-} from "$lib/components/user/schema";
+import { validatePasswordResetSchema } from "$lib/components/user/schema";
 
 export const actions = {
   default: async ({ request, fetch }) => {
