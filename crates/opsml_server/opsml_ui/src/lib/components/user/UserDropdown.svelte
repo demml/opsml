@@ -36,7 +36,7 @@
         <div class="border-b-2 border-black text-center text-black text-sm">User</div>
         <div class="flex flex-col">
           <a
-              href={`/opsml/user/profile/${userStore.username}`}
+              href={`/opsml/user/profile`}
               onclick={toggleDropdown}
               class="block px-1 m-1 text-left border-2 border-transparent hover:border-black rounded-lg transition-colors text-black text-sm"
           >

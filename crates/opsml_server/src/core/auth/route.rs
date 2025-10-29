@@ -5,8 +5,11 @@ use crate::core::auth::util::{authenticate_user_with_sso, authenticate_user_with
 use crate::core::error::{internal_server_error, OpsmlServerError};
 use crate::core::state::AppState;
 use crate::core::user::route::create_user;
+use crate::core::user::schema::RecoveryResetRequest;
+use crate::core::user::schema::ResetPasswordResponse;
 use crate::core::user::schema::{CreateUserRequest, CreateUserUiResponse, UserResponse};
 use crate::core::user::utils::get_user;
+use crate::core::user::utils::get_user as get_user_from_db;
 use anyhow::{Context, Result};
 use axum::extract::Query;
 /// Route for debugging information
@@ -23,9 +26,9 @@ use opsml_crypt::{generate_code_challenge, generate_code_verifier};
 use opsml_sql::traits::*;
 use opsml_types::JwtToken;
 use opsml_utils::create_uuid7;
+use password_auth::generate_hash;
 use password_auth::verify_password;
 use rand::Rng;
-
 use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::sync::Arc;
 use tracing::{debug, error, info, instrument};
@@ -552,6 +555,45 @@ async fn register_user_from_ui(
     }
 }
 
+#[instrument(skip_all)]
+async fn reset_password_with_recovery(
+    State(state): State<Arc<AppState>>,
+    Json(req): Json<RecoveryResetRequest>,
+) -> Result<Json<serde_json::Value>, (StatusCode, Json<OpsmlServerError>)> {
+    // Get user and their recovery codes
+    let mut user = get_user_from_db(&state.sql_client, &req.username, Some("basic")).await?;
+
+    // Find and verify the recovery code
+    let code_index = match user.hashed_recovery_codes.iter().position(|stored_hash| {
+        password_auth::verify_password(&req.recovery_code, stored_hash)
+            .map(|_| true)
+            .unwrap_or(false)
+    }) {
+        Some(index) => index,
+        None => {
+            return Err((
+                StatusCode::UNAUTHORIZED,
+                Json(OpsmlServerError::invalid_recovery_code()),
+            ))
+        }
+    };
+    // Update password
+    user.password_hash = generate_hash(&req.new_password);
+
+    // Remove used recovery code
+    user.hashed_recovery_codes.remove(code_index);
+
+    // Save changes
+    if let Err(e) = state.sql_client.update_user(&user).await {
+        return Err(internal_server_error(e, "Failed to update password"));
+    }
+
+    Ok(Json(serde_json::json!(ResetPasswordResponse {
+        message: "Password updated successfully".to_string(),
+        remaining_recovery_codes: user.hashed_recovery_codes.len(),
+    })))
+}
+
 pub async fn get_auth_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
     let result = catch_unwind(AssertUnwindSafe(|| {
         Router::new()
@@ -574,6 +616,10 @@ pub async fn get_auth_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
             .route(
                 &format!("{prefix}/auth/register"),
                 post(register_user_from_ui),
+            )
+            .route(
+                &format!("{prefix}/auth/reset-password/recovery"),
+                post(reset_password_with_recovery),
             )
     }));
 

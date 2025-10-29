@@ -10,12 +10,13 @@
   let showLogoutError: boolean = $state(false);
   let errorMessage: string = $state("Failed to logout");
 
-  async function handleLogout() {
-    
+  async function handleLogout(event: SubmitEvent) {
+    event.preventDefault();
+
     let res = await createInternalApiClient(fetch).get(ServerPaths.LOGOUT);
     let loggedOut = (await res.json() as LogOutResponse);
 
-    if (loggedOut) {
+    if (loggedOut.logged_out) {
       // update the user store
       userStore.resetUser();
       // redirect to login page

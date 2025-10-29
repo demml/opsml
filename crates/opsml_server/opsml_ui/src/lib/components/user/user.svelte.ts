@@ -73,29 +73,29 @@ export class UserStore {
     this.sso_state = state;
   }
 
-  // all perms are stored as <operation>:<resource>
-  // split permissions by : and get resource
-  // if index at 1 is empty set it to "all"
-  public getPermissions(): string[][] {
-    return this.permissions.map((perm) => {
-      const parts = perm.split(":");
-      if (parts[1] === "") parts[1] = "all";
-      return parts;
-    });
-  }
-
-  // same as permissions
-  public getGroupPermissions(): string[][] {
-    return this.group_permissions.map((perm) => {
-      const parts = perm.split(":");
-      if (parts[1] === "") parts[1] = "all";
-      return parts;
-    });
-  }
-
   public getSsoState(): string {
     return this.sso_state;
   }
+}
+
+// all perms are stored as <operation>:<resource>
+// split permissions by : and get resource
+// if index at 1 is empty set it to "all"
+export function getPermissions(permissions: string[]): string[][] {
+  return permissions.map((perm) => {
+    const parts = perm.split(":");
+    if (parts[1] === "") parts[1] = "all";
+    return parts;
+  });
+}
+
+// same as permissions
+export function getGroupPermissions(group_permissions: string[]): string[][] {
+  return group_permissions.map((perm) => {
+    const parts = perm.split(":");
+    if (parts[1] === "") parts[1] = "all";
+    return parts;
+  });
 }
 
 export const userStore = new UserStore();
