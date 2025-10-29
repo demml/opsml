@@ -69,11 +69,11 @@ jobs:
           make test.storage.aws.client
         env:
           RUST_BACKTRACE: 1
-          OPSML_TRACKING_URI: http://0.0.0.0:3000
+          OPSML_TRACKING_URI: http://0.0.0.0:8080
 
       - name: Shutdown background processes
         run: |
-          lsof -ti tcp:3000 | xargs kill -9
+          lsof -ti tcp:8080 | xargs kill -9
 
   gcs-client-test:
     environment: gcs-production
@@ -120,11 +120,11 @@ jobs:
           make test.storage.gcs.client
         env:
           RUST_BACKTRACE: 1
-          OPSML_TRACKING_URI: http://0.0.0.0:3000
+          OPSML_TRACKING_URI: http://0.0.0.0:8080
 
       - name: Shutdown background processes
         run: |
-          lsof -ti tcp:3000 | xargs kill -9
+          lsof -ti tcp:8080 | xargs kill -9
 
   azure-client-test:
     needs: gcs-client-test
@@ -178,11 +178,11 @@ jobs:
           make test.storage.azure.client
         env:
           RUST_BACKTRACE: 1
-          OPSML_TRACKING_URI: http://0.0.0.0:3000
+          OPSML_TRACKING_URI: http://0.0.0.0:8080
 
       - name: Shutdown background processes
         run: |
-          lsof -ti tcp:3000 | xargs kill -9
+          lsof -ti tcp:8080 | xargs kill -9
 
   local-client-test:
     needs: azure-client-test
@@ -224,8 +224,8 @@ jobs:
           make test.storage.local.client
         env:
           RUST_BACKTRACE: 1
-          OPSML_TRACKING_URI: http://0.0.0.0:3000
+          OPSML_TRACKING_URI: http://0.0.0.0:8080
 
       - name: Shutdown background processes
         run: |
-          lsof -ti tcp:3000 | xargs kill -9
+          lsof -ti tcp:8080 | xargs kill -9
