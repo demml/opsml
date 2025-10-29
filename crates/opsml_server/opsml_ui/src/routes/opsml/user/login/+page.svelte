@@ -41,6 +41,7 @@
   }
 
   async function handleLogin(event: SubmitEvent & { currentTarget: EventTarget & HTMLFormElement}) {
+   
     event.preventDefault();
     const data = new FormData(event.currentTarget, event.submitter);
 
@@ -48,7 +49,10 @@
       // Send login request to server endpoint
       const response = await fetch(event.currentTarget.action, {
         method: 'POST',
-        body: data
+        body: data,
+        headers: {
+          'x-sveltekit-action': 'true'
+        }
       });
 
       const result: ActionResult = deserialize(await response.text());
