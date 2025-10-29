@@ -1,13 +1,12 @@
 name: Build Dev Assets
-
+# bump
 permissions:
   pull-requests: write
   contents: write
 
 on:
   pull_request:
-    branches:
-      - docker-dev
+
 env:
   INTERPRETER: "3.12"
   RUSTFLAGS: "-C debuginfo=0"
