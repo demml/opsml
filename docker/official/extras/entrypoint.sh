@@ -6,11 +6,13 @@ exec 2>&1
 
 export OPSML_PORT=${OPSML_PORT:-8000}
 export OPSML_SERVER_PORT=${OPSML_SERVER_PORT:-8080}
+export APP_ENV=${APP_ENV:-staging}
 
 if ! [[ "$OPSML_PORT" =~ ^[0-9]+$ ]]; then
     echo "$(date): ERROR: OPSML_PORT must be numeric, got: $OPSML_PORT"
     exit 1
 fi
+
 
 # PID tracking
 RUST_API_PID=""
@@ -81,6 +83,9 @@ wait_for_service() {
     echo "$(date): ERROR: $service_name failed to start on port $port after $max_attempts attempts"
     return 1
 }
+
+# echo app env
+echo "$(date): Starting OpsML in APP_ENV=${APP_ENV}"
 
 # update nginx template
 echo "$(date): Configuring NGINX..."
