@@ -330,13 +330,21 @@ impl DataCard {
     }
 
     /// Create a data profile using the interface's method.
-    pub fn create_data_profile(&self, py: Python) -> Result<(), CardError> {
+    #[pyo3(signature = (bin_size=20, compute_correlations=false))]
+    pub fn create_data_profile(
+        &self,
+        py: Python,
+        bin_size: usize,
+        compute_correlations: bool,
+    ) -> Result<(), CardError> {
         let interface = self
             .interface
             .as_ref()
             .ok_or_else(|| CardError::InterfaceNotFoundError)?;
 
-        interface.bind(py).call_method0("create_data_profile")?;
+        interface
+            .bind(py)
+            .call_method1("create_data_profile", (bin_size, compute_correlations))?;
 
         Ok(())
     }

@@ -177,8 +177,8 @@ impl TorchData {
     pub fn create_data_profile(
         mut _self_: PyRefMut<'_, Self>,
         _py: Python,
-        _bin_size: Option<usize>,
-        _compute_correlations: Option<bool>,
+        _bin_size: usize,
+        _compute_correlations: bool,
     ) -> Result<DataProfile, DataInterfaceError> {
         Err(DataInterfaceError::DataTypeNotSupportedForProfilingError)
     }

@@ -32,5 +32,5 @@ def test_pandas_datacard_data_profile(pandas_data: PandasData):
 
     # validate creating a data profile by accessing interface via card getter attribute
     assert card.interface.data_profile is None
-    card.interface.create_data_profile()
+    card.create_data_profile()
     assert card.interface.data_profile is not None
