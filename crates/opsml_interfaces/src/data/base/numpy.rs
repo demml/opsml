@@ -257,8 +257,8 @@ impl NumpyData {
             py,
             self_.data.as_ref().unwrap().bind(py),
             data_type,
-            bin_size,
-            compute_correlations,
+            Some(bin_size),
+            Some(compute_correlations),
         )?;
 
         self_.as_super().data_profile = Some(profile.clone());
