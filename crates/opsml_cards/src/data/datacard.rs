@@ -328,6 +328,27 @@ impl DataCard {
             Err(CardError::InterfaceNotFoundError)
         }
     }
+
+    /// Create a data profile using the interface's method.
+    pub fn create_data_profile(&self, py: Python) -> Result<(), CardError> {
+        let interface = self
+            .interface
+            .as_ref()
+            .ok_or_else(|| CardError::InterfaceNotFoundError)?;
+
+        interface.bind(py).call_method0("create_data_profile")?;
+
+        Ok(())
+    }
+
+    pub fn split_data<'py>(&self, py: Python<'py>) -> Result<Bound<'py, PyAny>, CardError> {
+        let interface = self
+            .interface
+            .as_ref()
+            .ok_or_else(|| CardError::InterfaceNotFoundError)?;
+
+        Ok(interface.bind(py).call_method0("split_data")?)
+    }
 }
 
 impl DataCard {
