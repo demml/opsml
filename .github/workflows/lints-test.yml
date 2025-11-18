@@ -273,7 +273,9 @@ jobs:
         run: |
           make test.unit
 
+      # only upload coverage reports from ubuntu runners and python 3.12
       - name: Upload coverage reports to Codecov
+        if: runner.os == 'Linux' && matrix.python-version == '3.12'
         uses: codecov/codecov-action@v4
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
