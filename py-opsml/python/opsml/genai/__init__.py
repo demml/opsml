@@ -33,7 +33,7 @@ list_mcp_servers = _genai_impl.list_mcp_servers
 McpServer = _genai_impl.McpServer
 McpCapability = _genai_impl.McpCapability
 McpTransport = _genai_impl.McpTransport
-McpConfiguration = _genai_impl.McpConfiguration
+McpConfig = _genai_impl.McpConfig
 McpServers = _genai_impl.McpServers
 
 google = _genai_impl.google
