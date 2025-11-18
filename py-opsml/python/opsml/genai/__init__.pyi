@@ -283,7 +283,9 @@ class DocumentUrl:
         """The format of the document URL."""
 
 class Message:
-    def __init__(self, content: str | ImageUrl | AudioUrl | BinaryContent | DocumentUrl) -> None:
+    def __init__(
+        self, content: str | ImageUrl | AudioUrl | BinaryContent | DocumentUrl
+    ) -> None:
         """Create a Message object.
 
         Args:
@@ -397,7 +399,9 @@ class Prompt:
         model: str,
         provider: Provider | str,
         system_instruction: Optional[str | List[str]] = None,
-        model_settings: Optional[ModelSettings | OpenAIChatSettings | GeminiSettings] = None,
+        model_settings: Optional[
+            ModelSettings | OpenAIChatSettings | GeminiSettings
+        ] = None,
         response_format: Optional[Any] = None,
     ) -> None:
         """Prompt for interacting with an LLM API.
@@ -899,7 +903,9 @@ class Workflow:
         """
 
     @staticmethod
-    def model_validate_json(json_string: str, output_types: Optional[Dict[str, Any]]) -> "Workflow":
+    def model_validate_json(
+        json_string: str, output_types: Optional[Dict[str, Any]]
+    ) -> "Workflow":
         """Load a workflow from a JSON string.
 
         Args:

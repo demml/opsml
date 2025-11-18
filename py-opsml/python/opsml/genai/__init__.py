@@ -29,6 +29,12 @@ TaskEvent = _genai_impl.TaskEvent
 WorkflowResult = _genai_impl.WorkflowResult
 Score = _genai_impl.Score
 Embedder = _genai_impl.Embedder
+list_mcp_servers = _genai_impl.list_mcp_servers
+McpServer = _genai_impl.McpServer
+McpCapability = _genai_impl.McpCapability
+McpTransport = _genai_impl.McpTransport
+McpConfiguration = _genai_impl.McpConfiguration
+McpServers = _genai_impl.McpServers
 
 google = _genai_impl.google
 openai = _genai_impl.openai
@@ -58,4 +64,10 @@ __all__ = [
     "WorkflowResult",
     "Score",
     "Embedder",
+    "list_mcp_servers",
+    "McpServer",
+    "McpCapability",
+    "McpTransport",
+    "McpConfiguration",
+    "McpServers",
 ]
