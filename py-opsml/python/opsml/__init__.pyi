@@ -1,8 +1,3 @@
-## 📝 Refactored opsml/__init__.pyi
-
-# ----------------------------------------------------------------------
-# Card & Registry Imports (from .card)
-# ----------------------------------------------------------------------
 from .card import (
     Card,
     CardRegistries,
@@ -16,10 +11,6 @@ from .card import (
     RegistryType,
     ServiceCard,
 )
-
-# ----------------------------------------------------------------------
-# Data Imports (from .data)
-# ----------------------------------------------------------------------
 from .data import (
     ArrowData,
     DataInterface,
@@ -31,29 +22,13 @@ from .data import (
     SqlData,
     TorchData,
 )
-
-# ----------------------------------------------------------------------
-# Experiment Imports (from .experiment)
-# ----------------------------------------------------------------------
 from .experiment import (
     get_experiment_metrics,
     get_experiment_parameters,
+    start_experiment,
 )
-from .experiment import start_experiment
-
-# ----------------------------------------------------------------------
-# GenAI Imports (from .genai)
-# ----------------------------------------------------------------------
 from .genai import Message, ModelSettings, Prompt
-
-# ----------------------------------------------------------------------
-# Logging Imports (from .logging)
-# ----------------------------------------------------------------------
 from .logging import LoggingConfig, LogLevel, RustyLogger, WriteLevel
-
-# ----------------------------------------------------------------------
-# Model Imports (from .model)
-# ----------------------------------------------------------------------
 from .model import (
     CatBoostModel,
     HuggingFaceModel,
@@ -75,15 +50,8 @@ from .model import (
     TorchModel,
     XGBoostModel,
 )
-
-# ----------------------------------------------------------------------
-# Type Imports (from .types)
-# ----------------------------------------------------------------------
 from .types import VersionType
 
-# ----------------------------------------------------------------------
-# Version
-# ----------------------------------------------------------------------
 __version__: str
 
 __all__ = [

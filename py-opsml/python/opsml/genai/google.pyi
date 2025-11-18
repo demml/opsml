@@ -1,4 +1,6 @@
-from typing import List, Optional
+# type: ignore
+# opsml/genai/google.pyi
+from typing import Any, List, Optional
 
 class Modality:
     """Represents different modalities for content generation."""
@@ -309,3 +311,73 @@ class GeminiSettings:
     @property
     def extra_body(self) -> Optional[dict]: ...
     def __str__(self) -> str: ...
+
+class EmbeddingTaskType:
+    TaskTypeUnspecified = "EmbeddingTaskType"
+    RetrievalQuery = "EmbeddingTaskType"
+    RetrievalDocument = "EmbeddingTaskType"
+    SemanticSimilarity = "EmbeddingTaskType"
+    Classification = "EmbeddingTaskType"
+    Clustering = "EmbeddingTaskType"
+    QuestionAnswering = "EmbeddingTaskType"
+    FactVerification = "EmbeddingTaskType"
+    CodeRetrievalQuery = "EmbeddingTaskType"
+
+class GeminiEmbeddingConfig:
+    def __init__(
+        self,
+        model: Optional[str] = None,
+        output_dimensionality: Optional[int] = None,
+        task_type: Optional[EmbeddingTaskType | str] = None,
+    ) -> None:
+        """Configuration to pass to the Gemini Embedding API when creating a request
+
+
+        Args:
+            model (Optional[str]):
+                The embedding model to use. If not specified, the default gemini model will be used.
+            output_dimensionality (Optional[int]):
+                The output dimensionality of the embeddings. If not specified, a default value will be used.
+            task_type (Optional[EmbeddingTaskType]):
+                The type of embedding task to perform. If not specified, the default gemini task type will be used.
+        """
+
+class ContentEmbedding:
+    @property
+    def values(self) -> List[float]: ...
+
+class GeminiEmbeddingResponse:
+    @property
+    def embedding(self) -> ContentEmbedding: ...
+
+class PredictResponse:
+    @property
+    def predictions(self) -> List[dict]: ...
+    @property
+    def metadata(self) -> Any: ...
+    @property
+    def deployed_model_id(self) -> str: ...
+    @property
+    def model(self) -> str: ...
+    @property
+    def model_version_id(self) -> str: ...
+    @property
+    def model_display_name(self) -> str: ...
+    def __str__(self): ...
+
+class PredictRequest:
+    def __init__(self, instances: List[dict], parameters: Optional[dict] = None) -> None:
+        """Request to pass to the Vertex Predict API when creating a request
+
+        Args:
+            instances (List[dict]):
+                A list of instances to be sent in the request.
+            parameters (Optional[dict]):
+                Optional parameters for the request.
+        """
+
+    @property
+    def instances(self) -> List[dict]: ...
+    @property
+    def parameters(self) -> dict: ...
+    def __str__(self): ...

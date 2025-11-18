@@ -1,5 +1,6 @@
+# type: ignore
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Dict, List, Optional
 
 from opsml.scouter.types import DriftType
 
@@ -49,6 +50,30 @@ class CommonKwargs:
         Returns:
             String representation of the CommonKwargs.
         """
+
+class DataType:
+    Pandas: "DataType"
+    Arrow: "DataType"
+    Polars: "DataType"
+    Numpy: "DataType"
+    Image: "DataType"
+    Text: "DataType"
+    Dict: "DataType"
+    Sql: "DataType"
+    Profile: "DataType"
+    TransformerBatch: "DataType"
+    String: "DataType"
+    TorchTensor: "DataType"
+    TorchDataset: "DataType"
+    TensorFlowTensor: "DataType"
+    Tuple: "DataType"
+    List: "DataType"
+    Str: "DataType"
+    OrderedDict: "DataType"
+    Joblib: "DataType"
+    Base: "DataType"
+    Dataset: "DataType"
+    NotProvided: "DataType"
 
 class SaveName:
     Card: "SaveName"
@@ -232,3 +257,50 @@ class DriftProfileMap:
         Returns:
             True if the drift profile map is empty, False otherwise
         """
+
+class ExtraMetadata:
+    metadata: Dict[str, Any]
+
+class Feature:
+    feature_type: str
+    shape: List[int]
+    extra_args: Dict[str, str]
+
+    def __init__(
+        self,
+        feature_type: str,
+        shape: List[int],
+        extra_args: Optional[Dict[str, str]] = None,
+    ) -> None:
+        """Define a feature
+
+        Args:
+            feature_type:
+                The type of the feature
+            shape:
+                The shape of the feature
+            extra_args:
+                Extra arguments to pass to the feature
+        """
+
+    def __str__(self) -> str:
+        """Return a string representation of the Feature.
+
+        Returns:
+            String representation of the Feature.
+        """
+
+class FeatureSchema:
+    def __init__(self, items: Optional[dict[str, Feature]] = None) -> None:
+        """Define a feature map
+
+        Args:
+            features:
+                The features to use in the feature map
+        """
+
+    def __str__(self) -> str:
+        """Return a string representation of the FeatureSchema."""
+
+    def __getitem__(self, key: str) -> Feature:
+        """Returns the feature at the given key."""

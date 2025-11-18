@@ -1,3 +1,4 @@
+# type: ignore
 # pylint: disable=redefined-builtin,no-name-in-module
 
 from pathlib import Path

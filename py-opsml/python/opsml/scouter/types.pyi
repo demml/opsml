@@ -1,3 +1,4 @@
+# type: ignore
 class DriftType:
     Spc: "DriftType"
     Psi: "DriftType"

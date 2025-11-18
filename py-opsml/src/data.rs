@@ -4,7 +4,7 @@ use opsml_interfaces::data::{
     DataSplits, DataSplitter, DependentVars, IndiceSplit, Inequality, NumpyData, PandasData,
     PolarsData, SqlData, SqlLogic, StartStopSplit, TorchData,
 };
-use opsml_types::{DataInterfaceType, DataType};
+use opsml_types::DataInterfaceType;
 
 use pyo3::prelude::*;
 
@@ -38,9 +38,6 @@ pub fn data(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<SqlData>()?;
     m.add_class::<TorchData>()?;
     m.add_function(wrap_pyfunction!(generate_feature_schema, m)?)?;
-
-    // data type should be associated with data
-    m.add_class::<DataType>()?;
 
     Ok(())
 }

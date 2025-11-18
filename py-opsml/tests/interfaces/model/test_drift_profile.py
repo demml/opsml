@@ -1,13 +1,14 @@
-from opsml.scouter.drift import (
+from opsml.scouter import (
     PsiDriftConfig,
     CustomMetric,
     CustomMetricDriftConfig,
     CustomDriftProfile,
 )
+
 from typing import Tuple
 from opsml.scouter.alert import AlertThreshold
 from opsml.model import SklearnModel
-from opsml.data import DataType
+from opsml.types import DataType
 from pathlib import Path
 import pandas as pd
 from sklearn import ensemble  # type: ignore

@@ -1,5 +1,6 @@
 # type: ignore
 # pylint: disable=no-member
+# opsml/cli/__init__.py
 
 from . import cli
 

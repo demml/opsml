@@ -1,5 +1,5 @@
 import pytest
-from opsml.model import Feature
+from opsml.types import Feature
 from opsml.logging import RustyLogger, LoggingConfig, LogLevel
 from opsml.mock import RegistryTestHelper
 from opsml.genai import Prompt
