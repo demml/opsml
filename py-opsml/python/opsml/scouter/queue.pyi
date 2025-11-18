@@ -4,13 +4,12 @@ import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
+from opsml.genai import Prompt
+from opsml.logging import LogLevel
+from opsml.mock import MockConfig
+from opsml.scouter.client import HTTPConfig
+from opsml.scouter.observe import ObservabilityMetrics
 from typing_extensions import Protocol, TypeAlias
-
-from ...genai import Prompt
-from ...logging import LogLevel
-from ...mock import MockConfig
-from ..client import HTTPConfig
-from ..observe import ObservabilityMetrics
 
 class TransportType:
     Kafka = "TransportType"

@@ -1,9 +1,10 @@
-# pylint: disable=dangerous-default-value
+# pylint: disable=dangerous-default-value,no-name-in-module
 from datetime import datetime
+
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Protocol, Union, overload
 
-from ..alert import (
+from opsml.scouter.alert import (
     AlertThreshold,
     CustomMetricAlertCondition,
     CustomMetricAlertConfig,
@@ -11,8 +12,8 @@ from ..alert import (
     PsiAlertConfig,
     SpcAlertConfig,
 )
-from ..queue import LLMRecord
-from ..types import DataType, DriftType
+from opsml.scouter.queue import LLMRecord
+from opsml.scouter.types import DataType, DriftType
 
 class FeatureMap:
     @property
@@ -1297,7 +1298,9 @@ class Drifter:
     def create_drift_profile(  # type: ignore
         self,
         data: Any,
-        config: Optional[Union[SpcDriftConfig, PsiDriftConfig, CustomMetricDriftConfig]] = None,
+        config: Optional[
+            Union[SpcDriftConfig, PsiDriftConfig, CustomMetricDriftConfig]
+        ] = None,
         data_type: Optional[DataType] = None,
     ) -> Union[SpcDriftProfile, PsiDriftProfile, CustomDriftProfile]:
         """Create a drift profile from data.

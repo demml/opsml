@@ -3,8 +3,8 @@
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union, overload
 
-from ..data import DataType
-from ..scouter.drift import (
+from opsml.data import DataType
+from opsml.scouter.drift import (
     CustomDriftProfile,
     CustomMetric,
     CustomMetricDriftConfig,
@@ -13,9 +13,11 @@ from ..scouter.drift import (
     SpcDriftConfig,
     SpcDriftProfile,
 )
-from ..types import DriftArgs, DriftProfileMap, DriftProfileUri
+from opsml.types import DriftArgs, DriftProfileMap, DriftProfileUri
 
-DriftProfileType = Dict[str, Union[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile]]
+DriftProfileType = Dict[
+    str, Union[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile]
+]
 
 class ProcessorType:
     Preprocessor: "ProcessorType"

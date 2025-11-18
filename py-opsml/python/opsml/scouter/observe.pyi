@@ -1,6 +1,6 @@
 from typing import Dict, List, Optional
 
-from ..queue import ServerRecords
+from opsml.scouter.queue import ServerRecords
 
 class LatencyMetrics:
     @property

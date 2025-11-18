@@ -1,9 +1,9 @@
 # type: ignore
-# pylint: disable=redefined-builtin
+# pylint: disable=redefined-builtin,no-name-in-module
 from typing import Any, Dict, List, Optional, Protocol, TypeAlias, Union
 
-from ..genai import Embedder, Prompt, Score
-from ..profile import Histogram
+from opsml.genai import Embedder, Prompt, Score
+from opsml.scouter.profile import Histogram
 
 class BaseModel(Protocol):
     """Protocol for pydantic BaseModel to ensure compatibility with context"""

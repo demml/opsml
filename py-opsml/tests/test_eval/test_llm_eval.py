@@ -9,7 +9,7 @@ from opsml.evaluate import (  # type: ignore
 )
 from opsml.experiment import start_experiment
 from opsml.mock import OpsmlTestServer
-from opsml.genai import Embedder, Provider  # type: ignore
+from opsml.genai import Embedder, Provider
 from opsml.genai.openai import OpenAIEmbeddingConfig  # type: ignore
 from opsml.mock import LLMTestServer
 from tests.conftest import WINDOWS_EXCLUDE

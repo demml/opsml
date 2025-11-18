@@ -4,14 +4,134 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Protocol, TypeAlias, Union
 
-from ..card import DataCard, ExperimentCard, ModelCard, PromptCard
-from ..data import DataSaveKwargs
-from ..evaluate import EvaluationConfig, LLMEvalMetric, LLMEvalRecord, LLMEvalResults
-from ..model import ModelSaveKwargs
-from ..types import VersionType
+from opsml.card import DataCard, ExperimentCard, ModelCard, PromptCard
+from opsml.data import DataSaveKwargs
+from opsml.evaluate import (
+    EvaluationConfig,
+    LLMEvalMetric,
+    LLMEvalRecord,
+    LLMEvalResults,
+)
+from opsml.model import ModelSaveKwargs
+from opsml.types import VersionType
 
 SerializedType: TypeAlias = Union[str, int, float, dict, list]
-Context: TypeAlias = Union[Dict[str, Any], BaseModel]
+
+
+class BaseModel(Protocol):
+    """Protocol for pydantic BaseModel to ensure compatibility with context"""
+
+    def model_dump(self) -> Dict[str, Any]:
+        """Dump the model as a dictionary"""
+
+    def model_dump_json(self) -> str:
+        """Dump the model as a JSON string"""
+
+    def __str__(self) -> str:
+        """String representation of the model"""
+
+
+Context: TypeAlias = Union[Dict[str, Any], BaseModel]  # pylint: disable=used-before-assignment  # noqa: F821
+
+
+class Metric:
+    def __init__(
+        self,
+        name: str,
+        value: float,
+        step: Optional[int] = None,
+        timestamp: Optional[int] = None,
+        created_at: Optional[datetime] = None,
+    ) -> None:
+        """
+        Initialize a Metric
+
+        Args:
+            name (str):
+                Name of the metric
+            value (float):
+                Value of the metric
+            step (int | None):
+                Step of the metric
+            timestamp (int | None):
+                Timestamp of the metric
+            created_at (datetime | None):
+                Created at of the metric
+        """
+
+    @property
+    def name(self) -> str:
+        """
+        Name of the metric
+        """
+
+    @property
+    def value(self) -> float:
+        """
+        Value of the metric
+        """
+
+    @property
+    def step(self) -> Optional[int]:
+        """
+        Step of the metric
+        """
+
+    @property
+    def timestamp(self) -> Optional[int]:
+        """
+        Timestamp of the metric
+        """
+
+    @property
+    def created_at(self) -> Optional[datetime]:
+        """
+        Created at of the metric
+        """
+
+
+class Metrics:
+    def __str__(self): ...
+    def __getitem__(self, index: int) -> Metric: ...
+    def __iter__(self): ...
+    def __len__(self) -> int: ...
+
+
+class Parameter:
+    def __init__(
+        self,
+        name: str,
+        value: Union[int, float, str],
+    ) -> None:
+        """
+        Initialize a Parameter
+
+        Args:
+            name (str):
+                Name of the parameter
+            value (int | float | str):
+                Value of the parameter
+        """
+
+    @property
+    def name(self) -> str:
+        """
+        Name of the parameter
+        """
+
+    @property
+    def value(self) -> Union[int, float, str]:
+        """
+        Value of the parameter
+        """
+
+
+class Parameters:
+    def __str__(self): ...
+    def __getitem__(self, index: int) -> Parameter: ...
+    def __iter__(self): ...
+    def __len__(self) -> int: ...
+
 
 class LLMEvaluator:
     @staticmethod
@@ -34,6 +154,7 @@ class LLMEvaluator:
         Returns:
             LLMEvalResults
         """
+
 
 class Experiment:
     def start_experiment(
@@ -130,7 +251,9 @@ class Experiment:
                 Value of the parameter
         """
 
-    def log_parameters(self, parameters: list[Parameter] | Dict[str, Union[int, float, str]]) -> None:
+    def log_parameters(
+        self, parameters: list[Parameter] | Dict[str, Union[int, float, str]]
+    ) -> None:
         """
         Log multiple parameters
 
@@ -175,7 +298,9 @@ class Experiment:
 
         """
 
-    def log_figure(self, name: str, figure: Any, kwargs: Optional[Dict[str, Any]] = None) -> None:
+    def log_figure(
+        self, name: str, figure: Any, kwargs: Optional[Dict[str, Any]] = None
+    ) -> None:
         """
         Log a figure. This method will log a matplotlib Figure object to the experiment artifacts.
 
@@ -232,6 +357,7 @@ class Experiment:
 
         """
 
+
 def start_experiment(
     space: Optional[str] = None,
     name: Optional[str] = None,
@@ -258,66 +384,6 @@ def start_experiment(
         Experiment
     """
 
-class Metric:
-    def __init__(
-        self,
-        name: str,
-        value: float,
-        step: Optional[int] = None,
-        timestamp: Optional[int] = None,
-        created_at: Optional[datetime] = None,
-    ) -> None:
-        """
-        Initialize a Metric
-
-        Args:
-            name (str):
-                Name of the metric
-            value (float):
-                Value of the metric
-            step (int | None):
-                Step of the metric
-            timestamp (int | None):
-                Timestamp of the metric
-            created_at (datetime | None):
-                Created at of the metric
-        """
-
-    @property
-    def name(self) -> str:
-        """
-        Name of the metric
-        """
-
-    @property
-    def value(self) -> float:
-        """
-        Value of the metric
-        """
-
-    @property
-    def step(self) -> Optional[int]:
-        """
-        Step of the metric
-        """
-
-    @property
-    def timestamp(self) -> Optional[int]:
-        """
-        Timestamp of the metric
-        """
-
-    @property
-    def created_at(self) -> Optional[datetime]:
-        """
-        Created at of the metric
-        """
-
-class Metrics:
-    def __str__(self): ...
-    def __getitem__(self, index: int) -> Metric: ...
-    def __iter__(self): ...
-    def __len__(self) -> int: ...
 
 class EvalMetrics:
     """
@@ -336,41 +402,7 @@ class EvalMetrics:
 
     def __getitem__(self, key: str) -> float:
         """Get the value of a metric by name. A RuntimeError will be raised if the metric does not exist."""
-        ...
 
-class Parameter:
-    def __init__(
-        self,
-        name: str,
-        value: Union[int, float, str],
-    ) -> None:
-        """
-        Initialize a Parameter
-
-        Args:
-            name (str):
-                Name of the parameter
-            value (int | float | str):
-                Value of the parameter
-        """
-
-    @property
-    def name(self) -> str:
-        """
-        Name of the parameter
-        """
-
-    @property
-    def value(self) -> Union[int, float, str]:
-        """
-        Value of the parameter
-        """
-
-class Parameters:
-    def __str__(self): ...
-    def __getitem__(self, index: int) -> Parameter: ...
-    def __iter__(self): ...
-    def __len__(self) -> int: ...
 
 def get_experiment_metrics(
     experiment_uid: str,
@@ -389,6 +421,7 @@ def get_experiment_metrics(
         Metrics
     """
 
+
 def get_experiment_parameters(
     experiment_uid: str,
     names: Optional[list[str]] = None,
@@ -406,17 +439,15 @@ def get_experiment_parameters(
         Parameters
     """
 
+
 class BaseModel(Protocol):
     """Protocol for pydantic BaseModel to ensure compatibility with context"""
 
     def model_dump(self) -> Dict[str, Any]:
         """Dump the model as a dictionary"""
-        ...
 
     def model_dump_json(self) -> str:
         """Dump the model as a JSON string"""
-        ...
 
     def __str__(self) -> str:
         """String representation of the model"""
-        ...

@@ -1,5 +1,7 @@
 # type: ignore
-from .. import cli
+# pylint: disable=no-member
+
+from . import cli
 
 register_service = cli.register_service
 lock_service = cli.lock_service
