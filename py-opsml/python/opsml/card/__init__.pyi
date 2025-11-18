@@ -15,7 +15,7 @@ from typing import (
     overload,
 )
 
-from ..data import DataInterface, DataLoadKwargs, DataSaveKwargs, DataType
+from ..data import Data, DataInterface, DataLoadKwargs, DataSaveKwargs, DataType
 from ..experiment import EvalMetrics, Metrics, Parameters
 from ..genai import Prompt, Workflow
 from ..model import (
@@ -27,6 +27,7 @@ from ..model import (
     OnnxSession,
 )
 from ..scouter.drift import LLMDriftConfig, LLMDriftMetric, LLMDriftProfile
+from ..scouter.profile import DataProfile
 from ..types import VersionType
 
 CardInterfaceType: TypeAlias = Union[DataInterface, ModelInterface]
@@ -305,6 +306,29 @@ class DataCard:
                 By default, the interface will be inferred and instantiated
                 from the interface metadata. If an interface is provided
                 (as in the case of custom interfaces), it will be used.
+        """
+
+    def create_data_profile(
+        self,
+        bin_size: Optional[int] = 20,
+        compute_correlations: Optional[bool] = False,
+    ) -> DataProfile:
+        """Create a data profile
+
+
+        Args:
+            bin_size (int):
+                The bin size for the data profile
+            compute_correlations (bool):
+                Whether to compute correlations
+        """
+
+    def split_data(self) -> Dict[str, Data]:
+        """Split the data according to the data splits defined in the interface
+
+        Returns:
+            Dict[str, Any]:
+                A dictionary containing the split data
         """
 
 class DataCardMetadata:

@@ -210,7 +210,7 @@ jobs:
         run: chmod +x target/debug/opsml-server
 
       - name: Run opsml_server in the background
-        run: target/debug/opsml-server
+        run: target/debug/opsml-server &
 
       - name: Tests
         working-directory: ./crates

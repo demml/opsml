@@ -5,6 +5,7 @@ import time
 
 times = []
 
+
 def run_benchmark():
     start_time = time.time()
     with mlflow.start_run() as training_run:
@@ -21,11 +22,11 @@ def run_benchmark():
         classifier.fit(X, y)
 
         mlflow.sklearn.log_model(
-            sk_model=classifier, 
-            name="random_forest", 
+            sk_model=classifier,
+            name="random_forest",
             input_example=X[0:10],
         )
-    
+
     times.append(time.time() - start_time)
 
 
