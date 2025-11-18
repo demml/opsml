@@ -3,7 +3,7 @@
 import tensorflow as tf
 import numpy as np
 from opsml.model import TensorFlowModel, ModelSaveKwargs, ModelType, ModelLoadKwargs
-from opsml.data import DataType
+from opsml.types import DataType
 from tempfile import TemporaryDirectory
 from pathlib import Path
 from tensorflow.keras import Input, Model

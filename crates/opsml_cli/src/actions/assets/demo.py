@@ -22,7 +22,7 @@ from opsml.scouter.drift import (
 from opsml.experiment import Experiment
 import numpy as np
 from opsml.scouter.alert import AlertThreshold
-from opsml.data import DataType
+from opsml.types import DataType
 from opsml.helpers.data import create_fake_data
 from opsml.model import TaskType
 from sklearn.preprocessing import StandardScaler  # type: ignore

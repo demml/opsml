@@ -1,5 +1,5 @@
 from opsml import ModelCard, SklearnModel, TaskType
-from opsml.data import DataType
+from opsml.types import DataType
 from opsml.helpers.data import create_fake_data
 from opsml.scouter.alert import PsiAlertConfig
 from opsml.scouter.drift import PsiDriftConfig

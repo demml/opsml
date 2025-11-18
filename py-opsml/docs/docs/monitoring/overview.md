@@ -34,7 +34,7 @@ from opsml.scouter.alert import PsiAlertConfig
 # Opsml imports
 from opsml.card import ModelCard, CardRegistry
 from opsml.model import SklearnModel, TaskType
-from opsml.data import DataType
+from opsml.types import DataType
 
 reg = ensemble.RandomForestClassifier(n_estimators=5)
 reg.fit(X.to_numpy(), y.to_numpy().ravel())
