@@ -3,7 +3,9 @@ from opsml import ModelCard, SklearnModel, TaskType
 from sklearn.datasets import make_classification
 from sklearn import ensemble  # type: ignore
 import time
+
 times = []
+
 
 def run_benchmark():
     start_time = time.time()

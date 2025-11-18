@@ -238,8 +238,8 @@ impl NumpyData {
     pub fn create_data_profile(
         mut self_: PyRefMut<'_, Self>,
         py: Python,
-        bin_size: Option<usize>,
-        compute_correlations: Option<bool>,
+        bin_size: usize,
+        compute_correlations: bool,
     ) -> Result<DataProfile, DataInterfaceError> {
         let mut profiler = DataProfiler::new();
 
@@ -257,8 +257,8 @@ impl NumpyData {
             py,
             self_.data.as_ref().unwrap().bind(py),
             data_type,
-            bin_size,
-            compute_correlations,
+            Some(bin_size),
+            Some(compute_correlations),
         )?;
 
         self_.as_super().data_profile = Some(profile.clone());

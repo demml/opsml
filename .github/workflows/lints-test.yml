@@ -223,6 +223,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Free Disk Space (Ubuntu)
+        if: runner.os == 'Linux'
+        uses: jlumbroso/free-disk-space@main
+        with:
+          # this might remove tools that are actually needed,
+          # if set to "true" but frees about 6 GB
+          #tool-cache: false
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: true
+          docker-images: true
+          swap-storage: true
+
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v2
         with:

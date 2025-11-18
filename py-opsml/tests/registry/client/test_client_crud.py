@@ -87,7 +87,7 @@ def crud_datacard(pandas_data: PandasData):
         loaded_card.interface.data_splits.splits[0].column_split.column_name == "col_1"
     )
 
-    split_data = loaded_card.interface.split_data()
+    split_data = loaded_card.split_data()
     assert split_data["train"].x.shape[1] == 9
     assert split_data["train"].y.shape[1] == 1
 
