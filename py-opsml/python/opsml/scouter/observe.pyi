@@ -1,3 +1,4 @@
+# type: ignore
 from typing import Dict, List, Optional
 
 from opsml.scouter.queue import ServerRecords

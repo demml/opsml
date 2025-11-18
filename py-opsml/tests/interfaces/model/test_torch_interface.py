@@ -1,5 +1,5 @@
 from opsml.model import TorchModel, ModelLoadKwargs, ModelSaveKwargs
-from opsml.data import DataType
+from opsml.types import DataType
 from typing import Tuple
 import torch
 from pathlib import Path

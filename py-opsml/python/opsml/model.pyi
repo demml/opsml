@@ -1,9 +1,9 @@
+# type: ignore
 # pylint: disable=dangerous-default-value, arguments-renamed
 
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union, overload
 
-from opsml.data import DataType
 from opsml.scouter.drift import (
     CustomDriftProfile,
     CustomMetric,
@@ -13,64 +13,22 @@ from opsml.scouter.drift import (
     SpcDriftConfig,
     SpcDriftProfile,
 )
-from opsml.types import DriftArgs, DriftProfileMap, DriftProfileUri
+from opsml.types import (
+    DataType,
+    DriftArgs,
+    DriftProfileMap,
+    DriftProfileUri,
+    ExtraMetadata,
+    FeatureSchema,
+)
 
-DriftProfileType = Dict[
-    str, Union[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile]
-]
+DriftProfileType = Dict[str, Union[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile]]
 
 class ProcessorType:
     Preprocessor: "ProcessorType"
     Tokenizer: "ProcessorType"
     FeatureExtractor: "ProcessorType"
     ImageProcessor: "ProcessorType"
-
-class ExtraMetadata:
-    metadata: Dict[str, Any]
-
-class Feature:
-    feature_type: str
-    shape: List[int]
-    extra_args: Dict[str, str]
-
-    def __init__(
-        self,
-        feature_type: str,
-        shape: List[int],
-        extra_args: Optional[Dict[str, str]] = None,
-    ) -> None:
-        """Define a feature
-
-        Args:
-            feature_type:
-                The type of the feature
-            shape:
-                The shape of the feature
-            extra_args:
-                Extra arguments to pass to the feature
-        """
-
-    def __str__(self) -> str:
-        """Return a string representation of the Feature.
-
-        Returns:
-            String representation of the Feature.
-        """
-
-class FeatureSchema:
-    def __init__(self, items: Optional[dict[str, Feature]] = None) -> None:
-        """Define a feature map
-
-        Args:
-            features:
-                The features to use in the feature map
-        """
-
-    def __str__(self) -> str:
-        """Return a string representation of the FeatureSchema."""
-
-    def __getitem__(self, key: str) -> Feature:
-        """Returns the feature at the given key."""
 
 # Utils
 
@@ -122,7 +80,7 @@ class OnnxSchema:
 class ModelSaveKwargs:
     def __init__(
         self,
-        onnx: Optional[Dict | HuggingFaceOnnxArgs] = None,
+        onnx: Optional[Dict | "HuggingFaceOnnxArgs"] = None,
         model: Optional[Dict] = None,
         preprocessor: Optional[Dict] = None,
         save_onnx: bool = False,

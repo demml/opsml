@@ -1,4 +1,6 @@
+# type: ignore
 # pylint: disable=redefined-builtin
+# opsml/genai/openai.pyi
 from typing import Any, Dict, List, Optional
 
 class AudioParam:
@@ -295,3 +297,58 @@ class OpenAIChatSettings:
 
     def __str__(self) -> str:
         """Return string representation of the settings."""
+
+class OpenAIEmbeddingConfig:
+    """OpenAI embedding configuration settings."""
+
+    def __init__(
+        self,
+        model: str,
+        dimensions: Optional[int] = None,
+        encoding_format: Optional[str] = None,
+        user: Optional[str] = None,
+    ) -> None:
+        """Initialize OpenAI embedding configuration.
+
+        Args:
+            model (str):
+                The embedding model to use.
+            dimensions (Optional[int]):
+                The output dimensionality of the embeddings.
+            encoding_format (Optional[str]):
+                The encoding format to use for the embeddings.
+                Can be either "float" or "base64".
+            user (Optional[str]):
+                The user ID for the embedding request.
+        """
+
+    @property
+    def model(self) -> str: ...
+    @property
+    def dimensions(self) -> Optional[int]: ...
+    @property
+    def encoding_format(self) -> Optional[str]: ...
+    @property
+    def user(self) -> Optional[str]: ...
+
+class EmbeddingObject:
+    @property
+    def object(self) -> str: ...
+    @property
+    def embedding(self) -> List[float]: ...
+    @property
+    def index(self) -> int: ...
+
+class UsageObject:
+    @property
+    def prompt_tokens(self) -> int: ...
+    @property
+    def total_tokens(self) -> int: ...
+
+class OpenAIEmbeddingResponse:
+    @property
+    def object(self) -> str: ...
+    @property
+    def data(self) -> List[EmbeddingObject]: ...
+    @property
+    def usage(self) -> UsageObject: ...

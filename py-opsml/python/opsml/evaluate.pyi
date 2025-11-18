@@ -152,7 +152,7 @@ class LLMEvalRecord:
 def evaluate_llm(
     records: List[LLMEvalRecord],
     metrics: List[LLMEvalMetric],
-    config: Optional[EvaluationConfig] = None,
+    config: Optional["EvaluationConfig"] = None,
 ) -> LLMEvalResults:
     """
     Evaluate LLM responses using the provided evaluation metrics.

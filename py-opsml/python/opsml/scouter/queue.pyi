@@ -1,3 +1,4 @@
+# type: ignore
 # pylint: skip-file
 
 import datetime
@@ -224,7 +225,12 @@ class ServerRecord:
     @property
     def record(
         self,
-    ) -> Union[SpcServerRecord, PsiServerRecord, CustomMetricServerRecord, ObservabilityMetrics]:
+    ) -> Union[
+        "SpcServerRecord",
+        "PsiServerRecord",
+        "CustomMetricServerRecord",
+        "ObservabilityMetrics",
+    ]:
         """Return the drift server record."""
 
 class ServerRecords:
@@ -554,7 +560,7 @@ class Metric:
         """Return the string representation of the metric"""
 
     @property
-    def metrics(self) -> List[Metric]:
+    def metrics(self) -> List["Metric"]:
         """Return the list of metrics"""
 
     @property
@@ -603,7 +609,7 @@ class Metrics:
 class Queue:
     """Individual queue associated with a drift profile"""
 
-    def insert(self, entity: Union[Features, Metrics, LLMRecord]) -> None:
+    def insert(self, entity: Union[Features, Metrics, "LLMRecord"]) -> None:
         """Insert a record into the queue
 
         Args:
@@ -640,7 +646,7 @@ class ScouterQueue:
             RedisConfig,
             HTTPConfig,
         ],
-    ) -> ScouterQueue:
+    ) -> "ScouterQueue":
         """Initializes Scouter queue from one or more drift profile paths
 
         Args:

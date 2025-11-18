@@ -1,6 +1,6 @@
+# type: ignore
 # pylint: disable=dangerous-default-value,no-name-in-module
 from datetime import datetime
-
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Protocol, Union, overload
 
@@ -443,7 +443,7 @@ class PsiDriftProfile:
         """Return scouter version used to create DriftProfile"""
 
     @property
-    def features(self) -> Dict[str, PsiFeatureDriftProfile]:
+    def features(self) -> Dict[str, "PsiFeatureDriftProfile"]:
         """Return the list of features."""
 
     @property
@@ -603,7 +603,7 @@ class PsiDriftMap:
 
 class LLMDriftMap:
     @property
-    def records(self) -> List[LLMMetricRecord]:
+    def records(self) -> List["LLMMetricRecord"]:
         """Return the list of LLM records."""
 
     def __str__(self): ...
@@ -1298,9 +1298,7 @@ class Drifter:
     def create_drift_profile(  # type: ignore
         self,
         data: Any,
-        config: Optional[
-            Union[SpcDriftConfig, PsiDriftConfig, CustomMetricDriftConfig]
-        ] = None,
+        config: Optional[Union[SpcDriftConfig, PsiDriftConfig, CustomMetricDriftConfig]] = None,
         data_type: Optional[DataType] = None,
     ) -> Union[SpcDriftProfile, PsiDriftProfile, CustomDriftProfile]:
         """Create a drift profile from data.

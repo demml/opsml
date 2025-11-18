@@ -1,8 +1,9 @@
+# type: ignore
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
-from opsml.model import ExtraMetadata, FeatureSchema
 from opsml.scouter.profile import DataProfile
+from opsml.types import DataType, ExtraMetadata, FeatureSchema
 
 class DataInterfaceType:
     Base: "DataInterfaceType"
@@ -51,30 +52,6 @@ class Inequality:
     GreaterThanEqual: "Inequality"
     LesserThan: "Inequality"
     LesserThanEqual: "Inequality"
-
-class DataType:
-    Pandas: "DataType"
-    Arrow: "DataType"
-    Polars: "DataType"
-    Numpy: "DataType"
-    Image: "DataType"
-    Text: "DataType"
-    Dict: "DataType"
-    Sql: "DataType"
-    Profile: "DataType"
-    TransformerBatch: "DataType"
-    String: "DataType"
-    TorchTensor: "DataType"
-    TorchDataset: "DataType"
-    TensorFlowTensor: "DataType"
-    Tuple: "DataType"
-    List: "DataType"
-    Str: "DataType"
-    OrderedDict: "DataType"
-    Joblib: "DataType"
-    Base: "DataType"
-    Dataset: "DataType"
-    NotProvided: "DataType"
 
 class ColValType:
     String: "ColValType"
@@ -225,7 +202,7 @@ class DataSplits:
         data: Any,
         data_type: DataType,
         dependent_vars: DependentVars,
-    ) -> Dict[str, Data]:
+    ) -> Dict[str, "Data"]:
         """Split the data
 
         Args:
@@ -302,7 +279,7 @@ class DataInterfaceMetadata:
     save_metadata: DataInterfaceSaveMetadata
     schema: FeatureSchema
     extra_metadata: dict[str, str]
-    sql_logic: SqlLogic  # pylint: disable=used-before-assignment
+    sql_logic: "SqlLogic"  # pylint: disable=used-before-assignment
     interface_type: DataInterfaceType
     data_splits: DataSplits
     dependent_vars: DependentVars
@@ -313,7 +290,7 @@ class DataInterfaceMetadata:
         save_metadata: DataInterfaceSaveMetadata,
         schema: FeatureSchema,
         extra_metadata: dict[str, str],
-        sql_logic: SqlLogic,
+        sql_logic: "SqlLogic",
         interface_type: DataInterfaceType,
         data_splits: DataSplits,
         dependent_vars: DependentVars,
@@ -356,7 +333,7 @@ class DataInterface:
         data: Optional[Any] = None,
         data_splits: Optional[Union[DataSplits, List[DataSplit]]] = None,
         dependent_vars: Optional[Union[DependentVars, List[str], List[int]]] = None,
-        sql_logic: Optional[SqlLogic] = None,
+        sql_logic: Optional["SqlLogic"] = None,
         data_profile: Optional[DataProfile] = None,
     ) -> None:
         """Define a data interface
@@ -411,7 +388,7 @@ class DataInterface:
         """Sets the feature map"""
 
     @property
-    def sql_logic(self) -> SqlLogic:
+    def sql_logic(self) -> "SqlLogic":
         """Returns the sql logic."""
 
     @property
