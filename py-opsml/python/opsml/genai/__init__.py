@@ -68,6 +68,6 @@ __all__ = [
     "McpServer",
     "McpCapability",
     "McpTransport",
-    "McpConfiguration",
+    "McpConfig",
     "McpServers",
 ]
