@@ -1,7 +1,9 @@
+# pylint: disable=redefined-builtin,no-name-in-module
+
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from ..types import DataType
+from opsml.scouter.types import DataType
 
 class Distinct:
     @property

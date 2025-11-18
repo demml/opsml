@@ -4,9 +4,9 @@
 from pathlib import Path
 from typing import Any, Dict, Optional, Union
 
-from ..card import ServiceCard
-from ..scouter.client import HTTPConfig
-from ..scouter.queue import KafkaConfig, RabbitMQConfig, RedisConfig, ScouterQueue
+from opsml.card import ServiceCard
+from opsml.scouter.client import HTTPConfig
+from opsml.scouter.queue import KafkaConfig, RabbitMQConfig, RedisConfig, ScouterQueue
 
 class ReloadConfig:
     """Reload configuation to use with an Opsml AppState object. Defines the reload logic
@@ -31,7 +31,6 @@ class ReloadConfig:
             write_path (Optional[Path]):
                 The optional path to write the service card. Defaults to Path({current directory})/ service_reload
         """
-        ...
 
     @property
     def cron(self) -> str:
@@ -76,6 +75,11 @@ class AppState:
                 Optional transport configuration for the queue publisher
                 Can be KafkaConfig, RabbitMQConfig RedisConfig, or HTTPConfig. If not provided,
                 the queue will not be initialized.
+
+            reload_config (ReloadConfig | None):
+                Optional reload configuration for the AppState. If provided,
+                the AppState will periodically check for updates to the ServiceCard
+                and reload it if necessary.
 
             load_kwargs (Dict[str, Dict[str, Any]]):
                 Optional kwargs for loading cards. Expected format:

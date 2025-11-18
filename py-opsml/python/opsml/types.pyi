@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Any, Optional
 
-from ..scouter.types import DriftType
+from opsml.scouter.types import DriftType
 
 # shared
 class CommonKwargs:

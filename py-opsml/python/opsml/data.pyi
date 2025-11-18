@@ -1,8 +1,8 @@
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
-from ..model import ExtraMetadata, FeatureSchema
-from ..scouter.profile import DataProfile
+from opsml.model import ExtraMetadata, FeatureSchema
+from opsml.scouter.profile import DataProfile
 
 class DataInterfaceType:
     Base: "DataInterfaceType"

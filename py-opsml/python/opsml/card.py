@@ -15,10 +15,10 @@ from typing import (
     overload,
 )
 
-from ..data import Data, DataInterface, DataLoadKwargs, DataSaveKwargs, DataType
-from ..experiment import EvalMetrics, Metrics, Parameters
-from ..genai import Prompt, Workflow
-from ..model import (
+from opsml.data import Data, DataInterface, DataLoadKwargs, DataSaveKwargs, DataType
+from opsml.experiment import EvalMetrics, Metrics, Parameters
+from opsml.genai import Prompt, Workflow
+from opsml.model import (
     DriftProfileMap,
     FeatureSchema,
     ModelInterface,
@@ -26,18 +26,20 @@ from ..model import (
     ModelSaveKwargs,
     OnnxSession,
 )
-from ..scouter.drift import LLMDriftConfig, LLMDriftMetric, LLMDriftProfile
-from ..scouter.profile import DataProfile
-from ..types import VersionType
+from opsml.scouter.drift import LLMDriftConfig, LLMDriftMetric, LLMDriftProfile
+from opsml.scouter.profile import DataProfile
+from opsml.types import VersionType
 
 CardInterfaceType: TypeAlias = Union[DataInterface, ModelInterface]
 ServiceCardInterfaceType: TypeAlias = Dict[str, Union[DataInterface, ModelInterface]]
 LoadInterfaceType: TypeAlias = Union[ServiceCardInterfaceType, ServiceCardInterfaceType]
 
+
 class ServiceType:
     Api: "ServiceType"
     Mcp: "ServiceType"
     Agent: "ServiceType"
+
 
 class RegistryType:
     Data: "RegistryType"
@@ -45,11 +47,13 @@ class RegistryType:
     Experiment: "RegistryType"
     Audit: "RegistryType"
     Prompt: "RegistryType"
-    Deck: "RegistryType"
+    Service: "RegistryType"
+
 
 class RegistryMode:
     Client: "RegistryMode"
     Server: "RegistryMode"
+
 
 class CardRecord:
     uid: Optional[str]
@@ -75,6 +79,7 @@ class CardRecord:
             String representation of the Card.
         """
 
+
 class CardList:
     cards: List[CardRecord]
 
@@ -90,7 +95,9 @@ class CardList:
     def __len__(self) -> int:
         """Return the length of the card list"""
 
+
 # Registry
+
 
 class DataCard:
     def __init__(  # pylint: disable=dangerous-default-value
@@ -236,7 +243,7 @@ class DataCard:
         """
 
     @property
-    def metadata(self) -> DataCardMetadata:  # pylint: disable=used-before-assignment
+    def metadata(self) -> "DataCardMetadata":  # pylint: disable=used-before-assignment
         """Return the metadata of the data card"""
 
     @property
@@ -296,7 +303,9 @@ class DataCard:
         """Return the model dump as a json string"""
 
     @staticmethod
-    def model_validate_json(json_string: str, interface: Optional[DataInterface] = None) -> "ModelCard":
+    def model_validate_json(
+        json_string: str, interface: Optional[DataInterface] = None
+    ) -> "ModelCard":
         """Validate the model json string
 
         Args:
@@ -331,6 +340,7 @@ class DataCard:
                 A dictionary containing the split data
         """
 
+
 class DataCardMetadata:
     @property
     def schema(self) -> FeatureSchema:
@@ -343,6 +353,7 @@ class DataCardMetadata:
     @property
     def auditcard_uid(self) -> Optional[str]:
         """Return the experimentcard uid"""
+
 
 class ModelCardMetadata:
     def __init__(
@@ -385,6 +396,7 @@ class ModelCardMetadata:
     @auditcard_uid.setter
     def auditcard_uid(self, auditcard_uid: str) -> None:
         """Set the experimentcard uid"""
+
 
 class ModelCard:
     def __init__(
@@ -641,7 +653,9 @@ class ModelCard:
         """Return the model dump as a json string"""
 
     @staticmethod
-    def model_validate_json(json_string: str, interface: Optional[ModelInterface] = None) -> "ModelCard":
+    def model_validate_json(
+        json_string: str, interface: Optional[ModelInterface] = None
+    ) -> "ModelCard":
         """Validate the model json string
 
         Args:
@@ -681,6 +695,7 @@ class ModelCard:
             DriftProfileMap
         """
 
+
 class ComputeEnvironment:
     cpu_count: int
     total_memory: int
@@ -692,12 +707,14 @@ class ComputeEnvironment:
 
     def __str__(self): ...
 
+
 class UidMetadata:
     datacard_uids: List[str]
     modelcard_uids: List[str]
     promptcard_uids: List[str]
     service_card_uids: List[str]
     experimentcard_uids: List[str]
+
 
 class ExperimentCard:
     def __init__(
@@ -895,6 +912,7 @@ class ExperimentCard:
         """
 
     def download_artifact(
+        self,
         path: Path,
         lpath: Optional[Path] = None,
     ) -> None:
@@ -932,6 +950,7 @@ class ExperimentCard:
         Returns:
             String representation of the ModelCard.
         """
+
 
 class PromptCard:
     def __init__(
@@ -1104,6 +1123,9 @@ class PromptCard:
         Baseline metrics and thresholds will be extracted from the LLMDriftMetric objects.
 
         Args:
+            alias (str):
+                The alias for the drift profile. This will be used to reference
+                the profile in the model card.
             config (LLMDriftConfig):
                 The configuration for the LLM drift profile containing space, name,
                 version, and alert settings.
@@ -1161,6 +1183,7 @@ class PromptCard:
                 The drift profile map to set.
         """
 
+
 class Card:
     """Represents a card from a given registry that can be used in a service card"""
 
@@ -1172,7 +1195,7 @@ class Card:
         name: Optional[str] = None,
         version: Optional[str] = None,
         uid: Optional[str] = None,
-        card: Optional[CardType] = None,
+        card: Optional["CardType"] = None,
     ) -> None:
         """Initialize the service card. Card accepts either a combination of
         space and name (with version as optional) or a uid. If only space and name are
@@ -1242,6 +1265,7 @@ class Card:
 
         """
 
+
 class ServiceCard:
     """Creates a ServiceCard to hold a collection of cards."""
 
@@ -1295,7 +1319,7 @@ class ServiceCard:
         """Return the created at timestamp"""
 
     @property
-    def cards(self) -> List[CardType]:
+    def cards(self) -> List["CardType"]:
         """Return the cards in the service card"""
 
     @property
@@ -1374,7 +1398,7 @@ class ServiceCard:
             ```
         """
 
-    def __getitem__(self, alias: str) -> CardType:
+    def __getitem__(self, alias: str) -> "CardType":
         """Get a card from the service card by alias
 
         Args:
@@ -1407,6 +1431,7 @@ class ServiceCard:
                 to a directory using the ServiceCard name.
         """
 
+
 # Define a TypeVar that can only be one of our card types
 CardType = TypeVar(  # pylint: disable=invalid-name
     "CardType",
@@ -1417,31 +1442,52 @@ CardType = TypeVar(  # pylint: disable=invalid-name
     ServiceCard,
 )
 
+
 class CardRegistry(Generic[CardType]):
     @overload
-    def __init__(self, registry_type: Literal[RegistryType.Data]) -> "CardRegistry[DataCard]": ...
+    def __init__(
+        self, registry_type: Literal[RegistryType.Data]
+    ) -> "CardRegistry[DataCard]": ...
     @overload
-    def __init__(self, registry_type: Literal[RegistryType.Model]) -> "CardRegistry[ModelCard]": ...
+    def __init__(
+        self, registry_type: Literal[RegistryType.Model]
+    ) -> "CardRegistry[ModelCard]": ...
     @overload
-    def __init__(self, registry_type: Literal[RegistryType.Prompt]) -> "CardRegistry[PromptCard]": ...
+    def __init__(
+        self, registry_type: Literal[RegistryType.Prompt]
+    ) -> "CardRegistry[PromptCard]": ...
     @overload
-    def __init__(self, registry_type: Literal[RegistryType.Experiment]) -> "CardRegistry[ExperimentCard]": ...
+    def __init__(
+        self, registry_type: Literal[RegistryType.Experiment]
+    ) -> "CardRegistry[ExperimentCard]": ...
     @overload
-    def __init__(self, registry_type: Literal[RegistryType.Service]) -> "CardRegistry[ServiceCard]": ...
+    def __init__(
+        self, registry_type: Literal[RegistryType.Service]
+    ) -> "CardRegistry[ServiceCard]": ...
     @overload
-    def __init__(self, registry_type: Literal[RegistryType.Audit]) -> "CardRegistry[Any]": ...
+    def __init__(
+        self, registry_type: Literal[RegistryType.Audit]
+    ) -> "CardRegistry[Any]": ...
 
     # String literal overloads
     @overload
     def __init__(self, registry_type: Literal["data"]) -> "CardRegistry[DataCard]": ...
     @overload
-    def __init__(self, registry_type: Literal["model"]) -> "CardRegistry[ModelCard]": ...
+    def __init__(
+        self, registry_type: Literal["model"]
+    ) -> "CardRegistry[ModelCard]": ...
     @overload
-    def __init__(self, registry_type: Literal["prompt"]) -> "CardRegistry[PromptCard]": ...
+    def __init__(
+        self, registry_type: Literal["prompt"]
+    ) -> "CardRegistry[PromptCard]": ...
     @overload
-    def __init__(self, registry_type: Literal["experiment"]) -> "CardRegistry[ExperimentCard]": ...
+    def __init__(
+        self, registry_type: Literal["experiment"]
+    ) -> "CardRegistry[ExperimentCard]": ...
     @overload
-    def __init__(self, registry_type: Literal["service"]) -> "CardRegistry[ServiceCard]": ...
+    def __init__(
+        self, registry_type: Literal["service"]
+    ) -> "CardRegistry[ServiceCard]": ...
     @overload
     def __init__(self, registry_type: Literal["audit"]) -> "CardRegistry[Any]": ...
     def __init__(self, registry_type: Union[RegistryType, str]) -> None:
@@ -1649,6 +1695,7 @@ class CardRegistry(Generic[CardType]):
                 experimentcard.
         """
 
+
 class CardRegistries:
     def __init__(self) -> None: ...
     @property
@@ -1663,6 +1710,7 @@ class CardRegistries:
     def prompt(self) -> CardRegistry[PromptCard]: ...
     @property
     def service(self) -> CardRegistry[ServiceCard]: ...
+
 
 def download_service(
     write_dir: Path,

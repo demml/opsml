@@ -138,7 +138,7 @@ build-backend = "maturin"
 
 [tool.maturin]
 python-source = "python"
-module-name = "opsml.opsml"
+module-name = "opsml"
 bindings = 'pyo3'
 features = ["pyo3/extension-module", "pyo3/abi3-py39"]
 
