@@ -1,1 +1,1 @@
-::: opsml.types._types
+::: opsml._types

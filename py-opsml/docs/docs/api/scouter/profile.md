@@ -1,1 +1,1 @@
-::: opsml.scouter.profile._profile
+::: opsml.scouter._profile

@@ -273,12 +273,12 @@ app_state = AppState.from_path(
 | path             | `Pathlib.Path` (yes) | The file path to the service artifacts directory.            |
 | transport_config | `HTTPConfig` (no)         | Configuration for transporting `ScouterQueue` events.   |
 | reload_config    | `ReloadConfig` (no)       | Configuration for the reload behavior of the AppState.      |
-| load_kwargs      | `dict` (no)    | Dictionary of keyword arguments to pass to when loading - [docs](../api/app.md#opsml.app._app.AppState.from_path).|
+| load_kwargs      | `dict` (no)    | Dictionary of keyword arguments to pass to when loading - [docs](/opsml/docs/api/app#opsml._app.AppState.from_path).|
 
 
 ### Dynamic Reloading
 
-The `AppState` interface enables dynamic reloading of services, addressing the common challenge of decoupled API deployment and training processes. This decoupling often results in APIs running outdated service or model versions. Traditionally, updating to the latest version would require either rebuilding the container or scheduling a cron job within the API to fetch the updated model. With `AppState`, you can configure a reload mechanism that continuously polls for service updates based on a specified cron schedule. When updates are detected, the `AppState` automatically reloads the `ServiceCard` and, if present, the `ScouterQueue`. More information can be found [here](../api/app.md#opsml.app._app.ReloadConfig).
+The `AppState` interface enables dynamic reloading of services, addressing the common challenge of decoupled API deployment and training processes. This decoupling often results in APIs running outdated service or model versions. Traditionally, updating to the latest version would require either rebuilding the container or scheduling a cron job within the API to fetch the updated model. With `AppState`, you can configure a reload mechanism that continuously polls for service updates based on a specified cron schedule. When updates are detected, the `AppState` automatically reloads the `ServiceCard` and, if present, the `ScouterQueue`. More information can be found [here](/opsml/docs/api/app#opsml._app.ReloadConfig).
 
 ### Usage
 

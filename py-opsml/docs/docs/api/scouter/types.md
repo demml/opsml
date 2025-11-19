@@ -1,1 +1,1 @@
-::: opsml.scouter.types._types
+::: opsml.scouter._types

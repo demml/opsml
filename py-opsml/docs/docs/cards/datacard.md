@@ -1,4 +1,4 @@
-DataCards are used for storing, versioning, and tracking data. All DataCards require a `DataInterface` and optional metadata. 
+DataCards are used for storing, versioning, and tracking data. All DataCards require a `DataInterface` and optional metadata.
 
 ## Create a Card
 
@@ -56,7 +56,7 @@ reg.data.register_card(datacard)
 
 1. DataSplits allow you to create and store split logic with your DataInterface ensuring reproducibility
 2. Here we are using the PandasData interface and passing in the pandas dataframe, data splits and are defining and dependent variable.
-3. Create a DataCard and pass in the DataInterface, space, name, and tags. 
+3. Create a DataCard and pass in the DataInterface, space, name, and tags.
 
 
 ### How it all works
@@ -65,7 +65,7 @@ As you can tell in the example above, `DataCards` are created by passing in a `D
 
 ## Load a Card's Components
 
-By default, `OpsML` **does not** load any of the data components (data, preprocessor, etc.) when loading a card. This is to ensure that the card is loaded as quickly as possible. If you wish to load the data components, you can do so by calling the `load` method on the `DataCard` and provide any additional arguments via the `load_kwargs` argument. 
+By default, `OpsML` **does not** load any of the data components (data, preprocessor, etc.) when loading a card. This is to ensure that the card is loaded as quickly as possible. If you wish to load the data components, you can do so by calling the `load` method on the `DataCard` and provide any additional arguments via the `load_kwargs` argument.
 
 ```python
 from opsml import CardRegistry, RegistryType
@@ -655,15 +655,15 @@ interface = PandasData(
     data=X,
     data_splits=[
         DataSplit(
-            label="train", 
-            column_name="col_1", 
-            column_value=0.5, 
+            label="train",
+            column_name="col_1",
+            column_value=0.5,
             inequality=">="
             ),
         DataSplit(
-            label="test", 
-            column_name="col_1", 
-            column_value=0.5, 
+            label="test",
+            column_name="col_1",
+            column_value=0.5,
             inequality="<"
         ),
     ],
@@ -680,7 +680,7 @@ datasets["train"].y
 
 ### Sql Logic
 
-A DataInterface also accepts `SqlLogic` in the event a user wishes to store the sql logic used to create the data. This is useful as SQL logic tends to change frequently and having the logic that created the current data is helpful from a compliance and governance perspective. 
+A DataInterface also accepts `SqlLogic` in the event a user wishes to store the sql logic used to create the data. This is useful as SQL logic tends to change frequently and having the logic that created the current data is helpful from a compliance and governance perspective.
 
 The `SqlLogic` class is created by providing a dictionary of queries where each key is a unique name to provide to the query and the value is either a path to a `.sql` file or a string containing the SQL query.
 
@@ -886,7 +886,7 @@ Interface for saving a Pandas DataFrame
 
 ### Nuts and Bolts
 
-The `PandasData` interface uses the `to_parquet` method to save the data as a parquet file. 
+The `PandasData` interface uses the `to_parquet` method to save the data as a parquet file.
 
 ## PolarsData
 
@@ -1038,7 +1038,7 @@ Interface for saving a Polars DataFrame
 
 ### Nuts and Bolts
 
-The `PolarsData` interface uses the `write_parquet` method to save the data as a parquet file. 
+The `PolarsData` interface uses the `write_parquet` method to save the data as a parquet file.
 
 ## ArrowData
 
@@ -1474,7 +1474,7 @@ Interface for saving a SqlLogic. The `SqlData` interface is great for instances 
 
 While the above interfaces cover the most common use cases, there may be times where you want to create your own custom data interface similar to how ModelInterfaces work. By design, the `DataInterface` can be subclassed in cases where a more flexible implementation is needed. However to make sure all other components work nicely together, you will need to implement the following.
 
-### Custom Save 
+### Custom Save
 
 - **save**: This method is called when saving the model. It should save the model and any other artifacts to the specified path. The method should return a `ModelInterfaceMetadata` object.
 

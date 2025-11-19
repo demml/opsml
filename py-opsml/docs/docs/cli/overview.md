@@ -83,7 +83,7 @@ opsml get service --space 'my_space' --name 'my_service'
 
 The `lock` command is used to create an `opsml.lock` file based on the service configuration specified within the pyproject.toml file. This lock file captures the state of the service and its associated cards, ensuring reproducibility and consistency.
 
-For more information on `opsml` tool configurations, please refer to the [tool documentation](../automation/pyproject.md/#service-cards).
+For more information on `opsml` tool configurations, please refer to the [tool documentation](/opsml/docs/automation/pyproject#service-cards).
 
 #### Usage
 

@@ -1606,7 +1606,7 @@ While the above interfaces cover the most common use cases, there may be times w
 
 **Example**: [`Link`](https://github.com/demml/opsml/tree/main/py-opsml/examples/model/custom_model.py)
 
-### Custom Save 
+### Custom Save
 
 - **save**: This method is called when saving the model. It should save the model and any other artifacts to the specified path. The method should return a `ModelInterfaceMetadata` object.
 
