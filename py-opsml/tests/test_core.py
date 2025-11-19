@@ -1,12 +1,9 @@
 from opsml.model import (
     HuggingFaceORTModel,
     HuggingFaceOnnxArgs,
-    Feature,
     OnnxSchema,
-    FeatureSchema,
 )
-
-
+from opsml.types import Feature, FeatureSchema
 from optimum.onnxruntime.configuration import AutoQuantizationConfig  # type: ignore
 import pytest
 

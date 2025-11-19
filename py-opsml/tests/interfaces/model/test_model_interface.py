@@ -1,5 +1,6 @@
 from opsml.model import ModelInterface, TaskType
-from opsml.data import NumpyData, DataType, PandasData, PolarsData, ArrowData, TorchData
+from opsml.data import NumpyData, PandasData, PolarsData, ArrowData, TorchData
+from opsml.types import DataType
 from numpy.typing import NDArray
 import numpy as np
 import pandas as pd

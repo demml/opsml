@@ -9,10 +9,10 @@ from opsml.data import (
     IndiceSplit,
     StartStopSplit,
     DataSplitter,
-    DataType,
     Inequality,
     DependentVars,
 )
+from opsml.types import DataType
 import datetime
 import numpy as np
 from numpy.typing import NDArray

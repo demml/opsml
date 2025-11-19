@@ -10,12 +10,13 @@ from opsml.data import (
     DataSplit,
     IndiceSplit,
     DependentVars,
-    DataType,
     DataSaveKwargs,
     ColumnSplit,
     ColType,
     Inequality,
 )
+from opsml.types import DataType
+
 import numpy as np
 import polars as pl
 import pyarrow as pa  # type: ignore
