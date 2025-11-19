@@ -1,5 +1,5 @@
 use crate::actions::utils::register_service_card;
-use crate::cli::arg::DownloadCard;
+use crate::cli::arg::{DownloadCard, DEFAULT_SPEC_PATH};
 use crate::download_service;
 use crate::error::CliError;
 use opsml_cards::ServiceCard;
@@ -378,7 +378,27 @@ pub fn install_service(path: PathBuf, write_path: Option<PathBuf>) -> Result<(),
         Colorize::green("Downloading service for opsml.lock file")
     );
 
-    let lockfile = LockFile::read(&path)?;
+    // if lockfile cannot be read, check if path/ DEFAULT_SPEC_PATH exists as a spec file.
+    // If so, create a lockfile from it and proceed;
+    let lockfile = match LockFile::read(&path) {
+        Ok(lockfile) => lockfile,
+        Err(original_error) => {
+            let spec_path = path.join(DEFAULT_SPEC_PATH);
+
+            if !spec_path.exists() {
+                return Err(original_error.into());
+            }
+
+            // Create lockfile from spec
+            debug!(
+                "Lock file not found, creating lock from spec at path: {:?}",
+                spec_path
+            );
+            let _locked = lock_service(spec_path)?;
+
+            LockFile::read(&path)?
+        }
+    };
 
     for artifact in lockfile.artifact {
         match artifact.registry_type {
