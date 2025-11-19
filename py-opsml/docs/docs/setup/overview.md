@@ -1,13 +1,13 @@
 
 ## Choose your adventure
 
-The recommended way to use opsml is to run the server separately and connect to it from your client. This allows you to take advantage of the full power of Opsml and its features. 
+The recommended way to use opsml is to run the server separately and connect to it from your client. This allows you to take advantage of the full power of Opsml and its features.
 
 [Client Mode](#client-mode){ .md-button .md-button--primary } [Server Mode](#server-mode){ .md-button .md-button--primary }
 
 ## Client Mode
 
-If you are connecting to an Opsml server that is already setup and running, all you need to do is set the `OPSML_TRACKING_URI` and you're good to go. 
+If you are connecting to an Opsml server that is already setup and running, all you need to do is set the `OPSML_TRACKING_URI` and you're good to go.
 
 ```console
 $ export OPSML_TRACKING_URI={your_server_uri}
@@ -25,7 +25,7 @@ Depending on your use case there are a few different ways to setup and run the s
 
 ### Docker
 
-The recommended way to run the server is to use Docker or any other container service. With every release of opsml, we build and publish new container images that you can use to run the server and UI. You can find the latest images on [Docker Hub](https://hub.docker.com/r/demml/opsml). 
+The recommended way to run the server is to use Docker or any other container service. With every release of opsml, we build and publish new container images that you can use to run the server and UI. You can find the latest images on [Docker Hub](https://hub.docker.com/r/demml/opsml).
 
 In most cases, you can run the server with the following command; however, you may wish to use our docker images as base images to build your own custom images.
 
@@ -41,7 +41,7 @@ The server container image is home to both the UI ([sveltekit nodejs app](https:
 
 ### Binary
 
-In addition to docker images, we also build and publish new binaries with every release of opsml. These can be download via github and executed directly. 
+In addition to docker images, we also build and publish new binaries with every release of opsml. These can be download via github and executed directly.
 
 ### Development
 
@@ -116,7 +116,7 @@ Apart from the `OPSML_TRACKING_URI` and `OPSML_STORAGE_URI` environment variable
 - `APP_ENV`: The current environment. This can be set to `development`, `staging` or `production` or anything else you'd want. The default is `development`.
 - `OPSML_PORT`: The port that the container will run on. The default is `8000`.
 - `OPSML_ENCRYPT_KEY`: The master encryption key used to encrypt the data at rest. If not set, opsml will use a default **deterministic** key. This is not recommended for production use cases. opsml requires a pbdkdf2::HmacSha256 key with a length of 32 bytes. You can generate a key using the following command with the opsml CLI:
-  
+
 ```console
 $ opsml generate key --password {your_password}
 ```
@@ -127,7 +127,7 @@ The encryption key (aka jwt_key) is one of the most important pieces to opsml's 
 - `OPSML_MAX_POOL_CONNECTIONS`: The maximum number of connections to the database. The default is `10`.
 - `LOG_LEVEL`: The log level for the server and UI. This can be set to `error`, `warn`, `info`, `debug` or `trace`. The default is `info`.
 - `LOG_JSON`: Whether to log in JSON format or not. This can be set to `true` or `false`. The default is `false`.
-  
+
 #### Scouter Environment Variables
 
 If you are configuring opsml to use Scouter for model monitoring, you will need to set the following environment variables as well:

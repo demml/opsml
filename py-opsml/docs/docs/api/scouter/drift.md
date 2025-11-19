@@ -1,1 +1,1 @@
-::: opsml.scouter.drift._drift
+::: opsml.scouter._drift
