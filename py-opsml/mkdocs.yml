@@ -91,7 +91,7 @@ nav:
           - Builds: "docs/specs/ts-feature-builds.md"
           - Async Registry: "docs/specs/ts-feature-opsml-registry-hardware-async.md"
   - Benchmarks:
-      - "docs/benchmarks/overview.md"
+      - "docs/benchmark/overview.md"
   - API Documentation:
       - App: "docs/api/app.md"
       - Cards: "docs/api/cards.md"

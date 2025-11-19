@@ -1,6 +1,6 @@
 # ServiceCard
 
-Just like you can create cards, you can also create a service of cards called a `ServiceCard`. The most important benefit of a `ServiceCard` is that is allows you to create a collection of cards that can be loaded and used together. 
+Just like you can create cards, you can also create a service of cards called a `ServiceCard`. The most important benefit of a `ServiceCard` is that is allows you to create a collection of cards that can be loaded and used together.
 
 A prime example of this is in model apis where you may need to load more than one model, or agentic workflows that are associated with more than one prompt. By using a `ServiceCard`, you can group these cards together and load them all at once (with a few extra nice features that we'll get into).
 
@@ -36,11 +36,11 @@ async def lifespan(fast_app: FastAPI):
 
     fast_app.state.service = service = ServiceCard.from_path( # (1)
         path=settings.card_service_path
-        ) 
+        )
     yield
 
     logger.info("Shutting down FastAPI app")
-    
+
     # Shutdown the service card
     fast_app.state.service = None
 
@@ -137,7 +137,7 @@ service:
       drift:
         active: true
         deactivate_others: true
-        drift_type: 
+        drift_type:
           - custom
           - psi
 ```
@@ -148,7 +148,7 @@ service:
 4. A ranking model that will be used to rank the recommendations provided by the recommender model. This model also has drift detection enabled to monitor for changes in data distribution over time.
 
 After you define your `ServiceCard` in the `opsmlspec.yaml`, you can run `opsml lock`, which will create an `opsml.lock` file that will contain the resolved versions of the cards in the service. You can then run `opsml install service` to install the service and its cards into your application.
-   
+
 ???tip "Naming"
     `opsmlspec.yaml` is just a standard convention for naming the spec file. You can name it whatever you want so long as its either a `yml` or `yaml` file and you provide the file path when running the CLI commands. See `opsml lock --help` for more details.
 
@@ -240,7 +240,6 @@ Here is the full specification for the `opsmlspec.yaml` file:
 ---
 
 ???tip "Yaml Spec"
-    The following is the full specification in yaml
     Here is the full specification for the `opsmlspec.yaml` file:
 
     ```yaml
@@ -307,7 +306,7 @@ Assuming you already have a service registered and an `opsml.lock` file created,
 opsml install service
 ```
 
-This will download the service and its cards to a local directory (by default, `./opsml_service` unless otherwise specified in the `opsmlspec.yaml` file). You can then load the service in your application using the path to the downloaded service. While Opsml gives you the flexibility to load the service as you see fit, we recommend using `AppState` in applications to manage the lifecycle of the service ([link](../deployment/overview.md#appstate)).
+This will download the service and its cards to a local directory (by default, `./opsml_service` unless otherwise specified in the `opsmlspec.yaml` file). You can then load the service in your application using the path to the downloaded service. While Opsml gives you the flexibility to load the service as you see fit, we recommend using `AppState` in applications to manage the lifecycle of the service ([link](/opsml/docs/deployment/overview#appstate)).
 
 ### Load from Registry
 You can load a `ServiceCard` from the registry using the `CardRegistry`:
@@ -344,7 +343,7 @@ load_kwargs = {
 loaded_service = ServiceCard.from_path("path/to/service", load_kwargs=load_kwargs) # (1)
 ```
 
-1. Load the `ServiceCard` from a specified path, optionally providing load arguments for specific cards. Unlike registry loading, load_from_path will load all cards and their interfaces and artifacts by default (e.g. models), so there is no need to call `load()` on the service after loading it from a path. 
+1. Load the `ServiceCard` from a specified path, optionally providing load arguments for specific cards. Unlike registry loading, load_from_path will load all cards and their interfaces and artifacts by default (e.g. models), so there is no need to call `load()` on the service after loading it from a path.
 
 ### Custom Interfaces
 In the case you are using a custom interface for any cards that are associated with a ServiceCard, you will need to provide the custom interface at load time.
@@ -358,8 +357,8 @@ registry = CardRegistry(RegistryType.Service)
 
 loaded_service: ServiceCard = registry.load_card(
         interface = {"model1": MyCustomInterface} # (1)
-        ) 
-loaded_service.load() 
+        )
+loaded_service.load()
 ```
 
 1. Similar to loading other cards with a custom interface, you can provide the custom interface when loading the service from the registry. However, you will need to provide it as a dictionary mapping of alias to custom interface class.
@@ -380,4 +379,4 @@ loaded_service = ServiceCard.from_path("path/to/service", load_kwargs)
 1. When loading from a path, you can provide the custom interface directly in the `load_kwargs` for the specific card. This allows you to use your custom interface when loading the card from the service.
 
 
-For more information on how `ServiceCards` can be leveraged during application deployment, see the [Deployment](../deployment/overview.md) documentation.
+For more information on how `ServiceCards` can be leveraged during application deployment, see the [Deployment](/opsml/docs/deployment/overview/) documentation.

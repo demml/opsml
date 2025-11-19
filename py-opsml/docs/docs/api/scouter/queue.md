@@ -1,1 +1,1 @@
-::: opsml.scouter.queue._queue
+::: opsml.scouter._queue

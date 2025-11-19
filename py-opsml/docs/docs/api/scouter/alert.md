@@ -1,1 +1,1 @@
-::: opsml.scouter.alert._alert
+::: opsml.scouter._alert

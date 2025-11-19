@@ -140,3 +140,4 @@ py-opsml/examples/benchmarks/_opmsl/uv.lock
 py-opsml/python/opsml/scouter/_*.pyi
 py-opsml/python/opsml/genai/_*.pyi
 py-opsml/python/opsml/_*.pyi
+py-opsml/site/*

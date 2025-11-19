@@ -1,1 +1,1 @@
-::: opsml.logging._logging
+::: opsml._logging
