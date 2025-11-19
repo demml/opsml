@@ -1,5 +1,5 @@
 from opsml.model import LightningModel, ModelLoadKwargs, ModelSaveKwargs
-from opsml.data import DataType
+from opsml.types import DataType
 import lightning as L
 import torch
 from pathlib import Path

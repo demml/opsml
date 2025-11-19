@@ -1,4 +1,5 @@
-from opsml.data import generate_feature_schema, DataType
+from opsml.data import generate_feature_schema
+from opsml.types import DataType
 import polars as pl
 
 

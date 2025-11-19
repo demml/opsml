@@ -42,9 +42,9 @@ tokio = { workspace = true, optional = true }
 [features]
 default = []
 server = [
-    "opsml-registry/server", 
-    "opsml-server", 
-    "opsml-storage/server", 
+    "opsml-registry/server",
+    "opsml-server",
+    "opsml-storage/server",
     "opsml-mocks/server"
 ]
 
