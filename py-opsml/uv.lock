@@ -2465,7 +2465,7 @@ wheels = [
 
 [[package]]
 name = "opsml"
-version = "3.0.0rc17"
+version = "3.0.1"
 source = { editable = "." }
 dependencies = [
     { name = "joblib" },
