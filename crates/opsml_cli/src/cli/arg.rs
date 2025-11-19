@@ -7,9 +7,11 @@ use opsml_utils::clean_string;
 use pyo3::{pyclass, pymethods};
 use scouter_client::DriftType;
 
+pub const DEFAULT_SPEC_PATH: &str = "opsmlspec.yaml";
+
 fn default_spec_path() -> String {
     let path = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
-    let joined = path.join("opsmlspec.yaml");
+    let joined = path.join(DEFAULT_SPEC_PATH);
     joined.to_string_lossy().to_string()
 }
 
