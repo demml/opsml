@@ -389,12 +389,12 @@ pub fn install_service(path: PathBuf, write_path: Option<PathBuf>) -> Result<(),
                 return Err(original_error.into());
             }
 
-            // Create lockfile from spec
             debug!(
                 "Lock file not found, creating lock from spec at path: {:?}",
                 spec_path
             );
-            let _locked = lock_service(spec_path)?;
+
+            lock_service(spec_path)?;
 
             LockFile::read(&path)?
         }
