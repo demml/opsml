@@ -1,1 +1,1 @@
-::: opsml.scouter.client._client
+::: opsml.scouter._client

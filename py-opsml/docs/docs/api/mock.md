@@ -1,1 +1,1 @@
-::: opsml.mock._mock
+::: opsml._mock

@@ -1,1 +1,1 @@
-::: opsml.genai.openai._openai
+::: opsml.genai._openai

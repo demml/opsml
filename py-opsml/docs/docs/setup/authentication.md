@@ -3,7 +3,7 @@ For individuals and teams that wish to provide an additional layer of security t
 By default, all requests to Opsml use the guest username and password, `guest:guest` that is automatically created when the server is first started. If you wish to make this more strict, we encourage administrators to delete this user and create unique users via the CLI or the web interface.
 
 ## Opsml Authentication
-Opsml authentication uses a JWT (JSON Web Token) based system. This means that users can authenticate once and receive a token that can be used for subsequent requests without needing to re-enter credentials. This is used for both programmatic access via the API and for the web interface. All Opsml requests are routed through an authentication middleware that checks and validates the JWT token before allowing access to the requested resource. 
+Opsml authentication uses a JWT (JSON Web Token) based system. This means that users can authenticate once and receive a token that can be used for subsequent requests without needing to re-enter credentials. This is used for both programmatic access via the API and for the web interface. All Opsml requests are routed through an authentication middleware that checks and validates the JWT token before allowing access to the requested resource.
 
 ### Flow (Programmatic Access)
 
@@ -11,7 +11,6 @@ Opsml authentication uses a JWT (JSON Web Token) based system. This means that u
 2. **Token Retrieval**: Credentials are passed to the server, which validates them. If valid, a new JWT access and refresh token pair are generated. The refresh token is stored on the server and the access token is returned to the client.
 3. **Subsequent Requests**: For all subsequent requests, the client uses the access token in the `Authorization` header as a Bearer token, which is automatically validated by the server authentication middleware.
 4. **Token Expiry**: If the access token expires and fails validation on the server, the server will attempt to check if the refresh token is still valid. **Note**: The refresh token has a longer expiry time than the access token. If the refresh token is valid, a new access token is generated and returned to the client. If the refresh token is also invalid, the user must re-authenticate.
-   
 
 ```shell
 # Example of setting environment variables for authentication
@@ -113,7 +112,7 @@ export OPSML_USE_SSO="true"
 #### Endpoints
 
 Opsml uses 2 main endpoints for SSO providers based on the OAuth2 and OIDC protocols. These endpoints are constructed based on the SSO provider configuration and the environment variables set in the Opsml server.
-  
+
 - **Certificate Endpoint**: This endpoint is used to retrieve the public keys used to verify the JWT tokens issued by the identity provider. **NOTE**: Opsml uses the JWK (JSON Web Key) format to retrieve the public keys, which are used to validate the JWT tokens received from the identity provider. As an example, this would be the `v1/keys` endpoint for Okta and the `protocol/openid-connect/certs` endpoint for Keycloak.
 - **Token Endpoint**: This endpoint is used to obtain access and refresh tokens. **NOTE**: You must ensure your endpoint returns an `id_token` in the response. Opsml will generate its own JWT access token based on the `id_token` received from the identity provider. As an example, this would be the `v1/token` endpoint for Okta and the `protocol/openid-connect/token` endpoint for Keycloak.
 - **Authorization Endpoint**: This endpoint is used to initiate the OAuth2 authorization code flow. Users are redirected to this endpoint to log in and authorize the application. Opsml uses the `code` response type to obtain an authorization code, which is then exchanged for tokens at the token endpoint.

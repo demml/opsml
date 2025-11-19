@@ -191,7 +191,7 @@ As you can see from the above example, the overall flow for evaluating an LLM us
 
 <h1 align="center">
   <br>
-  <img src="../../images/llm-metric-flow.png" width="700"alt="llm metric flow"/>
+  <img src="/opsml/docs/images/llm-metric-flow.png" width="700"alt="llm metric flow"/>
   <br>
 </h1>
 
@@ -206,7 +206,7 @@ EvaluationConfig allows you to customize the evaluation process in several ways:
 - Enable clustering to identify patterns in the evaluation results.
 - Enable histogram computations to generate histograms for all numerical fields.
 
-[EvaluationConfig documentation](../api/evaluate.md#opsml.evaluate._evaluate.EvaluationConfig)
+[EvaluationConfig documentation](/opsml/docs/api/evaluate#opsml._evaluate.EvaluationConfig)
 
 ```python
 from opsml.evaluate import EvaluationConfig
@@ -273,4 +273,4 @@ for field, histogram in histograms.items():
     print(f"Histogram for {field}: {histogram}")
 ```
 
-Please refer to the [LLMEvalResults documentation](../api/evaluate.md#opsml.evaluate._evaluate.LLMEvalResults) for more details on how to work with the results object.
+Please refer to the [LLMEvalResults documentation](/opsml/docs/api/evaluate#opsml._evaluate.LLMEvalResults) for more details on how to work with the results object.

@@ -1,1 +1,1 @@
-::: opsml.genai.google._google
+::: opsml.genai._google

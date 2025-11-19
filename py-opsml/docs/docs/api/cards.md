@@ -1,1 +1,1 @@
-::: opsml.card._card
+::: opsml._card
