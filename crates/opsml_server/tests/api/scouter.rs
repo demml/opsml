@@ -78,6 +78,7 @@ async fn test_scouter_routes_insert_profile() {
         drift_type: DriftType::Psi,
         profile: "test_profile".to_string(),
         version_request: VersionRequest::default(),
+        ..Default::default()
     };
 
     let body = serde_json::to_string(&request).unwrap();
@@ -115,6 +116,7 @@ async fn test_scouter_routes_update_profile() {
             drift_type: DriftType::Spc,
             profile: serialized,
             version_request: VersionRequest::default(),
+            ..Default::default()
         },
         registry_type: RegistryType::Model,
     };

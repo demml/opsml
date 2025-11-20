@@ -1,18 +1,21 @@
 # python/opsml/__init__.py
-from . import types
-from . import card
-from . import data
-# from . import model
-# from . import experiment
-# from . import evaluate
-# from . import app
-# from . import logging
-# from . import mock
-# from . import scouter
-# from . import genai
+from . import (
+    app,
+    card,
+    data,
+    evaluate,
+    experiment,
+    genai,
+    logging,
+    mock,
+    model,
+    scouter,
+    types,
+)
+from ._opsml import get_opsml_version
+
 # from . import cli
 
-from ._opsml import get_opsml_version
 
 __all__ = [
     "types",

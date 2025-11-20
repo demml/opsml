@@ -1,3 +1,3 @@
-from .._opsml import LogLevel, RustyLogger, LoggingConfig, WriteLevel
+from .._opsml import LoggingConfig, LogLevel, RustyLogger, WriteLevel
 
 __all__ = ["LogLevel", "RustyLogger", "LoggingConfig", "WriteLevel"]
