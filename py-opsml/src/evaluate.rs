@@ -4,8 +4,7 @@ pub use scouter_client::{
     EvaluationConfig, LLMEvalMetric, LLMEvalRecord, LLMEvalResults, LLMEvalTaskResult,
 };
 
-#[pymodule]
-pub fn evaluate(m: &Bound<'_, PyModule>) -> PyResult<()> {
+pub fn add_evaluate_module(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<LLMEvalTaskResult>()?;
     m.add_class::<LLMEvalMetric>()?;
     m.add_class::<LLMEvalRecord>()?;

@@ -5,8 +5,7 @@ use opsml_experiment::{
 use opsml_types::cards::experiment::{EvalMetrics, Metric, Metrics, Parameter, Parameters};
 use pyo3::prelude::*;
 
-#[pymodule]
-pub fn experiment(m: &Bound<'_, PyModule>) -> PyResult<()> {
+pub fn add_experiment_module(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<Experiment>()?;
     m.add_class::<Metric>()?;
     m.add_class::<Parameter>()?;

@@ -1,6 +1,12 @@
 # type: ignore
-from . import card
 
+"""Python bindings for the Rust card module."""
+
+# pylint: disable=no-name-in-module,import-error
+
+from opsml.opsml import card
+
+# Re-export all classes and functions from the Rust module
 Card = card.Card
 CardRecord = card.CardRecord
 CardList = card.CardList
@@ -19,15 +25,14 @@ ServiceCard = card.ServiceCard
 download_service = card.download_service
 ServiceType = card.ServiceType
 
-
 __all__ = [
     "Card",
     "CardRecord",
     "CardList",
     "CardRegistry",
+    "CardRegistries",
     "DataCard",
     "DataCardMetadata",
-    "CardRegistry",
     "RegistryType",
     "RegistryMode",
     "ModelCard",
@@ -35,7 +40,6 @@ __all__ = [
     "ExperimentCard",
     "ComputeEnvironment",
     "PromptCard",
-    "CardRegistries",
     "ServiceCard",
     "download_service",
     "ServiceType",
