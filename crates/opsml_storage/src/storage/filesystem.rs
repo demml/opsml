@@ -5,7 +5,7 @@ use crate::storage::error::StorageError;
 use crate::storage::http::client::{AsyncHttpFSStorageClient, HttpFSStorageClient};
 use async_trait::async_trait;
 use opsml_settings::config::{OpsmlMode, OpsmlStorageSettings};
-use opsml_state::{app_state, get_api_client, get_async_api_client};
+use opsml_state::{block_on, get_api_client, get_async_api_client};
 use opsml_types::contracts::CompleteMultipartUpload;
 use opsml_types::contracts::FileInfo;
 use opsml_types::StorageType;
@@ -70,11 +70,7 @@ impl FileSystemStorage {
                 #[cfg(feature = "server")]
                 {
                     let settings = state.config()?.storage_settings()?;
-                    let server = Some(
-                        app_state()
-                            .start_runtime()
-                            .block_on(async { StorageClientEnum::new(&settings).await })?,
-                    );
+                    let server = Some(block_on(async { StorageClientEnum::new(&settings).await })?);
                     Ok(Self {
                         server,
                         client: None,
