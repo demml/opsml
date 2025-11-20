@@ -9,10 +9,8 @@ use opsml_types::contracts::{McpCapability, McpConfig, McpServer, McpServers, Mc
 pub mod google;
 pub mod openai;
 use pyo3::prelude::*;
-use pyo3::wrap_pymodule;
 
-#[pymodule]
-pub fn genai(m: &Bound<'_, PyModule>) -> PyResult<()> {
+pub fn add_genai_module(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<Provider>()?;
     m.add_class::<PyAgent>()?;
     m.add_class::<PyWorkflow>()?;
@@ -37,8 +35,8 @@ pub fn genai(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<TaskStatus>()?;
     m.add_class::<PyAgentResponse>()?;
     m.add_class::<PyEmbedder>()?;
-    m.add_wrapped(wrap_pymodule!(google::google))?;
-    m.add_wrapped(wrap_pymodule!(openai::openai))?;
+    google::add_google_module(m)?;
+    openai::add_openai_module(m)?;
 
     // opsml specific
     m.add_function(wrap_pyfunction!(list_mcp_servers, m)?)?;

@@ -10,8 +10,7 @@ use potato_head::openai_types::{
 };
 use pyo3::prelude::*;
 
-#[pymodule]
-pub fn openai(m: &Bound<'_, PyModule>) -> PyResult<()> {
+pub fn add_openai_module(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<AllowedTools>()?;
     m.add_class::<AudioParam>()?;
     m.add_class::<Content>()?;

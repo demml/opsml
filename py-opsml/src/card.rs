@@ -8,8 +8,7 @@ use opsml_types::contracts::{CardList, CardRecord, ServiceType};
 use opsml_types::{cards::ComputeEnvironment, RegistryMode, RegistryType};
 use pyo3::prelude::*;
 
-#[pymodule]
-pub fn card(m: &Bound<'_, PyModule>) -> PyResult<()> {
+pub fn add_card_module(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<CardRecord>()?;
     m.add_class::<CardList>()?;
     m.add_class::<DataCard>()?;
@@ -25,15 +24,12 @@ pub fn card(m: &Bound<'_, PyModule>) -> PyResult<()> {
     // ModelCard
     m.add_class::<ModelCard>()?;
     m.add_class::<ModelCardMetadata>()?;
-
     // experimentcard
     m.add_class::<ExperimentCard>()?;
     m.add_class::<ComputeEnvironment>()?;
     m.add_class::<UidMetadata>()?;
-
     // promptcard
     m.add_class::<PromptCard>()?;
-
     // ServiceCard
     m.add_class::<ServiceCard>()?;
     m.add_class::<Card>()?;

@@ -8,8 +8,7 @@ use opsml_types::{ModelInterfaceType, ModelType, TaskType};
 
 use pyo3::prelude::*;
 
-#[pymodule]
-pub fn model(m: &Bound<'_, PyModule>) -> PyResult<()> {
+pub fn add_model_module(m: &Bound<'_, PyModule>) -> PyResult<()> {
     // opsml_interfaces
     m.add_class::<HuggingFaceOnnxArgs>()?;
     m.add_class::<HuggingFaceORTModel>()?;

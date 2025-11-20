@@ -1,8 +1,7 @@
 use pyo3::prelude::*;
 use scouter_client::*;
 
-#[pymodule]
-pub fn drift(m: &Bound<'_, PyModule>) -> PyResult<()> {
+pub fn add_drift_module(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyDrifter>()?;
     m.add_class::<DriftProfile>()?;
     m.add_class::<SpcDriftProfile>()?;

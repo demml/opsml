@@ -1,8 +1,7 @@
 use pyo3::prelude::*;
 use scouter_client::*;
 
-#[pymodule]
-pub fn client(m: &Bound<'_, PyModule>) -> PyResult<()> {
+pub fn add_client_module(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyScouterClient>()?;
     m.add_class::<DriftRequest>()?;
     m.add_class::<ProfileStatusRequest>()?;

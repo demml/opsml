@@ -8,8 +8,7 @@ use opsml_types::DataInterfaceType;
 
 use pyo3::prelude::*;
 
-#[pymodule]
-pub fn data(m: &Bound<'_, PyModule>) -> PyResult<()> {
+pub fn add_data_module(m: &Bound<'_, PyModule>) -> PyResult<()> {
     // data_splitter
     m.add_class::<DataSplit>()?;
     m.add_class::<Data>()?;
