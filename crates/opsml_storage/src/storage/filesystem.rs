@@ -5,7 +5,7 @@ use crate::storage::error::StorageError;
 use crate::storage::http::client::{AsyncHttpFSStorageClient, HttpFSStorageClient};
 use async_trait::async_trait;
 use opsml_settings::config::{OpsmlMode, OpsmlStorageSettings};
-use opsml_state::{block_on, get_api_client, get_async_api_client};
+use opsml_state::{app_state, block_on, get_api_client, get_async_api_client};
 use opsml_types::contracts::CompleteMultipartUpload;
 use opsml_types::contracts::FileInfo;
 use opsml_types::StorageType;
@@ -62,14 +62,13 @@ enum ActiveStorageType {
 impl FileSystemStorage {
     #[instrument(skip_all)]
     pub fn new() -> Result<Self, StorageError> {
-        let state = app_state();
-        let mode = &*state.mode()?;
+        let mode = &*app_state().mode()?;
 
         match mode {
             OpsmlMode::Server => {
                 #[cfg(feature = "server")]
                 {
-                    let settings = state.config()?.storage_settings()?;
+                    let settings = app_state().config()?.storage_settings()?;
                     let server = Some(block_on(async { StorageClientEnum::new(&settings).await })?);
                     Ok(Self {
                         server,
@@ -109,7 +108,7 @@ impl FileSystemStorage {
         match self.active_type {
             #[cfg(feature = "server")]
             ActiveStorageType::Server => {
-                app_state().block_on(async { self.server.as_ref().unwrap().find(path).await })
+                block_on(async { self.server.as_ref().unwrap().find(path).await })
             }
             ActiveStorageType::Client => self.client.as_ref().unwrap().find(path),
         }
@@ -119,7 +118,7 @@ impl FileSystemStorage {
         match self.active_type {
             #[cfg(feature = "server")]
             ActiveStorageType::Server => {
-                app_state().block_on(async { self.server.as_ref().unwrap().find_info(path).await })
+                block_on(async { self.server.as_ref().unwrap().find_info(path).await })
             }
             ActiveStorageType::Client => self.client.as_ref().unwrap().find_info(path),
         }
@@ -128,7 +127,7 @@ impl FileSystemStorage {
     pub fn get(&self, lpath: &Path, rpath: &Path, recursive: bool) -> Result<(), StorageError> {
         match self.active_type {
             #[cfg(feature = "server")]
-            ActiveStorageType::Server => app_state().block_on(async {
+            ActiveStorageType::Server => block_on(async {
                 self.server
                     .as_ref()
                     .unwrap()
@@ -142,7 +141,7 @@ impl FileSystemStorage {
     pub fn put(&self, lpath: &Path, rpath: &Path, recursive: bool) -> Result<(), StorageError> {
         match self.active_type {
             #[cfg(feature = "server")]
-            ActiveStorageType::Server => app_state().block_on(async {
+            ActiveStorageType::Server => block_on(async {
                 self.server
                     .as_ref()
                     .unwrap()
@@ -156,8 +155,9 @@ impl FileSystemStorage {
     pub fn rm(&self, path: &Path, recursive: bool) -> Result<(), StorageError> {
         match self.active_type {
             #[cfg(feature = "server")]
-            ActiveStorageType::Server => app_state()
-                .block_on(async { self.server.as_ref().unwrap().rm(path, recursive).await }),
+            ActiveStorageType::Server => {
+                block_on(async { self.server.as_ref().unwrap().rm(path, recursive).await })
+            }
             ActiveStorageType::Client => self.client.as_ref().unwrap().rm(path, recursive),
         }
     }
@@ -166,7 +166,7 @@ impl FileSystemStorage {
         match self.active_type {
             #[cfg(feature = "server")]
             ActiveStorageType::Server => {
-                app_state().block_on(async { self.server.as_ref().unwrap().exists(path).await })
+                block_on(async { self.server.as_ref().unwrap().exists(path).await })
             }
             ActiveStorageType::Client => self.client.as_ref().unwrap().exists(path),
         }
@@ -179,7 +179,7 @@ impl FileSystemStorage {
     ) -> Result<String, StorageError> {
         match self.active_type {
             #[cfg(feature = "server")]
-            ActiveStorageType::Server => app_state().block_on(async {
+            ActiveStorageType::Server => block_on(async {
                 self.server
                     .as_ref()
                     .unwrap()
