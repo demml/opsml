@@ -1,8 +1,8 @@
-## LLM Evaluation
+# GenAI Evaluation
 
 Opsml provides you with tools to run offline LLM evaluations. This is is often useful for when you (1) want to compare and benchmark various prompts, and (2) you want to evaluate different versions of prompts and LLM services that you may already be using in production.
 
-**Note**: You can run an LLM evaluation by importing the `evaluate_llm` function directly from opsml.evaluate or you can create an evaluation as part of an experiment `exp.llm.evaluate(...)`. The latter is useful if you want to track and version your evaluations as part of an experiment.
+**Note**: You can run an LLM evaluation by importing the `evaluate_llm` function directly from opsml.evaluate or you can create an evaluation as part of an experiment `exp.genai.evaluate(...)`. The latter is useful if you want to track and version your evaluations as part of an experiment.
 
 ## Getting Started
 
@@ -206,7 +206,7 @@ EvaluationConfig allows you to customize the evaluation process in several ways:
 - Enable clustering to identify patterns in the evaluation results.
 - Enable histogram computations to generate histograms for all numerical fields.
 
-[EvaluationConfig documentation](/opsml/docs/api/evaluate#opsml._evaluate.EvaluationConfig)
+[EvaluationConfig documentation](/opsml/docs/api/opsml/#opsml._opsml..EvaluationConfig)
 
 ```python
 from opsml.evaluate import EvaluationConfig
@@ -273,4 +273,4 @@ for field, histogram in histograms.items():
     print(f"Histogram for {field}: {histogram}")
 ```
 
-Please refer to the [LLMEvalResults documentation](/opsml/docs/api/evaluate#opsml._evaluate.LLMEvalResults) for more details on how to work with the results object.
+Please refer to the [LLMEvalResults documentation](/opsml/docs/opsml/#opsml._opsml.LLMEvalResults) for more details on how to work with the results object.

@@ -326,7 +326,10 @@ impl ModelType {
 #[pyclass]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct DriftProfileUri {
+    #[pyo3(get)]
     pub root_dir: PathBuf,
+    #[pyo3(get)]
     pub uri: PathBuf,
+    #[pyo3(get)]
     pub drift_type: DriftType,
 }
