@@ -1,4 +1,5 @@
 # mypy: disable-error-code="attr-defined"
+# pylint: disable=dangerous-default-value
 
 import functools
 from typing import (

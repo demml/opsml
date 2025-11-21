@@ -1,4 +1,5 @@
 # mypy: disable-error-code="attr-defined"
+# pylint: disable=no-name-in-module
 from ..._opsml import (
     Alert,
     Attribute,

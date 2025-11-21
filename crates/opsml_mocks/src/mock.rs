@@ -16,6 +16,8 @@ use tokio::{runtime::Runtime, sync::Mutex, task::JoinHandle};
 #[cfg(feature = "server")]
 use mockito;
 #[cfg(feature = "server")]
+use scouter_client::RegisteredProfileResponse;
+#[cfg(feature = "server")]
 use scouter_client::{BinnedMetrics, BinnedPsiFeatureMetrics, SpcDriftFeatures};
 #[cfg(feature = "server")]
 use serde_json;
@@ -23,7 +25,7 @@ use serde_json;
 use crate::error::TestServerError;
 use pyo3::prelude::*;
 use pyo3::PyResult;
-use scouter_client::RegisteredProfileResponse;
+
 use std::path::PathBuf;
 use std::time::Duration;
 
