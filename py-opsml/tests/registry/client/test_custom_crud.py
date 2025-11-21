@@ -1,5 +1,5 @@
-from opsml.mock import OpsmlTestServer  # type: ignore
-from opsml import (  # type: ignore
+from opsml.mock import OpsmlTestServer
+from opsml import (
     CardRegistry,
     RegistryType,
     ModelCard,

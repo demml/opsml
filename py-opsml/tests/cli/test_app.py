@@ -5,7 +5,7 @@
 from opsml.cli import (
     lock_service,
     install_service,
-)  # type: ignore
+)
 from opsml.mock import MockConfig
 import pandas as pd
 import os
@@ -21,7 +21,7 @@ import opsml.scouter
 from opsml.scouter.alert import AlertThreshold
 from opsml.app import AppState
 
-from opsml import (  # type: ignore
+from opsml import (
     start_experiment,
     ModelCard,
     SklearnModel,

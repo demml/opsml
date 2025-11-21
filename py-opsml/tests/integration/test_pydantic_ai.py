@@ -1,6 +1,6 @@
 # this suite of tests runs through the basic pydanictic_ai workflows
 # These tests require a user to have api keys configured in their environment
-from opsml.potato_head import Prompt  # type: ignore
+from opsml.genai import Prompt  # type: ignore
 from pydantic_ai import Agent
 from pydantic import BaseModel
 
