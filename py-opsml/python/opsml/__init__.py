@@ -49,6 +49,8 @@ from ._opsml import (  # top-level modules; # App; # Card; # Data; Experiment; #
     XGBoostModel,
     get_opsml_version,
     start_experiment,
+    ExperimentCard,
+    Prompt,
 )
 
 __version__: str = get_opsml_version()
@@ -78,6 +80,7 @@ __all__ = [
     "PromptCard",
     "ServiceCard",
     "RegistryType",
+    "ExperimentCard",
     ## Data
     "DataInterface",
     "NumpyData",
@@ -104,5 +107,6 @@ __all__ = [
     "LightGBMModel",
     "LightningModel",
     "CatBoostModel",
+    "Prompt",
     "__version__",
 ]

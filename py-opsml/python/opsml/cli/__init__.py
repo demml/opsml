@@ -11,6 +11,8 @@ from .._opsml import (
     start_experiment,
     update_drift_profile_status,
     validate_project,
+    ScouterArgs,
+    DownloadCard,
 )
 
 __all__ = [
@@ -24,4 +26,6 @@ __all__ = [
     "start_experiment",
     "update_drift_profile_status",
     "validate_project",
+    "ScouterArgs",
+    "DownloadCard",
 ]
