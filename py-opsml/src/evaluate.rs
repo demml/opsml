@@ -1,5 +1,7 @@
 pub use opsml_evaluate::llm::evaluate_llm;
 use pyo3::prelude::*;
+
+// Important - these are imported form scouter crate
 pub use scouter_client::{
     EvaluationConfig, LLMEvalMetric, LLMEvalRecord, LLMEvalResults, LLMEvalTaskResult,
 };

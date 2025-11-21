@@ -1344,9 +1344,9 @@ dependencies = [
 
 [[package]]
 name = "cc"
-version = "1.2.46"
+version = "1.2.47"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b97463e1064cb1b1c1384ad0a0b9c8abd0988e2a91f52606c80ef14aadb63e36"
+checksum = "cd405d82c84ff7f35739f175f67d8b9fb7687a0e84ccdc78bd3568839827cf07"
 dependencies = [
  "find-msvc-tools",
  "jobserver",
@@ -3952,6 +3952,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "opentelemetry-stdout"
+version = "0.31.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bc8887887e169414f637b18751487cce4e095be787d23fad13c454e2fb1b3811"
+dependencies = [
+ "chrono",
+ "opentelemetry",
+ "opentelemetry_sdk",
+]
+
+[[package]]
 name = "opentelemetry_sdk"
 version = "0.31.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5219,6 +5230,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "pyo3-async-runtimes"
+version = "0.26.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e6ee6d4cb3e8d5b925f5cdb38da183e0ff18122eb2048d4041c9e7034d026e23"
+dependencies = [
+ "futures",
+ "once_cell",
+ "pin-project-lite",
+ "pyo3",
+ "tokio",
+]
+
+[[package]]
 name = "pyo3-build-config"
 version = "0.26.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6057,7 +6081,7 @@ checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
 [[package]]
 name = "scouter-client"
 version = "0.12.0"
-source = "git+https://github.com/demml/scouter?branch=updating-types#605cad6c4ce768da507b56f9020150e1ae13ebb5"
+source = "git+https://github.com/demml/scouter?branch=updating-types#34d3610ae104696d9235831c920f975020509faf"
 dependencies = [
  "chrono",
  "ndarray",
@@ -6075,6 +6099,7 @@ dependencies = [
  "scouter-profile",
  "scouter-settings",
  "scouter-state",
+ "scouter-tracing",
  "scouter-types",
  "serde",
  "serde_json",
@@ -6087,7 +6112,7 @@ dependencies = [
 [[package]]
 name = "scouter-dispatch"
 version = "0.12.0"
-source = "git+https://github.com/demml/scouter?branch=updating-types#605cad6c4ce768da507b56f9020150e1ae13ebb5"
+source = "git+https://github.com/demml/scouter?branch=updating-types#34d3610ae104696d9235831c920f975020509faf"
 dependencies = [
  "futures",
  "pyo3",
@@ -6102,7 +6127,7 @@ dependencies = [
 [[package]]
 name = "scouter-drift"
 version = "0.12.0"
-source = "git+https://github.com/demml/scouter?branch=updating-types#605cad6c4ce768da507b56f9020150e1ae13ebb5"
+source = "git+https://github.com/demml/scouter?branch=updating-types#34d3610ae104696d9235831c920f975020509faf"
 dependencies = [
  "chrono",
  "futures",
@@ -6127,7 +6152,7 @@ dependencies = [
 [[package]]
 name = "scouter-evaluate"
 version = "0.12.0"
-source = "git+https://github.com/demml/scouter?branch=updating-types#605cad6c4ce768da507b56f9020150e1ae13ebb5"
+source = "git+https://github.com/demml/scouter?branch=updating-types#34d3610ae104696d9235831c920f975020509faf"
 dependencies = [
  "itertools 0.14.0",
  "ndarray",
@@ -6149,7 +6174,7 @@ dependencies = [
 [[package]]
 name = "scouter-events"
 version = "0.12.0"
-source = "git+https://github.com/demml/scouter?branch=updating-types#605cad6c4ce768da507b56f9020150e1ae13ebb5"
+source = "git+https://github.com/demml/scouter?branch=updating-types#34d3610ae104696d9235831c920f975020509faf"
 dependencies = [
  "async-trait",
  "chrono",
@@ -6184,7 +6209,7 @@ dependencies = [
 [[package]]
 name = "scouter-observability"
 version = "0.12.0"
-source = "git+https://github.com/demml/scouter?branch=updating-types#605cad6c4ce768da507b56f9020150e1ae13ebb5"
+source = "git+https://github.com/demml/scouter?branch=updating-types#34d3610ae104696d9235831c920f975020509faf"
 dependencies = [
  "itertools 0.14.0",
  "ndarray",
@@ -6201,7 +6226,7 @@ dependencies = [
 [[package]]
 name = "scouter-profile"
 version = "0.12.0"
-source = "git+https://github.com/demml/scouter?branch=updating-types#605cad6c4ce768da507b56f9020150e1ae13ebb5"
+source = "git+https://github.com/demml/scouter?branch=updating-types#34d3610ae104696d9235831c920f975020509faf"
 dependencies = [
  "chrono",
  "indicatif",
@@ -6223,7 +6248,7 @@ dependencies = [
 [[package]]
 name = "scouter-semver"
 version = "0.12.0"
-source = "git+https://github.com/demml/scouter?branch=updating-types#605cad6c4ce768da507b56f9020150e1ae13ebb5"
+source = "git+https://github.com/demml/scouter?branch=updating-types#34d3610ae104696d9235831c920f975020509faf"
 dependencies = [
  "pyo3",
  "semver",
@@ -6234,7 +6259,7 @@ dependencies = [
 [[package]]
 name = "scouter-settings"
 version = "0.12.0"
-source = "git+https://github.com/demml/scouter?branch=updating-types#605cad6c4ce768da507b56f9020150e1ae13ebb5"
+source = "git+https://github.com/demml/scouter?branch=updating-types#34d3610ae104696d9235831c920f975020509faf"
 dependencies = [
  "base64 0.22.1",
  "potato-head",
@@ -6247,8 +6272,33 @@ dependencies = [
 [[package]]
 name = "scouter-state"
 version = "0.12.0"
-source = "git+https://github.com/demml/scouter?branch=updating-types#605cad6c4ce768da507b56f9020150e1ae13ebb5"
+source = "git+https://github.com/demml/scouter?branch=updating-types#34d3610ae104696d9235831c920f975020509faf"
 dependencies = [
+ "thiserror 2.0.17",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
+name = "scouter-tracing"
+version = "0.12.0"
+source = "git+https://github.com/demml/scouter?branch=updating-types#34d3610ae104696d9235831c920f975020509faf"
+dependencies = [
+ "chrono",
+ "opentelemetry",
+ "opentelemetry-otlp",
+ "opentelemetry-proto",
+ "opentelemetry-stdout",
+ "opentelemetry_sdk",
+ "potato-head",
+ "pyo3",
+ "pyo3-async-runtimes",
+ "scouter-events",
+ "scouter-settings",
+ "scouter-state",
+ "scouter-types",
+ "serde",
+ "serde_json",
  "thiserror 2.0.17",
  "tokio",
  "tracing",
@@ -6257,7 +6307,7 @@ dependencies = [
 [[package]]
 name = "scouter-types"
 version = "0.12.0"
-source = "git+https://github.com/demml/scouter?branch=updating-types#605cad6c4ce768da507b56f9020150e1ae13ebb5"
+source = "git+https://github.com/demml/scouter?branch=updating-types#34d3610ae104696d9235831c920f975020509faf"
 dependencies = [
  "base64 0.22.1",
  "chrono",

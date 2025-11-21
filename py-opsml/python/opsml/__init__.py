@@ -14,8 +14,6 @@ from . import (
     scouter,
     types,
 )
-
-# cli imports
 from ._opsml import (  # top-level modules; # App; # Card; # Data; Experiment; # model
     AppState,
     ArrowData,
@@ -25,7 +23,6 @@ from ._opsml import (  # top-level modules; # App; # Card; # Data; Experiment; #
     CatBoostModel,
     DataCard,
     DataInterface,
-    DownloadCard,
     Experiment,
     HuggingFaceModel,
     HuggingFaceOnnxArgs,
@@ -43,7 +40,6 @@ from ._opsml import (  # top-level modules; # App; # Card; # Data; Experiment; #
     PromptCard,
     RegistryType,
     ReloadConfig,
-    ScouterArgs,
     ServiceCard,
     SklearnModel,
     SqlData,
@@ -51,17 +47,10 @@ from ._opsml import (  # top-level modules; # App; # Card; # Data; Experiment; #
     TensorFlowModel,
     TorchModel,
     XGBoostModel,
-    download_card,
-    generate_key,
     get_opsml_version,
-    install_service,
-    lock_service,
-    register_service,
-    run_opsml_cli,
-    start_experiment,
-    update_drift_profile_status,
-    validate_project,
 )
+
+__version__: str = get_opsml_version()
 
 __all__ = [
     "types",
@@ -75,19 +64,7 @@ __all__ = [
     "mock",
     "scouter",
     "genai",
-    "get_opsml_version",
-    # cli
-    "register_service",
-    "lock_service",
-    "run_opsml_cli",
-    "install_service",
-    "generate_key",
-    "update_drift_profile_status",
-    "ScouterArgs",
-    "validate_project",
-    "DownloadCard",
-    "download_card",
-    # top-level modules
+    "cli",
     ## App
     "AppState",
     "ReloadConfig",
@@ -126,4 +103,5 @@ __all__ = [
     "LightGBMModel",
     "LightningModel",
     "CatBoostModel",
+    "__version__",
 ]

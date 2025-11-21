@@ -35,5 +35,6 @@ pub fn add_drift_module(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<LLMDriftMetric>()?;
     m.add_class::<LLMDriftMap>()?;
     m.add_class::<LLMMetricRecord>()?;
+
     Ok(())
 }
