@@ -138,3 +138,4 @@ pnpm-lock.yaml
 py-opsml/examples/benchmarks/_mlflow/uv.lock
 py-opsml/examples/benchmarks/_opsml/uv.lock
 py-opsml/site/*
+py-opsml/python/opsml/stubs.pyi

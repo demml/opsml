@@ -93,7 +93,7 @@ nav:
   - Benchmarks:
       - "docs/benchmark/overview.md"
   - API Documentation:
-      - API: "docs/api/opsml.md"
+      - API: "docs/api/stubs.md"
 
 markdown_extensions:
   - tables
@@ -143,7 +143,6 @@ plugins:
           merge_init_into_class: true
           show_signature_annotations: true
           signature_crossrefs: true
-          exclude: ["opsml._opsml"]
 
 extra_css:
   - docs/css/custom.css
