@@ -3,22 +3,18 @@
 # OpsmlTestServer will spin up a server in a background task that the client will connect to
 ###################################################################################################
 
-from opsml.mock import OpsmlTestServer  # type: ignore
-from opsml import (  # type: ignore
-    CardRegistry,
+from opsml.mock import OpsmlTestServer
+from opsml import Card, CardRegistry, ModelCard, DataCard, PromptCard
+from opsml.card import (
+    ServiceCard,
+    RegistryMode,
+    CardList,
     RegistryType,
-    ModelCard,
-    DataCard,
-    PromptCard,
-    Prompt,
-    ModelLoadKwargs,
-    ModelSaveKwargs,
 )
-from opsml.card import ServiceCard, Card  # type: ignore
-from opsml.card import RegistryMode, CardList  # type: ignore
-from opsml.model import SklearnModel  # type: ignore
-from opsml.data import PandasData  # type: ignore
-from opsml.types import DriftArgs  # type: ignore
+from opsml.genai import Prompt
+from opsml.model import SklearnModel, ModelLoadKwargs, ModelSaveKwargs
+from opsml.data import PandasData
+from opsml.types import DriftArgs
 from pathlib import Path
 import shutil
 import pytest

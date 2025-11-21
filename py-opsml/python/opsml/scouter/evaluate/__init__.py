@@ -1,6 +1,5 @@
 # mypy: disable-error-code="attr-defined"
-# python/opsml/card/__init__.py
-from .._opsml import (
+from ..._opsml import (
     EvaluationConfig,
     LLMEvalMetric,
     LLMEvalRecord,

@@ -1,3 +1,4 @@
+# mypy: disable-error-code="attr-defined"
 from .._opsml import (
     Agent,
     AgentResponse,

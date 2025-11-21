@@ -1,3 +1,5 @@
+# mypy: disable-error-code="attr-defined"
+# pylint: disable=no-name-in-module
 # python/opsml/__init__.py
 from . import (
     app,
@@ -12,10 +14,54 @@ from . import (
     scouter,
     types,
 )
-from ._opsml import get_opsml_version
 
-# from . import cli
-
+# cli imports
+from ._opsml import (  # top-level modules; # App; # Card; # Data; Experiment; # model
+    AppState,
+    ArrowData,
+    Card,
+    CardRegistries,
+    CardRegistry,
+    CatBoostModel,
+    DataCard,
+    DataInterface,
+    DownloadCard,
+    Experiment,
+    HuggingFaceModel,
+    HuggingFaceOnnxArgs,
+    HuggingFaceORTModel,
+    HuggingFaceTask,
+    LightGBMModel,
+    LightningModel,
+    ModelCard,
+    ModelInterface,
+    ModelLoadKwargs,
+    ModelSaveKwargs,
+    NumpyData,
+    PandasData,
+    PolarsData,
+    PromptCard,
+    RegistryType,
+    ReloadConfig,
+    ScouterArgs,
+    ServiceCard,
+    SklearnModel,
+    SqlData,
+    TaskType,
+    TensorFlowModel,
+    TorchModel,
+    XGBoostModel,
+    download_card,
+    generate_key,
+    get_opsml_version,
+    install_service,
+    lock_service,
+    register_service,
+    run_opsml_cli,
+    start_experiment,
+    update_drift_profile_status,
+    validate_project,
+)
 
 __all__ = [
     "types",
@@ -29,6 +75,55 @@ __all__ = [
     "mock",
     "scouter",
     "genai",
-    "cli",
     "get_opsml_version",
+    # cli
+    "register_service",
+    "lock_service",
+    "run_opsml_cli",
+    "install_service",
+    "generate_key",
+    "update_drift_profile_status",
+    "ScouterArgs",
+    "validate_project",
+    "DownloadCard",
+    "download_card",
+    # top-level modules
+    ## App
+    "AppState",
+    "ReloadConfig",
+    ## Card
+    "Card",
+    "CardRegistries",
+    "CardRegistry",
+    "DataCard",
+    "ModelCard",
+    "PromptCard",
+    "ServiceCard",
+    "RegistryType",
+    ## Data
+    "DataInterface",
+    "NumpyData",
+    "PandasData",
+    "PolarsData",
+    "SqlData",
+    "ArrowData",
+    # Experiment
+    "start_experiment",
+    "Experiment",
+    ## model
+    "ModelInterface",
+    "ModelLoadKwargs",
+    "ModelSaveKwargs",
+    "SklearnModel",
+    "TaskType",
+    "TensorFlowModel",
+    "TorchModel",
+    "XGBoostModel",
+    "HuggingFaceModel",
+    "HuggingFaceOnnxArgs",
+    "HuggingFaceORTModel",
+    "HuggingFaceTask",
+    "LightGBMModel",
+    "LightningModel",
+    "CatBoostModel",
 ]

@@ -108,7 +108,7 @@ def test_pyproject_app(
         # load the service card and the queue
         app = AppState.from_path(
             path=opsml_service,
-            transport_config=opsml.scouter.HTTPConfig(),  # this will be mocked
+            transport_config=opsml.scouter.HttpConfig(),  # this will be mocked
         )
 
         assert app.queue is not None

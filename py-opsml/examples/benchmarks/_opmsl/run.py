@@ -1,6 +1,7 @@
-from opsml import start_experiment
-from opsml import ModelCard, SklearnModel, TaskType
-from sklearn.datasets import make_classification
+from opsml.experiment import start_experiment
+from opsml.card import ModelCard
+from opsml.model import SklearnModel, TaskType
+from sklearn.datasets import make_classification  # type: ignore
 from sklearn import ensemble  # type: ignore
 import time
 

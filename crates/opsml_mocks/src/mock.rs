@@ -23,6 +23,7 @@ use serde_json;
 use crate::error::TestServerError;
 use pyo3::prelude::*;
 use pyo3::PyResult;
+use scouter_client::RegisteredProfileResponse;
 use std::path::PathBuf;
 use std::time::Duration;
 
@@ -36,6 +37,14 @@ pub struct ScouterServer {
 impl ScouterServer {
     pub fn new() -> Self {
         let mut server = mockito::Server::new();
+
+        let register_profile_response = RegisteredProfileResponse {
+            space: "space".to_string(),
+            name: "name".to_string(),
+            version: "version".to_string(),
+            status: "success".to_string(),
+            active: true,
+        };
 
         // Healthcheck mock
         server
@@ -83,7 +92,7 @@ impl ScouterServer {
             .match_body(mockito::Matcher::Any)
             .with_status(200)
             .with_header("content-type", "application/json")
-            .with_body(r#"{"space": "opsml", "name": "test_profile", "version": "1.0.0", "status": "success", "message": "Profile status updated"}"#)
+            .with_body(serde_json::to_string(&register_profile_response).unwrap())
             .create();
 
         server

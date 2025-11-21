@@ -21,7 +21,7 @@ pub fn add_client_module(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<SpcDriftFeatures>()?;
     m.add_class::<SpcDriftFeature>()?;
 
-    m.add_class::<HTTPConfig>()?;
+    m.add_class::<HttpConfig>()?;
 
     Ok(())
 }

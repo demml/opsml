@@ -1,3 +1,4 @@
+# mypy: disable-error-code="attr-defined"
 from .._opsml import (
     Alert,
     AlertDispatchType,
@@ -31,7 +32,7 @@ from .._opsml import (
     Features,
     GetProfileRequest,
     Histogram,
-    HTTPConfig,
+    HttpConfig,
     KafkaConfig,
     LatencyMetrics,
     LLMAlertConfig,
@@ -117,7 +118,7 @@ __all__ = [
     "BinnedPsiFeatureMetrics",
     "SpcDriftFeature",
     "BinnedSpcFeatureMetrics",
-    "HTTPConfig",
+    "HttpConfig",
     "ProfileStatusRequest",
     "Alert",
     "DriftAlertRequest",
