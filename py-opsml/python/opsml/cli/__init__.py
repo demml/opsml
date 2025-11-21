@@ -1,4 +1,5 @@
 # pylint: disable=no-name-in-module
+# mypy: disable-error-code="attr-defined"
 from .._opsml import (
     download_card,
     generate_key,

@@ -48,6 +48,7 @@ from ._opsml import (  # top-level modules; # App; # Card; # Data; Experiment; #
     TorchModel,
     XGBoostModel,
     get_opsml_version,
+    start_experiment,
 )
 
 __version__: str = get_opsml_version()
