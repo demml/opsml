@@ -49,9 +49,9 @@ pub fn create_scouter_queue(
         None
     } else if let Some(config) = transport_config {
         debug!("Drift paths found in card map, creating ScouterQueue");
-        let rt = app_state().runtime.clone();
+
         let scouter_queue =
-            ScouterQueue::from_path_rs(py, card_map.drift_paths, config, rt, wait_for_startup)?;
+            ScouterQueue::from_path_rs(py, card_map.drift_paths, config, wait_for_startup)?;
         let event_state = scouter_queue.queue_state.clone();
 
         Some(QueueState {

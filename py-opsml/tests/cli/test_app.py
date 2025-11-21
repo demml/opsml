@@ -5,7 +5,7 @@
 from opsml.cli import (
     lock_service,
     install_service,
-)  # type: ignore
+)
 from opsml.mock import MockConfig
 import pandas as pd
 import os
@@ -21,7 +21,7 @@ import opsml.scouter
 from opsml.scouter.alert import AlertThreshold
 from opsml.app import AppState
 
-from opsml import (  # type: ignore
+from opsml import (
     start_experiment,
     ModelCard,
     SklearnModel,
@@ -108,7 +108,7 @@ def test_pyproject_app(
         # load the service card and the queue
         app = AppState.from_path(
             path=opsml_service,
-            transport_config=opsml.scouter.HTTPConfig(),  # this will be mocked
+            transport_config=opsml.scouter.HttpConfig(),  # this will be mocked
         )
 
         assert app.queue is not None

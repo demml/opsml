@@ -1,8 +1,7 @@
 use pyo3::prelude::*;
 use scouter_client::*;
 
-#[pymodule]
-pub fn alert(m: &Bound<'_, PyModule>) -> PyResult<()> {
+pub fn add_alert_module(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<SpcAlertType>()?;
     m.add_class::<AlertZone>()?;
     m.add_class::<SpcAlert>()?;

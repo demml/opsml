@@ -7,7 +7,7 @@ from fastapi import FastAPI, Request
 from numpy.typing import NDArray
 from opsml.app import AppState, ReloadConfig
 
-# from opsml.scouter import HTTPConfig # uncomment for model monitoring
+# from opsml.scouter import HttpConfig # uncomment for model monitoring
 from opsml.card import ModelCard
 from opsml.logging import LoggingConfig, LogLevel, RustyLogger
 from opsml.model import ModelLoadKwargs
@@ -66,7 +66,7 @@ async def lifespan(app: FastAPI):
             "lgb": {"load_kwargs": ModelLoadKwargs(load_onnx=True)},
         },
         reload_config=ReloadConfig(cron="0 0 0 * * *"),
-        # transport_config=HTTPConfig(), # uncomment for model monitoring
+        # transport_config=HttpConfig(), # uncomment for model monitoring
     )
     app_state.start_reloader()
     app.state.app_state = app_state

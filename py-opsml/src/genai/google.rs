@@ -10,8 +10,7 @@ use potato_head::google_types::{
 };
 use pyo3::prelude::*;
 
-#[pymodule]
-pub fn google(m: &Bound<'_, PyModule>) -> PyResult<()> {
+pub fn add_google_module(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<GenerationConfig>()?;
     m.add_class::<MediaResolution>()?;
     m.add_class::<Modality>()?;

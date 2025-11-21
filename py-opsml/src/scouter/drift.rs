@@ -1,8 +1,7 @@
 use pyo3::prelude::*;
 use scouter_client::*;
 
-#[pymodule]
-pub fn drift(m: &Bound<'_, PyModule>) -> PyResult<()> {
+pub fn add_drift_module(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyDrifter>()?;
     m.add_class::<DriftProfile>()?;
     m.add_class::<SpcDriftProfile>()?;
@@ -19,6 +18,16 @@ pub fn drift(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<CustomMetric>()?;
     m.add_class::<CustomMetricDriftConfig>()?;
     m.add_class::<CustomDriftProfile>()?;
+    m.add_class::<QuantileBinning>()?;
+    m.add_class::<EqualWidthBinning>()?;
+    m.add_class::<Manual>()?;
+    m.add_class::<SquareRoot>()?;
+    m.add_class::<Sturges>()?;
+    m.add_class::<Rice>()?;
+    m.add_class::<Doane>()?;
+    m.add_class::<Scott>()?;
+    m.add_class::<TerrellScott>()?;
+    m.add_class::<FreedmanDiaconis>()?;
 
     // LLM Drift
     m.add_class::<LLMDriftConfig>()?;
@@ -26,5 +35,6 @@ pub fn drift(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<LLMDriftMetric>()?;
     m.add_class::<LLMDriftMap>()?;
     m.add_class::<LLMMetricRecord>()?;
+
     Ok(())
 }

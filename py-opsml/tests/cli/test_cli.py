@@ -12,7 +12,7 @@ from opsml.cli import (
     validate_project,
     download_card,
     DownloadCard,
-)  # type: ignore
+)
 
 import pandas as pd
 import os
@@ -23,7 +23,7 @@ from opsml.scouter.types import DriftType
 from opsml.scouter import PsiDriftConfig, CustomMetricDriftConfig, CustomMetric
 from opsml.scouter.alert import AlertThreshold
 
-from opsml import (  # type: ignore
+from opsml import (
     start_experiment,
     ModelCard,
     SklearnModel,
