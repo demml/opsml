@@ -1,3 +1,4 @@
+# mypy: disable-error-code="attr-defined"
 # python/opsml/card/__init__.py
 from .._opsml import (
     Card,
@@ -16,6 +17,7 @@ from .._opsml import (
     RegistryType,
     ServiceCard,
     ServiceType,
+    download_service,
 )
 
 __all__ = [
@@ -35,4 +37,5 @@ __all__ = [
     "PromptCard",
     "ServiceCard",
     "ServiceType",
+    "download_service",
 ]

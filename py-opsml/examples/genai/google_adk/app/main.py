@@ -6,7 +6,7 @@ from pathlib import Path
 from fastapi import FastAPI, Request
 from opsml.app import AppState
 from opsml.logging import LoggingConfig, LogLevel, RustyLogger
-from opsml.scouter import HTTPConfig
+from opsml.scouter import HttpConfig
 from pydantic import BaseModel, Field
 
 from .agent.helper import AgentHelper
@@ -50,7 +50,7 @@ async def lifespan(app: FastAPI):
     startup_db()
     app_state = AppState.from_path(
         path=Path("app/service_artifacts"),
-        transport_config=HTTPConfig(),
+        transport_config=HttpConfig(),
     )
 
     agent_helper = AgentHelper("opsml_app", app_state)

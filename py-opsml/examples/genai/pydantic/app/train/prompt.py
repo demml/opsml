@@ -2,7 +2,7 @@ from opsml.card import PromptCard
 from opsml.genai import Prompt
 from opsml.scouter.alert import LLMAlertConfig
 from opsml.scouter.drift import LLMDriftConfig
-from opsml.scouter.types import CommonCrons
+from opsml.scouter import CommonCrons
 
 from .prompt_metrics import shipment_eta_reply_evaluation, shipment_eta_task_evaluation
 

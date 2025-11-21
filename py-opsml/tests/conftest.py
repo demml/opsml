@@ -7,12 +7,12 @@ from typing import Tuple, Dict
 from pydantic import BaseModel
 import sys
 import platform
-from opsml import ModelInterface
 from opsml.model import (
     ModelInterfaceSaveMetadata,
     ModelInterfaceMetadata,
     DataProcessor,
     ProcessorType,
+    ModelInterface,
 )
 from typing import cast
 import pandas as pd

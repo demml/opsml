@@ -14,7 +14,7 @@ from sklearn import ensemble  # type: ignore
 import pytest
 from typing import Generator, Dict, cast, Tuple, Union
 from opsml.mock import OpsmlTestServer
-from opsml.scouter import PsiDriftConfig, HTTPConfig
+from opsml.scouter import PsiDriftConfig, HttpConfig
 import numpy as np
 from contextlib import asynccontextmanager
 from opsml import (  # type: ignore
@@ -154,7 +154,7 @@ def create_artifacts() -> Generator[Tuple[Path, Path], None, None]:
 
 
 def create_app(opsml_service: Path) -> FastAPI:
-    config = HTTPConfig()
+    config = HttpConfig()
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):

@@ -11,9 +11,7 @@ from opsml.scouter import (
 )
 from opsml.card import ServiceCard, Card, RegistryType
 import opsml.scouter
-from opsml.scouter.types import CommonCrons
-from opsml.scouter.alert import AlertThreshold
-from opsml.scouter.queue import Features
+from opsml.scouter import CommonCrons, AlertThreshold, Features
 from opsml.app import AppState, ReloadConfig
 from opsml.card import download_service
 from opsml.scouter import Metrics, Metric
@@ -131,7 +129,7 @@ def test_service_reload(
 
         app = AppState.from_path(
             path=opsml_app,
-            transport_config=opsml.scouter.HTTPConfig(),  # type: ignore
+            transport_config=opsml.scouter.HttpConfig(),  # type: ignore
             reload_config=ReloadConfig(
                 cron=CommonCrons.Every1Minute.cron,
                 write_path=service_reload,
