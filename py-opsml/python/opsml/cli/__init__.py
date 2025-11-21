@@ -1,6 +1,8 @@
 # pylint: disable=no-name-in-module
 # mypy: disable-error-code="attr-defined"
 from .._opsml import (
+    DownloadCard,
+    ScouterArgs,
     download_card,
     generate_key,
     get_opsml_version,
@@ -11,8 +13,6 @@ from .._opsml import (
     start_experiment,
     update_drift_profile_status,
     validate_project,
-    ScouterArgs,
-    DownloadCard,
 )
 
 __all__ = [
