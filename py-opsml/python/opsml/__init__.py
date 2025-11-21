@@ -24,6 +24,7 @@ from ._opsml import (  # top-level modules; # App; # Card; # Data; Experiment; #
     DataCard,
     DataInterface,
     Experiment,
+    ExperimentCard,
     HuggingFaceModel,
     HuggingFaceOnnxArgs,
     HuggingFaceORTModel,
@@ -37,6 +38,7 @@ from ._opsml import (  # top-level modules; # App; # Card; # Data; Experiment; #
     NumpyData,
     PandasData,
     PolarsData,
+    Prompt,
     PromptCard,
     RegistryType,
     ReloadConfig,
@@ -49,8 +51,6 @@ from ._opsml import (  # top-level modules; # App; # Card; # Data; Experiment; #
     XGBoostModel,
     get_opsml_version,
     start_experiment,
-    ExperimentCard,
-    Prompt,
 )
 
 __version__: str = get_opsml_version()
