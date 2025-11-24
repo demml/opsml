@@ -2,9 +2,15 @@
 # python/opsml/card/__init__.py
 from .._opsml import (
     CommonCrons,
+    CommonKwargs,
     DataType,
     DriftArgs,
+    DriftProfileMap,
+    DriftProfileUri,
     DriftType,
+    ExtraMetadata,
+    Feature,
+    FeatureSchema,
     SaveName,
     SaverPath,
     ScouterDataType,
@@ -22,4 +28,10 @@ __all__ = [
     "Suffix",
     "SaverPath",
     "VersionType",
+    "DriftProfileUri",
+    "DriftProfileMap",
+    "Feature",
+    "FeatureSchema",
+    "ExtraMetadata",
+    "CommonKwargs",
 ]
