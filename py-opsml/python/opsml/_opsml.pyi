@@ -24,9 +24,7 @@ from typing import (
 )
 
 CardInterfaceType: TypeAlias = Union["DataInterface", "ModelInterface"]
-ServiceCardInterfaceType: TypeAlias = Dict[
-    str, Union["DataInterface", "ModelInterface"]
-]
+ServiceCardInterfaceType: TypeAlias = Dict[str, Union["DataInterface", "ModelInterface"]]
 LoadInterfaceType: TypeAlias = Union[ServiceCardInterfaceType, ServiceCardInterfaceType]
 
 P = ParamSpec("P")
@@ -260,9 +258,7 @@ class FunctionCallingConfig:
     def mode(self) -> Optional[Mode]: ...
     @property
     def allowed_function_names(self) -> Optional[list[str]]: ...
-    def __init__(
-        self, mode: Optional[Mode], allowed_function_names: Optional[list[str]]
-    ) -> None: ...
+    def __init__(self, mode: Optional[Mode], allowed_function_names: Optional[list[str]]) -> None: ...
 
 class LatLng:
     @property
@@ -403,9 +399,7 @@ class PredictResponse:
     def __str__(self): ...
 
 class PredictRequest:
-    def __init__(
-        self, instances: List[dict], parameters: Optional[dict] = None
-    ) -> None:
+    def __init__(self, instances: List[dict], parameters: Optional[dict] = None) -> None:
         """Request to pass to the Vertex Predict API when creating a request
 
         Args:
@@ -956,9 +950,7 @@ class DocumentUrl:
         """The format of the document URL."""
 
 class Message:
-    def __init__(
-        self, content: str | ImageUrl | AudioUrl | BinaryContent | DocumentUrl
-    ) -> None:
+    def __init__(self, content: str | ImageUrl | AudioUrl | BinaryContent | DocumentUrl) -> None:
         """Create a Message object.
 
         Args:
@@ -1072,9 +1064,7 @@ class Prompt:
         model: str,
         provider: Provider | str,
         system_instruction: Optional[str | List[str]] = None,
-        model_settings: Optional[
-            ModelSettings | OpenAIChatSettings | GeminiSettings
-        ] = None,
+        model_settings: Optional[ModelSettings | OpenAIChatSettings | GeminiSettings] = None,
         response_format: Optional[Any] = None,
     ) -> None:
         """Prompt for interacting with an LLM API.
@@ -1576,9 +1566,7 @@ class Workflow:
         """
 
     @staticmethod
-    def model_validate_json(
-        json_string: str, output_types: Optional[Dict[str, Any]]
-    ) -> "Workflow":
+    def model_validate_json(json_string: str, output_types: Optional[Dict[str, Any]]) -> "Workflow":
         """Load a workflow from a JSON string.
 
         Args:
@@ -2046,12 +2034,8 @@ class BatchConfig:
 
 def init_tracer(
     service_name: str = "scouter_service",
-    transport_config: Optional[
-        HttpConfig | KafkaConfig | RabbitMQConfig | RedisConfig
-    ] = None,
-    exporter: HttpSpanExporter
-    | StdoutSpanExporter
-    | TestSpanExporter = StdoutSpanExporter(),  # noqa: F821
+    transport_config: Optional[HttpConfig | KafkaConfig | RabbitMQConfig | RedisConfig] = None,
+    exporter: HttpSpanExporter | StdoutSpanExporter | TestSpanExporter = StdoutSpanExporter(),  # noqa: F821
     batch_config: Optional[BatchConfig] = None,
     profile_space: Optional[str] = None,
     profile_name: Optional[str] = None,
@@ -2828,16 +2812,7 @@ class FreedmanDiaconis:
         For more information, please see: https://en.wikipedia.org/wiki/Histogram
         """
 
-EqualWidthMethods = (
-    Manual
-    | SquareRoot
-    | Sturges
-    | Rice
-    | Doane
-    | Scott
-    | TerrellScott
-    | FreedmanDiaconis
-)
+EqualWidthMethods = Manual | SquareRoot | Sturges | Rice | Doane | Scott | TerrellScott | FreedmanDiaconis
 
 class EqualWidthBinning:
     def __init__(self, method: EqualWidthMethods = Doane()):
@@ -2987,9 +2962,7 @@ class AlertDispatchType:
     def to_string() -> str:
         """Return the string representation of the alert dispatch type"""
 
-DispatchConfigType = (
-    ConsoleDispatchConfig | SlackDispatchConfig | OpsGenieDispatchConfig
-)
+DispatchConfigType = ConsoleDispatchConfig | SlackDispatchConfig | OpsGenieDispatchConfig
 
 class AlertZone:
     Zone1: "AlertZone"
@@ -3333,9 +3306,7 @@ class CustomMetricAlertConfig:
         """Return the alert_condition that were set during metric definition"""
 
     @alert_conditions.setter
-    def alert_conditions(
-        self, alert_conditions: dict[str, CustomMetricAlertCondition]
-    ) -> None:
+    def alert_conditions(self, alert_conditions: dict[str, CustomMetricAlertCondition]) -> None:
         """Update the alert_condition that were set during metric definition"""
 
 class LLMAlertConfig:
@@ -3466,9 +3437,7 @@ class DriftRequest:
         """
 
 class ProfileStatusRequest:
-    def __init__(
-        self, name: str, space: str, version: str, drift_type: DriftType, active: bool
-    ) -> None:
+    def __init__(self, name: str, space: str, version: str, drift_type: DriftType, active: bool) -> None:
         """Initialize profile status request
 
         Args:
@@ -3485,9 +3454,7 @@ class ProfileStatusRequest:
         """
 
 class GetProfileRequest:
-    def __init__(
-        self, name: str, space: str, version: str, drift_type: DriftType
-    ) -> None:
+    def __init__(self, name: str, space: str, version: str, drift_type: DriftType) -> None:
         """Initialize get profile request
 
         Args:
@@ -4929,9 +4896,7 @@ class Drifter:
     def create_drift_profile(  # type: ignore
         self,
         data: Any,
-        config: Optional[
-            Union[SpcDriftConfig, PsiDriftConfig, CustomMetricDriftConfig]
-        ] = None,
+        config: Optional[Union[SpcDriftConfig, PsiDriftConfig, CustomMetricDriftConfig]] = None,
         data_type: Optional[ScouterDataType] = None,
     ) -> Union[SpcDriftProfile, PsiDriftProfile, CustomDriftProfile]:
         """Create a drift profile from data.
@@ -7099,9 +7064,7 @@ class PolarsData(DataInterface):
 
         """
 
-    def save(
-        self, path: Path, save_kwargs: Optional[DataSaveKwargs] = None
-    ) -> DataInterfaceMetadata:
+    def save(self, path: Path, save_kwargs: Optional[DataSaveKwargs] = None) -> DataInterfaceMetadata:
         """Saves polars dataframe to parquet dataset via write_parquet
 
         Args:
@@ -7229,9 +7192,7 @@ class PandasData(DataInterface):
                 Data profile
         """
 
-    def save(
-        self, path: Path, save_kwargs: Optional[DataSaveKwargs] = None
-    ) -> DataInterfaceMetadata:
+    def save(self, path: Path, save_kwargs: Optional[DataSaveKwargs] = None) -> DataInterfaceMetadata:
         """Saves pandas dataframe as parquet file via to_parquet
 
         Args:
@@ -7352,9 +7313,7 @@ class ArrowData(DataInterface):
                 Data profile
         """
 
-    def save(
-        self, path: Path, save_kwargs: Optional[DataSaveKwargs] = None
-    ) -> DataInterfaceMetadata:
+    def save(self, path: Path, save_kwargs: Optional[DataSaveKwargs] = None) -> DataInterfaceMetadata:
         """Saves pyarrow table to parquet via write_table
 
         Args:
@@ -7511,9 +7470,7 @@ class TorchData(DataInterface):
                 Data profile
         """
 
-    def save(
-        self, path: Path, save_kwargs: Optional[DataSaveKwargs] = None
-    ) -> DataInterfaceMetadata:
+    def save(self, path: Path, save_kwargs: Optional[DataSaveKwargs] = None) -> DataInterfaceMetadata:
         """Saves torch tensor to a file
 
         Args:
@@ -7620,9 +7577,7 @@ def generate_feature_schema(data: Any, data_type: DataType) -> FeatureSchema:
 #  This section contains the type definitions for opsml.model module
 # __opsml.model__
 # ######################################################################################
-DriftProfileType = Dict[
-    str, Union[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile]
-]
+DriftProfileType = Dict[str, Union[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile]]
 
 class ProcessorType:
     Preprocessor: "ProcessorType"
@@ -9071,9 +9026,7 @@ class DataCard:
         """Return the model dump as a json string"""
 
     @staticmethod
-    def model_validate_json(
-        json_string: str, interface: Optional[DataInterface] = None
-    ) -> "ModelCard":
+    def model_validate_json(json_string: str, interface: Optional[DataInterface] = None) -> "ModelCard":
         """Validate the model json string
 
         Args:
@@ -9418,9 +9371,7 @@ class ModelCard:
         """Return the model dump as a json string"""
 
     @staticmethod
-    def model_validate_json(
-        json_string: str, interface: Optional[ModelInterface] = None
-    ) -> "ModelCard":
+    def model_validate_json(json_string: str, interface: Optional[ModelInterface] = None) -> "ModelCard":
         """Validate the model json string
 
         Args:
@@ -10202,49 +10153,29 @@ CardType = TypeVar(  # pylint: disable=invalid-name
 
 class CardRegistry(Generic[CardType]):
     @overload
-    def __init__(
-        self, registry_type: Literal[RegistryType.Data]
-    ) -> "CardRegistry[DataCard]": ...
+    def __init__(self, registry_type: Literal[RegistryType.Data]) -> "CardRegistry[DataCard]": ...
     @overload
-    def __init__(
-        self, registry_type: Literal[RegistryType.Model]
-    ) -> "CardRegistry[ModelCard]": ...
+    def __init__(self, registry_type: Literal[RegistryType.Model]) -> "CardRegistry[ModelCard]": ...
     @overload
-    def __init__(
-        self, registry_type: Literal[RegistryType.Prompt]
-    ) -> "CardRegistry[PromptCard]": ...
+    def __init__(self, registry_type: Literal[RegistryType.Prompt]) -> "CardRegistry[PromptCard]": ...
     @overload
-    def __init__(
-        self, registry_type: Literal[RegistryType.Experiment]
-    ) -> "CardRegistry[ExperimentCard]": ...
+    def __init__(self, registry_type: Literal[RegistryType.Experiment]) -> "CardRegistry[ExperimentCard]": ...
     @overload
-    def __init__(
-        self, registry_type: Literal[RegistryType.Service]
-    ) -> "CardRegistry[ServiceCard]": ...
+    def __init__(self, registry_type: Literal[RegistryType.Service]) -> "CardRegistry[ServiceCard]": ...
     @overload
-    def __init__(
-        self, registry_type: Literal[RegistryType.Audit]
-    ) -> "CardRegistry[Any]": ...
+    def __init__(self, registry_type: Literal[RegistryType.Audit]) -> "CardRegistry[Any]": ...
 
     # String literal overloads
     @overload
     def __init__(self, registry_type: Literal["data"]) -> "CardRegistry[DataCard]": ...
     @overload
-    def __init__(
-        self, registry_type: Literal["model"]
-    ) -> "CardRegistry[ModelCard]": ...
+    def __init__(self, registry_type: Literal["model"]) -> "CardRegistry[ModelCard]": ...
     @overload
-    def __init__(
-        self, registry_type: Literal["prompt"]
-    ) -> "CardRegistry[PromptCard]": ...
+    def __init__(self, registry_type: Literal["prompt"]) -> "CardRegistry[PromptCard]": ...
     @overload
-    def __init__(
-        self, registry_type: Literal["experiment"]
-    ) -> "CardRegistry[ExperimentCard]": ...
+    def __init__(self, registry_type: Literal["experiment"]) -> "CardRegistry[ExperimentCard]": ...
     @overload
-    def __init__(
-        self, registry_type: Literal["service"]
-    ) -> "CardRegistry[ServiceCard]": ...
+    def __init__(self, registry_type: Literal["service"]) -> "CardRegistry[ServiceCard]": ...
     @overload
     def __init__(self, registry_type: Literal["audit"]) -> "CardRegistry[Any]": ...
     def __init__(self, registry_type: Union[RegistryType, str]) -> None:
@@ -10891,9 +10822,7 @@ class Experiment:
                 Value of the parameter
         """
 
-    def log_parameters(
-        self, parameters: list[Parameter] | Dict[str, Union[int, float, str]]
-    ) -> None:
+    def log_parameters(self, parameters: list[Parameter] | Dict[str, Union[int, float, str]]) -> None:
         """
         Log multiple parameters
 
@@ -10938,9 +10867,7 @@ class Experiment:
 
         """
 
-    def log_figure(
-        self, name: str, figure: Any, kwargs: Optional[Dict[str, Any]] = None
-    ) -> None:
+    def log_figure(self, name: str, figure: Any, kwargs: Optional[Dict[str, Any]] = None) -> None:
         """
         Log a figure. This method will log a matplotlib Figure object to the experiment artifacts.
 
