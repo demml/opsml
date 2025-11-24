@@ -9,6 +9,7 @@ from .._opsml import (
     HuggingFaceTask,
     LightGBMModel,
     LightningModel,
+    ModelCardMetadata,
     ModelInterface,
     ModelInterfaceMetadata,
     ModelInterfaceSaveMetadata,
@@ -52,4 +53,5 @@ __all__ = [
     "ModelSaveKwargs",
     "OnnxSchema",
     "ProcessorType",
+    "ModelCardMetadata",
 ]
