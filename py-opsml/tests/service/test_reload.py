@@ -129,7 +129,7 @@ def test_service_reload(
 
         app = AppState.from_path(
             path=opsml_app,
-            transport_config=opsml.scouter.HttpConfig(),  # type: ignore
+            transport_config=opsml.scouter.HttpConfig(),
             reload_config=ReloadConfig(
                 cron=CommonCrons.Every1Minute.cron,
                 write_path=service_reload,
