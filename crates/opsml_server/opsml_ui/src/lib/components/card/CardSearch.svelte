@@ -42,11 +42,11 @@
     if (selectedSpace && !filteredSpaces.includes(selectedSpace)) {
       filteredSpaces = [...filteredSpaces, selectedSpace];
     }
-    
+
   });
 
   let searchTimeout: ReturnType<typeof setTimeout> | null = null;
-  
+
   function onInputChange() {
     if (searchTimeout) clearTimeout(searchTimeout);
     searchTimeout = setTimeout(async () => {
