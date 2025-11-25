@@ -85,7 +85,7 @@ jobs:
         if: matrix.container_image == 'rockylinux:9' && contains(matrix.os, 'ubuntu-22.04-arm')
         run: |
           dnf install -y --allowerasing gcc make curl pkgconf openssl-devel wget perl pkg-config
-          sudo dnf install -y python3-devel
+          dnf install -y python3-devel
 
           # Install Rust via rustup
           curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
