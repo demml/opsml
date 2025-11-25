@@ -1,7 +1,7 @@
 from typing import Tuple, cast
 
 import pandas as pd
-from opsml import (  # type: ignore
+from opsml import (
     CardRegistries,
     DataCard,
     ModelCard,
