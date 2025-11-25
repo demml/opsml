@@ -5,7 +5,7 @@
   let { data }: PageProps = $props();
 </script>
 
-<CardSearch 
+<CardSearch
   page={data.page}
   selectedName={data.selectedName} 
   selectedSpace={data.selectedSpace}
