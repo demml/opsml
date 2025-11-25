@@ -154,14 +154,17 @@ jobs:
         with:
           python-version: ${{ env.INTERPRETER }}
 
-      - name: Install Python development libraries
-        if: contains(matrix.os, 'ubuntu') && matrix.container_image == null
+      - name: Set Python Linker Flags (Linux/ARM)
+        # Only run for Linux targets that are NOT in a container (where the environment setup is different)
+        if: |
+          (matrix.target == 'aarch64-unknown-linux-gnu' || matrix.target == 'x86_64-unknown-linux-gnu')
+          && matrix.container_image == null
+        shell: bash
         run: |
-          sudo apt-get update -y
-          sudo apt-get install -y \
-            python${{ env.INTERPRETER }}-dev \
-            libpython${{ env.INTERPRETER }}-dev \
-            pkg-config
+          PYTHON_LIB_DIR=$(python -c "import sysconfig; print(sysconfig.get_config_var('LIBDIR'))")
+          PYTHON_LIB_NAME="python${{ env.INTERPRETER }}$(python -c 'import sys; print(sys.abiflags)')"
+          echo "RUSTFLAGS=${RUSTFLAGS} -C link-arg=-L${PYTHON_LIB_DIR} -C link-arg=-l${PYTHON_LIB_NAME}" >> $GITHUB_ENV
+          echo "Setting Linker Path: ${PYTHON_LIB_DIR} / -l${PYTHON_LIB_NAME}"
 
       - uses: pnpm/action-setup@v4
         name: Setup pnpm (Ubuntu)
