@@ -48,14 +48,6 @@ jobs:
             container_image: null
             tag: ubuntu
 
-          - os: ubuntu-22.04-arm
-            target: aarch64-unknown-linux-gnu
-            archive: tar.gz
-            binary_name: opsml-server
-            archive_name: opsml-server-aarch64-linux-gnu-rocky
-            container_image: rockylinux:9
-            tag: rocky
-
           - os: macos-15-intel
             target: x86_64-apple-darwin
             archive: zip
@@ -80,47 +72,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
-      - name: Install Rocky Deps Arm
-        if: matrix.container_image == 'rockylinux:9' && contains(matrix.os, 'ubuntu-22.04-arm')
-        run: |
-          dnf install -y --allowerasing gcc make curl pkgconf openssl-devel wget perl pkg-config
-          dnf install -y python3-devel
-
-          PY_CONFIG_FLAGS=$(python3-config --ldflags --embed || python3-config --ldflags)
-
-
-          LINK_ARGS=""
-          for flag in $PY_CONFIG_FLAGS; do
-            LINK_ARGS="$LINK_ARGS -C link-arg=$flag"
-          done
-
-          # 4. Export to GITHUB_ENV
-          echo "RUSTFLAGS=${RUSTFLAGS} ${LINK_ARGS}" >> $GITHUB_ENV
-
-          echo "Computed RUSTFLAGS: ${LINK_ARGS}"
-
-          # Install Rust via rustup
-          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-
-          # Add Rust to PATH for subsequent steps
-          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
-
-          # Source for this step
-          source $HOME/.cargo/env
-
-          echo "Installing CMake 3.26.4..."
-          curl -L https://github.com/Kitware/CMake/releases/download/v3.26.4/cmake-3.26.4-linux-aarch64.sh -o cmake.sh
-          chmod +x cmake.sh
-          ./cmake.sh --skip-license --prefix=/usr/local
-          cmake --version
-
-          # Install Node.js 22
-          curl -fsSL https://rpm.nodesource.com/setup_22.x | bash -
-          dnf install -y nodejs
-
-          # Install pnpm
-          npm install -g pnpm@10
 
       - name: Install Rocky Deps
         if: matrix.container_image == 'rockylinux:9' && !contains(matrix.os, 'ubuntu-22.04-arm')
@@ -352,9 +303,6 @@ jobs:
           - image: "debian"
             tag_suffix: "debian"
             artifact: "opsml-server-aarch64-linux-gnu"
-          - image: "rocky"
-            tag_suffix: "rocky-minimal"
-            artifact: "opsml-server-aarch64-linux-gnu-rocky"
 
     steps:
       - name: Checkout Code

@@ -36,6 +36,7 @@ from ._opsml import (  # top-level modules; # App; # Card; # Data; Experiment; #
     ModelLoadKwargs,
     ModelSaveKwargs,
     NumpyData,
+    OnnxModel,
     PandasData,
     PolarsData,
     Prompt,
@@ -109,4 +110,5 @@ __all__ = [
     "CatBoostModel",
     "Prompt",
     "__version__",
+    "OnnxModel",
 ]
