@@ -8,24 +8,25 @@
   import type { AnyCard } from "./card_interfaces/enum";
   import VersionButton from "./VersionButton.svelte";
   import { ServerPaths } from "$lib/components/api/routes";
+  import { getVersionPage } from "../api/registry";
 
 
-  let {  metadata, registry, versionPage, cardRegistryStats } = $props<{ 
+  let {  metadata, registry, versionPage, cardRegistryStats } = $props<{
       metadata: AnyCard
-      registry: RegistryType, 
-      versionPage: VersionPageResponse, 
+      registry: RegistryType,
+      versionPage: VersionPageResponse,
       cardRegistryStats: RegistryStatsResponse
   }>();
 
   let currentPage = $state(1);
   let totalPages = $state(1);
-  
+
   // registry-specific state
   let registryPage = $state<VersionPageResponse>(versionPage);
   let registryStats = $state<RegistryStatsResponse>(cardRegistryStats);
 
   const changePage = async function (page: number) {
-    registryPage = await createInternalApiClient(fetch).post(ServerPaths.VERSION_PAGE, { registry, space: metadata.space, name: metadata.name, page });
+    registryPage = await getVersionPage(fetch, registry, metadata.space, metadata.name, page);
     currentPage = page;
   }
 
@@ -34,7 +35,7 @@
   });
 
   </script>
-  
+
   <div class="flex-1 mx-auto w-10/12 pb-10 flex justify-center overflow-auto px-4 pt-4">
 
     <div class="grid grid-cols-1 w-full">
@@ -70,29 +71,29 @@
             />
           {/each}
         </div>
-    
+
         <div class="flex justify-center pt-4 gap-2">
-    
+
           {#if currentPage > 1}
             <button class="btn text-sm bg-surface-50 border-black border-2 shadow-small shadow-hover-small h-9" onclick={() => changePage(currentPage - 1)}>
               <ArrowLeft color="#5948a3"/>
             </button>
           {/if}
-          
+
           <div class="flex bg-surface-50 border-black border-2 text-center items-center rounded-base px-2 shadow-small h-9">
             <span class="text-primary-800 text-sm mr-1">{currentPage}</span>
             <span class="text-primary-400 text-sm">of {totalPages}</span>
           </div>
-    
+
           {#if currentPage < totalPages}
             <button class="btn text-sm bg-surface-50 border-black border-2 shadow-small shadow-hover-small h-9" onclick={() => changePage(currentPage + 1)}>
               <ArrowRight color="#5948a3"/>
             </button>
           {/if}
-        
+
         </div>
       </div>
 
     </div>
-  
+
   </div>

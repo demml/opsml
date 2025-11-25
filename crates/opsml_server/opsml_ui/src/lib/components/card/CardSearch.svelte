@@ -16,7 +16,7 @@
     selectedName: string | undefined;
     selectedSpace: string | undefined;
   }>();
- 
+
   let viewState = $state(true);
   let currentPage = $state(1);
   let totalPages = $state(1);
@@ -24,6 +24,7 @@
 
   let filteredSpaces: string[] = $state([]);
   let filteredTags: string[] = $state([]);
+  let isInitialMount = $state(true);
 
   let registryType = $state<RegistryType>(page.registry_type);
   let registryPage = $state<QueryPageResponse>(page.registryPage);
@@ -54,16 +55,22 @@
     }, 100);
   }
 
-  // effect to run SearchPage when filteredSpaces changes
   $effect(() => {
-    if (filteredSpaces.length > 0 ||  filteredTags.length > 0) {
-      onInputChange();
+
+    void filteredSpaces;
+    void filteredTags;
+
+    if (isInitialMount) {
+      isInitialMount = false;
+      return;
     }
+
+    onInputChange();
   });
 
   const searchPage = async function () {
-  [registryPage, registryStats] = await Promise.all([ 
-    getRegistryPage(fetch, registryType, undefined, filteredSpaces, artifactSearchQuery, filteredTags, 1), 
+  [registryPage, registryStats] = await Promise.all([
+    getRegistryPage(fetch, registryType, undefined, filteredSpaces, artifactSearchQuery, filteredTags, 1),
     getRegistryStats(fetch, registryType, artifactSearchQuery, filteredSpaces, filteredTags)
   ]);
   currentPage = 1;
@@ -83,9 +90,9 @@
 <div class="flex flex-col mx-auto w-11/12 pt-4 px-4 pb-10">
   <div class="inline-flex items-center bg-surface-50 border-black border-2 shadow-small mb-4 px-3 py-2 rounded-2xl self-start">
     <p class="mr-2 font-bold text-primary-800">Table View</p>
-    <Switch 
-      name="viewSwitch" 
-      checked={viewState} 
+    <Switch
+      name="viewSwitch"
+      checked={viewState}
       thumbInactive="bg-primary-500"
       thumbActive="bg-white"
       controlActive="bg-primary-500 border-black border-1"
@@ -106,7 +113,7 @@
       />
 
       <hr class="hr" />
-      
+
       <MultiComboBoxDropDown
         boxId="tag-search-input"
         label="Search Tags"
@@ -114,7 +121,7 @@
         availableOptions={availableTags}
       />
     </div>
-  
+
     <div class="col-span-1 lg:col-span-4 gap-1 p-4 flex-1 flex-col rounded-base border-primary-500 border-2 shadow-primary bg-surface-50 h-auto">
       <div class="flex flex-row items-center gap-2 pb-2">
         <div class="rounded-full bg-surface-200 border-black border-2 p-1 shadow-small">
@@ -162,7 +169,7 @@
           {/each}
         </div>
       {/if}
-      
+
       <div class="flex justify-center pt-4 gap-2">
         {#if currentPage > 1}
           <button class="btn bg-surface-50 border-black border-2 shadow-small shadow-hover-small h-9" onclick={() => changePage(currentPage - 1)}>
