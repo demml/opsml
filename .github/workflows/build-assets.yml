@@ -154,6 +154,15 @@ jobs:
         with:
           python-version: ${{ env.INTERPRETER }}
 
+      - name: Install Python development libraries
+        if: contains(matrix.os, 'ubuntu') && matrix.container_image == null
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y \
+            python${{ env.INTERPRETER }}-dev \
+            libpython${{ env.INTERPRETER }}-dev \
+            pkg-config
+
       - uses: pnpm/action-setup@v4
         name: Setup pnpm (Ubuntu)
         if: matrix.container_image == null
