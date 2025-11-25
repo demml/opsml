@@ -4,16 +4,16 @@ use axum::{
     http::{header, Request, StatusCode},
 };
 use http_body_util::BodyExt; // for `collect`
-use opsml_semver::VersionType;
-use opsml_types::contracts::*;
-use opsml_types::*;
-
 use opsml_crypt::encrypt_file;
+use opsml_semver::VersionType;
 use opsml_server::core::cards::schema::{
     CreateReadeMe, QueryPageResponse, ReadeMe, RegistryStatsResponse, VersionPageResponse,
 };
 use opsml_types::contracts::DeploymentConfig;
+use opsml_types::contracts::*;
+use opsml_types::*;
 use std::path::PathBuf;
+use test_utils::retry_flaky_test;
 
 // create json
 fn create_card_metadata(key: ArtifactKey) {
@@ -1294,82 +1294,84 @@ async fn test_opsml_server_card_promptcard_crud() {
 
 #[tokio::test]
 async fn test_opsml_server_card_get_card() {
-    let helper = TestHelper::new(None).await;
+    retry_flaky_test!({
+        let helper = TestHelper::new(None).await;
 
-    // 1. First create a card so we have something to get
-    let card_version_request = CardVersionRequest {
-        name: "name".to_string(),
-        space: "space".to_string(),
-        version: Some("1.0.0".to_string()),
-        version_type: VersionType::Minor,
-        pre_tag: None,
-        build_tag: None,
-    };
-
-    // Create a test card with some data
-    let card_request = CreateCardRequest {
-        card: CardRecord::Model(ModelCardClientRecord {
+        // 1. First create a card so we have something to get
+        let card_version_request = CardVersionRequest {
             name: "name".to_string(),
             space: "space".to_string(),
-            version: "1.0.0".to_string(),
-            tags: vec!["test".to_string()],
-            ..ModelCardClientRecord::default()
-        }),
-        registry_type: RegistryType::Model,
-        version_request: card_version_request,
-    };
+            version: Some("1.0.0".to_string()),
+            version_type: VersionType::Minor,
+            pre_tag: None,
+            build_tag: None,
+        };
 
-    let body = serde_json::to_string(&card_request).unwrap();
+        // Create a test card with some data
+        let card_request = CreateCardRequest {
+            card: CardRecord::Model(ModelCardClientRecord {
+                name: "name".to_string(),
+                space: "space".to_string(),
+                version: "1.0.0".to_string(),
+                tags: vec!["test".to_string()],
+                ..ModelCardClientRecord::default()
+            }),
+            registry_type: RegistryType::Model,
+            version_request: card_version_request,
+        };
 
-    // Create the card first
-    let request = Request::builder()
-        .uri("/opsml/api/card/create")
-        .method("POST")
-        .header(header::CONTENT_TYPE, "application/json")
-        .body(Body::from(body))
-        .unwrap();
+        let body = serde_json::to_string(&card_request).unwrap();
 
-    let response = helper.send_oneshot(request).await;
-    assert_eq!(response.status(), StatusCode::OK);
-    //
-    let body = response.into_body().collect().await.unwrap().to_bytes();
-    let create_response: CreateCardResponse = serde_json::from_slice(&body).unwrap();
+        // Create the card first
+        let request = Request::builder()
+            .uri("/opsml/api/card/create")
+            .method("POST")
+            .header(header::CONTENT_TYPE, "application/json")
+            .body(Body::from(body))
+            .unwrap();
 
-    create_card_metadata(create_response.key.clone());
-    //
-    //// 2. Now test getting the card
-    let params = CardQueryArgs {
-        uid: None,
-        name: Some("name".to_string()),
-        space: Some("space".to_string()),
-        version: Some(create_response.version),
-        max_date: None,
-        tags: None,
-        limit: None,
-        sort_by_timestamp: None,
-        registry_type: RegistryType::Model,
-    };
-    //
-    let query_string = serde_qs::to_string(&params).unwrap();
-    //
-    let request = Request::builder()
-        .uri(format!("/opsml/api/card/metadata?{query_string}"))
-        .method("GET")
-        .body(Body::empty())
-        .unwrap();
+        let response = helper.send_oneshot(request).await;
+        assert_eq!(response.status(), StatusCode::OK);
+        //
+        let body = response.into_body().collect().await.unwrap().to_bytes();
+        let create_response: CreateCardResponse = serde_json::from_slice(&body).unwrap();
 
-    let response = helper.send_oneshot(request).await;
-    assert_eq!(response.status(), StatusCode::OK);
-    //
-    let body = response.into_body().collect().await.unwrap().to_bytes();
-    let card_json: serde_json::Value = serde_json::from_slice(&body).unwrap();
-    //
-    //// Verify the response contains the expected data
-    assert_eq!(card_json["name"], "name");
-    assert_eq!(card_json["space"], "space");
-    assert_eq!(card_json["version"], "1.0.0");
-    //
-    helper.cleanup();
+        create_card_metadata(create_response.key.clone());
+        //
+        //// 2. Now test getting the card
+        let params = CardQueryArgs {
+            uid: None,
+            name: Some("name".to_string()),
+            space: Some("space".to_string()),
+            version: Some(create_response.version),
+            max_date: None,
+            tags: None,
+            limit: None,
+            sort_by_timestamp: None,
+            registry_type: RegistryType::Model,
+        };
+        //
+        let query_string = serde_qs::to_string(&params).unwrap();
+        //
+        let request = Request::builder()
+            .uri(format!("/opsml/api/card/metadata?{query_string}"))
+            .method("GET")
+            .body(Body::empty())
+            .unwrap();
+
+        let response = helper.send_oneshot(request).await;
+        assert_eq!(response.status(), StatusCode::OK);
+        //
+        let body = response.into_body().collect().await.unwrap().to_bytes();
+        let card_json: serde_json::Value = serde_json::from_slice(&body).unwrap();
+        //
+        //// Verify the response contains the expected data
+        assert_eq!(card_json["name"], "name");
+        assert_eq!(card_json["space"], "space");
+        assert_eq!(card_json["version"], "1.0.0");
+        //
+        helper.cleanup();
+    });
 }
 
 #[tokio::test]

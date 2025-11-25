@@ -43,6 +43,7 @@ opsml-toml = { path = "crates/opsml_toml" }
 opsml-types = { path = "crates/opsml_types" }
 opsml-utils = { path = "crates/opsml_utils" }
 opsml-version = { path = "crates/opsml_version" }
+test_utils = { path = "crates/test_utils" }
 
 aes-gcm = "0.*"
 anyhow = "1.0.93"
