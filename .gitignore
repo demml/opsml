@@ -136,8 +136,6 @@ crates/opsml_server/opsml_ui/site/*
 !crates/opsml_server/opsml_ui/site/.gitkeep
 pnpm-lock.yaml
 py-opsml/examples/benchmarks/_mlflow/uv.lock
-py-opsml/examples/benchmarks/_opmsl/uv.lock
-py-opsml/python/opsml/scouter/_*.pyi
-py-opsml/python/opsml/genai/_*.pyi
-py-opsml/python/opsml/_*.pyi
+py-opsml/examples/benchmarks/_opsml/uv.lock
 py-opsml/site/*
+py-opsml/python/opsml/stubs.pyi

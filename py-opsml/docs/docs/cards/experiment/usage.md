@@ -51,14 +51,14 @@ with start_experiment("opsml") as exp:
 
 ### Artifacts
 
-You can log artifacts from your local filesystem via the `log_artifact` or `log_artifacts` methods. **Note** - artifacts must already be saved to disk before they can be logged. More information can be found [here](../../api/experiment.md#opsml.experiment._experiment.Experiment.log_artifact)
+You can log artifacts from your local filesystem via the `log_artifact` or `log_artifacts` methods. **Note** - artifacts must already be saved to disk before they can be logged. More information can be found [here](/opsml/docs/api/opsml/#opsml._opsml.Experiment.log_artifact)
 
 - **log_artifact**: Intended for uploading a single artifact to the opsml server
 - **log_artifacts**: Intended for uploading multiple artifacts to the opsml server. Must be a local directory
 
 ### Parameters
 
-You can log parameters from your experiment via the `log_parameter` or `log_parameters` methods. **Note** - parameters must be simple data types (e.g. int, float, str) before they can be logged. More information can be found [here](../../api/experiment.md#opsml.experiment._experiment.Experiment.log_parameter)
+You can log parameters from your experiment via the `log_parameter` or `log_parameters` methods. **Note** - parameters must be simple data types (e.g. int, float, str) before they can be logged. More information can be found [here](/opsml/docs/api/opsml/#opsml._opsml.Experiment.log_parameter)
 
 - **log_parameter**: Intended for uploading a single parameter to the opsml server. Must be an integer, float or string.
 - **log_parameters**: Intended for uploading multiple parameters to the opsml server. Can either be a list of `Parameter` objects or a dictionary of parameter names to values.
@@ -66,14 +66,14 @@ You can log parameters from your experiment via the `log_parameter` or `log_para
 
 ### Metrics
 
-You can log metrics from your experiment via the `log_metric` or `log_metrics` methods. **Note** - metrics are expected to be floats. More information can be found [here](../../api/experiment.md#opsml.experiment._experiment.Experiment.log_metric)
+You can log metrics from your experiment via the `log_metric` or `log_metrics` methods. **Note** - metrics are expected to be floats. More information can be found [here](/opsml/docs/api/opsml/#opsml._opsml.Experiment.log_metric)
 
 - **log_metric**: Intended for uploading a single metric to the opsml server. Must be an integer, float or string.
 - **log_metrics**: Intended for uploading a list of `Metric` to the opsml server.
 
 ### Figures
 
-Opsml also allows you to associate figures to a given experiment through either the `log_figure_from_path` or `log_figure` methods. **Note** - To use `log_figure_from_path`, the figure must be saved to disk first. `log_figure` expects the figure object to be a `matplotlib.figure.Figure`. More information can be found [here](../../api/experiment.md#opsml.experiment._experiment.Experiment.log_figure)
+Opsml also allows you to associate figures to a given experiment through either the `log_figure_from_path` or `log_figure` methods. **Note** - To use `log_figure_from_path`, the figure must be saved to disk first. `log_figure` expects the figure object to be a `matplotlib.figure.Figure`. More information can be found [here](/opsml/docs/api/opsml/#opsml._opsml.Experiment.log_figure)
 
 - **log_figure_from_path**: Intended for uploading a figure from a file path to the opsml server.
 - **log_figure**: Intended for uploading a figure object to the opsml server.

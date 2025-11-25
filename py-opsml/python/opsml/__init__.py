@@ -1,147 +1,114 @@
-# type: ignore
-# pylint: disable=no-name-in-module,import-error
-# opsml/__init__.py
-
-from .opsml import (  # noqa: F401
+# mypy: disable-error-code="attr-defined"
+# pylint: disable=no-name-in-module
+# python/opsml/__init__.py
+from . import (
     app,
     card,
-    cli,
     data,
     evaluate,
     experiment,
     genai,
-    get_opsml_version,
     logging,
     mock,
     model,
     scouter,
     types,
 )
+from ._opsml import (  # top-level modules; # App; # Card; # Data; Experiment; # model
+    AppState,
+    ArrowData,
+    Card,
+    CardRegistries,
+    CardRegistry,
+    CatBoostModel,
+    DataCard,
+    DataInterface,
+    Experiment,
+    ExperimentCard,
+    HuggingFaceModel,
+    HuggingFaceOnnxArgs,
+    HuggingFaceORTModel,
+    HuggingFaceTask,
+    LightGBMModel,
+    LightningModel,
+    ModelCard,
+    ModelInterface,
+    ModelLoadKwargs,
+    ModelSaveKwargs,
+    NumpyData,
+    OnnxModel,
+    PandasData,
+    PolarsData,
+    Prompt,
+    PromptCard,
+    RegistryType,
+    ReloadConfig,
+    ServiceCard,
+    SklearnModel,
+    SqlData,
+    TaskType,
+    TensorFlowModel,
+    TorchModel,
+    XGBoostModel,
+    get_opsml_version,
+    start_experiment,
+)
 
-CardRegistry = card.CardRegistry
-CardRegistries = card.CardRegistries
-RegistryType = card.RegistryType
-
-# model
-ModelCard = card.ModelCard
-ModelCardMetadata = card.ModelCardMetadata
-HuggingFaceOnnxArgs = model.HuggingFaceOnnxArgs
-HuggingFaceORTModel = model.HuggingFaceORTModel
-HuggingFaceTask = model.HuggingFaceTask
-ModelInterfaceSaveMetadata = model.ModelInterfaceSaveMetadata
-ModelInterface = model.ModelInterface
-TaskType = model.TaskType
-SklearnModel = model.SklearnModel
-DataProcessor = model.DataProcessor
-LightGBMModel = model.LightGBMModel
-ModelType = model.ModelType
-XGBoostModel = model.XGBoostModel
-TorchModel = model.TorchModel
-LightningModel = model.LightningModel
-HuggingFaceModel = model.HuggingFaceModel
-CatBoostModel = model.CatBoostModel
-OnnxModel = model.OnnxModel
-OnnxSession = model.OnnxSession
-TensorFlowModel = model.TensorFlowModel
-ModelLoadKwargs = model.ModelLoadKwargs
-ModelSaveKwargs = model.ModelSaveKwargs
-
-# data
-DataCard = card.DataCard
-DataCardMetadata = card.DataCardMetadata
-PandasData = data.PandasData
-PolarsData = data.PolarsData
-ArrowData = data.ArrowData
-NumpyData = data.NumpyData
-TorchData = data.TorchData
-SqlData = data.SqlData
-DataInterface = data.DataInterface
-DataSaveKwargs = data.DataSaveKwargs
-DataLoadKwargs = data.DataLoadKwargs
-
-# Experiment
-ExperimentCard = card.ExperimentCard
-start_experiment = experiment.start_experiment
-get_experiment_metrics = experiment.get_experiment_metrics
-get_experiment_parameters = experiment.get_experiment_parameters
-
-# logging
-RustyLogger = logging.RustyLogger
-LoggingConfig = logging.LoggingConfig
-WriteLevel = logging.WriteLevel
-LogLevel = logging.LogLevel
-
-
-VersionType = types.VersionType
-
-# Potato Head
-PromptCard = card.PromptCard
-Prompt = genai.Prompt
-Message = genai.Message
-ModelSettings = genai.ModelSettings
-
-# Deck
-ServiceCard = card.ServiceCard
-Card = card.Card
-
-# CLI
-run_opsml_cli = cli.run_opsml_cli
-
-__version__ = get_opsml_version()
-
+__version__: str = get_opsml_version()
 
 __all__ = [
-    "CardRegistry",
+    "types",
+    "card",
+    "data",
+    "model",
+    "experiment",
+    "evaluate",
+    "app",
+    "logging",
+    "mock",
+    "scouter",
+    "genai",
+    "cli",
+    ## App
+    "AppState",
+    "ReloadConfig",
+    ## Card
+    "Card",
     "CardRegistries",
-    "RegistryType",
+    "CardRegistry",
+    "DataCard",
     "ModelCard",
-    "ModelCardMetadata",
+    "PromptCard",
+    "ServiceCard",
+    "RegistryType",
+    "ExperimentCard",
+    ## Data
+    "DataInterface",
+    "NumpyData",
+    "PandasData",
+    "PolarsData",
+    "SqlData",
+    "ArrowData",
+    # Experiment
+    "start_experiment",
+    "Experiment",
+    ## model
+    "ModelInterface",
+    "ModelLoadKwargs",
+    "ModelSaveKwargs",
+    "SklearnModel",
+    "TaskType",
+    "TensorFlowModel",
+    "TorchModel",
+    "XGBoostModel",
+    "HuggingFaceModel",
     "HuggingFaceOnnxArgs",
     "HuggingFaceORTModel",
     "HuggingFaceTask",
-    "ModelInterfaceSaveMetadata",
-    "ModelInterface",
-    "TaskType",
-    "SklearnModel",
-    "DataProcessor",
     "LightGBMModel",
-    "ModelType",
-    "XGBoostModel",
-    "TorchModel",
     "LightningModel",
-    "HuggingFaceModel",
     "CatBoostModel",
-    "OnnxModel",
-    "OnnxSession",
-    "TensorFlowModel",
-    "ModelLoadKwargs",
-    "ModelSaveKwargs",
-    "DataCard",
-    "DataCardMetadata",
-    "PandasData",
-    "PolarsData",
-    "ArrowData",
-    "NumpyData",
-    "TorchData",
-    "SqlData",
-    "DataInterface",
-    "DataSaveKwargs",
-    "DataLoadKwargs",
-    "ExperimentCard",
-    "start_experiment",
-    "get_experiment_metrics",
-    "get_experiment_parameters",
-    "RustyLogger",
-    "LoggingConfig",
-    "WriteLevel",
-    "LogLevel",
-    "VersionType",
-    "PromptCard",
     "Prompt",
-    "Message",
-    "ModelSettings",
-    "ServiceCard",
-    "Card",
-    "run_opsml_cli",
     "__version__",
+    "OnnxModel",
 ]

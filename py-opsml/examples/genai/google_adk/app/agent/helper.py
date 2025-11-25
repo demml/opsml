@@ -4,7 +4,8 @@ from google.genai import types
 from opsml.app import AppState
 from opsml.card import PromptCard
 from opsml.logging import LoggingConfig, LogLevel, RustyLogger
-from opsml.scouter.queue import LLMRecord, Queue
+from opsml.scouter import LLMRecord, Queue
+
 
 from .agents import get_agents
 from .utils import parse_response_events, parse_shipment_events

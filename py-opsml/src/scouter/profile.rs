@@ -1,8 +1,7 @@
 use pyo3::prelude::*;
 use scouter_client::*;
 
-#[pymodule]
-pub fn profile(m: &Bound<'_, PyModule>) -> PyResult<()> {
+pub fn add_profile_module(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<DataProfile>()?;
     m.add_class::<FeatureProfile>()?;
     m.add_class::<Distinct>()?;

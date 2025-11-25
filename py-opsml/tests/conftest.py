@@ -7,19 +7,19 @@ from typing import Tuple, Dict
 from pydantic import BaseModel
 import sys
 import platform
-from opsml import ModelInterface
 from opsml.model import (
     ModelInterfaceSaveMetadata,
     ModelInterfaceMetadata,
     DataProcessor,
     ProcessorType,
+    ModelInterface,
 )
 from typing import cast
 import pandas as pd
 from pathlib import Path
 from opsml.model import SklearnModel, TaskType
 from opsml.data import PandasData
-from opsml.helpers.data import create_fake_data  # type: ignore
+from opsml.helpers.data import create_fake_data
 from sklearn.preprocessing import StandardScaler  # type: ignore
 from sklearn import ensemble  # type: ignore
 from opsml.data import ColType, ColumnSplit, DataSplit

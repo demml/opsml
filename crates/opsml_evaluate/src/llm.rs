@@ -1,5 +1,5 @@
 use crate::error::EvaluationError;
-use opsml_state::app_state;
+use opsml_state::block_on;
 use opsml_types::contracts::evaluation::LLMEvalTaskResultRecord;
 use opsml_utils::get_utc_datetime;
 use pyo3::prelude::*;
@@ -27,11 +27,10 @@ pub fn evaluate_llm(
     config: Option<EvaluationConfig>,
     log: bool,
 ) -> Result<LLMEvalResults, EvaluationError> {
-    let runtime = app_state().start_runtime();
     let config = Arc::new(config.unwrap_or_default());
 
     // Create runtime and execute evaluation pipeline
-    let mut results = runtime.block_on(async {
+    let mut results = block_on(async {
         let workflow = workflow_from_eval_metrics(metrics, "LLM Evaluation").await?;
         async_evaluate_llm(workflow, records, &config).await
     })?;

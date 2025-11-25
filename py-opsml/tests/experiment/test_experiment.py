@@ -5,13 +5,10 @@ from opsml.experiment import (
 )
 import matplotlib.pyplot as plt
 import seaborn as sns  # type: ignore
-from opsml import (  # type: ignore
+from opsml import (
     start_experiment,
-    get_experiment_metrics,
-    get_experiment_parameters,
     DataCard,
     ModelCard,
-    ModelCardMetadata,
     PandasData,
     SklearnModel,
     Prompt,
@@ -22,6 +19,8 @@ from opsml import (  # type: ignore
     ModelSaveKwargs,
     ExperimentCard,
 )
+from opsml.experiment import get_experiment_metrics, get_experiment_parameters
+from opsml.model import ModelCardMetadata
 import numpy as np
 from opsml.card import CardRegistries
 import joblib  # type: ignore

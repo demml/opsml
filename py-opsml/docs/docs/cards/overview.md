@@ -39,13 +39,13 @@ All cards require a set of arguments in order to be registered. This is to ensur
 
 - **space**: The space associated with the card. This is typically the name of the organization or team that owns the card.
 - **name**: The name of the card. This is typically a short, descriptive name that identifies the card.
-  
+
 ### Naming
 
 All cards follow standardized naming conventions of `{space}/{name}/v{version}`. This is to ensure that cards are easily tracked and managed.
 
 !!!note
-    These arguments can also be supplied through a pyproject.toml tool configuration. See the [tools](../tools.md) section for more information.
+    These arguments can also be supplied through a pyproject.toml tool configuration. See the [tools](/opsml/docs/automation/pyproject/) section for more information.
 
 ## Registries
 
@@ -246,8 +246,8 @@ model_registry.delete_card(card)
 ```
 
 #### For detailed information on each card type, see the following sections:
-- [DataCard](./datacard.md)
-- [ModelCard](./modelcard.md)
-- [ExperimentCard](./experimentcard.md)
-- [PromptCard](./promptcard.md)
+- [DataCard](/opsml/docs/cards/datacard/)
+- [ModelCard](/opsml/docs/cards/modelcard/)
+- [ExperimentCard](/opsml/docs/cards/experimentcard/)
+- [PromptCard](/opsml/docs/cards/promptcard/)
 
