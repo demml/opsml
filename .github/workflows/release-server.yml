@@ -75,7 +75,7 @@ jobs:
         with:
           target: ${{ matrix.target }}
           manylinux: ${{ matrix.manylinux }}
-          args: --release --out dist
+          args: --release --out dist --features server
           rust-toolchain: stable
           docker-options: ${{ matrix.docker-options }}
           working-directory: ./py-opsml
