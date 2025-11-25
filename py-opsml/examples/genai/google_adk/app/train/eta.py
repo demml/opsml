@@ -3,7 +3,7 @@ from opsml.types import DataType
 from opsml.helpers.data import create_fake_data
 from opsml.scouter.alert import PsiAlertConfig
 from opsml.scouter.drift import PsiDriftConfig
-from opsml.scouter.types import CommonCrons
+from opsml.scouter import CommonCrons
 from sklearn import ensemble  # type: ignore
 
 

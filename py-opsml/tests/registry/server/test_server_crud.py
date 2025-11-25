@@ -1,18 +1,17 @@
-from opsml import (  # type: ignore
+from opsml.mock import OpsmlServerContext
+from opsml.card import (
+    RegistryMode,
+    CardList,
     CardRegistry,
-    RegistryType,
     ModelCard,
     DataCard,
     PromptCard,
-    Prompt,
-    ModelLoadKwargs,
-    ModelSaveKwargs,
+    RegistryType,
 )
-from opsml.mock import OpsmlServerContext
-from opsml.card import RegistryMode, CardList  # type: ignore
-from opsml.model import SklearnModel  # type: ignore
-from opsml.data import PandasData  # type: ignore
-from opsml.types import DriftArgs  # type: ignore
+from opsml.genai import Prompt
+from opsml.model import SklearnModel, ModelLoadKwargs, ModelSaveKwargs
+from opsml.data import PandasData
+from opsml.types import DriftArgs
 from pathlib import Path
 import shutil
 import pytest

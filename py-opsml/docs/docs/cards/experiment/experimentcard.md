@@ -4,7 +4,7 @@
 ### Creating an Experiment
 Experiments are unique context-managed executions that record all created cards and their associated metrics, params, and artifacts to a single card called a `Experimentcard`.
 
-If you're familiar with how other libraries do it, then nothing is really going to seem new. Refer to [usage](../experiment/usage.md) for more detailed information.
+If you're familiar with how other libraries do it, then nothing is really going to seem new. Refer to [usage](/opsml/docs/cards/experiment/usage/) for more detailed information.
 
 ### Traditional Example
 
@@ -29,7 +29,7 @@ with start_experiment(space="opsml", log_hardware=True) as exp: # (2)
             interface=random_forest_classifier,
             tags=["foo:bar", "baz:qux"],
         )
-    
+
     exp.register_card(modelcard) # (3)
     exp.log_metric("accuracy", 0.95) # (4)
     exp.log_parameter("epochs", 10) # (5)

@@ -2,7 +2,7 @@ from typing import Tuple, cast
 
 import pandas as pd
 from catboost import CatBoostRegressor  # type: ignore
-from opsml import CardRegistries, CatBoostModel, ModelCard, TaskType  # type: ignore
+from opsml import CardRegistries, CatBoostModel, ModelCard, TaskType
 from opsml.helpers.data import create_fake_data
 
 # start registries

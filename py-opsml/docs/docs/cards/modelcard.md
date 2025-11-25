@@ -5,7 +5,7 @@ ModelCards help you store, version, and track model objects.
 - **shareable**: All cards including ModelCards are shareable and searchable.
 - **auto-schema**: Auto-infer data schema.
 - **auto-metadata**: Extract model-specific metadata to associate with the card.
-- **versioning**: Semver for your model. 
+- **versioning**: Semver for your model.
 - **auto-onnx**: Optional automatic conversion of trained model into onnx model format.
 
 ## Create a Card

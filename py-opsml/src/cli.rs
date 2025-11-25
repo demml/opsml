@@ -11,8 +11,7 @@ pub fn run_opsml_cli() -> anyhow::Result<()> {
     run_cli(args)
 }
 
-#[pymodule]
-pub fn cli(m: &Bound<'_, PyModule>) -> PyResult<()> {
+pub fn add_cli_module(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(run_opsml_cli, m)?)?;
     m.add_function(wrap_pyfunction!(lock_service, m)?)?;
     m.add_function(wrap_pyfunction!(register_service, m)?)?;

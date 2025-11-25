@@ -61,6 +61,7 @@ pub struct CardArgs {
 }
 
 #[pyclass]
+#[pyo3(module = "opsml.card")]
 #[derive(Clone)]
 pub struct CardRegistry {
     registry_type: RegistryType,
@@ -798,6 +799,7 @@ impl CardRegistry {
 }
 
 #[pyclass]
+#[pyo3(module = "opsml.card")]
 #[derive(Clone)]
 pub struct CardRegistries {
     #[pyo3(get)]

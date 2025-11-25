@@ -10,7 +10,8 @@ use sysinfo::{Networks, System};
 use core::fmt::Debug;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[pyclass]
+#[pyclass(name = "ExperimentMetric")]
+#[pyo3(module = "opsml.experiment")]
 pub struct Metric {
     #[pyo3(get)]
     pub name: String,
@@ -124,7 +125,8 @@ impl EvalMetrics {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[pyclass]
+#[pyclass(name = "ExperimentMetrics")]
+#[pyo3(module = "opsml.experiment")]
 pub struct Metrics {
     #[pyo3(get)]
     pub metrics: Vec<Metric>,
@@ -191,6 +193,7 @@ impl ParameterValue {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[pyclass]
+#[pyo3(module = "opsml.experiment")]
 pub struct Parameter {
     #[pyo3(get)]
     pub name: String,
@@ -244,6 +247,7 @@ impl ParamIter {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[pyclass]
+#[pyo3(module = "opsml.experiment")]
 pub struct Parameters {
     #[pyo3(get)]
     pub parameters: Vec<Parameter>,

@@ -6,10 +6,12 @@ use opsml_client::base::{
 use opsml_settings::OpsmlConfig;
 use opsml_settings::OpsmlMode;
 use opsml_toml::{OpsmlTools, PyProjectToml};
+use std::future::Future;
 use std::path::Path;
 use std::sync::Arc;
 use std::sync::OnceLock;
 use std::sync::RwLock;
+use tokio::runtime::Handle;
 use tokio::runtime::Runtime;
 use tokio::sync::OnceCell;
 use tracing::debug;
@@ -112,8 +114,8 @@ impl OpsmlState {
         Ok(())
     }
 
-    pub fn start_runtime(&self) -> Arc<Runtime> {
-        self.runtime.clone()
+    pub fn handle(&self) -> Handle {
+        self.runtime.handle().clone()
     }
 
     pub fn block_on<F, T>(&self, future: F) -> T
@@ -174,4 +176,9 @@ async fn build_async_client() -> Arc<OpsmlApiAsyncClient> {
 
 pub async fn get_async_api_client() -> &'static Arc<OpsmlApiAsyncClient> {
     ASYNC_API_CLIENT.get_or_init(build_async_client).await
+}
+
+/// A safe utility function to block on an async future using the global multi-threaded runtime.
+pub fn block_on<F: Future>(future: F) -> F::Output {
+    app_state().block_on(future)
 }

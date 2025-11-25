@@ -71,7 +71,7 @@ nav:
       - "docs/cards/promptcard.md"
       - "docs/cards/servicecard.md"
   - Evaluation:
-      LLM: "docs/evaluation/llm.md"
+      - "docs/evaluation/genai.md"
   - Monitoring:
       - "docs/monitoring/overview.md"
   - Deployment:
@@ -93,25 +93,7 @@ nav:
   - Benchmarks:
       - "docs/benchmark/overview.md"
   - API Documentation:
-      - App: "docs/api/app.md"
-      - Cards: "docs/api/cards.md"
-      - Model: "docs/api/model.md"
-      - Experiment: "docs/api/experiment.md"
-      - Data: "docs/api/data.md"
-      - GenAI:
-          - Overview: "docs/api/genai/genai.md"
-          - Google: "docs/api/genai/google/google.md"
-          - OpenAI: "docs/api/genai/openai/openai.md"
-      - Types: "docs/api/types.md"
-      - Logging: "docs/api/logging.md"
-      - Mock: "docs/api/mock.md"
-      - Scouter:
-          - Alert: "docs/api/scouter/alert.md"
-          - Client: "docs/api/scouter/client.md"
-          - Drift: "docs/api/scouter/drift.md"
-          - Profile: "docs/api/scouter/profile.md"
-          - Queue: "docs/api/scouter/queue.md"
-          - Types: "docs/api/scouter/types.md"
+      - API: "docs/api/stubs.md"
 
 markdown_extensions:
   - tables

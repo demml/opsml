@@ -3,8 +3,7 @@ use opsml_semver::VersionType;
 use opsml_types::{CommonKwargs, DataType, DriftProfileUri, SaveName, SaverPath, Suffix};
 use pyo3::prelude::*;
 
-#[pymodule]
-pub fn types(m: &Bound<'_, PyModule>) -> PyResult<()> {
+pub fn add_types_module(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<CommonKwargs>()?;
     m.add_class::<SaveName>()?;
     m.add_class::<Suffix>()?;
