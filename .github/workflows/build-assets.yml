@@ -87,6 +87,20 @@ jobs:
           dnf install -y --allowerasing gcc make curl pkgconf openssl-devel wget perl pkg-config
           dnf install -y python3-devel
 
+          PYTHON_VERSION=$(python3 -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')")
+          PYTHON_LDFLAGS=$(pkg-config --libs-only-L python3 || true)
+          PYTHON_LIBS=$(pkg-config --libs-only-l python3 || true)
+
+          if [ -z "$PYTHON_LDFLAGS" ]; then
+              PYTHON_LIB_DIR=$(python3 -c "import sysconfig; print(sysconfig.get_config_var('LIBDIR'))")
+              PYTHON_LIB_NAME="python${PYTHON_VERSION}"
+              PYTHON_LDFLAGS="-L${PYTHON_LIB_DIR}"
+              PYTHON_LIBS="-l${PYTHON_LIB_NAME}"
+          fi
+
+          echo "RUSTFLAGS=${RUSTFLAGS} -C link-arg=${PYTHON_LDFLAGS} -C link-arg=${PYTHON_LIBS}" >> $GITHUB_ENV
+          echo "Python Linker Flags set to: -C link-arg=${PYTHON_LDFLAGS} -C link-arg=${PYTHON_LIBS}"
+
           # Install Rust via rustup
           curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 
