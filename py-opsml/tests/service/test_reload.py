@@ -17,7 +17,7 @@ from opsml.card import download_service
 from opsml.scouter import Metrics, Metric
 import numpy as np
 
-from opsml import (  # type: ignore
+from opsml import (
     start_experiment,
     ModelCard,
     SklearnModel,

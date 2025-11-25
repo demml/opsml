@@ -1,5 +1,6 @@
 # mypy: disable-error-code="attr-defined"
 from .._opsml import (
+    AlertThreshold,
     CommonCrons,
     CustomDriftProfile,
     CustomMetric,
@@ -99,4 +100,5 @@ __all__ = [
     "KafkaConfig",
     "RabbitMQConfig",
     "RedisConfig",
+    "AlertThreshold",
 ]

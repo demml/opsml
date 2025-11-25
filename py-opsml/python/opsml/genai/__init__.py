@@ -24,6 +24,7 @@ from .._opsml import (
     Usage,
     Workflow,
     WorkflowResult,
+    list_mcp_servers,
 )
 
 __all__ = [
@@ -51,4 +52,5 @@ __all__ = [
     "WorkflowResult",
     "Score",
     "Embedder",
+    "list_mcp_servers",
 ]
