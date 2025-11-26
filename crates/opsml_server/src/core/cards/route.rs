@@ -1,3 +1,5 @@
+use crate::core::cards::schema::FilterSummary;
+use crate::core::cards::schema::PageInfo;
 use crate::core::cards::schema::{
     CreateReadeMe, QueryPageResponse, ReadeMe, RegistryStatsResponse, VersionPageResponse,
 };
@@ -198,25 +200,78 @@ pub async fn retrieve_page(
     State(state): State<Arc<AppState>>,
     Json(params): Json<QueryPageRequest>,
 ) -> Result<Json<QueryPageResponse>, (StatusCode, Json<OpsmlServerError>)> {
+    const DEFAULT_LIMIT: i32 = 30;
+    const DEFAULT_SORT_BY: &str = "updated_at";
+
     let table = CardTable::from_registry_type(&params.registry_type);
-    let sort_by = params.sort_by.as_deref().unwrap_or("updated_at");
-    let page = params.page.unwrap_or(1);
-    let summaries = state
+    let cursor = params.get_cursor(DEFAULT_LIMIT, DEFAULT_SORT_BY);
+
+    debug!(
+        "Querying page: offset={}, limit={}, sort_by={}, filters={{search: {:?}, spaces: {:?}, tags: {:?}}}",
+        cursor.offset,
+        cursor.limit,
+        cursor.sort_by,
+        cursor.search_term,
+        cursor.spaces,
+        cursor.tags
+    );
+
+    let mut summaries = state
         .sql_client
         .query_page(
-            sort_by,
-            page,
-            params.search_term.as_deref(),
-            &params.spaces,
-            &params.tags,
+            &cursor.sort_by,
+            cursor.limit,
+            cursor.offset,
+            cursor.search_term.as_deref(),
+            &cursor.spaces,
+            &cursor.tags,
             &table,
         )
         .await
         .map_err(|e| {
-            error!("Failed to get page: {e}");
-            internal_server_error(e, "Failed to get page")
+            error!("Failed to query page: {e}");
+            internal_server_error(e, "Failed to query page")
         })?;
-    Ok(Json(QueryPageResponse { summaries }))
+
+    let has_next = summaries.len() > cursor.limit as usize;
+    if has_next {
+        summaries.pop();
+    }
+
+    let has_previous = !cursor.is_first_page();
+
+    let next_cursor = if has_next { Some(cursor.next()) } else { None };
+
+    let previous_cursor = if has_previous {
+        Some(cursor.previous())
+    } else {
+        None
+    };
+
+    debug!(
+        "Next cursor: {:?}, Previous cursor: {:?}",
+        next_cursor, previous_cursor
+    );
+
+    let page_info = PageInfo {
+        page_size: summaries.len(),
+        offset: cursor.offset,
+        filters: FilterSummary {
+            search_term: cursor.search_term.clone(),
+            spaces: cursor.spaces.clone(),
+            tags: cursor.tags.clone(),
+            sort_by: cursor.sort_by.clone(),
+        },
+    };
+
+    Ok(Json(QueryPageResponse {
+        items: summaries,
+        has_next,
+        next_cursor,
+        has_previous,
+        previous_cursor,
+        page_info,
+    }))
 }
 
 pub async fn get_version_page(

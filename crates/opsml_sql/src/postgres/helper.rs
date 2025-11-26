@@ -160,8 +160,8 @@ impl PostgresQueryHelper {
     pub fn get_experiment_metrics_insert_query(nbr_records: usize) -> String {
         let mut query = format!(
             "INSERT INTO {} (
-                experiment_uid, 
-                name, 
+                experiment_uid,
+                name,
                 value,
                 step,
                 timestamp,
@@ -226,14 +226,14 @@ impl PostgresQueryHelper {
         spaces: &[String],
         tags: &[String],
     ) -> String {
-        let mut binding_index = 2; // Start from 4 because $1, $2, $3 are used for space, name, search
+        let mut binding_index = 2;
 
         let space_filter = if !spaces.is_empty() {
             let condition = format!(" AND space = ANY(${binding_index})");
             binding_index += 1;
             condition
         } else {
-            "".to_string()
+            String::new()
         };
 
         let tag_filter = if !tags.is_empty() {
@@ -241,86 +241,63 @@ impl PostgresQueryHelper {
             binding_index += 1;
             condition
         } else {
-            "".to_string()
+            String::new()
         };
 
-        let versions_cte = format!(
-            "WITH versions AS (
-                SELECT 
-                    space, 
-                    name, 
-                    version, 
-                    ROW_NUMBER() OVER (PARTITION BY space, name ORDER BY created_at DESC) AS row_num 
+        // Single CTE with window functions for both stats and latest version
+        // LIMIT + 1 to detect if there are more rows
+        let query = format!(
+            "WITH card_aggregates AS (
+                SELECT
+                    space,
+                    name,
+                    version,
+                    uid,
+                    created_at,
+                    COUNT(*) OVER (PARTITION BY space, name) AS versions,
+                    MAX(created_at) OVER (PARTITION BY space, name) AS updated_at,
+                    ROW_NUMBER() OVER (PARTITION BY space, name ORDER BY created_at DESC) AS version_rank
                 FROM {table}
-                WHERE 1=1
-                AND ($1 IS NULL OR name LIKE $1 OR space LIKE $1)
-                {space_filter}
-                {tag_filter}
-            )"
-        );
-
-        let stats_cte = format!(
-            ", stats AS (
-                SELECT 
-                    space, 
-                    name, 
-                    COUNT(DISTINCT version) AS versions, 
-                    MAX(created_at) AS updated_at, 
-                    MIN(created_at) AS created_at 
-                FROM {table}
-                WHERE 1=1
-                AND ($1 IS NULL OR name LIKE $1 OR space LIKE $1)
-               
-                {tag_filter}
-                GROUP BY space, name
-        )"
-        );
-
-        let filtered_versions_cte = ", filtered_versions AS (
-             SELECT 
-                    space, 
-                    name, 
-                    version, 
-                    row_num
-                FROM versions 
-                WHERE row_num = 1
-        )";
-
-        let joined_cte = format!(
-            ", joined AS (
-                 SELECT 
-                    stats.space, 
-                    stats.name, 
-                    filtered_versions.version, 
-                    stats.versions, 
-                    stats.updated_at, 
-                    stats.created_at, 
-                    ROW_NUMBER() OVER (ORDER BY stats.{sort_by}) AS row_num 
-                FROM stats 
-                JOIN filtered_versions 
-                ON stats.space = filtered_versions.space 
-                AND stats.name = filtered_versions.name
-            )"
-        );
-
-        let combined_query = format!(
-            "{versions_cte}{stats_cte}{filtered_versions_cte}{joined_cte}
-            SELECT * FROM joined
-            WHERE row_num > ${binding_index} AND row_num <= ${binding_index_plus_1}
-            ORDER BY updated_at DESC",
+                WHERE ($1 IS NULL OR name ILIKE $1 OR space ILIKE $1)
+                    {space_filter}
+                    {tag_filter}
+            ),
+            latest_cards AS (
+                SELECT
+                    uid,
+                    space,
+                    name,
+                    version,
+                    versions,
+                    updated_at,
+                    created_at
+                FROM card_aggregates
+                WHERE version_rank = 1
+            )
+            SELECT
+                uid,
+                space,
+                name,
+                version,
+                versions,
+                updated_at,
+                created_at
+            FROM latest_cards
+            ORDER BY {sort_by} DESC, space, name
+            LIMIT ${binding_index_plus_1} OFFSET ${binding_index}",
             binding_index_plus_1 = binding_index + 1
         );
 
-        combined_query
+        query
     }
 
     pub fn get_version_page_query(table: &CardTable) -> String {
         let versions_cte = format!(
             "WITH versions AS (
-                SELECT 
-                    space, 
-                    name, 
-                    version, 
+                SELECT
+                    space,
+                    name,
+                    version,
                     created_at,
                     ROW_NUMBER() OVER (PARTITION BY space, name ORDER BY created_at DESC, major DESC, minor DESC, patch DESC) AS row_num
                 FROM {table}
@@ -354,9 +331,9 @@ impl PostgresQueryHelper {
 
         let mut base_query = format!(
             "SELECT
-        COALESCE(CAST(COUNT(DISTINCT name) AS INTEGER), 0) AS nbr_names, 
-        COALESCE(CAST(COUNT(major) AS INTEGER), 0) AS nbr_versions, 
-        COALESCE(CAST(COUNT(DISTINCT space) AS INTEGER), 0) AS nbr_spaces 
+        COALESCE(CAST(COUNT(DISTINCT name) AS INTEGER), 0) AS nbr_names,
+        COALESCE(CAST(COUNT(major) AS INTEGER), 0) AS nbr_versions,
+        COALESCE(CAST(COUNT(DISTINCT space) AS INTEGER), 0) AS nbr_spaces
         FROM {table}
         WHERE 1=1
         AND ($1 IS NULL OR name LIKE $1 OR space LIKE $1)
@@ -378,12 +355,12 @@ impl PostgresQueryHelper {
             "
             SELECT
              created_at,
-             name, 
-             space, 
-             major, minor, 
-             patch, 
-             pre_tag, 
-             build_tag, 
+             name,
+             space,
+             major, minor,
+             patch,
+             pre_tag,
+             build_tag,
              uid
              FROM {table}
              WHERE 1=1
@@ -502,8 +479,8 @@ impl PostgresQueryHelper {
     pub fn get_experiment_parameters_insert_query(nbr_records: usize) -> String {
         let mut query = format!(
             "INSERT INTO {} (
-                experiment_uid, 
-                name, 
+                experiment_uid,
+                name,
                 value
             ) VALUES ",
             CardTable::Parameters
@@ -638,7 +615,7 @@ impl PostgresQueryHelper {
             )
             SELECT a.uid, a.space, a.registry_type, a.encrypted_key, a.storage_key
             FROM {} as a
-            INNER JOIN query_cards as b 
+            INNER JOIN query_cards as b
                 ON a.uid = b.uid;",
             query_cards_query,
             CardTable::ArtifactKey

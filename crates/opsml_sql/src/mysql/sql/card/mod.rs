@@ -609,23 +609,26 @@ impl CardLogicTrait for CardLogicMySqlClient {
         Ok(stats)
     }
 
-    /// Query a page of cards
+    /// Query a page of cards with cursor-based pagination
     ///
     /// # Arguments
     ///
     /// * `sort_by` - The field to sort by
-    /// * `page` - The page number
-    /// * `search_term` - The search term to query
-    /// * `space` - The space to query
+    /// * `limit` - Number of items per page (will fetch limit + 1 for has_next detection)
+    /// * `offset` - Starting position in result set
+    /// * `search_term` - Optional search term (from cursor)
+    /// * `spaces` - Space filters (from cursor)
+    /// * `tags` - Tag filters (from cursor)
     /// * `table` - The table to query
     ///
     /// # Returns
     ///
-    /// * `Vec<CardSummary>` - A vector of card summaries
+    /// * `Vec<CardSummary>` - A vector of card summaries (may contain limit + 1 items)
     async fn query_page(
         &self,
         sort_by: &str,
-        page: i32,
+        limit: i32,
+        offset: i32,
         search_term: Option<&str>,
         spaces: &[String],
         tags: &[String],
@@ -633,47 +636,27 @@ impl CardLogicTrait for CardLogicMySqlClient {
     ) -> Result<Vec<CardSummary>, SqlError> {
         let query = MySqlQueryHelper::get_query_page_query(table, sort_by, spaces, tags);
 
-        let lower_bound = (page * 30) - 30;
-        let upper_bound = page * 30;
+        // Build query with proper parameter binding
+        // MySQL uses positional parameters (?)
+        let mut query_builder = sqlx::query_as::<_, CardSummary>(&query)
+            .bind(search_term) // First ? for NULL check
+            .bind(search_term.map(|term| format!("%{term}%"))) // Second ? for name LIKE
+            .bind(search_term.map(|term| format!("%{term}%"))); // Third ? for space LIKE
 
-        // start query for first cte
-        let mut records = sqlx::query_as(&query)
-            .bind(search_term) // 3rd ? in versions_cte
-            .bind(search_term.map(|term| format!("%{term}%"))) // 4th ? in versions_cte
-            .bind(search_term.map(|term| format!("%{term}%"))); // 5th ? in versions_cte
-
+        // Bind space filters
         for space in spaces {
-            records = records.bind(space);
+            query_builder = query_builder.bind(space);
         }
 
-        // bind tags for first cte
+        // Bind tag filters (JSON format for MySQL)
         for tag in tags {
-            records = records.bind(format!("\"{}\"", tag));
+            query_builder = query_builder.bind(format!("\"{}\"", tag));
         }
 
-        // 2nd cte
-        records = records
-            .bind(search_term) // 3rd ? in stats_cte
-            .bind(search_term.map(|term| format!("%{term}%"))) // 4th ? in stats_cte
-            .bind(search_term.map(|term| format!("%{term}%"))); // 5th ? in stats_cte
+        // Bind pagination parameters (limit + 1, then offset)
+        query_builder = query_builder.bind(limit + 1).bind(offset);
 
-        for space in spaces {
-            records = records.bind(space);
-        }
-
-        // bind tags for 2nd cte
-        for tag in tags {
-            records = records.bind(format!("\"{}\"", tag));
-        }
-
-        // final select
-        let records: Vec<CardSummary> = records
-            .bind(lower_bound) // 1st ? in final SELECT
-            .bind(upper_bound)
-            .fetch_all(&self.pool)
-            .await
-            .unwrap();
-
+        let records = query_builder.fetch_all(&self.pool).await?;
         Ok(records)
     }
 

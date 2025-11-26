@@ -183,18 +183,104 @@ impl AuditableRequest for RegistryStatsRequest {
     }
 }
 
-// RegistryStatsResponse is sourced from sql schema
+/// Cursor for paginating through card results with search state
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct CardCursor {
+    pub offset: i32,
+    pub limit: i32,
+    pub sort_by: String,
+    pub search_term: Option<String>,
+    #[serde(default)]
+    pub spaces: Vec<String>,
+    #[serde(default)]
+    pub tags: Vec<String>,
+}
+
+impl CardCursor {
+    /// Create a new cursor with search criteria
+    pub fn new(
+        offset: i32,
+        limit: i32,
+        sort_by: String,
+        search_term: Option<String>,
+        spaces: Vec<String>,
+        tags: Vec<String>,
+    ) -> Self {
+        Self {
+            offset,
+            limit,
+            sort_by,
+            search_term,
+            spaces,
+            tags,
+        }
+    }
+
+    pub fn next(&self) -> Self {
+        Self {
+            offset: self.offset + self.limit,
+            limit: self.limit,
+            sort_by: self.sort_by.clone(),
+            search_term: self.search_term.clone(),
+            spaces: self.spaces.clone(),
+            tags: self.tags.clone(),
+        }
+    }
+
+    pub fn previous(&self) -> Self {
+        Self {
+            offset: (self.offset - self.limit).max(0),
+            limit: self.limit,
+            sort_by: self.sort_by.clone(),
+            search_term: self.search_term.clone(),
+            spaces: self.spaces.clone(),
+            tags: self.tags.clone(),
+        }
+    }
+
+    /// Check if this is the first page
+    pub fn is_first_page(&self) -> bool {
+        self.offset == 0
+    }
+}
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct QueryPageRequest {
     pub registry_type: RegistryType,
+    pub page: Option<i32>,
+    pub cursor: Option<CardCursor>,
+    pub limit: Option<i32>,
     pub sort_by: Option<String>,
     pub search_term: Option<String>,
     #[serde(default)]
     pub spaces: Vec<String>,
     #[serde(default)]
     pub tags: Vec<String>,
-    pub page: Option<i32>,
+}
+
+impl QueryPageRequest {
+    /// Extract or build cursor from request parameters
+    pub fn get_cursor(&self, default_limit: i32, default_sort_by: &str) -> CardCursor {
+        if let Some(cursor) = &self.cursor {
+            cursor.clone()
+        } else {
+            let limit = self.limit.unwrap_or(default_limit);
+            let offset = self.page.map(|p| (p - 1) * limit).unwrap_or(0);
+            let sort_by = self
+                .sort_by
+                .clone()
+                .unwrap_or_else(|| default_sort_by.to_string());
+
+            CardCursor::new(
+                offset,
+                limit,
+                sort_by,
+                self.search_term.clone(),
+                self.spaces.clone(),
+                self.tags.clone(),
+            )
+        }
+    }
 }
 
 impl AuditableRequest for QueryPageRequest {
@@ -242,8 +328,6 @@ impl AuditableRequest for VersionPageRequest {
         ResourceType::Database
     }
 }
-
-// QueryPageResponse is sourced from sql schema
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct CardVersionRequest {

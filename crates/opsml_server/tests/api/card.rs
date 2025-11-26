@@ -212,7 +212,7 @@ async fn test_opsml_server_card_stats_and_query() {
     let body = response.into_body().collect().await.unwrap().to_bytes();
     let page_response: QueryPageResponse = serde_json::from_slice(&body).unwrap();
 
-    assert_eq!(page_response.summaries.len(), 10);
+    assert_eq!(page_response.items.len(), 10);
 
     let args = QueryPageRequest {
         registry_type: RegistryType::Model,
@@ -234,7 +234,7 @@ async fn test_opsml_server_card_stats_and_query() {
     let body = response.into_body().collect().await.unwrap().to_bytes();
     let page_response: QueryPageResponse = serde_json::from_slice(&body).unwrap();
 
-    assert_eq!(page_response.summaries.len(), 1);
+    assert_eq!(page_response.items.len(), 1);
 
     //////// Test Query page request with multiple spaces //////
 
@@ -262,7 +262,7 @@ async fn test_opsml_server_card_stats_and_query() {
     let body = response.into_body().collect().await.unwrap().to_bytes();
     let page_response: QueryPageResponse = serde_json::from_slice(&body).unwrap();
 
-    assert_eq!(page_response.summaries.len(), 3);
+    assert_eq!(page_response.items.len(), 3);
 
     // test getting version page
     let args = VersionPageRequest {
@@ -329,7 +329,7 @@ async fn test_opsml_server_card_stats_and_query() {
     let body = response.into_body().collect().await.unwrap().to_bytes();
     let page_response: QueryPageResponse = serde_json::from_slice(&body).unwrap();
 
-    assert_eq!(page_response.summaries.len(), 2);
+    assert_eq!(page_response.items.len(), 2);
 
     helper.cleanup();
 }
@@ -1634,4 +1634,243 @@ async fn test_opsml_server_space_stats() {
     assert_eq!(space_stats.stats[0].data_count, 0);
     assert_eq!(space_stats.stats[0].prompt_count, 0);
     assert_eq!(space_stats.stats[0].experiment_count, 0);
+}
+
+#[tokio::test]
+async fn test_opsml_server_card_pagination() {
+    let helper = TestHelper::new(None).await;
+
+    // Test 1: Basic pagination - first page
+    let first_page_request = QueryPageRequest {
+        registry_type: RegistryType::Model,
+        limit: Some(3),
+        ..Default::default()
+    };
+
+    let body = serde_json::to_string(&first_page_request).unwrap();
+    let request = Request::builder()
+        .uri("/opsml/api/card/registry/page")
+        .method("POST")
+        .header(header::CONTENT_TYPE, "application/json")
+        .body(Body::from(body))
+        .unwrap();
+
+    let response = helper.send_oneshot(request).await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let body = response.into_body().collect().await.unwrap().to_bytes();
+    let page1: QueryPageResponse = serde_json::from_slice(&body).unwrap();
+
+    assert_eq!(page1.items.len(), 3);
+    assert!(page1.has_next);
+    assert!(!page1.has_previous);
+    assert!(page1.next_cursor.is_some());
+    assert!(page1.previous_cursor.is_none());
+
+    // Test 2: Navigate to next page using cursor
+    // This should result in a previous and next page being available
+    let next_cursor = page1.next_cursor.clone().unwrap();
+    let next_page_request = QueryPageRequest {
+        registry_type: RegistryType::Model,
+        cursor: Some(next_cursor.clone()),
+        ..Default::default()
+    };
+
+    let body = serde_json::to_string(&next_page_request).unwrap();
+    let request = Request::builder()
+        .uri("/opsml/api/card/registry/page")
+        .method("POST")
+        .header(header::CONTENT_TYPE, "application/json")
+        .body(Body::from(body))
+        .unwrap();
+
+    let response = helper.send_oneshot(request).await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let body = response.into_body().collect().await.unwrap().to_bytes();
+    let page2: QueryPageResponse = serde_json::from_slice(&body).unwrap();
+
+    assert_eq!(page2.items.len(), 3);
+    assert!(page2.has_next);
+    assert!(page2.has_previous);
+    assert!(page2.next_cursor.is_some());
+    assert!(page2.previous_cursor.is_some());
+
+    // Verify we got different items
+    assert_ne!(page1.items[0].uid, page2.items[0].uid);
+
+    // Test 3: Navigate back to previous page
+    let prev_cursor = page2.previous_cursor.clone().unwrap();
+    let prev_page_request = QueryPageRequest {
+        registry_type: RegistryType::Model,
+        cursor: Some(prev_cursor),
+        ..Default::default()
+    };
+
+    let body = serde_json::to_string(&prev_page_request).unwrap();
+    let request = Request::builder()
+        .uri("/opsml/api/card/registry/page")
+        .method("POST")
+        .header(header::CONTENT_TYPE, "application/json")
+        .body(Body::from(body))
+        .unwrap();
+
+    let response = helper.send_oneshot(request).await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let body = response.into_body().collect().await.unwrap().to_bytes();
+    let page1_again: QueryPageResponse = serde_json::from_slice(&body).unwrap();
+
+    // Should get back to first page
+    assert_eq!(page1_again.items.len(), 3);
+    assert_eq!(page1_again.items[0].uid, page1.items[0].uid);
+    assert!(!page1_again.has_previous);
+
+    // Test 4: Pagination with search term
+    let search_request = QueryPageRequest {
+        registry_type: RegistryType::Model,
+        limit: Some(5),
+        search_term: Some("Model1".to_string()),
+        ..Default::default()
+    };
+
+    let body = serde_json::to_string(&search_request).unwrap();
+    let request = Request::builder()
+        .uri("/opsml/api/card/registry/page")
+        .method("POST")
+        .header(header::CONTENT_TYPE, "application/json")
+        .body(Body::from(body))
+        .unwrap();
+
+    let response = helper.send_oneshot(request).await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let body = response.into_body().collect().await.unwrap().to_bytes();
+    let search_page: QueryPageResponse = serde_json::from_slice(&body).unwrap();
+
+    assert_eq!(search_page.items.len(), 2);
+    assert!(!search_page.has_next);
+    assert_eq!(
+        search_page.page_info.filters.search_term,
+        Some("Model1".to_string())
+    );
+
+    // Test 5: Pagination with space filter
+    let space_request = QueryPageRequest {
+        registry_type: RegistryType::Model,
+        limit: Some(5),
+        spaces: vec!["repo1".to_string(), "repo2".to_string()],
+        ..Default::default()
+    };
+
+    let body = serde_json::to_string(&space_request).unwrap();
+    let request = Request::builder()
+        .uri("/opsml/api/card/registry/page")
+        .method("POST")
+        .header(header::CONTENT_TYPE, "application/json")
+        .body(Body::from(body))
+        .unwrap();
+
+    let response = helper.send_oneshot(request).await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let body = response.into_body().collect().await.unwrap().to_bytes();
+    let space_page: QueryPageResponse = serde_json::from_slice(&body).unwrap();
+
+    assert_eq!(space_page.items.len(), 2);
+    assert_eq!(space_page.page_info.filters.spaces.len(), 2);
+
+    // Test 6: Pagination with tags filter
+    let tags_request = QueryPageRequest {
+        registry_type: RegistryType::Model,
+        limit: Some(5),
+        tags: vec!["hello".to_string()],
+        ..Default::default()
+    };
+
+    let body = serde_json::to_string(&tags_request).unwrap();
+    let request = Request::builder()
+        .uri("/opsml/api/card/registry/page")
+        .method("POST")
+        .header(header::CONTENT_TYPE, "application/json")
+        .body(Body::from(body))
+        .unwrap();
+
+    let response = helper.send_oneshot(request).await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let body = response.into_body().collect().await.unwrap().to_bytes();
+    let tags_page: QueryPageResponse = serde_json::from_slice(&body).unwrap();
+
+    assert_eq!(tags_page.items.len(), 2); // Based on existing test data
+    assert_eq!(tags_page.page_info.filters.tags, vec!["hello".to_string()]);
+
+    // Test 7: Pagination with sort_by and verify cursor preserves it
+    let sort_request = QueryPageRequest {
+        registry_type: RegistryType::Model,
+        limit: Some(3),
+        sort_by: Some("created_at".to_string()),
+        ..Default::default()
+    };
+
+    let body = serde_json::to_string(&sort_request).unwrap();
+    let request = Request::builder()
+        .uri("/opsml/api/card/registry/page")
+        .method("POST")
+        .header(header::CONTENT_TYPE, "application/json")
+        .body(Body::from(body))
+        .unwrap();
+
+    let response = helper.send_oneshot(request).await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let body = response.into_body().collect().await.unwrap().to_bytes();
+    let sorted_page: QueryPageResponse = serde_json::from_slice(&body).unwrap();
+
+    assert_eq!(sorted_page.page_info.filters.sort_by, "created_at");
+
+    // Verify next cursor preserves sort_by
+    if let Some(cursor) = sorted_page.next_cursor {
+        assert_eq!(cursor.sort_by, "created_at");
+    }
+
+    // Test 8: Combined filters - search + spaces + tags
+    let combined_request = QueryPageRequest {
+        registry_type: RegistryType::Model,
+        limit: Some(5),
+        search_term: Some("Model".to_string()),
+        spaces: vec!["repo1".to_string()],
+        tags: vec!["hello".to_string()],
+        ..Default::default()
+    };
+
+    let body = serde_json::to_string(&combined_request).unwrap();
+    let request = Request::builder()
+        .uri("/opsml/api/card/registry/page")
+        .method("POST")
+        .header(header::CONTENT_TYPE, "application/json")
+        .body(Body::from(body))
+        .unwrap();
+
+    let response = helper.send_oneshot(request).await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let body = response.into_body().collect().await.unwrap().to_bytes();
+    let combined_page: QueryPageResponse = serde_json::from_slice(&body).unwrap();
+
+    // Verify all filters are preserved in page_info
+    assert_eq!(
+        combined_page.page_info.filters.search_term,
+        Some("Model".to_string())
+    );
+    assert_eq!(
+        combined_page.page_info.filters.spaces,
+        vec!["repo1".to_string()]
+    );
+    assert_eq!(
+        combined_page.page_info.filters.tags,
+        vec!["hello".to_string()]
+    );
+
+    helper.cleanup();
 }
