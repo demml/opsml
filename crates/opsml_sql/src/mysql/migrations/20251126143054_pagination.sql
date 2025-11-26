@@ -13,7 +13,7 @@ ON opsml_experiment_registry(space, name, created_at DESC);
 
 -- Deck Registry
 CREATE INDEX idx_deck_grouped
-ON opsml_deck_registry(space, name, created_at DESC);
+ON opsml_service_registry(space, name, created_at DESC);
 
 -- Prompt Registry
 CREATE INDEX idx_prompt_grouped
