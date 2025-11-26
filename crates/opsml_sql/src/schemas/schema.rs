@@ -1,7 +1,7 @@
 use crate::error::SqlError;
 use chrono::{DateTime, Utc};
 use opsml_semver::error::VersionError;
-use opsml_types::cards::{CardTable, ParameterValue};
+use opsml_types::cards::{CardStatus, CardTable, ParameterValue};
 use opsml_types::contracts::evaluation::{EvaluationProvider, EvaluationType};
 use opsml_types::contracts::{
     ArtifactRecord, AuditCardClientRecord, CardEntry, CardRecord, DataCardClientRecord,
@@ -150,6 +150,7 @@ pub struct CardSummary {
     pub versions: i64,
     pub updated_at: DateTime<Utc>,
     pub created_at: DateTime<Utc>,
+    pub status: CardStatus,
 }
 
 #[derive(Debug, FromRow, Serialize, Deserialize)]
