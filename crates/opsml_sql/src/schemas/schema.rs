@@ -150,7 +150,6 @@ pub struct CardSummary {
     pub versions: i64,
     pub updated_at: DateTime<Utc>,
     pub created_at: DateTime<Utc>,
-    pub row_num: i64,
 }
 
 #[derive(Debug, FromRow, Serialize, Deserialize)]

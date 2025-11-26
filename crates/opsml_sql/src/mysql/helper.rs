@@ -236,7 +236,8 @@ impl MySqlQueryHelper {
                 name,
                 version,
                 versions,
-                updated_at
+                updated_at,
+                created_at
             FROM latest_cards
             ORDER BY {sort_by} DESC, space, name
             LIMIT ? OFFSET ?"

@@ -245,7 +245,8 @@ impl SqliteQueryHelper {
                 name,
                 version,
                 versions,
-                updated_at
+                updated_at,
+                created_at
             FROM latest_cards
             ORDER BY {sort_by} DESC, space, name
             LIMIT ?{binding_index_plus_1} OFFSET ?{binding_index}",

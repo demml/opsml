@@ -10,7 +10,7 @@ use crate::{
 use opsml_settings::config::DatabaseSettings;
 use sqlx::{sqlite::SqlitePoolOptions, Pool, Sqlite};
 use std::path::Path;
-use tracing::{debug, instrument};
+use tracing::{debug, error, instrument};
 
 #[derive(Debug, Clone)]
 pub struct SqliteClient {
@@ -70,7 +70,10 @@ impl SqliteClient {
         };
 
         // Run migrations
-        client.run_migrations().await?;
+        client.run_migrations().await.map_err(|e| {
+            error!("Failed to run SQLite migrations: {:?}", e);
+            e
+        })?;
 
         debug!("SQLite client initialized successfully");
         Ok(client)
@@ -565,6 +568,8 @@ mod tests {
 
     #[tokio::test]
     async fn test_sqlite_query_pagination() {
+        cleanup();
+
         let config = DatabaseSettings {
             connection_uri: get_connection_uri(),
             max_connections: 1,
