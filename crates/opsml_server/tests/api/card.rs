@@ -212,7 +212,7 @@ async fn test_opsml_server_card_stats_and_query() {
     let body = response.into_body().collect().await.unwrap().to_bytes();
     let page_response: QueryPageResponse = serde_json::from_slice(&body).unwrap();
 
-    assert_eq!(page_response.summaries.len(), 10);
+    assert_eq!(page_response.items.len(), 10);
 
     let args = QueryPageRequest {
         registry_type: RegistryType::Model,
@@ -234,7 +234,7 @@ async fn test_opsml_server_card_stats_and_query() {
     let body = response.into_body().collect().await.unwrap().to_bytes();
     let page_response: QueryPageResponse = serde_json::from_slice(&body).unwrap();
 
-    assert_eq!(page_response.summaries.len(), 1);
+    assert_eq!(page_response.items.len(), 1);
 
     //////// Test Query page request with multiple spaces //////
 
@@ -262,7 +262,7 @@ async fn test_opsml_server_card_stats_and_query() {
     let body = response.into_body().collect().await.unwrap().to_bytes();
     let page_response: QueryPageResponse = serde_json::from_slice(&body).unwrap();
 
-    assert_eq!(page_response.summaries.len(), 3);
+    assert_eq!(page_response.items.len(), 3);
 
     // test getting version page
     let args = VersionPageRequest {
@@ -329,7 +329,7 @@ async fn test_opsml_server_card_stats_and_query() {
     let body = response.into_body().collect().await.unwrap().to_bytes();
     let page_response: QueryPageResponse = serde_json::from_slice(&body).unwrap();
 
-    assert_eq!(page_response.summaries.len(), 2);
+    assert_eq!(page_response.items.len(), 2);
 
     helper.cleanup();
 }

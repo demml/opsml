@@ -143,6 +143,7 @@ pub struct QueryStats {
 
 #[derive(Debug, FromRow, Serialize, Deserialize)]
 pub struct CardSummary {
+    pub uid: String,
     pub space: String,
     pub name: String,
     pub version: String,

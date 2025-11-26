@@ -723,6 +723,190 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn test_mysql_query_pagination() {
+        let client = db_client().await;
+
+        // Run the SQL script to populate the database
+        let script = std::fs::read_to_string("tests/populate_mysql_test.sql").unwrap();
+        sqlx::raw_sql(&script).execute(&client.pool).await.unwrap();
+
+        // Test 1: Basic pagination with limit + 1 pattern
+        let page1 = client
+            .card
+            .query_page("updated_at", 5, 0, None, &[], &[], &CardTable::Model)
+            .await
+            .unwrap();
+
+        assert!(
+            page1.len() <= 6,
+            "Should return at most limit + 1 for has_next detection"
+        );
+
+        // Test 2: Second page - verify no overlap
+        let page2 = client
+            .card
+            .query_page("updated_at", 5, 5, None, &[], &[], &CardTable::Model)
+            .await
+            .unwrap();
+
+        let page1_uids: Vec<_> = page1.iter().take(5).map(|c| &c.uid).collect();
+        let page2_uids: Vec<_> = page2.iter().take(5).map(|c| &c.uid).collect();
+
+        for uid in &page2_uids {
+            assert!(!page1_uids.contains(uid), "Pages should not overlap");
+        }
+
+        // Test 3: Search filter
+        let search_results = client
+            .card
+            .query_page(
+                "updated_at",
+                10,
+                0,
+                Some("Model1"),
+                &[],
+                &[],
+                &CardTable::Model,
+            )
+            .await
+            .unwrap();
+
+        for summary in search_results.iter().take(10) {
+            assert!(
+                summary.name.contains("Model1"),
+                "All results should match search term"
+            );
+        }
+
+        // Test 4: Space filter
+        let space_results = client
+            .card
+            .query_page(
+                "updated_at",
+                10,
+                0,
+                None,
+                &["repo1".to_string(), "repo2".to_string()],
+                &[],
+                &CardTable::Model,
+            )
+            .await
+            .unwrap();
+
+        for summary in space_results.iter().take(10) {
+            assert!(
+                summary.space == "repo1" || summary.space == "repo2",
+                "Results should match space filter"
+            );
+        }
+
+        // Test 5: Tag filter
+        let tag_results = client
+            .card
+            .query_page(
+                "updated_at",
+                10,
+                0,
+                None,
+                &[],
+                &["hello".to_string()],
+                &CardTable::Model,
+            )
+            .await
+            .unwrap();
+
+        assert!(
+            tag_results.len() >= 2,
+            "Should find models with 'hello' tag"
+        );
+
+        // Test 6: Combined filters (practical use case)
+        let combined_results = client
+            .card
+            .query_page(
+                "updated_at",
+                10,
+                0,
+                Some("Model"),
+                &["repo1".to_string()],
+                &["hello".to_string()],
+                &CardTable::Model,
+            )
+            .await
+            .unwrap();
+
+        for summary in combined_results.iter().take(10) {
+            assert!(summary.name.contains("Model"), "Should match search");
+            assert_eq!(summary.space, "repo1", "Should match space");
+        }
+
+        // Test 7: Sort by name
+        let sorted_results = client
+            .card
+            .query_page("name", 5, 0, None, &[], &[], &CardTable::Model)
+            .await
+            .unwrap();
+
+        if sorted_results.len() >= 2 {
+            for i in 0..sorted_results.len().min(5) - 1 {
+                assert!(
+                    sorted_results[i].name >= sorted_results[i + 1].name,
+                    "Results should be sorted by name DESC"
+                );
+            }
+        }
+
+        // Test 8: Version count accuracy
+        let data_results = client
+            .card
+            .query_page(
+                "updated_at",
+                10,
+                0,
+                Some("Data1"),
+                &[],
+                &[],
+                &CardTable::Data,
+            )
+            .await
+            .unwrap();
+
+        if let Some(data1) = data_results.iter().find(|s| s.name == "Data1") {
+            assert_eq!(data1.versions, 10, "Data1 should have 10 versions");
+        }
+
+        // Test 9: Empty results (edge case)
+        let empty_results = client
+            .card
+            .query_page(
+                "updated_at",
+                10,
+                0,
+                Some("NonExistentModel"),
+                &[],
+                &[],
+                &CardTable::Model,
+            )
+            .await
+            .unwrap();
+
+        assert_eq!(empty_results.len(), 0, "Should return empty for no matches");
+
+        // Test 10: Offset beyond results (edge case)
+        let beyond_results = client
+            .card
+            .query_page("updated_at", 10, 100, None, &[], &[], &CardTable::Model)
+            .await
+            .unwrap();
+
+        assert_eq!(
+            beyond_results.len(),
+            0,
+            "Should return empty when offset exceeds data"
+        );
+    }
+
+    #[tokio::test]
     async fn test_mysql_query_page() {
         let client = db_client().await;
 

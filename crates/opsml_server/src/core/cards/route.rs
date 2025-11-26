@@ -1,3 +1,5 @@
+use crate::core::cards::schema::FilterSummary;
+use crate::core::cards::schema::PageInfo;
 use crate::core::cards::schema::{
     CreateReadeMe, QueryPageResponse, ReadeMe, RegistryStatsResponse, VersionPageResponse,
 };
@@ -263,7 +265,6 @@ pub async fn retrieve_page(
         next_cursor,
         has_previous,
         previous_cursor,
-        total_count,
         page_info,
     }))
 }
