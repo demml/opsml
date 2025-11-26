@@ -226,9 +226,14 @@
   --retro-warning-mid:  oklch(88% 0.18 70deg);
   --retro-warning-to:   oklch(83% 0.20 60deg);
 
-  --retro-error-from: oklch(88% 0.18 25deg);    /* hot coral */
-  --retro-error-mid:  oklch(83% 0.22 18deg);
-  --retro-error-to:   oklch(78% 0.24 12deg);
+  --retro-error-base: oklch(95.798% 0.01325 28.451);
+  --retro-error-from: oklch(92% 0.15 25deg);    
+  --retro-error-mid:  oklch(83% 0.22 18deg);   
+  --retro-error-to:   oklch(72% 0.24 12deg);
+
+
+  --retro-orange-from: oklch(96.697% 0.01554 42.084);  /* bright neon tangerine - hot glow */  /* intense neon orange - fire core */
+  --retro-orange-to:   oklch(63.473% 0.19743 38.716); /* vivid orange-red - ember edge */
 }
 
 /* Replace originals (or keep both; this fully overrides existing gradient-* if order is last) */
@@ -309,4 +314,10 @@
   opacity: .55;
   border-radius: inherit;
   filter: contrast(120%) brightness(105%);
+}
+
+[data-theme='opsml'] .warn-color {
+  background-color: var(--retro-orange-from);  /* Light coral background */
+  border: 1px solid var(--retro-orange-to);     /* Dark coral border */
+  color: var(--retro-orange-to);                /* Dark coral text */
 }
