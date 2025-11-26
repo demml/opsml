@@ -42,7 +42,8 @@ pub trait CardLogicTrait {
     async fn query_page(
         &self,
         sort_by: &str,
-        page: i32,
+        limit: i32,
+        offset: i32,
         search_term: Option<&str>,
         spaces: &[String],
         tags: &[String],

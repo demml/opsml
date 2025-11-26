@@ -121,7 +121,8 @@ impl CardLogicTrait for SqlClientEnum {
     async fn query_page(
         &self,
         sort_by: &str,
-        page: i32,
+        limit: i32,
+        offset: i32,
         search_term: Option<&str>,
         spaces: &[String],
         tags: &[String],
@@ -131,19 +132,19 @@ impl CardLogicTrait for SqlClientEnum {
             SqlClientEnum::Postgres(client) => {
                 client
                     .card
-                    .query_page(sort_by, page, search_term, spaces, tags, table)
+                    .query_page(sort_by, limit, offset, search_term, spaces, tags, table)
                     .await
             }
             SqlClientEnum::Sqlite(client) => {
                 client
                     .card
-                    .query_page(sort_by, page, search_term, spaces, tags, table)
+                    .query_page(sort_by, limit, offset, search_term, spaces, tags, table)
                     .await
             }
             SqlClientEnum::MySql(client) => {
                 client
                     .card
-                    .query_page(sort_by, page, search_term, spaces, tags, table)
+                    .query_page(sort_by, limit, offset, search_term, spaces, tags, table)
                     .await
             }
         }
@@ -1157,7 +1158,7 @@ mod tests {
 
         // query page
         let results = client
-            .query_page("name", 1, None, &[], &[], &CardTable::Data)
+            .query_page("name", 1, 0, None, &[], &[], &CardTable::Data)
             .await
             .unwrap();
 
@@ -1165,7 +1166,7 @@ mod tests {
 
         // query page
         let results = client
-            .query_page("name", 1, None, &[], &[], &CardTable::Model)
+            .query_page("name", 1, 0, None, &[], &[], &CardTable::Model)
             .await
             .unwrap();
 
@@ -1173,14 +1174,7 @@ mod tests {
 
         // query page
         let results = client
-            .query_page(
-                "name",
-                1,
-                None,
-                &["repo3".to_string()],
-                &[],
-                &CardTable::Model,
-            )
+            .query_page("name", 1, 0, Some("repo3"), &[], &[], &CardTable::Model)
             .await
             .unwrap();
 

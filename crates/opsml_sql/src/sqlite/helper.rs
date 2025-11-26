@@ -181,109 +181,78 @@ impl SqliteQueryHelper {
         spaces: &[String],
         tags: &[String],
     ) -> String {
-        let mut bindings_number = 2; // ?1 and ?2 are used for search_term and space
+        let mut binding_index = 2; // ?1 is search_term
 
-        let spaces_filter = if spaces.is_empty() {
-            "".to_string()
+        // Build space filter with proper binding indices
+        let space_filter = if spaces.is_empty() {
+            String::new()
         } else {
             let mut or_conditions = Vec::new();
             for _ in spaces {
-                or_conditions.push(format!("space = ?{}", bindings_number));
-                bindings_number += 1;
+                or_conditions.push(format!("space = ?{binding_index}"));
+                binding_index += 1;
             }
             let or_clause = or_conditions.join(" OR ");
             format!(" AND ({or_clause})")
         };
 
-        let tags_filter = if tags.is_empty() {
-            "".to_string()
+        // Build tag filter using json_each for SQLite
+        let tag_filter = if tags.is_empty() {
+            String::new()
         } else {
             let mut or_conditions = Vec::new();
             for _ in tags {
-                or_conditions.push(format!("value = ?{}", bindings_number));
-                bindings_number += 1;
+                or_conditions.push(format!("value = ?{binding_index}"));
+                binding_index += 1;
             }
             let or_clause = or_conditions.join(" OR ");
             format!(" AND EXISTS (SELECT 1 FROM json_each({table}.tags) WHERE {or_clause})")
         };
 
-        let versions_cte = format!(
-            "WITH versions AS (
-                SELECT 
-                    space, 
-                    name, 
-                    version, 
-                    ROW_NUMBER() OVER (PARTITION BY space, name ORDER BY created_at DESC) AS row_num
+        // Optimized: Single CTE with window functions for both stats and latest version
+        // This eliminates redundant table scans and intermediate joins
+        let query = format!(
+            "WITH card_aggregates AS (
+                SELECT
+                    space,
+                    name,
+                    version,
+                    uid,
+                    created_at,
+                    COUNT(*) OVER (PARTITION BY space, name) AS versions,
+                    MAX(created_at) OVER (PARTITION BY space, name) AS updated_at,
+                    ROW_NUMBER() OVER (PARTITION BY space, name ORDER BY created_at DESC) AS version_rank
                 FROM {table}
-                WHERE 1=1
-                AND (?1 IS NULL OR name LIKE ?1 OR space LIKE ?1)
-                {spaces_filter}
-                {tags_filter}
-            )"
-        );
-
-        let stats_cte = format!(
-            ", stats AS (
-                SELECT 
-                    space, 
-                    name, 
-                    COUNT(DISTINCT version) AS versions, 
-                    MAX(created_at) AS updated_at, 
-                    MIN(created_at) AS created_at 
-                FROM {table}
-                WHERE 1=1
-                AND (?1 IS NULL OR name LIKE ?1 OR space LIKE ?1)
-                {spaces_filter}
-                {tags_filter}
-                GROUP BY space, name
-            )"
-        );
-
-        let filtered_versions_cte = ", filtered_versions AS (
-            SELECT 
-                space, 
-                name, 
-                version, 
-                row_num
-            FROM versions 
-            WHERE row_num = 1
-        )";
-
-        let joined_cte = format!(
-            ", joined AS (
-                SELECT 
-                    stats.space, 
-                    stats.name, 
-                    filtered_versions.version, 
-                    stats.versions, 
-                    stats.updated_at, 
-                    stats.created_at, 
-                    ROW_NUMBER() OVER (ORDER BY stats.{sort_by}) AS row_num 
-                FROM stats 
-                JOIN filtered_versions 
-                ON stats.space = filtered_versions.space 
-                AND stats.name = filtered_versions.name
-            )"
-        );
-
-        let combined_query = format!(
-            "{versions_cte}{stats_cte}{filtered_versions_cte}{joined_cte}
+                WHERE (?1 IS NULL OR name LIKE ?1 OR space LIKE ?1)
+                    {space_filter}
+                    {tag_filter}
+            ),
+            latest_cards AS (
+                SELECT
+                    uid,
+                    space,
+                    name,
+                    version,
+                    versions,
+                    updated_at,
+                    created_at
+                FROM card_aggregates
+                WHERE version_rank = 1
+            )
             SELECT
-            space,
-            name,
-            version,
-            versions,
-            updated_at,
-            created_at,
-            row_num
-            FROM joined 
-            WHERE row_num > ?{bindings_number} AND row_num <= ?{bindings_number_plus_1}
-            ORDER BY updated_at DESC",
-            bindings_number = bindings_number,
-            bindings_number_plus_1 = bindings_number + 1
+                uid,
+                space,
+                name,
+                version,
+                versions,
+                updated_at
+            FROM latest_cards
+            ORDER BY {sort_by} DESC, space, name
+            LIMIT ?{binding_index_plus_1} OFFSET ?{binding_index}",
+            binding_index_plus_1 = binding_index + 1
         );
 
-        combined_query
+        query
     }
 
     pub fn get_version_page_query(table: &CardTable) -> String {
