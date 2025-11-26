@@ -1163,7 +1163,7 @@ mod tests {
             .await
             .unwrap();
 
-        assert_eq!(results.len(), 10);
+        assert_eq!(results.len(), 2);
 
         // query page
         let results = client

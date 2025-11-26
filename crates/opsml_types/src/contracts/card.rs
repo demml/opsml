@@ -348,7 +348,7 @@ impl VersionCursor {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct VersionPageRequest {
     pub registry_type: RegistryType,
     pub space: String,

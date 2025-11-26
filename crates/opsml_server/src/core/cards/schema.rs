@@ -3,7 +3,10 @@ use opsml_sql::schemas::{
     schema::{CardSummary, QueryStats},
     VersionSummary,
 };
-use opsml_types::{contracts::CardCursor, RegistryType};
+use opsml_types::{
+    contracts::{CardCursor, VersionCursor},
+    RegistryType,
+};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
