@@ -259,6 +259,7 @@ impl CardLogicTrait for CardLogicSqliteClient {
                         .bind(&record.build_tag)
                         .bind(&record.username)
                         .bind(&record.opsml_version)
+                        .bind(&record.status)
                         .execute(&self.pool)
                         .await?;
                     Ok(())

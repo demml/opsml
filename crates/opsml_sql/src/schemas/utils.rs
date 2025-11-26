@@ -68,6 +68,7 @@ pub fn convert_experimentcard(record: ExperimentCardRecord) -> CardRecord {
         experimentcard_uids: record.experimentcard_uids.0,
         username: record.username,
         opsml_version: record.opsml_version,
+        status: record.status,
     };
 
     CardRecord::Experiment(card)
