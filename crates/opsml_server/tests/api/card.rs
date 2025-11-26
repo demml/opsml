@@ -269,7 +269,7 @@ async fn test_opsml_server_card_stats_and_query() {
         registry_type: RegistryType::Model,
         space: Some("repo1".to_string()),
         name: Some("Model1".to_string()),
-        page: None,
+        ..Default::default()
     };
     let query_string = serde_qs::to_string(&args).unwrap();
 
