@@ -39,6 +39,8 @@ pub trait CardLogicTrait {
         spaces: &[String],
         tags: &[String],
     ) -> Result<QueryStats, SqlError>;
+
+    #[allow(clippy::too_many_arguments)]
     async fn query_page(
         &self,
         sort_by: &str,
