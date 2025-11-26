@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { TraceListItem, TraceMetricBucket, TraceFilters, TracePaginationResponse } from './types';
+  import type { TraceMetricBucket, TraceFilters, TracePaginationResponse } from './types';
   import TraceCharts from './TraceCharts.svelte';
   import TraceTable from './TraceTable.svelte';
 

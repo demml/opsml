@@ -142,9 +142,9 @@
               style="left: {position.left}%; width: {position.width}%;"
             >
               <!-- Duration label inside bar if wide enough -->
-              {#if position.width > 8}
+              {#if position.width > 18}
                 <span
-                  class="absolute inset-0 flex items-center justify-center text-xs font-bold"
+                  class="absolute inset-0 flex items-center justify-center text-xs overflow-hidden"
                   class:text-error-800={spanHasError}
                   class:text-secondary-950={!spanHasError}
                 >

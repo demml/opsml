@@ -446,60 +446,67 @@ function generateSpansForTrace(
 
   spans.push(rootSpan);
 
-  // Generate child spans with realistic timing
-  let currentTime = traceStartTime;
-  let parentStack: TraceSpan[] = [rootSpan];
+  // Track span context for proper nesting
+  interface SpanContext {
+    span: TraceSpan;
+    nextChildStartTime: number;
+  }
+
+  let parentStack: SpanContext[] = [
+    { span: rootSpan, nextChildStartTime: traceStartTime },
+  ];
   let currentOrder = 1;
 
   for (let i = 1; i < spanCount; i++) {
     const operation = operations[rng.nextInt(operations.length)];
 
-    // Decide whether to create a child or sibling span
-    const isChild = rng.next() > 0.3 && parentStack.length < 4;
+    // Decide whether to create a child or sibling span (70% child, 30% sibling)
+    const shouldCreateChild = rng.next() > 0.3 && parentStack.length < 4;
 
-    if (!isChild && parentStack.length > 1) {
-      // Move up to parent level (create sibling)
+    if (!shouldCreateChild && parentStack.length > 1) {
+      // Move up to parent level (create sibling of current span)
       parentStack.pop();
     }
 
-    const currentParent = parentStack[parentStack.length - 1];
+    const currentContext = parentStack[parentStack.length - 1];
+    const currentParent = currentContext.span;
     const parentEndTime = new Date(currentParent.end_time!).getTime();
 
-    // Calculate available time window for this span
-    // Spans must fit within their parent's time window
-    const maxEndTime = parentEndTime;
-    const availableTime = maxEndTime - currentTime;
+    // Child spans must start within parent's time window
+    const spanStartTime = currentContext.nextChildStartTime;
 
-    if (availableTime <= 1) {
-      // Not enough time left in parent span, skip to next iteration
+    // Check if we have enough time left in parent
+    const availableTime = parentEndTime - spanStartTime;
+    if (availableTime <= 5) {
+      // Not enough time, skip this span
       continue;
     }
 
     // Calculate span duration based on operation type
     let baseDuration: number;
     if (operation.name.includes("db")) {
-      baseDuration = 20 + rng.next() * 50; // 20-70ms
+      baseDuration = 10 + rng.next() * 40; // 10-50ms
     } else if (operation.name.includes("cache")) {
-      baseDuration = 5 + rng.next() * 15; // 5-20ms
+      baseDuration = 2 + rng.next() * 8; // 2-10ms
     } else if (operation.name.includes("http")) {
-      baseDuration = 50 + rng.next() * 200; // 50-250ms
+      baseDuration = 30 + rng.next() * 100; // 30-130ms
     } else if (operation.name.includes("queue")) {
-      baseDuration = 10 + rng.next() * 30; // 10-40ms
+      baseDuration = 5 + rng.next() * 20; // 5-25ms
     } else {
-      baseDuration = 15 + rng.next() * 50; // 15-65ms (internal)
+      baseDuration = 8 + rng.next() * 30; // 8-38ms (internal)
     }
 
-    // Ensure span doesn't exceed available time
+    // Ensure span fits within parent's remaining time (leave 10% buffer)
+    const maxAllowedDuration = availableTime * 0.85;
     const spanDuration = Math.min(
       Math.floor(baseDuration),
-      Math.floor(availableTime * 0.9) // Leave some buffer
+      Math.floor(maxAllowedDuration)
     );
 
-    if (spanDuration <= 0) {
+    if (spanDuration <= 1) {
       continue;
     }
 
-    const spanStartTime = currentTime;
     const spanEndTime = spanStartTime + spanDuration;
 
     // Determine if this span has an error
@@ -628,13 +635,15 @@ function generateSpansForTrace(
 
     spans.push(span);
 
-    if (isChild) {
-      // Add to parent stack for nested spans
-      parentStack.push(span);
-      // Child spans continue from same time point (parallel/nested execution)
+    if (shouldCreateChild) {
+      // Add to parent stack - children start right after their parent starts
+      parentStack.push({
+        span: span,
+        nextChildStartTime: spanStartTime, // Children can start immediately within parent
+      });
     } else {
-      // Sibling spans continue after this span ends (sequential execution)
-      currentTime = spanEndTime;
+      // Update parent's next child start time to after this sibling
+      currentContext.nextChildStartTime = spanEndTime;
     }
   }
 

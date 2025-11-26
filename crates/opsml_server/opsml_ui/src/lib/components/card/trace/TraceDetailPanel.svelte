@@ -3,7 +3,9 @@
   import type { TraceDetail, TraceSpan } from './types';
   import TraceWaterfall from './TraceWaterfall.svelte';
   import SpanDetailView from './SpanDetailView.svelte';
+  import SpanGraph from './graph/SpanGraph.svelte';
   import { formatDuration } from './utils';
+  import { Network, List } from 'lucide-svelte';
 
   let {
     traceDetail,
@@ -17,12 +19,13 @@
   let isClosing = $state(false);
   let showWaterfall = $state(true);
   let showSpanDetail = $state(true);
+  let showGraph = $state(false);
 
   function handleClose() {
     isClosing = true;
     setTimeout(() => {
       onClose();
-    }, 20); // Match animation duration
+    }, 20);
   }
 
   const slowestSpan = $derived(() => {
@@ -36,7 +39,6 @@
 
   function handleSpanSelect(span: TraceSpan) {
     selectedSpan = span;
-    // On small screens, auto-show span detail when a span is selected
     if (window.innerWidth < 1024) {
       showSpanDetail = true;
     }
@@ -54,6 +56,10 @@
   function toggleSpanDetail() {
     showSpanDetail = !showSpanDetail;
     if (!showSpanDetail) showWaterfall = true;
+  }
+
+  function toggleGraph() {
+    showGraph = !showGraph;
   }
 
   onMount(() => {
@@ -102,22 +108,38 @@
       </div>
     </div>
 
-    <button
-      onclick={handleClose}
-      class="p-2 bg-primary-800 text-white hover:bg-primary-500 rounded-lg transition-colors flex-shrink-0 ml-2 border-2 border-black shadow-small"
-      aria-label="Close panel"
-    >
-      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-      </svg>
-    </button>
+    <div class="flex gap-2 flex-shrink-0 ml-2">
+      <!-- Graph Toggle Button -->
+      <button
+        onclick={toggleGraph}
+        class="px-3 py-2 rounded-lg transition-colors border-2 border-black shadow-small flex items-center gap-2 {showGraph ? 'bg-primary-500 text-white' : 'bg-white text-primary-800 hover:bg-primary-100'}"
+        aria-label="Toggle execution graph"
+        title="Toggle execution graph"
+      >
+        <Network class="w-5 h-5" />
+        <span class="hidden md:inline text-sm font-bold">Graph</span>
+      </button>
+
+      <!-- Close Button -->
+      <button
+        onclick={handleClose}
+        class="p-2 bg-primary-800 text-white hover:bg-primary-500 rounded-lg transition-colors border-2 border-black shadow-small"
+        aria-label="Close panel"
+      >
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
   </div>
 
+  <!-- Mobile View Tabs -->
   <div class="lg:hidden flex border-b-2 border-black bg-surface-200">
     <button
       onclick={toggleWaterfall}
       class="flex-1 py-2 text-sm font-bold transition-colors border-r-2 border-black {showWaterfall ? 'bg-primary-500 text-white' : 'bg-white text-primary-800'}"
     >
+      <List class="w-4 h-4 inline-block mr-1" />
       Waterfall
     </button>
     <button
@@ -128,7 +150,29 @@
     </button>
   </div>
 
+  <!-- Execution Graph (Expandable) -->
+  {#if showGraph}
+    <div class="border-b-2 border-black bg-surface-50 p-4 overflow-auto" style="max-height: 50vh;">
+      <div class="flex items-center justify-between mb-2">
+        <h3 class="text-sm font-bold text-primary-800">Execution Flow</h3>
+        <button
+          onclick={toggleGraph}
+          class="text-xs px-2 py-1 bg-surface-200 hover:bg-surface-300 rounded border-1 border-black text-gray-700"
+        >
+          Collapse
+        </button>
+      </div>
+      <SpanGraph
+        spans={traceDetail.spans}
+        slowestSpan={slowestSpan()}
+        onSpanSelect={handleSpanSelect}
+      />
+    </div>
+  {/if}
+
+  <!-- Main Content Area -->
   <div class="flex-1 overflow-hidden flex flex-col lg:flex-row">
+    <!-- Waterfall View -->
     <div
       class="overflow-auto border-b-2 lg:border-b-0 lg:border-r-2 border-black min-h-0 lg:flex-1 {showWaterfall ? 'flex-1' : 'hidden'} lg:block"
     >
@@ -141,6 +185,7 @@
       />
     </div>
 
+    <!-- Span Detail View -->
     <div
       class="overflow-auto bg-surface-50 min-h-0 lg:flex-1 lg:w-2/5 {showSpanDetail ? 'flex-1' : 'hidden'} lg:block"
     >
