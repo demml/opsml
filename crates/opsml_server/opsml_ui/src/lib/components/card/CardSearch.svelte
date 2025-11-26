@@ -87,7 +87,7 @@
 
 
 
-<div class="flex flex-col mx-auto w-11/12 pt-4 px-4 pb-10">
+<div class="mx-auto w-full max-w-8xl px-4 py-6 sm:px-6 lg:px-8">
   <div class="inline-flex items-center bg-surface-50 border-black border-2 shadow-small mb-4 px-3 py-2 rounded-2xl self-start">
     <p class="mr-2 font-bold text-primary-800">Table View</p>
     <Switch

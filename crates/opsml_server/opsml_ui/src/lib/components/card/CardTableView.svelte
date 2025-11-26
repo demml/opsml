@@ -19,19 +19,26 @@
       <thead class="sticky top-0 z-10 bg-white" style="box-shadow: 0 2px 0 0 #000;">
         <tr>
           <th class="p-2 font-heading pl-6 text-left text-black">
-            <span class='px-2 py-1 rounded-full bg-primary-100 text-primary-800'>
-              Space
-            </span>
+            <div class="text-center">
+              <span class='px-2 py-1 rounded-full bg-primary-100 text-primary-800'>
+                Id
+              </span>
+            </div>
           </th>
           <th class="p-2 font-heading">
-            <span class='px-2 py-1 rounded-full bg-primary-100 text-primary-800'>
-              Name
-            </span>
+            <div class="text-center">
+              <span class="px-2 py-1 rounded-full bg-primary-100 text-primary-800">Created</span>
+            </div>
           </th>
           <th class="p-2 font-heading">
-            <span class='px-2 py-1 rounded-full bg-primary-100 text-primary-800'>
-              Last Updated
-            </span>
+            <div class="text-center">
+              <span class="px-2 py-1 rounded-full bg-primary-100 text-primary-800">Space</span>
+            </div>
+          </th>
+          <th class="p-2 font-heading">
+            <div class="text-center">
+              <span class="px-2 py-1 rounded-full bg-primary-100 text-primary-800">Name</span>
+            </div>
           </th>
           <th class="p-2 font-heading">
             <span class='px-2 py-1 rounded-full bg-primary-100 text-primary-800'>
@@ -41,11 +48,6 @@
           <th class="p-2 font-heading">
             <span class='px-2 py-1 rounded-full bg-primary-100 text-primary-800'>
               Versions
-            </span>
-          </th>
-          <th class="p-2 font-heading">
-            <span class='px-2 py-1 rounded-full bg-primary-100 text-primary-800'>
-              Link
             </span>
           </th>
         </tr>
