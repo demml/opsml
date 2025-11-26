@@ -1,7 +1,7 @@
 <script lang="ts">
   import { Calendar, Clock, ChevronDown } from 'lucide-svelte';
   import type { DateTime } from '$lib/types';
-  
+
   export interface TimeRange {
     label: string;
     value: string;
@@ -230,7 +230,7 @@
               >
             Apply
             </button>
-          </div> 
+          </div>
         </div>
       {/if}
     </div>
