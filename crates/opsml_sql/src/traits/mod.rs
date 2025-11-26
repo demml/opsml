@@ -10,7 +10,7 @@ use opsml_types::contracts::CardQueryArgs;
 use opsml_types::{
     contracts::{
         ArtifactKey, ArtifactQueryArgs, ArtifactRecord, AuditEvent, ServiceQueryArgs,
-        SpaceNameEvent, SpaceRecord, SpaceStats,
+        SpaceNameEvent, SpaceRecord, SpaceStats, VersionCursor,
     },
     RegistryType,
 };
@@ -53,9 +53,7 @@ pub trait CardLogicTrait {
     ) -> Result<Vec<CardSummary>, SqlError>;
     async fn version_page(
         &self,
-        page: i32,
-        space: Option<&str>,
-        name: Option<&str>,
+        cursor: &VersionCursor,
         table: &CardTable,
     ) -> Result<Vec<VersionSummary>, SqlError>;
     async fn delete_card(&self, table: &CardTable, uid: &str)
