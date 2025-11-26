@@ -6,14 +6,27 @@ export interface RegistryStatsRequest {
   spaces?: string[];
   tags?: string[];
 }
+
+export interface CardCursor {
+  offset: number;
+  limit: number;
+  sort_by: string;
+  search_term?: string;
+  spaces?: string[];
+  tags?: string[];
+}
+
 export interface QueryPageRequest {
   registry_type: RegistryType;
-  sort_by?: string;
-  spaces?: string[];
-  search_term?: string;
-  tags?: string[];
   page?: number;
+  cursor?: CardCursor;
+  limit?: number;
+  sort_by?: string;
+  search_term?: string;
+  spaces?: string[];
+  tags?: string[];
 }
+
 export interface CardSpaceResponse {
   spaces: string[];
 }
@@ -33,13 +46,13 @@ export interface RegistryStatsResponse {
 }
 
 export interface CardSummary {
+  uid: string;
   space: string;
   name: string;
   version: string;
   versions: number;
   updated_at: string;
   created_at: string;
-  row_num: number;
 }
 
 export interface VersionSummary {
@@ -50,12 +63,41 @@ export interface VersionSummary {
   row_num: number;
 }
 
+export interface VersionCursor {
+  offset: number;
+  limit: number;
+  space: string;
+  name: string;
+}
+
 export interface VersionPageResponse {
-  summaries: VersionSummary[];
+  items: VersionSummary[];
+  has_next: boolean;
+  next_cursor?: VersionCursor;
+  has_previous: boolean;
+  previous_cursor?: VersionCursor;
+}
+
+export interface FilterSummary {
+  search_term?: string;
+  spaces?: string[];
+  tags?: string[];
+  sort_by?: string;
+}
+
+export interface PageInfo {
+  page_size: number;
+  offset: number;
+  filters: FilterSummary;
 }
 
 export interface QueryPageResponse {
-  summaries: CardSummary[];
+  items: CardSummary[];
+  has_next: boolean;
+  next_cursor?: CardCursor;
+  has_previous: boolean;
+  previous_cursor?: CardCursor;
+  page_info: PageInfo;
 }
 
 export interface RegistryPageReturn {
@@ -70,5 +112,6 @@ export interface VersionPageRequest {
   registry_type: RegistryType;
   space?: string;
   name?: string;
-  page?: number;
+  cursor?: VersionCursor;
+  limit?: number;
 }

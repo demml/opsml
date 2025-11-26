@@ -3,17 +3,44 @@ use opsml_sql::schemas::{
     schema::{CardSummary, QueryStats},
     VersionSummary,
 };
-use opsml_types::RegistryType;
+use opsml_types::{
+    contracts::{CardCursor, VersionCursor},
+    RegistryType,
+};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct QueryPageResponse {
-    pub summaries: Vec<CardSummary>,
+    pub items: Vec<CardSummary>,
+    pub has_next: bool,
+    pub next_cursor: Option<CardCursor>,
+    pub has_previous: bool,
+    pub previous_cursor: Option<CardCursor>,
+    pub page_info: PageInfo,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct PageInfo {
+    pub page_size: usize,
+    pub offset: i32,
+    pub filters: FilterSummary,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct FilterSummary {
+    pub search_term: Option<String>,
+    pub spaces: Vec<String>,
+    pub tags: Vec<String>,
+    pub sort_by: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct VersionPageResponse {
-    pub summaries: Vec<VersionSummary>,
+    pub items: Vec<VersionSummary>,
+    pub has_next: bool,
+    pub next_cursor: Option<VersionCursor>,
+    pub has_previous: bool,
+    pub previous_cursor: Option<VersionCursor>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]

@@ -12,7 +12,7 @@ use crate::traits::CardLogicTrait;
 use async_trait::async_trait;
 use opsml_semver::VersionValidator;
 use opsml_types::{
-    contracts::{ArtifactKey, CardQueryArgs, ServiceQueryArgs},
+    contracts::{ArtifactKey, CardQueryArgs, ServiceQueryArgs, VersionCursor},
     RegistryType,
 };
 use semver::Version;
@@ -613,16 +613,14 @@ impl CardLogicTrait for CardLogicPostgresClient {
     async fn query_page(
         &self,
         sort_by: &str,
-        page: i32,
+        limit: i32,
+        offset: i32,
         search_term: Option<&str>,
         spaces: &[String],
         tags: &[String],
         table: &CardTable,
     ) -> Result<Vec<CardSummary>, SqlError> {
         let query = PostgresQueryHelper::get_query_page_query(table, sort_by, spaces, tags);
-
-        let lower_bound = (page * 30) - 30;
-        let upper_bound = page * 30;
 
         let mut query_builder = sqlx::query_as::<_, CardSummary>(&query)
             .bind(search_term.map(|term| format!("%{term}%")));
@@ -631,12 +629,12 @@ impl CardLogicTrait for CardLogicPostgresClient {
             query_builder = query_builder.bind(spaces);
         }
 
-        // need to bind tags here
         if !tags.is_empty() {
             query_builder = query_builder.bind(tags);
         }
 
-        query_builder = query_builder.bind(lower_bound).bind(upper_bound);
+        // Fetch limit + 1 to determine if there's a next page
+        query_builder = query_builder.bind(offset).bind(limit + 1);
 
         let records = query_builder.fetch_all(&self.pool).await?;
         Ok(records)
@@ -644,21 +642,17 @@ impl CardLogicTrait for CardLogicPostgresClient {
 
     async fn version_page(
         &self,
-        page: i32,
-        space: Option<&str>,
-        name: Option<&str>,
+        cursor: &VersionCursor,
         table: &CardTable,
     ) -> Result<Vec<VersionSummary>, SqlError> {
         let query = PostgresQueryHelper::get_version_page_query(table);
 
-        let lower_bound = (page * 30) - 30;
-        let upper_bound = page * 30;
-
+        // Fetch limit + 1 to determine if there's a next page
         let records: Vec<VersionSummary> = sqlx::query_as(&query)
-            .bind(space)
-            .bind(name)
-            .bind(lower_bound)
-            .bind(upper_bound)
+            .bind(&cursor.space)
+            .bind(&cursor.name)
+            .bind(cursor.offset)
+            .bind(cursor.limit + 1)
             .fetch_all(&self.pool)
             .await?;
 

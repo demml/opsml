@@ -13,7 +13,7 @@ use crate::traits::CardLogicTrait;
 use async_trait::async_trait;
 use opsml_semver::VersionValidator;
 use opsml_types::{
-    contracts::{ArtifactKey, CardQueryArgs, ServiceQueryArgs},
+    contracts::{ArtifactKey, CardQueryArgs, ServiceQueryArgs, VersionCursor},
     RegistryType,
 };
 use semver::Version;
@@ -585,23 +585,26 @@ impl CardLogicTrait for CardLogicSqliteClient {
         Ok(stats)
     }
 
-    /// Query a page of cards
+    /// Query a page of cards with cursor-based pagination
     ///
     /// # Arguments
     ///
     /// * `sort_by` - The field to sort by
-    /// * `page` - The page number
-    /// * `search_term` - The search term to query
-    /// * `space` - The space to query
+    /// * `limit` - Number of items per page (will fetch limit + 1 for has_next detection)
+    /// * `offset` - Starting position in result set
+    /// * `search_term` - Optional search term (from cursor)
+    /// * `spaces` - Space filters (from cursor)
+    /// * `tags` - Tag filters (from cursor)
     /// * `table` - The table to query
     ///
     /// # Returns
     ///
-    /// * `Vec<CardSummary>` - A vector of card summaries
+    /// * `Vec<CardSummary>` - A vector of card summaries (may contain limit + 1 items)
     async fn query_page(
         &self,
         sort_by: &str,
-        page: i32,
+        limit: i32,
+        offset: i32,
         search_term: Option<&str>,
         spaces: &[String],
         tags: &[String],
@@ -609,42 +612,40 @@ impl CardLogicTrait for CardLogicSqliteClient {
     ) -> Result<Vec<CardSummary>, SqlError> {
         let query = SqliteQueryHelper::get_query_page_query(table, sort_by, spaces, tags);
 
-        let lower_bound = (page * 30) - 30;
-        let upper_bound = page * 30;
-
+        // Build query with proper parameter binding
         let mut query_builder = sqlx::query_as::<_, CardSummary>(&query)
             .bind(search_term.map(|term| format!("%{term}%")));
 
+        // Bind space filters
         for space in spaces {
             query_builder = query_builder.bind(space);
         }
 
+        // Bind tag filters
         for tag in tags {
             query_builder = query_builder.bind(tag);
         }
 
-        query_builder = query_builder.bind(lower_bound).bind(upper_bound);
+        // Bind pagination parameters (offset, then limit + 1)
+        query_builder = query_builder.bind(offset).bind(limit + 1);
+
         let records = query_builder.fetch_all(&self.pool).await?;
         Ok(records)
     }
 
     async fn version_page(
         &self,
-        page: i32,
-        space: Option<&str>,
-        name: Option<&str>,
+        cursor: &VersionCursor,
         table: &CardTable,
     ) -> Result<Vec<VersionSummary>, SqlError> {
         let query = SqliteQueryHelper::get_version_page_query(table);
 
-        let lower_bound = (page * 30) - 30;
-        let upper_bound = page * 30;
-
+        // Fetch limit + 1 to determine if there's a next page
         let records: Vec<VersionSummary> = sqlx::query_as(&query)
-            .bind(space)
-            .bind(name)
-            .bind(lower_bound)
-            .bind(upper_bound)
+            .bind(&cursor.space)
+            .bind(&cursor.name)
+            .bind(cursor.offset)
+            .bind(cursor.limit + 1)
             .fetch_all(&self.pool)
             .await?;
 

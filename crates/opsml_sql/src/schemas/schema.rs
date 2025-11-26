@@ -143,13 +143,13 @@ pub struct QueryStats {
 
 #[derive(Debug, FromRow, Serialize, Deserialize)]
 pub struct CardSummary {
+    pub uid: String,
     pub space: String,
     pub name: String,
     pub version: String,
     pub versions: i64,
     pub updated_at: DateTime<Utc>,
     pub created_at: DateTime<Utc>,
-    pub row_num: i64,
 }
 
 #[derive(Debug, FromRow, Serialize, Deserialize)]
@@ -158,7 +158,6 @@ pub struct VersionSummary {
     pub name: String,
     pub version: String,
     pub created_at: DateTime<Utc>,
-    pub row_num: i64,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]

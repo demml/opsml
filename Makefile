@@ -30,23 +30,23 @@ test.sql.enum:
 
 .PHONY: build.postgres
 build.postgres:
-	docker compose down --volumes 
+	docker compose down --volumes
 	docker compose up -d --build postgres --wait
 
 .PHONY: test.sql.postgres
 test.sql.postgres: build.postgres
 	cargo test -p opsml-sql test_postgres -- --nocapture --test-threads=1
-	docker compose down --volumes 
+	docker compose down --volumes
 
 .PHONY: build.mysql
 build.mysql:
-	docker compose down --volumes 
+	docker compose down --volumes
 	docker compose up -d --build mysql --wait
 
 .PHONY: test.sql.mysql
 test.sql.mysql: build.mysql
-	cargo test -p opsml-sql test_mysql -- --nocapture --test-threads=1
-	docker compose down --volumes 
+	cargo test -p opsml-sql test_mysql_query -- --nocapture --test-threads=1
+	docker compose down --volumes
 
 .PHONY: test.sql
 test.sql: test.sql.sqlite test.sql.enum test.sql.postgres test.sql.mysql
@@ -103,7 +103,7 @@ test.server:
 test.opsml.registry.client:
 	cargo test --features server -p opsml-registry test_registry_client -- --nocapture --test-threads=1
 
-.PHONY: test.version 
+.PHONY: test.version
 test.version:
 	cargo test -p opsml-version -- --nocapture --test-threads=1
 
@@ -180,7 +180,7 @@ dev.both:
 .PHONY: start.both
 start.both:
 	@echo "Starting both servers in production mode..."
-	@echo "Backend API: http://localhost:8080" 
+	@echo "Backend API: http://localhost:8080"
 	@echo "Frontend SSR: http://localhost:3000"
 	@make -j2 dev.backend start.frontend
 
