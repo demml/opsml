@@ -13,7 +13,6 @@ pub struct QueryPageResponse {
     pub next_cursor: Option<CardCursor>,
     pub has_previous: bool,
     pub previous_cursor: Option<CardCursor>,
-    pub total_count: Option<i32>,
     pub page_info: PageInfo,
 }
 
