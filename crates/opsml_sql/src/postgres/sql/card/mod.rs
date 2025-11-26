@@ -613,16 +613,14 @@ impl CardLogicTrait for CardLogicPostgresClient {
     async fn query_page(
         &self,
         sort_by: &str,
-        page: i32,
+        limit: i32,
+        offset: i32,
         search_term: Option<&str>,
         spaces: &[String],
         tags: &[String],
         table: &CardTable,
     ) -> Result<Vec<CardSummary>, SqlError> {
         let query = PostgresQueryHelper::get_query_page_query(table, sort_by, spaces, tags);
-
-        let lower_bound = (page * 30) - 30;
-        let upper_bound = page * 30;
 
         let mut query_builder = sqlx::query_as::<_, CardSummary>(&query)
             .bind(search_term.map(|term| format!("%{term}%")));
@@ -631,12 +629,12 @@ impl CardLogicTrait for CardLogicPostgresClient {
             query_builder = query_builder.bind(spaces);
         }
 
-        // need to bind tags here
         if !tags.is_empty() {
             query_builder = query_builder.bind(tags);
         }
 
-        query_builder = query_builder.bind(lower_bound).bind(upper_bound);
+        // Fetch limit + 1 to determine if there's a next page
+        query_builder = query_builder.bind(offset).bind(limit + 1);
 
         let records = query_builder.fetch_all(&self.pool).await?;
         Ok(records)
