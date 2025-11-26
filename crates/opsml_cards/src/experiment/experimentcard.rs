@@ -203,6 +203,7 @@ impl ExperimentCard {
             experimentcard_uids: self.uids.experimentcard_uids.clone(),
             opsml_version: self.opsml_version.clone(),
             username: std::env::var("OPSML_USERNAME").unwrap_or_else(|_| "guest".to_string()),
+            status: self.status.clone(),
         };
 
         Ok(CardRecord::Experiment(record))

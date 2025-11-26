@@ -16,6 +16,7 @@ INSERT INTO opsml_experiment_registry (
     pre_tag, 
     build_tag,
     username,
-    opsml_version
+    opsml_version,
+    status
 ) 
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18);
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19);

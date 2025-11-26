@@ -7,6 +7,7 @@ use std::collections::HashMap;
 use std::fmt;
 use std::path::{Path, PathBuf};
 
+#[pyclass(eq, eq_int)]
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 #[cfg_attr(feature = "server", derive(sqlx::Type))]
 pub enum CardStatus {
