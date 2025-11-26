@@ -2,7 +2,6 @@
   import type { VersionPageResponse, RegistryStatsResponse, VersionCursor } from "$lib/components/card/types";
   import type { RegistryType } from "$lib/utils";
   import { Settings, ArrowLeft, ArrowRight } from 'lucide-svelte';
-  import type { AnyCard } from "./card_interfaces/enum";
   import VersionButton from "./VersionButton.svelte";
   import { getVersionPageWithCursor } from "../api/registry";
 
