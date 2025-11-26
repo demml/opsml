@@ -248,6 +248,11 @@ pub async fn retrieve_page(
         None
     };
 
+    debug!(
+        "Next cursor: {:?}, Previous cursor: {:?}",
+        next_cursor, previous_cursor
+    );
+
     let page_info = PageInfo {
         page_size: summaries.len(),
         offset: cursor.offset,

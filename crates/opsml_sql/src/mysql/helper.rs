@@ -182,7 +182,7 @@ impl MySqlQueryHelper {
         } else {
             let mut or_conditions = Vec::new();
             for _ in spaces {
-                or_conditions.push(format!("space = ?"));
+                or_conditions.push("space = ?".to_string());
             }
             let or_clause = or_conditions.join(" OR ");
             format!(" AND ({or_clause})")
@@ -194,7 +194,7 @@ impl MySqlQueryHelper {
         } else {
             let mut or_conditions = Vec::new();
             for _ in tags {
-                or_conditions.push(format!("JSON_CONTAINS(tags, ?, '$')"));
+                or_conditions.push("JSON_CONTAINS(tags, ?, '$')".to_string());
             }
             let or_clause = or_conditions.join(" OR ");
             format!(" AND ({or_clause})")
