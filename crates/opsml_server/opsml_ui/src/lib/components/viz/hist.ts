@@ -25,7 +25,7 @@ export function createHistogramViz(data: Histogram): ChartConfiguration {
     options: {
       plugins: getPlugins(false),
       responsive: true,
-      onresize: handleResize,
+      //onresize: handleResize,
       maintainAspectRatio: false,
       scales: {
         x: {
