@@ -447,6 +447,7 @@ impl CardLogicTrait for CardLogicMySqlClient {
                         .bind(&record.build_tag)
                         .bind(&record.username)
                         .bind(&record.opsml_version)
+                        .bind(&record.status)
                         .bind(&record.uid)
                         .execute(&self.pool)
                         .await?;

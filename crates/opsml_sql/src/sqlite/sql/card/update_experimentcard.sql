@@ -15,5 +15,6 @@ experimentcard_uids = ?,
 pre_tag = ?, 
 build_tag = ?,
 username = ?,
-opsml_version = ?
+opsml_version = ?,
+status = ?
 WHERE uid = ?
