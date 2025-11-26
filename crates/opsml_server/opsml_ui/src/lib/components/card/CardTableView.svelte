@@ -1,16 +1,26 @@
-
 <script lang="ts">
   import { resolveCardPathFromArgs } from "./utils";
-  import type { QueryPageResponse} from "$lib/components/card/types";
+  import type { QueryPageResponse, CardCursor } from "$lib/components/card/types";
   import  { RegistryType } from "$lib/utils";
-  import { goto } from "$app/navigation";
-  
-  let { registryPage, registry } = $props<{
+  import { ArrowLeft, ArrowRight } from 'lucide-svelte';
+
+  let { registryPage, registry, onPageChange } = $props<{
     registryPage: QueryPageResponse;
     registry: RegistryType;
+    onPageChange?: (cursor: CardCursor) => Promise<void>;
   }>();
 
+  async function handleNextPage() {
+    if (registryPage.next_cursor && onPageChange) {
+      await onPageChange(registryPage.next_cursor);
+    }
+  }
 
+  async function handlePreviousPage() {
+    if (registryPage.previous_cursor && onPageChange) {
+      await onPageChange(registryPage.previous_cursor);
+    }
+  }
 </script>
 
 <div class="pt-4">
@@ -53,7 +63,7 @@
         </tr>
       </thead>
       <tbody>
-      {#each registryPage.summaries as summary, i}
+      {#each registryPage.items as summary, i}
         <tr class={`border-b-2 border-black hover:bg-primary-300 ${i % 2 === 0 ? 'bg-white' : 'bg-white'}`}>
           <td class="p-1 pl-8">{summary.space}</td>
           <td class="p-1 text-center">{summary.name}</td>
@@ -69,7 +79,7 @@
           </td>
           <td class="p-1 text-center">{summary.versions}</td>
           <td class="p-2">
-            <a 
+            <a
               class="justify-self-center btn text-sm flex flex-row gap-1 bg-primary-500 shadow shadow-hover border-black border-2 rounded-lg"
               href={resolveCardPathFromArgs(registry, summary.space, summary.name, summary.version)}
               data-sveltekit-preload-data="hover"
@@ -81,5 +91,37 @@
       {/each}
       </tbody>
     </table>
+  </div>
+
+  <!-- Pagination Controls -->
+  <div class="flex justify-center pt-4 gap-2 items-center">
+    {#if registryPage.has_previous}
+      <button
+        class="btn bg-surface-50 border-black border-2 shadow-small shadow-hover-small h-9"
+        onclick={handlePreviousPage}
+        disabled={!onPageChange}
+      >
+        <ArrowLeft color="#5948a3"/>
+      </button>
+    {/if}
+
+    <div class="flex bg-surface-50 border-black border-2 text-center items-center rounded-base px-2 shadow-small h-9">
+      <span class="text-primary-800 text-xs">
+        {registryPage.page_info.page_size} items
+        {#if registryPage.page_info.offset > 0}
+          (offset: {registryPage.page_info.offset})
+        {/if}
+      </span>
+    </div>
+
+    {#if registryPage.has_next}
+      <button
+        class="btn bg-surface-50 border-black border-2 shadow-small shadow-hover-small h-9"
+        onclick={handleNextPage}
+        disabled={!onPageChange}
+      >
+        <ArrowRight color="#5948a3"/>
+      </button>
+    {/if}
   </div>
 </div>

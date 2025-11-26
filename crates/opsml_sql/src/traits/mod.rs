@@ -10,7 +10,7 @@ use opsml_types::contracts::CardQueryArgs;
 use opsml_types::{
     contracts::{
         ArtifactKey, ArtifactQueryArgs, ArtifactRecord, AuditEvent, ServiceQueryArgs,
-        SpaceNameEvent, SpaceRecord, SpaceStats,
+        SpaceNameEvent, SpaceRecord, SpaceStats, VersionCursor,
     },
     RegistryType,
 };
@@ -39,10 +39,13 @@ pub trait CardLogicTrait {
         spaces: &[String],
         tags: &[String],
     ) -> Result<QueryStats, SqlError>;
+
+    #[allow(clippy::too_many_arguments)]
     async fn query_page(
         &self,
         sort_by: &str,
-        page: i32,
+        limit: i32,
+        offset: i32,
         search_term: Option<&str>,
         spaces: &[String],
         tags: &[String],
@@ -50,9 +53,7 @@ pub trait CardLogicTrait {
     ) -> Result<Vec<CardSummary>, SqlError>;
     async fn version_page(
         &self,
-        page: i32,
-        space: Option<&str>,
-        name: Option<&str>,
+        cursor: &VersionCursor,
         table: &CardTable,
     ) -> Result<Vec<VersionSummary>, SqlError>;
     async fn delete_card(&self, table: &CardTable, uid: &str)

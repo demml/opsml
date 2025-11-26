@@ -10,7 +10,7 @@ use crate::{
 use opsml_settings::config::DatabaseSettings;
 use sqlx::{sqlite::SqlitePoolOptions, Pool, Sqlite};
 use std::path::Path;
-use tracing::{debug, instrument};
+use tracing::{debug, error, instrument};
 
 #[derive(Debug, Clone)]
 pub struct SqliteClient {
@@ -70,7 +70,10 @@ impl SqliteClient {
         };
 
         // Run migrations
-        client.run_migrations().await?;
+        client.run_migrations().await.map_err(|e| {
+            error!("Failed to run SQLite migrations: {:?}", e);
+            e
+        })?;
 
         debug!("SQLite client initialized successfully");
         Ok(client)
@@ -105,6 +108,7 @@ mod tests {
     };
     use opsml_settings::config::DatabaseSettings;
     use opsml_types::contracts::evaluation::{EvaluationProvider, EvaluationType};
+    use opsml_types::contracts::VersionCursor;
     use opsml_types::contracts::{
         ArtifactKey, ArtifactQueryArgs, AuditEvent, DeploymentConfig, McpCapability, McpConfig,
         McpTransport, Resources, ServiceConfig, ServiceQueryArgs, ServiceType, SpaceNameEvent,
@@ -564,6 +568,198 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn test_sqlite_query_pagination() {
+        cleanup();
+
+        let config = DatabaseSettings {
+            connection_uri: get_connection_uri(),
+            max_connections: 1,
+            sql_type: SqlType::Sqlite,
+        };
+
+        let client = SqliteClient::new(&config).await.unwrap();
+
+        // Run the SQL script to populate the database
+        let script = std::fs::read_to_string("tests/populate_sqlite_test.sql").unwrap();
+        sqlx::query(&script).execute(&client.pool).await.unwrap();
+
+        // Test 1: Basic pagination with limit + 1 pattern
+        let page1 = client
+            .card
+            .query_page("updated_at", 5, 0, None, &[], &[], &CardTable::Model)
+            .await
+            .unwrap();
+
+        assert!(
+            page1.len() <= 6,
+            "Should return at most limit + 1 for has_next detection"
+        );
+
+        // Test 2: Second page - verify no overlap
+        let page2 = client
+            .card
+            .query_page("updated_at", 5, 5, None, &[], &[], &CardTable::Model)
+            .await
+            .unwrap();
+
+        let page1_uids: Vec<_> = page1.iter().take(5).map(|c| &c.uid).collect();
+        let page2_uids: Vec<_> = page2.iter().take(5).map(|c| &c.uid).collect();
+
+        for uid in &page2_uids {
+            assert!(!page1_uids.contains(uid), "Pages should not overlap");
+        }
+
+        // Test 3: Search filter
+        let search_results = client
+            .card
+            .query_page(
+                "updated_at",
+                10,
+                0,
+                Some("Model1"),
+                &[],
+                &[],
+                &CardTable::Model,
+            )
+            .await
+            .unwrap();
+
+        for summary in search_results.iter().take(10) {
+            assert!(
+                summary.name.contains("Model1"),
+                "All results should match search term"
+            );
+        }
+
+        // Test 4: Space filter
+        let space_results = client
+            .card
+            .query_page(
+                "updated_at",
+                10,
+                0,
+                None,
+                &["repo1".to_string(), "repo2".to_string()],
+                &[],
+                &CardTable::Model,
+            )
+            .await
+            .unwrap();
+
+        for summary in space_results.iter().take(10) {
+            assert!(
+                summary.space == "repo1" || summary.space == "repo2",
+                "Results should match space filter"
+            );
+        }
+
+        // Test 5: Tag filter
+        let tag_results = client
+            .card
+            .query_page(
+                "updated_at",
+                10,
+                0,
+                None,
+                &[],
+                &["hello".to_string()],
+                &CardTable::Model,
+            )
+            .await
+            .unwrap();
+
+        assert!(
+            tag_results.len() >= 2,
+            "Should find models with 'hello' tag"
+        );
+
+        // Test 6: Combined filters (practical use case)
+        let combined_results = client
+            .card
+            .query_page(
+                "updated_at",
+                10,
+                0,
+                Some("Model"),
+                &["repo1".to_string()],
+                &["hello".to_string()],
+                &CardTable::Model,
+            )
+            .await
+            .unwrap();
+
+        for summary in combined_results.iter().take(10) {
+            assert!(summary.name.contains("Model"), "Should match search");
+            assert_eq!(summary.space, "repo1", "Should match space");
+        }
+
+        // Test 7: Sort by name
+        let sorted_results = client
+            .card
+            .query_page("name", 5, 0, None, &[], &[], &CardTable::Model)
+            .await
+            .unwrap();
+
+        if sorted_results.len() >= 2 {
+            for i in 0..sorted_results.len().min(5) - 1 {
+                assert!(
+                    sorted_results[i].name >= sorted_results[i + 1].name,
+                    "Results should be sorted by name DESC"
+                );
+            }
+        }
+
+        // Test 8: Version count accuracy
+        let data_results = client
+            .card
+            .query_page(
+                "updated_at",
+                10,
+                0,
+                Some("Data1"),
+                &[],
+                &[],
+                &CardTable::Data,
+            )
+            .await
+            .unwrap();
+
+        if let Some(data1) = data_results.iter().find(|s| s.name == "Data1") {
+            assert_eq!(data1.versions, 10, "Data1 should have 10 versions");
+        }
+
+        // Test 9: Empty results (edge case)
+        let empty_results = client
+            .card
+            .query_page(
+                "updated_at",
+                10,
+                0,
+                Some("NonExistentModel"),
+                &[],
+                &[],
+                &CardTable::Model,
+            )
+            .await
+            .unwrap();
+
+        assert_eq!(empty_results.len(), 0, "Should return empty for no matches");
+
+        // Test 10: Offset beyond results (edge case)
+        let beyond_results = client
+            .card
+            .query_page("updated_at", 10, 100, None, &[], &[], &CardTable::Model)
+            .await
+            .unwrap();
+
+        assert_eq!(
+            beyond_results.len(),
+            0,
+            "Should return empty when offset exceeds data"
+        );
+    }
+
+    #[tokio::test]
     async fn test_sqlite_query_page() {
         cleanup();
 
@@ -582,7 +778,7 @@ mod tests {
         // query page
         let results = client
             .card
-            .query_page("name", 1, None, &[], &[], &CardTable::Data)
+            .query_page("name", 1, 0, None, &[], &[], &CardTable::Data)
             .await
             .unwrap();
 
@@ -591,11 +787,11 @@ mod tests {
         // query page
         let results = client
             .card
-            .query_page("name", 1, None, &[], &[], &CardTable::Model)
+            .query_page("name", 1, 0, None, &[], &[], &CardTable::Model)
             .await
             .unwrap();
 
-        assert_eq!(results.len(), 10);
+        assert_eq!(results.len(), 2);
 
         // query page
         let results = client
@@ -603,6 +799,7 @@ mod tests {
             .query_page(
                 "name",
                 1,
+                0,
                 None,
                 &["repo3".to_string()],
                 &[],
@@ -618,6 +815,7 @@ mod tests {
             .query_page(
                 "name",
                 1,
+                0,
                 None,
                 &[],
                 &["hello".to_string()],
@@ -633,6 +831,7 @@ mod tests {
             .query_page(
                 "name",
                 1,
+                0,
                 None,
                 &[
                     "repo1".to_string(),
@@ -645,7 +844,7 @@ mod tests {
             .await
             .unwrap();
 
-        assert_eq!(results.len(), 3);
+        assert_eq!(results.len(), 2);
 
         cleanup();
     }
@@ -666,14 +865,107 @@ mod tests {
         let script = std::fs::read_to_string("tests/populate_sqlite_test.sql").unwrap();
         sqlx::query(&script).execute(&client.pool).await.unwrap();
 
-        // query page
+        // Test 1: Initial page with cursor (offset 0)
+        let cursor = VersionCursor::new(0, 30, "repo1".to_string(), "Model1".to_string());
         let results = client
             .card
-            .version_page(1, Some("repo1"), Some("Model1"), &CardTable::Model)
+            .version_page(&cursor, &CardTable::Model)
             .await
             .unwrap();
 
-        assert_eq!(results.len(), 1);
+        // Should return limit + 1 for has_next detection (or fewer if less data exists)
+        assert!(results.len() <= 31, "Should return at most limit + 1");
+
+        // Based on your test data, Model1 should have 1 version
+        assert_eq!(results.len(), 1, "Model1 should have 1 version");
+
+        // Test 2: Verify version data
+        if !results.is_empty() {
+            assert_eq!(results[0].space, "repo1");
+            assert_eq!(results[0].name, "Model1");
+        }
+
+        // Test 3: Test pagination with Data1 (which has 10 versions)
+        let cursor = VersionCursor::new(0, 5, "repo1".to_string(), "Data1".to_string());
+        let page1_results = client
+            .card
+            .version_page(&cursor, &CardTable::Data)
+            .await
+            .unwrap();
+
+        // Should return 6 results (5 + 1 for has_next detection)
+        assert!(
+            page1_results.len() <= 6,
+            "Should return at most limit + 1 for first page"
+        );
+
+        // Test 4: Second page with offset
+        let cursor = VersionCursor::new(5, 5, "repo1".to_string(), "Data1".to_string());
+        let page2_results = client
+            .card
+            .version_page(&cursor, &CardTable::Data)
+            .await
+            .unwrap();
+
+        assert!(
+            page2_results.len() <= 6,
+            "Should return at most limit + 1 for second page"
+        );
+
+        // Test 5: Verify no overlap between pages
+        if page1_results.len() > 1 && page2_results.len() > 1 {
+            let page1_versions: Vec<_> = page1_results.iter().take(5).map(|v| &v.version).collect();
+            let page2_versions: Vec<_> = page2_results.iter().take(5).map(|v| &v.version).collect();
+
+            for version in &page2_versions {
+                assert!(
+                    !page1_versions.contains(version),
+                    "Pages should not have overlapping versions"
+                );
+            }
+        }
+
+        // Test 6: Verify ordering (should be DESC by created_at, then version components)
+        if page1_results.len() >= 2 {
+            for i in 0..page1_results.len() - 1 {
+                let current = &page1_results[i];
+                let next = &page1_results[i + 1];
+
+                // Either created_at DESC or if same, version DESC
+                assert!(
+                    current.created_at >= next.created_at,
+                    "Results should be ordered by created_at DESC"
+                );
+            }
+        }
+
+        // Test 7: Test with non-existent card
+        let cursor = VersionCursor::new(0, 30, "repo1".to_string(), "NonExistent".to_string());
+        let empty_results = client
+            .card
+            .version_page(&cursor, &CardTable::Model)
+            .await
+            .unwrap();
+
+        assert_eq!(
+            empty_results.len(),
+            0,
+            "Should return empty for non-existent card"
+        );
+
+        // Test 8: Test with offset beyond available data
+        let cursor = VersionCursor::new(100, 30, "repo1".to_string(), "Data1".to_string());
+        let beyond_results = client
+            .card
+            .version_page(&cursor, &CardTable::Data)
+            .await
+            .unwrap();
+
+        assert_eq!(
+            beyond_results.len(),
+            0,
+            "Should return empty when offset exceeds available versions"
+        );
 
         cleanup();
     }

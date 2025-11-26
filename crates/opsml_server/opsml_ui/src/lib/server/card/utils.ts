@@ -10,6 +10,8 @@ import type {
   VersionPageRequest,
   QueryPageRequest,
   CardTagsResponse,
+  CardCursor,
+  VersionCursor,
 } from "$lib/components/card/types";
 import type { CardQueryArgs } from "$lib/components/api/schema";
 import { type Card } from "$lib/components/home/types";
@@ -61,7 +63,6 @@ export async function getRegistryStats(
   );
   return await response.json();
 }
-
 export async function getRegistryPage(
   fetch: typeof globalThis.fetch,
   registry_type: RegistryType,
@@ -69,7 +70,8 @@ export async function getRegistryPage(
   spaces?: string[],
   searchTerm?: string,
   tags?: string[],
-  page?: number
+  page?: number,
+  cursor?: CardCursor
 ): Promise<QueryPageResponse> {
   let request: QueryPageRequest = {
     registry_type: registry_type,
@@ -78,6 +80,7 @@ export async function getRegistryPage(
     search_term: searchTerm,
     tags: tags,
     page: page,
+    cursor: cursor, // Include cursor in request
   };
 
   const response = await createOpsmlClient(fetch).post(
@@ -137,18 +140,20 @@ export async function getCardMetadata(
 export async function getVersionPage(
   fetch: typeof globalThis.fetch,
   registry_type: RegistryType,
-  space?: string,
-  name?: string,
-  page?: number
+  space: string,
+  name: string,
+  cursor?: VersionCursor,
+  limit?: number
 ): Promise<VersionPageResponse> {
   const params: VersionPageRequest = {
-    registry_type: registry_type,
-    space: space,
-    name: name,
-    page: page,
+    registry_type,
+    space,
+    name,
+    cursor,
+    limit,
   };
 
-  const response = await createOpsmlClient(fetch).get(
+  const response = await createOpsmlClient(fetch).post(
     RoutePaths.GET_VERSION_PAGE,
     params
   );
