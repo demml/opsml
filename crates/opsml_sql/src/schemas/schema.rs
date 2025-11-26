@@ -158,7 +158,6 @@ pub struct VersionSummary {
     pub name: String,
     pub version: String,
     pub created_at: DateTime<Utc>,
-    pub row_num: i64,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]

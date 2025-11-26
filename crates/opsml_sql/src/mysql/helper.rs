@@ -275,7 +275,6 @@ impl MySqlQueryHelper {
 
         query
     }
-
     pub fn get_query_stats_query(table: &CardTable, spaces: &[String], tags: &[String]) -> String {
         let space_filter = if spaces.is_empty() {
             "".to_string()

@@ -11,7 +11,7 @@ use crate::traits::CardLogicTrait;
 use async_trait::async_trait;
 use opsml_semver::VersionValidator;
 use opsml_types::{
-    contracts::{ArtifactKey, CardQueryArgs, ServiceQueryArgs},
+    contracts::{ArtifactKey, CardQueryArgs, ServiceQueryArgs, VersionCursor},
     RegistryType,
 };
 use semver::Version;
@@ -662,21 +662,17 @@ impl CardLogicTrait for CardLogicMySqlClient {
 
     async fn version_page(
         &self,
-        page: i32,
-        space: Option<&str>,
-        name: Option<&str>,
+        cursor: &VersionCursor,
         table: &CardTable,
     ) -> Result<Vec<VersionSummary>, SqlError> {
         let query = MySqlQueryHelper::get_version_page_query(table);
 
-        let lower_bound = (page * 30) - 30;
-        let upper_bound = page * 30;
-
+        // Fetch limit + 1 to determine if there's a next page
         let records: Vec<VersionSummary> = sqlx::query_as(&query)
-            .bind(space)
-            .bind(name)
-            .bind(lower_bound)
-            .bind(upper_bound)
+            .bind(&cursor.space)
+            .bind(&cursor.name)
+            .bind(cursor.limit + 1)
+            .bind(cursor.offset)
             .fetch_all(&self.pool)
             .await?;
 

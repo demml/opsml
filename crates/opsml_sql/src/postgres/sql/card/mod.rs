@@ -12,7 +12,7 @@ use crate::traits::CardLogicTrait;
 use async_trait::async_trait;
 use opsml_semver::VersionValidator;
 use opsml_types::{
-    contracts::{ArtifactKey, CardQueryArgs, ServiceQueryArgs},
+    contracts::{ArtifactKey, CardQueryArgs, ServiceQueryArgs, VersionCursor},
     RegistryType,
 };
 use semver::Version;
