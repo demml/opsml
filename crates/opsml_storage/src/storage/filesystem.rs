@@ -1,11 +1,14 @@
 #[cfg(feature = "server")]
 use crate::storage::enums::client::StorageClientEnum;
 
+#[cfg(feature = "server")]
+use opsml_state::block_on;
+
 use crate::storage::error::StorageError;
 use crate::storage::http::client::{AsyncHttpFSStorageClient, HttpFSStorageClient};
 use async_trait::async_trait;
 use opsml_settings::config::{OpsmlMode, OpsmlStorageSettings};
-use opsml_state::{app_state, block_on, get_api_client, get_async_api_client};
+use opsml_state::{app_state, get_api_client, get_async_api_client};
 use opsml_types::contracts::CompleteMultipartUpload;
 use opsml_types::contracts::FileInfo;
 use opsml_types::StorageType;
