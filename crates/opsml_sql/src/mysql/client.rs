@@ -635,7 +635,7 @@ mod tests {
         // query page
         let results = client
             .card
-            .query_page("name", 1, None, &[], &[], &CardTable::Data)
+            .query_page("name", 1, 0, None, &[], &[], &CardTable::Data)
             .await
             .unwrap();
 
@@ -644,7 +644,7 @@ mod tests {
         // query page
         let results = client
             .card
-            .query_page("name", 1, None, &[], &[], &CardTable::Model)
+            .query_page("name", 1, 0, None, &[], &[], &CardTable::Model)
             .await
             .unwrap();
 
@@ -656,6 +656,7 @@ mod tests {
             .query_page(
                 "name",
                 1,
+                0,
                 None,
                 &["repo4".to_string()],
                 &[],
@@ -671,6 +672,7 @@ mod tests {
             .query_page(
                 "name",
                 1,
+                0,
                 None,
                 &[],
                 &["hello".to_string()],
@@ -686,6 +688,7 @@ mod tests {
             .query_page(
                 "name",
                 1,
+                0,
                 None,
                 &[
                     "repo1".to_string(),
@@ -730,7 +733,7 @@ mod tests {
         // query page
         let results = client
             .card
-            .query_page("name", 1, None, &[], &[], &CardTable::Data)
+            .query_page("name", 1, 0, None, &[], &[], &CardTable::Data)
             .await
             .unwrap();
 
@@ -739,7 +742,7 @@ mod tests {
         // query page
         let results = client
             .card
-            .query_page("name", 1, None, &[], &[], &CardTable::Model)
+            .query_page("name", 1, 0, None, &[], &[], &CardTable::Model)
             .await
             .unwrap();
 
@@ -751,6 +754,7 @@ mod tests {
             .query_page(
                 "name",
                 1,
+                0,
                 None,
                 &["repo4".to_string()],
                 &[],
@@ -766,6 +770,7 @@ mod tests {
             .query_page(
                 "name",
                 1,
+                0,
                 None,
                 &[],
                 &["hello".to_string()],
