@@ -257,36 +257,25 @@ impl SqliteQueryHelper {
     }
 
     pub fn get_version_page_query(table: &CardTable) -> String {
-        let versions_cte = format!(
-            "WITH versions AS (
-                SELECT 
-                    space, 
-                    name, 
-                    version, 
-                    created_at,
-                    ROW_NUMBER() OVER (PARTITION BY space, name ORDER BY created_at DESC, major DESC, minor DESC, patch DESC) AS row_num
-                FROM {table}
-                WHERE space = ?1
-                AND name = ?2
-            )"
-        );
-
+        // Use LIMIT + 1 to detect if there are more rows
         let query = format!(
-            "{versions_cte}
-            SELECT
-            space,
-            name,
-            version,
-            created_at,
-            row_num
-            FROM versions
-            WHERE row_num > ?3 AND row_num <= ?4
-            ORDER BY created_at DESC"
+            "SELECT
+                space,
+                name,
+                version,
+                created_at,
+                major,
+                minor,
+                patch
+            FROM {table}
+            WHERE space = ?1
+                AND name = ?2
+            ORDER BY created_at DESC, major DESC, minor DESC, patch DESC
+            LIMIT ?4 OFFSET ?3"
         );
 
         query
     }
-
     pub fn get_query_stats_query(table: &CardTable, spaces: &[String], tags: &[String]) -> String {
         // if tags are provided, we need a OR condition for each tag
         let mut bindings_number = 2;

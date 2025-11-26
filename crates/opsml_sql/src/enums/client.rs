@@ -15,6 +15,7 @@ use anyhow::Context;
 use anyhow::Result as AnyhowResult;
 use async_trait::async_trait;
 use opsml_settings::config::DatabaseSettings;
+use opsml_types::contracts::VersionCursor;
 use opsml_types::contracts::{
     ArtifactQueryArgs, ArtifactRecord, AuditEvent, SpaceNameEvent, SpaceRecord, SpaceStats,
 };
@@ -152,21 +153,13 @@ impl CardLogicTrait for SqlClientEnum {
 
     async fn version_page(
         &self,
-        page: i32,
-        space: Option<&str>,
-        name: Option<&str>,
+        cursor: &VersionCursor,
         table: &CardTable,
     ) -> Result<Vec<VersionSummary>, SqlError> {
         match self {
-            SqlClientEnum::Postgres(client) => {
-                client.card.version_page(page, space, name, table).await
-            }
-            SqlClientEnum::Sqlite(client) => {
-                client.card.version_page(page, space, name, table).await
-            }
-            SqlClientEnum::MySql(client) => {
-                client.card.version_page(page, space, name, table).await
-            }
+            SqlClientEnum::Postgres(client) => client.card.version_page(cursor, table).await,
+            SqlClientEnum::Sqlite(client) => client.card.version_page(cursor, table).await,
+            SqlClientEnum::MySql(client) => client.card.version_page(cursor, table).await,
         }
     }
 
@@ -1180,8 +1173,9 @@ mod tests {
 
         assert_eq!(results.len(), 1);
 
+        let cursor = VersionCursor::new(0, 30, "repo1".to_string(), "Model1".to_string());
         let results = client
-            .version_page(1, Some("repo1"), Some("Model1"), &CardTable::Model)
+            .version_page(&cursor, &CardTable::Model)
             .await
             .unwrap();
 
