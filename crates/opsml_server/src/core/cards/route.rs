@@ -274,27 +274,56 @@ pub async fn retrieve_page(
     }))
 }
 
-pub async fn get_version_page(
+pub async fn query_version_page(
     State(state): State<Arc<AppState>>,
-    Query(params): Query<VersionPageRequest>,
+    Json(params): Json<VersionPageRequest>,
 ) -> Result<Json<VersionPageResponse>, (StatusCode, Json<OpsmlServerError>)> {
+    const DEFAULT_LIMIT: i32 = 30;
+
     let table = CardTable::from_registry_type(&params.registry_type);
-    let page = params.page.unwrap_or(1);
-    let summaries = state
+    let cursor = params.get_cursor(DEFAULT_LIMIT);
+
+    debug!(
+        "Querying version page: space={}, name={}, offset={}, limit={}",
+        cursor.space, cursor.name, cursor.offset, cursor.limit
+    );
+
+    let mut items = state
         .sql_client
-        .version_page(
-            page,
-            params.space.as_deref(),
-            params.name.as_deref(),
-            &table,
-        )
+        .version_page(&cursor, &table)
         .await
         .map_err(|e| {
             error!("Failed to get version page: {e}");
             internal_server_error(e, "Failed to get version page")
         })?;
 
-    Ok(Json(VersionPageResponse { summaries }))
+    let has_next = items.len() > cursor.limit as usize;
+    if has_next {
+        items.pop();
+    }
+
+    let has_previous = !cursor.is_first_page();
+
+    let next_cursor = if has_next { Some(cursor.next()) } else { None };
+
+    let previous_cursor = if has_previous {
+        Some(cursor.previous())
+    } else {
+        None
+    };
+
+    debug!(
+        "Next cursor: {:?}, Previous cursor: {:?}",
+        next_cursor, previous_cursor
+    );
+
+    Ok(Json(VersionPageResponse {
+        items,
+        has_next,
+        next_cursor,
+        has_previous,
+        previous_cursor,
+    }))
 }
 
 pub async fn list_cards(
@@ -829,7 +858,7 @@ pub async fn get_card_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
             .route(&format!("{prefix}/card/registry/page"), post(retrieve_page))
             .route(
                 &format!("{prefix}/card/registry/version/page"),
-                get(get_version_page),
+                post(query_version_page),
             )
             .route(&format!("{prefix}/card/list"), get(list_cards))
             .route(&format!("{prefix}/card/create"), post(create_card))

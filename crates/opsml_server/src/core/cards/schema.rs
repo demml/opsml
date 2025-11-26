@@ -33,7 +33,11 @@ pub struct FilterSummary {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct VersionPageResponse {
-    pub summaries: Vec<VersionSummary>,
+    pub items: Vec<VersionSummary>,
+    pub has_next: bool,
+    pub next_cursor: Option<VersionCursor>,
+    pub has_previous: bool,
+    pub previous_cursor: Option<VersionCursor>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
