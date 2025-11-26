@@ -16,6 +16,7 @@
     highlightPathEdges
   } from './utils';
   import SpanNode from './SpanNode.svelte';
+  import { max } from 'date-fns';
 
   let {
     spans,
@@ -85,7 +86,11 @@
     nodes={nodes}
     {edges}
     {nodeTypes}
-    fitView
+    fitView={true}
+    fitViewOptions={{
+      minZoom: 0.2,
+      maxZoom: 1.0,
+    }}
     minZoom={0.3}
     maxZoom={1.5}
     defaultEdgeOptions={{
