@@ -105,9 +105,9 @@
       </div>
 
       <div class="flex flex-col space-y-1 text-sm">
-        <Pill key="Start Time" value={formatTimestamp(span.start_time)} textSize="text-xs"/>
+        <Pill key="Start Time" value={span.start_time} textSize="text-xs"/>
         {#if span.end_time}
-          <Pill key="End Time" value={formatTimestamp(span.end_time)} textSize="text-xs"/>
+          <Pill key="End Time" value={span.end_time} textSize="text-xs"/>
         {/if}
         <Pill key="Duration" value={formatDuration(span.duration_ms)} textSize="text-xs"/>
       </div>
