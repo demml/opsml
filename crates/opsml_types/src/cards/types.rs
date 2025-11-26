@@ -7,6 +7,15 @@ use std::collections::HashMap;
 use std::fmt;
 use std::path::{Path, PathBuf};
 
+#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "server", derive(sqlx::Type))]
+pub enum CardStatus {
+    Unset = 0,
+    Ok = 1,
+    Error = 2,
+    Active = 3,
+}
+
 #[pyclass(eq, eq_int)]
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub enum CardTable {
