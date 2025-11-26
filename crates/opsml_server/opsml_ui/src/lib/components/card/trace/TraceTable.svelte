@@ -94,28 +94,28 @@
           <div class="bg-white border-b-2 border-black sticky top-0 z-10">
             <div class="grid grid-cols-[64px_180px_1fr_1fr_100px_100px_80px_120px] gap-2 text-black text-sm font-heading px-2 py-2">
               <div class="text-center">
-                <span class="px-2 py-1 rounded-full bg-primary-100 text-primary-800">ID</span>
+                <span class="px-2 py-1 rounded-full bg-primary-100 text-primary-800">Id</span>
               </div>
               <div class="text-left">
-                <span class="px-2 py-1 rounded-full bg-primary-100 text-primary-800">DATE</span>
+                <span class="px-2 py-1 rounded-full bg-primary-100 text-primary-800">Date</span>
               </div>
               <div class="text-left">
-                <span class="px-2 py-1 rounded-full bg-primary-100 text-primary-800">SERVICE</span>
+                <span class="px-2 py-1 rounded-full bg-primary-100 text-primary-800">Service</span>
               </div>
               <div class="text-left">
-                <span class="px-2 py-1 rounded-full bg-primary-100 text-primary-800">RESOURCE</span>
+                <span class="px-2 py-1 rounded-full bg-primary-100 text-primary-800">Resource</span>
               </div>
               <div class="text-center">
-                <span class="px-2 py-1 rounded-full bg-primary-100 text-primary-800">DURATION</span>
+                <span class="px-2 py-1 rounded-full bg-primary-100 text-primary-800">Duration</span>
               </div>
               <div class="text-center">
-                <span class="px-2 py-1 rounded-full bg-primary-100 text-primary-800">METHOD</span>
+                <span class="px-2 py-1 rounded-full bg-primary-100 text-primary-800">Method</span>
               </div>
               <div class="text-center">
-                <span class="px-2 py-1 rounded-full bg-primary-100 text-primary-800">SPANS</span>
+                <span class="px-2 py-1 rounded-full bg-primary-100 text-primary-800">Spans</span>
               </div>
               <div class="text-center">
-                <span class="px-2 py-1 rounded-full bg-primary-100 text-primary-800">STATUS</span>
+                <span class="px-2 py-1 rounded-full bg-primary-100 text-primary-800">Status</span>
               </div>
             </div>
           </div>
