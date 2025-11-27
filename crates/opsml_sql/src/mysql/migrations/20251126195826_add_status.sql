@@ -5,9 +5,9 @@
 -- 3: active
 
 -- MySQL 8.0.29+ supports IF NOT EXISTS
-ALTER TABLE opsml_data_registry ADD COLUMN status INTEGER NOT NULL DEFAULT 1;
-ALTER TABLE opsml_model_registry ADD COLUMN status INTEGER NOT NULL DEFAULT 1;
-ALTER TABLE opsml_experiment_registry ADD COLUMN status INTEGER NOT NULL DEFAULT 1;
-ALTER TABLE opsml_prompt_registry ADD COLUMN status INTEGER NOT NULL DEFAULT 1;
-ALTER TABLE opsml_mcp_registry ADD COLUMN status INTEGER NOT NULL DEFAULT 1;
-ALTER TABLE opsml_service_registry ADD COLUMN status INTEGER NOT NULL DEFAULT 1;
+ALTER TABLE opsml_data_registry ADD COLUMN status TINYINT NOT NULL DEFAULT 1;
+ALTER TABLE opsml_model_registry ADD COLUMN status TINYINT NOT NULL DEFAULT 1;
+ALTER TABLE opsml_experiment_registry ADD COLUMN status TINYINT NOT NULL DEFAULT 1;
+ALTER TABLE opsml_prompt_registry ADD COLUMN status TINYINT NOT NULL DEFAULT 1;
+ALTER TABLE opsml_mcp_registry ADD COLUMN status TINYINT NOT NULL DEFAULT 1;
+ALTER TABLE opsml_service_registry ADD COLUMN status TINYINT NOT NULL DEFAULT 1;
