@@ -4,6 +4,7 @@ import type {
   QueryPageResponse,
   VersionPageResponse,
   CardCursor,
+  VersionCursor,
 } from "$lib/components/card/types";
 import { RegistryType } from "$lib/utils";
 import { ServerPaths } from "$lib/components/api/routes";
@@ -52,17 +53,21 @@ export async function getRegistryStats(
   return (await resp.json()) as RegistryStatsResponse;
 }
 
-export async function getVersionPage(
+export async function getVersionPageWithCursor(
   fetch: typeof globalThis.fetch,
   registry_type: RegistryType,
-  space: string,
-  name: string,
-  page: number
+  cursor: VersionCursor
 ): Promise<VersionPageResponse> {
   let resp = await createInternalApiClient(fetch).post(
     ServerPaths.VERSION_PAGE,
-    { registry_type, space, name, page }
+    {
+      registry_type,
+      space: cursor.space,
+      name: cursor.name,
+      cursor,
+    }
   );
+
   return (await resp.json()) as VersionPageResponse;
 }
 

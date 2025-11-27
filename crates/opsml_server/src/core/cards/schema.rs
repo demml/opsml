@@ -3,7 +3,10 @@ use opsml_sql::schemas::{
     schema::{CardSummary, QueryStats},
     VersionSummary,
 };
-use opsml_types::{contracts::CardCursor, RegistryType};
+use opsml_types::{
+    contracts::{CardCursor, VersionCursor},
+    RegistryType,
+};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -33,7 +36,11 @@ pub struct FilterSummary {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct VersionPageResponse {
-    pub summaries: Vec<VersionSummary>,
+    pub items: Vec<VersionSummary>,
+    pub has_next: bool,
+    pub next_cursor: Option<VersionCursor>,
+    pub has_previous: bool,
+    pub previous_cursor: Option<VersionCursor>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]

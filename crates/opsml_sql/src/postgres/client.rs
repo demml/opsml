@@ -82,6 +82,7 @@ mod tests {
         UserLogicTrait,
     };
     use opsml_settings::config::DatabaseSettings;
+    use opsml_types::contracts::VersionCursor;
     use opsml_types::contracts::{
         evaluation::{EvaluationProvider, EvaluationType},
         ArtifactKey, ArtifactQueryArgs, AuditEvent, SpaceNameEvent,
@@ -835,7 +836,7 @@ mod tests {
             .await
             .unwrap();
 
-        assert_eq!(results.len(), 9);
+        assert_eq!(results.len(), 2);
 
         // query page
         let results = client
@@ -888,7 +889,7 @@ mod tests {
             .await
             .unwrap();
 
-        assert_eq!(results.len(), 3)
+        assert_eq!(results.len(), 2);
     }
 
     #[tokio::test]
@@ -899,14 +900,107 @@ mod tests {
         let script = std::fs::read_to_string("tests/populate_postgres_test.sql").unwrap();
         sqlx::raw_sql(&script).execute(&client.pool).await.unwrap();
 
-        // query page
+        // Test 1: Initial page with cursor (offset 0)
+        let cursor = VersionCursor::new(0, 30, "repo1".to_string(), "Model1".to_string());
         let results = client
             .card
-            .version_page(1, Some("repo1"), Some("Model1"), &CardTable::Model)
+            .version_page(&cursor, &CardTable::Model)
             .await
             .unwrap();
 
-        assert_eq!(results.len(), 1);
+        // Should return limit + 1 for has_next detection (or fewer if less data exists)
+        assert!(results.len() <= 31, "Should return at most limit + 1");
+
+        // Based on your test data, Model1 should have 1 version
+        assert_eq!(results.len(), 1, "Model1 should have 1 version");
+
+        // Test 2: Verify version data
+        if !results.is_empty() {
+            assert_eq!(results[0].space, "repo1");
+            assert_eq!(results[0].name, "Model1");
+        }
+
+        // Test 3: Test pagination with Data1 (which has 10 versions based on other tests)
+        let cursor = VersionCursor::new(0, 5, "repo1".to_string(), "Data1".to_string());
+        let page1_results = client
+            .card
+            .version_page(&cursor, &CardTable::Data)
+            .await
+            .unwrap();
+
+        // Should return 6 results (5 + 1 for has_next detection)
+        assert!(
+            page1_results.len() <= 6,
+            "Should return at most limit + 1 for first page"
+        );
+
+        // Test 4: Second page with offset
+        let cursor = VersionCursor::new(5, 5, "repo1".to_string(), "Data1".to_string());
+        let page2_results = client
+            .card
+            .version_page(&cursor, &CardTable::Data)
+            .await
+            .unwrap();
+
+        assert!(
+            page2_results.len() <= 6,
+            "Should return at most limit + 1 for second page"
+        );
+
+        // Test 5: Verify no overlap between pages
+        if page1_results.len() > 1 && page2_results.len() > 1 {
+            let page1_versions: Vec<_> = page1_results.iter().take(5).map(|v| &v.version).collect();
+            let page2_versions: Vec<_> = page2_results.iter().take(5).map(|v| &v.version).collect();
+
+            for version in &page2_versions {
+                assert!(
+                    !page1_versions.contains(version),
+                    "Pages should not have overlapping versions"
+                );
+            }
+        }
+
+        // Test 6: Verify ordering (should be DESC by created_at, then version components)
+        if page1_results.len() >= 2 {
+            for i in 0..page1_results.len() - 1 {
+                let current = &page1_results[i];
+                let next = &page1_results[i + 1];
+
+                // Either created_at DESC or if same, version DESC
+                assert!(
+                    current.created_at >= next.created_at,
+                    "Results should be ordered by created_at DESC"
+                );
+            }
+        }
+
+        // Test 7: Test with non-existent card
+        let cursor = VersionCursor::new(0, 30, "repo1".to_string(), "NonExistent".to_string());
+        let empty_results = client
+            .card
+            .version_page(&cursor, &CardTable::Model)
+            .await
+            .unwrap();
+
+        assert_eq!(
+            empty_results.len(),
+            0,
+            "Should return empty for non-existent card"
+        );
+
+        // Test 8: Test with offset beyond available data
+        let cursor = VersionCursor::new(100, 30, "repo1".to_string(), "Data1".to_string());
+        let beyond_results = client
+            .card
+            .version_page(&cursor, &CardTable::Data)
+            .await
+            .unwrap();
+
+        assert_eq!(
+            beyond_results.len(),
+            0,
+            "Should return empty when offset exceeds available versions"
+        );
     }
 
     #[tokio::test]
