@@ -56,6 +56,8 @@
 		"@codemirror/language-data": "^6.5.1",
 		"@codemirror/state": "^6.5.2",
 		"@codemirror/view": "^6.38.5",
+		"@tanstack/svelte-virtual": "^3.13.12",
+		"@xyflow/svelte": "^1.4.2",
 		"chart.js": "^4.5.0",
 		"chartjs-adapter-date-fns": "^3.0.0",
 		"chartjs-plugin-annotation": "^3.1.0",

@@ -6,16 +6,22 @@ import {
   generateColors,
   handleResize,
   tooltip,
+  type ChartjsBarDataset,
   type ChartjsLineDataset,
 } from "$lib/components/viz/utils";
 
 export function buildTimeChart(
   x: Date[],
-  datasets: ChartjsLineDataset[],
+  datasets: ChartjsLineDataset[] | ChartjsBarDataset[],
   x_label: string,
   y_label: string,
   showLegend: boolean = false,
-  baselineValue: number | undefined
+  baselineValue: number | undefined,
+  chart_type: string = "line",
+  showXLabel: boolean = true,
+  showYLabel: boolean = true,
+  maxRotation: number | undefined = undefined,
+  minRotation: number | undefined = undefined
 ): ChartConfiguration {
   const timeRange =
     x.length > 1 ? Math.abs(x[x.length - 1].getTime() - x[0].getTime()) : 0;
@@ -55,8 +61,33 @@ export function buildTimeChart(
         }
       : undefined;
 
+  // Build ticks config conditionally
+  const ticksConfig: any = {
+    maxTicksLimit: isMultiDay ? 12 : 25,
+    color: "rgb(0,0,0)",
+    font: {
+      size: 12,
+    },
+    callback: function (value: any) {
+      const date = new Date(value);
+      if (isMultiDay) {
+        return format(date, "MM/dd HH:mm");
+      }
+      return format(date, "HH:mm");
+    },
+  };
+
+  // Only add rotation if explicitly provided
+  if (maxRotation !== undefined) {
+    ticksConfig.maxRotation = maxRotation;
+  }
+  if (minRotation !== undefined) {
+    ticksConfig.minRotation = minRotation;
+  }
+
   return {
-    type: "line",
+    //@ts-ignore
+    type: chart_type,
     data: {
       labels: x,
       datasets,
@@ -75,7 +106,7 @@ export function buildTimeChart(
             mode: "xy",
             drag: {
               enabled: true,
-              borderColor: "rgb(	163, 135, 239)",
+              borderColor: "rgb(163, 135, 239)",
               borderWidth: 1,
               backgroundColor: "rgba(163, 135, 239, 0.3)",
             },
@@ -85,12 +116,11 @@ export function buildTimeChart(
           display: showLegend,
           position: "bottom",
         },
-
         //@ts-ignore
         annotation: annotation,
       },
       responsive: true,
-      onResize: handleResize,
+      //onResize: handleResize,
       maintainAspectRatio: false,
       scales: {
         x: {
@@ -98,7 +128,7 @@ export function buildTimeChart(
           border: {
             display: true,
             width: 2,
-            color: "rgb(0, 0, 0)", // You can adjust color as needed
+            color: "rgb(0, 0, 0)",
           },
           time: {
             displayFormats: {
@@ -120,42 +150,29 @@ export function buildTimeChart(
             drawTicks: true,
           },
           title: {
-            display: true,
+            display: showXLabel ?? false,
             text: x_label,
-            color: "rgb(0,0,0)", // gray-600
+            color: "rgb(0,0,0)",
             font: {
               size: 14,
             },
           },
-          ticks: {
-            maxTicksLimit: isMultiDay ? 12 : 25,
-            color: "rgb(0,0,0)", // gray-600
-            font: {
-              size: 12,
-            },
-            callback: function (value) {
-              const date = new Date(value);
-              if (isMultiDay) {
-                return format(date, "MM/dd HH:mm");
-              }
-              return format(date, "HH:mm");
-            },
-          },
+          ticks: ticksConfig,
         },
         y: {
           suggestedMin: minY - Math.abs(minY) * 0.1,
           suggestedMax: maxY + Math.abs(maxY) * 0.1,
           title: {
-            display: true,
+            display: showYLabel ?? false,
             text: y_label,
-            color: "rgb(0,0,0)", // gray-600
+            color: "rgb(0,0,0)",
             font: {
               size: 14,
             },
           },
           ticks: {
             maxTicksLimit: 10,
-            color: "rgb(0,0,0)", // gray-600
+            color: "rgb(0,0,0)",
             font: {
               size: 12,
             },
@@ -163,7 +180,7 @@ export function buildTimeChart(
           border: {
             display: true,
             width: 2,
-            color: "rgb(0, 0, 0)", // You can adjust color as needed
+            color: "rgb(0, 0, 0)",
           },
           grid: {
             display: true,
@@ -185,7 +202,8 @@ export function createTimeSeriesChart(
   y: number[],
   baselineValue: number | undefined,
   label: string,
-  y_label: string
+  y_label: string,
+  chart_type: string
 ): ChartConfiguration {
   const datasets: ChartjsLineDataset[] = [
     {
@@ -198,5 +216,13 @@ export function createTimeSeriesChart(
     },
   ];
 
-  return buildTimeChart(x, datasets, "Time", y_label, false, baselineValue);
+  return buildTimeChart(
+    x,
+    datasets,
+    "Time",
+    y_label,
+    false,
+    baselineValue,
+    chart_type
+  );
 }

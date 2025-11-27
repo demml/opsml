@@ -71,7 +71,7 @@ export function buildChart(
       },
 
       responsive: true,
-      onResize: handleResize,
+      //onResize: handleResize,
       maintainAspectRatio: false,
       scales: {
         x: {

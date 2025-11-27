@@ -3,7 +3,7 @@ use crate::utils::BaseArgs;
 use chrono::{DateTime, Utc};
 use opsml_crypt::decrypt_directory;
 use opsml_storage::storage_client;
-use opsml_types::cards::EvalMetrics;
+use opsml_types::cards::{CardStatus, EvalMetrics};
 use opsml_types::contracts::{CardRecord, ExperimentCardClientRecord};
 use opsml_types::{
     cards::{ComputeEnvironment, Metrics, Parameters},
@@ -87,6 +87,9 @@ pub struct ExperimentCard {
     eval_metrics: EvalMetrics,
 
     artifact_key: Option<ArtifactKey>,
+
+    #[pyo3(get, set)]
+    status: CardStatus,
 }
 
 #[pymethods]
@@ -126,6 +129,7 @@ impl ExperimentCard {
             is_card: true,
             opsml_version: opsml_version::version(),
             eval_metrics: EvalMetrics::default(),
+            status: CardStatus::Active,
         })
     }
 
@@ -200,6 +204,7 @@ impl ExperimentCard {
             experimentcard_uids: self.uids.experimentcard_uids.clone(),
             opsml_version: self.opsml_version.clone(),
             username: std::env::var("OPSML_USERNAME").unwrap_or_else(|_| "guest".to_string()),
+            status: self.status.clone(),
         };
 
         Ok(CardRecord::Experiment(record))
@@ -331,7 +336,7 @@ impl Serialize for ExperimentCard {
     where
         S: Serializer,
     {
-        let mut state = serializer.serialize_struct("ExperimentCard", 13)?;
+        let mut state = serializer.serialize_struct("ExperimentCard", 15)?;
 
         // set session to none
         state.serialize_field("name", &self.name)?;
@@ -348,6 +353,7 @@ impl Serialize for ExperimentCard {
         state.serialize_field("is_card", &self.is_card)?;
         state.serialize_field("opsml_version", &self.opsml_version)?;
         state.serialize_field("eval_metrics", &self.eval_metrics)?;
+        state.serialize_field("status", &self.status)?;
         state.end()
     }
 }
@@ -374,6 +380,7 @@ impl<'de> Deserialize<'de> for ExperimentCard {
             IsCard,
             OpsmlVersion,
             EvalMetrics,
+            Status,
         }
 
         struct ExperimentCardVisitor;
@@ -403,6 +410,7 @@ impl<'de> Deserialize<'de> for ExperimentCard {
                 let mut is_card = None;
                 let mut opsml_version = None;
                 let mut eval_metrics = None;
+                let mut status = None;
 
                 while let Some(key) = map.next_key()? {
                     match key {
@@ -451,6 +459,9 @@ impl<'de> Deserialize<'de> for ExperimentCard {
                         Field::EvalMetrics => {
                             eval_metrics = Some(map.next_value()?);
                         }
+                        Field::Status => {
+                            status = Some(map.next_value()?);
+                        }
                     }
                 }
 
@@ -475,6 +486,7 @@ impl<'de> Deserialize<'de> for ExperimentCard {
                     opsml_version.ok_or_else(|| de::Error::missing_field("opsml_version"))?;
                 let eval_metrics =
                     eval_metrics.ok_or_else(|| de::Error::missing_field("eval_metrics"))?;
+                let status = status.ok_or_else(|| de::Error::missing_field("status"))?;
 
                 Ok(ExperimentCard {
                     name,
@@ -492,6 +504,7 @@ impl<'de> Deserialize<'de> for ExperimentCard {
                     is_card,
                     opsml_version,
                     eval_metrics,
+                    status,
                 })
             }
         }
@@ -512,6 +525,7 @@ impl<'de> Deserialize<'de> for ExperimentCard {
             "is_card",
             "opsml_version",
             "eval_metrics",
+            "status",
         ];
         deserializer.deserialize_struct("ExperimentCard", FIELDS, ExperimentCardVisitor)
     }
@@ -533,6 +547,7 @@ impl FromPyObject<'_> for ExperimentCard {
         let artifact_key = None;
         let opsml_version = ob.getattr("opsml_version")?.extract()?;
         let eval_metrics = ob.getattr("eval_metrics")?.extract()?;
+        let status = ob.getattr("status")?.extract()?;
 
         Ok(ExperimentCard {
             space,
@@ -550,6 +565,7 @@ impl FromPyObject<'_> for ExperimentCard {
             is_card: true,
             opsml_version,
             eval_metrics,
+            status,
         })
     }
 }

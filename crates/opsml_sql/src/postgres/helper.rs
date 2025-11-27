@@ -254,6 +254,7 @@ impl PostgresQueryHelper {
                     version,
                     uid,
                     created_at,
+                    status,
                     COUNT(*) OVER (PARTITION BY space, name) AS versions,
                     MAX(created_at) OVER (PARTITION BY space, name) AS updated_at,
                     ROW_NUMBER() OVER (PARTITION BY space, name ORDER BY created_at DESC) AS version_rank
@@ -270,7 +271,8 @@ impl PostgresQueryHelper {
                     version,
                     versions,
                     updated_at,
-                    created_at
+                    created_at,
+                    status
                 FROM card_aggregates
                 WHERE version_rank = 1
             )
@@ -281,7 +283,8 @@ impl PostgresQueryHelper {
                 version,
                 versions,
                 updated_at,
-                created_at
+                created_at,
+                status
             FROM latest_cards
             ORDER BY {sort_by} DESC, space, name
             LIMIT ${binding_index_plus_1} OFFSET ${binding_index}",

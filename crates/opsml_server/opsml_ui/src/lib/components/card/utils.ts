@@ -1,5 +1,6 @@
 import { getRegistryPath, RegistryType } from "$lib/utils";
 import { type Card } from "$lib/components/home/types";
+import type { QueryPageResponse } from "./types";
 
 export function getBgColor(): string {
   const classes = [

@@ -219,6 +219,7 @@ impl SqliteQueryHelper {
                     version,
                     uid,
                     created_at,
+                    status,
                     COUNT(*) OVER (PARTITION BY space, name) AS versions,
                     MAX(created_at) OVER (PARTITION BY space, name) AS updated_at,
                     ROW_NUMBER() OVER (PARTITION BY space, name ORDER BY created_at DESC) AS version_rank
@@ -235,7 +236,8 @@ impl SqliteQueryHelper {
                     version,
                     versions,
                     updated_at,
-                    created_at
+                    created_at,
+                    status
                 FROM card_aggregates
                 WHERE version_rank = 1
             )
@@ -246,7 +248,8 @@ impl SqliteQueryHelper {
                 version,
                 versions,
                 updated_at,
-                created_at
+                created_at,
+                status
             FROM latest_cards
             ORDER BY {sort_by} DESC, space, name
             LIMIT ?{binding_index_plus_1} OFFSET ?{binding_index}",
@@ -257,7 +260,6 @@ impl SqliteQueryHelper {
     }
 
     pub fn get_version_page_query(table: &CardTable) -> String {
-        // Use LIMIT + 1 to detect if there are more rows
         let query = format!(
             "SELECT
                 space,

@@ -258,6 +258,7 @@ impl CardLogicTrait for CardLogicMySqlClient {
                         .bind(&record.build_tag)
                         .bind(&record.username)
                         .bind(&record.opsml_version)
+                        .bind(&record.status)
                         .execute(&self.pool)
                         .await?;
                     Ok(())
@@ -446,6 +447,7 @@ impl CardLogicTrait for CardLogicMySqlClient {
                         .bind(&record.build_tag)
                         .bind(&record.username)
                         .bind(&record.opsml_version)
+                        .bind(&record.status)
                         .bind(&record.uid)
                         .execute(&self.pool)
                         .await?;
@@ -671,8 +673,8 @@ impl CardLogicTrait for CardLogicMySqlClient {
         let records: Vec<VersionSummary> = sqlx::query_as(&query)
             .bind(&cursor.space)
             .bind(&cursor.name)
-            .bind(cursor.limit + 1)
             .bind(cursor.offset)
+            .bind(cursor.offset + cursor.limit + 1)
             .fetch_all(&self.pool)
             .await?;
 

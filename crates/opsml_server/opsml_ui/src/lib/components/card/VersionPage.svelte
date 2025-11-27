@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { VersionPageResponse, RegistryStatsResponse, VersionCursor } from "$lib/components/card/types";
+  import type { VersionPageResponse, RegistryStatsResponse } from "$lib/components/card/types";
   import type { RegistryType } from "$lib/utils";
   import { Settings, ArrowLeft, ArrowRight } from 'lucide-svelte';
   import VersionButton from "./VersionButton.svelte";
@@ -25,6 +25,15 @@
     if (registryPage.previous_cursor) {
       registryPage = await getVersionPageWithCursor(fetch, registry, registryPage.previous_cursor);
     }
+  }
+
+  function getPageRange(): string {
+    const currentOffset = registryPage.previous_cursor
+      ? registryPage.previous_cursor.offset + registryPage.previous_cursor.limit
+      : 0;
+    const start = currentOffset + 1;
+    const end = currentOffset + registryPage.items.length;
+    return `${start}-${end}`;
   }
 </script>
 
@@ -84,11 +93,8 @@
         {/if}
 
         <div class="flex bg-surface-50 border-black border-2 text-center items-center rounded-base px-2 shadow-small h-9">
-          <span class="text-primary-800 text-xs">
-            {registryPage.items.length} items
-            {#if registryPage.previous_cursor}
-              (offset: {registryPage.previous_cursor.offset + registryPage.previous_cursor.limit})
-            {/if}
+          <span class="text-primary-800 text-xs font-medium">
+            {getPageRange()}
           </span>
         </div>
 
