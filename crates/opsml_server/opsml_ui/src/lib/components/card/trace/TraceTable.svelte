@@ -63,14 +63,14 @@
   /**
    * Get Tailwind color class based on HTTP status code
    */
-  function getStatusColor(statusCode: number): string {
-    if (statusCode >= 200 && statusCode < 300) return 'bg-secondary-500';
-    if (statusCode >= 400 && statusCode < 500) return 'bg-warning-500';
-    if (statusCode >= 500) return 'bg-error-600';
-    return 'bg-gray-400';
+  export function getStatusColor(statusCode: number): string {
+    if (statusCode >= 200 && statusCode < 300) return "bg-secondary-500";
+    if (statusCode >= 400 && statusCode < 500) return "bg-warning-500";
+    if (statusCode >= 500) return "bg-error-600";
+    return "bg-gray-400";
   }
 
- 
+
 </script>
 
 <div class="grid grid-cols-1 lg:grid-cols-5 gap-4">
