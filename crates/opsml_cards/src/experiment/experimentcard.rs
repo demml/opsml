@@ -88,6 +88,7 @@ pub struct ExperimentCard {
 
     artifact_key: Option<ArtifactKey>,
 
+    #[pyo3(get, set)]
     status: CardStatus,
 }
 
