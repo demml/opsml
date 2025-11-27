@@ -2,6 +2,7 @@ import { setupRegistryPage } from "$lib/server/card/utils";
 import { getRegistryFromString, RegistryType } from "$lib/utils";
 import { redirect } from "@sveltejs/kit";
 import type { PageServerLoad, EntryGenerator } from "./$types";
+import { json } from "stream/consumers";
 
 export const entries: EntryGenerator = () => {
   return [
