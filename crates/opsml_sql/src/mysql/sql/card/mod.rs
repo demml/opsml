@@ -673,8 +673,8 @@ impl CardLogicTrait for CardLogicMySqlClient {
         let records: Vec<VersionSummary> = sqlx::query_as(&query)
             .bind(&cursor.space)
             .bind(&cursor.name)
-            .bind(cursor.limit + 1)
             .bind(cursor.offset)
+            .bind(cursor.offset + cursor.limit + 1)
             .fetch_all(&self.pool)
             .await?;
 

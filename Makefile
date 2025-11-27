@@ -45,7 +45,7 @@ build.mysql:
 
 .PHONY: test.sql.mysql
 test.sql.mysql: build.mysql
-	cargo test -p opsml-sql test_mysql_query -- --nocapture --test-threads=1
+	cargo test -p opsml-sql test_mysql -- --nocapture --test-threads=1
 	docker compose down --volumes
 
 .PHONY: test.sql

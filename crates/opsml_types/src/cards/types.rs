@@ -10,6 +10,7 @@ use std::path::{Path, PathBuf};
 #[pyclass(eq, eq_int)]
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 #[cfg_attr(feature = "server", derive(sqlx::Type))]
+#[repr(i32)]
 pub enum CardStatus {
     Unset = 0,
     Ok = 1,
