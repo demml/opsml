@@ -775,6 +775,7 @@ async fn test_opsml_server_card_experimentcard_crud() {
             tags: card.tags,
             username: std::env::var("OPSML_USERNAME").unwrap_or_else(|_| "guest".to_string()),
             opsml_version: card.opsml_version,
+            status: card.status,
         }),
     };
 

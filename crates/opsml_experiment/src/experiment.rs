@@ -10,7 +10,7 @@ use opsml_registry::registries::experiment::OpsmlExperiment;
 use opsml_registry::CardRegistries;
 use opsml_semver::VersionType;
 use opsml_storage::storage_client;
-use opsml_types::cards::{EvalMetrics, Metrics, Parameters};
+use opsml_types::cards::{CardStatus, EvalMetrics, Metrics, Parameters};
 use opsml_types::contracts::{
     ArtifactKey, ArtifactQueryArgs, ArtifactType, GetMetricRequest, GetParameterRequest,
     MetricRequest, ParameterRequest,
@@ -484,30 +484,38 @@ impl Experiment {
         exc_value: Option<Py<PyAny>>,
         traceback: Option<Py<PyAny>>,
     ) -> Result<bool, ExperimentError> {
-        if let (Some(exc_type), Some(exc_value), Some(traceback)) = (exc_type, exc_value, traceback)
+        let card_status = if let (Some(exc_type), Some(exc_value), Some(traceback)) =
+            (&exc_type, &exc_value, &traceback)
         {
             error!(
-                "An error occurred: {:?}, {:?}, {:?}",
-                exc_type.to_string(),
-                exc_value.to_string(),
-                traceback.to_string()
+                "Experiment failed with error: type={:?}, value={:?}, traceback={:?}",
+                exc_type.bind(py).repr()?,
+                exc_value.bind(py).repr()?,
+                traceback.bind(py).repr()?
             );
+            CardStatus::Error
         } else {
-            debug!("Exiting experiment");
+            debug!("Experiment completed successfully");
+            CardStatus::Ok
+        };
 
-            // Bind experiment first to avoid multiple borrows
-            let experiment = slf.experiment.clone_ref(py);
-            let exp = experiment.bind(py);
+        // Always perform cleanup regardless of success/failure
+        debug!("Finalizing experiment with status: {:?}", card_status);
 
-            // Update experiment card using the cloned reference
-            slf.registries.experiment.update_card(exp)?;
+        // Update experiment card
+        let experiment = slf.experiment.clone_ref(py);
+        let exp = experiment.bind(py);
+        exp.setattr("status", card_status)?;
+        slf.registries.experiment.update_card(exp)?;
 
-            debug!("Stopping hardware queue");
-            slf.stop_queue()?;
+        // Stop hardware monitoring queue
+        debug!("Stopping hardware queue");
+        slf.stop_queue()?;
 
-            debug!("Experiment updated");
-        }
-        Ok(false) // Return false to propagate exceptions
+        debug!("Experiment finalized successfully");
+
+        // Return false to propagate exceptions to Python
+        Ok(false)
     }
 
     #[pyo3(signature = (name, value, step = None, timestamp = None, created_at = None))]
