@@ -154,6 +154,7 @@ impl ServerCardRegistry {
                     client_card.experimentcard_uids,
                     client_card.opsml_version,
                     client_card.username,
+                    client_card.status,
                 );
                 ServerCard::Experiment(server_card)
             }
@@ -318,6 +319,7 @@ impl ServerCardRegistry {
                     experimentcard_uids: SqlxJson(client_card.experimentcard_uids),
                     username: client_card.username,
                     opsml_version: client_card.opsml_version,
+                    status: client_card.status,
                 };
                 ServerCard::Experiment(server_card)
             }

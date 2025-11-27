@@ -721,6 +721,8 @@ mod tests {
             .await
             .unwrap();
 
+        println!("Results: {:?}", results);
+
         // Should return limit + 1 for has_next detection (or fewer if less data exists)
         assert!(results.len() <= 31, "Should return at most limit + 1");
 

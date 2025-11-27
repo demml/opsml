@@ -274,7 +274,7 @@ async fn test_opsml_server_card_stats_and_query() {
     let body = serde_json::to_string(&args).unwrap();
 
     let request = Request::builder()
-        .uri(format!("/opsml/api/card/registry/version/page",))
+        .uri("/opsml/api/card/registry/version/page")
         .method("POST")
         .header(header::CONTENT_TYPE, "application/json")
         .body(Body::from(body))
@@ -775,6 +775,7 @@ async fn test_opsml_server_card_experimentcard_crud() {
             tags: card.tags,
             username: std::env::var("OPSML_USERNAME").unwrap_or_else(|_| "guest".to_string()),
             opsml_version: card.opsml_version,
+            status: card.status,
         }),
     };
 

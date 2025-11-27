@@ -1,3 +1,4 @@
+use crate::cards::CardStatus;
 use crate::contracts::{
     ArtifactKey, AuditableRequest, DeploymentConfig, ResourceType, ServiceConfig, ServiceMetadata,
     ServiceType,
@@ -544,6 +545,7 @@ pub struct ExperimentCardClientRecord {
     pub experimentcard_uids: Vec<String>,
     pub opsml_version: String,
     pub username: String,
+    pub status: CardStatus,
 }
 
 impl Default for ExperimentCardClientRecord {
@@ -563,6 +565,7 @@ impl Default for ExperimentCardClientRecord {
             experimentcard_uids: Vec::new(),
             opsml_version: opsml_version::version(),
             username: "guest".to_string(),
+            status: CardStatus::Ok,
         }
     }
 }

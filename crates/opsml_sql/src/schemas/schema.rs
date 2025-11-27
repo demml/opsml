@@ -1,7 +1,7 @@
 use crate::error::SqlError;
 use chrono::{DateTime, Utc};
 use opsml_semver::error::VersionError;
-use opsml_types::cards::{CardTable, ParameterValue};
+use opsml_types::cards::{CardStatus, CardTable, ParameterValue};
 use opsml_types::contracts::evaluation::{EvaluationProvider, EvaluationType};
 use opsml_types::contracts::{
     ArtifactRecord, AuditCardClientRecord, CardEntry, CardRecord, DataCardClientRecord,
@@ -150,6 +150,7 @@ pub struct CardSummary {
     pub versions: i64,
     pub updated_at: DateTime<Utc>,
     pub created_at: DateTime<Utc>,
+    pub status: CardStatus,
 }
 
 #[derive(Debug, FromRow, Serialize, Deserialize)]
@@ -441,6 +442,7 @@ pub struct ExperimentCardRecord {
     pub experimentcard_uids: Json<Vec<String>>,
     pub opsml_version: String,
     pub username: String,
+    pub status: CardStatus,
 }
 
 impl Default for ExperimentCardRecord {
@@ -465,6 +467,7 @@ impl Default for ExperimentCardRecord {
             experimentcard_uids: Json(Vec::new()),
             opsml_version: opsml_version::version(),
             username: CommonKwargs::Undefined.to_string(),
+            status: CardStatus::Ok,
         }
     }
 }
@@ -483,6 +486,7 @@ impl ExperimentCardRecord {
         experimentcard_uids: Vec<String>,
         opsml_version: String,
         username: String,
+        status: CardStatus,
     ) -> Self {
         let created_at = get_utc_datetime();
         let app_env = env::var("APP_ENV").unwrap_or_else(|_| "development".to_string());
@@ -508,6 +512,7 @@ impl ExperimentCardRecord {
             experimentcard_uids: Json(experimentcard_uids),
             opsml_version,
             username,
+            status,
         }
     }
 
@@ -544,6 +549,7 @@ impl ExperimentCardRecord {
             experimentcard_uids: Json(client_card.experimentcard_uids),
             opsml_version: client_card.opsml_version,
             username: client_card.username,
+            status: client_card.status,
         })
     }
 }

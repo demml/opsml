@@ -37,7 +37,6 @@
     --ring-offset: #fff;
     --text-smd: 0.9375rem;
     --text-xss: 0.8125rem;
-   
 
     --box-shadow-x-small: 2px;
     --box-shadow-y-small: 2px;
@@ -48,6 +47,8 @@
     --shadow-small: var(--box-shadow-x-small) var(--box-shadow-y-small) 0px 0px var(--border);
     --shadow-primary-small: var(--box-shadow-x-small) var(--box-shadow-y-small) 0px 0px var(--color-primary-700);
     --reverse-shadow-small: var(--reverse-box-shadow-x-small) var(--reverse-box-shadow-y-small) 0px 0px var(--border);
+    --color-retro-orange-100: var(--retro-orange-from);
+    --color-retro-orange-900: var(--retro-orange-to);
   }
 
 .shadow-hover {

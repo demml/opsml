@@ -45,6 +45,8 @@ export interface RegistryStatsResponse {
   stats: QueryStats;
 }
 
+export type CardStatus = "Unset" | "Ok" | "Error" | "Active";
+
 export interface CardSummary {
   uid: string;
   space: string;
@@ -53,6 +55,7 @@ export interface CardSummary {
   versions: number;
   updated_at: string;
   created_at: string;
+  status: CardStatus;
 }
 
 export interface VersionSummary {
