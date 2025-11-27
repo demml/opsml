@@ -302,30 +302,74 @@ impl AuditableRequest for QueryPageRequest {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct VersionPageRequest {
-    pub registry_type: RegistryType,
-    pub space: Option<String>,
-    pub name: Option<String>,
-    pub page: Option<i32>,
+// ...existing code...
+
+/// Cursor for paginating through version results
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct VersionCursor {
+    pub offset: i32,
+    pub limit: i32,
+    pub space: String,
+    pub name: String,
 }
 
-impl AuditableRequest for VersionPageRequest {
-    fn get_resource_id(&self) -> String {
-        self.registry_type.to_string()
+impl VersionCursor {
+    /// Create a new version cursor
+    pub fn new(offset: i32, limit: i32, space: String, name: String) -> Self {
+        Self {
+            offset,
+            limit,
+            space,
+            name,
+        }
     }
 
-    fn get_metadata(&self) -> String {
-        serde_json::to_string(self)
-            .unwrap_or_else(|e| format!("Failed to serialize VersionPageRequest: {e}"))
+    pub fn next(&self) -> Self {
+        Self {
+            offset: self.offset + self.limit,
+            limit: self.limit,
+            space: self.space.clone(),
+            name: self.name.clone(),
+        }
     }
 
-    fn get_registry_type(&self) -> Option<RegistryType> {
-        Some(self.registry_type.clone())
+    pub fn previous(&self) -> Self {
+        Self {
+            offset: (self.offset - self.limit).max(0),
+            limit: self.limit,
+            space: self.space.clone(),
+            name: self.name.clone(),
+        }
     }
 
-    fn get_resource_type(&self) -> ResourceType {
-        ResourceType::Database
+    /// Check if this is the first page
+    pub fn is_first_page(&self) -> bool {
+        self.offset == 0
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, Default)]
+pub struct VersionPageRequest {
+    pub registry_type: RegistryType,
+    pub space: String,
+    pub name: String,
+    pub cursor: Option<VersionCursor>,
+    pub limit: Option<i32>,
+}
+
+impl VersionPageRequest {
+    /// Extract or build cursor from request parameters
+    pub fn get_cursor(&self, default_limit: i32) -> VersionCursor {
+        if let Some(cursor) = &self.cursor {
+            cursor.clone()
+        } else {
+            VersionCursor::new(
+                0,
+                self.limit.unwrap_or(default_limit),
+                self.space.clone(),
+                self.name.clone(),
+            )
+        }
     }
 }
 

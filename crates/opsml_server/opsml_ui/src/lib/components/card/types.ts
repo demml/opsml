@@ -63,8 +63,19 @@ export interface VersionSummary {
   row_num: number;
 }
 
+export interface VersionCursor {
+  offset: number;
+  limit: number;
+  space: string;
+  name: string;
+}
+
 export interface VersionPageResponse {
-  summaries: VersionSummary[];
+  items: VersionSummary[];
+  has_next: boolean;
+  next_cursor?: VersionCursor;
+  has_previous: boolean;
+  previous_cursor?: VersionCursor;
 }
 
 export interface FilterSummary {
@@ -101,5 +112,6 @@ export interface VersionPageRequest {
   registry_type: RegistryType;
   space?: string;
   name?: string;
-  page?: number;
+  cursor?: VersionCursor;
+  limit?: number;
 }

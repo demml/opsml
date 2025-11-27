@@ -267,18 +267,17 @@ async fn test_opsml_server_card_stats_and_query() {
     // test getting version page
     let args = VersionPageRequest {
         registry_type: RegistryType::Model,
-        space: Some("repo1".to_string()),
-        name: Some("Model1".to_string()),
-        page: None,
+        space: "repo1".to_string(),
+        name: "Model1".to_string(),
+        ..Default::default()
     };
-    let query_string = serde_qs::to_string(&args).unwrap();
+    let body = serde_json::to_string(&args).unwrap();
 
     let request = Request::builder()
-        .uri(format!(
-            "/opsml/api/card/registry/version/page?{query_string}",
-        ))
-        .method("GET")
-        .body(Body::empty())
+        .uri(format!("/opsml/api/card/registry/version/page",))
+        .method("POST")
+        .header(header::CONTENT_TYPE, "application/json")
+        .body(Body::from(body))
         .unwrap();
 
     let response = helper.send_oneshot(request).await;
@@ -286,7 +285,7 @@ async fn test_opsml_server_card_stats_and_query() {
     let body = response.into_body().collect().await.unwrap().to_bytes();
     let version_page_response: VersionPageResponse = serde_json::from_slice(&body).unwrap();
 
-    assert_eq!(version_page_response.summaries.len(), 1);
+    assert_eq!(version_page_response.items.len(), 1);
 
     // Query by tag
     let params = RegistryStatsRequest {

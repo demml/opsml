@@ -123,9 +123,9 @@
         <div>
           <span class="badge text-primary-800 border-black border-1 shadow-small bg-surface-50">{registryStats.stats.nbr_spaces} spaces</span>
         </div>
-        <div class=" w-full md:w-auto lg:flex-1">
+        <div class=" w-full md:w-auto lg:flex-1 pl-2">
           <input
-            class="input w-full text-sm rounded-base bg-surface-50 text-black disabled:opacity-50 placeholder-surface-800 placeholder-text-sm focus-visible:ring-1 border-black border-2 h-9"
+            class="input border-black border-2 rounded-lg w-2/3 text-sm rounded-base bg-surface-50 text-black disabled:opacity-50 placeholder-surface-800 placeholder-text-sm focus-visible:ring-1 h-9"
             type="text"
             bind:value={artifactSearchQuery}
             placeholder="Search artifacts"
