@@ -7,8 +7,9 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt::Display;
 use tracing::error;
+
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Hash, Default)]
-#[pyclass]
+#[pyclass(eq, eq_int)]
 pub enum ServiceType {
     #[default]
     #[serde(alias = "API", alias = "api")]
@@ -206,6 +207,7 @@ pub struct Card {
 impl Card {
     #[new]
     #[pyo3(signature = (alias, registry_type, space=None, name=None, version=None, uid=None, card=None, drift=None))]
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         alias: String,
         registry_type: RegistryType, // Changed from Option to required

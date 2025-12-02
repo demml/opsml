@@ -48,7 +48,6 @@ pub struct ServiceSpec {
     pub name: String,
 
     #[serde(flatten)]
-    #[pyo3(get)]
     pub space_config: SpaceConfig,
 
     #[serde(rename = "type")]
@@ -201,10 +200,6 @@ impl ServiceSpec {
         Ok(spec)
     }
 
-    pub fn space(&self) -> &str {
-        self.space_config.get_space()
-    }
-
     pub fn get_card(&self, alias: &str) -> Option<&Card> {
         if let Some(service) = &self.service {
             if let Some(cards) = &service.cards {
@@ -242,7 +237,8 @@ impl ServiceSpec {
         Ok(spec)
     }
     #[staticmethod]
-    pub fn from_path(path: Option<PathBuf>) -> PyResult<Self> {
+    #[pyo3(name = "from_path")]
+    pub fn load_from_path(path: Option<PathBuf>) -> PyResult<Self> {
         let path = match path {
             Some(p) => p,
             None => {
@@ -253,6 +249,11 @@ impl ServiceSpec {
 
         let spec = Self::from_path(&path)?;
         Ok(spec)
+    }
+
+    #[getter]
+    pub fn space(&self) -> &str {
+        self.space_config.get_space()
     }
 
     pub fn __str__(&self) -> String {
