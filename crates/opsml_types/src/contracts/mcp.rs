@@ -52,6 +52,20 @@ pub struct McpConfig {
     pub transport: McpTransport,
 }
 
+#[pymethods]
+impl McpConfig {
+    #[new]
+    pub fn new(capabilities: Vec<McpCapability>, transport: McpTransport) -> Self {
+        McpConfig {
+            capabilities,
+            transport,
+        }
+    }
+    pub fn __str__(&self) -> String {
+        PyHelperFuncs::__str__(self)
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[pyclass]
 pub struct McpServer {

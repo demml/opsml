@@ -93,9 +93,6 @@ pub enum CardError {
     #[error("Registry type is required")]
     MissingRegistryTypeError,
 
-    #[error("Either space/name or uid must be provided")]
-    MissingServiceCardArgsError,
-
     #[error("Index out of bounds: {0}")]
     IndexOutOfBoundsError(usize),
 
