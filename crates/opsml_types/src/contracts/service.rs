@@ -230,8 +230,6 @@ impl Card {
 
             let version = extract_py_attr::<String>(&card, "version")?;
 
-            let drift = extract_py_attr::<Option<DriftConfig>>(&card, "drift")?;
-
             return Ok(Card {
                 space,
                 name,
