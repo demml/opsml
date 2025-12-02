@@ -1,12 +1,12 @@
 use crate::actions::utils::register_service_card;
-use crate::cli::arg::{DownloadCard, DEFAULT_SPEC_PATH};
+use crate::cli::arg::DownloadCard;
 use crate::download_service;
 use crate::error::CliError;
 use opsml_cards::ServiceCard;
 use opsml_colors::Colorize;
 use opsml_registry::error::RegistryError;
 use opsml_registry::{CardRegistries, CardRegistry};
-use opsml_service::ServiceSpec;
+use opsml_service::{service::DEFAULT_SERVICE_FILENAME, ServiceSpec};
 use opsml_toml::{LockArtifact, LockFile};
 use opsml_types::IntegratedService;
 use opsml_types::{
@@ -108,7 +108,11 @@ fn postprocess_service_card(
                     let request = ProfileStatusRequest {
                         space: current_card.space.clone(),
                         name: current_card.name.clone(),
-                        version: current_card.version.clone(),
+                        // this occurs after registration, so version is guaranteed to be Some
+                        version: current_card
+                            .version
+                            .clone()
+                            .expect("card version is expected when updating drift configurations"),
                         active: drift_config.active,
                         drift_type: Some(drift_type),
                         deactivate_others: drift_config.deactivate_others,
@@ -142,8 +146,8 @@ fn postprocess_service_card(
 /// * `Result<bool, CliError>` - True if a version refresh is needed, false otherwise
 #[instrument(skip_all)]
 fn process_service_cards(
-    service_cards: &[CardEntry],
-    cards: &[Card],
+    service_cards: &[CardEntry], // existing service cards
+    cards: &[Card],              // cards from spec
     registries: &CardRegistries,
 ) -> Result<bool, CliError> {
     debug!("Processing service cards");
@@ -164,7 +168,8 @@ fn process_service_cards(
         match current_card {
             Some(card) => {
                 // Check if existing entry UID matches latest card UID
-                if card.uid != latest_card.uid() {
+                let card_uid = card.uid.as_ref().ok_or(CliError::MissingCardEntriesError)?;
+                if card_uid != latest_card.uid() {
                     return Ok(true);
                 }
             }
@@ -233,8 +238,8 @@ fn get_write_dir(spec: &ServiceSpec, default: &str) -> String {
 /// # Returns
 /// * `Result<bool, CliError>`
 fn check_for_refresh(
-    service: &CardRecord,
-    spec_cards: Option<&Vec<Card>>,
+    service: &CardRecord,           // existing service
+    spec_cards: Option<&Vec<Card>>, // cards from spec
     registries: &CardRegistries,
 ) -> Result<bool, CliError> {
     match spec_cards {
@@ -288,8 +293,8 @@ fn handle_existing_service_lock(
     spec: &ServiceSpec,
     service_registry: &CardRegistry,
     registries: &CardRegistries,
-    spec_cards: Option<&Vec<Card>>,
-    service: CardRecord,
+    spec_cards: Option<&Vec<Card>>, // cards from spec
+    service: CardRecord,            // existing service
 ) -> Result<LockArtifact, CliError> {
     let needs_refresh = check_for_refresh(&service, spec_cards, registries)?;
 
@@ -383,7 +388,7 @@ pub fn install_service(path: PathBuf, write_path: Option<PathBuf>) -> Result<(),
     let lockfile = match LockFile::read(&path) {
         Ok(lockfile) => lockfile,
         Err(original_error) => {
-            let spec_path = path.join(DEFAULT_SPEC_PATH);
+            let spec_path = path.join(DEFAULT_SERVICE_FILENAME);
 
             if !spec_path.exists() {
                 return Err(original_error.into());

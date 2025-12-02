@@ -1,10 +1,10 @@
 use opsml_cards::{
-    Card, DataCard, DataCardMetadata, ExperimentCard, ModelCard, ModelCardMetadata, PromptCard,
+    DataCard, DataCardMetadata, ExperimentCard, ModelCard, ModelCardMetadata, PromptCard,
     ServiceCard, UidMetadata,
 };
 
-use opsml_registry::{download::download_service, CardRegistries, CardRegistry};
-use opsml_types::contracts::{CardList, CardRecord, ServiceType};
+use opsml_registry::{CardRegistries, CardRegistry};
+use opsml_types::contracts::{Card, CardList, CardRecord};
 use opsml_types::{cards::ComputeEnvironment, RegistryMode, RegistryType};
 use pyo3::prelude::*;
 
@@ -19,7 +19,6 @@ pub fn add_card_module(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<CardRegistries>()?;
     m.add_class::<RegistryType>()?;
     m.add_class::<RegistryMode>()?;
-    m.add_function(wrap_pyfunction!(download_service, m)?)?;
 
     // ModelCard
     m.add_class::<ModelCard>()?;
@@ -33,7 +32,6 @@ pub fn add_card_module(m: &Bound<'_, PyModule>) -> PyResult<()> {
     // ServiceCard
     m.add_class::<ServiceCard>()?;
     m.add_class::<Card>()?;
-    m.add_class::<ServiceType>()?;
 
     Ok(())
 }

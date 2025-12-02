@@ -1,10 +1,11 @@
 // This module contains utility functions for the opsml_cli crate.
 use crate::error::CliError;
-use opsml_cards::{Card, ServiceCard};
+use opsml_cards::ServiceCard;
 pub use opsml_registry::utils::validate_service_cards;
 use opsml_registry::CardRegistry;
 use opsml_semver::VersionType;
 use opsml_service::ServiceSpec;
+use opsml_types::contracts::Card;
 
 /// Create a new service card from an app configuration
 ///
@@ -46,6 +47,8 @@ pub fn create_service_card(
                     card.space.clone(),
                     card.name.clone(),
                     card.version.clone(),
+                    card.uid.clone(),
+                    card.drift.clone(),
                 )
             })
             .collect::<Vec<_>>();

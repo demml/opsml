@@ -9,6 +9,7 @@ pub mod logging;
 pub mod mocks;
 pub mod model;
 pub mod scouter;
+pub mod service;
 pub mod types;
 
 use pyo3::prelude::*;
@@ -36,6 +37,7 @@ fn _opsml(m: &Bound<'_, PyModule>) -> PyResult<()> {
     types::add_types_module(m)?;
     logging::add_logging_module(m)?;
     mocks::add_mocks_module(m)?;
+    service::add_service_module(m)?;
 
     Ok(())
 }

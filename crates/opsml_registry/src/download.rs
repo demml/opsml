@@ -1,7 +1,6 @@
 use crate::error::RegistryError;
 use crate::registries::async_registry::AsyncOpsmlRegistry;
 use crate::registries::card::OpsmlCardRegistry;
-use opsml_cards::Card;
 use opsml_cards::ModelCard;
 use opsml_cards::PromptCard;
 use opsml_cards::ServiceCard;
@@ -10,7 +9,7 @@ use opsml_crypt::decrypt_directory;
 use opsml_storage::{async_storage_client, storage_client};
 use opsml_types::{
     cards::ServiceCardMapping,
-    contracts::{ArtifactKey, CardQueryArgs},
+    contracts::{ArtifactKey, Card, CardQueryArgs},
     RegistryType, SaveName, Suffix,
 };
 use opsml_utils::PyHelperFuncs;
@@ -124,10 +123,10 @@ pub fn download_service_from_registry(
         .iter()
         .try_for_each(|card| -> Result<(), RegistryError> {
             let query_args = CardQueryArgs {
-                uid: Some(card.uid.clone()),
+                uid: card.uid.clone(),
                 name: Some(card.name.clone()),
                 space: Some(card.space.clone()),
-                version: Some(card.version.clone()),
+                version: card.version.clone(),
                 registry_type: card.registry_type.clone(),
                 ..Default::default()
             };
@@ -269,10 +268,10 @@ async fn async_download_card(
     mapping: &mut ServiceCardMapping,
 ) -> Result<(), RegistryError> {
     let query_args = CardQueryArgs {
-        uid: Some(card.uid.clone()),
+        uid: card.uid.clone(),
         name: Some(card.name.clone()),
         space: Some(card.space.clone()),
-        version: Some(card.version.clone()),
+        version: card.version.clone(),
         registry_type: card.registry_type.clone(),
         ..Default::default()
     };

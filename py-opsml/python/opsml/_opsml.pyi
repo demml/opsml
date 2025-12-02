@@ -6130,6 +6130,36 @@ class LLMRecord:
 # __opsml.types__
 # ######################################################################################
 
+class DriftConfig:
+    def __init__(
+        self,
+        active: bool = False,
+        deactivate_others: bool = False,
+        drift_type: List[str] = [],
+    ):
+        """Initialize drift detection configuration for model and prompt cards.
+
+        Args:
+            active:
+                Whether drift detection is active. Defaults to False
+            deactivate_others:
+                Whether to deactivate previous drift config versions. Defaults to False
+            drift_type:
+                Types of drift detection to enable (e.g., 'psi', 'custom'). Defaults to empty list
+        """
+
+    @property
+    def active(self) -> bool:
+        """Whether drift detection is currently active."""
+
+    @property
+    def deactivate_others(self) -> bool:
+        """Whether to deactivate other drift configurations."""
+
+    @property
+    def drift_type(self) -> List[str]:
+        """List of drift detection types enabled."""
+
 # shared
 class CommonKwargs:
     IsPipeline: "CommonKwargs"
@@ -8765,6 +8795,15 @@ class OnnxModel(ModelInterface):
 # ######################################################################################
 
 class ServiceType:
+    """
+    Enum representing the type of service.
+
+    Attributes:
+        Api: REST API service
+        Mcp: Model Context Protocol service
+        Agent: Agentic workflow service
+    """
+
     Api: "ServiceType"
     Mcp: "ServiceType"
     Agent: "ServiceType"
@@ -9907,6 +9946,7 @@ class Card:
         version: Optional[str] = None,
         uid: Optional[str] = None,
         card: Optional["CardType"] = None,
+        drift: Optional[DriftConfig] = None,
     ) -> None:
         """Initialize the service card. Card accepts either a combination of
         space and name (with version as optional) or a uid. If only space and name are
@@ -9944,6 +9984,9 @@ class Card:
             card (Union[DataCard, ModelCard, PromptCard, ExperimentCard]):
                 Optional card to add to the service. If provided, arguments will
                 be extracted from the card. This card must be registered in a registry.
+            drift (DriftConfig | None):
+                Optional drift configuration for the card. This is used to
+                configure drift detection for the card in the service.
 
 
         Example:
@@ -9975,6 +10018,86 @@ class Card:
         ```
 
         """
+
+    @property
+    def alias(self) -> str:
+        """Alias used to reference this card within the service."""
+
+    @property
+    def space(self) -> str:
+        """Space this card belongs to."""
+
+    @property
+    def name(self) -> str:
+        """Name of the card."""
+
+    @property
+    def version(self) -> Optional[str]:
+        """Version specifier for the card."""
+
+    @property
+    def registry_type(self) -> RegistryType:
+        """Registry type of the card."""
+
+    @property
+    def drift(self) -> Optional[DriftConfig]:
+        """Drift detection configuration if enabled."""
+
+    @property
+    def uid(self) -> Optional[str]:
+        """Unique identifier of the card."""
+
+class McpCapability:
+    """
+    Enum representing Model Context Protocol capabilities.
+
+    Attributes:
+        Resources: Resource access capability
+        Tools: Tool invocation capability
+        Prompts: Prompt template capability
+    """
+
+    Resources: "McpCapability"
+    Tools: "McpCapability"
+    Prompts: "McpCapability"
+
+class McpTransport:
+    """
+    Enum representing Model Context Protocol transport types.
+
+    Attributes:
+        Http: HTTP-based transport
+        Stdio: Standard I/O transport
+    """
+
+    Http: "McpTransport"
+    Stdio: "McpTransport"
+
+class McpConfig:
+    def __init__(
+        self,
+        capabilities: List[McpCapability],
+        transport: McpTransport,
+    ):
+        """Initialize MCP service configuration.
+
+        Required when service type is 'Mcp'.
+
+        Args:
+            capabilities: List of MCP capabilities to enable (resources, tools, prompts)
+            transport: Transport protocol to use (http or stdio)
+
+        Raises:
+            ValueError: If capabilities list is empty
+        """
+
+    @property
+    def capabilities(self) -> List[McpCapability]:
+        """List of enabled MCP capabilities."""
+
+    @property
+    def transport(self) -> McpTransport:
+        """Transport protocol for MCP communication."""
 
 class ServiceCard:
     """Creates a ServiceCard to hold a collection of cards."""
@@ -11151,6 +11274,333 @@ class AppState:
         associated with the `ScouterQueue` and reloader. Only use this method with graceful
         shutdown procedures in mind.
         """
+
+########################################################################################
+#  This section contains the type definitions for the opsmlspec file
+# ######################################################################################
+
+class SpaceConfig:
+    """Configuration for service space or team designation.
+
+    A service must belong to either a space or a team (mutually exclusive).
+    """
+
+    def __init__(self, space: Optional[str] = None, team: Optional[str] = None):
+        """Initialize space configuration.
+
+        Args:
+            space: Space name for general use
+            team: Team name for team-based organization
+
+        Raises:
+            ValueError: If both or neither space and team are provided
+        """
+
+    @property
+    def space(self) -> Optional[str]:
+        """Return the space name if this is a space-based config."""
+
+    @property
+    def team(self) -> Optional[str]:
+        """Return the team name if this is a team-based config."""
+
+class ServiceMetadata:
+    def __init__(
+        self,
+        description: str,
+        language: Optional[str] = None,
+        tags: List[str] = [],
+    ):
+        """Initialize service metadata.
+
+        Args:
+            description:
+                Description of the service (required)
+            language:
+                Programming language used (e.g., 'python'). Defaults to None
+            tags:
+                Tags for categorization and search. Defaults to empty list
+        """
+
+    @property
+    def description(self) -> str:
+        """Service description."""
+
+    @property
+    def language(self) -> Optional[str]:
+        """Programming language used by the service."""
+
+    @property
+    def tags(self) -> List[str]:
+        """Tags for categorization."""
+
+class ServiceConfig:
+    def __init__(
+        self,
+        version: Optional[str] = None,
+        cards: Optional[List[Card]] = None,
+        write_dir: Optional[str] = None,
+        mcp: Optional[McpConfig] = None,
+    ):
+        """Initialize service configuration.
+
+        Args:
+            version:
+                Version of the service. Defaults to None
+            cards:
+                List of cards included in the service. Defaults to None
+            write_dir:
+                Directory to write service artifacts to. Defaults to 'opsml_service'
+            mcp:
+                MCP configuration (required if service type is Mcp). Defaults to None
+        """
+
+    @property
+    def version(self) -> Optional[str]:
+        """Service version."""
+
+    @property
+    def cards(self) -> Optional[List[Card]]:
+        """Cards included in this service."""
+
+    @property
+    def write_dir(self) -> Optional[str]:
+        """Directory for writing service artifacts."""
+
+    @property
+    def mcp(self) -> Optional[McpConfig]:
+        """MCP configuration if service type is Mcp."""
+
+class GpuConfig:
+    def __init__(
+        self,
+        gpu_type: str,
+        count: int,
+        memory: str,
+    ):
+        """Initialize GPU resource configuration.
+
+        Args:
+            gpu_type:
+                GPU type identifier (e.g., 'nvidia-tesla-t4')
+            count:
+                Number of GPUs required
+            memory:
+                GPU memory per device (e.g., '16Gi')
+
+        Raises:
+            ValueError: If count is not positive or memory format is invalid
+        """
+
+    @property
+    def gpu_type(self) -> str:
+        """GPU type identifier."""
+
+    @property
+    def count(self) -> int:
+        """Number of GPUs."""
+
+    @property
+    def memory(self) -> str:
+        """GPU memory specification."""
+
+class Resources:
+    def __init__(
+        self,
+        cpu: int,
+        memory: str,
+        storage: str,
+        gpu: Optional[GpuConfig] = None,
+    ):
+        """Initialize resource requirements for deployment.
+
+        Args:
+            cpu:
+                Number of CPUs required
+            memory:
+                Amount of memory (e.g., '16Gi')
+            storage:
+                Storage capacity (e.g., '100Gi')
+            gpu:
+                GPU configuration if GPU resources are needed. Defaults to None
+
+        Raises:
+            ValueError: If cpu is not positive or memory/storage format is invalid
+        """
+
+    @property
+    def cpu(self) -> int:
+        """Number of CPUs required."""
+
+    @property
+    def memory(self) -> str:
+        """Memory requirement specification."""
+
+    @property
+    def storage(self) -> str:
+        """Storage requirement specification."""
+
+    @property
+    def gpu(self) -> Optional[GpuConfig]:
+        """GPU configuration if enabled."""
+
+class DeploymentConfig:
+    def __init__(
+        self,
+        environment: str,
+        endpoints: List[str],
+        provider: Optional[str] = None,
+        location: Optional[List[str]] = None,
+        resources: Optional[Resources] = None,
+        links: Optional[Dict[str, str]] = None,
+    ):
+        """Initialize deployment configuration.
+
+        Args:
+            environment:
+                Deployment environment (e.g., 'development', 'production')
+            endpoints:
+                List of endpoint URLs for the deployed service
+            provider:
+                Cloud provider (e.g., 'gcp', 'aws'). Defaults to None
+            location:
+                Deployment locations/regions. Defaults to None
+            resources:
+                Resource requirements for deployment. Defaults to None
+            links:
+                Related links (e.g., logging, monitoring URLs). Defaults to None
+
+        Raises:
+            ValueError: If endpoints list is empty
+        """
+
+    @property
+    def environment(self) -> str:
+        """Deployment environment name."""
+
+    @property
+    def provider(self) -> Optional[str]:
+        """Cloud provider identifier."""
+
+    @property
+    def location(self) -> Optional[List[str]]:
+        """Deployment locations/regions."""
+
+    @property
+    def endpoints(self) -> List[str]:
+        """Service endpoint URLs."""
+
+    @property
+    def resources(self) -> Optional[Resources]:
+        """Resource requirements for this deployment."""
+
+    @property
+    def links(self) -> Optional[Dict[str, str]]:
+        """Related links for monitoring, logging, etc."""
+
+class ServiceSpec:
+    """Service specification representing the opsmlspec.yaml structure."""
+
+    def __init__(
+        self,
+        name: str,
+        space_config: SpaceConfig,
+        service_type: ServiceType,
+        metadata: Optional[ServiceMetadata] = None,
+        service: Optional[ServiceConfig] = None,
+        deploy: Optional[List[DeploymentConfig]] = None,
+        root_path: Path = Path("."),
+    ):
+        """Initialize a service specification from opsmlspec.yaml.
+
+        This class represents the complete service definition including
+        metadata, card dependencies, and deployment configurations.
+
+        Args:
+            name:
+                Name of the service (required)
+            space_config:
+                Space or team configuration (required)
+            service_type:
+                Type of service (Api, Mcp, or Agent) (required)
+            metadata:
+                Additional service metadata. Defaults to None
+            service:
+                Service configuration including cards and MCP settings. Defaults to None
+            deploy:
+                List of deployment configurations. Defaults to None
+            root_path: Root path for the service specification file. Defaults to current directory
+
+        Example:
+            ```python
+            spec = ServiceSpec(
+                name="recommendation-api",
+                space_config=SpaceConfig(space="data-science"),
+                service_type=ServiceType.Api,
+                metadata=ServiceMetadata(
+                    description="Recommendation service",
+                    language="python",
+                    tags=["ml", "production"],
+                ),
+                service=ServiceConfig(
+                    version="1.0.0",
+                    cards=[
+                        Card(
+                            alias="recommender",
+                            name="recommender-model",
+                            registry_type=RegistryType.Model,
+                            version="1.*",
+                        )
+                    ],
+                ),
+            )
+            ```
+        """
+
+    @property
+    def name(self) -> str:
+        """Service name."""
+
+    @name.setter
+    def name(self, name: str) -> None:
+        """Set the service name."""
+
+    @property
+    def space_config(self) -> SpaceConfig:
+        """Space or team configuration."""
+
+    @property
+    def service_type(self) -> ServiceType:
+        """Type of service (Api, Mcp, or Agent)."""
+
+    @property
+    def metadata(self) -> Optional[ServiceMetadata]:
+        """Service metadata."""
+
+    @property
+    def service(self) -> Optional[ServiceConfig]:
+        """Service configuration."""
+
+    @property
+    def deploy(self) -> Optional[List[DeploymentConfig]]:
+        """Deployment configurations."""
+
+    @property
+    def root_path(self) -> Path:
+        """Root path of the service specification file."""
+
+    def from_path(self, path: Optional[Path] = None) -> "ServiceSpec":
+        """Load the service specification from an opsmlspec.yaml file or
+        a provided path.
+
+        Args:
+            path (Optional[Path]):
+                Optional path to the opsmlspec.yaml file. If not provided,
+                the method will look for opsmlspec.yaml in the root_path.
+        """
+
+    def __str__(self) -> str:
+        """String representation of the ServiceSpec."""
 
 __all__ = [
     ### App

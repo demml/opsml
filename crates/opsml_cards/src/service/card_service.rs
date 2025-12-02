@@ -5,15 +5,14 @@ use crate::{DataCard, ExperimentCard, ModelCard, PromptCard};
 use chrono::{DateTime, Utc};
 use opsml_interfaces::{DataLoadKwargs, ModelLoadKwargs};
 use opsml_service::ServiceSpec;
-use opsml_types::contracts::{CardEntry, ServiceConfig};
-use opsml_types::CommonKwargs;
+use opsml_types::contracts::{Card, CardEntry, ServiceConfig};
 use opsml_types::{
     contracts::{
         CardRecord, DeploymentConfig, ServiceCardClientRecord, ServiceMetadata, ServiceType,
     },
     RegistryType, SaveName, Suffix,
 };
-use opsml_utils::{extract_py_attr, PyHelperFuncs};
+use opsml_utils::PyHelperFuncs;
 use pyo3::IntoPyObjectExt;
 use pyo3::PyTraverseError;
 use pyo3::PyVisit;
@@ -50,123 +49,6 @@ impl ServiceInfo {
         self.name = name;
         self.version = version;
         Ok(())
-    }
-}
-
-#[pyclass(eq)]
-#[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
-pub struct Card {
-    #[pyo3(get, set)]
-    pub space: String,
-
-    #[pyo3(get, set)]
-    pub name: String,
-
-    #[pyo3(get, set)]
-    pub version: String,
-
-    #[pyo3(get, set)]
-    pub uid: String,
-
-    #[pyo3(get, set)]
-    pub registry_type: RegistryType,
-
-    #[pyo3(get, set)]
-    pub alias: String,
-}
-
-#[pymethods]
-impl Card {
-    #[new]
-    #[pyo3(signature = (alias, registry_type=None, space=None, name=None, version=None, uid=None, card=None))]
-    pub fn new(
-        alias: String,
-        registry_type: Option<RegistryType>,
-        space: Option<&str>,
-        name: Option<&str>,
-        version: Option<&str>,
-        uid: Option<&str>,
-        card: Option<Bound<'_, PyAny>>,
-    ) -> Result<Self, CardError> {
-        // if card is not None, then set the registry_type and alias
-        if let Some(card) = card {
-            let registry_type = extract_py_attr::<RegistryType>(&card, "registry_type")?;
-
-            let uid = extract_py_attr::<Option<String>>(&card, "uid")?
-                .ok_or_else(|| CardError::MissingAttributeError("uid".to_string()))?;
-
-            let name = extract_py_attr::<Option<String>>(&card, "name")?
-                .ok_or_else(|| CardError::MissingAttributeError("name".to_string()))?;
-
-            let space = extract_py_attr::<Option<String>>(&card, "space")?
-                .ok_or_else(|| CardError::MissingAttributeError("space".to_string()))?;
-
-            let version = extract_py_attr::<Option<String>>(&card, "version")?
-                .ok_or_else(|| CardError::MissingAttributeError("version".to_string()))?;
-
-            return Ok(Card {
-                space,
-                name,
-                version,
-                uid,
-                registry_type,
-                alias,
-            });
-        }
-
-        // if registry is none, raise error
-        let registry_type = match registry_type {
-            Some(registry_type) => registry_type,
-            None => {
-                error!("Registry type is required unless a registered card is provided");
-                return Err(CardError::MissingRegistryTypeError);
-            }
-        };
-
-        // check that at least space/name  or uid is provided
-        let has_space_or_name = space.is_some() || name.is_some();
-        let has_uid = uid.is_some();
-
-        if !has_space_or_name && !has_uid {
-            error!("Either space/name or uid must be provided");
-            return Err(CardError::MissingServiceCardArgsError);
-        }
-
-        Ok(Card {
-            space: space
-                .map(String::from)
-                .unwrap_or_else(|| CommonKwargs::Undefined.to_string()),
-            name: name
-                .map(String::from)
-                .unwrap_or_else(|| CommonKwargs::Undefined.to_string()),
-            version: version
-                .map(String::from)
-                .unwrap_or_else(|| CommonKwargs::Undefined.to_string()),
-            uid: uid
-                .map(String::from)
-                .unwrap_or_else(|| CommonKwargs::Undefined.to_string()),
-            registry_type,
-            alias,
-        })
-    }
-}
-
-impl Card {
-    pub fn rust_new(
-        alias: String,
-        registry_type: RegistryType,
-        space: String,
-        name: String,
-        version: Option<String>,
-    ) -> Card {
-        Card {
-            space,
-            name,
-            version: version.unwrap_or_else(|| CommonKwargs::Undefined.to_string()),
-            uid: CommonKwargs::Undefined.to_string(),
-            registry_type,
-            alias,
-        }
     }
 }
 

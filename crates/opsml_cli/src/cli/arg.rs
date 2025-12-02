@@ -2,16 +2,15 @@ use std::path::PathBuf;
 
 use crate::error::CliError;
 use clap::Args;
+use opsml_service::service::DEFAULT_SERVICE_FILENAME;
 use opsml_types::{contracts::CardQueryArgs, RegistryType};
 use opsml_utils::clean_string;
 use pyo3::{pyclass, pymethods};
 use scouter_client::DriftType;
 
-pub const DEFAULT_SPEC_PATH: &str = "opsmlspec.yaml";
-
 fn default_spec_path() -> String {
     let path = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
-    let joined = path.join(DEFAULT_SPEC_PATH);
+    let joined = path.join(DEFAULT_SERVICE_FILENAME);
     joined.to_string_lossy().to_string()
 }
 

@@ -13,7 +13,7 @@ from opsml.card import ServiceCard, Card, RegistryType
 import opsml.scouter
 from opsml.scouter import CommonCrons, AlertThreshold, Features
 from opsml.app import AppState, ReloadConfig
-from opsml.card import download_service
+from opsml.service import download_service
 from opsml.scouter import Metrics, Metric
 import numpy as np
 

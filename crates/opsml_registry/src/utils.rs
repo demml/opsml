@@ -2,7 +2,7 @@ use crate::error::RegistryError;
 use crate::registries::card::OpsmlCardRegistry;
 use crate::CardRegistries;
 use opsml_cards::{
-    traits::OpsmlCard, Card, DataCard, ExperimentCard, ModelCard, PromptCard, ServiceCard,
+    traits::OpsmlCard, DataCard, ExperimentCard, ModelCard, PromptCard, ServiceCard,
 };
 use opsml_crypt::{decrypt_directory, encrypt_directory};
 use opsml_storage::storage_client;
@@ -23,8 +23,8 @@ use tracing::{debug, error, instrument};
 /// * `card_registries`: Card registries
 /// * `card`: Card to load
 /// * `interface`: Optional interface to use
-/// * `load_kwargs`: Optional load kwargs   
-///     
+/// * `load_kwargs`: Optional load kwargs
+///
 fn load_and_extract_card(
     py: Python,
     card_registries: &CardRegistries,
@@ -34,34 +34,34 @@ fn load_and_extract_card(
     let card_obj = match card.registry_type {
         RegistryType::Model => card_registries.model.load_card(
             py,
-            Some(card.uid.clone()),
+            card.uid.clone(),
             Some(card.space.clone()),
             Some(card.name.clone()),
-            Some(card.version.clone()),
+            card.version.clone(),
             interface,
         )?,
         RegistryType::Data => card_registries.data.load_card(
             py,
-            Some(card.uid.clone()),
+            card.uid.clone(),
             Some(card.space.clone()),
             Some(card.name.clone()),
-            Some(card.version.clone()),
+            card.version.clone(),
             interface,
         )?,
         RegistryType::Experiment => card_registries.experiment.load_card(
             py,
-            Some(card.uid.clone()),
+            card.uid.clone(),
             Some(card.space.clone()),
             Some(card.name.clone()),
-            Some(card.version.clone()),
+            card.version.clone(),
             None,
         )?,
         RegistryType::Prompt => card_registries.prompt.load_card(
             py,
-            Some(card.uid.clone()),
+            card.uid.clone(),
             Some(card.space.clone()),
             Some(card.name.clone()),
-            Some(card.version.clone()),
+            card.version.clone(),
             None,
         )?,
         _ => {
@@ -354,10 +354,10 @@ fn validate_and_update_card(card: &mut Card) -> Result<(), RegistryError> {
     let reg = OpsmlCardRegistry::new(card.registry_type.clone())?;
 
     let args = CardQueryArgs {
-        uid: to_option(&card.uid),
+        uid: card.uid.clone(),
         space: to_option(&card.space),
         name: to_option(&card.name),
-        version: to_option(&card.version),
+        version: card.version.clone(),
         registry_type: card.registry_type.clone(),
         sort_by_timestamp: Some(false),
         ..Default::default()
@@ -378,8 +378,8 @@ fn validate_and_update_card(card: &mut Card) -> Result<(), RegistryError> {
     if let Some(found_card) = cards.first() {
         card.name = found_card.name().to_string();
         card.space = found_card.space().to_string();
-        card.version = found_card.version().to_string();
-        card.uid = found_card.uid().to_string();
+        card.version = Some(found_card.version().to_string());
+        card.uid = Some(found_card.uid().to_string());
         debug!("Updated card metadata for name: {:?}", card.name);
     } else {
         return Err(RegistryError::CustomError(format!(
