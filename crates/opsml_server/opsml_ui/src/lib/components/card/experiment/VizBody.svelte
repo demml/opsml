@@ -14,12 +14,10 @@
       selectedMetrics: string[];
       plotType: PlotType;
     }>();
-  
-    // state
-    let resetZoom: boolean = $state(false);
-  
+
+    let resetZoomTrigger: number = $state(0);
     let resetZoomClicked = () => {
-      resetZoom = !resetZoom;
+      resetZoomTrigger++;
     }
 
 
@@ -49,7 +47,7 @@
         {groupedMetrics} 
           yLabel="Value" 
           {plotType}
-          bind:resetZoom={resetZoom}
+          bind:resetZoomTrigger={resetZoomTrigger}
       />
     </div>
   {/key}

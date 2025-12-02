@@ -8,25 +8,23 @@
 
   let chart: Chart;
   let canvas: HTMLCanvasElement;
+  let lastTriggerValue = 0;
   Chart.register(zoomPlugin);
   Chart.register(annotationPlugin);
 
-  let resetZoom: boolean = $state(false);
+  let resetZoomTrigger: number = $state(0);
 
   let resetZoomClicked = () => {
-    resetZoom = !resetZoom;
+    resetZoomTrigger++;
   }
 
 
   $effect(() => {
-      if (resetZoom && chart) {
-        const zoomPlugin = chart.options.plugins?.zoom;
-        if (zoomPlugin) {
-          chart.resetZoom();
-          resetZoom = false;
-        }
-      }
-    });
+    if (resetZoomTrigger !== lastTriggerValue && chart) {
+      chart.resetZoom();
+      lastTriggerValue = resetZoomTrigger;
+    }
+  });
 
   onMount(() => {
     if (chart) {

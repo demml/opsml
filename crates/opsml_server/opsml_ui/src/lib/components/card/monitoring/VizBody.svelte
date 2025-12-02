@@ -32,10 +32,9 @@
   }>();
 
   // state
-  let resetZoom: boolean = $state(false);
-
+  let resetZoomTrigger: number = $state(0);
   let resetZoomClicked = () => {
-    resetZoom = !resetZoom;
+    resetZoomTrigger++;
   }
 
   // Helper to get y-values based on drift type
@@ -143,7 +142,7 @@ function getBaselineValue(): number | undefined {
         baselineValue={getBaselineValue()}
         label={currentName}
         yLabel={currentDriftType === DriftType.Psi ? 'PSI Value' : 'Value'}
-        bind:resetZoom={resetZoom}
+        bind:resetZoomTrigger={resetZoomTrigger}
       />
   {/key}
 
