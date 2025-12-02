@@ -1,7 +1,7 @@
 use pyo3::exceptions::PyRuntimeError;
 use pyo3::PyErr;
 use thiserror::Error;
-use tracing::error;
+
 #[derive(Error, Debug)]
 pub enum ServiceError {
     #[error(
@@ -33,12 +33,21 @@ configuration environment matches the current environment set in APP_ENV.
 
     #[error(transparent)]
     StateError(#[from] opsml_state::error::StateError),
+
+    #[error("{0}")]
+    PyError(String),
 }
 
 impl From<ServiceError> for PyErr {
     fn from(err: ServiceError) -> PyErr {
         let msg = err.to_string();
-        error!("{}", msg);
+        tracing::error!("{}", msg);
         PyRuntimeError::new_err(msg)
+    }
+}
+
+impl From<PyErr> for ServiceError {
+    fn from(err: PyErr) -> ServiceError {
+        ServiceError::PyError(err.to_string())
     }
 }
