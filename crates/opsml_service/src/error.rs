@@ -1,11 +1,13 @@
+use pyo3::exceptions::PyRuntimeError;
+use pyo3::PyErr;
 use thiserror::Error;
-
+use tracing::error;
 #[derive(Error, Debug)]
 pub enum ServiceError {
     #[error(
         r#"
-Missing deployment configuration for MCP service {0}. 
-Check the 'deploy' section of the spec and ensure at least one deployment 
+Missing deployment configuration for MCP service {0}.
+Check the 'deploy' section of the spec and ensure at least one deployment
 configuration environment matches the current environment set in APP_ENV.
 "#
     )]
@@ -31,4 +33,12 @@ configuration environment matches the current environment set in APP_ENV.
 
     #[error(transparent)]
     StateError(#[from] opsml_state::error::StateError),
+}
+
+impl From<ServiceError> for PyErr {
+    fn from(err: ServiceError) -> PyErr {
+        let msg = err.to_string();
+        error!("{}", msg);
+        PyRuntimeError::new_err(msg)
+    }
 }

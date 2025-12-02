@@ -1157,7 +1157,7 @@ pub struct UpdateCardResponse {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct CardEntry {
     pub registry_type: RegistryType,
-    pub uid: String,
-    pub version: String,
+    pub uid: Option<String>,
+    pub version: Option<String>,
     pub alias: String,
 }

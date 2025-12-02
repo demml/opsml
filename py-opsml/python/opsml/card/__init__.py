@@ -16,8 +16,6 @@ from .._opsml import (
     RegistryMode,
     RegistryType,
     ServiceCard,
-    ServiceType,
-    download_service,
 )
 
 __all__ = [
@@ -36,6 +34,4 @@ __all__ = [
     "ComputeEnvironment",
     "PromptCard",
     "ServiceCard",
-    "ServiceType",
-    "download_service",
 ]
