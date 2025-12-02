@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use std::fmt::Display;
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Hash)]
-#[pyclass]
+#[pyclass(eq, eq_int)]
 pub enum McpTransport {
     #[serde(alias = "HTTP", alias = "http")]
     Http,
@@ -23,7 +23,7 @@ impl Display for McpTransport {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Hash)]
-#[pyclass]
+#[pyclass(eq, eq_int)]
 pub enum McpCapability {
     #[serde(alias = "RESOURCES", alias = "resources")]
     Resources,
