@@ -8,16 +8,17 @@
   import type { WordStats } from '../card/data/types';
   import { createWordBarChart } from './wordChart';
 
-  let { 
+  let {
     wordStats,
-    resetZoom = $bindable(),
+    resetZoomTrigger = $bindable(),
   } = $props<{
     wordStats: WordStats;
-    resetZoom: boolean;
+    resetZoomTrigger: number;
   }>();
 
     let canvas: HTMLCanvasElement;
     let chart: Chart;
+    let lastTriggerValue = 0;
 
     Chart.register(zoomPlugin);
     Chart.register(Filler);
@@ -32,12 +33,9 @@
 
     // reset zoom effect
     $effect(() => {
-      if (resetZoom && chart) {
-        const zoomPlugin = chart.options.plugins?.zoom;
-        if (zoomPlugin) {
-          chart.resetZoom();
-          resetZoom = false;
-        }
+      if (resetZoomTrigger !== lastTriggerValue && chart) {
+        chart.resetZoom();
+        lastTriggerValue = resetZoomTrigger;
       }
     });
 

@@ -3,10 +3,10 @@
   import HistChart from "$lib/components/viz/HistChart.svelte";
 
   let { numericData } = $props<{ numericData: NumericStats }>();
-  let resetZoom: boolean = $state(false);
 
-  function resetZoomClicked() {
-    resetZoom = !resetZoom;
+  let resetZoomTrigger: number = $state(0);
+  let resetZoomClicked = () => {
+    resetZoomTrigger++;
   }
 </script>
 
@@ -77,7 +77,7 @@
     <div class="w-full h-[220px] sm:h-[300px] md:h-[340px]">
       <HistChart
         histData={numericData.histogram}
-        bind:resetZoom={resetZoom}
+        bind:resetZoomTrigger={resetZoomTrigger}
       />
     </div>
   </div>
