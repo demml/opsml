@@ -6,12 +6,6 @@
 
   let metrics: UiHardwareMetrics = data.hardwareMetrics;
 
-  let resetZoom: boolean = $state(false);
-
-  let resetZoomClicked = () => {
-    resetZoom = !resetZoom;
-  }
-
 </script>
 
 <div class="mx-auto max-w-8xl pb-8 px-4">

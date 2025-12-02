@@ -8,42 +8,40 @@
   import { Filler } from 'chart.js';
   import type { Histogram } from '../card/data/types';
   import { createHistogramViz } from './hist';
- 
-  let { 
+
+  let {
     histData,
-    resetZoom = $bindable(),
+    resetZoomTrigger= $bindable(),
   } = $props<{
     histData: Histogram;
-    resetZoom: boolean;
+    resetZoomTrigger: number;
   }>();
 
 
     let canvas: HTMLCanvasElement;
     let chart: Chart;
+    let lastTriggerValue = 0;
 
     Chart.register(zoomPlugin);
     Chart.register(Filler);
-  
+
 
     function initChart() {
       let config = createHistogramViz(histData);
-  
+
       if (chart) {
         chart.destroy();
       }
-      
+
       chart = new Chart(canvas, config);
     }
 
 
-    // reset zoom effect
+
     $effect(() => {
-      if (resetZoom && chart) {
-        const zoomPlugin = chart.options.plugins?.zoom;
-        if (zoomPlugin) {
-          chart.resetZoom();
-          resetZoom = false;
-        }
+      if (resetZoomTrigger !== lastTriggerValue && chart) {
+        chart.resetZoom();
+        lastTriggerValue = resetZoomTrigger;
       }
     });
 

@@ -15,19 +15,20 @@
     baselineValue,
     label,
     yLabel,
-    resetZoom = $bindable(),
+    resetZoomTrigger = $bindable(),
   } = $props<{
     timestamps: string[];
     values: number[];
     baselineValue: number | undefined;
     label: string;
     yLabel: string;
-    resetZoom: boolean;
+    resetZoomTrigger: number;
   }>();
 
 
     let canvas: HTMLCanvasElement;
     let chart: Chart;
+    let lastTriggerValue = 0;
 
     Chart.register(zoomPlugin);
     Chart.register(annotationPlugin);
@@ -36,23 +37,20 @@
     function initChart() {
 
       const dates = timestamps.map((ts: string | number | Date) => new Date(ts));
-      const config = createTimeSeriesChart(dates, values, baselineValue, label, yLabel);
+      const config = createTimeSeriesChart(dates, values, baselineValue, label, yLabel, "line");
       if (chart) {
         chart.destroy();
       }
-      
+
       chart = new Chart(canvas, config);
     }
 
 
     // reset zoom effect
     $effect(() => {
-      if (resetZoom && chart) {
-        const zoomPlugin = chart.options.plugins?.zoom;
-        if (zoomPlugin) {
-          chart.resetZoom();
-          resetZoom = false;
-        }
+      if (resetZoomTrigger !== lastTriggerValue && chart) {
+        chart.resetZoom();
+        lastTriggerValue = resetZoomTrigger;
       }
     });
 
