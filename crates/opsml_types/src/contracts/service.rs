@@ -206,11 +206,11 @@ pub struct Card {
 #[pymethods]
 impl Card {
     #[new]
-    #[pyo3(signature = (alias, registry_type, space=None, name=None, version=None, uid=None, card=None, drift=None))]
+    #[pyo3(signature = (alias, registry_type=None, space=None, name=None, version=None, uid=None, card=None, drift=None))]
     #[allow(clippy::too_many_arguments)]
     pub fn new(
         alias: String,
-        registry_type: RegistryType, // Changed from Option to required
+        registry_type: Option<RegistryType>,
         space: Option<&str>,
         name: Option<&str>,
         version: Option<&str>,
@@ -230,8 +230,6 @@ impl Card {
 
             let version = extract_py_attr::<String>(&card, "version")?;
 
-            let drift = extract_py_attr::<Option<DriftConfig>>(&card, "drift")?;
-
             return Ok(Card {
                 space,
                 name,
@@ -242,6 +240,14 @@ impl Card {
                 drift,
             });
         }
+
+        let registry_type = match registry_type {
+            Some(registry_type) => registry_type,
+            None => {
+                error!("Registry type is required unless a registered card is provided");
+                return Err(TypeError::MissingRegistryTypeError);
+            }
+        };
 
         // Validate that either (space AND name) OR uid is provided
         let has_space_and_name = space.is_some() && name.is_some();

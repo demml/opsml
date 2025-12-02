@@ -52,6 +52,9 @@ pub enum TypeError {
 
     #[error("Either space/name or uid must be provided")]
     MissingServiceCardArgsError,
+
+    #[error("Registry type must be provided when card is not provided")]
+    MissingRegistryTypeError,
 }
 
 impl From<TypeError> for PyErr {
