@@ -1,4 +1,5 @@
 use opsml_crypt::error::CryptError;
+use opsml_utils::error::PyUtilError;
 use opsml_utils::error::UtilError;
 use pyo3::exceptions::PyRuntimeError;
 use pyo3::PyErr;
@@ -45,6 +46,15 @@ pub enum TypeError {
 
     #[error("Missing MCP configuration for MCP service type")]
     MissingMCPConfig,
+
+    #[error(transparent)]
+    PyUtilError(#[from] PyUtilError),
+
+    #[error("Either space/name or uid must be provided")]
+    MissingServiceCardArgsError,
+
+    #[error("Registry type must be provided when card is not provided")]
+    MissingRegistryTypeError,
 }
 
 impl From<TypeError> for PyErr {

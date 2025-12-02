@@ -4348,12 +4348,14 @@ version = "3.0.0-rc.17"
 dependencies = [
  "opsml-state",
  "opsml-types",
+ "opsml-utils",
  "opsml-version",
  "pyo3",
  "serde",
  "serde_yaml",
  "tempfile",
  "thiserror 2.0.17",
+ "tracing",
 ]
 
 [[package]]

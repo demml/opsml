@@ -1,12 +1,15 @@
 use crate::error::ServiceError;
 use opsml_state::app_state;
 use opsml_types::contracts::{Card, DeploymentConfig, ServiceConfig, ServiceMetadata, ServiceType};
+use opsml_utils::PyHelperFuncs;
+use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
-const DEFAULT_SERVICE_FILENAME: &str = "opsmlspec.yaml";
+pub const DEFAULT_SERVICE_FILENAME: &str = "opsmlspec.yaml";
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(untagged)]
+#[pyclass]
 pub enum SpaceConfig {
     Team { team: String },
     Space { space: String },
@@ -21,18 +24,47 @@ impl SpaceConfig {
     }
 }
 
+#[pymethods]
+impl SpaceConfig {
+    #[new]
+    fn new(team: Option<String>, space: Option<String>) -> Self {
+        if let Some(space) = space {
+            SpaceConfig::Space { space }
+        } else if let Some(team) = team {
+            SpaceConfig::Team { team }
+        } else {
+            // Default to empty team
+            SpaceConfig::Team {
+                team: String::new(),
+            }
+        }
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
+#[pyclass]
 pub struct ServiceSpec {
+    #[pyo3(get)]
     pub name: String,
+
     #[serde(flatten)]
     pub space_config: SpaceConfig,
+
     #[serde(rename = "type")]
+    #[pyo3(get)]
     pub service_type: ServiceType,
+
+    #[pyo3(get)]
     pub metadata: Option<ServiceMetadata>,
+
+    #[pyo3(get)]
     pub service: Option<ServiceConfig>,
+
+    #[pyo3(get)]
     pub deploy: Option<Vec<DeploymentConfig>>,
 
     #[serde(skip)]
+    #[pyo3(get)]
     pub root_path: PathBuf,
 }
 
@@ -168,10 +200,6 @@ impl ServiceSpec {
         Ok(spec)
     }
 
-    pub fn space(&self) -> &str {
-        self.space_config.get_space()
-    }
-
     pub fn get_card(&self, alias: &str) -> Option<&Card> {
         if let Some(service) = &self.service {
             if let Some(cards) = &service.cards {
@@ -182,6 +210,54 @@ impl ServiceSpec {
         } else {
             None
         }
+    }
+}
+
+#[pymethods]
+impl ServiceSpec {
+    #[new]
+    pub fn new(
+        name: String,
+        space_config: SpaceConfig,
+        service_type: ServiceType,
+        metadata: Option<ServiceMetadata>,
+        service: Option<ServiceConfig>,
+        deploy: Option<Vec<DeploymentConfig>>,
+    ) -> Result<Self, ServiceError> {
+        let mut spec = ServiceSpec {
+            name,
+            space_config,
+            service_type,
+            metadata,
+            service,
+            deploy,
+            root_path: PathBuf::new(),
+        };
+        spec.validate()?;
+        Ok(spec)
+    }
+    #[staticmethod]
+    #[pyo3(name = "from_path")]
+    pub fn load_from_path(path: Option<PathBuf>) -> Result<Self, ServiceError> {
+        let path = match path {
+            Some(p) => p,
+            None => {
+                let current_dir = std::env::current_dir()?;
+                current_dir.join(DEFAULT_SERVICE_FILENAME)
+            }
+        };
+
+        let spec = Self::from_path(&path)?;
+        Ok(spec)
+    }
+
+    #[getter]
+    pub fn space(&self) -> &str {
+        self.space_config.get_space()
+    }
+
+    pub fn __str__(&self) -> String {
+        PyHelperFuncs::__str__(self)
     }
 }
 
