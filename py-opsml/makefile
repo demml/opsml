@@ -26,6 +26,10 @@ setup.project:
 	uv sync --all-extras --group dev --group docs
 	uv run maturin develop --features server
 
+setup.project.release:
+	uv sync --all-extras --group dev --group docs
+	uv run maturin build --release --out dist
+
 setup.adk:
 	uv sync --group dev --group docs
 	uv pip install -r requirements/requirements.adk.txt

@@ -238,7 +238,7 @@ impl ServiceSpec {
     }
     #[staticmethod]
     #[pyo3(name = "from_path")]
-    pub fn load_from_path(path: Option<PathBuf>) -> PyResult<Self> {
+    pub fn load_from_path(path: Option<PathBuf>) -> Result<Self, ServiceError> {
         let path = match path {
             Some(p) => p,
             None => {
