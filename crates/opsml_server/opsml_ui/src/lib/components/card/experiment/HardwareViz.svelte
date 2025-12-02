@@ -14,10 +14,9 @@
         yLabel: string,
      }>();
   
-    let resetZoom: boolean = $state(false);
-  
+    let resetZoomTrigger: number = $state(0);
     let resetZoomClicked = () => {
-      resetZoom = !resetZoom;
+      resetZoomTrigger++;
     }
   
   </script>
@@ -37,7 +36,7 @@
     values={yValues}
     label={vizLabel}
     yLabel={yLabel}
-    bind:resetZoom={resetZoom}
+    bind:resetZoomTrigger={resetZoomTrigger}
   />
 
 </div> 

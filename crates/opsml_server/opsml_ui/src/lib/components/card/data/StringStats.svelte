@@ -3,10 +3,10 @@
   import WordBarChart from "$lib/components/viz/WordBarChart.svelte";
 
   let { stringData } = $props<{ stringData: StringStats }>();
-  let resetZoom: boolean = $state(false);
-
-  function resetZoomClicked() {
-    resetZoom = !resetZoom;
+  
+  let resetZoomTrigger: number = $state(0);
+  let resetZoomClicked = () => {
+    resetZoomTrigger++;
   }
 </script>
 
@@ -57,7 +57,7 @@
     <div class="w-full h-[220px] sm:h-[300px] lg:h-[340px]">
       <WordBarChart
         wordStats={stringData.word_stats}
-        bind:resetZoom={resetZoom}
+        bind:resetZoomTrigger={resetZoomTrigger}
       />
     </div>
   </div>
