@@ -14,11 +14,9 @@ use opsml_sql::traits::ExperimentLogicTrait;
 use opsml_types::{cards::*, contracts::*};
 use opsml_utils::utils::get_utc_datetime;
 use sqlx::types::Json as SqlxJson;
+use std::collections::BTreeMap;
+use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::sync::Arc;
-use std::{
-    collections::HashMap,
-    panic::{catch_unwind, AssertUnwindSafe},
-};
 use tracing::error;
 
 pub async fn insert_metrics(
@@ -84,10 +82,9 @@ pub async fn get_metrics(
 
 pub async fn get_grouped_metrics(
     State(state): State<Arc<AppState>>,
-
     Json(req): Json<UiMetricRequest>,
-) -> Result<Json<HashMap<String, Vec<GroupedMetric>>>, (StatusCode, Json<OpsmlServerError>)> {
-    let mut metric_data: HashMap<String, Vec<GroupedMetric>> = HashMap::new();
+) -> Result<Json<BTreeMap<String, Vec<GroupedMetric>>>, (StatusCode, Json<OpsmlServerError>)> {
+    let mut metric_data: BTreeMap<String, Vec<GroupedMetric>> = BTreeMap::new();
 
     for experiment in req.experiments {
         let metrics = state
@@ -99,7 +96,8 @@ pub async fn get_grouped_metrics(
                 internal_server_error(e, "Failed to get metrics")
             })?;
 
-        let mut grouped_by_name: HashMap<String, Vec<MetricRecord>> = HashMap::new();
+        // Use BTreeMap to preserve database sort order
+        let mut grouped_by_name: BTreeMap<String, Vec<MetricRecord>> = BTreeMap::new();
         for metric in metrics {
             grouped_by_name
                 .entry(metric.name.clone())
@@ -108,6 +106,7 @@ pub async fn get_grouped_metrics(
         }
 
         for (metric_name, metric_records) in grouped_by_name {
+            // metric_records are now guaranteed to maintain DB sort order
             let grouped_metric = GroupedMetric {
                 uid: experiment.uid.clone(),
                 version: experiment.version.clone(),
@@ -129,7 +128,6 @@ pub async fn get_grouped_metrics(
                 },
             };
 
-            // Add GroupedMetric to the final result
             metric_data
                 .entry(metric_name)
                 .or_default()

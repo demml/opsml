@@ -4,6 +4,7 @@ use opsml_types::cards::CardTable;
 use crate::error::SqlError;
 use crate::schemas::schema::{HardwareMetricsRecord, MetricRecord, ParameterRecord};
 
+use crate::postgres::helper::GET_EXPERIMENT_METRIC_SQL;
 use crate::traits::ExperimentLogicTrait;
 use async_trait::async_trait;
 use sqlx::{Pool, Postgres};
@@ -64,14 +65,14 @@ impl ExperimentLogicTrait for ExperimentLogicPostgresClient {
         names: &'life2 [String],
         is_eval: Option<bool>,
     ) -> Result<Vec<MetricRecord>, SqlError> {
-        let (query, bindings) = PostgresQueryHelper::get_experiment_metric_query(names, is_eval);
-        let mut query_builder = sqlx::query_as::<sqlx::Postgres, MetricRecord>(&query).bind(uid);
+        let query = GET_EXPERIMENT_METRIC_SQL.to_string();
 
-        for binding in bindings {
-            query_builder = query_builder.bind(binding);
-        }
-
-        let records: Vec<MetricRecord> = query_builder.fetch_all(&self.pool).await?;
+        let records: Vec<MetricRecord> = sqlx::query_as::<sqlx::Postgres, MetricRecord>(&query)
+            .bind(uid)
+            .bind(names) // Pass array directly
+            .bind(is_eval)
+            .fetch_all(&self.pool)
+            .await?;
 
         Ok(records)
     }

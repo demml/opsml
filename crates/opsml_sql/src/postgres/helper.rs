@@ -33,7 +33,8 @@ const DELETE_SPACE_NAME_RECORD_SQL: &str = include_str!("sql/space/delete_space_
 const GET_HARDWARE_METRIC_SQL: &str = include_str!("sql/experiment/get_hardware_metric.sql");
 const INSERT_EXPERIMENT_METRIC_SQL: &str =
     include_str!("sql/experiment/insert_experiment_metric.sql");
-const GET_EXPERIMENT_METRIC_SQL: &str = include_str!("sql/experiment/get_experiment_metric.sql");
+pub const GET_EXPERIMENT_METRIC_SQL: &str =
+    include_str!("sql/experiment/get_experiment_metric.sql");
 const INSERT_HARDWARE_METRIC_SQL: &str = include_str!("sql/experiment/insert_hardware_metric.sql");
 
 // cards
@@ -186,38 +187,6 @@ impl PostgresQueryHelper {
         }
 
         query
-    }
-    pub fn get_experiment_metric_query(
-        names: &[String],
-        is_eval: Option<bool>,
-    ) -> (String, Vec<String>) {
-        let mut query = GET_EXPERIMENT_METRIC_SQL.to_string();
-
-        let mut bindings: Vec<String> = Vec::new();
-        let mut param_index = 2; // Start from 2 because $1 is used for experiment_uid
-
-        if !names.is_empty() {
-            query.push_str(" AND (");
-            for (idx, name) in names.iter().enumerate() {
-                if idx > 0 {
-                    query.push_str(" OR ");
-                }
-                query.push_str(&format!("name = ${param_index}"));
-                bindings.push(name.to_string());
-                param_index += 1;
-            }
-            query.push(')');
-        }
-
-        if let Some(is_eval) = is_eval {
-            if is_eval {
-                query.push_str(" AND is_eval = TRUE");
-            } else {
-                query.push_str(" AND is_eval = FALSE");
-            }
-        }
-
-        (query, bindings)
     }
 
     pub fn get_query_page_query(
