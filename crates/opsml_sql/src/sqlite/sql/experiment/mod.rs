@@ -63,14 +63,23 @@ impl ExperimentLogicTrait for ExperimentLogicSqliteClient {
         names: &'life2 [String],
         is_eval: Option<bool>,
     ) -> Result<Vec<MetricRecord>, SqlError> {
-        let (query, bindings) = SqliteQueryHelper::get_experiment_metric_query(names, is_eval);
-        let mut query_builder = sqlx::query_as::<sqlx::Sqlite, MetricRecord>(&query).bind(uid);
+        let query = SqliteQueryHelper::get_experiment_metric_query();
 
-        for binding in bindings {
-            query_builder = query_builder.bind(binding);
-        }
+        // Convert names array to JSON array for SQLite's json_each
+        let names_json = if names.is_empty() {
+            None
+        } else {
+            Some(serde_json::to_string(names)?)
+        };
 
-        let records: Vec<MetricRecord> = query_builder.fetch_all(&self.pool).await?;
+        let records: Vec<MetricRecord> = sqlx::query_as::<_, MetricRecord>(query)
+            .bind(uid)
+            .bind(names_json.as_ref()) // NULL check
+            .bind(names_json.as_ref()) // Actual JSON array
+            .bind(is_eval) // NULL check
+            .bind(is_eval) // Actual boolean value
+            .fetch_all(&self.pool)
+            .await?;
 
         Ok(records)
     }
