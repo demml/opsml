@@ -65,15 +65,23 @@ impl ExperimentLogicTrait for ExperimentLogicMySqlClient {
         names: &'life2 [String],
         is_eval: Option<bool>,
     ) -> Result<Vec<MetricRecord>, SqlError> {
-        let (query, bindings) = MySqlQueryHelper::get_experiment_metric_query(names, is_eval);
+        let query = MySqlQueryHelper::get_experiment_metric_query();
 
-        let mut query_builder = sqlx::query_as::<_, MetricRecord>(&query).bind(uid);
+        // Convert names array to comma-separated string for FIND_IN_SET
+        let names_csv = if names.is_empty() {
+            None
+        } else {
+            Some(names.join(","))
+        };
 
-        for binding in bindings {
-            query_builder = query_builder.bind(binding);
-        }
-
-        let records: Vec<MetricRecord> = query_builder.fetch_all(&self.pool).await?;
+        let records: Vec<MetricRecord> = sqlx::query_as::<_, MetricRecord>(query)
+            .bind(uid)
+            .bind(names_csv.as_ref()) // NULL check
+            .bind(names_csv.as_ref()) // Actual CSV value
+            .bind(is_eval) // NULL check
+            .bind(is_eval) // Actual boolean value
+            .fetch_all(&self.pool)
+            .await?;
 
         Ok(records)
     }
