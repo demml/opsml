@@ -1,9 +1,8 @@
 <script lang="ts">
 
   import type { PageProps } from './$types';
-  import { Search, CircleDot, List, ChartNoAxesColumn } from "lucide-svelte";
+  import { CircleDot, ChartNoAxesColumn } from "lucide-svelte";
   import { ServerPaths } from "$lib/components/api/routes";
-  import ExperimentPill from "$lib/components/card/experiment/ExperimentPill.svelte";
   import { PlotType, type Experiment, type GroupedMetrics } from "$lib/components/card/experiment/types";
   import VizBody from "$lib/components/card/experiment/VizBody.svelte";
   import { createInternalApiClient} from "$lib/api/internalClient";
