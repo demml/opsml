@@ -721,8 +721,6 @@ mod tests {
             .await
             .unwrap();
 
-        println!("Results: {:?}", results);
-
         // Should return limit + 1 for has_next detection (or fewer if less data exists)
         assert!(results.len() <= 31, "Should return at most limit + 1");
 
@@ -1065,89 +1063,347 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_mysql_run_metrics() {
+    async fn test_mysql_experiment_metrics() {
         let client = db_client().await;
 
         // Run the SQL script to populate the database
-        let script = std::fs::read_to_string("tests/populate_mysql_test.sql").unwrap();
+        let script = std::fs::read_to_string("tests/populate_postgres_test.sql").unwrap();
         sqlx::raw_sql(&script).execute(&client.pool).await.unwrap();
 
         let uid = "550e8400-e29b-41d4-a716-446655440000".to_string();
-        let metric_names = vec!["metric1", "metric2", "metric3"];
-        let eval_metric_names = vec!["eval_metric1", "eval_metric2"];
 
-        for name in metric_names {
-            let metric = MetricRecord {
-                experiment_uid: uid.clone(),
-                name: name.to_string(),
-                value: 1.0,
-                ..Default::default()
-            };
-
-            client.exp.insert_experiment_metric(&metric).await.unwrap();
-        }
-
-        for name in eval_metric_names {
-            let metric = MetricRecord {
-                experiment_uid: uid.clone(),
-                name: name.to_string(),
-                value: 1.0,
-                is_eval: true,
-                ..Default::default()
-            };
-
-            client.exp.insert_experiment_metric(&metric).await.unwrap();
-        }
-
-        let records = client
-            .exp
-            .get_experiment_metric(&uid, &Vec::new(), None)
-            .await
-            .unwrap();
-        let names = client.exp.get_experiment_metric_names(&uid).await.unwrap();
-
-        assert_eq!(records.len(), 5);
-
-        // assert names = "metric1"
-        assert_eq!(names.len(), 5);
-
-        let eval_records = client
-            .exp
-            .get_experiment_metric(&uid, &Vec::new(), Some(true))
-            .await
-            .unwrap();
-
-        assert_eq!(eval_records.len(), 2);
-
-        // insert vec
-        let records = vec![
+        // Test 1: Insert metrics with various steps to test sorting
+        let metrics_with_steps = vec![
             MetricRecord {
                 experiment_uid: uid.clone(),
-                name: "vec1".to_string(),
-                value: 1.0,
+                name: "accuracy".to_string(),
+                value: 0.85,
+                step: Some(3),
                 ..Default::default()
             },
             MetricRecord {
                 experiment_uid: uid.clone(),
-                name: "vec2".to_string(),
-                value: 1.0,
+                name: "accuracy".to_string(),
+                value: 0.90,
+                step: Some(1),
+                ..Default::default()
+            },
+            MetricRecord {
+                experiment_uid: uid.clone(),
+                name: "accuracy".to_string(),
+                value: 0.95,
+                step: Some(2),
+                ..Default::default()
+            },
+            // Test null step handling (should sort to end with COALESCE)
+            MetricRecord {
+                experiment_uid: uid.clone(),
+                name: "accuracy".to_string(),
+                value: 0.80,
+                step: None,
                 ..Default::default()
             },
         ];
 
         client
             .exp
-            .insert_experiment_metrics(&records)
+            .insert_experiment_metrics(&metrics_with_steps)
             .await
             .unwrap();
 
-        let records = client
+        // Test 2: Insert metrics with different names to test name sorting
+        let multi_name_metrics = vec![
+            MetricRecord {
+                experiment_uid: uid.clone(),
+                name: "loss".to_string(),
+                value: 0.5,
+                step: Some(1),
+                ..Default::default()
+            },
+            MetricRecord {
+                experiment_uid: uid.clone(),
+                name: "loss".to_string(),
+                value: 0.3,
+                step: Some(2),
+                ..Default::default()
+            },
+            MetricRecord {
+                experiment_uid: uid.clone(),
+                name: "f1_score".to_string(),
+                value: 0.88,
+                step: Some(1),
+                ..Default::default()
+            },
+        ];
+
+        client
+            .exp
+            .insert_experiment_metrics(&multi_name_metrics)
+            .await
+            .unwrap();
+
+        // Test 3: Insert eval metrics
+        let eval_metrics = vec![
+            MetricRecord {
+                experiment_uid: uid.clone(),
+                name: "eval_accuracy".to_string(),
+                value: 0.92,
+                step: Some(1),
+                is_eval: true,
+                ..Default::default()
+            },
+            MetricRecord {
+                experiment_uid: uid.clone(),
+                name: "eval_loss".to_string(),
+                value: 0.25,
+                step: Some(1),
+                is_eval: true,
+                ..Default::default()
+            },
+        ];
+
+        client
+            .exp
+            .insert_experiment_metrics(&eval_metrics)
+            .await
+            .unwrap();
+
+        // Test 4: Query all metrics (empty names array) - tests CARDINALITY = 0 branch
+        let all_metrics = client
             .exp
             .get_experiment_metric(&uid, &Vec::new(), None)
             .await
             .unwrap();
 
-        assert_eq!(records.len(), 7);
+        assert_eq!(all_metrics.len(), 9, "Should retrieve all inserted metrics");
+
+        // Test 5: Verify sorting by name ASC, step ASC
+        // Metrics should be ordered: accuracy (steps 1,2,3,null), eval_accuracy, eval_loss, f1_score, loss (steps 1,2)
+        assert_eq!(all_metrics[0].name, "accuracy");
+        assert_eq!(
+            all_metrics[0].step,
+            Some(1),
+            "First accuracy should be step 1"
+        );
+        assert_eq!(
+            all_metrics[1].step,
+            Some(2),
+            "Second accuracy should be step 2"
+        );
+        assert_eq!(
+            all_metrics[2].step,
+            Some(3),
+            "Third accuracy should be step 3"
+        );
+        assert_eq!(
+            all_metrics[3].step, None,
+            "Fourth accuracy should be None (sorted last via COALESCE)"
+        );
+
+        // Test 6: Filter by single name - tests name = ANY($2) with single element
+        let accuracy_metrics = client
+            .exp
+            .get_experiment_metric(&uid, &["accuracy".to_string()], None)
+            .await
+            .unwrap();
+
+        assert_eq!(
+            accuracy_metrics.len(),
+            4,
+            "Should retrieve 4 accuracy metrics"
+        );
+        assert!(
+            accuracy_metrics.iter().all(|m| m.name == "accuracy"),
+            "All metrics should be named 'accuracy'"
+        );
+        // Verify sorting within single name
+        assert_eq!(accuracy_metrics[0].step, Some(1));
+        assert_eq!(accuracy_metrics[1].step, Some(2));
+        assert_eq!(accuracy_metrics[2].step, Some(3));
+        assert_eq!(accuracy_metrics[3].step, None);
+
+        // Test 7: Filter by multiple names - tests name = ANY($2) with array
+        let multi_name_filter = client
+            .exp
+            .get_experiment_metric(&uid, &["accuracy".to_string(), "loss".to_string()], None)
+            .await
+            .unwrap();
+
+        assert_eq!(
+            multi_name_filter.len(),
+            6,
+            "Should retrieve 4 accuracy + 2 loss metrics"
+        );
+        // Verify name ordering (accuracy before loss alphabetically)
+        assert_eq!(multi_name_filter[0].name, "accuracy");
+        assert_eq!(multi_name_filter[4].name, "loss");
+        assert_eq!(multi_name_filter[5].name, "loss");
+
+        // Test 8: Filter by is_eval = true - tests $3::boolean IS NULL OR is_eval = $3
+        let eval_only = client
+            .exp
+            .get_experiment_metric(&uid, &Vec::new(), Some(true))
+            .await
+            .unwrap();
+
+        assert_eq!(eval_only.len(), 2, "Should retrieve only eval metrics");
+        assert!(
+            eval_only.iter().all(|m| m.is_eval),
+            "All metrics should be eval metrics"
+        );
+        assert_eq!(eval_only[0].name, "eval_accuracy");
+        assert_eq!(eval_only[1].name, "eval_loss");
+
+        // Test 9: Filter by is_eval = false
+        let non_eval = client
+            .exp
+            .get_experiment_metric(&uid, &Vec::new(), Some(false))
+            .await
+            .unwrap();
+
+        assert_eq!(non_eval.len(), 7, "Should retrieve only non-eval metrics");
+        assert!(
+            non_eval.iter().all(|m| !m.is_eval),
+            "All metrics should be non-eval"
+        );
+
+        // Test 10: Combined filters - names array + is_eval
+        let filtered_combo = client
+            .exp
+            .get_experiment_metric(&uid, &["accuracy".to_string()], Some(false))
+            .await
+            .unwrap();
+
+        assert_eq!(
+            filtered_combo.len(),
+            4,
+            "Should retrieve only non-eval accuracy metrics"
+        );
+        assert!(filtered_combo
+            .iter()
+            .all(|m| m.name == "accuracy" && !m.is_eval));
+
+        // Test 11: Verify created_at timestamp ordering for same name/step
+        // Insert two metrics with identical name and step but different timestamps
+        tokio::time::sleep(std::time::Duration::from_millis(10)).await;
+
+        let timestamp_test_metrics = vec![
+            MetricRecord {
+                experiment_uid: uid.clone(),
+                name: "timestamp_test".to_string(),
+                value: 1.0,
+                step: Some(1),
+                ..Default::default()
+            },
+            MetricRecord {
+                experiment_uid: uid.clone(),
+                name: "timestamp_test".to_string(),
+                value: 2.0,
+                step: Some(1),
+                ..Default::default()
+            },
+        ];
+
+        for metric in timestamp_test_metrics {
+            client.exp.insert_experiment_metric(&metric).await.unwrap();
+            tokio::time::sleep(std::time::Duration::from_millis(10)).await;
+        }
+
+        let timestamp_ordered = client
+            .exp
+            .get_experiment_metric(&uid, &["timestamp_test".to_string()], None)
+            .await
+            .unwrap();
+
+        assert_eq!(timestamp_ordered.len(), 2);
+        // Both have same name and step, so created_at ASC should determine order
+        assert!(
+            timestamp_ordered[0].created_at <= timestamp_ordered[1].created_at,
+            "Should be ordered by created_at ASC"
+        );
+        assert_eq!(timestamp_ordered[0].value, 1.0);
+        assert_eq!(timestamp_ordered[1].value, 2.0);
+
+        // Test 12: Get unique metric names
+        let metric_names = client.exp.get_experiment_metric_names(&uid).await.unwrap();
+
+        assert!(metric_names.contains(&"accuracy".to_string()));
+        assert!(metric_names.contains(&"loss".to_string()));
+        assert!(metric_names.contains(&"eval_accuracy".to_string()));
+        assert!(metric_names.contains(&"timestamp_test".to_string()));
+
+        // Test 13: Empty names array with is_eval filter - tests CARDINALITY = 0 with eval filter
+        let all_eval = client
+            .exp
+            .get_experiment_metric(&uid, &Vec::new(), Some(true))
+            .await
+            .unwrap();
+
+        assert_eq!(all_eval.len(), 2);
+        assert!(all_eval.iter().all(|m| m.is_eval));
+
+        // Test 14: Non-existent metric name - tests empty result
+        let non_existent = client
+            .exp
+            .get_experiment_metric(&uid, &["does_not_exist".to_string()], None)
+            .await
+            .unwrap();
+
+        assert_eq!(
+            non_existent.len(),
+            0,
+            "Should return empty for non-existent metric"
+        );
+
+        // Test 15: Large batch insert with multiple steps per metric
+        let large_batch: Vec<MetricRecord> = (0..20)
+            .flat_map(|step| {
+                vec![
+                    MetricRecord {
+                        experiment_uid: uid.clone(),
+                        name: "batch_metric_a".to_string(),
+                        value: step as f64 * 0.1,
+                        step: Some(step),
+                        ..Default::default()
+                    },
+                    MetricRecord {
+                        experiment_uid: uid.clone(),
+                        name: "batch_metric_b".to_string(),
+                        value: step as f64 * 0.2,
+                        step: Some(step),
+                        ..Default::default()
+                    },
+                ]
+            })
+            .collect();
+
+        client
+            .exp
+            .insert_experiment_metrics(&large_batch)
+            .await
+            .unwrap();
+
+        let batch_results = client
+            .exp
+            .get_experiment_metric(
+                &uid,
+                &["batch_metric_a".to_string(), "batch_metric_b".to_string()],
+                None,
+            )
+            .await
+            .unwrap();
+
+        assert_eq!(batch_results.len(), 40, "Should retrieve all batch metrics");
+
+        // Verify interleaved sorting: batch_metric_a (steps 0-19), then batch_metric_b (steps 0-19)
+        for (i, _) in batch_results.iter().enumerate().take(20) {
+            assert_eq!(batch_results[i].name, "batch_metric_a");
+            assert_eq!(batch_results[i].step, Some(i as i32));
+        }
+        for (i, _) in batch_results.iter().enumerate().take(40).skip(20) {
+            assert_eq!(batch_results[i].name, "batch_metric_b");
+            assert_eq!(batch_results[i].step, Some((i - 20) as i32));
+        }
     }
 
     #[tokio::test]
