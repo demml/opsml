@@ -52,6 +52,7 @@ const UPDATE_EXPERIMENTCARD_SQL: &str = include_str!("sql/card/update_experiment
 const UPDATE_AUDITCARD_SQL: &str = include_str!("sql/card/update_auditcard.sql");
 const UPDATE_SERVICECARD_SQL: &str = include_str!("sql/card/update_servicecard.sql");
 const UPDATE_MCP_SERVICECARD_SQL: &str = include_str!("sql/card/update_mcp_servicecard.sql");
+const GET_DASHBOARD_STATS_SQL: &str = include_str!("sql/card/get_dashboard_stats.sql");
 
 // artifact keys
 const INSERT_ARTIFACT_KEY_SQL: &str = include_str!("sql/artifact/insert_artifact_key.sql");
@@ -156,6 +157,10 @@ impl PostgresQueryHelper {
     }
     pub fn get_artifact_record_insert_query() -> String {
         INSERT_ARTIFACT_RECORD_SQL.to_string()
+    }
+
+    pub fn get_dashboard_stats_query() -> String {
+        GET_DASHBOARD_STATS_SQL.to_string()
     }
 
     pub fn get_experiment_metrics_insert_query(nbr_records: usize) -> String {
