@@ -7,7 +7,8 @@ use http_body_util::BodyExt; // for `collect`
 use opsml_crypt::encrypt_file;
 use opsml_semver::VersionType;
 use opsml_server::core::cards::schema::{
-    CreateReadeMe, QueryPageResponse, ReadeMe, RegistryStatsResponse, VersionPageResponse,
+    CreateReadeMe, DashboardStatsResponse, QueryPageResponse, ReadeMe, RegistryStatsResponse,
+    VersionPageResponse,
 };
 use opsml_types::contracts::DeploymentConfig;
 use opsml_types::contracts::*;
@@ -1901,5 +1902,33 @@ async fn test_opsml_server_card_pagination() {
         );
 
         helper.cleanup();
+    });
+}
+
+#[tokio::test]
+async fn test_opsml_server_dashboard_stats() {
+    retry_flaky_test!({
+        let mut helper = TestHelper::new(None).await;
+
+        helper.create_modelcard().await;
+        tokio::time::sleep(tokio::time::Duration::from_millis(500)).await;
+
+        let request = Request::builder()
+            .uri("/opsml/api/card/dashboard/stats")
+            .method("GET")
+            .body(Body::empty())
+            .unwrap();
+
+        let response = helper.send_oneshot(request).await;
+        assert_eq!(response.status(), StatusCode::OK);
+
+        //
+        let body = response.into_body().collect().await.unwrap().to_bytes();
+        let dashboard_stats: DashboardStatsResponse = serde_json::from_slice(&body).unwrap();
+
+        assert_eq!(dashboard_stats.stats.nbr_models, 0);
+        assert_eq!(dashboard_stats.stats.nbr_data, 0);
+        assert_eq!(dashboard_stats.stats.nbr_prompts, 0);
+        assert_eq!(dashboard_stats.stats.nbr_experiments, 0);
     });
 }

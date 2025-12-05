@@ -1162,11 +1162,11 @@ pub struct CardEntry {
     pub alias: String,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 #[cfg_attr(feature = "server", derive(sqlx::FromRow))]
 pub struct DashboardStats {
-    pub recent_models: i64,
-    pub recent_data: i64,
-    pub recent_prompts: i64,
-    pub recent_experiments: i64,
+    pub nbr_models: i64,
+    pub nbr_data: i64,
+    pub nbr_prompts: i64,
+    pub nbr_experiments: i64,
 }
