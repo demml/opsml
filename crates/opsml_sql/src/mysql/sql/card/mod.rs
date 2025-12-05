@@ -178,7 +178,7 @@ impl CardLogicTrait for CardLogicMySqlClient {
             CardTable::Data => match card {
                 ServerCard::Data(record) => {
                     let query = MySqlQueryHelper::get_datacard_insert_query();
-                    sqlx::query(&query)
+                    sqlx::query(query)
                         .bind(&record.uid)
                         .bind(&record.app_env)
                         .bind(&record.name)
@@ -207,7 +207,7 @@ impl CardLogicTrait for CardLogicMySqlClient {
             CardTable::Model => match card {
                 ServerCard::Model(record) => {
                     let query = MySqlQueryHelper::get_modelcard_insert_query();
-                    sqlx::query(&query)
+                    sqlx::query(query)
                         .bind(&record.uid)
                         .bind(&record.app_env)
                         .bind(&record.name)
@@ -239,7 +239,7 @@ impl CardLogicTrait for CardLogicMySqlClient {
             CardTable::Experiment => match card {
                 ServerCard::Experiment(record) => {
                     let query = MySqlQueryHelper::get_experimentcard_insert_query();
-                    sqlx::query(&query)
+                    sqlx::query(query)
                         .bind(&record.uid)
                         .bind(&record.app_env)
                         .bind(&record.name)
@@ -270,7 +270,7 @@ impl CardLogicTrait for CardLogicMySqlClient {
             CardTable::Audit => match card {
                 ServerCard::Audit(record) => {
                     let query = MySqlQueryHelper::get_auditcard_insert_query();
-                    sqlx::query(&query)
+                    sqlx::query(query)
                         .bind(&record.uid)
                         .bind(&record.app_env)
                         .bind(&record.name)
@@ -300,7 +300,7 @@ impl CardLogicTrait for CardLogicMySqlClient {
             CardTable::Prompt => match card {
                 ServerCard::Prompt(record) => {
                     let query = MySqlQueryHelper::get_promptcard_insert_query();
-                    sqlx::query(&query)
+                    sqlx::query(query)
                         .bind(&record.uid)
                         .bind(&record.app_env)
                         .bind(&record.name)
@@ -329,7 +329,7 @@ impl CardLogicTrait for CardLogicMySqlClient {
             CardTable::Service | CardTable::Mcp => match card {
                 ServerCard::Service(record) => {
                     let query = MySqlQueryHelper::get_servicecard_insert_query(table);
-                    sqlx::query(&query)
+                    sqlx::query(query)
                         .bind(&record.uid)
                         .bind(&record.app_env)
                         .bind(&record.name)
@@ -368,7 +368,7 @@ impl CardLogicTrait for CardLogicMySqlClient {
             CardTable::Data => match card {
                 ServerCard::Data(record) => {
                     let query = MySqlQueryHelper::get_datacard_update_query();
-                    sqlx::query(&query)
+                    sqlx::query(query)
                         .bind(&record.app_env)
                         .bind(&record.name)
                         .bind(&record.space)
@@ -397,7 +397,7 @@ impl CardLogicTrait for CardLogicMySqlClient {
             CardTable::Model => match card {
                 ServerCard::Model(record) => {
                     let query = MySqlQueryHelper::get_modelcard_update_query();
-                    sqlx::query(&query)
+                    sqlx::query(query)
                         .bind(&record.app_env)
                         .bind(&record.name)
                         .bind(&record.space)
@@ -429,7 +429,7 @@ impl CardLogicTrait for CardLogicMySqlClient {
             CardTable::Experiment => match card {
                 ServerCard::Experiment(record) => {
                     let query = MySqlQueryHelper::get_experimentcard_update_query();
-                    sqlx::query(&query)
+                    sqlx::query(query)
                         .bind(&record.app_env)
                         .bind(&record.name)
                         .bind(&record.space)
@@ -460,7 +460,7 @@ impl CardLogicTrait for CardLogicMySqlClient {
             CardTable::Audit => match card {
                 ServerCard::Audit(record) => {
                     let query = MySqlQueryHelper::get_auditcard_update_query();
-                    sqlx::query(&query)
+                    sqlx::query(query)
                         .bind(&record.app_env)
                         .bind(&record.name)
                         .bind(&record.space)
@@ -490,7 +490,7 @@ impl CardLogicTrait for CardLogicMySqlClient {
             CardTable::Prompt => match card {
                 ServerCard::Prompt(record) => {
                     let query = MySqlQueryHelper::get_promptcard_update_query();
-                    sqlx::query(&query)
+                    sqlx::query(query)
                         .bind(&record.app_env)
                         .bind(&record.name)
                         .bind(&record.space)
@@ -519,7 +519,7 @@ impl CardLogicTrait for CardLogicMySqlClient {
             CardTable::Service | CardTable::Mcp => match card {
                 ServerCard::Service(record) => {
                     let query = MySqlQueryHelper::get_servicecard_update_query(table);
-                    sqlx::query(&query)
+                    sqlx::query(query)
                         .bind(&record.app_env)
                         .bind(&record.name)
                         .bind(&record.space)
