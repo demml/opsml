@@ -1,3 +1,4 @@
+use crate::core::cards::schema::DashboardStatsResponse;
 use crate::core::cards::schema::FilterSummary;
 use crate::core::cards::schema::PageInfo;
 use crate::core::cards::schema::{
@@ -193,6 +194,25 @@ pub async fn retrieve_registry_stats(
         })?;
 
     Ok(Json(RegistryStatsResponse { stats }))
+}
+
+/// Get dashboard stats for the homepage
+pub async fn retrieve_dashboard_stats(
+    State(state): State<Arc<AppState>>,
+    Json(params): Json<RegistryStatsRequest>,
+) -> Result<Json<DashboardStatsResponse>, (StatusCode, Json<OpsmlServerError>)> {
+    let table = CardTable::from_registry_type(&params.registry_type);
+
+    let stats = state
+        .sql_client
+        .query_dashboard_stats()
+        .await
+        .map_err(|e| {
+            error!("Failed to get dashboard stats: {e}");
+            internal_server_error(e, "Failed to get dashboard stats")
+        })?;
+
+    Ok(Json(DashboardStatsResponse { stats }))
 }
 
 // query page

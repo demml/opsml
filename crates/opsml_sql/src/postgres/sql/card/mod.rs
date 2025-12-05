@@ -600,9 +600,7 @@ impl CardLogicTrait for CardLogicPostgresClient {
 
     async fn query_dashboard_stats(&self) -> Result<DashboardStats, SqlError> {
         let query = PostgresQueryHelper::get_dashboard_stats_query();
-
         let stats: DashboardStats = sqlx::query_as(&query).fetch_one(&self.pool).await?;
-
         Ok(stats)
     }
 

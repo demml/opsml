@@ -50,6 +50,7 @@ const UPDATE_EXPERIMENTCARD_SQL: &str = include_str!("sql/card/update_experiment
 const UPDATE_AUDITCARD_SQL: &str = include_str!("sql/card/update_auditcard.sql");
 const UPDATE_SERVICECARD_SQL: &str = include_str!("sql/card/update_servicecard.sql");
 const UPDATE_MCP_SERVICECARD_SQL: &str = include_str!("sql/card/update_mcp_servicecard.sql");
+const GET_DASHBOARD_STATS_SQL: &str = include_str!("sql/card/get_dashboard_stats.sql");
 
 // evaluation
 const INSERT_EVALUATION_SQL: &str = include_str!("sql/evaluation/insert_evaluation.sql");
@@ -71,46 +72,50 @@ pub struct SqliteQueryHelper;
 
 impl SqliteQueryHelper {
     pub fn get_uid_query(table: &CardTable) -> String {
-        format!("SELECT uid FROM {table} WHERE uid = ?").to_string()
+        format!("SELECT uid FROM {table} WHERE uid = ?")
     }
-    pub fn get_user_insert_query() -> String {
-        INSERT_USER_SQL.to_string()
-    }
-
-    pub fn get_user_query() -> String {
-        GET_USER_SQL.to_string()
+    pub fn get_user_insert_query() -> &'static str {
+        INSERT_USER_SQL
     }
 
-    pub fn get_user_query_by_auth_type() -> String {
-        GET_USER_AUTH_TYPE_SQL.to_string()
+    pub fn get_user_query() -> &'static str {
+        GET_USER_SQL
     }
 
-    pub fn get_users_query() -> String {
-        GET_USERS_SQL.to_string()
+    pub fn get_user_query_by_auth_type() -> &'static str {
+        GET_USER_AUTH_TYPE_SQL
     }
 
-    pub fn get_user_delete_query() -> String {
-        DELETE_USER_SQL.to_string()
+    pub fn get_users_query() -> &'static str {
+        GET_USERS_SQL
     }
 
-    pub fn get_user_update_query() -> String {
-        UPDATE_USER_SQL.to_string()
+    pub fn get_user_delete_query() -> &'static str {
+        DELETE_USER_SQL
     }
 
-    pub fn get_last_admin_query() -> String {
-        LAST_ADMIN_SQL.to_string()
+    pub fn get_user_update_query() -> &'static str {
+        UPDATE_USER_SQL
     }
 
-    pub fn get_hardware_metric_query() -> String {
-        GET_HARDWARE_METRIC_SQL.to_string()
+    pub fn get_last_admin_query() -> &'static str {
+        LAST_ADMIN_SQL
     }
 
-    pub fn get_experiment_metric_insert_query() -> String {
-        INSERT_EXPERIMENT_METRIC_SQL.to_string()
+    pub fn get_hardware_metric_query() -> &'static str {
+        GET_HARDWARE_METRIC_SQL
     }
 
-    pub fn get_artifact_record_insert_query() -> String {
-        INSERT_ARTIFACT_RECORD_SQL.to_string()
+    pub fn get_experiment_metric_insert_query() -> &'static str {
+        INSERT_EXPERIMENT_METRIC_SQL
+    }
+
+    pub fn get_artifact_record_insert_query() -> &'static str {
+        INSERT_ARTIFACT_RECORD_SQL
+    }
+
+    pub fn get_dashboard_stats_query() -> &'static str {
+        GET_DASHBOARD_STATS_SQL
     }
 
     pub fn get_experiment_metrics_insert_query(nbr_records: usize) -> String {
@@ -464,28 +469,28 @@ impl SqliteQueryHelper {
 
         (query, bindings)
     }
-    pub fn get_hardware_metrics_insert_query() -> String {
-        INSERT_HARDWARE_METRIC_SQL.to_string()
+    pub fn get_hardware_metrics_insert_query() -> &'static str {
+        INSERT_HARDWARE_METRIC_SQL
     }
 
-    pub fn get_datacard_insert_query() -> String {
-        INSERT_DATACARD_SQL.to_string()
+    pub fn get_datacard_insert_query() -> &'static str {
+        INSERT_DATACARD_SQL
     }
 
-    pub fn get_promptcard_insert_query() -> String {
-        INSERT_PROMPTCARD_SQL.to_string()
+    pub fn get_promptcard_insert_query() -> &'static str {
+        INSERT_PROMPTCARD_SQL
     }
 
-    pub fn get_modelcard_insert_query() -> String {
-        INSERT_MODELCARD_SQL.to_string()
+    pub fn get_modelcard_insert_query() -> &'static str {
+        INSERT_MODELCARD_SQL
     }
 
-    pub fn get_experimentcard_insert_query() -> String {
-        INSERT_EXPERIMENTCARD_SQL.to_string()
+    pub fn get_experimentcard_insert_query() -> &'static str {
+        INSERT_EXPERIMENTCARD_SQL
     }
 
-    pub fn get_auditcard_insert_query() -> String {
-        INSERT_AUDITCARD_SQL.to_string()
+    pub fn get_auditcard_insert_query() -> &'static str {
+        INSERT_AUDITCARD_SQL
     }
 
     pub fn get_servicecard_insert_query(table: &CardTable) -> String {

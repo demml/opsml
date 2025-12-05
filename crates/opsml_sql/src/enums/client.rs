@@ -17,7 +17,8 @@ use async_trait::async_trait;
 use opsml_settings::config::DatabaseSettings;
 use opsml_types::contracts::VersionCursor;
 use opsml_types::contracts::{
-    ArtifactQueryArgs, ArtifactRecord, AuditEvent, SpaceNameEvent, SpaceRecord, SpaceStats,
+    ArtifactQueryArgs, ArtifactRecord, AuditEvent, DashboardStats, SpaceNameEvent, SpaceRecord,
+    SpaceStats,
 };
 use opsml_types::{
     cards::CardTable,
@@ -116,6 +117,14 @@ impl CardLogicTrait for SqlClientEnum {
                     .query_stats(table, search_term, spaces, tags)
                     .await
             }
+        }
+    }
+
+    async fn query_dashboard_stats(&self) -> Result<DashboardStats, SqlError> {
+        match self {
+            SqlClientEnum::Postgres(client) => client.card.query_dashboard_stats().await,
+            SqlClientEnum::Sqlite(client) => client.card.query_dashboard_stats().await,
+            SqlClientEnum::MySql(client) => client.card.query_dashboard_stats().await,
         }
     }
 
