@@ -199,10 +199,7 @@ pub async fn retrieve_registry_stats(
 /// Get dashboard stats for the homepage
 pub async fn retrieve_dashboard_stats(
     State(state): State<Arc<AppState>>,
-    Json(params): Json<RegistryStatsRequest>,
 ) -> Result<Json<DashboardStatsResponse>, (StatusCode, Json<OpsmlServerError>)> {
-    let table = CardTable::from_registry_type(&params.registry_type);
-
     let stats = state
         .sql_client
         .query_dashboard_stats()
@@ -874,6 +871,10 @@ pub async fn get_card_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
             .route(
                 &format!("{prefix}/card/registry/stats"),
                 post(retrieve_registry_stats),
+            )
+            .route(
+                &format!("{prefix}/card/dashboard/stats"),
+                get(retrieve_dashboard_stats),
             )
             .route(&format!("{prefix}/card/registry/page"), post(retrieve_page))
             .route(
