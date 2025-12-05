@@ -179,7 +179,7 @@ impl CardLogicTrait for CardLogicSqliteClient {
             CardTable::Data => match card {
                 ServerCard::Data(record) => {
                     let query = SqliteQueryHelper::get_datacard_insert_query();
-                    sqlx::query(&query)
+                    sqlx::query(query)
                         .bind(&record.uid)
                         .bind(&record.app_env)
                         .bind(&record.name)
@@ -208,7 +208,7 @@ impl CardLogicTrait for CardLogicSqliteClient {
             CardTable::Model => match card {
                 ServerCard::Model(record) => {
                     let query = SqliteQueryHelper::get_modelcard_insert_query();
-                    sqlx::query(&query)
+                    sqlx::query(query)
                         .bind(&record.uid)
                         .bind(&record.app_env)
                         .bind(&record.name)
@@ -240,7 +240,7 @@ impl CardLogicTrait for CardLogicSqliteClient {
             CardTable::Experiment => match card {
                 ServerCard::Experiment(record) => {
                     let query = SqliteQueryHelper::get_experimentcard_insert_query();
-                    sqlx::query(&query)
+                    sqlx::query(query)
                         .bind(&record.uid)
                         .bind(&record.app_env)
                         .bind(&record.name)
@@ -271,7 +271,7 @@ impl CardLogicTrait for CardLogicSqliteClient {
             CardTable::Audit => match card {
                 ServerCard::Audit(record) => {
                     let query = SqliteQueryHelper::get_auditcard_insert_query();
-                    sqlx::query(&query)
+                    sqlx::query(query)
                         .bind(&record.uid)
                         .bind(&record.app_env)
                         .bind(&record.name)
@@ -301,7 +301,7 @@ impl CardLogicTrait for CardLogicSqliteClient {
             CardTable::Prompt => match card {
                 ServerCard::Prompt(record) => {
                     let query = SqliteQueryHelper::get_promptcard_insert_query();
-                    sqlx::query(&query)
+                    sqlx::query(query)
                         .bind(&record.uid)
                         .bind(&record.app_env)
                         .bind(&record.name)
@@ -329,7 +329,7 @@ impl CardLogicTrait for CardLogicSqliteClient {
             CardTable::Service | CardTable::Mcp => match card {
                 ServerCard::Service(record) => {
                     let query = SqliteQueryHelper::get_servicecard_insert_query(table);
-                    sqlx::query(&query)
+                    sqlx::query(query)
                         .bind(&record.uid)
                         .bind(&record.app_env)
                         .bind(&record.name)
@@ -368,7 +368,7 @@ impl CardLogicTrait for CardLogicSqliteClient {
             CardTable::Data => match card {
                 ServerCard::Data(record) => {
                     let query = SqliteQueryHelper::get_datacard_update_query();
-                    sqlx::query(&query)
+                    sqlx::query(query)
                         .bind(&record.app_env)
                         .bind(&record.name)
                         .bind(&record.space)
@@ -397,7 +397,7 @@ impl CardLogicTrait for CardLogicSqliteClient {
             CardTable::Model => match card {
                 ServerCard::Model(record) => {
                     let query = SqliteQueryHelper::get_modelcard_update_query();
-                    sqlx::query(&query)
+                    sqlx::query(query)
                         .bind(&record.app_env)
                         .bind(&record.name)
                         .bind(&record.space)
@@ -429,7 +429,7 @@ impl CardLogicTrait for CardLogicSqliteClient {
             CardTable::Experiment => match card {
                 ServerCard::Experiment(record) => {
                     let query = SqliteQueryHelper::get_experimentcard_update_query();
-                    sqlx::query(&query)
+                    sqlx::query(query)
                         .bind(&record.app_env)
                         .bind(&record.name)
                         .bind(&record.space)
@@ -460,7 +460,7 @@ impl CardLogicTrait for CardLogicSqliteClient {
             CardTable::Audit => match card {
                 ServerCard::Audit(record) => {
                     let query = SqliteQueryHelper::get_auditcard_update_query();
-                    sqlx::query(&query)
+                    sqlx::query(query)
                         .bind(&record.app_env)
                         .bind(&record.name)
                         .bind(&record.space)
@@ -490,7 +490,7 @@ impl CardLogicTrait for CardLogicSqliteClient {
             CardTable::Prompt => match card {
                 ServerCard::Prompt(record) => {
                     let query = SqliteQueryHelper::get_promptcard_update_query();
-                    sqlx::query(&query)
+                    sqlx::query(query)
                         .bind(&record.app_env)
                         .bind(&record.name)
                         .bind(&record.space)
@@ -519,7 +519,7 @@ impl CardLogicTrait for CardLogicSqliteClient {
             CardTable::Service | CardTable::Mcp => match card {
                 ServerCard::Service(record) => {
                     let query = SqliteQueryHelper::get_servicecard_update_query(table);
-                    sqlx::query(&query)
+                    sqlx::query(query)
                         .bind(&record.app_env)
                         .bind(&record.name)
                         .bind(&record.space)

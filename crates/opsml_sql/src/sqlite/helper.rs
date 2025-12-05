@@ -493,60 +493,60 @@ impl SqliteQueryHelper {
         INSERT_AUDITCARD_SQL
     }
 
-    pub fn get_servicecard_insert_query(table: &CardTable) -> String {
+    pub fn get_servicecard_insert_query(table: &CardTable) -> &'static str {
         match table {
-            CardTable::Service => INSERT_SERVICECARD_SQL.to_string(),
-            CardTable::Mcp => INSERT_MCP_SERVICECARD_SQL.to_string(),
-            _ => INSERT_SERVICECARD_SQL.to_string(),
+            CardTable::Service => INSERT_SERVICECARD_SQL,
+            CardTable::Mcp => INSERT_MCP_SERVICECARD_SQL,
+            _ => INSERT_SERVICECARD_SQL,
         }
     }
 
-    pub fn get_servicecard_update_query(table: &CardTable) -> String {
+    pub fn get_servicecard_update_query(table: &CardTable) -> &'static str {
         match table {
-            CardTable::Service => UPDATE_SERVICECARD_SQL.to_string(),
-            CardTable::Mcp => UPDATE_MCP_SERVICECARD_SQL.to_string(),
-            _ => UPDATE_SERVICECARD_SQL.to_string(),
+            CardTable::Service => UPDATE_SERVICECARD_SQL,
+            CardTable::Mcp => UPDATE_MCP_SERVICECARD_SQL,
+            _ => UPDATE_SERVICECARD_SQL,
         }
     }
 
-    pub fn get_promptcard_update_query() -> String {
-        UPDATE_PROMPTCARD_SQL.to_string()
+    pub fn get_promptcard_update_query() -> &'static str {
+        UPDATE_PROMPTCARD_SQL
     }
 
-    pub fn get_datacard_update_query() -> String {
-        UPDATE_DATACARD_SQL.to_string()
+    pub fn get_datacard_update_query() -> &'static str {
+        UPDATE_DATACARD_SQL
     }
 
-    pub fn get_modelcard_update_query() -> String {
-        UPDATE_MODELCARD_SQL.to_string()
+    pub fn get_modelcard_update_query() -> &'static str {
+        UPDATE_MODELCARD_SQL
     }
 
-    pub fn get_experimentcard_update_query() -> String {
-        UPDATE_EXPERIMENTCARD_SQL.to_string()
+    pub fn get_experimentcard_update_query() -> &'static str {
+        UPDATE_EXPERIMENTCARD_SQL
     }
 
-    pub fn get_auditcard_update_query() -> String {
-        UPDATE_AUDITCARD_SQL.to_string()
+    pub fn get_auditcard_update_query() -> &'static str {
+        UPDATE_AUDITCARD_SQL
     }
 
-    pub fn get_artifact_key_insert_query() -> String {
-        INSERT_ARTIFACT_KEY_SQL.to_string()
+    pub fn get_artifact_key_insert_query() -> &'static str {
+        INSERT_ARTIFACT_KEY_SQL
     }
 
-    pub fn get_artifact_key_select_query() -> String {
-        GET_ARTIFACT_KEY_SQL.to_string()
+    pub fn get_artifact_key_select_query() -> &'static str {
+        GET_ARTIFACT_KEY_SQL
     }
 
-    pub fn get_artifact_key_update_query() -> String {
-        UPDATE_ARTIFACT_KEY_SQL.to_string()
+    pub fn get_artifact_key_update_query() -> &'static str {
+        UPDATE_ARTIFACT_KEY_SQL
     }
 
-    pub fn get_artifact_key_from_storage_path_query() -> String {
-        GET_ARTIFACT_KEY_FROM_STORAGE_PATH_SQL.to_string()
+    pub fn get_artifact_key_from_storage_path_query() -> &'static str {
+        GET_ARTIFACT_KEY_FROM_STORAGE_PATH_SQL
     }
 
-    pub fn get_audit_event_insert_query() -> String {
-        INSERT_AUDIT_EVENT_SQL.to_string()
+    pub fn get_audit_event_insert_query() -> &'static str {
+        INSERT_AUDIT_EVENT_SQL
     }
 
     pub fn get_load_card_query(
@@ -572,44 +572,44 @@ impl SqliteQueryHelper {
         Ok(query)
     }
 
-    pub fn get_artifact_key_delete_query() -> String {
-        DELETE_ARTIFACT_KEY_SQL.to_string()
+    pub fn get_artifact_key_delete_query() -> &'static str {
+        DELETE_ARTIFACT_KEY_SQL
     }
 
-    pub fn get_all_space_stats_query() -> String {
-        GET_ALL_SPACE_STATS_SQL.to_string()
+    pub fn get_all_space_stats_query() -> &'static str {
+        GET_ALL_SPACE_STATS_SQL
     }
 
-    pub fn get_space_record_query() -> String {
-        GET_SPACE_RECORD_SQL.to_string()
+    pub fn get_space_record_query() -> &'static str {
+        GET_SPACE_RECORD_SQL
     }
 
-    pub fn get_insert_space_name_record_query() -> String {
-        INSERT_SPACE_NAME_RECORD_SQL.to_string()
+    pub fn get_insert_space_name_record_query() -> &'static str {
+        INSERT_SPACE_NAME_RECORD_SQL
     }
 
-    pub fn get_insert_space_record_query() -> String {
-        INSERT_SPACE_RECORD_SQL.to_string()
+    pub fn get_insert_space_record_query() -> &'static str {
+        INSERT_SPACE_RECORD_SQL
     }
 
-    pub fn get_update_space_record_query() -> String {
-        UPDATE_SPACE_RECORD_SQL.to_string()
+    pub fn get_update_space_record_query() -> &'static str {
+        UPDATE_SPACE_RECORD_SQL
     }
 
-    pub fn get_delete_space_record_query() -> String {
-        DELETE_SPACE_RECORD_SQL.to_string()
+    pub fn get_delete_space_record_query() -> &'static str {
+        DELETE_SPACE_RECORD_SQL
     }
 
-    pub fn get_delete_space_name_record_query() -> String {
-        DELETE_SPACE_NAME_RECORD_SQL.to_string()
+    pub fn get_delete_space_name_record_query() -> &'static str {
+        DELETE_SPACE_NAME_RECORD_SQL
     }
 
-    pub fn get_evaluation_record_insert_query() -> String {
-        INSERT_EVALUATION_SQL.to_string()
+    pub fn get_evaluation_record_insert_query() -> &'static str {
+        INSERT_EVALUATION_SQL
     }
 
-    pub fn get_evaluation_record_query() -> String {
-        GET_EVALUATION_RECORD_SQL.to_string()
+    pub fn get_evaluation_record_query() -> &'static str {
+        GET_EVALUATION_RECORD_SQL
     }
 
     pub fn get_recent_services_query(query_args: &ServiceQueryArgs) -> String {

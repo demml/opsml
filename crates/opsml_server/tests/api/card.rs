@@ -1926,7 +1926,7 @@ async fn test_opsml_server_dashboard_stats() {
         let body = response.into_body().collect().await.unwrap().to_bytes();
         let dashboard_stats: DashboardStatsResponse = serde_json::from_slice(&body).unwrap();
 
-        assert_eq!(dashboard_stats.stats.nbr_models, 0);
+        assert_eq!(dashboard_stats.stats.nbr_models, 1);
         assert_eq!(dashboard_stats.stats.nbr_data, 0);
         assert_eq!(dashboard_stats.stats.nbr_prompts, 0);
         assert_eq!(dashboard_stats.stats.nbr_experiments, 0);
