@@ -9,8 +9,8 @@ use opsml_types::cards::CardTable;
 use opsml_types::contracts::CardQueryArgs;
 use opsml_types::{
     contracts::{
-        ArtifactKey, ArtifactQueryArgs, ArtifactRecord, AuditEvent, ServiceQueryArgs,
-        SpaceNameEvent, SpaceRecord, SpaceStats, VersionCursor,
+        ArtifactKey, ArtifactQueryArgs, ArtifactRecord, AuditEvent, DashboardStats,
+        ServiceQueryArgs, SpaceNameEvent, SpaceRecord, SpaceStats, VersionCursor,
     },
     RegistryType,
 };
@@ -39,6 +39,7 @@ pub trait CardLogicTrait {
         spaces: &[String],
         tags: &[String],
     ) -> Result<QueryStats, SqlError>;
+    async fn query_dashboard_stats(&self) -> Result<DashboardStats, SqlError>;
 
     #[allow(clippy::too_many_arguments)]
     async fn query_page(
