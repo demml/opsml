@@ -19,7 +19,7 @@ export enum RoutePaths {
   GET_STATS = "/opsml/api/card/registry/stats",
   GET_REGISTRY_PAGE = "/opsml/api/card/registry/page",
   GET_VERSION_PAGE = "/opsml/api/card/registry/version/page",
-  GET_DASHBOARD_STATS = "/opsml/api/card/stats/dashboard",
+  GET_DASHBOARD_STATS = "/opsml/api/card/dashboard/stats",
 
   METADATA = "/opsml/api/card/metadata",
   README = "/opsml/api/card/readme",
