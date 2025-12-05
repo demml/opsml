@@ -6084,8 +6084,7 @@ checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
 [[package]]
 name = "scouter-client"
 version = "0.13.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dcc61227b6d31aebacce7a6bfb0fb0edad5cc722133ab4578e4948dcbe6df424"
+source = "git+https://github.com/demml/scouter.git?branch=db%2Foptimize-storage-and-performance#6b62d4b39fda24014b0afe3cf69ba143ac077cbd"
 dependencies = [
  "chrono",
  "ndarray",
@@ -6107,7 +6106,7 @@ dependencies = [
  "scouter-types",
  "serde",
  "serde_json",
- "serde_qs 0.15.0",
+ "serde_qs 0.8.5",
  "thiserror 2.0.17",
  "tokio",
  "tracing",
@@ -6116,8 +6115,7 @@ dependencies = [
 [[package]]
 name = "scouter-dispatch"
 version = "0.13.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "aa36989a9a0f1d64149a57239bc1f5f83c4762748047ec6685678bb153314b08"
+source = "git+https://github.com/demml/scouter.git?branch=db%2Foptimize-storage-and-performance#6b62d4b39fda24014b0afe3cf69ba143ac077cbd"
 dependencies = [
  "futures",
  "pyo3",
@@ -6132,13 +6130,12 @@ dependencies = [
 [[package]]
 name = "scouter-drift"
 version = "0.13.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d22f8541b006f655f347b72e8780eafe0f182de482d9495d551cf1db09c5afe8"
+source = "git+https://github.com/demml/scouter.git?branch=db%2Foptimize-storage-and-performance#6b62d4b39fda24014b0afe3cf69ba143ac077cbd"
 dependencies = [
  "chrono",
  "futures",
  "indicatif",
- "itertools 0.14.0",
+ "itertools 0.13.0",
  "ndarray",
  "num-traits",
  "numpy",
@@ -6158,10 +6155,9 @@ dependencies = [
 [[package]]
 name = "scouter-evaluate"
 version = "0.13.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8ce8a4b2a57045d604a1b1c46b27c4693d1c31800485f8478406ad2d2fcb4bb2"
+source = "git+https://github.com/demml/scouter.git?branch=db%2Foptimize-storage-and-performance#6b62d4b39fda24014b0afe3cf69ba143ac077cbd"
 dependencies = [
- "itertools 0.14.0",
+ "itertools 0.13.0",
  "ndarray",
  "num-traits",
  "potato-head",
@@ -6181,8 +6177,7 @@ dependencies = [
 [[package]]
 name = "scouter-events"
 version = "0.13.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6d530d8a5016dab50a69463056a5c8b9518958bc5389437c623ddfde8019ee47"
+source = "git+https://github.com/demml/scouter.git?branch=db%2Foptimize-storage-and-performance#6b62d4b39fda24014b0afe3cf69ba143ac077cbd"
 dependencies = [
  "async-trait",
  "chrono",
@@ -6217,10 +6212,9 @@ dependencies = [
 [[package]]
 name = "scouter-observability"
 version = "0.13.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1c9f320b71a4397fdb92860193a1095cdb42cb76ee03b33d442fe70d134c791a"
+source = "git+https://github.com/demml/scouter.git?branch=db%2Foptimize-storage-and-performance#6b62d4b39fda24014b0afe3cf69ba143ac077cbd"
 dependencies = [
- "itertools 0.14.0",
+ "itertools 0.13.0",
  "ndarray",
  "ndarray-stats",
  "noisy_float",
@@ -6235,12 +6229,11 @@ dependencies = [
 [[package]]
 name = "scouter-profile"
 version = "0.13.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "68db9dd080033f1a2beedca83d8c87b255e01edf6386f8cc75c4918d6bb0428a"
+source = "git+https://github.com/demml/scouter.git?branch=db%2Foptimize-storage-and-performance#6b62d4b39fda24014b0afe3cf69ba143ac077cbd"
 dependencies = [
  "chrono",
  "indicatif",
- "itertools 0.14.0",
+ "itertools 0.13.0",
  "ndarray",
  "ndarray-stats",
  "noisy_float",
@@ -6258,8 +6251,7 @@ dependencies = [
 [[package]]
 name = "scouter-semver"
 version = "0.13.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d3f1c709e51e76f08d704afe410ed58fdb2c6284b9d510be0978150f8366025b"
+source = "git+https://github.com/demml/scouter.git?branch=db%2Foptimize-storage-and-performance#6b62d4b39fda24014b0afe3cf69ba143ac077cbd"
 dependencies = [
  "pyo3",
  "semver",
@@ -6270,8 +6262,7 @@ dependencies = [
 [[package]]
 name = "scouter-settings"
 version = "0.13.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "99984b9dec89eecef2d6efb54487cc8d6a556bdcf8af0905ef376fc0e0580976"
+source = "git+https://github.com/demml/scouter.git?branch=db%2Foptimize-storage-and-performance#6b62d4b39fda24014b0afe3cf69ba143ac077cbd"
 dependencies = [
  "base64 0.22.1",
  "potato-head",
@@ -6284,8 +6275,7 @@ dependencies = [
 [[package]]
 name = "scouter-state"
 version = "0.13.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9b6b0770617b28f5bdf46e96d0c34aafcf6470d0bf97a8678e517c6bc2d96dde"
+source = "git+https://github.com/demml/scouter.git?branch=db%2Foptimize-storage-and-performance#6b62d4b39fda24014b0afe3cf69ba143ac077cbd"
 dependencies = [
  "thiserror 2.0.17",
  "tokio",
@@ -6295,8 +6285,7 @@ dependencies = [
 [[package]]
 name = "scouter-tracing"
 version = "0.13.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6dd6adc8c64828a7822c2066b43df7562d17fd50b58a33afcf31ec0b8f940344"
+source = "git+https://github.com/demml/scouter.git?branch=db%2Foptimize-storage-and-performance#6b62d4b39fda24014b0afe3cf69ba143ac077cbd"
 dependencies = [
  "chrono",
  "opentelemetry",
@@ -6321,8 +6310,7 @@ dependencies = [
 [[package]]
 name = "scouter-types"
 version = "0.13.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3320dce1367459c15e44ca22f6ad6af98571502e901265047ed837a8f016504c"
+source = "git+https://github.com/demml/scouter.git?branch=db%2Foptimize-storage-and-performance#6b62d4b39fda24014b0afe3cf69ba143ac077cbd"
 dependencies = [
  "base64 0.22.1",
  "chrono",

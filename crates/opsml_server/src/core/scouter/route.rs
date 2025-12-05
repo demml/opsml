@@ -26,7 +26,7 @@ use tracing::debug;
 
 use scouter_client::{
     Alerts, BinnedMetrics, BinnedPsiFeatureMetrics, DriftAlertRequest, DriftRequest,
-    LLMDriftRecordPaginationRequest, LLMDriftServerRecord, PaginationResponse, ProfileRequest,
+    LLMDriftRecord, LLMDriftRecordPaginationRequest, PaginationResponse, ProfileRequest,
     ProfileStatusRequest, RegisteredProfileResponse, ScouterResponse, ScouterServerError,
     SpcDriftFeatures, UpdateAlertResponse, UpdateAlertStatus,
 };
@@ -490,7 +490,7 @@ pub async fn get_llm_drift_records(
     State(data): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
     Json(body): Json<LLMDriftRecordPaginationRequest>,
-) -> Result<Json<PaginationResponse<LLMDriftServerRecord>>, (StatusCode, Json<OpsmlServerError>)> {
+) -> Result<Json<PaginationResponse<LLMDriftRecord>>, (StatusCode, Json<OpsmlServerError>)> {
     debug!("Getting LLM drift features with params: {:?}", &body);
     let exchange_token = data.exchange_token_from_perms(&perms).await.map_err(|e| {
         error!("Failed to exchange token for scouter: {e}");
@@ -519,7 +519,7 @@ pub async fn get_llm_drift_records(
         })?;
 
     let body = response
-        .json::<PaginationResponse<LLMDriftServerRecord>>()
+        .json::<PaginationResponse<LLMDriftRecord>>()
         .await
         .map_err(|e| {
             error!("Failed to parse drift features: {e}");
@@ -609,10 +609,6 @@ pub async fn get_drift_alerts(
     Extension(perms): Extension<UserPermissions>,
     Query(params): Query<DriftAlertRequest>,
 ) -> Result<Json<Alerts>, (StatusCode, Json<OpsmlServerError>)> {
-    if !perms.has_read_permission(&params.space) {
-        return OpsmlServerError::permission_denied().into_response(StatusCode::FORBIDDEN);
-    }
-
     let exchange_token = state.exchange_token_from_perms(&perms).await.map_err(|e| {
         error!("Failed to exchange token for scouter: {e}");
         internal_server_error(e, "Failed to exchange token for scouter")

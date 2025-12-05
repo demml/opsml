@@ -161,12 +161,10 @@ async fn test_scouter_routes_spc_drift_features() {
     let helper = TestHelper::new(None).await;
 
     let drift_request = DriftRequest {
-        name: helper.name.clone(),
         space: helper.space.clone(),
-        version: helper.version.clone(),
+        uid: "mocked_uid".to_string(),
         time_interval: TimeInterval::OneHour,
         max_data_points: 100,
-        drift_type: DriftType::Spc,
         ..Default::default()
     };
 
@@ -186,12 +184,10 @@ async fn test_scouter_routes_psi_drift_features() {
     let helper = TestHelper::new(None).await;
 
     let drift_request = DriftRequest {
-        name: helper.name.clone(),
+        uid: "mocked_uid".to_string(),
         space: helper.space.clone(),
-        version: helper.version.clone(),
         time_interval: TimeInterval::OneHour,
         max_data_points: 100,
-        drift_type: DriftType::Psi,
         ..Default::default()
     };
 
@@ -211,12 +207,10 @@ async fn test_scouter_routes_custom_drift_features() {
     let helper = TestHelper::new(None).await;
 
     let drift_request = DriftRequest {
-        name: helper.name.clone(),
         space: helper.space.clone(),
-        version: helper.version.clone(),
+        uid: "mocked_uid".to_string(),
         time_interval: TimeInterval::OneHour,
         max_data_points: 100,
-        drift_type: DriftType::Psi,
         ..Default::default()
     };
 

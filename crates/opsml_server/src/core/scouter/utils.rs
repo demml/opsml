@@ -79,7 +79,7 @@ pub fn load_drift_profiles(
             let filepath = path.join(&uri.uri);
             let file = std::fs::read_to_string(&filepath)?;
 
-            DriftProfile::from_str(uri.drift_type.clone(), file)
+            DriftProfile::from_str(&uri.drift_type, &file)
                 .map_err(|e| {
                     error!("Failed to load drift profile: {e}");
                     ServerError::LoadDriftProfileError(e.to_string())
