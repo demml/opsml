@@ -13,7 +13,7 @@ use crate::traits::CardLogicTrait;
 use async_trait::async_trait;
 use opsml_semver::VersionValidator;
 use opsml_types::{
-    contracts::{ArtifactKey, CardQueryArgs, ServiceQueryArgs, VersionCursor},
+    contracts::{ArtifactKey, CardQueryArgs, DashboardStats, ServiceQueryArgs, VersionCursor},
     RegistryType,
 };
 use semver::Version;
@@ -584,6 +584,12 @@ impl CardLogicTrait for CardLogicSqliteClient {
         }
 
         let stats = query_builder.fetch_one(&self.pool).await?;
+        Ok(stats)
+    }
+
+    async fn query_dashboard_stats(&self) -> Result<DashboardStats, SqlError> {
+        let query = SqliteQueryHelper::get_dashboard_stats_query();
+        let stats: DashboardStats = sqlx::query_as(query).fetch_one(&self.pool).await?;
         Ok(stats)
     }
 
