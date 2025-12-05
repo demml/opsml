@@ -2,9 +2,9 @@ use pyo3::prelude::*;
 use scouter_client::*;
 
 pub fn add_queue_module(m: &Bound<'_, PyModule>) -> PyResult<()> {
-    m.add_class::<SpcServerRecord>()?;
-    m.add_class::<PsiServerRecord>()?;
-    m.add_class::<CustomMetricServerRecord>()?;
+    m.add_class::<SpcRecord>()?;
+    m.add_class::<PsiRecord>()?;
+    m.add_class::<CustomMetricRecord>()?;
     m.add_class::<LLMRecord>()?;
     m.add_class::<ServerRecord>()?;
     m.add_class::<ServerRecords>()?;
