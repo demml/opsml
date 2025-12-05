@@ -1,9 +1,8 @@
-import { getDashboardStats, getRegistryStats } from "$lib/server/card/utils";
+import { getDashboardStats } from "$lib/server/card/utils";
 import {
   getRecentCards,
   type HomePageStats,
 } from "$lib/components/home/utils.server";
-import { RegistryType } from "$lib/utils";
 import type { PageServerLoad } from "./$types";
 
 async function get_registry_stats(
@@ -20,7 +19,11 @@ async function get_registry_stats(
 }
 
 export const load: PageServerLoad = async ({ fetch }) => {
-  let cards = await getRecentCards(fetch);
-  let stats = await get_registry_stats(fetch);
+  // Parallel fetch for better performance
+  const [cards, stats] = await Promise.all([
+    getRecentCards(fetch),
+    get_registry_stats(fetch),
+  ]);
+
   return { cards, stats };
 };
