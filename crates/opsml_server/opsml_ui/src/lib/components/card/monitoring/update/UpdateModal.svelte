@@ -237,7 +237,8 @@ function validateDispatchForm(): boolean {
         space: matchedProfile.config.space,
         profile: JSON.stringify(matchedProfile),
         drift_type: driftType,
-        
+        active: true,
+        deactivate_others: false
       }
     };
 
@@ -245,7 +246,6 @@ function validateDispatchForm(): boolean {
 
     modalClose();
 
-  
   }
 
   function updateParamCallback(field: string, value: any) {

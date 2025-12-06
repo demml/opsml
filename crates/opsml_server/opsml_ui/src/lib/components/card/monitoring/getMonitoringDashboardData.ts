@@ -194,9 +194,7 @@ export async function loadMonitoringDashboardData(
   const currentAlerts = loadAlerts
     ? await getMonitoringAlerts(
         fetch,
-        currentConfig.space,
-        currentConfig.name,
-        currentConfig.version,
+        currentConfig.uid,
         initialTimeInterval,
         true
       )
@@ -207,8 +205,7 @@ export async function loadMonitoringDashboardData(
   if (loadLLMRecords && registryType === RegistryType.Prompt) {
     const serviceInfo: ServiceInfo = {
       space: currentConfig.space,
-      name: currentConfig.name,
-      version: currentConfig.version,
+      uid: currentConfig.uid,
     };
 
     currentLLMRecords = await getLLMMonitoringRecordPage(

@@ -16,13 +16,11 @@ let parentContainer: HTMLDivElement | null = null;
 
 let {
     space,
-    name,
-    version,
+    uid,
     currentPage,
   } = $props<{
     space: string;
-    name: string;
-    version: string;
+    uid: string;
     currentPage: LLMPageResponse;
   }>();
 
@@ -30,7 +28,7 @@ let {
     let pageItems: LLMDriftServerRecord[] = $state(currentPage.items);
     let has_more: boolean = $state(currentPage.has_more);
     let status = $state<Status | undefined>(undefined);
-    let serviceInfo: ServiceInfo = $state({"space": space, "name": name, "version": version});
+    let serviceInfo: ServiceInfo = $state({"space": space, "uid": uid});
     let pageNbr: number = $state(1);
 
   // Function for getting next page
