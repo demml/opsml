@@ -984,7 +984,7 @@ mod tests {
         let client = SqliteClient::new(&config).await.unwrap();
 
         // Run the SQL script to populate the database
-        let script = std::fs::read_to_string("tests/populate_mysql_test.sql").unwrap();
+        let script = std::fs::read_to_string("tests/populate_sqlite_test.sql").unwrap();
         sqlx::raw_sql(&script).execute(&client.pool).await.unwrap();
 
         let uid = "550e8400-e29b-41d4-a716-446655440000".to_string();
@@ -1323,6 +1323,31 @@ mod tests {
         }
 
         cleanup();
+    }
+
+    #[tokio::test]
+    async fn test_sqlite_dashboard_stats() {
+        cleanup();
+
+        let config = DatabaseSettings {
+            connection_uri: get_connection_uri(),
+            max_connections: 1,
+            sql_type: SqlType::Sqlite,
+        };
+
+        let client = SqliteClient::new(&config).await.unwrap();
+
+        // Run the SQL script to populate the database
+        let script = std::fs::read_to_string("tests/populate_sqlite_test.sql").unwrap();
+        sqlx::raw_sql(&script).execute(&client.pool).await.unwrap();
+
+        // query dashboard stats
+        let stats = client.card.query_dashboard_stats().await.unwrap();
+
+        assert_eq!(stats.nbr_data, 10);
+        assert_eq!(stats.nbr_models, 10);
+        assert_eq!(stats.nbr_experiments, 10);
+        assert_eq!(stats.nbr_prompts, 0);
     }
 
     #[tokio::test]

@@ -12,10 +12,12 @@ import type {
   CardTagsResponse,
   CardCursor,
   VersionCursor,
+  DashBoardStatsResponse,
 } from "$lib/components/card/types";
 import type { CardQueryArgs } from "$lib/components/api/schema";
 import { type Card } from "$lib/components/home/types";
 import { createOpsmlClient } from "../api/opsmlClient";
+import type { DataCard } from "$lib/components/card/card_interfaces/datacard";
 
 export async function getSpaces(
   fetch: typeof globalThis.fetch,
@@ -198,5 +200,19 @@ export async function getCardfromUid(
     params
   );
   const data = (await response.json()) as Card[];
+  return data;
+}
+
+/** Helper function to get the data profile for a card
+ * @param card The DataCard to get the profile for
+ * @returns The DataProfile object
+ */
+export async function getDashboardStats(
+  fetch: typeof globalThis.fetch
+): Promise<DashBoardStatsResponse> {
+  const response = await createOpsmlClient(fetch).get(
+    RoutePaths.GET_DASHBOARD_STATS
+  );
+  const data = (await response.json()) as DashBoardStatsResponse;
   return data;
 }

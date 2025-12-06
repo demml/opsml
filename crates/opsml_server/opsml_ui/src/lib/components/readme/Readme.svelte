@@ -61,8 +61,8 @@
 
   async function saveReadme() {
     content = editor.state.doc.toString();
-  
-    let response = await createInternalApiClient(fetch).post("api/card/readme", {
+
+    let response = await createInternalApiClient(fetch).post("api/card/readme/create", {
       space,
       name,
       registry_type: registry,

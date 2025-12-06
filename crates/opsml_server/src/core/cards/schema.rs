@@ -4,7 +4,7 @@ use opsml_sql::schemas::{
     VersionSummary,
 };
 use opsml_types::{
-    contracts::{CardCursor, VersionCursor},
+    contracts::{CardCursor, DashboardStats, VersionCursor},
     RegistryType,
 };
 use serde::{Deserialize, Serialize};
@@ -46,6 +46,11 @@ pub struct VersionPageResponse {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct RegistryStatsResponse {
     pub stats: QueryStats,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct DashboardStatsResponse {
+    pub stats: DashboardStats,
 }
 
 #[derive(Debug, Serialize, Deserialize)]

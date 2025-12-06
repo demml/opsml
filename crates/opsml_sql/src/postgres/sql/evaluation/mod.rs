@@ -19,7 +19,7 @@ impl EvaluationLogicPostgresClient {
 impl EvaluationLogicTrait for EvaluationLogicPostgresClient {
     async fn insert_evaluation_record(&self, event: EvaluationSqlRecord) -> Result<(), SqlError> {
         let query = PostgresQueryHelper::get_evaluation_record_insert_query();
-        sqlx::query(&query)
+        sqlx::query(query)
             .bind(event.uid)
             .bind(&event.app_env)
             .bind(&event.name)
@@ -33,7 +33,7 @@ impl EvaluationLogicTrait for EvaluationLogicPostgresClient {
 
     async fn get_evaluation_record(&self, uid: &str) -> Result<EvaluationSqlRecord, SqlError> {
         let query = PostgresQueryHelper::get_evaluation_record_query();
-        let record: EvaluationSqlRecord = sqlx::query_as(&query)
+        let record: EvaluationSqlRecord = sqlx::query_as(query)
             .bind(uid)
             .fetch_one(&self.pool)
             .await?;

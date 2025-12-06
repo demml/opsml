@@ -1161,3 +1161,12 @@ pub struct CardEntry {
     pub version: Option<String>,
     pub alias: String,
 }
+
+#[derive(Debug, Serialize, Deserialize)]
+#[cfg_attr(feature = "server", derive(sqlx::FromRow))]
+pub struct DashboardStats {
+    pub nbr_models: i64,
+    pub nbr_data: i64,
+    pub nbr_prompts: i64,
+    pub nbr_experiments: i64,
+}
