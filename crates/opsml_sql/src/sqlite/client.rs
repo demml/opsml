@@ -984,7 +984,7 @@ mod tests {
         let client = SqliteClient::new(&config).await.unwrap();
 
         // Run the SQL script to populate the database
-        let script = std::fs::read_to_string("tests/populate_mysql_test.sql").unwrap();
+        let script = std::fs::read_to_string("tests/populate_sqlite_test.sql").unwrap();
         sqlx::raw_sql(&script).execute(&client.pool).await.unwrap();
 
         let uid = "550e8400-e29b-41d4-a716-446655440000".to_string();
