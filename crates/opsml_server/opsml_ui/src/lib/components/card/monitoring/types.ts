@@ -156,9 +156,8 @@ export interface BinnedMetrics {
 }
 
 export interface DriftRequest {
-  name: string;
+  uid: string;
   space: string;
-  version: string;
   time_interval: TimeInterval;
   max_data_points: number;
   drift_type: DriftType;

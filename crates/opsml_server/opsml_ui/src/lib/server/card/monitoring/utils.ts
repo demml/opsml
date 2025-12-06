@@ -85,17 +85,13 @@ export async function updateDriftProfile(
 
 export async function getDriftAlerts(
   fetch: typeof globalThis.fetch,
-  space: string,
-  name: string,
-  version: string,
+  uid: string,
   timeInterval: TimeInterval,
   active: boolean
 ): Promise<Alert[]> {
   // For testing purposes, return sample alerts
   let alertRequest: DriftAlertRequest = {
-    space: space,
-    name: name,
-    version: version,
+    uid: uid,
     limit_datetime: timeIntervalToDateTime(timeInterval),
     active: active,
   };
@@ -155,9 +151,8 @@ export async function getLatestMetrics(
       const config = getProfileConfig(driftType as DriftType, profile.profile);
 
       const request: DriftRequest = {
-        name: config.name,
         space: config.space,
-        version: config.version,
+        uid: config.uid,
         time_interval: time_interval,
         max_data_points: max_data_points,
         drift_type: driftType as DriftType,

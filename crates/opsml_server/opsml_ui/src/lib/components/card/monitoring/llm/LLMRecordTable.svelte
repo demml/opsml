@@ -14,9 +14,9 @@ let parentContainer: HTMLDivElement | null = null;
     }
   }
 
-let { 
+let {
     space,
-    name, 
+    name,
     version,
     currentPage,
   } = $props<{
@@ -44,7 +44,7 @@ let {
     pageNbr = newPage;
 
   } else if (newPage < pageNbr && newPage > 0) {
-    
+
     let prev_page;
     if (newPage === 1) {
       // First page: fetch with no cursor
