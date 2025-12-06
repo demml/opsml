@@ -6,6 +6,7 @@ use opsml_client::error::ApiClientError;
 use opsml_client::OpsmlApiClient;
 use opsml_semver::VersionType;
 use opsml_types::{api::*, cards::CardTable, contracts::*, Alive, IntegratedService, RegistryType};
+use scouter_client::RegisteredProfileResponse;
 use scouter_client::{ProfileRequest, ProfileStatusRequest, ScouterServerError};
 use std::sync::Arc;
 use tracing::{error, instrument};
@@ -281,7 +282,10 @@ pub trait ScouterRegistry: Registry {
         Ok(alive.alive)
     }
 
-    fn insert_scouter_profile(&self, profile: &ProfileRequest) -> Result<(), RegistryError> {
+    fn insert_scouter_profile(
+        &self,
+        profile: &ProfileRequest,
+    ) -> Result<RegisteredProfileResponse, RegistryError> {
         let body = serde_json::to_value(profile)?;
 
         let response = self
@@ -312,7 +316,11 @@ pub trait ScouterRegistry: Registry {
             return Err(ApiClientError::ServerError(error_text).into());
         }
 
-        Ok(())
+        let registered_profile = response
+            .json::<RegisteredProfileResponse>()
+            .map_err(RegistryError::RequestError)?;
+
+        Ok(registered_profile)
     }
 
     fn update_drift_profile_status(
