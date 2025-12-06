@@ -109,7 +109,7 @@
 
     // Update available names for the new drift type
     currentNames = getProfileFeatures(currentDriftType, currentProfile.profile);
-    
+
     // Set the first available name as default
     currentName = currentNames[0];
 
@@ -141,7 +141,7 @@
    */
   async function handleTimeChange(timeInterval: TimeInterval): Promise<void> {
     currentTimeInterval = timeInterval;
-    
+
     // Fetch updated metrics
     latestMetrics = await getLatestMonitoringMetrics(
       fetch,
@@ -193,7 +193,7 @@
 
 <div class="mx-auto w-full max-w-8xl px-4 py-6 sm:px-6 lg:px-8">
   <div class="grid grid-cols-1 gap-4 pt-4">
-    
+
     <!-- Header Section -->
     <div class="h-fit">
       <Header
@@ -249,8 +249,7 @@
       <div class="bg-white p-2 border-2 border-black rounded-lg shadow min-h-[6rem]">
         <LLMRecordTable
           space={currentConfig.space}
-          name={currentConfig.name}
-          version={currentConfig.version}
+          uid={currentConfig.uid}
           currentPage={currentLLMRecordPage}
         />
       </div>

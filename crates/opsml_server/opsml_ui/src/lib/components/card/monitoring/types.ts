@@ -184,6 +184,8 @@ export interface ProfileRequest {
   space: string;
   drift_type: DriftType;
   profile: string;
+  active: boolean;
+  deactivate_others: boolean;
 }
 
 export interface UpdateProfileRequest {
@@ -229,8 +231,7 @@ export interface LLMDriftServerRecord {
 
 export interface ServiceInfo {
   space: string;
-  name: string;
-  version: string;
+  uid: string;
 }
 
 export interface LLMPageRequest {
