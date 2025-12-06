@@ -101,8 +101,7 @@ uv.sub.pre.tag:
 prep.pre.patch: uv.pre.patch uv.sub.pre.tag
 
 setup.docs:
-	uv sync --all-extras --group docs
-	uv run maturin develop --features server
+	uv sync --group docs
 
 build.docs:
 	uv run python scripts/create_stubs.py
