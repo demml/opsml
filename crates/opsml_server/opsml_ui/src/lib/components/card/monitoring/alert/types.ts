@@ -1,9 +1,5 @@
-import type { DriftType } from "../types";
-
 export interface DriftAlertRequest {
-  name: string;
-  space: string;
-  version: string;
+  uid: string;
   limit_datetime?: string;
   active?: boolean;
   limit?: number;

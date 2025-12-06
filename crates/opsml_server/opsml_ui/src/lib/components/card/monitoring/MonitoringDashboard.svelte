@@ -159,9 +159,7 @@
     // Fetch updated alerts
     currentAlerts = await getMonitoringAlerts(
       fetch,
-      currentConfig.space,
-      currentConfig.name,
-      currentConfig.version,
+      currentConfig.uid,
       currentTimeInterval,
       true
     );
@@ -176,9 +174,7 @@
     if (updated) {
       currentAlerts = await getMonitoringAlerts(
         fetch,
-        currentConfig.space,
-        currentConfig.name,
-        currentConfig.version,
+        currentConfig.uid,
         currentTimeInterval,
         true
       );

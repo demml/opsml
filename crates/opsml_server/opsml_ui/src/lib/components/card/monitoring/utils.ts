@@ -237,9 +237,7 @@ export async function getMonitoringDriftProfiles(
  */
 export async function getMonitoringAlerts(
   fetch: typeof globalThis.fetch,
-  space: string,
-  name: string,
-  version: string,
+  uid: string,
   timeInterval: TimeInterval,
   active: boolean
 ): Promise<Alert[]> {
@@ -250,9 +248,7 @@ export async function getMonitoringAlerts(
   let resp = await createInternalApiClient(fetch).post(
     ServerPaths.MONITORING_ALERTS,
     {
-      space,
-      name,
-      version,
+      uid,
       timeInterval,
       active,
     }
