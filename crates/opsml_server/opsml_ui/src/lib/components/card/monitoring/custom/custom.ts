@@ -18,8 +18,9 @@ export interface CustomMetricDriftConfig {
   space: string;
   name: string;
   version: string;
+  uid: string;
   alert_config: CustomMetricAlertConfig;
-  drift_type: DriftType; // You'll need to define DriftType enum
+  drift_type: DriftType;
 }
 
 export interface CustomMetricAlertConfig {

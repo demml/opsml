@@ -1,4 +1,4 @@
-import type { Prompt } from "$lib/components/card/card_interfaces/promptcard";
+import type { Prompt } from "$lib/components/genai/types";
 import { DriftType, type AlertDispatchConfig } from "../types";
 
 export enum AlertThreshold {
@@ -24,6 +24,7 @@ export interface LLMDriftConfig {
   space: string;
   name: string;
   version: string;
+  uid: string;
   alert_config: LLMAlertConfig;
   drift_type: DriftType;
 }
