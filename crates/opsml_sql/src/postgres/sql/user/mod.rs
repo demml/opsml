@@ -70,7 +70,7 @@ impl UserLogicTrait for UserLogicPostgresClient {
         let permissions = serde_json::to_value(&user.permissions)?;
         let favorite_spaces = serde_json::to_value(&user.favorite_spaces)?;
 
-        sqlx::query(&query)
+        sqlx::query(query)
             .bind(&user.username)
             .bind(&user.password_hash)
             .bind(&hashed_recovery_codes)
@@ -97,7 +97,7 @@ impl UserLogicTrait for UserLogicPostgresClient {
             None => PostgresQueryHelper::get_user_query(),
         };
 
-        let mut query_builder = sqlx::query_as(&query).bind(username);
+        let mut query_builder = sqlx::query_as(query).bind(username);
 
         if let Some(auth_type) = auth_type {
             query_builder = query_builder.bind(auth_type);
@@ -116,7 +116,7 @@ impl UserLogicTrait for UserLogicPostgresClient {
         let permissions = serde_json::to_value(&user.permissions)?;
         let favorite_spaces = serde_json::to_value(&user.favorite_spaces)?;
 
-        sqlx::query(&query)
+        sqlx::query(query)
             .bind(user.active)
             .bind(&user.password_hash)
             .bind(&hashed_recovery_codes)
@@ -136,7 +136,7 @@ impl UserLogicTrait for UserLogicPostgresClient {
     async fn get_users(&self) -> Result<Vec<User>, SqlError> {
         let query = PostgresQueryHelper::get_users_query();
 
-        let users = sqlx::query_as::<_, User>(&query)
+        let users = sqlx::query_as::<_, User>(query)
             .fetch_all(&self.pool)
             .await?;
 
@@ -147,7 +147,7 @@ impl UserLogicTrait for UserLogicPostgresClient {
         // Count admins in the system
         let query = PostgresQueryHelper::get_last_admin_query();
 
-        let admins: Vec<String> = sqlx::query_scalar(&query).fetch_all(&self.pool).await?;
+        let admins: Vec<String> = sqlx::query_scalar(query).fetch_all(&self.pool).await?;
 
         // If there are no other admins, this is the last one
         if admins.len() > 1 {
@@ -166,7 +166,7 @@ impl UserLogicTrait for UserLogicPostgresClient {
     async fn delete_user(&self, username: &str) -> Result<(), SqlError> {
         let query = PostgresQueryHelper::get_user_delete_query();
 
-        sqlx::query(&query)
+        sqlx::query(query)
             .bind(username)
             .execute(&self.pool)
             .await?;

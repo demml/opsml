@@ -33,8 +33,8 @@ http {
     client_max_body_size 16M;
     client_body_buffer_size 128k;
     proxy_buffering on;
-    proxy_buffer_size 4k;
-    proxy_buffers 8 4k;
+    proxy_buffer_size 16k;
+    proxy_buffers 8 16k;
 
     # Gzip compression
     gzip on;
