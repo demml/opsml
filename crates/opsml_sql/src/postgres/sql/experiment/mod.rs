@@ -23,7 +23,7 @@ impl ExperimentLogicPostgresClient {
 impl ExperimentLogicTrait for ExperimentLogicPostgresClient {
     async fn insert_experiment_metric(&self, record: &MetricRecord) -> Result<(), SqlError> {
         let query = PostgresQueryHelper::get_experiment_metric_insert_query();
-        sqlx::query(&query)
+        sqlx::query(query)
             .bind(&record.experiment_uid)
             .bind(&record.name)
             .bind(record.value)
@@ -97,7 +97,7 @@ impl ExperimentLogicTrait for ExperimentLogicPostgresClient {
     ) -> Result<(), SqlError> {
         let query = PostgresQueryHelper::get_hardware_metrics_insert_query();
 
-        sqlx::query(&query)
+        sqlx::query(query)
             .bind(&record.experiment_uid)
             .bind(record.created_at)
             .bind(record.cpu_percent_utilization)
@@ -118,7 +118,7 @@ impl ExperimentLogicTrait for ExperimentLogicPostgresClient {
     async fn get_hardware_metric(&self, uid: &str) -> Result<Vec<HardwareMetricsRecord>, SqlError> {
         let query = PostgresQueryHelper::get_hardware_metric_query();
 
-        let records: Vec<HardwareMetricsRecord> = sqlx::query_as(&query)
+        let records: Vec<HardwareMetricsRecord> = sqlx::query_as(query)
             .bind(uid)
             .fetch_all(&self.pool)
             .await?;

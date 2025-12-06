@@ -1004,6 +1004,23 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn test_postgres_dashboard_stats() {
+        let client = db_client().await;
+
+        // Run the SQL script to populate the database
+        let script = std::fs::read_to_string("tests/populate_postgres_dashboard.sql").unwrap();
+        sqlx::raw_sql(&script).execute(&client.pool).await.unwrap();
+
+        // query dashboard stats
+        let stats = client.card.query_dashboard_stats().await.unwrap();
+
+        assert_eq!(stats.nbr_data, 10);
+        assert_eq!(stats.nbr_models, 9);
+        assert_eq!(stats.nbr_experiments, 10);
+        assert_eq!(stats.nbr_prompts, 0);
+    }
+
+    #[tokio::test]
     async fn test_postgres_experiment_metrics() {
         let client = db_client().await;
 

@@ -118,3 +118,14 @@ export interface VersionPageRequest {
   cursor?: VersionCursor;
   limit?: number;
 }
+
+export interface DashBoardStats {
+  nbr_models: number;
+  nbr_data: number;
+  nbr_prompts: number;
+  nbr_experiments: number;
+}
+
+export interface DashBoardStatsResponse {
+  stats: DashBoardStats;
+}

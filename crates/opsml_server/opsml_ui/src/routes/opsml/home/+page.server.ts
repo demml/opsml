@@ -1,32 +1,29 @@
-import { getRegistryStats } from "$lib/server/card/utils";
+import { getDashboardStats } from "$lib/server/card/utils";
 import {
   getRecentCards,
   type HomePageStats,
 } from "$lib/components/home/utils.server";
-import { RegistryType } from "$lib/utils";
 import type { PageServerLoad } from "./$types";
 
 async function get_registry_stats(
   fetch: typeof globalThis.fetch
 ): Promise<HomePageStats> {
-  const [modelStats, dataStats, promptStats, experimentStats] =
-    await Promise.all([
-      getRegistryStats(fetch, RegistryType.Model),
-      getRegistryStats(fetch, RegistryType.Data),
-      getRegistryStats(fetch, RegistryType.Prompt),
-      getRegistryStats(fetch, RegistryType.Experiment),
-    ]);
+  const stats = await getDashboardStats(fetch);
 
   return {
-    nbrModels: modelStats.stats.nbr_names,
-    nbrData: dataStats.stats.nbr_names,
-    nbrPrompts: promptStats.stats.nbr_names,
-    nbrExperiments: experimentStats.stats.nbr_names,
+    nbrModels: stats.stats.nbr_models,
+    nbrData: stats.stats.nbr_data,
+    nbrPrompts: stats.stats.nbr_prompts,
+    nbrExperiments: stats.stats.nbr_experiments,
   };
 }
 
 export const load: PageServerLoad = async ({ fetch }) => {
-  let cards = await getRecentCards(fetch);
-  let stats = await get_registry_stats(fetch);
+  // Parallel fetch for better performance
+  const [cards, stats] = await Promise.all([
+    getRecentCards(fetch),
+    get_registry_stats(fetch),
+  ]);
+
   return { cards, stats };
 };
