@@ -19,7 +19,7 @@ impl AuditLogicMySqlClient {
 impl AuditLogicTrait for AuditLogicMySqlClient {
     async fn insert_audit_event(&self, event: AuditEvent) -> Result<(), SqlError> {
         let query = MySqlQueryHelper::get_audit_event_insert_query();
-        sqlx::query(&query)
+        sqlx::query(query)
             .bind(event.username)
             .bind(event.client_ip)
             .bind(event.user_agent)

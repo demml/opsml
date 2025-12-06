@@ -26,16 +26,18 @@ INSERT INTO opsml_model_registry (uid, app_env, name, space, major, minor, patch
 
 -- Populate opsml_experiment_registry
 INSERT INTO opsml_experiment_registry (uid, created_at, app_env, name, space, major, minor, patch, pre_tag, build_tag, version,  tags, datacard_uids, modelcard_uids, experimentcard_uids, promptcard_uids) VALUES 
-('550e8400-e29b-41d4-a716-446655440000', '2023-11-28 00:00:00', 'development', 'Run1', 'repo1', 1, 0, 0, 'alpha', 'build1', '0.0.0',  '["hello", "world"]', '["datacard1"]', '["modelcard1"]', '["modelcard1"]', '[]'),
-('550e8400-e29b-41d4-a716-446655440001', '2023-11-28 00:00:00', 'development', 'Run2', 'repo2', 1, 0, 1, 'beta', 'build2',  '0.0.0', '[]', '["datacard1"]', '["modelcard1"]', '["modelcard1"]', '[]'),
-('550e8400-e29b-41d4-a716-446655440002', '2023-11-29 00:00:00', 'development', 'Run3', 'repo3', 1, 1, 0, 'gamma', 'build3', '0.0.0', '[]', '["datacard1"]', '["modelcard1"]', '["modelcard1"]', '[]'),
-('550e8400-e29b-41d4-a716-446655440003', '2023-11-29 00:00:00', 'development', 'Run4', 'repo4', 1, 1, 1, 'delta', 'build4', '0.0.0', '[]', '["datacard1"]', '["modelcard1"]', '["modelcard1"]', '[]'),
-('550e8400-e29b-41d4-a716-446655440004', '2023-11-29 00:00:00', 'development', 'Run5', 'repo5', 2, 0, 0, 'epsilon', 'build5', '0.0.0', '[]', '["datacard1"]', '["modelcard1"]', '["modelcard1"]', '[]'),
-('550e8400-e29b-41d4-a716-446655440005', '2023-11-29 00:00:00', 'development', 'Run6', 'repo6', 2, 0, 1, 'zeta', 'build6', '0.0.0', '[]', '["datacard1"]', '["modelcard1"]', '["modelcard1"]', '[]'),
-('550e8400-e29b-41d4-a716-446655440006', '2023-11-29 00:00:00', 'development', 'Run7', 'repo7', 2, 1, 0, 'eta', 'build7', '0.0.0', '[]', '["datacard1"]', '["modelcard1"]', '["modelcard1"]', '[]'),
-('550e8400-e29b-41d4-a716-446655440007', '2023-11-29 00:00:00', 'development', 'Run8', 'repo8', 2, 1, 1, 'theta', 'build8', '0.0.0', '[]', '["datacard1"]', '["modelcard1"]', '["modelcard1"]', '[]'),
-('550e8400-e29b-41d4-a716-446655440008', '2023-11-29 00:00:00', 'development', 'Run9', 'repo9', 3, 0, 0, 'iota', 'build9', '0.0.0', '[]', '["datacard1"]', '["modelcard1"]', '["modelcard1"]', '[]'),
-('550e8400-e29b-41d4-a716-446655440009', '2023-11-29 00:00:00', 'development', 'Run10', 'repo10', 3, 0, 1, 'kappa', 'build10', '0.0.0', '[]', '["datacard1"]', '["modelcard1"]', '["modelcard1"]', '[]');
+('550e8400-e29b-41d4-a716-446655440000', datetime('now'), 'development', 'Run1', 'repo1', 1, 0, 0, 'alpha', 'build1', '0.0.0',  '["hello", "world"]', '["datacard1"]', '["modelcard1"]', '["modelcard1"]', '[]'),
+('550e8400-e29b-41d4-a716-446655440001', datetime('now'), 'development', 'Run2', 'repo2', 1, 0, 1, 'beta', 'build2',  '0.0.0', '[]', '["datacard1"]', '["modelcard1"]', '["modelcard1"]', '[]'),
+('550e8400-e29b-41d4-a716-446655440002', datetime('now'), 'development', 'Run3', 'repo3', 1, 1, 0, 'gamma', 'build3', '0.0.0', '[]', '["datacard1"]', '["modelcard1"]', '["modelcard1"]', '[]'),
+('550e8400-e29b-41d4-a716-446655440003', datetime('now'), 'development', 'Run4', 'repo4', 1, 1, 1, 'delta', 'build4', '0.0.0', '[]', '["datacard1"]', '["modelcard1"]', '["modelcard1"]', '[]'),
+('550e8400-e29b-41d4-a716-446655440004', datetime('now'), 'development', 'Run5', 'repo5', 2, 0, 0, 'epsilon', 'build5', '0.0.0', '[]', '["datacard1"]', '["modelcard1"]', '["modelcard1"]', '[]'),
+('550e8400-e29b-41d4-a716-446655440005', datetime('now'), 'development', 'Run6', 'repo6', 2, 0, 1, 'zeta', 'build6', '0.0.0', '[]', '["datacard1"]', '["modelcard1"]', '["modelcard1"]', '[]'),
+('550e8400-e29b-41d4-a716-446655440006', datetime('now'), 'development', 'Run7', 'repo7', 2, 1, 0, 'eta', 'build7', '0.0.0', '[]', '["datacard1"]', '["modelcard1"]', '["modelcard1"]', '[]'),
+('550e8400-e29b-41d4-a716-446655440007', datetime('now'), 'development', 'Run8', 'repo8', 2, 1, 1, 'theta', 'build8', '0.0.0', '[]', '["datacard1"]', '["modelcard1"]', '["modelcard1"]', '[]'),
+('550e8400-e29b-41d4-a716-446655440008', datetime('now'), 'development', 'Run9', 'repo9', 3, 0, 0, 'iota', 'build9', '0.0.0', '[]', '["datacard1"]', '["modelcard1"]', '["modelcard1"]', '[]'),
+('550e8400-e29b-41d4-a716-446655440009', datetime('now'), 'development', 'Run10', 'repo10', 3, 0, 1, 'kappa', 'build10', '0.0.0', '[]', '["datacard1"]', '["modelcard1"]', '["modelcard1"]', '[]'),
+('550e8400-e29b-41d4-a716-446655440010', '2023-11-28 00:00:00', 'development', 'Run11', 'repo10', 3, 0, 1, 'kappa', 'build10', '0.0.0', '[]', '["datacard1"]', '["modelcard1"]', '["modelcard1"]', '[]'),
+('550e8400-e29b-41d4-a716-446655440011', '2023-11-28 00:00:00', 'development', 'Run12', 'repo10', 3, 0, 1, 'kappa', 'build10', '0.0.0', '[]', '["datacard1"]', '["modelcard1"]', '["modelcard1"]', '[]');
 
 -- Populate opsml_audit_registry
 INSERT INTO opsml_audit_registry (uid, app_env, name, space, major, minor, patch, pre_tag, build_tag, version,  tags, approved, datacard_uids, modelcard_uids, experimentcard_uids) VALUES 

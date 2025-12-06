@@ -391,11 +391,13 @@ GrrNOufvPsvmCRO9m4ESRrk=
 }
 
 fn set_common_env_vars(scouter_url: &str) {
-    env::set_var("SCOUTER_SERVER_URI", scouter_url);
-    env::set_var("RUST_LOG", "debug");
-    env::set_var("LOG_LEVEL", "debug");
-    env::set_var("LOG_JSON", "false");
-    env::set_var("OPSML_AUTH", "true");
+    unsafe {
+        env::set_var("SCOUTER_SERVER_URI", scouter_url);
+        env::set_var("RUST_LOG", "debug");
+        env::set_var("LOG_LEVEL", "debug");
+        env::set_var("LOG_JSON", "false");
+        env::set_var("OPSML_AUTH", "true");
+    }
 }
 
 /// Set up the SSO provider and return the mock server
@@ -403,31 +405,39 @@ async fn setup_sso_provider(provider: &str) -> Option<MockSsoServer> {
     // Create initial mock server and set common SSO variables
     let mock_sso_server = MockSsoServer::new().await;
 
-    std::env::set_var("OPSML_CLIENT_ID", "opsml-client");
-    std::env::set_var("OPSML_CLIENT_SECRET", "client-secret");
-    std::env::set_var("OPSML_REDIRECT_URI", "http://localhost:8080/callback");
-    std::env::set_var("OPSML_AUTH_DOMAIN", &mock_sso_server.url);
-    std::env::set_var("OPSML_USE_SSO", "true");
+    unsafe {
+        std::env::set_var("OPSML_CLIENT_ID", "opsml-client");
+        std::env::set_var("OPSML_CLIENT_SECRET", "client-secret");
+        std::env::set_var("OPSML_REDIRECT_URI", "http://localhost:8080/callback");
+        std::env::set_var("OPSML_AUTH_DOMAIN", &mock_sso_server.url);
+        std::env::set_var("OPSML_USE_SSO", "true");
 
-    // default env vars for sso (these are only use for DefaultSsoSettings)
-    std::env::set_var("OPSML_TOKEN_ENDPOINT", "oauth/token");
-    std::env::set_var("OPSML_CERT_ENDPOINT", "oauth/keys");
-    std::env::set_var("OPSML_AUTHORIZATION_ENDPOINT", "oauth/authorize");
+        // default env vars for sso (these are only use for DefaultSsoSettings)
+        std::env::set_var("OPSML_TOKEN_ENDPOINT", "oauth/token");
+        std::env::set_var("OPSML_CERT_ENDPOINT", "oauth/keys");
+        std::env::set_var("OPSML_AUTHORIZATION_ENDPOINT", "oauth/authorize");
+    }
 
     println!("Setting up SSO provider: {provider}");
 
     match provider {
         "keycloak" => {
-            std::env::set_var("SSO_PROVIDER", "keycloak");
-            std::env::set_var("OPSML_AUTH_REALM", "opsml");
+            unsafe {
+                std::env::set_var("SSO_PROVIDER", "keycloak");
+                std::env::set_var("OPSML_AUTH_REALM", "opsml");
+            }
             Some(mock_sso_server)
         }
         "okta" => {
-            std::env::set_var("SSO_PROVIDER", "okta");
+            unsafe {
+                std::env::set_var("SSO_PROVIDER", "okta");
+            }
             Some(mock_sso_server)
         }
         _ => {
-            std::env::set_var("SSO_PROVIDER", "default");
+            unsafe {
+                std::env::set_var("SSO_PROVIDER", "default");
+            }
             Some(mock_sso_server)
         }
     }
