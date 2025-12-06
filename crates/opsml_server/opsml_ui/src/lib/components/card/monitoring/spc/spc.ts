@@ -42,10 +42,11 @@ export interface SpcDriftConfig {
   space: string;
   name: string;
   version: string;
+  uid: string;
   alert_config: SpcAlertConfig;
-  feature_map: FeatureMap; // You'll need to define FeatureMap type
+  feature_map: FeatureMap;
   targets: string[];
-  drift_type: DriftType; // You'll need to define DriftType enum
+  drift_type: DriftType;
 }
 
 export interface SpcAlertConfig {
