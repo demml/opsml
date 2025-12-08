@@ -39,6 +39,7 @@ export enum RoutePaths {
   DRIFT_PROFILE = "/opsml/api/scouter/profile",
   DRIFT_ALERT = "/opsml/api/scouter/alerts",
   TRACE_PAGE = "/opsml/api/scouter/trace/paginated",
+  TRACE_SPANS = "/opsml/api/scouter/trace/spans",
 
   // Experiment
   EXPERIMENT_METRICS = "/opsml/api/experiment/metrics",
