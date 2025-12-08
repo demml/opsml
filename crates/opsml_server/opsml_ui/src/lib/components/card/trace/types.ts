@@ -30,9 +30,6 @@ export interface TraceMetricBucket {
 }
 
 export interface TraceFilters {
-  space?: string;
-  name?: string;
-  version?: string;
   service_name?: string;
   has_errors?: boolean;
   status_code?: number;
