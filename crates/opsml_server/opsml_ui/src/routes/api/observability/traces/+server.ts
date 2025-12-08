@@ -1,11 +1,35 @@
 import { type RequestHandler, json } from "@sveltejs/kit";
-import { getLLMRecordPage } from "$lib/server/card/monitoring/utils";
-import type { TraceFilters } from "$lib/components/card/trace/types";
+import type {
+  TraceFilters,
+  TracePaginationResponse,
+} from "$lib/components/card/trace/types";
+import { getTracePage } from "$lib/server/trace/utils";
 
-/** Get a paginated traces
+/**
+ * POST endpoint for fetching paginated traces
+ * @param request - SvelteKit request containing TraceFilters in body
+ * @param fetch - SvelteKit fetch function for server-side requests
+ * @returns JSON response with either trace data or error message
  */
 export const POST: RequestHandler = async ({ request, fetch }) => {
-  const { service_info, status, cursor }: TraceFilters = await request.json();
-  const response = await getLLMRecordPage(fetch, service_info, status, cursor);
-  return json(response);
+  try {
+    const filters: TraceFilters = await request.json();
+    const response: TracePaginationResponse = await getTracePage(
+      fetch,
+      filters
+    );
+
+    return json({ response, error: null });
+  } catch (error) {
+    console.error("Error fetching traces:", error);
+
+    return json(
+      {
+        response: null,
+        error:
+          error instanceof Error ? error.message : "Failed to fetch traces",
+      },
+      { status: 500 }
+    );
+  }
 };
