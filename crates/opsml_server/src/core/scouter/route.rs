@@ -28,7 +28,8 @@ use scouter_client::{
     Alerts, BinnedMetrics, BinnedPsiFeatureMetrics, DriftAlertRequest, DriftRequest,
     LLMDriftRecord, LLMDriftRecordPaginationRequest, PaginationResponse, ProfileRequest,
     ProfileStatusRequest, RegisteredProfileResponse, ScouterResponse, ScouterServerError,
-    SpcDriftFeatures, UpdateAlertResponse, UpdateAlertStatus,
+    SpcDriftFeatures, TraceFilters, TracePaginationResponse, UpdateAlertResponse,
+    UpdateAlertStatus,
 };
 use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::sync::Arc;
@@ -755,6 +756,62 @@ pub async fn check_scouter_health(
                 internal_server_error(e, "Failed to parse scouter error response")
             })?;
             // return error response
+            Err((status_code, Json(OpsmlServerError::new(body.error))))
+        }
+    }
+}
+
+/// Get drift  profiles for UI
+/// UI will make a request to return all profiles for a given card
+/// The card is identified by parent drift path.
+/// All profiles will be downloaded, decrypted and returned to the UI in the DriftProfile enum
+#[instrument(skip_all)]
+pub async fn get_paginated_traces(
+    State(state): State<Arc<AppState>>,
+    Extension(perms): Extension<UserPermissions>,
+    Json(req): Json<TraceFilters>,
+) -> Result<Json<TracePaginationResponse>, (StatusCode, Json<OpsmlServerError>)> {
+    let exchange_token = state.exchange_token_from_perms(&perms).await.map_err(|e| {
+        error!("Failed to exchange token for scouter: {e}");
+        internal_server_error(e, "Failed to exchange token for scouter")
+    })?;
+
+    let response = state
+        .scouter_client
+        .request(
+            scouter::Routes::TracePage,
+            RequestType::Post,
+            Some(serde_json::to_value(&req).map_err(|e| {
+                error!("Failed to serialize trace filter request: {e}");
+                internal_server_error(e, "Failed to serialize trace filter request")
+            })?),
+            None,
+            None,
+            &exchange_token,
+        )
+        .await
+        .map_err(|e| {
+            error!("Failed to acknowledge drift alerts: {e}");
+            internal_server_error(e, "Failed to acknowledge drift alerts")
+        })?;
+
+    let status_code = response.status();
+    match status_code.is_success() {
+        true => {
+            let body = response
+                .json::<TracePaginationResponse>()
+                .await
+                .map_err(|e| {
+                    error!("Failed to parse scouter pagination response: {e}");
+                    internal_server_error(e, "Failed to parse scouter response")
+                })?;
+            Ok(Json(body))
+        }
+        false => {
+            let body = response.json::<ScouterServerError>().await.map_err(|e| {
+                error!("Failed to parse scouter error response: {e}");
+                internal_server_error(e, "Failed to parse scouter error response")
+            })?;
             Err((status_code, Json(OpsmlServerError::new(body.error))))
         }
     }
