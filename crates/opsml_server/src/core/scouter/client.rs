@@ -28,6 +28,7 @@ pub enum Routes {
     Healthcheck,
     TracePage,
     TraceSpans,
+    TraceMetrics,
 }
 
 impl Routes {
@@ -56,6 +57,7 @@ impl Routes {
             // Scouter Trace Routes
             Routes::TracePage => "scouter/trace/paginated",
             Routes::TraceSpans => "scouter/trace/spans",
+            Routes::TraceMetrics => "scouter/trace/metrics",
         }
     }
 }

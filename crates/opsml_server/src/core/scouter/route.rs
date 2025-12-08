@@ -28,8 +28,9 @@ use scouter_client::{
     Alerts, BinnedMetrics, BinnedPsiFeatureMetrics, DriftAlertRequest, DriftRequest,
     LLMDriftRecord, LLMDriftRecordPaginationRequest, PaginationResponse, ProfileRequest,
     ProfileStatusRequest, RegisteredProfileResponse, ScouterResponse, ScouterServerError,
-    SpcDriftFeatures, TraceFilters, TracePaginationResponse, TraceRequest, TraceSpansResponse,
-    UpdateAlertResponse, UpdateAlertStatus,
+    SpcDriftFeatures, TraceFilters, TraceMetricsRequest, TraceMetricsResponse,
+    TracePaginationResponse, TraceRequest, TraceSpansResponse, UpdateAlertResponse,
+    UpdateAlertStatus,
 };
 use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::sync::Arc;
@@ -866,6 +867,58 @@ pub async fn get_trace_spans(
     }
 }
 
+/// Get trace metrics
+#[instrument(skip_all)]
+pub async fn get_trace_metrics(
+    State(state): State<Arc<AppState>>,
+    Extension(perms): Extension<UserPermissions>,
+    Query(params): Query<TraceMetricsRequest>,
+) -> Result<Json<TraceMetricsResponse>, (StatusCode, Json<OpsmlServerError>)> {
+    let exchange_token = state.exchange_token_from_perms(&perms).await.map_err(|e| {
+        error!("Failed to exchange token for scouter: {e}");
+        internal_server_error(e, "Failed to exchange token for scouter")
+    })?;
+
+    let query_string = serde_qs::to_string(&params).map_err(|e| {
+        error!("Failed to serialize query string: {e}");
+        internal_server_error(e, "Failed to serialize query string")
+    })?;
+
+    let response = state
+        .scouter_client
+        .request(
+            scouter::Routes::TraceMetrics,
+            RequestType::Get,
+            None,
+            Some(query_string),
+            None,
+            &exchange_token,
+        )
+        .await
+        .map_err(|e| {
+            error!("Failed to get trace metrics: {e}");
+            internal_server_error(e, "Failed to get trace metrics")
+        })?;
+
+    let status_code = response.status();
+    match status_code.is_success() {
+        true => {
+            let body = response.json::<TraceMetricsResponse>().await.map_err(|e| {
+                error!("Failed to parse scouter pagination response: {e}");
+                internal_server_error(e, "Failed to parse scouter response")
+            })?;
+            Ok(Json(body))
+        }
+        false => {
+            let body = response.json::<ScouterServerError>().await.map_err(|e| {
+                error!("Failed to parse scouter error response: {e}");
+                internal_server_error(e, "Failed to parse scouter error response")
+            })?;
+            Err((status_code, Json(OpsmlServerError::new(body.error))))
+        }
+    }
+}
+
 pub async fn get_scouter_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
     let result = catch_unwind(AssertUnwindSafe(|| {
         Router::new()
@@ -907,6 +960,10 @@ pub async fn get_scouter_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
             .route(
                 &format!("{prefix}/scouter/trace/spans"),
                 get(get_trace_spans),
+            )
+            .route(
+                &format!("{prefix}/scouter/trace/metrics"),
+                get(get_trace_metrics),
             )
     }));
 

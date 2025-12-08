@@ -118,3 +118,23 @@ export interface TraceDetail {
   error_count: number;
   critical_path_duration_ms: number;
 }
+
+export interface TraceSpansResponse {
+  spans: TraceSpan[];
+}
+
+export interface TraceRequest {
+  trace_id: string;
+  service_name?: string;
+}
+
+export interface TraceMetricsRequest {
+  service_name?: string;
+  start_time: DateTime;
+  end_time: DateTime;
+  bucket_interval: string;
+}
+
+export interface TraceMetricsResponse {
+  buckets: TraceMetricBucket[];
+}
