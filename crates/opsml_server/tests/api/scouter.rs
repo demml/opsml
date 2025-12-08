@@ -77,7 +77,7 @@ async fn test_scouter_routes_insert_profile() {
         space: helper.space.clone(),
         drift_type: DriftType::Psi,
         profile: "test_profile".to_string(),
-        version_request: VersionRequest::default(),
+        version_request: Some(VersionRequest::default()),
         active: true,
         deactivate_others: false,
     };
@@ -116,7 +116,7 @@ async fn test_scouter_routes_update_profile() {
             space: helper.space.clone(),
             drift_type: DriftType::Spc,
             profile: serialized,
-            version_request: VersionRequest::default(),
+            version_request: Some(VersionRequest::default()),
             active: true,
             deactivate_others: false,
         },

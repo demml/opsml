@@ -174,14 +174,14 @@ export async function getLatestMonitoringMetrics(
   max_data_points: number
 ): Promise<BinnedDriftMap> {
   // for dev, return example data
-  if (import.meta.env.DEV) {
-    return {
-      [DriftType.Spc]: mockSpcMetrics,
-      [DriftType.Psi]: mockPsiMetrics,
-      [DriftType.Custom]: mockCustomMetrics,
-      [DriftType.LLM]: mockLLMMetrics,
-    };
-  }
+  //if (import.meta.env.DEV) {
+  //  return {
+  //    [DriftType.Spc]: mockSpcMetrics,
+  //    [DriftType.Psi]: mockPsiMetrics,
+  //    [DriftType.Custom]: mockCustomMetrics,
+  //    [DriftType.LLM]: mockLLMMetrics,
+  //  };
+  //}
 
   let resp = await createInternalApiClient(fetch).post(
     ServerPaths.MONITORING_METRICS,
@@ -209,9 +209,9 @@ export async function getMonitoringDriftProfiles(
   driftMap: Record<string, DriftProfileUri>,
   registryType: RegistryType
 ): Promise<DriftProfileResponse> {
-  if (import.meta.env.DEV) {
-    return mockDriftProfileResponse;
-  }
+  //if (import.meta.env.DEV) {
+  //  return mockDriftProfileResponse;
+  //}
 
   let resp = createInternalApiClient(fetch).post(
     ServerPaths.MONITORING_PROFILES,
@@ -241,9 +241,9 @@ export async function getMonitoringAlerts(
   timeInterval: TimeInterval,
   active: boolean
 ): Promise<Alert[]> {
-  if (import.meta.env.DEV) {
-    return mockAlerts;
-  }
+  //if (import.meta.env.DEV) {
+  // return mockAlerts;
+  //}
 
   let resp = await createInternalApiClient(fetch).post(
     ServerPaths.MONITORING_ALERTS,
@@ -264,9 +264,9 @@ export async function getLLMMonitoringRecordPage(
   status?: Status,
   cursor?: PaginationCursor
 ): Promise<LLMPageResponse> {
-  if (import.meta.env.DEV) {
-    return mockLLMDriftPageResponse;
-  }
+  //if (import.meta.env.DEV) {
+  //return mockLLMDriftPageResponse;
+  //}
 
   let resp = await createInternalApiClient(fetch).post(
     ServerPaths.LLM_MONITORING_RECORDS,
