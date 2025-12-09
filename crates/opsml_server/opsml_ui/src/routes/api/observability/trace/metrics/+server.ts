@@ -1,11 +1,10 @@
 import { type RequestHandler, json } from "@sveltejs/kit";
 import type {
-  TraceRequest,
-  TraceSpansResponse,
   TraceMetricsRequest,
   TraceMetricsResponse,
-} from "$lib/components/card/trace/types";
+} from "$lib/components/trace/types";
 import { getTraceMetrics } from "$lib/server/trace/utils";
+import { logger } from "$lib/server/logger";
 
 /**
  * POST endpoint for fetching trace metrics
@@ -15,11 +14,18 @@ import { getTraceMetrics } from "$lib/server/trace/utils";
  */
 export const POST: RequestHandler = async ({ request, fetch }) => {
   try {
-    const filters: TraceMetricsRequest = await request.json();
+    const requestBody: TraceMetricsRequest = await request.json();
+
+    logger.info(
+      "Received request for trace metrics " + JSON.stringify(requestBody)
+    );
+
     const response: TraceMetricsResponse = await getTraceMetrics(
       fetch,
-      filters
+      requestBody
     );
+
+    logger.info("Successfully fetched trace metrics");
 
     return json({ response, error: null });
   } catch (error) {

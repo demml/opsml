@@ -136,5 +136,5 @@ export interface TraceMetricsRequest {
 }
 
 export interface TraceMetricsResponse {
-  buckets: TraceMetricBucket[];
+  metrics: TraceMetricBucket[];
 }

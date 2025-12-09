@@ -2,7 +2,7 @@ import { type RequestHandler, json } from "@sveltejs/kit";
 import type {
   TraceFilters,
   TracePaginationResponse,
-} from "$lib/components/card/trace/types";
+} from "$lib/components/trace/types";
 import { getTracePage } from "$lib/server/trace/utils";
 
 /**

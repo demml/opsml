@@ -2,7 +2,7 @@ import { type RequestHandler, json } from "@sveltejs/kit";
 import type {
   TraceRequest,
   TraceSpansResponse,
-} from "$lib/components/card/trace/types";
+} from "$lib/components/trace/types";
 import { getTraceSpans } from "$lib/server/trace/utils";
 
 /**
