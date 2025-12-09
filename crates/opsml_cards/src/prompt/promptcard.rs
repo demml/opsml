@@ -245,6 +245,15 @@ impl PromptCard {
         debug!("Creating drift profile");
 
         let mut drifter = PyDrifter::new();
+
+        // if space, name, version are __missing__, set them from card
+        config.update_config_args(
+            Some(self.space.clone()),
+            Some(self.name.clone()),
+            Some(self.version.clone()),
+            None,
+            None,
+        )?;
         let profile = drifter.create_llm_drift_profile(py, config, metrics, workflow)?;
         self.drift_profile.add_profile(py, alias, profile.clone())?;
 
