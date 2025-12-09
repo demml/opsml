@@ -6,7 +6,7 @@ import type { PageLoad } from "./$types";
 import {
   mockTraceMetrics,
   mockTracePaginationResponse,
-} from "$lib/components/card/trace/mock";
+} from "$lib/components/trace/mock";
 
 export const load: PageLoad = async ({ parent, fetch }) => {
   return {

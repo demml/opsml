@@ -874,6 +874,7 @@ pub async fn get_trace_metrics(
     Extension(perms): Extension<UserPermissions>,
     Query(params): Query<TraceMetricsRequest>,
 ) -> Result<Json<TraceMetricsResponse>, (StatusCode, Json<OpsmlServerError>)> {
+    debug!("Getting trace metrics with params: {:?}", &params);
     let exchange_token = state.exchange_token_from_perms(&perms).await.map_err(|e| {
         error!("Failed to exchange token for scouter: {e}");
         internal_server_error(e, "Failed to exchange token for scouter")
@@ -907,6 +908,7 @@ pub async fn get_trace_metrics(
                 error!("Failed to parse scouter pagination response: {e}");
                 internal_server_error(e, "Failed to parse scouter response")
             })?;
+            debug!("Trace metrics response: {:?}", &body);
             Ok(Json(body))
         }
         false => {

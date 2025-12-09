@@ -1,17 +1,8 @@
 import type { ChartConfiguration } from "chart.js";
 import type { TraceMetricBucket } from "./types";
-import { createTimeSeriesChart } from "$lib/components/viz/timeseries";
 import { buildTimeChart } from "$lib/components/viz/timeseries";
-import type {
-  ChartjsBarDataset,
-  ChartjsLineDataset,
-} from "$lib/components/viz/utils";
-import { format } from "date-fns";
-import {
-  generateColors,
-  handleResize,
-  tooltip,
-} from "$lib/components/viz/utils";
+import type { ChartjsLineDataset } from "$lib/components/viz/utils";
+import { generateColors } from "$lib/components/viz/utils";
 
 /**
  * Create bar chart for trace counts

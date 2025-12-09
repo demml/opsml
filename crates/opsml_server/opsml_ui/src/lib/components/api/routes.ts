@@ -100,4 +100,7 @@ export enum ServerPaths {
   EXPERIMENT_HARDWARE = "/api/card/experiment/hardware",
   CREATE_SPACE = "/api/space/create",
   HEALTHCHECK = "/api/health",
+  TRACE_METRICS = "/api/observability/trace/metrics",
+  TRACE_SPANS = "/api/observability/trace/spans",
+  TRACE_PAGE = "/api/observability/trace",
 }

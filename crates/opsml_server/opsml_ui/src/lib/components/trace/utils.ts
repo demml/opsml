@@ -1,4 +1,17 @@
-import type { TraceListItem, TraceCursor, TraceSpan, Attribute } from "./types";
+import { ServerPaths } from "../api/routes";
+import type {
+  TraceListItem,
+  TraceCursor,
+  TraceSpan,
+  Attribute,
+  TraceMetricsRequest,
+  TraceMetricsResponse,
+  TraceSpansResponse,
+  TraceRequest,
+  TraceFilters,
+  TracePaginationResponse,
+} from "./types";
+import { createInternalApiClient } from "$lib/api/internalClient";
 
 /**
  * Extract the next pagination cursor from a list of traces.
@@ -192,4 +205,77 @@ export function hasSpanError(span: TraceSpan): boolean {
 export function getHttpStatusCode(span: TraceSpan): number | null {
   const statusCode = getAttributeValue(span.attributes, "http.status_code");
   return typeof statusCode === "number" ? statusCode : null;
+}
+
+export async function getServerTraceMetrics(
+  fetch: typeof globalThis.fetch,
+  metricsRequest: TraceMetricsRequest
+): Promise<TraceMetricsResponse> {
+  console.log("Fetching TraceMetrics with request:", metricsRequest);
+
+  const resp = await createInternalApiClient(fetch).post(
+    ServerPaths.TRACE_METRICS,
+    metricsRequest
+  );
+
+  const { response, error } = await resp.json();
+
+  if (error) {
+    throw new Error(error);
+  }
+
+  return response as TraceMetricsResponse;
+}
+
+export async function getServerTraceSpans(
+  fetch: typeof globalThis.fetch,
+  traceRequest: TraceRequest
+): Promise<TraceSpansResponse> {
+  const resp = await createInternalApiClient(fetch).post(
+    ServerPaths.TRACE_SPANS,
+    traceRequest
+  );
+
+  const { response, error } = await resp.json();
+
+  if (error) {
+    throw new Error(error);
+  }
+
+  return response as TraceSpansResponse;
+}
+
+export async function getServerTracePage(
+  fetch: typeof globalThis.fetch,
+  filters: TraceFilters
+): Promise<TracePaginationResponse> {
+  const resp = await createInternalApiClient(fetch).post(
+    ServerPaths.TRACE_PAGE,
+    filters
+  );
+
+  const { response, error } = await resp.json();
+
+  if (error) {
+    throw new Error(error);
+  }
+
+  return response as TracePaginationResponse;
+}
+
+export function getCookie(name: string): string | null {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) {
+    const encodedValue = parts.pop()?.split(";").shift();
+    // Always decode to handle browser encoding
+    return encodedValue ? decodeURIComponent(encodedValue) : null;
+  }
+  return null;
+}
+
+export function setCookie(name: string, value: string): void {
+  const maxAge = 60 * 60; // 1 hour
+  // Don't manually encode - browser handles it
+  document.cookie = `${name}=${value}; path=/; max-age=${maxAge}; samesite=lax`;
 }

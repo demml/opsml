@@ -3,10 +3,9 @@
   import logo from "$lib/images/opsml_word.webp";
   import { page } from "$app/state";
   import { goto } from "$app/navigation";
-  import IconX from 'lucide-svelte/icons/x';
   import { KeySquare } from 'lucide-svelte';
   import UserDropdown from "../user/UserDropdown.svelte";
-
+  import { uiSettingsStore } from '$lib/components/settings/settings.svelte';
 
   let isSidebarOpen = $state(false);
 
@@ -19,15 +18,16 @@
     goto(path);
   }
 
-  
+
   function logInHandle() {
     const currentPage = page.url.pathname;
     goto('/opsml/user/login?url=' + currentPage);
   }
 
   let imageLoaded = $state(false);
+  let scouterEnabled = $derived(uiSettingsStore.scouterEnabled);
 
-  const names = ["Spaces", "Models", "Data", "GenAI", "Experiments", "Services", "Observability"];
+  const names = ["Spaces", "Models", "Data", "GenAI", "Experiments", "Services"];
 
 
   onMount(() => {
@@ -47,8 +47,8 @@
       <div class="flex items-center justify-start gap-4">
         <a href="/opsml/home" class="items-center">
           <div class="w-[120px] h-10">
-            <img 
-              src={logo} 
+            <img
+              src={logo}
               class="h-10 w-[120px] object-contain"
               alt="Opsml Logo"
             />
@@ -62,6 +62,16 @@
                 {name}
               </a>
           {/each}
+
+          {#if scouterEnabled}
+            <a
+              href="/opsml/observability"
+              class:active={page.url.pathname.includes('/opsml/observability')}
+              data-sveltekit-preload-data="hover"
+            >
+              Observability
+            </a>
+          {/if}
         </div>
       </div>
     </div>
@@ -84,14 +94,14 @@
           <KeySquare color="#5948a3"/>
         </button>
 
-        <div 
-          aria-label="user" 
+        <div
+          aria-label="user"
           class="m800:hidden relative flex items-center justify-center rounded-base border-2 border-black shadow p-2 shadow-hover bg-surface-50 w-9 h-9"
         >
           <UserDropdown/>
         </div>
       </div>
-  </div>  
+  </div>
 </nav>
 
 

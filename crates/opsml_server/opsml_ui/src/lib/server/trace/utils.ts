@@ -5,7 +5,7 @@ import type {
   TraceRequest,
   TraceMetricsRequest,
   TraceSpansResponse,
-} from "$lib/components/card/trace/types";
+} from "$lib/components/trace/types";
 import { createOpsmlClient } from "../api/opsmlClient";
 import { RoutePaths } from "$lib/components/api/routes";
 
@@ -35,7 +35,7 @@ export async function getTraceMetrics(
   fetch: typeof globalThis.fetch,
   metricsRequest: TraceMetricsRequest
 ): Promise<TraceMetricsResponse> {
-  const response = await createOpsmlClient(fetch).post(
+  const response = await createOpsmlClient(fetch).get(
     RoutePaths.TRACE_METRICS,
     metricsRequest
   );
