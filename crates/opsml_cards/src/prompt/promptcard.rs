@@ -174,7 +174,6 @@ impl PromptCard {
     #[pyo3(signature = (path))]
     pub fn save(&mut self, py: Python, path: PathBuf) -> Result<(), CardError> {
         debug!("Saving PromptCard to path: {:?}", path);
-        self.update_drift_config_args(py)?;
 
         // save drift profile
         let drift_profile_uri_map = if self.drift_profile.is_empty() {
@@ -245,19 +244,28 @@ impl PromptCard {
         debug!("Creating drift profile");
 
         let mut drifter = PyDrifter::new();
-
-        // if space, name, version are __missing__, set them from card
-        config.update_config_args(
-            Some(self.space.clone()),
-            Some(self.name.clone()),
-            Some(self.version.clone()),
-            None,
-            None,
-        )?;
         let profile = drifter.create_llm_drift_profile(py, config, metrics, workflow)?;
         self.drift_profile.add_profile(py, alias, profile.clone())?;
 
         Ok(())
+    }
+
+    #[pyo3(name = "_update_drift_config_args")]
+    fn update_drift_config_args(&mut self, py: Python) -> Result<(), CardError> {
+        // if drift_profiles is empty, return
+        if self.drift_profile.is_empty() {
+            Ok(())
+        } else {
+            // set new config args from card and update all profiles
+            let config_args = PyDict::new(py);
+            config_args.set_item("name", &self.name)?;
+            config_args.set_item("space", &self.space)?;
+            config_args.set_item("version", &self.version)?;
+
+            self.drift_profile.update_config_args(py, &config_args)?;
+
+            Ok(())
+        }
     }
 }
 
@@ -350,22 +358,5 @@ impl PromptCard {
         }
 
         Ok(())
-    }
-
-    fn update_drift_config_args(&mut self, py: Python) -> Result<(), CardError> {
-        // if drift_profiles is empty, return
-        if self.drift_profile.is_empty() {
-            Ok(())
-        } else {
-            // set new config args from card and update all profiles
-            let config_args = PyDict::new(py);
-            config_args.set_item("name", &self.name)?;
-            config_args.set_item("space", &self.space)?;
-            config_args.set_item("version", &self.version)?;
-
-            self.drift_profile.update_config_args(py, &config_args)?;
-
-            Ok(())
-        }
     }
 }

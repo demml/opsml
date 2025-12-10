@@ -114,42 +114,42 @@
   }
 
   function handleCustomRange() {
-  if (!customStartDate || !customEndDate) {
-    alert('Please select both start and end dates');
-    return;
-  }
+    if (!customStartDate || !customEndDate) {
+      alert('Please select both start and end dates');
+      return;
+    }
 
-  const startDateTime = new Date(`${customStartDate}T${customStartTime || '00:00:00'}`);
-  const endDateTime = new Date(`${customEndDate}T${customEndTime || '23:59:59'}`);
+    const startDateTime = new Date(`${customStartDate}T${customStartTime || '00:00:00'}`);
+    const endDateTime = new Date(`${customEndDate}T${customEndTime || '23:59:59'}`);
 
-  if (isNaN(startDateTime.getTime()) || isNaN(endDateTime.getTime())) {
-    alert('Invalid date or time selected');
-    return;
-  }
+    if (isNaN(startDateTime.getTime()) || isNaN(endDateTime.getTime())) {
+      alert('Invalid date or time selected');
+      return;
+    }
 
-  const startTime = startDateTime.toISOString() as DateTime;
-  const endTime = endDateTime.toISOString() as DateTime;
+    const startTime = startDateTime.toISOString() as DateTime;
+    const endTime = endDateTime.toISOString() as DateTime;
 
-  if (startTime >= endTime) {
-    alert('Start time must be before end time');
-    return;
-  }
+    if (startTime >= endTime) {
+      alert('Start time must be before end time');
+      return;
+    }
 
-  // Calculate optimal bucket for custom range
-  const durationMs = endDateTime.getTime() - startDateTime.getTime();
-  const bucketInterval = calculateCustomBucketInterval(durationMs);
+    // Calculate optimal bucket for custom range
+    const durationMs = endDateTime.getTime() - startDateTime.getTime();
+    const bucketInterval = calculateCustomBucketInterval(durationMs);
 
-  const range: TimeRange = {
-    label: 'Custom Range',
-    value: 'custom',
-    startTime,
-    endTime,
-    bucketInterval,
-  };
-  selectedRange = range;
-  onRangeChange(range);
-  isOpen = false;
-  showCustomPicker = false;
+    const range: TimeRange = {
+      label: 'Custom Range',
+      value: 'custom',
+      startTime,
+      endTime,
+      bucketInterval,
+    };
+    selectedRange = range;
+    onRangeChange(range);
+    isOpen = false;
+    showCustomPicker = false;
 }
 
 function calculateCustomBucketInterval(durationMs: number): string {

@@ -279,3 +279,60 @@ export function setCookie(name: string, value: string): void {
   // Don't manually encode - browser handles it
   document.cookie = `${name}=${value}; path=/; max-age=${maxAge}; samesite=lax`;
 }
+
+/**
+ * Calculate dynamic time range based on relative interval
+ */
+export function calculateTimeRange(range: string): {
+  startTime: string;
+  endTime: string;
+  bucketInterval: string;
+} {
+  const now = new Date();
+  let startTime: Date;
+  let bucketInterval: string;
+
+  switch (range) {
+    case "15min":
+      startTime = new Date(now.getTime() - 15 * 60 * 1000);
+      bucketInterval = "1 minutes";
+      break;
+    case "30min":
+      startTime = new Date(now.getTime() - 30 * 60 * 1000);
+      bucketInterval = "1 minutes";
+      break;
+    case "1hour":
+      startTime = new Date(now.getTime() - 60 * 60 * 1000);
+      bucketInterval = "2 minutes";
+      break;
+    case "4hours":
+      startTime = new Date(now.getTime() - 4 * 60 * 60 * 1000);
+      bucketInterval = "10 minutes";
+      break;
+    case "12hours":
+      startTime = new Date(now.getTime() - 12 * 60 * 60 * 1000);
+      bucketInterval = "30 minutes";
+      break;
+    case "24hours":
+      startTime = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+      bucketInterval = "1 hours";
+      break;
+    case "7days":
+      startTime = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      bucketInterval = "6 hours";
+      break;
+    case "30days":
+      startTime = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+      bucketInterval = "1 days";
+      break;
+    default:
+      startTime = new Date(now.getTime() - 15 * 60 * 1000);
+      bucketInterval = "1 minutes";
+  }
+
+  return {
+    startTime: startTime.toISOString(),
+    endTime: now.toISOString(),
+    bucketInterval,
+  };
+}

@@ -285,9 +285,6 @@ impl ModelCard {
             .as_ref()
             .ok_or_else(|| CardError::InterfaceNotFoundError)?;
 
-        // scouter integration: update drift config args
-        self.update_drift_config_args(py)?;
-
         let metadata = model
             .bind(py)
             .call_method("save", (path.clone(), save_kwargs), None)
@@ -499,12 +496,8 @@ impl ModelCard {
             Err(CardError::InterfaceNotFoundError)
         }
     }
-}
 
-impl ModelCard {
-    pub fn set_artifact_key(&mut self, key: ArtifactKey) {
-        self.artifact_key = Some(key);
-    }
+    #[pyo3(name = "_update_drift_config_args")]
     fn update_drift_config_args(&self, py: Python) -> Result<(), CardError> {
         let interface = self.interface.as_ref().unwrap().bind(py);
         let drift_profiles = interface.getattr("drift_profile")?;
@@ -525,6 +518,12 @@ impl ModelCard {
 
             Ok(())
         }
+    }
+}
+
+impl ModelCard {
+    pub fn set_artifact_key(&mut self, key: ArtifactKey) {
+        self.artifact_key = Some(key);
     }
 
     fn load_interface(

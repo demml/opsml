@@ -497,6 +497,8 @@ impl CardRegistry {
         card: &Bound<'_, PyAny>,
         drift_args: Option<DriftArgs>,
     ) -> Result<(), RegistryError> {
+        // update drift config args before uploading profiles to scouter and saving
+        card.call_method0("_update_drift_config_args")?;
         let drift_profiles = card.getattr("drift_profile")?;
         let binding = drift_profiles.call_method0("values")?;
         let collected_profiles = binding

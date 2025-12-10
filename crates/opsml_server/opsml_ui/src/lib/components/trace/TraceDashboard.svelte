@@ -18,119 +18,52 @@
       start_time: DateTime;
       end_time: DateTime;
       bucket_interval: string;
+      selected_range: string;
     };
   } = $props();
 
   let isUpdating = $state(false);
 
-  function determineTimeRangeFromDuration(
-    startTime: DateTime,
-    endTime: DateTime,
-    bucketInterval: string
-  ): TimeRange {
-    const start = new Date(startTime);
-    const end = new Date(endTime);
-    const durationMs = end.getTime() - start.getTime();
-    const durationMinutes = durationMs / (1000 * 60);
-
-    // Match duration to preset ranges (with some tolerance for timing differences)
-    if (Math.abs(durationMinutes - 15) < 1) {
-      return {
-        label: 'Past 15 Minutes',
-        value: '15min',
-        startTime,
-        endTime,
-        bucketInterval,
-      };
-    } else if (Math.abs(durationMinutes - 30) < 1) {
-      return {
-        label: 'Past 30 Minutes',
-        value: '30min',
-        startTime,
-        endTime,
-        bucketInterval,
-      };
-    } else if (Math.abs(durationMinutes - 60) < 2) {
-      return {
-        label: 'Past 1 Hour',
-        value: '1hour',
-        startTime,
-        endTime,
-        bucketInterval,
-      };
-    } else if (Math.abs(durationMinutes - 240) < 5) {
-      return {
-        label: 'Past 4 Hours',
-        value: '4hours',
-        startTime,
-        endTime,
-        bucketInterval,
-      };
-    } else if (Math.abs(durationMinutes - 720) < 10) {
-      return {
-        label: 'Past 12 Hours',
-        value: '12hours',
-        startTime,
-        endTime,
-        bucketInterval,
-      };
-    } else if (Math.abs(durationMinutes - 1440) < 20) {
-      return {
-        label: 'Past 24 Hours',
-        value: '24hours',
-        startTime,
-        endTime,
-        bucketInterval,
-      };
-    } else if (Math.abs(durationMinutes - 10080) < 60) {
-      return {
-        label: 'Past 7 Days',
-        value: '7days',
-        startTime,
-        endTime,
-        bucketInterval,
-      };
-    } else if (Math.abs(durationMinutes - 43200) < 240) {
-      return {
-        label: 'Past 30 Days',
-        value: '30days',
-        startTime,
-        endTime,
-        bucketInterval,
-      };
-    }
-
-    return {
-      label: 'Custom Range',
-      value: 'custom',
-      startTime,
-      endTime,
-      bucketInterval,
-    };
-  }
-
+  /**
+   * Initialize selected range from stored preference
+   */
   let selectedTimeRange = $state<TimeRange>(
-    determineTimeRangeFromDuration(
-      initialFilters.start_time,
-      initialFilters.end_time,
-      initialFilters.bucket_interval
-    )
+    createTimeRangeFromValue(initialFilters.selected_range)
   );
 
   /**
-   * Handle time range changes by updating cookies and reloading data
+   * Create TimeRange object from a range value
+   */
+  function createTimeRangeFromValue(rangeValue: string): TimeRange {
+    const labels: Record<string, string> = {
+      '15min': 'Past 15 Minutes',
+      '30min': 'Past 30 Minutes',
+      '1hour': 'Past 1 Hour',
+      '4hours': 'Past 4 Hours',
+      '12hours': 'Past 12 Hours',
+      '24hours': 'Past 24 Hours',
+      '7days': 'Past 7 Days',
+      '30days': 'Past 30 Days',
+    };
+
+    return {
+      label: labels[rangeValue] || 'Past 15 Minutes',
+      value: rangeValue,
+      startTime: initialFilters.start_time,
+      endTime: initialFilters.end_time,
+      bucketInterval: initialFilters.bucket_interval,
+    };
+  }
+
+  /**
+   * Handle time range changes by storing the range value
    */
   async function handleTimeRangeChange(range: TimeRange) {
     selectedTimeRange = range;
     isUpdating = true;
 
     try {
-      // Write cookies client-side (matching the cookie names from +page.ts)
-      setCookie('trace_start_time', range.startTime);
-      setCookie('trace_end_time', range.endTime);
-      setCookie('trace_bucket_interval', range.bucketInterval); // Set the NEW value from the range
-
-      // Trigger SvelteKit to re-run the load function
+      setCookie('trace_range', range.value);
       await invalidate('trace:data');
     } catch (error) {
       console.error('Failed to update time range:', error);
