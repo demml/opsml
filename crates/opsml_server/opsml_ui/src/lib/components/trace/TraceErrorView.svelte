@@ -4,7 +4,7 @@
   import { browser } from '$app/environment';
   import TimeRangeFilter, { type TimeRange } from './TimeRangeFilter.svelte';
   import type { DateTime } from '$lib/types';
-  import { setCookie } from './utils'; // Import from shared utils
+  import { setCookie } from './utils';
 
   interface Props {
     message: string;
@@ -13,6 +13,7 @@
       start_time: DateTime;
       end_time: DateTime;
       bucket_interval: string;
+      selected_range: string;
     };
   }
 
@@ -28,109 +29,31 @@
   let isUpdating = $state(false);
 
   /**
-   * Determine the appropriate time range based on initialFilters
-   * Matches TraceDashboard implementation
+   * Create TimeRange object from stored range value
    */
-  function determineTimeRangeFromDuration(
-    startTime: DateTime,
-    endTime: DateTime,
-    bucketInterval: string
-  ): TimeRange {
-    const start = new Date(startTime);
-    const end = new Date(endTime);
-    const durationMs = end.getTime() - start.getTime();
-    const durationMinutes = durationMs / (1000 * 60);
-
-    // Match duration to preset ranges (with tolerance for timing differences)
-    if (Math.abs(durationMinutes - 15) < 1) {
-      return {
-        label: 'Past 15 Minutes',
-        value: '15min',
-        startTime,
-        endTime,
-        bucketInterval,
-      };
-    } else if (Math.abs(durationMinutes - 30) < 1) {
-      return {
-        label: 'Past 30 Minutes',
-        value: '30min',
-        startTime,
-        endTime,
-        bucketInterval,
-      };
-    } else if (Math.abs(durationMinutes - 60) < 2) {
-      return {
-        label: 'Past 1 Hour',
-        value: '1hour',
-        startTime,
-        endTime,
-        bucketInterval,
-      };
-    } else if (Math.abs(durationMinutes - 240) < 5) {
-      return {
-        label: 'Past 4 Hours',
-        value: '4hours',
-        startTime,
-        endTime,
-        bucketInterval,
-      };
-    } else if (Math.abs(durationMinutes - 720) < 10) {
-      return {
-        label: 'Past 12 Hours',
-        value: '12hours',
-        startTime,
-        endTime,
-        bucketInterval,
-      };
-    } else if (Math.abs(durationMinutes - 1440) < 20) {
-      return {
-        label: 'Past 24 Hours',
-        value: '24hours',
-        startTime,
-        endTime,
-        bucketInterval,
-      };
-    } else if (Math.abs(durationMinutes - 10080) < 60) {
-      return {
-        label: 'Past 7 Days',
-        value: '7days',
-        startTime,
-        endTime,
-        bucketInterval,
-      };
-    } else if (Math.abs(durationMinutes - 43200) < 240) {
-      return {
-        label: 'Past 30 Days',
-        value: '30days',
-        startTime,
-        endTime,
-        bucketInterval,
-      };
-    }
+  function createTimeRangeFromValue(rangeValue: string): TimeRange {
+    const labels: Record<string, string> = {
+      '15min': 'Past 15 Minutes',
+      '30min': 'Past 30 Minutes',
+      '1hour': 'Past 1 Hour',
+      '4hours': 'Past 4 Hours',
+      '12hours': 'Past 12 Hours',
+      '24hours': 'Past 24 Hours',
+      '7days': 'Past 7 Days',
+      '30days': 'Past 30 Days',
+    };
 
     return {
-      label: 'Custom Range',
-      value: 'custom',
-      startTime,
-      endTime,
-      bucketInterval,
+      label: labels[rangeValue] || 'Past 15 Minutes',
+      value: rangeValue,
+      startTime: initialFilters?.start_time || (new Date(Date.now() - 15 * 60 * 1000).toISOString() as DateTime),
+      endTime: initialFilters?.end_time || (new Date().toISOString() as DateTime),
+      bucketInterval: initialFilters?.bucket_interval || '1 minutes',
     };
   }
 
   let selectedTimeRange = $state<TimeRange>(
-    initialFilters
-      ? determineTimeRangeFromDuration(
-          initialFilters.start_time,
-          initialFilters.end_time,
-          initialFilters.bucket_interval
-        )
-      : {
-          label: 'Past 15 Minutes',
-          value: '15min',
-          startTime: new Date(Date.now() - 15 * 60 * 1000).toISOString() as DateTime,
-          endTime: new Date().toISOString() as DateTime,
-          bucketInterval: '30 seconds',
-        }
+    createTimeRangeFromValue(initialFilters?.selected_range || '15min')
   );
 
   $effect(() => {
@@ -154,18 +77,17 @@
   }
 
   /**
-   * Handle time range changes by updating cookies and reloading data
-   * Fixed to prevent cookie re-encoding issue
+   * Handle time range changes by storing only the range value
    */
   async function handleTimeRangeChange(range: TimeRange) {
     selectedTimeRange = range;
     isUpdating = true;
 
     try {
-      setCookie('trace_start_time', range.startTime);
-      setCookie('trace_end_time', range.endTime);
-      setCookie('trace_bucket_interval', range.bucketInterval);
+      // Only store the range value, not absolute timestamps
+      setCookie('trace_range', range.value);
 
+      // Trigger reload - timestamps will be calculated fresh
       await invalidate('trace:data');
     } catch (error) {
       console.error('Failed to update time range:', error);

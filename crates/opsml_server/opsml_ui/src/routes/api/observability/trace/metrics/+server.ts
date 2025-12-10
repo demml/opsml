@@ -27,6 +27,8 @@ export const POST: RequestHandler = async ({ request, fetch }) => {
 
     logger.info("Successfully fetched trace metrics");
 
+    logger.info("Trace metrics response: " + JSON.stringify(response));
+
     return json({ response, error: null });
   } catch (error) {
     console.error("Error fetching metrics:", error);

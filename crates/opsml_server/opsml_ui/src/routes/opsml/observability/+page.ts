@@ -4,6 +4,7 @@ import {
   getServerTracePage,
   getServerTraceMetrics,
   getCookie,
+  calculateTimeRange,
 } from "$lib/components/trace/utils";
 
 export const ssr = false; // Client-side only
@@ -12,15 +13,10 @@ export const load: PageLoad = async ({ fetch, url, depends }) => {
   try {
     depends("trace:data");
 
-    const storedStartTime = getCookie("trace_start_time");
-    const storedEndTime = getCookie("trace_end_time");
-    const bucketInterval = getCookie("trace_bucket_interval") || "30 minutes";
+    const selectedRange = getCookie("trace_range") || "15min";
 
-    const now = new Date();
-    const fifteenMinutesAgo = new Date(now.getTime() - 15 * 60 * 1000);
-
-    const startTime = storedStartTime || fifteenMinutesAgo.toISOString();
-    const endTime = storedEndTime || now.toISOString();
+    const { startTime, endTime, bucketInterval } =
+      calculateTimeRange(selectedRange);
 
     const metricsRequest: TraceMetricsRequest = {
       service_name: undefined,
@@ -45,6 +41,7 @@ export const load: PageLoad = async ({ fetch, url, depends }) => {
           start_time: startTime,
           end_time: endTime,
           bucket_interval: bucketInterval,
+          selected_range: selectedRange,
         },
       };
     }
@@ -57,6 +54,7 @@ export const load: PageLoad = async ({ fetch, url, depends }) => {
         start_time: startTime,
         end_time: endTime,
         bucket_interval: bucketInterval,
+        selected_range: selectedRange,
       },
     };
   } catch (error) {
@@ -93,6 +91,7 @@ export const load: PageLoad = async ({ fetch, url, depends }) => {
         start_time: new Date(Date.now() - 15 * 60 * 1000).toISOString(),
         end_time: new Date().toISOString(),
         bucket_interval: "1 minutes",
+        selected_range: "15min",
       },
     };
   }
