@@ -231,7 +231,7 @@ export async function getServerTraceSpans(
   fetch: typeof globalThis.fetch,
   traceRequest: TraceRequest
 ): Promise<TraceSpansResponse> {
-  const resp = await createInternalApiClient(fetch).post(
+  const resp = await createInternalApiClient(fetch).get(
     ServerPaths.TRACE_SPANS,
     traceRequest
   );

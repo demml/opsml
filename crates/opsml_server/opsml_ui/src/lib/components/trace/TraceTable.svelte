@@ -1,15 +1,17 @@
 <script lang="ts">
   import MultiComboBoxDropDown from '$lib/components/utils/MultiComboBoxDropDown.svelte';
-  import type { TraceListItem, TracePaginationResponse, TraceDetail } from './types';
+  import type { TraceListItem, TracePaginationResponse, TraceSpansResponse, } from './types';
   import TraceDetailPanel from './TraceDetailPanel.svelte';
   import TraceInfiniteScroll from './TraceInfiniteScroll.svelte';
   import { fetchTraceDetail } from './mock';
+  import { getServerTraceSpans } from './utils';
 
   let { trace_page } = $props<{ trace_page: TracePaginationResponse }>();
   let filteredTags: string[] = $state([]);
   let availableTags: string[] = $state([]);
 
-  let selectedTraceDetail = $state<TraceDetail | null>(null);
+  let selectedTraceSpans= $state<TraceSpansResponse | null>(null);
+  let selectedTrace = $state<TraceListItem | null>(null);
   let isLoadingDetail = $state(false);
 
 
@@ -19,9 +21,10 @@
   async function handleTraceClick(trace: TraceListItem) {
     isLoadingDetail = true;
     try {
-      const detail = await fetchTraceDetail(trace.trace_id);
-      if (detail) {
-        selectedTraceDetail = detail;
+      const spans = await getServerTraceSpans(fetch, { trace_id: trace.trace_id });
+      if (spans) {
+        selectedTraceSpans = spans;
+        selectedTrace = trace;
       }
     } catch (error) {
       console.error('Failed to load trace details:', error);
@@ -31,7 +34,8 @@
   }
 
   function handleClosePanel() {
-    selectedTraceDetail = null;
+    selectedTraceSpans = null;
+    selectedTrace = null;
   }
 
   /**
@@ -177,9 +181,10 @@
   </div>
 </div>
 
-{#if selectedTraceDetail}
+{#if selectedTraceSpans && selectedTrace}
   <TraceDetailPanel
-    traceDetail={selectedTraceDetail}
+    trace={selectedTrace}
+    traceSpans={selectedTraceSpans}
     onClose={handleClosePanel}
   />
 {/if}

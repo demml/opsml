@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
-  import type { TraceDetail, TraceSpan } from './types';
+  import { type Attribute,  type TraceListItem, type TraceSpan, type TraceSpansResponse } from './types';
   import TraceWaterfall from './TraceWaterfall.svelte';
   import SpanDetailView from './SpanDetailView.svelte';
   import SpanGraph from './graph/SpanGraph.svelte';
@@ -8,14 +8,17 @@
   import { Network, List } from 'lucide-svelte';
 
   let {
-    traceDetail,
+    trace,
+    traceSpans,
     onClose,
   }: {
-    traceDetail: TraceDetail;
+    trace: TraceListItem;
+    traceSpans: TraceSpansResponse;
     onClose: () => void;
   } = $props();
 
-  let selectedSpan = $state<TraceSpan | null>(traceDetail.root_span);
+  let selectedSpan = $state<TraceSpan | null>(traceSpans.spans[0] || null);
+  let process_attributes = $state<Attribute[]>(trace.process_attributes || []);
   let isClosing = $state(false);
   let showWaterfall = $state(true);
   let showSpanDetail = $state(true);
@@ -29,12 +32,22 @@
   }
 
   const slowestSpan = $derived(() => {
-    const childSpans = traceDetail.spans.filter(span => span.depth > 0);
+    const childSpans = traceSpans.spans.filter(span => span.depth > 0);
     if (childSpans.length === 0) return null;
 
     return childSpans.reduce((max, span) =>
       (span.duration_ms || 0) > (max.duration_ms || 0) ? span : max
     );
+  });
+
+  const service_count = $derived(() => {
+    const services = new Set<string>();
+    traceSpans.spans.forEach(span => {
+      if ( span.process.service_name) {
+        services.add(span.process.service_name);
+      }
+    });
+    return services.size;
   });
 
   function handleSpanSelect(span: TraceSpan) {
@@ -91,19 +104,19 @@
   <div class="flex items-center justify-between p-4 border-b-2 border-black bg-surface-50">
     <div class="flex flex-col gap-2 flex-1 min-w-0">
       <div class="flex items-center gap-2">
-        <div class={`w-2 h-10 rounded flex-shrink-0 ${getStatusColor(traceDetail.error_count > 0)}`}></div>
+        <div class={`w-2 h-10 rounded flex-shrink-0 ${getStatusColor(trace.error_count > 0)}`}></div>
         <div class="min-w-0 flex-1">
           <h2 class="text-lg font-bold text-primary-800">Trace Details</h2>
-          <p class="text-sm font-mono text-gray-600 truncate">{traceDetail.trace_id}</p>
+          <p class="text-sm font-mono text-gray-600 truncate">{trace.trace_id}</p>
         </div>
       </div>
 
       <div class="flex flex-wrap gap-2">
-        <span class="badge text-primary-900 border-black border-1 shadow-small bg-primary-100">{traceDetail.span_count} spans</span>
-        <span class="badge text-primary-900 border-black border-1 shadow-small bg-primary-100">{traceDetail.service_count} services</span>
-        <span class="badge text-primary-900 border-black border-1 shadow-small bg-primary-100">{formatDuration(traceDetail.total_duration_ms)}</span>
-        {#if traceDetail.error_count > 0}
-          <span class="badge text-error-900 border-black border-1 shadow-small bg-error-100">{traceDetail.error_count} errors</span>
+        <span class="badge text-primary-900 border-black border-1 shadow-small bg-primary-100">{trace.span_count} spans</span>
+        <span class="badge text-primary-900 border-black border-1 shadow-small bg-primary-100">{trace.service_count} services</span>
+        <span class="badge text-primary-900 border-black border-1 shadow-small bg-primary-100">{formatDuration(trace.total_duration_ms)}</span>
+        {#if trace.error_count > 0}
+          <span class="badge text-error-900 border-black border-1 shadow-small bg-error-100">{trace.error_count} errors</span>
         {/if}
       </div>
     </div>
