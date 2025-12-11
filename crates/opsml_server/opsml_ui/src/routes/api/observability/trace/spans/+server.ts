@@ -11,7 +11,7 @@ import { getTraceSpans } from "$lib/server/trace/utils";
  * @param fetch - SvelteKit fetch function for server-side requests
  * @returns JSON response with either span data or error message
  */
-export const POST: RequestHandler = async ({ request, fetch }) => {
+export const GET: RequestHandler = async ({ request, fetch }) => {
   try {
     const filters: TraceRequest = await request.json();
     const response: TraceSpansResponse = await getTraceSpans(fetch, filters);

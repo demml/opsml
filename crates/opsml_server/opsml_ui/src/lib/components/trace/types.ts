@@ -17,6 +17,7 @@ export interface TraceListItem {
   has_errors: boolean;
   error_count: number;
   created_at: DateTime;
+  process_attributes: Attribute[];
 }
 
 export interface TraceMetricBucket {
@@ -71,6 +72,41 @@ export interface Attribute {
   value: any; // JSON value from serde_json::Value
 }
 
+function getAttributeValueType(
+  value: any
+): "null" | "boolean" | "number" | "string" | "array" | "object" {
+  if (value === null) return "null";
+  if (typeof value === "boolean") return "boolean";
+  if (typeof value === "number") return "number";
+  if (typeof value === "string") return "string";
+  if (Array.isArray(value)) return "array";
+  if (typeof value === "object") return "object";
+  return "null";
+}
+
+/**
+ * Format an attribute value for display based on its type
+ */
+export function formatAttributeValue(value: any): string {
+  const type = getAttributeValueType(value);
+
+  switch (type) {
+    case "null":
+      return "null";
+    case "boolean":
+      return value.toString();
+    case "number":
+      return value.toString();
+    case "string":
+      return value;
+    case "array":
+    case "object":
+      return JSON.stringify(value, null, 2);
+    default:
+      return String(value);
+  }
+}
+
 export interface SpanEvent {
   timestamp: DateTime;
   name: string;
@@ -106,17 +142,6 @@ export interface TraceSpan {
   span_order: number;
   input: string | null;
   output: string | null;
-}
-
-export interface TraceDetail {
-  trace_id: string;
-  spans: TraceSpan[];
-  root_span: TraceSpan;
-  total_duration_ms: number;
-  service_count: number;
-  span_count: number;
-  error_count: number;
-  critical_path_duration_ms: number;
 }
 
 export interface TraceSpansResponse {
