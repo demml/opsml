@@ -3,10 +3,10 @@
   import type { TraceListItem, TracePaginationResponse, TraceSpansResponse, } from './types';
   import TraceDetailPanel from './TraceDetailPanel.svelte';
   import TraceInfiniteScroll from './TraceInfiniteScroll.svelte';
-  import { fetchTraceDetail } from './mock';
   import { getServerTraceSpans } from './utils';
+  import type { TracePageFilter } from './types';
 
-  let { trace_page } = $props<{ trace_page: TracePaginationResponse }>();
+  let { trace_page, filters } = $props<{ trace_page: TracePaginationResponse, filters: TracePageFilter }>();
   let filteredTags: string[] = $state([]);
   let availableTags: string[] = $state([]);
 
@@ -22,6 +22,8 @@
     isLoadingDetail = true;
     try {
       const spans = await getServerTraceSpans(fetch, { trace_id: trace.trace_id });
+
+      console.log('Fetched trace spans:', JSON.stringify(spans, null, 2));
       if (spans) {
         selectedTraceSpans = spans;
         selectedTrace = trace;
@@ -68,12 +70,11 @@
    * Get Tailwind color class based on HTTP status code
    */
   export function getStatusColor(statusCode: number): string {
-    if (statusCode >= 200 && statusCode < 300) return "bg-secondary-500";
-    if (statusCode >= 400 && statusCode < 500) return "bg-warning-500";
-    if (statusCode >= 500) return "bg-error-600";
+    if (statusCode == 1) return "bg-secondary-500";
+    if (statusCode == 0) return "bg-warning-500";
+    if (statusCode == 2) return "bg-error-600";
     return "bg-gray-400";
   }
-
 
 </script>
 
@@ -125,7 +126,7 @@
           </div>
 
           <div class="flex-1 bg-white overflow-y-auto">
-            <TraceInfiniteScroll initialPage={trace_page} height="800px">
+            <TraceInfiniteScroll initialPage={trace_page} filters={filters} height="800px">
               {#snippet children(trace: TraceListItem, index: number)}
                 <div
                   class="grid grid-cols-[64px_180px_1fr_1fr_100px_100px_80px_120px] gap-2 items-center px-2 py-2 border-b border-gray-200 hover:bg-primary-200 cursor-pointer transition-colors {index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}"

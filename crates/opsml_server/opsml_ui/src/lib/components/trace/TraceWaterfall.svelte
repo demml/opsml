@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { TraceSpan } from './types';
-  import { formatDuration, getServiceName, hasSpanError } from './utils';
+  import { formatDuration, hasSpanError } from './utils';
   import { CircleX, Clock } from 'lucide-svelte';
 
   let {
@@ -52,8 +52,19 @@
   }
 
   const sortedSpans = $derived(
-    [...spans].sort((a, b) => a.span_order - b.span_order)
-  );
+  [...spans].sort((a, b) => {
+    // Primary sort: start time (chronological order)
+    const timeA = new Date(a.start_time).getTime();
+    const timeB = new Date(b.start_time).getTime();
+    if (timeA !== timeB) return timeA - timeB;
+
+    // Secondary sort: depth (parent before child at same time)
+    if (a.depth !== b.depth) return a.depth - b.depth;
+
+    // Tertiary sort: span_order as tiebreaker
+    return a.span_order - b.span_order;
+  })
+);
 </script>
 
 <div class="flex flex-col h-full bg-white text-sm overflow-hidden">
@@ -86,7 +97,7 @@
       {@const position = getSpanPosition(span)}
       {@const isSelected = selectedSpan?.span_id === span.span_id}
       {@const indent = span.depth * INDENT_PX}
-      {@const serviceName = getServiceName(span)}
+      {@const serviceName = span.service_name}
       {@const spanHasError = hasSpanError(span)}
       {@const badgeClasses = getServiceBadgeClasses(span)}
       {@const isSlowestSpan = slowestSpan && span.span_id === slowestSpan.span_id}
@@ -129,8 +140,8 @@
           </span>
         </div>
 
-        <div class="flex-1 flex items-center px-2 min-w-0">
-          <div class="relative w-full h-5">
+        <div class="flex-1 flex items-center gap-2 px-2 min-w-0">
+          <div class="relative flex-1 h-5 min-w-0">
             <!-- Span bar -->
             <div
               class="absolute h-full rounded border border-black transition-all"
@@ -154,11 +165,10 @@
             </div>
           </div>
 
-          <!-- Duration on right side -->
-          <span class="ml-2 text-xs font-mono text-gray-600 whitespace-nowrap flex-shrink-0">
+          <!-- Duration on right side - now in separate fixed-width container -->
+          <span class="w-16 text-xs font-mono text-gray-600 text-right flex-shrink-0 whitespace-nowrap">
             {formatDuration(span.duration_ms)}
           </span>
-
         </div>
       </div>
     {/each}

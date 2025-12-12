@@ -1,8 +1,7 @@
 <script lang="ts">
-  import type { TraceListItem, TracePaginationResponse, TraceCursor } from './types';
-  import { fetchTraces } from './mock';
+  import type { TraceListItem, TracePaginationResponse, TraceCursor, TracePageFilter } from './types';
   import VirtualScroller from '$lib/components/utils/VirtualScroller.svelte';
-
+  import { getServerTracePage } from './utils';
   /**
    * True infinite scroll with virtual positioning.
    * Maintains a sliding window of items while allowing unlimited scrolling.
@@ -10,13 +9,13 @@
 
   let {
     initialPage,
-    filters = {},
+    filters,
     maxItems = 100,
     height = 'calc(100vh - 400px)',
     children
   }: {
     initialPage: TracePaginationResponse;
-    filters?: Record<string, any>;
+    filters: TracePageFilter;
     maxItems?: number;
     height?: string;
     children: (item: TraceListItem, index: number) => any;
@@ -46,12 +45,13 @@
     isLoading = true;
 
     try {
-      const response = await fetchTraces({
-        ...filters,
-        limit: PAGE_SIZE,
-        cursor_created_at: previousCursor.created_at,
-        cursor_trace_id: previousCursor.trace_id,
-        direction: 'previous'
+
+      let response = await getServerTracePage(fetch, {
+          ...filters.filters,
+          limit: PAGE_SIZE,
+          cursor_start_time: previousCursor.start_time,
+          cursor_trace_id: previousCursor.trace_id,
+          direction: 'previous'
       });
 
 
@@ -76,7 +76,7 @@
         // Update cursors after trimming
         const lastItem = allTraces[allTraces.length - 1];
         nextCursor = {
-          created_at: lastItem.created_at,
+          start_time: lastItem.start_time,
           trace_id: lastItem.trace_id
         };
         hasNext = true;
@@ -97,13 +97,14 @@
     isLoading = true;
 
     try {
-      const response = await fetchTraces({
-        ...filters,
-        limit: PAGE_SIZE,
-        cursor_created_at: nextCursor.created_at,
-        cursor_trace_id: nextCursor.trace_id,
-        direction: 'next'
+      let response = await getServerTracePage(fetch, {
+          ...filters.filters,
+          limit: PAGE_SIZE,
+          cursor_start_time: nextCursor.start_time,
+          cursor_trace_id: nextCursor.trace_id,
+          direction: 'next'
       });
+
       const newTraces = response.items.filter(
         (newTrace) => !allTraces.some((t) => t.trace_id === newTrace.trace_id)
       );
@@ -127,7 +128,7 @@
         // Update cursors after trimming
         const firstItem = allTraces[0];
         previousCursor = {
-          created_at: firstItem.created_at,
+          start_time: firstItem.start_time,
           trace_id: firstItem.trace_id
         };
         hasPrevious = true;

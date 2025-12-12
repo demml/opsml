@@ -24,7 +24,7 @@ export async function getTraceSpans(
   fetch: typeof globalThis.fetch,
   traceRequest: TraceRequest
 ): Promise<TraceSpansResponse> {
-  const response = await createOpsmlClient(fetch).post(
+  const response = await createOpsmlClient(fetch).get(
     RoutePaths.TRACE_SPANS,
     traceRequest
   );

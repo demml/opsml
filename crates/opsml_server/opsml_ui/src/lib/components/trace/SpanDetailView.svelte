@@ -4,7 +4,6 @@
     formatTimestamp,
     formatDuration,
     formatAttributeValue,
-    getServiceName,
     hasSpanError,
     getHttpStatusCode,
     parseSpanJson
@@ -25,7 +24,7 @@
     slowestSpan?: TraceSpan | null;
   } = $props();
 
-  const serviceName = $derived(getServiceName(span));
+  const serviceName = span.service_name;
   const spanHasError = $derived(hasSpanError(span));
   const httpStatusCode = $derived(getHttpStatusCode(span));
   const parsedInput = $derived(parseSpanJson(span.input));

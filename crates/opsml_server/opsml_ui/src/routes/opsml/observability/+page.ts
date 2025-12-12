@@ -1,5 +1,10 @@
 import type { PageLoad } from "./$types";
-import type { TraceMetricsRequest } from "$lib/components/trace/types";
+import type {
+  TraceMetricsRequest,
+  TracePageFilter,
+  TraceFilters,
+} from "$lib/components/trace/types";
+
 import {
   getServerTracePage,
   getServerTraceMetrics,
@@ -7,9 +12,9 @@ import {
   calculateTimeRange,
 } from "$lib/components/trace/utils";
 
-export const ssr = false; // Client-side only
+export const ssr = false;
 
-export const load: PageLoad = async ({ fetch, url, depends }) => {
+export const load: PageLoad = async ({ fetch, depends }) => {
   try {
     depends("trace:data");
 
@@ -33,29 +38,39 @@ export const load: PageLoad = async ({ fetch, url, depends }) => {
     });
 
     if (!tracePage.items || tracePage.items.length === 0) {
+      let filters: TraceFilters = {
+        start_time: startTime,
+        end_time: endTime,
+      };
+      let initialFilters: TracePageFilter = {
+        filters: { ...filters },
+        tags: [],
+        bucket_interval: bucketInterval,
+        selected_range: selectedRange,
+      };
       return {
         status: "not_found" as const,
         errorMessage:
           "No traces found for the selected time range. Try adjusting your time range or check if your application is generating traces.",
-        initialFilters: {
-          start_time: startTime,
-          end_time: endTime,
-          bucket_interval: bucketInterval,
-          selected_range: selectedRange,
-        },
+        initialFilters: initialFilters,
       };
     }
+    let traceFilter: TraceFilters = {
+      start_time: startTime,
+      end_time: endTime,
+    };
+    let initialFilters: TracePageFilter = {
+      filters: { ...traceFilter },
+      tags: [],
+      bucket_interval: bucketInterval,
+      selected_range: selectedRange,
+    };
 
     return {
       status: "success" as const,
       trace_page: tracePage,
       trace_metrics: traceMetrics,
-      initialFilters: {
-        start_time: startTime,
-        end_time: endTime,
-        bucket_interval: bucketInterval,
-        selected_range: selectedRange,
-      },
+      initialFilters,
     };
   } catch (error) {
     console.error("Error loading trace data:", error);
@@ -84,15 +99,19 @@ export const load: PageLoad = async ({ fetch, url, depends }) => {
       }
     }
 
+    let initialFilters: TracePageFilter = {
+      filters: {
+        start_time: new Date(Date.now() - 15 * 60 * 1000).toISOString(),
+        end_time: new Date().toISOString(),
+      },
+      tags: [],
+      bucket_interval: "1 minutes",
+      selected_range: "15min",
+    };
     return {
       status: "error" as const,
       errorMessage,
-      initialFilters: {
-        start_time: new Date(Date.now() - 15 * 60 * 1000).toISOString(),
-        end_time: new Date().toISOString(),
-        bucket_interval: "1 minutes",
-        selected_range: "15min",
-      },
+      initialFilters,
     };
   }
 };

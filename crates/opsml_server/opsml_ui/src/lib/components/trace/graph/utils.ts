@@ -1,7 +1,7 @@
 import type { Node, Edge } from "@xyflow/svelte";
 import { Position } from "@xyflow/svelte";
 import type { TraceSpan } from "../types";
-import { getServiceName, hasSpanError, formatDuration } from "../utils";
+import { hasSpanError, formatDuration } from "../utils";
 
 interface SpanNodeData {
   span: TraceSpan;
@@ -39,7 +39,7 @@ export function createSpanGraph(
   let maxY = 0;
 
   sortedSpans.forEach((span) => {
-    const serviceName = getServiceName(span);
+    const serviceName = span.service_name;
     const spanHasError = hasSpanError(span);
     const isSlowest = slowestSpan?.span_id === span.span_id;
 
