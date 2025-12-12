@@ -195,7 +195,7 @@
             Collapse
           </button>
         </div>
-        <div class="border-2 border-black rounded bg-white">
+        <div class="bg-white">
           <SpanGraph spans={spans} slowestSpan={slowestSpan()} onSpanSelect={handleSpanSelect} />
         </div>
       </div>

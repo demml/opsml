@@ -5,6 +5,7 @@
   import TraceInfiniteScroll from './TraceInfiniteScroll.svelte';
   import { getServerTraceSpans } from './utils';
   import type { TracePageFilter } from './types';
+  import MultiComboSearchBox from '../utils/MultiComboSearchBox.svelte';
 
   let { trace_page, filters } = $props<{ trace_page: TracePaginationResponse, filters: TracePageFilter }>();
   let filteredTags: string[] = $state([]);
@@ -23,7 +24,6 @@
     try {
       const spans = await getServerTraceSpans(fetch, { trace_id: trace.trace_id });
 
-      console.log('Fetched trace spans:', JSON.stringify(spans, null, 2));
       if (spans) {
         selectedTraceSpans = spans;
         selectedTrace = trace;
@@ -87,6 +87,13 @@
       bind:filteredItems={filteredTags}
       availableOptions={availableTags}
     />
+
+    <MultiComboSearchBox
+      boxId="tag-search-input"
+      label="Search Tags"
+      bind:filteredItems={filteredTags}
+    />
+
   </div>
 
   <div class="col-span-1 lg:col-span-4 gap-1 py-2 px-4 flex-1 flex-col rounded-base border-primary-500 border-2 shadow-primary bg-surface-50">

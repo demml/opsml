@@ -69,7 +69,7 @@
 
 <div class="flex flex-col h-full bg-white text-sm overflow-hidden">
   <!-- Timeline Header -->
-  <div class="sticky top-0 z-20 bg-surface-50 border-b border-gray-300 flex-shrink-0">
+  <div class="sticky top-0 bg-surface-50 border-b border-gray-300 flex-shrink-0">
     <div class="flex">
       <!-- Service name column spacer -->
       <div class="w-[35%] min-w-[280px] border-r border-gray-300"></div>
