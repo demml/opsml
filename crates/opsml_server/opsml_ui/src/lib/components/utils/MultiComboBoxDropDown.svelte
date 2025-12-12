@@ -6,7 +6,7 @@
   // @ts-ignore
   type Option = (typeof options)[string];
   let {
-    boxId,  
+    boxId,
     label,
     parentStyle = "mb-4 text-black flex flex-col items-center w-full relative",
     inputHeight = "h-full",
@@ -14,9 +14,9 @@
     availableOptions = [] as string[],
     optionWidth = "w-full",
     defaultSelected = [] as string[],
-  } = 
+  } =
     $props<{
-      boxId:string, 
+      boxId:string,
       label:string,
       parentStyle?:string,
       inputHeight?:string,
@@ -29,11 +29,11 @@
   let searchTimeout: ReturnType<typeof setTimeout> | null = null;
   let availableItems: string[] = $state(availableOptions);
 
-  const combobox = new Combobox<string>({ 
+  const combobox = new Combobox<string>({
     // @ts-ignore
-    multiple: true, 
-    onValueChange: onChange, 
-    onInputValueChange: onInputChange 
+    multiple: true,
+    onValueChange: onChange,
+    onInputValueChange: onInputChange
   });
 
   function onChange() {

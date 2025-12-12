@@ -57,7 +57,7 @@
 
     try {
       // If live mode, update the time range to current time
-      if (isLiveUpdate && selectedTimeRange.value === '15min') {
+      if (isLiveUpdate && selectedTimeRange.value === '15min-live') {
         const now = new Date();
         const fifteenMinutesAgo = new Date(now.getTime() - 15 * 60 * 1000);
 
@@ -85,27 +85,6 @@
   }
 
   /**
-   * Start polling for live updates
-   */
-  function startLivePolling() {
-    if (pollInterval) return;
-    pollInterval = setInterval(() => {
-      refreshData(true);
-    }, LIVE_POLL_INTERVAL);
-  }
-
-  /**
-   * Stop polling
-   */
-  function stopLivePolling() {
-    if (pollInterval) {
-      console.log('⏸️ Stopping live polling');
-      clearInterval(pollInterval);
-      pollInterval = null;
-    }
-  }
-
-  /**
    * Initialize selected range from stored preference
    */
   let selectedTimeRange = $state<TimeRange>(
@@ -117,7 +96,8 @@
    */
   function createTimeRangeFromValue(rangeValue: string): TimeRange {
     const labels: Record<string, string> = {
-      '15min': 'Live (15min)',
+      '15min-live': 'Live (15min)',
+      '15min': 'Past 15 Minutes',
       '30min': 'Past 30 Minutes',
       '1hour': 'Past 1 Hour',
       '4hours': 'Past 4 Hours',
@@ -141,8 +121,6 @@
    */
   async function handleTimeRangeChange(range: TimeRange) {
     // Stop any existing polling
-    stopLivePolling();
-
     selectedTimeRange = range;
     isUpdating = true;
 
@@ -166,10 +144,6 @@
 
       tableKey++;
 
-      // Start polling if live mode selected
-      if (range.value === '15min') {
-        startLivePolling();
-      }
     } catch (error) {
       console.error('Failed to update time range:', error);
     } finally {
@@ -178,25 +152,23 @@
   }
 
   $effect(() => {
-    // Always define cleanup first. This runs before the effect re-runs (due to dependency change)
-    // OR when the component is destroyed.
-    return () => {
-      if (pollInterval) {
+
+    const cleanup = () => {
+      if (pollInterval !== null) {
         clearInterval(pollInterval);
-        pollInterval = null; // Clear state
+        pollInterval = null;
         console.log('⏸️ Stopping live polling (via effect cleanup)');
       }
     };
-  });
 
-  $effect(() => {
-  if (selectedTimeRange.value === '15min') {
-    pollInterval = setInterval(() => {
-      refreshData(true);
-    }, LIVE_POLL_INTERVAL);
-  } else {
-    pollInterval = null;
-  }
+    if (selectedTimeRange.value === '15min-live') {
+      console.log('🔴 Starting live polling (30s interval)');
+      pollInterval = setInterval(() => {
+        refreshData(true);
+      }, LIVE_POLL_INTERVAL);
+    }
+
+  return cleanup;
 });
 </script>
 
@@ -222,10 +194,10 @@
   <div class="grid grid-cols-1 gap-4 pt-4">
     {#key tableKey}
       <TraceCharts buckets={traceMetrics} />
-        <TraceTable
-          trace_page={tracePage}
-          filters={filters}
-        />
+      <TraceTable
+        trace_page={tracePage}
+        filters={filters}
+      />
     {/key}
   </div>
 </div>

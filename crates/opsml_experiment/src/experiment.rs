@@ -26,7 +26,7 @@ use pyo3::{
     types::{PyDict, PyList},
     IntoPyObjectExt,
 };
-use scouter_client::ActiveSpan;
+
 use std::path::PathBuf;
 use std::sync::Arc;
 use tempfile::tempdir;
@@ -413,7 +413,6 @@ impl Experiment {
     /// * `code_dir` - The directory containing the code
     /// * `log_hardware` - Whether to log hardware metrics. Will log hardware metrics every 30 seconds
     /// * `experiment_uid` - The experiment UID
-    /// * `span` - The active span to attach to the experiment if provided
     ///
     /// # Returns
     ///
@@ -422,7 +421,7 @@ impl Experiment {
     /// # Errors
     ///
     /// * `ExperimentError` - Error starting the experiment
-    #[pyo3(signature = (space=None, name=None, code_dir=None, log_hardware=false, experiment_uid=None, span=None))]
+    #[pyo3(signature = (space=None, name=None, code_dir=None, log_hardware=false, experiment_uid=None))]
     #[instrument(skip_all)]
     pub fn start_experiment<'py>(
         mut slf: PyRefMut<'py, Self>,
@@ -432,7 +431,6 @@ impl Experiment {
         code_dir: Option<PathBuf>,
         log_hardware: bool,
         experiment_uid: Option<&str>,
-        span: Option<Py<ActiveSpan>>,
     ) -> Result<Bound<'py, Experiment>, ExperimentError> {
         debug!("Starting experiment");
         let helper = slf.experiment_helper.clone();
@@ -440,12 +438,6 @@ impl Experiment {
 
         let experiment = match experiment_uid {
             Some(uid) => {
-                if let Some(span) = span {
-                    debug!("Attaching span to experiment load");
-                    let span = span.bind(py);
-                    span.call_method1("set_attribute", ("card.experiment.uid", uid.to_string()))?;
-                }
-
                 let card = Experiment::load_experiment(py, uid, registries)?;
                 Experiment::new(
                     py,
@@ -459,12 +451,6 @@ impl Experiment {
             }
             None => {
                 let (card, uid) = Experiment::create_experiment(py, space, name, registries, true)?;
-
-                if let Some(span) = span {
-                    debug!("Attaching span to experiment");
-                    let span = span.bind(py);
-                    span.call_method1("set_attribute", ("card.experiment.uid", uid.to_string()))?;
-                }
 
                 Experiment::new(
                     py,

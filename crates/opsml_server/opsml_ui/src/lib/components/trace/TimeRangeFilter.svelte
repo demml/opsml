@@ -21,6 +21,8 @@
 
   function getBucketInterval(value: string): string {
   switch (value) {
+    case '15min-live':
+      return '30 seconds';
     case '15min':
       return '30 seconds';
     case '30min':
@@ -43,7 +45,7 @@
 }
 
   const PRESET_RANGES: Omit<TimeRange, 'startTime' | 'endTime' | 'bucketInterval'>[] = [
-    { label: 'Live (15min)', value: '15min' },
+    { label: 'Live (15min)', value: '15min-live' },
     { label: 'Past 15 Minutes', value: '15min' },
     { label: 'Past 30 Minutes', value: '30min' },
     { label: 'Past 1 Hour', value: '1hour' },
@@ -61,6 +63,9 @@
     const bucketInterval = getBucketInterval(value);
 
     switch (value) {
+      case '15min-live':
+        startTime = new Date(now.getTime() - 15 * 60 * 1000).toISOString() as DateTime;
+        break;
       case '15min':
         startTime = new Date(now.getTime() - 15 * 60 * 1000).toISOString() as DateTime;
         break;

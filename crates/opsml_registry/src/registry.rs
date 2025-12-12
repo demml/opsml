@@ -11,10 +11,38 @@ use opsml_types::{cards::CardTable, contracts::*};
 use opsml_utils::{clean_string, unwrap_pystring};
 use pyo3::prelude::*;
 use pyo3::types::PyList;
+use scouter_client::try_set_span_attribute;
 use scouter_client::ProfileRequest;
+use scouter_client::SCOUTER_TAG_PREFIX;
 use std::path::PathBuf;
 use tempfile::TempDir;
 use tracing::{debug, error, instrument};
+
+const MODEL_KEY_ATTR: &str = "card.model.uid";
+const PROMPT_KEY_ATTR: &str = "card.prompt.uid";
+const SERVICE_KEY_ATTR: &str = "card.service.uid";
+const EXPERIMENT_KEY_ATTR: &str = "card.experiment.uid";
+const DATA_KEY_ATTR: &str = "card.data.uid";
+
+/// Set uid as a tag on the current active span
+fn set_attribute_by_registry_type(
+    py: Python<'_>,
+    registry_type: &RegistryType,
+    uid: &str,
+) -> Result<(), RegistryError> {
+    let key = match registry_type {
+        RegistryType::Model => format!("{}.{}", SCOUTER_TAG_PREFIX, MODEL_KEY_ATTR),
+        RegistryType::Prompt => format!("{}.{}", SCOUTER_TAG_PREFIX, PROMPT_KEY_ATTR),
+        RegistryType::Service => format!("{}.{}", SCOUTER_TAG_PREFIX, SERVICE_KEY_ATTR),
+        RegistryType::Experiment => format!("{}.{}", SCOUTER_TAG_PREFIX, EXPERIMENT_KEY_ATTR),
+        RegistryType::Data => format!("{}.{}", SCOUTER_TAG_PREFIX, DATA_KEY_ATTR),
+        _ => return Ok(()),
+    };
+
+    try_set_span_attribute(py, &key, uid)?;
+    Ok(())
+}
+
 /// Helper struct to hold parameters for card registration
 #[derive(Debug)]
 struct CardRegistrationParams<'py> {
@@ -182,7 +210,7 @@ impl CardRegistry {
         };
 
         // Wrap all operations in a single block_on to handle async operations
-        Self::verify_and_register_card(params)
+        Self::verify_and_register_card(card.py(), params)
     }
 
     #[pyo3(signature = (uid=None, space=None, name=None, version=None, interface=None))]
@@ -277,7 +305,10 @@ impl CardRegistry {
     }
 
     #[instrument(skip_all)]
-    fn verify_and_register_card(params: CardRegistrationParams) -> Result<(), RegistryError> {
+    fn verify_and_register_card(
+        py: Python<'_>,
+        params: CardRegistrationParams,
+    ) -> Result<(), RegistryError> {
         // Verify card for registration
         debug!("Verifying card");
         verify_card(params.card, params.registry_type)?;
@@ -306,6 +337,8 @@ impl CardRegistry {
             // raise error
             return Err(e);
         }
+
+        set_attribute_by_registry_type(py, &params.registry_type, &create_response.key.uid)?;
 
         println!(
             "{} - {} - {}/{} - v{}",

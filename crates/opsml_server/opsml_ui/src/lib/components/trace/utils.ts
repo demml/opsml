@@ -284,6 +284,10 @@ export function calculateTimeRange(range: string): {
   let bucketInterval: string;
 
   switch (range) {
+    case "15min-live":
+      startTime = new Date(now.getTime() - 15 * 60 * 1000);
+      bucketInterval = "1 minutes";
+      break;
     case "15min":
       startTime = new Date(now.getTime() - 15 * 60 * 1000);
       bucketInterval = "1 minutes";

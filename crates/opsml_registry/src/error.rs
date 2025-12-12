@@ -145,6 +145,9 @@ pub enum RegistryError {
 
     #[error("Failed to insert parameters")]
     InsertParameterError,
+
+    #[error(transparent)]
+    TraceError(#[from] scouter_client::TraceError),
 }
 
 impl From<RegistryError> for PyErr {
