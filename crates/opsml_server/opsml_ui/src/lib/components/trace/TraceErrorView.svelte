@@ -2,19 +2,15 @@
   import { AlertCircle, Activity, ArrowLeft, RefreshCw } from 'lucide-svelte';
   import { invalidate } from '$app/navigation';
   import { browser } from '$app/environment';
-  import TimeRangeFilter, { type TimeRange } from './TimeRangeFilter.svelte';
+  import TimeRangeFilter from './TimeRangeFilter.svelte';
   import type { DateTime } from '$lib/types';
   import { setCookie } from './utils';
+  import type { TracePageFilter, TimeRange } from './types';
 
   interface Props {
     message: string;
     type?: 'error' | 'not_found';
-    initialFilters?: {
-      start_time: DateTime;
-      end_time: DateTime;
-      bucket_interval: string;
-      selected_range: string;
-    };
+    initialFilters: TracePageFilter;
   }
 
   let { message, type = 'error', initialFilters }: Props = $props();
@@ -46,8 +42,8 @@
     return {
       label: labels[rangeValue] || 'Past 15 Minutes',
       value: rangeValue,
-      startTime: initialFilters?.start_time || (new Date(Date.now() - 15 * 60 * 1000).toISOString() as DateTime),
-      endTime: initialFilters?.end_time || (new Date().toISOString() as DateTime),
+      startTime: initialFilters?.filters.start_time || (new Date(Date.now() - 15 * 60 * 1000).toISOString() as DateTime),
+      endTime: initialFilters?.filters.end_time || (new Date().toISOString() as DateTime),
       bucketInterval: initialFilters?.bucket_interval || '1 minutes',
     };
   }

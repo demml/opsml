@@ -1,15 +1,9 @@
 <script lang="ts">
   import { Calendar, Clock, ChevronDown } from 'lucide-svelte';
   import type { DateTime } from '$lib/types';
+  import type { TimeRange } from './types';
 
-  export interface TimeRange {
-    label: string;
-    value: string;
-    startTime: DateTime;
-    endTime: DateTime;
-    bucketInterval: string;
-  }
-
+ 
   let {
     selectedRange = $bindable(),
     onRangeChange

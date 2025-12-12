@@ -27,7 +27,7 @@ export function getNextCursor(
 
   const lastTrace = traces[traces.length - 1];
   return {
-    created_at: lastTrace.created_at,
+    start_time: lastTrace.start_time,
     trace_id: lastTrace.trace_id,
   };
 }
@@ -151,13 +151,6 @@ export function getAttributeValue(attributes: Attribute[], key: string): any {
 }
 
 /**
- * Get service name from span attributes
- */
-export function getServiceName(span: TraceSpan): string {
-  return getAttributeValue(span.attributes, "service.name") || "unknown";
-}
-
-/**
  * Parse JSON input/output safely
  */
 export function parseSpanJson(jsonString: string | null): any {
@@ -211,8 +204,6 @@ export async function getServerTraceMetrics(
   fetch: typeof globalThis.fetch,
   metricsRequest: TraceMetricsRequest
 ): Promise<TraceMetricsResponse> {
-  console.log("Fetching TraceMetrics with request:", metricsRequest);
-
   const resp = await createInternalApiClient(fetch).post(
     ServerPaths.TRACE_METRICS,
     metricsRequest
@@ -231,7 +222,7 @@ export async function getServerTraceSpans(
   fetch: typeof globalThis.fetch,
   traceRequest: TraceRequest
 ): Promise<TraceSpansResponse> {
-  const resp = await createInternalApiClient(fetch).get(
+  const resp = await createInternalApiClient(fetch).post(
     ServerPaths.TRACE_SPANS,
     traceRequest
   );

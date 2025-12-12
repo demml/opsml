@@ -4,6 +4,7 @@
   import type { PageProps } from './$types';
 
   let { data }: PageProps = $props();
+
 </script>
 
 {#if data.status === 'error' || data.status === 'not_found'}

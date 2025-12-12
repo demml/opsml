@@ -2,22 +2,19 @@ import type { DateTime } from "$lib/types";
 
 export interface TraceListItem {
   trace_id: string;
-  space: string;
-  name: string;
-  version: string;
+  service_name: string;
   scope: string;
-  service_name: string | null;
-  root_operation: string | null;
+  root_operation: string;
   start_time: DateTime;
   end_time: DateTime | null;
   duration_ms: number | null;
   status_code: number;
   status_message: string | null;
-  span_count: number | null;
+  span_count: number;
   has_errors: boolean;
   error_count: number;
   created_at: DateTime;
-  process_attributes: Attribute[];
+  resource_attributes: Attribute[];
 }
 
 export interface TraceMetricBucket {
@@ -37,13 +34,13 @@ export interface TraceFilters {
   start_time?: DateTime;
   end_time?: DateTime;
   limit?: number;
-  cursor_created_at?: DateTime;
+  cursor_start_time?: DateTime;
   cursor_trace_id?: string;
   direction?: "next" | "previous";
 }
 
 export interface TraceCursor {
-  created_at: DateTime;
+  start_time: DateTime;
   trace_id: string;
 }
 
@@ -142,6 +139,7 @@ export interface TraceSpan {
   span_order: number;
   input: string | null;
   output: string | null;
+  service_name: string;
 }
 
 export interface TraceSpansResponse {
@@ -162,4 +160,22 @@ export interface TraceMetricsRequest {
 
 export interface TraceMetricsResponse {
   metrics: TraceMetricBucket[];
+}
+
+export interface TimeRange {
+  label: string;
+  value: string;
+  startTime: DateTime;
+  endTime: DateTime;
+  bucketInterval: string;
+}
+
+/**
+ * Filters for trace data queries
+ */
+export interface TracePageFilter {
+  filters: TraceFilters;
+  tags: string[];
+  bucket_interval: string;
+  selected_range: string;
 }
