@@ -9,16 +9,6 @@
 
   let isSidebarOpen = $state(false);
 
-  function toggleSidebar() {
-    isSidebarOpen = !isSidebarOpen;
-  }
-
-  function handleLinkClick(path: string) {
-    isSidebarOpen = false;
-    goto(path);
-  }
-
-
   function logInHandle() {
     const currentPage = page.url.pathname;
     goto('/opsml/user/login?url=' + currentPage);
@@ -27,7 +17,7 @@
   let imageLoaded = $state(false);
   let scouterEnabled = $derived(uiSettingsStore.scouterEnabled);
 
-  const names = ["Spaces", "Models", "Data", "GenAI", "Experiments", "Services"];
+  const names = ["Spaces", "Models", "Data", "GenAI", "Experiments", "Services", "Observability"];
 
 
   onMount(() => {
@@ -62,16 +52,6 @@
                 {name}
               </a>
           {/each}
-
-          {#if scouterEnabled}
-            <a
-              href="/opsml/observability"
-              class:active={page.url.pathname.includes('/opsml/observability')}
-              data-sveltekit-preload-data="hover"
-            >
-              Observability
-            </a>
-          {/if}
         </div>
       </div>
     </div>

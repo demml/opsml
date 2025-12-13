@@ -12,7 +12,8 @@
     Server,
     ChevronRight,
     Pin,
-    PinOff
+    PinOff,
+    Activity
   } from 'lucide-svelte';
 
   interface NavSubItem {
@@ -54,7 +55,8 @@
       ]
     },
     { name: "Experiments", path: "/opsml/experiment", icon: FlaskConical },
-    { name: "Services", path: "/opsml/service", icon: Server }
+    { name: "Services", path: "/opsml/service", icon: Server },
+    { name: "Observability", path: "/opsml/observability", icon: Activity }
   ];
 
   function handleMouseEnter() {
