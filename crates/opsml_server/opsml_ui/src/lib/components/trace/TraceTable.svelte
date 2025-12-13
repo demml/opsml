@@ -1,5 +1,4 @@
 <script lang="ts">
-  import MultiComboBoxDropDown from '$lib/components/utils/MultiComboBoxDropDown.svelte';
   import type { TraceListItem, TracePaginationResponse, TraceSpansResponse, } from './types';
   import TraceDetailPanel from './TraceDetailPanel.svelte';
   import TraceInfiniteScroll from './TraceInfiniteScroll.svelte';
@@ -7,14 +6,19 @@
   import type { TracePageFilter } from './types';
   import MultiComboSearchBox from '../utils/MultiComboSearchBox.svelte';
 
-  let { trace_page, filters } = $props<{ trace_page: TracePaginationResponse, filters: TracePageFilter }>();
-  let filteredTags: string[] = $state([]);
-  let availableTags: string[] = $state([]);
-
+  let {
+    trace_page,
+    filters,
+    onFiltersChange
+  } = $props<{
+    trace_page: TracePaginationResponse,
+    filters: TracePageFilter,
+    onFiltersChange: (updatedFilters: TracePageFilter) => void
+  }>();
+  let filteredAttributes: string[] = $state(filters.filters.attribute_filters || []);
   let selectedTraceSpans= $state<TraceSpansResponse | null>(null);
   let selectedTrace = $state<TraceListItem | null>(null);
   let isLoadingDetail = $state(false);
-
 
   /**
    * Handle trace row click - fetch trace details and show panel
@@ -76,24 +80,25 @@
     return "bg-gray-400";
   }
 
+  // update filters.tags when filteredTags changes
+  function handleAttributeFilterChange(attribute_filters: string[]) {
+    filters.filters.attribute_filters = attribute_filters;
+    console.log('Updated attribute_filters filter:', filters.filters.attribute_filters);
+    onFiltersChange(filters);
+  }
+
+
 </script>
 
 <div class="grid grid-cols-1 lg:grid-cols-5 gap-4">
   <!-- Filter sidebar -->
   <div class="col-span-1 lg:col-span-1 p-2 flex flex-col rounded-base border-primary-500 border-2 shadow-primary bg-surface-50 self-start overflow-hidden">
-    <MultiComboBoxDropDown
-      boxId="tag-search-input"
-      label="Search Tags"
-      bind:filteredItems={filteredTags}
-      availableOptions={availableTags}
-    />
-
     <MultiComboSearchBox
-      boxId="tag-search-input"
-      label="Search Tags"
-      bind:filteredItems={filteredTags}
+      boxId="attribute-search-input"
+      label="Search Attributes"
+      filteredItems={filteredAttributes}
+      onItemsChange={handleAttributeFilterChange}
     />
-
   </div>
 
   <div class="col-span-1 lg:col-span-4 gap-1 py-2 px-4 flex-1 flex-col rounded-base border-primary-500 border-2 shadow-primary bg-surface-50">

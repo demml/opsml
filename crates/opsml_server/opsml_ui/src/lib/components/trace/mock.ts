@@ -4,7 +4,6 @@ import type {
   TracePaginationResponse,
   TraceCursor,
   TraceFilters,
-  TraceDetail,
   TraceSpan,
   SpanEvent,
   Attribute,

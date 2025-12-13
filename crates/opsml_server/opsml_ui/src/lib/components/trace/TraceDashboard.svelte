@@ -31,9 +31,10 @@
   async function getTraceMetrics(): Promise<TraceMetricBucket[]> {
     const metricsRequest: TraceMetricsRequest = {
       service_name: filters.filters.service_name,
-      start_time: filters.filters.start_time || '',
-      end_time: filters.filters.end_time || '',
+      start_time: filters.filters.start_time,
+      end_time: filters.filters.end_time,
       bucket_interval: filters.bucket_interval,
+      attribute_filters: filters.filters.attribute_filters,
     };
 
     let traceMetrics = await getServerTraceMetrics(fetch, metricsRequest);
@@ -151,6 +152,27 @@
     }
   }
 
+  async function handleFiltersChange(updatedFilters: TracePageFilter) {
+  if (isUpdating) return;
+  isUpdating = true;
+
+    try {
+      filters = updatedFilters;
+
+      console.log('Filters updated to:', filters);
+      [traceMetrics, tracePage] = await Promise.all([
+        getTraceMetrics(),
+        getTracePage()
+      ]);
+
+      tableKey++;
+    } catch (error) {
+      console.error('Failed to update filters:', error);
+    } finally {
+      isUpdating = false;
+    }
+  }
+
   $effect(() => {
 
     const cleanup = () => {
@@ -168,8 +190,10 @@
       }, LIVE_POLL_INTERVAL);
     }
 
-  return cleanup;
-});
+    return cleanup;
+  });
+
+
 </script>
 
 <div class="mx-auto w-full max-w-8xl px-4 py-6 sm:px-6 lg:px-8">
@@ -197,6 +221,7 @@
       <TraceTable
         trace_page={tracePage}
         filters={filters}
+        onFiltersChange={handleFiltersChange}
       />
     {/key}
   </div>

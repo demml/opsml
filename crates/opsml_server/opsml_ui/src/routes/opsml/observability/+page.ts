@@ -44,7 +44,6 @@ export const load: PageLoad = async ({ fetch, depends }) => {
       };
       let initialFilters: TracePageFilter = {
         filters: { ...filters },
-        tags: [],
         bucket_interval: bucketInterval,
         selected_range: selectedRange,
       };
@@ -61,7 +60,6 @@ export const load: PageLoad = async ({ fetch, depends }) => {
     };
     let initialFilters: TracePageFilter = {
       filters: { ...traceFilter },
-      tags: [],
       bucket_interval: bucketInterval,
       selected_range: selectedRange,
     };
@@ -104,7 +102,6 @@ export const load: PageLoad = async ({ fetch, depends }) => {
         start_time: new Date(Date.now() - 15 * 60 * 1000).toISOString(),
         end_time: new Date().toISOString(),
       },
-      tags: [],
       bucket_interval: "1 minutes",
       selected_range: "15min",
     };
