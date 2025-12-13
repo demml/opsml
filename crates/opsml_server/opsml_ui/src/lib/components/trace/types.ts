@@ -37,6 +37,8 @@ export interface TraceFilters {
   cursor_start_time?: DateTime;
   cursor_trace_id?: string;
   direction?: "next" | "previous";
+  attribute_filters?: string[];
+  tace_ids?: string[];
 }
 
 export interface TraceCursor {
@@ -153,9 +155,10 @@ export interface TraceRequest {
 
 export interface TraceMetricsRequest {
   service_name?: string;
-  start_time: DateTime;
-  end_time: DateTime;
-  bucket_interval: string;
+  start_time?: DateTime;
+  end_time?: DateTime;
+  bucket_interval?: string;
+  attribute_filters?: string[];
 }
 
 export interface TraceMetricsResponse {
@@ -175,7 +178,6 @@ export interface TimeRange {
  */
 export interface TracePageFilter {
   filters: TraceFilters;
-  tags: string[];
   bucket_interval: string;
   selected_range: string;
 }

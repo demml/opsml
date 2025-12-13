@@ -52,9 +52,23 @@ from ._opsml import (  # top-level modules; # App; # Card; # Data; Experiment; #
     XGBoostModel,
     get_opsml_version,
     start_experiment,
+    _get_log_level,
+    _log_json,
+    RustyLogger,
+    LoggingConfig,
 )
 
 __version__: str = get_opsml_version()
+
+# We need to turn on rust logging early if LOG_LEVEL is set
+_log_level = _get_log_level()
+if _log_level:
+    RustyLogger.setup_logging(
+        LoggingConfig(
+            log_level=_log_level,
+            use_json=_log_json(),  # check if LOG_JSON is set to "1" or "true"
+        ),
+    )
 
 __all__ = [
     "types",

@@ -1,16 +1,15 @@
 <script lang="ts">
   import type { ChangeEventHandler, KeyboardEventHandler } from 'svelte/elements';
 
-  // --- Props and Bindings ---
   let {
     boxId,
     label,
     parentStyle = "mb-4 text-black flex flex-col items-center w-full relative",
     inputHeight = "h-full",
-    // $bindable prop for two-way synchronization with the parent component
     filteredItems = $bindable([] as string[]),
     optionWidth = "w-full",
     defaultSelected = [] as string[],
+    onItemsChange = undefined,
   } =
     $props<{
       boxId: string;
@@ -20,10 +19,11 @@
       filteredItems: string[];
       optionWidth?: string;
       defaultSelected?: string[];
+      onItemsChange?: (items: string[]) => void;
   }>();
 
   // --- Internal State ---
-  let currentInputValue = $state(''); // The text currently in the input field
+  let currentInputValue = $state('');
 
   // --- Initialization Effect (Equivalent to onMount) ---
   $effect.pre(() => {
@@ -32,8 +32,6 @@
       filteredItems = defaultSelected;
     }
   });
-
-  // --- Handlers ---
 
   const handleInputChange: ChangeEventHandler<HTMLInputElement> = (event) => {
     currentInputValue = event.currentTarget.value.trim();
@@ -51,6 +49,7 @@
 
         // 3. Update the bound prop directly. This triggers reactivity in the parent.
         filteredItems = [...filteredItems, valueToAdd];
+        onItemsChange?.(filteredItems);
       }
 
       // 4. Clear the input field for the next entry
@@ -61,6 +60,7 @@
   function deselectItem(itemToDeselect: string) {
     // Update the bound prop by filtering out the deselected item
     filteredItems = filteredItems.filter((item: string) => item !== itemToDeselect);
+    onItemsChange?.(filteredItems);
   }
 
 </script>

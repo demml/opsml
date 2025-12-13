@@ -2088,6 +2088,24 @@ class ActiveSpan:
     """Represents an active tracing span."""
 
     @property
+    def trace_id(self) -> str:
+        """Get the trace ID of the current active span.
+
+        Returns:
+            str:
+                The trace ID.
+        """
+
+    @property
+    def span_id(self) -> str:
+        """Get the span ID of the current active span.
+
+        Returns:
+            str:
+                The span ID.
+        """
+
+    @property
     def context_id(self) -> str:
         """Get the context ID of the active span."""
 
@@ -2099,6 +2117,19 @@ class ActiveSpan:
                 The attribute key.
             value (SerializedType):
                 The attribute value.
+        """
+
+    def set_tag(self, key: str, value: str) -> None:
+        """Set a tag on the active span. Tags are similar to attributes
+        except they are often used for indexing and searching spans/traces.
+        All tags are also set as attributes on the span. Before export, tags are
+        extracted and stored in a separate backend table for efficient querying.
+
+        Args:
+            key (str):
+                The tag key.
+            value (str):
+                The tag value.
         """
 
     def add_event(self, name: str, attributes: Any) -> None:
@@ -2156,16 +2187,14 @@ class ActiveSpan:
     ) -> None:
         """Exit the span context."""
 
-    async def __aenter__(self) -> "ActiveSpan":
-        """Enter the async span context."""
+def get_current_active_span(self) -> ActiveSpan:
+    """Get the current active span.
 
-    async def __aexit__(
-        self,
-        exc_type: Optional[type],
-        exc_value: Optional[BaseException],
-        exc_tb: Optional[TracebackType],
-    ) -> None:
-        """Exit the async span context."""
+    Returns:
+        ActiveSpan:
+            The current active span.
+            Raises an error if no active span exists.
+    """
 
 class BaseTracer:
     def __init__(self, name: str) -> None:
