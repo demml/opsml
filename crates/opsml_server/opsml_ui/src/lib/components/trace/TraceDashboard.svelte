@@ -42,10 +42,11 @@
   }
 
   async function getTracePage(): Promise<TracePaginationResponse> {
-    let tracePage = await getServerTracePage(fetch, {
+    let request = {
       ...filters.filters,
       limit: 50,
-    });
+    };
+    let tracePage = await getServerTracePage(fetch, request);
     return tracePage;
   }
 

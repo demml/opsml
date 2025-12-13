@@ -208,7 +208,6 @@ export async function getServerTraceMetrics(
     ServerPaths.TRACE_METRICS,
     metricsRequest
   );
-
   const { response, error } = await resp.json();
 
   if (error) {
