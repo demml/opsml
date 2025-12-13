@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { TraceSpan } from './types';
+  import { type TraceSpan } from './types';
   import {
     formatTimestamp,
     formatDuration,
@@ -11,6 +11,7 @@
   import { Info, Tags, Activity, Link2, AlertCircle, FileJson } from 'lucide-svelte';
   import Pill from '$lib/components/utils/Pill.svelte';
   import CodeBlock from '$lib/components/codeblock/CodeBlock.svelte';
+  import SpanEvents from './SpanEvents.svelte';
 
   let {
     span,
@@ -189,47 +190,7 @@
       {/if}
     </section>
 
-    <!-- Events -->
-    {#if span.events.length > 0}
-      <section>
-        <div class="flex flex-row items-center pb-2 mb-3 border-b-2 border-black">
-          <Activity color="#8059b6"/>
-          <header class="pl-2 text-primary-950 text-sm font-bold">Events ({span.events.length})</header>
-        </div>
-
-        <div class="space-y-3">
-          {#each span.events as event}
-            <div class="bg-surface-50 border-2 border-black rounded-base p-3 shadow-small">
-              <div class="flex items-center gap-2 mb-2">
-                {#if event.name.toLowerCase().includes('exception') || event.name.toLowerCase().includes('error')}
-                  <AlertCircle class="text-error-600" size={16}/>
-                {:else}
-                  <Activity class="text-primary-500" size={16}/>
-                {/if}
-                <span class="text-sm font-bold text-gray-900">{event.name}</span>
-              </div>
-
-              <Pill key="Timestamp" value={formatTimestamp(event.timestamp)} textSize="text-xs"/>
-
-              {#if event.attributes.length > 0}
-                <div class="space-y-1 mt-2">
-                  {#each event.attributes as attr}
-                    <Pill key={attr.key} value={formatAttributeValue(attr.value)} textSize="text-xs"/>
-                  {/each}
-                </div>
-              {/if}
-
-              {#if event.dropped_attributes_count > 0}
-                <div class="text-xs text-warning-500 mt-2 flex items-center gap-1">
-                  <AlertCircle size={12}/>
-                  {event.dropped_attributes_count} attributes dropped
-                </div>
-              {/if}
-            </div>
-          {/each}
-        </div>
-      </section>
-    {/if}
+    <SpanEvents events={span.events} />
 
     <!-- Links -->
     {#if span.links.length > 0}
