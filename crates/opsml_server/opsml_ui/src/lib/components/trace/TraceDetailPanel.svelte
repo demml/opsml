@@ -202,7 +202,7 @@
     {/if}
 
     <!-- Waterfall + Span Details -->
-    <div class="flex flex-col lg:flex-row min-h-[600px]">
+    <div class="flex flex-col lg:flex-row min-h-[600px] min-w-0">
       <div class="border-b-2 lg:border-b-0 lg:border-r-2 border-black lg:flex-1 {showWaterfall ? 'block' : 'hidden'} lg:block">
         <TraceWaterfall
           spans={spans}
@@ -213,7 +213,7 @@
         />
       </div>
 
-      <div class="bg-surface-50 lg:flex-1 {showSpanDetail ? 'block' : 'hidden'} lg:block">
+      <div class="bg-surface-50 lg:flex-1 min-w-0 {showSpanDetail ? 'block' : 'hidden'} lg:block">
         {#if selectedSpan}
           <SpanDetailView span={selectedSpan} onSpanSelect={handleSpanSelect} allSpans={spans} slowestSpan={slowestSpan()} />
         {:else}

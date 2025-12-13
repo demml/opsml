@@ -181,3 +181,6 @@ export interface TracePageFilter {
   bucket_interval: string;
   selected_range: string;
 }
+
+export const SPAN_ERROR = "span.error";
+export const EXCEPTION_TRACEBACK = "exception.traceback";
