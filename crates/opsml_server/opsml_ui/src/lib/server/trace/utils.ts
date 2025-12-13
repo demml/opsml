@@ -35,7 +35,7 @@ export async function getTraceMetrics(
   fetch: typeof globalThis.fetch,
   metricsRequest: TraceMetricsRequest
 ): Promise<TraceMetricsResponse> {
-  const response = await createOpsmlClient(fetch).get(
+  const response = await createOpsmlClient(fetch).post(
     RoutePaths.TRACE_METRICS,
     metricsRequest
   );

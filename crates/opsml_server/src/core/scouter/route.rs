@@ -869,29 +869,27 @@ pub async fn get_trace_spans(
 
 /// Get trace metrics
 #[instrument(skip_all)]
-pub async fn get_trace_metrics(
+pub async fn trace_metrics(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
-    Query(params): Query<TraceMetricsRequest>,
+    Json(body): Json<TraceMetricsRequest>,
 ) -> Result<Json<TraceMetricsResponse>, (StatusCode, Json<OpsmlServerError>)> {
-    debug!("Getting trace metrics with params: {:?}", &params);
+    debug!("Getting trace metrics with params: {:?}", &body);
     let exchange_token = state.exchange_token_from_perms(&perms).await.map_err(|e| {
         error!("Failed to exchange token for scouter: {e}");
         internal_server_error(e, "Failed to exchange token for scouter")
-    })?;
-
-    let query_string = serde_qs::to_string(&params).map_err(|e| {
-        error!("Failed to serialize query string: {e}");
-        internal_server_error(e, "Failed to serialize query string")
     })?;
 
     let response = state
         .scouter_client
         .request(
             scouter::Routes::TraceMetrics,
-            RequestType::Get,
+            RequestType::Post,
+            Some(serde_json::to_value(&body).map_err(|e| {
+                error!("Failed to serialize trace metrics request: {e}");
+                internal_server_error(e, "Failed to serialize trace metrics request")
+            })?),
             None,
-            Some(query_string),
             None,
             &exchange_token,
         )
@@ -965,7 +963,7 @@ pub async fn get_scouter_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
             )
             .route(
                 &format!("{prefix}/scouter/trace/metrics"),
-                get(get_trace_metrics),
+                post(trace_metrics),
             )
     }));
 
