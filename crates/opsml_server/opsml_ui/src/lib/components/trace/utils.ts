@@ -11,8 +11,17 @@ import type {
   TraceFilters,
   TracePaginationResponse,
 } from "./types";
+import {
+  MODEL_KEY_ATTR,
+  DATA_KEY_ATTR,
+  AGENT_KEY_ATTR,
+  MCP_KEY_ATTR,
+  EXPERIMENT_KEY_ATTR,
+  PROMPT_KEY_ATTR,
+  SERVICE_KEY_ATTR,
+} from "./types";
 import { createInternalApiClient } from "$lib/api/internalClient";
-
+import { RegistryType } from "$lib/utils";
 /**
  * Extract the next pagination cursor from a list of traces.
  * Returns undefined if there are no traces or we've reached the end.
@@ -329,4 +338,32 @@ export function calculateTimeRange(range: string): {
     endTime: now.toISOString(),
     bucketInterval,
   };
+}
+
+/**
+ * Get the key attribute name for a given registry type
+ * @param registryType - The type of registry
+ * @returns The key attribute string for the registry type
+ */
+export function getCardKeyAttribute(registryType: RegistryType): string {
+  switch (registryType) {
+    case RegistryType.Model:
+      return MODEL_KEY_ATTR;
+    case RegistryType.Experiment:
+      return EXPERIMENT_KEY_ATTR;
+    case RegistryType.Data:
+      return DATA_KEY_ATTR;
+    case RegistryType.Prompt:
+      return PROMPT_KEY_ATTR;
+    case RegistryType.Service:
+      return SERVICE_KEY_ATTR;
+    case RegistryType.Mcp:
+      return MCP_KEY_ATTR;
+    case RegistryType.Agent:
+      return AGENT_KEY_ATTR;
+    default:
+      // Exhaustiveness check - TypeScript will error if a case is missing
+      const _exhaustive: never = registryType;
+      throw new Error(`Unhandled registry type: ${_exhaustive}`);
+  }
 }

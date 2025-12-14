@@ -41,6 +41,7 @@ export enum RoutePaths {
   TRACE_PAGE = "/opsml/api/scouter/trace/paginated",
   TRACE_METRICS = "/opsml/api/scouter/trace/metrics",
   TRACE_SPANS = "/opsml/api/scouter/trace/spans",
+  ENTITY_ID_TAGS = "/opsml/api/scouter/tags/entity",
 
   // Experiment
   EXPERIMENT_METRICS = "/opsml/api/experiment/metrics",
@@ -103,4 +104,5 @@ export enum ServerPaths {
   TRACE_METRICS = "/api/observability/trace/metrics",
   TRACE_SPANS = "/api/observability/trace/spans",
   TRACE_PAGE = "/api/observability/trace",
+  ENTITY_ID_TAGS = "/api/tags/scouter/entity",
 }

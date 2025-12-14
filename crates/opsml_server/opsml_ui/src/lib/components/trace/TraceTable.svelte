@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { TraceListItem, TracePaginationResponse, TraceSpansResponse, } from './types';
-  import TraceDetailPanel from './TraceDetailPanel.svelte';
+  import TraceDetailSidebar from './TraceDetailSidebar.svelte';
   import TraceInfiniteScroll from './TraceInfiniteScroll.svelte';
   import { getServerTraceSpans } from './utils';
   import type { TracePageFilter } from './types';
@@ -195,7 +195,7 @@
 </div>
 
 {#if selectedTraceSpans && selectedTrace}
-  <TraceDetailPanel
+  <TraceDetailSidebar
     trace={selectedTrace}
     traceSpans={selectedTraceSpans}
     onClose={handleClosePanel}

@@ -1,4 +1,5 @@
 import type { DateTime } from "$lib/types";
+import { RegistryType } from "$lib/utils";
 
 export interface TraceListItem {
   trace_id: string;
@@ -38,7 +39,7 @@ export interface TraceFilters {
   cursor_trace_id?: string;
   direction?: "next" | "previous";
   attribute_filters?: string[];
-  tace_ids?: string[];
+  trace_ids?: string[];
 }
 
 export interface TraceCursor {
@@ -184,3 +185,10 @@ export interface TracePageFilter {
 
 export const SPAN_ERROR = "span.error";
 export const EXCEPTION_TRACEBACK = "exception.traceback";
+export const MODEL_KEY_ATTR = "card.model.uid";
+export const SERVICE_KEY_ATTR = "card.service.uid";
+export const EXPERIMENT_KEY_ATTR = "card.experiment.uid";
+export const DATA_KEY_ATTR = "card.data.uid";
+export const PROMPT_KEY_ATTR = "card.prompt.uid";
+export const MCP_KEY_ATTR = "card.mcp.uid";
+export const AGENT_KEY_ATTR = "card.agent.uid";
