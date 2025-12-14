@@ -1,6 +1,5 @@
 <script lang="ts">
   import type { TraceMetricBucket, TracePaginationResponse, TimeRange, TracePageFilter, TraceMetricsRequest, TraceMetricsResponse } from './types';
-  import { invalidate } from '$app/navigation';
   import TraceCharts from './TraceCharts.svelte';
   import TraceTable from './TraceTable.svelte';
   import TimeRangeFilter from './TimeRangeFilter.svelte';
