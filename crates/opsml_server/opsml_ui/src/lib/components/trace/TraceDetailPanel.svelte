@@ -8,7 +8,6 @@
   import { formatDuration } from './utils';
   import { Network, List } from 'lucide-svelte';
   import Pill from '../utils/Pill.svelte';
-  import { Waypoints } from 'lucide-svelte';
   let {
     trace,
     traceSpans,

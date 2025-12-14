@@ -1,32 +1,16 @@
 <script lang="ts">
-  import { onMount } from "svelte";
   import logo from "$lib/images/opsml_word.webp";
   import { page } from "$app/state";
   import { goto } from "$app/navigation";
   import { KeySquare } from 'lucide-svelte';
   import UserDropdown from "../user/UserDropdown.svelte";
-  import { uiSettingsStore } from '$lib/components/settings/settings.svelte';
-
-  let isSidebarOpen = $state(false);
 
   function logInHandle() {
     const currentPage = page.url.pathname;
     goto('/opsml/user/login?url=' + currentPage);
   }
 
-  let imageLoaded = $state(false);
-  let scouterEnabled = $derived(uiSettingsStore.scouterEnabled);
-
   const names = ["Spaces", "Models", "Data", "GenAI", "Experiments", "Services", "Observability"];
-
-
-  onMount(() => {
-    const img = new Image();
-    img.src = logo;
-    img.onload = () => {
-      imageLoaded = true;
-    };
-  });
 
 </script>
 

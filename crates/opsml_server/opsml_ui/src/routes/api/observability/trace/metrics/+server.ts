@@ -16,7 +16,7 @@ export const POST: RequestHandler = async ({ request, fetch }) => {
   try {
     const requestBody: TraceMetricsRequest = await request.json();
 
-    logger.info(
+    logger.debug(
       "Received request for trace metrics " + JSON.stringify(requestBody)
     );
 
