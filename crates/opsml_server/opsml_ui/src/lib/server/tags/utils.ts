@@ -9,7 +9,7 @@ export async function getScouterEntityIdFromTags(
   fetch: typeof globalThis.fetch,
   request: ScouterEntityIdTagsRequest
 ): Promise<ScouterEntityIdResponse> {
-  const response = await createOpsmlClient(fetch).get(
+  const response = await createOpsmlClient(fetch).post(
     RoutePaths.ENTITY_ID_TAGS,
     request
   );
