@@ -1,6 +1,7 @@
 import { createOpsmlClient } from "$lib/server/api/opsmlClient";
 import { RoutePaths } from "$lib/components/api/routes";
 import {
+  TimeInterval,
   type UpdateProfileRequest,
   type UpdateResponse,
   type LLMPageRequest,
@@ -8,7 +9,6 @@ import {
   type PaginationCursor,
   type ServiceInfo,
   type LLMPaginationRequest,
-  type TimeInterval,
   Status,
   DriftType,
   type DriftRequest,
@@ -24,10 +24,9 @@ import type {
   UpdateAlertResponse,
   UpdateAlertStatus,
 } from "$lib/components/card/monitoring/alert/types";
-import {
-  timeIntervalToDateTime,
-  getProfileConfig,
-} from "$lib/components/card/monitoring/utils";
+import { getProfileConfig } from "$lib/components/card/monitoring/utils";
+import type { TimeRange } from "$lib/components/trace/types";
+import { timeRangeToInterval } from "$lib/components/trace/utils";
 
 export async function getDriftProfiles(
   fetch: typeof globalThis.fetch,
@@ -86,13 +85,13 @@ export async function updateDriftProfile(
 export async function getDriftAlerts(
   fetch: typeof globalThis.fetch,
   uid: string,
-  timeInterval: TimeInterval,
+  timeRange: TimeRange,
   active: boolean
 ): Promise<Alert[]> {
   // For testing purposes, return sample alerts
   let alertRequest: DriftAlertRequest = {
     uid: uid,
-    limit_datetime: timeIntervalToDateTime(timeInterval),
+    limit_datetime: timeRange.startTime,
     active: active,
   };
 
@@ -140,7 +139,7 @@ export async function acknowledgeAlert(
 export async function getLatestMetrics(
   fetch: typeof globalThis.fetch,
   profiles: DriftProfileResponse,
-  time_interval: TimeInterval,
+  time_range: TimeRange,
   max_data_points: number
 ): Promise<BinnedDriftMap> {
   const driftMap: BinnedDriftMap = {};
@@ -149,6 +148,7 @@ export async function getLatestMetrics(
   const requests = Object.entries(profiles).map(
     async ([driftType, profile]) => {
       const config = getProfileConfig(driftType as DriftType, profile.profile);
+      const time_interval = timeRangeToInterval(time_range);
 
       const request: DriftRequest = {
         space: config.space,
@@ -157,6 +157,12 @@ export async function getLatestMetrics(
         max_data_points: max_data_points,
         drift_type: driftType as DriftType,
       };
+
+      // if time_interval is custom, add begin and end datetime
+      if (time_interval === TimeInterval.Custom) {
+        request.begin_custom_datetime = time_range.startTime;
+        request.end_custom_datetime = time_range.endTime;
+      }
 
       // Determine route based on drift type
       const route = (() => {

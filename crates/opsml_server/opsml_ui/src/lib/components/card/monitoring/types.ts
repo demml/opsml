@@ -24,16 +24,16 @@ export interface FeatureMap {
 }
 
 export enum TimeInterval {
-  FiveMinutes = "FiveMinutes",
   FifteenMinutes = "FifteenMinutes",
   ThirtyMinutes = "ThirtyMinutes",
   OneHour = "OneHour",
-  ThreeHours = "ThreeHours",
+  FourHours = "FourHours",
   SixHours = "SixHours",
   TwelveHours = "TwelveHours",
   TwentyFourHours = "TwentyFourHours",
-  TwoDays = "TwoDays",
-  FiveDays = "FiveDays",
+  SevenDays = "SevenDays",
+  ThirtyDays = "ThirtyDays",
+  Custom = "Custom",
 }
 
 export interface ConsoleDispatchConfig {

@@ -3,14 +3,14 @@
   import type {  CustomMetricAlertConfig, CustomMetricDriftConfig } from "./custom";
   import Pill from "$lib/components/utils/Pill.svelte";
   import UpdateModal from "../update/UpdateModal.svelte";
-  import type { UiProfile } from "../util";
+  import type { UiProfile } from "../utils";
   import type { RegistryType } from "$lib/utils";
   // props
-  let { 
+  let {
     config,
     alertConfig,
     profile,
-    uid, 
+    uid,
     registry,
   } = $props<{
     config: CustomMetricDriftConfig;
@@ -20,7 +20,7 @@
     registry: RegistryType;
   }>();
 
-  
+
   </script>
 
 <div class="grid grid-cols-1 gap-2 w-full h-auto">
@@ -30,13 +30,13 @@
     {#if config.sample}
       <Pill key="Sample size" value={config.sample_size} textSize="text-sm"/>
     {/if}
-   
+
   </div>
 
   <div class="flex flex-row gap-2">
 
     <div class="items-center mr-2 font-bold text-primary-800">Dispatch:</div>
-    
+
     {#if hasSlackConfig(alertConfig.dispatch_config)}
       <Pill key="Slack Channel" value={alertConfig.dispatch_config.Slack.channel} textSize="text-sm"/>
     {/if}
@@ -52,8 +52,8 @@
   </div>
   <div class="flex flex-row justify-start gap-2">
 
-    <UpdateModal 
-      config={config} 
+    <UpdateModal
+      config={config}
       driftType={config.drift_type}
       profile={profile}
       uid={uid}

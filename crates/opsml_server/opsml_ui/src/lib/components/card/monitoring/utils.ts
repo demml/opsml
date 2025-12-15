@@ -28,6 +28,7 @@ import type {
 } from "../monitoring/types";
 import { RegistryType } from "$lib/utils";
 import { type Alert } from "./alert/types";
+import type { TimeRange } from "$lib/components/trace/types";
 
 export type DriftProfile = {
   Spc: SpcDriftProfile;
@@ -138,28 +139,6 @@ export function isSpcConfig(config: DriftConfigType): config is SpcDriftConfig {
   return config.drift_type === DriftType.Spc;
 }
 
-export function timeIntervalToDateTime(interval: TimeInterval): string {
-  const now = new Date();
-  const minutesMap: Record<TimeInterval, number> = {
-    [TimeInterval.FiveMinutes]: 5,
-    [TimeInterval.FifteenMinutes]: 15,
-    [TimeInterval.ThirtyMinutes]: 30,
-    [TimeInterval.OneHour]: 60,
-    [TimeInterval.ThreeHours]: 180,
-    [TimeInterval.SixHours]: 360,
-    [TimeInterval.TwelveHours]: 720,
-    [TimeInterval.TwentyFourHours]: 1440,
-    [TimeInterval.TwoDays]: 2880,
-    [TimeInterval.FiveDays]: 7200,
-  };
-
-  const minutes = minutesMap[interval];
-  const past = new Date(now.getTime() - minutes * 60000);
-
-  // Format to YYYY-MM-DD HH:MM:SS
-  return past.toISOString();
-}
-
 /** Helper for getting latest monitoring metrics
  * @param profiles - drift profiles to get metrics for
  * @param time_interval - time interval for the metrics
@@ -170,14 +149,14 @@ export function timeIntervalToDateTime(interval: TimeInterval): string {
 export async function getLatestMonitoringMetrics(
   fetch: typeof globalThis.fetch,
   profiles: DriftProfileResponse,
-  time_interval: TimeInterval,
+  time_range: TimeRange,
   max_data_points: number
 ): Promise<BinnedDriftMap> {
   let resp = await createInternalApiClient(fetch).post(
     ServerPaths.MONITORING_METRICS,
     {
       profiles,
-      time_interval,
+      time_range,
       max_data_points,
     }
   );
@@ -228,7 +207,7 @@ export async function getMonitoringDriftProfiles(
 export async function getMonitoringAlerts(
   fetch: typeof globalThis.fetch,
   uid: string,
-  timeInterval: TimeInterval,
+  timeRange: TimeRange,
   active: boolean
 ): Promise<Alert[]> {
   //if (import.meta.env.DEV) {
@@ -239,7 +218,7 @@ export async function getMonitoringAlerts(
     ServerPaths.MONITORING_ALERTS,
     {
       uid,
-      timeInterval,
+      timeRange,
       active,
     }
   );

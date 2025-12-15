@@ -10,6 +10,7 @@ import type {
   TraceRequest,
   TraceFilters,
   TracePaginationResponse,
+  TimeRange,
 } from "./types";
 import {
   MODEL_KEY_ATTR,
@@ -22,6 +23,7 @@ import {
 } from "./types";
 import { createInternalApiClient } from "$lib/api/internalClient";
 import { RegistryType } from "$lib/utils";
+import { TimeInterval } from "../card/monitoring/types";
 /**
  * Extract the next pagination cursor from a list of traces.
  * Returns undefined if there are no traces or we've reached the end.
@@ -365,5 +367,34 @@ export function getCardKeyAttribute(registryType: RegistryType): string {
       // Exhaustiveness check - TypeScript will error if a case is missing
       const _exhaustive: never = registryType;
       throw new Error(`Unhandled registry type: ${_exhaustive}`);
+  }
+}
+
+/**
+ * Convert a TimeRange to a TimeInterval enum value based on the range label.
+ * Maps the predefined labels from TimeRangeFilter to TimeInterval enum values.
+ */
+export function timeRangeToInterval(range: TimeRange): TimeInterval {
+  switch (range.label) {
+    case "Live (15min)":
+    case "Past 15 Minutes":
+      return TimeInterval.FifteenMinutes;
+    case "Past 30 Minutes":
+      return TimeInterval.ThirtyMinutes;
+    case "Past 1 Hour":
+      return TimeInterval.OneHour;
+    case "Past 4 Hours":
+      return TimeInterval.FourHours;
+    case "Past 12 Hours":
+      return TimeInterval.TwelveHours;
+    case "Past 24 Hours":
+      return TimeInterval.TwentyFourHours;
+    case "Past 7 Days":
+      return TimeInterval.SevenDays;
+    case "Past 30 Days":
+      return TimeInterval.ThirtyDays;
+    case "Custom Range":
+    default:
+      return TimeInterval.Custom;
   }
 }
