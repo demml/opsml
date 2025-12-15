@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
-  import { IdCard, FolderTree, Tag, Activity } from 'lucide-svelte';
+  import { IdCard, FolderTree, Tag, Activity, Search } from 'lucide-svelte';
   import { page } from '$app/state';
   import { uiSettingsStore } from '$lib/components/settings/settings.svelte';
   import { dev } from '$app/environment';
@@ -22,12 +22,12 @@
 
   let { metadata, registryType, children }: PromptLayoutProps = $props();
 
-  /** 
+  /**
    * Determines the active tab based on the current URL path
    */
   let activeTab = $derived.by(() => {
     const last = page.url.pathname.split('/').pop() ?? '';
-    if (['card', 'files', 'monitoring', 'versions', 'view'].includes(last)) return last;
+    if (['card', 'files', 'monitoring', 'observability', 'versions', 'view'].includes(last)) return last;
     return 'card';
   });
 
@@ -54,8 +54,8 @@
     <!-- Breadcrumb Navigation -->
     <h1 class="flex flex-row flex-wrap items-center">
       <div class="group flex flex-none items-center">
-        <a 
-          class="font-semibold text-black hover:text-secondary-500 transition-colors" 
+        <a
+          class="font-semibold text-black hover:text-secondary-500 transition-colors"
           href={`/opsml/space/${metadata.space}`}
           aria-label={`Navigate to ${metadata.space} space`}
         >
@@ -64,7 +64,7 @@
         <div class="mx-0.5 text-gray-800" aria-hidden="true">/</div>
       </div>
       <div class="font-bold text-primary-800">
-        <a 
+        <a
           href={basePath.replace(`/${metadata.version}`, '')}
           class="hover:text-primary-600 transition-colors"
           aria-label={`Navigate to ${metadata.name} prompt overview`}
@@ -99,6 +99,16 @@
           <span>Monitoring</span>
         </a>
       {/if}
+
+      <a
+        class="flex items-center gap-x-2 border-b-3 {activeTab === 'observability' ? 'border-secondary-500' : 'border-transparent'} hover:border-secondary-500 hover:border-b-3"
+        href={`${basePath}/observability`}
+        data-sveltekit-preload-data="hover"
+        aria-current={activeTab === 'observability' ? 'page' : undefined}
+      >
+        <Search color="#8059b6" size={16} />
+        <span>Observability</span>
+      </a>
 
       <a
         class="flex items-center gap-x-2 border-b-3 {activeTab === 'files' || activeTab === 'view' ? 'border-secondary-500' : 'border-transparent'} hover:border-secondary-500 hover:border-b-3 transition-colors"

@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
-  import { IdCard, FolderTree, Tag, BookOpenText } from 'lucide-svelte';
+  import { IdCard, FolderTree, Tag, BookOpenText, Search } from 'lucide-svelte';
   import { page } from '$app/state';
   import { getRegistryPath } from '$lib/utils';
   import type { RegistryType } from '$lib/utils';
@@ -25,7 +25,7 @@
    */
   let activeTab = $derived.by(() => {
     const last = page.url.pathname.split('/').pop() ?? '';
-    if (['card', 'files', 'profile', 'versions', 'view'].includes(last)) return last;
+    if (['card', 'files', 'profile', 'observability', 'versions', 'view'].includes(last)) return last;
     return 'card';
   });
 
@@ -57,6 +57,13 @@
       label: 'Profile',
       icon: BookOpenText,
       isActive: (tab: string) => tab === 'profile'
+    },
+    {
+      key: 'observability',
+      label: 'Observability',
+      icon: Search,
+      isActive: (tab: string) => tab === 'observability',
+      iconProps: { fill: '#8059b6' }
     },
     {
       key: 'versions',

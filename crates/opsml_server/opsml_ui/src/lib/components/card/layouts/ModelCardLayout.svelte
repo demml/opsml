@@ -1,12 +1,11 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
-  import { IdCard, FolderTree, Tag, Activity } from 'lucide-svelte';
+  import { IdCard, FolderTree, Tag, Activity, Search } from 'lucide-svelte';
   import { page } from '$app/state';
   import { uiSettingsStore } from '$lib/components/settings/settings.svelte';
   import { getRegistryPath } from '$lib/utils';
   import { dev } from '$app/environment';
   import type { RegistryType } from '$lib/utils';
-  import ScouterRequiredView from "$lib/components/scouter/ScouterRequiredView.svelte";
 
   interface CardMetadata {
     space: string;
@@ -110,23 +109,15 @@
         </a>
       {/if}
 
-      {#if scouterEnabled}
-        <a
-          class="flex items-center gap-x-2 border-b-3 {activeTab === 'observability' ? 'border-secondary-500' : 'border-transparent'} hover:border-secondary-500 hover:border-b-3"
-          href="{basePath}/observability"
-          data-sveltekit-preload-data="hover"
-          aria-current={activeTab === 'observability' ? 'page' : undefined}
-        >
-          <Activity color="#8059b6" size={16} />
-          <span>Observability</span>
-        </a>
-      {:else}
-        <ScouterRequiredView
-          featureName="Observability Dashboard"
-          featureDescription="Track distributed traces, monitor request flows, and identify performance bottlenecks across your services with real-time observability powered by Scouter."
-          icon={Activity}
-        />
-      {/if}
+      <a
+        class="flex items-center gap-x-2 border-b-3 {activeTab === 'observability' ? 'border-secondary-500' : 'border-transparent'} hover:border-secondary-500 hover:border-b-3"
+        href="{basePath}/observability"
+        data-sveltekit-preload-data="hover"
+        aria-current={activeTab === 'observability' ? 'page' : undefined}
+      >
+        <Search color="#8059b6" size={16} />
+        <span>Observability</span>
+      </a>
 
       <a
         class="flex items-center gap-x-2 border-b-3 {activeTab === 'versions' ? 'border-secondary-500' : 'border-transparent'} hover:border-secondary-500 hover:border-b-3"

@@ -128,7 +128,7 @@
     </div>
 
     <!-- Footer with Model Info -->
-    <div class="border-t-3 border-black bg-gray-50 px-8 py-4">
+    <div class="border-t-3 border-black bg-gray-50 px-8 py-4 rounded-b-lg">
       <p class="text-center text-sm text-gray-600 font-mono">
         {space}/{name}:{version}
       </p>

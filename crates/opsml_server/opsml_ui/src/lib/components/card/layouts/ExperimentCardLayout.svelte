@@ -25,7 +25,7 @@
    */
   let activeTab = $derived.by(() => {
     const last = page.url.pathname.split('/').pop() ?? '';
-    if (['card', 'files', 'metrics', 'hardware', 'versions', 'figures', 'view'].includes(last)) return last;
+    if (['card', 'files', 'metrics', 'hardware', 'observability', 'versions', 'figures', 'view'].includes(last)) return last;
     return 'card';
   });
 
@@ -75,6 +75,12 @@
       isActive: (tab: string) => tab === 'hardware',
       description: 'System resource usage and monitoring'
     },
+    {key: 'observability',
+      label: 'Observability',
+      icon: Activity,
+      isActive: (tab: string) => tab === 'observability',
+      description: 'Distributed traces and performance monitoring'
+    },
     {
       key: 'versions',
       label: 'Versions',
@@ -95,8 +101,8 @@
   <div class="flex flex-col mx-auto justify-start px-4">
     <h1 class="flex flex-row flex-wrap items-center">
       <div class="group flex flex-none items-center">
-        <a 
-          class="font-semibold text-black hover:text-secondary-500 transition-colors" 
+        <a
+          class="font-semibold text-black hover:text-secondary-500 transition-colors"
           href="/opsml/space/{metadata.space}"
           aria-label="Navigate to {metadata.space} space"
         >
@@ -105,7 +111,7 @@
         <div class="mx-0.5 text-gray-800" aria-hidden="true">/</div>
       </div>
       <div class="font-bold text-primary-800">
-        <a 
+        <a
           href="{basePath.replace(`/${metadata.version}`, '')}"
           class="hover:text-primary-600 transition-colors"
           aria-label="Navigate to {metadata.name} experiment overview"
@@ -117,8 +123,8 @@
       <div class="font-semibold text-primary-800">{metadata.version}</div>
     </h1>
 
-    <nav 
-      class="flex flex-row gap-x-4 text-black pl-4 py-2 text-smd flex-wrap" 
+    <nav
+      class="flex flex-row gap-x-4 text-black pl-4 py-2 text-smd flex-wrap"
       aria-label="Experiment navigation"
     >
       {#each navItems as item}
