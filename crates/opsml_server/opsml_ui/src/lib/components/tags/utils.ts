@@ -3,7 +3,6 @@ import { ServerPaths } from "../api/routes";
 import type {
   ScouterEntityIdResponse,
   ScouterEntityIdTagsRequest,
-  Tag,
 } from "./types";
 
 export async function getScouterServerEntityIdFromTags(

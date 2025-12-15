@@ -29,6 +29,7 @@ pub enum Routes {
     TracePage,
     TraceSpans,
     TraceMetrics,
+    TagEntity,
 }
 
 impl Routes {
@@ -58,6 +59,7 @@ impl Routes {
             Routes::TracePage => "scouter/trace/paginated",
             Routes::TraceSpans => "scouter/trace/spans",
             Routes::TraceMetrics => "scouter/trace/metrics",
+            Routes::TagEntity => "scouter/tags/entity",
         }
     }
 }

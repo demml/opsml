@@ -5,7 +5,7 @@ export interface Tag {
 
 export interface ScouterEntityIdTagsRequest {
   entity_type: string;
-  tag_filters: Tag[];
+  tags: Tag[];
   match_all: boolean;
 }
 

@@ -4,6 +4,7 @@ import type {
   ScouterEntityIdTagsRequest,
 } from "$lib/components/tags/types";
 import { getScouterEntityIdFromTags } from "$lib/server/tags/utils";
+import { logger } from "$lib/server/logger";
 
 /**
  * POST endpoint for fetching entity ID from tags
@@ -14,6 +15,10 @@ import { getScouterEntityIdFromTags } from "$lib/server/tags/utils";
 export const POST: RequestHandler = async ({ request, fetch }) => {
   try {
     const requestBody: ScouterEntityIdTagsRequest = await request.json();
+
+    logger.info(
+      `Fetching Scouter entity ID for tags: ${JSON.stringify(requestBody)}`
+    );
 
     const response: ScouterEntityIdResponse = await getScouterEntityIdFromTags(
       fetch,

@@ -10,8 +10,8 @@ import { getScouterServerEntityIdFromTags } from "$lib/components/tags/utils";
 import {
   getCardKeyAttribute,
   getServerTraceSpans,
+  getServerTracePage,
 } from "$lib/components/trace/utils";
-import { getTracePage } from "$lib/server/trace/utils";
 
 export const load: PageLoad = async ({ parent }) => {
   const { metadata, registryType } = await parent();
@@ -26,12 +26,14 @@ export const load: PageLoad = async ({ parent }) => {
 
     const request: ScouterEntityIdTagsRequest = {
       entity_type: "trace",
-      tag_filters: [tag],
+      tags: [tag],
       match_all: true,
     };
 
     const response: ScouterEntityIdResponse =
       await getScouterServerEntityIdFromTags(fetch, request);
+
+    console.log("Fetched entity ID from tags:", response);
 
     if (response.entity_id.length === 0) {
       return {
@@ -48,7 +50,7 @@ export const load: PageLoad = async ({ parent }) => {
       getServerTraceSpans(fetch, {
         trace_id: response.entity_id[0],
       }),
-      getTracePage(fetch, {
+      getServerTracePage(fetch, {
         trace_ids: response.entity_id,
       }),
     ]);
