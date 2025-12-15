@@ -6,6 +6,7 @@
   import { getRegistryPath } from '$lib/utils';
   import { dev } from '$app/environment';
   import type { RegistryType } from '$lib/utils';
+  import ScouterRequiredView from "$lib/components/scouter/ScouterRequiredView.svelte";
 
   interface CardMetadata {
     space: string;
@@ -28,12 +29,14 @@
 
   let { metadata, registryType, children }: CardLayoutProps = $props();
 
+  let scouterEnabled: boolean = $state(uiSettingsStore.scouterEnabled);
+
   /**
    * Determines the active tab based on the current URL path
    */
   let activeTab = $derived.by(() => {
     const last = page.url.pathname.split('/').pop() ?? '';
-    if (['card', 'files', 'monitoring', 'versions', 'view'].includes(last)) return last;
+    if (['card', 'files', 'monitoring', 'versions', 'view', 'observability'].includes(last)) return last;
     return 'card';
   });
 
@@ -41,9 +44,9 @@
    * Determines if monitoring tab should be shown based on metadata and settings
    */
   let showMonitoring = $derived(
-    (metadata.metadata.interface_metadata.save_metadata.drift_profile_uri_map && 
-     uiSettingsStore.scouterEnabled) || dev
+    (metadata.metadata.interface_metadata.save_metadata.drift_profile_uri_map && scouterEnabled) || dev
   );
+
 
   /**
    * Base path for navigation links
@@ -57,7 +60,7 @@
   <div class="flex flex-col mx-auto justify-start px-4">
     <h1 class="flex flex-row flex-wrap items-center">
       <div class="group flex flex-none items-center">
-        <a 
+        <a
           class="font-semibold text-black hover:text-secondary-500" 
           href="/opsml/space/{metadata.space}"
         >
@@ -105,6 +108,24 @@
           <Activity color="#8059b6" size={16} />
           <span>Monitoring</span>
         </a>
+      {/if}
+
+      {#if scouterEnabled}
+        <a
+          class="flex items-center gap-x-2 border-b-3 {activeTab === 'observability' ? 'border-secondary-500' : 'border-transparent'} hover:border-secondary-500 hover:border-b-3"
+          href="{basePath}/observability"
+          data-sveltekit-preload-data="hover"
+          aria-current={activeTab === 'observability' ? 'page' : undefined}
+        >
+          <Activity color="#8059b6" size={16} />
+          <span>Observability</span>
+        </a>
+      {:else}
+        <ScouterRequiredView
+          featureName="Observability Dashboard"
+          featureDescription="Track distributed traces, monitor request flows, and identify performance bottlenecks across your services with real-time observability powered by Scouter."
+          icon={Activity}
+        />
       {/if}
 
       <a

@@ -2,6 +2,7 @@ use crate::error::RegistryError;
 use crate::registries::card::OpsmlCardRegistry;
 use crate::utils::verify_card_rs;
 use crate::utils::{check_if_card, download_card, upload_card_artifacts, verify_card};
+use const_format::concatcp;
 use opsml_cards::traits::OpsmlCard;
 use opsml_colors::Colorize;
 use opsml_interfaces::DriftArgs;
@@ -24,6 +25,13 @@ const SERVICE_KEY_ATTR: &str = "card.service.uid";
 const EXPERIMENT_KEY_ATTR: &str = "card.experiment.uid";
 const DATA_KEY_ATTR: &str = "card.data.uid";
 
+// combined patterns
+const DATA_TAG: &str = concatcp!(SCOUTER_TAG_PREFIX, ".", DATA_KEY_ATTR);
+const EXPERIMENT_TAG: &str = concatcp!(SCOUTER_TAG_PREFIX, ".", EXPERIMENT_KEY_ATTR);
+const SERVICE_TAG: &str = concatcp!(SCOUTER_TAG_PREFIX, ".", SERVICE_KEY_ATTR);
+const PROMPT_TAG: &str = concatcp!(SCOUTER_TAG_PREFIX, ".", PROMPT_KEY_ATTR);
+const MODEL_TAG: &str = concatcp!(SCOUTER_TAG_PREFIX, ".", MODEL_KEY_ATTR);
+
 /// Set uid as a tag on the current active span
 fn set_attribute_by_registry_type(
     py: Python<'_>,
@@ -31,15 +39,15 @@ fn set_attribute_by_registry_type(
     uid: &str,
 ) -> Result<(), RegistryError> {
     let key = match registry_type {
-        RegistryType::Model => format!("{}.{}", SCOUTER_TAG_PREFIX, MODEL_KEY_ATTR),
-        RegistryType::Prompt => format!("{}.{}", SCOUTER_TAG_PREFIX, PROMPT_KEY_ATTR),
-        RegistryType::Service => format!("{}.{}", SCOUTER_TAG_PREFIX, SERVICE_KEY_ATTR),
-        RegistryType::Experiment => format!("{}.{}", SCOUTER_TAG_PREFIX, EXPERIMENT_KEY_ATTR),
-        RegistryType::Data => format!("{}.{}", SCOUTER_TAG_PREFIX, DATA_KEY_ATTR),
+        RegistryType::Model => MODEL_TAG,
+        RegistryType::Prompt => PROMPT_TAG,
+        RegistryType::Service => SERVICE_TAG,
+        RegistryType::Experiment => EXPERIMENT_TAG,
+        RegistryType::Data => DATA_TAG,
         _ => return Ok(()),
     };
 
-    try_set_span_attribute(py, &key, uid)?;
+    try_set_span_attribute(py, key, uid)?;
     Ok(())
 }
 

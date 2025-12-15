@@ -9,6 +9,7 @@ doctest = false
 
 [dependencies]
 anyhow = { workspace = true }
+const_format = { workspace = true }
 opsml-cards = { workspace = true }
 opsml-client = { workspace = true }
 opsml-colors = { workspace = true }

@@ -3,7 +3,7 @@ import { RoutePaths } from "$lib/components/api/routes";
 import type {
   ScouterEntityIdResponse,
   ScouterEntityIdTagsRequest,
-} from "$lib/components/tags/utils";
+} from "$lib/components/tags/types";
 
 export async function getScouterEntityIdFromTags(
   fetch: typeof globalThis.fetch,

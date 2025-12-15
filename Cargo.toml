@@ -63,6 +63,7 @@ clap = { version = "4.*", features = ["derive", "string", "wrap_help"] }
 cron = "0.*"
 chrono = { version = "0.*", features = ["serde"] }
 colored_json = "5.*"
+const_format = "0.*"
 dirs = "6.*"
 dynfmt = { version = "0.*", features = ["curly"] }
 futures = "0.*"

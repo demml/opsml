@@ -26,11 +26,11 @@ use tracing::debug;
 
 use scouter_client::{
     Alerts, BinnedMetrics, BinnedPsiFeatureMetrics, DriftAlertRequest, DriftRequest,
-    LLMDriftRecord, LLMDriftRecordPaginationRequest, PaginationResponse, ProfileRequest,
-    ProfileStatusRequest, RegisteredProfileResponse, ScouterResponse, ScouterServerError,
-    SpcDriftFeatures, TraceFilters, TraceMetricsRequest, TraceMetricsResponse,
-    TracePaginationResponse, TraceRequest, TraceSpansResponse, UpdateAlertResponse,
-    UpdateAlertStatus,
+    EntityIdTagsRequest, EntityIdTagsResponse, LLMDriftRecord, LLMDriftRecordPaginationRequest,
+    PaginationResponse, ProfileRequest, ProfileStatusRequest, RegisteredProfileResponse,
+    ScouterResponse, ScouterServerError, SpcDriftFeatures, TraceFilters, TraceMetricsRequest,
+    TraceMetricsResponse, TracePaginationResponse, TraceRequest, TraceSpansResponse,
+    UpdateAlertResponse, UpdateAlertStatus,
 };
 use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::sync::Arc;
@@ -919,6 +919,56 @@ pub async fn trace_metrics(
     }
 }
 
+/// Get paginated traces
+#[instrument(skip_all)]
+pub async fn entity_from_tags(
+    State(state): State<Arc<AppState>>,
+    Extension(perms): Extension<UserPermissions>,
+    Json(body): Json<EntityIdTagsRequest>,
+) -> Result<Json<EntityIdTagsResponse>, (StatusCode, Json<OpsmlServerError>)> {
+    let exchange_token = state.exchange_token_from_perms(&perms).await.map_err(|e| {
+        error!("Failed to exchange token for scouter: {e}");
+        internal_server_error(e, "Failed to exchange token for scouter")
+    })?;
+
+    let response = state
+        .scouter_client
+        .request(
+            scouter::Routes::TagEntity,
+            RequestType::Post,
+            Some(serde_json::to_value(&body).map_err(|e| {
+                error!("Failed to serialize request body: {e}");
+                internal_server_error(e, "Failed to serialize request body")
+            })?),
+            None,
+            None,
+            &exchange_token,
+        )
+        .await
+        .map_err(|e| {
+            error!("Failed to get trace spans: {e}");
+            internal_server_error(e, "Failed to get trace spans")
+        })?;
+
+    let status_code = response.status();
+    match status_code.is_success() {
+        true => {
+            let body = response.json::<EntityIdTagsResponse>().await.map_err(|e| {
+                error!("Failed to parse scouter tag entity response: {e}");
+                internal_server_error(e, "Failed to parse scouter response")
+            })?;
+            Ok(Json(body))
+        }
+        false => {
+            let body = response.json::<ScouterServerError>().await.map_err(|e| {
+                error!("Failed to parse scouter error response: {e}");
+                internal_server_error(e, "Failed to parse scouter error response")
+            })?;
+            Err((status_code, Json(OpsmlServerError::new(body.error))))
+        }
+    }
+}
+
 pub async fn get_scouter_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
     let result = catch_unwind(AssertUnwindSafe(|| {
         Router::new()
@@ -964,6 +1014,10 @@ pub async fn get_scouter_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
             .route(
                 &format!("{prefix}/scouter/trace/metrics"),
                 post(trace_metrics),
+            )
+            .route(
+                &format!("{prefix}/scouter/tags/entity"),
+                post(entity_from_tags),
             )
     }));
 
