@@ -18,14 +18,12 @@
     metricData,
     currentDriftType,
     currentName,
-    currentTimeInterval,
     currentConfig,
     currentProfile,
   } = $props<{
     metricData: MetricData;
     currentDriftType: DriftType;
     currentName: string;
-    currentTimeInterval: TimeInterval;
     currentConfig: DriftConfigType;
     currentProfile: DriftProfile;
 
@@ -107,7 +105,6 @@ function getBaselineValue(): number | undefined {
     <div class="flex flex-row flex-wrap gap-2 items-center">
       <Pill key="Key" value={currentName} textSize="text-sm"/>
       <Pill key="drift" value={currentDriftType} textSize="text-sm"/>
-      <Pill key="Time Window" value={currentTimeInterval} textSize="text-sm"/>
 
       {#if currentConfig && currentDriftType === DriftType.Custom}
         {@const alertInfo = getCustomAlertCondition(currentConfig as CustomMetricDriftConfig, currentName)}
