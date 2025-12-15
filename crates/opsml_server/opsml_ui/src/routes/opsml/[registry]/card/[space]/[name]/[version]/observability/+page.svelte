@@ -12,14 +12,18 @@
 
 </script>
 
-<div class="mx-auto max-w-8xl pb-8 px-4">
-  {#if trace && traceSpans}
-    <TraceDetailContent
-      trace={trace}
-      traceSpans={traceSpans}
-      showCloseButton={false}
-    />
-  {:else}
-    <NoTraceView message={data.errorMessage} type={data.type} />
-  {/if}
+<div class="mx-auto w-full max-w-8xl px-4 py-6 sm:px-6 lg:px-8">
+  <div class="border-2 border-black rounded-lg shadow overflow-hidden">
+    <div class="flex flex-col">
+      {#if trace && traceSpans}
+        <TraceDetailContent
+          trace={trace}
+          traceSpans={traceSpans}
+          showCloseButton={false}
+        />
+      {:else}
+        <NoTraceView message={data.errorMessage} type={data.type} />
+      {/if}
+    </div>
+  </div>
 </div>
