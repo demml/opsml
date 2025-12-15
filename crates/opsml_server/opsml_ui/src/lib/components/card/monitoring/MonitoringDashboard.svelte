@@ -19,7 +19,7 @@
   import LLMRecordTable from './llm/LLMRecordTable.svelte';
   import { acknowledgeMonitoringAlert } from '$lib/components/card/monitoring/alert/utils';
   import { onMount, onDestroy } from 'svelte';
-  import type { DateTime } from '$lib/types';
+
 
   /**
    * Props for the monitoring dashboard component
@@ -85,7 +85,7 @@
       latestMetrics = await getLatestMonitoringMetrics(
         fetch,
         profiles,
-        timeInterval,
+        selectedTimeRange,
         currentMaxDataPoints
       );
 
@@ -135,33 +135,39 @@
     );
   }
 
-  /**
-   * Handles time interval change and refreshes data
-   */
-  async function handleTimeChange(timeInterval: TimeInterval): Promise<void> {
-    currentTimeInterval = timeInterval;
+  async function handleTimeRangeChange(range: TimeRange): Promise<void> {
+    if (isUpdating) return;
+    isUpdating = true;
 
-    // Fetch updated metrics
-    latestMetrics = await getLatestMonitoringMetrics(
-      fetch,
-      profiles,
-      currentTimeInterval,
-      currentMaxDataPoints
-    );
+    try {
+      selectedTimeRange = range;
 
-    currentMetricData = getCurrentMetricData(
-      latestMetrics,
-      currentDriftType,
-      currentName
-    );
+      // Backend checks if TimeInterval is Custom and uses start_time/end_time
+      latestMetrics = await getLatestMonitoringMetrics(
+        fetch,
+        profiles,
+        range,
+        currentMaxDataPoints,
+      );
 
-    // Fetch updated alerts
-    currentAlerts = await getMonitoringAlerts(
-      fetch,
-      currentConfig.uid,
-      currentTimeInterval,
-      true
-    );
+      currentAlerts = await getMonitoringAlerts(
+        fetch,
+        currentConfig.uid,
+        range,
+        true
+      );
+
+      currentMetricData = getCurrentMetricData(
+        latestMetrics,
+        currentDriftType,
+        currentName
+      );
+      
+    } catch (error) {
+      console.error('Failed to update time range:', error);
+    } finally {
+      isUpdating = false;
+    }
   }
 
   /**
@@ -174,7 +180,7 @@
       currentAlerts = await getMonitoringAlerts(
         fetch,
         currentConfig.uid,
-        currentTimeInterval,
+        selectedTimeRange,
         true
       );
     }
@@ -198,14 +204,14 @@
       <Header
         availableDriftTypes={driftTypes}
         {currentDriftType}
-        bind:currentTimeInterval
+        bind:selectedTimeRange
         bind:currentName
         {currentNames}
         {currentConfig}
         {currentProfile}
         {handleDriftTypeChange}
         {handleNameChange}
-        {handleTimeChange}
+        {handleTimeRangeChange}
         {uid}
         registry={registryType}
       />
@@ -219,7 +225,6 @@
             metricData={currentMetricData}
             {currentDriftType}
             {currentName}
-            {currentTimeInterval}
             {currentConfig}
             currentProfile={currentProfile.profile}
           />

@@ -49,11 +49,11 @@
   });
 </script>
 
-<div class="flex flex-col gap-4">
-  <!-- Drift Type Selection -->
-  <div class="flex flex-col justify-center p-4 bg-white rounded-lg border-2 border-black shadow">
-    <div class="flex flex-row flex-wrap gap-2 items-center justify-start">
-      <div class="items-start mr-1 font-bold text-primary-800">Drift Type:</div>
+<div class="flex flex-wrap gap-4">
+  <!-- Drift Type + Filters Row -->
+  <div class="flex flex-col justify-center p-4 bg-white rounded-lg border-2 border-black shadow px-4 w-fit">
+    <div class="flex flex-row flex-wrap gap-2 items-center justify-start mb-4">
+      <span class="items-start mr-1 font-bold text-primary-800">Drift Type:</span>
       {#each availableDriftTypes as drift_type}
         {#if drift_type === currentDriftType}
           <button class="btn text-sm flex items-center gap-2 bg-slate-100 border-primary-800 border-2 rounded-lg">
@@ -66,35 +66,36 @@
         {/if}
       {/each}
     </div>
-  </div>
 
-  <!-- Filters Row -->
-  <div class="flex flex-row flex-wrap gap-4 items-center">
-    <!-- Time Range Selector -->
-    <div class="flex flex-col gap-2">
-      <label class="text-sm font-bold text-primary-800">Time Range</label>
-      <TimeRangeFilter
-        selectedRange={selectedTimeRange}
-        onRangeChange={handleTimeRangeChange}
-      />
-    </div>
-
-    <!-- Name Selector -->
-    <div class="flex flex-col gap-2">
-      <label class="text-sm font-bold text-primary-800">Name</label>
-      <div class="flex items-center gap-2 px-4 py-2 bg-white border-2 border-black rounded-lg shadow-small">
-        <KeySquare class="w-4 h-4 text-primary-500" />
-        <ComboBoxDropDown
-          boxId="name-combobox-input"
-          defaultValue={currentName ?? "Select Name"}
-          boxOptions={currentNames}
+    <div class="flex flex-row gap-3">
+      <!-- Time Range Selector -->
+      <div class="flex flex-col gap-2 text-primary-800 self-center">
+        <span class="font-bold">Time Range:</span>
+        <TimeRangeFilter
+          selectedRange={selectedTimeRange}
+          onRangeChange={handleTimeRangeChange}
         />
+      </div>
+
+      <!-- Name Selector -->
+      <div class="flex flex-col gap-2 text-primary-800 self-center">
+        <span class="font-bold">Name:</span>
+        <div class="flex flex-row gap-1">
+          <div class="self-center" aria-label="Monitor Name">
+            <KeySquare color="#5948a3" />
+          </div>
+          <ComboBoxDropDown
+            boxId="name-combobox-input"
+            defaultValue={currentName ?? "Select Name"}
+            boxOptions={currentNames}
+          />
+        </div>
       </div>
     </div>
   </div>
 
   <!-- Config Header -->
-  <div class="bg-white p-4 rounded-lg shadow border-2 border-primary-800">
+  <div class="bg-white p-4 rounded-lg shadow border-2 border-black w-fit">
     {#if currentDriftType === DriftType.Custom}
       <CustomConfigHeader
         config={currentConfig}

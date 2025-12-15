@@ -1,7 +1,6 @@
 export const ssr = false;
 
 import type { PageLoad } from "./$types";
-import { TimeInterval } from "$lib/components/card/monitoring/types";
 import { loadMonitoringDashboardData } from "$lib/components/card/monitoring/getMonitoringDashboardData";
 import { getRegistryPath, RegistryType } from "$lib/utils";
 import { redirect } from "@sveltejs/kit";
@@ -46,11 +45,7 @@ export const load: PageLoad = async ({ parent, fetch }) => {
       bucketInterval,
     };
 
-    // Convert to TimeInterval enum
-    const timeInterval = timeRangeToInterval(timeRange);
-
     const dashboardData = await loadMonitoringDashboardData(fetch, parentData, {
-      initialTimeInterval: timeInterval,
       loadLLMRecords: false,
       loadAlerts: true,
       timeRange: timeRange, // Pass the full time range if needed
