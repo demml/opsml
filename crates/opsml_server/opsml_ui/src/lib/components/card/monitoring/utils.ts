@@ -173,16 +173,6 @@ export async function getLatestMonitoringMetrics(
   time_interval: TimeInterval,
   max_data_points: number
 ): Promise<BinnedDriftMap> {
-  // for dev, return example data
-  //if (import.meta.env.DEV) {
-  //  return {
-  //    [DriftType.Spc]: mockSpcMetrics,
-  //    [DriftType.Psi]: mockPsiMetrics,
-  //    [DriftType.Custom]: mockCustomMetrics,
-  //    [DriftType.LLM]: mockLLMMetrics,
-  //  };
-  //}
-
   let resp = await createInternalApiClient(fetch).post(
     ServerPaths.MONITORING_METRICS,
     {
@@ -264,10 +254,6 @@ export async function getLLMMonitoringRecordPage(
   status?: Status,
   cursor?: PaginationCursor
 ): Promise<LLMPageResponse> {
-  //if (import.meta.env.DEV) {
-  //return mockLLMDriftPageResponse;
-  //}
-
   let resp = await createInternalApiClient(fetch).post(
     ServerPaths.LLM_MONITORING_RECORDS,
     {

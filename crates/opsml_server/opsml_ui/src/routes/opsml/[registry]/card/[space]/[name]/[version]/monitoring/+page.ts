@@ -11,30 +11,25 @@ import { redirect } from "@sveltejs/kit";
  * Returns either successful data or error state using discriminated union
  */
 export const load: PageLoad = async ({ parent, fetch }) => {
-  const { registryType, metadata } = await parent();
+  const parentData = await parent(); // Call once and store
+  const { registryType, metadata } = parentData;
 
-  // Redirect to card layout if registryType is not 'model'
   if (registryType !== RegistryType.Model) {
     throw redirect(
       303,
       `/opsml/${getRegistryPath(registryType)}/card/${metadata.space}/${
         metadata.name
-      }/${metadata.version}`
+      }/${metadata.version}/card`
     );
   }
 
   try {
-    const dashboardData = await loadMonitoringDashboardData(
-      fetch,
-      await parent(),
-      {
-        initialTimeInterval: TimeInterval.SixHours,
-        loadLLMRecords: false,
-        loadAlerts: true,
-      }
-    );
+    const dashboardData = await loadMonitoringDashboardData(fetch, parentData, {
+      initialTimeInterval: TimeInterval.SixHours,
+      loadLLMRecords: false,
+      loadAlerts: true,
+    });
 
-    // Return success state with data
     return {
       status: "success" as const,
       data: dashboardData,
@@ -44,7 +39,6 @@ export const load: PageLoad = async ({ parent, fetch }) => {
   } catch (err) {
     console.error("Monitoring page load error:", err);
 
-    // Return error state with minimal required data
     return {
       status: "error" as const,
       errorMessage:
