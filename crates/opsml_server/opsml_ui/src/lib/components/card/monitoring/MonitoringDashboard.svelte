@@ -3,6 +3,7 @@
   import { DriftType, TimeInterval } from '$lib/components/card/monitoring/types';
   import type { DriftProfileResponse, UiProfile, DriftConfigType } from '$lib/components/card/monitoring/utils';
   import type { Alert } from '$lib/components/card/monitoring/alert/types';
+  import type { TimeRange } from '$lib/components/trace/types';
   import VizBody from '$lib/components/card/monitoring/VizBody.svelte';
   import Header from '$lib/components/card/monitoring/Header.svelte';
   import AlertTable from '$lib/components/card/monitoring/alert/AlertTable.svelte';
@@ -18,16 +19,14 @@
   import LLMRecordTable from './llm/LLMRecordTable.svelte';
   import { acknowledgeMonitoringAlert } from '$lib/components/card/monitoring/alert/utils';
   import { onMount, onDestroy } from 'svelte';
+  import type { DateTime } from '$lib/types';
 
   /**
    * Props for the monitoring dashboard component
    */
   interface Props {
-    /** Profile data for drift monitoring */
     profiles: DriftProfileResponse;
-    /** Available drift types */
     driftTypes: DriftType[];
-    /** Initial configuration */
     initialName: string;
     initialNames: string[];
     initialDriftType: DriftType;
@@ -37,11 +36,9 @@
     initialMaxDataPoints: number;
     initialConfig: DriftConfigType;
     initialAlerts: Alert[];
-    /** Metadata */
     uid: string;
     registryType: RegistryType;
-    /** Initial time interval, defaults to 6 hours */
-    initialTimeInterval?: TimeInterval;
+    initialTimeRange: TimeRange;
     currentLLMRecords?: LLMPageResponse;
   }
 
@@ -59,7 +56,7 @@
     initialAlerts,
     uid,
     registryType,
-    initialTimeInterval = TimeInterval.SixHours,
+    initialTimeRange,
     currentLLMRecords
   }: Props = $props();
 
@@ -73,8 +70,9 @@
   let currentMaxDataPoints = $state(initialMaxDataPoints);
   let currentConfig = $state(initialConfig);
   let currentAlerts = $state(initialAlerts);
-  let currentTimeInterval = $state(initialTimeInterval);
+  let selectedTimeRange = $state<TimeRange>(initialTimeRange);
   let currentLLMRecordPage = $state(currentLLMRecords);
+  let isUpdating = $state(false);
 
   /**
    * Checks screen size and updates metrics if data points threshold changes
@@ -83,10 +81,11 @@
     const newMaxDataPoints = getMaxDataPoints();
     if (newMaxDataPoints !== currentMaxDataPoints) {
       currentMaxDataPoints = newMaxDataPoints;
+
       latestMetrics = await getLatestMonitoringMetrics(
         fetch,
         profiles,
-        currentTimeInterval,
+        timeInterval,
         currentMaxDataPoints
       );
 

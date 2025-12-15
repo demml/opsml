@@ -19,6 +19,7 @@ import {
   type DriftProfileUri,
 } from "$lib/components/card/monitoring/types";
 import type { Alert } from "$lib/components/card/monitoring/alert/types";
+import type { TimeRange } from "$lib/components/trace/types";
 
 /**
  * Parent data interface expected from SvelteKit page hierarchy
@@ -71,8 +72,8 @@ function getDriftProfileUriMap(
  * Configuration options for monitoring dashboard data loading
  */
 export interface MonitoringDashboardLoadOptions {
-  /** Initial time interval for metrics, defaults to 6 hours */
-  initialTimeInterval?: TimeInterval;
+  /** Time range for loading metrics */
+  timeRange: TimeRange;
   /** Whether to load LLM records for prompt registries, defaults to true */
   loadLLMRecords?: boolean;
   /** Whether to load alerts, defaults to true */
@@ -120,14 +121,8 @@ export interface MonitoringDashboardData {
 export async function loadMonitoringDashboardData(
   fetch: typeof globalThis.fetch,
   parentData: MonitoringParentData,
-  options: MonitoringDashboardLoadOptions = {}
+  options: MonitoringDashboardLoadOptions
 ): Promise<MonitoringDashboardData> {
-  const {
-    initialTimeInterval = TimeInterval.SixHours,
-    loadLLMRecords = true,
-    loadAlerts = true,
-  } = options;
-
   const { metadata, registryType } = parentData;
 
   // Extract drift profile URI map based on registry type
@@ -179,7 +174,7 @@ export async function loadMonitoringDashboardData(
   const latestMetrics = await getLatestMonitoringMetrics(
     fetch,
     profiles,
-    initialTimeInterval,
+    options.timeRange,
     maxDataPoints
   );
 
@@ -191,18 +186,18 @@ export async function loadMonitoringDashboardData(
   );
 
   // Load alerts if enabled
-  const currentAlerts = loadAlerts
+  const currentAlerts = options.loadAlerts
     ? await getMonitoringAlerts(
         fetch,
         currentConfig.uid,
-        initialTimeInterval,
+        options.timeRange,
         true
       )
     : [];
 
   // Load LLM records for prompt registries if enabled
   let currentLLMRecords;
-  if (loadLLMRecords && registryType === RegistryType.Prompt) {
+  if (options.loadLLMRecords && registryType === RegistryType.Prompt) {
     const serviceInfo: ServiceInfo = {
       space: currentConfig.space,
       uid: currentConfig.uid,
