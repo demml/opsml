@@ -7,7 +7,7 @@ export interface DriftAlertPaginationRequest {
   active?: boolean;
   cursor_created_at?: DateTime;
   cursor_id?: number;
-  direction?: "next" | "previous";
+  direction?: string;
 }
 
 export interface DriftAlertPaginationResponse {
