@@ -1,5 +1,11 @@
 import type { Prompt } from "$lib/components/genai/types";
-import { DriftType, type AlertDispatchConfig } from "../types";
+import type { DateTime } from "$lib/types";
+import {
+  DriftType,
+  type AlertDispatchConfig,
+  type RecordCursor,
+  type ServiceInfo,
+} from "../types";
 
 export enum AlertThreshold {
   Below = "Below",
@@ -59,4 +65,46 @@ export function getLLMAlertCondition(
     alert_threshold: condition.alert_threshold,
     alert_threshold_value: condition.alert_threshold_value,
   };
+}
+
+export enum Status {
+  All = "All",
+  Pending = "pending",
+  Processing = "processing",
+  Processed = "processed",
+  Failed = "failed",
+}
+
+export interface LLMDriftServerRecord {
+  created_at: string; // ISO datetime string
+  space: string;
+  name: string;
+  version: string;
+  prompt?: string;
+  context: string;
+  status: Status;
+  id: number;
+  uid: string;
+  score: any; // This is an object (serde_json::Value in Rust)
+  updated_at: string; // ISO datetime string
+  processing_started_at?: string; // ISO datetime string
+  processing_ended_at?: string; // ISO datetime string
+  processing_duration?: number; // Duration in seconds
+}
+
+export interface LLMDriftRecordPaginationRequest {
+  service_info: ServiceInfo;
+  status?: Status;
+  limit?: number;
+  cursor_created_at?: DateTime;
+  cursor_id?: number;
+  direction?: "next" | "previous";
+}
+
+export interface LLMPageResponse {
+  items: LLMDriftServerRecord[];
+  has_next: boolean;
+  next_cursor?: RecordCursor;
+  has_previous: boolean;
+  previous_cursor?: RecordCursor;
 }

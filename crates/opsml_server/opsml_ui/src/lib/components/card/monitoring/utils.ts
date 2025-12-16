@@ -22,12 +22,17 @@ import { mockDriftProfileResponse } from "./mocks";
 import type {
   DriftProfileUri,
   LLMPageResponse,
+  LLMPaginationRequest,
   PaginationCursor,
   ServiceInfo,
   Status,
 } from "../monitoring/types";
 import { RegistryType } from "$lib/utils";
-import { type Alert } from "./alert/types";
+import {
+  type Alert,
+  type DriftAlertPaginationRequest,
+  type DriftAlertPaginationResponse,
+} from "./alert/types";
 import type { TimeRange } from "$lib/components/trace/types";
 
 export type DriftProfile = {
@@ -213,34 +218,26 @@ export async function getMonitoringDriftProfiles(
  * @param active - whether to fetch only active alerts
  * @returns list of alerts
  */
-export async function getMonitoringAlerts(
+export async function getDriftAlerts(
   fetch: typeof globalThis.fetch,
-  uid: string,
-  timeRange: TimeRange,
-  active: boolean
-): Promise<Alert[]> {
+  request: DriftAlertPaginationRequest
+): Promise<DriftAlertPaginationResponse> {
   if (import.meta.env.DEV) {
-    return mockAlerts;
+    return { items: mockAlerts, has_next: false, has_previous: false };
   }
 
   let resp = await createInternalApiClient(fetch).post(
     ServerPaths.MONITORING_ALERTS,
-    {
-      uid,
-      timeRange,
-      active,
-    }
+    request
   );
 
-  let alerts = (await resp.json()) as Alert[];
+  let alerts = (await resp.json()) as DriftAlertPaginationResponse;
   return alerts;
 }
 
 export async function getLLMMonitoringRecordPage(
   fetch: typeof globalThis.fetch,
-  service_info: ServiceInfo,
-  status?: Status,
-  cursor?: PaginationCursor
+  request: LLMPaginationRequest
 ): Promise<LLMPageResponse> {
   if (import.meta.env.DEV) {
     return mockLLMDriftPageResponse;
@@ -248,11 +245,7 @@ export async function getLLMMonitoringRecordPage(
 
   let resp = await createInternalApiClient(fetch).post(
     ServerPaths.LLM_MONITORING_RECORDS,
-    {
-      service_info,
-      status,
-      cursor,
-    }
+    request
   );
 
   let response = (await resp.json()) as LLMPageResponse;
