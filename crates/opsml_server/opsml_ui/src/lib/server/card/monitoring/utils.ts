@@ -135,7 +135,7 @@ export async function getLatestMetrics(
 
       // if time_interval is custom, add begin and end datetime
       if (time_interval === TimeInterval.Custom) {
-        request.begin_custom_datetime = time_range.startTime;
+        request.begin_custom_datetime = time_range.beginTime;
         request.end_custom_datetime = time_range.endTime;
       }
 

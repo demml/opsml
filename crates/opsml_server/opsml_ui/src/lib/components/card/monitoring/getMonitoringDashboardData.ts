@@ -1,7 +1,7 @@
 import { getMaxDataPoints, RegistryType } from "$lib/utils";
 import {
   getLatestMonitoringMetrics,
-  getDriftAlerts,
+  getServerDriftAlerts,
   getMonitoringDriftProfiles,
   getProfileConfig,
   getProfileFeatures,
@@ -190,7 +190,12 @@ export async function loadMonitoringDashboardData(
 
   // Load alerts if enabled
   const driftAlerts = options.loadAlerts
-    ? await getDriftAlerts(fetch, { uid: currentConfig.uid, active: true })
+    ? await getServerDriftAlerts(fetch, {
+        uid: currentConfig.uid,
+        active: true,
+        begin_datetime: options.timeRange.beginTime,
+        end_datetime: options.timeRange.endTime,
+      })
     : undefined;
 
   // Load LLM records for prompt registries if enabled
@@ -203,6 +208,8 @@ export async function loadMonitoringDashboardData(
 
     llmDriftRecords = await getServerLLMDriftRecordPage(fetch, {
       service_info: serviceInfo,
+      begin_datetime: options.timeRange.beginTime,
+      end_datetime: options.timeRange.endTime,
     });
   }
 

@@ -1516,9 +1516,9 @@ dependencies = [
 
 [[package]]
 name = "console"
-version = "0.16.1"
+version = "0.16.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b430743a6eb14e9764d4260d4c0d8123087d504eeb9c48f2b2a5e810dd369df4"
+checksum = "03e45a4a8926227e4197636ba97a9fc9b00477e9f4bd711395687c5f0734bec4"
 dependencies = [
  "encode_unicode",
  "libc",
@@ -3200,13 +3200,13 @@ dependencies = [
 
 [[package]]
 name = "libredox"
-version = "0.1.10"
+version = "0.1.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "416f7e718bdb06000964960ffa43b4335ad4012ae8b99060261aa4a8088d5ccb"
+checksum = "df15f6eac291ed1cf25865b1ee60399f57e7c227e7f51bdbd4c5270396a9ed50"
 dependencies = [
  "bitflags 2.10.0",
  "libc",
- "redox_syscall",
+ "redox_syscall 0.6.0",
 ]
 
 [[package]]
@@ -4622,7 +4622,7 @@ checksum = "2621685985a2ebf1c516881c026032ac7deafcda1a2c9b7850dc81e3dfcb64c1"
 dependencies = [
  "cfg-if",
  "libc",
- "redox_syscall",
+ "redox_syscall 0.5.18",
  "smallvec 1.15.1",
  "windows-link 0.2.1",
 ]
@@ -5605,6 +5605,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "redox_syscall"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ec96166dafa0886eb81fe1c0a388bece180fbef2135f97c1e2cf8302e74b43b5"
+dependencies = [
+ "bitflags 2.10.0",
+]
+
+[[package]]
 name = "redox_users"
 version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6037,7 +6046,7 @@ checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
 [[package]]
 name = "scouter-client"
 version = "0.13.0"
-source = "git+https://github.com/demml/scouter.git?branch=add-imports#81d8f70de2efef00268564b43e748af821ce73dc"
+source = "git+https://github.com/demml/scouter.git?branch=add-imports#64f58e79253bc4105e9147fbd17f811c946ec5cd"
 dependencies = [
  "chrono",
  "ndarray",
@@ -6068,7 +6077,7 @@ dependencies = [
 [[package]]
 name = "scouter-dispatch"
 version = "0.13.0"
-source = "git+https://github.com/demml/scouter.git?branch=add-imports#81d8f70de2efef00268564b43e748af821ce73dc"
+source = "git+https://github.com/demml/scouter.git?branch=add-imports#64f58e79253bc4105e9147fbd17f811c946ec5cd"
 dependencies = [
  "futures",
  "pyo3",
@@ -6083,7 +6092,7 @@ dependencies = [
 [[package]]
 name = "scouter-drift"
 version = "0.13.0"
-source = "git+https://github.com/demml/scouter.git?branch=add-imports#81d8f70de2efef00268564b43e748af821ce73dc"
+source = "git+https://github.com/demml/scouter.git?branch=add-imports#64f58e79253bc4105e9147fbd17f811c946ec5cd"
 dependencies = [
  "chrono",
  "futures",
@@ -6108,7 +6117,7 @@ dependencies = [
 [[package]]
 name = "scouter-evaluate"
 version = "0.13.0"
-source = "git+https://github.com/demml/scouter.git?branch=add-imports#81d8f70de2efef00268564b43e748af821ce73dc"
+source = "git+https://github.com/demml/scouter.git?branch=add-imports#64f58e79253bc4105e9147fbd17f811c946ec5cd"
 dependencies = [
  "itertools 0.14.0",
  "ndarray",
@@ -6130,7 +6139,7 @@ dependencies = [
 [[package]]
 name = "scouter-events"
 version = "0.13.0"
-source = "git+https://github.com/demml/scouter.git?branch=add-imports#81d8f70de2efef00268564b43e748af821ce73dc"
+source = "git+https://github.com/demml/scouter.git?branch=add-imports#64f58e79253bc4105e9147fbd17f811c946ec5cd"
 dependencies = [
  "async-trait",
  "chrono",
@@ -6165,7 +6174,7 @@ dependencies = [
 [[package]]
 name = "scouter-observability"
 version = "0.13.0"
-source = "git+https://github.com/demml/scouter.git?branch=add-imports#81d8f70de2efef00268564b43e748af821ce73dc"
+source = "git+https://github.com/demml/scouter.git?branch=add-imports#64f58e79253bc4105e9147fbd17f811c946ec5cd"
 dependencies = [
  "itertools 0.14.0",
  "ndarray",
@@ -6182,7 +6191,7 @@ dependencies = [
 [[package]]
 name = "scouter-profile"
 version = "0.13.0"
-source = "git+https://github.com/demml/scouter.git?branch=add-imports#81d8f70de2efef00268564b43e748af821ce73dc"
+source = "git+https://github.com/demml/scouter.git?branch=add-imports#64f58e79253bc4105e9147fbd17f811c946ec5cd"
 dependencies = [
  "chrono",
  "indicatif",
@@ -6204,7 +6213,7 @@ dependencies = [
 [[package]]
 name = "scouter-semver"
 version = "0.13.0"
-source = "git+https://github.com/demml/scouter.git?branch=add-imports#81d8f70de2efef00268564b43e748af821ce73dc"
+source = "git+https://github.com/demml/scouter.git?branch=add-imports#64f58e79253bc4105e9147fbd17f811c946ec5cd"
 dependencies = [
  "pyo3",
  "semver",
@@ -6215,7 +6224,7 @@ dependencies = [
 [[package]]
 name = "scouter-settings"
 version = "0.13.0"
-source = "git+https://github.com/demml/scouter.git?branch=add-imports#81d8f70de2efef00268564b43e748af821ce73dc"
+source = "git+https://github.com/demml/scouter.git?branch=add-imports#64f58e79253bc4105e9147fbd17f811c946ec5cd"
 dependencies = [
  "base64 0.22.1",
  "potato-head",
@@ -6228,7 +6237,7 @@ dependencies = [
 [[package]]
 name = "scouter-state"
 version = "0.13.0"
-source = "git+https://github.com/demml/scouter.git?branch=add-imports#81d8f70de2efef00268564b43e748af821ce73dc"
+source = "git+https://github.com/demml/scouter.git?branch=add-imports#64f58e79253bc4105e9147fbd17f811c946ec5cd"
 dependencies = [
  "thiserror 2.0.17",
  "tokio",
@@ -6238,7 +6247,7 @@ dependencies = [
 [[package]]
 name = "scouter-tracing"
 version = "0.13.0"
-source = "git+https://github.com/demml/scouter.git?branch=add-imports#81d8f70de2efef00268564b43e748af821ce73dc"
+source = "git+https://github.com/demml/scouter.git?branch=add-imports#64f58e79253bc4105e9147fbd17f811c946ec5cd"
 dependencies = [
  "chrono",
  "opentelemetry",
@@ -6263,7 +6272,7 @@ dependencies = [
 [[package]]
 name = "scouter-types"
 version = "0.13.0"
-source = "git+https://github.com/demml/scouter.git?branch=add-imports#81d8f70de2efef00268564b43e748af821ce73dc"
+source = "git+https://github.com/demml/scouter.git?branch=add-imports#64f58e79253bc4105e9147fbd17f811c946ec5cd"
 dependencies = [
  "base64 0.22.1",
  "chrono",
