@@ -1,10 +1,11 @@
 import { type RequestHandler, json } from "@sveltejs/kit";
 import { getDriftAlerts } from "$lib/server/card/monitoring/utils";
+import type { DriftAlertPaginationRequest } from "$lib/components/card/monitoring/alert/types";
 
 /** Get a page of recent drift alerts
  */
 export const POST: RequestHandler = async ({ request, fetch }) => {
-  const { uid, timeRange, active } = await request.json();
-  const response = await getDriftAlerts(fetch, uid, timeRange, active);
+  const alertRequest: DriftAlertPaginationRequest = await request.json();
+  const response = await getDriftAlerts(fetch, alertRequest);
   return json(response);
 };

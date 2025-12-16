@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { BinnedDriftMap, LLMPageResponse, MetricData } from '$lib/components/card/monitoring/types';
-  import { DriftType, TimeInterval } from '$lib/components/card/monitoring/types';
+  import { DriftType } from '$lib/components/card/monitoring/types';
   import type { DriftProfileResponse, UiProfile, DriftConfigType } from '$lib/components/card/monitoring/utils';
   import type { Alert } from '$lib/components/card/monitoring/alert/types';
   import type { TimeRange } from '$lib/components/trace/types';

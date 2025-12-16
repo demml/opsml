@@ -46,7 +46,7 @@ export const load: PageLoad = async ({ parent, fetch }) => {
     };
 
     const dashboardData = await loadMonitoringDashboardData(fetch, parentData, {
-      loadLLMRecords: false,
+      loadLLMRecords: true,
       loadAlerts: true,
       timeRange: timeRange, // Pass the full time range if needed
     });
