@@ -15,18 +15,17 @@ import {
   type BinnedDriftMap,
   type MetricData,
 } from "./types";
-import type { LLMDriftConfig, LLMDriftProfile } from "./llm/llm";
+import type {
+  LLMDriftConfig,
+  LLMDriftProfile,
+  LLMDriftRecordPaginationRequest,
+  LLMDriftRecordPaginationResponse,
+  Status,
+} from "./llm/llm";
 import { mockAlerts } from "./mocks";
 import { ServerPaths } from "$lib/components/api/routes";
 import { mockDriftProfileResponse } from "./mocks";
-import type {
-  DriftProfileUri,
-  LLMPageResponse,
-  LLMPaginationRequest,
-  PaginationCursor,
-  ServiceInfo,
-  Status,
-} from "../monitoring/types";
+import type { DriftProfileUri, ServiceInfo } from "../monitoring/types";
 import { RegistryType } from "$lib/utils";
 import {
   type Alert,
@@ -218,7 +217,7 @@ export async function getMonitoringDriftProfiles(
  * @param active - whether to fetch only active alerts
  * @returns list of alerts
  */
-export async function getDriftAlerts(
+export async function getServerDriftAlerts(
   fetch: typeof globalThis.fetch,
   request: DriftAlertPaginationRequest
 ): Promise<DriftAlertPaginationResponse> {
@@ -235,10 +234,10 @@ export async function getDriftAlerts(
   return alerts;
 }
 
-export async function getLLMMonitoringRecordPage(
+export async function getServerLLMDriftRecordPage(
   fetch: typeof globalThis.fetch,
-  request: LLMPaginationRequest
-): Promise<LLMPageResponse> {
+  request: LLMDriftRecordPaginationRequest
+): Promise<LLMDriftRecordPaginationResponse> {
   if (import.meta.env.DEV) {
     return mockLLMDriftPageResponse;
   }
@@ -248,6 +247,6 @@ export async function getLLMMonitoringRecordPage(
     request
   );
 
-  let response = (await resp.json()) as LLMPageResponse;
+  let response = (await resp.json()) as LLMDriftRecordPaginationResponse;
   return response;
 }

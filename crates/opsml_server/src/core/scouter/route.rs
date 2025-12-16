@@ -27,11 +27,11 @@ use tracing::debug;
 use scouter_client::{
     BinnedMetrics, BinnedPsiFeatureMetrics, DriftAlertPaginationRequest,
     DriftAlertPaginationResponse, DriftRequest, EntityIdTagsRequest, EntityIdTagsResponse,
-    LLMDriftRecord, LLMDriftRecordPaginationRequest, LLMDriftRecordPaginationRequest,
-    LLMDriftRecordPaginationResponse, ProfileRequest, ProfileStatusRequest,
-    RegisteredProfileResponse, ScouterResponse, ScouterServerError, SpcDriftFeatures, TraceFilters,
-    TraceMetricsRequest, TraceMetricsResponse, TracePaginationResponse, TraceRequest,
-    TraceSpansResponse, UpdateAlertResponse, UpdateAlertStatus,
+    LLMDriftRecordPaginationRequest, LLMDriftRecordPaginationResponse, ProfileRequest,
+    ProfileStatusRequest, RegisteredProfileResponse, ScouterResponse, ScouterServerError,
+    SpcDriftFeatures, TraceFilters, TraceMetricsRequest, TraceMetricsResponse,
+    TracePaginationResponse, TraceRequest, TraceSpansResponse, UpdateAlertResponse,
+    UpdateAlertStatus,
 };
 use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::sync::Arc;
@@ -522,7 +522,7 @@ pub async fn get_llm_drift_records(
         })?;
 
     let body = response
-        .json::<PaginationResponse<LLMDriftRecord>>()
+        .json::<LLMDriftRecordPaginationResponse>()
         .await
         .map_err(|e| {
             error!("Failed to parse drift features: {e}");

@@ -4,11 +4,7 @@ import type { PageLoad } from "./$types";
 import { loadMonitoringDashboardData } from "$lib/components/card/monitoring/getMonitoringDashboardData";
 import { getRegistryPath, RegistryType } from "$lib/utils";
 import { redirect } from "@sveltejs/kit";
-import {
-  getCookie,
-  calculateTimeRange,
-  timeRangeToInterval,
-} from "$lib/components/trace/utils";
+import { getCookie, calculateTimeRange } from "$lib/components/trace/utils";
 import type { TimeRange } from "$lib/components/trace/types";
 
 /**
@@ -48,7 +44,7 @@ export const load: PageLoad = async ({ parent, fetch }) => {
     const dashboardData = await loadMonitoringDashboardData(fetch, parentData, {
       loadLLMRecords: false,
       loadAlerts: true,
-      timeRange: timeRange, // Pass the full time range if needed
+      timeRange: timeRange,
     });
 
     return {
@@ -56,7 +52,7 @@ export const load: PageLoad = async ({ parent, fetch }) => {
       data: dashboardData,
       metadata,
       registryType,
-      initialTimeRange: timeRange, // Return for UI state initialization
+      initialTimeRange: timeRange,
     };
   } catch (err) {
     console.error("Monitoring page load error:", err);

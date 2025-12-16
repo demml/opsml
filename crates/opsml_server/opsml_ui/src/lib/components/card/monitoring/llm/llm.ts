@@ -101,7 +101,7 @@ export interface LLMDriftRecordPaginationRequest {
   direction?: "next" | "previous";
 }
 
-export interface LLMPageResponse {
+export interface LLMDriftRecordPaginationResponse {
   items: LLMDriftServerRecord[];
   has_next: boolean;
   next_cursor?: RecordCursor;

@@ -1,8 +1,8 @@
 <script lang="ts">
-  import type { BinnedDriftMap, LLMPageResponse, MetricData } from '$lib/components/card/monitoring/types';
+  import type { BinnedDriftMap, MetricData } from '$lib/components/card/monitoring/types';
   import { DriftType } from '$lib/components/card/monitoring/types';
   import type { DriftProfileResponse, UiProfile, DriftConfigType } from '$lib/components/card/monitoring/utils';
-  import type { Alert } from '$lib/components/card/monitoring/alert/types';
+  import type { DriftAlertPaginationResponse } from '$lib/components/card/monitoring/alert/types';
   import type { TimeRange } from '$lib/components/trace/types';
   import VizBody from '$lib/components/card/monitoring/VizBody.svelte';
   import Header from '$lib/components/card/monitoring/Header.svelte';
@@ -12,13 +12,14 @@
   import {
     getCurrentMetricData,
     getLatestMonitoringMetrics,
-    getMonitoringAlerts,
+    getServerDriftAlerts,
     getProfileFeatures,
     getProfileConfig,
   } from '$lib/components/card/monitoring/utils';
   import LLMRecordTable from './llm/LLMRecordTable.svelte';
   import { acknowledgeMonitoringAlert } from '$lib/components/card/monitoring/alert/utils';
   import { onMount, onDestroy } from 'svelte';
+  import type { LLMDriftRecordPaginationResponse } from './llm/llm';
 
 
   /**
@@ -35,11 +36,11 @@
     initialMetricData: MetricData;
     initialMaxDataPoints: number;
     initialConfig: DriftConfigType;
-    initialAlerts: Alert[];
     uid: string;
     registryType: RegistryType;
     initialTimeRange: TimeRange;
-    currentLLMRecords?: LLMPageResponse;
+    driftAlerts?: DriftAlertPaginationResponse;
+    llmDriftRecords?: LLMDriftRecordPaginationResponse;
   }
 
   let {
@@ -53,11 +54,11 @@
     initialMetricData,
     initialMaxDataPoints,
     initialConfig,
-    initialAlerts,
     uid,
     registryType,
     initialTimeRange,
-    currentLLMRecords
+    driftAlerts,
+    llmDriftRecords
   }: Props = $props();
 
   // Reactive state using runes
@@ -69,9 +70,9 @@
   let currentMetricData = $state(initialMetricData);
   let currentMaxDataPoints = $state(initialMaxDataPoints);
   let currentConfig = $state(initialConfig);
-  let currentAlerts = $state(initialAlerts);
+  let currentDriftAlerts = $state(driftAlerts);
   let selectedTimeRange = $state<TimeRange>(initialTimeRange);
-  let currentLLMRecordPage = $state(currentLLMRecords);
+  let currentLLMDriftRecords = $state(llmDriftRecords);
   let isUpdating = $state(false);
 
   /**
@@ -142,7 +143,6 @@
     try {
       selectedTimeRange = range;
 
-      // Backend checks if TimeInterval is Custom and uses start_time/end_time
       latestMetrics = await getLatestMonitoringMetrics(
         fetch,
         profiles,
@@ -150,19 +150,12 @@
         currentMaxDataPoints,
       );
 
-      currentAlerts = await getMonitoringAlerts(
-        fetch,
-        currentConfig.uid,
-        range,
-        true
-      );
-
       currentMetricData = getCurrentMetricData(
         latestMetrics,
         currentDriftType,
         currentName
       );
-      
+
     } catch (error) {
       console.error('Failed to update time range:', error);
     } finally {
@@ -177,11 +170,12 @@
     const updated = await acknowledgeMonitoringAlert(fetch, id, space);
 
     if (updated) {
-      currentAlerts = await getMonitoringAlerts(
+      currentDriftAlerts = await getServerDriftAlerts(
         fetch,
-        currentConfig.uid,
-        selectedTimeRange,
-        true
+        {
+          uid: currentConfig.uid,
+          active: true
+        }
       );
     }
   }
