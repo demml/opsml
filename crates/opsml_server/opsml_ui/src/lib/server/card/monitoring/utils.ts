@@ -85,7 +85,7 @@ export async function getDriftAlerts(
   fetch: typeof globalThis.fetch,
   request: DriftAlertPaginationRequest
 ): Promise<DriftAlertPaginationResponse> {
-  const response = await createOpsmlClient(fetch).get(
+  const response = await createOpsmlClient(fetch).post(
     RoutePaths.DRIFT_ALERT,
     request
   );

@@ -201,55 +201,9 @@ export type UpdateResponse = {
   status: string;
 };
 
-export interface PaginationCursor {
-  id: number;
-}
-
-export enum Status {
-  All = "All",
-  Pending = "pending",
-  Processing = "processing",
-  Processed = "processed",
-  Failed = "failed",
-}
-
-export interface LLMDriftServerRecord {
-  created_at: string; // ISO datetime string
-  space: string;
-  name: string;
-  version: string;
-  prompt?: string;
-  context: string;
-  status: Status;
-  id: number;
-  uid: string;
-  score: any; // This is an object (serde_json::Value in Rust)
-  updated_at: string; // ISO datetime string
-  processing_started_at?: string; // ISO datetime string
-  processing_ended_at?: string; // ISO datetime string
-  processing_duration?: number; // Duration in seconds
-}
-
 export interface ServiceInfo {
   space: string;
   uid: string;
-}
-
-export interface LLMPageRequest {
-  service_info: ServiceInfo;
-  status?: Status;
-  pagination: LLMPaginationRequest;
-}
-
-export interface LLMPaginationRequest {
-  limit: number;
-  cursor?: PaginationCursor;
-}
-
-export interface LLMPageResponse {
-  items: LLMDriftServerRecord[];
-  next_cursor?: PaginationCursor;
-  has_more: boolean;
 }
 
 export interface RecordCursor {

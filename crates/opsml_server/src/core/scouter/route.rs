@@ -27,7 +27,8 @@ use tracing::debug;
 use scouter_client::{
     BinnedMetrics, BinnedPsiFeatureMetrics, DriftAlertPaginationRequest,
     DriftAlertPaginationResponse, DriftRequest, EntityIdTagsRequest, EntityIdTagsResponse,
-    LLMDriftRecord, LLMDriftRecordPaginationRequest, ProfileRequest, ProfileStatusRequest,
+    LLMDriftRecord, LLMDriftRecordPaginationRequest, LLMDriftRecordPaginationRequest,
+    LLMDriftRecordPaginationResponse, ProfileRequest, ProfileStatusRequest,
     RegisteredProfileResponse, ScouterResponse, ScouterServerError, SpcDriftFeatures, TraceFilters,
     TraceMetricsRequest, TraceMetricsResponse, TracePaginationResponse, TraceRequest,
     TraceSpansResponse, UpdateAlertResponse, UpdateAlertStatus,
@@ -492,7 +493,7 @@ pub async fn get_llm_drift_records(
     State(data): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
     Json(body): Json<LLMDriftRecordPaginationRequest>,
-) -> Result<Json<PaginationResponse<LLMDriftRecord>>, (StatusCode, Json<OpsmlServerError>)> {
+) -> Result<Json<LLMDriftRecordPaginationResponse>, (StatusCode, Json<OpsmlServerError>)> {
     debug!("Getting LLM drift features with params: {:?}", &body);
     let exchange_token = data.exchange_token_from_perms(&perms).await.map_err(|e| {
         error!("Failed to exchange token for scouter: {e}");
