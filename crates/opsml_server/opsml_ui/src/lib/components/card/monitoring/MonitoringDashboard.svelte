@@ -249,17 +249,6 @@
       {/if}
     </div>
 
-    <!-- Alerts Section -->
-    {#if currentDriftAlerts}
-      <div class="bg-white p-2 border-2 border-black rounded-lg shadow min-h-[6rem] max-h-[30rem]">
-        <AlertTable
-          driftAlerts={currentDriftAlerts}
-          {updateAlert}
-          onPageChange={handleDriftPageChange}
-        />
-      </div>
-    {/if}
-
     <!-- If LLM records are available -->
     {#if currentLLMDriftRecords}
       <div class="bg-white p-2 border-2 border-black rounded-lg shadow min-h-[6rem]">
@@ -270,5 +259,18 @@
         />
       </div>
     {/if}
+
+
+       <!-- Alerts Section -->
+    {#if currentDriftAlerts}
+      <div class="bg-white p-2 border-2 border-black rounded-lg shadow min-h-[6rem] max-h-[30rem]">
+        <AlertTable
+          driftAlerts={currentDriftAlerts}
+          {updateAlert}
+          onPageChange={handleDriftPageChange}
+        />
+      </div>
+    {/if}
+    
   </div>
 </div>

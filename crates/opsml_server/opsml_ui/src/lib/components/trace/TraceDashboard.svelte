@@ -132,7 +132,7 @@
         ...filters,
         filters: {
           ...filters.filters,
-          start_time: range.startTime,
+          start_time: range.beginTime,
           end_time: range.endTime,
         },
         selected_range: range.value,
