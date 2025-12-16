@@ -133,9 +133,9 @@ export async function getLatestMetrics(
         drift_type: driftType as DriftType,
       };
 
-      // if time_interval is custom, add begin and end datetime
+      // if time_interval is custom, add start and end datetime
       if (time_interval === TimeInterval.Custom) {
-        request.begin_custom_datetime = time_range.beginTime;
+        request.begin_custom_datetime = time_range.startTime;
         request.end_custom_datetime = time_range.endTime;
       }
 
