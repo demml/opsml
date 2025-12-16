@@ -32,11 +32,11 @@
       initialMetricData={data.data.currentMetricData}
       initialMaxDataPoints={data.data.maxDataPoints}
       initialConfig={data.data.currentConfig}
-      initialAlerts={data.data.currentAlerts}
       initialTimeRange={data.initialTimeRange}
       uid={data.metadata.uid}
       registryType={data.registryType}
-      currentLLMRecords={data.data.currentLLMRecords}
+      driftAlerts={data.data.driftAlerts}
+      llmDriftRecords={data.data.llmDriftRecords}
     />
   {/if}
 {:else}

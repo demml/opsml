@@ -15,11 +15,12 @@
     getServerDriftAlerts,
     getProfileFeatures,
     getProfileConfig,
+    getServerLLMDriftRecordPage,
   } from '$lib/components/card/monitoring/utils';
   import LLMRecordTable from './llm/LLMRecordTable.svelte';
   import { acknowledgeMonitoringAlert } from '$lib/components/card/monitoring/alert/utils';
   import { onMount, onDestroy } from 'svelte';
-  import type { LLMDriftRecordPaginationResponse } from './llm/llm';
+  import type { LLMDriftRecordPaginationRequest, LLMDriftRecordPaginationResponse } from './llm/llm';
 
 
   /**
@@ -39,7 +40,7 @@
     uid: string;
     registryType: RegistryType;
     initialTimeRange: TimeRange;
-    driftAlerts?: DriftAlertPaginationResponse;
+    driftAlerts: DriftAlertPaginationResponse;
     llmDriftRecords?: LLMDriftRecordPaginationResponse;
   }
 
@@ -143,18 +144,46 @@
     try {
       selectedTimeRange = range;
 
-      latestMetrics = await getLatestMonitoringMetrics(
-        fetch,
-        profiles,
-        range,
-        currentMaxDataPoints,
-      );
+    const promises: (Promise<BinnedDriftMap> | Promise<DriftAlertPaginationResponse> | Promise<LLMDriftRecordPaginationResponse>)[] = [
+      getLatestMonitoringMetrics(fetch, profiles, range, currentMaxDataPoints),
+      getServerDriftAlerts(fetch, {
+        uid: currentConfig.uid,
+        active: true,
+        start_datetime: range.startTime,
+        end_datetime: range.endTime,
+      }),
+    ];
 
-      currentMetricData = getCurrentMetricData(
-        latestMetrics,
-        currentDriftType,
-        currentName
+    if (registryType === 'prompt') {
+      promises.push(
+        getServerLLMDriftRecordPage(fetch, {
+          service_info: {
+            uid: currentConfig.uid,
+            space: currentConfig.space,
+          },
+          start_datetime: range.startTime,
+          end_datetime: range.endTime,
+        })
       );
+    }
+
+    // Execute all promises concurrently
+    const results = await Promise.all(promises);
+
+    // Destructure results
+    latestMetrics = results[0] as BinnedDriftMap;
+    currentDriftAlerts = results[1] as DriftAlertPaginationResponse;
+
+    // Only assign if LLM records were fetched
+    if (registryType === 'prompt' && results[2]) {
+      currentLLMDriftRecords = results[2] as LLMDriftRecordPaginationResponse;
+    }
+
+    currentMetricData = getCurrentMetricData(
+      latestMetrics,
+      currentDriftType,
+      currentName
+    );
 
     } catch (error) {
       console.error('Failed to update time range:', error);
@@ -186,12 +215,33 @@
       active: true,
       cursor_created_at: cursor.created_at,
       cursor_id: cursor.id,
-      direction: direction
+      direction: direction,
+      start_datetime: selectedTimeRange.startTime,
+      end_datetime: selectedTimeRange.endTime,
     };
 
     currentDriftAlerts = await getServerDriftAlerts(
       fetch,
       driftAlertRequest
+    );
+  }
+
+  async function handleLLMDriftPageChange(cursor: RecordCursor, direction: string) {
+    let llmPaginationRequest: LLMDriftRecordPaginationRequest = {
+      service_info: {
+        uid: currentConfig.uid,
+        space: currentConfig.space,
+      },
+      cursor_created_at: cursor.created_at,
+      cursor_id: cursor.id,
+      direction: direction,
+      start_datetime: selectedTimeRange.startTime,
+      end_datetime: selectedTimeRange.endTime,
+    };
+
+    currentLLMDriftRecords = await getServerLLMDriftRecordPage(
+      fetch,
+      llmPaginationRequest
     );
   }
 
@@ -250,19 +300,18 @@
     </div>
 
     <!-- If LLM records are available -->
-    {#if currentLLMDriftRecords}
+    {#if currentLLMDriftRecords && currentLLMDriftRecords.items.length > 0}
       <div class="bg-white p-2 border-2 border-black rounded-lg shadow min-h-[6rem]">
         <LLMRecordTable
-          space={currentConfig.space}
-          uid={currentConfig.uid}
           currentPage={currentLLMDriftRecords}
+          onPageChange={handleLLMDriftPageChange}
         />
       </div>
     {/if}
 
 
        <!-- Alerts Section -->
-    {#if currentDriftAlerts}
+    {#if currentDriftAlerts.items.length > 0}
       <div class="bg-white p-2 border-2 border-black rounded-lg shadow min-h-[6rem] max-h-[30rem]">
         <AlertTable
           driftAlerts={currentDriftAlerts}
@@ -271,6 +320,6 @@
         />
       </div>
     {/if}
-    
+
   </div>
 </div>

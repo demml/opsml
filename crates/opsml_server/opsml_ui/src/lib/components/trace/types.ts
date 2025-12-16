@@ -169,7 +169,7 @@ export interface TraceMetricsResponse {
 export interface TimeRange {
   label: string;
   value: string;
-  beginTime: DateTime;
+  startTime: DateTime;
   endTime: DateTime;
   bucketInterval: string;
 }

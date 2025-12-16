@@ -97,7 +97,7 @@ export interface MonitoringDashboardData {
   latestMetrics: BinnedDriftMap;
   currentMetricData: MetricData;
   maxDataPoints: number;
-  driftAlerts?: DriftAlertPaginationResponse;
+  driftAlerts: DriftAlertPaginationResponse;
   llmDriftRecords?: LLMDriftRecordPaginationResponse;
 }
 
@@ -189,14 +189,12 @@ export async function loadMonitoringDashboardData(
   );
 
   // Load alerts if enabled
-  const driftAlerts = options.loadAlerts
-    ? await getServerDriftAlerts(fetch, {
-        uid: currentConfig.uid,
-        active: true,
-        begin_datetime: options.timeRange.beginTime,
-        end_datetime: options.timeRange.endTime,
-      })
-    : undefined;
+  const driftAlerts = await getServerDriftAlerts(fetch, {
+    uid: currentConfig.uid,
+    active: true,
+    start_datetime: options.timeRange.startTime,
+    end_datetime: options.timeRange.endTime,
+  });
 
   // Load LLM records for prompt registries if enabled
   let llmDriftRecords;
@@ -208,7 +206,7 @@ export async function loadMonitoringDashboardData(
 
     llmDriftRecords = await getServerLLMDriftRecordPage(fetch, {
       service_info: serviceInfo,
-      begin_datetime: options.timeRange.beginTime,
+      start_datetime: options.timeRange.startTime,
       end_datetime: options.timeRange.endTime,
     });
   }
