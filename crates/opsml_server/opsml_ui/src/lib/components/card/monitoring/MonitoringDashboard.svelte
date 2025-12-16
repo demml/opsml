@@ -1,8 +1,8 @@
 <script lang="ts">
-  import type { BinnedDriftMap, MetricData } from '$lib/components/card/monitoring/types';
+  import type { BinnedDriftMap, MetricData, RecordCursor } from '$lib/components/card/monitoring/types';
   import { DriftType } from '$lib/components/card/monitoring/types';
   import type { DriftProfileResponse, UiProfile, DriftConfigType } from '$lib/components/card/monitoring/utils';
-  import type { DriftAlertPaginationResponse } from '$lib/components/card/monitoring/alert/types';
+  import type { DriftAlertPaginationRequest, DriftAlertPaginationResponse } from '$lib/components/card/monitoring/alert/types';
   import type { TimeRange } from '$lib/components/trace/types';
   import VizBody from '$lib/components/card/monitoring/VizBody.svelte';
   import Header from '$lib/components/card/monitoring/Header.svelte';
@@ -180,6 +180,21 @@
     }
   }
 
+  async function handleDriftPageChange(cursor: RecordCursor, direction: string) {
+    let driftAlertRequest: DriftAlertPaginationRequest = {
+      uid: currentConfig.uid,
+      active: true,
+      cursor_created_at: cursor.created_at,
+      cursor_id: cursor.id,
+      direction: direction
+    };
+
+    currentDriftAlerts = await getServerDriftAlerts(
+      fetch,
+      driftAlertRequest
+    );
+  }
+
   // Lifecycle management
   onMount(() => {
     window.addEventListener('resize', debouncedCheckScreenSize);
@@ -235,20 +250,23 @@
     </div>
 
     <!-- Alerts Section -->
-    <div class="bg-white p-2 border-2 border-black rounded-lg shadow min-h-[6rem] max-h-[30rem]">
-      <AlertTable
-        alerts={currentAlerts}
-        {updateAlert}
-      />
-    </div>
+    {#if currentDriftAlerts}
+      <div class="bg-white p-2 border-2 border-black rounded-lg shadow min-h-[6rem] max-h-[30rem]">
+        <AlertTable
+          driftAlerts={currentDriftAlerts}
+          {updateAlert}
+          onPageChange={handleDriftPageChange}
+        />
+      </div>
+    {/if}
 
     <!-- If LLM records are available -->
-    {#if currentLLMRecordPage}
+    {#if currentLLMDriftRecords}
       <div class="bg-white p-2 border-2 border-black rounded-lg shadow min-h-[6rem]">
         <LLMRecordTable
           space={currentConfig.space}
           uid={currentConfig.uid}
-          currentPage={currentLLMRecordPage}
+          currentPage={currentLLMDriftRecords}
         />
       </div>
     {/if}
