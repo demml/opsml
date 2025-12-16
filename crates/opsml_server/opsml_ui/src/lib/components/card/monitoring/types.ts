@@ -162,7 +162,7 @@ export interface DriftRequest {
   time_interval: TimeInterval;
   max_data_points: number;
   drift_type: DriftType;
-  begin_custom_datetime?: string;
+  start_custom_datetime?: string;
   end_custom_datetime?: string;
 }
 
