@@ -99,7 +99,7 @@ export interface LLMDriftRecordPaginationRequest {
   cursor_created_at?: DateTime;
   cursor_id?: number;
   direction?: string; // "next" or "previous"
-  begin_datetime?: DateTime;
+  start_datetime?: DateTime;
   end_datetime?: DateTime;
 }
 

@@ -8,7 +8,7 @@ export interface DriftAlertPaginationRequest {
   cursor_created_at?: DateTime;
   cursor_id?: number;
   direction?: string;
-  begin_datetime?: DateTime;
+  start_datetime?: DateTime;
   end_datetime?: DateTime;
 }
 

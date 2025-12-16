@@ -6,23 +6,23 @@
     let { name, code } = $props<{name: string; code: string; }>();
     let openState = $state(false);
     let copied = $state(false);
-    let timeoutId: number = 0;
+    let timeoutId: ReturnType<typeof setTimeout>;
 
 
     function formatExtraBody(body: any): string {
       return JSON.stringify(body, null, 2);
     }
 
-  
+
     function modalClose() {
         openState = false;
     }
-  
+
     async function copyToClipboard() {
       try {
         await navigator.clipboard.writeText(formatExtraBody(code));
         copied = true;
-        
+
         // Reset the copied state after 2 seconds
         clearTimeout(timeoutId);
         timeoutId = setTimeout(() => {
@@ -32,10 +32,10 @@
         console.error('Failed to copy text:', err);
       }
     }
-  
-  
+
+
   </script>
-  
+
   <Modal
   open={openState}
   onOpenChange={(e) => (openState = e.open)}
@@ -46,7 +46,7 @@
   {#snippet trigger()}{name}{/snippet}
   {#snippet content()}
     <div class="flex flex-row pb-3 justify-between items-center">
-      <header class="pl-2 text-lg font-bold text-black">Details</header> 
+      <header class="pl-2 text-lg font-bold text-black">Details</header>
       <button class="btn text-sm bg-primary-500 text-black shadow shadow-hover border-black border-2 mr-2" onclick={copyToClipboard} disabled={copied}>
         {copied ? 'Copied 👍' : 'Copy'}
       </button>
@@ -62,6 +62,5 @@
       <button type="button" class="btn text-sm bg-primary-500 text-black shadow shadow-hover border-black border-2" onclick={modalClose}>Close</button>    </footer>
   {/snippet}
   </Modal>
-  
-  
-  
+
+

@@ -1,179 +1,197 @@
 <script lang="ts">
-  import { tick } from "svelte";
-  import { type PaginationCursor, type LLMDriftServerRecord, type LLMPageResponse, type ServiceInfo, Status } from "../types";
-  import { getLLMMonitoringRecordPage } from '$lib/components/card/monitoring/utils';
+  import type { LLMDriftServerRecord, LLMDriftRecordPaginationResponse } from "./llm";
+  import type { RecordCursor } from "../types";
   import { ArrowLeft, ArrowRight } from 'lucide-svelte';
   import CodeModal from "../CodeModal.svelte";
 
-
-let parentContainer: HTMLDivElement | null = null;
-
-  function scrollParentToBottomOfWindow() {
-    if (parentContainer) {
-      parentContainer.scrollIntoView({ behavior: "smooth", block: "end" });
-    }
-  }
-
-let {
-    space,
-    uid,
+  let {
     currentPage,
+    onPageChange
   } = $props<{
-    space: string;
-    uid: string;
-    currentPage: LLMPageResponse;
+    currentPage: LLMDriftRecordPaginationResponse;
+    onPageChange: (cursor: RecordCursor, direction: string) => void;
   }>();
 
-    let cursorStack: (PaginationCursor | undefined)[] =$state([currentPage.next_cursor]);
-    let pageItems: LLMDriftServerRecord[] = $state(currentPage.items);
-    let has_more: boolean = $state(currentPage.has_more);
-    let status = $state<Status | undefined>(undefined);
-    let serviceInfo: ServiceInfo = $state({"space": space, "uid": uid});
-    let pageNbr: number = $state(1);
+  let records = $state<LLMDriftServerRecord[]>(currentPage.items || []);
 
-  // Function for getting next page
-   async function changePage(newPage: number) {
-  if (newPage > pageNbr) {
-    // Going forward
-    let next_page = await getLLMMonitoringRecordPage(fetch,serviceInfo, status, cursorStack[pageNbr - 1]);
-    pageItems = next_page.items;
-    has_more = next_page.has_more;
-    cursorStack.push(next_page.next_cursor);
-    pageNbr = newPage;
-
-  } else if (newPage < pageNbr && newPage > 0) {
-
-    let prev_page;
-    if (newPage === 1) {
-      // First page: fetch with no cursor
-      prev_page = await getLLMMonitoringRecordPage(fetch, serviceInfo, status, undefined);
-    } else {
-      let prevCursor = cursorStack[newPage - 1];
-      prev_page = await getLLMMonitoringRecordPage(fetch, serviceInfo, status, prevCursor);
+  async function handleNextPage() {
+    if (currentPage.has_next && currentPage.next_cursor && onPageChange) {
+      await onPageChange(currentPage.next_cursor, 'next');
     }
-    pageItems = prev_page.items;
-    has_more = prev_page.has_more;
-    cursorStack = cursorStack.slice(0, newPage);
-    pageNbr = newPage;
   }
 
-  await tick();
-  scrollParentToBottomOfWindow();
-}
+  async function handlePreviousPage() {
+    if (currentPage.has_previous && currentPage.previous_cursor && onPageChange) {
+      await onPageChange(currentPage.previous_cursor, 'previous');
+    }
+  }
 
+  /**
+   * Format timestamp for display
+   */
+  function formatTimestamp(timestamp: string): string {
+    const date = new Date(timestamp);
+    return date.toLocaleString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: true
+    });
+  }
+
+  /**
+   * Get status badge styling
+   */
+  function getStatusBadge(status: string): string {
+    switch (status.toLowerCase()) {
+      case 'pending':
+        return 'bg-warning-100 border-warning-900 text-warning-900';
+      case 'processing':
+        return 'bg-tertiary-100 border-tertiary-900 text-tertiary-900';
+      case 'processed':
+        return 'bg-success-100 border-success-900 text-success-900';
+      case 'failed':
+        return 'bg-error-100 border-error-900 text-error-900';
+      default:
+        return 'bg-primary-100 border-primary-900 text-primary-900';
+    }
+  }
+
+  /**
+   * Format processing duration for display
+   */
+  function formatDuration(duration?: number): string {
+    if (duration === undefined) return 'N/A';
+    const seconds = duration / 1000;
+    return seconds < 1 ? `${duration}ms` : `${seconds.toFixed(2)}s`;
+  }
 </script>
 
-<div class="flex flex-col h-full" bind:this={parentContainer}>
-  <div class="items-center mr-2 font-bold text-primary-800">LLM Records</div>
-  {#if pageItems.length === 0}
-    <div class="flex items-center justify-center flex-1 text-center text-gray-500 text-lg text-primary-500 font-bold">
-      No LLM Drift Records Found
-    </div>
-  {:else}
-    <div class="overflow-auto w-full">
-      <table class="text-black border-collapse text-xs bg-white w-full">
-        <thead class="sticky top-0 z-5 bg-white" style="box-shadow: 0 2px 0 0 #000;">
-          <tr>
-            <th class="p-2 font-heading pl-6 text-left text-black">
-              <span class='px-2 py-1 rounded-full bg-primary-100 text-primary-800'>
-                ID
-              </span>
-            </th>
-            <th class="p-2 font-heading">
-              <span class='px-2 py-1 rounded-full bg-primary-100 text-primary-800'>
-                Status
-              </span>
-            </th>
-            <th class="p-2 font-heading">
-              <span class='px-2 py-1 rounded-full bg-primary-100 text-primary-800'>
-                Score
-              </span>
-            </th>
-            <th class="p-2 font-heading">
-              <span class='px-2 py-1 rounded-full bg-primary-100 text-primary-800'>
-                Prompt
-              </span>
-            </th>
-            <th class="p-2 font-heading">
-              <span class='px-2 py-1 rounded-full bg-primary-100 text-primary-800'>
-                Context
-              </span>
-            </th>
-            <th class="p-2 font-heading">
-              <span class='px-2 py-1 rounded-full bg-primary-100 text-primary-800'>
-                Created At
-              </span>
-            </th>
-            <th class="p-2 font-heading">
-              <span class='px-2 py-1 rounded-full bg-primary-100 text-primary-800'>
-                Processing Duration
-              </span>
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {#each pageItems as record, i}
-            <tr class={`border-b-2 border-black hover:bg-primary-300 ${i % 2 === 0 ? 'bg-gray-100' : 'bg-white'}`}>
-              <td class="p-1 pl-8">{record.id}</td>
-              <td class="p-1 text-center">
-                <span class={`px-2 py-1 rounded-full border border-black text-xs ${
-                  record.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                  record.status === 'processing' ? 'bg-blue-100 text-blue-800' :
-                  record.status === 'processed' ? 'bg-green-100 text-green-800' :
-                  record.status === 'failed' ? 'bg-red-100 text-red-800' :
-                  'bg-primary-100 text-primary-800'
-                }`}>
-                  {record.status}
-                </span>
-              </td>
-              <td class="p-2 text-center"><CodeModal name='Score' code={record.score} /></td>
-              {#if record.prompt}
-                <td class="p-2 text-center"><CodeModal name='Prompt' code={record.prompt} /></td>
-                {:else}
-                <td class="p-2 text-center"></td>
-              {/if}
-              {#if record.context}
-                <td class="p-2 text-center"><CodeModal name='Context' code={record.context} /></td>
-                {:else}
-                <td class="p-2 text-center"></td>
-              {/if}
-              <td class="p-1 text-center">{record.created_at}</td>
-              <td class="p-1 text-center">
-                <span class="px-2 py-1 rounded-full border border-black text-xs font-medium">
-                  {record.processing_duration !== undefined ? `${record.processing_duration / 1000} seconds` : 'N/A'}
-                </span>
-              </td>
-            </tr>
-          {/each}
-        </tbody>
-      </table>
-    </div>
+<div class="pt-4">
+  <!-- Header with title -->
+  <div class="mb-4">
+    <h2 class="text-lg font-bold text-primary-800">LLM Drift Records</h2>
+  </div>
 
-
-    <div class="flex justify-center pt-4 gap-2 border-t-2 border-black">
-        {#if cursorStack.length > 1}
-          <button
-            class="btn bg-surface-50 border-black border-2 shadow-small shadow-hover-small h-9"
-            onclick={() => changePage(pageNbr - 1)}
-            aria-label="Previous Page"
-          >
-            <ArrowLeft color="#5948a3" />
-          </button>
-        {/if}
-
-        <div class="flex bg-surface-50 border-black border-2 text-center items-center rounded-base px-2 shadow-small h-9">
-          <span class="text-primary-800 mr-1 text-xs">{pageNbr}</span>
+  <!-- Table Container -->
+  <div class="overflow-x-auto border-2 border-black rounded-lg">
+    <div class="h-full flex flex-col min-w-[1000px]">
+      {#if records.length === 0}
+        <!-- Empty State -->
+        <div class="flex items-center justify-center p-12 bg-white">
+          <p class="text-lg font-bold text-gray-500">No LLM drift records to display</p>
+        </div>
+      {:else}
+        <!-- Header -->
+        <div class="bg-white border-b-2 border-black sticky top-0 z-10">
+          <div class="grid grid-cols-[80px_120px_100px_100px_100px_140px_120px] gap-2 text-black text-sm font-heading px-2 py-2">
+            <div class="text-center">
+              <span class="px-2 py-1 rounded-full bg-primary-100 text-primary-800">ID</span>
+            </div>
+            <div class="text-center">
+              <span class="px-2 py-1 rounded-full bg-primary-100 text-primary-800">Status</span>
+            </div>
+            <div class="text-center">
+              <span class="px-2 py-1 rounded-full bg-primary-100 text-primary-800">Score</span>
+            </div>
+            <div class="text-center">
+              <span class="px-2 py-1 rounded-full bg-primary-100 text-primary-800">Prompt</span>
+            </div>
+            <div class="text-center">
+              <span class="px-2 py-1 rounded-full bg-primary-100 text-primary-800">Context</span>
+            </div>
+            <div class="text-center">
+              <span class="px-2 py-1 rounded-full bg-primary-100 text-primary-800">Created</span>
+            </div>
+            <div class="text-center">
+              <span class="px-2 py-1 rounded-full bg-primary-100 text-primary-800">Duration</span>
+            </div>
+          </div>
         </div>
 
-        {#if has_more}
-          <button
-            class="btn bg-surface-50 border-black border-2 shadow-small shadow-hover-small h-9"
-            onclick={() => changePage(pageNbr + 1)}
-            aria-label="Next Page"
-          >
-            <ArrowRight color="#5948a3" />
-          </button>
-        {/if}
-      </div>
+        <!-- Rows -->
+        <div class="bg-white">
+          {#each records as record, i}
+            <div
+              class="grid grid-cols-[80px_120px_100px_100px_100px_140px_120px] gap-2 items-center px-2 py-2 border-b border-gray-200 transition-colors {i % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-primary-200"
+            >
+              <!-- ID -->
+              <div class="text-center">
+                <span class="text-xs font-mono text-gray-500">{record.id}</span>
+              </div>
+
+              <!-- Status Badge -->
+              <div class="text-center">
+                <span class="px-2 py-1 rounded-lg border-2 text-xs font-medium {getStatusBadge(record.status)}">
+                  {record.status.toUpperCase()}
+                </span>
+              </div>
+
+              <!-- Score Modal -->
+              <div class="flex justify-center">
+                <CodeModal name='Score' code={JSON.stringify(record.score, null, 2)} />
+              </div>
+
+              <!-- Prompt Modal -->
+              <div class="flex justify-center">
+                {#if record.prompt}
+                  <CodeModal name='Prompt' code={record.prompt} />
+                {:else}
+                  <span class="text-xs text-gray-400">—</span>
+                {/if}
+              </div>
+
+              <!-- Context Modal -->
+              <div class="flex justify-center">
+                {#if record.context}
+                  <CodeModal name='Context' code={record.context} />
+                {:else}
+                  <span class="text-xs text-gray-400">—</span>
+                {/if}
+              </div>
+
+              <!-- Created Date -->
+              <div class="text-center">
+                <span class="text-xs text-black font-mono">
+                  {formatTimestamp(record.created_at)}
+                </span>
+              </div>
+
+              <!-- Processing Duration -->
+              <div class="text-center">
+                <span class="px-2 py-1 rounded-lg border-2 border-black bg-surface-100 text-xs font-medium">
+                  {formatDuration(record.processing_duration)}
+                </span>
+              </div>
+            </div>
+          {/each}
+        </div>
+      {/if}
+    </div>
+  </div>
+
+  <!-- Pagination Controls -->
+  {#if records.length > 0}
+    <div class="flex justify-center pt-4 gap-2 items-center">
+      {#if currentPage.has_previous}
+        <button
+          class="btn bg-surface-50 border-black border-2 shadow-small shadow-hover-small h-9"
+          onclick={handlePreviousPage}
+        >
+          <ArrowLeft color="#5948a3"/>
+        </button>
+      {/if}
+
+      {#if currentPage.has_next}
+        <button
+          class="btn bg-surface-50 border-black border-2 shadow-small shadow-hover-small h-9"
+          onclick={handleNextPage}
+        >
+          <ArrowRight color="#5948a3"/>
+        </button>
+      {/if}
+    </div>
   {/if}
 </div>

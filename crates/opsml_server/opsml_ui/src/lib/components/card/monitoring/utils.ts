@@ -250,3 +250,22 @@ export async function getServerLLMDriftRecordPage(
   let response = (await resp.json()) as LLMDriftRecordPaginationResponse;
   return response;
 }
+
+/**
+ * Helper to get label from time range value
+ * Maps the value back to a human-readable label
+ */
+export function getLabelFromValue(value: string): string {
+  const labelMap: Record<string, string> = {
+    "15min-live": "Live (15min)",
+    "15min": "Past 15 Minutes",
+    "30min": "Past 30 Minutes",
+    "1hour": "Past 1 Hour",
+    "4hours": "Past 4 Hours",
+    "12hours": "Past 12 Hours",
+    "24hours": "Past 24 Hours",
+    "7days": "Past 7 Days",
+    "30days": "Past 30 Days",
+  };
+  return labelMap[value] || "Custom Range";
+}

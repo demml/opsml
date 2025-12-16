@@ -6,6 +6,7 @@ import { getRegistryPath, RegistryType } from "$lib/utils";
 import { redirect } from "@sveltejs/kit";
 import { getCookie, calculateTimeRange } from "$lib/components/trace/utils";
 import type { TimeRange } from "$lib/components/trace/types";
+import { getLabelFromValue } from "$lib/components/card/monitoring/utils";
 
 /**
  * Monitoring page load function with error handling and time range management
@@ -66,22 +67,3 @@ export const load: PageLoad = async ({ parent, fetch }) => {
     };
   }
 };
-
-/**
- * Helper to get label from time range value
- * Maps the value back to a human-readable label
- */
-function getLabelFromValue(value: string): string {
-  const labelMap: Record<string, string> = {
-    "15min-live": "Live (15min)",
-    "15min": "Past 15 Minutes",
-    "30min": "Past 30 Minutes",
-    "1hour": "Past 1 Hour",
-    "4hours": "Past 4 Hours",
-    "12hours": "Past 12 Hours",
-    "24hours": "Past 24 Hours",
-    "7days": "Past 7 Days",
-    "30days": "Past 30 Days",
-  };
-  return labelMap[value] || "Custom Range";
-}
