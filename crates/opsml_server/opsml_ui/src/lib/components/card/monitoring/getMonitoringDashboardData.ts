@@ -1,25 +1,28 @@
 import { getMaxDataPoints, RegistryType } from "$lib/utils";
 import {
   getLatestMonitoringMetrics,
-  getLLMMonitoringRecordPage,
-  getMonitoringAlerts,
+  getDriftAlerts,
   getMonitoringDriftProfiles,
   getProfileConfig,
   getProfileFeatures,
   getCurrentMetricData,
   type UiProfile,
   type DriftProfileResponse,
+  getServerLLMDriftRecordPage,
 } from "$lib/components/card/monitoring/utils";
 import {
   DriftType,
-  TimeInterval,
   type ServiceInfo,
   type BinnedDriftMap,
   type MetricData,
   type DriftProfileUri,
 } from "$lib/components/card/monitoring/types";
-import type { Alert } from "$lib/components/card/monitoring/alert/types";
+import type {
+  Alert,
+  DriftAlertPaginationResponse,
+} from "$lib/components/card/monitoring/alert/types";
 import type { TimeRange } from "$lib/components/trace/types";
+import type { LLMDriftRecordPaginationResponse } from "./llm/llm";
 
 /**
  * Parent data interface expected from SvelteKit page hierarchy
@@ -94,8 +97,8 @@ export interface MonitoringDashboardData {
   latestMetrics: BinnedDriftMap;
   currentMetricData: MetricData;
   maxDataPoints: number;
-  currentAlerts: Alert[];
-  currentLLMRecords?: any; // Type this more specifically based on your LLM record structure
+  driftAlerts?: DriftAlertPaginationResponse;
+  llmDriftRecords?: LLMDriftRecordPaginationResponse;
 }
 
 /**
@@ -186,29 +189,21 @@ export async function loadMonitoringDashboardData(
   );
 
   // Load alerts if enabled
-  const currentAlerts = options.loadAlerts
-    ? await getMonitoringAlerts(
-        fetch,
-        currentConfig.uid,
-        options.timeRange,
-        true
-      )
-    : [];
+  const driftAlerts = options.loadAlerts
+    ? await getDriftAlerts(fetch, { uid: currentConfig.uid, active: true })
+    : undefined;
 
   // Load LLM records for prompt registries if enabled
-  let currentLLMRecords;
+  let llmDriftRecords;
   if (options.loadLLMRecords && registryType === RegistryType.Prompt) {
     const serviceInfo: ServiceInfo = {
       space: currentConfig.space,
       uid: currentConfig.uid,
     };
 
-    currentLLMRecords = await getLLMMonitoringRecordPage(
-      fetch,
-      serviceInfo,
-      undefined,
-      undefined
-    );
+    llmDriftRecords = await getServerLLMDriftRecordPage(fetch, {
+      service_info: serviceInfo,
+    });
   }
 
   return {
@@ -222,7 +217,7 @@ export async function loadMonitoringDashboardData(
     latestMetrics,
     currentMetricData,
     maxDataPoints,
-    currentAlerts,
-    currentLLMRecords,
+    driftAlerts,
+    llmDriftRecords,
   };
 }

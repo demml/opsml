@@ -6037,7 +6037,7 @@ checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
 [[package]]
 name = "scouter-client"
 version = "0.13.0"
-source = "git+https://github.com/demml/scouter.git?branch=add-imports#49bc4d32337284fc3e3b3aeb811d1a41d9bc183c"
+source = "git+https://github.com/demml/scouter.git?branch=add-imports#81d8f70de2efef00268564b43e748af821ce73dc"
 dependencies = [
  "chrono",
  "ndarray",
@@ -6068,7 +6068,7 @@ dependencies = [
 [[package]]
 name = "scouter-dispatch"
 version = "0.13.0"
-source = "git+https://github.com/demml/scouter.git?branch=add-imports#49bc4d32337284fc3e3b3aeb811d1a41d9bc183c"
+source = "git+https://github.com/demml/scouter.git?branch=add-imports#81d8f70de2efef00268564b43e748af821ce73dc"
 dependencies = [
  "futures",
  "pyo3",
@@ -6083,7 +6083,7 @@ dependencies = [
 [[package]]
 name = "scouter-drift"
 version = "0.13.0"
-source = "git+https://github.com/demml/scouter.git?branch=add-imports#49bc4d32337284fc3e3b3aeb811d1a41d9bc183c"
+source = "git+https://github.com/demml/scouter.git?branch=add-imports#81d8f70de2efef00268564b43e748af821ce73dc"
 dependencies = [
  "chrono",
  "futures",
@@ -6108,7 +6108,7 @@ dependencies = [
 [[package]]
 name = "scouter-evaluate"
 version = "0.13.0"
-source = "git+https://github.com/demml/scouter.git?branch=add-imports#49bc4d32337284fc3e3b3aeb811d1a41d9bc183c"
+source = "git+https://github.com/demml/scouter.git?branch=add-imports#81d8f70de2efef00268564b43e748af821ce73dc"
 dependencies = [
  "itertools 0.14.0",
  "ndarray",
@@ -6130,7 +6130,7 @@ dependencies = [
 [[package]]
 name = "scouter-events"
 version = "0.13.0"
-source = "git+https://github.com/demml/scouter.git?branch=add-imports#49bc4d32337284fc3e3b3aeb811d1a41d9bc183c"
+source = "git+https://github.com/demml/scouter.git?branch=add-imports#81d8f70de2efef00268564b43e748af821ce73dc"
 dependencies = [
  "async-trait",
  "chrono",
@@ -6165,7 +6165,7 @@ dependencies = [
 [[package]]
 name = "scouter-observability"
 version = "0.13.0"
-source = "git+https://github.com/demml/scouter.git?branch=add-imports#49bc4d32337284fc3e3b3aeb811d1a41d9bc183c"
+source = "git+https://github.com/demml/scouter.git?branch=add-imports#81d8f70de2efef00268564b43e748af821ce73dc"
 dependencies = [
  "itertools 0.14.0",
  "ndarray",
@@ -6182,7 +6182,7 @@ dependencies = [
 [[package]]
 name = "scouter-profile"
 version = "0.13.0"
-source = "git+https://github.com/demml/scouter.git?branch=add-imports#49bc4d32337284fc3e3b3aeb811d1a41d9bc183c"
+source = "git+https://github.com/demml/scouter.git?branch=add-imports#81d8f70de2efef00268564b43e748af821ce73dc"
 dependencies = [
  "chrono",
  "indicatif",
@@ -6204,7 +6204,7 @@ dependencies = [
 [[package]]
 name = "scouter-semver"
 version = "0.13.0"
-source = "git+https://github.com/demml/scouter.git?branch=add-imports#49bc4d32337284fc3e3b3aeb811d1a41d9bc183c"
+source = "git+https://github.com/demml/scouter.git?branch=add-imports#81d8f70de2efef00268564b43e748af821ce73dc"
 dependencies = [
  "pyo3",
  "semver",
@@ -6215,7 +6215,7 @@ dependencies = [
 [[package]]
 name = "scouter-settings"
 version = "0.13.0"
-source = "git+https://github.com/demml/scouter.git?branch=add-imports#49bc4d32337284fc3e3b3aeb811d1a41d9bc183c"
+source = "git+https://github.com/demml/scouter.git?branch=add-imports#81d8f70de2efef00268564b43e748af821ce73dc"
 dependencies = [
  "base64 0.22.1",
  "potato-head",
@@ -6228,7 +6228,7 @@ dependencies = [
 [[package]]
 name = "scouter-state"
 version = "0.13.0"
-source = "git+https://github.com/demml/scouter.git?branch=add-imports#49bc4d32337284fc3e3b3aeb811d1a41d9bc183c"
+source = "git+https://github.com/demml/scouter.git?branch=add-imports#81d8f70de2efef00268564b43e748af821ce73dc"
 dependencies = [
  "thiserror 2.0.17",
  "tokio",
@@ -6238,7 +6238,7 @@ dependencies = [
 [[package]]
 name = "scouter-tracing"
 version = "0.13.0"
-source = "git+https://github.com/demml/scouter.git?branch=add-imports#49bc4d32337284fc3e3b3aeb811d1a41d9bc183c"
+source = "git+https://github.com/demml/scouter.git?branch=add-imports#81d8f70de2efef00268564b43e748af821ce73dc"
 dependencies = [
  "chrono",
  "opentelemetry",
@@ -6263,7 +6263,7 @@ dependencies = [
 [[package]]
 name = "scouter-types"
 version = "0.13.0"
-source = "git+https://github.com/demml/scouter.git?branch=add-imports#49bc4d32337284fc3e3b3aeb811d1a41d9bc183c"
+source = "git+https://github.com/demml/scouter.git?branch=add-imports#81d8f70de2efef00268564b43e748af821ce73dc"
 dependencies = [
  "base64 0.22.1",
  "chrono",

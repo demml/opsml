@@ -4,12 +4,6 @@ import {
   TimeInterval,
   type UpdateProfileRequest,
   type UpdateResponse,
-  type LLMPageRequest,
-  type LLMPageResponse,
-  type PaginationCursor,
-  type ServiceInfo,
-  type LLMPaginationRequest,
-  Status,
   DriftType,
   type DriftRequest,
   type BinnedDriftMap,
@@ -26,6 +20,10 @@ import type {
 import { getProfileConfig } from "$lib/components/card/monitoring/utils";
 import type { TimeRange } from "$lib/components/trace/types";
 import { timeRangeToInterval } from "$lib/components/trace/utils";
+import type {
+  LLMDriftRecordPaginationRequest,
+  LLMDriftRecordPaginationResponse,
+} from "$lib/components/card/monitoring/llm/llm";
 
 export async function getDriftProfiles(
   fetch: typeof globalThis.fetch,
@@ -46,28 +44,15 @@ export async function getDriftProfiles(
   return (await response.json()) as DriftProfileResponse;
 }
 
-export async function getLLMRecordPage(
+export async function getLLMDriftRecordPage(
   fetch: typeof globalThis.fetch,
-  service_info: ServiceInfo,
-  status?: Status,
-  cursor?: PaginationCursor
-): Promise<LLMPageResponse> {
-  let pagination: LLMPaginationRequest = {
-    cursor,
-    limit: 20,
-  };
-
-  const request: LLMPageRequest = {
-    service_info,
-    status,
-    pagination,
-  };
-
+  request: LLMDriftRecordPaginationRequest
+): Promise<LLMDriftRecordPaginationResponse> {
   const response = await createOpsmlClient(fetch).post(
     RoutePaths.LLM_RECORD_PAGE,
     request
   );
-  return (await response.json()) as LLMPageResponse;
+  return (await response.json()) as LLMDriftRecordPaginationResponse;
 }
 
 export async function updateDriftProfile(
