@@ -18,11 +18,10 @@ import { RegistryType } from "$lib/utils";
 import type { DriftProfileUri } from "$lib/components/card/monitoring/types";
 import type { DriftProfileResponse } from "$lib/components/card/monitoring/utils";
 import type {
-  AlertResponse,
-  DriftAlertRequest,
-  Alert,
   UpdateAlertResponse,
   UpdateAlertStatus,
+  DriftAlertPaginationRequest,
+  DriftAlertPaginationResponse,
 } from "$lib/components/card/monitoring/alert/types";
 import { getProfileConfig } from "$lib/components/card/monitoring/utils";
 import type { TimeRange } from "$lib/components/trace/types";
@@ -84,27 +83,18 @@ export async function updateDriftProfile(
 
 export async function getDriftAlerts(
   fetch: typeof globalThis.fetch,
-  uid: string,
-  timeRange: TimeRange,
-  active: boolean
-): Promise<Alert[]> {
-  // For testing purposes, return sample alerts
-  let alertRequest: DriftAlertRequest = {
-    uid: uid,
-    limit_datetime: timeRange.startTime,
-    active: active,
-  };
-
+  request: DriftAlertPaginationRequest
+): Promise<DriftAlertPaginationResponse> {
   const response = await createOpsmlClient(fetch).get(
     RoutePaths.DRIFT_ALERT,
-    alertRequest
+    request
   );
   if (!response.ok) {
     throw new Error(`Failed to fetch drift alerts: ${response.status}`);
   }
-  const alertResponse = (await response.json()) as AlertResponse;
+  const alertResponse = (await response.json()) as DriftAlertPaginationResponse;
 
-  return alertResponse.alerts;
+  return alertResponse;
 }
 
 //// Acknowledge an alert by its ID

@@ -25,12 +25,12 @@ use reqwest::Response;
 use tracing::debug;
 
 use scouter_client::{
-    Alerts, BinnedMetrics, BinnedPsiFeatureMetrics, DriftAlertRequest, DriftRequest,
-    EntityIdTagsRequest, EntityIdTagsResponse, LLMDriftRecord, LLMDriftRecordPaginationRequest,
-    PaginationResponse, ProfileRequest, ProfileStatusRequest, RegisteredProfileResponse,
-    ScouterResponse, ScouterServerError, SpcDriftFeatures, TraceFilters, TraceMetricsRequest,
-    TraceMetricsResponse, TracePaginationResponse, TraceRequest, TraceSpansResponse,
-    UpdateAlertResponse, UpdateAlertStatus,
+    BinnedMetrics, BinnedPsiFeatureMetrics, DriftAlertPaginationRequest,
+    DriftAlertPaginationResponse, DriftRequest, EntityIdTagsRequest, EntityIdTagsResponse,
+    LLMDriftRecord, LLMDriftRecordPaginationRequest, ProfileRequest, ProfileStatusRequest,
+    RegisteredProfileResponse, ScouterResponse, ScouterServerError, SpcDriftFeatures, TraceFilters,
+    TraceMetricsRequest, TraceMetricsResponse, TracePaginationResponse, TraceRequest,
+    TraceSpansResponse, UpdateAlertResponse, UpdateAlertStatus,
 };
 use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::sync::Arc;
@@ -606,28 +606,26 @@ pub async fn get_drift_profiles_for_ui(
 }
 
 /// Get drift alerts
-pub async fn get_drift_alerts(
+pub async fn drift_alerts(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
-    Query(params): Query<DriftAlertRequest>,
-) -> Result<Json<Alerts>, (StatusCode, Json<OpsmlServerError>)> {
+    Json(body): Json<DriftAlertPaginationRequest>,
+) -> Result<Json<DriftAlertPaginationResponse>, (StatusCode, Json<OpsmlServerError>)> {
     let exchange_token = state.exchange_token_from_perms(&perms).await.map_err(|e| {
         error!("Failed to exchange token for scouter: {e}");
         internal_server_error(e, "Failed to exchange token for scouter")
-    })?;
-
-    let query_string = serde_qs::to_string(&params).map_err(|e| {
-        error!("Failed to serialize query string: {e}");
-        internal_server_error(e, "Failed to serialize query string")
     })?;
 
     let response = state
         .scouter_client
         .request(
             scouter::Routes::Alerts,
-            RequestType::Get,
+            RequestType::Post,
+            Some(serde_json::to_value(&body).map_err(|e| {
+                error!("Failed to serialize alert request: {e}");
+                internal_server_error(e, "Failed to serialize alert request")
+            })?),
             None,
-            Some(query_string),
             None,
             &exchange_token,
         )
@@ -641,10 +639,13 @@ pub async fn get_drift_alerts(
 
     match status_code.is_success() {
         true => {
-            let body = response.json::<Alerts>().await.map_err(|e| {
-                error!("Failed to parse scouter response: {e}");
-                internal_server_error(e, "Failed to parse scouter response")
-            })?;
+            let body = response
+                .json::<DriftAlertPaginationResponse>()
+                .await
+                .map_err(|e| {
+                    error!("Failed to parse scouter response: {e}");
+                    internal_server_error(e, "Failed to parse scouter response")
+                })?;
 
             Ok(Json(body))
         }
@@ -997,7 +998,7 @@ pub async fn get_scouter_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
             )
             .route(
                 &format!("{prefix}/scouter/alerts"),
-                get(get_drift_alerts).put(update_alert_status),
+                post(drift_alerts).put(update_alert_status),
             )
             .route(
                 &format!("{prefix}/scouter/healthcheck"),

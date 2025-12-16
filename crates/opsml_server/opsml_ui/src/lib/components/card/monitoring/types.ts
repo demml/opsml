@@ -1,3 +1,4 @@
+import type { DateTime } from "$lib/types";
 import type { RegistryType } from "$lib/utils";
 
 export enum AlertDispatchType {
@@ -249,4 +250,9 @@ export interface LLMPageResponse {
   items: LLMDriftServerRecord[];
   next_cursor?: PaginationCursor;
   has_more: boolean;
+}
+
+export interface RecordCursor {
+  created_at: DateTime;
+  id: number;
 }

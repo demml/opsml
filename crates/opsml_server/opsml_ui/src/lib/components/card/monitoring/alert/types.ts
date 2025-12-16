@@ -1,8 +1,21 @@
-export interface DriftAlertRequest {
+import type { DateTime } from "$lib/types";
+import type { RecordCursor } from "../types";
+
+export interface DriftAlertPaginationRequest {
   uid: string;
-  limit_datetime?: string;
-  active?: boolean;
   limit?: number;
+  active?: boolean;
+  cursor_created_at?: DateTime;
+  cursor_id?: number;
+  direction?: "next" | "previous";
+}
+
+export interface DriftAlertPaginationResponse {
+  items: Alert[];
+  has_next: boolean;
+  next_cursor?: RecordCursor;
+  has_previous: boolean;
+  previous_cursor?: RecordCursor;
 }
 
 export interface Alert {
