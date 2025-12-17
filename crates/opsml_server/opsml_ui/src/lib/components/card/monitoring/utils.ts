@@ -22,7 +22,7 @@ import type {
   LLMDriftRecordPaginationResponse,
   Status,
 } from "./llm/llm";
-import { mockAlerts } from "./mocks";
+import { mockDriftAlertResponse } from "./mocks";
 import { ServerPaths } from "$lib/components/api/routes";
 import { mockDriftProfileResponse } from "./mocks";
 import type { DriftProfileUri, ServiceInfo } from "../monitoring/types";
@@ -222,7 +222,7 @@ export async function getServerDriftAlerts(
   request: DriftAlertPaginationRequest
 ): Promise<DriftAlertPaginationResponse> {
   if (import.meta.env.DEV) {
-    return { items: mockAlerts, has_next: false, has_previous: false };
+    return mockDriftAlertResponse;
   }
 
   let resp = await createInternalApiClient(fetch).post(

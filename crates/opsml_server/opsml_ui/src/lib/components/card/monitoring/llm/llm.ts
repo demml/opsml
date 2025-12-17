@@ -75,6 +75,15 @@ export enum Status {
   Failed = "failed",
 }
 
+// Score: {score: number, reason: string}
+// create interface for scoure map Record<string, Score>
+export interface Score {
+  score: number;
+  reason: string;
+}
+
+export type ScoreMap = Record<string, Score>;
+
 export interface LLMDriftServerRecord {
   created_at: string; // ISO datetime string
   space: string;
@@ -85,7 +94,7 @@ export interface LLMDriftServerRecord {
   status: Status;
   id: number;
   uid: string;
-  score: any; // This is an object (serde_json::Value in Rust)
+  score: ScoreMap; // This is an object (serde_json::Value in Rust)
   updated_at: string; // ISO datetime string
   processing_started_at?: string; // ISO datetime string
   processing_ended_at?: string; // ISO datetime string
