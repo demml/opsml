@@ -12,7 +12,7 @@
   import json from 'shiki/langs/json.mjs';
   import md from 'shiki/langs/markdown.mjs';
   import bash from 'shiki/langs/bash.mjs';
-
+  
 
   const shiki = createHighlighterCoreSync({
     engine: createJavaScriptRegexEngine(),

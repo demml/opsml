@@ -12,6 +12,7 @@ export interface CodeBlockProps {
     | "toml"
     | "typescript"
     | "bash"
+    | "text"
     | "yaml";
   theme?: "custom-light" | "traceback-theme";
   // Base Style Props

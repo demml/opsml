@@ -26,14 +26,11 @@ export const load: PageLoad = async ({ parent, fetch }) => {
   }
 
   try {
-    // Get saved time range preference or default to 6 hours
     const savedRange = getCookie("monitoring_range") || "15min";
 
-    // Calculate time range based on saved preference
     const { startTime, endTime, bucketInterval } =
       calculateTimeRange(savedRange);
 
-    // Create TimeRange object for conversion
     const timeRange: TimeRange = {
       label: getLabelFromValue(savedRange),
       value: savedRange,

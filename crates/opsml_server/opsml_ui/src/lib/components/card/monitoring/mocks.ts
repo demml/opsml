@@ -4,7 +4,11 @@ import { mockCustomDriftProfile } from "./custom/mocks";
 import { mockSpcDriftProfile } from "./spc/mocks";
 import { mockLLMDriftProfile } from "./llm/mocks";
 import type { UiProfile } from "./utils";
-import type { Alert } from "./alert/types";
+import type {
+  Alert,
+  DriftAlertPaginationRequest,
+  DriftAlertPaginationResponse,
+} from "./alert/types";
 
 /**
  * Mock DriftProfileResponse for testing and UI development.
@@ -49,14 +53,15 @@ export const mockDriftProfileResponse: Record<DriftType, UiProfile> = {
   },
 };
 
-export const mockAlerts: Alert[] = [
+const mockAlerts: Alert[] = [
   {
     created_at: "2024-03-28 10:30:00",
     name: "credit_model",
     space: "models",
     version: "1.0.0",
     entity_name: "credit_score",
-    alert: { type: "drift_detected", message: "PSI value exceeded threshold" },
+    alert:
+      '{ type: "drift_detected", message: "PSI value exceeded threshold" }',
     id: 1,
     drift_type: "psi",
     active: true,
@@ -67,7 +72,7 @@ export const mockAlerts: Alert[] = [
     space: "models",
     version: "2.1.0",
     entity_name: "transaction_amount",
-    alert: { type: "spc_violation", message: "Value outside control limits" },
+    alert: '{ type: "spc_violation", message: "Value outside control limits" }',
     id: 2,
     drift_type: "spc",
     active: true,
@@ -78,7 +83,7 @@ export const mockAlerts: Alert[] = [
     space: "ml_models",
     version: "1.2.3",
     entity_name: "usage_frequency",
-    alert: { type: "custom_metric", message: "Metric below threshold" },
+    alert: '{ type: "custom_metric", message: "Metric below threshold" }',
     id: 3,
     drift_type: "custom",
     active: true,
@@ -89,7 +94,7 @@ export const mockAlerts: Alert[] = [
     space: "recsys",
     version: "3.0.1",
     entity_name: "user_engagement",
-    alert: { type: "drift_detected", message: "Distribution shift detected" },
+    alert: '{ type: "drift_detected", message: "Distribution shift detected" }',
     id: 4,
     drift_type: "psi",
     active: false,
@@ -100,7 +105,8 @@ export const mockAlerts: Alert[] = [
     space: "models",
     version: "1.0.0",
     entity_name: "debt_ratio",
-    alert: { type: "spc_violation", message: "Consecutive points above mean" },
+    alert:
+      '{ type: "spc_violation", message: "Consecutive points above mean" }',
     id: 5,
     drift_type: "spc",
     active: true,
@@ -111,7 +117,7 @@ export const mockAlerts: Alert[] = [
     space: "models",
     version: "2.1.0",
     entity_name: "ip_velocity",
-    alert: { type: "psi_threshold", message: "PSI above 0.2" },
+    alert: '{ type: "psi_threshold", message: "PSI above 0.2" }',
     id: 6,
     drift_type: "psi",
     active: true,
@@ -122,7 +128,7 @@ export const mockAlerts: Alert[] = [
     space: "pricing",
     version: "1.1.0",
     entity_name: "demand_forecast",
-    alert: { type: "custom_metric", message: "Accuracy below target" },
+    alert: '{ type: "custom_metric", message: "Accuracy below target" }',
     id: 7,
     drift_type: "custom",
     active: false,
@@ -133,7 +139,7 @@ export const mockAlerts: Alert[] = [
     space: "ml_models",
     version: "1.2.3",
     entity_name: "support_tickets",
-    alert: { type: "drift_detected", message: "Significant feature drift" },
+    alert: '{ type: "drift_detected", message: "Significant feature drift" }',
     id: 8,
     drift_type: "psi",
     active: true,
@@ -144,7 +150,7 @@ export const mockAlerts: Alert[] = [
     space: "recsys",
     version: "3.0.1",
     entity_name: "click_through_rate",
-    alert: { type: "spc_violation", message: "Point beyond 3 sigma" },
+    alert: '{ type: "spc_violation", message: "Point beyond 3 sigma" }',
     id: 9,
     drift_type: "spc",
     active: true,
@@ -155,9 +161,17 @@ export const mockAlerts: Alert[] = [
     space: "pricing",
     version: "1.1.0",
     entity_name: "competitor_prices",
-    alert: { type: "custom_metric", message: "Data freshness warning" },
+    alert: '{ type: "custom_metric", message: "Data freshness warning" }',
     id: 10,
     drift_type: "custom",
     active: true,
   },
 ];
+
+export const mockDriftAlertResponse: DriftAlertPaginationResponse = {
+  items: mockAlerts,
+  has_next: false,
+  has_previous: false,
+  next_cursor: undefined,
+  previous_cursor: undefined,
+};

@@ -26,7 +26,7 @@ export interface Alert {
   space: string;
   version: string;
   entity_name: string;
-  alert: Record<string, string>;
+  alert: string;
   id: number;
   active: boolean;
   drift_type: string;

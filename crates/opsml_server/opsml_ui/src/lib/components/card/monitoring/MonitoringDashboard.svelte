@@ -312,7 +312,7 @@
 
        <!-- Alerts Section -->
     {#if currentDriftAlerts.items.length > 0}
-      <div class="bg-white p-2 border-2 border-black rounded-lg shadow min-h-[6rem] max-h-[30rem]">
+      <div class="bg-white p-2 border-2 border-black rounded-lg shadow min-h-[6rem]">
         <AlertTable
           driftAlerts={currentDriftAlerts}
           {updateAlert}

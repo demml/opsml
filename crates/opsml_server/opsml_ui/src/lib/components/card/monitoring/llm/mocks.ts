@@ -1,10 +1,9 @@
+import { DriftType } from "../types";
 import {
-  DriftType,
+  type LLMDriftRecordPaginationResponse,
   Status,
   type LLMDriftServerRecord,
-  type LLMPageResponse,
-  type PaginationCursor,
-} from "../types";
+} from "./llm";
 import { AlertThreshold } from "./llm";
 import { type BinnedMetrics } from "../types";
 import {
@@ -137,6 +136,7 @@ export const mockLLMDriftProfile: LLMDriftProfile = {
   metric_names: ["toxicity_score", "coherence_score"],
   config: {
     sample_rate: 50,
+    uid: "llm-profile-mock-001",
     space: "llm-services",
     name: "summarizer",
     version: "3.0.0",
@@ -276,11 +276,10 @@ export const mockLLMDriftServerRecords: LLMDriftServerRecord[] = Array.from(
   })
 );
 
-let paginationCursor: PaginationCursor = {
-  id: mockLLMDriftServerRecords.length,
-};
-export const mockLLMDriftPageResponse: LLMPageResponse = {
+export const mockLLMDriftPageResponse: LLMDriftRecordPaginationResponse = {
   items: mockLLMDriftServerRecords,
-  next_cursor: paginationCursor,
-  has_more: true,
+  next_cursor: undefined,
+  has_next: false,
+  has_previous: false,
+  previous_cursor: undefined,
 };
