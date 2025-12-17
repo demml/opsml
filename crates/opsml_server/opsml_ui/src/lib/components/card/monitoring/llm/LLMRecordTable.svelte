@@ -54,6 +54,21 @@
     }
   }
 
+  function getStatusColor(status: string): string {
+    switch (status.toLowerCase()) {
+      case 'processed':
+        return 'bg-secondary-600';
+      case 'processing':
+        return 'bg-primary-600';
+      case 'pending':
+        return 'bg-warning-600';
+      case 'failed':
+        return 'bg-error-600';
+      default:
+        return 'bg-gray-400';
+    }
+  }
+
   function formatDuration(duration?: number): string {
     if (duration === undefined) return 'N/A';
     const seconds = duration / 1000;
@@ -92,21 +107,21 @@
       {:else}
         <!-- Header -->
         <div class="bg-white border-b-2 border-black sticky top-0 z-10">
-          <div class="grid grid-cols-5 gap-4 text-black text-xs font-bold px-4 py-2">
+          <div class="grid grid-cols-5 gap-3 text-black text-xs font-bold px-4 py-3" style="grid-template-columns: 80px 140px 100px 1fr 120px;">
             <div class="text-center">
-              <span class="px-1.5 py-0.5 rounded bg-primary-100 text-primary-800">ID</span>
+              <span class="px-2 py-1 rounded-full bg-primary-100 text-primary-800">ID</span>
             </div>
             <div class="text-center">
-              <span class="px-1.5 py-0.5 rounded bg-primary-100 text-primary-800">Status</span>
+              <span class="px-2 py-1 rounded-full bg-primary-100 text-primary-800">Created</span>
             </div>
             <div class="text-center">
-              <span class="px-1.5 py-0.5 rounded bg-primary-100 text-primary-800">Has Score</span>
+              <span class="px-2 py-1 rounded-full bg-primary-100 text-primary-800">Status</span>
             </div>
             <div class="text-center">
-              <span class="px-1.5 py-0.5 rounded bg-primary-100 text-primary-800">Created</span>
+              <span class="px-2 py-1 rounded-full bg-primary-100 text-primary-800">Has Score</span>
             </div>
             <div class="text-center">
-              <span class="px-1.5 py-0.5 rounded bg-primary-100 text-primary-800">Duration</span>
+              <span class="px-2 py-1 rounded-full bg-primary-100 text-primary-800">Duration</span>
             </div>
           </div>
         </div>
@@ -115,17 +130,26 @@
         <div class="bg-white">
           {#each records as record, i}
             <button
-              class="grid grid-cols-5 gap-4 items-center w-full px-4 py-3 border-b border-gray-200 transition-colors {i % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-primary-100 cursor-pointer text-left"
+              class="grid gap-3 items-center w-full px-4 py-3 border-b border-gray-200 transition-colors {i % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-primary-100 cursor-pointer text-left"
+              style="grid-template-columns: 80px 140px 100px 1fr 120px;"
               onclick={() => selectRecordForDetail(record)}
             >
-              <!-- ID -->
+              <!-- ID (truncated uid) -->
               <div class="text-center">
-                <span class="text-xs font-mono text-gray-600">{record.id}</span>
+                <span class="text-xs font-mono text-gray-600">{record.uid.slice(0, 8)}</span>
+              </div>
+
+              <!-- Created Date with status indicator -->
+              <div class="flex items-center justify-center gap-2 min-w-0">
+                <div class={`w-1.5 h-4 rounded-sm flex-shrink-0 ${getStatusColor(record.status)}`}></div>
+                <span class="text-xs text-black font-mono truncate">
+                  {formatTimestamp(record.created_at)}
+                </span>
               </div>
 
               <!-- Status Badge -->
               <div class="flex justify-center">
-                <span class="px-2 py-0.5 rounded border-1 text-xs font-bold {getStatusBadge(record.status)}">
+                <span class="px-2 py-1 rounded border-1 text-xs font-bold {getStatusBadge(record.status)}">
                   {record.status.toUpperCase()}
                 </span>
               </div>
@@ -133,21 +157,14 @@
               <!-- Has Score -->
               <div class="text-center">
                 {#if hasScoreData(record)}
-                  <span class="px-2 py-0.5 rounded border-1 bg-success-100 border-success-900 text-success-900 text-xs font-bold">
+                  <span class="px-2 py-1 rounded border-1 bg-success-100 border-success-900 text-success-900 text-xs font-bold">
                     Yes
                   </span>
                 {:else}
-                  <span class="px-2 py-0.5 rounded border-1 bg-gray-100 border-gray-400 text-gray-600 text-xs font-bold">
+                  <span class="px-2 py-1 rounded border-1 bg-gray-100 border-gray-400 text-gray-600 text-xs font-bold">
                     No
                   </span>
                 {/if}
-              </div>
-
-              <!-- Created Date -->
-              <div class="text-center">
-                <span class="text-xs text-black font-mono">
-                  {formatTimestamp(record.created_at)}
-                </span>
               </div>
 
               <!-- Processing Duration -->
@@ -172,10 +189,10 @@
 
   <!-- Pagination Controls -->
   {#if records.length > 0}
-    <div class="flex justify-center pt-3 gap-2 items-center">
+    <div class="flex justify-center pt-4 gap-2 items-center">
       {#if currentPage.has_previous}
         <button
-          class="btn bg-surface-50 border-black border-2 shadow-small shadow-hover-small h-8 w-8 p-1"
+          class="btn bg-surface-50 border-black border-2 shadow-small shadow-hover-small h-9"
           onclick={handlePreviousPage}
         >
           <ArrowLeft class="w-4 h-4" color="#5948a3"/>
@@ -184,7 +201,7 @@
 
       {#if currentPage.has_next}
         <button
-          class="btn bg-surface-50 border-black border-2 shadow-small shadow-hover-small h-8 w-8 p-1"
+          class="btn bg-surface-50 border-black border-2 shadow-small shadow-hover-small h-9"
           onclick={handleNextPage}
         >
           <ArrowRight class="w-4 h-4" color="#5948a3"/>

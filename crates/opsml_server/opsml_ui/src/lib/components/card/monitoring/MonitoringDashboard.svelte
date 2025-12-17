@@ -301,16 +301,17 @@
 
     <!-- If LLM records are available -->
     {#if currentLLMDriftRecords && currentLLMDriftRecords.items.length > 0}
-      <div class="bg-white p-2 border-2 border-black rounded-lg shadow min-h-[6rem]">
-        <LLMRecordTable
-          currentPage={currentLLMDriftRecords}
-          onPageChange={handleLLMDriftPageChange}
-        />
-      </div>
-    {/if}
+  <!-- Side-by-side grid when both tables have data -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+    <!-- LLM Records Table -->
+    <div class="bg-white p-2 border-2 border-black rounded-lg shadow min-h-[6rem]">
+      <LLMRecordTable
+        currentPage={currentLLMDriftRecords}
+        onPageChange={handleLLMDriftPageChange}
+      />
+    </div>
 
-
-       <!-- Alerts Section -->
+    <!-- Alerts Table -->
     {#if currentDriftAlerts.items.length > 0}
       <div class="bg-white p-2 border-2 border-black rounded-lg shadow min-h-[6rem]">
         <AlertTable
@@ -320,6 +321,19 @@
         />
       </div>
     {/if}
+  </div>
+{:else}
+  <!-- Full-width AlertTable when no LLM records -->
+  {#if currentDriftAlerts.items.length > 0}
+    <div class="bg-white p-2 border-2 border-black rounded-lg shadow min-h-[6rem]">
+      <AlertTable
+        driftAlerts={currentDriftAlerts}
+        {updateAlert}
+        onPageChange={handleDriftPageChange}
+      />
+    </div>
+  {/if}
+{/if}
 
   </div>
 </div>
