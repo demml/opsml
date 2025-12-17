@@ -65,29 +65,29 @@
       {#if alerts.length === 0}
         <!-- Empty State -->
         <div class="flex items-center justify-center p-8 bg-white">
-          <p class="text-sm font-bold text-gray-500">No alerts to display</p>
+          <p class="text-xs font-bold text-gray-500">No alerts to display</p>
         </div>
       {:else}
         <!-- Header -->
         <div class="bg-white border-b-2 border-black sticky top-0 z-10">
-          <div class="grid grid-cols-6 gap-4 text-black text-xs font-bold px-4 py-2">
+          <div class="grid gap-3 text-black text-xs font-bold px-4 py-3" style="grid-template-columns: 60px 140px 100px 1fr 120px 140px;">
             <div class="text-center">
-              <span class="px-1.5 py-0.5 rounded bg-primary-100 text-primary-800">ID</span>
+              <span class="px-2 py-1 rounded-full bg-primary-100 text-primary-800">ID</span>
             </div>
             <div class="text-center">
-              <span class="px-1.5 py-0.5 rounded bg-primary-100 text-primary-800">Created</span>
+              <span class="px-2 py-1 rounded-full bg-primary-100 text-primary-800">Created</span>
             </div>
             <div class="text-center">
-              <span class="px-1.5 py-0.5 rounded bg-primary-100 text-primary-800">Type</span>
+              <span class="px-2 py-1 rounded-full bg-primary-100 text-primary-800">Type</span>
             </div>
             <div class="text-center">
-              <span class="px-1.5 py-0.5 rounded bg-primary-100 text-primary-800">Name</span>
+              <span class="px-2 py-1 rounded-full bg-primary-100 text-primary-800">Name</span>
             </div>
             <div class="text-center">
-              <span class="px-1.5 py-0.5 rounded bg-primary-100 text-primary-800">Details</span>
+              <span class="px-2 py-1 rounded-full bg-primary-100 text-primary-800">Details</span>
             </div>
             <div class="text-center">
-              <span class="px-1.5 py-0.5 rounded bg-primary-100 text-primary-800">Status</span>
+              <span class="px-2 py-1 rounded-full bg-primary-100 text-primary-800">Status</span>
             </div>
           </div>
         </div>
@@ -96,7 +96,8 @@
         <div class="bg-white">
           {#each alerts as alert, i}
             <div
-              class="grid grid-cols-6 gap-4 items-center px-4 py-2 border-b border-gray-200 transition-colors {i % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-primary-100"
+              class="grid gap-3 items-center px-4 py-3 border-b border-gray-200 transition-colors {i % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-primary-100"
+              style="grid-template-columns: 60px 140px 100px 1fr 120px 140px;"
             >
               <!-- ID -->
               <div class="text-center">
@@ -112,7 +113,7 @@
 
               <!-- Drift Type Badge -->
               <div class="flex justify-center">
-                <span class="px-2 py-0.5 rounded border-1 text-xs font-bold {getDriftTypeBadge(alert.drift_type)}">
+                <span class="px-2 py-1 rounded border-1 text-xs font-bold {getDriftTypeBadge(alert.drift_type)}">
                   {alert.drift_type.toUpperCase()}
                 </span>
               </div>
@@ -132,7 +133,7 @@
               <!-- Acknowledge Button -->
               <div class="flex justify-center">
                 <button
-                  class="text-xs px-2 py-1 bg-error-500 hover:bg-error-600 text-white border-1 border-black rounded font-bold transition-colors"
+                  class="text-xs px-3 py-1.5 bg-error-500 hover:bg-error-600 text-white border-1 border-black rounded font-bold transition-colors"
                   onclick={() => updateAlert(alert.id, alert.space)}
                 >
                   Acknowledge
@@ -147,10 +148,10 @@
 
   <!-- Pagination Controls -->
   {#if alerts.length > 0}
-    <div class="flex justify-center pt-3 gap-2 items-center">
+    <div class="flex justify-center pt-4 gap-2 items-center">
       {#if driftAlerts.has_previous}
         <button
-          class="btn bg-surface-50 border-black border-2 shadow-small shadow-hover-small h-8 w-8 p-1"
+          class="btn bg-surface-50 border-black border-2 shadow-small shadow-hover-small h-9"
           onclick={handlePreviousPage}
         >
           <ArrowLeft class="w-4 h-4" color="#5948a3"/>
@@ -159,7 +160,7 @@
       
       {#if driftAlerts.has_next}
         <button
-          class="btn bg-surface-50 border-black border-2 shadow-small shadow-hover-small h-8 w-8 p-1"
+          class="btn bg-surface-50 border-black border-2 shadow-small shadow-hover-small h-9"
           onclick={handleNextPage}
         >
           <ArrowRight class="w-4 h-4" color="#5948a3"/>
