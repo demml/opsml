@@ -6,5 +6,6 @@ pub fn add_transport_module(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<RabbitMQConfig>()?;
     m.add_class::<RedisConfig>()?;
     m.add_class::<HttpConfig>()?;
+    m.add_class::<GrpcConfig>()?;
     Ok(())
 }

@@ -36,6 +36,11 @@ jobs:
       - name: Cache Rust
         uses: Swatinem/rust-cache@v2
 
+      - name: Install Protocol Buffers Compiler
+        uses: arduino/setup-protoc@v3
+        with:
+          version: "33.2"
+
       - name: Print versions
         run: rustc --version && cargo --version && cargo clippy --version && rustup --version
 
@@ -69,6 +74,11 @@ jobs:
         with:
           cmake-version: "3.x"
 
+      - name: Install Protocol Buffers Compiler
+        uses: arduino/setup-protoc@v3
+        with:
+          version: "33.2"
+
       - name: Set up Rust
         run: rustup override set stable && rustup update
 
@@ -98,6 +108,11 @@ jobs:
     runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v4
+
+      - name: Install Protocol Buffers Compiler
+        uses: arduino/setup-protoc@v3
+        with:
+          version: "33.2"
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -242,6 +257,11 @@ jobs:
         with:
           cmake-version: "3.x"
 
+      - name: Install Protocol Buffers Compiler
+        uses: arduino/setup-protoc@v3
+        with:
+          version: "33.2"
+
       - name: Install libomp on macOS
         if: runner.os == 'macOS'
         run: brew install libomp
@@ -304,6 +324,11 @@ jobs:
         uses: jwlawson/actions-setup-cmake@v2
         with:
           cmake-version: "3.x"
+
+      - name: Install Protocol Buffers Compiler
+        uses: arduino/setup-protoc@v3
+        with:
+          version: "33.2"
 
       - name: Set up Rust
         run: rustup override set stable && rustup update
