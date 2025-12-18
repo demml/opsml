@@ -18,8 +18,6 @@ from ..._opsml import (
     ActiveSpan,
     BaseTracer,
     BatchConfig,
-    CompressionType,
-    ExportConfig,
     FunctionType,
     GrpcSpanExporter,
     HttpSpanExporter,
