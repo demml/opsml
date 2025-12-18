@@ -1,6 +1,5 @@
 # mypy: disable-error-code="attr-defined"
 # pylint: disable=dangerous-default-value
-
 import functools
 from typing import (
     Any,
@@ -22,10 +21,9 @@ from ..._opsml import (
     CompressionType,
     ExportConfig,
     FunctionType,
-    GrpcConfig,
     GrpcSpanExporter,
-    HttpConfig,
     HttpSpanExporter,
+    OtelExportConfig,
     OtelProtocol,
     SpanKind,
     StdoutSpanExporter,
@@ -34,10 +32,11 @@ from ..._opsml import (
     TraceRecord,
     TraceSpanRecord,
     flush_tracer,
+    get_current_active_span,
     get_function_type,
+    get_tracing_headers_from_current_span,
     init_tracer,
     shutdown_tracer,
-    get_current_active_span,
 )
 
 P = ParamSpec("P")
@@ -77,6 +76,7 @@ class Tracer(BaseTracer):
         >>>
         >>> @tracer.span("operation_name")
         ... def my_function():
+        ...     return "result"
     """
 
     def span(
@@ -88,6 +88,7 @@ class Tracer(BaseTracer):
         tags: List[dict[str, str]] = [],
         label: Optional[str] = None,
         parent_context_id: Optional[str] = None,
+        trace_id: Optional[str] = None,
         max_length: int = 1000,
         capture_last_stream_item: bool = False,
         join_stream_items: bool = False,
@@ -110,6 +111,8 @@ class Tracer(BaseTracer):
                 An optional label for the span
             parent_context_id (Optional[str]):
                 Parent context ID for the span
+            trace_id (Optional[str]):
+                Optional trace ID to associate with the span. This is useful for
             max_length (int):
                 Maximum length for input/output capture
             capture_last_stream_item (bool):
@@ -131,9 +134,7 @@ class Tracer(BaseTracer):
             if function_type == FunctionType.AsyncGenerator:
 
                 @functools.wraps(func)
-                async def async_generator_wrapper(
-                    *args: P.args, **kwargs: P.kwargs
-                ) -> Any:
+                async def async_generator_wrapper(*args: P.args, **kwargs: P.kwargs) -> Any:
                     async with self._start_decorated_as_current_span(
                         name=span_name,
                         func=func,
@@ -144,14 +145,13 @@ class Tracer(BaseTracer):
                         tags=tags,
                         label=label,
                         parent_context_id=parent_context_id,
+                        trace_id=trace_id,
                         max_length=max_length,
                         func_type=function_type,
                         func_kwargs=kwargs,
                     ) as span:
                         try:
-                            async_gen_func = cast(
-                                Callable[P, AsyncGenerator[Any, None]], func
-                            )
+                            async_gen_func = cast(Callable[P, AsyncGenerator[Any, None]], func)
                             generator = async_gen_func(*args, **kwargs)
 
                             outputs = []
@@ -187,14 +187,13 @@ class Tracer(BaseTracer):
                         tags=tags,
                         label=label,
                         parent_context_id=parent_context_id,
+                        trace_id=trace_id,
                         max_length=max_length,
                         func_type=function_type,
                         func_kwargs=kwargs,
                     ) as span:
                         try:
-                            gen_func = cast(
-                                Callable[P, Generator[Any, None, None]], func
-                            )
+                            gen_func = cast(Callable[P, Generator[Any, None, None]], func)
                             generator = gen_func(*args, **kwargs)
                             results = []
 
@@ -230,6 +229,7 @@ class Tracer(BaseTracer):
                         tags=tags,
                         label=label,
                         parent_context_id=parent_context_id,
+                        trace_id=trace_id,
                         max_length=max_length,
                         func_type=function_type,
                         func_kwargs=kwargs,
@@ -259,6 +259,7 @@ class Tracer(BaseTracer):
                     tags=tags,
                     label=label,
                     parent_context_id=parent_context_id,
+                    trace_id=trace_id,
                     max_length=max_length,
                     func_type=function_type,
                     func_kwargs=kwargs,
@@ -288,15 +289,13 @@ def get_tracer(name: str) -> Tracer:
 
 __all__ = [
     "Tracer",
-    "init_tracer",
     "get_tracer",
+    "init_tracer",
     "SpanKind",
     "FunctionType",
     "ActiveSpan",
-    "ExportConfig",
-    "GrpcConfig",
+    "OtelExportConfig",
     "GrpcSpanExporter",
-    "HttpConfig",
     "HttpSpanExporter",
     "StdoutSpanExporter",
     "OtelProtocol",
@@ -307,7 +306,6 @@ __all__ = [
     "flush_tracer",
     "BatchConfig",
     "shutdown_tracer",
-    "CompressionType",
-    "get_function_type",
+    "get_tracing_headers_from_current_span",
     "get_current_active_span",
 ]

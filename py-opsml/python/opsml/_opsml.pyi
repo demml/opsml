@@ -26,6 +26,8 @@ from typing import (
 CardInterfaceType: TypeAlias = Union["DataInterface", "ModelInterface"]
 ServiceCardInterfaceType: TypeAlias = Dict[str, Union["DataInterface", "ModelInterface"]]
 LoadInterfaceType: TypeAlias = Union[ServiceCardInterfaceType, ServiceCardInterfaceType]
+SerializedType: TypeAlias = Union[str, int, float, dict, list]
+Context: TypeAlias = Union[Dict[str, Any], "BaseModel"]
 
 P = ParamSpec("P")
 R = TypeVar("R")
@@ -1788,14 +1790,6 @@ class OpsmlServerContext:
     def server_uri(self) -> str:
         """Returns the server URI."""
 
-class MockConfig:
-    def __init__(self, **kwargs) -> None:
-        """Mock configuration for the ScouterQueue
-
-        Args:
-            **kwargs: Arbitrary keyword arguments to set as attributes.
-        """
-
 class LLMTestServer:
     """
     Mock server for OpenAI API.
@@ -1982,6 +1976,14 @@ def get_function_type(func: Callable[..., Any]) -> "FunctionType":
             The function to analyze.
     """
 
+def get_tracing_headers_from_current_span() -> Dict[str, str]:
+    """Get tracing headers from the current active span and global propagator.
+
+    Returns:
+        Dict[str, str]:
+            A dictionary of tracing headers.
+    """
+
 class OtelProtocol:
     """Enumeration of protocols for HTTP exporting."""
 
@@ -2005,13 +2007,6 @@ class FunctionType:
     SyncGenerator: "FunctionType"
     AsyncGenerator: "FunctionType"
 
-class CompressionType:
-    NA: "CompressionType"
-    Gzip: "CompressionType"
-    Snappy: "CompressionType"
-    Lz4: "CompressionType"
-    Zstd: "CompressionType"
-
 class BatchConfig:
     """Configuration for batch exporting of spans."""
 
@@ -2034,54 +2029,141 @@ class BatchConfig:
 
 def init_tracer(
     service_name: str = "scouter_service",
-    transport_config: Optional[HttpConfig | KafkaConfig | RabbitMQConfig | RedisConfig] = None,
-    exporter: HttpSpanExporter | StdoutSpanExporter | TestSpanExporter = StdoutSpanExporter(),  # noqa: F821
+    scope: str = "scouter.tracer.{version}",
+    transport_config: Optional[HttpConfig | KafkaConfig | RabbitMQConfig | RedisConfig | GrpcConfig] = None,
+    exporter: Optional[HttpSpanExporter | GrpcSpanExporter | StdoutSpanExporter | TestSpanExporter] = None,
     batch_config: Optional[BatchConfig] = None,
-    profile_space: Optional[str] = None,
-    profile_name: Optional[str] = None,
-    profile_version: Optional[str] = None,
 ) -> None:
-    """Initialize the tracer for a service with specific transport and exporter configurations.
+    """
+    Initialize the tracer for a service with dual export capability.
+    ```
+    ╔════════════════════════════════════════════╗
+    ║          DUAL EXPORT ARCHITECTURE          ║
+    ╠════════════════════════════════════════════╣
+    ║                                            ║
+    ║  Your Application                          ║
+    ║       │                                    ║
+    ║       │  init_tracer()                     ║
+    ║       │                                    ║
+    ║       ├──────────────────┬                 ║
+    ║       │                  │                 ║
+    ║       ▼                  ▼                 ║
+    ║  ┌─────────────┐   ┌──────────────┐        ║
+    ║  │  Transport  │   │   Optional   │        ║
+    ║  │   to        │   │     OTEL     │        ║
+    ║  │  Scouter    │   │  Exporter    │        ║
+    ║  │  (Required) │   │              │        ║
+    ║  └──────┬──────┘   └──────┬───────┘        ║
+    ║         │                 │                ║
+    ║         │                 │                ║
+    ║    ┌────▼────┐       ┌────▼────┐           ║
+    ║    │ Scouter │       │  OTEL   │           ║
+    ║    │ Server  │       │Collector│           ║
+    ║    └─────────┘       └─────────┘           ║
+    ║                                            ║
+    ╚════════════════════════════════════════════╝
+    ```
+    Configuration Overview:
+        This function sets up a service tracer with **mandatory** export to Scouter
+        and **optional** export to OpenTelemetry-compatible backends.
 
-    This function configures a service tracer, allowing for the specification of
-    the service name, the transport mechanism for exporting spans, and the chosen
-    span exporter.
+    ```
+    ┌─ REQUIRED: Scouter Export ────────────────────────────────────────────────┐
+    │                                                                           │
+    │  All spans are ALWAYS exported to Scouter via transport_config:           │
+    │    • HttpConfig    → HTTP endpoint (default)                              │
+    │    • GrpcConfig    → gRPC endpoint                                        │
+    │    • KafkaConfig   → Kafka topic                                          │
+    │    • RabbitMQConfig→ RabbitMQ queue                                       │
+    │    • RedisConfig   → Redis stream/channel                                 │
+    │                                                                           │
+    └───────────────────────────────────────────────────────────────────────────┘
+
+    ┌─ OPTIONAL: OTEL Export ───────────────────────────────────────────────────┐
+    │                                                                           │
+    │  Optionally export spans to external OTEL-compatible systems:             │
+    │    • HttpSpanExporter   → OTEL Collector (HTTP)                           │
+    │    • GrpcSpanExporter   → OTEL Collector (gRPC)                           │
+    │    • StdoutSpanExporter → Console output (debugging)                      │
+    │    • TestSpanExporter   → In-memory (testing)                             │
+    │                                                                           │
+    │  If None: Only Scouter export is active (NoOpExporter)                    │
+    │                                                                           │
+    └───────────────────────────────────────────────────────────────────────────┘
+    ```
 
     Args:
         service_name (str):
             The **required** name of the service this tracer is associated with.
             This is typically a logical identifier for the application or component.
-        transport_config (HttpConfig | KafkaConfig | RabbitMQConfig | RedisConfig | None):
-            The configuration detailing how spans should be sent out.
-            If **None**, a default `HttpConfig` will be used.
+            Default: "scouter_service"
 
-            The supported configuration types are:
-            * `HttpConfig`: Configuration for exporting via HTTP/gRPC.
-            * `KafkaConfig`: Configuration for exporting to a Kafka topic.
-            * `RabbitMQConfig`: Configuration for exporting to a RabbitMQ queue.
-            * `RedisConfig`: Configuration for exporting to a Redis stream or channel.
-        exporter (HttpSpanExporter | StdoutSpanExporter | TestSpanExporter | None):
-            The span exporter implementation to use.
-            If **None**, a default `StdoutSpanExporter` is used.
+        scope (str):
+            The scope for the tracer. Used to differentiate tracers by version
+            or environment.
+            Default: "scouter.tracer.{version}"
+
+        transport_config (HttpConfig | GrpcConfig | KafkaConfig | RabbitMQConfig | RedisConfig | None):
+
+            Configuration for sending spans to Scouter. If None, defaults to HttpConfig.
+
+            Supported transports:
+                • HttpConfig     : Export to Scouter via HTTP
+                • GrpcConfig     : Export to Scouter via gRPC
+                • KafkaConfig    : Export to Scouter via Kafka
+                • RabbitMQConfig : Export to Scouter via RabbitMQ
+                • RedisConfig    : Export to Scouter via Redis
+
+        exporter (HttpSpanExporter | GrpcSpanExporter | StdoutSpanExporter | TestSpanExporter | None):
+
+            Optional secondary exporter for OpenTelemetry-compatible backends.
+            If None, spans are ONLY sent to Scouter (NoOpExporter used internally).
 
             Available exporters:
-            * `HttpSpanExporter`: Sends spans to an HTTP endpoint (e.g., an OpenTelemetry collector).
-            * `StdoutSpanExporter`: Writes spans directly to standard output for debugging.
-            * `TestSpanExporter`: Collects spans in memory, primarily for unit testing.
+                • HttpSpanExporter   : Send to OTEL Collector via HTTP
+                • GrpcSpanExporter   : Send to OTEL Collector via gRPC
+                • StdoutSpanExporter : Write to stdout (debugging)
+                • TestSpanExporter   : Collect in-memory (testing)
+
         batch_config (BatchConfig | None):
-            Configuration for the batching process. If provided, spans will be queued
-            and exported in batches according to these settings. If `None`, and the
-            exporter supports batching, default batch settings will be applied.
+            Configuration for batch span export. If provided, spans are queued
+            and exported in batches. If None and the exporter supports batching,
+            default batch settings apply.
 
-    Drift Profile Association (Optional):
-        Use these parameters to associate the tracer with a specific drift profile.
+            Batching improves performance for high-throughput applications.
 
-        profile_space (str | None):
-            The space for the drift profile.
-        profile_name (str | None):
-            A name of the associated drift profile or service.
-        profile_version (str | None):
-            The version of the drift profile.
+    Examples:
+        Basic setup (Scouter only via HTTP):
+            >>> init_tracer(service_name="my-service")
+
+        Scouter via Kafka + OTEL Collector:
+            >>> init_tracer(
+            ...     service_name="my-service",
+            ...     transport_config=KafkaConfig(brokers="kafka:9092"),
+            ...     exporter=HttpSpanExporter(
+            ...         export_config=OtelExportConfig(
+            ...             endpoint="http://otel-collector:4318"
+            ...         )
+            ...     )
+            ... )
+
+        Scouter via gRPC + stdout debugging:
+            >>> init_tracer(
+            ...     service_name="my-service",
+            ...     transport_config=GrpcConfig(server_uri="grpc://scouter:50051"),
+            ...     exporter=StdoutSpanExporter()
+            ... )
+
+    Notes:
+        • Spans are ALWAYS exported to Scouter via transport_config
+        • OTEL export via exporter is completely optional
+        • Both exports happen in parallel without blocking each other
+        • Use batch_config to optimize performance for high-volume tracing
+
+    See Also:
+        - HttpConfig, GrpcConfig, KafkaConfig, RabbitMQConfig, RedisConfig
+        - HttpSpanExporter, GrpcSpanExporter, StdoutSpanExporter, TestSpanExporter
+        - BatchConfig
     """
 
 class ActiveSpan:
@@ -2187,14 +2269,16 @@ class ActiveSpan:
     ) -> None:
         """Exit the span context."""
 
-def get_current_active_span(self) -> ActiveSpan:
-    """Get the current active span.
+    async def __aenter__(self) -> "ActiveSpan":
+        """Enter the async span context."""
 
-    Returns:
-        ActiveSpan:
-            The current active span.
-            Raises an error if no active span exists.
-    """
+    async def __aexit__(
+        self,
+        exc_type: Optional[type],
+        exc_value: Optional[BaseException],
+        exc_tb: Optional[TracebackType],
+    ) -> None:
+        """Exit the async span context."""
 
 class BaseTracer:
     def __init__(self, name: str) -> None:
@@ -2214,6 +2298,8 @@ class BaseTracer:
         baggage: Optional[dict[str, str]] = None,
         tags: Optional[dict[str, str]] = None,
         parent_context_id: Optional[str] = None,
+        trace_id: Optional[str] = None,
+        span_id: Optional[str] = None,
     ) -> ActiveSpan:
         """Context manager to start a new span as the current span.
 
@@ -2232,6 +2318,11 @@ class BaseTracer:
                 Optional tags to set on the span and trace.
             parent_context_id (Optional[str]):
                 Optional parent span context ID.
+            trace_id (Optional[str]):
+                Optional trace ID to associate with the span. This is useful for
+                when linking spans across different services or systems.
+            span_id (Optional[str]):
+                Optional span ID to associate with the span. This will be the parent span ID.
         Returns:
             ActiveSpan:
         """
@@ -2247,6 +2338,7 @@ class BaseTracer:
         baggage: List[dict[str, str]] = [],
         tags: List[dict[str, str]] = [],
         parent_context_id: Optional[str] = None,
+        trace_id: Optional[str] = None,
         max_length: int = 1000,
         func_type: FunctionType = FunctionType.Sync,
         func_kwargs: Optional[dict[str, Any]] = None,
@@ -2272,6 +2364,9 @@ class BaseTracer:
                 Optional tags to set on the span.
             parent_context_id (Optional[str]):
                 Optional parent span context ID.
+            trace_id (Optional[str]):
+                Optional trace ID to associate with the span. This is useful for
+                when linking spans across different services or systems.
             max_length (int):
                 The maximum length for string inputs/outputs. Defaults to 1000.
             func_type (FunctionType):
@@ -2291,6 +2386,15 @@ class BaseTracer:
                 The current active span.
                 Raises an error if no active span exists.
         """
+
+def get_current_active_span(self) -> ActiveSpan:
+    """Get the current active span.
+
+    Returns:
+        ActiveSpan:
+            The current active span.
+            Raises an error if no active span exists.
+    """
 
 class StdoutSpanExporter:
     """Exporter that outputs spans to standard output (stdout)."""
@@ -2320,7 +2424,7 @@ class StdoutSpanExporter:
 def flush_tracer() -> None:
     """Force flush the tracer's exporter."""
 
-class ExportConfig:
+class OtelExportConfig:
     """Configuration for exporting spans."""
 
     def __init__(
@@ -2328,16 +2432,22 @@ class ExportConfig:
         endpoint: Optional[str],
         protocol: OtelProtocol = OtelProtocol.HttpBinary,
         timeout: Optional[int] = None,
+        compression: Optional[CompressionType] = None,
+        headers: Optional[dict[str, str]] = None,
     ) -> None:
         """Initialize the ExportConfig.
 
         Args:
             endpoint (Optional[str]):
-                The HTTP endpoint for exporting spans.
+                The endpoint for exporting spans. Can be either an HTTP or gRPC endpoint.
             protocol (Protocol):
                 The protocol to use for exporting spans. Defaults to HttpBinary.
             timeout (Optional[int]):
-                The timeout for HTTP requests in seconds.
+                The timeout for requests in seconds.
+            compression (Optional[CompressionType]):
+                The compression type for requests.
+            headers (Optional[dict[str, str]]):
+                Optional HTTP headers to include in requests.
         """
 
     @property
@@ -2350,32 +2460,15 @@ class ExportConfig:
 
     @property
     def timeout(self) -> Optional[int]:
-        """Get the timeout for HTTP requests in seconds."""
-
-class OtelHttpConfig:
-    """Configuration for HTTP span exporting."""
-
-    def __init__(
-        self,
-        headers: Optional[dict[str, str]] = None,
-        compression: Optional[CompressionType] = None,
-    ) -> None:
-        """Initialize the HttpConfig.
-
-        Args:
-            headers (Optional[dict[str, str]]):
-                Optional HTTP headers to include in requests.
-            compression (Optional[CompressionType]):
-                Optional compression type for HTTP requests.
-        """
-
-    @property
-    def headers(self) -> Optional[dict[str, str]]:
-        """Get the HTTP headers."""
+        """Get the timeout for requests in seconds."""
 
     @property
     def compression(self) -> Optional[CompressionType]:
-        """Get the compression type."""
+        """Get the compression type used for exporting spans."""
+
+    @property
+    def headers(self) -> Optional[dict[str, str]]:
+        """Get the HTTP headers used for exporting spans."""
 
 class HttpSpanExporter:
     """Exporter that sends spans to an HTTP endpoint."""
@@ -2383,8 +2476,7 @@ class HttpSpanExporter:
     def __init__(
         self,
         batch_export: bool = True,
-        export_config: Optional[ExportConfig] = None,
-        http_config: Optional[OtelHttpConfig] = None,
+        export_config: Optional[OtelExportConfig] = None,
         sample_ratio: Optional[float] = None,
     ) -> None:
         """Initialize the HttpSpanExporter.
@@ -2392,10 +2484,8 @@ class HttpSpanExporter:
         Args:
             batch_export (bool):
                 Whether to use batch exporting. Defaults to True.
-            export_config (Optional[ExportConfig]):
+            export_config (Optional[OtelExportConfig]):
                 Configuration for exporting spans.
-            http_config (Optional[OtelHttpConfig]):
-                Configuration for the HTTP exporter.
             sample_ratio (Optional[float]):
                 The sampling ratio for traces. If None, defaults to always sample.
         """
@@ -2428,29 +2518,13 @@ class HttpSpanExporter:
     def compression(self) -> Optional[CompressionType]:
         """Get the compression type used for exporting spans."""
 
-class GrpcConfig:
-    """Configuration for gRPC exporting."""
-
-    def __init__(self, compression: Optional[CompressionType] = None) -> None:
-        """Initialize the GrpcConfig.
-
-        Args:
-            compression (Optional[CompressionType]):
-                Optional compression type for gRPC requests.
-        """
-
-    @property
-    def compression(self) -> Optional[CompressionType]:
-        """Get the compression type."""
-
 class GrpcSpanExporter:
     """Exporter that sends spans to a gRPC endpoint."""
 
     def __init__(
         self,
         batch_export: bool = True,
-        export_config: Optional[ExportConfig] = None,
-        grpc_config: Optional[GrpcConfig] = None,
+        export_config: Optional[OtelExportConfig] = None,
         sample_ratio: Optional[float] = None,
     ) -> None:
         """Initialize the GrpcSpanExporter.
@@ -2458,10 +2532,8 @@ class GrpcSpanExporter:
         Args:
             batch_export (bool):
                 Whether to use batch exporting. Defaults to True.
-            export_config (Optional[ExportConfig]):
+            export_config (Optional[OtelExportConfig]):
                 Configuration for exporting spans.
-            grpc_config (Optional[GrpcConfig]):
-                Configuration for the gRPC exporter.
             sample_ratio (Optional[float]):
                 The sampling ratio for traces. If None, defaults to always sample.
         """
@@ -2561,356 +2633,15 @@ class TestSpanExporter:
 def shutdown_tracer() -> None:
     """Shutdown the tracer and flush any remaining spans."""
 
-class TagRecord:
-    """Represents a single tag record associated with an entity."""
-
-    created_at: datetime
-    entity_type: str
-    entity_id: str
-    key: str
-    value: str
-
-class Attribute:
-    """Represents a key-value attribute associated with a span."""
-
-    key: str
-    value: str
-
-class SpanEvent:
-    """Represents an event within a span."""
-
-    timestamp: datetime
-    name: str
-    attributes: List[Attribute]
-    dropped_attributes_count: int
-
-class SpanLink:
-    """Represents a link to another span."""
-
-    trace_id: str
-    span_id: str
-    trace_state: str
-    attributes: List[Attribute]
-    dropped_attributes_count: int
-
-class TraceBaggageRecord:
-    """Represents a single baggage record associated with a trace."""
-
-    created_at: datetime
-    trace_id: str
-    scope: str
-    key: str
-    value: str
-
-class TracePaginationResponse:
-    """Response structure for paginated trace list requests."""
-
-    items: List["TraceListItem"]
-
-class TraceSpansResponse:
-    """Response structure containing a list of spans for a trace."""
-
-    spans: List["TraceSpan"]
-
-class TraceBaggageResponse:
-    """Response structure containing trace baggage records."""
-
-    baggage: List[TraceBaggageRecord]
-
-class TraceMetricsRequest:
-    """Request payload for fetching trace metrics."""
-
-    space: Optional[str]
-    name: Optional[str]
-    version: Optional[str]
-    start_time: datetime
-    end_time: datetime
-    bucket_interval: str
-
-    def __init__(
-        self,
-        start_time: datetime,
-        end_time: datetime,
-        bucket_interval: str,
-        space: Optional[str] = None,
-        name: Optional[str] = None,
-        version: Optional[str] = None,
-    ) -> None:
-        """Initialize trace metrics request.
-
-        Args:
-            start_time:
-                Start time boundary (UTC)
-            end_time:
-                End time boundary (UTC)
-            bucket_interval:
-                The time interval for metric aggregation buckets (e.g., '1 minutes', '30 minutes')
-            space:
-                Model space filter
-            name:
-                Model name filter
-            version:
-                Model version filter
-        """
-
-class TraceFilters:
-    """A struct for filtering traces, generated from Rust pyclass."""
-
-    space: Optional[str]
-    name: Optional[str]
-    version: Optional[str]
-    service_name: Optional[str]
-    has_errors: Optional[bool]
-    status_code: Optional[int]
-    start_time: Optional[datetime]
-    end_time: Optional[datetime]
-    limit: Optional[int]
-    cursor_created_at: Optional[datetime]
-    cursor_trace_id: Optional[str]
-
-    def __init__(
-        self,
-        space: Optional[str] = None,
-        name: Optional[str] = None,
-        version: Optional[str] = None,
-        service_name: Optional[str] = None,
-        has_errors: Optional[bool] = None,
-        status_code: Optional[int] = None,
-        start_time: Optional[datetime] = None,
-        end_time: Optional[datetime] = None,
-        limit: Optional[int] = None,
-        cursor_created_at: Optional[datetime] = None,
-        cursor_trace_id: Optional[str] = None,
-    ) -> None:
-        """Initialize trace filters.
-
-        Args:
-            space:
-                Model space filter
-            name:
-                Model name filter
-            version:
-                Model version filter
-            service_name:
-                Service name filter
-            has_errors:
-                Filter by presence of errors
-            status_code:
-                Filter by root span status code
-            start_time:
-                Start time boundary (UTC)
-            end_time:
-                End time boundary (UTC)
-            limit:
-                Maximum number of results to return
-            cursor_created_at:
-                Pagination cursor: created at timestamp
-            cursor_trace_id:
-                Pagination cursor: trace ID
-        """
-
-class TraceMetricBucket:
-    """Represents aggregated trace metrics for a specific time bucket."""
-
-    bucket_start: datetime
-    trace_count: int
-    avg_duration_ms: float
-    p50_duration_ms: Optional[float]
-    p95_duration_ms: Optional[float]
-    p99_duration_ms: Optional[float]
-    error_rate: float
-
-class TraceListItem:
-    """Represents a summary item for a trace in a list view."""
-
-    trace_id: str
-    space: str
-    name: str
-    version: str
-    scope: str
-    service_name: Optional[str]
-    root_operation: Optional[str]
-    start_time: datetime
-    end_time: Optional[datetime]
-    duration_ms: Optional[int]
-    status_code: int
-    status_message: Optional[str]
-    span_count: Optional[int]
-    has_errors: bool
-    error_count: int
-    created_at: datetime
-
-class TraceSpan:
-    """Detailed information for a single span within a trace."""
-
-    trace_id: str
-    span_id: str
-    parent_span_id: Optional[str]
-    span_name: str
-    span_kind: Optional[str]
-    start_time: datetime
-    end_time: Optional[datetime]
-    duration_ms: Optional[int]
-    status_code: str
-    status_message: Optional[str]
-    attributes: List[Attribute]
-    events: List[SpanEvent]
-    links: List[SpanLink]
-    depth: int
-    path: List[str]
-    root_span_id: str
-    span_order: int
-    input: Any
-    output: Any
-
-class TraceMetricsResponse:
-    """Response structure containing aggregated trace metrics."""
-
-    metrics: List[TraceMetricBucket]
-
-class TagsResponse:
-    """Response structure containing a list of tag records."""
-
-    tags: List[TagRecord]
-
-class Manual:
-    def __init__(self, num_bins: int):
-        """Manual equal-width binning strategy.
-
-        Divides the feature range into a fixed number of equally sized bins.
-
-        Args:
-            num_bins:
-                The exact number of bins to create.
-        """
-
-    @property
-    def num_bins(self) -> int:
-        """The number of bins you want created"""
-
-    @num_bins.setter
-    def num_bins(self, num_bins: int) -> None:
-        """Set the number of bins you want created"""
-
-class SquareRoot:
-    def __init__(self):
-        """Use the SquareRoot equal-width method.
-
-        For more information, please see: https://en.wikipedia.org/wiki/Histogram
-        """
-
-class Sturges:
-    def __init__(self):
-        """Use the Sturges equal-width method.
-
-        For more information, please see: https://en.wikipedia.org/wiki/Histogram
-        """
-
-class Rice:
-    def __init__(self):
-        """Use the Rice equal-width method.
-
-        For more information, please see: https://en.wikipedia.org/wiki/Histogram
-        """
-
-class Doane:
-    def __init__(self):
-        """Use the Doane equal-width method.
-
-        For more information, please see: https://en.wikipedia.org/wiki/Histogram
-        """
-
-class Scott:
-    def __init__(self):
-        """Use the Scott equal-width method.
-
-        For more information, please see: https://en.wikipedia.org/wiki/Histogram
-        """
-
-class TerrellScott:
-    def __init__(self):
-        """Use the Terrell-Scott equal-width method.
-
-        For more information, please see: https://en.wikipedia.org/wiki/Histogram
-        """
-
-class FreedmanDiaconis:
-    def __init__(self):
-        """Use the Freedman–Diaconis equal-width method.
-
-        For more information, please see: https://en.wikipedia.org/wiki/Histogram
-        """
-
-EqualWidthMethods = Manual | SquareRoot | Sturges | Rice | Doane | Scott | TerrellScott | FreedmanDiaconis
-
-class EqualWidthBinning:
-    def __init__(self, method: EqualWidthMethods = Doane()):
-        """Initialize the equal-width binning configuration.
-
-        This strategy divides the range of values into bins of equal width.
-        Several binning rules are supported to automatically determine the
-        appropriate number of bins based on the input distribution.
-
-        Note:
-            Detailed explanations of each method are provided in their respective
-            constructors or documentation.
-
-        Args:
-            method:
-                Specifies how the number of bins should be determined.
-                Options include:
-                  - Manual(num_bins): Explicitly sets the number of bins.
-                  - SquareRoot, Sturges, Rice, Doane, Scott, TerrellScott,
-                    FreedmanDiaconis: Rules that infer bin counts from data.
-                Defaults to Doane().
-        """
-
-    @property
-    def method(self) -> EqualWidthMethods:
-        """Specifies how the number of bins should be determined."""
-
-    @method.setter
-    def method(self, method: EqualWidthMethods) -> None:
-        """Specifies how the number of bins should be determined."""
-
-class QuantileBinning:
-    def __init__(self, num_bins: int = 10):
-        """Initialize the quantile binning strategy.
-
-        This strategy uses the R-7 quantile method (Hyndman & Fan Type 7) to
-        compute bin edges. It is the default quantile method in R and provides
-        continuous, median-unbiased estimates that are approximately unbiased
-        for normal distributions.
-
-        The R-7 method defines quantiles using:
-            - m = 1 - p
-            - j = floor(n * p + m)
-            - h = n * p + m - j
-            - Q(p) = (1 - h) * x[j] + h * x[j+1]
-
-        Reference:
-            Hyndman, R. J. & Fan, Y. (1996). "Sample quantiles in statistical packages."
-            The American Statistician, 50(4), pp. 361–365.
-            PDF: https://www.amherst.edu/media/view/129116/original/Sample+Quantiles.pdf
-
-        Args:
-            num_bins:
-                Number of bins to compute using the R-7 quantile method.
-        """
-
-    @property
-    def num_bins(self) -> int:
-        """The number of bins you want created using the r7 quantile method"""
-
-    @num_bins.setter
-    def num_bins(self, num_bins: int) -> None:
-        """Set the number of bins you want created using the r7 quantile method"""
+#################
+# _scouter.types
+#################
 
 class DriftType:
     Spc: "DriftType"
     Psi: "DriftType"
     Custom: "DriftType"
-    LLM: "DriftType"
+    LLM = "DriftType"
 
     def value(self) -> str: ...
     @staticmethod
@@ -2939,6 +2670,14 @@ class ScouterDataType:
     Polars: "ScouterDataType"
     Numpy: "ScouterDataType"
     Arrow: "ScouterDataType"
+    LLM: "ScouterDataType"
+
+class CompressionType:
+    NA: "CompressionType"
+    Gzip: "CompressionType"
+    Snappy: "CompressionType"
+    Lz4: "CompressionType"
+    Zstd: "CompressionType"
 
 class ConsoleDispatchConfig:
     def __init__(self):
@@ -3172,7 +2911,7 @@ class PsiAlertConfig:
 class SpcAlertConfig:
     def __init__(
         self,
-        rule: SpcAlertRule = SpcAlertRule(),
+        rule: Optional[SpcAlertRule] = None,
         dispatch_config: Optional[SlackDispatchConfig | OpsGenieDispatchConfig] = None,
         schedule: Optional[str | CommonCrons] = None,
         features_to_monitor: List[str] = [],
@@ -3371,7 +3110,7 @@ class LLMAlertConfig:
         """Set the schedule"""
 
     @property
-    def alert_conditions(self) -> Optional[Dict[str, "LLMMetricAlertCondition"]]:
+    def alert_conditions(self) -> Optional[Dict[str, LLMMetricAlertCondition]]:
         """Return the alert conditions"""
 
 class LLMMetricAlertCondition:
@@ -3394,6 +3133,148 @@ class LLMMetricAlertCondition:
 
     def __str__(self) -> str:
         """Return the string representation of LLMMetricAlertCondition."""
+
+class TagRecord:
+    """Represents a single tag record associated with an entity."""
+
+    entity_type: str
+    entity_id: str
+    key: str
+    value: str
+
+class Attribute:
+    """Represents a key-value attribute associated with a span."""
+
+    key: str
+    value: Any
+
+class SpanEvent:
+    """Represents an event within a span."""
+
+    timestamp: datetime
+    name: str
+    attributes: List[Attribute]
+    dropped_attributes_count: int
+
+class SpanLink:
+    """Represents a link to another span."""
+
+    trace_id: str
+    span_id: str
+    trace_state: str
+    attributes: List[Attribute]
+    dropped_attributes_count: int
+
+class TraceBaggageRecord:
+    """Represents a single baggage record associated with a trace."""
+
+    created_at: datetime
+    trace_id: str
+    scope: str
+    key: str
+    value: str
+
+class TraceFilters:
+    """A struct for filtering traces, generated from Rust pyclass."""
+
+    service_name: Optional[str]
+    has_errors: Optional[bool]
+    status_code: Optional[int]
+    start_time: Optional[datetime]
+    end_time: Optional[datetime]
+    limit: Optional[int]
+    cursor_created_at: Optional[datetime]
+    cursor_trace_id: Optional[str]
+
+    def __init__(
+        self,
+        service_name: Optional[str] = None,
+        has_errors: Optional[bool] = None,
+        status_code: Optional[int] = None,
+        start_time: Optional[datetime] = None,
+        end_time: Optional[datetime] = None,
+        limit: Optional[int] = None,
+        cursor_created_at: Optional[datetime] = None,
+        cursor_trace_id: Optional[str] = None,
+    ) -> None:
+        """Initialize trace filters.
+
+        Args:
+            service_name:
+                Service name filter
+            has_errors:
+                Filter by presence of errors
+            status_code:
+                Filter by root span status code
+            start_time:
+                Start time boundary (UTC)
+            end_time:
+                End time boundary (UTC)
+            limit:
+                Maximum number of results to return
+            cursor_created_at:
+                Pagination cursor: created at timestamp
+            cursor_trace_id:
+                Pagination cursor: trace ID
+        """
+
+class TraceMetricBucket:
+    """Represents aggregated trace metrics for a specific time bucket."""
+
+    bucket_start: datetime
+    trace_count: int
+    avg_duration_ms: float
+    p50_duration_ms: Optional[float]
+    p95_duration_ms: Optional[float]
+    p99_duration_ms: Optional[float]
+    error_rate: float
+
+class TraceListItem:
+    """Represents a summary item for a trace in a list view."""
+
+    trace_id: str
+    service_name: str
+    scope: str
+    root_operation: Optional[str]
+    start_time: datetime
+    end_time: Optional[datetime]
+    duration_ms: Optional[int]
+    status_code: int
+    status_message: Optional[str]
+    span_count: Optional[int]
+    has_errors: bool
+    error_count: int
+    created_at: datetime
+
+class TraceSpan:
+    """Detailed information for a single span within a trace."""
+
+    trace_id: str
+    span_id: str
+    parent_span_id: Optional[str]
+    span_name: str
+    span_kind: Optional[str]
+    start_time: datetime
+    end_time: Optional[datetime]
+    duration_ms: Optional[int]
+    status_code: int
+    status_message: Optional[str]
+    attributes: List[Attribute]
+    events: List[SpanEvent]
+    links: List[SpanLink]
+    depth: int
+    path: List[str]
+    root_span_id: str
+    span_order: int
+    input: Any
+    output: Any
+
+class TransportType:
+    Kafka = "TransportType"
+    RabbitMQ = "TransportType"
+    Redis = "TransportType"
+    HTTP = "TransportType"
+    Grpc = "TransportType"
 
 class HttpConfig:
     server_uri: str
@@ -3426,6 +3307,279 @@ class HttpConfig:
 
         """
 
+    def __str__(self): ...
+
+class GrpcConfig:
+    server_uri: str
+    username: str
+    password: str
+
+    def __init__(
+        self,
+        server_uri: Optional[str] = None,
+        username: Optional[str] = None,
+        password: Optional[str] = None,
+    ) -> None:
+        """gRPC configuration to use with the GrpcProducer.
+
+        Args:
+            server_uri:
+                URL of the gRPC server to publish messages to.
+                If not provided, the value of the SCOUTER_GRPC_URI environment variable is used.
+
+            username:
+                Username for basic authentication.
+                If not provided, the value of the SCOUTER_USERNAME environment variable is used.
+
+            password:
+                Password for basic authentication.
+                If not provided, the value of the SCOUTER_PASSWORD environment variable is used.
+        """
+
+    def __str__(self): ...
+
+class KafkaConfig:
+    brokers: str
+    topic: str
+    compression_type: str
+    message_timeout_ms: int
+    message_max_bytes: int
+    log_level: LogLevel
+    config: Dict[str, str]
+    max_retries: int
+    transport_type: TransportType
+
+    def __init__(
+        self,
+        username: Optional[str] = None,
+        password: Optional[str] = None,
+        brokers: Optional[str] = None,
+        topic: Optional[str] = None,
+        compression_type: Optional[str] = None,
+        message_timeout_ms: int = 600_000,
+        message_max_bytes: int = 2097164,
+        log_level: LogLevel = LogLevel.Info,
+        config: Dict[str, str] = {},
+        max_retries: int = 3,
+    ) -> None:
+        """Kafka configuration for connecting to and publishing messages to Kafka brokers.
+
+        This configuration supports both authenticated (SASL) and unauthenticated connections.
+        When credentials are provided, SASL authentication is automatically enabled with
+        secure defaults.
+
+        Authentication Priority (first match wins):
+            1. Direct parameters (username/password)
+            2. Environment variables (KAFKA_USERNAME/KAFKA_PASSWORD)
+            3. Configuration dictionary (sasl.username/sasl.password)
+
+        SASL Security Defaults:
+            - security.protocol: "SASL_SSL" (override via KAFKA_SECURITY_PROTOCOL env var)
+            - sasl.mechanism: "PLAIN" (override via KAFKA_SASL_MECHANISM env var)
+
+        Args:
+            username:
+                SASL username for authentication.
+                Fallback: KAFKA_USERNAME environment variable.
+            password:
+                SASL password for authentication.
+                Fallback: KAFKA_PASSWORD environment variable.
+            brokers:
+                Comma-separated list of Kafka broker addresses (host:port).
+                Fallback: KAFKA_BROKERS environment variable.
+                Default: "localhost:9092"
+            topic:
+                Target Kafka topic for message publishing.
+                Fallback: KAFKA_TOPIC environment variable.
+                Default: "scouter_monitoring"
+            compression_type:
+                Message compression algorithm.
+                Options: "none", "gzip", "snappy", "lz4", "zstd"
+                Default: "gzip"
+            message_timeout_ms:
+                Maximum time to wait for message delivery (milliseconds).
+                Default: 600000 (10 minutes)
+            message_max_bytes:
+                Maximum message size in bytes.
+                Default: 2097164 (~2MB)
+            log_level:
+                Logging verbosity for the Kafka producer.
+                Default: LogLevel.Info
+            config:
+                Additional Kafka producer configuration parameters.
+                See: https://kafka.apache.org/documentation/#producerconfigs
+                Note: Direct parameters take precedence over config dictionary values.
+            max_retries:
+                Maximum number of retry attempts for failed message deliveries.
+                Default: 3
+
+        Examples:
+            Basic usage (unauthenticated):
+            ```python
+            config = KafkaConfig(
+                brokers="kafka1:9092,kafka2:9092",
+                topic="my_topic"
+            )
+            ```
+
+            SASL authentication:
+            ```python
+            config = KafkaConfig(
+                username="my_user",
+                password="my_password",
+                brokers="secure-kafka:9093",
+                topic="secure_topic"
+            )
+            ```
+
+            Advanced configuration:
+            ```python
+            config = KafkaConfig(
+                brokers="kafka:9092",
+                compression_type="lz4",
+                config={
+                    "acks": "all",
+                    "batch.size": "32768",
+                    "linger.ms": "10"
+                }
+            )
+            ```
+        """
+
+    def __str__(self): ...
+
+class RabbitMQConfig:
+    address: str
+    queue: str
+    max_retries: int
+    transport_type: TransportType
+
+    def __init__(
+        self,
+        host: Optional[str] = None,
+        port: Optional[int] = None,
+        username: Optional[str] = None,
+        password: Optional[str] = None,
+        queue: Optional[str] = None,
+        max_retries: int = 3,
+    ) -> None:
+        """RabbitMQ configuration to use with the RabbitMQProducer.
+
+        Args:
+            host:
+                RabbitMQ host.
+                If not provided, the value of the RABBITMQ_HOST environment variable is used.
+
+            port:
+                RabbitMQ port.
+                If not provided, the value of the RABBITMQ_PORT environment variable is used.
+
+            username:
+                RabbitMQ username.
+                If not provided, the value of the RABBITMQ_USERNAME environment variable is used.
+
+            password:
+                RabbitMQ password.
+                If not provided, the value of the RABBITMQ_PASSWORD environment variable is used.
+
+            queue:
+                RabbitMQ queue to publish messages to.
+                If not provided, the value of the RABBITMQ_QUEUE environment variable is used.
+
+            max_retries:
+                Maximum number of retries to attempt when publishing messages.
+                Default is 3.
+        """
+
+    def __str__(self): ...
+
+class RedisConfig:
+    address: str
+    channel: str
+    transport_type: TransportType
+
+    def __init__(
+        self,
+        address: Optional[str] = None,
+        chanel: Optional[str] = None,
+    ) -> None:
+        """Redis configuration to use with a Redis producer
+
+        Args:
+            address (str):
+                Redis address.
+                If not provided, the value of the REDIS_ADDR environment variable is used and defaults to
+                "redis://localhost:6379".
+
+            channel (str):
+                Redis channel to publish messages to.
+
+                If not provided, the value of the REDIS_CHANNEL environment variable is used and defaults to "scouter_monitoring".
+        """
+
+    def __str__(self): ...
+
+class TracePaginationResponse:
+    """Response structure for paginated trace list requests."""
+
+    items: List[TraceListItem]
+
+class TraceSpansResponse:
+    """Response structure containing a list of spans for a trace."""
+
+    spans: List[TraceSpan]
+
+class TraceBaggageResponse:
+    """Response structure containing trace baggage records."""
+
+    baggage: List[TraceBaggageRecord]
+
+class TraceMetricsRequest:
+    """Request payload for fetching trace metrics."""
+
+    space: Optional[str]
+    name: Optional[str]
+    version: Optional[str]
+    start_time: datetime
+    end_time: datetime
+    bucket_interval: str
+
+    def __init__(
+        self,
+        start_time: datetime,
+        end_time: datetime,
+        bucket_interval: str,
+        space: Optional[str] = None,
+        name: Optional[str] = None,
+        version: Optional[str] = None,
+    ) -> None:
+        """Initialize trace metrics request.
+
+        Args:
+            start_time:
+                Start time boundary (UTC)
+            end_time:
+                End time boundary (UTC)
+            bucket_interval:
+                The time interval for metric aggregation buckets (e.g., '1 minutes', '30 minutes')
+            space:
+                Model space filter
+            name:
+                Model name filter
+            version:
+                Model version filter
+        """
+
+class TraceMetricsResponse:
+    """Response structure containing aggregated trace metrics."""
+
+    metrics: List[TraceMetricBucket]
+
+class TagsResponse:
+    """Response structure containing a list of tag records."""
+
+    tags: List[TagRecord]
+
 class TimeInterval:
     FiveMinutes: "TimeInterval"
     FifteenMinutes: "TimeInterval"
@@ -3441,28 +3595,28 @@ class TimeInterval:
 class DriftRequest:
     def __init__(
         self,
-        name: str,
+        uid: str,
         space: str,
-        version: str,
         time_interval: TimeInterval,
         max_data_points: int,
-        drift_type: DriftType,
+        start_datetime: Optional[datetime] = None,
+        end_datetime: Optional[datetime] = None,
     ) -> None:
         """Initialize drift request
 
         Args:
-            name:
-                Model name
+            uid:
+                Unique identifier tied to drift profile
             space:
-                Model space
-            version:
-                Model version
+                Space associated with drift profile
             time_interval:
                 Time window for drift request
             max_data_points:
                 Maximum data points to return
-            drift_type:
-                Drift type for request
+            start_datetime:
+                Optional start datetime for drift request
+            end_datetime:
+                Optional end datetime for drift request
         """
 
 class ProfileStatusRequest:
@@ -3499,40 +3653,54 @@ class GetProfileRequest:
 
 class Alert:
     created_at: datetime
-    name: str
-    space: str
-    version: str
-    feature: str
-    alert: str
+    entity_name: str
+    alert: Dict[str, str]
     id: int
-    status: str
+    active: bool
 
-class DriftAlertRequest:
+class DriftAlertPaginationRequest:
     def __init__(
         self,
-        name: str,
-        space: str,
-        version: str,
+        uid: str,
         active: bool = False,
-        limit_datetime: Optional[datetime] = None,
         limit: Optional[int] = None,
+        cursor_created_at: Optional[datetime] = None,
+        cursor_id: Optional[int] = None,
+        direction: Optional[Literal["next", "previous"]] = "previous",
+        start_datetime: Optional[datetime] = None,
+        end_datetime: Optional[datetime] = None,
     ) -> None:
-        """Initialize drift alert request
+        """Initialize drift alert request. Used for paginated alert retrieval.
 
         Args:
-            name:
-                Name
-            space:
-                Space
-            version:
-                Version
+            uid:
+                Unique identifier tied to drift profile
             active:
                 Whether to get active alerts only
-            limit_datetime:
-                Limit datetime for alerts
             limit:
                 Limit for number of alerts to return
+            cursor_created_at:
+                Pagination cursor: created at timestamp
+            cursor_id:
+                Pagination cursor: alert ID
+            direction:
+                Pagination direction: "next" or "previous"
+            start_datetime:
+                Optional start datetime for alert filtering
+            end_datetime:
+                Optional end datetime for alert filtering
         """
+
+class AlertCursor:
+    created_at: datetime
+    id: int
+
+class DriftAlertPaginationResponse:
+    items: List[Alert]
+    has_next: bool
+    next_cursor: Optional[AlertCursor]
+    has_previous: bool
+    previous_cursor: Optional[AlertCursor]
 
 # Client
 class ScouterClient:
@@ -3546,18 +3714,24 @@ class ScouterClient:
                 HTTP configuration for interacting with the server.
         """
 
-    def get_binned_drift(self, drift_request: DriftRequest) -> Any:
+    def get_binned_drift(
+        self,
+        drift_request: DriftRequest,
+        drift_type: DriftType,
+    ) -> Any:
         """Get drift map from server
 
         Args:
             drift_request:
                 DriftRequest object
+            drift_type:
+                Drift type for request
 
         Returns:
             Drift map of type BinnedMetrics | BinnedPsiFeatureMetrics | BinnedSpcFeatureMetrics
         """
 
-    def register_profile(self, profile: Any, set_active: bool = False) -> bool:
+    def register_profile(self, profile: Any, set_active: bool = False, deactivate_others: bool = False) -> bool:
         """Registers a drift profile with the server
 
         Args:
@@ -3565,6 +3739,8 @@ class ScouterClient:
                 Drift profile
             set_active:
                 Whether to set the profile as active or inactive
+            deactivate_others:
+                Whether to deactivate other profiles
 
         Returns:
             boolean
@@ -3581,15 +3757,15 @@ class ScouterClient:
             boolean
         """
 
-    def get_alerts(self, request: DriftAlertRequest) -> List[Alert]:
+    def get_alerts(self, request: DriftAlertPaginationRequest) -> DriftAlertPaginationResponse:
         """Get alerts
 
         Args:
             request:
-                DriftAlertRequest
+                DriftAlertPaginationRequest
 
         Returns:
-            List[Alert]
+            DriftAlertPaginationResponse
         """
 
     def download_profile(self, request: GetProfileRequest, path: Optional[Path]) -> str:
@@ -3603,6 +3779,74 @@ class ScouterClient:
 
         Returns:
             Path to downloaded profile
+        """
+
+    def get_paginated_traces(self, filters: TraceFilters) -> TracePaginationResponse:
+        """Get paginated traces
+        Args:
+            filters:
+                TraceFilters object
+        Returns:
+            TracePaginationResponse
+        """
+
+    def refresh_trace_summary(self) -> bool:
+        """Refresh trace summary cache
+
+        Returns:
+            boolean
+        """
+
+    def get_trace_spans(
+        self,
+        trace_id: str,
+        service_name: Optional[str] = None,
+    ) -> TraceSpansResponse:
+        """Get trace spans
+
+        Args:
+            trace_id:
+                Trace ID
+            service_name:
+                Service name
+
+        Returns:
+            TraceSpansResponse
+        """
+
+    def get_trace_baggage(self, trace_id: str) -> TraceBaggageResponse:
+        """Get trace baggage
+
+        Args:
+            trace_id:
+                Trace ID
+
+        Returns:
+            TraceBaggageResponse
+        """
+
+    def get_trace_metrics(self, request: TraceMetricsRequest) -> TraceMetricsResponse:
+        """Get trace metrics
+
+        Args:
+            request:
+                TraceMetricsRequest
+
+        Returns:
+            TraceMetricsResponse
+        """
+
+    def get_tags(self, entity_type: str, entity_id: str) -> TagsResponse:
+        """Get tags for an entity
+
+        Args:
+            entity_type:
+                Entity type
+            entity_id:
+                Entity ID
+
+        Returns:
+            TagsResponse
         """
 
 class BinnedMetricStats:
@@ -3623,6 +3867,7 @@ class BinnedMetrics:
     @property
     def metrics(self) -> Dict[str, BinnedMetric]: ...
     def __str__(self) -> str: ...
+    def __getitem__(self, key: str) -> Optional[BinnedMetric]: ...
 
 class BinnedPsiMetric:
     created_at: List[datetime]
@@ -3647,6 +3892,807 @@ class BinnedSpcFeatureMetrics:
     features: Dict[str, SpcDriftFeature]
 
     def __str__(self) -> str: ...
+
+class ScouterTestServer:
+    def __init__(
+        self,
+        cleanup: bool = True,
+        rabbit_mq: bool = False,
+        kafka: bool = False,
+        openai: bool = False,
+        base_path: Optional[Path] = None,
+    ) -> None:
+        """Instantiates the test server.
+
+        When the test server is used as a context manager, it will start the server
+        in a background thread and set the appropriate env vars so that the client
+        can connect to the server. The server will be stopped when the context manager
+        exits and the env vars will be reset.
+
+        Args:
+            cleanup (bool, optional):
+                Whether to cleanup the server after the test. Defaults to True.
+            rabbit_mq (bool, optional):
+                Whether to use RabbitMQ as the transport. Defaults to False.
+            kafka (bool, optional):
+                Whether to use Kafka as the transport. Defaults to False.
+            openai (bool, optional):
+                Whether to create a mock OpenAITest server. Defaults to False.
+            base_path (Optional[Path], optional):
+                The base path for the server. Defaults to None. This is primarily
+                used for testing loading attributes from a pyproject.toml file.
+        """
+
+    def start_server(self) -> None:
+        """Starts the test server."""
+
+    def stop_server(self) -> None:
+        """Stops the test server."""
+
+    def __enter__(self) -> "ScouterTestServer":
+        """Starts the test server."""
+
+    def __exit__(self, exc_type, exc_value, traceback) -> None:
+        """Stops the test server."""
+
+    def set_env_vars_for_client(self) -> None:
+        """Sets the env vars for the client to connect to the server."""
+
+    def remove_env_vars_for_client(self) -> None:
+        """Removes the env vars for the client to connect to the server."""
+
+    @staticmethod
+    def cleanup() -> None:
+        """Cleans up the test server."""
+
+class MockConfig:
+    def __init__(self, **kwargs) -> None:
+        """Mock configuration for the ScouterQueue
+
+        Args:
+            **kwargs: Arbitrary keyword arguments to set as attributes.
+        """
+
+class EntityType:
+    Feature = "EntityType"
+    Metric = "EntityType"
+
+class RecordType:
+    Spc = "RecordType"
+    Psi = "RecordType"
+    Observability = "RecordType"
+    Custom = "RecordType"
+
+class ServerRecord:
+    Spc: "ServerRecord"
+    Psi: "ServerRecord"
+    Custom: "ServerRecord"
+    Observability: "ServerRecord"
+
+    def __init__(self, record: Any) -> None:
+        """Initialize server record
+
+        Args:
+            record:
+                Server record to initialize
+        """
+
+    @property
+    def record(
+        self,
+    ) -> Union[SpcRecord, PsiRecord, CustomMetricRecord, ObservabilityMetrics]:
+        """Return the drift server record."""
+
+class ServerRecords:
+    def __init__(self, records: List[ServerRecord]) -> None:
+        """Initialize server records
+
+        Args:
+            records:
+                List of server records
+        """
+
+    @property
+    def records(self) -> List[ServerRecord]:
+        """Return the drift server records."""
+
+    def model_dump_json(self) -> str:
+        """Return the json representation of the record."""
+
+    def __str__(self) -> str:
+        """Return the string representation of the record."""
+
+class SpcRecord:
+    def __init__(
+        self,
+        uid: str,
+        feature: str,
+        value: float,
+    ):
+        """Initialize spc drift server record
+
+        Args:
+            uid:
+                Unique identifier for the spc record.
+                Must correspond to an existing entity in Scouter.
+            feature:
+                Feature name
+            value:
+                Feature value
+        """
+
+    @property
+    def created_at(self) -> datetime:
+        """Return the created at timestamp."""
+
+    @property
+    def uid(self) -> str:
+        """Return the unique identifier."""
+
+    @property
+    def feature(self) -> str:
+        """Return the feature."""
+
+    @property
+    def value(self) -> float:
+        """Return the sample value."""
+
+    def __str__(self) -> str:
+        """Return the string representation of the record."""
+
+    def model_dump_json(self) -> str:
+        """Return the json representation of the record."""
+
+    def to_dict(self) -> Dict[str, str]:
+        """Return the dictionary representation of the record."""
+
+class PsiRecord:
+    def __init__(
+        self,
+        uid: str,
+        feature: str,
+        bin_id: int,
+        bin_count: int,
+    ):
+        """Initialize spc drift server record
+
+        Args:
+            uid:
+                Unique identifier for the psi record.
+                Must correspond to an existing entity in Scouter.
+            feature:
+                Feature name
+            bin_id:
+                Bundle ID
+            bin_count:
+                Bundle ID
+        """
+
+    @property
+    def created_at(self) -> datetime:
+        """Return the created at timestamp."""
+
+    @property
+    def uid(self) -> str:
+        """Returns the unique identifier."""
+
+    @property
+    def feature(self) -> str:
+        """Return the feature."""
+
+    @property
+    def bin_id(self) -> int:
+        """Return the bin id."""
+
+    @property
+    def bin_count(self) -> int:
+        """Return the sample value."""
+
+    def __str__(self) -> str:
+        """Return the string representation of the record."""
+
+    def model_dump_json(self) -> str:
+        """Return the json representation of the record."""
+
+    def to_dict(self) -> Dict[str, str]:
+        """Return the dictionary representation of the record."""
+
+class CustomMetricRecord:
+    def __init__(
+        self,
+        uid: str,
+        metric: str,
+        value: float,
+    ):
+        """Initialize spc drift server record
+
+        Args:
+            uid:
+                Unique identifier for the metric record.
+                Must correspond to an existing entity in Scouter.
+            metric:
+                Metric name
+            value:
+                Metric value
+        """
+
+    @property
+    def created_at(self) -> datetime:
+        """Return the created at timestamp."""
+
+    @property
+    def uid(self) -> str:
+        """Returns the unique identifier."""
+
+    @property
+    def metric(self) -> str:
+        """Return the metric name."""
+
+    @property
+    def value(self) -> float:
+        """Return the metric value."""
+
+    def __str__(self) -> str:
+        """Return the string representation of the record."""
+
+    def model_dump_json(self) -> str:
+        """Return the json representation of the record."""
+
+    def to_dict(self) -> Dict[str, str]:
+        """Return the dictionary representation of the record."""
+
+class QueueFeature:
+    def __init__(self, name: str, value: Any) -> None:
+        """Initialize feature. Will attempt to convert the value to it's corresponding feature type.
+        Current support types are int, float, string.
+
+        Args:
+            name:
+                Name of the feature
+            value:
+                Value of the feature. Can be an int, float, or string.
+
+        Example:
+            ```python
+            feature = Feature("feature_1", 1) # int feature
+            feature = Feature("feature_2", 2.0) # float feature
+            feature = Feature("feature_3", "value") # string feature
+            ```
+        """
+
+    @staticmethod
+    def int(name: str, value: int) -> "QueueFeature":
+        """Create an integer feature
+
+        Args:
+            name:
+                Name of the feature
+            value:
+                Value of the feature
+        """
+
+    @staticmethod
+    def float(name: str, value: float) -> "QueueFeature":
+        """Create a float feature
+
+        Args:
+            name:
+                Name of the feature
+            value:
+                Value of the feature
+        """
+
+    @staticmethod
+    def string(name: str, value: str) -> "QueueFeature":
+        """Create a string feature
+
+        Args:
+            name:
+                Name of the feature
+            value:
+                Value of the feature
+        """
+
+    @staticmethod
+    def categorical(name: str, value: str) -> "QueueFeature":
+        """Create a categorical feature
+
+        Args:
+            name:
+                Name of the feature
+            value:
+                Value of the feature
+        """
+
+class Features:
+    def __init__(
+        self,
+        features: List[QueueFeature] | Dict[str, Union[int, float, str]],
+    ) -> None:
+        """Initialize a features class
+
+        Args:
+            features:
+                List of features or a dictionary of key-value pairs.
+                If a list, each item must be an instance of Feature.
+                If a dictionary, each key is the feature name and each value is the feature value.
+                Supported types for values are int, float, and string.
+
+        Example:
+            ```python
+            # Passing a list of features
+            features = Features(
+                features=[
+                    Feature.int("feature_1", 1),
+                    Feature.float("feature_2", 2.0),
+                    Feature.string("feature_3", "value"),
+                ]
+            )
+
+            # Passing a dictionary (pydantic model) of features
+            class MyFeatures(BaseModel):
+                feature1: int
+                feature2: float
+                feature3: str
+
+            my_features = MyFeatures(
+                feature1=1,
+                feature2=2.0,
+                feature3="value",
+            )
+
+            features = Features(my_features.model_dump())
+            ```
+        """
+
+    def __str__(self) -> str:
+        """Return the string representation of the features"""
+
+    @property
+    def features(self) -> List[QueueFeature]:
+        """Return the list of features"""
+
+    @property
+    def entity_type(self) -> EntityType:
+        """Return the entity type"""
+
+class Metric:
+    def __init__(self, name: str, value: float | int) -> None:
+        """Initialize metric
+
+        Args:
+            name:
+                Name of the metric
+            value:
+                Value to assign to the metric. Can be an int or float but will be converted to float.
+        """
+
+    def __str__(self) -> str:
+        """Return the string representation of the metric"""
+
+class Metrics:
+    def __init__(self, metrics: List[Metric] | Dict[str, Union[int, float]]) -> None:
+        """Initialize metrics
+
+        Args:
+            metrics:
+                List of metrics or a dictionary of key-value pairs.
+                If a list, each item must be an instance of Metric.
+                If a dictionary, each key is the metric name and each value is the metric value.
+
+
+        Example:
+            ```python
+
+            # Passing a list of metrics
+            metrics = Metrics(
+                metrics=[
+                    Metric("metric_1", 1.0),
+                    Metric("metric_2", 2.5),
+                    Metric("metric_3", 3),
+                ]
+            )
+
+            # Passing a dictionary (pydantic model) of metrics
+            class MyMetrics(BaseModel):
+                metric1: float
+                metric2: int
+
+            my_metrics = MyMetrics(
+                metric1=1.0,
+                metric2=2,
+            )
+
+            metrics = Metrics(my_metrics.model_dump())
+        """
+
+    def __str__(self) -> str:
+        """Return the string representation of the metrics"""
+
+    @property
+    def metrics(self) -> List["Metric"]:
+        """Return the list of metrics"""
+
+    @property
+    def entity_type(self) -> EntityType:
+        """Return the entity type"""
+
+class Queue:
+    """Individual queue associated with a drift profile"""
+
+    def insert(self, entity: Union[Features, Metrics, LLMRecord]) -> None:
+        """Insert a record into the queue
+
+        Args:
+            entity:
+                Entity to insert into the queue.
+                Can be an instance for Features, Metrics, or LLMRecord.
+
+        Example:
+            ```python
+            features = Features(
+                features=[
+                    Feature("feature_1", 1),
+                    Feature("feature_2", 2.0),
+                    Feature("feature_3", "value"),
+                ]
+            )
+            queue.insert(features)
+            ```
+        """
+
+    @property
+    def identifier(self) -> str:
+        """Return the identifier of the queue"""
+
+class ScouterQueue:
+    """Main queue class for Scouter. Publishes drift records to the configured transport"""
+
+    @staticmethod
+    def from_path(
+        path: Dict[str, Path],
+        transport_config: Union[
+            KafkaConfig,
+            RabbitMQConfig,
+            RedisConfig,
+            HttpConfig,
+            GrpcConfig,
+        ],
+    ) -> "ScouterQueue":
+        """Initializes Scouter queue from one or more drift profile paths.
+
+        ```
+        ╔══════════════════════════════════════════════════════════════════════════╗
+        ║                    SCOUTER QUEUE ARCHITECTURE                            ║
+        ╠══════════════════════════════════════════════════════════════════════════╣
+        ║                                                                          ║
+        ║  Python Runtime (Client)                                                 ║
+        ║  ┌────────────────────────────────────────────────────────────────────┐  ║
+        ║  │  ScouterQueue.from_path()                                          │  ║
+        ║  │    • Load drift profiles (SPC, PSI, Custom, LLM)                   │  ║
+        ║  │    • Configure transport (Kafka, RabbitMQ, Redis, HTTP, gRPC)      │  ║
+        ║  └───────────────────────────┬────────────────────────────────────────┘  ║
+        ║                              │                                           ║
+        ║                              ▼                                           ║
+        ║  ┌────────────────────────────────────────────────────────────────────┐  ║
+        ║  │  queue["profile_alias"].insert(Features | Metrics | LLMRecord)     │  ║
+        ║  └───────────────────────────┬────────────────────────────────────────┘  ║
+        ║                              │                                           ║
+        ╚══════════════════════════════╪═══════════════════════════════════════════╝
+                                       │
+                                       │  Language Boundary
+                                       │
+        ╔══════════════════════════════╪═══════════════════════════════════════════╗
+        ║  Rust Runtime (Producer)     ▼                                           ║
+        ║  ┌────────────────────────────────────────────────────────────────────┐  ║
+        ║  │  Queue<T> (per profile)                                            │  ║
+        ║  │    • Buffer records in memory                                      │  ║
+        ║  │    • Validate against drift profile schema                         │  ║
+        ║  │    • Convert to ServerRecord format                                │  ║
+        ║  └───────────────────────────┬────────────────────────────────────────┘  ║
+        ║                              │                                           ║
+        ║                              ▼                                           ║
+        ║  ┌────────────────────────────────────────────────────────────────────┐  ║
+        ║  │  Transport Producer                                                │  ║
+        ║  │    • KafkaProducer    → Kafka brokers                              │  ║
+        ║  │    • RabbitMQProducer → RabbitMQ exchange                          │  ║
+        ║  │    • RedisProducer    → Redis pub/sub                              │  ║
+        ║  │    • HttpProducer     → HTTP endpoint                              │  ║
+        ║  │    • GrpcProducer     → gRPC server                                │  ║
+        ║  └───────────────────────────┬────────────────────────────────────────┘  ║
+        ║                              │                                           ║
+        ╚══════════════════════════════╪═══════════════════════════════════════════╝
+                                       │
+                                       │  Network/Message Bus
+                                       │
+        ╔══════════════════════════════╪═══════════════════════════════════════════╗
+        ║  Scouter Server              ▼                                           ║
+        ║  ┌────────────────────────────────────────────────────────────────────┐  ║
+        ║  │  Consumer (Kafka/RabbitMQ/Redis/HTTP/gRPC)                         │  ║
+        ║  │    • Receive drift records                                         │  ║
+        ║  │    • Deserialize & validate                                        │  ║
+        ║  └───────────────────────────┬────────────────────────────────────────┘  ║
+        ║                              │                                           ║
+        ║                              ▼                                           ║
+        ║  ┌────────────────────────────────────────────────────────────────────┐  ║
+        ║  │  Processing Pipeline                                               │  ║
+        ║  │    • Calculate drift metrics (SPC, PSI)                            │  ║
+        ║  │    • Evaluate alert conditions                                     │  ║
+        ║  │    • Store in PostgreSQL                                           │  ║
+        ║  │    • Dispatch alerts (Slack, OpsGenie, Console)                    │  ║
+        ║  └────────────────────────────────────────────────────────────────────┘  ║
+        ║                                                                          ║
+        ╚══════════════════════════════════════════════════════════════════════════╝
+        ```
+        Flow Summary:
+            1. **Python Runtime**: Initialize queue with drift profiles and transport config
+            2. **Insert Records**: Call queue["alias"].insert() with Features/Metrics/LLMRecord
+            3. **Rust Queue**: Buffer and validate records against profile schema
+            4. **Transport Producer**: Serialize and publish to configured transport
+            5. **Network**: Records travel via Kafka/RabbitMQ/Redis/HTTP/gRPC
+            6. **Scouter Server**: Consumer receives, processes, and stores records
+            7. **Alerting**: Evaluate drift conditions and dispatch alerts if triggered
+
+        Args:
+            path (Dict[str, Path]):
+                Dictionary of drift profile paths.
+                Each key is a user-defined alias for accessing a queue.
+
+                Supported profile types:
+                    • SpcDriftProfile    - Statistical Process Control monitoring
+                    • PsiDriftProfile    - Population Stability Index monitoring
+                    • CustomDriftProfile - Custom metric monitoring
+                    • LLMDriftProfile    - LLM evaluation monitoring
+
+            transport_config (Union[KafkaConfig, RabbitMQConfig, RedisConfig, HttpConfig, GrpcConfig]):
+                Transport configuration for the queue publisher.
+
+                Available transports:
+                    • KafkaConfig     - Apache Kafka message bus
+                    • RabbitMQConfig  - RabbitMQ message broker
+                    • RedisConfig     - Redis pub/sub
+                    • HttpConfig      - Direct HTTP to Scouter server
+                    • GrpcConfig      - Direct gRPC to Scouter server
+
+        Returns:
+            ScouterQueue:
+                Configured queue with Rust-based producers for each drift profile.
+
+        Examples:
+            Basic SPC monitoring with Kafka:
+                >>> queue = ScouterQueue.from_path(
+                ...     path={"spc": Path("spc_drift_profile.json")},
+                ...     transport_config=KafkaConfig(
+                ...         brokers="localhost:9092",
+                ...         topic="scouter_monitoring",
+                ...     ),
+                ... )
+                >>> queue["spc"].insert(
+                ...     Features(features=[
+                ...         Feature("feature_1", 1.5),
+                ...         Feature("feature_2", 2.3),
+                ...     ])
+                ... )
+
+            Multi-profile monitoring with HTTP:
+                >>> queue = ScouterQueue.from_path(
+                ...     path={
+                ...         "spc": Path("spc_profile.json"),
+                ...         "psi": Path("psi_profile.json"),
+                ...         "custom": Path("custom_profile.json"),
+                ...     },
+                ...     transport_config=HttpConfig(
+                ...         server_uri="http://scouter-server:8000",
+                ...     ),
+                ... )
+                >>> queue["psi"].insert(Features(...))
+                >>> queue["custom"].insert(Metrics(...))
+
+            LLM monitoring with gRPC:
+                >>> queue = ScouterQueue.from_path(
+                ...     path={"llm_eval": Path("llm_profile.json")},
+                ...     transport_config=GrpcConfig(
+                ...         server_uri="http://scouter-server:50051",
+                ...         username="monitoring_user",
+                ...         password="secure_password",
+                ...     ),
+                ... )
+                >>> queue["llm_eval"].insert(
+                ...     LLMRecord(context={"input": "...", "response": "..."})
+                ... )
+        """
+
+    def __getitem__(self, key: str) -> Queue:
+        """Get the queue for the specified key
+
+        Args:
+            key (str):
+                Key to get the queue for
+
+        """
+
+    def shutdown(self) -> None:
+        """Shutdown the queue. This will close and flush all queues and transports"""
+
+    @property
+    def transport_config(
+        self,
+    ) -> Union[KafkaConfig, RabbitMQConfig, RedisConfig, HttpConfig, MockConfig]:
+        """Return the transport configuration used by the queue"""
+
+class BaseModel(Protocol):
+    """Protocol for pydantic BaseModel to ensure compatibility with context"""
+
+    def model_dump(self) -> Dict[str, Any]:
+        """Dump the model as a dictionary"""
+
+    def model_dump_json(self) -> str:
+        """Dump the model as a JSON string"""
+
+    def __str__(self) -> str:
+        """String representation of the model"""
+
+class LLMRecord:
+    """LLM record containing context tied to a Large Language Model interaction
+    that is used to evaluate drift in LLM responses.
+
+
+    Examples:
+        >>> record = LLMRecord(
+        ...     context={
+        ...         "input": "What is the capital of France?",
+        ...         "response": "Paris is the capital of France."
+        ...     },
+        ... )
+        >>> print(record.context["input"])
+        "What is the capital of France?"
+    """
+
+    prompt: Optional[Prompt]
+    """Optional prompt configuration associated with this record."""
+
+    entity_type: EntityType
+    """Type of entity, always EntityType.LLM for LLMRecord instances."""
+
+    def __init__(
+        self,
+        context: Context,
+        prompt: Optional[Prompt | SerializedType] = None,
+    ) -> None:
+        """Creates a new LLM record to associate with an `LLMDriftProfile`.
+        The record is sent to the `Scouter` server via the `ScouterQueue` and is
+        then used to inject context into the evaluation prompts.
+
+        Args:
+            context:
+                Additional context information as a dictionary or a pydantic BaseModel. During evaluation,
+                this will be merged with the input and response data and passed to the assigned
+                evaluation prompts. So if you're evaluation prompts expect additional context via
+                bound variables (e.g., `${foo}`), you can pass that here as key value pairs.
+                {"foo": "bar"}
+            prompt:
+                Optional prompt configuration associated with this record. Can be a Potatohead Prompt or
+                a JSON-serializable type.
+
+        Raises:
+            TypeError: If context is not a dict or a pydantic BaseModel.
+
+        """
+
+    @property
+    def context(self) -> Dict[str, Any]:
+        """Get the contextual information.
+
+        Returns:
+            The context data as a Python object (deserialized from JSON).
+
+        Raises:
+            TypeError: If the stored JSON cannot be converted to a Python object.
+        """
+
+class LatencyMetrics:
+    @property
+    def p5(self) -> float:
+        """5th percentile"""
+
+    @property
+    def p25(self) -> float:
+        """25th percentile"""
+
+    @property
+    def p50(self) -> float:
+        """50th percentile"""
+
+    @property
+    def p95(self) -> float:
+        """95th percentile"""
+
+    @property
+    def p99(self) -> float:
+        """99th percentile"""
+
+class RouteMetrics:
+    @property
+    def route_name(self) -> str:
+        """Return the route name"""
+
+    @property
+    def metrics(self) -> LatencyMetrics:
+        """Return the metrics"""
+
+    @property
+    def request_count(self) -> int:
+        """Request count"""
+
+    @property
+    def error_count(self) -> int:
+        """Error count"""
+
+    @property
+    def error_latency(self) -> float:
+        """Error latency"""
+
+    @property
+    def status_codes(self) -> Dict[int, int]:
+        """Dictionary of status codes and counts"""
+
+class ObservabilityMetrics:
+    @property
+    def space(self) -> str:
+        """Return the space"""
+
+    @property
+    def name(self) -> str:
+        """Return the name"""
+
+    @property
+    def version(self) -> str:
+        """Return the version"""
+
+    @property
+    def request_count(self) -> int:
+        """Request count"""
+
+    @property
+    def error_count(self) -> int:
+        """Error count"""
+
+    @property
+    def route_metrics(self) -> List[RouteMetrics]:
+        """Route metrics object"""
+
+    def __str__(self) -> str:
+        """Return the string representation of the observability metrics"""
+
+    def model_dump_json(self) -> str:
+        """Return the json representation of the observability metrics"""
+
+class Observer:
+    def __init__(self, uid: str) -> None:
+        """Initializes an api metric observer
+
+        Args:
+            uid:
+                Unique identifier for the observer
+        """
+
+    def increment(self, route: str, latency: float, status_code: int) -> None:
+        """Increment the feature value
+
+        Args:
+            route:
+                Route name
+            latency:
+                Latency of request
+            status_code:
+                Status code of request
+        """
+
+    def collect_metrics(self) -> Optional[ServerRecords]:
+        """Collect metrics from observer"""
+
+    def reset_metrics(self) -> None:
+        """Reset the observer metrics"""
 
 class FeatureMap:
     @property
@@ -3753,6 +4799,14 @@ class SpcDriftConfig:
         """Set model version"""
 
     @property
+    def uid(self) -> str:
+        """Unique identifier for the drift config"""
+
+    @uid.setter
+    def uid(self, uid: str) -> None:
+        """Set unique identifier for the drift config"""
+
+    @property
     def feature_map(self) -> Optional[FeatureMap]:
         """Feature map"""
 
@@ -3807,6 +4861,10 @@ class SpcDriftConfig:
         """
 
 class SpcDriftProfile:
+    @property
+    def uid(self) -> str:
+        """Return the unique identifier for the drift profile"""
+
     @property
     def scouter_version(self) -> str:
         """Return scouter version used to create DriftProfile"""
@@ -3960,6 +5018,139 @@ class SpcDriftMap:
     def to_numpy(self) -> Any:
         """Return drift map as a tuple of sample_array, drift_array and list of features"""
 
+class Manual:
+    def __init__(self, num_bins: int):
+        """Manual equal-width binning strategy.
+
+        Divides the feature range into a fixed number of equally sized bins.
+
+        Args:
+            num_bins:
+                The exact number of bins to create.
+        """
+
+    @property
+    def num_bins(self) -> int:
+        """The number of bins you want created"""
+
+    @num_bins.setter
+    def num_bins(self, num_bins: int) -> None:
+        """Set the number of bins you want created"""
+
+class SquareRoot:
+    def __init__(self):
+        """Use the SquareRoot equal-width method.
+
+        For more information, please see: https://en.wikipedia.org/wiki/Histogram
+        """
+
+class Sturges:
+    def __init__(self):
+        """Use the Sturges equal-width method.
+
+        For more information, please see: https://en.wikipedia.org/wiki/Histogram
+        """
+
+class Rice:
+    def __init__(self):
+        """Use the Rice equal-width method.
+
+        For more information, please see: https://en.wikipedia.org/wiki/Histogram
+        """
+
+class Doane:
+    def __init__(self):
+        """Use the Doane equal-width method.
+
+        For more information, please see: https://en.wikipedia.org/wiki/Histogram
+        """
+
+class Scott:
+    def __init__(self):
+        """Use the Scott equal-width method.
+
+        For more information, please see: https://en.wikipedia.org/wiki/Histogram
+        """
+
+class TerrellScott:
+    def __init__(self):
+        """Use the Terrell-Scott equal-width method.
+
+        For more information, please see: https://en.wikipedia.org/wiki/Histogram
+        """
+
+class FreedmanDiaconis:
+    def __init__(self):
+        """Use the Freedman–Diaconis equal-width method.
+
+        For more information, please see: https://en.wikipedia.org/wiki/Histogram
+        """
+
+EqualWidthMethods = Manual | SquareRoot | Sturges | Rice | Doane | Scott | TerrellScott | FreedmanDiaconis
+
+class EqualWidthBinning:
+    def __init__(self, method: EqualWidthMethods = Doane()):
+        """Initialize the equal-width binning configuration.
+
+        This strategy divides the range of values into bins of equal width.
+        Several binning rules are supported to automatically determine the
+        appropriate number of bins based on the input distribution.
+
+        Note:
+            Detailed explanations of each method are provided in their respective
+            constructors or documentation.
+
+        Args:
+            method:
+                Specifies how the number of bins should be determined.
+                Options include:
+                  - Manual(num_bins): Explicitly sets the number of bins.
+                  - SquareRoot, Sturges, Rice, Doane, Scott, TerrellScott,
+                    FreedmanDiaconis: Rules that infer bin counts from data.
+                Defaults to Doane().
+        """
+
+    @property
+    def method(self) -> EqualWidthMethods:
+        """Specifies how the number of bins should be determined."""
+
+    @method.setter
+    def method(self, method: EqualWidthMethods) -> None:
+        """Specifies how the number of bins should be determined."""
+
+class QuantileBinning:
+    def __init__(self, num_bins: int = 10):
+        """Initialize the quantile binning strategy.
+
+        This strategy uses the R-7 quantile method (Hyndman & Fan Type 7) to
+        compute bin edges. It is the default quantile method in R and provides
+        continuous, median-unbiased estimates that are approximately unbiased
+        for normal distributions.
+
+        The R-7 method defines quantiles using:
+            - m = 1 - p
+            - j = floor(n * p + m)
+            - h = n * p + m - j
+            - Q(p) = (1 - h) * x[j] + h * x[j+1]
+
+        Reference:
+            Hyndman, R. J. & Fan, Y. (1996). "Sample quantiles in statistical packages."
+            The American Statistician, 50(4), pp. 361–365.
+            PDF: https://www.amherst.edu/media/view/129116/original/Sample+Quantiles.pdf
+
+        Args:
+            num_bins:
+                Number of bins to compute using the R-7 quantile method.
+        """
+
+    @property
+    def num_bins(self) -> int:
+        """The number of bins you want created using the r7 quantile method"""
+
+    @num_bins.setter
+    def num_bins(self, num_bins: int) -> None:
+        """Set the number of bins you want created using the r7 quantile method"""
+
 class PsiDriftConfig:
     def __init__(
         self,
@@ -3969,6 +5160,7 @@ class PsiDriftConfig:
         alert_config: PsiAlertConfig = PsiAlertConfig(),
         config_path: Optional[Path] = None,
         categorical_features: Optional[list[str]] = None,
+        binning_strategy: QuantileBinning | EqualWidthBinning = QuantileBinning(num_bins=10),
     ):
         """Initialize monitor config
 
@@ -3985,6 +5177,12 @@ class PsiDriftConfig:
                 Optional path to load config from.
             categorical_features:
                 List of features to treat as categorical for PSI calculation.
+            binning_strategy:
+                Strategy for binning continuous features during PSI calculation.
+                Supports:
+                  - QuantileBinning (R-7 method, Hyndman & Fan Type 7).
+                  - EqualWidthBinning which divides the range of values into fixed-width bins.
+                Default is QuantileBinning with 10 bins. You can also specify methods like Doane's rule with EqualWidthBinning.
         """
 
     @property
@@ -4012,6 +5210,14 @@ class PsiDriftConfig:
         """Set model version"""
 
     @property
+    def uid(self) -> str:
+        """Unique identifier for the drift config"""
+
+    @uid.setter
+    def uid(self, uid: str) -> None:
+        """Set unique identifier for the drift config"""
+
+    @property
     def feature_map(self) -> Optional[FeatureMap]:
         """Feature map"""
 
@@ -4026,6 +5232,14 @@ class PsiDriftConfig:
     @property
     def drift_type(self) -> DriftType:
         """Drift type"""
+
+    @property
+    def binning_strategy(self) -> QuantileBinning | EqualWidthBinning:
+        """binning_strategy"""
+
+    @binning_strategy.setter
+    def binning_strategy(self, binning_strategy: QuantileBinning | EqualWidthBinning) -> None:
+        """Set binning_strategy"""
 
     @property
     def categorical_features(self) -> list[str]:
@@ -4056,6 +5270,8 @@ class PsiDriftConfig:
         name: Optional[str] = None,
         version: Optional[str] = None,
         alert_config: Optional[PsiAlertConfig] = None,
+        categorical_features: Optional[list[str]] = None,
+        binning_strategy: Optional[QuantileBinning | EqualWidthBinning] = None,
     ) -> None:
         """Inplace operation that updates config args
 
@@ -4068,15 +5284,23 @@ class PsiDriftConfig:
                 Model version
             alert_config:
                 Alert configuration
+            categorical_features:
+                Categorical features
+            binning_strategy:
+                Binning strategy
         """
 
 class PsiDriftProfile:
+    @property
+    def uid(self) -> str:
+        """Return the unique identifier for the drift profile"""
+
     @property
     def scouter_version(self) -> str:
         """Return scouter version used to create DriftProfile"""
 
     @property
-    def features(self) -> Dict[str, "PsiFeatureDriftProfile"]:
+    def features(self) -> Dict[str, PsiFeatureDriftProfile]:
         """Return the list of features."""
 
     @property
@@ -4133,6 +5357,8 @@ class PsiDriftProfile:
         name: Optional[str] = None,
         version: Optional[str] = None,
         alert_config: Optional[PsiAlertConfig] = None,
+        categorical_features: Optional[list[str]] = None,
+        binning_strategy: Optional[QuantileBinning | EqualWidthBinning] = None,
     ) -> None:
         """Inplace operation that updates config args
 
@@ -4145,6 +5371,10 @@ class PsiDriftProfile:
                 Model version
             alert_config:
                 Alert configuration
+            categorical_features:
+                Categorical Features
+            binning_strategy:
+                Binning strategy
         """
 
     def __str__(self) -> str:
@@ -4236,7 +5466,7 @@ class PsiDriftMap:
 
 class LLMDriftMap:
     @property
-    def records(self) -> List["LLMMetricRecord"]:
+    def records(self) -> List[LLMMetricRecord]:
         """Return the list of LLM records."""
 
     def __str__(self): ...
@@ -4287,6 +5517,14 @@ class CustomMetricDriftConfig:
     @version.setter
     def version(self, version: str) -> None:
         """Set model version"""
+
+    @property
+    def uid(self) -> str:
+        """Unique identifier for the drift config"""
+
+    @uid.setter
+    def uid(self, uid: str) -> None:
+        """Set unique identifier for the drift config"""
 
     @property
     def drift_type(self) -> DriftType:
@@ -4414,6 +5652,10 @@ class CustomDriftProfile:
             metrics = [CustomMetric("accuracy", 0.95), CustomMetric("f1_score", 0.88)]
             profile = CustomDriftProfile(config, metrics, "1.0.0")
         """
+
+    @property
+    def uid(self) -> str:
+        """Return the unique identifier for the drift profile"""
 
     @property
     def config(self) -> CustomMetricDriftConfig:
@@ -4555,24 +5797,16 @@ class LLMDriftMetric:
 
 class LLMMetricRecord:
     @property
-    def record_uid(self) -> str:
-        """Return the record id"""
+    def uid(self) -> str:
+        """Return the record uid"""
+
+    @property
+    def entity_uid(self) -> str:
+        """Returns the entity uid associated with the record"""
 
     @property
     def created_at(self) -> datetime:
         """Return the timestamp when the record was created"""
-
-    @property
-    def space(self) -> str:
-        """Return the space associated with the record"""
-
-    @property
-    def name(self) -> str:
-        """Return the name associated with the record"""
-
-    @property
-    def version(self) -> str:
-        """Return the version associated with the record"""
 
     @property
     def metric(self) -> str:
@@ -4633,6 +5867,14 @@ class LLMDriftConfig:
         """Set model version"""
 
     @property
+    def uid(self) -> str:
+        """Unique identifier for the drift config"""
+
+    @uid.setter
+    def uid(self, uid: str) -> None:
+        """Set unique identifier for the drift config"""
+
+    @property
     def drift_type(self) -> DriftType:
         """Drift type"""
 
@@ -4683,7 +5925,7 @@ class LLMDriftProfile:
         config: LLMDriftConfig,
         metrics: list[LLMDriftMetric],
         workflow: Optional[Workflow] = None,
-    ) -> None:
+    ):
         """Initialize a LLMDriftProfile for LLM evaluation and drift detection.
 
         LLM evaluations are run asynchronously on the scouter server.
@@ -4737,6 +5979,10 @@ class LLMDriftProfile:
             - Initial workflow tasks must include "input" and/or "response" parameters
             - All metric names must match corresponding workflow task names
         """
+
+    @property
+    def uid(self) -> str:
+        """Return the unique identifier for the drift profile"""
 
     @property
     def config(self) -> LLMDriftConfig:
@@ -5093,113 +6339,9 @@ class Drifter:
             SpcDriftMap, PsiDriftMap or LLMDriftMap
         """
 
-class LatencyMetrics:
-    @property
-    def p5(self) -> float:
-        """5th percentile"""
-
-    @property
-    def p25(self) -> float:
-        """25th percentile"""
-
-    @property
-    def p50(self) -> float:
-        """50th percentile"""
-
-    @property
-    def p95(self) -> float:
-        """95th percentile"""
-
-    @property
-    def p99(self) -> float:
-        """99th percentile"""
-
-class RouteMetrics:
-    @property
-    def route_name(self) -> str:
-        """Return the route name"""
-
-    @property
-    def metrics(self) -> LatencyMetrics:
-        """Return the metrics"""
-
-    @property
-    def request_count(self) -> int:
-        """Request count"""
-
-    @property
-    def error_count(self) -> int:
-        """Error count"""
-
-    @property
-    def error_latency(self) -> float:
-        """Error latency"""
-
-    @property
-    def status_codes(self) -> Dict[int, int]:
-        """Dictionary of status codes and counts"""
-
-class ObservabilityMetrics:
-    @property
-    def space(self) -> str:
-        """Return the space"""
-
-    @property
-    def name(self) -> str:
-        """Return the name"""
-
-    @property
-    def version(self) -> str:
-        """Return the version"""
-
-    @property
-    def request_count(self) -> int:
-        """Request count"""
-
-    @property
-    def error_count(self) -> int:
-        """Error count"""
-
-    @property
-    def route_metrics(self) -> List[RouteMetrics]:
-        """Route metrics object"""
-
-    def __str__(self) -> str:
-        """Return the string representation of the observability metrics"""
-
-    def model_dump_json(self) -> str:
-        """Return the json representation of the observability metrics"""
-
-class Observer:
-    def __init__(self, space: str, name: str, version: str) -> None:
-        """Initializes an api metric observer
-
-        Args:
-            space:
-                Model space
-            name:
-                Model name
-            version:
-                Model version
-        """
-
-    def increment(self, route: str, latency: float, status_code: int) -> None:
-        """Increment the feature value
-
-        Args:
-            route:
-                Route name
-            latency:
-                Latency of request
-            status_code:
-                Status code of request
-        """
-
-    def collect_metrics(self) -> Optional[ServerRecords]:
-        """Collect metrics from observer"""
-
-    def reset_metrics(self) -> None:
-        """Reset the observer metrics"""
+########
+# __scouter.profile__
+########
 
 class Distinct:
     @property
@@ -5393,766 +6535,29 @@ class DataProfiler:
             DataProfile
         """
 
-class TransportType:
-    Kafka = "TransportType"
-    RabbitMQ = "TransportType"
-    Redis = "TransportType"
-    HTTP = "TransportType"
-
-class EntityType:
-    Feature = "EntityType"
-    Metric = "EntityType"
-
-class RecordType:
-    Spc = "RecordType"
-    Psi = "RecordType"
-    Observability = "RecordType"
-    Custom = "RecordType"
-
-class KafkaConfig:
-    brokers: str
-    topic: str
-    compression_type: str
-    message_timeout_ms: int
-    message_max_bytes: int
-    log_level: LogLevel
-    config: Dict[str, str]
-    max_retries: int
-    transport_type: TransportType
-
-    def __init__(
-        self,
-        username: Optional[str] = None,
-        password: Optional[str] = None,
-        brokers: Optional[str] = None,
-        topic: Optional[str] = None,
-        compression_type: Optional[str] = None,
-        message_timeout_ms: int = 600_000,
-        message_max_bytes: int = 2097164,
-        log_level: LogLevel = LogLevel.Info,
-        config: Dict[str, str] = {},
-        max_retries: int = 3,
-    ) -> None:
-        """Kafka configuration for connecting to and publishing messages to Kafka brokers.
-
-        This configuration supports both authenticated (SASL) and unauthenticated connections.
-        When credentials are provided, SASL authentication is automatically enabled with
-        secure defaults.
-
-        Authentication Priority (first match wins):
-            1. Direct parameters (username/password)
-            2. Environment variables (KAFKA_USERNAME/KAFKA_PASSWORD)
-            3. Configuration dictionary (sasl.username/sasl.password)
-
-        SASL Security Defaults:
-            - security.protocol: "SASL_SSL" (override via KAFKA_SECURITY_PROTOCOL env var)
-            - sasl.mechanism: "PLAIN" (override via KAFKA_SASL_MECHANISM env var)
-
-        Args:
-            username:
-                SASL username for authentication.
-                Fallback: KAFKA_USERNAME environment variable.
-            password:
-                SASL password for authentication.
-                Fallback: KAFKA_PASSWORD environment variable.
-            brokers:
-                Comma-separated list of Kafka broker addresses (host:port).
-                Fallback: KAFKA_BROKERS environment variable.
-                Default: "localhost:9092"
-            topic:
-                Target Kafka topic for message publishing.
-                Fallback: KAFKA_TOPIC environment variable.
-                Default: "scouter_monitoring"
-            compression_type:
-                Message compression algorithm.
-                Options: "none", "gzip", "snappy", "lz4", "zstd"
-                Default: "gzip"
-            message_timeout_ms:
-                Maximum time to wait for message delivery (milliseconds).
-                Default: 600000 (10 minutes)
-            message_max_bytes:
-                Maximum message size in bytes.
-                Default: 2097164 (~2MB)
-            log_level:
-                Logging verbosity for the Kafka producer.
-                Default: LogLevel.Info
-            config:
-                Additional Kafka producer configuration parameters.
-                See: https://kafka.apache.org/documentation/#producerconfigs
-                Note: Direct parameters take precedence over config dictionary values.
-            max_retries:
-                Maximum number of retry attempts for failed message deliveries.
-                Default: 3
-
-        Examples:
-            Basic usage (unauthenticated):
-            ```python
-            config = KafkaConfig(
-                brokers="kafka1:9092,kafka2:9092",
-                topic="my_topic"
-            )
-            ```
-
-            SASL authentication:
-            ```python
-            config = KafkaConfig(
-                username="my_user",
-                password="my_password",
-                brokers="secure-kafka:9093",
-                topic="secure_topic"
-            )
-            ```
-
-            Advanced configuration:
-            ```python
-            config = KafkaConfig(
-                brokers="kafka:9092",
-                compression_type="lz4",
-                config={
-                    "acks": "all",
-                    "batch.size": "32768",
-                    "linger.ms": "10"
-                }
-            )
-            ```
-        """
-
-    def __str__(self): ...
-
-class RabbitMQConfig:
-    address: str
-    queue: str
-    max_retries: int
-    transport_type: TransportType
-
-    def __init__(
-        self,
-        host: Optional[str] = None,
-        port: Optional[int] = None,
-        username: Optional[str] = None,
-        password: Optional[str] = None,
-        queue: Optional[str] = None,
-        max_retries: int = 3,
-    ) -> None:
-        """RabbitMQ configuration to use with the RabbitMQProducer.
-
-        Args:
-            host:
-                RabbitMQ host.
-                If not provided, the value of the RABBITMQ_HOST environment variable is used.
-
-            port:
-                RabbitMQ port.
-                If not provided, the value of the RABBITMQ_PORT environment variable is used.
-
-            username:
-                RabbitMQ username.
-                If not provided, the value of the RABBITMQ_USERNAME environment variable is used.
-
-            password:
-                RabbitMQ password.
-                If not provided, the value of the RABBITMQ_PASSWORD environment variable is used.
-
-            queue:
-                RabbitMQ queue to publish messages to.
-                If not provided, the value of the RABBITMQ_QUEUE environment variable is used.
-
-            max_retries:
-                Maximum number of retries to attempt when publishing messages.
-                Default is 3.
-        """
-
-    def __str__(self): ...
-
-class RedisConfig:
-    address: str
-    channel: str
-    transport_type: TransportType
-
-    def __init__(
-        self,
-        address: Optional[str] = None,
-        chanel: Optional[str] = None,
-    ) -> None:
-        """Redis configuration to use with a Redis producer
-
-        Args:
-            address (str):
-                Redis address. If not provided, the value of the REDIS_ADDR environment
-                variable is used and defaults to "redis://localhost:6379".
-
-            channel (str):
-                Redis channel to publish messages to.
-
-                If not provided, the value of the REDIS_CHANNEL environment variable is used and defaults to "scouter_monitoring".
-        """
-
-    def __str__(self): ...
-
-class ServerRecord:
-    Spc: "ServerRecord"
-    Psi: "ServerRecord"
-    Custom: "ServerRecord"
-    Observability: "ServerRecord"
-
-    def __init__(self, record: Any) -> None:
-        """Initialize server record
-
-        Args:
-            record:
-                Server record to initialize
-        """
-
-    @property
-    def record(
-        self,
-    ) -> Union[
-        "SpcServerRecord",
-        "PsiServerRecord",
-        "CustomMetricServerRecord",
-        "ObservabilityMetrics",
-    ]:
-        """Return the drift server record."""
-
-class ServerRecords:
-    def __init__(self, records: List[ServerRecord]) -> None:
-        """Initialize server records
-
-        Args:
-            records:
-                List of server records
-        """
-
-    @property
-    def records(self) -> List[ServerRecord]:
-        """Return the drift server records."""
-
-    def model_dump_json(self) -> str:
-        """Return the json representation of the record."""
-
-    def __str__(self) -> str:
-        """Return the string representation of the record."""
-
-class SpcServerRecord:
-    def __init__(
-        self,
-        space: str,
-        name: str,
-        version: str,
-        feature: str,
-        value: float,
-    ):
-        """Initialize spc drift server record
-
-        Args:
-            space:
-                Model space
-            name:
-                Model name
-            version:
-                Model version
-            feature:
-                Feature name
-            value:
-                Feature value
-        """
-
-    @property
-    def created_at(self) -> datetime:
-        """Return the created at timestamp."""
-
-    @property
-    def space(self) -> str:
-        """Return the space."""
-
-    @property
-    def name(self) -> str:
-        """Return the name."""
-
-    @property
-    def version(self) -> str:
-        """Return the version."""
-
-    @property
-    def feature(self) -> str:
-        """Return the feature."""
-
-    @property
-    def value(self) -> float:
-        """Return the sample value."""
-
-    def __str__(self) -> str:
-        """Return the string representation of the record."""
-
-    def model_dump_json(self) -> str:
-        """Return the json representation of the record."""
-
-    def to_dict(self) -> Dict[str, str]:
-        """Return the dictionary representation of the record."""
-
-class PsiServerRecord:
-    def __init__(
-        self,
-        space: str,
-        name: str,
-        version: str,
-        feature: str,
-        bin_id: int,
-        bin_count: int,
-    ):
-        """Initialize spc drift server record
-
-        Args:
-            space:
-                Model space
-            name:
-                Model name
-            version:
-                Model version
-            feature:
-                Feature name
-            bin_id:
-                Bundle ID
-            bin_count:
-                Bundle ID
-        """
-
-    @property
-    def created_at(self) -> datetime:
-        """Return the created at timestamp."""
-
-    @property
-    def space(self) -> str:
-        """Return the space."""
-
-    @property
-    def name(self) -> str:
-        """Return the name."""
-
-    @property
-    def version(self) -> str:
-        """Return the version."""
-
-    @property
-    def feature(self) -> str:
-        """Return the feature."""
-
-    @property
-    def bin_id(self) -> int:
-        """Return the bin id."""
-
-    @property
-    def bin_count(self) -> int:
-        """Return the sample value."""
-
-    def __str__(self) -> str:
-        """Return the string representation of the record."""
-
-    def model_dump_json(self) -> str:
-        """Return the json representation of the record."""
-
-    def to_dict(self) -> Dict[str, str]:
-        """Return the dictionary representation of the record."""
-
-class CustomMetricServerRecord:
-    def __init__(
-        self,
-        space: str,
-        name: str,
-        version: str,
-        metric: str,
-        value: float,
-    ):
-        """Initialize spc drift server record
-
-        Args:
-            space:
-                Model space
-            name:
-                Model name
-            version:
-                Model version
-            metric:
-                Metric name
-            value:
-                Metric value
-        """
-
-    @property
-    def created_at(self) -> datetime:
-        """Return the created at timestamp."""
-
-    @property
-    def space(self) -> str:
-        """Return the space."""
-
-    @property
-    def name(self) -> str:
-        """Return the name."""
-
-    @property
-    def version(self) -> str:
-        """Return the version."""
-
-    @property
-    def metric(self) -> str:
-        """Return the metric name."""
-
-    @property
-    def value(self) -> float:
-        """Return the metric value."""
-
-    def __str__(self) -> str:
-        """Return the string representation of the record."""
-
-    def model_dump_json(self) -> str:
-        """Return the json representation of the record."""
-
-    def to_dict(self) -> Dict[str, str]:
-        """Return the dictionary representation of the record."""
-
-class QueueFeature:
-    def __init__(self, name: str, value: Any) -> None:
-        """Initialize feature. Will attempt to convert the value to it's corresponding feature type.
-        Current support types are int, float, string.
-
-        Args:
-            name:
-                Name of the feature
-            value:
-                Value of the feature. Can be an int, float, or string.
-
-        Example:
-            ```python
-            feature = Feature("feature_1", 1) # int feature
-            feature = Feature("feature_2", 2.0) # float feature
-            feature = Feature("feature_3", "value") # string feature
-            ```
-        """
-
-    @staticmethod
-    def int(name: str, value: int) -> "Feature":
-        """Create an integer feature
-
-        Args:
-            name:
-                Name of the feature
-            value:
-                Value of the feature
-        """
-
-    @staticmethod
-    def float(name: str, value: float) -> "Feature":
-        """Create a float feature
-
-        Args:
-            name:
-                Name of the feature
-            value:
-                Value of the feature
-        """
-
-    @staticmethod
-    def string(name: str, value: str) -> "Feature":
-        """Create a string feature
-
-        Args:
-            name:
-                Name of the feature
-            value:
-                Value of the feature
-        """
-
-    @staticmethod
-    def categorical(name: str, value: str) -> "Feature":
-        """Create a categorical feature
-
-        Args:
-            name:
-                Name of the feature
-            value:
-                Value of the feature
-        """
-
-class Features:
-    def __init__(
-        self,
-        features: List[Feature] | Dict[str, Union[int, float, str]],
-    ) -> None:
-        """Initialize a features class
-
-        Args:
-            features:
-                List of features or a dictionary of key-value pairs.
-                If a list, each item must be an instance of Feature.
-                If a dictionary, each key is the feature name and each value is the feature value.
-                Supported types for values are int, float, and string.
-
-        Example:
-            ```python
-            # Passing a list of features
-            features = Features(
-                features=[
-                    Feature.int("feature_1", 1),
-                    Feature.float("feature_2", 2.0),
-                    Feature.string("feature_3", "value"),
-                ]
-            )
-
-            # Passing a dictionary (pydantic model) of features
-            class MyFeatures(BaseModel):
-                feature1: int
-                feature2: float
-                feature3: str
-
-            my_features = MyFeatures(
-                feature1=1,
-                feature2=2.0,
-                feature3="value",
-            )
-
-            features = Features(my_features.model_dump())
-            ```
-        """
-
-    def __str__(self) -> str:
-        """Return the string representation of the features"""
-
-    @property
-    def features(self) -> List[Feature]:
-        """Return the list of features"""
-
-    @property
-    def entity_type(self) -> EntityType:
-        """Return the entity type"""
-
-class Metric:
-    def __init__(self, name: str, value: float | int) -> None:
-        """Initialize metric
-
-        Args:
-            name:
-                Name of the metric
-            value:
-                Value to assign to the metric. Can be an int or float but will be converted to float.
-        """
-
-    def __str__(self) -> str:
-        """Return the string representation of the metric"""
-
-class Metrics:
-    def __init__(self, metrics: List[Metric] | Dict[str, Union[int, float]]) -> None:
-        """Initialize metrics
-
-        Args:
-            metrics:
-                List of metrics or a dictionary of key-value pairs.
-                If a list, each item must be an instance of Metric.
-                If a dictionary, each key is the metric name and each value is the metric value.
-
-
-        Example:
-            ```python
-
-            # Passing a list of metrics
-            metrics = Metrics(
-                metrics=[
-                    Metric("metric_1", 1.0),
-                    Metric("metric_2", 2.5),
-                    Metric("metric_3", 3),
-                ]
-            )
-
-            # Passing a dictionary (pydantic model) of metrics
-            class MyMetrics(BaseModel):
-                metric1: float
-                metric2: int
-
-            my_metrics = MyMetrics(
-                metric1=1.0,
-                metric2=2,
-            )
-
-            metrics = Metrics(my_metrics.model_dump())
-        """
-
-    def __str__(self) -> str:
-        """Return the string representation of the metrics"""
-
-    @property
-    def metrics(self) -> List["Metric"]:
-        """Return the list of metrics"""
-
-    @property
-    def entity_type(self) -> EntityType:
-        """Return the entity type"""
-
-class Queue:
-    """Individual queue associated with a drift profile"""
-
-    def insert(self, entity: Union[Features, Metrics, "LLMRecord"]) -> None:
-        """Insert a record into the queue
-
-        Args:
-            entity:
-                Entity to insert into the queue.
-                Can be an instance for Features, Metrics, or LLMRecord.
-
-        Example:
-            ```python
-            features = Features(
-                features=[
-                    Feature("feature_1", 1),
-                    Feature("feature_2", 2.0),
-                    Feature("feature_3", "value"),
-                ]
-            )
-            queue.insert(features)
-            ```
-        """
-
-    @property
-    def identifier(self) -> str:
-        """Return the identifier of the queue"""
-
-class ScouterQueue:
-    """Main queue class for Scouter. Publishes drift records to the configured transport"""
-
-    @staticmethod
-    def from_path(
-        path: Dict[str, Path],
-        transport_config: Union[
-            KafkaConfig,
-            RabbitMQConfig,
-            RedisConfig,
-            HttpConfig,
-        ],
-    ) -> "ScouterQueue":
-        """Initializes Scouter queue from one or more drift profile paths
-
-        Args:
-            path (Dict[str, Path]):
-                Dictionary of drift profile paths.
-                Each key is a user-defined alias for accessing a queue
-            transport_config (Union[KafkaConfig, RabbitMQConfig, RedisConfig, HttpConfig]):
-                Transport configuration for the queue publisher
-                Can be KafkaConfig, RabbitMQConfig RedisConfig, or HttpConfig
-
-        Example:
-            ```python
-            queue = ScouterQueue(
-                path={
-                    "spc": Path("spc_profile.json"),
-                    "psi": Path("psi_profile.json"),
-                },
-                transport_config=KafkaConfig(
-                    brokers="localhost:9092",
-                    topic="scouter_topic",
-                ),
-            )
-
-            queue["psi"].insert(
-                Features(
-                    features=[
-                        Feature("feature_1", 1),
-                        Feature("feature_2", 2.0),
-                        Feature("feature_3", "value"),
-                    ]
-                )
-            )
-            ```
-        """
-
-    def __getitem__(self, key: str) -> Queue:
-        """Get the queue for the specified key
-
-        Args:
-            key (str):
-                Key to get the queue for
-
-        """
-
-    def shutdown(self) -> None:
-        """Shutdown the queue. This will close and flush all queues and transports"""
-
-    @property
-    def transport_config(
-        self,
-    ) -> Union[KafkaConfig, RabbitMQConfig, RedisConfig, HttpConfig, MockConfig]:
-        """Return the transport configuration used by the queue"""
-
-class BaseModel(Protocol):
-    """Protocol for pydantic BaseModel to ensure compatibility with context"""
-
-    def model_dump(self) -> Dict[str, Any]:
-        """Dump the model as a dictionary"""
-
-    def model_dump_json(self) -> str:
-        """Dump the model as a JSON string"""
-
-    def __str__(self) -> str:
-        """String representation of the model"""
-
-SerializedType: TypeAlias = Union[str, int, float, dict, list]
-Context: TypeAlias = Union[Dict[str, Any], BaseModel]
-
-class LLMRecord:
-    """LLM record containing context tied to a Large Language Model interaction
-    that is used to evaluate drift in LLM responses.
-
-
-    Examples:
-        >>> record = LLMRecord(
-        ...     context={
-        ...         "input": "What is the capital of France?",
-        ...         "response": "Paris is the capital of France."
-        ...     },
-        ... )
-        >>> print(record.context["input"])
-        "What is the capital of France?"
-    """
-
-    prompt: Optional[Prompt]
-    """Optional prompt configuration associated with this record."""
-
-    entity_type: EntityType
-    """Type of entity, always EntityType.LLM for LLMRecord instances."""
-
-    def __init__(
-        self,
-        context: Context,
-        prompt: Optional[Prompt | SerializedType] = None,
-    ) -> None:
-        """Creates a new LLM record to associate with an `LLMDriftProfile`.
-        The record is sent to the `Scouter` server via the `ScouterQueue` and is
-        then used to inject context into the evaluation prompts.
-
-        Args:
-            context:
-                Additional context information as a dictionary or a pydantic BaseModel. During evaluation,
-                this will be merged with the input and response data and passed to the assigned
-                evaluation prompts. So if you're evaluation prompts expect additional context via
-                bound variables (e.g., `${foo}`), you can pass that here as key value pairs.
-                {"foo": "bar"}
-            prompt:
-                Optional prompt configuration associated with this record. Can be a Potatohead Prompt or
-                a JSON-serializable type.
-
-        Raises:
-            TypeError: If context is not a dict or a pydantic BaseModel.
-
-        """
-
-    @property
-    def context(self) -> Dict[str, Any]:
-        """Get the contextual information.
-
-        Returns:
-            The context data as a Python object (deserialized from JSON).
-
-        Raises:
-            TypeError: If the stored JSON cannot be converted to a Python object.
-        """
+    class TraceMetricsRequest:
+        """Request to get trace metrics from the Scouter server."""
+
+        def __init__(
+            self,
+            service_name: str,
+            start_time: datetime,
+            end_time: datetime,
+            bucket_interval: str,
+        ):
+            """
+            Initialize a TraceMetricsRequest.
+
+            Args:
+                service_name (str):
+                    The name of the service to query metrics for.
+                start_time (datetime):
+                    The start time for the metrics query.
+                end_time (datetime):
+                    The end time for the metrics query.
+                bucket_interval (str):
+                    Optional interval for aggregating metrics (e.g., "1m", "5m").
+            """
 
 ########################################################################################
 #  This section contains the type definitions for opsml.types module
@@ -11792,7 +12197,7 @@ __all__ = [
     "HttpConfig",
     "ProfileStatusRequest",
     "Alert",
-    "DriftAlertRequest",
+    "DriftAlertPaginationRequest",
     "GetProfileRequest",
     "FeatureMap",
     "SpcFeatureDriftProfile",
@@ -11829,9 +12234,9 @@ __all__ = [
     "KafkaConfig",
     "RabbitMQConfig",
     "RedisConfig",
-    "SpcServerRecord",
-    "PsiServerRecord",
-    "CustomMetricServerRecord",
+    "SpcRecord",
+    "PsiRecord",
+    "CustomMetricRecord",
     "ServerRecord",
     "ServerRecords",
     "QueueFeature",
@@ -11849,10 +12254,9 @@ __all__ = [
     "SpanKind",
     "FunctionType",
     "ActiveSpan",
-    "ExportConfig",
+    "OtelExportConfig",
     "GrpcConfig",
     "GrpcSpanExporter",
-    "OtelHttpConfig",
     "HttpSpanExporter",
     "StdoutSpanExporter",
     "OtelProtocol",
