@@ -2112,6 +2112,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3a3076410a55c90011c298b04d0cfa770b00fa04e1e3c97d3f6c9de105a03844"
 
 [[package]]
+name = "fixedbitset"
+version = "0.5.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1d674e81391d1e1ab681a28d99df07927c6d4aa5b027d7da16ba32d1d21ecd99"
+
+[[package]]
 name = "flagset"
 version = "0.4.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3503,6 +3509,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "multimap"
+version = "0.10.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1d87ecb2933e8aeadb3e3a02b828fed80a7528047e68b4f424523a0981a3a084"
+
+[[package]]
 name = "nalgebra"
 version = "0.33.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4692,6 +4704,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9b4f627cb1b25917193a259e49bdad08f671f8d9708acfd5fe0a8c1455d87220"
 
 [[package]]
+name = "petgraph"
+version = "0.7.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3672b37090dbd86368a4145bc067582552b29c27377cad4e0a306c97f9bd7772"
+dependencies = [
+ "fixedbitset",
+ "indexmap 2.12.1",
+]
+
+[[package]]
 name = "pin-project"
 version = "1.1.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5050,6 +5072,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "prettyplease"
+version = "0.2.37"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "479ca8adacdd7ce8f1fb39ce9ecccbfe93a3f1344b3d0d97f20bc0196208f62b"
+dependencies = [
+ "proc-macro2",
+ "syn 2.0.111",
+]
+
+[[package]]
 name = "proc-macro-crate"
 version = "3.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5139,6 +5171,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "prost-build"
+version = "0.14.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ac6c3320f9abac597dcbc668774ef006702672474aad53c6d596b62e487b40b1"
+dependencies = [
+ "heck 0.4.1",
+ "itertools 0.13.0",
+ "log",
+ "multimap",
+ "once_cell",
+ "petgraph",
+ "prettyplease",
+ "prost",
+ "prost-types",
+ "pulldown-cmark",
+ "pulldown-cmark-to-cmark",
+ "regex",
+ "syn 2.0.111",
+ "tempfile",
+]
+
+[[package]]
 name = "prost-derive"
 version = "0.14.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5149,6 +5203,35 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 2.0.111",
+]
+
+[[package]]
+name = "prost-types"
+version = "0.14.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b9b4db3d6da204ed77bb26ba83b6122a73aeb2e87e25fbf7ad2e84c4ccbf8f72"
+dependencies = [
+ "prost",
+]
+
+[[package]]
+name = "pulldown-cmark"
+version = "0.13.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1e8bbe1a966bd2f362681a44f6edce3c2310ac21e4d5067a6e7ec396297a6ea0"
+dependencies = [
+ "bitflags 2.10.0",
+ "memchr",
+ "unicase",
+]
+
+[[package]]
+name = "pulldown-cmark-to-cmark"
+version = "21.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8246feae3db61428fd0bb94285c690b460e4517d83152377543ca802357785f1"
+dependencies = [
+ "pulldown-cmark",
 ]
 
 [[package]]
@@ -6046,7 +6129,7 @@ checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
 [[package]]
 name = "scouter-client"
 version = "0.13.0"
-source = "git+https://github.com/demml/scouter.git?branch=add-imports#6753c44b2b556ede7cbeaed3035a636a2e598f72"
+source = "git+https://github.com/demml/scouter.git?branch=feat%2F182%2Ftonic-grpc#6f96e331f2972f484dfbe6ec10bbce8d49061036"
 dependencies = [
  "chrono",
  "ndarray",
@@ -6060,6 +6143,7 @@ dependencies = [
  "scouter-drift",
  "scouter-evaluate",
  "scouter-events",
+ "scouter-http",
  "scouter-observability",
  "scouter-profile",
  "scouter-settings",
@@ -6068,7 +6152,7 @@ dependencies = [
  "scouter-types",
  "serde",
  "serde_json",
- "serde_qs 0.15.0",
+ "serde_qs 0.8.5",
  "thiserror 2.0.17",
  "tokio",
  "tracing",
@@ -6077,7 +6161,7 @@ dependencies = [
 [[package]]
 name = "scouter-dispatch"
 version = "0.13.0"
-source = "git+https://github.com/demml/scouter.git?branch=add-imports#6753c44b2b556ede7cbeaed3035a636a2e598f72"
+source = "git+https://github.com/demml/scouter.git?branch=feat%2F182%2Ftonic-grpc#6f96e331f2972f484dfbe6ec10bbce8d49061036"
 dependencies = [
  "futures",
  "pyo3",
@@ -6092,12 +6176,12 @@ dependencies = [
 [[package]]
 name = "scouter-drift"
 version = "0.13.0"
-source = "git+https://github.com/demml/scouter.git?branch=add-imports#6753c44b2b556ede7cbeaed3035a636a2e598f72"
+source = "git+https://github.com/demml/scouter.git?branch=feat%2F182%2Ftonic-grpc#6f96e331f2972f484dfbe6ec10bbce8d49061036"
 dependencies = [
  "chrono",
  "futures",
  "indicatif",
- "itertools 0.14.0",
+ "itertools 0.13.0",
  "ndarray",
  "num-traits",
  "numpy",
@@ -6117,9 +6201,9 @@ dependencies = [
 [[package]]
 name = "scouter-evaluate"
 version = "0.13.0"
-source = "git+https://github.com/demml/scouter.git?branch=add-imports#6753c44b2b556ede7cbeaed3035a636a2e598f72"
+source = "git+https://github.com/demml/scouter.git?branch=feat%2F182%2Ftonic-grpc#6f96e331f2972f484dfbe6ec10bbce8d49061036"
 dependencies = [
- "itertools 0.14.0",
+ "itertools 0.13.0",
  "ndarray",
  "num-traits",
  "potato-head",
@@ -6139,7 +6223,7 @@ dependencies = [
 [[package]]
 name = "scouter-events"
 version = "0.13.0"
-source = "git+https://github.com/demml/scouter.git?branch=add-imports#6753c44b2b556ede7cbeaed3035a636a2e598f72"
+source = "git+https://github.com/demml/scouter.git?branch=feat%2F182%2Ftonic-grpc#6f96e331f2972f484dfbe6ec10bbce8d49061036"
 dependencies = [
  "async-trait",
  "chrono",
@@ -6159,6 +6243,7 @@ dependencies = [
  "scouter-drift",
  "scouter-settings",
  "scouter-state",
+ "scouter-tonic",
  "scouter-types",
  "serde",
  "serde_json",
@@ -6172,11 +6257,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "scouter-http"
+version = "0.13.0"
+source = "git+https://github.com/demml/scouter.git?branch=feat%2F182%2Ftonic-grpc#6f96e331f2972f484dfbe6ec10bbce8d49061036"
+dependencies = [
+ "pyo3",
+ "reqwest",
+ "scouter-settings",
+ "scouter-types",
+ "serde_json",
+ "serde_qs 0.8.5",
+ "thiserror 2.0.17",
+ "tracing",
+]
+
+[[package]]
 name = "scouter-observability"
 version = "0.13.0"
-source = "git+https://github.com/demml/scouter.git?branch=add-imports#6753c44b2b556ede7cbeaed3035a636a2e598f72"
+source = "git+https://github.com/demml/scouter.git?branch=feat%2F182%2Ftonic-grpc#6f96e331f2972f484dfbe6ec10bbce8d49061036"
 dependencies = [
- "itertools 0.14.0",
+ "itertools 0.13.0",
  "ndarray",
  "ndarray-stats",
  "noisy_float",
@@ -6191,11 +6291,11 @@ dependencies = [
 [[package]]
 name = "scouter-profile"
 version = "0.13.0"
-source = "git+https://github.com/demml/scouter.git?branch=add-imports#6753c44b2b556ede7cbeaed3035a636a2e598f72"
+source = "git+https://github.com/demml/scouter.git?branch=feat%2F182%2Ftonic-grpc#6f96e331f2972f484dfbe6ec10bbce8d49061036"
 dependencies = [
  "chrono",
  "indicatif",
- "itertools 0.14.0",
+ "itertools 0.13.0",
  "ndarray",
  "ndarray-stats",
  "noisy_float",
@@ -6213,7 +6313,7 @@ dependencies = [
 [[package]]
 name = "scouter-semver"
 version = "0.13.0"
-source = "git+https://github.com/demml/scouter.git?branch=add-imports#6753c44b2b556ede7cbeaed3035a636a2e598f72"
+source = "git+https://github.com/demml/scouter.git?branch=feat%2F182%2Ftonic-grpc#6f96e331f2972f484dfbe6ec10bbce8d49061036"
 dependencies = [
  "pyo3",
  "semver",
@@ -6224,7 +6324,7 @@ dependencies = [
 [[package]]
 name = "scouter-settings"
 version = "0.13.0"
-source = "git+https://github.com/demml/scouter.git?branch=add-imports#6753c44b2b556ede7cbeaed3035a636a2e598f72"
+source = "git+https://github.com/demml/scouter.git?branch=feat%2F182%2Ftonic-grpc#6f96e331f2972f484dfbe6ec10bbce8d49061036"
 dependencies = [
  "base64 0.22.1",
  "potato-head",
@@ -6237,7 +6337,7 @@ dependencies = [
 [[package]]
 name = "scouter-state"
 version = "0.13.0"
-source = "git+https://github.com/demml/scouter.git?branch=add-imports#6753c44b2b556ede7cbeaed3035a636a2e598f72"
+source = "git+https://github.com/demml/scouter.git?branch=feat%2F182%2Ftonic-grpc#6f96e331f2972f484dfbe6ec10bbce8d49061036"
 dependencies = [
  "thiserror 2.0.17",
  "tokio",
@@ -6245,9 +6345,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "scouter-tonic"
+version = "0.13.0"
+source = "git+https://github.com/demml/scouter.git?branch=feat%2F182%2Ftonic-grpc#6f96e331f2972f484dfbe6ec10bbce8d49061036"
+dependencies = [
+ "prost",
+ "prost-types",
+ "reqwest",
+ "scouter-http",
+ "scouter-settings",
+ "thiserror 2.0.17",
+ "tokio",
+ "tonic",
+ "tonic-health",
+ "tonic-prost",
+ "tonic-prost-build",
+ "tracing",
+]
+
+[[package]]
 name = "scouter-tracing"
 version = "0.13.0"
-source = "git+https://github.com/demml/scouter.git?branch=add-imports#6753c44b2b556ede7cbeaed3035a636a2e598f72"
+source = "git+https://github.com/demml/scouter.git?branch=feat%2F182%2Ftonic-grpc#6f96e331f2972f484dfbe6ec10bbce8d49061036"
 dependencies = [
  "chrono",
  "opentelemetry",
@@ -6272,7 +6391,7 @@ dependencies = [
 [[package]]
 name = "scouter-types"
 version = "0.13.0"
-source = "git+https://github.com/demml/scouter.git?branch=add-imports#6753c44b2b556ede7cbeaed3035a636a2e598f72"
+source = "git+https://github.com/demml/scouter.git?branch=feat%2F182%2Ftonic-grpc#6f96e331f2972f484dfbe6ec10bbce8d49061036"
 dependencies = [
  "base64 0.22.1",
  "chrono",
@@ -7389,8 +7508,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "eb7613188ce9f7df5bfe185db26c5814347d110db17920415cf2fbcad85e7203"
 dependencies = [
  "async-trait",
+ "axum",
  "base64 0.22.1",
  "bytes",
+ "h2 0.4.12",
  "http 1.4.0",
  "http-body 1.0.1",
  "http-body-util",
@@ -7399,6 +7520,7 @@ dependencies = [
  "hyper-util",
  "percent-encoding",
  "pin-project",
+ "socket2 0.6.1",
  "sync_wrapper",
  "tokio",
  "tokio-stream",
@@ -7406,6 +7528,31 @@ dependencies = [
  "tower-layer",
  "tower-service",
  "tracing",
+]
+
+[[package]]
+name = "tonic-build"
+version = "0.14.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4c40aaccc9f9eccf2cd82ebc111adc13030d23e887244bc9cfa5d1d636049de3"
+dependencies = [
+ "prettyplease",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.111",
+]
+
+[[package]]
+name = "tonic-health"
+version = "0.14.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2a82868bf299e0a1d2e8dce0dc33a46c02d6f045b2c1f1d6cc8dc3d0bf1812ef"
+dependencies = [
+ "prost",
+ "tokio",
+ "tokio-stream",
+ "tonic",
+ "tonic-prost",
 ]
 
 [[package]]
@@ -7417,6 +7564,22 @@ dependencies = [
  "bytes",
  "prost",
  "tonic",
+]
+
+[[package]]
+name = "tonic-prost-build"
+version = "0.14.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b4a16cba4043dc3ff43fcb3f96b4c5c154c64cbd18ca8dce2ab2c6a451d058a2"
+dependencies = [
+ "prettyplease",
+ "proc-macro2",
+ "prost-build",
+ "prost-types",
+ "quote",
+ "syn 2.0.111",
+ "tempfile",
+ "tonic-build",
 ]
 
 [[package]]
