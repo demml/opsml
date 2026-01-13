@@ -5,7 +5,7 @@ pub fn add_queue_module(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<SpcRecord>()?;
     m.add_class::<PsiRecord>()?;
     m.add_class::<CustomMetricRecord>()?;
-    m.add_class::<LLMRecord>()?;
+    m.add_class::<GenAIEvalRecord>()?;
     m.add_class::<ServerRecord>()?;
     m.add_class::<ServerRecords>()?;
     m.add_class::<RecordType>()?;

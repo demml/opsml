@@ -2,7 +2,6 @@ pub mod app;
 pub mod card;
 pub mod cli;
 pub mod data;
-pub mod evaluate;
 pub mod experiment;
 pub mod genai;
 pub mod logging;
@@ -32,7 +31,6 @@ fn _opsml(m: &Bound<'_, PyModule>) -> PyResult<()> {
     app::add_app_module(m)?;
     data::add_data_module(m)?;
     model::add_model_module(m)?;
-    evaluate::add_evaluate_module(m)?;
     experiment::add_experiment_module(m)?;
     types::add_types_module(m)?;
     logging::add_logging_module(m)?;
