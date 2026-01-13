@@ -570,7 +570,8 @@ impl Serialize for ModelCard {
 }
 
 impl FromPyObject<'_> for ModelCard {
-    fn extract_bound(ob: &Bound<'_, PyAny>) -> PyResult<Self> {
+    type Error = PyErr;
+    fn extract(ob: &Bound<'_, PyAny>) -> PyResult<Self> {
         let interface = ob.getattr("interface")?;
         let name = ob.getattr("name")?.extract()?;
         let space = ob.getattr("space")?.extract()?;

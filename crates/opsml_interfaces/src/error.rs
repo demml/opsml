@@ -1,4 +1,4 @@
-use opsml_utils::error::{PyUtilError, UtilError};
+use opsml_utils::error::UtilError;
 use pyo3::exceptions::PyRuntimeError;
 use pyo3::PyErr;
 use reqwest::StatusCode;
@@ -340,9 +340,6 @@ pub enum ModelInterfaceError {
     UtilError(#[from] UtilError),
 
     #[error(transparent)]
-    PyUtilError(#[from] PyUtilError),
-
-    #[error(transparent)]
     DataInterfaceError(#[from] DataInterfaceError),
 
     #[error("Interface type not found")]
@@ -374,62 +371,6 @@ impl<'a> From<pyo3::DowncastError<'a, 'a>> for ModelInterfaceError {
 
 impl From<ModelInterfaceError> for PyErr {
     fn from(err: ModelInterfaceError) -> PyErr {
-        let msg = err.to_string();
-        error!("{}", msg);
-        PyRuntimeError::new_err(msg)
-    }
-}
-
-#[derive(Error, Debug)]
-pub enum AgentError {
-    #[error("Failed to create header value for the agent client")]
-    CreateHeaderValueError(#[from] reqwest::header::InvalidHeaderValue),
-
-    #[error("Failed to create header name for the agent client")]
-    CreateHeaderNameError(#[from] reqwest::header::InvalidHeaderName),
-
-    #[error("Failed to create agent client: {0}")]
-    CreateClientError(#[source] reqwest::Error),
-
-    #[error("Request failed: {0}")]
-    RequestError(#[from] reqwest::Error),
-
-    #[error("Failed to serialize chat request")]
-    SerializationError(#[from] serde_json::Error),
-
-    #[error("Failed to get chat completion response: {0}")]
-    ChatCompletionError(StatusCode),
-
-    #[error("Failed to downcast Python object: {0}")]
-    DowncastError(String),
-
-    #[error("Failed to get environment variable: {0}")]
-    EnvVarError(#[from] std::env::VarError),
-
-    #[error("Failed to extract client: {0}")]
-    ClientExtractionError(String),
-
-    #[error(transparent)]
-    PyError(#[from] pyo3::PyErr),
-
-    #[error(transparent)]
-    UtilError(#[from] PyUtilError),
-
-    #[error("Client did not provide response")]
-    ClientNoResponseError,
-
-    #[error("No ready tasks found but pending tasks remain. Possible circular dependency.")]
-    NoTaskFoundError,
-}
-
-impl<'a> From<pyo3::DowncastError<'a, 'a>> for AgentError {
-    fn from(err: pyo3::DowncastError) -> Self {
-        AgentError::DowncastError(err.to_string())
-    }
-}
-
-impl From<AgentError> for PyErr {
-    fn from(err: AgentError) -> PyErr {
         let msg = err.to_string();
         error!("{}", msg);
         PyRuntimeError::new_err(msg)
