@@ -6391,7 +6391,7 @@ checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
 [[package]]
 name = "scouter-client"
 version = "0.13.0"
-source = "git+https://github.com/demml/scouter.git?branch=main#477945b64aae165c02a77b2526e349a13ea7e666"
+source = "git+https://github.com/demml/scouter.git?branch=imports#1268a2bb77af76f0c0d4eb14af22ecef7e757d70"
 dependencies = [
  "chrono",
  "ndarray",
@@ -6414,7 +6414,7 @@ dependencies = [
  "scouter-types",
  "serde",
  "serde_json",
- "serde_qs 0.15.0",
+ "serde_qs 0.8.5",
  "thiserror 2.0.17",
  "tokio",
  "tracing",
@@ -6423,7 +6423,7 @@ dependencies = [
 [[package]]
 name = "scouter-dispatch"
 version = "0.13.0"
-source = "git+https://github.com/demml/scouter.git?branch=main#477945b64aae165c02a77b2526e349a13ea7e666"
+source = "git+https://github.com/demml/scouter.git?branch=imports#1268a2bb77af76f0c0d4eb14af22ecef7e757d70"
 dependencies = [
  "futures",
  "pyo3",
@@ -6438,12 +6438,12 @@ dependencies = [
 [[package]]
 name = "scouter-drift"
 version = "0.13.0"
-source = "git+https://github.com/demml/scouter.git?branch=main#477945b64aae165c02a77b2526e349a13ea7e666"
+source = "git+https://github.com/demml/scouter.git?branch=imports#1268a2bb77af76f0c0d4eb14af22ecef7e757d70"
 dependencies = [
  "chrono",
  "futures",
  "indicatif",
- "itertools 0.14.0",
+ "itertools 0.13.0",
  "ndarray",
  "num-traits",
  "numpy",
@@ -6464,10 +6464,10 @@ dependencies = [
 [[package]]
 name = "scouter-evaluate"
 version = "0.13.0"
-source = "git+https://github.com/demml/scouter.git?branch=main#477945b64aae165c02a77b2526e349a13ea7e666"
+source = "git+https://github.com/demml/scouter.git?branch=imports#1268a2bb77af76f0c0d4eb14af22ecef7e757d70"
 dependencies = [
  "chrono",
- "itertools 0.14.0",
+ "itertools 0.13.0",
  "ndarray",
  "num-traits",
  "owo-colors",
@@ -6491,7 +6491,7 @@ dependencies = [
 [[package]]
 name = "scouter-events"
 version = "0.13.0"
-source = "git+https://github.com/demml/scouter.git?branch=main#477945b64aae165c02a77b2526e349a13ea7e666"
+source = "git+https://github.com/demml/scouter.git?branch=imports#1268a2bb77af76f0c0d4eb14af22ecef7e757d70"
 dependencies = [
  "async-trait",
  "chrono",
@@ -6527,14 +6527,14 @@ dependencies = [
 [[package]]
 name = "scouter-http"
 version = "0.13.0"
-source = "git+https://github.com/demml/scouter.git?branch=main#477945b64aae165c02a77b2526e349a13ea7e666"
+source = "git+https://github.com/demml/scouter.git?branch=imports#1268a2bb77af76f0c0d4eb14af22ecef7e757d70"
 dependencies = [
  "pyo3",
  "reqwest",
  "scouter-settings",
  "scouter-types",
  "serde_json",
- "serde_qs 0.15.0",
+ "serde_qs 0.8.5",
  "thiserror 2.0.17",
  "tracing",
 ]
@@ -6542,7 +6542,7 @@ dependencies = [
 [[package]]
 name = "scouter-macro"
 version = "0.13.0"
-source = "git+https://github.com/demml/scouter.git?branch=main#477945b64aae165c02a77b2526e349a13ea7e666"
+source = "git+https://github.com/demml/scouter.git?branch=imports#1268a2bb77af76f0c0d4eb14af22ecef7e757d70"
 dependencies = [
  "thiserror 2.0.17",
 ]
@@ -6550,9 +6550,9 @@ dependencies = [
 [[package]]
 name = "scouter-observability"
 version = "0.13.0"
-source = "git+https://github.com/demml/scouter.git?branch=main#477945b64aae165c02a77b2526e349a13ea7e666"
+source = "git+https://github.com/demml/scouter.git?branch=imports#1268a2bb77af76f0c0d4eb14af22ecef7e757d70"
 dependencies = [
- "itertools 0.14.0",
+ "itertools 0.13.0",
  "ndarray",
  "ndarray-stats",
  "noisy_float",
@@ -6567,11 +6567,11 @@ dependencies = [
 [[package]]
 name = "scouter-profile"
 version = "0.13.0"
-source = "git+https://github.com/demml/scouter.git?branch=main#477945b64aae165c02a77b2526e349a13ea7e666"
+source = "git+https://github.com/demml/scouter.git?branch=imports#1268a2bb77af76f0c0d4eb14af22ecef7e757d70"
 dependencies = [
  "chrono",
  "indicatif",
- "itertools 0.14.0",
+ "itertools 0.13.0",
  "ndarray",
  "ndarray-stats",
  "noisy_float",
@@ -6589,7 +6589,7 @@ dependencies = [
 [[package]]
 name = "scouter-semver"
 version = "0.13.0"
-source = "git+https://github.com/demml/scouter.git?branch=main#477945b64aae165c02a77b2526e349a13ea7e666"
+source = "git+https://github.com/demml/scouter.git?branch=imports#1268a2bb77af76f0c0d4eb14af22ecef7e757d70"
 dependencies = [
  "pyo3",
  "semver",
@@ -6600,7 +6600,7 @@ dependencies = [
 [[package]]
 name = "scouter-settings"
 version = "0.13.0"
-source = "git+https://github.com/demml/scouter.git?branch=main#477945b64aae165c02a77b2526e349a13ea7e666"
+source = "git+https://github.com/demml/scouter.git?branch=imports#1268a2bb77af76f0c0d4eb14af22ecef7e757d70"
 dependencies = [
  "base64 0.22.1",
  "potato-head 0.10.0 (git+https://github.com/demml/potatohead.git?branch=feat%2Fnon-mut-execute-task)",
@@ -6613,7 +6613,7 @@ dependencies = [
 [[package]]
 name = "scouter-state"
 version = "0.13.0"
-source = "git+https://github.com/demml/scouter.git?branch=main#477945b64aae165c02a77b2526e349a13ea7e666"
+source = "git+https://github.com/demml/scouter.git?branch=imports#1268a2bb77af76f0c0d4eb14af22ecef7e757d70"
 dependencies = [
  "thiserror 2.0.17",
  "tokio",
@@ -6623,7 +6623,7 @@ dependencies = [
 [[package]]
 name = "scouter-tonic"
 version = "0.13.0"
-source = "git+https://github.com/demml/scouter.git?branch=main#477945b64aae165c02a77b2526e349a13ea7e666"
+source = "git+https://github.com/demml/scouter.git?branch=imports#1268a2bb77af76f0c0d4eb14af22ecef7e757d70"
 dependencies = [
  "prost",
  "prost-types",
@@ -6642,7 +6642,7 @@ dependencies = [
 [[package]]
 name = "scouter-tracing"
 version = "0.13.0"
-source = "git+https://github.com/demml/scouter.git?branch=main#477945b64aae165c02a77b2526e349a13ea7e666"
+source = "git+https://github.com/demml/scouter.git?branch=imports#1268a2bb77af76f0c0d4eb14af22ecef7e757d70"
 dependencies = [
  "chrono",
  "opentelemetry",
@@ -6667,7 +6667,7 @@ dependencies = [
 [[package]]
 name = "scouter-types"
 version = "0.13.0"
-source = "git+https://github.com/demml/scouter.git?branch=main#477945b64aae165c02a77b2526e349a13ea7e666"
+source = "git+https://github.com/demml/scouter.git?branch=imports#1268a2bb77af76f0c0d4eb14af22ecef7e757d70"
 dependencies = [
  "base64 0.22.1",
  "chrono",
