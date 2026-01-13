@@ -19696,7 +19696,7 @@ class ServiceCard:
         """
 
 # Define a TypeVar that can only be one of our card types
-CardType = TypeVar(  # pylint: disable=invalid-name
+CardType = TypeVar(
     "CardType",
     DataCard,
     ModelCard,
@@ -19705,53 +19705,7 @@ CardType = TypeVar(  # pylint: disable=invalid-name
     ServiceCard,
 )
 
-class CardRegistry(Generic[CardType]):
-    @overload
-    def __init__(
-        self, registry_type: Literal[RegistryType.Data]
-    ) -> "CardRegistry[DataCard]": ...
-    @overload
-    def __init__(
-        self, registry_type: Literal[RegistryType.Model]
-    ) -> "CardRegistry[ModelCard]": ...
-    @overload
-    def __init__(
-        self, registry_type: Literal[RegistryType.Prompt]
-    ) -> "CardRegistry[PromptCard]": ...
-    @overload
-    def __init__(
-        self, registry_type: Literal[RegistryType.Experiment]
-    ) -> "CardRegistry[ExperimentCard]": ...
-    @overload
-    def __init__(
-        self, registry_type: Literal[RegistryType.Service]
-    ) -> "CardRegistry[ServiceCard]": ...
-    @overload
-    def __init__(
-        self, registry_type: Literal[RegistryType.Audit]
-    ) -> "CardRegistry[Any]": ...
-
-    # String literal overloads
-    @overload
-    def __init__(self, registry_type: Literal["data"]) -> "CardRegistry[DataCard]": ...
-    @overload
-    def __init__(
-        self, registry_type: Literal["model"]
-    ) -> "CardRegistry[ModelCard]": ...
-    @overload
-    def __init__(
-        self, registry_type: Literal["prompt"]
-    ) -> "CardRegistry[PromptCard]": ...
-    @overload
-    def __init__(
-        self, registry_type: Literal["experiment"]
-    ) -> "CardRegistry[ExperimentCard]": ...
-    @overload
-    def __init__(
-        self, registry_type: Literal["service"]
-    ) -> "CardRegistry[ServiceCard]": ...
-    @overload
-    def __init__(self, registry_type: Literal["audit"]) -> "CardRegistry[Any]": ...
+class CardRegistry:
     def __init__(self, registry_type: Union[RegistryType, str]) -> None:
         """Interface for connecting to any of the Card registries
 
@@ -19761,7 +19715,6 @@ class CardRegistry(Generic[CardType]):
 
         Returns:
             Instantiated connection to specific Card registry
-
 
         Example:
         ```python
@@ -19850,51 +19803,6 @@ class CardRegistry(Generic[CardType]):
 
         """
 
-    @overload
-    def load_card(
-        self: "CardRegistry[DataCard]",
-        uid: Optional[str] = None,
-        space: Optional[str] = None,
-        name: Optional[str] = None,
-        version: Optional[str] = None,
-        interface: Optional[DataInterface] = None,
-    ) -> DataCard: ...
-    @overload
-    def load_card(
-        self: "CardRegistry[ServiceCard]",
-        uid: Optional[str] = None,
-        space: Optional[str] = None,
-        name: Optional[str] = None,
-        version: Optional[str] = None,
-        interface=Optional[ServiceCardInterfaceType],
-    ) -> ServiceCard: ...
-    @overload
-    def load_card(
-        self: "CardRegistry[ModelCard]",
-        uid: Optional[str] = None,
-        space: Optional[str] = None,
-        name: Optional[str] = None,
-        version: Optional[str] = None,
-        interface: Optional[ModelInterface] = None,
-    ) -> ModelCard: ...
-    @overload
-    def load_card(
-        self: "CardRegistry[PromptCard]",
-        uid: Optional[str] = None,
-        space: Optional[str] = None,
-        name: Optional[str] = None,
-        version: Optional[str] = None,
-        interface: None = None,
-    ) -> PromptCard: ...
-    @overload
-    def load_card(
-        self: "CardRegistry[ExperimentCard]",
-        uid: Optional[str] = None,
-        space: Optional[str] = None,
-        name: Optional[str] = None,
-        version: Optional[str] = None,
-        interface: None = None,
-    ) -> ExperimentCard: ...
     def load_card(
         self,
         uid: Optional[str] = None,
@@ -19902,7 +19810,7 @@ class CardRegistry(Generic[CardType]):
         name: Optional[str] = None,
         version: Optional[str] = None,
         interface: Optional[LoadInterfaceType] = None,
-    ) -> Union[DataCard, ModelCard, PromptCard, ExperimentCard, ServiceCard]:
+    ) -> CardType:
         """Load a Card from the registry
 
         Args:
@@ -19957,20 +19865,383 @@ class CardRegistry(Generic[CardType]):
                 experimentcard.
         """
 
+class ModelCardRegistry(CardRegistry):
+    def register_card(
+        self,
+        card: ModelCard,
+        version_type: VersionType = VersionType.Minor,
+        pre_tag: Optional[str] = None,
+        build_tag: Optional[str] = None,
+        save_kwargs: Optional[ModelSaveKwargs] = None,
+    ) -> None:
+        """Register a Card
+
+        Args:
+            card (ModelCard):
+                ModelCard to register.
+            version_type (VersionType):
+                How to increment the version SemVer.
+            pre_tag (str):
+                Optional pre tag to associate with the version.
+            build_tag (str):
+                Optional build_tag to associate with the version.
+            save_kwargs (ModelSaveKwargs):
+                Optional SaveKwargs to pass to the Card interface
+
+        """
+
+    def load_card(
+        self,
+        uid: Optional[str] = None,
+        space: Optional[str] = None,
+        name: Optional[str] = None,
+        version: Optional[str] = None,
+        interface: Optional[ModelInterface] = None,
+    ) -> ModelCard:
+        """Load a Card from the registry
+
+        Args:
+            uid (str, optional):
+                Unique identifier for Card. If present, the uid takes precedence over space/name/version.
+            space (str, optional):
+                Space associated with the card.
+            name (str, optional):
+                Name of the card.
+            version (str, optional):
+                Version number of existing card. If not specified, the most recent version will be used.
+            interface (ModelInterface, optional):
+                Interface to load the card with. Required for cards registered with custom interfaces.
+
+        Returns:
+            ModelCard
+        """
+
+    def update_card(
+        self,
+        card: ModelCard,
+    ) -> None:
+        """Update a Card in the registry.
+        Note: This will only update the registry record for a given card. It
+        will not re-save/update the underlying artifacts (except for metadata).
+
+        Args:
+            card (ModelCard):
+                Card to update
+        """
+
+    def delete_card(
+        self,
+        card: ModelCard,
+    ) -> None:
+        """Delete a Card from the registry. This will also remove
+        the underlying artifacts associated with the card.
+
+        Args:
+            card (ModelCard):
+                Card to delete. Can be a DataCard, ModelCard,
+                experimentcard.
+        """
+
+class DataCardRegistry(CardRegistry):
+    def register_card(
+        self,
+        card: DataCard,
+        version_type: VersionType = VersionType.Minor,
+        pre_tag: Optional[str] = None,
+        build_tag: Optional[str] = None,
+        save_kwargs: Optional[DataSaveKwargs] = None,
+    ) -> None:
+        """Register a Card
+
+        Args:
+            card (DataCard):
+                DataCard to register.
+            version_type (VersionType):
+                How to increment the version SemVer.
+            pre_tag (str):
+                Optional pre tag to associate with the version.
+            build_tag (str):
+                Optional build_tag to associate with the version.
+            save_kwargs (DataSaveKwargs):
+                Optional SaveKwargs to pass to the Card interface
+
+        """
+
+    def load_card(
+        self,
+        uid: Optional[str] = None,
+        space: Optional[str] = None,
+        name: Optional[str] = None,
+        version: Optional[str] = None,
+        interface: Optional[DataInterface] = None,
+    ) -> DataCard:
+        """Load a Card from the registry
+
+        Args:
+            uid (str, optional):
+                Unique identifier for Card. If present, the uid takes precedence over space/name/version.
+            space (str, optional):
+                Space associated with the card.
+            name (str, optional):
+                Name of the card.
+            version (str, optional):
+                Version number of existing card. If not specified, the most recent version will be used.
+            interface (DataInterface, optional):
+                Interface to load the card with. Required for cards registered with custom interfaces.
+
+        Returns:
+            DataCard
+        """
+
+    def update_card(
+        self,
+        card: DataCard,
+    ) -> None:
+        """Update a Card in the registry.
+        Note: This will only update the registry record for a given card. It
+        will not re-save/update the underlying artifacts (except for metadata).
+
+        Args:
+            card (DataCard):
+                Card to update
+        """
+
+    def delete_card(
+        self,
+        card: DataCard,
+    ) -> None:
+        """Delete a Card from the registry. This will also remove
+        the underlying artifacts associated with the card.
+
+        Args:
+            card (DataCard):
+                Card to delete
+        """
+
+class ExperimentCardRegistry(CardRegistry):
+    def register_card(
+        self,
+        card: ExperimentCard,
+        version_type: VersionType = VersionType.Minor,
+        pre_tag: Optional[str] = None,
+        build_tag: Optional[str] = None,
+    ) -> None:
+        """Register a Card
+
+        Args:
+            card (ExperimentCard):
+                ExperimentCard to register.
+            version_type (VersionType):
+                How to increment the version SemVer.
+            pre_tag (str):
+                Optional pre tag to associate with the version.
+            build_tag (str):
+                Optional build_tag to associate with the version.
+
+        """
+
+    def load_card(
+        self,
+        uid: Optional[str] = None,
+        space: Optional[str] = None,
+        name: Optional[str] = None,
+        version: Optional[str] = None,
+    ) -> ExperimentCard:
+        """Load a Card from the registry
+
+        Args:
+            uid (str, optional):
+                Unique identifier for Card. If present, the uid takes precedence over space/name/version.
+            space (str, optional):
+                Space associated with the card.
+            name (str, optional):
+                Name of the card.
+            version (str, optional):
+                Version number of existing card. If not specified, the most recent version will be used.
+
+        Returns:
+            ExperimentCard
+        """
+
+    def update_card(
+        self,
+        card: ExperimentCard,
+    ) -> None:
+        """Update a Card in the registry.
+        Note: This will only update the registry record for a given card. It
+        will not re-save/update the underlying artifacts (except for metadata).
+
+        Args:
+            card (ExperimentCard):
+                Card to update.
+        """
+
+    def delete_card(
+        self,
+        card: ExperimentCard,
+    ) -> None:
+        """Delete a Card from the registry. This will also remove
+        the underlying artifacts associated with the card.
+
+        Args:
+            card (ExperimentCard):
+                Card to delete
+        """
+
+class PromptCardRegistry(CardRegistry):
+    def register_card(
+        self,
+        card: PromptCard,
+        version_type: VersionType = VersionType.Minor,
+        pre_tag: Optional[str] = None,
+        build_tag: Optional[str] = None,
+    ) -> None:
+        """Register a Card
+
+        Args:
+            card (PromptCard):
+                PromptCard to register.
+            version_type (VersionType):
+                How to increment the version SemVer.
+            pre_tag (str):
+                Optional pre tag to associate with the version.
+            build_tag (str):
+                Optional build_tag to associate with the version.
+
+        """
+
+    def load_card(
+        self,
+        uid: Optional[str] = None,
+        space: Optional[str] = None,
+        name: Optional[str] = None,
+        version: Optional[str] = None,
+    ) -> PromptCard:
+        """Load a Card from the registry
+
+        Args:
+            uid (str, optional):
+                Unique identifier for Card. If present, the uid takes precedence over space/name/version.
+            space (str, optional):
+                Space associated with the card.
+            name (str, optional):
+                Name of the card.
+            version (str, optional):
+                Version number of existing card. If not specified, the most recent version will be used.
+
+        Returns:
+            PromptCard
+        """
+
+    def update_card(
+        self,
+        card: PromptCard,
+    ) -> None:
+        """Update a Card in the registry.
+        Note: This will only update the registry record for a given card. It
+        will not re-save/update the underlying artifacts (except for metadata).
+
+        Args:
+            card (PromptCard):
+                Card to update
+        """
+
+    def delete_card(
+        self,
+        card: PromptCard,
+    ) -> None:
+        """Delete a Card from the registry. This will also remove
+        the underlying artifacts associated with the card.
+
+        Args:
+            card (PromptCard):
+                Card to delete
+        """
+
+class ServiceCardRegistry(CardRegistry):
+    def register_card(
+        self,
+        card: ServiceCard,
+        version_type: VersionType = VersionType.Minor,
+        pre_tag: Optional[str] = None,
+        build_tag: Optional[str] = None,
+    ) -> None:
+        """Register a Card
+
+        Args:
+            card (ServiceCard):
+                ServiceCard to register.
+            version_type (VersionType):
+                How to increment the version SemVer.
+            pre_tag (str):
+                Optional pre tag to associate with the version.
+            build_tag (str):
+                Optional build_tag to associate with the version.
+
+        """
+
+    def load_card(
+        self,
+        uid: Optional[str] = None,
+        space: Optional[str] = None,
+        name: Optional[str] = None,
+        version: Optional[str] = None,
+    ) -> ServiceCard:
+        """Load a Card from the registry
+
+        Args:
+            uid (str, optional):
+                Unique identifier for Card. If present, the uid takes precedence over space/name/version.
+            space (str, optional):
+                Space associated with the card.
+            name (str, optional):
+                Name of the card.
+            version (str, optional):
+                Version number of existing card. If not specified, the most recent version will be used.
+
+        Returns:
+            ServiceCard
+        """
+
+    def update_card(
+        self,
+        card: ServiceCard,
+    ) -> None:
+        """Update a Card in the registry.
+        Note: This will only update the registry record for a given card. It
+        will not re-save/update the underlying artifacts (except for metadata).
+
+        Args:
+            card (ServiceCard):
+                Card to update
+        """
+
+    def delete_card(
+        self,
+        card: ServiceCard,
+    ) -> None:
+        """Delete a Card from the registry. This will also remove
+        the underlying artifacts associated with the card.
+
+        Args:
+            card (ServiceCard):
+                Card to delete
+        """
+
 class CardRegistries:
     def __init__(self) -> None: ...
     @property
-    def data(self) -> CardRegistry[DataCard]: ...
+    def data(self) -> DataCardRegistry: ...
     @property
-    def model(self) -> CardRegistry[ModelCard]: ...
+    def model(self) -> ModelCardRegistry: ...
     @property
-    def experiment(self) -> CardRegistry[ExperimentCard]: ...
+    def experiment(self) -> ExperimentCardRegistry: ...
     @property
     def audit(self) -> CardRegistry[Any]: ...
     @property
-    def prompt(self) -> CardRegistry[PromptCard]: ...
+    def prompt(self) -> PromptCardRegistry: ...
     @property
-    def service(self) -> CardRegistry[ServiceCard]: ...
+    def service(self) -> ServiceCardRegistry: ...
 
 def download_service(
     write_dir: Path,
