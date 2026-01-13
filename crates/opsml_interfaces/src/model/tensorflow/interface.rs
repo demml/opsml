@@ -361,8 +361,16 @@ impl TensorFlowModel {
         }
 
         if !metadata.data_processor_map.is_empty() {
-            debug!("Loading preprocessor");
-            self_.load_preprocessor(py, &path, load_kwargs.preprocessor_kwargs(py))?;
+            // get first key from metadata.save_metadata.data_processor_map.keys() or default to unknow
+            let processor = metadata
+                .data_processor_map
+                .values()
+                .next()
+                .ok_or_else(|| ModelInterfaceError::MissingPreprocessorUriError)?;
+
+            let preprocessor_uri = path.join(&processor.uri);
+
+            self_.load_preprocessor(py, &preprocessor_uri, load_kwargs.preprocessor_kwargs(py))?;
         }
 
         debug!("Loading drift profile");
