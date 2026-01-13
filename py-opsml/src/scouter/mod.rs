@@ -1,6 +1,7 @@
 pub mod alert;
 pub mod client;
 pub mod drift;
+pub mod evaluate;
 pub mod observe;
 pub mod profile;
 pub mod queue;
@@ -20,6 +21,7 @@ pub fn add_scouter_module(m: &Bound<'_, PyModule>) -> PyResult<()> {
     observe::add_observe_module(m)?;
     transport::add_transport_module(m)?;
     tracing::add_tracing_module(m)?;
+    evaluate::add_evaluate_module(m)?;
 
     Ok(())
 }

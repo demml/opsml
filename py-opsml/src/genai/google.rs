@@ -1,39 +1,136 @@
-use potato_head::google_types::{
-    chat::{
-        FunctionCallingConfig, GeminiSettings, GenerationConfig, HarmBlockMethod,
-        HarmBlockThreshold, HarmCategory, LatLng, MediaResolution, Modality, Mode,
-        ModelArmorConfig, PrebuiltVoiceConfig, RetrievalConfig, SafetySetting, SpeechConfig,
-        ThinkingConfig, ToolConfig, VoiceConfig, VoiceConfigMode,
-    },
-    predict::{PredictRequest, PredictResponse},
-    EmbeddingTaskType, GeminiEmbeddingConfig, GeminiEmbeddingResponse,
-};
+use potato_head::google_types::*;
 use pyo3::prelude::*;
 
 pub fn add_google_module(m: &Bound<'_, PyModule>) -> PyResult<()> {
-    m.add_class::<GenerationConfig>()?;
-    m.add_class::<MediaResolution>()?;
-    m.add_class::<Modality>()?;
-    m.add_class::<SpeechConfig>()?;
-    m.add_class::<ThinkingConfig>()?;
-    m.add_class::<VoiceConfig>()?;
-    m.add_class::<VoiceConfigMode>()?;
-    m.add_class::<PrebuiltVoiceConfig>()?;
+    // request types
+    m.add_class::<SchemaType>()?;
+    m.add_class::<Schema>()?;
     m.add_class::<HarmCategory>()?;
-    m.add_class::<HarmBlockMethod>()?;
     m.add_class::<HarmBlockThreshold>()?;
+    m.add_class::<HarmBlockMethod>()?;
     m.add_class::<SafetySetting>()?;
-    m.add_class::<ToolConfig>()?;
-    m.add_class::<FunctionCallingConfig>()?;
-    m.add_class::<RetrievalConfig>()?;
-    m.add_class::<LatLng>()?;
+    m.add_class::<Modality>()?;
+    m.add_class::<MediaResolution>()?;
+    m.add_class::<ModelRoutingPreference>()?;
+    m.add_class::<ThinkingLevel>()?;
+    m.add_class::<ThinkingConfig>()?;
+    m.add_class::<ImageConfig>()?;
+    m.add_class::<AutoRoutingMode>()?;
+    m.add_class::<ManualRoutingMode>()?;
+    m.add_class::<RoutingConfigMode>()?;
+    m.add_class::<RoutingConfig>()?;
+    m.add_class::<PrebuiltVoiceConfig>()?;
+    m.add_class::<VoiceConfig>()?;
+    m.add_class::<SpeakerVoiceConfig>()?;
+    m.add_class::<MultiSpeakerVoiceConfig>()?;
+    m.add_class::<SpeechConfig>()?;
+    m.add_class::<GenerationConfig>()?;
     m.add_class::<ModelArmorConfig>()?;
     m.add_class::<Mode>()?;
+    m.add_class::<FunctionCallingConfig>()?;
+    m.add_class::<LatLng>()?;
+    m.add_class::<RetrievalConfig>()?;
+    m.add_class::<ToolConfig>()?;
     m.add_class::<GeminiSettings>()?;
-    m.add_class::<GeminiEmbeddingConfig>()?;
-    m.add_class::<GeminiEmbeddingResponse>()?;
+    m.add_class::<Language>()?;
+    m.add_class::<Outcome>()?;
+    m.add_class::<FileData>()?;
+    m.add_class::<PartialArgs>()?;
+    m.add_class::<FunctionCall>()?;
+    m.add_class::<Blob>()?;
+    m.add_class::<FunctionResponse>()?;
+    m.add_class::<ExecutableCode>()?;
+    m.add_class::<CodeExecutionResult>()?;
+    m.add_class::<VideoMetadata>()?;
+    m.add_class::<PartMetadata>()?;
+    m.add_class::<Part>()?;
+    m.add_class::<GeminiContent>()?;
+    m.add_class::<Behavior>()?;
+    m.add_class::<FunctionDeclaration>()?;
+    m.add_class::<DataStoreSpec>()?;
+    m.add_class::<VertexAISearch>()?;
+    m.add_class::<VertexRagStore>()?;
+    m.add_class::<RagResource>()?;
+    m.add_class::<RagRetrievalConfig>()?;
+    m.add_class::<Filter>()?;
+    m.add_class::<RankService>()?;
+    m.add_class::<LlmRanker>()?;
+    m.add_class::<RankingConfig>()?;
+    m.add_class::<Ranking>()?;
+    m.add_class::<ApiSpecType>()?;
+    m.add_class::<SimpleSearchParams>()?;
+    m.add_class::<ElasticSearchParams>()?;
+    m.add_class::<AuthType>()?;
+    m.add_class::<HttpElementLocation>()?;
+    m.add_class::<ApiKeyConfig>()?;
+    m.add_class::<HttpBasicAuthConfig>()?;
+    m.add_class::<GoogleServiceAccountConfig>()?;
+    m.add_class::<OauthConfigValue>()?;
+    m.add_class::<OauthConfig>()?;
+    m.add_class::<OidcConfig>()?;
+    m.add_class::<AuthConfigValue>()?;
+    m.add_class::<AuthConfig>()?;
+    m.add_class::<ExternalApi>()?;
+    m.add_class::<RetrievalSource>()?;
+    m.add_class::<Retrieval>()?;
+    m.add_class::<Interval>()?;
+    m.add_class::<GoogleSearch>()?;
+    m.add_class::<PhishBlockThreshold>()?;
+    m.add_class::<VertexGoogleSearch>()?;
+    m.add_class::<EnterpriseWebSearch>()?;
+    m.add_class::<ParallelAiSearch>()?;
+    m.add_class::<GoogleSearchNum>()?;
+    m.add_class::<DynamicRetrievalMode>()?;
+    m.add_class::<DynamicRetrievalConfig>()?;
+    m.add_class::<GoogleSearchRetrieval>()?;
+    m.add_class::<GoogleMaps>()?;
+    m.add_class::<CodeExecution>()?;
+    m.add_class::<ComputerUseEnvironment>()?;
+    m.add_class::<ComputerUse>()?;
+    m.add_class::<UrlContext>()?;
+    m.add_class::<FileSearch>()?;
+    m.add_class::<Tool>()?;
+    // response types
+    m.add_class::<TrafficType>()?;
+    m.add_class::<ModalityTokenCount>()?;
+    m.add_class::<UsageMetadata>()?;
+    m.add_class::<BlockedReason>()?;
+    m.add_class::<PromptFeedback>()?;
+    m.add_class::<UrlRetrievalStatus>()?;
+    m.add_class::<UrlMetadata>()?;
+    m.add_class::<UrlContextMetadata>()?;
+    m.add_class::<SourceFlaggingUri>()?;
+    m.add_class::<RetrievalMetadata>()?;
+    m.add_class::<SearchEntryPoint>()?;
+    m.add_class::<Segment>()?;
+    m.add_class::<GroundingSupport>()?;
+    m.add_class::<Web>()?;
+    m.add_class::<PageSpan>()?;
+    m.add_class::<RagChunk>()?;
+    m.add_class::<RetrievedContext>()?;
+    m.add_class::<Maps>()?;
+    m.add_class::<GroundingChunkType>()?;
+    m.add_class::<GroundingChunk>()?;
+    m.add_class::<GroundingMetadata>()?;
+    m.add_class::<HarmProbability>()?;
+    m.add_class::<HarmSeverity>()?;
+    m.add_class::<SafetyRating>()?;
+    m.add_class::<FinishReason>()?;
+    m.add_class::<LogprobsCandidate>()?;
+    m.add_class::<TopCandidates>()?;
+    m.add_class::<LogprobsResult>()?;
+    m.add_class::<GoogleDate>()?;
+    m.add_class::<Citation>()?;
+    m.add_class::<CitationMetadata>()?;
+    m.add_class::<Candidate>()?;
+    m.add_class::<GenerateContentResponse>()?;
+
+    // embedding types
     m.add_class::<PredictRequest>()?;
     m.add_class::<PredictResponse>()?;
     m.add_class::<EmbeddingTaskType>()?;
+    m.add_class::<GeminiEmbeddingConfig>()?;
+    m.add_class::<ContentEmbedding>()?;
+    m.add_class::<GeminiEmbeddingResponse>()?;
     Ok(())
 }

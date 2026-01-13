@@ -24,7 +24,6 @@ opsml-cli = { path = "crates/opsml_cli" }
 opsml-crypt = { path = "crates/opsml_crypt" }
 opsml-client = { path = "crates/opsml_client" }
 opsml-colors = { path = "crates/opsml_colors" }
-opsml-evaluate = { path = "crates/opsml_evaluate" }
 opsml-events = { path = "crates/opsml_events" }
 opsml-interfaces = { path = "crates/opsml_interfaces" }
 opsml-genai = { path = "crates/opsml_genai" }
@@ -85,7 +84,7 @@ ort = { version = "2.0.0-rc.10" }
 owo-colors = "4.*"
 password-auth = "1.*"
 pbkdf2 = "0.*"
-potato-head = "0.*"
+potato-head = { git = "https://github.com/demml/potatohead.git", branch = "main" }
 pyo3 = { version = "0.*", features = ["abi3-py310", "extension-module", "anyhow", "serde", "chrono"] }
 rand = { version = "0.9.1"}
 rayon = "1.*"
@@ -94,7 +93,7 @@ reqwest = { version = "0.12.*", features = ["json", "stream", "multipart", "rust
 reqwest-middleware = "0.*"
 rusty-logging = "0.*"
 # we cant use crates.io because scouter relies on a fork of linfa at the moment
-scouter-client = {branch = "feat/182/tonic-grpc", git = "https://github.com/demml/scouter.git"}
+scouter-client = {branch = "main", git = "https://github.com/demml/scouter.git"}
 sha2 = "0.*"
 semver = "1.*"
 serde = { version = "1.*", features = ["derive"] }
