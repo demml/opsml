@@ -1,12 +1,12 @@
 # mypy: disable-error-code="attr-defined"
 from ..._opsml import (
-    CustomMetricServerRecord,
+    CustomMetricRecord,
     EntityType,
     Features,
-    LLMRecord,
+    GenAIEvalRecord,
     Metric,
     Metrics,
-    PsiServerRecord,
+    PsiRecord,
     Queue,
 )
 from ..._opsml import QueueFeature as Feature
@@ -15,15 +15,14 @@ from ..._opsml import (
     ScouterQueue,
     ServerRecord,
     ServerRecords,
-    SpcServerRecord,
 )
 
 __all__ = [
     "ScouterQueue",
     "Queue",
-    "SpcServerRecord",
-    "PsiServerRecord",
-    "CustomMetricServerRecord",
+    "SpcRecord",
+    "PsiRecord",
+    "CustomMetricRecord",
     "ServerRecord",
     "ServerRecords",
     "Feature",
@@ -32,5 +31,5 @@ __all__ = [
     "Metric",
     "Metrics",
     "EntityType",
-    "LLMRecord",
+    "GenAIEvalRecord",
 ]

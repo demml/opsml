@@ -1,6 +1,6 @@
-use jsonwebtoken::DecodingKey;
+use jsonwebtoken::{DecodingKey, decode_header};
 use serde::{Deserialize, Serialize};
-
+use tracing::{debug, error};
 use crate::sso::error::SsoError;
 
 pub enum Provider {
@@ -32,6 +32,34 @@ impl JwkResponse {
         self.keys
             .iter()
             .find(|key| key.alg == Algorithm::RS256 && key.use_ == "sig")
+    }
+
+    pub fn signing_key_by_kid(&self, kid: &str) -> Option<&Jwk> {
+        self.keys
+            .iter()
+            .find(|key| key.kid == kid && key.use_ == "sig")
+    }
+
+    /// Get the decoding key for a specific token by extracting the kid from its header
+    pub fn get_decoded_key_for_token(&self, token: &str) -> Result<DecodingKey, SsoError> {
+        // Decode the JWT header to get the kid
+        let header = decode_header(token).map_err(SsoError::JwtDecodeError)?;
+
+        debug!("Decoded JWT header: {:?}", header);
+        
+        let kid = header.kid.ok_or(SsoError::MissingSigningKey).inspect_err(|_| {
+            error!("No 'kid' found in token header");
+        })?;
+
+        let signing_key = self
+            .signing_key_by_kid(&kid)
+            .ok_or(SsoError::MissingSigningKey).inspect_err(|_| {
+                error!("No signing key found for kid: {}", kid);
+            })?;
+
+        
+        DecodingKey::from_rsa_components(&signing_key.n, &signing_key.e)
+            .map_err(SsoError::JwtDecodeError)
     }
 
     /// Get the public key in PEM format from the JWK response.
