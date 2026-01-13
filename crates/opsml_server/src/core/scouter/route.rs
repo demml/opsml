@@ -27,7 +27,7 @@ use tracing::debug;
 use scouter_client::{
     BinnedMetrics, BinnedPsiFeatureMetrics, DriftAlertPaginationRequest,
     DriftAlertPaginationResponse, DriftRequest, EntityIdTagsRequest, EntityIdTagsResponse,
-    LLMDriftRecordPaginationRequest, LLMDriftRecordPaginationResponse, ProfileRequest,
+    GenAIEvalRecordPaginationRequest, GenAIEvalRecordPaginationResponse, ProfileRequest,
     ProfileStatusRequest, RegisteredProfileResponse, ScouterResponse, ScouterServerError,
     SpcDriftFeatures, TraceFilters, TraceMetricsRequest, TraceMetricsResponse,
     TracePaginationResponse, TraceRequest, TraceSpansResponse, UpdateAlertResponse,
