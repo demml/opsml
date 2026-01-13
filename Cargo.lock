@@ -3396,9 +3396,9 @@ dependencies = [
 
 [[package]]
 name = "lzma-rust2"
-version = "0.15.6"
+version = "0.15.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "17f7337d278fec032975dc884152491580dd23750ee957047856735fe0e61ede"
+checksum = "1670343e58806300d87950e3401e820b519b9384281bbabfb15e3636689ffd69"
 
 [[package]]
 name = "lzma-sys"
@@ -6414,7 +6414,7 @@ dependencies = [
  "scouter-types",
  "serde",
  "serde_json",
- "serde_qs 0.8.5",
+ "serde_qs 0.15.0",
  "thiserror 2.0.17",
  "tokio",
  "tracing",
@@ -6443,7 +6443,7 @@ dependencies = [
  "chrono",
  "futures",
  "indicatif",
- "itertools 0.13.0",
+ "itertools 0.14.0",
  "ndarray",
  "num-traits",
  "numpy",
@@ -6467,7 +6467,7 @@ version = "0.13.0"
 source = "git+https://github.com/demml/scouter.git?branch=imports#1268a2bb77af76f0c0d4eb14af22ecef7e757d70"
 dependencies = [
  "chrono",
- "itertools 0.13.0",
+ "itertools 0.14.0",
  "ndarray",
  "num-traits",
  "owo-colors",
@@ -6534,7 +6534,7 @@ dependencies = [
  "scouter-settings",
  "scouter-types",
  "serde_json",
- "serde_qs 0.8.5",
+ "serde_qs 0.15.0",
  "thiserror 2.0.17",
  "tracing",
 ]
@@ -6552,7 +6552,7 @@ name = "scouter-observability"
 version = "0.13.0"
 source = "git+https://github.com/demml/scouter.git?branch=imports#1268a2bb77af76f0c0d4eb14af22ecef7e757d70"
 dependencies = [
- "itertools 0.13.0",
+ "itertools 0.14.0",
  "ndarray",
  "ndarray-stats",
  "noisy_float",
@@ -6571,7 +6571,7 @@ source = "git+https://github.com/demml/scouter.git?branch=imports#1268a2bb77af76
 dependencies = [
  "chrono",
  "indicatif",
- "itertools 0.13.0",
+ "itertools 0.14.0",
  "ndarray",
  "ndarray-stats",
  "noisy_float",
