@@ -4,7 +4,7 @@ use crate::sso::types::UserInfo;
 use async_trait::async_trait;
 use jsonwebtoken::{decode, DecodingKey, Validation};
 use reqwest::StatusCode;
-use tracing::{debug, error};
+use tracing::{debug, error, instrument};
 #[async_trait]
 pub trait SsoProviderExt {
     fn client(&self) -> &reqwest::Client;
@@ -26,8 +26,7 @@ pub trait SsoProviderExt {
         code: &'a str,
         code_verifier: &'a str,
     ) -> Vec<(&'a str, &'a str)>;
-    fn decoding_key(&self) -> &DecodingKey;
-
+    fn get_decoding_key_for_token(&self, token: &str) -> Result<DecodingKey, SsoError>;
     async fn make_token_request(
         &self,
         params: Vec<(&str, &str)>,
@@ -92,6 +91,7 @@ pub trait SsoProviderExt {
         self.make_token_request(params).await
     }
 
+    #[instrument(skip_all)]
     async fn get_token_from_code(
         &self,
         code: &str,
@@ -99,7 +99,7 @@ pub trait SsoProviderExt {
     ) -> Result<TokenResponse, SsoError> {
         // Implement the token retrieval logic using the authorization code
         let params = self.build_callback_auth_params(code, code_verifier);
-        debug!("Requesting token from Keycloak with code");
+        debug!("Requesting token from sso provider with code");
         self.make_token_request(params).await
     }
 
@@ -112,11 +112,13 @@ pub trait SsoProviderExt {
     ///
     /// # Returns
     /// * `Result<Claims, SsoError>` - The decoded claims if successful, or an error if validation fails.
+    #[instrument(skip_all)]
     fn decode_jwt_with_validation(&self, id_token: &str) -> Result<IdTokenClaims, SsoError> {
         let mut validation = Validation::new(jsonwebtoken::Algorithm::RS256);
         validation.validate_aud = false;
 
-        let token_data = decode::<IdTokenClaims>(id_token, self.decoding_key(), &validation)
+        let decoding_key = self.get_decoding_key_for_token(id_token)?;
+        let token_data = decode::<IdTokenClaims>(id_token, &decoding_key, &validation)
             .map_err({
                 |e| {
                     error!("Failed to decode JWT token: {e}");
@@ -161,6 +163,7 @@ pub trait SsoProviderExt {
         Ok(UserInfo { username, email })
     }
 
+    #[instrument(skip_all)]
     async fn authenticate_auth_flow(
         &self,
         code: &str,
@@ -202,4 +205,6 @@ pub trait SsoProviderExt {
             code_challenge_method
         )
     }
+
+    
 }
