@@ -1,5 +1,4 @@
 use crate::error::ExperimentError;
-use crate::llm::LLMEvaluator;
 use crate::HardwareQueue;
 use chrono::{DateTime, Utc};
 use mime_guess::mime;
@@ -546,11 +545,6 @@ impl Experiment {
             .map_err(ExperimentError::InsertMetricError)?;
 
         Ok(())
-    }
-
-    #[getter]
-    pub fn llm(&self) -> Result<LLMEvaluator, ExperimentError> {
-        Ok(LLMEvaluator {})
     }
 
     pub fn log_metrics(&self, metrics: Vec<Metric>) -> Result<(), ExperimentError> {

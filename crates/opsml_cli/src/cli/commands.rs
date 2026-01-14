@@ -3,7 +3,6 @@ use crate::cli::arg::{
 };
 use clap::builder::styling::{AnsiColor, Effects};
 use clap::builder::Styles;
-use clap::command;
 use clap::Parser;
 use clap::Subcommand;
 use serde::Serialize;

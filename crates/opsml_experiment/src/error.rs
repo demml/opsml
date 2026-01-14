@@ -10,6 +10,9 @@ use tracing::error;
 
 #[derive(Error, Debug)]
 pub enum ExperimentError {
+    #[error("{0}")]
+    Error(String),
+
     #[error(transparent)]
     IoError(#[from] std::io::Error),
 
@@ -27,9 +30,6 @@ pub enum ExperimentError {
 
     #[error(transparent)]
     CardError(#[from] CardError),
-
-    #[error(transparent)]
-    PyErr(#[from] pyo3::PyErr),
 
     #[error("Failed to load experiment card")]
     LoadCardError(#[source] RegistryError),
@@ -72,9 +72,6 @@ pub enum ExperimentError {
 
     #[error("{0}")]
     MissingImportError(String),
-
-    #[error(transparent)]
-    EvaluationError(#[from] opsml_evaluate::error::EvaluationError),
 }
 
 impl From<std::ffi::OsString> for ExperimentError {
@@ -90,9 +87,14 @@ impl From<ExperimentError> for PyErr {
         PyRuntimeError::new_err(msg)
     }
 }
-
-impl<'a> From<pyo3::DowncastError<'a, 'a>> for ExperimentError {
-    fn from(err: pyo3::DowncastError) -> Self {
+impl<'a, 'py> From<pyo3::CastError<'a, 'py>> for ExperimentError {
+    fn from(err: pyo3::CastError<'a, 'py>) -> Self {
         ExperimentError::DowncastError(err.to_string())
+    }
+}
+
+impl From<PyErr> for ExperimentError {
+    fn from(err: PyErr) -> Self {
+        ExperimentError::Error(err.to_string())
     }
 }
