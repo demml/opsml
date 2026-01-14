@@ -1,6 +1,6 @@
 use opsml_experiment::{
-    download_artifact, get_experiment_metrics, get_experiment_parameters, llm::LLMEvaluator,
-    start_experiment, Experiment,
+    download_artifact, get_experiment_metrics, get_experiment_parameters, start_experiment,
+    Experiment,
 };
 use opsml_types::cards::experiment::{EvalMetrics, Metric, Metrics, Parameter, Parameters};
 use pyo3::prelude::*;

@@ -42,12 +42,10 @@ impl DefaultSsoSettings {
             .map_err(SsoError::ReqwestError)?;
 
         let jwk_response = match response.status() {
-            StatusCode::OK => {
-                response.json::<JwkResponse>().await.map_err(|e| {
-                    error!("Failed to parse JWK response from Keycloak at {certs_url} error: {e}");
-                    SsoError::ReqwestError(e)
-                })?
-            }
+            StatusCode::OK => response.json::<JwkResponse>().await.map_err(|e| {
+                error!("Failed to parse JWK response from Keycloak at {certs_url} error: {e}");
+                SsoError::ReqwestError(e)
+            })?,
             _ => {
                 // get response body
                 let body = response.text().await.map_err(SsoError::ReqwestError)?;

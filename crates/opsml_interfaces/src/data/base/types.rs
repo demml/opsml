@@ -227,7 +227,7 @@ impl DataSaveKwargs {
         let data = self
             .data
             .as_ref()
-            .map(|args| depythonize(&args.bind(py)).unwrap())
+            .map(|args| depythonize(args.bind(py)).unwrap())
             .unwrap_or(Value::Null);
 
         let json = json!({
@@ -264,7 +264,7 @@ impl Serialize for DataSaveKwargs {
             let data = self
                 .data
                 .as_ref()
-                .map(|onnx| depythonize(&onnx.bind(py)).unwrap())
+                .map(|onnx| depythonize(onnx.bind(py)).unwrap())
                 .unwrap_or(Value::Null);
 
             state.serialize_field("data", &data)?;

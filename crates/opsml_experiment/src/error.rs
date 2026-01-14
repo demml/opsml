@@ -4,6 +4,7 @@ use opsml_registry::error::RegistryError;
 use opsml_storage::storage::error::StorageError;
 use opsml_types::error::TypeError;
 use pyo3::exceptions::PyRuntimeError;
+use pyo3::pyclass::PyClassGuardError;
 use pyo3::PyErr;
 use thiserror::Error;
 use tracing::error;
@@ -95,6 +96,12 @@ impl<'a, 'py> From<pyo3::CastError<'a, 'py>> for ExperimentError {
 
 impl From<PyErr> for ExperimentError {
     fn from(err: PyErr) -> Self {
+        ExperimentError::Error(err.to_string())
+    }
+}
+
+impl<'a, 'py> From<PyClassGuardError<'a, 'py>> for ExperimentError {
+    fn from(err: PyClassGuardError<'a, 'py>) -> Self {
         ExperimentError::Error(err.to_string())
     }
 }
