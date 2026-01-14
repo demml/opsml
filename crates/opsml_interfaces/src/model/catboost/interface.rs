@@ -4,7 +4,6 @@ use crate::model::ModelInterface;
 use crate::{DataProcessor, ModelLoadKwargs, ModelSaveKwargs};
 use crate::{OnnxSession, ProcessorType};
 use opsml_types::{CommonKwargs, ModelInterfaceType, SaveName, Suffix, TaskType};
-use opsml_utils::pyobject_to_json;
 use pyo3::gc::PyVisit;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
