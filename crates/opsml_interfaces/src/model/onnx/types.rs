@@ -24,11 +24,11 @@ fn parse_session_schema(
     ort_session: &Session,
 ) -> Result<(FeatureSchema, FeatureSchema), OnnxError> {
     let input_schema = ort_session
-        .inputs
+        .inputs()
         .iter()
         .map(|input| {
-            let name = input.name.clone();
-            let input_type = input.input_type.clone();
+            let name = input.name().to_string();
+            let input_type = input.dtype().clone();
 
             let feature = match input_type {
                 ValueType::Tensor {
@@ -44,12 +44,11 @@ fn parse_session_schema(
         .collect::<Result<FeatureSchema, OnnxError>>()?;
 
     let output_schema = ort_session
-        .outputs
+        .outputs()
         .iter()
         .map(|output| {
-            let name = output.name.clone();
-            let input_type = output.output_type.clone();
-
+            let name = output.name().to_string();
+            let input_type = output.dtype().clone();
             let feature = match input_type {
                 ValueType::Tensor {
                     ty,

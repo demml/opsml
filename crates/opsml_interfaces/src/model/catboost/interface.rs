@@ -9,6 +9,7 @@ use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use pyo3::IntoPyObjectExt;
 use pyo3::PyTraverseError;
+use pythonize::depythonize;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use tracing::{debug, instrument};
@@ -504,7 +505,7 @@ impl CatBoostModel {
         )?;
         set_catboost_model_attribute(model, &new_dict)?;
 
-        let value = pyobject_to_json(&new_dict)?;
+        let value = depythonize(&new_dict)?;
 
         Ok(value)
     }

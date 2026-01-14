@@ -2,6 +2,7 @@ use opsml_utils::error::UtilError;
 use pyo3::exceptions::PyRuntimeError;
 use pyo3::pyclass::PyClassGuardError;
 use pyo3::PyErr;
+use pythonize::PythonizeError;
 use thiserror::Error;
 use tracing::error;
 
@@ -394,6 +395,12 @@ pub enum ModelInterfaceError {
 
     #[error("Drift profile not found in map")]
     DriftProfileNotFound,
+}
+
+impl From<PythonizeError> for ModelInterfaceError {
+    fn from(err: PythonizeError) -> Self {
+        ModelInterfaceError::Error(err.to_string())
+    }
 }
 
 impl<'a, 'py> From<pyo3::CastError<'a, 'py>> for ModelInterfaceError {
