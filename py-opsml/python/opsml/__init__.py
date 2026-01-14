@@ -1,18 +1,7 @@
 # mypy: disable-error-code="attr-defined"
 # pylint: disable=no-name-in-module
 # python/opsml/__init__.py
-from . import (
-    app,
-    card,
-    data,
-    experiment,
-    genai,
-    logging,
-    mock,
-    model,
-    scouter,
-    types,
-)
+from . import app, card, data, experiment, genai, logging, mock, model, scouter, types
 from ._opsml import (  # top-level modules; # App; # Card; # Data; Experiment; # model
     AppState,
     ArrowData,
@@ -75,7 +64,6 @@ __all__ = [
     "data",
     "model",
     "experiment",
-    "evaluate",
     "app",
     "logging",
     "mock",

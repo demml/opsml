@@ -13,7 +13,7 @@ use pyo3::types::PyDict;
 use pyo3::types::PyList;
 use pyo3::IntoPyObjectExt;
 use scouter_client::PyDrifter;
-use scouter_client::{DriftType, GenAIDriftConfig, GenAIEvalProfile};
+use scouter_client::{DriftType, GenAIEvalConfig, GenAIEvalProfile};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
@@ -233,11 +233,11 @@ impl PromptCard {
     /// # Returns
     ///
     #[pyo3(signature = (alias, config, tasks))]
-    pub fn create_drift_profile(
+    pub fn create_eval_profile(
         &mut self,
         py: Python<'_>,
         alias: String,
-        config: GenAIDriftConfig,
+        config: GenAIEvalConfig,
         tasks: &Bound<'_, PyList>,
     ) -> Result<(), CardError> {
         debug!("Creating eval profile");

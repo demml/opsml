@@ -12,7 +12,9 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-brightgreen.svg)](https://opensource.org/licenses/MIT)
 
 
-`OpsML` is a developer-first ML operations platform focused on injecting quality control into machine learning artifact management. `OpsML` provides a unified and ergonomic interface and experience for managing ML artifacts, enabling teams to collaborate more effectively and deploy with confidence, all while reducing engineering overhead and providing peace of mind.
+`OpsML` is a developer-first platform designed to institutionalize quality control across the AI lifecycle. It provides a unified, ergonomic interface for the end-to-end management of traditional ML and Generative AI applications.
+
+By standardizing how teams build, deploy, monitor, and govern models, OpsML eliminates "glue code" and fragmented workflows, allowing engineering teams to ship production-grade AI with high velocity and quality
 
 ## Highlights
 
@@ -238,23 +240,23 @@ card = PromptCard(
     prompt=Prompt(
         model="o4-mini",
         provider="openai",
-        message="Provide a brief summary of the programming language ${language}.", # (1)
-        system_instruction="Be concise, reply with one sentence.",
+        messages="Provide a brief summary of the programming language ${language}.", # (1)
+        system_instructions="Be concise, reply with one sentence.",
     ),
 )
 
 def chat_app(language: str):
 
     # create the prompt and bind the context
-    user_message = card.prompt.bind(language=language).message[0].unwrap()
-    system_instruction = card.prompt.system_instruction[0].unwrap()
+    user_message = card.prompt.bind(language=language).messages[0]
+    system_instruction = card.prompt.system_instructions[0]
 
     response = client.chat.completions.create(
         model=card.prompt.model,
         messages=[
-            {"role": "system", "content": system_instruction},
-            {"role": "user", "content": user_message},
-        ],
+          system_instruction.model_dump(),
+          user_message.model_dump()
+        ]
     )
 
     return response.choices[0].message.content
@@ -287,17 +289,17 @@ card = PromptCard(
     prompt=Prompt(
         model="gpt-4o",
         provider="openai",
-        message='Where does "hello world" come from?',
-        system_instruction="Be concise, reply with one sentence.",
+        messages='Where does "hello world" come from?',
+        system_instructions="Be concise, reply with one sentence.",
     ),
 )
 
 agent = Agent(
     card.prompt.model_identifier,
-    system_instruction=card.prompt.system_instruction[0].unwrap(),
+    system_instruction=card.prompt.system_instructions[0].text,
 )
 
-result = agent.run_sync(card.prompt.message[0].unwrap())
+result = agent.run_sync(card.prompt.messages[0].text)
 print(result.output)
 
 registry = CardRegistry(RegistryType.Prompt)
@@ -317,7 +319,9 @@ registry.register_card(card)
 | **Authentication** | ✅ | ✅ |
 | **Encryption** | ✅ | ❌ (rare) |
 | **Artifact Lineage** | ✅ | ❌ (uncommon) |
-| **Out-of-the-Box Model Monitoring & Data Profiling** | ✅ | ❌ |
+| **Data Profiling** | ✅ | ❌ |
+| **Out-of-the-Box Real-time Monitoring & Observability** | ✅ | ❌ (rare) |
+| **Offline and Online GenAI Evaluation System** | ✅ | ❌ (rare) |
 | **Isolated Environments (No Staging/Prod Conflicts)** | ✅ | ❌ |
 | **Single Dependency** | ✅ | ❌ |
 | **Low-friction Integration Into Your Current Tech Stack** | ✅ | ❌ |
