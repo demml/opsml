@@ -1,9 +1,10 @@
 use crate::error::{ModelInterfaceError, TypeError};
 use crate::model::huggingface::types::HuggingFaceOnnxArgs;
-use opsml_utils::{json_to_pyobject, pyobject_to_json, PyHelperFuncs};
+use opsml_utils::PyHelperFuncs;
 use pyo3::prelude::*;
 use pyo3::types::{PyDict, PyList};
 use pyo3::IntoPyObjectExt;
+use pythonize::{depythonize, pythonize};
 use serde::{
     de::{MapAccess, Visitor},
     ser::SerializeStruct,
@@ -91,9 +92,9 @@ impl ModelSaveKwargs {
         let onnx = onnx.map(|onnx| {
             if onnx.is_instance_of::<HuggingFaceOnnxArgs>() {
                 let onnx_dict = onnx.call_method0("to_dict").unwrap();
-                Ok(onnx_dict.downcast::<PyDict>().unwrap().clone().unbind())
+                Ok(onnx_dict.cast::<PyDict>().unwrap().clone().unbind())
             } else if onnx.is_instance_of::<PyDict>() {
-                Ok(onnx.downcast::<PyDict>().unwrap().clone().unbind())
+                Ok(onnx.cast::<PyDict>().unwrap().clone().unbind())
             } else {
                 Err(TypeError::InvalidOnnxType)
             }
@@ -126,15 +127,15 @@ impl ModelSaveKwargs {
         let mut preprocessor = Value::Null;
 
         if let Some(onnx_args) = &self.onnx {
-            onnx = pyobject_to_json(onnx_args.bind(py)).unwrap();
+            onnx = depythonize(onnx_args.bind(py)).unwrap();
         }
 
         if let Some(model_args) = &self.model {
-            model = pyobject_to_json(model_args.bind(py)).unwrap();
+            model = depythonize(model_args.bind(py)).unwrap();
         }
 
         if let Some(preprocessor_args) = &self.preprocessor {
-            preprocessor = pyobject_to_json(preprocessor_args.bind(py)).unwrap();
+            preprocessor = depythonize(preprocessor_args.bind(py)).unwrap();
         }
 
         let json = json!({
@@ -185,28 +186,67 @@ impl Serialize for ModelSaveKwargs {
         S: serde::Serializer,
     {
         Python::attach(|py| {
-            let mut state = serializer.serialize_struct("ModelSaveKwargs", 4)?;
-            let onnx = self
+            let mut state = serializer.serialize_struct("ModelSaveKwargs", 5)?;
+
+            let onnx: Option<serde_json::Value> = self
                 .onnx
                 .as_ref()
-                .map(|onnx| pyobject_to_json(onnx.bind(py)).unwrap());
-            let model = self
+                .map(|onnx| depythonize(onnx.bind(py)))
+                .transpose()
+                .map_err(|e| {
+                    serde::ser::Error::custom(format!("Failed to serialize onnx: {}", e))
+                })?;
+
+            let model: Option<serde_json::Value> = self
                 .model
                 .as_ref()
-                .map(|model| pyobject_to_json(model.bind(py)).unwrap());
-            let preprocessor = self
+                .map(|model| depythonize(model.bind(py)))
+                .transpose()
+                .map_err(|e| {
+                    serde::ser::Error::custom(format!("Failed to serialize model: {}", e))
+                })?;
+
+            let preprocessor: Option<serde_json::Value> = self
                 .preprocessor
                 .as_ref()
-                .map(|preprocessor| pyobject_to_json(preprocessor.bind(py)).unwrap());
-            let save_onnx = self.save_onnx;
+                .map(|preprocessor| depythonize(preprocessor.bind(py)))
+                .transpose()
+                .map_err(|e| {
+                    serde::ser::Error::custom(format!("Failed to serialize preprocessor: {}", e))
+                })?;
 
             state.serialize_field("onnx", &onnx)?;
             state.serialize_field("model", &model)?;
             state.serialize_field("preprocessor", &preprocessor)?;
-            state.serialize_field("save_onnx", &save_onnx)?;
+            state.serialize_field("save_onnx", &self.save_onnx)?;
             state.serialize_field("drift", &self.drift)?;
             state.end()
         })
+    }
+}
+
+/// Deserialize a dictionary field that may be null into Option<Py<PyDict>>
+fn deserialize_dict_field<'de, A>(
+    map: &mut A,
+    py: Python<'_>,
+) -> Result<Option<Py<PyDict>>, A::Error>
+where
+    A: MapAccess<'de>,
+{
+    let value = map.next_value::<serde_json::Value>()?;
+    match value {
+        serde_json::Value::Null => Ok(None),
+        _ => {
+            let py_obj = pythonize(py, &value)
+                .map_err(|e| serde::de::Error::custom(format!("Deserialization failed: {}", e)))?;
+
+            let dict = py_obj
+                .cast::<PyDict>()
+                .map_err(|_| serde::de::Error::custom("Expected a dictionary"))?
+                .clone();
+
+            Ok(Some(dict.unbind()))
+        }
     }
 }
 
@@ -238,59 +278,26 @@ impl<'de> Deserialize<'de> for ModelSaveKwargs {
                     while let Some(key) = map.next_key::<String>()? {
                         match key.as_str() {
                             "onnx" => {
-                                let value = map.next_value::<serde_json::Value>()?;
-                                match value {
-                                    serde_json::Value::Null => {
-                                        onnx = None;
-                                    }
-                                    _ => {
-                                        let dict =
-                                            json_to_pyobject(py, &value, &PyDict::new(py)).unwrap();
-                                        onnx = Some(dict.unbind());
-                                    }
-                                }
+                                onnx = deserialize_dict_field(&mut map, py)?;
                             }
                             "model" => {
-                                let value = map.next_value::<serde_json::Value>()?;
-                                match value {
-                                    serde_json::Value::Null => {
-                                        model = None;
-                                    }
-                                    _ => {
-                                        let dict =
-                                            json_to_pyobject(py, &value, &PyDict::new(py)).unwrap();
-                                        model = Some(dict.unbind());
-                                    }
-                                }
+                                model = deserialize_dict_field(&mut map, py)?;
                             }
                             "preprocessor" => {
-                                let value = map.next_value::<serde_json::Value>()?;
-                                match value {
-                                    serde_json::Value::Null => {
-                                        preprocessor = None;
-                                    }
-                                    _ => {
-                                        let dict =
-                                            json_to_pyobject(py, &value, &PyDict::new(py)).unwrap();
-                                        preprocessor = Some(dict.unbind());
-                                    }
-                                }
+                                preprocessor = deserialize_dict_field(&mut map, py)?;
                             }
-
                             "save_onnx" => {
-                                let value = map.next_value::<Option<bool>>()?;
-                                save_onnx = value;
+                                save_onnx = map.next_value::<Option<bool>>()?;
                             }
-
                             "drift" => {
-                                let value = map.next_value::<Option<DriftArgs>>()?;
-                                drift = value;
+                                drift = map.next_value::<Option<DriftArgs>>()?;
                             }
                             _ => {
                                 let _: serde::de::IgnoredAny = map.next_value()?;
                             }
                         }
                     }
+
                     let kwargs = ModelSaveKwargs {
                         onnx,
                         model,
@@ -365,9 +372,9 @@ impl ModelLoadKwargs {
         let onnx = onnx.map(|onnx| {
             if onnx.is_instance_of::<HuggingFaceOnnxArgs>() {
                 let onnx_dict = onnx.call_method0("to_dict").unwrap();
-                Ok(onnx_dict.downcast::<PyDict>().unwrap().clone().unbind())
+                Ok(onnx_dict.cast::<PyDict>().unwrap().clone().unbind())
             } else if onnx.is_instance_of::<PyDict>() {
-                Ok(onnx.downcast::<PyDict>().unwrap().clone().unbind())
+                Ok(onnx.cast::<PyDict>().unwrap().clone().unbind())
             } else {
                 // return error
                 Err(TypeError::InvalidOnnxType)
@@ -476,7 +483,9 @@ impl Serialize for ExtraMetadata {
     {
         Python::attach(|py| {
             let mut state = serializer.serialize_struct("ExtraMetadata", 1)?;
-            let metadata = pyobject_to_json(self.metadata.bind(py)).unwrap();
+            let metadata: serde_json::Value = depythonize(self.metadata.bind(py)).map_err(|e| {
+                serde::ser::Error::custom(format!("Failed to serialize metadata: {}", e))
+            })?;
 
             state.serialize_field("metadata", &metadata)?;
             state.end()
@@ -508,17 +517,7 @@ impl<'de> Deserialize<'de> for ExtraMetadata {
                     while let Some(key) = map.next_key::<String>()? {
                         match key.as_str() {
                             "metadata" => {
-                                let value = map.next_value::<serde_json::Value>()?;
-                                match value {
-                                    serde_json::Value::Null => {
-                                        metadata = None;
-                                    }
-                                    _ => {
-                                        let dict =
-                                            json_to_pyobject(py, &value, &PyDict::new(py)).unwrap();
-                                        metadata = Some(dict.unbind());
-                                    }
-                                }
+                                metadata = deserialize_dict_field(&mut map, py)?;
                             }
 
                             _ => {
@@ -534,7 +533,7 @@ impl<'de> Deserialize<'de> for ExtraMetadata {
             }
         }
 
-        deserializer.deserialize_struct("ModelSaveKwargs", &["onnx", "model"], ExtraMetadataVisitor)
+        deserializer.deserialize_struct("ExtraMetadata", &["metadata"], ExtraMetadataVisitor)
     }
 }
 
