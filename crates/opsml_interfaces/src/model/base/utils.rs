@@ -128,10 +128,13 @@ impl SampleData {
         }
     }
 
+    #[instrument(skip_all)]
     fn get_interface_for_sample(data: &Bound<'_, PyAny>) -> Result<Option<Self>, SampleDataError> {
         let py = data.py();
         let class = data.getattr("__class__")?;
         let full_class_name = get_class_full_name(&class)?;
+
+        debug!("Full class name: {}", &full_class_name);
 
         if let Ok(interface_type) = InterfaceDataType::from_module_name(&full_class_name) {
             return Self::match_interface_type(py, &interface_type, data).map(Some);
@@ -249,6 +252,7 @@ impl SampleData {
         Ok(save_path)
     }
 
+    #[instrument(skip_all)]
     fn save_interface_data(
         &self,
         data: &Bound<'_, PyAny>,
@@ -263,6 +267,8 @@ impl SampleData {
             .getattr("save_metadata")?
             .getattr("data_uri")?
             .extract::<PathBuf>()?;
+
+        debug!("Data saved");
 
         Ok(save_path)
     }

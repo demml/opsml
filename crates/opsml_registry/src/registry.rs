@@ -330,7 +330,8 @@ impl CardRegistry {
             params.version_type,
             params.pre_tag,
             params.build_tag,
-        )?;
+        )
+        .inspect_err(|e| error!("Failed to register card: {:?}", e))?;
 
         // Update card attributes
         if let Err(e) = Self::update_card_and_save(
@@ -380,7 +381,8 @@ impl CardRegistry {
     ) -> Result<(), RegistryError> {
         // Update card attributes
         debug!("Updating card with server response");
-        Self::update_card_with_server_response(response, card)?;
+        Self::update_card_with_server_response(response, card)
+            .inspect_err(|e| error!("Failed to updated card with server response {e}"))?;
 
         // Helper function for handling integrations with other services
         // For example, Opsml will allow a user to register and store a Scouter drift profile
@@ -510,7 +512,7 @@ impl CardRegistry {
                     .and_then(|kwargs| kwargs.getattr("drift").ok())
                     .and_then(|args| args.extract::<DriftArgs>().ok());
 
-                Self::upload_scouter_artifacts(registry, card, drift_args)?;
+                Self::upload_scouter_artifacts(registry, card, drift_args, registry_type)?;
             }
         }
         Ok(())
@@ -537,14 +539,24 @@ impl CardRegistry {
         registry: &OpsmlCardRegistry,
         card: &Bound<'_, PyAny>,
         drift_args: Option<DriftArgs>,
+        registry_type: &RegistryType,
     ) -> Result<(), RegistryError> {
         // update drift config args before uploading profiles to scouter and saving
         card.call_method0("_update_drift_config_args")?;
-        let drift_profiles = card.getattr("drift_profile")?;
+
+        let drift_profiles = match registry_type {
+            RegistryType::Model => card.getattr("drift_profile")?,
+            RegistryType::Prompt => card.getattr("eval_profile")?,
+            _ => {
+                return Err(RegistryError::InvalidRegistryType(
+                    "Expected Model or Prompt registry type".to_string(),
+                ))
+            }
+        };
         let binding = drift_profiles.call_method0("values")?;
         let collected_profiles = binding
             .cast::<PyList>()
-            .inspect_err(|e| error!("Failed to downcast drift profiles: {:?}", e))?;
+            .inspect_err(|e| error!("Failed to downcast drift profiles: {e}"))?;
 
         for profile in collected_profiles.iter() {
             let mut profile_request = profile
@@ -648,8 +660,11 @@ impl CardRegistry {
             Some(version.clone())
         };
 
-        let response =
-            registry.create_card(registry_card, version, version_type, pre_tag, build_tag)?;
+        let response = registry
+            .create_card(registry_card, version, version_type, pre_tag, build_tag)
+            .inspect_err(|e| {
+                error!("Failed to create card in registry: {e}");
+            })?;
 
         debug!(
             "Successfully registered card with server - {} - {}/{} - v{}",

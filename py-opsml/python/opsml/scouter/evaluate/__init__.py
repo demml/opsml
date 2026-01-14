@@ -4,6 +4,7 @@ from ..._opsml import (
     AssertionTask,
     ComparisonOperator,
     EvaluationConfig,
+    GenAIEvalConfig,
     GenAIEvalDataset,
     GenAIEvalProfile,
     GenAIEvalRecord,
@@ -27,4 +28,5 @@ __all__ = [
     "AssertionTask",
     "ComparisonOperator",
     "GenAIEvalProfile",
+    "GenAIEvalConfig",
 ]

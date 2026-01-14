@@ -15259,7 +15259,7 @@ class GenAIEvalResults:
         """
 
 class EvaluationConfig:
-    """Configuration options for LLM evaluation."""
+    """Configuration options for GenAI offline evaluation."""
 
     def __init__(
         self,
@@ -19235,7 +19235,7 @@ class PromptCard:
         """
 
     def __str__(self): ...
-    def create_drift_profile(
+    def create_eval_profile(
         self,
         alias: str,
         config: GenAIEvalConfig,
@@ -19289,19 +19289,19 @@ class PromptCard:
         """
 
     @property
-    def drift_profile(self) -> DriftProfileMap:
+    def eval_profile(self) -> DriftProfileMap:
         """Return the drift profile map from the model interface.
 
         Returns:
             DriftProfileMap
         """
 
-    @drift_profile.setter
-    def drift_profile(self, drift_profile: DriftProfileMap) -> None:
+    @eval_profile.setter
+    def eval_profile(self, eval_profile: DriftProfileMap) -> None:
         """Set the drift profile map for the prompt card.
 
         Args:
-            drift_profile (DriftProfileMap):
+            eval_profile (DriftProfileMap):
                 The drift profile map to set.
         """
 
@@ -19645,7 +19645,33 @@ CardT = TypeVar(
     ServiceCard,
 )
 
-class CardRegistry:
+class CardRegistry(Generic[CardT]):
+    @overload
+    def __init__(self, registry_type: Literal[RegistryType.Data]) -> "CardRegistry[DataCard]": ...
+    @overload
+    def __init__(self, registry_type: Literal[RegistryType.Model]) -> "CardRegistry[ModelCard]": ...
+    @overload
+    def __init__(self, registry_type: Literal[RegistryType.Prompt]) -> "CardRegistry[PromptCard]": ...
+    @overload
+    def __init__(self, registry_type: Literal[RegistryType.Experiment]) -> "CardRegistry[ExperimentCard]": ...
+    @overload
+    def __init__(self, registry_type: Literal[RegistryType.Service]) -> "CardRegistry[ServiceCard]": ...
+    @overload
+    def __init__(self, registry_type: Literal[RegistryType.Audit]) -> "CardRegistry[Any]": ...
+
+    # String literal overloads
+    @overload
+    def __init__(self, registry_type: Literal["data"]) -> "CardRegistry[DataCard]": ...
+    @overload
+    def __init__(self, registry_type: Literal["model"]) -> "CardRegistry[ModelCard]": ...
+    @overload
+    def __init__(self, registry_type: Literal["prompt"]) -> "CardRegistry[PromptCard]": ...
+    @overload
+    def __init__(self, registry_type: Literal["experiment"]) -> "CardRegistry[ExperimentCard]": ...
+    @overload
+    def __init__(self, registry_type: Literal["service"]) -> "CardRegistry[ServiceCard]": ...
+    @overload
+    def __init__(self, registry_type: Literal["audit"]) -> "CardRegistry[Any]": ...
     def __init__(self, registry_type: Union[RegistryType, str]) -> None:
         """Interface for connecting to any of the Card registries
 
@@ -19655,6 +19681,7 @@ class CardRegistry:
 
         Returns:
             Instantiated connection to specific Card registry
+
 
         Example:
         ```python
@@ -19743,6 +19770,51 @@ class CardRegistry:
 
         """
 
+    @overload
+    def load_card(
+        self: "CardRegistry[DataCard]",
+        uid: Optional[str] = None,
+        space: Optional[str] = None,
+        name: Optional[str] = None,
+        version: Optional[str] = None,
+        interface: Optional[DataInterface] = None,
+    ) -> DataCard: ...
+    @overload
+    def load_card(
+        self: "CardRegistry[ServiceCard]",
+        uid: Optional[str] = None,
+        space: Optional[str] = None,
+        name: Optional[str] = None,
+        version: Optional[str] = None,
+        interface=Optional[ServiceCardInterfaceType],
+    ) -> ServiceCard: ...
+    @overload
+    def load_card(
+        self: "CardRegistry[ModelCard]",
+        uid: Optional[str] = None,
+        space: Optional[str] = None,
+        name: Optional[str] = None,
+        version: Optional[str] = None,
+        interface: Optional[ModelInterface] = None,
+    ) -> ModelCard: ...
+    @overload
+    def load_card(
+        self: "CardRegistry[PromptCard]",
+        uid: Optional[str] = None,
+        space: Optional[str] = None,
+        name: Optional[str] = None,
+        version: Optional[str] = None,
+        interface: None = None,
+    ) -> PromptCard: ...
+    @overload
+    def load_card(
+        self: "CardRegistry[ExperimentCard]",
+        uid: Optional[str] = None,
+        space: Optional[str] = None,
+        name: Optional[str] = None,
+        version: Optional[str] = None,
+        interface: None = None,
+    ) -> ExperimentCard: ...
     def load_card(
         self,
         uid: Optional[str] = None,
@@ -19750,7 +19822,7 @@ class CardRegistry:
         name: Optional[str] = None,
         version: Optional[str] = None,
         interface: Optional[LoadInterfaceType] = None,
-    ) -> CardT:
+    ) -> Union[DataCard, ModelCard, PromptCard, ExperimentCard, ServiceCard]:
         """Load a Card from the registry
 
         Args:

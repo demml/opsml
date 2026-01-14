@@ -20,7 +20,7 @@ async fn test_scouter_routes_record_page() {
 
     let body = serde_json::to_string(&record_request).unwrap();
     let request = Request::builder()
-        .uri(format!("/opsml/api/scouter/genai/page/record"))
+        .uri("/opsml/api/scouter/genai/page/record".to_string())
         .method("POST")
         .header(header::CONTENT_TYPE, "application/json")
         .body(Body::from(body))
@@ -42,7 +42,7 @@ async fn test_scouter_routes_workflow_page() {
 
     let body = serde_json::to_string(&record_request).unwrap();
     let request = Request::builder()
-        .uri(format!("/opsml/api/scouter/genai/page/workflow"))
+        .uri("/opsml/api/scouter/genai/page/workflow".to_string())
         .method("POST")
         .header(header::CONTENT_TYPE, "application/json")
         .body(Body::from(body))

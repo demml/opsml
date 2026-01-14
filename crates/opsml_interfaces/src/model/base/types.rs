@@ -14,6 +14,7 @@ use serde::{
 use serde_json::json;
 use serde_json::Value;
 use std::collections::HashMap;
+use tracing::{debug, instrument};
 
 #[pyclass(eq)]
 #[derive(PartialEq, Debug)]
@@ -26,7 +27,9 @@ pub enum InterfaceDataType {
 }
 
 impl InterfaceDataType {
+    #[instrument(skip_all)]
     pub fn from_module_name(module_name: &str) -> Result<Self, TypeError> {
+        debug!("Mapping module name to InterfaceDataType: {}", module_name);
         match module_name {
             "pandas.core.frame.DataFrame" => Ok(InterfaceDataType::Pandas),
             "polars.dataframe.frame.DataFrame" => Ok(InterfaceDataType::Polars),

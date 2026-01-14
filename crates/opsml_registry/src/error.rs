@@ -147,6 +147,9 @@ pub enum RegistryError {
 
     #[error(transparent)]
     TraceError(#[from] scouter_client::TraceError),
+
+    #[error("Invalid registry type for drift profiles: {0}")]
+    InvalidRegistryType(String),
 }
 
 impl<'a, 'py> From<PyClassGuardError<'a, 'py>> for RegistryError {

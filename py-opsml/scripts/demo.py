@@ -58,7 +58,7 @@ def random_forest_classifier():
     # custom
     metric = CustomMetric(
         name="custom",
-        value=0.5,
+        baseline_value=0.5,
         alert_threshold=AlertThreshold.Above,
     )
     model.create_drift_profile(
@@ -101,8 +101,8 @@ def pandas_data() -> PandasData:
 
 def chat_prompt() -> Prompt:
     prompt = Prompt(
-        message="what is 2 + 2?",
-        system_instruction="You are a helpful assistant.",
+        messages="what is 2 + 2?",
+        system_instructions="You are a helpful assistant.",
         model_settings=ModelSettings(
             model="gpt-4o",
             provider="openai",

@@ -36,7 +36,9 @@ def test_model_interface_drift_profile(
 
     # custom
     metric = CustomMetric(
-        name="custom1", value=0.5, alert_threshold=AlertThreshold.Above
+        name="custom1",
+        baseline_value=0.5,
+        alert_threshold=AlertThreshold.Above,
     )
 
     custom_profile1 = CustomDriftProfile(CustomMetricDriftConfig(), [metric])
@@ -57,7 +59,9 @@ def test_model_interface_drift_profile(
 
     # custom
     metric = CustomMetric(
-        name="custom", value=0.5, alert_threshold=AlertThreshold.Above
+        name="custom",
+        baseline_value=0.5,
+        alert_threshold=AlertThreshold.Above,
     )
     model.create_drift_profile("custom", [metric], CustomMetricDriftConfig())
 
