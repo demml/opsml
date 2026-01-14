@@ -9,12 +9,12 @@ use crate::{ModelLoadKwargs, ModelSaveKwargs};
 use opsml_types::CommonKwargs;
 use opsml_types::{ModelInterfaceType, ModelType, TaskType};
 use opsml_types::{SaveName, Suffix};
-use opsml_utils::pyobject_to_json;
 use opsml_utils::PyHelperFuncs;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use pyo3::IntoPyObjectExt;
 use pyo3::{PyTraverseError, PyVisit};
+use pythonize::depythonize;
 use std::path::{Path, PathBuf};
 use tracing::debug;
 use tracing::instrument;
@@ -64,7 +64,6 @@ impl SklearnModel {
             sklearn_version,
         )?;
         model_interface.interface_type = ModelInterfaceType::Sklearn;
-
         let mut preprocessor_name = CommonKwargs::Undefined.to_string();
 
         let preprocessor = match preprocessor {
@@ -400,7 +399,7 @@ impl SklearnModel {
         new_dict.set_item("params", model.call_method0("get_params")?)?;
         set_sklearn_model_attribute(model, &new_dict)?;
 
-        let value = pyobject_to_json(&new_dict)?;
+        let value = depythonize(&new_dict)?;
 
         Ok(value)
     }

@@ -1,10 +1,11 @@
 use crate::base::ExtraMetadata;
+use crate::deserialize_dict_field;
 use crate::error::TypeError;
 use opsml_types::{SaveName, Suffix};
-use opsml_utils::{json_to_pyobject, pyobject_to_json};
 use opsml_utils::{FileUtils, PyHelperFuncs};
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
+use pythonize::depythonize;
 use serde::ser::SerializeStruct;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
@@ -217,19 +218,17 @@ impl DataSaveKwargs {
     #[new]
     #[pyo3(signature = (data=None))]
     pub fn new(data: Option<Bound<'_, PyDict>>) -> Result<Self, TypeError> {
-        // check if onnx is None, PyDict or HuggingFaceOnnxArgs
-
         let data = data.map(|data| data.unbind());
 
         Ok(Self { data })
     }
 
     pub fn __str__(&self, py: Python) -> String {
-        let mut data = Value::Null;
-
-        if let Some(data_args) = &self.data {
-            data = pyobject_to_json(data_args.bind(py)).unwrap();
-        }
+        let data = self
+            .data
+            .as_ref()
+            .map(|args| depythonize(&args.bind(py)).unwrap())
+            .unwrap_or(Value::Null);
 
         let json = json!({
             "data": data,
@@ -265,7 +264,8 @@ impl Serialize for DataSaveKwargs {
             let data = self
                 .data
                 .as_ref()
-                .map(|onnx| pyobject_to_json(onnx.bind(py)).unwrap());
+                .map(|onnx| depythonize(&onnx.bind(py)).unwrap())
+                .unwrap_or(Value::Null);
 
             state.serialize_field("data", &data)?;
             state.end()
@@ -297,17 +297,7 @@ impl<'de> Deserialize<'de> for DataSaveKwargs {
                     while let Some(key) = map.next_key::<String>()? {
                         match key.as_str() {
                             "data" => {
-                                let value = map.next_value::<serde_json::Value>()?;
-                                match value {
-                                    serde_json::Value::Null => {
-                                        data = None;
-                                    }
-                                    _ => {
-                                        let dict =
-                                            json_to_pyobject(py, &value, &PyDict::new(py)).unwrap();
-                                        data = Some(dict.unbind());
-                                    }
-                                }
+                                data = deserialize_dict_field(&mut map, py)?;
                             }
                             _ => {
                                 let _: serde::de::IgnoredAny = map.next_value()?;
@@ -320,11 +310,7 @@ impl<'de> Deserialize<'de> for DataSaveKwargs {
             }
         }
 
-        deserializer.deserialize_struct(
-            "DataSaveKwargs",
-            &["onnx", "model", "preprocessor"],
-            DataSaveKwargsVisitor,
-        )
+        deserializer.deserialize_struct("DataSaveKwargs", &["data"], DataSaveKwargsVisitor)
     }
 }
 
