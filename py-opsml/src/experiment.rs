@@ -12,7 +12,6 @@ pub fn add_experiment_module(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<Parameters>()?;
     m.add_class::<Metrics>()?;
     m.add_class::<EvalMetrics>()?;
-    m.add_class::<LLMEvaluator>()?;
     m.add_function(wrap_pyfunction!(get_experiment_metrics, m)?)?;
     m.add_function(wrap_pyfunction!(get_experiment_parameters, m)?)?;
     m.add_function(wrap_pyfunction!(download_artifact, m)?)?;
