@@ -144,7 +144,7 @@ def random_forest_classifier(exp: Experiment):
         data=[
             CustomMetric(
                 name="custom",
-                value=0.5,
+                baseline_value=0.5,
                 alert_threshold=AlertThreshold.Above,
             )
         ],

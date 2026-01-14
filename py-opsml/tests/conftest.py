@@ -245,8 +245,8 @@ def incorrect_custom_interface(example_dataframe):
 def chat_prompt() -> Prompt:
     prompt = Prompt(
         model="gpt-4o",
-        message="what is 2 + 2?",
+        messages="what is 2 + 2?",
         provider="openai",
-        system_instruction="You are a helpful assistant.",
+        system_instructions="You are a helpful assistant.",
     )
     return prompt

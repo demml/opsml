@@ -2,13 +2,14 @@ use crate::error::UtilError;
 use chrono::Timelike;
 use chrono::{DateTime, NaiveDateTime, Utc};
 use colored_json::{Color, ColorMode, ColoredFormatter, PrettyFormatter, Styler};
+use pyo3::types::{PyBool, PyDict, PyFloat, PyInt, PyList, PyString, PyTuple};
 use pyo3::{prelude::*, types::PyAnyMethods};
 use regex::Regex;
-
 use serde::Serialize;
+use serde_json::{json, Value};
 use std::path::{Path, PathBuf};
+use tracing::debug;
 use uuid::Uuid;
-
 const PUNCTUATION: &str = "!\"#$%&'()*+,./:;<=>?@[\\]^`{|}~";
 const NAME_SPACE_PATTERN: &str = r"^[a-z0-9]+(?:[-a-z0-9]+)*/[-a-z0-9]+$";
 
@@ -233,6 +234,94 @@ pub fn create_tmp_path() -> Result<PathBuf, UtilError> {
 /// - The attribute cannot be extracted as a string.
 pub fn unwrap_pystring(obj: &Bound<'_, PyAny>, field: &str) -> Result<String, UtilError> {
     Ok(obj.getattr(field)?.extract::<String>()?)
+}
+
+/// Recursively converts Python objects to JSON-compatible values
+/// Handles ndarrays and other non-serializable types by converting to lists or strings
+fn pyobject_to_json_value(py: Python, obj: &Bound<'_, PyAny>) -> Result<Value, UtilError> {
+    if obj.is_none() {
+        return Ok(Value::Null);
+    }
+
+    if obj.is_instance_of::<PyBool>() {
+        return Ok(json!(obj.extract::<bool>()?));
+    }
+
+    if obj.is_instance_of::<PyInt>() {
+        return Ok(json!(obj.extract::<i64>()?));
+    }
+
+    if obj.is_instance_of::<PyFloat>() {
+        return Ok(json!(obj.extract::<f64>()?));
+    }
+
+    if obj.is_instance_of::<PyString>() {
+        return Ok(json!(obj.extract::<String>()?));
+    }
+
+    if obj.is_instance_of::<PyList>() || obj.is_instance_of::<PyTuple>() {
+        let list = obj.extract::<Vec<Bound<'_, PyAny>>>()?;
+        let values: Result<Vec<Value>, _> = list
+            .iter()
+            .map(|item| pyobject_to_json_value(py, item))
+            .collect();
+        return Ok(Value::Array(values?));
+    }
+
+    if obj.is_instance_of::<PyDict>() {
+        let dict = obj.cast::<PyDict>()?;
+        let mut map = serde_json::Map::new();
+
+        for (key, value) in dict.iter() {
+            let key_str = if key.is_instance_of::<PyString>() {
+                key.extract::<String>()?
+            } else {
+                key.str()?.extract::<String>()?
+            };
+
+            map.insert(key_str, pyobject_to_json_value(py, &value)?);
+        }
+
+        return Ok(Value::Object(map));
+    }
+
+    // Handle numpy arrays
+    if obj.hasattr("__array__")? || obj.hasattr("tolist")? {
+        if let Ok(py_list) = obj.call_method0("tolist") {
+            return pyobject_to_json_value(py, &py_list);
+        }
+    }
+
+    // Handle pandas Series/DataFrame
+    if obj.hasattr("to_dict")? {
+        if let Ok(py_dict) = obj.call_method0("to_dict") {
+            return pyobject_to_json_value(py, &py_dict);
+        }
+    }
+
+    // Fallback: convert to string representation
+    debug!(
+        "Converting non-serializable type {} to string",
+        obj.get_type().name()?
+    );
+    Ok(json!(obj.str()?.extract::<String>()?))
+}
+
+/// Converts a PyDict to a JSON Value, handling numpy arrays and other non-serializable types
+pub fn pydict_to_json_value(py: Python, dict: &Bound<'_, PyDict>) -> Result<Value, UtilError> {
+    let mut map = serde_json::Map::new();
+
+    for (key, value) in dict.iter() {
+        let key_str = if key.is_instance_of::<PyString>() {
+            key.extract::<String>()?
+        } else {
+            key.str()?.extract::<String>()?
+        };
+
+        map.insert(key_str, pyobject_to_json_value(py, &value)?);
+    }
+
+    Ok(Value::Object(map))
 }
 
 #[cfg(test)]

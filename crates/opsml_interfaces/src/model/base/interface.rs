@@ -406,24 +406,40 @@ impl ModelInterface {
         let kwargs = parse_save_kwargs(py, save_kwargs.as_ref());
 
         // save model
+        debug!("Step 1: Saving model");
         let model_uri = self.save_model(py, &path, kwargs.model.as_ref())?;
 
         // if save_onnx is true, convert the model to onnx
         let mut onnx_model_uri = None;
         if kwargs.save_onnx {
-            onnx_model_uri = Some(self.save_onnx_model(py, &path, kwargs.onnx.as_ref())?);
+            debug!("Step 1a: Converting model to ONNX");
+            onnx_model_uri = Some(
+                self.save_onnx_model(py, &path, kwargs.onnx.as_ref())
+                    .inspect_err(|e| error!("Failed to save ONNX model: {:?}", e))?,
+            );
         }
 
-        let sample_data_uri = self.save_data(py, &path, None)?;
+        debug!("Step 2: Saving sample data");
+        let sample_data_uri = self
+            .save_data(py, &path, None)
+            .inspect_err(|e| error!("Failed to save sample data: {:?}", e))?;
 
+        debug!("Step 3: Saving drift profile");
         let drift_profile_uri_map = if self.drift_profile.is_empty() {
             None
         } else {
-            Some(self.save_drift_profile(py, &path)?)
+            Some(
+                self.save_drift_profile(py, &path)
+                    .inspect_err(|e| error!("Failed to save drift profile: {:?}", e))?,
+            )
         };
 
-        self.schema = self.create_feature_schema(py)?;
+        debug!("Step 4: Creating feature schema");
+        self.schema = self
+            .create_feature_schema(py)
+            .inspect_err(|e| error!("Failed to create feature schema: {:?}", e))?;
 
+        debug!("Step 5: Creating metadata");
         let save_metadata = ModelInterfaceSaveMetadata {
             model_uri,
             data_processor_map: HashMap::new(),
@@ -436,11 +452,14 @@ impl ModelInterface {
 
         // if onnx session is not None, get the session and extract it from py
         let onnx_session = self.onnx_session.as_ref().map(|sess| {
+            debug!("Step: Extracting ONNX session from PyObject");
             let sess = sess.bind(py);
             // extract OnnxSession from py object
-            sess.extract::<OnnxSession>().unwrap()
+            sess.extract::<OnnxSession>()
+                .expect("Failed to extract OnnxSession")
         });
 
+        debug!("Step 6: Creating ModelInterfaceMetadata");
         let metadata = ModelInterfaceMetadata::new(
             save_metadata,
             self.task_type.clone(),
@@ -606,7 +625,8 @@ impl ModelInterface {
             &self.model_type,
             path,
             kwargs,
-        )?;
+        )
+        .inspect_err(|e| error!("Failed to convert model to ONNX: {:?}", e))?;
 
         self.onnx_session = Some(Py::new(py, session)?);
 
@@ -732,6 +752,7 @@ impl ModelInterface {
         path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> Result<PathBuf, ModelInterfaceError> {
+        debug!("Saving ONNX model");
         if self.onnx_session.is_none() {
             self.convert_to_onnx(py, path, kwargs)?;
         }

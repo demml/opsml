@@ -14,7 +14,7 @@ def reformulation_evaluation_prompt():
         >>> prompt = create_reformulation_evaluation_prompt()
     """
     return Prompt(
-        message=(
+        messages=(
             "You are an expert evaluator of search query reformulations. "
             "Given the original user query and its reformulated version, your task is to assess how well the reformulation improves the query. "
             "Consider the following criteria:\n"
@@ -38,7 +38,7 @@ def reformulation_evaluation_prompt():
         ),
         model="gemini-2.5-flash-lite-preview-06-17",
         provider="gemini",
-        response_format=Score,
+        output_type=Score,
     )
 
 
@@ -54,7 +54,7 @@ def relevancy_evaluation_prompt():
         >>> prompt = create_relevancy_evaluation_prompt()
     """
     return Prompt(
-        message=(
+        messages=(
             "You are an expert evaluator of search query relevance. "
             "Given a user query, your task is to assess its relevance to the information needs of the user. "
             "Consider the following criteria:\n"
@@ -75,5 +75,5 @@ def relevancy_evaluation_prompt():
         ),
         model="gemini-2.5-flash-lite-preview-06-17",
         provider="gemini",
-        response_format=Score,
+        output_type=Score,
     )

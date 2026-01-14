@@ -9,15 +9,15 @@ use crate::{ModelLoadKwargs, ModelSaveKwargs};
 use opsml_types::CommonKwargs;
 use opsml_types::{ModelInterfaceType, ModelType, TaskType};
 use opsml_types::{SaveName, Suffix};
+use opsml_utils::pydict_to_json_value;
 use opsml_utils::PyHelperFuncs;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use pyo3::IntoPyObjectExt;
 use pyo3::{PyTraverseError, PyVisit};
-use pythonize::depythonize;
 use std::path::{Path, PathBuf};
 use tracing::debug;
-use tracing::instrument;
+use tracing::{error, instrument};
 
 #[pyclass(extends=ModelInterface, subclass)]
 #[derive(Debug)]
@@ -148,7 +148,7 @@ impl SklearnModel {
         path: PathBuf,
         save_kwargs: Option<ModelSaveKwargs>,
     ) -> Result<ModelInterfaceMetadata, ModelInterfaceError> {
-        debug!("Saving model interface");
+        debug!("Saving sklearn model interface");
 
         // save the preprocessor if it exists
         let preprocessor_entity = if self_.preprocessor.is_none() {
@@ -168,19 +168,26 @@ impl SklearnModel {
         };
 
         // call the super save method
+        debug!("Saving and extracting metadata");
         let mut metadata = self_.as_super().save(py, path, save_kwargs)?;
 
         // add the preprocessor to the metadata
         preprocessor_entity.map(|preprocessor| {
+            debug!("Adding preprocessor to metadata");
             metadata
                 .save_metadata
                 .data_processor_map
                 .insert("preprocessor".to_string(), preprocessor)
         });
 
+        debug!("Setting model");
         let model = self_.as_super().model.as_ref().unwrap().bind(py);
+
+        debug!("Extracting model params");
         metadata.model_specific_metadata = SklearnModel::extract_model_params(py, model)?;
 
+        // add check mark for done
+        debug!("Sklearn model interface saved successfully");
         Ok(metadata)
     }
 
@@ -390,6 +397,7 @@ impl SklearnModel {
         Ok(())
     }
 
+    #[instrument(skip_all)]
     pub fn extract_model_params(
         py: Python,
         model: &Bound<'_, PyAny>,
@@ -399,7 +407,9 @@ impl SklearnModel {
         new_dict.set_item("params", model.call_method0("get_params")?)?;
         set_sklearn_model_attribute(model, &new_dict)?;
 
-        let value = depythonize(&new_dict)?;
+        let value = pydict_to_json_value(py, &new_dict).inspect_err(|e| {
+            error!("Failed to serialize sklearn model params: {e}");
+        })?;
 
         Ok(value)
     }
