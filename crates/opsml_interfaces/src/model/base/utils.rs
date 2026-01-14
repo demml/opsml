@@ -166,7 +166,7 @@ impl SampleData {
 
     fn handle_pylist(data: &Bound<'_, PyAny>) -> Result<Self, SampleDataError> {
         let py = data.py();
-        let py_list = data.downcast::<PyList>()?;
+        let py_list = data.cast::<PyList>()?;
 
         for (idx, item) in py_list.iter().enumerate() {
             let slice = PySlice::new(py, 0, 1, 1);
@@ -181,7 +181,7 @@ impl SampleData {
         let py = data.py();
 
         // convert data from PyTuple to PyList
-        let py_list = PyList::new(py, data.downcast::<PyTuple>()?.iter())?;
+        let py_list = PyList::new(py, data.cast::<PyTuple>()?.iter())?;
 
         for (idx, item) in py_list.iter().enumerate() {
             let slice = PySlice::new(py, 0, 1, 1);
@@ -196,7 +196,7 @@ impl SampleData {
 
     fn handle_pydict(data: &Bound<'_, PyAny>) -> Result<Self, SampleDataError> {
         let py = data.py();
-        let py_dict = data.downcast::<PyDict>()?;
+        let py_dict = data.cast::<PyDict>()?;
 
         for (k, v) in py_dict.iter() {
             let slice = PySlice::new(py, 0, 1, 1);
@@ -370,21 +370,15 @@ impl SampleData {
             }
             DataType::List => {
                 let data = load_from_joblib(py, path)?;
-                Ok(SampleData::List(
-                    data.downcast::<PyList>()?.clone().unbind(),
-                ))
+                Ok(SampleData::List(data.cast::<PyList>()?.clone().unbind()))
             }
             DataType::Tuple => {
                 let data = load_from_joblib(py, path)?;
-                Ok(SampleData::Tuple(
-                    data.downcast::<PyTuple>()?.clone().unbind(),
-                ))
+                Ok(SampleData::Tuple(data.cast::<PyTuple>()?.clone().unbind()))
             }
             DataType::Dict => {
                 let data = load_from_joblib(py, path)?;
-                Ok(SampleData::Dict(
-                    data.downcast::<PyDict>()?.clone().unbind(),
-                ))
+                Ok(SampleData::Dict(data.cast::<PyDict>()?.clone().unbind()))
             }
             DataType::DMatrix => {
                 let data = load_dmatrix(py, path)?;
@@ -402,7 +396,7 @@ pub fn extract_drift_profile(
     let py = py_profiles.py();
 
     if py_profiles.is_instance_of::<PyDict>() {
-        let py_profiles = py_profiles.downcast::<PyDict>()?;
+        let py_profiles = py_profiles.cast::<PyDict>()?;
         let mut profiles = DriftProfileMap::new();
 
         for (alias, profile) in py_profiles.iter() {

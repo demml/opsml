@@ -543,7 +543,7 @@ impl CardRegistry {
         let drift_profiles = card.getattr("drift_profile")?;
         let binding = drift_profiles.call_method0("values")?;
         let collected_profiles = binding
-            .downcast::<PyList>()
+            .cast::<PyList>()
             .inspect_err(|e| error!("Failed to downcast drift profiles: {:?}", e))?;
 
         for profile in collected_profiles.iter() {
