@@ -7,13 +7,13 @@ use opsml_types::contracts::{CardRecord, PromptCardClientRecord};
 use opsml_types::DriftProfileUri;
 use opsml_types::{RegistryType, SaveName, Suffix};
 use opsml_utils::{get_utc_datetime, PyHelperFuncs};
-use potato_head::Prompt;
+use potato_head::prompt_types::Prompt;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use pyo3::types::PyList;
 use pyo3::IntoPyObjectExt;
 use scouter_client::PyDrifter;
-use scouter_client::{DriftType, LLMDriftConfig, LLMDriftMetric, LLMDriftProfile};
+use scouter_client::{DriftType, GenAIDriftConfig, GenAIEvalProfile};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
@@ -70,14 +70,14 @@ pub struct PromptCard {
     #[pyo3(get)]
     pub opsml_version: String,
 
-    pub drift_profile: DriftProfileMap,
+    pub eval_profile: DriftProfileMap,
 }
 
 #[pymethods]
 impl PromptCard {
     #[new]
     #[allow(clippy::too_many_arguments)]
-    #[pyo3(signature = (prompt, space=None, name=None, version=None, uid=None, tags=None, drift_profile=None))]
+    #[pyo3(signature = (prompt, space=None, name=None, version=None, uid=None, tags=None, eval_profile=None))]
     pub fn new(
         prompt: &Bound<'_, PyAny>,
         space: Option<&str>,
@@ -85,7 +85,7 @@ impl PromptCard {
         version: Option<&str>,
         uid: Option<&str>,
         tags: Option<&Bound<'_, PyList>>,
-        drift_profile: Option<&Bound<'_, PyAny>>,
+        eval_profile: Option<&Bound<'_, PyAny>>,
     ) -> Result<Self, CardError> {
         let registry_type = RegistryType::Prompt;
         let tags = match tags {
@@ -99,7 +99,7 @@ impl PromptCard {
             error!("Failed to extract prompt: {e}");
         })?;
 
-        let profiles = match drift_profile {
+        let profiles = match eval_profile {
             Some(profile) => utils::extract_drift_profile(profile)?,
             None => DriftProfileMap::new(),
         };
@@ -117,27 +117,27 @@ impl PromptCard {
             created_at: get_utc_datetime(),
             is_card: true,
             opsml_version: opsml_version::version(),
-            drift_profile: profiles,
+            eval_profile: profiles,
         })
     }
 
     #[getter]
-    pub fn drift_profile<'py>(
+    pub fn eval_profile<'py>(
         &self,
         py: Python<'py>,
     ) -> Result<Bound<'py, DriftProfileMap>, CardError> {
-        let pyob = Py::new(py, self.drift_profile.clone())?;
+        let pyob = Py::new(py, self.eval_profile.clone())?;
         let bound = pyob.bind(py).clone();
         Ok(bound)
     }
 
     #[setter]
-    pub fn set_drift_profile(
+    pub fn set_eval_profile(
         &mut self,
-        drift_profile: Bound<'_, DriftProfileMap>,
+        eval_profile: Bound<'_, DriftProfileMap>,
     ) -> Result<(), CardError> {
-        self.drift_profile = drift_profile.extract().inspect_err(|e| {
-            error!("Failed to extract drift profile: {e}");
+        self.eval_profile = eval_profile.extract().inspect_err(|e| {
+            error!("Failed to extract eval profile: {e}");
         })?;
 
         Ok(())
@@ -175,14 +175,14 @@ impl PromptCard {
     pub fn save(&mut self, py: Python, path: PathBuf) -> Result<(), CardError> {
         debug!("Saving PromptCard to path: {:?}", path);
 
-        // save drift profile
-        let drift_profile_uri_map = if self.drift_profile.is_empty() {
+        // save eval profile
+        let eval_profile_uri_map = if self.eval_profile.is_empty() {
             None
         } else {
-            Some(self.save_drift_profile(py, &path)?)
+            Some(self.save_eval_profile(py, &path)?)
         };
 
-        self.metadata.drift_profile_uri_map = drift_profile_uri_map;
+        self.metadata.drift_profile_uri_map = eval_profile_uri_map;
 
         self.prompt.save_prompt(Some(path.clone()))?;
         let card_save_path = path.join(SaveName::Card).with_extension(Suffix::Json);
@@ -229,31 +229,29 @@ impl PromptCard {
     /// # Arguments
     ///
     /// * `config` - LLMDriftConfig
-    /// * `metrics` - List of metrics to include in the drift profile
-    /// * `workflow` - Optional workflow to associate with the drift profile
+    /// * `tasks` - List of tasks (LLMJudgeTask or AssertionTask)
+    /// # Returns
     ///
-    #[pyo3(signature = (alias, config, metrics, workflow=None))]
+    #[pyo3(signature = (alias, config, tasks))]
     pub fn create_drift_profile(
         &mut self,
         py: Python<'_>,
         alias: String,
-        config: LLMDriftConfig,
-        metrics: Vec<LLMDriftMetric>,
-        workflow: Option<Bound<'_, PyAny>>,
+        config: GenAIDriftConfig,
+        tasks: &Bound<'_, PyList>,
     ) -> Result<(), CardError> {
-        debug!("Creating drift profile");
+        debug!("Creating eval profile");
 
         let mut drifter = PyDrifter::new();
-        let profile = drifter.create_llm_drift_profile(py, config, metrics, workflow)?;
-        self.drift_profile.add_profile(py, alias, profile.clone())?;
-
+        let profile = drifter.create_genai_drift_profile(py, config, tasks)?;
+        self.eval_profile.add_profile(py, alias, profile.clone())?;
         Ok(())
     }
 
     #[pyo3(name = "_update_drift_config_args")]
     fn update_drift_config_args(&mut self, py: Python) -> Result<(), CardError> {
-        // if drift_profiles is empty, return
-        if self.drift_profile.is_empty() {
+        // if eval_profiles is empty, return
+        if self.eval_profile.is_empty() {
             Ok(())
         } else {
             // set new config args from card and update all profiles
@@ -262,7 +260,7 @@ impl PromptCard {
             config_args.set_item("space", &self.space)?;
             config_args.set_item("version", &self.version)?;
 
-            self.drift_profile.update_config_args(py, &config_args)?;
+            self.eval_profile.update_config_args(py, &config_args)?;
 
             Ok(())
         }
@@ -279,8 +277,8 @@ impl PromptCard {
     /// # Returns
     ///
     /// * `PyResult<PathBuf>` - Path to saved drift profile
-    #[instrument(skip_all, name = "save_drift_profile")]
-    pub fn save_drift_profile(
+    #[instrument(skip_all, name = "save_eval_profile")]
+    pub fn save_eval_profile(
         &mut self,
         py: Python,
         path: &Path,
@@ -288,11 +286,11 @@ impl PromptCard {
         let mut drift_url_map = HashMap::new();
         let save_dir = PathBuf::from(SaveName::Drift);
 
-        for (alias, profile) in self.drift_profile.profiles.iter() {
+        for (alias, profile) in self.eval_profile.profiles.iter() {
             let relative_path = save_dir.join(alias).with_extension(Suffix::Json);
             let full_path = path.join(&relative_path);
 
-            let drift_type = DriftType::LLM;
+            let drift_type = DriftType::GenAI;
             profile.call_method1(py, "save_to_json", (Some(&full_path),))?;
 
             drift_url_map.insert(
@@ -310,7 +308,7 @@ impl PromptCard {
     }
 
     /// Load drift profile
-    ///     
+    ///
     /// # Arguments
     ///
     /// * `path` - Path to load drift profile
@@ -336,9 +334,9 @@ impl PromptCard {
             let file = std::fs::read_to_string(&filepath)?;
 
             match drift_profile_uri.drift_type {
-                DriftType::LLM => {
-                    let profile = LLMDriftProfile::model_validate_json(file);
-                    self.drift_profile.add_profile(
+                DriftType::GenAI => {
+                    let profile = GenAIEvalProfile::model_validate_json(file);
+                    self.eval_profile.add_profile(
                         py,
                         alias.to_string(),
                         profile.into_bound_py_any(py)?,

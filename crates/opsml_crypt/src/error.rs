@@ -1,6 +1,5 @@
 use opsml_utils::error::UtilError;
 use thiserror::Error;
-use tracing::error;
 
 #[derive(Error, Debug)]
 pub enum CryptError {

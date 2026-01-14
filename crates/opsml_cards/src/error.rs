@@ -1,5 +1,3 @@
-use std::path::PathBuf;
-
 use opsml_crypt::error::CryptError;
 use opsml_interfaces::error::{DataInterfaceError, ModelInterfaceError};
 use opsml_state::error::StateError;
@@ -9,7 +7,9 @@ use opsml_types::RegistryType;
 use opsml_utils::error::UtilError;
 use pyo3::exceptions::PyRuntimeError;
 use pyo3::prelude::*;
+use pyo3::pyclass::PyClassGuardError;
 use scouter_client::DriftType;
+use std::path::PathBuf;
 use thiserror::Error;
 use tracing::error;
 
@@ -25,9 +25,6 @@ pub enum CardError {
     UtilError(#[from] UtilError),
 
     #[error(transparent)]
-    PyErr(#[from] pyo3::PyErr),
-
-    #[error(transparent)]
     SerdeError(#[from] serde_json::Error),
 
     #[error(transparent)]
@@ -37,7 +34,7 @@ pub enum CardError {
     DriftError(#[from] scouter_client::DriftError),
 
     #[error("{0}")]
-    CustomError(String),
+    Error(String),
 
     #[error("Failed to downcast Python object: {0}")]
     DowncastError(String),
@@ -112,9 +109,21 @@ pub enum CardError {
     ServiceError(#[from] opsml_service::error::ServiceError),
 }
 
-impl<'a> From<pyo3::DowncastError<'a, 'a>> for CardError {
-    fn from(err: pyo3::DowncastError) -> Self {
+impl<'a, 'py> From<PyClassGuardError<'a, 'py>> for CardError {
+    fn from(err: PyClassGuardError<'a, 'py>) -> Self {
+        CardError::Error(err.to_string())
+    }
+}
+
+impl<'a, 'py> From<pyo3::CastError<'a, 'py>> for CardError {
+    fn from(err: pyo3::CastError<'a, 'py>) -> Self {
         CardError::DowncastError(err.to_string())
+    }
+}
+
+impl From<PyErr> for CardError {
+    fn from(err: PyErr) -> Self {
+        CardError::Error(err.to_string())
     }
 }
 
