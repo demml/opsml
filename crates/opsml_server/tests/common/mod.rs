@@ -305,7 +305,8 @@ GrrNOufvPsvmCRO9m4ESRrk=
             ..Default::default()
         };
 
-        let header = Header::new(jsonwebtoken::Algorithm::RS256);
+        let mut header = Header::new(jsonwebtoken::Algorithm::RS256);
+        header.kid = Some("mock_key_id".to_string());
 
         let token = encode(
             &header,
