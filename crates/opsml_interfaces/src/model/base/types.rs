@@ -1,10 +1,11 @@
+use crate::deserialize_dict_field;
 use crate::error::{ModelInterfaceError, TypeError};
 use crate::model::huggingface::types::HuggingFaceOnnxArgs;
 use opsml_utils::PyHelperFuncs;
 use pyo3::prelude::*;
 use pyo3::types::{PyDict, PyList};
 use pyo3::IntoPyObjectExt;
-use pythonize::{depythonize, pythonize};
+use pythonize::depythonize;
 use serde::{
     de::{MapAccess, Visitor},
     ser::SerializeStruct,
@@ -222,31 +223,6 @@ impl Serialize for ModelSaveKwargs {
             state.serialize_field("drift", &self.drift)?;
             state.end()
         })
-    }
-}
-
-/// Deserialize a dictionary field that may be null into Option<Py<PyDict>>
-fn deserialize_dict_field<'de, A>(
-    map: &mut A,
-    py: Python<'_>,
-) -> Result<Option<Py<PyDict>>, A::Error>
-where
-    A: MapAccess<'de>,
-{
-    let value = map.next_value::<serde_json::Value>()?;
-    match value {
-        serde_json::Value::Null => Ok(None),
-        _ => {
-            let py_obj = pythonize(py, &value)
-                .map_err(|e| serde::de::Error::custom(format!("Deserialization failed: {}", e)))?;
-
-            let dict = py_obj
-                .cast::<PyDict>()
-                .map_err(|_| serde::de::Error::custom("Expected a dictionary"))?
-                .clone();
-
-            Ok(Some(dict.unbind()))
-        }
     }
 }
 
