@@ -566,9 +566,9 @@ impl<'de> Deserialize<'de> for DataCard {
     }
 }
 
-impl FromPyObject<'_> for DataCard {
+impl FromPyObject<'_, '_> for DataCard {
     type Error = PyErr;
-    fn extract(ob: &Bound<'_, PyAny>) -> PyResult<Self> {
+    fn extract(ob: Borrowed<'_, '_, PyAny>) -> PyResult<Self> {
         let interface = ob.getattr("interface")?;
         let name = ob.getattr("name")?.extract()?;
         let space = ob.getattr("space")?.extract()?;

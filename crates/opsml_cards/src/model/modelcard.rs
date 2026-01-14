@@ -153,7 +153,7 @@ impl ModelCard {
         if interface.is_instance_of::<ModelInterface>() {
             //
         } else {
-            return Err(CardError::CustomError(interface_error()));
+            return Err(CardError::Error(interface_error()));
         }
 
         let interface_type = extract_py_attr::<ModelInterfaceType>(interface, "interface_type")?;
@@ -569,9 +569,9 @@ impl Serialize for ModelCard {
     }
 }
 
-impl FromPyObject<'_> for ModelCard {
+impl FromPyObject<'_, '_> for ModelCard {
     type Error = PyErr;
-    fn extract(ob: &Bound<'_, PyAny>) -> PyResult<Self> {
+    fn extract(ob: Borrowed<'_, '_, PyAny>) -> PyResult<Self> {
         let interface = ob.getattr("interface")?;
         let name = ob.getattr("name")?.extract()?;
         let space = ob.getattr("space")?.extract()?;

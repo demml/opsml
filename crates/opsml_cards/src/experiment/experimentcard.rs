@@ -531,8 +531,9 @@ impl<'de> Deserialize<'de> for ExperimentCard {
     }
 }
 
-impl FromPyObject<'_> for ExperimentCard {
-    fn extract_bound(ob: &Bound<'_, PyAny>) -> PyResult<Self> {
+impl FromPyObject<'_, '_> for ExperimentCard {
+    type Error = PyErr;
+    fn extract(ob: Borrowed<'_, '_, PyAny>) -> PyResult<Self> {
         let space = ob.getattr("space")?.extract()?;
         let name = ob.getattr("name")?.extract()?;
         let version = ob.getattr("version")?.extract()?;
