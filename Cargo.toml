@@ -92,6 +92,7 @@ regex = "1.*"
 reqwest = { version = "0.12.*", features = ["json", "stream", "multipart", "rustls-tls", "rustls-tls-native-roots", "blocking" ], default-features = false }
 reqwest-middleware = "0.*"
 rusty-logging = "0.*"
+pythonize = { version = "0.*" }
 # we cant use crates.io because scouter relies on a fork of linfa at the moment
 scouter-client = {branch = "imports", git = "https://github.com/demml/scouter.git"}
 sha2 = "0.*"

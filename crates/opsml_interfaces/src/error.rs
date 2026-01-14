@@ -1,7 +1,7 @@
 use opsml_utils::error::UtilError;
 use pyo3::exceptions::PyRuntimeError;
+use pyo3::pyclass::PyClassGuardError;
 use pyo3::PyErr;
-use reqwest::StatusCode;
 use thiserror::Error;
 use tracing::error;
 
@@ -39,8 +39,8 @@ impl From<TypeError> for PyErr {
 
 #[derive(Error, Debug)]
 pub enum DataInterfaceError {
-    #[error(transparent)]
-    PyError(#[from] pyo3::PyErr),
+    #[error("{0}")]
+    Error(String),
 
     #[error("Data must be a numpy array. Received: {0}")]
     NumpyTypeError(String),
@@ -106,8 +106,20 @@ pub enum DataInterfaceError {
     DowncastError(String),
 }
 
-impl<'a> From<pyo3::DowncastError<'a, 'a>> for DataInterfaceError {
-    fn from(err: pyo3::DowncastError) -> Self {
+impl<'a, 'py> From<PyClassGuardError<'a, 'py>> for DataInterfaceError {
+    fn from(err: PyClassGuardError<'a, 'py>) -> Self {
+        DataInterfaceError::Error(err.to_string())
+    }
+}
+
+impl From<PyErr> for DataInterfaceError {
+    fn from(err: PyErr) -> Self {
+        DataInterfaceError::Error(err.to_string())
+    }
+}
+
+impl<'a, 'py> From<pyo3::CastError<'a, 'py>> for DataInterfaceError {
+    fn from(err: pyo3::CastError<'a, 'py>) -> Self {
         DataInterfaceError::DowncastError(err.to_string())
     }
 }
@@ -122,8 +134,8 @@ impl From<DataInterfaceError> for PyErr {
 
 #[derive(Error, Debug)]
 pub enum SampleDataError {
-    #[error(transparent)]
-    PyError(#[from] pyo3::PyErr),
+    #[error("{0}")]
+    Error(String),
 
     #[error(transparent)]
     DataInterfaceError(#[from] DataInterfaceError),
@@ -144,8 +156,20 @@ pub enum SampleDataError {
     DataTypeError,
 }
 
-impl<'a> From<pyo3::DowncastError<'a, 'a>> for SampleDataError {
-    fn from(err: pyo3::DowncastError) -> Self {
+impl<'a, 'py> From<PyClassGuardError<'a, 'py>> for SampleDataError {
+    fn from(err: PyClassGuardError<'a, 'py>) -> Self {
+        SampleDataError::Error(err.to_string())
+    }
+}
+
+impl From<PyErr> for SampleDataError {
+    fn from(err: PyErr) -> Self {
+        SampleDataError::Error(err.to_string())
+    }
+}
+
+impl<'a, 'py> From<pyo3::CastError<'a, 'py>> for SampleDataError {
+    fn from(err: pyo3::CastError<'a, 'py>) -> Self {
         SampleDataError::DowncastError(err.to_string())
     }
 }
@@ -203,9 +227,6 @@ pub enum OnnxError {
     PyOnnxExtractError(pyo3::PyErr),
 
     #[error(transparent)]
-    PyError(#[from] pyo3::PyErr),
-
-    #[error(transparent)]
     IoError(#[from] std::io::Error),
 
     #[error(transparent)]
@@ -233,8 +254,20 @@ pub enum OnnxError {
     DowncastError(String),
 }
 
-impl<'a> From<pyo3::DowncastError<'a, 'a>> for OnnxError {
-    fn from(err: pyo3::DowncastError) -> Self {
+impl<'a, 'py> From<PyClassGuardError<'a, 'py>> for OnnxError {
+    fn from(err: PyClassGuardError<'a, 'py>) -> Self {
+        OnnxError::Error(err.to_string())
+    }
+}
+
+impl From<PyErr> for OnnxError {
+    fn from(err: PyErr) -> Self {
+        OnnxError::Error(err.to_string())
+    }
+}
+
+impl<'a, 'py> From<pyo3::CastError<'a, 'py>> for OnnxError {
+    fn from(err: pyo3::CastError<'a, 'py>) -> Self {
         OnnxError::DowncastError(err.to_string())
     }
 }
@@ -248,6 +281,9 @@ impl From<OnnxError> for PyErr {
 
 #[derive(Error, Debug)]
 pub enum ModelInterfaceError {
+    #[error("{0}")]
+    Error(String),
+
     #[error("No ONNX session detected in interface for loading")]
     OnnxSessionMissing,
 
@@ -262,9 +298,6 @@ pub enum ModelInterfaceError {
 
     #[error("Model must be an instance of transformers")]
     TransformerTypeError,
-
-    #[error(transparent)]
-    PyError(#[from] pyo3::PyErr),
 
     #[error(transparent)]
     OnnxError(#[from] OnnxError),
@@ -363,9 +396,21 @@ pub enum ModelInterfaceError {
     DriftProfileNotFound,
 }
 
-impl<'a> From<pyo3::DowncastError<'a, 'a>> for ModelInterfaceError {
-    fn from(err: pyo3::DowncastError) -> Self {
+impl<'a, 'py> From<pyo3::CastError<'a, 'py>> for ModelInterfaceError {
+    fn from(err: pyo3::CastError<'a, 'py>) -> Self {
         ModelInterfaceError::DowncastError(err.to_string())
+    }
+}
+
+impl<'a, 'py> From<PyClassGuardError<'a, 'py>> for ModelInterfaceError {
+    fn from(err: PyClassGuardError<'a, 'py>) -> Self {
+        ModelInterfaceError::Error(err.to_string())
+    }
+}
+
+impl From<PyErr> for ModelInterfaceError {
+    fn from(err: PyErr) -> Self {
+        ModelInterfaceError::Error(err.to_string())
     }
 }
 

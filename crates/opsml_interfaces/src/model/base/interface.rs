@@ -10,7 +10,7 @@ use crate::OnnxSession;
 use opsml_types::CommonKwargs;
 use opsml_utils::PyHelperFuncs;
 use scouter_client::{
-    CustomDriftProfile, DriftType, LLMDriftProfile, PsiDriftProfile, SpcDriftProfile,
+    CustomDriftProfile, DriftType, GenAIEvalProfile, PsiDriftProfile, SpcDriftProfile,
 };
 
 use crate::error::ModelInterfaceError;
@@ -484,7 +484,7 @@ impl ModelInterface {
             _ => None,
         });
 
-        let profile = drifter.create_drift_profile(py, data, config, data_type, None)?;
+        let profile = drifter.create_drift_profile(py, data, config, data_type)?;
         self.drift_profile.add_profile(py, alias, profile.clone())?;
 
         Ok(profile)
@@ -704,8 +704,8 @@ impl ModelInterface {
                         profile.into_bound_py_any(py)?,
                     )?;
                 }
-                DriftType::LLM => {
-                    let profile = LLMDriftProfile::model_validate_json(file);
+                DriftType::GenAI => {
+                    let profile = GenAIEvalProfile::model_validate_json(file);
                     self.drift_profile.add_profile(
                         py,
                         alias.to_string(),
