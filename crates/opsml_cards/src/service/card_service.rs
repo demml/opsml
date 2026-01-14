@@ -563,7 +563,7 @@ impl ServiceCard {
         let card_kwargs = kwargs
             .and_then(|kwargs| kwargs.get_item(alias).ok())
             .and_then(|bound| match bound {
-                Some(b) => b.downcast::<PyDict>().ok().cloned(),
+                Some(b) => b.cast::<PyDict>().ok().cloned(),
                 None => None,
             });
 

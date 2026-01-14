@@ -201,7 +201,7 @@ impl ModelCard {
             if session.is_none() {
                 Ok(None)
             } else {
-                let session = session.downcast::<OnnxSession>()?;
+                let session = session.cast::<OnnxSession>()?;
                 Ok(Some(session.clone()))
             }
         } else {
@@ -261,7 +261,7 @@ impl ModelCard {
     ) -> Result<Bound<'py, DriftProfileMap>, CardError> {
         if let Some(interface) = self.interface.as_ref() {
             let drift_profiles = interface.bind(py).getattr("drift_profile")?;
-            Ok(drift_profiles.downcast::<DriftProfileMap>()?.clone())
+            Ok(drift_profiles.cast::<DriftProfileMap>()?.clone())
         } else {
             Err(CardError::InterfaceNotFoundError)
         }
@@ -502,7 +502,7 @@ impl ModelCard {
         let interface = self.interface.as_ref().unwrap().bind(py);
         let drift_profiles = interface.getattr("drift_profile")?;
         // downcast to list
-        let drift_profiles = drift_profiles.downcast::<DriftProfileMap>()?;
+        let drift_profiles = drift_profiles.cast::<DriftProfileMap>()?;
 
         // if drift_profiles is empty, return
         if drift_profiles.call_method0("is_empty")?.extract::<bool>()? {

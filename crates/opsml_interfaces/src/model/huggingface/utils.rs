@@ -66,7 +66,7 @@ impl HuggingFaceSampleData {
 
         if data.is_instance_of::<PyString>() {
             return Ok(HuggingFaceSampleData::Str(
-                data.downcast::<PyString>()?.clone().unbind(),
+                data.cast::<PyString>()?.clone().unbind(),
             ));
         }
 
@@ -154,7 +154,7 @@ impl HuggingFaceSampleData {
 
     fn handle_pylist(data: &Bound<'_, PyAny>) -> Result<Self, SampleDataError> {
         let py = data.py();
-        let py_list = data.downcast::<PyList>()?;
+        let py_list = data.cast::<PyList>()?;
 
         for (idx, item) in py_list.iter().enumerate() {
             let slice = PySlice::new(py, 0, 1, 1);
@@ -169,7 +169,7 @@ impl HuggingFaceSampleData {
         let py = data.py();
 
         // convert data from PyTuple to PyList
-        let py_list = PyList::new(py, data.downcast::<PyTuple>()?.iter())?;
+        let py_list = PyList::new(py, data.cast::<PyTuple>()?.iter())?;
 
         for (idx, item) in py_list.iter().enumerate() {
             let slice = PySlice::new(py, 0, 1, 1);
@@ -184,7 +184,7 @@ impl HuggingFaceSampleData {
 
     fn handle_pydict(data: &Bound<'_, PyAny>) -> Result<Self, SampleDataError> {
         let py = data.py();
-        let py_dict = data.downcast::<PyDict>()?;
+        let py_dict = data.cast::<PyDict>()?;
 
         for (k, v) in py_dict.iter() {
             let slice = PySlice::new(py, 0, 1, 1);
@@ -346,26 +346,26 @@ impl HuggingFaceSampleData {
             DataType::List => {
                 let data = load_from_joblib(py, path)?;
                 Ok(HuggingFaceSampleData::List(
-                    data.downcast::<PyList>()?.clone().unbind(),
+                    data.cast::<PyList>()?.clone().unbind(),
                 ))
             }
             DataType::Tuple => {
                 let data = load_from_joblib(py, path)?;
                 Ok(HuggingFaceSampleData::Tuple(
-                    data.downcast::<PyTuple>()?.clone().unbind(),
+                    data.cast::<PyTuple>()?.clone().unbind(),
                 ))
             }
             DataType::Dict => {
                 let data = load_from_joblib(py, path)?;
                 Ok(HuggingFaceSampleData::Dict(
-                    data.downcast::<PyDict>()?.clone().unbind(),
+                    data.cast::<PyDict>()?.clone().unbind(),
                 ))
             }
 
             DataType::Str => {
                 let data = load_from_joblib(py, path)?;
                 Ok(HuggingFaceSampleData::Str(
-                    data.downcast::<PyString>()?.clone().unbind(),
+                    data.cast::<PyString>()?.clone().unbind(),
                 ))
             }
 

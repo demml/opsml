@@ -616,13 +616,13 @@ impl Experiment {
         // accepts either a dictionary or a list of Parameters
         let parameters = if parameters.is_instance_of::<PyDict>() {
             // extract to pydict
-            let dict = parameters.downcast::<PyDict>()?;
+            let dict = parameters.cast::<PyDict>()?;
             dict.iter()
                 .map(|(k, v)| Parameter::new(k.to_string(), v))
                 .collect::<Result<Vec<_>, _>>()?
         } else if parameters.is_instance_of::<PyList>() {
             // extract to pylist
-            let list = parameters.downcast::<PyList>()?;
+            let list = parameters.cast::<PyList>()?;
             list.extract::<Vec<Parameter>>()?
         } else {
             let received_type = parameters.get_type().name()?;

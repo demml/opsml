@@ -114,7 +114,7 @@ impl XGBoostOnnxConverter {
             )
             .unwrap();
 
-        let initial_types = initial_types.downcast::<PyList>()?;
+        let initial_types = initial_types.cast::<PyList>()?;
 
         // iter over the list and convert each to a tuple
         // Newer versions of onnxmltools requires the use of onnxmltools data types and not skl2onnx data types
@@ -123,7 +123,7 @@ impl XGBoostOnnxConverter {
         let initial_types = initial_types
             .iter()
             .map(|x| {
-                let x = x.downcast::<PyTuple>().unwrap();
+                let x = x.cast::<PyTuple>().unwrap();
                 convert_to_onnxmltools_type(py, x)
             })
             .collect::<Result<Vec<_>, _>>()?

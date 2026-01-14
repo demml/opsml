@@ -82,7 +82,7 @@ impl TorchSampleData {
 
     fn handle_pylist(data: &Bound<'_, PyAny>) -> Result<Self, SampleDataError> {
         let py = data.py();
-        let py_list = data.downcast::<PyList>()?;
+        let py_list = data.cast::<PyList>()?;
         let torch_tensor = py.import("torch")?.getattr("Tensor")?;
 
         for (idx, item) in py_list.iter().enumerate() {
@@ -107,7 +107,7 @@ impl TorchSampleData {
         let torch_tensor = py.import("torch")?.getattr("Tensor")?;
 
         // convert data from PyTuple to PyList
-        let py_list = PyList::new(py, data.downcast::<PyTuple>()?.iter())?;
+        let py_list = PyList::new(py, data.cast::<PyTuple>()?.iter())?;
 
         for (idx, item) in py_list.iter().enumerate() {
             let slice = PySlice::new(py, 0, 1, 1);
@@ -129,7 +129,7 @@ impl TorchSampleData {
 
     fn handle_pydict(data: &Bound<'_, PyAny>) -> Result<Self, SampleDataError> {
         let py = data.py();
-        let py_dict = data.downcast::<PyDict>()?;
+        let py_dict = data.cast::<PyDict>()?;
         let torch_tensor = py.import("torch")?.getattr("Tensor")?;
 
         for (k, v) in py_dict.iter() {
@@ -242,20 +242,20 @@ impl TorchSampleData {
             DataType::List => {
                 let data = load_from_joblib(py, path)?;
                 Ok(TorchSampleData::List(
-                    data.downcast::<PyList>()?.clone().unbind(),
+                    data.cast::<PyList>()?.clone().unbind(),
                 ))
             }
 
             DataType::Tuple => {
                 let data = load_from_joblib(py, path)?;
                 Ok(TorchSampleData::Tuple(
-                    data.downcast::<PyTuple>()?.clone().unbind(),
+                    data.cast::<PyTuple>()?.clone().unbind(),
                 ))
             }
             DataType::Dict => {
                 let data = load_from_joblib(py, path)?;
                 Ok(TorchSampleData::Dict(
-                    data.downcast::<PyDict>()?.clone().unbind(),
+                    data.cast::<PyDict>()?.clone().unbind(),
                 ))
             }
 

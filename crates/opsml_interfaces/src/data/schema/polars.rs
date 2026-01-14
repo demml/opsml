@@ -658,7 +658,7 @@ impl Struct {
         let mut extra_args = HashMap::new();
 
         let fields = data_type.getattr("fields")?;
-        let fields = fields.downcast::<PyList>()?;
+        let fields = fields.cast::<PyList>()?;
 
         // iterate over fields and extract name and dtype
         for field in fields.iter() {
@@ -711,7 +711,7 @@ impl PolarsSchemaValidator {
         data: &Bound<'_, PyAny>,
     ) -> Result<FeatureSchema, DataInterfaceError> {
         let binding = data.getattr("schema")?;
-        let schema_items = binding.downcast::<PyDict>()?;
+        let schema_items = binding.cast::<PyDict>()?;
 
         let feature_map = schema_items
             .iter()
