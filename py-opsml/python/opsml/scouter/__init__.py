@@ -1,18 +1,5 @@
 # mypy: disable-error-code="attr-defined"
 # pylint: disable=no-name-in-module
-from . import (
-    alert,
-    client,
-    drift,
-    evaluate,
-    observe,
-    profile,
-    queue,
-    tracing,
-    transport,
-    types,
-    util,
-)
 from .._opsml import (
     AssertionTask,
     CommonCrons,
@@ -29,7 +16,7 @@ from .._opsml import (
     FeatureMap,
     Features,
     FreedmanDiaconis,
-    GenAIDriftConfig,
+    GenAIEvalConfig,
     GenAIEvalProfile,
     GenAIEvalRecord,
     GenAIEvalResults,
@@ -64,6 +51,19 @@ from .._opsml import (
     SquareRoot,
     Sturges,
     TerrellScott,
+)
+from . import (
+    alert,
+    client,
+    drift,
+    evaluate,
+    observe,
+    profile,
+    queue,
+    tracing,
+    transport,
+    types,
+    util,
 )
 
 __all__ = [
@@ -121,7 +121,7 @@ __all__ = [
     "RabbitMQConfig",
     "RedisConfig",
     # genai
-    "GenAIDriftConfig",
+    "GenAIEvalConfig",
     "GenAIEvalProfile",
     "GenAIEvalRecord",
     "LLMJudgeTask",

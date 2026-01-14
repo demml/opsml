@@ -1,11 +1,10 @@
 # Overview
 
-`Opsml` is integrated with [Scouter](https://github.com/demml/scouter) for real-time monitoring. With this integration, you can the create drift profiles for your models and prompts, and monitor them in real-time. For a more detailed overview of Scouter, and how to use it, see the [Scouter documentation](https://docs.demml.io/scouter) along with our examples directory. The following is a brief overview of the Scouter integration with `Opsml`.
-
+`Opsml` is integrated with [Scouter](https://github.com/demml/scouter) for real-time monitoring and observability. With this integration, you can the create drift profiles for your models and prompts and agents, and monitor them in real-time. For a more detailed overview of Scouter, and how to use it, see the [Scouter documentation](https://docs.demml.io/scouter) along with our examples directory. The following is a brief overview of the Scouter integration with `Opsml`.
 
 ## Creating a Drift Profile
 
-While you can create a drift profile for `ModelCards` and `PromptCards`, real-time monitoring requires that you setup the `Scouter` server. Refer to the setup instructions in the [Scouter documentation](https://docs.demml.io/scouter/docs/server/).
+While you can create a drift profile for `ModelCards`, `PromptCards` and `AgentCards`, real-time monitoring requires that you setup the `Scouter` server. Refer to the setup instructions in the [Scouter documentation](https://docs.demml.io/scouter/docs/server/).
 
 ## ModelCards
 
@@ -91,29 +90,34 @@ registry.register_card(modelcard)
 
 ## PromptCards
 
-You can also create drift profiles for `PromptCards`. The only difference is that you will use the `create_drift_profile` method on the `PromptCard` instead of the `ModelInterface`, and you can only create LLM drift profiles and metrics.
+**Note on nomenclature**: In the context of `PromptCards`, drift profiles are often referred to as evaluation profiles, since they are typically used to evaluate the performance of prompts over time.
 
-For more information on LLM Monitoring, refer to [LLM Monitoring documentation](https://docs.demml.io/scouter/docs/monitoring/llm/overview/).
+You can also create evaluation profiles for `PromptCards`. The only difference is that you will use the `create_eval_profile` method on the `PromptCard` instead of the `ModelInterface`. You can also provide a `GenAIEvalProfile` directly when creating the `PromptCard`.
 
-### `create_drift_profile` Arguments
+For more information on GenAI Evaluations, refer to [LLM Monitoring documentation](https://docs.demml.io/scouter/docs/monitoring/genai/overview/).
 
+### `create_eval_profile` Arguments
 | Name | Required | Description |
 | --- | --- | --- |
-| **alias** | Yes | The alias for the drift profile |
-| **config** | Yes | The LLM drift config to use |
-| **metrics** | Yes | The metrics to use for the drift profile. Must be a collection of `LMDriftMetric` objects |
-| **workflow** | No | Optional custom workflow for advanced evaluation scenarios |
+| **alias** | Yes | The alias for the evaluation profile |
+| **config** | Yes | The GenAI drift config to use |
+| **tasks** | Yes | The tasks to use for the evaluation profile. Must be a combination of `LLMJudgeTask` and `AssertionTask`. See [docs](https://docs.demml.io/scouter/docs/monitoring/genai/tasks/) |
 
 
-### Example (LLM as a Judge Drift Profile)
+### Example (LLM as a Judge Evaluation Profile)
 
 ```python
-from opsml.scouter.drift import LLMDriftConfig, LLMDriftMetric, LLMDriftProfile
+from opsml.scouter.evaluate import (
+    GenAIAlertConfig,
+    GenAIEvalConfig,
+    GenAIEvalProfile,
+    LLMJudgeTask,
+)
 from opsml.scouter.alert import AlertThreshold
 from opsml.genai import Score, Agent, Task, Workflow, Prompt
 
 
-def create_reformulation_evaluation_prompt(): # (1)
+def create_reformulation_evaluation_prompt():
     """
     Builds a prompt for evaluating the quality of a reformulated query.
 
@@ -124,62 +128,142 @@ def create_reformulation_evaluation_prompt(): # (1)
         >>> prompt = create_reformulation_evaluation_prompt()
     """
     return Prompt(
-        message=(
+        messages=(
             "You are an expert evaluator of search query reformulations. "
             "Given the original user query and its reformulated version, your task is to assess how well the reformulation improves the query. "
-            "Consider the following criteria:"
-            "- Does the reformulation make the query more explicit and comprehensive?"
-            "- Are relevant synonyms, related concepts, or specific features added?"
-            "- Is the original intent preserved without changing the meaning?"
-            "- Is the reformulation clear and unambiguous?"
-            "Provide your evaluation as a JSON object with the following attributes:"
-            "- score: An integer from 1 (poor) to 5 (excellent) indicating the overall quality of the reformulation."
-            "- reason: A brief explanation for your score."
-            "Format your response as:"
-            "{"
-            '  "score": <integer 1-5>,'
-            '  "reason": "<your explanation>"'
-            "}"
-            "Original Query:"
-            "${user_query}"
-            "Reformulated Query:"
-            "${response}"
+            "Consider the following criteria:\n"
+            "- Does the reformulation make the query more explicit and comprehensive?\n"
+            "- Are relevant synonyms, related concepts, or specific features added?\n"
+            "- Is the original intent preserved without changing the meaning?\n"
+            "- Is the reformulation clear and unambiguous?\n\n"
+            "Provide your evaluation as a JSON object with the following attributes:\n"
+            "- score: An integer from 1 (poor) to 5 (excellent) indicating the overall quality of the reformulation.\n"
+            "- reason: A brief explanation for your score.\n\n"
+            "Format your response as:\n"
+            "{\n"
+            '  "score": <integer 1-5>,\n'
+            '  "reason": "<your explanation>"\n'
+            "}\n\n"
+            "Original Query:\n"
+            "${user_input}\n\n"
+            "Reformulated Query:\n"
+            "${reformulated_query}\n\n"
             "Evaluation:"
         ),
         model="gemini-2.5-flash-lite-preview-06-17",
         provider="gemini",
-        response_format=Score,
+        output_type=Score,
     )
+
+
+def create_relevance_evaluation_prompt() -> Prompt:
+    """
+    Builds a prompt for evaluating the relevance of an LLM response to the original user query.
+
+    Returns:
+        Prompt: A prompt that asks for a JSON evaluation of the response's relevance.
+
+    Example:
+        >>> prompt = create_relevance_evaluation_prompt()
+    """
+    return Prompt(
+        messages=(
+            "You are an expert evaluator of LLM responses. "
+            "Given the original user query and the LLM's response, your task is to assess how relevant the response is to the query. "
+            "Consider the following criteria:\n"
+            "- Does the response directly address the user's question or request?\n"
+            "- Is the information provided accurate and appropriate for the query?\n"
+            "- Are any parts of the response off-topic or unrelated?\n"
+            "- Is the response complete and does it avoid unnecessary information?\n\n"
+            "Provide your evaluation as a JSON object with the following attributes:\n"
+            "- score: An integer from 1 (irrelevant) to 5 (highly relevant) indicating the overall relevance of the response.\n"
+            "- reason: A brief explanation for your score.\n\n"
+            "Format your response as:\n"
+            "{\n"
+            '  "score": <integer 1-5>,\n'
+            '  "reason": "<your explanation>"\n'
+            "}\n\n"
+            "Original Query:\n"
+            "${reformulated_query}\n\n"
+            "LLM Response:\n"
+            "${relevance_response}\n\n"
+            "Evaluation:"
+        ),
+        model="gemini-2.5-flash-lite-preview-06-17",
+        provider="gemini",
+        output_type=Score,
+    )
+
+
+relevance = LLMJudgeTask(
+    id="relevance",
+    prompt=create_relevance_evaluation_prompt(),
+    expected_value=3.0,
+    field_path="score",
+    operator=ComparisonOperator.GreaterThanOrEqual,
+    description="Evaluate the relevance of the LLM response to the user query",
+)
+
+reformulation = LLMJudgeTask(
+    id="reformulation",
+    prompt=create_reformulation_evaluation_prompt(),
+    expected_value=3.0,
+    field_path="score",
+    operator=ComparisonOperator.GreaterThanOrEqual,
+    description="Evaluate the quality of the query reformulation",
+)
+
+profile = GenAIEvalProfile(
+    config=GenAIEvalConfig( # name, space, version are auto-set when registering the card
+        sample_ratio=1,
+        alert_config=GenAIAlertConfig(
+            alert_condition=AlertCondition(
+                baseline_value=0.80,
+                alert_threshold=AlertThreshold.Below,
+                delta=0.05,
+            )
+        ),
+    ),
+    tasks=[relevance, reformulation],
+)
 
 prompt = Prompt(
     model="gpt-4o",
     provider="openai",
-    message="Hello, please reformulate the following query to make it more explicit and comprehensive: ${user_query}",
-    system_instruction="You are a helpful assistant.",
+    messages="Hello, please reformulate the following query to make it more explicit and comprehensive: ${user_query}",
+    system_instructions="You are a helpful assistant.",
 )
 
-card = PromptCard(prompt=prompt, space="opsml", name="opsml")
+card = PromptCard(
+    prompt=prompt,
+    space="opsml",
+    name="opsml",
+    eval_profile={"genai_eval": profile} # (1)
+)
 
+### This is how you would create the evaluation profile on an existing PromptCard
 card.create_drift_profile(
-    alias="llm_drift",
-    config=LLMDriftConfig(),
-    metrics=[
-        LLMDriftMetric(
-            name="reformulation_quality",
-            prompt=create_reformulation_evaluation_prompt(), # (2)
-            value=3.0,
-            alert_threshold=AlertThreshold.Below, # (3)
-        )
-    ],
+    alias="genai_eval",
+    config=GenAIEvalConfig(
+        sample_ratio=1,
+        alert_config=GenAIAlertConfig(
+            alert_condition=AlertCondition(
+                baseline_value=0.80, # (2)
+                alert_threshold=AlertThreshold.Below,  # (3)
+                delta=0.05,
+            )
+        ),
+    ),
+    tasks=[relevance, reformulation],
 )
 ```
 
-1. The `create_reformulation_evaluation_prompt` function builds an evaluation prompt that we can use to assess the quality of query reformulations.
-2. We feed the reformulation evaluation prompt to the `LLMDriftMetric` to evaluate the quality of the reformulation.
-3. The `alert_threshold` is set to `Below`, meaning that if the score is below the threshold, an alert will be triggered. Given the value of 3.0, this means that if the score is below 3.0, an alert will be triggered.
+1. The `eval_profile` argument is used to pass in the evaluation profile key and value when creating the `PromptCard`. (this is optional, you can also create the evaluation profile later using the `create_eval_profile` method).
+2. The `baseline_value` is the value that the alert condition will be compared against.
+3. The `alert_threshold` is used to specify whether the alert should be triggered when the value goes above or below the baseline value.
 
 ### Things to know
 
-- There is no need to specify `space`, `name` or `version` with your drift config. These are automatically set based on the `ModelCard` or `PromptCard` you are using.
+- There is no need to specify `space`, `name` or `version` with your evaluation config. These are automatically set based on the `ModelCard` or `PromptCard` you are using.
 
 

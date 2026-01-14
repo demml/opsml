@@ -12,7 +12,7 @@ from ..._opsml import (
     FeatureMap,
     FreedmanDiaconis,
     GenAIAlertConfig,
-    GenAIDriftConfig,
+    GenAIEvalConfig,
     GenAIEvalProfile,
     GenAIEvalRecord,
     LLMJudgeTask,
@@ -60,7 +60,7 @@ __all__ = [
     "TerrellScott",
     "FreedmanDiaconis",
     # genai
-    "GenAIDriftConfig",
+    "GenAIEvalConfig",
     "GenAIEvalProfile",
     "GenAIEvalRecord",
     "LLMJudgeTask",

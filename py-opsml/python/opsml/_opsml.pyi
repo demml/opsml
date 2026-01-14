@@ -1,9 +1,9 @@
 # python/opsml/_opsml.pyi
-# pylint: disable=dangerous-default-value,redefined-builtin,missing-param-doc
+# pylint: disable=dangerous-default-value,redefined-builtin,missing-param-doc,arguments-differ
 # type: ignore
 
 # to search for a specific module, search for __<module_name>__ like __opsml.card__
-from datetime import datetime
+import datetime
 from pathlib import Path
 from types import TracebackType
 from typing import (
@@ -24,9 +24,7 @@ from typing import (
 )
 
 CardInterfaceType: TypeAlias = Union["DataInterface", "ModelInterface"]
-ServiceCardInterfaceType: TypeAlias = Dict[
-    str, Union["DataInterface", "ModelInterface"]
-]
+ServiceCardInterfaceType: TypeAlias = Dict[str, Union["DataInterface", "ModelInterface"]]
 LoadInterfaceType: TypeAlias = Union[ServiceCardInterfaceType, ServiceCardInterfaceType]
 SerializedType: TypeAlias = Union[str, int, float, dict, list]
 Context: TypeAlias = Union[Dict[str, Any], "BaseModel"]
@@ -254,9 +252,7 @@ class Prompt:
         model: str,
         provider: Provider | str,
         system_instructions: Optional[PromptMessage] = None,
-        model_settings: Optional[
-            ModelSettings | OpenAIChatSettings | GeminiSettings | AnthropicSettings
-        ] = None,
+        model_settings: Optional[ModelSettings | OpenAIChatSettings | GeminiSettings | AnthropicSettings] = None,
         output_type: Optional[Any] = None,
     ) -> None:
         """Initialize a Prompt object.
@@ -2559,9 +2555,7 @@ class ChatMessage:
     @property
     def content(
         self,
-    ) -> List[
-        Union[TextContentPart, ImageContentPart, InputAudioContentPart, FileContentPart]
-    ]:
+    ) -> List[Union[TextContentPart, ImageContentPart, InputAudioContentPart, FileContentPart]]:
         """The message content parts."""
 
     @property
@@ -9819,12 +9813,8 @@ class BatchConfig:
 def init_tracer(
     service_name: str = "scouter_service",
     scope: str = "scouter.tracer.{version}",
-    transport_config: Optional[
-        HttpConfig | KafkaConfig | RabbitMQConfig | RedisConfig | GrpcConfig
-    ] = None,
-    exporter: Optional[
-        HttpSpanExporter | GrpcSpanExporter | StdoutSpanExporter | TestSpanExporter
-    ] = None,
+    transport_config: Optional[HttpConfig | KafkaConfig | RabbitMQConfig | RedisConfig | GrpcConfig] = None,
+    exporter: Optional[HttpSpanExporter | GrpcSpanExporter | StdoutSpanExporter | TestSpanExporter] = None,
     batch_config: Optional[BatchConfig] = None,
     sample_ratio: Optional[float] = None,
 ) -> None:
@@ -10575,9 +10565,7 @@ class AlertDispatchType:
     def to_string() -> str:
         """Return the string representation of the alert dispatch type"""
 
-DispatchConfigType = (
-    ConsoleDispatchConfig | SlackDispatchConfig | OpsGenieDispatchConfig
-)
+DispatchConfigType = ConsoleDispatchConfig | SlackDispatchConfig | OpsGenieDispatchConfig
 
 class AlertZone:
     Zone1: "AlertZone"
@@ -10961,17 +10949,6 @@ class GenAIAlertConfig:
     @property
     def alert_conditions(self) -> Optional[AlertCondition]:
         """Return the alert condition"""
-
-class LogLevel:
-    Debug: "LogLevel"
-    Info: "LogLevel"
-    Warn: "LogLevel"
-    Error: "LogLevel"
-    Trace: "LogLevel"
-
-class WriteLevel:
-    Stdout: "WriteLevel"
-    Stderror: "WriteLevel"
 
 class TagRecord:
     """Represents a single tag record associated with an entity."""
@@ -11461,9 +11438,7 @@ class DriftRequest:
         """
 
 class ProfileStatusRequest:
-    def __init__(
-        self, name: str, space: str, version: str, drift_type: DriftType, active: bool
-    ) -> None:
+    def __init__(self, name: str, space: str, version: str, drift_type: DriftType, active: bool) -> None:
         """Initialize profile status request
 
         Args:
@@ -11480,9 +11455,7 @@ class ProfileStatusRequest:
         """
 
 class GetProfileRequest:
-    def __init__(
-        self, name: str, space: str, version: str, drift_type: DriftType
-    ) -> None:
+    def __init__(self, name: str, space: str, version: str, drift_type: DriftType) -> None:
         """Initialize get profile request
 
         Args:
@@ -11583,9 +11556,7 @@ class ScouterClient:
                 DriftRequest object
         """
 
-    def register_profile(
-        self, profile: Any, set_active: bool = False, deactivate_others: bool = False
-    ) -> bool:
+    def register_profile(self, profile: Any, set_active: bool = False, deactivate_others: bool = False) -> bool:
         """Registers a drift profile with the server
 
         Args:
@@ -11611,9 +11582,7 @@ class ScouterClient:
             boolean
         """
 
-    def get_alerts(
-        self, request: DriftAlertPaginationRequest
-    ) -> DriftAlertPaginationResponse:
+    def get_alerts(self, request: DriftAlertPaginationRequest) -> DriftAlertPaginationResponse:
         """Get alerts
 
         Args:
@@ -12950,16 +12919,7 @@ class FreedmanDiaconis:
         For more information, please see: https://en.wikipedia.org/wiki/Histogram
         """
 
-EqualWidthMethods = (
-    Manual
-    | SquareRoot
-    | Sturges
-    | Rice
-    | Doane
-    | Scott
-    | TerrellScott
-    | FreedmanDiaconis
-)
+EqualWidthMethods = Manual | SquareRoot | Sturges | Rice | Doane | Scott | TerrellScott | FreedmanDiaconis
 
 class EqualWidthBinning:
     def __init__(self, method: EqualWidthMethods = Doane()):
@@ -13033,9 +12993,7 @@ class PsiDriftConfig:
         alert_config: PsiAlertConfig = PsiAlertConfig(),
         config_path: Optional[Path] = None,
         categorical_features: Optional[list[str]] = None,
-        binning_strategy: QuantileBinning | EqualWidthBinning = QuantileBinning(
-            num_bins=10
-        ),
+        binning_strategy: QuantileBinning | EqualWidthBinning = QuantileBinning(num_bins=10),
     ):
         """Initialize monitor config
 
@@ -13113,9 +13071,7 @@ class PsiDriftConfig:
         """binning_strategy"""
 
     @binning_strategy.setter
-    def binning_strategy(
-        self, binning_strategy: QuantileBinning | EqualWidthBinning
-    ) -> None:
+    def binning_strategy(self, binning_strategy: QuantileBinning | EqualWidthBinning) -> None:
         """Set binning_strategy"""
 
     @property
@@ -13614,7 +13570,7 @@ class CustomDriftProfile:
             None
         """
 
-class GenAIDriftConfig:
+class GenAIEvalConfig:
     def __init__(
         self,
         space: str = "__missing__",
@@ -13623,7 +13579,7 @@ class GenAIDriftConfig:
         sample_ratio: float = 1.0,
         alert_config: GenAIAlertConfig = GenAIAlertConfig(),
     ):
-        """Initialize drift config
+        """Initialize eval config
         Args:
             space:
                 Space to associate with the config
@@ -13683,7 +13639,7 @@ class GenAIDriftConfig:
         """Set alert_config"""
 
     @staticmethod
-    def load_from_json_file(path: Path) -> "GenAIDriftConfig":
+    def load_from_json_file(path: Path) -> "GenAIEvalConfig":
         """Load config from json file
         Args:
             path:
@@ -14354,7 +14310,7 @@ class GenAIEvalProfile:
     Examples:
         Pure assertion-based monitoring (no LLM calls):
 
-        >>> config = GenAIDriftConfig(
+        >>> config = GenAIEvalConfig(
         ...     space="production",
         ...     name="chatbot",
         ...     version="1.0",
@@ -14496,7 +14452,7 @@ class GenAIEvalProfile:
 
     def __init__(
         self,
-        config: GenAIDriftConfig,
+        config: GenAIEvalConfig,
         tasks: List[Union[AssertionTask, LLMJudgeTask]],
     ):
         """Initialize a GenAIEvalProfile for LLM evaluation and drift detection.
@@ -14506,7 +14462,7 @@ class GenAIEvalProfile:
         into an internal Workflow for execution on the Scouter server.
 
         Args:
-            config (GenAIDriftConfig):
+            config (GenAIEvalConfig):
                 Configuration for the GenAI drift profile containing space, name,
                 version, sample rate, and alert settings.
             tasks (List[Union[AssertionTask, LLMJudgeTask]]):
@@ -14526,7 +14482,7 @@ class GenAIEvalProfile:
         Examples:
             Assertion-only profile:
 
-            >>> config = GenAIDriftConfig(space="prod", name="bot", version="1.0")
+            >>> config = GenAIEvalConfig(space="prod", name="bot", version="1.0")
             >>> assertions = [
             ...     AssertionTask(id="length_check", ...),
             ...     AssertionTask(id="confidence_check", ...)
@@ -14562,7 +14518,7 @@ class GenAIEvalProfile:
         """Set unique identifier for the drift profile."""
 
     @property
-    def config(self) -> GenAIDriftConfig:
+    def config(self) -> GenAIEvalConfig:
         """Configuration for the drift profile.
 
         Contains space, name, version, sample rate, and alert settings.
@@ -14888,9 +14844,7 @@ class Drifter:
     def create_drift_profile(  # type: ignore
         self,
         data: Any,
-        config: Optional[
-            Union[SpcDriftConfig, PsiDriftConfig, CustomMetricDriftConfig]
-        ] = None,
+        config: Optional[Union[SpcDriftConfig, PsiDriftConfig, CustomMetricDriftConfig]] = None,
         data_type: Optional[ScouterDataType] = None,
     ) -> Union[SpcDriftProfile, PsiDriftProfile, CustomDriftProfile]:
         """Create a drift profile from data.
@@ -14913,7 +14867,7 @@ class Drifter:
         """
 
     def create_genai_drift_profile(
-        self, config: GenAIDriftConfig, tasks: Sequence[LLMJudgeTask | AssertionTask]
+        self, config: GenAIEvalConfig, tasks: Sequence[LLMJudgeTask | AssertionTask]
     ) -> GenAIEvalProfile:
         """Initialize a GenAIEvalProfile for LLM evaluation and drift detection.
 
@@ -14929,7 +14883,7 @@ class Drifter:
 
 
         Args:
-            config (GenAIDriftConfig):
+            config (GenAIEvalConfig):
                 The configuration for the GenAI drift profile containing space, name,
                 version, and alert settings.
             tasks (List[LLMJudgeTask | AssertionTask]):
@@ -14947,7 +14901,7 @@ class Drifter:
         Examples:
             Basic usage with metrics only:
 
-            >>> config = GenAIDriftConfig("my_space", "my_model", "1.0")
+            >>> config = GenAIEvalConfig("my_space", "my_model", "1.0")
             >>>  tasks = [
             ...     LLMJudgeTask(
             ...         id="response_relevance",
@@ -16522,9 +16476,7 @@ class PolarsData(DataInterface):
 
         """
 
-    def save(
-        self, path: Path, save_kwargs: Optional[DataSaveKwargs] = None
-    ) -> DataInterfaceMetadata:
+    def save(self, path: Path, save_kwargs: Optional[DataSaveKwargs] = None) -> DataInterfaceMetadata:
         """Saves polars dataframe to parquet dataset via write_parquet
 
         Args:
@@ -16652,9 +16604,7 @@ class PandasData(DataInterface):
                 Data profile
         """
 
-    def save(
-        self, path: Path, save_kwargs: Optional[DataSaveKwargs] = None
-    ) -> DataInterfaceMetadata:
+    def save(self, path: Path, save_kwargs: Optional[DataSaveKwargs] = None) -> DataInterfaceMetadata:
         """Saves pandas dataframe as parquet file via to_parquet
 
         Args:
@@ -16775,9 +16725,7 @@ class ArrowData(DataInterface):
                 Data profile
         """
 
-    def save(
-        self, path: Path, save_kwargs: Optional[DataSaveKwargs] = None
-    ) -> DataInterfaceMetadata:
+    def save(self, path: Path, save_kwargs: Optional[DataSaveKwargs] = None) -> DataInterfaceMetadata:
         """Saves pyarrow table to parquet via write_table
 
         Args:
@@ -16934,9 +16882,7 @@ class TorchData(DataInterface):
                 Data profile
         """
 
-    def save(
-        self, path: Path, save_kwargs: Optional[DataSaveKwargs] = None
-    ) -> DataInterfaceMetadata:
+    def save(self, path: Path, save_kwargs: Optional[DataSaveKwargs] = None) -> DataInterfaceMetadata:
         """Saves torch tensor to a file
 
         Args:
@@ -17043,9 +16989,7 @@ def generate_feature_schema(data: Any, data_type: DataType) -> FeatureSchema:
 #  This section contains the type definitions for opsml.model module
 # __opsml.model__
 # ######################################################################################
-DriftProfileType = Dict[
-    str, Union[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile]
-]
+DriftProfileType = Dict[str, Union[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile]]
 
 class ProcessorType:
     Preprocessor: "ProcessorType"
@@ -18503,9 +18447,7 @@ class DataCard:
         """Return the model dump as a json string"""
 
     @staticmethod
-    def model_validate_json(
-        json_string: str, interface: Optional[DataInterface] = None
-    ) -> "ModelCard":
+    def model_validate_json(json_string: str, interface: Optional[DataInterface] = None) -> "ModelCard":
         """Validate the model json string
 
         Args:
@@ -18850,9 +18792,7 @@ class ModelCard:
         """Return the model dump as a json string"""
 
     @staticmethod
-    def model_validate_json(
-        json_string: str, interface: Optional[ModelInterface] = None
-    ) -> "ModelCard":
+    def model_validate_json(json_string: str, interface: Optional[ModelInterface] = None) -> "ModelCard":
         """Validate the model json string
 
         Args:
@@ -19298,7 +19238,7 @@ class PromptCard:
     def create_drift_profile(
         self,
         alias: str,
-        config: GenAIDriftConfig,
+        config: GenAIEvalConfig,
         tasks: Sequence[LLMJudgeTask | AssertionTask],
     ) -> None:
         """Initialize a GenAIEvalProfile for LLM evaluation and drift detection.
@@ -19315,7 +19255,7 @@ class PromptCard:
 
 
         Args:
-            config (GenAIDriftConfig):
+            config (GenAIEvalConfig):
                 The configuration for the GenAI drift profile containing space, name,
                 version, and alert settings.
             tasks (List[LLMJudgeTask | AssertionTask]):
@@ -19333,7 +19273,7 @@ class PromptCard:
         Examples:
             Basic usage with metrics only:
 
-            >>> config = GenAIDriftConfig("my_space", "my_model", "1.0")
+            >>> config = GenAIEvalConfig("my_space", "my_model", "1.0")
             >>>  tasks = [
             ...     LLMJudgeTask(
             ...         id="response_relevance",
@@ -19376,7 +19316,7 @@ class Card:
         name: Optional[str] = None,
         version: Optional[str] = None,
         uid: Optional[str] = None,
-        card: Optional["CardType"] = None,
+        card: Optional["CardT"] = None,
         drift: Optional[DriftConfig] = None,
     ) -> None:
         """Initialize the service card. Card accepts either a combination of
@@ -19583,7 +19523,7 @@ class ServiceCard:
         """Return the created at timestamp"""
 
     @property
-    def cards(self) -> List["CardType"]:
+    def cards(self) -> List["CardT"]:
         """Return the cards in the service card"""
 
     @property
@@ -19662,7 +19602,7 @@ class ServiceCard:
             ```
         """
 
-    def __getitem__(self, alias: str) -> "CardType":
+    def __getitem__(self, alias: str) -> "CardT":
         """Get a card from the service card by alias
 
         Args:
@@ -19696,8 +19636,8 @@ class ServiceCard:
         """
 
 # Define a TypeVar that can only be one of our card types
-CardType = TypeVar(
-    "CardType",
+CardT = TypeVar(
+    "CardT",
     DataCard,
     ModelCard,
     PromptCard,
@@ -19779,7 +19719,7 @@ class CardRegistry:
 
     def register_card(
         self,
-        card: CardType,
+        card: CardT,
         version_type: VersionType = VersionType.Minor,
         pre_tag: Optional[str] = None,
         build_tag: Optional[str] = None,
@@ -19810,7 +19750,7 @@ class CardRegistry:
         name: Optional[str] = None,
         version: Optional[str] = None,
         interface: Optional[LoadInterfaceType] = None,
-    ) -> CardType:
+    ) -> CardT:
         """Load a Card from the registry
 
         Args:
@@ -19840,7 +19780,7 @@ class CardRegistry:
 
     def update_card(
         self,
-        card: CardType,
+        card: CardT,
     ) -> None:
         """Update a Card in the registry.
         Note: This will only update the registry record for a given card. It
@@ -19854,7 +19794,7 @@ class CardRegistry:
 
     def delete_card(
         self,
-        card: CardType,
+        card: CardT,
     ) -> None:
         """Delete a Card from the registry. This will also remove
         the underlying artifacts associated with the card.
@@ -20237,7 +20177,7 @@ class CardRegistries:
     @property
     def experiment(self) -> ExperimentCardRegistry: ...
     @property
-    def audit(self) -> CardRegistry[Any]: ...
+    def audit(self) -> CardRegistry: ...
     @property
     def prompt(self) -> PromptCardRegistry: ...
     @property
@@ -20456,9 +20396,7 @@ class Experiment:
                 Value of the parameter
         """
 
-    def log_parameters(
-        self, parameters: list[Parameter] | Dict[str, Union[int, float, str]]
-    ) -> None:
+    def log_parameters(self, parameters: list[Parameter] | Dict[str, Union[int, float, str]]) -> None:
         """
         Log multiple parameters
 
@@ -20503,9 +20441,7 @@ class Experiment:
 
         """
 
-    def log_figure(
-        self, name: str, figure: Any, kwargs: Optional[Dict[str, Any]] = None
-    ) -> None:
+    def log_figure(self, name: str, figure: Any, kwargs: Optional[Dict[str, Any]] = None) -> None:
         """
         Log a figure. This method will log a matplotlib Figure object to the experiment artifacts.
 
@@ -21553,7 +21489,7 @@ __all__ = [
     "CustomMetricDriftConfig",
     "CustomMetric",
     "CustomDriftProfile",
-    "GenAIDriftConfig",
+    "GenAIEvalConfig",
     "GenAIEvalProfile",
     "Drifter",
     "QuantileBinning",

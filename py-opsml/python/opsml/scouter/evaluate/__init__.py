@@ -5,6 +5,7 @@ from ..._opsml import (
     ComparisonOperator,
     EvaluationConfig,
     GenAIEvalDataset,
+    GenAIEvalProfile,
     GenAIEvalRecord,
     GenAIEvalResults,
     GenAIEvalResultSet,
@@ -25,4 +26,5 @@ __all__ = [
     "LLMJudgeTask",
     "AssertionTask",
     "ComparisonOperator",
+    "GenAIEvalProfile",
 ]
