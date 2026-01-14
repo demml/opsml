@@ -51,12 +51,10 @@ impl OktaSettings {
             .map_err(SsoError::ReqwestError)?;
 
         let jwk_response = match response.status() {
-            StatusCode::OK => {
-                response
-                    .json::<JwkResponse>()
-                    .await
-                    .map_err(SsoError::ReqwestError)?
-            }
+            StatusCode::OK => response
+                .json::<JwkResponse>()
+                .await
+                .map_err(SsoError::ReqwestError)?,
             _ => {
                 // get response body
                 let body = response.text().await.map_err(SsoError::ReqwestError)?;

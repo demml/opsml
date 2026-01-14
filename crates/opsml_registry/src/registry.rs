@@ -346,7 +346,7 @@ impl CardRegistry {
             return Err(e);
         }
 
-        set_attribute_by_registry_type(py, &params.registry_type, &create_response.key.uid)?;
+        set_attribute_by_registry_type(py, params.registry_type, &create_response.key.uid)?;
 
         println!(
             "{} - {} - {}/{} - v{}",

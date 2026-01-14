@@ -1,6 +1,5 @@
-use opsml_mocks::{OpsmlServerContext, OpsmlTestServer};
+use opsml_mocks::{LLMTestServer, OpsmlServerContext, OpsmlTestServer};
 use opsml_registry::RegistryTestHelper;
-use potato_head::LLMTestServer;
 use pyo3::prelude::*;
 use scouter_client::MockConfig;
 

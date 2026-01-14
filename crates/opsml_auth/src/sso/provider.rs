@@ -33,35 +33,34 @@ impl SsoProvider {
     }
 
     pub async fn from_env() -> Result<Self, SsoError> {
-    let client = Client::new();
+        let client = Client::new();
 
-    let provider_value = std::env::var("SSO_PROVIDER")
-        .map_err(|e| {
+        let provider_value = std::env::var("SSO_PROVIDER").map_err(|e| {
             tracing::debug!("SSO_PROVIDER env var error: {:?}", e);
             SsoError::EnvVarNotSet("SSO_PROVIDER".to_string())
         })?;
 
-    debug!("SSO_PROVIDER value: {}", provider_value);
+        debug!("SSO_PROVIDER value: {}", provider_value);
 
-    match provider_value.to_lowercase().as_str() {
-        "keycloak" => {
-            debug!("Initializing Keycloak provider");
-            Ok(SsoProvider::Keycloak(KeycloakProvider::new(client).await?))
-        }
-        "okta" => {
-            debug!("Initializing Okta provider");
-            Ok(SsoProvider::Okta(OktaProvider::new(client).await?))
-        }
-        "default" => {
-            debug!("Initializing Default provider");
-            Ok(SsoProvider::Default(DefaultProvider::new(client).await?))
-        }
-        _ => {
-            debug!("Invalid SSO_PROVIDER value: {}", provider_value);
-            Err(SsoError::SsoNotConfigured)
+        match provider_value.to_lowercase().as_str() {
+            "keycloak" => {
+                debug!("Initializing Keycloak provider");
+                Ok(SsoProvider::Keycloak(KeycloakProvider::new(client).await?))
+            }
+            "okta" => {
+                debug!("Initializing Okta provider");
+                Ok(SsoProvider::Okta(OktaProvider::new(client).await?))
+            }
+            "default" => {
+                debug!("Initializing Default provider");
+                Ok(SsoProvider::Default(DefaultProvider::new(client).await?))
+            }
+            _ => {
+                debug!("Invalid SSO_PROVIDER value: {}", provider_value);
+                Err(SsoError::SsoNotConfigured)
+            }
         }
     }
-}
 
     pub fn is_enabled() -> bool {
         std::env::var("SSO_ENABLED")

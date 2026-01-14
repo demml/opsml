@@ -118,8 +118,8 @@ pub trait SsoProviderExt {
         validation.validate_aud = false;
 
         let decoding_key = self.get_decoding_key_for_token(id_token)?;
-        let token_data = decode::<IdTokenClaims>(id_token, &decoding_key, &validation)
-            .map_err({
+        let token_data =
+            decode::<IdTokenClaims>(id_token, &decoding_key, &validation).map_err({
                 |e| {
                     error!("Failed to decode JWT token: {e}");
                     SsoError::JwtDecodeError(e)
@@ -205,6 +205,4 @@ pub trait SsoProviderExt {
             code_challenge_method
         )
     }
-
-    
 }

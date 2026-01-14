@@ -1,7 +1,7 @@
-use jsonwebtoken::{DecodingKey, decode_header};
+use crate::sso::error::SsoError;
+use jsonwebtoken::{decode_header, DecodingKey};
 use serde::{Deserialize, Serialize};
 use tracing::{debug, error};
-use crate::sso::error::SsoError;
 
 pub enum Provider {
     Keycloak,
@@ -46,18 +46,21 @@ impl JwkResponse {
         let header = decode_header(token).map_err(SsoError::JwtDecodeError)?;
 
         debug!("Decoded JWT header: {:?}", header);
-        
-        let kid = header.kid.ok_or(SsoError::MissingSigningKey).inspect_err(|_| {
-            error!("No 'kid' found in token header");
-        })?;
+
+        let kid = header
+            .kid
+            .ok_or(SsoError::MissingSigningKey)
+            .inspect_err(|_| {
+                error!("No 'kid' found in token header");
+            })?;
 
         let signing_key = self
             .signing_key_by_kid(&kid)
-            .ok_or(SsoError::MissingSigningKey).inspect_err(|_| {
+            .ok_or(SsoError::MissingSigningKey)
+            .inspect_err(|_| {
                 error!("No signing key found for kid: {}", kid);
             })?;
 
-        
         DecodingKey::from_rsa_components(&signing_key.n, &signing_key.e)
             .map_err(SsoError::JwtDecodeError)
     }

@@ -12,7 +12,6 @@ use opsml_types::{
 };
 use opsml_utils::{get_utc_datetime, PyHelperFuncs};
 use pyo3::prelude::*;
-use pyo3::types::PyList;
 use serde_json;
 use std::path::PathBuf;
 use tracing::error;
@@ -103,13 +102,10 @@ impl ExperimentCard {
         name: Option<&str>,
         version: Option<&str>,
         uid: Option<&str>,
-        tags: Option<&Bound<'_, PyList>>,
+        tags: Option<Vec<String>>,
     ) -> Result<Self, CardError> {
         let registry_type = RegistryType::Experiment;
-        let tags = match tags {
-            None => Vec::new(),
-            Some(t) => t.extract::<Vec<String>>()?,
-        };
+        let tags = tags.unwrap_or_default();
 
         let base_args = BaseArgs::create_args(name, space, version, uid, &registry_type)?;
 
