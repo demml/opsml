@@ -33,8 +33,6 @@ export const load: PageLoad = async ({ parent, fetch }) => {
     const response: ScouterEntityIdResponse =
       await getScouterServerEntityIdFromTags(fetch, request);
 
-    console.log("Fetched entity ID from tags:", response);
-
     if (response.entity_id.length === 0) {
       return {
         trace: null,

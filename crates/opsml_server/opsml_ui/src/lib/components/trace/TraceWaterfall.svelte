@@ -208,7 +208,7 @@
   </div>
 
   <!-- Span List -->
-  <div class="flex-1 overflow-auto">
+  <div class="flex-1 overflow-auto pb-6">
     {#each sortedSpans as span (span.span_id)}
       {@const position = getSpanPosition(span)}
       {@const isSelected = selectedSpan?.span_id === span.span_id}

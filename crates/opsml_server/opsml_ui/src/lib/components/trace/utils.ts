@@ -23,7 +23,7 @@ import {
 } from "./types";
 import { createInternalApiClient } from "$lib/api/internalClient";
 import { RegistryType } from "$lib/utils";
-import { TimeInterval } from "../card/monitoring/types";
+import { TimeInterval } from "$lib/components/scouter/types";
 /**
  * Extract the next pagination cursor from a list of traces.
  * Returns undefined if there are no traces or we've reached the end.
@@ -164,26 +164,42 @@ export function getAttributeValue(attributes: Attribute[], key: string): any {
 /**
  * Parse JSON input/output safely
  */
-export function parseSpanJson(jsonString: string | null): any {
+export function parseSpanJson(jsonString: string | null | object): any {
   if (!jsonString) return null;
-  try {
-    return JSON.parse(jsonString);
-  } catch {
-    return null;
+
+  if (typeof jsonString === "object") {
+    return jsonString;
   }
+
+  if (typeof jsonString === "string") {
+    try {
+      return JSON.parse(jsonString);
+    } catch (error) {
+      return jsonString;
+    }
+  }
+
+  return null;
 }
 
 /**
- * Format attribute value for display
+ * Formats attribute values for UI display, truncating long strings
+ * to maintain layout integrity in Neo-Brutalist components.
  */
 export function formatAttributeValue(value: any): string {
   if (value === null || value === undefined) return "null";
-  if (typeof value === "object") {
-    return JSON.stringify(value, null, 2);
-  }
-  return String(value);
-}
 
+  let result: string;
+
+  if (typeof value === "object") {
+    result = JSON.stringify(value);
+  } else {
+    result = String(value);
+  }
+
+  // Truncate to first 32 elements/characters
+  return result.length > 32 ? result.substring(0, 32) + "..." : result;
+}
 export function getSpanKindIcon(kind: string | null): string {
   if (!kind) return "●";
 

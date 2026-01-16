@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { AlertCircle, Activity, ArrowLeft, RefreshCw } from 'lucide-svelte';
+  import { AlertCircle, Activity, ArrowLeft } from 'lucide-svelte';
   import { browser } from '$app/environment';
 
   interface Props {
@@ -26,12 +26,6 @@
 </script>
 
 <div class="mx-auto w-full max-w-4xl px-4 py-6 sm:px-6 lg:px-8">
-  <div class="flex items-center justify-between mb-4">
-    <h1 class="text-2xl font-bold text-primary-800">
-      {isNotFound ? 'No Traces Found' : 'Error Loading Traces'}
-    </h1>
-  </div>
-
   <div class="pb-1 pr-1">
     <div class="bg-white border-2 border-black rounded-lg shadow">
       <div class="p-8 sm:p-12">

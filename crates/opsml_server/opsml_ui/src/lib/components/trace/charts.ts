@@ -46,7 +46,7 @@ export function createErrorRateChart(
   buckets: TraceMetricBucket[]
 ): ChartConfiguration {
   const labels = buckets.map((b) => new Date(b.bucket_start));
-  const data = buckets.map((b) => b.error_rate * 100);
+  const data = buckets.map((b) => b.error_rate);
 
   const datasets: ChartjsLineDataset[] = [
     {

@@ -83,7 +83,6 @@
   // update filters.tags when filteredTags changes
   function handleAttributeFilterChange(attribute_filters: string[]) {
     filters.filters.attribute_filters = attribute_filters;
-    console.log('Updated attribute_filters filter:', filters.filters.attribute_filters);
     onFiltersChange(filters);
   }
 

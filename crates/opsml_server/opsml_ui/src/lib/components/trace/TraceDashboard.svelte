@@ -158,8 +158,6 @@
 
     try {
       filters = updatedFilters;
-
-      console.log('Filters updated to:', filters);
       [traceMetrics, tracePage] = await Promise.all([
         getTraceMetrics(),
         getTracePage()
