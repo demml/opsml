@@ -39,10 +39,12 @@
   let selectedNodeId = $state<string | null>(null);
 
   const pathNodeIds = $derived(
+     // @ts-ignore
     getPathNodeIds(initialNodes, initialEdges, selectedNodeId)
   );
 
   const nodes = $derived(
+    // @ts-ignore
     highlightPathNodes(initialNodes, pathNodeIds, selectedNodeId)
   );
 

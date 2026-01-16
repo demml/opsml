@@ -34,8 +34,14 @@ export enum RoutePaths {
   SPC_DRIFT = "/opsml/api/scouter/drift/spc",
   PSI_DRIFT = "/opsml/api/scouter/drift/psi",
   CUSTOM_DRIFT = "/opsml/api/scouter/drift/custom",
-  LLM_DRIFT = "/opsml/api/scouter/drift/llm",
-  LLM_RECORD_PAGE = "/opsml/api/scouter/drift/llm/records",
+  // GenAI Evaluation
+  GENAI_EVAL_TASK_DRIFT = "/opsml/api/scouter/drift/genai/task",
+  GENAI_EVAL_WORKFLOW_DRIFT = "/opsml/api/scouter/drift/genai/workflow",
+
+  GENAI_EVAL_TASK_RECORD = "/opsml/api/scouter/genai/task",
+  GENAI_EVAL_RECORD_PAGE = "/opsml/api/scouter/genai/page/record",
+  GENAI_EVAL_WORKFLOW_PAGE = "/opsml/api/scouter/genai/page/workflow",
+
   DRIFT_PROFILE = "/opsml/api/scouter/profile",
   DRIFT_ALERT = "/opsml/api/scouter/alerts",
   TRACE_PAGE = "/opsml/api/scouter/trace/paginated",
@@ -88,12 +94,34 @@ export enum ServerPaths {
   METADATA = "/api/card/metadata",
   CARD_FROM_UID = "/api/card/uid",
   VERSION_PAGE = "/api/card/registry/version/page",
-  MONITORING_METRICS = "/api/card/monitoring/metrics",
-  MONITORING_PROFILES = "/api/card/monitoring/profiles",
-  MONITORING_ALERTS = "/api/card/monitoring/alerts",
-  ACKNOWLEDGE_ALERT = "/api/card/monitoring/alerts/acknowledge",
-  UPDATE_MONITORING_PROFILE = "/api/card/monitoring/profile/update",
-  LLM_MONITORING_RECORDS = "/api/card/monitoring/llm/records",
+
+  // scouter
+  // profile
+  MONITORING_PROFILES = "/api/scouter/profiles",
+  UPDATE_MONITORING_PROFILE = "/api/scouter/profile/update",
+
+  // drift
+  SPC_DRIFT = "/api/scouter/drift/spc",
+  PSI_DRIFT = "/api/scouter/drift/psi",
+  CUSTOM_DRIFT = "/api/scouter/drift/custom",
+  GENAI_TASK_DRIFT = "/api/scouter/drift/genai/task",
+  GENAI_WORKFLOW_DRIFT = "/api/scouter/drift/genai/workflow",
+
+  // drift alerts
+  MONITORING_ALERTS = "/api/scouter/alerts",
+  ACKNOWLEDGE_ALERT = "/api/scouter/alerts/acknowledge",
+
+  // genai
+  GENAI_EVAL_RECORD_PAGE = "/api/scouter/genai/page/record",
+  GENAI_EVAL_WORKFLOW_PAGE = "/api/scouter/genai/page/workflow",
+  GENAI_EVAL_TASK = "/api/scouter/genai/task",
+
+  // observability
+  TRACE_METRICS = "/api/scouter/observability/trace/metrics",
+  TRACE_SPANS = "/api/scouter/observability/trace/spans",
+  TRACE_PAGE = "/api/scouter/observability/trace",
+  ENTITY_ID_TAGS = "/api/scouter/tags/entity",
+
   EXPERIMENT_GROUPED_METRICS = "/api/card/experiment/metrics/grouped",
   DATA_PROFILE = "/api/card/data/profile",
   EXPERIMENT_METRIC_NAMES = "/api/card/experiment/metrics/names",
@@ -101,8 +129,4 @@ export enum ServerPaths {
   EXPERIMENT_HARDWARE = "/api/card/experiment/hardware",
   CREATE_SPACE = "/api/space/create",
   HEALTHCHECK = "/api/health",
-  TRACE_METRICS = "/api/observability/trace/metrics",
-  TRACE_SPANS = "/api/observability/trace/spans",
-  TRACE_PAGE = "/api/observability/trace",
-  ENTITY_ID_TAGS = "/api/tags/scouter/entity",
 }

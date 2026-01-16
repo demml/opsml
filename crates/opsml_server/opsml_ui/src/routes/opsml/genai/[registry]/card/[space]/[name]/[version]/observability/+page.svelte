@@ -19,8 +19,6 @@
 
 <div class="mx-auto w-full max-w-8xl px-4 py-6 sm:px-6 lg:px-8">
   {#if scouterEnabled}
-    <div class="border-2 border-black rounded-lg shadow overflow-hidden">
-      <div class="flex flex-col">
         {#if trace && traceSpans}
           <TraceDetailContent
             trace={trace}
@@ -30,8 +28,6 @@
         {:else}
           <NoTraceView message={data.errorMessage} type={data.type} />
         {/if}
-      </div>
-    </div>
   {:else}
     <ScouterRequiredView
       featureName="Observability Dashboard"

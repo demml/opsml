@@ -2,8 +2,21 @@
   //@ts-ignore
   import { Handle, Position, type NodeProps } from '@xyflow/svelte';
   import { AlertCircle, Clock } from 'lucide-svelte';
+  import type { TraceSpan } from '../types';
 
-  let { data }: NodeProps = $props();
+  interface SpanNodeData {
+    span: TraceSpan;
+    serviceName: string;
+    hasError: boolean;
+    duration: string;
+    isSlowest: boolean;
+    isInPath: boolean;
+    isSelected: boolean;
+  }
+
+  type Props = NodeProps & { data: SpanNodeData };
+
+  let { data }: Props = $props();
   const { span, serviceName, hasError, duration, isSlowest, isInPath, isSelected } = data;
 
   const nodeClasses = $derived(() => {

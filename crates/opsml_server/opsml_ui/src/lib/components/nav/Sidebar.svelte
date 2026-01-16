@@ -51,7 +51,7 @@
       subItems: [
         { name: "Prompts", path: "/opsml/genai/prompt" },
         { name: "Agents", path: "/opsml/genai/agent" },
-        { name: "MCPs", path: "/opsml/genai/mcp" }
+        { name: "MCPs", path: "/opsml/genai/mcp" },
         { name: "Evaluations", path: "/opsml/genai/eval" }
       ]
     },

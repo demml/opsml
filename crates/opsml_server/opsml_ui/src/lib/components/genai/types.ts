@@ -1,16 +1,9 @@
-import type {
-  AnthropicMessageRequestV1,
-  MessageParam,
-  TextBlockParam,
-} from "./provider/anthropic/v1/request";
+import type { AnthropicMessageRequestV1 } from "./provider/anthropic/v1/request";
 import type {
   ChatMessage,
   OpenAIChatCompletionRequestV1,
 } from "./provider/openai/v1/chat/request";
-import type {
-  GeminiContent,
-  GeminiGenerateContentRequestV1,
-} from "./provider/google/v1/generate/request";
+import type { GeminiGenerateContentRequestV1 } from "./provider/google/v1/generate/request";
 import type { MessageNum } from "./provider/types";
 
 /**

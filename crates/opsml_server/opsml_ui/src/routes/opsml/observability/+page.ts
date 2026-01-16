@@ -31,6 +31,7 @@ export const load: PageLoad = async ({ fetch, depends }) => {
     };
 
     let traceMetrics = await getServerTraceMetrics(fetch, metricsRequest);
+
     let tracePage = await getServerTracePage(fetch, {
       start_time: startTime,
       end_time: endTime,

@@ -10222,7 +10222,7 @@ class BaseTracer:
     def shutdown(self) -> None:
         """Shutdown the tracer and flush any remaining spans."""
 
-def get_current_active_span(self) -> ActiveSpan:
+def get_current_active_span() -> "ActiveSpan":
     """Get the current active span.
 
     Returns:

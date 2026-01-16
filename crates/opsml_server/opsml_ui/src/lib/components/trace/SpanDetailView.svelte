@@ -25,7 +25,7 @@
     slowestSpan?: TraceSpan | null;
   } = $props();
 
-  const serviceName = span.service_name;
+  const serviceName = $derived(span.service_name);
   const spanHasError = $derived(hasSpanError(span));
   const httpStatusCode = $derived(getHttpStatusCode(span));
   const parsedInput = $derived(parseSpanJson(span.input));
@@ -139,37 +139,41 @@
 
     <!-- Input/Output -->
     {#if parsedInput}
-      <section>
-        <div class="flex flex-row items-center pb-2 mb-3 border-b-2 border-black">
-          <FileJson color="#8059b6"/>
-          <header class="pl-2 text-primary-950 text-sm font-bold">Input</header>
-        </div>
-        <div class="bg-surface-50 rounded-base border-2 border-black p-1 shadow-small text-xs">
-          <CodeBlock
-            code={JSON.stringify(parsedInput, null, 2)}
-            showLineNumbers={false}
-            lang="json"
-            prePadding="p-1"
-          />
-        </div>
-      </section>
+      {#key span.span_id}
+        <section>
+          <div class="flex flex-row items-center pb-2 mb-3 border-b-2 border-black">
+            <FileJson color="#8059b6"/>
+            <header class="pl-2 text-primary-950 text-sm font-bold">Input</header>
+          </div>
+          <div class="bg-surface-50 rounded-base border-2 border-black p-1 shadow-small text-xs">
+            <CodeBlock
+              code={JSON.stringify(parsedInput, null, 2)}
+              showLineNumbers={false}
+              lang="json"
+              prePadding="p-1"
+            />
+          </div>
+        </section>
+      {/key}
     {/if}
 
     {#if parsedOutput}
-      <section>
-        <div class="flex flex-row items-center pb-2 mb-3 border-b-2 border-black">
-          <FileJson color="#8059b6"/>
-          <header class="pl-2 text-primary-950 text-sm font-bold">Output</header>
-        </div>
-        <div class="bg-surface-50 rounded-base border-2 border-black p-1 shadow-small text-xs">
-          <CodeBlock
-            code={JSON.stringify(parsedOutput, null, 2)}
-            showLineNumbers={false}
-            lang="json"
-            prePadding="p-1"
-          />
-        </div>
-      </section>
+      {#key span.span_id}
+        <section>
+          <div class="flex flex-row items-center pb-2 mb-3 border-b-2 border-black">
+            <FileJson color="#8059b6"/>
+            <header class="pl-2 text-primary-950 text-sm font-bold">Output</header>
+          </div>
+          <div class="bg-surface-50 rounded-base border-2 border-black p-1 shadow-small text-xs">
+            <CodeBlock
+              code={JSON.stringify(parsedOutput, null, 2)}
+              showLineNumbers={false}
+              lang="json"
+              prePadding="p-1"
+            />
+          </div>
+        </section>
+      {/key}
     {/if}
 
     <!-- Attributes -->

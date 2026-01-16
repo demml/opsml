@@ -1,6 +1,6 @@
 <script lang="ts">
-  import MonitoringDashboard from '$lib/components/card/monitoring/MonitoringDashboard.svelte';
-  import MonitoringErrorView from '$lib/components/card/monitoring/MonitoringErrorView.svelte';
+  import MonitoringDashboard from '$lib/components/scouter/dashboard/MonitoringDashboard.svelte';
+  import MonitoringErrorView from '$lib/components/scouter/dashboard/MonitoringErrorView.svelte';
   import type { PageProps } from './$types';
   import { uiSettingsStore } from '$lib/components/settings/settings.svelte';
   import ScouterRequiredView from '$lib/components/scouter/ScouterRequiredView.svelte';
@@ -21,23 +21,7 @@
       registryType={data.registryType}
     />
   {:else}
-    <MonitoringDashboard
-      profiles={data.data.profiles}
-      driftTypes={data.data.keys}
-      initialName={data.data.currentName}
-      initialNames={data.data.currentNames}
-      initialDriftType={data.data.currentDriftType}
-      initialProfile={data.data.currentProfile}
-      initialMetrics={data.data.latestMetrics}
-      initialMetricData={data.data.currentMetricData}
-      initialMaxDataPoints={data.data.maxDataPoints}
-      initialConfig={data.data.currentConfig}
-      initialTimeRange={data.initialTimeRange}
-      uid={data.metadata.uid}
-      registryType={data.registryType}
-      driftAlerts={data.data.driftAlerts}
-      llmDriftRecords={data.data.llmDriftRecords}
-    />
+    <MonitoringDashboard {...data} />
   {/if}
 {:else}
   <ScouterRequiredView
