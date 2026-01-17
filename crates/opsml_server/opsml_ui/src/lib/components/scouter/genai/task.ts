@@ -1,5 +1,5 @@
 import type { Prompt } from "$lib/components/genai/types";
-import type { JsonValue } from "../types";
+import type { JsonValue } from "$lib/types";
 
 /**
  * Represents the fundamental Comparison Operators available in the Rust backend.
