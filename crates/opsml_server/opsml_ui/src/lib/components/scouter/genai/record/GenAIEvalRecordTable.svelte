@@ -91,89 +91,79 @@
   }
 </script>
 
-<div class="pt-2">
-  <div class="overflow-hidden border-2 border-black rounded-lg max-h-[500px] flex flex-col">
-    <div class="overflow-y-auto flex-1">
+<div class="pt-2 h-full flex flex-col">
+  <div class="border-2 border-black rounded-lg bg-white flex flex-col h-full max-h-[500px] overflow-hidden">
+    
+    <div class="overflow-auto flex-1 w-full relative">
       {#if records.length === 0}
-        <div class="flex items-center justify-center p-8 bg-white">
+        <div class="flex items-center justify-center p-8 bg-white h-full">
           <p class="text-sm font-bold text-gray-500">No evaluation records to display</p>
         </div>
       {:else}
-        <div class="bg-white border-b-2 border-black sticky top-0 z-10">
-          <div class="grid gap-3 text-black text-xs font-bold px-4 py-3" style="grid-template-columns: 80px 140px 100px 120px 120px 120px 100px;">
-            <div class="text-center">
-              <span class="px-2 py-1 rounded-full bg-primary-100 text-primary-800">ID</span>
-            </div>
-            <div class="text-center">
-              <span class="px-2 py-1 rounded-full bg-primary-100 text-primary-800">Created</span>
-            </div>
-            <div class="text-center">
-              <span class="px-2 py-1 rounded-full bg-primary-100 text-primary-800">Status</span>
-            </div>
-            <div class="text-center">
-              <span class="px-2 py-1 rounded-full bg-primary-100 text-primary-800">Entity Type</span>
-            </div>
-            <div class="text-center">
-              <span class="px-2 py-1 rounded-full bg-primary-100 text-primary-800">Processing Started</span>
-            </div>
-            <div class="text-center">
-              <span class="px-2 py-1 rounded-full bg-primary-100 text-primary-800">Processing Ended</span>
-            </div>
-            <div class="text-center">
-              <span class="px-2 py-1 rounded-full bg-primary-100 text-primary-800">Duration</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="bg-white">
-          {#each records as record, i}
-            <button
-              class="grid gap-3 items-center w-full px-4 py-3 border-b border-gray-200 transition-colors {i % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-primary-100 cursor-pointer text-left"
-              style="grid-template-columns: 80px 140px 100px 120px 120px 120px 100px;"
-              onclick={() => selectRecordForDetail(record)}
-            >
-              <div class="text-center">
-                <span class="text-xs font-mono text-gray-600">{record.uid.slice(0, 8)}</span>
+        <div class="min-w-[820px] inline-block align-top">
+            
+            <div class="bg-white border-b-2 border-black sticky top-0 z-10 w-full">
+              <div class="grid gap-3 text-black text-xs font-bold px-4 py-3" style="grid-template-columns: 80px 140px 100px 120px 120px 120px 100px;">
+                <div class="text-center"><span class="px-2 py-1 rounded-full bg-primary-100 text-primary-800">ID</span></div>
+                <div class="text-center"><span class="px-2 py-1 rounded-full bg-primary-100 text-primary-800">Created</span></div>
+                <div class="text-center"><span class="px-2 py-1 rounded-full bg-primary-100 text-primary-800">Status</span></div>
+                <div class="text-center"><span class="px-2 py-1 rounded-full bg-primary-100 text-primary-800">Entity Type</span></div>
+                <div class="text-center"><span class="px-2 py-1 rounded-full bg-primary-100 text-primary-800">Processing Started</span></div>
+                <div class="text-center"><span class="px-2 py-1 rounded-full bg-primary-100 text-primary-800">Processing Ended</span></div>
+                <div class="text-center"><span class="px-2 py-1 rounded-full bg-primary-100 text-primary-800">Duration</span></div>
               </div>
+            </div>
 
-              <div class="flex items-center justify-center gap-2 min-w-0">
-                <div class={`w-1.5 h-4 rounded-sm flex-shrink-0 ${getStatusColor(record.status)}`}></div>
-                <span class="text-xs text-black font-mono truncate">
-                  {formatTimestamp(record.created_at)}
-                </span>
-              </div>
+            <div class="bg-white w-full">
+              {#each records as record, i}
+                <button
+                  class="grid gap-3 items-center w-full px-4 py-3 border-b border-gray-200 transition-colors {i % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-primary-100 cursor-pointer text-left"
+                  style="grid-template-columns: 80px 140px 100px 120px 120px 120px 100px;"
+                  onclick={() => selectRecordForDetail(record)}
+                >
+                  <div class="text-center">
+                    <span class="text-xs font-mono text-gray-600">{record.uid.slice(0, 8)}</span>
+                  </div>
 
-              <div class="flex justify-center">
-                <span class="px-2 py-1 rounded border-1 text-xs font-bold {getStatusBadge(record.status)}">
-                  {record.status.toUpperCase()}
-                </span>
-              </div>
+                  <div class="flex items-center justify-center gap-2 min-w-0">
+                    <div class={`w-1.5 h-4 rounded-sm flex-shrink-0 ${getStatusColor(record.status)}`}></div>
+                    <span class="text-xs text-black font-mono truncate">
+                      {formatTimestamp(record.created_at)}
+                    </span>
+                  </div>
 
-              <div class="text-center">
-                <span class="px-2 py-1 rounded border-1 bg-primary-100 border-primary-900 text-primary-900 text-xs font-bold">
-                  {record.entity_type}
-                </span>
-              </div>
+                  <div class="flex justify-center">
+                    <span class="px-2 py-1 rounded border-1 text-xs font-bold {getStatusBadge(record.status)}">
+                      {record.status.toUpperCase()}
+                    </span>
+                  </div>
 
-              <div class="text-center">
-                <span class="text-xs font-mono text-gray-600">
-                  {record.processing_started_at ? formatTimestamp(record.processing_started_at) : 'N/A'}
-                </span>
-              </div>
+                  <div class="text-center">
+                    <span class="px-2 py-1 rounded border-1 bg-primary-100 border-primary-900 text-primary-900 text-xs font-bold">
+                      {record.entity_type}
+                    </span>
+                  </div>
 
-              <div class="text-center">
-                <span class="text-xs font-mono text-gray-600">
-                  {record.processing_ended_at ? formatTimestamp(record.processing_ended_at) : 'N/A'}
-                </span>
-              </div>
+                  <div class="text-center">
+                    <span class="text-xs font-mono text-gray-600">
+                      {record.processing_started_at ? formatTimestamp(record.processing_started_at) : 'N/A'}
+                    </span>
+                  </div>
 
-              <div class="text-center">
-                <span class="text-xs font-medium text-gray-700">
-                  {formatDuration(record.processing_duration)}
-                </span>
-              </div>
-            </button>
-          {/each}
+                  <div class="text-center">
+                    <span class="text-xs font-mono text-gray-600">
+                      {record.processing_ended_at ? formatTimestamp(record.processing_ended_at) : 'N/A'}
+                    </span>
+                  </div>
+
+                  <div class="text-center">
+                    <span class="text-xs font-medium text-gray-700">
+                      {formatDuration(record.processing_duration)}
+                    </span>
+                  </div>
+                </button>
+              {/each}
+            </div>
         </div>
       {/if}
     </div>

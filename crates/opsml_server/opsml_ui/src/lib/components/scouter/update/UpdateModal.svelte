@@ -4,7 +4,7 @@
   import { validateSlack,validateCustomConfig, validateOpsGenie, getConfigParams, validatePsiConfig, validateSpcConfig, validateConsole, validateGenAIConfig } from './schema';
   import type {SpcConfigParams, PsiConfigParams, CustomConfigParams, ConsoleConfigSchema, GenAIConfigParams} from './schema';
   import type {SlackConfigSchema, OpsGenieConfigSchema, CustomConfigSchema, PsiConfigSchema} from './schema';
-  import type { DriftConfigType,  UiProfile } from '../utils';
+  import type { DriftConfigType,  DriftProfile,  UiProfile } from '../utils';
   import { isSpcConfig, isCustomConfig, isPsiConfig, extractProfile, isGenAIConfig } from '../utils';
   import { getPsiThresholdKeyValue } from '$lib/components/scouter/psi/utils';
   import CustomFields from './CustomFields.svelte';
@@ -39,12 +39,14 @@
       config = $bindable(),
       driftType= $bindable(),
       profile= $bindable(),
+      profileUri= $bindable(),
       uid,
       registry,
     } = $props<{
       config: DriftConfigType;
       driftType: DriftType;
-      profile: UiProfile;
+      profile: DriftProfile[DriftType];
+      profileUri: string;
       uid: string;
       registry: RegistryType;
     }>();
@@ -220,22 +222,19 @@ function validateDispatchForm(): boolean {
       return;
     }
 
-    // implement post request to update config
-    const matchedProfile = extractProfile(profile.profile, driftType);
 
-
-    matchedProfile.config = {
-      ...matchedProfile.config,
+    profile.config = {
+      ...profile.config,
       ...configParams
     };
 
     let request: UpdateProfileRequest = {
       uid: uid,
-      profile_uri: profile.profile_uri,
+      profile_uri: profileUri,
       registry_type: registry,
       request: {
-        space: matchedProfile.config.space,
-        profile: JSON.stringify(matchedProfile),
+        space: profile.config.space,
+        profile: JSON.stringify(profile),
         drift_type: driftType,
         active: true,
         deactivate_others: false

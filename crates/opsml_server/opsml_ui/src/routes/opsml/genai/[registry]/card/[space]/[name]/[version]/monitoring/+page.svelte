@@ -9,21 +9,21 @@
 
   let { data }: PageProps = $props();
   let scouterEnabled = $derived(uiSettingsStore.scouterEnabled);
-  let pageData: MonitoringPageData = $state(data.monitoringData);
+  let monitoringData: MonitoringPageData = $state(data.monitoringData);
 
 </script>
 
-{#if scouterEnabled}`
-  {#if pageData.status === 'error'}
+{#if scouterEnabled}
+  {#if monitoringData.status === 'error'}
     <MonitoringErrorView
-      message={pageData.errorMsg}
+      message={monitoringData.errorMsg}
       space={data.metadata.space}
       name={data.metadata.name}
       version={data.metadata.version}
       registryType={data.registryType}
     />
   {:else}
-    <MonitoringDashboard {pageData} />
+    <MonitoringDashboard {monitoringData} />
   {/if}
 {:else}
   <ScouterRequiredView
