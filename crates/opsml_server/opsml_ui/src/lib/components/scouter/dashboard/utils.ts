@@ -9,6 +9,7 @@ import {
 } from "$lib/components/scouter/genai/utils";
 import { DriftType } from "../types";
 import type { TimeRange } from "$lib/components/trace/types";
+import type { RecordCursor } from "$lib/components/scouter/types";
 import {
   extractProfile,
   getDriftProfileUriMap,
@@ -344,4 +345,123 @@ export async function getMonitoringPageData(
       profiles: {},
     };
   }
+}
+
+// Update type definition to include optional cursors
+export interface RefreshOptions {
+  recordCursor?: { cursor: RecordCursor; direction: string };
+  workflowCursor?: { cursor: RecordCursor; direction: string };
+}
+
+/**
+ * Refactored Refresh Logic
+ * Handles full refreshes (Time/Type changes) and partial refreshes (Pagination)
+ */
+export async function refreshMonitoringData(
+  fetch: typeof globalThis.fetch,
+  type: DriftType,
+  monitoringData: Extract<MonitoringPageData, { status: "success" }>,
+  options: RefreshOptions = {}
+): Promise<void> {
+  const profile = getProfileFromResponse(type, monitoringData.profiles); // accessing specific profile based on structure
+  const config = profile.config; // assuming standardized config structure
+  const timeRange = monitoringData.selectedTimeRange;
+  const maxPoints = getMaxDataPoints(); // This usually relies on window.innerWidth
+
+  const promises: Promise<any>[] = [];
+  const isPaginationOnly = options.recordCursor || options.workflowCursor;
+
+  console.log("step1");
+
+  let metricsPromise;
+  if (!isPaginationOnly) {
+    metricsPromise = loadMetricsForDriftType(
+      fetch,
+      config.space,
+      config.uid,
+      type,
+      timeRange,
+      maxPoints
+    );
+  } else {
+    // Return existing metrics to preserve state
+    metricsPromise = Promise.resolve(monitoringData.selectedData.metrics);
+  }
+  promises.push(metricsPromise);
+
+  // B. GenAI Specific Data
+  console.log("step2");
+  if (type === DriftType.GenAI) {
+    // Records Table
+    if (options.recordCursor) {
+      promises.push(
+        getServerGenAIEvalRecordPage(fetch, {
+          service_info: { uid: config.uid, space: config.space },
+          cursor_created_at: options.recordCursor.cursor.created_at,
+          cursor_id: options.recordCursor.cursor.id,
+          direction: options.recordCursor.direction,
+          start_datetime: timeRange.startTime,
+          end_datetime: timeRange.endTime,
+        })
+      );
+    } else {
+      // Default load (Time/Type change)
+      promises.push(
+        getServerGenAIEvalRecordPage(fetch, {
+          service_info: { uid: config.uid, space: config.space },
+          start_datetime: timeRange.startTime,
+          end_datetime: timeRange.endTime,
+        })
+      );
+    }
+
+    // Workflows Table
+    console.log("step3");
+    if (options.workflowCursor) {
+      promises.push(
+        getServerGenAIEvalWorkflowPage(fetch, {
+          service_info: { uid: config.uid, space: config.space },
+          cursor_created_at: options.workflowCursor.cursor.created_at,
+          cursor_id: options.workflowCursor.cursor.id,
+          direction: options.workflowCursor.direction,
+          start_datetime: timeRange.startTime,
+          end_datetime: timeRange.endTime,
+        })
+      );
+    } else {
+      // Default load
+      promises.push(
+        getServerGenAIEvalWorkflowPage(fetch, {
+          service_info: { uid: config.uid, space: config.space },
+          start_datetime: timeRange.startTime,
+          end_datetime: timeRange.endTime,
+        })
+      );
+    }
+  } else {
+    // Placeholders for non-GenAI types to maintain Promise.all alignment
+    promises.push(Promise.resolve(null));
+    promises.push(Promise.resolve(null));
+  }
+
+  // Execute Parallel Fetch
+  const [newMetrics, recordsResp, workflowsResp] = await Promise.all(promises);
+
+  console.log("step4");
+
+  // Update State in Place
+  monitoringData.selectedData = {
+    ...monitoringData.selectedData,
+    driftType: type,
+    metrics: newMetrics,
+    // Update GenAI data if relevant
+    ...(type === DriftType.GenAI
+      ? {
+          genAIData: {
+            records: recordsResp,
+            workflows: workflowsResp,
+          },
+        }
+      : {}),
+  };
 }

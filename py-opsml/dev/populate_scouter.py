@@ -3,7 +3,7 @@
 # Refer to makefile targets dev.both.scouter
 import os
 from opsml._opsml import GenAIEvalProfile
-from typing import cast
+from typing import Optional, cast
 
 os.environ["OPSML_TRACKING_URI"] = "http://localhost:8090"
 from opsml import (
@@ -26,13 +26,14 @@ from utils import (  # type: ignore
     create_genai_tasks,
     SAVE_PATH,
     create_random_genaieval_record,
+    create_random_features_record,
+    create_random_metrics_record,
 )
 from opsml.scouter.tracing import (
     get_tracer,
     init_tracer,
     BatchConfig,
     get_current_active_span,
-    ActiveSpan,
 )
 from opsml.scouter.transport import GrpcConfig
 from opsml.scouter.drift import (
@@ -43,6 +44,7 @@ import numpy as np
 
 _GENAI_EVAL_PROFILE_PATH = SAVE_PATH / "genai_eval_profile.json"
 _PSI_DRIFT_PROFILE_PATH = SAVE_PATH / "psi_drift_profile.json"
+_CUSTOM_DRIFT_PROFILE_PATH = SAVE_PATH / "custom_drift_profile.json"
 
 
 # Use Scouter Tracer
@@ -56,7 +58,7 @@ tracer = get_tracer("scouter-cards")
 
 
 class PopulateHelper:
-    def __init__(self, name: str = None, space: str = None):
+    def __init__(self, name: Optional[str] = None, space: Optional[str] = None):
         self.name = name if name is not None else random_name()
         self.space = space if space is not None else random_name()
 
@@ -101,6 +103,9 @@ class PopulateHelper:
 
         # save the drift_profile to json
         modelcard.interface.drift_profile["psi"].save_to_json(_PSI_DRIFT_PROFILE_PATH)
+        modelcard.interface.drift_profile["custom"].save_to_json(
+            _CUSTOM_DRIFT_PROFILE_PATH
+        )
 
         return modelcard
 
@@ -192,7 +197,11 @@ class PopulateHelper:
         And attach it to the tracer.
         """
         queue = ScouterQueue.from_path(
-            path={"psi": _PSI_DRIFT_PROFILE_PATH, "genai": _GENAI_EVAL_PROFILE_PATH},
+            path={
+                "psi": _PSI_DRIFT_PROFILE_PATH,
+                "genai": _GENAI_EVAL_PROFILE_PATH,
+                "custom": _CUSTOM_DRIFT_PROFILE_PATH,
+            },
             transport_config=GrpcConfig(),
         )
 
@@ -210,14 +219,28 @@ class PopulateHelper:
                 record = create_random_genaieval_record()
                 active_span.add_queue_item(alias="genai", item=record)
 
+            with tracer.start_as_current_span(f"psi_service_{i}") as active_span:
+                active_span.set_tag("service.name", "psi-drift-service")
+                record = create_random_features_record()
+                active_span.add_queue_item(alias="psi", item=record)
+
+            with tracer.start_as_current_span(f"custom_service_{i}") as active_span:
+                active_span.set_tag("service.name", "custom-drift-service")
+                record = create_random_metrics_record()
+                active_span.add_queue_item(alias="custom", item=record)
+
     def cleanup(self):
         """Cleanup any saved files."""
         if _GENAI_EVAL_PROFILE_PATH.exists():
             _GENAI_EVAL_PROFILE_PATH.unlink()
         if _PSI_DRIFT_PROFILE_PATH.exists():
             _PSI_DRIFT_PROFILE_PATH.unlink()
+        if _CUSTOM_DRIFT_PROFILE_PATH.exists():
+            _CUSTOM_DRIFT_PROFILE_PATH.unlink()
 
-    @tracer.span("populate")
+        # shutdown tracer
+        tracer.shutdown()
+
     def populate(self):
         with tracer.start_as_current_span("experiment_loop"):
             with start_experiment(

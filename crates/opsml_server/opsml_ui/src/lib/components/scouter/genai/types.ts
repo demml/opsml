@@ -146,9 +146,9 @@ export interface GenAIEvalRecord {
 export interface GenAIEvalWorkflowPaginationResponse {
   items: GenAIEvalWorkflowResult[];
   has_next: boolean;
-  next_cursor: RecordCursor | null; // Option mapping
+  next_cursor?: RecordCursor;
   has_previous: boolean;
-  previous_cursor: RecordCursor | null;
+  previous_cursor?: RecordCursor;
 }
 
 /**
