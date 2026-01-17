@@ -41,13 +41,13 @@
 
   function getStatusBadge(status: Status): string {
     switch (status) {
-      case 'pending':
+      case 'Pending':
         return 'bg-warning-100 border-warning-900 text-warning-900';
-      case 'processing':
+      case 'Processing':
         return 'bg-primary-100 border-primary-900 text-primary-900';
-      case 'processed':
+      case 'Processed':
         return 'bg-secondary-100 border-secondary-900 text-secondary-900';
-      case 'failed':
+      case 'Failed':
         return 'bg-error-100 border-error-900 text-error-900';
       default:
         return 'bg-primary-100 border-primary-900 text-primary-900';
@@ -55,14 +55,15 @@
   }
 
   function getStatusColor(status: Status): string {
+    
     switch (status) {
-      case 'processed':
+      case 'Processed':
         return 'bg-secondary-600';
-      case 'processing':
+      case 'Processing':
         return 'bg-primary-600';
-      case 'pending':
+      case 'Pending':
         return 'bg-warning-600';
-      case 'failed':
+      case 'Failed':
         return 'bg-error-600';
       default:
         return 'bg-gray-400';
@@ -90,11 +91,7 @@
   }
 </script>
 
-<div class="pt-4">
-  <div class="mb-3">
-    <h2 class="text-base font-bold text-primary-800">GenAI Evaluation Records</h2>
-  </div>
-
+<div class="pt-2">
   <div class="overflow-hidden border-2 border-black rounded-lg max-h-[500px] flex flex-col">
     <div class="overflow-y-auto flex-1">
       {#if records.length === 0}
@@ -103,7 +100,7 @@
         </div>
       {:else}
         <div class="bg-white border-b-2 border-black sticky top-0 z-10">
-          <div class="grid grid-cols-5 gap-3 text-black text-xs font-bold px-4 py-3" style="grid-template-columns: 80px 140px 100px 1fr 120px;">
+          <div class="grid gap-3 text-black text-xs font-bold px-4 py-3" style="grid-template-columns: 80px 140px 100px 120px 120px 120px 100px;">
             <div class="text-center">
               <span class="px-2 py-1 rounded-full bg-primary-100 text-primary-800">ID</span>
             </div>
@@ -117,6 +114,12 @@
               <span class="px-2 py-1 rounded-full bg-primary-100 text-primary-800">Entity Type</span>
             </div>
             <div class="text-center">
+              <span class="px-2 py-1 rounded-full bg-primary-100 text-primary-800">Processing Started</span>
+            </div>
+            <div class="text-center">
+              <span class="px-2 py-1 rounded-full bg-primary-100 text-primary-800">Processing Ended</span>
+            </div>
+            <div class="text-center">
               <span class="px-2 py-1 rounded-full bg-primary-100 text-primary-800">Duration</span>
             </div>
           </div>
@@ -126,7 +129,7 @@
           {#each records as record, i}
             <button
               class="grid gap-3 items-center w-full px-4 py-3 border-b border-gray-200 transition-colors {i % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-primary-100 cursor-pointer text-left"
-              style="grid-template-columns: 80px 140px 100px 1fr 120px;"
+              style="grid-template-columns: 80px 140px 100px 120px 120px 120px 100px;"
               onclick={() => selectRecordForDetail(record)}
             >
               <div class="text-center">
@@ -149,6 +152,18 @@
               <div class="text-center">
                 <span class="px-2 py-1 rounded border-1 bg-primary-100 border-primary-900 text-primary-900 text-xs font-bold">
                   {record.entity_type}
+                </span>
+              </div>
+
+              <div class="text-center">
+                <span class="text-xs font-mono text-gray-600">
+                  {record.processing_started_at ? formatTimestamp(record.processing_started_at) : 'N/A'}
+                </span>
+              </div>
+
+              <div class="text-center">
+                <span class="text-xs font-mono text-gray-600">
+                  {record.processing_ended_at ? formatTimestamp(record.processing_ended_at) : 'N/A'}
                 </span>
               </div>
 

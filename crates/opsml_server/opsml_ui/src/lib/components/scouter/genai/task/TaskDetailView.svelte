@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { GenAIEvalTaskResult } from '../task';
-  import { Info, Tags, Activity, FileJson, AlertCircle, TrendingUp } from 'lucide-svelte';
+  import { Info, Tags, Activity, FileJson, AlertCircle, TrendingUp, GitBranch } from 'lucide-svelte';
   import Pill from '$lib/components/utils/Pill.svelte';
   import CodeBlock from '$lib/components/codeblock/CodeBlock.svelte';
 
@@ -40,15 +40,35 @@
     return String(value);
   }
 
-  const hasError = $derived(!task.passed);
-  const hasFieldPath = $derived(task.field_path !== null && task.field_path !== '');
+  function detectLanguage(value: any): string {
+    if (typeof value === 'string') {
+      const trimmed = value.trim();
+      if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+        try {
+          JSON.parse(trimmed);
+          return 'json';
+        } catch {
+          return 'text';
+        }
+      }
+      return 'text';
+    }
+    return 'json';
+  }
+
   const isConditional = $derived(task.condition);
+  const shouldShowAsFailure = $derived(!task.passed && !isConditional);
+  const hasFieldPath = $derived(task.field_path !== null && task.field_path !== '');
+  const statusColor = $derived(() => {
+    if (isConditional) return 'bg-tertiary-600';
+    return task.passed ? 'bg-secondary-600' : 'bg-error-600';
+  });
 </script>
 
 <div class="flex flex-col h-full bg-white">
   <div class="p-3 border-b-2 border-black bg-surface-50">
     <div class="flex items-start gap-2">
-      <div class={`w-1 h-14 rounded ${hasError ? 'bg-error-600' : 'bg-success-600'}`}></div>
+      <div class={`w-1 h-14 rounded ${statusColor()}`}></div>
       <div class="flex-1 min-w-0">
         <h3 class="font-bold text-gray-900 truncate">{task.task_id}</h3>
         <p class="text-sm text-gray-600">{task.task_type}</p>
@@ -65,13 +85,15 @@
       </div>
 
       <div class="flex flex-wrap gap-2 text-xs">
-        <Pill key="Status" value={task.passed ? 'PASSED' : 'FAILED'} textSize="text-xs" bgColor={task.passed ? 'bg-success-100' : 'bg-error-100'} textColor={task.passed ? 'text-success-900' : 'text-error-900'} borderColor={task.passed ? 'border-success-900' : 'border-error-900'} />
-        <Pill key="Type" value={task.task_type} textSize="text-xs"/>
+        {#if isConditional}
+          <Pill key="Type" value="CONDITIONAL" textSize="text-xs" bgColor="bg-tertiary-100" textColor="text-tertiary-900" borderColor="border-tertiary-900" />
+          <Pill key="Result" value={task.passed ? 'TRUE' : 'FALSE'} textSize="text-xs" bgColor="bg-tertiary-100" textColor="text-tertiary-900" borderColor="border-tertiary-900" />
+        {:else}
+          <Pill key="Status" value={task.passed ? 'PASSED' : 'FAILED'} textSize="text-xs" bgColor={task.passed ? 'bg-secondary-100' : 'bg-error-100'} textColor={task.passed ? 'text-secondary-900' : 'text-error-900'} borderColor={task.passed ? 'border-secondary-900' : 'border-error-900'} />
+        {/if}
+        <Pill key="Task Type" value={task.task_type} textSize="text-xs"/>
         <Pill key="Stage" value={task.stage.toString()} textSize="text-xs"/>
         <Pill key="Operator" value={task.operator} textSize="text-xs"/>
-        {#if isConditional}
-          <Pill key="Conditional" value="Yes" textSize="text-xs" bgColor="bg-warning-100" textColor="text-warning-900" borderColor="border-warning-900" />
-        {/if}
       </div>
     </section>
 
@@ -110,12 +132,12 @@
             <FileJson color="#8059b6"/>
             <header class="pl-2 text-primary-950 text-sm font-bold">Expected Value</header>
           </div>
-          <div class="bg-surface-50 rounded-base border-2 border-black p-1 shadow-small text-xs">
+          <div class="bg-surface-50 rounded-lg border-2 border-black shadow-small overflow-hidden">
             <CodeBlock
               code={formatJsonValue(task.expected)}
               showLineNumbers={false}
               lang="json"
-              prePadding="p-1"
+              prePadding="p-3"
             />
           </div>
         </section>
@@ -129,12 +151,12 @@
             <FileJson color="#8059b6"/>
             <header class="pl-2 text-primary-950 text-sm font-bold">Actual Value</header>
           </div>
-          <div class="bg-surface-50 rounded-base border-2 border-black p-1 shadow-small text-xs">
+          <div class="bg-surface-50 rounded-lg border-2 border-black shadow-small overflow-hidden">
             <CodeBlock
               code={formatJsonValue(task.actual)}
               showLineNumbers={false}
               lang="json"
-              prePadding="p-1"
+              prePadding="p-3"
             />
           </div>
         </section>
@@ -147,20 +169,43 @@
           <Tags color="#8059b6"/>
           <header class="pl-2 text-primary-950 text-sm font-bold">Message</header>
         </div>
-        <div class="bg-surface-50 border-2 border-black rounded-base p-3 shadow-small">
+        <div class="bg-surface-50 border-2 border-black rounded-lg p-3 shadow-small">
           <p class="text-sm text-gray-700">{task.message}</p>
         </div>
       </section>
     {/if}
 
-    {#if hasError}
+    {#if isConditional}
+      <section>
+        <div class="flex flex-row items-center pb-2 mb-3 border-b-2 border-tertiary-600">
+          <GitBranch color="#8059b6"/>
+          <header class="pl-2 text-tertiary-800 text-sm font-bold">Conditional Logic</header>
+        </div>
+
+        <div class="bg-tertiary-50 border-2 border-tertiary-600 rounded-lg p-3 shadow-small">
+          <p class="text-sm text-tertiary-800 font-medium mb-2">
+            This task determines branching logic in the evaluation workflow.
+          </p>
+          <div class="space-y-1 text-xs">
+            <div class="flex gap-2">
+              <span class="font-bold text-tertiary-900">Condition Result:</span>
+              <span class="text-tertiary-800">{task.passed ? 'TRUE (branch taken)' : 'FALSE (branch skipped)'}</span>
+            </div>
+            <div class="flex gap-2">
+              <span class="font-bold text-tertiary-900">Operator:</span>
+              <span class="text-tertiary-800">{task.operator}</span>
+            </div>
+          </div>
+        </div>
+      </section>
+    {:else if shouldShowAsFailure}
       <section>
         <div class="flex flex-row items-center pb-2 mb-3 border-b-2 border-error-600">
           <AlertCircle color="#d93025"/>
           <header class="pl-2 text-error-600 text-sm font-bold">Failure Details</header>
         </div>
 
-        <div class="bg-error-50 border-2 border-error-600 rounded-base p-3 shadow-small">
+        <div class="bg-error-50 border-2 border-error-600 rounded-lg p-3 shadow-small">
           <p class="text-sm text-error-600 font-medium mb-2">This task did not pass evaluation.</p>
           <div class="space-y-1 text-xs">
             <div class="flex gap-2">

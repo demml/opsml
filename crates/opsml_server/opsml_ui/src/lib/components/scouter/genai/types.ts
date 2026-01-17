@@ -18,10 +18,10 @@ import type { MessageNum } from "$lib/components/genai/provider/types";
 
 export enum Status {
   All = "All",
-  Pending = "pending",
-  Processing = "processing",
-  Processed = "processed",
-  Failed = "failed",
+  Pending = "Pending",
+  Processing = "Processing",
+  Processed = "Processed",
+  Failed = "Failed",
 }
 
 export interface GenAIAlertConfig {

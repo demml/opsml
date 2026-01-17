@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { GenAIEvalTaskResult, ExecutionPlan } from '../task';
-  import { CheckCircle2, XCircle, Clock } from 'lucide-svelte';
+  import { CheckCircle2, XCircle, GitBranch } from 'lucide-svelte';
 
   let {
     tasks,
@@ -20,19 +20,24 @@
     return tasks.find(t => t.task_id === taskId);
   }
 
-  function getStatusIcon(passed: boolean) {
-    return passed ? CheckCircle2 : XCircle;
+  function getStatusIcon(task: GenAIEvalTaskResult) {
+    if (task.condition) return GitBranch;
+    return task.passed ? CheckCircle2 : XCircle;
   }
 
-  function getStatusColor(passed: boolean): string {
-    return passed ? 'text-success-600' : 'text-error-600';
+  function getStatusColor(task: GenAIEvalTaskResult): string {
+    if (task.condition) return 'text-tertiary-600';
+    return task.passed ? 'text-secondary-600' : 'text-error-600';
   }
 
   function getTaskBadgeClasses(task: GenAIEvalTaskResult): string {
-    if (task.passed) {
-      return 'border-success-950 bg-success-100 text-success-950';
+    if (task.condition) {
+      return 'border-tertiary-900 bg-tertiary-100 text-tertiary-900';
     }
-    return 'border-error-800 bg-error-100 text-error-800';
+    if (task.passed) {
+      return 'border-secondary-900 bg-secondary-100 text-secondary-900';
+    }
+    return 'border-error-900 bg-error-100 text-error-900';
   }
 
   function formatDuration(startTime: string, endTime: string): string {
@@ -83,7 +88,7 @@
 
         {#each stageTasks as task}
           {@const isSelected = selectedTask?.task_id === task.task_id}
-          {@const StatusIcon = getStatusIcon(task.passed)}
+          {@const StatusIcon = getStatusIcon(task)}
           {@const badgeClasses = getTaskBadgeClasses(task)}
 
           <button
@@ -95,7 +100,7 @@
             tabindex="0"
           >
             <div class="flex items-center gap-2 px-4 w-full overflow-hidden">
-              <StatusIcon class="w-4 h-4 flex-shrink-0 {getStatusColor(task.passed)}" />
+              <StatusIcon class="w-4 h-4 flex-shrink-0 {getStatusColor(task)}" />
 
               <span class="border px-1.5 py-0.5 text-xs rounded flex-shrink-0 {badgeClasses}">
                 {task.task_type}

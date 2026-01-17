@@ -1,44 +1,27 @@
 <script lang="ts">
   import { DriftType } from '$lib/components/scouter/types';
-  import type { DriftProfileResponse } from '$lib/components/scouter/utils';
-  import { getProfileDataWithConfig, isGenAIConfig, isCustomConfig, isPsiConfig, isSpcConfig } from '$lib/components/scouter/utils';
+  import type { DriftProfile, DriftProfileResponse } from '$lib/components/scouter/utils';
+  import { getProfileDataWithConfig, isGenAIConfig, isCustomConfig, isPsiConfig, isSpcConfig, getProfileFromResponse } from '$lib/components/scouter/utils';
   import type { RegistryType } from '$lib/utils';
   import GenAIDashboard from '$lib/components/scouter/genai/dashboard/GenAIDashboard.svelte';
   import MetricDashboard from '$lib/components/scouter/dashboard/metric/MetricDashboard.svelte';
   import type { TimeRange } from '$lib/components/trace/types';
   import { type GenAIEvalConfig } from '../genai/types';
+  import type { MonitoringPageData } from './utils';
 
-  interface Props {
-    profiles: DriftProfileResponse;
-    driftTypes: DriftType[];
-    initialDriftType: DriftType;
-    uid: string;
-    registryType: RegistryType;
-    initialTimeRange: TimeRange;
-    [key: string]: any;
-  }
 
-  let {
-    profiles,
-    driftTypes,
-    initialDriftType,
-    uid,
-    registryType,
-    initialTimeRange,
-    ...rest
-  }: Props = $props();
+  let { monitoringData }: { monitoringData: Extract<MonitoringPageData, { status: 'success' }> } = $props();
+  let selectedDriftType = $state(monitoringData.selectedData.driftType);
+  let driftTypes = $derived(monitoringData.driftTypes);
+  let selectedProfile = $derived(
+    getProfileFromResponse(selectedDriftType, monitoringData.profiles)
+  );
 
-  let selectedDriftType = $state(initialDriftType);
 
-  const currentData = $derived(() => {
-    const data = getProfileDataWithConfig(profiles, selectedDriftType);
-    console.log('Current drift type:', selectedDriftType);
-    console.log('Current data:', data);
-    return data;
-  });
+
 </script>
 
-<div class="mx-auto w-full max-w-8xl px-4 py-6 sm:px-6 lg:px-8">
+<div class="mx-auto w-full max-w-8xl px-4 py-2 sm:px-6 lg:px-8">
 
   {#if driftTypes.length > 1}
     <div class="flex flex-wrap gap-2 mb-4 p-4 bg-white rounded-lg border-2 border-black shadow">
@@ -54,27 +37,47 @@
     </div>
   {/if}
 
-  {#if selectedDriftType === DriftType.GenAI && isGenAIConfig(currentData().config)}
+  {#key selectedDriftType }
+    <!-- Load dashboard based on drift type -->
+    {#if selectedDriftType === DriftType.GenAI}
+      <GenAIDashboard
+        uid={monitoringData.uid}
+        config={getProfileDataWithConfig(monitoringData.profiles, selectedProfile)?.config as GenAIEvalConfig}
+        profile={getProfileDataWithConfig(monitoringData.profiles, selectedProfile)}
+        profiles={monitoringData.profiles}
+        initialTimeRange={monitoringData.initialTimeRange}
+        initialRecords={monitoringData.selectedData.genAIEvalRecords}
+        initialWorkflows={monitoringData.selectedData.genAIEvalWorkflows}
+      />
+    {/if}
+    
+
+
+  {/key}
+
+  <!--
+  {#if selectedDriftType === DriftType.GenAI && isGenAIConfig(currentData.config)}
     <GenAIDashboard
       {uid}
-      config={currentData().config as GenAIEvalConfig}
-      profile={currentData().profile}
+      config={currentData.config as GenAIEvalConfig}
+      profile={currentData.profile}
       {profiles}
       {initialTimeRange}
       initialRecords={rest.genAIEvalRecords}
       initialWorkflows={rest.genAIEvalWorkflows}
     />
-  {:else if [DriftType.Spc, DriftType.Psi, DriftType.Custom].includes(selectedDriftType) && (isSpcConfig(currentData().config) || isPsiConfig(currentData().config) || isCustomConfig(currentData().config))}
+   <!--{:else if [DriftType.Spc, DriftType.Psi, DriftType.Custom].includes(selectedDriftType) && (isSpcConfig(currentData.config) || isPsiConfig(currentData.config) || isCustomConfig(currentData.config))}
     <MetricDashboard
       {uid}
       driftType={selectedDriftType}
-      profile={currentData().profile}
-      config={currentData().config}
+      profile={currentData.profile}
+      config={currentData.config}
       {profiles}
       {initialTimeRange}
       initialMetrics={rest.initialMetrics}
       initialAlerts={rest.driftAlerts}
       {registryType}
     />
-  {/if}
+  -->
+
 </div>
