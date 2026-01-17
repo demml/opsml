@@ -3,8 +3,8 @@
   import { DriftType } from '../types';
   import type { MetricData } from '../types';
   import { type SpcDriftFeature } from '$lib/components/scouter/spc/types';
-  import { type BinnedPsiMetric } from '$lib/components/scouter/psi/types';
-  import type { BinnedMetric, BinnedMetricStats} from '$lib/components/scouter/custom/types';
+  import { type BinnedPsiMetric, type PsiDriftProfile } from '$lib/components/scouter/psi/types';
+  import type { BinnedMetric, BinnedMetricStats, CustomDriftProfile} from '$lib/components/scouter/custom/types';
   import Pill from '$lib/components/utils/Pill.svelte';
   import type { DriftConfigType, DriftProfile } from '../utils';
   import CustomAlertPill from '../custom/CustomAlertPill.svelte';
@@ -12,7 +12,7 @@
   import type { CustomMetricDriftConfig } from '../custom/types';
   import { getCustomAlertCondition } from '../custom/utils';
   import type { AlertCondition } from '../types';
-  import type { GenAIEvalConfig } from '../genai/types';
+  import type { GenAIEvalConfig, GenAIEvalProfile } from '../genai/types';
 
   let {
     metricData,
@@ -25,7 +25,7 @@
     currentDriftType: DriftType;
     currentName: string;
     currentConfig: DriftConfigType;
-    currentProfile: DriftProfile;
+    currentProfile: DriftProfile[DriftType];
   }>();
 
   let resetZoomTrigger = $state(0);
@@ -52,17 +52,16 @@
 
   function getBaselineValue(): number | undefined {
     if (currentDriftType === DriftType.Custom) {
-      return (currentProfile as DriftProfile).Custom.metrics[currentName];
+      return (currentProfile as CustomDriftProfile).metrics[currentName];
     }
 
     if (currentDriftType === DriftType.GenAI) {
-      const genaiProfile = (currentProfile as DriftProfile).GenAI;
-      const alertConfig = genaiProfile.config.alert_config.alert_condition;
+      const alertConfig = (currentProfile as GenAIEvalProfile).config.alert_config.alert_condition;
       return alertConfig?.baseline_value;
     }
 
     if (currentDriftType === DriftType.Psi) {
-      const psiProfile = (currentProfile as DriftProfile).Psi;
+      const psiProfile = (currentProfile as PsiDriftProfile);
       const threshold = psiProfile.config.alert_config.threshold;
 
       if (threshold?.Normal) return threshold.Normal.alpha;

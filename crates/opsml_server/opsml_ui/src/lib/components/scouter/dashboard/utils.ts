@@ -26,7 +26,6 @@ import type {
 import { calculateTimeRange, getCookie } from "$lib/components/trace/utils";
 import { getMaxDataPoints, type RegistryType } from "$lib/utils";
 import type { DriftAlertPaginationResponse } from "../alert/types";
-import { profile, type time } from "console";
 
 export interface DriftMetricMapping {
   [DriftType.Spc]: Awaited<ReturnType<typeof getSpcDriftMetrics>>;
@@ -201,6 +200,7 @@ export type SelectedData = {
   metrics: DriftMetricMapping[DriftType];
   driftAlerts: DriftAlertPaginationResponse;
   profile: DriftProfile[DriftType];
+  profileUri: string;
   genAIData?: {
     records: GenAIEvalRecordPaginationResponse;
     workflows: GenAIEvalWorkflowPaginationResponse;
@@ -225,6 +225,7 @@ export async function loadInitialData<T extends DriftType>(
   const selectedProfile = getProfileFromResponse(selectedDriftType, profiles);
   const selectedConfig = selectedProfile.config;
   const maxDataPoints = getMaxDataPoints();
+  const profileUri = profiles[selectedDriftType].profile_uri;
 
   // Parallel fetch to optimize Rust API response times
   const [selectedMetrics, driftAlerts] = await Promise.all([
@@ -264,6 +265,7 @@ export async function loadInitialData<T extends DriftType>(
     metrics: selectedMetrics as DriftMetricMapping[T],
     driftAlerts,
     profile: selectedProfile,
+    profileUri,
     genAIData,
   };
 }

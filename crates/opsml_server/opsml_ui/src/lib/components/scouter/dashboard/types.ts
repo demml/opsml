@@ -5,7 +5,7 @@ import type { TimeRange } from "$lib/components/trace/types";
  */
 export interface BaseProfileDashboardState {
   isUpdating: boolean;
-  selectedTimeRange: TimeRange | null;
+  selectedTimeRange: TimeRange;
   maxDataPoints: number;
 
   checkScreenSize(): Promise<void>;

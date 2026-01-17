@@ -1,6 +1,6 @@
 <script lang="ts">
   import { hasConsoleConfig, hasOpsGenieConfig, hasSlackConfig } from "../utils";
-  import type { GenAIEvalConfig, GenAIAlertConfig } from "./types";
+  import type { GenAIEvalConfig, GenAIAlertConfig, GenAIEvalProfile } from "./types";
   import Pill from "$lib/components/utils/Pill.svelte";
   import UpdateModal from "../update/UpdateModal.svelte";
   import type { UiProfile } from "../utils";
@@ -9,14 +9,16 @@
   let {
     config,
     alertConfig,
-    profile,
     uid,
+    profile,
+    profileUri,
     registry,
   } = $props<{
     config: GenAIEvalConfig;
     alertConfig: GenAIAlertConfig;
-    profile: UiProfile;
     uid: string;
+    profile: GenAIEvalProfile;
+    profileUri: String
     registry: RegistryType;
   }>();
 
@@ -57,6 +59,7 @@
       config={config}
       driftType={config.drift_type}
       profile={profile}
+      profileUri={profileUri}
       uid={uid}
     />
 

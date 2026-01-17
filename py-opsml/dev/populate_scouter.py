@@ -204,7 +204,7 @@ class PopulateHelper:
         """Populate the Scouter queue with drift and evaluation profiles."""
         self.setup_queue()
 
-        for i in range(0, 50):
+        for i in range(0, 100):
             with tracer.start_as_current_span(f"genai_service_{i}") as active_span:
                 active_span.set_tag("service.name", "genai-eval-service")
                 record = create_random_genaieval_record()
@@ -238,8 +238,9 @@ class PopulateHelper:
                     modelcard_uid=modelcard.uid,
                     promptcard_uid=prompt_card.uid,
                 )
-                # Populate the Scouter queue
-                self.populate_queue()
+
+        # Populate the Scouter queue
+        self.populate_queue()
 
         # Cleanup saved files
         self.cleanup()

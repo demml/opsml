@@ -1,23 +1,12 @@
 <script lang="ts">
   import { DriftType } from '$lib/components/scouter/types';
-  import type { DriftProfile, DriftProfileResponse } from '$lib/components/scouter/utils';
-  import { getProfileDataWithConfig, isGenAIConfig, isCustomConfig, isPsiConfig, isSpcConfig, getProfileFromResponse } from '$lib/components/scouter/utils';
-  import type { RegistryType } from '$lib/utils';
   import GenAIDashboard from '$lib/components/scouter/genai/dashboard/GenAIDashboard.svelte';
-  import MetricDashboard from '$lib/components/scouter/dashboard/metric/MetricDashboard.svelte';
-  import type { TimeRange } from '$lib/components/trace/types';
-  import { type GenAIEvalConfig } from '../genai/types';
   import type { MonitoringPageData } from './utils';
 
 
   let { monitoringData }: { monitoringData: Extract<MonitoringPageData, { status: 'success' }> } = $props();
   let selectedDriftType = $state(monitoringData.selectedData.driftType);
   let driftTypes = $derived(monitoringData.driftTypes);
-  let selectedProfile = $derived(
-    getProfileFromResponse(selectedDriftType, monitoringData.profiles)
-  );
-
-
 
 </script>
 
@@ -41,13 +30,7 @@
     <!-- Load dashboard based on drift type -->
     {#if selectedDriftType === DriftType.GenAI}
       <GenAIDashboard
-        uid={monitoringData.uid}
-        config={getProfileDataWithConfig(monitoringData.profiles, selectedProfile)?.config as GenAIEvalConfig}
-        profile={getProfileDataWithConfig(monitoringData.profiles, selectedProfile)}
-        profiles={monitoringData.profiles}
-        initialTimeRange={monitoringData.initialTimeRange}
-        initialRecords={monitoringData.selectedData.genAIEvalRecords}
-        initialWorkflows={monitoringData.selectedData.genAIEvalWorkflows}
+        monitoringData={monitoringData}
       />
     {/if}
     
