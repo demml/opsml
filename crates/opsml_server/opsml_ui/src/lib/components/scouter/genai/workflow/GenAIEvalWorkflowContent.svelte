@@ -162,7 +162,7 @@
 
         <div class="bg-surface-50 lg:flex-1 min-w-0 {showTaskDetail ? 'block' : 'hidden'} lg:block">
           {#if selectedTask}
-            <TaskDetailView task={selectedTask} allTasks={tasks} />
+            <TaskDetailView task={selectedTask}/>
           {:else}
             <div class="flex items-center justify-center h-full text-gray-500 p-4 text-center">
               Select a task to view details

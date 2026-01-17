@@ -1,6 +1,6 @@
 <script lang="ts">
   import { hasConsoleConfig, hasOpsGenieConfig, hasSlackConfig } from "../utils";
-  import type {  CustomMetricAlertConfig, CustomMetricDriftConfig } from "./types";
+  import type {  CustomDriftProfile, CustomMetricAlertConfig, CustomMetricDriftConfig } from "./types";
   import Pill from "$lib/components/utils/Pill.svelte";
   import UpdateModal from "$lib/components/scouter/update/UpdateModal.svelte";
   import type { UiProfile } from "../utils";
@@ -11,12 +11,14 @@
     config,
     alertConfig,
     profile,
+    profileUri,
     uid,
     registry,
   } = $props<{
     config: CustomMetricDriftConfig;
     alertConfig: CustomMetricAlertConfig;
-    profile: UiProfile;
+    profile: CustomDriftProfile;
+    profileUri: String;
     uid: string;
     registry: RegistryType;
   }>();
@@ -57,6 +59,7 @@
       config={config}
       driftType={config.drift_type}
       profile={profile}
+      profileUri={profileUri}
       uid={uid}
       registry={registry}
       />

@@ -92,25 +92,25 @@
           {@const badgeClasses = getTaskBadgeClasses(task)}
 
           <button
-            class="flex group cursor-pointer hover:bg-surface-600 transition-colors w-full"
+            class="flex group cursor-pointer hover:bg-surface-100 transition-all w-full border-b border-gray-100 relative"
             style="height: {ROW_HEIGHT}px"
             class:bg-primary-50={isSelected}
             onclick={() => onTaskSelect(task)}
-            onkeydown={(e) => e.key === 'Enter' && onTaskSelect(task)}
-            tabindex="0"
           >
-            <div class="flex items-center gap-2 px-4 w-full overflow-hidden">
+            <div class={`absolute left-0 top-0 bottom-0 w-1 ${getStatusColor(task).replace('text-', 'bg-')}`}></div>
+
+            <div class="flex items-center gap-3 px-4 pl-6 w-full overflow-hidden">
               <StatusIcon class="w-4 h-4 flex-shrink-0 {getStatusColor(task)}" />
 
-              <span class="border px-1.5 py-0.5 text-xs rounded flex-shrink-0 {badgeClasses}">
-                {task.task_type}
-              </span>
-
-              <span class="text-xs truncate font-medium text-gray-900 flex-1 min-w-0 text-left" title={task.task_id}>
+              <span class="text-xs truncate text-gray-900 flex-1 min-w-0 text-left {isSelected ? 'font-bold' : 'font-medium'}" title={task.task_id}>
                 {task.task_id}
               </span>
 
-              <span class="w-16 text-xs font-mono text-gray-600 text-right flex-shrink-0 whitespace-nowrap">
+              {#if !task.passed && !task.condition}
+                <span class="text-[10px] bg-error-100 text-error-800 px-1.5 rounded font-bold uppercase tracking-wider">Fail</span>
+              {/if}
+
+              <span class="w-16 text-[10px] font-mono text-gray-500 text-right flex-shrink-0">
                 {formatDuration(task.start_time, task.end_time)}
               </span>
             </div>

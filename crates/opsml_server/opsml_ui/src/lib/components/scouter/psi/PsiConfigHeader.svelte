@@ -1,7 +1,7 @@
 <script lang="ts">
   import { getPsiThresholdKeyValue } from "./utils";
   import { hasConsoleConfig, hasOpsGenieConfig, hasSlackConfig } from "../utils";
-  import type { PsiAlertConfig, PsiDriftConfig } from "./types";
+  import type { PsiAlertConfig, PsiDriftConfig, PsiDriftProfile } from "./types";
   import Pill from "$lib/components/utils/Pill.svelte";
   import UpdateModal from "$lib/components/scouter/update/UpdateModal.svelte";
   import type { UiProfile } from "../utils";
@@ -13,12 +13,14 @@
     config,
     alertConfig,
     profile,
+    profileUri,
     uid,
     registry,
   } = $props<{
     config: PsiDriftConfig;
     alertConfig: PsiAlertConfig;
-    profile: UiProfile;
+    profile: PsiDriftProfile;
+    profileUri: String
     uid: string;
     registry: RegistryType;
   }>();
@@ -67,6 +69,7 @@
       config={config}
       driftType={config.drift_type}
       profile={profile}
+      profileUri={profileUri}
       uid={uid}
       />
   </div>
