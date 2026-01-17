@@ -5,23 +5,25 @@
   import { uiSettingsStore } from '$lib/components/settings/settings.svelte';
   import ScouterRequiredView from '$lib/components/scouter/ScouterRequiredView.svelte';
   import { Activity } from 'lucide-svelte';
+  import type { MonitoringPageData } from '$lib/components/scouter/dashboard/utils';
 
   let { data }: PageProps = $props();
   let scouterEnabled = $derived(uiSettingsStore.scouterEnabled);
+  let pageData: MonitoringPageData = $state(data.monitoringData);
 
 </script>
 
-{#if scouterEnabled}
-  {#if data.status === 'error'}
+{#if scouterEnabled}`
+  {#if pageData.status === 'error'}
     <MonitoringErrorView
-      message={data.errorMessage}
+      message={pageData.errorMsg}
       space={data.metadata.space}
       name={data.metadata.name}
       version={data.metadata.version}
       registryType={data.registryType}
     />
   {:else}
-    <MonitoringDashboard {...data} />
+    <MonitoringDashboard {pageData} />
   {/if}
 {:else}
   <ScouterRequiredView

@@ -2,7 +2,6 @@ import type {
   BinnedDriftMap,
   MetricData,
   RecordCursor,
-  DriftType,
 } from "$lib/components/scouter/types";
 import type {
   DriftConfigType,
@@ -13,12 +12,15 @@ import type { DriftAlertPaginationResponse } from "$lib/components/scouter/alert
 import type { TimeRange } from "$lib/components/trace/types";
 import { getMaxDataPoints } from "$lib/utils";
 import {
-  getCurrentMetricData,
+  getGenericMetricData,
   getServerDriftAlerts,
   getProfileFeatures,
+  getSpcDriftMetrics,
+  getPsiDriftMetrics,
+  getCustomDriftMetrics,
 } from "$lib/components/scouter/utils";
-import { loadMetricsForDriftType } from "$lib/components/scouter/utils";
 import type { BaseProfileDashboardState } from "../types";
+import { DriftType } from "$lib/components/scouter/types";
 
 interface MetricDashboardStateInit {
   driftType: DriftType;
@@ -36,7 +38,7 @@ export class MetricDashboardState implements BaseProfileDashboardState {
   config: DriftConfigType;
   profiles: DriftProfileResponse;
   isUpdating = $state(false);
-  selectedTimeRange: TimeRange; // Remove null type
+  selectedTimeRange = $state<TimeRange | null>(null);
   maxDataPoints = $state<number>(0);
 
   currentName = $state<string>("");
@@ -51,7 +53,7 @@ export class MetricDashboardState implements BaseProfileDashboardState {
     this.profile = init.profile;
     this.config = init.config;
     this.profiles = init.profiles;
-    this.selectedTimeRange = $state(init.initialTimeRange);
+    this.selectedTimeRange = init.initialTimeRange;
     this.latestMetrics = init.initialMetrics;
     this.driftAlerts = init.initialAlerts;
     this.maxDataPoints = getMaxDataPoints();
@@ -61,18 +63,21 @@ export class MetricDashboardState implements BaseProfileDashboardState {
       this.profile.profile
     );
     this.currentName = this.availableNames[0];
-    this.currentMetricData = getCurrentMetricData(
-      this.latestMetrics,
-      this.driftType,
-      this.currentName
-    );
+
+    if (this.latestMetrics) {
+      this.currentMetricData = getGenericMetricData(
+        this.latestMetrics,
+        this.driftType as DriftType.Spc | DriftType.Psi | DriftType.Custom,
+        this.currentName
+      );
+    }
   }
 
   async checkScreenSize(): Promise<void> {
     const newMaxDataPoints = getMaxDataPoints();
     if (newMaxDataPoints !== this.maxDataPoints) {
       this.maxDataPoints = newMaxDataPoints;
-      await this.loadMetrics();
+      if (this.selectedTimeRange) await this.loadMetrics();
     }
   }
 
@@ -83,8 +88,6 @@ export class MetricDashboardState implements BaseProfileDashboardState {
     try {
       this.selectedTimeRange = range;
       await Promise.all([this.loadMetrics(), this.loadAlerts()]);
-    } catch (error) {
-      console.error("Failed to update time range:", error);
     } finally {
       this.isUpdating = false;
     }
@@ -93,9 +96,9 @@ export class MetricDashboardState implements BaseProfileDashboardState {
   handleNameChange(name: string): void {
     this.currentName = name;
     if (this.latestMetrics) {
-      this.currentMetricData = getCurrentMetricData(
+      this.currentMetricData = getGenericMetricData(
         this.latestMetrics,
-        this.driftType,
+        this.driftType as DriftType.Spc | DriftType.Psi | DriftType.Custom,
         this.currentName
       );
     }
@@ -105,6 +108,8 @@ export class MetricDashboardState implements BaseProfileDashboardState {
     cursor: RecordCursor,
     direction: string
   ): Promise<void> {
+    if (!this.selectedTimeRange) return;
+
     this.driftAlerts = await getServerDriftAlerts(fetch, {
       uid: this.config.uid,
       active: true,
@@ -117,24 +122,47 @@ export class MetricDashboardState implements BaseProfileDashboardState {
   }
 
   private async loadMetrics(): Promise<void> {
-    this.latestMetrics = await loadMetricsForDriftType(
-      fetch,
-      this.driftType,
-      this.profiles,
-      this.selectedTimeRange,
-      this.maxDataPoints
-    );
+    if (!this.selectedTimeRange) return;
+
+    switch (this.driftType) {
+      case DriftType.Spc:
+        this.latestMetrics = await getSpcDriftMetrics(
+          fetch,
+          this.profiles,
+          this.selectedTimeRange,
+          this.maxDataPoints
+        );
+        break;
+      case DriftType.Psi:
+        this.latestMetrics = await getPsiDriftMetrics(
+          fetch,
+          this.profiles,
+          this.selectedTimeRange,
+          this.maxDataPoints
+        );
+        break;
+      case DriftType.Custom:
+        this.latestMetrics = await getCustomDriftMetrics(
+          fetch,
+          this.profiles,
+          this.selectedTimeRange,
+          this.maxDataPoints
+        );
+        break;
+    }
 
     if (this.latestMetrics) {
-      this.currentMetricData = getCurrentMetricData(
+      this.currentMetricData = getGenericMetricData(
         this.latestMetrics,
-        this.driftType,
+        this.driftType as DriftType.Spc | DriftType.Psi | DriftType.Custom,
         this.currentName
       );
     }
   }
 
   private async loadAlerts(): Promise<void> {
+    if (!this.selectedTimeRange) return;
+
     this.driftAlerts = await getServerDriftAlerts(fetch, {
       uid: this.config.uid,
       active: true,

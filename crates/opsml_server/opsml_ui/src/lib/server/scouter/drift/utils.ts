@@ -6,20 +6,27 @@ import {
   type UpdateResponse,
   DriftType,
   type DriftRequest,
-  type BinnedDriftMap,
 } from "$lib/components/scouter/types";
 import { RegistryType } from "$lib/utils";
-import type { DriftProfileUri } from "$lib/components/scouter/types";
-import type { DriftProfileResponse } from "$lib/components/scouter/utils";
+import type {
+  BinnedMetricUnion,
+  DriftProfileUri,
+} from "$lib/components/scouter/types";
+import type {
+  DriftProfile,
+  DriftProfileResponse,
+} from "$lib/components/scouter/utils";
 import type {
   UpdateAlertResponse,
   UpdateAlertStatus,
   DriftAlertPaginationRequest,
   DriftAlertPaginationResponse,
 } from "$lib/components/scouter/alert/types";
-import { getProfileConfig } from "$lib/components/scouter/utils";
 import type { TimeRange } from "$lib/components/trace/types";
 import { timeRangeToInterval } from "$lib/components/trace/utils";
+import type { BinnedMetrics } from "$lib/components/scouter/custom/types";
+import type { BinnedPsiFeatureMetrics } from "$lib/components/scouter/psi/types";
+import type { BinnedSpcFeatureMetrics } from "$lib/components/scouter/spc/types";
 
 export async function getDriftProfiles(
   fetch: typeof globalThis.fetch,
@@ -105,117 +112,122 @@ export async function acknowledgeAlert(
  */
 async function getDriftMetrics(
   fetch: typeof globalThis.fetch,
-  profiles: DriftProfileResponse,
+  space: string,
+  uid: string,
+  driftType: DriftType,
   time_range: TimeRange,
   max_data_points: number,
   route: RoutePaths
-): Promise<BinnedDriftMap> {
-  const driftMap: BinnedDriftMap = {};
+): Promise<BinnedMetricUnion> {
+  const time_interval = timeRangeToInterval(time_range);
 
-  // Create an array of promises
-  const requests = Object.entries(profiles).map(
-    async ([driftType, profile]) => {
-      const config = getProfileConfig(driftType as DriftType, profile.profile);
-      const time_interval = timeRangeToInterval(time_range);
+  const request: DriftRequest = {
+    space: space,
+    uid: uid,
+    time_interval: time_interval,
+    max_data_points: max_data_points,
+    drift_type: driftType as DriftType,
+  };
 
-      const request: DriftRequest = {
-        space: config.space,
-        uid: config.uid,
-        time_interval: time_interval,
-        max_data_points: max_data_points,
-        drift_type: driftType as DriftType,
-      };
+  // if time_interval is custom, add start and end datetime
+  if (time_interval === TimeInterval.Custom) {
+    request.start_custom_datetime = time_range.startTime;
+    request.end_custom_datetime = time_range.endTime;
+  }
 
-      // if time_interval is custom, add start and end datetime
-      if (time_interval === TimeInterval.Custom) {
-        request.start_custom_datetime = time_range.startTime;
-        request.end_custom_datetime = time_range.endTime;
-      }
+  // Make the request and store result in driftMap
+  const response = await createOpsmlClient(fetch).get(route, request);
+  const data = (await response.json()) as BinnedMetricUnion;
 
-      // Make the request and store result in driftMap
-      const response = await createOpsmlClient(fetch).get(route, request);
-      const data = await response.json();
-      driftMap[driftType as DriftType] = data;
-    }
-  );
-
-  // Wait for all requests to complete
-  await Promise.all(requests);
-
-  return driftMap;
+  return data;
 }
 
 export async function getCustomDriftMetrics(
   fetch: typeof globalThis.fetch,
-  profiles: DriftProfileResponse,
+  space: string,
+  uid: string,
   time_range: TimeRange,
   max_data_points: number
-): Promise<BinnedDriftMap> {
-  return getDriftMetrics(
+): Promise<BinnedMetrics> {
+  return (await getDriftMetrics(
     fetch,
-    profiles,
+    space,
+    uid,
+    DriftType.Custom,
     time_range,
     max_data_points,
     RoutePaths.CUSTOM_DRIFT
-  );
+  )) as BinnedMetrics;
 }
 
 export async function getPsiDriftMetrics(
   fetch: typeof globalThis.fetch,
-  profiles: DriftProfileResponse,
+  space: string,
+  uid: string,
   time_range: TimeRange,
   max_data_points: number
-): Promise<BinnedDriftMap> {
-  return getDriftMetrics(
+): Promise<BinnedPsiFeatureMetrics> {
+  return (await getDriftMetrics(
     fetch,
-    profiles,
+    space,
+    uid,
+    DriftType.Psi,
     time_range,
     max_data_points,
     RoutePaths.PSI_DRIFT
-  );
+  )) as BinnedPsiFeatureMetrics;
 }
 
-export async function getSpcDriftMetrics(
+export async function getSpcDriftMetrics<T extends DriftType.Spc>(
   fetch: typeof globalThis.fetch,
-  profiles: DriftProfileResponse,
+  space: string,
+  uid: string,
   time_range: TimeRange,
   max_data_points: number
-): Promise<BinnedDriftMap> {
-  return getDriftMetrics(
+): Promise<BinnedSpcFeatureMetrics> {
+  return (await getDriftMetrics(
     fetch,
-    profiles,
+    space,
+    uid,
+    DriftType.Spc,
     time_range,
     max_data_points,
     RoutePaths.SPC_DRIFT
-  );
+  )) as BinnedSpcFeatureMetrics;
 }
 
 export async function getGenAIEvalTaskDriftMetrics(
   fetch: typeof globalThis.fetch,
-  profiles: DriftProfileResponse,
+  space: string,
+  uid: string,
   time_range: TimeRange,
   max_data_points: number
-): Promise<BinnedDriftMap> {
-  return getDriftMetrics(
+): Promise<BinnedMetrics> {
+  return (await getDriftMetrics(
     fetch,
-    profiles,
+    space,
+    uid,
+    DriftType.GenAI,
     time_range,
     max_data_points,
     RoutePaths.GENAI_EVAL_TASK_DRIFT
-  );
+  )) as BinnedMetrics;
 }
 
 export async function getGenAIEvalWorkflowDriftMetrics(
   fetch: typeof globalThis.fetch,
-  profiles: DriftProfileResponse,
+  space: string,
+  uid: string,
   time_range: TimeRange,
   max_data_points: number
-): Promise<BinnedDriftMap> {
-  return getDriftMetrics(
+): Promise<BinnedMetrics> {
+  return (await getDriftMetrics(
     fetch,
-    profiles,
+    space,
+    uid,
+    DriftType.GenAI,
     time_range,
     max_data_points,
     RoutePaths.GENAI_EVAL_WORKFLOW_DRIFT
-  );
+  )) as BinnedMetrics;
 }

@@ -87,7 +87,7 @@
         <span class="badge text-primary-900 border-black border-1 shadow-small bg-primary-100">
           ID: {record.id}
         </span>
-        <span class="badge border-black border-1 shadow-small {record.status === Status.Failed ? 'bg-error-100 text-error-900' : 'bg-success-100 text-success-900'}">
+        <span class="badge border-black border-1 shadow-small {record.status === Status.Failed ? 'bg-error-100 text-error-900' : 'bg-secondary-100 text-secondary-900'}">
           {getStatusLabel(record.status)}
         </span>
         <span class="badge text-primary-900 border-black border-1 shadow-small bg-primary-100">
@@ -118,8 +118,6 @@
 
       <div class="flex flex-wrap gap-2 text-xs">
         <Pill key="Record ID" value={record.record_id} textSize="text-xs"/>
-        <Pill key="Entity UID" value={record.entity_uid} textSize="text-xs"/>
-        <Pill key="Entity ID" value={record.entity_id.toString()} textSize="text-xs"/>
       </div>
     </section>
 

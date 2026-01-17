@@ -207,10 +207,12 @@
         </span>
       {/if}
     </h1>
-    <TimeRangeFilter
-      onRangeChange={handleTimeRangeChange}
-      selectedRange={selectedTimeRange}
-    />
+    <div class="flex justify-end">
+      <TimeRangeFilter
+        onRangeChange={handleTimeRangeChange}
+        selectedRange={selectedTimeRange}
+      />
+    </div>
   </div>
 
   <div class="grid grid-cols-1 gap-4 pt-4">

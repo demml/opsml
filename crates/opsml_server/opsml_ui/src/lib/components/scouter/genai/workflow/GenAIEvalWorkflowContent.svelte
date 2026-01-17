@@ -53,7 +53,7 @@
   }
 
   function getPassRateColor(passRate: number): string {
-    if (passRate >= 0.9) return 'bg-success-600';
+    if (passRate >= 0.9) return 'bg-secondary-600';
     if (passRate >= 0.7) return 'bg-warning-600';
     return 'bg-error-600';
   }
@@ -97,7 +97,7 @@
         <span class="badge text-primary-900 border-black border-1 shadow-small bg-primary-100">
           {formatDuration(workflow.duration_ms)}
         </span>
-        <span class="badge border-black border-1 shadow-small {workflow.pass_rate >= 0.9 ? 'bg-success-100 text-success-900' : workflow.pass_rate >= 0.7 ? 'bg-warning-100 text-warning-900' : 'bg-error-100 text-error-900'}">
+        <span class="badge border-black border-1 shadow-small {workflow.pass_rate >= 0.9 ? 'bg-secondary-100 text-secondary-900' : workflow.pass_rate >= 0.7 ? 'bg-warning-100 text-warning-900' : 'bg-error-100 text-error-900'}">
           {(workflow.pass_rate * 100).toFixed(1)}% pass rate
         </span>
         {#if workflow.failed_tasks > 0}
@@ -108,8 +108,6 @@
       </div>
 
       <div class="flex flex-wrap gap-1 text-xs">
-        <Pill key="Entity ID" value={workflow.entity_id.toString()} textSize="text-xs"/>
-        <Pill key="Entity UID" value={workflow.entity_uid} textSize="text-xs"/>
         <Pill key="Passed" value={`${workflow.passed_tasks}/${workflow.total_tasks}`} textSize="text-xs"/>
       </div>
     </div>

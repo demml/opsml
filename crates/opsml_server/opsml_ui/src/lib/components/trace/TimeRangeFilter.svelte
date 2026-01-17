@@ -202,19 +202,21 @@ function calculateCustomBucketInterval(durationMs: number): string {
   });
 </script>
 
-<div class="time-range-filter relative">
+<div class="time-range-filter relative w-full min-w-[280px]">
   <button
     onclick={toggleDropdown}
-    class="flex items-center gap-2 px-4 py-2 bg-white border-2 border-black rounded-lg shadow-small hover:shadow-hover hover:bg-primary-50 transition-all text-sm font-bold text-primary-800"
+    class="flex items-center justify-between w-full gap-2 px-4 py-2 bg-white border-2 border-black rounded-lg shadow-small hover:shadow-hover hover:bg-primary-50 transition-all text-sm font-bold text-primary-800"
     aria-label="Select time range"
   >
-    <Clock class="w-4 h-4" />
-    <span>{selectedRange.label}</span>
+    <div class="flex items-center gap-2">
+      <Clock class="w-4 h-4" />
+      <span>{selectedRange.label}</span>
+    </div>
     <ChevronDown class="w-4 h-4 transition-transform {isOpen ? 'rotate-180' : ''}" />
   </button>
 
   {#if isOpen}
-    <div class="absolute right-0 mt-2 bg-white border-2 border-black rounded-lg shadow-primary z-50 overflow-hidden">
+    <div class="absolute right-0 w-full min-w-[320px] mt-2 bg-white border-2 border-black rounded-lg shadow-primary z-50 overflow-hidden">
       {#if !showCustomPicker}
         <div class="max-h-96 overflow-y-auto">
           {#each PRESET_RANGES as preset}
@@ -235,7 +237,7 @@ function calculateCustomBucketInterval(durationMs: number): string {
           Custom Range
         </button>
       {:else}
-        <div class="p-4 space-y-1 w-80">
+        <div class="p-4 space-y-3">
           <div class="flex items-center justify-between mb-2">
             <h3 class="text-sm font-bold text-primary-800">Custom Time Range</h3>
             <button
@@ -246,39 +248,39 @@ function calculateCustomBucketInterval(durationMs: number): string {
             </button>
           </div>
 
-          <div class="space-y-1">
+          <div class="space-y-2">
             <label for="custom-start-date" class="block text-xs font-bold text-gray-700">Start</label>
             <div class="grid grid-cols-2 gap-2">
               <input
                 id="custom-start-date"
                 type="date"
                 bind:value={customStartDate}
-                class="date-input w-full px-2 py-1 text-sm border-2 border-black rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
+                class="date-input w-full px-2 py-1.5 text-sm border-2 border-black rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
               />
               <input
                 id="custom-start-time"
                 type="time"
                 bind:value={customStartTime}
-                class="time-input w-full px-2 py-1 text-sm border-2 border-black rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
+                class="time-input w-full px-2 py-1.5 text-sm border-2 border-black rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
                 aria-label="Start time"
               />
             </div>
           </div>
 
-          <div class="space-y-1 pb-1">
+          <div class="space-y-2">
             <label for="custom-end-date" class="block text-xs font-bold text-gray-700">End</label>
             <div class="grid grid-cols-2 gap-2">
               <input
                 id="custom-end-date"
                 type="date"
                 bind:value={customEndDate}
-                class="date-input w-full px-2 py-1 text-sm border-2 border-black rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
+                class="date-input w-full px-2 py-1.5 text-sm border-2 border-black rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
               />
               <input
                 id="custom-end-time"
                 type="time"
                 bind:value={customEndTime}
-                class="time-input w-full px-2 py-1 text-sm border-2 border-black rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
+                class="time-input w-full px-2 py-1.5 text-sm border-2 border-black rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
                 aria-label="End time"
               />
             </div>
@@ -286,10 +288,10 @@ function calculateCustomBucketInterval(durationMs: number): string {
 
           <div class="flex justify-center pt-2">
             <button
-              class="btn text-sm flex self-center gap-2 bg-primary-500 shadow shadow-hover border-black border-2 rounded-lg"
+              class="btn text-sm flex self-center gap-2 bg-primary-500 shadow shadow-hover border-black border-2 rounded-lg px-4 py-2"
               onclick={handleCustomRange}
-              >
-            Apply
+            >
+              Apply
             </button>
           </div>
         </div>
@@ -297,6 +299,7 @@ function calculateCustomBucketInterval(durationMs: number): string {
     </div>
   {/if}
 </div>
+
 
 <style>
   /* Style the native calendar picker button for date inputs */

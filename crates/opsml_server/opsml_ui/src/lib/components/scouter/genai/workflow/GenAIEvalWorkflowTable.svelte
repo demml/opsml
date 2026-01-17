@@ -1,6 +1,7 @@
 <script lang="ts">
-  import type { GenAIEvalWorkflowResult} from '../task';
-  import type { GenAIEvalWorkflowPaginationResponse } from '../types';
+  import type { GenAIEvalWorkflowResult, GenAIEvalTaskResult} from '../task';
+  import { getServerGenAIEvalTask } from '../utils';
+  import type { GenAIEvalWorkflowPaginationResponse, GenAIEvalTaskRequest, GenAIEvalTaskResponse } from '../types';
   import type { RecordCursor } from '$lib/components/scouter/types';
   import { ArrowLeft, ArrowRight } from 'lucide-svelte';
   import GenAIEvalWorkflowSideBar from './GenAIEvalWorkflowSideBar.svelte';
@@ -16,6 +17,7 @@
   let workflows = $state<GenAIEvalWorkflowResult[]>(currentPage.items || []);
   let selectedWorkflow = $state<GenAIEvalWorkflowResult | null>(null);
   let isSelected = $state(false);
+  let selectedWorkflowTasks = $state<GenAIEvalTaskResult[]>([]);
 
   async function handleNextPage() {
     if (currentPage.has_next && currentPage.next_cursor && onPageChange) {
@@ -29,6 +31,7 @@
     }
   }
 
+
   function formatTimestamp(timestamp: string): string {
     const date = new Date(timestamp);
     return date.toLocaleString('en-US', {
@@ -41,13 +44,13 @@
   }
 
   function getPassRateBadge(passRate: number): string {
-    if (passRate >= 0.9) return 'bg-success-100 border-success-900 text-success-900';
+    if (passRate >= 0.9) return 'bg-secondary-100 border-secondary-900 text-secondary-900';
     if (passRate >= 0.7) return 'bg-warning-100 border-warning-900 text-warning-900';
     return 'bg-error-100 border-error-900 text-error-900';
   }
 
   function getPassRateColor(passRate: number): string {
-    if (passRate >= 0.9) return 'bg-success-600';
+    if (passRate >= 0.9) return 'bg-secondary-600';
     if (passRate >= 0.7) return 'bg-warning-600';
     return 'bg-error-600';
   }
@@ -62,17 +65,16 @@
     isSelected = true;
   }
 
+
+
   function handleClosePanel() {
     selectedWorkflow = null;
     isSelected = false;
   }
 </script>
 
-<div class="pt-4">
-  <div class="mb-3">
-    <h2 class="text-base font-bold text-primary-800">GenAI Evaluation Workflows</h2>
-  </div>
 
+<div class="pt-2">
   <div class="overflow-hidden border-2 border-black rounded-lg max-h-[500px] flex flex-col">
     <div class="overflow-y-auto flex-1">
       {#if workflows.length === 0}
@@ -81,7 +83,7 @@
         </div>
       {:else}
         <div class="bg-white border-b-2 border-black sticky top-0 z-10">
-          <div class="grid grid-cols-6 gap-3 text-black text-xs font-bold px-4 py-3" style="grid-template-columns: 80px 140px 120px 100px 120px 1fr;">
+          <div class="grid gap-3 text-black text-xs font-bold px-4 py-3" style="grid-template-columns: 60px 140px 100px 80px 80px 100px 100px 140px;">
             <div class="text-center">
               <span class="px-2 py-1 rounded-full bg-primary-100 text-primary-800">ID</span>
             </div>
@@ -92,7 +94,13 @@
               <span class="px-2 py-1 rounded-full bg-primary-100 text-primary-800">Pass Rate</span>
             </div>
             <div class="text-center">
-              <span class="px-2 py-1 rounded-full bg-primary-100 text-primary-800">Tasks</span>
+              <span class="px-2 py-1 rounded-full bg-primary-100 text-primary-800">Passed</span>
+            </div>
+            <div class="text-center">
+              <span class="px-2 py-1 rounded-full bg-primary-100 text-primary-800">Failed</span>
+            </div>
+            <div class="text-center">
+              <span class="px-2 py-1 rounded-full bg-primary-100 text-primary-800">Total</span>
             </div>
             <div class="text-center">
               <span class="px-2 py-1 rounded-full bg-primary-100 text-primary-800">Duration</span>
@@ -107,7 +115,7 @@
           {#each workflows as workflow, i}
             <button
               class="grid gap-3 items-center w-full px-4 py-3 border-b border-gray-200 transition-colors {i % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-primary-100 cursor-pointer text-left"
-              style="grid-template-columns: 80px 140px 120px 100px 120px 1fr;"
+              style="grid-template-columns: 60px 140px 100px 80px 80px 100px 100px 140px;"
               onclick={() => selectWorkflowForDetail(workflow)}
             >
               <div class="text-center">
@@ -129,7 +137,19 @@
 
               <div class="text-center">
                 <span class="text-xs font-medium text-gray-700">
-                  {workflow.passed_tasks}/{workflow.total_tasks}
+                  {workflow.passed_tasks}
+                </span>
+              </div>
+
+              <div class="text-center">
+                <span class="text-xs font-medium text-gray-700">
+                  {workflow.failed_tasks}
+                </span>
+              </div>
+
+              <div class="text-center">
+                <span class="text-xs font-medium text-gray-700">
+                  {workflow.total_tasks}
                 </span>
               </div>
 

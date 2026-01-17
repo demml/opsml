@@ -120,15 +120,10 @@ export interface DriftRequest {
   end_custom_datetime?: string;
 }
 
-export type BinnedDriftMap = {
-  [DriftType.Spc]?: BinnedSpcFeatureMetrics;
-  [DriftType.Psi]?: BinnedPsiFeatureMetrics;
-  [DriftType.Custom]?: BinnedMetrics;
-  [DriftType.GenAI]?: {
-    task: BinnedMetrics;
-    workflow: BinnedMetrics;
-  };
-};
+export type BinnedMetricUnion =
+  | BinnedSpcFeatureMetrics
+  | BinnedPsiFeatureMetrics
+  | BinnedMetrics;
 
 export type MetricData =
   | SpcDriftFeature

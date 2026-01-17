@@ -1,22 +1,19 @@
 import type {
   GenAIEvalConfig,
   GenAIEvalRecordPaginationResponse,
-} from "../types";
-import type {
   GenAIEvalWorkflowPaginationResponse,
-  GenAIEvalTaskResponse,
 } from "../types";
-import type { RecordCursor, BinnedDriftMap, MetricData } from "../../types";
+import type { RecordCursor, MetricData } from "../../types";
+import { type BinnedMetrics } from "../../custom/types";
 import type { TimeRange } from "$lib/components/trace/types";
 import { getMaxDataPoints } from "$lib/utils";
 import {
   getServerGenAIEvalRecordPage,
   getServerGenAIEvalWorkflowPage,
-  getServerGenAIEvalTask,
 } from "../utils";
-import { loadGenAIMetrics } from "$lib/components/scouter/utils";
 import {
-  getCurrentMetricData,
+  getGenAITaskMetrics,
+  getGenAIWorkflowMetrics,
   getProfileFeatures,
 } from "$lib/components/scouter/utils";
 import type { BaseProfileDashboardState } from "$lib/components/scouter/dashboard/types";
@@ -29,47 +26,64 @@ interface GenAIDashboardStateInit {
   initialTimeRange: TimeRange;
   initialRecords: GenAIEvalRecordPaginationResponse;
   initialWorkflows: GenAIEvalWorkflowPaginationResponse;
+  initialMetrics: { task: BinnedMetrics; workflow: BinnedMetrics };
 }
 
 export class GenAIDashboardState implements BaseProfileDashboardState {
-  config: GenAIEvalConfig;
-  profiles: DriftProfileResponse;
+  readonly config: GenAIEvalConfig;
+  readonly profiles: DriftProfileResponse;
+
   isUpdating = $state(false);
-  selectedTimeRange: TimeRange;
+  selectedTimeRange = $state<TimeRange | null>(null);
   maxDataPoints = $state<number>(0);
 
   evalRecords = $state<GenAIEvalRecordPaginationResponse | null>(null);
-  selectedRecord = $state<string | null>(null);
-
   evalWorkflows = $state<GenAIEvalWorkflowPaginationResponse | null>(null);
-  selectedWorkflow = $state<string | null>(null);
 
-  workflowTasks = $state<GenAIEvalTaskResponse | null>(null);
-  selectedTask = $state<string | null>(null);
+  taskMetrics = $state<BinnedMetrics | null>(null);
+  workflowMetrics = $state<BinnedMetrics | null>(null);
 
-  taskMetrics = $state<BinnedDriftMap | null>(null);
-  workflowMetrics = $state<BinnedDriftMap | null>(null);
   selectedMetricView = $state<"task" | "workflow">("task");
   currentMetricName = $state<string>("");
-  availableMetricNames = $state<string[]>([]);
-  currentMetricData = $state<MetricData | null>(null);
 
   constructor(init: GenAIDashboardStateInit) {
     this.config = init.config;
     this.profiles = init.profiles;
-    this.selectedTimeRange = $state(init.initialTimeRange);
+    this.maxDataPoints = getMaxDataPoints();
+    this.selectedTimeRange = init.initialTimeRange;
     this.evalRecords = init.initialRecords;
     this.evalWorkflows = init.initialWorkflows;
-    this.maxDataPoints = getMaxDataPoints();
+    this.taskMetrics = init.initialMetrics.task;
+    this.workflowMetrics = init.initialMetrics.workflow;
+    this.currentMetricName =
+      Object.keys(init.initialMetrics.workflow.metrics)[0] || "";
+  }
+
+  /// get all keys from the current active type (task or workflow)
+  get availableMetricNames(): string[] {
+    const currentMetrics =
+      this.selectedMetricView === "task"
+        ? this.taskMetrics
+        : this.workflowMetrics;
+    return currentMetrics ? Object.keys(currentMetrics.metrics) : [];
+  }
+
+  get currentMetrics(): BinnedMetrics | null {
+    return this.selectedMetricView === "task"
+      ? this.taskMetrics
+      : this.workflowMetrics;
+  }
+
+  get currentMetricData(): MetricData | null {
+    if (!this.currentMetrics || !this.currentMetricName) return null;
+    return this.currentMetrics.metrics[this.currentMetricName] || null;
   }
 
   async checkScreenSize(): Promise<void> {
     const newMaxDataPoints = getMaxDataPoints();
     if (newMaxDataPoints !== this.maxDataPoints) {
       this.maxDataPoints = newMaxDataPoints;
-      if (this.selectedTimeRange) {
-        await this.loadMetrics();
-      }
+      if (this.selectedTimeRange) await this.loadMetrics();
     }
   }
 
@@ -80,8 +94,6 @@ export class GenAIDashboardState implements BaseProfileDashboardState {
     try {
       this.selectedTimeRange = range;
       await this.loadAllData();
-    } catch (error) {
-      console.error("Failed to update time range:", error);
     } finally {
       this.isUpdating = false;
     }
@@ -94,10 +106,7 @@ export class GenAIDashboardState implements BaseProfileDashboardState {
     if (!this.selectedTimeRange) return;
 
     this.evalRecords = await getServerGenAIEvalRecordPage(fetch, {
-      service_info: {
-        uid: this.config.uid,
-        space: this.config.space,
-      },
+      service_info: { uid: this.config.uid, space: this.config.space },
       cursor_created_at: cursor.created_at,
       cursor_id: cursor.id,
       direction,
@@ -113,10 +122,7 @@ export class GenAIDashboardState implements BaseProfileDashboardState {
     if (!this.selectedTimeRange) return;
 
     this.evalWorkflows = await getServerGenAIEvalWorkflowPage(fetch, {
-      service_info: {
-        uid: this.config.uid,
-        space: this.config.space,
-      },
+      service_info: { uid: this.config.uid, space: this.config.space },
       cursor_created_at: cursor.created_at,
       cursor_id: cursor.id,
       direction,
@@ -125,78 +131,25 @@ export class GenAIDashboardState implements BaseProfileDashboardState {
     });
   }
 
-  async handleRecordSelect(recordUid: string): Promise<void> {
-    this.selectedRecord = recordUid;
-    this.workflowTasks = await getServerGenAIEvalTask(fetch, {
-      record_uid: recordUid,
-    });
-  }
-
-  async handleWorkflowSelect(recordUid: string): Promise<void> {
-    this.selectedWorkflow = recordUid;
-    this.workflowTasks = await getServerGenAIEvalTask(fetch, {
-      record_uid: recordUid,
-    });
-  }
-
-  handleTaskSelect(taskId: string): void {
-    this.selectedTask = taskId;
-  }
-
   handleMetricViewChange(view: "task" | "workflow"): void {
     this.selectedMetricView = view;
-    this.updateMetricData();
   }
 
-  private updateMetricData(): void {
-    const currentMetrics =
-      this.selectedMetricView === "task"
-        ? this.taskMetrics
-        : this.workflowMetrics;
-
-    if (!currentMetrics) return;
-
-    const profile = this.profiles[DriftType.GenAI];
-    if (!profile) return;
-
-    this.availableMetricNames = getProfileFeatures(
-      DriftType.GenAI,
-      profile.profile
-    );
-
-    if (this.availableMetricNames.length > 0) {
-      if (
-        !this.currentMetricName ||
-        !this.availableMetricNames.includes(this.currentMetricName)
-      ) {
-        this.currentMetricName = this.availableMetricNames[0];
-      }
-
-      this.currentMetricData = getCurrentMetricData(
-        currentMetrics,
-        DriftType.GenAI,
-        this.currentMetricName
-      );
-    }
+  handleMetricNameChange(name: string): void {
+    this.currentMetricName = name;
   }
 
   private async loadAllData(): Promise<void> {
     if (!this.selectedTimeRange) return;
 
-    const [records, workflows, metrics] = await Promise.all([
+    const [records, workflows] = await Promise.all([
       getServerGenAIEvalRecordPage(fetch, {
-        service_info: {
-          uid: this.config.uid,
-          space: this.config.space,
-        },
+        service_info: { uid: this.config.uid, space: this.config.space },
         start_datetime: this.selectedTimeRange.startTime,
         end_datetime: this.selectedTimeRange.endTime,
       }),
       getServerGenAIEvalWorkflowPage(fetch, {
-        service_info: {
-          uid: this.config.uid,
-          space: this.config.space,
-        },
+        service_info: { uid: this.config.uid, space: this.config.space },
         start_datetime: this.selectedTimeRange.startTime,
         end_datetime: this.selectedTimeRange.endTime,
       }),
@@ -205,24 +158,27 @@ export class GenAIDashboardState implements BaseProfileDashboardState {
 
     this.evalRecords = records;
     this.evalWorkflows = workflows;
-    this.selectedRecord = null;
-    this.selectedWorkflow = null;
-    this.workflowTasks = null;
-    this.selectedTask = null;
   }
 
   private async loadMetrics(): Promise<void> {
     if (!this.selectedTimeRange) return;
 
-    const { task, workflow } = await loadGenAIMetrics(
-      fetch,
-      this.profiles,
-      this.selectedTimeRange,
-      this.maxDataPoints
-    );
+    const [task, workflow] = await Promise.all([
+      getGenAITaskMetrics(
+        fetch,
+        this.profiles,
+        this.selectedTimeRange,
+        this.maxDataPoints
+      ),
+      getGenAIWorkflowMetrics(
+        fetch,
+        this.profiles,
+        this.selectedTimeRange,
+        this.maxDataPoints
+      ),
+    ]);
 
     this.taskMetrics = task;
     this.workflowMetrics = workflow;
-    this.updateMetricData();
   }
 }
