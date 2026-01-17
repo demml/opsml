@@ -72,7 +72,7 @@
   <div class="flex-1 overflow-auto">
     {#each sortedStages as { stageIndex, tasks: stageTasks }}
       <div class="border-b-2 border-gray-200">
-        <div class="sticky top-0 bg-tertiary-100 border-b border-tertiary-300 px-4 py-2 z-10">
+        <div class="sticky top-0 bg-tertiary-100 border-b border-tertiary-300 px-4 py-2">
           <div class="flex items-center gap-2">
             <span class="flex-shrink-0 w-6 h-6 flex items-center justify-center bg-tertiary-950 text-white rounded-full text-xs font-bold">
               {stageIndex + 1}

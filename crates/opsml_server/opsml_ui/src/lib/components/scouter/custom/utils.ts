@@ -1,8 +1,6 @@
 import type { AlertCondition } from "../types";
 import type { CustomMetricDriftConfig } from "./types";
 import type { TimeRange } from "$lib/components/trace/types";
-import type { DriftType } from "../types";
-import type { DriftProfile } from "../utils";
 import type { BinnedMetrics } from "./types";
 import { createInternalApiClient } from "$lib/api/internalClient";
 import { ServerPaths } from "$lib/components/api/routes";

@@ -5,7 +5,13 @@ from sklearn import ensemble  # type: ignore
 from opsml.scouter.drift import (
     PsiDriftConfig,
     GenAIEvalRecord,
+    CustomMetricDriftConfig,
+    CustomMetric,
+    CustomMetricAlertConfig,
 )
+from opsml.scouter.queue import Features, Metrics
+from opsml.scouter.alert import AlertThreshold
+from opsml.scouter.types import CommonCrons
 import random
 import string
 from figure_dataset import (  # type: ignore
@@ -26,6 +32,7 @@ from opsml import (
     SklearnModel,
     Prompt,
 )
+from pydantic import BaseModel
 import pathlib
 
 CWD = pathlib.Path(__file__).parent
@@ -48,6 +55,16 @@ X2, y2 = create_fake_data(
 )
 
 SAVE_PATH = CWD / "assets" / "temp_save"
+
+
+class ModelFeatures(BaseModel):
+    col_1: float
+    target: float
+
+
+class ModelMetrics(BaseModel):
+    metric_1: float
+    metric_2: float
 
 
 def create_genai_tasks() -> list[AssertionTask]:
@@ -117,6 +134,32 @@ def create_random_genaieval_record() -> GenAIEvalRecord:
     return record
 
 
+def create_random_features_record() -> Features:
+    """Helper function to create a random Features record for testing."""
+    feature1 = np.random.rand() * 100
+    target = feature1 * 2 + np.random.randn() * 10  # some noise
+
+    record = ModelFeatures(
+        col_1=feature1,
+        target=target,
+    )
+
+    return Features(record.model_dump())
+
+
+def create_random_metrics_record() -> Metrics:
+    """Helper function to create a random Metrics record for testing."""
+    metric_1 = np.random.rand() * 5
+    metric_2 = metric_1 / 2 + np.random.rand()  # some noise
+
+    record = ModelMetrics(
+        metric_1=metric_1,
+        metric_2=metric_2,
+    )
+
+    return Metrics(record.model_dump())
+
+
 def create_sklearn_interface() -> SklearnModel:
     """ "Helper function to create a random forest classifier with drift profiles.
     This function creates a random forest classifier and adds a PSI drift profile to it.
@@ -137,6 +180,29 @@ def create_sklearn_interface() -> SklearnModel:
         data=X,
         config=PsiDriftConfig(),
         data_type=DataType.Pandas,
+    )
+
+    # create custom drift
+    model.create_drift_profile(
+        alias="custom",
+        data=[
+            CustomMetric(
+                name="metric1",
+                baseline_value=0.5,
+                alert_threshold=AlertThreshold.Above,
+            ),
+            CustomMetric(
+                name="metric2",
+                baseline_value=0.7,
+                alert_threshold=AlertThreshold.Above,
+            ),
+        ],
+        config=CustomMetricDriftConfig(
+            sample_size=5,
+            alert_config=CustomMetricAlertConfig(
+                schedule=CommonCrons.Every1Minute,
+            ),
+        ),
     )
 
     return model
