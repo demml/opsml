@@ -46,6 +46,22 @@
     (metadata.metadata.drift_profile_uri_map && uiSettingsStore.scouterEnabled) || dev
   );
 
+  /// determine base path for monitoring links
+  // if metadata.metadata.drift_profile_uri_map exists and scouter is enabled, get the first drift type from the map
+  // example profile map: {"genai":{"drift_type":"GenAI","root_dir":"drift","uri":"drift/genai.json"}}
+  // iterate over map and get first drift type at key "drift_type"
+  let monitoringBasePath = $derived(() => {
+    if (metadata.metadata.drift_profile_uri_map && uiSettingsStore.scouterEnabled) {
+      const driftTypes = Object.values(metadata.metadata.drift_profile_uri_map).map(
+        (profile: any) => profile.drift_type.toLowerCase()
+      );
+      if (driftTypes.length > 0) {
+        return `monitoring/${driftTypes[0]}`;
+      }
+    }
+    return 'monitoring';
+  });
+
   /**
    * Base path for navigation links
    */
@@ -54,6 +70,8 @@
   );
 
   const iconColor = '#8059b6';
+
+  console.log("PromptCardLayout metadata:", JSON.stringify(metadata.metadata.drift_profile_uri_map));
 </script>
 
 <!-- Sticky header with breadcrumb and tab navigation -->
@@ -99,7 +117,7 @@
       {#if showMonitoring}
         <a
           class="flex items-center gap-x-2 border-b-3 {activeTab === 'monitoring' ? 'border-secondary-500' : 'border-transparent'} hover:border-secondary-500 hover:border-b-3 transition-colors"
-          href={`${basePath}/monitoring`}
+          href={`${basePath}/${monitoringBasePath()}`}
           data-sveltekit-preload-data="hover"
           aria-current={activeTab === 'monitoring' ? 'page' : undefined}
         >

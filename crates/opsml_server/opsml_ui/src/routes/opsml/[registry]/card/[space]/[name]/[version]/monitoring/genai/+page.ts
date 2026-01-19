@@ -1,7 +1,7 @@
 export const ssr = false;
 
 import type { PageLoad } from "./$types";
-import { DriftType } from "$lib/components/scouter/types";
+import { DriftType, driftTypeFromString } from "$lib/components/scouter/types";
 import { error } from "@sveltejs/kit";
 import {
   loadInitialData,
@@ -9,25 +9,16 @@ import {
   type MonitoringPageData,
 } from "$lib/components/scouter/dashboard/utils";
 
-export const load: PageLoad = async ({ parent, fetch, params }) => {
+export const load: PageLoad = async ({ parent, fetch }) => {
   const parentData = await parent();
   const { registryType, metadata, profiles, driftTypes } = parentData;
-
-  const driftType = params.drift as DriftType;
-
-  if (!driftTypes.includes(driftType)) {
-    throw error(
-      404,
-      `Invalid drift type: ${driftType}. Available types: ${driftTypes.join(", ")}`
-    );
-  }
 
   const timeRange = getTimeRange();
 
   try {
     const selectedData = await loadInitialData(
       fetch,
-      [driftType],
+      [DriftType.GenAI],
       profiles,
       timeRange
     );
@@ -42,7 +33,12 @@ export const load: PageLoad = async ({ parent, fetch, params }) => {
       selectedTimeRange: timeRange,
     };
 
-    return { monitoringData, driftType, metadata, registryType };
+    return {
+      monitoringData,
+      metadata,
+      driftType: DriftType.GenAI,
+      registryType,
+    };
   } catch (err) {
     const message =
       err instanceof Error ? err.message : "Unknown monitoring error";
@@ -58,6 +54,11 @@ export const load: PageLoad = async ({ parent, fetch, params }) => {
       profiles: {},
     };
 
-    return { monitoringData: errorData, driftType, metadata, registryType };
+    return {
+      monitoringData: errorData,
+      driftType: DriftType.GenAI,
+      metadata,
+      registryType,
+    };
   }
 };

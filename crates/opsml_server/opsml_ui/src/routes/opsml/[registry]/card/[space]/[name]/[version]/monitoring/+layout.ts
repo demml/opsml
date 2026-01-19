@@ -13,7 +13,7 @@ export const load: LayoutLoad = async ({ parent, fetch, url }) => {
   const parentData = await parent();
   const { registryType, metadata } = parentData;
 
-  if (registryType !== RegistryType.Prompt) {
+  if (registryType !== RegistryType.Model) {
     throw redirect(
       303,
       `/opsml/${getRegistryPath(registryType)}/card/${metadata.space}/${metadata.name}/${metadata.version}/card`

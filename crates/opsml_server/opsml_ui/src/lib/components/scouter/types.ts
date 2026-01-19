@@ -11,6 +11,21 @@ export enum DriftType {
   GenAI = "GenAI",
 }
 
+export function driftTypeFromString(type: string): DriftType | null {
+  switch (type.toLowerCase()) {
+    case "spc":
+      return DriftType.Spc;
+    case "psi":
+      return DriftType.Psi;
+    case "custom":
+      return DriftType.Custom;
+    case "genai":
+      return DriftType.GenAI;
+    default:
+      return null;
+  }
+}
+
 export interface DriftProfileUri {
   root_dir: string;
   uri: string;

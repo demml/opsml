@@ -38,7 +38,6 @@ export async function getServerGenAIEvalWorkflowPage(
   fetch: typeof globalThis.fetch,
   request: GenAIEvalRecordPaginationRequest
 ): Promise<GenAIEvalWorkflowPaginationResponse> {
-  console.log(JSON.stringify(request));
   let resp = await createInternalApiClient(fetch).post(
     ServerPaths.GENAI_EVAL_WORKFLOW_PAGE,
     request

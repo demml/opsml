@@ -1,6 +1,5 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { untrack } from 'svelte';
   import MonitoringErrorView from '$lib/components/scouter/dashboard/MonitoringErrorView.svelte';
   import type { PageProps } from './$types';
   import type { MonitoringPageData } from '$lib/components/scouter/dashboard/utils';
@@ -23,13 +22,13 @@
   let isRefreshing = $state(false);
   let currentMaxPoints = $state(typeof window !== 'undefined' ? getMaxDataPoints() : 0);
 
-  // React to time range changes from global state
+
   $effect(() => {
     const newRange = timeRangeState.selectedTimeRange;
-    
+
     if (newRange && monitoringData.status === 'success') {
       const currentRange = monitoringData.selectedTimeRange;
-      
+
       if (
         currentRange.startTime !== newRange.startTime ||
         currentRange.endTime !== newRange.endTime
@@ -65,7 +64,7 @@
     wCursor?: { cursor: RecordCursor; direction: string }
   ) {
     if (monitoringData.status !== 'success') return;
-    
+
     isRefreshing = true;
     try {
       await refreshMonitoringData(fetch, type, monitoringData, {
@@ -89,7 +88,7 @@
 
   async function handleAlertPageChange(cursor: RecordCursor, direction: string) {
     if (monitoringData.status !== 'success') return;
-    
+
     isRefreshing = true;
     try {
       await changeAlertPage(fetch, { cursor, direction }, monitoringData);
@@ -102,7 +101,7 @@
 
   async function updateAlert(id: number, space: string): Promise<void> {
     if (monitoringData.status !== 'success') return;
-    
+
     const updated = await acknowledgeMonitoringAlert(fetch, id, space);
     if (updated) {
       const newAlerts = await getServerDriftAlerts(fetch, {
