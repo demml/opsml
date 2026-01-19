@@ -90,7 +90,7 @@
 </script>
 
 <div class="grid grid-cols-1 lg:grid-cols-5 gap-4">
-  <!-- Filter sidebar -->
+ 
   <div class="col-span-1 lg:col-span-1 p-2 flex flex-col rounded-base border-primary-500 border-2 shadow-primary bg-surface-50 self-start overflow-hidden">
     <MultiComboSearchBox
       boxId="attribute-search-input"

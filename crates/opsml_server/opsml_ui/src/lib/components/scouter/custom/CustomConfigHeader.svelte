@@ -29,10 +29,13 @@
 <div class="grid grid-cols-1 gap-2 w-full h-auto">
   <div class="flex flex-row gap-2">
     <div class="items-center mr-2 font-bold text-primary-800">Config:</div>
-    <Pill key="Schedule" value={alertConfig.schedule} textSize="text-sm"/>
-    {#if config.sample}
-      <Pill key="Sample size" value={config.sample_size} textSize="text-sm"/>
-    {/if}
+
+    <div class="flex flex-wrap gap-1">
+      <Pill key="Schedule" value={alertConfig.schedule} textSize="text-sm"/>
+      {#if config.sample}
+        <Pill key="Sample size" value={config.sample_size} textSize="text-sm"/>
+      {/if}
+    </div>
 
   </div>
 

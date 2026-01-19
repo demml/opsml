@@ -2,7 +2,6 @@
 # This script assumes you have already started both an Opsml server and Scouter server locally
 # Refer to makefile targets dev.both.scouter
 import os
-from opsml._opsml import GenAIEvalProfile
 from typing import Optional, cast
 
 os.environ["OPSML_TRACKING_URI"] = "http://localhost:8090"
@@ -15,11 +14,13 @@ from opsml import (
     Card,
     RegistryType,
 )
-from opsml.model import ModelCardMetadata
+from opsml.model import ModelCardMetadata, ModelSaveKwargs
 from opsml.experiment import Experiment
-
+from opsml.scouter.drift import GenAIEvalProfile
+from opsml.types import DriftArgs
 from utils import (  # type: ignore
-    create_chat_prompt,
+    create_openai_chat_prompt,
+    create_gemini_chat_prompt,
     random_name,
     create_pandas_data,
     create_sklearn_interface,
@@ -39,12 +40,16 @@ from opsml.scouter.transport import GrpcConfig
 from opsml.scouter.drift import (
     GenAIEvalConfig,
 )
+from opsml.logging import RustyLogger
 from opsml.scouter.queue import ScouterQueue
 import numpy as np
+
+logger = RustyLogger.setup_logging()
 
 _GENAI_EVAL_PROFILE_PATH = SAVE_PATH / "genai_eval_profile.json"
 _PSI_DRIFT_PROFILE_PATH = SAVE_PATH / "psi_drift_profile.json"
 _CUSTOM_DRIFT_PROFILE_PATH = SAVE_PATH / "custom_drift_profile.json"
+_SPC_DRIFT_PROFILE_PATH = SAVE_PATH / "spc_drift_profile.json"
 
 
 # Use Scouter Tracer
@@ -98,7 +103,15 @@ class PopulateHelper:
             ),
         )
 
-        exp.register_card(modelcard)
+        exp.register_card(
+            modelcard,
+            save_kwargs=ModelSaveKwargs(
+                drift=DriftArgs(
+                    active=True,
+                    deactivate_others=True,
+                ),
+            ),
+        )
         assert modelcard.experimentcard_uid == exp.card.uid
 
         # save the drift_profile to json
@@ -106,6 +119,7 @@ class PopulateHelper:
         modelcard.interface.drift_profile["custom"].save_to_json(
             _CUSTOM_DRIFT_PROFILE_PATH
         )
+        modelcard.interface.drift_profile["spc"].save_to_json(_SPC_DRIFT_PROFILE_PATH)
 
         return modelcard
 
@@ -118,7 +132,7 @@ class PopulateHelper:
             exp: The experiment to register the PromptCard in.
         """
         prompt_card = PromptCard(
-            prompt=create_chat_prompt(),
+            prompt=create_openai_chat_prompt(),
             space=self.space,
             name=self.name,
             tags=["foo:bar", "baz:qux"],
@@ -130,11 +144,29 @@ class PopulateHelper:
             tasks=create_genai_tasks(),
         )
 
-        exp.register_card(prompt_card)
+        exp.register_card(
+            prompt_card,
+            save_kwargs=ModelSaveKwargs(
+                drift=DriftArgs(
+                    active=True,
+                    deactivate_others=True,
+                ),
+            ),
+        )
         assert prompt_card.experimentcard_uid == exp.card.uid
 
         profile = cast(GenAIEvalProfile, prompt_card.eval_profile["genai"])
         profile.save_to_json(_GENAI_EVAL_PROFILE_PATH)
+
+        ## save gemini prompt card
+        # prompt_card = PromptCard(
+        #    prompt=create_gemini_chat_prompt(),
+        #    space=self.space,
+        #    name="gemini_" + self.name,
+        #    tags=["gemini", "baz:qux"],
+        # )
+        #
+        # exp.register_card(prompt_card)
 
         return prompt_card
 
@@ -192,7 +224,7 @@ class PopulateHelper:
         exp.register_card(deck)
 
     @tracer.span("setup_queue")
-    def setup_queue(self):
+    def setup_queue(self) -> ScouterQueue:
         """Setup the Scouter queue with the saved drift and evaluation profiles.
         And attach it to the tracer.
         """
@@ -201,6 +233,7 @@ class PopulateHelper:
                 "psi": _PSI_DRIFT_PROFILE_PATH,
                 "genai": _GENAI_EVAL_PROFILE_PATH,
                 "custom": _CUSTOM_DRIFT_PROFILE_PATH,
+                "spc": _SPC_DRIFT_PROFILE_PATH,
             },
             transport_config=GrpcConfig(),
         )
@@ -209,25 +242,23 @@ class PopulateHelper:
         active_span = get_current_active_span()
         active_span.set_tag("scouter.queue", "setup_complete")
 
+        return queue
+
     def populate_queue(self):
         """Populate the Scouter queue with drift and evaluation profiles."""
-        self.setup_queue()
+        queue = self.setup_queue()
 
-        for i in range(0, 100):
-            with tracer.start_as_current_span(f"genai_service_{i}") as active_span:
-                active_span.set_tag("service.name", "genai-eval-service")
-                record = create_random_genaieval_record()
-                active_span.add_queue_item(alias="genai", item=record)
+        for i in range(0, 2000):
+            genai_record = create_random_genaieval_record()
+            features_record = create_random_features_record()
+            custom_record = create_random_metrics_record()
 
-            with tracer.start_as_current_span(f"psi_service_{i}") as active_span:
-                active_span.set_tag("service.name", "psi-drift-service")
-                record = create_random_features_record()
-                active_span.add_queue_item(alias="psi", item=record)
+            queue["custom"].insert(custom_record)
+            queue["psi"].insert(features_record)
+            queue["spc"].insert(features_record)
+            queue["genai"].insert(genai_record)
 
-            with tracer.start_as_current_span(f"custom_service_{i}") as active_span:
-                active_span.set_tag("service.name", "custom-drift-service")
-                record = create_random_metrics_record()
-                active_span.add_queue_item(alias="custom", item=record)
+        queue.shutdown()
 
     def cleanup(self):
         """Cleanup any saved files."""
@@ -237,6 +268,8 @@ class PopulateHelper:
             _PSI_DRIFT_PROFILE_PATH.unlink()
         if _CUSTOM_DRIFT_PROFILE_PATH.exists():
             _CUSTOM_DRIFT_PROFILE_PATH.unlink()
+        if _SPC_DRIFT_PROFILE_PATH.exists():
+            _SPC_DRIFT_PROFILE_PATH.unlink()
 
         # shutdown tracer
         tracer.shutdown()

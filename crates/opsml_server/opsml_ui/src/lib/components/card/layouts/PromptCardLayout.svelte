@@ -26,8 +26,16 @@
    * Determines the active tab based on the current URL path
    */
   let activeTab = $derived.by(() => {
-    const last = page.url.pathname.split('/').pop() ?? '';
+    const pathParts = page.url.pathname.split('/');
+    const last = pathParts[pathParts.length - 1] ?? '';
+    const secondLast = pathParts[pathParts.length - 2] ?? '';
+    
+    // Check if we're in a nested monitoring route (e.g., /monitoring/custom)
+    if (secondLast === 'monitoring') return 'monitoring';
+    
+    // Direct routes
     if (['card', 'files', 'monitoring', 'observability', 'versions', 'view'].includes(last)) return last;
+    
     return 'card';
   });
 

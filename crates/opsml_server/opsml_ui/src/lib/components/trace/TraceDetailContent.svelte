@@ -72,7 +72,7 @@
 </script>
 
 <!-- Header -->
- <div class="border-2 border-black rounded-lg shadow overflow-hidden">
+ <div class="border-2 rounded-lg overflow-scroll">
   <div class="flex flex-col">
     <div class="flex items-start justify-between p-6 border-b-2 border-black bg-surface-50 gap-6 flex-shrink-0">
       <div class="flex flex-col gap-4 flex-1 min-w-0">

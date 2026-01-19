@@ -1,16 +1,18 @@
 <script lang="ts">
+
   // Components
+  import TimeRangeFilter from '$lib/components/trace/TimeRangeFilter.svelte';
   import ComboBoxDropDown from '$lib/components/utils/ComboBoxDropDown.svelte';
-  import CustomConfigHeader from './CustomConfigHeader.svelte';
+  import SpcConfigHeader from './SpcConfigHeader.svelte';
   import VizBody from '$lib/components/scouter/dashboard/VizBody.svelte';
-  import CustomAlertTable from './CustomAlertTable.svelte';
 
   // Icons & Types
-  import { KeySquare, Siren } from 'lucide-svelte';
+  import { KeySquare, Activity, Siren } from 'lucide-svelte';
   import { DriftType } from '$lib/components/scouter/types';
   import type { MonitoringPageData } from '$lib/components/scouter/dashboard/utils';
-  import type { BinnedMetrics, CustomDriftProfile, CustomMetricDriftConfig } from '$lib/components/scouter/custom/types';
   import type { RecordCursor } from '$lib/components/scouter/types';
+  import SpcAlertTable from '$lib/components/scouter/spc/SpcAlertTable.svelte';
+  import type { BinnedSpcFeatureMetrics, SpcDriftConfig, SpcDriftProfile } from './types';
 
   // Props
   let {
@@ -26,24 +28,36 @@
   let currentMetricName = $state<string>('');
 
   // Derived
-  const profile = $derived(monitoringData.profiles[DriftType.Custom].profile.Custom as CustomDriftProfile);
-  const config = $derived(profile.config as CustomMetricDriftConfig);
-  const metrics = $derived(monitoringData.selectedData.metrics as BinnedMetrics);
-  const driftAlerts = $derived(monitoringData.selectedData.driftAlerts);
-  const availableMetricNames = $derived(metrics?.metrics ? Object.keys(metrics.metrics) : []);
-  const currentMetricData = $derived(currentMetricName ? metrics?.metrics[currentMetricName] : null);
+  const profile = $derived(monitoringData.profiles[DriftType.Spc].profile.Spc as SpcDriftProfile);
+  const config = $derived(profile.config as SpcDriftConfig);
+  const metrics = $derived(monitoringData.selectedData.metrics as BinnedSpcFeatureMetrics);
 
+  // Drift Alerts Data
+  const driftAlerts = $derived(monitoringData.selectedData.driftAlerts);
+
+  const availableMetricNames = $derived(metrics?.features ? Object.keys(metrics.features) : []);
+  const currentMetricData = $derived(currentMetricName ? metrics?.features[currentMetricName] : null);
+
+  console.log('SPC Dashboard - currentMetricData:', JSON.stringify(currentMetricData, null, 2));
+
+  // Auto-select first metric if none selected
   $effect(() => {
     if (availableMetricNames.length > 0 && !currentMetricName) {
       currentMetricName = availableMetricNames[0];
     }
   });
+
+  function handleRangeChange(newRange: any) {
+     monitoringData.selectedTimeRange = newRange;
+  }
 </script>
 
 <div class="mx-auto w-full space-y-8 pb-12">
 
   <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+
     <div class="lg:col-span-3 flex flex-col gap-6">
+
       <div class="bg-white border-2 border-black p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] rounded-xl flex flex-col gap-5">
         <div class="flex flex-col gap-2">
           <label for="metric-selector" class="text-xs font-black uppercase text-slate-500 tracking-wider">
@@ -65,11 +79,11 @@
       </div>
 
       <div class="bg-white border-2 border-black p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] rounded-xl">
-        <CustomConfigHeader
+        <SpcConfigHeader
           config={config}
           alertConfig={config.alert_config}
           profile={profile}
-          profileUri={monitoringData.profiles[DriftType.Custom].profile_uri}
+          profileUri={monitoringData.profiles[DriftType.Spc].profile_uri}
           uid={config.uid}
           registry={monitoringData.registryType}
         />
@@ -92,7 +106,7 @@
             {#key currentMetricName}
               <VizBody
                 metricData={currentMetricData}
-                currentDriftType={DriftType.Custom}
+                currentDriftType={DriftType.Spc}
                 currentName={currentMetricName}
                 currentConfig={config}
                 currentProfile={profile}
@@ -109,9 +123,9 @@
     </div>
   </div>
 
-  <div class="max-w-2/3 min-w-0 mx-auto"> 
-    {#if driftAlerts && driftAlerts.items}
-      <div class="bg-white border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] rounded-xl overflow-hidden flex flex-col h-full min-w-0">
+  <div class="max-w-2/3 min-w-0 mx-auto">
+     {#if driftAlerts && driftAlerts.items}
+      <div class="bg-white border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] rounded-xl overflow-hidden flex flex-col h-full">
         <div class="bg-error-100 border-b-2 border-black px-5 py-3 flex items-center justify-between flex-shrink-0">
           <h3 class="font-black text-lg uppercase tracking-tight flex items-center gap-2 text-slate-900">
             <Siren class="w-5 h-5 text-error-700" />
@@ -123,7 +137,7 @@
         </div>
 
         <div class="p-2 w-full flex-grow bg-slate-50 min-h-0">
-           <CustomAlertTable
+           <SpcAlertTable
              {driftAlerts}
              onPageChange={onAlertPageChange}
              {onUpdateAlert}
@@ -133,4 +147,6 @@
       </div>
      {/if}
   </div>
+
 </div>
+

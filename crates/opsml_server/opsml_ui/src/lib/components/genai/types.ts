@@ -64,6 +64,7 @@ export type Prompt =
  * ensuring it doesn't match the unique structure of Anthropic content blocks.
  */
 export const isOpenAIMessage = (m: MessageNum): m is ChatMessage => {
+  console.log("Checking OpenAI message:", m);
   return (
     "role" in m &&
     // OpenAI content is either a string or a flat array of parts.
@@ -98,8 +99,10 @@ export class PromptHelper {
         return prompt.request.messages as unknown as MessageNum[];
 
       case Provider.OpenAI:
-        // request is narrowed to OpenAIChatCompletionRequestV1
-        return prompt.request.messages as unknown as MessageNum[];
+        // need to filter out any message with "role": "developer"
+        return (prompt.request.messages as unknown as MessageNum[]).filter(
+          (m) => (m as ChatMessage).role !== "developer"
+        );
 
       case Provider.Gemini:
       case Provider.Google:
@@ -136,7 +139,7 @@ export class PromptHelper {
       case Provider.OpenAI:
         const openaiReq = request as OpenAIChatCompletionRequestV1;
         return (openaiReq.messages as unknown as MessageNum[]).filter(
-          (m) => isOpenAIMessage(m) && m.role === "system"
+          (m) => (m as ChatMessage).role === "developer"
         );
 
       default:

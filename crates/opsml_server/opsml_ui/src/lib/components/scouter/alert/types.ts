@@ -1,5 +1,6 @@
 import type { DateTime } from "$lib/types";
-import type { RecordCursor } from "../types";
+import type { SpcDriftProfile } from "../spc/types";
+import type { AlertThreshold, DriftType, RecordCursor } from "../types";
 
 export interface DriftAlertPaginationRequest {
   uid: string;
@@ -20,16 +21,48 @@ export interface DriftAlertPaginationResponse {
   previous_cursor?: RecordCursor;
 }
 
+export interface ComparisonMetricAlert {
+  metric_name: string;
+  baseline_value: number;
+  observed_value: number;
+  delta: number | null;
+  alert_threshold: AlertThreshold;
+}
+
+export interface PsiFeatureAlert {
+  feature: string;
+  drift: number;
+  threshold: number;
+}
+
+export type SpcAlertType =
+  | "OutOfBounds"
+  | "Consecutive"
+  | "Alternating"
+  | "AllGood"
+  | "Trend";
+
+export type AlertZone = "Zone1" | "Zone2" | "Zone3" | "Zone4" | "NotApplicable";
+
+export interface SpcAlertEntry {
+  feature: string;
+  kind: SpcAlertType;
+  zone: AlertZone;
+}
+
+export type AlertMap = {
+  [DriftType.Spc]: SpcAlertEntry;
+  [DriftType.Psi]: PsiFeatureAlert;
+  [DriftType.Custom]: ComparisonMetricAlert;
+  [DriftType.GenAI]: ComparisonMetricAlert;
+};
+
 export interface Alert {
   created_at: string;
-  name: string;
-  space: string;
-  version: string;
   entity_name: string;
-  alert: string;
+  alert: AlertMap;
   id: number;
   active: boolean;
-  drift_type: string;
 }
 export interface AlertResponse {
   alerts: Alert[];

@@ -8,6 +8,7 @@ from opsml.scouter.drift import (
     CustomMetricDriftConfig,
     CustomMetric,
     CustomMetricAlertConfig,
+    SpcDriftConfig,
 )
 from opsml.scouter.queue import Features, Metrics
 from opsml.scouter.alert import AlertThreshold
@@ -59,12 +60,12 @@ SAVE_PATH = CWD / "assets" / "temp_save"
 
 class ModelFeatures(BaseModel):
     col_1: float
-    target: float
+    col_2: float
 
 
 class ModelMetrics(BaseModel):
-    metric_1: float
-    metric_2: float
+    metric1: float
+    metric2: float
 
 
 def create_genai_tasks() -> list[AssertionTask]:
@@ -136,12 +137,12 @@ def create_random_genaieval_record() -> GenAIEvalRecord:
 
 def create_random_features_record() -> Features:
     """Helper function to create a random Features record for testing."""
-    feature1 = np.random.rand() * 100
-    target = feature1 * 2 + np.random.randn() * 10  # some noise
+    col_1 = np.random.rand() * 100
+    col_2 = col_1 * 2 + np.random.randn() * 10  # some noise
 
     record = ModelFeatures(
-        col_1=feature1,
-        target=target,
+        col_1=col_1,
+        col_2=col_2,
     )
 
     return Features(record.model_dump())
@@ -153,8 +154,8 @@ def create_random_metrics_record() -> Metrics:
     metric_2 = metric_1 / 2 + np.random.rand()  # some noise
 
     record = ModelMetrics(
-        metric_1=metric_1,
-        metric_2=metric_2,
+        metric1=metric_1,
+        metric2=metric_2,
     )
 
     return Metrics(record.model_dump())
@@ -182,6 +183,14 @@ def create_sklearn_interface() -> SklearnModel:
         data_type=DataType.Pandas,
     )
 
+    # create spc
+    model.create_drift_profile(
+        alias="spc",
+        data=X,
+        config=SpcDriftConfig(),
+        data_type=DataType.Pandas,
+    )
+
     # create custom drift
     model.create_drift_profile(
         alias="custom",
@@ -198,7 +207,7 @@ def create_sklearn_interface() -> SklearnModel:
             ),
         ],
         config=CustomMetricDriftConfig(
-            sample_size=5,
+            sample_size=100,
             alert_config=CustomMetricAlertConfig(
                 schedule=CommonCrons.Every1Minute,
             ),
@@ -237,10 +246,21 @@ def create_pandas_data() -> PandasData:
     return interface
 
 
-def create_chat_prompt() -> Prompt:
+def create_openai_chat_prompt() -> Prompt:
     prompt = Prompt(
         model="gpt-4o",
         provider="openai",
+        messages="what is 2 + ${variable1} and ${variable2}?",
+        system_instructions="You are a helpful assistant.",
+    )
+
+    return prompt
+
+
+def create_gemini_chat_prompt() -> Prompt:
+    prompt = Prompt(
+        model="gemini-3.0-pro",
+        provider="gemini",
         messages="what is 2 + ${variable1} and ${variable2}?",
         system_instructions="You are a helpful assistant.",
     )

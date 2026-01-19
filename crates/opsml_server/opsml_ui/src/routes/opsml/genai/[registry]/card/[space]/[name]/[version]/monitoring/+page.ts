@@ -1,24 +1,16 @@
 export const ssr = false;
 
-import type { PageLoad } from "./$types";
-import { getMonitoringPageData } from "$lib/components/scouter/dashboard/utils";
-import { getRegistryPath, RegistryType } from "$lib/utils";
 import { redirect } from "@sveltejs/kit";
+import type { PageLoad } from "./$types";
 
-export const load: PageLoad = async ({ parent, fetch }) => {
-  const parentData = await parent();
-  const { registryType, metadata } = parentData;
+export const load: PageLoad = async ({ parent, params }) => {
+  const { driftTypes } = await parent();
 
-  if (registryType !== RegistryType.Prompt) {
-    throw redirect(
-      303,
-      `/opsml/${getRegistryPath(registryType)}/card/${metadata.space}/${
-        metadata.name
-      }/${metadata.version}/card`
-    );
-  }
+  // Redirect to the first available drift type
+  const defaultDriftType = driftTypes[0];
 
-  const data = await getMonitoringPageData(fetch, metadata, registryType);
-
-  return { monitoringData: data, registryType, metadata };
+  throw redirect(
+    303,
+    `/opsml/genai/${params.registry}/card/${params.space}/${params.name}/${params.version}/monitoring/${defaultDriftType}`
+  );
 };
