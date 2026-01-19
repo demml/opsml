@@ -27,6 +27,12 @@ jobs:
         with:
           cmake-version: "3.x"
 
+      - name: Install Protocol Buffers Compiler
+        uses: arduino/setup-protoc@v3
+        with:
+          version: "33.2"
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Set up Rust
         run: |
           rustup override set stable && rustup update
@@ -78,6 +84,7 @@ jobs:
         uses: arduino/setup-protoc@v3
         with:
           version: "33.2"
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Rust
         run: rustup override set stable && rustup update
@@ -113,6 +120,7 @@ jobs:
         uses: arduino/setup-protoc@v3
         with:
           version: "33.2"
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -261,6 +269,7 @@ jobs:
         uses: arduino/setup-protoc@v3
         with:
           version: "33.2"
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Install libomp on macOS
         if: runner.os == 'macOS'
@@ -329,6 +338,7 @@ jobs:
         uses: arduino/setup-protoc@v3
         with:
           version: "33.2"
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Rust
         run: rustup override set stable && rustup update
