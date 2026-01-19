@@ -1,6 +1,7 @@
 # mypy: disable-error-code="attr-defined"
 # pylint: disable=no-name-in-module
 from .._opsml import (
+    AlertThreshold,
     AssertionTask,
     CommonCrons,
     ComparisonOperator,
@@ -120,6 +121,7 @@ __all__ = [
     "KafkaConfig",
     "RabbitMQConfig",
     "RedisConfig",
+    "AlertThreshold",
     # genai
     "GenAIEvalConfig",
     "GenAIEvalProfile",

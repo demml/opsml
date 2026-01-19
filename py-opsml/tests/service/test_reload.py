@@ -11,10 +11,9 @@ from opsml.scouter import (
 )
 from opsml.card import ServiceCard, Card, RegistryType
 import opsml.scouter
-from opsml.scouter import CommonCrons, AlertThreshold, Features
+from opsml.scouter import CommonCrons, AlertThreshold, Features, Metrics, Metric
 from opsml.app import AppState, ReloadConfig
 from opsml.service import download_service
-from opsml.scouter import Metrics, Metric
 import numpy as np
 
 from opsml import (

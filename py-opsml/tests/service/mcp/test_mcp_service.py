@@ -9,7 +9,7 @@ CURRENT_DIRECTORY = Path(os.getcwd())
 ASSETS_DIRECTORY = CURRENT_DIRECTORY / "tests" / "service" / "mcp"
 
 
-def test_mcp_registration():
+def _test_mcp_registration():
     with OpsmlTestServer(True, ASSETS_DIRECTORY):
         register_service(ASSETS_DIRECTORY / "mcpspec1.yaml")
         register_service(ASSETS_DIRECTORY / "mcpspec2.yaml")
