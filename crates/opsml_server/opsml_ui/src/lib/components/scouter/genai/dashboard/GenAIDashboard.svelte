@@ -1,7 +1,9 @@
 <script lang="ts">
-  import type { GenAIEvalConfig, GenAIEvalProfile, GenAIEvalRecordPaginationResponse, GenAIEvalWorkflowPaginationResponse, GenAIAlertConfig } from '../types';
-  import { DashboardContext } from '$lib/components/scouter/dashboard/dashboard.svelte';
-  import { createGenAIStore } from './genai.svelte';
+  import type { GenAIEvalConfig, GenAIEvalProfile, GenAIEvalRecordPaginationResponse, GenAIEvalWorkflowPaginationResponse } from '../types';
+  import type { MonitoringPageData } from '../../dashboard/utils';
+  import type { RecordCursor } from '../../types';
+  import type { BinnedMetrics } from '../../custom/types';
+  import { DriftType } from '$lib/components/scouter/types';
 
   // Components
   import TimeRangeFilter from '$lib/components/trace/TimeRangeFilter.svelte';
@@ -10,66 +12,59 @@
   import GenAIEvalRecordTable from '../record/GenAIEvalRecordTable.svelte';
   import GenAIEvalWorkflowTable from '../workflow/GenAIEvalWorkflowTable.svelte';
   import VizBody from '$lib/components/scouter/dashboard/VizBody.svelte';
-  import { RegistryType } from '$lib/utils';
-  import { KeySquare, Loader2, LayoutDashboard, TableProperties, ArrowRightLeft } from 'lucide-svelte';
-  import { DriftType } from '$lib/components/scouter/types';
-  import type { BinnedMetrics } from '../../custom/types';
-  import type { MonitoringPageData } from '../../dashboard/utils';
+  
+  // Icons
+  import { KeySquare, LayoutDashboard, TableProperties, ArrowRightLeft } from 'lucide-svelte';
 
-  let { monitoringData }: { monitoringData: Extract<MonitoringPageData, { status: 'success' }> } = $props();
+  // Props
+  let { 
+    monitoringData = $bindable(),
+    onRecordPageChange,
+    onWorkflowPageChange
+  }: { 
+    monitoringData: Extract<MonitoringPageData, { status: 'success' }>;
+    onRecordPageChange: (cursor: RecordCursor, direction: string) => Promise<void>;
+    onWorkflowPageChange: (cursor: RecordCursor, direction: string) => Promise<void>;
+  } = $props();
 
-  const dashboardCtx = new DashboardContext(monitoringData.selectedTimeRange);
-  const { selectedData } = monitoringData;
+  // -- Derived Data from Parent --
+  const profile = $derived(monitoringData.profiles[DriftType.GenAI].profile.GenAI as GenAIEvalProfile);
+  const config = $derived(profile.config as GenAIEvalConfig);
 
-  }: Props = $props();
+  const genAIData = $derived(monitoringData.selectedData.genAIData);
+  
 
-  const state = new GenAIDashboardState({
-    config,
-    initialTimeRange,
-    initialRecords,
-    initialWorkflows,
-    initialMetrics,
-    config: monitoringData.selectedData.profile.config as GenAIEvalConfig,
-    ctx: dashboardCtx,
-    initialData: {
-      records: monitoringData.selectedData.genAIData?.records as GenAIEvalRecordPaginationResponse,
-      workflows: monitoringData.selectedData.genAIData?.workflows as GenAIEvalWorkflowPaginationResponse,
-      metrics: { task: genAiMetrics!.task, workflow: genAiMetrics!.workflow }
+  const records = $derived(genAIData?.records ?? { items: [], has_next: false, has_prev: false });
+  const workflows = $derived(genAIData?.workflows ?? { items: [], has_next: false, has_prev: false });
+  
+  const metrics = $derived(monitoringData.selectedData.metrics as { task: BinnedMetrics; workflow: BinnedMetrics });
+  const taskMetrics = $derived(metrics?.task);
+  const workflowMetrics = $derived(metrics?.workflow);
+
+  let selectedMetricView = $state<'task' | 'workflow'>('workflow');
+  let currentMetricName = $state<string>('');
+  
+  const currentMetricsObj = $derived(selectedMetricView === 'task' ? taskMetrics : workflowMetrics);
+  const availableMetricNames = $derived(currentMetricsObj?.metrics ? Object.keys(currentMetricsObj.metrics) : []);
+  const currentMetricData = $derived(currentMetricsObj && currentMetricName ? currentMetricsObj.metrics[currentMetricName] : null);
+
+  $effect(() => {
+    if (availableMetricNames.length > 0 && !availableMetricNames.includes(currentMetricName)) {
+      currentMetricName = availableMetricNames[0];
     }
   });
+
+
+  function handleRangeChange(newRange: any) {
+     monitoringData.selectedTimeRange = newRange;
+  }
 
   const metricViews = ['task', 'workflow'] as const;
 </script>
 
 <div class="mx-auto w-full px-4 sm:px-6 lg:px-8 space-y-8 pb-12">
-
-  <div class="flex flex-col sm:flex-row items-center justify-between gap-4 border-b-4 border-black pb-4 mt-4">
-    <div class="flex items-center gap-3">
-      <div class="p-2 bg-primary-100 border-2 border-black rounded-lg shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
-        <LayoutDashboard class="w-6 h-6 text-black" />
-      </div>
-      <h1 class="text-3xl font-black text-black uppercase tracking-tight">
-        GenAI Evaluation
-      </h1>
-      {#if store.isLoading}
-        <div class="flex items-center gap-2 px-3 py-1 bg-slate-100 border border-black rounded-full transition-all">
-            <Loader2 class="w-4 h-4 animate-spin text-primary-600" />
-            <span class="text-xs font-bold text-slate-600">Syncing...</span>
-        </div>
-      {/if}
-    </div>
-    <div class="w-full sm:w-auto">
-      <TimeRangeFilter
-        selectedRange={dashboardCtx.timeRange}
-        onRangeChange={(range) => dashboardCtx.updateTimeRange(range)}
-      />
-    </div>
-  </div>
-
   <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
-    
     <div class="lg:col-span-3 flex flex-col gap-6">
-      
       <div class="bg-white border-2 border-black p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] rounded-xl flex flex-col gap-5">
         <div class="flex flex-col gap-2">
             <span class="text-xs font-black uppercase text-slate-500 tracking-wider">Metric Type</span>
@@ -77,10 +72,10 @@
             {#each metricViews as viewType}
                 <button
                 class="flex-1 px-3 py-2 text-sm font-bold rounded-md border-2 transition-all duration-200
-                    {viewType === store.selectedMetricView
+                    {viewType === selectedMetricView
                     ? 'bg-primary-500 text-white border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] translate-x-[-1px] translate-y-[-1px]'
                     : 'bg-white text-slate-700 border-transparent hover:border-slate-300 hover:bg-slate-50'}"
-                onclick={() => store.selectedMetricView = viewType}
+                onclick={() => selectedMetricView = viewType}
                 >
                 {viewType.toUpperCase()}
                 </button>
@@ -98,9 +93,9 @@
             </div>
             <div class="w-full [&>button]:w-full [&>button]:pl-9 [&>button]:text-left">
                 <ComboBoxDropDown
-                boxId="metric-selector"
-                bind:defaultValue={store.currentMetricName}
-                boxOptions={store.availableMetricNames}
+                  boxId="metric-selector"
+                  bind:defaultValue={currentMetricName}
+                  boxOptions={availableMetricNames}
                 />
             </div>
           </div>
@@ -109,12 +104,12 @@
 
       <div class="bg-white border-2 border-black p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] rounded-xl">
         <GenAIConfigHeader
-          config={selectedData.profile.config as GenAIEvalConfig}
-          alertConfig={selectedData.profile.config.alert_config as GenAIAlertConfig}
-          profile={selectedData.profile as GenAIEvalProfile}
-          profileUri={selectedData.profileUri}
-          uid={selectedData.profile.config.uid}
-          registry={RegistryType.Prompt}
+          config={config}
+          alertConfig={config.alert_config}
+          profile={profile}
+          profileUri={monitoringData.profiles[DriftType.GenAI].profile_uri}
+          uid={config.uid}
+          registry={monitoringData.registryType}
         />
       </div>
     </div>
@@ -127,23 +122,18 @@
             <h2 class="font-bold text-lg text-slate-900">Metric Visualization</h2>
           </div>
           <span class="text-xs font-mono font-bold bg-black text-white px-3 py-1 rounded-md shadow-sm">
-            {store.currentMetricName || 'NO SELECTION'}
+            {currentMetricName || 'NO SELECTION'}
           </span>
         </div>
         <div class="flex-grow relative bg-white p-4">
-          {#if store.isLoading && !store.currentMetricData}
-             <div class="absolute inset-0 flex items-center justify-center bg-white/80 z-10 backdrop-blur-sm">
-                <Loader2 class="w-10 h-10 animate-spin text-primary-600" />
-             </div>
-          {/if}
-          {#if store.currentMetricData}
-            {#key store.currentMetricName}
+          {#if currentMetricData}
+            {#key currentMetricName}
               <VizBody
-                metricData={store.currentMetricData}
+                metricData={currentMetricData}
                 currentDriftType={DriftType.GenAI}
-                currentName={store.currentMetricName}
-                currentConfig={monitoringData.selectedData.profile.config as GenAIEvalConfig}
-                currentProfile={monitoringData.selectedData.profile}
+                currentName={currentMetricName}
+                currentConfig={config}
+                currentProfile={profile}
               />
             {/key}
           {:else}
@@ -157,9 +147,9 @@
     </div>
   </div>
 
-  <div class="grid grid-cols-1 2xl:grid-cols-2 gap-6">
+  <div class="grid grid-cols-1 gap-6">
     
-    {#if store.records}
+    {#if records && records.items && records.items.length > 0}
       <div class="bg-white border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] rounded-xl overflow-hidden flex flex-col h-full">
         <div class="bg-primary-100 border-b-2 border-black px-5 py-3 flex items-center justify-between flex-shrink-0">
           <h3 class="font-black text-lg uppercase tracking-tight flex items-center gap-2 text-slate-900">
@@ -167,22 +157,22 @@
             Evaluation Records
           </h3>
           <span class="text-xs font-bold bg-black text-white px-2 py-0.5 rounded-full border border-black">
-            {store.records.items?.length || 0}
+            {records.items.length}
           </span>
         </div>
         
         <div class="p-2 w-full flex-grow bg-slate-50 min-h-0">
-           {#key store.records}
+           {#key records}
               <GenAIEvalRecordTable
-                currentPage={store.records}
-                onPageChange={store.handleRecordPageChange}
+                currentPage={records as GenAIEvalRecordPaginationResponse}
+                onPageChange={onRecordPageChange}
               />
            {/key}
         </div>
       </div>
     {/if}
 
-    {#if store.workflows}
+    {#if workflows && workflows.items && workflows.items.length > 0}
       <div class="bg-white border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] rounded-xl overflow-hidden flex flex-col h-full">
         <div class="bg-purple-100 border-b-2 border-black px-5 py-3 flex items-center justify-between flex-shrink-0">
           <h3 class="font-black text-lg uppercase tracking-tight flex items-center gap-2 text-slate-900">
@@ -190,15 +180,15 @@
             Workflow Results
           </h3>
           <span class="text-xs font-bold bg-black text-white px-2 py-0.5 rounded-full border border-black">
-            {store.workflows.items?.length || 0}
+            {workflows.items.length}
           </span>
         </div>
         
         <div class="p-2 w-full flex-grow bg-slate-50 min-h-0">
-            {#key store.workflows}
+            {#key workflows}
                 <GenAIEvalWorkflowTable
-                  currentPage={store.workflows}
-                  onPageChange={store.handleWorkflowPageChange}
+                  currentPage={workflows as GenAIEvalWorkflowPaginationResponse}
+                  onPageChange={onWorkflowPageChange}
                 />
             {/key}
         </div>
