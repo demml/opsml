@@ -106,6 +106,13 @@ jobs:
           sudo apt-get update -y
           sudo apt-get install -y build-essential
 
+      - name: Install protoc (Ubuntu)
+        if: contains(matrix.os, 'ubuntu') && matrix.container_image == null
+        uses: arduino/setup-protoc@v3
+        with:
+          version: "33.2"
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Set up Rust
         run: |
           rustup override set stable

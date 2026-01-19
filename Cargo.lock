@@ -6374,8 +6374,8 @@ checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
 
 [[package]]
 name = "scouter-client"
-version = "0.13.0"
-source = "git+https://github.com/demml/scouter.git?branch=genai%2Fsession_id#9ce6557a5332caded66df698fd15bff38a9aaa93"
+version = "0.14.0"
+source = "git+https://github.com/demml/scouter.git?branch=main#3ce6e61d9d912aebf3a04b596e2b3a7cbaf638b2"
 dependencies = [
  "chrono",
  "ndarray",
@@ -6406,8 +6406,8 @@ dependencies = [
 
 [[package]]
 name = "scouter-dispatch"
-version = "0.13.0"
-source = "git+https://github.com/demml/scouter.git?branch=genai%2Fsession_id#9ce6557a5332caded66df698fd15bff38a9aaa93"
+version = "0.14.0"
+source = "git+https://github.com/demml/scouter.git?branch=main#3ce6e61d9d912aebf3a04b596e2b3a7cbaf638b2"
 dependencies = [
  "futures",
  "pyo3",
@@ -6421,8 +6421,8 @@ dependencies = [
 
 [[package]]
 name = "scouter-drift"
-version = "0.13.0"
-source = "git+https://github.com/demml/scouter.git?branch=genai%2Fsession_id#9ce6557a5332caded66df698fd15bff38a9aaa93"
+version = "0.14.0"
+source = "git+https://github.com/demml/scouter.git?branch=main#3ce6e61d9d912aebf3a04b596e2b3a7cbaf638b2"
 dependencies = [
  "chrono",
  "futures",
@@ -6447,8 +6447,8 @@ dependencies = [
 
 [[package]]
 name = "scouter-evaluate"
-version = "0.13.0"
-source = "git+https://github.com/demml/scouter.git?branch=genai%2Fsession_id#9ce6557a5332caded66df698fd15bff38a9aaa93"
+version = "0.14.0"
+source = "git+https://github.com/demml/scouter.git?branch=main#3ce6e61d9d912aebf3a04b596e2b3a7cbaf638b2"
 dependencies = [
  "chrono",
  "itertools 0.14.0",
@@ -6474,8 +6474,8 @@ dependencies = [
 
 [[package]]
 name = "scouter-events"
-version = "0.13.0"
-source = "git+https://github.com/demml/scouter.git?branch=genai%2Fsession_id#9ce6557a5332caded66df698fd15bff38a9aaa93"
+version = "0.14.0"
+source = "git+https://github.com/demml/scouter.git?branch=main#3ce6e61d9d912aebf3a04b596e2b3a7cbaf638b2"
 dependencies = [
  "async-trait",
  "chrono",
@@ -6510,8 +6510,8 @@ dependencies = [
 
 [[package]]
 name = "scouter-http"
-version = "0.13.0"
-source = "git+https://github.com/demml/scouter.git?branch=genai%2Fsession_id#9ce6557a5332caded66df698fd15bff38a9aaa93"
+version = "0.14.0"
+source = "git+https://github.com/demml/scouter.git?branch=main#3ce6e61d9d912aebf3a04b596e2b3a7cbaf638b2"
 dependencies = [
  "pyo3",
  "reqwest 0.12.28",
@@ -6525,16 +6525,16 @@ dependencies = [
 
 [[package]]
 name = "scouter-macro"
-version = "0.13.0"
-source = "git+https://github.com/demml/scouter.git?branch=genai%2Fsession_id#9ce6557a5332caded66df698fd15bff38a9aaa93"
+version = "0.14.0"
+source = "git+https://github.com/demml/scouter.git?branch=main#3ce6e61d9d912aebf3a04b596e2b3a7cbaf638b2"
 dependencies = [
  "thiserror 2.0.18",
 ]
 
 [[package]]
 name = "scouter-observability"
-version = "0.13.0"
-source = "git+https://github.com/demml/scouter.git?branch=genai%2Fsession_id#9ce6557a5332caded66df698fd15bff38a9aaa93"
+version = "0.14.0"
+source = "git+https://github.com/demml/scouter.git?branch=main#3ce6e61d9d912aebf3a04b596e2b3a7cbaf638b2"
 dependencies = [
  "itertools 0.14.0",
  "ndarray",
@@ -6550,8 +6550,8 @@ dependencies = [
 
 [[package]]
 name = "scouter-profile"
-version = "0.13.0"
-source = "git+https://github.com/demml/scouter.git?branch=genai%2Fsession_id#9ce6557a5332caded66df698fd15bff38a9aaa93"
+version = "0.14.0"
+source = "git+https://github.com/demml/scouter.git?branch=main#3ce6e61d9d912aebf3a04b596e2b3a7cbaf638b2"
 dependencies = [
  "chrono",
  "indicatif",
@@ -6572,8 +6572,8 @@ dependencies = [
 
 [[package]]
 name = "scouter-semver"
-version = "0.13.0"
-source = "git+https://github.com/demml/scouter.git?branch=genai%2Fsession_id#9ce6557a5332caded66df698fd15bff38a9aaa93"
+version = "0.14.0"
+source = "git+https://github.com/demml/scouter.git?branch=main#3ce6e61d9d912aebf3a04b596e2b3a7cbaf638b2"
 dependencies = [
  "pyo3",
  "semver",
@@ -6583,8 +6583,8 @@ dependencies = [
 
 [[package]]
 name = "scouter-settings"
-version = "0.13.0"
-source = "git+https://github.com/demml/scouter.git?branch=genai%2Fsession_id#9ce6557a5332caded66df698fd15bff38a9aaa93"
+version = "0.14.0"
+source = "git+https://github.com/demml/scouter.git?branch=main#3ce6e61d9d912aebf3a04b596e2b3a7cbaf638b2"
 dependencies = [
  "base64 0.22.1",
  "potato-head",
@@ -6596,8 +6596,8 @@ dependencies = [
 
 [[package]]
 name = "scouter-state"
-version = "0.13.0"
-source = "git+https://github.com/demml/scouter.git?branch=genai%2Fsession_id#9ce6557a5332caded66df698fd15bff38a9aaa93"
+version = "0.14.0"
+source = "git+https://github.com/demml/scouter.git?branch=main#3ce6e61d9d912aebf3a04b596e2b3a7cbaf638b2"
 dependencies = [
  "thiserror 2.0.18",
  "tokio",
@@ -6606,8 +6606,8 @@ dependencies = [
 
 [[package]]
 name = "scouter-tonic"
-version = "0.13.0"
-source = "git+https://github.com/demml/scouter.git?branch=genai%2Fsession_id#9ce6557a5332caded66df698fd15bff38a9aaa93"
+version = "0.14.0"
+source = "git+https://github.com/demml/scouter.git?branch=main#3ce6e61d9d912aebf3a04b596e2b3a7cbaf638b2"
 dependencies = [
  "prost",
  "prost-types",
@@ -6625,8 +6625,8 @@ dependencies = [
 
 [[package]]
 name = "scouter-tracing"
-version = "0.13.0"
-source = "git+https://github.com/demml/scouter.git?branch=genai%2Fsession_id#9ce6557a5332caded66df698fd15bff38a9aaa93"
+version = "0.14.0"
+source = "git+https://github.com/demml/scouter.git?branch=main#3ce6e61d9d912aebf3a04b596e2b3a7cbaf638b2"
 dependencies = [
  "chrono",
  "opentelemetry",
@@ -6650,8 +6650,8 @@ dependencies = [
 
 [[package]]
 name = "scouter-types"
-version = "0.13.0"
-source = "git+https://github.com/demml/scouter.git?branch=genai%2Fsession_id#9ce6557a5332caded66df698fd15bff38a9aaa93"
+version = "0.14.0"
+source = "git+https://github.com/demml/scouter.git?branch=main#3ce6e61d9d912aebf3a04b596e2b3a7cbaf638b2"
 dependencies = [
  "base64 0.22.1",
  "chrono",
