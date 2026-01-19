@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
   import { page } from '$app/state';
   import { goto } from '$app/navigation';
   import { uiSettingsStore } from '$lib/components/settings/settings.svelte';
@@ -14,7 +15,6 @@
   let scouterEnabled = $derived(uiSettingsStore.scouterEnabled);
 
   let registryType = $derived(getRegistryFromString(page.params.registry as string)) as RegistryType;
-  
 
   const driftTypeConfig = {
     [DriftType.Custom]: { title: 'Custom Metrics', icon: Activity, color: 'text-emerald-600', bg: 'bg-emerald-100' },

@@ -60,7 +60,7 @@
   
   <div class={`flex flex-row justify-between items-center px-3 py-2 border-b-2 border-black ${roleStyles.badge}`}>
     <div class="flex items-center gap-2">
-      <svelte:component this={roleStyles.icon} class="w-4 h-4 text-black" />
+      <roleStyles.icon class="w-4 h-4 text-black" />
       <span class="font-bold text-xs uppercase tracking-wider text-black">{role}</span>
     </div>
     {#if index !== undefined}

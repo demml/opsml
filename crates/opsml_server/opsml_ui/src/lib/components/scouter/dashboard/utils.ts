@@ -483,9 +483,6 @@ export async function refreshMonitoringData(
   const [newMetrics, alertResp, recordsResp, workflowsResp] =
     await Promise.all(promises);
 
-  // log alert
-  console.log("Alert Response:", JSON.stringify(alertResp));
-
   // Update State in Place
   monitoringData.selectedData = {
     ...monitoringData.selectedData,

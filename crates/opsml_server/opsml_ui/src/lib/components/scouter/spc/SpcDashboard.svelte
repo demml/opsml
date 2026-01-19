@@ -38,8 +38,6 @@
   const availableMetricNames = $derived(metrics?.features ? Object.keys(metrics.features) : []);
   const currentMetricData = $derived(currentMetricName ? metrics?.features[currentMetricName] : null);
 
-  console.log('SPC Dashboard - currentMetricData:', JSON.stringify(currentMetricData, null, 2));
-
   // Auto-select first metric if none selected
   $effect(() => {
     if (availableMetricNames.length > 0 && !currentMetricName) {

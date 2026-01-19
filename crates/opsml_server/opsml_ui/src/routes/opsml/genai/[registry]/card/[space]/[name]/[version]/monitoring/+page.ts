@@ -11,6 +11,6 @@ export const load: PageLoad = async ({ parent, params }) => {
 
   throw redirect(
     303,
-    `/opsml/genai/${params.registry}/card/${params.space}/${params.name}/${params.version}/monitoring/${defaultDriftType}`
+    `/opsml/${params.registry}/card/${params.space}/${params.name}/${params.version}/monitoring/${defaultDriftType}`
   );
 };

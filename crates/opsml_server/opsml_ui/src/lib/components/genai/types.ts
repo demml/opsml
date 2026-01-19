@@ -64,7 +64,6 @@ export type Prompt =
  * ensuring it doesn't match the unique structure of Anthropic content blocks.
  */
 export const isOpenAIMessage = (m: MessageNum): m is ChatMessage => {
-  console.log("Checking OpenAI message:", m);
   return (
     "role" in m &&
     // OpenAI content is either a string or a flat array of parts.
