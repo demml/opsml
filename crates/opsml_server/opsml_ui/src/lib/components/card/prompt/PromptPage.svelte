@@ -41,7 +41,6 @@
         <div class="rounded-base bg-surface-50 border-primary-800 border-3 shadow-primary p-4">
         <Metadata 
           card={card} 
-          modelSettings={card.prompt.model_settings} 
         />
       </div>
     </div>

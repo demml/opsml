@@ -89,7 +89,7 @@
 
       {#if currentDriftType === DriftType.Custom}
         {@const alertInfo = getCustomAlertCondition(currentConfig as CustomMetricDriftConfig, currentName)}
-        {@const metricValue = (currentProfile as DriftProfile).Custom.metrics[currentName]}
+        {@const metricValue = (currentProfile as CustomDriftProfile).metrics[currentName]}
         {#if alertInfo}
           <CustomAlertPill value={metricValue} {alertInfo} />
         {/if}

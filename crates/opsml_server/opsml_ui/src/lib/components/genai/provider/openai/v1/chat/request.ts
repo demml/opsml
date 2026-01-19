@@ -64,7 +64,7 @@ export type ContentPart =
   | FileContentPart;
 
 export interface ChatMessage {
-  role: "system" | "user" | "assistant" | "tool";
+  role: "system" | "user" | "assistant" | "tool" | "developer";
   content: ContentPart[];
   name?: string;
 }

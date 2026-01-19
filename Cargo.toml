@@ -84,7 +84,7 @@ ort = { version = "2.0.0-rc.10" }
 owo-colors = "4.*"
 password-auth = "1.*"
 pbkdf2 = "0.*"
-potato-head = { git = "https://github.com/demml/potatohead.git", branch = "main" }
+potato-head = "0.10.0"
 pyo3 = { version = "0.*", features = ["abi3-py310", "extension-module", "anyhow", "serde", "chrono"] }
 rand = { version = "0.9.1"}
 rayon = "1.*"
@@ -94,7 +94,7 @@ reqwest-middleware = "0.*"
 rusty-logging = "0.*"
 pythonize = { version = "0.*" }
 # we cant use crates.io because scouter relies on a fork of linfa at the moment
-scouter-client = {branch = "add-default", git = "https://github.com/demml/scouter.git"}
+scouter-client = {branch = "genai/session_id", git = "https://github.com/demml/scouter.git"}
 sha2 = "0.*"
 semver = "1.*"
 serde = { version = "1.*", features = ["derive"] }

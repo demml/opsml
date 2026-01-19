@@ -19,15 +19,17 @@
 
 <div class="mx-auto w-full max-w-8xl px-4 py-6 sm:px-6 lg:px-8">
   {#if scouterEnabled}
-        {#if trace && traceSpans}
-          <TraceDetailContent
-            trace={trace}
-            traceSpans={traceSpans}
-            showCloseButton={false}
-          />
-        {:else}
-          <NoTraceView message={data.errorMessage} type={data.type} />
-        {/if}
+    {#if trace && traceSpans}
+      <div class="border-black border-2 rounded-lg shadow">
+        <TraceDetailContent
+          trace={trace}
+          traceSpans={traceSpans}
+          showCloseButton={false}
+        />
+      </div>
+    {:else}
+      <NoTraceView message={data.errorMessage} type={data.type} />
+    {/if}
   {:else}
     <ScouterRequiredView
       featureName="Observability Dashboard"

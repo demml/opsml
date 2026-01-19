@@ -238,7 +238,7 @@ pub fn unwrap_pystring(obj: &Bound<'_, PyAny>, field: &str) -> Result<String, Ut
 
 /// Recursively converts Python objects to JSON-compatible values
 /// Handles ndarrays and other non-serializable types by converting to lists or strings
-fn pyobject_to_json_value(py: Python, obj: &Bound<'_, PyAny>) -> Result<Value, UtilError> {
+fn pyobject_to_json_value(_py: Python, obj: &Bound<'_, PyAny>) -> Result<Value, UtilError> {
     if obj.is_none() {
         return Ok(Value::Null);
     }
@@ -263,7 +263,7 @@ fn pyobject_to_json_value(py: Python, obj: &Bound<'_, PyAny>) -> Result<Value, U
         let list = obj.extract::<Vec<Bound<'_, PyAny>>>()?;
         let values: Result<Vec<Value>, _> = list
             .iter()
-            .map(|item| pyobject_to_json_value(py, item))
+            .map(|item| pyobject_to_json_value(_py, item))
             .collect();
         return Ok(Value::Array(values?));
     }
@@ -279,7 +279,7 @@ fn pyobject_to_json_value(py: Python, obj: &Bound<'_, PyAny>) -> Result<Value, U
                 key.str()?.extract::<String>()?
             };
 
-            map.insert(key_str, pyobject_to_json_value(py, &value)?);
+            map.insert(key_str, pyobject_to_json_value(_py, &value)?);
         }
 
         return Ok(Value::Object(map));
@@ -288,14 +288,14 @@ fn pyobject_to_json_value(py: Python, obj: &Bound<'_, PyAny>) -> Result<Value, U
     // Handle numpy arrays
     if obj.hasattr("__array__")? || obj.hasattr("tolist")? {
         if let Ok(py_list) = obj.call_method0("tolist") {
-            return pyobject_to_json_value(py, &py_list);
+            return pyobject_to_json_value(_py, &py_list);
         }
     }
 
     // Handle pandas Series/DataFrame
     if obj.hasattr("to_dict")? {
         if let Ok(py_dict) = obj.call_method0("to_dict") {
-            return pyobject_to_json_value(py, &py_dict);
+            return pyobject_to_json_value(_py, &py_dict);
         }
     }
 
