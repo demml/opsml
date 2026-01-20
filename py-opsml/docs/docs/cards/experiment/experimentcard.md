@@ -50,9 +50,9 @@ with start_experiment(space="opsml", log_hardware=True) as exp:
 
     prompt = Prompt(
         model="gpt-4o",
-        message="what is 2 + 2?",
+        messages="what is 2 + 2?",
         provider="openai",
-        system_instruction="You are a helpful assistant.",
+        system_instructions="You are a helpful assistant.",
     )
 
     # ... your code here to test and validate the prompt
@@ -73,6 +73,7 @@ You can now log into the opsml server and see your recent experiment and associa
     def start_experiment(
         space: Optional[str] = None,
         name: Optional[str] = None,
+        tags: Optional[List[str]] = None,
         code_dir: Optional[Path] = None,
         log_hardware: bool = False,
         experiment_uid: Optional[str] = None,
@@ -105,6 +106,7 @@ You can now log into the opsml server and see your recent experiment and associa
             self,
             space: Optional[str] = None,
             name: Optional[str] = None,
+            tags: Optional[List[str]] = None,
             code_dir: Optional[Path] = None,
             log_hardware: bool = False,
             experiment_uid: Optional[str] = None,
@@ -117,6 +119,8 @@ You can now log into the opsml server and see your recent experiment and associa
                     space to associate with `ExperimentCard`
                 name (str | None):
                     Name to associate with `ExperimentCard`
+                tags (List[str] | None):
+                    Tags to associate with `ExperimentCard`
                 code_dir (Path | None):
                     Directory to log code from
                 log_hardware (bool):

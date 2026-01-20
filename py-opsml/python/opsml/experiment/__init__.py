@@ -4,7 +4,6 @@ from .._opsml import EvalMetrics, Experiment
 from .._opsml import ExperimentMetric as Metric
 from .._opsml import ExperimentMetrics as Metrics
 from .._opsml import (
-    LLMEvaluator,
     Parameter,
     Parameters,
     download_artifact,
@@ -24,5 +23,4 @@ __all__ = [
     "get_experiment_metrics",
     "get_experiment_parameters",
     "download_artifact",
-    "LLMEvaluator",
 ]

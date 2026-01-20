@@ -2,14 +2,15 @@ use crate::types::{DownloadEvent, ReloadEvent};
 use opsml_cards::error::CardError;
 use opsml_registry::error::RegistryError;
 use opsml_types::error::TypeError;
+use pyo3::pyclass::PyClassGuardError;
 use pyo3::PyErr;
 use scouter_client::PyEventError;
 use thiserror::Error;
-use tracing::error;
+
 #[derive(Error, Debug)]
 pub enum AppError {
-    #[error(transparent)]
-    PyErr(#[from] pyo3::PyErr),
+    #[error("{0}")]
+    Error(String),
 
     #[error(transparent)]
     SerdeError(#[from] serde_json::Error),
@@ -114,15 +115,27 @@ pub enum AppError {
     ScouterQueueRuntimeError(String),
 }
 
+impl<'a, 'py> From<PyClassGuardError<'a, 'py>> for AppError {
+    fn from(err: PyClassGuardError<'a, 'py>) -> Self {
+        AppError::Error(err.to_string())
+    }
+}
+
+impl<'a, 'py> From<pyo3::CastError<'a, 'py>> for AppError {
+    fn from(err: pyo3::CastError<'a, 'py>) -> Self {
+        AppError::DowncastError(err.to_string())
+    }
+}
+
+impl From<PyErr> for AppError {
+    fn from(err: PyErr) -> Self {
+        AppError::Error(err.to_string())
+    }
+}
+
 impl From<AppError> for PyErr {
     fn from(err: AppError) -> PyErr {
         let msg = err.to_string();
         pyo3::exceptions::PyRuntimeError::new_err(msg)
-    }
-}
-
-impl<'a> From<pyo3::DowncastError<'a, 'a>> for AppError {
-    fn from(err: pyo3::DowncastError) -> Self {
-        AppError::DowncastError(err.to_string())
     }
 }

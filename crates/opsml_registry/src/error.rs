@@ -6,13 +6,18 @@ use opsml_state::error::StateError;
 use opsml_storage::storage::error::StorageError;
 use opsml_types::error::TypeError;
 use opsml_types::RegistryType;
-use opsml_utils::error::{PyUtilError, UtilError};
+use opsml_utils::error::UtilError;
 use pyo3::exceptions::PyRuntimeError;
 use pyo3::prelude::*;
+use pyo3::pyclass::PyClassGuardError;
 use thiserror::Error;
 use tracing::error;
+
 #[derive(Error, Debug)]
 pub enum RegistryError {
+    #[error("{0}")]
+    Error(String),
+
     #[error(transparent)]
     ScouterClientError(#[from] scouter_client::ClientError),
 
@@ -41,16 +46,10 @@ pub enum RegistryError {
     JoinError(#[from] tokio::task::JoinError),
 
     #[error(transparent)]
-    PyErr(#[from] pyo3::PyErr),
-
-    #[error(transparent)]
     TypeError(#[from] TypeError),
 
     #[error(transparent)]
     UtilError(#[from] UtilError),
-
-    #[error(transparent)]
-    PyUtilError(#[from] PyUtilError),
 
     #[error(transparent)]
     IoError(#[from] std::io::Error),
@@ -145,6 +144,18 @@ pub enum RegistryError {
 
     #[error("Failed to insert parameters")]
     InsertParameterError,
+
+    #[error(transparent)]
+    TraceError(#[from] scouter_client::TraceError),
+
+    #[error("Invalid registry type for drift profiles: {0}")]
+    InvalidRegistryType(String),
+}
+
+impl<'a, 'py> From<PyClassGuardError<'a, 'py>> for RegistryError {
+    fn from(err: PyClassGuardError<'a, 'py>) -> Self {
+        RegistryError::Error(err.to_string())
+    }
 }
 
 impl From<RegistryError> for PyErr {
@@ -155,8 +166,14 @@ impl From<RegistryError> for PyErr {
     }
 }
 
-impl<'a> From<pyo3::DowncastError<'a, 'a>> for RegistryError {
-    fn from(err: pyo3::DowncastError) -> Self {
+impl From<PyErr> for RegistryError {
+    fn from(err: PyErr) -> Self {
+        RegistryError::Error(err.to_string())
+    }
+}
+
+impl<'a, 'py> From<pyo3::CastError<'a, 'py>> for RegistryError {
+    fn from(err: pyo3::CastError<'a, 'py>) -> Self {
         RegistryError::DowncastError(err.to_string())
     }
 }

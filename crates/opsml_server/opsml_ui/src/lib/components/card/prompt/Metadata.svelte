@@ -6,8 +6,7 @@
   import CodeModal from "../CodeModal.svelte";
   import Pill from "$lib/components/utils/Pill.svelte";
   import { MessageSquareText, Settings } from 'lucide-svelte';
-  import PromptModal from "./PromptModal.svelte";
-  import ExtraModelSettings from "./ExtraModelSettings.svelte";
+  import PromptModal from "./common/PromptModal.svelte";
   import LinkPill from "$lib/components/utils/LinkPill.svelte";
   import { RegistryType } from "$lib/utils";
   import ResponseSchemaModal from "./ResponseSchemaModal.svelte";
@@ -15,10 +14,8 @@
 
   let {
       card,
-      modelSettings,
     } = $props<{
       card: PromptCard;
-      modelSettings: Record<string, any>;
     }>();
 
 
@@ -110,8 +107,6 @@ datacard = registry.load_card(uid="${card.uid}")
     <Pill key="Provider" value={card.prompt.provider} textSize="text-sm"/>
     
   </div>
-
-  <ExtraModelSettings settings={modelSettings}/>
 
   {#if card.tags.length > 0}
     <div class="flex flex-col space-y-1 gap-1">

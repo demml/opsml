@@ -9,7 +9,9 @@ use opsml_state::{app_state, get_api_client};
 use opsml_types::contracts::{ArtifactKey, DeleteCardRequest};
 use opsml_types::contracts::{CardQueryArgs, CardRecord, CreateCardResponse};
 use opsml_types::*;
-use scouter_client::{ProfileRequest, ProfileStatusRequest, ScouterClient};
+use scouter_client::{
+    ProfileRequest, ProfileStatusRequest, RegisteredProfileResponse, ScouterClient,
+};
 use tracing::{debug, error, instrument};
 
 #[cfg(feature = "server")]
@@ -235,7 +237,10 @@ impl OpsmlCardRegistry {
     /// # Returns
     /// * `Result<(), RegistryError>` - Ok if the profile was inserted successfully, Err if there was an error
     #[instrument(skip_all)]
-    pub fn insert_scouter_profile(&self, profile: &ProfileRequest) -> Result<(), RegistryError> {
+    pub fn insert_scouter_profile(
+        &self,
+        profile: &ProfileRequest,
+    ) -> Result<RegisteredProfileResponse, RegistryError> {
         match self {
             Self::Client(client_registry) => {
                 debug!("ClientRegistry: Inserting scouter profile");

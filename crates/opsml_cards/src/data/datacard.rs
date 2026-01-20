@@ -12,7 +12,6 @@ use opsml_types::contracts::{ArtifactKey, CardRecord, DataCardClientRecord};
 use opsml_types::interfaces::types::DataInterfaceType;
 use opsml_types::{DataType, RegistryType, SaveName, Suffix};
 use opsml_utils::{create_tmp_path, extract_py_attr, get_utc_datetime, PyHelperFuncs};
-use pyo3::types::PyList;
 use pyo3::{prelude::*, IntoPyObjectExt};
 use pyo3::{PyTraverseError, PyVisit};
 use serde::{
@@ -109,14 +108,11 @@ impl DataCard {
         name: Option<&str>,
         version: Option<&str>,
         uid: Option<&str>,
-        tags: Option<&Bound<'_, PyList>>,
+        tags: Option<Vec<String>>,
         metadata: Option<DataCardMetadata>,
     ) -> Result<Self, CardError> {
         let registry_type = RegistryType::Data;
-        let tags = match tags {
-            None => Vec::new(),
-            Some(t) => t.extract::<Vec<String>>()?,
-        };
+        let tags = tags.unwrap_or_default();
 
         let base_args = BaseArgs::create_args(name, space, version, uid, &registry_type)?;
 
@@ -566,8 +562,9 @@ impl<'de> Deserialize<'de> for DataCard {
     }
 }
 
-impl FromPyObject<'_> for DataCard {
-    fn extract_bound(ob: &Bound<'_, PyAny>) -> PyResult<Self> {
+impl FromPyObject<'_, '_> for DataCard {
+    type Error = PyErr;
+    fn extract(ob: Borrowed<'_, '_, PyAny>) -> PyResult<Self> {
         let interface = ob.getattr("interface")?;
         let name = ob.getattr("name")?.extract()?;
         let space = ob.getattr("space")?.extract()?;

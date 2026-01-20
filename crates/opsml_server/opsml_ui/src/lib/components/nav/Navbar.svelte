@@ -1,42 +1,16 @@
 <script lang="ts">
-  import { onMount } from "svelte";
   import logo from "$lib/images/opsml_word.webp";
   import { page } from "$app/state";
   import { goto } from "$app/navigation";
-  import IconX from 'lucide-svelte/icons/x';
   import { KeySquare } from 'lucide-svelte';
   import UserDropdown from "../user/UserDropdown.svelte";
 
-
-  let isSidebarOpen = $state(false);
-
-  function toggleSidebar() {
-    isSidebarOpen = !isSidebarOpen;
-  }
-
-  function handleLinkClick(path: string) {
-    isSidebarOpen = false;
-    goto(path);
-  }
-
-  
   function logInHandle() {
     const currentPage = page.url.pathname;
     goto('/opsml/user/login?url=' + currentPage);
   }
 
-  let imageLoaded = $state(false);
-
-  const names = ["Spaces", "Models", "Data", "GenAI", "Experiments", "Services"];
-
-
-  onMount(() => {
-    const img = new Image();
-    img.src = logo;
-    img.onload = () => {
-      imageLoaded = true;
-    };
-  });
+  const names = ["Spaces", "Models", "Data", "GenAI", "Experiments", "Services", "Observability"];
 
 </script>
 
@@ -47,8 +21,8 @@
       <div class="flex items-center justify-start gap-4">
         <a href="/opsml/home" class="items-center">
           <div class="w-[120px] h-10">
-            <img 
-              src={logo} 
+            <img
+              src={logo}
               class="h-10 w-[120px] object-contain"
               alt="Opsml Logo"
             />
@@ -84,14 +58,14 @@
           <KeySquare color="#5948a3"/>
         </button>
 
-        <div 
-          aria-label="user" 
+        <div
+          aria-label="user"
           class="m800:hidden relative flex items-center justify-center rounded-base border-2 border-black shadow p-2 shadow-hover bg-surface-50 w-9 h-9"
         >
           <UserDropdown/>
         </div>
       </div>
-  </div>  
+  </div>
 </nav>
 
 

@@ -13,16 +13,16 @@ def test_string_openai_prompt():
     # test string prompt
     prompt = Prompt(
         model="gpt-4o-mini",
-        message="What is today's date?",
+        messages="What is today's date?",
         provider="openai",
-        system_instruction="You are a helpful assistant.",
+        system_instructions="You are a helpful assistant.",
     )
 
     agent = Agent(
         prompt.model_identifier,
-        system_prompt=prompt.system_instruction[0].unwrap(),
-        result_type=TodaysDate,
+        system_prompt=prompt.system_instructions[0].unwrap(),
+        output_type=TodaysDate,
     )
-    result = agent.run_sync(prompt.message[0].unwrap())
+    result = agent.run_sync(prompt.messages[0].content)
 
-    assert result.data.date is not None
+    assert result.output.date is not None

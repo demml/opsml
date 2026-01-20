@@ -12,7 +12,7 @@ impl PandasSchemaValidator {
         data: &Bound<'_, PyAny>,
     ) -> Result<FeatureSchema, DataInterfaceError> {
         let columns = data.getattr("dtypes")?.call_method0("to_dict")?;
-        let columns = columns.downcast::<PyDict>()?;
+        let columns = columns.cast::<PyDict>()?;
 
         let feature_map = columns
             .iter()

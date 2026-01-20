@@ -1,5 +1,4 @@
 use crate::contracts::ArtifactKey;
-use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::fmt::Display;
 
@@ -17,7 +16,7 @@ pub struct CreateEvaluationResponse {
 #[derive(Debug, Serialize, Deserialize, Default)]
 #[cfg_attr(feature = "server", derive(sqlx::Type))]
 pub enum EvaluationType {
-    LLM,
+    GenAI,
     #[default]
     Other,
 }
@@ -25,7 +24,7 @@ pub enum EvaluationType {
 impl Display for EvaluationType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            EvaluationType::LLM => write!(f, "LLM"),
+            EvaluationType::GenAI => write!(f, "GenAI"),
             EvaluationType::Other => write!(f, "Other"),
         }
     }
@@ -36,7 +35,7 @@ impl std::str::FromStr for EvaluationType {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "LLM" => Ok(EvaluationType::LLM),
+            "GenAI" => Ok(EvaluationType::GenAI),
             "Other" => Ok(EvaluationType::Other),
             _ => Err(format!("Unknown EvaluationType: {}", s)),
         }
@@ -70,17 +69,4 @@ impl std::str::FromStr for EvaluationProvider {
             _ => Err(format!("Unknown EvaluationProvider: {}", s)),
         }
     }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(feature = "server", derive(sqlx::FromRow))]
-pub struct LLMEvalTaskResultRecord {
-    pub evaluation_uid: String,
-    pub id: String,
-    pub evaluation_name: String,
-    pub created_at: DateTime<Utc>,
-    pub metrics: String,
-    pub mean_embeddings: String,
-    pub similarity_scores: String,
-    pub cluster_id: Option<i32>,
 }

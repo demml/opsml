@@ -44,6 +44,12 @@ jobs:
         with:
           cmake-version: "3.x"
 
+      - name: Install protoc (Ubuntu)
+        uses: arduino/setup-protoc@v3
+        with:
+          version: "33.2"
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
       - name: install rust stable
         uses: dtolnay/rust-toolchain@stable
 

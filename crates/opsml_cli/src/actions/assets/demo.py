@@ -11,8 +11,8 @@ from opsml import (
     Card,
     RegistryType,
     ModelSaveKwargs,
-    ModelSettings,
 )
+from opsml.genai.openai import OpenAIChatSettings
 from opsml.logging import RustyLogger, LoggingConfig, LogLevel
 from opsml.scouter.drift import (
     PsiDriftConfig,
@@ -144,7 +144,7 @@ def random_forest_classifier(exp: Experiment):
         data=[
             CustomMetric(
                 name="custom",
-                value=0.5,
+                baseline_value=0.5,
                 alert_threshold=AlertThreshold.Above,
             )
         ],
@@ -185,11 +185,11 @@ def pandas_data() -> PandasData:
 
 def chat_prompt() -> Prompt:
     prompt = Prompt(
-        message="what is 2 + 2?",
-        system_instruction="You are a helpful assistant.",
-        model_settings=ModelSettings(
-            model="gpt-4o",
-            provider="openai",
+        messages="what is 2 + 2?",
+        system_instructions="You are a helpful assistant.",
+        model="gpt-4o",
+        provider="openai",
+        model_settings=OpenAIChatSettings(
             temperature=0.7,
             top_p=1.0,
             max_tokens=100,

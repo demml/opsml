@@ -140,7 +140,7 @@ def lgb_classifier_calibrated(example_dataframe):
     )
     reg.fit(X_train.to_numpy(), y_train)
 
-    calibrated_model = CalibratedClassifierCV(reg, method="isotonic", cv="prefit")
+    calibrated_model = CalibratedClassifierCV(reg, method="isotonic", cv=2)
     calibrated_model.fit(X_test, y_test)
 
     return SklearnModel(model=calibrated_model, sample_data=X_test[:10])
@@ -811,7 +811,7 @@ def tweedie_regressor(example_dataframe):
 @pytest.fixture
 def voting_classifier(example_dataframe):
     X_train, y_train, _, _ = example_dataframe
-    clf1 = linear_model.LogisticRegression(multi_class="multinomial", max_iter=5)
+    clf1 = linear_model.LogisticRegression(max_iter=5)
     clf2 = ensemble.RandomForestClassifier(n_estimators=5, random_state=1)
     clf3 = naive_bayes.GaussianNB()
     eclf1 = ensemble.VotingClassifier(

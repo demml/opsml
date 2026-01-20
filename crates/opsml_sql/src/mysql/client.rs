@@ -80,11 +80,9 @@ mod tests {
         UserLogicTrait,
     };
     use opsml_settings::config::DatabaseSettings;
+    use opsml_types::contracts::evaluation::{EvaluationProvider, EvaluationType};
     use opsml_types::contracts::VersionCursor;
-    use opsml_types::contracts::{
-        evaluation::{EvaluationProvider, EvaluationType},
-        ArtifactKey, ArtifactQueryArgs, AuditEvent, SpaceNameEvent,
-    };
+    use opsml_types::contracts::{ArtifactKey, ArtifactQueryArgs, AuditEvent, SpaceNameEvent};
     use opsml_types::CommonKwargs;
     use opsml_types::SqlType;
     use opsml_types::{
@@ -1945,7 +1943,7 @@ mod tests {
         let client = db_client().await;
         let eval_record = EvaluationSqlRecord::new(
             "test".to_string(),
-            EvaluationType::LLM,
+            EvaluationType::GenAI,
             EvaluationProvider::Opsml,
         );
         let uid = eval_record.uid.clone();

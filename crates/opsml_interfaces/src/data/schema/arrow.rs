@@ -18,7 +18,7 @@ impl ArrowSchemaValidator {
         // get types, downcast to list, iterate and call str() on each element
         let schema_types = schema
             .getattr("types")?
-            .downcast::<PyList>()?
+            .cast::<PyList>()?
             .iter()
             .map(|x| Ok(x.str()?.to_string()))
             .collect::<Result<Vec<String>, PyErr>>()?;

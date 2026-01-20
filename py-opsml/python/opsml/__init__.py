@@ -1,19 +1,7 @@
 # mypy: disable-error-code="attr-defined"
 # pylint: disable=no-name-in-module
 # python/opsml/__init__.py
-from . import (
-    app,
-    card,
-    data,
-    evaluate,
-    experiment,
-    genai,
-    logging,
-    mock,
-    model,
-    scouter,
-    types,
-)
+from . import app, card, data, experiment, genai, logging, mock, model, scouter, types
 from ._opsml import (  # top-level modules; # App; # Card; # Data; Experiment; # model
     AppState,
     ArrowData,
@@ -31,6 +19,7 @@ from ._opsml import (  # top-level modules; # App; # Card; # Data; Experiment; #
     HuggingFaceTask,
     LightGBMModel,
     LightningModel,
+    LoggingConfig,
     ModelCard,
     ModelInterface,
     ModelLoadKwargs,
@@ -43,6 +32,7 @@ from ._opsml import (  # top-level modules; # App; # Card; # Data; Experiment; #
     PromptCard,
     RegistryType,
     ReloadConfig,
+    RustyLogger,
     ServiceCard,
     SklearnModel,
     SqlData,
@@ -50,11 +40,23 @@ from ._opsml import (  # top-level modules; # App; # Card; # Data; Experiment; #
     TensorFlowModel,
     TorchModel,
     XGBoostModel,
+    _get_log_level,
+    _log_json,
     get_opsml_version,
     start_experiment,
 )
 
 __version__: str = get_opsml_version()
+
+# We need to turn on rust logging early if LOG_LEVEL is set
+_log_level = _get_log_level()
+if _log_level:
+    RustyLogger.setup_logging(
+        LoggingConfig(
+            log_level=_log_level,
+            use_json=_log_json(),  # check if LOG_JSON is set to "1" or "true"
+        ),
+    )
 
 __all__ = [
     "types",
@@ -62,7 +64,6 @@ __all__ = [
     "data",
     "model",
     "experiment",
-    "evaluate",
     "app",
     "logging",
     "mock",

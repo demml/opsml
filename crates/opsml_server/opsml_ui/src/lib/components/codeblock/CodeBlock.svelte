@@ -1,7 +1,7 @@
 <script module>
   import { createHighlighterCoreSync } from 'shiki/core';
   import { createJavaScriptRegexEngine } from 'shiki/engine/javascript';
-  import { customTheme } from './customTheme';
+  import { customTheme, tracebackTheme } from './customTheme';
 
   import console from 'shiki/langs/console.mjs';
   import html from 'shiki/langs/html.mjs';
@@ -12,11 +12,11 @@
   import json from 'shiki/langs/json.mjs';
   import md from 'shiki/langs/markdown.mjs';
   import bash from 'shiki/langs/bash.mjs';
-
+  
 
   const shiki = createHighlighterCoreSync({
     engine: createJavaScriptRegexEngine(),
-    themes: [customTheme],
+    themes: [customTheme, tracebackTheme],
     langs: [console, html, css, js, python, rust, json, md, bash],
   });
 </script>
@@ -64,11 +64,12 @@
   }
   
   :global(.shiki code) {
-    width: max-content;
-    min-width: 100%;
+    /* Remove width: max-content that causes expansion */
+    width: 100%;
+    max-width: 100%;
+    min-width: 0; /* Allow shrinking below content width */
     display: block;
     white-space: pre !important;
-
   }
 
   .show-line-numbers :global(.shiki pre) {

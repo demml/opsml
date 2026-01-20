@@ -11,7 +11,7 @@ pub struct DefaultSsoSettings {
     pub client_id: String,
     pub client_secret: String,
     pub redirect_uri: String,
-    pub decoding_key: DecodingKey,
+    pub jwk_response: JwkResponse,
     pub scope: String,
     pub token_url: String,
     pub authorization_url: String,
@@ -41,14 +41,11 @@ impl DefaultSsoSettings {
             .await
             .map_err(SsoError::ReqwestError)?;
 
-        let decoding_key = match response.status() {
-            StatusCode::OK => {
-                let jwk_response = response.json::<JwkResponse>().await.map_err(|e| {
-                    error!("Failed to parse JWK response from Keycloak at {certs_url} error: {e}");
-                    SsoError::ReqwestError(e)
-                })?;
-                jwk_response.get_decoded_key()?
-            }
+        let jwk_response = match response.status() {
+            StatusCode::OK => response.json::<JwkResponse>().await.map_err(|e| {
+                error!("Failed to parse JWK response from Keycloak at {certs_url} error: {e}");
+                SsoError::ReqwestError(e)
+            })?,
             _ => {
                 // get response body
                 let body = response.text().await.map_err(SsoError::ReqwestError)?;
@@ -61,7 +58,7 @@ impl DefaultSsoSettings {
             client_id,
             client_secret,
             redirect_uri,
-            decoding_key,
+            jwk_response,
             scope,
             token_url,
             authorization_url,
@@ -179,7 +176,7 @@ impl SsoProviderExt for DefaultProvider {
             .build_callback_auth_params(code, code_verifier)
     }
 
-    fn decoding_key(&self) -> &DecodingKey {
-        &self.settings.decoding_key
+    fn get_decoding_key_for_token(&self, token: &str) -> Result<DecodingKey, SsoError> {
+        self.settings.jwk_response.get_decoded_key_for_token(token)
     }
 }

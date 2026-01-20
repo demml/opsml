@@ -18,7 +18,7 @@ env:
 
 jobs:
   format-and-lint:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
 
@@ -26,6 +26,12 @@ jobs:
         uses: jwlawson/actions-setup-cmake@v2
         with:
           cmake-version: "3.x"
+
+      - name: Install Protocol Buffers Compiler
+        uses: arduino/setup-protoc@v3
+        with:
+          version: "33.2"
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Rust
         run: |
@@ -35,6 +41,11 @@ jobs:
 
       - name: Cache Rust
         uses: Swatinem/rust-cache@v2
+
+      - name: Install Protocol Buffers Compiler
+        uses: arduino/setup-protoc@v3
+        with:
+          version: "33.2"
 
       - name: Print versions
         run: rustc --version && cargo --version && cargo clippy --version && rustup --version
@@ -46,7 +57,7 @@ jobs:
         run: make lints
 
   test-Sql-Storage-Utils:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     needs: format-and-lint
     steps:
       - uses: actions/checkout@v4
@@ -68,6 +79,12 @@ jobs:
         uses: jwlawson/actions-setup-cmake@v2
         with:
           cmake-version: "3.x"
+
+      - name: Install Protocol Buffers Compiler
+        uses: arduino/setup-protoc@v3
+        with:
+          version: "33.2"
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Rust
         run: rustup override set stable && rustup update
@@ -98,6 +115,12 @@ jobs:
     runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v4
+
+      - name: Install Protocol Buffers Compiler
+        uses: arduino/setup-protoc@v3
+        with:
+          version: "33.2"
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -139,6 +162,24 @@ jobs:
             # Determine architecture and install CMake
             ARCH=$(uname -m)
             echo "Detected architecture: $ARCH"
+
+            # Install Protocol Buffers Compiler (protoc)
+            PROTOC_VERSION="33.2"
+            if [[ "$ARCH" == "x86_64" ]]; then
+                PROTOC_ARCH="linux-x86_64"
+            elif [[ "$ARCH" == "aarch64" ]]; then
+                PROTOC_ARCH="linux-aarch_64"
+            else
+                echo "Unsupported architecture for protoc: $ARCH"
+                exit 1
+            fi
+
+            echo "Installing protoc ${PROTOC_VERSION} for ${PROTOC_ARCH}"
+            curl -LO "https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOC_VERSION}/protoc-${PROTOC_VERSION}-${PROTOC_ARCH}.zip"
+            unzip "protoc-${PROTOC_VERSION}-${PROTOC_ARCH}.zip" -d /usr/local
+            rm "protoc-${PROTOC_VERSION}-${PROTOC_ARCH}.zip"
+            chmod +x /usr/local/bin/protoc
+            protoc --version
 
             if [[ "$ARCH" == "x86_64" ]]; then
                 echo "Downloading CMake for x86_64 architecture"
@@ -242,6 +283,12 @@ jobs:
         with:
           cmake-version: "3.x"
 
+      - name: Install Protocol Buffers Compiler
+        uses: arduino/setup-protoc@v3
+        with:
+          version: "33.2"
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Install libomp on macOS
         if: runner.os == 'macOS'
         run: brew install libomp
@@ -304,6 +351,12 @@ jobs:
         uses: jwlawson/actions-setup-cmake@v2
         with:
           cmake-version: "3.x"
+
+      - name: Install Protocol Buffers Compiler
+        uses: arduino/setup-protoc@v3
+        with:
+          version: "33.2"
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Rust
         run: rustup override set stable && rustup update

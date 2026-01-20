@@ -122,22 +122,22 @@ pub async fn download_artifact(
     registry_type: &str,
     uid: Option<&str>,
 ) -> Result<DownloadResponse, ServerError> {
-    let key = if uid.is_none() {
+    let key = if let Some(uid) = uid {
+        Some(
+            sql_client
+                .get_artifact_key(uid, registry_type)
+                .await
+                .inspect_err(|e| {
+                    error!("Failed to get artifact key: {e}");
+                })?,
+        )
+    } else {
         sql_client
             .get_artifact_key_from_path(rpath, registry_type)
             .await
             .inspect_err(|e| {
                 error!("Failed to get artifact key: {e}");
             })?
-    } else {
-        Some(
-            sql_client
-                .get_artifact_key(uid.unwrap(), registry_type)
-                .await
-                .inspect_err(|e| {
-                    error!("Failed to get artifact key: {e}");
-                })?,
-        )
     };
 
     if key.is_none() {

@@ -357,7 +357,7 @@ fn create_pyarrow_data(
         })
     } else if !dependent_vars.idx_empty() {
         let shape = data.getattr("shape")?;
-        let shape_tuple = shape.downcast::<PyTuple>()?;
+        let shape_tuple = shape.cast::<PyTuple>()?;
 
         let num_cols = shape_tuple.get_item(1).unwrap().extract::<usize>()?;
 
@@ -388,7 +388,7 @@ fn create_numpy_data(
     let py = data.py();
     if !dependent_vars.idx_empty() {
         let shape = data.getattr("shape")?;
-        let shape_tuple = shape.downcast::<PyTuple>()?;
+        let shape_tuple = shape.cast::<PyTuple>()?;
 
         let num_cols = shape_tuple.get_item(1).unwrap().extract::<usize>()?;
 

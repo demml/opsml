@@ -13,6 +13,7 @@ use opsml_types::IntegratedService;
 use opsml_types::RegistryMode;
 use opsml_types::{cards::CardTable, contracts::*, RegistryType};
 use opsml_utils::uid_to_byte_key;
+use scouter_client::RegisteredProfileResponse;
 use scouter_client::{ProfileRequest, ProfileStatusRequest, ScouterClient};
 use semver::Version;
 use sqlx::types::Json as SqlxJson;
@@ -559,13 +560,16 @@ impl ServerCardRegistry {
         }
     }
 
-    pub fn insert_scouter_profile(&self, request: &ProfileRequest) -> Result<(), RegistryError> {
+    pub fn insert_scouter_profile(
+        &self,
+        request: &ProfileRequest,
+    ) -> Result<RegisteredProfileResponse, RegistryError> {
         let client = self
             .scouter_client
             .as_ref()
             .ok_or(RegistryError::ScouterClientNotFoundError)?;
-        client.insert_profile(request)?;
-        Ok(())
+        let response = client.insert_profile(request)?;
+        Ok(response)
     }
 
     pub fn update_drift_profile_status(

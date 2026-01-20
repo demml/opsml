@@ -64,7 +64,7 @@ http {
     }
 
     server {
-        listen ${OPSML_PORT};
+        listen ${OPSML_SERVER_PORT};
         server_name _;
 
          # Security headers

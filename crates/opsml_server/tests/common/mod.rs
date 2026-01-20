@@ -20,7 +20,11 @@ use opsml_settings::config::DatabaseSettings;
 use opsml_sql::enums::client::SqlClientEnum;
 use opsml_types::contracts::*;
 use opsml_types::*;
-use scouter_client::{BinnedMetrics, BinnedPsiFeatureMetrics, SpcDriftFeatures};
+use scouter_client::{
+    BinnedMetrics, BinnedPsiFeatureMetrics, GenAIEvalRecordPaginationResponse,
+    GenAIEvalTaskResponse, GenAIEvalTaskResult, GenAIEvalWorkflowPaginationResponse,
+    SpcDriftFeatures,
+};
 use std::time::SystemTime;
 use std::time::UNIX_EPOCH;
 use std::{env, net::SocketAddr, vec};
@@ -74,6 +78,12 @@ pub struct ScouterServer {
 }
 
 impl ScouterServer {
+    fn create_genai_eval_task_response() -> String {
+        let task = GenAIEvalTaskResult::default();
+        let response = GenAIEvalTaskResponse { tasks: vec![task] };
+
+        serde_json::to_string(&response).unwrap()
+    }
     pub async fn new() -> Self {
         let mut server = mockito::Server::new_async().await;
 
@@ -182,10 +192,52 @@ impl ScouterServer {
 
         let binned_metrics_json = serde_json::to_string(&binned_metrics).unwrap();
         server
-            .mock("GET", "/scouter/drift/llm")
+            .mock("GET", "/scouter/drift/genai/task")
             .match_query(mockito::Matcher::Any)
             .with_status(200)
             .with_body(binned_metrics_json)
+            .create_async()
+            .await;
+
+        let binned_metrics_json = serde_json::to_string(&binned_metrics).unwrap();
+        server
+            .mock("GET", "/scouter/drift/genai/workflow")
+            .match_query(mockito::Matcher::Any)
+            .with_status(200)
+            .with_body(binned_metrics_json)
+            .create_async()
+            .await;
+
+        let task_records = Self::create_genai_eval_task_response();
+        server
+            .mock("GET", "/scouter/genai/task")
+            .match_query(mockito::Matcher::Any)
+            .with_status(200)
+            .with_body(task_records)
+            .create_async()
+            .await;
+
+        let workflow_page =
+            serde_json::to_string(&GenAIEvalWorkflowPaginationResponse::default()).unwrap();
+        server
+            .mock("POST", "/scouter/genai/page/workflow")
+            .match_header("content-type", mockito::Matcher::Any)
+            .match_header("authorization", mockito::Matcher::Any)
+            .match_body(mockito::Matcher::Any)
+            .with_status(200)
+            .with_body(workflow_page)
+            .create_async()
+            .await;
+
+        let record_page =
+            serde_json::to_string(&GenAIEvalRecordPaginationResponse::default()).unwrap();
+        server
+            .mock("POST", "/scouter/genai/page/record")
+            .match_header("content-type", mockito::Matcher::Any)
+            .match_header("authorization", mockito::Matcher::Any)
+            .match_body(mockito::Matcher::Any)
+            .with_status(200)
+            .with_body(record_page)
             .create_async()
             .await;
 
@@ -253,7 +305,8 @@ GrrNOufvPsvmCRO9m4ESRrk=
             ..Default::default()
         };
 
-        let header = Header::new(jsonwebtoken::Algorithm::RS256);
+        let mut header = Header::new(jsonwebtoken::Algorithm::RS256);
+        header.kid = Some("mock_key_id".to_string());
 
         let token = encode(
             &header,

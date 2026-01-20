@@ -1889,7 +1889,7 @@ mod tests {
         let client = db_client().await;
         let eval_record = EvaluationSqlRecord::new(
             "test".to_string(),
-            EvaluationType::LLM,
+            EvaluationType::GenAI,
             EvaluationProvider::Opsml,
         );
         let uid = eval_record.uid.clone();

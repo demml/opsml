@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
-  import { IdCard, FolderTree, Tag, Activity } from 'lucide-svelte';
+  import { IdCard, FolderTree, Tag, Activity, Search } from 'lucide-svelte';
   import { page } from '$app/state';
   import { uiSettingsStore } from '$lib/components/settings/settings.svelte';
   import { getRegistryPath } from '$lib/utils';
@@ -28,12 +28,22 @@
 
   let { metadata, registryType, children }: CardLayoutProps = $props();
 
+  let scouterEnabled: boolean = $state(uiSettingsStore.scouterEnabled);
+
   /**
    * Determines the active tab based on the current URL path
    */
   let activeTab = $derived.by(() => {
-    const last = page.url.pathname.split('/').pop() ?? '';
-    if (['card', 'files', 'monitoring', 'versions', 'view'].includes(last)) return last;
+    const pathParts = page.url.pathname.split('/');
+    const last = pathParts[pathParts.length - 1] ?? '';
+    const secondLast = pathParts[pathParts.length - 2] ?? '';
+    
+    // Check if we're in a nested monitoring route
+    if (secondLast === 'monitoring') return 'monitoring';
+    
+    // Direct routes
+    if (['card', 'files', 'monitoring', 'versions', 'view', 'observability'].includes(last)) return last;
+    
     return 'card';
   });
 
@@ -41,9 +51,9 @@
    * Determines if monitoring tab should be shown based on metadata and settings
    */
   let showMonitoring = $derived(
-    (metadata.metadata.interface_metadata.save_metadata.drift_profile_uri_map && 
-     uiSettingsStore.scouterEnabled) || dev
+    (metadata.metadata.interface_metadata.save_metadata.drift_profile_uri_map && scouterEnabled) || dev
   );
+
 
   /**
    * Base path for navigation links
@@ -57,7 +67,7 @@
   <div class="flex flex-col mx-auto justify-start px-4">
     <h1 class="flex flex-row flex-wrap items-center">
       <div class="group flex flex-none items-center">
-        <a 
+        <a
           class="font-semibold text-black hover:text-secondary-500" 
           href="/opsml/space/{metadata.space}"
         >
@@ -106,6 +116,16 @@
           <span>Monitoring</span>
         </a>
       {/if}
+
+      <a
+        class="flex items-center gap-x-2 border-b-3 {activeTab === 'observability' ? 'border-secondary-500' : 'border-transparent'} hover:border-secondary-500 hover:border-b-3"
+        href="{basePath}/observability"
+        data-sveltekit-preload-data="hover"
+        aria-current={activeTab === 'observability' ? 'page' : undefined}
+      >
+        <Search color="#8059b6" size={16} />
+        <span>Observability</span>
+      </a>
 
       <a
         class="flex items-center gap-x-2 border-b-3 {activeTab === 'versions' ? 'border-secondary-500' : 'border-transparent'} hover:border-secondary-500 hover:border-b-3"
