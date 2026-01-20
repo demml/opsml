@@ -1,15 +1,16 @@
 from typing import Tuple
 
 from opsml.app import AppState
+from opsml.scouter.tracing import Tracer
 from pydantic_ai import Agent
 
 from .tools import build_tools
 
 
-def get_agents(app_state: AppState) -> Tuple[Agent, Agent]:
+def get_agents(tracer: Tracer, app_state: AppState) -> Tuple[Agent, Agent]:
     """Creates agents for shipment and response handling."""
 
-    tool = build_tools(app_state)
+    tool = build_tools(tracer, app_state)
 
     shipment_agent = Agent(
         name="shipment_agent",

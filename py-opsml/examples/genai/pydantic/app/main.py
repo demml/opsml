@@ -5,15 +5,16 @@ from pathlib import Path
 
 from fastapi import FastAPI, Request
 from opsml.app import AppState
-from opsml.logging import LoggingConfig, LogLevel, RustyLogger
-from opsml.scouter import HttpConfig
+from opsml.scouter import GrpcConfig
 from pydantic import BaseModel, Field
 
 from .agent.helper import AgentHelper
 from .db.commands import shutdown_db, startup_db
+from opsml.scouter.tracing import get_tracer, init_tracer
 
-logger = RustyLogger.get_logger(
-    LoggingConfig(log_level=LogLevel.Info),
+init_tracer(
+    service_name="agent-delivery-service",
+    transport_config=GrpcConfig(),
 )
 
 
@@ -45,21 +46,21 @@ class Question(BaseModel):
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    logger.info("Starting up FastAPI app")
-
     startup_db()
+
+    tracer = get_tracer("agent-delivery-service")
     app_state = AppState.from_path(
         path=Path("app/service_artifacts"),
-        transport_config=HttpConfig(),
+        transport_config=GrpcConfig(),
     )
+    tracer.set_scouter_queue(app_state.queue)
 
-    agent_helper = AgentHelper("opsml_app", app_state)
+    agent_helper = AgentHelper("agent-delivery-service", app_state, tracer)
     app.state.agent_helper = agent_helper
     app.state.app_state = app_state
 
     yield
 
-    logger.info("Shutting down FastAPI app")
     shutdown_db()
     app.state.app_state = None
     app.state.agent_helper = None

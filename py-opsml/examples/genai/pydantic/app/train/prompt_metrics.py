@@ -2,10 +2,9 @@
 
 
 from opsml.genai import Prompt, Score
-from opsml.scouter.alert import AlertThreshold
-from opsml.scouter.drift import LLMDriftMetric
+from opsml.scouter.drift import LLMJudgeTask, ComparisonOperator
 
-LLM_MODEL = "o4-mini"
+LLM_MODEL = "gpt5-mini"
 LLM_PROVIDER = "openai"
 
 
@@ -21,7 +20,7 @@ def create_shipment_eta_task_evaluation_prompt() -> Prompt:
         >>> prompt = create_shipment_eta_task_evaluation_prompt()
     """
     return Prompt(
-        message="""
+        messages="""
             You are an expert evaluator of supply chain assistant performance.
             Given the original user query, the LLM's tool call, and the LLM's final response, assess how well the LLM performed the following:
                 - Correctly extracted the shipment ID from the user's query.
@@ -52,7 +51,7 @@ def create_shipment_eta_task_evaluation_prompt() -> Prompt:
         """,
         model=LLM_MODEL,
         provider=LLM_PROVIDER,
-        response_format=Score,
+        output_type=Score,
     )
 
 
@@ -68,7 +67,7 @@ def create_shipment_eta_reply_evaluation_prompt() -> Prompt:
         >>> prompt = create_shipment_eta_reply_evaluation_prompt()
     """
     return Prompt(
-        message="""
+        messages="""
             You are an expert evaluator of supply chain assistant responses.
             Given the structured shipment ETA information and the LLM's reply to the user, assess how well the LLM communicated the information.
             Consider the following:
@@ -92,22 +91,24 @@ def create_shipment_eta_reply_evaluation_prompt() -> Prompt:
         """,
         model=LLM_MODEL,
         provider=LLM_PROVIDER,
-        response_format=Score,
+        output_type=Score,
     )
 
 
-shipment_eta_task_evaluation = LLMDriftMetric(
-    name="shipment_eta_task_evaluation",
+shipment_eta_task_evaluation = LLMJudgeTask(
+    id="shipment_eta_task_evaluation",
     prompt=create_shipment_eta_task_evaluation_prompt(),
-    value=5.0,
-    alert_threshold_value=2.0,
-    alert_threshold=AlertThreshold.Below,
+    expected_value=3.0,
+    field_path="score",
+    operator=ComparisonOperator.GreaterThanOrEqual,
+    description="Evaluates how well the LLM performed the shipment ETA task.",
 )
 
-shipment_eta_reply_evaluation = LLMDriftMetric(
-    name="shipment_eta_reply_evaluation",
+shipment_eta_reply_evaluation = LLMJudgeTask(
+    id="shipment_eta_reply_evaluation",
     prompt=create_shipment_eta_reply_evaluation_prompt(),
-    value=5.0,
-    alert_threshold_value=2.0,
-    alert_threshold=AlertThreshold.Below,
+    expected_value=3.0,
+    field_path="score",
+    operator=ComparisonOperator.GreaterThanOrEqual,
+    description="Evaluates the quality of the LLM's user-facing reply for shipment ETA.",
 )

@@ -1,12 +1,11 @@
 from opsml.card import PromptCard
 from opsml.genai import Prompt
-from opsml.scouter.alert import LLMAlertConfig
-from opsml.scouter.drift import LLMDriftConfig
+from opsml.scouter.drift import GenAIAlertConfig, GenAIEvalConfig
 from opsml.scouter import CommonCrons
 
 from .prompt_metrics import shipment_eta_reply_evaluation, shipment_eta_task_evaluation
 
-LLM_MODEL = "o4-mini"
+LLM_MODEL = "gpt5-mini"
 LLM_PROVIDER = "openai"
 
 get_shipment_eta = """
@@ -59,7 +58,7 @@ def create_shipment_prompt_card() -> PromptCard:
     """
     shipment_extraction_card = PromptCard(
         prompt=Prompt(
-            message=get_shipment_eta,
+            messages=get_shipment_eta,
             model=LLM_MODEL,
             provider=LLM_PROVIDER,
         ),
@@ -67,13 +66,13 @@ def create_shipment_prompt_card() -> PromptCard:
         name="shipment_eta",
     )
 
-    shipment_extraction_card.create_drift_profile(
+    shipment_extraction_card.create_eval_profile(
         alias="shipment_metrics",
-        config=LLMDriftConfig(
-            sample_rate=1,
-            alert_config=LLMAlertConfig(schedule=CommonCrons.Every6Hours),
+        config=GenAIEvalConfig(
+            sample_ratio=1.0,
+            alert_config=GenAIAlertConfig(schedule=CommonCrons.Every6Hours),
         ),
-        metrics=[shipment_eta_task_evaluation],
+        tasks=[shipment_eta_task_evaluation],
     )
 
     return shipment_extraction_card
@@ -88,7 +87,7 @@ def create_shipment_reply_prompt_card() -> PromptCard:
     """
     shipment_reply_card = PromptCard(
         prompt=Prompt(
-            message=get_shipment_eta_reply,
+            messages=get_shipment_eta_reply,
             model=LLM_MODEL,
             provider=LLM_PROVIDER,
         ),
@@ -96,13 +95,13 @@ def create_shipment_reply_prompt_card() -> PromptCard:
         name="shipment_eta_reply",
     )
 
-    shipment_reply_card.create_drift_profile(
+    shipment_reply_card.create_eval_profile(
         alias="shipment_reply_metrics",
-        config=LLMDriftConfig(
-            sample_rate=1,
-            alert_config=LLMAlertConfig(schedule=CommonCrons.Every6Hours),
+        config=GenAIEvalConfig(
+            sample_ratio=1.0,
+            alert_config=GenAIAlertConfig(schedule=CommonCrons.Every6Hours),
         ),
-        metrics=[shipment_eta_reply_evaluation],
+        tasks=[shipment_eta_reply_evaluation],
     )
 
     return shipment_reply_card
