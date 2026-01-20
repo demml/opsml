@@ -2,7 +2,6 @@ import numpy as np
 from opsml import (
     CardRegistry,
     ModelCard,
-    ModelLoadKwargs,
     RegistryType,
     TensorFlowModel,
 )
@@ -89,9 +88,6 @@ modelcard_list = registry.list_cards(uid=modelcard.uid).as_table()
 loaded_modelcard: ModelCard = registry.load_card(modelcard.uid)
 
 # Load the model card artifacts
-loaded_modelcard.load(
-    load_kwargs=ModelLoadKwargs(load_onnx=True),
-)
+loaded_modelcard.load()
 
 assert loaded_modelcard.model is not None
-assert loaded_modelcard.onnx_session is not None
