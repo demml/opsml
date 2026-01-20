@@ -1,7 +1,7 @@
-# opsml-artifacts
+
 opsml_registries/
 opsml/api/
-dev/
+dev_local/
 tmp.db
 test.db
 opsml.db

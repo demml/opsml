@@ -1915,7 +1915,7 @@ mod tests {
         let client = SqliteClient::new(&config).await.unwrap();
         let eval_record = EvaluationSqlRecord::new(
             "test".to_string(),
-            EvaluationType::LLM,
+            EvaluationType::GenAI,
             EvaluationProvider::Opsml,
         );
         let uid = eval_record.uid.clone();

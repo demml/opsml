@@ -1,5 +1,4 @@
 use crate::error::ExperimentError;
-use crate::llm::LLMEvaluator;
 use crate::HardwareQueue;
 use chrono::{DateTime, Utc};
 use mime_guess::mime;
@@ -26,6 +25,7 @@ use pyo3::{
     types::{PyDict, PyList},
     IntoPyObjectExt,
 };
+
 use std::path::PathBuf;
 use std::sync::Arc;
 use tempfile::tempdir;
@@ -267,11 +267,12 @@ impl Experiment {
         py: Python<'py>,
         space: Option<&str>,
         name: Option<&str>,
+        tags: Option<Vec<String>>,
         registries: &mut CardRegistries,
         subexperiment: bool,
     ) -> Result<(Bound<'py, PyAny>, String), ExperimentError> {
         debug!("Initializing experiment");
-        let experiment = Self::initialize_experiment(py, space, name, subexperiment)?;
+        let experiment = Self::initialize_experiment(py, space, name, tags, subexperiment)?;
 
         debug!("Registering experiment");
         let uid = Self::register_experiment(&experiment, registries)?;
@@ -299,9 +300,10 @@ impl Experiment {
         py: Python<'py>,
         space: Option<&str>,
         name: Option<&str>,
+        tags: Option<Vec<String>>,
         subexperiment: bool,
     ) -> Result<Bound<'py, PyAny>, ExperimentError> {
-        let mut card = ExperimentCard::new(py, space, name, None, None, None)?;
+        let mut card = ExperimentCard::new(py, space, name, None, None, tags)?;
         card.subexperiment = subexperiment;
 
         let experiment = Py::new(py, card)?.into_bound_py_any(py)?;
@@ -412,6 +414,7 @@ impl Experiment {
     /// * `code_dir` - The directory containing the code
     /// * `log_hardware` - Whether to log hardware metrics. Will log hardware metrics every 30 seconds
     /// * `experiment_uid` - The experiment UID
+    /// * `tags` - The tags associated with the experiment
     ///
     /// # Returns
     ///
@@ -420,13 +423,15 @@ impl Experiment {
     /// # Errors
     ///
     /// * `ExperimentError` - Error starting the experiment
-    #[pyo3(signature = (space=None, name=None, code_dir=None, log_hardware=false, experiment_uid=None))]
+    #[pyo3(signature = (space=None, name=None, tags=None, code_dir=None, log_hardware=false, experiment_uid=None))]
     #[instrument(skip_all)]
+    #[allow(clippy::too_many_arguments)]
     pub fn start_experiment<'py>(
         mut slf: PyRefMut<'py, Self>,
         py: Python<'py>,
         space: Option<&str>,
         name: Option<&str>,
+        tags: Option<Vec<String>>,
         code_dir: Option<PathBuf>,
         log_hardware: bool,
         experiment_uid: Option<&str>,
@@ -434,6 +439,7 @@ impl Experiment {
         debug!("Starting experiment");
         let helper = slf.experiment_helper.clone();
         let registries = &mut slf.registries;
+
         let experiment = match experiment_uid {
             Some(uid) => {
                 let card = Experiment::load_experiment(py, uid, registries)?;
@@ -448,7 +454,8 @@ impl Experiment {
                 )?
             }
             None => {
-                let (card, uid) = Experiment::create_experiment(py, space, name, registries, true)?;
+                let (card, uid) =
+                    Experiment::create_experiment(py, space, name, tags, registries, true)?;
 
                 Experiment::new(
                     py,
@@ -546,11 +553,6 @@ impl Experiment {
         Ok(())
     }
 
-    #[getter]
-    pub fn llm(&self) -> Result<LLMEvaluator, ExperimentError> {
-        Ok(LLMEvaluator {})
-    }
-
     pub fn log_metrics(&self, metrics: Vec<Metric>) -> Result<(), ExperimentError> {
         let metric_request = MetricRequest {
             experiment_uid: self.uid.clone(),
@@ -614,13 +616,13 @@ impl Experiment {
         // accepts either a dictionary or a list of Parameters
         let parameters = if parameters.is_instance_of::<PyDict>() {
             // extract to pydict
-            let dict = parameters.downcast::<PyDict>()?;
+            let dict = parameters.cast::<PyDict>()?;
             dict.iter()
                 .map(|(k, v)| Parameter::new(k.to_string(), v))
                 .collect::<Result<Vec<_>, _>>()?
         } else if parameters.is_instance_of::<PyList>() {
             // extract to pylist
-            let list = parameters.downcast::<PyList>()?;
+            let list = parameters.cast::<PyList>()?;
             list.extract::<Vec<Parameter>>()?
         } else {
             let received_type = parameters.get_type().name()?;
@@ -933,12 +935,13 @@ impl Experiment {
 /// # Errors
 /// * `ExperimentError` - Error starting the experiment
 #[pyfunction]
-#[pyo3(signature = (space=None, name=None, code_dir=None, log_hardware=false, experiment_uid=None))]
+#[pyo3(signature = (space=None, name=None, tags=None, code_dir=None, log_hardware=false, experiment_uid=None))]
 #[instrument(skip_all)]
 pub fn start_experiment<'py>(
     py: Python<'py>,
     space: Option<&str>,
     name: Option<&str>,
+    tags: Option<Vec<String>>,
     code_dir: Option<PathBuf>,
     log_hardware: bool,
     experiment_uid: Option<&str>,
@@ -966,7 +969,7 @@ pub fn start_experiment<'py>(
         }
         None => {
             let (experiment, uid) =
-                Experiment::create_experiment(py, space, name, &mut registries, false)?;
+                Experiment::create_experiment(py, space, name, tags, &mut registries, false)?;
 
             Experiment::new(
                 py,

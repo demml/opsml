@@ -12,10 +12,10 @@ pub fn add_alert_module(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PsiChiSquareThreshold>()?;
     m.add_class::<PsiFixedThreshold>()?;
     m.add_class::<AlertThreshold>()?;
-    m.add_class::<CustomMetricAlertCondition>()?;
+    m.add_class::<AlertCondition>()?;
     m.add_class::<CustomMetricAlertConfig>()?;
-    m.add_class::<LLMMetricAlertCondition>()?;
-    m.add_class::<LLMAlertConfig>()?;
+    m.add_class::<AlertCondition>()?;
+    m.add_class::<GenAIAlertConfig>()?;
     m.add_class::<SlackDispatchConfig>()?;
     m.add_class::<OpsGenieDispatchConfig>()?;
     m.add_class::<ConsoleDispatchConfig>()?;

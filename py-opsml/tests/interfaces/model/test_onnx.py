@@ -119,7 +119,7 @@ def test_lgb_classifier_calibrated_pipeline(
     "interface",
     [
         lazy_fixture("ard_regression"),
-        lazy_fixture("ada_boost_classifier"),
+        # lazy_fixture("ada_boost_classifier"), no longer works with onnx conversion (missing algorithm)
         lazy_fixture("ada_regression"),
         lazy_fixture("bagging_classifier"),
         lazy_fixture("bagging_regression"),

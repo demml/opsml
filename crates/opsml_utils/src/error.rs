@@ -46,15 +46,9 @@ pub enum UtilError {
 
     #[error("Space/name pattern is too long")]
     SpaceNamePatternTooLong,
-}
 
-#[derive(Error, Debug)]
-pub enum PyUtilError {
     #[error("{0}")]
     PyError(String),
-
-    #[error(transparent)]
-    UtilError(#[from] UtilError),
 
     #[error("Failed to downcast Python object: {0}")]
     DowncastError(String),
@@ -70,24 +64,27 @@ pub enum PyUtilError {
 
     #[error("Failed to import pydantic module. Error: {0}")]
     FailedToImportPydantic(String),
+
+    #[error("Failed to extract python type")]
+    FailedToExtract,
 }
 
-impl<'a> From<pyo3::DowncastError<'a, 'a>> for PyUtilError {
-    fn from(err: pyo3::DowncastError) -> Self {
-        PyUtilError::DowncastError(err.to_string())
+impl<'a, 'py> From<pyo3::CastError<'a, 'py>> for UtilError {
+    fn from(err: pyo3::CastError) -> Self {
+        UtilError::DowncastError(err.to_string())
     }
 }
 
-impl From<PyUtilError> for PyErr {
-    fn from(err: PyUtilError) -> PyErr {
+impl From<UtilError> for PyErr {
+    fn from(err: UtilError) -> PyErr {
         let msg = err.to_string();
         error!("{}", msg);
         PyRuntimeError::new_err(msg)
     }
 }
 
-impl From<PyErr> for PyUtilError {
-    fn from(err: PyErr) -> PyUtilError {
-        PyUtilError::PyError(err.to_string())
+impl From<PyErr> for UtilError {
+    fn from(err: PyErr) -> UtilError {
+        UtilError::PyError(err.to_string())
     }
 }

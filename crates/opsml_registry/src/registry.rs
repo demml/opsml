@@ -2,6 +2,7 @@ use crate::error::RegistryError;
 use crate::registries::card::OpsmlCardRegistry;
 use crate::utils::verify_card_rs;
 use crate::utils::{check_if_card, download_card, upload_card_artifacts, verify_card};
+use const_format::concatcp;
 use opsml_cards::traits::OpsmlCard;
 use opsml_colors::Colorize;
 use opsml_interfaces::DriftArgs;
@@ -11,11 +12,45 @@ use opsml_types::{cards::CardTable, contracts::*};
 use opsml_utils::{clean_string, unwrap_pystring};
 use pyo3::prelude::*;
 use pyo3::types::PyList;
+use scouter_client::try_set_span_attribute;
 use scouter_client::ProfileRequest;
-use scouter_client::ProfileStatusRequest;
+use scouter_client::SCOUTER_TAG_PREFIX;
 use std::path::PathBuf;
 use tempfile::TempDir;
 use tracing::{debug, error, instrument};
+
+const MODEL_KEY_ATTR: &str = "card.model.uid";
+const PROMPT_KEY_ATTR: &str = "card.prompt.uid";
+const SERVICE_KEY_ATTR: &str = "card.service.uid";
+const EXPERIMENT_KEY_ATTR: &str = "card.experiment.uid";
+const DATA_KEY_ATTR: &str = "card.data.uid";
+
+// combined patterns
+const DATA_TAG: &str = concatcp!(SCOUTER_TAG_PREFIX, ".", DATA_KEY_ATTR);
+const EXPERIMENT_TAG: &str = concatcp!(SCOUTER_TAG_PREFIX, ".", EXPERIMENT_KEY_ATTR);
+const SERVICE_TAG: &str = concatcp!(SCOUTER_TAG_PREFIX, ".", SERVICE_KEY_ATTR);
+const PROMPT_TAG: &str = concatcp!(SCOUTER_TAG_PREFIX, ".", PROMPT_KEY_ATTR);
+const MODEL_TAG: &str = concatcp!(SCOUTER_TAG_PREFIX, ".", MODEL_KEY_ATTR);
+
+/// Set uid as a tag on the current active span
+fn set_attribute_by_registry_type(
+    py: Python<'_>,
+    registry_type: &RegistryType,
+    uid: &str,
+) -> Result<(), RegistryError> {
+    let key = match registry_type {
+        RegistryType::Model => MODEL_TAG,
+        RegistryType::Prompt => PROMPT_TAG,
+        RegistryType::Service => SERVICE_TAG,
+        RegistryType::Experiment => EXPERIMENT_TAG,
+        RegistryType::Data => DATA_TAG,
+        _ => return Ok(()),
+    };
+
+    try_set_span_attribute(py, key, uid)?;
+    Ok(())
+}
+
 /// Helper struct to hold parameters for card registration
 #[derive(Debug)]
 struct CardRegistrationParams<'py> {
@@ -183,7 +218,7 @@ impl CardRegistry {
         };
 
         // Wrap all operations in a single block_on to handle async operations
-        Self::verify_and_register_card(params)
+        Self::verify_and_register_card(card.py(), params)
     }
 
     #[pyo3(signature = (uid=None, space=None, name=None, version=None, interface=None))]
@@ -278,7 +313,10 @@ impl CardRegistry {
     }
 
     #[instrument(skip_all)]
-    fn verify_and_register_card(params: CardRegistrationParams) -> Result<(), RegistryError> {
+    fn verify_and_register_card(
+        py: Python<'_>,
+        params: CardRegistrationParams,
+    ) -> Result<(), RegistryError> {
         // Verify card for registration
         debug!("Verifying card");
         verify_card(params.card, params.registry_type)?;
@@ -292,7 +330,8 @@ impl CardRegistry {
             params.version_type,
             params.pre_tag,
             params.build_tag,
-        )?;
+        )
+        .inspect_err(|e| error!("Failed to register card: {:?}", e))?;
 
         // Update card attributes
         if let Err(e) = Self::update_card_and_save(
@@ -307,6 +346,8 @@ impl CardRegistry {
             // raise error
             return Err(e);
         }
+
+        set_attribute_by_registry_type(py, params.registry_type, &create_response.key.uid)?;
 
         println!(
             "{} - {} - {}/{} - v{}",
@@ -340,7 +381,17 @@ impl CardRegistry {
     ) -> Result<(), RegistryError> {
         // Update card attributes
         debug!("Updating card with server response");
-        Self::update_card_with_server_response(response, card)?;
+        Self::update_card_with_server_response(response, card)
+            .inspect_err(|e| error!("Failed to updated card with server response {e}"))?;
+
+        // Helper function for handling integrations with other services
+        // For example, Opsml will allow a user to register and store a Scouter drift profile
+        // with a modelcard. However, this drift profile still needs to be registered with Scouter
+        // so we can preform model monitoring and drift detection
+        // This method also needs to be called before saving the card artifacts because Scouter will
+        // set the drift profile uid on the modelcard
+        debug!("Uploading integration artifacts");
+        Self::upload_integration_artifacts(registry, registry_type, card, save_kwargs)?;
 
         // Save card artifacts to temp path
         debug!("Saving card artifacts");
@@ -349,13 +400,6 @@ impl CardRegistry {
         // Save artifacts
         debug!("Uploading card artifacts");
         upload_card_artifacts(tmp_path, &response.key)?;
-
-        // Helper function for handling integrations with other services
-        // For example, Opsml will allow a user to register and store a Scouter drift profile
-        // with a modelcard. However, this drift profile still needs to be registered with Scouter
-        // so we can preform model monitoring and drift detection
-        debug!("Uploading integration artifacts");
-        Self::upload_integration_artifacts(registry, registry_type, card, save_kwargs, response)?;
 
         Ok(())
     }
@@ -411,9 +455,7 @@ impl CardRegistry {
     /// (1) create an artifact key to be used to encrypt data
     /// (2) save the card to a temporary directory (with encryption)
     /// (3) Transfer all files in the temporary directory to the storage system
-    ///
     /// # Arguments
-    ///
     /// * `py` - Python interpreter
     /// * `card` - Card to save
     /// * `save_kwargs` - Optional save kwargs
@@ -460,7 +502,6 @@ impl CardRegistry {
         registry_type: &RegistryType,
         card: &Bound<'_, PyAny>,
         save_kwargs: Option<&Bound<'_, PyAny>>,
-        response: &CreateCardResponse,
     ) -> Result<(), RegistryError> {
         // If our integration types expand to other services and registry types, consider using a match statement
         if registry_type == &RegistryType::Model || registry_type == &RegistryType::Prompt {
@@ -471,7 +512,7 @@ impl CardRegistry {
                     .and_then(|kwargs| kwargs.getattr("drift").ok())
                     .and_then(|args| args.extract::<DriftArgs>().ok());
 
-                Self::upload_scouter_artifacts(registry, card, drift_args, response)?;
+                Self::upload_scouter_artifacts(registry, card, drift_args, registry_type)?;
             }
         }
         Ok(())
@@ -498,35 +539,45 @@ impl CardRegistry {
         registry: &OpsmlCardRegistry,
         card: &Bound<'_, PyAny>,
         drift_args: Option<DriftArgs>,
-        response: &CreateCardResponse,
+        registry_type: &RegistryType,
     ) -> Result<(), RegistryError> {
-        let drift_profiles = card.getattr("drift_profile")?;
+        // update drift config args before uploading profiles to scouter and saving
+        card.call_method0("_update_drift_config_args")?;
+
+        let drift_profiles = match registry_type {
+            RegistryType::Model => card.getattr("drift_profile")?,
+            RegistryType::Prompt => card.getattr("eval_profile")?,
+            _ => {
+                return Err(RegistryError::InvalidRegistryType(
+                    "Expected Model or Prompt registry type".to_string(),
+                ))
+            }
+        };
         let binding = drift_profiles.call_method0("values")?;
         let collected_profiles = binding
-            .downcast::<PyList>()
-            .inspect_err(|e| error!("Failed to downcast drift profiles: {:?}", e))?;
+            .cast::<PyList>()
+            .inspect_err(|e| error!("Failed to downcast drift profiles: {e}"))?;
 
         for profile in collected_profiles.iter() {
-            let profile_request = profile
+            let mut profile_request = profile
                 .call_method0("create_profile_request")?
                 .extract::<ProfileRequest>()?;
 
-            registry.insert_scouter_profile(&profile_request)?;
+            // set drift args if provided
+            if let Some(drift_args) = &drift_args {
+                profile_request.active = drift_args.active;
+                profile_request.deactivate_others = drift_args.deactivate_others;
+            }
+
+            let registered_response = registry.insert_scouter_profile(&profile_request)?;
             debug!("Successfully uploaded scouter profile");
 
-            // if drift_args is Some, then we need to update the drift profile status
-            if let Some(ref drift_args) = drift_args {
-                let profile_status_request = ProfileStatusRequest {
-                    space: response.space.clone(),
-                    name: response.name.clone(),
-                    version: response.version.clone(),
-                    active: drift_args.active,
-                    drift_type: Some(profile_request.drift_type.clone()),
-                    deactivate_others: drift_args.deactivate_others,
-                };
-                registry.update_drift_profile_status(&profile_status_request)?;
-                debug!("Successfully updated scouter profile status");
-            }
+            // Need to update the drift profile.config.uid with the registered profile uid
+            profile
+                .setattr("uid", registered_response.uid)
+                .inspect_err(|e| {
+                    error!("Failed to set drift profile uid: {e}");
+                })?;
         }
 
         Ok(())
@@ -609,8 +660,11 @@ impl CardRegistry {
             Some(version.clone())
         };
 
-        let response =
-            registry.create_card(registry_card, version, version_type, pre_tag, build_tag)?;
+        let response = registry
+            .create_card(registry_card, version, version_type, pre_tag, build_tag)
+            .inspect_err(|e| {
+                error!("Failed to create card in registry: {e}");
+            })?;
 
         debug!(
             "Successfully registered card with server - {} - {}/{} - v{}",

@@ -5,7 +5,6 @@ use opsml_storage::storage::error::StorageError;
 use opsml_toml::error::PyProjectTomlError;
 use opsml_types::contracts::ServiceType;
 use opsml_types::error::TypeError;
-use opsml_utils::error::PyUtilError;
 use opsml_utils::error::UtilError;
 use pyo3::exceptions::PyRuntimeError;
 use pyo3::prelude::*;
@@ -17,9 +16,6 @@ use tracing::error;
 pub enum CliError {
     #[error(transparent)]
     UtilError(#[from] UtilError),
-
-    #[error(transparent)]
-    PyUtilError(#[from] PyUtilError),
 
     #[error(transparent)]
     StorageError(#[from] StorageError),

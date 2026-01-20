@@ -44,6 +44,7 @@ impl ScouterServer {
             space: "space".to_string(),
             name: "name".to_string(),
             version: "version".to_string(),
+            uid: "mocked_uid".to_string(),
             status: "success".to_string(),
             active: true,
         };
@@ -208,7 +209,9 @@ impl OpsmlTestServer {
     #[cfg(feature = "server")]
     pub fn start_mock_scouter(&mut self) -> PyResult<()> {
         let scouter_server = ScouterServer::new();
-        std::env::set_var("SCOUTER_SERVER_URI", &scouter_server.url);
+        unsafe {
+            std::env::set_var("SCOUTER_SERVER_URI", &scouter_server.url);
+        }
         println!("Mock Scouter Server started at {}", scouter_server.url);
         self.scouter_server = Some(scouter_server);
         Ok(())
@@ -218,7 +221,9 @@ impl OpsmlTestServer {
     pub fn stop_mock_scouter(&mut self) {
         if let Some(server) = self.scouter_server.take() {
             drop(server);
-            std::env::remove_var("SCOUTER_SERVER_URI");
+            unsafe {
+                std::env::remove_var("SCOUTER_SERVER_URI");
+            }
         }
         println!("Mock Scouter Server stopped");
     }
@@ -226,8 +231,10 @@ impl OpsmlTestServer {
     pub fn set_env_vars_for_client(&self, _port: u16) -> PyResult<()> {
         #[cfg(feature = "server")]
         {
-            std::env::set_var("OPSML_TRACKING_URI", format!("http://localhost:{}", _port));
-            std::env::set_var("APP_ENV", "dev_client");
+            unsafe {
+                std::env::set_var("OPSML_TRACKING_URI", format!("http://localhost:{}", _port));
+                std::env::set_var("APP_ENV", "dev_client");
+            }
             Ok(())
         }
         #[cfg(not(feature = "server"))]
@@ -247,10 +254,14 @@ impl OpsmlTestServer {
             println!("Starting Opsml Server...");
 
             // set server env vars
-            std::env::set_var("APP_ENV", "dev_server");
+            unsafe {
+                std::env::set_var("APP_ENV", "dev_server");
+            }
 
             if self.base_path.is_some() {
-                std::env::set_var("OPSML_BASE_PATH", self.base_path.as_ref().unwrap());
+                unsafe {
+                    std::env::set_var("OPSML_BASE_PATH", self.base_path.as_ref().unwrap());
+                }
             }
 
             let handle = self.handle.clone();
@@ -265,14 +276,18 @@ impl OpsmlTestServer {
                 }
             };
 
-            std::env::set_var("OPSML_SERVER_PORT", port.to_string());
+            unsafe {
+                std::env::set_var("OPSML_SERVER_PORT", port.to_string());
+            }
 
             let sql_path = format!("sqlite://{}/opsml.db", self.root_dir.display());
             let registry_path = self.root_dir.join("opsml_registries").display().to_string();
 
             runtime.spawn(async move {
-                std::env::set_var("OPSML_TRACKING_URI", sql_path);
-                std::env::set_var("OPSML_STORAGE_URI", registry_path);
+                unsafe {
+                    std::env::set_var("OPSML_TRACKING_URI", sql_path);
+                    std::env::set_var("OPSML_STORAGE_URI", registry_path);
+                }
                 let server_handle = start_server_in_background();
                 *handle.lock().await = server_handle.lock().await.take();
             });
@@ -346,10 +361,12 @@ impl OpsmlTestServer {
     }
 
     pub fn remove_env_vars_for_client(&self) -> PyResult<()> {
-        std::env::remove_var("APP_ENV");
-        std::env::remove_var("OPSML_TRACKING_URI");
-        std::env::remove_var("OPSML_SERVER_PORT");
-        std::env::remove_var("OPSML_BASE_PATH");
+        unsafe {
+            std::env::remove_var("APP_ENV");
+            std::env::remove_var("OPSML_TRACKING_URI");
+            std::env::remove_var("OPSML_SERVER_PORT");
+            std::env::remove_var("OPSML_BASE_PATH");
+        }
         Ok(())
     }
 
@@ -421,7 +438,10 @@ impl OpsmlServerContext {
     #[cfg(feature = "server")]
     pub fn start_mock_scouter(&mut self) -> PyResult<()> {
         let scouter_server = ScouterServer::new();
-        std::env::set_var("SCOUTER_SERVER_URI", &scouter_server.url);
+
+        unsafe {
+            std::env::set_var("SCOUTER_SERVER_URI", &scouter_server.url);
+        }
         println!("Mock Scouter Server started at {}", scouter_server.url);
         self.scouter_server = Some(scouter_server);
         Ok(())
@@ -431,7 +451,9 @@ impl OpsmlServerContext {
     pub fn stop_mock_scouter(&mut self) {
         if let Some(server) = self.scouter_server.take() {
             drop(server);
-            std::env::remove_var("SCOUTER_SERVER_URI");
+            unsafe {
+                std::env::remove_var("SCOUTER_SERVER_URI");
+            }
         }
         println!("Mock Scouter Server stopped");
     }

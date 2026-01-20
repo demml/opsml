@@ -37,7 +37,7 @@ OpsML is an open-source developer-first ML operations platform focused on inject
   - [For when you only need the client](#for-when-you-only-need-the-client)
 - [Demo](#demo)
 - [Example Usage (Traditional ML)](#example-usage-traditional-ml)
-- [Example Usage (LLM)](#example-usage-llm)
+- [Example Usage (GenAI Chat)](#example-usage-genai-chat)
 - [The Docs](#the-docs)
 - [Hosting](#hosting)
 - [Us vs Others](#us-vs-others)
@@ -49,15 +49,15 @@ Building reliable ML systems shouldn't require gluing together dozens of dispara
 
 ### What makes OpsML different
 
-- **All-in-One Simplicity** – Models, data, prompts, experiments, services, and monitoring in one unified platform  
+- **All-in-One Simplicity** – Models, data, prompts, experiments, services, and monitoring in one unified platform
 - **Artifact-First Approach** – Artifacts are the foundation of any ML system. Opsml treats them all as first-class citizens.
 - **Type-Safe & Fast** – OpsML is written entirely in Rust with a focus on reliability and performance
-- **Zero-Friction Integration** – Drop into existing workflows in minutes 
-- **Cloud & Database Agnostic** – Deploy anywhere, from local dev to multi-cloud production  
-- **Production-Ready Controls** – Authentication, encryption, audit trails, and governance built-in  
-- **Integrated Monitoring** – Real-time drift detection via [Scouter](https://github.com/demml/scouter) 
-- **Standardized Patterns** – Consistent workflows across teams, projects, and environments  
-- **Developer Happiness** – One dependency, unified API, maximum productivity  
+- **Zero-Friction Integration** – Drop into existing workflows in minutes
+- **Cloud & Database Agnostic** – Deploy anywhere, from local dev to multi-cloud production
+- **Production-Ready Controls** – Authentication, encryption, audit trails, and governance built-in
+- **Integrated Monitoring** – Real-time drift detection via [Scouter](https://github.com/demml/scouter)
+- **Standardized Patterns** – Consistent workflows across teams, projects, and environments
+- **Developer Happiness** – One dependency, unified API, maximum productivity
 
 
 ## Installation
@@ -100,7 +100,7 @@ opsml ui stop
 ## Example Usage (Traditional ML)
 
 ```python
-# create_fake_data requires polars and pandas to be installed 
+# create_fake_data requires polars and pandas to be installed
 from opsml.helpers.data import create_fake_data
 from opsml import SklearnModel, CardRegistry, TaskType, ModelCard, RegistryType
 from sklearn import ensemble
@@ -115,7 +115,7 @@ X, y = create_fake_data(n_samples=1200)
 classifier = ensemble.RandomForestClassifier(n_estimators=5)
 classifier.fit(X.to_numpy(), y.to_numpy().ravel())
 
-model_interface = SklearnModel( 
+model_interface = SklearnModel(
     model=classifier,
     sample_data=X[0:10],
     task_type=TaskType.Classification,
@@ -132,7 +132,7 @@ modelcard = ModelCard(
 reg.register_card(modelcard)
 ```
 
-## Example Usage (LLM)
+## Example Usage (GenAI Chat)
 
 ```python
 from openai import OpenAI
@@ -143,24 +143,24 @@ client = OpenAI()
 card = PromptCard(
     space="opsml",
     name="my_prompt",
-    prompt=Prompt( 
+    prompt=Prompt(
         model="gpt-4o",
         provider="openai",
-        message="Provide a brief summary of the programming language ${language}.", 
-        system_instruction="Be concise, reply with one sentence.",
+        messages="Provide a brief summary of the programming language ${language}.",
+        system_instructions="Be concise, reply with one sentence.",
     ),
 )
 
 def chat_app(language: str):
 
     # create the prompt and bind the context
-    user_prompt = card.prompt.bind(language=language).message[0].unwrap()
-    system_instruction = card.prompt.system_instruction[0].unwrap()
+    user_prompt = card.prompt.bind(language=language).messages[0]
+    system_instruction = card.prompt.system_instructions[0]
 
     response = client.chat.completions.create(
         model=card.prompt.model_identifier,
         messages=[
-            {"role": "system", "content": system_instruction},
+            {"role": "system", "content": system_instruction.text},
             {"role": "user", "content": user_prompt},
         ],
     )

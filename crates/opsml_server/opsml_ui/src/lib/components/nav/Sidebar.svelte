@@ -2,17 +2,18 @@
   import { onMount } from "svelte";
   import { page } from "$app/state";
   import { goto } from "$app/navigation";
-  import { 
-    Home, 
-    Database, 
-    Brain, 
+  import {
+    Home,
+    Database,
+    Brain,
     Sparkles,
     NotebookTabs,
-    FlaskConical, 
+    FlaskConical,
     Server,
     ChevronRight,
     Pin,
-    PinOff
+    PinOff,
+    Activity
   } from 'lucide-svelte';
 
   interface NavSubItem {
@@ -43,18 +44,20 @@
     { name: "Spaces", path: "/opsml/space", icon: NotebookTabs },
     { name: "Models", path: "/opsml/model", icon: Brain },
     { name: "Data", path: "/opsml/data", icon: Database },
-    { 
-      name: "GenAI", 
-      path: "/opsml/genai", 
+    {
+      name: "GenAI",
+      path: "/opsml/genai",
       icon: Sparkles,
       subItems: [
         { name: "Prompts", path: "/opsml/genai/prompt" },
         { name: "Agents", path: "/opsml/genai/agent" },
-        { name: "MCPs", path: "/opsml/genai/mcp" }
+        { name: "MCPs", path: "/opsml/genai/mcp" },
+        { name: "Evaluations", path: "/opsml/genai/eval" }
       ]
     },
     { name: "Experiments", path: "/opsml/experiment", icon: FlaskConical },
-    { name: "Services", path: "/opsml/service", icon: Server }
+    { name: "Services", path: "/opsml/service", icon: Server },
+    { name: "Observability", path: "/opsml/observability", icon: Activity }
   ];
 
   function handleMouseEnter() {
@@ -131,7 +134,7 @@
 
 <div class="flex h-full">
 
-  <aside 
+  <aside
     class="fixed start-0 top-[3.5rem] z-30 h-[calc(100dvh-3.5rem)] bg-surface-100 border-e-2 border-black shadow-lg transition-all duration-300 ease-in-out data-[expanded=true]:w-64 data-[expanded=false]:w-16"
     data-sidebar
     data-expanded={isExpanded}
@@ -145,7 +148,7 @@
         {@const IconComponent = item.icon}
         {@const hasSubItems = item.subItems && item.subItems.length > 0}
         {@const isSubMenuExpanded = expandedItems.has(item.name)}
-        
+
         <div>
           <button
             type="button"
@@ -161,8 +164,8 @@
           >
             <div class="absolute left-0 top-1/2 -translate-y-1/2 h-8 w-1 {isActive ? 'bg-primary-700' : 'bg-transparent'} rounded-e-full"></div>
             <div class="shrink-0 w-6 h-6 flex items-center justify-center">
-              <IconComponent 
-                size={20} 
+              <IconComponent
+                size={20}
                 class="transition-colors duration-200 {isActive ? 'text-primary-800' : 'text-current'}"
               />
             </div>
@@ -171,9 +174,9 @@
             </span>
             {#if hasSubItems && isExpanded}
               <div class="ms-auto">
-                <ChevronRight 
-                  size={16} 
-                  class="text-black transition-transform duration-200 {isSubMenuExpanded ? 'rotate-90' : ''}" 
+                <ChevronRight
+                  size={16}
+                  class="text-black transition-transform duration-200 {isSubMenuExpanded ? 'rotate-90' : ''}"
                 />
               </div>
             {/if}
@@ -216,11 +219,11 @@
             <Pin size={20} class="text-current" />
           {/if}
         </div>
-        
+
         <span class="ms-3 text-sm font-medium whitespace-nowrap transition-opacity duration-300 {isExpanded ? 'opacity-100' : 'opacity-0'}">
           {isPinned ? 'Unpin' : 'Pin sidebar'}
         </span>
-        
+
         {#if isExpanded}
           <div class="ms-auto">
             <ChevronRight size={16} class="text-gray-400 transition-transform duration-200 {isExpanded ? 'rotate-180' : ''}" />
@@ -236,24 +239,24 @@
 </div>
 
 <style>
- 
+
   aside {
     will-change: width;
   }
-  
+
   aside::-webkit-scrollbar {
     width: 4px;
   }
-  
+
   aside::-webkit-scrollbar-track {
     background: transparent;
   }
-  
+
   aside::-webkit-scrollbar-thumb {
     background: rgb(156 163 175 / 0.3);
     border-radius: 2px;
   }
-  
+
   aside::-webkit-scrollbar-thumb:hover {
     background: rgb(156 163 175 / 0.5);
   }

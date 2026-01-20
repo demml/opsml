@@ -1,7 +1,8 @@
-use opsml_utils::error::{PyUtilError, UtilError};
+use opsml_utils::error::UtilError;
 use pyo3::exceptions::PyRuntimeError;
+use pyo3::pyclass::PyClassGuardError;
 use pyo3::PyErr;
-use reqwest::StatusCode;
+use pythonize::PythonizeError;
 use thiserror::Error;
 use tracing::error;
 
@@ -39,8 +40,8 @@ impl From<TypeError> for PyErr {
 
 #[derive(Error, Debug)]
 pub enum DataInterfaceError {
-    #[error(transparent)]
-    PyError(#[from] pyo3::PyErr),
+    #[error("{0}")]
+    Error(String),
 
     #[error("Data must be a numpy array. Received: {0}")]
     NumpyTypeError(String),
@@ -106,8 +107,20 @@ pub enum DataInterfaceError {
     DowncastError(String),
 }
 
-impl<'a> From<pyo3::DowncastError<'a, 'a>> for DataInterfaceError {
-    fn from(err: pyo3::DowncastError) -> Self {
+impl<'a, 'py> From<PyClassGuardError<'a, 'py>> for DataInterfaceError {
+    fn from(err: PyClassGuardError<'a, 'py>) -> Self {
+        DataInterfaceError::Error(err.to_string())
+    }
+}
+
+impl From<PyErr> for DataInterfaceError {
+    fn from(err: PyErr) -> Self {
+        DataInterfaceError::Error(err.to_string())
+    }
+}
+
+impl<'a, 'py> From<pyo3::CastError<'a, 'py>> for DataInterfaceError {
+    fn from(err: pyo3::CastError<'a, 'py>) -> Self {
         DataInterfaceError::DowncastError(err.to_string())
     }
 }
@@ -122,8 +135,8 @@ impl From<DataInterfaceError> for PyErr {
 
 #[derive(Error, Debug)]
 pub enum SampleDataError {
-    #[error(transparent)]
-    PyError(#[from] pyo3::PyErr),
+    #[error("{0}")]
+    Error(String),
 
     #[error(transparent)]
     DataInterfaceError(#[from] DataInterfaceError),
@@ -144,8 +157,20 @@ pub enum SampleDataError {
     DataTypeError,
 }
 
-impl<'a> From<pyo3::DowncastError<'a, 'a>> for SampleDataError {
-    fn from(err: pyo3::DowncastError) -> Self {
+impl<'a, 'py> From<PyClassGuardError<'a, 'py>> for SampleDataError {
+    fn from(err: PyClassGuardError<'a, 'py>) -> Self {
+        SampleDataError::Error(err.to_string())
+    }
+}
+
+impl From<PyErr> for SampleDataError {
+    fn from(err: PyErr) -> Self {
+        SampleDataError::Error(err.to_string())
+    }
+}
+
+impl<'a, 'py> From<pyo3::CastError<'a, 'py>> for SampleDataError {
+    fn from(err: pyo3::CastError<'a, 'py>) -> Self {
         SampleDataError::DowncastError(err.to_string())
     }
 }
@@ -203,9 +228,6 @@ pub enum OnnxError {
     PyOnnxExtractError(pyo3::PyErr),
 
     #[error(transparent)]
-    PyError(#[from] pyo3::PyErr),
-
-    #[error(transparent)]
     IoError(#[from] std::io::Error),
 
     #[error(transparent)]
@@ -233,8 +255,20 @@ pub enum OnnxError {
     DowncastError(String),
 }
 
-impl<'a> From<pyo3::DowncastError<'a, 'a>> for OnnxError {
-    fn from(err: pyo3::DowncastError) -> Self {
+impl<'a, 'py> From<PyClassGuardError<'a, 'py>> for OnnxError {
+    fn from(err: PyClassGuardError<'a, 'py>) -> Self {
+        OnnxError::Error(err.to_string())
+    }
+}
+
+impl From<PyErr> for OnnxError {
+    fn from(err: PyErr) -> Self {
+        OnnxError::Error(err.to_string())
+    }
+}
+
+impl<'a, 'py> From<pyo3::CastError<'a, 'py>> for OnnxError {
+    fn from(err: pyo3::CastError<'a, 'py>) -> Self {
         OnnxError::DowncastError(err.to_string())
     }
 }
@@ -248,6 +282,9 @@ impl From<OnnxError> for PyErr {
 
 #[derive(Error, Debug)]
 pub enum ModelInterfaceError {
+    #[error("{0}")]
+    Error(String),
+
     #[error("No ONNX session detected in interface for loading")]
     OnnxSessionMissing,
 
@@ -262,9 +299,6 @@ pub enum ModelInterfaceError {
 
     #[error("Model must be an instance of transformers")]
     TransformerTypeError,
-
-    #[error(transparent)]
-    PyError(#[from] pyo3::PyErr),
 
     #[error(transparent)]
     OnnxError(#[from] OnnxError),
@@ -340,9 +374,6 @@ pub enum ModelInterfaceError {
     UtilError(#[from] UtilError),
 
     #[error(transparent)]
-    PyUtilError(#[from] PyUtilError),
-
-    #[error(transparent)]
     DataInterfaceError(#[from] DataInterfaceError),
 
     #[error("Interface type not found")]
@@ -366,70 +397,32 @@ pub enum ModelInterfaceError {
     DriftProfileNotFound,
 }
 
-impl<'a> From<pyo3::DowncastError<'a, 'a>> for ModelInterfaceError {
-    fn from(err: pyo3::DowncastError) -> Self {
+impl From<PythonizeError> for ModelInterfaceError {
+    fn from(err: PythonizeError) -> Self {
+        ModelInterfaceError::Error(err.to_string())
+    }
+}
+
+impl<'a, 'py> From<pyo3::CastError<'a, 'py>> for ModelInterfaceError {
+    fn from(err: pyo3::CastError<'a, 'py>) -> Self {
         ModelInterfaceError::DowncastError(err.to_string())
+    }
+}
+
+impl<'a, 'py> From<PyClassGuardError<'a, 'py>> for ModelInterfaceError {
+    fn from(err: PyClassGuardError<'a, 'py>) -> Self {
+        ModelInterfaceError::Error(err.to_string())
+    }
+}
+
+impl From<PyErr> for ModelInterfaceError {
+    fn from(err: PyErr) -> Self {
+        ModelInterfaceError::Error(err.to_string())
     }
 }
 
 impl From<ModelInterfaceError> for PyErr {
     fn from(err: ModelInterfaceError) -> PyErr {
-        let msg = err.to_string();
-        error!("{}", msg);
-        PyRuntimeError::new_err(msg)
-    }
-}
-
-#[derive(Error, Debug)]
-pub enum AgentError {
-    #[error("Failed to create header value for the agent client")]
-    CreateHeaderValueError(#[from] reqwest::header::InvalidHeaderValue),
-
-    #[error("Failed to create header name for the agent client")]
-    CreateHeaderNameError(#[from] reqwest::header::InvalidHeaderName),
-
-    #[error("Failed to create agent client: {0}")]
-    CreateClientError(#[source] reqwest::Error),
-
-    #[error("Request failed: {0}")]
-    RequestError(#[from] reqwest::Error),
-
-    #[error("Failed to serialize chat request")]
-    SerializationError(#[from] serde_json::Error),
-
-    #[error("Failed to get chat completion response: {0}")]
-    ChatCompletionError(StatusCode),
-
-    #[error("Failed to downcast Python object: {0}")]
-    DowncastError(String),
-
-    #[error("Failed to get environment variable: {0}")]
-    EnvVarError(#[from] std::env::VarError),
-
-    #[error("Failed to extract client: {0}")]
-    ClientExtractionError(String),
-
-    #[error(transparent)]
-    PyError(#[from] pyo3::PyErr),
-
-    #[error(transparent)]
-    UtilError(#[from] PyUtilError),
-
-    #[error("Client did not provide response")]
-    ClientNoResponseError,
-
-    #[error("No ready tasks found but pending tasks remain. Possible circular dependency.")]
-    NoTaskFoundError,
-}
-
-impl<'a> From<pyo3::DowncastError<'a, 'a>> for AgentError {
-    fn from(err: pyo3::DowncastError) -> Self {
-        AgentError::DowncastError(err.to_string())
-    }
-}
-
-impl From<AgentError> for PyErr {
-    fn from(err: AgentError) -> PyErr {
         let msg = err.to_string();
         error!("{}", msg);
         PyRuntimeError::new_err(msg)

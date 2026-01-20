@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
-  import { IdCard, FolderTree, Tag } from 'lucide-svelte';
+  import { IdCard, FolderTree, Tag, Search } from 'lucide-svelte';
   import { page } from '$app/state';
   import { getRegistryPath } from '$lib/utils';
   import type { RegistryType } from '$lib/utils';
@@ -25,7 +25,7 @@
    */
   let activeTab = $derived.by(() => {
     const last = page.url.pathname.split('/').pop() ?? '';
-    if (['card', 'files', 'versions', 'view'].includes(last)) return last;
+    if (['card', 'files', 'observability', 'versions', 'view'].includes(last)) return last;
     return 'card';
   });
 
@@ -56,6 +56,13 @@
       description: 'Service artifacts and deployment files'
     },
     {
+      key: 'observability',
+      label: 'Observability',
+      icon: Search,
+      isActive: (tab: string) => tab === 'observability',
+      description: 'Service observability and monitoring'
+    },
+    {
       key: 'versions',
       label: 'Versions',
       icon: Tag,
@@ -74,8 +81,8 @@
     <!-- Breadcrumb Navigation -->
     <h1 class="flex flex-row flex-wrap items-center">
       <div class="group flex flex-none items-center">
-        <a 
-          class="font-semibold text-black hover:text-secondary-500 transition-colors" 
+        <a
+          class="font-semibold text-black hover:text-secondary-500 transition-colors"
           href="/opsml/space/{metadata.space}"
           aria-label="Navigate to {metadata.space} space"
         >
@@ -84,7 +91,7 @@
         <div class="mx-0.5 text-gray-800" aria-hidden="true">/</div>
       </div>
       <div class="font-bold text-primary-800">
-        <a 
+        <a
           href="{basePath.replace(`/${metadata.version}`, '')}"
           class="hover:text-primary-600 transition-colors"
           aria-label="Navigate to {metadata.name} service overview"
@@ -97,8 +104,8 @@
     </h1>
 
     <!-- Tab Navigation -->
-    <nav 
-      class="flex flex-row gap-x-4 text-black pl-4 py-2 text-smd flex-wrap" 
+    <nav
+      class="flex flex-row gap-x-4 text-black pl-4 py-2 text-smd flex-wrap"
       aria-label="Service navigation"
     >
       {#each navItems as item}

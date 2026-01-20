@@ -153,7 +153,7 @@ impl ModelCard {
         if interface.is_instance_of::<ModelInterface>() {
             //
         } else {
-            return Err(CardError::CustomError(interface_error()));
+            return Err(CardError::Error(interface_error()));
         }
 
         let interface_type = extract_py_attr::<ModelInterfaceType>(interface, "interface_type")?;
@@ -201,7 +201,7 @@ impl ModelCard {
             if session.is_none() {
                 Ok(None)
             } else {
-                let session = session.downcast::<OnnxSession>()?;
+                let session = session.cast::<OnnxSession>()?;
                 Ok(Some(session.clone()))
             }
         } else {
@@ -261,7 +261,7 @@ impl ModelCard {
     ) -> Result<Bound<'py, DriftProfileMap>, CardError> {
         if let Some(interface) = self.interface.as_ref() {
             let drift_profiles = interface.bind(py).getattr("drift_profile")?;
-            Ok(drift_profiles.downcast::<DriftProfileMap>()?.clone())
+            Ok(drift_profiles.cast::<DriftProfileMap>()?.clone())
         } else {
             Err(CardError::InterfaceNotFoundError)
         }
@@ -284,9 +284,6 @@ impl ModelCard {
             .interface
             .as_ref()
             .ok_or_else(|| CardError::InterfaceNotFoundError)?;
-
-        // scouter integration: update drift config args
-        self.update_drift_config_args(py)?;
 
         let metadata = model
             .bind(py)
@@ -499,17 +496,13 @@ impl ModelCard {
             Err(CardError::InterfaceNotFoundError)
         }
     }
-}
 
-impl ModelCard {
-    pub fn set_artifact_key(&mut self, key: ArtifactKey) {
-        self.artifact_key = Some(key);
-    }
+    #[pyo3(name = "_update_drift_config_args")]
     fn update_drift_config_args(&self, py: Python) -> Result<(), CardError> {
         let interface = self.interface.as_ref().unwrap().bind(py);
         let drift_profiles = interface.getattr("drift_profile")?;
         // downcast to list
-        let drift_profiles = drift_profiles.downcast::<DriftProfileMap>()?;
+        let drift_profiles = drift_profiles.cast::<DriftProfileMap>()?;
 
         // if drift_profiles is empty, return
         if drift_profiles.call_method0("is_empty")?.extract::<bool>()? {
@@ -525,6 +518,12 @@ impl ModelCard {
 
             Ok(())
         }
+    }
+}
+
+impl ModelCard {
+    pub fn set_artifact_key(&mut self, key: ArtifactKey) {
+        self.artifact_key = Some(key);
     }
 
     fn load_interface(
@@ -570,8 +569,9 @@ impl Serialize for ModelCard {
     }
 }
 
-impl FromPyObject<'_> for ModelCard {
-    fn extract_bound(ob: &Bound<'_, PyAny>) -> PyResult<Self> {
+impl FromPyObject<'_, '_> for ModelCard {
+    type Error = PyErr;
+    fn extract(ob: Borrowed<'_, '_, PyAny>) -> PyResult<Self> {
         let interface = ob.getattr("interface")?;
         let name = ob.getattr("name")?.extract()?;
         let space = ob.getattr("space")?.extract()?;

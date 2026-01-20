@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
-  import { IdCard, FolderTree, Tag, Activity } from 'lucide-svelte';
+  import { IdCard, FolderTree, Tag, Activity, Search } from 'lucide-svelte';
   import { page } from '$app/state';
   import { uiSettingsStore } from '$lib/components/settings/settings.svelte';
   import { dev } from '$app/environment';
@@ -22,12 +22,20 @@
 
   let { metadata, registryType, children }: PromptLayoutProps = $props();
 
-  /** 
+  /**
    * Determines the active tab based on the current URL path
    */
   let activeTab = $derived.by(() => {
-    const last = page.url.pathname.split('/').pop() ?? '';
-    if (['card', 'files', 'monitoring', 'versions', 'view'].includes(last)) return last;
+    const pathParts = page.url.pathname.split('/');
+    const last = pathParts[pathParts.length - 1] ?? '';
+    const secondLast = pathParts[pathParts.length - 2] ?? '';
+    
+    // Check if we're in a nested monitoring route (e.g., /monitoring/custom)
+    if (secondLast === 'monitoring') return 'monitoring';
+    
+    // Direct routes
+    if (['card', 'files', 'monitoring', 'observability', 'versions', 'view'].includes(last)) return last;
+    
     return 'card';
   });
 
@@ -38,6 +46,22 @@
     (metadata.metadata.drift_profile_uri_map && uiSettingsStore.scouterEnabled) || dev
   );
 
+  /// determine base path for monitoring links
+  // if metadata.metadata.drift_profile_uri_map exists and scouter is enabled, get the first drift type from the map
+  // example profile map: {"genai":{"drift_type":"GenAI","root_dir":"drift","uri":"drift/genai.json"}}
+  // iterate over map and get first drift type at key "drift_type"
+  let monitoringBasePath = $derived(() => {
+    if (metadata.metadata.drift_profile_uri_map && uiSettingsStore.scouterEnabled) {
+      const driftTypes = Object.values(metadata.metadata.drift_profile_uri_map).map(
+        (profile: any) => profile.drift_type.toLowerCase()
+      );
+      if (driftTypes.length > 0) {
+        return `monitoring/${driftTypes[0]}`;
+      }
+    }
+    return 'monitoring';
+  });
+
   /**
    * Base path for navigation links
    */
@@ -46,6 +70,8 @@
   );
 
   const iconColor = '#8059b6';
+
+  console.log("PromptCardLayout metadata:", JSON.stringify(metadata.metadata.drift_profile_uri_map));
 </script>
 
 <!-- Sticky header with breadcrumb and tab navigation -->
@@ -54,8 +80,8 @@
     <!-- Breadcrumb Navigation -->
     <h1 class="flex flex-row flex-wrap items-center">
       <div class="group flex flex-none items-center">
-        <a 
-          class="font-semibold text-black hover:text-secondary-500 transition-colors" 
+        <a
+          class="font-semibold text-black hover:text-secondary-500 transition-colors"
           href={`/opsml/space/${metadata.space}`}
           aria-label={`Navigate to ${metadata.space} space`}
         >
@@ -64,7 +90,7 @@
         <div class="mx-0.5 text-gray-800" aria-hidden="true">/</div>
       </div>
       <div class="font-bold text-primary-800">
-        <a 
+        <a
           href={basePath.replace(`/${metadata.version}`, '')}
           class="hover:text-primary-600 transition-colors"
           aria-label={`Navigate to ${metadata.name} prompt overview`}
@@ -91,7 +117,7 @@
       {#if showMonitoring}
         <a
           class="flex items-center gap-x-2 border-b-3 {activeTab === 'monitoring' ? 'border-secondary-500' : 'border-transparent'} hover:border-secondary-500 hover:border-b-3 transition-colors"
-          href={`${basePath}/monitoring`}
+          href={`${basePath}/${monitoringBasePath()}`}
           data-sveltekit-preload-data="hover"
           aria-current={activeTab === 'monitoring' ? 'page' : undefined}
         >
@@ -99,6 +125,16 @@
           <span>Monitoring</span>
         </a>
       {/if}
+
+      <a
+        class="flex items-center gap-x-2 border-b-3 {activeTab === 'observability' ? 'border-secondary-500' : 'border-transparent'} hover:border-secondary-500 hover:border-b-3"
+        href={`${basePath}/observability`}
+        data-sveltekit-preload-data="hover"
+        aria-current={activeTab === 'observability' ? 'page' : undefined}
+      >
+        <Search color="#8059b6" size={16} />
+        <span>Observability</span>
+      </a>
 
       <a
         class="flex items-center gap-x-2 border-b-3 {activeTab === 'files' || activeTab === 'view' ? 'border-secondary-500' : 'border-transparent'} hover:border-secondary-500 hover:border-b-3 transition-colors"

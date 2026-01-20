@@ -14,8 +14,13 @@ def test_pytorch_simple(tmp_path: Path, pytorch_simple: Tuple[torch.nn.Module, d
     save_path = tmp_path / "test"
     save_path.mkdir()
 
+    fake_preprocessor = {"foo": "bar"}
     model, data = pytorch_simple
-    interface = TorchModel(model=model, sample_data=data)
+    interface = TorchModel(
+        model=model,
+        preprocessor=fake_preprocessor,
+        sample_data=data,
+    )
 
     assert isinstance(interface.sample_data, dict)
     assert interface.data_type == DataType.Dict

@@ -14,22 +14,22 @@ card = PromptCard(
     prompt=Prompt(  # (1)
         model="gpt-4o",
         provider="openai",
-        message="Provide a brief summary of the programming language ${language}.", 
-        system_instruction="Be concise, reply with one sentence.",
+        messages="Provide a brief summary of the programming language ${language}.", 
+        system_instructions="Be concise, reply with one sentence.",
     ),
 )
 
 def chat_app(language: str):
 
     # create the prompt and bind the context
-    user_prompt = card.prompt.bind(language=language).message[0].unwrap()
-    system_instruction = card.prompt.system_instruction[0].unwrap()
+    user_prompt = card.prompt.bind(language=language).messages[0]
+    system_instruction = card.prompt.system_instruction[0]
 
     response = client.chat.completions.create(
         model=card.prompt.model_identifier,
         messages=[
-            {"role": "system", "content": system_instruction},
-            {"role": "user", "content": user_prompt},
+            system_instruction.model_dump()
+            user_prompt.model_dump()
         ],
     )
 

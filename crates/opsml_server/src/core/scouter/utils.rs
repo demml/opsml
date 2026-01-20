@@ -7,10 +7,36 @@ use axum::{http::StatusCode, Json};
 use opsml_crypt::encrypt_file;
 use opsml_storage::StorageClientEnum;
 use opsml_types::DriftProfileUri;
+use reqwest::Response;
+use scouter_client::ScouterResponse;
+use scouter_client::ScouterServerError;
 use scouter_client::{DriftProfile, DriftType};
 use std::collections::HashMap;
 use std::path::Path;
 use tracing::{debug, error, instrument};
+
+pub(crate) async fn parse_scouter_response(
+    response: Response,
+) -> Result<Json<ScouterResponse>, (StatusCode, Json<OpsmlServerError>)> {
+    let status_code = response.status();
+
+    match status_code.is_success() {
+        true => {
+            let body = response.json::<ScouterResponse>().await.map_err(|e| {
+                error!("Failed to parse scouter response: {e}");
+                internal_server_error(e, "Failed to parse scouter response")
+            })?;
+            Ok(Json(body))
+        }
+        false => {
+            let body = response.json::<ScouterServerError>().await.map_err(|e| {
+                error!("Failed to parse scouter error response: {e}");
+                internal_server_error(e, "Failed to parse scouter error response")
+            })?;
+            Err((status_code, Json(OpsmlServerError::new(body.error))))
+        }
+    }
+}
 
 pub fn find_drift_profile(
     files: &[String],
@@ -79,7 +105,7 @@ pub fn load_drift_profiles(
             let filepath = path.join(&uri.uri);
             let file = std::fs::read_to_string(&filepath)?;
 
-            DriftProfile::from_str(uri.drift_type.clone(), file)
+            DriftProfile::from_str(&uri.drift_type, &file)
                 .map_err(|e| {
                     error!("Failed to load drift profile: {e}");
                     ServerError::LoadDriftProfileError(e.to_string())

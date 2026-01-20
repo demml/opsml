@@ -80,7 +80,7 @@ impl HuggingFaceOnnxConverter {
         // get onnx_kwargs or create an empty dict
         let onnx_kwargs = kwargs
             .get_item("extra_kwargs")?
-            .map(|x| x.downcast::<PyDict>().unwrap().clone())
+            .map(|x| x.cast::<PyDict>().unwrap().clone())
             .unwrap_or_else(|| PyDict::new(py));
 
         // add export=True to onnx_kwargs

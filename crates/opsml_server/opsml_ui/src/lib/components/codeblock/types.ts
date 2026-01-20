@@ -11,8 +11,10 @@ export interface CodeBlockProps {
     | "sql"
     | "toml"
     | "typescript"
+    | "bash"
+    | "text"
     | "yaml";
-  theme?: "custom-light";
+  theme?: "custom-light" | "traceback-theme";
   // Base Style Props
   base?: string;
   rounded?: string;

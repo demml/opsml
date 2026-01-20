@@ -5,7 +5,8 @@ pub fn add_client_module(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyScouterClient>()?;
     m.add_class::<DriftRequest>()?;
     m.add_class::<ProfileStatusRequest>()?;
-    m.add_class::<DriftAlertRequest>()?;
+    m.add_class::<DriftAlertPaginationRequest>()?;
+    m.add_class::<DriftAlertPaginationResponse>()?;
     m.add_class::<GetProfileRequest>()?;
     m.add_class::<Alert>()?;
 

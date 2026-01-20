@@ -29,12 +29,13 @@ pub fn add_drift_module(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<TerrellScott>()?;
     m.add_class::<FreedmanDiaconis>()?;
 
-    // LLM Drift
-    m.add_class::<LLMDriftConfig>()?;
-    m.add_class::<LLMDriftProfile>()?;
-    m.add_class::<LLMDriftMetric>()?;
-    m.add_class::<LLMDriftMap>()?;
-    m.add_class::<LLMMetricRecord>()?;
+    // GenAI Drift
+    m.add_class::<GenAIEvalConfig>()?;
+    m.add_class::<GenAIEvalProfile>()?;
+    m.add_class::<GenAIEvalRecord>()?;
+    m.add_class::<LLMJudgeTask>()?;
+    m.add_class::<AssertionTask>()?;
+    m.add_class::<ComparisonOperator>()?;
 
     Ok(())
 }

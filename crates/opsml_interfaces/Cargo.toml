@@ -14,6 +14,7 @@ opsml-utils = { workspace = true }
 ort = { workspace = true }
 potato-head = { workspace = true }
 pyo3 = { workspace = true }
+pythonize = { workspace = true }
 rand = { workspace = true }
 reqwest = { workspace = true }
 scouter-client = { workspace = true }

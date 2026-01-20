@@ -4,7 +4,7 @@ use crate::model::ModelInterface;
 use crate::{DataProcessor, ModelLoadKwargs, ModelSaveKwargs};
 use crate::{OnnxSession, ProcessorType};
 use opsml_types::{CommonKwargs, ModelInterfaceType, SaveName, Suffix, TaskType};
-use opsml_utils::pyobject_to_json;
+use opsml_utils::pydict_to_json_value;
 use pyo3::gc::PyVisit;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
@@ -12,7 +12,7 @@ use pyo3::IntoPyObjectExt;
 use pyo3::PyTraverseError;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
-use tracing::{debug, instrument};
+use tracing::{debug, error, instrument};
 
 #[pyclass(extends=ModelInterface, subclass)]
 #[derive(Debug)]
@@ -505,7 +505,9 @@ impl CatBoostModel {
         )?;
         set_catboost_model_attribute(model, &new_dict)?;
 
-        let value = pyobject_to_json(&new_dict)?;
+        let value = pydict_to_json_value(py, &new_dict).inspect_err(|e| {
+            error!("Failed to depythonize catboost model params: {e}");
+        })?;
 
         Ok(value)
     }

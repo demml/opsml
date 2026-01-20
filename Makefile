@@ -148,7 +148,6 @@ prepend.changelog:
 
 
 ###### Development & Production - Separate Servers ######
-
 .PHONY: dev.backend
 dev.backend:
 	cargo build -p opsml-server
@@ -188,3 +187,28 @@ start.both:
 stop.both:
 	-lsof -ti:3000 | xargs kill -9 2>/dev/null || true
 	-lsof -ti:8080 | xargs kill -9 2>/dev/null || true
+
+
+###### Scouter Integration
+###### It's assumed that Scouter is running on 8080
+###### Steps:
+###### 1. Set environment variable SCOUTER_SERVER_URI=http://localhost:8080
+###### 2. Set OPSML_SERVER_PORT=8000 for backend to avoid port conflict with Scouter
+###### 3. Frontend SSR will run on default port 3000
+.PHONY: dev.both.scouter
+dev.both.scouter:
+	@echo "Starting both servers in development mode with Scouter integration..."
+	@echo "Backend API: http://localhost:8090"
+	@echo "Frontend SSR: http://localhost:3000"
+	@echo "Scouter: http://localhost:8000"
+	OPSML_SERVER_PORT=8090 SCOUTER_SERVER_URI=http://localhost:8000 $(MAKE) -j2 dev.backend.scouter.run dev.frontend
+
+.PHONY: dev.backend.scouter.run
+dev.backend.scouter.run:
+	cargo build -p opsml-server
+	./target/debug/opsml-server
+
+.PHONY: stop.both.scouter
+stop.both.scouter:
+	-lsof -ti:3000 | xargs kill -9 2>/dev/null || true
+	-lsof -ti:8090 | xargs kill -9 2>/dev/null || true

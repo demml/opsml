@@ -1,6 +1,9 @@
 use crate::error::TypeError;
 use opsml_utils::PyHelperFuncs;
 use pyo3::prelude::*;
+use pyo3::types::PyDict;
+use pythonize::pythonize;
+use serde::de::MapAccess;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt;
@@ -76,6 +79,31 @@ impl FromIterator<(String, Feature)> for FeatureSchema {
             items.insert(key, value);
         }
         FeatureSchema { items }
+    }
+}
+
+/// Deserialize a dictionary field that may be null into Option<Py<PyDict>>
+pub(crate) fn deserialize_dict_field<'de, A>(
+    map: &mut A,
+    py: Python<'_>,
+) -> Result<Option<Py<PyDict>>, A::Error>
+where
+    A: MapAccess<'de>,
+{
+    let value = map.next_value::<serde_json::Value>()?;
+    match value {
+        serde_json::Value::Null => Ok(None),
+        _ => {
+            let py_obj = pythonize(py, &value)
+                .map_err(|e| serde::de::Error::custom(format!("Deserialization failed: {}", e)))?;
+
+            let dict = py_obj
+                .cast::<PyDict>()
+                .map_err(|_| serde::de::Error::custom("Expected a dictionary"))?
+                .clone();
+
+            Ok(Some(dict.unbind()))
+        }
     }
 }
 

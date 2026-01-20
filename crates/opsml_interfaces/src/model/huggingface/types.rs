@@ -78,13 +78,13 @@ impl HuggingFaceOnnxArgs {
         // Import the necessary classes from the optimum.onnxruntime module
         let optimum_module = py.import("optimum.onnxruntime")?;
         let auto_quantization_config_attr = optimum_module.getattr("AutoQuantizationConfig")?;
-        let auto_quantization_config = auto_quantization_config_attr.downcast::<PyType>()?;
+        let auto_quantization_config = auto_quantization_config_attr.cast::<PyType>()?;
 
         let ort_config_attr = optimum_module.getattr("ORTConfig")?;
-        let ort_config = ort_config_attr.downcast::<PyType>()?;
+        let ort_config = ort_config_attr.cast::<PyType>()?;
 
         let quantization_config_attr = optimum_module.getattr("QuantizationConfig")?;
-        let quantization_config = quantization_config_attr.downcast::<PyType>()?;
+        let quantization_config = quantization_config_attr.cast::<PyType>()?;
 
         // Assert that config is an instance of one of the specified classes
         let is_valid_config = config.is_instance(auto_quantization_config)?

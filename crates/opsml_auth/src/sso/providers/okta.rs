@@ -14,7 +14,7 @@ pub struct OktaSettings {
     pub client_id: String,
     pub client_secret: String,
     pub redirect_uri: String,
-    pub decoding_key: DecodingKey,
+    pub jwk_response: JwkResponse,
     pub scope: String,
     pub token_url: String,
     pub authorization_url: String,
@@ -50,14 +50,11 @@ impl OktaSettings {
             .await
             .map_err(SsoError::ReqwestError)?;
 
-        let decoding_key = match response.status() {
-            StatusCode::OK => {
-                let jwk_response = response
-                    .json::<JwkResponse>()
-                    .await
-                    .map_err(SsoError::ReqwestError)?;
-                jwk_response.get_decoded_key()?
-            }
+        let jwk_response = match response.status() {
+            StatusCode::OK => response
+                .json::<JwkResponse>()
+                .await
+                .map_err(SsoError::ReqwestError)?,
             _ => {
                 // get response body
                 let body = response.text().await.map_err(SsoError::ReqwestError)?;
@@ -71,7 +68,7 @@ impl OktaSettings {
             client_secret,
             redirect_uri,
             token_url,
-            decoding_key,
+            jwk_response,
             scope,
             authorization_url,
         })
@@ -182,7 +179,7 @@ impl SsoProviderExt for OktaProvider {
             .build_callback_auth_params(code, code_verifier)
     }
 
-    fn decoding_key(&self) -> &DecodingKey {
-        &self.settings.decoding_key
+    fn get_decoding_key_for_token(&self, token: &str) -> Result<DecodingKey, SsoError> {
+        self.settings.jwk_response.get_decoded_key_for_token(token)
     }
 }
