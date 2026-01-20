@@ -57,7 +57,7 @@ jobs:
         run: make lints
 
   test-Sql-Storage-Utils:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     needs: format-and-lint
     steps:
       - uses: actions/checkout@v4
@@ -173,6 +173,13 @@ jobs:
                 echo "Unsupported architecture for protoc: $ARCH"
                 exit 1
             fi
+
+            echo "Installing protoc ${PROTOC_VERSION} for ${PROTOC_ARCH}"
+            curl -LO "https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOC_VERSION}/protoc-${PROTOC_VERSION}-${PROTOC_ARCH}.zip"
+            unzip "protoc-${PROTOC_VERSION}-${PROTOC_ARCH}.zip" -d /usr/local
+            rm "protoc-${PROTOC_VERSION}-${PROTOC_ARCH}.zip"
+            chmod +x /usr/local/bin/protoc
+            protoc --version
 
             if [[ "$ARCH" == "x86_64" ]]; then
                 echo "Downloading CMake for x86_64 architecture"

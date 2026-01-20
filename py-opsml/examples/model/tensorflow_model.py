@@ -1,17 +1,13 @@
-# type: ignore
-
 import numpy as np
-import tensorflow as tf
 from opsml import (
     CardRegistry,
     ModelCard,
     ModelLoadKwargs,
-    ModelSaveKwargs,
     RegistryType,
     TensorFlowModel,
 )
-from tensorflow.keras import Input, Model
-from tensorflow.keras.layers import Concatenate, Dense
+from tensorflow.keras import Input, Model  # type: ignore
+from tensorflow.keras.layers import Concatenate, Dense  # type: ignore
 
 registry = CardRegistry(RegistryType.Model)
 
@@ -60,19 +56,20 @@ def multi_input_model():
         verbose=1,
     )
 
-    input_signature = [
-        tf.TensorSpec(shape=(None, 10), dtype=tf.float32, name="numeric_input"),
-        tf.TensorSpec(shape=(None, 5), dtype=tf.float32, name="categorical_input"),
-    ]
-    save_kwargs = ModelSaveKwargs(
-        onnx={"input_signature": input_signature},
-        save_onnx=True,
-    )
+    # Theres an issue with tf2onnx and numpy casting - remove for now
+    # input_signature = [
+    #    tf.TensorSpec(shape=(None, 10), dtype=tf.float32, name="numeric_input"),
+    #    tf.TensorSpec(shape=(None, 5), dtype=tf.float32, name="categorical_input"),
+    # ]
+    # save_kwargs = ModelSaveKwargs(
+    #    onnx={"input_signature": input_signature},
+    #    save_onnx=True,
+    # )
 
-    return model, [numeric_data, categorical_data], save_kwargs
+    return model, [numeric_data, categorical_data]
 
 
-model, data, save_kwargs = multi_input_model()
+model, data = multi_input_model()
 interface = TensorFlowModel(model=model, sample_data=data)
 
 modelcard = ModelCard(
@@ -82,10 +79,7 @@ modelcard = ModelCard(
 )
 
 # Register the model card
-registry.register_card(
-    modelcard,
-    save_kwargs=save_kwargs,
-)
+registry.register_card(modelcard)
 
 # List the model card
 modelcard_list = registry.list_cards(uid=modelcard.uid).as_table()
