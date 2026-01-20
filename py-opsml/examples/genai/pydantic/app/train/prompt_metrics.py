@@ -4,7 +4,7 @@
 from opsml.genai import Prompt, Score
 from opsml.scouter.drift import LLMJudgeTask, ComparisonOperator
 
-LLM_MODEL = "gpt5-mini"
+LLM_MODEL = "gpt-5-mini"
 LLM_PROVIDER = "openai"
 
 

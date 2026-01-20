@@ -5,7 +5,7 @@ export interface Card {
   space: string;
   version: string;
   uid: string;
-  registry_type: string;
+  type: string;
   alias: string;
 }
 

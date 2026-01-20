@@ -94,7 +94,7 @@ reqwest-middleware = "0.*"
 rusty-logging = "0.*"
 pythonize = { version = "0.*" }
 # we cant use crates.io because scouter relies on a fork of linfa at the moment
-scouter-client = {branch = "main", git = "https://github.com/demml/scouter.git"}
+scouter-client = {branch = "genai/adding-background-queue", git = "https://github.com/demml/scouter.git"}
 sha2 = "0.*"
 semver = "1.*"
 serde = { version = "1.*", features = ["derive"] }

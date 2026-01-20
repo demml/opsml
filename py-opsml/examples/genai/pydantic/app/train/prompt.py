@@ -5,7 +5,7 @@ from opsml.scouter import CommonCrons
 
 from .prompt_metrics import shipment_eta_reply_evaluation, shipment_eta_task_evaluation
 
-LLM_MODEL = "gpt5-mini"
+LLM_MODEL = "gpt-5-mini"
 LLM_PROVIDER = "openai"
 
 get_shipment_eta = """

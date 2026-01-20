@@ -41,7 +41,7 @@
                 name={card.name}
                 space={card.space}
                 version={card.version}
-                registry={getRegistryFromString(card.registry_type) || RegistryType.Model}
+                registry={getRegistryFromString(card.type) || RegistryType.Model}
                 alias={card.alias}
               />
             {/each}
