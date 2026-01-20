@@ -14,10 +14,11 @@
   interface ExperimentLayoutProps {
     metadata: ExperimentMetadata;
     registryType: RegistryType;
+    has_drift_profile: boolean;
     children: Snippet;
   }
 
-  let { metadata, registryType, children }: ExperimentLayoutProps = $props();
+  let { metadata, registryType, has_drift_profile, children }: ExperimentLayoutProps = $props();
 
   /**
    * Determines the active tab based on the current URL path

@@ -6,11 +6,13 @@
   import CardButton from '$lib/components/card/service/CardButton.svelte';
   import { getRegistryFromString, RegistryType } from '$lib/utils';
   import DeploymentConfig from '$lib/components/card/service/DeploymentConfig.svelte';
+  import type { AnyCard } from '../card_interfaces/enum';
   let badgeColor = "#40328b";
   let iconColor = "#40328b";
 
   let { data } = $props();
   let service: ServiceCard = data.metadata;
+  let cards: Record<string, AnyCard> = data.cards;
   let deploymentConfig = service.deploy;
 
 </script>

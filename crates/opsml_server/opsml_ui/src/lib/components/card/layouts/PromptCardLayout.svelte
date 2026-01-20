@@ -17,10 +17,11 @@
   interface PromptLayoutProps {
     metadata: PromptMetadata;
     registryType: string;
+    has_drift_profile: boolean;
     children: Snippet;
   }
 
-  let { metadata, registryType, children }: PromptLayoutProps = $props();
+  let { metadata, registryType, has_drift_profile,children }: PromptLayoutProps = $props();
 
   /**
    * Determines the active tab based on the current URL path
@@ -43,7 +44,7 @@
    * Determines if monitoring tab should be shown based on metadata and settings
    */
   let showMonitoring = $derived(
-    (metadata.metadata.drift_profile_uri_map && uiSettingsStore.scouterEnabled) || dev
+    (has_drift_profile && uiSettingsStore.scouterEnabled) || dev
   );
 
   /// determine base path for monitoring links
@@ -51,7 +52,7 @@
   // example profile map: {"genai":{"drift_type":"GenAI","root_dir":"drift","uri":"drift/genai.json"}}
   // iterate over map and get first drift type at key "drift_type"
   let monitoringBasePath = $derived(() => {
-    if (metadata.metadata.drift_profile_uri_map && uiSettingsStore.scouterEnabled) {
+    if (has_drift_profile && uiSettingsStore.scouterEnabled) {
       const driftTypes = Object.values(metadata.metadata.drift_profile_uri_map).map(
         (profile: any) => profile.drift_type.toLowerCase()
       );

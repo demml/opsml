@@ -14,10 +14,11 @@
   interface DataLayoutProps {
     metadata: DataMetadata;
     registryType: RegistryType;
+    has_drift_profile: boolean;
     children: Snippet;
   }
 
-  let { metadata, registryType, children }: DataLayoutProps = $props();
+  let { metadata, registryType, has_drift_profile,children }: DataLayoutProps = $props();
 
   /**
    * Determines the active tab based on the current URL path

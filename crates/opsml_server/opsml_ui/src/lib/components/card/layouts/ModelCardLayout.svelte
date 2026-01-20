@@ -23,10 +23,11 @@
   interface CardLayoutProps {
     metadata: CardMetadata;
     registryType: RegistryType;
+    has_drift_profile: boolean;
     children: Snippet;
   }
 
-  let { metadata, registryType, children }: CardLayoutProps = $props();
+  let { metadata, registryType, has_drift_profile, children }: CardLayoutProps = $props();
 
   let scouterEnabled: boolean = $state(uiSettingsStore.scouterEnabled);
 
@@ -51,7 +52,7 @@
    * Determines if monitoring tab should be shown based on metadata and settings
    */
   let showMonitoring = $derived(
-    (metadata.metadata.interface_metadata.save_metadata.drift_profile_uri_map && scouterEnabled) || dev
+    (has_drift_profile && scouterEnabled) || dev
   );
 
 

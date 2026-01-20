@@ -1,8 +1,10 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
-  import { IdCard, FolderTree, Tag, Search } from 'lucide-svelte';
+  import { IdCard, FolderTree, Tag, Search, Activity } from 'lucide-svelte';
   import { page } from '$app/state';
+  import { dev } from '$app/environment';
   import { getRegistryPath } from '$lib/utils';
+  import { uiSettingsStore } from '$lib/components/settings/settings.svelte';
   import type { RegistryType } from '$lib/utils';
 
   interface ServiceMetadata {
@@ -14,10 +16,13 @@
   interface ServiceLayoutProps {
     metadata: ServiceMetadata;
     registryType: RegistryType;
+    has_drift_profile: boolean;
     children: Snippet;
   }
 
-  let { metadata, registryType, children }: ServiceLayoutProps = $props();
+  let { metadata, registryType, has_drift_profile,children }: ServiceLayoutProps = $props();
+
+  let scouterEnabled: boolean = $state(uiSettingsStore.scouterEnabled);
 
   /**
    * Determines the active tab based on the current URL path
@@ -25,7 +30,7 @@
    */
   let activeTab = $derived.by(() => {
     const last = page.url.pathname.split('/').pop() ?? '';
-    if (['card', 'files', 'observability', 'versions', 'view'].includes(last)) return last;
+    if (['card', 'files', 'monitoring','observability', 'versions', 'view'].includes(last)) return last;
     return 'card';
   });
 
@@ -36,41 +41,61 @@
     `/opsml/${getRegistryPath(registryType)}/card/${metadata.space}/${metadata.name}/${metadata.version}`
   );
 
+  let showMonitoring = $derived(
+    (has_drift_profile && scouterEnabled) || dev
+  );
+
   /**
    * Navigation configuration for service-specific tabs
    * Minimal set focused on service deployment and management essentials
    */
-  const navItems = [
-    {
-      key: 'card',
-      label: 'Card',
-      icon: IdCard,
-      isActive: (tab: string) => tab === 'card',
-      description: 'Service details and configuration'
-    },
-    {
-      key: 'files',
-      label: 'Files',
-      icon: FolderTree,
-      isActive: (tab: string) => tab === 'files' || tab === 'view',
-      description: 'Service artifacts and deployment files'
-    },
-    {
-      key: 'observability',
-      label: 'Observability',
-      icon: Search,
-      isActive: (tab: string) => tab === 'observability',
-      description: 'Service observability and monitoring'
-    },
-    {
-      key: 'versions',
-      label: 'Versions',
-      icon: Tag,
-      isActive: (tab: string) => tab === 'versions',
-      iconProps: { fill: '#8059b6' },
-      description: 'Service version history and releases'
+  const navItems = $derived.by(() => {
+    const baseItems = [
+      {
+        key: 'card' as const,
+        label: 'Card',
+        icon: IdCard,
+        isActive: (tab: string): tab is 'card' => tab === 'card',
+        description: 'Service details and configuration'
+      },
+      {
+        key: 'files' as const,
+        label: 'Files',
+        icon: FolderTree,
+        isActive: (tab: string): tab is 'files' | 'view' => tab === 'files' || tab === 'view',
+        description: 'Service artifacts and deployment files'
+      },
+      {
+        key: 'observability' as const,
+        label: 'Observability',
+        icon: Search,
+        isActive: (tab: string): tab is 'observability' => tab === 'observability',
+        description: 'Service observability and monitoring'
+      },
+      {
+        key: 'versions' as const,
+        label: 'Versions',
+        icon: Tag,
+        isActive: (tab: string): tab is 'versions' => tab === 'versions',
+        iconProps: { fill: '#8059b6' },
+        description: 'Service version history and releases'
+      }
+    ];
+
+    if (showMonitoring) {
+      baseItems.splice(2, 0, {
+        // @ts-ignore
+        key: 'service_monitoring' as const,
+        label: 'Monitoring',
+        icon: Activity,
+        // @ts-ignore
+        isActive: (tab: string): tab is 'monitoring' => tab === 'monitoring',
+        description: 'Service performance and health monitoring'
+      });
     }
-  ];
+
+    return baseItems;
+  });
 
   const iconColor = '#8059b6';
 </script>
