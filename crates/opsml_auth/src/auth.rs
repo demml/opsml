@@ -125,7 +125,6 @@ impl AuthManager {
         let mut validation = Validation::default();
         validation.validate_exp = false; // Disable expiration validation
         validation.validate_nbf = false; // Disable "not before" validation
-        validation.required_spec_claims.clear();
         let token_data = decode::<Claims>(
             token,
             &DecodingKey::from_secret(self.jwt_secret.as_ref()),
