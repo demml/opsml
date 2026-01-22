@@ -28,17 +28,10 @@ class AgentHelper:
         """Sends a query to the shipment agent and returns the response."""
 
         with self.tracer.start_as_current_span(name="call_shipment_agent") as span:
-            parameterized_query = (
-                self.shipment_prompt.prompt.bind(user_query=query)
-                .messages[0]
-                .content[0]
-                .text
-            )
+            parameterized_query = self.shipment_prompt.prompt.bind(user_query=query).messages[0].content[0].text
 
             # Prepare the user's message
-            agent_response = await self.shipment_agent.run(
-                user_prompt=parameterized_query
-            )
+            agent_response = await self.shipment_agent.run(user_prompt=parameterized_query)
             response = parse_shipment_events(agent_response)
 
             span.add_queue_item(
@@ -53,14 +46,9 @@ class AgentHelper:
 
         with self.tracer.start_as_current_span(name="call_response_agent") as span:
             parameterized_query = (
-                self.response_prompt.prompt.bind(shipment_eta_info=shipment_eta_info)
-                .messages[0]
-                .content[0]
-                .text
+                self.response_prompt.prompt.bind(shipment_eta_info=shipment_eta_info).messages[0].content[0].text
             )
-            agent_response = await self.response_agent.run(
-                user_prompt=parameterized_query
-            )
+            agent_response = await self.response_agent.run(user_prompt=parameterized_query)
 
             response = parse_response_events(agent_response)
             response["shipment_eta_info"] = shipment_eta_info
