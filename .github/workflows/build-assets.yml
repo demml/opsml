@@ -76,7 +76,7 @@ jobs:
       - name: Install Rocky Deps
         if: matrix.container_image == 'rockylinux:9' && !contains(matrix.os, 'ubuntu-22.04-arm')
         run: |
-          dnf install -y --allowerasing gcc make curl pkgconf openssl-devel wget perl pkg-config
+          dnf install -y --allowerasing gcc make curl pkgconf openssl-devel wget perl pkg-config curl-devel
 
           # Install Rust via rustup
           curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
@@ -114,7 +114,11 @@ jobs:
         if: contains(matrix.os, 'ubuntu') && matrix.container_image == null
         run: |
           sudo apt-get update -y
-          sudo apt-get install -y build-essential
+          sudo apt-get install -y build-essential libcurl4-openssl-dev pkg-config
+
+      - name: Install build dependencies (macOS)
+        if: matrix.container_image == null && runner.os == 'macOS'
+        run: brew install curl openssl pkg-config
 
       - name: Install protoc (Ubuntu)
         if: matrix.container_image == null
