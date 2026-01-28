@@ -79,6 +79,7 @@ jobs:
         run: |
           pip install -U twine tomli tomli-w
           python ./py-opsml/scripts/update_package_name.py ./py-opsml/pyproject.toml "opsml-client"
+          python /py-opsml/scripts/assemble_stubs.py
 
       - name: Set OPENSSL_DIR environment variable
         run: echo "OPENSSL_DIR=/usr" >> $GITHUB_ENV
@@ -194,6 +195,10 @@ jobs:
           pip install -U twine tomli tomli-w
           python ./py-opsml/scripts/update_package_name.py ./py-opsml/pyproject.toml "opsml-client"
 
+      - name: Build stubs
+        run: |
+          python ./py-opsml/scripts/assemble_stubs.py
+
       - name: build wheels
         uses: PyO3/maturin-action@v1
         with:
@@ -241,12 +246,16 @@ jobs:
           pip install -U twine tomli tomli-w
           python ./py-opsml/scripts/update_package_name.py ./py-opsml/pyproject.toml "opsml-client"
 
+      - name: Build stubs
+        run: |
+          python ./py-opsml/scripts/assemble_stubs.py
+
       - name: Build wheel
         uses: PyO3/maturin-action@v1
         with:
           command: build
           target: ${{ matrix.target }}
-          args: --release --out dist --features server
+          args: --release --out dist
           rust-toolchain: stable
           working-directory: ./py-opsml
 

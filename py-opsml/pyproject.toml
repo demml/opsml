@@ -73,6 +73,11 @@ docs = [
 [tool.isort]
 profile = "black"
 
+[tool.ruff]
+exclude = [
+    "python/opsml/stubs/*",
+]
+
 [tool.black]
 line-length = 120
 target-version = ['py310']
@@ -80,7 +85,10 @@ include = '\.pyi?$'
 
 [tool.pylint.MASTER]
 load-plugins = ["pylint.extensions.docparams"]
-ignore-patterns = ".*_app\\.pyi$,.*_llm\\.pyi$,.*_card\\.pyi$"
+ignore-patterns = [
+    "python/opsml/stubs/*",
+]
+
 
 [tool.pylint.messages_control]
 max-line-length = 130
@@ -130,7 +138,10 @@ plugins = [
     "numpy.typing.mypy_plugin",
     "pydantic.mypy",
 ]
-exclude = ['.*\/_.*\.pyi$']
+exclude = [
+    '.*\/_.*\.pyi$',
+    "python/opsml/stubs/*",
+]
 
 [build-system]
 requires = ["maturin>=1.4,<2.0"]
