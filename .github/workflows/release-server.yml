@@ -70,6 +70,10 @@ jobs:
       - name: Set OPENSSL_DIR environment variable
         run: echo "OPENSSL_DIR=/usr" >> $GITHUB_ENV
 
+      - name: Build stubs
+        run: |
+          python ./py-opsml/scripts/assemble_stubs.py
+
       - name: Build wheel
         uses: PyO3/maturin-action@v1
         with:
@@ -178,6 +182,10 @@ jobs:
 
       - run: pip install -U twine
 
+      - name: Build stubs
+        run: |
+          python ./py-opsml/scripts/assemble_stubs.py
+
       - name: build wheels
         uses: PyO3/maturin-action@v1
         with:
@@ -221,6 +229,10 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
 
       - run: pip install -U twine
+
+      - name: Build stubs
+        run: |
+          python ./py-opsml/scripts/assemble_stubs.py
 
       - name: Build wheel
         uses: PyO3/maturin-action@v1

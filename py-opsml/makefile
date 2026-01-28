@@ -24,6 +24,7 @@ lints.ci: lints.format_check lints.ruff lints.pylint lints.mypy
 
 setup.project:
 	uv sync --all-extras --group dev --group docs
+	uv run python python/opsml/scripts/assemble_stubs.py
 	uv run maturin develop --features server
 
 setup.project.release:
@@ -104,15 +105,15 @@ setup.docs:
 	uv sync --group docs
 
 build.docs:
-	uv run python scripts/create_stubs.py
+	uv run python scripts/create_mkdocs_stubs.py
 	uv run mkdocs build
 
 serve.docs:
-	uv run python scripts/create_stubs.py
+	uv run python scripts/create_mkdocs_stubs.py
 	uv run mkdocs serve
 
 publish.docs:
-	uv run python scripts/create_stubs.py
+	uv run python scripts/create_mkdocs_stubs.py
 	uv run mkdocs gh-deploy --force
 
 upgrade.deps:
