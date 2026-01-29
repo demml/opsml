@@ -350,8 +350,8 @@ impl PostgresQueryHelper {
         query_args: &CardQueryArgs,
     ) -> Result<String, SqlError> {
         let mut binding_index = 5; // Start from 6 because $1 to $5 are used for uid, space, name, max_date, version
-        if query_args.uid.is_some() {
-            is_valid_uuidv7(query_args.uid.as_ref().unwrap())?;
+        if let Some(uid) = &query_args.uid {
+            is_valid_uuidv7(uid)?;
             return Ok(format!("SELECT * FROM {table} WHERE uid = $1 LIMIT 1"));
         }
 
@@ -377,8 +377,8 @@ impl PostgresQueryHelper {
         }
 
         // Add version bounds - will use the version part of the index
-        if query_args.version.is_some() {
-            add_version_bounds(&mut query, query_args.version.as_ref().unwrap())?;
+        if let Some(version) = &query_args.version {
+            add_version_bounds(&mut query, version)?;
         }
 
         // Tags query using jsonb operator
@@ -401,8 +401,8 @@ impl PostgresQueryHelper {
 
     pub fn get_query_artifacts_query(query_args: &ArtifactQueryArgs) -> Result<String, SqlError> {
         let table = &CardTable::Artifact;
-        if query_args.uid.is_some() {
-            is_valid_uuidv7(query_args.uid.as_ref().unwrap())?;
+        if let Some(uid) = &query_args.uid {
+            is_valid_uuidv7(uid)?;
 
             return Ok(format!("SELECT * FROM {table} WHERE uid = $1 LIMIT 1"));
         }
@@ -428,8 +428,8 @@ impl PostgresQueryHelper {
         }
 
         // Add version bounds - will use the version part of the index
-        if query_args.version.is_some() {
-            add_version_bounds(&mut query, query_args.version.as_ref().unwrap())?;
+        if let Some(version) = &query_args.version {
+            add_version_bounds(&mut query, version)?;
         }
 
         // Add ordering
