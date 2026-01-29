@@ -3741,6 +3741,8 @@ class PromptCard:
 
 
         Args:
+            alias (str):
+                Unique alias for the drift profile within the prompt card.
             config (GenAIEvalConfig):
                 The configuration for the GenAI drift profile containing space, name,
                 version, and alert settings.
