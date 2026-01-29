@@ -1,4 +1,4 @@
-# pylint: disable=redefined-builtin, invalid-name, dangerous-default-value, missing-final-newline
+# pylint: disable=redefined-builtin, invalid-name, dangerous-default-value, missing-final-newline, arguments-differ
 
 import datetime
 from pathlib import Path
