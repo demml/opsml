@@ -180,18 +180,9 @@ impl LightningModel {
 
     #[getter]
     pub fn get_preprocessor<'py>(&self, py: Python<'py>) -> Option<Bound<'py, PyAny>> {
-        if self.preprocessor.is_none() {
-            None
-        } else {
-            Some(
-                self.preprocessor
-                    .as_ref()
-                    .unwrap()
-                    .clone_ref(py)
-                    .into_bound_py_any(py)
-                    .unwrap(),
-            )
-        }
+        self.preprocessor
+            .as_ref()
+            .map(|preprocessor| preprocessor.clone_ref(py).into_bound_py_any(py).unwrap())
     }
     #[setter]
     #[allow(clippy::needless_lifetimes)]
@@ -478,10 +469,10 @@ impl LightningModel {
         path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> Result<(), ModelInterfaceError> {
-        let model = if self.trainer.is_some() {
-            self.trainer.as_ref().unwrap().bind(py).getattr("model")?
-        } else if self.model.is_some() {
-            self.model.as_ref().unwrap().bind(py).clone()
+        let model = if let Some(ref trainer) = self.trainer {
+            trainer.bind(py).getattr("model")?
+        } else if let Some(ref model) = self.model {
+            model.bind(py).clone()
         } else {
             return Err(ModelInterfaceError::NoModelError);
         };

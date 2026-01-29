@@ -747,10 +747,10 @@ impl<'de> Deserialize<'de> for ModelCard {
 
 impl ModelCard {
     fn get_decryption_key(&self) -> Result<Vec<u8>, CardError> {
-        if self.artifact_key.is_none() {
-            Err(CardError::DecryptionKeyNotFoundError)
+        if let Some(ref key) = self.artifact_key {
+            Ok(key.get_decrypt_key()?)
         } else {
-            Ok(self.artifact_key.as_ref().unwrap().get_decrypt_key()?)
+            Err(CardError::DecryptionKeyNotFoundError)
         }
     }
     fn download_all_artifacts(&mut self, lpath: &Path) -> Result<(), CardError> {

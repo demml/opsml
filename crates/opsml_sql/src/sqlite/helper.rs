@@ -345,19 +345,17 @@ impl SqliteQueryHelper {
         );
 
         // check for uid. If uid is present, we only return that card
-        if query_args.uid.is_some() {
+        if let Some(uid) = &query_args.uid {
             // validate uid
-            is_valid_uuidv7(query_args.uid.as_ref().unwrap())?;
+            is_valid_uuidv7(uid)?;
         } else {
             // add where clause due to multiple combinations
 
-            if query_args.version.is_some() {
-                add_version_bounds(&mut query, query_args.version.as_ref().unwrap())?;
+            if let Some(version) = &query_args.version {
+                add_version_bounds(&mut query, version)?;
             }
 
-            if query_args.tags.is_some() {
-                let tags = query_args.tags.as_ref().unwrap();
-
+            if let Some(tags) = &query_args.tags {
                 let mut or_conditions = Vec::new();
                 for _ in tags {
                     or_conditions.push(format!("value = ?{}", bindings_number));
@@ -397,14 +395,14 @@ impl SqliteQueryHelper {
         );
 
         // check for uid. If uid is present, we only return that card
-        if query_args.uid.is_some() {
+        if let Some(uid) = &query_args.uid {
             // validate uid
-            is_valid_uuidv7(query_args.uid.as_ref().unwrap())?;
+            is_valid_uuidv7(uid)?;
         } else {
             // add where clause due to multiple combinations
 
-            if query_args.version.is_some() {
-                add_version_bounds(&mut query, query_args.version.as_ref().unwrap())?;
+            if let Some(version) = &query_args.version {
+                add_version_bounds(&mut query, version)?;
             }
 
             if query_args.sort_by_timestamp.unwrap_or(false) {

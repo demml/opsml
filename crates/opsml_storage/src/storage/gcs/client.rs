@@ -182,7 +182,14 @@ impl StorageClient for GoogleStorageClient {
         let creds = GcpCreds::new().await?;
         // If no credentials, attempt to create a default client pulling from the environment
 
-        let config: Result<ClientConfig, GoogleError> = if creds.creds.is_none() {
+        let config: Result<ClientConfig, GoogleError> = if let Some(creds) = creds.creds {
+            let config = ClientConfig::default()
+                .with_credentials(creds)
+                .await
+                .map_err(GoogleError::GCloudAuthError)?;
+
+            Ok(config)
+        } else {
             // if using in client_mode, default to anonymous
             let config = ClientConfig::default().with_auth().await;
 
@@ -191,16 +198,6 @@ impl StorageClient for GoogleStorageClient {
                 Ok(config) => config,
                 Err(_) => ClientConfig::default().anonymous(),
             };
-
-            Ok(config)
-
-        // if creds are set (base64 for JSON file)
-        } else {
-            // try with credentials
-            let config = ClientConfig::default()
-                .with_credentials(creds.creds.unwrap())
-                .await
-                .map_err(GoogleError::GCloudAuthError)?;
 
             Ok(config)
         };

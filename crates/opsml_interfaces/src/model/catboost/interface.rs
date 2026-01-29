@@ -82,18 +82,9 @@ impl CatBoostModel {
 
     #[getter]
     pub fn get_preprocessor<'py>(&self, py: Python<'py>) -> Option<Bound<'py, PyAny>> {
-        if self.preprocessor.is_none() {
-            None
-        } else {
-            Some(
-                self.preprocessor
-                    .as_ref()
-                    .unwrap()
-                    .clone_ref(py)
-                    .into_bound_py_any(py)
-                    .unwrap(),
-            )
-        }
+        self.preprocessor
+            .as_ref()
+            .map(|preprocessor| preprocessor.clone_ref(py).into_bound_py_any(py).unwrap())
     }
 
     #[setter]
