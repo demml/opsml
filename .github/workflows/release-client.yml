@@ -23,13 +23,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Install uv and set the python version
+        uses: astral-sh/setup-uv@v6
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Install dependencies
-        run: pip install -U twine tomli tomli-w
+        run: |
+          pip install -U twine tomli tomli-w
+          make build.stubs
 
       - name: Install build dependencies
         run: |
@@ -75,8 +77,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: set up python
-        uses: actions/setup-python@v5
+      - name: Install uv and set the python version
+        uses: astral-sh/setup-uv@v6
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
@@ -84,7 +86,7 @@ jobs:
         run: |
           pip install -U twine tomli tomli-w
           python ./py-opsml/scripts/update_package_name.py ./py-opsml/pyproject.toml "opsml-client"
-          python /py-opsml/scripts/assemble_stubs.py
+          make build.stubs
 
       - name: Set OPENSSL_DIR environment variable
         run: echo "OPENSSL_DIR=/usr" >> $GITHUB_ENV
@@ -190,8 +192,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: set up python
-        uses: actions/setup-python@v5
+      - name: Install uv and set the python version
+        uses: astral-sh/setup-uv@v6
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
@@ -202,7 +204,7 @@ jobs:
 
       - name: Build stubs
         run: |
-          python ./py-opsml/scripts/assemble_stubs.py
+          make build.stubs
 
       - name: Install libomp on macOS
         run: brew install libomp curl openssl pkg-config
@@ -244,19 +246,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Install uv and set the python version
+        uses: astral-sh/setup-uv@v6
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Update package name to opsml-client
         run: |
+          make build.stubs
           pip install -U twine tomli tomli-w
           python ./py-opsml/scripts/update_package_name.py ./py-opsml/pyproject.toml "opsml-client"
-
-      - name: Build stubs
-        run: |
-          python ./py-opsml/scripts/assemble_stubs.py
 
       - name: Build wheel
         uses: PyO3/maturin-action@v1

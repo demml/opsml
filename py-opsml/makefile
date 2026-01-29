@@ -28,9 +28,8 @@ build.stubs:
 	uv run black ${FORMAT_OBJECT}
 	uv run ruff check --silent --exit-zero ${FORMAT_OBJECT}
 
-setup.project:
+setup.project: build.stubs
 	uv sync --all-extras --group dev --group docs
-	uv run python scripts/assemble_stubs.py
 	uv run maturin develop --features server
 
 setup.project.release:

@@ -60,8 +60,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: set up python
-        uses: actions/setup-python@v5
+      - name: Install uv and set the python version
+        uses: astral-sh/setup-uv@v6
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
@@ -72,7 +72,7 @@ jobs:
 
       - name: Build stubs
         run: |
-          python ./py-opsml/scripts/assemble_stubs.py
+          make build.stubs
 
       - name: Build wheel
         uses: PyO3/maturin-action@v1
@@ -175,8 +175,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: set up python
-        uses: actions/setup-python@v5
+      - name: Install uv and set the python version
+        uses: astral-sh/setup-uv@v6
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
@@ -184,7 +184,7 @@ jobs:
 
       - name: Build stubs
         run: |
-          python ./py-opsml/scripts/assemble_stubs.py
+          make build.stubs
 
       - name: Install libomp on macOS
         run: brew install libomp curl openssl pkg-config
@@ -226,8 +226,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Install uv and set the python version
+        uses: astral-sh/setup-uv@v6
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
@@ -235,7 +235,7 @@ jobs:
 
       - name: Build stubs
         run: |
-          python ./py-opsml/scripts/assemble_stubs.py
+          make build.stubs
 
       - name: Build wheel
         uses: PyO3/maturin-action@v1

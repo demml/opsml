@@ -326,7 +326,6 @@ jobs:
       - name: Create virtual environment
         working-directory: ./py-opsml
         run: |
-          make build.stubs
           make setup.project
 
       - name: Lints
