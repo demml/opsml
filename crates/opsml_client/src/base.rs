@@ -11,8 +11,12 @@ use reqwest::{multipart::Form as AsyncForm, Client as AsyncClient, Response as A
 use serde_json::Value;
 use std::sync::Arc;
 use std::sync::RwLock;
+use std::thread;
+use std::time::Duration;
 use tracing::{debug, error, instrument};
-
+const MAX_RETRIES: u32 = 3;
+const INITIAL_BACKOFF_MS: u64 = 100;
+const MAX_BACKOFF_MS: u64 = 5000;
 const TIMEOUT_SECS: u64 = 30;
 
 /// Create a new HTTP client that can be shared across different clients
@@ -255,18 +259,91 @@ impl OpsmlApiClient {
         query_params: Option<String>,
         headers: Option<HeaderMap>,
     ) -> Result<Response, ApiClientError> {
-        let response = self._request(
-            route.clone(),
+        self.request_with_retry(
+            route,
             request_type,
             body_params,
             query_params,
             headers,
-        )?;
+            MAX_RETRIES,
+        )
+    }
 
-        // Check and update token if a new one was provided
-        self.update_token_from_response(&response);
+    fn request_with_retry(
+        &self,
+        route: Routes,
+        request_type: RequestType,
+        body_params: Option<Value>,
+        query_params: Option<String>,
+        headers: Option<HeaderMap>,
+        max_retries: u32,
+    ) -> Result<Response, ApiClientError> {
+        let mut attempt = 0;
+        let mut backoff_ms = INITIAL_BACKOFF_MS;
 
-        Ok(response)
+        loop {
+            match self._request(
+                route.clone(),
+                request_type.clone(),
+                body_params.clone(),
+                query_params.clone(),
+                headers.clone(),
+            ) {
+                Ok(response) => {
+                    // handle if response is an error status code
+                    if Self::is_retryable_status(response.status()) && attempt < max_retries {
+                        debug!(
+                            "Request failed with retryable status {}, attempt {}/{}",
+                            response.status(),
+                            attempt + 1,
+                            max_retries
+                        );
+                        attempt += 1;
+                        thread::sleep(Duration::from_millis(backoff_ms));
+                        backoff_ms = (backoff_ms * 2).min(MAX_BACKOFF_MS);
+                        continue;
+                    }
+
+                    self.update_token_from_response(&response);
+                    return Ok(response);
+                }
+                Err(e) => {
+                    // handle client error
+                    if Self::is_retryable_error(&e) && attempt < max_retries {
+                        debug!(
+                            "Request failed with retryable error: {}, attempt {}/{}",
+                            e,
+                            attempt + 1,
+                            max_retries
+                        );
+                        attempt += 1;
+                        thread::sleep(Duration::from_millis(backoff_ms));
+                        backoff_ms = (backoff_ms * 2).min(MAX_BACKOFF_MS);
+                        continue;
+                    }
+                    return Err(e);
+                }
+            }
+        }
+    }
+
+    fn is_retryable_status(status: reqwest::StatusCode) -> bool {
+        matches!(
+            status.as_u16(),
+            408 | // Request Timeout
+            429 | // Too Many Requests
+            500 | // Internal Server Error
+            502 | // Bad Gateway
+            503 | // Service Unavailable
+            504 // Gateway Timeout
+        )
+    }
+
+    fn is_retryable_error(error: &ApiClientError) -> bool {
+        matches!(
+            error,
+            ApiClientError::RequestError(e) if e.is_timeout() || e.is_connect()
+        )
     }
 
     // specific method for multipart uploads (mainly used for localstorageclient)
@@ -500,20 +577,85 @@ impl OpsmlApiAsyncClient {
         query_params: Option<String>,
         headers: Option<HeaderMap>,
     ) -> Result<AsyncResponse, ApiClientError> {
-        let response = self
-            ._request(
-                route.clone(),
-                request_type,
-                body_params,
-                query_params,
-                headers,
-            )
-            .await?;
+        self.request_with_retry(
+            route,
+            request_type,
+            body_params,
+            query_params,
+            headers,
+            MAX_RETRIES,
+        )
+        .await
+    }
 
-        // Check and update token if a new one was provided
-        self.update_token_from_response(&response);
+    async fn request_with_retry(
+        &self,
+        route: Routes,
+        request_type: RequestType,
+        body_params: Option<Value>,
+        query_params: Option<String>,
+        headers: Option<HeaderMap>,
+        max_retries: u32,
+    ) -> Result<AsyncResponse, ApiClientError> {
+        let mut attempt = 0;
+        let mut backoff_ms = INITIAL_BACKOFF_MS;
 
-        Ok(response)
+        loop {
+            match self
+                ._request(
+                    route.clone(),
+                    request_type.clone(),
+                    body_params.clone(),
+                    query_params.clone(),
+                    headers.clone(),
+                )
+                .await
+            {
+                Ok(response) => {
+                    if Self::is_retryable_status(response.status()) && attempt < max_retries {
+                        debug!(
+                            "Request failed with retryable status {}, attempt {}/{}",
+                            response.status(),
+                            attempt + 1,
+                            max_retries
+                        );
+                        attempt += 1;
+                        tokio::time::sleep(Duration::from_millis(backoff_ms)).await;
+                        backoff_ms = (backoff_ms * 2).min(MAX_BACKOFF_MS);
+                        continue;
+                    }
+
+                    self.update_token_from_response(&response);
+                    return Ok(response);
+                }
+                Err(e) => {
+                    if Self::is_retryable_error(&e) && attempt < max_retries {
+                        debug!(
+                            "Request failed with retryable error: {}, attempt {}/{}",
+                            e,
+                            attempt + 1,
+                            max_retries
+                        );
+                        attempt += 1;
+                        tokio::time::sleep(Duration::from_millis(backoff_ms)).await;
+                        backoff_ms = (backoff_ms * 2).min(MAX_BACKOFF_MS);
+                        continue;
+                    }
+                    return Err(e);
+                }
+            }
+        }
+    }
+
+    fn is_retryable_status(status: reqwest::StatusCode) -> bool {
+        matches!(status.as_u16(), 408 | 429 | 500 | 502 | 503 | 504)
+    }
+
+    fn is_retryable_error(error: &ApiClientError) -> bool {
+        matches!(
+            error,
+            ApiClientError::RequestError(e) if e.is_timeout() || e.is_connect()
+        )
     }
 
     // specific method for multipart uploads (mainly used for localstorageclient)
@@ -583,7 +725,10 @@ impl OpsmlApiAsyncClient {
             .bearer_auth(self.get_current_token())
             .send()
             .await
-            .map_err(ApiClientError::RequestError)?;
+            .map_err(|e| {
+                error!("Failed to complete multipart upload with error: {}", e);
+                ApiClientError::RequestError(e)
+            })?;
         Ok(response)
     }
 }
