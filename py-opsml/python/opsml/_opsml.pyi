@@ -20,10 +20,11 @@ from typing import (
     Tuple,
     Type,
     TypeAlias,
-    TypeVar,
     Union,
     overload,
 )
+
+from typing_extensions import TypeVar
 
 SerializedType: TypeAlias = Union[str, int, float, dict, list]
 CardInterfaceType: TypeAlias = Union["DataInterface", "ModelInterface"]
