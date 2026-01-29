@@ -22,6 +22,12 @@ lints.pylint:
 lints: lints.ruff lints.pylint lints.mypy
 lints.ci: lints.format_check lints.ruff lints.pylint lints.mypy
 
+build.stubs:
+	uv run python scripts/assemble_stubs.py
+	uv run isort ${SOURCE_OBJECTS}
+	uv run black ${FORMAT_OBJECT}
+	uv run ruff check --silent --exit-zero ${FORMAT_OBJECT}
+
 setup.project:
 	uv sync --all-extras --group dev --group docs
 	uv run python scripts/assemble_stubs.py
