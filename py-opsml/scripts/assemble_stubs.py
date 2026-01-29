@@ -28,7 +28,7 @@ def assemble():
         if not file_path.exists():
             continue
 
-        raw_text = file_path.read_text()
+        raw_text = file_path.read_text(encoding="utf-8")
 
         match = all_pattern.search(raw_text)
         if match:
@@ -53,7 +53,8 @@ def assemble():
         final_content.append(f'    "{item}",')
     final_content.append("]")
 
-    OUTPUT_FILE.write_text("\n".join(final_content))
+    with OUTPUT_FILE.open("w", encoding="utf-8") as f:
+        f.write("\n".join(final_content))
     print(f"Compiled {len(master_all)} exports into {OUTPUT_FILE}")
 
 
