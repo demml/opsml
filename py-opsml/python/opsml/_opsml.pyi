@@ -46,7 +46,6 @@ class BaseModel(Protocol):
     def __str__(self) -> str:
         """String representation of the model"""
 
-
 ### logging.pyi ###
 class LogLevel:
     Debug: "LogLevel"
@@ -200,7 +199,6 @@ class RustyLogger:
             *args:
                 Additional arguments to log.
         """
-
 
 ### potato.pyi ###
 class Provider:
@@ -9723,7 +9721,6 @@ class LLMTestServer:
         Stop the mock server.
         """
 
-
 ### scouter.pyi ###
 def get_function_type(func: Callable[..., Any]) -> "FunctionType":
     """Determine the function type (sync, async, generator, async generator).
@@ -15684,7 +15681,6 @@ class DataProfiler:
                     Optional interval for aggregating metrics (e.g., "1m", "5m").
             """
 
-
 ### opsml.pyi ###
 class DriftConfig:
     def __init__(
@@ -21287,7 +21283,6 @@ class OpsmlServerContext:
     @property
     def server_uri(self) -> str:
         """Returns the server URI."""
-
 
 ### GLOBAL EXPORTS ###
 __all__ = [
