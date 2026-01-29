@@ -1,7 +1,7 @@
 # AUTO-GENERATED STUB FILE. DO NOT EDIT.
 # pylint: disable=redefined-builtin, invalid-name, dangerous-default-value
 ### header.pyi ###
-# pylint: disable=redefined-builtin, invalid-name, dangerous-default-value, missing-final-newline
+# pylint: disable=redefined-builtin, invalid-name, dangerous-default-value, missing-final-newline, arguments-differ
 
 import datetime
 from pathlib import Path
@@ -45,6 +45,7 @@ class BaseModel(Protocol):
 
     def __str__(self) -> str:
         """String representation of the model"""
+
 
 ### logging.pyi ###
 class LogLevel:
@@ -199,6 +200,7 @@ class RustyLogger:
             *args:
                 Additional arguments to log.
         """
+
 
 ### potato.pyi ###
 class Provider:
@@ -9721,6 +9723,7 @@ class LLMTestServer:
         Stop the mock server.
         """
 
+
 ### scouter.pyi ###
 def get_function_type(func: Callable[..., Any]) -> "FunctionType":
     """Determine the function type (sync, async, generator, async generator).
@@ -15681,6 +15684,7 @@ class DataProfiler:
                     Optional interval for aggregating metrics (e.g., "1m", "5m").
             """
 
+
 ### opsml.pyi ###
 class DriftConfig:
     def __init__(
@@ -19425,6 +19429,8 @@ class PromptCard:
 
 
         Args:
+            alias (str):
+                Unique alias for the drift profile within the prompt card.
             config (GenAIEvalConfig):
                 The configuration for the GenAI drift profile containing space, name,
                 version, and alert settings.
@@ -21281,6 +21287,7 @@ class OpsmlServerContext:
     @property
     def server_uri(self) -> str:
         """Returns the server URI."""
+
 
 ### GLOBAL EXPORTS ###
 __all__ = [
