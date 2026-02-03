@@ -4,11 +4,12 @@ set -e
 # All output goes to stdout/stderr for Kubernetes logging
 exec 2>&1
 
-export OPSML_SERVER_PORT=${OPSML_SERVER_PORT:-8000}
+export OPSML_SERVER_PORT=${OPSML_SERVER_PORT:-8080}  # Rust API internal port
+export NGINX_PORT=${NGINX_PORT:-8000}  # NGINX external port
 export APP_ENV=${APP_ENV:-staging}
 
-if ! [[ "$OPSML_SERVER_PORT" =~ ^[0-9]+$ ]]; then
-    echo "$(date): ERROR: OPSML_SERVER_PORT must be numeric, got: $OPSML_SERVER_PORT"
+if ! [[ "$NGINX_PORT" =~ ^[0-9]+$ ]]; then
+    echo "$(date): ERROR: NGINX_PORT must be numeric, got: $NGINX_PORT"
     exit 1
 fi
 
@@ -88,7 +89,7 @@ echo "$(date): Starting OpsML in APP_ENV=${APP_ENV}"
 
 # update nginx template
 echo "$(date): Configuring NGINX..."
-if ! envsubst '${OPSML_SERVER_PORT}' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf; then
+if ! envsubst '${NGINX_PORT}' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf; then
     echo "$(date): ERROR: Failed to process NGINX template"
     exit 1
 fi
@@ -125,13 +126,13 @@ if ! nginx -t; then
     exit 1
 fi
 
-echo "$(date): Starting NGINX on port ${OPSML_SERVER_PORT}..."
+echo "$(date): Starting NGINX on port ${NGINX_PORT}..."
 nginx -g "daemon off;" &
 NGINX_PID=$!
 echo "$(date): NGINX PID: $NGINX_PID"
 
 # Wait for NGINX
-if ! wait_for_service "${OPSML_SERVER_PORT}" "NGINX"; then
+if ! wait_for_service "${NGINX_PORT}" "NGINX"; then
     echo "$(date): Failed to start NGINX, exiting..."
     exit 1
 fi
