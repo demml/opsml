@@ -5,7 +5,6 @@ set -e
 exec 2>&1
 
 export OPSML_SERVER_PORT=${OPSML_SERVER_PORT:-8000}
-export OPSML_SERVER_PORT=${OPSML_SERVER_PORT:-8080}
 export APP_ENV=${APP_ENV:-staging}
 
 if ! [[ "$OPSML_SERVER_PORT" =~ ^[0-9]+$ ]]; then
