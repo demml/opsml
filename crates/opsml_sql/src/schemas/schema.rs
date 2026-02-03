@@ -115,14 +115,12 @@ impl VersionResult {
     pub fn to_version(&self) -> Result<Version, SqlError> {
         let mut version = Version::new(self.major as u64, self.minor as u64, self.patch as u64);
 
-        if self.pre_tag.is_some() {
-            version.pre = Prerelease::new(self.pre_tag.as_ref().unwrap())
-                .map_err(VersionError::InvalidVersion)?;
+        if let Some(pre_tag) = &self.pre_tag {
+            version.pre = Prerelease::new(pre_tag).map_err(VersionError::InvalidVersion)?;
         }
 
-        if self.build_tag.is_some() {
-            version.build = BuildMetadata::new(self.build_tag.as_ref().unwrap())
-                .map_err(VersionError::InvalidVersion)?;
+        if let Some(build_tag) = &self.build_tag {
+            version.build = BuildMetadata::new(build_tag).map_err(VersionError::InvalidVersion)?;
         }
 
         Ok(version)

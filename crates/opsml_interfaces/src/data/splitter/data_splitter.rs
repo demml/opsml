@@ -681,89 +681,49 @@ impl DataSplitter {
         data_type: &DataType,
         dependent_vars: &DependentVars,
     ) -> Result<Data, DataInterfaceError> {
-        if split.column_split.is_some() {
+        if let Some(split) = &split.column_split {
             match data_type {
                 DataType::Polars => {
-                    return PolarsColumnSplitter::create_split(
-                        data,
-                        split.column_split.as_ref().unwrap(),
-                        dependent_vars,
-                    );
+                    return PolarsColumnSplitter::create_split(data, split, dependent_vars);
                 }
                 DataType::Pandas => {
-                    return PandasColumnSplitter::create_split(
-                        data,
-                        split.column_split.as_ref().unwrap(),
-                        dependent_vars,
-                    );
+                    return PandasColumnSplitter::create_split(data, split, dependent_vars);
                 }
                 _ => {}
             }
         };
 
-        if split.indice_split.is_some() {
+        if let Some(split) = &split.indice_split {
             match data_type {
                 DataType::Polars => {
-                    return PolarsIndexSplitter::create_split(
-                        data,
-                        split.indice_split.as_ref().unwrap(),
-                        dependent_vars,
-                    );
+                    return PolarsIndexSplitter::create_split(data, split, dependent_vars);
                 }
                 DataType::Pandas => {
-                    return PandasIndexSplitter::create_split(
-                        data,
-                        split.indice_split.as_ref().unwrap(),
-                        dependent_vars,
-                    );
+                    return PandasIndexSplitter::create_split(data, split, dependent_vars);
                 }
                 DataType::Arrow => {
-                    return PyArrowIndexSplitter::create_split(
-                        data,
-                        split.indice_split.as_ref().unwrap(),
-                        dependent_vars,
-                    );
+                    return PyArrowIndexSplitter::create_split(data, split, dependent_vars);
                 }
                 DataType::Numpy => {
-                    return NumpyIndexSplitter::create_split(
-                        data,
-                        split.indice_split.as_ref().unwrap(),
-                        dependent_vars,
-                    );
+                    return NumpyIndexSplitter::create_split(data, split, dependent_vars);
                 }
                 _ => {}
             }
         };
 
-        if split.start_stop_split.is_some() {
+        if let Some(split) = &split.start_stop_split {
             match data_type {
                 DataType::Polars => {
-                    return PolarsStartStopSplitter::create_split(
-                        data,
-                        split.start_stop_split.as_ref().unwrap(),
-                        dependent_vars,
-                    );
+                    return PolarsStartStopSplitter::create_split(data, split, dependent_vars);
                 }
                 DataType::Pandas => {
-                    return PandasStartStopSplitter::create_split(
-                        data,
-                        split.start_stop_split.as_ref().unwrap(),
-                        dependent_vars,
-                    );
+                    return PandasStartStopSplitter::create_split(data, split, dependent_vars);
                 }
                 DataType::Arrow => {
-                    return PyArrowStartStopSplitter::create_split(
-                        data,
-                        split.start_stop_split.as_ref().unwrap(),
-                        dependent_vars,
-                    );
+                    return PyArrowStartStopSplitter::create_split(data, split, dependent_vars);
                 }
                 DataType::Numpy => {
-                    return NumpyStartStopSplitter::create_split(
-                        data,
-                        split.start_stop_split.as_ref().unwrap(),
-                        dependent_vars,
-                    );
+                    return NumpyStartStopSplitter::create_split(data, split, dependent_vars);
                 }
                 _ => {}
             }

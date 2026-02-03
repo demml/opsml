@@ -22,7 +22,13 @@ lints.pylint:
 lints: lints.ruff lints.pylint lints.mypy
 lints.ci: lints.format_check lints.ruff lints.pylint lints.mypy
 
-setup.project:
+build.stubs:
+	uv run python scripts/assemble_stubs.py
+	uv run isort ${SOURCE_OBJECTS}
+	uv run black ${FORMAT_OBJECT}
+	uv run ruff check --silent --exit-zero ${FORMAT_OBJECT}
+
+setup.project: build.stubs
 	uv sync --all-extras --group dev --group docs
 	uv run maturin develop --features server
 
@@ -104,15 +110,15 @@ setup.docs:
 	uv sync --group docs
 
 build.docs:
-	uv run python scripts/create_stubs.py
+	uv run python scripts/create_mkdocs_stubs.py
 	uv run mkdocs build
 
 serve.docs:
-	uv run python scripts/create_stubs.py
+	uv run python scripts/create_mkdocs_stubs.py
 	uv run mkdocs serve
 
 publish.docs:
-	uv run python scripts/create_stubs.py
+	uv run python scripts/create_mkdocs_stubs.py
 	uv run mkdocs gh-deploy --force
 
 upgrade.deps:
