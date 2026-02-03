@@ -6,22 +6,21 @@
   import { DriftType } from '$lib/components/scouter/types';
 
   // Components
-  import TimeRangeFilter from '$lib/components/trace/TimeRangeFilter.svelte';
   import ComboBoxDropDown from '$lib/components/utils/ComboBoxDropDown.svelte';
   import GenAIConfigHeader from '../GenAIConfigHeader.svelte';
   import GenAIEvalRecordTable from '../record/GenAIEvalRecordTable.svelte';
   import GenAIEvalWorkflowTable from '../workflow/GenAIEvalWorkflowTable.svelte';
   import VizBody from '$lib/components/scouter/dashboard/VizBody.svelte';
-  
+
   // Icons
-  import { KeySquare, LayoutDashboard, TableProperties, ArrowRightLeft } from 'lucide-svelte';
+  import { KeySquare, TableProperties, ArrowRightLeft } from 'lucide-svelte';
 
   // Props
-  let { 
+  let {
     monitoringData = $bindable(),
     onRecordPageChange,
     onWorkflowPageChange
-  }: { 
+  }: {
     monitoringData: Extract<MonitoringPageData, { status: 'success' }>;
     onRecordPageChange: (cursor: RecordCursor, direction: string) => Promise<void>;
     onWorkflowPageChange: (cursor: RecordCursor, direction: string) => Promise<void>;
@@ -32,18 +31,18 @@
   const config = $derived(profile.config as GenAIEvalConfig);
 
   const genAIData = $derived(monitoringData.selectedData.genAIData);
-  
+
 
   const records = $derived(genAIData?.records ?? { items: [], has_next: false, has_prev: false });
   const workflows = $derived(genAIData?.workflows ?? { items: [], has_next: false, has_prev: false });
-  
+
   const metrics = $derived(monitoringData.selectedData.metrics as { task: BinnedMetrics; workflow: BinnedMetrics });
   const taskMetrics = $derived(metrics?.task);
   const workflowMetrics = $derived(metrics?.workflow);
 
   let selectedMetricView = $state<'task' | 'workflow'>('workflow');
   let currentMetricName = $state<string>('');
-  
+
   const currentMetricsObj = $derived(selectedMetricView === 'task' ? taskMetrics : workflowMetrics);
   const availableMetricNames = $derived(currentMetricsObj?.metrics ? Object.keys(currentMetricsObj.metrics) : []);
   const currentMetricData = $derived(currentMetricsObj && currentMetricName ? currentMetricsObj.metrics[currentMetricName] : null);
@@ -148,7 +147,7 @@
   </div>
 
   <div class="grid grid-cols-1 gap-6">
-    
+
     {#if records && records.items && records.items.length > 0}
       <div class="bg-white border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] rounded-xl overflow-hidden flex flex-col h-full">
         <div class="bg-primary-100 border-b-2 border-black px-5 py-3 flex items-center justify-between flex-shrink-0">
@@ -160,7 +159,7 @@
             {records.items.length}
           </span>
         </div>
-        
+
         <div class="p-2 w-full flex-grow bg-slate-50 min-h-0">
            {#key records}
               <GenAIEvalRecordTable
@@ -183,12 +182,13 @@
             {workflows.items.length}
           </span>
         </div>
-        
+
         <div class="p-2 w-full flex-grow bg-slate-50 min-h-0">
             {#key workflows}
                 <GenAIEvalWorkflowTable
                   currentPage={workflows as GenAIEvalWorkflowPaginationResponse}
                   onPageChange={onWorkflowPageChange}
+                  profile={profile}
                 />
             {/key}
         </div>

@@ -5,16 +5,18 @@
   import WorkflowStageList from './WorkflowStageList.svelte';
   import TaskDetailView from '../task/TaskDetailView.svelte';
   import { getServerGenAIEvalTask } from '../utils';
-  import type { GenAIEvalTaskRequest } from '../types';
+  import type { GenAIEvalProfile, GenAIEvalTaskRequest } from '../types';
 
   let {
     workflow,
     onClose,
     showCloseButton = true,
+    profile,
   }: {
     workflow: GenAIEvalWorkflowResult;
     onClose?: () => void;
     showCloseButton?: boolean;
+    profile: GenAIEvalProfile;
   } = $props();
 
   let selectedTask = $state<GenAIEvalTaskResult | null>(null);
@@ -162,7 +164,7 @@
 
         <div class="bg-surface-50 lg:flex-1 min-w-0 {showTaskDetail ? 'block' : 'hidden'} lg:block">
           {#if selectedTask}
-            <TaskDetailView task={selectedTask}/>
+            <TaskDetailView task={selectedTask} profile={profile} />
           {:else}
             <div class="flex items-center justify-center h-full text-gray-500 p-4 text-center">
               Select a task to view details
