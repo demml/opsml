@@ -15,12 +15,12 @@ RUN microdnf update -y \
   && microdnf clean all \
   && rm -rf /var/cache/dnf/*
 
-ARG OPSML_SERVER_PORT=8000
+ARG NGINX_PORT=8000
 ARG OPSML_SERVER_BINARY
 ARG APP_ENV=staging
 
 # Set environment variables
-ENV OPSML_SERVER_PORT=${OPSML_SERVER_PORT}
+ENV NGINX_PORT=${NGINX_PORT}
 ENV APP_ENV=${APP_ENV}
 
 # Copy built UI, server binary, NGINX config, and entrypoint script
@@ -42,6 +42,6 @@ WORKDIR /app
 
 USER opsml
 
-EXPOSE ${OPSML_SERVER_PORT}
+EXPOSE ${NGINX_PORT}
 
 CMD ["/entrypoint.sh"]
