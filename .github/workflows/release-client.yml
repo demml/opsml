@@ -23,13 +23,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Install uv and set the python version
+        uses: astral-sh/setup-uv@v6
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Install dependencies
-        run: pip install -U twine tomli tomli-w
+        run: |
+          pip install -U twine tomli tomli-w
+          make build.stubs
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libcurl4-openssl-dev pkg-config
 
       - name: Update package name to opsml-client
         run: python ./py-opsml/scripts/update_package_name.py ./py-opsml/pyproject.toml "opsml-client"
@@ -70,8 +77,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: set up python
-        uses: actions/setup-python@v5
+      - name: Install uv and set the python version
+        uses: astral-sh/setup-uv@v6
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
@@ -79,6 +86,7 @@ jobs:
         run: |
           pip install -U twine tomli tomli-w
           python ./py-opsml/scripts/update_package_name.py ./py-opsml/pyproject.toml "opsml-client"
+          make build.stubs
 
       - name: Set OPENSSL_DIR environment variable
         run: echo "OPENSSL_DIR=/usr" >> $GITHUB_ENV
@@ -95,7 +103,7 @@ jobs:
           before-script-linux: |
             # Install required packages
             if command -v yum &> /dev/null; then
-                yum update -y && yum install -y perl-core openssl openssl-devel pkgconfig libatomic
+                yum update -y && yum install -y perl-core openssl openssl-devel pkgconfig libatomic curl-devel
 
                 # If we're running on i686 we need to symlink libatomic
                 # in order to build openssl with -latomic flag.
@@ -184,8 +192,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: set up python
-        uses: actions/setup-python@v5
+      - name: Install uv and set the python version
+        uses: astral-sh/setup-uv@v6
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
@@ -193,6 +201,13 @@ jobs:
         run: |
           pip install -U twine tomli tomli-w
           python ./py-opsml/scripts/update_package_name.py ./py-opsml/pyproject.toml "opsml-client"
+
+      - name: Build stubs
+        run: |
+          make build.stubs
+
+      - name: Install libomp on macOS
+        run: brew install libomp curl openssl pkg-config
 
       - name: build wheels
         uses: PyO3/maturin-action@v1
@@ -231,13 +246,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Install uv and set the python version
+        uses: astral-sh/setup-uv@v6
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Update package name to opsml-client
         run: |
+          make build.stubs
           pip install -U twine tomli tomli-w
           python ./py-opsml/scripts/update_package_name.py ./py-opsml/pyproject.toml "opsml-client"
 
@@ -246,7 +262,7 @@ jobs:
         with:
           command: build
           target: ${{ matrix.target }}
-          args: --release --out dist --features server
+          args: --release --out dist
           rust-toolchain: stable
           working-directory: ./py-opsml
 

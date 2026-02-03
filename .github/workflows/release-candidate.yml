@@ -36,7 +36,7 @@ jobs:
           make lints.ci
           make test.unit
           make setup.install
-          if [[ "v$(poetry version --short)" == *"rc"* ]]; 
+          if [[ "v$(poetry version --short)" == *"rc"* ]];
           then
             poetry build
             twine check --strict dist/*

@@ -60,8 +60,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: set up python
-        uses: actions/setup-python@v5
+      - name: Install uv and set the python version
+        uses: astral-sh/setup-uv@v6
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
@@ -69,6 +69,10 @@ jobs:
 
       - name: Set OPENSSL_DIR environment variable
         run: echo "OPENSSL_DIR=/usr" >> $GITHUB_ENV
+
+      - name: Build stubs
+        run: |
+          make build.stubs
 
       - name: Build wheel
         uses: PyO3/maturin-action@v1
@@ -82,7 +86,7 @@ jobs:
           before-script-linux: |
             # Install required packages
             if command -v yum &> /dev/null; then
-                yum update -y && yum install -y perl-core openssl openssl-devel pkgconfig libatomic
+                yum update -y && yum install -y perl-core openssl openssl-devel pkgconfig libatomic curl-devel
 
                 # If we're running on i686 we need to symlink libatomic
                 # in order to build openssl with -latomic flag.
@@ -171,12 +175,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: set up python
-        uses: actions/setup-python@v5
+      - name: Install uv and set the python version
+        uses: astral-sh/setup-uv@v6
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
       - run: pip install -U twine
+
+      - name: Build stubs
+        run: |
+          make build.stubs
+
+      - name: Install libomp on macOS
+        run: brew install libomp curl openssl pkg-config
 
       - name: build wheels
         uses: PyO3/maturin-action@v1
@@ -215,12 +226,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Install uv and set the python version
+        uses: astral-sh/setup-uv@v6
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
       - run: pip install -U twine
+
+      - name: Build stubs
+        run: |
+          make build.stubs
 
       - name: Build wheel
         uses: PyO3/maturin-action@v1

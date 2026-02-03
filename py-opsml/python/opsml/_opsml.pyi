@@ -1,8 +1,8 @@
-# python/opsml/_opsml.pyi
-# pylint: disable=dangerous-default-value,redefined-builtin,missing-param-doc,arguments-differ
-# type: ignore
+# AUTO-GENERATED STUB FILE. DO NOT EDIT.
+# pylint: disable=redefined-builtin, invalid-name, dangerous-default-value
+### header.pyi ###
+# pylint: disable=redefined-builtin, invalid-name, dangerous-default-value, missing-final-newline, arguments-differ
 
-# to search for a specific module, search for __<module_name>__ like __opsml.card__
 import datetime
 from pathlib import Path
 from types import TracebackType
@@ -17,25 +17,191 @@ from typing import (
     ParamSpec,
     Protocol,
     Sequence,
+    Tuple,
+    Type,
     TypeAlias,
-    TypeVar,
     Union,
     overload,
 )
 
+from typing_extensions import TypeVar
+
+SerializedType: TypeAlias = Union[str, int, float, dict, list]
 CardInterfaceType: TypeAlias = Union["DataInterface", "ModelInterface"]
 ServiceCardInterfaceType: TypeAlias = Dict[str, Union["DataInterface", "ModelInterface"]]
 LoadInterfaceType: TypeAlias = Union[ServiceCardInterfaceType, ServiceCardInterfaceType]
-SerializedType: TypeAlias = Union[str, int, float, dict, list]
 Context: TypeAlias = Union[Dict[str, Any], "BaseModel"]
 
 P = ParamSpec("P")
 R = TypeVar("R")
 
-########################################################################################
-#  This section contains the type definitions for opsml.mock module
-# start: __opsml.genai__
-# ######################################################################################
+class BaseModel(Protocol):
+    """Protocol for pydantic BaseModel to ensure compatibility with context"""
+
+    def model_dump(self) -> Dict[str, Any]:
+        """Dump the model as a dictionary"""
+
+    def model_dump_json(self) -> str:
+        """Dump the model as a JSON string"""
+
+    def __str__(self) -> str:
+        """String representation of the model"""
+
+### logging.pyi ###
+class LogLevel:
+    Debug: "LogLevel"
+    Info: "LogLevel"
+    Warn: "LogLevel"
+    Error: "LogLevel"
+    Trace: "LogLevel"
+
+class WriteLevel:
+    Stdout: "WriteLevel"
+    Stderror: "WriteLevel"
+
+class LoggingConfig:
+    show_threads: bool
+    log_level: LogLevel
+    write_level: WriteLevel
+    use_json: bool
+
+    def __init__(
+        self,
+        show_threads: bool = True,
+        log_level: LogLevel = LogLevel.Info,
+        write_level: WriteLevel = WriteLevel.Stdout,
+        use_json: bool = False,
+    ) -> None:
+        """
+        Logging configuration options.
+
+        Args:
+            show_threads:
+                Whether to include thread information in log messages.
+                Default is True.
+
+            log_level:
+                Log level for the logger.
+                Default is LogLevel.Info.
+
+            write_level:
+                Write level for the logger.
+                Default is WriteLevel.Stdout.
+
+            use_json:
+                Whether to write log messages in JSON format.
+                Default is False.
+        """
+
+    @staticmethod
+    def json_default() -> "LoggingConfig":
+        """Gets a default JSON configuration.
+
+        show_threads: True
+        log_level: Env or LogLevel.Info
+        write_level: WriteLevel.Stdout
+        use_json: True
+
+        Returns:
+            LoggingConfig:
+                The default JSON configuration.
+        """
+
+    @staticmethod
+    def default() -> "LoggingConfig":
+        """Gets a default configuration.
+
+        show_threads: True
+        log_level: Env or LogLevel.Info
+        write_level: WriteLevel.Stdout
+        use_json: False
+
+        Returns:
+            LoggingConfig:
+                The default JSON configuration.
+        """
+
+class RustyLogger:
+    """The Rusty Logger class to use with your python and rust-backed projects."""
+
+    @staticmethod
+    def setup_logging(config: Optional[LoggingConfig] = None) -> None:
+        """Sets up the logger with the given configuration.
+
+        Args:
+            config (LoggingConfig):
+                The configuration to use for the logger.
+        """
+
+    @staticmethod
+    def get_logger(config: Optional[LoggingConfig] = None) -> "RustyLogger":
+        """Gets the logger instance.
+
+        Args:
+            config (LoggingConfig):
+                The configuration to use for the logger.
+
+        Returns:
+            RustyLogger:
+                The logger instance.
+        """
+
+    def debug(self, message: str, *args) -> None:
+        """Logs a debug message.
+
+        Args:
+            message (str):
+                The message to log.
+
+            *args:
+                Additional arguments to log.
+        """
+
+    def info(self, message: str, *args) -> None:
+        """Logs an info message.
+
+        Args:
+            message (str):
+                The message to log.
+
+            *args:
+                Additional arguments to log.
+        """
+
+    def warn(self, message: str, *args) -> None:
+        """Logs a warning message.
+
+        Args:
+            message (str):
+                The message to log.
+
+            *args:
+                Additional arguments to log.
+        """
+
+    def error(self, message: str, *args) -> None:
+        """Logs an error message.
+
+        Args:
+            message (str):
+                The message to log.
+
+            *args:
+                Additional arguments to log.
+        """
+
+    def trace(self, message: str, *args) -> None:
+        """Logs a trace message.
+
+        Args:
+            message (str):
+                The message to log.
+
+            *args:
+                Additional arguments to log.
+        """
+
+### potato.pyi ###
 class Provider:
     """Provider enumeration for LLM services.
 
@@ -239,7 +405,9 @@ PromptMessage: TypeAlias = Union[
     List[Union[str, "ChatMessage", "MessageParam", "GeminiContent"]],
 ]
 
-class Prompt:
+OutputType = TypeVar("OutputType")
+
+class Prompt(Generic[OutputType]):
     """Prompt for interacting with an LLM API.
 
     The Prompt class handles message parsing, provider-specific formatting, and
@@ -253,7 +421,7 @@ class Prompt:
         provider: Provider | str,
         system_instructions: Optional[PromptMessage] = None,
         model_settings: Optional[ModelSettings | OpenAIChatSettings | GeminiSettings | AnthropicSettings] = None,
-        output_type: Optional[Any] = None,
+        output_type: Optional[Type[OutputType]] = None,
     ) -> None:
         """Initialize a Prompt object.
 
@@ -277,8 +445,9 @@ class Prompt:
             model_settings (Optional[ModelSettings | OpenAIChatSettings | GeminiSettings | AnthropicSettings]):
                 Optional model-specific settings (temperature, max_tokens, etc.)
                 If None, provider default settings will be used
-            output_type (Optional[Pydantic BaseModel | Score]):
-                Optional structured output format.The provided format will be parsed into a JSON schema for structured outputs
+            output_type (Optional[OutputT]):
+                Optional structured output type.The provided format will be parsed into a JSON schema for structured outputs.
+                This is typically a pydantic BaseModel.
 
         Raises:
             TypeError: If message types are invalid or incompatible with the provider
@@ -735,16 +904,30 @@ _ResponseType: TypeAlias = Union[
     "AnthropicMessageResponse",
 ]
 
-class AgentResponse:
+OutT = TypeVar(
+    "OutT",
+    default=str,
+)
+RespT = TypeVar("RespT", default=_ResponseType)
+
+class AgentResponse(Generic[OutT, RespT]):
+    """Agent response generic over OutputDataT.
+
+    The structured_output property returns OutputDataT type.
+
+    Examples:
+        >>> agent = Agent(provider=Provider.OpenAI)
+        >>> response: AgentResponse[WeatherData] = agent.execute_prompt(prompt, output_type=WeatherData)
+        >>> weather: WeatherData = response.structured_output
+    """
+
     @property
     def id(self) -> str:
         """The ID of the agent response."""
 
     @property
-    def response(self) -> _ResponseType:
-        """The response of the agent. This can be an OpenAIChatResponse, GenerateContentResponse,
-        or AnthropicMessageResponse depending on the provider used.
-        """
+    def response(self) -> RespT:
+        """The response of the agent."""
 
     @property
     def token_usage(self) -> Any:
@@ -752,13 +935,15 @@ class AgentResponse:
 
     @property
     def log_probs(self) -> ResponseLogProbs:
-        """Returns the log probabilities of the agent response if supported.
-        This is primarily used for debugging and analysis purposes.
-        """
+        """Returns the log probabilities of the agent response if supported."""
 
     @property
-    def structured_output(self) -> Any:
-        """Returns the structured output of the agent response if supported."""
+    def structured_output(self) -> OutT:
+        """Returns the structured output of the agent response.
+
+        The type is determined by the Agent's OutputType generic parameter
+        or the output_type argument passed to execute_task/execute_prompt.
+        """
 
     def response_text(self) -> str:
         """The response text from the agent if available, otherwise an empty string."""
@@ -767,7 +952,7 @@ class Task:
     def __init__(
         self,
         agent_id: str,
-        prompt: Prompt,
+        prompt: Prompt[OutputType],
         id: Optional[str] = None,
         dependencies: List[str] = [],
         max_retries: int = 3,
@@ -777,7 +962,7 @@ class Task:
         Args:
             agent_id (str):
                 The ID of the agent that will execute the task.
-            prompt (Prompt):
+            prompt (Prompt[OutputType]):
                 The prompt to use for the task.
             id (Optional[str]):
                 The ID of the task. If None, a random uuid7 will be generated.
@@ -814,6 +999,27 @@ class TaskList:
         """Dictionary of tasks in the TaskList where keys are task IDs and values are Task objects."""
 
 class Agent:
+    """Create an Agent object.
+
+    Generic over OutputType which determines the structured output type.
+    By default, OutputType is str if no output_type is specified.
+
+    Examples:
+        >>> # Default agent (OutputType = str)
+        >>> agent = Agent(provider=Provider.OpenAI)
+        >>> response = agent.execute_prompt(prompt)
+        >>> text: str = response.structured_output
+
+        >>> # Typed agent with Pydantic model
+        >>> class WeatherData(BaseModel):
+        ...     temperature: float
+        ...     condition: str
+        >>>
+        >>> agent = Agent(provider=Provider.OpenAI)
+        >>> response = agent.execute_prompt(prompt, output_type=WeatherData)
+        >>> weather: WeatherData = response.structured_output
+    """
+
     def __init__(
         self,
         provider: Provider | str,
@@ -823,67 +1029,56 @@ class Agent:
 
         Args:
             provider (Provider | str):
-                The provider to use for the agent. This can be a Provider enum or a string
-                representing the provider.
+                The provider to use for the agent.
             system_instruction (Optional[PromptMessage]):
-                The system message to use for the agent. This can be a string, a list of strings,
-                a Message object, or a list of Message objects. If None, no system message will be used.
-                This is added to all tasks that the agent executes. If a given task contains it's own
-                system message, the agent's system message will be prepended to the task's system message.
-
-        Example:
-        ```python
-            agent = Agent(
-                provider=Provider.OpenAI,
-                system_instructions="You are a helpful assistant.",
-            )
-        ```
+                The system message to use for the agent.
         """
 
     @property
     def system_instruction(self) -> List[Any]:
-        """The system message to use for the agent. This is a list of Message objects."""
+        """The system message to use for the agent."""
 
     def execute_task(
         self,
         task: Task,
-        output_type: Optional[Any] = None,
-    ) -> AgentResponse:
+        output_type: type[OutT] | None = None,
+    ) -> AgentResponse[OutT, _ResponseType]:
         """Execute a task.
 
         Args:
             task (Task):
                 The task to execute.
-            output_type (Optional[Any]):
-                The output type to use for the task. This can either be a Pydantic `BaseModel` class
-                or a supported PotatoHead response type such as `Score`.
+            output_type (Optional[OutT]):
+                The output type to use for the task.
+
         Returns:
-            AgentResponse:
-                The response from the agent after executing the task.
+            AgentResponse[OutT, _ResponseType]:
+                The response from the agent. For type-safe response access,
+                annotate the return value with the specific response type.
         """
 
     def execute_prompt(
         self,
         prompt: Prompt,
-        output_type: Optional[Any] = None,
-    ) -> AgentResponse:
+        output_type: type[OutT] | None = None,
+    ) -> AgentResponse[OutT, _ResponseType]:
         """Execute a prompt.
 
         Args:
             prompt (Prompt):
                 The prompt to execute.
-            output_type (Optional[Any]):
-                The output type to use for the task. This can either be a Pydantic `BaseModel` class
-                or a supported potato_head response type such as `Score`.
+            output_type (Optional[OutT]):
+                The output type to use for the task.
 
         Returns:
-            AgentResponse:
-                The response from the agent after executing the task.
+            AgentResponse[OutT, _ResponseType]:
+                The response from the agent. For type-safe response access,
+                annotate the return value with the specific response type.
         """
 
     @property
     def id(self) -> str:
-        """The ID of the agent. This is a random uuid7 that is generated when the agent is created."""
+        """The ID of the agent."""
 
 class Workflow:
     def __init__(self, name: str) -> None:
@@ -2542,6 +2737,7 @@ class ChatMessage:
             TypeError: If content format is invalid
         """
 
+    @property
     def text(self) -> str:
         """Get the text content of the first part, if available. Returns
         an empty string if the first part is not text.
@@ -5324,6 +5520,7 @@ class GeminiContent:
                 Role of the message sender (e.g., "user", "model", "function")
         """
 
+    @property
     def text(self) -> str:
         """Get the text content of the first part, if available. Returns
         an empty string if the first part is not text.
@@ -8650,6 +8847,7 @@ class MessageParam:
                 Message role ("user" or "assistant")
         """
 
+    @property
     def text(self) -> str:
         """Get the text content of the first part, if available. Returns
         an empty string if the first part is not text.
@@ -9503,75 +9701,7 @@ class AnthropicMessageResponse:
     def content(self) -> List[Any]:
         """Generated content blocks."""
 
-# end: __opsml.genai__
-
-########################################################################################
-#  This section contains the type definitions for opsml.mock module
-# __opsml.mock__
-# ######################################################################################
-
-class RegistryTestHelper:
-    """Helper class for testing the registry"""
-
-    def __init__(self) -> None: ...
-    def setup(self) -> None: ...
-    def cleanup(self) -> None: ...
-
-class OpsmlTestServer:
-    def __init__(self, cleanup: bool = True, base_path: Optional[Path] = None) -> None:
-        """Instantiates the test server.
-
-        When the test server is used as a context manager, it will start the server
-        in a background thread and set the appropriate env vars so that the client
-        can connect to the server. The server will be stopped when the context manager
-        exits and the env vars will be reset.
-
-        Args:
-            cleanup (bool, optional):
-                Whether to cleanup the server after the test. Defaults to True.
-            base_path (Optional[Path], optional):
-                The base path for the server. Defaults to None. This is primarily
-                used for testing loading attributes from a pyproject.toml file.
-        """
-
-    def start_server(self) -> None:
-        """Starts the test server."""
-
-    def stop_server(self) -> None:
-        """Stops the test server."""
-
-    def __enter__(self) -> "OpsmlTestServer":
-        """Starts the test server."""
-
-    def __exit__(self, exc_type, exc_value, traceback) -> None:
-        """Stops the test server."""
-
-    def set_env_vars_for_client(self) -> None:
-        """Sets the env vars for the client to connect to the server."""
-
-    def remove_env_vars_for_client(self) -> None:
-        """Removes the env vars for the client to connect to the server."""
-
-    @staticmethod
-    def cleanup() -> None:
-        """Cleans up the test server."""
-
-class OpsmlServerContext:
-    def __init__(self) -> None:
-        """Instantiates the server context.
-        This is helpful when you are running tests in server mode to
-        aid in background cleanup of resources
-        """
-
-    def __enter__(self) -> "OpsmlServerContext":
-        """Starts the server context."""
-
-    def __exit__(self, exc_type, exc_value, traceback) -> None:
-        """Stops the server context."""
-
-    @property
-    def server_uri(self) -> str:
-        """Returns the server URI."""
+###### __potatohead__.mock module ######
 
 class LLMTestServer:
     """
@@ -9579,7 +9709,9 @@ class LLMTestServer:
     This class is used to simulate the OpenAI API for testing purposes.
     """
 
-    def __init__(self): ...
+    def __init__(self):
+        """Initialize the mock server."""
+
     def __enter__(self):
         """
         Start the mock server.
@@ -9590,167 +9722,7 @@ class LLMTestServer:
         Stop the mock server.
         """
 
-########################################################################################
-#  This section contains the type definitions for opsml.logging module
-# __opsml.logging__
-# ######################################################################################
-class LogLevel:
-    Debug: "LogLevel"
-    Info: "LogLevel"
-    Warn: "LogLevel"
-    Error: "LogLevel"
-    Trace: "LogLevel"
-
-class WriteLevel:
-    Stdout: "WriteLevel"
-    Stderror: "WriteLevel"
-
-class LoggingConfig:
-    show_threads: bool
-    log_level: LogLevel
-    write_level: WriteLevel
-    use_json: bool
-
-    def __init__(
-        self,
-        show_threads: bool = True,
-        log_level: LogLevel = LogLevel.Info,
-        write_level: WriteLevel = WriteLevel.Stdout,
-        use_json: bool = False,
-    ) -> None:
-        """
-        Logging configuration options.
-
-        Args:
-            show_threads:
-                Whether to include thread information in log messages.
-                Default is True.
-
-            log_level:
-                Log level for the logger.
-                Default is LogLevel.Info.
-
-            write_level:
-                Write level for the logger.
-                Default is WriteLevel.Stdout.
-
-            use_json:
-                Whether to write log messages in JSON format.
-                Default is False.
-        """
-
-    @staticmethod
-    def json_default() -> "LoggingConfig":
-        """Gets a default JSON configuration.
-
-        show_threads: True
-        log_level: Env or LogLevel.Info
-        write_level: WriteLevel.Stdout
-        use_json: True
-
-        Returns:
-            LoggingConfig:
-                The default JSON configuration.
-        """
-
-    @staticmethod
-    def default() -> "LoggingConfig":
-        """Gets a default configuration.
-
-        show_threads: True
-        log_level: Env or LogLevel.Info
-        write_level: WriteLevel.Stdout
-        use_json: False
-
-        Returns:
-            LoggingConfig:
-                The default JSON configuration.
-        """
-
-class RustyLogger:
-    """The Rusty Logger class to use with your python and rust-backed projects."""
-
-    @staticmethod
-    def setup_logging(config: Optional[LoggingConfig] = None) -> None:
-        """Sets up the logger with the given configuration.
-
-        Args:
-            config (LoggingConfig):
-                The configuration to use for the logger.
-        """
-
-    @staticmethod
-    def get_logger(config: Optional[LoggingConfig] = None) -> "RustyLogger":
-        """Gets the logger instance.
-
-        Args:
-            config (LoggingConfig):
-                The configuration to use for the logger.
-
-        Returns:
-            RustyLogger:
-                The logger instance.
-        """
-
-    def debug(self, message: str, *args) -> None:
-        """Logs a debug message.
-
-        Args:
-            message (str):
-                The message to log.
-
-            *args:
-                Additional arguments to log.
-        """
-
-    def info(self, message: str, *args) -> None:
-        """Logs an info message.
-
-        Args:
-            message (str):
-                The message to log.
-
-            *args:
-                Additional arguments to log.
-        """
-
-    def warn(self, message: str, *args) -> None:
-        """Logs a warning message.
-
-        Args:
-            message (str):
-                The message to log.
-
-            *args:
-                Additional arguments to log.
-        """
-
-    def error(self, message: str, *args) -> None:
-        """Logs an error message.
-
-        Args:
-            message (str):
-                The message to log.
-
-            *args:
-                Additional arguments to log.
-        """
-
-    def trace(self, message: str, *args) -> None:
-        """Logs a trace message.
-
-        Args:
-            message (str):
-                The message to log.
-
-            *args:
-                Additional arguments to log.
-        """
-
-########################################################################################
-#  This section contains the type definitions for opsml.scouter module
-# start: __opsml.scouter__
-
+### scouter.pyi ###
 def get_function_type(func: Callable[..., Any]) -> "FunctionType":
     """Determine the function type (sync, async, generator, async generator).
 
@@ -10222,7 +10194,7 @@ class BaseTracer:
     def shutdown(self) -> None:
         """Shutdown the tracer and flush any remaining spans."""
 
-def get_current_active_span() -> "ActiveSpan":
+def get_current_active_span(self) -> ActiveSpan:
     """Get the current active span.
 
     Returns:
@@ -11632,6 +11604,25 @@ class ScouterClient:
             TraceSpansResponse
         """
 
+    def get_trace_spans_from_tags(
+        self,
+        tags: List[Tuple[str, str]],
+        match_all: bool = False,
+        service_name: Optional[str] = None,
+    ) -> TraceSpansResponse:
+        """Get trace spans from tags
+        Args:
+            tags:
+                List of tags to filter by
+            match_all:
+                Whether to match all tags or any tag
+            service_name:
+                Service name
+
+        Returns:
+            TraceSpansResponse
+        """
+
     def get_trace_baggage(self, trace_id: str) -> TraceBaggageResponse:
         """Get trace baggage
 
@@ -12338,18 +12329,6 @@ class ScouterQueue:
     ) -> Union[KafkaConfig, RabbitMQConfig, RedisConfig, HttpConfig, MockConfig]:
         """Return the transport configuration used by the queue"""
 
-class BaseModel(Protocol):
-    """Protocol for pydantic BaseModel to ensure compatibility with context"""
-
-    def model_dump(self) -> Dict[str, Any]:
-        """Dump the model as a dictionary"""
-
-    def model_dump_json(self) -> str:
-        """Dump the model as a JSON string"""
-
-    def __str__(self) -> str:
-        """String representation of the model"""
-
 class GenAIEvalRecord:
     """LLM record containing context tied to a Large Language Model interaction
     that is used to evaluate drift in LLM responses.
@@ -12433,6 +12412,17 @@ class GenAIEvalRecord:
 
     def model_dump_json(self) -> str:
         """Return the json representation of the record."""
+
+    def update_context_field(self, key: str, value: Any) -> None:
+        """Update a specific field in the context.
+        If the key does not exist, it will be added.
+
+        Args:
+            key (str):
+                The key of the context field to update.
+            value (Any):
+                The new value for the context field.
+        """
 
 class LatencyMetrics:
     @property
@@ -13590,7 +13580,7 @@ class GenAIEvalConfig:
         sample_ratio: float = 1.0,
         alert_config: GenAIAlertConfig = GenAIAlertConfig(),
     ):
-        """Initialize eval config
+        """Initialize drift config
         Args:
             space:
                 Space to associate with the config
@@ -13939,7 +13929,7 @@ class AssertionTask:
         operator: ComparisonOperator,
         field_path: Optional[str] = None,
         description: Optional[str] = None,
-        depends_on: Optional[List[str]] = None,
+        depends_on: Optional[Sequence[str]] = None,
         condition: bool = False,
     ):
         """Initialize an assertion task for rule-based evaluation.
@@ -15121,6 +15111,26 @@ class GenAIEvalDataset:
     def print_execution_plan(self) -> None:
         """Print the execution plan for all tasks in the dataset."""
 
+    def with_updated_contexts_by_id(
+        self,
+        updated_contexts: Dict[str, Any],
+    ) -> "GenAIEvalDataset":
+        """Create a new GenAIEvalDataset with updated contexts for specific records.
+
+        Example:
+            >>> updated_contexts = {
+            ...     "record_1_uid": {"new_field": "new_value"},
+            ...     "record_2_uid": {"another_field": 123}
+            ... }
+            >>> new_dataset = dataset.with_updated_contexts_by_id(updated_contexts)
+        Args:
+            updated_contexts (Dict[str, Any]):
+                A dictionary mapping record UIDs to their new context data.
+        Returns:
+            GenAIEvalDataset:
+                A new dataset instance with the updated contexts.
+        """
+
 class GenAIEvalSet:
     """Evaluation set for a specific evaluation run"""
 
@@ -15209,6 +15219,149 @@ class AlignedEvalResult:
     def task_count(self) -> int:
         """Get the total number of tasks in the evaluation"""
 
+class MissingTask:
+    """Represents a task that exists in only one of the compared evaluations"""
+
+    @property
+    def task_id(self) -> str:
+        """Get the task identifier"""
+
+    @property
+    def present_in(self) -> str:
+        """Get which evaluation contains this task ('baseline_only' or 'comparison_only')"""
+
+class TaskComparison:
+    """Represents a comparison between the same task in baseline and comparison evaluations"""
+
+    @property
+    def task_id(self) -> str:
+        """Get the task identifier"""
+
+    @property
+    def baseline_passed(self) -> bool:
+        """Check if the task passed in the baseline evaluation"""
+
+    @property
+    def comparison_passed(self) -> bool:
+        """Check if the task passed in the comparison evaluation"""
+
+    @property
+    def status_changed(self) -> bool:
+        """Check if the task's pass/fail status changed between evaluations"""
+
+    @property
+    def record_uid(self) -> str:
+        """Get the record unique identifier associated with this task comparison"""
+
+class WorkflowComparison:
+    """Represents a comparison between matching workflows in baseline and comparison evaluations"""
+
+    @property
+    def baseline_uid(self) -> str:
+        """Get the baseline workflow unique identifier"""
+
+    @property
+    def comparison_uid(self) -> str:
+        """Get the comparison workflow unique identifier"""
+
+    @property
+    def baseline_pass_rate(self) -> float:
+        """Get the baseline workflow pass rate (0.0 to 1.0)"""
+
+    @property
+    def comparison_pass_rate(self) -> float:
+        """Get the comparison workflow pass rate (0.0 to 1.0)"""
+
+    @property
+    def pass_rate_delta(self) -> float:
+        """Get the change in pass rate (positive = improvement, negative = regression)"""
+
+    @property
+    def is_regression(self) -> bool:
+        """Check if this workflow shows a significant regression"""
+
+    @property
+    def task_comparisons(self) -> List[TaskComparison]:
+        """Get detailed task-by-task comparisons for this workflow"""
+
+class ComparisonResults:
+    """Results from comparing two GenAIEvalResults evaluations"""
+
+    @property
+    def workflow_comparisons(self) -> List[WorkflowComparison]:
+        """Get all workflow-level comparisons"""
+
+    @property
+    def total_workflows(self) -> int:
+        """Get the total number of workflows compared"""
+
+    @property
+    def improved_workflows(self) -> int:
+        """Get the count of workflows that improved"""
+
+    @property
+    def regressed_workflows(self) -> int:
+        """Get the count of workflows that regressed"""
+
+    @property
+    def unchanged_workflows(self) -> int:
+        """Get the count of workflows with no significant change"""
+
+    @property
+    def mean_pass_rate_delta(self) -> float:
+        """Get the mean change in pass rate across all workflows"""
+
+    @property
+    def task_status_changes(self) -> List[TaskComparison]:
+        """Get all tasks where pass/fail status changed"""
+
+    @property
+    def missing_tasks(self) -> List[MissingTask]:
+        """Get all tasks present in only one evaluation"""
+
+    @property
+    def baseline_workflow_count(self) -> int:
+        """Get the number of workflows in the baseline evaluation"""
+
+    @property
+    def comparison_workflow_count(self) -> int:
+        """Get the number of workflows in the comparison evaluation"""
+
+    @property
+    def has_missing_tasks(self) -> bool:
+        """Check if there are any missing tasks between evaluations"""
+
+    def __str__(self) -> str:
+        """String representation of the comparison results"""
+
+    @property
+    def regressed(self) -> bool:
+        """Check if any workflows regressed in the comparison"""
+
+    def print_missing_tasks(self) -> None:
+        """Print a formatted list of missing tasks to the console"""
+
+    def print_task_aggregate_table(self) -> None:
+        """Print a formatted table of task status changes to the console"""
+
+    def print_summary_table(self) -> None:
+        """Print a formatted summary table of workflow comparisons to the console"""
+
+    def print_status_changes_table(self) -> None:
+        """Print a formatted table of task status changes to the console"""
+
+    def print_summary_stats(self) -> None:
+        """Print summary statistics of the comparison results to the console"""
+
+    def as_table(self) -> None:
+        """Print comparison results as formatted tables to the console.
+
+        Displays:
+        - Workflow-level summary table
+        - Task status changes table (if any)
+        - Missing tasks list (if any)
+        """
+
 class GenAIEvalResults:
     """Defines the results of an LLM eval metric"""
 
@@ -15269,8 +15422,21 @@ class GenAIEvalResults:
 
         """
 
+    def compare_to(self, baseline: "GenAIEvalResults", regression_threshold: float) -> ComparisonResults:
+        """Compare the current evaluation results to a baseline with a regression threshold.
+
+        Args:
+            baseline (GenAIEvalResults):
+                The baseline evaluation results to compare against.
+            regression_threshold (float):
+                The threshold for considering a regression significant.
+
+        Returns:
+            ComparisonResults
+        """
+
 class EvaluationConfig:
-    """Configuration options for GenAI offline evaluation."""
+    """Configuration options for LLM evaluation."""
 
     def __init__(
         self,
@@ -15516,13 +15682,7 @@ class DataProfiler:
                     Optional interval for aggregating metrics (e.g., "1m", "5m").
             """
 
-# end: __opsml.scouter__
-
-########################################################################################
-#  This section contains the type definitions for opsml.types module
-# __opsml.types__
-# ######################################################################################
-
+### opsml.pyi ###
 class DriftConfig:
     def __init__(
         self,
@@ -18338,7 +18498,7 @@ class DataCard:
         """Returns the app env"""
 
     @property
-    def created_at(self) -> datetime:
+    def created_at(self) -> datetime.datetime:
         """Returns the created at timestamp"""
 
     @property
@@ -18642,7 +18802,7 @@ class ModelCard:
         """Returns the app env"""
 
     @property
-    def created_at(self) -> datetime:
+    def created_at(self) -> datetime.datetime:
         """Returns the created at timestamp"""
 
     @property
@@ -19011,7 +19171,7 @@ class ExperimentCard:
         """Returns the app env"""
 
     @property
-    def created_at(self) -> datetime:
+    def created_at(self) -> datetime.datetime:
         """Returns the created at timestamp"""
 
     def add_child_experiment(self, uid: str) -> None:
@@ -19266,6 +19426,8 @@ class PromptCard:
 
 
         Args:
+            alias (str):
+                Unique alias for the drift profile within the prompt card.
             config (GenAIEvalConfig):
                 The configuration for the GenAI drift profile containing space, name,
                 version, and alert settings.
@@ -19530,7 +19692,7 @@ class ServiceCard:
         """Return the uid of the service card"""
 
     @property
-    def created_at(self) -> datetime:
+    def created_at(self) -> datetime.datetime:
         """Return the created at timestamp"""
 
     @property
@@ -19613,7 +19775,7 @@ class ServiceCard:
             ```
         """
 
-    def __getitem__(self, alias: str) -> "CardT":
+    def __getitem__(self, alias: str) -> Union[DataCard, ModelCard, PromptCard, ExperimentCard]:
         """Get a card from the service card by alias
 
         Args:
@@ -19657,32 +19819,6 @@ CardT = TypeVar(
 )
 
 class CardRegistry(Generic[CardT]):
-    @overload
-    def __init__(self, registry_type: Literal[RegistryType.Data]) -> "CardRegistry[DataCard]": ...
-    @overload
-    def __init__(self, registry_type: Literal[RegistryType.Model]) -> "CardRegistry[ModelCard]": ...
-    @overload
-    def __init__(self, registry_type: Literal[RegistryType.Prompt]) -> "CardRegistry[PromptCard]": ...
-    @overload
-    def __init__(self, registry_type: Literal[RegistryType.Experiment]) -> "CardRegistry[ExperimentCard]": ...
-    @overload
-    def __init__(self, registry_type: Literal[RegistryType.Service]) -> "CardRegistry[ServiceCard]": ...
-    @overload
-    def __init__(self, registry_type: Literal[RegistryType.Audit]) -> "CardRegistry[Any]": ...
-
-    # String literal overloads
-    @overload
-    def __init__(self, registry_type: Literal["data"]) -> "CardRegistry[DataCard]": ...
-    @overload
-    def __init__(self, registry_type: Literal["model"]) -> "CardRegistry[ModelCard]": ...
-    @overload
-    def __init__(self, registry_type: Literal["prompt"]) -> "CardRegistry[PromptCard]": ...
-    @overload
-    def __init__(self, registry_type: Literal["experiment"]) -> "CardRegistry[ExperimentCard]": ...
-    @overload
-    def __init__(self, registry_type: Literal["service"]) -> "CardRegistry[ServiceCard]": ...
-    @overload
-    def __init__(self, registry_type: Literal["audit"]) -> "CardRegistry[Any]": ...
     def __init__(self, registry_type: Union[RegistryType, str]) -> None:
         """Interface for connecting to any of the Card registries
 
@@ -19781,51 +19917,6 @@ class CardRegistry(Generic[CardT]):
 
         """
 
-    @overload
-    def load_card(
-        self: "CardRegistry[DataCard]",
-        uid: Optional[str] = None,
-        space: Optional[str] = None,
-        name: Optional[str] = None,
-        version: Optional[str] = None,
-        interface: Optional[DataInterface] = None,
-    ) -> DataCard: ...
-    @overload
-    def load_card(
-        self: "CardRegistry[ServiceCard]",
-        uid: Optional[str] = None,
-        space: Optional[str] = None,
-        name: Optional[str] = None,
-        version: Optional[str] = None,
-        interface=Optional[ServiceCardInterfaceType],
-    ) -> ServiceCard: ...
-    @overload
-    def load_card(
-        self: "CardRegistry[ModelCard]",
-        uid: Optional[str] = None,
-        space: Optional[str] = None,
-        name: Optional[str] = None,
-        version: Optional[str] = None,
-        interface: Optional[ModelInterface] = None,
-    ) -> ModelCard: ...
-    @overload
-    def load_card(
-        self: "CardRegistry[PromptCard]",
-        uid: Optional[str] = None,
-        space: Optional[str] = None,
-        name: Optional[str] = None,
-        version: Optional[str] = None,
-        interface: None = None,
-    ) -> PromptCard: ...
-    @overload
-    def load_card(
-        self: "CardRegistry[ExperimentCard]",
-        uid: Optional[str] = None,
-        space: Optional[str] = None,
-        name: Optional[str] = None,
-        version: Optional[str] = None,
-        interface: None = None,
-    ) -> ExperimentCard: ...
     def load_card(
         self,
         uid: Optional[str] = None,
@@ -19833,7 +19924,7 @@ class CardRegistry(Generic[CardT]):
         name: Optional[str] = None,
         version: Optional[str] = None,
         interface: Optional[LoadInterfaceType] = None,
-    ) -> Union[DataCard, ModelCard, PromptCard, ExperimentCard, ServiceCard]:
+    ) -> CardT:
         """Load a Card from the registry
 
         Args:
@@ -19895,7 +19986,7 @@ class ModelCardRegistry(CardRegistry):
         version_type: VersionType = VersionType.Minor,
         pre_tag: Optional[str] = None,
         build_tag: Optional[str] = None,
-        save_kwargs: Optional[ModelSaveKwargs] = None,
+        save_kwargs: Optional[ModelSaveKwargs] = None,  # type: ignore
     ) -> None:
         """Register a Card
 
@@ -19919,7 +20010,7 @@ class ModelCardRegistry(CardRegistry):
         space: Optional[str] = None,
         name: Optional[str] = None,
         version: Optional[str] = None,
-        interface: Optional[ModelInterface] = None,
+        interface: Optional[ModelInterface] = None,  # type: ignore
     ) -> ModelCard:
         """Load a Card from the registry
 
@@ -19972,7 +20063,7 @@ class DataCardRegistry(CardRegistry):
         version_type: VersionType = VersionType.Minor,
         pre_tag: Optional[str] = None,
         build_tag: Optional[str] = None,
-        save_kwargs: Optional[DataSaveKwargs] = None,
+        save_kwargs: Optional[DataSaveKwargs] = None,  # type: ignore
     ) -> None:
         """Register a Card
 
@@ -19996,7 +20087,7 @@ class DataCardRegistry(CardRegistry):
         space: Optional[str] = None,
         name: Optional[str] = None,
         version: Optional[str] = None,
-        interface: Optional[DataInterface] = None,
+        interface: Optional[DataInterface] = None,  # type: ignore
     ) -> DataCard:
         """Load a Card from the registry
 
@@ -20042,7 +20133,7 @@ class DataCardRegistry(CardRegistry):
         """
 
 class ExperimentCardRegistry(CardRegistry):
-    def register_card(
+    def register_card(  # type: ignore
         self,
         card: ExperimentCard,
         version_type: VersionType = VersionType.Minor,
@@ -20063,7 +20154,7 @@ class ExperimentCardRegistry(CardRegistry):
 
         """
 
-    def load_card(
+    def load_card(  # type: ignore
         self,
         uid: Optional[str] = None,
         space: Optional[str] = None,
@@ -20112,7 +20203,7 @@ class ExperimentCardRegistry(CardRegistry):
         """
 
 class PromptCardRegistry(CardRegistry):
-    def register_card(
+    def register_card(  # type: ignore
         self,
         card: PromptCard,
         version_type: VersionType = VersionType.Minor,
@@ -20133,7 +20224,7 @@ class PromptCardRegistry(CardRegistry):
 
         """
 
-    def load_card(
+    def load_card(  # type: ignore
         self,
         uid: Optional[str] = None,
         space: Optional[str] = None,
@@ -20182,7 +20273,7 @@ class PromptCardRegistry(CardRegistry):
         """
 
 class ServiceCardRegistry(CardRegistry):
-    def register_card(
+    def register_card(  # type: ignore
         self,
         card: ServiceCard,
         version_type: VersionType = VersionType.Minor,
@@ -20203,7 +20294,7 @@ class ServiceCardRegistry(CardRegistry):
 
         """
 
-    def load_card(
+    def load_card(  # type: ignore
         self,
         uid: Optional[str] = None,
         space: Optional[str] = None,
@@ -20288,11 +20379,6 @@ def download_service(
             Directory to write the downloaded service to.
     """
 
-########################################################################################
-#  This section contains the type definitions for opsml.experiment module
-# __opsml.experiment__
-# ######################################################################################
-
 class ExperimentMetric:
     def __init__(
         self,
@@ -20300,7 +20386,7 @@ class ExperimentMetric:
         value: float,
         step: Optional[int] = None,
         timestamp: Optional[int] = None,
-        created_at: Optional[datetime] = None,
+        created_at: Optional[datetime.datetime] = None,
     ) -> None:
         """
         Initialize a Metric
@@ -20343,7 +20429,7 @@ class ExperimentMetric:
         """
 
     @property
-    def created_at(self) -> Optional[datetime]:
+    def created_at(self) -> Optional[datetime.datetime]:
         """
         Created at of the metric
         """
@@ -20428,7 +20514,7 @@ class Experiment:
         value: float,
         step: Optional[int] = None,
         timestamp: Optional[int] = None,
-        created_at: Optional[datetime] = None,
+        created_at: Optional[datetime.datetime] = None,
     ) -> None:
         """
         Log a metric
@@ -21136,526 +21222,532 @@ class ServiceSpec:
     def __str__(self) -> str:
         """String representation of the ServiceSpec."""
 
+class RegistryTestHelper:
+    """Helper class for testing the registry"""
+
+    def __init__(self) -> None: ...
+    def setup(self) -> None: ...
+    def cleanup(self) -> None: ...
+
+class OpsmlTestServer:
+    def __init__(self, cleanup: bool = True, base_path: Optional[Path] = None) -> None:
+        """Instantiates the test server.
+
+        When the test server is used as a context manager, it will start the server
+        in a background thread and set the appropriate env vars so that the client
+        can connect to the server. The server will be stopped when the context manager
+        exits and the env vars will be reset.
+
+        Args:
+            cleanup (bool, optional):
+                Whether to cleanup the server after the test. Defaults to True.
+            base_path (Optional[Path], optional):
+                The base path for the server. Defaults to None. This is primarily
+                used for testing loading attributes from a pyproject.toml file.
+        """
+
+    def start_server(self) -> None:
+        """Starts the test server."""
+
+    def stop_server(self) -> None:
+        """Stops the test server."""
+
+    def __enter__(self) -> "OpsmlTestServer":
+        """Starts the test server."""
+
+    def __exit__(self, exc_type, exc_value, traceback) -> None:
+        """Stops the test server."""
+
+    def set_env_vars_for_client(self) -> None:
+        """Sets the env vars for the client to connect to the server."""
+
+    def remove_env_vars_for_client(self) -> None:
+        """Removes the env vars for the client to connect to the server."""
+
+    @staticmethod
+    def cleanup() -> None:
+        """Cleans up the test server."""
+
+class OpsmlServerContext:
+    def __init__(self) -> None:
+        """Instantiates the server context.
+        This is helpful when you are running tests in server mode to
+        aid in background cleanup of resources
+        """
+
+    def __enter__(self) -> "OpsmlServerContext":
+        """Starts the server context."""
+
+    def __exit__(self, exc_type, exc_value, traceback) -> None:
+        """Stops the server context."""
+
+    @property
+    def server_uri(self) -> str:
+        """Returns the server URI."""
+
+### GLOBAL EXPORTS ###
 __all__ = [
-    ### App
-    "AppState",
-    "ReloadConfig",
-    #### Cards
-    "Card",
-    "CardRecord",
-    "CardList",
-    "CardRegistry",
-    "CardRegistries",
-    "DataCard",
-    "DataCardMetadata",
-    "RegistryType",
-    "RegistryMode",
-    "ModelCard",
-    "ModelCardMetadata",
-    "ExperimentCard",
-    "ComputeEnvironment",
-    "PromptCard",
-    "ServiceCard",
-    "ServiceType",
-    "download_service",
-    #### Data
-    "ColType",
-    "ColValType",
-    "ColumnSplit",
-    "StartStopSplit",
-    "IndiceSplit",
-    "DataSplit",
-    "DataSplits",
-    "Data",
-    "DependentVars",
-    "Inequality",
-    "DataSplitter",
-    "DataInterface",
-    "SqlLogic",
-    "DataInterfaceSaveMetadata",
-    "DataInterfaceMetadata",
-    "NumpyData",
-    "PolarsData",
-    "PandasData",
-    "ArrowData",
-    "TorchData",
-    "SqlData",
-    "generate_feature_schema",
-    "DataSaveKwargs",
-    "DataLoadKwargs",
-    "DataInterfaceType",
-    #### Model
-    "HuggingFaceORTModel",
-    "HuggingFaceOnnxArgs",
-    "ModelInterfaceMetadata",
-    "ModelInterfaceSaveMetadata",
-    "ModelInterfaceType",
-    "ModelInterface",
-    "TaskType",
-    "SklearnModel",
-    "DataProcessor",
-    "LightGBMModel",
-    "ModelType",
-    "XGBoostModel",
-    "TorchModel",
-    "LightningModel",
-    "HuggingFaceTask",
-    "HuggingFaceModel",
-    "OnnxModel",
-    "CatBoostModel",
-    "OnnxSession",
-    "TensorFlowModel",
-    "ModelLoadKwargs",
-    "ModelSaveKwargs",
-    "OnnxSchema",
-    "ProcessorType",
-    #### Types
-    "CommonKwargs",
-    "SaveName",
-    "Suffix",
-    "VersionType",
-    "DriftProfileUri",
-    "DriftArgs",
-    "DriftProfileMap",
-    "DataType",
-    "ExtraMetadata",
-    "Feature",
-    "FeatureSchema",
-    # Experiment
-    "Experiment",
-    "start_experiment",
-    "ExperimentMetric",
-    "ExperimentMetrics",
-    "EvalMetrics",
-    "Parameter",
-    "Parameters",
-    "get_experiment_metrics",
-    "get_experiment_parameters",
-    "download_artifact",
-    # genai
-    #######_______________________ main _________________________######
-    "Prompt",
-    "Role",
-    "ModelSettings",
-    "Provider",
-    "Score",
-    "ResponseType",
-    # Workflow
-    "TaskEvent",
-    "EventDetails",
-    "WorkflowResult",
-    "Workflow",
-    "WorkflowTask",
-    "TaskList",
-    # Agents
+    "ActiveSpan",
     "Agent",
-    "Task",
-    "TaskStatus",
     "AgentResponse",
-    # Embeddings
-    "Embedder",
-    #######_______________________ OpenAI _________________________######
+    "Alert",
+    "AlertCondition",
+    "AlertDispatchType",
+    "AlertThreshold",
+    "AlertZone",
+    "AlignedEvalResult",
     "AllowedTools",
     "AllowedToolsMode",
-    "AudioParam",
-    "Content",
-    "CustomChoice",
-    "CustomDefinition",
-    "CustomTool",
-    "CustomToolChoice",
-    "CustomToolFormat",
-    "FunctionChoice",
-    "FunctionDefinition",
-    "FunctionTool",
-    "FunctionToolChoice",
-    "Grammar",
-    "GrammarFormat",
-    "InnerAllowedTools",
-    "OpenAIChatSettings",
-    "Prediction",
-    "PredictionContentPart",
-    "StreamOptions",
-    "TextFormat",
-    "OpenAITool",
-    "OpenAIToolChoice",
-    "ToolChoiceMode",
-    "ToolDefinition",
-    # Request types
-    "ChatMessage",
-    "File",
-    "FileContentPart",
-    "ImageContentPart",
-    "ImageUrl",
-    "InputAudioContentPart",
-    "InputAudioData",
-    "TextContentPart",
-    # Response types
     "Annotations",
-    "Audio",
-    "ChatCompletionMessage",
-    "Choice",
-    "CompletionTokenDetails",
-    "Function",
-    "LogContent",
-    "LogProbs",
-    "OpenAIChatResponse",
-    "PromptTokenDetails",
-    "ToolCall",
-    "TopLogProbs",
-    "Usage",
-    "UrlCitation",
-    # Embedding types
-    "EmbeddingObject",
-    "OpenAIEmbeddingConfig",
-    "OpenAIEmbeddingResponse",
-    "UsageObject",
-    #######_______________________ Gemini _________________________######
-    # Request - Schema and Safety
-    "SchemaType",
-    "Schema",
-    "HarmCategory",
-    "HarmBlockThreshold",
-    "HarmBlockMethod",
-    "SafetySetting",
-    # Request - Modality and Media
-    "Modality",
-    "MediaResolution",
-    "ModelRoutingPreference",
-    "ThinkingLevel",
-    "GeminiThinkingConfig",
-    "ImageConfig",
-    # Request - Routing
-    "AutoRoutingMode",
-    "ManualRoutingMode",
-    "RoutingConfigMode",
-    "RoutingConfig",
-    # Request - Speech/Voice
-    "PrebuiltVoiceConfig",
-    "VoiceConfig",
-    "SpeakerVoiceConfig",
-    "MultiSpeakerVoiceConfig",
-    "SpeechConfig",
-    # Request - Generation and Configuration
-    "GenerationConfig",
-    "ModelArmorConfig",
-    "Mode",
-    "FunctionCallingConfig",
-    "LatLng",
-    "RetrievalConfig",
-    "ToolConfig",
-    "GeminiSettings",
-    # Request - Code and Functions
-    "Language",
-    "Outcome",
-    "FileData",
-    "PartialArgs",
-    "FunctionCall",
-    "Blob",
-    "FunctionResponse",
-    "ExecutableCode",
-    "CodeExecutionResult",
-    # Request - Content Parts
-    "VideoMetadata",
-    "PartMetadata",
-    "Part",
-    "GeminiContent",
-    # Request - Tools and Functions
-    "Behavior",
-    "FunctionDeclaration",
-    # Request - Retrieval
-    "DataStoreSpec",
-    "VertexAISearch",
-    "VertexRagStore",
-    "RagResource",
-    "RagRetrievalConfig",
-    "Filter",
-    "RankService",
-    "LlmRanker",
-    "RankingConfig",
-    "Ranking",
-    # Request - External API
-    "ApiSpecType",
-    "SimpleSearchParams",
-    "ElasticSearchParams",
-    "AuthType",
-    "HttpElementLocation",
-    "ApiKeyConfig",
-    "HttpBasicAuthConfig",
-    "GoogleServiceAccountConfig",
-    "OauthConfigValue",
-    "OauthConfig",
-    "OidcConfig",
-    "AuthConfigValue",
-    "AuthConfig",
-    "ExternalApi",
-    "RetrievalSource",
-    "Retrieval",
-    # Request - Search
-    "Interval",
-    "GoogleSearch",
-    "PhishBlockThreshold",
-    "VertexGoogleSearch",
-    "EnterpriseWebSearch",
-    "ParallelAiSearch",
-    "GoogleSearchNum",
-    "DynamicRetrievalMode",
-    "DynamicRetrievalConfig",
-    "GoogleSearchRetrieval",
-    "GoogleMaps",
-    # Request - Computer Use and Context
-    "CodeExecution",
-    "ComputerUseEnvironment",
-    "ComputerUse",
-    "UrlContext",
-    "FileSearch",
-    "GeminiTool",
-    # Response - Usage and Metadata
-    "TrafficType",
-    "ModalityTokenCount",
-    "UsageMetadata",
-    "BlockedReason",
-    "PromptFeedback",
-    # Response - URL and Retrieval
-    "UrlRetrievalStatus",
-    "UrlMetadata",
-    "UrlContextMetadata",
-    "SourceFlaggingUri",
-    "RetrievalMetadata",
-    # Response - Search and Grounding
-    "SearchEntryPoint",
-    "Segment",
-    "GroundingSupport",
-    "Web",
-    "PageSpan",
-    "RagChunk",
-    "RetrievedContext",
-    "Maps",
-    "GroundingChunkType",
-    "GroundingChunk",
-    "GroundingMetadata",
-    # Response - Safety
-    "HarmProbability",
-    "HarmSeverity",
-    "SafetyRating",
-    # Response - Candidates
-    "FinishReason",
-    "LogprobsCandidate",
-    "TopCandidates",
-    "LogprobsResult",
-    "GoogleDate",
-    "Citation",
-    "CitationMetadata",
-    "Candidate",
-    "GenerateContentResponse",
-    # Embeddings
-    "PredictRequest",
-    "PredictResponse",
-    "EmbeddingTaskType",
-    "GeminiEmbeddingConfig",
-    "ContentEmbedding",
-    "GeminiEmbeddingResponse",
-    #######_______________________ Anthropic _________________________######
-    # Settings and Configuration
+    "AnthropicMessageResponse",
     "AnthropicSettings",
-    "CacheControl",
-    "Metadata",
-    # Tools
     "AnthropicThinkingConfig",
     "AnthropicTool",
     "AnthropicToolChoice",
-    # Request - Citation Locations
-    "CitationCharLocationParam",
-    "CitationPageLocationParam",
-    "CitationContentBlockLocationParam",
-    "CitationWebSearchResultLocationParam",
-    "CitationSearchResultLocationParam",
-    # Request - Content Blocks
-    "TextBlockParam",
-    "Base64ImageSource",
-    "UrlImageSource",
-    "ImageBlockParam",
-    "Base64PDFSource",
-    "UrlPDFSource",
-    "PlainTextSource",
-    "CitationsConfigParams",
-    "DocumentBlockParam",
-    "SearchResultBlockParam",
-    "ThinkingBlockParam",
-    "RedactedThinkingBlockParam",
-    "ToolUseBlockParam",
-    "ToolResultBlockParam",
-    "ServerToolUseBlockParam",
-    "WebSearchResultBlockParam",
-    "WebSearchToolResultBlockParam",
-    "MessageParam",
-    "SystemPrompt",
-    # Response - Citation Locations
-    "CitationCharLocation",
-    "CitationPageLocation",
-    "CitationContentBlockLocation",
-    "CitationsWebSearchResultLocation",
-    "CitationsSearchResultLocation",
-    # Response - Content Blocks
-    "TextBlock",
-    "ThinkingBlock",
-    "RedactedThinkingBlock",
-    "ToolUseBlock",
-    "ServerToolUseBlock",
-    "WebSearchResultBlock",
-    "WebSearchToolResultError",
-    "WebSearchToolResultBlock",
-    # Response - Message
-    "StopReason",
     "AnthropicUsage",
-    "AnthropicMessageResponse",
-    ## Scouter
-    # alert
-    "AlertZone",
-    "SpcAlertType",
-    "SpcAlertRule",
-    "PsiAlertConfig",
-    "PsiAlertConfig",
-    "SpcAlertConfig",
-    "SpcAlert",
-    "AlertThreshold",
-    "AlertCondition",
-    "CustomMetricAlertConfig",
-    "SlackDispatchConfig",
-    "OpsGenieDispatchConfig",
-    "ConsoleDispatchConfig",
-    "AlertDispatchType",
-    "PsiNormalThreshold",
-    "PsiChiSquareThreshold",
-    "PsiFixedThreshold",
-    "GenAIAlertConfig",
-    # client
-    "TimeInterval",
-    "DriftRequest",
-    "ScouterClient",
-    "BinnedMetricStats",
-    "BinnedMetric",
-    "BinnedMetrics",
-    "BinnedPsiMetric",
-    "BinnedPsiFeatureMetrics",
-    "SpcDriftFeature",
-    "BinnedSpcFeatureMetrics",
-    "ProfileStatusRequest",
-    "Alert",
-    "DriftAlertPaginationRequest",
-    "DriftAlertPaginationResponse",
-    "GetProfileRequest",
+    "ApiKeyConfig",
+    "ApiSpecType",
+    "AppState",
+    "ArrowData",
     "Attribute",
-    "SpanEvent",
-    "SpanLink",
-    "TraceBaggageRecord",
-    "TraceFilters",
-    "TraceMetricBucket",
-    "TraceListItem",
-    "TraceSpan",
-    "TracePaginationResponse",
-    "TraceSpansResponse",
-    "TraceBaggageResponse",
-    "TraceMetricsRequest",
-    "TraceMetricsResponse",
-    "TagsResponse",
-    "TagRecord",
-    # drift
-    "FeatureMap",
-    "SpcFeatureDriftProfile",
-    "SpcDriftConfig",
-    "SpcDriftProfile",
-    "SpcFeatureDrift",
-    "SpcDriftMap",
-    "PsiDriftConfig",
-    "PsiDriftProfile",
-    "PsiDriftMap",
-    "CustomMetricDriftConfig",
-    "CustomMetric",
-    "CustomDriftProfile",
-    "GenAIEvalConfig",
-    "GenAIEvalProfile",
-    "Drifter",
-    "QuantileBinning",
-    "EqualWidthBinning",
-    "Manual",
-    "SquareRoot",
-    "Sturges",
-    "Rice",
-    "Doane",
-    "Scott",
-    "TerrellScott",
-    "FreedmanDiaconis",
-    # evaluate
-    "GenAIEvalResults",
-    "EvaluationConfig",
-    "GenAIEvalDataset",
-    "GenAIEvalSet",
-    "GenAIEvalTaskResult",
-    "GenAIEvalResultSet",
-    "AlignedEvalResult",
-    # profile
-    "Distinct",
-    "Quantiles",
-    "Histogram",
-    "NumericStats",
+    "Audio",
+    "AudioParam",
+    "AuthConfig",
+    "AuthConfigValue",
+    "AuthType",
+    "AutoRoutingMode",
+    "Base64ImageSource",
+    "Base64PDFSource",
+    "BatchConfig",
+    "Behavior",
+    "BinnedMetric",
+    "BinnedMetricStats",
+    "BinnedMetrics",
+    "BinnedPsiFeatureMetrics",
+    "BinnedPsiMetric",
+    "BinnedSpcFeatureMetrics",
+    "Blob",
+    "BlockedReason",
+    "CacheControl",
+    "Candidate",
+    "Card",
+    "CardList",
+    "CardRecord",
+    "CardRegistries",
+    "CardRegistry",
+    "CatBoostModel",
     "CharStats",
-    "WordStats",
-    "StringStats",
-    "FeatureProfile",
+    "ChatCompletionMessage",
+    "ChatMessage",
+    "Choice",
+    "Citation",
+    "CitationCharLocation",
+    "CitationCharLocationParam",
+    "CitationContentBlockLocation",
+    "CitationContentBlockLocationParam",
+    "CitationMetadata",
+    "CitationPageLocation",
+    "CitationPageLocationParam",
+    "CitationSearchResultLocationParam",
+    "CitationWebSearchResultLocationParam",
+    "CitationsConfigParams",
+    "CitationsSearchResultLocation",
+    "CitationsWebSearchResultLocation",
+    "CodeExecution",
+    "CodeExecutionResult",
+    "ColType",
+    "ColValType",
+    "ColumnSplit",
+    "CommonCrons",
+    "CommonKwargs",
+    "CompletionTokenDetails",
+    "ComputeEnvironment",
+    "ComputerUse",
+    "ComputerUseEnvironment",
+    "ConsoleDispatchConfig",
+    "Content",
+    "ContentEmbedding",
+    "CustomChoice",
+    "CustomDefinition",
+    "CustomDriftProfile",
+    "CustomMetric",
+    "CustomMetricAlertConfig",
+    "CustomMetricDriftConfig",
+    "CustomMetricRecord",
+    "CustomTool",
+    "CustomToolChoice",
+    "CustomToolFormat",
+    "Data",
+    "DataCard",
+    "DataCardMetadata",
+    "DataInterface",
+    "DataInterfaceMetadata",
+    "DataInterfaceSaveMetadata",
+    "DataInterfaceType",
+    "DataLoadKwargs",
+    "DataProcessor",
     "DataProfile",
     "DataProfiler",
-    # queue
-    "ScouterQueue",
-    "Queue",
-    "SpcRecord",
-    "PsiRecord",
-    "CustomMetricRecord",
-    "ServerRecord",
-    "ServerRecords",
-    "QueueFeature",
-    "Features",
-    "RecordType",
-    "Metric",
-    "Metrics",
-    "EntityType",
-    "GenAIEvalRecord",
-    # transport
-    "HttpConfig",
-    "KafkaConfig",
-    "RabbitMQConfig",
-    "RedisConfig",
-    # types
+    "DataSaveKwargs",
+    "DataSplit",
+    "DataSplits",
+    "DataSplitter",
+    "DataStoreSpec",
+    "DataType",
+    "DependentVars",
+    "Distinct",
+    "Doane",
+    "DocumentBlockParam",
+    "DriftAlertPaginationRequest",
+    "DriftAlertPaginationResponse",
+    "DriftArgs",
+    "DriftProfileMap",
+    "DriftProfileUri",
+    "DriftRequest",
     "DriftType",
-    "CommonCrons",
-    "ScouterDataType",
-    # tracer
-    "init_tracer",
-    "SpanKind",
+    "Drifter",
+    "DynamicRetrievalConfig",
+    "DynamicRetrievalMode",
+    "ElasticSearchParams",
+    "Embedder",
+    "EmbeddingObject",
+    "EmbeddingTaskType",
+    "EnterpriseWebSearch",
+    "EntityType",
+    "EqualWidthBinning",
+    "EvalMetrics",
+    "EvaluationConfig",
+    "EventDetails",
+    "ExecutableCode",
+    "Experiment",
+    "ExperimentCard",
+    "ExperimentMetric",
+    "ExperimentMetrics",
+    "ExternalApi",
+    "ExtraMetadata",
+    "Feature",
+    "FeatureMap",
+    "FeatureProfile",
+    "FeatureSchema",
+    "Features",
+    "File",
+    "FileContentPart",
+    "FileData",
+    "FileSearch",
+    "Filter",
+    "FinishReason",
+    "FreedmanDiaconis",
+    "Function",
+    "FunctionCall",
+    "FunctionCallingConfig",
+    "FunctionChoice",
+    "FunctionDeclaration",
+    "FunctionDefinition",
+    "FunctionResponse",
+    "FunctionTool",
+    "FunctionToolChoice",
     "FunctionType",
-    "ActiveSpan",
-    "OtelExportConfig",
+    "GeminiContent",
+    "GeminiEmbeddingConfig",
+    "GeminiEmbeddingResponse",
+    "GeminiSettings",
+    "GeminiThinkingConfig",
+    "GeminiTool",
+    "GenAIAlertConfig",
+    "GenAIEvalConfig",
+    "GenAIEvalDataset",
+    "GenAIEvalProfile",
+    "GenAIEvalRecord",
+    "GenAIEvalResultSet",
+    "GenAIEvalResults",
+    "GenAIEvalSet",
+    "GenAIEvalTaskResult",
+    "GenerateContentResponse",
+    "GenerationConfig",
+    "GetProfileRequest",
+    "GoogleDate",
+    "GoogleMaps",
+    "GoogleSearch",
+    "GoogleSearchNum",
+    "GoogleSearchRetrieval",
+    "GoogleServiceAccountConfig",
+    "Grammar",
+    "GrammarFormat",
+    "GroundingChunk",
+    "GroundingChunkType",
+    "GroundingMetadata",
+    "GroundingSupport",
     "GrpcConfig",
     "GrpcSpanExporter",
+    "HarmBlockMethod",
+    "HarmBlockThreshold",
+    "HarmCategory",
+    "HarmProbability",
+    "HarmSeverity",
+    "Histogram",
+    "HttpBasicAuthConfig",
+    "HttpConfig",
+    "HttpElementLocation",
     "HttpSpanExporter",
-    "StdoutSpanExporter",
-    "OtelProtocol",
-    "TraceRecord",
-    "TraceSpanRecord",
-    "TraceBaggageRecord",
-    "TestSpanExporter",
-    "flush_tracer",
-    "BatchConfig",
-    "shutdown_tracer",
-    "TraceMetricsRequest",
-    # Logging
+    "HuggingFaceModel",
+    "HuggingFaceORTModel",
+    "HuggingFaceOnnxArgs",
+    "HuggingFaceTask",
+    "ImageBlockParam",
+    "ImageConfig",
+    "ImageContentPart",
+    "ImageUrl",
+    "IndiceSplit",
+    "Inequality",
+    "InnerAllowedTools",
+    "InputAudioContentPart",
+    "InputAudioData",
+    "Interval",
+    "KafkaConfig",
+    "Language",
+    "LatLng",
+    "LightGBMModel",
+    "LightningModel",
+    "LlmRanker",
+    "LogContent",
     "LogLevel",
-    "RustyLogger",
+    "LogProbs",
     "LoggingConfig",
-    "WriteLevel",
-    # Mock
-    "OpsmlTestServer",
-    "OpsmlServerContext",
-    "LLMTestServer",
+    "LogprobsCandidate",
+    "LogprobsResult",
+    "Manual",
+    "ManualRoutingMode",
+    "Maps",
+    "MediaResolution",
+    "MessageParam",
+    "Metadata",
+    "Metric",
+    "Metrics",
     "MockConfig",
+    "Modality",
+    "ModalityTokenCount",
+    "Mode",
+    "ModelArmorConfig",
+    "ModelCard",
+    "ModelCardMetadata",
+    "ModelInterface",
+    "ModelInterfaceMetadata",
+    "ModelInterfaceSaveMetadata",
+    "ModelInterfaceType",
+    "ModelLoadKwargs",
+    "ModelRoutingPreference",
+    "ModelSaveKwargs",
+    "ModelSettings",
+    "ModelType",
+    "MultiSpeakerVoiceConfig",
+    "NumericStats",
+    "NumpyData",
+    "OauthConfig",
+    "OauthConfigValue",
+    "OidcConfig",
+    "OnnxModel",
+    "OnnxSchema",
+    "OnnxSession",
+    "OpenAIChatResponse",
+    "OpenAIChatSettings",
+    "OpenAIEmbeddingConfig",
+    "OpenAIEmbeddingResponse",
+    "OpenAITool",
+    "OpenAIToolChoice",
+    "OpsGenieDispatchConfig",
+    "OpsmlServerContext",
+    "OpsmlTestServer",
+    "OtelExportConfig",
+    "OtelProtocol",
+    "Outcome",
+    "PageSpan",
+    "PandasData",
+    "ParallelAiSearch",
+    "Parameter",
+    "Parameters",
+    "Part",
+    "PartMetadata",
+    "PartialArgs",
+    "PhishBlockThreshold",
+    "PlainTextSource",
+    "PolarsData",
+    "PrebuiltVoiceConfig",
+    "PredictRequest",
+    "PredictResponse",
+    "Prediction",
+    "PredictionContentPart",
+    "ProcessorType",
+    "ProfileStatusRequest",
+    "Prompt",
+    "PromptCard",
+    "PromptFeedback",
+    "PromptTokenDetails",
+    "Provider",
+    "PsiAlertConfig",
+    "PsiChiSquareThreshold",
+    "PsiDriftConfig",
+    "PsiDriftMap",
+    "PsiDriftProfile",
+    "PsiFixedThreshold",
+    "PsiNormalThreshold",
+    "PsiRecord",
+    "QuantileBinning",
+    "Quantiles",
+    "Queue",
+    "QueueFeature",
+    "RabbitMQConfig",
+    "RagChunk",
+    "RagResource",
+    "RagRetrievalConfig",
+    "RankService",
+    "Ranking",
+    "RankingConfig",
+    "RecordType",
+    "RedactedThinkingBlock",
+    "RedactedThinkingBlockParam",
+    "RedisConfig",
+    "RegistryMode",
     "RegistryTestHelper",
+    "RegistryType",
+    "ReloadConfig",
+    "ResponseType",
+    "Retrieval",
+    "RetrievalConfig",
+    "RetrievalMetadata",
+    "RetrievalSource",
+    "RetrievedContext",
+    "Rice",
+    "Role",
+    "RoutingConfig",
+    "RoutingConfigMode",
+    "RustyLogger",
+    "SafetyRating",
+    "SafetySetting",
+    "SaveName",
+    "Schema",
+    "SchemaType",
+    "Score",
+    "Scott",
+    "ScouterClient",
+    "ScouterDataType",
+    "ScouterQueue",
+    "SearchEntryPoint",
+    "SearchResultBlockParam",
+    "Segment",
+    "ServerRecord",
+    "ServerRecords",
+    "ServerToolUseBlock",
+    "ServerToolUseBlockParam",
+    "ServiceCard",
+    "ServiceType",
+    "SimpleSearchParams",
+    "SklearnModel",
+    "SlackDispatchConfig",
+    "SourceFlaggingUri",
+    "SpanEvent",
+    "SpanKind",
+    "SpanLink",
+    "SpcAlert",
+    "SpcAlertConfig",
+    "SpcAlertRule",
+    "SpcAlertType",
+    "SpcDriftConfig",
+    "SpcDriftFeature",
+    "SpcDriftMap",
+    "SpcDriftProfile",
+    "SpcFeatureDrift",
+    "SpcFeatureDriftProfile",
+    "SpcRecord",
+    "SpeakerVoiceConfig",
+    "SpeechConfig",
+    "SqlData",
+    "SqlLogic",
+    "SquareRoot",
+    "StartStopSplit",
+    "StdoutSpanExporter",
+    "StopReason",
+    "StreamOptions",
+    "StringStats",
+    "Sturges",
+    "Suffix",
+    "SystemPrompt",
+    "TagRecord",
+    "TagsResponse",
+    "Task",
+    "TaskEvent",
+    "TaskList",
+    "TaskStatus",
+    "TaskType",
+    "TensorFlowModel",
+    "TerrellScott",
+    "TestSpanExporter",
+    "TextBlock",
+    "TextBlockParam",
+    "TextContentPart",
+    "TextFormat",
+    "ThinkingBlock",
+    "ThinkingBlockParam",
+    "ThinkingLevel",
+    "TimeInterval",
+    "ToolCall",
+    "ToolChoiceMode",
+    "ToolConfig",
+    "ToolDefinition",
+    "ToolResultBlockParam",
+    "ToolUseBlock",
+    "ToolUseBlockParam",
+    "TopCandidates",
+    "TopLogProbs",
+    "TorchData",
+    "TorchModel",
+    "TraceBaggageRecord",
+    "TraceBaggageResponse",
+    "TraceFilters",
+    "TraceListItem",
+    "TraceMetricBucket",
+    "TraceMetricsRequest",
+    "TraceMetricsResponse",
+    "TracePaginationResponse",
+    "TraceRecord",
+    "TraceSpan",
+    "TraceSpanRecord",
+    "TraceSpansResponse",
+    "TrafficType",
+    "UrlCitation",
+    "UrlContext",
+    "UrlContextMetadata",
+    "UrlImageSource",
+    "UrlMetadata",
+    "UrlPDFSource",
+    "UrlRetrievalStatus",
+    "Usage",
+    "UsageMetadata",
+    "UsageObject",
+    "VersionType",
+    "VertexAISearch",
+    "VertexGoogleSearch",
+    "VertexRagStore",
+    "VideoMetadata",
+    "VoiceConfig",
+    "Web",
+    "WebSearchResultBlock",
+    "WebSearchResultBlockParam",
+    "WebSearchToolResultBlock",
+    "WebSearchToolResultBlockParam",
+    "WebSearchToolResultError",
+    "WordStats",
+    "Workflow",
+    "WorkflowResult",
+    "WorkflowTask",
+    "WriteLevel",
+    "XGBoostModel",
+    "download_artifact",
+    "download_service",
+    "flush_tracer",
+    "generate_feature_schema",
+    "get_experiment_metrics",
+    "get_experiment_parameters",
+    "init_tracer",
+    "shutdown_tracer",
+    "start_experiment",
 ]

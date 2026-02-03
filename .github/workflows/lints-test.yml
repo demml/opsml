@@ -47,6 +47,11 @@ jobs:
         with:
           version: "33.2"
 
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libcurl4-openssl-dev pkg-config
+
       - name: Print versions
         run: rustc --version && cargo --version && cargo clippy --version && rustup --version
 
@@ -85,6 +90,11 @@ jobs:
         with:
           version: "33.2"
           repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libcurl4-openssl-dev pkg-config
 
       - name: Set up Rust
         run: rustup override set stable && rustup update
@@ -144,7 +154,7 @@ jobs:
           before-script-linux: |
             # Install required packages
             if command -v yum &> /dev/null; then
-                yum update -y && yum install -y perl-core openssl openssl-devel pkgconfig libatomic
+                yum update -y && yum install -y perl-core openssl openssl-devel pkgconfig libatomic curl-devel
 
                 # If we're running on i686 we need to symlink libatomic
                 # in order to build openssl with -latomic flag.
@@ -289,9 +299,15 @@ jobs:
           version: "33.2"
           repo-token: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Install build dependencies (Ubuntu)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libcurl4-openssl-dev pkg-config
+
       - name: Install libomp on macOS
         if: runner.os == 'macOS'
-        run: brew install libomp
+        run: brew install libomp curl openssl pkg-config
 
       - name: install rust stable
         uses: dtolnay/rust-toolchain@stable
@@ -309,7 +325,8 @@ jobs:
 
       - name: Create virtual environment
         working-directory: ./py-opsml
-        run: make setup.project
+        run: |
+          make setup.project
 
       - name: Lints
         working-directory: ./py-opsml
@@ -357,6 +374,11 @@ jobs:
         with:
           version: "33.2"
           repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libcurl4-openssl-dev pkg-config
 
       - name: Set up Rust
         run: rustup override set stable && rustup update
