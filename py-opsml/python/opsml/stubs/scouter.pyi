@@ -1,37 +1,3 @@
-# AUTO-GENERATED STUB FILE. DO NOT EDIT.
-# pylint: disable=redefined-builtin, invalid-name, dangerous-default-value
-### header.pyi ###
-# pylint: disable=redefined-builtin, invalid-name, dangerous-default-value, missing-final-newline
-
-import datetime
-from pathlib import Path
-from types import TracebackType
-from typing import (
-    Any,
-    Callable,
-    Dict,
-    Generic,
-    List,
-    Literal,
-    Optional,
-    ParamSpec,
-    Protocol,
-    Sequence,
-    Tuple,
-    Type,
-    TypeAlias,
-    Union,
-    overload,
-)
-
-from typing_extensions import TypeVar
-
-SerializedType: TypeAlias = Union[str, int, float, dict, list]
-Context: TypeAlias = Union[Dict[str, Any], "BaseModel"]
-
-P = ParamSpec("P")
-R = TypeVar("R")
-
 class BaseModel(Protocol):
     """Protocol for pydantic BaseModel to ensure compatibility with context"""
 
