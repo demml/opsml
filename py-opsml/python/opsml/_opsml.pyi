@@ -30133,8 +30133,8 @@ class PromptCard:
     def create_eval_profile(
         self,
         alias: str,
-        config: GenAIEvalConfig,
         tasks: Sequence[LLMJudgeTask | AssertionTask | TraceAssertionTask],
+        config: Optional[GenAIEvalConfig] = None,
     ) -> None:
         """Initialize a GenAIEvalProfile for LLM evaluation and drift detection.
 
@@ -30152,13 +30152,13 @@ class PromptCard:
         Args:
             alias (str):
                 Unique alias for the drift profile within the prompt card.
-            config (GenAIEvalConfig):
-                The configuration for the GenAI drift profile containing space, name,
-                version, and alert settings.
             tasks (List[LLMJudgeTask | AssertionTask | TraceAssertionTask]):
                 List of evaluation tasks to include in the profile. Can contain
                 both AssertionTask, LLMJudgeTask and TraceAssertionTask instances. At least one task
                 is required.
+            config (GenAIEvalConfig | None):
+                Optional configuration for the GenAI drift profile. If not provided,
+                a default configuration will be used.
 
         Returns:
             GenAIEvalProfile: Configured profile ready for GenAI drift monitoring.

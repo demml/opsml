@@ -404,6 +404,12 @@ pub enum ModelInterfaceError {
 
     #[error("Drift profile not found in map")]
     DriftProfileNotFound,
+
+    #[error("Drift profile alias must be set when passing list of drift profiles")]
+    DriftProfileListAliasMustBeSet,
+
+    #[error("Drift profile alias must be set when passing drift profile")]
+    DriftProfileAliasMustBeSet,
 }
 
 impl From<PythonizeError> for ModelInterfaceError {

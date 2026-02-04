@@ -43,11 +43,6 @@ def create_recipe_prompt_card() -> PromptCard:
         space="opsml",
         name="recipe_generation",
     )
-
-    recipe_card.create_eval_profile(
-        alias="recipe_metrics",
-        config=GenAIEvalConfig(),
-        tasks=tasks,
-    )
+    recipe_card.create_eval_profile(alias="recipe_metrics", tasks=tasks)
 
     return recipe_card
