@@ -150,6 +150,9 @@ pub enum RegistryError {
 
     #[error("Invalid registry type for drift profiles: {0}")]
     InvalidRegistryType(String),
+
+    #[error(transparent)]
+    InterfaceTypeError(#[from] opsml_interfaces::error::TypeError),
 }
 
 impl<'a, 'py> From<PyClassGuardError<'a, 'py>> for RegistryError {

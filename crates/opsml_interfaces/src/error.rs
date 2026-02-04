@@ -8,6 +8,9 @@ use tracing::error;
 
 #[derive(Error, Debug)]
 pub enum TypeError {
+    #[error("{0}")]
+    Error(String),
+
     #[error("Key {0} not found in FeatureMap")]
     MissingKeyError(String),
 
@@ -35,6 +38,12 @@ impl From<TypeError> for PyErr {
         let msg = err.to_string();
         error!("{}", msg);
         PyRuntimeError::new_err(msg)
+    }
+}
+
+impl<'a, 'py> From<PyClassGuardError<'a, 'py>> for TypeError {
+    fn from(err: PyClassGuardError<'a, 'py>) -> Self {
+        TypeError::Error(err.to_string())
     }
 }
 

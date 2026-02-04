@@ -42,7 +42,7 @@ impl InterfaceDataType {
 }
 
 #[pyclass]
-#[derive(Debug, Default, Clone, Deserialize, Serialize)]
+#[derive(Debug, Default, Clone, Deserialize, Serialize, PartialEq)]
 pub struct DriftArgs {
     #[pyo3(get, set)]
     pub active: bool,
