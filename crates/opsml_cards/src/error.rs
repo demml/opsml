@@ -99,8 +99,8 @@ pub enum CardError {
     #[error("Unsupported registry type: {0}")]
     UnsupportedRegistryTypeError(RegistryType),
 
-    #[error("Failed to get drift profile")]
-    DriftProfileNotFoundError,
+    #[error("Failed to to get drift profile from card profile map")]
+    DriftProfileNotFoundInMap,
 
     #[error("Unsupported drift type: {0}")]
     UnsupportedDriftType(DriftType),
