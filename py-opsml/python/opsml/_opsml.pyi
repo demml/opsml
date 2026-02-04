@@ -28,7 +28,9 @@ from typing_extensions import TypeVar
 
 SerializedType: TypeAlias = Union[str, int, float, dict, list]
 CardInterfaceType: TypeAlias = Union["DataInterface", "ModelInterface"]
-ServiceCardInterfaceType: TypeAlias = Dict[str, Union["DataInterface", "ModelInterface"]]
+ServiceCardInterfaceType: TypeAlias = Dict[
+    str, Union["DataInterface", "ModelInterface"]
+]
 LoadInterfaceType: TypeAlias = Union[ServiceCardInterfaceType, ServiceCardInterfaceType]
 Context: TypeAlias = Union[Dict[str, Any], "BaseModel"]
 
@@ -420,7 +422,9 @@ class Prompt(Generic[OutputType]):
         model: str,
         provider: Provider | str,
         system_instructions: Optional[PromptMessage] = None,
-        model_settings: Optional[ModelSettings | OpenAIChatSettings | GeminiSettings | AnthropicSettings] = None,
+        model_settings: Optional[
+            ModelSettings | OpenAIChatSettings | GeminiSettings | AnthropicSettings
+        ] = None,
         output_type: Optional[Type[OutputType]] = None,
     ) -> None:
         """Initialize a Prompt object.
@@ -2751,7 +2755,9 @@ class ChatMessage:
     @property
     def content(
         self,
-    ) -> List[Union[TextContentPart, ImageContentPart, InputAudioContentPart, FileContentPart]]:
+    ) -> List[
+        Union[TextContentPart, ImageContentPart, InputAudioContentPart, FileContentPart]
+    ]:
         """The message content parts."""
 
     @property
@@ -10108,7 +10114,9 @@ class Prompt(Generic[OutputType]):
         model: str,
         provider: Provider | str,
         system_instructions: Optional[PromptMessage] = None,
-        model_settings: Optional[ModelSettings | OpenAIChatSettings | GeminiSettings | AnthropicSettings] = None,
+        model_settings: Optional[
+            ModelSettings | OpenAIChatSettings | GeminiSettings | AnthropicSettings
+        ] = None,
         output_type: Optional[Type[OutputType]] = None,
     ) -> None:
         """Initialize a Prompt object.
@@ -12439,7 +12447,9 @@ class ChatMessage:
     @property
     def content(
         self,
-    ) -> List[Union[TextContentPart, ImageContentPart, InputAudioContentPart, FileContentPart]]:
+    ) -> List[
+        Union[TextContentPart, ImageContentPart, InputAudioContentPart, FileContentPart]
+    ]:
         """The message content parts."""
 
     @property
@@ -19608,8 +19618,12 @@ class BatchConfig:
 def init_tracer(
     service_name: str = "scouter_service",
     scope: str = "scouter.tracer.{version}",
-    transport_config: Optional[HttpConfig | KafkaConfig | RabbitMQConfig | RedisConfig | GrpcConfig] = None,
-    exporter: Optional[HttpSpanExporter | GrpcSpanExporter | StdoutSpanExporter | TestSpanExporter] = None,
+    transport_config: Optional[
+        HttpConfig | KafkaConfig | RabbitMQConfig | RedisConfig | GrpcConfig
+    ] = None,
+    exporter: Optional[
+        HttpSpanExporter | GrpcSpanExporter | StdoutSpanExporter | TestSpanExporter
+    ] = None,
     batch_config: Optional[BatchConfig] = None,
     sample_ratio: Optional[float] = None,
 ) -> None:
@@ -21101,7 +21115,9 @@ class SpanFilter:
         """
 
     @staticmethod
-    def with_duration(min_ms: Optional[float] = None, max_ms: Optional[float] = None) -> "SpanFilter":
+    def with_duration(
+        min_ms: Optional[float] = None, max_ms: Optional[float] = None
+    ) -> "SpanFilter":
         """Filter spans by duration constraints.
 
         Args:
@@ -21381,7 +21397,9 @@ class TraceAssertion:
         """
 
     @staticmethod
-    def span_aggregation(filter: SpanFilter, attribute_key: str, aggregation: AggregationType) -> "TraceAssertion":
+    def span_aggregation(
+        filter: SpanFilter, attribute_key: str, aggregation: AggregationType
+    ) -> "TraceAssertion":
         """Aggregate numeric attribute across filtered spans.
 
         Args:
@@ -21732,7 +21750,9 @@ class AssertionResults:
     def __str__(self): ...
     def __getitem__(self, key: str) -> AssertionResult: ...
 
-def execute_trace_assertion_tasks(tasks: List[TraceAssertionTask], spans: List[TraceSpan]) -> AssertionResults:
+def execute_trace_assertion_tasks(
+    tasks: List[TraceAssertionTask], spans: List[TraceSpan]
+) -> AssertionResults:
     """Execute trace assertion tasks against provided spans.
 
     Args:
@@ -21949,7 +21969,9 @@ class AlertDispatchType:
     def to_string() -> str:
         """Return the string representation of the alert dispatch type"""
 
-DispatchConfigType = ConsoleDispatchConfig | SlackDispatchConfig | OpsGenieDispatchConfig
+DispatchConfigType = (
+    ConsoleDispatchConfig | SlackDispatchConfig | OpsGenieDispatchConfig
+)
 
 class AlertZone:
     Zone1: "AlertZone"
@@ -22687,7 +22709,9 @@ class DriftRequest:
         """
 
 class ProfileStatusRequest:
-    def __init__(self, name: str, space: str, version: str, drift_type: DriftType, active: bool) -> None:
+    def __init__(
+        self, name: str, space: str, version: str, drift_type: DriftType, active: bool
+    ) -> None:
         """Initialize profile status request
 
         Args:
@@ -22704,7 +22728,9 @@ class ProfileStatusRequest:
         """
 
 class GetProfileRequest:
-    def __init__(self, name: str, space: str, version: str, drift_type: DriftType) -> None:
+    def __init__(
+        self, name: str, space: str, version: str, drift_type: DriftType
+    ) -> None:
         """Initialize get profile request
 
         Args:
@@ -22805,7 +22831,9 @@ class ScouterClient:
                 DriftRequest object
         """
 
-    def register_profile(self, profile: Any, set_active: bool = False, deactivate_others: bool = False) -> bool:
+    def register_profile(
+        self, profile: Any, set_active: bool = False, deactivate_others: bool = False
+    ) -> bool:
         """Registers a drift profile with the server
 
         Args:
@@ -22831,7 +22859,9 @@ class ScouterClient:
             boolean
         """
 
-    def get_alerts(self, request: DriftAlertPaginationRequest) -> DriftAlertPaginationResponse:
+    def get_alerts(
+        self, request: DriftAlertPaginationRequest
+    ) -> DriftAlertPaginationResponse:
         """Get alerts
 
         Args:
@@ -24137,7 +24167,16 @@ class FreedmanDiaconis:
         For more information, please see: https://en.wikipedia.org/wiki/Histogram
         """
 
-EqualWidthMethods = Manual | SquareRoot | Sturges | Rice | Doane | Scott | TerrellScott | FreedmanDiaconis
+EqualWidthMethods = (
+    Manual
+    | SquareRoot
+    | Sturges
+    | Rice
+    | Doane
+    | Scott
+    | TerrellScott
+    | FreedmanDiaconis
+)
 
 class EqualWidthBinning:
     def __init__(self, method: EqualWidthMethods = Doane()):
@@ -24211,7 +24250,9 @@ class PsiDriftConfig:
         alert_config: PsiAlertConfig = PsiAlertConfig(),
         config_path: Optional[Path] = None,
         categorical_features: Optional[list[str]] = None,
-        binning_strategy: QuantileBinning | EqualWidthBinning = QuantileBinning(num_bins=10),
+        binning_strategy: QuantileBinning | EqualWidthBinning = QuantileBinning(
+            num_bins=10
+        ),
     ):
         """Initialize monitor config
 
@@ -24289,7 +24330,9 @@ class PsiDriftConfig:
         """binning_strategy"""
 
     @binning_strategy.setter
-    def binning_strategy(self, binning_strategy: QuantileBinning | EqualWidthBinning) -> None:
+    def binning_strategy(
+        self, binning_strategy: QuantileBinning | EqualWidthBinning
+    ) -> None:
         """Set binning_strategy"""
 
     @property
@@ -25492,7 +25535,9 @@ class Drifter:
     def create_drift_profile(  # type: ignore
         self,
         data: Any,
-        config: Optional[Union[SpcDriftConfig, PsiDriftConfig, CustomMetricDriftConfig]] = None,
+        config: Optional[
+            Union[SpcDriftConfig, PsiDriftConfig, CustomMetricDriftConfig]
+        ] = None,
         data_type: Optional[ScouterDataType] = None,
     ) -> Union[SpcDriftProfile, PsiDriftProfile, CustomDriftProfile]:
         """Create a drift profile from data.
@@ -25515,7 +25560,9 @@ class Drifter:
         """
 
     def create_genai_drift_profile(
-        self, config: GenAIEvalConfig, tasks: Sequence[LLMJudgeTask | AssertionTask | TraceAssertionTask]
+        self,
+        config: GenAIEvalConfig,
+        tasks: Sequence[LLMJudgeTask | AssertionTask | TraceAssertionTask],
     ) -> GenAIEvalProfile:
         """Initialize a GenAIEvalProfile for LLM evaluation and drift detection.
 
@@ -26069,7 +26116,9 @@ class GenAIEvalResults:
 
         """
 
-    def compare_to(self, baseline: "GenAIEvalResults", regression_threshold: float) -> ComparisonResults:
+    def compare_to(
+        self, baseline: "GenAIEvalResults", regression_threshold: float
+    ) -> ComparisonResults:
         """Compare the current evaluation results to a baseline with a regression threshold.
 
         Args:
@@ -27296,7 +27345,9 @@ class PolarsData(DataInterface):
 
         """
 
-    def save(self, path: Path, save_kwargs: Optional[DataSaveKwargs] = None) -> DataInterfaceMetadata:
+    def save(
+        self, path: Path, save_kwargs: Optional[DataSaveKwargs] = None
+    ) -> DataInterfaceMetadata:
         """Saves polars dataframe to parquet dataset via write_parquet
 
         Args:
@@ -27424,7 +27475,9 @@ class PandasData(DataInterface):
                 Data profile
         """
 
-    def save(self, path: Path, save_kwargs: Optional[DataSaveKwargs] = None) -> DataInterfaceMetadata:
+    def save(
+        self, path: Path, save_kwargs: Optional[DataSaveKwargs] = None
+    ) -> DataInterfaceMetadata:
         """Saves pandas dataframe as parquet file via to_parquet
 
         Args:
@@ -27545,7 +27598,9 @@ class ArrowData(DataInterface):
                 Data profile
         """
 
-    def save(self, path: Path, save_kwargs: Optional[DataSaveKwargs] = None) -> DataInterfaceMetadata:
+    def save(
+        self, path: Path, save_kwargs: Optional[DataSaveKwargs] = None
+    ) -> DataInterfaceMetadata:
         """Saves pyarrow table to parquet via write_table
 
         Args:
@@ -27702,7 +27757,9 @@ class TorchData(DataInterface):
                 Data profile
         """
 
-    def save(self, path: Path, save_kwargs: Optional[DataSaveKwargs] = None) -> DataInterfaceMetadata:
+    def save(
+        self, path: Path, save_kwargs: Optional[DataSaveKwargs] = None
+    ) -> DataInterfaceMetadata:
         """Saves torch tensor to a file
 
         Args:
@@ -27809,7 +27866,9 @@ def generate_feature_schema(data: Any, data_type: DataType) -> FeatureSchema:
 #  This section contains the type definitions for opsml.model module
 # __opsml.model__
 # ######################################################################################
-DriftProfileType = Dict[str, Union[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile]]
+DriftProfileType = Dict[
+    str, Union[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile]
+]
 
 class ProcessorType:
     Preprocessor: "ProcessorType"
@@ -27863,6 +27922,18 @@ class OnnxSchema:
     @property
     def feature_names(self) -> List[str]:
         """Return the feature names and order for onnx."""
+
+class PromptSaveKwargs:
+    def __init__(
+        self,
+        drift: DriftArgs,
+    ) -> None:
+        """Optional arguments to pass to register card for PromptRegistry
+
+        Args:
+            drift (DriftArgs):
+                Optional drift args to use when saving and registering a prompt.
+        """
 
 class ModelSaveKwargs:
     def __init__(
@@ -29267,7 +29338,9 @@ class DataCard:
         """Return the model dump as a json string"""
 
     @staticmethod
-    def model_validate_json(json_string: str, interface: Optional[DataInterface] = None) -> "ModelCard":
+    def model_validate_json(
+        json_string: str, interface: Optional[DataInterface] = None
+    ) -> "ModelCard":
         """Validate the model json string
 
         Args:
@@ -29612,7 +29685,9 @@ class ModelCard:
         """Return the model dump as a json string"""
 
     @staticmethod
-    def model_validate_json(json_string: str, interface: Optional[ModelInterface] = None) -> "ModelCard":
+    def model_validate_json(
+        json_string: str, interface: Optional[ModelInterface] = None
+    ) -> "ModelCard":
         """Validate the model json string
 
         Args:
@@ -30059,7 +30134,7 @@ class PromptCard:
         self,
         alias: str,
         config: GenAIEvalConfig,
-        tasks: Sequence[LLMJudgeTask | AssertionTask],
+        tasks: Sequence[LLMJudgeTask | AssertionTask | TraceAssertionTask],
     ) -> None:
         """Initialize a GenAIEvalProfile for LLM evaluation and drift detection.
 
@@ -30080,10 +30155,10 @@ class PromptCard:
             config (GenAIEvalConfig):
                 The configuration for the GenAI drift profile containing space, name,
                 version, and alert settings.
-            tasks (List[LLMJudgeTask | AssertionTask]):
+            tasks (List[LLMJudgeTask | AssertionTask | TraceAssertionTask]):
                 List of evaluation tasks to include in the profile. Can contain
-                both AssertionTask and LLMJudgeTask instances. At least one task
-                (assertion or LLM judge) is required.
+                both AssertionTask, LLMJudgeTask and TraceAssertionTask instances. At least one task
+                is required.
 
         Returns:
             GenAIEvalProfile: Configured profile ready for GenAI drift monitoring.
@@ -30424,7 +30499,9 @@ class ServiceCard:
             ```
         """
 
-    def __getitem__(self, alias: str) -> Union[DataCard, ModelCard, PromptCard, ExperimentCard]:
+    def __getitem__(
+        self, alias: str
+    ) -> Union[DataCard, ModelCard, PromptCard, ExperimentCard]:
         """Get a card from the service card by alias
 
         Args:
@@ -30546,7 +30623,9 @@ class CardRegistry(Generic[CardT]):
         version_type: VersionType = VersionType.Minor,
         pre_tag: Optional[str] = None,
         build_tag: Optional[str] = None,
-        save_kwargs: Optional[ModelSaveKwargs | DataSaveKwargs] = None,
+        save_kwargs: Optional[
+            ModelSaveKwargs | DataSaveKwargs | PromptSaveKwargs
+        ] = None,
     ) -> None:
         """Register a Card
 
@@ -30858,6 +30937,7 @@ class PromptCardRegistry(CardRegistry):
         version_type: VersionType = VersionType.Minor,
         pre_tag: Optional[str] = None,
         build_tag: Optional[str] = None,
+        save_kwargs: Optional[PromptSaveKwargs] = None,
     ) -> None:
         """Register a Card
 
@@ -30870,6 +30950,8 @@ class PromptCardRegistry(CardRegistry):
                 Optional pre tag to associate with the version.
             build_tag (str):
                 Optional build_tag to associate with the version.
+            save_kwargs (PromptSaveKwargs):
+                Optional SaveKwargs to pass to the Card
 
         """
 
@@ -31214,7 +31296,9 @@ class Experiment:
                 Value of the parameter
         """
 
-    def log_parameters(self, parameters: list[Parameter] | Dict[str, Union[int, float, str]]) -> None:
+    def log_parameters(
+        self, parameters: list[Parameter] | Dict[str, Union[int, float, str]]
+    ) -> None:
         """
         Log multiple parameters
 
@@ -31259,7 +31343,9 @@ class Experiment:
 
         """
 
-    def log_figure(self, name: str, figure: Any, kwargs: Optional[Dict[str, Any]] = None) -> None:
+    def log_figure(
+        self, name: str, figure: Any, kwargs: Optional[Dict[str, Any]] = None
+    ) -> None:
         """
         Log a figure. This method will log a matplotlib Figure object to the experiment artifacts.
 

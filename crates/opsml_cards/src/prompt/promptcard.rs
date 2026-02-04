@@ -232,17 +232,21 @@ impl PromptCard {
     /// * `tasks` - List of tasks (LLMJudgeTask or AssertionTask)
     /// # Returns
     ///
-    #[pyo3(signature = (alias, config, tasks))]
+    #[pyo3(signature = (alias, tasks, config=None))]
     pub fn create_eval_profile(
         &mut self,
         py: Python<'_>,
         alias: String,
-        config: GenAIEvalConfig,
         tasks: &Bound<'_, PyList>,
+        config: Option<GenAIEvalConfig>,
     ) -> Result<(), CardError> {
         debug!("Creating eval profile");
 
         let mut drifter = PyDrifter::new();
+        let config = match config {
+            Some(c) => c,
+            None => GenAIEvalConfig::default(),
+        };
         let profile = drifter.create_genai_drift_profile(py, config, tasks)?;
         self.eval_profile.add_profile(py, alias, profile.clone())?;
         Ok(())
