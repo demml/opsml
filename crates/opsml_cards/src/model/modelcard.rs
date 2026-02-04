@@ -422,11 +422,11 @@ impl ModelCard {
             .save_metadata
             .drift_profile_uri_map
             .as_ref()
-            .ok_or(CardError::DriftProfileNotFoundError)?;
+            .ok_or(CardError::DriftProfileNotFoundInMap)?;
 
         // Get the profile directly without checking contains_key first
         map.get(alias)
-            .ok_or(CardError::DriftProfileNotFoundError)
+            .ok_or(CardError::DriftProfileNotFoundInMap)
             // Use clone only at the final return point
             .map(|profile| profile.uri.clone())
     }

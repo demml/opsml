@@ -321,7 +321,7 @@ impl PromptCard {
             .metadata
             .drift_profile_uri_map
             .as_ref()
-            .ok_or(CardError::DriftProfileNotFoundError)?;
+            .ok_or(CardError::DriftProfileNotFoundInMap)?;
 
         for (alias, drift_profile_uri) in map {
             debug!(filepath = ?drift_profile_uri.uri, tmp_path = ?path, "Loading drift profile for alias: {}", alias);

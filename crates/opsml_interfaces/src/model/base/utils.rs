@@ -435,7 +435,7 @@ pub fn extract_drift_profile(
             Err(ModelInterfaceError::DriftProfileAliasMustBeSet)
         }
     } else {
-        Err(ModelInterfaceError::DriftProfileMustBeDictionary)
+        Err(ModelInterfaceError::DriftProfileNotFound)
     }
 }
 

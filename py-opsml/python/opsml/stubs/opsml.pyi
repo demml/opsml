@@ -3580,7 +3580,7 @@ class PromptCard:
         version: Optional[str] = None,
         uid: Optional[str] = None,
         tags: List[str] = [],
-        drift_profile: Optional[Dict[str, GenAIEvalProfile]] = None,
+        drift_profile: Optional[Dict[str, GenAIEvalProfile] | List[GenAIEvalProfile] | GenAIEvalProfile] = None,
     ) -> None:
         """Creates a `PromptCard`.
 
@@ -3604,8 +3604,8 @@ class PromptCard:
                 Tags to associate with `PromptCard`. Can be a dictionary of strings or
                 a `Tags` object.
             drift_profile:
-                Drift profile(s) to associate with the model. Must be a dictionary of
-                alias and drift profile. Currently supports GenAI evaluation profiles.
+                Drift profile(s) to associate with the prompt. Must be a dictionary of
+                alias and drift profile, a list of drift profiles with aliases, or a single drift profile with an alias.
         Example:
         ```python
         from opsml import Prompt, PromptCard, CardRegistry, RegistryType

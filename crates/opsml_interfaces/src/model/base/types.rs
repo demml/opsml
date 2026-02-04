@@ -614,7 +614,7 @@ impl DriftProfileMap {
         let profile = self
             .profiles
             .get(&key)
-            .ok_or_else(|| ModelInterfaceError::DriftProfileNotFound)
+            .ok_or_else(|| ModelInterfaceError::DriftProfileNotFoundInMap)
             .map(|profile| profile.bind(py))?;
 
         Ok(profile)
