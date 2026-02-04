@@ -6405,7 +6405,7 @@ checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
 [[package]]
 name = "scouter-client"
 version = "0.16.0"
-source = "git+https://github.com/demml/scouter?branch=feat%2Ftracing-tasks#818265a549204694571f16172a1e9c5f2378ec4a"
+source = "git+https://github.com/demml/scouter?branch=queue_from_profile#03e7dff88eab4d8f780c24a8be5c89a9c2955bd8"
 dependencies = [
  "chrono",
  "ndarray",
@@ -6437,7 +6437,7 @@ dependencies = [
 [[package]]
 name = "scouter-dispatch"
 version = "0.16.0"
-source = "git+https://github.com/demml/scouter?branch=feat%2Ftracing-tasks#818265a549204694571f16172a1e9c5f2378ec4a"
+source = "git+https://github.com/demml/scouter?branch=queue_from_profile#03e7dff88eab4d8f780c24a8be5c89a9c2955bd8"
 dependencies = [
  "futures",
  "pyo3",
@@ -6452,7 +6452,7 @@ dependencies = [
 [[package]]
 name = "scouter-drift"
 version = "0.16.0"
-source = "git+https://github.com/demml/scouter?branch=feat%2Ftracing-tasks#818265a549204694571f16172a1e9c5f2378ec4a"
+source = "git+https://github.com/demml/scouter?branch=queue_from_profile#03e7dff88eab4d8f780c24a8be5c89a9c2955bd8"
 dependencies = [
  "chrono",
  "futures",
@@ -6478,7 +6478,7 @@ dependencies = [
 [[package]]
 name = "scouter-evaluate"
 version = "0.16.0"
-source = "git+https://github.com/demml/scouter?branch=feat%2Ftracing-tasks#818265a549204694571f16172a1e9c5f2378ec4a"
+source = "git+https://github.com/demml/scouter?branch=queue_from_profile#03e7dff88eab4d8f780c24a8be5c89a9c2955bd8"
 dependencies = [
  "chrono",
  "itertools 0.14.0",
@@ -6505,7 +6505,7 @@ dependencies = [
 [[package]]
 name = "scouter-events"
 version = "0.16.0"
-source = "git+https://github.com/demml/scouter?branch=feat%2Ftracing-tasks#818265a549204694571f16172a1e9c5f2378ec4a"
+source = "git+https://github.com/demml/scouter?branch=queue_from_profile#03e7dff88eab4d8f780c24a8be5c89a9c2955bd8"
 dependencies = [
  "async-trait",
  "chrono",
@@ -6540,7 +6540,7 @@ dependencies = [
 [[package]]
 name = "scouter-http"
 version = "0.16.0"
-source = "git+https://github.com/demml/scouter?branch=feat%2Ftracing-tasks#818265a549204694571f16172a1e9c5f2378ec4a"
+source = "git+https://github.com/demml/scouter?branch=queue_from_profile#03e7dff88eab4d8f780c24a8be5c89a9c2955bd8"
 dependencies = [
  "pyo3",
  "reqwest 0.12.28",
@@ -6555,7 +6555,7 @@ dependencies = [
 [[package]]
 name = "scouter-macro"
 version = "0.16.0"
-source = "git+https://github.com/demml/scouter?branch=feat%2Ftracing-tasks#818265a549204694571f16172a1e9c5f2378ec4a"
+source = "git+https://github.com/demml/scouter?branch=queue_from_profile#03e7dff88eab4d8f780c24a8be5c89a9c2955bd8"
 dependencies = [
  "thiserror 2.0.18",
 ]
@@ -6563,7 +6563,7 @@ dependencies = [
 [[package]]
 name = "scouter-observability"
 version = "0.16.0"
-source = "git+https://github.com/demml/scouter?branch=feat%2Ftracing-tasks#818265a549204694571f16172a1e9c5f2378ec4a"
+source = "git+https://github.com/demml/scouter?branch=queue_from_profile#03e7dff88eab4d8f780c24a8be5c89a9c2955bd8"
 dependencies = [
  "itertools 0.14.0",
  "ndarray",
@@ -6580,7 +6580,7 @@ dependencies = [
 [[package]]
 name = "scouter-profile"
 version = "0.16.0"
-source = "git+https://github.com/demml/scouter?branch=feat%2Ftracing-tasks#818265a549204694571f16172a1e9c5f2378ec4a"
+source = "git+https://github.com/demml/scouter?branch=queue_from_profile#03e7dff88eab4d8f780c24a8be5c89a9c2955bd8"
 dependencies = [
  "chrono",
  "indicatif",
@@ -6602,7 +6602,7 @@ dependencies = [
 [[package]]
 name = "scouter-semver"
 version = "0.16.0"
-source = "git+https://github.com/demml/scouter?branch=feat%2Ftracing-tasks#818265a549204694571f16172a1e9c5f2378ec4a"
+source = "git+https://github.com/demml/scouter?branch=queue_from_profile#03e7dff88eab4d8f780c24a8be5c89a9c2955bd8"
 dependencies = [
  "pyo3",
  "semver",
@@ -6613,7 +6613,7 @@ dependencies = [
 [[package]]
 name = "scouter-settings"
 version = "0.16.0"
-source = "git+https://github.com/demml/scouter?branch=feat%2Ftracing-tasks#818265a549204694571f16172a1e9c5f2378ec4a"
+source = "git+https://github.com/demml/scouter?branch=queue_from_profile#03e7dff88eab4d8f780c24a8be5c89a9c2955bd8"
 dependencies = [
  "base64 0.22.1",
  "chrono",
@@ -6627,7 +6627,7 @@ dependencies = [
 [[package]]
 name = "scouter-state"
 version = "0.16.0"
-source = "git+https://github.com/demml/scouter?branch=feat%2Ftracing-tasks#818265a549204694571f16172a1e9c5f2378ec4a"
+source = "git+https://github.com/demml/scouter?branch=queue_from_profile#03e7dff88eab4d8f780c24a8be5c89a9c2955bd8"
 dependencies = [
  "thiserror 2.0.18",
  "tokio",
@@ -6637,7 +6637,7 @@ dependencies = [
 [[package]]
 name = "scouter-tonic"
 version = "0.16.0"
-source = "git+https://github.com/demml/scouter?branch=feat%2Ftracing-tasks#818265a549204694571f16172a1e9c5f2378ec4a"
+source = "git+https://github.com/demml/scouter?branch=queue_from_profile#03e7dff88eab4d8f780c24a8be5c89a9c2955bd8"
 dependencies = [
  "prost",
  "prost-types",
@@ -6656,7 +6656,7 @@ dependencies = [
 [[package]]
 name = "scouter-tracing"
 version = "0.16.0"
-source = "git+https://github.com/demml/scouter?branch=feat%2Ftracing-tasks#818265a549204694571f16172a1e9c5f2378ec4a"
+source = "git+https://github.com/demml/scouter?branch=queue_from_profile#03e7dff88eab4d8f780c24a8be5c89a9c2955bd8"
 dependencies = [
  "chrono",
  "opentelemetry",
@@ -6681,7 +6681,7 @@ dependencies = [
 [[package]]
 name = "scouter-types"
 version = "0.16.0"
-source = "git+https://github.com/demml/scouter?branch=feat%2Ftracing-tasks#818265a549204694571f16172a1e9c5f2378ec4a"
+source = "git+https://github.com/demml/scouter?branch=queue_from_profile#03e7dff88eab4d8f780c24a8be5c89a9c2955bd8"
 dependencies = [
  "base64 0.22.1",
  "chrono",
