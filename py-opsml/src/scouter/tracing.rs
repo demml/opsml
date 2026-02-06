@@ -3,8 +3,8 @@ use scouter_client::{
     flush_tracer, get_current_active_span, get_function_type,
     get_tracing_headers_from_current_span, init_tracer, shutdown_tracer, ActiveSpan, BaseTracer,
     BatchConfig, FunctionType, GrpcSpanExporter, HttpSpanExporter, OtelExportConfig, OtelProtocol,
-    SpanKind, StdoutSpanExporter, TestSpanExporter, TraceBaggageRecord, TraceRecord,
-    TraceSpanRecord,
+    PyScouterSpanExporter, SpanKind, StdoutSpanExporter, TestSpanExporter, TraceBaggageRecord,
+    TraceRecord, TraceSpanRecord,
 };
 
 pub fn add_tracing_module(m: &Bound<'_, PyModule>) -> PyResult<()> {
@@ -16,6 +16,7 @@ pub fn add_tracing_module(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<GrpcSpanExporter>()?;
     m.add_class::<HttpSpanExporter>()?;
     m.add_class::<StdoutSpanExporter>()?;
+    m.add_class::<PyScouterSpanExporter>()?;
     m.add_class::<OtelProtocol>()?;
     m.add_class::<TraceRecord>()?;
     m.add_class::<TraceSpanRecord>()?;

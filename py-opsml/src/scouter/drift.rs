@@ -29,13 +29,22 @@ pub fn add_drift_module(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<TerrellScott>()?;
     m.add_class::<FreedmanDiaconis>()?;
 
-    // GenAI Drift
+    // GenAI Evals
     m.add_class::<GenAIEvalConfig>()?;
     m.add_class::<GenAIEvalProfile>()?;
     m.add_class::<GenAIEvalRecord>()?;
     m.add_class::<LLMJudgeTask>()?;
     m.add_class::<AssertionTask>()?;
     m.add_class::<ComparisonOperator>()?;
+
+    m.add_class::<TraceAssertion>()?;
+    m.add_class::<TraceAssertionTask>()?;
+    m.add_class::<AggregationType>()?;
+    m.add_class::<SpanFilter>()?;
+    m.add_class::<SpanStatus>()?;
+    m.add_class::<AssertionResult>()?;
+    m.add_class::<AssertionResults>()?;
+    m.add_function(wrap_pyfunction!(execute_trace_assertion_tasks, m)?)?;
 
     Ok(())
 }

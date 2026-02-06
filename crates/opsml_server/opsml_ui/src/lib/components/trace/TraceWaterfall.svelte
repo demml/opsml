@@ -279,7 +279,7 @@
           {/if}
 
           <span class="border px-1.5 py-0.5 text-xs rounded flex-shrink-0 {badgeClasses}">
-            {serviceName}
+            {span.span_name}
           </span>
 
           {#if isSlowestSpan}
@@ -290,9 +290,6 @@
             <CircleX class="w-4 h-4 text-error-600 flex-shrink-0"/>
           {/if}
 
-          <span class="text-xs truncate font-medium text-gray-900 flex-1 min-w-0" title={span.span_name}>
-            {span.span_name}
-          </span>
         </div>
 
         <div class="flex-1 flex items-center gap-2 px-2 min-w-0">

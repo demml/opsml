@@ -2,8 +2,8 @@
 
 from typing import Any, Dict, List, Optional, Sequence
 
-from ..header import SerializedType
 from ..genai.potato import Prompt
+from ..header import SerializedType
 from .tracing import TraceSpan
 
 #### end of imports ####

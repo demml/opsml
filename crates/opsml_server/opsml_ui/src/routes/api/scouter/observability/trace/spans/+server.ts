@@ -25,7 +25,7 @@ export const POST: RequestHandler = async ({ request, fetch }) => {
         response: null,
         error: error instanceof Error ? error.message : "Failed to fetch spans",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 };

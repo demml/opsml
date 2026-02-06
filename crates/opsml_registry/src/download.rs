@@ -16,7 +16,7 @@ use opsml_utils::PyHelperFuncs;
 use pyo3::prelude::*;
 use std::path::Path;
 use std::path::PathBuf;
-use tracing::{debug, instrument};
+use tracing::{debug, error, instrument};
 /// Download all artifacts of a card
 ///
 /// # Arguments
@@ -28,7 +28,9 @@ use tracing::{debug, instrument};
 /// Result<(), CliError>
 fn download_card_artifacts(key: &ArtifactKey, lpath: &Path) -> Result<(), RegistryError> {
     // get registry
-    let decryption_key = key.get_decrypt_key()?;
+    let decryption_key = key
+        .get_decrypt_key()
+        .inspect_err(|e| error!("Failed to get decrypt key: {:?}", e))?;
     let rpath = key.storage_path();
 
     if !lpath.exists() {
@@ -101,7 +103,8 @@ pub fn download_service_from_registry(
     }
 
     // download service card card
-    download_card_artifacts(&key, write_path)?;
+    download_card_artifacts(&key, write_path)
+        .inspect_err(|e| error!("Failed to download card artifacts: {:?}", e))?;
 
     // read Card.json file
     let service = ServiceCard::load_service_json(write_path).map_err(RegistryError::CardError)?;

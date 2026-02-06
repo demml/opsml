@@ -8,7 +8,7 @@ import { createOpsmlClient } from "$lib/server/api/opsmlClient";
  * @returns UI settings from the server
  */
 export async function getUISettings(
-  fetch: typeof globalThis.fetch
+  fetch: typeof globalThis.fetch,
 ): Promise<UiSettings> {
   try {
     logger.debug("Fetching UI settings...");
