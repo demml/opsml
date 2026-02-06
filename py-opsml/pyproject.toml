@@ -63,6 +63,10 @@ dev = [
     "tomli>=2.2.1",
     "tomli-w>=1.2.0",
     "seaborn>=0.13.2",
+    "opentelemetry-sdk>=1.37.0",
+    "opentelemetry-exporter-otlp-proto-common>=1.37.0",
+    "google-adk>=1.23.0",
+    "opentelemetry-instrumentation>=0.58b0",
 ]
 
 docs = [
@@ -135,7 +139,6 @@ ignore_missing_imports = true
 disable_error_code = ["return"]
 check_untyped_defs = true
 plugins = [
-    "numpy.typing.mypy_plugin",
     "pydantic.mypy",
 ]
 exclude = [
