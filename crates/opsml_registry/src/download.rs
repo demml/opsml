@@ -37,9 +37,16 @@ fn download_card_artifacts(key: &ArtifactKey, lpath: &Path) -> Result<(), Regist
         std::fs::create_dir_all(lpath)?;
     }
     // download card artifacts
-    storage_client()?.get(lpath, &rpath, true)?;
+    storage_client()?
+        .get(lpath, &rpath, true)
+        .inspect_err(|e| error!("Failed to download card artifacts: {:?}", e))?;
 
-    decrypt_directory(lpath, &decryption_key)?;
+    decrypt_directory(lpath, &decryption_key).inspect_err(|e| {
+        error!(
+            "Failed to decrypt card artifacts at path {:?}: {:?}",
+            lpath, e
+        );
+    })?;
 
     Ok(())
 }

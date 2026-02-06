@@ -99,7 +99,7 @@ sha2 = "0.*"
 semver = "1.*"
 serde = { version = "1.*", features = ["derive"] }
 serde_json = "1.*"
-serde_qs = ">=0.14"
+serde_qs = "0.*"
 serde_yaml = "0.9.34-deprecated" # serde_yaml is no longer maintained, but it still contains all we need for now
 sqlx = { version = "0.*", features = [ "runtime-tokio", "tls-native-tls", "postgres", "mysql", "sqlite", "chrono", "json"] }
 sysinfo = "0.*"
@@ -119,7 +119,7 @@ tracing-core = "0.*"
 tracing-subscriber = {version = "0.*", features = ["json", "time"]}
 uuid = { version = "1.*", features = ["v7"] }
 walkdir = "2.*"
-zip = "2.*"
+zip = "7.*"
 
 [profile.release]
 lto = "fat"

@@ -12,7 +12,7 @@ use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use tokio::task::JoinSet;
-use tracing::debug;
+use tracing::{debug, error};
 pub struct HttpFSStorageClient {
     pub client: HttpStorageClient,
 }
@@ -61,7 +61,13 @@ impl HttpFSStorageClient {
         } else {
             let file = objects.first().ok_or(StorageError::NoFilesFoundError)?;
             self.client
-                .get_object(lpath.to_str().unwrap(), rpath.to_str().unwrap(), file.size)?;
+                .get_object(lpath.to_str().unwrap(), rpath.to_str().unwrap(), file.size)
+                .inspect_err(|e| {
+                    error!(
+                        "Failed to download file from path {:?} to {:?}: {:?}",
+                        rpath, lpath, e
+                    );
+                })?;
         }
 
         Ok(())
