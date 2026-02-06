@@ -708,10 +708,15 @@ impl CardRegistry {
     ) -> Result<ArtifactKey, RegistryError> {
         let registry_card = card
             .call_method0("get_registry_card")?
-            .extract::<CardRecord>()?;
+            .extract::<CardRecord>()
+            .inspect_err(|e| {
+                error!("Failed to extract registry card: {e}");
+            })?;
 
         // update card
-        registry.update_card(&registry_card)?;
+        registry.update_card(&registry_card).inspect_err(|e| {
+            error!("Failed to update card: {e}");
+        })?;
 
         // get key to re-save Card.json
         let uid = registry_card.uid().to_string();
@@ -722,7 +727,7 @@ impl CardRegistry {
                 ..Default::default()
             })
             .inspect_err(|e| {
-                error!("Failed to load card: {e}");
+                error!("Failed to get card key: {e}");
             })?;
 
         println!(

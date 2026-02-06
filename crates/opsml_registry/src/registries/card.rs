@@ -161,7 +161,11 @@ impl OpsmlCardRegistry {
 
     pub fn get_key(&self, args: &CardQueryArgs) -> Result<ArtifactKey, RegistryError> {
         match self {
-            Self::Client(client_registry) => Ok(client_registry.get_key(args)?),
+            Self::Client(client_registry) => {
+                Ok(client_registry.get_key(args).inspect_err(|e| {
+                    error!("Error making card key request: {e}");
+                })?)
+            }
             #[cfg(feature = "server")]
             Self::Server(server_registry) => {
                 app_state().block_on(async {
@@ -192,7 +196,11 @@ impl OpsmlCardRegistry {
 
     pub fn update_card(&self, card: &CardRecord) -> Result<(), RegistryError> {
         match self {
-            Self::Client(client_registry) => Ok(client_registry.update_card(card)?),
+            Self::Client(client_registry) => {
+                Ok(client_registry.update_card(card).inspect_err(|e| {
+                    error!("Failed to update card: {e}");
+                })?)
+            }
             #[cfg(feature = "server")]
             Self::Server(server_registry) => {
                 app_state().block_on(async { server_registry.update_card(card).await })
