@@ -358,6 +358,7 @@ pub enum SaveName {
     CardMap,
     Figures,
     ServiceReload,
+    Evaluation,
 }
 
 #[pymethods]
@@ -387,6 +388,7 @@ impl SaveName {
             "drift-profile" => Some(SaveName::DriftProfile),
             "sql" => Some(SaveName::Sql),
             "drift" => Some(SaveName::Drift),
+            "evaluation" => Some(SaveName::Evaluation),
             "code" => Some(SaveName::Code),
             "prompt" => Some(SaveName::Prompt),
             "README" => Some(SaveName::ReadMe),
@@ -429,6 +431,7 @@ impl SaveName {
             SaveName::CardMap => "card_map",
             SaveName::Figures => "figures",
             SaveName::ServiceReload => "service_reload",
+            SaveName::Evaluation => "evaluation",
         }
     }
 
@@ -475,6 +478,7 @@ impl AsRef<Path> for SaveName {
             SaveName::CardMap => Path::new("card_map"),
             SaveName::Figures => Path::new("figures"),
             SaveName::ServiceReload => Path::new("service_reload"),
+            SaveName::Evaluation => Path::new("evaluation"),
         }
     }
 }

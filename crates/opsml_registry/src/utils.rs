@@ -285,11 +285,9 @@ pub fn download_card<'py>(
                 storage_client()?.get(&lpath, &rpath, true)?;
                 decrypt_directory(&lpath, &decryption_key)?;
 
-                prompt_card
-                    .load_drift_profile(py, &tmp_path)
-                    .inspect_err(|e| {
-                        error!("Failed to load drift profile: {e}");
-                    })?;
+                prompt_card.load_drift_profile(&tmp_path).inspect_err(|e| {
+                    error!("Failed to load drift profile: {e}");
+                })?;
             }
         }
         _ => debug!("Card is not a service, skipping service loading"),
