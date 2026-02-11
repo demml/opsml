@@ -107,6 +107,9 @@ pub enum CardError {
 
     #[error(transparent)]
     ServiceError(#[from] opsml_service::error::ServiceError),
+
+    #[error(transparent)]
+    SerdeYamlError(#[from] serde_yaml::Error),
 }
 
 impl<'a, 'py> From<PyClassGuardError<'a, 'py>> for CardError {

@@ -12,12 +12,35 @@ use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use pyo3::types::PyList;
 use pyo3::IntoPyObjectExt;
-use scouter_client::PyDrifter;
 use scouter_client::{DriftType, GenAIEvalConfig, GenAIEvalProfile};
+use scouter_client::{PyDrifter, TasksFile};
+use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use tracing::{debug, error, instrument};
+
+pub fn deserialize_from_path<T: DeserializeOwned>(path: PathBuf) -> Result<T, CardError> {
+    let content = std::fs::read_to_string(&path)?;
+
+    let extension = path
+        .extension()
+        .and_then(|ext| ext.to_str())
+        .ok_or_else(|| CardError::Error(format!("Invalid file path: {:?}", path)))?;
+
+    let item = match extension.to_lowercase().as_str() {
+        "json" => serde_json::from_str(&content)?,
+        "yaml" | "yml" => serde_yaml::from_str(&content)?,
+        _ => {
+            return Err(CardError::Error(format!(
+                "Unsupported file extension '{}'. Expected .json, .yaml, or .yml",
+                extension
+            )))
+        }
+    };
+
+    Ok(item)
+}
 
 #[pyclass]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
@@ -33,7 +56,7 @@ pub struct PromptCardMetadata {
 }
 
 #[pyclass]
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Clone)]
 pub struct PromptCard {
     pub prompt: Prompt,
 
@@ -77,48 +100,25 @@ pub struct PromptCard {
 impl PromptCard {
     #[new]
     #[allow(clippy::too_many_arguments)]
-    #[pyo3(signature = (prompt, space=None, name=None, version=None, uid=None, tags=None, eval_profile=None))]
+    #[pyo3(signature = (prompt, space=None, name=None, version=None, tags=None, eval_profile=None))]
     pub fn new(
         prompt: &Bound<'_, PyAny>,
         space: Option<&str>,
         name: Option<&str>,
         version: Option<&str>,
-        uid: Option<&str>,
-        tags: Option<&Bound<'_, PyList>>,
+        tags: Option<Vec<String>>,
         eval_profile: Option<&Bound<'_, PyAny>>,
     ) -> Result<Self, CardError> {
-        let registry_type = RegistryType::Prompt;
-        let tags = match tags {
-            None => Vec::new(),
-            Some(t) => t.extract::<Vec<String>>()?,
-        };
-
-        let base_args = BaseArgs::create_args(name, space, version, uid, &registry_type)?;
-
         let prompt = prompt.extract::<Prompt>().inspect_err(|e| {
             error!("Failed to extract prompt: {e}");
         })?;
 
-        let profiles = match eval_profile {
+        let profile = match eval_profile {
             Some(profile) => utils::extract_drift_profile(profile)?,
             None => DriftProfileMap::new(),
         };
 
-        Ok(Self {
-            prompt,
-            space: base_args.0,
-            name: base_args.1,
-            version: base_args.2,
-            uid: base_args.3,
-            tags,
-            metadata: PromptCardMetadata::default(),
-            registry_type,
-            app_env: std::env::var("APP_ENV").unwrap_or_else(|_| "dev".to_string()),
-            created_at: get_utc_datetime(),
-            is_card: true,
-            opsml_version: opsml_version::version(),
-            eval_profile: profiles,
-        })
+        Ok(Self::new_rs(prompt, space, name, version, tags, profile)?)
     }
 
     #[getter]
@@ -268,7 +268,116 @@ impl PromptCard {
     }
 }
 
+#[derive(Debug, Deserialize)]
+pub struct EvaluationConfig {
+    pub config: Option<GenAIEvalConfig>,
+    pub tasks: TasksFile,
+    pub alias: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct PromptConfig {
+    pub prompt: Prompt,
+    pub space: Option<String>,
+    pub name: Option<String>,
+    pub version: Option<String>,
+    pub tags: Option<Vec<String>>,
+    pub evaluation: Option<EvaluationConfig>,
+}
+
+impl PromptConfig {
+    pub fn into_promptcard(self) -> Result<PromptCard, CardError> {
+        let mut card = PromptCard::new_rs(
+            self.prompt,
+            self.space.as_deref(),
+            self.name.as_deref(),
+            self.version.as_deref(),
+            self.tags,
+            DriftProfileMap::new(),
+        )?;
+
+        if let Some(evaluation) = self.evaluation {
+            let config = evaluation.config.unwrap_or_default();
+            GenAIEvalProfile::new(config, evaluation.tasks)
+        }
+
+        Ok(card)
+    }
+}
+
+#[derive(Debug, Deserialize)]
+pub struct PromptCardInternal {
+    pub prompt: Prompt,
+    pub space: String,
+    pub name: String,
+    pub version: String,
+    pub uid: String,
+    pub tags: Vec<String>,
+    pub metadata: PromptCardMetadata,
+    pub registry_type: RegistryType,
+    pub app_env: String,
+    pub created_at: DateTime<Utc>,
+    pub is_card: bool,
+    pub opsml_version: String,
+    pub eval_profile: DriftProfileMap,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(untagged)]
+enum PromptCardFormat {
+    Full(Box<PromptCardInternal>),
+    Generic(PromptConfig),
+}
+
+impl<'de> Deserialize<'de> for PromptCard {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let format = PromptCardFormat::deserialize(deserializer)?;
+
+        match format {
+            PromptCardFormat::Generic(config) => {
+                config.into_task().map_err(serde::de::Error::custom)
+            }
+            PromptCardFormat::Full(internal) => Ok(internal.into_task()),
+        }
+    }
+}
+
 impl PromptCard {
+    pub fn new_rs(
+        prompt: Prompt,
+        space: Option<&str>,
+        name: Option<&str>,
+        version: Option<&str>,
+        tags: Option<Vec<String>>,
+        profile: DriftProfileMap,
+    ) -> Result<Self, CardError> {
+        let registry_type = RegistryType::Prompt;
+        let tags = match tags {
+            None => Vec::new(),
+            Some(t) => t,
+        };
+
+        let base_args = BaseArgs::create_args(name, space, version, None, &registry_type)?;
+
+        Ok(Self {
+            prompt,
+            space: base_args.0,
+            name: base_args.1,
+            version: base_args.2,
+            uid: base_args.3,
+            tags,
+            metadata: PromptCardMetadata::default(),
+            registry_type,
+            app_env: std::env::var("APP_ENV").unwrap_or_else(|_| "dev".to_string()),
+            created_at: get_utc_datetime(),
+            is_card: true,
+            opsml_version: opsml_version::version(),
+            eval_profile: profile,
+        })
+    }
     /// Save drift profile
     ///
     /// # Arguments
