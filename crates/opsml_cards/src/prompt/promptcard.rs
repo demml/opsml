@@ -243,7 +243,8 @@ impl PromptCard {
         debug!("Creating eval profile");
 
         let mut drifter = PyDrifter::new();
-        let profile = drifter.create_genai_drift_profile(py, config, tasks)?;
+        let profile =
+            drifter.create_genai_drift_profile(py, tasks, Some(config), Some(alias.clone()))?;
         self.eval_profile.add_profile(py, alias, profile.clone())?;
         Ok(())
     }
