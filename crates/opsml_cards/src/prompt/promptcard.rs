@@ -1,19 +1,17 @@
 use crate::error::CardError;
 use crate::utils::BaseArgs;
 use chrono::{DateTime, Utc};
-use opsml_interfaces::base::utils;
-use opsml_interfaces::DriftProfileMap;
 use opsml_types::contracts::{CardRecord, PromptCardClientRecord};
 use opsml_types::DriftProfileUri;
 use opsml_types::{RegistryType, SaveName, Suffix};
 use opsml_utils::{get_utc_datetime, PyHelperFuncs};
 use potato_head::prompt_types::Prompt;
 use pyo3::prelude::*;
-use pyo3::types::PyDict;
 use pyo3::types::PyList;
 use pyo3::IntoPyObjectExt;
+use scouter_client::AssertionTasks;
+use scouter_client::TasksFile;
 use scouter_client::{DriftType, GenAIEvalConfig, GenAIEvalProfile};
-use scouter_client::{PyDrifter, TasksFile};
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -93,7 +91,8 @@ pub struct PromptCard {
     #[pyo3(get)]
     pub opsml_version: String,
 
-    pub eval_profile: DriftProfileMap,
+    #[pyo3(get, set)]
+    pub eval_profile: Option<GenAIEvalProfile>,
 }
 
 #[pymethods]
@@ -107,40 +106,20 @@ impl PromptCard {
         name: Option<&str>,
         version: Option<&str>,
         tags: Option<Vec<String>>,
-        eval_profile: Option<&Bound<'_, PyAny>>,
+        eval_profile: Option<GenAIEvalProfile>,
     ) -> Result<Self, CardError> {
         let prompt = prompt.extract::<Prompt>().inspect_err(|e| {
             error!("Failed to extract prompt: {e}");
         })?;
 
-        let profile = match eval_profile {
-            Some(profile) => utils::extract_drift_profile(profile)?,
-            None => DriftProfileMap::new(),
-        };
-
-        Ok(Self::new_rs(prompt, space, name, version, tags, profile)?)
-    }
-
-    #[getter]
-    pub fn eval_profile<'py>(
-        &self,
-        py: Python<'py>,
-    ) -> Result<Bound<'py, DriftProfileMap>, CardError> {
-        let pyob = Py::new(py, self.eval_profile.clone())?;
-        let bound = pyob.bind(py).clone();
-        Ok(bound)
-    }
-
-    #[setter]
-    pub fn set_eval_profile(
-        &mut self,
-        eval_profile: Bound<'_, DriftProfileMap>,
-    ) -> Result<(), CardError> {
-        self.eval_profile = eval_profile.extract().inspect_err(|e| {
-            error!("Failed to extract eval profile: {e}");
-        })?;
-
-        Ok(())
+        Ok(Self::new_rs(
+            prompt,
+            space,
+            name,
+            version,
+            tags,
+            eval_profile,
+        )?)
     }
 
     #[getter]
@@ -172,14 +151,13 @@ impl PromptCard {
     }
 
     #[pyo3(signature = (path))]
-    pub fn save(&mut self, py: Python, path: PathBuf) -> Result<(), CardError> {
+    pub fn save(&mut self, path: PathBuf) -> Result<(), CardError> {
         debug!("Saving PromptCard to path: {:?}", path);
 
-        // save eval profile
-        let eval_profile_uri_map = if self.eval_profile.is_empty() {
-            None
+        let eval_profile_uri_map = if let Some(_eval_profile) = &mut self.eval_profile {
+            Some(self.save_eval_profile(&path)?)
         } else {
-            Some(self.save_eval_profile(py, &path)?)
+            None
         };
 
         self.metadata.drift_profile_uri_map = eval_profile_uri_map;
@@ -235,36 +213,26 @@ impl PromptCard {
     #[pyo3(signature = (alias, config, tasks))]
     pub fn create_eval_profile(
         &mut self,
-        py: Python<'_>,
         alias: String,
         config: GenAIEvalConfig,
         tasks: &Bound<'_, PyList>,
     ) -> Result<(), CardError> {
         debug!("Creating eval profile");
+        self.eval_profile = Some(GenAIEvalProfile::new_py(tasks, Some(config), Some(alias))?);
 
-        let mut drifter = PyDrifter::new();
-        let profile =
-            drifter.create_genai_drift_profile(py, tasks, Some(config), Some(alias.clone()))?;
-        self.eval_profile.add_profile(py, alias, profile.clone())?;
         Ok(())
     }
 
     #[pyo3(name = "_update_drift_config_args")]
-    fn update_drift_config_args(&mut self, py: Python) -> Result<(), CardError> {
+    fn update_drift_config_args(&mut self) -> Result<(), CardError> {
         // if eval_profiles is empty, return
-        if self.eval_profile.is_empty() {
-            Ok(())
-        } else {
-            // set new config args from card and update all profiles
-            let config_args = PyDict::new(py);
-            config_args.set_item("name", &self.name)?;
-            config_args.set_item("space", &self.space)?;
-            config_args.set_item("version", &self.version)?;
-
-            self.eval_profile.update_config_args(py, &config_args)?;
-
-            Ok(())
+        if let Some(profile) = &mut self.eval_profile {
+            profile.config.name = self.name.clone();
+            profile.config.space = self.space.clone();
+            profile.config.version = self.version.clone();
         }
+
+        Ok(())
     }
 }
 
@@ -272,7 +240,7 @@ impl PromptCard {
 pub struct EvaluationConfig {
     pub config: Option<GenAIEvalConfig>,
     pub tasks: TasksFile,
-    pub alias: Option<String>,
+    pub alias: String,
 }
 
 #[derive(Debug, Deserialize)]
@@ -293,12 +261,15 @@ impl PromptConfig {
             self.name.as_deref(),
             self.version.as_deref(),
             self.tags,
-            DriftProfileMap::new(),
+            None,
         )?;
 
         if let Some(evaluation) = self.evaluation {
             let config = evaluation.config.unwrap_or_default();
-            GenAIEvalProfile::new(config, evaluation.tasks)
+            let tasks: AssertionTasks = AssertionTasks::from_tasks_file(evaluation.tasks);
+            let profile =
+                GenAIEvalProfile::build_from_parts(config, tasks, Some(evaluation.alias))?;
+            card.eval_profile = Some(profile);
         }
 
         Ok(card)
@@ -319,7 +290,7 @@ pub struct PromptCardInternal {
     pub created_at: DateTime<Utc>,
     pub is_card: bool,
     pub opsml_version: String,
-    pub eval_profile: DriftProfileMap,
+    pub eval_profile: Option<GenAIEvalProfile>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -338,9 +309,23 @@ impl<'de> Deserialize<'de> for PromptCard {
 
         match format {
             PromptCardFormat::Generic(config) => {
-                config.into_task().map_err(serde::de::Error::custom)
+                config.into_promptcard().map_err(serde::de::Error::custom)
             }
-            PromptCardFormat::Full(internal) => Ok(internal.into_task()),
+            PromptCardFormat::Full(internal) => Ok(PromptCard {
+                prompt: internal.prompt,
+                space: internal.space,
+                name: internal.name,
+                version: internal.version,
+                uid: internal.uid,
+                tags: internal.tags,
+                metadata: internal.metadata,
+                registry_type: internal.registry_type,
+                app_env: internal.app_env,
+                created_at: internal.created_at,
+                is_card: internal.is_card,
+                opsml_version: internal.opsml_version,
+                eval_profile: internal.eval_profile,
+            }),
         }
     }
 }
@@ -352,7 +337,7 @@ impl PromptCard {
         name: Option<&str>,
         version: Option<&str>,
         tags: Option<Vec<String>>,
-        profile: DriftProfileMap,
+        eval_profile: Option<GenAIEvalProfile>,
     ) -> Result<Self, CardError> {
         let registry_type = RegistryType::Prompt;
         let tags = match tags {
@@ -375,7 +360,7 @@ impl PromptCard {
             created_at: get_utc_datetime(),
             is_card: true,
             opsml_version: opsml_version::version(),
-            eval_profile: profile,
+            eval_profile,
         })
     }
     /// Save drift profile
@@ -390,30 +375,36 @@ impl PromptCard {
     #[instrument(skip_all, name = "save_eval_profile")]
     pub fn save_eval_profile(
         &mut self,
-        py: Python,
         path: &Path,
     ) -> Result<HashMap<String, DriftProfileUri>, CardError> {
+        let profile = self
+            .eval_profile
+            .as_ref()
+            .ok_or(CardError::DriftProfileNotFoundError)?;
+
+        let alias = profile
+            .alias
+            .clone()
+            .unwrap_or_else(|| "prompt_eval".to_string());
+
         let mut drift_url_map = HashMap::new();
-        let save_dir = PathBuf::from(SaveName::Drift);
+        let save_dir = PathBuf::from(SaveName::Evaluation);
 
-        for (alias, profile) in self.eval_profile.profiles.iter() {
-            let relative_path = save_dir.join(alias).with_extension(Suffix::Json);
-            let full_path = path.join(&relative_path);
+        let relative_path = save_dir.with_extension(Suffix::Json);
+        let full_path = path.join(&relative_path);
 
-            let drift_type = DriftType::GenAI;
-            profile.call_method1(py, "save_to_json", (Some(&full_path),))?;
+        let drift_type = DriftType::GenAI;
+        profile.save_to_json(Some(full_path))?;
 
-            drift_url_map.insert(
-                alias.to_string(),
-                DriftProfileUri {
-                    root_dir: save_dir.clone(),
-                    uri: relative_path,
-                    drift_type,
-                },
-            );
-        }
+        drift_url_map.insert(
+            alias.to_string(),
+            DriftProfileUri {
+                root_dir: save_dir.clone(),
+                uri: relative_path,
+                drift_type,
+            },
+        );
         debug!("Drift profile saved");
-
         Ok(drift_url_map)
     }
 
@@ -426,7 +417,7 @@ impl PromptCard {
     /// # Returns
     ///
     /// * `PyResult<()>` - Result of loading drift profile
-    pub fn load_drift_profile(&mut self, py: Python, path: &Path) -> Result<(), CardError> {
+    pub fn load_drift_profile(&mut self, path: &Path) -> Result<(), CardError> {
         let map = self
             .metadata
             .drift_profile_uri_map
@@ -446,11 +437,7 @@ impl PromptCard {
             match drift_profile_uri.drift_type {
                 DriftType::GenAI => {
                     let profile = GenAIEvalProfile::model_validate_json(file);
-                    self.eval_profile.add_profile(
-                        py,
-                        alias.to_string(),
-                        profile.into_bound_py_any(py)?,
-                    )?;
+                    self.eval_profile = Some(profile);
                 }
 
                 _ => {
