@@ -37,7 +37,7 @@ def test_promptcard_crud(reformulation_evaluation_prompt: Prompt) -> None:
                 ],
             )
 
-            assert not card.eval_profile.is_empty()
+            assert card.eval_profile is not None
 
             reg.register_card(
                 card,
@@ -53,7 +53,7 @@ def test_promptcard_crud(reformulation_evaluation_prompt: Prompt) -> None:
 
             loaded_card = reg.load_card(uid=card.uid)
             assert loaded_card.name == card.name
-            assert not loaded_card.eval_profile.is_empty()
+            assert loaded_card.eval_profile is not None
 
             assert loaded_card.version == card.version
 

@@ -112,14 +112,7 @@ impl PromptCard {
             error!("Failed to extract prompt: {e}");
         })?;
 
-        Ok(Self::new_rs(
-            prompt,
-            space,
-            name,
-            version,
-            tags,
-            eval_profile,
-        )?)
+        Self::new_rs(prompt, space, name, version, tags, eval_profile)
     }
 
     #[getter]
@@ -297,7 +290,7 @@ pub struct PromptCardInternal {
 #[serde(untagged)]
 enum PromptCardFormat {
     Full(Box<PromptCardInternal>),
-    Generic(PromptConfig),
+    Generic(Box<PromptConfig>),
 }
 
 impl<'de> Deserialize<'de> for PromptCard {
@@ -340,11 +333,6 @@ impl PromptCard {
         eval_profile: Option<GenAIEvalProfile>,
     ) -> Result<Self, CardError> {
         let registry_type = RegistryType::Prompt;
-        let tags = match tags {
-            None => Vec::new(),
-            Some(t) => t,
-        };
-
         let base_args = BaseArgs::create_args(name, space, version, None, &registry_type)?;
 
         Ok(Self {
@@ -353,7 +341,7 @@ impl PromptCard {
             name: base_args.1,
             version: base_args.2,
             uid: base_args.3,
-            tags,
+            tags: tags.unwrap_or_default(),
             metadata: PromptCardMetadata::default(),
             registry_type,
             app_env: std::env::var("APP_ENV").unwrap_or_else(|_| "dev".to_string()),
