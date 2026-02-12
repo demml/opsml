@@ -94,12 +94,12 @@ reqwest-middleware = "0.*"
 rusty-logging = "0.*"
 pythonize = { version = "0.*" }
 # we cant use crates.io because scouter relies on a fork of linfa at the moment
-scouter-client = { git = "https://github.com/demml/scouter.git", branch = "tasks-from-file", package = "scouter-client" }
+scouter-client = { git = "https://github.com/demml/scouter.git", branch = "update-serde-logic", package = "scouter-client" }
 sha2 = "0.*"
 semver = "1.*"
 serde = { version = "1.*", features = ["derive"] }
 serde_json = "1.*"
-serde_qs = ">=0.14"
+serde_qs = "0.15"
 serde_yaml = "0.9.34-deprecated" # serde_yaml is no longer maintained, but it still contains all we need for now
 sqlx = { version = "0.*", features = [ "runtime-tokio", "tls-native-tls", "postgres", "mysql", "sqlite", "chrono", "json"] }
 sysinfo = "0.*"

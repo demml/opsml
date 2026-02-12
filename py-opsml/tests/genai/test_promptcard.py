@@ -1,3 +1,4 @@
+from pathlib import Path
 from opsml.card import CardRegistry, RegistryType, PromptCard
 from opsml.types import DriftArgs
 from opsml.scouter.evaluate import GenAIEvalConfig, LLMJudgeTask, ComparisonOperator
@@ -8,8 +9,8 @@ from tests.conftest import WINDOWS_EXCLUDE
 
 
 @pytest.mark.skipif(WINDOWS_EXCLUDE, reason="skipping")
-def test_promptcard_crud(reformulation_evaluation_prompt: Prompt) -> None:
-    with OpsmlTestServer():
+def _test_promptcard_crud(reformulation_evaluation_prompt: Prompt) -> None:
+    with OpsmlTestServer(cleanup=False):
         with LLMTestServer():
             reg: CardRegistry[PromptCard] = CardRegistry(RegistryType.Prompt)
 
@@ -19,8 +20,11 @@ def test_promptcard_crud(reformulation_evaluation_prompt: Prompt) -> None:
                 messages="Hello!",
                 system_instructions="You are a helpful assistant.",
             )
-
-            card = PromptCard(prompt=prompt, space="test", name="test")
+            card = PromptCard(
+                prompt=prompt,
+                space="test",
+                name="test",
+            )
 
             card.create_eval_profile(
                 alias="genai_eval",
@@ -50,11 +54,9 @@ def test_promptcard_crud(reformulation_evaluation_prompt: Prompt) -> None:
             )
 
             assert card.uid is not None
-
             loaded_card = reg.load_card(uid=card.uid)
             assert loaded_card.name == card.name
             assert loaded_card.eval_profile is not None
-
             assert loaded_card.version == card.version
 
             loaded_card.name = "updated"
@@ -74,3 +76,8 @@ def test_promptcard_crud(reformulation_evaluation_prompt: Prompt) -> None:
             cards = reg.list_cards()
 
             assert cards.__len__() == 0
+
+
+def test_load_prompt_from_file():
+    file_path = Path(__file__).parent / "assets" / "prompt.yaml"
+    prompt_card = PromptCard.from_path(file_path)

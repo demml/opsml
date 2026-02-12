@@ -4322,7 +4322,7 @@ dependencies = [
  "scouter-client",
  "serde",
  "serde_json",
- "serde_qs 1.0.0",
+ "serde_qs 0.15.0",
  "thiserror 2.0.18",
  "tokio",
  "tracing",
@@ -4476,7 +4476,7 @@ dependencies = [
  "semver",
  "serde",
  "serde_json",
- "serde_qs 1.0.0",
+ "serde_qs 0.15.0",
  "sqlx",
  "tempfile",
  "thiserror 2.0.18",
@@ -4532,7 +4532,7 @@ dependencies = [
  "semver",
  "serde",
  "serde_json",
- "serde_qs 1.0.0",
+ "serde_qs 0.15.0",
  "sqlx",
  "tempfile",
  "test_utils",
@@ -4644,7 +4644,7 @@ dependencies = [
  "reqwest 0.12.28",
  "serde",
  "serde_json",
- "serde_qs 1.0.0",
+ "serde_qs 0.15.0",
  "tempfile",
  "thiserror 2.0.18",
  "time",
@@ -6435,7 +6435,7 @@ checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
 [[package]]
 name = "scouter-client"
 version = "0.16.0"
-source = "git+https://github.com/demml/scouter.git?branch=tasks-from-file#a088f40de2a56d2e69c469aad76d79dfd2796d5c"
+source = "git+https://github.com/demml/scouter.git?branch=update-serde-logic#6e7554ad4b84a49d7a5f01774fd9c0c9d418e153"
 dependencies = [
  "chrono",
  "ndarray",
@@ -6467,7 +6467,7 @@ dependencies = [
 [[package]]
 name = "scouter-dispatch"
 version = "0.16.0"
-source = "git+https://github.com/demml/scouter.git?branch=tasks-from-file#a088f40de2a56d2e69c469aad76d79dfd2796d5c"
+source = "git+https://github.com/demml/scouter.git?branch=update-serde-logic#6e7554ad4b84a49d7a5f01774fd9c0c9d418e153"
 dependencies = [
  "futures",
  "pyo3",
@@ -6482,7 +6482,7 @@ dependencies = [
 [[package]]
 name = "scouter-drift"
 version = "0.16.0"
-source = "git+https://github.com/demml/scouter.git?branch=tasks-from-file#a088f40de2a56d2e69c469aad76d79dfd2796d5c"
+source = "git+https://github.com/demml/scouter.git?branch=update-serde-logic#6e7554ad4b84a49d7a5f01774fd9c0c9d418e153"
 dependencies = [
  "chrono",
  "futures",
@@ -6508,7 +6508,7 @@ dependencies = [
 [[package]]
 name = "scouter-evaluate"
 version = "0.16.0"
-source = "git+https://github.com/demml/scouter.git?branch=tasks-from-file#a088f40de2a56d2e69c469aad76d79dfd2796d5c"
+source = "git+https://github.com/demml/scouter.git?branch=update-serde-logic#6e7554ad4b84a49d7a5f01774fd9c0c9d418e153"
 dependencies = [
  "chrono",
  "itertools 0.14.0",
@@ -6535,7 +6535,7 @@ dependencies = [
 [[package]]
 name = "scouter-events"
 version = "0.16.0"
-source = "git+https://github.com/demml/scouter.git?branch=tasks-from-file#a088f40de2a56d2e69c469aad76d79dfd2796d5c"
+source = "git+https://github.com/demml/scouter.git?branch=update-serde-logic#6e7554ad4b84a49d7a5f01774fd9c0c9d418e153"
 dependencies = [
  "async-trait",
  "chrono",
@@ -6570,7 +6570,7 @@ dependencies = [
 [[package]]
 name = "scouter-http"
 version = "0.16.0"
-source = "git+https://github.com/demml/scouter.git?branch=tasks-from-file#a088f40de2a56d2e69c469aad76d79dfd2796d5c"
+source = "git+https://github.com/demml/scouter.git?branch=update-serde-logic#6e7554ad4b84a49d7a5f01774fd9c0c9d418e153"
 dependencies = [
  "pyo3",
  "reqwest 0.12.28",
@@ -6585,7 +6585,7 @@ dependencies = [
 [[package]]
 name = "scouter-macro"
 version = "0.16.0"
-source = "git+https://github.com/demml/scouter.git?branch=tasks-from-file#a088f40de2a56d2e69c469aad76d79dfd2796d5c"
+source = "git+https://github.com/demml/scouter.git?branch=update-serde-logic#6e7554ad4b84a49d7a5f01774fd9c0c9d418e153"
 dependencies = [
  "thiserror 2.0.18",
 ]
@@ -6593,7 +6593,7 @@ dependencies = [
 [[package]]
 name = "scouter-observability"
 version = "0.16.0"
-source = "git+https://github.com/demml/scouter.git?branch=tasks-from-file#a088f40de2a56d2e69c469aad76d79dfd2796d5c"
+source = "git+https://github.com/demml/scouter.git?branch=update-serde-logic#6e7554ad4b84a49d7a5f01774fd9c0c9d418e153"
 dependencies = [
  "itertools 0.14.0",
  "ndarray",
@@ -6610,7 +6610,7 @@ dependencies = [
 [[package]]
 name = "scouter-profile"
 version = "0.16.0"
-source = "git+https://github.com/demml/scouter.git?branch=tasks-from-file#a088f40de2a56d2e69c469aad76d79dfd2796d5c"
+source = "git+https://github.com/demml/scouter.git?branch=update-serde-logic#6e7554ad4b84a49d7a5f01774fd9c0c9d418e153"
 dependencies = [
  "chrono",
  "indicatif",
@@ -6632,7 +6632,7 @@ dependencies = [
 [[package]]
 name = "scouter-semver"
 version = "0.16.0"
-source = "git+https://github.com/demml/scouter.git?branch=tasks-from-file#a088f40de2a56d2e69c469aad76d79dfd2796d5c"
+source = "git+https://github.com/demml/scouter.git?branch=update-serde-logic#6e7554ad4b84a49d7a5f01774fd9c0c9d418e153"
 dependencies = [
  "pyo3",
  "semver",
@@ -6643,7 +6643,7 @@ dependencies = [
 [[package]]
 name = "scouter-settings"
 version = "0.16.0"
-source = "git+https://github.com/demml/scouter.git?branch=tasks-from-file#a088f40de2a56d2e69c469aad76d79dfd2796d5c"
+source = "git+https://github.com/demml/scouter.git?branch=update-serde-logic#6e7554ad4b84a49d7a5f01774fd9c0c9d418e153"
 dependencies = [
  "base64 0.22.1",
  "chrono",
@@ -6657,7 +6657,7 @@ dependencies = [
 [[package]]
 name = "scouter-state"
 version = "0.16.0"
-source = "git+https://github.com/demml/scouter.git?branch=tasks-from-file#a088f40de2a56d2e69c469aad76d79dfd2796d5c"
+source = "git+https://github.com/demml/scouter.git?branch=update-serde-logic#6e7554ad4b84a49d7a5f01774fd9c0c9d418e153"
 dependencies = [
  "thiserror 2.0.18",
  "tokio",
@@ -6667,7 +6667,7 @@ dependencies = [
 [[package]]
 name = "scouter-tonic"
 version = "0.16.0"
-source = "git+https://github.com/demml/scouter.git?branch=tasks-from-file#a088f40de2a56d2e69c469aad76d79dfd2796d5c"
+source = "git+https://github.com/demml/scouter.git?branch=update-serde-logic#6e7554ad4b84a49d7a5f01774fd9c0c9d418e153"
 dependencies = [
  "prost",
  "prost-types",
@@ -6686,7 +6686,7 @@ dependencies = [
 [[package]]
 name = "scouter-tracing"
 version = "0.16.0"
-source = "git+https://github.com/demml/scouter.git?branch=tasks-from-file#a088f40de2a56d2e69c469aad76d79dfd2796d5c"
+source = "git+https://github.com/demml/scouter.git?branch=update-serde-logic#6e7554ad4b84a49d7a5f01774fd9c0c9d418e153"
 dependencies = [
  "chrono",
  "opentelemetry",
@@ -6712,7 +6712,7 @@ dependencies = [
 [[package]]
 name = "scouter-types"
 version = "0.16.0"
-source = "git+https://github.com/demml/scouter.git?branch=tasks-from-file#a088f40de2a56d2e69c469aad76d79dfd2796d5c"
+source = "git+https://github.com/demml/scouter.git?branch=update-serde-logic#6e7554ad4b84a49d7a5f01774fd9c0c9d418e153"
 dependencies = [
  "base64 0.22.1",
  "chrono",
@@ -6907,18 +6907,6 @@ dependencies = [
  "percent-encoding",
  "serde",
  "thiserror 2.0.18",
-]
-
-[[package]]
-name = "serde_qs"
-version = "1.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ac22439301a0b6f45a037681518e3169e8db1db76080e2e9600a08d1027df037"
-dependencies = [
- "itoa",
- "percent-encoding",
- "ryu",
- "serde",
 ]
 
 [[package]]
@@ -9294,9 +9282,9 @@ dependencies = [
 
 [[package]]
 name = "zmij"
-version = "1.0.20"
+version = "1.0.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4de98dfa5d5b7fef4ee834d0073d560c9ca7b6c46a71d058c48db7960f8cfaf7"
+checksum = "b8848ee67ecc8aedbaf3e4122217aff892639231befc6a1b58d29fff4c2cabaa"
 
 [[package]]
 name = "zopfli"

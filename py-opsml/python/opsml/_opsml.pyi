@@ -19265,7 +19265,7 @@ class PromptCard:
         version: Optional[str] = None,
         uid: Optional[str] = None,
         tags: List[str] = [],
-        drift_profile: Optional[Dict[str, GenAIEvalProfile]] = None,
+        eval_profile: Optional[GenAIEvalProfile] = None,
     ) -> None:
         """Creates a `PromptCard`.
 
@@ -19288,9 +19288,9 @@ class PromptCard:
             tags (List[str]):
                 Tags to associate with `PromptCard`. Can be a dictionary of strings or
                 a `Tags` object.
-            drift_profile:
-                Drift profile(s) to associate with the model. Must be a dictionary of
-                alias and drift profile. Currently supports GenAI evaluation profiles.
+            eval_profile (GenAIEvalProfile | None):
+                Optional GenAIEvalProfile to associate with the PromptCard. This can be used to
+                automatically create a drift profile for the prompt when it is registered.
         Example:
         ```python
         from opsml import Prompt, PromptCard, CardRegistry, RegistryType
@@ -19462,20 +19462,32 @@ class PromptCard:
         """
 
     @property
-    def eval_profile(self) -> DriftProfileMap:
-        """Return the drift profile map from the model interface.
+    def eval_profile(self) -> Optional[GenAIEvalProfile]:
+        """Return the GenAIEvalProfile associated with the PromptCard, if it exists.
 
         Returns:
-            DriftProfileMap
+            Optional[GenAIEvalProfile]: The evaluation profile for the prompt card, or None if not set.
         """
 
     @eval_profile.setter
-    def eval_profile(self, eval_profile: DriftProfileMap) -> None:
-        """Set the drift profile map for the prompt card.
+    def eval_profile(self, eval_profile: GenAIEvalProfile) -> None:
+        """Set the eval profile for the prompt card.
 
         Args:
-            eval_profile (DriftProfileMap):
-                The drift profile map to set.
+            eval_profile (GenAIEvalProfile):
+                The eval profile to set.
+        """
+
+    @staticmethod
+    def from_path(path: Path) -> "PromptCard":
+        """Load a PromptCard from a given path.
+
+        Args:
+            path (Path):
+                The path to load the PromptCard from.
+        Returns:
+            PromptCard:
+                The loaded PromptCard object.
         """
 
 class Card:
