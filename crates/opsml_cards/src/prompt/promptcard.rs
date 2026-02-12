@@ -1,7 +1,6 @@
 use crate::error::CardError;
 use crate::utils::BaseArgs;
 use chrono::{DateTime, Utc};
-use opsml_crypt::error;
 use opsml_types::contracts::{CardRecord, PromptCardClientRecord};
 use opsml_types::DriftProfileUri;
 use opsml_types::{RegistryType, SaveName, Suffix};
@@ -241,6 +240,10 @@ impl PromptCard {
     pub fn from_path(path: PathBuf) -> Result<Self, CardError> {
         deserialize_from_path(path)
     }
+
+    pub fn __str__(&self) -> String {
+        PyHelperFuncs::__str__(self)
+    }
 }
 
 #[derive(Debug, Deserialize)]
@@ -267,7 +270,7 @@ pub struct PromptConfig {
 
 impl PromptConfig {
     pub fn into_promptcard(self) -> Result<PromptCard, CardError> {
-        let card = PromptCard::new_rs(
+        let mut card = PromptCard::new_rs(
             self.prompt,
             self.space.as_deref(),
             self.name.as_deref(),
@@ -276,13 +279,13 @@ impl PromptConfig {
             None,
         )?;
 
-        // let Some(evaluation) = self.evaluation {
-        //  let config = evaluation.config.unwrap_or_default();
-        //  let tasks: AssertionTasks = AssertionTasks::from_tasks_file(evaluation.tasks);
-        //  let profile =
-        //      GenAIEvalProfile::build_from_parts(config, tasks, Some(evaluation.alias))?;
-        //  card.eval_profile = Some(profile);
-        //}
+        if let Some(evaluation) = self.evaluation {
+            let config = evaluation.config.unwrap_or_default();
+            let tasks: AssertionTasks = AssertionTasks::from_tasks_file(evaluation.tasks);
+            let profile =
+                GenAIEvalProfile::build_from_parts(config, tasks, Some(evaluation.alias))?;
+            card.eval_profile = Some(profile);
+        }
 
         Ok(card)
     }

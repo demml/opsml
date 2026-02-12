@@ -270,7 +270,7 @@ checksum = "3109e49b1e4909e9db6515a30c633684d68cdeaa252f215214cb4fa1a5bfee2c"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.114",
+ "syn 2.0.115",
  "synstructure",
 ]
 
@@ -282,7 +282,7 @@ checksum = "7b18050c2cd6fe86c3a76584ef5e0baf286d038cda203eb6223df2cc413565f7"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.114",
+ "syn 2.0.115",
 ]
 
 [[package]]
@@ -477,7 +477,7 @@ checksum = "9035ad2d096bed7955a320ee7e2230574d28fd3c3a0f186cbea1ff3c7eed5dbb"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.114",
+ "syn 2.0.115",
 ]
 
 [[package]]
@@ -1068,7 +1068,7 @@ checksum = "604fde5e028fea851ce1d8570bbdc034bec850d157f7569d10f347d06808c05c"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.114",
+ "syn 2.0.115",
 ]
 
 [[package]]
@@ -1494,7 +1494,7 @@ dependencies = [
  "heck 0.5.0",
  "proc-macro2",
  "quote",
- "syn 2.0.114",
+ "syn 2.0.115",
 ]
 
 [[package]]
@@ -1887,7 +1887,7 @@ checksum = "8034092389675178f570469e6c3b0465d3d30b4505c294a6550db47f3c17ad18"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.114",
+ "syn 2.0.115",
 ]
 
 [[package]]
@@ -1908,7 +1908,7 @@ checksum = "1e567bd82dcff979e4b03460c307b3cdc9e96fde3d73bed1496d2bc75d9dd62a"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.114",
+ "syn 2.0.115",
 ]
 
 [[package]]
@@ -1961,7 +1961,7 @@ checksum = "97369cbbc041bc366949bc74d34658d6cda5621039731c6310521892a3a20ae0"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.114",
+ "syn 2.0.115",
 ]
 
 [[package]]
@@ -2402,7 +2402,7 @@ checksum = "162ee34ebcb7c64a8abebc059ce0fee27c2262618d7b60ed8faf72fef13c3650"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.114",
+ "syn 2.0.115",
 ]
 
 [[package]]
@@ -3662,7 +3662,7 @@ dependencies = [
  "cfg-if",
  "proc-macro2",
  "quote",
- "syn 2.0.114",
+ "syn 2.0.115",
 ]
 
 [[package]]
@@ -3955,7 +3955,7 @@ dependencies = [
  "proc-macro-crate",
  "proc-macro2",
  "quote",
- "syn 2.0.114",
+ "syn 2.0.115",
 ]
 
 [[package]]
@@ -4071,7 +4071,7 @@ checksum = "a948666b637a0f465e8564c73e89d4dde00d72d4d473cc972f390fc3dcee7d9c"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.114",
+ "syn 2.0.115",
 ]
 
 [[package]]
@@ -4938,7 +4938,7 @@ checksum = "6e918e4ff8c4549eb882f14b3a4bc8c8bc93de829416eacf579f1207a8fbf861"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.114",
+ "syn 2.0.115",
 ]
 
 [[package]]
@@ -5295,7 +5295,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "479ca8adacdd7ce8f1fb39ce9ecccbfe93a3f1344b3d0d97f20bc0196208f62b"
 dependencies = [
  "proc-macro2",
- "syn 2.0.114",
+ "syn 2.0.115",
 ]
 
 [[package]]
@@ -5350,7 +5350,7 @@ dependencies = [
  "proc-macro-error-attr2",
  "proc-macro2",
  "quote",
- "syn 2.0.114",
+ "syn 2.0.115",
 ]
 
 [[package]]
@@ -5404,7 +5404,7 @@ dependencies = [
  "pulldown-cmark",
  "pulldown-cmark-to-cmark",
  "regex",
- "syn 2.0.114",
+ "syn 2.0.115",
  "tempfile",
 ]
 
@@ -5418,7 +5418,7 @@ dependencies = [
  "itertools 0.14.0",
  "proc-macro2",
  "quote",
- "syn 2.0.114",
+ "syn 2.0.115",
 ]
 
 [[package]]
@@ -5545,7 +5545,7 @@ dependencies = [
  "proc-macro2",
  "pyo3-macros-backend",
  "quote",
- "syn 2.0.114",
+ "syn 2.0.115",
 ]
 
 [[package]]
@@ -5558,7 +5558,7 @@ dependencies = [
  "proc-macro2",
  "pyo3-build-config",
  "quote",
- "syn 2.0.114",
+ "syn 2.0.115",
 ]
 
 [[package]]
@@ -5949,7 +5949,7 @@ checksum = "b7186006dcb21920990093f30e3dea63b7d6e977bf1256be20c3563a5db070da"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.114",
+ "syn 2.0.115",
 ]
 
 [[package]]
@@ -6423,7 +6423,7 @@ dependencies = [
  "proc-macro2",
  "quote",
  "serde_derive_internals",
- "syn 2.0.114",
+ "syn 2.0.115",
 ]
 
 [[package]]
@@ -6434,8 +6434,8 @@ checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
 
 [[package]]
 name = "scouter-client"
-version = "0.16.0"
-source = "git+https://github.com/demml/scouter.git?branch=update-serde-logic#6e7554ad4b84a49d7a5f01774fd9c0c9d418e153"
+version = "0.17.0"
+source = "git+https://github.com/demml/scouter.git?branch=update-serde-logic#4cff3248b77de77a82b3598e60ecc0b093e266ed"
 dependencies = [
  "chrono",
  "ndarray",
@@ -6466,8 +6466,8 @@ dependencies = [
 
 [[package]]
 name = "scouter-dispatch"
-version = "0.16.0"
-source = "git+https://github.com/demml/scouter.git?branch=update-serde-logic#6e7554ad4b84a49d7a5f01774fd9c0c9d418e153"
+version = "0.17.0"
+source = "git+https://github.com/demml/scouter.git?branch=update-serde-logic#4cff3248b77de77a82b3598e60ecc0b093e266ed"
 dependencies = [
  "futures",
  "pyo3",
@@ -6481,8 +6481,8 @@ dependencies = [
 
 [[package]]
 name = "scouter-drift"
-version = "0.16.0"
-source = "git+https://github.com/demml/scouter.git?branch=update-serde-logic#6e7554ad4b84a49d7a5f01774fd9c0c9d418e153"
+version = "0.17.0"
+source = "git+https://github.com/demml/scouter.git?branch=update-serde-logic#4cff3248b77de77a82b3598e60ecc0b093e266ed"
 dependencies = [
  "chrono",
  "futures",
@@ -6507,8 +6507,8 @@ dependencies = [
 
 [[package]]
 name = "scouter-evaluate"
-version = "0.16.0"
-source = "git+https://github.com/demml/scouter.git?branch=update-serde-logic#6e7554ad4b84a49d7a5f01774fd9c0c9d418e153"
+version = "0.17.0"
+source = "git+https://github.com/demml/scouter.git?branch=update-serde-logic#4cff3248b77de77a82b3598e60ecc0b093e266ed"
 dependencies = [
  "chrono",
  "itertools 0.14.0",
@@ -6534,8 +6534,8 @@ dependencies = [
 
 [[package]]
 name = "scouter-events"
-version = "0.16.0"
-source = "git+https://github.com/demml/scouter.git?branch=update-serde-logic#6e7554ad4b84a49d7a5f01774fd9c0c9d418e153"
+version = "0.17.0"
+source = "git+https://github.com/demml/scouter.git?branch=update-serde-logic#4cff3248b77de77a82b3598e60ecc0b093e266ed"
 dependencies = [
  "async-trait",
  "chrono",
@@ -6569,8 +6569,8 @@ dependencies = [
 
 [[package]]
 name = "scouter-http"
-version = "0.16.0"
-source = "git+https://github.com/demml/scouter.git?branch=update-serde-logic#6e7554ad4b84a49d7a5f01774fd9c0c9d418e153"
+version = "0.17.0"
+source = "git+https://github.com/demml/scouter.git?branch=update-serde-logic#4cff3248b77de77a82b3598e60ecc0b093e266ed"
 dependencies = [
  "pyo3",
  "reqwest 0.12.28",
@@ -6584,16 +6584,16 @@ dependencies = [
 
 [[package]]
 name = "scouter-macro"
-version = "0.16.0"
-source = "git+https://github.com/demml/scouter.git?branch=update-serde-logic#6e7554ad4b84a49d7a5f01774fd9c0c9d418e153"
+version = "0.17.0"
+source = "git+https://github.com/demml/scouter.git?branch=update-serde-logic#4cff3248b77de77a82b3598e60ecc0b093e266ed"
 dependencies = [
  "thiserror 2.0.18",
 ]
 
 [[package]]
 name = "scouter-observability"
-version = "0.16.0"
-source = "git+https://github.com/demml/scouter.git?branch=update-serde-logic#6e7554ad4b84a49d7a5f01774fd9c0c9d418e153"
+version = "0.17.0"
+source = "git+https://github.com/demml/scouter.git?branch=update-serde-logic#4cff3248b77de77a82b3598e60ecc0b093e266ed"
 dependencies = [
  "itertools 0.14.0",
  "ndarray",
@@ -6609,8 +6609,8 @@ dependencies = [
 
 [[package]]
 name = "scouter-profile"
-version = "0.16.0"
-source = "git+https://github.com/demml/scouter.git?branch=update-serde-logic#6e7554ad4b84a49d7a5f01774fd9c0c9d418e153"
+version = "0.17.0"
+source = "git+https://github.com/demml/scouter.git?branch=update-serde-logic#4cff3248b77de77a82b3598e60ecc0b093e266ed"
 dependencies = [
  "chrono",
  "indicatif",
@@ -6631,8 +6631,8 @@ dependencies = [
 
 [[package]]
 name = "scouter-semver"
-version = "0.16.0"
-source = "git+https://github.com/demml/scouter.git?branch=update-serde-logic#6e7554ad4b84a49d7a5f01774fd9c0c9d418e153"
+version = "0.17.0"
+source = "git+https://github.com/demml/scouter.git?branch=update-serde-logic#4cff3248b77de77a82b3598e60ecc0b093e266ed"
 dependencies = [
  "pyo3",
  "semver",
@@ -6642,8 +6642,8 @@ dependencies = [
 
 [[package]]
 name = "scouter-settings"
-version = "0.16.0"
-source = "git+https://github.com/demml/scouter.git?branch=update-serde-logic#6e7554ad4b84a49d7a5f01774fd9c0c9d418e153"
+version = "0.17.0"
+source = "git+https://github.com/demml/scouter.git?branch=update-serde-logic#4cff3248b77de77a82b3598e60ecc0b093e266ed"
 dependencies = [
  "base64 0.22.1",
  "chrono",
@@ -6656,8 +6656,8 @@ dependencies = [
 
 [[package]]
 name = "scouter-state"
-version = "0.16.0"
-source = "git+https://github.com/demml/scouter.git?branch=update-serde-logic#6e7554ad4b84a49d7a5f01774fd9c0c9d418e153"
+version = "0.17.0"
+source = "git+https://github.com/demml/scouter.git?branch=update-serde-logic#4cff3248b77de77a82b3598e60ecc0b093e266ed"
 dependencies = [
  "thiserror 2.0.18",
  "tokio",
@@ -6666,8 +6666,8 @@ dependencies = [
 
 [[package]]
 name = "scouter-tonic"
-version = "0.16.0"
-source = "git+https://github.com/demml/scouter.git?branch=update-serde-logic#6e7554ad4b84a49d7a5f01774fd9c0c9d418e153"
+version = "0.17.0"
+source = "git+https://github.com/demml/scouter.git?branch=update-serde-logic#4cff3248b77de77a82b3598e60ecc0b093e266ed"
 dependencies = [
  "prost",
  "prost-types",
@@ -6685,8 +6685,8 @@ dependencies = [
 
 [[package]]
 name = "scouter-tracing"
-version = "0.16.0"
-source = "git+https://github.com/demml/scouter.git?branch=update-serde-logic#6e7554ad4b84a49d7a5f01774fd9c0c9d418e153"
+version = "0.17.0"
+source = "git+https://github.com/demml/scouter.git?branch=update-serde-logic#4cff3248b77de77a82b3598e60ecc0b093e266ed"
 dependencies = [
  "chrono",
  "opentelemetry",
@@ -6711,8 +6711,8 @@ dependencies = [
 
 [[package]]
 name = "scouter-types"
-version = "0.16.0"
-source = "git+https://github.com/demml/scouter.git?branch=update-serde-logic#6e7554ad4b84a49d7a5f01774fd9c0c9d418e153"
+version = "0.17.0"
+source = "git+https://github.com/demml/scouter.git?branch=update-serde-logic#4cff3248b77de77a82b3598e60ecc0b093e266ed"
 dependencies = [
  "base64 0.22.1",
  "chrono",
@@ -6849,7 +6849,7 @@ checksum = "d540f220d3187173da220f885ab66608367b6574e925011a9353e4badda91d79"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.114",
+ "syn 2.0.115",
 ]
 
 [[package]]
@@ -6860,7 +6860,7 @@ checksum = "18d26a20a969b9e3fdf2fc2d9f21eda6c40e2de84c9408bb5d3b05d499aae711"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.114",
+ "syn 2.0.115",
 ]
 
 [[package]]
@@ -7212,7 +7212,7 @@ dependencies = [
  "quote",
  "sqlx-core",
  "sqlx-macros-core",
- "syn 2.0.114",
+ "syn 2.0.115",
 ]
 
 [[package]]
@@ -7235,7 +7235,7 @@ dependencies = [
  "sqlx-mysql",
  "sqlx-postgres",
  "sqlx-sqlite",
- "syn 2.0.114",
+ "syn 2.0.115",
  "tokio",
  "url",
 ]
@@ -7402,7 +7402,7 @@ dependencies = [
  "heck 0.5.0",
  "proc-macro2",
  "quote",
- "syn 2.0.114",
+ "syn 2.0.115",
 ]
 
 [[package]]
@@ -7424,9 +7424,9 @@ dependencies = [
 
 [[package]]
 name = "syn"
-version = "2.0.114"
+version = "2.0.115"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d4d107df263a3013ef9b1879b0df87d706ff80f65a86ea879bd9c31f9b307c2a"
+checksum = "6e614ed320ac28113fa64972c4262d5dbc89deacdfd00c34a3e4cea073243c12"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -7450,7 +7450,7 @@ checksum = "728a70f3dbaf5bab7f0c4b1ac8d7ae5ea60a4b5549c8a5914361c99147a709d2"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.114",
+ "syn 2.0.115",
 ]
 
 [[package]]
@@ -7490,7 +7490,7 @@ dependencies = [
  "proc-macro-error2",
  "proc-macro2",
  "quote",
- "syn 2.0.114",
+ "syn 2.0.115",
 ]
 
 [[package]]
@@ -7609,7 +7609,7 @@ checksum = "4fee6c4efc90059e10f81e6d42c60a18f76588c3d74cb83a0b242a2b6c7504c1"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.114",
+ "syn 2.0.115",
 ]
 
 [[package]]
@@ -7620,7 +7620,7 @@ checksum = "ebc4ee7f67670e9b64d05fa4253e753e016c6c95ff35b89b7941d6b856dec1d5"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.114",
+ "syn 2.0.115",
 ]
 
 [[package]]
@@ -7725,7 +7725,7 @@ checksum = "af407857209536a95c8e56f8231ef2c2e2aff839b22e07a1ffcbc617e9db9fa5"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.114",
+ "syn 2.0.115",
 ]
 
 [[package]]
@@ -7881,7 +7881,7 @@ dependencies = [
  "prettyplease",
  "proc-macro2",
  "quote",
- "syn 2.0.114",
+ "syn 2.0.115",
 ]
 
 [[package]]
@@ -7919,7 +7919,7 @@ dependencies = [
  "prost-build",
  "prost-types",
  "quote",
- "syn 2.0.114",
+ "syn 2.0.115",
  "tempfile",
  "tonic-build",
 ]
@@ -8015,7 +8015,7 @@ checksum = "7490cfa5ec963746568740651ac6781f701c9c5ea257c58e057f3ba8cf69e8da"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.114",
+ "syn 2.0.115",
 ]
 
 [[package]]
@@ -8415,7 +8415,7 @@ dependencies = [
  "bumpalo",
  "proc-macro2",
  "quote",
- "syn 2.0.114",
+ "syn 2.0.115",
  "wasm-bindgen-shared",
 ]
 
@@ -8617,7 +8617,7 @@ checksum = "053e2e040ab57b9dc951b72c264860db7eb3b0200ba345b4e4c3b14f67855ddf"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.114",
+ "syn 2.0.115",
 ]
 
 [[package]]
@@ -8628,7 +8628,7 @@ checksum = "3f316c4a2570ba26bbec722032c4099d8c8bc095efccdc15688708623367e358"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.114",
+ "syn 2.0.115",
 ]
 
 [[package]]
@@ -9010,7 +9010,7 @@ dependencies = [
  "heck 0.5.0",
  "indexmap 2.13.0",
  "prettyplease",
- "syn 2.0.114",
+ "syn 2.0.115",
  "wasm-metadata",
  "wit-bindgen-core",
  "wit-component",
@@ -9026,7 +9026,7 @@ dependencies = [
  "prettyplease",
  "proc-macro2",
  "quote",
- "syn 2.0.114",
+ "syn 2.0.115",
  "wit-bindgen-core",
  "wit-bindgen-rust",
 ]
@@ -9152,7 +9152,7 @@ checksum = "b659052874eb698efe5b9e8cf382204678a0086ebf46982b79d6ca3182927e5d"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.114",
+ "syn 2.0.115",
  "synstructure",
 ]
 
@@ -9173,7 +9173,7 @@ checksum = "4122cd3169e94605190e77839c9a40d40ed048d305bfdc146e7df40ab0f3e517"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.114",
+ "syn 2.0.115",
 ]
 
 [[package]]
@@ -9193,7 +9193,7 @@ checksum = "d71e5d6e06ab090c67b5e44993ec16b72dcbaabc526db883a360057678b48502"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.114",
+ "syn 2.0.115",
  "synstructure",
 ]
 
@@ -9214,7 +9214,7 @@ checksum = "85a5b4158499876c763cb03bc4e49185d3cccbabb15b33c627f7884f43db852e"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.114",
+ "syn 2.0.115",
 ]
 
 [[package]]
@@ -9247,7 +9247,7 @@ checksum = "eadce39539ca5cb3985590102671f2567e659fca9666581ad3411d59207951f3"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.114",
+ "syn 2.0.115",
 ]
 
 [[package]]
