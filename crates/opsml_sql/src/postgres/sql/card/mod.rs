@@ -322,10 +322,10 @@ impl CardLogicTrait for CardLogicPostgresClient {
                     return Err(SqlError::InvalidCardType);
                 }
             },
-            CardTable::Service | CardTable::Mcp => match card {
+            CardTable::Service | CardTable::Mcp | CardTable::Agent => match card {
                 ServerCard::Service(record) => {
                     let query = PostgresQueryHelper::get_servicecard_insert_query(table);
-                    sqlx::query(query)
+                    let mut bound = sqlx::query(query)
                         .bind(&record.uid)
                         .bind(&record.app_env)
                         .bind(&record.name)
@@ -343,9 +343,14 @@ impl CardLogicTrait for CardLogicPostgresClient {
                         .bind(&record.metadata)
                         .bind(&record.deployment)
                         .bind(&record.service_config)
-                        .bind(&record.tags)
-                        .execute(&self.pool)
-                        .await?;
+                        .bind(&record.tags);
+
+                    // add promptcard uids if agent card
+                    if table == &CardTable::Agent {
+                        bound = bound.bind(record.promptcard_uids.as_ref());
+                    }
+                    bound.execute(&self.pool).await?;
+
                     Ok(())
                 }
                 _ => {
@@ -512,10 +517,10 @@ impl CardLogicTrait for CardLogicPostgresClient {
                 }
             },
 
-            CardTable::Service | CardTable::Mcp => match card {
+            CardTable::Service | CardTable::Mcp | CardTable::Agent => match card {
                 ServerCard::Service(record) => {
                     let query = PostgresQueryHelper::get_servicecard_update_query(table);
-                    sqlx::query(query)
+                    let mut bound = sqlx::query(query)
                         .bind(&record.app_env)
                         .bind(&record.name)
                         .bind(&record.space)
@@ -531,9 +536,14 @@ impl CardLogicTrait for CardLogicPostgresClient {
                         .bind(&record.deployment)
                         .bind(&record.service_config)
                         .bind(&record.tags)
-                        .bind(&record.uid)
-                        .execute(&self.pool)
-                        .await?;
+                        .bind(&record.uid);
+
+                    // add promptcard uids if agent card
+                    if table == &CardTable::Agent {
+                        bound = bound.bind(record.promptcard_uids.as_ref());
+                    }
+                    bound.execute(&self.pool).await?;
+
                     Ok(())
                 }
                 _ => {
