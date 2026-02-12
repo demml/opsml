@@ -4,9 +4,9 @@ use opsml_semver::error::VersionError;
 use opsml_types::cards::{CardStatus, CardTable, ParameterValue};
 use opsml_types::contracts::evaluation::{EvaluationProvider, EvaluationType};
 use opsml_types::contracts::{
-    ArtifactRecord, AuditCardClientRecord, CardEntry, CardRecord, DataCardClientRecord,
-    ExperimentCardClientRecord, McpServer, ModelCardClientRecord, PromptCardClientRecord,
-    ServiceCardClientRecord, ServiceConfig,
+    card, AgentCardClientRecord, ArtifactRecord, AuditCardClientRecord, CardEntry, CardRecord,
+    DataCardClientRecord, ExperimentCardClientRecord, McpServer, ModelCardClientRecord,
+    PromptCardClientRecord, ServiceCardClientRecord, ServiceConfig,
 };
 use opsml_types::contracts::{ArtifactType, DeploymentConfig, ServiceMetadata, ServiceType};
 use opsml_types::{CommonKwargs, DataType, ModelType, RegistryType};
@@ -953,6 +953,80 @@ impl ServiceCardRecord {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+pub struct AgentCardRecord {
+    pub uid: String,
+    pub created_at: DateTime<Utc>,
+    pub app_env: String,
+    pub name: String,
+    pub space: String,
+    pub major: i32,
+    pub minor: i32,
+    pub patch: i32,
+    pub pre_tag: Option<String>,
+    pub build_tag: Option<String>,
+    pub version: String,
+    pub tags: Json<Vec<String>>,
+    pub promptcard_uids: Json<Vec<String>>,
+    pub opsml_version: String,
+    pub username: String,
+}
+
+impl AgentCardRecord {
+    pub fn from_client_card(client_card: AgentCardClientRecord) -> Result<Self, SqlError> {
+        let version = Version::parse(&client_card.version).map_err(VersionError::InvalidVersion)?;
+        Ok(AgentCardRecord {
+            uid: client_card.uid,
+            created_at: client_card.created_at,
+            app_env: client_card.app_env,
+            name: client_card.name,
+            space: client_card.space,
+            major: version.major as i32,
+            minor: version.minor as i32,
+            patch: version.patch as i32,
+            pre_tag: Some(version.pre.to_string()),
+            build_tag: Some(version.build.to_string()),
+            version: client_card.version,
+            tags: Json(client_card.tags),
+            promptcard_uids: Json(client_card.promptcard_uids),
+            opsml_version: client_card.opsml_version,
+            username: client_card.username,
+        })
+    }
+
+    pub fn uri(&self) -> String {
+        format!(
+            "{}/{}/{}/v{}",
+            CardTable::Agent,
+            self.space,
+            self.name,
+            self.version
+        )
+    }
+}
+
+impl Default for AgentCardRecord {
+    fn default() -> Self {
+        AgentCardRecord {
+            uid: create_uuid7(),
+            created_at: get_utc_datetime(),
+            app_env: env::var("APP_ENV").unwrap_or_else(|_| "development".to_string()),
+            name: CommonKwargs::Undefined.to_string(),
+            space: CommonKwargs::Undefined.to_string(),
+            major: 1,
+            minor: 0,
+            patch: 0,
+            pre_tag: None,
+            build_tag: None,
+            version: Version::new(1, 0, 0).to_string(),
+            tags: Json(Vec::new()),
+            promptcard_uids: Json(Vec::new()),
+            opsml_version: opsml_version::version(),
+            username: CommonKwargs::Undefined.to_string(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct ArtifactSqlRecord {
     pub uid: String,
     pub created_at: DateTime<Utc>,
@@ -1167,6 +1241,7 @@ pub enum ServerCard {
     Audit(AuditCardRecord),
     Prompt(PromptCardRecord),
     Service(ServiceCardRecord),
+    Agent(AgentCardRecord),
 }
 
 impl ServerCard {
@@ -1178,6 +1253,7 @@ impl ServerCard {
             ServerCard::Audit(card) => card.uid.as_str(),
             ServerCard::Prompt(card) => card.uid.as_str(),
             ServerCard::Service(card) => card.uid.as_str(),
+            ServerCard::Agent(card) => card.uid.as_str(),
         }
     }
 
@@ -1189,6 +1265,7 @@ impl ServerCard {
             ServerCard::Audit(_) => RegistryType::Audit.to_string(),
             ServerCard::Prompt(_) => RegistryType::Prompt.to_string(),
             ServerCard::Service(_) => RegistryType::Service.to_string(),
+            ServerCard::Agent(_) => RegistryType::Agent.to_string(),
         }
     }
 
@@ -1200,6 +1277,7 @@ impl ServerCard {
             ServerCard::Audit(card) => card.version.clone(),
             ServerCard::Prompt(card) => card.version.clone(),
             ServerCard::Service(card) => card.version.clone(),
+            ServerCard::Agent(card) => card.version.clone(),
         }
     }
 
@@ -1211,6 +1289,7 @@ impl ServerCard {
             ServerCard::Audit(card) => card.space.clone(),
             ServerCard::Prompt(card) => card.space.clone(),
             ServerCard::Service(card) => card.space.clone(),
+            ServerCard::Agent(card) => card.space.clone(),
         }
     }
 
@@ -1222,6 +1301,7 @@ impl ServerCard {
             ServerCard::Audit(card) => card.name.clone(),
             ServerCard::Prompt(card) => card.name.clone(),
             ServerCard::Service(card) => card.name.clone(),
+            ServerCard::Agent(card) => card.name.clone(),
         }
     }
 
@@ -1233,6 +1313,7 @@ impl ServerCard {
             ServerCard::Audit(card) => card.uri(),
             ServerCard::Prompt(card) => card.uri(),
             ServerCard::Service(card) => card.uri(),
+            ServerCard::Agent(card) => card.uri(),
         }
     }
 
@@ -1244,6 +1325,7 @@ impl ServerCard {
             ServerCard::Audit(card) => card.app_env.clone(),
             ServerCard::Prompt(card) => card.app_env.clone(),
             ServerCard::Service(card) => card.app_env.clone(),
+            ServerCard::Agent(card) => card.app_env.clone(),
         }
     }
 
@@ -1255,6 +1337,7 @@ impl ServerCard {
             ServerCard::Audit(card) => card.created_at,
             ServerCard::Prompt(card) => card.created_at,
             ServerCard::Service(card) => card.created_at,
+            ServerCard::Agent(card) => card.created_at,
         }
     }
 
@@ -1280,6 +1363,9 @@ impl ServerCard {
             CardRecord::Service(card) => Ok(ServerCard::Service(
                 ServiceCardRecord::from_client_card(card)?,
             )),
+            CardRecord::Agent(card) => {
+                Ok(ServerCard::Agent(AgentCardRecord::from_client_card(card)?))
+            }
         }
     }
 }

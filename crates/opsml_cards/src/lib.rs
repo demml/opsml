@@ -1,3 +1,4 @@
+pub mod agent;
 pub mod data;
 pub mod error;
 pub mod experiment;
@@ -7,6 +8,7 @@ pub mod service;
 pub mod traits;
 pub mod utils;
 
+pub use agent::*;
 pub use data::*;
 pub use experiment::*;
 pub use model::*;
