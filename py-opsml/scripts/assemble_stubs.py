@@ -74,10 +74,10 @@ def assemble():
     with OUTPUT_FILE.open("w", encoding="utf-8") as f:
         f.write("\n".join(final_content))
 
-    print(f"✓ Compiled {len(set(master_all))} unique exports into {OUTPUT_FILE}")
+    print(f"[OK] Compiled {len(set(master_all))} unique exports into {OUTPUT_FILE}")
     print(f"  Processed {len(STUB_FILES)} stub files:")
     for stub in STUB_FILES:
-        status = "✓" if (STUB_DIR / stub).exists() else "✗"
+        status = "[OK]" if (STUB_DIR / stub).exists() else "[MISSING]"
         print(f"    {status} {stub}")
 
 
