@@ -1,8 +1,11 @@
 from pathlib import Path
+import profile
+from typing import cast
 from opsml.card import CardRegistry, RegistryType, PromptCard
 from opsml.types import DriftArgs
 from opsml.scouter.evaluate import GenAIEvalConfig, LLMJudgeTask, ComparisonOperator
-from opsml.genai import Prompt
+from opsml.genai import Prompt, Provider, ModelSettings
+from opsml.genai.google import GeminiSettings
 from opsml.mock import OpsmlTestServer, LLMTestServer
 import pytest
 from tests.conftest import WINDOWS_EXCLUDE
@@ -81,3 +84,35 @@ def _test_promptcard_crud(reformulation_evaluation_prompt: Prompt) -> None:
 def test_load_prompt_from_file():
     file_path = Path(__file__).parent / "assets" / "prompt.yaml"
     prompt_card = PromptCard.from_path(file_path)
+
+    assert prompt_card.name == "my-prompt"
+    assert prompt_card.space == "opsml"
+    assert prompt_card.prompt.model == "gemini-2.5-flash"
+    assert prompt_card.prompt.provider == Provider.Google
+
+    assert (
+        prompt_card.prompt.message.text
+        == "Analyze the sentiment of the provided text {input}"
+    )
+    assert (
+        prompt_card.prompt.system_instructions[0].text == "You are a helpful assistant"
+    )
+    settings = cast(GeminiSettings, prompt_card.prompt.model_settings)
+
+    assert round(settings.generation_config.temperature, 1) == 0.7
+    assert settings.generation_config.max_output_tokens == 1024
+    assert round(settings.generation_config.top_p, 1) == 0.9
+    assert settings.generation_config.frequency_penalty == 0.0
+    assert settings.generation_config.stop_sequences == ["###"]
+
+    profile = prompt_card.eval_profile
+    assert profile is not None
+    assert profile.alias == "sentiment_analysis_eval"
+    assert profile.has_assertions()
+    tasks = profile.assertion_tasks
+    task1 = tasks[0]
+    assert task1.id == "sentiment_score_assertion"
+    assert task1.field_path == "sentiment.score"
+    task2 = tasks[1]
+    assert task2.id == "validate_email"
+    assert task2.field_path == "user.email"
