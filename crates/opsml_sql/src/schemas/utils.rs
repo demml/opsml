@@ -4,7 +4,7 @@ use crate::schemas::schema::{
 
 use opsml_types::contracts::{
     AuditCardClientRecord, CardRecord, DataCardClientRecord, ExperimentCardClientRecord,
-    ModelCardClientRecord, PromptCardClientRecord, ServiceCardClientRecord,
+    ModelCardClientRecord, PromptCardClientRecord, ServiceCardClientRecord, ServiceType,
 };
 
 use super::ServiceCardRecord;
@@ -123,11 +123,12 @@ pub fn convert_servicecard(record: ServiceCardRecord) -> CardRecord {
         username: record.username,
         cards: record.cards.0,
         opsml_version: record.opsml_version,
-        service_type: record.service_type,
+        service_type: ServiceType::from(record.service_type),
         metadata: record.metadata.map(|m| m.0),
         deployment: record.deployment.map(|d| d.0),
         service_config: record.service_config.map(|s| s.0),
         tags: record.tags.0,
+        promptcard_uids: record.promptcard_uids.map(|u| u.0),
     };
 
     CardRecord::Service(card)

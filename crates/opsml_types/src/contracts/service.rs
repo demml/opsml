@@ -1,4 +1,5 @@
 use crate::contracts::mcp::McpConfig;
+use crate::contracts::AgentSpec;
 use crate::error::TypeError;
 use crate::RegistryType;
 use opsml_utils::extract_py_attr;
@@ -7,7 +8,6 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt::Display;
 use tracing::error;
-
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Hash, Default)]
 #[pyclass(eq, eq_int)]
 pub enum ServiceType {
@@ -29,7 +29,16 @@ impl Display for ServiceType {
         }
     }
 }
-
+impl From<String> for ServiceType {
+    fn from(s: String) -> Self {
+        match s.to_lowercase().as_str() {
+            "api" => ServiceType::Api,
+            "mcp" => ServiceType::Mcp,
+            "agent" => ServiceType::Agent,
+            _ => ServiceType::Api, // default to Api if unknown
+        }
+    }
+}
 impl From<&str> for ServiceType {
     fn from(s: &str) -> Self {
         match s.to_lowercase().as_str() {
@@ -312,13 +321,20 @@ impl Card {
 #[pyclass]
 pub struct ServiceConfig {
     #[pyo3(get)]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub version: Option<String>,
     #[pyo3(get)]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub cards: Option<Vec<Card>>,
     #[pyo3(get)]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub write_dir: Option<String>,
     #[pyo3(get)]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub mcp: Option<McpConfig>,
+    #[pyo3(get)]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub agent: Option<AgentSpec>,
 }
 
 impl ServiceConfig {
@@ -351,12 +367,14 @@ impl ServiceConfig {
         cards: Option<Vec<Card>>,
         write_dir: Option<String>,
         mcp: Option<McpConfig>,
+        agent: Option<AgentSpec>,
     ) -> Self {
         ServiceConfig {
             version,
             cards,
             write_dir,
             mcp,
+            agent,
         }
     }
 }

@@ -685,10 +685,11 @@ pub struct ServiceCardClientRecord {
     pub version: String,
     pub cards: Vec<CardEntry>,
     pub opsml_version: String,
-    pub service_type: String,
+    pub service_type: ServiceType,
     pub metadata: Option<ServiceMetadata>,
     pub deployment: Option<Vec<DeploymentConfig>>,
     pub service_config: Option<ServiceConfig>,
+    pub promptcard_uids: Option<Vec<String>>,
     pub username: String,
     pub tags: Vec<String>,
 }
@@ -704,11 +705,12 @@ impl Default for ServiceCardClientRecord {
             version: "".to_string(),
             opsml_version: opsml_version::version(),
             username: "guest".to_string(),
-            service_type: ServiceType::Api.to_string(),
+            service_type: ServiceType::Api,
             metadata: None,
             deployment: None,
             service_config: None,
             cards: Vec::new(),
+            promptcard_uids: None,
             tags: Vec::new(),
         }
     }
@@ -724,7 +726,6 @@ pub enum CardRecord {
     Audit(AuditCardClientRecord),
     Prompt(PromptCardClientRecord),
     Service(ServiceCardClientRecord),
-    Agent(AgentCardClientRecord),
 }
 
 #[pymethods]
@@ -742,7 +743,6 @@ impl CardRecord {
             Self::Audit(card) => &card.uid,
             Self::Prompt(card) => &card.uid,
             Self::Service(card) => &card.uid,
-            Self::Agent(card) => &card.uid,
         }
     }
 
@@ -755,7 +755,6 @@ impl CardRecord {
             Self::Audit(card) => card.created_at,
             Self::Prompt(card) => card.created_at,
             Self::Service(card) => card.created_at,
-            Self::Agent(card) => card.created_at,
         }
     }
 
@@ -768,7 +767,6 @@ impl CardRecord {
             Self::Audit(card) => card.app_env.as_ref(),
             Self::Prompt(card) => card.app_env.as_ref(),
             Self::Service(card) => card.app_env.as_ref(),
-            Self::Agent(card) => card.app_env.as_ref(),
         }
     }
 
@@ -781,7 +779,6 @@ impl CardRecord {
             Self::Audit(card) => card.name.as_ref(),
             Self::Prompt(card) => card.name.as_ref(),
             Self::Service(card) => card.name.as_ref(),
-            Self::Agent(card) => card.name.as_ref(),
         }
     }
 
@@ -794,7 +791,6 @@ impl CardRecord {
             Self::Audit(card) => card.space.as_ref(),
             Self::Prompt(card) => card.space.as_ref(),
             Self::Service(card) => card.space.as_ref(),
-            Self::Agent(card) => card.space.as_ref(),
         }
     }
 
@@ -807,7 +803,6 @@ impl CardRecord {
             Self::Audit(card) => card.version.as_ref(),
             Self::Prompt(card) => card.version.as_ref(),
             Self::Service(card) => card.version.as_ref(),
-            Self::Agent(card) => card.version.as_ref(),
         }
     }
 
@@ -821,7 +816,6 @@ impl CardRecord {
             Self::Audit(card) => &card.tags,
             Self::Prompt(card) => &card.tags,
             Self::Service(_card) => &EMPTY_TAGS,
-            Self::Agent(card) => &card.tags,
         }
     }
 
@@ -834,7 +828,6 @@ impl CardRecord {
             Self::Audit(card) => Some(card.datacard_uids.iter().map(String::as_str).collect()),
             Self::Prompt(_) => None,
             Self::Service(_) => None,
-            Self::Agent(_) => None,
         }
     }
 
@@ -849,7 +842,6 @@ impl CardRecord {
             Self::Audit(card) => Some(card.modelcard_uids.iter().map(String::as_str).collect()),
             Self::Prompt(_) => None,
             Self::Service(_) => None,
-            Self::Agent(_) => None,
         }
     }
 
@@ -861,8 +853,10 @@ impl CardRecord {
             Self::Experiment(_) => None,
             Self::Audit(_) => None,
             Self::Prompt(card) => Some(vec![&card.uid]),
-            Self::Service(_) => None,
-            Self::Agent(card) => Some(card.promptcard_uids.iter().map(String::as_str).collect()),
+            Self::Service(card) => card
+                .promptcard_uids
+                .as_ref()
+                .map(|uids| uids.iter().map(String::as_str).collect()),
         }
     }
 
@@ -880,7 +874,6 @@ impl CardRecord {
             ),
             Self::Prompt(card) => Some(vec![&card.experimentcard_uid.as_deref().unwrap()]),
             Self::Service(_) => None,
-            Self::Agent(_) => None,
         }
     }
 
@@ -893,7 +886,6 @@ impl CardRecord {
             Self::Audit(card) => Some(&card.uid),
             Self::Prompt(card) => card.auditcard_uid.as_deref(),
             Self::Service(_) => None,
-            Self::Agent(_) => None,
         }
     }
 
@@ -906,7 +898,6 @@ impl CardRecord {
             Self::Audit(_) => None,
             Self::Prompt(_) => None,
             Self::Service(_) => None,
-            Self::Agent(_) => None,
         }
     }
 
@@ -919,7 +910,6 @@ impl CardRecord {
             Self::Audit(_) => None,
             Self::Prompt(_) => None,
             Self::Service(_) => None,
-            Self::Agent(_) => None,
         }
     }
 
@@ -932,7 +922,6 @@ impl CardRecord {
             Self::Audit(_) => None,
             Self::Prompt(_) => None,
             Self::Service(_) => None,
-            Self::Agent(_) => None,
         }
     }
 
@@ -945,7 +934,6 @@ impl CardRecord {
             Self::Audit(_) => None,
             Self::Prompt(_) => None,
             Self::Service(_) => None,
-            Self::Agent(_) => None,
         }
     }
 }
@@ -959,7 +947,6 @@ impl CardRecord {
             Self::Audit(_) => None,
             Self::Prompt(_) => None,
             Self::Service(card) => Some(card.cards.clone()),
-            Self::Agent(_) => None,
         }
     }
 
@@ -1020,20 +1007,7 @@ impl CardRecord {
             Self::Service(card) => {
                 let uri = format!(
                     "{}/{}/{}/v{}",
-                    CardTable::Service,
-                    card.space,
-                    card.name,
-                    card.version
-                );
-                Ok(Path::new(&uri).to_path_buf())
-            }
-            Self::Agent(card) => {
-                let uri = format!(
-                    "{}/{}/{}/v{}",
-                    CardTable::Agent,
-                    card.space,
-                    card.name,
-                    card.version
+                    &card.service_type, card.space, card.name, card.version
                 );
                 Ok(Path::new(&uri).to_path_buf())
             }
@@ -1048,7 +1022,6 @@ impl CardRecord {
             Self::Audit(_) => RegistryType::Audit,
             Self::Prompt(_) => RegistryType::Prompt,
             Self::Service(_) => RegistryType::Service,
-            Self::Agent(_) => RegistryType::Agent,
         }
     }
 }
