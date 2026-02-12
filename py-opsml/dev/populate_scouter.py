@@ -113,6 +113,7 @@ class PopulateHelper:
             ),
         )
         assert modelcard.experimentcard_uid == exp.card.uid
+        assert modelcard.interface is not None
 
         # save the drift_profile to json
         modelcard.interface.drift_profile["psi"].save_to_json(_PSI_DRIFT_PROFILE_PATH)
@@ -154,19 +155,12 @@ class PopulateHelper:
             ),
         )
         assert prompt_card.experimentcard_uid == exp.card.uid
+        assert prompt_card.eval_profile is not None
+        prompt_card.eval_profile.save_to_json(_GENAI_EVAL_PROFILE_PATH)
 
-        profile = cast(GenAIEvalProfile, prompt_card.eval_profile["genai"])
-        profile.save_to_json(_GENAI_EVAL_PROFILE_PATH)
-
-        ## save gemini prompt card
-        # prompt_card = PromptCard(
-        #    prompt=create_gemini_chat_prompt(),
-        #    space=self.space,
-        #    name="gemini_" + self.name,
-        #    tags=["gemini", "baz:qux"],
-        # )
-        #
-        # exp.register_card(prompt_card)
+        assert prompt_card.eval_profile.config.name == prompt_card.name
+        assert prompt_card.eval_profile.config.space == prompt_card.space
+        assert prompt_card.eval_profile.uid
 
         return prompt_card
 

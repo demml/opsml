@@ -159,13 +159,20 @@ impl OpsmlCardRegistry {
         }
     }
 
+    #[instrument(skip_all)]
     pub fn get_key(&self, args: &CardQueryArgs) -> Result<ArtifactKey, RegistryError> {
         match self {
-            Self::Client(client_registry) => Ok(client_registry.get_key(args)?),
+            Self::Client(client_registry) => {
+                Ok(client_registry.get_key(args).inspect_err(|e| {
+                    error!("Client - Failed to get key from: {e}");
+                })?)
+            }
             #[cfg(feature = "server")]
             Self::Server(server_registry) => {
                 app_state().block_on(async {
-                    let key = server_registry.get_key(args).await?;
+                    let key = server_registry.get_key(args).await.inspect_err(|e| {
+                        error!("Failed to get key: {e}");
+                    })?;
 
                     // convert to client ArtifactKey
                     Ok(ArtifactKey {

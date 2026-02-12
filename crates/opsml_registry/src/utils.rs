@@ -5,12 +5,15 @@ use opsml_cards::{
     traits::OpsmlCard, DataCard, ExperimentCard, ModelCard, PromptCard, ServiceCard,
 };
 use opsml_crypt::{decrypt_directory, encrypt_directory};
+use opsml_interfaces::DriftArgs;
 use opsml_storage::storage_client;
 use opsml_types::contracts::*;
 use opsml_types::*;
 use pyo3::prelude::*;
+use pyo3::types::PyList;
 use pyo3::types::PyString;
 use pyo3::IntoPyObjectExt;
+use scouter_client::ProfileRequest;
 use std::collections::HashMap;
 use std::path::PathBuf;
 use tempfile::TempDir;
@@ -235,6 +238,7 @@ pub fn card_from_string<'py>(
 ///
 /// # Errors
 /// * `RegistryError` - Error downloading card
+#[instrument(skip_all)]
 pub fn download_card<'py>(
     py: Python<'py>,
     key: ArtifactKey,
@@ -279,17 +283,14 @@ pub fn download_card<'py>(
             // Load drift profile if exists
             if let Some(_drift_profile_uri_map) = prompt_card.metadata.drift_profile_uri_map.clone()
             {
-                let rpath = orig_rpath.join(SaveName::Drift);
-
-                let lpath = tmp_path.join(SaveName::Drift);
+                let rpath = orig_rpath.join(SaveName::Evaluation);
+                let lpath = tmp_path.join(SaveName::Evaluation);
                 storage_client()?.get(&lpath, &rpath, true)?;
                 decrypt_directory(&lpath, &decryption_key)?;
 
-                prompt_card
-                    .load_drift_profile(py, &tmp_path)
-                    .inspect_err(|e| {
-                        error!("Failed to load drift profile: {e}");
-                    })?;
+                prompt_card.load_drift_profile(&tmp_path).inspect_err(|e| {
+                    error!("Failed to load drift profile: {e}");
+                })?;
             }
         }
         _ => debug!("Card is not a service, skipping service loading"),
@@ -499,6 +500,60 @@ where
     }
 
     debug!("Verified card");
+
+    Ok(())
+}
+
+/// Helper function to upload a single drift profile from a Card
+///  # Arguments
+/// * `profile` - Drift profile
+/// * `drift_args` - Optional drift arguments
+/// * `registry` - OpsmlCardRegistry
+/// # Returns
+/// * `Result<(), RegistryError>` - Result
+pub(crate) fn upload_profile(
+    profile: &Bound<'_, PyAny>,
+    drift_args: Option<DriftArgs>,
+    registry: &OpsmlCardRegistry,
+) -> Result<String, RegistryError> {
+    let mut profile_request = profile
+        .call_method0("create_profile_request")?
+        .extract::<ProfileRequest>()?;
+
+    if let Some(drift_args) = &drift_args {
+        profile_request.active = drift_args.active;
+        profile_request.deactivate_others = drift_args.deactivate_others;
+    }
+
+    let registered_response = registry.insert_scouter_profile(&profile_request)?;
+    debug!("Successfully uploaded scouter profile");
+
+    Ok(registered_response.uid)
+}
+
+/// Helper function to upload drift profiles from a Card
+///  # Arguments
+/// * `profile_map` - Map of drift profiles
+/// * `drift_args` - Optional drift arguments
+/// * `registry` - OpsmlCardRegistry
+/// # Returns
+/// * `Result<(), RegistryError>` - Result
+pub(crate) fn upload_drift_profile_map(
+    profile_map: &Bound<'_, PyAny>,
+    drift_args: Option<DriftArgs>,
+    registry: &OpsmlCardRegistry,
+) -> Result<(), RegistryError> {
+    let binding = profile_map.call_method0("values")?;
+    let collected_profiles = binding
+        .cast::<PyList>()
+        .inspect_err(|e| error!("Failed to downcast drift profiles: {e}"))?;
+
+    for profile in collected_profiles.iter() {
+        let uid = upload_profile(&profile, drift_args.clone(), registry)?;
+        profile.setattr("uid", uid).inspect_err(|e| {
+            error!("Failed to set drift profile uid: {e}");
+        })?;
+    }
 
     Ok(())
 }

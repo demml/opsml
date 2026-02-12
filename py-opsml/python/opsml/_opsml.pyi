@@ -1,5 +1,5 @@
 # AUTO-GENERATED STUB FILE. DO NOT EDIT.
-# pylint: disable=redefined-builtin, invalid-name, dangerous-default-value
+# pylint: disable=redefined-builtin, invalid-name, dangerous-default-value, missing-final-newline, arguments-differ
 ### header.pyi ###
 # pylint: disable=redefined-builtin, invalid-name, dangerous-default-value, missing-final-newline, arguments-differ
 
@@ -11,6 +11,7 @@ from typing import (
     Callable,
     Dict,
     Generic,
+    Iterator,
     List,
     Literal,
     Optional,
@@ -27,8 +28,8 @@ from typing import (
 from typing_extensions import TypeVar
 
 SerializedType: TypeAlias = Union[str, int, float, dict, list]
-CardInterfaceType: TypeAlias = Union["DataInterface", "ModelInterface"]
-ServiceCardInterfaceType: TypeAlias = Dict[str, Union["DataInterface", "ModelInterface"]]
+CardInterfaceType: TypeAlias = Union["DataInterface", "ModelInterface"]  # type: ignore[name-defined]
+ServiceCardInterfaceType: TypeAlias = Dict[str, Union["DataInterface", "ModelInterface"]]  # type: ignore[name-defined]
 LoadInterfaceType: TypeAlias = Union[ServiceCardInterfaceType, ServiceCardInterfaceType]
 Context: TypeAlias = Union[Dict[str, Any], "BaseModel"]
 
@@ -47,7 +48,7 @@ class BaseModel(Protocol):
     def __str__(self) -> str:
         """String representation of the model"""
 
-### logging.pyi ###
+### common/logging.pyi ###
 class LogLevel:
     Debug: "LogLevel"
     Info: "LogLevel"
@@ -201,7 +202,7 @@ class RustyLogger:
                 Additional arguments to log.
         """
 
-### potato.pyi ###
+### genai/potato.pyi ###
 class Provider:
     """Provider enumeration for LLM services.
 
@@ -9722,7 +9723,142 @@ class LLMTestServer:
         Stop the mock server.
         """
 
-### scouter.pyi ###
+### scouter/tracing.pyi ###
+class TagRecord:
+    """Represents a single tag record associated with an entity."""
+
+    entity_type: str
+    entity_id: str
+    key: str
+    value: str
+
+class Attribute:
+    """Represents a key-value attribute associated with a span."""
+
+    key: str
+    value: Any
+
+class SpanEvent:
+    """Represents an event within a span."""
+
+    timestamp: datetime.datetime
+    name: str
+    attributes: List[Attribute]
+    dropped_attributes_count: int
+
+class SpanLink:
+    """Represents a link to another span."""
+
+    trace_id: str
+    span_id: str
+    trace_state: str
+    attributes: List[Attribute]
+    dropped_attributes_count: int
+
+class TraceBaggageRecord:
+    """Represents a single baggage record associated with a trace."""
+
+    created_at: datetime.datetime
+    trace_id: str
+    scope: str
+    key: str
+    value: str
+
+class TraceFilters:
+    """A struct for filtering traces, generated from Rust pyclass."""
+
+    service_name: Optional[str]
+    has_errors: Optional[bool]
+    status_code: Optional[int]
+    start_time: Optional[datetime.datetime]
+    end_time: Optional[datetime.datetime]
+    limit: Optional[int]
+    cursor_created_at: Optional[datetime.datetime]
+    cursor_trace_id: Optional[str]
+
+    def __init__(
+        self,
+        service_name: Optional[str] = None,
+        has_errors: Optional[bool] = None,
+        status_code: Optional[int] = None,
+        start_time: Optional[datetime.datetime] = None,
+        end_time: Optional[datetime.datetime] = None,
+        limit: Optional[int] = None,
+        cursor_created_at: Optional[datetime.datetime] = None,
+        cursor_trace_id: Optional[str] = None,
+    ) -> None:
+        """Initialize trace filters.
+
+        Args:
+            service_name:
+                Service name filter
+            has_errors:
+                Filter by presence of errors
+            status_code:
+                Filter by root span status code
+            start_time:
+                Start time boundary (UTC)
+            end_time:
+                End time boundary (UTC)
+            limit:
+                Maximum number of results to return
+            cursor_created_at:
+                Pagination cursor: created at timestamp
+            cursor_trace_id:
+                Pagination cursor: trace ID
+        """
+
+class TraceMetricBucket:
+    """Represents aggregated trace metrics for a specific time bucket."""
+
+    bucket_start: datetime.datetime
+    trace_count: int
+    avg_duration_ms: float
+    p50_duration_ms: Optional[float]
+    p95_duration_ms: Optional[float]
+    p99_duration_ms: Optional[float]
+    error_rate: float
+
+class TraceListItem:
+    """Represents a summary item for a trace in a list view."""
+
+    trace_id: str
+    service_name: str
+    scope: str
+    root_operation: Optional[str]
+    start_time: datetime.datetime
+    end_time: Optional[datetime.datetime]
+    duration_ms: Optional[int]
+    status_code: int
+    status_message: Optional[str]
+    span_count: Optional[int]
+    has_errors: bool
+    error_count: int
+    created_at: datetime.datetime
+
+class TraceSpan:
+    """Detailed information for a single span within a trace."""
+
+    trace_id: str
+    span_id: str
+    parent_span_id: Optional[str]
+    span_name: str
+    span_kind: Optional[str]
+    start_time: datetime.datetime
+    end_time: Optional[datetime.datetime]
+    duration_ms: Optional[int]
+    status_code: int
+    status_message: Optional[str]
+    attributes: List[Attribute]
+    events: List[SpanEvent]
+    links: List[SpanLink]
+    depth: int
+    path: List[str]
+    root_span_id: str
+    span_order: int
+    input: Any
+    output: Any
+
 def get_function_type(func: Callable[..., Any]) -> "FunctionType":
     """Determine the function type (sync, async, generator, async generator).
 
@@ -9789,7 +9925,10 @@ def init_tracer(
     exporter: Optional[HttpSpanExporter | GrpcSpanExporter | StdoutSpanExporter | TestSpanExporter] = None,
     batch_config: Optional[BatchConfig] = None,
     sample_ratio: Optional[float] = None,
-) -> None:
+    scouter_queue: Optional[ScouterQueue] = None,
+    schema_url: Optional[str] = None,
+    attributes: Optional[Dict[str, SerializedType]] = None,
+) -> "BaseTracer":
     """
     Initialize the tracer for a service with dual export capability.
     ```
@@ -9892,6 +10031,25 @@ def init_tracer(
             Sampling ratio for tracing. A value between 0.0 and 1.0.
             All provided values are clamped between 0.0 and 1.0.
             If None, all spans are sampled (no sampling).
+
+        scouter_queue (ScouterQueue | None):
+            Optional ScouterQueue to associate with the tracer for correlated
+            queue entity export alongside span data.
+
+            This allows queue records (e.g., Features, Metrics, GenAIEvalRecord)
+            to be ingested in conjunction with tracing data for enhanced
+            observability.
+
+            If None, no queue is associated with the tracer.
+
+        schema_url (str | None):
+            Optional URL pointing to the schema that describes the structure of the spans.
+            This can be used by backends to validate and process spans according to a defined schema.
+            This will be included with instrumentation scope.
+
+        attributes (Dict[str, SerializedType] | None):
+            Optional dictionary of attributes to set on the tracer.
+            This will be included with instrumentation scope.
 
     Examples:
         Basic setup (Scouter only via HTTP):
@@ -10072,12 +10230,27 @@ class ActiveSpan:
         """Exit the async span context."""
 
 class BaseTracer:
-    def __init__(self, name: str) -> None:
+    def __init__(
+        self,
+        instrumenting_module_name: str = "scouter_tracer",
+        instrumenting_library_version: str = "{version}",
+        schema_url: Optional[str] = None,
+        attributes: Optional[Dict[str, SerializedType]] = None,
+        scouter_queue: Optional[ScouterQueue] = None,
+    ) -> None:
         """Initialize the BaseTracer with a service name.
 
         Args:
-            name (str):
-                The name of the service for tracing.
+            instrumenting_module_name (str):
+                The name of the instrumenting module.
+            instrumenting_library_version (str):
+                The version of the instrumenting library.
+            schema_url (Optional[str]):
+                Optional URL pointing to the schema that describes the structure of the spans.
+            attributes (Optional[Dict[str, SerializedType]]):
+                Optional dictionary of attributes to set on the tracer.
+            scouter_queue (Optional[ScouterQueue]):
+                Optional ScouterQueue to associate with the tracer.
         """
 
     def set_scouter_queue(self, queue: "ScouterQueue") -> None:
@@ -10440,6 +10613,1636 @@ class TestSpanExporter:
 def shutdown_tracer() -> None:
     """Shutdown the tracer and flush any remaining spans."""
 
+### scouter/evaluate.pyi ###
+class EvaluationTaskType:
+    """Types of evaluation tasks for LLM assessments."""
+
+    Assertion: "EvaluationTaskType"
+    """Assertion-based evaluation task."""
+    LLMJudge: "EvaluationTaskType"
+    """LLM judge-based evaluation task."""
+    HumanValidation: "EvaluationTaskType"
+    """Human validation evaluation task."""
+    TraceAssertion: "EvaluationTaskType"
+    """Trace assertion-based evaluation task."""
+
+class ComparisonOperator:
+    """Comparison operators for assertion-based evaluations.
+
+    Defines the available comparison operators that can be used to evaluate
+    assertions against expected values in LLM evaluation workflows.
+
+    Examples:
+        >>> operator = ComparisonOperator.GreaterThan
+        >>> operator = ComparisonOperator.Equal
+    """
+
+    Equals: "ComparisonOperator"
+    """Equality comparison (==)"""
+
+    NotEqual: "ComparisonOperator"
+    """Inequality comparison (!=)"""
+
+    GreaterThan: "ComparisonOperator"
+    """Greater than comparison (>)"""
+
+    GreaterThanOrEqual: "ComparisonOperator"
+    """Greater than or equal comparison (>=)"""
+
+    LessThan: "ComparisonOperator"
+    """Less than comparison (<)"""
+
+    LessThanOrEqual: "ComparisonOperator"
+    """Less than or equal comparison (<=)"""
+
+    Contains: "ComparisonOperator"
+    """Contains substring or element (in)"""
+
+    NotContains: "ComparisonOperator"
+    """Does not contain substring or element (not in)"""
+
+    StartsWith: "ComparisonOperator"
+    """Starts with substring"""
+
+    EndsWith: "ComparisonOperator"
+    """Ends with substring"""
+
+    Matches: "ComparisonOperator"
+    """Matches regular expression pattern"""
+
+    HasLengthGreaterThan: "ComparisonOperator"
+    """Has specified length greater than"""
+
+    HasLengthLessThan: "ComparisonOperator"
+    """Has specified length less than"""
+
+    HasLengthEqual: "ComparisonOperator"
+    """Has specified length equal to"""
+
+    HasLengthGreaterThanOrEqual: "ComparisonOperator"
+    """Has specified length greater than or equal to"""
+
+    HasLengthLessThanOrEqual: "ComparisonOperator"
+    """Has specified length less than or equal to"""
+
+    # type validations
+    IsNumeric: "ComparisonOperator"
+    """Is a numeric value"""
+
+    IsString: "ComparisonOperator"
+    """Is a string value"""
+
+    IsBoolean: "ComparisonOperator"
+    """Is a boolean value"""
+
+    IsNull: "ComparisonOperator"
+    """Is null (None) value"""
+
+    IsArray: "ComparisonOperator"
+    """Is an array (list) value"""
+
+    IsObject: "ComparisonOperator"
+    """Is an object (dict) value"""
+
+    IsEmail: "ComparisonOperator"
+    """Is a valid email format"""
+
+    IsUrl: "ComparisonOperator"
+    """Is a valid URL format"""
+
+    IsUuid: "ComparisonOperator"
+    """Is a valid UUID format"""
+
+    IsIso8601: "ComparisonOperator"
+    """Is a valid ISO 8601 date format"""
+
+    IsJson: "ComparisonOperator"
+    """Is a valid JSON format"""
+
+    MatchesRegex: "ComparisonOperator"
+    """Matches a regular expression pattern"""
+
+    InRange: "ComparisonOperator"
+    """Is within a specified numeric range"""
+
+    NotInRange: "ComparisonOperator"
+    """Is outside a specified numeric range"""
+
+    IsPositive: "ComparisonOperator"
+    """Is a positive number"""
+
+    IsNegative: "ComparisonOperator"
+    """Is a negative number"""
+    IsZero: "ComparisonOperator"
+    """Is zero"""
+
+    ContainsAll: "ComparisonOperator"
+    """Contains all specified elements"""
+
+    ContainsAny: "ComparisonOperator"
+    """Contains any of the specified elements"""
+
+    ContainsNone: "ComparisonOperator"
+    """Contains none of the specified elements"""
+
+    IsEmpty: "ComparisonOperator"
+    """Is empty"""
+
+    IsNotEmpty: "ComparisonOperator"
+    """Is not empty"""
+
+    HasUniqueItems: "ComparisonOperator"
+    """Has unique items"""
+
+    IsAlphabetic: "ComparisonOperator"
+    """Is alphabetic"""
+
+    IsAlphanumeric: "ComparisonOperator"
+    """Is alphanumeric"""
+
+    IsLowerCase: "ComparisonOperator"
+    """Is lowercase"""
+
+    IsUpperCase: "ComparisonOperator"
+    """Is uppercase"""
+
+    ContainsWord: "ComparisonOperator"
+    """Contains a specific word"""
+
+    ApproximatelyEquals: "ComparisonOperator"
+    """Approximately equals within a tolerance"""
+
+class AssertionTask:
+    """Assertion-based evaluation task for LLM monitoring.
+
+    Defines a rule-based assertion that evaluates values extracted from LLM
+    context/responses against expected conditions without requiring additional LLM calls.
+    Assertions are efficient, deterministic evaluations ideal for validating
+    structured outputs, checking thresholds, or verifying data constraints.
+
+    Assertions can operate on:
+        - Nested fields via dot-notation paths (e.g., "response.user.age")
+        - Top-level context values when field_path is None
+        - String, numeric, boolean, or collection values
+
+    Common Use Cases:
+        - Validate response structure ("response.status" == "success")
+        - Check numeric thresholds ("response.confidence" >= 0.8)
+        - Verify required fields exist ("response.user.id" is not None)
+        - Validate string patterns ("response.language" contains "en")
+
+    Examples:
+        Basic numeric comparison:
+
+        >>> # Context at runtime: {"response": {"user": {"age": 25}}}
+        >>> task = AssertionTask(
+        ...     id="check_user_age",
+        ...     field_path="response.user.age",
+        ...     operator=ComparisonOperator.GreaterThan,
+        ...     expected_value=18,
+        ...     description="Verify user is an adult"
+        ... )
+
+        Checking top-level fields:
+
+        >>> # Context at runtime: {"user": {"age": 25}}
+        >>> task = AssertionTask(
+        ...     id="check_age",
+        ...     field_path="user.age",
+        ...     operator=ComparisonOperator.GreaterThanOrEqual,
+        ...     expected_value=21,
+        ...     description="Check minimum age requirement"
+        ... )
+
+        Operating on entire context (no nested path):
+
+        >>> # Context at runtime: 25
+        >>> task = AssertionTask(
+        ...     id="age_threshold",
+        ...     field_path=None,
+        ...     operator=ComparisonOperator.GreaterThan,
+        ...     expected_value=18,
+        ...     description="Validate age value"
+        ... )
+
+        String validation:
+
+        >>> # Context: {"response": {"status": "completed"}}
+        >>> task = AssertionTask(
+        ...     id="status_check",
+        ...     field_path="response.status",
+        ...     operator=ComparisonOperator.Equals,
+        ...     expected_value="completed",
+        ...     description="Verify completion status"
+        ... )
+
+        Collection membership:
+
+        >>> # Context: {"response": {"tags": ["valid", "processed"]}}
+        >>> task = AssertionTask(
+        ...     id="tag_validation",
+        ...     field_path="response.tags",
+        ...     operator=ComparisonOperator.Contains,
+        ...     expected_value="valid",
+        ...     description="Check for required tag"
+        ... )
+
+        With dependencies:
+
+        >>> task = AssertionTask(
+        ...     id="confidence_check",
+        ...     field_path="response.confidence",
+        ...     operator=ComparisonOperator.GreaterThan,
+        ...     expected_value=0.9,
+        ...     description="High confidence validation",
+        ...     depends_on=["status_check"]
+        ... )
+
+    Note:
+        - Field paths use dot-notation for nested access
+        - Field paths are case-sensitive
+        - When field_path is None, the entire context is used as the value
+        - Type mismatches between actual and expected values will fail the assertion
+        - Dependencies are executed before this task
+    """
+
+    def __init__(
+        self,
+        id: str,
+        expected_value: Any,
+        operator: ComparisonOperator,
+        field_path: Optional[str] = None,
+        description: Optional[str] = None,
+        depends_on: Optional[Sequence[str]] = None,
+        condition: bool = False,
+    ):
+        """Initialize an assertion task for rule-based evaluation.
+
+        Args:
+            id:
+                Unique identifier for the task. Will be converted to lowercase.
+                Used to reference this task in dependencies and results.
+            expected_value:
+                The expected value to compare against. Can be any JSON-serializable
+                type: str, int, float, bool, list, dict, or None.
+            operator:
+                Comparison operator to use for the assertion. Must be a
+                ComparisonOperator enum value.
+            field_path:
+                Optional dot-notation path to extract value from context
+                (e.g., "response.user.age"). If None, the entire context
+                is used as the comparison value.
+            description:
+                Optional human-readable description of what this assertion validates.
+                Useful for understanding evaluation results.
+            depends_on:
+                Optional list of task IDs that must complete successfully before
+                this task executes. Empty list if not provided.
+            condition:
+                If True, this assertion task acts as a condition for subsequent tasks.
+                If the assertion fails, dependent tasks will be skipped and this task
+                will be excluded from final results.
+
+        Raises:
+            TypeError: If expected_value is not JSON-serializable or if operator
+                is not a valid ComparisonOperator.
+        """
+
+    @property
+    def id(self) -> str:
+        """Unique task identifier (lowercase)."""
+
+    @id.setter
+    def id(self, id: str) -> None:
+        """Set task identifier (will be converted to lowercase)."""
+
+    @property
+    def field_path(self) -> Optional[str]:
+        """Dot-notation path to field in context, or None for entire context."""
+
+    @field_path.setter
+    def field_path(self, field_path: Optional[str]) -> None:
+        """Set field path for value extraction."""
+
+    @property
+    def operator(self) -> ComparisonOperator:
+        """Comparison operator for the assertion."""
+
+    @operator.setter
+    def operator(self, operator: ComparisonOperator) -> None:
+        """Set comparison operator."""
+
+    @property
+    def expected_value(self) -> Any:
+        """Expected value for comparison.
+
+        Returns:
+            The expected value as a Python object (deserialized from internal
+            JSON representation).
+        """
+
+    @property
+    def description(self) -> Optional[str]:
+        """Human-readable description of the assertion."""
+
+    @description.setter
+    def description(self, description: Optional[str]) -> None:
+        """Set assertion description."""
+
+    @property
+    def depends_on(self) -> List[str]:
+        """List of task IDs this task depends on."""
+
+    @depends_on.setter
+    def depends_on(self, depends_on: List[str]) -> None:
+        """Set task dependencies."""
+
+    @property
+    def condition(self) -> bool:
+        """Indicates if this task is a condition for subsequent tasks."""
+
+    @condition.setter
+    def condition(self, condition: bool) -> None:
+        """Set whether this task is a condition for subsequent tasks."""
+
+    @property
+    def task_type(self) -> EvaluationTaskType:
+        """The type of this evaluation task (Assertion)."""
+
+    def __str__(self) -> str:
+        """Return string representation of the assertion task."""
+
+class LLMJudgeTask:
+    """LLM-powered evaluation task for complex assessments.
+
+    Uses an additional LLM call to evaluate responses based on sophisticated
+    criteria that require reasoning, context understanding, or subjective judgment.
+    LLM judges are ideal for evaluations that cannot be captured by deterministic
+    rules, such as semantic similarity, quality assessment, or nuanced criteria.
+
+    Unlike AssertionTask which provides efficient, deterministic rule-based evaluation,
+    LLMJudgeTask leverages an LLM's reasoning capabilities for:
+        - Semantic similarity and relevance assessment
+        - Quality, coherence, and fluency evaluation
+        - Factual accuracy and hallucination detection
+        - Tone, sentiment, and style analysis
+        - Custom evaluation criteria requiring judgment
+        - Complex reasoning over multiple context elements
+
+    The LLM judge executes a prompt that receives context (either raw or from
+    dependencies) and returns a response that is then compared against the expected
+    value using the specified operator.
+
+    Common Use Cases:
+        - Evaluate semantic similarity between generated and reference answers
+        - Assess response quality on subjective criteria (helpfulness, clarity)
+        - Detect factual inconsistencies or hallucinations
+        - Score tone appropriateness for different audiences
+        - Judge whether responses meet complex, nuanced requirements
+
+    Examples:
+        Basic relevance check using LLM judge:
+
+        >>> # Define a prompt that evaluates relevance
+        >>> relevance_prompt = Prompt(
+        ...     system_instructions="Evaluate if the response is relevant to the query",
+        ...     messages="Given the query '{{query}}' and response '{{response}}', rate the relevance from 0 to 10 as an integer.",
+        ...     model="gpt-4",
+        ...     provider= Provider.OpenAI,
+        ...     output_type=Score # returns a structured output with schema {"score": float, "reason": str}
+        ... )
+
+        >>> # Context at runtime: {"query": "What is AI?", "response": "AI is..."}
+        >>> task = LLMJudgeTask(
+        ...     id="relevance_judge",
+        ...     prompt=relevance_prompt,
+        ...     expected_value=8,
+        ...     field_path="score",
+        ...     operator=ComparisonOperator.GreaterThanOrEqual,
+        ...     description="Ensure response relevance score >= 8"
+        ... )
+
+        Factuality check with structured output:
+
+        >>> # Prompt returns a Pydantic model with factuality assessment
+        >>> from pydantic import BaseModel
+        >>> class FactCheckResult(BaseModel):
+        ...     is_factual: bool
+        ...     confidence: float
+
+        >>> fact_check_prompt = Prompt(
+        ...     system_instructions="Verify factual claims in the response",
+        ...     messages="Assess the factual accuracy of the response: '{{response}}'. Provide a JSON with fields 'is_factual' (bool) and 'confidence' (float).", # pylint: disable=line-too-long
+        ...     model="gpt-4",
+        ...     provider= Provider.OpenAI,
+        ...     output_type=FactCheckResult
+        ... )
+
+        >>> # Context: {"response": "Paris is the capital of France"}
+        >>> task = LLMJudgeTask(
+        ...     id="fact_checker",
+        ...     prompt=fact_check_prompt,
+        ...     expected_value={"is_factual": True, "confidence": 0.95},
+        ...     field_path="response",
+        ...     operator=ComparisonOperator.Contains
+        ... )
+
+        Quality assessment with dependencies:
+
+        >>> # This judge depends on previous relevance check
+        >>> quality_prompt = Prompt(
+        ...     system_instructions="Assess the overall quality of the response",
+        ...     messages="Given the response '{{response}}', rate its quality from 0 to 5",
+        ...     model="gemini-3.0-flash",
+        ...     provider= Provider.Google,
+        ...     output_type=Score
+        ... )
+
+        >>> task = LLMJudgeTask(
+        ...     id="quality_judge",
+        ...     prompt=quality_prompt,
+        ...     expected_value=0.7,
+        ...     field_path=None,
+        ...     operator=ComparisonOperator.GreaterThan,
+        ...     depends_on=["relevance_judge"],
+        ...     description="Evaluate overall quality after relevance check"
+        ... )
+    Note:
+        - LLM judge tasks incur additional latency and cost vs assertions
+        - Scouter does not auto-inject any additional prompts or context apart from what is defined
+          in the Prompt object
+        - For tasks that contain dependencies, upstream results are passed as context to downstream tasks.
+        - Use dependencies to chain evaluations and pass results between tasks
+        - max_retries helps handle transient LLM failures (defaults to 3)
+        - Field paths work the same as AssertionTask (dot-notation for nested access)
+        - Consider cost/latency tradeoffs when designing judge evaluations
+    """
+
+    def __init__(
+        self,
+        id: str,
+        prompt: Prompt,
+        expected_value: Any,
+        field_path: Optional[str],
+        operator: ComparisonOperator,
+        description: Optional[str] = None,
+        depends_on: Optional[List[str]] = None,
+        max_retries: Optional[int] = None,
+        condition: bool = False,
+    ):
+        """Initialize an LLM judge task for advanced evaluation.
+
+        Creates an evaluation task that uses an LLM to assess responses based on
+        sophisticated criteria requiring reasoning or subjective judgment. The LLM
+        receives context (raw or from dependencies) and returns a response that
+        is compared against the expected value.
+
+        Args:
+            id (str):
+                Unique identifier for the task. Will be converted to lowercase.
+                Used to reference this task in dependencies and results.
+            prompt (Prompt):
+                Prompt configuration defining the LLM evaluation task.
+            expected_value (Any):
+                The expected value to compare against the LLM's response. Type depends
+                on prompt response type. Can be any JSON-serializable type: str, int,
+                float, bool, list, dict, or None.
+            field_path (Optional[str]):
+                Optional dot-notation path to extract value from context before passing
+                to the LLM prompt (e.g., "response.text"), the entire response will be
+                evaluated.
+            operator (ComparisonOperator):
+                Comparison operator to apply between LLM response and expected_value
+            description (Optional[str]):
+                Optional human-readable description of what this judge evaluates.
+            depends_on (Optional[List[str]]):
+                Optional list of task IDs that must complete successfully before this
+                task executes. Results from dependencies are passed to the LLM prompt
+                as additional context parameters. Empty list if not provided.
+            max_retries (Optional[int]):
+                Optional maximum number of retry attempts if the LLM call fails
+                (network errors, rate limits, etc.). Defaults to 3 if not provided.
+                Set to 0 to disable retries.
+            condition (bool):
+                If True, this judge task acts as a condition for subsequent tasks.
+                If the judge fails, dependent tasks will be skipped and this task
+                will be excluded from final results.
+        """
+
+    @property
+    def id(self) -> str:
+        """Unique task identifier (lowercase)."""
+
+    @id.setter
+    def id(self, id: str) -> None:
+        """Set task identifier (will be converted to lowercase)."""
+
+    @property
+    def prompt(self) -> Prompt:
+        """Prompt configuration for the LLM evaluation task.
+
+        Defines the LLM model, evaluation instructions, and response format.
+        The prompt must have response_type of Score or Pydantic.
+        """
+
+    @property
+    def field_path(self) -> Optional[str]:
+        """Dot-notation path to extract value from context before LLM evaluation.
+
+        If specified, extracts nested value from context (e.g., "response.text")
+        and passes it to the LLM prompt. If None, the entire context or
+        dependency results are passed.
+        """
+
+    @property
+    def operator(self) -> ComparisonOperator:
+        """Comparison operator for evaluating LLM response against expected value.
+
+        For Score responses: use numeric operators (GreaterThan, Equals, etc.)
+        For Pydantic responses: use structural operators (Contains, Equals, etc.)
+        """
+
+    @property
+    def expected_value(self) -> Any:
+        """Expected value to compare against LLM response.
+
+        Returns:
+            The expected value as a Python object (deserialized from internal
+            JSON representation).
+        """
+
+    @property
+    def depends_on(self) -> List[str]:
+        """List of task IDs this task depends on.
+
+        Dependency results are passed to the LLM prompt as additional context
+        parameters, enabling chained evaluations.
+        """
+
+    @depends_on.setter
+    def depends_on(self, depends_on: List[str]) -> None:
+        """Set task dependencies."""
+
+    @property
+    def max_retries(self) -> Optional[int]:
+        """Maximum number of retry attempts for LLM call failures.
+
+        Handles transient failures like network errors or rate limits.
+        Defaults to 3 if not specified during initialization.
+        """
+
+    @max_retries.setter
+    def max_retries(self, max_retries: Optional[int]) -> None:
+        """Set maximum retry attempts."""
+
+    @property
+    def condition(self) -> bool:
+        """Indicates if this task is a condition for subsequent tasks."""
+
+    @condition.setter
+    def condition(self, condition: bool) -> None:
+        """Set whether this task is a condition for subsequent tasks."""
+
+    @property
+    def task_type(self) -> EvaluationTaskType:
+        """The type of this evaluation task (LLMJudge)."""
+
+    def __str__(self) -> str:
+        """Return string representation of the LLM judge task."""
+
+class SpanStatus:
+    """Status codes for trace spans.
+
+    Represents the execution status of a span within a distributed trace,
+    following OpenTelemetry status conventions.
+
+    Examples:
+        >>> status = SpanStatus.Ok
+        >>> error_status = SpanStatus.Error
+    """
+
+    Ok: "SpanStatus"
+    """Span completed successfully without errors."""
+
+    Error: "SpanStatus"
+    """Span encountered an error during execution."""
+
+    Unset: "SpanStatus"
+    """Span status has not been explicitly set."""
+
+class AggregationType:
+    """Aggregation operations for span attribute values.
+
+    Defines how numeric or collection values should be aggregated across
+    multiple spans matching a filter. Used in TraceAssertion.span_aggregation
+    to compute statistics over filtered spans.
+
+    Examples:
+        >>> # Compute average duration across LLM spans
+        >>> aggregation = AggregationType.Average
+        >>>
+        >>> # Count total spans matching filter
+        >>> count = AggregationType.Count
+    """
+
+    Count: "AggregationType"
+    """Count the number of spans matching the filter."""
+
+    Sum: "AggregationType"
+    """Sum numeric attribute values across spans."""
+
+    Average: "AggregationType"
+    """Calculate mean of numeric attribute values."""
+
+    Min: "AggregationType"
+    """Find minimum numeric attribute value."""
+
+    Max: "AggregationType"
+    """Find maximum numeric attribute value."""
+
+    First: "AggregationType"
+    """Get attribute value from first matching span (by start time)."""
+
+    Last: "AggregationType"
+    """Get attribute value from last matching span (by start time)."""
+
+class SpanFilter:
+    """Filter for selecting specific spans within a trace.
+
+    Provides composable filtering logic to identify spans based on name,
+    attributes, status, duration, or combinations thereof. Filters can be
+    combined using and() and or() methods for complex queries.
+
+    SpanFilter is used to target specific spans for assertions in
+    TraceAssertionTask, enabling precise behavioral validation.
+
+    Examples:
+        Filter by exact span name:
+
+        >>> filter = SpanFilter.by_name("llm.generate")
+
+        Filter by name pattern (regex):
+
+        >>> filter = SpanFilter.by_name_pattern(r"retry.*")
+
+        Filter spans with specific attribute:
+
+        >>> filter = SpanFilter.with_attribute("model")
+
+        Filter spans with attribute value (note: requires PyValueWrapper):
+
+        >>> # Note: In Python, pass native types; they're converted internally
+        >>> # This is handled automatically by the with_attribute_value method
+        >>> filter = SpanFilter.with_attribute_value("model", "gpt-4")
+
+        Filter by span status:
+
+        >>> filter = SpanFilter.with_status(SpanStatus.Error)
+
+        Filter by duration constraints:
+
+        >>> filter = SpanFilter.with_duration(min_ms=100, max_ms=5000)
+
+        Combine filters with AND logic:
+
+        >>> base = SpanFilter.by_name_pattern("llm.*")
+        >>> with_model = base.and_(SpanFilter.with_attribute("model"))
+        >>> # Matches spans: name matches "llm.*" AND has "model" attribute
+
+        Combine filters with OR logic:
+
+        >>> retries = SpanFilter.by_name_pattern("retry.*")
+        >>> errors = SpanFilter.with_status(SpanStatus.Error)
+        >>> either = retries.or_(errors)
+        >>> # Matches spans: name matches "retry.*" OR status is Error
+
+        Complex nested filter:
+
+        >>> # Find LLM spans that either errored or took too long
+        >>> llm_filter = SpanFilter.by_name_pattern("llm.*")
+        >>> error_filter = SpanFilter.with_status(SpanStatus.Error)
+        >>> slow_filter = SpanFilter.with_duration(min_ms=10000)
+        >>> combined = llm_filter.and_(error_filter.or_(slow_filter))
+
+    Note:
+        - Filters are immutable; and() and or() return new filter instances
+        - Regex patterns use standard regex syntax
+        - Duration is measured in milliseconds
+        - Attribute values are internally wrapped for type safety
+    """
+
+    class ByName:
+        """Filter spans by exact name match."""
+
+        name: str
+        def and_(self, other: SpanFilter) -> SpanFilter: ...
+        def or_(self, other: SpanFilter) -> SpanFilter: ...
+
+    class ByNamePattern:
+        """Filter spans by regex name pattern."""
+
+        pattern: str
+        def and_(self, other: SpanFilter) -> SpanFilter: ...
+        def or_(self, other: SpanFilter) -> SpanFilter: ...
+
+    class WithAttribute:
+        """Filter spans with specific attribute key."""
+
+        key: str
+        def and_(self, other: SpanFilter) -> SpanFilter: ...
+        def or_(self, other: SpanFilter) -> SpanFilter: ...
+
+    class WithAttributeValue:
+        """Filter spans with specific attribute key-value pair."""
+
+        key: str
+        value: object  # PyValueWrapper is internal, expose as object
+        def and_(self, other: SpanFilter) -> SpanFilter: ...
+        def or_(self, other: SpanFilter) -> SpanFilter: ...
+
+    class WithStatus:
+        """Filter spans by status code."""
+
+        status: SpanStatus
+        def and_(self, other: SpanFilter) -> SpanFilter: ...
+        def or_(self, other: SpanFilter) -> SpanFilter: ...
+
+    class WithDuration:
+        """Filter spans with duration constraints."""
+
+        min_ms: Optional[float]
+        max_ms: Optional[float]
+        def and_(self, other: SpanFilter) -> SpanFilter: ...
+        def or_(self, other: SpanFilter) -> SpanFilter: ...
+
+    class Sequence:
+        """Match a sequence of span names in order."""
+
+        names: List[str]
+        def and_(self, other: SpanFilter) -> SpanFilter: ...
+        def or_(self, other: SpanFilter) -> SpanFilter: ...
+
+    class And:
+        """Combine multiple filters with AND logic."""
+
+        filters: List[SpanFilter]
+        def and_(self, other: SpanFilter) -> SpanFilter: ...
+        def or_(self, other: SpanFilter) -> SpanFilter: ...
+
+    class Or:
+        """Combine multiple filters with OR logic."""
+
+        filters: List[SpanFilter]
+        def and_(self, other: SpanFilter) -> SpanFilter: ...
+        def or_(self, other: SpanFilter) -> SpanFilter: ...
+
+    @staticmethod
+    def by_name(name: str) -> "SpanFilter":
+        """Filter spans by exact name match.
+
+        Args:
+            name (str):
+                Exact span name to match (case-sensitive).
+
+        Returns:
+            SpanFilter that matches spans with the specified name.
+        """
+
+    @staticmethod
+    def by_name_pattern(pattern: str) -> "SpanFilter":
+        """Filter spans by regex name pattern.
+
+        Args:
+            pattern (str):
+                Regular expression pattern to match span names.
+
+        Returns:
+            SpanFilter that matches spans whose names match the pattern.
+        """
+
+    @staticmethod
+    def with_attribute(key: str) -> "SpanFilter":
+        """Filter spans that have a specific attribute key.
+
+        Args:
+            key (str):
+                Attribute key to check for existence.
+
+        Returns:
+            SpanFilter that matches spans with the specified attribute.
+        """
+
+    @staticmethod
+    def with_attribute_value(key: str, value: "SerializedType") -> "SpanFilter":
+        """Filter spans that have a specific attribute key-value pair.
+
+        Args:
+            key (str):
+                Attribute key to check.
+            value (SerializedType):
+                Attribute value to match (must be JSON-serializable).
+
+        Returns:
+            SpanFilter that matches spans with the specified key-value pair.
+        """
+
+    @staticmethod
+    def with_status(status: SpanStatus) -> "SpanFilter":
+        """Filter spans by execution status.
+
+        Args:
+            status (SpanStatus):
+                SpanStatus to match (Ok, Error, or Unset).
+
+        Returns:
+            SpanFilter that matches spans with the specified status.
+        """
+
+    @staticmethod
+    def with_duration(min_ms: Optional[float] = None, max_ms: Optional[float] = None) -> "SpanFilter":
+        """Filter spans by duration constraints.
+
+        Args:
+            min_ms (Optional[float]):
+                Optional minimum duration in milliseconds.
+            max_ms (Optional[float]):
+                Optional maximum duration in milliseconds.
+
+        Returns:
+            SpanFilter that matches spans within the duration range.
+            If both are None, matches all spans.
+        """
+
+    @staticmethod
+    def sequence(names: List[str]) -> "SpanFilter":
+        """Filter for spans appearing in specific order.
+
+        Args:
+            names (List[str]):
+                List of span names that must appear in order.
+
+        Returns:
+            SpanFilter that matches the span sequence.
+        """
+
+    def and_(self, other: "SpanFilter") -> "SpanFilter":
+        """Combine this filter with another using AND logic.
+
+        Args:
+            other (SpanFilter):
+                Another SpanFilter to combine with.
+
+        Returns:
+            New SpanFilter matching spans that satisfy both conditions.
+        """
+
+    def or_(self, other: "SpanFilter") -> "SpanFilter":
+        """Combine this filter with another using OR logic.
+
+        Args:
+            other (SpanFilter):
+                Another SpanFilter to combine with.
+
+        Returns:
+            New SpanFilter matching spans that satisfy either condition.
+        """
+
+class TraceAssertion:
+    """Assertion target for trace and span properties.
+
+    Defines what aspect of a trace or its spans should be evaluated.
+    TraceAssertion types fall into three categories:
+
+    1. Span-level assertions: Evaluate properties of filtered spans
+       (count, existence, attributes, duration, aggregations)
+
+    2. Span collection assertions: Evaluate span sets and sequences
+       (span_set for existence, span_sequence for ordering)
+
+    3. Trace-level assertions: Evaluate entire trace properties
+       (total duration, span count, error count, max depth)
+
+    Each assertion type extracts a value that is then compared against
+    an expected value using the operator specified in TraceAssertionTask.
+
+    Examples:
+        Check execution order of spans:
+
+        >>> assertion = TraceAssertion.span_sequence([
+        ...     "validate_input",
+        ...     "process_data",
+        ...     "generate_output"
+        ... ])
+        >>> # Use with SequenceMatches operator
+
+        Check all required spans exist (order doesn't matter):
+
+        >>> assertion = TraceAssertion.span_set([
+        ...     "call_tool",
+        ...     "run_agent",
+        ...     "double_check"
+        ... ])
+        >>> # Use with ContainsAll operator
+
+        Count spans matching a filter:
+
+        >>> filter = SpanFilter.by_name("retry_operation")
+        >>> assertion = TraceAssertion.span_count(filter)
+        >>> # Use with LessThanOrEqual to limit retries
+
+        Check if specific span exists:
+
+        >>> filter = SpanFilter.by_name_pattern("llm.*")
+        >>> assertion = TraceAssertion.span_exists(filter)
+        >>> # Use with Equals(True) to verify LLM was called
+
+        Get attribute value from span:
+
+        >>> filter = SpanFilter.by_name("llm.generate")
+        >>> assertion = TraceAssertion.span_attribute(filter, "model")
+        >>> # Use with Equals("gpt-4") to verify model
+
+        Get span duration:
+
+        >>> filter = SpanFilter.by_name("database_query")
+        >>> assertion = TraceAssertion.span_duration(filter)
+        >>> # Use with LessThan to enforce SLA
+
+        Aggregate numeric attribute across spans:
+
+        >>> filter = SpanFilter.by_name_pattern("llm.*")
+        >>> assertion = TraceAssertion.span_aggregation(
+        ...     filter,
+        ...     "token_count",
+        ...     AggregationType.Sum
+        ... )
+        >>> # Use with LessThan to limit total tokens
+
+        Check total trace duration:
+
+        >>> assertion = TraceAssertion.trace_duration()
+        >>> # Use with LessThan to enforce response time
+
+        Count total spans in trace:
+
+        >>> assertion = TraceAssertion.trace_span_count()
+        >>> # Use with range operators to validate complexity
+
+        Count error spans:
+
+        >>> assertion = TraceAssertion.trace_error_count()
+        >>> # Use with Equals(0) to ensure no errors
+
+        Count unique services involved:
+
+        >>> assertion = TraceAssertion.trace_service_count()
+        >>> # Use to validate service boundaries
+
+        Get maximum span depth:
+
+        >>> assertion = TraceAssertion.trace_max_depth()
+        >>> # Use to detect deep recursion
+
+        Get trace-level attribute:
+
+        >>> assertion = TraceAssertion.trace_attribute("user_id")
+        >>> # Use to validate trace context
+
+    Note:
+        - Span assertions require SpanFilter to target specific spans
+        - Aggregations only work on numeric attributes
+        - Sequence matching preserves span order by start time
+        - Trace-level assertions evaluate the entire trace without filtering
+    """
+
+    class SpanSequence:
+        """Extracts a sequence of span names in order."""
+
+        span_names: List[str]
+
+    class SpanSet:
+        """Checks for existence of all specified span names."""
+
+        span_names: List[str]
+
+    class SpanCount:
+        """Counts spans matching a filter."""
+
+        filter: SpanFilter
+
+    class SpanExists:
+        """Checks if any span matches a filter."""
+
+        filter: SpanFilter
+
+    class SpanAttribute:
+        """Extracts attribute value from span matching filter."""
+
+        filter: SpanFilter
+        attribute_key: str
+
+    class SpanDuration:
+        """Extracts duration of span matching filter."""
+
+        filter: SpanFilter
+
+    class SpanAggregation:
+        """Aggregates numeric attribute across filtered spans."""
+
+        filter: SpanFilter
+        attribute_key: str
+        aggregation: AggregationType
+
+    class TraceAttribute:
+        """Extracts trace-level attribute value."""
+
+        attribute_key: str
+
+    @staticmethod
+    def span_sequence(span_names: List[str]) -> "TraceAssertion":
+        """Assert spans appear in specific order.
+
+        Args:
+            span_names (List[str]):
+                List of span names that must appear sequentially.
+
+        Returns:
+            TraceAssertion that extracts the span sequence.
+            Use with SequenceMatches operator.
+        """
+
+    @staticmethod
+    def span_set(span_names: List[str]) -> "TraceAssertion":
+        """Assert all specified spans exist (order independent).
+
+        Args:
+            span_names (List[str]):
+                List of span names that must all be present.
+
+        Returns:
+            TraceAssertion that checks for span set membership.
+            Use with ContainsAll operator.
+        """
+
+    @staticmethod
+    def span_count(filter: SpanFilter) -> "TraceAssertion":
+        """Count spans matching the filter.
+
+        Args:
+            filter (SpanFilter):
+                SpanFilter defining which spans to count.
+
+        Returns:
+            TraceAssertion that extracts the span count.
+            Use with numeric comparison operators.
+        """
+
+    @staticmethod
+    def span_exists(filter: SpanFilter) -> "TraceAssertion":
+        """Check if any span matches the filter.
+
+        Args:
+            filter (SpanFilter):
+                SpanFilter defining which span to look for.
+
+        Returns:
+            TraceAssertion that extracts boolean existence.
+            Use with Equals(True/False).
+        """
+
+    @staticmethod
+    def span_attribute(filter: SpanFilter, attribute_key: str) -> "TraceAssertion":
+        """Get attribute value from span matching filter.
+
+        Args:
+            filter (SpanFilter):
+                SpanFilter to identify the span.
+            attribute_key (str):
+                Attribute key to extract.
+
+        Returns:
+            TraceAssertion that extracts the attribute value.
+            Use with appropriate operators for the value type.
+        """
+
+    @staticmethod
+    def span_duration(filter: SpanFilter) -> "TraceAssertion":
+        """Get duration of span matching filter.
+
+        Args:
+            filter (SpanFilter):
+                SpanFilter to identify the span.
+
+        Returns:
+            TraceAssertion that extracts span duration in milliseconds.
+            Use with numeric comparison operators.
+        """
+
+    @staticmethod
+    def span_aggregation(filter: SpanFilter, attribute_key: str, aggregation: AggregationType) -> "TraceAssertion":
+        """Aggregate numeric attribute across filtered spans.
+
+        Args:
+            filter (SpanFilter):
+                SpanFilter to identify spans.
+            attribute_key (str):
+                Numeric attribute to aggregate.
+            aggregation (AggregationType):
+                Defining how to aggregate.
+
+        Returns:
+            TraceAssertion that computes the aggregation.
+            Use with numeric comparison operators.
+        """
+
+    @staticmethod
+    def trace_duration() -> "TraceAssertion":
+        """Get total duration of the entire trace.
+
+        Returns:
+            TraceAssertion that extracts trace duration in milliseconds.
+            Use with numeric comparison operators for SLA validation.
+        """
+
+    @staticmethod
+    def trace_span_count() -> "TraceAssertion":
+        """Count total spans in the trace.
+
+        Returns:
+            TraceAssertion that extracts total span count.
+            Use with numeric operators to validate trace complexity.
+        """
+
+    @staticmethod
+    def trace_error_count() -> "TraceAssertion":
+        """Count spans with error status in the trace.
+
+        Returns:
+            TraceAssertion that counts error spans.
+            Use with Equals(0) to ensure no errors occurred.
+        """
+
+    @staticmethod
+    def trace_service_count() -> "TraceAssertion":
+        """Count unique services involved in the trace.
+
+        Returns:
+            TraceAssertion that counts distinct services.
+            Use to validate service boundaries or detect sprawl.
+        """
+
+    @staticmethod
+    def trace_max_depth() -> "TraceAssertion":
+        """Get maximum nesting depth of span tree.
+
+        Returns:
+            TraceAssertion that extracts max span depth.
+            Use to detect deep recursion or validate call hierarchy.
+        """
+
+    @staticmethod
+    def trace_attribute(attribute_key: str) -> "TraceAssertion":
+        """Get trace-level attribute value.
+
+        Args:
+            attribute_key (str):
+                Attribute key from trace context.
+
+        Returns:
+            TraceAssertion that extracts the trace attribute.
+            Use with appropriate operators for the value type.
+        """
+
+class TraceAssertionTask:
+    """Trace-based evaluation task for behavioral assertions.
+
+    Evaluates trace and span properties to validate execution behavior,
+    performance characteristics, and service interactions. Unlike AssertionTask
+    which operates on LLM responses, TraceAssertionTask analyzes distributed
+    traces to ensure agents and services behave correctly.
+
+    TraceAssertionTask is essential for:
+        - Validating agent workflow execution order
+        - Ensuring required services are called
+        - Enforcing performance SLAs
+        - Detecting error patterns
+        - Verifying span attributes and metadata
+        - Analyzing service dependencies
+
+    Each task combines three components:
+        1. TraceAssertion: What to measure (span count, duration, etc.)
+        2. ComparisonOperator: How to compare (equals, greater than, etc.)
+        3. Expected Value: What value to compare against
+
+    Common Use Cases:
+        - Workflow validation: Verify spans execute in correct order
+        - Completeness checks: Ensure all required steps were executed
+        - Performance monitoring: Enforce latency SLAs
+        - Error detection: Validate error-free execution
+        - Resource validation: Check correct models/services were used
+        - Complexity bounds: Limit retry counts or recursion depth
+
+    Examples:
+        Verify agent execution order:
+
+        >>> task = TraceAssertionTask(
+        ...     id="verify_agent_workflow",
+        ...     assertion=TraceAssertion.span_sequence([
+        ...         "call_tool",
+        ...         "run_agent",
+        ...         "double_check"
+        ...     ]),
+        ...     operator=ComparisonOperator.SequenceMatches,
+        ...     expected_value=True,
+        ...     description="Verify correct agent execution order"
+        ... )
+
+        Ensure all required steps exist:
+
+        >>> task = TraceAssertionTask(
+        ...     id="verify_required_steps",
+        ...     assertion=TraceAssertion.span_set([
+        ...         "validate_input",
+        ...         "process_data",
+        ...         "generate_output"
+        ...     ]),
+        ...     operator=ComparisonOperator.ContainsAll,
+        ...     expected_value=True,
+        ...     description="Ensure all pipeline steps were executed"
+        ... )
+
+        Enforce total trace duration SLA:
+
+        >>> task = TraceAssertionTask(
+        ...     id="verify_performance",
+        ...     assertion=TraceAssertion.trace_duration(),
+        ...     operator=ComparisonOperator.LessThan,
+        ...     expected_value=5000.0,  # 5 seconds in milliseconds
+        ...     description="Ensure execution completes within 5 seconds"
+        ... )
+
+        Limit retry attempts:
+
+        >>> filter = SpanFilter.by_name("retry_operation")
+        >>> task = TraceAssertionTask(
+        ...     id="verify_retry_limit",
+        ...     assertion=TraceAssertion.span_count(filter),
+        ...     operator=ComparisonOperator.LessThanOrEqual,
+        ...     expected_value=3,
+        ...     description="Ensure no more than 3 retries"
+        ... )
+
+        Verify correct model was used:
+
+        >>> filter = SpanFilter.by_name("llm.generate")
+        >>> task = TraceAssertionTask(
+        ...     id="verify_model_used",
+        ...     assertion=TraceAssertion.span_attribute(filter, "model"),
+        ...     operator=ComparisonOperator.Equals,
+        ...     expected_value="gpt-4",
+        ...     description="Verify gpt-4 was used"
+        ... )
+
+        Ensure error-free execution:
+
+        >>> task = TraceAssertionTask(
+        ...     id="no_errors",
+        ...     assertion=TraceAssertion.trace_error_count(),
+        ...     operator=ComparisonOperator.Equals,
+        ...     expected_value=0,
+        ...     description="Verify no errors occurred"
+        ... )
+
+        Limit total token usage:
+
+        >>> filter = SpanFilter.by_name_pattern("llm.*")
+        >>> task = TraceAssertionTask(
+        ...     id="token_budget",
+        ...     assertion=TraceAssertion.span_aggregation(
+        ...         filter,
+        ...         "token_count",
+        ...         AggregationType.Sum
+        ...     ),
+        ...     operator=ComparisonOperator.LessThan,
+        ...     expected_value=10000,
+        ...     description="Ensure total tokens under budget"
+        ... )
+
+        With dependencies:
+
+        >>> task = TraceAssertionTask(
+        ...     id="verify_database_performance",
+        ...     assertion=TraceAssertion.span_duration(
+        ...         SpanFilter.by_name("database_query")
+        ...     ),
+        ...     operator=ComparisonOperator.LessThan,
+        ...     expected_value=100,  # 100ms
+        ...     depends_on=["verify_agent_workflow"],
+        ...     description="Verify database query performance after workflow validation"
+        ... )
+
+    Note:
+        - Traces must be collected and available before evaluation
+        - Span names and attributes depend on instrumentation
+        - Duration is measured in milliseconds
+        - Use dependencies to chain trace assertions with other tasks
+        - Condition tasks can gate subsequent evaluations
+    """
+
+    def __init__(
+        self,
+        id: str,
+        assertion: TraceAssertion,
+        expected_value: Any,
+        operator: ComparisonOperator,
+        description: Optional[str] = None,
+        depends_on: Optional[List[str]] = None,
+        condition: bool = False,
+    ):
+        """Initialize a trace assertion task for behavioral validation.
+
+        Args:
+            id (str):
+                Unique identifier for the task. Will be converted to lowercase.
+                Used to reference this task in dependencies and results.
+            assertion (TraceAssertion):
+                TraceAssertion defining what to measure (span count, duration,
+                attributes, etc.). Determines the value extracted from the trace.
+            expected_value (Any):
+                Expected value to compare against. Type depends on the assertion:
+                - Numeric for counts, durations, aggregations
+                - Boolean for existence checks
+                - String/dict for attribute comparisons
+                - List for sequence/set operations
+            operator (ComparisonOperator):
+                ComparisonOperator defining how to compare the extracted value
+                against expected_value. Must be appropriate for the assertion type.
+            description (Optional[str]):
+                Optional human-readable description of what this assertion validates.
+                Useful for understanding evaluation results.
+            depends_on (Optional[List[str]]):
+                Optional list of task IDs that must complete successfully before
+                this task executes. Empty list if not provided.
+            condition (bool):
+                If True, this assertion acts as a condition for subsequent tasks.
+                If the assertion fails, dependent tasks will be skipped and this
+                task will be excluded from final results.
+
+        Raises:
+            TypeError: If expected_value is not JSON-serializable or if operator
+                is not a valid ComparisonOperator.
+        """
+
+    @property
+    def id(self) -> str:
+        """Unique task identifier (lowercase)."""
+
+    @id.setter
+    def id(self, id: str) -> None:
+        """Set task identifier (will be converted to lowercase)."""
+
+    @property
+    def assertion(self) -> TraceAssertion:
+        """TraceAssertion defining what to measure in the trace."""
+
+    @assertion.setter
+    def assertion(self, assertion: TraceAssertion) -> None:
+        """Set trace assertion target.
+
+        Args:
+            assertion (TraceAssertion):
+                TraceAssertion defining what to measure.
+        """
+
+    @property
+    def operator(self) -> ComparisonOperator:
+        """Comparison operator for the assertion."""
+
+    @operator.setter
+    def operator(self, operator: ComparisonOperator) -> None:
+        """Set comparison operator.
+
+        Args:
+            operator (ComparisonOperator):
+                ComparisonOperator defining how to compare values.
+        """
+
+    @property
+    def expected_value(self) -> Any:
+        """Expected value for comparison.
+
+        Returns:
+            The expected value as a Python object (deserialized from internal
+            JSON representation).
+        """
+
+    @property
+    def description(self) -> Optional[str]:
+        """Human-readable description of the assertion."""
+
+    @description.setter
+    def description(self, description: Optional[str]) -> None:
+        """Set assertion description.
+
+        Args:
+            description (Optional[str]):
+                Human-readable description of the assertion.
+        """
+
+    @property
+    def depends_on(self) -> List[str]:
+        """List of task IDs this task depends on."""
+
+    @depends_on.setter
+    def depends_on(self, depends_on: List[str]) -> None:
+        """Set task dependencies.
+
+        Args:
+            depends_on (List[str]):
+                List of task IDs that must complete before this task.
+        """
+
+    @property
+    def condition(self) -> bool:
+        """Indicates if this task is a condition for subsequent tasks."""
+
+    @condition.setter
+    def condition(self, condition: bool) -> None:
+        """Set whether this task is a condition for subsequent tasks."""
+
+    @property
+    def task_type(self) -> EvaluationTaskType:
+        """The type of this evaluation task (TraceAssertion)."""
+
+    def __str__(self) -> str:
+        """Return string representation of the trace assertion task."""
+
+class AssertionResult:
+    @property
+    def passed(self) -> bool: ...
+    @property
+    def actual(self) -> Any: ...
+    @property
+    def expected(self) -> Any: ...
+    @property
+    def message(self) -> str: ...
+    def __str__(self): ...
+
+class AssertionResults:
+    @property
+    def results(self) -> Dict[str, AssertionResult]: ...
+    def __str__(self): ...
+    def __getitem__(self, key: str) -> AssertionResult: ...
+
+def execute_trace_assertion_tasks(tasks: List[TraceAssertionTask], spans: List[TraceSpan]) -> AssertionResults:
+    """Execute trace assertion tasks against provided spans.
+
+    Args:
+        tasks (List[TraceAssertionTask]):
+            List of TraceAssertionTask to evaluate.
+        spans (List[TraceSpan]):
+            List of TraceSpan representing the collected trace data.
+
+    Returns:
+        AssertionResults containing results for each trace assertion task.
+
+    Raises:
+        ValueError: If tasks list is empty or spans are not provided.
+    """
+
+class TasksFile:
+    """Object representing a collection of evaluation tasks loaded from a file."""
+
+    def __iter__(self) -> Iterator[AssertionTask | LLMJudgeTask | TraceAssertionTask]:
+        """Iterate over all tasks in the file, yielding each task object."""
+
+    def __next__(self) -> AssertionTask | LLMJudgeTask | TraceAssertionTask:
+        """Return the next task in the file, or raise StopIteration when done."""
+
+    def __getitem__(
+        self, index: int | slice
+    ) -> AssertionTask | LLMJudgeTask | TraceAssertionTask | List[AssertionTask | LLMJudgeTask | TraceAssertionTask]:
+        """Get task(s) by index or slice."""
+
+    def __len__(self) -> int:
+        """Return the total number of tasks in the file."""
+
+    def __str__(self) -> str:
+        """Return string representation of the tasks file and its contents."""
+
+    @staticmethod
+    def from_path(path: Path) -> "TasksFile":
+        """Load evaluation tasks from a YAML file at the specified path.
+
+        Args:
+            path (Path):
+                Path to the YAML file containing evaluation task definitions.
+        """
+
+### scouter/mock.pyi ###
+class ScouterTestServer:
+    def __init__(
+        self,
+        cleanup: bool = True,
+        rabbit_mq: bool = False,
+        kafka: bool = False,
+        openai: bool = False,
+        base_path: Optional[Path] = None,
+    ) -> None:
+        """Instantiates the test server.
+
+        When the test server is used as a context manager, it will start the server
+        in a background thread and set the appropriate env vars so that the client
+        can connect to the server. The server will be stopped when the context manager
+        exits and the env vars will be reset.
+
+        Args:
+            cleanup (bool, optional):
+                Whether to cleanup the server after the test. Defaults to True.
+            rabbit_mq (bool, optional):
+                Whether to use RabbitMQ as the transport. Defaults to False.
+            kafka (bool, optional):
+                Whether to use Kafka as the transport. Defaults to False.
+            openai (bool, optional):
+                Whether to create a mock OpenAITest server. Defaults to False.
+            base_path (Optional[Path], optional):
+                The base path for the server. Defaults to None. This is primarily
+                used for testing loading attributes from a pyproject.toml file.
+        """
+
+    def start_server(self) -> None:
+        """Starts the test server."""
+
+    def stop_server(self) -> None:
+        """Stops the test server."""
+
+    def __enter__(self) -> "ScouterTestServer":
+        """Starts the test server."""
+
+    def __exit__(self, exc_type, exc_value, traceback) -> None:
+        """Stops the test server."""
+
+    def set_env_vars_for_client(self) -> None:
+        """Sets the env vars for the client to connect to the server."""
+
+    def remove_env_vars_for_client(self) -> None:
+        """Removes the env vars for the client to connect to the server."""
+
+    @staticmethod
+    def cleanup() -> None:
+        """Cleans up the test server."""
+
+class MockConfig:
+    def __init__(self, **kwargs) -> None:
+        """Mock configuration for the ScouterQueue
+
+        Args:
+            **kwargs: Arbitrary keyword arguments to set as attributes.
+        """
+
+def create_simple_trace() -> List["TraceSpan"]:
+    """Creates a simple trace with a few spans.
+
+    Returns:
+        List[TraceSpan]: A list of TraceSpan objects representing the trace.
+    """
+
+def create_nested_trace() -> List["TraceSpan"]:
+    """Creates a nested trace with parent-child relationships.
+
+    Returns:
+        List[TraceSpan]: A list of TraceSpan objects representing the trace.
+    """
+
+def create_trace_with_attributes() -> List["TraceSpan"]:
+    """Creates a trace with spans that have attributes.
+
+    Returns:
+        List[TraceSpan]: A list of TraceSpan objects representing the trace.
+    """
+
+def create_multi_service_trace() -> List["TraceSpan"]:
+    """Creates a trace that spans multiple services.
+
+    Returns:
+        List[TraceSpan]: A list of TraceSpan objects representing the trace.
+    """
+
+def create_sequence_pattern_trace() -> List["TraceSpan"]:
+    """Creates a trace with a sequence pattern of spans.
+
+    Returns:
+        List[TraceSpan]: A list of TraceSpan objects representing the trace.
+    """
+
+def create_trace_with_errors() -> List["TraceSpan"]:
+    """Creates a trace with spans that contain errors.
+
+    Returns:
+        List[TraceSpan]: A list of TraceSpan objects representing the trace.
+    """
+
+### scouter/scouter.pyi ###
 #################
 # _scouter.types
 #################
@@ -10921,141 +12724,6 @@ class GenAIAlertConfig:
     @property
     def alert_conditions(self) -> Optional[AlertCondition]:
         """Return the alert condition"""
-
-class TagRecord:
-    """Represents a single tag record associated with an entity."""
-
-    entity_type: str
-    entity_id: str
-    key: str
-    value: str
-
-class Attribute:
-    """Represents a key-value attribute associated with a span."""
-
-    key: str
-    value: Any
-
-class SpanEvent:
-    """Represents an event within a span."""
-
-    timestamp: datetime.datetime
-    name: str
-    attributes: List[Attribute]
-    dropped_attributes_count: int
-
-class SpanLink:
-    """Represents a link to another span."""
-
-    trace_id: str
-    span_id: str
-    trace_state: str
-    attributes: List[Attribute]
-    dropped_attributes_count: int
-
-class TraceBaggageRecord:
-    """Represents a single baggage record associated with a trace."""
-
-    created_at: datetime.datetime
-    trace_id: str
-    scope: str
-    key: str
-    value: str
-
-class TraceFilters:
-    """A struct for filtering traces, generated from Rust pyclass."""
-
-    service_name: Optional[str]
-    has_errors: Optional[bool]
-    status_code: Optional[int]
-    start_time: Optional[datetime.datetime]
-    end_time: Optional[datetime.datetime]
-    limit: Optional[int]
-    cursor_created_at: Optional[datetime.datetime]
-    cursor_trace_id: Optional[str]
-
-    def __init__(
-        self,
-        service_name: Optional[str] = None,
-        has_errors: Optional[bool] = None,
-        status_code: Optional[int] = None,
-        start_time: Optional[datetime.datetime] = None,
-        end_time: Optional[datetime.datetime] = None,
-        limit: Optional[int] = None,
-        cursor_created_at: Optional[datetime.datetime] = None,
-        cursor_trace_id: Optional[str] = None,
-    ) -> None:
-        """Initialize trace filters.
-
-        Args:
-            service_name:
-                Service name filter
-            has_errors:
-                Filter by presence of errors
-            status_code:
-                Filter by root span status code
-            start_time:
-                Start time boundary (UTC)
-            end_time:
-                End time boundary (UTC)
-            limit:
-                Maximum number of results to return
-            cursor_created_at:
-                Pagination cursor: created at timestamp
-            cursor_trace_id:
-                Pagination cursor: trace ID
-        """
-
-class TraceMetricBucket:
-    """Represents aggregated trace metrics for a specific time bucket."""
-
-    bucket_start: datetime.datetime
-    trace_count: int
-    avg_duration_ms: float
-    p50_duration_ms: Optional[float]
-    p95_duration_ms: Optional[float]
-    p99_duration_ms: Optional[float]
-    error_rate: float
-
-class TraceListItem:
-    """Represents a summary item for a trace in a list view."""
-
-    trace_id: str
-    service_name: str
-    scope: str
-    root_operation: Optional[str]
-    start_time: datetime.datetime
-    end_time: Optional[datetime.datetime]
-    duration_ms: Optional[int]
-    status_code: int
-    status_message: Optional[str]
-    span_count: Optional[int]
-    has_errors: bool
-    error_count: int
-    created_at: datetime.datetime
-
-class TraceSpan:
-    """Detailed information for a single span within a trace."""
-
-    trace_id: str
-    span_id: str
-    parent_span_id: Optional[str]
-    span_name: str
-    span_kind: Optional[str]
-    start_time: datetime.datetime
-    end_time: Optional[datetime.datetime]
-    duration_ms: Optional[int]
-    status_code: int
-    status_message: Optional[str]
-    attributes: List[Attribute]
-    events: List[SpanEvent]
-    links: List[SpanLink]
-    depth: int
-    path: List[str]
-    root_span_id: str
-    span_order: int
-    input: Any
-    output: Any
 
 class TransportType:
     Kafka = "TransportType"
@@ -11702,66 +13370,6 @@ class BinnedSpcFeatureMetrics:
 
     def __str__(self) -> str: ...
 
-class ScouterTestServer:
-    def __init__(
-        self,
-        cleanup: bool = True,
-        rabbit_mq: bool = False,
-        kafka: bool = False,
-        openai: bool = False,
-        base_path: Optional[Path] = None,
-    ) -> None:
-        """Instantiates the test server.
-
-        When the test server is used as a context manager, it will start the server
-        in a background thread and set the appropriate env vars so that the client
-        can connect to the server. The server will be stopped when the context manager
-        exits and the env vars will be reset.
-
-        Args:
-            cleanup (bool, optional):
-                Whether to cleanup the server after the test. Defaults to True.
-            rabbit_mq (bool, optional):
-                Whether to use RabbitMQ as the transport. Defaults to False.
-            kafka (bool, optional):
-                Whether to use Kafka as the transport. Defaults to False.
-            openai (bool, optional):
-                Whether to create a mock OpenAITest server. Defaults to False.
-            base_path (Optional[Path], optional):
-                The base path for the server. Defaults to None. This is primarily
-                used for testing loading attributes from a pyproject.toml file.
-        """
-
-    def start_server(self) -> None:
-        """Starts the test server."""
-
-    def stop_server(self) -> None:
-        """Stops the test server."""
-
-    def __enter__(self) -> "ScouterTestServer":
-        """Starts the test server."""
-
-    def __exit__(self, exc_type, exc_value, traceback) -> None:
-        """Stops the test server."""
-
-    def set_env_vars_for_client(self) -> None:
-        """Sets the env vars for the client to connect to the server."""
-
-    def remove_env_vars_for_client(self) -> None:
-        """Removes the env vars for the client to connect to the server."""
-
-    @staticmethod
-    def cleanup() -> None:
-        """Cleans up the test server."""
-
-class MockConfig:
-    def __init__(self, **kwargs) -> None:
-        """Mock configuration for the ScouterQueue
-
-        Args:
-            **kwargs: Arbitrary keyword arguments to set as attributes.
-        """
-
 class EntityType:
     Feature: "EntityType"
     Metric: "EntityType"
@@ -12167,6 +13775,7 @@ class ScouterQueue:
             HttpConfig,
             GrpcConfig,
         ],
+        wait_for_startup: bool = False,
     ) -> "ScouterQueue":
         """Initializes Scouter queue from one or more drift profile paths.
 
@@ -12262,6 +13871,9 @@ class ScouterQueue:
                     • RedisConfig     - Redis pub/sub
                     • HttpConfig      - Direct HTTP to Scouter server
                     • GrpcConfig      - Direct gRPC to Scouter server
+            wait_for_startup (bool):
+                Whether to block until the underlying transport producer is fully started.
+                Default: False
 
         Returns:
             ScouterQueue:
@@ -12309,6 +13921,41 @@ class ScouterQueue:
                 >>> queue["genai_eval"].insert(
                 ...     GenAIEvalRecord(context={"input": "...", "response": "..."})
                 ... )
+        """
+
+    @staticmethod
+    def from_profile(
+        profile: Union[dict, list, SpcDriftProfile, PsiDriftProfile, CustomDriftProfile, GenAIEvalProfile],
+        transport_config: Union[
+            KafkaConfig,
+            RabbitMQConfig,
+            RedisConfig,
+            HttpConfig,
+            GrpcConfig,
+        ],
+        wait_for_startup: bool = False,
+    ) -> "ScouterQueue":
+        """Initializes Scouter queue from a dictionary of drift profiles (string, DriftProfile),
+        list of drift profiles, or a single drift profile.
+
+        Args:
+            profile (Union[dict, list, SpcDriftProfile, PsiDriftProfile, CustomDriftProfile, GenAIEvalProfile]):
+                Drift profile(s) to initialize the queue with. Can be a single profile,
+                a list of profiles, or a dictionary of profiles.
+
+            transport_config (Union[KafkaConfig, RabbitMQConfig, RedisConfig, HttpConfig, GrpcConfig]):
+                Transport configuration for the queue publisher.
+
+                Available transports:
+                    • KafkaConfig     - Apache Kafka message bus
+                    • RabbitMQConfig  - RabbitMQ message broker
+                    • RedisConfig     - Redis pub/sub
+                    • HttpConfig      - Direct HTTP to Scouter server
+                    • GrpcConfig      - Direct gRPC to Scouter server
+
+            wait_for_startup (bool):
+                Whether to block until the underlying transport producer is fully started.
+                Default: False
         """
 
     def __getitem__(self, key: str) -> Queue:
@@ -13672,586 +15319,16 @@ class GenAIEvalConfig:
                 LLM alert configuration
         """
 
-class EvaluationTaskType:
-    """Types of evaluation tasks for LLM assessments."""
-
-    Assertion: "EvaluationTaskType"
-    """Assertion-based evaluation task."""
-    LLMJudge: "EvaluationTaskType"
-    """LLM judge-based evaluation task."""
-    HumanValidation: "EvaluationTaskType"
-    """Human validation evaluation task."""
-
-class ComparisonOperator:
-    """Comparison operators for assertion-based evaluations.
-
-    Defines the available comparison operators that can be used to evaluate
-    assertions against expected values in LLM evaluation workflows.
-
-    Examples:
-        >>> operator = ComparisonOperator.GreaterThan
-        >>> operator = ComparisonOperator.Equal
-    """
-
-    Equals: "ComparisonOperator"
-    """Equality comparison (==)"""
-
-    NotEqual: "ComparisonOperator"
-    """Inequality comparison (!=)"""
-
-    GreaterThan: "ComparisonOperator"
-    """Greater than comparison (>)"""
-
-    GreaterThanOrEqual: "ComparisonOperator"
-    """Greater than or equal comparison (>=)"""
-
-    LessThan: "ComparisonOperator"
-    """Less than comparison (<)"""
-
-    LessThanOrEqual: "ComparisonOperator"
-    """Less than or equal comparison (<=)"""
-
-    Contains: "ComparisonOperator"
-    """Contains substring or element (in)"""
-
-    NotContains: "ComparisonOperator"
-    """Does not contain substring or element (not in)"""
-
-    StartsWith: "ComparisonOperator"
-    """Starts with substring"""
-
-    EndsWith: "ComparisonOperator"
-    """Ends with substring"""
-
-    Matches: "ComparisonOperator"
-    """Matches regular expression pattern"""
-
-    HasLengthGreaterThan: "ComparisonOperator"
-    """Has specified length greater than"""
-
-    HasLengthLessThan: "ComparisonOperator"
-    """Has specified length less than"""
-
-    HasLengthEqual: "ComparisonOperator"
-    """Has specified length equal to"""
-
-    HasLengthGreaterThanOrEqual: "ComparisonOperator"
-    """Has specified length greater than or equal to"""
-
-    HasLengthLessThanOrEqual: "ComparisonOperator"
-    """Has specified length less than or equal to"""
-
-    # type validations
-    IsNumeric: "ComparisonOperator"
-    """Is a numeric value"""
-
-    IsString: "ComparisonOperator"
-    """Is a string value"""
-
-    IsBoolean: "ComparisonOperator"
-    """Is a boolean value"""
-
-    IsNull: "ComparisonOperator"
-    """Is null (None) value"""
-
-    IsArray: "ComparisonOperator"
-    """Is an array (list) value"""
-
-    IsObject: "ComparisonOperator"
-    """Is an object (dict) value"""
-
-    IsEmail: "ComparisonOperator"
-    """Is a valid email format"""
-
-    IsUrl: "ComparisonOperator"
-    """Is a valid URL format"""
-
-    IsUuid: "ComparisonOperator"
-    """Is a valid UUID format"""
-
-    IsIso8601: "ComparisonOperator"
-    """Is a valid ISO 8601 date format"""
-
-    IsJson: "ComparisonOperator"
-    """Is a valid JSON format"""
-
-    MatchesRegex: "ComparisonOperator"
-    """Matches a regular expression pattern"""
-
-    InRange: "ComparisonOperator"
-    """Is within a specified numeric range"""
-
-    NotInRange: "ComparisonOperator"
-    """Is outside a specified numeric range"""
-
-    IsPositive: "ComparisonOperator"
-    """Is a positive number"""
-
-    IsNegative: "ComparisonOperator"
-    """Is a negative number"""
-    IsZero: "ComparisonOperator"
-    """Is zero"""
-
-    ContainsAll: "ComparisonOperator"
-    """Contains all specified elements"""
-
-    ContainsAny: "ComparisonOperator"
-    """Contains any of the specified elements"""
-
-    ContainsNone: "ComparisonOperator"
-    """Contains none of the specified elements"""
-
-    IsEmpty: "ComparisonOperator"
-    """Is empty"""
-
-    IsNotEmpty: "ComparisonOperator"
-    """Is not empty"""
-
-    HasUniqueItems: "ComparisonOperator"
-    """Has unique items"""
-
-    IsAlphabetic: "ComparisonOperator"
-    """Is alphabetic"""
-
-    IsAlphanumeric: "ComparisonOperator"
-    """Is alphanumeric"""
-
-    IsLowerCase: "ComparisonOperator"
-    """Is lowercase"""
-
-    IsUpperCase: "ComparisonOperator"
-    """Is uppercase"""
-
-    ContainsWord: "ComparisonOperator"
-    """Contains a specific word"""
-
-    ApproximatelyEquals: "ComparisonOperator"
-    """Approximately equals within a tolerance"""
-
-class AssertionTask:
-    """Assertion-based evaluation task for LLM monitoring.
-
-    Defines a rule-based assertion that evaluates values extracted from LLM
-    context/responses against expected conditions without requiring additional LLM calls.
-    Assertions are efficient, deterministic evaluations ideal for validating
-    structured outputs, checking thresholds, or verifying data constraints.
-
-    Assertions can operate on:
-        - Nested fields via dot-notation paths (e.g., "response.user.age")
-        - Top-level context values when field_path is None
-        - String, numeric, boolean, or collection values
-
-    Common Use Cases:
-        - Validate response structure ("response.status" == "success")
-        - Check numeric thresholds ("response.confidence" >= 0.8)
-        - Verify required fields exist ("response.user.id" is not None)
-        - Validate string patterns ("response.language" contains "en")
-
-    Examples:
-        Basic numeric comparison:
-
-        >>> # Context at runtime: {"response": {"user": {"age": 25}}}
-        >>> task = AssertionTask(
-        ...     id="check_user_age",
-        ...     field_path="response.user.age",
-        ...     operator=ComparisonOperator.GreaterThan,
-        ...     expected_value=18,
-        ...     description="Verify user is an adult"
-        ... )
-
-        Checking top-level fields:
-
-        >>> # Context at runtime: {"user": {"age": 25}}
-        >>> task = AssertionTask(
-        ...     id="check_age",
-        ...     field_path="user.age",
-        ...     operator=ComparisonOperator.GreaterThanOrEqual,
-        ...     expected_value=21,
-        ...     description="Check minimum age requirement"
-        ... )
-
-        Operating on entire context (no nested path):
-
-        >>> # Context at runtime: 25
-        >>> task = AssertionTask(
-        ...     id="age_threshold",
-        ...     field_path=None,
-        ...     operator=ComparisonOperator.GreaterThan,
-        ...     expected_value=18,
-        ...     description="Validate age value"
-        ... )
-
-        String validation:
-
-        >>> # Context: {"response": {"status": "completed"}}
-        >>> task = AssertionTask(
-        ...     id="status_check",
-        ...     field_path="response.status",
-        ...     operator=ComparisonOperator.Equals,
-        ...     expected_value="completed",
-        ...     description="Verify completion status"
-        ... )
-
-        Collection membership:
-
-        >>> # Context: {"response": {"tags": ["valid", "processed"]}}
-        >>> task = AssertionTask(
-        ...     id="tag_validation",
-        ...     field_path="response.tags",
-        ...     operator=ComparisonOperator.Contains,
-        ...     expected_value="valid",
-        ...     description="Check for required tag"
-        ... )
-
-        With dependencies:
-
-        >>> task = AssertionTask(
-        ...     id="confidence_check",
-        ...     field_path="response.confidence",
-        ...     operator=ComparisonOperator.GreaterThan,
-        ...     expected_value=0.9,
-        ...     description="High confidence validation",
-        ...     depends_on=["status_check"]
-        ... )
-
-    Note:
-        - Field paths use dot-notation for nested access
-        - Field paths are case-sensitive
-        - When field_path is None, the entire context is used as the value
-        - Type mismatches between actual and expected values will fail the assertion
-        - Dependencies are executed before this task
-    """
-
-    def __init__(
-        self,
-        id: str,
-        expected_value: Any,
-        operator: ComparisonOperator,
-        field_path: Optional[str] = None,
-        description: Optional[str] = None,
-        depends_on: Optional[Sequence[str]] = None,
-        condition: bool = False,
-    ):
-        """Initialize an assertion task for rule-based evaluation.
-
-        Args:
-            id:
-                Unique identifier for the task. Will be converted to lowercase.
-                Used to reference this task in dependencies and results.
-            expected_value:
-                The expected value to compare against. Can be any JSON-serializable
-                type: str, int, float, bool, list, dict, or None.
-            operator:
-                Comparison operator to use for the assertion. Must be a
-                ComparisonOperator enum value.
-            field_path:
-                Optional dot-notation path to extract value from context
-                (e.g., "response.user.age"). If None, the entire context
-                is used as the comparison value.
-            description:
-                Optional human-readable description of what this assertion validates.
-                Useful for understanding evaluation results.
-            depends_on:
-                Optional list of task IDs that must complete successfully before
-                this task executes. Empty list if not provided.
-            condition:
-                If True, this assertion task acts as a condition for subsequent tasks.
-                If the assertion fails, dependent tasks will be skipped and this task
-                will be excluded from final results.
-
-        Raises:
-            TypeError: If expected_value is not JSON-serializable or if operator
-                is not a valid ComparisonOperator.
-        """
-
-    @property
-    def id(self) -> str:
-        """Unique task identifier (lowercase)."""
-
-    @id.setter
-    def id(self, id: str) -> None:
-        """Set task identifier (will be converted to lowercase)."""
-
-    @property
-    def field_path(self) -> Optional[str]:
-        """Dot-notation path to field in context, or None for entire context."""
-
-    @field_path.setter
-    def field_path(self, field_path: Optional[str]) -> None:
-        """Set field path for value extraction."""
-
-    @property
-    def operator(self) -> ComparisonOperator:
-        """Comparison operator for the assertion."""
-
-    @operator.setter
-    def operator(self, operator: ComparisonOperator) -> None:
-        """Set comparison operator."""
-
-    @property
-    def expected_value(self) -> Any:
-        """Expected value for comparison.
-
-        Returns:
-            The expected value as a Python object (deserialized from internal
-            JSON representation).
-        """
-
-    @property
-    def description(self) -> Optional[str]:
-        """Human-readable description of the assertion."""
-
-    @description.setter
-    def description(self, description: Optional[str]) -> None:
-        """Set assertion description."""
-
-    @property
-    def depends_on(self) -> List[str]:
-        """List of task IDs this task depends on."""
-
-    @depends_on.setter
-    def depends_on(self, depends_on: List[str]) -> None:
-        """Set task dependencies."""
-
-    def __str__(self) -> str:
-        """Return string representation of the assertion task."""
-
-class LLMJudgeTask:
-    """LLM-powered evaluation task for complex assessments.
-
-    Uses an additional LLM call to evaluate responses based on sophisticated
-    criteria that require reasoning, context understanding, or subjective judgment.
-    LLM judges are ideal for evaluations that cannot be captured by deterministic
-    rules, such as semantic similarity, quality assessment, or nuanced criteria.
-
-    Unlike AssertionTask which provides efficient, deterministic rule-based evaluation,
-    LLMJudgeTask leverages an LLM's reasoning capabilities for:
-        - Semantic similarity and relevance assessment
-        - Quality, coherence, and fluency evaluation
-        - Factual accuracy and hallucination detection
-        - Tone, sentiment, and style analysis
-        - Custom evaluation criteria requiring judgment
-        - Complex reasoning over multiple context elements
-
-    The LLM judge executes a prompt that receives context (either raw or from
-    dependencies) and returns a response that is then compared against the expected
-    value using the specified operator.
-
-    Common Use Cases:
-        - Evaluate semantic similarity between generated and reference answers
-        - Assess response quality on subjective criteria (helpfulness, clarity)
-        - Detect factual inconsistencies or hallucinations
-        - Score tone appropriateness for different audiences
-        - Judge whether responses meet complex, nuanced requirements
-
-    Examples:
-        Basic relevance check using LLM judge:
-
-        >>> # Define a prompt that evaluates relevance
-        >>> relevance_prompt = Prompt(
-        ...     system_instructions="Evaluate if the response is relevant to the query",
-        ...     messages="Given the query '{{query}}' and response '{{response}}', rate the relevance from 0 to 10 as an integer.",
-        ...     model="gpt-4",
-        ...     provider= Provider.OpenAI,
-        ...     output_type=Score # returns a structured output with schema {"score": float, "reason": str}
-        ... )
-
-        >>> # Context at runtime: {"query": "What is AI?", "response": "AI is..."}
-        >>> task = LLMJudgeTask(
-        ...     id="relevance_judge",
-        ...     prompt=relevance_prompt,
-        ...     expected_value=8,
-        ...     field_path="score",
-        ...     operator=ComparisonOperator.GreaterThanOrEqual,
-        ...     description="Ensure response relevance score >= 8"
-        ... )
-
-        Factuality check with structured output:
-
-        >>> # Prompt returns a Pydantic model with factuality assessment
-        >>> from pydantic import BaseModel
-        >>> class FactCheckResult(BaseModel):
-        ...     is_factual: bool
-        ...     confidence: float
-
-        >>> fact_check_prompt = Prompt(
-        ...     system_instructions="Verify factual claims in the response",
-        ...     messages="Assess the factual accuracy of the response: '{{response}}'. Provide a JSON with fields 'is_factual' (bool) and 'confidence' (float).", # pylint: disable=line-too-long
-        ...     model="gpt-4",
-        ...     provider= Provider.OpenAI,
-        ...     output_type=FactCheckResult
-        ... )
-
-        >>> # Context: {"response": "Paris is the capital of France"}
-        >>> task = LLMJudgeTask(
-        ...     id="fact_checker",
-        ...     prompt=fact_check_prompt,
-        ...     expected_value={"is_factual": True, "confidence": 0.95},
-        ...     field_path="response",
-        ...     operator=ComparisonOperator.Contains
-        ... )
-
-        Quality assessment with dependencies:
-
-        >>> # This judge depends on previous relevance check
-        >>> quality_prompt = Prompt(
-        ...     system_instructions="Assess the overall quality of the response",
-        ...     messages="Given the response '{{response}}', rate its quality from 0 to 5",
-        ...     model="gemini-3.0-flash",
-        ...     provider= Provider.Google,
-        ...     output_type=Score
-        ... )
-
-        >>> task = LLMJudgeTask(
-        ...     id="quality_judge",
-        ...     prompt=quality_prompt,
-        ...     expected_value=0.7,
-        ...     field_path=None,
-        ...     operator=ComparisonOperator.GreaterThan,
-        ...     depends_on=["relevance_judge"],
-        ...     description="Evaluate overall quality after relevance check"
-        ... )
-    Note:
-        - LLM judge tasks incur additional latency and cost vs assertions
-        - Scouter does not auto-inject any additional prompts or context apart from what is defined
-          in the Prompt object
-        - For tasks that contain dependencies, upstream results are passed as context to downstream tasks.
-        - Use dependencies to chain evaluations and pass results between tasks
-        - max_retries helps handle transient LLM failures (defaults to 3)
-        - Field paths work the same as AssertionTask (dot-notation for nested access)
-        - Consider cost/latency tradeoffs when designing judge evaluations
-    """
-
-    def __init__(
-        self,
-        id: str,
-        prompt: Prompt,
-        expected_value: Any,
-        field_path: Optional[str],
-        operator: ComparisonOperator,
-        description: Optional[str] = None,
-        depends_on: Optional[List[str]] = None,
-        max_retries: Optional[int] = None,
-        condition: bool = False,
-    ):
-        """Initialize an LLM judge task for advanced evaluation.
-
-        Creates an evaluation task that uses an LLM to assess responses based on
-        sophisticated criteria requiring reasoning or subjective judgment. The LLM
-        receives context (raw or from dependencies) and returns a response that
-        is compared against the expected value.
-
-        Args:
-            id (str):
-                Unique identifier for the task. Will be converted to lowercase.
-                Used to reference this task in dependencies and results.
-            prompt (Prompt):
-                Prompt configuration defining the LLM evaluation task.
-            expected_value (Any):
-                The expected value to compare against the LLM's response. Type depends
-                on prompt response type. Can be any JSON-serializable type: str, int,
-                float, bool, list, dict, or None.
-            field_path (Optional[str]):
-                Optional dot-notation path to extract value from context before passing
-                to the LLM prompt (e.g., "response.text"), the entire response will be
-                evaluated.
-            operator (ComparisonOperator):
-                Comparison operator to apply between LLM response and expected_value
-            description (Optional[str]):
-                Optional human-readable description of what this judge evaluates.
-            depends_on (Optional[List[str]]):
-                Optional list of task IDs that must complete successfully before this
-                task executes. Results from dependencies are passed to the LLM prompt
-                as additional context parameters. Empty list if not provided.
-            max_retries (Optional[int]):
-                Optional maximum number of retry attempts if the LLM call fails
-                (network errors, rate limits, etc.). Defaults to 3 if not provided.
-                Set to 0 to disable retries.
-            condition (bool):
-                If True, this judge task acts as a condition for subsequent tasks.
-                If the judge fails, dependent tasks will be skipped and this task
-                will be excluded from final results.
-        """
-
-    @property
-    def id(self) -> str:
-        """Unique task identifier (lowercase)."""
-
-    @id.setter
-    def id(self, id: str) -> None:
-        """Set task identifier (will be converted to lowercase)."""
-
-    @property
-    def prompt(self) -> Prompt:
-        """Prompt configuration for the LLM evaluation task.
-
-        Defines the LLM model, evaluation instructions, and response format.
-        The prompt must have response_type of Score or Pydantic.
-        """
-
-    @property
-    def field_path(self) -> Optional[str]:
-        """Dot-notation path to extract value from context before LLM evaluation.
-
-        If specified, extracts nested value from context (e.g., "response.text")
-        and passes it to the LLM prompt. If None, the entire context or
-        dependency results are passed.
-        """
-
-    @property
-    def operator(self) -> ComparisonOperator:
-        """Comparison operator for evaluating LLM response against expected value.
-
-        For Score responses: use numeric operators (GreaterThan, Equals, etc.)
-        For Pydantic responses: use structural operators (Contains, Equals, etc.)
-        """
-
-    @property
-    def expected_value(self) -> Any:
-        """Expected value to compare against LLM response.
-
-        Returns:
-            The expected value as a Python object (deserialized from internal
-            JSON representation).
-        """
-
-    @property
-    def depends_on(self) -> List[str]:
-        """List of task IDs this task depends on.
-
-        Dependency results are passed to the LLM prompt as additional context
-        parameters, enabling chained evaluations.
-        """
-
-    @depends_on.setter
-    def depends_on(self, depends_on: List[str]) -> None:
-        """Set task dependencies."""
-
-    @property
-    def max_retries(self) -> Optional[int]:
-        """Maximum number of retry attempts for LLM call failures.
-
-        Handles transient failures like network errors or rate limits.
-        Defaults to 3 if not specified during initialization.
-        """
-
-    @max_retries.setter
-    def max_retries(self, max_retries: Optional[int]) -> None:
-        """Set maximum retry attempts."""
-
-    def __str__(self) -> str:
-        """Return string representation of the LLM judge task."""
-
 class GenAIEvalProfile:
     """Profile for LLM evaluation and drift detection.
 
-    GenAIEvalProfile combines assertion tasks and LLM judge tasks into a unified
-    evaluation framework for monitoring LLM performance. Evaluations run asynchronously
-    on the Scouter server, enabling scalable drift detection without blocking your
-    application.
+    GenAIEvalProfile combines assertion tasks, LLM judge tasks, and trace assertion
+    tasks into a unified evaluation framework for monitoring LLM performance. Evaluations
+    run asynchronously on the Scouter server, enabling scalable drift detection without
+    blocking your application.
 
     Architecture:
-        The profile automatically orchestrates two types of evaluation tasks:
+        The profile automatically orchestrates three types of evaluation tasks:
 
         1. **Assertion Tasks**: Fast, deterministic rule-based validations
            - Execute locally without additional LLM calls
@@ -14264,35 +15341,41 @@ class GenAIEvalProfile:
            - Support dependencies to chain evaluations and pass results
            - Ideal for semantic similarity, quality assessment, factuality checks
 
+        3. **Trace Assertion Tasks**: Behavioral validation via distributed traces
+           - Analyze execution traces without additional LLM calls
+           - Validate workflow ordering, performance SLAs, and error patterns
+           - Verify span attributes, service interactions, and execution depth
+           - Ideal for agent workflow validation, latency monitoring, behavioral checks
+
     Task Execution Order:
         Tasks are executed based on their dependency graph using topological sort:
 
         ```
-        ╔══════════════════════════════════════════════════════════════╗
-        ║              TASK EXECUTION ARCHITECTURE                     ║
-        ╠══════════════════════════════════════════════════════════════╣
-        ║                                                              ║
-        ║  Level 0: Independent Tasks (no dependencies)                ║
-        ║  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐          ║
-        ║  │ Assertion A │  │ Assertion B │  │ LLM Judge X │          ║
-        ║  └──────┬──────┘  └──────┬──────┘  └──────┬──────┘          ║
-        ║         │                │                │                  ║
-        ║         └────────┬───────┴────────┬───────┘                  ║
-        ║                  │                │                          ║
-        ║  Level 1: Tasks depending on Level 0                         ║
-        ║         ┌────────▼────────┐  ┌────▼────────┐                ║
-        ║         │  LLM Judge Y    │  │Assertion C  │                ║
-        ║         │ (depends: A, X) │  │(depends: B) │                ║
-        ║         └────────┬────────┘  └────┬────────┘                ║
-        ║                  │                │                          ║
-        ║  Level 2: Final aggregation tasks                            ║
-        ║                  └────────┬───────┘                          ║
-        ║                  ┌────────▼────────┐                         ║
-        ║                  │  LLM Judge Z    │                         ║
-        ║                  │ (depends: Y, C) │                         ║
-        ║                  └─────────────────┘                         ║
-        ║                                                              ║
-        ╚══════════════════════════════════════════════════════════════╝
+        ╔══════════════════════════════════════════════════════════╗
+        ║              TASK EXECUTION ARCHITECTURE                 ║
+        ╠══════════════════════════════════════════════════════════╣
+        ║                                                          ║
+        ║  Level 0: Independent Tasks (no dependencies)            ║
+        ║  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐       ║
+        ║  │ Assertion A │  │ Assertion B │  │ LLM Judge X │       ║
+        ║  └──────┬──────┘  └──────┬──────┘  └──────┬──────┘       ║
+        ║         │                │                │              ║
+        ║         └────────┬───────┴────────┬───────┘              ║
+        ║                  │                │                      ║
+        ║  Level 1: Tasks depending on Level 0                     ║
+        ║         ┌────────▼────────┐  ┌────▼────────┐             ║
+        ║         │  LLM Judge Y    │  │Assertion C  │             ║
+        ║         │ (depends: A, X) │  │(depends: B) │             ║
+        ║         └────────┬────────┘  └────┬────────┘             ║
+        ║                  │                │                      ║
+        ║  Level 2: Final aggregation tasks                        ║
+        ║                  └────────┬───────┘                      ║
+        ║                  ┌────────▼────────┐                     ║
+        ║                  │  LLM Judge Z    │                     ║
+        ║                  │ (depends: Y, C) │                     ║
+        ║                  └─────────────────┘                     ║
+        ║                                                          ║
+        ╚══════════════════════════════════════════════════════════╝
         ```
 
     Workflow Generation:
@@ -14307,6 +15390,10 @@ class GenAIEvalProfile:
         - Hybrid assertion + LLM judge pipelines (fast checks, then deep analysis)
         - Dependent evaluations (use upstream results in downstream prompts)
         - Cost-optimized monitoring (assertions for 90%, LLM judges for 10%)
+        - Agent workflow validation (verify execution order and completeness)
+        - Performance SLA enforcement (monitor latency and resource usage)
+        - Behavioral drift detection (track changes in execution patterns)
+        - Multi-modal evaluation (response quality + execution behavior)
 
     Examples:
         Pure assertion-based monitoring (no LLM calls):
@@ -14442,41 +15529,126 @@ class GenAIEvalProfile:
         ...     tasks=[relevance_task, toxicity_task, quality_task]
         ... )
 
+        Trace assertion for behavioral validation:
+
+        >>> # Verify agent workflow execution order
+        >>> workflow_task = TraceAssertionTask(
+        ...     id="workflow_order",
+        ...     assertion=TraceAssertion.span_sequence([
+        ...         "validate_input",
+        ...         "call_llm",
+        ...         "process_output"
+        ...     ]),
+        ...     operator=ComparisonOperator.SequenceMatches,
+        ...     expected_value=True,
+        ...     description="Verify correct execution order"
+        ... )
+        >>>
+        >>> # Enforce performance SLA
+        >>> perf_task = TraceAssertionTask(
+        ...     id="performance_sla",
+        ...     assertion=TraceAssertion.trace_duration(),
+        ...     operator=ComparisonOperator.LessThan,
+        ...     expected_value=5000.0,  # 5 seconds
+        ...     description="Ensure response within 5s"
+        ... )
+        >>>
+        >>> # Verify no errors occurred
+        >>> error_task = TraceAssertionTask(
+        ...     id="no_errors",
+        ...     assertion=TraceAssertion.trace_error_count(),
+        ...     operator=ComparisonOperator.Equals,
+        ...     expected_value=0,
+        ...     description="Ensure error-free execution"
+        ... )
+        >>>
+        >>> profile = GenAIEvalProfile(
+        ...     config=config,
+        ...     tasks=[workflow_task, perf_task, error_task]
+        ... )
+
+        Combining all three task types:
+
+        >>> # Fast assertions first
+        >>> response_check = AssertionTask(
+        ...     id="not_empty",
+        ...     field_path="response",
+        ...     operator=ComparisonOperator.IsNotEmpty,
+        ...     expected_value=True,
+        ...     description="Response must not be empty"
+        ... )
+        >>>
+        >>> # Trace validation for execution behavior
+        >>> trace_check = TraceAssertionTask(
+        ...     id="verify_workflow",
+        ...     assertion=TraceAssertion.span_set([
+        ...         "validate_input",
+        ...         "call_llm",
+        ...         "process_output"
+        ...     ]),
+        ...     operator=ComparisonOperator.ContainsAll,
+        ...     expected_value=True,
+        ...     depends_on=["not_empty"],
+        ...     description="Ensure all workflow steps executed"
+        ... )
+        >>>
+        >>> # Deep LLM judge only if basic checks pass
+        >>> quality_judge = LLMJudgeTask(
+        ...     id="quality",
+        ...     prompt=quality_prompt,
+        ...     expected_value=8,
+        ...     field_path="score",
+        ...     operator=ComparisonOperator.GreaterThanOrEqual,
+        ...     depends_on=["not_empty", "verify_workflow"],
+        ...     description="Quality assessment after validation"
+        ... )
+        >>>
+        >>> profile = GenAIEvalProfile(
+        ...     config=config,
+        ...     tasks=[response_check, trace_check, quality_judge]
+        ... )
+
     Note:
-        - At least one task (assertion or LLM judge) is required
+        - At least one task (assertion, LLM judge, or trace assertion) is required
         - LLM judge tasks are automatically compiled into an internal Workflow
         - Task dependencies must form a valid DAG (no circular dependencies)
         - Execution order is optimized via topological sort
         - Independent tasks at the same level can execute in parallel
         - Failed tasks halt execution of dependent downstream tasks
+        - Trace assertions require traces to be available before evaluation
     """
 
     def __init__(
         self,
-        config: GenAIEvalConfig,
-        tasks: List[Union[AssertionTask, LLMJudgeTask]],
+        tasks: List[Union[AssertionTask, LLMJudgeTask, TraceAssertionTask]],
+        config: Optional[GenAIEvalConfig] = None,
+        alias: Optional[str] = None,
     ):
         """Initialize a GenAIEvalProfile for LLM evaluation and drift detection.
 
-        Creates a profile that combines assertion tasks and LLM judge tasks into
-        a unified evaluation framework. LLM judge tasks are automatically compiled
-        into an internal Workflow for execution on the Scouter server.
+        Creates a profile that combines assertion tasks, LLM judge tasks, and
+        trace assertion tasks into a unified evaluation framework. LLM judge tasks
+        are automatically compiled into an internal Workflow for execution on the
+        Scouter server.
 
         Args:
-            config (GenAIEvalConfig):
-                Configuration for the GenAI drift profile containing space, name,
-                version, sample rate, and alert settings.
-            tasks (List[Union[AssertionTask, LLMJudgeTask]]):
+            tasks (List[Union[AssertionTask, LLMJudgeTask, TraceAssertionTask]]):
                 List of evaluation tasks to include in the profile. Can contain
-                both AssertionTask and LLMJudgeTask instances. At least one task
-                (assertion or LLM judge) is required.
+                AssertionTask, LLMJudgeTask, and TraceAssertionTask instances.
+                At least one task (assertion, LLM judge, or trace assertion) is required.
+            config (Optional[GenAIEvalConfig]):
+                Configuration for the GenAI drift profile containing space, name,
+                version, sample rate, and alert settings. If not provided,
+                defaults will be used.
+            alias (Optional[str]):
+                Optional alias for the profile.
 
         Returns:
             GenAIEvalProfile: Configured profile ready for GenAI drift monitoring.
 
         Raises:
             ProfileError: If validation fails due to:
-                - Empty task lists (both assertion_tasks and llm_judge_tasks are None/empty)
+                - Empty task list (no tasks provided)
                 - Circular dependencies in task dependency graph
                 - Invalid task configurations (malformed prompts, missing fields, etc.)
 
@@ -14498,11 +15670,29 @@ class GenAIEvalProfile:
             ... ]
             >>> profile = GenAIEvalProfile(config, tasks=judges)
 
+            Trace assertion-only profile:
+
+            >>> trace_tasks = [
+            ...     TraceAssertionTask(
+            ...         id="workflow_order",
+            ...         assertion=TraceAssertion.span_sequence([...]),
+            ...         operator=ComparisonOperator.SequenceMatches,
+            ...         expected_value=True
+            ...     ),
+            ...     TraceAssertionTask(
+            ...         id="performance",
+            ...         assertion=TraceAssertion.trace_duration(),
+            ...         operator=ComparisonOperator.LessThan,
+            ...         expected_value=5000.0
+            ...     )
+            ... ]
+            >>> profile = GenAIEvalProfile(config, tasks=trace_tasks)
+
             Hybrid profile:
 
             >>> profile = GenAIEvalProfile(
             ...     config=config,
-            ...     tasks=assertions + judges
+            ...     tasks=assertions + judges + trace_tasks
             ... )
         """
 
@@ -14544,6 +15734,16 @@ class GenAIEvalProfile:
         """
 
     @property
+    def trace_assertion_tasks(self) -> List[TraceAssertionTask]:
+        """List of trace assertion tasks for behavioral validation.
+
+        Trace assertions analyze distributed traces to validate execution behavior,
+        performance characteristics, and service interactions. They operate on
+        span-level properties (ordering, timing, attributes) without additional
+        LLM calls, providing efficient behavioral monitoring.
+        """
+
+    @property
     def scouter_version(self) -> str:
         """Scouter version used to create this profile.
 
@@ -14570,6 +15770,17 @@ class GenAIEvalProfile:
         Example:
             >>> if profile.has_assertions():
             ...     print("Profile includes fast assertion checks")
+        """
+
+    def has_trace_assertions(self) -> bool:
+        """Check if profile contains trace assertion tasks.
+
+        Returns:
+            bool: True if trace_assertion_tasks is non-empty, False otherwise.
+
+        Example:
+            >>> if profile.has_trace_assertions():
+            ...     print("Profile includes trace-based behavioral validation")
         """
 
     def get_execution_plan(self) -> List[List[str]]:
@@ -14741,6 +15952,10 @@ class GenAIEvalProfile:
             ... )
         """
 
+    @property
+    def alias(self) -> Optional[str]:
+        """Optional alias for the profile"""
+
 class Drifter:
     def __init__(self) -> None:
         """Instantiate Rust Drifter class that is
@@ -14868,7 +16083,10 @@ class Drifter:
         """
 
     def create_genai_drift_profile(
-        self, config: GenAIEvalConfig, tasks: Sequence[LLMJudgeTask | AssertionTask]
+        self,
+        config: GenAIEvalConfig,
+        tasks: Sequence[LLMJudgeTask | AssertionTask | TraceAssertionTask],
+        alias: Optional[str] = None,
     ) -> GenAIEvalProfile:
         """Initialize a GenAIEvalProfile for LLM evaluation and drift detection.
 
@@ -14891,6 +16109,8 @@ class Drifter:
                 List of evaluation tasks to include in the profile. Can contain
                 both AssertionTask and LLMJudgeTask instances. At least one task
                 (assertion or LLM judge) is required.
+            alias (Optional[str]):
+                Optional alias for the profile.
 
         Returns:
             GenAIEvalProfile: Configured profile ready for GenAI drift monitoring.
@@ -17215,6 +18435,20 @@ class OnnxSchema:
     def feature_names(self) -> List[str]:
         """Return the feature names and order for onnx."""
 
+class PromptSaveKwargs:
+    """Additional kwargs to pass when registering a PromptCard"""
+
+    def __init__(
+        self,
+        drift: DriftArgs,
+    ) -> None:
+        """Optional arguments to pass to save_prompt
+
+        Args:
+            drift (DriftArgs):
+                Drift args to use when saving and registering a prompt.
+        """
+
 class ModelSaveKwargs:
     def __init__(
         self,
@@ -19265,7 +20499,7 @@ class PromptCard:
         version: Optional[str] = None,
         uid: Optional[str] = None,
         tags: List[str] = [],
-        drift_profile: Optional[Dict[str, GenAIEvalProfile]] = None,
+        eval_profile: Optional[Dict[str, GenAIEvalProfile] | List[GenAIEvalProfile] | GenAIEvalProfile] = None,
     ) -> None:
         """Creates a `PromptCard`.
 
@@ -19289,8 +20523,8 @@ class PromptCard:
                 Tags to associate with `PromptCard`. Can be a dictionary of strings or
                 a `Tags` object.
             drift_profile:
-                Drift profile(s) to associate with the model. Must be a dictionary of
-                alias and drift profile. Currently supports GenAI evaluation profiles.
+                Drift profile(s) to associate with the prompt. Must be a dictionary of
+                alias and drift profile, a list of drift profiles with aliases, or a single drift profile with an alias.
         Example:
         ```python
         from opsml import Prompt, PromptCard, CardRegistry, RegistryType
@@ -19409,8 +20643,8 @@ class PromptCard:
     def create_eval_profile(
         self,
         alias: str,
-        config: GenAIEvalConfig,
-        tasks: Sequence[LLMJudgeTask | AssertionTask],
+        tasks: Sequence[LLMJudgeTask | AssertionTask | TraceAssertionTask],
+        config: Optional[GenAIEvalConfig] = None,
     ) -> None:
         """Initialize a GenAIEvalProfile for LLM evaluation and drift detection.
 
@@ -19428,13 +20662,14 @@ class PromptCard:
         Args:
             alias (str):
                 Unique alias for the drift profile within the prompt card.
-            config (GenAIEvalConfig):
+
+            tasks (List[LLMJudgeTask | AssertionTask | TraceAssertionTask]):
+                List of evaluation tasks to include in the profile. Can contain
+                a mix of LLM judge tasks, assertion tasks, and trace assertion tasks.
+
+            config (GenAIEvalConfig | None):
                 The configuration for the GenAI drift profile containing space, name,
                 version, and alert settings.
-            tasks (List[LLMJudgeTask | AssertionTask]):
-                List of evaluation tasks to include in the profile. Can contain
-                both AssertionTask and LLMJudgeTask instances. At least one task
-                (assertion or LLM judge) is required.
 
         Returns:
             GenAIEvalProfile: Configured profile ready for GenAI drift monitoring.
@@ -19897,7 +21132,7 @@ class CardRegistry(Generic[CardT]):
         version_type: VersionType = VersionType.Minor,
         pre_tag: Optional[str] = None,
         build_tag: Optional[str] = None,
-        save_kwargs: Optional[ModelSaveKwargs | DataSaveKwargs] = None,
+        save_kwargs: Optional[ModelSaveKwargs | DataSaveKwargs | PromptSaveKwargs] = None,
     ) -> None:
         """Register a Card
 
@@ -20209,6 +21444,7 @@ class PromptCardRegistry(CardRegistry):
         version_type: VersionType = VersionType.Minor,
         pre_tag: Optional[str] = None,
         build_tag: Optional[str] = None,
+        save_kwargs: Optional[PromptSaveKwargs] = None,
     ) -> None:
         """Register a Card
 
@@ -20221,6 +21457,8 @@ class PromptCardRegistry(CardRegistry):
                 Optional pre tag to associate with the version.
             build_tag (str):
                 Optional build_tag to associate with the version.
+            save_kwargs (PromptSaveKwargs):
+                Optional SaveKwargs to pass to the Card interface
 
         """
 
@@ -21290,6 +22528,7 @@ __all__ = [
     "ActiveSpan",
     "Agent",
     "AgentResponse",
+    "AggregationType",
     "Alert",
     "AlertCondition",
     "AlertDispatchType",
@@ -21309,6 +22548,9 @@ __all__ = [
     "ApiSpecType",
     "AppState",
     "ArrowData",
+    "AssertionResult",
+    "AssertionResults",
+    "AssertionTask",
     "Attribute",
     "Audio",
     "AudioParam",
@@ -21360,6 +22602,7 @@ __all__ = [
     "ColumnSplit",
     "CommonCrons",
     "CommonKwargs",
+    "ComparisonOperator",
     "CompletionTokenDetails",
     "ComputeEnvironment",
     "ComputerUse",
@@ -21417,6 +22660,7 @@ __all__ = [
     "EqualWidthBinning",
     "EvalMetrics",
     "EvaluationConfig",
+    "EvaluationTaskType",
     "EventDetails",
     "ExecutableCode",
     "Experiment",
@@ -21504,6 +22748,7 @@ __all__ = [
     "InputAudioData",
     "Interval",
     "KafkaConfig",
+    "LLMJudgeTask",
     "Language",
     "LatLng",
     "LightGBMModel",
@@ -21523,7 +22768,6 @@ __all__ = [
     "Metadata",
     "Metric",
     "Metrics",
-    "MockConfig",
     "Modality",
     "ModalityTokenCount",
     "Mode",
@@ -21581,6 +22825,7 @@ __all__ = [
     "Prompt",
     "PromptCard",
     "PromptFeedback",
+    "PromptSaveKwargs",
     "PromptTokenDetails",
     "Provider",
     "PsiAlertConfig",
@@ -21645,8 +22890,10 @@ __all__ = [
     "SlackDispatchConfig",
     "SourceFlaggingUri",
     "SpanEvent",
+    "SpanFilter",
     "SpanKind",
     "SpanLink",
+    "SpanStatus",
     "SpcAlert",
     "SpcAlertConfig",
     "SpcAlertRule",
@@ -21678,6 +22925,7 @@ __all__ = [
     "TaskList",
     "TaskStatus",
     "TaskType",
+    "TasksFile",
     "TensorFlowModel",
     "TerrellScott",
     "TestSpanExporter",
@@ -21700,6 +22948,8 @@ __all__ = [
     "TopLogProbs",
     "TorchData",
     "TorchModel",
+    "TraceAssertion",
+    "TraceAssertionTask",
     "TraceBaggageRecord",
     "TraceBaggageResponse",
     "TraceFilters",
