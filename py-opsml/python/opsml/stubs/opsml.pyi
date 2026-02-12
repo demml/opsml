@@ -1,3 +1,29 @@
+#### begin imports ####
+
+import datetime
+from pathlib import Path
+from typing import (
+    Any,
+    Dict,
+    Generic,
+    List,
+    Optional,
+    Sequence,
+    TypeAlias,
+    TypeVar,
+    Union,
+    overload,
+)
+
+from .genai.potato import *
+from .scouter.evaluate import *
+from .scouter.scouter import *
+
+CardInterfaceType: TypeAlias = Union["DataInterface", "ModelInterface"]
+ServiceCardInterfaceType: TypeAlias = Dict[str, Union["DataInterface", "ModelInterface"]]
+LoadInterfaceType: TypeAlias = Union[ServiceCardInterfaceType, ServiceCardInterfaceType]
+#### end of imports ####
+
 class DriftConfig:
     def __init__(
         self,
@@ -1529,6 +1555,20 @@ class OnnxSchema:
     @property
     def feature_names(self) -> List[str]:
         """Return the feature names and order for onnx."""
+
+class PromptSaveKwargs:
+    """Additional kwargs to pass when registering a PromptCard"""
+
+    def __init__(
+        self,
+        drift: DriftArgs,
+    ) -> None:
+        """Optional arguments to pass to save_prompt
+
+        Args:
+            drift (DriftArgs):
+                Drift args to use when saving and registering a prompt.
+        """
 
 class ModelSaveKwargs:
     def __init__(
@@ -3580,7 +3620,7 @@ class PromptCard:
         version: Optional[str] = None,
         uid: Optional[str] = None,
         tags: List[str] = [],
-        eval_profile: Optional[GenAIEvalProfile] = None,
+        eval_profile: Optional[Dict[str, GenAIEvalProfile] | List[GenAIEvalProfile] | GenAIEvalProfile] = None,
     ) -> None:
         """Creates a `PromptCard`.
 
@@ -3603,9 +3643,9 @@ class PromptCard:
             tags (List[str]):
                 Tags to associate with `PromptCard`. Can be a dictionary of strings or
                 a `Tags` object.
-            eval_profile (GenAIEvalProfile | None):
-                Optional GenAIEvalProfile to associate with the PromptCard. This can be used to
-                automatically create a drift profile for the prompt when it is registered.
+            drift_profile:
+                Drift profile(s) to associate with the prompt. Must be a dictionary of
+                alias and drift profile, a list of drift profiles with aliases, or a single drift profile with an alias.
         Example:
         ```python
         from opsml import Prompt, PromptCard, CardRegistry, RegistryType
@@ -3724,8 +3764,8 @@ class PromptCard:
     def create_eval_profile(
         self,
         alias: str,
-        config: GenAIEvalConfig,
-        tasks: Sequence[LLMJudgeTask | AssertionTask],
+        tasks: Sequence[LLMJudgeTask | AssertionTask | TraceAssertionTask],
+        config: Optional[GenAIEvalConfig] = None,
     ) -> None:
         """Initialize a GenAIEvalProfile for LLM evaluation and drift detection.
 
@@ -3743,13 +3783,14 @@ class PromptCard:
         Args:
             alias (str):
                 Unique alias for the drift profile within the prompt card.
-            config (GenAIEvalConfig):
+
+            tasks (List[LLMJudgeTask | AssertionTask | TraceAssertionTask]):
+                List of evaluation tasks to include in the profile. Can contain
+                a mix of LLM judge tasks, assertion tasks, and trace assertion tasks.
+
+            config (GenAIEvalConfig | None):
                 The configuration for the GenAI drift profile containing space, name,
                 version, and alert settings.
-            tasks (List[LLMJudgeTask | AssertionTask]):
-                List of evaluation tasks to include in the profile. Can contain
-                both AssertionTask and LLMJudgeTask instances. At least one task
-                (assertion or LLM judge) is required.
 
         Returns:
             GenAIEvalProfile: Configured profile ready for GenAI drift monitoring.
@@ -3777,32 +3818,20 @@ class PromptCard:
         """
 
     @property
-    def eval_profile(self) -> Optional[GenAIEvalProfile]:
-        """Return the GenAIEvalProfile associated with the PromptCard, if it exists.
+    def eval_profile(self) -> DriftProfileMap:
+        """Return the drift profile map from the model interface.
 
         Returns:
-            Optional[GenAIEvalProfile]: The evaluation profile for the prompt card, or None if not set.
+            DriftProfileMap
         """
 
     @eval_profile.setter
-    def eval_profile(self, eval_profile: GenAIEvalProfile) -> None:
-        """Set the eval profile for the prompt card.
+    def eval_profile(self, eval_profile: DriftProfileMap) -> None:
+        """Set the drift profile map for the prompt card.
 
         Args:
-            eval_profile (GenAIEvalProfile):
-                The eval profile to set.
-        """
-
-    @staticmethod
-    def from_path(path: Path) -> "PromptCard":
-        """Load a PromptCard from a given path.
-
-        Args:
-            path (Path):
-                The path to load the PromptCard from.
-        Returns:
-            PromptCard:
-                The loaded PromptCard object.
+            eval_profile (DriftProfileMap):
+                The drift profile map to set.
         """
 
 class Card:
@@ -4224,7 +4253,7 @@ class CardRegistry(Generic[CardT]):
         version_type: VersionType = VersionType.Minor,
         pre_tag: Optional[str] = None,
         build_tag: Optional[str] = None,
-        save_kwargs: Optional[ModelSaveKwargs | DataSaveKwargs] = None,
+        save_kwargs: Optional[ModelSaveKwargs | DataSaveKwargs | PromptSaveKwargs] = None,
     ) -> None:
         """Register a Card
 
@@ -4536,6 +4565,7 @@ class PromptCardRegistry(CardRegistry):
         version_type: VersionType = VersionType.Minor,
         pre_tag: Optional[str] = None,
         build_tag: Optional[str] = None,
+        save_kwargs: Optional[PromptSaveKwargs] = None,
     ) -> None:
         """Register a Card
 
@@ -4548,6 +4578,8 @@ class PromptCardRegistry(CardRegistry):
                 Optional pre tag to associate with the version.
             build_tag (str):
                 Optional build_tag to associate with the version.
+            save_kwargs (PromptSaveKwargs):
+                Optional SaveKwargs to pass to the Card interface
 
         """
 
@@ -5677,6 +5709,7 @@ __all__ = [
     "CatBoostModel",
     "OnnxSession",
     "TensorFlowModel",
+    "PromptSaveKwargs",
     "ModelLoadKwargs",
     "ModelSaveKwargs",
     "OnnxSchema",
