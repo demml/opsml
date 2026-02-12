@@ -1,21 +1,30 @@
 # mypy: disable-error-code="attr-defined"
+
 from ..._opsml import (
+    AggregationType,
     AlignedEvalResult,
     AssertionTask,
     ComparisonOperator,
     EvaluationConfig,
+    EvaluationTaskType,
     GenAIEvalConfig,
     GenAIEvalDataset,
-    GenAIEvalProfile,
     GenAIEvalRecord,
     GenAIEvalResults,
     GenAIEvalResultSet,
     GenAIEvalSet,
     GenAIEvalTaskResult,
     LLMJudgeTask,
+    SpanFilter,
+    SpanStatus,
+    TasksFile,
+    TraceAssertion,
+    TraceAssertionTask,
+    execute_trace_assertion_tasks,
 )
 
 __all__ = [
+    "GenAIEvalConfig",
     "GenAIEvalResults",
     "EvaluationConfig",
     "GenAIEvalDataset",
@@ -27,6 +36,12 @@ __all__ = [
     "LLMJudgeTask",
     "AssertionTask",
     "ComparisonOperator",
-    "GenAIEvalProfile",
-    "GenAIEvalConfig",
+    "TraceAssertion",
+    "TraceAssertionTask",
+    "SpanStatus",
+    "AggregationType",
+    "SpanFilter",
+    "execute_trace_assertion_tasks",
+    "TasksFile",
+    "EvaluationTaskType",
 ]

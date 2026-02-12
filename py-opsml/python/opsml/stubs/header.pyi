@@ -8,6 +8,7 @@ from typing import (
     Callable,
     Dict,
     Generic,
+    Iterator,
     List,
     Literal,
     Optional,
@@ -24,8 +25,8 @@ from typing import (
 from typing_extensions import TypeVar
 
 SerializedType: TypeAlias = Union[str, int, float, dict, list]
-CardInterfaceType: TypeAlias = Union["DataInterface", "ModelInterface"]
-ServiceCardInterfaceType: TypeAlias = Dict[str, Union["DataInterface", "ModelInterface"]]
+CardInterfaceType: TypeAlias = Union["DataInterface", "ModelInterface"]  # type: ignore[name-defined]
+ServiceCardInterfaceType: TypeAlias = Dict[str, Union["DataInterface", "ModelInterface"]]  # type: ignore[name-defined]
 LoadInterfaceType: TypeAlias = Union[ServiceCardInterfaceType, ServiceCardInterfaceType]
 Context: TypeAlias = Union[Dict[str, Any], "BaseModel"]
 

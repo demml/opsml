@@ -1,10 +1,9 @@
 from pathlib import Path
-import profile
 from typing import cast
 from opsml.card import CardRegistry, RegistryType, PromptCard
 from opsml.types import DriftArgs
 from opsml.scouter.evaluate import GenAIEvalConfig, LLMJudgeTask, ComparisonOperator
-from opsml.genai import Prompt, Provider, ModelSettings
+from opsml.genai import Prompt, Provider
 from opsml.genai.google import GeminiSettings
 from opsml.mock import OpsmlTestServer, LLMTestServer
 import pytest
@@ -12,7 +11,7 @@ from tests.conftest import WINDOWS_EXCLUDE
 
 
 @pytest.mark.skipif(WINDOWS_EXCLUDE, reason="skipping")
-def _test_promptcard_crud(reformulation_evaluation_prompt: Prompt) -> None:
+def test_promptcard_crud(reformulation_evaluation_prompt: Prompt) -> None:
     with OpsmlTestServer(cleanup=False):
         with LLMTestServer():
             reg: CardRegistry[PromptCard] = CardRegistry(RegistryType.Prompt)

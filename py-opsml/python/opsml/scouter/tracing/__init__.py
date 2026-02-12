@@ -1,17 +1,23 @@
-# pylint: disable=dangerous-default-value
+# pylint: disable=dangerous-default-value,implicit-str-concat
 # mypy: disable-error-code="attr-defined"
 
 import functools
 from typing import (
+    TYPE_CHECKING,
     Any,
     AsyncGenerator,
     Awaitable,
     Callable,
+    Collection,
     Generator,
     List,
+    Mapping,
     Optional,
     ParamSpec,
+    Sequence,
+    TypeAlias,
     TypeVar,
+    Union,
     cast,
 )
 
@@ -38,8 +44,60 @@ from ..._opsml import (
     shutdown_tracer,
 )
 
+SerializedType: TypeAlias = Union[str, int, float, dict, list]
 P = ParamSpec("P")
 R = TypeVar("R")
+HAS_OPENTELEMETRY = True
+if TYPE_CHECKING:
+    from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
+    from opentelemetry.trace import Tracer as _OtelTracer
+    from opentelemetry.trace import TracerProvider as _OtelTracerProvider
+    from opentelemetry.trace import set_tracer_provider
+    from opentelemetry.util.types import Attributes
+else:
+    # Try to import OpenTelemetry, but provide fallbacks if not available
+    try:
+        from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
+        from opentelemetry.trace import get_tracer_provider, set_tracer_provider
+
+        HAS_OPENTELEMETRY = True
+    except ImportError:
+        HAS_OPENTELEMETRY = False
+
+        # Provide stub base class when OpenTelemetry is not installed
+        class BaseInstrumentor:
+            """Stub base class when OpenTelemetry is not available."""
+
+            def instrument(self, **kwargs):
+                raise ImportError("OpenTelemetry is not installed. Install with: " "pip install opsml[opentelemetry]")
+
+            def uninstrument(self, **kwargs):
+                raise ImportError("OpenTelemetry is not installed. Install with: " "pip install opsml[opentelemetry]")
+
+        def get_tracer_provider():
+            raise ImportError("OpenTelemetry is not installed. Install with: " "pip install opsml[opentelemetry]")
+
+        def set_tracer_provider(provider):
+            raise ImportError("OpenTelemetry is not installed. Install with: " "pip install opsml[opentelemetry]")
+
+    class _OtelTracerProvider:
+        pass
+
+    class _OtelTracer:
+        pass
+
+    AttributeValue = Union[
+        str,
+        bool,
+        int,
+        float,
+        Sequence[str],
+        Sequence[bool],
+        Sequence[int],
+        Sequence[float],
+    ]
+
+    Attributes = Optional[Mapping[str, AttributeValue]]
 
 
 def set_output(
@@ -286,6 +344,221 @@ def get_tracer(name: str) -> Tracer:
     return Tracer(name)
 
 
+class TracerProvider(_OtelTracerProvider):
+    """
+    Python wrapper around PyTracerProvider that returns Python Tracer instances.
+
+    This wrapper ensures that get_tracer() returns the Python Tracer class
+    with decorator support, not the Rust BaseTracer.
+    """
+
+    def __init__(
+        self,
+        transport_config: Optional[Any] = None,
+        exporter: Optional[Any] = None,
+        batch_config: Optional[BatchConfig] = None,
+        sample_ratio: Optional[float] = None,
+        scouter_queue: Optional[Any] = None,
+    ):
+        """Initialize TracerProvider and underlying Rust tracer."""
+
+        self.transport_config = transport_config
+        self.exporter = exporter
+        self.batch_config = batch_config
+        self.sample_ratio = sample_ratio
+        self.scouter_queue = scouter_queue
+
+    def get_tracer(
+        self,
+        instrumenting_module_name: str,
+        instrumenting_library_version: Optional[str] = None,
+        schema_url: Optional[str] = None,
+        attributes: Optional[Attributes] = None,
+    ) -> _OtelTracer:
+        """
+        Get a Python Tracer instance with decorator support.
+
+        This method returns the Python Tracer class that wraps BaseTracer,
+        providing the @tracer.span() decorator functionality.
+
+        Args:
+            instrumenting_module_name: Module name (typically __name__)
+            instrumenting_library_version: Optional version string
+            schema_url: Optional schema URL
+            attributes: Optional attributes dict
+
+        Returns:
+            Tracer: Python Tracer instance with decorator support
+        """
+        # Return the Python Tracer wrapper, not the Rust BaseTracer
+
+        return cast(
+            _OtelTracer,
+            init_tracer(
+                service_name=instrumenting_module_name,
+                scope=instrumenting_library_version,  # type: ignore
+                transport_config=self.transport_config,
+                exporter=self.exporter,
+                batch_config=self.batch_config,
+                sample_ratio=self.sample_ratio,
+                scouter_queue=self.scouter_queue,
+                schema_url=schema_url,
+                attributes=attributes,  # type: ignore
+            ),
+        )
+
+    def force_flush(self, timeout_millis: int = 30000) -> bool:
+        """Force flush all pending spans."""
+        flush_tracer()
+        return True
+
+    def shutdown(self) -> None:
+        """Shutdown the tracer provider."""
+        shutdown_tracer()
+
+
+class ScouterInstrumentor(BaseInstrumentor):
+    """
+    OpenTelemetry-compatible instrumentor for Scouter tracing.
+
+    Provides a standard instrument() interface that integrates with
+    the OpenTelemetry SDK while using Scouter's Rust-based tracer.
+
+    Examples:
+        Basic usage:
+        >>> from scouter.tracing import ScouterInstrumentor
+        >>> from scouter import BatchConfig, GrpcConfig
+        >>>
+        >>> instrumentor = ScouterInstrumentor()
+        >>> instrumentor.instrument(
+        ...     transport_config=GrpcConfig(),
+        ...     batch_config=BatchConfig(scheduled_delay_ms=200),
+        ... )
+
+        Auto-instrument on import:
+        >>> from scouter.tracing import ScouterInstrumentor
+        >>> ScouterInstrumentor().instrument()
+
+        Cleanup:
+        >>> instrumentor.uninstrument()
+    """
+
+    _instance: Optional["ScouterInstrumentor"] = None
+    _provider: Optional[TracerProvider] = None
+
+    def __new__(cls) -> "ScouterInstrumentor":
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+        return cls._instance
+
+    def instrumentation_dependencies(self) -> Collection[str]:
+        """Return list of packages required for instrumentation."""
+        return []
+
+    def _instrument(self, **kwargs) -> None:
+        """Initialize Scouter tracing and set as global provider."""
+        if not HAS_OPENTELEMETRY:
+            raise ImportError(
+                "OpenTelemetry is required for instrumentation. " "Install with: pip install opsml[opentelemetry]"
+            )
+
+        if self._provider is not None:
+            return
+
+        tracer_provider = kwargs.pop("tracer_provider", None)
+
+        if tracer_provider is not None:
+            self._provider = tracer_provider
+        else:
+            self._provider = TracerProvider(
+                transport_config=kwargs.pop("transport_config", None),
+                exporter=kwargs.pop("exporter", None),
+                batch_config=kwargs.pop("batch_config", None),
+                sample_ratio=kwargs.pop("sample_ratio", None),
+                scouter_queue=kwargs.pop("scouter_queue", None),
+            )
+
+        from opentelemetry import trace
+
+        trace._TRACER_PROVIDER_SET_ONCE._done = False  # pylint: disable=protected-access
+        trace._TRACER_PROVIDER_SET_ONCE._lock = __import__("threading").Lock()  # pylint: disable=protected-access
+        set_tracer_provider(self._provider)
+
+    def _uninstrument(self, **kwargs) -> None:
+        """Shutdown Scouter tracing and reset global provider."""
+        if not HAS_OPENTELEMETRY:
+            return
+
+        if self._provider is None:
+            return
+
+        self._provider.shutdown()
+
+        from opentelemetry import trace
+
+        trace._TRACER_PROVIDER = None  # pylint: disable=protected-access
+        trace._TRACER_PROVIDER_SET_ONCE._done = False  # pylint: disable=protected-access
+
+        self._provider = None
+
+    @property
+    def is_instrumented(self) -> bool:
+        """Check if instrumentation is active."""
+        return self._provider is not None
+
+
+# Convenience function matching common pattern
+def instrument(
+    transport_config: Optional[Any] = None,
+    exporter: Optional[Any] = None,
+    batch_config: Optional[BatchConfig] = None,
+    sample_ratio: Optional[float] = None,
+    scouter_queue: Optional[Any] = None,
+) -> None:
+    """
+    Convenience function to instrument with Scouter tracing.
+
+    This is equivalent to:
+        ScouterInstrumentor().instrument(**kwargs)
+
+    Args:
+        transport_config: Export configuration (OtelExportConfig, etc.)
+        exporter: Custom span exporter instance
+        batch_config: Batch processing configuration
+        sample_ratio: Sampling ratio (0.0 to 1.0)
+        scouter_queue: Optional ScouterQueue for buffering
+
+    Examples:
+        >>> from scouter.tracing import instrument
+        >>> from scouter import BatchConfig, OtelExportConfig, OtelProtocol
+        >>>
+        >>> instrument(
+        ...     transport_config=OtelExportConfig(
+        ...         endpoint="http://localhost:4318/v1/traces",
+        ...         protocol=OtelProtocol.HttpProtobuf,
+        ...     ),
+        ...     batch_config=BatchConfig(scheduled_delay_ms=200),
+        ... )
+    """
+    ScouterInstrumentor().instrument(
+        transport_config=transport_config,
+        exporter=exporter,
+        batch_config=batch_config,
+        sample_ratio=sample_ratio,
+        scouter_queue=scouter_queue,
+    )
+
+
+def uninstrument() -> None:
+    """
+    Convenience function to uninstrument Scouter tracing.
+
+    This is equivalent to:
+        ScouterInstrumentor().uninstrument()
+    """
+    ScouterInstrumentor().uninstrument()
+
+
 __all__ = [
     "Tracer",
     "get_tracer",
@@ -307,4 +580,7 @@ __all__ = [
     "shutdown_tracer",
     "get_tracing_headers_from_current_span",
     "get_current_active_span",
+    "ScouterInstrumentor",
+    "instrument",
+    "uninstrument",
 ]
