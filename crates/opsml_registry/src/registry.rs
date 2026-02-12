@@ -2,6 +2,7 @@ use crate::error::RegistryError;
 use crate::registries::card::OpsmlCardRegistry;
 use crate::utils::verify_card_rs;
 use crate::utils::{check_if_card, download_card, upload_card_artifacts, verify_card};
+use crate::utils::{upload_drift_profile_map, upload_profile};
 use const_format::concatcp;
 use opsml_cards::traits::OpsmlCard;
 use opsml_colors::Colorize;
@@ -11,9 +12,7 @@ use opsml_types::*;
 use opsml_types::{cards::CardTable, contracts::*};
 use opsml_utils::{clean_string, unwrap_pystring};
 use pyo3::prelude::*;
-use pyo3::types::PyList;
 use scouter_client::try_set_span_attribute;
-use scouter_client::ProfileRequest;
 use scouter_client::SCOUTER_TAG_PREFIX;
 use std::path::PathBuf;
 use tempfile::TempDir;
@@ -544,41 +543,29 @@ impl CardRegistry {
         // update drift config args before uploading profiles to scouter and saving
         card.call_method0("_update_drift_config_args")?;
 
-        let drift_profiles = match registry_type {
-            RegistryType::Model => card.getattr("drift_profile")?,
-            RegistryType::Prompt => card.getattr("eval_profile")?,
+        match registry_type {
+            RegistryType::Model => {
+                let profile = card.getattr("drift_profile")?;
+                if !profile.is_none() {
+                    upload_drift_profile_map(&profile, drift_args, registry)?
+                }
+            }
+            RegistryType::Prompt => {
+                let profile = card.getattr("eval_profile")?;
+                if !profile.is_none() {
+                    let uid = upload_profile(&profile, drift_args, registry)?;
+                    card.call_method1("_update_eval_uid", (uid,))
+                        .inspect_err(|e| {
+                            error!("Failed to set eval profile uid: {e}");
+                        })?;
+                }
+            }
             _ => {
                 return Err(RegistryError::InvalidRegistryType(
                     "Expected Model or Prompt registry type".to_string(),
                 ))
             }
         };
-        let binding = drift_profiles.call_method0("values")?;
-        let collected_profiles = binding
-            .cast::<PyList>()
-            .inspect_err(|e| error!("Failed to downcast drift profiles: {e}"))?;
-
-        for profile in collected_profiles.iter() {
-            let mut profile_request = profile
-                .call_method0("create_profile_request")?
-                .extract::<ProfileRequest>()?;
-
-            // set drift args if provided
-            if let Some(drift_args) = &drift_args {
-                profile_request.active = drift_args.active;
-                profile_request.deactivate_others = drift_args.deactivate_others;
-            }
-
-            let registered_response = registry.insert_scouter_profile(&profile_request)?;
-            debug!("Successfully uploaded scouter profile");
-
-            // Need to update the drift profile.config.uid with the registered profile uid
-            profile
-                .setattr("uid", registered_response.uid)
-                .inspect_err(|e| {
-                    error!("Failed to set drift profile uid: {e}");
-                })?;
-        }
 
         Ok(())
     }

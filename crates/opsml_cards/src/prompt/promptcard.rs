@@ -1,6 +1,7 @@
 use crate::error::CardError;
 use crate::utils::BaseArgs;
 use chrono::{DateTime, Utc};
+use opsml_crypt::error;
 use opsml_types::contracts::{CardRecord, PromptCardClientRecord};
 use opsml_types::DriftProfileUri;
 use opsml_types::{RegistryType, SaveName, Suffix};
@@ -218,7 +219,6 @@ impl PromptCard {
 
     #[pyo3(name = "_update_drift_config_args")]
     fn update_drift_config_args(&mut self) -> Result<(), CardError> {
-        // if eval_profiles is empty, return
         if let Some(profile) = &mut self.eval_profile {
             profile.config.name = self.name.clone();
             profile.config.space = self.space.clone();
@@ -226,6 +226,20 @@ impl PromptCard {
         }
 
         Ok(())
+    }
+
+    #[pyo3(name = "_update_eval_uid")]
+    fn update_eval_uid(&mut self, uid: String) -> Result<(), CardError> {
+        if let Some(profile) = &mut self.eval_profile {
+            profile.config.uid = uid;
+        }
+
+        Ok(())
+    }
+
+    #[staticmethod]
+    pub fn from_path(path: PathBuf) -> Result<Self, CardError> {
+        deserialize_from_path(path)
     }
 }
 
@@ -239,16 +253,21 @@ pub struct EvaluationConfig {
 #[derive(Debug, Deserialize)]
 pub struct PromptConfig {
     pub prompt: Prompt,
+    #[serde(default)]
     pub space: Option<String>,
+    #[serde(default)]
     pub name: Option<String>,
+    #[serde(default)]
     pub version: Option<String>,
+    #[serde(default)]
     pub tags: Option<Vec<String>>,
+    #[serde(default)]
     pub evaluation: Option<EvaluationConfig>,
 }
 
 impl PromptConfig {
     pub fn into_promptcard(self) -> Result<PromptCard, CardError> {
-        let mut card = PromptCard::new_rs(
+        let card = PromptCard::new_rs(
             self.prompt,
             self.space.as_deref(),
             self.name.as_deref(),
@@ -257,13 +276,13 @@ impl PromptConfig {
             None,
         )?;
 
-        if let Some(evaluation) = self.evaluation {
-            let config = evaluation.config.unwrap_or_default();
-            let tasks: AssertionTasks = AssertionTasks::from_tasks_file(evaluation.tasks);
-            let profile =
-                GenAIEvalProfile::build_from_parts(config, tasks, Some(evaluation.alias))?;
-            card.eval_profile = Some(profile);
-        }
+        // let Some(evaluation) = self.evaluation {
+        //  let config = evaluation.config.unwrap_or_default();
+        //  let tasks: AssertionTasks = AssertionTasks::from_tasks_file(evaluation.tasks);
+        //  let profile =
+        //      GenAIEvalProfile::build_from_parts(config, tasks, Some(evaluation.alias))?;
+        //  card.eval_profile = Some(profile);
+        //}
 
         Ok(card)
     }
@@ -302,7 +321,13 @@ impl<'de> Deserialize<'de> for PromptCard {
 
         match format {
             PromptCardFormat::Generic(config) => {
-                config.into_promptcard().map_err(serde::de::Error::custom)
+                debug!("Deserialized PromptCard format: Generic");
+                config
+                    .into_promptcard()
+                    .inspect_err(|e| {
+                        error!("Failed to convert PromptConfig to PromptCard: {e}");
+                    })
+                    .map_err(serde::de::Error::custom)
             }
             PromptCardFormat::Full(internal) => Ok(PromptCard {
                 prompt: internal.prompt,
@@ -373,19 +398,19 @@ impl PromptCard {
         let alias = profile
             .alias
             .clone()
-            .unwrap_or_else(|| "prompt_eval".to_string());
+            .unwrap_or_else(|| "eval_profile".to_string());
 
         let mut drift_url_map = HashMap::new();
         let save_dir = PathBuf::from(SaveName::Evaluation);
 
-        let relative_path = save_dir.with_extension(Suffix::Json);
+        let relative_path = save_dir.join(alias.clone()).with_extension(Suffix::Json);
         let full_path = path.join(&relative_path);
 
         let drift_type = DriftType::GenAI;
         profile.save_to_json(Some(full_path))?;
 
         drift_url_map.insert(
-            alias.to_string(),
+            alias,
             DriftProfileUri {
                 root_dir: save_dir.clone(),
                 uri: relative_path,
@@ -427,7 +452,6 @@ impl PromptCard {
                     let profile = GenAIEvalProfile::model_validate_json(file);
                     self.eval_profile = Some(profile);
                 }
-
                 _ => {
                     error!(
                         "PromptCard does not support drift type: {:?}",

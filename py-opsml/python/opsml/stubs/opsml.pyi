@@ -3793,6 +3793,18 @@ class PromptCard:
                 The eval profile to set.
         """
 
+    @staticmethod
+    def from_path(path: Path) -> "PromptCard":
+        """Load a PromptCard from a given path.
+
+        Args:
+            path (Path):
+                The path to load the PromptCard from.
+        Returns:
+            PromptCard:
+                The loaded PromptCard object.
+        """
+
 class Card:
     """Represents a card from a given registry that can be used in a service card"""
 

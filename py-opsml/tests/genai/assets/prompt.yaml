@@ -1,0 +1,40 @@
+space: opsml
+name: my-prompt
+prompt:
+  model: gemini-2.5-flash
+  provider: Google
+  messages:
+    - "Analyze the sentiment of the provided text"
+  system_instructions:
+    - "You are a helpful assistant"
+  settings:
+    generation_config:
+      max_output_tokens: 1024
+      temperature: 0.7
+      top_p: 0.9
+      top_k: 40
+      presence_penalty: 0.0
+      frequency_penalty: 0.0
+      stop_sequences:
+        - "###"
+evaluation:
+  alias: sentiment_analysis_eval
+  tasks:
+    tasks:
+      - task_type: Assertion
+        id: check_user_age
+        field_path: user.age
+        operator: GreaterThan
+        expected_value: 18
+        description: Verify user is an adult
+        depends_on: []
+        condition: false
+
+      - task_type: Assertion
+        id: validate_email
+        field_path: user.email
+        operator: IsEmail
+        expected_value: true
+        description: Validate email format
+        depends_on: []
+        condition: false
