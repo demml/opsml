@@ -1,6 +1,7 @@
 #### begin imports ####
 
-from typing import Any, Dict, List, Optional, Sequence
+from pathlib import Path
+from typing import Any, Dict, Iterator, List, Optional, Sequence
 
 from ..genai.potato import Prompt
 from ..header import SerializedType
@@ -359,6 +360,10 @@ class AssertionTask:
     def condition(self, condition: bool) -> None:
         """Set whether this task is a condition for subsequent tasks."""
 
+    @property
+    def task_type(self) -> EvaluationTaskType:
+        """The type of this evaluation task (Assertion)."""
+
     def __str__(self) -> str:
         """Return string representation of the assertion task."""
 
@@ -592,6 +597,10 @@ class LLMJudgeTask:
     @condition.setter
     def condition(self, condition: bool) -> None:
         """Set whether this task is a condition for subsequent tasks."""
+
+    @property
+    def task_type(self) -> EvaluationTaskType:
+        """The type of this evaluation task (LLMJudge)."""
 
     def __str__(self) -> str:
         """Return string representation of the LLM judge task."""
@@ -1456,6 +1465,10 @@ class TraceAssertionTask:
     def condition(self, condition: bool) -> None:
         """Set whether this task is a condition for subsequent tasks."""
 
+    @property
+    def task_type(self) -> EvaluationTaskType:
+        """The type of this evaluation task (TraceAssertion)."""
+
     def __str__(self) -> str:
         """Return string representation of the trace assertion task."""
 
@@ -1492,6 +1505,35 @@ def execute_trace_assertion_tasks(tasks: List[TraceAssertionTask], spans: List[T
         ValueError: If tasks list is empty or spans are not provided.
     """
 
+class TasksFile:
+    """Object representing a collection of evaluation tasks loaded from a file."""
+
+    def __iter__(self) -> Iterator[AssertionTask | LLMJudgeTask | TraceAssertionTask]:
+        """Iterate over all tasks in the file, yielding each task object."""
+
+    def __next__(self) -> AssertionTask | LLMJudgeTask | TraceAssertionTask:
+        """Return the next task in the file, or raise StopIteration when done."""
+
+    def __getitem__(
+        self, index: int | slice
+    ) -> AssertionTask | LLMJudgeTask | TraceAssertionTask | List[AssertionTask | LLMJudgeTask | TraceAssertionTask]:
+        """Get task(s) by index or slice."""
+
+    def __len__(self) -> int:
+        """Return the total number of tasks in the file."""
+
+    def __str__(self) -> str:
+        """Return string representation of the tasks file and its contents."""
+
+    @staticmethod
+    def from_path(path: Path) -> "TasksFile":
+        """Load evaluation tasks from a YAML file at the specified path.
+
+        Args:
+            path (Path):
+                Path to the YAML file containing evaluation task definitions.
+        """
+
 __all__ = [
     "EvaluationTaskType",
     "ComparisonOperator",
@@ -1504,4 +1546,5 @@ __all__ = [
     "SpanFilter",
     "TraceAssertion",
     "TraceAssertionTask",
+    "TasksFile",
 ]
