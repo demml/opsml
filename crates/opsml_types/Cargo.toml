@@ -19,6 +19,7 @@ potato-head = { workspace = true }
 scouter-client = { workspace = true }
 semver = { workspace = true }
 pyo3 = { workspace = true }
+pythonize = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 sysinfo = { workspace = true }

@@ -4691,6 +4691,7 @@ dependencies = [
  "opsml-version",
  "potato-head",
  "pyo3",
+ "pythonize",
  "scouter-client",
  "semver",
  "serde",
