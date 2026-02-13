@@ -1,8 +1,8 @@
 use crate::error::RegistryError;
 use crate::registries::client::base::Registry;
-use opsml_client::error::ApiClientError;
 use opsml_client::OpsmlApiClient;
-use opsml_types::{api::*, cards::CardTable, contracts::*, RegistryType};
+use opsml_client::error::ApiClientError;
+use opsml_types::{RegistryType, api::*, cards::CardTable, contracts::*};
 use std::sync::Arc;
 use tracing::error;
 

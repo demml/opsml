@@ -1,13 +1,13 @@
-use crate::core::error::{internal_server_error, OpsmlServerError};
+use crate::core::error::{OpsmlServerError, internal_server_error};
 
 use crate::core::state::AppState;
 use anyhow::{Context, Result};
 use axum::{
+    Json, Router,
     extract::{OriginalUri, State},
     http::StatusCode,
     response::{IntoResponse, Response},
     routing::get,
-    Json, Router,
 };
 
 use opsml_events::AuditContext;
@@ -15,10 +15,10 @@ use opsml_events::AuditContext;
 use opsml_sql::error::SqlError;
 
 use opsml_sql::traits::*;
-use opsml_types::contracts::*;
 use opsml_types::RegistryType;
+use opsml_types::contracts::*;
 
-use std::panic::{catch_unwind, AssertUnwindSafe};
+use std::panic::{AssertUnwindSafe, catch_unwind};
 use std::sync::Arc;
 
 use tracing::{debug, error};

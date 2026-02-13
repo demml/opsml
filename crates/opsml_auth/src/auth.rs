@@ -1,9 +1,9 @@
 use crate::error::AuthError;
 use crate::sso::SsoProvider;
-use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
+use jsonwebtoken::{DecodingKey, EncodingKey, Header, Validation, decode, encode};
 use opsml_sql::schemas::schema::User;
 use password_auth::{generate_hash, verify_password};
-use rand::{distr::Alphanumeric, Rng};
+use rand::{Rng, distr::Alphanumeric};
 use serde::{Deserialize, Serialize};
 use std::time::{SystemTime, UNIX_EPOCH};
 

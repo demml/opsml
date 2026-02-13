@@ -1,5 +1,5 @@
 use anyhow::Result;
-use axum::{http::StatusCode, Json};
+use axum::{Json, http::StatusCode};
 use scouter_client::{DriftProfile, DriftType};
 
 use crate::core::error::OpsmlServerError;

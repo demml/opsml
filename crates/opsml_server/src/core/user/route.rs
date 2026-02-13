@@ -1,4 +1,4 @@
-use crate::core::error::{internal_server_error, OpsmlServerError};
+use crate::core::error::{OpsmlServerError, internal_server_error};
 use crate::core::scouter;
 use crate::core::state::AppState;
 use crate::core::user::schema::{
@@ -8,10 +8,10 @@ use crate::core::user::utils::get_user as get_user_from_db;
 use anyhow::{Context, Result};
 use axum::extract::Path;
 use axum::{
+    Extension, Json, Router,
     extract::State,
     http::StatusCode,
     routing::{delete, get, post, put},
-    Extension, Json, Router,
 };
 
 use opsml_auth::permission::UserPermissions;
@@ -20,7 +20,7 @@ use opsml_sql::schemas::schema::User;
 use opsml_sql::traits::UserLogicTrait;
 use opsml_types::RequestType;
 use password_auth::generate_hash;
-use std::panic::{catch_unwind, AssertUnwindSafe};
+use std::panic::{AssertUnwindSafe, catch_unwind};
 use std::sync::Arc;
 use tracing::{error, info, instrument};
 

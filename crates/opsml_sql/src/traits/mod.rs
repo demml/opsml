@@ -8,11 +8,11 @@ use async_trait::async_trait;
 use opsml_types::cards::CardTable;
 use opsml_types::contracts::CardQueryArgs;
 use opsml_types::{
+    RegistryType,
     contracts::{
         ArtifactKey, ArtifactQueryArgs, ArtifactRecord, AuditEvent, DashboardStats,
         ServiceQueryArgs, SpaceNameEvent, SpaceRecord, SpaceStats, VersionCursor,
     },
-    RegistryType,
 };
 
 #[async_trait]
@@ -59,7 +59,7 @@ pub trait CardLogicTrait {
         table: &CardTable,
     ) -> Result<Vec<VersionSummary>, SqlError>;
     async fn delete_card(&self, table: &CardTable, uid: &str)
-        -> Result<(String, String), SqlError>;
+    -> Result<(String, String), SqlError>;
     async fn get_unique_space_names(&self, table: &CardTable) -> Result<Vec<String>, SqlError>;
     async fn get_card_key_for_loading(
         &self,
@@ -90,7 +90,7 @@ pub trait ExperimentLogicTrait {
     ) -> Result<Vec<MetricRecord>, SqlError>;
     async fn get_experiment_metric_names(&self, uid: &str) -> Result<Vec<String>, SqlError>;
     async fn insert_hardware_metrics(&self, record: &HardwareMetricsRecord)
-        -> Result<(), SqlError>;
+    -> Result<(), SqlError>;
     async fn get_hardware_metric(&self, uid: &str) -> Result<Vec<HardwareMetricsRecord>, SqlError>;
     async fn insert_experiment_parameters<'life1>(
         &self,

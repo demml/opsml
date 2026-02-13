@@ -1,6 +1,6 @@
 use crate::sso::error::SsoError;
 use crate::sso::providers::traits::SsoProviderExt;
-use crate::sso::providers::types::{get_env_var, JwkResponse};
+use crate::sso::providers::types::{JwkResponse, get_env_var};
 use jsonwebtoken::DecodingKey;
 use reqwest::{Client, StatusCode};
 
@@ -49,7 +49,9 @@ impl DefaultSsoSettings {
             _ => {
                 // get response body
                 let body = response.text().await.map_err(SsoError::ReqwestError)?;
-                error!("Failed to fetch public key from Keycloak at {certs_url}. Tokens will not be validated when decoding");
+                error!(
+                    "Failed to fetch public key from Keycloak at {certs_url}. Tokens will not be validated when decoding"
+                );
                 return Err(SsoError::FailedToFetchJwk(body));
             }
         };

@@ -3,8 +3,8 @@ use crate::cli::arg::ListCards;
 use crate::error::CliError;
 use opsml_colors::Colorize;
 use opsml_registry::registries::card::OpsmlCardRegistry;
-use opsml_types::contracts::CardList;
 use opsml_types::RegistryType;
+use opsml_types::contracts::CardList;
 
 /// List cards from a registry and print them as a table
 ///

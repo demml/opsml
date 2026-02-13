@@ -1,10 +1,10 @@
 use anyhow::Context;
 use axum::{
+    Router,
     extract::{MatchedPath, Request},
     middleware::Next,
     response::IntoResponse,
     routing::get,
-    Router,
 };
 use metrics::{counter, histogram};
 use metrics_exporter_prometheus::{Matcher, PrometheusBuilder, PrometheusHandle};

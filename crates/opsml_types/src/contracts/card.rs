@@ -5,19 +5,19 @@ use crate::contracts::{
 };
 use crate::error::TypeError;
 use crate::{
-    cards::CardTable,
-    interfaces::{types::DataInterfaceType, ModelType, TaskType},
     DataType, ModelInterfaceType, RegistryType,
+    cards::CardTable,
+    interfaces::{ModelType, TaskType, types::DataInterfaceType},
 };
 use chrono::{DateTime, Utc};
 use opsml_colors::Colorize;
 use opsml_semver::VersionType;
-use opsml_utils::{get_utc_datetime, PyHelperFuncs};
-use pyo3::{prelude::*, IntoPyObjectExt};
+use opsml_utils::{PyHelperFuncs, get_utc_datetime};
+use pyo3::{IntoPyObjectExt, prelude::*};
 use semver::Version;
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
-use tabled::settings::{format::Format, object::Rows, Alignment, Color, Style};
+use tabled::settings::{Alignment, Color, Style, format::Format, object::Rows};
 use tabled::{Table, Tabled};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

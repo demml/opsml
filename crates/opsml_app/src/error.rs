@@ -2,8 +2,8 @@ use crate::types::{DownloadEvent, ReloadEvent};
 use opsml_cards::error::CardError;
 use opsml_registry::error::RegistryError;
 use opsml_types::error::TypeError;
-use pyo3::pyclass::PyClassGuardError;
 use pyo3::PyErr;
+use pyo3::pyclass::PyClassGuardError;
 use scouter_client::PyEventError;
 use thiserror::Error;
 

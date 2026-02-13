@@ -1,12 +1,12 @@
 use crate::data::{DataInterface, TorchData};
 use crate::error::{OnnxError, SampleDataError};
 use crate::model::{
-    base::{get_class_full_name, load_from_joblib, save_to_joblib, OnnxExtension},
     InterfaceDataType,
+    base::{OnnxExtension, get_class_full_name, load_from_joblib, save_to_joblib},
 };
 use opsml_types::{DataType, ModelType};
-use pyo3::types::{PyDict, PyList, PyListMethods, PyTuple, PyTupleMethods};
 use pyo3::IntoPyObjectExt;
+use pyo3::types::{PyDict, PyList, PyListMethods, PyTuple, PyTupleMethods};
 use pyo3::{prelude::*, types::PySlice};
 use std::path::Path;
 use std::path::PathBuf;

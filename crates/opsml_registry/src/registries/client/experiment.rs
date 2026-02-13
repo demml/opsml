@@ -3,10 +3,10 @@ use crate::registries::client::artifact::ArtifactRegistry;
 use crate::registries::client::base::Registry;
 use opsml_client::OpsmlApiClient;
 use opsml_types::{
+    RegistryType,
     api::*,
     cards::{CardTable, HardwareMetrics, Metric, Parameter},
     contracts::*,
-    RegistryType,
 };
 use std::sync::Arc;
 use tracing::error;

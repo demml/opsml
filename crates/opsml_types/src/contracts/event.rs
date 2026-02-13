@@ -1,5 +1,5 @@
-use crate::contracts::{AuditStatus, Operation, ResourceType};
 use crate::RegistryType;
+use crate::contracts::{AuditStatus, Operation, ResourceType};
 
 #[derive(Debug, Clone)]
 pub struct AuditEvent {

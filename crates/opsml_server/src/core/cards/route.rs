@@ -5,7 +5,7 @@ use crate::core::cards::schema::{
     CreateReadeMe, QueryPageResponse, ReadeMe, RegistryStatsResponse, VersionPageResponse,
 };
 use crate::core::cards::utils::{cleanup_artifacts, insert_card_into_db};
-use crate::core::error::{internal_server_error, OpsmlServerError};
+use crate::core::error::{OpsmlServerError, internal_server_error};
 use crate::core::files::utils::{
     create_and_store_encrypted_file, create_artifact_key, download_artifact, get_artifact_key,
 };
@@ -13,11 +13,11 @@ use crate::core::state::AppState;
 use anyhow::{Context, Result};
 use axum::extract::OriginalUri;
 use axum::{
+    Extension, Json, Router,
     extract::{Query, State},
     http::StatusCode,
     response::{IntoResponse, Response},
     routing::{delete, get, post, put},
-    Extension, Json, Router,
 };
 use opsml_auth::permission::UserPermissions;
 use opsml_crypt::decrypt_directory;
@@ -26,11 +26,11 @@ use opsml_sql::enums::utils::get_next_version;
 use opsml_sql::schemas::*;
 use opsml_sql::traits::*;
 use opsml_types::contracts::{CompareHashRequest, CompareHashResponse};
-use opsml_types::{cards::*, contracts::*};
 use opsml_types::{SaveName, Suffix};
+use opsml_types::{cards::*, contracts::*};
 use serde_qs;
 
-use std::panic::{catch_unwind, AssertUnwindSafe};
+use std::panic::{AssertUnwindSafe, catch_unwind};
 use std::sync::Arc;
 use tempfile::tempdir;
 use tracing::{debug, error, info, instrument};
@@ -226,12 +226,7 @@ pub async fn retrieve_page(
 
     debug!(
         "Querying page: offset={}, limit={}, sort_by={}, filters={{search: {:?}, spaces: {:?}, tags: {:?}}}",
-        cursor.offset,
-        cursor.limit,
-        cursor.sort_by,
-        cursor.search_term,
-        cursor.spaces,
-        cursor.tags
+        cursor.offset, cursor.limit, cursor.sort_by, cursor.search_term, cursor.spaces, cursor.tags
     );
 
     let mut summaries = state

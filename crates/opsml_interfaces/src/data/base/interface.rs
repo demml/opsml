@@ -1,7 +1,7 @@
 use crate::data::DataSaveKwargs;
 use crate::data::{
-    generate_feature_schema, Data, DataInterfaceSaveMetadata, DataLoadKwargs, DataSplit,
-    DataSplits, DependentVars, SqlLogic,
+    Data, DataInterfaceSaveMetadata, DataLoadKwargs, DataSplit, DataSplits, DependentVars,
+    SqlLogic, generate_feature_schema,
 };
 use crate::error::DataInterfaceError;
 use crate::types::FeatureSchema;

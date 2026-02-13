@@ -4,7 +4,7 @@ use crate::model::onnx::OnnxSession;
 use opsml_types::ModelType;
 use pyo3::types::PyList;
 use pyo3::types::{PyDict, PyTuple};
-use pyo3::{prelude::*, IntoPyObjectExt};
+use pyo3::{IntoPyObjectExt, prelude::*};
 use tracing::debug;
 
 fn convert_to_onnxmltools_type<'py>(

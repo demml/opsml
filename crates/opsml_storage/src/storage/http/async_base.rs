@@ -1,10 +1,10 @@
 use crate::storage::error::StorageError;
 use futures_util::StreamExt;
-use opsml_client::error::ApiClientError;
 use opsml_client::OpsmlApiAsyncClient;
+use opsml_client::error::ApiClientError;
 use opsml_colors::Colorize;
 use opsml_types::api::{RequestType, Routes};
-use opsml_types::{contracts::*, StorageType};
+use opsml_types::{StorageType, contracts::*};
 use std::path::Path;
 use std::sync::Arc;
 use tokio::fs::File;

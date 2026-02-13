@@ -1,6 +1,6 @@
 use opsml_registry::error::RegistryError;
-use pyo3::exceptions::PyRuntimeError;
 use pyo3::PyErr;
+use pyo3::exceptions::PyRuntimeError;
 use thiserror::Error;
 use tracing::error;
 

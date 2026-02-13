@@ -1,13 +1,13 @@
-use crate::storage::base::get_files;
 use crate::storage::base::PathExt;
+use crate::storage::base::get_files;
 use crate::storage::error::StorageError;
 use crate::storage::http::async_base::AsyncHttpStorageClient;
 use crate::storage::http::base::HttpStorageClient;
 use crate::storage::utils::get_chunk_parts;
 use opsml_client::OpsmlApiAsyncClient;
 use opsml_client::OpsmlApiClient;
-use opsml_types::contracts::FileInfo;
 use opsml_types::StorageType;
+use opsml_types::contracts::FileInfo;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;

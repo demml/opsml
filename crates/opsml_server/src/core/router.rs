@@ -14,10 +14,10 @@ use crate::core::state::AppState;
 use crate::core::user::route::get_user_router;
 use anyhow::Result;
 use axum::http::{
-    header::{ACCEPT, AUTHORIZATION, CONTENT_TYPE},
     Method,
+    header::{ACCEPT, AUTHORIZATION, CONTENT_TYPE},
 };
-use axum::{middleware, Router};
+use axum::{Router, middleware};
 use reqwest::header::HeaderValue;
 use std::sync::Arc;
 use tower_http::cors::CorsLayer;

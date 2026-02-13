@@ -1,6 +1,6 @@
 use crate::data::{
-    generate_feature_schema, DataInterface, DataInterfaceMetadata, DataInterfaceSaveMetadata,
-    DataLoadKwargs, DataSaveKwargs, SqlLogic,
+    DataInterface, DataInterfaceMetadata, DataInterfaceSaveMetadata, DataLoadKwargs,
+    DataSaveKwargs, SqlLogic, generate_feature_schema,
 };
 use crate::error::DataInterfaceError;
 use crate::types::FeatureSchema;

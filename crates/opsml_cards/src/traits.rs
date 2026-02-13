@@ -1,7 +1,7 @@
 // This is an evolving trait for cards.
 use crate::error::CardError;
 use chrono::{DateTime, Utc};
-use opsml_types::{contracts::CardRecord, RegistryType};
+use opsml_types::{RegistryType, contracts::CardRecord};
 use std::path::PathBuf;
 
 pub trait OpsmlCard {

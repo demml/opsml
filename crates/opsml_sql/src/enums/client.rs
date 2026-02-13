@@ -1,11 +1,11 @@
 use crate::error::SqlError;
 use crate::mysql::client::MySqlClient;
 use crate::postgres::client::PostgresClient;
+use crate::schemas::VersionSummary;
 use crate::schemas::schema::{
     ArtifactSqlRecord, CardResults, CardSummary, HardwareMetricsRecord, MetricRecord,
     ParameterRecord, QueryStats, ServerCard, ServiceCardRecord, User,
 };
-use crate::schemas::VersionSummary;
 use crate::sqlite::client::SqliteClient;
 use crate::traits::{
     ArtifactLogicTrait, AuditLogicTrait, CardLogicTrait, ExperimentLogicTrait, SpaceLogicTrait,
@@ -21,9 +21,9 @@ use opsml_types::contracts::{
     SpaceStats,
 };
 use opsml_types::{
+    RegistryType, SqlType,
     cards::CardTable,
     contracts::{ArtifactKey, CardQueryArgs, ServiceQueryArgs},
-    RegistryType, SqlType,
 };
 
 #[derive(Debug, Clone)]

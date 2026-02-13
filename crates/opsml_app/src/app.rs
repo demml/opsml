@@ -2,16 +2,16 @@ use crate::types::{DownloadEvent, QueueState, ReloadEvent, ReloadTaskState, Relo
 use crate::utils::{wait_for_download_task, wait_for_reload_task};
 use crate::{
     error::AppError,
-    reloader::{start_background_download_task, ReloadConfig, ServiceReloader},
+    reloader::{ReloadConfig, ServiceReloader, start_background_download_task},
 };
-use opsml_cards::{card_service::ServiceInfo, ServiceCard};
+use opsml_cards::{ServiceCard, card_service::ServiceInfo};
 use opsml_state::app_state;
-use opsml_storage::{copy_objects, StorageError};
-use opsml_types::{cards::ServiceCardMapping, SaveName, Suffix};
-use pyo3::prelude::*;
-use pyo3::types::PyDict;
+use opsml_storage::{StorageError, copy_objects};
+use opsml_types::{SaveName, Suffix, cards::ServiceCardMapping};
 use pyo3::PyTraverseError;
 use pyo3::PyVisit;
+use pyo3::prelude::*;
+use pyo3::types::PyDict;
 use scouter_client::ScouterQueue;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, RwLock};
@@ -19,7 +19,7 @@ use std::time::Duration;
 use tokio::sync::mpsc::{self, UnboundedReceiver};
 use tokio::time::sleep;
 use tokio_util::sync::CancellationToken;
-use tracing::{debug, error, info, info_span, Instrument};
+use tracing::{Instrument, debug, error, info, info_span};
 
 /// Load a card map from path
 fn load_card_map(path: &Path) -> Result<ServiceCardMapping, AppError> {

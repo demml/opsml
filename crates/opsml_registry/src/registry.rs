@@ -12,8 +12,8 @@ use opsml_types::*;
 use opsml_types::{cards::CardTable, contracts::*};
 use opsml_utils::{clean_string, unwrap_pystring};
 use pyo3::prelude::*;
-use scouter_client::try_set_span_attribute;
 use scouter_client::SCOUTER_TAG_PREFIX;
+use scouter_client::try_set_span_attribute;
 use std::path::PathBuf;
 use tempfile::TempDir;
 use tracing::{debug, error, instrument};
@@ -563,7 +563,7 @@ impl CardRegistry {
             _ => {
                 return Err(RegistryError::InvalidRegistryType(
                     "Expected Model or Prompt registry type".to_string(),
-                ))
+                ));
             }
         };
 

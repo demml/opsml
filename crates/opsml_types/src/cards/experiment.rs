@@ -1,8 +1,8 @@
 use crate::error::TypeError;
 use chrono::{DateTime, Utc};
 use opsml_utils::PyHelperFuncs;
-use pyo3::prelude::*;
 use pyo3::IntoPyObjectExt;
+use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use sysinfo::{Networks, System};

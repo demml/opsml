@@ -1,8 +1,8 @@
 use crate::error::SettingsError;
 use base64::prelude::*;
 use opsml_types::{SqlType, StorageType};
-use rusty_logging::logger::{LoggingConfig, WriteLevel};
 use rusty_logging::LogLevel;
+use rusty_logging::logger::{LoggingConfig, WriteLevel};
 use serde::Serialize;
 use std::default::Default;
 use std::env;
