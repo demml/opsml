@@ -692,6 +692,7 @@ pub struct PromptCardRecord {
     pub auditcard_uid: Option<String>,
     pub opsml_version: String,
     pub username: String,
+    pub content_hash: Vec<u8>,
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -705,6 +706,7 @@ impl PromptCardRecord {
         auditcard_uid: Option<String>,
         opsml_version: String,
         username: String,
+        content_hash: Vec<u8>,
     ) -> Self {
         let created_at = get_utc_datetime();
         let app_env = env::var("APP_ENV").unwrap_or_else(|_| "development".to_string());
@@ -727,6 +729,7 @@ impl PromptCardRecord {
             auditcard_uid,
             opsml_version,
             username,
+            content_hash,
         }
     }
 
@@ -760,6 +763,7 @@ impl PromptCardRecord {
             auditcard_uid: client_card.auditcard_uid,
             opsml_version: client_card.opsml_version,
             username: client_card.username,
+            content_hash: client_card.content_hash,
         })
     }
 }
@@ -783,6 +787,7 @@ impl Default for PromptCardRecord {
             auditcard_uid: None,
             opsml_version: opsml_version::version(),
             username: CommonKwargs::Undefined.to_string(),
+            content_hash: Vec::new(),
         }
     }
 }

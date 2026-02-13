@@ -349,6 +349,15 @@ impl VersionCursor {
     }
 }
 
+pub struct CompareHashRequest {
+    pub registry_type: RegistryType,
+    pub content_hash: Vec<u8>,
+}
+
+pub struct CompareHashResponse {
+    pub matches: bool,
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct VersionPageRequest {
     pub registry_type: RegistryType,
