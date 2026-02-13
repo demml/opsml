@@ -210,13 +210,16 @@ pub struct Card {
     pub drift: Option<DriftConfig>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[pyo3(get)]
-    pub uid: Option<String>, // Changed from String to Option<String>
+    pub uid: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[pyo3(get)]
+    pub path: Option<String>,
 }
 
 #[pymethods]
 impl Card {
     #[new]
-    #[pyo3(signature = (alias, registry_type=None, space=None, name=None, version=None, uid=None, card=None, drift=None))]
+    #[pyo3(signature = (alias, registry_type=None, space=None, name=None, version=None, uid=None, card=None, drift=None, path=None))]
     #[allow(clippy::too_many_arguments)]
     pub fn new(
         alias: String,
@@ -227,6 +230,7 @@ impl Card {
         uid: Option<&str>,
         card: Option<Bound<'_, PyAny>>,
         drift: Option<DriftConfig>,
+        path: Option<&str>,
     ) -> Result<Self, TypeError> {
         // If card object is provided, extract all attributes from it
         if let Some(card) = card {
@@ -248,6 +252,7 @@ impl Card {
                 registry_type,
                 alias,
                 drift,
+                path: None,
             });
         }
 
@@ -276,6 +281,7 @@ impl Card {
             registry_type,
             alias,
             drift,
+            path: path.map(String::from),
         })
     }
 }
@@ -298,6 +304,7 @@ impl Card {
             registry_type,
             alias,
             drift,
+            path: None,
         }
     }
 

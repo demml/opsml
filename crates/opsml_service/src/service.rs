@@ -406,4 +406,39 @@ deploy:
         assert!(mcp_config.capabilities.contains(&McpCapability::Resources));
         assert!(mcp_config.capabilities.contains(&McpCapability::Tools));
     }
+
+    #[test]
+    fn test_service_spec_with_prompt_card_path() {
+        let yaml_content = r#"
+name: test-service
+team: my-team
+type: Api
+metadata:
+  description: Test service with prompt card from path
+  language: python
+  tags: [ml, test]
+
+service:
+  version: "1.0.0"
+  write_dir: "opsml_app/test_service"
+  cards:
+    - alias: my_prompt
+      type: prompt
+      path: "prompts/my_prompt.json"
+
+deploy:
+  - environment: development
+"#;
+
+        let spec = ServiceSpec::from_yaml(yaml_content).unwrap();
+        assert_eq!(spec.name, "test-service");
+        assert_eq!(spec.space(), "my-team");
+
+        let prompt_card = spec.get_card("my_prompt").unwrap();
+        assert_eq!(prompt_card.registry_type, opsml_types::RegistryType::Prompt);
+        assert_eq!(
+            prompt_card.path,
+            Some("prompts/my_prompt.json".to_string())
+        );
+    }
 }

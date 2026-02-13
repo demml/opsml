@@ -26,6 +26,8 @@ use serde::{
     ser::SerializeStruct,
     Deserialize, Deserializer, Serialize, Serializer,
 };
+use serde_json::json;
+use sha2::{Digest, Sha256};
 use std::fmt;
 use std::path::{Path, PathBuf};
 use tracing::{debug, error, instrument};

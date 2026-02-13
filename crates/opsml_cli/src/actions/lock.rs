@@ -261,7 +261,7 @@ fn check_for_refresh(
 /// # Returns
 /// * `Result<LockArtifact, CliError>`
 fn create_new_service_lock(
-    spec: &ServiceSpec,
+    spec: &mut ServiceSpec,
     registry: &CardRegistry,
     spec_cards: Option<&Vec<Card>>,
     space: &str,
@@ -290,7 +290,7 @@ fn create_new_service_lock(
 /// # Returns
 /// * `Result<LockArtifact, CliError>`
 fn handle_existing_service_lock(
-    spec: &ServiceSpec,
+    spec: &mut ServiceSpec,
     service_registry: &CardRegistry,
     registries: &CardRegistries,
     spec_cards: Option<&Vec<Card>>, // cards from spec
@@ -331,7 +331,7 @@ fn handle_existing_service_lock(
 /// * `Result<LockArtifact, CliError>` - Lock artifact or error
 #[instrument(skip_all)]
 pub fn lock_service_card(
-    spec: &ServiceSpec,
+    spec: &mut ServiceSpec,
     space: &str,
     name: &str,
 ) -> Result<LockArtifact, CliError> {
@@ -454,11 +454,11 @@ pub fn install_service(path: PathBuf, write_path: Option<PathBuf>) -> Result<(),
 pub fn lock_service(path: PathBuf) -> Result<(), CliError> {
     debug!("Locking service with path: {:?}", path);
     // handle case of no cards
-    let spec = ServiceSpec::from_path(&path)?;
+    let mut spec = ServiceSpec::from_path(&path)?;
 
     // Create a lock file
     let lock_file = LockFile {
-        artifact: vec![lock_service_card(&spec, spec.space(), &spec.name)?],
+        artifact: vec![lock_service_card(&mut spec, spec.space(), &spec.name)?],
     };
 
     lock_file.write(&spec.root_path)?;
