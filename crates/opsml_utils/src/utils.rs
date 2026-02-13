@@ -6,7 +6,7 @@ use pyo3::types::{PyBool, PyDict, PyFloat, PyInt, PyList, PyString, PyTuple};
 use pyo3::{prelude::*, types::PyAnyMethods};
 use regex::Regex;
 use serde::Serialize;
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 use std::path::{Path, PathBuf};
 use tracing::debug;
 use uuid::Uuid;
@@ -286,17 +286,17 @@ fn pyobject_to_json_value(_py: Python, obj: &Bound<'_, PyAny>) -> Result<Value, 
     }
 
     // Handle numpy arrays
-    if obj.hasattr("__array__")? || obj.hasattr("tolist")? {
-        if let Ok(py_list) = obj.call_method0("tolist") {
-            return pyobject_to_json_value(_py, &py_list);
-        }
+    if (obj.hasattr("__array__")? || obj.hasattr("tolist")?)
+        && let Ok(py_list) = obj.call_method0("tolist")
+    {
+        return pyobject_to_json_value(_py, &py_list);
     }
 
     // Handle pandas Series/DataFrame
-    if obj.hasattr("to_dict")? {
-        if let Ok(py_dict) = obj.call_method0("to_dict") {
-            return pyobject_to_json_value(_py, &py_dict);
-        }
+    if obj.hasattr("to_dict")?
+        && let Ok(py_dict) = obj.call_method0("to_dict")
+    {
+        return pyobject_to_json_value(_py, &py_dict);
     }
 
     // Fallback: convert to string representation

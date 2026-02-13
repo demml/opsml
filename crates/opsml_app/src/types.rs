@@ -215,10 +215,7 @@ impl ReloadTaskState {
         self.cancel_download_task();
 
         // abort the download loop
-        let download_handle = {
-            let guard = self.download_task.write().unwrap().abort_handle.take();
-            guard
-        };
+        let download_handle = { self.download_task.write().unwrap().abort_handle.take() };
 
         if let Some(handle) = download_handle {
             handle.abort();
@@ -232,10 +229,7 @@ impl ReloadTaskState {
         self.cancel_reload_task();
 
         // abort the reload loop
-        let reload_handle = {
-            let guard = self.reload_task.write().unwrap().abort_handle.take();
-            guard
-        };
+        let reload_handle = { self.reload_task.write().unwrap().abort_handle.take() };
 
         if let Some(handle) = reload_handle {
             handle.abort();

@@ -5,7 +5,7 @@ use opsml_settings::config::DatabaseSettings;
 use opsml_sql::{enums::client::SqlClientEnum, traits::CardLogicTrait};
 
 #[cfg(feature = "server")]
-use opsml_types::{cards::CardTable, contracts::*, SqlType};
+use opsml_types::{SqlType, cards::CardTable, contracts::*};
 
 use pyo3::prelude::*;
 
@@ -95,8 +95,10 @@ impl RegistryTestHelper {
         });
 
         // set tracking uri
-        std::env::set_var("OPSML_TRACKING_URI", config.connection_uri);
-        std::env::set_var("OPSML_STORAGE_URI", storage_uri);
+        unsafe {
+            std::env::set_var("OPSML_TRACKING_URI", config.connection_uri);
+            std::env::set_var("OPSML_STORAGE_URI", storage_uri);
+        }
     }
 
     #[cfg(not(feature = "server"))]
@@ -120,7 +122,9 @@ impl RegistryTestHelper {
             std::fs::remove_dir_all(registry_path).unwrap();
         }
 
-        std::env::remove_var("OPSML_TRACKING_URI");
-        std::env::remove_var("OPSML_STORAGE_URI");
+        unsafe {
+            std::env::remove_var("OPSML_TRACKING_URI");
+            std::env::remove_var("OPSML_STORAGE_URI");
+        }
     }
 }

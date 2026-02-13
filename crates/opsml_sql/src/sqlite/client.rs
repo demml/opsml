@@ -8,7 +8,7 @@ use crate::{
     },
 };
 use opsml_settings::config::DatabaseSettings;
-use sqlx::{sqlite::SqlitePoolOptions, Pool, Sqlite};
+use sqlx::{Pool, Sqlite, sqlite::SqlitePoolOptions};
 use std::path::Path;
 use tracing::{debug, error, instrument};
 
@@ -38,11 +38,11 @@ impl SqliteClient {
                 debug!("SQLite file does not exist, creating file at: {}", uri);
 
                 // Ensure parent directory exists
-                if let Some(parent) = path.parent() {
-                    if !parent.exists() {
-                        std::fs::create_dir_all(parent)
-                            .map_err(|e| SqlError::ConnectionError(sqlx::Error::Io(e)))?;
-                    }
+                if let Some(parent) = path.parent()
+                    && !parent.exists()
+                {
+                    std::fs::create_dir_all(parent)
+                        .map_err(|e| SqlError::ConnectionError(sqlx::Error::Io(e)))?;
                 }
 
                 // Create the file
@@ -96,32 +96,32 @@ mod tests {
 
     use super::*;
 
+    use crate::schemas::EvaluationSqlRecord;
     use crate::schemas::schema::{
         ArtifactSqlRecord, AuditCardRecord, CardResults, DataCardRecord, ExperimentCardRecord,
         HardwareMetricsRecord, MetricRecord, ModelCardRecord, ParameterRecord, PromptCardRecord,
         ServerCard, ServiceCardRecord, User,
     };
-    use crate::schemas::EvaluationSqlRecord;
     use crate::traits::{
         ArtifactLogicTrait, AuditLogicTrait, CardLogicTrait, EvaluationLogicTrait,
         ExperimentLogicTrait, SpaceLogicTrait, UserLogicTrait,
     };
     use opsml_settings::config::DatabaseSettings;
+    use opsml_types::SqlType;
+    use opsml_types::contracts::VersionCursor;
     use opsml_types::contracts::agent::{
         AgentCapabilities, AgentInterface, AgentProvider, AgentSkill, AgentSpec,
         SecurityRequirement,
     };
     use opsml_types::contracts::evaluation::{EvaluationProvider, EvaluationType};
-    use opsml_types::contracts::VersionCursor;
     use opsml_types::contracts::{
         ArtifactKey, ArtifactQueryArgs, AuditEvent, DeploymentConfig, McpCapability, McpConfig,
         McpTransport, Resources, ServiceConfig, ServiceQueryArgs, ServiceType, SpaceNameEvent,
     };
-    use opsml_types::SqlType;
     use opsml_types::{
+        RegistryType,
         cards::CardTable,
         contracts::{ArtifactType, CardQueryArgs},
-        RegistryType,
     };
     use opsml_utils::utils::get_utc_datetime;
     use semver::Version;
@@ -183,7 +183,7 @@ mod tests {
             CardTable::Experiment => ServerCard::Experiment(ExperimentCardRecord::default()),
             CardTable::Audit => ServerCard::Audit(AuditCardRecord::default()),
             CardTable::Prompt => ServerCard::Prompt(PromptCardRecord::default()),
-            CardTable::Service => ServerCard::Service(ServiceCardRecord::default()),
+            CardTable::Service => ServerCard::Service(Box::default()),
             _ => panic!("Invalid card type"),
         };
 
@@ -258,7 +258,7 @@ mod tests {
                     name: updated_name.to_string(),
                     ..Default::default()
                 };
-                ServerCard::Service(c)
+                ServerCard::Service(Box::new(c))
             }
             _ => panic!("Invalid card type"),
         };
@@ -1241,9 +1241,11 @@ mod tests {
             4,
             "Should retrieve only non-eval accuracy metrics"
         );
-        assert!(filtered_combo
-            .iter()
-            .all(|m| m.name == "accuracy" && !m.is_eval));
+        assert!(
+            filtered_combo
+                .iter()
+                .all(|m| m.name == "accuracy" && !m.is_eval)
+        );
 
         // Test 11: Verify created_at timestamp ordering for same name/step
         // Insert two metrics with identical name and step but different timestamps
@@ -1728,7 +1730,7 @@ mod tests {
 
         let client = SqliteClient::new(&config).await.unwrap();
         let service_card = ServiceCardRecord::default();
-        let card = ServerCard::Service(service_card.clone());
+        let card = ServerCard::Service(Box::new(service_card.clone()));
 
         client
             .card
@@ -1997,7 +1999,7 @@ mod tests {
         };
         client
             .card
-            .insert_card(&CardTable::Service, &ServerCard::Service(card1))
+            .insert_card(&CardTable::Service, &ServerCard::Service(Box::new(card1)))
             .await
             .unwrap();
 
@@ -2010,7 +2012,7 @@ mod tests {
         };
         client
             .card
-            .insert_card(&CardTable::Service, &ServerCard::Service(card2))
+            .insert_card(&CardTable::Service, &ServerCard::Service(Box::new(card2)))
             .await
             .unwrap();
 
@@ -2087,7 +2089,7 @@ mod tests {
 
         client
             .card
-            .insert_card(&CardTable::Mcp, &ServerCard::Service(mcp_card1))
+            .insert_card(&CardTable::Mcp, &ServerCard::Service(Box::new(mcp_card1)))
             .await
             .unwrap();
 
@@ -2109,7 +2111,7 @@ mod tests {
 
         client
             .card
-            .insert_card(&CardTable::Mcp, &ServerCard::Service(mcp_card2))
+            .insert_card(&CardTable::Mcp, &ServerCard::Service(Box::new(mcp_card2)))
             .await
             .unwrap();
 
@@ -2177,7 +2179,10 @@ mod tests {
 
         client
             .card
-            .insert_card(&CardTable::Agent, &ServerCard::Service(agent_card1))
+            .insert_card(
+                &CardTable::Agent,
+                &ServerCard::Service(Box::new(agent_card1)),
+            )
             .await
             .unwrap();
 
@@ -2199,7 +2204,10 @@ mod tests {
 
         client
             .card
-            .insert_card(&CardTable::Agent, &ServerCard::Service(agent_card2))
+            .insert_card(
+                &CardTable::Agent,
+                &ServerCard::Service(Box::new(agent_card2)),
+            )
             .await
             .unwrap();
 

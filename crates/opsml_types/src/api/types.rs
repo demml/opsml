@@ -27,6 +27,7 @@ pub enum Routes {
     CardLoad,
     CardVersion,
     CardUpdate,
+    CardCompareHash,
 
     CardMetadata,
     CardSpaces,
@@ -100,6 +101,7 @@ impl Routes {
             Routes::CardLoad => "card/load",
             Routes::CardVersion => "card/version",
             Routes::CardUpdate => "card/update",
+            Routes::CardCompareHash => "card/compare_hash",
             Routes::ExperimentMetrics => "experiment/metrics",
             Routes::ExperimentGroupedMetrics => "experiment/metrics/grouped",
             Routes::ExperimentMetricNames => "experiment/metrics/names",

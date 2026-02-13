@@ -837,6 +837,10 @@ impl CardRegistry {
 
         Ok(response)
     }
+
+    pub fn compare_card_hash(&self, content_hash: &[u8]) -> Result<bool, RegistryError> {
+        self.registry.compare_card_hash(content_hash)
+    }
 }
 
 #[pyclass]

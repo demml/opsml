@@ -253,6 +253,33 @@ pub trait CardRegistry: Registry {
             .json::<ArtifactKey>()
             .map_err(RegistryError::RequestError)
     }
+
+    #[instrument(skip_all)]
+    fn compare_card_hash(&self, content_hash: &[u8]) -> Result<bool, RegistryError> {
+        let hash_request = CompareHashRequest {
+            registry_type: self.registry_type().clone(),
+            content_hash: content_hash.to_vec(),
+        };
+
+        let body = serde_json::to_value(&hash_request)?;
+
+        let response = self
+            .client()
+            .request(
+                Routes::CardCompareHash,
+                RequestType::Post,
+                Some(body),
+                None,
+                None,
+            )
+            .inspect_err(|e| {
+                error!("Failed to compare card hash {}", e);
+            })?;
+
+        let hash_response = response.json::<CompareHashResponse>()?;
+
+        Ok(hash_response.matches)
+    }
 }
 
 pub trait ScouterRegistry: Registry {

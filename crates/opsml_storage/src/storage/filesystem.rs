@@ -9,9 +9,9 @@ use crate::storage::http::client::{AsyncHttpFSStorageClient, HttpFSStorageClient
 use async_trait::async_trait;
 use opsml_settings::config::{OpsmlMode, OpsmlStorageSettings};
 use opsml_state::{app_state, get_api_client, get_async_api_client};
+use opsml_types::StorageType;
 use opsml_types::contracts::CompleteMultipartUpload;
 use opsml_types::contracts::FileInfo;
-use opsml_types::StorageType;
 use std::path::Path;
 use std::sync::{Arc, RwLock};
 use tokio::sync::OnceCell;
@@ -212,10 +212,10 @@ impl StorageClientManager {
 
     pub fn get_client(&self) -> Result<Arc<FileSystemStorage>, StorageError> {
         // Try to read first
-        if let Ok(guard) = self.client.read() {
-            if let Some(client) = guard.as_ref() {
-                return Ok(client.clone());
-            }
+        if let Ok(guard) = self.client.read()
+            && let Some(client) = guard.as_ref()
+        {
+            return Ok(client.clone());
         }
 
         // If no client exists, create one
@@ -277,9 +277,9 @@ pub async fn async_storage_client() -> &'static Arc<AsyncHttpFSStorageClient> {
 mod tests {
     use super::*;
     use opsml_utils::create_uuid7;
+    use rand::Rng;
     use rand::distr::Alphanumeric;
     use rand::rng;
-    use rand::Rng;
     use std::fs::File;
     use std::io::Write;
 
@@ -349,11 +349,15 @@ mod tests {
     }
 
     pub fn set_env_vars() {
-        std::env::set_var("OPSML_TRACKING_URI", "http://0.0.0.0:8080");
+        unsafe {
+            std::env::set_var("OPSML_TRACKING_URI", "http://0.0.0.0:8080");
+        }
     }
 
     pub fn unset_env_vars() {
-        std::env::remove_var("OPSML_TRACKING_URI");
+        unsafe {
+            std::env::remove_var("OPSML_TRACKING_URI");
+        }
     }
 
     #[test]

@@ -984,13 +984,14 @@ async fn test_opsml_server_card_service_card_crud() {
         };
 
         // ServiceCard
+        let service_card = ServiceCardClientRecord {
+            name: "service".to_string(),
+            space: "repo1".to_string(),
+            version: "1.0.0".to_string(),
+            ..ServiceCardClientRecord::default()
+        };
         let card_request = CreateCardRequest {
-            card: CardRecord::Service(ServiceCardClientRecord {
-                name: "service".to_string(),
-                space: "repo1".to_string(),
-                version: "1.0.0".to_string(),
-                ..ServiceCardClientRecord::default()
-            }),
+            card: CardRecord::Service(Box::new(service_card)),
             registry_type: RegistryType::Service,
             version_request: card_version_request,
         };
@@ -1039,25 +1040,26 @@ async fn test_opsml_server_card_service_card_crud() {
             _ => panic!("Card not found"),
         };
 
+        let service_card = ServiceCardClientRecord {
+            name: "service".to_string(),
+            space: "repo1".to_string(),
+            version: "1.0.1".to_string(),
+            uid: card.uid.clone(),
+            app_env: card.app_env,
+            created_at: card.created_at,
+            cards: card.cards,
+            username: std::env::var("OPSML_USERNAME").unwrap_or_else(|_| "guest".to_string()),
+            service_type: card.service_type,
+            metadata: card.metadata,
+            deployment: card.deployment,
+            service_config: card.service_config,
+            opsml_version: card.opsml_version,
+            tags: card.tags,
+            content_hash: card.content_hash,
+        };
         let card_request = UpdateCardRequest {
             registry_type: RegistryType::Service,
-            card: CardRecord::Service(ServiceCardClientRecord {
-                name: "service".to_string(),
-                space: "repo1".to_string(),
-                version: "1.0.1".to_string(),
-                uid: card.uid.clone(),
-                app_env: card.app_env,
-                created_at: card.created_at,
-                cards: card.cards,
-                username: std::env::var("OPSML_USERNAME").unwrap_or_else(|_| "guest".to_string()),
-                service_type: card.service_type,
-                metadata: card.metadata,
-                deployment: card.deployment,
-                service_config: card.service_config,
-                opsml_version: card.opsml_version,
-                promptcard_uids: card.promptcard_uids,
-                tags: card.tags,
-            }),
+            card: CardRecord::Service(Box::new(service_card)),
         };
 
         let body = serde_json::to_string(&card_request).unwrap();
@@ -1126,22 +1128,23 @@ async fn test_opsml_server_card_service_card_mcps() {
         };
 
         // ServiceCard
-        let card_request = CreateCardRequest {
-            card: CardRecord::Service(ServiceCardClientRecord {
-                name: "service".to_string(),
-                space: "repo1".to_string(),
-                version: "1.0.0".to_string(),
-                service_type: ServiceType::Mcp,
-                service_config: Some(ServiceConfig {
-                    mcp: Some(McpConfig {
-                        capabilities: vec![McpCapability::Resources, McpCapability::Tools],
-                        transport: McpTransport::Http,
-                    }),
-                    ..Default::default()
+        let service_card = ServiceCardClientRecord {
+            name: "service".to_string(),
+            space: "repo1".to_string(),
+            version: "1.0.0".to_string(),
+            service_type: ServiceType::Mcp,
+            service_config: Some(ServiceConfig {
+                mcp: Some(McpConfig {
+                    capabilities: vec![McpCapability::Resources, McpCapability::Tools],
+                    transport: McpTransport::Http,
                 }),
-                deployment: Some(vec![deploy]),
-                ..ServiceCardClientRecord::default()
+                ..Default::default()
             }),
+            deployment: Some(vec![deploy]),
+            ..ServiceCardClientRecord::default()
+        };
+        let card_request = CreateCardRequest {
+            card: CardRecord::Service(Box::new(service_card)),
             registry_type: RegistryType::Mcp,
             version_request: card_version_request,
         };
@@ -1272,6 +1275,7 @@ async fn test_opsml_server_card_promptcard_crud() {
                 created_at: card.created_at,
                 username: std::env::var("OPSML_USERNAME").unwrap_or_else(|_| "guest".to_string()),
                 opsml_version: card.opsml_version,
+                content_hash: card.content_hash,
             }),
         };
 

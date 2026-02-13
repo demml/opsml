@@ -300,12 +300,14 @@ GrrNOufvPsvmCRO9m4ESRrk=
         let mock_server = MockServer::new().await;
 
         // Set the SSO provider environment variable
-        std::env::set_var("SSO_PROVIDER", "keycloak");
-        std::env::set_var("OPSML_CLIENT_ID", "opsml-client");
-        std::env::set_var("OPSML_CLIENT_SECRET", "client-secret");
-        std::env::set_var("OPSML_REDIRECT_URI", "http://localhost:8080/callback");
-        std::env::set_var("OPSML_AUTH_DOMAIN", &mock_server.url);
-        std::env::set_var("OPSML_AUTH_REALM", "opsml");
+        unsafe {
+            std::env::set_var("SSO_PROVIDER", "keycloak");
+            std::env::set_var("OPSML_CLIENT_ID", "opsml-client");
+            std::env::set_var("OPSML_CLIENT_SECRET", "client-secret");
+            std::env::set_var("OPSML_REDIRECT_URI", "http://localhost:8080/callback");
+            std::env::set_var("OPSML_AUTH_DOMAIN", &mock_server.url);
+            std::env::set_var("OPSML_AUTH_REALM", "opsml");
+        }
 
         // Initialize the SSO provider
         let sso_provider = SsoProvider::from_env().await.unwrap();
@@ -331,11 +333,13 @@ GrrNOufvPsvmCRO9m4ESRrk=
         let mock_server = MockServer::new().await;
 
         // Set the SSO provider environment variable
-        std::env::set_var("SSO_PROVIDER", "okta");
-        std::env::set_var("OPSML_CLIENT_ID", "opsml-client");
-        std::env::set_var("OPSML_CLIENT_SECRET", "client-secret");
-        std::env::set_var("OPSML_REDIRECT_URI", "https://localhost:8080/callback");
-        std::env::set_var("OPSML_AUTH_DOMAIN", &mock_server.url);
+        unsafe {
+            std::env::set_var("SSO_PROVIDER", "okta");
+            std::env::set_var("OPSML_CLIENT_ID", "opsml-client");
+            std::env::set_var("OPSML_CLIENT_SECRET", "client-secret");
+            std::env::set_var("OPSML_REDIRECT_URI", "https://localhost:8080/callback");
+            std::env::set_var("OPSML_AUTH_DOMAIN", &mock_server.url);
+        }
 
         // Initialize the SSO provider
         let sso_provider = SsoProvider::from_env().await.unwrap();
@@ -360,15 +364,17 @@ GrrNOufvPsvmCRO9m4ESRrk=
         let mock_server = MockServer::new().await;
 
         // Set the SSO provider environment variable
-        std::env::set_var("SSO_PROVIDER", "default");
-        std::env::set_var("OPSML_CLIENT_ID", "opsml-client");
-        std::env::set_var("OPSML_CLIENT_SECRET", "client-secret");
-        std::env::set_var("OPSML_REDIRECT_URI", "https://localhost:8080/callback");
-        std::env::set_var("OPSML_AUTH_DOMAIN", &mock_server.url);
+        unsafe {
+            std::env::set_var("SSO_PROVIDER", "default");
+            std::env::set_var("OPSML_CLIENT_ID", "opsml-client");
+            std::env::set_var("OPSML_CLIENT_SECRET", "client-secret");
+            std::env::set_var("OPSML_REDIRECT_URI", "https://localhost:8080/callback");
+            std::env::set_var("OPSML_AUTH_DOMAIN", &mock_server.url);
 
-        std::env::set_var("OPSML_TOKEN_ENDPOINT", "oauth/token");
-        std::env::set_var("OPSML_CERT_ENDPOINT", "oauth/keys");
-        std::env::set_var("OPSML_AUTHORIZATION_ENDPOINT", "oauth/authorize");
+            std::env::set_var("OPSML_TOKEN_ENDPOINT", "oauth/token");
+            std::env::set_var("OPSML_CERT_ENDPOINT", "oauth/keys");
+            std::env::set_var("OPSML_AUTHORIZATION_ENDPOINT", "oauth/authorize");
+        }
 
         // Initialize the SSO provider
         let sso_provider = SsoProvider::from_env().await.unwrap();

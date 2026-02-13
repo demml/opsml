@@ -90,10 +90,7 @@ impl AgentExtension {
         params: Option<&Bound<'_, PyAny>>,
         required: bool,
     ) -> Self {
-        let depythonized = match params {
-            Some(p) => Some(depythonize(p).unwrap_or_default()),
-            None => None,
-        };
+        let depythonized = params.map(|p| depythonize(p).unwrap_or_default());
         Self {
             uri,
             description,
