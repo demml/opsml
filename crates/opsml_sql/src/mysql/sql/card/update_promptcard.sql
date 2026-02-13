@@ -12,6 +12,6 @@ auditcard_uid = ?,
 pre_tag = ?,
 build_tag = ?,
 username = ?,
-opsml_version = ?
+opsml_version = ?,
 content_hash = ?
 WHERE uid = ?;

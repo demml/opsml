@@ -107,6 +107,10 @@ mod tests {
         ExperimentLogicTrait, SpaceLogicTrait, UserLogicTrait,
     };
     use opsml_settings::config::DatabaseSettings;
+    use opsml_types::contracts::agent::{
+        AgentCapabilities, AgentInterface, AgentProvider, AgentSkill, AgentSpec,
+        SecurityRequirement,
+    };
     use opsml_types::contracts::evaluation::{EvaluationProvider, EvaluationType};
     use opsml_types::contracts::VersionCursor;
     use opsml_types::contracts::{
@@ -125,6 +129,47 @@ mod tests {
     use std::{env, vec};
 
     const SPACE: &str = "space";
+
+    fn example_agent_spec() -> AgentSpec {
+        AgentSpec::new(
+            "TestAgent".to_string(),
+            "A test agent for SQL integration tests".to_string(),
+            "1.0.0".to_string(),
+            vec![AgentInterface::new(
+                "http://localhost:8000".to_string(),
+                "HTTP".to_string(),
+                "1.0".to_string(),
+                Some("tenant1".to_string()),
+            )],
+            AgentCapabilities::new(
+                true,  // streaming
+                false, // push_notifications
+                false, // extended_agent_card
+                None,  // extensions
+            ),
+            vec!["text".to_string()],
+            vec!["json".to_string()],
+            vec![AgentSkill::new(
+                "skill1".to_string(),
+                "Echo".to_string(),
+                "Echoes input text".to_string(),
+                Some(vec!["test".to_string()]),
+                Some(vec!["example input".to_string()]),
+                Some(vec!["text".to_string()]),
+                Some(vec!["text".to_string()]),
+                Some(vec![SecurityRequirement::new(vec!["apiKey".to_string()])]),
+            )],
+            Some(AgentProvider::new(
+                Some("TestOrg".to_string()),
+                Some("https://test.org".to_string()),
+            )),
+            Some("https://docs.test.org".to_string()),
+            Some("https://test.org/icon.png".to_string()),
+            None, // security_schemes
+            Some(vec![SecurityRequirement::new(vec!["apiKey".to_string()])]),
+            None, // signatures
+        )
+    }
 
     async fn test_card_crud(
         client: &SqliteClient,
@@ -2075,6 +2120,96 @@ mod tests {
                 name: None,
                 tags: None,
                 service_type: ServiceType::Mcp,
+            })
+            .await
+            .unwrap();
+        assert_eq!(services.len(), 1);
+
+        // check that endpoint is populated
+        assert!(services[0].deployment.is_some());
+        let deployment = services[0].deployment.as_ref().unwrap();
+        assert_eq!(deployment.len(), 1);
+        assert_eq!(deployment[0].environment, "dev");
+        assert_eq!(deployment[0].endpoints.len(), 1);
+        assert_eq!(deployment[0].endpoints[0], "http://localhost:8000");
+
+        cleanup();
+    }
+
+    #[tokio::test]
+    async fn test_sqlite_recent_agent_services() {
+        cleanup();
+
+        let config = DatabaseSettings {
+            connection_uri: get_connection_uri(),
+            max_connections: 1,
+            sql_type: SqlType::Sqlite,
+        };
+
+        let client = SqliteClient::new(&config).await.unwrap();
+        let agent_spec = example_agent_spec();
+
+        let deploy = DeploymentConfig {
+            environment: "dev".to_string(),
+            provider: Some("development".to_string()),
+            location: Some(vec!["local".to_string()]),
+            endpoints: vec!["http://localhost:8000".to_string()],
+            resources: Some(Resources {
+                cpu: 2,
+                memory: "4GB".to_string(),
+                storage: "10GB".to_string(),
+                gpu: None,
+            }),
+            links: None,
+        };
+        let agent_card1 = ServiceCardRecord {
+            name: "agent1".to_string(),
+            space: SPACE.to_string(),
+            service_type: ServiceType::Agent.to_string(),
+            tags: Json(vec!["tag1".to_string()]),
+            service_config: Some(Json(ServiceConfig {
+                agent: Some(agent_spec.clone()),
+                ..Default::default()
+            })),
+            deployment: Some(Json(vec![deploy.clone()])),
+            ..Default::default()
+        };
+
+        client
+            .card
+            .insert_card(&CardTable::Agent, &ServerCard::Service(agent_card1))
+            .await
+            .unwrap();
+
+        tokio::time::sleep(std::time::Duration::from_millis(300)).await;
+
+        // create new version
+        let agent_card2 = ServiceCardRecord {
+            name: "agent1".to_string(),
+            space: SPACE.to_string(),
+            service_type: ServiceType::Agent.to_string(),
+            tags: Json(vec!["tag1".to_string()]),
+            service_config: Some(Json(ServiceConfig {
+                agent: Some(agent_spec.clone()),
+                ..Default::default()
+            })),
+            deployment: Some(Json(vec![deploy])),
+            ..Default::default()
+        };
+
+        client
+            .card
+            .insert_card(&CardTable::Agent, &ServerCard::Service(agent_card2))
+            .await
+            .unwrap();
+
+        let services = client
+            .card
+            .get_recent_services(&ServiceQueryArgs {
+                space: None,
+                name: None,
+                tags: None,
+                service_type: ServiceType::Agent,
             })
             .await
             .unwrap();

@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS opsml_agent_registry (
     deployment JSONB,
     service_config JSONB,
     tags JSONB DEFAULT '[]',
-    content_hash TYPE BYTEA
+    content_hash BYTEA
 );
 
 CREATE INDEX idx_opsml_agent_registry_space_name ON opsml_agent_registry (space, name);
@@ -27,10 +27,10 @@ CREATE INDEX idx_opsml_agent_registry_uid ON opsml_agent_registry (uid);
 
 -- need for hash comparisons
 ALTER TABLE opsml_prompt_registry
-ADD COLUMN content_hash TYPE BYTEA;
+ADD COLUMN content_hash BYTEA;
 
 ALTER TABLE opsml_mcp_registry
-ADD COLUMN content_hash TYPE BYTEA;
+ADD COLUMN content_hash BYTEA;
 
 ALTER TABLE opsml_service_registry
-ADD COLUMN content_hash TYPE BYTEA;
+ADD COLUMN content_hash BYTEA;
