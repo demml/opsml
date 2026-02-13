@@ -1,4 +1,4 @@
-UPDATE opsml_service_registry SET
+UPDATE opsml_agent_registry SET
     app_env = ?,
     name = ?,
     space = ?,

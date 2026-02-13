@@ -105,6 +105,7 @@ pub async fn insert_card_into_db(
                 client_card.auditcard_uid,
                 client_card.opsml_version,
                 client_card.username,
+                client_card.content_hash,
             );
             ServerCard::Prompt(server_card)
         }
@@ -120,7 +121,7 @@ pub async fn insert_card_into_db(
                 client_card.metadata,
                 client_card.deployment,
                 client_card.service_config,
-                client_card.promptcard_uids,
+                client_card.content_hash,
                 client_card.username,
                 client_card.tags,
             );

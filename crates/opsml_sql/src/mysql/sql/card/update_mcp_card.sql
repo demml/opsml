@@ -14,4 +14,5 @@ UPDATE opsml_mcp_registry SET
     deployment = ?,
     service_config = ?,
     tags = ?
+    content_hash = ?
 WHERE uid = ?;
