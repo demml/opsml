@@ -2,7 +2,7 @@ use crate::core::auth::schema::{
     Authenticated, LoginRequest, LoginResponse, LogoutResponse, SsoCallbackParams,
 };
 use crate::core::auth::util::{authenticate_user_with_sso, authenticate_user_with_sso_callback};
-use crate::core::error::{internal_server_error, OpsmlServerError};
+use crate::core::error::{OpsmlServerError, internal_server_error};
 use crate::core::state::AppState;
 use crate::core::user::route::create_user;
 use crate::core::user::schema::RecoveryResetRequest;
@@ -15,11 +15,11 @@ use axum::extract::Query;
 /// Route for debugging information
 use axum::extract::State;
 use axum::{
+    Json, Router,
+    http::StatusCode,
     http::header,
     http::header::HeaderMap,
-    http::StatusCode,
     routing::{get, post},
-    Json, Router,
 };
 use opsml_auth::permission::UserPermissions;
 use opsml_crypt::{generate_code_challenge, generate_code_verifier};
@@ -29,7 +29,7 @@ use opsml_utils::create_uuid7;
 use password_auth::generate_hash;
 use password_auth::verify_password;
 use rand::Rng;
-use std::panic::{catch_unwind, AssertUnwindSafe};
+use std::panic::{AssertUnwindSafe, catch_unwind};
 use std::sync::Arc;
 use tracing::{debug, error, info, instrument};
 
@@ -135,10 +135,10 @@ pub async fn api_login_handler(
     // check if refresh token is already set.
     // if it is, check if its valid and return it
     // if it is not, generate a new one
-    if let Some(refresh_token) = &user.refresh_token {
-        if state.auth_manager.validate_jwt(refresh_token).is_ok() {
-            return Ok(Json(JwtToken { token: jwt_token }));
-        }
+    if let Some(refresh_token) = &user.refresh_token
+        && state.auth_manager.validate_jwt(refresh_token).is_ok()
+    {
+        return Ok(Json(JwtToken { token: jwt_token }));
     }
 
     let refresh_token = state
@@ -574,7 +574,7 @@ async fn reset_password_with_recovery(
             return Err((
                 StatusCode::UNAUTHORIZED,
                 Json(OpsmlServerError::invalid_recovery_code()),
-            ))
+            ));
         }
     };
     // Update password

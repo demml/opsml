@@ -5,7 +5,7 @@ use opsml_sql::schemas::*;
 use opsml_sql::traits::*;
 use opsml_storage::StorageClientEnum;
 use opsml_types::cards::CardTable;
-use opsml_types::{contracts::*, RegistryType};
+use opsml_types::{RegistryType, contracts::*};
 use semver::Version;
 use std::sync::Arc;
 use tracing::{error, instrument};
@@ -125,7 +125,7 @@ pub async fn insert_card_into_db(
                 client_card.username,
                 client_card.tags,
             );
-            ServerCard::Service(server_card)
+            ServerCard::Service(Box::new(server_card))
         }
     };
     sql_client.insert_card(table, &card).await?;

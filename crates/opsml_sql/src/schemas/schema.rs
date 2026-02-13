@@ -14,8 +14,8 @@ use opsml_utils::create_uuid7;
 use opsml_utils::utils::get_utc_datetime;
 use semver::{BuildMetadata, Prerelease, Version};
 use serde::{Deserialize, Serialize};
-use serde_json::json;
 use serde_json::Value;
+use serde_json::json;
 use sqlx::{prelude::FromRow, types::Json};
 use std::collections::HashMap;
 use std::env;
@@ -854,7 +854,7 @@ impl ServiceCardRecord {
             metadata: metadata.map(Json),
             deployment: deployment.map(Json),
             service_config: service_config.map(Json),
-            content_hash: content_hash,
+            content_hash,
             username,
             tags: Json(tags),
         }
@@ -1173,7 +1173,7 @@ pub enum ServerCard {
     Experiment(ExperimentCardRecord),
     Audit(AuditCardRecord),
     Prompt(PromptCardRecord),
-    Service(ServiceCardRecord),
+    Service(Box<ServiceCardRecord>),
 }
 
 impl ServerCard {
@@ -1284,9 +1284,9 @@ impl ServerCard {
             CardRecord::Prompt(card) => Ok(ServerCard::Prompt(PromptCardRecord::from_client_card(
                 card,
             )?)),
-            CardRecord::Service(card) => Ok(ServerCard::Service(
+            CardRecord::Service(card) => Ok(ServerCard::Service(Box::new(
                 ServiceCardRecord::from_client_card(*card)?,
-            )),
+            ))),
         }
     }
 }

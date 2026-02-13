@@ -11,7 +11,7 @@ default-members = [
 [workspace.package]
 version = "3.0.0-rc.17"
 authors = ["Steven Forrester <sjforrester32@gmail.com>"]
-edition = "2021"
+edition = "2024"
 license = "MIT"
 repository = "https://github.com/demml/opsml"
 

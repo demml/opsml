@@ -1,7 +1,8 @@
-use crate::contracts::mcp::McpConfig;
-use crate::contracts::AgentSpec;
-use crate::error::TypeError;
 use crate::RegistryType;
+use crate::contracts::AgentSpec;
+use crate::contracts::mcp::McpConfig;
+use crate::error::TypeError;
+use opsml_semver::VersionType;
 use opsml_utils::extract_py_attr;
 use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -9,6 +10,7 @@ use std::collections::HashMap;
 use std::fmt::Display;
 use std::path::{Path, PathBuf};
 use tracing::error;
+
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Hash, Default)]
 #[pyclass(eq, eq_int)]
 pub enum ServiceType {
@@ -214,12 +216,15 @@ pub struct Card {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[pyo3(get)]
     pub path: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[pyo3(get)]
+    pub version_type: Option<VersionType>,
 }
 
 #[pymethods]
 impl Card {
     #[new]
-    #[pyo3(signature = (alias, registry_type=None, space=None, name=None, version=None, uid=None, card=None, drift=None, path=None))]
+    #[pyo3(signature = (alias, registry_type=None, space=None, name=None, version=None, uid=None, card=None, drift=None, path=None, version_type=None))]
     #[allow(clippy::too_many_arguments)]
     pub fn new(
         alias: String,
@@ -231,6 +236,7 @@ impl Card {
         card: Option<Bound<'_, PyAny>>,
         drift: Option<DriftConfig>,
         path: Option<&str>,
+        version_type: Option<VersionType>,
     ) -> Result<Self, TypeError> {
         // If card object is provided, extract all attributes from it
         if let Some(card) = card {
@@ -253,6 +259,7 @@ impl Card {
                 alias,
                 drift,
                 path: None,
+                version_type,
             });
         }
 
@@ -282,11 +289,13 @@ impl Card {
             alias,
             drift,
             path: path.map(String::from),
+            version_type,
         })
     }
 }
 
 impl Card {
+    #[allow(clippy::too_many_arguments)]
     pub fn rust_new(
         alias: String,
         registry_type: RegistryType,
@@ -295,6 +304,7 @@ impl Card {
         version: Option<String>,
         uid: Option<String>,
         drift: Option<DriftConfig>,
+        version_type: Option<VersionType>,
     ) -> Card {
         Card {
             space,
@@ -305,6 +315,7 @@ impl Card {
             alias,
             drift,
             path: None,
+            version_type,
         }
     }
 

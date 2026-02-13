@@ -10,10 +10,9 @@ use tracing::debug;
 pub fn register_service(path: PathBuf) -> Result<(), CliError> {
     debug!("Registering service with path: {:?}", path);
     // handle case of no cards
-    let spec = ServiceSpec::from_path(&path)?;
-
+    let mut spec = ServiceSpec::from_path(&path)?;
     //Register the service
-    lock_service_card(&spec, spec.space(), &spec.name)?;
+    lock_service_card(&mut spec)?;
 
     Ok(())
 }

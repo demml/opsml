@@ -1,6 +1,6 @@
 use crate::error::PyProjectTomlError;
 use opsml_types::RegistryType;
-use serde::{de::IntoDeserializer, Deserialize, Serialize};
+use serde::{Deserialize, Serialize, de::IntoDeserializer};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
@@ -59,8 +59,7 @@ impl OpsmlTools {
         }
 
         // check the registry specific arguments for the given registry type and key
-        let registry_value = self
-            .registry
+        self.registry
             .as_ref()
             .and_then(|r| r.get(registry_type))
             .and_then(|r| match key {
@@ -68,9 +67,7 @@ impl OpsmlTools {
                 "name" => r.name.clone(),
                 "version" => r.version.clone(),
                 _ => None,
-            });
-
-        registry_value
+            })
     }
 
     /// Get the registry specific arguments

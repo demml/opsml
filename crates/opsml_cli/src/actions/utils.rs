@@ -1,17 +1,14 @@
 // This module contains utility functions for the opsml_cli crate.
 use crate::error::CliError;
 use opsml_cards::{PromptCard, ServiceCard};
-pub use opsml_registry::utils::validate_service_cards;
 use opsml_registry::CardRegistry;
+pub use opsml_registry::utils::validate_service_cards;
 use opsml_semver::VersionType;
 use opsml_service::ServiceSpec;
+use opsml_types::RegistryType;
 use opsml_types::contracts::Card;
-use opsml_types::RegistryType;
-use opsml_types::RegistryType;
 use std::path::Path;
-use std::path::Path;
-use tracing::debug;
-use tracing::debug;
+use tracing::{debug, warn};
 
 /// Process prompt cards that have paths specified, loading and registering them
 ///
@@ -28,13 +25,20 @@ use tracing::debug;
 /// * The prompt card cannot be loaded from path
 /// * The prompt card cannot be registered
 pub fn process_prompt_card_from_path(
-    cards: &mut Card,
+    card: &mut Card,
     root_path: &Path,
     registry: &CardRegistry,
 ) -> Result<(), CliError> {
+    // this is already checked before calling this function, but we check again here to be safe
+    let path_str = card
+        .path
+        .as_ref()
+        .ok_or_else(|| CliError::Error("Prompt card path is missing".to_string()))?;
+
     debug!(
         "Loading PromptCard from path: {} for alias: {}",
-        path_str, card.alias
+        card.path.as_ref().unwrap_or(&"".to_string()),
+        card.alias
     );
 
     // Resolve path relative to root_path if not absolute
@@ -48,15 +52,29 @@ pub fn process_prompt_card_from_path(
     let mut prompt_card = PromptCard::from_path(card_path)
         .map_err(|e| CliError::Error(format!("Failed to load PromptCard: {}", e)))?;
 
-    // Register the PromptCard
-    registry
-        .register_card_rs(&mut prompt_card, VersionType::Minor)
-        .map_err(|e| CliError::Error(format!("Failed to register PromptCard: {}", e)))?;
+    // Check if content hash matches registry to avoid unnecessary registration and versioning if content is the same
+    if let Ok(true) = registry.compare_card_hash(prompt_card.calculate_content_hash()?.as_slice()) {
+        warn!(
+            "PromptCard content hash matches registry, skipping registration for: {}/{}",
+            card.space, card.name
+        );
+    } else {
+        // Register the PromptCard
+        registry
+            .register_card_rs(
+                &mut prompt_card,
+                card.version_type // maybe move this as default in spec later on
+                    .as_ref()
+                    .unwrap_or(&VersionType::Minor)
+                    .clone(),
+            )
+            .map_err(|e| CliError::Error(format!("Failed to register PromptCard: {}", e)))?;
 
-    debug!(
-        "Registered PromptCard: {}/{} version {} (uid: {})",
-        card.space, card.name, prompt_card.version, prompt_card.uid
-    );
+        debug!(
+            "Registered PromptCard: {}/{} version {} (uid: {})",
+            card.space, card.name, prompt_card.version, prompt_card.uid
+        );
+    }
 
     card.space = prompt_card.space;
     card.name = prompt_card.name;
@@ -109,6 +127,7 @@ pub fn create_service_card(
                     card.version.clone(),
                     card.uid.clone(),
                     card.drift.clone(),
+                    card.version_type.clone(),
                 )
             })
             .collect::<Vec<_>>();
@@ -122,21 +141,28 @@ pub fn create_service_card(
         .map_err(CliError::CreateServiceError)
 }
 
+/// Attempts to register a service card based on the provided spec.
+/// Flow:
+/// 1. Iterate through cards in spec. If any cards/prompts have paths, load them and register them first.
+/// 2. Validate the cards in the spec after loading any cards from paths to ensure they are valid before registering the service card.
+/// 3. Create the service card and calculate its content hash.
+/// 4. Check the content hash against the registry - if it matches, skip registration to avoid creating a new version with the same content.
+///    If it doesn't match, register the service card
 pub fn register_service_card(
     spec: &mut ServiceSpec,
     registry: &CardRegistry,
     space: &str,
     name: &str,
-) -> Result<ServiceCard, CliError> {
-    if let Some(service_config) = &mut spec.service {
-        if let Some(cards) = &mut service_config.cards {
-            for card in cards.iter_mut() {
-                if card.registry_type == RegistryType::Prompt && card.path.is_some() {
-                    process_prompt_card_from_path(card, &spec.root_path, registry)?;
-                }
+) -> Result<(ServiceCard, bool), CliError> {
+    if let Some(service_config) = &mut spec.service
+        && let Some(cards) = &mut service_config.cards
+    {
+        for card in cards.iter_mut() {
+            if card.registry_type == RegistryType::Prompt && card.path.is_some() {
+                process_prompt_card_from_path(card, &spec.root_path, registry)?;
             }
-            validate_service_cards(cards)?;
         }
+        validate_service_cards(cards)?;
     }
 
     let cards = spec
@@ -149,7 +175,16 @@ pub fn register_service_card(
     let mut service = ServiceCard::rust_new(space.to_string(), name.to_string(), cards, spec)
         .map_err(CliError::CreateServiceError)?;
 
+    // check service content hash against registry to avoid unnecessary registration and versioning if content is the same
+    if let Ok(true) = registry.compare_card_hash(service.calculate_content_hash()?.as_slice()) {
+        warn!(
+            "ServiceCard content hash matches registry, skipping registration for: {}/{}",
+            space, name
+        );
+        return Ok((service, false));
+    }
+
     registry.register_card_rs(&mut service, VersionType::Minor)?;
 
-    Ok(service)
+    Ok((service, true))
 }

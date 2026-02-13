@@ -1,7 +1,7 @@
 use crate::core::state::AppState;
 use opsml_events::{
-    event::{insert_space_name_record, log_audit_event},
     Event,
+    event::{insert_space_name_record, log_audit_event},
 };
 use std::sync::Arc;
 use tokio::task;
@@ -18,21 +18,25 @@ impl AuditEventHandler {
     }
 
     pub async fn start(self) {
-        let mut events = self.state.event_bus.subscribe();
-
+        let state_for_task = Arc::clone(&self.state);
         info!("Starting audit event handler");
+
         task::spawn(async move {
+            let mut events = state_for_task.event_bus.subscribe();
+
             while let Some(event) = events.next().await {
                 match event {
                     Event::Audit(record) => {
-                        if let Err(e) = log_audit_event(record, self.state.sql_client.clone()).await
+                        if let Err(e) =
+                            log_audit_event(record, state_for_task.sql_client.clone()).await
                         {
                             error!("Failed to log audit event: {e}");
                         }
                     }
                     Event::SpaceName(record) => {
                         if let Err(e) =
-                            insert_space_name_record(record, self.state.sql_client.clone()).await
+                            insert_space_name_record(record, state_for_task.sql_client.clone())
+                                .await
                         {
                             error!("Failed to log space name event: {e}");
                         }

@@ -9,8 +9,8 @@ use crate::{
 };
 use opsml_settings::config::DatabaseSettings;
 use sqlx::{
-    mysql::{MySql, MySqlPoolOptions},
     Pool,
+    mysql::{MySql, MySqlPoolOptions},
 };
 
 use tracing::debug;
@@ -68,34 +68,34 @@ mod tests {
 
     use super::*;
 
+    use crate::schemas::EvaluationSqlRecord;
     use crate::schemas::schema::{
         ArtifactSqlRecord, AuditCardRecord, CardResults, DataCardRecord, ExperimentCardRecord,
         HardwareMetricsRecord, MetricRecord, ModelCardRecord, ParameterRecord, PromptCardRecord,
         ServerCard, ServiceCardRecord, User,
     };
-    use crate::schemas::EvaluationSqlRecord;
     use crate::traits::EvaluationLogicTrait;
     use crate::traits::{
         ArtifactLogicTrait, AuditLogicTrait, CardLogicTrait, ExperimentLogicTrait, SpaceLogicTrait,
         UserLogicTrait,
     };
     use opsml_settings::config::DatabaseSettings;
+    use opsml_types::CommonKwargs;
+    use opsml_types::SqlType;
+    use opsml_types::contracts::VersionCursor;
     use opsml_types::contracts::agent::{
         AgentCapabilities, AgentInterface, AgentProvider, AgentSkill, AgentSpec,
         SecurityRequirement,
     };
     use opsml_types::contracts::evaluation::{EvaluationProvider, EvaluationType};
-    use opsml_types::contracts::VersionCursor;
     use opsml_types::contracts::{ArtifactKey, ArtifactQueryArgs, AuditEvent, SpaceNameEvent};
-    use opsml_types::CommonKwargs;
-    use opsml_types::SqlType;
     use opsml_types::{
+        RegistryType,
         cards::CardTable,
         contracts::{
             ArtifactType, CardQueryArgs, DeploymentConfig, McpCapability, McpConfig, McpTransport,
             Resources, ServiceConfig, ServiceQueryArgs, ServiceType, SpaceRecord,
         },
-        RegistryType,
     };
     use opsml_utils::utils::get_utc_datetime;
     use semver::Version;
@@ -217,7 +217,7 @@ mod tests {
             CardTable::Experiment => ServerCard::Experiment(ExperimentCardRecord::default()),
             CardTable::Audit => ServerCard::Audit(AuditCardRecord::default()),
             CardTable::Prompt => ServerCard::Prompt(PromptCardRecord::default()),
-            CardTable::Service => ServerCard::Service(ServiceCardRecord::default()),
+            CardTable::Service => ServerCard::Service(Box::default()),
             _ => panic!("Invalid card type"),
         };
 
@@ -292,7 +292,7 @@ mod tests {
                     name: updated_name.to_string(),
                     ..Default::default()
                 };
-                ServerCard::Service(c)
+                ServerCard::Service(Box::new(c))
             }
             _ => panic!("Invalid card type"),
         };
@@ -1328,9 +1328,11 @@ mod tests {
             4,
             "Should retrieve only non-eval accuracy metrics"
         );
-        assert!(filtered_combo
-            .iter()
-            .all(|m| m.name == "accuracy" && !m.is_eval));
+        assert!(
+            filtered_combo
+                .iter()
+                .all(|m| m.name == "accuracy" && !m.is_eval)
+        );
 
         // Test 11: Verify created_at timestamp ordering for same name/step
         // Insert two metrics with identical name and step but different timestamps
@@ -1736,7 +1738,7 @@ mod tests {
     async fn test_mysql_get_load_card_key_service() {
         let client = db_client().await;
         let service_card = ServiceCardRecord::default();
-        let card = ServerCard::Service(service_card.clone());
+        let card = ServerCard::Service(Box::new(service_card.clone()));
 
         client
             .card
@@ -2022,7 +2024,10 @@ mod tests {
         };
         client
             .card
-            .insert_card(&CardTable::Service, &ServerCard::Service(service1))
+            .insert_card(
+                &CardTable::Service,
+                &ServerCard::Service(Box::new(service1)),
+            )
             .await
             .unwrap();
 
@@ -2035,7 +2040,10 @@ mod tests {
         };
         client
             .card
-            .insert_card(&CardTable::Service, &ServerCard::Service(service2))
+            .insert_card(
+                &CardTable::Service,
+                &ServerCard::Service(Box::new(service2)),
+            )
             .await
             .unwrap();
 
@@ -2079,7 +2087,7 @@ mod tests {
         };
         client
             .card
-            .insert_card(&CardTable::Mcp, &ServerCard::Service(mcp1))
+            .insert_card(&CardTable::Mcp, &ServerCard::Service(Box::new(mcp1)))
             .await
             .unwrap();
 
@@ -2092,7 +2100,7 @@ mod tests {
         };
         client
             .card
-            .insert_card(&CardTable::Mcp, &ServerCard::Service(mcp2))
+            .insert_card(&CardTable::Mcp, &ServerCard::Service(Box::new(mcp2)))
             .await
             .unwrap();
 
@@ -2131,7 +2139,7 @@ mod tests {
         tokio::time::sleep(std::time::Duration::from_secs(1)).await;
         client
             .card
-            .insert_card(&CardTable::Mcp, &ServerCard::Service(mcp3))
+            .insert_card(&CardTable::Mcp, &ServerCard::Service(Box::new(mcp3)))
             .await
             .unwrap();
 
@@ -2202,7 +2210,10 @@ mod tests {
 
         client
             .card
-            .insert_card(&CardTable::Agent, &ServerCard::Service(agent_card1))
+            .insert_card(
+                &CardTable::Agent,
+                &ServerCard::Service(Box::new(agent_card1)),
+            )
             .await
             .unwrap();
 
@@ -2224,7 +2235,10 @@ mod tests {
 
         client
             .card
-            .insert_card(&CardTable::Agent, &ServerCard::Service(agent_card2))
+            .insert_card(
+                &CardTable::Agent,
+                &ServerCard::Service(Box::new(agent_card2)),
+            )
             .await
             .unwrap();
 
