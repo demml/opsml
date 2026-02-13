@@ -24,3 +24,7 @@ CREATE TABLE IF NOT EXISTS opsml_agent_registry (
 
 CREATE INDEX idx_opsml_agent_registry_space_name ON opsml_agent_registry (space, name);
 CREATE INDEX idx_opsml_agent_registry_uid ON opsml_agent_registry (uid);
+
+-- need for hash comparisons
+ALTER TABLE opsml_prompt_registry 
+ADD COLUMN content_hash TEXT;

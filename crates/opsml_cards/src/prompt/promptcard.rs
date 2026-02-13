@@ -14,6 +14,7 @@ use scouter_client::TasksFile;
 use scouter_client::{DriftType, GenAIEvalConfig, GenAIEvalProfile};
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use tracing::{debug, error, instrument};
@@ -243,6 +244,24 @@ impl PromptCard {
 
     pub fn __str__(&self) -> String {
         PyHelperFuncs::__str__(self)
+    }
+
+    pub fn calculate_content_hash(&self) -> Result<String, CardError> {
+        let mut hasher = Sha256::new();
+
+        let prompt_json = serde_json::to_string(&self.prompt)?;
+        hasher.update(prompt_json.as_bytes());
+
+        let mut sorted_tags = self.tags.clone();
+        sorted_tags.sort();
+        hasher.update(sorted_tags.join(",").as_bytes());
+
+        if let Some(eval_profile) = &self.eval_profile {
+            let profile_json = serde_json::to_string(eval_profile)?;
+            hasher.update(profile_json.as_bytes());
+        }
+
+        Ok(format!("{:x}", hasher.finalize()))
     }
 }
 
