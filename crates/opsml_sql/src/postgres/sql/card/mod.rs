@@ -313,6 +313,7 @@ impl CardLogicTrait for CardLogicPostgresClient {
                         .bind(&record.build_tag)
                         .bind(&record.username)
                         .bind(&record.opsml_version)
+                        .bind(&record.content_hash)
                         .execute(&self.pool)
                         .await?;
                     Ok(())

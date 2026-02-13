@@ -1,4 +1,4 @@
-INSERT INTO opsml_mcp_registry (
+INSERT INTO opsml_agent_registry (
     uid,
     app_env,
     name,

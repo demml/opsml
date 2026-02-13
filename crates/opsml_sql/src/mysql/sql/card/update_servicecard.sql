@@ -13,6 +13,6 @@ UPDATE opsml_service_registry SET
     metadata = ?,
     deployment = ?,
     service_config = ?,
-    tags = ?
+    tags = ?,
     content_hash = ?
 WHERE uid = ?;

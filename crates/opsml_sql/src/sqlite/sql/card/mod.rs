@@ -351,6 +351,7 @@ impl CardLogicTrait for CardLogicSqliteClient {
             CardTable::Service | CardTable::Mcp | CardTable::Agent => match card {
                 ServerCard::Service(record) => {
                     let query = SqliteQueryHelper::get_servicecard_insert_query(table);
+
                     sqlx::query(query)
                         .bind(&record.uid)
                         .bind(&record.app_env)

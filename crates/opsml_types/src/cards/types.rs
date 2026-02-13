@@ -88,7 +88,7 @@ impl CardTable {
         match service_type {
             ServiceType::Mcp => CardTable::Mcp,
             ServiceType::Api => CardTable::Service,
-            _ => CardTable::Service,
+            ServiceType::Agent => CardTable::Agent,
         }
     }
 }
