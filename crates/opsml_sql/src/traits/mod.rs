@@ -17,6 +17,7 @@ use opsml_types::{
 
 #[async_trait]
 pub trait CardLogicTrait {
+    async fn compare_hash(&self, table: &CardTable, content_hash: &[u8]) -> Result<bool, SqlError>;
     async fn check_uid_exists(&self, uid: &str, table: &CardTable) -> Result<bool, SqlError>;
     async fn get_versions(
         &self,

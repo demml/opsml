@@ -22,6 +22,7 @@ use serde::{
     ser::SerializeStruct,
     Deserialize, Deserializer, Serialize, Serializer,
 };
+use sha2::{Digest, Sha256};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use tracing::{debug, error, instrument};
@@ -327,6 +328,15 @@ impl ServiceCard {
         self.card_objs.clear();
     }
 
+    /// Calculate a content hash for the service card based on its JSON representation. This can be used to detect changes in the card's content.
+    /// This is needed for cli work to compare current state vs previous state of the card.
+    pub fn calculate_content_hash(&self) -> Result<Vec<u8>, CardError> {
+        let mut hasher = Sha256::new();
+        let prompt_json = serde_json::to_string(&self)?;
+        hasher.update(prompt_json.as_bytes());
+        Ok(hasher.finalize().to_vec())
+    }
+
     /// Get the registry card for the service card
     pub fn get_registry_card(&self) -> Result<CardRecord, CardError> {
         let record = ServiceCardClientRecord {
@@ -344,7 +354,7 @@ impl ServiceCard {
             deployment: self.deploy.clone(),
             service_config: self.service_config.clone(),
             tags: self.metadata.as_ref().map_or(vec![], |m| m.tags.clone()),
-            promptcard_uids: None,
+            content_hash: self.calculate_content_hash()?,
         };
 
         Ok(CardRecord::Service(Box::new(record)))

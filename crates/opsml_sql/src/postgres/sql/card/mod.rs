@@ -325,7 +325,7 @@ impl CardLogicTrait for CardLogicPostgresClient {
             CardTable::Service | CardTable::Mcp | CardTable::Agent => match card {
                 ServerCard::Service(record) => {
                     let query = PostgresQueryHelper::get_servicecard_insert_query(table);
-                    let mut bound = sqlx::query(query)
+                    sqlx::query(query)
                         .bind(&record.uid)
                         .bind(&record.app_env)
                         .bind(&record.name)
@@ -343,13 +343,10 @@ impl CardLogicTrait for CardLogicPostgresClient {
                         .bind(&record.metadata)
                         .bind(&record.deployment)
                         .bind(&record.service_config)
-                        .bind(&record.tags);
-
-                    // add promptcard uids if agent card
-                    if table == &CardTable::Agent {
-                        bound = bound.bind(record.promptcard_uids.as_ref());
-                    }
-                    bound.execute(&self.pool).await?;
+                        .bind(&record.tags)
+                        .bind(&record.content_hash)
+                        .execute(&self.pool)
+                        .await?;
 
                     Ok(())
                 }
@@ -520,7 +517,7 @@ impl CardLogicTrait for CardLogicPostgresClient {
             CardTable::Service | CardTable::Mcp | CardTable::Agent => match card {
                 ServerCard::Service(record) => {
                     let query = PostgresQueryHelper::get_servicecard_update_query(table);
-                    let mut bound = sqlx::query(query)
+                    sqlx::query(query)
                         .bind(&record.app_env)
                         .bind(&record.name)
                         .bind(&record.space)
@@ -536,13 +533,10 @@ impl CardLogicTrait for CardLogicPostgresClient {
                         .bind(&record.deployment)
                         .bind(&record.service_config)
                         .bind(&record.tags)
-                        .bind(&record.uid);
-
-                    // add promptcard uids if agent card
-                    if table == &CardTable::Agent {
-                        bound = bound.bind(record.promptcard_uids.as_ref());
-                    }
-                    bound.execute(&self.pool).await?;
+                        .bind(&record.content_hash)
+                        .bind(&record.uid)
+                        .execute(&self.pool)
+                        .await?;
 
                     Ok(())
                 }
@@ -571,6 +565,16 @@ impl CardLogicTrait for CardLogicPostgresClient {
         let repos: Vec<String> = sqlx::query_scalar(&query).fetch_all(&self.pool).await?;
 
         Ok(repos)
+    }
+
+    async fn compare_hash(&self, table: &CardTable, content_hash: &[u8]) -> Result<bool, SqlError> {
+        let query = format!("SELECT EXISTS(SELECT 1 FROM {table} WHERE content_hash = $1)");
+        let exists: bool = sqlx::query_scalar(&query)
+            .bind(content_hash)
+            .fetch_one(&self.pool)
+            .await?;
+
+        Ok(exists)
     }
 
     /// Helper for extracting the unique tags from a table

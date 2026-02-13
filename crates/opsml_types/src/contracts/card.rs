@@ -622,6 +622,7 @@ pub struct PromptCardClientRecord {
     pub auditcard_uid: Option<String>,
     pub opsml_version: String,
     pub username: String,
+    pub content_hash: Vec<u8>,
 }
 
 impl Default for PromptCardClientRecord {
@@ -638,38 +639,7 @@ impl Default for PromptCardClientRecord {
             auditcard_uid: None,
             opsml_version: opsml_version::version(),
             username: "guest".to_string(),
-        }
-    }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[pyclass]
-pub struct AgentCardClientRecord {
-    pub uid: String,
-    pub created_at: DateTime<Utc>,
-    pub app_env: String,
-    pub name: String,
-    pub space: String,
-    pub version: String,
-    pub tags: Vec<String>,
-    pub promptcard_uids: Vec<String>,
-    pub opsml_version: String,
-    pub username: String,
-}
-
-impl Default for AgentCardClientRecord {
-    fn default() -> Self {
-        Self {
-            uid: "".to_string(),
-            created_at: get_utc_datetime(),
-            app_env: "development".to_string(),
-            name: "".to_string(),
-            space: "".to_string(),
-            version: "".to_string(),
-            tags: Vec::new(),
-            promptcard_uids: Vec::new(),
-            opsml_version: opsml_version::version(),
-            username: "guest".to_string(),
+            content_hash: Vec::new(),
         }
     }
 }
@@ -689,9 +659,9 @@ pub struct ServiceCardClientRecord {
     pub metadata: Option<ServiceMetadata>,
     pub deployment: Option<Vec<DeploymentConfig>>,
     pub service_config: Option<ServiceConfig>,
-    pub promptcard_uids: Option<Vec<String>>,
     pub username: String,
     pub tags: Vec<String>,
+    pub content_hash: Vec<u8>,
 }
 
 // Need to tell rust how to handle the box
@@ -735,8 +705,8 @@ impl Default for ServiceCardClientRecord {
             deployment: None,
             service_config: None,
             cards: Vec::new(),
-            promptcard_uids: None,
             tags: Vec::new(),
+            content_hash: Vec::new(),
         }
     }
 }
@@ -878,10 +848,7 @@ impl CardRecord {
             Self::Experiment(_) => None,
             Self::Audit(_) => None,
             Self::Prompt(card) => Some(vec![&card.uid]),
-            Self::Service(card) => card
-                .promptcard_uids
-                .as_ref()
-                .map(|uids| uids.iter().map(String::as_str).collect()),
+            Self::Service(_) => None,
         }
     }
 

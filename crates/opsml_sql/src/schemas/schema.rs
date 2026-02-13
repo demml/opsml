@@ -806,7 +806,7 @@ pub struct ServiceCardRecord {
     pub metadata: Option<Json<ServiceMetadata>>,
     pub deployment: Option<Json<Vec<DeploymentConfig>>>,
     pub service_config: Option<Json<ServiceConfig>>,
-    pub promptcard_uids: Option<Json<Vec<String>>>, // only used by mcps and agents. may need to convert this to enum in future
+    pub content_hash: Vec<u8>,
     pub username: String,
     pub tags: Json<Vec<String>>,
 }
@@ -823,7 +823,7 @@ impl ServiceCardRecord {
         metadata: Option<ServiceMetadata>,
         deployment: Option<Vec<DeploymentConfig>>,
         service_config: Option<ServiceConfig>,
-        promptcard_uids: Option<Vec<String>>,
+        content_hash: Vec<u8>,
         username: String,
         tags: Vec<String>,
     ) -> Self {
@@ -849,7 +849,7 @@ impl ServiceCardRecord {
             metadata: metadata.map(Json),
             deployment: deployment.map(Json),
             service_config: service_config.map(Json),
-            promptcard_uids: promptcard_uids.map(Json),
+            content_hash: content_hash,
             username,
             tags: Json(tags),
         }
@@ -884,7 +884,7 @@ impl ServiceCardRecord {
             metadata: client_card.metadata.map(Json),
             deployment: client_card.deployment.map(Json),
             service_config: client_card.service_config.map(Json),
-            promptcard_uids: client_card.promptcard_uids.map(Json),
+            content_hash: client_card.content_hash,
             tags: Json(client_card.tags),
         })
     }
@@ -911,7 +911,7 @@ impl Default for ServiceCardRecord {
             metadata: None,
             deployment: None,
             service_config: None,
-            promptcard_uids: None,
+            content_hash: Vec::new(),
             tags: Json(Vec::new()),
         }
     }
