@@ -4,6 +4,8 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
 
+use crate::error::TypeError;
+
 #[pyclass]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 #[serde(rename_all = "camelCase", default)]
@@ -255,12 +257,41 @@ pub struct OpenIdConnectSecurityScheme {
 #[pyclass]
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(tag = "type", rename_all = "camelCase")]
+#[allow(clippy::large_enum_variant)]
 pub enum SecurityScheme {
     ApiKeySecurityScheme(ApiKeySecurityScheme),
     HttpAuthSecurityScheme(HttpAuthSecurityScheme),
     MtlsSecurityScheme(MtlsSecurityScheme),
     Oauth2SecurityScheme(Oauth2SecurityScheme),
     OpenIdConnectSecurityScheme(OpenIdConnectSecurityScheme),
+}
+
+#[pymethods]
+impl SecurityScheme {
+    #[new]
+    pub fn new(scheme: &Bound<'_, PyAny>) -> Result<Self, TypeError> {
+        if scheme.is_instance_of::<ApiKeySecurityScheme>() {
+            let api_key_scheme = scheme.extract::<ApiKeySecurityScheme>()?;
+            Ok(SecurityScheme::ApiKeySecurityScheme(api_key_scheme))
+        } else if scheme.is_instance_of::<HttpAuthSecurityScheme>() {
+            let http_auth_scheme = scheme.extract::<HttpAuthSecurityScheme>()?;
+            Ok(SecurityScheme::HttpAuthSecurityScheme(http_auth_scheme))
+        } else if scheme.is_instance_of::<MtlsSecurityScheme>() {
+            let mtls_scheme = scheme.extract::<MtlsSecurityScheme>()?;
+            Ok(SecurityScheme::MtlsSecurityScheme(mtls_scheme))
+        } else if scheme.is_instance_of::<Oauth2SecurityScheme>() {
+            let oauth2_scheme = scheme.extract::<Oauth2SecurityScheme>()?;
+            Ok(SecurityScheme::Oauth2SecurityScheme(oauth2_scheme))
+        } else if scheme.is_instance_of::<OpenIdConnectSecurityScheme>() {
+            let openid_scheme = scheme.extract::<OpenIdConnectSecurityScheme>()?;
+            Ok(SecurityScheme::OpenIdConnectSecurityScheme(openid_scheme))
+        } else {
+            Err(TypeError::PyError(format!(
+                "Unsupported security scheme type: {:?}",
+                scheme.get_type()
+            )))
+        }
+    }
 }
 
 #[pyclass]

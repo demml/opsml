@@ -343,6 +343,7 @@ pub fn lock_service_card(
     let reg = match spec.service_type {
         ServiceType::Api => &registries.service,
         ServiceType::Mcp => &registries.mcp,
+        ServiceType::Agent => &registries.agent,
         _ => {
             return Err(CliError::UnsupportedServiceType(spec.service_type.clone()));
         }

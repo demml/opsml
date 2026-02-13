@@ -174,7 +174,13 @@ impl ServiceSpec {
         self.validate_service_type()?;
         self.service
             .as_mut()
-            .map(|service| service.validate(self.space_config.get_space(), &self.service_type))
+            .map(|service| {
+                service.validate(
+                    self.space_config.get_space(),
+                    &self.service_type,
+                    Some(&self.root_path), // Pass root path for agent spec loading
+                )
+            })
             .transpose()?;
         Ok(())
     }

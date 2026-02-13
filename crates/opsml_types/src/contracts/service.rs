@@ -7,6 +7,7 @@ use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt::Display;
+use std::path::{Path, PathBuf};
 use tracing::error;
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Hash, Default)]
 #[pyclass(eq, eq_int)]
@@ -317,6 +318,13 @@ impl Card {
     }
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(untagged)]
+pub enum AgentConfig {
+    Path(String),
+    Spec(Box<AgentSpec>),
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 #[pyclass]
 pub struct ServiceConfig {
@@ -332,29 +340,64 @@ pub struct ServiceConfig {
     #[pyo3(get)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub mcp: Option<McpConfig>,
+
+    #[serde(skip)]
+    agent_config: Option<AgentConfig>,
+
+    #[serde(skip)]
     #[pyo3(get)]
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub agent: Option<AgentSpec>,
 }
 
 impl ServiceConfig {
+    pub fn load_agent_spec(&mut self, root_path: &Path) -> Result<(), TypeError> {
+        if let Some(agent_config) = &self.agent_config {
+            match agent_config {
+                AgentConfig::Path(path) => {
+                    let agent_path = if Path::new(path).is_absolute() {
+                        PathBuf::from(path)
+                    } else {
+                        root_path.join(path)
+                    };
+
+                    let content = std::fs::read_to_string(&agent_path)?;
+                    let spec: AgentSpec = serde_json::from_str(&content)?;
+                    self.agent = Some(spec);
+                }
+                AgentConfig::Spec(spec) => {
+                    self.agent = Some((**spec).clone());
+                }
+            }
+        }
+        Ok(())
+    }
     pub fn validate(
         &mut self,
         service_space: &str,
         service_type: &ServiceType,
+        root_path: Option<&Path>,
     ) -> Result<(), TypeError> {
         if let Some(cards) = &mut self.cards {
             for card in cards {
                 card.validate()?;
-                // need to set the space to overall service space if not set
                 card.set_space(service_space);
             }
         }
 
-        // if service type is MCP, ensure MCP config is provided
         if service_type == &ServiceType::Mcp && self.mcp.is_none() {
             return Err(TypeError::MissingMCPConfig);
         }
+
+        if service_type == &ServiceType::Agent {
+            if let Some(root) = root_path {
+                self.load_agent_spec(root)?;
+            }
+
+            if self.agent.is_none() {
+                return Err(TypeError::MissingAgentConfig);
+            }
+        }
+
         Ok(())
     }
 }
@@ -368,13 +411,14 @@ impl ServiceConfig {
         write_dir: Option<String>,
         mcp: Option<McpConfig>,
         agent: Option<AgentSpec>,
-    ) -> Self {
-        ServiceConfig {
+    ) -> Result<Self, TypeError> {
+        Ok(ServiceConfig {
             version,
             cards,
             write_dir,
             mcp,
+            agent_config: None,
             agent,
-        }
+        })
     }
 }

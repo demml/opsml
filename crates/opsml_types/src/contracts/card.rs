@@ -13,7 +13,7 @@ use chrono::{DateTime, Utc};
 use opsml_colors::Colorize;
 use opsml_semver::VersionType;
 use opsml_utils::{get_utc_datetime, PyHelperFuncs};
-use pyo3::prelude::*;
+use pyo3::{prelude::*, IntoPyObjectExt};
 use semver::Version;
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
@@ -694,6 +694,31 @@ pub struct ServiceCardClientRecord {
     pub tags: Vec<String>,
 }
 
+// Need to tell rust how to handle the box
+impl<'py> IntoPyObject<'py> for Box<ServiceCardClientRecord> {
+    type Target = PyAny;
+    type Output = Bound<'py, PyAny>;
+    type Error = PyErr;
+
+    fn into_pyobject(self, py: Python<'py>) -> Result<Self::Output, Self::Error> {
+        (*self).into_bound_py_any(py)
+    }
+}
+
+impl<'a, 'py> FromPyObject<'a, 'py> for Box<ServiceCardClientRecord> {
+    type Error = PyErr;
+
+    fn extract(ob: Borrowed<'a, 'py, PyAny>) -> PyResult<Self> {
+        if let Ok(service) = ob.extract::<ServiceCardClientRecord>() {
+            return Ok(Box::new(service));
+        }
+
+        Err(PyErr::new::<pyo3::exceptions::PyTypeError, _>(
+            "Could not extract CardRecord from Python object",
+        ))
+    }
+}
+
 impl Default for ServiceCardClientRecord {
     fn default() -> Self {
         Self {
@@ -725,7 +750,7 @@ pub enum CardRecord {
     Experiment(ExperimentCardClientRecord),
     Audit(AuditCardClientRecord),
     Prompt(PromptCardClientRecord),
-    Service(ServiceCardClientRecord),
+    Service(Box<ServiceCardClientRecord>),
 }
 
 #[pymethods]

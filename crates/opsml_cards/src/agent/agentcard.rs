@@ -1,5 +1,6 @@
 use crate::error::CardError;
 use crate::utils::BaseArgs;
+use crate::ServiceCard;
 use chrono::{DateTime, Utc};
 use opsml_types::contracts::{AgentCardClientRecord, CardRecord};
 use opsml_types::{RegistryType, SaveName, Suffix};
@@ -591,58 +592,12 @@ impl AgentCardMetadata {
 // Main AgentCard
 // ============================================================================
 
-#[pyclass]
-#[derive(Debug, Serialize, Clone)]
-pub struct AgentCard {
-    #[pyo3(get, set)]
-    pub space: String,
-
-    #[pyo3(get, set)]
-    pub name: String,
-
-    #[pyo3(get, set)]
-    pub version: String,
-
-    #[pyo3(get, set)]
-    pub uid: String,
-
-    #[pyo3(get, set)]
-    pub tags: Vec<String>,
-
-    #[pyo3(get, set)]
-    pub metadata: AgentCardMetadata,
-
-    #[pyo3(get)]
-    pub registry_type: RegistryType,
-
-    #[pyo3(get, set)]
-    pub app_env: String,
-
-    #[pyo3(get, set)]
-    pub created_at: DateTime<Utc>,
-
-    #[pyo3(get)]
-    pub is_card: bool,
-
-    #[pyo3(get)]
-    pub opsml_version: String,
-}
+#[pyclass(extends=ServiceCard, subclass)]
+#[derive(Debug)]
+pub struct AgentCard {}
 
 #[pymethods]
 impl AgentCard {
-    #[new]
-    #[allow(clippy::too_many_arguments)]
-    #[pyo3(signature = (space=None, name=None, version=None, tags=None, spec=None))]
-    pub fn new(
-        space: Option<&str>,
-        name: Option<&str>,
-        version: Option<&str>,
-        tags: Option<Vec<String>>,
-        spec: Option<AgentSpec>,
-    ) -> Result<Self, CardError> {
-        Self::new_rs(space, name, version, tags, spec)
-    }
-
     pub fn add_tags(&mut self, tags: Vec<String>) {
         self.tags.extend(tags);
     }
@@ -713,12 +668,8 @@ impl AgentCard {
             version: self.version.clone(),
             uid: self.uid.clone(),
             tags: self.tags.clone(),
-            experimentcard_uid: self.metadata.experimentcard_uid.clone(),
-            auditcard_uid: self.metadata.auditcard_uid.clone(),
             opsml_version: self.opsml_version.clone(),
             promptcard_uids: self.metadata.promptcard_uids.clone(),
-            datacard_uids: self.metadata.datacard_uids.clone(),
-            modelcard_uids: self.metadata.modelcard_uids.clone(),
             username: std::env::var("OPSML_USERNAME").unwrap_or_else(|_| "guest".to_string()),
         };
 

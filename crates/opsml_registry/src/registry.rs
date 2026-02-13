@@ -860,6 +860,9 @@ pub struct CardRegistries {
 
     #[pyo3(get)]
     pub mcp: CardRegistry,
+
+    #[pyo3(get)]
+    pub agent: CardRegistry,
 }
 
 #[pymethods]
@@ -879,6 +882,7 @@ impl CardRegistries {
         let prompt = CardRegistry::rust_new(&RegistryType::Prompt)?;
         let service = CardRegistry::rust_new(&RegistryType::Service)?;
         let mcp = CardRegistry::rust_new(&RegistryType::Mcp)?;
+        let agent = CardRegistry::rust_new(&RegistryType::Agent)?;
 
         Ok(Self {
             experiment,
@@ -887,6 +891,7 @@ impl CardRegistries {
             prompt,
             service,
             mcp,
+            agent,
         })
     }
 }
