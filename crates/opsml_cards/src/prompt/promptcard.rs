@@ -184,6 +184,7 @@ impl PromptCard {
             auditcard_uid: self.metadata.auditcard_uid.clone(),
             opsml_version: self.opsml_version.clone(),
             username: std::env::var("OPSML_USERNAME").unwrap_or_else(|_| "guest".to_string()),
+            content_hash: self.calculate_content_hash()?,
         };
 
         Ok(CardRecord::Prompt(record))
@@ -246,7 +247,7 @@ impl PromptCard {
         PyHelperFuncs::__str__(self)
     }
 
-    pub fn calculate_content_hash(&self) -> Result<String, CardError> {
+    pub fn calculate_content_hash(&self) -> Result<Vec<u8>, CardError> {
         let mut hasher = Sha256::new();
 
         let prompt_json = serde_json::to_string(&self.prompt)?;
@@ -261,7 +262,7 @@ impl PromptCard {
             hasher.update(profile_json.as_bytes());
         }
 
-        Ok(format!("{:x}", hasher.finalize()))
+        Ok(hasher.finalize().to_vec())
     }
 }
 
