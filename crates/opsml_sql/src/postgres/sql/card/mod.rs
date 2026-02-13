@@ -567,6 +567,13 @@ impl CardLogicTrait for CardLogicPostgresClient {
         Ok(repos)
     }
 
+    /// Helper for comparing content hash for cards. Mainly used for cli work to determine if card has changed before
+    /// registering a new version or not.
+    /// # Arguments
+    /// * `table` - The table to query
+    /// * `content_hash` - The content hash to compare
+    /// # Returns
+    /// * `bool` - True if the content hash matches an existing card, false otherwise
     async fn compare_hash(&self, table: &CardTable, content_hash: &[u8]) -> Result<bool, SqlError> {
         let query = format!("SELECT EXISTS(SELECT 1 FROM {table} WHERE content_hash = $1)");
         let exists: bool = sqlx::query_scalar(&query)

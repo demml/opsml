@@ -107,6 +107,7 @@ pub fn convert_promptcard(record: PromptCardRecord) -> CardRecord {
         experimentcard_uid: record.experimentcard_uid,
         auditcard_uid: record.auditcard_uid,
         opsml_version: record.opsml_version,
+        content_hash: record.content_hash,
     };
 
     CardRecord::Prompt(card)
@@ -128,7 +129,7 @@ pub fn convert_servicecard(record: ServiceCardRecord) -> CardRecord {
         deployment: record.deployment.map(|d| d.0),
         service_config: record.service_config.map(|s| s.0),
         tags: record.tags.0,
-        promptcard_uids: record.promptcard_uids.map(|u| u.0),
+        content_hash: record.content_hash,
     };
 
     CardRecord::Service(Box::new(card))
