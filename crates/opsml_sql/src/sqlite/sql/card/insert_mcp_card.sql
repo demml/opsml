@@ -1,4 +1,4 @@
-INSERT INTO opsml_service_registry (
+INSERT INTO opsml_mcp_registry (
     uid,
     app_env,
     name,
@@ -18,4 +18,6 @@ INSERT INTO opsml_service_registry (
     service_config,
     tags,
     content_hash
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+    )
+    VALUES
+    (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);

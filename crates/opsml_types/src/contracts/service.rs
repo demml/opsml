@@ -349,7 +349,7 @@ pub struct ServiceConfig {
     pub mcp: Option<McpConfig>,
 
     #[serde(skip)]
-    agent_config: Option<AgentConfig>,
+    pub agent_config: Option<AgentConfig>,
 
     #[serde(skip)]
     #[pyo3(get)]

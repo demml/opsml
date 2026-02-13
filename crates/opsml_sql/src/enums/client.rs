@@ -43,6 +43,14 @@ impl CardLogicTrait for SqlClientEnum {
         }
     }
 
+    async fn compare_hash(&self, table: &CardTable, content_hash: &[u8]) -> Result<bool, SqlError> {
+        match self {
+            SqlClientEnum::Postgres(client) => client.card.compare_hash(table, content_hash).await,
+            SqlClientEnum::Sqlite(client) => client.card.compare_hash(table, content_hash).await,
+            SqlClientEnum::MySql(client) => client.card.compare_hash(table, content_hash).await,
+        }
+    }
+
     async fn get_versions(
         &self,
         table: &CardTable,
