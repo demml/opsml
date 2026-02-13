@@ -1055,6 +1055,7 @@ async fn test_opsml_server_card_service_card_crud() {
                 deployment: card.deployment,
                 service_config: card.service_config,
                 opsml_version: card.opsml_version,
+                promptcard_uids: card.promptcard_uids,
                 tags: card.tags,
             }),
         };
@@ -1130,7 +1131,7 @@ async fn test_opsml_server_card_service_card_mcps() {
                 name: "service".to_string(),
                 space: "repo1".to_string(),
                 version: "1.0.0".to_string(),
-                service_type: ServiceType::Mcp.to_string(),
+                service_type: ServiceType::Mcp,
                 service_config: Some(ServiceConfig {
                     mcp: Some(McpConfig {
                         capabilities: vec![McpCapability::Resources, McpCapability::Tools],

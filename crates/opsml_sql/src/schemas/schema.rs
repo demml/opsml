@@ -1280,7 +1280,7 @@ impl ServerCard {
                 card,
             )?)),
             CardRecord::Service(card) => Ok(ServerCard::Service(
-                ServiceCardRecord::from_client_card(card)?,
+                ServiceCardRecord::from_client_card(*card)?,
             )),
         }
     }

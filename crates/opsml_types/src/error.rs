@@ -1,6 +1,7 @@
 use opsml_crypt::error::CryptError;
 use opsml_utils::error::UtilError;
 use pyo3::exceptions::PyRuntimeError;
+use pyo3::pyclass::PyClassGuardError;
 use pyo3::PyErr;
 use thiserror::Error;
 use tracing::error;
@@ -51,6 +52,12 @@ pub enum TypeError {
 
     #[error("Registry type must be provided when card is not provided")]
     MissingRegistryTypeError,
+
+    #[error("Agent configuration is missing")]
+    MissingAgentConfig,
+
+    #[error("Invalid agent configuration")]
+    InvalidAgentConfig,
 }
 
 impl From<TypeError> for PyErr {
@@ -63,6 +70,12 @@ impl From<TypeError> for PyErr {
 
 impl From<PyErr> for TypeError {
     fn from(err: PyErr) -> TypeError {
+        TypeError::PyError(err.to_string())
+    }
+}
+
+impl<'a, 'py> From<PyClassGuardError<'a, 'py>> for TypeError {
+    fn from(err: PyClassGuardError<'a, 'py>) -> Self {
         TypeError::PyError(err.to_string())
     }
 }

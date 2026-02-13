@@ -131,5 +131,5 @@ pub fn convert_servicecard(record: ServiceCardRecord) -> CardRecord {
         promptcard_uids: record.promptcard_uids.map(|u| u.0),
     };
 
-    CardRecord::Service(card)
+    CardRecord::Service(Box::new(card))
 }

@@ -174,7 +174,6 @@ pub struct ServiceCard {
     #[pyo3(get)]
     pub registry_type: RegistryType,
 
-    // this is the holder for the card objects (ModelCard, DataCard, etc.)
     pub card_objs: HashMap<String, Py<PyAny>>,
 
     #[pyo3(get, set)]
@@ -340,14 +339,15 @@ impl ServiceCard {
             cards: self.cards.to_card_entries(),
             opsml_version: self.opsml_version.clone(),
             username: std::env::var("OPSML_USERNAME").unwrap_or_else(|_| "guest".to_string()),
-            service_type: self.service_type.to_string(),
+            service_type: self.service_type.clone(),
             metadata: self.metadata.clone(),
             deployment: self.deploy.clone(),
             service_config: self.service_config.clone(),
             tags: self.metadata.as_ref().map_or(vec![], |m| m.tags.clone()),
+            promptcard_uids: None,
         };
 
-        Ok(CardRecord::Service(record))
+        Ok(CardRecord::Service(Box::new(record)))
     }
 
     /// enable __getitem__ for ServiceCard alias calls

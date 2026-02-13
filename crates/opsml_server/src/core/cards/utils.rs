@@ -116,26 +116,15 @@ pub async fn insert_card_into_db(
                 version,
                 client_card.cards,
                 client_card.opsml_version,
-                client_card.service_type,
+                client_card.service_type.to_string(),
                 client_card.metadata,
                 client_card.deployment,
                 client_card.service_config,
+                client_card.promptcard_uids,
                 client_card.username,
                 client_card.tags,
             );
             ServerCard::Service(server_card)
-        }
-        CardRecord::Agent(client_card) => {
-            let server_card = AgentCardRecord::new(
-                client_card.name,
-                client_card.space,
-                version,
-                client_card.tags,
-                client_card.promptcard_uids,
-                client_card.opsml_version,
-                client_card.username,
-            );
-            ServerCard::Agent(server_card)
         }
     };
     sql_client.insert_card(table, &card).await?;
