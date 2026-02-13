@@ -2,10 +2,10 @@ use crate::error::RegistryError;
 use crate::{base::*, error::ApiClientError};
 use opsml_semver::VersionType;
 use opsml_types::{
+    Alive, IntegratedService, RegistryMode, RegistryType,
     api::*,
     cards::{CardTable, HardwareMetrics, Metric, Parameter},
     contracts::*,
-    Alive, IntegratedService, RegistryMode, RegistryType,
 };
 use scouter_client::{ProfileRequest, ProfileStatusRequest, ScouterServerError};
 use serde::Deserialize;

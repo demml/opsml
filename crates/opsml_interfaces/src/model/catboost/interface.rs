@@ -1,15 +1,15 @@
-use crate::base::{parse_save_kwargs, ModelInterfaceMetadata, ModelInterfaceSaveMetadata};
+use crate::base::{ModelInterfaceMetadata, ModelInterfaceSaveMetadata, parse_save_kwargs};
 use crate::error::{ModelInterfaceError, OnnxError};
 use crate::model::ModelInterface;
 use crate::{DataProcessor, ModelLoadKwargs, ModelSaveKwargs};
 use crate::{OnnxSession, ProcessorType};
 use opsml_types::{CommonKwargs, ModelInterfaceType, SaveName, Suffix, TaskType};
 use opsml_utils::pydict_to_json_value;
+use pyo3::IntoPyObjectExt;
+use pyo3::PyTraverseError;
 use pyo3::gc::PyVisit;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
-use pyo3::IntoPyObjectExt;
-use pyo3::PyTraverseError;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use tracing::{debug, error, instrument};

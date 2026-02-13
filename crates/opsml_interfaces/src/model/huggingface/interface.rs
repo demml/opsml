@@ -6,21 +6,21 @@ use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
+use crate::OnnxConverter;
+use crate::OnnxSession;
 use crate::base::{
-    parse_save_kwargs, ExtraMetadata, ModelInterfaceMetadata, ModelInterfaceSaveMetadata,
+    ExtraMetadata, ModelInterfaceMetadata, ModelInterfaceSaveMetadata, parse_save_kwargs,
 };
-use crate::data::generate_feature_schema;
 use crate::data::DataInterface;
+use crate::data::generate_feature_schema;
 use crate::error::{ModelInterfaceError, OnnxError};
 use crate::model::ModelInterface;
 use crate::types::{FeatureSchema, ProcessorType};
-use crate::OnnxConverter;
-use crate::OnnxSession;
 use crate::{DataProcessor, ModelLoadKwargs, ModelSaveKwargs};
-use pyo3::types::PyDict;
 use pyo3::IntoPyObjectExt;
 use pyo3::PyTraverseError;
 use pyo3::PyVisit;
+use pyo3::types::PyDict;
 use std::path::{Path, PathBuf};
 use tracing::{debug, instrument, warn};
 

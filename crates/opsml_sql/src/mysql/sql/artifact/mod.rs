@@ -5,8 +5,8 @@ use crate::error::SqlError;
 use crate::schemas::ArtifactSqlRecord;
 use async_trait::async_trait;
 use opsml_types::{
-    contracts::{ArtifactKey, ArtifactQueryArgs, ArtifactRecord},
     RegistryType,
+    contracts::{ArtifactKey, ArtifactQueryArgs, ArtifactRecord},
 };
 use sqlx::{MySql, Pool};
 

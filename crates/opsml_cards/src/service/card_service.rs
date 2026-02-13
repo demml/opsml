@@ -7,10 +7,10 @@ use opsml_interfaces::{DataLoadKwargs, ModelLoadKwargs};
 use opsml_service::ServiceSpec;
 use opsml_types::contracts::{Card, CardEntry, ServiceConfig};
 use opsml_types::{
+    RegistryType, SaveName, Suffix,
     contracts::{
         CardRecord, DeploymentConfig, ServiceCardClientRecord, ServiceMetadata, ServiceType,
     },
-    RegistryType, SaveName, Suffix,
 };
 use opsml_utils::PyHelperFuncs;
 use pyo3::IntoPyObjectExt;
@@ -18,9 +18,9 @@ use pyo3::PyTraverseError;
 use pyo3::PyVisit;
 use pyo3::{prelude::*, types::PyDict};
 use serde::{
+    Deserialize, Deserializer, Serialize, Serializer,
     de::{self, MapAccess, Visitor},
     ser::SerializeStruct,
-    Deserialize, Deserializer, Serialize, Serializer,
 };
 use sha2::{Digest, Sha256};
 use std::collections::HashMap;

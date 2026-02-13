@@ -2,7 +2,7 @@
 use crate::storage::error::StorageError;
 use async_trait::async_trait;
 use opsml_settings::config::OpsmlStorageSettings;
-use opsml_types::{contracts::FileInfo, StorageType};
+use opsml_types::{StorageType, contracts::FileInfo};
 use std::path::Path;
 use std::path::PathBuf;
 // take a stream of bytes

@@ -1,12 +1,12 @@
-use crate::base::{
-    parse_save_kwargs, DriftProfileMap, ExtraMetadata, ModelLoadKwargs, ModelSaveKwargs,
-};
-use crate::data::generate_feature_schema;
-use crate::data::DataInterface;
-use crate::model::onnx::OnnxConverter;
-use crate::model::SampleData;
-use crate::types::{FeatureSchema, ProcessorType};
 use crate::OnnxSession;
+use crate::base::{
+    DriftProfileMap, ExtraMetadata, ModelLoadKwargs, ModelSaveKwargs, parse_save_kwargs,
+};
+use crate::data::DataInterface;
+use crate::data::generate_feature_schema;
+use crate::model::SampleData;
+use crate::model::onnx::OnnxConverter;
+use crate::types::{FeatureSchema, ProcessorType};
 use opsml_types::CommonKwargs;
 use opsml_utils::PyHelperFuncs;
 use scouter_client::{
@@ -17,20 +17,20 @@ use crate::error::ModelInterfaceError;
 use crate::model::base::utils;
 
 use opsml_types::{
-    interfaces::{ModelInterfaceType, ModelType, TaskType},
     DataType, DriftProfileUri, SaveName, Suffix,
+    interfaces::{ModelInterfaceType, ModelType, TaskType},
 };
+use pyo3::IntoPyObjectExt;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
-use pyo3::IntoPyObjectExt;
-use scouter_client::{drifter::PyDrifter, DataType as DriftDataType};
+use scouter_client::{DataType as DriftDataType, drifter::PyDrifter};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use pyo3::gc::PyVisit;
 use pyo3::PyTraverseError;
+use pyo3::gc::PyVisit;
 use serde_json::Value;
 use tracing::{debug, error, instrument, warn};
 

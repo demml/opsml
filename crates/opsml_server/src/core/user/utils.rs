@@ -1,7 +1,7 @@
-use crate::core::error::{internal_server_error, OpsmlServerError};
+use crate::core::error::{OpsmlServerError, internal_server_error};
 use anyhow::Result;
 /// Route for debugging information
-use axum::{http::StatusCode, Json};
+use axum::{Json, http::StatusCode};
 use opsml_sql::enums::client::SqlClientEnum;
 use opsml_sql::schemas::User;
 use opsml_sql::traits::UserLogicTrait;

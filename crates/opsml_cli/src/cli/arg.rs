@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use crate::error::CliError;
 use clap::Args;
 use opsml_service::service::DEFAULT_SERVICE_FILENAME;
-use opsml_types::{contracts::CardQueryArgs, RegistryType};
+use opsml_types::{RegistryType, contracts::CardQueryArgs};
 use opsml_utils::clean_string;
 use pyo3::{pyclass, pymethods};
 use scouter_client::DriftType;

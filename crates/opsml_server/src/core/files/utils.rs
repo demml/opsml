@@ -9,18 +9,18 @@ use opsml_crypt::{
 use opsml_sql::enums::client::SqlClientEnum;
 use opsml_sql::traits::ArtifactLogicTrait;
 use opsml_storage::StorageClientEnum;
+use opsml_types::RegistryType;
 use opsml_types::contracts::FileInfo;
 use opsml_types::contracts::RawFile;
 use opsml_types::contracts::{ArtifactKey, DownloadResponse, UploadResponse};
-use opsml_types::RegistryType;
 use opsml_utils::uid_to_byte_key;
 use std::collections::VecDeque;
 use std::path::{Path, PathBuf};
 use std::result;
 /// Route for debugging information
 use std::sync::Arc;
-use tempfile::tempdir;
 use tempfile::TempDir;
+use tempfile::tempdir;
 use tokio::task::JoinSet;
 use tracing::debug;
 use tracing::{error, instrument, warn};

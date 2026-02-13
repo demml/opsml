@@ -1,8 +1,8 @@
 use opsml_crypt::error::CryptError;
 use opsml_utils::error::UtilError;
+use pyo3::PyErr;
 use pyo3::exceptions::PyRuntimeError;
 use pyo3::pyclass::PyClassGuardError;
-use pyo3::PyErr;
 use thiserror::Error;
 use tracing::error;
 

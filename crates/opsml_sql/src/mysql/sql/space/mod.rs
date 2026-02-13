@@ -5,8 +5,8 @@ use crate::error::SqlError;
 use crate::schemas::SqlSpaceRecord;
 use async_trait::async_trait;
 use opsml_types::{
-    contracts::{SpaceNameEvent, SpaceRecord, SpaceStats},
     RegistryType,
+    contracts::{SpaceNameEvent, SpaceRecord, SpaceStats},
 };
 use sqlx::{MySql, Pool};
 

@@ -436,9 +436,6 @@ deploy:
 
         let prompt_card = spec.get_card("my_prompt").unwrap();
         assert_eq!(prompt_card.registry_type, opsml_types::RegistryType::Prompt);
-        assert_eq!(
-            prompt_card.path,
-            Some("prompts/my_prompt.json".to_string())
-        );
+        assert_eq!(prompt_card.path, Some("prompts/my_prompt.json".to_string()));
     }
 }

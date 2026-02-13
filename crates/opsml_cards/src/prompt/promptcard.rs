@@ -2,14 +2,14 @@ use crate::error::CardError;
 use crate::traits::OpsmlCard;
 use crate::utils::BaseArgs;
 use chrono::{DateTime, Utc};
-use opsml_types::contracts::{CardRecord, PromptCardClientRecord};
 use opsml_types::DriftProfileUri;
+use opsml_types::contracts::{CardRecord, PromptCardClientRecord};
 use opsml_types::{RegistryType, SaveName, Suffix};
-use opsml_utils::{get_utc_datetime, PyHelperFuncs};
+use opsml_utils::{PyHelperFuncs, get_utc_datetime};
 use potato_head::prompt_types::Prompt;
+use pyo3::IntoPyObjectExt;
 use pyo3::prelude::*;
 use pyo3::types::PyList;
-use pyo3::IntoPyObjectExt;
 use scouter_client::AssertionTasks;
 use scouter_client::TasksFile;
 use scouter_client::{DriftType, GenAIEvalConfig, GenAIEvalProfile};
@@ -35,7 +35,7 @@ pub fn deserialize_from_path<T: DeserializeOwned>(path: PathBuf) -> Result<T, Ca
             return Err(CardError::Error(format!(
                 "Unsupported file extension '{}'. Expected .json, .yaml, or .yml",
                 extension
-            )))
+            )));
         }
     };
 

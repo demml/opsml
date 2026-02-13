@@ -7,7 +7,7 @@ use opsml_sql::schemas::User;
 use opsml_types::api::RequestType;
 /// Route for debugging information
 use reqwest::Response;
-use reqwest::{header::HeaderMap, Client};
+use reqwest::{Client, header::HeaderMap};
 use serde_json::Value;
 use tracing::error;
 

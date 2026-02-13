@@ -1,5 +1,5 @@
-use axum::response::IntoResponse;
 use axum::Json;
+use axum::response::IntoResponse;
 /// file containing schema for health module
 use serde::{Deserialize, Serialize};
 

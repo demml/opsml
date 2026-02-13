@@ -1,29 +1,29 @@
-use crate::storage::base::{get_files, PathExt, StorageClient};
+use crate::storage::base::{PathExt, StorageClient, get_files};
 use crate::storage::error::StorageError;
 use crate::storage::filesystem::FileSystem;
 use crate::storage::gcs::error::GoogleError;
 use crate::storage::utils::get_chunk_parts;
 use async_trait::async_trait;
 use base64::prelude::*;
-use futures::stream::Stream;
 use futures::StreamExt;
+use futures::stream::Stream;
 use gcloud_auth::credentials::CredentialsFile;
 use gcloud_storage::client::{Client, ClientConfig};
+use gcloud_storage::http::objects::Object;
 use gcloud_storage::http::objects::delete::DeleteObjectRequest;
 use gcloud_storage::http::objects::download::Range;
 use gcloud_storage::http::objects::get::GetObjectRequest;
 use gcloud_storage::http::objects::list::ListObjectsRequest;
 use gcloud_storage::http::objects::upload::UploadObjectRequest;
 use gcloud_storage::http::objects::upload::UploadType;
-use gcloud_storage::http::objects::Object;
 use gcloud_storage::http::resumable_upload_client::ChunkSize;
 use gcloud_storage::http::resumable_upload_client::ResumableUploadClient;
 use gcloud_storage::http::resumable_upload_client::UploadStatus;
 use gcloud_storage::sign::SignedURLMethod;
 use gcloud_storage::sign::SignedURLOptions;
 use opsml_settings::config::OpsmlStorageSettings;
-use opsml_types::contracts::{CompleteMultipartUpload, FileInfo, UploadPartArgs};
 use opsml_types::StorageType;
+use opsml_types::contracts::{CompleteMultipartUpload, FileInfo, UploadPartArgs};
 use opsml_utils::ChunkParts;
 use reqwest::header::CONTENT_LENGTH;
 use std::env;
@@ -757,8 +757,8 @@ mod tests {
     use crate::storage::error::StorageError;
     use opsml_settings::config::OpsmlConfig;
     use opsml_utils::create_uuid7;
-    use rand::distr::Alphanumeric;
     use rand::Rng;
+    use rand::distr::Alphanumeric;
     use std::path::Path;
     use tempfile::TempDir;
 
@@ -816,10 +816,12 @@ mod tests {
         assert!(!path.is_empty());
 
         // ls
-        assert!(!storage_client
-            .find(rpath_nested.parent().unwrap())
-            .await?
-            .is_empty());
+        assert!(
+            !storage_client
+                .find(rpath_nested.parent().unwrap())
+                .await?
+                .is_empty()
+        );
 
         // find
         let blobs = storage_client.find(rpath_dir).await?;

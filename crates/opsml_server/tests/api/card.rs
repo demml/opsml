@@ -1,7 +1,7 @@
 use crate::common::TestHelper;
 use axum::{
     body::Body,
-    http::{header, Request, StatusCode},
+    http::{Request, StatusCode, header},
 };
 use http_body_util::BodyExt; // for `collect`
 use opsml_crypt::encrypt_file;
@@ -1935,5 +1935,103 @@ async fn test_opsml_server_dashboard_stats() {
         assert_eq!(dashboard_stats.stats.nbr_data, 10);
         assert_eq!(dashboard_stats.stats.nbr_prompts, 0);
         assert_eq!(dashboard_stats.stats.nbr_experiments, 0);
+    });
+}
+
+#[tokio::test]
+async fn test_opsml_server_card_service_card_agents() {
+    retry_flaky_test!({
+        let helper = TestHelper::new(None).await;
+
+        let agent_spec = TestHelper::example_agent_spec();
+
+        let deploy = DeploymentConfig {
+            environment: "dev".to_string(),
+            provider: Some("development".to_string()),
+            location: Some(vec!["local".to_string()]),
+            endpoints: vec!["http://localhost:8000".to_string()],
+            resources: Some(Resources {
+                cpu: 2,
+                memory: "4GB".to_string(),
+                storage: "10GB".to_string(),
+                gpu: None,
+            }),
+            links: None,
+        };
+
+        // ServiceCard
+        let service_card = ServiceCardClientRecord {
+            name: "service".to_string(),
+            space: "repo1".to_string(),
+            version: "1.0.0".to_string(),
+            service_type: ServiceType::Agent,
+            service_config: Some(ServiceConfig {
+                agent: Some(agent_spec.clone()),
+                ..Default::default()
+            }),
+            deployment: Some(vec![deploy]),
+            ..ServiceCardClientRecord::default()
+        };
+
+        let card_version_request = CardVersionRequest {
+            name: "service".to_string(),
+            space: "repo1".to_string(),
+            version: Some("1.0.0".to_string()),
+            version_type: VersionType::Minor,
+            pre_tag: None,
+            build_tag: None,
+        };
+
+        let card_request = CreateCardRequest {
+            card: CardRecord::Service(Box::new(service_card)),
+            registry_type: RegistryType::Agent,
+            version_request: card_version_request,
+        };
+
+        let body = serde_json::to_string(&card_request).unwrap();
+
+        let request = Request::builder()
+            .uri("/opsml/api/card/create")
+            .method("POST")
+            .header(header::CONTENT_TYPE, "application/json")
+            .body(Body::from(body))
+            .unwrap();
+
+        let response = helper.send_oneshot(request).await;
+        assert_eq!(response.status(), StatusCode::OK);
+
+        let body = response.into_body().collect().await.unwrap().to_bytes();
+        let create_response: CreateCardResponse = serde_json::from_slice(&body).unwrap();
+        assert!(create_response.registered);
+
+        let args = CardQueryArgs {
+            uid: None,
+            name: None,
+            space: None,
+            version: None,
+            max_date: None,
+            tags: None,
+            limit: None,
+            sort_by_timestamp: None,
+            registry_type: RegistryType::Agent,
+        };
+
+        let query_string = serde_qs::to_string(&args).unwrap();
+
+        let request = Request::builder()
+            .uri(format!("/opsml/api/card/list?{query_string}"))
+            .method("GET")
+            .body(Body::empty())
+            .unwrap();
+
+        let response = helper.send_oneshot(request).await;
+        assert_eq!(response.status(), StatusCode::OK);
+
+        let body = response.into_body().collect().await.unwrap().to_bytes();
+        let card_results: Vec<CardRecord> = serde_json::from_slice(&body).unwrap();
+
+        assert_eq!(card_results.len(), 1);
+
+        helper.cleanup();
     });
 }

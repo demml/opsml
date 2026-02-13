@@ -9,8 +9,8 @@ use opsml_crypt::encrypt_file;
 use opsml_types::SaveName;
 use opsml_types::Suffix;
 use opsml_types::{
-    contracts::{ArtifactKey, UpdateProfileRequest},
     RegistryType,
+    contracts::{ArtifactKey, UpdateProfileRequest},
 };
 use rand::Rng;
 use reqwest::header;

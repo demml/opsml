@@ -12,8 +12,8 @@ use crate::traits::CardLogicTrait;
 use async_trait::async_trait;
 use opsml_semver::VersionValidator;
 use opsml_types::{
-    contracts::{ArtifactKey, CardQueryArgs, DashboardStats, ServiceQueryArgs, VersionCursor},
     RegistryType,
+    contracts::{ArtifactKey, CardQueryArgs, DashboardStats, ServiceQueryArgs, VersionCursor},
 };
 use semver::Version;
 use sqlx::{Pool, Postgres};
@@ -160,7 +160,7 @@ impl CardLogicTrait for CardLogicPostgresClient {
                         .await?;
                 Ok(CardResults::Prompt(cards))
             }
-            CardTable::Service | CardTable::Mcp => {
+            CardTable::Service | CardTable::Mcp | CardTable::Agent => {
                 let cards =
                     query_cards_generic::<ServiceCardRecord>(&self.pool, &query, query_args, 1000)
                         .await?;

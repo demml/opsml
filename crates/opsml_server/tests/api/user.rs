@@ -1,7 +1,7 @@
 use crate::common::TestHelper;
 use axum::{
     body::Body,
-    http::{header, Request, StatusCode},
+    http::{Request, StatusCode, header},
 };
 use http_body_util::BodyExt;
 use opsml_types::JwtToken; // for `collect`

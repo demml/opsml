@@ -1,35 +1,35 @@
-use crate::error::ExperimentError;
 use crate::HardwareQueue;
+use crate::error::ExperimentError;
 use chrono::{DateTime, Utc};
 use mime_guess::mime;
 use opsml_cards::ExperimentCard;
 use opsml_crypt::{decrypt_directory, encrypt_directory};
+use opsml_registry::CardRegistries;
 use opsml_registry::registries::artifact::OpsmlArtifactRegistry;
 use opsml_registry::registries::experiment::OpsmlExperiment;
-use opsml_registry::CardRegistries;
 use opsml_semver::VersionType;
 use opsml_storage::storage_client;
+use opsml_types::CommonKwargs;
+use opsml_types::RegistryType;
 use opsml_types::cards::{CardStatus, EvalMetrics, Metrics, Parameters};
 use opsml_types::contracts::{
     ArtifactKey, ArtifactQueryArgs, ArtifactType, GetMetricRequest, GetParameterRequest,
     MetricRequest, ParameterRequest,
 };
-use opsml_types::CommonKwargs;
-use opsml_types::RegistryType;
 use opsml_types::{
-    cards::experiment::{Metric, Parameter},
     SaveName,
+    cards::experiment::{Metric, Parameter},
 };
 use pyo3::{
+    IntoPyObjectExt,
     prelude::*,
     types::{PyDict, PyList},
-    IntoPyObjectExt,
 };
 
 use std::path::PathBuf;
 use std::sync::Arc;
-use tempfile::tempdir;
 use tempfile::TempDir;
+use tempfile::tempdir;
 use tracing::{debug, error, instrument, warn};
 use walkdir::WalkDir;
 
@@ -909,7 +909,10 @@ impl Experiment {
             }
 
             _ => {
-                warn!("Registry type not supported for {} when registering card from inside an experiment", registry_type);
+                warn!(
+                    "Registry type not supported for {} when registering card from inside an experiment",
+                    registry_type
+                );
             }
         }
 

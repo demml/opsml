@@ -196,7 +196,9 @@ impl GcsMultipartUpload {
         }
 
         if !upload_complete {
-            tracing::warn!("Upload may be incomplete - never received final success status. Attempting to complete");
+            tracing::warn!(
+                "Upload may be incomplete - never received final success status. Attempting to complete"
+            );
             // Attempt to complete the upload
             match self.complete_multipart_upload() {
                 Ok(_) => {

@@ -1,18 +1,18 @@
 use aes_gcm::{
-    aead::{Aead, AeadCore, KeyInit, OsRng},
     Aes256Gcm,
     Key, // Or `Aes128Gcm`
     Nonce,
+    aead::{Aead, AeadCore, KeyInit, OsRng},
 };
 
 use crate::error::CryptError;
-use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use base64::Engine;
+use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use hkdf::Hkdf;
 use hmac::Hmac;
 use pbkdf2::pbkdf2;
 use rand::distr::Alphanumeric;
-use rand::{rngs::OsRng as RandOsRng, Rng, TryRngCore};
+use rand::{Rng, TryRngCore, rngs::OsRng as RandOsRng};
 use sha2::Digest;
 use sha2::Sha256;
 

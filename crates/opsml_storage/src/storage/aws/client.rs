@@ -1,20 +1,20 @@
 use crate::storage::aws::error::AwsError;
-use crate::storage::base::{get_files, PathExt, StorageClient};
+use crate::storage::base::{PathExt, StorageClient, get_files};
 use crate::storage::error::StorageError;
 use crate::storage::filesystem::FileSystem;
 use crate::storage::utils::get_chunk_parts;
 use async_trait::async_trait;
 use aws_config::BehaviorVersion;
 use aws_config::SdkConfig;
+use aws_sdk_s3::Client;
 use aws_sdk_s3::operation::get_object::GetObjectOutput;
 use aws_sdk_s3::presigning::PresigningConfig;
 use aws_sdk_s3::primitives::ByteStream;
 use aws_sdk_s3::primitives::Length;
 use aws_sdk_s3::types::{CompletedMultipartUpload, CompletedPart};
-use aws_sdk_s3::Client;
 use opsml_settings::config::OpsmlStorageSettings;
-use opsml_types::contracts::{CompleteMultipartUpload, FileInfo, MultipartCompleteParts};
 use opsml_types::StorageType;
+use opsml_types::contracts::{CompleteMultipartUpload, FileInfo, MultipartCompleteParts};
 use opsml_utils::ChunkParts;
 use reqwest::Client as HttpClient;
 use std::fs::File;
@@ -877,9 +877,9 @@ mod tests {
     use crate::storage::error::StorageError;
     use opsml_settings::config::OpsmlConfig;
     use opsml_utils::create_uuid7;
+    use rand::Rng;
     use rand::distr::Alphanumeric;
     use rand::rng;
-    use rand::Rng;
     use std::path::Path;
     use tempfile::TempDir;
 
@@ -937,10 +937,12 @@ mod tests {
         assert!(!path.is_empty());
 
         // ls
-        assert!(!storage_client
-            .find(rpath_nested.parent().unwrap())
-            .await?
-            .is_empty());
+        assert!(
+            !storage_client
+                .find(rpath_nested.parent().unwrap())
+                .await?
+                .is_empty()
+        );
 
         // find
         let blobs = storage_client.find(rpath_dir).await?;

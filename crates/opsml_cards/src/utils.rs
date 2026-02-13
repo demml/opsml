@@ -1,6 +1,6 @@
 use crate::error::CardError;
 use names::Generator;
-use opsml_state::{app_state, StateError};
+use opsml_state::{StateError, app_state};
 use opsml_types::error::TypeError;
 use opsml_types::{CommonKwargs, RegistryType};
 use opsml_utils::{clean_string, validate_name_space_pattern};

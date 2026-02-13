@@ -1,8 +1,8 @@
 use crate::error::ModelInterfaceError;
+use pyo3::IntoPyObjectExt;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use pyo3::types::PyType;
-use pyo3::IntoPyObjectExt;
 use serde::{Deserialize, Serialize};
 use std::fmt;
 use std::fmt::Display;
