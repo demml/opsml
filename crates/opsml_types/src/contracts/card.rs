@@ -349,11 +349,13 @@ impl VersionCursor {
     }
 }
 
+#[derive(Serialize, Deserialize, Debug)]
 pub struct CompareHashRequest {
     pub registry_type: RegistryType,
     pub content_hash: Vec<u8>,
 }
 
+#[derive(Serialize, Deserialize, Debug)]
 pub struct CompareHashResponse {
     pub matches: bool,
 }
