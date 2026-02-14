@@ -1,10 +1,26 @@
+use crate::error::AgentConfigError;
 use pyo3::{IntoPyObjectExt, prelude::*};
 use pythonize::depythonize;
+use regex::Regex;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
+use std::env;
+use std::path::{Path, PathBuf};
+use std::sync::LazyLock;
+use tracing::debug;
+// Validation constants per Agent Skills Spec
+const MAX_SKILL_NAME_LENGTH: usize = 64;
+const MAX_DESCRIPTION_LENGTH: usize = 1024;
+const MAX_COMPATIBILITY_LENGTH: usize = 500;
 
-use crate::error::TypeError;
+// Regex patterns for validation
+static SKILL_NAME_REGEX: LazyLock<Regex> = LazyLock::new(|| {
+    // Matches lowercase alphanumeric and hyphens
+    // - Must start and end with alphanumeric
+    // - Hyphens only appear between alphanumeric characters (prevents consecutive hyphens)
+    Regex::new(r"^[a-z0-9]+(-[a-z0-9]+)*$").unwrap()
+});
 
 #[pyclass]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
@@ -36,9 +52,11 @@ pub struct AgentInterface {
     pub url: String,
 
     #[pyo3(get, set)]
+    #[serde(alias = "protocol_binding")]
     pub protocol_binding: String,
 
     #[pyo3(get, set)]
+    #[serde(alias = "protocol_version")]
     pub protocol_version: String,
 
     #[pyo3(get, set)]
@@ -100,7 +118,7 @@ impl AgentExtension {
     }
 
     #[getter]
-    pub fn get_params<'py>(&self, py: Python<'py>) -> Result<Bound<'py, PyAny>, TypeError> {
+    pub fn get_params<'py>(&self, py: Python<'py>) -> Result<Bound<'py, PyAny>, AgentConfigError> {
         match &self.params {
             Some(params) => Ok(pythonize::pythonize(py, params)?),
             None => Ok(py.None().into_bound_py_any(py)?),
@@ -116,9 +134,11 @@ pub struct AgentCapabilities {
     pub streaming: bool,
 
     #[pyo3(get, set)]
+    #[serde(alias = "push_notifications")]
     pub push_notifications: bool,
 
     #[pyo3(get, set)]
+    #[serde(alias = "extended_agent_card")]
     pub extended_agent_card: bool,
 
     #[pyo3(get, set)]
@@ -160,6 +180,237 @@ impl SecurityRequirement {
     }
 }
 
+/// Claude Agent Skill Standard
+/// Implements the Agent Skills specification from https://agentskills.io/specification
+#[pyclass]
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+#[serde(rename_all = "camelCase", default)]
+pub struct AgentSkillStandard {
+    #[pyo3(get, set)]
+    pub name: String, // lowercase alphanumeric + hyphens only, 1-64 chars
+
+    #[pyo3(get, set)]
+    pub description: String, // 1-1024 chars
+
+    #[pyo3(get, set)]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub license: Option<String>,
+
+    #[pyo3(get, set)]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub compatibility: Option<String>, // max 500 chars
+
+    #[pyo3(get, set)]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub metadata: Option<HashMap<String, String>>,
+
+    #[pyo3(get, set)]
+    #[serde(skip_serializing_if = "Option::is_none", alias = "allowed_tools")]
+    pub allowed_tools: Option<Vec<String>>,
+
+    // Optional directory path to the skill
+    // If None: expected at {parent}/skills/{skill-name}/SKILL.md
+    // If Some(path): expected at {path}/SKILL.md, where last directory in path must match skill name
+    #[pyo3(get, set)]
+    #[serde(skip_serializing_if = "Option::is_none", alias = "skills_path")]
+    pub skills_path: Option<PathBuf>,
+
+    // The actual Markdown body (loaded on demand)
+    #[pyo3(get, set)]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub body: Option<String>,
+}
+
+impl AgentSkillStandard {
+    /// Validate the name field per Agent Skills specification
+    fn validate_name(&self) -> Result<(), AgentConfigError> {
+        let name = self.name.trim();
+
+        if name.is_empty() {
+            return Err(AgentConfigError::FieldNameEmpty);
+        }
+
+        if name.len() > MAX_SKILL_NAME_LENGTH {
+            return Err(AgentConfigError::FieldNameTooLong {
+                name: name.to_string(),
+                length: name.len(),
+                max_length: MAX_SKILL_NAME_LENGTH,
+            });
+        }
+
+        // Check if name is lowercase
+        if name != name.to_lowercase() {
+            return Err(AgentConfigError::SkillMustBeLowercase {
+                name: name.to_string(),
+            });
+        }
+
+        // Check if name matches the pattern: starts/ends with alphanumeric, no consecutive hyphens
+        if !SKILL_NAME_REGEX.is_match(name) {
+            let mut error_msg = format!("Skill name '{}' is invalid. ", name);
+
+            if name.starts_with('-') || name.ends_with('-') {
+                error_msg.push_str("Name cannot start or end with a hyphen. ");
+            }
+            if name.contains("--") {
+                error_msg.push_str("Name cannot contain consecutive hyphens. ");
+            }
+            if !name.chars().all(|c| c.is_ascii_alphanumeric() || c == '-') {
+                error_msg.push_str("Only lowercase letters, digits, and hyphens are allowed.");
+            }
+
+            return Err(AgentConfigError::SkillNameInvalid {
+                name: name.to_string(),
+                reason: error_msg,
+            });
+        }
+
+        Ok(())
+    }
+
+    /// Validate the description field per Agent Skills specification
+    fn validate_description(&self) -> Result<(), AgentConfigError> {
+        let description = self.description.trim();
+
+        if description.is_empty() {
+            return Err(AgentConfigError::FieldDescriptionEmpty);
+        }
+
+        if description.len() > MAX_DESCRIPTION_LENGTH {
+            return Err(AgentConfigError::FieldDescriptionTooLong {
+                length: description.len(),
+                max_length: MAX_DESCRIPTION_LENGTH,
+            });
+        }
+
+        Ok(())
+    }
+
+    /// Validate the compatibility field per Agent Skills specification
+    fn validate_compatibility(&self) -> Result<(), AgentConfigError> {
+        if let Some(compatibility) = &self.compatibility {
+            if compatibility.is_empty() {
+                return Err(AgentConfigError::FieldCompatibilityEmpty);
+            }
+
+            if compatibility.len() > MAX_COMPATIBILITY_LENGTH {
+                return Err(AgentConfigError::FieldCompatibilityTooLong {
+                    length: compatibility.len(),
+                    max_length: MAX_COMPATIBILITY_LENGTH,
+                });
+            }
+        }
+
+        Ok(())
+    }
+
+    /// Validate the skills_path and check if SKILL.md file exists
+    /// If parent_dir is provided, it will be used as the base for relative paths. Otherwise, current working directory is used.
+    /// It is expected that the last directory in the skills_path matches the skill name, and SKILL.md is located within that directory.
+    /// If skills_path is None, it defaults to {parent_dir}/skills/{skill-name}/SKILL.md
+    fn validate_skills_path(&self) -> Result<(), AgentConfigError> {
+        let skill_md_path = match &self.skills_path {
+            Some(dir_path) => {
+                // Check that the last directory component matches skill name
+                if let Some(last_dir) = dir_path.file_name() {
+                    if last_dir.to_string_lossy() != self.name {
+                        return Err(AgentConfigError::LastDirectoryMustMatchSkillName {
+                            skills_path: last_dir.to_string_lossy().to_string(),
+                            skill_name: self.name.clone(),
+                        });
+                    }
+                }
+
+                dir_path.join("SKILL.md")
+            }
+            None => {
+                // Default: skills/{skill-name}/SKILL.md
+                let base = env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
+                base.join("skills").join(&self.name).join("SKILL.md")
+            }
+        };
+
+        debug!(
+            "Validating skills_path. Looking for SKILL.md at: {}",
+            skill_md_path.display()
+        );
+
+        // Check if the file exists
+        if !skill_md_path.exists() {
+            return Err(AgentConfigError::SkillFileNotFound {
+                path: skill_md_path.to_string_lossy().to_string(),
+            });
+        }
+
+        Ok(())
+    }
+
+    /// Comprehensive validation of all fields
+    pub fn validate(&self) -> Result<(), AgentConfigError> {
+        self.validate_name()?;
+
+        self.validate_description()?;
+
+        self.validate_compatibility()?;
+
+        self.validate_skills_path()?;
+
+        Ok(())
+    }
+}
+
+#[pymethods]
+impl AgentSkillStandard {
+    #[new]
+    #[pyo3(signature = (name, description, license=None, compatibility=None, metadata=None, allowed_tools=None, skills_path=None, body=None))]
+    pub fn new(
+        name: String,
+        description: String,
+        license: Option<String>,
+        compatibility: Option<String>,
+        metadata: Option<HashMap<String, String>>,
+        allowed_tools: Option<Vec<String>>,
+        skills_path: Option<PathBuf>,
+        body: Option<String>,
+    ) -> PyResult<Self> {
+        let skill = Self {
+            name,
+            description,
+            license,
+            compatibility,
+            metadata,
+            allowed_tools,
+            skills_path,
+            body,
+        };
+
+        // Validate on construction
+        skill.validate()?;
+
+        Ok(skill)
+    }
+
+    /// Get the expected SKILL.md file path based on skills_path
+    /// Returns the full path where SKILL.md should be located
+    #[pyo3(name = "get_skill_md_path")]
+    pub fn py_get_skill_md_path(&self, parent_dir: Option<String>) -> String {
+        let skill_name = self.name.trim();
+
+        let path = match &self.skills_path {
+            Some(dir_path) => Path::new(dir_path).join("SKILL.md"),
+            None => {
+                let base = parent_dir
+                    .as_ref()
+                    .map(|p| Path::new(p.as_str()))
+                    .unwrap_or_else(|| Path::new("."));
+                base.join("skills").join(skill_name).join("SKILL.md")
+            }
+        };
+
+        path.to_string_lossy().to_string()
+    }
+}
+
 #[pyclass]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 #[serde(rename_all = "camelCase", default)]
@@ -174,15 +425,18 @@ pub struct AgentSkill {
     pub id: String,
 
     #[pyo3(get, set)]
+    #[serde(alias = "input_modes")]
     pub input_modes: Option<Vec<String>>,
 
     #[pyo3(get, set)]
     pub name: String,
 
     #[pyo3(get, set)]
+    #[serde(alias = "output_modes")]
     pub output_modes: Option<Vec<String>>,
 
     #[pyo3(get, set)]
+    #[serde(alias = "security_requirements")]
     pub security_requirements: Option<Vec<SecurityRequirement>>,
 
     #[pyo3(get, set)]
@@ -213,6 +467,42 @@ impl AgentSkill {
             input_modes,
             output_modes,
             security_requirements,
+        }
+    }
+}
+
+#[pyclass]
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(untagged)]
+pub enum SkillFormat {
+    A2A(AgentSkill),
+    Standard(AgentSkillStandard),
+}
+
+impl SkillFormat {
+    pub fn validate(&self) -> Result<(), AgentConfigError> {
+        match self {
+            SkillFormat::A2A(_skill) => Ok(()),
+            SkillFormat::Standard(skill) => skill.validate(),
+        }
+    }
+}
+
+#[pymethods]
+impl SkillFormat {
+    #[new]
+    pub fn new(skill: &Bound<'_, PyAny>) -> Result<Self, AgentConfigError> {
+        if skill.is_instance_of::<AgentSkill>() {
+            let agent_skill = skill.extract::<AgentSkill>()?;
+            Ok(SkillFormat::A2A(agent_skill))
+        } else if skill.is_instance_of::<AgentSkillStandard>() {
+            let standard_skill = skill.extract::<AgentSkillStandard>()?;
+            Ok(SkillFormat::Standard(standard_skill))
+        } else {
+            Err(AgentConfigError::PyError(format!(
+                "Unsupported skill format type: {:?}",
+                skill.get_type()
+            )))
         }
     }
 }
@@ -249,6 +539,7 @@ pub struct HttpAuthSecurityScheme {
     #[pyo3(get, set)]
     scheme: String,
     #[pyo3(get, set)]
+    #[serde(alias = "bearer_format")]
     bearer_format: String,
     #[pyo3(get, set)]
     description: String,
@@ -295,6 +586,7 @@ pub struct Oauth2SecurityScheme {
     #[pyo3(get, set)]
     pub flows: OAuthFlows,
     #[pyo3(get, set)]
+    #[serde(alias = "oauth2_metadata_url")]
     pub oauth2_metadata_url: Option<String>,
 }
 
@@ -322,6 +614,7 @@ pub struct OpenIdConnectSecurityScheme {
     #[pyo3(get, set)]
     pub description: Option<String>,
     #[pyo3(get, set)]
+    #[serde(alias = "openIdConnectUrl")]
     pub open_id_connect_url: Option<String>,
 }
 
@@ -352,7 +645,7 @@ pub enum SecurityScheme {
 #[pymethods]
 impl SecurityScheme {
     #[new]
-    pub fn new(scheme: &Bound<'_, PyAny>) -> Result<Self, TypeError> {
+    pub fn new(scheme: &Bound<'_, PyAny>) -> Result<Self, AgentConfigError> {
         if scheme.is_instance_of::<ApiKeySecurityScheme>() {
             let api_key_scheme = scheme.extract::<ApiKeySecurityScheme>()?;
             Ok(SecurityScheme::ApiKeySecurityScheme(api_key_scheme))
@@ -369,7 +662,7 @@ impl SecurityScheme {
             let openid_scheme = scheme.extract::<OpenIdConnectSecurityScheme>()?;
             Ok(SecurityScheme::OpenIdConnectSecurityScheme(openid_scheme))
         } else {
-            Err(TypeError::PyError(format!(
+            Err(AgentConfigError::PyError(format!(
                 "Unsupported security scheme type: {:?}",
                 scheme.get_type()
             )))
@@ -382,10 +675,13 @@ impl SecurityScheme {
 #[serde(default, rename_all = "camelCase")]
 pub struct OAuthFlows {
     #[pyo3(get, set)]
+    #[serde(alias = "authorization_code")]
     pub authorization_code: Option<AuthorizationCodeFlow>,
     #[pyo3(get, set)]
+    #[serde(alias = "client_credentials")]
     pub client_credentials: Option<ClientCredentialsFlow>,
     #[pyo3(get, set)]
+    #[serde(alias = "device_code")]
     pub device_code: Option<DeviceCodeFlow>,
     #[pyo3(get, set)]
     pub implicit: Option<ImplicitAuthFlow>,
@@ -419,14 +715,18 @@ impl OAuthFlows {
 #[serde(default, rename_all = "camelCase")]
 pub struct AuthorizationCodeFlow {
     #[pyo3(get, set)]
+    #[serde(alias = "authorization_url")]
     pub authorization_url: String,
     #[pyo3(get, set)]
+    #[serde(alias = "pkce_required")]
     pub pkce_required: bool,
     #[pyo3(get, set)]
+    #[serde(alias = "refresh_url")]
     pub refresh_url: String,
     #[pyo3(get, set)]
     pub scopes: HashMap<String, String>,
     #[pyo3(get, set)]
+    #[serde(alias = "token_url")]
     pub token_url: String,
 }
 
@@ -456,10 +756,12 @@ impl AuthorizationCodeFlow {
 #[serde(default, rename_all = "camelCase")]
 pub struct ClientCredentialsFlow {
     #[pyo3(get, set)]
+    #[serde(alias = "refresh_url")]
     pub refresh_url: String,
     #[pyo3(get, set)]
     pub scopes: HashMap<String, String>,
     #[pyo3(get, set)]
+    #[serde(alias = "token_url")]
     pub token_url: String,
 }
 
@@ -485,12 +787,15 @@ impl ClientCredentialsFlow {
 #[serde(default, rename_all = "camelCase")]
 pub struct DeviceCodeFlow {
     #[pyo3(get, set)]
+    #[serde(alias = "device_authorization_url")]
     pub device_authorization_url: String,
     #[pyo3(get, set)]
+    #[serde(alias = "refresh_url")]
     pub refresh_url: String,
     #[pyo3(get, set)]
     pub scopes: HashMap<String, String>,
     #[pyo3(get, set)]
+    #[serde(alias = "token_url")]
     pub token_url: String,
 }
 
@@ -518,8 +823,10 @@ impl DeviceCodeFlow {
 #[serde(default, rename_all = "camelCase")]
 pub struct ImplicitAuthFlow {
     #[pyo3(get, set)]
+    #[serde(alias = "authorization_url")]
     pub authorization_url: String,
     #[pyo3(get, set)]
+    #[serde(alias = "refresh_url")]
     pub refresh_url: String,
     #[pyo3(get, set)]
     pub scopes: HashMap<String, String>,
@@ -547,10 +854,12 @@ impl ImplicitAuthFlow {
 #[serde(default, rename_all = "camelCase")]
 pub struct PassWordAuthFlow {
     #[pyo3(get, set)]
+    #[serde(alias = "refresh_url")]
     pub refresh_url: String,
     #[pyo3(get, set)]
     pub scopes: HashMap<String, String>,
     #[pyo3(get, set)]
+    #[serde(alias = "token_url")]
     pub token_url: String,
 }
 
@@ -649,7 +958,7 @@ pub struct AgentSpec {
     pub signatures: Option<Vec<AgentCardSignature>>,
 
     #[pyo3(get, set)]
-    pub skills: Vec<AgentSkill>,
+    pub skills: Vec<SkillFormat>,
 
     #[pyo3(get, set)]
     #[serde(alias = "supported_interfaces")]
@@ -687,7 +996,7 @@ impl AgentSpec {
         capabilities: AgentCapabilities,
         default_input_modes: Vec<String>,
         default_output_modes: Vec<String>,
-        skills: Vec<AgentSkill>,
+        skills: Vec<SkillFormat>,
         provider: Option<AgentProvider>,
         documentation_url: Option<String>,
         icon_url: Option<String>,
@@ -711,5 +1020,14 @@ impl AgentSpec {
             security_requirements,
             signatures,
         }
+    }
+
+    pub(crate) fn validate(&self) -> Result<(), AgentConfigError> {
+        // Validate each skill
+        for skill in &self.skills {
+            skill.validate()?;
+        }
+
+        Ok(())
     }
 }

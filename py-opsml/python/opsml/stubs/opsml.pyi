@@ -3052,7 +3052,7 @@ class DeploymentConfig:
     def links(self) -> Optional[Dict[str, str]]:
         """Related links for monitoring, logging, etc."""
 
-class ServiceSpec:
+class OpsmlServiceSpec:
     """Service specification representing the opsmlspec.yaml structure."""
 
     def __init__(
@@ -3087,7 +3087,7 @@ class ServiceSpec:
 
         Example:
             ```python
-            spec = ServiceSpec(
+            spec = OpsmlServiceSpec(
                 name="recommendation-api",
                 space_config=SpaceConfig(space="data-science"),
                 service_type=ServiceType.Api,
@@ -3143,7 +3143,7 @@ class ServiceSpec:
     def root_path(self) -> Path:
         """Root path of the service specification file."""
 
-    def from_path(self, path: Optional[Path] = None) -> "ServiceSpec":
+    def from_path(self, path: Optional[Path] = None) -> "OpsmlServiceSpec":
         """Load the service specification from an opsmlspec.yaml file or
         a provided path.
 
@@ -3154,7 +3154,7 @@ class ServiceSpec:
         """
 
     def __str__(self) -> str:
-        """String representation of the ServiceSpec."""
+        """String representation of the OpsmlServiceSpec."""
 
 class RegistryTestHelper:
     """Helper class for testing the registry"""

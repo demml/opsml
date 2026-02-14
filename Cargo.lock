@@ -4694,6 +4694,7 @@ dependencies = [
  "potato-head",
  "pyo3",
  "pythonize",
+ "regex",
  "scouter-client",
  "semver",
  "serde",

@@ -38,6 +38,21 @@ service:
           typ: "JWT"
         protected: "ey1"
         signature: "abc123"
+    skills:
+      - name: "web_search"
+        description: "Perform web searches"
+        id: "skill1"
+        examples:
+          - "Search for the latest news on AI"
+          - "Here are the latest news articles on AI..."
+        tags: ["search", "web"]
+      - name: "data-analysis"
+        description: "Analyze data sets"
+        license: "MIT"
+        compatibility: "v1.0"
+        metadata:
+          complexity: "high"
+        allowed_tools: ["pandas", "numpy"]
 
 deploy:
   - environment: "dev_client"

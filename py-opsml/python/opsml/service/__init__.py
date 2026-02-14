@@ -6,17 +6,17 @@ from .._opsml import (
     McpCapability,
     McpConfig,
     McpTransport,
+    OpsmlServiceSpec,
     Resources,
     ServiceConfig,
     ServiceMetadata,
-    ServiceSpec,
     ServiceType,
     SpaceConfig,
     download_service,
 )
 
 __all__ = [
-    "ServiceSpec",
+    "OpsmlServiceSpec",
     "ServiceType",
     "SpaceConfig",
     "ServiceMetadata",

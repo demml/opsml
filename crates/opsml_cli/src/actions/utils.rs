@@ -4,7 +4,7 @@ use opsml_cards::{PromptCard, ServiceCard};
 use opsml_registry::CardRegistry;
 pub use opsml_registry::utils::validate_service_cards;
 use opsml_semver::VersionType;
-use opsml_service::ServiceSpec;
+use opsml_service::OpsmlServiceSpec;
 use opsml_types::RegistryType;
 use opsml_types::contracts::Card;
 use std::path::Path;
@@ -99,7 +99,7 @@ pub fn process_prompt_card_from_path(
 /// * The cards in the app configuration are invalid
 /// * The service card cannot be created
 pub fn create_service_card(
-    spec: &ServiceSpec,
+    spec: &OpsmlServiceSpec,
     space: &str,
     name: &str,
 ) -> Result<ServiceCard, CliError> {
@@ -149,7 +149,7 @@ pub fn create_service_card(
 /// 4. Check the content hash against the registry - if it matches, skip registration to avoid creating a new version with the same content.
 ///    If it doesn't match, register the service card
 pub fn register_service_card(
-    spec: &mut ServiceSpec,
+    spec: &mut OpsmlServiceSpec,
     registry: &CardRegistry,
     space: &str,
     name: &str,

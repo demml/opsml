@@ -36,6 +36,9 @@ configuration environment matches the current environment set in APP_ENV.
 
     #[error("{0}")]
     PyError(String),
+
+    #[error(transparent)]
+    AgentConfigError(#[from] opsml_types::error::AgentConfigError),
 }
 
 impl From<ServiceError> for PyErr {
