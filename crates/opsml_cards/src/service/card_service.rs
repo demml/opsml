@@ -183,10 +183,13 @@ pub struct ServiceCard {
     #[pyo3(get)]
     pub service_type: ServiceType,
 
+    #[pyo3(get)]
     pub metadata: Option<ServiceMetadata>,
 
+    #[pyo3(get)]
     pub deploy: Option<Vec<DeploymentConfig>>,
 
+    #[pyo3(get)]
     pub service_config: Option<ServiceConfig>,
 }
 
