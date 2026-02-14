@@ -361,11 +361,11 @@ impl AgentConfig {
     }
 
     /// This will perform conversion of String path to AgentSpec and validate AgentSpec if provided as path. If AgentSpec is already provided, it will just validate it.
-    pub fn validate(&self) -> Result<(), AgentConfigError> {
+    pub fn validate(&self, root_path: &Path) -> Result<(), AgentConfigError> {
         // validates the agent configuration
         match self {
             AgentConfig::Spec(spec) => {
-                spec.validate()?;
+                spec.validate(root_path)?;
                 Ok(())
             }
             AgentConfig::Path(_) => Err(AgentConfigError::InvalidAgentConfig), // Path should have been resolved at this point
@@ -396,6 +396,7 @@ pub struct ServiceConfig {
 impl ServiceConfig {
     pub fn validate(
         &mut self,
+        root_path: &Path,
         service_space: &str,
         service_type: &ServiceType,
     ) -> Result<(), TypeError> {
@@ -419,7 +420,7 @@ impl ServiceConfig {
 
         // Validate agent config if present
         if let Some(agent_config) = &self.agent {
-            agent_config.validate()?;
+            agent_config.validate(root_path)?;
         }
         Ok(())
     }
