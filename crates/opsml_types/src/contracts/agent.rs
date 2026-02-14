@@ -320,13 +320,13 @@ impl AgentSkillStandard {
                     root_path.join(dir_path)
                 };
 
-                if let Some(last_dir) = resolved_path.file_name() {
-                    if last_dir.to_string_lossy() != self.name {
-                        return Err(AgentConfigError::LastDirectoryMustMatchSkillName {
-                            skills_path: last_dir.to_string_lossy().to_string(),
-                            skill_name: self.name.clone(),
-                        });
-                    }
+                if let Some(last_dir) = resolved_path.file_name()
+                    && last_dir.to_string_lossy() != self.name
+                {
+                    return Err(AgentConfigError::LastDirectoryMustMatchSkillName {
+                        skills_path: last_dir.to_string_lossy().to_string(),
+                        skill_name: self.name.clone(),
+                    });
                 }
 
                 resolved_path.join("SKILL.md")
@@ -358,9 +358,11 @@ impl AgentSkillStandard {
 }
 
 #[pymethods]
+
 impl AgentSkillStandard {
     #[new]
     #[pyo3(signature = (name, description, license=None, compatibility=None, metadata=None, allowed_tools=None, skills_path=None, body=None))]
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         name: String,
         description: String,
