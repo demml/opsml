@@ -13,6 +13,7 @@ use opsml_server::core::cards::schema::{
 use opsml_types::contracts::DeploymentConfig;
 use opsml_types::contracts::*;
 use opsml_types::*;
+use sha2::{Digest, Sha256};
 use std::path::PathBuf;
 use test_utils::retry_flaky_test;
 
@@ -1959,6 +1960,13 @@ async fn test_opsml_server_card_service_card_agents() {
             links: None,
         };
 
+        // create fake content hash
+        let content_hash = "Qm".to_string() + &rand::random::<u64>().to_string();
+        let mut hasher = Sha256::new();
+        let serialized = serde_json::to_string(&content_hash).unwrap();
+        hasher.update(serialized.as_bytes());
+        let hash = hasher.finalize().to_vec();
+
         // ServiceCard
         let service_card = ServiceCardClientRecord {
             name: "service".to_string(),
@@ -1967,9 +1975,11 @@ async fn test_opsml_server_card_service_card_agents() {
             service_type: ServiceType::Agent,
             service_config: Some(ServiceConfig {
                 agent: Some(agent_spec.clone()),
+
                 ..Default::default()
             }),
             deployment: Some(vec![deploy]),
+            content_hash: hash,
             ..ServiceCardClientRecord::default()
         };
 
@@ -1983,13 +1993,12 @@ async fn test_opsml_server_card_service_card_agents() {
         };
 
         let card_request = CreateCardRequest {
-            card: CardRecord::Service(Box::new(service_card)),
+            card: CardRecord::Service(Box::new(service_card.clone())),
             registry_type: RegistryType::Agent,
             version_request: card_version_request,
         };
 
         let body = serde_json::to_string(&card_request).unwrap();
-
         let request = Request::builder()
             .uri("/opsml/api/card/create")
             .method("POST")
@@ -2029,8 +2038,28 @@ async fn test_opsml_server_card_service_card_agents() {
 
         let body = response.into_body().collect().await.unwrap().to_bytes();
         let card_results: Vec<CardRecord> = serde_json::from_slice(&body).unwrap();
-
         assert_eq!(card_results.len(), 1);
+
+        // compare content hash
+        let hash_request = CompareHashRequest {
+            registry_type: RegistryType::Agent,
+            content_hash: service_card.content_hash.clone(),
+        };
+
+        let body = serde_json::to_string(&hash_request).unwrap();
+        let request = Request::builder()
+            .uri("/opsml/api/card/compare_hash")
+            .method("POST")
+            .header(header::CONTENT_TYPE, "application/json")
+            .body(Body::from(body))
+            .unwrap();
+
+        let response = helper.send_oneshot(request).await;
+        assert_eq!(response.status(), StatusCode::OK);
+
+        let body = response.into_body().collect().await.unwrap().to_bytes();
+        let hash_response: CompareHashResponse = serde_json::from_slice(&body).unwrap();
+        assert!(hash_response.matches);
 
         helper.cleanup();
     });

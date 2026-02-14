@@ -57,6 +57,7 @@ rand = "0.*"
 tower = { version = "0.*", features = ["util"] }
 jsonwebtoken = { workspace = true }
 test_utils = { workspace = true }
+sha2 = { workspace = true }
 
 [[test]]
 name = "integration"
