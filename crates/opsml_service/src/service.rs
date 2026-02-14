@@ -6,6 +6,7 @@ use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 pub const DEFAULT_SERVICE_FILENAME: &str = "opsmlspec.yaml";
+use tracing::{error, instrument};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(untagged)]
@@ -97,6 +98,7 @@ impl OpsmlServiceSpec {
     ///   - If the path is a directory, searches for `opsmlspec.yaml`.
     /// # Returns
     /// * `OpsmlServiceSpec` - The loaded service specification
+    #[instrument(skip_all)]
     pub fn from_path(path: &Path) -> Result<Self, ServiceError> {
         // We are returning both the service spec and the root path where the spec was found
         // This is useful for (1) loading the spec file and (2) determine which root path a spec belongs to
@@ -132,21 +134,40 @@ impl OpsmlServiceSpec {
             }
         };
 
-        let mut spec = Self::from_yaml_file(&service_path)?;
+        let mut spec = Self::from_yaml_file(&service_path).inspect_err(|e| {
+            error!(
+                "Failed to load service spec from path {}: {}",
+                service_path.display(),
+                e
+            );
+        })?;
 
         // root path is where the service spec file lives
         spec.root_path = root_path;
 
         // resolve and underlying paths
-        spec.resolve()?;
+        spec.resolve().inspect_err(|e| {
+            error!(
+                "Failed to resolve service spec from path {}: {}",
+                service_path.display(),
+                e
+            );
+        })?;
 
         // validate the spec
-        spec.validate()?;
+        spec.validate().inspect_err(|e| {
+            error!(
+                "Failed to validate service spec from path {}: {}",
+                service_path.display(),
+                e
+            );
+        })?;
 
         Ok(spec)
     }
 
     /// Resolve any paths in the service spec (e.g. agent spec path) and replace with actual specs
+    #[instrument(skip_all)]
     fn resolve(&mut self) -> Result<(), ServiceError> {
         // if service exists, resolve any paths in service config (e.g. agent spec path) and replace with actual specs
         if let Some(service) = &mut self.service {
@@ -158,6 +179,7 @@ impl OpsmlServiceSpec {
     /// Filter the deployment configurations to only include those matching the current application environment
     /// This is important when dealing with multiple deployment environments in a single service spec
     /// We don't want to record the prod deployment config in staging or dev environments
+    #[instrument(skip_all)]
     fn filter_deploy_by_environment(&mut self) -> Result<(), ServiceError> {
         let app_env = app_state().config()?.app_env.clone();
         if let Some(deployments) = &mut self.deploy {

@@ -123,7 +123,7 @@ mod tests {
             ),
             vec!["text".to_string()],
             vec!["json".to_string()],
-            vec![AgentSkill::new(
+            vec![opsml_types::contracts::SkillFormat::A2A(AgentSkill::new(
                 "skill1".to_string(),
                 "Echo".to_string(),
                 "Echoes input text".to_string(),
@@ -132,7 +132,7 @@ mod tests {
                 Some(vec!["text".to_string()]),
                 Some(vec!["text".to_string()]),
                 Some(vec![SecurityRequirement::new(vec!["apiKey".to_string()])]),
-            )],
+            ))],
             Some(AgentProvider::new(
                 Some("TestOrg".to_string()),
                 Some("https://test.org".to_string()),

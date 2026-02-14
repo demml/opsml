@@ -7,7 +7,7 @@ use serde_json::Value;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::LazyLock;
-use tracing::debug;
+
 // Validation constants per Agent Skills Spec
 const MAX_SKILL_NAME_LENGTH: usize = 64;
 const MAX_DESCRIPTION_LENGTH: usize = 1024;
@@ -20,6 +20,10 @@ static SKILL_NAME_REGEX: LazyLock<Regex> = LazyLock::new(|| {
     // - Hyphens only appear between alphanumeric characters (prevents consecutive hyphens)
     Regex::new(r"^[a-z0-9]+(-[a-z0-9]+)*$").unwrap()
 });
+
+fn a2a_current_version() -> String {
+    "0.3.0".to_string()
+}
 
 #[pyclass]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
@@ -310,8 +314,13 @@ impl AgentSkillStandard {
     fn validate_skills_path(&self, root_path: &Path) -> Result<(), AgentConfigError> {
         let skill_md_path = match &self.skills_path {
             Some(dir_path) => {
-                // Check that the last directory component matches skill name
-                if let Some(last_dir) = dir_path.file_name() {
+                let resolved_path = if dir_path.is_absolute() {
+                    dir_path.clone()
+                } else {
+                    root_path.join(dir_path)
+                };
+
+                if let Some(last_dir) = resolved_path.file_name() {
                     if last_dir.to_string_lossy() != self.name {
                         return Err(AgentConfigError::LastDirectoryMustMatchSkillName {
                             skills_path: last_dir.to_string_lossy().to_string(),
@@ -320,21 +329,11 @@ impl AgentSkillStandard {
                     }
                 }
 
-                dir_path.join("SKILL.md")
+                resolved_path.join("SKILL.md")
             }
-            None => {
-                println!("root_path in validate_skills_path: {}", root_path.display());
-                let base = root_path;
-                base.join("skills").join(&self.name).join("SKILL.md")
-            }
+            None => root_path.join("skills").join(&self.name).join("SKILL.md"),
         };
 
-        println!(
-            "Validating skills_path. Looking for SKILL.md at: {}",
-            skill_md_path.display()
-        );
-
-        // Check if the file exists
         if !skill_md_path.exists() {
             return Err(AgentConfigError::SkillFileNotFound {
                 path: skill_md_path.to_string_lossy().to_string(),
@@ -962,6 +961,7 @@ pub struct AgentSpec {
     pub supported_interfaces: Vec<AgentInterface>,
 
     #[pyo3(get, set)]
+    #[serde(default = "a2a_current_version")]
     pub version: String,
 }
 
